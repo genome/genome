@@ -13,11 +13,11 @@ use Test::More;
 use File::Basename qw(dirname basename);
 use File::DirCompare;
 use Sub::Install qw(reinstall_sub);
-use Genome::Test::Factory::Model::SomaticValidation;
 use Genome::Test::Factory::Model::ReferenceSequence;
 use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Sample;
+use Genome::VariantReporting::Framework::Command::Wrappers::TestHelpers qw(get_build);
 
 my $pkg = "Genome::VariantReporting::Framework::Command::Wrappers::ModelPair";
 
@@ -28,15 +28,10 @@ my $expected_dir = File::Spec->join($test_dir, "expected");
 my $output_dir = Genome::Sys->create_temp_directory;
 
 my $roi_name = "test_roi";
-my $discovery_model = Genome::Test::Factory::Model::SomaticValidation->setup_object();
-is($discovery_model->class, "Genome::Model::SomaticValidation");
-my $discovery_build = Genome::Test::Factory::Build->setup_object(model_id => $discovery_model->id);
-$discovery_build->region_of_interest_set_name($roi_name);
-is($discovery_build->class, "Genome::Model::Build::SomaticValidation");
 my $tumor_sample = Genome::Test::Factory::Sample->setup_object();
 my $normal_sample = Genome::Test::Factory::Sample->setup_object(source_id => $tumor_sample->source_id);
-$discovery_build->tumor_sample($tumor_sample);
-$discovery_build->normal_sample($normal_sample);
+my $discovery_build = get_build($roi_name, $tumor_sample, $normal_sample);
+is($discovery_build->class, "Genome::Model::Build::SomaticValidation");
 
 my $dbsnp_model = Genome::Test::Factory::Model::ImportedVariationList->setup_object();
 my $dbsnp_build = Genome::Test::Factory::Build->setup_object(model_id => $dbsnp_model->id);
@@ -104,12 +99,6 @@ reinstall_sub( {
         return $segdups;
     },
 });
-
-#my $validation_model = Genome::Test::Factory::Model::SomaticValidation->setup_object(processing_profile_id => $discovery_model->processing_profile->id);
-#my $validation_build = Genome::Test::Factory::Model::SomaticValidation->setup_object(model_id => $discovery_model->id);
-#$validation_build->region_of_interest_set_name($roi_name);
-
-my $roi = Genome::FeatureList->__define__(name => $roi_name, id => "-b8bc947b2fbf464592508cc021fa63ef");
 
 my $model_pair = $pkg->create(discovery => $discovery_build,
     validation => $discovery_build,
