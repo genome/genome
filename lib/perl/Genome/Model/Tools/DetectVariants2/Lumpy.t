@@ -25,7 +25,7 @@ my $refbuild_id = 101947881;
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Lumpy';
 my $output_dir = Genome::Sys-> create_temp_directory();
 
-my $tumor_bam = $test_dir . '/tumor.bam';
+my $tumor_bam = $test_dir .'/tumor.bam';
 
 #GENOME_SOFTWARE_RESULT_TEST_NAME=mir_thurs8 gmt detect-variants2 lumpy --output-directory ~/lumpy_results --reference-build GRCh37-lite-build37 --aligned-reads-input /gscmnt/gc8001/info/build_merged_alignments/merged-alignment-blade12-2-10.gsc.wustl.edu-idas-12597-dc83cc176c8849d2a1acdd6fa2943605/dc83cc176c8849d2a1acdd6fa2943605.bam --params -mw:4,-tt:0.0//min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:2,min_mapping_threshold:20//back_distance:20,weight:1,id:2,min_mapping_threshold:20
 
