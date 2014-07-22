@@ -44,6 +44,8 @@ my %model_files = (
     'Tnativa.rf.gd.mkv2.hmm'                => 'sn_tn1mk2',
     'Oostertagi_pbj_cgmkv2.hmm'             => 'sn_oo1cgmk2',
     'Oostertagi_pbj.mkv2.hmm'               => 'sn_oo1mk2',
+    'Pwestermani_1.0.cg.mk2.hmm'            => 'sn_pw1cgmk2',
+    'Pwestermani_1.0.mk2.hmm'               => 'sn_pw1mk2',
 );
 
 
