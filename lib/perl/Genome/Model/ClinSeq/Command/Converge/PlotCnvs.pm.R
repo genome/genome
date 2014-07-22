@@ -33,14 +33,16 @@ plotEm <- function(files, sample_name){
 
 
 addLegend <- function(){
-  plot(100,100,xlim=c(0,100),ylim=c(0,100),xaxt="n",yaxt="n",bty="n")
+  plot(0, 0, xlim=c(0,100), ylim=c(0,100),xaxt="n",yaxt="n", bty="n",
+      bg = "white", type = "n")
   rect(seq(40,60,0.2),50,seq(40.2,60.2,0.2),70,col=getColor(seq(0,4,0.04)),
-      border=0, xaxt="n")
+      border = 0, xaxt="n")
   text(40,50,"0",pos=1)
   text(45,50,"1",pos=1)
   text(50,50,"2",pos=1)
   text(55,50,"3",pos=1)
   text(60,50,"4+",pos=1)
+  text(50,100,sample_name, pos=1, cex = 2)
 }
 
 
@@ -152,8 +154,7 @@ getColor <- function(val){
   len = length(val)
   ## add in the extremes so that our palette is centered properly
   val = c(val,0,4)
-  ##colFunc <- colorRampPalette(c('blue','blue','#8383FF','#BBBBFF','white','white','white','#FFBBBB','#FF8383','red','red'),bias=1)
-  colFunc <- colorRampPalette(c('blue','#8383FF','white','#FF8383','red'),
+  colFunc <- colorRampPalette(c("#d7191c", "#fdae61", "#ffffbf", "#abd9e9", "#2c7bb6"),
       bias=1)
   return(colFunc(100)[as.numeric(cut(val,breaks=100))[1:len]])
 }
@@ -469,5 +470,4 @@ plotEm(files, sample_name)
 addLegend()
 
 #adds title, labels to X and Y axis
-mtext(sample_name, side = 1, outer = TRUE)
 dev.off()
