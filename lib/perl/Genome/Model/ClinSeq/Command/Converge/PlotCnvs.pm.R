@@ -25,7 +25,8 @@ plotEm <- function(files, sample_name){
       id = gsub("microarrays", "Microarray", id)
     }
     plotSegments(filename=infile, 
-                 showNorm=TRUE, multiplePlot=TRUE, drawLabel=chrNames, title=chrNames, sampleName=id)
+                 showNorm=TRUE, multiplePlot=TRUE, drawLabel=chrNames,
+                 title=chrNames, sampleName=id)
     chrNames=FALSE;
   }
 }
@@ -33,7 +34,8 @@ plotEm <- function(files, sample_name){
 
 addLegend <- function(){
   plot(100,100,xlim=c(0,100),ylim=c(0,100),xaxt="n",yaxt="n",bty="n")
-  rect(seq(40,60,0.2),50,seq(40.2,60.2,0.2),70,col=getColor(seq(0,4,0.04)),border=0, xaxt="n")
+  rect(seq(40,60,0.2),50,seq(40.2,60.2,0.2),70,col=getColor(seq(0,4,0.04)),
+      border=0, xaxt="n")
   text(40,50,"0",pos=1)
   text(45,50,"1",pos=1)
   text(50,50,"2",pos=1)
@@ -143,8 +145,7 @@ addOffsets <- function(df){
   return(df)
 }
 
-
-                                        #color gradient
+#color gradient
 getColor <- function(val){ 
   val[val>4] = 4
   val[val<0] = 0
@@ -152,15 +153,13 @@ getColor <- function(val){
   ## add in the extremes so that our palette is centered properly
   val = c(val,0,4)
   ##colFunc <- colorRampPalette(c('blue','blue','#8383FF','#BBBBFF','white','white','white','#FFBBBB','#FF8383','red','red'),bias=1)
-  colFunc <- colorRampPalette(c('blue','#8383FF','white','#FF8383','red'),bias=1)
+  colFunc <- colorRampPalette(c('blue','#8383FF','white','#FF8383','red'),
+      bias=1)
   return(colFunc(100)[as.numeric(cut(val,breaks=100))[1:len]])
 }
 
 
-##---------------------------------------------------------
 ## main function - plot the segments
-##
-
 plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
                          highlights=NULL, lowRes=FALSE, lowResMin=NULL,
                          lowResMax=NULL, showNorm=FALSE, baseline=2,
@@ -168,8 +167,7 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
                          annotationsBottom = NULL, plotTitle="",
                          gainColor="red", lossColor="blue", ylabel="",
                          xmin=NULL, xmax=NULL, label_size=0.6, multiplePlot=FALSE, 
-                         drawLabel=TRUE, percentagePlot=FALSE, title=FALSE, sampleName=""){
-
+                        drawLabel=TRUE, percentagePlot=FALSE, title=FALSE, sampleName=""){
   ## add options for plotting just a smaller region - TODO
   xlim = NULL
   ## read in the segments, handle case of empty file
@@ -180,18 +178,15 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
       segs=read.table(filename,comment.char="#")
     }
   }
-
   ## read in the entrypoints
   entrypoints = addOffsets(createMaleEntrypoints())
   entrypoints = addOffsets(entrypoints)
   names(entrypoints) = c("chr","length","ploidy","offset")
-
   ## if we have regions to highlight, read them in too
   hlRegions = NULL;
   if(!(is.null(highlights))){
     hlRegions=read.table(highlights)
   }
-
   ## if we have annotations, read them in too
   annTopRegions=NULL
   if(!(is.null(annotationsTop))){
@@ -202,20 +197,18 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
     annBtmRegions=read.table(annotationsBottom,comment.char="#")
   }
 
-
   ##validate that we have entrypoints for all of our chromosomes
   chrnames = names(table(segs$V1))
   if(!is.null(chrnames)){
     for(i in 1:length(chrnames)){
-      ##raise an error if entrypoints and chrs don't match
+  ##raise an error if entrypoints and chrs don't match
       if(length(which(entrypoints$chr==chrnames[i])) < 1){
         cat("\nERROR - no entrypoint found for chromosome ",chrnames[i]," found in segs file\n")
-        cat("maybe you meant to use the male entrypoints?\n")
-        q(save="no")
+          cat("maybe you meant to use the male entrypoints?\n")
+          q(save="no")
       }
     }
   }
-
 
   ##---------------------------------------------------------
   ## function to expand the size of features
@@ -229,19 +222,16 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
     return(segs)
   }
 
-  ##---------------------------------------------------------
-  ## add annotations to the top/btm of the plot
-  ## with lines to the peaks
-
-  addAnnos <- function(annos, segs, top=TRUE, offset=FALSE, chr=NULL, leftEdge=50000000){
-    
+##---------------------------------------------------------
+## add annotations to the top/btm of the plot
+## with lines to the peaks
+addAnnos <- function(annos, segs, top=TRUE, offset=FALSE, chr=NULL, leftEdge=50000000){
     if(!(is.null(chr))){
       annos=annos[which(annos[,1] == chr),]
     }
     if(length(annos[,1]) < 1){
       return(0)
     }
-
     
     ypos = ymin*0.8
     if (top){
@@ -273,7 +263,6 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
           ptop = min(segs[peakNum,5])+((ymin-as.numeric(baseline))*0.05)
         }
       }
-      
 
       ##adjust at left edge of plot
       ## todo - make this a percentage of the plot, rather than a
@@ -293,7 +282,7 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
       text(mid2,(ypos+annos[i,5]),annos[i,4],cex=0.5,font=3)
       lines(c(mid,mid2),c(ptop,(ypos+annos[i,5])*.90))
     }
-  }
+}
 
   
   ## if we haven't set a ymax/ymin, set it to be just
@@ -319,8 +308,8 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
     axis(side = 2, las=2, at = c(1,0.75, 0.5,0.25,0,-0.25,-0.5,-0.75,-1),
          cex.axis=label_size, labels=c("100%",  "75%", "50%", "25%", 0, "25%", "50%", "75%", "100%"))
   } else if (multiplePlot == TRUE){
-    plot(0, 0, xlim=xlim, ylim=c(ymin,ymax), pch=".", ylab=ylabel, xlab="",
-           xaxt="n", yaxt="n", cex.lab=1, las=2, cex.axis=label_size*0.8, xaxs="i", yaxs="i")
+      plot(0, 0, xlim=xlim, ylim=c(ymin, ymax), pch=".", ylab=ylabel, xlab="",
+           xaxt = "n", yaxt="n", cex.lab=1, las=2, cex.axis=label_size*0.8, xaxs="i", yaxs="i")
   } else {
     plot(0, 0, xlim=xlim, ylim=c(ymin,ymax), pch=".", ylab=ylabel, xlab="",
          xaxt="n", cex.lab=1, cex.axis=label_size)
@@ -342,7 +331,7 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
   }
 
   ## draw baselines
-  abline(h=baseline,col="grey50")
+  abline(h=baseline, col="grey50")
 
   offsets = as.numeric(entrypoints[,4])
   offsets = append(offsets,sum(entrypoints$length))
@@ -350,7 +339,7 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
   ## draw chromosome labels if needed
   if (drawLabel){
     for(i in 2:(length(offsets)-1)){
-      text((offsets[i]+offsets[i+1])/2, 0.2, labels= gsub("chr","",entrypoints[i,1]), cex=1,col="white")
+      text((offsets[i]+offsets[i+1])/2, 0.5, labels= gsub("chr","",entrypoints[i,1]), cex=1,col="white")
     }    
   }
   
@@ -380,29 +369,28 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
 
 
 
-  ## function to actually draw the segments
-  drawSegs <- function(segs,color="black"){
-
-    chrNames = names(table(segs[,1]))
-    for(i in 1:length(chrNames)){
-      ## offset is equal to whatever chromosome we're on
-      offset = as.numeric(entrypoints[which(entrypoints$chr==chrNames[i]),4])
-      toAdj = which(segs[,1] == chrNames[i])
-      if(length(toAdj) > 0){
-        segs[toAdj,2] = segs[toAdj,2] + offset
-        segs[toAdj,3] = segs[toAdj,3] + offset
-      }
+## function to actually draw the segments
+drawSegs <- function(segs,color="black"){
+  chrNames = names(table(segs[,1]))
+  for(i in 1:length(chrNames)){
+  ## offset is equal to whatever chromosome we're on
+    offset = as.numeric(entrypoints[which(entrypoints$chr==chrNames[i]),4])
+    toAdj = which(segs[,1] == chrNames[i])
+    if(length(toAdj) > 0){
+      segs[toAdj,2] = segs[toAdj,2] + offset
+      segs[toAdj,3] = segs[toAdj,3] + offset
     }
-
-    ## do the lowres expansion if specified
-    if(lowRes){
-      lrpos = which((segs[,3]-segs[,2]) > lowResMin)
-      segs[lrpos,] = makeVisible(segs[lrpos,],lowResMax)
-    }
-
-    ## draw the segments
-    rect(segs[,2], 0, segs[,3], 1, col=getColor(segs[,5]),lty="blank")
   }
+
+  ## do the lowres expansion if specified
+  if(lowRes){
+    lrpos = which((segs[,3]-segs[,2]) > lowResMin)
+    segs[lrpos,] = makeVisible(segs[lrpos,],lowResMax)
+  }
+
+  ## draw the segments
+  rect(segs[,2], 0, segs[,3], 1, col=getColor(segs[,5]),lty="blank")
+}
 
 
   ## finally, do the drawing:
@@ -426,17 +414,17 @@ plotSegments <- function(chr="ALL", filename, ymax=0, ymin=1,
   }
 
   ## draw chromosome labels
-  abline(v=0,col="gray25")
+  abline(v = 0, col="gray25")
   for(i in 1:(length(offsets)-1)){
-    abline(v=offsets[i+1],col="gray25")
+    abline(v = offsets[i+1], col="gray25")
   }
 
   #add sample titles
   if(title==FALSE){
-    rect(0,0,offsets[2],1,col="grey50")
-    text(0,0.5,sampleName,pos=4,col="white",cex=1.2)
+    rect(0, 0, offsets[2], 1,col="grey50")
+    text(0, 0.5, sampleName,pos=4,col="white",cex=1.2)
   } else {
-    text(0,0.5, "Chromosome",pos=4,col="white",cex=1.)
+    text(0, 0.5, "Chromosome",pos=4,col="white",cex=1.)
   }
   
   
@@ -482,5 +470,4 @@ addLegend()
 
 #adds title, labels to X and Y axis
 mtext(sample_name, side = 1, outer = TRUE)
-#mtext("Chromosome", side=3, outer=TRUE)
 dev.off()
