@@ -34,6 +34,8 @@ for my $format (qw/ bam fastq /) {
         lane => 2,
         original_data_path => '/a/'.$format,
         random => 'yep',
+        read_count => 0, # excluded
+        read_length => 0, # excluded
     );
     die 'Failed to create instrument data' if not $instrument_data;
 
