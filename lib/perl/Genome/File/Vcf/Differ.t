@@ -63,10 +63,11 @@ sub test_header {
     };
 
     subtest 'PRINT' => sub {;
-        my $expected =  "Lines unique to Differ.t.d/blessed.vcf are:\n" .
+        my $expected =  sprintf "Lines unique to %s are:\n" .
                         "    ##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n" .
-                        "Lines unique to Differ.t.d/header.vcf are:\n" .
-                        "    ##FORMAT=<ID=GT,Number=1,Type=Integer,Description=\"Genotype\">\n";
+                        "Lines unique to %s are:\n" .
+                        "    ##FORMAT=<ID=GT,Number=1,Type=Integer,Description=\"Genotype\">\n", 
+                        test_file('blessed.vcf'), test_file('header.vcf');
 
         stdout_like(sub { $diff->print },  qr/\Q$expected/, 'Tests the HeaderDiff print method');
     };
@@ -91,14 +92,15 @@ sub test_entry {
         my $differ = new_differ('blessed.vcf', 'columns.vcf');
         my $diff = $differ->diff;
 
-        my $expected = "Entries at position (1, 10001) have differences in columns: FILTER, ALT\n" .
-                    "a: Differ.t.d/blessed.vcf, b: Differ.t.d/columns.vcf\n" .
+        my $expected = sprintf "Entries at position (1, 10001) have differences in columns: FILTER, ALT\n" .
+                    "a: %s, b: %s\n" .
                     "FILTER:\n" .
                     "    a => .\n" .
                     "    b => 5\n" .
                     "ALT:\n" .
                     "    a => .\n" .
-                    "    b => 1\n";
+                    "    b => 1\n", test_file('blessed.vcf'),
+                    test_file('columns.vcf');
 
         stdout_like(sub { $diff->print }, qr/\Q$expected/, 'Tests the EntryDiff 
             print method when chrom and pos are identical');
@@ -108,9 +110,10 @@ sub test_entry {
         my $differ = new_differ('blessed.vcf', 'chrom.vcf');
         my $diff = $differ->diff;
 
-        my $expected = "Entries refer to different chromosomes and positions:\n"
-                  . "         1        10001 Differ.t.d/blessed.vcf\n"
-                  . "         2        10001 Differ.t.d/chrom.vcf\n";
+        my $expected = sprintf "Entries refer to different chromosomes and positions:\n"
+                  . "         1        10001 %s\n"
+                  . "         2        10001 %s\n", test_file('blessed.vcf'),
+                  test_file('chrom.vcf');
 
         stdout_like(sub { $diff->print }, qr/\Q$expected/, 'Tests the EntryDiff
             print method when chrom and/or pos differ');
@@ -120,7 +123,8 @@ sub test_entry {
         my $differ = new_differ('blessed.vcf', 'fewer_lines.vcf');
         my $diff = $differ->diff;
 
-        my $expected = 'Differ.t.d/fewer_lines.vcf has fewer lines than Differ.t.d/blessed.vcf';
+        my $expected = sprintf '%s has fewer lines than %s',
+            test_file('fewer_lines.vcf'), test_file('blessed.vcf');
 
         stdout_like(sub { $diff->print }, qr/\Q$expected/, 'Tests the EntryDiff print
             method when one file has fewer lines');
