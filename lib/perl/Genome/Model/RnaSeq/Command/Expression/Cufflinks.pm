@@ -7,7 +7,9 @@ use version;
 
 use Genome;
 
-my $DEFAULT_LSF_RESOURCE = "-R 'select[model!=Opteron250 && type==LINUX64 && mem>=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4";
+my $DEFAULT_LSF_RESOURCE = $ENV{GENOME_TESTING}
+    ? "-R 'select[model!=Opteron250 && type==LINUX64 && mem>=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4"
+    : "-R 'select[model!=Opteron250 && type==LINUX64] span[hosts=1]' -n 4";
 
 class Genome::Model::RnaSeq::Command::Expression::Cufflinks {
     is => ['Command::V2'],
