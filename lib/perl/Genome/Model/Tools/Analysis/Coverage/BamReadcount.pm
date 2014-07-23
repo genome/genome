@@ -262,7 +262,8 @@ sub execute {
 
     #read in all the variants and hash both the ref and var allele by position
     #also dump the snvs and indels in seperate files for readcounting
-    my $inFh = IO::File->new( $variant_file ) || die "can't open file\n";
+    my $inFh = IO::File->new( $variant_file )
+        or die "can't open file: $variant_file\n";
     open(SNVFILE,">$tempdir/snvpos");
     open(INDELFILE,">$tempdir/indelpos");
     while( my $sline = $inFh->getline )
