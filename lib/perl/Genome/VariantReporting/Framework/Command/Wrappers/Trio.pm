@@ -29,11 +29,11 @@ class Genome::VariantReporting::Framework::Command::Wrappers::Trio {
 
 sub execute {
     my $self = shift;
+    $self->run_summary_stats;
     my @model_pairs = $self->get_model_pairs;
     for my $model_pair (@model_pairs) {
         $self->run_reports($model_pair);
     }
-    $self->run_summary_stats;
     return 1;
 }
 
