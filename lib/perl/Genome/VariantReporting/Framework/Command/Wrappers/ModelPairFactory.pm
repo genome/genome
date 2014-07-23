@@ -41,11 +41,11 @@ sub get_model_pairs {
 
     my %models_for_roi;
     for my $model ($self->models) {
-        unless (defined $model->region_of_interest_set_name) {
+        unless (defined $model->region_of_interest_set) {
             $self->warning_message("Skipping model %s because ROI is not defined", $model->__display_name__);
             next;
         }
-        push @{$models_for_roi{$model->region_of_interest_set_name}}, $model;
+        push @{$models_for_roi{$model->region_of_interest_set->name}}, $model;
     }
 
     my @model_pairs;
