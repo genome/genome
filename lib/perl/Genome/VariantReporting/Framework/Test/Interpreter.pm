@@ -3,6 +3,7 @@ package Genome::VariantReporting::Framework::Test::Interpreter;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Data::Dump qw(pp);
 
 class Genome::VariantReporting::Framework::Test::Interpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
@@ -27,7 +28,7 @@ sub _interpret_entry {
 
     my %return_values;
     for my $variant_allele (@$passed_alt_alleles) {
-        $return_values{$variant_allele}->{info} = $entry->info_for_allele($variant_allele);
+        $return_values{$variant_allele}->{info} = pp($entry->info_for_allele($variant_allele));
     }
 
     return %return_values;
