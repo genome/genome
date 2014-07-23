@@ -18,15 +18,12 @@ Genome::File::Vcf::Differ - A class for diffing vcf files.
 
 =head1 SYNOPSIS
 
+use Genome::File::Vcf::Differ;
+
 my $differ = new Genome::File::Vcf::Differ("A.vcf", "B.vcf.gz")
-
-#   keys = file_names
-#   values = list of lines that differ
-my %header_differences = $differ->header;
-
-
-while (my ($A_entry, $B_entry, @columns) = $differ->next) {
-    # ...
+while (my $diff = $differ->diff) {
+    # $diff is either a header diff or an entry diff
+    $diff->print;
 }
 
 =cut
