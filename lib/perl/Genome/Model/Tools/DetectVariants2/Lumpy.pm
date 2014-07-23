@@ -35,15 +35,6 @@ sub bam_split{
 }
 
 
-sub read_params{
-  
-  my $self = shift;   
-  my $all_params = $self->params;
-#  my @params_list = split('//',$all_params);
-  
-    return $all_params;
-}
-
 sub pe_alignment{
    my $orig_bam = shift;   
    my $pe_bam = Genome::Sys->create_temp_file_path(
@@ -148,7 +139,7 @@ sub _open_params {
 
     my $self = shift;
 
-    my $all_perm = $self->read_params;
+    my $all_perm = $self->params;
     my @perm = split('//',$all_perm);
 
     my $lump_text = $perm[0];
@@ -175,7 +166,7 @@ sub _detect_variants{
  
     print "\nI'm going to detect the parameters.\n";  
 
-    my $all_perm = $self->read_params;
+    my $all_perm = $self->params;
     
     print "\n\n$all_perm\n\n";
 
