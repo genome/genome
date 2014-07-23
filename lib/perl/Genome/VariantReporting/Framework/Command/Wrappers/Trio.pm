@@ -72,7 +72,7 @@ sub run_reports {
         );
         Genome::VariantReporting::Framework::Command::CreateReport->execute(%params);
     }
-    for my $base (qw(cle_full_report cle_simple_report)) {
+    for my $base (qw(cle_full_report cle_simple_report cle_acmg_simple_report cle_acmg_full_report)) {
         Genome::VariantReporting::PostProcessing::CombineReports->execute(
             reports => [File::Spec->join($model_pair->reports_directory("snvs"), $base),
                 File::Spec->join($model_pair->reports_directory("indels"), $base)],
