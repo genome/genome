@@ -86,11 +86,11 @@ sub run_reports {
 sub run_summary_stats {
     my $self = shift;
     Genome::Model::SomaticValidation::Command::AlignmentStatsSummary->execute(
-        output_tsv_file => File::Spec->join($self->output_dir, "alignment_summary.tsv"),
+        output_tsv_file => File::Spec->join($self->output_directory, "alignment_summary.tsv"),
         models => [$self->models],
     );
     Genome::Model::SomaticValidation::Command::CoverageStatsSummary->execute(
-        output_tsv_file => File::Spec->join($self->output_dir, "coverage_summary.tsv"),
+        output_tsv_file => File::Spec->join($self->output_directory, "coverage_summary.tsv"),
         models => [$self->models],
     );
 }
