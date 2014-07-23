@@ -186,13 +186,13 @@ sub _generate_joinx_command {
     my ($self, $joinx_bin_path, $flags, $inputs, $labeled_inputs_order, $labeled_inputs_hash, $output) = @_;
     my @inputs = @{$inputs};
 
-    @inputs = map {"<(zcat $_)"} @inputs if $self->use_bgzip;
+    @inputs = map {"<(zcat $_)"} @inputs if $self->use_zcat;
 
     my @labeled_inputs;
     for my $file (@$labeled_inputs_order) {
         my $tag = $labeled_inputs_hash->{$file};
         my $labeled_input;
-        if($self->use_bgzip) {
+        if($self->use_zcat) {
             $labeled_input = "-D <(zcat $file)=$tag";
         } else {
             $labeled_input = "-D $file=$tag";

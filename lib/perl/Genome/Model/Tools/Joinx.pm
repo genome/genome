@@ -9,6 +9,7 @@ use Sys::Hostname;
 
 my $DEFAULT_VER = '1.8';
 my $MINIMUM_VER_FOR_RLIB = 1.5;
+my $MINIMUM_VER_FOR_GZIP = '1.8';
 
 class Genome::Model::Tools::Joinx {
     is  => 'Command',
@@ -65,6 +66,18 @@ sub rlib_path {
     else {
         confess "joinx version $ver does not install scripts.";
     }
+}
+
+# Is the current version compatible with gzip natively?
+sub is_gzip_compatible {
+    my $self = shift;
+    return ($self->use_version ge $MINIMUM_VER_FOR_GZIP);
+}
+
+# If we are supposed to use bgzip and this version of joinx can't handle gzip natively, we should use zcat
+sub use_zcat {
+    my $self = shift;
+    return ($self->use_bgzip and not $self->is_gzip_compatible);
 }
 
 1;
