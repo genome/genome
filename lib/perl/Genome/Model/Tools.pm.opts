@@ -20470,6 +20470,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         undef,
         'samtools-pileup-params=s',
         'files',
+        'forced-variations-build-id=s',
+        'files',
         'roi-list=s',
         undef,
         'allow-multiple-processing-profiles!',
