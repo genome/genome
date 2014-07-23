@@ -9,7 +9,9 @@ class Genome::InstrumentData::Reimport{
 };
 
 sub attribute_labels_to_ignore_when_reimporting {
-    (qw/ bam_path genotype_file genotype_file_name ignored import_date import_format user_name /);
+    (qw/ bam_path genotype_file genotype_file_name
+        ignored import_date import_format
+        read_length read_count user_name /);
 }
 
 sub attributes_for_reimport_from_instrument_data {
