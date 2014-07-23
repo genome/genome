@@ -71,8 +71,7 @@ sub names {
 
 sub get_object {
     my ($self, $accessor, $name, $params, $overrides) = validate_pos(@_, 1, 1, 1, 1, 0);
-    my @name_parts = split('\.', $name);
-    my $pkg = $self->get_class($accessor, $name_parts[0]);
+    my $pkg = $self->get_class($accessor, $name);
     return $pkg->create(resolve_params($params, $overrides));
 }
 
@@ -86,13 +85,20 @@ sub resolve_params {
 sub get_class {
     my ($self, $accessor, $name) = validate_pos(@_, 1, 1, 1);
 
-    if (exists $self->_load($accessor)->{$name}) {
-        my $pkg = $self->_load($accessor)->{$name};
+    my $type_name = _truncate_name($name);
+    if (exists $self->_load($accessor)->{$type_name}) {
+        my $pkg = $self->_load($accessor)->{$type_name};
         return $pkg;
     } else {
-        confess sprintf("No $accessor with name ($name) available $accessor are:\n    %s\n",
+        confess sprintf("No $accessor with name ($type_name) available $accessor are:\n    %s\n",
             join("\n    ", $self->names($accessor)));
     }
+}
+
+sub _truncate_name {
+    my $name = shift;
+    my @name_parts = split('\.', $name);
+    return $name_parts[0];
 }
 
 sub _load {
