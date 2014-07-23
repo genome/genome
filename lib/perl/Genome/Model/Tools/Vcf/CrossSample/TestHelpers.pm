@@ -7,8 +7,6 @@ use above 'Genome';
 use Test::More;
 use File::Spec;
 use Genome::Utility::Test 'compare_ok';
-use Genome::File::Vcf::Reader;
-use Genome::File::Vcf::Differ;
 use File::Copy qw(cp);
 use File::Slurp qw(write_file);
 use Memoize;

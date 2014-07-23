@@ -24,6 +24,10 @@ sub column_headers {
     return @COLUMN_HEADERS;
 }
 
+sub all_columns {
+    my $self = shift;
+    return (column_headers(), $self->sample_names);
+}
 
 my %VALID_VCF_TYPE_NON_NUMERIC_NUMBERS = (
     'A' => 1, # per alt
@@ -139,7 +143,7 @@ sub index_for_sample_name {
 
 sub _header_line {
     my $self = shift;
-    return "#" . join("\t", column_headers(), $self->sample_names);
+    return "#" . join("\t", $self->all_columns);
 }
 
 sub _metainfo_lines {

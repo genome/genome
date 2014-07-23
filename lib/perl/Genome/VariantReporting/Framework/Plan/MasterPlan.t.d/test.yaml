@@ -24,6 +24,25 @@ reporters:
         params:
             ra_p1: something
             ra_p2: something else
+    "reporter_alpha.2":
+        filters:
+            filter_a:
+                fa_p1: something
+                fa_p2: something else
+            filter_b:
+                fb_p1: something
+                fb_p2: something else
+        interpreters:
+            interpreter_x:
+                ix_p1: something
+                ix_p2: something else
+            interpreter_y:
+                iy_p1: something
+                iy_p2: something else
+        params:
+            ra_p1: something
+            ra_p2: something else
+
     reporter_beta:
         interpreters:
             interpreter_x:

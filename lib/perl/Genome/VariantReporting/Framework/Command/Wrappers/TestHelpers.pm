@@ -25,7 +25,7 @@ sub _get_or_create_feature_list {
     my $name = shift;
     my $feature_list = Genome::FeatureList->get(name => $name);
     unless ($feature_list) {
-        my $roi = Genome::FeatureList->__define__(name => $name, id => $fl_counter);
+        $feature_list = Genome::FeatureList->__define__(name => $name, id => $fl_counter);
         $fl_counter--;
     }
     return $feature_list;
@@ -33,16 +33,13 @@ sub _get_or_create_feature_list {
 
 sub get_build {
     my ($roi_name, $tumor_sample, $normal_sample) = @_;
-    _get_or_create_feature_list($roi_name);
+    my $roi = _get_or_create_feature_list($roi_name);
     my $pp = _get_pp;
     my $discovery_model = Genome::Test::Factory::Model::SomaticValidation->setup_object(processing_profile_id => $pp->id);
     $discovery_model->tumor_sample($tumor_sample);
     $discovery_model->normal_sample($normal_sample);
+    $discovery_model->add_region_of_interest_set(id => $roi->id);
     my $discovery_build = Genome::Test::Factory::Build->setup_object(model_id => $discovery_model->id);
-    $discovery_model->region_of_interest_set_name($roi_name);
-    $discovery_build->region_of_interest_set_name($roi_name);
-    #$discovery_build->tumor_sample($tumor_sample);
-    #$discovery_build->normal_sample($normal_sample);
     return $discovery_build;
 }
 

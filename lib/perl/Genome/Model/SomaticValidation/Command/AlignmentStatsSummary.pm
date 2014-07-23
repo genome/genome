@@ -199,7 +199,7 @@ sub _alignment_metrics_from_result {
         $data->{'Average Coverage'} = $haploid_coverage;
     }
     if ($self->targeted_insert_length) {
-        'Targeted Insert Length' => join(",", sort {$a <=> $b} @inserts),
+        $data->{'Targeted Insert Length'} = join(",", sort {$a <=> $b} @inserts),
     }
     return $data;
 }

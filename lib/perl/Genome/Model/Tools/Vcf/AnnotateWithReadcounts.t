@@ -31,7 +31,9 @@ subtest "output gzipped vcf" => sub {
 
     my $expected_out = File::Spec->join($data_dir, "expected.vcf.gz");
     my $differ = Genome::File::Vcf::Differ->new($out, $expected_out);
-    is($differ->diff, undef, "Found No differences between $out and (expected) $expected_out");
+    my $diff = $differ->diff;
+    is($diff, undef, "Found No differences between $out and (expected) $expected_out") ||
+       diag $diff->to_string;
 };
 
 subtest "output indel vcf" => sub {
@@ -40,7 +42,10 @@ subtest "output indel vcf" => sub {
 
     my $expected_out = File::Spec->join($data_dir, "expected_indel.vcf.gz");
     my $differ = Genome::File::Vcf::Differ->new($out, $expected_out);
-    is($differ->diff, undef, "Found No differences between $out and (expected) $expected_out");
+    my $diff = $differ->diff;
+    is($diff, undef, "Found No differences between $out and (expected) $expected_out") ||
+       diag $diff->to_string;
+    
 };
 
 

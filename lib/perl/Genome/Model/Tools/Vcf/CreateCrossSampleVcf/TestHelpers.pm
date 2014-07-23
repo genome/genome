@@ -240,7 +240,9 @@ sub test_cmd {
     my $expected_result = get_expected_result($variant_type, $test_dir);
 
     my $differ = Genome::File::Vcf::Differ->new($result, $expected_result);
-    is($differ->diff, undef, "Found No differences between $result and (expected) $expected_result");
+    my $diff = $differ->diff;
+    is($diff, undef, "Found No differences between $result and (expected) $expected_result") ||
+        diag $diff->to_string;
 }
 
 sub get_expected_result {
