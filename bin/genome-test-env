@@ -20,5 +20,6 @@ export GE_ENV_NAME="genome-test-env"
 
 export GENOME_SYS_SERVICES_FILES_URL="file:///"
 export GENOME_TEST_URL="${GENOME_SYS_SERVICES_FILES_URL}/${GENOME_TEST_INPUTS}"
+export GENOME_TESTING=1
 
 exec genome-env "$@"
