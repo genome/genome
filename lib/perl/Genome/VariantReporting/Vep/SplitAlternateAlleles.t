@@ -34,8 +34,8 @@ $pkg->execute(
 );
 
 my $differ = Genome::File::Vcf::Differ->new($output_file, $expected_output_file);
-my $diff = [$differ->diff];
-is_deeply($diff, [], "Found No differences between $output_file and (expected) $expected_output_file") or
-    diag Data::Dumper::Dumper($diff);
+my $diff = $differ->diff;
+is($diff, undef, "Found No differences between $output_file and (expected) $expected_output_file") ||
+    diag $diff->to_string;
 
 done_testing();

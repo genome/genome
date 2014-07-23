@@ -144,9 +144,9 @@ sub test_dag_execute {
     );
     my $vcf_path = $output->{output_vcf};
     my $differ = Genome::File::Vcf::Differ->new($vcf_path, $expected_vcf);
-    my $diff = [$differ->diff];
-    is_deeply($diff, [], "Found No differences between $vcf_path and (expected) $expected_vcf") or
-        diag Data::Dumper::Dumper($diff);
+    my $diff = $differ->diff;
+    is($diff, undef, "Found No differences between $vcf_path and (expected) $expected_vcf") ||
+        diag $diff->to_string;
 }
 
 sub get_test_dir {
