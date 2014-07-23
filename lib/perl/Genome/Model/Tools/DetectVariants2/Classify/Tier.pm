@@ -28,7 +28,7 @@ sub path {
     my @filenames = glob sprintf('%s/%s', $self->output_dir, $pattern);
 
     unless (1 == scalar(@filenames)) {
-        die $self->error_message(sprintf(
+        croak $self->error_message(sprintf(
                 "Found %s files matching pattern '%s' in (%s); expected 1.",
                 scalar(@filenames), $pattern, $self->output_dir))
     }
