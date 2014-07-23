@@ -20,30 +20,64 @@ use Genome::Utility::Test qw(compare_ok);
 
 use_ok('Genome::Model::Tools::DetectVariants2::Lumpy');
 
-my $refbuild_id = 101947881;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Lumpy';
-my $output_dir = Genome::Sys-> create_temp_directory();
+    my $refbuild_id = 101947881;
 
-my $tumor_bam = $test_dir .'/tumor.bam';
+    my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Lumpy';
+    my $output_dir = Genome::Sys-> create_temp_directory();
 
-#GENOME_SOFTWARE_RESULT_TEST_NAME=mir_thurs8 gmt detect-variants2 lumpy --output-directory ~/lumpy_results --reference-build GRCh37-lite-build37 --aligned-reads-input /gscmnt/gc8001/info/build_merged_alignments/merged-alignment-blade12-2-10.gsc.wustl.edu-idas-12597-dc83cc176c8849d2a1acdd6fa2943605/dc83cc176c8849d2a1acdd6fa2943605.bam --params -mw:4,-tt:0.0//min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:2,min_mapping_threshold:20//back_distance:20,weight:1,id:2,min_mapping_threshold:20
+    my $tumor_bam = $test_dir .'/tumor.bam';
+
 
 my $command = Genome::Model::Tools::DetectVariants2::Lumpy->create(
         reference_build_id => $refbuild_id,
         aligned_reads_input => $tumor_bam,
         params  =>"-mw:4,-tt:0.0//min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:2,min_mapping_threshold:20//back_distance:20,weight:1,id:2,min_mapping_threshold:20",
         output_directory => $output_dir,
-);
-
+    );
 ok($command, 'Created `gmt detect-variants2 Lumpy` command');
-$command->dump_status_messages(1);
-ok($command->execute, 'Executed `gmt detect-variants2 Lumpy` command');
-
-my $output_file = "$output_dir/svs.hq";
-my $expected_file = "$test_dir/svs.hq";
 
 
-compare_ok($output_file,$expected_file);
+subtest "Execute"=>sub {
+    #GENOME_SOFTWARE_RESULT_TEST_NAME=mir_thurs8 gmt detect-variants2 lumpy --output-directory ~/lumpy_results --reference-build GRCh37-lite-build37 --aligned-reads-input /gscmnt/gc8001/info/build_merged_alignments/merged-alignment-blade12-2-10.gsc.wustl.edu-idas-12597-dc83cc176c8849d2a1acdd6fa2943605/dc83cc176c8849d2a1acdd6fa2943605.bam --params -mw:4,-tt:0.0//min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:2,min_mapping_threshold:20//back_distance:20,weight:1,id:2,min_mapping_threshold:20
+
+    $command->dump_status_messages(1);
+    ok($command->execute, 'Executed `gmt detect-variants2 Lumpy` command');
+
+    my $output_file = "$output_dir/svs.hq";
+    my $expected_file = "$test_dir/svs.hq";
+
+    $DB::single=1;
+
+    compare_ok($output_file,$expected_file);
+};
+
+subtest "pe_arrange"=>sub{
+    my $t_pe = "Test PE location";
+    my $t_histo = "histo_loc";
+    my @std_mn = (123,456);
+    my $pe_text =$command->pe_param;
+
+   my $pe_cmd = $command->pe_arrange($t_pe,$t_histo,@std_mn);
+
+    my $mean = $std_mn[0];
+    my $std = $std_mn[1];
+   
+
+
+    is ($pe_cmd, "-pe bam_file:$t_pe,histo_file:$t_histo,mean:$mean,stdev:$std,read_length:150,$pe_text");
+
+};
+
+subtest "sr_arrange"=>sub{
+   my $t_sr = "Test SR location";
+   my $sr_text =$command->sr_param;
+
+  my $sr_cmd = $command->sr_arrange($t_sr);
+ 
+  is($sr_cmd, " -sr bam_file:$t_sr,$sr_text");
+};
 
 done_testing();
+
+

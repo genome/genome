@@ -11,6 +11,7 @@ use strict;
  
 use Genome;
 use File::Basename;
+use IPC::System::Simple;
  
  my @FULL_CHR_LIST = (1..22, 'X', 'Y', 'MT');
  
@@ -52,6 +53,8 @@ sub sr_alignment{
     my $orig_bam = shift;
     my $sr_bam = Genome::Sys->create_temp_file_path(
     );
+#| samtools view -Sb
+
    my $sr_alignment = "samtools view -h $orig_bam | /gscuser/mfulton/lumpy-sv/scripts/extractSplitReads_BwaMem -i stdin | samtools view -Sb - > $sr_bam";
    print "300 - I'm going to run $sr_alignment";
     my $sr_split = Genome::Sys->shellcmd(
@@ -64,26 +67,33 @@ sub sr_alignment{
 sub pe_cmd_arrangement{
 #-pe bam_file:disc-lib1.bam,histo_file:lib1.histo,mean:563.83,stdev:17.839,read_length:100,min_non_overlap:100,discordant_z:4,back_distance:20,weight:1,id:10,min_mapping_threshold:10  
     
-    my $new_bam = shift;
-    my $all_perm = shift;
     my $self = shift;
-
-    my @perm = split('//',$all_perm);
+    my $new_bam = shift;
 
     my $pe_histo = Genome::Sys->create_temp_file_path();  
    
-    print "\n\nThe values in @ perm are: @perm ,\n\n The values in new_bam are: $new_bam, \n\n the histo file is located in: $pe_histo\n\n";
  
     print "I'm going to calculate the mean and stdv.\n";
     my @st_mn = &mean_stdv_reader($new_bam,$pe_histo);
     
     print "\nI just recieved @st_mn\n";
     
+    my $pe_loc = &pe_alignment($new_bam);
+    
+    my $cmd = $self->pe_arrange($pe_loc,$pe_histo,@st_mn); 
+    
+    return $cmd;
+}
 
+sub pe_arrange{
+    my $self = shift;
+    my $pe_loc = shift;
+    my $pe_histo = shift;   
+    my @st_mn = @_;
+ 
     my $mean = $st_mn[0];
     my $std = $st_mn[1];    
-    my $pe_loc = &pe_alignment($new_bam);
-    my $pe_text = $perm[1];
+    my $pe_text = $self->pe_param;
     my $pe_cmd = "-pe bam_file:$pe_loc,histo_file:$pe_histo,mean:$mean,stdev:$std,read_length:150,$pe_text";   
     
     print "I'm about to return pe_cmd whic contains $pe_cmd \n";
@@ -95,27 +105,31 @@ sub pe_cmd_arrangement{
 sub sr_cmd_arrangement{
 #This command should return a string that looks something like this:
 #-sr bam_file:split-lib2.bam,back_distance:20,min_mapping_threshold:10,weight:1,id:40,min_clip:20
-    
+    my $self = shift;  
     my $new_bam = shift;
-    my $all_perm = shift;
-    my $self = shift;
     my $sr_loc = &sr_alignment($new_bam);
-    my @perm = split('//',$all_perm);
-
-    my $sr_text = $perm[2];
-
-    my $sr_cmd = " -sr bam_file:$sr_loc,$sr_text";    
-
+    my $sr_cmd =$self->sr_arrange($sr_loc); 
+    
+    return $sr_cmd;
 }
+
+sub sr_arrange{
+    my $self = shift;
+    my $sr_loc = shift;
+    my $sr_text = $self->sr_param;
+    my $sr_cmd = " -sr bam_file:$sr_loc,$sr_text"; 
+    
+    return $sr_cmd;
+}
+
 sub mean_stdv_reader{
   my $new_bam = shift;  
   my $pe_histo = shift;
   my $export_loc = "/gscuser/mfulton/Practice/mean_stdv.txt";
-  my @mn_stdv = qq(samtools view $new_bam | tail -n+100000 | /gscuser/mfulton/lumpy-sv/scripts/pairend_distro.py -r1 100 -X 4 -N 10000 -o $pe_histo);
+  my @mn_stdv = qq(samtools view $new_bam | tail -n+100 | /gscuser/mfulton/lumpy-sv/scripts/pairend_distro.py -r1 100 -X 4 -N 10000 -o $pe_histo);
   
   print "400 - the mean and stdv command reads: @mn_stdv \n";
   
-  require IPC::System::Simple;
   my $ms_output = IPC::System::Simple::capture(@mn_stdv);
   
   print "\n\n\n500 - $ms_output";
@@ -134,15 +148,33 @@ sub mean_stdv_reader{
  }
 }
 
+sub sr_param{
+    my $self = shift;
+    my $params = $self->params;
+    my @perm = split('//',$params);
+    return $perm[2];
+}
+
+sub pe_param{
+    my $self = shift;
+    my $params = $self->params;
+    my @perm = split('//',$params);
+    return $perm[1];
+}
+
+sub lumpy_param{
+    my $self = shift;
+    my $params = $self->params;
+    my @perm = split('//',$params);
+    return $perm[0];
+}
 
 sub _open_params {
 
     my $self = shift;
 
-    my $all_perm = $self->params;
-    my @perm = split('//',$all_perm);
+    my $lump_text =$self->lumpy_param;
 
-    my $lump_text = $perm[0];
     print "$lump_text";
     my @perm = split(',',$lump_text);
     $lump_text = join(' ',@perm);
@@ -192,11 +224,11 @@ sub _detect_variants{
     foreach my $cur_bam (@new_bam){
         print "\nI'm going to detect the paired end commands for each file.\n";
 
-        my $pe_cmd = &pe_cmd_arrangement($cur_bam,$all_perm);
+        my $pe_cmd = $self->pe_cmd_arrangement($cur_bam);
 
         print "\nI'm going to detect the split read commands for each file.\n";
 
-        my $sr_cmd = &sr_cmd_arrangement($cur_bam,$all_perm);
+        my $sr_cmd = $self->sr_cmd_arrangement($cur_bam);
 
         print "\n\n@pe_cmds\n\n"; 
         print "\n\n@pe_cmds\n\n"; 
@@ -217,13 +249,6 @@ sub _detect_variants{
     splice @cmd, 1, 0, "@pe_cmds", "@sr_cmds";  
 
     my $cmmd = "@cmd";
-
-    print Data::Dumper::Dumper(\@cmd);   
- 
-
-    foreach my $cms (@cmd){
-    print "$cms";
-    }
 
     my $run = Genome::Sys->shellcmd(
         cmd => $cmmd,
