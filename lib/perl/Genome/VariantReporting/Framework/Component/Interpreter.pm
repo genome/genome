@@ -12,15 +12,18 @@ class Genome::VariantReporting::Framework::Component::Interpreter {
 };
 
 sub name {
-    my $self = shift;
-    my $class = $self->class;
-    confess "Abstract method 'name' must be defined in class '$class'";
+    my $class = shift->class;
+    confess "Abstract method 'name' must be defined in subclass '$class'";
 }
 
 sub requires_annotations {
-    my $self = shift;
-    my $class = $self->class;
-    confess "Abstract method 'requires_annotations' must be defined in class '$class'";
+    my $class = shift->class;
+    confess "Abstract method 'requires_annotations' must be defined in subclass '$class'";
+}
+
+sub _interpret_entry {
+    my $class = shift->class;
+    confess "Abstract method '_interpret_entry' must be defined in subclass '$class'";
 }
 
 sub interpret_entry {
