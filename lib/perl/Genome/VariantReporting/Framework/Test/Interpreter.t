@@ -26,6 +26,14 @@ my $entry = create_entry('A', 'C,G');
 ok($entry, 'create entry');
 
 
+subtest 'test good as expected' => sub {
+    my %expected_return_values = (
+        G => {info => '{ A => "B", C => 9 }'},
+        C => {info => '{ A => "B", C => 8 }'},
+    );
+    is_deeply({$interpreter->interpret_entry($entry, ['G', 'C'])}, \%expected_return_values, "return values");
+};
+
 subtest 'test wrong input alleles' => sub {
     for my $allele qw(T BBB GGGGGG --__++) { 
         my $rv = eval {$interpreter->interpret_entry($entry, [$allele])};
@@ -35,23 +43,17 @@ subtest 'test wrong input alleles' => sub {
 
 subtest 'test output alleles not equal to input alleles' => sub {
     my %incomplete_return_values = (
-        G => { info => {A=>'B', C=>9}},
+        G => {info => '{ A => "B", C => 9 }'},
     );
     Sub::Install::reinstall_sub({
         into => 'Genome::VariantReporting::Framework::Test::Interpreter',
-        as => '_interpret_entry',
+        as   => '_interpret_entry',
         code => sub {return %incomplete_return_values;},
     });
     my $rv = eval {$interpreter->interpret_entry($entry, ['C', 'G'])};
     ok(!$rv, 'Failed as expected: '.$@);
 };
 
-subtest 'test good as expected' => sub {
-    my %expected_return_values = (
-        G => { info => {A=>'B', C=>9}},
-    );
-    is_deeply({$interpreter->interpret_entry($entry, ['G'])}, \%expected_return_values, "return values");
-};
 
 done_testing;
 
