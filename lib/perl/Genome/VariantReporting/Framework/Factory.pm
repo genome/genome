@@ -71,8 +71,8 @@ sub names {
 
 sub get_object {
     my ($self, $accessor, $name, $params, $overrides) = validate_pos(@_, 1, 1, 1, 1, 0);
-
-    my $pkg = $self->get_class($accessor, $name);
+    my @name_parts = split('\.', $name);
+    my $pkg = $self->get_class($accessor, $name_parts[0]);
     return $pkg->create(resolve_params($params, $overrides));
 }
 

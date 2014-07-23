@@ -60,6 +60,32 @@ my $expected_hashref = {
                 ra_p2 => 'something else'
             }
         },
+        "reporter_alpha.2" => {
+            filters      => {
+                filter_a => {
+                    fa_p1 => 'something',
+                    fa_p2 => 'something else'
+                },
+                filter_b => {
+                    fb_p1 => 'something',
+                    fb_p2 => 'something else'
+                }
+            },
+            interpreters => {
+                interpreter_x => {
+                    ix_p1 => 'something',
+                    ix_p2 => 'something else'
+                },
+                interpreter_y => {
+                    iy_p1 => 'something',
+                    iy_p2 => 'something else'
+                }
+            },
+            params       => {
+                ra_p1 => 'something',
+                ra_p2 => 'something else'
+            }
+        },
         reporter_beta  => {
             filters => {},
             interpreters => { interpreter_x => {
@@ -87,6 +113,9 @@ is($expert_one_plan->name, 'expert_one', "Got correct plan ('expert_one') from g
 
 my $reporter_alpha_plan = $plan->get_plan('reporter', 'reporter_alpha');
 is($reporter_alpha_plan->name, 'reporter_alpha', "Got correct plan ('reporter_alpha') from get_plan");
+
+my $reporter_alpha2_plan = $plan->get_plan('reporter', 'reporter_alpha.2');
+is($reporter_alpha2_plan->name, 'reporter_alpha.2', "Got correct plan ('reporter_alpha2') from get_plan");
 
 throws_ok sub {$plan->get_plan('bad_category', 'bad_name');}, qr(bad_category), "Dies when given a bad category";
 throws_ok sub {$plan->get_plan('expert', 'bad_name');}, qr(bad_name), "Dies when given a bad name";
