@@ -6,6 +6,7 @@ use Test::Output;
 use File::Spec;
 use Data::Dump qw(pp);
 use Genome::File::Vcf::HeaderDiff;
+use Genome::File::Vcf::EntryDiff;
 
 use strict;
 use warnings;
@@ -20,6 +21,7 @@ use_ok($pkg);
 
 test_same();
 test_header();
+test_entry();
 
 test_more_lines();
 test_fewer_lines();
@@ -60,38 +62,92 @@ sub test_header {
         is_deeply($diff->{_diffs_b}, $expected, "Found _diffs_b was " . pp($expected));
     };
 
-    subtest 'PRINT' => sub {
-        my $indent = '    ';
-        my $expecting =  "Lines unique to Differ.t.d/blessed.vcf are:\n"
-                         . "$indent" . "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
-                         . "Lines unique to Differ.t.d/header.vcf are:\n"
-                         . "$indent" . "##FORMAT=<ID=GT,Number=1,Type=Integer,Description=\"Genotype\">\n";
-        stdout_like(sub { $diff->print },  qr/\Q$expecting/, 'Tests the HeaderDiff print method');
+    subtest 'PRINT' => sub {;
+        my $expected =  "Lines unique to Differ.t.d/blessed.vcf are:\n" .
+                        "    ##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n" .
+                        "Lines unique to Differ.t.d/header.vcf are:\n" .
+                        "    ##FORMAT=<ID=GT,Number=1,Type=Integer,Description=\"Genotype\">\n";
+
+        stdout_like(sub { $diff->print },  qr/\Q$expected/, 'Tests the HeaderDiff print method');
+    };
+}
+
+sub test_entry {
+    subtest 'ENTRY' => sub {
+        my $differ = new_differ('blessed.vcf', 'columns.vcf');
+        my $diff = $differ->diff;
+
+        is(ref $diff, 'Genome::File::Vcf::EntryDiff',
+            'found EntryDiff object when entries diff');
+
+        my $expected = test_file('blessed.vcf');
+        is($diff->{_a}, $expected, "Found _a was ($expected)");
+
+        $expected = test_file('columns.vcf');
+        is($diff->{_b}, $expected, "Found _b was ($expected)");
+    };
+
+    subtest 'EXPLAIN_COLUMN_DIFFS' => sub {
+        my $differ = new_differ('blessed.vcf', 'columns.vcf');
+        my $diff = $differ->diff;
+
+        my $expected = "Entries at position (1, 10001) have differences in columns: FILTER, ALT\n" .
+                    "a: Differ.t.d/blessed.vcf, b: Differ.t.d/columns.vcf\n" .
+                    "FILTER:\n" .
+                    "    a => .\n" .
+                    "    b => 5\n" .
+                    "ALT:\n" .
+                    "    a => .\n" .
+                    "    b => 1\n";
+
+        stdout_like(sub { $diff->print }, qr/\Q$expected/, 'Tests the EntryDiff 
+            print method when chrom and pos are identical');
+    };
+
+    subtest 'EXPLAIN_POSITION_DIFFS' => sub {
+        my $differ = new_differ('blessed.vcf', 'chrom.vcf');
+        my $diff = $differ->diff;
+
+        my $expected = "Entries refer to different chromosomes and positions:\n"
+                  . "         1        10001 Differ.t.d/blessed.vcf\n"
+                  . "         2        10001 Differ.t.d/chrom.vcf\n";
+
+        stdout_like(sub { $diff->print }, qr/\Q$expected/, 'Tests the EntryDiff
+            print method when chrom and/or pos differ');
+    };
+
+    subtest 'EXPLAIN_ENTRY_NOT_DEFINED' => sub {
+        my $differ = new_differ('blessed.vcf', 'fewer_lines.vcf');
+        my $diff = $differ->diff;
+
+        my $expected = 'Differ.t.d/fewer_lines.vcf has fewer lines than Differ.t.d/blessed.vcf';
+
+        stdout_like(sub { $diff->print }, qr/\Q$expected/, 'Tests the EntryDiff print
+            method when one file has fewer lines');
     };
 }
 
 sub test_more_lines {
     my $differ = new_differ('blessed.vcf', 'more_lines.vcf');
-    my ($blessed_entry, $other_entry, @columns) = $differ->next();
-    is($blessed_entry, undef, 'found undef for BLESSED entry when other file has MORE lines');
+    my $diff = $differ->diff;
+    is($diff->{_entry_a}, undef, 'found undef for BLESSED entry when other file has MORE lines');
 }
 
 sub test_fewer_lines {
     my $differ = new_differ('blessed.vcf', 'fewer_lines.vcf');
-    my ($blessed_entry, $other_entry, @columns) = $differ->next();
-    is($other_entry, undef, 'found undef for OTHER entry when other file has FEWER lines');
+    my $diff = $differ->diff;
+    is($diff->{_entry_b}, undef, 'found undef for OTHER entry when other file has FEWER lines');
 }
 
 sub test_chrom {
     my $differ = new_differ('blessed.vcf', 'chrom.vcf');
-    my ($blessed_entry, $other_entry, @columns) = $differ->next();
+    my $diff = $differ->diff;
     subtest 'CHROM' => sub{
-        is_deeply(\@columns, ['CHROM'], 'Found that only the chromosome differs');
-        is($blessed_entry->{chrom}, 1, 'Found expected value for BLESSED');
-        is($other_entry->{chrom}, 2, 'Found expected value for OTHER');
+        is_deeply($diff->{_columns}, ['CHROM'], 'Found that only the chromosone differs');
+        is($diff->{_entry_a}->{chrom}, 1, 'Found expected value for BLESSED');
+        is($diff->{_entry_b}->{chrom}, 2, 'Found expected value for OTHER');
     };
 }
-
 
 sub new_differ {
     my ($blessed, $other) = @_;

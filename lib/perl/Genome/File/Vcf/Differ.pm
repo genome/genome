@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Genome::File::Vcf::Reader;
+use Genome::File::Vcf::EntryDiff;
 use Genome::File::Vcf::HeaderDiff;
 use Memoize;
 use Carp qw/confess/;
