@@ -23,9 +23,12 @@ class Genome::Model::Tools::DetectVariants2::Classify::Tier {
 };
 
 sub path {
-    my ($self, $pattern) = @_;
+    my ($self, $pattern, $filter) = @_;
 
     my @filenames = glob sprintf('%s/%s', $self->output_dir, $pattern);
+    if ($filter) {
+        @filenames = grep { $filter->($_) } @filenames;
+    }
 
     unless (1 == scalar(@filenames)) {
         croak $self->error_message(sprintf(
