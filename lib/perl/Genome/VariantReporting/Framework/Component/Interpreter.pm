@@ -3,6 +3,7 @@ package Genome::VariantReporting::Framework::Component::Interpreter;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Set::Scalar;
 use Carp qw(confess);
 
 class Genome::VariantReporting::Framework::Component::Interpreter {
@@ -25,21 +26,17 @@ sub requires_annotations {
 sub interpret_entry {
     my ($self, $entry, $alt_alleles) = @_;
 
-    my @allele_list   = sort @{$entry->{alternate_alleles}};
-    my @input_alleles = sort @$alt_alleles;
-    my $input_alleles = join ',', @input_alleles;
+    my $allele_list   = Set::Scalar->new(@{$entry->{alternate_alleles}});
+    my $input_alleles = Set::Scalar->new(@$alt_alleles);
 
-    for my $input_allele (@input_alleles) {
-        unless (grep{$_ eq $input_allele}@allele_list) {
-            confess "The input allele $input_allele is not in vcf alt_alleles column";
-        }
+    unless ($input_alleles->is_subset($allele_list)) {
+        confess "The input alleles: $input_alleles is not subset of vcf alt_allele list: $allele_list";
     }
 
-    my %interpret_entry = $self->process_interpret_entry($entry, $alt_alleles);
-    my @output_alleles = sort keys %interpret_entry; 
-    my $output_alleles = join ',', @output_alleles;
+    my %interpret_entry = $self->_interpret_entry($entry, $alt_alleles);
+    my $output_alleles = Set::Scalar->new(keys %interpret_entry); 
 
-    unless (@input_alleles ~~ @output_alleles) {
+    unless ($output_alleles->is_equal($input_alleles)) {
         confess "The output allele list: $output_alleles is not the same as the input: $input_alleles";
     }
     

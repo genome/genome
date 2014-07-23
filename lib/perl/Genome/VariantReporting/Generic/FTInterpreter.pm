@@ -23,7 +23,7 @@ sub available_fields {
     /;
 }
 
-sub process_interpret_entry {
+sub _interpret_entry {
     my ($self, $entry, $passed_alt_alleles) = @_;
 
     my $ft_string = $entry->sample_field($self->sample_index($entry->{header}), 'FT');

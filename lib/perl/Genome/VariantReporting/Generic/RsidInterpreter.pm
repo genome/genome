@@ -22,7 +22,7 @@ sub available_fields {
     /;
 }
 
-sub process_interpret_entry {
+sub _interpret_entry {
     my $self = shift;
     my $entry = shift;
 

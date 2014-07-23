@@ -20,7 +20,7 @@ sub available_fields {
     return qw/info_tags/;
 }
 
-sub process_interpret_entry {
+sub _interpret_entry {
     my $self = shift;
     my $entry = shift;
     my $passed_alt_alleles = shift;
