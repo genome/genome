@@ -31868,6 +31868,8 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'samtools-pileup-params=s',
           'files',
+          'forced-variations-build-id=s',
+          'files',
           'roi-list=s',
           undef,
           'allow-multiple-processing-profiles!',
@@ -38098,6 +38100,28 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       'resource-file=s',
       undef,
+      'help!',
+      undef
+    ],
+    '>wrappers',
+    [
+      '>trio',
+      [
+        'models=s@',
+        undef,
+        'snvs-plan-file=s',
+        'files',
+        'indels-plan-file=s',
+        'files',
+        'output-directory=s',
+        undef,
+        'tumor-sample=s',
+        undef,
+        'additional-sample=s',
+        undef,
+        'help!',
+        undef
+      ],
       'help!',
       undef
     ],
