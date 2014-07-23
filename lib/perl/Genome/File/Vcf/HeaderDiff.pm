@@ -46,16 +46,23 @@ sub new {
 
 sub print {
     my $self = shift;
-    _print($self->{_a}, @{$self->{_diffs_a}});   
-    _print($self->{_b}, @{$self->{_diffs_b}});   
+
+    print $self->to_string . "\n";
 }
 
+sub to_string {
+    my $self = shift;
 
-sub _print {
+    return _to_string($self->{_a}, @{$self->{_diffs_a}}) .
+           _to_string($self->{_b}, @{$self->{_diffs_b}});
+}
+
+sub _to_string {
     my $file_name = shift;
     my @lines = @_;
 
     my $indent = '    ';
     printf "Lines unique to %s are:\n%s%s\n", $file_name, $indent, join("\n$indent", @lines);
 }
+
 1;
