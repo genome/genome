@@ -44,7 +44,7 @@ Memoize::memoize('plan');
 sub execute {
     my $self = shift;
 
-    $self->debug_message("Reading from: ".$self->input_vcf."\n");
+    $self->status_message("Reading from: ".$self->input_vcf."\n");
     my $vcf_reader = Genome::File::Vcf::Reader->new($self->input_vcf);
     while (my $entry = $vcf_reader->next) {
         for my $processor ($self->entry_processors) {
