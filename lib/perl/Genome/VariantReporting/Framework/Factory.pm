@@ -86,14 +86,16 @@ sub get_class {
     my ($self, $accessor, $name) = validate_pos(@_, 1, 1, 1);
 
     my $type_name = _truncate_name($name);
-    if (exists $self->_load($accessor)->{$type_name}) {
-        my $pkg = $self->_load($accessor)->{$type_name};
+
+    my $pkg = $self->_load($accessor)->{$type_name};
+    if (defined($pkg)) {
         return $pkg;
     } else {
         confess sprintf("No $accessor with name ($type_name) available $accessor are:\n    %s\n",
             join("\n    ", $self->names($accessor)));
     }
 }
+Memoize::memoize('get_class');
 
 sub _truncate_name {
     my $name = shift;
