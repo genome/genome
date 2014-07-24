@@ -38109,10 +38109,6 @@ $Genome::Command::OPTS_SPEC = [
       [
         'models=s@',
         undef,
-        'snvs-plan-file=s',
-        'files',
-        'indels-plan-file=s',
-        'files',
         'output-directory=s',
         undef,
         'tumor-sample=s',
