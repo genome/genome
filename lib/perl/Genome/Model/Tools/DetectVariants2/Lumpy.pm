@@ -54,8 +54,10 @@ sub sr_alignment{
     my $sr_bam = Genome::Sys->create_temp_file_path(
     );
 #| samtools view -Sb
+   
 
-   my $sr_alignment = "samtools view -h $orig_bam | /gscuser/mfulton/lumpy-sv/scripts/extractSplitReads_BwaMem -i stdin | samtools view -Sb - > $sr_bam";
+   my $sr_alignment = "samtools view -h $orig_bam | /gscuser/mfulton/lumpy-sv/scripts/extractSplitReads_BwaMem -i stdin | java -Xmx8g -XX:MaxPermSize=256m -cp /gsc/scripts/lib/java/samtools/picard-tools-1.82/SamFormatConverter.jar net.sf.picard.sam.SamFormatConverter I=/dev/stdin O=$sr_bam";
+   
    print "300 - I'm going to run $sr_alignment";
     my $sr_split = Genome::Sys->shellcmd(
        cmd => $sr_alignment,
