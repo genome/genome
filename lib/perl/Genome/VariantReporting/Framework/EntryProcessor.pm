@@ -25,6 +25,8 @@ sub process_entry {
     my $entry = shift;
 
     my $interpretations = $self->interpretations($entry);
+    return unless keys %$interpretations;
+
     $self->reporter->report($interpretations);
 }
 
@@ -34,6 +36,8 @@ sub interpretations {
 
     my %interpretations;
     my $passed_alleles = $self->passed_alleles($entry);
+    return {} unless scalar(@$passed_alleles);
+
     for my $interpreter ($self->interpreters) {
         $interpretations{$interpreter->name} = {$interpreter->interpret_entry($entry, $passed_alleles)};
     }
