@@ -49,7 +49,7 @@ sub requires_interpreters_classes {
     my $self = shift;
     my @interpreters;
     for my $interpreter_name ($self->requires_interpreters) {
-        push @interpreters, Genome::VariantReporting::Framework::Factory->_load('interpreters')->{$interpreter_name};
+        push @interpreters, Genome::VariantReporting::Framework::Factory->get_class('interpreters', $interpreter_name);
     }
     return @interpreters;
 }
