@@ -3,6 +3,7 @@ package Genome::VariantReporting::Framework::Plan::ExpertPlan;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Genome::VariantReporting::Framework::Plan::Base;
 
 class Genome::VariantReporting::Framework::Plan::ExpertPlan {
     is => 'Genome::VariantReporting::Framework::Plan::Base',
@@ -20,7 +21,7 @@ sub resources_required {
 
 sub object {
     my $self = shift;
-    return $self->factory->get_object($self->category,
+    return $Genome::VariantReporting::Framework::Plan::Base::FACTORY->get_object($self->category,
         $self->name, {});
 }
 

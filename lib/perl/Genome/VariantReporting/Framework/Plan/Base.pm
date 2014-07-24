@@ -17,6 +17,8 @@ class Genome::VariantReporting::Framework::Plan::Base {
     ],
 };
 
+our $FACTORY = Genome::VariantReporting::Framework::Factory->create();
+
 sub category {
     die "Abstract (eg 'expert', 'filter', 'interpreter', or 'reporter')";
 }
@@ -74,22 +76,16 @@ sub validate_object {
 
 sub get_class {
     my $self = shift;
-    return $self->factory->get_class($self->category, $self->name);
+    return $FACTORY->get_class($self->category, $self->name);
 }
 
 sub object {
     my $self = shift;
     my %overrides = @_;
-    return $self->factory->get_object($self->category,
+    return $FACTORY->get_object($self->category,
             $self->name, $self->params, \%overrides);
 }
 Memoize::memoize("object");
-
-sub factory {
-    my $self = shift;
-    return Genome::VariantReporting::Framework::Factory->create();
-}
-Memoize::memoize("factory");
 
 sub __errors__ {
     my $self = shift;
