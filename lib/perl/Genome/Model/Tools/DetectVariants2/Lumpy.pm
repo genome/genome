@@ -74,15 +74,11 @@ sub pe_cmd_arrangement{
 
     my $pe_histo = Genome::Sys->create_temp_file_path();  
    
- 
-    print "I'm going to calculate the mean and stdv.\n";
-   my @st_mn = &mean_stdv_reader($new_bam,$pe_histo);
-    
-    print "\nI just recieved @st_mn\n";
+    print "\nI just recieved the mean and standard deviation.\n";
     
     my $pe_loc = &pe_alignment($new_bam);
     
-    my $cmd = $self->pe_arrange($pe_loc,$pe_histo,@st_mn); 
+    my $cmd = $self->pe_arrange($pe_loc,$pe_histo); 
     
     return $cmd;
 }
@@ -91,10 +87,10 @@ sub pe_arrange{
     my $self = shift;
     my $pe_loc = shift;
     my $pe_histo = shift;   
-    my @st_mn = @_;
- 
-    my $mean = $st_mn[0];
-    my $std = $st_mn[1];    
+     
+    my %st_mn = &mean_stdv_reader($new_bam,$pe_histo);
+    my $mean = $st_mn{mean};
+    my $std = $st_mn{stdv};    
     my $pe_text = $self->pe_param;
     my $pe_cmd = "-pe bam_file:$pe_loc,histo_file:$pe_histo,mean:$mean,stdev:$std,read_length:150,$pe_text";   
     
@@ -140,9 +136,13 @@ sub mean_stdv_reader{
     
     if ($ms_output =~ m/mean:([-+]?[0-9]*\.?[0-9]*)\s+stdev:([-+]?[0-9]*\.?[0-9]*)/){
         my $mean = $1;
-        my $stdev = $2;
-        my @stdv_mean = ($mean,$stdev);
-        return @stdv_mean;
+        my $stdv = $2;
+        
+        my %stdv_mean = (
+            mean => $mean,
+            stdv => $stdv,
+        );
+        return %stdv_mean;
     }
     else {
         die"ERROR couldnt find mean and stdev";
