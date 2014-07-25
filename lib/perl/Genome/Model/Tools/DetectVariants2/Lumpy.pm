@@ -103,7 +103,7 @@ sub sr_arrange{
     my $self = shift;
     my $sr_loc = shift;
     my $sr_text = $self->sr_param;
-    my $sr_cmd = " -sr bam_file:$sr_loc,$sr_text"; 
+    my $sr_cmd = " -sr $sr_text,bam_file:$sr_loc"; 
     
     return $sr_cmd;
 }

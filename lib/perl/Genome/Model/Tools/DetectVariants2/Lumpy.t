@@ -50,14 +50,6 @@ subtest "Execute"=>sub {
     compare_ok($output_file,$expected_file);
 };
 
-subtest "sr_arrange"=>sub{
-   my $t_sr = "Test SR location";
-   my $sr_text =$command->sr_param;
-
-  my $sr_cmd = $command->sr_arrange($t_sr);
- 
-  is($sr_cmd, " -sr bam_file:$t_sr,$sr_text");
-};
 
 subtest "test file without split reads"=>sub{
     
@@ -110,6 +102,15 @@ subtest "pe_arrange"=>sub{
     my $pe_cmd = $command->pe_cmd_arrangement($t_pe);
     is ($pe_cmd, "-pe bam_file:$t_pe,histo_file:$t_histo,mean:$mean,stdev:$std,read_length:150,$pe_text");
 
+};
+
+subtest "sr_arrange"=>sub{
+   my $t_sr = "Test SR location";
+   my $sr_text =$command->sr_param;
+
+  my $sr_cmd = $command->sr_arrange($t_sr);
+ 
+  is($sr_cmd, " -sr $sr_text,bam_file:$t_sr");
 };
 
 done_testing();
