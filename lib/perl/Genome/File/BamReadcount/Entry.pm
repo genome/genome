@@ -128,26 +128,19 @@ sub to_string {
     return $self->{_source_string};
 }
 
-my $E_CODEC = {
-    "\t" => "?",
-    ":" => ";",
-};
-my $D_CODEC = {
-    "?" => "\t",
-    ";" => ":",
-};
-
 sub encode {
     my $line = shift;
 
-    $line =~ s/([:\t])/$E_CODEC->{$1}/eg;
+    $line =~ s/([\t])/?/g;
+    $line =~ s/([:])/;/g;
     return $line;
 }
 
 sub decode {
     my $line = shift;
 
-    $line =~ s/([;?])/$D_CODEC->{$1}/eg;
+    $line =~ s/([?])/\t/g;
+    $line =~ s/([;])/:/g;
     return $line;
 }
 
