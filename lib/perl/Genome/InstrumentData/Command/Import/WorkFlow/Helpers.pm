@@ -581,8 +581,10 @@ sub add_operation_to_workflow_by_class {
         return;
     }
 
-    my $operation = $self->_workflow->add_operation(
-        name => $command_class_name->short_name, # FIXME
+    my $name = $command_class_name->command_name_brief;
+    $name =~ s/\-/ /g;
+    my $operation = $wf->add_operation(
+        name => $name,
         operation_type => $operation_type,
     );
 
@@ -596,7 +598,7 @@ sub add_operation_to_workflow_by_name {
     die 'No work flow given to add opertion!' if not $wf;
     die 'No name given to add operation to work flow!' if not $name;
 
-    return $self->add_operation_to_workflow_by_class( $self->work_flow_operation_class_from_name($name) );
+    return $self->add_operation_to_workflow_by_class( $wf, $self->work_flow_operation_class_from_name($name) );
 }
 
 1;
