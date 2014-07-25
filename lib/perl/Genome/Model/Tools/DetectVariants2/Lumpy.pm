@@ -76,7 +76,7 @@ sub pe_cmd_arrangement{
    
  
     print "I'm going to calculate the mean and stdv.\n";
-    my @st_mn = &mean_stdv_reader($new_bam,$pe_histo);
+   my @st_mn = &mean_stdv_reader($new_bam,$pe_histo);
     
     print "\nI just recieved @st_mn\n";
     
@@ -125,30 +125,29 @@ sub sr_arrange{
 }
 
 sub mean_stdv_reader{
-  my $new_bam = shift;  
-  my $pe_histo = shift;
-  my $export_loc = "/gscuser/mfulton/Practice/mean_stdv.txt";
-  my @mn_stdv = qq(samtools view $new_bam | tail -n+100 | /gscuser/mfulton/lumpy-sv/scripts/pairend_distro.py -r1 100 -X 4 -N 10000 -o $pe_histo);
+    my $new_bam = shift;  
+    my $pe_histo = shift;
+    my $export_loc = "/gscuser/mfulton/Practice/mean_stdv.txt";
+    my @mn_stdv = qq(samtools view $new_bam | tail -n+100 | /gscuser/mfulton/lumpy-sv/scripts/pairend_distro.py -r1 100 -X 4 -N 10000 -o $pe_histo);
   
-  print "400 - the mean and stdv command reads: @mn_stdv \n";
+    print "400 - the mean and stdv command reads: @mn_stdv \n";
   
-  my $ms_output = IPC::System::Simple::capture(@mn_stdv);
+    my $ms_output = IPC::System::Simple::capture(@mn_stdv);
   
-  print "\n\n\n500 - $ms_output";
-  
-  foreach ($ms_output){  
-  my @values = split;
-  my $stdv1 = pop(@values);
-  my $mean1 = pop(@values);
-  my @mean2 = split(':',$mean1);  
-  my $mean = pop(@mean2);
-  my @stdv2 = split(':',$stdv1);
-  my $stdv = pop(@stdv2);
-  my @stdv_mean = ($mean,$stdv);
-
-  return @stdv_mean;
+    print "\n\n\n500 - $ms_output";
+    
+    $DB::single=1;
+    
+    if ($ms_output =~ m/mean:([-+]?[0-9]*\.?[0-9]*)\s+stdev:([-+]?[0-9]*\.?[0-9]*)/){
+        my $mean = $1;
+        my $stdev = $2;
+        my @stdv_mean = ($mean,$stdev);
+        return @stdv_mean;
+    }
+    else {
+        die"ERROR couldnt find mean and stdev";
+    }
  }
-}
 
 sub sr_param{
     my $self = shift;
