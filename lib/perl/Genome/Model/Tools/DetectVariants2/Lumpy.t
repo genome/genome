@@ -28,7 +28,6 @@ use_ok('Genome::Model::Tools::DetectVariants2::Lumpy');
 
     my $tumor_bam = $test_dir .'/tumor.bam';
 
-
 my $command = Genome::Model::Tools::DetectVariants2::Lumpy->create(
         reference_build_id => $refbuild_id,
         aligned_reads_input => $tumor_bam,
@@ -47,7 +46,6 @@ subtest "Execute"=>sub {
     my $output_file = "$output_dir/svs.hq";
     my $expected_file = "$test_dir/svs.hq";
 
-    $DB::single=1;
 
     compare_ok($output_file,$expected_file);
 };
@@ -76,6 +74,32 @@ subtest "sr_arrange"=>sub{
   my $sr_cmd = $command->sr_arrange($t_sr);
  
   is($sr_cmd, " -sr bam_file:$t_sr,$sr_text");
+};
+
+subtest "test file without split reads"=>sub{
+    
+    my $wo_sr_bam = $test_dir .'/medlarge2.bam';
+    
+    my $output_dir2 = Genome::Sys-> create_temp_directory();
+
+my $command2 = Genome::Model::Tools::DetectVariants2::Lumpy->create(
+        reference_build_id => $refbuild_id,
+        aligned_reads_input => $wo_sr_bam,
+        params  =>"-mw:4,-tt:0.0//min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:2,min_mapping_threshold:20//back_distance:20,weight:1,id:2,min_mapping_threshold:20",
+        output_directory => $output_dir2,
+    );
+
+    ok($command2, 'Created `gmt detect-variants2 Lumpy` command');
+
+    $command2->dump_status_messages(1);
+    ok($command2->execute, 'Executed `gmt detect-variants2 Lumpy` command');
+
+    my $output_file = "$output_dir2/svs.hq";
+    my $expected_file = "$test_dir/wo_sr_svs.hq";
+
+    $DB::single=1;
+
+    compare_ok($output_file,$expected_file);
 };
 
 done_testing();
