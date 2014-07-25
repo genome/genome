@@ -68,29 +68,17 @@ sub sr_alignment{
 
 sub pe_cmd_arrangement{
 #-pe bam_file:disc-lib1.bam,histo_file:lib1.histo,mean:563.83,stdev:17.839,read_length:100,min_non_overlap:100,discordant_z:4,back_distance:20,weight:1,id:10,min_mapping_threshold:10  
-    
     my $self = shift;
     my $new_bam = shift;
-
-    my $pe_histo = Genome::Sys->create_temp_file_path();  
    
     print "\nI just recieved the mean and standard deviation.\n";
     
     my $pe_loc = &pe_alignment($new_bam);
     
-    my $cmd = $self->pe_arrange($pe_loc,$pe_histo); 
-    
-    return $cmd;
-}
-
-sub pe_arrange{
-    my $self = shift;
-    my $pe_loc = shift;
-    my $pe_histo = shift;   
-     
-    my %st_mn = &mean_stdv_reader($new_bam,$pe_histo);
+    my %st_mn = &mean_stdv_reader($new_bam);
     my $mean = $st_mn{mean};
     my $std = $st_mn{stdv};    
+    my $pe_histo = $st_mn{histo};  
     my $pe_text = $self->pe_param;
     my $pe_cmd = "-pe bam_file:$pe_loc,histo_file:$pe_histo,mean:$mean,stdev:$std,read_length:150,$pe_text";   
     
@@ -122,7 +110,7 @@ sub sr_arrange{
 
 sub mean_stdv_reader{
     my $new_bam = shift;  
-    my $pe_histo = shift;
+    my $pe_histo = Genome::Sys->create_temp_file_path();  
     my $export_loc = "/gscuser/mfulton/Practice/mean_stdv.txt";
     my @mn_stdv = qq(samtools view $new_bam | tail -n+100 | /gscuser/mfulton/lumpy-sv/scripts/pairend_distro.py -r1 100 -X 4 -N 10000 -o $pe_histo);
   
@@ -141,6 +129,7 @@ sub mean_stdv_reader{
         my %stdv_mean = (
             mean => $mean,
             stdv => $stdv,
+            histo=> $pe_histo,
         );
         return %stdv_mean;
     }

@@ -50,23 +50,6 @@ subtest "Execute"=>sub {
     compare_ok($output_file,$expected_file);
 };
 
-subtest "pe_arrange"=>sub{
-    my $t_pe = "Test PE location";
-    my $t_histo = "histo_loc";
-    my @std_mn = (123,456);
-    my $pe_text =$command->pe_param;
-
-   my $pe_cmd = $command->pe_arrange($t_pe,$t_histo,@std_mn);
-
-    my $mean = $std_mn[0];
-    my $std = $std_mn[1];
-   
-
-
-    is ($pe_cmd, "-pe bam_file:$t_pe,histo_file:$t_histo,mean:$mean,stdev:$std,read_length:150,$pe_text");
-
-};
-
 subtest "sr_arrange"=>sub{
    my $t_sr = "Test SR location";
    my $sr_text =$command->sr_param;
@@ -100,6 +83,33 @@ my $command2 = Genome::Model::Tools::DetectVariants2::Lumpy->create(
     $DB::single=1;
 
     compare_ok($output_file,$expected_file);
+};
+
+
+subtest "pe_arrange"=>sub{
+    my $t_pe = "Test_PE_location";
+    my $t_histo = "histo_loc";
+    my $pe_text =$command->pe_param;
+
+    my $mean = 123;
+    my $std = 456;
+   
+   Sub::Install::reinstall_sub({
+    into => 'Genome::Model::Tools::DetectVariants2::Lumpy',
+    as => 'pe_alignment',
+    code => sub {return $t_pe;},
+});
+
+  
+   Sub::Install::reinstall_sub({
+    into => 'Genome::Model::Tools::DetectVariants2::Lumpy',
+    as => 'mean_stdv_reader',
+    code => sub {return (mean=>$mean,stdv=>$std,histo=>$t_histo);},
+});
+
+    my $pe_cmd = $command->pe_cmd_arrangement($t_pe);
+    is ($pe_cmd, "-pe bam_file:$t_pe,histo_file:$t_histo,mean:$mean,stdev:$std,read_length:150,$pe_text");
+
 };
 
 done_testing();
