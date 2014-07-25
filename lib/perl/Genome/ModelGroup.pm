@@ -63,8 +63,8 @@ class Genome::ModelGroup {
 
 sub __display_name__ {
     my $self = shift;
-    my @models = $self->models();
-    return join(' ' ,$self->name, '('. scalar(@models), 'models)');
+    my $set = Genome::Model->define_set('model_groups.id' => $self->id);
+    return join(' ' ,$self->name, '('. $set->count, 'models)');
 }
 
 sub unload {
