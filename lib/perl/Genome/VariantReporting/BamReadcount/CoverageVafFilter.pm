@@ -6,7 +6,6 @@ use warnings;
 use Genome;
 
 use Genome::VariantReporting::BamReadcount::VafCalculator;
-require Memoize;
 
 class Genome::VariantReporting::BamReadcount::CoverageVafFilter {
     is => ['Genome::VariantReporting::Framework::Component::Filter', 'Genome::VariantReporting::BamReadcount::ComponentBase'],
@@ -87,7 +86,6 @@ sub requires_annotations {
 sub coverages {
     return sort { $b <=> $a } keys %{$_[0]->coverages_and_vafs};
 }
-Memoize::memoize('coverages');
 
 sub filter_entry {
     my ($self, $entry) = @_;
