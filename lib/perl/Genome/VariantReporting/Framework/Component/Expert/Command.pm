@@ -124,6 +124,9 @@ sub input_hash {
             $hash{$input_name . '_lookup'} = calculate_lookup($self->$input_name);
         }
     }
+
+    $hash{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
+
     return %hash;
 }
 
