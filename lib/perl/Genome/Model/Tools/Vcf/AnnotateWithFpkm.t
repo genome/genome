@@ -44,5 +44,5 @@ sub run {
     );
     ok($cmd->isa($pkg), "Command created ok");
     ok($cmd->execute, "Command executed ok");
-    like($cmd->status_message, qr/Could not find a gene for intergenic transcript/, "Status message for one intergenic transcript as expected");
+    like($cmd->status_message, qr/INTERGENIC: 1/, "Status message for one intergenic transcript as expected");
 }
