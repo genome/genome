@@ -36,7 +36,7 @@ class Genome::VariantReporting::Vep::RunResult {
         plugins_version => {is => 'String',},
         joinx_version => {is => 'String',},
     ],
-    has_transient => [
+    has_transient_optional => [
         reference_fasta => {is => 'Path'},
     ],
 };
