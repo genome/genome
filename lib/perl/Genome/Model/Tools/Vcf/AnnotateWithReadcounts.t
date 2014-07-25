@@ -22,7 +22,10 @@ subtest "output vcf" => sub {
     my $out = Genome::Sys->create_temp_file_path;
     run($out);
     my $expected_out = File::Spec->join($data_dir, "expected.vcf");
-    compare_ok($expected_out, $out, "Vcf was written correctly");
+    my $differ = Genome::File::Vcf::Differ->new($out, $expected_out);
+    my $diff = $differ->diff;
+    is($diff, undef, "Found No differences between $out and (expected) $expected_out") ||
+       diag $diff->to_string;
 };
 
 subtest "output gzipped vcf" => sub {
@@ -45,7 +48,6 @@ subtest "output indel vcf" => sub {
     my $diff = $differ->diff;
     is($diff, undef, "Found No differences between $out and (expected) $expected_out") ||
        diag $diff->to_string;
-    
 };
 
 
