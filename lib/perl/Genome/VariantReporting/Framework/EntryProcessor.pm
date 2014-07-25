@@ -10,12 +10,10 @@ class Genome::VariantReporting::Framework::EntryProcessor {
             is => 'Genome::VariantReporting::Framework::Component::Reporter',
         },
         filters => {
-            is => 'Genome::VariantReporting::Framework::Component::Filter',
-            is_many => 1,
+            is => 'ARRAY',
         },
         interpreters => {
-            is => 'Genome::VariantReporting::Framework::Component::Interpreter',
-            is_many => 1,
+            is => 'ARRAY',
         },
     ],
 };
@@ -38,7 +36,7 @@ sub interpretations {
     my $passed_alleles = $self->passed_alleles($entry);
     return {} unless scalar(@$passed_alleles);
 
-    for my $interpreter ($self->interpreters) {
+    for my $interpreter (@{$self->interpreters}) {
         $interpretations{$interpreter->name} = {$interpreter->interpret_entry($entry, $passed_alleles)};
     }
 
@@ -50,7 +48,7 @@ sub passed_alleles {
     my $entry = shift;
 
     my $filter_results = initialize_filters($entry);
-    for my $filter ($self->filters) {
+    for my $filter (@{$self->filters}) {
         combine($filter_results, {$filter->filter_entry($entry)});
         last if(all_zeros($filter_results));
     }
