@@ -890,25 +890,31 @@ sub recover_low_coverage_variants {
     my $sample_name = $build->tumor_sample->name;
     if($poor_count > 0){
         #create the xml file for this 4-way review
-        my $dump_cov_xml = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-            bams => join(",",($build->normal_bam,$build->tumor_bam,$normal_bam_var,$tumor_bam_var)),
-            labels => join(",",("validation normal $sample_name","validation tumor $sample_name","original normal $sample_name","original tumor $sample_name")),
-            output_file => "$output_dir/review/poorValCoverage.xml",
-            genome_name => $sample_name,
-            review_bed_file => "$output_dir/review/poorValCoverage.bed",
-            reference_name => $self->igv_reference_name,
-        );
-        unless ($dump_cov_xml->execute) {
-            die $self->error_message("Failed to dump IGV xml for poorly covered sites.");
+        if ($self->igv_reference_name) {
+            my $dump_cov_xml = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
+                bams => join(",",($build->normal_bam,$build->tumor_bam,$normal_bam_var,$tumor_bam_var)),
+                labels => join(",",("validation normal $sample_name","validation tumor $sample_name","original normal $sample_name","original tumor $sample_name")),
+                output_file => "$output_dir/review/poorValCoverage.xml",
+                genome_name => $sample_name,
+                review_bed_file => "$output_dir/review/poorValCoverage.bed",
+                reference_name => $self->igv_reference_name,
+            );
+            unless ($dump_cov_xml->execute) {
+                die $self->error_message("Failed to dump IGV xml for poorly covered sites.");
+            }
         }
 
         $self->debug_message(join("\n",
             "--------------------------------------------------------------------------------",
             "Sites for review with poor coverage in validation but good coverage in original are here:",
             "    $output_dir/review/poorValCoverage.bed",
-            "IGV XML file is here:",
-            "    $output_dir/review/poorValCoverage.xml"
         ));
+        if ($self->igv_reference_name) {
+            $self->debug_message(join("\n",
+                "IGV XML file is here:",
+                "    $output_dir/review/poorValCoverage.xml"
+            ));
+        }
     }
 }
 
@@ -984,26 +990,32 @@ sub gather_new_sites {
     }
 
 
-    #create the xml file for review
-    my $dump_xml = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-        bams => $bam_files,
-        labels => $labels,
-        output_file => "$output_dir/review/newcalls.xml",
-        genome_name => $sample_name,
-        review_bed_file => $tier1_review_bed_file,
-        reference_name => $self->igv_reference_name,
-    );
-    unless ($dump_xml->execute) {
-        die "Failed to dump IGV xml for poorly covered sites.\n";
+    if ($self->igv_reference_name) {
+        #create the xml file for review
+        my $dump_xml = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
+            bams => $bam_files,
+            labels => $labels,
+            output_file => "$output_dir/review/newcalls.xml",
+            genome_name => $sample_name,
+            review_bed_file => $tier1_review_bed_file,
+            reference_name => $self->igv_reference_name,
+        );
+        unless ($dump_xml->execute) {
+            die "Failed to dump IGV xml for poorly covered sites.\n";
+        }
     }
 
     $self->debug_message(join("\n",
         "--------------------------------------------------------------------------------",
         "Sites to review that were not found original genomes, but were found in validation are here:",
         "    $output_dir/review/newcalls.bed.tier1",
-        "IGV XML file is here:",
-        "    $output_dir/review/newcalls.xml",
     ));
+    if ($self->igv_reference_name) {
+        $self->debug_message(join("\n",
+            "IGV XML file is here:",
+            "    $output_dir/review/newcalls.xml",
+        ));
+    }
 
     return 1;
 }

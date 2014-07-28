@@ -23,17 +23,39 @@ class Genome::Model::Tools::DetectVariants2::Classify::Tier {
 };
 
 sub path {
-    my ($self, $pattern) = @_;
+    my ($self, $pattern, $filter) = @_;
 
     my @filenames = glob sprintf('%s/%s', $self->output_dir, $pattern);
+    if ($filter) {
+        @filenames = grep { $filter->($_) } @filenames;
+    }
 
     unless (1 == scalar(@filenames)) {
-        die $self->error_message(sprintf(
+        croak $self->error_message(sprintf(
                 "Found %s files matching pattern '%s' in (%s); expected 1.",
                 scalar(@filenames), $pattern, $self->output_dir))
     }
 
     return pop @filenames;
+}
+
+sub tier_bed_path {
+    my ($self, $tier_version) = @_;
+
+    my $pattern = sprintf('*tier%s*.bed', $tier_version);
+    my $is_lq = $self->prior_result->isa('Genome::Model::Tools::DetectVariants2::Result::Combine::LqUnion');
+    my $is_pdv = $self->prior_result->isa('Genome::Model::Tools::DetectVariants2::Classify::PreviouslyDiscovered');
+
+    my $filter;
+    if ($is_lq) {
+        $filter = sub { $_[0] !~ /\.hq\./ };
+    } elsif ($is_pdv) {
+        $filter = sub { $_[0] =~ /novel/ };
+    } else {
+        $filter = sub { $_[0] !~ /\.lq\./ };
+    }
+
+    return $self->path($pattern, $filter);
 }
 
 sub _validate_inputs {
