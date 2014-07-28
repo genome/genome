@@ -256,7 +256,8 @@ sub get_or_create {
             @objects = $class->_faster_get(@_);
             unless (@objects) {
                 if ($error) {
-                    die $error;
+                    local $@ = $error;
+                    die; # show this propogation
                 } else {
                     $class->error_message("Could not create a $class for params " . Data::Dumper::Dumper(\@_) . " even after trying!");
                     confess $class->error_message();
