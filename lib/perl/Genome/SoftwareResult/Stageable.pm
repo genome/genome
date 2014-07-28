@@ -4,7 +4,6 @@ use warnings;
 use strict;
 
 use Genome;
-use Genome::Utility::File::Mode qw(mode);
 
 use Sys::Hostname;
 use File::Find::Rule qw();

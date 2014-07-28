@@ -11,7 +11,6 @@ use File::Copy;
 use Carp qw(confess);
 
 use Genome::Utility::Instrumentation;
-use Genome::Utility::File::Mode qw(mode);
 
 use warnings;
 use strict;

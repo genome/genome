@@ -10,7 +10,6 @@ use File::Path 'rmtree';
 use File::Find::Rule qw();
 
 use Genome;
-use Genome::Utility::File::Mode qw(mode);
 
 class Genome::InstrumentData::AlignmentResult::Tophat {
     is => 'Genome::SoftwareResult',

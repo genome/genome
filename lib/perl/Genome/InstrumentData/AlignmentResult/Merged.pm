@@ -10,7 +10,6 @@ use File::Path 'rmtree';
 use List::MoreUtils qw{ uniq };
 
 use Genome;
-use Genome::Utility::File::Mode qw(mode);
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
 
 class Genome::InstrumentData::AlignmentResult::Merged {

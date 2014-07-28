@@ -8,7 +8,6 @@ use File::Path 'rmtree';
 
 use Genome;
 use Genome::Utility::Instrumentation qw();
-use Genome::Utility::File::Mode qw(mode);
 
 class Genome::Model::Tools::DetectVariants2::Result::DetectionBase {
     is => ['Genome::Model::Tools::DetectVariants2::Result::Base'],
