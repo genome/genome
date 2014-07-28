@@ -12,10 +12,12 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Sub::Install qw(reinstall_sub);
-use Genome::VariantReporting::Framework::Command::Wrappers::TestHelpers qw(get_build succeed_build);
+use File::Basename qw(basename);
+use Genome::VariantReporting::Framework::Command::Wrappers::TestHelpers qw(get_build succeed_build compare_directories);
 
 my $pkg = "Genome::VariantReporting::Framework::Command::Wrappers::Trio";
 use_ok($pkg);
+my $test_dir = __FILE__.".d";
 
 my $roi_name = "test roi";
 my $tumor_sample1 = Genome::Test::Factory::Sample->setup_object(name => "TEST-patient1-somval_tumor1");
@@ -55,5 +57,9 @@ my $cmd = $pkg->create(
 
 is($cmd->class, $pkg);
 ok($cmd->execute);
+for my $directory (glob("$output_dir/*")) {
+    print STDERR "Comparing directory $directory to expected dir\n";
+    compare_directories(File::Spec->join($test_dir, basename($directory)), $directory);
+}
 done_testing;
 
