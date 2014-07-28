@@ -240,6 +240,7 @@ sub get_with_lock {
 sub get_or_create {
     my $class = shift;
 
+
     my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
 
     my %is_input = %{$params_processed->{inputs}};
@@ -248,19 +249,13 @@ sub get_or_create {
     my @objects = $class->_faster_get(@_);
 
     unless (@objects) {
-        # eval because a subclass "extended" create to throw an exception which broke get_or_create
-        @objects = eval { $class->create(@_) };
-        my $error = $@;
+        @objects = $class->create(@_);
         unless (@objects) {
             # see if the reason we failed was b/c the objects were created while we were locking...
             @objects = $class->_faster_get(@_);
             unless (@objects) {
-                if ($error) {
-                    die $error;
-                } else {
-                    $class->error_message("Could not create a $class for params " . Data::Dumper::Dumper(\@_) . " even after trying!");
-                    confess $class->error_message();
-                }
+                $class->error_message("Could not create a $class for params " . Data::Dumper::Dumper(\@_) . " even after trying!");
+                confess $class->error_message();
             }
         }
     }
