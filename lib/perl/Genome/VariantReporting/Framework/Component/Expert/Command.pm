@@ -72,8 +72,7 @@ sub execute {
     my $result = $self->result_class->get_or_create($self->input_hash);
     $self->debug_message("Got or created result (%s) with output file path (%s)",
         $result->id, $result->output_file_path);
-    use Data::Dump qw(pp);
-    print pp({$result->calculate_query()}) . "\n";
+    $self->debug_message("Calculated query for result:\n".pp({$result->calculate_query()}));
     $self->output_result($result);
     $self->output_vcf($result->output_file_path);
     print "output file path: " . pp($result->output_file_path) . "\n";
@@ -126,7 +125,6 @@ sub input_hash {
     }
 
     $hash{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
-
     return %hash;
 }
 
