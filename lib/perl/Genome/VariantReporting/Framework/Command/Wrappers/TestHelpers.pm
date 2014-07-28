@@ -181,10 +181,10 @@ sub compare_directories {
             my ($a, $b) = @_;
             if (! $b) {
                 printf "Only in %s: %s\n", dirname($a), basename($a);
-                push @a_only, basename($a);
+                push @a_only, $a;
             } elsif (! $a) {
                 printf "Only in %s: %s\n", dirname($b), basename($b);
-                push @b_only, basename($b);
+                push @b_only, $b;
             } else {
                 print "Files $a and $b differ\n";
                 push @diff, $a;
@@ -201,9 +201,9 @@ sub compare_directories {
                 }
             }
         });
-    is(scalar @a_only, 0, "No files only in expected dir");
-    is(scalar @b_only, 0, "No files only in output dir");
-    is(scalar @diff, 0, "No shared files diff");
+    is(scalar  (grep {!($_ =~ /logs_/)} @a_only), 0, "No files only in expected dir");
+    is(scalar (grep {!($_ =~ /logs_/)} @b_only), 0, "No files only in output dir");
+    is(scalar (grep {!($_ =~ /logs_/)} @diff), 0, "No shared files diff");
 }
 sub unzip {
     my $file = shift;
