@@ -275,11 +275,6 @@ sub create {
         return $class->SUPER::create(@_);
     }
 
-    my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
-
-    my %is_input = %{$params_processed->{inputs}};
-    my %is_param = %{$params_processed->{params}};
-
     my @previously_existing = $class->_faster_get(@_);
 
     if (@previously_existing > 0) {
@@ -305,19 +300,7 @@ sub create {
         return;
     }
 
-    # We need to update the indirect mutable accessor logic for non-nullable
-    # hang-offs to delete the entry instead of setting it to null.  Otherwise
-    # we get SOFTWARE_RESULT_PARAM entries with a NULL, and unsavable PARAM_VALUE.
-    # also remove empty strings because that's equivalent to a NULL to the database
-
-    # Do the same for inputs (e.g. alignment results have nullable segment values for instrument data, which are treated as inputs)
-    my @param_remove = grep { not (defined $is_param{$_}) || $is_param{$_} eq "" } keys %is_param;
-    my @input_remove = grep { not (defined $is_input{$_}) || $is_input{$_} eq "" } keys %is_input;
-    my $bx = $class->define_boolexpr($class->_preprocess_params_for_get_or_create(@_));
-    for my $i (@param_remove, @input_remove) {
-        $bx = $bx->remove_filter($i);
-    }
-
+    my $bx = $class->_get_safe_boolexpr(@_);
     my $self = $class->SUPER::create($bx);
     unless ($self) {
         $class->_release_lock_or_die($lock,"Failed to unlock during create after committing SoftwareResult.");
@@ -361,6 +344,36 @@ sub create {
     $self->lookup_hash($self->calculate_lookup_hash());
     return $self;
 }
+
+
+# TODO update the indirect mutable accessor logic for non-nullable
+# hang-offs to delete the entry instead of setting it to null.
+#
+# Otherwise we get SOFTWARE_RESULT_PARAM entries with a NULL, and unsavable
+# PARAM_VALUE.  also remove empty strings because that's equivalent to a
+# NULL to the database
+#
+# This function generates a boolexpr that filters out such params and inputs.
+sub _get_safe_boolexpr {
+    my $class = shift;
+
+    my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
+
+    my %is_input = %{$params_processed->{inputs}};
+    my %is_param = %{$params_processed->{params}};
+
+    my @param_remove = grep { not (defined $is_param{$_}) || $is_param{$_} eq "" } keys %is_param;
+
+    # Do the same for inputs (e.g. alignment results have nullable segment values for instrument data, which are treated as inputs)
+    my @input_remove = grep { not (defined $is_input{$_}) || $is_input{$_} eq "" } keys %is_input;
+
+    my $bx = $class->define_boolexpr($class->_preprocess_params_for_get_or_create(@_));
+    for my $i (@param_remove, @input_remove) {
+        $bx = $bx->remove_filter($i);
+    }
+    return $bx;
+}
+
 
 sub _gather_params_for_get_or_create {
     my $class = shift;
