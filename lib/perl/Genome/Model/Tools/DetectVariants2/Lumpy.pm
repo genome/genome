@@ -80,7 +80,7 @@ sub pe_cmd_arrangement{
     my $std = $st_mn{stdv};    
     my $pe_histo = $st_mn{histo};  
     my $pe_text = $self->pe_param;
-    my $pe_cmd = "-pe bam_file:$pe_loc,histo_file:$pe_histo,mean:$mean,stdev:$std,read_length:150,$pe_text";   
+    my $pe_cmd = " -pe bam_file:$pe_loc,histo_file:$pe_histo,mean:$mean,stdev:$std,read_length:150,$pe_text";   
     
     print "I'm about to return pe_cmd whic contains $pe_cmd \n";
 
@@ -103,7 +103,7 @@ sub sr_arrange{
     my $self = shift;
     my $sr_loc = shift;
     my $sr_text = $self->sr_param;
-    my $sr_cmd = " -sr $sr_text,bam_file:$sr_loc"; 
+    my $sr_cmd = " -sr bam_file:$sr_loc,$sr_text"; 
     
     return $sr_cmd;
 }
@@ -119,8 +119,6 @@ sub mean_stdv_reader{
     my $ms_output = IPC::System::Simple::capture(@mn_stdv);
   
     print "\n\n\n500 - $ms_output";
-    
-    $DB::single=1;
     
     if ($ms_output =~ m/mean:([-+]?[0-9]*\.?[0-9]*)\s+stdev:([-+]?[0-9]*\.?[0-9]*)/){
         my $mean = $1;
@@ -140,23 +138,38 @@ sub mean_stdv_reader{
 
 sub sr_param{
     my $self = shift;
-    my $params = $self->params;
-    my @perm = split('//',$params);
-    return $perm[2];
+    my %params =$self->params_reader();
+    return $params{'sr'};
 }
 
 sub pe_param{
     my $self = shift;
-    my $params = $self->params;
-    my @perm = split('//',$params);
-    return $perm[1];
+    my %params =$self->params_reader();
+    return $params{'pe'};
 }
 
 sub lumpy_param{
     my $self = shift;
+    my %params =$self->params_reader();
+    return $params{'lp'};
+}
+
+sub params_reader{
+    my $self = shift;
     my $params = $self->params;
-    my @perm = split('//',$params);
-    return $perm[0];
+    my @params = split('//',$params);
+    my %parameters;
+    foreach my $place (@params){
+
+
+        if ($place =~ m/^\-([a-z]{2}),(.*)$/){
+            my $prefix = $1;
+            my $params = $2;
+            $parameters{$prefix} = $params;
+        }
+        else {print "\nnone here\n";}
+    }
+    return %parameters;
 }
 
 sub _open_params {
@@ -165,13 +178,11 @@ sub _open_params {
 
     my $lump_text =$self->lumpy_param;
 
-    print "$lump_text";
-    my @perm = split(',',$lump_text);
-    $lump_text = join(' ',@perm);
+    print "I just got the \$lump_text variable and it has $lump_text";
+    $lump_text =~ s/,/ /g;
     
-    my @per = split(':',$lump_text);
-    $lump_text = join(' ',@per);    
-
+    $lump_text =~ s/:/ /g;    
+    
     print "$lump_text";
     my $executable_path = "~/lumpy-sv/bin/lumpy";
     my $output_files = $self->_sv_staging_output;
@@ -185,20 +196,12 @@ sub _open_params {
 
 sub _detect_variants{
     my $self = shift;
- 
     print "\nI'm going to detect the parameters.\n";  
-
     my $all_perm = $self->params;
-    
-    print "\n\n$all_perm\n\n";
-
+   
     my @perm = split('//',$all_perm);
- 
     my @cmd = $self->_open_params();
    
-    foreach my $cms (@cmd){
-    print "\n$cms";
-    }
 
     my $orig_bam = $self->aligned_reads_input;
     

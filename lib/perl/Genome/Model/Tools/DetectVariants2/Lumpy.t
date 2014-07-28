@@ -31,7 +31,7 @@ use_ok('Genome::Model::Tools::DetectVariants2::Lumpy');
 my $command = Genome::Model::Tools::DetectVariants2::Lumpy->create(
         reference_build_id => $refbuild_id,
         aligned_reads_input => $tumor_bam,
-        params  =>"-mw:4,-tt:0.0//min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:2,min_mapping_threshold:20//back_distance:20,weight:1,id:2,min_mapping_threshold:20",
+        params  =>"-lp,-mw:4,-tt:0.0//-pe,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:20//-sr,back_distance:20,weight:1,id:2,min_mapping_threshold:20",
         output_directory => $output_dir,
     );
 ok($command, 'Created `gmt detect-variants2 Lumpy` command');
@@ -44,8 +44,9 @@ subtest "Execute"=>sub {
     ok($command->execute, 'Executed `gmt detect-variants2 Lumpy` command');
 
     my $output_file = "$output_dir/svs.hq";
-    my $expected_file = "$test_dir/svs.hq";
+    my $expected_file = "$test_dir/1_svs.hq";
 
+    $DB::single=1;
 
     compare_ok($output_file,$expected_file);
 };
@@ -60,7 +61,7 @@ subtest "test file without split reads"=>sub{
 my $command2 = Genome::Model::Tools::DetectVariants2::Lumpy->create(
         reference_build_id => $refbuild_id,
         aligned_reads_input => $wo_sr_bam,
-        params  =>"-mw:4,-tt:0.0//min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:2,min_mapping_threshold:20//back_distance:20,weight:1,id:2,min_mapping_threshold:20",
+        params  =>"-lp,-mw:4,-tt:0.0//-pe,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:2//-sr,back_distance:20,weight:1,id:2,min_mapping_threshold:20",
         output_directory => $output_dir2,
     );
 
@@ -70,10 +71,10 @@ my $command2 = Genome::Model::Tools::DetectVariants2::Lumpy->create(
     ok($command2->execute, 'Executed `gmt detect-variants2 Lumpy` command');
 
     my $output_file = "$output_dir2/svs.hq";
-    my $expected_file = "$test_dir/wo_sr_svs.hq";
+    my $expected_file = "$test_dir/wo_sr1_svs.hq";
+
 
     $DB::single=1;
-
     compare_ok($output_file,$expected_file);
 };
 
@@ -100,7 +101,7 @@ subtest "pe_arrange"=>sub{
 });
 
     my $pe_cmd = $command->pe_cmd_arrangement($t_pe);
-    is ($pe_cmd, "-pe bam_file:$t_pe,histo_file:$t_histo,mean:$mean,stdev:$std,read_length:150,$pe_text");
+    is ($pe_cmd, " -pe bam_file:$t_pe,histo_file:$t_histo,mean:$mean,stdev:$std,read_length:150,$pe_text");
 
 };
 
@@ -108,9 +109,10 @@ subtest "sr_arrange"=>sub{
    my $t_sr = "Test SR location";
    my $sr_text =$command->sr_param;
 
-  my $sr_cmd = $command->sr_arrange($t_sr);
- 
-  is($sr_cmd, " -sr $sr_text,bam_file:$t_sr");
+  my $sr_cmd = $command->sr_arrange($t_sr); 
+
+  is($sr_cmd, " -sr bam_file:$t_sr,$sr_text");
+
 };
 
 done_testing();
