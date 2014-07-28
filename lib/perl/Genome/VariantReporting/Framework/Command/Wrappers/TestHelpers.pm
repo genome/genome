@@ -15,10 +15,13 @@ use Genome::Test::Factory::Model::ReferenceSequence;
 use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Sample;
 use Genome::Utility::Test;
+use Test::More;
+use File::DirCompare;
+use File::Basename qw(dirname basename);
 use Sub::Install qw(reinstall_sub);
 use Exporter 'import';
 
-our @EXPORT_OK = qw(get_build succeed_build);
+our @EXPORT_OK = qw(get_build succeed_build compare_directories);
 my $TEST_DIR = __FILE__.".d";
 my $PROVIDER_TEST_DIR = Genome::Utility::Test->data_dir_ok("Genome::VariantReporting::Framework::Component::ResourceProvider", "v3");
 
@@ -170,5 +173,47 @@ sub _get_control_alignment_result {
     Genome::InstrumentData::AlignmentResult::Merged->__define__(id => "-533e0bb1a99f4fbe9e31cf6e19907133", output_dir => $TEST_DIR);
 }
 Memoize::memoize("_get_control_alignment_result");
+
+sub compare_directories {
+    my ($expected_dir, $output_dir) = @_;
+    my (@a_only, @b_only, @diff);
+    my $comparison = File::DirCompare->compare($expected_dir, $output_dir, sub {
+            my ($a, $b) = @_;
+            if (! $b) {
+                printf "Only in %s: %s\n", dirname($a), basename($a);
+                push @a_only, basename($a);
+            } elsif (! $a) {
+                printf "Only in %s: %s\n", dirname($b), basename($b);
+                push @b_only, basename($b);
+            } else {
+                print "Files $a and $b differ\n";
+                push @diff, $a;
+            }
+        }, {cmp => sub {
+                my ($a, $b) = @_;
+                if (Genome::Sys->file_is_gzipped($a) and Genome::Sys->file_is_gzipped($b)) {
+                    my $unzipped_a = unzip($a);
+                    my $unzipped_b = unzip($b);
+                    return File::Compare::compare($unzipped_a, $unzipped_b);
+                }
+                else {
+                    return File::Compare::compare($a, $b);
+                }
+            }
+        });
+    is(scalar @a_only, 0, "No files only in expected dir");
+    is(scalar @b_only, 0, "No files only in output dir");
+    is(scalar @diff, 0, "No shared files diff");
+}
+sub unzip {
+    my $file = shift;
+    my $unzipped = Genome::Sys->create_temp_file_path;
+    Genome::Sys->shellcmd(
+        cmd => "gunzip -c $file > $unzipped",
+        input_files => [$file],
+        output_files => [$unzipped],
+    );
+    return $unzipped;
+}
 1;
 

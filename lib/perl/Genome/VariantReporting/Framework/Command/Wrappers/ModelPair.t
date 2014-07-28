@@ -10,9 +10,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-use File::Basename qw(dirname basename);
-use File::DirCompare;
-use Genome::VariantReporting::Framework::Command::Wrappers::TestHelpers qw(get_build);
+use Genome::VariantReporting::Framework::Command::Wrappers::TestHelpers qw(get_build compare_directories);
 
 my $pkg = "Genome::VariantReporting::Framework::Command::Wrappers::ModelPair";
 
@@ -35,45 +33,7 @@ my $model_pair = $pkg->create(discovery => $discovery_build,
     base_output_dir => $output_dir,
 );
 is($model_pair->class, "Genome::VariantReporting::Framework::Command::Wrappers::ModelPair");
-
-my (@a_only, @b_only, @diff);
-my $comparison = File::DirCompare->compare($expected_dir, $output_dir, sub {
-        my ($a, $b) = @_;
-        if (! $b) {
-            printf "Only in %s: %s\n", dirname($a), basename($a);
-            push @a_only, basename($a);
-        } elsif (! $a) {
-            printf "Only in %s: %s\n", dirname($b), basename($b);
-            push @b_only, basename($b);
-        } else {
-            print "Files $a and $b differ\n";
-            push @diff, $a;
-        }
-}, {cmp => sub {
-    my ($a, $b) = @_;
-    if (Genome::Sys->file_is_gzipped($a) and Genome::Sys->file_is_gzipped($b)) {
-        my $unzipped_a = unzip($a);
-        my $unzipped_b = unzip($b);
-        return File::Compare::compare($unzipped_a, $unzipped_b);
-    }
-    else {
-        return File::Compare::compare($a, $b);
-    }
-}
-});
-is(scalar @a_only, 0, "No files only in expected dir");
-is(scalar @b_only, 0, "No files only in output dir");
-is(scalar @diff, 0, "No shared files diff");
-
+compare_directories($expected_dir, $output_dir);
 done_testing;
 
-sub unzip {
-    my $file = shift;
-    my $unzipped = Genome::Sys->create_temp_file_path;
-    Genome::Sys->shellcmd(
-        cmd => "gunzip -c $file > $unzipped",
-        input_files => [$file],
-        output_files => [$unzipped],
-    );
-    return $unzipped;
-}
+
