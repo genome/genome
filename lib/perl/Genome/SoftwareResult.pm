@@ -240,12 +240,6 @@ sub get_with_lock {
 sub get_or_create {
     my $class = shift;
 
-
-    my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
-
-    my %is_input = %{$params_processed->{inputs}};
-    my %is_param = %{$params_processed->{params}};
-
     my @objects = $class->_faster_get(@_);
 
     unless (@objects) {
