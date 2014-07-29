@@ -1,0 +1,3 @@
+#hack to get this directory in the git repo
+#ignore only this file in the directory
+!.gitignore
