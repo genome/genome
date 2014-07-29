@@ -193,8 +193,8 @@ sub compare_directories {
                return 0; 
             }
         });
-    is(scalar  (grep {!($_ =~ /logs_/)} @a_only), 0, "No files only in expected dir");
-    is(scalar (grep {!($_ =~ /logs_/)} @b_only), 0, "No files only in output dir");
+    is(scalar (grep {!($_ =~ /logs_|ignore/)} @a_only), 0, "No files only in expected dir");
+    is(scalar (grep {!($_ =~ /logs_|ignore/)} @b_only), 0, "No files only in output dir");
 }
 sub unzip {
     my $file = shift;
