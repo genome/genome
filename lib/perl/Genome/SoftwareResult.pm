@@ -330,7 +330,8 @@ sub _get_lock_or_die {
     if (my $lock = $class->_lock($lookup_hash)) {
         return $lock;
     } else {
-        die "Failed to get a lock for class ($class) and lookup_hash ($lookup_hash)";
+        die "Failed to get a lock for class ($class) and " .
+            "lookup_hash ($lookup_hash)";
     }
 }
 
