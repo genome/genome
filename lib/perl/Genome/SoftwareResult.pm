@@ -308,12 +308,7 @@ sub create {
     }
 
     $self->_lock_name($lock);
-
-    my $unlock_callback = sub {
-        $self->_unlock;
-    };
-    $self->create_subscription(method=>'commit', callback=>$unlock_callback);
-    $self->create_subscription(method=>'delete', callback=>$unlock_callback);
+    $self->_set_unlock_callbacks();
 
     if (my $output_dir = $self->output_dir) {
         if (-d $output_dir) {
@@ -372,6 +367,19 @@ sub _get_safe_boolexpr {
         $bx = $bx->remove_filter($i);
     }
     return $bx;
+}
+
+# Ensure that we release the lock we have obtained if the SR object gets
+# committed or deleted.
+sub _set_unlock_callbacks {
+    my $self = shift;
+
+    my $unlock_callback = sub {
+        $self->_unlock;
+    };
+    $self->create_subscription(method=>'commit', callback=>$unlock_callback);
+    $self->create_subscription(method=>'delete', callback=>$unlock_callback);
+    return;
 }
 
 
