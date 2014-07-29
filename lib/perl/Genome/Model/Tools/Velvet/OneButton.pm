@@ -528,7 +528,7 @@ sub _run_velveth_get_opt_expcov_covcutoff {
 
 
     (undef, $genome_length) = $self->_run_velvetg_get_n50_total($median_cov_cutoff, $median_exp_coverage, $hash_size);
-    return if not defined $genome_length;
+    return if not $genome_length;
 
     $self->_best_estimated_genome_length($genome_length); #<- global in orig code .. need to retain changes in memory
 
