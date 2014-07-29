@@ -175,6 +175,9 @@ sub should_wait {
     if ($analysis_project->status eq 'Hold') {
         return sprintf("Analysis Project (%s) is set to status 'Hold', skipping!", $analysis_project->id);
     }
+    if ($analysis_project->status eq 'Pending') {
+        return sprintf("Analysis Project (%s) is still 'Pending', skipping!", $analysis_project->id);
+    }
     return;
 }
 
