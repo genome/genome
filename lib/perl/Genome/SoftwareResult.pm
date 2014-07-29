@@ -310,27 +310,11 @@ sub create {
     $self->_lock_name($lock);
     $self->_set_unlock_callbacks();
 
-    if (my $output_dir = $self->output_dir) {
-        if (-d $output_dir) {
-            my @files = glob("$output_dir/*");
-            if (@files) {
-                $self->delete;
-                die "Found files in output directory $output_dir!:\n\t"
-                    . join("\n\t", @files);
-            }
-            else {
-                $self->debug_message("No files in $output_dir.");
-            }
-        }
-        else {
-            $self->debug_message("Creating output directory $output_dir...");
-            eval {
-                Genome::Sys->create_directory($output_dir)
-            };
-            if ($@) {
-                $self->delete;
-                die $@;
-            }
+    if ($self->output_dir) {
+        if (-d $self->output_dir) {
+            $self->_validate_output_dir_is_empty;
+        } else {
+            $self->_create_output_dir_or_die;
         }
     }
 
@@ -380,6 +364,35 @@ sub _set_unlock_callbacks {
     $self->create_subscription(method=>'commit', callback=>$unlock_callback);
     $self->create_subscription(method=>'delete', callback=>$unlock_callback);
     return;
+}
+
+
+sub _validate_output_dir_is_empty {
+    my $self = shift;
+
+    my $output_dir = $self->output_dir;
+    my @files = glob("$output_dir/*");
+    if (@files) {
+        $self->delete;
+        die "Found files in output directory $output_dir!:\n\t"
+            . join("\n\t", @files);
+    }
+    else {
+        $self->debug_message("No files in $output_dir.");
+    }
+}
+
+sub _create_output_dir_or_die {
+    my $self = shift;
+
+    $self->debug_message("Creating output directory (%s)...", $self->output_dir);
+    eval {
+        Genome::Sys->create_directory($self->output_dir)
+    };
+    if ($@) {
+        $self->delete;
+        die $@;
+    }
 }
 
 
