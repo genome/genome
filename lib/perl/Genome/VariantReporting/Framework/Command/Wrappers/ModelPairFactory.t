@@ -12,7 +12,7 @@ use above "Genome";
 use Test::More;
 use Sub::Install qw(reinstall_sub);
 use Genome::Test::Factory::Sample;
-use Genome::VariantReporting::Framework::Command::Wrappers::TestHelpers qw(get_build);
+use Genome::VariantReporting::Framework::Command::Wrappers::TestHelpers qw(get_build succeed_build);
 
 my $pkg = "Genome::VariantReporting::Framework::Command::Wrappers::ModelPairFactory";
 
@@ -111,8 +111,4 @@ subtest "Two valid model pairs" => sub {
 
 done_testing;
 
-sub succeed_build {
-    my $build = shift;
-    $build->status("Succeeded");
-    $build->date_completed("2013-07-11 20:47:51");
-}
+
