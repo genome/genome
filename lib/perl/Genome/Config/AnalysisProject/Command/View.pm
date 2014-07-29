@@ -116,6 +116,9 @@ sub _write_heading {
     if (lc $self->analysis_project->status eq 'hold') {
         print $handle "\n    ",
             $self->_color('** Analysis Project on HOLD **', 'red'), "\n";
+    } elsif (lc $self->analysis_project->status eq 'pending') {
+        print $handle "\n    ",
+            $self->_color('** Analysis Project is PENDING **', 'red'), "\n";
     }
 
     print $handle "\n";
