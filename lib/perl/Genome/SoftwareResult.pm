@@ -292,14 +292,16 @@ sub create {
 
     if (@previously_existing > 0) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
-        $class->_release_lock_or_die($lock, "Failed to release lock in create before committing SoftwareResult.");
+        $class->_release_lock_or_die($lock,
+            "Failed to unlock in create before constructing SoftwareResult.");
         return;
     }
 
     my $bx = $class->_get_safe_boolexpr(@_);
     my $self = $class->SUPER::create($bx);
     unless ($self) {
-        $class->_release_lock_or_die($lock,"Failed to unlock during create after committing SoftwareResult.");
+        $class->_release_lock_or_die($lock,
+            "Failed to unlock in create after failing to construct SoftwareResult.");
         return;
     }
 
