@@ -11,6 +11,11 @@ sub generate_obj {
     my $self = shift;
     my %params = @_;
     my $config_hash = delete $params{'config_hash'};
+
+    unless(exists $params{status}) {
+        $params{status} = 'In Progress'; #most commonly needed for tests
+    }
+
     my $project = Genome::Config::AnalysisProject->create(%params);
 
     if ($config_hash) {
