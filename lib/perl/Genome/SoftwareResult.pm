@@ -281,11 +281,8 @@ sub create {
         return;
     }
 
-    my $lock;
     my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@_);
-    unless ($lock = $class->_lock($lookup_hash)) {
-        die "Failed to get a lock for " . Dumper(@_);
-    }
+    my $lock = $class->_get_lock_or_die($lookup_hash);
 
     # we might have had to wait on the lock, in which case someone else was probably creating that entity
     # do a "reload" here to force another trip back to the database to see if a software result was created
@@ -323,6 +320,17 @@ sub create {
     return $self;
 }
 
+sub _get_lock_or_die {
+    my $class = shift;
+    my $lookup_hash = shift;
+
+    my $lock;
+    if (my $lock = $class->_lock($lookup_hash)) {
+        return $lock;
+    } else {
+        die "Failed to get a lock for class ($class) and lookup_hash ($lookup_hash)";
+    }
+}
 
 # TODO update the indirect mutable accessor logic for non-nullable
 # hang-offs to delete the entry instead of setting it to null.
