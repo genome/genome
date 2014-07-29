@@ -276,7 +276,6 @@ sub create {
     }
 
     my @previously_existing = $class->_faster_get(@_);
-
     if (@previously_existing > 0) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
         return;
@@ -292,7 +291,7 @@ sub create {
     # do a "reload" here to force another trip back to the database to see if a software result was created
     # while we were waiting on the lock.
     (@previously_existing) = UR::Context->current->reload($class,
-        lookup_hash => $class->calculate_lookup_hash_from_arguments(@_));
+        lookup_hash => $lookup_hash);
 
     if (@previously_existing > 0) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
@@ -320,7 +319,7 @@ sub create {
 
     $self->module_version($self->resolve_module_version) unless defined $self->module_version;
     $self->subclass_name($class);
-    $self->lookup_hash($self->calculate_lookup_hash());
+    $self->lookup_hash($lookup_hash);
     return $self;
 }
 
