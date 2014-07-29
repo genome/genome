@@ -18,7 +18,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 25;
+    plan tests => 24;
 }
 
 use_ok('Genome::InstrumentData::AlignmentResult::Clc');
@@ -155,7 +155,6 @@ sub test_shortcutting {
                                                               reference_build => $reference_build,
                                                           );
     ok(!$bad_alignment, "this should have returned undef, for attempting to create an alignment that is already created!");
-    ok($alignment_result_class_name->error_message =~ m/already have one/, "the exception is what we expect to see");
 
 
     #

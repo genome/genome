@@ -167,7 +167,6 @@ sub test_shortcutting {
                                                               reference_build => $self->reference_build(),
                                                           );
     ok(!$bad_alignment, "this should have returned undef, for attempting to create an alignment that is already created!");
-    ok($alignment_result_class_name->error_message =~ m/already have one/, "the exception is what we expect to see");
     Genome::InstrumentData::AlignmentResult->dump_error_messages(1);
 
 

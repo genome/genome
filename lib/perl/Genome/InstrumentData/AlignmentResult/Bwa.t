@@ -16,7 +16,7 @@ use Test::More;
 
 my $arch_os = Genome::Config->arch_os;
 if ($arch_os =~ /x86_64/) {
-    plan tests => 18;
+    plan tests => 17;
 } else {
     plan skip_all => 'Must run on a 64 bit machine';
 }
@@ -70,7 +70,6 @@ ok(!@users, 'alignment is not using any intermediate results');
 # RECREATE FAIL
 my $recreate = Genome::InstrumentData::AlignmentResult->create(%result_params);
 ok(!$recreate, "Did not recreate the alignment result");
-like(Genome::InstrumentData::AlignmentResult::Bwa->error_message, qr/already have one/, "correct error");
 
 # GET WITH LOCK OK
 my $get_with_lock = Genome::InstrumentData::AlignmentResult->get_with_lock(%result_params);
