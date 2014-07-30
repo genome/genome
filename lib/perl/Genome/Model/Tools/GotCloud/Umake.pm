@@ -127,8 +127,7 @@ sub build_config_hash {
     $config->{"INDEL_PREFIX"}="/gscuser/kmeltzst/gscmnt/reference_files/gotcloud.ref/1kg.pilot_release.merged.indels.sites.hg19";
     #FIXME:don't make me hardcoded
     $config->{"OUT_DIR"}=$self->output_directory;
-    #$config->{"BAM_INDEX"}=$self->generate_bam_index;
-    $config->{"BAM_INDEX"}="/gscmnt/gc3036/info/kmeltzst/testing/AT-449/umake_in/umake.index";
+    $config->{"BAM_INDEX"}=$self->generate_bam_index;
     $config->{"PED_INDEX"}=$self->pedigree_file;
     $config->{"WRITE_TARGET_LOCI"}="TRUE";
     $config->{"UNIFORM_TARGET_BED"}=$self->single_track_roi;
