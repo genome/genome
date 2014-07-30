@@ -163,6 +163,8 @@ sub generate_bam_index{
     return $outfile;
 }
 
+Memoize::memoize('generate_bam_index');
+
 sub generate_config_file{
     my $self = shift;
     my $config = shift;
