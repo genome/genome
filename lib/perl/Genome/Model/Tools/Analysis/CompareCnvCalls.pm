@@ -55,7 +55,8 @@ class Genome::Model::Tools::Analysis::CompareCnvCalls {
 
 sub help_synopsis {
   return <<EOS
-        gmt analysis compare-cnv-calls --outdir=/gscuser/gscuser1/tmp/ --tp-bed=tp.bed --eval-bed=eval.bed
+        gmt analysis compare-cnv-calls --outdir=/gscuser/gscuser1/tmp/
+        --tp-bed=tp.bed --eval-bed=eval.bed
 EOS
 }
 
@@ -118,15 +119,26 @@ sub write_ROC_metrics {
   my $cumul_metrics = shift;
   my $outdir = shift;
   open(my $METRICS_FH, ">", $metrics_f);
-  print $METRICS_FH "sample\tp_c\tn_c\ttp_c\ttn_c\tfp_c\tfn_c\n";
+  print $METRICS_FH "sample\tTotal_P_windows\tTotal_N_windows\tTP_windows\tTN_windows\tFP_windows\tFN_windows\tTPR_Sensitivity".
+    "\tTNR\tFPR\tPPV\n";
   foreach my $sample (keys %$cumul_metrics) {
+    my $TPR = $cumul_metrics->{$sample}{"TP_windows"} /
+      ($cumul_metrics->{$sample}{"TP_windows"} + $cumul_metrics->{$sample}{"FN_windows"});
+    my $TNR = $cumul_metrics->{$sample}{"TN_windows"} /
+      ($cumul_metrics->{$sample}{"TN_windows"} + $cumul_metrics->{$sample}{"FP_windows"});
+    my $FPR = $cumul_metrics->{$sample}{"FP_windows"} /
+      ($cumul_metrics->{$sample}{"FP_windows"} + $cumul_metrics->{$sample}{"TP_windows"});
+    my $PPV = $cumul_metrics->{$sample}{"TP_windows"} /
+      ($cumul_metrics->{$sample}{"TP_windows"} + $cumul_metrics->{$sample}{"FP_windows"});
     print $METRICS_FH $sample . "\t" .
-    $cumul_metrics->{$sample}{"p_c"} . "\t" .
-    $cumul_metrics->{$sample}{"n_c"} . "\t" .
-    $cumul_metrics->{$sample}{"tp_c"} . "\t" .
-    $cumul_metrics->{$sample}{"tn_c"} . "\t" .
-    $cumul_metrics->{$sample}{"fp_c"} . "\t" .
-    $cumul_metrics->{$sample}{"fn_c"} .  "\n";
+    $cumul_metrics->{$sample}{"P_windows"} . "\t" .
+    $cumul_metrics->{$sample}{"N_windows"} . "\t" .
+    $cumul_metrics->{$sample}{"TP_windows"} . "\t" .
+    $cumul_metrics->{$sample}{"TN_windows"} . "\t" .
+    $cumul_metrics->{$sample}{"FP_windows"} . "\t" .
+    $cumul_metrics->{$sample}{"FN_windows"} .  "\t" .
+    $TPR . "\t" . $TNR . "\t" . $FPR . "\t" . $PPV .
+    "\n";
   }
   close($METRICS_FH);
 }
@@ -144,17 +156,17 @@ sub accumulate_ROC_metrics {
   my $fp_windows = $outdir . "/" . $sample . ".fp.windows.bed";
   my $p_c = `wc -l < $p_windows`;
   my $n_c = `wc -l < $n_windows`;
-  my $tp_c = `wc -l < $tp_windows`;
-  my $tn_c = `wc -l < $tn_windows`;
-  my $fp_c = `wc -l < $fp_windows`;
-  my $fn_c = `wc -l < $fn_windows`;
-  chomp ($p_c, $n_c, $tp_c, $tn_c, $fp_c, $fn_c);
-  $cumul_metrics->{$sample}{"p_c"} = $p_c;
-  $cumul_metrics->{$sample}{"n_c"} = $n_c;
-  $cumul_metrics->{$sample}{"tp_c"} = $tp_c;
-  $cumul_metrics->{$sample}{"tn_c"} = $tn_c;
-  $cumul_metrics->{$sample}{"fp_c"} = $fp_c;
-  $cumul_metrics->{$sample}{"fn_c"} = $fn_c;
+  my $TP_windows = `wc -l < $tp_windows`;
+  my $TN_windows = `wc -l < $tn_windows`;
+  my $FP_windows = `wc -l < $fp_windows`;
+  my $FN_windows = `wc -l < $fn_windows`;
+  chomp ($p_c, $n_c, $TP_windows, $TN_windows, $FP_windows, $FN_windows);
+  $cumul_metrics->{$sample}{"P_windows"} = $p_c;
+  $cumul_metrics->{$sample}{"N_windows"} = $n_c;
+  $cumul_metrics->{$sample}{"TP_windows"} = $TP_windows;
+  $cumul_metrics->{$sample}{"TN_windows"} = $TN_windows;
+  $cumul_metrics->{$sample}{"FP_windows"} = $FP_windows;
+  $cumul_metrics->{$sample}{"FN_windows"} = $FN_windows;
 } 
 
 sub calculate_stats {
@@ -169,9 +181,9 @@ sub calculate_stats {
   my $tn_windows = $self->outdir . "/" . $sample . ".tn.windows.bed";
   my $fn_windows = $self->outdir . "/" . $sample . ".fn.windows.bed";
   my $fp_windows = $self->outdir . "/" . $sample . ".fp.windows.bed";
-  $self->joinx_intersect($window_file, $tp_bed_sorted, $p_windows, $n_windows);
-  $self->joinx_intersect($p_windows, $eval_bed_sorted, $tp_windows, $fn_windows);
-  $self->joinx_intersect($n_windows, $eval_bed_sorted, $fp_windows, $tn_windows);
+  $self->joinx_intersect($window_file,$tp_bed_sorted, $p_windows, $n_windows);
+  $self->joinx_intersect($p_windows,$eval_bed_sorted, $tp_windows, $fn_windows);
+  $self->joinx_intersect($n_windows,$eval_bed_sorted, $fp_windows, $tn_windows);
 }
 
 sub create_window_file {

@@ -175,7 +175,9 @@ sub calculate_ROC_metrics {
   my $eval_bed = shift;
   my $common_name = shift;
   my $outdir = $self->outdir;
-  my $c1 = Genome::Model::Tools::Analysis::CompareCnvCalls->create(tp_bed => $tp_bed, eval_bed => $eval_bed, outdir => $outdir, sample => $common_name);
+  my $c1 = Genome::Model::Tools::Analysis::CompareCnvCalls->create(
+    tp_bed => $tp_bed, eval_bed => $eval_bed, outdir => $outdir,
+    sample => $common_name);
   $c1->execute();
 }
 
@@ -185,36 +187,42 @@ sub plot_wgs_exome_microarray_cnvs() {
   my @builds = $self->builds;
   my (%cumulative_metrics1, %cumulative_metrics2, %cumulative_metrics3);
   foreach my $build (@builds) {
-      my $microarray_file;
-      my $wgs_file;
-      my $exome_file;
-      my $common_name = $build->common_name;
-      ($microarray_file, $wgs_file, $exome_file) = $self->copy_files($build, $common_name);
-      if ($microarray_file eq "NA" or $wgs_file eq "NA" or $exome_file eq "NA") {
-        $self->status_message("Skipping $common_name, this sample does not have all three CNV files.");
-        next;
-      }
-      my ($microarray_bed, $wgs_bed, $exome_bed) = $self->format_files(\$microarray_file, \$wgs_file, \$exome_file);
-      if($self->calculate_metrics) {
-        my $name1 = $common_name . ".wgs_exome";
-        my $name2 = $common_name . ".wgs_ma";
-        my $name3 = $common_name . ".exome_ma";
-        $self->calculate_ROC_metrics($wgs_bed, $exome_bed, $name1);
-        $self->calculate_ROC_metrics($wgs_bed, $microarray_bed, $name2);
-        $self->calculate_ROC_metrics($exome_bed, $microarray_bed, $name3);
-        Genome::Model::Tools::Analysis::CompareCnvCalls->accumulate_ROC_metrics($name1, \%cumulative_metrics1, $self->outdir);
-        Genome::Model::Tools::Analysis::CompareCnvCalls->accumulate_ROC_metrics($name2, \%cumulative_metrics2, $self->outdir);
-        Genome::Model::Tools::Analysis::CompareCnvCalls->accumulate_ROC_metrics($name3, \%cumulative_metrics3, $self->outdir);
-        my $metrics_f1 = $self->outdir . "/". $common_name . ".wgs_exome.ROC.metrics.txt";
-        Genome::Model::Tools::Analysis::CompareCnvCalls->write_ROC_metrics($metrics_f1, \%cumulative_metrics1, $self->outdir);
-        my $metrics_f2 = $self->outdir . "/" . $common_name . ".wgs_ma.ROC.metrics.txt";
-        Genome::Model::Tools::Analysis::CompareCnvCalls->write_ROC_metrics($metrics_f2, \%cumulative_metrics2, $self->outdir);
-        my $metrics_f3 = $self->outdir . "/" . $common_name . ".exome_ma.ROC.metrics.txt";
-        Genome::Model::Tools::Analysis::CompareCnvCalls->write_ROC_metrics($metrics_f3, \%cumulative_metrics3, $self->outdir);
-      }
-      $self->create_combined_plot($microarray_file, $wgs_file, $exome_file, $common_name);
+    my $microarray_file;
+    my $wgs_file;
+    my $exome_file;
+    my $common_name = $build->common_name;
+    ($microarray_file, $wgs_file, $exome_file) = $self->copy_files($build, $common_name);
+    if ($microarray_file eq "NA" or $wgs_file eq "NA" or $exome_file eq "NA") {
+      $self->status_message("Skipping $common_name, this sample does not have all three CNV files.");
+      next;
+    }
+    my ($microarray_bed, $wgs_bed, $exome_bed) = $self->format_files(
+      \$microarray_file, \$wgs_file, \$exome_file);
+    if($self->calculate_metrics) {
+      $self->calculate_ROC_metrics($wgs_bed, $exome_bed, $common_name);
+      $self->calculate_ROC_metrics($wgs_bed, $microarray_bed, $common_name);
+      $self->calculate_ROC_metrics($exome_bed, $microarray_bed, $common_name);
+      Genome::Model::Tools::Analysis::CompareCnvCalls->accumulate_ROC_metrics(
+        $common_name, \%cumulative_metrics1, $self->outdir);
+      Genome::Model::Tools::Analysis::CompareCnvCalls->accumulate_ROC_metrics(
+        $common_name, \%cumulative_metrics2, $self->outdir);
+      Genome::Model::Tools::Analysis::CompareCnvCalls->accumulate_ROC_metrics(
+        $common_name, \%cumulative_metrics3, $self->outdir);
+    }
+    $self->create_combined_plot($microarray_file, $wgs_file, $exome_file,
+      $common_name);
   }
-
+  if($self->calculate_metrics) {
+    my $metrics_f1 = $self->outdir . "/" . "wgs_exome.ROC.metrics.txt";
+    Genome::Model::Tools::Analysis::CompareCnvCalls->write_ROC_metrics(
+      $metrics_f1, \%cumulative_metrics1, $self->outdir);
+    my $metrics_f2 = $self->outdir . "/" . "wgs_ma.ROC.metrics.txt";
+    Genome::Model::Tools::Analysis::CompareCnvCalls->write_ROC_metrics(
+      $metrics_f2, \%cumulative_metrics2, $self->outdir);
+    my $metrics_f3 = $self->outdir . "/" . "exome_ma.ROC.metrics.txt";
+    Genome::Model::Tools::Analysis::CompareCnvCalls->write_ROC_metrics(
+      $metrics_f3, \%cumulative_metrics3, $self->outdir);
+  }
 }
 
 sub execute {
