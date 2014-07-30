@@ -129,7 +129,7 @@ sub params_for_result {
         my $accessor = $variant_type . '_result';
         if($build->previously_discovered_variations_build and $build->previously_discovered_variations_build->$accessor) {
             $label = $variant_type . '_identify_previously_discovered_result';
-        } elsif($variant_type eq 'snv' and $build->model->loh_version) {
+        } elsif($variant_type eq 'snv' and !Genome::Model::SomaticValidation::Command::Loh->should_skip_run($build)) {
             $label = 'loh';
         } else {
             $label = $variant_type . '_result';

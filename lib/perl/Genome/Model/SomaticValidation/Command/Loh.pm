@@ -29,7 +29,7 @@ class Genome::Model::SomaticValidation::Command::Loh {
 sub shortcut {
     my $self = shift;
 
-    return 1 if $self->should_skip_run;
+    return 1 if $self->should_skip_run($self->build);
 
     return;
 
@@ -53,7 +53,7 @@ sub execute {
     my $self = shift;
     my $build = $self->build;
 
-    return 1 if $self->should_skip_run;
+    return 1 if $self->should_skip_run($self->build);
 
     my @params = $self->_params_for_result;
     if(@params) {
@@ -68,30 +68,31 @@ sub execute {
 }
 
 sub should_skip_run {
-    my $self = shift;
-    my $build = $self->build;
+    my $class = shift;
+    $class = ref($class) || $class;
+    my $build = shift;
 
     unless ($build){
-        die $self->error_message("no build provided!");
+        die $class->error_message("no build provided!");
     }
 
     unless(defined($build->model->loh_version)){
-        $self->debug_message("No LOH version was found, skipping LOH detection!");
+        $class->debug_message("No LOH version was found, skipping LOH detection!");
         return 1;
     }
 
     unless(defined($build->model->snv_detection_strategy)){
-        $self->debug_message("No SNV Detection Strategy, skipping LOH.");
+        $class->debug_message("No SNV Detection Strategy, skipping LOH.");
         return 1;
     }
 
     unless(defined($build->model->loh_snv_detection_strategy)) {
-        $self->debug_message("No LOH SNV detection strategy, skipping LOH");
+        $class->debug_message("No LOH SNV detection strategy, skipping LOH");
         return 1;
     }
 
     unless($build->normal_sample) {
-        $self->debug_message('No control to compare against, skipping LOH');
+        $class->debug_message('No control to compare against, skipping LOH');
         return 1;
     }
 
