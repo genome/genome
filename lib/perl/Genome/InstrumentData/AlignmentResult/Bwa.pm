@@ -503,25 +503,6 @@ sub _derive_bwa_sampe_parameters {
     my %aligner_params = $self->decomposed_aligner_params;
     my $bwa_sampe_params = (defined $aligner_params{'bwa_sampe_params'} ? $aligner_params{'bwa_sampe_params'} : "");
 
-    # Ignore where we have a -a already specified
-    if ($bwa_sampe_params =~ m/\-a\s*(\d+)/) {
-        $self->debug_message("Aligner params specify a -a parameter ($1) as upper bound on insert size.");
-    } else {
-        # come up with an upper bound on insert size.
-        my $instrument_data = $self->instrument_data;
-        my $sd_above        = $instrument_data->resolve_sd_insert_size || 0;
-        my $median_insert   = $instrument_data->resolve_median_insert_size || 0;
-        my $upper_bound_on_insert_size= ($sd_above * 5) + $median_insert;
-        if($upper_bound_on_insert_size > 0) {
-            $self->debug_message("Calculated a valid insert size as $upper_bound_on_insert_size.  This will be used when BWA's internal algorithm can't determine an insert size");
-        } else {
-            $self->debug_message("Unable to calculate a valid insert size to run BWA with. Using 600 (hax)");
-            $upper_bound_on_insert_size= 600;
-        }
-
-        $bwa_sampe_params .= " -a $upper_bound_on_insert_size";
-    }
-
     # store the calculated sampe params
     $self->_bwa_sam_cmd("bwa sampe " . $bwa_sampe_params);
     return $bwa_sampe_params;
