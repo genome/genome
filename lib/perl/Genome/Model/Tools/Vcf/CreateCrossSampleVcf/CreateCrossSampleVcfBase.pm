@@ -47,6 +47,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase 
         wingspan => {
             is => 'Text',
             default => 0,
+            is_optional => 1,
             doc => 'Set this to add a wingspan to region limiting',
         },
         allow_multiple_processing_profiles => {
