@@ -6,77 +6,32 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject::Command::ShowConfig {
-    is => 'Command::V2',
+    is => 'Genome::Object::Command::List',
     has_input => [
-       analysis_project  => {
-            is                  => 'Genome::Config::AnalysisProject',
-            doc                 => 'the analysis projects to put on hold',
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'The AnalysisProject whose configuration to list',
             shell_args_position => 1,
-        }
+        },
+        subject_class_name => {
+            is_constant => 1,
+            value => 'Genome::Config::Profile::Item',
+        },
+        show => {
+            default_value => 'id,file_path,updated_at,is_concrete,analysis_menu_item.name,status',
+        },
+    ],
+    has_optional_input => [
+        filter => {
+            shell_args_position => 2,
+        },
     ],
 };
 
-sub help_brief {
-    return 'print out a summary of the configuration profile of an analysis project';
-}
-
-sub help_synopsis {
-    return "genome config analysis-project show-config <analysis-project>";
-}
-
-sub help_detail {
-    return <<"EOS"
-This will print out a summary of the current configuration assigned to an analysis project
-EOS
-}
-
-sub execute {
+sub _base_filter {
     my $self = shift;
 
-    print $self->_header_line;
-
-    for my $profile_item ($self->analysis_project->config_items) {
-        print $self->_format_profile_item($profile_item);
-    }
-
-    return 1;
-}
-
-sub _header_line {
-    my $self = shift;
-
-    return sprintf($self->_line_template(),
-        'ID', 'File Path', 'Modified At',
-        'Concrete', 'Menu Item',
-        'Menu Item Name', 'Status');
-}
-
-sub _format_profile_item {
-    my $self = shift;
-    my $item = shift;
-
-    return sprintf($self->_line_template(100),
-        $item->id,
-        $item->file_path,
-        $item->updated_at,
-        $self->_format_boolean($item->is_concrete),
-        $self->_format_boolean($item->analysis_menu_item),
-        $item->analysis_menu_item ? $item->analysis_menu_item->name : '',
-        defined($item->status) ? $item->status : 'active');
-
-}
-
-sub _format_boolean {
-    my $self = shift;
-    my $arg = shift;
-    return $arg ? '1' : '0';
-}
-
-sub _line_template {
-    my $self = shift;
-    my $padding = shift || 0;
-
-    return "%-${padding}s\t%s\t%s\t%s\t%s\t%s\t%s\n";
+    return sprintf('analysis_project_id="%s"', $self->analysis_project->id);
 }
 
 1;
