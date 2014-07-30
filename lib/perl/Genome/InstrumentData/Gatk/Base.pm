@@ -95,9 +95,9 @@ sub max_memory_for_gmt_gatk {
     my $self = shift;
 
     my $mem_limit_kb = Genome::Sys->mem_limit_kb;
-    return 4 if not $mem_limit_kb;
+    return 4 if not $mem_limit_kb; # default is 4 GB
     
-    return $mem_limit_kb * 1024;
+    return sprintf('%.1f', $mem_limit_kb / (1024 * 1024 ) ); # retrun as GB
 }
 
 1;
