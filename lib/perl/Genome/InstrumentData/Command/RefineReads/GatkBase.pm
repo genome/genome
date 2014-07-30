@@ -10,14 +10,19 @@ require Genome::Utility::Text;
 class Genome::InstrumentData::Command::RefineReads::GatkBase {
     is => 'Command::V2',
     is_abstract => 1,
-    has => {
+    has_input => {
         version => { is => 'Text', },
         bam_source => { is => 'Genome::InstrumentData::AlignedBamResult', },
     },
-    has_many => {
+    has_param => {
+        lsf_resource => {
+            default_value => &bsub_rusage,
+        },
+    },
+    has_many_input => {
         known_sites => { is => 'Genome::Model::Build::ImportedVariationList', },
     },
-    has_optional => {
+    has_optional_input => {
         params => { is => 'Text', }, # FIXME not used
     },
     has_many_optional_transient => {
@@ -31,6 +36,10 @@ class Genome::InstrumentData::Command::RefineReads::GatkBase {
         },
     },
 };
+
+sub bsub_rusage {
+    return "-R 'select[mem>12000 && gtmp>90 && type==LINUX64] rusage[mem=12000, gtmp=90] span[hosts=1]' -M 12000000";
+}
 
 sub result_names {
     die 'Provide result names in sub-classes!';
