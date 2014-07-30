@@ -60,7 +60,7 @@ isa_ok($alignment, 'Genome::InstrumentData::AlignmentResult::Bwa');
 my $bam_path = $alignment->output_dir."/all_sequences.bam";
 ok(-s $bam_path, "created a bam");
 my $generated_bam_md5 = Genome::Sys->md5sum($bam_path);
-is($generated_bam_md5, 'c503838df748e349d6c44103e50984e9', "MD5 of bam matches");
+is($generated_bam_md5, 'a15544d06deeda14506ac9beb8af78d1', "MD5 of bam matches");
 
 # FIXME test if the iar are deleted? if not we is done
 
@@ -91,7 +91,7 @@ isa_ok($alignment, 'Genome::InstrumentData::AlignmentResult::Bwa');
 $bam_path = $alignment->output_dir."/all_sequences.bam";
 ok(-s $bam_path, "created a bam");
 $generated_bam_md5 = Genome::Sys->md5sum($bam_path);
-is($generated_bam_md5, '1c29b3f9feedd2ed300cf6cc74f961cd', "MD5 of bam matches");
+is($generated_bam_md5, '2ea7b6431d9e9cb7e33207ecf7438d3e', "MD5 of bam matches");
 @users = Genome::SoftwareResult::User->get(user => $alignment, label => 'intermediate result');
 ok(!@users, 'alignment is not using any intermediate results');
 
