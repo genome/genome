@@ -77,7 +77,7 @@ sub _create_targets {
         input_bam => $self->input_bam_path,
         reference_fasta => $self->reference_fasta,
         output_intervals => $intervals_file,
-        number_of_threads => 24,
+        number_of_threads => 8,
         max_memory => $self->max_memory_for_gmt_gatk,
     );
     $target_creator_params{known} = $self->known_sites_indel_vcfs if @{$self->known_sites_indel_vcfs};
