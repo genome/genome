@@ -27,6 +27,12 @@ sub indel_dir {
   return $indel_dir;
 }
 
+sub snv_indel_report_dir {
+  my $self = shift;
+  my $snv_indel_report_dir = $self->case_dir . "/snv_indel_report";
+  return $snv_indel_report_dir;
+}
+
 sub cnv_dir {
   my $self = shift;
   my $cnv_dir = $self->case_dir . "/cnv";
@@ -242,6 +248,19 @@ sub wgs_exome_snv_summary_dir {
   } else {
     $self->warning_message("unable to find " .
         $wgs_exome_snv_summary_dir);
+    return 0;
+  }
+}
+
+sub snv_indel_report_clean_filtered_file {
+  my $self = shift;
+  my $snv_indel_report_clean_filtered_file = $self->snv_indel_report_dir .
+    "/" . $self->common_name . "_final_filtered_clean.tsv";
+  if(-e $snv_indel_report_clean_filtered_file) {
+    return $snv_indel_report_clean_filtered_file;
+  } else {
+    $self->warning_message("unable to find " .
+      $snv_indel_report_clean_filtered_file);
     return 0;
   }
 }
