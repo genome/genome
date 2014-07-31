@@ -50,16 +50,39 @@ subtest "output indel vcf" => sub {
        diag $diff->to_string;
 };
 
+subtest "output vcf with new sample name" => sub {
+    my $expected_out = File::Spec->join($data_dir, "expected_new_sample.vcf.gz");
+    my $out = Genome::Sys->create_temp_file_path . '_new_sample.gz';
+    run_new_sample($out);
+
+    my $differ = Genome::File::Vcf::Differ->new($out, $expected_out);
+    my $diff = $differ->diff;
+    is($diff, undef, "Found No differences between $out and (expected) $expected_out") ||
+       diag $diff->to_string;
+};
 
 done_testing;
+sub run_new_sample {
+    my $out = shift;
+
+    my $cmd = $pkg->create(
+        vcf_file => File::Spec->join($data_dir, "2.vcf.gz"),
+        readcount_file_and_sample_name => [
+            sprintf("%s:TEST-patient1-somval_normal", File::Spec->join($data_dir, 'test4.rc.tsv')),
+        ],
+        output_file => $out,
+    );
+    ok($cmd->isa($pkg), "Command created ok");
+    ok($cmd->execute, "Command executed ok");
+}
 
 sub run_indel {
     my $out = shift;
 
     my $cmd = $pkg->create(
         vcf_file => File::Spec->join($data_dir, "2.vcf.gz"),
-        readcount_file_and_sample_idx => [
-            sprintf("%s:0", File::Spec->join($data_dir, 'test3.rc.tsv')),
+        readcount_file_and_sample_name => [
+            sprintf("%s:TEST-patient1-somval_tumor1", File::Spec->join($data_dir, 'test3.rc.tsv')),
         ],
         output_file => $out,
     );
@@ -72,9 +95,9 @@ sub run {
 
     my $cmd = $pkg->create(
         vcf_file => File::Spec->join($data_dir, "1.vcf.gz"),
-        readcount_file_and_sample_idx => [
-            sprintf("%s:0", File::Spec->join($data_dir, 'test1.rc.tsv')),
-            sprintf("%s:2", File::Spec->join($data_dir, 'test2.rc.tsv')),
+        readcount_file_and_sample_name => [
+            sprintf("%s:TEST-patient1-somval_tumor1", File::Spec->join($data_dir, 'test1.rc.tsv')),
+            sprintf("%s:TEST-patient1-somval_normal1", File::Spec->join($data_dir, 'test2.rc.tsv')),
         ],
         output_file => $out,
     );

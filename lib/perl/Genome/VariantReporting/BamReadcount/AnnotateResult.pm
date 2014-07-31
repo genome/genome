@@ -24,14 +24,14 @@ sub _run {
 
     Genome::Model::Tools::Vcf::AnnotateWithReadcounts->execute(
         vcf_file => $self->input_vcf,
-        readcount_file_and_sample_idx => $self->readcount_file_and_sample_idxs,
+        readcount_file_and_sample_name => $self->readcount_file_and_sample_names,
         output_file => File::Spec->join($self->temp_staging_directory, $self->output_filename),
     );
 
     return;
 }
 
-sub readcount_file_and_sample_idxs {
+sub readcount_file_and_sample_names {
     my $self = shift;
     my $reader = Genome::File::Vcf::Reader->new($self->input_vcf);
     my $header = $reader->header;
@@ -39,7 +39,7 @@ sub readcount_file_and_sample_idxs {
     my @array;
     for my $result ($self->readcount_results) {
         push @array, sprintf("%s:%s", $result->output_file_path,
-            $header->index_for_sample_name($result->sample_name));
+            $result->sample_name);
     }
     return \@array;
 }

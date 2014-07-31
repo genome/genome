@@ -88,11 +88,18 @@ sub get_build {
         });
 
     my $alignment_result =  _get_alignment_result();
+    my $third_alignment_result = _get_third_alignment_result();
     reinstall_sub( {
             into => "Genome::Model::Build::SomaticValidation",
             as => "merged_alignment_result",
             code => sub {
-                return $alignment_result;
+                my $self = shift;
+                if ($self->subject->name eq "TEST-patient1-somval_tumor1") {
+                    return $alignment_result;
+                }
+                else {
+                    return $third_alignment_result;
+                }
             },
         });
 
@@ -150,10 +157,12 @@ sub _get_alignment_result {
         my %bam_paths = (
             "-b52e1b52f81e4541af7f71ce14ca96f6" => "bam1.bam",
             "-533e0bb1a99f4fbe9e31cf6e19907133" => "bam2.bam",
+            "-ghij4i5j230509ug345" => "bam3.bam",
         );
         my %sample_names = (
             "-b52e1b52f81e4541af7f71ce14ca96f6" => "TEST-patient1-somval_tumor1",
             "-533e0bb1a99f4fbe9e31cf6e19907133" => "TEST-patient1-somval_normal1",
+            "-ghij4i5j230509ug345" => "TEST-patient1-somval_tumor2",
         );
         reinstall_sub({
             into => "Genome::InstrumentData::AlignmentResult::Merged",
@@ -173,6 +182,11 @@ sub _get_control_alignment_result {
     Genome::InstrumentData::AlignmentResult::Merged->__define__(id => "-533e0bb1a99f4fbe9e31cf6e19907133", output_dir => $TEST_DIR);
 }
 Memoize::memoize("_get_control_alignment_result");
+
+sub _get_third_alignment_result {
+    Genome::InstrumentData::AlignmentResult::Merged->__define__(id => "-ghij4i5j230509ug345", output_dir => $TEST_DIR);
+}
+Memoize::memoize("_get_third_alignment_result");
 
 sub compare_directories {
     my ($expected_dir, $output_dir) = @_;
