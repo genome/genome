@@ -33,5 +33,15 @@ sub gotcloud_path {
     return $path;
 }
 
+sub epacts_path {
+    my ($self) = @_;
+    my $path = "/gscuser/kmeltzst/gscmnt/Software/epacts/bin/epacts";
+    my $hostname = Sys::Hostname::hostname();
+    if (! -x $path) {
+        die $self->error_message("Failed to find executable epacts version at $hostname:$path!");
+    }
+    return $path;
+}
+
 1;
 
