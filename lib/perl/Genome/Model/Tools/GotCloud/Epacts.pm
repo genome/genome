@@ -79,6 +79,10 @@ class Genome::Model::Tools::GotCloud::Umake {
             is => 'text',
             is_optional => 1,
         },
+        unit => {
+            is => 'integer',
+            is_optional => 1,
+        },
     ],
 };
 
@@ -93,18 +97,19 @@ sub execute {
     my $pheno = $self->pheno;
     my $cov = $self->covariates;
     my $min_maf = $self->minimum_maf;
-    my $max_maf = $self->maximum_maf;
-    my $min_mac = $self->minimum_mac;
+    #my $max_maf = $self->maximum_maf;
+    #my $min_mac = $self->minimum_mac;
     my $min_call = $self->minimum_callrate;
-    my $grp = $self->marker_group_file;
-    my $kin = $self->kinship_matrix;
+    #my $grp = $self->marker_group_file;
+    #my $kin = $self->kinship_matrix;
     my $chr = $self->chromosomes;
     my $sep_by_chr = $self->separate_by_chr;
     my $anno = $self->annotate;
     my $ref = $self->reference_build;
-    my $skat_test = $self->which_skat;
+    #my $skat_test = $self->which_skat;
     my $epacts_path = $self->epacts_path;
-    Genome::Sys->shellcmd(cmd =>"$epacts_path");
+    my $unit = $self->unit;
+    #Genome::Sys->shellcmd(cmd =>"$epacts_path");
     if($type eq "make-kin"){
         my $cmd;
         if(defined $self->chr){
@@ -120,7 +125,28 @@ sub execute {
     }
     my $cmd = "$epacts_path $type --vcf $vcf --ped $ped --test $test --pheno $pheno --out $out";
     if(defined $self->covariates){
-        join " ", map{"--cov $_"} $self->covariates;
+        $cmd .= join " ", map{"--cov $_"} $self->covariates;
+    }
+    if(defined $self->minimum_maf){
+        $cmd .=  "--min-maf".$self->minimum_maf;
+    }
+    if(defined $self->maximum_maf){
+        $cmd .= "--max-maf".$self->maximum_maf;
+    }
+    if(defined $self->minimum_callrate){
+        $cmd .="--min-callrate".$self->minimum_callrate;
+    }
+    if(defined $self->marker_group_file){
+        $cmd .= "--groupf".$self->marker_group_file;
+    }
+    if(defined $self->kinship_matrix){
+        $cmd .= "--kinf".$self->kinship_matrix;
+    }
+    if(defined $self->skat_test){
+        $cmd .= "--".$self->skat_test;
+    }
+    if(defined $self->unit){
+        $cmd .="--".$self->unit;
     }
     Genome::Sys->shellcmd(cmd => "$cmd");
     return 1;
