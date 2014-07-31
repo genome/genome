@@ -46,8 +46,6 @@ sub create {
     Genome::Sys->create_directory($self->logs_directory("snvs"));
     Genome::Sys->create_directory($self->logs_directory("indels"));
     $self->generate_resource_file;
-    $self->create_input_vcf("snvs");
-    $self->create_input_vcf("indels");
     return $self;
 };
 
@@ -104,18 +102,7 @@ sub generate_resource_file {
 
 sub input_vcf {
     my ($self, $variant_type) = @_;
-    return File::Spec->join($self->output_dir, "$variant_type.vcf.gz");
-}
-
-sub create_input_vcf {
-    my ($self, $variant_type) = @_;
-    my $vcf = $self->discovery->get_detailed_vcf_result($variant_type)->get_vcf($variant_type);
-    my $sed_cmd = sprintf("zcat %s | %s | gzip > %s", $vcf, 'sed s/^#CHROM.*/\&\	'.$self->validation->tumor_sample->name."/", $self->input_vcf($variant_type));
-    my $rv = Genome::Sys->shellcmd(
-        cmd => $sed_cmd,
-        output_files => [$self->input_vcf($variant_type)],
-        input_files => [$vcf],
-    );
+    return $self->discovery->get_detailed_vcf_result($variant_type)->get_vcf($variant_type);
 }
 1;
 
