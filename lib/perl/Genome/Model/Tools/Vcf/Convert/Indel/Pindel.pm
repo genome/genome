@@ -40,13 +40,12 @@ sub source {
 sub execute {
     my $self = shift;
     my $input_id       = $self->input_id;
-    my $output         = $self->output_file;
+    my $output         = Genome::Sys->create_temp_file_path;
     my $pindel_raw     = $self->input_file;
     my $refbuild_id    = $self->reference_sequence_build->id;
     my $target_sample  = $self->aligned_reads_sample;
     my $control_sample = $self->control_aligned_reads_sample;
-
-    my ($output_directory) = dirname($output);
+    my ($output_directory) = dirname($self->output_file);
     $self->debug_message("Output Directory for pindel vcf creation will be: ".$output_directory);
 
     my $pindel2vcf_path;
@@ -122,6 +121,13 @@ sub execute {
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
         die $self->error_message("Workflow did not return correctly.");
     }
+    my $unzipped_output = Genome::Sys->create_temp_file_path;
+    Genome::Model::Tools::Joinx::Sort->execute(
+        input_files => [$output],
+        output_file => $unzipped_output,
+    );
+
+    Genome::Sys->gzip_file($unzipped_output, $self->output_file);
 
     return 1;
 }
