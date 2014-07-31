@@ -171,9 +171,9 @@ sub write_full_summary {
 
         #Take the first instrument_data's index until a decision is made
         #  on how to handle per-sample data, when per-instrument-data data is unavailable
-        my ($index) = map{$_->index_sequence}$model->instrument_data;
+        my ($index) = map{$_->index_sequence}$build->instrument_data;
         $index = '-' unless defined $index;
-        my $pool = $self->_resolve_pooled_sample_name_for_instrument_data($model->instrument_data);
+        my $pool = $self->_resolve_pooled_sample_name_for_instrument_data($build->instrument_data);
         $pool = '-' unless defined $pool;
         my $libraries = join ' ', map{$_->library->name}$build->instrument_data;
 
