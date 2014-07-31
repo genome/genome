@@ -39,7 +39,7 @@ sub _detect_variants {
         reference_fasta => $refseq,
         version => $self->version,
     );
-    if (Genome::Model::Tools::Gatk->is_legacy_version($self->version)) {
+    if (Genome::Model::Tools::Gatk::GermlineSnv->is_legacy_version($self->version)) {
         $gatk_cmd->verbose_output_file($self->_temp_staging_directory."/gatk_output_file");
     }
 
