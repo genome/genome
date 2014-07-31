@@ -17,10 +17,10 @@ class Genome::Model::Tools::Vcf::AnnotateWithReadcounts {
             is => 'File',
             doc => 'The vcf (gzipped or not) file that is to be annotated.',
         },
-        readcount_file_and_sample_idx => {
+        readcount_file_and_sample_name => {
             is => 'File',
             is_many => 1,
-            doc => 'The readcount file and what sample-column it should be annotated into.  <filename>:<sample_index>',
+            doc => 'The readcount file and the name of the sample-column it should be annotated into.  <filename>:<sample_name>',
         },
         output_file => {
             is_output => 1,
@@ -62,12 +62,25 @@ sub get_file_objects {
     my $header = $vcf_reader->{header};
     $header->add_format_str($RC_HEADER);
 
-    my $vcf_writer = Genome::File::Vcf::Writer->new($self->output_file, $header);
     my %readcount_readers;
-    for my $sample_idx (keys %{$self->readcount_filenames}) {
+    for my $sample_name (keys %{$self->readcount_filenames}) {
+        my $sample_idx = eval{$header->index_for_sample_name($sample_name)};
+        my $error = $@;
+        if ($error) {
+            if ($error =~ /Sample name $sample_name not found in header/) {
+                my @sample_names = $header->sample_names;
+                push @sample_names, $sample_name;
+                $header->sample_names(\@sample_names);
+                $sample_idx = $header->index_for_sample_name($sample_name);
+            }
+            else {
+                die $@;
+            }
+        }
         $readcount_readers{$sample_idx} = Genome::File::BamReadcount::Reader->new(
-            $self->readcount_filenames->{$sample_idx});
+            $self->readcount_filenames->{$sample_name});
     }
+    my $vcf_writer = Genome::File::Vcf::Writer->new($self->output_file, $header);
     return ($vcf_reader, $vcf_writer, \%readcount_readers);
 }
 
@@ -75,9 +88,9 @@ sub readcount_filenames {
     my $self = shift;
 
     my %result;
-    for my $value ($self->readcount_file_and_sample_idx) {
-        my ($filename, $sample_idx) = split(/:/, $value);
-        $result{$sample_idx} = $filename;
+    for my $value ($self->readcount_file_and_sample_name) {
+        my ($filename, $sample_name) = split(/:/, $value);
+        $result{$sample_name} = $filename;
     }
     return \%result;
 }

@@ -30,7 +30,7 @@ is(ref($cmd->output_result), $result_class, 'Found software result after executi
 
 my $expected_tool_args = {
     vcf_file => __FILE__,
-    readcount_file_and_sample_idx => ['rc_file1:1', 'rc_file2:2'],
+    readcount_file_and_sample_name => ['rc_file1:sample1', 'rc_file2:sample2'],
 };
 is_deeply($tool_args, $expected_tool_args, 'Called Genome::Model::Tools::Vcf::AnnotateWithReadcounts with expected args');
 
@@ -48,7 +48,7 @@ sub generate_test_cmd {
             my $file = $self->output_file;
             `touch $file`;
             $tool_args->{vcf_file} = $self->vcf_file;
-            $tool_args->{readcount_file_and_sample_idx} = [$self->readcount_file_and_sample_idx];
+            $tool_args->{readcount_file_and_sample_name} = [$self->readcount_file_and_sample_name];
     }});
 
     my $rc_result1 = Genome::VariantReporting::BamReadcount::RunResult->__define__();
@@ -56,8 +56,8 @@ sub generate_test_cmd {
 
     Sub::Install::reinstall_sub({
         into => 'Genome::VariantReporting::BamReadcount::AnnotateResult',
-        as => 'readcount_file_and_sample_idxs',
-        code => sub {my $self = shift; return ['rc_file1:1', 'rc_file2:2'];},
+        as => 'readcount_file_and_sample_names',
+        code => sub {my $self = shift; return ['rc_file1:sample1', 'rc_file2:sample2'];},
     });
 
     my %params = (
