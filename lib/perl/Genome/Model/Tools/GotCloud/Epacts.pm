@@ -95,41 +95,41 @@ sub execute {
     my $out = $self->output_directory;
     my $type = $self->type;
     my $test = $self->test;
-    my $pheno = $self->pheno;
+    my $pheno = $self->phenotype;
     my $epacts_path = $self->epacts_path;
     my $cmd = "$epacts_path $type --vcf $vcf --ped $ped --test $test --pheno $pheno --out $out";
     if(defined $self->covariates){
-        $cmd .= join " ", map{"--cov $_"} $self->covariates;
+        $cmd .= join " ", map{" --cov $_ "} $self->covariates;
     }
     if(defined $self->minimum_maf){
-        $cmd .=  "--min-maf ".$self->minimum_maf;
+        $cmd .=  " --min-maf ".$self->minimum_maf;
     }
     if(defined $self->maximum_maf){
-        $cmd .= "--max-maf ".$self->maximum_maf;
+        $cmd .= " --max-maf ".$self->maximum_maf;
     }
     if(defined $self->minimum_mac){
-        $cmd .= "--min-mac ".$self->minimum_mac;
+        $cmd .= " --min-mac ".$self->minimum_mac;
     }
     if(defined $self->minimum_callrate){
-        $cmd .="--min-callrate ".$self->minimum_callrate;
+        $cmd .=" --min-callrate ".$self->minimum_callrate;
     }
     if(defined $self->chromosomes){
-        $cmd .="--chr ".$self->chromosomes;
+        $cmd .=" --chr ".$self->chromosomes;
     }
     if(defined $self->separate_by_chr){
-        $cmd .="--sepchr";
+        $cmd .=" --sepchr";
     }
     if(defined $self->marker_group_file){
-        $cmd .= "--groupf ".$self->marker_group_file;
+        $cmd .= " --groupf ".$self->marker_group_file;
     }
     if(defined $self->kinship_matrix){
-        $cmd .= "--kinf ".$self->kinship_matrix;
+        $cmd .= " --kinf ".$self->kinship_matrix;
     }
-    if(defined $self->skat_test){
-        $cmd .= "--".$self->skat_test;
+    if(defined $self->which_skat){
+        $cmd .= " --".$self->which_skat;
     }
     if(defined $self->unit){
-        $cmd .="--unit ".$self->unit;
+        $cmd .=" --unit ".$self->unit;
     }
     Genome::Sys->shellcmd(cmd => "$cmd");
     return 1;
@@ -151,7 +151,7 @@ sub validate {
     if($self->type eq "make-kin" && !defined $self->minimum_callrate){
         die $self->error_message("You must give a minimum call rate value for make-kin");
     }
-    if(defined $self->anno && !defined $self->reference_build){
+    if(defined $self->annotate && !defined $self->reference_build){
         die $self->error_message("You must give the reference build to annotate");
     }
     if($self->test eq "skat" && !defined $self->which_skat){
