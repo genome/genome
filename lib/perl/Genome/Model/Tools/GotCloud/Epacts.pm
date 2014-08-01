@@ -114,7 +114,7 @@ sub execute {
         $cmd .=" --min-callrate ".$self->minimum_callrate;
     }
     if(defined $self->chromosomes){
-        $cmd .=" --chr ". join ",", $self->chromosomes;
+        $cmd .=" --chr ". join " ", $self->chromosomes;
     }
     if(defined $self->separate_by_chr){
         $cmd .=" --sepchr";
