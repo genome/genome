@@ -20,7 +20,7 @@ class Genome::Model::Tools::GotCloud::Epacts {
         },
         type => {
             is => 'text',
-            valid_values => [qw (single group make-kin make-group anno)]
+            valid_values => [qw(single group make-kin make-group anno)]
         },
         test => {
             is => 'text',
@@ -62,7 +62,7 @@ class Genome::Model::Tools::GotCloud::Epacts {
             is => 'text',
             is_many => 1,
             is_optional => 1,
-            valid_values => [qw (1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X)]
+            valid_values => [qw(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X)]
         },
         separate_by_chr => {
             is => 'text',
@@ -97,7 +97,7 @@ sub execute {
     my $test = $self->test;
     my $pheno = $self->phenotype;
     my $epacts_path = $self->epacts_path;
-    my $cmd = "$epacts_path $type --vcf $vcf --ped $ped --test $test --pheno $pheno --out $out";
+    my $cmd = "$epacts_path $type --vcf $vcf --ped $ped --test $test --pheno $pheno --out $out --run 1";
     if(defined $self->covariates){
         $cmd .= join " ", map{" --cov $_ "} $self->covariates;
     }
