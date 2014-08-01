@@ -9,13 +9,13 @@ use Memoize;
 class Genome::Model::Tools::GotCloud::Epacts {
     is => ['Genome::Command::Base', 'Genome::Model::Tools::GotCloud'],
     has => [
-        vcf_file => {
+        vcf => {
             is => 'path',
         },
-        pedigree_file => {
+        ped => {
             is => 'path',
         },
-        output_directory => {
+        out => {
             is => 'path',
         },
         type => {
@@ -26,49 +26,49 @@ class Genome::Model::Tools::GotCloud::Epacts {
             is => 'text',
             is_optional => 1,
         },
-        phenotype => {
+        pheno => {
             is => 'text',
         },
-        covariates => {
+        cov => {
             is => 'text',
             is_many => 1,
             is_optional => 1,
         },
-        minimum_maf => {
+        min_maf => {
             is => 'integer',
             is_optional => 1,
         },
-        maximum_maf => {
+        max_maf => {
             is => 'integer',
             is_optional => 1,
         },
-        minimum_mac => {
+        min_mac => {
             is => 'integer',
             is_optional => 1,
         },
-        minimum_callrate => {
+        min_callrate => {
             is => 'integer',
             is_optional => 1,
         },
-        marker_group_file => {
+        groupf => {
             is => 'text',
             is_optional => 1,
         },
-        kinship_matrix => {
+        kin => {
             is => 'text',
             is_optional => 1,
         },
-        chromosomes => {
+        chr => {
             is => 'text',
             is_many => 1,
             is_optional => 1,
             valid_values => [qw(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 X)]
         },
-        separate_by_chr => {
+        sepchr => {
             is => 'text',
             is_optional => 1,
         },
-        annotate => {
+        anno => {
             is => 'text',
             is_optional => 1,
         },
@@ -84,46 +84,50 @@ class Genome::Model::Tools::GotCloud::Epacts {
             is => 'integer',
             is_optional => 1,
         },
+        field => {
+            is => 'text',
+            is_optional => 1,
+        },
     ],
 };
 
 sub execute {
     my $self = shift;
     $self->validate;
-    my $vcf = $self->vcf_file;
-    my $ped = $self->pedigree_file;
-    my $out = $self->output_directory;
+    my $vcf = $self->vcf;
+    my $ped = $self->ped;
+    my $out = $self->out;
     my $type = $self->type;
     my $test = $self->test;
-    my $pheno = $self->phenotype;
+    my $pheno = $self->pheno;
     my $epacts_path = $self->epacts_path;
     my $cmd = "$epacts_path $type --vcf $vcf --ped $ped --test $test --pheno $pheno --out $out --run 1";
-    if(defined $self->covariates){
-        $cmd .= join " ", map{" --cov $_ "} $self->covariates;
+    if(defined $self->cov){
+        $cmd .= join " ", map{" --cov $_ "} $self->cov;
     }
-    if(defined $self->minimum_maf){
-        $cmd .=  " --min-maf ".$self->minimum_maf;
+    if(defined $self->min_maf){
+        $cmd .=  " --min-maf ".$self->min_maf;
     }
-    if(defined $self->maximum_maf){
-        $cmd .= " --max-maf ".$self->maximum_maf;
+    if(defined $self->max_maf){
+        $cmd .= " --max-maf ".$self->max_maf;
     }
-    if(defined $self->minimum_mac){
-        $cmd .= " --min-mac ".$self->minimum_mac;
+    if(defined $self->min_mac){
+        $cmd .= " --min-mac ".$self->min_mac;
     }
-    if(defined $self->minimum_callrate){
-        $cmd .=" --min-callrate ".$self->minimum_callrate;
+    if(defined $self->min_callrate){
+        $cmd .=" --min-callrate ".$self->min_callrate;
     }
-    if(defined $self->chromosomes){
-        $cmd .=" --chr ". join " ", $self->chromosomes;
+    if(defined $self->chr){
+        $cmd .=" --chr ". join " ", $self->chr;
     }
-    if(defined $self->separate_by_chr){
+    if(defined $self->sepchr){
         $cmd .=" --sepchr";
     }
-    if(defined $self->marker_group_file){
-        $cmd .= " --groupf ".$self->marker_group_file;
+    if(defined $self->groupf){
+        $cmd .= " --groupf ".$self->groupf;
     }
-    if(defined $self->kinship_matrix){
-        $cmd .= " --kinf ".$self->kinship_matrix;
+    if(defined $self->kin){
+        $cmd .= " --kinf ".$self->kin;
     }
     if(defined $self->which_skat){
         $cmd .= " --".$self->which_skat;
@@ -131,27 +135,33 @@ sub execute {
     if(defined $self->unit){
         $cmd .=" --unit ".$self->unit;
     }
+    if(defined $self->anno){
+        $cmd .=" --anno";
+    }
+    if(defined $self->field){
+        $cmd .=" --field ".$self->field;
+    }
     Genome::Sys->shellcmd(cmd => "$cmd");
     return 1;
 }
 
 sub validate {
     my $self = shift;
-    Genome::Sys->create_directory($self->output_directory);
-    if(defined $self->pedigree_file){
-        Genome::Sys->validate_file_for_reading($self->pedigree_file);
+    Genome::Sys->create_directory($self->out);
+    if(defined $self->ped){
+        Genome::Sys->validate_file_for_reading($self->ped);
     }
-    Genome::Sys->validate_file_for_reading($self->vcf_file);
-    if($self->type eq "group" && !defined $self->marker_group_file){
+    Genome::Sys->validate_file_for_reading($self->vcf);
+    if($self->type eq "group" && !defined $self->groupf){
         die $self->error_message("You must give a group marker file for a group test");
     }
     if($self->type eq "make-kin" && !defined $self->min_maf){
         die $self->error_message("You must give a minimum maf value for make-kin");
     }
-    if($self->type eq "make-kin" && !defined $self->minimum_callrate){
+    if($self->type eq "make-kin" && !defined $self->min_callrate){
         die $self->error_message("You must give a minimum call rate value for make-kin");
     }
-    if(defined $self->annotate && !defined $self->reference_build){
+    if(defined $self->anno && !defined $self->reference_build){
         die $self->error_message("You must give the reference build to annotate");
     }
     if($self->test eq "skat" && !defined $self->which_skat){
