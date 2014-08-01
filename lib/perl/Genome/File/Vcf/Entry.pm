@@ -608,7 +608,7 @@ sub sample_field {
     my ($self, $sample_idx, $field_name) = @_;
     my $n_samples = $self->{header}->num_samples;
     confess "Invalid sample index $sample_idx (have $n_samples samples): "
-        unless ($sample_idx >= 0 && $sample_idx <= $n_samples);
+        unless ($sample_idx >= 0 && $sample_idx < $n_samples);
 
     my $sample_data = $self->sample_data;
     return unless $sample_idx <= $#$sample_data;
@@ -746,7 +746,7 @@ sub genotype_for_sample {
     my $alts = $self->{alternate_alleles};
     my $gt = $self->sample_field($sample_index, 'GT');
     unless ($gt) {
-        confess "No sample for index $sample_index";
+        return; # This is acceptable - the sample may be '.'
     }
     return Genome::File::Vcf::Genotype->new($self->{reference_allele}, $alts, $gt);
 }
