@@ -1,0 +1,14 @@
+---
+aligned_bam_result_id:
+  - -ghij4i5j230509ug345
+  - -533e0bb1a99f4fbe9e31cf6e19907133
+  - -533e0bb1a99f4fbe9e31cf6e19907133
+dbsnp_vcf: /gscuser/aregier/git/genome/updated/lib/perl/Genome/VariantReporting/Framework/Command/Wrappers/TestHelpers.pm.d/dbsnp.vcf
+feature_list_ids:
+  ON_TARGET: -1
+  SEG_DUP: -1
+reference_fasta: /gscmnt/gc13003/info/test_suite_data/Genome-VariantReporting-Framework-Component-ResourceProvider/v3/reference.fasta
+translations:
+  d0_tumor: TEST-patient1-somval_tumor2
+  d30_normal: TEST-patient1-somval_normal1
+  d30_tumor: TEST-patient1-somval_tumor1

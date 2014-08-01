@@ -106,7 +106,7 @@ subtest "Two valid model pairs" => sub {
     );
 
     my @pairs = $factory->get_model_pairs;
-    ok(@pairs == 2, "Factory returned 2 pairs");
+    is(scalar @pairs, 4, "2 model pairs for 2 pairs of models returned");
 };
 
 done_testing;
