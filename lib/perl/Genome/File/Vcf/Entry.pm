@@ -766,6 +766,7 @@ sub alt_bases_for_sample {
     my ($self, $sample_index) = @_;
 
     my $genotype = $self->genotype_for_sample($sample_index);
+    return unless defined $genotype;
     my @entry_allele_nucleotides = $self->alleles;
     my @alt_allele_pointers = grep { $_ ne '.' && $_ != 0 } $genotype->get_alleles;
     my @alt_allele_nucleotides = map {$entry_allele_nucleotides[$_]} @alt_allele_pointers;
