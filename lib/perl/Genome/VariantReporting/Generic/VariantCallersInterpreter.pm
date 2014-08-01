@@ -39,7 +39,7 @@ sub _interpret_entry {
     for my $caller_name ($self->get_callers($entry->{header})) {
         my $sample_name = $self->sample_name_with_suffix($caller_name);
         my $sample_index = eval{ $entry->{header}->index_for_sample_name($sample_name) };
-        my @sample_alt_alleles = eval{ $entry->alt_bases_for_sample($sample_index)};
+        my @sample_alt_alleles = $entry->alt_bases_for_sample($sample_index);
         for my $sample_alt_allele (uniq @sample_alt_alleles) {
             push(@{$callers{$sample_alt_allele}}, $caller_name);
         }

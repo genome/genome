@@ -30,7 +30,10 @@ sub _interpret_entry {
 
     my %return_values;
 
-    my $sample_alt_alleles = Set::Scalar->new($entry->alt_bases_for_sample($self->sample_index($entry->{header})));
+    my @sample_alt_alleles =$entry->alt_bases_for_sample($self->sample_index($entry->{header})); 
+    return %return_values if not @sample_alt_alleles;
+
+    my $sample_alt_alleles = Set::Scalar->new(@sample_alt_alleles);
     for my $alt_allele (@$passed_alt_alleles) {
         unless ($sample_alt_alleles->contains($alt_allele)) {
             $ft_string = "";
