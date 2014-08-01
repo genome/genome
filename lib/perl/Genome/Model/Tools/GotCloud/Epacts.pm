@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 use Memoize;
 
-class Genome::Model::Tools::GotCloud::Umake {
+class Genome::Model::Tools::GotCloud::Epacts {
     is => ['Genome::Command::Base', 'Genome::Model::Tools::GotCloud'],
     has => [
         vcf_file => {
@@ -32,6 +32,7 @@ class Genome::Model::Tools::GotCloud::Umake {
         covariates => {
             is => 'text',
             is_many => 1,
+            is_optional => 1,
         },
         minimum_maf => {
             is => 'integer',
@@ -105,6 +106,9 @@ sub execute {
     }
     if(defined $self->maximum_maf){
         $cmd .= "--max-maf ".$self->maximum_maf;
+    }
+    if(defined $self->minimum_mac){
+        $cmd .= "--min-mac ".$self->minimum_mac;
     }
     if(defined $self->minimum_callrate){
         $cmd .="--min-callrate ".$self->minimum_callrate;
