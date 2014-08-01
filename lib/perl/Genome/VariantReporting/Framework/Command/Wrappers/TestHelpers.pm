@@ -69,13 +69,22 @@ sub get_build {
         }
     );
 
-    my $vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__;
-    my $vcf = File::Spec->join($PROVIDER_TEST_DIR, "snvs.vcf.gz");
+    my %ids = (
+        "TEST-patient1-somval_tumor1" => "-485773",
+        "TEST-patient1-somval_tumor2" => "-586867",
+    );
+    my %vcf_files = (
+        "-485773" => File::Spec->join($TEST_DIR, "TEST-patient1-somval_tumor1.snvs.vcf.gz"),
+        "-586867" => File::Spec->join($TEST_DIR, "TEST-patient1-somval_tumor2.snvs.vcf.gz"),
+    );
+    my $vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__(id => $ids{$tumor_sample->name});
+    my $vcf = File::Spec->join($TEST_DIR, $tumor_sample->name.".vcf.gz");
     reinstall_sub({
             into => "Genome::Model::Build::SomaticValidation",
             as => "get_detailed_vcf_result",
             code => sub {
-                return $vcf_result;
+                my $self = shift;
+                return Genome::SoftwareResult->get(id => $ids{$self->tumor_sample->name});
             },
         });
 
@@ -83,7 +92,8 @@ sub get_build {
             into => "Genome::Model::Tools::DetectVariants2::Result::Vcf",
             as => "get_vcf",
             code => sub {
-                return $vcf;
+                my $self = shift;
+                return $vcf_files{$self->id};
             },
         });
 

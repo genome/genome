@@ -14,6 +14,14 @@ class Genome::VariantReporting::Framework::Command::Wrappers::ModelPairFactory {
         d0_sample => { is => 'Genome::Sample', },
         d30_sample => { is => 'Genome::Sample', },
         output_dir => { is => 'Text', },
+        discovery_output_dir => {
+            calculate_from => [qw/output_dir/],
+            calculate => q/return File::Spec->join($output_dir, "discovery");/,
+        },
+        additional_output_dir => {
+            calculate_from => [qw/output_dir/],
+            calculate => q/return File::Spec->join($output_dir, "additional");/,
+        },
     },
 };
 
@@ -82,7 +90,13 @@ sub get_model_pairs {
         push @model_pairs, Genome::VariantReporting::Framework::Command::Wrappers::ModelPair->create(
             discovery => $discovery_build,
             validation => $validation_build,
-            base_output_dir => $self->output_dir,
+            base_output_dir => $self->discovery_output_dir,
+        );
+
+        push @model_pairs, Genome::VariantReporting::Framework::Command::Wrappers::ModelPair->create(
+            discovery => $validation_build,
+            validation => $discovery_build,
+            base_output_dir => $self->additional_output_dir,
         );
     }
 
