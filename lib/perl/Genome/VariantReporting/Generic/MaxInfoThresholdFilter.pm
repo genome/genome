@@ -1,30 +1,29 @@
-package Genome::VariantReporting::Vep::MaxSegdupFilter;
+package Genome::VariantReporting::Generic::MaxInfoThresholdFilter;
 
 use strict;
 use warnings;
 use Genome;
-use Genome::File::Vcf::VepConsequenceParser;
 
-class Genome::VariantReporting::Vep::MaxSegdupFilter {
+class Genome::VariantReporting::Generic::MaxInfoThresholdFilter {
     is  => ['Genome::VariantReporting::Framework::Component::Filter'],
     has => [
         info_tag => {
             is  => 'String',
-            doc => 'custom tag name in the info field to show segment duplication percentage, like SEGDUP=82',
+            doc => 'custom tag name in the info field to show threshold, like SEGDUP=82',
         },
         threshold => {
             is  => 'Number',
-            doc => 'The maximum segdup thresold percentage to pass',
+            doc => 'The maximum thresold to pass',
         }
     ],
 };
 
 sub name {
-    return 'max-segdup';
+    return 'max-info-threshold';
 }
 
 sub requires_annotations {
-    return ('vep');
+    return ();
 }
 
 sub filter_entry {
@@ -42,9 +41,8 @@ sub filter_entry {
     my %return_values;
 
     for my $alt_allele ( @{$entry->{alternate_alleles}} ) {
-        my $segdup_percent = $entry->info($self->info_tag);
-        $segdup_percent =~ s/\%$//;
-        $return_values{$alt_allele} = $segdup_percent > $self->threshold ? 0 : 1;
+        my $number = $entry->info($self->info_tag);
+        $return_values{$alt_allele} = $number > $threshold ? 0 : 1;
     }
 
     return %return_values;

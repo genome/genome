@@ -13,7 +13,7 @@ use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
 
-my $pkg = 'Genome::VariantReporting::Vep::MaxSegdupFilter';
+my $pkg = 'Genome::VariantReporting::Generic::MaxInfoThresholdFilter';
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
@@ -22,7 +22,7 @@ subtest "with bad info_tag" => sub {
     my $filter = $pkg->create(info_tag => 'BAD_TAG', threshold => 96);
     lives_ok(sub {$filter->validate}, "Filter validates");
 
-    my $entry = create_entry_with_vep('');
+    my $entry = create_entry('');
     dies_ok(sub {$filter->filter_entry($entry)}, "Filter with a info tag not in the header file should die");
 };
 
@@ -30,12 +30,12 @@ subtest "with invalid threshold" => sub {
     my $filter = $pkg->create(info_tag => 'SD', threshold => 'NOT_NUMBER');
     lives_ok(sub {$filter->validate}, "Filter validates");
 
-    my $entry = create_entry_with_vep('');
+    my $entry = create_entry('');
     dies_ok(sub {$filter->filter_entry($entry)}, "Filter with a non number threshold should die");
 };
 
 
-subtest "with failing segdup" => sub {
+subtest "with failing threshold" => sub {
     my $filter = $pkg->create(info_tag => 'SD', threshold => 90.88);
     lives_ok(sub {$filter->validate}, "Filter validates");
 
@@ -43,11 +43,11 @@ subtest "with failing segdup" => sub {
         C => 0,
         G => 0,
     );
-    my $entry = create_entry_with_vep('SD=93.68');
+    my $entry = create_entry('SD=93.68');
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry gets filtered correctly");
 };
 
-subtest "with passing segdup" => sub {
+subtest "with passing threshold" => sub {
     my $filter = $pkg->create(info_tag => 'SD', threshold => 90);
     lives_ok(sub {$filter->validate}, "Filter validates");
 
@@ -55,7 +55,7 @@ subtest "with passing segdup" => sub {
         C => 1,
         G => 1,
     );
-    my $entry = create_entry_with_vep('A=B;SD=86;C=8,9;E');
+    my $entry = create_entry('A=B;SD=86;C=8,9;E');
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry gets filtered correctly");
 };
 
@@ -81,7 +81,7 @@ EOS
     return $header
 }
 
-sub create_entry_with_vep {
+sub create_entry {
     my $info = shift;
 
     my @fields = (
