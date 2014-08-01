@@ -52,14 +52,6 @@ is($i_d->read_length, 50,"read_length is set");
 is($i_d->base_count,274209200, "base_count is set to 274209200");
 ok(-s $i_d->archive_path, "bam exists");
 
-my $model = $cmd->_model;
-ok($model, 'created model');
-like($model->name, qr/^TCGA-AB-2804-03B-01W-0728-08.36-lite.refalign(\-\d+)?$/, 'model name');
-ok(!$model->build_requested, 'did not request build');
-is_deeply([$model->instrument_data], [$i_d], 'model inst data');
-ok($model->dbsnp_build, 'dbsnp build');
-ok($model->annotation_reference_build, 'annotation reference');
-
 # created attributes properly
 my $inst_data = $cmd->_inst_data;
 my $aid_attr = $inst_data->attributes(attribute_label=>"analysis_id");
