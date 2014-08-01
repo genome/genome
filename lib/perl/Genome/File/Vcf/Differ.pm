@@ -106,39 +106,57 @@ sub paired_next {
     }
 }
 
+sub header_a {
+    my $self = shift;
+    return $self->{_a_reader}->header;
+}
+
+sub header_b {
+    my $self = shift;
+    return $self->{_b_reader}->header;
+}
+
 sub header {
     my $self = shift;
 
-    my $ah = $self->{_a_reader}->header;
-    my $bh = $self->{_b_reader}->header;
+    my ($lines_a, $samples_a) = _lines_and_samples_from_header($self->header_a);
+    my ($lines_b, $samples_b) = _lines_and_samples_from_header($self->header_b);
 
-    my $a_lineset = _lineset_from_header($ah);
-    my $b_lineset = _lineset_from_header($bh);
+    my $line_diffs_a = $lines_a->difference($lines_b);
+    my $line_diffs_b = $lines_b->difference($lines_a);
 
-    my $a_diff = $a_lineset->difference($b_lineset);
-    my $b_diff = $b_lineset->difference($a_lineset);
+    my $sample_diffs_a = $samples_a->difference($samples_b);
+    my $sample_diffs_b = $samples_b->difference($samples_a);
 
-    if (!$a_diff->size && !$b_diff->size) {
+    if (all_empty($line_diffs_a, $line_diffs_b, $sample_diffs_a, $sample_diffs_b)) {
         return;
     } else {
-        my @a_diffs = sort($a_diff->members());
-        my @b_diffs = sort($b_diff->members());
-
         return Genome::File::Vcf::HeaderDiff->new(
-            $self->{_a} => \@a_diffs,
-            $self->{_b} => \@b_diffs,
+            $self->{_a}, $line_diffs_a, $sample_diffs_a,
+            $self->{_b}, $line_diffs_b, $sample_diffs_b,
         );
     }
 }
 
-sub _lineset_from_header {
+sub _lines_and_samples_from_header {
     my $header = shift;
-    my $lineset = Set::Scalar->new();
-    $lineset->insert($header->_info_lines);
-    $lineset->insert($header->_format_lines);
-    $lineset->insert($header->_filter_lines);
-    $lineset->insert($header->sample_names);
-    return $lineset;
+
+    my $lines = Set::Scalar->new();
+    $lines->insert($header->_info_lines);
+    $lines->insert($header->_format_lines);
+    $lines->insert($header->_filter_lines);
+
+    my $samples = Set::Scalar->new($header->sample_names);
+    return ($lines, $samples);
+}
+
+sub all_empty {
+    for my $set (@_) {
+        if ($set->size() > 0) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 1;

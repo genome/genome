@@ -26,18 +26,23 @@ two VCF file headers.
 =cut
 
 sub new {
-    my ($class, $path_a, $diffs_a, $path_b, $diffs_b) = validate_pos(@_,
+    my ($class, $path_a, $line_diffs_a, $sample_diffs_a,
+                $path_b, $line_diffs_b, $sample_diffs_b) = validate_pos(@_,
         {type => SCALAR},
         {type => SCALAR},
-        {type => ARRAYREF},
+        {type => OBJECT},
+        {type => OBJECT},
         {type => SCALAR},
-        {type => ARRAYREF},
+        {type => OBJECT},
+        {type => OBJECT},
     );
     my $self = {
         _a => $path_a,
         _b => $path_b,
-        _diffs_a => $diffs_a,
-        _diffs_b => $diffs_b,
+        _line_diffs_a => [sort $line_diffs_a->members()],
+        _line_diffs_b => [sort $line_diffs_b->members()],
+        _sample_diffs_a => [sort $sample_diffs_a->members()],
+        _sample_diffs_b => [sort $sample_diffs_b->members()],
     };
 
     bless $self, $class;
@@ -53,16 +58,35 @@ sub print {
 sub to_string {
     my $self = shift;
 
-    return _to_string($self->{_a}, @{$self->{_diffs_a}}) .
-           _to_string($self->{_b}, @{$self->{_diffs_b}});
+    return _samples_to_string($self->{_a}, $self->{_sample_diffs_a}) .
+           _samples_to_string($self->{_b}, $self->{_sample_diffs_b}) .
+           _lines_to_string($self->{_a}, $self->{_line_diffs_a}) .
+           _lines_to_string($self->{_b}, $self->{_line_diffs_b});
 }
 
-sub _to_string {
-    my $file_name = shift;
-    my @lines = @_;
+sub _lines_to_string {
+    my ($file_name, $lines) = @_;
 
-    my $indent = '    ';
-    printf "Lines unique to %s are:\n%s%s\n", $file_name, $indent, join("\n$indent", @lines);
+    if (@$lines) {
+        my $indent = '    ';
+        return sprintf "Lines unique to %s are:\n%s%s\n", $file_name, $indent,
+            join("\n$indent", @$lines);
+    } else {
+        return '';
+    }
+}
+
+sub _samples_to_string {
+    my ($file_name, $names) = @_;
+
+    if (@$names) {
+        my $indent = '    ';
+        return sprintf "Sample names unique to %s are:\n%s%s\n", $file_name,
+            $indent, join("\n$indent", @$names);
+    } else {
+        return '';
+    }
+
 }
 
 1;
