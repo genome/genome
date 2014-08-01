@@ -17,6 +17,11 @@ class Genome::Model::Tools::Vcf::Convert::Indel::Pindel {
             calculate_from => ['reference_sequence_input'],
             calculate => q| $reference_sequence_input |,
         },
+        _unsorted_output_file => {
+            is => 'Text',
+            calculate_from => ['output_file'],
+            calculate => q/"$output_file.unsorted"/,
+        },
     ],
 };
 
@@ -40,7 +45,7 @@ sub source {
 sub execute {
     my $self = shift;
     my $input_id       = $self->input_id;
-    my $output         = Genome::Sys->create_temp_file_path;
+    my $output         = $self->_unsorted_output_file;
     my $pindel_raw     = $self->input_file;
     my $refbuild_id    = $self->reference_sequence_build->id;
     my $target_sample  = $self->aligned_reads_sample;
