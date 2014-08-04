@@ -311,3 +311,7 @@ remove_unused_apconfig_tables [config_set] 2014-05-09T15:20:47Z Adam Coffman <ac
 timeline.allocation.pkey_id [timeline_allocation] 2014-06-11T22:34:20Z Thomas B. Mooney <tmooney@genome.wustl.edu> # add a primary key to the timeline.allocation table
 timeline.analysis_project.pkey_id [analysis_project_event_logging] 2014-06-12T14:20:29Z Thomas B. Mooney <tmooney@genome.wustl.edu> # add primary key to analysis project timeline table
 @1402586722 2014-06-12T15:25:23Z Thomas B. Mooney <tmooney@genome.wustl.edu># Added primary keys to child timeline tables.
+
+config_tag [config_schema] 2014-08-04T21:15:27Z Thomas B. Mooney <tmooney@genome.wustl.edu> # arbitrary "tags" for imbuing configurations with meaning
+config_tag_profile_item [config_profile_item] 2014-08-04T21:20:58Z Thomas B. Mooney <tmooney@genome.wustl.edu> # link tags to profile items
+@1407191044 2014-08-04T22:24:05Z Thomas B. Mooney <tmooney@genome.wustl.edu># Add tagging support to config profile items.
