@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Genome::Utility::Test;
+use Test::Exception;
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Test::Factory::InstrumentData::Imported;
 use Genome::Test::Factory::Model::GenotypeMicroarray;
@@ -27,6 +28,13 @@ my ($instrument_data_1, $sample, $dbsnp_build, $on_target_feature_list) = setup_
 subtest test_convert_caf_to_af => sub {
     is(Genome::InstrumentData::VerifyBamIdResult::_convert_caf_to_af(create_entry("[0.07163,0.9284]")), "0.9284");
 };
+
+subtest test_convert_caf_to_af_bad_caf => sub {
+    is(Genome::InstrumentData::VerifyBamIdResult::_convert_caf_to_af(create_entry("[0.07163,0.9284,0.1]")), undef);
+    dies_ok(sub {Genome::InstrumentData::VerifyBamIdResult::_convert_caf_to_af(create_entry("0.07163,0.9284"))});
+};
+
+
 
 subtest test_on_target => sub{
     my $sr = Genome::InstrumentData::VerifyBamIdResult->create(
