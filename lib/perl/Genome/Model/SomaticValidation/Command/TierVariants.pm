@@ -40,7 +40,13 @@ sub shortcut {
 
             my @params = $self->params_for_result($qual, $variant_type);
             unless(@params) {
-                die $self->error_message('Failed to get params for ' . $qual . ' ' . $variant_type . ' tiering');
+                my $msg = 'Failed to get params for ' . $qual . ' ' . $variant_type . ' tiering';
+                if ($qual eq 'lq') {
+                    $self->status_message($msg);
+                    next;
+                } else {
+                    die $self->error_message($msg);
+                }
             }
 
             my $existing_result = Genome::Model::Tools::DetectVariants2::Classify::Tier->get_with_lock(@params);
@@ -108,7 +114,13 @@ sub execute {
                 }
             } else {
                 unless(@params) {
-                    die $self->error_message('Failed to get params for ' . $qual . ' ' . $variant_type . ' tiering');
+                    my $msg = 'Failed to get params for ' . $qual . ' ' . $variant_type . ' tiering';
+                    if ($qual eq 'lq') {
+                        $self->status_message($msg);
+                        next;
+                    } else {
+                        die $self->error_message($msg);
+                    }
                 }
             }
         }
