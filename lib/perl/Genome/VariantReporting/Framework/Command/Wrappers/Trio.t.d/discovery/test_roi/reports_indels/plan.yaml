@@ -9,13 +9,13 @@ experts:
     version: 0.5
   dbsnp:
     info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
-    joinx_version: 1.8
+    joinx_version: 1.9
   vep:
     custom_annotation_tags:
       - ON_TARGET
       - SEG_DUP
     ensembl_version: 75
-    joinx_version: 1.8
+    joinx_version: 1.9
     plugins:
       - Condel@PLUGIN_DIR@b@2
     plugins_version: 1

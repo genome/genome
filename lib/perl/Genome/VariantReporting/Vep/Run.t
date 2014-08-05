@@ -63,7 +63,7 @@ sub generate_test_cmd {
         variant_type => 'snvs',
         plugins_version => 0,
         species => "alien",
-        joinx_version => '1.8',
+        joinx_version => '1.9',
         reference_fasta => __FILE__,
     );
     my $cmd = $cmd_class->create(%params);

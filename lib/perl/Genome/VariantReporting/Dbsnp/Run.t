@@ -50,7 +50,7 @@ sub generate_test_cmd {
         dbsnp_vcf => __FILE__,
         variant_type     => 'snvs',
         info_string      => 'test',
-        joinx_version          => '1.8',
+        joinx_version          => '1.9',
     );
 
     my $cmd = $cmd_class->create(%params);

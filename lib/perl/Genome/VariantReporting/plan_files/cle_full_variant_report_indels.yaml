@@ -15,9 +15,9 @@ experts:
         plugins:
             - Condel@PLUGIN_DIR@b@2
         plugins_version: 1
-        joinx_version: 1.8
+        joinx_version: 1.9
     dbsnp:
-        joinx_version: 1.8
+        joinx_version: 1.9
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
 reporters:
     'full':

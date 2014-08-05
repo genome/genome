@@ -11,7 +11,7 @@ experts:
         feature_list_names_and_tags: {}
         species: 'homo-sapiens'
         plugins: []
-        joinx_version: 1.8
+        joinx_version: 1.9
         plugins_version: 1
 reporters:
     simple:
