@@ -132,13 +132,13 @@ $expected = sprintf("JOINX vcf-merge FLAGS %s -o " . __FILE__ . ".d/foo 2> ERROR
         join(' ', @non_empty_input_files));
 is($output, $expected, 'Command is generated correctly 4');
 
-subtest 'test joinx 1.8 does not use zcat' => sub {
+subtest 'test joinx 1.9 does not use zcat' => sub {
     $cmd = $cmd_class->create(
         input_files => \@non_empty_input_files, # not optional
         output_file => $missing_input_files[0],
         error_log => 'ERROR',
         use_bgzip => 1,
-        use_version => 1.8,
+        use_version => 1.9,
     );
     ($output) = $cmd->_generate_joinx_command($joinx_bin_path, $flags,
         $inputs, $labeled_inputs, $labeled_inputs_hash, $output_file);

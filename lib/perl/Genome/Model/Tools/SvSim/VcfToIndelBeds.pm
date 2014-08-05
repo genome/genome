@@ -4,7 +4,7 @@ use Genome;
 use strict;
 use warnings;
 
-my $JOINX_PATH = "/usr/bin/joinx1.8";
+my $JOINX_PATH = "/usr/bin/joinx1.9";
 
 class Genome::Model::Tools::SvSim::VcfToIndelBeds {
     is => "Command::V2",

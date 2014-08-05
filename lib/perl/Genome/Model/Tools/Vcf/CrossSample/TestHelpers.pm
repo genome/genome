@@ -198,7 +198,7 @@ sub test_indel_cmd {
             roi_list => get_roi_list($test_dir, 'roi.bed'),
             wingspan => 500,
             allow_multiple_processing_profiles => 0,
-            joinx_version => '1.8',
+            joinx_version => '1.9',
             varscan_version => '2.3.6',
             output_directory => $output_dir,
     );
@@ -255,7 +255,7 @@ sub test_indel_cmd {
     ok($cmd->execute(), "executed CrossSample Indel");
 
     my %compare_args = (
-        replace => [ [ qr(^region_bed_file\t.*$) => "region_bed_file\tSOMEPATH"] ],
+        replace => [ [ qr(^region_bed_file\t.*$) => "region_bed_file\tSOMEPATH"], [ qr(merge\.joinx_version\t.*$) => "merge.joinx_version\tSOMEVERSION"] ],
     );
 
     compare_ok($output_tsv, $expected_inputs, "expected inputs file ($expected_inputs) matches what we made ($output_tsv)", %compare_args);
