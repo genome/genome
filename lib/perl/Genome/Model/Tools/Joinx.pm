@@ -7,7 +7,7 @@ use Genome;
 use Carp qw/confess/;
 use Sys::Hostname;
 
-my $DEFAULT_VER = '1.8';
+my $DEFAULT_VER = '1.9';
 my $MINIMUM_VER_FOR_RLIB = 1.5;
 my $MINIMUM_VER_FOR_GZIP = '1.8';
 
