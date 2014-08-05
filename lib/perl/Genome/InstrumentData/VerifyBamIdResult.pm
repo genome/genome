@@ -184,8 +184,11 @@ sub _fix_allele_frequencies {
             $af_count++;
         }
         elsif (defined $entry->info->{CAF}) {
-            $entry->info->{AF} = _convert_caf_to_af($entry);
-            $af_count++;
+            my $af = _convert_caf_to_af($entry);
+            if ($af) {
+                $entry->info->{AF} = $af;
+                $af_count++;
+            }
         }
         $writer->write($entry);
     }
@@ -205,9 +208,14 @@ sub _convert_caf_to_af {
     my $entry = shift;
     my @fields;
     my $parser = _caf_parser($entry->{header});
-    my $caf = $parser->process_entry($entry);
+    my $caf = eval {$parser->process_entry($entry);};
+    my $error = $@;
+    #Allow this error until we fix some other problems with CAF
+    if ($error and !($error =~ /Frequency list and allele list differ in length/)) {
+        die $error;
+    }
     unless ($caf) {
-        return "";
+        return undef;
     }
     for my $alt (@{$entry->{alternate_alleles}}) {
         push @fields, $caf->{$alt};
