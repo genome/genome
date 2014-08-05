@@ -63,7 +63,7 @@ class Genome::ModelGroup {
 
 sub __display_name__ {
     my $self = shift;
-    my $set = Genome::Model->define_set('model_groups.id' => $self->id);
+    my $set = $self->model_bridge_set;
     return join(' ' ,$self->name, '('. $set->count, 'models)');
 }
 
