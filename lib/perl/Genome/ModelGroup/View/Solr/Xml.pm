@@ -74,14 +74,7 @@ class Genome::ModelGroup::View::Solr::Xml {
             is => 'ARRAY',
             default => [
                 {
-                    name => 'models',
-                    perspective => 'default',
-                    toolkit => 'xml',
-                    aspects => [
-                        'id',
-                        'name',
-                        'subject_name',
-                    ],
+                    name => '_model_content_for_search',
                     position => 'content',
                 },
                 {

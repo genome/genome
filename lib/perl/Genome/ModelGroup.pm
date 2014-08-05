@@ -388,6 +388,23 @@ sub tags_for_model {
     return \%tags;
 }
 
+sub _model_content_for_search {
+    my $self = shift;
+    my $dbh = $self->__meta__->data_source->get_default_handle();
+    my $sth = $dbh->prepare(
+        'SELECT m.genome_model_id, m.name, s.name
+        FROM model.model_group mg
+        LEFT JOIN model.model_group_bridge b ON mg.id = b.model_group_id
+        LEFT JOIN model.model m ON b.model_id = m.genome_model_id
+        LEFT JOIN subject.subject s ON m.subject_id = s.subject_id
+        WHERE mg.id = ?'
+    );
+    my $rv = $sth->execute($self->id);
+    warn $self->error_message('Failed to execute query') unless $rv;
+    my $ref = $sth->fetchall_arrayref;
+    return join(' ', map @$_, @$ref);
+}
+
 1;
 
 
