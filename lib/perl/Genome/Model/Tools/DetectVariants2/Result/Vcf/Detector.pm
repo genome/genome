@@ -136,7 +136,7 @@ sub _debug_rename {
         delay    => 30,
         tries  => 3,
         callback => sub {
-            my $rv = Genome::Sys->rename($current, $destination);
+            my $rv = eval{ Genome::Sys->rename($current, $destination) };
             my $error = $!;
             if ($rv) {
                 return $rv
