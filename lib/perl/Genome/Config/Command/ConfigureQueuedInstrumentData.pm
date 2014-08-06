@@ -311,7 +311,7 @@ sub _get_items_to_process {
     } else {
         return Genome::Config::AnalysisProject::InstrumentDataBridge->get(
             status => ['new', 'failed'],
-            'analysis_project.status !=' => 'Hold',
+            'analysis_project.status not in' => ['Hold','Pending'],
             -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample'],
             -order => ['fail_count'],
             -limit => $self->limit,
