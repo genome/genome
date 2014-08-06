@@ -20,6 +20,15 @@ use Genome::Utility::Test qw(compare_ok);
 
 use_ok('Genome::Model::Tools::DetectVariants2::Lumpy');
 
+my $expected_lumpy_directory = File::Spec->catdir(File::Spec->rootdir,qw/ usr lib lumpy0.2.6 /);
+my $lumpy_directory = Genome::Model::Tools::DetectVariants2::Lumpy->lumpy_directory;
+is($lumpy_directory, $expected_lumpy_directory, "lumpy directory");
+my $lumpy_scripts_directory =  Genome::Model::Tools::DetectVariants2::Lumpy->lumpy_scripts_directory;
+is($lumpy_scripts_directory, File::Spec->catfile($expected_lumpy_directory,"scripts"), "lumpy scripts directory");
+is(Genome::Model::Tools::DetectVariants2::Lumpy->lumpy_script_for_extract_split_reads_bwamem, File::Spec->catfile($lumpy_scripts_directory,"extractSplitReads_BwaMem"), "lumpy script for split reads");
+is(Genome::Model::Tools::DetectVariants2::Lumpy->lumpy_script_for_pairend_distro, File::Spec->catfile($lumpy_scripts_directory,"pairend_distro.py"), "lumpy script for paired end");
+is(Genome::Model::Tools::DetectVariants2::Lumpy->lumpy_command, File::Spec->catfile($expected_lumpy_directory,"bin","lumpy"), "lumpy command");
+
 
     my $refbuild_id = 101947881;
 
