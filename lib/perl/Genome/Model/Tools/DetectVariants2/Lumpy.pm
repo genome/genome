@@ -96,8 +96,10 @@ sub sr_arrange{
 sub mean_stdv_reader{
     my $new_bam = shift;  
     my $pe_histo = Genome::Sys->create_temp_file_path();  
-    my $export_loc = "/gscuser/mfulton/Practice/mean_stdv.txt";
+    my $temp_dir = Genome::Sys->create_temp_file_path();
+    my $export_loc = "$temp_dir/mean_stdv.txt";
     my @mn_stdv = qq(samtools view $new_bam | tail -n+100 | /gscuser/mfulton/lumpy-sv/scripts/pairend_distro.py -r1 100 -X 4 -N 10000 -o $pe_histo);
+    # fix scripts path!!  FIXME
     print "400 - the mean and stdv command reads: @mn_stdv \n";
     my $ms_output = IPC::System::Simple::capture(@mn_stdv);
     print "\n\n\n500 - $ms_output";
