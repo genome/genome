@@ -31,6 +31,7 @@ sub bam_split{
     print Data::Dumper::Dumper(\@file_list); 
     return @file_list;
 }
+
 sub pe_alignment{
     my $orig_bam = shift;   
     my $pe_bam = Genome::Sys->create_temp_file_path(
@@ -48,7 +49,8 @@ sub sr_alignment{
     my $orig_bam = shift;
     my $sr_bam = Genome::Sys->create_temp_file_path(
     );
-    my $sr_alignment = "samtools view -h $orig_bam | /gscuser/mfulton/lumpy-sv/scripts/extractSplitReads_BwaMem -i stdin | java -Xmx8g -XX:MaxPermSize=256m -cp /gsc/scripts/lib/java/samtools/picard-tools-1.82/SamFormatConverter.jar net.sf.picard.sam.SamFormatConverter I=/dev/stdin O=$sr_bam";
+    my $extraction_script = lumpy_script_for_extract_split_reads_bwamem();
+    my $sr_alignment = "samtools view -h $orig_bam | $extraction_script -i stdin | java -Xmx8g -XX:MaxPermSize=256m -cp /gsc/scripts/lib/java/samtools/picard-tools-1.82/SamFormatConverter.jar net.sf.picard.sam.SamFormatConverter I=/dev/stdin O=$sr_bam";
    
     print "300 - I'm going to run $sr_alignment";
     my $sr_split = Genome::Sys->shellcmd(
@@ -98,8 +100,8 @@ sub mean_stdv_reader{
     my $pe_histo = Genome::Sys->create_temp_file_path();  
     my $temp_dir = Genome::Sys->create_temp_file_path();
     my $export_loc = "$temp_dir/mean_stdv.txt";
-    my @mn_stdv = qq(samtools view $new_bam | tail -n+100 | /gscuser/mfulton/lumpy-sv/scripts/pairend_distro.py -r1 100 -X 4 -N 10000 -o $pe_histo);
-    # fix scripts path!!  FIXME
+    my $pe_extraction_script = lumpy_script_for_pairend_distro();
+    my @mn_stdv = qq(samtools view $new_bam | tail -n+100 | $pe_extraction_script -r1 100 -X 4 -N 10000 -o $pe_histo);
     print "400 - the mean and stdv command reads: @mn_stdv \n";
     my $ms_output = IPC::System::Simple::capture(@mn_stdv);
     print "\n\n\n500 - $ms_output";
@@ -219,6 +221,36 @@ sub _detect_variants{
         output_files => [$self->_sv_staging_output],
         allow_zero_size_output_files => 1,
        );
+}
+
+sub lumpy_directory{
+    return File::Spec->catdir(File::Spec->rootdir,qw/ usr lib lumpy0.2.6 /);
+}
+
+sub lumpy_command{
+    return File::Spec->catfile(lumpy_directory(),"bin","lumpy");
+}
+
+sub lumpy_scripts_directory{
+    return File::Spec->catfile(lumpy_directory(),'scripts');
+}
+
+sub lumpy_script_for {
+    my $script_name = shift;
+    die "no script name given" if not $script_name;
+
+    my $script_location = File::Spec->catfile(lumpy_scripts_directory(), "$script_name");
+ 
+    die "script does not exist $script_location" if not -e $script_location; 
+
+    return $script_location;
+}
+sub lumpy_script_for_extract_split_reads_bwamem{
+    return lumpy_script_for("extractSplitReads_BwaMem");
+}
+
+sub lumpy_script_for_pairend_distro{
+    return lumpy_script_for("pairend_distro.py");
 }
 
 
