@@ -33,16 +33,14 @@ sub _interpret_entry {
         my $interpreter = Genome::VariantReporting::BamReadcount::VafInterpreter->create(sample_name => $sample_name);
         my %result = $interpreter->interpret_entry($entry, $passed_alt_alleles);
         for my $alt_allele (@$passed_alt_alleles) {
-            $coverages{$alt_allele}->{ref_count}->{$sample_name} = $result{$alt_allele}->{ref_count};
-            $coverages{$alt_allele}->{var_count}->{$sample_name} = $result{$alt_allele}->{var_count};
+            $coverages{$alt_allele}->{coverage}->{$sample_name} = $result{$alt_allele}->{ref_count} + $result{$alt_allele}->{var_count};
         }
     }
 
     my %return_values;
     for my $alt_allele (@$passed_alt_alleles) {
-        my @ref_counts = values %{$coverages{$alt_allele}->{ref_count}};
-        my @var_counts = values %{$coverages{$alt_allele}->{var_count}};
-        $return_values{$alt_allele} = { min_coverage_observed => min(@ref_counts, @var_counts) };
+        my @coverages = values %{$coverages{$alt_allele}->{coverage}};
+        $return_values{$alt_allele} = { min_coverage_observed => min(@coverages) };
     }
     return %return_values;
 }
