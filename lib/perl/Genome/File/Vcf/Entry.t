@@ -24,6 +24,7 @@ my $header_txt = <<EOS;
 ##FILTER=<ID=BAD,Description="This entry is bad and it should feel bad">
 ##INFO=<ID=A,Number=1,Type=String,Description="Info field A">
 ##INFO=<ID=C,Number=A,Type=String,Description="Info field C (per-alt)">
+##INFO=<ID=D,Number=R,Type=String,Description="Info field D (per-alt)">
 ##INFO=<ID=E,Number=0,Type=Flag,Description="Info field E">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">
@@ -84,7 +85,7 @@ subtest "basic parsing/accessors" => sub {
         'C,G',          # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
-        'A=B;C=8,9;E',  # INFO
+        'A=B;C=8,9;D=REF-A,ALT-C,ALT-G;E',  # INFO
         'GT:DP:FT',     # FORMAT
         '0/1:12',       # FIRST_SAMPLE
         '0/2:24:PASS',
@@ -114,7 +115,7 @@ subtest "basic parsing/accessors" => sub {
     ok(!defined $entry->allele_index('AA'), 'allele index (not found)');
     is($entry->{quality}, '10.3', 'Parsed quality');
     is_deeply([$entry->filters], ['PASS'], 'Parsed filter');
-    is_deeply($entry->info, { A => 'B', C => '8,9', E => undef  }, 'Parsed info fields');
+    is_deeply($entry->info, { A => 'B', C => '8,9', D => 'REF-A,ALT-C,ALT-G', E => undef  }, 'Parsed info fields');
     is_deeply([$entry->format], ['GT', 'DP', 'FT'], 'Parsed format');
 
     is($entry->info('A'), 'B', 'Info accessor works for A');
@@ -139,9 +140,17 @@ subtest "basic parsing/accessors" => sub {
 
     ok(!$entry->info_for_allele("X"), "info_for_allele with bad allele name");
     is($entry->info_for_allele("C", "C"), 8, "info_for_allele 1");
+    is($entry->info_for_allele("C", "D"), 'ALT-C', "info_for_allele for alt C field D");
     is($entry->info_for_allele("G", "C"), 9, "info_for_allele 2");
-    is_deeply($entry->info_for_allele("C"), { A => 'B', C => 8, E => undef }, "info_for_allele (all fields)");
-    is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, E => undef }, "info_for_allele (all fields)");
+    is($entry->info_for_allele("G", "D"), 'ALT-G', "info_for_allele for alt G field D");
+    is_deeply($entry->info_for_allele("C"), { A => 'B', C => 8, D => 'ALT-C', E => undef }, "info_for_allele (all fields)");
+    is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, D => 'ALT-G', E => undef }, "info_for_allele (all fields)");
+
+    is($entry->info_for_allele("A", "A"), undef, "info_for_allele ref for field 'A' is undef");
+    is($entry->info_for_allele("A", "C"), undef, "info_for_allele ref for field 'C' is undef");
+    is($entry->info_for_allele("A", "D"), 'REF-A', "info_for_allele ref for field 'D' is 1");
+    print Data::Dumper::Dumper([$entry->info_for_allele("A")]);
+    is_deeply($entry->info_for_allele("A"), { D => 'REF-A', }, "info_for_allele ref (all fields) is correct");
 
 };
 
@@ -417,6 +426,8 @@ subtest "add_allele" => sub {
     is_deeply($entry->{alternate_alleles}, [qw/ C G T /], 'alternate_alleles is correct after readding T');
     ok($entry->add_allele('A'), 'add_allele reference A');
     is_deeply($entry->{alternate_alleles}, [qw/ C G T /], 'alternate_alleles is correct after adding reference');
+
+
 
 };
 

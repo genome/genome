@@ -419,24 +419,37 @@ sub info_for_allele {
 
     # we don't have that allele, or it is the reference (idx 0)
     my $idx = $self->allele_index($allele);
-    return unless defined $idx && $idx > 0;
-    --$idx; # we don't care about the reference allele
+    return unless defined $idx;
 
     # no header! what are you doing?
     confess "info_for_allele called on entry with no vcf header!" unless $self->{header};
 
     my @keys = defined $key ? $key : keys %$hash;
 
+    print Data::Dumper::Dumper([$allele, $idx, $hash]);
+
     my %result;
     for my $k (@keys) {
         my $type = $self->{header}->info_types->{$k};
         warn "Unknown info type $k encountered!" if !defined $type;
+
         if (defined $type && $type->{number} eq 'A') { # per alt field
+
+            next if $idx == 0;
+            my @values = split(',', $hash->{$k});
+            next if ( $idx - 1 ) > $#values;
+            $result{$k} = $values[$idx - 1];
+
+        }
+        elsif (defined $type && $type->{number} eq 'R') { # per ref & alt field
 
             my @values = split(',', $hash->{$k});
             next if $idx > $#values;
             $result{$k} = $values[$idx];
-        } else {
+
+        }
+        else {
+            next if $idx == 0;
             $result{$k} = $hash->{$k}
         }
     }
