@@ -9,15 +9,33 @@ use Test::More;
 
 use_ok('Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation') or die;
 use_ok('Genome::File::Vcf::Entry') or die;
+use_ok('Genome::File::Vcf::Header') or die;
+
+my $header = Genome::File::Vcf::Header->create(
+    lines => [
+        '##fileformat=VCFv4.2',
+        '#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S2	S3	S4	S5',
+    ],
+);
 
 sub build_test {
     my ($allele1, $allele2, $reference_allele, $alternate_alleles, $expected_gt, $expected_alts) = @_; 
 
     my $genotype = { allele1 => $allele1, allele2 => $allele2, };
-    my $entry = bless({ reference_allele => $reference_allele, alternate_alleles => $alternate_alleles }, 'Genome::File::Vcf::Entry');
+    my $entry = bless({ 
+            reference_allele => $reference_allele, 
+            alternate_alleles => $alternate_alleles,
+            header => $header,
+        }, 'Genome::File::Vcf::Entry');
+    for my $allele ( $allele1, $allele2 ) { 
+        next if $allele eq '-';
+        $entry->add_allele($allele);
+    }
 
     return sub { 
-        my $gt = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation->_gt_for_genotype($genotype, $entry);
+        my $gt = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation->_gt_for_alleles(
+            $entry, $genotype->{allele1}, $genotype->{allele2}
+        );
         is($gt, $expected_gt, 'correct GT '.$gt.' for alleles: '.$genotype->{allele1}.$genotype->{allele2});
         is_deeply($entry->{alternate_alleles}, $expected_alts, 'correct alternate alleles: '.join('', @{$entry->{alternate_alleles}}));
     };
