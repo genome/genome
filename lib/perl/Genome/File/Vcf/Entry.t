@@ -2,6 +2,7 @@
 
 use above 'Genome';
 use Data::Dumper;
+use Test::Exception;
 use Test::More;
 use Genome::File::Vcf::Genotype;
 
@@ -384,6 +385,39 @@ subtest "get alt bases for sample" => sub {
         # my $non_genotype = $entry->genotype_for_sample(3);
     # };
     # ok($@, "Getting a genotype for an out-of-bounds sample index is an error");
+};
+
+subtest "add_allele" => sub {
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'A',            # REF
+        'C,G',          # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        'A=B;C=8,9;E',  # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12',       # FIRST_SAMPLE
+        '0/2:24:PASS',
+        '0/2:24:.',
+        '0/2:24:BAD',
+    );
+
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "parsed entry");
+
+    throws_ok( sub{ $entry->add_allele(); }, qr/No allele given to add!/, 'add_allele fails without allele');
+    throws_ok( sub{ $entry->add_allele('-'); }, qr/Invalid allele given to add! '-'/, 'add_allele fails with invalid allele');
+    is_deeply($entry->{alternate_alleles}, [qw/ C G /], 'alternate_alleles is correct');
+    ok($entry->add_allele('T'), 'add_allele T');
+    is_deeply($entry->{alternate_alleles}, [qw/ C G T /], 'alternate_alleles is correct after adding T');
+    ok($entry->add_allele('T'), 'add_allele T again');
+    is_deeply($entry->{alternate_alleles}, [qw/ C G T /], 'alternate_alleles is correct after readding T');
+    ok($entry->add_allele('A'), 'add_allele reference A');
+    is_deeply($entry->{alternate_alleles}, [qw/ C G T /], 'alternate_alleles is correct after adding reference');
+
 };
 
 done_testing();

@@ -4,6 +4,7 @@ use Data::Dumper;
 use Carp qw/confess/;
 use Genome;
 use List::Util qw/first/;
+require List::MoreUtils;
 use Genome::File::Vcf::Genotype;
 
 use strict;
@@ -212,6 +213,37 @@ sub alleles {
     my $self = shift;
     my @allele_array = ($self->{reference_allele}, @{$self->{alternate_alleles}});
     return @allele_array;
+}
+
+=item C<add_allele>
+
+DOC ME!
+
+=cut
+
+my @valid_alleles = (qw/ A C G T /);
+sub add_allele {
+    my ($self, $allele, %stuff) = @_;
+    confess 'No allele given to add!' if not $allele;
+
+    # Make allele capital
+    $allele = uc $allele;
+
+    # Check if valid alele
+    confess "Invalid allele given to add! '$allele'" if not List::MoreUtils::any { $allele eq $_ } @valid_alleles;
+
+    # No op if allele already exists
+    return 1 if List::MoreUtils::any { $allele eq $_ } $self->alleles;
+
+    # Push to alt alleles
+    push @{$self->{alternate_alleles}}, $allele;
+
+    # FIXME add to required fields
+
+    return 1;
+}
+
+sub add_info_for_allele {
 }
 
 =item C<has_indel>
