@@ -34,5 +34,24 @@ sub interpret_entry {
     return %return_values;
 }
 
+# Auto pass all alts for this sample (fail alts not present in this sample)
+# If this sample has no genotype information, pass everything.
+sub pass_all_sample_alts {
+    my ($self, $entry) = @_;
+    my @sample_alt_alleles = $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
+
+    my %return_values;
+    if (@sample_alt_alleles) {
+        %return_values = map { $_ => 0 } @{$entry->{alternate_alleles}};
+        for my $alt_allele (@sample_alt_alleles) {
+            $return_values{$alt_allele} = 1;
+        }
+    } else {
+        %return_values = map { $_ => 1 } @{$entry->{alternate_alleles}};
+    }
+
+    return %return_values;
+}
+
 
 1;

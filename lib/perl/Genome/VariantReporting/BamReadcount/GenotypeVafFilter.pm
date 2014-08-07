@@ -65,15 +65,14 @@ sub filter_entry {
 
     my %return_values = map { $_ => 0 } @{$entry->{alternate_alleles}};
     my @sample_alt_alleles = $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
-    return %return_values if not @sample_alt_alleles;
+    unless (@sample_alt_alleles) {
+        return $self->pass_all_sample_alts($entry);
+    }
 
     #Keep positions without readcount information
     my $readcount_entry = $self->get_readcount_entry($entry);
     unless (defined($readcount_entry)) {
-        for my $alt_allele (@sample_alt_alleles) {
-            $return_values{$alt_allele} = 1;
-        }
-        return %return_values;
+        return $self->pass_all_sample_alts($entry);
     }
 
     my %vafs = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
@@ -81,7 +80,9 @@ sub filter_entry {
         $readcount_entry,
     );
     my $gt = $entry->genotype_for_sample($self->sample_index($entry->{header}));
-    return %return_values unless defined $gt;
+    unless ($gt and %vafs) {
+        return $self->pass_all_sample_alts($entry);
+    }
 
     for my $alt_allele ( @sample_alt_alleles ) {
         my $vaf = $vafs{$alt_allele};
