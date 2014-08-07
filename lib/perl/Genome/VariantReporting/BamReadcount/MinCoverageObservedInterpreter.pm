@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use List::Util qw/ min /;
+use Scalar::Util qw( looks_like_number );
 
 class Genome::VariantReporting::BamReadcount::MinCoverageObservedInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
@@ -39,8 +40,12 @@ sub _interpret_entry {
 
     my %return_values;
     for my $alt_allele (@$passed_alt_alleles) {
-        my @coverages = values %{$coverages{$alt_allele}->{coverage}};
-        $return_values{$alt_allele} = { min_coverage_observed => min(@coverages) };
+        my @coverages = grep { looks_like_number($_) } values %{$coverages{$alt_allele}->{coverage}};
+        if (@coverages) {
+            $return_values{$alt_allele} = { min_coverage_observed => min(@coverages) };
+        } else {
+            $return_values{$alt_allele} = { min_coverage_observed => $self->interpretation_null_character };
+        }
     }
     return %return_values;
 }

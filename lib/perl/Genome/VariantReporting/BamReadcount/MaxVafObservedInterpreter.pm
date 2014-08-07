@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 use List::Util qw/ max /;
 use List::MoreUtils qw( each_array );
+use Scalar::Util qw( looks_like_number );
 
 class Genome::VariantReporting::BamReadcount::MaxVafObservedInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter'],
@@ -60,12 +61,19 @@ sub _interpret_entry {
 
     my %return_values;
     for my $alt_allele (@$passed_alt_alleles) {
-        my @normal_vafs = values %{$normal_vafs{$alt_allele}};
-        my @tumor_vafs = values %{$tumor_vafs{$alt_allele}};
-        $return_values{$alt_allele} = {
-            max_normal_vaf_observed => max(@normal_vafs),
-            max_tumor_vaf_observed => max(@tumor_vafs),
-        };
+        my @normal_vafs = grep { looks_like_number($_) } values %{$normal_vafs{$alt_allele}};
+        my @tumor_vafs = grep { looks_like_number($_) } values %{$tumor_vafs{$alt_allele}};
+
+        if (@normal_vafs) {
+            $return_values{$alt_allele}{max_normal_vaf_observed} = max(@normal_vafs);
+        } else {
+            $return_values{$alt_allele}{max_normal_vaf_observed} = $self->interpretation_null_character;
+        }
+        if (@tumor_vafs) {
+            $return_values{$alt_allele}{max_tumor_vaf_observed} = max(@tumor_vafs);
+        } else {
+            $return_values{$alt_allele}{max_tumor_vaf_observed} = $self->interpretation_null_character;
+        }
     }
     return %return_values;
 }
