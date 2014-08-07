@@ -102,6 +102,19 @@ class Genome::Model::SomaticValidation {
             valid_values => ['target_region','tiled_region'],
             doc => 'For multi-tracked BED files we define which track to use.',
         },
+
+        run_snv_validation => {
+            is => 'Boolean',
+            doc => 'control whether SNV validation is run in the pipeline (if other prerequisites for validation are met)'
+        },
+        run_sv_validation => {
+            is => 'Boolean',
+            doc => 'control whether SV validation is run in the pipeline (if other prerequisites for validation are met)'
+        },
+        run_indel_validation => {
+            is => 'Boolean',
+            doc => 'control whether indel validation is run in the pipeline (if other prerequisites for validation are met)'
+        },
     ],
     has_input_optional_mutable => [
         snv_variant_list => {

@@ -69,8 +69,16 @@ class Genome::Model::SomaticValidation::Command::ValidateLargeIndels::CreateAsse
 
 sub sub_command_category {'pipeline steps'}
 
+sub shortcut {
+    my $self = shift;
+
+    return $self->skip_validation;
+}
+
 sub execute {
     my $self = shift;
+
+    return 1 if $self->skip_validation;
 
     my $output_directory = $self->_create_output_directory;
 
@@ -183,5 +191,22 @@ sub _create_output_directory {
     return $output_directory;
 }
 
+sub skip_validation {
+    my $self = shift;
+
+    unless($self->build->run_indel_validation) {
+        $self->debug_message('Build indicates indel validation should be skipped.');
+        $self->skip(1);
+        $self->_resolve_output_directory;
+
+        $self->reference_build_id(1);
+        $self->contigs_fasta(1);
+        $self->tier_files(1);
+
+        return 1;
+    }
+
+    return;
+}
 1;
 

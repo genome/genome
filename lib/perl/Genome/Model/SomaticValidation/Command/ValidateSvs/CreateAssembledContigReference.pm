@@ -47,6 +47,17 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledCon
 
 sub sub_command_category { 'pipeline steps' }
 
+sub shortcut {
+    my $self = shift;
+
+    if($self->skip) {
+        $self->status_message("skip signal received. not running.");
+        return 1;
+    }
+
+    return;
+}
+
 sub execute {
     my $self = shift;
     my $build = $self->build;

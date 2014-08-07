@@ -53,8 +53,11 @@ class Genome::Model::SomaticValidation::Command::PrepareIndelValidationInput {
 
 sub execute {
     my $self = shift;
+    my $build = $self->build;
 
-    return 1 if $self->build and not $self->build->normal_sample;
+    if($build) {
+        return 1 unless $build->run_indel_validation and $build->normal_sample;
+    }
 
     $self->_create_output_directories();
 

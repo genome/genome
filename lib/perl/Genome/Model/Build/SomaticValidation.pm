@@ -126,6 +126,8 @@ class Genome::Model::Build::SomaticValidation {
         tiering_version => {
             via => 'model',
         },
+
+        map { $_ => { via => 'model' } } ('run_snv_validation', 'run_sv_validation', 'run_indel_validation'),
     ],
 };
 
