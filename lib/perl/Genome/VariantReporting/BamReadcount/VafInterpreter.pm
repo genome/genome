@@ -50,7 +50,6 @@ sub _interpret_entry {
         else {
             $vaf = undef;
         }
-        my $readcount_entry = $self->get_readcount_entry($entry);
 
         $return_values{$allele} = {
             vaf => $vaf,
