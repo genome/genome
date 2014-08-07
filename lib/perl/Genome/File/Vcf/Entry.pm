@@ -223,7 +223,7 @@ DOC ME!
 
 my @valid_alleles = (qw/ A C G T /);
 sub add_allele {
-    my ($self, $allele, %stuff) = @_;
+    my ($self, $allele) = @_;
     confess 'No allele given to add!' if not $allele;
 
     # Make allele capital
@@ -238,12 +238,19 @@ sub add_allele {
     # Push to alt alleles
     push @{$self->{alternate_alleles}}, $allele;
 
-    # FIXME add to required fields
+    # Add info
+    my $info = $self->info;
+    my $info_types = $self->{header}->info_types;
+    my @info_type_names = keys %$info_types;
+    return 1 if not @info_type_names;
+
+    for my $info_type_name ( @info_type_names ) {
+        next if not List::MoreUtils::any { $_ eq $info_types->{$info_type_name}->{number} } (qw/ A R /);
+        next if not $info->{$info_type_name};
+        $info->{$info_type_name} .= ',.';
+    }
 
     return 1;
-}
-
-sub add_info_for_allele {
 }
 
 =item C<has_indel>

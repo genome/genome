@@ -405,7 +405,7 @@ subtest "add_allele" => sub {
         'C,G',          # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
-        'A=B;C=8,9;E',  # INFO
+        'A=B;C=8,9;D=REF-A,ALT-C,ALT-G;E',  # INFO
         'GT:DP:FT',     # FORMAT
         '0/1:12',       # FIRST_SAMPLE
         '0/2:24:PASS',
@@ -422,12 +422,12 @@ subtest "add_allele" => sub {
     is_deeply($entry->{alternate_alleles}, [qw/ C G /], 'alternate_alleles is correct');
     ok($entry->add_allele('T'), 'add_allele T');
     is_deeply($entry->{alternate_alleles}, [qw/ C G T /], 'alternate_alleles is correct after adding T');
+    is_deeply($entry->info, { A => 'B', C => '8,9,.', D => 'REF-A,ALT-C,ALT-G,.', E => undef  }, 'add_allele updated info fields');
     ok($entry->add_allele('T'), 'add_allele T again');
     is_deeply($entry->{alternate_alleles}, [qw/ C G T /], 'alternate_alleles is correct after readding T');
+
     ok($entry->add_allele('A'), 'add_allele reference A');
     is_deeply($entry->{alternate_alleles}, [qw/ C G T /], 'alternate_alleles is correct after adding reference');
-
-
 
 };
 
