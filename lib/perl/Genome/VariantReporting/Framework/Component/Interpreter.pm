@@ -46,4 +46,21 @@ sub interpret_entry {
     return %interpret_entry;
 }
 
+# Set all interpretation fields to null values.
+# Override this method if special behavior is needed.
+sub null_interpretation {
+    my ($self, $alt_alleles) = @_;
+    my %return_values;
+
+    for my $allele (@$alt_alleles) {
+        $return_values{$allele} = { map { $_ => $self->interpretation_null_character } $self->available_fields };
+    }
+
+    return %return_values;
+}
+
+sub interpretation_null_character {
+    return '.';
+}
+
 1;

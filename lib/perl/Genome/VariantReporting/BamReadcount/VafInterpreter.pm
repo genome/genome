@@ -36,7 +36,7 @@ sub _interpret_entry {
     my %return_values;
 
     my $readcount_entry = $self->get_readcount_entry($entry);
-    return $self->unknown_readcount_return_values($passed_alt_alleles) unless defined($readcount_entry);
+    return $self->null_interpretation($passed_alt_alleles) unless defined($readcount_entry);
 
     my %vafs = Genome::VariantReporting::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
         $entry, $readcount_entry);
@@ -62,17 +62,6 @@ sub _interpret_entry {
         }
     }
 
-    return %return_values;
-}
-
-sub unknown_readcount_return_values {
-    my $self = shift;
-    my $passed_alt_alleles = shift;
-
-    my %return_values;
-    for my $allele (@$passed_alt_alleles) {
-        $return_values{$allele} = { map { $_ => '.' } $self->available_fields };
-    }
     return %return_values;
 }
 
