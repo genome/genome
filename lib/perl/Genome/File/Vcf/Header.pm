@@ -31,6 +31,7 @@ sub all_columns {
 
 my %VALID_VCF_TYPE_NON_NUMERIC_NUMBERS = (
     'A' => 1, # per alt
+    'R' => 1, # per allele [ref + alts]
     'G' => 1, # per genotype
     '.' => 1, # variable length
 );

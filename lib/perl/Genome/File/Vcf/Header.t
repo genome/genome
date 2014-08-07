@@ -17,7 +17,7 @@ my $pkg = "Genome::File::Vcf::Header";
 use_ok($pkg);
 
 my $header_txt = <<EOS;
-##fileformat=VCFv4.1
+##fileformat=VCFv4.2
 ##foo=bar
 ##something
 ##FILTER=<ID=PASS,Description="Passed all filters">
@@ -25,6 +25,7 @@ my $header_txt = <<EOS;
 ##FILTER=<ID=REALLY_BAD,Description="Oh no">
 ##INFO=<ID=CALLER,Number=.,Type=String,Description="Variant caller">
 ##INFO=<ID=GMAF,Number=A,Type=Float,Description="Global minor allele frequency">
+##INFO=<ID=CAF,Number=R,Type=Float,Description="Complete allele frequency">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">
 ##SAMPLE=<Accession=hhh000034,File=TCGA-1.bam,ID=TCGA-1,Platform=Illumina,SampleTCGABarcode=TCGA-1,SampleUUID=536-345-5dc-8234,Source=dbGap>
@@ -37,12 +38,12 @@ subtest "basic_parse" => sub {
     my $header = $pkg->create(lines => \@lines);
     ok($header, "Parsed header");
 
-    is($header->fileformat, "VCFv4.1", "fileformat");
+    is($header->fileformat, "VCFv4.2", "fileformat");
     is($header->num_samples, 3, "got 3 samples");
     is(scalar $header->sample_names, 3, "got 3 samples");
     is_deeply([$header->sample_names], ["S1", "S2", "S3"], "Sample names parsed");
 
-    is_deeply([sort keys %{$header->info_types}], ["CALLER", "GMAF"], "Got expected info field names");
+    is_deeply([sort keys %{$header->info_types}], [qw/ CAF CALLER GMAF /], "Got expected info field names");
     is_deeply([sort keys %{$header->format_types}], ["DP", "GT"], "Got expected format field names");
     is_deeply([sort keys %{$header->filters}], ["BAD", "PASS", "REALLY_BAD"], "Got expected filter names");
 
@@ -61,6 +62,15 @@ subtest "basic_parse" => sub {
             number => "A",
             type => "Float",
             description => "Global minor allele frequency",
+        }
+        , "caller info field");
+
+    is_deeply($header->info_types->{CAF},
+        {
+            id => "CAF",
+            number => "R",
+            type => "Float",
+            description => "Complete allele frequency",
         }
         , "caller info field");
 
