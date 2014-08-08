@@ -55,7 +55,7 @@ sub _interpret_entry {
             vaf => $vaf,
             var_count => Genome::VariantReporting::BamReadcount::VafCalculator::calculate_coverage_for_allele($readcount_entry, $allele, $entry->{reference_allele}),
             per_library_var_count => $self->per_library_coverage($readcount_entry, $allele, $entry->{reference_allele}),
-            ref_count => Genome::VariantReporting::BamReadcount::VafCalculator::calculate_coverage_for_allele($self->get_readcount_entry($entry), $translated_reference_allele, 'A'),
+            ref_count => Genome::VariantReporting::BamReadcount::VafCalculator::calculate_coverage_for_allele($readcount_entry, $translated_reference_allele, 'A'),
             per_library_ref_count => $self->per_library_coverage($readcount_entry, $translated_reference_allele, 'A'),
             per_library_vaf => $self->per_library_vaf($entry, $readcount_entry, $allele),
         }
