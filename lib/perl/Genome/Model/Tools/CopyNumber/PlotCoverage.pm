@@ -76,6 +76,11 @@ class Genome::Model::Tools::CopyNumber::PlotCoverage{
             is => 'Boolean',
             is_optional => 1,
             doc => 'Set this flag to scale the depth of tumor reads with respect to the matching normal coverage ',
+        },
+        highlight => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'manually define a segment to highlight in the plot i.e  1000-1500 ',
         }
     ],
 };
@@ -124,6 +129,9 @@ sub execute {
     my $ylim_max = $self->ylim_max;
     my $arrow_size = $self->arrow_length;
     my $scale_tumor = $self->scale_tumor;
+    my $segment2highlight = $self->highlight;
+
+   
 
 
     my $transcript_file;
@@ -138,6 +146,17 @@ sub execute {
     #9:100-1001
     my ($chr,$positions) = split(/:/,$ROI);
     my ($start,$stop) = split(/\-/,$positions);
+
+    my $highlight_string="";
+    if($segment2highlight) {
+	my($seg_start,$seg_end) = split(/-/,$segment2highlight);
+	if($seg_start < $start || $seg_end > $stop) {
+	    die "Segment to highlight is beyond the range specified by ROI\n";
+	}else {
+	    $highlight_string = "highlight=c($seg_start,$seg_end)";
+	}
+    }
+
     #####code to make sure ROI is not weird###
 
     #########################################
@@ -245,13 +264,15 @@ sub execute {
     get_mean_depth($temp_file,$window_size,$plot_input_file); #calculate the average depth,given a fixed window size
     #unlink($temp_file); 
 
+ 
+
     my $plot_cmd;
     print STDERR "Rendering Plot\n";
     if($transcript_file) {
-	$plot_cmd = qq{ plot_tumor_normal_read_depth(coverage_file="$plot_input_file",plot_title="$plot_title",output_file="$output_file",transcript.info="$transcript_file",ylim_max=$ylim_max,arrow=$arrow_size) };
+	$plot_cmd = qq{ plot_tumor_normal_read_depth(coverage_file="$plot_input_file",plot_title="$plot_title",output_file="$output_file",transcript.info="$transcript_file",ylim_max=$ylim_max,arrow=$arrow_size,$highlight_string) };
     }
     else {
-	$plot_cmd = qq{ plot_tumor_normal_read_depth(coverage_file="$plot_input_file",plot_title="$plot_title",output_file="$output_file",ylim_max=$ylim_max,arrow=$arrow_size) };
+	$plot_cmd = qq{ plot_tumor_normal_read_depth(coverage_file="$plot_input_file",plot_title="$plot_title",output_file="$output_file",ylim_max=$ylim_max,arrow=$arrow_size,$highlight_string) };
     }
     my $call = Genome::Model::Tools::R::CallR->create(command=>$plot_cmd, library=> "Plot_Coverage.R");
     $call->execute;
