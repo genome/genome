@@ -37,6 +37,17 @@ class Genome::Config::Profile::Item {
             valid_values => [qw/ disabled active /],
             is_optional => 1,
         },
+        model_bridges => {
+            is => 'Genome::Config::AnalysisProject::ModelBridge',
+            reverse_as => 'config_profile_item',
+            is_many => 1,
+        },
+        models => {
+            is => 'Genome::Model',
+            via => 'model_bridges',
+            to => 'model',
+            is_many => 1,
+        },
     ],
 };
 
