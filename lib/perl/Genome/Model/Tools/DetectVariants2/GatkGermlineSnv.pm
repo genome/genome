@@ -61,7 +61,7 @@ sub _detect_variants {
 sub has_version {
     my $self = shift;
 
-    return Genome::Model::Tools::Gatk->has_version(@_);
+    return Genome::Model::Tools::Gatk::GermlineSnv->has_version(@_);
 }
 
 #TODO clean all of this up. It is usually/should be based on logic from Genome::Model::Tools::Bed::Convert logic in process_source... 

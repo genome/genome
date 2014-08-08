@@ -53,7 +53,7 @@ sub _detect_variants {
 sub has_version {
     my $self = shift;
 
-    return Genome::Model::Tools::Gatk->has_version(@_);
+    return Genome::Model::Tools::Gatk::GermlineIndelUnifiedGenotyper->has_version(@_);
 }
 
 sub parse_line_for_bed_intersection {
