@@ -25,6 +25,10 @@ class Genome::Config::AnalysisProject::ModelBridge {
             is => 'Genome::Model',
             id_by => 'model_id',
         },
+        config_profile_item => {
+            is => 'Genome::Config::Profile::Item',
+            id_by => 'profile_item_id',
+        },
     ],
 };
 

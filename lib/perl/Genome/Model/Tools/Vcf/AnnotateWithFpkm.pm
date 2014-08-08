@@ -33,6 +33,11 @@ class Genome::Model::Tools::Vcf::AnnotateWithFpkm {
             doc => 'The output file, should end in ".vcf" or ".vcf.gz".  If ".vcf.gz" the output will be zipped using bgzip.',
         },
     ],
+    has_transient_optional => [
+        _transcripts_without_genes => {
+            is => 'Hash',
+        },
+    ],
 };
 # TODO we probably want this information to be added to the sample field rather than info
 # Travis brought this up, you'd have different information for tumor vs normal, we just happen to only care
@@ -52,6 +57,8 @@ sub execute {
         $self->write_fpkm_for_sample($vep_parser, $entry, $sample_index);
         $vcf_writer->write($entry);
     }
+    $self->_print_transcripts_without_genes;
+
     return 1;
 }
 
@@ -75,23 +82,36 @@ sub write_fpkm_for_sample {
             die $self->error_message("Vep returned multiple transcripts, we want only one. Returned: %s", join(",", ( map{$_->{'feature'}} ($transcript, @extra) ) ) );
         }
         my $gene = $transcript->{'gene'};
-        unless ($gene) {
-            if ($transcript->{consequence} eq 'INTERGENIC') {
-                $self->status_message("Could not find a gene for intergenic transcript:\n%s", Data::Dumper::Dumper $transcript);
-                push @fpkms, '.';
-                next;
-            }
-            else {
-                die $self->error_message("Could not find a gene for transcript:\n%s", Data::Dumper::Dumper $transcript);
-            }
+        my $fpkm;
+        if ($gene) {
+            $fpkm = $gene_to_fpkm_map->{$gene};
+        } else {
+            $self->_add_transcript_without_gene($transcript);
+            $fpkm = '.';
         }
-        my $fpkm = $gene_to_fpkm_map->{$gene};
         unless (defined $fpkm) {
-            die $self->error_message("Could not find a fpkm value for gene (%s) from fpkm file (%s).", $gene, $self->fpkm_file);
+            $self->status_message("Could not find a fpkm value for gene (%s) from fpkm file (%s).", $gene, $self->fpkm_file);
+            $fpkm = '.';
         }
         push @fpkms, $fpkm;
     }
     $self->add_fpkm_to_entry($entry, join(',', @fpkms), $sample_index);
+}
+
+sub _add_transcript_without_gene {
+    my ($self, $transcript_to_add) = @_;
+    my $transcripts = $self->_transcripts_without_genes || {};
+    $transcripts->{ $transcript_to_add->{consequence} }++;
+    $self->_transcripts_without_genes($transcripts);
+}
+
+sub _print_transcripts_without_genes {
+    my $self = shift;
+    my $transcripts = $self->_transcripts_without_genes;
+    $self->status_message("Transcripts by consequence type:");
+    for my $consequence (keys %$transcripts) {
+        $self->status_message("%s: %s", $consequence, $transcripts->{$consequence});
+    }
 }
 
 # Return a hash mapping transcript names to fpkm values

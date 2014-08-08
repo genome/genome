@@ -146,6 +146,11 @@ sub execute {
         my $build = Genome::Model::Build->get($self->somatic_validation_build);
         die $self->error_message("Could not get a build for id " . $self->somatic_validation_build) unless ($build);
 
+        unless($build->run_indel_validation) {
+            $self->status_message('Build indicates indel validation should not be run. Skipping.');
+            return 1;
+        }
+
         unless($build->normal_sample) {
             $self->status_message('No normal sample found.  Skipping.');
             return 1;

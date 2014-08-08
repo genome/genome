@@ -31,12 +31,21 @@ my %fail = (
     AA => 0,
 );
 
+my %autopass_s1 = (
+    G => 1,
+    C => 0,
+    AA => 0,
+);
+
 subtest "pass" => sub {
     my $min_coverage = 300;
     my $filter = $pkg->create(min_coverage => $min_coverage, sample_name => "S1");
     lives_ok(sub {$filter->validate}, "Filter validates");
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->filter_entry($entry)}, \%pass, "Entry passes filter with min_coverage $min_coverage");
+
+    $entry = create_entry("");
+    is_deeply({$filter->filter_entry($entry)}, \%autopass_s1, "Entry without coverage automatically passes filter within the sample genotype with min_coverage $min_coverage");
 };
 
 subtest "fail" => sub {
@@ -46,9 +55,6 @@ subtest "fail" => sub {
 
     my $entry = create_entry(bam_readcount_line);
     is_deeply({$filter->filter_entry($entry)}, \%fail, "Entry does not pass filter with min_coverage $min_coverage");
-
-    $entry = create_entry("");
-    is_deeply({$filter->filter_entry($entry)}, \%fail, "Entry without coverage does not pass filter with min_coverage $min_coverage");
 };
 
 subtest "insertion" => sub {

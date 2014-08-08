@@ -56,10 +56,14 @@ sub _evaluate_method_chain {
     if (@_ >= 2) {
         my $obj = shift;
         my $meth = shift;
-        return _evaluate_method_chain($obj->$meth, @_);
-    } else {
-       return shift // '';
+        if ($obj->can($meth)) {
+            return _evaluate_method_chain($obj->$meth, @_);
+        } else {
+            Genome::Config::RuleModelMap->warning_message("Attempt to call nonexistent method %s on %s", $meth, $obj->__display_name__);
+            return '';
+        }
     }
+    return shift // '';
 }
 
 1;

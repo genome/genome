@@ -16,7 +16,7 @@ class Genome::VariantReporting::Fpkm::RunResult {
     ],
     has_param => [
     ],
-    has_transient => [
+    has_transient_optional => [
         fpkm_file => {
             is => 'Path',
         },

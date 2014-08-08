@@ -4,6 +4,7 @@ use Data::Dumper;
 use Carp qw/confess/;
 use Genome;
 use List::Util qw/first/;
+require List::MoreUtils;
 use Genome::File::Vcf::Genotype;
 
 use strict;
@@ -214,6 +215,44 @@ sub alleles {
     return @allele_array;
 }
 
+=item C<add_allele>
+
+DOC ME!
+
+=cut
+
+my @valid_alleles = (qw/ A C G T /);
+sub add_allele {
+    my ($self, $allele) = @_;
+    confess 'No allele given to add!' if not $allele;
+
+    # Make allele capital
+    $allele = uc $allele;
+
+    # Check if valid alele
+    confess "Invalid allele given to add! '$allele'" if not List::MoreUtils::any { $allele eq $_ } @valid_alleles;
+
+    # No op if allele already exists
+    return 1 if List::MoreUtils::any { $allele eq $_ } $self->alleles;
+
+    # Push to alt alleles
+    push @{$self->{alternate_alleles}}, $allele;
+
+    # Add info
+    my $info = $self->info;
+    my $info_types = $self->{header}->info_types;
+    my @info_type_names = keys %$info_types;
+    return 1 if not @info_type_names;
+
+    for my $info_type_name ( @info_type_names ) {
+        next if not List::MoreUtils::any { $_ eq $info_types->{$info_type_name}->{number} } (qw/ A R /);
+        next if not $info->{$info_type_name};
+        $info->{$info_type_name} .= ',.';
+    }
+
+    return 1;
+}
+
 =item C<has_indel>
 
 Returns true if the given entry has an insertion or deletion, false otherwise.
@@ -387,24 +426,37 @@ sub info_for_allele {
 
     # we don't have that allele, or it is the reference (idx 0)
     my $idx = $self->allele_index($allele);
-    return unless defined $idx && $idx > 0;
-    --$idx; # we don't care about the reference allele
+    return unless defined $idx;
 
     # no header! what are you doing?
     confess "info_for_allele called on entry with no vcf header!" unless $self->{header};
 
     my @keys = defined $key ? $key : keys %$hash;
 
+    print Data::Dumper::Dumper([$allele, $idx, $hash]);
+
     my %result;
     for my $k (@keys) {
         my $type = $self->{header}->info_types->{$k};
         warn "Unknown info type $k encountered!" if !defined $type;
+
         if (defined $type && $type->{number} eq 'A') { # per alt field
+
+            next if $idx == 0;
+            my @values = split(',', $hash->{$k});
+            next if ( $idx - 1 ) > $#values;
+            $result{$k} = $values[$idx - 1];
+
+        }
+        elsif (defined $type && $type->{number} eq 'R') { # per ref & alt field
 
             my @values = split(',', $hash->{$k});
             next if $idx > $#values;
             $result{$k} = $values[$idx];
-        } else {
+
+        }
+        else {
+            next if $idx == 0;
             $result{$k} = $hash->{$k}
         }
     }

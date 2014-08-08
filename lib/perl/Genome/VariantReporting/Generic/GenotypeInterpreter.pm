@@ -31,7 +31,9 @@ sub _interpret_entry {
 
     my $sample_alt_alleles = Set::Scalar->new($entry->alt_bases_for_sample($self->sample_index($entry->{header})));
     my $gt = $entry->genotype_for_sample($self->sample_index($entry->{header}));
-    return unless defined $gt;
+    unless ($sample_alt_alleles and $gt) {
+        return $self->null_interpretation($passed_alt_alleles);
+    }
 
     my %return_values;
     for my $alt_allele ( @$passed_alt_alleles ) {

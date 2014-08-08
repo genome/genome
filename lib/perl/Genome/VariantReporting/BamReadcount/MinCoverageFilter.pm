@@ -28,7 +28,9 @@ sub filter_entry {
     my @alt_alleles = @{$entry->{alternate_alleles}};
 
     my $readcount_entry = $self->get_readcount_entry($entry);
-    return map { $_ => 0 } @alt_alleles unless $readcount_entry;
+    unless ($readcount_entry) {
+        return $self->pass_all_sample_alts($entry);
+    }
 
     if ($readcount_entry->depth >= $self->min_coverage) {
         return map { $_ => 1 } @alt_alleles;

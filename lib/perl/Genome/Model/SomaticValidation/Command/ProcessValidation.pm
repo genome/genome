@@ -41,6 +41,11 @@ sub should_skip_run {
 
     my $build = $self->build;
 
+    unless($build->run_snv_validation) {
+        $self->status_message('Build indicates SNV validation should not run. Skipping.');
+        return 1;
+    }
+
     unless($build->normal_sample) {
         $self->status_message('No control sample. Skipping run.');
         return 1;

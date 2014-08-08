@@ -106,7 +106,7 @@ sub execute {
         my $tumor_model = $model->tumor_model;
         my $normal_model = $model->normal_model;
 
-        foreach my $m ($tumor_model,$normal_model){
+        foreach my $m ($normal_model,$tumor_model){
             my $build = $m->last_succeeded_build or
                 die "Could not find last succeeded build from model " . $m->id . "\n";
             my $dir = $build->data_directory;
@@ -169,8 +169,6 @@ sub execute {
 
     print $rfile "dev.off()\n";
     close($rfile);
-
-    `cp $newfile /tmp/asdf.R`;
 
     my $cmd = "Rscript $newfile";
     my $return = Genome::Sys->shellcmd(

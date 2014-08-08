@@ -25,23 +25,17 @@ sub _interpret_entry {
     my ($self, $entry, $passed_alt_alleles) = @_;
 
     my $readcount_entry = $self->get_readcount_entry($entry);
-    return return_hash($entry, ".", $passed_alt_alleles) unless $readcount_entry;
-
-    return return_hash($entry, $readcount_entry->depth, $passed_alt_alleles);
-}
-
-sub return_hash {
-    my $entry = shift;
-    my $coverage = shift;
-    my $passed_alt_alleles = shift;
-
-    my %return_hash;
-    for my $alt (@$passed_alt_alleles) {
-        $return_hash{$alt} = {
-            coverage => $coverage
-        };
+    if ($readcount_entry) {
+        my %return_hash;
+        for my $alt (@$passed_alt_alleles) {
+            $return_hash{$alt} = {
+                coverage => $readcount_entry->depth,
+            };
+        }
+        return %return_hash;
+    } else {
+        return $self->null_interpretation($passed_alt_alleles);
     }
-    return %return_hash;
 }
 
 1;

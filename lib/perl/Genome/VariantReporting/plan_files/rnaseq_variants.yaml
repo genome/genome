@@ -1,0 +1,53 @@
+experts:
+    'bam-readcount':
+        version: 0.5
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 0
+    vep:
+        ensembl_version: 75
+        custom_annotation_tags: []
+        species: 'homo-sapiens'
+        plugins: []
+        joinx_version: 1.8
+        plugins_version: 1
+    fpkm: {}
+reporters:
+    'annotation-format':
+        filters:
+            'allele-in-genotype':
+                sample_name: tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: tumor
+            'min-coverage':
+                min_coverage: 20
+                sample_name: tumor
+            'min-coverage':
+                min_coverage: 10
+                sample_name: normal
+            'tier1': {}
+            'n-callers':
+                sample_name: tumor
+                min_callers: 2
+                valid_callers:
+                    - Samtools
+                    - VarscanSomatic
+            'vaf-cutoff':
+                sample_name: normal
+                max_vaf: 1
+            'vaf-cutoff':
+                sample_name: tumor
+                min_vaf: 20
+            'min-fpkm':
+                sample_name: tumor
+                min_fpkm: 1
+        interpreters:
+            position: {}
+            vep: {}
+        params:
+            file_name: 'annotation'

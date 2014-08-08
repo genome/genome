@@ -55,8 +55,11 @@ sub _create_vcf_entry {
     # Skip INDELs
     return if $entry->has_indel;
 
+    # Add alleles
+    $self->_add_alleles_to_entry($genotype, $entry);
+
     # Add GT to genotype
-    $genotype->{genotype} = $self->_gt_for_genotype($genotype, $entry);
+    $genotype->{genotype} = $self->_gt_for_alleles($entry, map { $genotype->{$_} } (qw/ allele1 allele2 /) );
 
     # Add genotype data to entry
     for my $field ( Genome::Model::GenotypeMicroarray->format_types ) {
@@ -166,21 +169,28 @@ sub _annotate_genotypes {
     return 1;
 }
 
-sub _gt_for_genotype {
+sub _add_alleles_to_entry {
     my ($self, $genotype, $entry) = @_;
+    
+    for my $allele ( map { $genotype->{$_} } (qw/ allele1 allele2 /) ) { 
+        next if $allele eq '-';
+        $entry->add_allele($allele);
+    }
+
+    return 1;
+}
+
+sub _gt_for_alleles {
+    my ($self, $entry, @alleles) = @_;
 
     my %alleles_idx = (
         '-' => '.',
-        $entry->{reference_allele} => 0,
     );
-    @alleles_idx{ @{$entry->{alternate_alleles}} } = ( 1..@{$entry->{alternate_alleles}} );
+    my @entry_alleles = $entry->alleles;
+    @alleles_idx{ @entry_alleles } = ( 0..@entry_alleles );
 
     my @gt_idx;
-    for my $allele ( map { $genotype->{$_} } (qw/ allele1 allele2 /) ) { 
-        if ( not exists $alleles_idx{$allele} ) {
-            push @{$entry->{alternate_alleles}}, $allele;
-            $alleles_idx{$allele} = scalar(@{$entry->{alternate_alleles}});
-        }
+    for my $allele ( @alleles ) {
         push @gt_idx, $alleles_idx{$allele};
     }
 

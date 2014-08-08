@@ -74,6 +74,9 @@ sub test_build {
 
     # Make a fake build with both the indel variant list and a "dv2" result
     my $build = Genome::Model::Build::SomaticValidation->__define__(%params);
+    no warnings qw(once redefine);
+    *Genome::Model::Build::SomaticValidation::run_indel_validation = sub { return 1; };
+    use warnings;
 
     my $command = $class->create(
         build => $build,
