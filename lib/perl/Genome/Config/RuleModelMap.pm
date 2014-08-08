@@ -60,6 +60,7 @@ sub _evaluate_method_chain {
             return _evaluate_method_chain($obj->$meth, @_);
         } else {
             Genome::Config::RuleModelMap->warning_message("Attempt to call nonexistent method %s on %s", $meth, $obj->__display_name__);
+            return '';
         }
     }
     return shift // '';
