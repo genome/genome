@@ -12459,6 +12459,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'debug!',
         undef,
+        'highlight=s',
+        'files',
         'normal-bam=s',
         'files',
         'plot-title=s',
