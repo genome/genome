@@ -5,6 +5,7 @@ use Genome::Test::Factory::Model;
 use strict;
 use warnings;
 use Genome;
+use Genome::Test::Factory::Build;
 use Genome::Test::Factory::ProcessingProfile::ReferenceSequence;
 
 our @required_params = qw(subject);
