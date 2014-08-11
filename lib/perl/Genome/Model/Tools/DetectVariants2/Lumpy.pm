@@ -46,10 +46,11 @@ sub pe_alignment{
 }
 
 sub sr_alignment{
+    my $self = shift;
     my $orig_bam = shift;
     my $sr_bam = Genome::Sys->create_temp_file_path(
     );
-    my $extraction_script = lumpy_script_for_extract_split_reads_bwamem();
+    my $extraction_script = $self->lumpy_script_for_extract_split_reads_bwamem();
     my $sr_alignment = "samtools view -h $orig_bam | $extraction_script -i stdin | java -Xmx8g -XX:MaxPermSize=256m -cp /gsc/scripts/lib/java/samtools/picard-tools-1.82/SamFormatConverter.jar net.sf.picard.sam.SamFormatConverter I=/dev/stdin O=$sr_bam";
    
     print "300 - I'm going to run $sr_alignment";
@@ -67,7 +68,7 @@ sub pe_cmd_arrangement{
     
     $self->debug_message("\nI just recieved the mean and standard deviation.");
     my $pe_loc = &pe_alignment($new_bam);
-    my %st_mn = &mean_stdv_reader($new_bam);
+    my %st_mn = $self->mean_stdv_reader($new_bam);
     
     my $mean = $st_mn{mean};
     my $std = $st_mn{stdv};    
@@ -84,7 +85,7 @@ sub sr_cmd_arrangement{
 #-sr bam_file:split-lib2.bam,back_distance:20,min_mapping_threshold:10,weight:1,id:40,min_clip:20
     my $self = shift;  
     my $new_bam = shift;
-    my $sr_loc = &sr_alignment($new_bam);
+    my $sr_loc = $self->sr_alignment($new_bam);
     my $sr_cmd =$self->sr_arrange($sr_loc); 
     return $sr_cmd;
 }
@@ -96,11 +97,12 @@ sub sr_arrange{
     return $sr_cmd;
 }
 sub mean_stdv_reader{
+    my $self = shift;
     my $new_bam = shift;  
     my $pe_histo = Genome::Sys->create_temp_file_path();  
     my $temp_dir = Genome::Sys->create_temp_file_path();
     my $export_loc = "$temp_dir/mean_stdv.txt";
-    my $pe_extraction_script = lumpy_script_for_pairend_distro();
+    my $pe_extraction_script = $self->lumpy_script_for_pairend_distro();
     my @mn_stdv = qq(samtools view $new_bam | tail -n+100 | $pe_extraction_script -r1 100 -X 4 -N 10000 -o $pe_histo);
     print "400 - the mean and stdv command reads: @mn_stdv \n";
     my $ms_output = IPC::System::Simple::capture(@mn_stdv);
@@ -224,35 +226,41 @@ sub _detect_variants{
 }
 
 sub lumpy_directory{
-    return File::Spec->catdir(File::Spec->rootdir,qw/ usr lib lumpy0.2.6 /);
+    my $self = shift;
+    my $version = $self->version();
+    return File::Spec->catdir(File::Spec->rootdir,"usr","lib","lumpy"."$version");
 }
 
 sub lumpy_command{
-    return File::Spec->catfile(lumpy_directory(),"bin","lumpy");
+    my $self = shift;
+    return File::Spec->catfile($self->lumpy_directory(),"bin","lumpy");
 }
 
 sub lumpy_scripts_directory{
-    return File::Spec->catfile(lumpy_directory(),'scripts');
+    my $self = shift;
+    return File::Spec->catfile($self->lumpy_directory(),'scripts');
 }
 
 sub lumpy_script_for {
+    my $self = shift;
     my $script_name = shift;
     die "no script name given" if not $script_name;
 
-    my $script_location = File::Spec->catfile(lumpy_scripts_directory(), "$script_name");
+    my $script_location = File::Spec->catfile($self->lumpy_scripts_directory(), "$script_name");
  
     die "script does not exist $script_location" if not -e $script_location; 
 
     return $script_location;
 }
 sub lumpy_script_for_extract_split_reads_bwamem{
-    return lumpy_script_for("extractSplitReads_BwaMem");
+    my $self = shift;
+    return $self->lumpy_script_for("extractSplitReads_BwaMem");
 }
 
 sub lumpy_script_for_pairend_distro{
-    return lumpy_script_for("pairend_distro.py");
+    my $self = shift;
+    return $self->lumpy_script_for("pairend_distro.py");
 }
-
 
 
 
