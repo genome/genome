@@ -33,6 +33,20 @@ subtest "One passes, one fails" => sub {
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values);
 };
 
+subtest "No frequency for allele" => sub {
+    my $filter = $pkg->create(
+        max_af => ".1",
+    );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
+
+    my $entry = create_entry('['.join(",",0.7,".",".").']');
+
+    my %expected_return_values = (
+        C => 1,
+        G => 1,
+    );
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values);
+};
 subtest "No CAF for entry" => sub {
     my $filter = $pkg->create(
         max_af => ".1",

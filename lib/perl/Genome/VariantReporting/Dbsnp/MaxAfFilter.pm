@@ -36,7 +36,7 @@ sub filter_entry {
     }
 
     for my $alt_allele (@{$entry->{alternate_alleles}}) {
-        if ($caf->{$alt_allele} <= $self->max_af) {
+        if ($caf->{$alt_allele} eq '.' or $caf->{$alt_allele} <= $self->max_af) {
             $return_values{$alt_allele} = 1;
         }
         else {
