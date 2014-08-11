@@ -296,12 +296,6 @@ sub delete {
     return $self->SUPER::delete;
 }
 
-my @_AR_SUBCLASSES_TO_EXPUNGE = (
-    'Genome::InstrumentData::AlignmentResult::Merged',
-    'Genome::InstrumentData::AlignmentResult',
-    'Genome::InstrumentData::AlignmentResult::Tophat',
-);
-
 sub _expunge_assignments{
     my $self = shift;
     my $instrument_data_id = $self->id;
@@ -331,44 +325,9 @@ sub _expunge_assignments{
         push @models, $build->model;
     }
 
-    for my $ar_subclass_name (@_AR_SUBCLASSES_TO_EXPUNGE) {
-        my @alignment_results = $ar_subclass_name->get(
-            instrument_data_id => $self->id);
-
-        for my $alignment_result (@alignment_results) {
-            my @descendent_results = grep { $_->isa('Genome::SoftwareResult') } $alignment_result->descendents;
-            for my $descendent (@descendent_results) {
-                $self->_expunge_software_result($descendent);
-            }
-
-            $self->_expunge_software_result($alignment_result);
-        }
-
-    }
+    Genome::SoftwareResult->expunge_results_containing_object($self, 'Expunging instrument data ' . $instrument_data_id);
 
     return 1, %affected_users;
-}
-
-sub _expunge_software_result {
-    my $self = shift;
-    my $software_result = shift;
-
-    my $message = 'Expunging instrument data ' . $self->id;
-    return 1 if $software_result->test_name && $software_result->test_name eq $message;
-
-    if($software_result->disk_allocation) {
-        eval {
-            $software_result->disk_allocation->purge($message);
-        };
-        if($@) {
-            warn $@;
-            $software_result->set_test_name($message);
-        }
-    } else {
-        $software_result->set_test_name($message);
-    }
-
-    return 1;
 }
 
 sub calculate_alignment_estimated_kb_usage {

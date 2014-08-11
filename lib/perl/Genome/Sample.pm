@@ -378,6 +378,8 @@ sub delete {
         $library->delete;
     }
 
+    Genome::SoftwareResult->expunge_results_containing_object($self, 'deleting sample ' . $self->id);
+
     return $self->SUPER::delete;
 }
 

@@ -1159,4 +1159,37 @@ sub creation_build_and_lsf_job_id {
     return ($creation_build, $creation_lsf_job_id);
 }
 
+sub expunge_results_containing_object {
+    my $class = shift;
+    my $object = shift;
+    my $reason = shift;
+
+    my @params_and_inputs = (Genome::SoftwareResult::Param->get(value_id => $object->id), Genome::SoftwareResult::Input->get(value_id => $object->id));
+    my @results_to_expunge = Genome::SoftwareResult->get([map $_->software_result_id, @params_and_inputs]);
+
+    map $_->expunge($reason), @results_to_expunge;
+}
+
+sub expunge {
+    my $self = shift;
+    my $reason = shift;
+
+    for my $child (grep { $_->isa('Genome::SoftwareResult') } $self->children) {
+        $child->expunge($reason);
+    }
+
+    $self->set_test_name($reason);
+
+    if($self->disk_allocation) {
+        eval {
+            $self->disk_allocation->purge($reason);
+        };
+        if(my $error = $@) {
+            $self->warning_message($@);
+        }
+    }
+
+    return 1;
+}
+
 1;

@@ -125,7 +125,7 @@ ok($inst_data->delete, 'delete super seq inst data');
 ok(!$model->instrument_data, 'removed inst data from model');
 is($build->status, 'Abandoned', 'set build to abandoned');
 
-for my $result ($alignment_result, $merged_result, $qc_result, $tophat_result) {
+for my $result ($alignment_result, $merged_result, $tophat_result) {
     ok($result->test_name, 'set test name on result for expunged data');
 }
 
