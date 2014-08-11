@@ -117,6 +117,20 @@ my $command2 = Genome::Model::Tools::DetectVariants2::Lumpy->create(
     compare_ok($output_file,$expected_file);
 };
 
+subtest "has version test"=>sub{
+
+    my $command2 = Genome::Model::Tools::DetectVariants2::Lumpy->create(
+        reference_build_id => "refbuild_id",
+        aligned_reads_input => "wo_sr_bam",
+        control_aligned_reads_input => "tumor_bam",
+        params  =>"-lp,-mw:4,-tt:0.0//-pe,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:2//-sr,back_distance:20,weight:1,id:2,min_mapping_threshold:20",
+        output_directory => "output_dir2",
+        version => "0.2.6",
+    );
+    
+    is(1, $command2->has_version);
+};
+
 subtest "pe_arrange"=>sub{
     my $t_pe = "Test_PE_location";
     my $t_histo = "histo_loc";
