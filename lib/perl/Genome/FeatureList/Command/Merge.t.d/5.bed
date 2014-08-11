@@ -1,0 +1,6 @@
+track name="targets"
+1	123	1234
+1	234	2345
+2	345	3456
+X	456	4567
+track name="probes"

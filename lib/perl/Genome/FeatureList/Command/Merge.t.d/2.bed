@@ -1,0 +1,15 @@
+track name="targets"
+4	123	1234
+4	234	2345
+5	345	3456
+Y	456	4567
+track name="probes"
+4	123	500	probe9
+4	501	1234	probe10
+4	234	1000	probe11
+4	1001	2345	probe12
+5	345	2000	probe13
+5	2001	3456	probe14
+Y	456	3000	probe15
+Y	3001	4567	probe16
+
