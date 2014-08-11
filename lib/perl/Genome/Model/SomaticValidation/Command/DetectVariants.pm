@@ -143,6 +143,21 @@ sub execute{
             }
             symlink($unexpected_filename_output, $lq_result);
         }
+        #find the relevant output files for outputs from this step
+        my $hq_snv_file = $self->build->data_set_path('variants/snvs.hq', $version, 'bed');
+        my $lq_snv_file = $self->build->data_set_path('variants/snvs.lq', $version, 'bed');
+
+        unless($hq_snv_file) {
+            die $self->error_message('Could not find an HQ snv file.');
+        }
+        unless($lq_snv_file) {
+            die $self->error_message('Could not find an LQ snv file.');
+        }
+
+        $self->hq_snv_file($hq_snv_file);
+        $self->lq_snv_file($lq_snv_file);
+
+
     }
 
     if ($build->indel_detection_strategy){
@@ -198,20 +213,6 @@ sub execute{
             symlink($unexpected_filename_output, $result);
         }
     }
-
-    #find the relevant output files for outputs from this step
-    my $hq_snv_file = $self->build->data_set_path('variants/snvs.hq', $version, 'bed');
-    my $lq_snv_file = $self->build->data_set_path('variants/snvs.lq', $version, 'bed');
-
-    unless($hq_snv_file) {
-        die $self->error_message('Could not find an HQ snv file.');
-    }
-    unless($lq_snv_file) {
-        die $self->error_message('Could not find an LQ snv file.');
-    }
-
-    $self->hq_snv_file($hq_snv_file);
-    $self->lq_snv_file($lq_snv_file);
 
     $self->debug_message("detect variants step completed");
 
