@@ -228,6 +228,12 @@ sub _detect_variants{
 sub lumpy_directory{
     my $self = shift;
     my $version = $self->version();
+
+    return _lumpy_directory($version); 
+}
+
+sub _lumpy_directory {
+    my $version = shift;  
     return File::Spec->catdir(File::Spec->rootdir,"usr","lib","lumpy"."$version"); 
 }
 
@@ -264,7 +270,8 @@ sub lumpy_script_for_pairend_distro{
 
 sub has_version {
     my $self = shift;
-    if (-d $self->lumpy_directory){
+    my $version = shift; 
+    if (-d _lumpy_directory($version)){
         return 1;
     }
     else {
