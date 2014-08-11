@@ -133,12 +133,14 @@ sub _resolve_genotype_vcf_result {
     my %params = (
         sample => $self->sample,
         known_sites_build => $self->known_sites_build,
+        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
     );
     if ($self->genotype_filters) {
         $params{filters} = [$self->genotype_filters];
     }
     my $result = Genome::InstrumentData::Microarray::Result::Vcf->get_or_create(%params);
     $self->_error("Could not get or create genotype vcf result") unless $result;
+    $result->add_user(user => $self, label => "uses");
     return $result;
 }
 

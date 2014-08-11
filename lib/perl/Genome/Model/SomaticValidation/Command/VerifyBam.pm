@@ -77,6 +77,7 @@ sub params_for_result {
         precise => 1,
         version => $self->build->model->verify_bam_id_version,
         result_version => 2,
+        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
     );
     if (defined $self->build->target_region_set) {
         $params{on_target_list} = $self->build->target_region_set;
