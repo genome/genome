@@ -433,8 +433,6 @@ sub info_for_allele {
 
     my @keys = defined $key ? $key : keys %$hash;
 
-    print Data::Dumper::Dumper([$allele, $idx, $hash]);
-
     my %result;
     for my $k (@keys) {
         my $type = $self->{header}->info_types->{$k};
