@@ -33,8 +33,6 @@ sub _run {
 
 sub readcount_file_and_sample_names {
     my $self = shift;
-    my $reader = Genome::File::Vcf::Reader->new($self->input_vcf);
-    my $header = $reader->header;
 
     my @array;
     for my $result ($self->readcount_results) {
