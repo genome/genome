@@ -177,9 +177,7 @@ sub params_hash{
     my %parameters;
     foreach my $place (@params){
         if ($place =~ m/^\-([a-z]{2}),(.*)$/){
-            my $prefix = $1;
-            my $params = $2;
-            $parameters{$prefix} = $params;
+            $parameters{$1} = $2;
         }
         else {$self->debug_message("\nnone here\n");}
     }
