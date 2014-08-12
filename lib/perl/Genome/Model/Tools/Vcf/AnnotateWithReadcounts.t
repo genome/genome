@@ -50,6 +50,17 @@ subtest "output indel vcf" => sub {
        diag $diff->to_string;
 };
 
+subtest "insertion and deletion on same line" => sub {
+    my $out = Genome::Sys->create_temp_file_path . '_indel2.gz';
+    run_indel2($out);
+
+    my $expected_out = File::Spec->join($data_dir, "expected_indel2.vcf.gz");
+    my $differ = Genome::File::Vcf::Differ->new($out, $expected_out);
+    my $diff = $differ->diff;
+    is($diff, undef, "Found No differences between $out and (expected) $expected_out") ||
+       diag $diff->to_string;
+};
+
 subtest "output vcf with new sample name" => sub {
     my $expected_out = File::Spec->join($data_dir, "expected_new_sample.vcf.gz");
     my $out = Genome::Sys->create_temp_file_path . '_new_sample.gz';
@@ -83,6 +94,20 @@ sub run_indel {
         vcf_file => File::Spec->join($data_dir, "2.vcf.gz"),
         readcount_file_and_sample_name => [
             sprintf("%s:TEST-patient1-somval_tumor1", File::Spec->join($data_dir, 'test3.rc.tsv')),
+        ],
+        output_file => $out,
+    );
+    ok($cmd->isa($pkg), "Command created ok");
+    ok($cmd->execute, "Command executed ok");
+}
+
+sub run_indel2 {
+    my $out = shift;
+
+    my $cmd = $pkg->create(
+        vcf_file => File::Spec->join($data_dir, "3.vcf.gz"),
+        readcount_file_and_sample_name => [
+            sprintf("%s:TEST-patient1-somval_tumor1", File::Spec->join($data_dir, 'test5.rc.tsv')),
         ],
         output_file => $out,
     );

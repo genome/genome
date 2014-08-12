@@ -43,9 +43,15 @@ sub execute {
     while (my $vcf_entry = $vcf_reader->next) {
         $vcf_entry->add_format_field($RC_TAG);
         for my $sample_idx (@sample_idxs) {
-            my $readcount_entry = $readcount_entries{$sample_idx};
-            if (entries_match($readcount_entry, $vcf_entry)) {
-                add_readcount_to_vcf_entry($readcount_entry, $vcf_entry, $sample_idx);
+            my $match_count = 0;
+            while (entries_match($readcount_entries{$sample_idx}, $vcf_entry)) {
+                if ($match_count > 0) {
+                    remove_readcount_from_vcf_entry($vcf_entry, $sample_idx);
+                }
+                else {
+                    add_readcount_to_vcf_entry($readcount_entries{$sample_idx}, $vcf_entry, $sample_idx);
+                }
+                $match_count++;
                 $readcount_entries{$sample_idx} = $readcount_readers->{$sample_idx}->next;
             }
         }
@@ -125,5 +131,10 @@ sub add_readcount_to_vcf_entry {
     return;
 }
 
+sub remove_readcount_from_vcf_entry {
+    my ($vcf_entry, $sample_idx) = @_;
+    $vcf_entry->set_sample_field($sample_idx, $RC_TAG, undef);
+    return;
+}
 
 1;
