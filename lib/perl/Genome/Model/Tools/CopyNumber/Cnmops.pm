@@ -182,11 +182,11 @@ sub plot_cnvs {
 
 sub annotate_cnvs {
   my $self = shift;
-  my $cnmops_bed = $self->outdir . "/cnmops.cnv.bed";
+  my $cnmops_bed = $self->outdir . "/cnmops.cnvs.filtered.txt";
   if(-e $cnmops_bed) {
     my $cnmops_bedpe = $self->outdir . "/cnmops.cnv.bedpe";
     my $cnmops_annotated = $self->outdir . "/cnmops.cnv.bedpe.annotated";
-    my $create_bedpe_cmd = "awk \'!/chr/ { print \"cnv\\t\"\$1\"\\t\"\$2\"\\t\"\$2\"\\t\"\$1\"\\t\"\$3\"\\t\"\$3\"\\tNA\\tNA\\t+\" }\' $cnmops_bed > $cnmops_bedpe";
+    my $create_bedpe_cmd = "awk \'!/chr/ { print \"cnv\\t\"\$1\"\\t\"\$2\"\\t\"\$2\"\\t\"\$1\"\\t\"\$3\"\\t\"\$3\"\\t\"\$4\"\\t\"\$5\"\\t+\" }\' $cnmops_bed > $cnmops_bedpe";
     Genome::Sys->shellcmd(cmd=>$create_bedpe_cmd);
     my $annotate = Genome::Model::Tools::Annotate::Sv::Transcripts->create(input_file => $cnmops_bedpe,
           output_file => $cnmops_annotated, print_flanking_genes => 1, annotation_build=>$self->annotation_build_id);
