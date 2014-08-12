@@ -28,6 +28,7 @@ class Genome::Config::AnalysisProject::ModelBridge {
         config_profile_item => {
             is => 'Genome::Config::Profile::Item',
             id_by => 'profile_item_id',
+            is_optional => 1,
         },
     ],
 };
