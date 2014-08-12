@@ -75,7 +75,7 @@ sub generate_resource_file {
     my @aligned_bams;
     push @aligned_bams, $self->discovery->merged_alignment_result->id;
     push @aligned_bams, $self->discovery->control_merged_alignment_result->id;
-    push @aligned_bams, $self->validation->control_merged_alignment_result->id;
+    push @aligned_bams, $self->validation->merged_alignment_result->id;
     $resource->{aligned_bam_result_id} = \@aligned_bams;
 
     my %feature_list_ids;
