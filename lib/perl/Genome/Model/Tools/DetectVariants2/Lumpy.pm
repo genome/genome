@@ -15,6 +15,49 @@ class Genome::Model::Tools::DetectVariants2::Lumpy{
      is => 'Genome::Model::Tools::DetectVariants2::Detector',
 };
 
+sub _detect_variants{
+    my $self = shift;
+    my @cmd = $self->_open_params();
+    my %params =$self->params_reader();
+    my $orig_bam = $self->aligned_reads_input;
+    my @new_bam = &bam_split($orig_bam);
+    my @pe_cmds;
+    my @sr_cmds;    
+    foreach my $cur_bam (@new_bam){
+        if (exists $params{"pe"}){
+            my $pe_cmd = $self->pe_cmd_arrangement($cur_bam);
+            push (@pe_cmds,"$pe_cmd"); 
+        }
+        if (exists $params{"sr"}){
+            my $sr_cmd = $self->sr_cmd_arrangement($cur_bam);
+            push (@sr_cmds,"$sr_cmd");
+        }
+     }
+    if (defined $self->control_aligned_reads_input){
+       my $bam2 = $self->control_aligned_reads_input;
+       my @new_bam2 = &bam_split($bam2);
+       foreach my $cur_bam (@new_bam2){
+            if (exists $params{"pe"}){
+                my $pe_cmd = $self->pe_cmd_arrangement($cur_bam);
+                push (@pe_cmds,"$pe_cmd"); 
+            }
+            if (exists $params{"sr"}){
+                my $sr_cmd = $self->sr_cmd_arrangement($cur_bam);
+                push (@sr_cmds,"$sr_cmd");
+            }
+       }
+    }
+    my $pe_cmd = join(",@pe_cmds");   
+    my $sr_cmd = join(",@sr_cmds");   
+    splice @cmd, 1, 0, "@pe_cmds", "@sr_cmds";  
+    my $cmmd = "@cmd";
+    my $run = Genome::Sys->shellcmd(
+        cmd => $cmmd,
+        output_files => [$self->_sv_staging_output],
+        allow_zero_size_output_files => 1,
+       );
+}
+
 sub bam_split{
     my $orig_bam = shift;
     my $split_loc = Genome::Sys->create_temp_directory();
@@ -151,51 +194,6 @@ sub _open_params {
     my $output_files = $self->_sv_staging_output;
     my @sur_cmd = ("$executable_path $lump_text "," > $output_files");
     return @sur_cmd;
-}
-
-sub _detect_variants{
-    my $self = shift;
-    my $all_perm = $self->params;
-    my @perm = split('//',$all_perm);
-    my @cmd = $self->_open_params();
-    my %params =$self->params_reader();
-    my $orig_bam = $self->aligned_reads_input;
-    my @new_bam = &bam_split($orig_bam);
-    my @pe_cmds;
-    my @sr_cmds;    
-    foreach my $cur_bam (@new_bam){
-        if (exists $params{"pe"}){
-            my $pe_cmd = $self->pe_cmd_arrangement($cur_bam);
-            push (@pe_cmds,"$pe_cmd"); 
-        }
-        if (exists $params{"sr"}){
-            my $sr_cmd = $self->sr_cmd_arrangement($cur_bam);
-            push (@sr_cmds,"$sr_cmd");
-        }
-     }
-    if (defined $self->control_aligned_reads_input){
-       my $bam2 = $self->control_aligned_reads_input;
-       my @new_bam2 = &bam_split($bam2);
-       foreach my $cur_bam (@new_bam2){
-            if (exists $params{"pe"}){
-                my $pe_cmd = $self->pe_cmd_arrangement($cur_bam);
-                push (@pe_cmds,"$pe_cmd"); 
-            }
-            if (exists $params{"sr"}){
-                my $sr_cmd = $self->sr_cmd_arrangement($cur_bam);
-                push (@sr_cmds,"$sr_cmd");
-            }
-       }
-    }
-    my $pe_cmd = join(",@pe_cmds");   
-    my $sr_cmd = join(",@sr_cmds");   
-    splice @cmd, 1, 0, "@pe_cmds", "@sr_cmds";  
-    my $cmmd = "@cmd";
-    my $run = Genome::Sys->shellcmd(
-        cmd => $cmmd,
-        output_files => [$self->_sv_staging_output],
-        allow_zero_size_output_files => 1,
-       );
 }
 
 sub lumpy_directory{
