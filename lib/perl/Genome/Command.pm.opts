@@ -6367,17 +6367,6 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>converge',
       [
-        '>plot-cnvs',
-        [
-          'builds=s@',
-          undef,
-          'outdir=s',
-          'files',
-          'calculate-metrics!',
-          undef,
-          'help!',
-          undef
-        ],
         '>snv-indel-report',
         [
           'lsf-resource=s',
@@ -6419,17 +6408,6 @@ $Genome::Command::OPTS_SPEC = [
           'min-coverage=s',
           undef,
           'max-gmaf=s',
-          undef,
-          'help!',
-          undef
-        ],
-        '>cufflinks-de',
-        [
-          'builds=s@',
-          undef,
-          'outdir=s',
-          'files',
-          'fc-cutoff=s',
           undef,
           'help!',
           undef
@@ -6493,6 +6471,52 @@ $Genome::Command::OPTS_SPEC = [
           'plot!',
           undef,
           'verbose!',
+          undef,
+          'help!',
+          undef
+        ],
+        '>mutation-spectrum',
+        [
+          'builds=s@',
+          undef,
+          'outfile=s',
+          'files',
+          'outdir=s',
+          'files',
+          'help!',
+          undef
+        ],
+        '>cancer-relevance-score',
+        [
+          'builds=s@',
+          undef,
+          'gene-category-sum=s',
+          undef,
+          'outdir=s',
+          'files',
+          'outfile=s',
+          'files',
+          'help!',
+          undef
+        ],
+        '>plot-cnvs',
+        [
+          'builds=s@',
+          undef,
+          'outdir=s',
+          'files',
+          'calculate-metrics!',
+          undef,
+          'help!',
+          undef
+        ],
+        '>cufflinks-de',
+        [
+          'builds=s@',
+          undef,
+          'outdir=s',
+          'files',
+          'fc-cutoff=s',
           undef,
           'help!',
           undef
@@ -38311,6 +38335,17 @@ $Genome::Command::OPTS_SPEC = [
       'source=s',
       'files',
       'subject=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>merge',
+    [
+      'name=s',
+      'files',
+      'reference=s',
+      undef,
+      'source-lists=s@',
       undef,
       'help!',
       undef
