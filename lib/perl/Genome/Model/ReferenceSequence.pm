@@ -4,6 +4,7 @@ use warnings;
 use Genome;
 use File::Spec;
 use File::Temp;
+use Bio::SeqIO;
 
 # this ensures that, when a generic UR::Value of one or zero is gotten, 
 # other subclasses of UR::Value
