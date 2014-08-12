@@ -62,7 +62,7 @@ avgPP <- function(x, gr) {
   chr = as.vector(seqnames(x))
   start = start(x)
   end = end(x)
-  if(cn != "CN2") {
+  if(!is.nan(pp) && cn != "CN2") {
     return(data.frame(chr, start, end, end - start, max(pp), cn))
   }
 }
