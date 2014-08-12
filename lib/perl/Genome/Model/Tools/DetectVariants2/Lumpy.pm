@@ -17,17 +17,16 @@ class Genome::Model::Tools::DetectVariants2::Lumpy{
 
 sub _detect_variants{
     my $self = shift;
-    my %params =$self->params_hash();
     my $orig_bam = $self->aligned_reads_input;
     my @new_bam = bam_split($orig_bam);
     my @pe_cmds;
     my @sr_cmds;    
     foreach my $cur_bam (@new_bam){
-        if (exists $params{"pe"}){
+        if ($self->pe_param){
             my $pe_cmd = $self->pe_cmd_arrangement($cur_bam);
             push (@pe_cmds,"$pe_cmd"); 
         }
-        if (exists $params{"sr"}){
+        if ($self->sr_param){
             my $sr_cmd = $self->sr_cmd_arrangement($cur_bam);
             push (@sr_cmds,"$sr_cmd");
         }
@@ -36,11 +35,11 @@ sub _detect_variants{
        my $bam2 = $self->control_aligned_reads_input;
        my @new_bam2 = &bam_split($bam2);
        foreach my $cur_bam (@new_bam2){
-            if (exists $params{"pe"}){
+            if ($self->pe_param){
                 my $pe_cmd = $self->pe_cmd_arrangement($cur_bam);
                 push (@pe_cmds,"$pe_cmd"); 
             }
-            if (exists $params{"sr"}){
+            if ($self->sr_param){
                 my $sr_cmd = $self->sr_cmd_arrangement($cur_bam);
                 push (@sr_cmds,"$sr_cmd");
             }
@@ -74,7 +73,7 @@ sub bam_split{
 sub pe_alignment{
     my $orig_bam = shift;   
     my $pe_bam = Genome::Sys->create_temp_file_path(); 
-    my $pe_alignments ="samtools view -u -F 0x0002 $orig_bam |  samtools view -u -F 0x0100 - | samtools view -u -F 0x0004 - | samtools view -u -F 0x0008 - | samtools view -b -F 0x0400 - > $pe_bam"; 
+    my $pe_alignments ="samtools view -b -F 1294 $orig_bam -o $pe_bam"; 
     my $pe_split  = Genome::Sys->shellcmd(
       cmd => $pe_alignments,
       allow_zero_size_output_files => 1,
@@ -98,10 +97,10 @@ sub sr_alignment{
 sub pe_cmd_arrangement{
   
     my $self = shift;
-    my $new_bam = shift;
+    my $current_split_bam = shift;
     
-    my $pe_loc = &pe_alignment($new_bam);
-    my %st_mn = $self->mean_stdv_reader($new_bam);
+    my $pe_loc = &pe_alignment($current_split_bam);
+    my %st_mn = $self->mean_stdv_reader($current_split_bam);
     my $mean = $st_mn{mean};
     my $std = $st_mn{stdv};    
     my $pe_histo = $st_mn{histo};  
@@ -172,14 +171,17 @@ sub lumpy_param{
 
 sub params_hash{
     my $self = shift;
-    my $params = $self->params;
-    my @params = split('//',$params);
+    my $unparsed_params = $self->params;
+    my @params = split('//',$unparsed_params);
     my %parameters;
     foreach my $place (@params){
         if ($place =~ m/^\-([a-z]{2}),(.*)$/){
             $parameters{$1} = $2;
         }
-        else {$self->debug_message("\nnone here\n");}
+        else {
+            die sprintf("You specified the parameters incorrectly. Unparsed parametere were: (%s)  The malformed parameters were: (%s)",
+                $unparsed_params, $place);
+        }
     }
     return %parameters;
 }
