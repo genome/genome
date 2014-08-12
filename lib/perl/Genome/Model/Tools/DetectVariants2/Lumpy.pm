@@ -17,10 +17,9 @@ class Genome::Model::Tools::DetectVariants2::Lumpy{
 
 sub _detect_variants{
     my $self = shift;
-    my @cmd = $self->_open_params();
-    my %params =$self->params_reader();
+    my %params =$self->params_hash();
     my $orig_bam = $self->aligned_reads_input;
-    my @new_bam = &bam_split($orig_bam);
+    my @new_bam = bam_split($orig_bam);
     my @pe_cmds;
     my @sr_cmds;    
     foreach my $cur_bam (@new_bam){
@@ -49,8 +48,11 @@ sub _detect_variants{
     }
     my $pe_cmd = join(",@pe_cmds");   
     my $sr_cmd = join(",@sr_cmds");   
+    
+    my @cmd = $self->_open_params();
     splice @cmd, 1, 0, "@pe_cmds", "@sr_cmds";  
     my $cmmd = "@cmd";
+    
     my $run = Genome::Sys->shellcmd(
         cmd => $cmmd,
         output_files => [$self->_sv_staging_output],
@@ -152,23 +154,23 @@ sub mean_stdv_reader{
  }
 sub sr_param{
     my $self = shift;
-    my %params =$self->params_reader();
+    my %params =$self->params_hash();
     return $params{'sr'};
 }
 
 sub pe_param{
     my $self = shift;
-    my %params =$self->params_reader();
+    my %params =$self->params_hash();
     return $params{'pe'};
 }
 
 sub lumpy_param{
     my $self = shift;
-    my %params =$self->params_reader();
+    my %params =$self->params_hash();
     return $params{'lp'};
 }
 
-sub params_reader{
+sub params_hash{
     my $self = shift;
     my $params = $self->params;
     my @params = split('//',$params);
