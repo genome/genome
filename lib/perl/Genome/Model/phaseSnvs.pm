@@ -1,4 +1,4 @@
-package Genome::Model::phaseSnvs;     # rename this when you give the module file a different name <--
+package Genome::Model::phaseVariants;     # rename this when you give the module file a different name <--
 
 use strict;
 use warnings;
@@ -6,7 +6,7 @@ use File::Basename;
 use File::Spec; 
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
 
-class Genome::Model::phaseSnvs {
+class Genome::Model::phaseVariants {
     is => 'Command',                       
     has => [                                # specify the command's single-value properties (parameters) <--- 
        distance      	=> { is => 'String', is_optional => 1, doc => "Max Distance between SNV location to check if in phase" },
@@ -40,7 +40,7 @@ sub execute {
 	my $dirName = dirname(__FILE__); 
 	
 	my $command = "java -jar ";
-	$command .= File::Spec->catfile( $dirName, 'PhaseSnvs.jar' );
+	$command .= File::Spec->catfile( $dirName, 'PhaseVariants.jar' );
 
 	$command .= ' --m ';
 	$command .= $self->distance;
