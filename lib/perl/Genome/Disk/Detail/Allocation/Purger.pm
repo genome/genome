@@ -65,7 +65,11 @@ sub purge {
     unless($ENV{UR_DBI_NO_COMMIT}) {
         my $destination_directory = Genome::Sys->create_directory(
             File::Spec->join($trash_folder, $allocation_object->id));
-        dirmove($allocation_object->absolute_path, $destination_directory);
+        $self->status_message('Moving allocation path \''. $allocation_object->absolute_path .'\' to temporary path \''. $destination_directory .'\'');
+        unless (dirmove($allocation_object->absolute_path, $destination_directory) ) {
+            $self->error_message('Failed to move allocation path \''. $allocation_object->absolute_path .'\' to destination path \''. $destination_directory .'\': '. $!);
+            return;
+        };
     }
 
     my $event = Genome::Timeline::Event::Allocation->purged(
