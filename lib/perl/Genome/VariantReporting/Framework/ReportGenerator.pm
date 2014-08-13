@@ -69,6 +69,13 @@ sub entry_processors {
         my @filters = map {$self->object_with_translations($_)} $reporter_plan->filter_plans;
         my @interpreters = map {$self->object_with_translations($_)} $reporter_plan->interpreter_plans;
 
+        for my $filter (@filters) {
+            $reporter->add_filter_object($filter)
+        }
+        for my $interpreter (@interpreters) {
+            $reporter->add_interpreter_object($interpreter)
+        }
+
         push @entry_processors, Genome::VariantReporting::Framework::EntryProcessor->create(
             reporter => $reporter,
             filters => \@filters,
