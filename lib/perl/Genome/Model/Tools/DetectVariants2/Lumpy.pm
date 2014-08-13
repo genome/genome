@@ -192,7 +192,7 @@ sub _open_params {
     $lump_text =~ s/,/ /g;
     $lump_text =~ s/:/ /g;    
     print "$lump_text";
-    my $executable_path = "~/lumpy-sv/bin/lumpy";
+    my $executable_path = $self->lumpy_command;
     my $output_files = $self->_sv_staging_output;
     my @sur_cmd = ("$executable_path $lump_text "," > $output_files");
     return @sur_cmd;
