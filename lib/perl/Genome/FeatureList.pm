@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Genome::Utility::File::Mode qw(mode);
+use Text::ParseWords;
 
 class Genome::FeatureList {
     table_name => 'model.feature_list',
@@ -293,24 +294,28 @@ sub processed_bed_file_content {
         }
 
         if($self->is_multitracked) {
-            if ($line =~ /^track name=tiled_region/ or $line =~ /^track name=probes/) {
-                if ($track_name eq 'tiled_region') {
-                    $print = 1;
+            if($line =~ /^track /) {
+                my %track_attrs = $self->parse_track_definition($line);
+                my $name = $self->_standardize_track_name($track_attrs{name});
+                if ($name eq 'probes') {
+                    if ($track_name eq 'tiled_region') {
+                        $print = 1;
+                    } else {
+                        $print = 0;
+                    }
+                    next;
+                } elsif ($name eq 'targets') {
+                    if ($track_name eq 'target_region') {
+                        $print = 1;
+                    } else {
+                        $print = 0;
+                    }
+                    next;
                 } else {
-                    $print = 0;
-                }
-                next;
-            } elsif ($line =~ /^track name=target_region/ or $line =~ /^track name=targets/) {
-                if ($track_name eq 'target_region') {
+                    $self->warning_message("Unknown track name (line $line_no '$line'). Including regions.");
                     $print = 1;
-                } else {
-                    $print = 0;
+                    next;
                 }
-                next;
-            } elsif ($line =~ /^track\s.*?name=/) {
-                $self->warning_message("Unknown track name (line $line_no '$line'). Including regions.");
-                $print = 1;
-                next;
             }
         }
 
@@ -595,5 +600,65 @@ sub get_target_track_only {
 
     return $output_path;
 }
+
+use constant STANDARDIZED_TRACK_NAMES => {
+    # nimblegen lingo:
+    'tiled_region'  => 'probes',
+    'target_region' => 'targets',
+
+    # agilent lingo:
+    'Target Regions' => 'targets',
+    'Probes'         => 'probes',
+};
+
+sub _standardize_track_name {
+    my $class = shift;
+    my $track_name = shift;
+
+
+    if(exists STANDARDIZED_TRACK_NAMES->{$track_name}) {
+        return STANDARDIZED_TRACK_NAMES->{$track_name};
+    }
+
+    return $track_name;
+}
+
+# input a track definition such as:
+# track name=foo description="this is a track" some_arbitrary_attribute=yes
+# and parse it into a hash of attribute/value pairs:
+# %attrs = (
+#    name                     => 'foo',
+#    description              => 'this is a track',
+#    some_arbitrary_attribute => 'yes',
+# );
+sub parse_track_definition {
+    my $class = shift;
+    my $track_def = shift;
+    $track_def =~ s/^track\s*//;
+
+    my %track_attrs;
+    my @attr_pairs = parse_line('\s+', 1, $track_def); # break on spaces, ignoring spaces inside quotes
+    foreach (grep {defined} @attr_pairs) {
+        my ($attr, $value) = parse_line('=', 0, $_);
+        die "badly formed track definition in BED file, could not parse track definition: $track_def" unless ($attr && $value);
+        $track_attrs{$attr} = $value;
+    }
+    return %track_attrs;
+}
+
+sub _derive_format {
+    my $class = shift;
+    my ($is_1_based, $is_multitracked) = @_;
+
+    return 'unknown' unless defined($is_1_based) && defined($is_multitracked);
+
+    return 'multi-tracked 1-based' if $is_multitracked && $is_1_based;
+    return '1-based' if !$is_multitracked && $is_1_based;
+    return 'multi-tracked' if $is_multitracked && !$is_1_based;
+    return 'true-BED' if !$is_multitracked && !$is_1_based;
+
+    die 'Logic error in _derive_format.';
+}
+
 
 1;
