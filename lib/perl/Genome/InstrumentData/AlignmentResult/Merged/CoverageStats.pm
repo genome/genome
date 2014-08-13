@@ -171,6 +171,7 @@ sub create {
     }
 
     $self->_promote_data;
+    Genome::Sys->remove_directory_tree($self->temp_staging_directory);
     $self->_reallocate_disk_allocation;
 
     $self->_generate_metrics;

@@ -5,7 +5,6 @@ use warnings;
 
 use feature qw(say);
 
-use Text::ParseWords;
 use List::MoreUtils qw(any uniq);
 use Genome;
 
@@ -83,7 +82,7 @@ sub execute {
             reference => $self->reference,
             file_path => $temp_file,
             content_type => 'targeted',
-            format => $self->_derive_format($is_1_based, $is_multitracked),
+            format => Genome::FeatureList->_derive_format($is_1_based, $is_multitracked),
             description => 'generated with `genome feature-list merge`',
         );
         unless($merged_list = $cmd->execute) {
@@ -232,20 +231,6 @@ sub find_existing_list {
     return $list_to_use;
 }
 
-sub _derive_format {
-    my $class = shift;
-    my ($is_1_based, $is_multitracked) = @_;
-
-    return 'unknown' unless defined($is_1_based) && defined($is_multitracked);
-
-    return 'multi-tracked 1-based' if $is_multitracked && $is_1_based;
-    return '1-based' if !$is_multitracked && $is_1_based;
-    return 'multi-tracked' if $is_multitracked && !$is_1_based;
-    return 'true-BED' if !$is_multitracked && !$is_1_based;
-
-    die 'Logic error in _derive_format.';
-}
-
 
 #### Based on GSC::BEDFile ####
 
@@ -317,15 +302,7 @@ sub standardize_track_names {
     my $track_content = shift;
     my $accept_weird_tracks = shift; # typically no during normal processing / pooling. set to yes for some exploratory / information gathering purposes such as get_comparable_bed_file_content
 
-    my %standardized_track_names = (
-        # nimblegen lingo: 
-        'tiled_region'  => 'probes',
-        'target_region' => 'targets',
-
-        # agilent lingo:
-        'Target Regions' => 'targets',
-        'Probes'         => 'probes',
-    );
+    my %standardized_track_names = %{Genome::FeatureList->STANDARDIZED_TRACK_NAMES};
 
     my %approved_track_names = map {$_ => 1} uniq values %standardized_track_names;
     $approved_track_names{no_track} = 1 if ($accept_weird_tracks);
@@ -352,29 +329,6 @@ sub standardize_track_names {
     return $track_content;
 }
 
-# input a track definition such as:
-# track name=foo description="this is a track" some_arbitrary_attribute=yes
-# and parse it into a hash of attribute/value pairs:
-# %attrs = (
-#    name                     => 'foo',
-#    description              => 'this is a track',
-#    some_arbitrary_attribute => 'yes',
-# );
-sub parse_track_definition {
-    my $class = shift;
-    my $track_def = shift;
-    $track_def =~ s/^track\s*//;
-
-    my %track_attrs;
-    my @attr_pairs = parse_line('\s+', 1, $track_def); # break on spaces, ignoring spaces inside quotes
-    foreach (grep {defined} @attr_pairs) {
-        my ($attr, $value) = parse_line('=', 0, $_);
-        die "badly formed track definition in BED file, could not parse track definition: $track_def" unless ($attr && $value);
-        $track_attrs{$attr} = $value;
-    }
-    return %track_attrs;
-}
-
 # takes in raw file content and returns a hash keyed by track names
 sub hash_bed_content_by_tracks {
     my $class = shift;
@@ -387,7 +341,7 @@ sub hash_bed_content_by_tracks {
     foreach my $line (split /\n/, $content) {
         next if $line =~ /^browser/;
         if ($line =~ /^track/) {
-            my %track_attrs = $class->parse_track_definition($line);
+            my %track_attrs = Genome::FeatureList->parse_track_definition($line);
             $current_track = $track_attrs{name};
             unless ($current_track) {
                 die $class->error_message("badly formed BED file track definition, track with no 'name' information: " . Data::Dumper::Dumper(\%track_attrs));
@@ -461,7 +415,7 @@ sub get_bed_track_names {
 
     my @track_names;
     foreach my $line (@track_info) {
-        my %track_attrs = $class->parse_track_definition($line);
+        my %track_attrs = Genome::FeatureList->parse_track_definition($line);
         $track_attrs{name} ||= 'BAD';
         push @track_names, $track_attrs{name};
     }
