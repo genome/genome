@@ -48,7 +48,8 @@ subtest "Execute"=>sub {
     my $output_file = "$output_dir/svs.hq";
     my $expected_file = "$test_dir/1_svs.hq";
 
-    compare_ok($output_file,$expected_file);
+    compare_ok($output_file,$expected_file)or `diff $output_file $expected_file`;
+
 };
 
 subtest "test file without split reads"=>sub{
@@ -95,10 +96,11 @@ subtest "test matched samples"=>sub{
     $command2->dump_status_messages(1);
     ok($command2->execute, 'Executed `gmt detect-variants2 Lumpy` command');
 
+    
     my $output_file = "$output_dir2/svs.hq";
     my $expected_file = "$test_dir/match_svs.hq";
 
-    compare_ok($output_file,$expected_file);
+    compare_ok($output_file,$expected_file)or `diff $output_file $expected_file`;
 };
 
 subtest "has version test"=>sub{
