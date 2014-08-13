@@ -72,10 +72,6 @@ class Genome::Model::Tools::GotCloud::Epacts {
             is => 'text',
             is_optional => 1,
         },
-        reference_build => {
-            is => 'Genome::Model::Build::ReferenceSequence',
-            is_optional => 1,
-        },
         which_skat => {
             is => 'text',
             is_optional => 1,
@@ -160,9 +156,6 @@ sub validate {
     }
     if($self->type eq "make-kin" && !defined $self->min_callrate){
         die $self->error_message("You must give a minimum call rate value for make-kin");
-    }
-    if(defined $self->anno && !defined $self->reference_build){
-        die $self->error_message("You must give the reference build to annotate");
     }
     if($self->test eq "skat" && !defined $self->which_skat){
         die $self->error_message("You must specify WHICH skat test you want to run if you choose skat");
