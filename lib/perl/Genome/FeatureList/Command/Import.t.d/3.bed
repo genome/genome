@@ -1,0 +1,6 @@
+track name="targets"
+chr1	1	2	position1
+chr6	100	105	range1
+track name="probes"
+chr1	1	100	position1
+chr6	80	179	range1
