@@ -83,6 +83,8 @@ sub generate_resource_file {
     $feature_list_ids{ON_TARGET} = $on_target_feature_list->id;
     my $segdup_feature_list = $self->discovery->get_feature_list("segmental_duplications");
     $feature_list_ids{SEG_DUP} = $segdup_feature_list->id;
+    # TODO: There has to be a better way...
+    $feature_list_ids{AML_RMG} = '0e4973c600244c3f804d54bee6f81145';
     $resource->{feature_list_ids} = \%feature_list_ids;
 
     $resource->{reference_fasta} = $self->discovery->reference_sequence_build->full_consensus_path("fa");
