@@ -318,3 +318,6 @@ config_tag_profile_item [config_profile_item] 2014-08-04T21:20:58Z Thomas B. Moo
 
 add_config_id_to_anp_model_bridges [config_analysis_project_model_bridge] 2014-08-08T19:09:49Z Adam Coffman <acoffman@genome.wustl.edu> # start tracking which config item a model came from
 @1407525664 2014-08-08T19:21:05Z Adam Coffman <acoffman@genome.wustl.edu># start tracking config profile items for anp model creation
+
+config.subject_mapping_subject_index [config.subject_mapping] 2014-08-14T19:33:06Z Thomas B. Mooney <tmooney@genome.wustl.edu> # add index to speed up query in CQID
+@1408045247 2014-08-14T19:40:48Z Thomas B. Mooney <tmooney@genome.wustl.edu># Added index on query frequently used by CQID
