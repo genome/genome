@@ -35,9 +35,13 @@ sub _get_or_create_feature_list {
     my $name = shift;
     my $feature_list = Genome::FeatureList->get(name => $name);
     unless ($feature_list) {
-        $feature_list = Genome::FeatureList->__define__(name => $name, id => $fl_counter, format => "true-BED",
-            file_content_hash => "5081d1f22d4514f3ac09b003385a6e7e");
+        $feature_list = Genome::FeatureList->__define__(name => $name, id => $fl_counter, format => "true-BED");
         $fl_counter--;
+        reinstall_sub({
+            into => "Genome::FeatureList",
+            as => "file_content_hash",
+            code => sub {return "5081d1f22d4514f3ac09b003385a6e7e"},
+        });
         reinstall_sub({
             into => "Genome::FeatureList",
             as => "file_path",
