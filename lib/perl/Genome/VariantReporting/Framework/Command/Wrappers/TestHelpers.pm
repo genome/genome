@@ -88,7 +88,7 @@ sub get_build {
             as => "get_detailed_vcf_result",
             code => sub {
                 my $self = shift;
-                return Genome::SoftwareResult->get(id => $ids{$self->tumor_sample->name});
+                return Genome::SoftwareResult->get($ids{$self->tumor_sample->name});
             },
         });
 
