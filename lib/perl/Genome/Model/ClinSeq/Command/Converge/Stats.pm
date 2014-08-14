@@ -9,11 +9,7 @@ use File::Basename;
 class Genome::Model::ClinSeq::Command::Converge::Stats {
   is => 'Genome::Model::ClinSeq::Command::Converge::Base',
   has_input => [  
-    outfile => {
-      is => 'FilesystemPath',
-      doc => 'File to write results',
-    },
-    stats_file_type => {
+    stats => {
       is => 'Text',
       doc => 'Stats file to summarize' .
               'Possible values = all, wgs_snv_summary, exome_snv_summary ' .
@@ -24,12 +20,8 @@ class Genome::Model::ClinSeq::Command::Converge::Stats {
     },
     plot => {
       is => 'Boolean',
-      doc => 'Set for plotting stats.',
-      default => 0,
-    },
-    verbose => {
-      is => 'Boolean',
-      doc => 'Set for verbose status outputs.',
+      doc => 'When set, converge and plot stats. If false, stats are just ' .
+        'converged and not plotted.',
       default => 0,
     },
   ],
@@ -38,8 +30,11 @@ class Genome::Model::ClinSeq::Command::Converge::Stats {
 
 sub help_detail {
   return <<EOS
-  For a group of ClinSeq models, converge all Stats.tsv files (RNA-seq library quality metrics, SNV concordance, etc.)
-  All stats should be pre-calculated. Produce an output matrix in which each row is metric and each column is a library
+  For a group of ClinSeq models, converge all Stats.tsv files
+  (RNA-seq library quality metrics, SNV concordance, etc.)
+  All stats should be pre-calculated.
+  Produce an output matrix in which each row is metric and
+  each column is a library
   Input:
   A list of Clinseq builds, models, or a Clinseq model-group.
 EOS
@@ -47,16 +42,14 @@ EOS
 
 sub help_synopsis {
   return <<EOS
-  Example usage: 
-  genome model clin-seq converge stats  --builds='model_groups.id=786367aa2edc41e1b4a5d33787a8c003,is_last_complete=1' --outfile=metris.tsv  --verbose --outdir=/tmp/
+  Example usage:
+  genome model clin-seq converge stats  --builds='model_groups.id=786367aa2edc41e1b4a5d33787a8c003,is_last_complete=1' --outdir=/tmp/
+  genome model clin-seq converge stats  --builds='model_groups.id=786367aa2edc41e1b4a5d33787a8c003,is_last_complete=1' --outdir=/tmp/ --plot
 
   Specify *one* of the following as input (each model/build should be a ClinSeq model)
   --build_ids                Comma separated list of specific build IDs
   --model_ids                Comma separated list of specific model IDs
   --model_group_id           A singe genome model group ID
-
-  --outfile                  Path of the output file to be written
-  --verbose                  More descriptive stdout messages
 
   Test Clinseq model groups:
   32264                      ClinSeq - TechD RNA-seq library comparison - SPIA trimmed data
@@ -265,7 +258,8 @@ sub parse_metrics{
         chomp($_);
         my @line = split("\t", $_);
 
-        #Perform sanity check on header to make sure it conforms to the ClinSeq stats.tsv standard
+        #Perform sanity check on header.
+        #make sure it conforms to the ClinSeq stats.tsv standard
         if ($header){
           my $p = 0;
           foreach my $col (@line){
@@ -273,13 +267,20 @@ sub parse_metrics{
             $p++;
           }
           $header = 0;
-          unless ($columns{'Question'} && $columns{'Answer'} && $columns{'Data_Type'} && $columns{'Analysis_Type'} && $columns{'Statistic_Type'} && $columns{'Extra_Description'}){
-            die $self->error_message("\n\nRequired column missing from file:\nRequired columns: Question, Answer, Data_Type, Analysis_Type, Statistic_Type, Extra_Description\nFile: $file\nHeader: @line\n\n");
+          unless ($columns{'Question'} && $columns{'Answer'} &&
+            $columns{'Data_Type'} && $columns{'Analysis_Type'} &&
+            $columns{'Statistic_Type'} && $columns{'Extra_Description'}){
+              die $self->error_message("\n\nRequired column missing from file:".
+                "\nRequired columns: Question, Answer, Data_Type," .
+                " Analysis_Type, Statistic_Type, Extra_Description\nFile: " .
+                "$file\nHeader: @line\n\n");
           }
           next();
         }
 
-        #Parse the metrics data and store in a hash keyed on: build id (one per column in the final output) & a concatenated string unique to the metric
+        #Parse the metrics data and store in a hash keyed on: build id
+        #(one per column in the final output) &&
+        #a concatenated string unique to the metric
         my $question = "\"" . $line[$columns{'Question'}{position}] . "\"";
         my $answer = $line[$columns{'Answer'}{position}];
         my $data_type = "\"" . $line[$columns{'Data_Type'}{position}] . "\"";
@@ -333,7 +334,8 @@ sub write_output {
   my $metrics = shift;
   my $files = shift;
   my $column_names_s = shift;
-  my $outfile = shift;
+  my $outdir = shift;
+  my $outfile = $outdir . "/stats.converged.tsv";
 
   my $header_line = "Question\tData_Type\tAnalysis_Type\tStatistic_Type\tExtra_Description\tFile_Source\t$column_names_s";
   #No go through each build and print out the summary
@@ -362,8 +364,9 @@ sub write_output {
 
 sub plot_stats {
   my $self = shift;
-  my $outfile = shift;
-  my $plot_file = "stats.converged.pdf";
+  my $outdir = shift;
+  my $outfile = $outdir . "/stats.converged.tsv";
+  my $plot_file = $outdir . "/stats.converged.pdf";
   my $plot_script = __FILE__.".R";
   my $plot_cmd = $plot_script . " " . $outfile . " " . $plot_file;
   Genome::Sys->shellcmd(cmd => $plot_cmd);
@@ -372,7 +375,7 @@ sub plot_stats {
 
 sub execute {
   my $self = shift;
-  my $outfile = $self->outdir . "/" . basename($self->outfile);
+  my $outdir = $self->outdir;
   my $verbose = $self->verbose;
   my @builds = $self->builds;
   my @build_ids;
@@ -381,26 +384,30 @@ sub execute {
     push @build_ids, $build->id;
   }
 
-  my $models_builds = $self->getModelsBuilds('-builds'=>\@build_ids, '-verbose'=>$verbose);
-
-  my %files = %{$self->aggregate_stats('-models_builds'=>$models_builds, '-verbose'=>$verbose)};
+  my $models_builds = $self->getModelsBuilds('-builds'=>\@build_ids,
+    '-verbose'=>$verbose);
+  my %files = %{$self->aggregate_stats('-models_builds'=>$models_builds,
+    '-verbose'=>$verbose)};
 
   #Build a hash of possible stats values.  Key it on:
-  #Question + Data_Type + Analysis_Type + Statistic_Type + Source_File - Make sure these keys are unique within a patient (column_name)!!
+  #   Question + Data_Type + Analysis_Type + Statistic_Type + Source_File
+  #Make sure these keys are unique within a patient (column_name)!!
   my $result = $self->parse_metrics('-files'=>\%files);
   my $metrics = $result->{'metrics'};
   my $metric_list = $result->{'metric_list'};
 
   #Build the header line
   my @column_names;
-  foreach my $build_id (sort {$files{$a}->{column_name} cmp $files{$b}->{column_name}} keys %files){
+  foreach my $build_id (sort {$files{$a}->{column_name} cmp
+        $files{$b}->{column_name}} keys %files){
     my $column_name = $files{$build_id}{column_name};
     push(@column_names, $column_name);
   }
   my $column_names_s = join("\t", @column_names);
-  $self->write_output($metric_list, $metrics, \%files, $column_names_s, $outfile);
+  $self->write_output($metric_list, $metrics, \%files, $column_names_s,
+      $outdir);
   if($self->plot) {
-    $self->plot_stats($outfile);
+    $self->plot_stats($outdir);
   }
   return 1;
 }
