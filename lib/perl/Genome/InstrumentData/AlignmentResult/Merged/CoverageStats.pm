@@ -171,9 +171,11 @@ sub create {
     }
 
     $self->_promote_data;
+    $self->_generate_metrics;
+
+    $self->_cleanup_files;
     $self->_reallocate_disk_allocation;
 
-    $self->_generate_metrics;
 
     #quick sanity check--all wingspans should run on the same number of total reads
     my @wingspan_values = split(',', $self->wingspan_values);
@@ -584,5 +586,21 @@ sub _generate_target_total_bp_metric {
     return $self->add_metric(metric_name => 'target_total_bp', metric_value => $target_total_bp);
 }
 
+sub _cleanup_files {
+    my $self = shift;
+
+    Genome::Sys->remove_directory_tree($self->temp_staging_directory);
+
+    if($self->use_short_roi_names) {
+        my @files_to_remove = glob($self->output_dir . '/*.bed');
+        push @files_to_remove, map { $self->stats_file($_) } split(',', $self->wingspan_values);
+
+        for my $file (@files_to_remove) {
+            unlink $file or $self->warning_message('Failed to clean up %s: %s', $file, $!);
+        }
+    }
+
+    return 1;
+}
 
 1;

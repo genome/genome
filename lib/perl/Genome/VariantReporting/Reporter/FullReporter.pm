@@ -34,6 +34,7 @@ sub headers {
         default_gene_name
         ensembl_gene_id
         inSegDup
+        AML_RMG
         rsid
         caf
         onTarget
@@ -83,6 +84,7 @@ sub _per_library_vaf_fields {
 
 sub _header_to_info_tag_conversion {
     return {
+        AML_RMG => 'AML_RMG',
         inSegDup => 'SEG_DUP',
         onTarget => 'ON_TARGET',
     }
@@ -98,7 +100,7 @@ sub report {
             my $interpreter = $fields{$header}->{interpreter};
             my $field = $fields{$header}->{field};
 
-            if ($header eq 'inSegDup' || $header eq 'onTarget') {
+            if ($header eq 'inSegDup' || $header eq 'onTarget' || $header eq 'AML_RMG') {
                 my $info_tags = $interpretations->{$interpreter}->{$allele}->{$field};
                 $self->_print_info_tag(_header_to_info_tag_conversion()->{$header}, $info_tags);
             }
@@ -125,7 +127,7 @@ sub available_fields_dict {
     my $self = shift;
 
     my %available_fields = $self->SUPER::available_fields_dict();
-    for my $info_tag_field (qw/inSegDup onTarget/) {
+    for my $info_tag_field (qw/inSegDup onTarget AML_RMG/) {
         $available_fields{$info_tag_field} = {
             interpreter => 'info-tags',
             field => 'info_tags',

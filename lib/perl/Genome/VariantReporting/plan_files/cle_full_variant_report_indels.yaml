@@ -11,6 +11,7 @@ experts:
         custom_annotation_tags:
             - ON_TARGET
             - SEG_DUP
+            - AML_RMG
         species: 'homo-sapiens'
         plugins:
             - Condel@PLUGIN_DIR@b@2

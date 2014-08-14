@@ -345,7 +345,7 @@ sub execute {
     #now run the readcounting on snvs
     if( -s "$tempdir/snvpos"){
         my $return = Genome::Model::Tools::Sam::Readcount->execute(
-            use_version => 0.5,
+            use_version => 0.6,
             bam_file => $bam_file,
             minimum_mapping_quality => $min_mapping_quality,
             minimum_base_quality => $min_base_quality,
