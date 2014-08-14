@@ -32,4 +32,37 @@ class Genome::Model::Tools::DetectVariants2::Result::Filter {
 
 #Most filter-specific logic is in Detector.pm
 
+sub previous_result {
+    my $self = shift;
+
+    my @users = Genome::SoftwareResult::User->get(user=>$self);
+    if (scalar(@users) == 1) {
+        my $user = shift @users;
+        return $user->software_result;
+    } else {
+        my $message = sprintf("Number of previous results (%d) is not 1.  Result IDs: (%s)",
+            scalar(@users), join(', ', map {$_->software_result->id} @users));
+        die $message;
+    }
+}
+
+sub vcf_result_params {
+    my $self = shift;
+
+    return (
+        filter_name => $self->filter_name,
+        filter_params => $self->filter_params,
+        filter_version => $self->filter_version,
+        incoming_vcf_result => $self->previous_result->get_vcf_result,
+        input_id => $self->id,
+        previous_filter_strategy => $self->previous_filter_strategy,
+        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        vcf_version => Genome::Model::Tools::Vcf->get_vcf_version,
+    );
+}
+
+sub vcf_result_class {
+    'Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter';
+}
+
 1;

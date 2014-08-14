@@ -8,6 +8,7 @@ use File::Path 'rmtree';
 
 use Genome;
 use Genome::Utility::Instrumentation qw();
+use Data::Dump qw(pp);
 
 class Genome::Model::Tools::DetectVariants2::Result::DetectionBase {
     is => ['Genome::Model::Tools::DetectVariants2::Result::Base'],
@@ -353,5 +354,32 @@ sub _set_result_file_permissions {
     shift->_disk_allocation->set_files_read_only;
 }
 
+sub vcf_result_params {
+    my $self = shift;
+
+    return (
+        input_id => $self->id,
+        vcf_version => Genome::Model::Tools::Vcf->get_vcf_version,
+        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+    );
+}
+
+sub vcf_result_class {
+    'Genome::Model::Tools::DetectVariants2::Result::Vcf';
+}
+
+sub get_vcf_result {
+    my $self = shift;
+
+    my %params = $self->vcf_result_params;
+    my @results = $self->vcf_result_class->get(%params);
+    if (scalar(@results) > 1){
+        my $message = sprintf("Found %d VCF results for parameters (%s): %s",
+            scalar(@results), pp(\%params), join(', ', map { $_->id } @results)
+        );
+        die $message;
+    }
+    return shift @results;
+}
 
 1;

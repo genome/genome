@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Carp qw(confess);
 
 class Genome::Model::Tools::DetectVariants2::Result::Base {
     is => ['Genome::SoftwareResult::Stageable'],
@@ -20,22 +21,9 @@ sub path {
 
 sub get_vcf_result {
     my $self = shift;
-    my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
-    my @result = Genome::Model::Tools::DetectVariants2::Result::Vcf->get(
-        input_id => $self->id,
-        vcf_version => $vcf_version,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
-    );
-    if (@result > 1){
-        my $message = sprintf('Found %d VCF result for paramaters vcf_version=%s and input_id=%s. ID(s) are: %s',
-            scalar(@result),
-            $vcf_version,
-            $self->id,
-            join(', ', map { $_->id } @result));
-        die $self->error_message($message);
-    }
-    my $vcf_result = (@result == 1) ? $result[0] : undef;
-    return $vcf_result;
+
+    confess sprintf("Method 'get_vcf_result' is abstract and not defined for class (%s)",
+        $self->class);
 }
 
 1;

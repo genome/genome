@@ -175,4 +175,28 @@ sub _add_as_user_of_inputs {
     );
 }
 
+sub vcf_result_params {
+    my $self = shift;
+
+    return (
+        incoming_vcf_result_a => $self->input_a->get_vcf_result,
+        incoming_vcf_result_b => $self->input_b->get_vcf_result,
+        input_a_id => $self->input_a_id,
+        input_b_id => $self->input_b_id,
+        input_id => $self->id,
+
+        joinx_version => Genome::Model::Tools::Joinx->get_default_version,
+        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        variant_type => $self->_variant_type,
+        vcf_version => Genome::Model::Tools::Vcf->get_vcf_version,
+    );
+}
+
+sub get_vcf_result {
+    my $self = shift;
+
+    return Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->get_with_lock(
+        $self->vcf_result_params);
+}
+
 1;

@@ -121,6 +121,10 @@ my $snp_filter_result = Genome::Model::Tools::DetectVariants2::Result::Filter->_
 $snp_filter_result->lookup_hash($snp_filter_result->calculate_lookup_hash);
 
 my $snp_filter_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter->__define__(
+    filter_name => 'Genome::Model::Tools::DetectVariants2::Filter::SnpFilter',
+    filter_params => '',
+    filter_version => 'v1',
+    incoming_vcf_result => $varscan_detector_vcf_result,
     input => $snp_filter_result,
     output_dir => $snp_filter_vcf_directory,
     aligned_reads_sample => "TEST",
@@ -144,6 +148,10 @@ my $false_positive_filter_result = Genome::Model::Tools::DetectVariants2::Result
 $false_positive_filter_result->lookup_hash($false_positive_filter_result->calculate_lookup_hash);
 
 my $false_positive_filter_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter->__define__(
+    filter_name => 'Genome::Model::Tools::DetectVariants2::Filter::FalsePositive',
+    filter_params => '',
+    filter_version => 'v1',
+    incoming_vcf_result => $samtools_detector_vcf_result,
     input => $false_positive_filter_result,
     output_dir => $false_positive_filter_vcf_directory,
     aligned_reads_sample => "TEST",
@@ -164,10 +172,13 @@ $union_result->lookup_hash($union_result->calculate_lookup_hash);
 my $union_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__(
     incoming_vcf_result_a => $snp_filter_vcf_result,
     incoming_vcf_result_b => $false_positive_filter_vcf_result,
+    input_a_id => $snp_filter_result->id,
+    input_b_id => $false_positive_filter_result->id,
     input => $union_result,
     output_dir => $union_vcf_directory,
     variant_type => "snvs",
     joinx_version => 1.9,
+    vcf_version => $vcf_version,
 );
 $union_vcf_result->lookup_hash($union_vcf_result->calculate_lookup_hash);
 
@@ -184,14 +195,20 @@ $intersect_result->lookup_hash($intersect_result->calculate_lookup_hash);
 my $intersect_vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__(
     incoming_vcf_result_a => $snp_filter_vcf_result,
     incoming_vcf_result_b => $false_positive_filter_vcf_result,
+    input_a_id => $snp_filter_result->id,
+    input_b_id => $false_positive_filter_result->id,
     input => $intersect_result,
     output_dir => $intersect_vcf_directory,
     variant_type => "snvs",
     joinx_version => 1.9,
+    vcf_version => $vcf_version,
 );
 $intersect_vcf_result->lookup_hash($intersect_vcf_result->calculate_lookup_hash);
 
 $intersect_result->add_user(user => $intersect_vcf_result, label => 'uses');
+
+$varscan_detector_result->add_user(user => $snp_filter_result, label => 'uses');
+$samtools_detector_result->add_user(user => $false_positive_filter_result, label => 'uses');
 
 #Test combining detector results with union
 run_combine_test($samtools_detector_result,$varscan_detector_result, $detector_union_expected_file, "Union");
