@@ -87,6 +87,17 @@ subtest "pass max vaf" => sub {
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with max_vaf $max_vaf");
 };
 
+subtest "Bamreadcount entry is a ." => sub {
+    my $filter = $pkg->create(max_vaf => 100, sample_name => "S2");
+    my %expected_return_values = (
+        G => 1,
+        C => 1,
+        AA => 0,
+    );
+    my $entry = create_entry(".");
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter when bam-readcount not available");
+};
+
 subtest "pass min and max vaf" => sub {
     my $min_vaf = 90;
     my $max_vaf = 100;
