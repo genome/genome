@@ -44,8 +44,6 @@ isa_ok($coverage_result, 'Genome::InstrumentData::AlignmentResult::Merged::Cover
 
 my $alignment_summary = $coverage_result->alignment_summary_hash_ref;
 ok($alignment_summary, 'produced alignment summary');
-my $coverage_stats = $coverage_result->coverage_stats_hash_ref;
-ok($coverage_stats, 'produced stats');
 my $coverage_stats_summary = $coverage_result->coverage_stats_summary_hash_ref;
 ok($coverage_stats_summary, 'produced coverage stats summary');
 
@@ -53,12 +51,16 @@ my $coverage_result2 = Genome::InstrumentData::AlignmentResult::Merged::Coverage
 is($coverage_result2, $coverage_result, 'got same result for get() after get_or_create()');
 
 $coverage_stats_params{wingspan_values} = '0,100';
+$coverage_stats_params{use_short_roi_names} = 0;
 my $coverage_result3 = Genome::InstrumentData::AlignmentResult::Merged::CoverageStats->get_with_lock(%coverage_stats_params);
 ok(!$coverage_result3, 'request with different (yet unrun) parameters returns no result');
 
 my $coverage_result4 = Genome::InstrumentData::AlignmentResult::Merged::CoverageStats->get_or_create(%coverage_stats_params);
 isa_ok($coverage_result4, 'Genome::InstrumentData::AlignmentResult::Merged::CoverageStats', 'sucessful run');
 isnt($coverage_result4, $coverage_result, 'produced different result');
+
+my $coverage_stats = $coverage_result4->coverage_stats_hash_ref;
+ok($coverage_stats, 'produced stats when long names used');
 
 sub setup_data {
 
