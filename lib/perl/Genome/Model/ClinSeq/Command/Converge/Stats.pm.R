@@ -21,6 +21,7 @@ plot_row <- function(stats.short) {
 
 plot_stats <- function(stats_f, plot_f) {
   stats<-read.table(stats_f, head = T, stringsAsFactors = F)
+  stats$Question <- paste(stats$Question, "(", stats$Data_Type, ")")
   #Assume first six cols are "Question  Data_Type Analysis_Type Statistic_Type  Extra_Description File_Source"
   #followed by the sample data.
   stats.short<-stats[, c(1, 7:ncol(stats))]
