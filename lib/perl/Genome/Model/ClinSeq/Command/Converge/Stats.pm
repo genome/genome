@@ -63,7 +63,7 @@ sub resolve_which_stats_tsv {
   my $self = shift;
   my $b = shift;
   my @stats_files;
-  my $stats_file_type  = $self->stats_file_type;
+  my $stats_file_type  = $self->stats;
   if($stats_file_type =~ m/all/i) {
     push @stats_files, $b->input_summary_stats_file;
     push @stats_files, $b->wgs_snv_summary_stats_file;
@@ -233,9 +233,9 @@ sub aggregate_stats {
 }
 
 
-#######################################################################################################################
-#Build a hash of metrics across the input builds and their stats files                                                #
-#######################################################################################################################
+##############################################################################
+#Build a hash of metrics across the input builds and their stats files
+##############################################################################
 sub parse_metrics{
   my $self = shift;
   my %args = @_;
@@ -287,7 +287,9 @@ sub parse_metrics{
         my $analysis_type = "\"" . $line[$columns{'Analysis_Type'}{position}]. "\"";
         my $statistic_type = "\"" . $line[$columns{'Statistic_Type'}{position}]. "\"";
         my $extra_description = "\"" . $line[$columns{'Extra_Description'}{position}] . "\"";
-
+        $extra_description =~ s/pre-treatment met/tumor/;
+        $extra_description =~ s/recurrence met/tumor/;
+        $extra_description =~ s/relapse2/tumor/;
         my $metric_key = $question.$data_type.$analysis_type.$statistic_type.$extra_description.$distinct_name;
 
         #Clean up the key a bit
@@ -376,9 +378,9 @@ sub plot_stats {
 sub execute {
   my $self = shift;
   my $outdir = $self->outdir;
-  my $verbose = $self->verbose;
   my @builds = $self->builds;
   my @build_ids;
+  my $verbose = 1;
 
   foreach my $build (@builds) {
     push @build_ids, $build->id;
