@@ -27,7 +27,7 @@ genome model clin-seq converge plot-cnvs --builds='id in ["4b7539bb10cc4b9c97577
 
 genome model clin-seq converge plot-cnvs --builds='model.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/
 
-genome model clin-seq converge plot-cnvs --builds='model_groups.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/
+genome model clin-seq converge plot-cnvs --builds='model_groups.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/ --calculate_metrics
 
 genome model clin-seq converge plot-cnvs --builds='model.id in ["279f50e35d2b479ea3c32486eafd4ad4","7143119a93984056ae3f32c88c9ac2a1"],is_last_complete=1' --outdir=/tmp/snv_indel_report/
 EOS
@@ -129,7 +129,17 @@ sub get_bed {
   my $self = shift;
   my $ip_f = shift;
   my $op_f = shift;
+  #insert a '0 0 1' line to deal with empty files.
   my $format = "awk '!/chr|CHR/ { print \$1\"\\t\"\$2\"\\t\"\$3 }' $ip_f > $op_f";
+  Genome::Sys->shellcmd(cmd => $format);
+  return;
+}
+
+sub get_exome_bed {
+  my $self = shift;
+  my $ip_f = shift;
+  my $op_f = shift;
+  my $format = "awk '!/chr|CHR/ { if(\$5 > 0.5) { print \$1\"\\t\"\$2\"\\t\"\$3 } }' $ip_f > $op_f";
   Genome::Sys->shellcmd(cmd => $format);
   return;
 }
@@ -140,17 +150,20 @@ sub format_files {
   my $wgs_file = shift;
   my $exome_file = shift;
   my $microarray_cn = $$microarray_file . ".cn";
-  my $microarray_bed = $$microarray_file . ".bed";
   my $wgs_cn = $$wgs_file . ".cn";
-  my $wgs_bed = $$wgs_file . ".bed";
   my $exome_cn = $$exome_file . ".cn";
+  my $microarray_bed = $$microarray_file . ".bed";
+  my $wgs_bed = $$wgs_file . ".bed";
   my $exome_bed = $$exome_file . ".bed";
   $self->get_cn($$microarray_file, $microarray_cn);
   $self->get_cn($$wgs_file, $wgs_cn);
   $self->get_cn($$exome_file, $exome_cn);
   $self->get_bed($$microarray_file, $microarray_bed);
   $self->get_bed($$wgs_file, $wgs_bed);
-  $self->get_bed($$exome_file, $exome_bed);
+  $self->get_exome_bed($$exome_file, $exome_bed);
+  $self->joinxSortFile(\$microarray_bed);
+  $self->joinxSortFile(\$wgs_bed);
+  $self->joinxSortFile(\$exome_bed);
   $$microarray_file = $microarray_cn;
   $$exome_file = $exome_cn;
   $$wgs_file = $wgs_cn;
@@ -181,6 +194,14 @@ sub calculate_ROC_metrics {
   $c1->execute();
 }
 
+sub joinxSortFile {
+  my ($self, $ip_file) = @_;
+  my $sorted_op_file = $$ip_file . ".sorted";
+  my $joinx_sort_cmd = Genome::Model::Tools::Joinx::Sort->create(output_file=>$sorted_op_file, input_files=>[$ip_file]);
+  $joinx_sort_cmd->execute();
+  unlink $$ip_file;
+  $$ip_file = $sorted_op_file;
+}
 
 sub plot_wgs_exome_microarray_cnvs() {
   my $self = shift;
