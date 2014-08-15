@@ -51,7 +51,19 @@ sub new {
 sub resolve_alleles {
     my ($entry) = @_;
     if ($entry->has_indel) {
-        return map {substr($_, 1) || '-' => $_} @{$entry->{alternate_alleles}};
+        my %alleles;
+        for my $alt (@{$entry->{alternate_alleles}}) {
+            if (substr($alt, 1) eq "") {
+                $alleles{'-'} = $alt;
+            }
+            elsif (substr($alt, 0, 1) eq substr($entry->{reference_allele}, 0, 1)) {
+                $alleles{substr($alt, 1)} = $alt;
+            }
+            else {
+                $alleles{$alt} = $alt;
+            }
+        }
+        return %alleles;
     }
     return;
 }
@@ -84,7 +96,8 @@ sub process_entry {
         if (%allele_map) {
             if (!exists $allele_map{$h{allele}}) {
                 confess "Unknown allele from vep in vcf entry: $h{allele} not found in entry "
-                    . Dumper($entry);
+                    . Dumper($entry)
+                    . Dumper(\%allele_map);
             }
 
             $allele = $allele_map{$h{allele}};
