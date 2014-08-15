@@ -20,6 +20,8 @@ my $plot = Genome::Model::phaseVariants->create(
 							 sample => "none",
 							 relax => "false", 
 							 snvs => "7579646T7579653C", 
+	 						 printReads => "t", 
+							 outFile => "/gscuser/cfederer/git/genome/lib/perl/Genome/Model/phaseVariantsOutPut.txt"
                                                         );
 ok($plot->execute,'Executed');
                                                   

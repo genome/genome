@@ -17,6 +17,8 @@ class Genome::Model::phaseVariants {
 	snvs => { is => 'String', is_optional => 1, doc => "location and alt alleles"},
 	relax => { is => 'String', is_optional => 1, doc => "use intsec failed SNVs"},
 	sample => { is => 'String', is_optional => 1, doc => "sample name"}, 
+        printReads => { is => 'String', is_optional => 1, doc => " print reads?"}, 
+	outFile => { is => 'String', is_optional => 1, doc => " output file"}, 
     ], 
 };
 
@@ -41,6 +43,12 @@ sub execute {
 	
 	my $command = "java -jar ";
 	$command .= File::Spec->catfile( $dirName, 'PhaseVariants.jar' );
+	
+	$command .= ' --o ';
+	$command .= $self->outFile;
+
+	$command .= ' --p ';
+	$command .= $self->printReads;
 
 	$command .= ' --m ';
 	$command .= $self->distance;
