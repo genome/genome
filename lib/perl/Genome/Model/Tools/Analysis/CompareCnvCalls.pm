@@ -122,14 +122,27 @@ sub write_ROC_metrics {
   print $METRICS_FH "sample\tTotal_P_windows\tTotal_N_windows\tTP_windows\tTN_windows\tFP_windows\tFN_windows\tTPR_Sensitivity".
     "\tTNR\tFPR\tPPV\n";
   foreach my $sample (keys %$cumul_metrics) {
-    my $TPR = $cumul_metrics->{$sample}{"TP_windows"} /
-      ($cumul_metrics->{$sample}{"TP_windows"} + $cumul_metrics->{$sample}{"FN_windows"});
-    my $TNR = $cumul_metrics->{$sample}{"TN_windows"} /
-      ($cumul_metrics->{$sample}{"TN_windows"} + $cumul_metrics->{$sample}{"FP_windows"});
-    my $FPR = $cumul_metrics->{$sample}{"FP_windows"} /
-      ($cumul_metrics->{$sample}{"FP_windows"} + $cumul_metrics->{$sample}{"TP_windows"});
-    my $PPV = $cumul_metrics->{$sample}{"TP_windows"} /
-      ($cumul_metrics->{$sample}{"TP_windows"} + $cumul_metrics->{$sample}{"FP_windows"});
+    my ($TPR, $TNR, $FPR, $PPV);
+    $TPR = eval ('$cumul_metrics->{$sample}{"TP_windows"} /
+      ($cumul_metrics->{$sample}{"TP_windows"} + $cumul_metrics->{$sample}{"FN_windows"})');
+    if($@) {
+      $TPR = 0;
+    }
+    $TNR = eval ('$cumul_metrics->{$sample}{"TN_windows"} /
+      ($cumul_metrics->{$sample}{"TN_windows"} + $cumul_metrics->{$sample}{"FP_windows"})');
+    if($@) {
+      $TNR = 0;
+    }
+    $FPR = eval ('$cumul_metrics->{$sample}{"FP_windows"} /
+      ($cumul_metrics->{$sample}{"FP_windows"} + $cumul_metrics->{$sample}{"TP_windows"})');
+    if($@) {
+      $FPR = 0;
+    }
+    $PPV = eval ('$cumul_metrics->{$sample}{"TP_windows"} /
+      ($cumul_metrics->{$sample}{"TP_windows"} + $cumul_metrics->{$sample}{"FP_windows"})');
+    if($@) {
+      $PPV = 0;
+    }
     print $METRICS_FH $sample . "\t" .
     $cumul_metrics->{$sample}{"P_windows"} . "\t" .
     $cumul_metrics->{$sample}{"N_windows"} . "\t" .
