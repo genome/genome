@@ -740,6 +740,7 @@ sub add_read_counts{
   my %args = @_;
   my $align_builds = $args{'-align_builds'};
   my $grand_anno_file = $args{'-anno_file'};
+  my $indel_size_limit = 25; #max size of indels to report counts for.
 
   my @bam_files;
   my @time_points;
@@ -790,6 +791,7 @@ sub add_read_counts{
             output_file=>$output_file,
             variant_file=>$grand_anno_file,
             header_prefixes=>$header_prefixes,
+            indel_size_limit => $indel_size_limit,
           );
     my $r = $add_count_cmd->execute();
     die $self->error_message("add-readcounts cmd unsuccessful") unless ($r);
