@@ -212,6 +212,13 @@ sub plot_wgs_exome_microarray_cnvs() {
     my $wgs_file;
     my $exome_file;
     my $common_name = $build->common_name;
+    my $subject_common_name = $build->model->exome_model->tumor_model->subject->common_name;
+    $subject_common_name =~ s/[\s,-]/_/g;
+    $common_name = $common_name . "_" . $subject_common_name;
+    $common_name =~ s/_tumor//;
+    $common_name =~ s/_relapse2//;
+    $common_name =~ s/_pre_treatment_met/_1/;
+    $common_name =~ s/_recurrence_met/_2/;
     ($microarray_file, $wgs_file, $exome_file) = $self->copy_files($build, $common_name);
     if ($microarray_file eq "NA" or $wgs_file eq "NA" or $exome_file eq "NA") {
       $self->status_message("Skipping $common_name, this sample does not have all three CNV files.");
