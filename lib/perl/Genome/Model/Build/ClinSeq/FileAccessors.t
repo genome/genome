@@ -8,7 +8,7 @@ use Test::More;
 
 use_ok('Genome::Model::Build::ClinSeq::FileAccessors');
 
-my $b = Genome::Model::Build->get("beafc83a6e3d47e499b9261e23ccbaf1");
+my $b = Genome::Model::Build->get("b7e68f8041b04efbaacfc9c3f6d92855");
 ok($b, 'got a succesful build for apipe-test-clinseq-wer');
 
 my $case_dir = $b->data_directory . "/" . $b->common_name;
@@ -57,7 +57,7 @@ is($b->snv_indel_report_clean_filtered_file, $case_dir . "/snv_indel_report/" .
    "found snv_indel_report_clean_filtered_file");
 is($b->wgs_cnvhmm_file, $case_dir . "/cnv/wgs_cnv/cnview/CNView_All/cnaseq.cnvhmm.tsv", "found wgs_cnvhmm_file");
 is($b->wgs_cnv_wg_plot, $case_dir . "/cnv/wgs_cnv/cnview/CNView_All/Both_AllChrs.jpeg", "found wgs_cnv_wg_plot");
-is($b->exome_cnvs_file, $case_dir . "/cnv/exome_cnv/cnmops.cnvhmm", "found exome_cnvs_file");
+is($b->exome_cnvs_file, $case_dir . "/cnv/exome_cnv/cnmops.cnvs.filtered.txt", "found exome_cnvs_file");
 is($b->exome_cnv_wg_plot, $case_dir . "/cnv/exome_cnv/cnmops.segplot_WG.pdf", "found exome_cnvs_wg_plot");
 is($b->microarray_cnvhmm_file, $case_dir . "/cnv/microarray_cnv/cnvs.diff.cbs.cnvhmm", "found microarray_cnvhmm_file");
 is($b->microarray_cnv_wg_plot, $case_dir . "/cnv/microarray_cnv/CNView_All/Gains_AllChrs.jpeg", "found microarray_cnv_wg_plot");
