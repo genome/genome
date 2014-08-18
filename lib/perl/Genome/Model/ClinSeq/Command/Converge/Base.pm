@@ -312,6 +312,21 @@ sub resolve_input_builds{
   return(\@defined_builds);
 }
 
+sub resolve_rnaseq_builds {
+  my $self = shift;
+  my @clinseq_builds = $self->builds;
+
+  my %rnaseq_builds;
+  foreach my $clinseq_build (@clinseq_builds){
+    my $tumor_build = $clinseq_build->tumor_rnaseq_build;
+    $rnaseq_builds{$tumor_build->id}{build} = $tumor_build if $tumor_build;
+    $rnaseq_builds{$tumor_build->id}{type} = 'tumor_rnaseq' if $tumor_build;
+    my $normal_build = $clinseq_build->normal_rnaseq_build;
+    $rnaseq_builds{$normal_build->id}{build} = $normal_build if $normal_build;
+    $rnaseq_builds{$normal_build->id}{type} = 'normal_rnaseq' if $normal_build;
+  }
+  return (\%rnaseq_builds);
+}
 
 sub resolve_somatic_builds{
   my $self = shift;
@@ -633,10 +648,42 @@ sub get_case_name{
 }
 
 
+sub get_rnaseq_ref_builds {
+  my $self = shift;
+  my $ref_builds = shift;
+  my $rnaseq_builds = shift;
+  foreach my $rnaseq_build_id (keys %{$rnaseq_builds}){
+    my $build_type = $rnaseq_builds->{$rnaseq_build_id}->{type};
+    my $rnaseq_build = $rnaseq_builds->{$rnaseq_build_id}->{build};
+    my $subject_name = $rnaseq_build->subject->name;
+    my $subject_common_name = $rnaseq_build->subject->common_name;
+    $subject_common_name =~ s/\,//g;
+    $subject_common_name =~ s/\s+/\_/g;
+    my $bam_path = $rnaseq_build->alignment_result->bam_file;
+    my @timepoints = $rnaseq_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+
+    my $time_point = "day0";
+    if (@timepoints){
+      $time_point = $timepoints[0]->attribute_value;
+      $time_point =~ s/\s+//g;
+    }
+    my $refalign_name = $subject_name . "_$build_type" . "_" .
+      $subject_common_name . "_$time_point";;
+    $ref_builds->{$refalign_name}{type} = $build_type;
+    $ref_builds->{$refalign_name}{sample_name} = $subject_name;
+    $ref_builds->{$refalign_name}{sample_common_name} = $subject_common_name;
+    $ref_builds->{$refalign_name}{bam_path} = $bam_path;
+    $ref_builds->{$refalign_name}{time_point} = $subject_common_name . "_" . $time_point;
+    $ref_builds->{$refalign_name}{day} = $time_point;
+  }
+}
+
+
 sub get_ref_align_builds{
   my $self = shift;
   my %args = @_;
   my $somatic_builds = $args{'-somatic_builds'};
+  my $rnaseq_builds = $args{'-rnaseq_builds'};
 
   my %ref_builds;
 
@@ -692,6 +739,8 @@ sub get_ref_align_builds{
     $ref_builds{$tumor_refalign_name}{time_point} = $tumor_subject_common_name . "_" . $tumor_time_point;
     $ref_builds{$tumor_refalign_name}{day} = $tumor_time_point;
   }
+
+  $self->get_rnaseq_ref_builds(\%ref_builds, $rnaseq_builds);
 
   #Set an order on refalign builds (use time points if available, otherwise name)
   my $o = 0;
