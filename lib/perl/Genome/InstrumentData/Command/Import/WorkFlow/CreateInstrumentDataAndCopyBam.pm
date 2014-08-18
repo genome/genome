@@ -71,6 +71,7 @@ sub __errors__ {
     $self->instrument_data_subset_name($subset_name);
 
     $instrument_data_properties->{import_format} = 'bam';
+    delete $instrument_data_properties->{is_paired_end};
 
     $self->instrument_data_properties($instrument_data_properties);
 
