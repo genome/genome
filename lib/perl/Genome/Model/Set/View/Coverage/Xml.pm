@@ -145,66 +145,8 @@ sub get_enrichment_factor_node {
             my $model_node = $self->_get_model_node($model, $result);
             $ef_node->addChild( $model_node );
 
-            # get BED file
-            my $bedf;
-            my $refcovd;
-
-            if($result->isa('Genome::SoftwareResult')) {
-                $refcovd = $result->output_dir;
-            } else {
-                $refcovd = $result->reference_coverage_directory;
-            }
-            opendir(my $refcovdh, $refcovd) or die "Could not open reference coverage directory at $refcovd";
-
-            while (my $file = readdir($refcovdh)) {
-                if ($file =~ /.*.bed/) { $bedf = $refcovd . "/" . $file; }
-            }
-
-            # calculate target_total_bp
-            my $target_total_bp;
-
-            open(my $bedfh, "<", $bedf) or die "Could not open BED file at $bedf";
-
-            while (<$bedfh>) {
-                chomp;
-                my @f      = split (/\t/, $_);
-                my $start  = $f[1];
-                my $stop   = $f[2];
-                my $length = ($stop - $start);
-                $target_total_bp += $length;
-            }
-
-            # calculate genome_total_bp from reference sequence seqdict.sam
-            my $genome_total_bp;
-
-            my $refseq_build;
-            if($result->isa('Genome::SoftwareResult')) {
-                $refseq_build = $result->alignment_result->reference_build;
-            } else {
-                $refseq_build = $result->reference_sequence_build;
-            }
-
-            my $seqdictf = $refseq_build->data_directory . "/seqdict/seqdict.sam";
-
-            my $genomes_total_bp = $self->_genomes_total_bp;
-            if($genomes_total_bp and $genomes_total_bp->{$seqdictf}) {
-                $genome_total_bp = $genomes_total_bp->{$seqdictf};
-            } else {
-                open(my $seqdictfh, "<", $seqdictf) or die "Could not open seqdict at $seqdictf";
-
-                while (<$seqdictfh>) {
-                    chomp;
-                    unless($_ =~ /$@HD/) { # skip the header row
-                        my @f = split(/\t/, $_);
-                        my $ln = $f[2];
-                        $ln =~ s/LN://;
-                        $genome_total_bp += $ln;
-                    }
-                }
-
-                $genomes_total_bp->{$seqdictf} = $genome_total_bp;
-                $self->_genomes_total_bp($genomes_total_bp);
-            }
+            my $target_total_bp = $self->_resolve_target_total_bp_for_result($result);
+            my $genome_total_bp = $self->_resolve_genome_total_bp_for_result($result);
 
             # get wingspan 0 alignment metrics
             # Note: this may need to be changed to alignment_summary_v2_hash_ref()
@@ -256,66 +198,8 @@ sub get_enrichment_factor_v2_node {
         for my $result (@results) {
             my $model_node = $self->_get_model_node($model, $result);
 
-            # get BED file
-            my $bedf;
-            my $refcovd;
-
-            if($result->isa('Genome::SoftwareResult')) {
-                $refcovd = $result->output_dir;
-            } else {
-                $refcovd = $result->reference_coverage_directory;
-            }
-            opendir(my $refcovdh, $refcovd) or die "Could not open reference coverage directory at $refcovd";
-
-            while (my $file = readdir($refcovdh)) {
-                if ($file =~ /.*.bed/) { $bedf = $refcovd . "/" . $file; }
-            }
-
-            # calculate target_total_bp
-            my $target_total_bp;
-
-            open(my $bedfh, "<", $bedf) or die "Could not open BED file at $bedf";
-
-            while (<$bedfh>) {
-                chomp;
-                my @f      = split (/\t/, $_);
-                my $start  = $f[1];
-                my $stop   = $f[2];
-                my $length = ($stop - $start);
-                $target_total_bp += $length;
-            }
-
-            # calculate genome_total_bp from reference sequence seqdict.sam
-            my $genome_total_bp;
-
-            my $refseq_build;
-            if($result->isa('Genome::SoftwareResult')) {
-                $refseq_build = $result->alignment_result->reference_build;
-            } else {
-                $refseq_build = $result->reference_sequence_build;
-            }
-
-            my $seqdictf = $refseq_build->data_directory . "/seqdict/seqdict.sam";
-
-            my $genomes_total_bp = $self->_genomes_total_bp;
-            if($genomes_total_bp and $genomes_total_bp->{$seqdictf}) {
-                $genome_total_bp = $genomes_total_bp->{$seqdictf};
-            } else {
-                open(my $seqdictfh, "<", $seqdictf) or die "Could not open seqdict at $seqdictf";
-
-                while (<$seqdictfh>) {
-                    chomp;
-                    unless($_ =~ /$@HD/) { # skip the header row
-                        my @f = split(/\t/, $_);
-                        my $ln = $f[2];
-                        $ln =~ s/LN://;
-                        $genome_total_bp += $ln;
-                    }
-                }
-
-                $genomes_total_bp->{$seqdictf} = $genome_total_bp;
-                $self->_genomes_total_bp($genomes_total_bp);
-            }
+            my $target_total_bp = $self->_resolve_target_total_bp_for_result($result);
+            my $genome_total_bp = $self->_resolve_genome_total_bp_for_result($result);
 
             # get wingspan 0 alignment metrics
             # Note: this may need to be changed to alignment_summary_v2_hash_ref()
@@ -588,5 +472,108 @@ sub _get_model_node {
     return $model_node;
 }
 
+#< TARGET TOTAL BP >#
+sub _resolve_target_total_bp_for_result {
+    my ($self, $result) = @_;
+
+    my $target_total_bp = $self->_get_target_total_bp_from_result_metrics($result);
+    return $target_total_bp if defined $target_total_bp;
+
+    return $self->_get_target_total_bp_from_result_bed_file($result);
+}
+
+sub _get_target_total_bp_from_result_metrics {
+    my ($self, $result) = @_;
+
+    my $metric = $result->metrics(metric_name => 'target_total_bp');
+    return if not $metric;
+
+    return $metric->metric_value;
+}
+
+sub _get_target_total_bp_from_result_bed_file {
+    my ($self, $result) = @_;
+
+    my $refcovd;
+    if($result->isa('Genome::SoftwareResult')) {
+        $refcovd = $result->output_dir;
+    } else {
+        $refcovd = $result->reference_coverage_directory;
+    }
+
+    opendir(my $refcovdh, $refcovd) or die "Could not open directory $refcovd for ".$result->__display_name__;
+    my $bedf;
+    while (my $file = readdir($refcovdh)) {
+        if ($file =~ /.*.bed/) { $bedf = $refcovd . "/" . $file; }
+    }
+
+    if ( not $bedf or not -e $bedf ) {
+        die 'No bed file for result to calculate target total bp for '.$result->__display_name__;
+    }
+
+    open(my $bedfh, "<", $bedf) or die "Could not open BED file $bedf for ".$result->__display_name__;
+    my $target_total_bp;
+    while (<$bedfh>) {
+        chomp;
+        my @f      = split (/\t/, $_);
+        my $start  = $f[1];
+        my $stop   = $f[2];
+        my $length = ($stop - $start);
+        $target_total_bp += $length;
+    }
+
+    return $target_total_bp;
+}
+
+#< GENOME TOTAL BP >#
+sub _resolve_genome_total_bp_for_result {
+    my ($self, $result) = @_;
+
+    my $genome_total_bp = $self->_get_genome_total_bp_from_result_metrics($result);
+    return $genome_total_bp if defined $genome_total_bp;
+
+    return $self->_get_genome_total_bp_from_result_reference_seq_dict($result);
+}
+
+sub _get_genome_total_bp_from_result_metrics {
+    my ($self, $result) = @_;
+
+    my $metric = $result->metrics(metric_name => 'genome_total_bp');
+    return if not $metric;
+
+    return $metric->metric_value;
+}
+
+sub _get_genome_total_bp_from_result_reference_seq_dict {
+    my ($self, $result) = @_;
+
+    my $refseq_build;
+    if($result->isa('Genome::SoftwareResult')) {
+        $refseq_build = $result->alignment_result->reference_build;
+    } else {
+        $refseq_build = $result->reference_sequence_build;
+    }
+
+    my $seqdictf = $refseq_build->data_directory . "/seqdict/seqdict.sam";
+    my $genomes_total_bp = $self->_genomes_total_bp;
+    if ( defined $genomes_total_bp->{$seqdictf} ) {
+        return $genomes_total_bp->{$seqdictf};
+    }
+
+    open(my $seqdictfh, "<", $seqdictf) or die "Could not open seqdict $seqdictf for ".$refseq_build->__display_name__;
+    while (<$seqdictfh>) {
+        chomp;
+        unless($_ =~ /$@HD/) { # skip the header row
+            my @f = split(/\t/, $_);
+            my $ln = $f[2];
+            $ln =~ s/LN://;
+            $genomes_total_bp->{$seqdictf} = $ln;
+        }
+    }
+    $self->_genomes_total_bp($genomes_total_bp);
+
+    return $genomes_total_bp->{$seqdictf};
+}
 
 1;
+
