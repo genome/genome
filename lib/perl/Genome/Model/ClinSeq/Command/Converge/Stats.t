@@ -4,7 +4,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-Converge-Stats/2014-05-27/";
+my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-Converge-Stats/2014-08-18/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 my $op_dir = Genome::Sys->create_temp_directory();
@@ -21,9 +21,7 @@ my @builds = ($clinseq_build1, $clinseq_build2);
 #genome model clin-seq converge stats  --builds='model_groups.id=786367aa2edc41e1b4a5d33787a8c003,is_last_complete=1' --outfile=TechD_RNAseq_Metrics.tsv  --verbose=1 --outdir=/tmp/
 my $converge_stats = Genome::Model::ClinSeq::Command::Converge::Stats->create(
       builds => \@builds,
-      outfile => $op_file,
       outdir => $op_dir,
-      verbose => 1,
 );
 my $return = $converge_stats->execute();
 ok($clinseq_build2, "Executed succesfully");
