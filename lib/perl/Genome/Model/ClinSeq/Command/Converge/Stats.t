@@ -11,10 +11,10 @@ my $op_dir = Genome::Sys->create_temp_directory();
 ok($op_dir, "Created test dir");
 
 my $op_file = "converge_stats.out";
-my $bid1="d0f2169786074f6e9609a9f6de3754c7";
+my $bid1="780016fe26e543aa97dd9f7f2bebac7a";
 my $clinseq_build1 = Genome::Model::Build->get($bid1);
 ok($clinseq_build1, "Found test build1");
-my $bid2="638b5e3c3e7548df94351907d6d8c714";
+my $bid2="1571c7966aed490180220cd3841d90e3";
 my $clinseq_build2 = Genome::Model::Build->get($bid2);
 ok($clinseq_build2, "Found test build 2");
 my @builds = ($clinseq_build1, $clinseq_build2);
