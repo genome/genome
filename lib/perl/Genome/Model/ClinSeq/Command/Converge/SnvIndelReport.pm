@@ -788,7 +788,8 @@ sub parse_read_counts{
       }
       my $coverage = $line[$columns{$ref_count_colname}{c}] + $line[$columns{$var_count_colname}{c}];
       push(@covs, $coverage);
-      $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed);
+      #don't apply min_coverage on rnaseq, the transcript might not be expressed.
+      $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed and $prefix !~ /rnaseq/);
     }
 
     if ($na_found){
