@@ -360,7 +360,6 @@ sub summarize_clinseq_build {
 
     #Summarize exome coverage statistics for each WGS/Exome reference alignment model
     # cd /gscmnt/gc8001/info/model_data/2882774248/build120412367/reference_coverage/wingspan_0
-    # cat *_STATS.tsv | perl -ne '@line=split("\t", $_); if ($line[12]==20){print "$_"}' | cut -f 8 | perl -ne 'chomp($_); $n++; $c+=$_; $a=$c/$n; print "$a\n”’
     my %exome_builds_with_coverage;
     $self->status_message("\n\nExome coverage values for each WGS/Exome reference alignment build");
     for my $build (@builds) {
@@ -382,7 +381,6 @@ sub summarize_clinseq_build {
       my $sequence_type = $self->_determine_wgs_or_exome_for_instrument_data(@lanes);
 
       my $wingspan_0_dir = "$build_dir/reference_coverage/wingspan_0/";
-      #my $wingspan_0_path = $wingspan_0_dir . "*_STATS.tsv";
       next unless (-e $wingspan_0_dir && -d $wingspan_0_dir);
       my $wingspan_0_file;
 
@@ -428,7 +426,6 @@ sub summarize_clinseq_build {
       my $min_breadth = 80;
       open (REFCOV, "$wingspan_0_file");
       while(<REFCOV>){
-        # cat *_STATS.tsv | perl -ne '@line=split("\t", $_); if ($line[12]==20){print "$_"}' | cut -f 8 | perl -ne 'chomp($_); $n++; $c+=$_; $a=$c/$n; print "$a\n”’
         chomp($_);
         my @line = split("\t", $_);
         my $min_cov = $line[12];
