@@ -6,7 +6,7 @@ use Genome;
 use Genome::File::Vcf::DbsnpAFParser;
 
 class Genome::VariantReporting::Dbsnp::MaxAfFilter {
-    is => 'Genome::VariantReporting::Framework::Component::Filter',
+    is => ['Genome::VariantReporting::Dbsnp::ComponentBase', 'Genome::VariantReporting::Framework::Component::Filter'],
     has => [
         max_af => {
             is => 'Number',
@@ -28,7 +28,7 @@ sub filter_entry {
     my $entry = shift;
     my %return_values;
 
-    my $parser = _caf_parser($entry->{header});
+    my $parser = $self->_caf_parser($entry->{header});
     my $caf = $parser->process_entry($entry);
 
     if (!defined $caf) {
@@ -48,13 +48,6 @@ sub filter_entry {
 
     return %return_values;
 }
-
-sub _caf_parser {
-    my $header = shift;
-    return Genome::File::Vcf::DbsnpAFParser->new($header);
-}
-
-Memoize::memoize('_caf_parser');
 
 1;
 

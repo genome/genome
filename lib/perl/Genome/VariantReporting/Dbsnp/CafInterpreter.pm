@@ -5,12 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::VariantReporting::Dbsnp::CafInterpreter {
-    is => 'Genome::VariantReporting::Framework::Component::Interpreter',
-    has => [
-        dummy => {
-            is_optional => 1,
-        },
-    ],
+    is => ['Genome::VariantReporting::Dbsnp::ComponentBase', 'Genome::VariantReporting::Framework::Component::Interpreter'],
 };
 
 sub name {
