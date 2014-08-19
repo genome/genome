@@ -1,0 +1,27 @@
+experts:
+    'bam-readcount':
+        version: 0.5
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 0
+    vep:
+        ensembl_version: 75
+        custom_annotation_tags:
+            - ON_TARGET
+        species: 'homo-sapiens'
+        plugins:
+            - Condel@PLUGIN_DIR@b@2
+        plugins_version: 1
+        joinx_version: 1.9
+reporters:
+    'vcf':
+        filters: {}
+        interpreters:
+            'vcf-entry': {}
+            'min-coverage':
+                min_coverage: 10
+                sample_name: d0_tumor
+        params:
+            file_name: 'cle_vcf_snv_report'

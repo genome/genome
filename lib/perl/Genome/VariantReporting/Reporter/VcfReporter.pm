@@ -52,9 +52,6 @@ sub report {
     #pass allele if all alt alleles are pass
     #add filter status to the info field
 
-    #manipulate the entry to add info fields to it
-    $entry = $self->add_interpretations_for_filter_interpreters($entry, $interpretations);
-
     #print the entry
     $self->vcf_file->write($entry);
 
@@ -76,7 +73,7 @@ sub add_headers_for_soft_filters {
             "<ID=%s,Description=\"%s\">",
             $filter_interpreter->vcf_id,
             $filter_interpreter->vcf_description,
-        );
+        ));
     }
 }
 
@@ -84,7 +81,7 @@ sub add_header_for_main_filter {
     my $self = shift;
     my $header = shift;
 
-    my $filters = join(", ", map { $_->vcf_id } $self->filter_interpreters;
+    my $filters = join(", ", map { $_->vcf_id } $self->filter_interpreters);
 
     $header->add_info_str(sprintf(
         "<ID=%s,Number=A,Type=Flag,Description=\"%s\">",
