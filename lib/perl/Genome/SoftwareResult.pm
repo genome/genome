@@ -318,7 +318,9 @@ sub create {
 
     $self->module_version($self->resolve_module_version) unless defined $self->module_version;
     $self->subclass_name($class);
-    $self->lookup_hash($lookup_hash);
+
+    $self->_set_and_validate_lookup_hash($lookup_hash);
+
     return $self;
 }
 
@@ -405,6 +407,16 @@ sub _create_output_dir_or_die {
     }
 }
 
+sub _set_and_validate_lookup_hash {
+    my ($self, $lookup_hash) = @_;
+
+    $self->lookup_hash($self->calculate_lookup_hash());
+    if ($self->lookup_hash ne $lookup_hash) {
+        $self->delete;
+        die sprintf("The newly created object's lookup-hash (%s) does not match that used to create the lock (%s)",
+            $self->lookup_hash, $lookup_hash);
+    }
+}
 
 sub _gather_params_for_get_or_create {
     my $class = shift;
