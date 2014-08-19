@@ -30,13 +30,15 @@ sub _interpret_entry {
     my $passed_alt_alleles = shift;
 
     my %return_values;
+    my $parser = $self->_caf_parser($entry->{header});
+    my $caf = $parser->process_entry($entry);
 
     for my $variant_allele (@$passed_alt_alleles) {
         if (!defined $entry->info("CAF")) {
             $return_values{$variant_allele}->{caf} = undef;
         }
         else {
-            $return_values{$variant_allele}->{caf} = $entry->info("CAF");
+            $return_values{$variant_allele}->{caf} = $caf->{$variant_allele};
         }
     }
 

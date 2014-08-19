@@ -27,11 +27,11 @@ subtest "one alt allele" => sub {
             caf => 0.3,
         }
     );
-    my $entry = create_entry(0.3);
+    my $entry = create_entry('[0.7,0.3,.]');
     is_deeply({$interpreter->interpret_entry($entry, ['C'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
-subtest "no gmaf" => sub {
+subtest "no caf" => sub {
     my $interpreter = $pkg->create();
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
@@ -53,10 +53,10 @@ subtest "two alt allele" => sub {
             caf => 0.3,
         },
         G => {
-            caf => 0.3,
+            caf => '.',
         },
     );
-    my $entry = create_entry(0.3);
+    my $entry = create_entry('[0.7,0.3,.]');
     is_deeply({$interpreter->interpret_entry($entry, ['C', 'G'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
@@ -65,7 +65,7 @@ sub create_vcf_header {
 ##fileformat=VCFv4.1
 ##FILTER=<ID=PASS,Description="Passed all filters">
 ##FILTER=<ID=BAD,Description="This entry is bad and it should feel bad">
-##INFO=<ID=CAF,Number=1,Type=Float,Description="CAF">
+##INFO=<ID=CAF,Number=.,Type=Float,Description="CAF">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
 EOS
     my @lines = split("\n", $header_txt);
