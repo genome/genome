@@ -432,6 +432,7 @@ subtest "add_allele" => sub {
 };
 
 subtest 'set_info_field' => sub {
+    my $orig_info = 'A=B;C=8,9;D=REF-A,ALT-C,ALT-G;E';
     my @fields = (
         '1',            # CHROM
         10,             # POS
@@ -440,7 +441,7 @@ subtest 'set_info_field' => sub {
         'C,G',          # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
-        'A=B;C=8,9;D=REF-A,ALT-C,ALT-G;E',  # INFO
+        $orig_info,     # INFO
         'GT:DP:FT',     # FORMAT
         '0/1:12',       # FIRST_SAMPLE
         '0/2:24:PASS',
@@ -461,18 +462,22 @@ subtest 'set_info_field' => sub {
 
     throws_ok( sub{ $entry->set_info_field(); }, qr/No info tag given to add!/, 'set_info_field fails without info');
 
-    is($entry->{_fields}->[7], $fields[7], 'Info string is correct before adding');
-    is_deeply($entry->info, $expected_info, 'Info field is correct before adding');
+    $expected_info->{OMG} = undef;
+    $entry->set_info_field('OMG', undef);
+    is_deeply($entry->info, $expected_info, 'Info field is correct after adding a flag');
+    is($entry->info_to_string, $orig_info . ';OMG', 'Info string is correct after updating');
 
-    ok($entry->set_info_field('F', 'old'), 'added a new info field');
+    $entry->set_info_field('F', 'old');
     $expected_info->{'F'} = 'old';
-    is($entry->{_fields}->[7], $fields[7] . ';F=old', 'Info string is correct after adding');
     is_deeply($entry->info, $expected_info, 'Info field is correct after adding');
+    is($entry->info_to_string, $orig_info . ';OMG;F=old', 'Info string is correct after adding');
 
-    ok($entry->set_info_field('F', 'new'), 'changed an info field');
+    $entry->set_info_field('F', 'new');
     $expected_info->{'F'} = 'new';
-    is($entry->{_fields}->[7], $fields[7] . ';F=new', 'Info string is correct after changing a value');
     is_deeply($entry->info, $expected_info, 'Info field is correct after changing a value');
+    is($entry->info_to_string, $orig_info . ';OMG;F=new', 'Info string is correct after updating');
+
+
 };
 
 done_testing();
