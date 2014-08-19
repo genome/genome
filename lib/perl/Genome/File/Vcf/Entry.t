@@ -431,4 +431,48 @@ subtest "add_allele" => sub {
 
 };
 
+subtest 'set_info_field' => sub {
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'A',            # REF
+        'C,G',          # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        'A=B;C=8,9;D=REF-A,ALT-C,ALT-G;E',  # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12',       # FIRST_SAMPLE
+        '0/2:24:PASS',
+        '0/2:24:.',
+        '0/2:24:BAD',
+    );
+    my $expected_info = {
+        A => 'B',
+        C => '8,9',
+        D => 'REF-A,ALT-C,ALT-G',
+        E => undef,
+    };
+
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "parsed entry");
+
+
+    throws_ok( sub{ $entry->set_info_field(); }, qr/No info tag given to add!/, 'set_info_field fails without info');
+
+    is($entry->{_fields}->[7], $fields[7], 'Info string is correct before adding');
+    is_deeply($entry->info, $expected_info, 'Info field is correct before adding');
+
+    ok($entry->set_info_field('F', 'old'), 'added a new info field');
+    $expected_info->{'F'} = 'old';
+    is($entry->{_fields}->[7], $fields[7] . ';F=old', 'Info string is correct after adding');
+    is_deeply($entry->info, $expected_info, 'Info field is correct after adding');
+
+    ok($entry->set_info_field('F', 'new'), 'changed an info field');
+    $expected_info->{'F'} = 'new';
+    is($entry->{_fields}->[7], $fields[7] . ';F=new', 'Info string is correct after changing a value');
+    is_deeply($entry->info, $expected_info, 'Info field is correct after changing a value');
+};
+
 done_testing();

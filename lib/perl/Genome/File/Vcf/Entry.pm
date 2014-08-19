@@ -716,6 +716,38 @@ sub set_sample_field {
     $sample_data->[$sample_idx]->[$field_idx] = $value;
 }
 
+=item C<set_info_field>
+
+Sets the value of per-site fields.
+
+params:
+    $field_name - name of the field to set (must exist in FORMAT)
+    $value      - the value to set $field_name to
+
+=cut
+
+sub set_info_field {
+    my ($self, $field_name, $value) = @_;
+    unless (defined $field_name) {
+        confess "No info tag given to add!";
+    }
+
+    my $info_hash = $self->info;
+    my $info_string = $self->info_to_string;
+
+    if (defined $info_hash->{$field_name}) {
+        $info_hash->{$field_name} = $value;
+        $self->{info_fields}{hash} = $info_hash;
+        $info_string = $self->info_to_string;
+    } else {
+        $info_string .= ";$field_name";
+        $info_string .= "=$value" if defined $value;
+    }
+
+    $self->{_fields}->[INFO] = $info_string;
+    $self->{info_fields} = _parse_info($info_string);
+}
+
 =item C<filter_calls_involving_only>
 
 Applies a per-sample filter (FT tag) to any genotype calls that involve only the
