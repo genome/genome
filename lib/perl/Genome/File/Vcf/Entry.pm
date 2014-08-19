@@ -862,8 +862,8 @@ sub to_hashref {
     return \%hash;
 }
 
-sub to_string {
-    my ($self) = @_;
+sub info_to_string {
+    my $self = shift;
 
     my %info;
     if ($self->info) {
@@ -878,6 +878,16 @@ sub to_string {
     }
 
     push(@info_order, keys %info_keys);
+    return join(";",
+        map {
+            defined $info{$_} ?
+            join("=", $_, $info{$_})
+            : $_
+        } @info_order) || '.'
+}
+
+sub to_string {
+    my ($self) = @_;
 
     # We want to display ./. when the GT format field is undefined,
     # but . otherwise. To this end, we build an array containing the
@@ -897,12 +907,7 @@ sub to_string {
         join(",", @{$self->{alternate_alleles}}) || '.',
         $self->{quality} || '.',
         join(";", @{$self->{_filter}}) || '.',
-        join(";",
-            map {
-                defined $info{$_} ?
-                    join("=", $_, $info{$_})
-                    : $_
-            } @info_order) || '.',
+        $self->info_to_string,
         join(":", @{$self->{_format}}) || '.',
         map {
             # Join values for an individual sample
