@@ -38,4 +38,14 @@ sub filter_entry {
     return map { $_ => 0 } @alt_alleles;
 }
 
+sub vcf_description {
+    my $self = shift;
+    return "Coverage for sample " . $self->sample_name . " is larger than or equal to " . $self->min_coverage;
+}
+
+sub vcf_id {
+    my $self = shift;
+    return "MINCOV" . $self->min_coverage;
+}
+
 1;

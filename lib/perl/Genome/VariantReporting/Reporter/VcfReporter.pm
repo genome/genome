@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::Writer;
-use List::AllUtils qw(any);
+use List::AllUtils qw(all);
 
 class Genome::VariantReporting::Reporter::VcfReporter {
     is => 'Genome::VariantReporting::Framework::Component::Reporter::SingleFile',
@@ -47,14 +47,16 @@ sub report {
         $self->print_vcf_header();
     }
 
-    my @passed_alleles = keys %vcf_entry_interpretations;
-    #get interpretations of filter interpreters on a per allele basis
-    #pass allele if all alt alleles are pass
-    #add filter status to the info field
+    my @final_results;
+    for my $alt_allele (@{$entry->{alternate_alleles}}) {
+        push(
+            @final_results,
+            (all { $interpretations->{$_->name}->{$alt_allele}->{filter_status} == 1} $self->filter_interpreters) || 0
+        );
+    }
+    $entry->set_info_field('ALLFILTERSPASS', join(',', @final_results));
 
-    #print the entry
     $self->vcf_file->write($entry);
-
 }
 
 sub print_vcf_header {
@@ -84,9 +86,9 @@ sub add_header_for_main_filter {
     my $filters = join(", ", map { $_->vcf_id } $self->filter_interpreters);
 
     $header->add_info_str(sprintf(
-        "<ID=%s,Number=A,Type=Flag,Description=\"%s\">",
+        "<ID=%s,Number=A,Type=Integer,Description=\"%s\">",
         'ALLFILTERSPASS',
-        'Did the alternate allele pass all the soft filters: ' . $filters
+        'Flags whether the alternate allele passed all the soft filters: ' . $filters
     ));
 }
 
