@@ -23,7 +23,7 @@ sub requires_annotations {
 sub available_fields {
     return qw/
         caf
-        highest_alt_af
+        max_alt_af
     /;
 }
 
@@ -40,10 +40,10 @@ sub _interpret_entry {
     for my $variant_allele (@$passed_alt_alleles) {
         if (!defined $entry->info("CAF")) {
             $return_values{$variant_allele}->{caf} = undef;
-            $return_values{$variant_allele}->{highest_alt_af} = undef;
+            $return_values{$variant_allele}->{max_alt_af} = undef;
         }
         else {
-            $return_values{$variant_allele}->{highest_alt_af} = $highest_alt_af;
+            $return_values{$variant_allele}->{max_alt_af} = $highest_alt_af;
             $return_values{$variant_allele}->{caf} = $caf->{$variant_allele};
         }
     }

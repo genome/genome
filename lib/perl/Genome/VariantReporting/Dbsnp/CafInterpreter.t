@@ -25,7 +25,7 @@ subtest "one alt allele" => sub {
     my %expected_return_values = (
         C => {
             caf => 0.3,
-            highest_alt_af => 0.3,
+            max_alt_af => 0.3,
         }
     );
     my $entry = create_entry('[0.7,0.3,.]');
@@ -39,7 +39,7 @@ subtest "no caf" => sub {
     my %expected_return_values = (
         C => {
             caf => undef,
-            highest_alt_af => undef,
+            max_alt_af => undef,
         }
     );
     my $entry = create_entry();
@@ -53,11 +53,11 @@ subtest "two alt allele" => sub {
     my %expected_return_values = (
         C => {
             caf => 0.3,
-            highest_alt_af => 0.3,
+            max_alt_af => 0.3,
         },
         G => {
             caf => '.',
-            highest_alt_af => 0.3,
+            max_alt_af => 0.3,
         },
     );
     my $entry = create_entry('[0.7,0.3,.]');

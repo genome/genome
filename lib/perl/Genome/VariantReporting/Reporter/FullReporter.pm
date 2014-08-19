@@ -37,6 +37,7 @@ sub headers {
         AML_RMG
         rsid
         caf
+        max_alt_af
         onTarget
         MeetsMinDepthCutoff
     /;
