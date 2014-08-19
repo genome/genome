@@ -20,7 +20,7 @@ use VervetHmpSraProcess;
 
 #Setup test_dir
 my $test_dir = '/gscmnt/sata156/research/mmitreva/HMP_DAWG/VERVET_HMP/VERVET_PIPELINE_WORK/TEST'; #THIS IS A TEMPORARY LOCATION!!!!
-#my $test_dir = '/gsc/var/cache/testsuite/data/Genome-InstrumentData-Import-Hmp/SUBDIR';
+#my $test_dir = '$GENOME_TEST_INPUTS/Genome-InstrumentData-Import-Hmp/SUBDIR';
 my $bam_name = 'GoldStandardForTesting.2873462096.cleaned.bam';
 my $bam_path = $test_dir . '/' . $bam_name;
 

@@ -79,5 +79,5 @@ is(@output, 1, "got 1 fastq files");
 my $md_sum = Genome::Sys->md5sum( $output[0] );
 is( Genome::Sys->md5sum( $output[0] ), '88874bc2a76115d49589b2e5d58d3d9b', 'Output fastq matches' );
 
-#print "gvimdiff $output[0] /gsc/var/cache/testsuite/data/Genome-Model-Tools-Sx/TrimFlexbar/revcomp_adapter_removed.far2.17.fastq\n"; <STDIN>;
+#print "gvimdiff $output[0] $GENOME_TEST_INPUTS/Genome-Model-Tools-Sx/TrimFlexbar/revcomp_adapter_removed.far2.17.fastq\n"; <STDIN>;
 done_testing();

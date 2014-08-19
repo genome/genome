@@ -45,5 +45,5 @@ my @output = glob("$temp_dir/*fastq");
 is(@output, 1, "got 1 fastq files");
 is(Genome::Sys->md5sum($output[0]), '0bc803457a4343eaa555b99916d226c3', "Output fastq matches");
 
-#print "gvimdiff $output[0] /gsc/var/cache/testsuite/data/Genome-Model-Tools-Sx/TrimFlexbar/revcomp_adapter_removed.far2.17.fastq\n"; <STDIN>;
+#print "gvimdiff $output[0] $GENOME_TEST_INPUTS/Genome-Model-Tools-Sx/TrimFlexbar/revcomp_adapter_removed.far2.17.fastq\n"; <STDIN>;
 done_testing();
