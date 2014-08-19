@@ -297,7 +297,7 @@ sub create {
         return;
     }
 
-    my $bx = $class->_get_safe_boolexpr(@_);
+    my $bx = $class->_get_creation_boolexpr(@_);
     my $self = $class->SUPER::create($bx);
     unless ($self) {
         $class->_release_lock_or_die($lock,
@@ -343,7 +343,7 @@ sub _get_lock_or_die {
 # NULL to the database
 #
 # This function generates a boolexpr that filters out such params and inputs.
-sub _get_safe_boolexpr {
+sub _get_creation_boolexpr {
     my $class = shift;
 
     my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
