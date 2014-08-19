@@ -23,6 +23,66 @@ my $interpreter = $pkg->create(normal_sample_names => ["S1"], tumor_sample_names
 lives_ok(sub {$interpreter->validate}, "Filter validates");
 my $entry = create_entry(bam_readcount_line);
 
+subtest 'no tumor_sample_names' => sub {
+    my $no_tumor = $pkg->create(normal_sample_names => ["S1"]);
+    lives_ok(sub {$no_tumor->validate}, "Filter validates");
+    my %expected_return_values = (
+        G => {
+            max_tumor_vaf_observed => '.',
+            max_normal_vaf_observed =>  99.1279069767442,
+        },
+        C => {
+            max_tumor_vaf_observed => '.',
+            max_normal_vaf_observed =>  0.290697674418605,
+        },
+        AA => {
+            max_tumor_vaf_observed => '.',
+            max_normal_vaf_observed =>  5.81395348837209,
+        },
+    );
+    is_deeply({$no_tumor->interpret_entry($entry, ['G', 'C', 'AA'])}, \%expected_return_values, "No tumor samples ok");
+};
+
+subtest 'no normal_sample_names' => sub {
+    my $no_normal = $pkg->create(tumor_sample_names => ["S1"]);
+    lives_ok(sub {$no_normal->validate}, "Filter validates");
+    my %expected_return_values = (
+        G => {
+            max_normal_vaf_observed => '.',
+            max_tumor_vaf_observed =>  99.1279069767442,
+        },
+        C => {
+            max_normal_vaf_observed => '.',
+            max_tumor_vaf_observed =>  0.290697674418605,
+        },
+        AA => {
+            max_normal_vaf_observed => '.',
+            max_tumor_vaf_observed =>  5.81395348837209,
+        },
+    );
+    is_deeply({$no_normal->interpret_entry($entry, ['G', 'C', 'AA'])}, \%expected_return_values, "No normal samples ok");
+};
+
+subtest 'no normal_or_tumor_sample_names' => sub {
+    my $no_normal_or_tumor = $pkg->create();
+    lives_ok(sub {$no_normal_or_tumor->validate}, "Filter validates");
+    my %expected_return_values = (
+        G => {
+            max_normal_vaf_observed => '.',
+            max_tumor_vaf_observed =>  '.',
+        },
+        C => {
+            max_normal_vaf_observed => '.',
+            max_tumor_vaf_observed =>  '.',
+        },
+        AA => {
+            max_normal_vaf_observed => '.',
+            max_tumor_vaf_observed =>  '.',
+        },
+    );
+    is_deeply({$no_normal_or_tumor->interpret_entry($entry, ['G', 'C', 'AA'])}, \%expected_return_values, "No normal or tumor samples ok");
+};
+
 subtest 'all alt alleles' => sub {
     my %expected_return_values = (
         G => {

@@ -25,8 +25,10 @@ my $tumor_sample2 = Genome::Test::Factory::Sample->setup_object(name => "TEST-pa
 my $normal_sample1 = Genome::Test::Factory::Sample->setup_object(name => "TEST-patient1-somval_normal1");
 my $discovery_build = get_build($roi_name, $tumor_sample1, $normal_sample1);
 my $d30_build = get_build($roi_name, $tumor_sample2, $normal_sample1);
+my $normal_build = get_build($roi_name, $normal_sample1, undef);
 succeed_build($discovery_build);
 succeed_build($d30_build);
+succeed_build($normal_build);
 
 use Genome::Model::SomaticValidation::Command::AlignmentStatsSummary;
 reinstall_sub( {
@@ -49,10 +51,11 @@ reinstall_sub( {
 
 my $output_dir = Genome::Sys->create_temp_directory;
 my $cmd = $pkg->create(
-    models => [$discovery_build->model, $d30_build->model],
+    models => [$discovery_build->model, $d30_build->model, $normal_build->model],
     output_directory => $output_dir,
     tumor_sample => $tumor_sample1,
     additional_sample => $tumor_sample2,
+    normal_sample => $normal_sample1,
 );
 
 is($cmd->class, $pkg);

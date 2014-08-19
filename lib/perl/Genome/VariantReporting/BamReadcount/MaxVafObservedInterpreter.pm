@@ -9,7 +9,7 @@ use Scalar::Util qw( looks_like_number );
 
 class Genome::VariantReporting::BamReadcount::MaxVafObservedInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter'],
-    has => [
+    has_optional => [
         tumor_sample_names => {
             is => 'Text',
             is_many => 1,

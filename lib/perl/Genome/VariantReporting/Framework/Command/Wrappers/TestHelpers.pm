@@ -57,7 +57,9 @@ sub get_build {
     my $pp = _get_pp;
     my $discovery_model = Genome::Test::Factory::Model::SomaticValidation->setup_object(processing_profile_id => $pp->id);
     $discovery_model->tumor_sample($tumor_sample);
-    $discovery_model->normal_sample($normal_sample);
+    if (defined $normal_sample) {
+        $discovery_model->normal_sample($normal_sample);
+    }
     $discovery_model->add_region_of_interest_set(id => $roi->id);
 
     my $discovery_build = Genome::Test::Factory::Build->setup_object(model_id => $discovery_model->id);
@@ -76,10 +78,12 @@ sub get_build {
     my %ids = (
         "TEST-patient1-somval_tumor1" => "-485773",
         "TEST-patient1-somval_tumor2" => "-586867",
+        "TEST-patient1-somval_normal1" => "-679783",
     );
     my %vcf_files = (
         "-485773" => File::Spec->join($TEST_DIR, "TEST-patient1-somval_tumor1.snvs.vcf.gz"),
         "-586867" => File::Spec->join($TEST_DIR, "TEST-patient1-somval_tumor2.snvs.vcf.gz"),
+        "-679783" => File::Spec->join($TEST_DIR, "TEST-patient1-somval_tumor1.snvs.vcf.gz"),
     );
     my $vcf_result = Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->__define__(id => $ids{$tumor_sample->name});
     my $vcf = File::Spec->join($TEST_DIR, $tumor_sample->name.".vcf.gz");
