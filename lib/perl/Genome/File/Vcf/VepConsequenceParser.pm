@@ -53,14 +53,14 @@ sub resolve_alleles {
     if ($entry->has_indel) {
         my %alleles;
         for my $alt (@{$entry->{alternate_alleles}}) {
-            if (substr($alt, 1) eq "") {
+            if (substr($alt, 0, 1) ne substr($entry->{reference_allele}, 0, 1)) {
+                $alleles{$alt} = $alt;
+            }
+            elsif (substr($alt, 1) eq "") {
                 $alleles{'-'} = $alt;
             }
-            elsif (substr($alt, 0, 1) eq substr($entry->{reference_allele}, 0, 1)) {
-                $alleles{substr($alt, 1)} = $alt;
-            }
             else {
-                $alleles{$alt} = $alt;
+                $alleles{substr($alt, 1)} = $alt;
             }
         }
         return %alleles;
