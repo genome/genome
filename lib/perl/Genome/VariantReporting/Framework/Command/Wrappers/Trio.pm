@@ -3,7 +3,6 @@ package Genome::VariantReporting::Framework::Command::Wrappers::Trio;
 use strict;
 use warnings;
 use Genome;
-use File::Basename qw(dirname);
 
 class Genome::VariantReporting::Framework::Command::Wrappers::Trio {
     is => 'Command::V2',
@@ -24,6 +23,10 @@ class Genome::VariantReporting::Framework::Command::Wrappers::Trio {
             is => 'Genome::Sample',
             doc => 'Additional sample to report readcounts on at discovery variant positions',
         },
+        normal_sample => {
+            is => 'Genome::Sample',
+            doc => 'Normal sample',
+        },
     ],
 };
 
@@ -37,22 +40,13 @@ sub execute {
     return 1;
 }
 
-sub plan_file {
-    my ($self, $type) = @_;
-    return File::Spec->join($self->_plan_search_dir, "cle_full_variant_report_$type.yaml");
-}
-
-sub _plan_search_dir {
-    my $variant_reporting_base_dir = dirname(dirname(dirname(dirname(__FILE__))));
-    return File::Spec->join($variant_reporting_base_dir, 'plan_files');
-}
-
 sub get_model_pairs {
     my $self = shift;
     my $factory = Genome::VariantReporting::Framework::Command::Wrappers::ModelPairFactory->create(
         models => [$self->models],
         d0_sample => $self->tumor_sample,
         d30_sample => $self->additional_sample,
+        normal_sample => $self->normal_sample,
         output_dir => $self->output_directory,
     );
     return $factory->get_model_pairs;
@@ -66,13 +60,13 @@ sub run_reports {
             input_vcf => $model_pair->input_vcf($variant_type),
             variant_type => $variant_type,
             output_directory => $model_pair->reports_directory($variant_type),
-            plan_file => $self->plan_file($variant_type),
+            plan_file => $model_pair->plan_file($variant_type),
             resource_file => $model_pair->resource_file,
             log_directory => $model_pair->logs_directory($variant_type),
         );
         Genome::VariantReporting::Framework::Command::CreateReport->execute(%params);
     }
-    for my $base (qw(cle_full_report cle_simple_report cle_acmg_simple_report cle_acmg_full_report)) {
+    for my $base ($model_pair->report_names) {
         Genome::VariantReporting::PostProcessing::CombineReports->execute(
             reports => [File::Spec->join($model_pair->reports_directory("snvs"), $base),
                 File::Spec->join($model_pair->reports_directory("indels"), $base)],

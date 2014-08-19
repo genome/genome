@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+use File::Basename qw(dirname);
 use File::Spec;
 
 class Genome::VariantReporting::Framework::Command::Wrappers::ModelPair {
@@ -26,6 +27,20 @@ class Genome::VariantReporting::Framework::Command::Wrappers::ModelPair {
         },
     },
 };
+
+sub plan_file {
+    my ($self, $type) = @_;
+    return File::Spec->join($self->_plan_search_dir, "cle_full_variant_report_$type.yaml");
+}
+
+sub _plan_search_dir {
+    my $variant_reporting_base_dir = dirname(dirname(dirname(dirname(__FILE__))));
+    return File::Spec->join($variant_reporting_base_dir, 'plan_files');
+}
+
+sub report_names {
+    return qw(cle_full_report cle_simple_report);
+}
 
 sub reports_directory {
     my ($self, $variant_type) = @_;
@@ -66,17 +81,31 @@ sub is_valid {
     return 1;
 }
 
+sub get_aligned_bams {
+    my $self = shift;
+    my @aligned_bams;
+    push @aligned_bams, $self->discovery->merged_alignment_result->id;
+    push @aligned_bams, $self->discovery->control_merged_alignment_result->id;
+    push @aligned_bams, $self->validation->merged_alignment_result->id;
+    return \@aligned_bams;
+}
+
+sub get_translations {
+    my $self = shift;
+    my %translations;
+    $translations{d0_tumor} = $self->discovery->tumor_sample->name;
+    $translations{d30_normal} = $self->discovery->normal_sample->name;
+    $translations{d30_tumor} = $self->validation->tumor_sample->name;
+    return \%translations;
+}
+
 sub generate_resource_file {
     my $self = shift;
 
     return if not $self->is_valid;
     my $resource = {};
 
-    my @aligned_bams;
-    push @aligned_bams, $self->discovery->merged_alignment_result->id;
-    push @aligned_bams, $self->discovery->control_merged_alignment_result->id;
-    push @aligned_bams, $self->validation->merged_alignment_result->id;
-    $resource->{aligned_bam_result_id} = \@aligned_bams;
+    $resource->{aligned_bam_result_id} = $self->get_aligned_bams;
 
     my %feature_list_ids;
     my $on_target_feature_list = Genome::FeatureList->get(name => $self->discovery->region_of_interest_set->name);
@@ -89,11 +118,7 @@ sub generate_resource_file {
 
     $resource->{reference_fasta} = $self->discovery->reference_sequence_build->full_consensus_path("fa");
 
-    my %translations;
-    $translations{d0_tumor} = $self->discovery->tumor_sample->name;
-    $translations{d30_normal} = $self->discovery->normal_sample->name;
-    $translations{d30_tumor} = $self->validation->tumor_sample->name;
-    $resource->{translations} = \%translations;
+    $resource->{translations} = $self->get_translations;
 
     $resource->{dbsnp_vcf} = $self->discovery->previously_discovered_variations_build->snvs_vcf;
 

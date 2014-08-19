@@ -13,6 +13,7 @@ class Genome::VariantReporting::Framework::Command::Wrappers::ModelPairFactory {
         },
         d0_sample => { is => 'Genome::Sample', },
         d30_sample => { is => 'Genome::Sample', },
+        normal_sample => { is => 'Genome::Sample',},
         output_dir => { is => 'Text', },
         discovery_output_dir => {
             calculate_from => [qw/output_dir/],
@@ -21,6 +22,10 @@ class Genome::VariantReporting::Framework::Command::Wrappers::ModelPairFactory {
         additional_output_dir => {
             calculate_from => [qw/output_dir/],
             calculate => q/return File::Spec->join($output_dir, "additional");/,
+        },
+        germline_output_dir => {
+            calculate_from => [qw/output_dir/],
+            calculate => q/return File::Spec->join($output_dir, "germline");/,
         },
     },
 };
@@ -48,15 +53,23 @@ sub get_model_pairs {
     return if not $self->is_valid;
 
     my %models_for_roi;
+    my @model_pairs;
     for my $model ($self->models) {
         unless (defined $model->region_of_interest_set) {
             $self->warning_message("Skipping model %s because ROI is not defined", $model->__display_name__);
             next;
         }
-        push @{$models_for_roi{$model->region_of_interest_set->name}}, $model;
+        if ($self->is_single_bam($model)) {
+            push @model_pairs, Genome::VariantReporting::Framework::Command::Wrappers::SingleModel->create(
+                discovery => $model->last_succeeded_build,
+                base_output_dir => $self->germline_output_dir,
+            );
+        }
+        else {
+            push @{$models_for_roi{$model->region_of_interest_set->name}}, $model;
+        }
     }
 
-    my @model_pairs;
     for my $roi (keys %models_for_roi) {
 
         my @models = @{$models_for_roi{$roi}};
@@ -111,6 +124,11 @@ sub is_model_discovery {
 sub is_model_validation {
     my ($self, $model) = @_;
     return $self->d30_sample->id eq $model->tumor_sample->id;
+}
+
+sub is_single_bam {
+    my ($self, $model) = @_;
+    return (!(defined $model->normal_sample) and $self->normal_sample->id eq $model->tumor_sample->id);
 }
 
 1;
