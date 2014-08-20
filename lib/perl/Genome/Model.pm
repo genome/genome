@@ -837,9 +837,6 @@ sub _trigger_downstream_builds {
 sub default_model_name {
     my ($self, %params) = @_;
 
-    my $auto_increment = delete $params{auto_increment};
-    $auto_increment = 1 unless defined $auto_increment;
-
     my $name = ($self->subject->name).'.';
     $name .= 'prod-' if (($self->run_as && $self->run_as eq 'apipe-builder') || $params{prod});
 
