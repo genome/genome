@@ -120,17 +120,8 @@ sub split_file {
 
     my @header_fields = $self->get_header($file);
     my %keys_to_append = $self->get_keys_to_append($file);
-    my @new_header;
-    for my $header_field (@header_fields) {
-        if (defined $keys_to_append{$header_field}) {
-            for my $split_header (values %{$keys_to_append{$header_field}}) {
-                push @new_header, $split_header;
-            }
-        }
-        else {
-            push @new_header, $header_field;
-        }
-    }
+    my @new_header = $self->calculate_new_header(\@header_fields, \%keys_to_append);
+
     $fh->print(join($self->separator, @new_header),"\n");
     my $in = Genome::Sys->open_file_for_reading($file);
     my $header = <$in>;
@@ -195,6 +186,22 @@ sub get_keys_to_append {
     }
     $in->close;
     return %keys_to_append;
+}
+
+sub calculate_new_header {
+    my ($self, $header_fields, $keys_to_append) = @_;
+    my @new_header;
+    for my $header_field (@$header_fields) {
+        if (defined $keys_to_append->{$header_field}) {
+            for my $split_header (values %{$keys_to_append->{$header_field}}) {
+                push @new_header, $split_header;
+            }
+        }
+        else {
+            push @new_header, $header_field;
+        }
+    }
+    return @new_header;
 }
 
 sub print_header_to_fh {
