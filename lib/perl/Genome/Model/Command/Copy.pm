@@ -189,7 +189,7 @@ sub execute {
 
     my %overrides = $self->params_from_param_strings($model->class, $self->overrides);
     if (not %overrides) {
-        die "eror parsing overrides!";
+        die "error parsing overrides!";
     }
 
     my %indirect_overrides;
