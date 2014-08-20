@@ -120,4 +120,21 @@ sub filter_entry {
     return %return_values;
 }
 
+sub vcf_id {
+    my $self = shift;
+    return 'GENOTYPE_VAF';
+}
+
+sub vcf_description {
+    my $self = shift;
+    return sprintf(
+        'Coverage and VAF for sample %s follows criteria: [heterozygous: VAF between %s and %s,homozygous: VAF between %s and %s]',
+        $self->sample_name,
+        $self->min_het_vaf,
+        $self->max_het_vaf,
+        $self->min_hom_vaf,
+        $self->max_hom_vaf,
+    );
+}
+
 1;

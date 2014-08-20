@@ -63,4 +63,14 @@ sub interpretation_null_character {
     return '.';
 }
 
+sub is_filter_interpreter {
+    my $self = shift;
+    if ($self->isa('Genome::VariantReporting::Framework::Component::Filter')) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
 1;

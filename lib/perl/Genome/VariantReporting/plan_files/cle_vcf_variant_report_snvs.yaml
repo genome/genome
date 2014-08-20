@@ -1,0 +1,42 @@
+experts:
+    'bam-readcount':
+        version: 0.5
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 0
+    vep:
+        ensembl_version: 75
+        custom_annotation_tags:
+            - ON_TARGET
+        species: 'homo-sapiens'
+        plugins:
+            - Condel@PLUGIN_DIR@b@2
+        plugins_version: 1
+        joinx_version: 1.9
+reporters:
+    'vcf':
+        filters: {}
+        interpreters:
+            'vcf-entry': {}
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: d0_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            'coverage-vaf':
+                coverages_and_vafs:
+                    1000: 5
+                    200: 10
+                sample_name: d0_tumor
+            'genotype-vaf':
+                min_het_vaf: 40
+                max_het_vaf: 60
+                min_hom_vaf: 85
+                max_hom_vaf: 100
+                sample_name: d0_tumor
+        params:
+            file_name: 'cle_vcf_snv_report'

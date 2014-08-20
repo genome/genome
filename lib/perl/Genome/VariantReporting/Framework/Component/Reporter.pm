@@ -11,6 +11,14 @@ class Genome::VariantReporting::Framework::Component::Reporter {
         'Genome::VariantReporting::Framework::Component::WithTranslatedInputs',
     ],
     is_abstract => 1,
+    has_transient_optional => [
+        filters => {
+            is => 'HASH',
+        },
+        interpreters => {
+            is => 'HASH',
+        },
+    ],
 };
 
 sub name {
@@ -39,6 +47,22 @@ sub report {
 sub finalize {
     # this gets called after interpretations are given to ->report method
     return;
+}
+
+sub add_filter_object {
+    my ($self, $filter) = @_;
+
+    my $filters_ref = $self->filters || {};
+    $filters_ref->{$filter->name} = $filter;
+    $self->filters($filters_ref);
+}
+
+sub add_interpreter_object {
+    my ($self, $interpreter) = @_;
+
+    my $interpreters_ref = $self->interpreters || {};
+    $interpreters_ref->{$interpreter->name} = $interpreter;
+    $self->interpreters($interpreters_ref);
 }
 
 1;
