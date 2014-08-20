@@ -251,13 +251,11 @@ sub add_allele {
     my $info_types = $self->{header}->info_types;
     my @info_type_names = keys %$info_types;
     return 1 if not @info_type_names;
-
     for my $info_type_name ( @info_type_names ) {
         next if not List::MoreUtils::any { $_ eq $info_types->{$info_type_name}->{number} } (qw/ A R /);
         next if not $info->{$info_type_name};
-        $info->{$info_type_name} .= ',.';
+        $self->set_info_field($info_type_name, $self->info($info_type_name).",.");
     }
-
     return 1;
 }
 
