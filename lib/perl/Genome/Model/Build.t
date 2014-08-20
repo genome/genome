@@ -199,7 +199,7 @@ for my $diff ( keys %expected_diffs ) {
     like($diffs{$diff}, $expected_diffs{$diff}, "diff message for $diff is correct");
 }
 
-# Delete build, verify disk allcocation deleted
+# Delete build, verify disk allocation deleted
 ok($build->delete, 'Deleted build');
 UR::Context->commit; # this fails
 isa_ok($disk_allocation, 'UR::DeletedRef');

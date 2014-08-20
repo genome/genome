@@ -110,8 +110,8 @@ sub execute {
         return if not $instrument_data;
 
         # Create allocation
-        my $allcoation = $self->_create_allocation($instrument_data, $bam_path);
-        return if not $allcoation;
+        my $allocation = $self->_create_allocation($instrument_data, $bam_path);
+        return if not $allocation;
 
         # Flagstat
         my $flagstat_path = $bam_path.'.flagstat';
