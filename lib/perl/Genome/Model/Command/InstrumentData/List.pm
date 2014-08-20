@@ -12,7 +12,7 @@ use Regexp::Common;
 class Genome::Model::Command::InstrumentData::List {
     is => 'Genome::Object::Command::List',
     has => [
-        model => { is => 'Genome::Model', id_by => 'model_id' },
+        model => { is => 'Genome::Model', id_by => 'model_id', doc => 'model whose instrument-data to query' },
         model_id => { is => 'Text', doc => 'ID of the genome model' },
         subject_class_name => {
             is_constant => 1,
