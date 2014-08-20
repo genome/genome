@@ -195,8 +195,15 @@ sub vcf_result_params {
 sub get_vcf_result {
     my $self = shift;
 
-    return Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->get_with_lock(
-        $self->vcf_result_params);
+    my %params = $self->vcf_result_params;
+    if (!defined($params{incoming_vcf_result_a}) or !defined($params{incoming_vcf_result_b})) {
+        # Either one or both of the input results did not produce a vcf.
+        # That means that this result didn't produce one either.
+        return;
+    } else {
+        return Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->get_with_lock(
+            $self->vcf_result_params);
+    }
 }
 
 1;
