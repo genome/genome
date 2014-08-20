@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Data::Dump qw(pp);
 
 class Genome::Model::Tools::DetectVariants2::Result::Filter {
     is => ['Genome::Model::Tools::DetectVariants2::Result::DetectionBase'],
@@ -35,13 +36,12 @@ class Genome::Model::Tools::DetectVariants2::Result::Filter {
 sub previous_result {
     my $self = shift;
 
-    my @users = Genome::SoftwareResult::User->get(user=>$self);
-    if (scalar(@users) == 1) {
-        my $user = shift @users;
-        return $user->software_result;
+    my @parents = grep {pp($_->test_name) eq pp($self->test_name)} $self->parents;
+    if (scalar(@parents) == 1) {
+        return shift @parents;
     } else {
         my $message = sprintf("Number of previous results (%d) is not 1.  Result IDs: (%s)",
-            scalar(@users), join(', ', map {$_->software_result->id} @users));
+            scalar(@parents), join(', ', map {$_->id} @parents));
         die $message;
     }
 }
