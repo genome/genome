@@ -38195,6 +38195,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'additional-sample=s',
         undef,
+        'normal-sample=s',
+        undef,
         'help!',
         undef
       ],
