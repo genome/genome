@@ -401,4 +401,27 @@ sub default_single_bam_profile {
 
 sub requires_subject_mapping { return 1; }
 
+sub default_model_name {
+    my $self = shift;
+
+    my @parts;
+    if($self->tumor_sample) {
+        if($self->tumor_sample->source) {
+            push @parts, $self->tumor_sample->source->name;
+        } else {
+            push @parts, $self->tumor_sample->name;
+        }
+    } else {
+        push @parts, $self->subject->name;
+    }
+
+    if($self->run_as && $self->run_as eq 'apipe-builder') {
+        push @parts, 'prod-somatic_validation';
+    } else {
+        push @parts, 'somatic_validation';
+    }
+
+    return $self->_get_incremented_name(join('.', @parts), '');
+}
+
 1;
