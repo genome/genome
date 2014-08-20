@@ -119,15 +119,15 @@ sub split_file {
     my $fh = Genome::Sys->open_file_for_writing($split_file);
 
     my %keys_to_append;
-    my $in = Genome::Sys->open_file_for_reading($file);
-    my $header = <$in>;
-    chomp $header;
-    my @header_fields = split($self->separator, $header);
+    my @header_fields = $self->get_header($file);
     for my $header_field (@header_fields) {
         if (first {$_ eq $header_field} $self->columns_to_split) {
             $keys_to_append{$header_field} = {};
         }
     }
+
+    my $in = Genome::Sys->open_file_for_reading($file);
+    my $header = <$in>;
     while (my $line = <$in>) {
         chomp $line;
         my @fields = split ($self->separator, $line);
