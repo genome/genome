@@ -360,7 +360,7 @@ sub vcf_result_params {
     return (
         input_id => $self->id,
         vcf_version => Genome::Model::Tools::Vcf->get_vcf_version,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => $self->test_name,
     );
 }
 

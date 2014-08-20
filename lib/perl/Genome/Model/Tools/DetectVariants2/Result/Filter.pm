@@ -56,7 +56,7 @@ sub vcf_result_params {
         incoming_vcf_result => $self->previous_result->get_vcf_result,
         input_id => $self->id,
         previous_filter_strategy => $self->previous_filter_strategy,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => $self->test_name,
         vcf_version => Genome::Model::Tools::Vcf->get_vcf_version,
     );
 }
