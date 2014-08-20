@@ -10,7 +10,7 @@ use IO::File;
 class Genome::Model::Tools::Analysis::LaneQc::CompareSnpsBuildLanes {
     is => 'Command',
     has => [
-    model_id => { type => 'String', is_optional => 0, doc => "tumor/normal model_id to get the last suceed build to gather per lane bam files",},
+    model_id => { type => 'String', is_optional => 0, doc => "tumor/normal model_id to get the last succeeded build to gather per lane bam files",},
     analysis_dir => { type => 'String', is_optional => 0, doc => "Directory to use for keep outputs",},
     genotype_file => { type => 'String', is_optional => 1, doc => "Genotype file to use as input to gmt analysis lane-qc compare-snps",},
     sample_name => { type => 'String', is_optional => 0, doc => "Sample name to get imported genotype file, for example H_LC-SJTALL001-G-TB-01-1378 ",},
