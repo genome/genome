@@ -64,5 +64,15 @@ sub interpret_entry {
     return %return_values;
 }
 
+sub vcf_id {
+    my $self = shift;
+    return 'CONTAINS_TAG_' . $self->info_tag;
+}
+
+sub vcf_description {
+    my $self = shift;
+    return 'INFO field for entry contains tag ' . $self->info_tag;
+}
+
 1;
 

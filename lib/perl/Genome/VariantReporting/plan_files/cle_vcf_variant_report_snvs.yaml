@@ -20,8 +20,23 @@ reporters:
         filters: {}
         interpreters:
             'vcf-entry': {}
-            'min-coverage':
-                min_coverage: 10
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: d0_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            'coverage-vaf':
+                coverages_and_vafs:
+                    1000: 5
+                    200: 10
+                sample_name: d0_tumor
+            'genotype-vaf':
+                min_het_vaf: 40
+                max_het_vaf: 60
+                min_hom_vaf: 85
+                max_hom_vaf: 100
                 sample_name: d0_tumor
         params:
             file_name: 'cle_vcf_snv_report'

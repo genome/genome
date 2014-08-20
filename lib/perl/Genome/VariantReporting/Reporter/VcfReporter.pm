@@ -26,7 +26,7 @@ sub name {
 }
 
 sub requires_interpreters {
-    return qw(vcf-entry min-coverage);
+    return qw(vcf-entry ft-keep contains-tag coverage-vaf genotype-vaf);
 }
 
 sub report {

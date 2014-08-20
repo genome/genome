@@ -134,5 +134,26 @@ sub _vaf_for_coverage {
     return;
 }
 
+sub vcf_id {
+    my $self = shift;
+    return 'COVERAGE_VAF';
+}
+
+sub vcf_description {
+    my $self = shift;
+
+    my @criteria = map {
+        my $coverage = $_;
+        my $vaf = $self->_vaf_for_coverage($coverage);
+        $coverage . "X and VAF>$vaf%";
+    } $self->coverages;
+
+    return sprintf(
+        'Coverage and VAF for sample %s follows criteria: [%s]',
+        $self->sample_name,
+        join(',', @criteria)
+    );
+}
+
 1;
 

@@ -57,4 +57,18 @@ sub fail_return_values {
     return map { $_ => 0 } @{$entry->{alternate_alleles}};
 }
 
+sub vcf_id {
+    my $self = shift;
+    return 'FT' . ($self->keep_filter_values)[0];
+}
+
+sub vcf_description {
+    my $self = shift;
+    return sprintf(
+        'FT value for sample %s is one of [%s]',
+        $self->sample_name,
+        join(",", $self->keep_filter_values)
+    );
+}
+
 1;
