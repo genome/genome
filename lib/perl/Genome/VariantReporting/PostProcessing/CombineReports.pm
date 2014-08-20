@@ -3,6 +3,7 @@ package Genome::VariantReporting::PostProcessing::CombineReports;
 use strict;
 use warnings;
 use Genome;
+use List::Util qw(first);
 use List::MoreUtils qw(firstidx);
 use Set::Scalar;
 use Memoize;
@@ -34,6 +35,12 @@ class Genome::VariantReporting::PostProcessing::CombineReports {
             default => "\t",
             doc => 'Field separator for the reports',
         },
+        split_indicators => {
+            is => 'Text',
+            is_optional => 1,
+            is_many => 1,
+            doc => 'A regular expression that indicates that columns whose headers match should be split up.  These columns contain key:value pairs.  The key will be appended to the column header and the value will be put in the column.  Only valid if the file has a header.',
+        },
     ],
 };
 
@@ -46,7 +53,30 @@ sub execute {
 
     my $sorted_file = $self->sort_file($combined_file);
 
+    if ($self->split_indicators) {
+        my $split_file = $self->split_file($sorted_file);
+        $self->move_file_to_output($split_file);
+    }
+    else {
+        $self->move_file_to_output($sorted_file);
+    }
     return 1;
+}
+
+sub columns_to_split {
+    my $self = shift;
+    return grep {
+        my $field = $_;
+        first {$field =~ $_} $self->split_indicators
+    } $self->get_master_header;
+}
+
+sub move_file_to_output {
+    my $self = shift;
+    my $file = shift;
+    Genome::Sys->move_file(
+        $file, $self->output_file
+    );
 }
 
 sub combine_files {
@@ -70,15 +100,115 @@ sub combine_files {
 sub sort_file {
     my ($self, $combined_file) = @_;
 
+    my $sorted_file = Genome::Sys->create_temp_file_path;
     if (defined $self->sort_columns) {
-        my $fh = Genome::Sys->open_file_for_writing($self->output_file);
+        my $fh = Genome::Sys->open_file_for_writing($sorted_file);
         $self->print_header_to_fh($fh);
-        Genome::Sys->shellcmd(cmd => sprintf('sort %s %s >> %s', $self->get_sort_params, $combined_file, $self->output_file));
+        Genome::Sys->shellcmd(cmd => sprintf('sort %s %s >> %s', $self->get_sort_params, $combined_file, $sorted_file));
     } else {
         my ($fh, $header_file) = Genome::Sys->create_temp_file;
         $self->print_header_to_fh($fh);
-        Genome::Sys->concatenate_files( [$header_file, $combined_file], $self->output_file );
+        Genome::Sys->concatenate_files( [$header_file, $combined_file], $sorted_file );
     }
+    return $sorted_file;
+}
+
+sub split_file {
+    my ($self, $file) = @_;
+    my $split_file = Genome::Sys->create_temp_file_path;
+    my $fh = Genome::Sys->open_file_for_writing($split_file);
+
+    my @header_fields = $self->get_header($file);
+    my %keys_to_append = $self->get_keys_to_append($file);
+
+    my @new_header = $self->calculate_new_header(\@header_fields, \%keys_to_append);
+    $fh->print(join($self->separator, @new_header),"\n");
+
+    my $in = Genome::Sys->open_file_for_reading($file);
+    my $header = <$in>;
+    while (my $line = <$in>) {
+        my $new_line = $self->calculate_new_line($line, \@header_fields, \%keys_to_append);
+        $fh->print($new_line,"\n");
+    }
+    $fh->close;
+    return $split_file;
+}
+
+sub get_keys_to_append {
+    my ($self, $file) = @_;
+    my @header_fields = $self->get_header($file);
+    my %keys_to_append;
+    for my $header_field (@header_fields) {
+        if (first {$_ eq $header_field} $self->columns_to_split) {
+            $keys_to_append{$header_field} = {};
+        }
+    }
+
+    my $in = Genome::Sys->open_file_for_reading($file);
+    my $header = <$in>;
+    while (my $line = <$in>) {
+        chomp $line;
+        my @fields = split ($self->separator, $line);
+        for my $field_name (keys %keys_to_append) {
+            my $field_index = firstidx {$_ eq $field_name} @header_fields; 
+            my @values = split(",", $fields[$field_index]);
+            for my $value (@values) {
+                unless ($value eq ".") {
+                    my ($sub_field, $sub_value) = split(":", $value);
+                    $keys_to_append{$field_name}->{$sub_field} = $header_fields[$field_index]."-".$sub_field;
+                }
+            }
+        }
+    }
+    $in->close;
+    return %keys_to_append;
+}
+
+sub calculate_new_header {
+    my ($self, $header_fields, $keys_to_append) = @_;
+    my @new_header;
+    for my $header_field (@$header_fields) {
+        if (defined $keys_to_append->{$header_field}) {
+            for my $split_header (values %{$keys_to_append->{$header_field}}) {
+                push @new_header, $split_header;
+            }
+        }
+        else {
+            push @new_header, $header_field;
+        }
+    }
+    return @new_header;
+}
+
+sub calculate_new_line {
+    my ($self, $line, $header_fields, $keys_to_append) = @_;
+    chomp $line;
+    my @fields = split ($self->separator, $line);
+    my @new_fields;
+    my $counter = 0;
+    for my $header_field (@$header_fields) {
+        if (defined $keys_to_append->{$header_field}) {
+            my @split_field = split(",", $fields[$counter]);
+            my %split_field_dict;
+            for my $split_field_item (@split_field) {
+                my ($subfield, $subvalue) = split(":", $split_field_item);
+                $split_field_dict{"$header_field-$subfield"} = $subvalue;
+            }
+            for my $split_header (values %{$keys_to_append->{$header_field}}) {
+                if (defined $split_field_dict{$split_header}) {
+                    push @new_fields, $split_field_dict{$split_header};
+                }
+                else {
+                    push @new_fields, ".";
+                }
+            }
+        }
+        else {
+            push @new_fields, $fields[$counter];
+        }
+        $counter++;
+    }
+    return join($self->separator, @new_fields);
 }
 
 sub print_header_to_fh {
@@ -93,6 +223,9 @@ sub print_header_to_fh {
 sub validate {
     my $self = shift;
 
+    if ($self->split_indicators and !$self->contains_header) {
+        die $self->error_message("If split_indicators are specified, then a header must be present");
+    }
     Genome::Sys->validate_file_for_writing($self->output_file);
 
     my $master_header = Set::Scalar->new($self->get_master_header);

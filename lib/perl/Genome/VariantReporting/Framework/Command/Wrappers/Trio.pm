@@ -73,6 +73,7 @@ sub run_reports {
             sort_columns => [qw(chromosome_name start stop reference variant)],
             contains_header => 1,
             output_file => File::Spec->join($model_pair->output_dir, $base),
+            split_indicators => [qw(per_library)],
         );
     }
 }
