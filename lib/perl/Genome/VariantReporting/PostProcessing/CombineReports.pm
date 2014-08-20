@@ -118,31 +118,8 @@ sub split_file {
     my $split_file = Genome::Sys->create_temp_file_path;
     my $fh = Genome::Sys->open_file_for_writing($split_file);
 
-    my %keys_to_append;
     my @header_fields = $self->get_header($file);
-    for my $header_field (@header_fields) {
-        if (first {$_ eq $header_field} $self->columns_to_split) {
-            $keys_to_append{$header_field} = {};
-        }
-    }
-
-    my $in = Genome::Sys->open_file_for_reading($file);
-    my $header = <$in>;
-    while (my $line = <$in>) {
-        chomp $line;
-        my @fields = split ($self->separator, $line);
-        for my $field_name (keys %keys_to_append) {
-            my $field_index = firstidx {$_ eq $field_name} @header_fields; 
-            my @values = split(",", $fields[$field_index]);
-            for my $value (@values) {
-                unless ($value eq ".") {
-                    my ($sub_field, $sub_value) = split(":", $value);
-                    $keys_to_append{$field_name}->{$sub_field} = $header_fields[$field_index]."-".$sub_field;
-                }
-            }
-        }
-    }
-    $in->close;
+    my %keys_to_append = $self->get_keys_to_append($file);
     my @new_header;
     for my $header_field (@header_fields) {
         if (defined $keys_to_append{$header_field}) {
@@ -155,8 +132,8 @@ sub split_file {
         }
     }
     $fh->print(join($self->separator, @new_header),"\n");
-    $in = Genome::Sys->open_file_for_reading($file);
-    $header = <$in>;
+    my $in = Genome::Sys->open_file_for_reading($file);
+    my $header = <$in>;
     while (my $line = <$in>) {
         chomp $line;
         my @fields = split ($self->separator, $line);
@@ -188,6 +165,36 @@ sub split_file {
     }
     $fh->close;
     return $split_file;
+}
+
+sub get_keys_to_append {
+    my ($self, $file) = @_;
+    my @header_fields = $self->get_header($file);
+    my %keys_to_append;
+    for my $header_field (@header_fields) {
+        if (first {$_ eq $header_field} $self->columns_to_split) {
+            $keys_to_append{$header_field} = {};
+        }
+    }
+
+    my $in = Genome::Sys->open_file_for_reading($file);
+    my $header = <$in>;
+    while (my $line = <$in>) {
+        chomp $line;
+        my @fields = split ($self->separator, $line);
+        for my $field_name (keys %keys_to_append) {
+            my $field_index = firstidx {$_ eq $field_name} @header_fields; 
+            my @values = split(",", $fields[$field_index]);
+            for my $value (@values) {
+                unless ($value eq ".") {
+                    my ($sub_field, $sub_value) = split(":", $value);
+                    $keys_to_append{$field_name}->{$sub_field} = $header_fields[$field_index]."-".$sub_field;
+                }
+            }
+        }
+    }
+    $in->close;
+    return %keys_to_append;
 }
 
 sub print_header_to_fh {
