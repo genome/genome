@@ -47,6 +47,16 @@ sub report {
         $self->print_vcf_header();
     }
 
+    my @final_results = $self->determine_final_results($interpretations, $entry);
+    add_final_results($entry, @final_results);
+    $self->vcf_file->write($entry);
+}
+
+sub determine_final_results {
+    my $self = shift;
+    my $interpretations = shift;
+    my $entry = shift;
+
     my @final_results;
     for my $alt_allele (@{$entry->{alternate_alleles}}) {
         push(
@@ -54,9 +64,13 @@ sub report {
             (all { $interpretations->{$_->name}->{$alt_allele}->{filter_status} == 1} $self->filter_interpreters) || 0
         );
     }
-    $entry->set_info_field('ALLFILTERSPASS', join(',', @final_results));
+    return @final_results;
+}
 
-    $self->vcf_file->write($entry);
+sub add_final_results {
+    my $entry = shift;
+    my @final_results = @_;
+    $entry->set_info_field('ALLFILTERSPASS', join(',', @final_results));
 }
 
 sub print_vcf_header {
