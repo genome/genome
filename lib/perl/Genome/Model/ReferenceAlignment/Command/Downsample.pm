@@ -113,7 +113,7 @@ sub _create_downsampled_model_group {
 }
 
 # Given a single model:
-# 1) downsample the merged bam from the last succeded build
+# 1) downsample the merged bam from the last succeeded build
 # 2) import the downsampled bam into a new instrument data
 # 3) create a new model with that instrument data assigned
 sub _create_downsampled_model {
