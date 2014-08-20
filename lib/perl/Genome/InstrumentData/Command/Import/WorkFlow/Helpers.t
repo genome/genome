@@ -154,4 +154,10 @@ Genome::Sys->create_symlink($test_dir.'/bam/v1/'.$bam_basename.'.md5-orig', $bam
 ok($helpers->remove_paths_and_auxiliary_files($bam_path), 'remove source paths and md5s w/o source paths');
 ok(!glob($bam_path.'*'), 'removed path and auxillary files');
 
+# bam path
+throws_ok( sub{ $helpers->insert_extension_into_bam_path(); }, qr/^No bam path given to insert extension to bam path!/, 'insert_extension_into_bam_path fails w/o bam_path');
+throws_ok( sub{ $helpers->insert_extension_into_bam_path('in.bam'); }, qr/^No extension given to insert extension to bam path!/, 'insert_extension_into_bam_path fails w/o extension');
+throws_ok( sub{ $helpers->insert_extension_into_bam_path('bam', 'sorted'); }, qr/^Failed to insert extension into bam path! Bam path does not end in .bam! bam/, 'insert_extension_into_bam_path fails w/ invalid bam');
+is($helpers->insert_extension_into_bam_path('in.bam', 'sorted'), 'in.sorted.bam', 'insert_extension_into_bam_path');
+
 done_testing();
