@@ -50,7 +50,7 @@ sub help_brief {
 }
 
 sub help_detail {
-    return '';
+    return 'Lists the instrument data either assigned or available for assignment to a model';
 }
 
 #########################################################
