@@ -113,7 +113,7 @@ sub execute {
                 );
                 unless ($extract->resolve_source){
                     $self->warning_message(
-                        'Failed to resolve genotype build or instrumetn data for '.$model->subject->name.'skipping...'
+                        'Failed to resolve genotype build or instrument data for '.$model->subject->name.'skipping...'
                     );
                     next;
                 }
