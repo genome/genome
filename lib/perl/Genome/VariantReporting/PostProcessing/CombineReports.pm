@@ -35,11 +35,11 @@ class Genome::VariantReporting::PostProcessing::CombineReports {
             default => "\t",
             doc => 'Field separator for the reports',
         },
-        columns_to_split => {
+        split_indicators => {
             is => 'Text',
             is_optional => 1,
             is_many => 1,
-            doc => 'Columns that should be split up.  These columns contain key:value pairs.  The key will be appended to the column header and the value will be put in the column.  Only valid if the file has a header.',
+            doc => 'A regular expression that indicates that columns whose headers match should be split up.  These columns contain key:value pairs.  The key will be appended to the column header and the value will be put in the column.  Only valid if the file has a header.',
         },
     ],
 };
@@ -53,7 +53,7 @@ sub execute {
 
     my $sorted_file = $self->sort_file($combined_file);
 
-    if ($self->columns_to_split) {
+    if ($self->split_indicators) {
         my $split_file = $self->split_file($sorted_file);
         $self->move_file_to_output($split_file);
     }
@@ -61,6 +61,14 @@ sub execute {
         $self->move_file_to_output($sorted_file);
     }
     return 1;
+}
+
+sub columns_to_split {
+    my $self = shift;
+    return grep {
+        my $field = $_;
+        first {$field =~ $_} $self->split_indicators
+    } $self->get_master_header;
 }
 
 sub move_file_to_output {
@@ -194,8 +202,8 @@ sub print_header_to_fh {
 sub validate {
     my $self = shift;
 
-    if ($self->columns_to_split and !$self->contains_header) {
-        die $self->error_message("If columns-to-split are specified, then a header must be present");
+    if ($self->split_indicators and !$self->contains_header) {
+        die $self->error_message("If split_indicators are specified, then a header must be present");
     }
     Genome::Sys->validate_file_for_writing($self->output_file);
 

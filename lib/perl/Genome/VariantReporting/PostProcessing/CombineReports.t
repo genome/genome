@@ -67,10 +67,10 @@ subtest "columns to split only works with headers" => sub {
     my $expected = File::Spec->join($data_dir, 'expected.noheader');
 
     my $output_file = Genome::Sys->create_temp_file_path;
-    my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['1', '2'], contains_header => 0, output_file => $output_file, columns_to_split => ["1"]);
+    my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['1', '2'], contains_header => 0, output_file => $output_file, split_indicators => ["split"]);
     isa_ok($cmd, $pkg);
 
-    throws_ok(sub {$cmd->execute}, qr/If columns-to-split are specified, then a header must be present/, 'columns_to_split fails without header');
+    throws_ok(sub {$cmd->execute}, qr/If split_indicators are specified, then a header must be present/, 'columns_to_split fails without header');
 };
 
 subtest "with split" => sub {
@@ -78,7 +78,7 @@ subtest "with split" => sub {
     my $expected = File::Spec->join($data_dir, 'expected_split.header');
 
     my $output_file = Genome::Sys->create_temp_file_path;
-    my $cmd = $pkg->create(reports => [$report_c], sort_columns => ['chr', 'pos'], contains_header => 1, output_file => $output_file, columns_to_split => ["split1", "split2"]);
+    my $cmd = $pkg->create(reports => [$report_c], sort_columns => ['chr', 'pos'], contains_header => 1, output_file => $output_file, split_indicators => ["split"]);
     isa_ok($cmd, $pkg);
 
     my @expected_header = qw(chr pos data1 data2 split1 split2);
