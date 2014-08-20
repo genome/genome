@@ -269,7 +269,7 @@ sub parse {
     }
     elsif($type =~ m/I/) {
         #misunderstanding of bed format
-        #0 based numbers teh gaps so an insertion of any number of bases between base 10 and 11 in 1base
+        #0 based numbers the gaps so an insertion of any number of bases between base 10 and 11 in 1base
         #is 10 10 in bed format
         #$start = $start - 1;
         $ref=0;
