@@ -120,39 +120,15 @@ sub split_file {
 
     my @header_fields = $self->get_header($file);
     my %keys_to_append = $self->get_keys_to_append($file);
-    my @new_header = $self->calculate_new_header(\@header_fields, \%keys_to_append);
 
+    my @new_header = $self->calculate_new_header(\@header_fields, \%keys_to_append);
     $fh->print(join($self->separator, @new_header),"\n");
+
     my $in = Genome::Sys->open_file_for_reading($file);
     my $header = <$in>;
     while (my $line = <$in>) {
-        chomp $line;
-        my @fields = split ($self->separator, $line);
-        my @new_fields;
-        my $counter = 0;
-        for my $header_field (@header_fields) {
-            if (defined $keys_to_append{$header_field}) {
-                my @split_field = split(",", $fields[$counter]);
-                my %split_field_dict;
-                for my $split_field_item (@split_field) {
-                    my ($subfield, $subvalue) = split(":", $split_field_item);
-                    $split_field_dict{"$header_field-$subfield"} = $subvalue;
-                }
-                for my $split_header (values %{$keys_to_append{$header_field}}) {
-                    if (defined $split_field_dict{$split_header}) {
-                        push @new_fields, $split_field_dict{$split_header};
-                    }
-                    else {
-                        push @new_fields, ".";
-                    }
-                }
-            }
-            else {
-                push @new_fields, $fields[$counter];
-            }
-            $counter++;
-        }
-        $fh->print(join($self->separator, @new_fields),"\n");
+        my $new_line = $self->calculate_new_line($line, \@header_fields, \%keys_to_append);
+        $fh->print($new_line,"\n");
     }
     $fh->close;
     return $split_file;
@@ -202,6 +178,37 @@ sub calculate_new_header {
         }
     }
     return @new_header;
+}
+
+sub calculate_new_line {
+    my ($self, $line, $header_fields, $keys_to_append) = @_;
+    chomp $line;
+    my @fields = split ($self->separator, $line);
+    my @new_fields;
+    my $counter = 0;
+    for my $header_field (@$header_fields) {
+        if (defined $keys_to_append->{$header_field}) {
+            my @split_field = split(",", $fields[$counter]);
+            my %split_field_dict;
+            for my $split_field_item (@split_field) {
+                my ($subfield, $subvalue) = split(":", $split_field_item);
+                $split_field_dict{"$header_field-$subfield"} = $subvalue;
+            }
+            for my $split_header (values %{$keys_to_append->{$header_field}}) {
+                if (defined $split_field_dict{$split_header}) {
+                    push @new_fields, $split_field_dict{$split_header};
+                }
+                else {
+                    push @new_fields, ".";
+                }
+            }
+        }
+        else {
+            push @new_fields, $fields[$counter];
+        }
+        $counter++;
+    }
+    return join($self->separator, @new_fields);
 }
 
 sub print_header_to_fh {
