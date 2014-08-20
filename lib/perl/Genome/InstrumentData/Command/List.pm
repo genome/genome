@@ -119,4 +119,27 @@ sub _base_filter {
     }
 }
 
+sub _hint_string {
+    my $self = shift;
+
+    my @show_parts = grep { $self->_show_item_is_property_name($_) } $self->_resolve_field_list();
+    my $class_name = $self->subject_class_name;
+
+    my @hint_parts = ();
+    my $include_attributes = 0;
+
+    for my $part (@show_parts) {
+        my $prop = $class_name->__meta__->property(property_name => $part);
+        if($prop and (($prop->via and $prop->via eq 'attributes') or $prop->is_calculated)) {
+            $include_attributes = 1;
+        } else {
+            push @hint_parts, $part;
+        }
+    }
+    push @hint_parts, 'attributes' if $include_attributes;
+
+    return join(',', @hint_parts);
+
+}
+
 1;
