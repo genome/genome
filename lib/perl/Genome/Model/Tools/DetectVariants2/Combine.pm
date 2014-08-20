@@ -28,6 +28,16 @@ class Genome::Model::Tools::DetectVariants2::Combine {
         },
     ],
     has_optional => [
+        input_a => {
+            is_transient => 1,
+            is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
+            id_by => 'input_a_id',
+        },
+        input_b => {
+            is_transient => 1,
+            is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
+            id_by => 'input_b_id',
+        },
         _result_id => {
             is => 'Text',
             is_output => 1,
