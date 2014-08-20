@@ -22,10 +22,6 @@ sub requires_annotations {
     return ();
 }
 
-sub available_fields {
-    return qw/contains_tag/;
-}
-
 sub filter_entry {
     my $self = shift;
     my $entry = shift;
@@ -47,20 +43,6 @@ sub filter_entry {
         $return_values{$alt_allele} = $contains_tag;
     }
 
-    return %return_values;
-}
-
-sub interpret_entry {
-    my ($self, $entry, $passed_alt_alleles) = @_;
-
-    my %filter_output = $self->filter_entry($entry);
-
-    my %return_values;
-    for my $variant_allele (@$passed_alt_alleles) {
-        $return_values{$variant_allele} =  {
-            contains_tag => $filter_output{$variant_allele},
-        };
-    }
     return %return_values;
 }
 
