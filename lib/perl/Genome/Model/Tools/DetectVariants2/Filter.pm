@@ -751,7 +751,7 @@ sub params_for_filter_result {
         control_alignment_results => \@control_alignment_results,
         reference_build_id => $self->reference_build_id,
         region_of_interest_id => $previous_result->region_of_interest_id,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => $previous_result->test_name,
         chromosome_list => $previous_result->chromosome_list,
     );
 
@@ -770,7 +770,7 @@ sub params_for_vcf_result {
     }
 
     my %params = (
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => $prev_vcf_result->test_name,
         input_id => $self->_result->id,
         aligned_reads_sample => $self->aligned_reads_sample,
         incoming_vcf_result => $prev_vcf_result,

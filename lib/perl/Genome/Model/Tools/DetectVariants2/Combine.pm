@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Data::Dump qw(pp);
 use File::Basename;
 
 class Genome::Model::Tools::DetectVariants2::Combine {
@@ -226,6 +227,18 @@ sub _resolve_output_directory {
     return 1;
 }
 
+sub test_name_from_input_results {
+    my $self = shift;
+
+    if (pp($self->input_a->test_name) eq pp($self->input_b->test_name)) {
+        return $self->input_a->test_name;
+    } else {
+        die sprintf("The test_names on inputs do not match: input_a (%s) has test_name (%s) and input_b (%s) has (%s)",
+            $self->input_a_id, pp($self->input_a->test_name),
+            $self->input_b_id, pp($self->input_b->test_name),
+        );
+    }
+}
 
 sub params_for_combine_result {
     my $self = shift;
@@ -234,7 +247,7 @@ sub params_for_combine_result {
         input_a_id => $self->input_a_id,
         input_b_id => $self->input_b_id,
         subclass_name => $self->_result_class,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => $self->test_name_from_input_results,
     );
 
     return \%params;
@@ -269,7 +282,7 @@ sub params_for_vcf_result {
         input_a_id => $self->input_a_id,
         input_b_id => $self->input_b_id,
         input_id => $self->_result->id,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => $self->test_name_from_input_results,
         incoming_vcf_result_a => $prev_vcf_result_a,
         incoming_vcf_result_b => $prev_vcf_result_b,
         vcf_version => $vcf_version,

@@ -432,7 +432,7 @@ sub params_for_vcf_result {
     my $self = shift;
     my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
     my %params = (
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => $self->_result->test_name,
         input_id => $self->_result->id,
         vcf_version => $vcf_version,
         aligned_reads_sample => $self->aligned_reads_sample,
