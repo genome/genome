@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Solexa::Command::GenerateSummaryReport; #TODO: name this for real
+package Genome::InstrumentData::Solexa::Command::GenerateSummaryReport;
 
 use strict;
 use warnings;
@@ -8,10 +8,13 @@ use Genome;
 class Genome::InstrumentData::Solexa::Command::GenerateSummaryReport {
     is => 'Command::V2',
     has_input => [
+        alignment_result => {
+            is => 'Genome::InstrumentData::AlignmentResult::Merged',
+            doc => 'Merged aligment result to summarize',
+        },
         instrument_data => {
             is => 'Genome::InstrumentData::Solexa',
-            shell_args_position => 1,
-            doc => '', #TODO: write me
+            doc => 'Instrument data to use'
         },
     ],
     doc => '', #TODO: write me
@@ -19,48 +22,42 @@ class Genome::InstrumentData::Solexa::Command::GenerateSummaryReport {
 
 sub execute {
     my $self = shift;
+    my $result = $self->alignment_result;;
     my $instrument_data = $self->instrument_data;
-    my @alignment_results = Genome::InstrumentData::AlignmentResult->get(instrument_data_id => $instrument_data->id);
-    my $counter = 1;
-    for my $result (@alignment_results){
-        my $instrument_data = $result->instrument_data;
-        my %metric_hash = create_metric_hash($result);
-        my %attributes_hash = create_attributes_hash($instrument_data);
+    my %metric_hash = create_metric_hash($result);
+    my %attributes_hash = create_attributes_hash($instrument_data);
 
-        print join("\t", $counter,
-                         $instrument_data->flow_cell_id,
-                         $instrument_data->lane,
-                         $attributes_hash{'fwd_run_type'},
-                         $attributes_hash{'fwd_read_length'},
-                         '', #library (empty on report)
-                         $instrument_data->sample->individual_common_name . ' ' . $instrument_data->sample->common_name,
-                         '', #library type (empty on report)
-                         '', #Loaded [Library] pM
-                         $instrument_data->median_insert_size,
-                         $metric_hash{'median_insert_size'},
-                         $instrument_data->clusters,
-                         $metric_hash{'paired_end_base_count'},
-                         $instrument_data->fwd_filt_error_rate_avg,
-                         $instrument_data->read_1_pct_mismatch,
-                         $attributes_hash{'filt_error_rate_avg'},
-                         $attributes_hash{'fwd_filt_error_rate_avg'},
-                         $attributes_hash{'fwd_filt_aligned_clusters'},
-                         $metric_hash{'read_1_pct_aligned'},
-                         $attributes_hash{'rev_filt_aligned_clustered_pct'},
-                         $metric_hash{'read_2_pct_aligned'},
-                         _calculate_avg_qscore(\%attributes_hash, 'fwd', $instrument_data->clusters), #Avg QScore (R1)
-                         _calculate_avg_qscore(\%attributes_hash, 'rev', $instrument_data->clusters), #Avg QScore (R2)
-                         _calculate_percent_gt_q30(\%attributes_hash, 'fwd', $instrument_data->clusters), # % >Q30 (R1)
-                         _calculate_percent_gt_q30(\%attributes_hash, 'rev', $instrument_data->clusters), # % >Q30 (R2)
-                         '', #Percent Unknown PF Reads (empty on report)
-                         '', #Projects
-                         '', #Work Order (id)
-                         '', #SRA experiment Accession (empty on report)
-                         '', #SRA Run Accession (empty on report
-                         '', #SRA Run Status (empty on report)
-                  ), "\n";
-        $counter++;
-    }
+    print join("\t", $instrument_data->flow_cell_id,
+                     $instrument_data->lane,
+                     $attributes_hash{'fwd_run_type'},
+                     $attributes_hash{'fwd_read_length'},
+                     '', #library (empty on report)
+                     $instrument_data->sample->individual_common_name . ' ' . $instrument_data->sample->common_name,
+                     '', #library type (empty on report)
+                     '', #Loaded [Library] pM
+                     $instrument_data->median_insert_size,
+                     $metric_hash{'median_insert_size'},
+                     $instrument_data->clusters,
+                     $metric_hash{'paired_end_base_count'},
+                     $instrument_data->fwd_filt_error_rate_avg,
+                     $instrument_data->read_1_pct_mismatch,
+                     $attributes_hash{'filt_error_rate_avg'},
+                     $attributes_hash{'fwd_filt_error_rate_avg'},
+                     $attributes_hash{'fwd_filt_aligned_clusters'},
+                     $metric_hash{'read_1_pct_aligned'},
+                     $attributes_hash{'rev_filt_aligned_clustered_pct'},
+                     $metric_hash{'read_2_pct_aligned'},
+                     _calculate_avg_qscore(\%attributes_hash, 'fwd', $instrument_data->clusters), #Avg QScore (R1)
+                     _calculate_avg_qscore(\%attributes_hash, 'rev', $instrument_data->clusters), #Avg QScore (R2)
+                     _calculate_percent_gt_q30(\%attributes_hash, 'fwd', $instrument_data->clusters), # % >Q30 (R1)
+                     _calculate_percent_gt_q30(\%attributes_hash, 'rev', $instrument_data->clusters), # % >Q30 (R2)
+                     '', #Percent Unknown PF Reads (empty on report)
+                     '', #Projects
+                     '', #Work Order (id)
+                     '', #SRA experiment Accession (empty on report)
+                     '', #SRA Run Accession (empty on report)
+                     '', #SRA Run Status (empty on report)
+              ), "\n";
     return 1;
 }
 
