@@ -165,7 +165,7 @@ sub _get_seq_ids {
 	push @srs,@srs2;
     }
 
-    #try template_id adn trace_type_code
+    #try template_id and trace_type_code
     unless (@srs) {
 	delete $params{'clone_id'};
 	$params{'template_id'} = [@clone_ids_ncbi];

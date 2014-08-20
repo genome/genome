@@ -152,6 +152,6 @@ ok(!eval{$helpers->remove_path_and_auxiliary_files();}, 'failed to remove source
 Genome::Sys->create_symlink($test_dir.'/bam/v1/'.$bam_basename.'.md5-orig', $bam_path.'.md5-orig');
 Genome::Sys->create_symlink($test_dir.'/bam/v1/'.$bam_basename.'.md5-orig', $bam_path.'.random');
 ok($helpers->remove_paths_and_auxiliary_files($bam_path), 'remove source paths and md5s w/o source paths');
-ok(!glob($bam_path.'*'), 'removed path adn auxillary files');
+ok(!glob($bam_path.'*'), 'removed path and auxillary files');
 
 done_testing();

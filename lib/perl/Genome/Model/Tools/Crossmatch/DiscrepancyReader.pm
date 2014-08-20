@@ -154,7 +154,7 @@ sub _parse_list
 
 =over
 
-=item I<Synopsis>   Parses, creates adn returns a discrepancy from the io
+=item I<Synopsis>   Parses, creates and returns a discrepancy from the io
 
 =item I<Params>     none
 
