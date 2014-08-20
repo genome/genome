@@ -28,12 +28,12 @@ class Genome::Model::Command::InstrumentData::List {
         unassigned => {
             is => 'Boolean',
             default => 0,
-            doc => 'List instrument data that is compatable to the model, but not yet assigned',
+            doc => 'List instrument data that is compatible to the model, but not yet assigned',
         },
         compatible => {
             is => 'Boolean',
             default => 0,
-            doc => 'List instrument data that has been is compatable to the model',
+            doc => 'List instrument data that has been is compatible to the model',
         },
         show => {
             is => 'Text',
