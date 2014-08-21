@@ -1,0 +1,35 @@
+experts:
+    'bam-readcount':
+        version: 0.5
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 0
+    'flanking-regions':
+        flank_size: 25
+    vep:
+        ensembl_version: 75
+        custom_annotation_tags: []
+        species: 'homo-sapiens'
+        plugins: []
+        joinx_version: 1.9
+        plugins_version: 1
+reporters:
+    fasta:
+        filters:
+            'allele-in-genotype':
+                sample_name: tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: tumor
+        interpreters:
+            position: {}
+            'flanking-regions': {}
+            vaf:
+                sample_name: tumor
+            vep: {}
+        params:
+            file_name: 'report1.fa'
