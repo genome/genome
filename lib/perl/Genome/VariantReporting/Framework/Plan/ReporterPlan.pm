@@ -65,9 +65,17 @@ sub __plan_errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__plan_errors__;
 
+    push @errors, $self->__interpreter_plan_errors__;
+
+    return @errors;
+}
+
+sub __interpreter_plan_errors__ {
+    my $self = shift;
     my $needed = Set::Scalar->new($self->get_class->requires_interpreters);
     my $have = Set::Scalar->new(map {$_->name} $self->interpreter_plans);
 
+    my @errors;
     unless($needed->is_equal($have)) {
         if (my $still_needed = $needed - $have) {
             push @errors, UR::Object::Tag->create(
@@ -80,11 +88,11 @@ sub __plan_errors__ {
             push @errors, UR::Object::Tag->create(
                 type => 'error',
                 properties => [$not_needed->members],
-                desc => sprintf("Interpreters provided by plan but not required by reporter (%s): (%s)", $self->name, join(",", $not_needed->members)),
+                desc => sprintf("Interpreters provided by plan but not required by reporter (%s): (%s)",
+                    $self->name, join(",", $not_needed->members)),
             );
         }
     }
-
     return @errors;
 }
 
