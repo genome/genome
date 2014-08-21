@@ -52,7 +52,7 @@ subtest 'report subroutine' => sub {
     );
 };
 
-subtest 'filter_interpreters subroutine' => sub {
+subtest 'soft_filters subroutine' => sub {
     my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
     ok($reporter, "Reporter created successfully");
 
@@ -60,7 +60,7 @@ subtest 'filter_interpreters subroutine' => sub {
     $reporter->add_interpreter_object($ft_filter);
 
     my $expected_filters = Set::Scalar->new($indel_filter, $ft_filter);
-    my $actual_filters = Set::Scalar->new($reporter->filter_interpreters);
+    my $actual_filters = Set::Scalar->new($reporter->soft_filters);
     ok($actual_filters->is_equal($expected_filters), 'Filter interpreter list as expected');
 };
 
@@ -90,7 +90,7 @@ subtest 'add_headers_for_soft_filters subroutine' => sub {
 
     $reporter->add_headers_for_soft_filters($header);
     my $expected_filter_ids = Set::Scalar->new(keys %{$header->filters});
-    for my $filter ($reporter->filter_interpreters) {
+    for my $filter ($reporter->soft_filters) {
         ok($expected_filter_ids->contains($filter->vcf_id), sprintf('Header containts FILTER tag for %s interpreter: %s', $filter->name, $filter->vcf_id));
     }
 };

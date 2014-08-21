@@ -61,11 +61,11 @@ sub add_headers_for_soft_filters {
     my $self = shift;
     my $header = shift;
 
-    for my $filter_interpreter ($self->filter_interpreters) {
+    for my $filter ($self->soft_filters) {
         $header->add_filter_str(sprintf(
             "<ID=%s,Description=\"%s\">",
-            $filter_interpreter->vcf_id,
-            $filter_interpreter->vcf_description,
+            $filter->vcf_id,
+            $filter->vcf_description,
         ));
     }
 }
@@ -74,7 +74,7 @@ sub add_header_for_main_filter {
     my $self = shift;
     my $header = shift;
 
-    my $filters = join(", ", map { $_->vcf_id } $self->filter_interpreters);
+    my $filters = join(", ", map { $_->vcf_id } $self->soft_filters);
 
     $header->add_info_str(sprintf(
         "<ID=%s,Number=A,Type=Integer,Description=\"%s\">",
@@ -108,7 +108,7 @@ sub determine_final_results {
     for my $alt_allele (@{$entry->{alternate_alleles}}) {
         push(
             @final_results,
-            (all { $interpretations->{$_->name}->{$alt_allele}->{filter_status} == 1} $self->filter_interpreters) || 0
+            (all { $interpretations->{$_->name}->{$alt_allele}->{filter_status} == 1} $self->soft_filters) || 0
         );
     }
     return @final_results;
@@ -120,7 +120,7 @@ sub add_final_results {
     $entry->set_info_field('ALLFILTERSPASS', join(',', @final_results));
 }
 
-sub filter_interpreters {
+sub soft_filters {
     my $self = shift;
     return grep { $_->isa('Genome::VariantReporting::Framework::Component::Filter') } values %{$self->interpreters};
 }
