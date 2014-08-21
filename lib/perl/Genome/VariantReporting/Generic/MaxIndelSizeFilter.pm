@@ -53,5 +53,15 @@ sub filter_entry {
     return %return_values;
 }
 
-1;
+sub vcf_id {
+    my $self = shift;
+    return 'MAXINDEL' . $self->size;
+}
 
+sub vcf_description {
+    my $self = shift;
+
+    return 'The size of an indel is less than or equal to ' . $self->size;
+}
+
+1;
