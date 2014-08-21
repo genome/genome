@@ -285,7 +285,6 @@ sub _validate_required_for_start_properties {
     push @missing_required_properties, 'reference_sequence_build' unless ($self->reference_sequence_build);
     push @missing_required_properties, 'tumor_sample' unless ($self->tumor_sample);
     push @missing_required_properties, 'instrument_data' unless (scalar @{[ $self->instrument_data ]} );
-    push @missing_required_properties, 'annotation_build' unless ($self->annotation_build);
 
     my $tag;
     if (@missing_required_properties) {
