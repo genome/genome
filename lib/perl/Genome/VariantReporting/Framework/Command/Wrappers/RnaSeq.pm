@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+use File::Basename qw(dirname);
 use File::Spec;
 
 class Genome::VariantReporting::Framework::Command::Wrappers::RnaSeq {
@@ -42,14 +43,14 @@ sub logs_directory {
     return  File::Spec->join($self->output_dir, "logs_$variant_type");
 };
 
-sub create {
-    my $class = shift;
-    my $self = $class->SUPER::create(@_);
+sub execute {
+    my $self = shift;
     Genome::Sys->create_directory($self->output_dir);
-    #Genome::Sys->create_directory($self->reports_directory("snvs"));
-    #Genome::Sys->create_directory($self->logs_directory("snvs"));
+    Genome::Sys->create_directory($self->reports_directory("snvs"));
+    Genome::Sys->create_directory($self->logs_directory("snvs"));
     $self->generate_resource_file;
-    return $self;
+    $self->run_reports;
+    return 1;
 };
 
 sub is_valid {
@@ -94,14 +95,39 @@ sub generate_resource_file {
     # This should be handled by the translated properties once experts can have translations
     $resource->{tumor_sample_name} = $self->somatic_build->tumor_sample->name;
 
-    YAML::DumpFile(File::Spec->join($self->resource_file), $resource);
+    YAML::DumpFile($self->resource_file, $resource);
 
     return 1;
+}
+
+sub run_reports {
+    my $self = shift;
+
+    my $variant_type = 'snvs';
+    Genome::VariantReporting::Framework::Command::CreateReport->execute(
+        input_vcf => $self->input_vcf($variant_type),
+        variant_type => $variant_type,
+        output_directory => $self->reports_directory($variant_type),
+        plan_file => $self->plan_file($variant_type),
+        resource_file => $self->resource_file,
+        log_directory => $self->logs_directory($variant_type),
+    );
+
+}
+
+sub plan_file {
+    my ($self, $type) = @_;
+    return File::Spec->join($self->_plan_search_dir, "rnaseq_variants_$type.yaml");
 }
 
 sub input_vcf {
     my ($self, $variant_type) = @_;
     return $self->somatic_build->get_detailed_vcf_result($variant_type)->get_vcf($variant_type);
+}
+
+sub _plan_search_dir {
+    my $variant_reporting_base_dir = dirname(dirname(dirname(dirname(__FILE__))));
+    return File::Spec->join($variant_reporting_base_dir, 'plan_files');
 }
 
 1;

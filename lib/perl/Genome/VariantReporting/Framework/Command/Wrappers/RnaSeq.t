@@ -16,6 +16,7 @@ use Genome::Test::Factory::ProcessingProfile::RnaSeq;
 use Genome::Test::Factory::Model::RnaSeq;
 use Genome::Test::Factory::Build;
 use Genome::Utility::Test qw(compare_ok);
+use Sub::Install qw(reinstall_sub);
 
 my $pkg = "Genome::VariantReporting::Framework::Command::Wrappers::RnaSeq";
 
@@ -26,19 +27,29 @@ my $expected_dir = File::Spec->join($test_dir, "expected");
 my $output_dir = Genome::Sys->create_temp_directory;
 
 my $roi_name = "test_roi"; #FIXME not actually needed for this test
-my $tumor_sample = Genome::Test::Factory::Sample->setup_object();
-my $normal_sample = Genome::Test::Factory::Sample->setup_object(source_id => $tumor_sample->source_id);
+my $tumor_sample = Genome::Test::Factory::Sample->setup_object(name => "TEST-patient1-somval_tumor1");
+my $normal_sample = Genome::Test::Factory::Sample->setup_object(name => "TEST-patient1-somval_normal1", source_id => $tumor_sample->source_id);
 my $somatic_build = get_build($roi_name, $tumor_sample, $normal_sample);
 
 is($somatic_build->class, "Genome::Model::Build::SomaticValidation", 'Somatic build looks ok');
 my $tumor_build = get_rnaseq_build($tumor_sample);
 
-my $model_pair = $pkg->create(
+my $wrapper = $pkg->create(
     somatic_build => $somatic_build,
     tumor_build => $tumor_build,
     base_output_dir => $output_dir,
 );
-is($model_pair->class, $pkg, 'model pair command looks ok');
+is($wrapper->class, $pkg, 'wrapper command looks ok');
+
+# Turn off report running, as it's out of the scope/time for this test
+reinstall_sub({
+    into => "Genome::VariantReporting::Framework::Command::CreateReport",
+    as => "execute",
+    code => sub {return 1},
+});
+
+ok($wrapper->execute, 'wrapper executed');
+
 compare_directories($expected_dir, $output_dir);
 
 my $relative_yaml_path = File::Spec->join(qw(test_model_1 resource.yaml));

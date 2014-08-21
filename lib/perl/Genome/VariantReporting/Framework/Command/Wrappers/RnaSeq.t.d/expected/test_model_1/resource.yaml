@@ -6,6 +6,6 @@ feature_list_ids: {}
 fpkm_file: RnaSeq.t.d/expression/genes.fpkm_tracking
 reference_fasta: /gscmnt/gc13003/info/test_suite_data/Genome-VariantReporting-Framework-Component-ResourceProvider/v3/reference.fasta
 translations:
-  normal: sample_name_2
-  tumor: sample_name_1
-tumor_sample_name: sample_name_1
+  normal: TEST-patient1-somval_normal1
+  tumor: TEST-patient1-somval_tumor1
+tumor_sample_name: TEST-patient1-somval_tumor1
