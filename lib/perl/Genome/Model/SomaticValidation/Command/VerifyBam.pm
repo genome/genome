@@ -60,10 +60,17 @@ sub should_run {
         return 0;
     }
 
+    unless($self->build->model->verify_bam_id_version) {
+        $self->debug_message('No Verify BAM ID version specified. Skipping run.');
+        return 0;
+    }
+
     unless (defined $self->sample_for_mode->default_genotype_data) {
         $self->debug_message('No default genotype data for sample '.$self->sample_for_mode->__display_name__.' Skipping VerifyBamId');
         return 0;
     }
+
+    return 1;
 }
 
 sub params_for_result {
