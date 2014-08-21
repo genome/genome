@@ -12,6 +12,7 @@ use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
 use Set::Scalar;
+use List::MoreUtils qw(each_array);
 
 my $pkg = 'Genome::VariantReporting::Reporter::VcfReporter';
 use_ok($pkg);
@@ -135,6 +136,26 @@ subtest 'process_header subroutine' => sub {
         File::Spec->join($data_dir, 'expected_after_process_header.vcf'),
         'Output vcf as expected'
     );
+};
+
+subtest 'all_filters_passed_for_allele subroutine' => sub {
+    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
+    ok($reporter, "Reporter created successfully");
+
+    $reporter->add_interpreter_object($indel_filter);
+    $reporter->add_interpreter_object($ft_filter);
+
+    my @alleles = qw( C AT T );
+    my @results = @{expected_final_results()};
+
+    my $it = each_array( @alleles, @results );
+    while ( my ($allele, $result) = $it->() ) {
+        is(
+            $reporter->all_filters_passed_for_allele(interpretations(), $allele),
+            $result,
+            "Result for allele ($allele) calculated correctly: ($result)"
+        );
+    }
 };
 
 subtest 'determine_final_results subroutine' => sub {

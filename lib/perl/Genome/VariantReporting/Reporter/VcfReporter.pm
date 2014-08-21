@@ -106,12 +106,17 @@ sub determine_final_results {
 
     my @final_results;
     for my $alt_allele (@{$entry->{alternate_alleles}}) {
-        push(
-            @final_results,
-            (all { $interpretations->{$_->name}->{$alt_allele}->{filter_status} == 1} $self->soft_filters) || 0
-        );
+        push(@final_results, $self->all_filters_passed_for_allele($interpretations, $alt_allele));
     }
     return @final_results;
+}
+
+sub all_filters_passed_for_allele {
+    my $self = shift;
+    my $interpretations = shift;
+    my $allele = shift;
+
+    return (all { $interpretations->{$_->name}->{$allele}->{filter_status} == 1} $self->soft_filters) || 0
 }
 
 sub add_final_results {
