@@ -25,9 +25,102 @@ use_ok($indel_filter_pkg);
 my $ft_filter_pkg = 'Genome::VariantReporting::Generic::FTKeepFilter';
 use_ok($ft_filter_pkg);
 
-test_reporter();
+my $indel_filter = $indel_filter_pkg->create(info_tag => 'ON_TARGET');
+ok($indel_filter->isa($indel_filter_pkg), 'Filter created successfully');
+
+my $ft_filter = $ft_filter_pkg->create(sample_name => 'S1');
+ok($ft_filter->isa($ft_filter_pkg), 'Filter created successfully');
+
+subtest 'filter_interpreters subroutine' => sub {
+    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
+    ok($reporter, "Reporter created successfully");
+
+    $reporter->add_interpreter_object($indel_filter);
+    $reporter->add_interpreter_object($ft_filter);
+
+    my $expected_filters = Set::Scalar->new($indel_filter, $ft_filter);
+    my $actual_filters = Set::Scalar->new($reporter->filter_interpreters);
+    ok($actual_filters->is_equal($expected_filters), 'Filter interpreter list as expected');
+};
+
+subtest 'add_header_for_main_filter subroutine' => sub {
+    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
+    ok($reporter, "Reporter created successfully");
+
+    $reporter->add_interpreter_object($indel_filter);
+    $reporter->add_interpreter_object($ft_filter);
+
+    my $entry = create_entry();
+    my $header = $entry->{'header'};
+
+    $reporter->add_header_for_main_filter($header);
+    ok($header->info_types->{ALLFILTERSPASS}, "Main filter header ALLFILTERSPASS was added successfully");
+};
+
+subtest 'add_headers_for_soft_filters subroutine' => sub {
+    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
+    ok($reporter, "Reporter created successfully");
+
+    $reporter->add_interpreter_object($indel_filter);
+    $reporter->add_interpreter_object($ft_filter);
+
+    my $entry = create_entry();
+    my $header = $entry->{'header'};
+
+    $reporter->add_headers_for_soft_filters($header);
+    my $expected_filter_ids = Set::Scalar->new(keys %{$header->filters});
+    for my $filter ($reporter->filter_interpreters) {
+        ok($expected_filter_ids->contains($filter->vcf_id), sprintf('Header containts FILTER tag for %s interpreter: %s', $filter->name, $filter->vcf_id));
+    }
+};
+
+subtest 'determine_final_results subroutine' => sub {
+    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
+    ok($reporter, "Reporter created successfully");
+
+    $reporter->add_interpreter_object($indel_filter);
+    $reporter->add_interpreter_object($ft_filter);
+
+    my @final_results = $reporter->determine_final_results(interpretations(), create_entry());
+    is_deeply(\@final_results, expected_final_results(), "Final filter results as expected");
+};
+
+subtest 'add_final_results subroutine' => sub {
+    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
+    ok($reporter, "Reporter created successfully");
+
+    my $entry = create_entry();
+
+    Genome::VariantReporting::Reporter::VcfReporter::add_final_results($entry, @{expected_final_results()});
+    is($entry->info('ALLFILTERSPASS'), '1,0,0', 'ALLFILTERPASS INFO field added correctly');
+};
 
 done_testing;
+
+sub interpretations {
+    my $entry = create_entry();
+    return {
+        $indel_filter->name => {
+            C  => { filter_status => 1, },
+            AT => { filter_status => 1, },
+            T  => { filter_status => 0, },
+        },
+        $ft_filter->name => {
+            C  => { filter_status => 1, },
+            AT => { filter_status => 0, },
+            T  => { filter_status => 0, },
+        },
+        'vcf-entry' => {
+            C  => { vcf_entry => $entry, },
+            AT => { vcf_entry => $entry, },
+            T  => { vcf_entry => $entry, },
+        }
+    };
+}
+
+sub expected_final_results {
+    return [1,0,0];
+}
 
 sub create_vcf_header {
     my $header_txt = <<EOS;
@@ -60,48 +153,4 @@ sub create_entry {
     my $entry_txt = join("\t", @fields);
     my $entry = Genome::File::Vcf::Entry->new(create_vcf_header(), $entry_txt);
     return $entry;
-}
-
-
-sub test_reporter {
-    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
-    ok($reporter, "Reporter created successfully");
-
-    my $indel_filter = $indel_filter_pkg->create(info_tag => 'ON_TARGET');
-    ok($indel_filter->isa($indel_filter_pkg), 'Filter created successfully');
-    $reporter->add_interpreter_object($indel_filter);
-
-    my $ft_filter = $ft_filter_pkg->create(sample_name => 'S1');
-    ok($ft_filter->isa($ft_filter_pkg), 'Filter created successfully');
-    $reporter->add_interpreter_object($ft_filter);
-
-    my $expected_filters = Set::Scalar->new($indel_filter, $ft_filter);
-    my $actual_filters = Set::Scalar->new($reporter->filter_interpreters);
-    ok($actual_filters->is_equal($expected_filters), 'Filter interpreter list as expected');
-
-    my $entry = create_entry();
-    $reporter->add_headers_for_soft_filters($entry->{header});
-    $reporter->add_header_for_main_filter($entry->{header});
-    my $expected_filter_ids = Set::Scalar->new(keys %{$entry->{header}->filters});
-    for my $filter ($reporter->filter_interpreters) {
-        ok($expected_filter_ids->contains($filter->vcf_id), sprintf('Header containts FILTER tag for %s interpreter: %s', $filter->name, $filter->vcf_id));
-    }
-    $reporter->header($entry->{header});
-
-    my %interpretations = (
-        $indel_filter->name => {
-            C  => { filter_status => 1, },
-            AT => { filter_status => 1, },
-            T  => { filter_status => 0, },
-        },
-        $ft_filter->name => {
-            C  => { filter_status => 1, },
-            AT => { filter_status => 0, },
-            T  => { filter_status => 0, },
-        },
-    );
-    my @final_results = $reporter->determine_final_results(\%interpretations, $entry);
-    is_deeply(\@final_results, [1, 0, 0], "Final filter results as expected");
-    Genome::VariantReporting::Reporter::VcfReporter::add_final_results($entry, @final_results);
-    is($entry->info('ALLFILTERSPASS'), '1,0,0', 'ALLFILTERPASS INFO field added correctly');
 }

@@ -41,43 +41,20 @@ sub report {
     my $entry = (values %vcf_entry_interpretations)[0]->{'vcf_entry'};
 
     unless (defined($self->header)) {
-        my $header = $entry->{'header'};
-        $self->add_headers_for_soft_filters($header);
-        $self->add_header_for_main_filter($header);
-        $self->header($header);
-        $self->print_vcf_header();
+        $self->process_header($entry->{'header'});
     }
 
-    my @final_results = $self->determine_final_results($interpretations, $entry);
-    add_final_results($entry, @final_results);
-    $self->vcf_file->write($entry);
+    $self->process_entry($entry, $interpretations);
 }
 
-sub determine_final_results {
+sub process_header {
     my $self = shift;
-    my $interpretations = shift;
-    my $entry = shift;
+    my $header = shift;
 
-    my @final_results;
-    for my $alt_allele (@{$entry->{alternate_alleles}}) {
-        push(
-            @final_results,
-            (all { $interpretations->{$_->name}->{$alt_allele}->{filter_status} == 1} $self->filter_interpreters) || 0
-        );
-    }
-    return @final_results;
-}
-
-sub add_final_results {
-    my $entry = shift;
-    my @final_results = @_;
-    $entry->set_info_field('ALLFILTERSPASS', join(',', @final_results));
-}
-
-sub print_vcf_header {
-    my $self = shift;
-
-    $self->vcf_file(Genome::File::Vcf::Writer->fhopen($self->_output_fh, $self->file_name, $self->header));
+    $self->add_headers_for_soft_filters($header);
+    $self->add_header_for_main_filter($header);
+    $self->header($header);
+    $self->print_vcf_header();
 }
 
 sub add_headers_for_soft_filters {
@@ -104,6 +81,43 @@ sub add_header_for_main_filter {
         'ALLFILTERSPASS',
         'Flags whether the alternate allele passed all the soft filters: ' . $filters
     ));
+}
+
+sub print_vcf_header {
+    my $self = shift;
+
+    $self->vcf_file(Genome::File::Vcf::Writer->fhopen($self->_output_fh, $self->file_name, $self->header));
+}
+
+sub process_entry {
+    my $self = shift;
+    my $entry = shift;
+    my $interpretations = shift;
+
+    my @final_results = $self->determine_final_results($interpretations, $entry);
+    add_final_results($entry, @final_results);
+    $self->vcf_file->write($entry);
+}
+
+sub determine_final_results {
+    my $self = shift;
+    my $interpretations = shift;
+    my $entry = shift;
+
+    my @final_results;
+    for my $alt_allele (@{$entry->{alternate_alleles}}) {
+        push(
+            @final_results,
+            (all { $interpretations->{$_->name}->{$alt_allele}->{filter_status} == 1} $self->filter_interpreters) || 0
+        );
+    }
+    return @final_results;
+}
+
+sub add_final_results {
+    my $entry = shift;
+    my @final_results = @_;
+    $entry->set_info_field('ALLFILTERSPASS', join(',', @final_results));
 }
 
 sub filter_interpreters {
