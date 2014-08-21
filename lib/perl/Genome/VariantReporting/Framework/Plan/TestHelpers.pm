@@ -232,6 +232,35 @@ sub set_what_interpreter_x_requires {
 }
 
 {
+    package Genome::VariantReporting::TestDeltaReporter;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::VariantReporting::TestDeltaReporter {
+        is => 'Genome::VariantReporting::Framework::Component::Reporter',
+        has => [
+            p1 => {},
+        ],
+    };
+
+    sub name {
+        "reporter_delta";
+    }
+
+    sub requires_interpreters {
+        return qw(interpreter_x);
+    }
+
+    sub allows_hard_filters {
+        return 0;
+    }
+
+    1;
+}
+
+{
     package Genome::VariantReporting::TestExpert;
 
     use strict;
