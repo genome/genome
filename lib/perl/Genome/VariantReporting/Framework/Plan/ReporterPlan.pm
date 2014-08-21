@@ -66,6 +66,7 @@ sub __plan_errors__ {
     my @errors = $self->SUPER::__plan_errors__;
 
     push @errors, $self->__interpreter_plan_errors__;
+    push @errors, $self->__filter_plan_errors__;
 
     return @errors;
 }
@@ -94,6 +95,21 @@ sub __interpreter_plan_errors__ {
         }
     }
     return @errors;
+}
+
+sub __filter_plan_errors__ {
+    my $self = shift;
+
+    unless ($self->get_class->allows_hard_filters) {
+        if ($self->filter_plans) {
+            return UR::Object::Tag->create(
+                type => 'error',
+                desc => sprintf("Reporter (%s) does not allow any hard filters.  Move them to the interpreters section if they should be soft filters. (%s)",
+                    $self->name, join(",", map {$_->name} $self->filter_plans)),
+            );
+        }
+    }
+    return;
 }
 
 sub requires_annotations {

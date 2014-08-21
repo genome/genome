@@ -33,6 +33,10 @@ sub requires_interpreters {
     confess "Abstract method 'requires_interpreters' must be defined in class '$class'";
 }
 
+sub allows_hard_filters {
+    return 1;
+}
+
 sub initialize {
     # this gets called before interpretations are given to ->report method
     return;

@@ -29,6 +29,10 @@ sub requires_interpreters {
     return qw(vcf-entry ft-keep contains-tag coverage-vaf genotype-vaf);
 }
 
+sub allows_hard_filters {
+    return 0;
+}
+
 sub report {
     my $self = shift;
     my $interpretations = shift;
