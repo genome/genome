@@ -15,9 +15,6 @@ class Genome::VariantReporting::Reporter::VcfReporter {
         header => {
             is => 'Genome::Vcf::Header',
         },
-        header_is_written => {
-            is => 'Bool',
-        },
     ],
 };
 
@@ -43,7 +40,7 @@ sub report {
     # We just grab the first one
     my $entry = (values %vcf_entry_interpretations)[0]->{'vcf_entry'};
 
-    unless ($self->header_is_written) {
+    unless (defined($self->header)) {
         my $header = $entry->{'header'};
         $self->add_headers_for_soft_filters($header);
         $self->add_header_for_main_filter($header);
@@ -81,7 +78,6 @@ sub print_vcf_header {
     my $self = shift;
 
     $self->vcf_file(Genome::File::Vcf::Writer->fhopen($self->_output_fh, $self->file_name, $self->header));
-    $self->header_is_written(1);
 }
 
 sub add_headers_for_soft_filters {
