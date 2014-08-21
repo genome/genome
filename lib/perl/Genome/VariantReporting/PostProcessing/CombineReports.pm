@@ -41,6 +41,11 @@ class Genome::VariantReporting::PostProcessing::CombineReports {
             is_many => 1,
             doc => 'A regular expression that indicates that columns whose headers match should be split up.  These columns contain key:value pairs.  The key will be appended to the column header and the value will be put in the column.  Only valid if the file has a header.',
         },
+        entry_sources => {
+            is => 'HASH',
+            is_optional => 1,
+            doc => 'Hash of report => TAG If entry_sources are specified, a column will be added to the combined report with a tag on each entry indicating which report it originally came from',
+        },
     ],
 };
 
@@ -97,8 +102,9 @@ sub combine_files {
         } else {
             $file_to_combine = $report;
         }
+        my $with_source = $self->add_source($report, $file_to_combine);
         my $combine_command = 'cat %s >> %s';
-        Genome::Sys->shellcmd(cmd => sprintf($combine_command, $file_to_combine, $combined_file));
+        Genome::Sys->shellcmd(cmd => sprintf($combine_command, $with_source, $combined_file));
     }
     return $combined_file;
 }
@@ -143,6 +149,25 @@ sub reordered_columns_file {
     }
     $out->close;
     $in->close;
+    return $out_file;
+}
+
+sub add_source {
+    my ($self, $report, $file) = @_;
+    unless ($self->entry_sources) {
+        return $file;
+    }
+    my $tag = $self->entry_sources->{$report};
+    my $out_file = Genome::Sys->create_temp_file_path;
+    my $out = Genome::Sys->open_file_for_writing($out_file);
+    my $in = Genome::Sys->open_file_for_reading($file);
+
+    while (my $line = <$in>) {
+        chomp $line;
+        print $out join($self->separator, $line, $tag)."\n";
+    }
+    $in->close;
+    $out->close;
     return $out_file;
 }
 
@@ -264,7 +289,7 @@ sub calculate_new_line {
 sub print_header_to_fh {
     my ($self, $fh) = @_;
     if ($self->contains_header) {
-        $fh->print( join($self->separator, $self->get_master_header) . "\n");
+        $fh->print( join($self->separator, $self->get_master_header_with_source) . "\n");
     }
     $fh->close;
 }
@@ -276,6 +301,16 @@ sub validate {
     if ($self->split_indicators and !$self->contains_header) {
         die $self->error_message("If split_indicators are specified, then a header must be present");
     }
+
+    if ($self->entry_sources) {
+        for my $report ($self->reports) {
+            my $tag = $self->entry_sources->{$report};
+            unless (defined $tag) {
+                die $self->error_message("No source tag defined for report $report");
+            }
+        }
+    }
+
     Genome::Sys->validate_file_for_writing($self->output_file);
 
     my $master_header = Set::Scalar->new($self->get_master_header);
@@ -335,6 +370,16 @@ sub get_master_header {
     return $self->get_header($reports[0]);
 }
 memoize('get_master_header');
+
+sub get_master_header_with_source {
+    my $self = shift;
+    if ($self->entry_sources) {
+        return ($self->get_master_header, "Source");
+    }
+    else {
+        return $self->get_master_header;
+    }
+}
 
 # Given a file, return the header. If reports have no header, return an 'anonymous' one with just numbers.
 sub get_header {
