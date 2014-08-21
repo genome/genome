@@ -158,20 +158,28 @@ sub _parse_list {
     return split($delim, $identifiers);
 }
 
+sub _raw_set_info {
+    my ($self, $k, $v) = @_;
+
+    my $info = $self->{info_fields};
+    push(@{$info->{order}}, $k) unless exists $info->{hash}{$k};
+    $info->{hash}{$k} = $v;
+}
+
 # transform a string A=B;C=D;... into a hashref { A=>B, C=>D, ...}
 # take care about the string being . (_parse_list does this for us)
 sub _parse_info {
-    my $info_str = shift;
+    my $self = shift;
+    my $info_str = $self->{_fields}->[INFO];
+    $self->{info_fields} = {hash => {}, order => []};
+
     my @info_list = _parse_list($info_str, ';');
     my %info_hash;
     my @info_order;
     for my $i (@info_list) {
         my ($k, $v) = split('=', $i, 2);
-        # we do this rather than just split to handle Flag types (they have undef values)
-        $info_hash{$k} = $v;
-        push(@info_order, $k);
+        $self->_raw_set_info($k, $v);
     }
-    return { hash => \%info_hash, order => \@info_order };
 }
 
 # this assumes $self->{_format} is set
@@ -243,13 +251,11 @@ sub add_allele {
     my $info_types = $self->{header}->info_types;
     my @info_type_names = keys %$info_types;
     return 1 if not @info_type_names;
-
     for my $info_type_name ( @info_type_names ) {
         next if not List::MoreUtils::any { $_ eq $info_types->{$info_type_name}->{number} } (qw/ A R /);
         next if not $info->{$info_type_name};
-        $info->{$info_type_name} .= ',.';
+        $self->set_info_field($info_type_name, $self->info($info_type_name).",.");
     }
-
     return 1;
 }
 
@@ -378,8 +384,8 @@ See info_for_allele for an example.
 sub info {
     my ($self, $key) = @_;
 
-    if (!$self->{info_fields}) {
-        $self->{info_fields} = _parse_info($self->{_fields}->[INFO]);
+    if (!defined $self->{info_fields}) {
+        $self->_parse_info;
     }
 
     my $hash = $self->{info_fields}{hash};
@@ -721,7 +727,7 @@ sub set_sample_field {
 Sets the value of per-site fields.
 
 params:
-    $field_name - name of the field to set (must exist in FORMAT)
+    $field_name - name of the field to set
     $value      - the value to set $field_name to
 
 =cut
@@ -732,20 +738,8 @@ sub set_info_field {
         confess "No info tag given to add!";
     }
 
-    my $info_hash = $self->info;
-    my $info_string = $self->info_to_string;
-
-    if (defined $info_hash->{$field_name}) {
-        $info_hash->{$field_name} = $value;
-        $self->{info_fields}{hash} = $info_hash;
-        $info_string = $self->info_to_string;
-    } else {
-        $info_string .= ";$field_name";
-        $info_string .= "=$value" if defined $value;
-    }
-
-    $self->{_fields}->[INFO] = $info_string;
-    $self->{info_fields} = _parse_info($info_string);
+    $self->_parse_info unless defined $self->{info_fields};
+    $self->_raw_set_info($field_name, $value);
 }
 
 =item C<filter_calls_involving_only>
@@ -875,14 +869,6 @@ sub bases_for_sample {
     return @genotype_allele_nucleotides;
 }
 
-=item C<to_string>
-
-Returns a string representation of the entry in VCF format.
-
-=back
-
-=cut
-
 sub to_hashref {
     my $self = shift;
 
@@ -893,6 +879,14 @@ sub to_hashref {
     @hash{@keys} = @values;
     return \%hash;
 }
+
+=item C<info_to_string>
+
+Returns the string representation of the info fields for this entry.
+
+=back
+
+=cut
 
 sub info_to_string {
     my $self = shift;
@@ -917,6 +911,14 @@ sub info_to_string {
             : $_
         } @info_order) || '.'
 }
+
+=item C<to_string>
+
+Returns a string representation of the entry in VCF format.
+
+=back
+
+=cut
 
 sub to_string {
     my ($self) = @_;
