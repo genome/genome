@@ -37527,6 +37527,25 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>solexa',
+    [
+      '>generate-summary-report',
+      [
+        'alignment-result=s',
+        undef,
+        'instrument-data=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>update',
+      [
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
     '>dump',
     [
       'instrument-data=s',
@@ -37626,25 +37645,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>refine-reads',
-    [
-      'lsf-resource=s',
-      'files',
-      'refiner-name=s',
-      'files',
-      'refiner-version=s',
-      'files',
-      'refiner-params=s',
-      'files',
-      'result-id=s',
-      'files',
-      'input-result=s',
-      undef,
-      'refiner-known-sites-ids=s@',
-      'files',
-      'help!',
-      undef
-    ],
     '>list',
     [
       'style=s',
@@ -37676,6 +37676,25 @@ $Genome::Command::OPTS_SPEC = [
         'any'
       ],
       'filter=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>refine-reads',
+    [
+      'lsf-resource=s',
+      'files',
+      'refiner-name=s',
+      'files',
+      'refiner-version=s',
+      'files',
+      'refiner-params=s',
+      'files',
+      'result-id=s',
+      'files',
+      'input-result=s',
+      undef,
+      'refiner-known-sites-ids=s@',
       'files',
       'help!',
       undef
@@ -37971,6 +37990,8 @@ $Genome::Command::OPTS_SPEC = [
     [
       'remove',
       undef,
+      'solexa',
+      undef,
       'dump',
       undef,
       'move-alignment-directory',
@@ -37985,9 +38006,9 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       'imported',
       undef,
-      'refine-reads',
-      undef,
       'list',
+      undef,
+      'refine-reads',
       undef,
       'alignment-result',
       undef,
@@ -38004,8 +38025,6 @@ $Genome::Command::OPTS_SPEC = [
       'generate-file-for-reimport',
       undef,
       'update',
-      undef,
-      'microarray',
       undef,
       'calculate-read-count',
       undef,
@@ -38024,11 +38043,6 @@ $Genome::Command::OPTS_SPEC = [
       undef
     ],
     '>update',
-    [
-      'help!',
-      undef
-    ],
-    '>microarray',
     [
       'help!',
       undef
