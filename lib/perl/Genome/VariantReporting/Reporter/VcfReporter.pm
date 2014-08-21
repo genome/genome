@@ -108,7 +108,7 @@ sub add_header_for_main_filter {
 
 sub filter_interpreters {
     my $self = shift;
-    return grep { $_->is_filter_interpreter } values %{$self->interpreters};
+    return grep { $_->isa('Genome::VariantReporting::Framework::Component::Filter') } values %{$self->interpreters};
 }
 
 1;
