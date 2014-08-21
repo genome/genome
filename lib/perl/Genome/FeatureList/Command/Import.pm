@@ -147,6 +147,7 @@ sub validate_and_sanitize_bed {
 
     while(my $line = <$input_bed_fh>) {
         next if $line =~ /^browser/;
+        $line =~ s/\015$//; #remove CRs if BED came from Windows
 
         if($line =~ /^track/) {
             $self->is_multitracked(1);
