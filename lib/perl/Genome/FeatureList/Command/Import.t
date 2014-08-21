@@ -9,14 +9,14 @@ BEGIN {
 
 use above "Genome";
 
-use Test::More tests => 16;
+use Test::More tests => 20;
 
 use_ok('Genome::FeatureList::Command::Import');
 
 my $reference = Genome::Model::Build::ReferenceSequence->get(name => 'NCBI-human-build36');
 
 my @test_beds = (undef); #fill 0th position
-push @test_beds, map { sprintf('%s.d/%s.bed', __FILE__, $_) } 1..5;
+push @test_beds, map { sprintf('%s.d/%s.bed', __FILE__, $_) } 1..6;
 
 
 #1 has unknown track name
@@ -25,7 +25,7 @@ my @should_fail = (1,3);
 
 #2 is normal
 #4 has browser lines and alternate track names
-my @should_pass = (2,4,5);
+my @should_pass = (2,4,5,6);
 
 my @new_feature_lists;
 for my $passing_bed (@test_beds[@should_pass]) {
@@ -42,6 +42,7 @@ for my $passing_bed (@test_beds[@should_pass]) {
 }
 is($new_feature_lists[0]->file_content_hash, $new_feature_lists[1]->file_content_hash, 'sanitization of browser lines led to same BED file');
 is($new_feature_lists[0]->file_content_hash, $new_feature_lists[2]->file_content_hash, 'sanitization of CRs led to same BED file');
+is($new_feature_lists[0]->file_content_hash, $new_feature_lists[3]->file_content_hash, 'selected correct BED file out of directory');
 
 for my $failing_bed(@test_beds[@should_fail]) {
     my $cmd = Genome::FeatureList::Command::Import->create(

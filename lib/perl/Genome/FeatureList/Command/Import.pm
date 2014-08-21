@@ -88,6 +88,10 @@ sub execute {
         die $self->error_message('File does not exist: %s', $file_path);
     }
 
+    if(-d $file_path) {
+        $file_path = $self->_resolve_bed_file_from_directory($file_path);
+    }
+
     my $sanitized_bed_path = $self->validate_and_sanitize_bed($file_path);
     unless($sanitized_bed_path) {
         die $self->error_message('Unable to import BED file due to validation errors.');
@@ -173,6 +177,32 @@ sub validate_and_sanitize_bed {
     $sanitized_bed_fh->close;
 
     return $sanitized_bed_file;
+}
+
+sub _resolve_bed_file_from_directory {
+    my $self = shift;
+    my $directory = shift;
+
+    unless(-d $directory) {
+        die $self->error_message('Could not read %s as a directory.', $directory);
+    }
+
+    my @bed_files = glob(join '/', $directory, '*.bed');
+
+    unless(scalar(@bed_files)) {
+        die $self->error_message('No BED files found in directory %s.', $directory);
+    }
+
+    if(scalar(@bed_files) == 1) {
+        return $bed_files[0];
+    }
+
+    my @all_tracks = grep { $_ =~ '/[^/]+_AllTracks.bed$' } @bed_files;
+    if(scalar(@all_tracks) == 1) {
+        return $all_tracks[0];
+    }
+
+    die $self->error_message('Multiple candidate BED files found in directory %s. Please select one.', $directory);
 }
 
 1;
