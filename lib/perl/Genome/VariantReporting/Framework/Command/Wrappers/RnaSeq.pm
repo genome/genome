@@ -1,0 +1,108 @@
+package Genome::VariantReporting::Framework::Command::Wrappers::RnaSeq;
+
+use strict;
+use warnings;
+
+use Genome;
+
+use File::Spec;
+
+class Genome::VariantReporting::Framework::Command::Wrappers::RnaSeq {
+    has => {
+        somatic_build => {
+            is => 'Genome::Model::Build',
+        },
+        tumor_build => {
+            is => 'Genome::Model::Build::RnaSeq',
+            doc => 'The build that contains the fpkm file',
+        },
+        base_output_dir => { is => 'Text', },
+    },
+    has_calculated => {
+        output_dir => {
+            calculate_from => [qw/ base_output_dir somatic_build/],
+            calculate => q| my $model_nospace  = $somatic_build->model->name;
+                $model_nospace =~ s/ /_/g;
+                return File::Spec->join($base_output_dir, $model_nospace); |,
+        },
+        resource_file => {
+            calculate_from => [qw/ output_dir /],
+            calculate => q( File::Spec->join($output_dir, "resource.yaml") ),
+        },
+    },
+};
+
+sub reports_directory {
+    my ($self, $variant_type) = @_;
+    return File::Spec->join($self->output_dir, "reports_$variant_type");
+};
+
+sub logs_directory {
+    my ($self, $variant_type) = @_;
+    return  File::Spec->join($self->output_dir, "logs_$variant_type");
+};
+
+sub create {
+    my $class = shift;
+    my $self = $class->SUPER::create(@_);
+    Genome::Sys->create_directory($self->output_dir);
+    #Genome::Sys->create_directory($self->reports_directory("snvs"));
+    #Genome::Sys->create_directory($self->logs_directory("snvs"));
+    $self->generate_resource_file;
+    return $self;
+};
+
+sub is_valid {
+    my $self = shift;
+
+    if (my @problems = $self->__errors__) {
+        $self->error_message('RnaSeq is invalid!');
+        for my $problem (@problems) {
+            my @properties = $problem->properties;
+            $self->error_message("Property " .
+                join(',', map { "'$_'" } @properties) .
+                ': ' . $problem->desc);
+        }
+        return;
+    }
+
+    return 1;
+}
+
+sub generate_resource_file {
+    my $self = shift;
+
+    return if not $self->is_valid;
+    my $resource = {};
+
+    my @aligned_bams;
+    push @aligned_bams, $self->somatic_build->merged_alignment_result->id;
+    push @aligned_bams, $self->somatic_build->control_merged_alignment_result->id;
+    $resource->{aligned_bam_result_id} = \@aligned_bams;
+
+    $resource->{reference_fasta} = $self->somatic_build->reference_sequence_build->full_consensus_path("fa");
+
+    $resource->{feature_list_ids} = {};
+
+    $resource->{fpkm_file} = File::Spec->join($self->tumor_build->data_directory, 'expression', 'genes.fpkm_tracking');
+
+    my %translations;
+    $translations{tumor} = $self->somatic_build->tumor_sample->name;
+    $translations{normal} = $self->somatic_build->normal_sample->name;
+    $resource->{translations} = \%translations;
+
+    # This should be handled by the translated properties once experts can have translations
+    $resource->{tumor_sample_name} = $self->somatic_build->tumor_sample->name;
+
+    YAML::DumpFile(File::Spec->join($self->resource_file), $resource);
+
+    return 1;
+}
+
+sub input_vcf {
+    my ($self, $variant_type) = @_;
+    return $self->somatic_build->get_detailed_vcf_result($variant_type)->get_vcf($variant_type);
+}
+
+1;
+
