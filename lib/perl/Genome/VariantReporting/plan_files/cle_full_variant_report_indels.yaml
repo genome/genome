@@ -108,7 +108,7 @@ reporters:
             vep: {}
         params:
             file_name: 'cle_simple_report'
-    'vcf':
+    'vcf-indels':
         filters: {}
         interpreters:
             'vcf-entry': {}
