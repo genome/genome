@@ -82,18 +82,68 @@ sub move_file_to_output {
 sub combine_files {
     my $self = shift;
 
-    my $combine_command;
-    if ($self->contains_header) {
-        $combine_command = 'tail -n +2 %s >> %s';
-    } else {
-        $combine_command = 'cat %s >> %s';
-    }
-
     my $combined_file = Genome::Sys->create_temp_file_path;
     for my $report ($self->reports) {
-        Genome::Sys->shellcmd(cmd => sprintf($combine_command, $report, $combined_file));
+        my $file_to_combine;
+        if ($self->contains_header) {
+            my @order = $self->get_header_order($report);
+            my @original_order = (0..$#order);
+            if (@order ~~ @original_order) {
+                $file_to_combine = $self->file_without_header($report);
+            }
+            else {
+                $file_to_combine = $self->reordered_columns_file($report, \@order);
+            }
+        } else {
+            $file_to_combine = $report;
+        }
+        my $combine_command = 'cat %s >> %s';
+        Genome::Sys->shellcmd(cmd => sprintf($combine_command, $file_to_combine, $combined_file));
     }
     return $combined_file;
+}
+
+sub get_header_order {
+    my ($self, $file) = @_;
+    my @header = $self->get_header($file);
+    my @order;
+    for my $field (@header) {
+        push @order, firstidx {$_ eq $field} $self->get_master_header;
+    }
+    return @order;
+}
+
+sub file_without_header {
+    my ($self, $file) = @_;
+    my $out_file = Genome::Sys->create_temp_file_path;
+    my $cmd = sprintf('tail -n +2 %s > %s', $file, $out_file);
+    Genome::Sys->shellcmd(
+        cmd => $cmd,
+        output_files => [$out_file],
+        input_files => [$file],
+        allow_zero_size_output_files => 1,
+    );
+    return $out_file;
+}
+
+sub reordered_columns_file {
+    my ($self, $file, $order) = @_;
+    my $out_file = Genome::Sys->create_temp_file_path;
+    my $out = Genome::Sys->open_file_for_writing($out_file);
+    my $in = Genome::Sys->open_file_for_reading($file);
+    my $header_line = <$in>;
+    while (my $line = <$in>) {
+        chomp $line;
+        my @fields = split ($self->separator, $line);
+        my @new_fields;
+        for my $index (@$order) {
+            push @new_fields, $fields[$index];
+        }
+        print $out join($self->separator, @new_fields)."\n";
+    }
+    $out->close;
+    $in->close;
+    return $out_file;
 }
 
 # Sort the file if required. Regardless, put the header in place.

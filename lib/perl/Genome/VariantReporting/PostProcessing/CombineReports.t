@@ -41,6 +41,26 @@ subtest "test with headers" => sub {
     compare_ok($output_file, $expected, 'Output file looks as expected');
 };
 
+subtest "test with different orders of headers" => sub {
+    my $report_a = File::Spec->join($data_dir, 'report_a.header');
+    my $report_b = File::Spec->join($data_dir, 'report_b2.header');
+    my $expected = File::Spec->join($data_dir, 'expected.header');
+
+    my $output_file = Genome::Sys->create_temp_file_path;
+    my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['chr', 'pos'], contains_header => 1, output_file => $output_file);
+    isa_ok($cmd, $pkg);
+
+    my @expected_header = qw(chr pos data1 data2);
+    is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
+    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
+
+    is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
+    is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
+
+    ok($cmd->execute, 'Executed the test command');
+    compare_ok($output_file, $expected, 'Output file looks as expected');
+};
+
 subtest "test without headers" => sub {
     my $report_a = File::Spec->join($data_dir, 'report_a.noheader');
     my $report_b = File::Spec->join($data_dir, 'report_b.noheader');
