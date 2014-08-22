@@ -60,9 +60,6 @@ my $cmd = $pkg->create(
 
 is($cmd->class, $pkg);
 ok($cmd->execute);
-for my $directory (glob("$output_dir/*")) {
-    print STDERR "Comparing directory $directory to expected dir\n";
-    compare_directories(File::Spec->join($test_dir, basename($directory)), $directory);
-}
+compare_directories($test_dir, $output_dir);
 done_testing;
 

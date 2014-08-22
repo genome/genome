@@ -41,6 +41,46 @@ subtest "test with headers" => sub {
     compare_ok($output_file, $expected, 'Output file looks as expected');
 };
 
+subtest "test with headers with source" => sub {
+    my $report_a = File::Spec->join($data_dir, 'report_a.header');
+    my $report_b = File::Spec->join($data_dir, 'report_b.header');
+    my $expected = File::Spec->join($data_dir, 'expected_with_source.header');
+
+    my $output_file = Genome::Sys->create_temp_file_path;
+    my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['chr', 'pos'], contains_header => 1, output_file => $output_file, entry_sources => {"VariantReporting/PostProcessing/CombineReports.t.d/report_a.header" => "report_a", "VariantReporting/PostProcessing/CombineReports.t.d/report_b.header" => "report_b"});
+    isa_ok($cmd, $pkg);
+
+    my @expected_header = qw(chr pos data1 data2);
+    is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
+    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
+
+    is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
+    is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
+
+    ok($cmd->execute, 'Executed the test command');
+    compare_ok($output_file, $expected, 'Output file looks as expected');
+};
+
+subtest "test with different orders of headers" => sub {
+    my $report_a = File::Spec->join($data_dir, 'report_a.header');
+    my $report_b = File::Spec->join($data_dir, 'report_b2.header');
+    my $expected = File::Spec->join($data_dir, 'expected.header');
+
+    my $output_file = Genome::Sys->create_temp_file_path;
+    my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['chr', 'pos'], contains_header => 1, output_file => $output_file);
+    isa_ok($cmd, $pkg);
+
+    my @expected_header = qw(chr pos data1 data2);
+    is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
+    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
+
+    is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
+    is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
+
+    ok($cmd->execute, 'Executed the test command');
+    compare_ok($output_file, $expected, 'Output file looks as expected');
+};
+
 subtest "test without headers" => sub {
     my $report_a = File::Spec->join($data_dir, 'report_a.noheader');
     my $report_b = File::Spec->join($data_dir, 'report_b.noheader');
@@ -59,6 +99,31 @@ subtest "test without headers" => sub {
 
     ok($cmd->execute, 'Executed the test command');
     compare_ok($output_file, $expected, 'Output file looks as expected');
+};
+
+subtest "test without headers with source" => sub {
+    my $report_a = File::Spec->join($data_dir, 'report_a.noheader');
+    my $report_b = File::Spec->join($data_dir, 'report_b.noheader');
+    my $expected = File::Spec->join($data_dir, 'expected_with_source.noheader');
+
+    my $output_file = Genome::Sys->create_temp_file_path;
+    my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['1', '2'], contains_header => 0, output_file => $output_file, entry_sources => {'VariantReporting/PostProcessing/CombineReports.t.d/report_a.noheader' => "report_a", 'VariantReporting/PostProcessing/CombineReports.t.d/report_b.noheader' => "report_b"});
+    isa_ok($cmd, $pkg);
+
+    my @expected_header = qw(1 2 3 4);
+    is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
+    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
+
+    is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
+    is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
+
+    ok($cmd->execute, 'Executed the test command');
+    compare_ok($output_file, $expected, 'Output file looks as expected');
+};
+
+subtest "Source tags must be defined" => sub {
+    my $cmd = $pkg->create(reports => ["report1", "report2"], output_file => "output", entry_sources => {"report2" => "report2"});
+    throws_ok(sub {$cmd->validate}, qr(No source tag defined for report report1), "Error if source tag is not defined for one report");
 };
 
 subtest "columns to split only works with headers" => sub {
