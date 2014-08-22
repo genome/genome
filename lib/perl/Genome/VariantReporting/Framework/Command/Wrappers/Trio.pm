@@ -3,6 +3,7 @@ package Genome::VariantReporting::Framework::Command::Wrappers::Trio;
 use strict;
 use warnings;
 use Genome;
+use File::Basename qw(basename);
 
 class Genome::VariantReporting::Framework::Command::Wrappers::Trio {
     is => 'Command::V2',
@@ -36,6 +37,20 @@ sub execute {
     my @model_pairs = $self->get_model_pairs;
     for my $model_pair (@model_pairs) {
         $self->run_reports($model_pair);
+    }
+    my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
+    for my $roi_directory (@roi_directories) {
+        for my $base (Genome::VariantReporting::Framework::Command::Wrappers::ModelPair->report_names) {
+            my $discovery_report = File::Spec->join($self->output_directory, "discovery", $roi_directory, $base);
+            my $additional_report = File::Spec->join($self->output_directory, "additional", $roi_directory, $base);
+            Genome::VariantReporting::PostProcessing::CombineReports->execute(
+                reports => [$discovery_report, $additional_report],
+                sort_columns => [qw(chromosome_name start stop reference variant)],
+                contains_header => 1,
+                output_file => File::Spec->join($self->output_directory, "$base-$roi_directory"),
+                entry_sources =>  {$discovery_report => 'd0', $additional_report => 'd30'},
+            );
+        }
     }
     return 1;
 }
