@@ -52,6 +52,7 @@ reinstall_sub( {
 my $output_dir = Genome::Sys->create_temp_directory;
 my $cmd = $pkg->create(
     models => [$discovery_build->model, $d30_build->model, $normal_build->model],
+    coverage_models => [$discovery_build->model, $d30_build->model, $normal_build->model],
     output_directory => $output_dir,
     tumor_sample => $tumor_sample1,
     additional_sample => $tumor_sample2,
