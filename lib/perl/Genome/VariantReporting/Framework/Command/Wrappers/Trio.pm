@@ -11,6 +11,13 @@ class Genome::VariantReporting::Framework::Command::Wrappers::Trio {
         models => {
             is => 'Genome::Model::SomaticValidation',
             is_many => 1,
+            doc => "Models to run variant reports on",
+        },
+        coverage_models => {
+            is => 'Genome::Model::SomaticValidation',
+            is_many => 1,
+            is_optional => 1,
+            doc => "Models to run coverage reports on",
         },
         output_directory => {
             is => 'Path',
@@ -95,14 +102,16 @@ sub run_reports {
 
 sub run_summary_stats {
     my $self = shift;
-    Genome::Model::SomaticValidation::Command::AlignmentStatsSummary->execute(
-        output_tsv_file => File::Spec->join($self->output_directory, "alignment_summary.tsv"),
-        models => [$self->models],
-    );
-    Genome::Model::SomaticValidation::Command::CoverageStatsSummary->execute(
-        output_tsv_file => File::Spec->join($self->output_directory, "coverage_summary.tsv"),
-        models => [$self->models],
-    );
+    if ($self->coverage_models) {
+        Genome::Model::SomaticValidation::Command::AlignmentStatsSummary->execute(
+            output_tsv_file => File::Spec->join($self->output_directory, "alignment_summary.tsv"),
+            models => [$self->coverage_models],
+        );
+        Genome::Model::SomaticValidation::Command::CoverageStatsSummary->execute(
+            output_tsv_file => File::Spec->join($self->output_directory, "coverage_summary.tsv"),
+            models => [$self->coverage_models],
+        );
+    }
 }
 
 1;
