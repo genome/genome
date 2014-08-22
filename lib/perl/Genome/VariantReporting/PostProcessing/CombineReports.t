@@ -47,7 +47,16 @@ subtest "test with headers with source" => sub {
     my $expected = File::Spec->join($data_dir, 'expected_with_source.header');
 
     my $output_file = Genome::Sys->create_temp_file_path;
-    my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['chr', 'pos'], contains_header => 1, output_file => $output_file, entry_sources => {"VariantReporting/PostProcessing/CombineReports.t.d/report_a.header" => "report_a", "VariantReporting/PostProcessing/CombineReports.t.d/report_b.header" => "report_b"});
+    my $cmd = $pkg->create(
+        reports => [$report_a, $report_b],
+        sort_columns => ['chr', 'pos'],
+        contains_header => 1,
+        output_file => $output_file,
+        entry_sources => {
+            File::Spec->join($data_dir, 'report_a.header') => "report_a",
+            File::Spec->join($data_dir, 'report_b.header') => "report_b"
+        }
+    );
     isa_ok($cmd, $pkg);
 
     my @expected_header = qw(chr pos data1 data2);
@@ -57,6 +66,7 @@ subtest "test with headers with source" => sub {
     is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
     is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
 
+$DB::single=1;
     ok($cmd->execute, 'Executed the test command');
     compare_ok($output_file, $expected, 'Output file looks as expected');
 };
@@ -78,6 +88,7 @@ subtest "test with different orders of headers" => sub {
     is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
 
     ok($cmd->execute, 'Executed the test command');
+    $DB::single=1;
     compare_ok($output_file, $expected, 'Output file looks as expected');
 };
 
@@ -107,7 +118,16 @@ subtest "test without headers with source" => sub {
     my $expected = File::Spec->join($data_dir, 'expected_with_source.noheader');
 
     my $output_file = Genome::Sys->create_temp_file_path;
-    my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['1', '2'], contains_header => 0, output_file => $output_file, entry_sources => {'VariantReporting/PostProcessing/CombineReports.t.d/report_a.noheader' => "report_a", 'VariantReporting/PostProcessing/CombineReports.t.d/report_b.noheader' => "report_b"});
+    my $cmd = $pkg->create(
+        reports => [$report_a, $report_b],
+        sort_columns => ['1', '2'],
+        contains_header => 0,
+        output_file => $output_file,
+        entry_sources => {
+            File::Spec->join($data_dir, 'report_a.noheader') => "report_a",
+            File::Spec->join($data_dir, 'report_b.noheader') => "report_b"
+        }
+    );
     isa_ok($cmd, $pkg);
 
     my @expected_header = qw(1 2 3 4);
@@ -132,7 +152,13 @@ subtest "columns to split only works with headers" => sub {
     my $expected = File::Spec->join($data_dir, 'expected.noheader');
 
     my $output_file = Genome::Sys->create_temp_file_path;
-    my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['1', '2'], contains_header => 0, output_file => $output_file, split_indicators => ["split"]);
+    my $cmd = $pkg->create(
+        reports => [$report_a, $report_b],
+        sort_columns => ['1', '2'],
+        contains_header => 0,
+        output_file => $output_file,
+        split_indicators => ["split"]
+    );
     isa_ok($cmd, $pkg);
 
     throws_ok(sub {$cmd->execute}, qr/If split_indicators are specified, then a header must be present/, 'columns_to_split fails without header');
@@ -143,7 +169,13 @@ subtest "with split" => sub {
     my $expected = File::Spec->join($data_dir, 'expected_split.header');
 
     my $output_file = Genome::Sys->create_temp_file_path;
-    my $cmd = $pkg->create(reports => [$report_c], sort_columns => ['chr', 'pos'], contains_header => 1, output_file => $output_file, split_indicators => ["split"]);
+    my $cmd = $pkg->create(
+        reports => [$report_c],
+        sort_columns => ['chr', 'pos'],
+        contains_header => 1,
+        output_file => $output_file,
+        split_indicators => ["split"]
+    );
     isa_ok($cmd, $pkg);
 
     my @expected_header = qw(chr pos data1 data2 split1 split2);
