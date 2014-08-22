@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 use Carp qw(confess);
-use File::Copy::Recursive qw(dircopy dirmove);
+use File::Copy::Recursive qw(dirmove);
 
 class Genome::Disk::Detail::Allocation::Purger {
     is => 'Genome::Disk::Detail::StrictObject',

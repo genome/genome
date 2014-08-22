@@ -9,7 +9,6 @@ use Genome::Utility::File::Mode qw(mode);
 
 use Carp qw(croak confess);
 use Digest::MD5 qw(md5_hex);
-use File::Copy::Recursive qw(dircopy dirmove);
 use File::Find;
 use File::Find::Rule;
 use Cwd;
