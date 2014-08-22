@@ -29,7 +29,7 @@ class Genome::Model::ClinSeq::Command::MicroarrayCnv {
         min_cnv_diff => {
             is => 'Float',
             doc => 'Cutoff for the minimum cnv difference between tumor and normal [the absolute value]',
-            default_value => 0.5,
+            default_value => 0.2,
             is_optional => 1,
         },
         test => {
@@ -54,7 +54,7 @@ class Genome::Model::ClinSeq::Command::MicroarrayCnv {
             example_values  => ['tgi/cancer-annotation/human/build37-20130401.1'],
         },
         annotation_build_id => {
-            is => 'Genome::Model::Build::ImportedAnnotation', 
+            is => 'Genome::Model::Build::ImportedAnnotation',
             doc => 'Supply an annotation build id (e.g., 124434505 for NCBI-human.ensembl/67_37l_v2)',
             default_value => '124434505',
         },
@@ -72,7 +72,7 @@ EOS
 
 sub help_detail {
     return <<EOS
-Create somatic copynumber plots using the ".original" files in the microarray builds. This tool can either take in two microarray models as input or it can take in a Clin-Seq model (with an exome-sv or wgs-sv model) as input or it can take in two ".original" files as input. In the second case the tool extracts the ".original" file by looking at the microarray models used in the exome-sv or wgs-sv model of the clinseq model. The segmentation is done using 'gmt copy-number cbs' and the copy number plots are made using 'gmt copy-number cn-view'. 
+Create somatic copynumber plots using the ".original" files in the microarray builds. This tool can either take in two microarray models as input or it can take in a Clin-Seq model (with an exome-sv or wgs-sv model) as input or it can take in two ".original" files as input. In the second case the tool extracts the ".original" file by looking at the microarray models used in the exome-sv or wgs-sv model of the clinseq model. The segmentation is done using 'gmt copy-number cbs' and the copy number plots are made using 'gmt copy-number cn-view'.
 EOS
 }
 
@@ -160,18 +160,126 @@ sub get_copynumber_files {
     return ($copynumber_tumor, $copynumber_normal);
 }
 
+sub intersect_files {
+  my $self = shift;
+  my $f1 = shift;
+  my $f2 = shift;
+  my $f1_o = $f1 . ".intersected";
+  my $f2_o = $f2 . ".intersected";
+
+  open(my $f1_fh, "<". $f1);
+  open(my $f1_ofh, ">". $f1_o);
+  open(my $f2_fh, "<". $f2);
+  open(my $f2_ofh, ">". $f2_o);
+
+  my %f1;
+  my %chr_pos1;
+
+  while(<$f1_fh>) {
+    my $line = $_;
+    my @fields = split("\t", $line);
+    my $key = $fields[0] . ":" . $fields[1];
+    $chr_pos1{$key} = 1;
+    $f1{$key} = $line;
+  }
+
+  while(<$f2_fh>) {
+    my $line = $_;
+    my @fields = split("\t", $line);
+    my $key = $fields[0] . ":" . $fields[1];
+    if($chr_pos1{$key}) {
+      print $f2_ofh $line;
+      print $f1_ofh $f1{$key};
+    }
+  }
+  return ($f1_o, $f2_o);
+}
+
+sub create_cnv_diff_hq_file {
+  my $self = shift;
+  my $tumor_cn_f = shift;
+  my $normal_cn_f = shift;
+  my $diff_f = shift;
+  my $cnvhq_f = shift;
+  #at the time of writing the headers for these files look like "chromosome position alleles reference id sample_name log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2"
+  my $reader_t = Genome::Utility::IO::SeparatedValueReader->create(
+    separator => "\t",
+    input => $tumor_cn_f,
+  );
+  my $reader_n = Genome::Utility::IO::SeparatedValueReader->create(
+    separator => "\t",
+    input => $normal_cn_f,
+  );
+  my @headers_diff = qw/chr pos cnv_diff/;
+  my $writer_diff = Genome::Utility::IO::SeparatedValueWriter->create(
+    output => $diff_f,
+    separator => "\t",
+    headers => \@headers_diff,
+    print_headers => 0,
+  );
+  my @headers_cnvhq = qw/CHR POS TUMOR NORMAL DIFF/;
+  my $writer_cnvhq = Genome::Utility::IO::SeparatedValueWriter->create(
+    output => $cnvhq_f,
+    separator => "\t",
+    headers => \@headers_cnvhq,
+    print_headers => 1,
+  );
+  unless ($reader_t and $reader_n) {
+    die $self->error_message('Unable to create SeparatedValueReader for '
+                              . $tumor_cn_f . ' and ' . $normal_cn_f);
+  }
+  while (my $data_t = $reader_t->next and my $data_n = $reader_n->next) {
+    if($data_n->{chromosome} ne $data_t->{chromosome} or 
+      $data_n->{position} ne $data_t->{position}) {
+        $self->warning_message('Mismatch in chr:pos between '. $tumor_cn_f . ' and ' . $normal_cn_f . '. Taking intersection.');
+        ($tumor_cn_f, $normal_cn_f) = $self->intersect_files($tumor_cn_f, $normal_cn_f);
+        Genome::Sys->shellcmd(cmd => "rm -f $diff_f $cnvhq_f");
+        $self->create_cnv_diff_hq_file($tumor_cn_f, $normal_cn_f, $diff_f, $cnvhq_f);
+        return;
+    }
+    if($data_n->{chromosome} eq "chr" or $data_n->{log_r_ratio} eq "NaN" or $data_t->{log_r_ratio} eq "NaN") {
+        next;
+    }
+    my $diff_data;
+    my $cnvhq_data;
+    $diff_data->{chr} = $data_n->{chromosome};
+    $cnvhq_data->{CHR} = $data_n->{chromosome};
+    $diff_data->{pos} = $data_n->{position};
+    $cnvhq_data->{POS} = $data_n->{position};
+    #copynumber ~ 2^(log_r_ratio + 1)
+    my $cn_normal = $data_n->{cnv_value};
+    $cn_normal = sprintf("%.5f", $cn_normal);
+    my $cn_tumor = $data_t->{cnv_value};
+    $cn_tumor = sprintf("%.5f", $cn_tumor);
+    if( $cn_tumor == 0) {
+      $cn_tumor = 0.0001;
+    }
+    if( $cn_normal == 0) {
+      $cn_normal = 0.0001;
+    }
+    my $cnv_diff = $cn_tumor - $cn_normal;
+    my $cnv_ratio = log($cn_tumor/$cn_normal)/log(2);
+    $cnv_diff = sprintf("%.6f", $cnv_diff);
+    $cnvhq_data->{TUMOR} = 2.0**($data_t->{log_r_ratio} + 1.0);
+    $cnvhq_data->{NORMAL} = 2.0**($data_n->{log_r_ratio} + 1.0);;
+    $diff_data->{cnv_diff} = $cnv_ratio; #segment the ratio of LRR
+    $cnvhq_data->{DIFF} = $cnvhq_data->{TUMOR} - $cnvhq_data->{NORMAL};
+    if(not $self->test) {
+      $writer_diff->write_one($diff_data);
+      $writer_cnvhq->write_one($cnvhq_data);
+    } elsif($data_n->{chromosome} eq 6) { #for test, use only chr6
+      $writer_diff->write_one($diff_data);
+      $writer_cnvhq->write_one($cnvhq_data);
+    }
+  }
+}
+
 sub run_cbs {
     my $self = shift;
     my ($tumor_copynumber, $normal_copynumber, $cbs_op) = @_;
     my $cnv_diff_file = $self->outdir . "/cnvs.diff";
-    my $create_diff_cmd;
-    #copynumber = 2^(log_r_ratio + 1)
-    if(not $self->test) {
-        $create_diff_cmd = 'paste ' . $tumor_copynumber . ' ' . $normal_copynumber . ' | awk \'!/NaN|chr/ { print $1"\t"$2"\t"2^($6 + 1) - 2^($17 + 1) }\' > ' . $cnv_diff_file;
-    } else { #use only chr1 for test
-        $create_diff_cmd = 'paste ' . $tumor_copynumber . ' ' . $normal_copynumber . ' | awk \'!/NaN|chr/ { if($1 == 6) print $1"\t"$2"\t"2^($6 + 1) - 2^($17 + 1) }\' > ' . $cnv_diff_file;
-    }
-    Genome::Sys->shellcmd(cmd => $create_diff_cmd);
+    my $cnv_hq_file = $self->outdir . "/cnvs.hq";
+    $self->create_cnv_diff_hq_file($tumor_copynumber, $normal_copynumber, $cnv_diff_file, $cnv_hq_file);
     my $cbs = Genome::Model::Tools::CopyNumber::Cbs->create(array_file => $cnv_diff_file, output_file => $cbs_op);
     $cbs->execute();
 }
@@ -187,25 +295,14 @@ sub run_cnview {
     if($min_cnv_diff < 0) {
         $min_cnv_diff = $min_cnv_diff * -1; #use the absolute value
     }
-
-    #Create cnvhq file
-    my $cnv_file = $self->outdir . "/cnvs.hq";
-    #copynumber = 2^(log_r_ratio + 1)
-    my $create_cnvhq_cmd; 
-    if(not $self -> test) { 
-        $create_cnvhq_cmd = 'paste ' . $tumor_copynumber . ' ' .  $normal_copynumber . ' | awk \' BEGIN { print "CHR\tPOS\tTUMOR\tNORMAL\tDIFF"; } !/NaN|chr/ { print $1"\t"$2"\t"2^($6 + 1)"\t"2^($17 + 1)"\t"2^($6 + 1)-2^($17 + 1); }\' > ' . $cnv_file;
-    } else {#use just chr1 for test
-        $create_cnvhq_cmd = 'paste ' . $tumor_copynumber . ' ' .  $normal_copynumber . ' | awk \' BEGIN { print "CHR\tPOS\tTUMOR\tNORMAL\tDIFF"; } !/NaN|chr/ { if($1 == 6) print $1"\t"$2"\t"2^($6 + 1)"\t"2^($17 + 1)"\t"2^($6 + 1)-2^($17 + 1); }\' > ' . $cnv_file;
-    }
-    
-    Genome::Sys->shellcmd(cmd => $create_cnvhq_cmd);
-    
+   
+    my $cnv_hq_file = $self->outdir . "/cnvs.hq";
     #Create cnvhmm file
-    my $cnv_hmm_file = $cbs_op . ".cnvhmm"; 
+    my $cnv_hmm_file = $cbs_op . ".cnvhmm";
     #print only cnv segments with atleast five snp markers.
-    my $make_hmmfile_cmd = 'awk \'{ size = $3-$2; nmarkers=size; event = "NA"; if($5>0) { event = "Gain" } else if($5<0) { event = "Loss" } cn1 = $5 +2; cn2 = 2; if((event == "Gain" || event == "Loss") && ($5 > ' . $min_cnv_diff . ' || $5 < -1 * ' . $min_cnv_diff . ' ) && $4 >=5) print $1"\t"$2"\t"$3"\t"size"\t"nmarkers"\t"cn1"\t"cn1"\t"cn2"\t"cn2"\tNA\t"event; } \' ' . $cbs_op . ' > ' .  $cnv_hmm_file;
+    my $make_hmmfile_cmd = 'awk \'{ size = $3-$2; nmarkers=size; cn_diff = 2^$5*2-2; event = "NA"; if(cn_diff>0) { event = "Gain" } else if(cn_diff<0) { event = "Loss" } cn1 = cn_diff +2; cn2 = 2; if((event == "Gain" || event == "Loss") && (cn_diff > ' . $min_cnv_diff . ' || cn_diff < -1 * ' . $min_cnv_diff . ' ) && $4 >=5) print $1"\t"$2"\t"$3"\t"size"\t"nmarkers"\t"cn1"\t"cn1"\t"cn2"\t"cn2"\tNA\t"event; } \' ' . $cbs_op . ' > ' .  $cnv_hmm_file;
     Genome::Sys->shellcmd(cmd => $make_hmmfile_cmd);
-    
+   
     #For each list of gene symbols, run the CNView analysis
     my @cnv_symbols;
     if($self->test) {
@@ -217,11 +314,11 @@ sub run_cnview {
     foreach my $symbol(@cnv_symbols){
         my $symbol_outdir =  $self->outdir;
         if ($symbol eq "All") {
-            my $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build => $self->annotation_build_id, cnv_file => $cnv_file, segments_file => $cnv_hmm_file, output_dir => $symbol_outdir, name => $symbol, cancer_annotation_db => $cancer_annotation_db, window_size => 0, verbose => 1);
+            my $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build => $self->annotation_build_id, cnv_file => $cnv_hq_file, segments_file => $cnv_hmm_file, output_dir => $symbol_outdir, name => $symbol, cancer_annotation_db => $cancer_annotation_db, window_size => 0, verbose => 1);
             $cnview_cmd->execute();
         } else {
             my $gene_targets_file = "$gene_symbol_dir/$symbol" . ".txt";
-            my $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build =>  $self->annotation_build_id, cnv_file => $cnv_file, segments_file => $cnv_hmm_file, output_dir => $symbol_outdir, gene_targets_file => $gene_targets_file, name => $symbol, cancer_annotation_db => $cancer_annotation_db, window_size => 0, verbose => 1);
+            my $cnview_cmd = Genome::Model::Tools::CopyNumber::CnView->create(annotation_build =>  $self->annotation_build_id, cnv_file => $cnv_hq_file, segments_file => $cnv_hmm_file, output_dir => $symbol_outdir, gene_targets_file => $gene_targets_file, name => $symbol, cancer_annotation_db => $cancer_annotation_db, window_size => 0, verbose => 1);
             $cnview_cmd->execute();
         }
     }
