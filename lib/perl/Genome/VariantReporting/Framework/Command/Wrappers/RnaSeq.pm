@@ -9,6 +9,7 @@ use File::Basename qw(dirname);
 use File::Spec;
 
 class Genome::VariantReporting::Framework::Command::Wrappers::RnaSeq {
+    is => 'Command::V2',
     has => {
         somatic_build => {
             is => 'Genome::Model::Build',
