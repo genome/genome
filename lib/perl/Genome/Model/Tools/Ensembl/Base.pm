@@ -6,9 +6,11 @@ use warnings;
 use Genome;
 
 my $DEFAULT_VERSION = '58_37c';
-my $DEFAULT_HOSTNAME = 'mysql1.gsc.wustl.edu';
-my $DEFAULT_USERNAME = 'mse';
-my $DEFAULT_PASSWORD = '';
+my $DEFAULT_HOSTNAME = $ENV{GENOME_DB_ENSEMBL_HOST};
+my $DEFAULT_PORT     = $ENV{GENOME_DB_ENSEMBL_PORT};
+my $DEFAULT_USERNAME = $ENV{GENOME_DB_ENSEMBL_USER};
+my $DEFAULT_PASSWORD = $ENV{GENOME_DB_ENSEMBL_PASS};
+
 
 class Genome::Model::Tools::Ensembl::Base {
     is  => 'Command::V2',
@@ -45,6 +47,11 @@ class Genome::Model::Tools::Ensembl::Base {
             default_value => Genome::Model::Tools::Ensembl::Base->default_hostname,
             doc => 'The location of the Ensembl MySQL server.',
             is_optional => 1,
+        },
+        port => {
+            default_value => Genome::Model::Tools::Ensembl::Base->default_port,
+            doc => 'The tcp port of the Ensembl MySQL server.',
+            is_optional => 1,
         }
     ],
     has_optional => [
@@ -64,6 +71,10 @@ sub default_hostname {
 
 sub default_username {
     return $DEFAULT_USERNAME;
+}
+
+sub default_port {
+    return $DEFAULT_PORT;
 }
 
 sub default_password {
@@ -87,7 +98,7 @@ sub api_version {
 
 sub create_dbh {
     my $self = shift;
-    my $dbi_string = 'dbi:mysql:database='.$self->database .';host='.$self->hostname;
+    my $dbi_string = 'dbi:mysql:database='.$self->database .';host='.$self->hostname .';port='. $self->port;
     my @connect_params = ( $dbi_string, $self->username, $self->password, { PrintError => 1 } );
     my $dbh = DBI->connect( @connect_params );
     my $connection_attempts = 1;
