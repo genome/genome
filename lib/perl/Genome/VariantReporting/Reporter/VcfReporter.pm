@@ -116,7 +116,7 @@ sub all_filters_passed_for_allele {
     my $interpretations = shift;
     my $allele = shift;
 
-    return (all { $interpretations->{$_->name}->{$allele}->{filter_status} == 1} $self->soft_filters) || 0
+    return (all { $interpretations->{$_->name}->{$allele}->{filter_status} == 1} $self->soft_filters) || 0;
 }
 
 sub add_final_results {

@@ -130,7 +130,7 @@ reporters:
                 min_hom_vaf: 85
                 max_hom_vaf: 100
                 sample_name: d0_tumor
-             'max-indel-size':
+            'max-indel-size':
                 size: 4
-       params:
+        params:
             file_name: 'cle_vcf_report'
