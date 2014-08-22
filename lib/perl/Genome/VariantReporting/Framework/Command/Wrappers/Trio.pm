@@ -48,7 +48,7 @@ sub execute {
                 sort_columns => [qw(chromosome_name start stop reference variant)],
                 contains_header => 1,
                 output_file => File::Spec->join($self->output_directory, "$base-$roi_directory"),
-                entry_sources =>  {$discovery_report => 'd0', $additional_report => 'd30'},
+                entry_sources =>  {$discovery_report => $self->tumor_sample->name, $additional_report => $self->additional_sample->name},
             );
         }
     }
