@@ -38199,6 +38199,17 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>wrappers',
     [
+      '>rna-seq',
+      [
+        'base-output-dir=s',
+        'files',
+        'somatic-build=s',
+        undef,
+        'tumor-build=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>trio',
       [
         'models=s@',
@@ -38210,6 +38221,8 @@ $Genome::Command::OPTS_SPEC = [
         'additional-sample=s',
         undef,
         'normal-sample=s',
+        undef,
+        'coverage-models=s@',
         undef,
         'help!',
         undef
