@@ -119,18 +119,23 @@ class Genome::Model::SomaticValidation {
     has_input_optional_mutable => [
         snv_variant_list => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
+            doc => 'prior SNVs to be validated',
         },
         indel_variant_list => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
+            doc => 'prior indels to be validated',
         },
         sv_variant_list => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
+            doc => 'prior SVs to be validated',
         },
         reference_sequence_build => {
             is => 'Genome::Model::Build::ReferenceSequence',
+            doc => 'reference to which to align the instrument data',
         },
         annotation_build => {
             is => 'Genome::Model::Build::ImportedAnnotation',
+            doc => 'annotation data set to annotate the newly called variants',
         },
         previously_discovered_variations_build => {
             is => 'Genome::Model::Build::ImportedVariationList',
@@ -138,18 +143,23 @@ class Genome::Model::SomaticValidation {
         },
         target_region_set => {
             is => 'Genome::FeatureList',
+            doc => 'target set of the instrument data',
         },
         region_of_interest_set => {
             is => 'Genome::FeatureList',
+            doc => 'the region of interest for coverage analysis',
         },
         design_set => {
             is => 'Genome::FeatureList',
+            doc => 'the idealized region of interest as sent for probe design',
         },
         tumor_sample => {
             is => 'Genome::Sample',
+            doc => 'the experimental sample',
         },
         normal_sample => {
             is => 'Genome::Sample',
+            doc => 'the control sample',
         },
         known_sites => {
             is => 'Genome::Model::Build::ImportedVariationList',
