@@ -139,7 +139,7 @@ sub is_rna {
     return 1 if $self->transcript_strand;
 
     #fallback in case above was not set
-    return Genome::Utility::List::in(
+    return 1 if Genome::Utility::List::in(
         $self->sample->extraction_type,
         qw(
 rna
@@ -151,6 +151,8 @@ cdna
 cDNA
         )
     );
+
+    return 0;
 }
 
 sub lock_id {
