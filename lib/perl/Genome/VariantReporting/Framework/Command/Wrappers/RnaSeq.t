@@ -55,7 +55,15 @@ compare_directories($expected_dir, $output_dir);
 my $relative_yaml_path = File::Spec->join(qw(test_model_1 resource.yaml));
 my $yaml = File::Spec->join($output_dir, $relative_yaml_path);
 my $expected_yaml = File::Spec->join($expected_dir, $relative_yaml_path);
-compare_ok($yaml, $expected_yaml, 'yaml looks as expected'); # FIXME fix up the comparison for alignment results
+compare_ok(
+    $yaml, $expected_yaml,
+    'yaml looks as expected',
+    filters => sub {
+        my $o = shift;
+        $o =~ s!fpkm_file: .+/genes.fpkm_tracking!fpkm_file: genes.fpkm_tracking!;
+        return $o;
+    }
+);
 
 done_testing;
 
