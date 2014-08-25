@@ -19,7 +19,7 @@ class Genome::InstrumentData::Command::RefineReads::GatkBase {
             default_value => &bsub_rusage,
         },
     },
-    has_many_input => {
+    has_many_optional_input => {
         known_sites => { is => 'Genome::Model::Build::ImportedVariationList', },
     },
     has_optional_input => {
@@ -117,14 +117,16 @@ sub _load_result {
     $self->debug_message('Method: '.$retrieval_method);
 
     # Params
-    my @known_sites = $self->known_sites;
     my %result_params = (
         bam_source => $bam_source,
         version => $self->version,
         reference_build => $reference_build,
-        known_sites => \@known_sites,
         # TODO use params from class
     );
+    my @known_sites = $self->known_sites;
+    if ( @known_sites ) {
+        $result_params{known_sites} = \@known_sites;
+    }
     $self->debug_message("Result params: \n".$self->_params_display_name(\%result_params));
 
     # Retrieve
