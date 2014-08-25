@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use Genome;
 
+use Genome::Utility::List;
+
 class Genome::Library {
     is => [ "Genome::Notable", "Genome::Searchable", "Genome::Utility::ObjectWithLockedConstruction" ],
     table_name => 'instrument.fragment_library',
@@ -129,6 +131,26 @@ sub delete {
 sub is_bisulfite_converted {
     my $self = shift;
     return $self->bisulfite_conversion ? 1 : 0;
+}
+
+sub is_rna {
+    my $self = shift;
+
+    return 1 if $self->transcript_strand;
+
+    #fallback in case above was not set
+    return Genome::Utility::List::in(
+        $self->sample->extraction_type,
+        qw(
+rna
+total rna
+cdna library
+mrna
+pooled rna
+cdna
+cDNA
+        )
+    );
 }
 
 sub lock_id {
