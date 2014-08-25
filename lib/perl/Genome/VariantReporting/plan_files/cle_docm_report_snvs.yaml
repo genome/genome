@@ -1,0 +1,24 @@
+experts:
+    'bam-readcount':
+        version: 0.5
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 0
+reporters:
+    'docm':
+        filters: {}
+        interpreters:
+            position: {}
+            'many-samples-vaf':
+                sample_names:
+                    - d0_tumor
+                    - d30_tumor
+                    - d30_normal
+        params:
+            file_name: 'cle_docm_report'
+            sample_names:
+                - d0_tumor
+                - d30_tumor
+                - d30_normal
