@@ -120,6 +120,7 @@ sub execute {
 
     unless ($self->build->snv_detection_strategy) {
         $self->warning_message("Snv detection strategy not defined. Skipping IdentifyDnp");
+        $self->dnp_result_id(0);
         return 1;
     }
 
