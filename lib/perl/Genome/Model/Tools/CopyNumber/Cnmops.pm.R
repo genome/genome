@@ -40,7 +40,8 @@ get_tumor_normal_logrr <- function(ref_analysis_norm, out_dir)
 getPosteriors <- function(ref_analysis_norm, out_dir) {
   gr1<-ref_analysis_norm@gr
   values(gr1)<-as.data.frame(posteriorProbs(ref_analysis_norm))
-  cn_regions <- data.frame(stringsAsFactors = FALSE)
+  cn_regions <- data.frame(matrix(ncol = 6, nrow = 0),
+    stringsAsFactors = FALSE)
   for(i in 1:length(ref_analysis_norm@cnvr)){
     cnvr<-ref_analysis_norm@cnvr[i]
     cn_regions <- rbind(cn_regions, avgPP(cnvr, gr1))
