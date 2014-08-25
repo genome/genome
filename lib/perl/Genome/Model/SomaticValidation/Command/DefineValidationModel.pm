@@ -1,4 +1,4 @@
-package Genome::Model::Command::Define::SomaticValidation;
+package Genome::Model::SomaticValidation::Command::DefineValidationModel;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use Genome;
 use Cwd;
 use File::Basename;
 
-class Genome::Model::Command::Define::SomaticValidation {
+class Genome::Model::SomaticValidation::Command::DefineValidationModel {
     is => 'Command::V2',
     has_optional_input => [
         name => {

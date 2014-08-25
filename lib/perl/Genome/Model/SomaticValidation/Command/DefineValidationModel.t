@@ -54,8 +54,8 @@ my @params_for_define_1 = (
     groups => [$mg],
 );
 
-my $define_1 = Genome::Model::Command::Define::SomaticValidation->create(@params_for_define_1);
-isa_ok($define_1, 'Genome::Model::Command::Define::SomaticValidation', 'first creation command');
+my $define_1 = Genome::Model::SomaticValidation::Command::DefineValidationModel->create(@params_for_define_1);
+isa_ok($define_1, 'Genome::Model::SomaticValidation::Command::DefineValidationModel', 'first creation command');
 $define_1->dump_status_messages(1);
 
 ok($define_1->execute, 'executed first creation command');
@@ -84,8 +84,8 @@ my @params_for_define_2 = (
     variants => [$variants_1, $result],
 );
 
-my $define_2 = Genome::Model::Command::Define::SomaticValidation->create(@params_for_define_2);
-isa_ok($define_2, 'Genome::Model::Command::Define::SomaticValidation', 'second creation command');
+my $define_2 = Genome::Model::SomaticValidation::Command::DefineValidationModel->create(@params_for_define_2);
+isa_ok($define_2, 'Genome::Model::SomaticValidation::Command::DefineValidationModel', 'second creation command');
 $define_2->dump_status_messages(1);
 
 ok($define_2->execute, 'executed second creation command');
@@ -104,8 +104,8 @@ my @params_for_define_3 = (
     variants => [$variants_1, $variants_2],
 );
 
-my $define_3 = Genome::Model::Command::Define::SomaticValidation->create(@params_for_define_3);
-isa_ok($define_3, 'Genome::Model::Command::Define::SomaticValidation', 'third creation command');
+my $define_3 = Genome::Model::SomaticValidation::Command::DefineValidationModel->create(@params_for_define_3);
+isa_ok($define_3, 'Genome::Model::SomaticValidation::Command::DefineValidationModel', 'third creation command');
 $define_3->dump_status_messages(1);
 
 ok($define_3->execute, 'executed third creation command');
@@ -121,8 +121,8 @@ my @params_for_define_4 = (
     normal_sample => $somatic_variation_build2->normal_model->subject,
 );
 
-my $define_4 = Genome::Model::Command::Define::SomaticValidation->create(@params_for_define_4);
-isa_ok($define_4, 'Genome::Model::Command::Define::SomaticValidation', 'fourth creation command');
+my $define_4 = Genome::Model::SomaticValidation::Command::DefineValidationModel->create(@params_for_define_4);
+isa_ok($define_4, 'Genome::Model::SomaticValidation::Command::DefineValidationModel', 'fourth creation command');
 $define_4->dump_status_messages(1);
 
 ok($define_4->execute, 'executed fourth creation command');
@@ -138,8 +138,8 @@ my @params_for_define_5 = (
     tumor_sample => $somatic_variation_build2->tumor_model->subject,
 );
 
-my $define_5 = Genome::Model::Command::Define::SomaticValidation->create(@params_for_define_5);
-isa_ok($define_5, 'Genome::Model::Command::Define::SomaticValidation', 'fifth creation command');
+my $define_5 = Genome::Model::SomaticValidation::Command::DefineValidationModel->create(@params_for_define_5);
+isa_ok($define_5, 'Genome::Model::SomaticValidation::Command::DefineValidationModel', 'fifth creation command');
 $define_5->dump_status_messages(1);
 
 ok($define_5->execute, 'executed fifth creation command');
@@ -180,11 +180,11 @@ Genome::Sys->write_file($sample_list_file, join("\n",
     $fake_library->name
 ));
 
-my $define_6 = Genome::Model::Command::Define::SomaticValidation->create(
+my $define_6 = Genome::Model::SomaticValidation::Command::DefineValidationModel->create(
     sample_list_file => $sample_list_file,
     target => $test_targets,
 );
-isa_ok($define_6, 'Genome::Model::Command::Define::SomaticValidation', 'sixth creation command');
+isa_ok($define_6, 'Genome::Model::SomaticValidation::Command::DefineValidationModel', 'sixth creation command');
 $define_6->dump_status_messages(1);
 
 ok($define_6->execute, 'executed sixth creation command');
