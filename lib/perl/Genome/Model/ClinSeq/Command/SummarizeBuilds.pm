@@ -380,83 +380,49 @@ sub summarize_clinseq_build {
       my @lanes = $build->instrument_data;
       my $sequence_type = $self->_determine_wgs_or_exome_for_instrument_data(@lanes);
 
-      my $wingspan_0_dir = "$build_dir/reference_coverage/wingspan_0/";
-      next unless (-e $wingspan_0_dir && -d $wingspan_0_dir);
-      my $wingspan_0_file;
+      next unless $build->region_of_interest_set_name and $build->processing_profile->coverage_stats_params;
 
-      opendir (my $dh, $wingspan_0_dir);
-      my @files = readdir($dh);
-      closedir($dh);
-      foreach my $file (@files){
-        if ($file =~ /\_STATS\.tsv/){
-          $wingspan_0_file = $wingspan_0_dir . $file;
-        }
-      }
+      my $coverage_summary = $build->coverage_stats_summary_hash_ref();
+      my $wingspan_0_metrics = $coverage_summary->{0};
 
-      next unless ($wingspan_0_file);
+      next unless $wingspan_0_metrics;
 
-      my $build_id = $build->id;
-      $exome_builds_with_coverage{$build_id}=1;
+      $exome_builds_with_coverage{$build->id} = 1;
 
       $self->status_message("\nSample: $subject_name ($common_name | $tissue_desc | $extraction_type | $sequence_type)");
 
-      #Summarize the average coverage of regions of interest (e.g. exons) at each minimum coverage cutoff value used when the reference coverage report was generated
-      #Output file format(stats_file):
-      #[0] Region Name (column 4 of BED file)
-      #[1] Percent of Reference Bases Covered
-      #[2] Total Number of Reference Bases
-      #[3] Total Number of Covered Bases
-      #[4] Number of Missing Bases
-      #[5] Average Coverage Depth
-      #[6] Standard Deviation Average Coverage Depth
-      #[7] Median Coverage Depth
-      #[8] Number of Gaps
-      #[9] Average Gap Length
-      #[10] Standard Deviation Average Gap Length
-      #[11] Median Gap Length
-      #[12] Min. Depth Filter
-      #[13] Discarded Bases (Min. Depth Filter)
-      #[14] Percent Discarded Bases (Min. Depth Filter)
-
-      #Calculate:
-      #total number of ROIs
-      #average of all median ROI coverage levels
-      #percent of all ROIs covered at X depth or greater across 80% or greater of breadth of ROIs
-      my %covs;
-      my $min_breadth = 80;
-      open (REFCOV, "$wingspan_0_file");
-      while(<REFCOV>){
-        chomp($_);
-        my @line = split("\t", $_);
-        my $min_cov = $line[12];
-        my $percent_bases_covered = $line[1];
-        my $median_coverage_depth = $line[7];
-        if (defined($covs{$min_cov})){
-          $covs{$min_cov}{count}++;
-          $covs{$min_cov}{cum_median_coverage} += $median_coverage_depth;
-          if ($percent_bases_covered > $min_breadth){
-            $covs{$min_cov}{min_breadth_count}++;
-          }
-          $covs{$min_cov}{avg_median_coverage} = sprintf("%.2f", ($covs{$min_cov}{cum_median_coverage} / $covs{$min_cov}{count}));
-          $covs{$min_cov}{min_breadth_count_percent} = sprintf("%.2f", (($covs{$min_cov}{min_breadth_count}/$covs{$min_cov}{count})*100));
-        }else{
-          $covs{$min_cov}{count} = 1;
-          $covs{$min_cov}{cum_median_coverage} = $median_coverage_depth;
-          $covs{$min_cov}{min_breadth_count} = 0;
-          if ($percent_bases_covered > $min_breadth){
-            $covs{$min_cov}{min_breadth_count}++;
-          }
-          $covs{$min_cov}{avg_median_coverage} = sprintf("%.2f", $median_coverage_depth);
-          $covs{$min_cov}{min_breadth_count_percent} = sprintf("%.2f", (($covs{$min_cov}{min_breadth_count}/$covs{$min_cov}{count})*100));
-        }
-      }
-      close (REFCOV);
-
-      $self->status_message("min_coverage\troi_count\tmin_breadth_count_"."$min_breadth\tmin_breadth_count_percent_"."$min_breadth\taverage_median_coverage");
-      foreach my $min_cov (sort {$a <=> $b} keys %covs){
-        $self->status_message("$min_cov\t$covs{$min_cov}{count}\t$covs{$min_cov}{min_breadth_count}\t$covs{$min_cov}{min_breadth_count_percent}\t$covs{$min_cov}{avg_median_coverage}");
-        print $stats_fh "Median ROI Coverage at >= $min_cov X\t$covs{$min_cov}{avg_median_coverage}\t$common_name\tClinseq Build Summary\tAverage\tAverage of Median Exon Coverage Values at a Min Coverage of $min_cov for $common_name $extraction_type data\n";
-        print $stats_fh "Percent ROI Coverage at >= $min_cov X and >= $min_breadth % breadth\t$covs{$min_cov}{min_breadth_count_percent}\t$common_name\tClinseq Build Summary\tAverage\tPercent of Exons Covered at a Min Coverage of $min_cov and Min Breadth of $min_breadth for $common_name $extraction_type data\n";
+      $self->status_message(join("\t", qw(
+        min_coverage
+        roi_count
+        min_breadth_count_80
+        min_breadth_count_percent_80
+        average_median_coverage
+      )));
+      foreach my $min_cov (sort {$a <=> $b} keys %$wingspan_0_metrics){
+        my $min_cov_metrics = $wingspan_0_metrics->{$min_cov};
+        $self->status_message(join("\t",
+          $min_cov,
+          $min_cov_metrics->{targets},
+          $min_cov_metrics->{targets_eighty_pc_breadth},
+          $min_cov_metrics->{pc_targets_eighty_pc_breadth},
+          $min_cov_metrics->{mean_depth}
+        ));
+        print $stats_fh join("\t",
+            "Median ROI Coverage at >= $min_cov X",
+            $min_cov_metrics->{mean_depth},
+            $common_name,
+            "Clinseq Build Summary",
+            "Average",
+            "Average of Median Exon Coverage Values at a Min Coverage of $min_cov for $common_name $extraction_type data\n"
+        );
+        print $stats_fh join("\t",
+            "Percent ROI Coverage at >= $min_cov X and >= 80 % breadth",
+            $min_cov_metrics->{pc_targets_eighty_pc_breadth},
+            $common_name,
+            "Clinseq Build Summary",
+            "Average",
+            "Percent of Exons Covered at a Min Coverage of $min_cov and Min Breadth of 80 for $common_name $extraction_type data\n"
+        );
       }
     }
 
