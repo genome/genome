@@ -447,7 +447,6 @@ sub calculate_query {
     # Pre-fetch things, since we're going loop through them.
     $self->inputs;
     $self->params;
-    $self->metrics;
 
     my @query;
 
