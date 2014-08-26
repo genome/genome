@@ -49,6 +49,7 @@ reporters:
             vep: {}
             rsid: {}
             caf: {}
+            nhlbi: {}
             vaf:
                 sample_name: tumor
         params:
