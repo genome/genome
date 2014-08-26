@@ -127,31 +127,44 @@ subtest "has version test" => sub {
     ok(!Genome::Model::Tools::DetectVariants2::Lumpy->has_version("0.2.10"), 'Lumpy version is not 0.2.10');
 };
 
-subtest "pe_arrange" => sub {
-    my $t_pe    = "Test_PE_location";
-    my $t_histo = "histo_loc";
-    my $pe_text = $command->pe_param;
-    my $mean    = 123;
-    my $std     = 456;
+subtest "paired_end_parameters_for_bam" => sub {
+    my $bam                    = "test_bam";
+    my $histogram              = "test_histogram_file";
+    my $mean                   = 123;
+    my $standard_deviation     = 456;
 
     Sub::Install::reinstall_sub(
         {
             into => 'Genome::Model::Tools::DetectVariants2::Lumpy',
-            as   => 'pe_alignment',
-            code => sub {return $t_pe;},
+            as   => 'extract_paired_end_reads',
+            code => sub {return $bam;},
         }
     );
 
     Sub::Install::reinstall_sub(
         {
             into => 'Genome::Model::Tools::DetectVariants2::Lumpy',
-            as   => 'mean_stdv_reader',
-            code => sub {return (mean => $mean, stdv => $std, histo => $t_histo);},
+            as   => 'calculate_metrics',
+            code => sub {return (
+                mean => $mean,
+                standard_deviation => $standard_deviation,
+                histogram => $histogram
+            );},
         }
     );
 
-    my $pe_cmd = $command->pe_cmd_arrangement($t_pe);
-    is($pe_cmd, " -pe bam_file:$t_pe,histo_file:$t_histo,mean:$mean,stdev:$std,read_length:150,$pe_text");
+    is(
+        $command->paired_end_parameters_for_bam($bam),
+        sprintf(
+            ' -pe bam_file:%s,histo_file:%s,mean:%s,stdev:%s,read_length:150,%s',
+            $bam,
+            $histogram,
+            $mean,
+            $standard_deviation,
+            $command->pe_param
+        ),
+        'Command as expected',
+    );
 };
 
 subtest "sr_arrange" => sub {

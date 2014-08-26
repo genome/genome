@@ -22,7 +22,7 @@ sub _detect_variants {
         next unless defined($input_bam);
         for my $bam (split_bam_by_readgroup($input_bam)) {
             if ($self->pe_param) {
-                push(@pe_cmds, $self->pe_cmd_arrangement($bam));
+                push(@pe_cmds, $self->paired_end_parameters_for_bam($bam));
             }
             if ($self->sr_param) {
                 push(@sr_cmds, $self->sr_cmd_arrangement($bam));
@@ -53,15 +53,16 @@ sub split_bam_by_readgroup {
     return glob("$split_bam_basename*");
 }
 
-sub pe_alignment {
-    my $orig_bam      = shift;
-    my $pe_bam        = Genome::Sys->create_temp_file_path();
-    my $pe_alignments = "samtools view -b -F 1294 $orig_bam -o $pe_bam";
-    my $pe_split      = Genome::Sys->shellcmd(
-        cmd                          => $pe_alignments,
+sub extract_paired_end_reads {
+    my $bam = shift;
+
+    my $filtered_bam  = Genome::Sys->create_temp_file_path();
+    my $command = "samtools view -b -F 1294 $bam -o $filtered_bam";
+    Genome::Sys->shellcmd(
+        cmd                          => $command,
         allow_zero_size_output_files => 1,
     );
-    return $pe_bam;
+    return $filtered_bam;
 }
 
 sub sr_alignment {
@@ -78,20 +79,21 @@ sub sr_alignment {
     return $sr_bam;
 }
 
-sub pe_cmd_arrangement {
+sub paired_end_parameters_for_bam {
+    my $self = shift;
+    my $bam  = shift;
 
-    my $self              = shift;
-    my $current_split_bam = shift;
+    my $filtered_bam = extract_paired_end_reads($bam);
+    my %metrics = $self->calculate_metrics($bam);
 
-    my $pe_loc   = &pe_alignment($current_split_bam);
-    my %st_mn    = $self->mean_stdv_reader($current_split_bam);
-    my $mean     = $st_mn{mean};
-    my $std      = $st_mn{stdv};
-    my $pe_histo = $st_mn{histo};
-    my $pe_text  = $self->pe_param;
-
-    my $pe_cmd = " -pe bam_file:$pe_loc,histo_file:$pe_histo,mean:$mean,stdev:$std,read_length:150,$pe_text";
-    return $pe_cmd;
+    return sprintf(
+        ' -pe bam_file:%s,histo_file:%s,mean:%s,stdev:%s,read_length:150,%s',
+        $filtered_bam,
+        $metrics{histogram},
+        $metrics{mean},
+        $metrics{standard_deviation},
+        $self->pe_param
+    );
 }
 
 sub sr_cmd_arrangement {
@@ -110,29 +112,27 @@ sub sr_arrange {
     return $sr_cmd;
 }
 
-sub mean_stdv_reader {
-    my $self     = shift;
-    my $new_bam  = shift;
-    my $pe_histo = Genome::Sys->create_temp_file_path();
-    my $temp_dir = Genome::Sys->create_temp_file_path();
+sub calculate_metrics {
+    my $self = shift;
+    my $bam  = shift;
 
-    my $export_loc           = "$temp_dir/mean_stdv.txt";
-    my $pe_extraction_script = $self->lumpy_script_for_pairend_distro();
-    my @mn_stdv   = qq(samtools view $new_bam | tail -n+100 | $pe_extraction_script -r1 100 -X 4 -N 10000 -o $pe_histo);
-    my $ms_output = IPC::System::Simple::capture(@mn_stdv);
+    my $histogram = Genome::Sys->create_temp_file_path();
+    my $pairend_distro_script = $self->lumpy_script_for_pairend_distro;
+    my @commands   = qq(samtools view $bam | tail -n+100 | $pairend_distro_script -r1 100 -X 4 -N 10000 -o $histogram);
+    my $output = IPC::System::Simple::capture(@commands);
 
-    if ($ms_output =~ m/mean:([-+]?[0-9]*\.?[0-9]*)\s+stdev:([-+]?[0-9]*\.?[0-9]*)/) {
-        my $mean      = $1;
-        my $stdv      = $2;
-        my %stdv_mean = (
-            mean  => $mean,
-            stdv  => $stdv,
-            histo => $pe_histo,
+    if ($output =~ m/mean:([-+]?[0-9]*\.?[0-9]*)\s+stdev:([-+]?[0-9]*\.?[0-9]*)/) {
+        my $mean = $1;
+        my $standard_deviation = $2;
+        my %metrics = (
+            mean               => $mean,
+            standard_deviation => $standard_deviation,
+            histogram          => $histogram,
         );
-        return %stdv_mean;
+        return %metrics;
     }
     else {
-        die "ERROR couldn't find mean and stdev";
+        die "ERROR couldn't determine mean and standard deviation: $output";
     }
 }
 
