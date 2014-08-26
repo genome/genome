@@ -403,7 +403,7 @@ sub query_tcga_barcode {
 
     my @prefix = qw(gmt vcf convert query_tcga_barcode);
     my $response;
-    retry(func => sub {
+    my $attempts = retry(func => sub {
         my $rv;
         Genome::Utility::Instrumentation::timer(
             join('.', @prefix, 'request'), sub {
@@ -413,7 +413,12 @@ sub query_tcga_barcode {
         );
         return $rv;
     }, sleep => $sleep, attempts => 5);
-    unless ($response && $response->is_success) {
+    if ($attempts) {
+        Genome::Utility::Instrumentation::gauge(
+            join('.', @prefix, 'retry_attempts'), $attempts,
+        );
+    } else {
+        Genome::Utility::Instrumentation::inc(join('.', @prefix, 'retry_failure'));
         my $message = $response->message;
         my $error_message = sprintf(query_tcga_barcode_error_template, $barcode_str, $message);
         die $self->error_message($error_message);
