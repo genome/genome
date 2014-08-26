@@ -11,6 +11,7 @@ use above 'Genome';
 use Genome::SoftwareResult;
 
 use Test::More;
+use Test::Exception;
 use File::Compare qw(compare);
 use Genome::Utility::Test qw(compare_ok);
 
@@ -65,6 +66,19 @@ subtest 'Directories and input files as expected' => sub {
         File::Spec->join($expected_lumpy_directory, 'bin', 'lumpy'),
         'Lumpy base command as expected'
     );
+};
+
+subtest 'parameter parsing' => sub {
+    is($command->split_read_base_params, 'back_distance:20,weight:1,id:2,min_mapping_threshold:20', 'Split read parameters as expected');
+    is($command->paired_end_base_params, 'min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:20', 'Pair end parameters as expected');
+    is($command->lumpy_base_params, '-mw 4 -tt 0.0', 'Lumpy parameters as expected');
+    my $command2 = Genome::Model::Tools::DetectVariants2::Lumpy->create(
+        reference_build_id  => $refbuild_id,
+        params              => '-test,-mw:4,-tt:0.0',
+        output_directory    => $output_dir,
+        version             => "0.2.6",
+    );
+    dies_ok(sub {$command2->params_hash}, 'Lumpy command with malformed parameters dies');
 };
 
 subtest "Execute" => sub {
@@ -161,7 +175,7 @@ subtest "paired_end_parameters_for_bam" => sub {
             $histogram,
             $mean,
             $standard_deviation,
-            $command->pe_param
+            $command->paired_end_base_params
         ),
         'Command as expected',
     );
@@ -183,7 +197,7 @@ subtest "split_read_parameters_for_bam" => sub {
         sprintf(
             ' -sr bam_file:%s,%s',
             $bam,
-            $command->sr_param
+            $command->split_read_base_params
         ),
         'Command as expected'
     );

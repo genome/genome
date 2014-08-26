@@ -14,30 +14,26 @@ my @FULL_CHR_LIST = (1 .. 22, 'X', 'Y', 'MT');
 class Genome::Model::Tools::DetectVariants2::Lumpy {is => 'Genome::Model::Tools::DetectVariants2::Detector',};
 
 sub _detect_variants {
-    my $self     = shift;
+    my $self = shift;
 
-    my @pe_cmds;
-    my @sr_cmds;
+    my @final_paired_end_parameters;
+    my @final_split_read_parameters;
     for my $input_bam ($self->aligned_reads_input, $self->control_aligned_reads_input) {
         next unless defined($input_bam);
         for my $bam (split_bam_by_readgroup($input_bam)) {
-            if ($self->pe_param) {
-                push(@pe_cmds, $self->paired_end_parameters_for_bam($bam));
+            if ($self->paired_end_base_params) {
+                push(@final_paired_end_parameters, $self->paired_end_parameters_for_bam($bam));
             }
-            if ($self->sr_param) {
-                push(@sr_cmds, $self->split_read_parameters_for_bam($bam));
+            if ($self->split_read_base_params) {
+                push(@final_split_read_parameters, $self->split_read_parameters_for_bam($bam));
             }
         }
     }
-    my $pe_cmd = join(",@pe_cmds");
-    my $sr_cmd = join(",@sr_cmds");
-
-    my @cmd = $self->_open_params();
-    splice @cmd, 1, 0, "@pe_cmds", "@sr_cmds";
-    my $cmmd = "@cmd";
+    my $paired_end_parameters_string = join(' ', @final_paired_end_parameters);
+    my $split_read_parameters_string = join(' ', @final_split_read_parameters);
 
     my $run = Genome::Sys->shellcmd(
-        cmd                          => $cmmd,
+        cmd                          => $self->create_command($paired_end_parameters_string, $split_read_parameters_string),
         output_files                 => [$self->_sv_staging_output],
         allow_zero_size_output_files => 1,
     );
@@ -96,7 +92,7 @@ sub paired_end_parameters_for_bam {
         $metrics{histogram},
         $metrics{mean},
         $metrics{standard_deviation},
-        $self->pe_param
+        $self->paired_end_base_params
     );
 }
 
@@ -108,7 +104,7 @@ sub split_read_parameters_for_bam {
     return sprintf(
         " -sr bam_file:%s,%s",
         $filtered_bam,
-        $self->sr_param
+        $self->split_read_base_params
     );
 }
 
@@ -136,52 +132,46 @@ sub calculate_metrics {
     }
 }
 
-sub sr_param {
-    my $self   = shift;
-    my %params = $self->params_hash();
-    return $params{'sr'};
+sub split_read_base_params {
+    my $self = shift;
+    return $self->params_hash->{sr};
 }
 
-sub pe_param {
-    my $self   = shift;
-    my %params = $self->params_hash();
-    return $params{'pe'};
+sub paired_end_base_params {
+    my $self = shift;
+    return $self->params_hash->{pe};
 }
 
-sub lumpy_param {
-    my $self   = shift;
-    my %params = $self->params_hash();
-    return $params{'lp'};
+sub lumpy_base_params {
+    my $self = shift;
+    my $lumpy_base_params = $self->params_hash->{lp};
+    $lumpy_base_params =~ s/[,:]/ /g;
+    return $lumpy_base_params;
 }
 
 sub params_hash {
-    my $self            = shift;
-    my $unparsed_params = $self->params;
-    my @params          = split('//', $unparsed_params);
+    my $self = shift;
     my %parameters;
-    foreach my $place (@params) {
-        if ($place =~ m/^\-([a-z]{2}),(.*)$/) {
+    foreach my $param (split('//', $self->params)) {
+        if ($param =~ m/^\-(pe|sr|lp),(.*)$/) {
             $parameters{$1} = $2;
         }
         else {
-            die sprintf(
-                "You specified the parameters incorrectly. Unparsed parametere were: (%s)  The malformed parameters were: (%s)",
-                $unparsed_params, $place);
+            die $self->error_message("The specified parameter is malformed: ($param)");
         }
     }
-    return %parameters;
+    return \%parameters;
 }
 
-sub _open_params {
-    my $self      = shift;
-    my $lump_text = $self->lumpy_param;
-    $lump_text =~ s/,/ /g;
-    $lump_text =~ s/:/ /g;
-    # print "$lump_text";
-    my $executable_path = $self->lumpy_command;
-    my $output_files    = $self->_sv_staging_output;
-    my @sur_cmd         = ("$executable_path $lump_text ", " > $output_files");
-    return @sur_cmd;
+sub create_command {
+    my $self = shift;
+    my $paired_end_commands = shift;
+    my $split_read_commands = shift;
+
+    my $lumpy_base_params = $self->lumpy_base_params;
+    my $executable_path   = $self->lumpy_command;
+    my $output_file       = $self->_sv_staging_output;
+    return "$executable_path $lumpy_base_params $paired_end_commands $split_read_commands > $output_file";
 }
 
 sub lumpy_directory {
