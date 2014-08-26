@@ -6,6 +6,7 @@ use warnings;
 use JSON;
 use Genome;
 use File::Slurp;
+use Params::Validate qw(validate CODEREF SCALAR);
 use POSIX 'strftime';
 use LWP::UserAgent;
 use Carp qw(croak);
@@ -352,29 +353,31 @@ sub format_meta_line {
     return $string;
 }
 
-sub retry_request {
-    my %argv = @_;
+sub retry {
+    my %p = validate(@_, {
+        func => {
+            type => CODEREF,
+        },
+        sleep => {
+            type => SCALAR,
+            regex => qr(^\d+$),
+        },
+        attempts => {
+            type => SCALAR,
+            regex => qr(^\d+$),
+            callbacks => { 'greater than zero' => sub { $_[0] > 0 } },
+        },
+    });
 
-    my $agent = delete $argv{agent} or croak 'required argument: agent';
-    my $sleep = delete $argv{sleep} or croak 'required argument: sleep';
-    my $request = delete $argv{request} or croak 'required argument: request';
-    my $attempts = delete $argv{attempts} or croak 'required argument: attempts';
-
-    if ($sleep < 0 || $attempts < 1) {
-        die;
-    }
-
-    my $response;
-
-    while ($attempts-- > 0) {
-        $response = $agent->request($request);
-        if ($response->is_success) {
-            return $response;
+    while ($p{attempts}-- > 0) {
+        if ($p{func}->()) {
+            return 1;
+        } else {
+            sleep $p{sleep};
         }
-        sleep $sleep;
     }
 
-    return $response;
+    return;
 }
 
 sub query_tcga_barcode_error_template {
@@ -395,13 +398,12 @@ sub query_tcga_barcode {
     $request->content_type('text/plain');
     $request->content($barcode_str);
 
-    my $response = retry_request(
-        agent    => $agent,
-        request  => $request,
-        sleep    => $sleep,
-        attempts => 5,
-    );
-    unless ($response->is_success) {
+    my $response;
+    retry(func => sub {
+        $response = $agent->request($request);
+        return $response->is_success;
+    }, sleep => $sleep, attempts => 5);
+    unless ($response && $response->is_success) {
         my $message = $response->message;
         my $error_message = sprintf(query_tcga_barcode_error_template, $barcode_str, $message);
         die $self->error_message($error_message);
