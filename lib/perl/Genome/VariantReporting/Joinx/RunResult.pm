@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Dbsnp::RunResult;
+package Genome::VariantReporting::Joinx::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use File::Spec;
 
-class Genome::VariantReporting::Dbsnp::RunResult {
+class Genome::VariantReporting::Joinx::RunResult {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
     has_input => [
         vcf_lookup => {
