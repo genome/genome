@@ -44,6 +44,9 @@ reporters:
                 max_af: 0.001
             'contains-tag':
                 info_tag: ON_TARGET
+            'max-maf':
+                max_maf: 0.1
+                population_code: All
         interpreters:
             position: {}
             vep: {}
