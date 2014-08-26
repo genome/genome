@@ -482,6 +482,11 @@ sub calculate_lookup_hash {
     return $self->calculate_lookup_hash_from_arguments(@query);
 }
 
+sub recalculate_lookup_hash {
+    my $self = shift;
+    return $self->lookup_hash($self->calculate_lookup_hash);
+}
+
 sub _process_params_for_lookup_hash {
     my $class = shift;
     my %initial_params;
