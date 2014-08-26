@@ -71,13 +71,50 @@ sub _create_targets {
     my $self = shift;
     $self->debug_message('Run realigner target creator...');
 
+    my $target_creator = $self->_create_realigner_target_creator_with_threading;
+    return if not $target_creator;
+    if ( not $target_creator->execute ) {
+        if ( $target_creator->shellcmd_exit_code ne '134' ) {
+            # 134 is typically for seg faults
+            $self->error_message('Failed to execute realigner target creator with threading!');
+            return;
+        }
+        # Try again w/o threading
+        my $target_creator = $self->_create_realigner_target_creator;
+        return if not $target_creator;
+        if ( not $target_creator->execute ) {
+            $self->error_message('Failed to execute realigner target creator!');
+            return;
+        }
+    }
+
+    my $intervals_file = $target_creator->output_intervals;
+    $self->debug_message('Intervals file: '.$intervals_file);
+    if ( not -s $intervals_file ) {
+        $self->error_message('Ran target creator, but failed to make an intervals file!');
+        return;
+    }
+
+    $self->debug_message('Run realigner target creator...done');
+    return 1;
+}
+
+sub _create_realigner_target_creator_with_threading {
+    my $self = shift;
+    my $target_creator = $self->_create_realigner_target_creator;
+    $target_creator->number_of_threads(8);
+    return $target_creator;
+}
+
+sub _create_realigner_target_creator {
+    my $self = shift;
+
     my $intervals_file = $self->intervals_file;
     my %target_creator_params = (
         version => $self->version,
         input_bam => $self->input_bam_path,
         reference_fasta => $self->reference_fasta,
         output_intervals => $intervals_file,
-        number_of_threads => 8,
         max_memory => $self->max_memory_for_gmt_gatk,
     );
     $target_creator_params{known} = $self->known_sites_indel_vcfs if @{$self->known_sites_indel_vcfs};
@@ -88,20 +125,8 @@ sub _create_targets {
         $self->error_message('Failed to create realigner target creator!');
         return;
     }
-    if ( not eval{ $target_creator->execute; } ) {
-        $self->error_message($@) if $@;
-        $self->error_message('Failed to execute realigner target creator!');
-        return;
-    }
 
-    if ( not -s $intervals_file ) {
-        $self->error_message('Ran target creator, but failed to make an intervals file!');
-        return;
-    }
-    $self->debug_message('Intervals file: '.$intervals_file);
-
-    $self->debug_message('Run realigner target creator...done');
-    return 1;
+    return $target_creator;
 }
 
 sub _realign_indels {
