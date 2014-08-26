@@ -320,20 +320,23 @@ sub execute {
 
             # If FT was not previously present, add it to the format field
             unless ($ft_index) {
-                $fields[8] = join(":", (@format_keys, "FT") );
+                push @format_keys, "FT";
+                $fields[8] = join(":", @format_keys);
+                $ft_index = $#format_keys;
             }
 
             # For each sample present in the file, either replace the old FT value if one was present or insert a new one
             for (my $sample_index = 9; $sample_index <= $#fields; $sample_index++) {
                 my $sample_field = $fields[$sample_index];
-                if ($ft_index) {
-                    my @sample_fields = split ":", $sample_field;
-                    $sample_fields[$ft_index] = $final_filter_value;
-                    $fields[$sample_index] = join(":", @sample_fields);
-                } 
-                else {
-                    $fields[$sample_index] = join(":", ($fields[$sample_index], $final_filter_value) );
+                my @sample_fields = split ":", $sample_field;
+
+                $sample_fields[$ft_index] = $final_filter_value;
+
+                for (0 .. $#sample_fields) {
+                    $sample_fields[$_] = '.' unless defined $sample_fields[$_];
                 }
+
+                $fields[$sample_index] = join(":", @sample_fields);
             }
 
             #output the line
