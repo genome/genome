@@ -87,11 +87,12 @@ sub paired_end_parameters_for_bam {
     my %metrics = $self->calculate_metrics($bam);
 
     return sprintf(
-        ' -pe bam_file:%s,histo_file:%s,mean:%s,stdev:%s,read_length:150,%s',
+        ' -pe bam_file:%s,histo_file:%s,mean:%s,stdev:%s,read_length:%s,%s',
         $filtered_bam,
         $metrics{histogram},
         $metrics{mean},
         $metrics{standard_deviation},
+        $metrics{read_length},
         $self->paired_end_base_params
     );
 }
@@ -114,7 +115,7 @@ sub calculate_metrics {
 
     my $histogram = Genome::Sys->create_temp_file_path();
     my $pairend_distro_script = $self->lumpy_script_for_pairend_distro;
-    my @commands   = qq(samtools view $bam | tail -n+100 | $pairend_distro_script -r1 100 -X 4 -N 10000 -o $histogram);
+    my @commands = qq(samtools view $bam | tail -n+100 | $pairend_distro_script -r1 100 -X 4 -N 10000 -o $histogram);
     my $output = IPC::System::Simple::capture(@commands);
 
     if ($output =~ m/mean:([-+]?[0-9]*\.?[0-9]*)\s+stdev:([-+]?[0-9]*\.?[0-9]*)/) {
@@ -124,12 +125,35 @@ sub calculate_metrics {
             mean               => $mean,
             standard_deviation => $standard_deviation,
             histogram          => $histogram,
+            read_length        => $self->determine_read_length_in_bam($bam),
         );
         return %metrics;
     }
     else {
         die "ERROR couldn't determine mean and standard deviation: $output";
     }
+}
+
+sub determine_read_length_in_bam {
+    my ($self, $bam_path) = @_;
+
+    my @read_length_command = qq(samtools view $bam_path | head -n 1000 | awk '{print \$10}'  | xargs -I{} expr length {} | perl -mstrict -e 'my \$c = 0; my \$t = 0; while (<>) { chomp; \$c++; \$t += \$_; } printf("%d\\n", \$t/\$c);');
+    my $read_length = IPC::System::Simple::capture(@read_length_command);
+    chomp $read_length;
+
+    if ( not $read_length ) {
+        die $self->error_message('Failed to get read length from bam! '.$bam_path);
+    }
+
+    if ( $read_length !~ /^\d+$/ ) {
+        die $self->error_message("Non numeric read length ($read_length) from bam! ".$bam_path);
+    }
+
+    if ( $read_length == 0 ) {
+        die $self->error_message('Read length for bam is 0! '.$bam_path);
+    }
+
+    return $read_length;
 }
 
 sub split_read_base_params {

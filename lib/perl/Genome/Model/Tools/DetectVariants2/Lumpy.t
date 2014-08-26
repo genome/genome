@@ -142,10 +142,11 @@ subtest "has version test" => sub {
 };
 
 subtest "paired_end_parameters_for_bam" => sub {
-    my $bam                    = "test_bam";
-    my $histogram              = "test_histogram_file";
-    my $mean                   = 123;
-    my $standard_deviation     = 456;
+    my $bam                = "test_bam";
+    my $histogram          = "test_histogram_file";
+    my $mean               = 123;
+    my $standard_deviation = 456;
+    my $read_length        = 99;
 
     Sub::Install::reinstall_sub(
         {
@@ -162,7 +163,8 @@ subtest "paired_end_parameters_for_bam" => sub {
             code => sub {return (
                 mean => $mean,
                 standard_deviation => $standard_deviation,
-                histogram => $histogram
+                histogram => $histogram,
+                read_length => $read_length,
             );},
         }
     );
@@ -170,11 +172,12 @@ subtest "paired_end_parameters_for_bam" => sub {
     is(
         $command->paired_end_parameters_for_bam($bam),
         sprintf(
-            ' -pe bam_file:%s,histo_file:%s,mean:%s,stdev:%s,read_length:150,%s',
+            ' -pe bam_file:%s,histo_file:%s,mean:%s,stdev:%s,read_length:%s,%s',
             $bam,
             $histogram,
             $mean,
             $standard_deviation,
+            $read_length,
             $command->paired_end_base_params
         ),
         'Command as expected',
