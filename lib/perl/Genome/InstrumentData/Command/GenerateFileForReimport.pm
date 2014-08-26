@@ -65,17 +65,6 @@ sub __errors__ {
             );
         }
 
-        if ( not -s $source_file ) {
-            return (
-                UR::Object::Tag->create(
-                    type => 'invalid',
-                    properties => [qw/ instrument_data_and_new_source_files /],
-                    desc => 'Source file does not exist! '.$source_file,
-                )
-            );
-
-        }
-
         push @{$instrument_data_and_new_source_files{$previous_insdata_id}}, $source_file;
     }
     $self->_instrument_data_and_new_source_files(\%instrument_data_and_new_source_files);
@@ -90,18 +79,21 @@ sub execute {
     my $instrument_data_and_new_source_files = $self->_instrument_data_and_new_source_files;
     my @reimports;
     for my $instrument_data ( $self->instrument_data ) {
-        my $reimport = Genome::InstrumentData::Reimport->attributes_for_reimport_from_instrument_data($instrument_data);
-        return if not $reimport;
+        my $instdata_attrs = Genome::InstrumentData::Reimport->attributes_for_reimport_from_instrument_data($instrument_data);
+        return if not $instdata_attrs;
 
-        if ( $instrument_data_and_new_source_files->{ $instrument_data->id } ) {
-            $reimport->{source_files} = join(',', @{$instrument_data_and_new_source_files->{ $instrument_data->id }});
-        }
-        elsif ( not $reimport->{source_files} or not -s $reimport->{source_files} ) {
-            $self->error_message("No existing source file for instrument data! %s", $instrument_data->id);
-            return;
-        }
+        my @source_files = ( $instrument_data_and_new_source_files->{ $instrument_data->id } )
+        ? @{$instrument_data_and_new_source_files->{ $instrument_data->id }}
+        : $instdata_attrs->{source_files};
 
-        push @reimports, $reimport;
+        for my $source_file ( @source_files ) {
+            my %reimport = %$instdata_attrs;
+            if ( not -s $source_file ) {
+                die $self->error_message("Source file does not exist! $source_file");
+            }
+            $reimport{source_files} = $source_file;
+            push @reimports, \%reimport;
+        }
     }
     $self->status_message('Found '.@reimports.' instrument data...');
 

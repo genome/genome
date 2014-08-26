@@ -12,11 +12,12 @@ use warnings;
 use above "Genome";
 
 use Genome::Utility::Test 'compare_ok';
+use Test::Exception;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::GenerateFileForReimport') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::GenerateFileForReimport', 'v1');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::GenerateFileForReimport', 'v2');
 my $expected_source_files_tsv = $test_dir.'/source_files.tsv';
 my $expected_source_files_with_new_source_files_tsv = $test_dir.'/source_files.with_new_source_files.tsv';
 
@@ -84,9 +85,7 @@ $generate = Genome::InstrumentData::Command::GenerateFileForReimport->create(
     instrument_data_and_new_source_files => [ $instrument_data[0]->id.'=does_not_exist', ],
 );
 ok($generate, 'create generate file for reimport w/ new source files that do not exist');
-@errors = $generate->__errors__;
-is(@errors, 1, 'correct number of errors');
-is($errors[0]->desc, 'Source file does not exist! does_not_exist', 'correct error message');
+throws_ok( sub{ $generate->execute }, qr/^Source file does not exist! does_not_exist/, 'execute fails as expected w/ non existing source file');
 
 # success
 my $new_bam = $test_dir.'/new-source-files/new.bam';
