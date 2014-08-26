@@ -167,12 +167,26 @@ subtest "paired_end_parameters_for_bam" => sub {
     );
 };
 
-subtest "sr_arrange" => sub {
-    my $t_sr    = "Test SR location";
-    my $sr_text = $command->sr_param;
-    my $sr_cmd  = $command->sr_arrange($t_sr);
+subtest "split_read_parameters_for_bam" => sub {
+    my $bam  = "test_bam";
 
-    is($sr_cmd, " -sr bam_file:$t_sr,$sr_text");
+    Sub::Install::reinstall_sub(
+        {
+            into => 'Genome::Model::Tools::DetectVariants2::Lumpy',
+            as   => 'extract_split_reads',
+            code => sub {return $bam;},
+        }
+    );
+
+    is(
+        $command->split_read_parameters_for_bam($bam),
+        sprintf(
+            ' -sr bam_file:%s,%s',
+            $bam,
+            $command->sr_param
+        ),
+        'Command as expected'
+    );
 };
 
 done_testing();

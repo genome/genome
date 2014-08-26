@@ -25,7 +25,7 @@ sub _detect_variants {
                 push(@pe_cmds, $self->paired_end_parameters_for_bam($bam));
             }
             if ($self->sr_param) {
-                push(@sr_cmds, $self->sr_cmd_arrangement($bam));
+                push(@sr_cmds, $self->split_read_parameters_for_bam($bam));
             }
         }
     }
@@ -65,18 +65,22 @@ sub extract_paired_end_reads {
     return $filtered_bam;
 }
 
-sub sr_alignment {
-    my $self              = shift;
-    my $orig_bam          = shift;
-    my $sr_bam            = Genome::Sys->create_temp_file_path();
-    my $extraction_script = $self->lumpy_script_for_extract_split_reads_bwamem();
-    my $sr_alignment =
-        "samtools view -h $orig_bam | $extraction_script -i stdin | java -Xmx8g -XX:MaxPermSize=256m -cp /gsc/scripts/lib/java/samtools/picard-tools-1.82/SamFormatConverter.jar net.sf.picard.sam.SamFormatConverter I=/dev/stdin O=$sr_bam";
-    my $sr_split = Genome::Sys->shellcmd(
-        cmd                          => $sr_alignment,
+sub extract_split_reads {
+    my $self = shift;
+    my $bam = shift;
+    my $filtered_bam = Genome::Sys->create_temp_file_path();
+    my $extract_split_reads_bwamen_script = $self->lumpy_script_for_extract_split_reads_bwamem();
+    my $command = join(
+        '|',
+        "samtools view -h $bam",
+        "$extract_split_reads_bwamen_script -i stdin",
+        "java -Xmx8g -XX:MaxPermSize=256m -cp /gsc/scripts/lib/java/samtools/picard-tools-1.82/SamFormatConverter.jar net.sf.picard.sam.SamFormatConverter I=/dev/stdin O=$filtered_bam"
+    );
+    Genome::Sys->shellcmd(
+        cmd                          => $command,
         allow_zero_size_output_files => 1,
     );
-    return $sr_bam;
+    return $filtered_bam;
 }
 
 sub paired_end_parameters_for_bam {
@@ -96,20 +100,16 @@ sub paired_end_parameters_for_bam {
     );
 }
 
-sub sr_cmd_arrangement {
-    my $self    = shift;
-    my $new_bam = shift;
-    my $sr_loc  = $self->sr_alignment($new_bam);
-    my $sr_cmd  = $self->sr_arrange($sr_loc);
-    return $sr_cmd;
-}
+sub split_read_parameters_for_bam {
+    my $self = shift;
+    my $bam = shift;
 
-sub sr_arrange {
-    my $self    = shift;
-    my $sr_loc  = shift;
-    my $sr_text = $self->sr_param;
-    my $sr_cmd  = " -sr bam_file:$sr_loc,$sr_text";
-    return $sr_cmd;
+    my $filtered_bam = $self->extract_split_reads($bam);
+    return sprintf(
+        " -sr bam_file:%s,%s",
+        $filtered_bam,
+        $self->sr_param
+    );
 }
 
 sub calculate_metrics {
