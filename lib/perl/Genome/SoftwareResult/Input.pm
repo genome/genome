@@ -2,8 +2,8 @@ package Genome::SoftwareResult::Input;
 
 use strict;
 use warnings;
-
 use Genome;
+
 class Genome::SoftwareResult::Input {
     table_name => 'result.input',
     type_name => 'software result input',
@@ -101,6 +101,14 @@ sub create {
     return $self;
 }
 
+sub delete {
+    my $self = shift;
+    my $sr = $self->software_result;
+    my $rv = $self->SUPER::delete(@_);
+    $sr->recalculate_lookup_hash();
+    return $rv;
+}
+
 # this has the functionality of the old "value" accessor
 # we wanted to ensure we were no longer dependent on it
 # ..but the HTML view needs something generic which will work
@@ -123,4 +131,3 @@ sub input_value {
 }
 
 1;
-
