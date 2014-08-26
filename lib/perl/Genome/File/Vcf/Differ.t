@@ -153,7 +153,7 @@ sub test_chrom {
     my $differ = new_differ('blessed.vcf', 'chrom.vcf');
     my $diff = $differ->diff;
 
-    is_deeply($diff->{_columns}, ['CHROM'], 'Found that only the chromosone differs');
+    is_deeply($diff->{_columns}, ['CHROM'], 'Found that only the chromosome differs');
     is($diff->{_entry_a}->{chrom}, 1, 'Found expected value for BLESSED');
     is($diff->{_entry_b}->{chrom}, 2, 'Found expected value for OTHER');
 }
