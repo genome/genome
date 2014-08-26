@@ -370,9 +370,11 @@ sub retry {
         },
     });
 
+    my $attempt;
     while ($p{attempts}-- > 0) {
+        $attempt++;
         if ($p{func}->()) {
-            return 1;
+            return $attempt;
         } else {
             sleep $p{sleep};
         }
