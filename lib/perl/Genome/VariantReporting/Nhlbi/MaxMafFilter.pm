@@ -11,6 +11,11 @@ class Genome::VariantReporting::Nhlbi::MaxMafFilter {
             is => 'Number',
             doc => 'Maximum minor allele frequency',
         },
+        population_code => {
+            is => 'String',
+            valid_values => ['All', 'EU', 'AA'],
+            doc => 'Population for which to compare MAF',
+        },
     ],
 };
 
@@ -27,7 +32,7 @@ sub filter_entry {
     my $entry = shift;
     my %return_values;
 
-    my $maf = $self->get_maf_for_entry($entry);
+    my $maf = $self->get_maf_for_entry($entry, $self->population_code);
 
     if (!defined $maf or $maf <= $self->max_maf) {
         return map {$_=> 1} @{$entry->{alternate_alleles}};

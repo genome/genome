@@ -15,16 +15,18 @@ use Genome::File::Vcf::Entry;
 
 my $pkg = 'Genome::VariantReporting::Nhlbi::ComponentBase';
 
-my $base = $pkg->create(population_code => "All");
+my $base = $pkg->create();
 
 my $entry = create_entry();
-ok(!defined $base->get_maf_for_entry($entry), "Entry with no maf returns undef");
+throws_ok(sub {$base->get_maf_for_entry($entry, "Bad")}, qr(Bad population code), "Bad population code throws an error");
+throws_ok(sub {$base->get_maf_for_entry($entry)}, qr(Bad population code), "Missing population code throws an error");
+ok(!defined $base->get_maf_for_entry($entry, "All"), "Entry with no maf returns undef");
 
 $entry = create_entry("1");
-throws_ok(sub {$base->get_maf_for_entry($entry)}, qr(MAF in unexpected format:), "MAF with wrong format throws exception");
+throws_ok(sub {$base->get_maf_for_entry($entry, "All")}, qr(MAF in unexpected format:), "MAF with wrong format throws exception");
 
 $entry = create_entry("0.001,0.3,0.00012");
-is($base->get_maf_for_entry($entry), 0.00012, "Correctly got maf for All");
+is($base->get_maf_for_entry($entry, "All"), 0.00012, "Correctly got maf for All");
 
 done_testing;
 

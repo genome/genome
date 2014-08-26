@@ -11,18 +11,16 @@ my %TYPES = (
 );
 
 class Genome::VariantReporting::Nhlbi::ComponentBase {
-    has => [
-        population_code => {
-            is => 'String',
-            valid_values => ['All', 'EU', 'AA'],
-            doc => 'Population for which to compare MAF',
-        },
-    ],
 };
 
 sub get_maf_for_entry {
     my $self = shift;
     my $entry = shift;
+    my $population_code = shift;
+
+    unless (defined $TYPES{$population_code}) {
+        die $self->error_message("Bad population code: ($population_code)");
+    }
 
     my $maf = $entry->info("MAF");
     if (!defined $maf or $maf eq '.') {
@@ -32,7 +30,7 @@ sub get_maf_for_entry {
     unless (@population_mafs == 3) {
         die $self->error_message("MAF in unexpected format: $maf");
     }
-    return $population_mafs[$TYPES{$self->population_code}];
+    return $population_mafs[$TYPES{$population_code}];
 }
 
 1;
