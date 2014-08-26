@@ -15,31 +15,17 @@ class Genome::Model::Tools::DetectVariants2::Lumpy {is => 'Genome::Model::Tools:
 
 sub _detect_variants {
     my $self     = shift;
-    my $orig_bam = $self->aligned_reads_input;
-    my @new_bam  = bam_split($orig_bam);
+
     my @pe_cmds;
     my @sr_cmds;
-    foreach my $cur_bam (@new_bam) {
-        if ($self->pe_param) {
-            my $pe_cmd = $self->pe_cmd_arrangement($cur_bam);
-            push(@pe_cmds, "$pe_cmd");
-        }
-        if ($self->sr_param) {
-            my $sr_cmd = $self->sr_cmd_arrangement($cur_bam);
-            push(@sr_cmds, "$sr_cmd");
-        }
-    }
-    if (defined $self->control_aligned_reads_input) {
-        my $bam2     = $self->control_aligned_reads_input;
-        my @new_bam2 = &bam_split($bam2);
-        foreach my $cur_bam (@new_bam2) {
+    for my $input_bam ($self->aligned_reads_input, $self->control_aligned_reads_input) {
+        next unless defined($input_bam);
+        for my $bam (split_bam_by_readgroup($input_bam)) {
             if ($self->pe_param) {
-                my $pe_cmd = $self->pe_cmd_arrangement($cur_bam);
-                push(@pe_cmds, "$pe_cmd");
+                push(@pe_cmds, $self->pe_cmd_arrangement($bam));
             }
             if ($self->sr_param) {
-                my $sr_cmd = $self->sr_cmd_arrangement($cur_bam);
-                push(@sr_cmds, "$sr_cmd");
+                push(@sr_cmds, $self->sr_cmd_arrangement($bam));
             }
         }
     }
@@ -49,7 +35,6 @@ sub _detect_variants {
     my @cmd = $self->_open_params();
     splice @cmd, 1, 0, "@pe_cmds", "@sr_cmds";
     my $cmmd = "@cmd";
-    $DB::single = 1;
 
     my $run = Genome::Sys->shellcmd(
         cmd                          => $cmmd,
@@ -58,13 +43,14 @@ sub _detect_variants {
     );
 }
 
-sub bam_split {
-    my $orig_bam  = shift;
-    my $split_loc = Genome::Sys->create_temp_directory();
-    my $command   = "bamtools split -in $orig_bam -stub $split_loc/test1 -tag RG";
-    my $return    = Genome::Sys->shellcmd(cmd => $command,);
-    my @file_list = glob("$split_loc/*");
-    return @file_list;
+sub split_bam_by_readgroup {
+    my $bam_file  = shift;
+
+    my $split_dir = Genome::Sys->create_temp_directory();
+    my $split_bam_basename = File::Spec->join($split_dir, 'split_bam');
+    my $command = "bamtools split -in $bam_file -stub $split_bam_basename -tag RG";
+    Genome::Sys->shellcmd(cmd => $command);
+    return glob("$split_bam_basename*");
 }
 
 sub pe_alignment {
