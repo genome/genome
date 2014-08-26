@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::GenerateFileForReimport;
+package Genome::InstrumentData::Command::Import::GenerateFileForReimport;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 use Genome::InstrumentData::Reimport;
 
-class Genome::InstrumentData::Command::GenerateFileForReimport { 
+class Genome::InstrumentData::Command::Import::GenerateFileForReimport { 
     is => 'Command::V2',
     has_input => {
         instrument_data => {

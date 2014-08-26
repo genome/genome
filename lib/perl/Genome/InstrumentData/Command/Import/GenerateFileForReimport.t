@@ -15,7 +15,7 @@ use Genome::Utility::Test 'compare_ok';
 use Test::Exception;
 use Test::More;
 
-use_ok('Genome::InstrumentData::Command::GenerateFileForReimport') or die;
+use_ok('Genome::InstrumentData::Command::Import::GenerateFileForReimport') or die;
 
 my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::GenerateFileForReimport', 'v2');
 my $expected_source_files_tsv = $test_dir.'/source_files.tsv';
@@ -58,7 +58,7 @@ for my $format (qw/ bam fastq /) {
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 my $file = $tmpdir.'/source-files.tsv';
-my $generate = Genome::InstrumentData::Command::GenerateFileForReimport->create(
+my $generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->create(
     instrument_data => \@instrument_data,
     file => $file,
 );
@@ -69,7 +69,7 @@ compare_ok($file, $expected_source_files_tsv, 'file matches');
 
 # With new source files...
 # failures
-$generate = Genome::InstrumentData::Command::GenerateFileForReimport->create(
+$generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->create(
     instrument_data => \@instrument_data,
     file => $file,
     instrument_data_and_new_source_files => [ 'mal-formed' ],
@@ -79,7 +79,7 @@ my @errors = $generate->__errors__;
 is(@errors, 1, 'correct number of errors');
 is($errors[0]->desc, 'Mal-formed instrument data and new source files! mal-formed', 'correct error message');
 
-$generate = Genome::InstrumentData::Command::GenerateFileForReimport->create(
+$generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->create(
     instrument_data => \@instrument_data,
     file => $file,
     instrument_data_and_new_source_files => [ $instrument_data[0]->id.'=does_not_exist', ],
@@ -92,7 +92,7 @@ my $new_bam = $test_dir.'/new-source-files/new.bam';
 my $new_fq1 = $test_dir.'/new-source-files/new.1.fastq';
 my $new_fq2 = $test_dir.'/new-source-files/new.2.fastq';
 $file = $tmpdir.'/source-files.with_new.tsv';
-$generate = Genome::InstrumentData::Command::GenerateFileForReimport->create(
+$generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->create(
     instrument_data => \@instrument_data,
     file => $file,
     instrument_data_and_new_source_files => [ 
