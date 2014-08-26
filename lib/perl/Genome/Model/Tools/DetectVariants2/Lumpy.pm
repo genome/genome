@@ -183,27 +183,27 @@ sub lumpy_directory {
 
 sub _lumpy_directory {
     my $version = shift;
-    return File::Spec->catdir(File::Spec->rootdir, "usr", "lib", "lumpy" . "$version");
+    return File::Spec->join(File::Spec->rootdir, "usr", "lib", "lumpy" . "$version");
 }
 
 sub lumpy_command {
     my $self = shift;
-    return File::Spec->catfile($self->lumpy_directory(), "bin", "lumpy");
+    return File::Spec->join($self->lumpy_directory(), "bin", "lumpy");
 }
 
 sub lumpy_scripts_directory {
     my $self = shift;
-    return File::Spec->catfile($self->lumpy_directory(), 'scripts');
+    return File::Spec->join($self->lumpy_directory(), 'scripts');
 }
 
 sub lumpy_script_for {
     my $self        = shift;
     my $script_name = shift;
 
-    die "no script name given" if not $script_name;
-    my $script_location = File::Spec->catfile($self->lumpy_scripts_directory(), "$script_name");
+    die $self->error_message("No script name given") unless defined($script_name);
+    my $script_location = File::Spec->join($self->lumpy_scripts_directory, "$script_name");
 
-    die "script does not exist $script_location" if not -e $script_location;
+    die $self->error_message("Script does not exist at $script_location") unless(-e $script_location);
     return $script_location;
 }
 
