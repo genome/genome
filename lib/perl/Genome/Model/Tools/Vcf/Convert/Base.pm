@@ -401,11 +401,12 @@ sub query_tcga_barcode {
     $request->content_type('text/plain');
     $request->content($barcode_str);
 
+    my @prefix = qw(gmt vcf convert query_tcga_barcode);
     my $response;
     retry(func => sub {
         my $rv;
         Genome::Utility::Instrumentation::timer(
-            'gmt.vcf.convert.query_tcga_barcode.request', sub {
+            join('.', @prefix, 'request'), sub {
                 $response = $agent->request($request);
                 $rv = $response->is_success;
             }
