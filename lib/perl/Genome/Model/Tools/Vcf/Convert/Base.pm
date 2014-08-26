@@ -5,6 +5,7 @@ use warnings;
 
 use JSON;
 use Genome;
+use Genome::Utility::Instrumentation qw();
 use File::Slurp;
 use Params::Validate qw(validate CODEREF SCALAR);
 use POSIX 'strftime';
@@ -400,8 +401,14 @@ sub query_tcga_barcode {
 
     my $response;
     retry(func => sub {
-        $response = $agent->request($request);
-        return $response->is_success;
+        my $rv;
+        Genome::Utility::Instrumentation::timer(
+            'gmt.vcf.convert.query_tcga_barcode.request', sub {
+                $response = $agent->request($request);
+                $rv = $response->is_success;
+            }
+        );
+        return $rv;
     }, sleep => $sleep, attempts => 5);
     unless ($response && $response->is_success) {
         my $message = $response->message;
