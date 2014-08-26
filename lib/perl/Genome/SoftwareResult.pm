@@ -587,9 +587,7 @@ sub _generate_lookup_hash {
 
 sub set_test_name {
     my ($self, $new_test_name) = @_;
-
-    $self->test_name($new_test_name);
-    return $self->lookup_hash($self->calculate_lookup_hash);
+    return $self->test_name($new_test_name);
 }
 
 sub remove_test_name {
