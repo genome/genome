@@ -20,7 +20,7 @@ experts:
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
     nhlbi:
         joinx_version: 1.9
-        info_string: 'AAC:PP:CDP:PH:EA_GTC:AA_GTC'
+        info_string: 'AAC:PP:CDP:PH:EA_GTC:AA_GTC:MAF'
     '1kg':
         joinx_version: 1.9
         info_string: 'AF:AFR_AF:AMR_AF'
