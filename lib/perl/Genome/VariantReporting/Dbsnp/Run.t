@@ -47,7 +47,7 @@ sub generate_test_cmd {
 
     my %params = (
         input_vcf => __FILE__,
-        dbsnp_vcf => __FILE__,
+        vcf => __FILE__,
         variant_type     => 'snvs',
         info_string      => 'test',
         joinx_version          => '1.9',

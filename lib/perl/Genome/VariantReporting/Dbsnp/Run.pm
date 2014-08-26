@@ -7,7 +7,7 @@ use Genome;
 class Genome::VariantReporting::Dbsnp::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     has_input => [
-        dbsnp_vcf => {
+        vcf => {
             is => 'Path',
         },
         info_string => {
@@ -20,7 +20,7 @@ class Genome::VariantReporting::Dbsnp::Run {
 };
 
 sub name {
-    'dbsnp';
+    return 'joinx';
 }
 
 sub result_class {

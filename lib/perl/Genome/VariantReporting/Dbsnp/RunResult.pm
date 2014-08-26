@@ -8,7 +8,7 @@ use File::Spec;
 class Genome::VariantReporting::Dbsnp::RunResult {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
     has_input => [
-        dbsnp_vcf_lookup => {
+        vcf_lookup => {
             is => 'text',
         },
     ],
@@ -21,7 +21,7 @@ class Genome::VariantReporting::Dbsnp::RunResult {
         },
     ],
     has_transient_optional => [
-        dbsnp_vcf => {
+        vcf => {
             is => 'Path',
         },
     ],
@@ -41,7 +41,7 @@ sub _run {
 
     my $vcf_annotator = Genome::Model::Tools::Joinx::VcfAnnotate->create(
         input_file      => $self->input_vcf,
-        annotation_file => $self->dbsnp_vcf,
+        annotation_file => $self->vcf,
         output_file     => $output_file,
         use_bgzip       => 1,
         info_fields     => $info_string,

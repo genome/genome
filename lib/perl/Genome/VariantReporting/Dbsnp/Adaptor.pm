@@ -12,7 +12,7 @@ class Genome::VariantReporting::Dbsnp::Adaptor {
         info_string => { is => 'Text', },
     ],
     has_provided_output => [
-        dbsnp_vcf => {
+        vcf => {
             is => 'Path',
         }
     ],
@@ -20,6 +20,19 @@ class Genome::VariantReporting::Dbsnp::Adaptor {
 
 sub name {
     "dbsnp";
+}
+
+sub resolve_provided_attributes {
+    my $self = shift;
+    $self->vcf($self->provider->get_attribute("dbsnp_vcf"));
+}
+
+sub __provided_output_errors__ {
+    my $self = shift;
+    my $needed = Set::Scalar->new($self->provided_output_names);
+    $needed->delete("vcf");
+    $needed->insert("dbsnp_vcf");
+    return $self->_get_missing_errors(@_, $needed);
 }
 
 1;
