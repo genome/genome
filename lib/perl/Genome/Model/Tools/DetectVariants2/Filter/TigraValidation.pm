@@ -10,6 +10,8 @@ use File::Temp;
 use File::Basename;
 use Carp 'confess';
 
+use Genome::Utility::Text;
+
 my $GENOME_PATH = Genome->get_base_directory_name;
 
 #my %opts = (l=>500,p=>1000,s=>0,q=>0,n=>0,m=>10,x=>3,P=>-10,G=>-10,S=>0.02,A=>500,Q=>0);
@@ -334,7 +336,7 @@ sub _resolve_output_directory {
             Genome::Sys->create_directory($output_dir);
         }
         #Put per-chromosome outputs in subdirectories to avoid collisions in SoftwareResults
-        $self->output_directory($output_dir . '/' . $self->specify_chr);
+        $self->output_directory($output_dir . '/' . Genome::Utility::Text::sanitize_string_for_filesystem($self->specify_chr));
     }
 
     return 1;
@@ -494,9 +496,10 @@ sub _filter_variants {
         return 1;
     }
 
+    my $sanitized_chr = Genome::Utility::Text::sanitize_string_for_filesystem($self->specify_chr);
     # If running as part of a workflow, need to update certain properties to contain the chromosome name
     if ($self->_run_by_workflow) {
-        $variant_file = dirname($self->output_directory) . '/svs.hq.tigra.' . $self->specify_chr; #since now svs.hq.tigra.chr is on upper level dir
+        $variant_file = dirname($self->output_directory) . '/svs.hq.tigra.' . $sanitized_chr; #since now svs.hq.tigra.chr is on upper level dir
         my $out_dir = $self->output_directory;
         unless (-d $out_dir) {
             unless (Genome::Sys->create_directory($out_dir)) {
@@ -518,7 +521,7 @@ sub _filter_variants {
     for my $type (keys %bam_files) {
         my $bam_file = $bam_files{$type};
 
-        my $tmp_tigra_dir = File::Temp::tempdir('tigra_sv_out_'.$self->specify_chr.'_'.$type.'_XXXXXX', DIR => '/tmp', CLEANUP => 1);
+        my $tmp_tigra_dir = File::Temp::tempdir('tigra_sv_out_'.$sanitized_chr.'_'.$type.'_XXXXXX', DIR => '/tmp', CLEANUP => 1);
         $self->_tigra_data_dir($tmp_tigra_dir); 
 
         # Construct tigra command and execute

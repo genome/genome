@@ -5,6 +5,7 @@ use strict;
 
 use Genome;
 use File::Basename;
+use Genome::Utility::Text;
 
 my @FULL_CHR_LIST = (1..22, 'X', 'Y', 'MT');
 
@@ -132,7 +133,7 @@ sub _resolve_output_directory {
             Genome::Sys->create_directory($output_dir);
         }
         #Put per-chromosome outputs in subdirectories to avoid collisions in SoftwareResults
-        $self->output_directory($output_dir . '/' . $self->chromosome);
+        $self->output_directory($output_dir . '/' . Genome::Utility::Text::sanitize_string_for_filesystem($self->chromosome));
     }
 
     return 1;
@@ -272,7 +273,7 @@ sub run_breakdancer {
             }
 
             my $merge_obj = Genome::Model::Tools::Breakdancer::MergeFiles->create(
-                input_files => join(',', map { $self->_temp_staging_directory . '/' . $_ . '/' . $self->_sv_base_name . '.' . $_ } @chr_list),
+                input_files => join(',', map { $self->_temp_staging_directory . '/' . $_ . '/' . $self->_sv_base_name . '.' . $_  } map { Genome::Utility::Text::sanitize_string_for_filesystem($_) } @chr_list),
                 output_file => $self->_sv_staging_output,
             );
             my $merge_rv = $merge_obj->execute;
@@ -281,8 +282,8 @@ sub run_breakdancer {
             return 1;
         }
         else {
-            $self->_sv_base_name($self->_sv_base_name . '.' . $chr);
-            $bd_params =~ s/\-o/\-o $chr/;
+            $self->_sv_base_name($self->_sv_base_name . '.' . Genome::Utility::Text::sanitize_string_for_filesystem($chr));
+            $bd_params =~ s/\-o/\-o '$chr'/;
         }
     }
     elsif ($bd_params =~ /\-d/) {
