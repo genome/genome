@@ -441,6 +441,15 @@ sub _preprocess_params_for_get_or_create {
     return %params;
 }
 
+my $recalculate_lookup_hash_callback = sub {
+    my ($object, $aspect) = @_;
+    return unless $object;
+    return unless $object->software_result;
+    $object->software_result->recalculate_lookup_hash();
+};
+Genome::SoftwareResult::Param->add_observer(callback => $recalculate_lookup_hash_callback);
+Genome::SoftwareResult::Input->add_observer(callback => $recalculate_lookup_hash_callback);
+
 sub calculate_query {
     my $self = shift;
 
