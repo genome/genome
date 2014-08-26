@@ -82,6 +82,18 @@ my %interpretations = (
             caf => ".1",
         },
     },
+    'nhlbi' => {
+        T => {
+            All_MAF => "0.1",
+            EU_MAF => "0.1",
+            AA_MAF => "0.3",
+        },
+        G => {
+            All_MAF => "0.1",
+            EU_MAF => "0.1",
+            AA_MAF => "0.3",
+        },
+    },
     'vaf' => {
         T => {
             vaf => "30",

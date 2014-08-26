@@ -17,7 +17,9 @@ sub requires_interpreters {
     rsid
     caf
     vaf
-    vep);
+    vep
+    nhlbi
+    );
 }
 
 sub headers {
@@ -40,6 +42,9 @@ sub headers {
         polyphen
         condel
         caf
+        All_MAF
+        AA_MAF
+        EU_MAF
         vaf
         ref_count
         var_count
