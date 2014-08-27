@@ -40,15 +40,21 @@ EOS
 }
 
 sub execute {
-    return $_[0]->_execute_command; # must do since WithNumberOfThreads is not a command
-}
-
-sub _before_execute {
     my $self = shift;
-    return $self->_check_inputs;
+
+    unless ($self->_check_inputs) {
+        return;
+    }
+    my $command = $self->realigner_creator_command;
+
+    unless (Genome::Sys->shellcmd(cmd => $command)) {
+        die $self->error_message("Failed to execute $command");
+    }
+
+    return 1;
 }
 
-sub _build_gatk_command {
+sub realigner_creator_command {
     my $self = shift;
     my $gatk_command = $self->base_java_command;
     $gatk_command .= " -T RealignerTargetCreator";
@@ -59,6 +65,7 @@ sub _build_gatk_command {
     $gatk_command .= " -I " . $self->input_bam;
     $gatk_command .= " -R " . $self->reference_fasta;
     $gatk_command .= " -o ". $self->output_intervals;
+    $gatk_command .= $self->number_of_threads_param_for_java_command;
     return $gatk_command;
 }
 
