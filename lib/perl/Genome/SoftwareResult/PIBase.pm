@@ -6,16 +6,6 @@ use Genome;
 
 class Genome::SoftwareResult::PIBase {
     is_abstract => 1,
-    id_by => [
-        software_result => {
-            is => 'Genome::SoftwareResult',
-            id_by => 'software_result_id',
-        },
-        name => {
-            is => 'Text',
-            len => 255,
-        },
-    ],
     has => [
         value_class_name => {
             is => 'Text',
