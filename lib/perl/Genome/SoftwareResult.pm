@@ -447,8 +447,8 @@ my $recalculate_lookup_hash_callback = sub {
     return unless $object->software_result;
     $object->software_result->recalculate_lookup_hash();
 };
-Genome::SoftwareResult::Param->add_observer(callback => $recalculate_lookup_hash_callback);
-Genome::SoftwareResult::Input->add_observer(callback => $recalculate_lookup_hash_callback);
+Genome::SoftwareResult::Param->add_observer(aspect => '_new_value', callback => $recalculate_lookup_hash_callback);
+Genome::SoftwareResult::Input->add_observer(aspect => '_new_value', callback => $recalculate_lookup_hash_callback);
 
 sub calculate_query {
     my $self = shift;
