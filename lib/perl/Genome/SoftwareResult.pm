@@ -445,7 +445,7 @@ my $recalculate_lookup_hash_callback = sub {
     my ($object, $aspect) = @_;
     return unless $object;
     return unless $object->software_result;
-    $object->software_result->recalculate_lookup_hash();
+    eval { $object->software_result->recalculate_lookup_hash() };
 };
 Genome::SoftwareResult::Param->add_observer(aspect => '_new_value', callback => $recalculate_lookup_hash_callback);
 Genome::SoftwareResult::Input->add_observer(aspect => '_new_value', callback => $recalculate_lookup_hash_callback);
