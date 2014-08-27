@@ -17,7 +17,7 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::GenerateFileForReimport') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::GenerateFileForReimport', 'v2');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::GenerateFileForReimport', 'v2');
 my $expected_source_files_tsv = $test_dir.'/source_files.tsv';
 my $expected_source_files_with_new_source_files_tsv = $test_dir.'/source_files.with_new_source_files.tsv';
 
