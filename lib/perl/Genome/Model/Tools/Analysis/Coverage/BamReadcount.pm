@@ -11,6 +11,13 @@ use Genome::File::BamReadcount::Reader;
 class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
     is => 'Command',
     has => [
+    bam_readcount_version => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'version of bam-readcount to use',
+        default => '0.6',
+    }
+
     bam_file => {
         is => 'String',
         is_optional => 0,
@@ -345,13 +352,14 @@ sub execute {
     #now run the readcounting on snvs
     if( -s "$tempdir/snvpos"){
         my $return = Genome::Model::Tools::Sam::Readcount->execute(
-            use_version => 0.6,
+            use_version => $self->bam_readcount_version,
             bam_file => $bam_file,
             minimum_mapping_quality => $min_mapping_quality,
             minimum_base_quality => $min_base_quality,
             output_file => "$tempdir/readcounts",
             reference_fasta => $fasta,
-            region_list => "$tempdir/snvpos",
+            region_list => "$tempdir
+/snvpos",
             per_library => $self->per_library,
         );
         unless($return) {
@@ -462,7 +470,7 @@ sub execute {
     #if there are no indels, skip
     if( -s "$tempdir/indelpos"){
         my $return = Genome::Model::Tools::Sam::Readcount->execute(
-            use_version => 0.5,
+            use_version => $self->bam_readcount_version,
             bam_file => $bam_file,
             minimum_mapping_quality => $min_mapping_quality,
             minimum_base_quality => $min_base_quality,
