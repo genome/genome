@@ -358,8 +358,7 @@ sub execute {
             minimum_base_quality => $min_base_quality,
             output_file => "$tempdir/readcounts",
             reference_fasta => $fasta,
-            region_list => "$tempdir
-/snvpos",
+            region_list => "$tempdir/snvpos",
             per_library => $self->per_library,
         );
         unless($return) {
