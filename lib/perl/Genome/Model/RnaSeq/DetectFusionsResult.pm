@@ -42,7 +42,7 @@ sub _prepare_staging_directory {
 
     return $self->temp_staging_directory if ($self->temp_staging_directory);
 
-    my $tempdir = Genome::Sys->create_directory($self->output_dir . "/tmp");
+    my $tempdir = Genome::Sys->create_directory($self->output_dir . "/chimerascan-staging");
     unless($tempdir) {
         die "failed to create a temp staging directory for completed files";
     }
