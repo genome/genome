@@ -119,7 +119,7 @@ sub _value_scalar_or_object {
 }
 
 sub value {
-    Carp::confess("The system is calling value() on a Genome::ProcessingProfile::input.  The old functionality of value() is not compatible with the new.  Code should go throuh the accessor on the processing profile, or call _value_scalar_or_object _IF_ it is internal to the profile")
+    Carp::confess("The system is calling value() on a Genome::SoftwareResult::Input.  The old functionality of value() is not compatible with the new.  Code should go throuh the accessor on the software result, or call _value_scalar_or_object _IF_ it is internal to the profile")
 }
 
 sub input_name {

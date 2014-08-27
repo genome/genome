@@ -6,11 +6,11 @@ use Genome;
 
 class Genome::SoftwareResult::Param {
     table_name => 'result.param',
+    type_name => 'software result input',
     id_by => [
         software_result => {
             is => 'Genome::SoftwareResult',
             id_by => 'software_result_id',
-            constraint_name => 'SRP_SR_FK2',
         },
         name => {
             is => 'Text',
@@ -77,17 +77,17 @@ sub create {
     my $bx = $class->define_boolexpr(@_);
 
     unless ($bx->value_for('value_class_name')) {
-        my $pp_id = $bx->value_for('software_result_id');
+        my $sr_id = $bx->value_for('software_result_id');
 
-        my $pp = Genome::SoftwareResult->get($pp_id);
-        die "invalid software result id $pp_id!" unless $pp;
+        my $sr = Genome::SoftwareResult->get($sr_id);
+        die "invalid software result id $sr_id!" unless $sr;
 
         my $name = $bx->value_for('name');
         $name =~ s/-.*//;
-        die "no name specified when constructing a processing profile param!" unless $name;
+        die "no name specified when constructing a software result param!" unless $name;
 
-        my $pmeta = $pp->__meta__->property($name);
-        die "no property $name found on processing profile " . $pp->__display_name__ unless $pmeta;
+        my $pmeta = $sr->__meta__->property($name);
+        die "no property $name found on software result " . $sr->__display_name__ unless $pmeta;
 
         my $value_class_name = $pmeta->_data_type_as_class_name;
 
@@ -119,7 +119,7 @@ sub _value_scalar_or_object {
 }
 
 sub value {
-    Carp::confess("The system is calling value() on a Genome::ProcessingProfile::Param.  The old functionality of value() is not compatible with the new.  Code should go throuh the accessor on the processing profile, or call _value_scalar_or_object _IF_ it is internal to the profile")
+    Carp::confess("The system is calling value() on a Genome::SoftwareResult::Param.  The old functionality of value() is not compatible with the new.  Code should go throuh the accessor on the software result, or call _value_scalar_or_object _IF_ it is internal to the profile")
 }
 
 sub param_name {
