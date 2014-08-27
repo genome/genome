@@ -73,16 +73,22 @@ sub _create_targets {
 
     my $target_creator = $self->_create_realigner_target_creator_with_threading;
     return if not $target_creator;
-    if ( not $target_creator->execute ) {
-        if ( $target_creator->shellcmd_exit_code ne '134' ) {
+    my $rv = eval { $target_creator->execute; };
+    if ( not $rv ) {
+        my $error_message = "$@";
+        $self->error_message($error_message);
+        my $exit_code = $self->_resolve_exit_code_from_shellcmd_error_message($error_message);
+        if ( $exit_code ne '134' ) {
             # 134 is typically for seg faults
             $self->error_message('Failed to execute realigner target creator with threading!');
             return;
         }
         # Try again w/o threading
+        $self->debug_message("Recieved exit code $exit_code, which may be a seg fault due to ta threading issue. Attempting to rerun realigner target creator without threading.");
         my $target_creator = $self->_create_realigner_target_creator;
         return if not $target_creator;
-        if ( not $target_creator->execute ) {
+        $rv = eval{ $target_creator->execute; };
+        if ( not $rv ) {
             $self->error_message('Failed to execute realigner target creator!');
             return;
         }
@@ -127,6 +133,16 @@ sub _create_realigner_target_creator {
     }
 
     return $target_creator;
+}
+
+sub _resolve_exit_code_from_shellcmd_error_message {
+    my ($self, $error_message) = @_;
+
+    if ( $error_message =~ /^ERROR RUNNING COMMAND.  Exit code (\d+) from/ ) {
+        return $1;
+    }
+
+    return 1;
 }
 
 sub _realign_indels {

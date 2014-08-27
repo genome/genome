@@ -12,6 +12,7 @@ use warnings;
 use above 'Genome';
 
 require Genome::Utility::Test;
+use Sub::Install;
 use Test::More;
 
 my $class = 'Genome::InstrumentData::Gatk::IndelRealignerResult';
@@ -75,4 +76,15 @@ like(
 
 #print $indel_realigner->_tmpdir."\n";
 #print $indel_realigner->output_dir."\n"; <STDIN>;
+
+# Test rerunning b/c of failure with threading
+my $cnt = 0;
+Sub::Install::reinstall_sub({
+        code => sub { $cnt++; Carp::croak("ERROR RUNNING COMMAND.  Exit code 134 from: "); },
+        into => 'Genome::Model::Tools::Gatk::RealignerTargetCreator',
+        as   => 'execute',
+    });
+ok(!$indel_realigner->_create_targets, '_create_targets failed as expected');
+is($cnt, 2, 'realigner target creator called twice in attempt to rerun');
+
 done_testing();
