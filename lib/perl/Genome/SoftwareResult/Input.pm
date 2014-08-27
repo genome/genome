@@ -26,6 +26,11 @@ class Genome::SoftwareResult::Input {
             len => 1000,
             column_name => 'input_value',
         },
+        value_obj => {
+            is => 'UR::Object',
+            id_by => 'value_id',
+            id_class_by => 'value_class_name',
+        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',

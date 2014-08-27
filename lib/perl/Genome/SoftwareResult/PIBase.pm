@@ -12,11 +12,6 @@ class Genome::SoftwareResult::PIBase {
             len => 255,
             is_optional => 1,
         },
-        value_obj => {
-            is => 'UR::Object',
-            id_by => 'value_id',
-            id_class_by => 'value_class_name',
-        },
         # after the new API is released and old snapshots go away, invert the column assingments with those above
         _new_name => {
             is => 'Text',
