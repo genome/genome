@@ -46,6 +46,8 @@ my %model_files = (
     'Oostertagi_pbj.mkv2.hmm'               => 'sn_oo1mk2',
     'Pwestermani_1.0.cg.mk2.hmm'            => 'sn_pw1cgmk2',
     'Pwestermani_1.0.mk2.hmm'               => 'sn_pw1mk2',
+    'Pmiyazaki.1.0.cgmkv2.hmm'              => 'sn_pm1cgmk2',
+    'Pmiyazaki.1.0.mkv2.hmm'                => 'sn_pm1mk2',
 );
 
 
