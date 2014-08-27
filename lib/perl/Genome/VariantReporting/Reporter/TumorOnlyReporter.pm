@@ -19,6 +19,7 @@ sub requires_interpreters {
     vaf
     vep
     nhlbi
+    1kg
     );
 }
 
@@ -45,6 +46,7 @@ sub headers {
         All_MAF
         AA_MAF
         EU_MAF
+        1kg-af
         vaf
         ref_count
         var_count

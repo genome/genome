@@ -47,12 +47,15 @@ reporters:
             'max-maf':
                 max_maf: 0.1
                 population_code: All
+            '1kg-max-af':
+                max_af: 0.001
         interpreters:
             position: {}
             vep: {}
             rsid: {}
             caf: {}
             nhlbi: {}
+            '1kg': {}
             vaf:
                 sample_name: tumor
         params:
