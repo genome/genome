@@ -5,7 +5,9 @@ use warnings;
 
 use JSON;
 use Genome;
+use Genome::Utility::Instrumentation qw();
 use File::Slurp;
+use Params::Validate qw(validate CODEREF SCALAR);
 use POSIX 'strftime';
 use LWP::UserAgent;
 use Carp qw(croak);
@@ -352,29 +354,33 @@ sub format_meta_line {
     return $string;
 }
 
-sub retry_request {
-    my %argv = @_;
+sub retry {
+    my %p = validate(@_, {
+        func => {
+            type => CODEREF,
+        },
+        sleep => {
+            type => SCALAR,
+            regex => qr(^\d+$),
+        },
+        attempts => {
+            type => SCALAR,
+            regex => qr(^\d+$),
+            callbacks => { 'greater than zero' => sub { $_[0] > 0 } },
+        },
+    });
 
-    my $agent = delete $argv{agent} or croak 'required argument: agent';
-    my $sleep = delete $argv{sleep} or croak 'required argument: sleep';
-    my $request = delete $argv{request} or croak 'required argument: request';
-    my $attempts = delete $argv{attempts} or croak 'required argument: attempts';
-
-    if ($sleep < 0 || $attempts < 1) {
-        die;
-    }
-
-    my $response;
-
-    while ($attempts-- > 0) {
-        $response = $agent->request($request);
-        if ($response->is_success) {
-            return $response;
+    my $attempt;
+    while ($p{attempts}-- > 0) {
+        $attempt++;
+        if ($p{func}->()) {
+            return $attempt;
+        } else {
+            sleep $p{sleep};
         }
-        sleep $sleep;
     }
 
-    return $response;
+    return;
 }
 
 sub query_tcga_barcode_error_template {
@@ -395,13 +401,24 @@ sub query_tcga_barcode {
     $request->content_type('text/plain');
     $request->content($barcode_str);
 
-    my $response = retry_request(
-        agent    => $agent,
-        request  => $request,
-        sleep    => $sleep,
-        attempts => 5,
-    );
-    unless ($response->is_success) {
+    my @prefix = qw(gmt vcf convert query_tcga_barcode);
+    my $response;
+    my $attempts = retry(func => sub {
+        my $rv;
+        Genome::Utility::Instrumentation::timer(
+            join('.', @prefix, 'request'), sub {
+                $response = $agent->request($request);
+                $rv = $response->is_success;
+            }
+        );
+        return $rv;
+    }, sleep => $sleep, attempts => 5);
+    if ($attempts) {
+        Genome::Utility::Instrumentation::gauge(
+            join('.', @prefix, 'retry_attempts'), $attempts,
+        );
+    } else {
+        Genome::Utility::Instrumentation::inc(join('.', @prefix, 'retry_failure'));
         my $message = $response->message;
         my $error_message = sprintf(query_tcga_barcode_error_template, $barcode_str, $message);
         die $self->error_message($error_message);
