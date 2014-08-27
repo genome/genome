@@ -23,7 +23,7 @@ sub name {
 }
 
 sub requires_interpreters {
-    return qw(vcf-entry ft-keep contains-tag coverage-vaf genotype-vaf);
+    return qw(vcf-entry ft-keep contains-tag);
 }
 
 sub allows_hard_filters {
