@@ -30,7 +30,7 @@ class Genome::VariantReporting::Framework::Command::Wrappers::ModelPair {
 
 sub plan_file {
     my ($self, $type) = @_;
-    return File::Spec->join($self->_plan_search_dir, "cle_full_variant_report_$type.yaml");
+    return File::Spec->join($self->_plan_search_dir, 'cle_'. $type .'_report.yaml');
 }
 
 sub _plan_search_dir {
