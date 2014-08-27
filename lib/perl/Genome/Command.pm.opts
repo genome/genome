@@ -22746,21 +22746,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>screen-seq-by-snp-list',
-      [
-        'debug!',
-        undef,
-        'fasta=s',
-        undef,
-        'mp-grande=s',
-        'files',
-        'screen-file=s',
-        undef,
-        'screen-file-fof=s',
-        undef,
-        'help!',
-        undef
-      ],
       '>somatic-capture-dbsnp',
       [
         'dbsnp-snvs-file=s',
@@ -37923,6 +37908,17 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>generate-file-for-reimport',
+      [
+        'file=s',
+        'files',
+        'instrument-data=s@',
+        undef,
+        'instrument-data-and-new-source-files=s@',
+        'files',
+        'help!',
+        undef
+      ],
       '>manager',
       [
         'source-files-tsv=s',
@@ -38069,23 +38065,10 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       'estimate-library-complexity',
       undef,
-      'generate-file-for-reimport',
-      undef,
       'update',
       undef,
       'calculate-read-count',
       undef,
-      'help!',
-      undef
-    ],
-    '>generate-file-for-reimport',
-    [
-      'file=s',
-      'files',
-      'instrument-data=s@',
-      undef,
-      'instrument-data-and-new-source-files=s@',
-      'files',
       'help!',
       undef
     ],
