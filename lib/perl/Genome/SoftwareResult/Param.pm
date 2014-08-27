@@ -8,7 +8,7 @@ use Genome;
 class Genome::SoftwareResult::Param {
     is => 'Genome::SoftwareResult::PIBase',
     table_name => 'result.param',
-    type_name => 'software result input',
+    type_name => 'software result param',
     id_by => [
         software_result => {
             is => 'Genome::SoftwareResult',
