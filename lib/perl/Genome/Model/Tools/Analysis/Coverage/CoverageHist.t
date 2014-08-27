@@ -10,6 +10,7 @@ use File::Compare;
 use above 'Genome';
 
 use Genome::Test::Factory::Model::ReferenceAlignment;
+use Genome::Test::Factory::Model::SomaticValidation;
 use Genome::Test::Factory::Build;
 
 $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -29,7 +30,14 @@ my $test_data =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Analysis-Covera
 
 my $tmpbase = File::Temp::tempdir('CoverageHistXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_file = "$tmpbase/output.pdf";
-my $somval_model_id = 2868188440;
+
+my $somval_model = Genome::Test::Factory::Model::SomaticValidation->setup_object();
+my $somval_model_id = $somval_model->id;
+my $somval_build = Genome::Test::Factory::Build->setup_object(
+    model_id => $somval_model_id,
+    status => 'Succeeded',
+    data_directory => join('/', $test_data, 'somval_build_dir'),
+);
 
 my $refalign_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
 my $refalign_model_id = $refalign_model->id;
@@ -53,8 +61,5 @@ $cmd = Genome::Model::Tools::Analysis::Coverage::CoverageHist->create(
 
 ok($cmd, 'command created');
 
-SKIP: {
-    skip "somval build is archived and maybe does not have appropriate files", 1;
-    $rv = $cmd->execute;
-    is($rv, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$rv);
-};
+$rv = $cmd->execute;
+is($rv, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$rv);
