@@ -447,8 +447,12 @@ my $recalculate_lookup_hash_callback = sub {
     return unless $object->software_result;
     eval { $object->software_result->recalculate_lookup_hash() };
 };
-Genome::SoftwareResult::Param->add_observer(aspect => '_new_value', callback => $recalculate_lookup_hash_callback);
-Genome::SoftwareResult::Input->add_observer(aspect => '_new_value', callback => $recalculate_lookup_hash_callback);
+for my $name (qw(Param Input)) {
+    my $classname = join('::', qw(Genome SoftwareResult), $name);
+    for my $aspect (qw(create value_id)) {
+        $classname->add_observer(aspect => $aspect, callback => $recalculate_lookup_hash_callback);
+    }
+}
 
 sub calculate_query {
     my $self = shift;
