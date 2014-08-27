@@ -21,7 +21,7 @@ is(scalar(@sr), 3, "got three existing results") or die;
 
 # put our test name here temporarily so we don't regenerate the underlying results
 for (@sr) {
-    $_->set_test_name($test_name);
+    $_->test_name($test_name);
 }
 
 # generate a composite result

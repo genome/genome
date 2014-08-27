@@ -589,11 +589,6 @@ sub _generate_lookup_hash {
     return Genome::Sys->md5sum_data($result);
 }
 
-sub set_test_name {
-    my ($self, $new_test_name) = @_;
-    return $self->test_name($new_test_name);
-}
-
 sub remove_test_name {
     my $self = shift;
     my $param = $self->params(name => 'test_name');
@@ -1189,7 +1184,7 @@ sub expunge {
         $child->expunge($reason);
     }
 
-    $self->set_test_name($reason);
+    $self->test_name($reason);
 
     if($self->disk_allocation) {
         eval {
