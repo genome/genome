@@ -71,7 +71,7 @@ sub create
     else {
         #This is necessary because we call commit after each chromosome,
         #so even if it crashes, the software result will stick around
-        $self->set_test_name("Creation of this software result is not complete");
+        $self->test_name("Creation of this software result is not complete");
     }
 
     $self->_prepare_staging_directory;

@@ -33,7 +33,7 @@ sub _update_owner_test_name {
 
     my $owner = $allocation->owner;
 
-    # Make sure the owner is a SoftwareResult before we set_test_name.
+    # Make sure the owner is a SoftwareResult before we set test_name.
     return unless defined $owner;
     return unless $owner->isa('Genome::SoftwareResult');
     return if defined $owner->test_name;
@@ -45,7 +45,7 @@ sub _update_owner_test_name {
         $allocation->id, $timestamp,
         (defined $reason ? "with reason '$reason'" : 'no reason specified');
 
-    $owner->set_test_name($test_name);
+    $owner->test_name($test_name);
 
     return;
 }
