@@ -16,7 +16,7 @@ class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
         is_optional => 1,
         doc => 'version of bam-readcount to use',
         default => '0.6',
-    }
+    },
 
     bam_file => {
         is => 'String',
