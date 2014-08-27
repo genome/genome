@@ -8,7 +8,6 @@ use Genome;
 class Genome::SoftwareResult::Input {
     is => 'Genome::SoftwareResult::PIBase',
     table_name => 'result.input',
-    type_name => 'software result input',
     id_by => [
         software_result => {
             is => 'Genome::SoftwareResult',
