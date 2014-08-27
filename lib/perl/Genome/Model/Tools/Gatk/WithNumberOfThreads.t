@@ -14,6 +14,7 @@ class GMT::Gatk::TestWithNumberThreads {
     is => 'Genome::Model::Tools::Gatk::WithNumberOfThreads',
 };
 sub GMT::Gatk::TestWithNumberThreads::_build_gatk_command { return 'gatk' };
+sub GMT::Gatk::TestWithNumberThreads::execute { return $_[0]->_execute_command };
 
 my $cmd = GMT::Gatk::TestWithNumberThreads->create();
 is($cmd->build_gatk_command, 'gatk', 'correct build_gatk_command w/o threads');
