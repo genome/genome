@@ -11244,21 +11244,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>screen-seq-by-snp-list',
-    [
-      'debug!',
-      undef,
-      'fasta=s',
-      undef,
-      'mp-grande=s',
-      'files',
-      'screen-file=s',
-      undef,
-      'screen-file-fof=s',
-      undef,
-      'help!',
-      undef
-    ],
     '>somatic-capture-dbsnp',
     [
       'dbsnp-snvs-file=s',
