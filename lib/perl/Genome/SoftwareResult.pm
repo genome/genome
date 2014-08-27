@@ -586,8 +586,7 @@ sub set_test_name {
 sub remove_test_name {
     my $self = shift;
 
-    my $param = Genome::SoftwareResult::Param->get(name => 'test_name',
-        software_result_id => $self->id);
+    my $param = $self->params(name => 'test_name');
     $param->delete;
 
     return $self->lookup_hash($self->calculate_lookup_hash);
