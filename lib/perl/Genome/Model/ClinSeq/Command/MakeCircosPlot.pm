@@ -96,10 +96,16 @@ sub execute {
 
  
 
-    # declare variables shared between WGS and exome data
+    # declare variable to contain text for circos.conf file output
     my $config;
+
+    # Gene hash is a union of all of the different genes in each file used for the gene annotations on the plot.
+    # Two gene hashes are created and two files are produced that could be used for gene labels on the circo plot
+    #    1. genes-noAmpDel is a hash with all of genes except for amplifications and deletions
+    #    2. genes-AmpDel is a wash with the amplifications and deletions (This file could enrich lables to only be in the AmpDel regions)
     my %genes_noAmpDel;
     my %genes_AmpDel;
+
 
     # determine if data is exome or WGS and access correct folders for input files
     
@@ -261,15 +267,6 @@ band_transparency = 4
 #</ticks>
 EOS
 
-
-        #Gene hash is a union of all of the different genes in each file used for the gene annotations on the plot.
-        # Two gene hashes are created and two files are produced that could be used for gene labels on the circo plot
-        #    1. genes-noAmpDel is a hash with all of genes except for amplifications and deletions
-        #    2. genes-AmpDel is a wash with the amplifications and deletions (This file could enrich lables to only be in the AmpDel regions)
-        my %genes_noAmpDel ;
-        my %genes_AmpDel;
-
-        #TODO I am assuming that this comes from the WGS data. I am not sure on this, however if it does not the <links> tag needs to be brought out of the conf section here
         ###Candidate Fusions
         my $candidate_fusions = Genome::Sys->read_file("$output_directory/raw/CandidateSvCodingFusions.tsv");
         my $candidate_fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/CandidateSvCodingFusions.txt");
@@ -365,8 +362,16 @@ EOS
         }
         $deletions_fh->close;
         $focal_amps_fh->close;
-        
-    # if exome build data is available, collects input files from appropriate folders 
+    
+        #the gene names for deletions and focal amplifications is in another file so it needs to be read in here
+        my $ampdel_genes = Genome::Sys->read_file("$output_directory/raw/cnv.All_genes.ampdel.tsv");
+        while ($ampdel_genes =~ /ENS\w+\s\w+\s(\S+)\s\S+\s(\w+)\s(\d+)\s(\d+)/g) {
+            $genes_AmpDel{$1}="hs$2\t$3\t$4";
+        }
+         
+
+
+    ## if exome build data is available, collects input files from appropriate folders 
 
     }else{
 
@@ -378,13 +383,13 @@ EOS
             Genome::Sys->copy_file($dataDir."/rnaseq/tumor/fusions/filtered_chimeras.bedpe", "$output_directory/raw/filtered_chimeras.bedpe");
         }
         ###Deletions and Focal Amplifications
-        Genome::Sys->copy_file("$dataDir/clonality/cnaseq.cnvhmm", "$output_directory/raw/cnaseq.cnvhmm");
+        Genome::Sys->copy_file("$dataDir/cnv/exome_cnv/cnmops.cnvhmm", "$output_directory/raw/cnmops.cnvhmm");
         if($self->cnv_hmm_file){
-            system("rm -f $output_directory/raw/cnaseq.cnvhmm");
-            Genome::Sys->copy_file($self->cnv_hmm_file , "$output_directory/raw/cnaseq.cnvhmm");
+            system("rm -f $output_directory/raw/cnmops.cnvhmm");
+            Genome::Sys->copy_file($self->cnv_hmm_file , "$output_directory/raw/cnmops.cnvhmm");
         }
         ###Deletions and focal amplifications gene files
-        Genome::Sys->copy_file("$dataDir/cnv/wgs_cnv/cnview/cnv.All_genes.ampdel.tsv" , "$output_directory/raw/cnv.All_genes.ampdel.tsv");
+        Genome::Sys->copy_file("$dataDir/cnv/exome_cnv/CNView_All/CNView_All_genes.ampdel.tsv" , "$output_directory/raw/CNView_All_genes.ampdel.tsv");
         if($self->gene_ampdel_file){
             system("rm -f $output_directory/raw/cnv.All_genes.ampdel.tsv");
             Genome::Sys->copy_file($self->gene_ampdel_file , "$output_directory/raw/cnv.All_genes.ampdel.tsv");
@@ -413,7 +418,6 @@ EOS
 
         ### Tier1 SNVs and INDELs
         #decides which somatic variation model to use
-        #my $wgs_build = $build->wgs_build; #WGS build required at beginning of execute
         my $snv_data_dir;
         my $indel_data_dir;
         if($wgs_build && $exo_build){
@@ -526,13 +530,8 @@ band_transparency = 4
 EOS
 
 
-        #Gene hash is a union of all of the different genes in each file used for the gene annotations on the plot.
-        # Two gene hashes are created and two files are produced that could be used for gene labels on the circo plot
-        #    1. genes-noAmpDel is a hash with all of genes except for amplifications and deletions
-        #    2. genes-AmpDel is a wash with the amplifications and deletions (This file could enrich lables to only be in the AmpDel regions)
-        my %genes_noAmpDel ;
-        my %genes_AmpDel;
-
+# WGS Fusions not available for exome so this will be skipped
+=cut
         #TODO I am assuming that this comes from the WGS data. I am not sure on this, however if it does not the <links> tag needs to be brought out of the conf section here
         ###Candidate Fusions
         my $candidate_fusions = Genome::Sys->read_file("$output_directory/raw/CandidateSvCodingFusions.tsv");
@@ -557,23 +556,19 @@ thickness     = 2
 </link>
 
 EOS
+=cut
 
         ###Fusions
         if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rnaseq/tumor/fusions/filtered_chimeras.bedpe"){
             my $fusions = Genome::Sys->read_file("$output_directory/raw/filtered_chimeras.bedpe");
             my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/filtered_chimeras.bedpe");
             while ($fusions =~ /(\d+|X|Y)\s(\d+)\s(\d+)\s(\d+|X|Y)\s(\d+)\s(\d+)\s+\w+\s\d+\s[+|-]\s[+|-]\s(\S+):(\S+)/g) {
-#           		print "gene 1 : $7 hs$1 $2 $3";
-#           		print "gene 2 : $8 hs$4 $5 $6";
-#                $genes_noAmpDel{$7}="hs$1 $2 $3";
-#                $genes_noAmpDel{$8}="hs$4 $5 $6";
-#                $genes_AmpDel{$7}="hs$1 $2 $3";
-#                $genes_AmpDel{$8}="hs$4 $5 $6";
                 print $fusions_fh ("hs$1 $2 $3 hs$4 $5 $6\n");
             }
             $fusions_fh->close;
             $config .=<<EOS;
 #Fusions RNAseq support
+<links>
 <link>
 file          = $output_directory/data/filtered_chimeras.bedpe
 radius          = 0.50r
@@ -596,7 +591,7 @@ EOS
 
 
         ###Deletions and Focal Amplifications
-        my $deletions_and_focal_amps = Genome::Sys->read_file("$output_directory/raw/cnaseq.cnvhmm");
+        my $deletions_and_focal_amps = Genome::Sys->read_file("$output_directory/raw/cnmops.cnvhmm");
         my $deletions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/deletions.txt");
         my $focal_amps_fh = Genome::Sys->open_file_for_writing("$output_directory/data/focalAmps.txt");
         while ($deletions_and_focal_amps =~ /(\S+)\s(\d+)\s(\d+)\s\d+\s\d+\s\d+\s(\S+)\s\d+\s(\S+)\s\S+\s(\S+)/g) {
@@ -629,20 +624,20 @@ EOS
         
         }
         $deletions_fh->close;
-        $focal_amps_fh->close;
+        $focal_amps_fh->close;  
+    
+        #the gene names for deletions and focal amplifications is in another file so it needs to be read in here
+        my $ampdel_genes = Genome::Sys->read_file("$output_directory/raw/CNView_All_genes.ampdel.tsv");
+        while ($ampdel_genes =~ /ENS\w+\s\w+\s(\S+)\s\S+\s(\w+)\s(\d+)\s(\d+)/g) {
+            $genes_AmpDel{$1}="hs$2\t$3\t$4";
+        }
+        
+
     }
 
-    
+
     ## following occurs with WGS or exome data input
 
-
-    
-    #the gene names for deletions and focal amplifications is in another file so it needs to be read in here
-    my $ampdel_genes = Genome::Sys->read_file("$output_directory/raw/cnv.All_genes.ampdel.tsv");
-    while ($ampdel_genes =~ /ENS\w+\s\w+\s(\S+)\s\S+\s(\w+)\s(\d+)\s(\d+)/g) {
-        $genes_AmpDel{$1}="hs$2\t$3\t$4";
-    }
-    
     $config .=<<EOS;
 
 #DELETIONS DATA
