@@ -278,6 +278,8 @@ BEGIN: {
     *get_default_alignment_results = \&Genome::InstrumentData::Solexa::get_default_alignment_results;
     *get_default_alignment_metrics_hash = \&Genome::InstrumentData::Solexa::get_default_alignment_metrics_hash;
     *_convert_trimmer_to_sx_commands = \&Genome::InstrumentData::Solexa::_convert_trimmer_to_sx_commands;
+    *is_capture = \&Genome::InstrumentData::Solexa::is_capture;
+    *target_region_set = \&Genome::InstrumentData::Solexa::target_region_set;
 }
 
 sub dump_sanger_fastq_files {

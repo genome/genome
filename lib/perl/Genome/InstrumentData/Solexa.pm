@@ -1388,6 +1388,12 @@ sub is_capture {
     return defined($self->target_region_set_name) ? 1 : 0;
 }
 
+sub target_region_set {
+    my $self = shift;
+
+    return unless $self->target_region_set_name;
+    return Genome::FeatureList->get(name => $self->target_region_set_name);
+}
 
 1;
 
