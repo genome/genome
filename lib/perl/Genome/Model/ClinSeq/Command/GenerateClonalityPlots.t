@@ -54,7 +54,7 @@ my @diff = `diff -x '*.pdf' -x '*.R' -r $expected_out $actual_out`;
 is(scalar(@diff), 0, "only expected differences")
 or do {
   for (@diff) { diag($_) }
-  warn "*** if the above differences are not in error, rebuild the test data by running this test with REBUILD on the command-line ***";
+  warn "*** if the above differences are not in error, rebuild the test data by running this test with REBUILD on the command-line after updating the expected dir's date ***";
   Genome::Sys->shellcmd(cmd => "rm -fr $temp_dir");
   Genome::Sys->shellcmd(cmd => "mv $actual_out $temp_dir");
 };
