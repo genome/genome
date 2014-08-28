@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More tests => 8; 
+use Test::More tests => 8;
 
 my $expected_out = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-ClinSeq-Command-GenerateClonalityPlots/2014-08-28/';
 
@@ -26,12 +26,12 @@ my $somvar_build = Genome::Model::Build->get($somvar_build_id);
 ok($somvar_build, "Got somatic variation build from id: $somvar_build_id") or die;
 
 my $cmd = Genome::Model::ClinSeq::Command::GenerateClonalityPlots->create(
-    somatic_var_build => $somvar_build, 
+    somatic_var_build => $somvar_build,
     misc_annotation_db => Genome::Db->get("tgi/misc-annotation/human/build37-20130113.1"),
     chromosome => '22',
     verbose => 1, 
-    output_dir => $actual_out, 
-    common_name => 'HCC1395', 
+    output_dir => $actual_out,
+    common_name => 'HCC1395',
 );
 $cmd->queue_status_messages(1);
 my $r1 = $cmd->execute();
@@ -51,7 +51,7 @@ for my $pdf_name ( qw(
 # The differences test excludes files which always differ (embed dates, or are the subject of a masking as above).
 my $temp_dir = "/tmp/last-generate-clonality-plots-result/";
 my @diff = `diff -x '*.pdf' -x '*.R' -r $expected_out $actual_out`;
-is(scalar(@diff), 0, "only expected differences") 
+is(scalar(@diff), 0, "only expected differences")
 or do {
   for (@diff) { diag($_) }
   warn "*** if the above differences are not in error, rebuild the test data by running this test with REBUILD on the command-line ***";
