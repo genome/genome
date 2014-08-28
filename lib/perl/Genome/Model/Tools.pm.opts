@@ -4469,6 +4469,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'files',
         'variant-file=s',
         'files',
+        'bam-readcount-version=s',
+        'files',
         'chrom=s',
         'files',
         'count-non-reference-reads!',
