@@ -15,10 +15,13 @@ use Test::Exception;
 use File::Compare qw(compare);
 use Genome::Utility::Test qw(compare_ok);
 
-use_ok('Genome::Model::Tools::DetectVariants2::Lumpy');
+my $VERSION = 1;
+
+my $pkg = 'Genome::Model::Tools::DetectVariants2::Lumpy';
+use_ok($pkg);
 
 my $refbuild_id = 101947881;
-my $test_dir    = File::Spec->join($ENV{GENOME_TEST_INPUTS}, '/Genome-Model-Tools-DetectVariants2-Lumpy');
+my $test_dir    = Genome::Utility::Test->data_dir($pkg, $VERSION);
 my $output_dir  = Genome::Sys->create_temp_directory();
 my $tumor_bam   = File::Spec->join($test_dir, 'tumor.bam');
 
