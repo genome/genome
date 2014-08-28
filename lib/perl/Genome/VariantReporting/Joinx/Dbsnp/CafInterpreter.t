@@ -13,7 +13,7 @@ use Test::Exception;
 use Test::More;
 use Genome::File::Vcf::Entry;
 
-my $pkg = "Genome::VariantReporting::Dbsnp::GmafInterpreter";
+my $pkg = "Genome::VariantReporting::Joinx::Dbsnp::CafInterpreter";
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
@@ -24,20 +24,22 @@ subtest "one alt allele" => sub {
 
     my %expected_return_values = (
         C => {
-            gmaf => 0.3,
+            caf => 0.3,
+            max_alt_af => 0.3,
         }
     );
-    my $entry = create_entry(0.3);
+    my $entry = create_entry('[0.7,0.3,.]');
     is_deeply({$interpreter->interpret_entry($entry, ['C'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
-subtest "no gmaf" => sub {
+subtest "no caf" => sub {
     my $interpreter = $pkg->create();
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
     my %expected_return_values = (
         C => {
-            gmaf => undef,
+            caf => undef,
+            max_alt_af => undef,
         }
     );
     my $entry = create_entry();
@@ -50,13 +52,15 @@ subtest "two alt allele" => sub {
 
     my %expected_return_values = (
         C => {
-            gmaf => 0.3,
+            caf => 0.3,
+            max_alt_af => 0.3,
         },
         G => {
-            gmaf => 0.3,
+            caf => '.',
+            max_alt_af => 0.3,
         },
     );
-    my $entry = create_entry(0.3);
+    my $entry = create_entry('[0.7,0.3,.]');
     is_deeply({$interpreter->interpret_entry($entry, ['C', 'G'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
@@ -65,7 +69,7 @@ sub create_vcf_header {
 ##fileformat=VCFv4.1
 ##FILTER=<ID=PASS,Description="Passed all filters">
 ##FILTER=<ID=BAD,Description="This entry is bad and it should feel bad">
-##INFO=<ID=GMAF,Number=1,Type=Float,Description="GMAF">
+##INFO=<ID=CAF,Number=.,Type=Float,Description="CAF">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
 EOS
     my @lines = split("\n", $header_txt);
@@ -74,7 +78,7 @@ EOS
 }
 
 sub create_entry {
-    my $gmaf = shift;
+    my $caf = shift;
     my @fields = (
         '1',            # CHROM
         10,             # POS
@@ -84,8 +88,8 @@ sub create_entry {
         '10.3',         # QUAL
         'PASS',         # FILTER
     );
-    if (defined $gmaf) {
-        push @fields, "GMAF=$gmaf";
+    if (defined $caf) {
+        push @fields, "CAF=$caf";
     }
 
     my $entry_txt = join("\t", @fields);

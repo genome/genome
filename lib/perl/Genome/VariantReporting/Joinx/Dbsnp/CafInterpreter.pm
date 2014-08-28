@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Dbsnp::CafInterpreter;
+package Genome::VariantReporting::Joinx::Dbsnp::CafInterpreter;
 
 use strict;
 use warnings;
@@ -6,8 +6,8 @@ use Genome;
 
 use List::Util qw(max);
 
-class Genome::VariantReporting::Dbsnp::CafInterpreter {
-    is => ['Genome::VariantReporting::Dbsnp::ComponentBase', 'Genome::VariantReporting::Framework::Component::Interpreter'],
+class Genome::VariantReporting::Joinx::Dbsnp::CafInterpreter {
+    is => ['Genome::VariantReporting::Joinx::Dbsnp::ComponentBase', 'Genome::VariantReporting::Framework::Component::Interpreter'],
 };
 
 sub name {

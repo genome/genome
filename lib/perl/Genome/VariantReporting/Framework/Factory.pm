@@ -18,14 +18,16 @@ use Module::Pluggable
     require => 1,
     search_path => search_path(),
     only => qr(Expert$),
-    except => ['Genome::VariantReporting::Framework::Component::Expert'],
+    except => ['Genome::VariantReporting::Framework::Component::Expert',
+               'Genome::VariantReporting::Joinx::Expert'],
     sub_name => 'experts';
 
 use Module::Pluggable
     require => 1,
     search_path => search_path(),
     only => qr(Adaptor$),
-    except => ['Genome::VariantReporting::Framework::Component::Adaptor'],
+    except => ['Genome::VariantReporting::Framework::Component::Adaptor',
+               'Genome::VariantReporting::Joinx::Adaptor'],
     sub_name => 'adaptors';
 
 use Module::Pluggable

@@ -13,18 +13,19 @@ use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
 
-my $pkg = "Genome::VariantReporting::Dbsnp::MaxGmafFilter";
+my $pkg = "Genome::VariantReporting::Joinx::Nhlbi::MaxMafFilter";
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 
-subtest "Filter fails" => sub {
+subtest "Fails" => sub {
     my $filter = $pkg->create(
-        max_gmaf => ".1",
+        max_maf => "0.1",
+        population_code => "All",
     );
     lives_ok(sub {$filter->validate}, "Filter validates ok");
 
-    my $entry = create_entry('.3');
+    my $entry = create_entry(join(",",0.7,0.1,0.2));
 
     my %expected_return_values = (
         C => 0,
@@ -33,9 +34,25 @@ subtest "Filter fails" => sub {
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values);
 };
 
-subtest "No GMAF for entry" => sub {
+subtest "Passes" => sub {
     my $filter = $pkg->create(
-        max_gmaf => ".1",
+        max_maf => "0.1",
+        population_code => "All",
+    );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
+
+    my $entry = create_entry(join(",",0.7,0.1,0.09));
+
+    my %expected_return_values = (
+        C => 1,
+        G => 1,
+    );
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values);
+};
+subtest "No MAF for entry" => sub {
+    my $filter = $pkg->create(
+        max_maf => ".1",
+        population_code => "All",
     );
     lives_ok(sub {$filter->validate}, "Filter validates ok");
 
@@ -47,11 +64,22 @@ subtest "No GMAF for entry" => sub {
     );
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values);
 };
+subtest "Malformed MAF" => sub {
+    my $filter = $pkg->create(
+        max_maf => ".1",
+        population_code => "EU",
+    );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
+
+    my $entry = create_entry("1");
+
+    throws_ok(sub {$filter->filter_entry($entry)}, qr(MAF in unexpected format));
+};
 
 sub create_vcf_header {
     my $header_txt = <<EOS;
 ##fileformat=VCFv4.1
-##INFO=<ID=GMAF,Number=1,Type=Float,Description="GMAF">
+##INFO=<ID=MAF,Number=.,Type=Float,Description="MAF">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
 EOS
     my @lines = split("\n", $header_txt);
@@ -60,7 +88,7 @@ EOS
 }
 
 sub create_entry {
-    my $gmaf = shift;
+    my $maf = shift;
     my @fields = (
         '1',            # CHROM
         10,             # POS
@@ -70,8 +98,8 @@ sub create_entry {
         '10.3',         # QUAL
         'PASS',         # FILTER
     );
-    if (defined $gmaf) {
-        push @fields, "GMAF=$gmaf";
+    if (defined $maf) {
+        push @fields, "MAF=$maf";
     }
     else {
         push @fields, ".";

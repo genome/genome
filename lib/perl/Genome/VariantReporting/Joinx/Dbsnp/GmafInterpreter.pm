@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Dbsnp::GmafInterpreter;
+package Genome::VariantReporting::Joinx::Dbsnp::GmafInterpreter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Dbsnp::GmafInterpreter {
+class Genome::VariantReporting::Joinx::Dbsnp::GmafInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
     has => [
         dummy => {

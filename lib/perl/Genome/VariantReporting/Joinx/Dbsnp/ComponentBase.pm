@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Dbsnp::ComponentBase;
+package Genome::VariantReporting::Joinx::Dbsnp::ComponentBase;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Dbsnp::ComponentBase {
+class Genome::VariantReporting::Joinx::Dbsnp::ComponentBase {
 };
 
 sub _caf_parser {

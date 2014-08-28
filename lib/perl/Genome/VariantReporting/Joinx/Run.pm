@@ -1,13 +1,13 @@
-package Genome::VariantReporting::Dbsnp::Run;
+package Genome::VariantReporting::Joinx::Run;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Dbsnp::Run {
+class Genome::VariantReporting::Joinx::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     has_input => [
-        dbsnp_vcf => {
+        vcf => {
             is => 'Path',
         },
         info_string => {
@@ -20,9 +20,9 @@ class Genome::VariantReporting::Dbsnp::Run {
 };
 
 sub name {
-    'dbsnp';
+    return 'joinx';
 }
 
 sub result_class {
-    'Genome::VariantReporting::Dbsnp::RunResult';
+    'Genome::VariantReporting::Joinx::RunResult';
 }

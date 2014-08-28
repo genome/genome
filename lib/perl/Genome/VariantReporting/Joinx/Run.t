@@ -19,13 +19,13 @@ use Genome::VariantReporting::Framework::TestHelpers qw(test_cmd_and_result_are_
 
 use Test::More;
 
-my $cmd_class = 'Genome::VariantReporting::Dbsnp::Run';
+my $cmd_class = 'Genome::VariantReporting::Joinx::Run';
 use_ok($cmd_class) or die;
 
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('runners', $cmd_class->name), $cmd_class);
 
-my $result_class = 'Genome::VariantReporting::Dbsnp::RunResult';
+my $result_class = 'Genome::VariantReporting::Joinx::RunResult';
 use_ok($result_class) or die;
 
 use_ok('Genome::Model::Tools::Joinx::VcfAnnotate') or die;
@@ -47,7 +47,7 @@ sub generate_test_cmd {
 
     my %params = (
         input_vcf => __FILE__,
-        dbsnp_vcf => __FILE__,
+        vcf => __FILE__,
         variant_type     => 'snvs',
         info_string      => 'test',
         joinx_version          => '1.9',

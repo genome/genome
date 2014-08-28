@@ -1,12 +1,12 @@
-package Genome::VariantReporting::Dbsnp::MaxAfFilter;
+package Genome::VariantReporting::Joinx::Dbsnp::MaxAfFilter;
 
 use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::DbsnpAFParser;
 
-class Genome::VariantReporting::Dbsnp::MaxAfFilter {
-    is => ['Genome::VariantReporting::Dbsnp::ComponentBase', 'Genome::VariantReporting::Framework::Component::Filter'],
+class Genome::VariantReporting::Joinx::Dbsnp::MaxAfFilter {
+    is => ['Genome::VariantReporting::Joinx::Dbsnp::ComponentBase', 'Genome::VariantReporting::Framework::Component::Filter'],
     has => [
         max_af => {
             is => 'Number',
