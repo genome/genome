@@ -35,7 +35,6 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots::Readcounts {
     doc => 'Get readcounts from a series of BAMs for the positions specified in the sites file',
 };
 
-use IO::File;
 use Cwd 'abs_path';
 sub execute {
     my $self = shift;
@@ -45,11 +44,10 @@ sub execute {
     my $output = $self->output_file;
     my @bams = $self->bam_files;
     my @types;
-    my $sitesfh = new IO::File $sites,"r";
-    my $outfh = new IO::File $output,"w";
+    my $sitesfh = Genome::Sys->open_file_for_reading($sites);
+    my $outfh = Genome::Sys->open_file_for_writing($output);
 
     #headers
-    #print $outfh "#",$bams,"\n";
     print $outfh "#Chr\tStart\tStop";
     for my $bam (@bams) {
         my ($type,$bam) = split /:/,$bam;
