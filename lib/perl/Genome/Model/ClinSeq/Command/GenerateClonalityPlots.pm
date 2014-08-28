@@ -274,19 +274,21 @@ sub execute {
     #Step 7-C.  Without clusters but after filtering the input file to remove those with low coverage in tumor or high VAF in normal
     #normal coverage = col5+col6; normal vaf = col7; tumor coverage = col9+10; tumor vaf = col11
     my $filtered_file = $varscan_file . ".filt";
-    open (SNV, $varscan_file) || die $self->error_message("Could not open snv file: $varscan_file for reading");
-    open (SNV2, ">$filtered_file") || die $self->error_message("Could not open filtered snv file: $filtered_file for writing");
-    while(<SNV>){
+
+    my $varscan_fh = Genome::Sys->open_file_for_reading($varscan_file);
+    my $filtered_fh = Genome::Sys->open_file_for_writing($filtered_file);
+    while(<$varscan_fh>){
       my @line = split("\t", $_);
       my $normal_cov = $line[4] + $line[5];
       my $normal_vaf = $line[6];
       my $tumor_cov = $line[8]+$line[9];
       my $tumor_vaf = $line[10];
       next if ($tumor_cov < $self->min_tumor_cov || $tumor_cov > $self->max_tumor_cov || $normal_vaf > $self->max_normal_vaf);
-      print SNV2 $_;
+      print $filtered_fh $_;
     }
-    close(SNV);
-    close(SNV2);
+    $varscan_fh->close;
+    $filtered_fh->close;
+
     if (-s $filtered_file){
       my $output_image_file3a = "$output_dir"."$common_name".".clonality.filtered_snvs.pdf";
       my $clonality_cmd3a = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file3a, r_script_output_file=>$r_script_file, varscan_file=>$filtered_file, analysis_type=>'wgs', sample_id=>$uc_common_name);
