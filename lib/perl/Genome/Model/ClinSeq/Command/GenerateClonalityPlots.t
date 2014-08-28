@@ -38,14 +38,15 @@ my $r1 = $cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
 
 #Since we can not diff the pdf files, at least check for file creation...
-my $pdf1 = $actual_out . "/HCC1395.clonality.pdf";
-ok(-s $pdf1, "Found non-zero PDF file HCC1395.clonality.pdf");
-my $pdf2 = $actual_out . "/HCC1395.clonality.cn2.pdf";
-ok(-s $pdf2, "Found non-zero PDF file HCC1395.clonality.cn2.pdf");
-my $pdf3 = $actual_out . "/HCC1395.clonality.filtered_snvs.pdf";
-ok(-s $pdf3, "Found non-zero PDF file HCC1395.clonality.filtered_snvs.pdf");
-my $pdf4 = $actual_out . "/HCC1395.clonality.filtered_snvs.cn2.pdf";
-ok(-s $pdf4, "Found non-zero PDF file HCC1395.clonality.filtered_snvs.cn2.pdf");
+for my $pdf_name ( qw(
+    HCC1395.clonality.pdf
+    HCC1395.clonality.cn2.pdf
+    HCC1395.clonality.filtered_snvs.pdf
+    HCC1395.clonality.filtered_snvs.cn2.pdf
+)) {
+    my $pdf_path = join('/', $actual_out, $pdf_name);
+    ok(-s $pdf_path, "Found non-zero PDF file $pdf_name");
+}
 
 # The differences test excludes files which always differ (embed dates, or are the subject of a masking as above).
 my $temp_dir = "/tmp/last-generate-clonality-plots-result/";
