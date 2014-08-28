@@ -4,6 +4,9 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Model::Tools::Vcf::Helpers qw/convertIub/;
+
+use IO::File;
 
 class Genome::Model::ClinSeq::Command::GenerateClonalityPlots::Readcounts {
     is => 'Command::V2',
@@ -35,7 +38,6 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots::Readcounts {
     doc => 'Get readcounts from a series of BAMs for the positions specified in the sites file',
 };
 
-use Cwd 'abs_path';
 sub execute {
     my $self = shift;
 
@@ -67,12 +69,6 @@ sub execute {
     }
     $sites_fh->close;
 
-    #TODO Bring script into a module
-    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../../OriginalScripts/') . '/';
-    unless (-d $script_dir) {
-        die $self->error_message("failed to find script dir $script_dir!")
-    }
-
     #cycle through bams to get readcounts
     for my $bam (@bams) {
         my $temp_readcount_file = Genome::Sys->create_temp_file_path();
@@ -88,13 +84,12 @@ sub execute {
         );
 
         my $sites = $self->sites_file;
-        my $statscmd = "$script_dir/borrowed/ndees/miller-bam-readcount-to-stats.noheader.pl $sites $temp_readcount_file |";
-        open(STATS,$statscmd) or die "Couldn't open stats command: $!";
-        while (my $line = <STATS>) {
-            chomp $line;
-            my ($chr,$pos,$stats) = split /\t/,$line,3;
-            $output{$chr}{$pos}{$type} = $stats;
-        }
+        $self->convert_readcounts_to_stats(
+            \%output,
+            $type,
+            $self->sites_file,
+            $temp_readcount_file
+        );
     }
 
     #print output
@@ -114,5 +109,91 @@ sub execute {
 
     return 1;
 }
+
+sub convert_readcounts_to_stats {
+    my $self = shift;
+
+    my $stats = shift;
+    my $type = shift;
+    my $sites_file = shift;
+    my $readcounts_file = shift;
+
+    my %refHash;
+    my %varHash;
+
+
+    #read in all the snvs and hash both the ref and var allele by position
+    my $inFh = IO::File->new( $sites_file ) || die "can't open file\n";
+    while( my $line = $inFh->getline )
+    {
+        chomp($line);
+        my @fields = split("\t",$line);
+        $refHash{$fields[0] . "|" . $fields[1]} = $fields[3];
+        $varHash{$fields[0] . "|" . $fields[1]} = $fields[4]
+    }
+
+    #read in the bam-readcount file
+    my $inFh2 = IO::File->new( $readcounts_file ) || die "can't open file\n";
+    while( my $line = $inFh2->getline )
+    {
+        chomp($line);
+        my ($chr, $pos, $ref, $depth, @counts) = split("\t",$line);
+
+        my $ref_count = 0;
+        my $var_count = 0;
+        my $knownRef;
+        my $knownVar;
+
+        #for each base at that pos
+        foreach my $count_stats (@counts) {
+            my ($allele, $count, $mq, $bq) = split /:/, $count_stats;
+
+            # skip if it's not in our list of snvs
+            next unless (exists($refHash{$chr . "|" . $pos}) && exists($varHash{$chr . "|" . $pos}));
+
+            #look up the snv calls at this position
+            $knownRef = $refHash{$chr . "|" . $pos};
+            $knownVar = $varHash{$chr . "|" . $pos};
+
+            # assume that the ref call is ACTG, not iub
+            # (assumption looks valid in my files)
+            if ($allele eq $knownRef){
+                $ref_count += $count;
+            }
+
+            # if this base is included in the IUB code for
+            # for the variant, (but doesn't match the ref)
+            if (matchIub($allele,$knownRef,$knownVar)){
+                $var_count += $count;
+            }
+        }
+
+        my $var_freq = 0;
+        if ($depth ne '0') {
+            $var_freq = $var_count/$depth * 100;
+        }
+
+        #output
+        $stats->{$chr}{$pos}{$type} = join("\t",
+            $knownRef, $knownVar, $ref_count, $var_count, sprintf("%.2f", $var_freq)
+        );
+    }
+}
+
+#
+sub matchIub{
+    my ($allele,$ref,$var) = @_;
+    my @variubs = split(",",convertIub($var));
+    my @refiubs = split(",",convertIub($ref));
+    foreach my $i (@variubs){
+        unless (grep {$_ eq $i} @refiubs) {
+            if ($allele eq $i){
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 
 1;
