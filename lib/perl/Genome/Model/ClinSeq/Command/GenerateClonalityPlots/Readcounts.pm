@@ -6,8 +6,6 @@ use warnings;
 use Genome;
 use Genome::Model::Tools::Vcf::Helpers qw/convertIub/;
 
-use IO::File;
-
 class Genome::Model::ClinSeq::Command::GenerateClonalityPlots::Readcounts {
     is => 'Command::V2',
     has_input => [
@@ -123,18 +121,19 @@ sub convert_readcounts_to_stats {
 
 
     #read in all the snvs and hash both the ref and var allele by position
-    my $inFh = IO::File->new( $sites_file ) || die "can't open file\n";
-    while( my $line = $inFh->getline )
+    my $sites_fh = Genome::Sys->open_file_for_reading( $sites_file );
+    while( my $line = $sites_fh->getline )
     {
         chomp($line);
         my @fields = split("\t",$line);
         $refHash{$fields[0] . "|" . $fields[1]} = $fields[3];
         $varHash{$fields[0] . "|" . $fields[1]} = $fields[4]
     }
+    $sites_fh->close();
 
     #read in the bam-readcount file
-    my $inFh2 = IO::File->new( $readcounts_file ) || die "can't open file\n";
-    while( my $line = $inFh2->getline )
+    my $readcounts_fh = Genome::Sys->open_file_for_reading( $readcounts_file );
+    while( my $line = $readcounts_fh->getline )
     {
         chomp($line);
         my ($chr, $pos, $ref, $depth, @counts) = split("\t",$line);
@@ -178,6 +177,7 @@ sub convert_readcounts_to_stats {
             $knownRef, $knownVar, $ref_count, $var_count, sprintf("%.2f", $var_freq)
         );
     }
+    $readcounts_fh->close();
 }
 
 #
