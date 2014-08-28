@@ -147,7 +147,16 @@ class Genome::Disk::Allocation {
             is => 'Genome::Disk::Allocation::FileSummary',
             is_many => 1,
             reverse_as => 'allocation'
-        }
+        },
+        finalizer_id => {
+            is => 'Text',
+            len => 64,
+            is_transient => 1, # TODO: remove once column exists
+        },
+        finalizer => {
+            is => 'Genome::Disk::Detail::Allocation::Finalizer',
+            id_by => 'finalizer_id',
+        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -1028,6 +1037,27 @@ sub _get_trash_folder {
 sub _extract_aggr {
     my $self = shift;
     return (shift =~ m!/(aggr\d{2})/!)[0];
+}
+
+sub finalize {
+    my $self = shift;
+
+    my $rv = 1;
+    if ($self->finalizer) {
+        unless ($self->finalizer->finalize($self)) {
+            warn qq(finalize failed);
+            $rv = undef;
+        }
+    }
+
+    # TODO: add finalize event?
+
+    unless ($self->reallocate) {
+        warn qq(reallocate failed);
+        $rv = undef;
+    }
+
+    return $rv;;
 }
 
 1;
