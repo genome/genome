@@ -185,9 +185,15 @@ sub execute {
     }
     else {
         $readcounts_outfile = "$adapted_file".".readcounts";
-        my $read_counts_cmd = "$script_dir"."borrowed/ndees/give_me_readcounts.pl  --sites_file=$adapted_file --bam_list=\"Tumor:$tumor_bam,Normal:$normal_bam\" --reference_fasta=$data_paths{reference_fasta} --output_file=$readcounts_outfile";
-        if ($verbose){$self->debug_message("$read_counts_cmd");}
-        Genome::Sys->shellcmd(cmd => $read_counts_cmd);
+        my $read_counts_cmd = Genome::Model::ClinSeq::Command::GenerateClonalityPlots::Readcounts->create(
+            sites_file => $adapted_file,
+            bam_files => ["Tumor:$tumor_bam", "Normal:$normal_bam"],
+            reference_build => $somatic_var_build->reference_sequence_build,
+            output_file => $readcounts_outfile,
+            #bam_readcount_version => '', #FIXME should not rely on default versions in a pipeline
+        );
+        $read_counts_cmd->execute
+            or die $self->error_message('Failed to generate readcounts');
     }
 
     #Step 5 - create a varscan-format file from these outputs:
