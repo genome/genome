@@ -15971,6 +15971,8 @@ $Genome::Command::OPTS_SPEC = [
           'files',
           'variant-file=s',
           'files',
+          'bam-readcount-version=s',
+          'files',
           'chrom=s',
           'files',
           'count-non-reference-reads!',
@@ -38236,6 +38238,15 @@ $Genome::Command::OPTS_SPEC = [
         'somatic-build=s',
         undef,
         'tumor-build=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>fasta',
+      [
+        'model=s',
+        undef,
+        'output-directory=s',
         undef,
         'help!',
         undef
