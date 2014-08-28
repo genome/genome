@@ -60,8 +60,9 @@ sub execute {
     my %output;
     while (my $line = $sites_fh->getline) {
         chomp $line;
-        my ($chr,$start,$stop) = split /\t/,$line;
-        $output{$chr}{$start} = {};
+        my ($chr,$start,$stop,$ref,$var) = split /\t/,$line;
+        $output{$chr}{$start}{__ref__} = $ref;
+        $output{$chr}{$start}{__var__} = $var;
 
         $site_list_for_readcount_fh->say(join("\t", $chr, $start, $stop));
     }
@@ -81,11 +82,9 @@ sub execute {
             use_version => $self->bam_readcount_version,
         );
 
-        my $sites = $self->sites_file;
         $self->convert_readcounts_to_stats(
             \%output,
             $type,
-            $self->sites_file,
             $temp_readcount_file
         );
     }
@@ -113,23 +112,10 @@ sub convert_readcounts_to_stats {
 
     my $stats = shift;
     my $type = shift;
-    my $sites_file = shift;
     my $readcounts_file = shift;
 
     my %refHash;
     my %varHash;
-
-
-    #read in all the snvs and hash both the ref and var allele by position
-    my $sites_fh = Genome::Sys->open_file_for_reading( $sites_file );
-    while( my $line = $sites_fh->getline )
-    {
-        chomp($line);
-        my @fields = split("\t",$line);
-        $refHash{$fields[0] . "|" . $fields[1]} = $fields[3];
-        $varHash{$fields[0] . "|" . $fields[1]} = $fields[4]
-    }
-    $sites_fh->close();
 
     #read in the bam-readcount file
     my $readcounts_fh = Genome::Sys->open_file_for_reading( $readcounts_file );
@@ -148,11 +134,11 @@ sub convert_readcounts_to_stats {
             my ($allele, $count, $mq, $bq) = split /:/, $count_stats;
 
             # skip if it's not in our list of snvs
-            next unless (exists($refHash{$chr . "|" . $pos}) && exists($varHash{$chr . "|" . $pos}));
+            next unless (exists($stats->{$chr}{$pos}{__ref__}) && exists($stats->{$chr}{$pos}{__var__}));
 
             #look up the snv calls at this position
-            $knownRef = $refHash{$chr . "|" . $pos};
-            $knownVar = $varHash{$chr . "|" . $pos};
+            $knownRef = $stats->{$chr}{$pos}{__ref__};
+            $knownVar = $stats->{$chr}{$pos}{__var__};
 
             # assume that the ref call is ACTG, not iub
             # (assumption looks valid in my files)
