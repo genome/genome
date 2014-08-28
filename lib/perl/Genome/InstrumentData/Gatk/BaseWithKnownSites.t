@@ -26,31 +26,46 @@ use_ok('Genome::InstrumentData::Gatk::Test') or die;
 my $gatk_test = Genome::InstrumentData::Gatk::Test->get;
 my $bam_source = $gatk_test->bam_source;
 my $reference_build = $gatk_test->reference_build;
-my $known_site = $gatk_test->known_site;
 my %params = (
     version => 2.5,
     bam_source => $bam_source,
     reference_build => $reference_build,
-    known_sites => [$known_site],
 );
 
-# Create
+# Create w/o known sites
+my $base_without_known_sites = Genome::InstrumentData::Gatk::BaseWithKnownSitesTest->get_or_create(%params);
+ok($base_without_known_sites, 'create gatk base without known sites');
+
+my $known_sites_vcfs = $base_without_known_sites->known_sites_vcfs;
+is($known_sites_vcfs, undef, 'NO known sites vcfs'); 
+
+my $known_sites_indel_vcfs = $base_without_known_sites->known_sites_indel_vcfs;
+is($known_sites_indel_vcfs, undef, 'NO known sites indel vcfs'); 
+
+my $known_sites_snv_vcfs = $base_without_known_sites->known_sites_snv_vcfs;
+is($known_sites_snv_vcfs, undef, 'NO known sites snv vcfs'); 
+
+# Create w/ known sites
+$params{known_sites} = $gatk_test->known_sites; # indel and snv
+
 my $base_with_known_sites = Genome::InstrumentData::Gatk::BaseWithKnownSitesTest->get_or_create(%params);
 ok($base_with_known_sites, 'create gatk base with known indels');
 
 # Known indels vcfs
-my $known_sites_vcfs = $base_with_known_sites->known_sites_vcfs;
-ok(@$known_sites_vcfs, 'known sites vcfs');
-my $expected_vcf_link_name = $base_with_known_sites->_tmpdir.'/'.$gatk_test->indel_result->id.'.vcf';
-ok($known_sites_vcfs, 'known sites vcfs'); 
-is_deeply($known_sites_vcfs, [$expected_vcf_link_name], 'known sites vcfs correctly named'); 
-ok(-l $expected_vcf_link_name, 'known sites vcfs correctly linked'); 
+my @expected_known_sites_vcfs = ( 
+    $base_with_known_sites->_tmpdir.'/'.$gatk_test->indel_result->id.'.vcf',
+    $base_with_known_sites->_tmpdir.'/'.$gatk_test->snv_result->id.'.vcf',
+);
+$known_sites_vcfs = $base_with_known_sites->known_sites_vcfs;
+is_deeply($known_sites_vcfs, \@expected_known_sites_vcfs, 'known sites vcfs'); 
 
-my $known_sites_indel_vcfs = $base_with_known_sites->known_sites_indel_vcfs;
-is_deeply($known_sites_indel_vcfs, $known_sites_vcfs, 'known sites indel vcfs'); 
+$known_sites_indel_vcfs = $base_with_known_sites->known_sites_indel_vcfs;
+is_deeply($known_sites_indel_vcfs, [$expected_known_sites_vcfs[0]], 'known sites indel vcfs'); 
+ok(-l $expected_known_sites_vcfs[0], 'known sites indel vcfs correctly linked'); 
 
-my $known_sites_snv_vcfs = $base_with_known_sites->known_sites_snv_vcfs;
-is_deeply($known_sites_snv_vcfs, [], 'known sites snv vcfs'); 
+$known_sites_snv_vcfs = $base_with_known_sites->known_sites_snv_vcfs;
+is_deeply($known_sites_snv_vcfs, [$expected_known_sites_vcfs[1]], 'known sites snv vcfs'); 
+ok(-l $expected_known_sites_vcfs[1], 'known sites snv vcfs correctly linked'); 
 
 #print $base_with_known_sites->_tmpdir."\n";
 #print $base_with_known_sites->output_dir."\n"; <STDIN>;

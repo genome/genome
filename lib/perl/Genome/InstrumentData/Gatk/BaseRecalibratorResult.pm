@@ -58,7 +58,8 @@ sub _run_base_recalibrator {
         number_of_cpu_threads => 8,
         max_memory => $self->max_memory_for_gmt_gatk,
     );
-    $base_recalibrator_params{known_sites} = $self->known_sites_vcfs if @{$self->known_sites_vcfs};
+    my $known_sites_vcfs = $self->known_sites_vcfs;
+    $base_recalibrator_params{known_sites} = $known_sites_vcfs if $known_sites_vcfs;
     $self->status_message('Params: '.Data::Dumper::Dumper(\%base_recalibrator_params));
 
     my $base_recalibrator = Genome::Model::Tools::Gatk::BaseRecalibrator->create(%base_recalibrator_params);

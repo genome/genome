@@ -17,9 +17,15 @@ class Genome::InstrumentData::Gatk::BaseWithKnownSites {
 
 sub known_sites_vcfs {
     my $self = shift;
-    my @vcfs = @{$self->known_sites_indel_vcfs};
+
+    my @vcfs;
+    my $indel_vcfs = $self->known_sites_indel_vcfs;
+    push @vcfs, @$indel_vcfs if $indel_vcfs;
+
+    my $snv_vcfs = $self->known_sites_snv_vcfs;
+    push @vcfs, @$snv_vcfs if $snv_vcfs;
+
     return if not @vcfs;
-    push @vcfs, @{$self->known_sites_snv_vcfs};
     return \@vcfs;
 }
 
@@ -40,11 +46,11 @@ sub _known_sites_vcfs {
 
     if ( not $self->{_known_sites_vcfs} ) {
         my %known_sites_vcfs = $self->link_known_sites_vcfs;
-        return if not %known_sites_vcfs;
         $self->{_known_sites_vcfs} = \%known_sites_vcfs;
     }
 
-    return [ @{$self->{_known_sites_vcfs}->{$type}} ];
+    return if not @{$self->{_known_sites_vcfs}->{$type}};
+    return $self->{_known_sites_vcfs}->{$type};
 }
 
 sub link_known_sites_vcfs {

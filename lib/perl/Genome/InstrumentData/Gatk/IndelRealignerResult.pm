@@ -123,7 +123,8 @@ sub _create_realigner_target_creator {
         output_intervals => $intervals_file,
         max_memory => $self->max_memory_for_gmt_gatk,
     );
-    $target_creator_params{known} = $self->known_sites_indel_vcfs if @{$self->known_sites_indel_vcfs};
+    my $known_sites_indel_vcfs = $self->known_sites_indel_vcfs;
+    $target_creator_params{known} = $known_sites_indel_vcfs if $known_sites_indel_vcfs;
     $self->debug_message('Params: '.Data::Dumper::Dumper(\%target_creator_params));
 
     my $target_creator = Genome::Model::Tools::Gatk::RealignerTargetCreator->create(%target_creator_params);
@@ -160,7 +161,8 @@ sub _realign_indels {
         target_intervals_are_sorted => 1,
         max_memory => $self->max_memory_for_gmt_gatk,
     );
-    $realigner_params{known} = $self->known_sites_indel_vcfs if @{$self->known_sites_indel_vcfs};
+    my $known_sites_indel_vcfs = $self->known_sites_indel_vcfs;
+    $realigner_params{known} = $known_sites_indel_vcfs if $known_sites_indel_vcfs;
     $self->debug_message('Params: '.Data::Dumper::Dumper(\%realigner_params));
 
     my $realigner = Genome::Model::Tools::Gatk::IndelRealigner->create(%realigner_params);
