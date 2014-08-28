@@ -9,8 +9,6 @@ use Genome;
 use File::Basename;
 use IPC::System::Simple;
 
-my @FULL_CHR_LIST = (1 .. 22, 'X', 'Y', 'MT');
-
 class Genome::Model::Tools::DetectVariants2::Lumpy {is => 'Genome::Model::Tools::DetectVariants2::Detector',};
 
 sub _detect_variants {
@@ -18,14 +16,17 @@ sub _detect_variants {
 
     my @final_paired_end_parameters;
     my @final_split_read_parameters;
+    my $id = 1;
     for my $input_bam ($self->aligned_reads_input, $self->control_aligned_reads_input) {
         next unless defined($input_bam);
         for my $bam (split_bam_by_readgroup($input_bam)) {
             if ($self->paired_end_base_params) {
-                push(@final_paired_end_parameters, $self->paired_end_parameters_for_bam($bam));
+                push(@final_paired_end_parameters, $self->paired_end_parameters_for_bam($bam, $id));
+                $id++;
             }
             if ($self->split_read_base_params) {
-                push(@final_split_read_parameters, $self->split_read_parameters_for_bam($bam));
+                push(@final_split_read_parameters, $self->split_read_parameters_for_bam($bam, $id));
+                $id++;
             }
         }
     }
@@ -82,29 +83,33 @@ sub extract_split_reads {
 sub paired_end_parameters_for_bam {
     my $self = shift;
     my $bam  = shift;
+    my $id   = shift;
 
     my $filtered_bam = extract_paired_end_reads($bam);
     my %metrics = $self->calculate_metrics($bam);
 
     return sprintf(
-        ' -pe bam_file:%s,histo_file:%s,mean:%s,stdev:%s,read_length:%s,%s',
+        ' -pe bam_file:%s,histo_file:%s,mean:%s,stdev:%s,read_length:%s,id:%s,%s',
         $filtered_bam,
         $metrics{histogram},
         $metrics{mean},
         $metrics{standard_deviation},
         $metrics{read_length},
+        $id,
         $self->paired_end_base_params
     );
 }
 
 sub split_read_parameters_for_bam {
     my $self = shift;
-    my $bam = shift;
+    my $bam  = shift;
+    my $id   = shift;
 
     my $filtered_bam = $self->extract_split_reads($bam);
     return sprintf(
-        " -sr bam_file:%s,%s",
+        " -sr bam_file:%s,id:%s,%s",
         $filtered_bam,
+        $id,
         $self->split_read_base_params
     );
 }
@@ -113,25 +118,24 @@ sub calculate_metrics {
     my $self = shift;
     my $bam  = shift;
 
+    my %metrics = ( read_length => $self->determine_read_length_in_bam($bam) );
+
     my $histogram = Genome::Sys->create_temp_file_path();
     my $pairend_distro_script = $self->lumpy_script_for_pairend_distro;
-    my @commands = qq(samtools view $bam | tail -n+100 | $pairend_distro_script -r1 100 -X 4 -N 10000 -o $histogram);
-    my $output = IPC::System::Simple::capture(@commands);
-
-    if ($output =~ m/mean:([-+]?[0-9]*\.?[0-9]*)\s+stdev:([-+]?[0-9]*\.?[0-9]*)/) {
+    my @statistics_command = qq(samtools view $bam | tail -n+100 | $pairend_distro_script -r1 100 -X 4 -N 10000 -o $histogram);
+    my $statistics_output = IPC::System::Simple::capture(@statistics_command);
+    if ($statistics_output =~ m/mean:([-+]?[0-9]*\.?[0-9]*)\s+stdev:([-+]?[0-9]*\.?[0-9]*)/) {
         my $mean = $1;
         my $standard_deviation = $2;
-        my %metrics = (
-            mean               => $mean,
-            standard_deviation => $standard_deviation,
-            histogram          => $histogram,
-            read_length        => $self->determine_read_length_in_bam($bam),
-        );
-        return %metrics;
+        $metrics{mean} = $mean;
+        $metrics{standard_deviation} = $standard_deviation;
+        $metrics{histogram} = $histogram;
     }
     else {
-        die "ERROR couldn't determine mean and standard deviation: $output";
+        die "ERROR couldn't determine mean and standard deviation: $statistics_output";
     }
+
+    return %metrics;
 }
 
 sub determine_read_length_in_bam {

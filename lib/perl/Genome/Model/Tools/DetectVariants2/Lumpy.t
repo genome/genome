@@ -15,7 +15,7 @@ use Test::Exception;
 use File::Compare qw(compare);
 use Genome::Utility::Test qw(compare_ok);
 
-my $VERSION = 1;
+my $VERSION = 2;
 
 my $pkg = 'Genome::Model::Tools::DetectVariants2::Lumpy';
 use_ok($pkg);
@@ -30,8 +30,8 @@ my $command = Genome::Model::Tools::DetectVariants2::Lumpy->create(
     aligned_reads_input => $tumor_bam,
     params              => join('//',
         '-lp,-mw:4,-tt:0.0',
-        '-pe,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:20',
-        '-sr,back_distance:20,weight:1,id:2,min_mapping_threshold:20'
+        '-pe,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1',
+        '-sr,back_distance:20,weight:1,min_mapping_threshold:20'
     ),
     output_directory    => $output_dir,
     version             => "0.2.6",
@@ -72,8 +72,8 @@ subtest 'Directories and input files as expected' => sub {
 };
 
 subtest 'parameter parsing' => sub {
-    is($command->split_read_base_params, 'back_distance:20,weight:1,id:2,min_mapping_threshold:20', 'Split read parameters as expected');
-    is($command->paired_end_base_params, 'min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:20', 'Pair end parameters as expected');
+    is($command->split_read_base_params, 'back_distance:20,weight:1,min_mapping_threshold:20', 'Split read parameters as expected');
+    is($command->paired_end_base_params, 'min_non_overlap:150,discordant_z:4,back_distance:20,weight:1', 'Pair end parameters as expected');
     is($command->lumpy_base_params, '-mw 4 -tt 0.0', 'Lumpy parameters as expected');
     my $command2 = Genome::Model::Tools::DetectVariants2::Lumpy->create(
         reference_build_id  => $refbuild_id,
@@ -102,8 +102,8 @@ subtest "test file without split reads" => sub {
         aligned_reads_input => $wo_sr_bam,
         params              => join('//',
             '-lp,-mw:4,-tt:0.0',
-            '-pe,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:2',
-            '-sr,back_distance:20,weight:1,id:2,min_mapping_threshold:20'
+            '-pe,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1',
+            '-sr,back_distance:20,weight:1,min_mapping_threshold:20'
         ),
         output_directory    => $output_dir2,
         version             => "0.2.6",
@@ -125,8 +125,11 @@ subtest "test matched samples" => sub {
         reference_build_id          => $refbuild_id,
         aligned_reads_input         => $wo_sr_bam,
         control_aligned_reads_input => $tumor_bam,
-        params =>
-            "-lp,-mw:4,-tt:0.0//-pe,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1,id:2//-sr,back_distance:20,weight:1,id:2,min_mapping_threshold:20",
+        params => join('//',
+            '-lp,-mw:4,-tt:0.0',
+            '-pe,min_non_overlap:150,discordant_z:4,back_distance:20,weight:1',
+            '-sr,back_distance:20,weight:1,min_mapping_threshold:20'
+        ),
         output_directory => $output_dir2,
         version          => "0.2.6",
     );
@@ -150,6 +153,7 @@ subtest "paired_end_parameters_for_bam" => sub {
     my $mean               = 123;
     my $standard_deviation = 456;
     my $read_length        = 99;
+    my $id                 = 1;
 
     Sub::Install::reinstall_sub(
         {
@@ -173,14 +177,15 @@ subtest "paired_end_parameters_for_bam" => sub {
     );
 
     is(
-        $command->paired_end_parameters_for_bam($bam),
+        $command->paired_end_parameters_for_bam($bam, $id),
         sprintf(
-            ' -pe bam_file:%s,histo_file:%s,mean:%s,stdev:%s,read_length:%s,%s',
+            ' -pe bam_file:%s,histo_file:%s,mean:%s,stdev:%s,read_length:%s,id:%s,%s',
             $bam,
             $histogram,
             $mean,
             $standard_deviation,
             $read_length,
+            $id,
             $command->paired_end_base_params
         ),
         'Command as expected',
@@ -188,7 +193,8 @@ subtest "paired_end_parameters_for_bam" => sub {
 };
 
 subtest "split_read_parameters_for_bam" => sub {
-    my $bam  = "test_bam";
+    my $bam = "test_bam";
+    my $id  = 1;
 
     Sub::Install::reinstall_sub(
         {
@@ -199,10 +205,11 @@ subtest "split_read_parameters_for_bam" => sub {
     );
 
     is(
-        $command->split_read_parameters_for_bam($bam),
+        $command->split_read_parameters_for_bam($bam, $id),
         sprintf(
-            ' -sr bam_file:%s,%s',
+            ' -sr bam_file:%s,id:%s,%s',
             $bam,
+            $id,
             $command->split_read_base_params
         ),
         'Command as expected'
