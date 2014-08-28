@@ -183,10 +183,10 @@ sub convert_readcounts_to_stats {
 #
 sub matchIub{
     my ($allele,$ref,$var) = @_;
-    my @variubs = split(",",convertIub($var));
-    my @refiubs = split(",",convertIub($ref));
-    foreach my $i (@variubs){
-        unless (grep {$_ eq $i} @refiubs) {
+    my @var_iubs = split(",",convertIub($var));
+    my @ref_iubs = split(",",convertIub($ref));
+    foreach my $i (@var_iubs){
+        unless (grep {$_ eq $i} @ref_iubs) {
             if ($allele eq $i){
                 return 1;
             }
