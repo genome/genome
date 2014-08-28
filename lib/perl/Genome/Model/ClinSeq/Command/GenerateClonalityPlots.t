@@ -35,7 +35,7 @@ my $cmd = Genome::Model::ClinSeq::Command::GenerateClonalityPlots->create(
 );
 $cmd->queue_status_messages(1);
 my $r1 = $cmd->execute();
-is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
+is($r1, 1, 'Testing for successful execution.');
 
 #Since we can not diff the pdf files, at least check for file creation...
 for my $pdf_name ( qw(
