@@ -93,13 +93,6 @@ sub execute {
     #TODO: Replace all of this with a new process that gets variants from a unified clin-seq BAM read counts result
     #TODO: This step should just run the clonality tool in different ways on different input files.  All of this hacky file manipulation should be removed
 
-    # This tool calls some scripts which have not been converted into tools
-    #TODO: Fix that so that Nate and Krishna's old code is cleaned up and brought into the fold
-    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../OriginalScripts/') . '/';
-    unless (-d $script_dir) {
-      die $self->error_message("failed to find script dir $script_dir!")
-    }
-
     #Get somatic variation effects dir, tumor bam and normal bam from a somatic variation model ID
     my %data_paths;
     my $is_copycat = $self->_is_copycat_somvar($somatic_var_build);
@@ -197,11 +190,8 @@ sub execute {
     }
 
     #Step 5 - create a varscan-format file from these outputs:
-    #perl ~kkanchi/bin/create_pseudo_varscan.pl     allsnvs.hq.novel.tier123.v2.bed.adapted     allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts     >     allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan
     my $readcounts_varscan_file = "$readcounts_outfile".".varscan";
-    my $varscan_format_cmd = "$script_dir"."borrowed/kkanchi/create_pseudo_varscan.pl $adapted_file $readcounts_outfile > $readcounts_varscan_file";
-    if ($verbose){$self->debug_message("$varscan_format_cmd");}
-    Genome::Sys->shellcmd(cmd => $varscan_format_cmd);
+    $self->create_pseudo_varscan_file($adapted_file, $readcounts_outfile, $readcounts_varscan_file);
 
     #TODO: Replace steps 4-5 above by using the following script:
     #TODO: Once you know this is working, use $readcounts_clonality_outfile instead of $readcounts_varscan_file in the clonality commands below.  Then comment out steps 2-5 above
@@ -392,6 +382,49 @@ sub get_data_paths {
     my $reference_build = $somatic_var_build->reference_sequence_build;
     $data_paths->{reference_fasta} = $reference_build->full_consensus_path('fa');
     $data_paths->{display_name} = $reference_build->__display_name__;
+}
+
+use IO::File;
+sub create_pseudo_varscan_file {
+    my $self = shift;
+    my $snps = shift;
+    my $readcounts = shift;
+    my $output_file = shift;
+
+    my $output_fh = Genome::Sys->open_file_for_writing($output_file);
+
+    my %tumHash;
+    #my %normHash;
+    #read tumor
+    my $rcFh = IO::File->new( $readcounts ) || die "can't open file\n";
+    while( my $line = $rcFh->getline )
+    {
+        chomp($line);
+        my @fields = split("\t",$line);
+        $tumHash{$fields[0] . "|" . $fields[1]} = $line;
+    }
+    $rcFh->close;
+
+    my $snpsFh = IO::File->new( $snps ) || die "can't open file\n";
+    while( my $line = $snpsFh->getline )
+    {
+        chomp($line);
+        my @fields = split("\t",$line);
+        if(exists($tumHash{$fields[0] . "|" . $fields[1]})){
+        #if(exists($normHash{$fields[0] . "|" . $fields[1]})){
+            my @tum = split("\t",$tumHash{$fields[0] . "|" . $fields[1]});
+            #my @norm = split("\t",$normHash{$fields[0] . "|" . $fields[1]});
+
+            print $output_fh join("\t",(@fields[0..1],@fields[3..4])) . "\t";
+            #print join("\t",@norm[5..7]) . "\t";
+            #print "NULL\t";
+            print $output_fh join("\t",@tum[10..12]) . "\t";
+                print $output_fh "NULL\t";
+                print $output_fh join("\t",@tum[5..7]) . "\t";
+            print $output_fh "NULL\tSomatic\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\n";
+
+        }
+    }
 }
 
 1;
