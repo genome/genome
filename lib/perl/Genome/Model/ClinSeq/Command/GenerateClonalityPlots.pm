@@ -119,42 +119,25 @@ sub execute {
     Genome::Sys->shellcmd(cmd => $cat_cmd);
 
     #Apply the chromosome filter if specified
-    if (defined $chromosome){
-      $self->warning_message("limiting SNVs to only those on chromosome: $chromosome");
+    if (defined $chromosome or defined $limit){
+      $self->warning_message("limiting SNVs to only those on chromosome: $chromosome") if defined $chromosome;
+      $self->warning_message("limiting SNVs to a max of $limit") if defined $limit;
+
       my $file = $snv_file . ".tmp";
-      open (IN, $snv_file) || die $self->error_message("Could not open file reading: $snv_file");
-      open (OUT, ">$file") || die $self->error_message("Could not open file for writing: $file");
+      my $snv_fh = Genome::Sys->open_file_for_reading($snv_file);
+      my $filtered_fh = Genome::Sys->open_file_for_writing($file);
       my $s = 0;
-      while(<IN>){
-        if ($_ =~ /^$chromosome\s+/){
-          print OUT $_;
+      while(<$snv_fh>){
+        if (!defined($chromosome) or $_ =~ /^$chromosome\s+/){
+          print $filtered_fh $_;
           $s++;
         }
-      }
-      close(IN);
-      close (OUT);
-      $self->debug_message("Filtered down to $s variants on chromosome: $chromosome");
-      unlink($snv_file);
-      Genome::Sys->move_file($file, $snv_file);
-    }
 
-    #Apply the variant limit if specified
-    if (defined $limit) {
-      $self->warning_message("limiting SNVs to a max of $limit");
-      my $file = $snv_file . ".tmp";
-      open (IN, $snv_file) || die $self->error_message("Could not open file reading: $snv_file");
-      open (OUT, ">$file") || die $self->error_message("Could not open file for writing: $file");
-      my $c = 0;
-      while(<IN>){
-        $c++;
-        if ($c <= $limit){
-          print OUT "$_";
-        }else{
-          last;
-        }
+        last if defined($limit) and $s >= $limit;
       }
-      close(IN);
-      close (OUT);
+      $snv_fh->close;
+      $filtered_fh->close;
+      $self->debug_message("Filtered down to $s variants on chromosome: $chromosome");
       unlink($snv_file);
       Genome::Sys->move_file($file, $snv_file);
     }
