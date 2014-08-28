@@ -14,7 +14,6 @@ class Genome::DataSource::GMSchema {
         server  => { default_value  => $ENV{GENOME_DS_GMSCHEMA_SERVER} },
         login   => { default_value  => $ENV{GENOME_DS_GMSCHEMA_LOGIN} },
         auth    => { default_value  => $ENV{GENOME_DS_GMSCHEMA_AUTH} },
-        owner   => { default_value  => $ENV{GENOME_DS_GMSCHEMA_OWNER} },
     ],
 };
 
