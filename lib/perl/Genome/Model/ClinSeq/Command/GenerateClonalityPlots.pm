@@ -384,47 +384,43 @@ sub get_data_paths {
     $data_paths->{display_name} = $reference_build->__display_name__;
 }
 
-use IO::File;
 sub create_pseudo_varscan_file {
     my $self = shift;
-    my $snps = shift;
-    my $readcounts = shift;
+    my $snvs_file = shift;
+    my $readcounts_file = shift;
     my $output_file = shift;
 
     my $output_fh = Genome::Sys->open_file_for_writing($output_file);
 
     my %tumHash;
-    #my %normHash;
-    #read tumor
-    my $rcFh = IO::File->new( $readcounts ) || die "can't open file\n";
-    while( my $line = $rcFh->getline )
+    my $rc_fh = Genome::Sys->open_file_for_reading( $readcounts_file );
+    while( my $line = $rc_fh->getline )
     {
         chomp($line);
         my @fields = split("\t",$line);
         $tumHash{$fields[0] . "|" . $fields[1]} = $line;
     }
-    $rcFh->close;
+    $rc_fh->close;
 
-    my $snpsFh = IO::File->new( $snps ) || die "can't open file\n";
-    while( my $line = $snpsFh->getline )
+    my $snvs_fh = Genome::Sys->open_file_for_reading( $snvs_file );
+    while( my $line = $snvs_fh->getline )
     {
         chomp($line);
         my @fields = split("\t",$line);
         if(exists($tumHash{$fields[0] . "|" . $fields[1]})){
-        #if(exists($normHash{$fields[0] . "|" . $fields[1]})){
             my @tum = split("\t",$tumHash{$fields[0] . "|" . $fields[1]});
-            #my @norm = split("\t",$normHash{$fields[0] . "|" . $fields[1]});
 
-            print $output_fh join("\t",(@fields[0..1],@fields[3..4])) . "\t";
-            #print join("\t",@norm[5..7]) . "\t";
-            #print "NULL\t";
-            print $output_fh join("\t",@tum[10..12]) . "\t";
-                print $output_fh "NULL\t";
-                print $output_fh join("\t",@tum[5..7]) . "\t";
-            print $output_fh "NULL\tSomatic\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\n";
+            print $output_fh join("\t",
+                @fields[0..1,3..4],
+                @tum[10..12], "NULL", @tum[5..7],
+                "NULL", "Somatic", (("NULL") x 6)
+            ), "\n";
 
         }
     }
+    $snvs_fh->close;
+
+    return 1;
 }
 
 1;
