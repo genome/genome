@@ -40,33 +40,32 @@ sub execute {
     my $self = shift;
 
     my $reference_fasta = $self->reference_build->full_consensus_path('fa');
-    my $sites = $self->sites_file;
-    my $output = $self->output_file;
     my @bams = $self->bam_files;
     my @types;
-    my $sitesfh = Genome::Sys->open_file_for_reading($sites);
-    my $outfh = Genome::Sys->open_file_for_writing($output);
+    my $out_fh = Genome::Sys->open_file_for_writing($self->output_file);
 
     #headers
-    print $outfh "#Chr\tStart\tStop";
+    print $out_fh join("\t", '#Chr', 'Start', 'Stop');
     for my $bam (@bams) {
         my ($type,$bam) = split /:/,$bam;
         push @types,$type;
-        print $outfh "\t$type" . "_Ref\t$type" . "_Var\t$type" . "_Ref_Count\t$type" . "_Var_Count\t$type" . "_Var_Freq";
+        print $out_fh map { "\t${type}_$_" } qw(Ref Var Ref_Count Var_Count Var_Freq);
     }
-    print $outfh "\n";
+    print $out_fh "\n";
 
-    my $site_list_for_readcount = Genome::Sys->create_temp_file_path();
-    print `cut -f 1-3 $sites > $site_list_for_readcount`;
+    my ($site_list_for_readcount_fh, $site_list_for_readcount) = Genome::Sys->create_temp_file();
+    my $sites_fh = Genome::Sys->open_file_for_reading($self->sites_file);
 
     #begin to load output hash
     my %output;
-    while (my $line = $sitesfh->getline) {
+    while (my $line = $sites_fh->getline) {
         chomp $line;
         my ($chr,$start,$stop) = split /\t/,$line;
         $output{$chr}{$start} = {};
+
+        $site_list_for_readcount_fh->say(join("\t", $chr, $start, $stop));
     }
-    $sitesfh->close;
+    $sites_fh->close;
 
     #TODO Bring script into a module
     my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../../OriginalScripts/') . '/';
@@ -88,7 +87,7 @@ sub execute {
             use_version => $self->bam_readcount_version,
         );
 
-
+        my $sites = $self->sites_file;
         my $statscmd = "$script_dir/borrowed/ndees/miller-bam-readcount-to-stats.noheader.pl $sites $temp_readcount_file |";
         open(STATS,$statscmd) or die "Couldn't open stats command: $!";
         while (my $line = <STATS>) {
@@ -101,15 +100,15 @@ sub execute {
     #print output
     for my $chr (sort keys %output) {
         for my $pos (sort keys %{$output{$chr}}) {
-            print $outfh "$chr\t$pos\t$pos";
+            print $out_fh join("\t", $chr, $pos, $pos);
             for my $type (@types) {
                 if (exists $output{$chr}{$pos}{$type}) {
-                    print $outfh "\t".$output{$chr}{$pos}{$type};
+                    print $out_fh "\t".$output{$chr}{$pos}{$type};
                 } else {
-                    print $outfh "\tNA\tNA\tNA\tNA\tNA";
+                    print $out_fh ("\tNA" x 5);
                 }
             }
-            print $outfh "\n";
+            print $out_fh "\n";
         }
     }
 
