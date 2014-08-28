@@ -4,7 +4,7 @@ use warnings;
 use above "Genome";
 use Test::More tests => 8; 
 
-my $expected_out = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-ClinSeq-Command-GenerateClonalityPlots/2013-04-04/';
+my $expected_out = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-ClinSeq-Command-GenerateClonalityPlots/2014-08-28/';
 
 # "REBUILD" on the command-line when running the test sets the output to be the reference data set
 # IMPORTANT: change the directory above to a new date when updating test data!
