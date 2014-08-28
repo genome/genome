@@ -37,19 +37,6 @@ $cmd->queue_status_messages(1);
 my $r1 = $cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
 
-# The last column in the tsv file has output which varies randomly from run-to-run. :(
-# We replace that value with ? before doing a diff so that we won't get spurious failures.
-# In shell: cat AML54.clustered.data.tsv | perl -nae '$F[-1] = "?"; print join("\t",@F),"\n"' >| AML54.clustered.data.tsv.testmasked
-#my $fhin = Genome::Sys->open_file_for_reading("$actual_out/AML54.clustered.data.tsv");
-#my $fhout = Genome::Sys->open_file_for_writing("$actual_out/AML54.clustered.data.tsv.testmasked");
-#while (my $row = <$fhin>) {
-#    chomp $row;
-#    my @fields = split("\t",$row);
-#    $fields[-1] = "?";
-#    $fhout->print(join("\t",@fields),"\n");
-#}
-#$fhout->close;
-
 #Since we can not diff the pdf files, at least check for file creation...
 my $pdf1 = $actual_out . "/HCC1395.clonality.pdf";
 ok(-s $pdf1, "Found non-zero PDF file HCC1395.clonality.pdf");
@@ -70,7 +57,4 @@ or do {
   Genome::Sys->shellcmd(cmd => "rm -fr $temp_dir");
   Genome::Sys->shellcmd(cmd => "mv $actual_out $temp_dir");
 };
-
-#Genome::Sys->shellcmd(cmd => "rm -fr $temp_dir");
-#Genome::Sys->shellcmd(cmd => "mv $actual_out $temp_dir");
 
