@@ -6,11 +6,32 @@ use Genome;
 
 class Genome::SoftwareResult::PIBase {
     is_abstract => 1,
+    id_by => [
+        software_result_id => {
+            is => 'Text',
+            column_name => 'software_result_id',
+        },
+        name => {
+            is => 'Text',
+            len => 255,
+            column_name => 'param_name',
+        },
+    ],
     has => [
         value_class_name => {
             is => 'Text',
             len => 255,
             is_optional => 1,
+            column_name => 'value_class_name',
+        },
+        value_obj => {
+            is => 'UR::Object',
+            id_by => 'value_id',
+            id_class_by => 'value_class_name',
+        },
+        software_result => {
+            is => 'Genome::SoftwareResult',
+            id_by => 'software_result_id',
         },
         # after the new API is released and old snapshots go away, invert the column assingments with those above
         _new_name => {
