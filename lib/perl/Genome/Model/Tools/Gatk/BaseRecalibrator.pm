@@ -21,6 +21,7 @@ class Genome::Model::Tools::Gatk::BaseRecalibrator {
         known_sites => {
             is_input => 1,
             is_many => 1,
+            is_optional => 1,
             is => 'Text',
             doc => 'A database of known polymorphic sites to skip over in the recalibration algorithm',
         },
