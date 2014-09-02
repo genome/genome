@@ -20,7 +20,7 @@ class Genome::Model::Tools::GeneTorrent {
     has => [
         lsf_resource => {
             # mbps -> mega-BITS per second (see --rate-limit below)
-            default_value => '-q lims-i2-datatransfer -R "rusage[internet_download_mbps=1000]"',
+            default_value => '-q lims-long -R "rusage[internet_download_mbps=80]"',
         },
     ]
 };

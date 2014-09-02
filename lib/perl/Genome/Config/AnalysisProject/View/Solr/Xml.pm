@@ -27,12 +27,6 @@ class Genome::Config::AnalysisProject::View::Solr::Xml {
                 join('?id=', '/view/genome/config/analysis-project/status.html',$_[0]->id())
             },
         },
-        display_url1 => {},
-        display_label1 => {},
-        display_url2 => {},
-        display_label2 => {},
-        display_url3 => {},
-        display_label3 => {},
         default_aspects => {
             is => 'ARRAY',
             value => [
@@ -58,6 +52,14 @@ class Genome::Config::AnalysisProject::View::Solr::Xml {
                 },
             ],
         }
+    ],
+    has_optional_field => [
+        display_url1 => {},
+        display_label1 => {},
+        display_url2 => {},
+        display_label2 => {},
+        display_url3 => {},
+        display_label3 => {},
     ],
 };
 

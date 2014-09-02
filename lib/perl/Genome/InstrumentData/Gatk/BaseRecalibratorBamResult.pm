@@ -25,6 +25,7 @@ class Genome::InstrumentData::Gatk::BaseRecalibratorBamResult {
         base_recalibrator_result => { is => 'Genome::InstrumentData::Gatk::BaseRecalibratorResult', },
     ],
 };
+Genome::InstrumentData::Gatk::BaseRecalibratorBamResult->__meta__->property_meta_for_name('known_sites')->is_optional(0);
 
 sub resolve_allocation_kilobytes_requested {
     my $self = shift;

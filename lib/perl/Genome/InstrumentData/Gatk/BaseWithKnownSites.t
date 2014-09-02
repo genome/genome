@@ -20,6 +20,8 @@ use_ok($class) or die;
 class Genome::InstrumentData::Gatk::BaseWithKnownSitesTest { 
     is => 'Genome::InstrumentData::Gatk::BaseWithKnownSites',
 };
+my $known_sites_property_meta = Genome::InstrumentData::Gatk::BaseWithKnownSitesTest->__meta__->property_meta_for_name('known_sites');
+ok($known_sites_property_meta->is_optional, 'known_sites is optptional');
 
 # Inputs
 use_ok('Genome::InstrumentData::Gatk::Test') or die;
@@ -45,10 +47,13 @@ is($known_sites_indel_vcfs, undef, 'NO known sites indel vcfs');
 my $known_sites_snv_vcfs = $base_without_known_sites->known_sites_snv_vcfs;
 is($known_sites_snv_vcfs, undef, 'NO known sites snv vcfs'); 
 
-# Create w/ known sites
+# Make known sites required
+ok(!$known_sites_property_meta->is_optional(undef), 'known_sites is not optional');
+$params{version} = 2.6; # no shortcut
+my $base_with_known_sites = eval{Genome::InstrumentData::Gatk::BaseWithKnownSitesTest->get_or_create(%params); };
+ok(!$base_with_known_sites, 'failed to create base with known sites w/o known sites when they are not optional');
 $params{known_sites} = $gatk_test->known_sites; # indel and snv
-
-my $base_with_known_sites = Genome::InstrumentData::Gatk::BaseWithKnownSitesTest->get_or_create(%params);
+$base_with_known_sites = Genome::InstrumentData::Gatk::BaseWithKnownSitesTest->get_or_create(%params);
 ok($base_with_known_sites, 'create gatk base with known indels');
 
 # Known indels vcfs

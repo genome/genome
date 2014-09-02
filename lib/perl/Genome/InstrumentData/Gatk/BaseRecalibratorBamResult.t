@@ -16,6 +16,7 @@ use Test::More;
 
 my $class = 'Genome::InstrumentData::Gatk::BaseRecalibratorBamResult';
 use_ok($class) or die;
+ok(!$class->__meta__->property_meta_for_name('known_sites')->is_optional, 'known_sites are not optional');
 my $result_data_dir = Genome::Utility::Test->data_dir_ok($class, 'v1');
 
 # Inputs

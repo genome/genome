@@ -34556,6 +34556,8 @@ $Genome::Command::OPTS_SPEC = [
       [
         'input-bam=s',
         'files',
+        'known-sites=s@',
+        'files',
         'lsf-resource=s',
         'files',
         'max-memory=s',
@@ -34568,8 +34570,6 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'debug!',
         undef,
-        'known-sites=s@',
-        'files',
         'number-of-cpu-threads=s',
         undef,
         'tmp-dir=s',
