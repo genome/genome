@@ -106,6 +106,7 @@ reporters:
         interpreters:
             position: {}
             vep: {}
+            'variant-type': {}
         params:
             file_name: 'cle_simple_report'
     'vcf-indels':

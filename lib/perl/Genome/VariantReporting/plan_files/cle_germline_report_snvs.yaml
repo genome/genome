@@ -98,5 +98,6 @@ reporters:
         interpreters:
             position: {}
             vep: {}
+            'variant-type': {}
         params:
             file_name: 'cle_germline_simple_report'

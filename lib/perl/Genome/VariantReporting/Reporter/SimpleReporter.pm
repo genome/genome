@@ -15,7 +15,7 @@ sub name {
 }
 
 sub requires_interpreters {
-    return qw(position vep);
+    return qw(position variant-type vep);
 }
 
 sub headers {
@@ -25,6 +25,7 @@ sub headers {
         stop
         reference
         variant
+        variant_type
         transcript_name
         trv_type
         amino_acid_change
