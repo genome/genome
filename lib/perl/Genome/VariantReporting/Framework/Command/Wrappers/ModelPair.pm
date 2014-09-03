@@ -13,6 +13,11 @@ class Genome::VariantReporting::Framework::Command::Wrappers::ModelPair {
         discovery => { is => 'Genome::Model::Build', },
         validation => { is => 'Genome::Model::Build', },
         base_output_dir => { is => 'Text', },
+        plan_file_basename => {
+            is => 'Text',
+            default_value => "cle_TYPE_report.yaml",
+            doc => "plan file name where 'snvs' or 'indels' is substituted by placeholder TYPE",
+        },
     },
     has_calculated => {
         output_dir => {
@@ -30,7 +35,9 @@ class Genome::VariantReporting::Framework::Command::Wrappers::ModelPair {
 
 sub plan_file {
     my ($self, $type) = @_;
-    return File::Spec->join($self->_plan_search_dir, 'cle_'. $type .'_report.yaml');
+    my $base_name = $self->plan_file_basename;
+    $base_name =~ s/TYPE/$type/;
+    return File::Spec->join($self->_plan_search_dir, $base_name);
 }
 
 sub _plan_search_dir {
