@@ -13,35 +13,39 @@ class Genome::Model::Tools::Somatic::ReadCounts {
 
     is  => ['Command'],
     has => [
-       tumor_bam => {
-           is => 'String',
-           doc =>'Path to the tumor bam file',
-       },
-       normal_bam => {
-           is => 'String',
-           doc =>'Path to the normal bam file',
-       },
-       sites_file => {
-           is => 'String',
-           doc =>'the sites of interest in annotation format.'
-       },
-       minimum_mapping_quality => {
-           is => 'String',
-           default => 1,
-           doc =>'the minimum mapping quality of a read to include it in the counts'
-       },
-       reference_sequence => {
-           is => 'String',
-           doc =>'the reference sequence to use, defaults to NCBI-human-build36',
-           example_values => [Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa'],
-       },
-       output_file => {
-           is => 'String',
-           doc =>'path to output file',
-       },
+        bam_readcount_version => {
+            is => 'Version',
+            doc => 'Version of bam readcount to utilize',
+        },
+        tumor_bam => {
+            is => 'String',
+            doc =>'Path to the tumor bam file',
+        },
+        normal_bam => {
+            is => 'String',
+            doc =>'Path to the normal bam file',
+        },
+        sites_file => {
+            is => 'String',
+            doc =>'the sites of interest in annotation format.'
+        },
+        minimum_mapping_quality => {
+            is => 'String',
+            default => 1,
+            doc =>'the minimum mapping quality of a read to include it in the counts'
+        },
+        reference_sequence => {
+            is => 'String',
+            doc =>'the reference sequence to use, defaults to NCBI-human-build36',
+            example_values => [Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa'],
+        },
+        output_file => {
+            is => 'String',
+            doc =>'path to output file',
+        },
     ],
 };
-    
+
 sub help_brief {
     return "generate read count statistics";
 }
@@ -53,7 +57,7 @@ sub help_synopsis {
 EOS
 }
 
-sub help_detail {                           
+sub help_detail {
     return <<EOS 
     Produces a tab-delimited file of statistics from the 'bam-readcount' command.
 EOS
@@ -72,7 +76,7 @@ sub execute {
         $self->error_message("Couldn't open sites file " . $self->sites_file);
         return 0;
     }
-    
+
     unless (`uname -a` =~ /x86_64/) {
         $self->error_message("Must run on a 64 bit machine");
         return 0;
@@ -93,6 +97,7 @@ sub execute {
         output_file => $normal_temp,
         reference_fasta => $self->reference_sequence,
         region_list => $readcount_regions_file,
+        use_version => $self->bam_readcount_version,
     );
     my $tumor_rv = Genome::Model::Tools::Sam::Readcount->execute(
         bam_file => $self->tumor_bam,
@@ -100,6 +105,7 @@ sub execute {
         output_file => $tumor_temp,
         reference_fasta => $self->reference_sequence,
         region_list => $readcount_regions_file,
+        use_version => $self->bam_readcount_version,
     );
     unless ($normal_rv and $tumor_rv) {
         $self->error_message("readcount failed\n");
