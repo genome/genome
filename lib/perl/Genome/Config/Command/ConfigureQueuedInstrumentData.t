@@ -11,6 +11,7 @@ use Carp::Always;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::Imported;
 use Genome::Test::Factory::AnalysisProject;
+use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Individual;
 use Genome::Test::Factory::Library;
 use Genome::Test::Factory::Sample;
@@ -335,9 +336,11 @@ sub _generate_lane_qc_instrument_data {
     );
 
     my $tmp_dir = Genome::Sys->create_temp_directory;
-    my $gmb = Genome::Model::Build->create(model_id => $genotype_microarray_model->id, data_directory => $tmp_dir);
-    $gmb->success();
-
+    my $gmb = Genome::Test::Factory::Build->setup_object(
+        model_id => $genotype_microarray_model->id,
+        data_directory => $tmp_dir,
+        status => 'Succeeded',
+    );
 
     for my $inst_data ($sans_data, $plus_data) {
         my $ap = Genome::Test::Factory::AnalysisProject->setup_object(
