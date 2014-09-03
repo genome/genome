@@ -96,17 +96,13 @@ sub execute {
     my $space_available = $self->_verify_adequate_disk_space_is_available_for_source_files;
     return if not $space_available;
 
-    my $workflow = $self->_create_workflow;
+    my $workflow = $self->_build_workflow;
     return if not $workflow;
-
-    my $method = '_build_workflow_to_import_'.$original_format;
-    my $wf = $self->$method;
-    return if not $wf;
 
     my $inputs = $self->_gather_inputs_for_workflow;
     return if not $inputs;
 
-    my $success = Workflow::Simple::run_workflow($wf, %$inputs);
+    my $success = Workflow::Simple::run_workflow($workflow, %$inputs);
     die 'Run wf failed!' if not $success;
 
     $self->_new_instrument_data($success->{instrument_data});
@@ -192,7 +188,7 @@ sub _verify_adequate_disk_space_is_available_for_source_files {
     return $space_available;
 }
 
-sub _create_workflow {
+sub _build_workflow {
     my $self = shift;
 
     my $workflow = Workflow::Model->create(
@@ -201,6 +197,20 @@ sub _create_workflow {
         output_properties => [qw/ instrument_data /],
     );
     $self->_workflow($workflow);
+
+    my $create_wf = $self->_create_workflow;
+    return if not $create_wf;
+
+    my $method = '_build_workflow_to_import_'.$self->original_format;
+    my $build_wf = $self->$method;
+    return if not $build_wf;
+
+    return $workflow;
+}
+
+sub _create_workflow {
+    my $self = shift;
+
 
     my $helpers = $self->helpers;
     my $retrieve_source_path_op = $helpers->add_operation_to_workflow_by_name($workflow, 'retrieve source path');
