@@ -94,6 +94,24 @@ sub help_usage {
     return $usage;
 }
 
+sub _get_gtf_path {
+    my $self = shift;
+    my $reference_build = shift;
+    my $annotation_build = shift;
+    my $reference_build_id = $reference_build->id;
+    my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build_id);
+    unless (defined($gtf_path)) {
+        my $derived_reference_build = $reference_build->derived_from;
+        unless (defined($derived_reference_build)) {
+            die $self->error_message("'There is no annotation GTF file " . 
+              "defined for annotation_reference_transcripts build: ".
+              $annotation_build->__display_name__);
+        }
+        $gtf_path = $self->_get_gtf_path($derived_reference_build, $annotation_build);
+    }
+    return $gtf_path;
+}
+
 sub execute {
   my $self = shift;
   
@@ -137,10 +155,7 @@ sub execute {
   my $annotation_build_name = $annotation_build->name;
   my $annotation_data_dir = $annotation_build->data_directory;
   my $transcript_info_path = $annotation_data_dir . "/annotation_data/rna_annotation/$reference_build_id-transcript_info.tsv";
-  my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build_id);
-  unless (defined($gtf_path)) {
-    die $self->error_message("'There is no annotation GTF file defined for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
-  }
+  my $gtf_path = $self->_get_gtf_path($reference_build, $annotation_build);
   unless (-e $transcript_info_path) {
     die $self->error_message("'There is no transcript info file for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
   }
