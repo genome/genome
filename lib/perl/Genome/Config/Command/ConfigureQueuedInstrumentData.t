@@ -291,7 +291,7 @@ sub _generate_lane_qc_instrument_data {
     my $genotype_sample = Genome::Test::Factory::Sample->setup_object();
 
     my $genotype_library => Genome::Test::Factory::Library->setup_object(
-        sample_id => $genotype_sample, 
+        sample_id => $genotype_sample,
     );
 
     my $genotype_data = Genome::Test::Factory::InstrumentData::Imported->setup_object(
@@ -302,7 +302,7 @@ sub _generate_lane_qc_instrument_data {
     my $sans_sample = Genome::Test::Factory::Sample->setup_object();
 
     my $sans_library = Genome::Test::Factory::Library->setup_object(
-        sample_id => $sans_sample, 
+        sample_id => $sans_sample,
     );
 
     my $sans_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
@@ -318,7 +318,7 @@ sub _generate_lane_qc_instrument_data {
     );
 
     my $plus_library = Genome::Test::Factory::Library->setup_object(
-        sample_id => $plus_sample, 
+        sample_id => $plus_sample,
     );
 
     my $plus_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
@@ -352,7 +352,7 @@ sub _generate_lane_qc_instrument_data {
         );
     }
 
-    return ($sans_data, $plus_data, ['Genome::Model::ReferenceAlignment']); 
+    return ($sans_data, $plus_data, ['Genome::Model::ReferenceAlignment']);
 }
 
 
