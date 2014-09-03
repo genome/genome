@@ -10,6 +10,10 @@ class Genome::Model::Tools::Somatic::UltraHighConfidence {
     has => [
 
     ## INPUT/OUTPUT OPTIONS ##
+        bam_readcount_version => {
+            is => 'Version',
+            doc => 'Version of bam readcount to utilize',
+        },
         'normal_bam_file' => {
             type => 'String',
             doc => 'The normal BAM file in which to examine reads ',
@@ -304,6 +308,7 @@ sub run_filter {
         minimum_base_quality => 15,
         output_file => $readcount_file_tumor,
         region_list => $temp_path,
+        use_version => $self->bam_readcount_version,
     );
 
     print "Running bam-readcounts on normal BAM...\n";
@@ -314,6 +319,7 @@ sub run_filter {
         minimum_base_quality => 15,
         output_file => $readcount_file_normal,
         region_list => $temp_path,
+        use_version => $self->bam_readcount_version,
     );
 
     unless($tumor_rv and $normal_rv) {
