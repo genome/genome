@@ -13,29 +13,35 @@ use File::Path;
 
 class Genome::Model::Tools::Relationship::PolymuttDenovoFilter {
     is => 'Command',
+    has => [
+        bam_readcount_version => {
+            is => 'Version',
+            doc => 'Version of bam readcount to utilize',
+        },
+    ],
     has_optional_input => [
-    model_group_id => {
-        is_optional=>0,
-        doc=>'id of model group for family',
-    },
-    denovo_vcf=> {
-        is_optional=>0,
-        doc=>'denovo vcf output for same family',
-    },
-    output_file=> {
-        is_optional=>0,
-        doc=>'binomial test outputs for each individual in the family',
-    },
-    min_read_qual=> {
-        is_optional=>1,
-        doc=>'the lowest quality reads to use in the calculation. default q20',
-        default=>"20",
-    },
-    min_unaffected_pvalue=> {
-        is_optional=>1,
-        doc=>"the minimum binomial test result from unaffected members to pass through the filter",
-        default=>"1.0e-4",
-    },
+        model_group_id => {
+            is_optional=>0,
+            doc=>'id of model group for family',
+        },
+        denovo_vcf=> {
+            is_optional=>0,
+            doc=>'denovo vcf output for same family',
+        },
+        output_file=> {
+            is_optional=>0,
+            doc=>'binomial test outputs for each individual in the family',
+        },
+        min_read_qual=> {
+            is_optional=>1,
+            doc=>'the lowest quality reads to use in the calculation. default q20',
+            default=>"20",
+        },
+        min_unaffected_pvalue=> {
+            is_optional=>1,
+            doc=>"the minimum binomial test result from unaffected members to pass through the filter",
+            default=>"1.0e-4",
+        },
     ],
 
 
@@ -155,6 +161,7 @@ sub prepare_readcount_files {
                 output_file => $readcount_out,
                 reference_fasta => $ref_fasta,
                 region_list => $sites_file,
+                use_version => $self->bam_readcount_version,
             );
             unless ($rv) {
                 $self->error_message("Failed to run readcount");
