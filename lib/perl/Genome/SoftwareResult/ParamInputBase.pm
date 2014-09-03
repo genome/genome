@@ -1,10 +1,10 @@
-package Genome::SoftwareResult::PIBase;
+package Genome::SoftwareResult::ParamInputBase;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::SoftwareResult::PIBase {};
+class Genome::SoftwareResult::ParamInputBase {};
 
 sub __display_name__ {
     my $self = shift;

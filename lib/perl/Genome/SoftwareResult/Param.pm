@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
-use Genome::SoftwareResult::PIFactory;
+use Genome::SoftwareResult::ParamInputFactory;
 
 sub param_name {
     Carp::confess("using param_name!");

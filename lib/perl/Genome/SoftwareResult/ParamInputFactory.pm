@@ -1,4 +1,4 @@
-package Genome::SoftwareResult::PIFactory;
+package Genome::SoftwareResult::ParamInputFactory;
 
 use strict;
 use warnings;
@@ -15,7 +15,7 @@ sub import {
 
     my $subclass = UR::Object::Type->define(
         class_name => $subclassname,
-        isa => 'Genome::SoftwareResult::PIBase',
+        isa => 'Genome::SoftwareResult::ParamInputBase',
         table_name => 'result.' . $type,
         id_by => [
             software_result_id => {
