@@ -91,12 +91,12 @@ sub _process_models {
     my $model_list = shift;
 
     for my $model_instance (@$model_list) {
-        my ($model, $created_new) = $self->_get_model_for_config_hash($model_type, $model_instance, $analysis_project);
+        my ($model, $created_new, $config_profile_item) = $self->_get_model_for_config_hash($model_type, $model_instance, $analysis_project);
 
         $self->status_message(sprintf('Model: %s %s for instrument data: %s.',
                 $model->id, ($created_new ? 'created' : 'found'), $instrument_data->id ));
 
-        $self->_assign_model_to_analysis_project($analysis_project, $model, $created_new);
+        $self->_assign_model_to_analysis_project($analysis_project, $model, $config_profile_item, $created_new);
         $self->_assign_instrument_data_to_model($model, $instrument_data, $created_new);
         $self->_update_model($model);
         $self->_request_build_if_necessary($model, $created_new);
@@ -233,6 +233,7 @@ sub _get_model_for_config_hash {
     }
 
     my @extra_params = (auto_assign_inst_data => 1);
+    my ($config_profile_item) = @{delete $config->{config_profile_items}};
 
     my @m = $class_name->get(@extra_params, %read_config, analysis_projects => [$analysis_project]);
 
@@ -240,7 +241,7 @@ sub _get_model_for_config_hash {
         die(sprintf("Sorry, but multiple identical models were found: %s", join(',', map { $_->id } @m)));
     };
     #return the model, plus a 'boolean' value indicating if we created a new model
-    my @model_info =  $m[0] ? ($m[0], 0) : ($class_name->create(@extra_params, %$config), 1);
+    my @model_info =  $m[0] ? ($m[0], 0, $config_profile_item) : ($class_name->create(@extra_params, %$config), 1, $config_profile_item);
     return wantarray ? @model_info : $model_info[0];
 }
 
@@ -323,11 +324,12 @@ sub _assign_model_to_analysis_project {
     my $self = shift;
     my $analysis_project = shift;
     my $model = shift;
+    my $config_profile_item = shift;
     my $created_new = shift;
 
-    die('Must specify an analysis project and a model!') unless $analysis_project && $model;
+    die('Must specify an analysis project and a model!') unless $analysis_project && $model && $config_profile_item;
 
-    $analysis_project->add_model_bridge(model => $model) if $created_new;
+    $analysis_project->add_model_bridge(model => $model, config_profile_item => $config_profile_item) if $created_new;
     return $analysis_project->model_group->assign_models($model);
 }
 
