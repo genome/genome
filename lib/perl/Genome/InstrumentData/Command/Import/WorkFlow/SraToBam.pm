@@ -25,7 +25,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SraToBam {
         },
     ],
     has_output => [
-        bam_path => {
+        output_bam_path => {
             calculate_from => [qw/ sra_path /],
             calculate => q( return $sra_path.'.bam'; ),
             doc => 'The path of the bam dumped from the SRA path.',
@@ -41,7 +41,7 @@ sub execute {
     return if not $dump_ok;
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $flagstat = $helpers->validate_bam($self->bam_path);
+    my $flagstat = $helpers->validate_bam($self->output_bam_path);
     return if not $flagstat;
 
     $self->debug_message('Dump bam from SRA...done');
@@ -85,7 +85,7 @@ sub _dump_bam_from_sra {
     $self->debug_message('Check SRA database...done');
     
     $self->debug_message('Dump aligned bam...');
-    my $aligned_bam = ( $sra_has_primary_alignment_info ) ? $self->working_directory.'/aligned.bam' : $self->bam_path;
+    my $aligned_bam = ( $sra_has_primary_alignment_info ) ? $self->working_directory.'/aligned.bam' : $self->output_bam_path;
     $self->debug_message('Aligned bam: '.$aligned_bam);
     $cmd = "/usr/bin/sam-dump --primary $sra_path | samtools view -h -b -S - > $aligned_bam";
     $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
@@ -124,7 +124,7 @@ sub _dump_bam_from_sra {
             unlink($unaligned_fastq);
 
             $self->debug_message('Add bam from unaligned fastq to unsorted bam...');
-            my $bam_path = $self->bam_path;
+            my $bam_path = $self->output_bam_path;
             $cmd = "samtools merge $bam_path $aligned_bam $unaligned_bam";
             $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
             if ( not $rv ) {

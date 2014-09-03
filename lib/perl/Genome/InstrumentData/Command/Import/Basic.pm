@@ -198,8 +198,12 @@ sub _build_workflow {
     );
     $self->_workflow($workflow);
 
-    my $create_wf = $self->_create_workflow;
-    return if not $create_wf;
+    my $retrieve_source_path_op = $self->_add_retrieve_source_path_op_to_workflow;
+    return if not $retrieve_source_path_op;
+
+    my $verify_md5_op = $self->_add_verify_md5_op_to_workflow($retrieve_source_path_op);
+    return if not $verify_md5_op;
+    $self->_verify_md5_op($verify_md5_op);
 
     my $method = '_build_workflow_to_import_'.$self->original_format;
     my $build_wf = $self->$method;
@@ -208,12 +212,11 @@ sub _build_workflow {
     return $workflow;
 }
 
-sub _create_workflow {
+sub _add_retrieve_source_path_op_to_workflow {
     my $self = shift;
 
-
-    my $helpers = $self->helpers;
-    my $retrieve_source_path_op = $helpers->add_operation_to_workflow_by_name($workflow, 'retrieve source path');
+    my $workflow = $self->_workflow;
+    my $retrieve_source_path_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'retrieve source path');
     $workflow->add_link(
         left_operation => $workflow->get_input_connector,
         left_property => 'working_directory',
@@ -228,8 +231,16 @@ sub _create_workflow {
     );
     $retrieve_source_path_op->parallel_by('source_path') if $self->source_files > 1;
 
-    my $verify_md5_op = $helpers->add_operation_to_workflow_by_name($workflow, 'verify md5');
-    $self->_verify_md5_op($verify_md5_op);
+    return $retrieve_source_path_op;
+}
+
+sub _add_verify_md5_op_to_workflow {
+    my ($self, $retrieve_source_path_op) = @_;
+
+    die 'No retrieve source files operation given!' if not $retrieve_source_path_op;
+
+    my $workflow = $self->_workflow;
+    my $verify_md5_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'verify md5');
     $workflow->add_link(
         left_operation => $workflow->get_input_connector,
         left_property => 'working_directory',
@@ -244,7 +255,7 @@ sub _create_workflow {
    );
    $verify_md5_op->parallel_by('source_path') if $self->source_files > 1;
 
-    return $workflow;
+    return $verify_md5_op;
 }
 
 sub _gather_inputs_for_workflow {
@@ -318,9 +329,9 @@ sub _build_workflow_to_import_fastq {
     my $sort_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sort bam');
     $workflow->add_link(
         left_operation => $fastqs_to_bam_op,
-        left_property => 'bam_path',
+        left_property => 'output_bam_path',
         right_operation => $sort_bam_op,
-        right_property => 'unsorted_bam_path',
+        right_property => 'bam_path',
     );
 
     my $create_instdata_and_copy_bam = $helpers->add_operation_to_workflow_by_name($workflow, 'create instrument data and copy bam');
@@ -334,7 +345,7 @@ sub _build_workflow_to_import_fastq {
     }
     $workflow->add_link(
         left_operation => $sort_bam_op,
-        left_property => 'sorted_bam_path',
+        left_property => 'output_bam_path',
         right_operation => $create_instdata_and_copy_bam,
         right_property => 'bam_paths',
     );
@@ -367,21 +378,21 @@ sub _build_workflow_to_import_bam {
         left_operation => $verify_md5_op,
         left_property => 'source_path',
         right_operation => $sanitize_bam_op,
-        right_property => 'dirty_bam_path',
+        right_property => 'bam_path',
     );
 
     my $sort_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sort bam');
     $workflow->add_link(
         left_operation => $sanitize_bam_op,
-        left_property => 'clean_bam_path',
+        left_property => 'output_bam_path',
         right_operation => $sort_bam_op,
-        right_property => 'unsorted_bam_path',
+        right_property => 'bam_path',
     );
 
     my $split_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'split bam by read group');
     $workflow->add_link(
         left_operation => $sort_bam_op,
-        left_property => 'sorted_bam_path',
+        left_property => 'output_bam_path',
         right_operation => $split_bam_op,
         right_property => 'bam_path',
     );
@@ -397,7 +408,7 @@ sub _build_workflow_to_import_bam {
     }
     $workflow->add_link(
         left_operation => $split_bam_op,
-        left_property => 'read_group_bam_paths',
+        left_property => 'output_bam_paths',
         right_operation => $create_instdata_and_copy_bam,
         right_property => 'bam_paths',
     );
@@ -446,23 +457,23 @@ sub _build_workflow_to_import_sra {
     my $sanitize_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sanitize bam');
     $workflow->add_link(
         left_operation => $sra_to_bam_op,
-        left_property => 'bam_path',
+        left_property => 'output_bam_path',
         right_operation => $sanitize_bam_op,
-        right_property => 'dirty_bam_path',
+        right_property => 'bam_path',
     );
 
     my $sort_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sort bam');
     $workflow->add_link(
         left_operation => $sanitize_bam_op,
-        left_property => 'clean_bam_path',
+        left_property => 'output_bam_path',
         right_operation => $sort_bam_op,
-        right_property => 'unsorted_bam_path',
+        right_property => 'bam_path',
     );
 
     my $split_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'split bam by read group');
     $workflow->add_link(
         left_operation => $sort_bam_op,
-        left_property => 'sorted_bam_path',
+        left_property => 'output_bam_path',
         right_operation => $split_bam_op,
         right_property => 'bam_path',
     );
@@ -478,7 +489,7 @@ sub _build_workflow_to_import_sra {
     }
     $workflow->add_link(
         left_operation => $split_bam_op,
-        left_property => 'read_group_bam_paths',
+        left_property => 'output_bam_paths',
         right_operation => $create_instdata_and_copy_bam,
         right_property => 'bam_paths',
     );

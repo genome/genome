@@ -8,18 +8,18 @@ use Genome;
 class Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam { 
     is => 'Command::V2',
     has_input => {
-        dirty_bam_path => {
+        bam_path => {
             is => 'Text',
             doc => 'The path of the dirty bam to clean.',
         }
     },
     has_output => {
-        clean_bam_path => {
+        output_bam_path => {
             is => 'Text',
-            calculate_from => [qw/ dirty_bam_path /],
+            calculate_from => [qw/ bam_path /],
             calculate => q{
-                $dirty_bam_path =~ s/(\.bam)$/.clean$1/;
-                return $dirty_bam_path;
+                $bam_path =~ s/(\.bam)$/.clean$1/;
+                return $bam_path;
             },
             doc => 'The path of the clean bam.',
         },
@@ -39,7 +39,7 @@ sub execute {
     my $verify_read_count_ok = $self->_verify_read_count;
     return if not $verify_read_count_ok;
 
-    my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->dirty_bam_path);
+    my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->bam_path);
     return if not $cleanup_ok;
 
     $self->debug_message('Sanitize bam...done');
@@ -49,17 +49,17 @@ sub execute {
 sub _sanitize_bam {
     my $self = shift;
 
-    my $dirty_bam_path = $self->dirty_bam_path;
-    $self->debug_message("Dirty bam path: $dirty_bam_path");
+    my $bam_path = $self->bam_path;
+    $self->debug_message("Dirty bam path: $bam_path");
 
-    my $clean_bam_path = $self->clean_bam_path;
-    $self->debug_message("Clean bam path: $clean_bam_path");
+    my $output_bam_path = $self->output_bam_path;
+    $self->debug_message("Clean bam path: $output_bam_path");
 
     my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
     my $sanitize_err = $tmp_dir.'/sanitize.err';
-    my $cmd = "/usr/bin/seq-grind sanitize --input $dirty_bam_path --output $clean_bam_path 2> $sanitize_err";
+    my $cmd = "/usr/bin/seq-grind sanitize --input $bam_path --output $output_bam_path 2> $sanitize_err";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv or not -s $clean_bam_path ) {
+    if ( not $rv or not -s $output_bam_path ) {
         $self->error_message($@) if $@;
         $self->error_message('Failed to run samtools sanitize!');
         return;
@@ -99,10 +99,10 @@ sub _verify_read_count {
     $self->debug_message('Verify read count...');
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $dirty_flagstat = $helpers->load_or_run_flagstat($self->dirty_bam_path);
+    my $dirty_flagstat = $helpers->load_or_run_flagstat($self->bam_path);
     return if not $dirty_flagstat;
 
-    my $clean_flagstat = $helpers->load_or_run_flagstat($self->clean_bam_path);
+    my $clean_flagstat = $helpers->load_or_run_flagstat($self->output_bam_path);
     return if not $clean_flagstat;
 
     $self->debug_message('Clean bam read count: '.$clean_flagstat->{total_reads});
