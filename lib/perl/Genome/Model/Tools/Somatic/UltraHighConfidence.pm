@@ -88,12 +88,6 @@ class Genome::Model::Tools::Somatic::UltraHighConfidence {
             is_input => 1,
             doc => 'Minimum coverage in the tumor BAM',
         },
-        'use_readcounts' => {
-            type => 'String',
-            is_input => 1,
-            is_optional => 1,
-            doc => 'Existing BAM-Readcounts file to save execution time',
-        },
         ## WGS FILTER OPTIONS ##
 
 
