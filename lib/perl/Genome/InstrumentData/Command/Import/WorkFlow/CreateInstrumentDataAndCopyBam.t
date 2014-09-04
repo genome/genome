@@ -41,7 +41,7 @@ my $source_bam = $test_dir.'/input.rg-multi.bam';
 my $md5 = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->load_md5($source_bam.'.md5');
 ok($md5, 'load source md5');
 
-# failures
+# FAIL no original data path
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
     library => $library,
     analysis_project => $analysis_project,
@@ -54,7 +54,7 @@ my @errors = $cmd->__errors__;
 ok(@errors, "command has errors");
 is($errors[0]->__display_name__, "INVALID: property 'instrument_data_properties': No original data path!", 'correct error');
 
-# success
+# SUCCESS
 $cmd->instrument_data_properties(
     {
         original_data_path => $source_bam, 
@@ -87,6 +87,11 @@ for my $instrument_data ( @instrument_data ) {
     is($instrument_data->read_length, 100, 'read_length correctly set');
     is($instrument_data->attributes(attribute_label => 'index_sequence')->attribute_value, 'ATGCTA', 'index_sequence correctly set');
     is($instrument_data->attributes(attribute_label => 'segment_id')->attribute_value, $read_group, 'segment_id correctly set');
+
+    print join(' ', map { $_->attribute_label.' '.$_->nomenclature } $instrument_data->attributes)."\n";
+    my @correct_nomenclature_attrs = grep { $_->nomenclature eq $nomenclature } $instrument_data->attributes;
+    is(@correct_nomenclature_attrs, 
+
     is($instrument_data->analysis_projects, $analysis_project, 'set ana;yis project');
 
     my $bam_path = $instrument_data->bam_path;
@@ -103,7 +108,7 @@ for my $instrument_data ( @instrument_data ) {
     $read_group++;
 }
 
-# recreate
+# FAIL recreate
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
     library => $library,
     analysis_project => $analysis_project,
