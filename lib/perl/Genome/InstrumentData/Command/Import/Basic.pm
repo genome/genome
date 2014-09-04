@@ -261,6 +261,46 @@ sub _add_verify_md5_op_to_workflow {
     return $verify_md5_op;
 }
 
+sub _add_sra_to_bam_op {
+    my $self = shift;
+
+    my $workflow = $self->_workflow;
+    my $sra_to_bam_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'sra to bam');
+    for my $property_mapping ( [qw/ working_directory working_directory /], [qw/ source_path sra_path /] ) {
+        my ($left_property, $right_property) = @$property_mapping;
+        $workflow->add_link(
+            left_operation => $self->_verify_md5_op,
+            left_property => $left_property,
+            right_operation => $sra_to_bam_op,
+            right_property => $right_property,
+        );
+    }
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'library',
+        right_operation => $sra_to_bam_op,
+        right_property => 'library',
+    );
+
+    return $sra_to_bam_op;
+}
+
+sub _add_sort_bam_op_to_workflow {
+    my ($self, $previous_op) = @_;
+
+    die 'No previous op given to _add_sort_bam_op_to_workflow!' if not $previous_op;
+
+    my $sort_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'sort bam');
+    $self->_workflow->add_link(
+        left_operation => $previous_op,
+        left_property => 'output_bam_path',
+        right_operation => $sort_bam_op,
+        right_property => 'bam_path',
+    );
+
+    return $sort_bam_op;
+}
+
 sub _add_create_instdata_and_copy_bam_op_to_workflow {
     my ($self, $previous_op) = @_;
 
@@ -372,13 +412,8 @@ sub _build_workflow_to_import_fastq {
         right_property => 'fastq_paths',
     );
 
-    my $sort_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sort bam');
-    $workflow->add_link(
-        left_operation => $fastqs_to_bam_op,
-        left_property => 'output_bam_path',
-        right_operation => $sort_bam_op,
-        right_property => 'bam_path',
-    );
+    my $sort_bam_op = $self->_add_sort_bam_op_to_workflow($fastqs_to_bam_op);
+    return if not $sort_bam_op;
 
     return $sort_bam_op;
 }
@@ -398,13 +433,9 @@ sub _build_workflow_to_import_bam {
         right_property => 'bam_path',
     );
 
-    my $sort_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sort bam');
-    $workflow->add_link(
-        left_operation => $sanitize_bam_op,
-        left_property => 'output_bam_path',
-        right_operation => $sort_bam_op,
-        right_property => 'bam_path',
-    );
+
+    my $sort_bam_op = $self->_add_sort_bam_op_to_workflow($sanitize_bam_op);
+    return if not $sort_bam_op;
 
     my $split_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'split bam by read group');
     $workflow->add_link(
@@ -424,22 +455,8 @@ sub _build_workflow_to_import_sra {
     my $verify_md5_op = $self->_verify_md5_op;
 
     my $helpers = $self->helpers;
-    my $sra_to_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sra to bam');
-    for my $property_mapping ( [qw/ working_directory working_directory /], [qw/ source_path sra_path /] ) {
-        my ($left_property, $right_property) = @$property_mapping;
-        $workflow->add_link(
-            left_operation => $verify_md5_op,
-            left_property => $left_property,
-            right_operation => $sra_to_bam_op,
-            right_property => $right_property,
-        );
-    }
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'library',
-        right_operation => $sra_to_bam_op,
-        right_property => 'library',
-    );
+    my $sra_to_bam_op = $self->_add_sra_to_bam_op;
+    return if not $sra_to_bam_op;
 
     my $sanitize_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sanitize bam');
     $workflow->add_link(
@@ -449,13 +466,8 @@ sub _build_workflow_to_import_sra {
         right_property => 'bam_path',
     );
 
-    my $sort_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sort bam');
-    $workflow->add_link(
-        left_operation => $sanitize_bam_op,
-        left_property => 'output_bam_path',
-        right_operation => $sort_bam_op,
-        right_property => 'bam_path',
-    );
+    my $sort_bam_op = $self->_add_sort_bam_op_to_workflow($sanitize_bam_op);
+    return if not $sort_bam_op;
 
     my $split_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'split bam by read group');
     $workflow->add_link(
