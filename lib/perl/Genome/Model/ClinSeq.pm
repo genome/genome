@@ -37,6 +37,7 @@ class Genome::Model::ClinSeq {
         common_name         => { is => 'Text', doc => 'the name chosen for the root directory in the build' },
     ],
     has_calculated => [
+        bam_readcount_version => { calculate => q| return 0.4 | }, #FIXME this should be a processing profile param once they are backfilled.
         expected_common_name => {
             is => 'Text',
             calculate_from => [qw /wgs_model exome_model tumor_rnaseq_model normal_rnaseq_model/],
@@ -235,6 +236,7 @@ sub map_workflow_inputs {
       cancer_annotation_db => $cancer_annotation_db,
       misc_annotation_db => $misc_annotation_db,
       cosmic_annotation_db => $cosmic_annotation_db,
+      bam_readcount_version => $self->bam_readcount_version,
   );
 
   my $annotation_build = $self->_resolve_annotation;
@@ -903,6 +905,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'wgs_build', $clonality_op, 'somatic_var_build');
     $add_link->($input_connector, 'clonality_dir', $clonality_op, 'output_dir');
     $add_link->($input_connector, 'common_name', $clonality_op, 'common_name');
+    $add_link->($input_connector, 'bam_readcount_version', $clonality_op, 'bam_readcount_version');
     $add_link->($clonality_op, 'result', $output_connector, 'clonality_result');
   }
 
