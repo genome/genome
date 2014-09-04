@@ -46,6 +46,7 @@ ok($exome_model, "got the exome Somatic Variation model");
 my $p = Genome::ProcessingProfile::ClinSeq->create(
     id   => -10002,
     name => 'TESTSUITE ClinSeq Profile 2',
+    bam_readcount_version => 0.4,
 );
 ok($p, "created a processing profile") or diag(Genome::ProcessingProfile::ClinSeq->error_message);
 
