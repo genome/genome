@@ -40,7 +40,7 @@ class Genome::InstrumentData::Command::Import::Basic {
         },
         original_format => {
             is => 'Text',
-            valid_values => [qw/ bam fastq sra /],
+            valid_values => [qw/ bam fastq fastq_archive sra /],
             doc => 'The original format of the source files. Use if the format cannot be determined from the file extension.',
         },
     ],
@@ -121,11 +121,12 @@ sub _resolve_original_format {
 
     my @source_files = $self->source_files;
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my %formats;
+    my (%formats, $is_archived);
     for my $source_file ( @source_files ) {
         my $format = $helpers->source_file_format($source_file);
         return if not $format;
         $formats{$format}++;
+        $is_archived++ if $helpers->is_source_file_archived($source_file);
     }
 
     my @formats = keys %formats;
@@ -133,16 +134,25 @@ sub _resolve_original_format {
         $self->error_message('Got more than one format when trying to determine format!');
         return;
     }
-    $self->status_message('Original format: '.$formats[0]);
 
-    my $max_source_files = ( $formats[0] =~ /^fast[aq]$/ ? 2 : 1 );
+    my $format = $formats[0];
+    if ( $is_archived > 1 ) {
+        $self->error_message('More than one file is archived. Please import them separately.');
+        return;
+    }
+    elsif ( $is_archived ) {
+        $format .= '_archive';
+    }
+    $self->status_message('Original format: '.$format);
+
+    my $max_source_files = ( $format =~ /^fast[aq]$/ ? 2 : 1 );
     if ( @source_files > $max_source_files ) {
         $self->error_message("Cannot handle more than $max_source_files source files!");
         return;
     }
 
     $self->status_message('Resolve original format...done');
-    return $self->original_format($formats[0]);
+    return $self->original_format($format);
 }
 
 sub _resolve_instrument_data_properties {
