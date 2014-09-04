@@ -27,17 +27,13 @@ class Genome::Model::ClinSeq {
 
         #processing_profile      => { is => 'Genome::ProcessingProfile::ClinSeq', id_by => 'processing_profile_id', default_value => { } },
     ],
-    has_optional_param => [
-        #Processing profile parameters would go in here
-        #someparam1 => { is => 'Number', doc => 'blah' },
-        #someparam2 => { is => 'Boolean', doc => 'blah' },
-        #someparam2 => { is => 'Text', valid_values => ['a','b','c'], doc => 'blah' },
+    has_optional_param => [ # Processing profile parameters
+        bam_readcount_version => { is => 'Text', doc => 'The bam readcount version to use during clonality analysis' },
     ],
     has_optional_metric => [
         common_name         => { is => 'Text', doc => 'the name chosen for the root directory in the build' },
     ],
     has_calculated => [
-        bam_readcount_version => { calculate => q| return 0.4 | }, #FIXME this should be a processing profile param once they are backfilled.
         expected_common_name => {
             is => 'Text',
             calculate_from => [qw /wgs_model exome_model tumor_rnaseq_model normal_rnaseq_model/],
