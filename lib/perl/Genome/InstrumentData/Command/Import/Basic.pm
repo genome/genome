@@ -285,6 +285,34 @@ sub _add_sra_to_bam_op {
     return $sra_to_bam_op;
 }
 
+sub _add_fastqs_to_bam_op_to_workflow {
+    my ($self, $previous_op) = @_;
+
+    die 'No previous operation given!' if not $previous_op;
+
+    my $fastqs_to_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'fastqs to bam');
+    return if not $fastqs_to_bam_op;
+
+    for my $property (qw/ working_directory library /) {
+        $self->_workflow->add_link(
+            left_operation => $self->_workflow->get_input_connector,
+            left_property => $property,
+            right_operation => $fastqs_to_bam_op,
+            right_property => $property,
+        );
+    }
+    $self->_workflow->add_link(
+        left_operation => $previous_op,
+        left_property => ( $previous_op->name eq 'verify md5' ) # not ideal...
+        ? 'source_path'
+        : 'fastq_paths',
+        right_operation => $fastqs_to_bam_op,
+        right_property => 'fastq_paths',
+    );
+
+    return $fastqs_to_bam_op;
+}
+
 sub _add_sanitize_bam_op_to_workflow {
     my ($self, $previous_op) = @_;
 
@@ -398,10 +426,7 @@ sub _build_workflow_to_import_fastq {
     my $workflow = $self->_workflow;
     my $verify_md5_op = $self->_verify_md5_op;
 
-    my %left_op_and_fastqs_property = (
-        left_operation => $verify_md5_op,
-        left_property => 'source_path',
-    );
+    my $previous_op = $verify_md5_op;
     my @source_files = $self->source_files;
 
     # .tar.gz + Archive::Extract->types
@@ -426,26 +451,11 @@ sub _build_workflow_to_import_fastq {
             right_operation => $archive_to_fastqs_op,
             right_property => 'archive_path',
         );
-        %left_op_and_fastqs_property = (
-            left_operation => $archive_to_fastqs_op,
-            left_property => 'fastq_paths',
-        );
+        $previous_op = $archive_to_fastqs_op;
     }
 
-    my $fastqs_to_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'fastqs to bam');
-    for my $property (qw/ working_directory library /) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $property,
-            right_operation => $fastqs_to_bam_op,
-            right_property => $property,
-        );
-    }
-    $workflow->add_link(
-        %left_op_and_fastqs_property,
-        right_operation => $fastqs_to_bam_op,
-        right_property => 'fastq_paths',
-    );
+    my $fastqs_to_bam_op = $self->_add_fastqs_to_bam_op_to_workflow($previous_op);
+    return if not $fastqs_to_bam_op;
 
     my $sort_bam_op = $self->_add_sort_bam_op_to_workflow($fastqs_to_bam_op);
     return if not $sort_bam_op;
