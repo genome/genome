@@ -331,7 +331,7 @@ EOS
         my $deletions_and_focal_amps = Genome::Sys->read_file("$output_directory/raw/cnaseq.cnvhmm");
         my $deletions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/deletions.txt");
         my $focal_amps_fh = Genome::Sys->open_file_for_writing("$output_directory/data/focalAmps.txt");
-        while ($deletions_and_focal_amps =~ /(\S+)\s(\d+)\s(\d+)\s\d+\s\d+\s\d+\s(\S+)\s\d+\s(\S+)\s\S+\s(\S+)/g) {
+        while ($deletions_and_focal_amps =~ /(\S+)\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+\S+\s+(\S+)\s+\S+\s+(\S+)\s+\S+\s+(\S+)\n/g) {
         
             if($6 eq "Loss"){
                 my $loss;
@@ -594,7 +594,7 @@ EOS
         my $deletions_and_focal_amps = Genome::Sys->read_file("$output_directory/raw/cnmops.cnvhmm");
         my $deletions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/deletions.txt");
         my $focal_amps_fh = Genome::Sys->open_file_for_writing("$output_directory/data/focalAmps.txt");
-        while ($deletions_and_focal_amps =~ /(\S+)\s(\d+)\s(\d+)\s\d+\s\d+\s\d+\s(\S+)\s\d+\s(\S+)\s\S+\s(\S+)/g) {
+        while ($deletions_and_focal_amps =~ /(\S+)\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+\S+\s+(\S+)\s+\S+\s+(\S+)\s+\S+\s+(\S+)\n/g) {
         
             if($6 eq "Loss"){
                 my $loss;
@@ -885,7 +885,7 @@ EOS
     #SNV
     my $snv_file = Genome::Sys->read_file("$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv");
     my $snv_fh = Genome::Sys->open_file_for_writing("$output_directory/data/snvs.hq.tier1.v1.annotated.compact.tsv");
-    while ($snv_file =~ /(\S+):(\d+)-(\d+)\s+\S+\s+(\S+)\s+\w+\s+(\S+)\s+(\S+)\s+(\S+)\s+.+/g) {
+    while ($snv_file =~ /(\S+):(\d+)-(\d+)\s+\S+\s+(\S+)\s+\w+\s+(\S+)\s+(\S+)\s+(\S+).*/g) {
     
         $genes_noAmpDel{$4}="hs$1\t$2\t$3";
         $genes_AmpDel{$4}="hs$1\t$2\t$3";
@@ -907,7 +907,7 @@ EOS
     my $indel_file = Genome::Sys->read_file("$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv");
     my $indel_fh = Genome::Sys->open_file_for_writing("$output_directory/data/indels.hq.tier1.v1.annotated.compact.tsv");
     my $color;
-    while ($indel_file =~ /(\S+):(\d+)-(\d+)\t\S+\t(\S+)\t\w+\t(\S+)\t(\S+)\t(\S+)\t.+/g) {
+    while ($indel_file =~ /(\S+):(\d+)-(\d+)\s+\S+\s+(\S+)\s+\w+\s+(\S+)\s+(\S+)\s+(\S+).*/g) {
     
         $genes_noAmpDel{$4}="hs$1\t$2\t$3";
         $genes_AmpDel{$4}="hs$1\t$2\t$3";
