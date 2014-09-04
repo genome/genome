@@ -119,7 +119,7 @@ sub source_file_format {
         bam => 'bam',
         sra => 'sra',
     );
-    $source_file =~ s/\Q\.$_\E$// for Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs->types;
+    $source_file =~ s/\Q.$_\E$// for Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs->types;
     my ($source_file_base_name, $path, $suffix) = File::Basename::fileparse(
         $source_file, keys %suffixes_to_original_format
     );
@@ -129,6 +129,16 @@ sub source_file_format {
     }
 
     return $suffixes_to_original_format{$suffix};
+}
+
+sub is_source_file_archived {
+    my ($self, $source_file) = @_;
+
+    Carp::confess('No source file to determined if archived!') if not $source_file;
+
+    return grep { 
+        $source_file =~ /\Q$_\E$/
+    } (qw/ .tgz .tar .tar.gz /);
 }
 
 sub verify_adequate_disk_space_is_available_for_source_files {

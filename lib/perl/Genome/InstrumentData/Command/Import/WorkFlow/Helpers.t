@@ -42,6 +42,13 @@ is($helpers->source_file_format('source.fasta'), 'fasta', 'format for fasta sour
 is($helpers->source_file_format('source.fa'), 'fasta', 'format for fa source file is fasta');
 is($helpers->source_file_format('source.fna'), 'fasta', 'format for fna source file is fasta');
 
+# is_source_file_archived
+throws_ok(sub {$helpers->is_source_file_archived; }, qr/No source file to determined if archived!/, 'is_source_file_archived failed w/o source file');
+ok($helpers->is_source_file_archived('file.tar.gz'), 'file.tar.gz is archived');
+ok($helpers->is_source_file_archived('file.tar'), 'file.tar is archived');
+ok($helpers->is_source_file_archived('file.tgz'), 'file.tgz is archived');
+ok(!$helpers->is_source_file_archived('filetar.gz'), 'filetar.gz is not archived');
+
 ok(!eval{$helpers->size_of_source_file;}, 'failed to get size for source file w/o source file');
 ok(!eval{$helpers->size_of_remote_file;}, 'failed to get size for remote file w/o remote file');
 
