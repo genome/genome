@@ -450,30 +450,25 @@ sub _gather_inputs_for_workflow {
     };
 }
 
+sub _build_workflow_to_import_fastq_archive {
+    my $self = shift;
+
+    my $previous_op = $self->_add_archive_to_fastqs_op_to_workflow;
+    return if not $previous_op;
+
+    my $fastqs_to_bam_op = $self->_add_fastqs_to_bam_op_to_workflow($previous_op);
+    return if not $fastqs_to_bam_op;
+
+    my $sort_bam_op = $self->_add_sort_bam_op_to_workflow($fastqs_to_bam_op);
+    return if not $sort_bam_op;
+
+    return $sort_bam_op;
+}
+
 sub _build_workflow_to_import_fastq {
     my $self = shift;
 
-    my $helpers = $self->helpers;
-    my $workflow = $self->_workflow;
-    my $verify_md5_op = $self->_verify_md5_op;
-
-    my $previous_op = $verify_md5_op;
-    my @source_files = $self->source_files;
-
-    # .tar.gz + Archive::Extract->types
-    my $archive_command_name = 'archive to fastqs';
-    my $archive_command_class_name = $helpers->work_flow_operation_class_from_name($archive_command_name);
-    my @archive_types = $archive_command_class_name->types;
-    my $is_archived = (
-        @source_files == 1
-        && grep { $source_files[0] =~ /\Q.$_\E$/ } @archive_types
-    );
-    if ( $is_archived ) {
-        $previous_op = $self->_add_archive_to_fastqs_op_to_workflow;
-        return if not $previous_op;
-    }
-
-    my $fastqs_to_bam_op = $self->_add_fastqs_to_bam_op_to_workflow($previous_op);
+    my $fastqs_to_bam_op = $self->_add_fastqs_to_bam_op_to_workflow($self->_verify_md5_op);
     return if not $fastqs_to_bam_op;
 
     my $sort_bam_op = $self->_add_sort_bam_op_to_workflow($fastqs_to_bam_op);
