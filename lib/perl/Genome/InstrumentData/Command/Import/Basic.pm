@@ -285,6 +285,25 @@ sub _add_sra_to_bam_op {
     return $sra_to_bam_op;
 }
 
+sub _add_sanitize_bam_op_to_workflow {
+    my ($self, $previous_op) = @_;
+
+    die 'No previous operation given to _add_sanitize_bam_op_to_workflow!' if not $previous_op;
+
+    my $sanitize_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'sanitize bam');
+    return if not $sanitize_bam_op;
+    $self->_workflow->add_link(
+        left_operation => $previous_op,
+        left_property => ( $previous_op->name eq 'verify md5' ) # not ideal...
+        ? 'source_path'
+        : 'output_bam_path',
+        right_operation => $sanitize_bam_op,
+        right_property => 'bam_path',
+    );
+
+    return $sanitize_bam_op;
+}
+
 sub _add_sort_bam_op_to_workflow {
     my ($self, $previous_op) = @_;
 
@@ -425,14 +444,8 @@ sub _build_workflow_to_import_bam {
     my $verify_md5_op = $self->_verify_md5_op;
 
     my $helpers = $self->helpers;
-    my $sanitize_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sanitize bam');
-    $workflow->add_link(
-        left_operation => $verify_md5_op,
-        left_property => 'source_path',
-        right_operation => $sanitize_bam_op,
-        right_property => 'bam_path',
-    );
-
+    my $sanitize_bam_op = $self->_add_sanitize_bam_op_to_workflow($verify_md5_op);
+    return if not $sanitize_bam_op;
 
     my $sort_bam_op = $self->_add_sort_bam_op_to_workflow($sanitize_bam_op);
     return if not $sort_bam_op;
@@ -458,13 +471,8 @@ sub _build_workflow_to_import_sra {
     my $sra_to_bam_op = $self->_add_sra_to_bam_op;
     return if not $sra_to_bam_op;
 
-    my $sanitize_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sanitize bam');
-    $workflow->add_link(
-        left_operation => $sra_to_bam_op,
-        left_property => 'output_bam_path',
-        right_operation => $sanitize_bam_op,
-        right_property => 'bam_path',
-    );
+    my $sanitize_bam_op = $self->_add_sanitize_bam_op_to_workflow($sra_to_bam_op);
+    return if not $sanitize_bam_op;
 
     my $sort_bam_op = $self->_add_sort_bam_op_to_workflow($sanitize_bam_op);
     return if not $sort_bam_op;
