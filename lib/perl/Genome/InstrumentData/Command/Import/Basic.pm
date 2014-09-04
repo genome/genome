@@ -285,6 +285,27 @@ sub _add_sra_to_bam_op {
     return $sra_to_bam_op;
 }
 
+sub _add_archive_to_fastqs_op_to_workflow {
+    my $self = shift;
+
+    my $archive_to_fastqs_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'archive to fastqs');
+    return if not $archive_to_fastqs_op;
+    $self->_workflow->add_link(
+        left_operation => $self->_workflow->get_input_connector,
+        left_property => 'working_directory',
+        right_operation => $archive_to_fastqs_op,
+        right_property => 'working_directory',
+    );
+    $self->_workflow->add_link(
+        left_operation => $self->_verify_md5_op,
+        left_property => 'source_path',
+        right_operation => $archive_to_fastqs_op,
+        right_property => 'archive_path',
+    );
+
+    return $archive_to_fastqs_op;
+}
+
 sub _add_fastqs_to_bam_op_to_workflow {
     my ($self, $previous_op) = @_;
 
@@ -438,20 +459,8 @@ sub _build_workflow_to_import_fastq {
         && grep { $source_files[0] =~ /\Q.$_\E$/ } @archive_types
     );
     if ( $is_archived ) {
-        my $archive_to_fastqs_op = $helpers->add_operation_to_workflow_by_name($workflow, $archive_command_name);
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'working_directory',
-            right_operation => $archive_to_fastqs_op,
-            right_property => 'working_directory',
-        );
-        $workflow->add_link(
-            left_operation => $verify_md5_op,
-            left_property => 'source_path',
-            right_operation => $archive_to_fastqs_op,
-            right_property => 'archive_path',
-        );
-        $previous_op = $archive_to_fastqs_op;
+        $previous_op = $self->_add_archive_to_fastqs_op_to_workflow;
+        return if not $previous_op;
     }
 
     my $fastqs_to_bam_op = $self->_add_fastqs_to_bam_op_to_workflow($previous_op);
