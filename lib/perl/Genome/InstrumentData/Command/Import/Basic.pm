@@ -320,6 +320,22 @@ sub _add_sort_bam_op_to_workflow {
     return $sort_bam_op;
 }
 
+sub _add_split_bam_by_rg_op_to_workflow {
+    my ($self, $previous_op) = @_;
+
+    die 'No previous op given to _add_split_bam_by_rg_op_to_workflow!' if not $previous_op;
+
+    my $split_bam_by_rg_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'split bam by read group');
+    $self->_workflow->add_link(
+        left_operation => $previous_op,
+        left_property => 'output_bam_path',
+        right_operation => $split_bam_by_rg_op,
+        right_property => 'bam_path',
+    );
+
+    return $split_bam_by_rg_op;
+}
+
 sub _add_create_instdata_and_copy_bam_op_to_workflow {
     my ($self, $previous_op) = @_;
 
@@ -450,15 +466,10 @@ sub _build_workflow_to_import_bam {
     my $sort_bam_op = $self->_add_sort_bam_op_to_workflow($sanitize_bam_op);
     return if not $sort_bam_op;
 
-    my $split_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'split bam by read group');
-    $workflow->add_link(
-        left_operation => $sort_bam_op,
-        left_property => 'output_bam_path',
-        right_operation => $split_bam_op,
-        right_property => 'bam_path',
-    );
+    my $split_bam_by_rg_op = $self->_add_split_bam_by_rg_op_to_workflow($sort_bam_op);
+    return if not $split_bam_by_rg_op;
 
-    return $split_bam_op;
+    return $split_bam_by_rg_op;
 }
 
 sub _build_workflow_to_import_sra {
@@ -477,15 +488,10 @@ sub _build_workflow_to_import_sra {
     my $sort_bam_op = $self->_add_sort_bam_op_to_workflow($sanitize_bam_op);
     return if not $sort_bam_op;
 
-    my $split_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'split bam by read group');
-    $workflow->add_link(
-        left_operation => $sort_bam_op,
-        left_property => 'output_bam_path',
-        right_operation => $split_bam_op,
-        right_property => 'bam_path',
-    );
+    my $split_bam_by_rg_op = $self->_add_split_bam_by_rg_op_to_workflow($sort_bam_op);
+    return if not $split_bam_by_rg_op;
 
-    return $split_bam_op;
+    return $split_bam_by_rg_op;
 }
 
 1;
