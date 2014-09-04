@@ -167,4 +167,19 @@ throws_ok( sub{ $helpers->insert_extension_into_bam_path('in.bam'); }, qr/^No ex
 throws_ok( sub{ $helpers->insert_extension_into_bam_path('bam', 'sorted'); }, qr/^Failed to insert extension into bam path! Bam path does not end in .bam! bam/, 'insert_extension_into_bam_path fails w/ invalid bam');
 is($helpers->insert_extension_into_bam_path('in.bam', 'sorted'), 'in.sorted.bam', 'insert_extension_into_bam_path');
 
+# validators
+throws_ok(sub{ $helpers->is_downsmaple_ratio_invalid(); }, qr/No downsample ratio to check!/, 'is_downsmaple_ratio_invalid fails w/o downsample_ratio');
+
+my @errors = $helpers->is_downsmaple_ratio_invalid('NA');
+ok(@errors, 'errors for downsample_ratio of NA');
+is($errors[0]->desc, 'Invalid number! NA', 'correct error desc for downsample_ratio of NA');
+
+@errors = $helpers->is_downsmaple_ratio_invalid('0');
+ok(@errors, 'errors for downsample_ratio of 0');
+is($errors[0]->desc, 'Must be greater than 0 and less than 1! 0', 'correct error desc for downsample_ratio of 0');
+
+@errors = $helpers->is_downsmaple_ratio_invalid('1');
+ok(@errors, 'errors for downsample_ratio of 1');
+is($errors[0]->desc, 'Must be greater than 0 and less than 1! 1', 'correct error desc for downsample_ratio of 1');
+
 done_testing();

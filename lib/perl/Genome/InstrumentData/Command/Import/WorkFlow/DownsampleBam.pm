@@ -5,7 +5,6 @@ use warnings;
 
 use Genome;
 
-use Regexp::Common;
 use Genome::InstrumentData::Command::Import::WorkFlow::Helpers;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam {
@@ -41,26 +40,8 @@ sub __errors__ {
     my @errors = $self->SUPER::__errors__;
     return @errors if @errors;
 
-    my $downsample_ratio = $self->downsample_ratio;
-    if ( $downsample_ratio !~ /$RE{num}{real}/ ) {
-        return (
-            UR::Object::Tag->create(
-                type => 'invalid',
-                properties => [qw/ downsample_ratio /],
-                desc => 'Invalid number! '.$downsample_ratio,
-            )
-        );
-    }
-
-    if ( $downsample_ratio <= 0 or $downsample_ratio >= 1 ) {
-        return (
-            UR::Object::Tag->create(
-                type => 'invalid',
-                properties => [qw/ downsample_ratio /],
-                desc => 'Must be greater than 0 and less than 1! '.$downsample_ratio,
-            )
-        );
-    }
+    my @errors = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->is_downsmaple_ratio_invalid($self->downsample_ratio);
+    return @errors if @errors;
 
     return;
 }

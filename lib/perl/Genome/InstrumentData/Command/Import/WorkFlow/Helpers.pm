@@ -10,6 +10,7 @@ require File::Basename;
 require File::Copy;
 require Filesys::Df;
 require LWP::Simple;
+use Regexp::Common;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::Helpers { 
     is => 'UR::Singleton',
@@ -614,6 +615,36 @@ sub insert_extension_into_bam_path {
 
     return join('.', $bam_path, $ext, 'bam');
 }
+
+#<VALIDATORS>#
+sub is_downsmaple_ratio_invalid {
+    my ($self, $downsample_ratio) = @_;
+
+    Carp::confess('No downsample ratio to check!') if not defined $downsample_ratio;
+
+    if ( $downsample_ratio !~ /$RE{num}{real}/ ) {
+        return (
+            UR::Object::Tag->create(
+                type => 'invalid',
+                properties => [qw/ downsample_ratio /],
+                desc => 'Invalid number! '.$downsample_ratio,
+            )
+        );
+    }
+
+    if ( $downsample_ratio <= 0 or $downsample_ratio >= 1 ) {
+        return (
+            UR::Object::Tag->create(
+                type => 'invalid',
+                properties => [qw/ downsample_ratio /],
+                desc => 'Must be greater than 0 and less than 1! '.$downsample_ratio,
+            )
+        );
+    }
+
+    return;
+}
+#<>#
 
 1;
 
