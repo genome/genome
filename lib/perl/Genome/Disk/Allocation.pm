@@ -13,6 +13,7 @@ use File::Find;
 use File::Find::Rule;
 use Cwd;
 use DateTime;
+use Path::Class::Dir qw();
 
 our $TESTING_DISK_ALLOCATION = 0;
 
@@ -1058,6 +1059,24 @@ sub finalize {
     }
 
     return $rv;;
+}
+
+sub import_path { # can't be import; maybe gather, pack, transfer
+    my $self = shift;
+    my $staging_path = shift;
+
+    my $staging_dir = Path::Class::Dir->new($staging_path);
+    my $allocation_dir = Path::Class::Dir->new($self->absolute_path);
+
+    # I had wanted to verify $allocation_dir was empty but some
+    # SoftwareResult's currently have a practice of creating their scratch
+    # and/or staging directories in their allocation.
+
+    unless (system('rsync', '-a', "$staging_dir/", "$allocation_dir/") == 0) {
+        croak "rsync failed: $!";
+    }
+
+    $self->finalize();
 }
 
 1;
