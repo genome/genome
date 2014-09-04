@@ -94,6 +94,26 @@ sub help_usage {
     return $usage;
 }
 
+sub _get_transcript_info_path {
+    my $self = shift;
+    my $reference_build = shift;
+    my $annotation_build = shift;
+    my $annotation_data_dir = $annotation_build->data_directory;
+    my $rb_id = $reference_build->id;
+    my $transcript_info_path = $annotation_data_dir .
+          "/annotation_data/rna_annotation/$rb_id-transcript_info.tsv";
+    unless (-e $transcript_info_path) {
+        my $derived_reference_build = $reference_build->derived_from;
+        unless (defined($derived_reference_build)) {
+            die $self->error_message("'There is no transcript " .
+                "info file for annotation_reference_transcripts build: ".
+                $annotation_build->__display_name__);
+        }
+        $transcript_info_path = $self->_get_transcript_info_path($derived_reference_build, $annotation_build);
+    }
+    return $transcript_info_path;
+}
+
 sub _get_gtf_path {
     my $self = shift;
     my $reference_build = shift;
@@ -153,14 +173,10 @@ sub execute {
 
   my $reference_build_id = $reference_build->id;
   my $annotation_build_name = $annotation_build->name;
-  my $annotation_data_dir = $annotation_build->data_directory;
-  my $transcript_info_path = $annotation_data_dir . "/annotation_data/rna_annotation/$reference_build_id-transcript_info.tsv";
   my $gtf_path = $self->_get_gtf_path($reference_build, $annotation_build);
-  unless (-e $transcript_info_path) {
-    die $self->error_message("'There is no transcript info file for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
-  }
-
-  my $ensembl_map = $self->loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
+  my $transcript_info_path = $self->_get_transcript_info_path($reference_build, $annotation_build);
+  my $ensembl_map = $self->loadEnsemblMap('-gtf_path'=>$gtf_path,
+      '-transcript_info_path'=>$transcript_info_path);
 
   #Get Entrez and Ensembl data for gene name mappings
   my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
