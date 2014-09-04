@@ -215,14 +215,51 @@ sub _build_workflow {
     return if not $verify_md5_op;
     $self->_verify_md5_op($verify_md5_op);
 
-    my $method = '_build_workflow_to_import_'.$self->original_format;
-    my $previous_op = $self->$method;
-    return if not $previous_op;
+    my $steps_method = '_steps_to_build_workflow_for_'.$self->original_format;
+    my $previous_op = $verify_md5_op;
+    for my $step ( $self->$steps_method ) {
+        $step =~ s/ /_/g;
+        my $add_step_method = '_add_'.$step.'_op_to_workflow';
+        $previous_op = $self->$add_step_method($previous_op);
+        return if not $previous_op;
+    }
 
     my $create_instdata_and_copy_bam_op = $self->_add_create_instdata_and_copy_bam_op_to_workflow($previous_op);
     return if not $create_instdata_and_copy_bam_op;
 
     return $workflow;
+}
+
+sub _steps_to_build_workflow_for_bam {
+    my $self = shift;
+
+    return (
+        'sanitize bam', 'sort bam', 'split bam by rg',
+    );
+}
+
+sub _steps_to_build_workflow_for_fastq {
+    my $self = shift;
+
+    return (
+       'fastqs to bam', 'sort bam',
+    );
+}
+
+sub _steps_to_build_workflow_for_fastq_archive {
+    my $self = shift;
+
+    return (
+       'archive to fastqs', 'fastqs to bam', 'sort bam',
+    );
+}
+
+sub _steps_to_build_workflow_for_sra {
+    my $self = shift;
+
+    return (
+        'sra to bam', 'sanitize bam', 'sort bam', 'split bam by rg',
+    );
 }
 
 sub _add_retrieve_source_path_op_to_workflow {
@@ -271,7 +308,7 @@ sub _add_verify_md5_op_to_workflow {
     return $verify_md5_op;
 }
 
-sub _add_sra_to_bam_op {
+sub _add_sra_to_bam_op_to_workflow {
     my $self = shift;
 
     my $workflow = $self->_workflow;
