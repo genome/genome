@@ -456,11 +456,7 @@ sub _build_workflow_to_import_fastq {
 sub _build_workflow_to_import_bam {
     my $self = shift;
 
-    my $workflow = $self->_workflow;
-    my $verify_md5_op = $self->_verify_md5_op;
-
-    my $helpers = $self->helpers;
-    my $sanitize_bam_op = $self->_add_sanitize_bam_op_to_workflow($verify_md5_op);
+    my $sanitize_bam_op = $self->_add_sanitize_bam_op_to_workflow($self->_verify_md5_op);
     return if not $sanitize_bam_op;
 
     my $sort_bam_op = $self->_add_sort_bam_op_to_workflow($sanitize_bam_op);
@@ -475,10 +471,6 @@ sub _build_workflow_to_import_bam {
 sub _build_workflow_to_import_sra {
     my $self = shift;
 
-    my $workflow = $self->_workflow;
-    my $verify_md5_op = $self->_verify_md5_op;
-
-    my $helpers = $self->helpers;
     my $sra_to_bam_op = $self->_add_sra_to_bam_op;
     return if not $sra_to_bam_op;
 
