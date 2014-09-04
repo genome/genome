@@ -21,7 +21,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam {
         },
     },
     has_output => {
-        downsampled_bam_path => {
+        output_bam_path => {
             is => 'Text',
             calculate_from => [qw/ bam_path /],
             calculate => q| return Genome::InstrumentData::Command::Import::WorkFlow::Helpers->insert_extension_into_bam_path($bam_path, 'downsampled') |,
@@ -88,15 +88,15 @@ sub _downsample_bam {
     my $bam_path = $self->bam_path;
     $self->debug_message("Bam path: $bam_path");
 
-    my $downsampled_bam_path = $self->downsampled_bam_path;
-    $self->debug_message("Downsampled bam path: $downsampled_bam_path");
+    my $output_bam_path = $self->output_bam_path;
+    $self->debug_message("Downsampled bam path: $output_bam_path");
 
     my $downsample_ratio = $self->downsample_ratio;
     $self->debug_message("Downsample ratio: $downsample_ratio");
 
     my $picard_downsample_cmd = Genome::Model::Tools::Picard::Downsample->create(
         input_file => $bam_path,
-        output_file => $downsampled_bam_path,
+        output_file => $output_bam_path,
         downsample_ratio => $downsample_ratio,
         random_seed => 1, # makes bam reproducable
     );
@@ -117,13 +117,11 @@ sub _verify_read_count {
     my $self = shift;
     $self->debug_message('Verify read count...');
 
-    #FIXME calc expected read count
-
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
     my $flagstat = $helpers->load_or_run_flagstat($self->bam_path);
     return if not $flagstat;
 
-    my $downsampled_flagstat = $helpers->load_or_run_flagstat($self->downsampled_bam_path);
+    my $downsampled_flagstat = $helpers->load_or_run_flagstat($self->output_bam_path);
     return if not $downsampled_flagstat;
 
     $self->debug_message('Undownsampled bam read count: '.$flagstat->{total_reads});

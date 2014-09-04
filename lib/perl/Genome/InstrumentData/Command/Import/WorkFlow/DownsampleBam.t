@@ -62,13 +62,13 @@ $cmd = Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam->create(
 );
 ok($cmd, 'create');
 ok($cmd->execute, 'execute');
-my $downsampled_bam_path = $cmd->downsampled_bam_path;
+my $output_bam_path = $cmd->output_bam_path;
 my $downsampled_bam_base_name = 'test.downsampled.bam';
-is($downsampled_bam_path, $tmp_dir.'/'.$downsampled_bam_base_name, 'downsampled bam path named correctly');
-ok(-s $downsampled_bam_path, 'downsampled bam path exists');
-is(File::Compare::compare($downsampled_bam_path, $test_dir.'/'.$downsampled_bam_base_name), 0, 'downsampled bam matches');
-ok(-s $downsampled_bam_path.'.flagstat', 'flagstat path exists');
-is(File::Compare::compare($downsampled_bam_path.'.flagstat', $test_dir.'/'.$downsampled_bam_base_name.'.flagstat'), 0, 'flagstat matches');
+is($output_bam_path, $tmp_dir.'/'.$downsampled_bam_base_name, 'downsampled bam path named correctly');
+ok(-s $output_bam_path, 'downsampled bam path exists');
+is(File::Compare::compare($output_bam_path, $test_dir.'/'.$downsampled_bam_base_name), 0, 'downsampled bam matches');
+ok(-s $output_bam_path.'.flagstat', 'flagstat path exists');
+is(File::Compare::compare($output_bam_path.'.flagstat', $test_dir.'/'.$downsampled_bam_base_name.'.flagstat'), 0, 'flagstat matches');
 ok(!glob($bam_path.'*'), 'removed bam path and auxillary files after down sampling');
 
 #print "$tmp_dir\n"; <STDIN>;
