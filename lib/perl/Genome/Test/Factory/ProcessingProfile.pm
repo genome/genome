@@ -19,7 +19,7 @@ sub generate_obj {
     {
         # Override this method so we don't crash because of similarities with existing production profiles
         no warnings 'redefine';
-        local *Genome::ProcessingProfile::_validate_no_existing_processing_profiles_with_idential_params = sub { return 1;};
+        local *Genome::ProcessingProfile::_validate_no_existing_processing_profiles_with_identical_params = sub { return 1;};
         $pp = $pp_class->create(@_);
     }
     return $pp;

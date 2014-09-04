@@ -136,7 +136,7 @@ sub create {
     }
 
     # Identical PPs
-    $subclass->_validate_no_existing_processing_profiles_with_idential_params(%params)
+    $subclass->_validate_no_existing_processing_profiles_with_identical_params(%params)
         or return;
 
     #unless ($params{'subclass_name'}) {
@@ -189,7 +189,7 @@ sub _validate_name_and_uniqueness {
     return 1;
 }
 
-sub _validate_no_existing_processing_profiles_with_idential_params {
+sub _validate_no_existing_processing_profiles_with_identical_params {
     my ($subclass, %params) = @_;
     my @existing_pp = _profiles_matching_subclass_and_params($subclass,%params);
 
