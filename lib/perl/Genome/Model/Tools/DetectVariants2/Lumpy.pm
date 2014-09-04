@@ -9,10 +9,20 @@ use Genome;
 use File::Basename;
 use IPC::System::Simple;
 
-class Genome::Model::Tools::DetectVariants2::Lumpy {is => 'Genome::Model::Tools::DetectVariants2::Detector',};
+class Genome::Model::Tools::DetectVariants2::Lumpy {
+    is => 'Genome::Model::Tools::DetectVariants2::Detector',
+    has_optional => [
+        _legend_output => {
+            calculate_from => ['_temp_staging_directory'],
+            calculate => q{ File::Spec->join($_temp_staging_directory, 'legend.tsv'); },
+        },
+    ]
+};
 
 sub _detect_variants {
     my $self = shift;
+
+    $self->write_header_to_legend_file;
 
     my @final_paired_end_parameters;
     my @final_split_read_parameters;
@@ -22,10 +32,12 @@ sub _detect_variants {
         for my $bam (split_bam_by_readgroup($input_bam)) {
             if ($self->paired_end_base_params) {
                 push(@final_paired_end_parameters, $self->paired_end_parameters_for_bam($bam, $id));
+                $self->write_id_mapping_to_legend_file($bam, $id);
                 $id++;
             }
             if ($self->split_read_base_params) {
                 push(@final_split_read_parameters, $self->split_read_parameters_for_bam($bam, $id));
+                $self->write_id_mapping_to_legend_file($bam, $id);
                 $id++;
             }
         }
@@ -38,6 +50,54 @@ sub _detect_variants {
         output_files                 => [$self->_sv_staging_output],
         allow_zero_size_output_files => 1,
     );
+}
+
+sub write_header_to_legend_file {
+    my $self = shift;
+
+    my $legend_file = Genome::Sys->open_file_for_appending($self->_legend_output);
+    print $legend_file join("\t", 'id', 'read group ID', 'read roup LB') . "\n";
+    close $legend_file;
+}
+
+sub write_id_mapping_to_legend_file {
+    my ($self, $bam, $id) = @_;
+
+    my ($read_group_id, $read_group_lib) = $self->extract_id_and_lib_values($bam);
+    my $legend_file = Genome::Sys->open_file_for_appending($self->_legend_output);
+    print $legend_file join("\t", $id, $read_group_id, $read_group_lib) . "\n";
+    close $legend_file;
+}
+
+sub extract_id_and_lib_values {
+    my ($self, $bam) = @_;
+
+    my @read_group_command = qq(samtools view -H $bam | grep \@RG);
+    my $read_groups_string = IPC::System::Simple::capture(@read_group_command);
+    my @read_groups = split("\n", $read_groups_string);
+
+    for my $read_group (@read_groups) {
+        if ($read_group =~ m/ID:(.*?)\s.*LB:(.*?)\s/) {
+            my $read_group_id = $1;
+            my $read_group_lib = $2;
+            next unless $self->is_correct_read_group($bam, $read_group_id);
+            return ($read_group_id, $read_group_lib);
+        }
+        else {
+            die $self->error_message("Couldn't determine ID and LB from read group: $read_group");
+        }
+    }
+
+    die $self->error_message("Not able to determine ID and LB from read groups: $read_groups_string");
+}
+
+sub is_correct_read_group {
+    my ($self, $bam, $id) = @_;
+
+    my @reads_with_id_command = qq(bamtools filter -tag  RG:$id -in $bam  | bamtools count);
+    my $reads_with_id = IPC::System::Simple::capture(@reads_with_id_command);
+    chomp $reads_with_id;
+    return $reads_with_id > 0;
 }
 
 sub split_bam_by_readgroup {
@@ -132,7 +192,7 @@ sub calculate_metrics {
         $metrics{histogram} = $histogram;
     }
     else {
-        die "ERROR couldn't determine mean and standard deviation: $statistics_output";
+        die $self->error_message("Couldn't determine mean and standard deviation: $statistics_output");
     }
 
     return %metrics;

@@ -84,12 +84,23 @@ subtest 'parameter parsing' => sub {
     dies_ok(sub {$command2->params_hash}, 'Lumpy command with malformed parameters dies');
 };
 
+subtest 'read group values' => sub {
+    my ($id, $lib) = $command->extract_id_and_lib_values($tumor_bam);
+    is($id, '2883581792-2883255521', 'ID value extracted correctly');
+    is($lib, 'TEST-patient1-somval_tumor1-extlibs', 'LB value extracted correctly');
+};
+
 subtest "Execute" => sub {
     ok($command->execute, 'Executed `gmt detect-variants2 lumpy` command');
     compare_ok(
         File::Spec->join($output_dir, 'svs.hq'),
         File::Spec->join($test_dir, '1_svs.hq'),
         'Output file as expected'
+    );
+    compare_ok(
+        File::Spec->join($output_dir, 'legend.tsv'),
+        File::Spec->join($test_dir, 'legend.tsv'),
+        'Legend file as expected'
     );
 };
 
@@ -115,6 +126,11 @@ subtest "test file without split reads" => sub {
         File::Spec->join($test_dir, 'wo_sr1_svs.hq'),
         'Output file as expected'
     );
+    compare_ok(
+        File::Spec->join($output_dir2, 'legend.tsv'),
+        File::Spec->join($test_dir, 'legend.split_reads.tsv'),
+        'Legend file as expected'
+    );
 };
 
 subtest "test matched samples" => sub {
@@ -139,6 +155,11 @@ subtest "test matched samples" => sub {
         File::Spec->join($output_dir2, 'svs.hq'),
         File::Spec->join($test_dir, 'match_svs.hq'),
         'Output file as expected'
+    );
+    compare_ok(
+        File::Spec->join($output_dir2, 'legend.tsv'),
+        File::Spec->join($test_dir, 'legend.matched.tsv'),
+        'Legend file as expected'
     );
 };
 
