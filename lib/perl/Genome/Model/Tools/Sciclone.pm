@@ -214,7 +214,7 @@ sub help_brief {
 sub help_synopsis {
     return <<EOS
         Inputs of variant readcounts and copy-number segmentation data, Output of cluster assignments and pdf plots.
-EXAMPLE:	gmt validation sciclone --variant-files snvs.txt,snvs2.txt --sample-names 'Sample1,Sample2' --copy-number-files segs.paired.dat,segs2.paired.dat --clusters-file clusters.out --r-script-file run.R --plot-1d-file output.1d.pdf
+EXAMPLE:	gmt sciclone --variant-files snvs.txt,snvs2.txt --sample-names 'Sample1,Sample2' --copy-number-files segs.paired.dat,segs2.paired.dat --clusters-file clusters.out --r-script-file run.R --plot-1d-file output.1d.pdf
 
 EOS
 }
