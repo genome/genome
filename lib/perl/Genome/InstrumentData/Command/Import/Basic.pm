@@ -51,7 +51,7 @@ class Genome::InstrumentData::Command::Import::Basic {
     },
     has_optional_transient => [
         _workflow => {},
-        _verify_md5_op => {},
+        _verify_not_imported_op => {},
         _working_directory => { is => 'Text', },
         _instrument_data_properties => { is => 'Hash', },
         _new_instrument_data => { is => 'Genome::InstrumentData', is_many => 1 },
@@ -211,12 +211,12 @@ sub _build_workflow {
     my $retrieve_source_path_op = $self->_add_retrieve_source_path_op_to_workflow;
     return if not $retrieve_source_path_op;
 
-    my $verify_md5_op = $self->_add_verify_md5_op_to_workflow($retrieve_source_path_op);
-    return if not $verify_md5_op;
-    $self->_verify_md5_op($verify_md5_op);
+    my $verify_not_imported_op = $self->_add_verify_not_imported_op_to_workflow($retrieve_source_path_op);
+    return if not $verify_not_imported_op;
+    $self->_verify_not_imported_op($verify_not_imported_op);
 
     my $steps_method = '_steps_to_build_workflow_for_'.$self->original_format;
-    my $previous_op = $verify_md5_op;
+    my $previous_op = $verify_not_imported_op;
     for my $step ( $self->$steps_method ) {
         $step =~ s/ /_/g;
         my $add_step_method = '_add_'.$step.'_op_to_workflow';
@@ -284,28 +284,28 @@ sub _add_retrieve_source_path_op_to_workflow {
     return $retrieve_source_path_op;
 }
 
-sub _add_verify_md5_op_to_workflow {
+sub _add_verify_not_imported_op_to_workflow {
     my ($self, $retrieve_source_path_op) = @_;
 
     die 'No retrieve source files operation given!' if not $retrieve_source_path_op;
 
     my $workflow = $self->_workflow;
-    my $verify_md5_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'verify md5');
+    my $verify_not_imported_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'verify md5');
     $workflow->add_link(
         left_operation => $workflow->get_input_connector,
         left_property => 'working_directory',
-        right_operation => $verify_md5_op,
+        right_operation => $verify_not_imported_op,
         right_property => 'working_directory',
     );
     $workflow->add_link(
         left_operation => $retrieve_source_path_op,
         left_property => 'destination_path',
-        right_operation => $verify_md5_op,
+        right_operation => $verify_not_imported_op,
         right_property => 'source_path',
    );
-   $verify_md5_op->parallel_by('source_path') if $self->source_files > 1;
+   $verify_not_imported_op->parallel_by('source_path') if $self->source_files > 1;
 
-    return $verify_md5_op;
+    return $verify_not_imported_op;
 }
 
 sub _add_sra_to_bam_op_to_workflow {
@@ -316,7 +316,7 @@ sub _add_sra_to_bam_op_to_workflow {
     for my $property_mapping ( [qw/ working_directory working_directory /], [qw/ source_path sra_path /] ) {
         my ($left_property, $right_property) = @$property_mapping;
         $workflow->add_link(
-            left_operation => $self->_verify_md5_op,
+            left_operation => $self->_verify_not_imported_op,
             left_property => $left_property,
             right_operation => $sra_to_bam_op,
             right_property => $right_property,
@@ -344,7 +344,7 @@ sub _add_archive_to_fastqs_op_to_workflow {
         right_property => 'working_directory',
     );
     $self->_workflow->add_link(
-        left_operation => $self->_verify_md5_op,
+        left_operation => $self->_verify_not_imported_op,
         left_property => 'source_path',
         right_operation => $archive_to_fastqs_op,
         right_property => 'archive_path',
@@ -458,7 +458,7 @@ sub _add_create_instdata_and_copy_bam_op_to_workflow {
     );
 
     $workflow->add_link(
-        left_operation => $self->_verify_md5_op,
+        left_operation => $self->_verify_not_imported_op,
         left_property => 'source_md5',
         right_operation => $create_instdata_and_copy_bam_op,
         right_property => 'source_md5s',
@@ -505,7 +505,7 @@ sub _build_workflow_to_import_fastq_archive {
 sub _build_workflow_to_import_fastq {
     my $self = shift;
 
-    my $fastqs_to_bam_op = $self->_add_fastqs_to_bam_op_to_workflow($self->_verify_md5_op);
+    my $fastqs_to_bam_op = $self->_add_fastqs_to_bam_op_to_workflow($self->_verify_not_imported_op);
     return if not $fastqs_to_bam_op;
 
     my $sort_bam_op = $self->_add_sort_bam_op_to_workflow($fastqs_to_bam_op);
@@ -517,7 +517,7 @@ sub _build_workflow_to_import_fastq {
 sub _build_workflow_to_import_bam {
     my $self = shift;
 
-    my $sanitize_bam_op = $self->_add_sanitize_bam_op_to_workflow($self->_verify_md5_op);
+    my $sanitize_bam_op = $self->_add_sanitize_bam_op_to_workflow($self->_verify_not_imported_op);
     return if not $sanitize_bam_op;
 
     my $sort_bam_op = $self->_add_sort_bam_op_to_workflow($sanitize_bam_op);

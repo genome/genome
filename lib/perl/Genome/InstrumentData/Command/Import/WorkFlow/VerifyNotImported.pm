@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5;
+package Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 require File::Basename;
 
-class Genome::InstrumentData::Command::Import::WorkFlow::VerifyMd5 { 
+class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported { 
     is => 'Command::V2',
     has_input => [
         working_directory => {
