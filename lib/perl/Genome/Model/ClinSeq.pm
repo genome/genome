@@ -27,7 +27,7 @@ class Genome::Model::ClinSeq {
 
         #processing_profile      => { is => 'Genome::ProcessingProfile::ClinSeq', id_by => 'processing_profile_id', default_value => { } },
     ],
-    has_optional_param => [ # Processing profile parameters
+    has_param => [ # Processing profile parameters
         bam_readcount_version => { is => 'Text', doc => 'The bam readcount version to use during clonality analysis' },
     ],
     has_optional_metric => [
