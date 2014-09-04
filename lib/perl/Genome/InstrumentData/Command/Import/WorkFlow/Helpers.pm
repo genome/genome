@@ -110,18 +110,6 @@ sub source_file_format {
 
     Carp::confess('No source file to get format!') if not $source_file;
 
-    my $source_file_base_name = File::Basename::basename($source_file);
-    my @parts = split(/\./, $source_file_base_name);
-    my $suffix;
-    do {
-        $suffix = pop @parts;
-    } until not defined $suffix or ( $suffix !~ /t?gz/ and $suffix ne 'tar' );
-
-    if ( not $suffix ) {
-        $self->error_message("Failed to get suffix from source file! $source_file");
-        return;
-    }
-
     my %suffixes_to_original_format = (
         fastq => 'fastq',
         fq => 'fastq',
@@ -131,13 +119,16 @@ sub source_file_format {
         bam => 'bam',
         sra => 'sra',
     );
-    my $format = $suffixes_to_original_format{$suffix};
-    if ( not $format ) {
+    $source_file =~ s/\Q\.$_\E$// for Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs->types;
+    my ($source_file_base_name, $path, $suffix) = File::Basename::fileparse(
+        $source_file, keys %suffixes_to_original_format
+    );
+    if ( not $suffix or not $suffixes_to_original_format{$suffix} ) {
         $self->error_message('Unrecognized source file format! '.$source_file_base_name);
         return;
     }
 
-    return $format;
+    return $suffixes_to_original_format{$suffix};
 }
 
 sub verify_adequate_disk_space_is_available_for_source_files {
