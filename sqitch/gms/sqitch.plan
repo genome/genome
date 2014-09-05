@@ -325,4 +325,4 @@ config.subject_mapping_subject_index [config.subject_mapping] 2014-08-14T19:33:0
 unconstrain_model_name_length [model_model] 2014-09-04T13:19:39Z Thomas B. Mooney <tmooney@genome.wustl.edu> # remove 255 char limit on names
 @1409840677 2014-09-04T14:24:38Z Thomas B. Mooney <tmooney@genome.wustl.edu># Allow longer names for models.
 
-disk.allocation_finalizer [disk_allocation] 2014-09-04T20:44:24Z Nathaniel Nutter <nnutter@genome.wustl.edu> # add disk.allocation_finalizer table
+disk.allocation_permission_scheme [disk_allocation] 2014-09-04T20:44:24Z Nathaniel Nutter <nnutter@genome.wustl.edu> # add disk.allocation_permission_scheme table

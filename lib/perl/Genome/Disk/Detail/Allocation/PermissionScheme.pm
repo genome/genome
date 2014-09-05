@@ -1,4 +1,4 @@
-package Genome::Disk::Detail::Allocation::Finalizer;
+package Genome::Disk::Detail::Allocation::PermissionScheme;
 
 use strict;
 use warnings;
@@ -10,8 +10,8 @@ use File::stat qw(stat);
 use Path::Class::Dir qw();
 
 
-class Genome::Disk::Detail::Allocation::Finalizer {
-    table_name => 'disk.allocation_finalizer',
+class Genome::Disk::Detail::Allocation::PermissionScheme {
+    table_name => 'disk.allocation_permission_scheme',
     data_source => 'Genome::DataSource::GMSchema',
     id_generator => '-uuid',
     id_by => [
@@ -69,7 +69,7 @@ sub create {
 }
 
 
-sub finalize {
+sub apply {
     my $self = shift;
     my $path = shift;
 

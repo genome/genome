@@ -150,14 +150,14 @@ class Genome::Disk::Allocation {
             is_many => 1,
             reverse_as => 'allocation'
         },
-        finalizer_id => {
+        permission_scheme_id => {
             is => 'Text',
             len => 64,
             is_transient => 1, # TODO: remove once column exists
         },
-        finalizer => {
-            is => 'Genome::Disk::Detail::Allocation::Finalizer',
-            id_by => 'finalizer_id',
+        permission_scheme => {
+            is => 'Genome::Disk::Detail::Allocation::PermissionScheme',
+            id_by => 'permission_scheme_id',
         },
     ],
     schema_name => 'GMSchema',
@@ -1045,9 +1045,9 @@ sub finalize {
     my $self = shift;
 
     my $rv = 1;
-    if ($self->finalizer) {
-        unless ($self->finalizer->finalize($self)) {
-            warn qq(finalize failed);
+    if ($self->permission_scheme) {
+        unless ($self->permission_scheme->apply($self)) {
+            warn qq(permissions scheme application failed);
             $rv = undef;
         }
     }
