@@ -13,6 +13,7 @@ use File::Find;
 use File::Find::Rule;
 use Cwd;
 use DateTime;
+use Params::Validate qw(validate);
 use Path::Class::Dir qw();
 
 our $TESTING_DISK_ALLOCATION = 0;
@@ -1064,6 +1065,9 @@ sub finalize {
 sub import_path { # can't be import; maybe gather, pack, transfer
     my $self = shift;
     my $staging_path = shift;
+    my %options = validate(@_, {
+        follow_symlinks => 0,
+    });
 
     my $staging_dir = Path::Class::Dir->new($staging_path);
     my $allocation_dir = Path::Class::Dir->new($self->absolute_path);
@@ -1072,7 +1076,11 @@ sub import_path { # can't be import; maybe gather, pack, transfer
     # SoftwareResult's currently have a practice of creating their scratch
     # and/or staging directories in their allocation.
 
-    unless (system('rsync', '-a', "$staging_dir/", "$allocation_dir/") == 0) {
+    my $rsync_params = '-avz';
+    if ($options{follow_symlinks}) {
+        $rsync_params .= 'L';
+    }
+    unless (system('rsync', $rsync_params, "$staging_dir/", "$allocation_dir/") == 0) {
         croak "rsync failed: $!";
     }
 
