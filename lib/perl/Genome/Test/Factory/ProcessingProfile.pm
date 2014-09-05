@@ -7,6 +7,7 @@ use warnings;
 use Genome;
 use Genome::ProcessingProfile;
 use Genome::Test::Factory::Util;
+use Sub::Override;
 
 our @required_params = qw(name);
 
@@ -18,8 +19,7 @@ sub generate_obj {
     my $pp;
     {
         # Override this method so we don't crash because of similarities with existing production profiles
-        no warnings 'redefine';
-        local *Genome::ProcessingProfile::_validate_no_existing_processing_profiles_with_identical_params = sub { return 1;};
+        my $override = Sub::Override->new('Genome::ProcessingProfile::_validate_no_existing_processing_profiles_with_identical_params', sub {return 1});
         $pp = $pp_class->create(@_);
     }
     return $pp;
