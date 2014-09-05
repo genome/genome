@@ -1064,7 +1064,7 @@ sub finalize {
     return $rv;;
 }
 
-sub import_path { # can't be import; maybe gather, pack, transfer
+sub import_from {
     my $self = shift;
     my $staging_path = shift;
     my %options = validate(@_, {

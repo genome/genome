@@ -17,8 +17,8 @@ my $staging_path_for = sub { File::Spec->join($staging_path, @_) };
 my $allocation_path_for = sub { File::Spec->join($allocation->absolute_path, @_) };;
 setup_staging_path($staging_path->dirname);
 $DB::single = 1;
-my $rv = $allocation->import_path($staging_path->dirname);
-ok($rv, 'import_path returned successful');
+my $rv = $allocation->import_from($staging_path->dirname);
+ok($rv, 'import_from returned successful');
 subtest 'allocation paths exist' => sub {
     plan tests => 3;
     ok(-f $allocation_path_for->('file'));
