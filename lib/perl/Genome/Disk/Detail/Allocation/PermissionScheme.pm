@@ -21,6 +21,10 @@ class Genome::Disk::Detail::Allocation::PermissionScheme {
         },
     ],
     has => [
+        name => {
+            is => 'Text',
+            len => 128,
+        },
         uid => {
             is_optional => 1,
             is => 'Number',
