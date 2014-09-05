@@ -215,9 +215,9 @@ sub _build_workflow {
     return if not $verify_not_imported_op;
     $self->_verify_not_imported_op($verify_not_imported_op);
 
-    my $steps_method = '_steps_to_build_workflow_for_'.$self->original_format;
+    my @steps = $self->_resolve_workflow_steps;
     my $previous_op = $verify_not_imported_op;
-    for my $step ( $self->$steps_method ) {
+    for my $step ( @steps ) {
         $step =~ s/ /_/g;
         my $add_step_method = '_add_'.$step.'_op_to_workflow';
         $previous_op = $self->$add_step_method($previous_op);
@@ -228,6 +228,16 @@ sub _build_workflow {
     return if not $create_instdata_and_copy_bam_op;
 
     return $workflow;
+}
+
+sub _resolve_workflow_steps {
+    my $self = shift;
+
+    my $steps_method = '_steps_to_build_workflow_for_'.$self->original_format;
+    my @steps = $self->$steps_method;
+
+    return @steps;
+
 }
 
 sub _steps_to_build_workflow_for_bam {
