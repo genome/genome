@@ -36,7 +36,7 @@ use Test::More tests => 103;
 my $temp_dir = Genome::Sys->create_temp_directory();
 ok(-d $temp_dir, "created temp directory: $temp_dir") or die;
 
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-TestGenomeCommands/2014-09-03/";
+my $expected_output_dir = __FILE__ .  '.d/';
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 my ($individual, $model_group) = setup_test_data();
