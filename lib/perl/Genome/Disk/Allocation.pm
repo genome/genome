@@ -1052,11 +1052,13 @@ sub finalize {
         }
     }
 
-    # TODO: add finalize event?
-
     unless ($self->reallocate) {
         warn qq(reallocate failed);
         $rv = undef;
+    }
+
+    if ($rv) {
+        Genome::Timeline::Event::Allocation->finalized('finalize()', $self);
     }
 
     return $rv;;
