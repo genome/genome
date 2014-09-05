@@ -214,6 +214,7 @@ sub _merge_annotations {
         input_files => [$self->sorted_input_vcf, $self->sorted_vep_output],
         output_file => $self->final_vcf_file,
         merge_strategy_file => $self->joinx_merge_strategy_file,
+        exact_pos => 1,
     );
     unlink($self->sorted_input_vcf);
     unlink($self->sorted_vep_output);
