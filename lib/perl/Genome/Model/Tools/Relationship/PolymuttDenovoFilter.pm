@@ -19,17 +19,14 @@ class Genome::Model::Tools::Relationship::PolymuttDenovoFilter {
             doc => 'Version of bam readcount to utilize',
         },
     ],
-    has_optional_input => [
+    has_input => [
         model_group_id => {
-            is_optional=>0,
             doc=>'id of model group for family',
         },
         denovo_vcf=> {
-            is_optional=>0,
             doc=>'denovo vcf output for same family',
         },
         output_file=> {
-            is_optional=>0,
             doc=>'binomial test outputs for each individual in the family',
         },
         min_read_qual=> {
@@ -43,8 +40,6 @@ class Genome::Model::Tools::Relationship::PolymuttDenovoFilter {
             default=>"1.0e-4",
         },
     ],
-
-
 };
 
 sub help_brief {
