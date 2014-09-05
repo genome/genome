@@ -13,47 +13,45 @@ use FileHandle;
 class Genome::Model::Tools::Analysis::Concordance {
     is => 'Command',
     has => [
-    bam_file_1 => {
-        is => 'String',
-        is_optional => 1,
-        doc => 'Get indexed bam file #1',
-    },
-
-    bam_file_2 => {
-        is => 'String',
-        is_optional => 1,
-        doc => 'Get indexed bam file #2',
-    },
-
-    model_id_1 => {
-        is => 'String',
-        is_optional => 1,
-        doc => 'Get genome model ID #1',
-    },
-
-    model_id_2 => {
-        is => 'String',
-        is_optional => 1,
-        doc => 'Get genome model ID #2',
-    },
-
-    reference_genome => {
-        is => 'String',
-        is_optional => 1,
-        doc => 'Reference genome of indexed bam files',
-    },
-
-    snp_file => {
-        is => 'String',
-        is_optional => 0,
-        doc => '1-based Tab-delimited file of SNP positions. Three columns required: chr, start, end',
-    },
-
-    output_file => {
-        is => 'String',
-        is_optional => 1,
-        doc => 'Output the numbers and percentages of matched and mismatched SNPs',
-    }
+        bam_file_1 => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'Get indexed bam file #1',
+        },
+        bam_readcount_version => {
+            is => 'Version',
+            doc => 'Version of bam readcount to utilize',
+        },
+        bam_file_2 => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'Get indexed bam file #2',
+        },
+        model_id_1 => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'Get genome model ID #1',
+        },
+        model_id_2 => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'Get genome model ID #2',
+        },
+        reference_genome => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'Reference genome of indexed bam files',
+        },
+        snp_file => {
+            is => 'String',
+            is_optional => 0,
+            doc => '1-based Tab-delimited file of SNP positions. Three columns required: chr, start, end',
+        },
+        output_file => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'Output the numbers and percentages of matched and mismatched SNPs',
+        },
     ]
 };
 
@@ -151,6 +149,7 @@ sub execute {
         region_list => $snp_file,
 #        minimum_mapping_quality => $min_mapping_quality,
         output_file => "$tempdir/norm_rct",
+        use_version => $self->bam_readcount_version,
     );
 
     my $bam_readcount_2 = Genome::Model::Tools::Sam::Readcount->execute(
@@ -159,6 +158,7 @@ sub execute {
         region_list => $snp_file,
 #        minimum_mapping_quality => $min_mapping_quality,
         output_file => "$tempdir/pre_rct",
+        use_version => $self->bam_readcount_version,
     );
 
     # empty result

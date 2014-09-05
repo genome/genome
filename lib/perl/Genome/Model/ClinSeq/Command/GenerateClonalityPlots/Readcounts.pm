@@ -29,7 +29,6 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots::Readcounts {
         },
         bam_readcount_version => {
             is => 'Text',
-            is_optional => 1,
             doc => 'The version of bam-readcounts to use',
         },
     ],

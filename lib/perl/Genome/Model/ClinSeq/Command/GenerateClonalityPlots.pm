@@ -45,6 +45,7 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
         max_normal_vaf      => { is => 'Number', is_optional => 1, default_value => 3,
                                  doc => 'Specify a maximum allowed normal VAF (you will still get another plot with all data)' },
 
+        bam_readcount_version => { is => 'Text', doc => 'The version of bam-readcounts to use', },
     ],
     has_output => [
         cnv_hmm_file => {
@@ -166,7 +167,7 @@ sub execute {
             bam_files => ["Tumor:$tumor_bam", "Normal:$normal_bam"],
             reference_build => $somatic_var_build->reference_sequence_build,
             output_file => $readcounts_outfile,
-            #bam_readcount_version => '', #FIXME should not rely on default versions in a pipeline
+            bam_readcount_version => $self->bam_readcount_version,
         );
         $read_counts_cmd->execute
             or die $self->error_message('Failed to generate readcounts');
