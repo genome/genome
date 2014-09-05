@@ -1093,4 +1093,15 @@ sub import_from {
     $self->finalize();
 }
 
+sub create_from {
+    my $classname = shift;
+    my $staging_path = shift;
+    my $options = shift;
+    unless (ref($options) eq 'HASH') {
+        croak 'second argument must be an options hash ref';
+    }
+    my $allocation = $classname->create(@_);
+    return $allocation->import_from($staging_path, %$options);
+}
+
 1;
