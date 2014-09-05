@@ -426,6 +426,30 @@ sub _add_sort_bam_op_to_workflow {
     return $sort_bam_op;
 }
 
+sub _add_downsample_bam_op_to_workflow {
+    my ($self, $previous_op) = @_;
+
+    die 'No previous op given to _add_downsample_bam_op_to_workflow!' if not $previous_op;
+
+    my $downsample_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'downsample bam');
+    return if not $downsample_bam_op;
+
+    $self->_workflow->add_link(
+        left_operation => $self->_workflow->get_input_connector,
+        left_property => 'downsample_ratio',
+        right_operation => $downsample_bam_op,
+        right_property => 'downsample_ratio',
+    );
+    $self->_workflow->add_link(
+        left_operation => $previous_op,
+        left_property => 'output_bam_path',
+        right_operation => $downsample_bam_op,
+        right_property => 'bam_path',
+    );
+
+    return $downsample_bam_op;
+}
+
 sub _add_split_bam_by_rg_op_to_workflow {
     my ($self, $previous_op) = @_;
 
