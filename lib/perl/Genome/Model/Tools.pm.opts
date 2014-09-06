@@ -4403,6 +4403,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     ],
     '>concordance',
     [
+      'bam-readcount-version=s',
+      undef,
       'snp-file=s',
       'files',
       'bam-file-1=s',
@@ -7659,6 +7661,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     ],
     '>polymutt-denovo-filter',
     [
+      'bam-readcount-version=s',
+      undef,
       'denovo-vcf=s',
       'files',
       'model-group-id=s',
@@ -15597,6 +15601,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     ],
     '>read-counts',
     [
+      'bam-readcount-version=s',
+      undef,
       'minimum-mapping-quality=s',
       'files',
       'normal-bam=s',
@@ -15677,6 +15683,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     ],
     '>ultra-high-confidence',
     [
+      'bam-readcount-version=s',
+      undef,
       'lsf-queue=s',
       'files',
       'lsf-resource=s',
@@ -15717,8 +15725,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'skip-if-output-present!',
       undef,
-      'use-readcounts=s',
-      'files',
       'verbose!',
       undef,
       'help!',
