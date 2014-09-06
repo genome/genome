@@ -20,7 +20,7 @@ dbsnp_build: 127786607 of dbsnp-GRCh37-lite-build37 (version 137)
 previously_discovered_variations: 127786607 of dbsnp-GRCh37-lite-build37 (version 137)
 cancer_annotation_db: tgi/cancer-annotation/human/build37-20140205.1 (/gsc/scripts/opt/genome/db/tgi/cancer-annotation/human/build37-20140205)
 misc_annotation_db: tgi/misc-annotation/human/build37-20130113.1 (/gsc/scripts/opt/genome/db/tgi/misc-annotation/human/build37-20130113)
-cosmic_annotation_db: cosmic/65.1 (/gsc/scripts/opt/genome/db/cosmic/65_v1)
+cosmic_annotation_db: cosmic/65.3 (/gsc/scripts/opt/genome/db/cosmic/65_v3)
 
 EXAMINE SAMPLES
 Found 2 samples:
