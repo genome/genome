@@ -2253,6 +2253,8 @@ $Genome::Command::OPTS_SPEC = [
       [
         'name=s',
         'files',
+        'bam-readcount-version=s',
+        'files',
         'based-on=s',
         undef,
         'describe!',
@@ -6662,6 +6664,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>generate-clonality-plots',
       [
+        'bam-readcount-version=s',
+        'files',
         'read-counts=s',
         'files',
         'verbose!',
@@ -15905,6 +15909,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>concordance',
       [
+        'bam-readcount-version=s',
+        undef,
         'snp-file=s',
         'files',
         'bam-file-1=s',
@@ -19161,6 +19167,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>polymutt-denovo-filter',
       [
+        'bam-readcount-version=s',
+        undef,
         'denovo-vcf=s',
         'files',
         'model-group-id=s',
@@ -27099,6 +27107,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>read-counts',
       [
+        'bam-readcount-version=s',
+        undef,
         'minimum-mapping-quality=s',
         'files',
         'normal-bam=s',
@@ -27179,6 +27189,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>ultra-high-confidence',
       [
+        'bam-readcount-version=s',
+        undef,
         'lsf-queue=s',
         'files',
         'lsf-resource=s',
@@ -27219,8 +27231,6 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'skip-if-output-present!',
         undef,
-        'use-readcounts=s',
-        'files',
         'verbose!',
         undef,
         'help!',
@@ -38306,6 +38316,15 @@ $Genome::Command::OPTS_SPEC = [
         'normal-sample=s',
         undef,
         'coverage-models=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>germline-only',
+      [
+        'model=s',
+        undef,
+        'output-directory=s',
         undef,
         'help!',
         undef
