@@ -6499,12 +6499,12 @@ $Genome::Command::OPTS_SPEC = [
         [
           'builds=s@',
           undef,
-          'gene-category-sum=s',
-          undef,
-          'outdir=s',
-          'files',
           'outfile=s',
           'files',
+          'outdir=s',
+          'files',
+          'gene-category-sum=s',
+          undef,
           'help!',
           undef
         ],
