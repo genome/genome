@@ -1,4 +1,4 @@
-package Genome::File::TypedStream;
+package Genome::File::TypedReader;
 
 use Carp qw/confess/;
 use Genome;
