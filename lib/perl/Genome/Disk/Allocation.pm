@@ -1083,10 +1083,6 @@ sub import_from {
         $rsync_params .= 'L';
     }
     unless (system('rsync', $rsync_params, "$staging_dir/", "$allocation_dir/") == 0) {
-        # Should this delete really be here?  Whatever created it should be
-        # responsible for deleting it; ideally by a transaction.  It is here
-        # because Genome::SoftwareResult::_promote_data did it.
-        $self->delete;
         croak "rsync failed: $!";
     }
 
