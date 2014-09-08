@@ -1100,8 +1100,14 @@ sub create_from {
     unless (ref($options) eq 'HASH') {
         croak 'second argument must be an options hash ref';
     }
+    my $tx = UR::Context::Transaction->begin();
     my $allocation = $classname->create(@_);
-    return $allocation->import_from($staging_path, %$options);
+    my $rv = $allocation->import_from($staging_path, %$options);
+    if ($rv) {
+        $tx->commit;
+    } else {
+        $tx->rollback;
+    }
 }
 
 1;
