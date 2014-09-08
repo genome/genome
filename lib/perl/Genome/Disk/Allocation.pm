@@ -156,7 +156,7 @@ class Genome::Disk::Allocation {
             is_transient => 1, # TODO: remove once column exists
         },
         permission_scheme => {
-            is => 'Genome::Disk::Detail::Allocation::PermissionScheme',
+            is => 'Genome::Disk::PermissionScheme',
             id_by => 'permission_scheme_id',
         },
     ],

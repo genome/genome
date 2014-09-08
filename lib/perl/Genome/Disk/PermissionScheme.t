@@ -17,14 +17,14 @@ unless (defined $gid) {
     die 'must have supplementary groups to run this test';
 }
 my $owner = Genome::Sys::User->get(username => Genome::Sys->username);
-my $permission_scheme = Genome::Disk::Detail::Allocation::PermissionScheme->create(
+my $permission_scheme = Genome::Disk::PermissionScheme->create(
     gid => $gid,
     min_mode => oct(2550),
     max_mode => oct(7770),
     file_min_mask => oct(7111),
 );
 
-ok(exception { Genome::Disk::Detail::Allocation::PermissionScheme->create(uid => 0) },
+ok(exception { Genome::Disk::PermissionScheme->create(uid => 0) },
     'an exception is thrown when creating a permission scheme with a uid');
 
 my $staging_path = File::Temp->newdir();

@@ -1,4 +1,4 @@
-package Genome::Disk::Detail::Allocation::PermissionScheme;
+package Genome::Disk::PermissionScheme;
 
 use strict;
 use warnings;
@@ -10,7 +10,7 @@ use File::stat qw(stat);
 use Path::Class::Dir qw();
 
 
-class Genome::Disk::Detail::Allocation::PermissionScheme {
+class Genome::Disk::PermissionScheme {
     table_name => 'disk.allocation_permission_scheme',
     data_source => 'Genome::DataSource::GMSchema',
     id_generator => '-uuid',
