@@ -1094,14 +1094,14 @@ sub import_from {
 }
 
 sub create_from {
-    my $classname = shift;
+    my $class = shift;
     my $staging_path = shift;
     my $options = shift;
     unless (ref($options) eq 'HASH') {
         croak 'second argument must be an options hash ref';
     }
     my $tx = UR::Context::Transaction->begin();
-    my $allocation = $classname->create(@_);
+    my $allocation = $class->create(@_);
     my $rv = $allocation->import_from($staging_path, %$options);
     if ($rv) {
         $tx->commit;
