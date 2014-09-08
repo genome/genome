@@ -53,6 +53,16 @@ ok($profile_item_from_file->file_path ne $custom_config_file_path, 'it should no
 is(Genome::Sys->read_file($profile_item_from_file->file_path), $custom_config_file_contents, 'it should copy the original file to the new location');
 ok(!$profile_item_from_file->analysis_menu_item, 'it should not have a menu item selected');
 
+my @tags = map {
+    Genome::Config::Tag->create(
+        name => 'Genome::Config::Profile::Item test ' . $_,
+        description => 'a test for tags',
+    )
+} (1..3);
+Genome::Config::Tag::Profile::Item->create(profile_item => $profile_item_from_menu_item, tag => $tags[0]);
+Genome::Config::Tag::Profile::Item->create(profile_item => $profile_item_from_menu_item, tag => $tags[2]);
+is_deeply([sort $profile_item_from_menu_item->tag_names], [sort($tags[0]->name, $tags[2]->name)], 'found assigned tag names for profile item');
+
 
 sub _create_file_with_contents {
     my $contents = shift;
