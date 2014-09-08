@@ -1083,7 +1083,8 @@ sub import_from {
         $rsync_params .= 'L';
     }
     unless (system('rsync', $rsync_params, "$staging_dir/", "$allocation_dir/") == 0) {
-        croak "rsync failed: $!";
+        $self->warning_message("rsync failed");
+        return;
     }
 
     $self->finalize();
