@@ -11,6 +11,7 @@ use above 'Genome';
 use Genome::Test::Factory::Config::Profile::Item;
 
 use Test::More tests => 10;
+use Test::Deep qw(cmp_bag);
 
 use_ok('Genome::Config::AnalysisProject::Command::UntagConfigFile') or die 'Command cannot be used.';
 
@@ -41,8 +42,4 @@ ok($cmd->execute, 'executed command');
 
 my (@assigned_tags) = $profile_item->tags;
 is(scalar(@assigned_tags), 2, 'one tag removed from assignment');
-is_deeply(
-    [sort map $_->id, @assigned_tags],
-    [sort map $_->id, @tags[0,2]],
-    'remaining tags are the expected tags'
-);
+cmp_bag(\@assigned_tags, [@tags[0,2]], 'remaining tags are the expected tags');

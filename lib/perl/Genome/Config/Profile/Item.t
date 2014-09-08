@@ -5,6 +5,7 @@ use warnings;
 
 use above 'Genome';
 use Test::More;
+use Test::Deep qw(cmp_bag);
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -61,7 +62,7 @@ my @tags = map {
 } (1..3);
 Genome::Config::Tag::Profile::Item->create(profile_item => $profile_item_from_menu_item, tag => $tags[0]);
 Genome::Config::Tag::Profile::Item->create(profile_item => $profile_item_from_menu_item, tag => $tags[2]);
-is_deeply([sort $profile_item_from_menu_item->tag_names], [sort($tags[0]->name, $tags[2]->name)], 'found assigned tag names for profile item');
+cmp_bag([$profile_item_from_menu_item->tag_names], [map $_->name, @tags[0,2]], 'found assigned tag names for profile item');
 
 
 sub _create_file_with_contents {
