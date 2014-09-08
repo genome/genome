@@ -13,6 +13,7 @@ use Test::More;
 use Genome::Utility::Test qw(compare_ok);
 use Set::Scalar;
 use List::MoreUtils qw(each_array);
+use Genome::File::Vcf::Entry;
 
 my $pkg = 'Genome::VariantReporting::Reporter::VcfReporter';
 use_ok($pkg);
