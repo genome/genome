@@ -18,7 +18,7 @@ class Genome::Command::WorkflowMixin {
             is => 'Int',
             is_optional => 1,
             default_value => 5,
-            doc => 'Parallel by stages with this many steps will be summarized.  Negative values disable summarizing.'
+            doc => 'Parallel by stages with this many steps will be summarized. Use zero to summarize every step. Use a negative value to never summarize.'
         },
         connectors => {
             is => 'Boolean',
@@ -238,7 +238,7 @@ sub _should_summarize {
     my ($self, $child_bunch) = @_;
 
     if ((scalar(@$child_bunch) >= $self->summary_threshold) and
-        ($self->summary_threshold > 0)) {
+        ($self->summary_threshold >= 0)) {
         return 1;
     } else {
         return 0;
