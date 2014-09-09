@@ -48,6 +48,23 @@ class Genome::Config::Profile::Item {
             to => 'model',
             is_many => 1,
         },
+        tag_bridges => {
+            is => 'Genome::Config::Tag::Profile::Item',
+            reverse_as => 'profile_item',
+            is_many => 1,
+        },
+        tags => {
+            is => 'Genome::Config::Tag',
+            via => 'tag_bridges',
+            to => 'tag',
+            is_many => 1,
+        },
+        tag_names => {
+            is => 'Text',
+            via => 'tags',
+            to => 'name',
+            is_many => 1,
+        },
     ],
 };
 
