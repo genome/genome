@@ -8,7 +8,7 @@ use Genome;
 # to provide the most useful examples possible
 our $DEFAULT_CANCER_ANNOTATION_DB_ID    = 'tgi/cancer-annotation/human/build37-20140205.1';
 our $DEFAULT_MISC_ANNOTATION_DB_ID      = 'tgi/misc-annotation/human/build37-20130113.1';
-our $DEFAULT_COSMIC_ANNOTATION_DB_ID    = 'cosmic/65.1';
+our $DEFAULT_COSMIC_ANNOTATION_DB_ID    = 'cosmic/65.3';
 
 class Genome::Model::ClinSeq {
     is => 'Genome::Model',
@@ -27,11 +27,8 @@ class Genome::Model::ClinSeq {
 
         #processing_profile      => { is => 'Genome::ProcessingProfile::ClinSeq', id_by => 'processing_profile_id', default_value => { } },
     ],
-    has_optional_param => [
-        #Processing profile parameters would go in here
-        #someparam1 => { is => 'Number', doc => 'blah' },
-        #someparam2 => { is => 'Boolean', doc => 'blah' },
-        #someparam2 => { is => 'Text', valid_values => ['a','b','c'], doc => 'blah' },
+    has_param => [ # Processing profile parameters
+        bam_readcount_version => { is => 'Text', doc => 'The bam readcount version to use during clonality analysis' },
     ],
     has_optional_metric => [
         common_name         => { is => 'Text', doc => 'the name chosen for the root directory in the build' },
@@ -235,6 +232,7 @@ sub map_workflow_inputs {
       cancer_annotation_db => $cancer_annotation_db,
       misc_annotation_db => $misc_annotation_db,
       cosmic_annotation_db => $cosmic_annotation_db,
+      bam_readcount_version => $self->bam_readcount_version,
   );
 
   my $annotation_build = $self->_resolve_annotation;
@@ -903,6 +901,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'wgs_build', $clonality_op, 'somatic_var_build');
     $add_link->($input_connector, 'clonality_dir', $clonality_op, 'output_dir');
     $add_link->($input_connector, 'common_name', $clonality_op, 'common_name');
+    $add_link->($input_connector, 'bam_readcount_version', $clonality_op, 'bam_readcount_version');
     $add_link->($clonality_op, 'result', $output_connector, 'clonality_result');
   }
 

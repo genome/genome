@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 4;
+use Test::More tests => 5;
 use above 'Genome';
 
 use_ok('Genome::Config::AnalysisProject::View::Solr::Xml') or die 'failed to use module';
@@ -19,4 +19,4 @@ isa_ok($view, 'Genome::Config::AnalysisProject::View::Solr::Xml', 'created view'
 my $xml = $view->_generate_content();
 ok($xml, 'view returns XML');
 
-
+ok(!($view->__errors__), 'view should not have errors') or diag explain $view->__errors__;

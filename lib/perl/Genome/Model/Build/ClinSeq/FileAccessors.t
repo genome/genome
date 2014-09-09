@@ -21,6 +21,10 @@ is($b->rnaseq_dir, $case_dir . "/rnaseq", "found rnaseq_dir");
 is($b->sv_dir, $case_dir . "/sv", "found sv_dir");
 is($b->variant_sc_dir, $case_dir . "/variant_source_callers", "found variant_sc_dir");
 is($b->mutation_spectrum_dir, $case_dir . "/mutation-spectrum", "found mutation_spectrum_dir");
+is($b->rnaseq_dir, $case_dir . "/rnaseq", "found rnaseq_dir");
+is($b->sv_dir, $case_dir . "/sv", "found sv_dir");
+is($b->variant_sc_dir, $case_dir . "/variant_source_callers", "found variant_sc_dir");
+is($b->mutation_spectrum_dir, $case_dir . "/mutation-spectrum", "found mutation_spectrum_dir");
 is($b->variant_sc_wgs_dir, $case_dir . "/variant_source_callers/wgs", "found variant_sc_wgs_dir");
 is($b->variant_sc_exome_dir, $case_dir . "/variant_source_callers/exome", "found variant_sc_exome_dir");
 is($b->rnaseq_tumor_dir, $case_dir . "/rnaseq/tumor", "found snv_dir");
@@ -92,4 +96,5 @@ is($b->mutation_spectrum_wgs_summary_file, $case_dir . "/mutation-spectrum/wgs/s
     "found wgs mut-spec summary file");
 is($b->mutation_spectrum_exome_summary_file, $case_dir . "/mutation-spectrum/exome/summarize_mutation_spectrum/mutation_spectrum.tsv",
     "found exome mut-spec summary file");
+
 done_testing()

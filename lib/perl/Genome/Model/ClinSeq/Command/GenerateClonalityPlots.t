@@ -26,6 +26,7 @@ my $somvar_build = Genome::Model::Build->get($somvar_build_id);
 ok($somvar_build, "Got somatic variation build from id: $somvar_build_id") or die;
 
 my $cmd = Genome::Model::ClinSeq::Command::GenerateClonalityPlots->create(
+    bam_readcount_version => 0.6,
     somatic_var_build => $somvar_build,
     misc_annotation_db => Genome::Db->get("tgi/misc-annotation/human/build37-20130113.1"),
     chromosome => '22',

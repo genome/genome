@@ -30,4 +30,6 @@ my $project_view = Genome::Project::View::Solr::Xml->create(subject => $project)
 isa_ok($project_view, 'UR::Object::View', '$project_view');
 ok($project_view->content, 'generated content of project view');
 
+ok(!($project_view->__errors__), 'view has no errors');
+
 done_testing();

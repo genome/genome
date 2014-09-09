@@ -23,7 +23,7 @@ use_ok('Genome::Model::ClinSeq::Command::CreateMutationDiagrams') or die;
 
 
 #Define the test where expected results are stored
-my $base_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-CreateMutationDiagrams/2013-07-30/";
+my $base_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-CreateMutationDiagrams/2014-09-05/";
 my $expected_output_dir = $base_dir."expected";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 

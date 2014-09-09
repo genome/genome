@@ -1,0 +1,3 @@
+TUMOR_SAMPLE.PATIENT_COMMON_NAME   TUMOR_SAMPLE.NAME                    LAST_COMPLETE_BUILD.TUMOR_BAM
+--------------------------------   -----------------                    -----------------------------
+TEST_1                             H_TEST-ClinSeqGenomeCommands-tumor   /tmp/fake-somval-path/-59.bam

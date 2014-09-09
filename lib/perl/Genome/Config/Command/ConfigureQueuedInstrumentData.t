@@ -8,9 +8,11 @@ use Test::More;
 use above "Genome";
 use Carp::Always;
 
+use Genome::Test::Factory::Config::Profile::Item;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::Imported;
 use Genome::Test::Factory::AnalysisProject;
+use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Individual;
 use Genome::Test::Factory::Library;
 use Genome::Test::Factory::Sample;
@@ -34,6 +36,7 @@ is($rna_instrument_data->models->auto_assign_inst_data, 1, 'it should default to
 ($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();
 my $config_hash = _rna_seq_config_hash();
 delete $config_hash->{instrument_data_properties};
+delete $config_hash->{config_profile_items};
 $config_hash->{subject} = $rna_instrument_data->sample;
 $config_hash->{target_region_set_name} = $rna_instrument_data->target_region_set_name;
 $config_hash->{auto_assign_inst_data} = 1;
@@ -46,6 +49,7 @@ is_deeply([$rna_model->instrument_data], [], 'it does not assign the instrument 
 ($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();
 my $config_hash_no_auto_assign = _rna_seq_config_hash();
 delete $config_hash_no_auto_assign->{instrument_data_properties};
+delete $config_hash_no_auto_assign->{config_profile_items};
 $config_hash_no_auto_assign->{subject} = $rna_instrument_data->sample;
 $config_hash_no_auto_assign->{target_region_set_name} = $rna_instrument_data->target_region_set_name;
 $config_hash_no_auto_assign->{auto_assign_inst_data} = 0;
@@ -161,6 +165,8 @@ sub assert_succeeded {
     ok($bridge->status eq 'processed', 'it should mark the inst data as succeeded');
     is($bridge->fail_count, 0, 'it should remove the fail count');
     for my $model_instance ($inst_data->models) {
+        my @config_items = $model_instance->config_profile_items;
+        ok(scalar(@config_items), 'it sets a config profile item on the model');
         ok($model_instance->build_requested, 'it sets build requested on constructed models');
         is($model_instance->user_name, 'apipe-builder');
     }
@@ -210,6 +216,7 @@ sub generate_rna_seq_instrument_data {
 
 sub _rna_seq_config_hash {
     return {
+        config_profile_items => [Genome::Test::Factory::Config::Profile::Item->setup_object()],
         processing_profile_id       => 2819506,
         annotation_build_id         => 124434505,
         reference_sequence_build_id => 106942997,
@@ -280,6 +287,7 @@ sub _generate_som_val_instrument_data {
 
 sub _som_val_config_hash {
     return {
+        config_profile_items => [Genome::Test::Factory::Config::Profile::Item->setup_object()],
         processing_profile_id       => 2656116,
         annotation_build_id         => 124434505,
         reference_sequence_build_id => 106942997,
@@ -291,7 +299,7 @@ sub _generate_lane_qc_instrument_data {
     my $genotype_sample = Genome::Test::Factory::Sample->setup_object();
 
     my $genotype_library => Genome::Test::Factory::Library->setup_object(
-        sample_id => $genotype_sample, 
+        sample_id => $genotype_sample,
     );
 
     my $genotype_data = Genome::Test::Factory::InstrumentData::Imported->setup_object(
@@ -302,7 +310,7 @@ sub _generate_lane_qc_instrument_data {
     my $sans_sample = Genome::Test::Factory::Sample->setup_object();
 
     my $sans_library = Genome::Test::Factory::Library->setup_object(
-        sample_id => $sans_sample, 
+        sample_id => $sans_sample,
     );
 
     my $sans_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
@@ -318,7 +326,7 @@ sub _generate_lane_qc_instrument_data {
     );
 
     my $plus_library = Genome::Test::Factory::Library->setup_object(
-        sample_id => $plus_sample, 
+        sample_id => $plus_sample,
     );
 
     my $plus_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
@@ -335,9 +343,11 @@ sub _generate_lane_qc_instrument_data {
     );
 
     my $tmp_dir = Genome::Sys->create_temp_directory;
-    my $gmb = Genome::Model::Build->create(model_id => $genotype_microarray_model->id, data_directory => $tmp_dir);
-    $gmb->success();
-
+    my $gmb = Genome::Test::Factory::Build->setup_object(
+        model_id => $genotype_microarray_model->id,
+        data_directory => $tmp_dir,
+        status => 'Succeeded',
+    );
 
     for my $inst_data ($sans_data, $plus_data) {
         my $ap = Genome::Test::Factory::AnalysisProject->setup_object(
@@ -352,12 +362,13 @@ sub _generate_lane_qc_instrument_data {
         );
     }
 
-    return ($sans_data, $plus_data, ['Genome::Model::ReferenceAlignment']); 
+    return ($sans_data, $plus_data, ['Genome::Model::ReferenceAlignment']);
 }
 
 
 sub _ref_align_config_hash {
     return {
+        config_profile_items => [Genome::Test::Factory::Config::Profile::Item->setup_object()],
         processing_profile_id => '2653572',
         reference_sequence_build_id => '106942997',
         user_name                   => 'apipe-builder',

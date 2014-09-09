@@ -59,6 +59,14 @@ my %interpretations = (
             ensembl_gene_id   => 'ENSG00000223695',
         },
     },
+    'variant-type' => {
+        T => {
+            variant_type => "snv",
+        },
+        G => {
+            variant_type => "snv",
+        },
+    },
 );
 
 $reporter->report(\%interpretations);

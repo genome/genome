@@ -20,6 +20,7 @@ class Genome::InstrumentData::Gatk::BaseRecalibratorResult {
         },
     ],
 };
+Genome::InstrumentData::Gatk::BaseRecalibratorResult->__meta__->property_meta_for_name('known_sites')->is_optional(0);
 
 sub resolve_allocation_kilobytes_requested {
     my $self = shift;
@@ -57,9 +58,8 @@ sub _run_base_recalibrator {
         output_recalibration_table => $recalibration_table_file,
         number_of_cpu_threads => 8,
         max_memory => $self->max_memory_for_gmt_gatk,
+        known_sites => $self->known_sites_vcfs,
     );
-    my $known_sites_vcfs = $self->known_sites_vcfs;
-    $base_recalibrator_params{known_sites} = $known_sites_vcfs if $known_sites_vcfs;
     $self->status_message('Params: '.Data::Dumper::Dumper(\%base_recalibrator_params));
 
     my $base_recalibrator = Genome::Model::Tools::Gatk::BaseRecalibrator->create(%base_recalibrator_params);

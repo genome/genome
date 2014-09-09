@@ -56,6 +56,14 @@ sub _known_sites_vcfs {
 sub link_known_sites_vcfs {
     my $self = shift;
 
+    if ( not $self->__meta__->property_meta_for_name('known_sites')->is_optional ) {
+        my @known_sites = $self->known_sites;
+        if ( not @known_sites ) {
+            $self->error_message('Known sites are required for '.$self->class);
+            return;
+        }
+    }
+
     my %known_sites_vcfs = ( indel => [], snv => [] );
     for my $known_site ( $self->known_sites ) { # all have indels for now...
         # indel

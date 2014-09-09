@@ -151,6 +151,12 @@ class Genome::Model {
             to => 'analysis_project',
             is_many => 1,
         },
+        config_profile_items => {
+            is => 'Genome::Config::Profile::Item',
+            via => 'analysis_project_bridges',
+            to => 'config_profile_item',
+            is_many => 1,
+        },
     ],
     has_many_optional_deprecated => [
         instrument_data => {

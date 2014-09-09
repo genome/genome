@@ -74,6 +74,10 @@ sub help_detail {
     "used to get readcount information from a bam";
 }
 
+sub default_version {
+    return $DEFAULT_VER;
+}
+
 sub readcount_path {
     my $self = shift;
     my $version = $self->use_version || "";

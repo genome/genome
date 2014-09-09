@@ -79,6 +79,14 @@ sub aligner_requires_param_masking {
     my $class = shift;
     my $aligner_name = shift;
 
+    # If $aligner_name is not known then we can't ask.  While this could be an
+    # exception it is the case that while an object is being created its
+    # params/inputs getted added one-by-one which means sometime $aligner_name
+    # was not yet known.
+    unless ($aligner_name) {
+        return 0;
+    }
+
     my $aligner_class = 'Genome::InstrumentData::AlignmentResult::'  . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($aligner_name);
 
     # if aligner params are not required for index, and we can   generically create an index for that version, then filter it out.

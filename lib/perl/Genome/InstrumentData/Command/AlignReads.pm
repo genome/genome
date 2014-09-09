@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Data::Dump qw(pp);
 
 class Genome::InstrumentData::Command::AlignReads {
     is => ['Command::V2'],
@@ -246,10 +247,19 @@ sub _fetch_alignment_sets {
         $self->error_message('Could not get alignment parameters for this instrument data');
         return;
     }
+
+    $self->debug_message("Attempting to Genome::InstrumentData::AlignmentResult->%s with params: \n%s", $mode, pp($params));
+
     my $alignment = eval { Genome::InstrumentData::AlignmentResult->$mode(%$params) };
     if($@) {
         $self->error_message($mode . ': ' . $@);
         return;
+    }
+
+    if ($alignment) {
+        $self->debug_message("Found alignment result (%s)", $alignment->id);
+    } else {
+        $self->debug_message("Failed to find alignment result with those params");
     }
 
     return $alignment;

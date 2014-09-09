@@ -132,6 +132,21 @@ sub get_levels {
   return(\%levels);
 }
 
+sub determine_genome_build {
+  my $self = shift;
+  my $ref_build_name1 = shift;
+  my $genome_build = "";
+  my $b37_build =
+    Genome::Model::Build::ReferenceSequence->get(name => "GRCh37-lite-build37");
+  my $ref_build1 = Genome::Model::Build::ReferenceSequence->get(name => $ref_build_name1);
+  if($b37_build->is_compatible_with($ref_build1)) {
+    return "b37";
+  } else {
+    die $self->error_message("Unrecognized reference genome name " .
+      "($ref_build_name1) supplied to DumpIgvXml.pm");
+  }
+}
+
 sub execute {
   my $self = shift;
   my @clinseq_builds = $self->builds;
@@ -154,18 +169,9 @@ sub execute {
     my $reference_genome_name = $reference_build->name;
 
     #Hardcoded list of allowed reference builds and their mappings to names used in IGV
-    my $genome_build = "";
+    my $genome_build = $self->determine_genome_build($reference_genome_name);
     my $gene_track_name = "";
-    my $starting_locus = "";
-    if ($reference_genome_name=~/GRCh37\-lite\-build37/){ #Assumes that if name is "like" this you want b37
-      $genome_build = "b37";
-      $starting_locus = "17:7569720-7592868";
-    }elsif ($reference_genome_name=~/GRCh37\-lite\-human\-build37/){ #Assumes that if name is "like" this you want b37
-      $genome_build = "b37";
-      $starting_locus = "17:7569720-7592868";
-    }else{
-      die $self->error_message("Unrecognized reference genome name ($reference_genome_name) supplied to DumpIgvXml.pm");
-    }
+    my $starting_locus = "17:7569720-7592868";
     $gene_track_name = $genome_build . "_genes";
     
     my $panel_count = 1;

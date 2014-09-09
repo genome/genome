@@ -40,7 +40,7 @@
     Default value 'tgi/misc-annotation/human/build37-20130113.1' if not specified
   [1mcosmic-annotation-db[0m
     (undocumented) 
-    Default value 'cosmic/65.1' if not specified
+    Default value 'cosmic/65.3' if not specified
   [1mforce[0m
     skip sanity checks on input models 
   [1mnoforce[0m

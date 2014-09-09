@@ -28,5 +28,6 @@ reporters:
         interpreters:
             position: {}
             vep: {}
+            'variant-type': {}
         params:
             file_name: 'report.1'
