@@ -1,46 +1,80 @@
 package Genome::File::BedPe::Entry;
 
+use strict;
+use warnings;
+
 use Genome;
 use Carp qw/confess/;
 use List::AllUtils qw/min first/;
 
-use strict;
-use warnings;
-
-our @REQUIRED_FIELDS = qw{
-    chrom1
-    start1
-    end1
-    chrom2
-    start2
-    end2
-};
-
-our @OPTIONAL_FIELDS = qw{
-    name
-    score
-    strand1
-    strand2
-};
-
-our @ALL_FIELDS = (@REQUIRED_FIELDS, @OPTIONAL_FIELDS);
+use Genome::File::BedPe::Header qw(
+    @REQUIRED_FIELDS @EXTRA_FIELDS @ALL_FIELDS
+    %FIELD_INDICES
+    );
 
 sub new {
     my ($class, $header, $line) = @_;
     my $self = {
         header => $header,
-        _line => $line,
         custom => [],
     };
 
     bless $self, $class;
-    $self->_parse;
+    $self->_parse($line);
+    return $self;
+}
+
+sub new_from_fields {
+    my ($class, $header, %fields) = @_;
+
+
+    my %defaults = map {$_ => '.'} keys %FIELD_INDICES;
+    my $self = {
+        header => $header,
+        custom => [],
+        %defaults,
+    };
+
+
+    my %standard_mapping;
+    my %custom_mapping;
+    my %required_seen;
+    @required_seen{@REQUIRED_FIELDS} = undef;
+
+    my $max_custom = -1;
+    for my $f (keys %fields) {
+        if (exists $FIELD_INDICES{$f}) {
+            delete $required_seen{$f};
+            $self->{$f} = $fields{$f};
+        }
+        else {
+            my $cidx = $header->custom_field_index($f);
+            if (!defined $cidx) {
+                confess "Unknown BedPe attribute $f specified. Custom fields can be added " .
+                        "to the header with \$header->set_custom_fields(...)";
+            }
+            $custom_mapping{$f} = $cidx;
+            $max_custom = $cidx > $max_custom ? $cidx : $max_custom;
+        }
+    }
+
+    my @missing = keys %required_seen;
+    confess sprintf("Required fields missing: %s", join(", ", @missing)) if @missing;
+
+    $self->{custom} = [('.') x $max_custom];
+
+    for my $f (keys %custom_mapping) {
+        $self->{custom}->[$custom_mapping{$f}] = $fields{$f};
+    }
+
+    bless $self, $class;
+
     return $self;
 }
 
 sub _parse {
-    my $self = shift;
-    my @fields = split("\t", $self->{_line});
+    my ($self, $line) = @_;
+    my @fields = split("\t", $line);
     if (scalar @fields < scalar @REQUIRED_FIELDS) {
         confess "Too few fields in bedpe record (" . scalar @fields . ")";
     }
@@ -61,7 +95,8 @@ sub validate {
     for my $f (@numeric_fields) {
         next if $f eq '-1';
         if ($self->{$f} !~ /^\d+$/) {
-            confess "in entry $self->{_line}: $f is not numeric";
+            my $line = $self->to_string;
+            confess "in entry $line: $f is not numeric";
         }
     }
 }

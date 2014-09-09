@@ -3,6 +3,31 @@ package Genome::File::BedPe::Header;
 use strict;
 use warnings;
 
+use Exporter;
+use base qw(Exporter);
+
+our @REQUIRED_FIELDS = qw{
+    chrom1
+    start1
+    end1
+    chrom2
+    start2
+    end2
+};
+
+our @OPTIONAL_FIELDS = qw{
+    name
+    score
+    strand1
+    strand2
+};
+
+our @ALL_FIELDS = (@REQUIRED_FIELDS, @OPTIONAL_FIELDS);
+
+our %FIELD_INDICES = map {$ALL_FIELDS[$_] => $_} 0..$#ALL_FIELDS;
+
+our @EXPORT_OK = qw(@REQUIRED_FIELDS @EXTRA_FIELDS @ALL_FIELDS %FIELD_INDICES);
+
 sub new {
     my ($class, $lines) = @_;
 
