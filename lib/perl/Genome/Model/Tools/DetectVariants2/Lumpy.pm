@@ -8,6 +8,7 @@ use strict;
 use Genome;
 use File::Basename;
 use IPC::System::Simple;
+use Genome::File::Tsv;
 
 class Genome::Model::Tools::DetectVariants2::Lumpy {
     is => 'Genome::Model::Tools::DetectVariants2::Detector',
@@ -22,7 +23,7 @@ class Genome::Model::Tools::DetectVariants2::Lumpy {
 sub _detect_variants {
     my $self = shift;
 
-    $self->write_header_to_legend_file;
+    my $legend_writer = $self->write_header_to_legend_file;
 
     my @final_paired_end_parameters;
     my @final_split_read_parameters;
@@ -32,12 +33,12 @@ sub _detect_variants {
         for my $bam (split_bam_by_readgroup($input_bam)) {
             if ($self->paired_end_base_params) {
                 push(@final_paired_end_parameters, $self->paired_end_parameters_for_bam($bam, $id));
-                $self->write_id_mapping_to_legend_file($bam, $id);
+                $self->write_id_mapping_to_legend_file($legend_writer, $bam, $id);
                 $id++;
             }
             if ($self->split_read_base_params) {
                 push(@final_split_read_parameters, $self->split_read_parameters_for_bam($bam, $id));
-                $self->write_id_mapping_to_legend_file($bam, $id);
+                $self->write_id_mapping_to_legend_file($legend_writer, $bam, $id);
                 $id++;
             }
         }
@@ -55,18 +56,20 @@ sub _detect_variants {
 sub write_header_to_legend_file {
     my $self = shift;
 
-    my $legend_file = Genome::Sys->open_file_for_appending($self->_legend_output);
-    print $legend_file join("\t", 'id', 'read group ID', 'read group LB') . "\n";
-    close $legend_file;
+    my $legend_file = Genome::File::Tsv->create($self->_legend_output);
+    my @headers = ('id', 'read group ID', 'read group LB');
+    return $legend_file->create_writer(headers => \@headers);
 }
 
 sub write_id_mapping_to_legend_file {
-    my ($self, $bam, $id) = @_;
+    my ($self, $legend_writer, $bam, $id) = @_;
 
     my ($read_group_id, $read_group_lib) = $self->extract_id_and_lib_values($bam);
-    my $legend_file = Genome::Sys->open_file_for_appending($self->_legend_output);
-    print $legend_file join("\t", $id, $read_group_id, $read_group_lib) . "\n";
-    close $legend_file;
+    $legend_writer->write_one({
+        id => $id,
+        'read group ID' => $read_group_id,
+        'read group LB' => $read_group_lib
+    });
 }
 
 sub extract_id_and_lib_values {
