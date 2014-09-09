@@ -26,6 +26,11 @@ class Genome::Model::Tools::Sam::ListReadGroups {
             doc => 'List of read groups for use programmatically',
             is_optional=>1,
             is_many=>1
+        },
+        read_group_info => {
+            is => 'Hash',
+            doc => 'List of the read group information keyed on the corresponding read group ids',
+            is_optional=>1,
         }
     ]
 };
@@ -49,7 +54,7 @@ sub execute {
         return;
     }
 
-    my @read_groups;
+    my %read_groups;
 
     while (my $line = <$fd>) {
         if (substr($line,0,3) eq '@RG') {
@@ -58,16 +63,17 @@ sub execute {
                 $self->error_message("failed parsing read group... " . $self->error_message);
                 return;
             }
-            push @read_groups, $rg_info;
+            %read_groups = (%read_groups, %$rg_info);
         }
     }
 
-    my @rg_ids = map {$_->{id}} @read_groups;
+    my @rg_ids = keys %read_groups;
 
     unless ($self->silence_output) {
         print "Read Groups detected from BAM file: \n" . join "\n", @rg_ids;
     }
     $self->read_groups(\@rg_ids);
+    $self->read_group_info(\%read_groups);
 
     return 1;
 }
@@ -96,7 +102,7 @@ sub get_read_group_from_sam_header {
         return;
     }
 
-    return {id=>$id, platform_unit=>$platform_unit, library_name=>$library_name};
+    return { $id => { platform_unit => $platform_unit, library_name => $library_name } };
 }
 
 
