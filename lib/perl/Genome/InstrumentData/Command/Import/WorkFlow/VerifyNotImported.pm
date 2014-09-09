@@ -9,7 +9,7 @@ require File::Basename;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported { 
     is => 'Command::V2',
-    has_input => [
+    has_input => {
         working_directory => {
             is => 'Text',
             doc => 'Detination directory for source path.',
@@ -18,14 +18,20 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported {
             is => 'Text',
             doc => 'Source path of sequences to get.',
         },
-    ],
-    has_output => [
+    },
+    has_optional_input => {
+        downsample_ratio => {
+            is => 'Text',
+            doc => 'Ratio at which to keep reads in order to downsample. A value of 0.01 means keep 1 in 100 reads.',
+        },
+    },
+    has_output => {
         source_md5 => {
             is => 'Text',
             doc => 'Source MD5.',
         }, 
-    ],
-    has_optional_calculated => [
+    },
+    has_optional_calculated => {
         source_md5_path => {
             calculate_from => [qw/ source_path /],
             calculate => q{ return $self->helpers->md5_path_for($source_path); },
@@ -36,15 +42,15 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported {
             calculate => q{ return $self->helpers->original_md5_path_for($source_path); },
             doc => 'Original source MD5 path.',
         }, 
-    ],
-    has_transient_optional => [
+    },
+    has_transient_optional => {
         original_md5 => { is => 'Text', },
-    ],
-    has_constant_calculated => [
+    },
+    has_constant_calculated => {
         helpers => {
             calculate => q( Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get; ),
         },
-    ],
+    },
 };
 
 sub execute {
@@ -54,10 +60,16 @@ sub execute {
     my $load_original_md5 = $self->_load_original_md5;
     return if not $load_original_md5;
 
-    # Verify original md5 [if exists] not previouly imported
+    my %downsample_ratio_param;
+    $downsample_ratio_param{downsample_ratio} = $self->downsample_ratio if defined $self->downsample_ratio;
+
+    # Verify original md5 [if exists] not previously imported
     my $original_md5 = $self->original_md5;
     if ( $original_md5 ) { # check if previously imported
-        my $previously_imported = $self->helpers->were_original_path_md5s_previously_imported(md5s => [ $original_md5 ]);
+        my $previously_imported = $self->helpers->were_original_path_md5s_previously_imported(
+            md5s => [ $original_md5 ],
+            %downsample_ratio_param,
+        );
         return if $previously_imported;
     }
 
@@ -72,7 +84,10 @@ sub execute {
     }
 
     # Verify md5 not previouly imported
-    my $previously_imported = $self->helpers->were_original_path_md5s_previously_imported(md5s => [ $md5 ]);
+    my $previously_imported = $self->helpers->were_original_path_md5s_previously_imported(
+        md5s => [ $md5 ],
+        %downsample_ratio_param,
+    );
     return if $previously_imported;
 
     $self->source_md5($md5);
