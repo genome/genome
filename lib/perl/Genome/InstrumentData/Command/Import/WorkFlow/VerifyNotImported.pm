@@ -57,7 +57,7 @@ sub execute {
     # Verify original md5 [if exists] not previouly imported
     my $original_md5 = $self->original_md5;
     if ( $original_md5 ) { # check if previously imported
-        my $previously_imported = $self->helpers->were_original_path_md5s_previously_imported($original_md5);
+        my $previously_imported = $self->helpers->were_original_path_md5s_previously_imported(md5s => [ $original_md5 ]);
         return if $previously_imported;
     }
 
@@ -72,7 +72,7 @@ sub execute {
     }
 
     # Verify md5 not previouly imported
-    my $previously_imported = $self->helpers->were_original_path_md5s_previously_imported($md5);
+    my $previously_imported = $self->helpers->were_original_path_md5s_previously_imported(md5s => [ $md5 ]);
     return if $previously_imported;
 
     $self->source_md5($md5);

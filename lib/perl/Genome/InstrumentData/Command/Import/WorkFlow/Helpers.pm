@@ -529,13 +529,14 @@ sub load_md5 {
 }
 
 sub were_original_path_md5s_previously_imported {
-    my ($self, @md5s) = @_;
+    my ($self, %params) = @_;
 
-    Carp::confess('No md5s given to check if previously imported!') if not @md5s;
+    my $md5s = delete $params{md5s};
+    Carp::confess('No md5s given to check if previously imported!') if not $md5s or not @$md5s;
 
     my @instrument_data_attr = Genome::InstrumentDataAttribute->get(
         attribute_label => 'original_data_path_md5',
-        'attribute_value in' => \@md5s,
+        'attribute_value in' => $md5s,
     );
 
     if ( @instrument_data_attr ) {
