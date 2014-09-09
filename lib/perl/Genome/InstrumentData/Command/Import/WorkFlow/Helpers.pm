@@ -9,6 +9,7 @@ require Carp;
 require File::Basename;
 require File::Copy;
 require Filesys::Df;
+require List::MoreUtils;
 require LWP::Simple;
 use Regexp::Common;
 
@@ -533,21 +534,50 @@ sub were_original_path_md5s_previously_imported {
 
     my $md5s = delete $params{md5s};
     Carp::confess('No md5s given to check if previously imported!') if not $md5s or not @$md5s;
+    my $downsample_ratio = delete $params{downsample_ratio};
+    Carp::confess('Unknown params sent to were_original_path_md5s_previously_imported: '.Data::Dumper::Dumper(\%params)) if %params;
 
-    my @instrument_data_attr = Genome::InstrumentDataAttribute->get(
+    # Gather original_data_path_md5 attrs
+    my @original_data_path_md5_attrs = Genome::InstrumentDataAttribute->get(
         attribute_label => 'original_data_path_md5',
         'attribute_value in' => $md5s,
     );
 
-    if ( @instrument_data_attr ) {
-        $self->error_message(
-            "Instrument data was previously imported! Found existing instrument data with MD5s: ".
-            join(', ', map { $_->instrument_data_id.' => '.$_->attribute_value } @instrument_data_attr),
-        );
-        return 1;
-    }
+    # No existing original_data_path_md5s == not previously imported
+    return if not @original_data_path_md5_attrs;
 
-    return;
+    # Get unique inst data from original_data_path_md5 attrs
+    my @instrument_data = List::MoreUtils::uniq( map { $_->instrument_data } @original_data_path_md5_attrs);
+
+    # Check if md5 was previously imported
+    my @previously_imported_instrument_data;
+    my $was_previously_imported = sub{
+        my ($downsample_ratio_attr) = @_;
+        # if no downsample_ratio given and no downsample_ratio for inst data
+        return 1 if not defined $downsample_ratio and not $downsample_ratio_attr;
+        # if given a downsample_ratio and there is a downsample_ratio_attr
+        #  and the attribute_value matches the given downsample_ratio
+        return 1 if defined $downsample_ratio and $downsample_ratio_attr
+            and $downsample_ratio eq $downsample_ratio_attr->attribute_value;
+        # not previously imported
+        return;
+    };
+    for my $instrument_data ( @instrument_data ) {
+        my $downsample_ratio_attr = Genome::InstrumentDataAttribute->get(
+            instrument_data_id => $instrument_data->id,
+            attribute_label => 'downsample_ratio',
+        );
+        push @previously_imported_instrument_data, $instrument_data if $was_previously_imported->($downsample_ratio_attr);
+    }
+    return if not @previously_imported_instrument_data;
+
+    $self->error_message(
+        'Instrument data was previously'.
+            ( $downsample_ratio ? " downsampled by a ratio of $downsample_ratio and" : '' ).
+            ' imported! Found existing instrument data: '.
+            join(', ', sort map { $_->id } @previously_imported_instrument_data)
+    );
+    return 1;
 }
 #<>#
 

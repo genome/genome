@@ -129,17 +129,54 @@ is_deeply($load_md5, $run_md5, 'load md5');
 
 # previously imported
 my @md5s = map { $_ x 32 } (qw/ a b c /);
+my @instrument_data = map {
+    Genome::InstrumentData::Imported->__define__(
+        id => $_ - 11,
+    )
+} (0..$#md5s);
+is(@instrument_data, 3, '__define__ instdata');
 ok(!$helpers->were_original_path_md5s_previously_imported(md5s => \@md5s), 'as expected, no inst data found for md5s');
 my @mdr_attrs = map { 
-    Genome::InstrumentDataAttribute->create(
-    instrument_data_id => $_ - 11,
+    Genome::InstrumentDataAttribute->__define__(
+    instrument_data_id => $instrument_data[$_]->id,
     attribute_label => 'original_data_path_md5',
     attribute_value => $md5s[$_],
     nomenclature => 'WUGC',
-) } ( 0..1); # none for c
-ok($helpers->were_original_path_md5s_previously_imported(md5s => \@md5s), 'inst data found for md5s "a" & "b"');
-is($helpers->error_message, 'Instrument data was previously imported! Found existing instrument data with MD5s: -10 => bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, -11 => aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'correct error message');
-ok(!$helpers->were_original_path_md5s_previously_imported(md5s => [$md5s[2]]), 'as expected, no inst data found for "c" md5');
+) } (0..$#md5s);
+is(@mdr_attrs, 3, '__define__ md5 attrs');
+my $ds_attr = Genome::InstrumentDataAttribute->__define__(
+    instrument_data_id => $instrument_data[2]->id,
+    attribute_label => 'downsample_ratio',
+    attribute_value => 0.25,
+    nomenclature => 'WUGC',
+);
+ok($ds_attr, '__define__ downsample attr for instdata 3');
+
+## no downsample ratio
+ok(# a & b w/o downsample_ratio should be found
+    $helpers->were_original_path_md5s_previously_imported(md5s => \@md5s),
+    'inst data found for md5s "a" & "b" w/o downsample_ratio',
+);
+is($helpers->error_message, 'Instrument data was previously imported! Found existing instrument data: -10, -11', 'correct error message');
+ok(# c w/o downsample_ratio should not be found
+    !$helpers->were_original_path_md5s_previously_imported(md5s => [$md5s[2]]),
+    'as expected, no inst data found for "c" md5',
+);
+
+## w/ downsample ratio
+ok(# a, b & c w/ downsample_ratio 0.33 should not be found
+    !$helpers->were_original_path_md5s_previously_imported(md5s => \@md5s, downsample_ratio => 0.33),
+    'as expected, no inst data found for "a", "b" & "c" md5 w/ downsample_ratio of .33',
+);
+ok(# a & b w/ downsample_ratio 0.25 should not be found
+    !$helpers->were_original_path_md5s_previously_imported(md5s => [$md5s[0..1]], downsample_ratio => 0.25),
+    'as expected, no inst data found for "a" and "b" md5 w/ downsample_ratio of .25',
+);
+ok(# c w/ downsample_ratio of 0.25 should be found
+    $helpers->were_original_path_md5s_previously_imported(md5s => \@md5s, downsample_ratio => 0.25),
+    'instdata found for md5 "c" and downsample_ratio 0.25',
+);
+is($helpers->error_message, 'Instrument data was previously downsampled by a ratio of 0.25 and imported! Found existing instrument data: -9', 'correct error message');
 
 # properties
 my $properties = $helpers->key_value_pairs_to_hash(qw/ sequencing_platform=solexa lane=2 flow_cell_id=XXXXXX /);
