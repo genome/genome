@@ -21,6 +21,7 @@ sub available_fields {
     return qw/
         transcript_name
         trv_type
+        trv_type_category
         amino_acid_change
         default_gene_name
         ensembl_gene_id
@@ -46,6 +47,7 @@ sub _interpret_entry {
         $return_values{$variant_allele} = {
             transcript_name   =>$transcript->{'feature'},
             trv_type          => $transcript->{'consequence'},
+            trv_type_category => trv_type_category($transcript->{'consequence'}),
             amino_acid_change => $transcript->{'hgvsp'},
             default_gene_name => $transcript->{'symbol'} ,
             ensembl_gene_id   => $transcript->{'gene'},
@@ -64,6 +66,49 @@ sub _interpret_entry {
     }
 
     return %return_values;
+}
+
+sub trv_type_category {
+    my $trv_type = shift;
+
+    my $trv_types = Set::Scalar->new(split('&', $trv_type));
+    if (is_splice_site($trv_types)) {
+        return 'splice_site';
+    }
+    elsif (is_non_synonymous($trv_types)) {
+        return 'non_synonymous';
+    }
+    else {
+        return 'other';
+    }
+}
+
+sub is_splice_site {
+    my $trv_types = shift;
+
+    my $splice_sites = Set::Scalar->new(
+        'splice_acceptor_variant',
+        'splice_donor_variant'
+    );
+    return !$splice_sites->intersection($trv_types)->is_null;
+}
+
+sub is_non_synonymous {
+    my $trv_types = shift;
+
+    my $non_synonymous = Set::Scalar->new(
+        'transcript_ablation',
+        'stop_gained',
+        'frameshift_variant',
+        'stop_lost',
+        'initiator_codon_variant',
+        'transcript_amplification',
+        'inframe_insertion',
+        'inframe_deletion',
+        'missense_variant',
+        'incomplete_terminal_codon_variant'
+    );
+    return !$non_synonymous->intersection($trv_types)->is_null;
 }
 
 1;
