@@ -71,33 +71,32 @@ sub write_id_mapping_to_legend_file {
 
 sub extract_id_and_lib_values {
     my ($self, $bam) = @_;
+    my $bam_read_group = $self->read_group_for_bam($bam);
 
     my @read_group_command = qq(samtools view -H $bam | grep \@RG);
     my $read_groups_string = IPC::System::Simple::capture(@read_group_command);
-    my @read_groups = split("\n", $read_groups_string);
 
-    for my $read_group (@read_groups) {
-        if ($read_group =~ m/ID:(.*?)\s.*LB:(.*?)\s/) {
-            my $read_group_id = $1;
-            my $read_group_lib = $2;
-            next unless $self->is_correct_read_group($bam, $read_group_id);
-            return ($read_group_id, $read_group_lib);
-        }
-        else {
-            die $self->error_message("Couldn't determine ID and LB from read group: $read_group");
-        }
+    if ($read_groups_string =~ m/ID:$bam_read_group\s.*?LB:(.*?)\s/) {
+        my $read_group_lib = $1;
+        return ($bam_read_group, $read_group_lib);
     }
-
-    die $self->error_message("Not able to determine ID and LB from read groups: $read_groups_string");
+    else {
+        die $self->error_message("Couldn't determine LB from read group: $read_groups_string");
+    }
 }
 
-sub is_correct_read_group {
-    my ($self, $bam, $id) = @_;
+sub read_group_for_bam {
+    my ($self, $bam) = @_;
 
-    my @reads_with_id_command = qq(bamtools filter -tag  RG:$id -in $bam  | bamtools count);
-    my $reads_with_id = IPC::System::Simple::capture(@reads_with_id_command);
-    chomp $reads_with_id;
-    return $reads_with_id > 0;
+    my @first_read_command = qq(samtools view $bam | head -1);
+    my $first_read = IPC::System::Simple::capture(@first_read_command);
+    if ($first_read =~ m/RG:Z:(.*?)\s/) {
+        my $read_group = $1;
+        return $read_group;
+    }
+    else {
+        die $self->error_message("Unable to extract read group from read: $first_read");
+    }
 }
 
 sub split_bam_by_readgroup {
