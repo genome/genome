@@ -71,18 +71,11 @@ sub write_id_mapping_to_legend_file {
 
 sub extract_id_and_lib_values {
     my ($self, $bam) = @_;
+
     my $bam_read_group = $self->read_group_for_bam($bam);
-
-    my @read_group_command = qq(samtools view -H $bam | grep \@RG);
-    my $read_groups_string = IPC::System::Simple::capture(@read_group_command);
-
-    if ($read_groups_string =~ m/ID:$bam_read_group\s.*?LB:(.*?)\s/) {
-        my $read_group_lib = $1;
-        return ($bam_read_group, $read_group_lib);
-    }
-    else {
-        die $self->error_message("Couldn't determine LB from read group: $read_groups_string");
-    }
+    my $read_group_command = Genome::Model::Tools::Sam::ListReadGroups->execute(input => $bam, silence_output => 1);
+    my $read_group_lib = $read_group_command->read_group_info->{$bam_read_group}->{library_name};
+    return ($bam_read_group, $read_group_lib);
 }
 
 sub read_group_for_bam {
