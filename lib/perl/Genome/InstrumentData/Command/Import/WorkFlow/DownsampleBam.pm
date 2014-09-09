@@ -40,7 +40,7 @@ sub __errors__ {
     my @errors = $self->SUPER::__errors__;
     return @errors if @errors;
 
-    my @errors = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->is_downsmaple_ratio_invalid($self->downsample_ratio);
+    @errors = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->is_downsmaple_ratio_invalid($self->downsample_ratio);
     return @errors if @errors;
 
     return;
