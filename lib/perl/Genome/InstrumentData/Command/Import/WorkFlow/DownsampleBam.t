@@ -17,10 +17,9 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v3') or die;
-
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v4') or die;
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
-my $bam_base_name = 'test.bam';
+my $bam_base_name = 'test.clean.sorted.bam';
 my $bam_path = $tmp_dir.'/'.$bam_base_name;
 Genome::Sys->create_symlink($test_dir.'/'.$bam_base_name, $bam_path);
 ok(-s $bam_path, 'linked bam path');
@@ -63,7 +62,7 @@ $cmd = Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam->create(
 ok($cmd, 'create');
 ok($cmd->execute, 'execute');
 my $output_bam_path = $cmd->output_bam_path;
-my $downsampled_bam_base_name = 'test.downsampled.bam';
+my $downsampled_bam_base_name = 'test.clean.sorted.downsampled.bam';
 is($output_bam_path, $tmp_dir.'/'.$downsampled_bam_base_name, 'downsampled bam path named correctly');
 ok(-s $output_bam_path, 'downsampled bam path exists');
 is(File::Compare::compare($output_bam_path, $test_dir.'/'.$downsampled_bam_base_name), 0, 'downsampled bam matches');
