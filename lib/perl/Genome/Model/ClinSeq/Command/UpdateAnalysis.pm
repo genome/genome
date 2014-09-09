@@ -78,7 +78,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _clinseq_pp_id => {
               is => 'Number',
-              default => '2649924',
+              default => '33c5f2c5752e47eda3ea89dc8c47e1c0',
         },
         clinseq_pp => {
               is => 'Genome::ProcessingProfile',
