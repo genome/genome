@@ -56,7 +56,7 @@ sub write_header_to_legend_file {
     my $self = shift;
 
     my $legend_file = Genome::Sys->open_file_for_appending($self->_legend_output);
-    print $legend_file join("\t", 'id', 'read group ID', 'read roup LB') . "\n";
+    print $legend_file join("\t", 'id', 'read group ID', 'read group LB') . "\n";
     close $legend_file;
 }
 
