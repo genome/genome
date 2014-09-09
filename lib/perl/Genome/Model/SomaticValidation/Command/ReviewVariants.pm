@@ -935,6 +935,7 @@ sub gather_new_sites {
             variant_file => "$snv_file",
             reference => $ref_seq_fasta,
             filtered_file => "$snv_file.failuhc",
+            bam_readcount_version => $build->processing_profile->bam_readcount_version,
         );
         unless ($uhc_cmd->execute) {
             die $self->error_message("Failed to run UHC filter.");

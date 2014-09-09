@@ -7,6 +7,12 @@ use Genome;
 
 class Genome::Model::SomaticValidation {
     is  => 'Genome::Model::Detail::RunsVariantReporting',
+    has_param => [
+        bam_readcount_version => {
+            is => 'Text',
+            doc => 'The bam readcount version to use',
+        },
+    ],
     has_param_optional => [
         alignment_strategy => {
             is => 'Text',
