@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::VepConsequenceParser;
+use feature "state";
 
 class Genome::VariantReporting::Vep::VepInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
@@ -83,31 +84,32 @@ sub trv_type_category {
     }
 }
 
+state $splice_sites = Set::Scalar->new(
+    'splice_acceptor_variant',
+    'splice_donor_variant'
+);
+
+
 sub is_splice_site {
     my $trv_types = shift;
-
-    my $splice_sites = Set::Scalar->new(
-        'splice_acceptor_variant',
-        'splice_donor_variant'
-    );
     return !$splice_sites->intersection($trv_types)->is_null;
 }
 
+state $non_synonymous = Set::Scalar->new(
+    'transcript_ablation',
+    'stop_gained',
+    'frameshift_variant',
+    'stop_lost',
+    'initiator_codon_variant',
+    'transcript_amplification',
+    'inframe_insertion',
+    'inframe_deletion',
+    'missense_variant',
+    'incomplete_terminal_codon_variant'
+);
+
 sub is_non_synonymous {
     my $trv_types = shift;
-
-    my $non_synonymous = Set::Scalar->new(
-        'transcript_ablation',
-        'stop_gained',
-        'frameshift_variant',
-        'stop_lost',
-        'initiator_codon_variant',
-        'transcript_amplification',
-        'inframe_insertion',
-        'inframe_deletion',
-        'missense_variant',
-        'incomplete_terminal_codon_variant'
-    );
     return !$non_synonymous->intersection($trv_types)->is_null;
 }
 
