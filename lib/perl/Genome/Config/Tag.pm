@@ -27,7 +27,7 @@ class Genome::Config::Tag {
             is => 'Text',
         },
         profile_item_bridges => {
-            is => 'Genome::Config::Tag::ProfileItem',
+            is => 'Genome::Config::Tag::Profile::Item',
             is_many => 1,
             is_optional => 1,
             reverse_as => 'tag',
