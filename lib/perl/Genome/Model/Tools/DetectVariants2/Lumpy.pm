@@ -31,14 +31,15 @@ sub _detect_variants {
     for my $input_bam ($self->aligned_reads_input, $self->control_aligned_reads_input) {
         next unless defined($input_bam);
         for my $bam (split_bam_by_readgroup($input_bam)) {
+            my ($read_group_id, $read_group_lb) = $self->extract_id_and_lb_values($bam);
             if ($self->paired_end_base_params) {
                 push(@final_paired_end_parameters, $self->paired_end_parameters_for_bam($bam, $id));
-                $self->write_id_mapping_to_legend_file($legend_writer, $bam, $id);
+                write_id_mapping_to_legend_file($legend_writer, $id, $read_group_id, $read_group_lb);
                 $id++;
             }
             if ($self->split_read_base_params) {
                 push(@final_split_read_parameters, $self->split_read_parameters_for_bam($bam, $id));
-                $self->write_id_mapping_to_legend_file($legend_writer, $bam, $id);
+                write_id_mapping_to_legend_file($legend_writer, $id, $read_group_id, $read_group_lb);
                 $id++;
             }
         }
@@ -62,9 +63,8 @@ sub create_legend_writer {
 }
 
 sub write_id_mapping_to_legend_file {
-    my ($self, $legend_writer, $bam, $id) = @_;
+    my ($legend_writer, $id, $read_group_id, $read_group_lb) = @_;
 
-    my ($read_group_id, $read_group_lb) = $self->extract_id_and_lb_values($bam);
     $legend_writer->write_one({
         id => $id,
         'read group ID' => $read_group_id,
