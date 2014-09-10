@@ -23,7 +23,7 @@ class Genome::Model::Tools::DetectVariants2::Lumpy {
 sub _detect_variants {
     my $self = shift;
 
-    my $legend_writer = $self->write_header_to_legend_file;
+    my $legend_writer = $self->create_legend_writer;
 
     my @final_paired_end_parameters;
     my @final_split_read_parameters;
@@ -53,7 +53,7 @@ sub _detect_variants {
     );
 }
 
-sub write_header_to_legend_file {
+sub create_legend_writer {
     my $self = shift;
 
     my $legend_file = Genome::File::Tsv->create($self->_legend_output);
