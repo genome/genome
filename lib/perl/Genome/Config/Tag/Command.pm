@@ -1,4 +1,4 @@
-package Genome::Config::AnalysisProject::Command;
+package Genome::Config::Tag::Command;
 
 use strict;
 use warnings;
