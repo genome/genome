@@ -119,7 +119,7 @@ $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAn
 );
 ok($cmd, "create command");
 ok(!$cmd->execute, "execute command");
-like(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, qr/^Instrument data was previously imported! Found existing instrument data with MD5s: /, 'correct error message');
+like(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, qr/^Instrument data was previously imported! Found existing instrument data: /, 'correct error message');
 
 #print $instrument_data->data_directory."\n";<STDIN>;
 done_testing();
