@@ -13,6 +13,8 @@ use File::Find;
 use File::Find::Rule;
 use Cwd;
 use DateTime;
+use Params::Validate qw(validate);
+use Path::Class::Dir qw();
 
 our $TESTING_DISK_ALLOCATION = 0;
 
@@ -147,7 +149,16 @@ class Genome::Disk::Allocation {
             is => 'Genome::Disk::Allocation::FileSummary',
             is_many => 1,
             reverse_as => 'allocation'
-        }
+        },
+        permission_scheme_id => {
+            is => 'Text',
+            len => 64,
+            is_transient => 1, # TODO: remove once column exists
+        },
+        permission_scheme => {
+            is => 'Genome::Disk::PermissionScheme',
+            id_by => 'permission_scheme_id',
+        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -1028,6 +1039,72 @@ sub _get_trash_folder {
 sub _extract_aggr {
     my $self = shift;
     return (shift =~ m!/(aggr\d{2})/!)[0];
+}
+
+sub finalize {
+    my $self = shift;
+
+    my $rv = 1;
+    if ($self->permission_scheme) {
+        unless ($self->permission_scheme->apply($self)) {
+            warn qq(permissions scheme application failed);
+            $rv = undef;
+        }
+    }
+
+    unless ($self->reallocate) {
+        warn qq(reallocate failed);
+        $rv = undef;
+    }
+
+    if ($rv) {
+        Genome::Timeline::Event::Allocation->finalized('finalize()', $self);
+    }
+
+    return $rv;;
+}
+
+sub import_from {
+    my $self = shift;
+    my $staging_path = shift;
+    my %options = validate(@_, {
+        follow_symlinks => 0,
+    });
+
+    my $staging_dir = Path::Class::Dir->new($staging_path);
+    my $allocation_dir = Path::Class::Dir->new($self->absolute_path);
+
+    # I had wanted to verify $allocation_dir was empty but some
+    # SoftwareResult's currently have a practice of creating their scratch
+    # and/or staging directories in their allocation.
+
+    my $rsync_params = '-avz';
+    if ($options{follow_symlinks}) {
+        $rsync_params .= 'L';
+    }
+    unless (system('rsync', $rsync_params, "$staging_dir/", "$allocation_dir/") == 0) {
+        $self->warning_message("rsync failed");
+        return;
+    }
+
+    $self->finalize();
+}
+
+sub create_from {
+    my $class = shift;
+    my $staging_path = shift;
+    my $options = shift;
+    unless (ref($options) eq 'HASH') {
+        croak 'second argument must be an options hash ref';
+    }
+    my $tx = UR::Context::Transaction->begin();
+    my $allocation = $class->create(@_);
+    my $rv = $allocation->import_from($staging_path, %$options);
+    if ($rv) {
+        $tx->commit;
+    } else {
+        $tx->rollback;
+    }
 }
 
 1;
