@@ -52,7 +52,7 @@ class Genome::Model::ClinSeq::Command::GenerateSciclonePlots {
 
 sub help_synopsis {
     return <<EOS
-        genome model clin-seq generate-sciclone-plots \\ 
+        genome model clin-seq generate-sciclone-plots \\
         --outdir=/gscuser/gscuser1/tmp/ \\
         --clinseq-build='a4abcd1313eb4376b59e68a9dd9d5ad2'
 EOS
@@ -124,7 +124,7 @@ sub get_variant_file {
     if(-e $snv_indel_report_clean_file) {
         Genome::Sys->copy_file($snv_indel_report_clean_file, $outfile);
     } else {
-        die $self->error_message("Unable to find variant read-counts file 
+        die $self->error_message("Unable to find variant read-counts file
             for clinseq build " . $clinseq_build->id);
     }
     return $self->parse_variant_file($clinseq_build, $outfile);
