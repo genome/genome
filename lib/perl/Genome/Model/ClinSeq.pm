@@ -386,6 +386,13 @@ sub map_workflow_inputs {
       push @inputs, exome_cnv_dir => $exome_cnv_dir;
     }
 
+    #SciClone
+    if ($wgs_build or $exome_build) {
+      my $sciclone_dir = $patient_dir . "/clonality/sciclone/";
+      push @dirs, $sciclone_dir;
+      push @inputs, sciclone_dir => $sciclone_dir;
+    }
+
     my $docm_variants_file = $self->_get_docm_variants_file($self->cancer_annotation_db);
     #Make DOCM report
     if (($exome_build or $wgs_build) and $docm_variants_file) {
@@ -528,6 +535,7 @@ sub _resolve_workflow_for_build {
       push @output_properties, 'mutation_diagram_result';
       push @output_properties, 'import_snvs_indels_result';
       push @output_properties, 'converge_snv_indel_report_result';
+      push @output_properties, 'sciclone_result';
   }
 
   if ($self->has_microarray_build()) {
@@ -1187,6 +1195,20 @@ sub _resolve_workflow_for_build {
     if ($build->exome_build){
       $add_link->($exome_variant_sources_op, 'snv_variant_sources_file', $converge_snv_indel_report_op, '_exome_snv_variant_sources_file');
       $add_link->($exome_variant_sources_op, 'indel_variant_sources_file', $converge_snv_indel_report_op, '_exome_indel_variant_sources_file');
+    }
+
+    #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
+    my $sciclone_op;
+    if ($build->wgs_build or $build->exome_build){
+      my $msg = "Run clonality analysis and produce clonality plots using SciClone";
+      $sciclone_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateSciclonePlots");
+      $add_link->($input_connector, 'sciclone_dir', $sciclone_op, 'outdir');
+      $add_link->($input_connector, 'build', $sciclone_op, 'clinseq_build');
+      $add_link->($run_cn_view_op, 'result', $sciclone_op, 'wgs_cnv_result');
+      $add_link->($exome_cnv_op, 'result', $sciclone_op, 'exome_cnv_result');
+      $add_link->($microarray_cnv_op, 'result', $sciclone_op, 'microarray_cnv_result');
+      $add_link->($converge_snv_indel_report_op, 'result', $sciclone_op, 'converge_snv_indel_report_result');
+      $add_link->($sciclone_op, 'result', $output_connector, 'sciclone_result');
     }
 
     #If this is a build of a test model, perform a faster analysis (e.g. apipe-test-clinseq-wer)

@@ -26,6 +26,26 @@ class Genome::Model::ClinSeq::Command::GenerateSciclonePlots {
             is_optional => 1,
             doc => 'Minimum depth of variants.',
         },
+        microarray_cnv_result => {
+            is => 'Boolean',
+            doc => 'Link in workflow',
+            is_optional => 1
+        },
+        exome_cnv_result => {
+            is => 'Boolean',
+            doc => 'Link in workflow',
+            is_optional => 1
+        },
+        wgs_cnv_result => {
+            is => 'Boolean',
+            doc => 'Link in workflow',
+            is_optional => 1
+        },
+        converge_snv_indel_report_result => {
+            is => 'Boolean',
+            doc => 'Link in workflow',
+            is_optional => 1
+        },
     ],
     doc => 'Create clonality plots with SciClone.',
 };
