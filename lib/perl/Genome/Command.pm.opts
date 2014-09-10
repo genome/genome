@@ -1220,6 +1220,15 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>analysis-project',
   [
+    '>tag-config-file',
+    [
+      'tag=s',
+      undef,
+      'profile-items=s@',
+      undef,
+      'help!',
+      undef
+    ],
     '>disable-config-file',
     [
       'profile-item=s',
@@ -1368,6 +1377,15 @@ $Genome::Command::OPTS_SPEC = [
       'analysis-menu-items=s@',
       undef,
       'analysis-project=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>untag-config-file',
+    [
+      'tag=s',
+      undef,
+      'profile-items=s@',
       undef,
       'help!',
       undef
@@ -1762,6 +1780,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'varscan-validation-version=s',
         'files',
+        'verify-bam-id-version=s',
+        'files',
         'indels-variant-reporting-plan-name=s',
         'files',
         'loh-version=s',
@@ -1780,12 +1800,12 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'alignment-strategy=s',
         'files',
-        'refcov-wingspan-values=s',
-        'files',
-        'cnv-detection-strategy=s',
+        'bam-readcount-version=s',
         'files',
         'describe!',
         undef,
+        'refcov-wingspan-values=s',
+        'files',
         'loh-snv-detection-strategy=s',
         'files',
         'indel-detection-strategy=s',
@@ -1798,6 +1818,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'refcov-roi-track-name=s',
         'files',
+        'cnv-detection-strategy=s',
+        'files',
         'run-snv-validation!',
         undef,
         'refcov-minimum-mapping-quality=s',
@@ -1809,8 +1831,6 @@ $Genome::Command::OPTS_SPEC = [
         'sv-detection-strategy=s',
         'files',
         'transcript-variant-annotator-version=s',
-        'files',
-        'verify-bam-id-version=s',
         'files',
         'help!',
         undef
@@ -38672,6 +38692,15 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>analysis-project',
     [
+      '>tag-config-file',
+      [
+        'tag=s',
+        undef,
+        'profile-items=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>disable-config-file',
       [
         'profile-item=s',
@@ -38820,6 +38849,15 @@ $Genome::Command::OPTS_SPEC = [
         'analysis-menu-items=s@',
         undef,
         'analysis-project=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>untag-config-file',
+      [
+        'tag=s',
+        undef,
+        'profile-items=s@',
         undef,
         'help!',
         undef
