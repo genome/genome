@@ -185,9 +185,13 @@ sub _resolve_instrument_data_properties {
         return if not $properties;
     }
 
-    for my $name (qw/ import_source_name description /) {
+    for my $name (qw/ import_source_name description downsample_ratio /) {
         my $value = $self->$name;
         next if not defined $value;
+        if ( defined $properties->{$name} and $properties->{$name} ne $value ) {
+            $self->error_message("Conflicting values given for command and instrument data properties $name: '$value' <=> '$properties->{$name}'");
+            return;
+        }
         $properties->{$name} = $value;
     }
 
