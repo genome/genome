@@ -866,21 +866,21 @@ sub _resolve_workflow_for_build {
   #Intersect filtered fusion calls with WGS SV calls.
   my $intersect_tumor_fusion_sv_op;
   if ($build->tumor_rnaseq_build){
-      if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
-          #copy over fusion files
-          $self->copy_fusion_files($build);
-          if ($build->wgs_build){
-              if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
-                  my $msg = "Intersecting filtered tumor ChimeraScan fusion calls with WGS SV calls.";
-                  $intersect_tumor_fusion_sv_op = $add_step->($msg, 'Genome::Model::Tools::ChimeraScan::IntersectSv');
-                  $add_link->($input_connector, 'ncbi_human_ensembl_build_id', $intersect_tumor_fusion_sv_op, 'annotation_build_id');
-                  $add_link->($input_connector, 'tumor_filtered_intersected_fusion_file', $intersect_tumor_fusion_sv_op, 'output_file');
-                  $add_link->($input_connector, 'wgs_sv_file', $intersect_tumor_fusion_sv_op, 'sv_output_file');
-                  $add_link->($input_connector, 'tumor_filtered_fusion_file', $intersect_tumor_fusion_sv_op, 'filtered_bedpe_file');
-                  $add_link->($intersect_tumor_fusion_sv_op, 'result', $output_connector, 'intersect_tumor_fusion_sv_result');
-              }
-          }
+    if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
+      #copy over fusion files
+      $self->copy_fusion_files($build);
+      if ($build->wgs_build){
+        if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
+          my $msg = "Intersecting filtered tumor ChimeraScan fusion calls with WGS SV calls.";
+          $intersect_tumor_fusion_sv_op = $add_step->($msg, 'Genome::Model::Tools::ChimeraScan::IntersectSv');
+          $add_link->($input_connector, 'ncbi_human_ensembl_build_id', $intersect_tumor_fusion_sv_op, 'annotation_build_id');
+          $add_link->($input_connector, 'tumor_filtered_intersected_fusion_file', $intersect_tumor_fusion_sv_op, 'output_file');
+          $add_link->($input_connector, 'wgs_sv_file', $intersect_tumor_fusion_sv_op, 'sv_output_file');
+          $add_link->($input_connector, 'tumor_filtered_fusion_file', $intersect_tumor_fusion_sv_op, 'filtered_bedpe_file');
+          $add_link->($intersect_tumor_fusion_sv_op, 'result', $output_connector, 'intersect_tumor_fusion_sv_result');
+        }
       }
+    }
   }
 
   #DumpIgvXml - Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
@@ -955,25 +955,25 @@ sub _resolve_workflow_for_build {
   #It also relies on run-cn-view step having been run already
   my $summarize_cnvs_op;
   if ($build->wgs_build){
-      my $msg = "Summarize CNV results from WGS somatic variation";
-      $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
-      $add_link->($input_connector, 'wgs_cnv_summary_dir', $summarize_cnvs_op, 'outdir');
-      $add_link->($input_connector, 'wgs_build', $summarize_cnvs_op, 'build');
-      $add_link->($clonality_op, 'cnv_hmm_file', $summarize_cnvs_op);
-      $add_link->($clonality_op, 'cnv_hq_file', $summarize_cnvs_op);
-      $add_link->($run_cn_view_op, 'gene_amp_file', $summarize_cnvs_op);
-      $add_link->($run_cn_view_op, 'gene_del_file', $summarize_cnvs_op);
-      $add_link->($summarize_cnvs_op, 'result', $output_connector, 'summarize_cnvs_result');
+    my $msg = "Summarize CNV results from WGS somatic variation";
+    $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
+    $add_link->($input_connector, 'wgs_cnv_summary_dir', $summarize_cnvs_op, 'outdir');
+    $add_link->($input_connector, 'wgs_build', $summarize_cnvs_op, 'build');
+    $add_link->($clonality_op, 'cnv_hmm_file', $summarize_cnvs_op);
+    $add_link->($clonality_op, 'cnv_hq_file', $summarize_cnvs_op);
+    $add_link->($run_cn_view_op, 'gene_amp_file', $summarize_cnvs_op);
+    $add_link->($run_cn_view_op, 'gene_del_file', $summarize_cnvs_op);
+    $add_link->($summarize_cnvs_op, 'result', $output_connector, 'summarize_cnvs_result');
   }
 
   #SummarizeSvs - Generate a summary of SV results from the WGS SV results
   my $summarize_svs_op;
   if ($build->wgs_build){
-      my $msg = "Summarize SV results from WGS somatic variation";
-      $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
-      $add_link->($input_connector, 'wgs_build', $summarize_svs_op, 'builds');
-      $add_link->($input_connector, 'sv_dir', $summarize_svs_op, 'outdir');
-      $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
+    my $msg = "Summarize SV results from WGS somatic variation";
+    $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
+    $add_link->($input_connector, 'wgs_build_as_array', $summarize_svs_op, 'builds');
+    $add_link->($input_connector, 'sv_dir', $summarize_svs_op, 'outdir');
+    $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
   }
 
   #Add gene category annotations to some output files from steps above. (e.g. determine which SNV affected genes are kinases, ion channels, etc.)
