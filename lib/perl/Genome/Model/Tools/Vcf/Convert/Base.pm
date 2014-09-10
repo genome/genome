@@ -393,9 +393,12 @@ sub query_tcga_barcode {
     my %argv = @_;
 
     my $url = delete $argv{url} || 'https://tcga-data.nci.nih.gov/uuid/uuidws/mapping/json/barcode/batch';
-    my $sleep = delete $argv{sleep} || 60;
+    my $sleep = delete $argv{sleep} || 10;
 
     my $agent = LWP::UserAgent->new();
+
+    # based on instrumentation the upper bound on response times is 700 ms
+    $agent->timeout(5);
 
     my $request = HTTP::Request->new(POST => $url);
     $request->content_type('text/plain');
@@ -412,7 +415,7 @@ sub query_tcga_barcode {
             }
         );
         return $rv;
-    }, sleep => $sleep, attempts => 5);
+    }, sleep => $sleep, attempts => 8);
     if ($attempts) {
         Genome::Utility::Instrumentation::gauge(
             join('.', @prefix, 'retry_attempts'), $attempts,
