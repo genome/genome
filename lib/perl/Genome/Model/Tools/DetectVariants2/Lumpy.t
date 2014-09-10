@@ -85,7 +85,7 @@ subtest 'parameter parsing' => sub {
 };
 
 subtest 'read group values' => sub {
-    my ($id, $lib) = $command->extract_id_and_lib_values($tumor_bam);
+    my ($id, $lib) = $command->extract_id_and_lb_values($tumor_bam);
     is($id, '2883581792-2883255521', 'ID value extracted correctly');
     is($lib, 'TEST-patient1-somval_tumor1-extlibs', 'LB value extracted correctly');
 };

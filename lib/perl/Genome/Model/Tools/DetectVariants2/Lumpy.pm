@@ -64,21 +64,21 @@ sub create_legend_writer {
 sub write_id_mapping_to_legend_file {
     my ($self, $legend_writer, $bam, $id) = @_;
 
-    my ($read_group_id, $read_group_lib) = $self->extract_id_and_lib_values($bam);
+    my ($read_group_id, $read_group_lb) = $self->extract_id_and_lb_values($bam);
     $legend_writer->write_one({
         id => $id,
         'read group ID' => $read_group_id,
-        'read group LB' => $read_group_lib
+        'read group LB' => $read_group_lb
     });
 }
 
-sub extract_id_and_lib_values {
+sub extract_id_and_lb_values {
     my ($self, $bam) = @_;
 
     my $bam_read_group = $self->read_group_for_bam($bam);
     my $read_group_command = Genome::Model::Tools::Sam::ListReadGroups->execute(input => $bam, silence_output => 1);
-    my $read_group_lib = $read_group_command->read_group_info->{$bam_read_group}->{library_name};
-    return ($bam_read_group, $read_group_lib);
+    my $read_group_lb = $read_group_command->read_group_info->{$bam_read_group}->{library_name};
+    return ($bam_read_group, $read_group_lb);
 }
 
 sub read_group_for_bam {
