@@ -309,6 +309,17 @@ sub exome_cnv_wg_plot{
   }
 }
 
+sub exome_cnvhmm_file{
+  my $self = shift;
+  my $exome_cnvhmm_file = $self->exome_cnv_dir . "/cnmops.cnvhmm";
+  if(-e $exome_cnvhmm_file) {
+    return $exome_cnvhmm_file;
+  } else {
+    $self->warning_message("unable to find $exome_cnvhmm_file");
+    return 0;
+  }
+}
+
 sub microarray_cnvhmm_file {
   my $self = shift;
   my $microarray_cnvhmm_file = $self->microarray_cnv_dir . "/cnvs.diff.cbs.cnvhmm";
@@ -329,6 +340,22 @@ sub microarray_cnv_wg_plot {
     $self->warning_message("unable to find $microarray_cnv_wg_plot");
     return 0;
   }
+}
+
+sub best_cnvhmm_file {
+    my $self = shift;
+    my $best_cnvhmm_file = $self->wgs_cnvhmm_file;
+    unless ($best_cnvhmm_file) {
+        $best_cnvhmm_file = $self->exome_cnvhmm_file;
+    }
+    unless ($best_cnvhmm_file) {
+        $best_cnvhmm_file = $self->microarray_cnvhmm_file;
+    }
+    unless ($best_cnvhmm_file) {
+        $self->warning_message("unable to find cnvhmm files");
+        return 0;
+    }
+    return $best_cnvhmm_file;
 }
 
 sub wgs_exome_snv_tier1_annotated_compact_file {
