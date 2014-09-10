@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+require List::MoreUtils;
 use Workflow::Simple;
 
 class Genome::InstrumentData::Command::Import::Basic { 
@@ -32,6 +33,10 @@ class Genome::InstrumentData::Command::Import::Basic {
         description  => {
             is => 'Text',
             doc => 'Description of the data.',
+        },
+        downsample_ratio => {
+            is => 'Text',
+            doc => 'Ratio at which to keep reads in order to downsample. A value of 0.01 means keep 1 in 100 reads.',
         },
         instrument_data_properties => {
             is => 'Text',
@@ -80,6 +85,20 @@ Instrument Data Properties
 HELP
 }
 
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+    return @errors if @errors;
+
+    if ( defined $self->downsample_ratio ) {
+        @errors = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->is_downsmaple_ratio_invalid($self->downsample_ratio);
+        return @errors if @errors;
+    }
+
+    return;
+}
+
 sub execute {
     my $self = shift;
     $self->status_message('Import instrument data...');
@@ -121,7 +140,8 @@ sub _resolve_original_format {
 
     my @source_files = $self->source_files;
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my (%formats, $is_archived);
+    my %formats;
+    my $is_archived = 0;
     for my $source_file ( @source_files ) {
         my $format = $helpers->source_file_format($source_file);
         return if not $format;
@@ -203,7 +223,7 @@ sub _build_workflow {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Instrument Data',
-        input_properties => [qw/ analysis_project instrument_data_properties library source_paths working_directory /],
+        input_properties => [qw/ analysis_project instrument_data_properties downsample_ratio library source_paths working_directory /],
         output_properties => [qw/ instrument_data /],
     );
     $self->_workflow($workflow);
@@ -235,9 +255,12 @@ sub _resolve_workflow_steps {
 
     my $steps_method = '_steps_to_build_workflow_for_'.$self->original_format;
     my @steps = $self->$steps_method;
+    return @steps if not $self->downsample_ratio;
+
+    my $idx = List::MoreUtils::firstidx(sub{ $_ eq 'sort bam' }, @steps);
+    splice(@steps, $idx + 1, 0, 'downsample bam');
 
     return @steps;
-
 }
 
 sub _steps_to_build_workflow_for_bam {
@@ -300,7 +323,7 @@ sub _add_verify_not_imported_op_to_workflow {
     die 'No retrieve source files operation given!' if not $retrieve_source_path_op;
 
     my $workflow = $self->_workflow;
-    my $verify_not_imported_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'verify md5');
+    my $verify_not_imported_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'verify not imported');
     $workflow->add_link(
         left_operation => $workflow->get_input_connector,
         left_property => 'working_directory',
@@ -381,7 +404,7 @@ sub _add_fastqs_to_bam_op_to_workflow {
     }
     $self->_workflow->add_link(
         left_operation => $previous_op,
-        left_property => ( $previous_op->name eq 'verify md5' ) # not ideal...
+        left_property => ( $previous_op->name eq 'verify not imported' ) # not ideal...
         ? 'source_path'
         : 'fastq_paths',
         right_operation => $fastqs_to_bam_op,
@@ -400,7 +423,7 @@ sub _add_sanitize_bam_op_to_workflow {
     return if not $sanitize_bam_op;
     $self->_workflow->add_link(
         left_operation => $previous_op,
-        left_property => ( $previous_op->name eq 'verify md5' ) # not ideal...
+        left_property => ( $previous_op->name eq 'verify not imported' ) # not ideal...
         ? 'source_path'
         : 'output_bam_path',
         right_operation => $sanitize_bam_op,
@@ -514,6 +537,7 @@ sub _gather_inputs_for_workflow {
 
     return {
         analysis_project => $self->analysis_project,
+        downsample_ratio => $self->downsample_ratio,
         instrument_data_properties => $self->_instrument_data_properties,
         library => $self->library,
         source_paths => [ $self->source_files ],
