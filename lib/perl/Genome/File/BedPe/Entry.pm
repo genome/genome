@@ -87,6 +87,16 @@ sub _parse {
     }
 }
 
+sub custom_by_name {
+    my ($self, $name) = @_;
+    my $index = $self->{header}->custom_field_index($name);
+    if (!defined $index) {
+        print Data::Dumper::Dumper($index);
+        confess "Unknown custom value $name";
+    }
+    return $self->{custom}->[$index];
+}
+
 sub validate {
     my $self = shift;
     # numeric fields, (-1 means not known)

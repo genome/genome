@@ -1,20 +1,22 @@
 #!/usr/bin/env perl
 
-use Test::More;
-use above 'Genome';
-use Genome::File::BedPe::Header;
-
 use strict;
 use warnings;
+
+use above 'Genome';
+use Test::More;
+use Genome::File::BedPe::Header;
+use Genome::File::BedPe::Entry;
 
 my $pkg = 'Genome::File::BedPe::Entry';
 
 use_ok($pkg);
 
-my $header = new Genome::File::BedPe::Header([]);
 my $entry_txt = join("\t", qw(chr1 10 20 chr2 30 40 hello 45 + - a b c));
 
 subtest "create" => sub {
+    my $header = new Genome::File::BedPe::Header([]);
+    $header->set_custom_fields("c1", "c2", "c3");
     my $entry = $pkg->new($header, $entry_txt);
     ok($entry, "Created dummy entry");
     is($entry->{chrom1}, "chr1");
@@ -30,9 +32,18 @@ subtest "create" => sub {
     is($entry->{custom}[0], 'a');
     is($entry->{custom}[1], 'b');
     is($entry->{custom}[2], 'c');
+    is($entry->custom_by_name("c1"), 'a', 'custom_by_name c1');
+    is($entry->custom_by_name("c2"), 'b', 'custom_by_name c2');
+    is($entry->custom_by_name("c3"), 'c', 'custom_by_name c3');
+
+    eval {
+        $entry->custom_by_name("banana");
+    };
+    ok($@, "asking for unknown custom field is an error");
 };
 
 subtest "to_string" => sub {
+    my $header = new Genome::File::BedPe::Header([]);
     my $entry = $pkg->new($header, $entry_txt);
     is($entry->to_string, $entry_txt, "to_string works");
 
