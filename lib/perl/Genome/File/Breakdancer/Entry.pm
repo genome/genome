@@ -61,6 +61,16 @@ sub _parse {
     $self->{$_} = _parse_orientation($self->{$_}) for qw/orientation1 orientation2/;
 }
 
+sub lib_read_count {
+    my ($self, $lib) = @_;
+    if (exists $self->{num_reads_lib}{$lib}) {
+        return $self->{num_reads_lib}{$lib}{count};
+    }
+    else {
+        return 0;
+    }
+}
+
 sub to_string {
     my $self = shift;
 

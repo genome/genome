@@ -21,7 +21,7 @@ my @input_lines = <DATA>;
 my $input_string = join("", @input_lines);
 chomp @input_lines;
 
-subtest "peek" => sub {
+subtest "next" => sub {
     my $fh = new IO::String($input_string);
     my $reader = $pkg->fhopen($fh, "Test File");
 

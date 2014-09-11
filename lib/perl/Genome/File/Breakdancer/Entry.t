@@ -52,7 +52,9 @@ subtest "parse basic entry" => sub {
     is($entry->{score}, 88, "score");
     is($entry->{num_reads}, 16, "num_reads");
     is($entry->{num_reads_lib}{lib1}{count}, 7, "num_reads_lib (lib1)");
+    is($entry->lib_read_count("lib1"), 7, "lib_read_count(lib1)");
     is($entry->{num_reads_lib}{lib2}{count}, 9, "num_reads_lib (lib2)");
+    is($entry->lib_read_count("lib2"), 9, "lib_read_count(lib2)");
     is($entry->{num_reads_lib}{lib1}{copy_number}, 1, "copy number (lib1)");
     is($entry->{num_reads_lib}{lib2}{copy_number}, "NA", "copy number (lib2)");
     is_deeply($entry->{extra}, [], "extra");
