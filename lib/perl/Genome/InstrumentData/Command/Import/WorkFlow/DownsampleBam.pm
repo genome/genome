@@ -113,7 +113,7 @@ sub _verify_read_count {
     my $allowed_min_read_count = $expected_read_count - $allowed_deviation;
     my $allowed_max_read_count = $expected_read_count + $allowed_deviation;
     $self->debug_message('Expected bam read count: '.$expected_read_count);
-    $self->debug_message( sprintf('Allowed deviation: %d%%', $allowed_deviation * 100) );
+    $self->debug_message('Allowed deviation: %d%%', $allowed_deviation * 100);
     $self->debug_message('Allowed minimum read count: '.$allowed_min_read_count);
     $self->debug_message('Allowed maximum read count: '.$allowed_max_read_count);
 
