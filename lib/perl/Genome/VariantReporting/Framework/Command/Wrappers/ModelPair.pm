@@ -67,10 +67,17 @@ sub create {
     my $self = $class->SUPER::create(@_);
     Genome::Sys->create_directory($self->output_dir);
     Genome::Sys->create_directory($self->reports_directory("snvs"));
+    my $snvs_plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file("snvs"));
+    $snvs_plan->write_to_file(File::Spec->join($self->reports_directory("snvs"), "plan.yaml"));
     Genome::Sys->create_directory($self->reports_directory("indels"));
+    my $indel_plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file("indels"));
+    $indel_plan->write_to_file(File::Spec->join($self->reports_directory("indels"), "plan.yaml"));
     Genome::Sys->create_directory($self->logs_directory("snvs"));
     Genome::Sys->create_directory($self->logs_directory("indels"));
     $self->generate_resource_file;
+    my $provider = Genome::VariantReporting::Framework::Component::ResourceProvider->create_from_file($self->resource_file);
+    $provider->write_to_file(File::Spec->join($self->reports_directory("snvs"), "resources.yaml"));
+    $provider->write_to_file(File::Spec->join($self->reports_directory("indels"), "resources.yaml"));
     return $self;
 };
 
