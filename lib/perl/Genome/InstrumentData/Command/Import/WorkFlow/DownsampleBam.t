@@ -11,19 +11,20 @@ use warnings;
 use above 'Genome';
 
 require Genome::Utility::Test;
-require File::Temp;
 require File::Compare;
+require File::Spec;
+require File::Temp;
 use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam/v4') or die;
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', File::Spec->catfile('bam', 'v4')) or die;
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 my $bam_base_name = 'test.clean.sorted.bam';
-my $bam_path = $tmp_dir.'/'.$bam_base_name;
-Genome::Sys->create_symlink($test_dir.'/'.$bam_base_name, $bam_path);
+my $bam_path = File::Spec->catfile($tmp_dir, $bam_base_name);
+Genome::Sys->create_symlink( File::Spec->catfile($test_dir, $bam_base_name), $bam_path);
 ok(-s $bam_path, 'linked bam path');
-Genome::Sys->create_symlink($test_dir.'/'.$bam_base_name.'.flagstat', $bam_path.'.flagstat');
+Genome::Sys->create_symlink( File::Spec->catfile($test_dir, $bam_base_name.'.flagstat'), $bam_path.'.flagstat');
 ok(-s $bam_path.'.flagstat', 'linked bam flagstat path');
 
 # Check downsample value errors
@@ -63,11 +64,11 @@ ok($cmd, 'create');
 ok($cmd->execute, 'execute');
 my $output_bam_path = $cmd->output_bam_path;
 my $downsampled_bam_base_name = 'test.clean.sorted.downsampled.bam';
-is($output_bam_path, $tmp_dir.'/'.$downsampled_bam_base_name, 'downsampled bam path named correctly');
+is($output_bam_path, File::Spec->catfile($tmp_dir, $downsampled_bam_base_name), 'downsampled bam path named correctly');
 ok(-s $output_bam_path, 'downsampled bam path exists');
-is(File::Compare::compare($output_bam_path, $test_dir.'/'.$downsampled_bam_base_name), 0, 'downsampled bam matches');
+is(File::Compare::compare($output_bam_path, File::Spec->catfile($test_dir, $downsampled_bam_base_name)), 0, 'downsampled bam matches');
 ok(-s $output_bam_path.'.flagstat', 'flagstat path exists');
-is(File::Compare::compare($output_bam_path.'.flagstat', $test_dir.'/'.$downsampled_bam_base_name.'.flagstat'), 0, 'flagstat matches');
+is(File::Compare::compare($output_bam_path.'.flagstat', File::Spec->catfile($test_dir, $downsampled_bam_base_name.'.flagstat')), 0, 'flagstat matches');
 ok(!glob($bam_path.'*'), 'removed bam path and auxillary files after down sampling');
 
 #print "$tmp_dir\n"; <STDIN>;
