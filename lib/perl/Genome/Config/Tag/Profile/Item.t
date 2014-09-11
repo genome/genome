@@ -6,7 +6,7 @@ use warnings;
 use above "Genome";
 use Genome::Test::Factory::AnalysisProject;
 
-use Test::More tests => 4;
+use Test::More tests => 6;
 
 use_ok('Genome::Config::Tag::Profile::Item');
 
@@ -27,4 +27,7 @@ my $tag_assignment = Genome::Config::Tag::Profile::Item->create(
     profile_item => $profile_item,
 );
 isa_ok($tag_assignment, 'Genome::Config::Tag::Profile::Item');
+
+is($tag->profile_items, $profile_item, 'tag sees new assignment');
+is($profile_item->tags, $tag, 'profile item sees new assignment');
 
