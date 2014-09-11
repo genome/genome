@@ -33,7 +33,9 @@ sub filter_entry {
     my %return_values;
 
     for my $alt_allele (@{$entry->{alternate_alleles}}) {
-        $return_values{$alt_allele} = $entry->info_for_allele($alt_allele, $tag);
+        my $status = $entry->info_for_allele($alt_allele, $tag);
+        $status =~ tr/01/10/;   #joinx sest 1 for homopolymer hit, 0 for not hit
+        $return_values{$alt_allele} = $status;
     }
 
     return %return_values;

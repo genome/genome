@@ -28,19 +28,29 @@ subtest "bad info_tag" => sub {
 };
 
 
-subtest "good" => sub {
+subtest "Homo-polymer hit, discard" => sub {
     my $filter = $pkg->create(info_tag => 'HOMP_FILTER');
     lives_ok(sub {$filter->validate}, "Filter validates");
 
     my %expected_return_values = (
         AAAAA => 0,
-        AAA   => 1,
-        AA    => 1,
+        AAA   => 0,
     );
-    my $entry = create_entry('A=B;HOMP_FILTER=0,1,1;C=8,9,10;E');
+    my $entry = create_entry('A=B;HOMP_FILTER=1,1;E');
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry gets filtered correctly");
 };
 
+subtest "Homo-polymer NOT hit, keep" => sub {
+    my $filter = $pkg->create(info_tag => 'HOMP_FILTER');
+    lives_ok(sub {$filter->validate}, "Filter validates");
+
+    my %expected_return_values = (
+        AAAAA => 1,
+        AAA   => 1,
+    );
+    my $entry = create_entry('A=B;HOMP_FILTER=0,0;E');
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry gets filtered correctly");
+};
 
 done_testing;
 
@@ -70,7 +80,7 @@ sub create_entry {
         10,             # POS
         '.',            # ID
         'A',            # REF
-        'AAAAA,AAA,AA', # ALT
+        'AAAAA,AAA',    # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
         $info,          # INFO
