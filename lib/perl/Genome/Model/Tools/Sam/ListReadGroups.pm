@@ -26,6 +26,11 @@ class Genome::Model::Tools::Sam::ListReadGroups {
             doc => 'List of read groups for use programmatically',
             is_optional=>1,
             is_many=>1
+        },
+        read_group_info => {
+            is => 'Hash',
+            doc => 'List of the read group information keyed on the corresponding read group ids',
+            is_optional=>1,
         }
     ]
 };
@@ -49,7 +54,7 @@ sub execute {
         return;
     }
 
-    my @read_groups;
+    my %read_groups;
 
     while (my $line = <$fd>) {
         if (substr($line,0,3) eq '@RG') {
@@ -58,63 +63,46 @@ sub execute {
                 $self->error_message("failed parsing read group... " . $self->error_message);
                 return;
             }
-            push @read_groups, $rg_info;
+            %read_groups = (%read_groups, %$rg_info);
         }
     }
 
-    my @rg_ids = map {$_->{id}} @read_groups;
+    my @rg_ids = keys %read_groups;
 
     unless ($self->silence_output) {
         print "Read Groups detected from BAM file: \n" . join "\n", @rg_ids;
     }
     $self->read_groups(\@rg_ids);
+    $self->read_group_info(\%read_groups);
 
     return 1;
 }
 
-sub process_line {
-my $self = shift;
-
-my $line = shift;
-my $rg_handles = shift;
-
-my ($rg_id) =  $line =~ m/RG:Z:(.*?)(\t|\s+)/;
-unless (defined $rg_id) {
-    $self->error_message("can't get read group ID");
-    return;
-}
-
-my $handle = $rg_handles->{$rg_id};
-
-print $handle $line;
-}
-
-
 sub get_read_group_from_sam_header {
-my $self = shift;
-my $line = shift;
+    my $self = shift;
+    my $line = shift;
 
-my ($id, $platform_unit, $library_name);
+    my ($id, $platform_unit, $library_name);
 
-($id) = $line =~ m/ID:(.*?)(\t|\s+)/;
-unless (defined $id)  {
-    $self->error_message("failed to parse read group id from SAM line: $line");
-    return;
-}
+    ($id) = $line =~ m/ID:(.*?)(\t|\s+)/;
+    unless (defined $id)  {
+        $self->error_message("failed to parse read group id from SAM line: $line");
+        return;
+    }
 
-($platform_unit) = $line =~ m/PU:(.*?)(\t|\s+)/;
-if ($line =~ m/PU:/ && !defined $platform_unit)  {
-    $self->error_message("failed to parse platform unit from SAM line: $line");
-    return;
-}
+    ($platform_unit) = $line =~ m/PU:(.*?)(\t|\s+)/;
+    if ($line =~ m/PU:/ && !defined $platform_unit)  {
+        $self->error_message("failed to parse platform unit from SAM line: $line");
+        return;
+    }
 
-($library_name) = $line =~ m/LB:(.*?)(\t|\s+)/;
-if ($line =~ m/LB:/ && !defined $library_name) {
-    $self->error_message("failed to parse library name from SAM line: $line");
-    return;
-}
+    ($library_name) = $line =~ m/LB:(.*?)(\t|\s+)/;
+    if ($line =~ m/LB:/ && !defined $library_name) {
+        $self->error_message("failed to parse library name from SAM line: $line");
+        return;
+    }
 
-return {id=>$id, platform_unit=>$platform_unit, library_name=>$library_name};
+    return { $id => { platform_unit => $platform_unit, library_name => $library_name } };
 }
 
 

@@ -8,11 +8,22 @@ use strict;
 use Genome;
 use File::Basename;
 use IPC::System::Simple;
+use Genome::File::Tsv;
 
-class Genome::Model::Tools::DetectVariants2::Lumpy {is => 'Genome::Model::Tools::DetectVariants2::Detector',};
+class Genome::Model::Tools::DetectVariants2::Lumpy {
+    is => 'Genome::Model::Tools::DetectVariants2::Detector',
+    has_optional => [
+        _legend_output => {
+            calculate_from => ['_temp_staging_directory'],
+            calculate => q{ File::Spec->join($_temp_staging_directory, 'legend.tsv'); },
+        },
+    ]
+};
 
 sub _detect_variants {
     my $self = shift;
+
+    my $legend_writer = $self->create_legend_writer;
 
     my @final_paired_end_parameters;
     my @final_split_read_parameters;
@@ -20,12 +31,15 @@ sub _detect_variants {
     for my $input_bam ($self->aligned_reads_input, $self->control_aligned_reads_input) {
         next unless defined($input_bam);
         for my $bam (split_bam_by_readgroup($input_bam)) {
+            my ($read_group_id, $read_group_lb) = $self->extract_id_and_lb_values($bam);
             if ($self->paired_end_base_params) {
                 push(@final_paired_end_parameters, $self->paired_end_parameters_for_bam($bam, $id));
+                write_id_mapping_to_legend_file($legend_writer, $id, $read_group_id, $read_group_lb);
                 $id++;
             }
             if ($self->split_read_base_params) {
                 push(@final_split_read_parameters, $self->split_read_parameters_for_bam($bam, $id));
+                write_id_mapping_to_legend_file($legend_writer, $id, $read_group_id, $read_group_lb);
                 $id++;
             }
         }
@@ -38,6 +52,47 @@ sub _detect_variants {
         output_files                 => [$self->_sv_staging_output],
         allow_zero_size_output_files => 1,
     );
+}
+
+sub create_legend_writer {
+    my $self = shift;
+
+    my $legend_file = Genome::File::Tsv->create($self->_legend_output);
+    my @headers = ('id', 'read group ID', 'read group LB');
+    return $legend_file->create_writer(headers => \@headers);
+}
+
+sub write_id_mapping_to_legend_file {
+    my ($legend_writer, $id, $read_group_id, $read_group_lb) = @_;
+
+    $legend_writer->write_one({
+        id => $id,
+        'read group ID' => $read_group_id,
+        'read group LB' => $read_group_lb
+    });
+}
+
+sub extract_id_and_lb_values {
+    my ($self, $bam) = @_;
+
+    my $bam_read_group = $self->read_group_for_bam($bam);
+    my $read_group_command = Genome::Model::Tools::Sam::ListReadGroups->execute(input => $bam, silence_output => 1);
+    my $read_group_lb = $read_group_command->read_group_info->{$bam_read_group}->{library_name};
+    return ($bam_read_group, $read_group_lb);
+}
+
+sub read_group_for_bam {
+    my ($self, $bam) = @_;
+
+    my @first_read_command = qq(samtools view $bam | head -1);
+    my $first_read = IPC::System::Simple::capture(@first_read_command);
+    if ($first_read =~ m/RG:Z:(.*?)\s/) {
+        my $read_group = $1;
+        return $read_group;
+    }
+    else {
+        die $self->error_message("Unable to extract read group from read: $first_read");
+    }
 }
 
 sub split_bam_by_readgroup {
@@ -132,7 +187,7 @@ sub calculate_metrics {
         $metrics{histogram} = $histogram;
     }
     else {
-        die "ERROR couldn't determine mean and standard deviation: $statistics_output";
+        die $self->error_message("Couldn't determine mean and standard deviation: $statistics_output");
     }
 
     return %metrics;
