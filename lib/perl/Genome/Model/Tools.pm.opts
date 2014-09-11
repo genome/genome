@@ -18474,6 +18474,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'maximum-memory=s',
       undef,
+      'read-group-info=s',
+      undef,
       'read-groups=s@',
       undef,
       'use-version=s',
