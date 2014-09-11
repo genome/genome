@@ -43,10 +43,6 @@ class Genome::VariantReporting::Framework::Command::Wrappers::Trio {
         _workflow_inputs => {
             is => 'Hash',
         },
-        _workflow_counter => {
-            is => 'Integer',
-            default_value => 0,
-        },
     ],
 };
 
@@ -145,7 +141,6 @@ sub add_combine_to_workflow {
     my ($self, $params, $reports_to_combine, $file_name) = @_;
     #snv report and indel report => combine_snv_indel_reports helper => combine_reports => output_connector
     my $counter = $self->_workflow_counter;
-    $self->_workflow_counter($counter+1);
     my $combine_command = Genome::WorkflowBuilder::Command->create(
         name => join(" ", "Combine snv and indel", $counter),
         command => "Genome::VariantReporting::PostProcessing::CombineReports",
@@ -192,7 +187,6 @@ sub add_combine_to_workflow {
 sub add_report_to_workflow {
     my ($self, $params) = @_;
     my $counter = $self->_workflow_counter;
-    $self->_workflow_counter($counter+1);
     my $report_creator = Genome::VariantReporting::Framework::Command::CreateReport->create(%$params);
     my $report_dag = $report_creator->dag;
     $report_dag->name(join(" ", $report_dag->name, $counter));
@@ -227,6 +221,13 @@ sub run_summary_stats {
             output_tsv_file => File::Spec->join($self->output_directory, "coverage_summary.tsv"),
             models => [$self->coverage_models],
         );
+    }
+}
+
+{
+    my $counter = 0;
+    sub _workflow_counter {
+        return $counter++;
     }
 }
 
