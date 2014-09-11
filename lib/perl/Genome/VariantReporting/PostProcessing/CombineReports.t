@@ -66,7 +66,6 @@ subtest "test with headers with source" => sub {
     is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
     is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
 
-$DB::single=1;
     ok($cmd->execute, 'Executed the test command');
     compare_ok($output_file, $expected, 'Output file looks as expected');
 };
@@ -88,7 +87,6 @@ subtest "test with different orders of headers" => sub {
     is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
 
     ok($cmd->execute, 'Executed the test command');
-    $DB::single=1;
     compare_ok($output_file, $expected, 'Output file looks as expected');
 };
 
