@@ -92,7 +92,7 @@ sub __errors__ {
     return @errors if @errors;
 
     if ( defined $self->downsample_ratio ) {
-        @errors = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->is_downsmaple_ratio_invalid($self->downsample_ratio);
+        @errors = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->is_downsample_ratio_invalid($self->downsample_ratio);
         return @errors if @errors;
     }
 

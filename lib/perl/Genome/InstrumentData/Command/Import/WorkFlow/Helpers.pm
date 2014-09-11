@@ -648,7 +648,7 @@ sub insert_extension_into_bam_path {
 }
 
 #<VALIDATORS>#
-sub is_downsmaple_ratio_invalid {
+sub is_downsample_ratio_invalid {
     my ($self, $downsample_ratio) = @_;
 
     Carp::confess('No downsample ratio to check!') if not defined $downsample_ratio;
