@@ -1,0 +1,64 @@
+package Genome::VariantReporting::Joinx::HomoPolymer::RunResult;
+
+use strict;
+use warnings FATAL => 'all';
+use Genome;
+use File::Spec;
+
+class Genome::VariantReporting::Joinx::HomoPolymer::RunResult {
+    is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
+    has_input => [
+        homopolymer_list_id => {
+            is => 'String',
+        },
+    ],
+    has_param => [
+        info_string => {
+            is => 'Text',
+        },
+        joinx_version => {
+            is => 'Text',
+        },
+        max_length => {
+            is => 'Integer',
+        },
+    ],
+};
+
+
+sub output_filename {
+    return 'joinx_vcf_annotate_homopolymer.vcf.gz';
+}
+
+sub _run {
+    my $self = shift;
+    my $info_string = $self->info_string;
+    my $max_length  = $self->max_length;
+    my $list_id     = $self->homopolymer_list_id;
+    my $output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
+
+    my $feature_list     = Genome::FeatureList->get($list_id);
+    my $homopolymer_file = $feature_list->get_tabix_and_gzipped_bed_file;
+
+    my %params = (
+        input_file       => $self->input_vcf,
+        homopolymer_file => $homopolymer_file,
+        output_file      => $output_file,
+        use_bgzip        => 1,
+        use_version      => $self->joinx_version,
+    );
+
+    $params{info_field} = $info_string if $info_string;
+    $params{max_length} = $max_length  if $max_length;
+
+    my $homopolymer_annotator = Genome::Model::Tools::Joinx::VcfAnnotateHomopolymer->create(%params);
+
+    unless ($homopolymer_annotator->execute) {
+        die $self->error_message("Failed to execute joinx vcf-annotate-homopolymer");
+    }
+
+    return 1;
+}
+
+
+1;
