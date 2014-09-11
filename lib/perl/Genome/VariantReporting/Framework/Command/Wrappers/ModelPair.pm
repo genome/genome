@@ -11,7 +11,10 @@ use File::Spec;
 class Genome::VariantReporting::Framework::Command::Wrappers::ModelPair {
     has => {
         discovery => { is => 'Genome::Model::Build', },
-        validation => { is => 'Genome::Model::Build', },
+        validation => {
+            is => 'Genome::Model::Build',
+            is_optional => 1,
+        },
         base_output_dir => { is => 'Text', },
         plan_file_basename => {
             is => 'Text',
@@ -93,7 +96,9 @@ sub get_aligned_bams {
     my @aligned_bams;
     push @aligned_bams, $self->discovery->merged_alignment_result->id;
     push @aligned_bams, $self->discovery->control_merged_alignment_result->id;
-    push @aligned_bams, $self->validation->merged_alignment_result->id;
+    if ($self->validation) {
+        push @aligned_bams, $self->validation->merged_alignment_result->id;
+    }
     return \@aligned_bams;
 }
 
@@ -102,7 +107,9 @@ sub get_translations {
     my %translations;
     $translations{d0_tumor} = $self->discovery->tumor_sample->name;
     $translations{d30_normal} = $self->discovery->normal_sample->name;
-    $translations{d30_tumor} = $self->validation->tumor_sample->name;
+    if ($self->validation) {
+        $translations{d30_tumor} = $self->validation->tumor_sample->name;
+    }
     return \%translations;
 }
 
