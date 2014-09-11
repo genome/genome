@@ -6859,24 +6859,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>generate-bitmask',
-      [
-        'color!',
-        undef,
-        'debug!',
-        undef,
-        'refseq=s',
-        undef,
-        'bases=s',
-        [
-          'AT',
-          'CG',
-          'CpG',
-          'GC'
-        ],
-        'help!',
-        undef
-      ],
       '>generate-transcriptome',
       [
         'annotation-build-name=s',
@@ -29999,6 +29981,8 @@ $Genome::Command::OPTS_SPEC = [
         'debug!',
         undef,
         'maximum-memory=s',
+        undef,
+        'read-group-info=s',
         undef,
         'read-groups=s@',
         undef,
