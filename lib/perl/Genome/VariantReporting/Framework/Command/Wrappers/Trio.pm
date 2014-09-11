@@ -36,15 +36,30 @@ class Genome::VariantReporting::Framework::Command::Wrappers::Trio {
             doc => 'Normal sample',
         },
     ],
+    has_transient_optional => [
+        _workflow => {
+            is => 'Genome::WorkflowBuilder::DAG',
+        },
+        _workflow_inputs => {
+            is => 'Hash',
+        },
+        _workflow_counter => {
+            is => 'Integer',
+            default_value => 0,
+        },
+    ],
 };
 
 sub execute {
     my $self = shift;
+    $self->initialize_dag;
     $self->run_summary_stats;
     my @model_pairs = $self->get_model_pairs;
     for my $model_pair (@model_pairs) {
-        $self->run_reports($model_pair);
+        $self->add_reports_to_workflow($model_pair);
     }
+    File::Slurp::write_file(File::Spec->join($self->output_directory, "workflow.xml"), $self->_workflow->get_xml);
+    $self->_workflow->execute(%{$self->_workflow_inputs});
     my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
     for my $roi_directory (@roi_directories) {
         for my $base (Genome::VariantReporting::Framework::Command::Wrappers::ModelPair->report_names) {
@@ -62,6 +77,20 @@ sub execute {
     return 1;
 }
 
+sub add_final_converge {
+    my $self = shift;
+    my $converge = Genome::WorkflowBuilder::Converge->create(
+        name => "Final Converge",
+        output_properties => ['reports'],
+    );
+    $self->_workflow->add_operation($converge);
+    $self->_workflow->connect_output(
+        output_property => "reports",
+        source => $converge,
+        source_property => "reports",
+    );
+}
+
 sub get_model_pairs {
     my $self = shift;
     my $factory = Genome::VariantReporting::Framework::Command::Wrappers::ModelPairFactory->create(
@@ -74,9 +103,10 @@ sub get_model_pairs {
     return $factory->get_model_pairs;
 }
 
-sub run_reports {
+sub add_reports_to_workflow {
     my ($self, $model_pair) = @_;
 
+    my %report_operations;
     for my $variant_type(qw(snvs indels)) {
         my %params = (
             input_vcf => $model_pair->input_vcf($variant_type),
@@ -86,17 +116,103 @@ sub run_reports {
             resource_file => $model_pair->resource_file,
             log_directory => $model_pair->logs_directory($variant_type),
         );
-        Genome::VariantReporting::Framework::Command::CreateReport->execute(%params);
+        $report_operations{$variant_type} = $self->add_report_to_workflow(\%params);
     }
     for my $base ($model_pair->report_names) {
-        Genome::VariantReporting::PostProcessing::CombineReports->execute(
-            reports => [File::Spec->join($model_pair->reports_directory("snvs"), $base),
-                File::Spec->join($model_pair->reports_directory("indels"), $base)],
+        my %combine_params = (
             sort_columns => [qw(chromosome_name start stop reference variant)],
             contains_header => 1,
             output_file => File::Spec->join($model_pair->output_dir, $base),
             split_indicators => [qw(per_library)],
+            separator => "\t",
         );
+        $self->add_combine_to_workflow(\%combine_params, \%report_operations, $base);
+    }
+}
+
+sub initialize_dag {
+    my $self = shift;
+    my $dag = Genome::WorkflowBuilder::DAG->create(
+        name => 'Trio Report',
+        log_dir => File::Spec->join($self->output_directory, "logs_main"),
+    );
+    Genome::Sys->create_directory(File::Spec->join($self->output_directory, "logs_main"));
+    $self->_workflow($dag);
+    $self->add_final_converge;
+}
+
+sub add_combine_to_workflow {
+    my ($self, $params, $reports_to_combine, $file_name) = @_;
+    #snv report and indel report => combine_snv_indel_reports helper => combine_reports => output_connector
+    my $counter = $self->_workflow_counter;
+    $self->_workflow_counter($counter+1);
+    my $combine_command = Genome::WorkflowBuilder::Command->create(
+        name => join(" ", "Combine snv and indel", $counter),
+        command => "Genome::VariantReporting::PostProcessing::CombineReports",
+    );
+    $self->_add_operation_to_workflow($combine_command, $params, $counter);
+    my $generate_file_names = Genome::WorkflowBuilder::Command->create(
+        name => join(" ", "Generate filenames", $counter),
+        command => "Genome::VariantReporting::PostProcessing::CombineSnvIndelReports",
+    );
+    $self->_workflow->add_operation($generate_file_names);
+    my $converge = Genome::WorkflowBuilder::Converge->create(
+        output_properties => ['output_dirs'],
+        name => join(" ", "Converge", $counter),
+    );
+    $self->_workflow->add_operation($converge);
+    for my $variant_type (keys %$reports_to_combine) {
+        $self->_workflow->create_link(
+            source => $reports_to_combine->{$variant_type}, source_property => "output_directory",
+            destination => $converge, destination_property => $variant_type."_output_dir",
+        );
+    }
+    my $full_param_name = join("_", "file_name", $counter);
+    $self->_workflow->connect_input(
+            input_property => $full_param_name,
+            destination => $generate_file_names,
+            destination_property => "file_name",
+    );
+    $self->_workflow_inputs->{$full_param_name} = $file_name;
+    $self->_workflow->create_link(
+        source => $converge, source_property => "output_dirs",
+        destination => $generate_file_names, destination_property => "input_directories",
+    );
+    $self->_workflow->create_link(
+        source => $generate_file_names, source_property => "reports",
+        destination => $combine_command, destination_property => "reports"
+    );
+    my $final_converge = $self->_workflow->operation_named("Final Converge");
+    $self->_workflow->create_link(
+        source => $combine_command, source_property => "output_file",
+        destination => $final_converge, destination_property => $combine_command->name,
+    );
+}
+
+sub add_report_to_workflow {
+    my ($self, $params) = @_;
+    my $counter = $self->_workflow_counter;
+    $self->_workflow_counter($counter+1);
+    my $report_creator = Genome::VariantReporting::Framework::Command::CreateReport->create(%$params);
+    my $report_dag = $report_creator->dag;
+    $report_dag->name(join(" ", $report_dag->name, $counter));
+    $self->_add_operation_to_workflow($report_dag, {$report_creator->params_for_execute}, $counter);
+    return $report_dag;
+}
+
+sub _add_operation_to_workflow {
+    my ($self, $operation, $params, $counter) = @_;
+    $self->_workflow->add_operation($operation);
+    for my $param (keys %$params) {
+        my $full_param_name = join("_", $param, $counter);
+        $self->_workflow->connect_input(
+            input_property => $full_param_name,
+            destination => $operation,
+            destination_property => $param,
+        );
+        my $inputs = $self->_workflow_inputs;
+        $inputs->{$full_param_name} = $params->{$param};
+        $self->_workflow_inputs($inputs);
     }
 }
 
