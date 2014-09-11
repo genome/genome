@@ -1,17 +1,17 @@
-package Genome::VariantReporting::Generic::HomopolymerFilter;
+package Genome::VariantReporting::Joinx::HomoPolymer::HomopolymerFilter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Generic::HomopolymerFilter {
+class Genome::VariantReporting::Joinx::HomoPolymer::HomopolymerFilter {
     is  => ['Genome::VariantReporting::Framework::Component::Filter'],
     has => [
         info_tag => {
             is  => 'String',
-            doc => 'custom tag name in the info field to show homopolymer status, like HOMO=0,0,1',
+            doc => 'custom tag name in the info field to show homopolymer status, like HOMP_FILTER=0,1',
         },
-        ],
+    ],
 };
 
 sub name {
@@ -19,7 +19,7 @@ sub name {
 }
 
 sub requires_annotations {
-    return ();
+    return ('homo-polymer');
 }
 
 sub filter_entry {
