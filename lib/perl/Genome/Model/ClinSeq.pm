@@ -1204,9 +1204,15 @@ sub _resolve_workflow_for_build {
       $sciclone_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateSciclonePlots");
       $add_link->($input_connector, 'sciclone_dir', $sciclone_op, 'outdir');
       $add_link->($input_connector, 'build', $sciclone_op, 'clinseq_build');
-      $add_link->($run_cn_view_op, 'result', $sciclone_op, 'wgs_cnv_result');
-      $add_link->($exome_cnv_op, 'result', $sciclone_op, 'exome_cnv_result');
-      $add_link->($microarray_cnv_op, 'result', $sciclone_op, 'microarray_cnv_result');
+      if ($build->wgs_build) {
+        $add_link->($run_cn_view_op, 'result', $sciclone_op, 'wgs_cnv_result');
+      }
+      if ($build->exome_build) {
+        $add_link->($exome_cnv_op, 'result', $sciclone_op, 'exome_cnv_result');
+      }
+      if ($self->has_microarray_build()) {
+        $add_link->($microarray_cnv_op, 'result', $sciclone_op, 'microarray_cnv_result');
+      }
       $add_link->($converge_snv_indel_report_op, 'result', $sciclone_op, 'converge_snv_indel_report_result');
       $add_link->($sciclone_op, 'result', $output_connector, 'sciclone_result');
     }
