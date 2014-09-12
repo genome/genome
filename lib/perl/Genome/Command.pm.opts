@@ -31967,17 +31967,6 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>create-cross-sample-vcf',
       [
-        '>create-output-directory',
-        [
-          'sample-name=s',
-          'files',
-          'base-directory=s',
-          undef,
-          'output-directory=s',
-          undef,
-          'help!',
-          undef
-        ],
         '>backfill',
         [
           'build-clump=s',
@@ -32028,19 +32017,6 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
-        '>filter-non-calls',
-        [
-          'build-clump=s',
-          undef,
-          'color!',
-          undef,
-          'debug!',
-          undef,
-          'filtered-vcf=s',
-          'files',
-          'help!',
-          undef
-        ],
         '>pileup',
         [
           'build-clump=s',
@@ -32066,6 +32042,19 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
+        '>filter-non-calls',
+        [
+          'build-clump=s',
+          undef,
+          'color!',
+          undef,
+          'debug!',
+          undef,
+          'filtered-vcf=s',
+          'files',
+          'help!',
+          undef
+        ],
         '>region-limit-vcf',
         [
           'build-clump=s',
@@ -32087,51 +32076,6 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'roi-name=s',
           'files',
-          'help!',
-          undef
-        ],
-        '>create-cross-sample-vcf-indels',
-        [
-          'varscan-version=s',
-          'files',
-          'software-result=s',
-          undef,
-          'final-result=s',
-          undef,
-          'max-files-per-merge=s',
-          'files',
-          'output-directory=s',
-          'files',
-          'builds=s@',
-          undef,
-          'model-group=s',
-          undef,
-          'roi-list=s',
-          undef,
-          'wingspan=s',
-          'files',
-          'allow-multiple-processing-profiles!',
-          undef,
-          'joinx-version=s',
-          'files',
-          'help!',
-          undef
-        ],
-        '>determine-varscan-options',
-        [
-          'output-directory=s',
-          'files',
-          'help!',
-          undef
-        ],
-        '>backfill-indel-vcf-helper',
-        [
-          'sample-name=s',
-          'files',
-          'base-directory=s',
-          undef,
-          'output-directory=s',
-          undef,
           'help!',
           undef
         ],
@@ -38287,6 +38231,15 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>wrappers',
     [
+      '>somatic-only',
+      [
+        'model=s',
+        undef,
+        'output-directory=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>rna-seq',
       [
         'base-output-dir=s',
