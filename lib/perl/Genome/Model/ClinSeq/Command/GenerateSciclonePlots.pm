@@ -218,7 +218,7 @@ sub run_sciclone {
     } else {
         $minimum_depth = 1;
     }
-    my $sample_name = $clinseq_build->subject->name;
+    my $sample_name = $clinseq_build->subject->common_name;
     my $sciclone = Genome::Model::Tools::Sciclone->create(
         clusters_file => $clusters_f,
         r_script_file => $rscript_f,
