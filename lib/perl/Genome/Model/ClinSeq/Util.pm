@@ -8,10 +8,10 @@ require Exporter;
 @EXPORT = qw();
 
 @EXPORT_OK = qw(
-                &createNewDir &checkDir &commify &memoryUsage &loadEnsemblMap &loadEntrezEnsemblData &mapGeneName &fixGeneName &importIdeogramData &getCytoband &getColumnPosition &listGeneCategories &importSymbolListNames &importGeneSymbolLists &getFilePathBase &_get_si_report_tumor_prefix &_get_si_report_normal_prefix &_get_somatic_build_type);
+                &createNewDir &checkDir &commify &memoryUsage &loadEnsemblMap &loadEntrezEnsemblData &mapGeneName &fixGeneName &importIdeogramData &getCytoband &getColumnPosition &listGeneCategories &importSymbolListNames &importGeneSymbolLists &getFilePathBase &_get_si_report_tumor_prefix &_get_si_report_normal_prefix &_get_somatic_builds);
 
 %EXPORT_TAGS = (
-                all => [qw(&createNewDir &checkDir &commify &memoryUsage &loadEnsemblMap &loadEntrezEnsemblData &mapGeneName &fixGeneName &importIdeogramData &getCytoband &getColumnPosition &listGeneCategories &importSymbolListNames &importGeneSymbolLists &getFilePathBase &_get_si_report_tumor_prefix &_get_si_report_normal_prefix &_get_somatic_build_type)]
+                all => [qw(&createNewDir &checkDir &commify &memoryUsage &loadEnsemblMap &loadEntrezEnsemblData &mapGeneName &fixGeneName &importIdeogramData &getCytoband &getColumnPosition &listGeneCategories &importSymbolListNames &importGeneSymbolLists &getFilePathBase &_get_si_report_tumor_prefix &_get_si_report_normal_prefix &_get_somatic_builds)]
                );
 
 use strict;
@@ -1207,68 +1207,79 @@ sub resolve_reference_sequence_build {
     return $rb_names{$rb_names[0]};
 }
 
-sub _get_somatic_build_type {
+sub _get_somatic_builds {
   my $self = shift;
   my $clinseq_build = shift;
-  my ($somatic_build, $build_type);
+  my (%somatic_builds, $build_type);
   if($clinseq_build->wgs_build) {
-    $somatic_build = $clinseq_build->wgs_build;
     $build_type = "wgs";
-  } elsif ($clinseq_build->exome_build){
-    $somatic_build = $clinseq_build->exome_build;
+    $somatic_builds{$build_type} = $clinseq_build->wgs_build;
+  } 
+  if ($clinseq_build->exome_build){
     $build_type = "exome";
-  } else {
+    $somatic_builds{$build_type} = $clinseq_build->exome_build;
+  }
+  if(not keys %somatic_builds){
     die $self->error_message("Unable to find somatic build for clinseq build:" .
         $clinseq_build->{id});
   }
-  return ($somatic_build, $build_type);
+  return (%somatic_builds);
 }
 
 sub _get_si_report_tumor_prefix {
   my $self = shift;
   my $clinseq_build = shift;
-  my ($somatic_build, $build_type) = $self->_get_somatic_build_type(
+  my (%somatic_builds) = $self->_get_somatic_builds(
     $clinseq_build);
-  my $tumor_build = $somatic_build->tumor_build;
-  my $tumor_subject_name = $tumor_build->subject->name;
-  my $tumor_subject_common_name = $tumor_build->subject->common_name;
-  $tumor_subject_common_name =~ s/\,//g;
-  $tumor_subject_common_name =~ s/\s+/\_/g;
-  my $tumor_refalign_name = $tumor_subject_name . "_$build_type" . "_" .
+  my @tumor_refalign_names;
+  foreach my $build_type (keys %somatic_builds) {
+    my $somatic_build = $somatic_builds{$build_type};
+    my $tumor_build = $somatic_build->tumor_build;
+    my $tumor_subject_name = $tumor_build->subject->name;
+    my $tumor_subject_common_name = $tumor_build->subject->common_name;
+    $tumor_subject_common_name =~ s/\,//g;
+    $tumor_subject_common_name =~ s/\s+/\_/g;
+    my $tumor_refalign_name = $tumor_subject_name . "_$build_type" . "_" .
     $tumor_subject_common_name;
-  my @tumor_timepoints = $tumor_build->subject->attributes(
-    attribute_label => "timepoint", nomenclature => "caTissue");
-  my $tumor_time_point = "day0";
-  if (@tumor_timepoints){
-    $tumor_time_point = $tumor_timepoints[0]->attribute_value;
-    $tumor_time_point =~ s/\s+//g;
+    my @tumor_timepoints = $tumor_build->subject->attributes(
+        attribute_label => "timepoint", nomenclature => "caTissue");
+    my $tumor_time_point = "day0";
+    if (@tumor_timepoints){
+        $tumor_time_point = $tumor_timepoints[0]->attribute_value;
+        $tumor_time_point =~ s/\s+//g;
+    }
+    $tumor_refalign_name = $tumor_refalign_name . "_$tumor_time_point";
+    push @tumor_refalign_names, $tumor_refalign_name;
   }
-  $tumor_refalign_name = $tumor_refalign_name . "_$tumor_time_point";
-  return $tumor_refalign_name;
+  return @tumor_refalign_names;
 }
 
 sub _get_si_report_normal_prefix {
   my $self = shift;
   my $clinseq_build = shift;
-  my ($somatic_build, $build_type) = $self->_get_somatic_build_type(
-      $clinseq_build);
-  my $normal_build = $somatic_build->normal_build;
-  my $normal_subject_name = $normal_build->subject->name;
-  my $normal_subject_common_name = $normal_build->subject->common_name;
-  $normal_subject_common_name =~ s/\,//g;
-  $normal_subject_common_name =~ s/\s+/\_/g;
-  my $normal_refalign_name = $normal_subject_name . "_$build_type" . "_" .
-    $normal_subject_common_name;
-  my @normal_timepoints = $normal_build->subject->attributes(
-    attribute_label => "timepoint", nomenclature => "caTissue");
-
-  my $normal_time_point = "day0";
-  if (@normal_timepoints){
-    $normal_time_point = $normal_timepoints[0]->attribute_value;
-    $normal_time_point =~ s/\s+//g;
+  my (%somatic_builds) = $self->_get_somatic_builds(
+    $clinseq_build);
+  my @normal_refalign_names;
+  foreach my $build_type (keys %somatic_builds) {
+    my $somatic_build = $somatic_builds{$build_type};
+    my $normal_build = $somatic_build->normal_build;
+    my $normal_subject_name = $normal_build->subject->name;
+    my $normal_subject_common_name = $normal_build->subject->common_name;
+    $normal_subject_common_name =~ s/\,//g;
+    $normal_subject_common_name =~ s/\s+/\_/g;
+    my $normal_refalign_name = $normal_subject_name . "_$build_type" . "_" .
+        $normal_subject_common_name;
+    my @normal_timepoints = $normal_build->subject->attributes(
+        attribute_label => "timepoint", nomenclature => "caTissue");
+    my $normal_time_point = "day0";
+    if (@normal_timepoints){
+        $normal_time_point = $normal_timepoints[0]->attribute_value;
+        $normal_time_point =~ s/\s+//g;
+    }
+    $normal_refalign_name = $normal_refalign_name . "_$normal_time_point";
+    push @normal_refalign_names, $normal_refalign_name;
   }
-  $normal_refalign_name = $normal_refalign_name . "_$normal_time_point";
-  return $normal_refalign_name;
+  return @normal_refalign_names;
 }
 
 1;

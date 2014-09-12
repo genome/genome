@@ -95,7 +95,7 @@ sub parse_variant_file {
         print_headers => 0,
     );
     my $out_data;
-    my $tumor_prefix = $self->_get_si_report_tumor_prefix($clinseq_build);
+    my @tumor_prefixes = $self->_get_si_report_tumor_prefix($clinseq_build);
     while (my $data = $reader->next) {
         if ($data->{chromosome_name} =~ /X|Y|MT/) {
             next;
@@ -104,9 +104,26 @@ sub parse_variant_file {
         $out_data->{pos} = $data->{start};
         $out_data->{ref_allele} = $data->{reference};
         $out_data->{var_allele} = $data->{variant};
-        $out_data->{ref_rc} = $data->{$tumor_prefix . "_ref_count"};
-        $out_data->{var_rc} = $data->{$tumor_prefix . "_var_count"};
-        $out_data->{vaf} = $data->{$tumor_prefix . "_VAF"};
+        my $max_vaf = 0;
+        foreach my $tumor_prefix(@tumor_prefixes) {
+            my $ref_rc = $data->{$tumor_prefix . "_ref_count"};
+            my $var_rc = $data->{$tumor_prefix . "_var_count"};
+            my $vaf = $data->{$tumor_prefix . "_VAF"};
+            if($ref_rc eq "NA") { 
+                $ref_rc = 0;
+            }
+            if($var_rc eq "NA") {
+                $var_rc = 0;
+            }
+            if($vaf eq "NA") {
+                $vaf = 0;
+            }
+            if($vaf > $max_vaf) {
+                $out_data->{ref_rc} = $ref_rc;
+                $out_data->{var_rc} = $var_rc;
+                $out_data->{vaf} = $vaf;
+            }
+        }
         $writer->write_one($out_data);
     }
     unlink $variant_file;
