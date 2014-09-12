@@ -10,7 +10,8 @@ use Test::More;
 my $class = 'Genome::Model::Tools::Vcf::FilterNonCalls';
 use_ok($class);
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-FilterNonCalls";
+my $VERSION = 1;
+my $test_dir = File::Spec->join($ENV{GENOME_TEST_INPUTS}, 'Genome-Model-Tools-Vcf-FilterNonCalls', $VERSION);
 my $expected_base = "expected";
 my $expected_dir = "$test_dir/$expected_base";
 my $expected_file = "$expected_dir/expected.vcf.gz";
