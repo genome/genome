@@ -787,29 +787,19 @@ sub get_ref_align_builds{
   return(\%ref_builds);
 }
 
-
-sub add_read_counts{
+sub get_header_prefixes {
   my $self = shift;
   my %args = @_;
   my $align_builds = $args{'-align_builds'};
-  my $grand_anno_file = $args{'-anno_file'};
-  my $indel_size_limit = 25; #max size of indels to report counts for.
 
-  my @bam_files;
   my @time_points;
   my @samples;
   my @names;
   foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
-    push(@bam_files, $align_builds->{$name}->{bam_path});
     push(@time_points, $align_builds->{$name}->{time_point});
     push(@samples, $align_builds->{$name}->{sample_name});
     push(@names, $name);
   }
-  my $bam_list = join(",", @bam_files);
-
-  #Get the reference fasta
-  my $reference_build = $self->resolve_clinseq_reference_build;
-  my $reference_fasta = $reference_build->full_consensus_path('fa');
 
   #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
   my @prefixes;
@@ -825,13 +815,30 @@ sub add_read_counts{
   }else{
     die $self->error_message("could not resolve unique prefixes for add-readcounts");
   }
-  my $header_prefixes = join(",", @prefixes);
 
-  #Record the header prefix chosen on the align_builds object
+  return @prefixes;
+}
+
+sub add_read_counts{
+  my $self = shift;
+  my %args = @_;
+  my $align_builds = $args{'-align_builds'};
+  my $grand_anno_file = $args{'-anno_file'};
+  my @prefixes = @{$args{'-prefixes'}};
+  my $header_prefixes = join(",", @prefixes);
+  my $indel_size_limit = 25; #max size of indels to report counts for.
+
+  my @bam_files;
   foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+    push(@bam_files, $align_builds->{$name}->{bam_path});
     my $prefix = shift @prefixes;
     $align_builds->{$name}->{prefix} = $prefix;
   }
+  my $bam_list = join(",", @bam_files);
+
+  #Get the reference fasta
+  my $reference_build = $self->resolve_clinseq_reference_build;
+  my $reference_fasta = $reference_build->full_consensus_path('fa');
 
   #gmt analysis coverage add-readcounts --bam-files=? --genome-build=? --output-file=? --variant-file=? [--header-prefixes=?] 
   my $output_file = $self->outdir . "variants.all.anno.readcounts";
