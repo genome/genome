@@ -259,9 +259,12 @@ sub execute {
   my $align_builds = $self->get_ref_align_builds(
     '-somatic_builds'=>$somatic_builds,
     '-rnaseq_builds'=>$rnaseq_builds);
-
+  my @prefixes = $self->get_header_prefixes('-align_builds'=>$align_builds);
   #Get bam-readcounts for all positions for all BAM files
-  my $grand_anno_count_file = $self->add_read_counts('-align_builds'=>$align_builds, '-anno_file'=>$grand_anno_file);
+  my $grand_anno_count_file = $self->add_read_counts(
+    '-align_builds'=>$align_builds,
+    '-anno_file'=>$grand_anno_file,
+    '-prefixes'=>\@prefixes);
   
   #Parse the BAM read count info and gather minimal data needed to apply filters:
   #Max normal VAF, Min Coverage
