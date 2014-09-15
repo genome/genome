@@ -32,27 +32,24 @@ sub output_filename {
 
 sub _run {
     my $self = shift;
-    my $info_string = $self->info_string;
-    my $max_length  = $self->max_length;
-    my $list_id     = $self->homopolymer_list_id;
-    my $output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
-
+    
+    my $list_id          = $self->homopolymer_list_id;
     my $feature_list     = Genome::FeatureList->get($list_id);
     my $homopolymer_file = $feature_list->get_tabix_and_gzipped_bed_file;
 
+    my $output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
+
     my %params = (
         input_file       => $self->input_vcf,
-        homopolymer_file => $homopolymer_file,
+        info_field       => $self->info_string,
+        max_length       => $self->max_length,  
+        use_version      => $self->joinx_version,
         output_file      => $output_file,
         use_bgzip        => 1,
-        use_version      => $self->joinx_version,
+        homopolymer_file => $homopolymer_file,
     );
 
-    $params{info_field} = $info_string if $info_string;
-    $params{max_length} = $max_length  if $max_length;
-
     my $homopolymer_annotator = Genome::Model::Tools::Joinx::VcfAnnotateHomopolymer->create(%params);
-
     unless ($homopolymer_annotator->execute) {
         die $self->error_message("Failed to execute joinx vcf-annotate-homopolymer");
     }

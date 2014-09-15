@@ -52,6 +52,19 @@ subtest "Homo-polymer NOT hit, keep" => sub {
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry gets filtered correctly");
 };
 
+subtest "No Homo-polymer in INFO column, keep" => sub {
+    my $filter = $pkg->create(info_tag => 'HOMP_FILTER');
+    lives_ok(sub {$filter->validate}, "Filter validates");
+
+    my %expected_return_values = (
+        AAAAA => 1,
+        AAA   => 1,
+    );
+    my $entry = create_entry('A=B;E');
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry gets filtered correctly");
+};
+
+
 done_testing;
 
 sub create_vcf_header {

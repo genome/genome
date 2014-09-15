@@ -18,7 +18,6 @@ class Genome::VariantReporting::Joinx::HomoPolymer::Run {
         max_length => {
             is  => 'Integer',
             doc => 'maximum indel length to annotate as in the homopolymer, default is 2',
-            is_optional => 1,
         },
         info_string => {
             is  => 'Text',
