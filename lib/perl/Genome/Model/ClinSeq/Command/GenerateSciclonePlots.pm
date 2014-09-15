@@ -3,10 +3,11 @@ package Genome::Model::ClinSeq::Command::GenerateSciclonePlots;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::GenerateSciclonePlots {
-    is => 'Command::V2',
+    is => ['Command::V2',
+           'Genome::Model::ClinSeq::Util',
+          ],
     has_input => [
         clinseq_build => {
             is => 'Genome::Model::Build::ClinSeq',
@@ -82,30 +83,30 @@ sub parse_variant_file {
     my $self = shift;
     my $clinseq_build = shift;
     my $variant_file = shift;
-    my $variant_file_temp = $variant_file . ".tmp";
-    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
-        separator => "\t",
-        input => $variant_file,
-    );
     my @headers = qw/chr pos ref_allele var_allele ref_rc var_rc vaf/;
-    my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
-        output => $variant_file_temp,
-        separator => "\t",
-        headers => \@headers,
-        print_headers => 0,
-    );
-    my $out_data;
     my @tumor_prefixes = $self->_get_si_report_tumor_prefix($clinseq_build);
-    while (my $data = $reader->next) {
-        if ($data->{chromosome_name} =~ /X|Y|MT/) {
-            next;
-        }
-        $out_data->{chr} = $data->{chromosome_name};
-        $out_data->{pos} = $data->{start};
-        $out_data->{ref_allele} = $data->{reference};
-        $out_data->{var_allele} = $data->{variant};
-        my $max_vaf = 0;
-        foreach my $tumor_prefix(@tumor_prefixes) {
+    my %variant_files;
+    foreach my $tumor_prefix(@tumor_prefixes) {
+        my $variant_file_temp = $variant_file . "_" . $tumor_prefix;
+        my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
+            output => $variant_file_temp,
+            separator => "\t",
+            headers => \@headers,
+            print_headers => 0,
+        );
+        my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+            separator => "\t",
+            input => $variant_file,
+        );
+        my $out_data;
+        while (my $data = $reader->next) {
+            if ($data->{chromosome_name} =~ /X|Y|MT|GL/) {
+                next;
+            }
+            $out_data->{chr} = $data->{chromosome_name};
+            $out_data->{pos} = $data->{start};
+            $out_data->{ref_allele} = $data->{reference};
+            $out_data->{var_allele} = $data->{variant};
             my $ref_rc = $data->{$tumor_prefix . "_ref_count"};
             my $var_rc = $data->{$tumor_prefix . "_var_count"};
             my $vaf = $data->{$tumor_prefix . "_VAF"};
@@ -118,21 +119,19 @@ sub parse_variant_file {
             if($vaf eq "NA") {
                 $vaf = 0;
             }
-            if($vaf > $max_vaf) {
-                $out_data->{ref_rc} = $ref_rc;
-                $out_data->{var_rc} = $var_rc;
-                $out_data->{vaf} = $vaf;
-            }
+            $out_data->{ref_rc} = $ref_rc;
+            $out_data->{var_rc} = $var_rc;
+            $out_data->{vaf} = $vaf;
+            $writer->write_one($out_data);
         }
-        $writer->write_one($out_data);
+        $variant_files{$tumor_prefix} = $variant_file_temp;
     }
-    unlink $variant_file;
-    Genome::Sys->move_file($variant_file_temp, $variant_file);
-    return $variant_file;
+    $self->status_message("keys " . keys %variant_files);
+    return %variant_files;
 }
 
 
-sub get_variant_file {
+sub get_variant_files {
     my $self = shift;
     my $clinseq_build = shift;
     my $outfile = $self->outdir . "/variants.clean.tsv";
@@ -168,7 +167,7 @@ sub parse_cnv_file {
     );
     my $out_data;
     while (my $data = $reader->next) {
-        if ($data->{chr} =~ /CHR|X|Y|MT/) {
+        if ($data->{chr} =~ /CHR|X|Y|MT|GL/) {
             next;
         }
         $out_data->{chr} = $data->{chr};
@@ -202,10 +201,11 @@ sub run_sciclone {
     my $variant_f = shift;
     my $cnv_f = shift;
     my $clinseq_build = shift;
+    my $prefix = shift;
     my $outdir = $self->outdir;
-    my $clusters_f = $outdir . "/sciclone.clusters.txt";
-    my $rscript_f = $outdir . "/sciclone.R";
-    my $plot_f = $outdir . "/sciclone.clonality.pdf";
+    my $clusters_f = $outdir . "/sciclone." . $prefix . ".clusters.txt";
+    my $rscript_f = $outdir . "/sciclone." . $prefix . ".R";
+    my $plot_f = $outdir . "/sciclone." . $prefix . ".clonality.pdf";
     my $maximum_clusters;
     if ($self->maximum_clusters) {
         $maximum_clusters = $self->maximum_clusters;
@@ -226,7 +226,7 @@ sub run_sciclone {
         copy_number_files => $cnv_f,
         maximum_clusters => $maximum_clusters,
         minimum_depth => $minimum_depth,
-        sample_names => $sample_name,
+        sample_names => $prefix,
         plot1d_file => $plot_f,
         cn_calls_are_log2 => 1,
         label_highlighted_points => 1,
@@ -241,9 +241,12 @@ sub run_sciclone {
 sub execute {
     my $self = shift;
     my $clinseq_build = $self->clinseq_build;
-    my $variant_f = $self->get_variant_file($clinseq_build);
+    my %variant_files = $self->get_variant_files($clinseq_build);
     my $cnv_f = $self->get_cnv_file($clinseq_build);
-    $self->run_sciclone($variant_f, $cnv_f, $clinseq_build);
+    foreach my $prefix (keys %variant_files) {
+        $self->run_sciclone($variant_files{$prefix}, $cnv_f, $clinseq_build,
+            $prefix);
+    }
     return 1;
 }
 
