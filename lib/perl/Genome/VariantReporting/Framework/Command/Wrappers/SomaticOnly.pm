@@ -18,6 +18,14 @@ class Genome::VariantReporting::Framework::Command::Wrappers::SomaticOnly {
             is => 'Path',
             is_output => 1,
         },
+        snvs_input_vcf => {
+            is => 'Path',
+            is_optional => 1,
+        },
+        indels_input_vcf => {
+            is => 'Path',
+            is_optional => 1,
+        },
     },
 };
 
@@ -32,8 +40,15 @@ sub execute {
         plan_file_basename => 'somatic_TYPE_report.yaml',
     );
     for my $variant_type(qw(snvs indels)) {
+        my $optional_vcf_method = $variant_type .'_input_vcf';
+        my $input_vcf;
+        if ($self->$optional_vcf_method) {
+            $input_vcf = $self->$optional_vcf_method;
+        } else {
+            $input_vcf = $model_pair->input_vcf($variant_type)
+        }
         my %params = (
-            input_vcf => $model_pair->input_vcf($variant_type),
+            input_vcf => $input_vcf,
             variant_type => $variant_type,
             output_directory => $model_pair->reports_directory($variant_type),
             plan_file => $model_pair->plan_file($variant_type),
