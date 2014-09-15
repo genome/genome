@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+use Genome::Model::Tools::Picard::DownsampleRatioMixin;
 require List::MoreUtils;
 use Workflow::Simple;
 
@@ -34,10 +35,7 @@ class Genome::InstrumentData::Command::Import::Basic {
             is => 'Text',
             doc => 'Description of the data.',
         },
-        downsample_ratio => {
-            is => 'Text',
-            doc => 'Ratio at which to keep reads in order to downsample. A value of 0.01 means keep 1 in 100 reads.',
-        },
+        downsample_ratio => Genome::Model::Tools::Picard::DownsampleRatioMixin->downsample_ratio_property,
         instrument_data_properties => {
             is => 'Text',
             is_many => 1,
@@ -91,10 +89,8 @@ sub __errors__ {
     my @errors = $self->SUPER::__errors__;
     return @errors if @errors;
 
-    if ( defined $self->downsample_ratio ) {
-        @errors = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->is_downsample_ratio_invalid($self->downsample_ratio);
-        return @errors if @errors;
-    }
+    @errors = Genome::Model::Tools::Picard::DownsampleRatioMixin::__errors__($self);
+    return @errors if @errors;
 
     return;
 }

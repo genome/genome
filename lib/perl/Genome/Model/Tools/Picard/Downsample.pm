@@ -4,9 +4,10 @@ use strict;
 use warnings;
 
 use Genome;
-use IO::File;
-use File::Basename;
 
+use Genome::Model::Tools::Picard::DownsampleRatioMixin;
+use File::Basename;
+use IO::File;
 
 class Genome::Model::Tools::Picard::Downsample {
     is  => 'Genome::Model::Tools::Picard',
@@ -21,11 +22,7 @@ class Genome::Model::Tools::Picard::Downsample {
             doc => 'The resulting downsampled SAM/BAM file.  File type is determined by suffix.',
             is_optional => 0,
         },
-        downsample_ratio => {
-            is => 'String',
-            doc => 'ratio at which to keep reads in order to downsample. 0.01 means keep 1 in 100 reads. ',
-            is_optional => 0,
-        },
+        downsample_ratio => Genome::Model::Tools::Picard::DownsampleRatioMixin->downsample_ratio_property,
         use_version => {
             is => 'String',
             doc => 'Version must be 1.52 or greater, default is 1.52',
@@ -49,6 +46,18 @@ sub help_detail {
     Tool to downsample a BAM or SAM file using Picard.  For Picard documentation of this command see:
     http://picard.sourceforge.net/command-line-overview.shtml#DownsampleSam
 EOS
+}
+
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+    return @errors if @errors;
+
+    @errors = Genome::Model::Tools::Picard::DownsampleRatioMixin::__errors__($self);
+    return @errors if @errors;
+
+    return;
 }
 
 sub execute {
@@ -75,5 +84,5 @@ sub execute {
     return 1;
 }
 
-
 1;
+
