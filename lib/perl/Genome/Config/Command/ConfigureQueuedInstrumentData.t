@@ -32,11 +32,15 @@ build_and_run_cmd($rna_instrument_data);
 assert_succeeded($rna_instrument_data, $model_types);
 is($rna_instrument_data->models->auto_assign_inst_data, 1, 'it should default to setting auto assign inst data to 1');
 
-#existing model
-($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();
+#find the same model again
+build_and_run_cmd($rna_instrument_data);
+assert_succeeded($rna_instrument_data, $model_types);
+is(scalar(@{[$rna_instrument_data->models]}), 1, 'it should use the same model again instead of creating a new one');
+
+#find existing model should be scoped to AnP
 my $config_hash = _rna_seq_config_hash();
 delete $config_hash->{instrument_data_properties};
-delete $config_hash->{config_profile_items};
+delete $config_hash->{config_profile_item};
 $config_hash->{subject} = $rna_instrument_data->sample;
 $config_hash->{target_region_set_name} = $rna_instrument_data->target_region_set_name;
 $config_hash->{auto_assign_inst_data} = 1;
@@ -49,7 +53,6 @@ is_deeply([$rna_model->instrument_data], [], 'it does not assign the instrument 
 ($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();
 my $config_hash_no_auto_assign = _rna_seq_config_hash();
 delete $config_hash_no_auto_assign->{instrument_data_properties};
-delete $config_hash_no_auto_assign->{config_profile_items};
 $config_hash_no_auto_assign->{subject} = $rna_instrument_data->sample;
 $config_hash_no_auto_assign->{target_region_set_name} = $rna_instrument_data->target_region_set_name;
 $config_hash_no_auto_assign->{auto_assign_inst_data} = 0;
@@ -216,7 +219,6 @@ sub generate_rna_seq_instrument_data {
 
 sub _rna_seq_config_hash {
     return {
-        config_profile_items => [Genome::Test::Factory::Config::Profile::Item->setup_object()],
         processing_profile_id       => 2819506,
         annotation_build_id         => 124434505,
         reference_sequence_build_id => 106942997,
@@ -287,7 +289,6 @@ sub _generate_som_val_instrument_data {
 
 sub _som_val_config_hash {
     return {
-        config_profile_items => [Genome::Test::Factory::Config::Profile::Item->setup_object()],
         processing_profile_id       => 2656116,
         annotation_build_id         => 124434505,
         reference_sequence_build_id => 106942997,
@@ -368,7 +369,6 @@ sub _generate_lane_qc_instrument_data {
 
 sub _ref_align_config_hash {
     return {
-        config_profile_items => [Genome::Test::Factory::Config::Profile::Item->setup_object()],
         processing_profile_id => '2653572',
         reference_sequence_build_id => '106942997',
         user_name                   => 'apipe-builder',

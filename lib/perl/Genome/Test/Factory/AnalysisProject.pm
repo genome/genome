@@ -17,8 +17,18 @@ sub generate_obj {
     }
 
     my $project = Genome::Config::AnalysisProject->create(%params);
+    my $config_profile_item = Genome::Test::Factory::Config::Profile::Item->setup_object(analysis_project => $project);
 
     if ($config_hash) {
+        for(values %$config_hash) {
+            if(ref($_) eq 'ARRAY') {
+                for(@$_){
+                    $_->{config_profile_item} = $config_profile_item
+                }
+            } else {
+                $_->{config_profile_item} = $config_profile_item
+            }
+        }
         $project->{__dummy_config_hash__} = $config_hash;
     }
 
@@ -47,7 +57,7 @@ use warnings;
 
 package Genome::Config::DummyConfigReader;
 sub get_config {
-    return shift->{'config'};
+    return UR::Util::deep_copy(shift->{'config'});
 }
 
 1;
