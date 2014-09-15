@@ -5,6 +5,8 @@ use strict;
 use warnings;
 use Genome;
 
+use Genome::Test::Factory::Config::Profile::Item;
+
 our @required_params = qw(name);
 
 sub generate_obj {
@@ -17,8 +19,18 @@ sub generate_obj {
     }
 
     my $project = Genome::Config::AnalysisProject->create(%params);
+    my $config_profile_item = Genome::Test::Factory::Config::Profile::Item->setup_object(analysis_project => $project);
 
     if ($config_hash) {
+        for my $model_config (values %$config_hash) {
+            if(ref($model_config) eq 'ARRAY') {
+                for my $model_instance_config (@$model_config){
+                    $model_instance_config->{config_profile_item} = $config_profile_item
+                }
+            } else {
+                $model_config->{config_profile_item} = $config_profile_item
+            }
+        }
         $project->{__dummy_config_hash__} = $config_hash;
     }
 
@@ -47,7 +59,7 @@ use warnings;
 
 package Genome::Config::DummyConfigReader;
 sub get_config {
-    return shift->{'config'};
+    return UR::Util::deep_copy(shift->{'config'});
 }
 
 1;

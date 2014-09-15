@@ -45,7 +45,7 @@ sub _add_config_profile_item_id {
 
     while (my (undef, $model_config) = each %$models) {
         for (@{$model_config}) {
-            $_->{config_profile_items} = [$config_profile_item]
+            $_->{config_profile_item} = $config_profile_item
         }
     }
     return $models;

@@ -224,6 +224,7 @@ sub _get_model_for_config_hash {
     my $config = shift;
     my $analysis_project = shift;
 
+    my $config_profile_item = delete $config->{config_profile_item};
     my %read_config = %$config;
     for my $key (keys %read_config) {
         my $value = $read_config{$key};
@@ -233,9 +234,9 @@ sub _get_model_for_config_hash {
     }
 
     my @extra_params = (auto_assign_inst_data => 1);
-    my ($config_profile_item) = @{delete $config->{config_profile_items}};
 
-    my @m = $class_name->get(@extra_params, %read_config, analysis_projects => [$analysis_project]);
+    my @found_models = $class_name->get(@extra_params, %read_config, analysis_projects => [$analysis_project]);
+    my @m = grep { $_->analysis_project_bridges->profile_item_id eq $config_profile_item->id } @found_models;
 
     if (scalar(@m) > 1) {
         die(sprintf("Sorry, but multiple identical models were found: %s", join(',', map { $_->id } @m)));
