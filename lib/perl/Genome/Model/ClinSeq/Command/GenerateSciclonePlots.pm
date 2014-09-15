@@ -83,6 +83,7 @@ sub parse_variant_file {
     my $self = shift;
     my $clinseq_build = shift;
     my $variant_file = shift;
+    my $gender = $clinseq_build->subject->gender;
     my @headers = qw/chr pos ref_allele var_allele ref_rc var_rc vaf/;
     my @tumor_prefixes = $self->_get_si_report_tumor_prefix($clinseq_build);
     my %variant_files;
@@ -100,7 +101,10 @@ sub parse_variant_file {
         );
         my $out_data;
         while (my $data = $reader->next) {
-            if ($data->{chromosome_name} =~ /X|Y|MT|GL/) {
+            if ($data->{chromosome_name} =~ /Y|MT|GL/) {
+                next;
+            }
+            if ($gender ne "female" and $data->{chr} =~ /X/) {
                 next;
             }
             $out_data->{chr} = $data->{chromosome_name};
@@ -150,6 +154,8 @@ sub parse_cnv_file {
     my $self = shift;
     my $clinseq_build = shift;
     my $cnv_file = shift;
+    my $gender = $clinseq_build->subject->gender;
+    $self->status_message($gender);
     my $cnv_file_temp = $cnv_file . ".tmp";
     my @cnvhmm_header = qw/chr start end size adjusted_size tumor_cn
         tumor_adjusted_cn normal_cn normal_adjusted_cn unknown_column status/;
@@ -167,7 +173,10 @@ sub parse_cnv_file {
     );
     my $out_data;
     while (my $data = $reader->next) {
-        if ($data->{chr} =~ /CHR|X|Y|MT|GL/) {
+        if ($data->{chr} =~ /CHR|Y|MT|GL/) {
+            next;
+        }
+        if ($gender ne "female" and $data->{chr} =~ /X/) {
             next;
         }
         $out_data->{chr} = $data->{chr};
