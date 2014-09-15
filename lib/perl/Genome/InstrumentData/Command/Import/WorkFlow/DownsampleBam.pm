@@ -79,7 +79,7 @@ sub _downsample_bam {
         input_file => $bam_path,
         output_file => $output_bam_path,
         downsample_ratio => $downsample_ratio,
-        random_seed => 1, # makes bam reproducable
+        random_seed => 1, # makes bam reproducible
     );
     if ( not $picard_downsample_cmd ) {
         $self->error_message('Failed to create GMT Picard downsample command!');
