@@ -1,23 +1,12 @@
 package Genome::Model::ClinSeq::Util;
-
-#Written by Malachi Griffith
-
-require Exporter;
-
-@ISA = qw( Exporter );
-@EXPORT = qw();
-
-@EXPORT_OK = qw(
-                &createNewDir &checkDir &commify &memoryUsage &loadEnsemblMap &loadEntrezEnsemblData &mapGeneName &fixGeneName &importIdeogramData &getCytoband &getColumnPosition &listGeneCategories &importSymbolListNames &importGeneSymbolLists &getFilePathBase &_get_si_report_tumor_prefix &_get_si_report_normal_prefix &_get_somatic_builds);
-
-%EXPORT_TAGS = (
-                all => [qw(&createNewDir &checkDir &commify &memoryUsage &loadEnsemblMap &loadEntrezEnsemblData &mapGeneName &fixGeneName &importIdeogramData &getCytoband &getColumnPosition &listGeneCategories &importSymbolListNames &importGeneSymbolLists &getFilePathBase &_get_si_report_tumor_prefix &_get_si_report_normal_prefix &_get_somatic_builds)]
-               );
-
 use strict;
 use warnings;
 use Data::Dumper;
+use List::MoreUtils qw/ uniq /;
 
+#Written by Malachi Griffith
+class Genome::Model::ClinSeq::Util{
+};
 
 ###############################################################################################################
 #Create a new directory in a specified location                                                               #
@@ -1229,57 +1218,229 @@ sub _get_somatic_builds {
 sub _get_si_report_tumor_prefix {
   my $self = shift;
   my $clinseq_build = shift;
+  my $somatic_builds = $self->resolve_somatic_builds($clinseq_build);
+  my $rnaseq_builds = $self->resolve_rnaseq_builds($clinseq_build);
+  my $align_builds = $self->get_ref_align_builds(
+    '-somatic_builds'=>$somatic_builds,
+    '-rnaseq_builds'=>$rnaseq_builds);
+  my @prefixes = $self->get_header_prefixes(
+    '-align_builds'=>$align_builds);
   my (%somatic_builds) = $self->_get_somatic_builds(
     $clinseq_build);
-  my @tumor_refalign_names;
+  my (@tumor_refalign_names, $somatic_build, $tumor_build);
+  my ($tumor_subject_name, $tumor_subject_common_name);
   foreach my $build_type (keys %somatic_builds) {
-    my $somatic_build = $somatic_builds{$build_type};
-    my $tumor_build = $somatic_build->tumor_build;
-    my $tumor_subject_name = $tumor_build->subject->name;
-    my $tumor_subject_common_name = $tumor_build->subject->common_name;
+    $somatic_build = $somatic_builds{$build_type};
+    $tumor_build = $somatic_build->tumor_build;
+    $tumor_subject_name = $tumor_build->subject->name;
+    $tumor_subject_common_name = $tumor_build->subject->common_name;
     $tumor_subject_common_name =~ s/\,//g;
     $tumor_subject_common_name =~ s/\s+/\_/g;
-    my $tumor_refalign_name = $tumor_subject_name . "_$build_type" . "_" .
-    $tumor_subject_common_name;
-    my @tumor_timepoints = $tumor_build->subject->attributes(
-        attribute_label => "timepoint", nomenclature => "caTissue");
-    my $tumor_time_point = "day0";
-    if (@tumor_timepoints){
-        $tumor_time_point = $tumor_timepoints[0]->attribute_value;
-        $tumor_time_point =~ s/\s+//g;
+  }
+  foreach my $prefix (@prefixes) {
+    if(($prefix =~ /$tumor_subject_name/) or
+      ($prefix =~ /$tumor_subject_common_name/) or
+      ($prefix =~ /$tumor_build/)) {
+      push @tumor_refalign_names, $prefix;
     }
-    $tumor_refalign_name = $tumor_refalign_name . "_$tumor_time_point";
-    push @tumor_refalign_names, $tumor_refalign_name;
   }
   return @tumor_refalign_names;
 }
 
-sub _get_si_report_normal_prefix {
+sub resolve_rnaseq_builds {
   my $self = shift;
-  my $clinseq_build = shift;
-  my (%somatic_builds) = $self->_get_somatic_builds(
-    $clinseq_build);
-  my @normal_refalign_names;
-  foreach my $build_type (keys %somatic_builds) {
-    my $somatic_build = $somatic_builds{$build_type};
+  my @clinseq_builds = shift;
+  my %rnaseq_builds;
+  foreach my $clinseq_build (@clinseq_builds){
+    my $tumor_build = $clinseq_build->tumor_rnaseq_build;
+    $rnaseq_builds{$tumor_build->id}{build} = $tumor_build if $tumor_build;
+    $rnaseq_builds{$tumor_build->id}{type} = 'tumor_rnaseq' if $tumor_build;
+    my $normal_build = $clinseq_build->normal_rnaseq_build;
+    $rnaseq_builds{$normal_build->id}{build} = $normal_build if $normal_build;
+    $rnaseq_builds{$normal_build->id}{type} = 'normal_rnaseq' if $normal_build;
+  }
+  return (\%rnaseq_builds);
+}
+
+sub resolve_somatic_builds{
+  my $self = shift;
+  my @clinseq_builds = shift;
+  my %somatic_builds;
+  foreach my $clinseq_build (@clinseq_builds){
+    my $wgs_build = $clinseq_build->wgs_build;
+    $somatic_builds{$wgs_build->id}{build} = $wgs_build if $wgs_build;
+    $somatic_builds{$wgs_build->id}{type} = 'wgs' if $wgs_build;
+    my $exome_build = $clinseq_build->exome_build;
+    $somatic_builds{$exome_build->id}{build} = $exome_build if $exome_build;
+    $somatic_builds{$exome_build->id}{type} = 'exome' if $exome_build;
+  }
+  return (\%somatic_builds);
+}
+
+sub get_ref_align_builds{
+  my $self = shift;
+  my %args = @_;
+  my $somatic_builds = $args{'-somatic_builds'};
+  my $rnaseq_builds = $args{'-rnaseq_builds'};
+
+  my %ref_builds;
+
+  my $sort_on_time_point = 0;
+
+  foreach my $somatic_build_id (keys %{$somatic_builds}){
+    my $build_type = $somatic_builds->{$somatic_build_id}->{type};
+    my $somatic_build = $somatic_builds->{$somatic_build_id}->{build};
     my $normal_build = $somatic_build->normal_build;
     my $normal_subject_name = $normal_build->subject->name;
     my $normal_subject_common_name = $normal_build->subject->common_name;
     $normal_subject_common_name =~ s/\,//g;
     $normal_subject_common_name =~ s/\s+/\_/g;
-    my $normal_refalign_name = $normal_subject_name . "_$build_type" . "_" .
-        $normal_subject_common_name;
-    my @normal_timepoints = $normal_build->subject->attributes(
-        attribute_label => "timepoint", nomenclature => "caTissue");
+    my $tumor_build = $somatic_build->tumor_build;
+    my $tumor_subject_name = $tumor_build->subject->name;
+    my $tumor_subject_common_name = $tumor_build->subject->common_name;
+    $tumor_subject_common_name =~ s/\,//g;
+    $tumor_subject_common_name =~ s/\s+/\_/g;
+    my $normal_refalign_name = $normal_subject_name . "_$build_type" . "_" . $normal_subject_common_name;
+    my $tumor_refalign_name = $tumor_subject_name . "_$build_type" . "_" . $tumor_subject_common_name;
+    my $normal_bam_path = $normal_build->whole_rmdup_bam_file;
+    my $tumor_bam_path = $tumor_build->whole_rmdup_bam_file;
+    my @normal_timepoints = $normal_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+    my @tumor_timepoints = $tumor_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+
     my $normal_time_point = "day0";
     if (@normal_timepoints){
-        $normal_time_point = $normal_timepoints[0]->attribute_value;
-        $normal_time_point =~ s/\s+//g;
+      $normal_time_point = $normal_timepoints[0]->attribute_value;
+      $normal_time_point =~ s/\s+//g;
+      $sort_on_time_point = 1;
     }
-    $normal_refalign_name = $normal_refalign_name . "_$normal_time_point";
-    push @normal_refalign_names, $normal_refalign_name;
+    $normal_refalign_name .= "_$normal_time_point";
+
+    my $tumor_time_point = "day0";
+    if (@tumor_timepoints){
+      $tumor_time_point = $tumor_timepoints[0]->attribute_value;
+      $tumor_time_point =~ s/\s+//g;
+      $sort_on_time_point = 1;
+    }
+    $tumor_refalign_name .= "_$tumor_time_point";
+
+    $ref_builds{$normal_refalign_name}{type} = $build_type;
+    $ref_builds{$normal_refalign_name}{sample_name} = $normal_subject_name;
+    $ref_builds{$normal_refalign_name}{sample_common_name} = $normal_subject_common_name;
+    $ref_builds{$normal_refalign_name}{bam_path} = $normal_bam_path;
+    $ref_builds{$normal_refalign_name}{time_point} = $normal_subject_common_name . "_" . $normal_time_point;
+    $ref_builds{$normal_refalign_name}{day} = $normal_time_point;
+
+    $ref_builds{$tumor_refalign_name}{type} = $build_type;
+    $ref_builds{$tumor_refalign_name}{sample_name} = $tumor_subject_name;
+    $ref_builds{$tumor_refalign_name}{sample_common_name} = $tumor_subject_common_name;
+    $ref_builds{$tumor_refalign_name}{bam_path} = $tumor_bam_path;
+    $ref_builds{$tumor_refalign_name}{time_point} = $tumor_subject_common_name . "_" . $tumor_time_point;
+    $ref_builds{$tumor_refalign_name}{day} = $tumor_time_point;
   }
-  return @normal_refalign_names;
+
+  $self->get_rnaseq_ref_builds(\%ref_builds, $rnaseq_builds);
+
+  #Set an order on refalign builds (use time points if available, otherwise name)
+  my $o = 0;
+  if ($sort_on_time_point){
+    foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
+      $o++;
+      $ref_builds{$name}{order} = $o;
+    }
+  }else{
+    foreach my $name (sort keys %ref_builds){
+      $o++;
+      $ref_builds{$name}{order} = $o;
+    }
+  }
+
+  #Determine the time point position
+  my %timepoint_positions;
+  foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
+    my $day = $ref_builds{$name}{day};
+    if ($day =~ /day(\d+)/){
+      my $day_number = $1;
+      $timepoint_positions{$day_number}{position} = 0;
+      $ref_builds{$name}{day_number} = $day_number;
+    }else{
+      die $self->error_message("could not parse day value from sample attribute (caTissue timepoint): $day");
+    }
+  }
+  my $time_point_counter = 0;
+  foreach my $day_number (sort {$a <=> $b} keys %timepoint_positions){
+    $time_point_counter++;
+    $timepoint_positions{$day_number}{position} = $time_point_counter;
+  }
+
+  foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
+    my $day_number = $ref_builds{$name}{day_number};
+    my $position = $timepoint_positions{$day_number}{position};
+    $ref_builds{$name}{timepoint_position} = $position;
+  }
+
+  return(\%ref_builds);
+}
+
+sub get_rnaseq_ref_builds {
+  my $self = shift;
+  my $ref_builds = shift;
+  my $rnaseq_builds = shift;
+  foreach my $rnaseq_build_id (keys %{$rnaseq_builds}){
+    my $build_type = $rnaseq_builds->{$rnaseq_build_id}->{type};
+    my $rnaseq_build = $rnaseq_builds->{$rnaseq_build_id}->{build};
+    my $subject_name = $rnaseq_build->subject->name;
+    my $subject_common_name = $rnaseq_build->subject->common_name;
+    $subject_common_name =~ s/\,//g;
+    $subject_common_name =~ s/\s+/\_/g;
+    my $bam_path = $rnaseq_build->alignment_result->bam_file;
+    my @timepoints = $rnaseq_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+
+    my $time_point = "day0";
+    if (@timepoints){
+      $time_point = $timepoints[0]->attribute_value;
+      $time_point =~ s/\s+//g;
+    }
+    my $refalign_name = $subject_name . "_$build_type" . "_" .
+      $subject_common_name . "_$time_point";;
+    $ref_builds->{$refalign_name}{type} = $build_type;
+    $ref_builds->{$refalign_name}{sample_name} = $subject_name;
+    $ref_builds->{$refalign_name}{sample_common_name} = $subject_common_name;
+    $ref_builds->{$refalign_name}{bam_path} = $bam_path;
+    $ref_builds->{$refalign_name}{time_point} = $subject_common_name . "_" . $time_point;
+    $ref_builds->{$refalign_name}{day} = $time_point;
+  }
+}
+
+sub get_header_prefixes {
+  my $self = shift;
+  my %args = @_;
+  my $align_builds = $args{'-align_builds'};
+
+  my @time_points;
+  my @samples;
+  my @names;
+  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
+    push(@time_points, $align_builds->{$name}->{time_point});
+    push(@samples, $align_builds->{$name}->{sample_name});
+    push(@names, $name);
+  }
+
+  #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
+  my @prefixes;
+  my @unique_time_points = uniq @time_points;
+  my @unique_samples = uniq @samples;
+  my @unique_names = uniq @names;
+  if (scalar(@unique_time_points) == scalar(@time_points)){
+    @prefixes = @time_points;
+  }elsif(scalar(@unique_samples) == scalar(@samples)){
+    @prefixes = @samples;
+  }elsif(scalar(@unique_names) == scalar(@names)){
+    @prefixes = @names;
+  }else{
+    die $self->error_message("could not resolve unique prefixes for add-readcounts");
+  }
+
+  return @prefixes;
 }
 
 1;
