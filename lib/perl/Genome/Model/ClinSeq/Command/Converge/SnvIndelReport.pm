@@ -7,9 +7,9 @@ use List::MoreUtils qw/ uniq /;
 use Genome::Info::IUB;
 use Spreadsheet::WriteExcel;
 
-
 class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
-    is => 'Genome::Model::ClinSeq::Command::Converge::Base',
+    is => ['Genome::Model::ClinSeq::Command::Converge::Base',
+           'Genome::Model::ClinSeq::Util'],
     has_input => [
         outdir => { 
                is => 'FilesystemPath',
@@ -226,8 +226,8 @@ sub execute {
   #Gather variants for the tiers specified by the user from each build. Note which build each came from.
   #Get these from the underlying somatic-variation builds.
   #Annotate all variants (gmt annotate transcript-variants --help)
-  my $somatic_builds = $self->resolve_somatic_builds;
-  my $rnaseq_builds = $self->resolve_rnaseq_builds;
+  my $somatic_builds = $self->resolve_somatic_builds($self->builds);
+  my $rnaseq_builds = $self->resolve_rnaseq_builds($self->builds);
   my $annotation_build_name = $self->annotation_build->name;
   $self->status_message("Using annotation build: $annotation_build_name");
   my $bed_dir = $self->outdir . "bed_files/";
