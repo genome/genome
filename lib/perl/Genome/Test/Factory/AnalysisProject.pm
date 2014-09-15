@@ -22,13 +22,13 @@ sub generate_obj {
     my $config_profile_item = Genome::Test::Factory::Config::Profile::Item->setup_object(analysis_project => $project);
 
     if ($config_hash) {
-        for(values %$config_hash) {
-            if(ref($_) eq 'ARRAY') {
-                for(@$_){
-                    $_->{config_profile_item} = $config_profile_item
+        for my $model_config (values %$config_hash) {
+            if(ref($model_config) eq 'ARRAY') {
+                for my $model_instance_config (@$model_config){
+                    $model_instance_config->{config_profile_item} = $config_profile_item
                 }
             } else {
-                $_->{config_profile_item} = $config_profile_item
+                $model_config->{config_profile_item} = $config_profile_item
             }
         }
         $project->{__dummy_config_hash__} = $config_hash;
