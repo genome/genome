@@ -5,6 +5,8 @@ use strict;
 use warnings;
 use Genome;
 
+use Genome::Test::Factory::Config::Profile::Item;
+
 our @required_params = qw(name);
 
 sub generate_obj {
