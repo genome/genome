@@ -71,6 +71,17 @@ $fail = Genome::InstrumentData::Command::Import::Basic->create(
 ok(!$fail->execute, 'Fails w/ invalid instrument_data_properties');
 is(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, 'Multiple values for instrument data property! lane => 2, 3', 'Correct error meassage');
 
+$fail = Genome::InstrumentData::Command::Import::Basic->create(
+    analysis_project => $analysis_project,
+    library => $library,
+    source_files => \@source_files,
+    import_source_name => 'broad',
+    downsample_ratio => 0.25,
+    instrument_data_properties => [qw/ downsample_ratio=0.24 /],
+);
+ok(!$fail->execute, 'Fails w/ conflicting cmd and instdata properties instrument_data_properties');
+is($fail->error_message, "Conflicting values given for command and instrument data properties downsample_ratio: '0.25' <=> '0.24'", 'Correct error message');
+
 my $inst_data = Genome::InstrumentData::Imported->create(
     library => $library,
     original_data_path => join(',', @source_files),

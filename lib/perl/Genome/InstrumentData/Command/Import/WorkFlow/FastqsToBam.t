@@ -36,10 +36,10 @@ my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam->execut
     library => $library,
 );
 ok($cmd->result, 'execute');
-my $bam_path = $cmd->bam_path;
-is($bam_path, $tmp_dir.'/__TEST_SAMPLE__.bam', 'bam path named correctly');
-ok(-s $bam_path, 'bam path exists');
-is(File::Compare::compare($bam_path, $test_dir.'/input.fastq.unsorted.bam'), 0, 'bam matches');
+my $output_bam_path = $cmd->output_bam_path;
+is($output_bam_path, $tmp_dir.'/__TEST_SAMPLE__.bam', 'bam path named correctly');
+ok(-s $output_bam_path, 'bam path exists');
+is(File::Compare::compare($output_bam_path, $test_dir.'/input.fastq.unsorted.bam'), 0, 'bam matches');
 
 for ( my $i = 0; $i < @source_fastq_paths; $i++ ) {
     ok(!glob($source_fastq_paths[$i].'*'), 'removed fastq '.($i + 1).' after conversion to bam');

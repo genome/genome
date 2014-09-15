@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+require List::MoreUtils;
 use Workflow::Simple;
 
 class Genome::InstrumentData::Command::Import::Basic { 
@@ -33,6 +34,10 @@ class Genome::InstrumentData::Command::Import::Basic {
             is => 'Text',
             doc => 'Description of the data.',
         },
+        downsample_ratio => {
+            is => 'Text',
+            doc => 'Ratio at which to keep reads in order to downsample. A value of 0.01 means keep 1 in 100 reads.',
+        },
         instrument_data_properties => {
             is => 'Text',
             is_many => 1,
@@ -40,7 +45,7 @@ class Genome::InstrumentData::Command::Import::Basic {
         },
         original_format => {
             is => 'Text',
-            valid_values => [qw/ bam fastq sra /],
+            valid_values => [qw/ bam fastq fastq_archive sra /],
             doc => 'The original format of the source files. Use if the format cannot be determined from the file extension.',
         },
     ],
@@ -51,7 +56,7 @@ class Genome::InstrumentData::Command::Import::Basic {
     },
     has_optional_transient => [
         _workflow => {},
-        _verify_md5_op => {},
+        _verify_not_imported_op => {},
         _working_directory => { is => 'Text', },
         _instrument_data_properties => { is => 'Hash', },
         _new_instrument_data => { is => 'Genome::InstrumentData', is_many => 1 },
@@ -80,6 +85,20 @@ Instrument Data Properties
 HELP
 }
 
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+    return @errors if @errors;
+
+    if ( defined $self->downsample_ratio ) {
+        @errors = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->is_downsample_ratio_invalid($self->downsample_ratio);
+        return @errors if @errors;
+    }
+
+    return;
+}
+
 sub execute {
     my $self = shift;
     $self->status_message('Import instrument data...');
@@ -96,17 +115,13 @@ sub execute {
     my $space_available = $self->_verify_adequate_disk_space_is_available_for_source_files;
     return if not $space_available;
 
-    my $workflow = $self->_create_workflow;
+    my $workflow = $self->_build_workflow;
     return if not $workflow;
-
-    my $method = '_build_workflow_to_import_'.$original_format;
-    my $wf = $self->$method;
-    return if not $wf;
 
     my $inputs = $self->_gather_inputs_for_workflow;
     return if not $inputs;
 
-    my $success = Workflow::Simple::run_workflow($wf, %$inputs);
+    my $success = Workflow::Simple::run_workflow($workflow, %$inputs);
     die 'Run wf failed!' if not $success;
 
     $self->_new_instrument_data($success->{instrument_data});
@@ -126,10 +141,12 @@ sub _resolve_original_format {
     my @source_files = $self->source_files;
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
     my %formats;
+    my $is_archived = 0;
     for my $source_file ( @source_files ) {
         my $format = $helpers->source_file_format($source_file);
         return if not $format;
         $formats{$format}++;
+        $is_archived++ if $helpers->is_source_file_archived($source_file);
     }
 
     my @formats = keys %formats;
@@ -137,16 +154,25 @@ sub _resolve_original_format {
         $self->error_message('Got more than one format when trying to determine format!');
         return;
     }
-    $self->status_message('Original format: '.$formats[0]);
 
-    my $max_source_files = ( $formats[0] =~ /^fast[aq]$/ ? 2 : 1 );
+    my $format = $formats[0];
+    if ( $is_archived > 1 ) {
+        $self->error_message('More than one file is archived. Please import them separately.');
+        return;
+    }
+    elsif ( $is_archived ) {
+        $format .= '_archive';
+    }
+    $self->status_message('Original format: '.$format);
+
+    my $max_source_files = ( $format =~ /^fast[aq]$/ ? 2 : 1 );
     if ( @source_files > $max_source_files ) {
         $self->error_message("Cannot handle more than $max_source_files source files!");
         return;
     }
 
     $self->status_message('Resolve original format...done');
-    return $self->original_format($formats[0]);
+    return $self->original_format($format);
 }
 
 sub _resolve_instrument_data_properties {
@@ -159,9 +185,13 @@ sub _resolve_instrument_data_properties {
         return if not $properties;
     }
 
-    for my $name (qw/ import_source_name description /) {
+    for my $name (qw/ import_source_name description downsample_ratio /) {
         my $value = $self->$name;
         next if not defined $value;
+        if ( defined $properties->{$name} and $properties->{$name} ne $value ) {
+            $self->error_message("Conflicting values given for command and instrument data properties $name: '$value' <=> '$properties->{$name}'");
+            return;
+        }
         $properties->{$name} = $value;
     }
 
@@ -192,18 +222,88 @@ sub _verify_adequate_disk_space_is_available_for_source_files {
     return $space_available;
 }
 
-sub _create_workflow {
+sub _build_workflow {
     my $self = shift;
 
     my $workflow = Workflow::Model->create(
         name => 'Import Instrument Data',
-        input_properties => [qw/ analysis_project instrument_data_properties library source_paths working_directory /],
+        input_properties => [qw/ analysis_project instrument_data_properties downsample_ratio library source_paths working_directory /],
         output_properties => [qw/ instrument_data /],
     );
     $self->_workflow($workflow);
 
-    my $helpers = $self->helpers;
-    my $retrieve_source_path_op = $helpers->add_operation_to_workflow_by_name($workflow, 'retrieve source path');
+    my $retrieve_source_path_op = $self->_add_retrieve_source_path_op_to_workflow;
+    return if not $retrieve_source_path_op;
+
+    my $verify_not_imported_op = $self->_add_verify_not_imported_op_to_workflow($retrieve_source_path_op);
+    return if not $verify_not_imported_op;
+    $self->_verify_not_imported_op($verify_not_imported_op);
+
+    my @steps = $self->_resolve_workflow_steps;
+    my $previous_op = $verify_not_imported_op;
+    for my $step ( @steps ) {
+        $step =~ s/ /_/g;
+        my $add_step_method = '_add_'.$step.'_op_to_workflow';
+        $previous_op = $self->$add_step_method($previous_op);
+        return if not $previous_op;
+    }
+
+    my $create_instdata_and_copy_bam_op = $self->_add_create_instdata_and_copy_bam_op_to_workflow($previous_op);
+    return if not $create_instdata_and_copy_bam_op;
+
+    return $workflow;
+}
+
+sub _resolve_workflow_steps {
+    my $self = shift;
+
+    my $steps_method = '_steps_to_build_workflow_for_'.$self->original_format;
+    my @steps = $self->$steps_method;
+    return @steps if not $self->downsample_ratio;
+
+    my $idx = List::MoreUtils::firstidx(sub{ $_ eq 'sort bam' }, @steps);
+    splice(@steps, $idx + 1, 0, 'downsample bam');
+
+    return @steps;
+}
+
+sub _steps_to_build_workflow_for_bam {
+    my $self = shift;
+
+    return (
+        'sanitize bam', 'sort bam', 'split bam by rg',
+    );
+}
+
+sub _steps_to_build_workflow_for_fastq {
+    my $self = shift;
+
+    return (
+       'fastqs to bam', 'sort bam',
+    );
+}
+
+sub _steps_to_build_workflow_for_fastq_archive {
+    my $self = shift;
+
+    return (
+       'archive to fastqs', 'fastqs to bam', 'sort bam',
+    );
+}
+
+sub _steps_to_build_workflow_for_sra {
+    my $self = shift;
+
+    return (
+        'sra to bam', 'sanitize bam', 'sort bam', 'split bam by rg',
+    );
+}
+
+sub _add_retrieve_source_path_op_to_workflow {
+    my $self = shift;
+
+    my $workflow = $self->_workflow;
+    my $retrieve_source_path_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'retrieve source path');
     $workflow->add_link(
         left_operation => $workflow->get_input_connector,
         left_property => 'working_directory',
@@ -218,209 +318,42 @@ sub _create_workflow {
     );
     $retrieve_source_path_op->parallel_by('source_path') if $self->source_files > 1;
 
-    my $verify_md5_op = $helpers->add_operation_to_workflow_by_name($workflow, 'verify md5');
-    $self->_verify_md5_op($verify_md5_op);
+    return $retrieve_source_path_op;
+}
+
+sub _add_verify_not_imported_op_to_workflow {
+    my ($self, $retrieve_source_path_op) = @_;
+
+    die 'No retrieve source files operation given!' if not $retrieve_source_path_op;
+
+    my $workflow = $self->_workflow;
+    my $verify_not_imported_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'verify not imported');
     $workflow->add_link(
         left_operation => $workflow->get_input_connector,
         left_property => 'working_directory',
-        right_operation => $verify_md5_op,
+        right_operation => $verify_not_imported_op,
         right_property => 'working_directory',
     );
     $workflow->add_link(
         left_operation => $retrieve_source_path_op,
         left_property => 'destination_path',
-        right_operation => $verify_md5_op,
+        right_operation => $verify_not_imported_op,
         right_property => 'source_path',
    );
-   $verify_md5_op->parallel_by('source_path') if $self->source_files > 1;
+   $verify_not_imported_op->parallel_by('source_path') if $self->source_files > 1;
 
-    return $workflow;
+    return $verify_not_imported_op;
 }
 
-sub _gather_inputs_for_workflow {
-    my $self = shift;
-
-    return {
-        analysis_project => $self->analysis_project,
-        instrument_data_properties => $self->_instrument_data_properties,
-        library => $self->library,
-        source_paths => [ $self->source_files ],
-        working_directory => $self->_working_directory,
-    };
-}
-
-sub _build_workflow_to_import_fastq {
-    my $self = shift;
-
-    my $helpers = $self->helpers;
-    my $workflow = $self->_workflow;
-    my $verify_md5_op = $self->_verify_md5_op;
-
-    my %left_op_and_fastqs_property = (
-        left_operation => $verify_md5_op,
-        left_property => 'source_path',
-    );
-    my @source_files = $self->source_files;
-
-    # .tar.gz + Archive::Extract->types
-    my $archive_command_name = 'archive to fastqs';
-    my $archive_command_class_name = $helpers->work_flow_operation_class_from_name($archive_command_name);
-    my @archive_types = $archive_command_class_name->types;
-    my $is_archived = (
-        @source_files == 1
-        && grep { $source_files[0] =~ /\Q.$_\E$/ } @archive_types
-    );
-    if ( $is_archived ) {
-        my $archive_to_fastqs_op = $helpers->add_operation_to_workflow_by_name($workflow, $archive_command_name);
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => 'working_directory',
-            right_operation => $archive_to_fastqs_op,
-            right_property => 'working_directory',
-        );
-        $workflow->add_link(
-            left_operation => $verify_md5_op,
-            left_property => 'source_path',
-            right_operation => $archive_to_fastqs_op,
-            right_property => 'archive_path',
-        );
-        %left_op_and_fastqs_property = (
-            left_operation => $archive_to_fastqs_op,
-            left_property => 'fastq_paths',
-        );
-    }
-
-    my $fastqs_to_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'fastqs to bam');
-    for my $property (qw/ working_directory library /) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $property,
-            right_operation => $fastqs_to_bam_op,
-            right_property => $property,
-        );
-    }
-    $workflow->add_link(
-        %left_op_and_fastqs_property,
-        right_operation => $fastqs_to_bam_op,
-        right_property => 'fastq_paths',
-    );
-
-    my $sort_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sort bam');
-    $workflow->add_link(
-        left_operation => $fastqs_to_bam_op,
-        left_property => 'bam_path',
-        right_operation => $sort_bam_op,
-        right_property => 'unsorted_bam_path',
-    );
-
-    my $create_instdata_and_copy_bam = $helpers->add_operation_to_workflow_by_name($workflow, 'create instrument data and copy bam');
-    for my $property (qw/ analysis_project library instrument_data_properties /) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $property,
-            right_operation => $create_instdata_and_copy_bam,
-            right_property => $property,
-        );
-    }
-    $workflow->add_link(
-        left_operation => $sort_bam_op,
-        left_property => 'sorted_bam_path',
-        right_operation => $create_instdata_and_copy_bam,
-        right_property => 'bam_paths',
-    );
-    $workflow->add_link(
-        left_operation => $verify_md5_op,
-        left_property => 'source_md5',
-        right_operation => $create_instdata_and_copy_bam,
-        right_property => 'source_md5s',
-    );
-
-    $workflow->add_link(
-        left_operation => $create_instdata_and_copy_bam,
-        left_property => 'instrument_data',
-        right_operation => $workflow->get_output_connector,
-        right_property => 'instrument_data',
-    );
-
-    return $workflow;
-}
-
-sub _build_workflow_to_import_bam {
+sub _add_sra_to_bam_op_to_workflow {
     my $self = shift;
 
     my $workflow = $self->_workflow;
-    my $verify_md5_op = $self->_verify_md5_op;
-
-    my $helpers = $self->helpers;
-    my $sanitize_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sanitize bam');
-    $workflow->add_link(
-        left_operation => $verify_md5_op,
-        left_property => 'source_path',
-        right_operation => $sanitize_bam_op,
-        right_property => 'dirty_bam_path',
-    );
-
-    my $sort_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sort bam');
-    $workflow->add_link(
-        left_operation => $sanitize_bam_op,
-        left_property => 'clean_bam_path',
-        right_operation => $sort_bam_op,
-        right_property => 'unsorted_bam_path',
-    );
-
-    my $split_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'split bam by read group');
-    $workflow->add_link(
-        left_operation => $sort_bam_op,
-        left_property => 'sorted_bam_path',
-        right_operation => $split_bam_op,
-        right_property => 'bam_path',
-    );
-
-    my $create_instdata_and_copy_bam = $helpers->add_operation_to_workflow_by_name($workflow, 'create instrument data and copy bam');
-    for my $property (qw/ analysis_project library instrument_data_properties /) {
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => $property,
-            right_operation => $create_instdata_and_copy_bam,
-            right_property => $property,
-        );
-    }
-    $workflow->add_link(
-        left_operation => $split_bam_op,
-        left_property => 'read_group_bam_paths',
-        right_operation => $create_instdata_and_copy_bam,
-        right_property => 'bam_paths',
-    );
-    $workflow->add_link(
-        left_operation => $verify_md5_op,
-        left_property => 'source_md5',
-        right_operation => $create_instdata_and_copy_bam,
-        right_property => 'source_md5s',
-    );
-    $create_instdata_and_copy_bam->parallel_by('bam_path');
-
-    $workflow->add_link(
-        left_operation => $create_instdata_and_copy_bam,
-        left_property => 'instrument_data',
-        right_operation => $workflow->get_output_connector,
-        right_property => 'instrument_data',
-    );
-
-    return $workflow;
-}
-
-sub _build_workflow_to_import_sra {
-    my $self = shift;
-
-    my $workflow = $self->_workflow;
-    my $verify_md5_op = $self->_verify_md5_op;
-
-    my $helpers = $self->helpers;
-    my $sra_to_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sra to bam');
+    my $sra_to_bam_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'sra to bam');
     for my $property_mapping ( [qw/ working_directory working_directory /], [qw/ source_path sra_path /] ) {
         my ($left_property, $right_property) = @$property_mapping;
         $workflow->add_link(
-            left_operation => $verify_md5_op,
+            left_operation => $self->_verify_not_imported_op,
             left_property => $left_property,
             right_operation => $sra_to_bam_op,
             right_property => $right_property,
@@ -433,61 +366,187 @@ sub _build_workflow_to_import_sra {
         right_property => 'library',
     );
 
-    my $sanitize_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sanitize bam');
-    $workflow->add_link(
-        left_operation => $sra_to_bam_op,
-        left_property => 'bam_path',
+    return $sra_to_bam_op;
+}
+
+sub _add_archive_to_fastqs_op_to_workflow {
+    my $self = shift;
+
+    my $archive_to_fastqs_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'archive to fastqs');
+    return if not $archive_to_fastqs_op;
+    $self->_workflow->add_link(
+        left_operation => $self->_workflow->get_input_connector,
+        left_property => 'working_directory',
+        right_operation => $archive_to_fastqs_op,
+        right_property => 'working_directory',
+    );
+    $self->_workflow->add_link(
+        left_operation => $self->_verify_not_imported_op,
+        left_property => 'source_path',
+        right_operation => $archive_to_fastqs_op,
+        right_property => 'archive_path',
+    );
+
+    return $archive_to_fastqs_op;
+}
+
+sub _add_fastqs_to_bam_op_to_workflow {
+    my ($self, $previous_op) = @_;
+
+    die 'No previous operation given!' if not $previous_op;
+
+    my $fastqs_to_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'fastqs to bam');
+    return if not $fastqs_to_bam_op;
+
+    for my $property (qw/ working_directory library /) {
+        $self->_workflow->add_link(
+            left_operation => $self->_workflow->get_input_connector,
+            left_property => $property,
+            right_operation => $fastqs_to_bam_op,
+            right_property => $property,
+        );
+    }
+    $self->_workflow->add_link(
+        left_operation => $previous_op,
+        left_property => ( $previous_op->name eq 'verify not imported' ) # not ideal...
+        ? 'source_path'
+        : 'fastq_paths',
+        right_operation => $fastqs_to_bam_op,
+        right_property => 'fastq_paths',
+    );
+
+    return $fastqs_to_bam_op;
+}
+
+sub _add_sanitize_bam_op_to_workflow {
+    my ($self, $previous_op) = @_;
+
+    die 'No previous operation given to _add_sanitize_bam_op_to_workflow!' if not $previous_op;
+
+    my $sanitize_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'sanitize bam');
+    return if not $sanitize_bam_op;
+    $self->_workflow->add_link(
+        left_operation => $previous_op,
+        left_property => ( $previous_op->name eq 'verify not imported' ) # not ideal...
+        ? 'source_path'
+        : 'output_bam_path',
         right_operation => $sanitize_bam_op,
-        right_property => 'dirty_bam_path',
-    );
-
-    my $sort_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'sort bam');
-    $workflow->add_link(
-        left_operation => $sanitize_bam_op,
-        left_property => 'clean_bam_path',
-        right_operation => $sort_bam_op,
-        right_property => 'unsorted_bam_path',
-    );
-
-    my $split_bam_op = $helpers->add_operation_to_workflow_by_name($workflow, 'split bam by read group');
-    $workflow->add_link(
-        left_operation => $sort_bam_op,
-        left_property => 'sorted_bam_path',
-        right_operation => $split_bam_op,
         right_property => 'bam_path',
     );
 
-    my $create_instdata_and_copy_bam = $helpers->add_operation_to_workflow_by_name($workflow, 'create instrument data and copy bam');
+    return $sanitize_bam_op;
+}
+
+sub _add_sort_bam_op_to_workflow {
+    my ($self, $previous_op) = @_;
+
+    die 'No previous op given to _add_sort_bam_op_to_workflow!' if not $previous_op;
+
+    my $sort_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'sort bam');
+    $self->_workflow->add_link(
+        left_operation => $previous_op,
+        left_property => 'output_bam_path',
+        right_operation => $sort_bam_op,
+        right_property => 'bam_path',
+    );
+
+    return $sort_bam_op;
+}
+
+sub _add_downsample_bam_op_to_workflow {
+    my ($self, $previous_op) = @_;
+
+    die 'No previous op given to _add_downsample_bam_op_to_workflow!' if not $previous_op;
+
+    my $downsample_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'downsample bam');
+    return if not $downsample_bam_op;
+
+    $self->_workflow->add_link(
+        left_operation => $self->_workflow->get_input_connector,
+        left_property => 'downsample_ratio',
+        right_operation => $downsample_bam_op,
+        right_property => 'downsample_ratio',
+    );
+    $self->_workflow->add_link(
+        left_operation => $previous_op,
+        left_property => 'output_bam_path',
+        right_operation => $downsample_bam_op,
+        right_property => 'bam_path',
+    );
+
+    return $downsample_bam_op;
+}
+
+sub _add_split_bam_by_rg_op_to_workflow {
+    my ($self, $previous_op) = @_;
+
+    die 'No previous op given to _add_split_bam_by_rg_op_to_workflow!' if not $previous_op;
+
+    my $split_bam_by_rg_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'split bam by read group');
+    $self->_workflow->add_link(
+        left_operation => $previous_op,
+        left_property => 'output_bam_path',
+        right_operation => $split_bam_by_rg_op,
+        right_property => 'bam_path',
+    );
+
+    return $split_bam_by_rg_op;
+}
+
+sub _add_create_instdata_and_copy_bam_op_to_workflow {
+    my ($self, $previous_op) = @_;
+
+    die 'No previous op given to _add_create_instdata_and_copy_bam_op_to_workflow!' if not $previous_op;
+
+    my $workflow = $self->_workflow;
+    my $create_instdata_and_copy_bam_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'create instrument data and copy bam');
     for my $property (qw/ analysis_project library instrument_data_properties /) {
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $property,
-            right_operation => $create_instdata_and_copy_bam,
+            right_operation => $create_instdata_and_copy_bam_op,
             right_property => $property,
         );
     }
-    $workflow->add_link(
-        left_operation => $split_bam_op,
-        left_property => 'read_group_bam_paths',
-        right_operation => $create_instdata_and_copy_bam,
-        right_property => 'bam_paths',
-    );
-    $workflow->add_link(
-        left_operation => $verify_md5_op,
-        left_property => 'source_md5',
-        right_operation => $create_instdata_and_copy_bam,
-        right_property => 'source_md5s',
-    );
-    $create_instdata_and_copy_bam->parallel_by('bam_path');
 
     $workflow->add_link(
-        left_operation => $create_instdata_and_copy_bam,
+        left_operation => $previous_op,
+        left_property => ( $previous_op->name eq 'sort bam' ) # not ideal...
+        ? 'output_bam_path'
+        : 'output_bam_paths',
+        right_operation => $create_instdata_and_copy_bam_op,
+        right_property => 'bam_paths',
+    );
+
+    $workflow->add_link(
+        left_operation => $self->_verify_not_imported_op,
+        left_property => 'source_md5',
+        right_operation => $create_instdata_and_copy_bam_op,
+        right_property => 'source_md5s',
+    );
+    $create_instdata_and_copy_bam_op->parallel_by('bam_path');
+
+    $workflow->add_link(
+        left_operation => $create_instdata_and_copy_bam_op,
         left_property => 'instrument_data',
         right_operation => $workflow->get_output_connector,
         right_property => 'instrument_data',
     );
 
-    return $workflow;
+    return $create_instdata_and_copy_bam_op;
+}
+
+sub _gather_inputs_for_workflow {
+    my $self = shift;
+
+    return {
+        analysis_project => $self->analysis_project,
+        downsample_ratio => $self->downsample_ratio,
+        instrument_data_properties => $self->_instrument_data_properties,
+        library => $self->library,
+        source_paths => [ $self->source_files ],
+        working_directory => $self->_working_directory,
+    };
 }
 
 1;
