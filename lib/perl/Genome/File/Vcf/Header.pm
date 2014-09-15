@@ -155,12 +155,8 @@ sub _metainfo_lines {
     my @metainfo_lines;
     for my $key (sort keys %$metainfo) {
         my $value = $metainfo->{$key};
-        if (ref $metainfo->{$key} eq 'ARRAY') {
-            push @metainfo_lines, map { sprintf "##%s=%s", $key, $self->_metainfo_to_string($_) } @$value;
-        }
-        else {
-            push @metainfo_lines, sprintf "##%s=%s", $key, $self->_metainfo_to_string($value);
-        }
+        my @values = (ref $value eq 'ARRAY'? @$value : $value);
+        push @metainfo_lines, map { sprintf "##%s=%s", $key, $self->_metainfo_to_string($_) } @values;
     }
     return @metainfo_lines;
 }
