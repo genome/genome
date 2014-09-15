@@ -5,11 +5,10 @@ package Genome::Model::ClinSeq::Command::GenerateClonalityPlots;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::ClinSeq::Util qw(:all);
-
 
 class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
-    is => 'Command::V2',
+    is => ['Command::V2',
+          'Genome::Model::ClinSeq::Util'],
     has_input => [
         somatic_var_build   => { is => 'Genome::Model::Build::SomaticVariation', id_by => 'somatic_var_build_id',
                                 doc => 'Build ID for a somatic variation model' },

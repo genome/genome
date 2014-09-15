@@ -6,10 +6,9 @@ use Genome;
 use Data::Dumper;
 use File::Basename;
 
-use Genome::Model::ClinSeq::Util qw(:all);
-
 class Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport {
-    is => 'Command::V2',
+    is => ['Command::V2',
+           'Genome::Model::ClinSeq::Util'],
     has_input => [
         wgs_build           => { is => 'Genome::Model::Build', is_optional => 1, },
         exome_build         => { is => 'Genome::Model::Build', is_optional => 1, },

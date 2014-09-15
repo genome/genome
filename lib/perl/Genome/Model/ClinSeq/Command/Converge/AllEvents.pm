@@ -2,10 +2,10 @@ package Genome::Model::ClinSeq::Command::Converge::AllEvents;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::Converge::AllEvents {
-    is => 'Genome::Model::ClinSeq::Command::Converge::Base',
+    is => ['Genome::Model::ClinSeq::Command::Converge::Base',
+           'Genome::Model::ClinSeq::Util'],
     has_input => [
         outdir => { 
                is => 'FilesystemPath',

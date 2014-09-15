@@ -2,11 +2,11 @@ package Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::ClinSeq::Util qw(:all);
 use Genome::Model::ClinSeq::RnaSeqUtil qw(:all);
 
 class Genome::Model::ClinSeq::Command::CufflinksDifferentialExpression {
-    is => 'Command::V2',
+    is => ['Command::V2',
+           'Genome::Model::ClinSeq::Util'],
     has_input => [
         case_build => {
             is => 'Genome::Model::Build::RnaSeq',
