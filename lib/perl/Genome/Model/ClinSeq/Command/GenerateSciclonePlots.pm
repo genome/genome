@@ -27,6 +27,12 @@ class Genome::Model::ClinSeq::Command::GenerateSciclonePlots {
             is_optional => 1,
             doc => 'Minimum depth of variants.',
         },
+        test => {
+            is => 'Boolean',
+            doc => 'set for test-cases',
+            is_optional => 1,
+            default => 0,
+        },
         microarray_cnv_result => {
             is => 'Boolean',
             doc => 'Link in workflow',
@@ -86,6 +92,9 @@ sub parse_variant_file {
     my $gender = $clinseq_build->subject->gender;
     my @headers = qw/chr pos ref_allele var_allele ref_rc var_rc vaf/;
     my @tumor_prefixes = $self->_get_si_report_tumor_prefix($clinseq_build);
+    if($self->test) {
+        @tumor_prefixes = $tumor_prefixes[0];
+    }
     my %variant_files;
     foreach my $tumor_prefix(@tumor_prefixes) {
         my $variant_file_temp = $variant_file . "_" . $tumor_prefix;
