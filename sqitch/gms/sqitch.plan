@@ -324,3 +324,5 @@ config.subject_mapping_subject_index [config.subject_mapping] 2014-08-14T19:33:0
 
 unconstrain_model_name_length [model_model] 2014-09-04T13:19:39Z Thomas B. Mooney <tmooney@genome.wustl.edu> # remove 255 char limit on names
 @1409840677 2014-09-04T14:24:38Z Thomas B. Mooney <tmooney@genome.wustl.edu># Allow longer names for models.
+
+config.tag_subject_mapping [config_tag config.subject_mapping] 2014-09-16T20:14:12Z Thomas B. Mooney <tmooney@genome.wustl.edu> # bridge between tags and subject mappings
