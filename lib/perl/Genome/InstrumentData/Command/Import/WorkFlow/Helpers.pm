@@ -558,7 +558,7 @@ sub were_original_path_md5s_previously_imported {
         # if given a downsample_ratio and there is a downsample_ratio_attr
         #  and the attribute_value matches the given downsample_ratio
         return 1 if defined $downsample_ratio and $downsample_ratio_attr
-            and $downsample_ratio eq $downsample_ratio_attr->attribute_value;
+            and $downsample_ratio == $downsample_ratio_attr->attribute_value;
         # not previously imported
         return;
     };
