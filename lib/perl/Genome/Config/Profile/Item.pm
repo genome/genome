@@ -114,6 +114,14 @@ sub create_from_file_path {
     return $profile_item;
 }
 
+sub has_model_for {
+    my $self = shift;
+    my $instrument_data = shift;
+
+    my @models = $self->models('instrument_data' => $instrument_data);
+    return scalar(@models);
+}
+
 sub _create_allocation_for_file {
     my $self = shift;
     my $file_to_store = shift;
