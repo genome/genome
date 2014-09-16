@@ -62,8 +62,8 @@ class Genome::FeatureList {
             to => 'name',
         },
         subject_id => {
-            is => 'NUMBER',
-            len => 10,
+            is => 'Text',
+            len => 32,
             doc => 'ID of the subject to which the features are relevant',
         },
         subject => {
