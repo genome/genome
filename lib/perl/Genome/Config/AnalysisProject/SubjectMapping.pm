@@ -34,7 +34,17 @@ class Genome::Config::AnalysisProject::SubjectMapping {
             is => 'Genome::Config::AnalysisProject::SubjectMapping::Input',
             reverse_as => 'subject_mapping',
             is_many => 1,
-        }
+        },
+        tag_bridges => {
+            is => 'Genome::Config::Tag::AnalysisProject::SubjectMapping',
+            reverse_as => 'subject_mapping',
+            is_many => 1,
+        },
+        tags => {
+            is => 'Genome::Config::Tag',
+            via => 'tag_bridges',
+            to => 'tag',
+        },
     ]
 };
 
