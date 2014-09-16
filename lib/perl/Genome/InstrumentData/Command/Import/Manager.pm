@@ -198,15 +198,15 @@ sub _load_source_files_tsv {
         return 'No '.join(' ', map { '"'.$_.'"' } keys %headers_not_found).' column in source files tsv! '.$self->source_files_tsv;
     }
 
-    my @imports;
-    my %seen_source_files;
+    my (@imports, %seen);
     while ( my $hash = $info_reader->next ) {
+        my $id = Genome::Sys->md5sum_data( join('', map { $hash->{$_} } sort keys %$hash) );
         my $source_files = delete $hash->{source_files};
-        if ( $seen_source_files{$source_files} ) {
-            $self->error_message('Duplicate source files! '.$source_files);
+        if ( $seen{$id} ) {
+            $self->error_message('Duplicate entry on line '.$info_reader->line_number.'!');
             return;
         }
-        $seen_source_files{$source_files}++;
+        $seen{$id}++;
         my $library_name = delete $hash->{library_name};
         if ( not $library_name ) {
             $self->error_message('No library name in source files tsv on line '.$info_reader->line_number.'!');
@@ -215,14 +215,19 @@ sub _load_source_files_tsv {
         my $import = {
             library_name => $library_name,
             source_files => $source_files,
-            instrument_data_attributes => [],
         };
         push @imports, $import;
-        for my $attr ( sort keys %$hash ) {
-            my $value = $hash->{$attr};
+        my %instrument_data_properties;
+        for my $name ( sort keys %$hash ) {
+            my $value = $hash->{$name};
             next if not defined $value or $value eq '';
-            push @{$import->{instrument_data_attributes}}, $attr."='".$value."'";
+            if ( defined $instrument_data_properties{$name} ) {
+                $self->error_message('');
+                return;
+            }
+            $instrument_data_properties{$name} = $value;
         }
+        $import->{instrument_data_properties} = \%instrument_data_properties;
     }
 
     $self->_imports(\@imports);
@@ -246,7 +251,7 @@ sub _resolve_launch_command {
         $cmd_format .= ' ';
     }
 
-    $cmd_format .= "genome instrument-data import basic --library name=%{library_name} --source-files %s --import-source-name '%s'%s%s",
+    $cmd_format .= "genome instrument-data import basic --library name=%{library_name} --source-files %s --import-source-name '%s'%s%s%s",
     $self->_launch_command_format($cmd_format);
 
     return;
@@ -319,21 +324,26 @@ sub _load_instrument_data {
 
     my $imports = $self->_imports;
 
-    my %instrument_data = map { $_->original_data_path, $_ } Genome::InstrumentData::Imported->get(
+    # Get instdata by source files
+    my @instrument_data = Genome::InstrumentData::Imported->get(
         original_data_path => [ map { $_->{source_files} } @$imports ],
         '-hint' => [qw/ attributes /],
     );
 
+    # Create map w/ original data path files and downsample ratio as ids
+    my %instrument_data;
+    for my $instrument_data ( @instrument_data ) {
+        my $original_data_path = $instrument_data->original_data_path;
+        my $downsample_ratio_attr = $instrument_data->attributes(attribute_label => 'downsample_ratio');
+        my $id = $original_data_path;
+        $id .= sprintf('%f', $downsample_ratio_attr->attribute_value) if $downsample_ratio_attr;
+        push @{$instrument_data{$id}}, $instrument_data;
+    }
+
     for my $import ( @$imports ) {
-        my $instrument_data = $instrument_data{ $import->{source_files} };
-        $import->{instrument_data} = $instrument_data;
-        $import->{instrument_data_file} = eval{
-            my $attribute = $instrument_data->attributes(attribute_label => 'bam_path');
-            if ( not $attribute ) {
-                $attribute = $instrument_data->attributes(attribute_label => 'archive_path');
-            }
-            return $attribute->attribute_value if $attribute;
-        };
+        my $lookup_id = $import->{source_files};
+        $lookup_id .= sprintf('%f', $import->{instrument_data_properties}->{downsample_ratio}) if $import->{instrument_data_properties}->{downsample_ratio};
+        $import->{instrument_data} = $instrument_data{$lookup_id};
     }
 
     $self->_imports($imports);
@@ -353,7 +363,6 @@ sub _load_statuses {
         return 'too_many_libraries' if @{$import->{library}} > 1;
         return $import->{job_status} if $import->{job_status};
         return 'needed' if not $import->{instrument_data};
-        return 'needed' if not defined $import->{instrument_data_file} or not -s $import->{instrument_data_file};
         return 'success';
     };
 
@@ -451,16 +460,22 @@ sub _resolve_launch_command_for_import {
         $cmd_format =~ s/$pattern/$value/g;
     }
 
+    my $instrument_data_properties = $import->{instrument_data_properties};
     my $cmd .= sprintf(
         $cmd_format,
         $import->{source_files},
         ( $import->{library}->[0]->sample->nomenclature // 'WUGC' ), #FIXME nomenclature
         ( 
-            @{$import->{instrument_data_attributes}}
-            ? ' --instrument-data-properties '.join(',', @{$import->{instrument_data_attributes}})
+            %{$import->{instrument_data_properties}}
+            ? ' --instrument-data-properties '.  join(',', map { $_."='".$instrument_data_properties->{$_}."'"; } sort keys %$instrument_data_properties)
             : ''
         ),
         $self->analysis_project ? " --analysis-project id=".$self->analysis_project->id : '',
+        ( 
+            defined $instrument_data_properties->{downsample_ratio}
+            ? " --downsample-ratio ".$instrument_data_properties->{downsample_ratio} 
+            : '' 
+        ),
     );
 
     return $cmd;
@@ -478,7 +493,7 @@ sub _output_status {
             $import->{library_name},
             $import->{library_number}, 
             $import->{status}, 
-            ( $import->{instrument_data} ? $import->{instrument_data}->id : 'NA' ),
+            ( $import->{instrument_data} ? join(' ', map { $_->id } @{$import->{instrument_data}}) : 'NA' ),
         );
         for ( $i = 0; $i < @row; $i++ ) {
             push @{$status[$i]}, $row[$i];

@@ -20,10 +20,9 @@ use Test::More;
 use_ok('Genome::InstrumentData::Command::Import::Manager') or die;
 
 my $cwd = Cwd::getcwd();
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::Manager', 'v2');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::Manager', 'v3');
 chdir $test_dir;
 my $source_files_tsv = $test_dir.'/source-files.tsv';
-my @source_files = map { $_.'.bam' } (qw/ bam1 bam2 bam3 /);
 
 my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
 ok($analysis_project, 'create analysis project');
@@ -39,11 +38,11 @@ ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 
 my $imports_aryref = $manager->_imports;
-is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ no_library no_library no_library /], 'imports aryref status');
-is_deeply([ map { $_->{library_name} } @$imports_aryref ], [qw/ TeSt-0000-00-extlibs TeSt-0000-00-extlibs TeSt-0000-01-extlibs /], 'imports aryref library_name');
-is_deeply([ map { $_->{source_files} } @$imports_aryref ], \@source_files, 'imports aryref source_files');
-is_deeply([ map { $_->{instrument_data_attributes} } @$imports_aryref ], [ ["lane=\'8\'"], ["lane=\'8\'"], ["lane=\'7\'"], ], 'imports aryref instrument_data_attributes');
-is_deeply([ map { $_->{job_name} } @$imports_aryref ], [qw/ TeSt-0000-00-extlibs.1 TeSt-0000-00-extlibs.2 TeSt-0000-01-extlibs.1 /], 'imports aryref job_name');
+is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ no_library no_library no_library no_library /], 'imports aryref status');
+is_deeply([ map { $_->{library_name} } @$imports_aryref ], [qw/ TeSt-0000-00-extlibs TeSt-0000-00-extlibs TeSt-0000-01-extlibs TeSt-0000-01-extlibs /], 'imports aryref library_name');
+is_deeply([ map { $_->{source_files} } @$imports_aryref ], [qw/ bam1.bam bam2.bam bam3.bam bam3.bam /], 'imports aryref source_files');
+is_deeply([ map { $_->{instrument_data_properties} } @$imports_aryref ], [ {lane => '8'}, {lane => '8'}, {lane => 7, downsample_ratio => '.25'}, {lane => 7, downsample_ratio => '.1'}, ], 'imports aryref instrument_data_properties');
+is_deeply([ map { $_->{job_name} } @$imports_aryref ], [qw/ TeSt-0000-00-extlibs.1 TeSt-0000-00-extlibs.2 TeSt-0000-01-extlibs.1 TeSt-0000-01-extlibs.2 /], 'imports aryref job_name');
 ok(!grep({ $_->{libraries} } @$imports_aryref), 'imports aryref does not have library');
 ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
 ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
@@ -75,8 +74,8 @@ ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 
 $imports_aryref = $manager->_imports;
-is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ needed needed needed /], 'imports aryref status');
-is_deeply([ map { @{$_->{library}} } @$imports_aryref ], [$libraries[0], $libraries[0], $libraries[1]], 'imports aryref library');
+is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ needed needed needed needed /], 'imports aryref status');
+is_deeply([ map { @{$_->{library}} } @$imports_aryref ], [$libraries[0], $libraries[0], $libraries[1], $libraries[1]], 'imports aryref library');
 ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
 ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
 ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
@@ -89,15 +88,15 @@ is($manager->_list_status_column, 1, '_list_status_column');
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
     analysis_project => $analysis_project,
     source_files_tsv => $source_files_tsv,
-    list_config => 'printf "%s %s\\n%s %s\\n%s %s" TeSt-0000-00-extlibs.1 pend TeSt-0000-00-extlibs.2 run TeSt-0000-01-extlibs.1 run;1;2',
+    list_config => 'printf "%s %s\\n%s %s\\n%s %s\\n%s %s" TeSt-0000-00-extlibs.1 pend TeSt-0000-00-extlibs.2 run TeSt-0000-01-extlibs.1 run TeSt-0000-01-extlibs.2 pend;1;2',
     launch_config => "echo %{job_name} LAUNCH!",
 );
 ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 
 $imports_aryref = $manager->_imports;
-is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ pend run run /], 'imports aryref status');
-is_deeply([ map { $_->{job_status} } @$imports_aryref ], [qw/ pend run run /], 'imports aryref job_status');
+is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ pend run run pend /], 'imports aryref status');
+is_deeply([ map { $_->{job_status} } @$imports_aryref ], [qw/ pend run run pend /], 'imports aryref job_status');
 ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
 ok(!grep({ $_->{instrument_data_file} } @$imports_aryref), 'imports aryref does not have instrument_data_file');
 
@@ -123,9 +122,11 @@ for my $import_hashref ( @$imports_aryref ) {
         description => 'import test',
     );
     $inst_data->add_attribute(attribute_label => 'bam_path', attribute_value => $source_files_tsv);
+    my $downsample_ratio = $import_hashref->{instrument_data_properties}->{downsample_ratio};
+    $inst_data->add_attribute(attribute_label => 'downsample_ratio', attribute_value => $downsample_ratio) if $downsample_ratio;
     push @inst_data, $inst_data;
 }
-is(@inst_data, 3, 'define 3 inst data');
+is(@inst_data, 4, 'define 4 inst data');
 
 # Fake successful imports by pointing bam_path to existing source_files.tsv
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
@@ -138,9 +139,8 @@ ok($manager, 'create manager');
 ok($manager->execute, 'execute');
 
 $imports_aryref = $manager->_imports;
-is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ success success success /], 'imports aryref status');
-is_deeply([ map { $_->{instrument_data} } @$imports_aryref ], \@inst_data, 'imports aryref instrument_data');
-is_deeply([ map { $_->{instrument_data_file} } @$imports_aryref ], [$source_files_tsv, $source_files_tsv, $source_files_tsv], 'imports aryref source_files');
+is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ success success success success /], 'imports aryref status');
+is_deeply([ sort { $a->id cmp $b->id } map { @{$_->{instrument_data}} } @$imports_aryref ], [ sort { $a->id cmp $b->id } @inst_data], 'imports aryref instrument_data');
 ok(!grep({ $_->{job_status} } @$imports_aryref), 'imports aryref does not have job_status');
 
 is_deeply(
@@ -148,7 +148,8 @@ is_deeply(
     [
     "echo TeSt-0000-00-extlibs.1 LAUNCH! GTMP=1 MTMP=1024 KBTMP=1048576 genome instrument-data import basic --library name=TeSt-0000-00-extlibs --source-files bam1.bam --import-source-name 'TeSt' --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
     "echo TeSt-0000-00-extlibs.2 LAUNCH! GTMP=1 MTMP=1024 KBTMP=1048576 genome instrument-data import basic --library name=TeSt-0000-00-extlibs --source-files bam2.bam --import-source-name 'TeSt' --instrument-data-properties lane='8' --analysis-project id=".$analysis_project->id,
-    "echo TeSt-0000-01-extlibs.1 LAUNCH! GTMP=1 MTMP=1024 KBTMP=1048576 genome instrument-data import basic --library name=TeSt-0000-01-extlibs --source-files bam3.bam --import-source-name 'TeSt' --instrument-data-properties lane='7' --analysis-project id=".$analysis_project->id,
+    "echo TeSt-0000-01-extlibs.1 LAUNCH! GTMP=1 MTMP=1024 KBTMP=1048576 genome instrument-data import basic --library name=TeSt-0000-01-extlibs --source-files bam3.bam --import-source-name 'TeSt' --instrument-data-properties downsample_ratio='.25',lane='7' --analysis-project id=".$analysis_project->id. ' --downsample-ratio .25',
+    "echo TeSt-0000-01-extlibs.2 LAUNCH! GTMP=1 MTMP=1024 KBTMP=1048576 genome instrument-data import basic --library name=TeSt-0000-01-extlibs --source-files bam3.bam --import-source-name 'TeSt' --instrument-data-properties downsample_ratio='.1',lane='7' --analysis-project id=".$analysis_project->id. ' --downsample-ratio .1',
     ],
     'launch commands',
 );
