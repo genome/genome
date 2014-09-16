@@ -26,6 +26,18 @@ sub match_and_concretize {
     my $self = shift;
     my $instrument_data = shift;
 
+    if ($self->match($instrument_data)) {
+        $self->config->concretize();
+        return 1;
+    } else {
+        return;
+    }
+}
+
+sub match {
+    my $self = shift;
+    my $instrument_data = shift;
+
     die('You must supply an instrument data instance to match against!')
         unless $instrument_data;
 
@@ -34,7 +46,6 @@ sub match_and_concretize {
         return unless $result;
     }
 
-    $self->config->concretize();
     return 1;
 }
 
