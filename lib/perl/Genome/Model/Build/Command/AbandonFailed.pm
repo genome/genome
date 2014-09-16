@@ -49,7 +49,7 @@ sub execute {
     }
     my @eligible_to_abandon;
     for my $build (@builds){
-        push @eligible_to_abandon, $build unless $build->id == $build->model->latest_build->id;
+        push @eligible_to_abandon, $build unless $build->id eq $build->model->latest_build->id;
     }
     my $gamma = Benchmark->new();
     #print "pruned ineligible builds ".timestr(timediff($gamma,$beta))."\n";
