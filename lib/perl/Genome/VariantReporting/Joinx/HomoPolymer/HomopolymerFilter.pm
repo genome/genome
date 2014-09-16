@@ -35,7 +35,7 @@ sub filter_entry {
     for my $alt_allele (@{$entry->{alternate_alleles}}) {
         my $status = $entry->info_for_allele($alt_allele, $tag);
         if (defined $status) {
-            $status =~ tr/01/10/;   #joinx sest 1 for homopolymer hit, 0 for not hit
+            $status =~ tr/01/10/;   #joinx sets 1 for homopolymer hit, 0 for not hit
             $return_values{$alt_allele} = $status;
         }
         else { #No HOMP_FILTER in INFO column

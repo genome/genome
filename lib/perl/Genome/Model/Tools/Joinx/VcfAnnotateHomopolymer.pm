@@ -29,12 +29,12 @@ class Genome::Model::Tools::Joinx::VcfAnnotateHomopolymer {
         },
         max_length => {
             is  => 'Integer',
-            doc => 'maximum indel length to annotate as in homopolymer, command default is 2',
+            doc => 'maximum indel length to annotate as in homopolymer',
             default_value => 2,
         },
         info_field => {
             is  => 'Text',
-            doc => 'Info field id for homopolymer, command default is HOMP_FILTER',
+            doc => 'Info field id for homopolymer',
             default => 'HOMP_FILTER',
         },
         use_bgzip => {
