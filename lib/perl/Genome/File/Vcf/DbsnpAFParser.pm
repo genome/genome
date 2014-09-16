@@ -59,12 +59,13 @@ sub process_entry {
 package Genome::File::Vcf::DbsnpAFParserForInfoTypeR;
 
 use parent 'Genome::File::Vcf::DbsnpAFParser';
+use constant TAG => "CAF";
 
 sub process_entry {
     my ($self, $entry) = @_;
     my %af;
     for my $allele ( $entry->alleles ) {
-        my $af = $entry->info_for_allele($allele, "CAF");
+        my $af = $entry->info_for_allele($allele, TAG);
         $af{$allele} = $af;
     }
 
