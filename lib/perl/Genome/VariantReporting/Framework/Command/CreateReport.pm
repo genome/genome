@@ -48,15 +48,9 @@ sub execute {
             join(', ', $self->plan->resources_required, 'translations'));
     }
 
-
     $self->status_message("Executing workflow.");
     $self->dag->execute(
-        input_vcf => $self->input_vcf,
-        variant_type => $self->variant_type,
-        output_directory => $self->output_directory,
-        plan_json => $self->plan->as_json,
-        provider_json => $self->provider->as_json,
-        translations => $self->provider->get_attribute('translations'),
+        $self->params_for_execute
     );
 
     $self->status_message("Writing plan file and provider file to output_directory (%s)",
@@ -68,6 +62,18 @@ sub execute {
         $self->output_directory);
 
     return 1;
+}
+
+sub params_for_execute {
+    my $self = shift;
+    return (
+        input_vcf => $self->input_vcf,
+        variant_type => $self->variant_type,
+        output_directory => $self->output_directory,
+        plan_json => $self->plan->as_json,
+        provider_json => $self->provider->as_json,
+        translations => $self->provider->get_attribute('translations'),
+    );
 }
 
 sub plan {
