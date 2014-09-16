@@ -37899,12 +37899,15 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'description=s',
         'files',
+        'downsample-ratio=s',
+        'files',
         'instrument-data-properties=s@',
         'files',
         'original-format=s',
         [
           'bam',
           'fastq',
+          'fastq_archive',
           'sra'
         ],
         'help!',
@@ -38236,6 +38239,10 @@ $Genome::Command::OPTS_SPEC = [
         'model=s',
         undef,
         'output-directory=s',
+        undef,
+        'indels-input-vcf=s',
+        undef,
+        'snvs-input-vcf=s',
         undef,
         'help!',
         undef
@@ -38844,6 +38851,41 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>update',
       [
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
+    '>tag',
+    [
+      '>update',
+      [
+        'help!',
+        undef
+      ],
+      '>list',
+      [
+        'show=s',
+        'files',
+        'style=s',
+        [
+          'text',
+          'csv',
+          'tsv',
+          'pretty',
+          'html',
+          'xml',
+          'newtext'
+        ],
+        'csv-delimiter=s',
+        'files',
+        'noheaders!',
+        undef,
+        'order-by=s',
+        'files',
+        'filter=s',
+        'files',
         'help!',
         undef
       ],
