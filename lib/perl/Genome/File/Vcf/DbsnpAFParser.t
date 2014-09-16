@@ -52,13 +52,13 @@ ok($parser_4x2, 'construct parser');
 isa_ok($parser_4x2, 'Genome::File::Vcf::DbsnpAFParserForInfoTypeR');
 
 subtest "three alleles" => sub {
-    my $entry = create_entry_4x2("[0.25,0.40,0.35]");
+    my $entry = create_entry_4x2("0.25,0.40,0.35");
     my $expected = {
         A => 0.25,
         C => '0.40',
         G => 0.35,
     };
-    is_deeply($parser->process_entry($entry), $expected, "Processed CAF with three alleles");
+    is_deeply($parser_4x2->process_entry($entry), $expected, "Processed CAF with three alleles");
 };
 
 subtest "No CAF entry" => sub {

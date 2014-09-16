@@ -62,10 +62,9 @@ use parent 'Genome::File::Vcf::DbsnpAFParser';
 
 sub process_entry {
     my ($self, $entry) = @_;
-
     my %af;
     for my $allele ( $entry->alleles ) {
-        my $af = $entry->info_for_allele($allele);
+        my $af = $entry->info_for_allele($allele, "CAF");
         $af{$allele} = $af;
     }
 
