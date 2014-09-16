@@ -100,7 +100,7 @@ sub _display_matches {
                     $self->_color($map->config->file_path,'green')
                 );
             } else {
-                printf("  Missing model for config %s.\n",
+                printf("  Missing expected model for matched config %s.\n",
                     $self->_color($map->config->file_path, 'blue'));
             }
         }
