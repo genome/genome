@@ -617,8 +617,7 @@ sub execute {
   my $tumor_build = $build->tumor_build;
   my $normal_build = $build->normal_build;
 
-  my $ref_seq_build_id = $tumor_build->reference_sequence_build->build_id;
-  my $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
+  my $ref_seq_build = $tumor_build->reference_sequence_build;
   my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
   my $annotation_build_name = $model->annotation_build->name;
   if(defined $self->reference_transcripts){
