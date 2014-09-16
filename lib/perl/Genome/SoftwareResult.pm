@@ -1185,8 +1185,6 @@ sub expunge {
         $child->expunge($reason);
     }
 
-    $self->test_name($reason);
-
     if($self->disk_allocation) {
         eval {
             $self->disk_allocation->purge($reason);
@@ -1194,7 +1192,12 @@ sub expunge {
         if(my $error = $@) {
             $self->warning_message($@);
         }
+
+        #disk allocation activity may have updated object
+        UR::Context->current->reload($self->class, id => $self->id);
     }
+
+    $self->test_name($reason);
 
     return 1;
 }
