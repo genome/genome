@@ -129,6 +129,7 @@ sub generate_resource_file {
     # TODO: There has to be a better way...
     $feature_list_ids{AML_RMG} = '0e4973c600244c3f804d54bee6f81145';
     $resource->{feature_list_ids} = \%feature_list_ids;
+    $resource->{homopolymer_list_id} = '696318bab30d47d49fab9afa845691b7';
 
     $resource->{reference_fasta} = $self->discovery->reference_sequence_build->full_consensus_path("fa");
 

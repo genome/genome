@@ -20,6 +20,10 @@ experts:
     dbsnp:
         joinx_version: 1.9
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+    'homo-polymer':
+        joinx_version: 1.9
+        max_length: 2
+        info_string: 'HOMP_FILTER'
 reporters:
     'full':
         filters:
@@ -32,6 +36,8 @@ reporters:
                 sample_name: d30_normal
             'contains-tag':
                 info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER
         interpreters:
             position: {}
             'variant-type': {}
@@ -69,6 +75,8 @@ reporters:
                 sample_name: d30_normal
             'contains-tag':
                 info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER
         interpreters:
             position: {}
             vep: {}
