@@ -6,10 +6,10 @@ use warnings;
 use Term::ANSIColor qw(:constants);
 use Data::Dumper;
 use File::Basename;
-use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::Tools::CopyNumber::CnView{
-  is=>'Command::V2',
+  is=>['Command::V2',
+      'Genome::Model::ClinSeq::Util'],
   has=>[
     annotation_build  => { 
       is => 'Genome::Model::Build::ImportedAnnotation', 
@@ -497,7 +497,8 @@ sub loadGeneTranscriptMap{
     my $chr = $genes{$gid}{chr};
     my $chr_start = $genes{$gid}{start};
     my $chr_end = $genes{$gid}{end};
-    my $cytoband_string = &getCytoband('-ideo_data'=>$ideo_data, '-chr'=>"chr".$chr, '-chr_start'=>$chr_start, '-chr_end'=>$chr_end);
+    my $cytoband_string = $self->getCytoband('-ideo_data'=>$ideo_data,
+        '-chr'=>"chr".$chr, '-chr_start'=>$chr_start, '-chr_end'=>$chr_end);
     $genes{$gid}{cytoband} = $cytoband_string;
   }
   $self->status_message("Annotating transcripts with cytoband names") if $self->verbose;
@@ -505,7 +506,7 @@ sub loadGeneTranscriptMap{
     my $chr = $trans{$tid}{chr};
     my $chr_start = $trans{$tid}{start};
     my $chr_end = $trans{$tid}{end};
-    my $cytoband_string = &getCytoband('-ideo_data'=>$ideo_data, '-chr'=>"chr".$chr, '-chr_start'=>$chr_start, '-chr_end'=>$chr_end);
+    my $cytoband_string = $self->getCytoband('-ideo_data'=>$ideo_data, '-chr'=>"chr".$chr, '-chr_start'=>$chr_start, '-chr_end'=>$chr_end);
     $trans{$tid}{cytoband} = $cytoband_string;
   }
   
