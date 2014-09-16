@@ -22,7 +22,7 @@ class Genome::Config::RuleModelMap {
     ]
 };
 
-sub match {
+sub match_and_concretize {
     my $self = shift;
     my $instrument_data = shift;
 
