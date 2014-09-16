@@ -454,7 +454,7 @@ sub getVcfFile{
 
 sub removeUnsupportedSites{
     my ($snv_file, $numcallers, $build_dir) = @_;
-    
+
     #hash all of the sites
     my $sites = getFilterSites($snv_file);
     for my $k (keys(%{$sites})){
@@ -494,7 +494,7 @@ sub removeUnsupportedSites{
         chomp $line;
         my ($chr, $start, $stop, $ref, $var, @rest) = split /\t/, $line;
         my $key = join("\t",($chr, $start, $stop, $ref, $var));
-        
+
         if(!defined($sites->{$key})){
             print STDERR "wut?: " . $key . "\n";
         }
@@ -772,7 +772,7 @@ sub execute {
           close(FEATFILE);
           my $new_snv_file = addName($snv_file,"ontarget");
           my $new_indel_file = addName($indel_file,"ontarget");
-          
+
           $cmd = "joinx sort '" . $output_dir . "/" . $sample_name . "/featurelist.tmp'" . " >'" . $output_dir . "/" . $sample_name . "/featurelist'";
           `$cmd`;
           $cmd = "rm -f '" . $output_dir . "/" . $sample_name . "/featurelist.tmp'";
