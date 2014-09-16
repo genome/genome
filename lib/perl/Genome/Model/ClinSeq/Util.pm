@@ -1045,6 +1045,7 @@ sub importIdeogramData{
 #Given some chromosome coordinates and an object of ideogram data, generate a cytoband string                               #
 #############################################################################################################################
 sub getCytoband{
+  my $self = shift;
   my %args = @_;
   my $ideo_data = $args{'-ideo_data'};
   my $chr = $args{'-chr'};

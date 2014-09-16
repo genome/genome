@@ -226,8 +226,9 @@ sub execute {
   #Gather variants for the tiers specified by the user from each build. Note which build each came from.
   #Get these from the underlying somatic-variation builds.
   #Annotate all variants (gmt annotate transcript-variants --help)
-  my $somatic_builds = $self->resolve_somatic_builds($self->builds);
-  my $rnaseq_builds = $self->resolve_rnaseq_builds($self->builds);
+  my @clinseq_builds = $self->builds;
+  my $somatic_builds = $self->resolve_somatic_builds(\@clinseq_builds);
+  my $rnaseq_builds = $self->resolve_rnaseq_builds(\@clinseq_builds);
   my $annotation_build_name = $self->annotation_build->name;
   $self->status_message("Using annotation build: $annotation_build_name");
   my $bed_dir = $self->outdir . "bed_files/";
