@@ -1219,8 +1219,9 @@ sub _get_somatic_builds {
 sub _get_si_report_tumor_prefix {
   my $self = shift;
   my $clinseq_build = shift;
-  my $somatic_builds = $self->resolve_somatic_builds($clinseq_build);
-  my $rnaseq_builds = $self->resolve_rnaseq_builds($clinseq_build);
+  my @clinseq_builds = ($clinseq_build);
+  my $somatic_builds = $self->resolve_somatic_builds(\@clinseq_builds);
+  my $rnaseq_builds = $self->resolve_rnaseq_builds(\@clinseq_builds);
   my $align_builds = $self->get_ref_align_builds(
     '-somatic_builds'=>$somatic_builds,
     '-rnaseq_builds'=>$rnaseq_builds);
