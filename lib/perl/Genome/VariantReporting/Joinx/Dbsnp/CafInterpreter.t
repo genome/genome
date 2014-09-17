@@ -28,7 +28,7 @@ subtest "one alt allele" => sub {
             max_alt_af => 0.3,
         }
     );
-    my $entry = create_entry('[0.7,0.3,.]');
+    my $entry = create_entry('0.7,0.3,.');
     is_deeply({$interpreter->interpret_entry($entry, ['C'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
@@ -60,29 +60,11 @@ subtest "two alt allele" => sub {
             max_alt_af => 0.3,
         },
     );
-    my $entry = create_entry('[0.7,0.3,.]');
+    my $entry = create_entry('0.7,0.3,.');
     is_deeply({$interpreter->interpret_entry($entry, ['C', 'G'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
-subtest "new caf" => sub {
-    my $interpreter = $pkg->create();
-    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
-
-    my %expected_return_values = (
-        C => {
-            caf => 0.3,
-            max_alt_af => 0.3,
-        },
-        G => {
-            caf => '.',
-            max_alt_af => 0.3,
-        },
-    );
-    my $entry = create_entry('0.7,0.3,.', new_vcf_header());
-    is_deeply({$interpreter->interpret_entry($entry, ['C', 'G'])}, \%expected_return_values, "Entry gets interpreted correctly");
-};
-
-sub new_vcf_header {
+sub create_vcf_header {
     my $header_txt = <<EOS;
 ##fileformat=VCFv4.2
 ##FILTER=<ID=PASS,Description="Passed all filters">
@@ -95,25 +77,8 @@ EOS
     return $header;
 }
 
-sub create_vcf_header {
-    my $header_txt = <<EOS;
-##fileformat=VCFv4.1
-##FILTER=<ID=PASS,Description="Passed all filters">
-##FILTER=<ID=BAD,Description="This entry is bad and it should feel bad">
-##INFO=<ID=CAF,Number=.,Type=Float,Description="CAF">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
-EOS
-    my @lines = split("\n", $header_txt);
-    my $header = Genome::File::Vcf::Header->create(lines => \@lines);
-    return $header
-}
-
 sub create_entry {
     my $caf = shift;
-    my $header = shift;
-    unless (defined $header) {
-        $header = create_vcf_header();
-    }
     my @fields = (
         '1',            # CHROM
         10,             # POS
@@ -128,7 +93,7 @@ sub create_entry {
     }
 
     my $entry_txt = join("\t", @fields);
-    my $entry = Genome::File::Vcf::Entry->new($header, $entry_txt);
+    my $entry = Genome::File::Vcf::Entry->new(create_vcf_header(), $entry_txt);
     return $entry;
 }
 
