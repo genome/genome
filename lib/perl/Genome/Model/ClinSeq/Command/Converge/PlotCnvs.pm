@@ -23,19 +23,17 @@ class Genome::Model::ClinSeq::Command::Converge::PlotCnvs {
 
 sub help_synopsis {
   return <<EOS
-genome model clin-seq converge plot-cnvs --builds='id in ["4b7539bb10cc4b9c97577cf11f4c79a2","cdca0edf526c4fe193d3054627a5871b"]' --outdir=/tmp/snv_indel_report/
-
-genome model clin-seq converge plot-cnvs --builds='model.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/
-
-genome model clin-seq converge plot-cnvs --builds='model_groups.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/ --calculate_metrics
-
-genome model clin-seq converge plot-cnvs --builds='model.id in ["279f50e35d2b479ea3c32486eafd4ad4","7143119a93984056ae3f32c88c9ac2a1"],is_last_complete=1' --outdir=/tmp/snv_indel_report/
+genome model clin-seq converge plot-cnvs \\
+--builds='model_groups.id=6fa120dc0afb400596a1e3d6ecf6167d,is_last_complete=1' \\
+--outdir=/gscmnt/CNVSummary/ \\
+--calculate-metrics
 EOS
 }
 
 sub help_detail {
   return <<EOS
-Plot CNVs from different technologies(microarray, exome etc), helps contrast and evaluate the calls.
+Plot CNVs from different technologies(microarray, exome etc),
+helps contrast and evaluate the calls.
 EOS
 }
 
