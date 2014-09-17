@@ -118,8 +118,12 @@ sub has_model_for {
     my $self = shift;
     my $instrument_data = shift;
 
-    my @models = $self->models('instrument_data' => $instrument_data);
-    return scalar(@models);
+    my $model_set = Genome::Model->define_set(
+        'analysis_project_bridges.profile_item_id' => $self->id,
+        'instrument_data.id' => $instrument_data->id,
+    );
+
+    return $model_set->count;
 }
 
 sub _create_allocation_for_file {
