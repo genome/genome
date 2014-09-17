@@ -39,6 +39,19 @@ class Genome::Config::Tag {
             is_many => 1,
             is_optional => 1,
         },
+        subject_mapping_bridges => {
+            is => 'Genome::Config::Tag::AnalysisProject::SubjectMapping',
+            is_many => 1,
+            is_optional => 1,
+            reverse_as => 'tag',
+        },
+        subject_mappings => {
+            is => 'Genome::Config::AnalysisProject::SubjectMapping',
+            via => 'subject_mapping_bridges',
+            to => 'subject_mapping',
+            is_many => 1,
+            is_optional => 1,
+        },
     ],
 };
 
