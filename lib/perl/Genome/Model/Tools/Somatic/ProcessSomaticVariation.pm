@@ -454,7 +454,7 @@ sub getVcfFile{
 
 sub removeUnsupportedSites{
     my ($snv_file, $numcallers, $build_dir) = @_;
-    
+
     #hash all of the sites
     my $sites = getFilterSites($snv_file);
     for my $k (keys(%{$sites})){
@@ -494,7 +494,7 @@ sub removeUnsupportedSites{
         chomp $line;
         my ($chr, $start, $stop, $ref, $var, @rest) = split /\t/, $line;
         my $key = join("\t",($chr, $start, $stop, $ref, $var));
-        
+
         if(!defined($sites->{$key})){
             print STDERR "wut?: " . $key . "\n";
         }
@@ -614,11 +614,10 @@ sub execute {
       return undef;
   }
 
-  my $tumor_model = $model->tumor_model;
-  my $normal_model = $model->normal_model;
+  my $tumor_build = $build->tumor_build;
+  my $normal_build = $build->normal_build;
 
-  my $ref_seq_build_id = $tumor_model->reference_sequence_build->build_id;
-  my $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
+  my $ref_seq_build = $tumor_build->reference_sequence_build;
   my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
   my $annotation_build_name = $model->annotation_build->name;
   if(defined $self->reference_transcripts){
@@ -633,8 +632,8 @@ sub execute {
       $sample_name = $self->sample_name;
   }
   print STDERR "processing model with sample_name: " . $sample_name . "\n";
-  my $tumor_bam = $tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
-  my $normal_bam = $normal_model->last_succeeded_build->merged_alignment_result->bam_file;
+  my $tumor_bam = $tumor_build->merged_alignment_result->bam_file;
+  my $normal_bam = $normal_build->merged_alignment_result->bam_file;
   my $build_dir = $build->data_directory;
 
   my $igv_reference_name;
@@ -773,7 +772,7 @@ sub execute {
           close(FEATFILE);
           my $new_snv_file = addName($snv_file,"ontarget");
           my $new_indel_file = addName($indel_file,"ontarget");
-          
+
           $cmd = "joinx sort '" . $output_dir . "/" . $sample_name . "/featurelist.tmp'" . " >'" . $output_dir . "/" . $sample_name . "/featurelist'";
           `$cmd`;
           $cmd = "rm -f '" . $output_dir . "/" . $sample_name . "/featurelist.tmp'";
