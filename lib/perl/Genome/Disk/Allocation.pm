@@ -620,6 +620,7 @@ sub _reload_allocation {
         $allocation = Genome::Disk::Allocation->get($id);
     } elsif ($mode eq 'load') {
         $allocation = UR::Context->current->reload($class, id => $id);
+        $owner = UR::Context->current->reload($allocation->owner_class_name, id => $allocation->owner_id);
     } else {
         die 'Unrecognized _retrieve_mode: ' . $class->_retrieve_mode;
     }

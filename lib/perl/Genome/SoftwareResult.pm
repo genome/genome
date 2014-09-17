@@ -1193,10 +1193,9 @@ sub expunge {
             $self->warning_message($@);
         }
 
-        #disk allocation activity may have updated object
-        UR::Context->current->reload($self->class, id => $self->id);
     }
 
+    #disk allocation activity may have updated object so set this afterwards.
     $self->test_name($reason);
 
     return 1;
