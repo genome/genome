@@ -88,17 +88,25 @@ subtest "deletion" => sub {
     my $interpreter = $pkg->create();
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
+    # two examples here. Report coordinates are for the deleted bases.
+    # VCF typically reports the base before the indel, but this isn't required
+    # as long as alleles are non-empty.
+    #       111
+    #       012
+    # Ref:  ATT
+    # Alt1: A-T
+    # Alt2: A--
     my %expected_return_values = (
         AT => {
             chromosome_name => '1',
-            start           => 10,
+            start           => 11,
             stop            => 11,
             reference       => 'T',
             variant         => '-'
         },
         A => {
             chromosome_name => '1',
-            start           => 10,
+            start           => 11,
             stop            => 12,
             reference       => 'TT',
             variant         => '-'
