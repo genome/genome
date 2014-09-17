@@ -83,7 +83,7 @@ reporters:
             'variant-type': {}
         params:
             file_name: 'germline_report_simple.tsv'
-    'vcf':
+    'vcf-homopolymer':
         filters: {}
         interpreters:
             'vcf-entry': {}

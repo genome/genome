@@ -23,7 +23,7 @@ sub name {
 }
 
 sub requires_interpreters {
-    return qw(vcf-entry ft-keep contains-tag homopolymer);
+    return qw(vcf-entry ft-keep contains-tag);
 }
 
 sub allows_hard_filters {
