@@ -430,6 +430,11 @@ sub info_for_allele {
     my $hash = $self->info;
     return unless defined $hash;
 
+    # There is no this info_tag in this vcf line
+    if (defined $key) {
+        return unless exists $hash->{$key};
+    }
+
     # we don't have that allele, or it is the reference (idx 0)
     my $idx = $self->allele_index($allele);
     return unless defined $idx;

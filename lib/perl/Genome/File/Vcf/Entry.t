@@ -26,6 +26,7 @@ my $header_txt = <<EOS;
 ##INFO=<ID=C,Number=A,Type=String,Description="Info field C (per-alt)">
 ##INFO=<ID=D,Number=R,Type=String,Description="Info field D (per-alt)">
 ##INFO=<ID=E,Number=0,Type=Flag,Description="Info field E">
+##INFO=<ID=F,Number=A,Type=String,Description="Info field F (per-alt)">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">
 ##FORMAT=<ID=FT,Number=.,Type=String,Description="Filter">
@@ -143,6 +144,7 @@ subtest "basic parsing/accessors" => sub {
     is($entry->info_for_allele("C", "D"), 'ALT-C', "info_for_allele for alt C field D");
     is($entry->info_for_allele("G", "C"), 9, "info_for_allele 2");
     is($entry->info_for_allele("G", "D"), 'ALT-G', "info_for_allele for alt G field D");
+    is($entry->info_for_allele("G", "F"), undef, "info_for_allele for alt G field F is undef");
     is_deeply($entry->info_for_allele("C"), { A => 'B', C => 8, D => 'ALT-C', E => undef }, "info_for_allele (all fields)");
     is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, D => 'ALT-G', E => undef }, "info_for_allele (all fields)");
 

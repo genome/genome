@@ -13,7 +13,7 @@ use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
 
-my $pkg = 'Genome::VariantReporting::Generic::HomopolymerFilter';
+my $pkg = 'Genome::VariantReporting::Joinx::HomoPolymer::HomopolymerFilter';
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
@@ -28,16 +28,39 @@ subtest "bad info_tag" => sub {
 };
 
 
-subtest "good" => sub {
-    my $filter = $pkg->create(info_tag => 'HOMO');
+subtest "Homo-polymer hit, discard" => sub {
+    my $filter = $pkg->create(info_tag => 'HOMP_FILTER');
     lives_ok(sub {$filter->validate}, "Filter validates");
 
     my %expected_return_values = (
         AAAAA => 0,
-        AAA   => 1,
-        AA    => 1,
+        AAA   => 0,
     );
-    my $entry = create_entry('A=B;HOMO=0,1,1;C=8,9,10;E');
+    my $entry = create_entry('A=B;HOMP_FILTER=1,1;E');
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry gets filtered correctly");
+};
+
+subtest "Homo-polymer NOT hit, keep" => sub {
+    my $filter = $pkg->create(info_tag => 'HOMP_FILTER');
+    lives_ok(sub {$filter->validate}, "Filter validates");
+
+    my %expected_return_values = (
+        AAAAA => 1,
+        AAA   => 1,
+    );
+    my $entry = create_entry('A=B;HOMP_FILTER=0,0;E');
+    is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry gets filtered correctly");
+};
+
+subtest "No Homo-polymer in INFO column, keep" => sub {
+    my $filter = $pkg->create(info_tag => 'HOMP_FILTER');
+    lives_ok(sub {$filter->validate}, "Filter validates");
+
+    my %expected_return_values = (
+        AAAAA => 1,
+        AAA   => 1,
+    );
+    my $entry = create_entry('A=B;E');
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry gets filtered correctly");
 };
 
@@ -49,7 +72,7 @@ sub create_vcf_header {
 ##fileformat=VCFv4.1
 ##FILTER=<ID=PASS,Description="Passed all filters">
 ##FILTER=<ID=BAD,Description="This entry is bad and it should feel bad">
-##INFO=<ID=HOMO,Number=A,Type=String,Description="Info field for homopolymer">
+##INFO=<ID=HOMP_FILTER,Number=A,Type=String,Description="Info field for homopolymer">
 ##INFO=<ID=A,Number=1,Type=String,Description="Info field A">
 ##INFO=<ID=E,Number=0,Type=Flag,Description="Info field E">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
@@ -70,7 +93,7 @@ sub create_entry {
         10,             # POS
         '.',            # ID
         'A',            # REF
-        'AAAAA,AAA,AA', # ALT
+        'AAAAA,AAA',    # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
         $info,          # INFO
