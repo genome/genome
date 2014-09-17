@@ -46,5 +46,13 @@ sub filter_entry {
     return %return_values;
 }
 
+sub vcf_id {
+    return 'HOMOPOLYMERS';
+}
+
+sub vcf_description {
+    return 'Filter out indels hitting homo-polymers';
+}
+
 
 1;

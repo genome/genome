@@ -94,5 +94,7 @@ reporters:
                 sample_name: d30_normal
             'contains-tag':
                 info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER    
         params:
             file_name: 'germline_report.vcf'
