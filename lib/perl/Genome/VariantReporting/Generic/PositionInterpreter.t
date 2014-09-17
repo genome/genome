@@ -60,6 +60,54 @@ subtest "two alt allele" => sub {
     is_deeply({$interpreter->interpret_entry($entry, ['C', 'G'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
+subtest "insertion" => sub {
+    my $interpreter = $pkg->create();
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected_return_values = (
+        AT => {
+            chromosome_name => '1',
+            start           => 10,
+            stop            => 11,
+            reference       => '-',
+            variant         => 'T'
+        },
+        ATT => {
+            chromosome_name => '1',
+            start           => 10,
+            stop            => 11,
+            reference       => '-',
+            variant         => 'TT'
+        },
+    );
+    my $entry = create_entry("A", "AT", "ATT");
+    is_deeply({$interpreter->interpret_entry($entry, ['AT', 'ATT'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest "deletion" => sub {
+    my $interpreter = $pkg->create();
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected_return_values = (
+        AT => {
+            chromosome_name => '1',
+            start           => 10,
+            stop            => 11,
+            reference       => 'T',
+            variant         => '-'
+        },
+        A => {
+            chromosome_name => '1',
+            start           => 10,
+            stop            => 12,
+            reference       => 'TT',
+            variant         => '-'
+        },
+    );
+    my $entry = create_entry("ATT", "AT", "A");
+    is_deeply({$interpreter->interpret_entry($entry, ['AT', 'A'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
 sub create_vcf_header {
     my $header_txt = <<EOS;
 ##fileformat=VCFv4.1
@@ -79,12 +127,17 @@ EOS
 }
 
 sub create_entry {
+    my ($ref, @alts) = @_;
+    unless (defined $ref) {
+        $ref = "A";
+        @alts = qw(C G);
+    }
     my @fields = (
         '1',            # CHROM
         10,             # POS
         '.',            # ID
-        'A',            # REF
-        'C,G',            # ALT
+        $ref,           # REF
+        join(",", @alts), # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
         'A=B;C=8,9;E',  # INFO
