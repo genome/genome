@@ -1192,7 +1192,6 @@ sub expunge {
         if(my $error = $@) {
             $self->warning_message($@);
         }
-
     }
 
     #disk allocation activity may have updated object so set this afterwards.
