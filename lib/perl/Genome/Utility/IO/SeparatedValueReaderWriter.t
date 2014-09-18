@@ -92,7 +92,7 @@ for my $desc ( keys %fails ) {
 
 # READER FAILS
 $reader = Genome::Utility::IO::SeparatedValueReader->create(
-    input => $albums_no_headers, 
+    input => $albums_no_headers,
     headers => [qw/ not the right number of headers /],
 );
 ok($reader, 'create reader');
