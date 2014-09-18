@@ -30,11 +30,7 @@ sub attributes_for_reimport_from_instrument_data {
     if ( not $source_file ) {
         $source_file = eval{ $instrument_data->archive_path; };
     }
-    if ( not $source_file or not -s $source_file ) {
-        $self->error_message("Source file for instrument data (%s) does not exist!", $instrument_data->id);
-        return;
-    }
-    $reimport{source_files} = $source_file;
+    $reimport{source_files} = $source_file if $source_file;
 
     for my $optional_property_name (qw/ run_name subset_name /) {
         next if not $instrument_data->$optional_property_name;
