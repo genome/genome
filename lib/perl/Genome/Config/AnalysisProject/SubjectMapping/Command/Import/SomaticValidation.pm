@@ -39,7 +39,7 @@ tumor_subject normal_subject snv_variant_list_id indel_variant_list_id sv_varian
 
 All columns but tumor_subject are optional and can be left blank, though the tab separators must be present.
 This is useful for setting up single-sample validation models.
-A header is optional and should be preceeded with a '#' if present.
+A header is optional and should be preceded with a '#' if present.
 Both tumor and normal subject can be specified by either ID or Name.
 
 EOS
