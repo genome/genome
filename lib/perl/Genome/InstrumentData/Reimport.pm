@@ -26,14 +26,15 @@ sub attributes_for_reimport_from_instrument_data {
         library_name => $instrument_data->library->name,
     );
 
-    my $source_file = $instrument_data->archive_path;
-    if ( $source_file ) {
-        if ( not -s $source_file ) {
-            $self->error_message("Source file for instrument data (%s) does not exist!", $instrument_data->id);
-            return;
-        }
-        $reimport{source_files} = $source_file;
+    my $source_file = eval{ $instrument_data->bam_path; };
+    if ( not $source_file ) {
+        $source_file = eval{ $instrument_data->archive_path; };
     }
+    if ( not $source_file or not -s $source_file ) {
+        $self->error_message("Source file for instrument data (%s) does not exist!", $instrument_data->id);
+        return;
+    }
+    $reimport{source_files} = $source_file;
 
     for my $optional_property_name (qw/ run_name subset_name /) {
         next if not $instrument_data->$optional_property_name;
