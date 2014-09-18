@@ -3,6 +3,7 @@ package Genome::VariantReporting::Generic::PositionInterpreter;
 use strict;
 use warnings;
 use Genome;
+use Genome::Model::Tools::Bed::Convert::CoordinateConverter qw(convert_indel_gt_to_bed);
 
 class Genome::VariantReporting::Generic::PositionInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
@@ -33,21 +34,20 @@ sub _interpret_entry {
 
     my %return_values;
     for my $variant_allele (@$passed_alt_alleles) {
-        my ($stop, $reference, $variant);
-        if (length($variant_allele) < length($entry->{reference_allele})) {
-            ($stop, $reference, $variant) = _interpret_deletion($entry, $variant_allele);
-        }
-        elsif (length($variant_allele) > length($entry->{reference_allele})) {
-            ($stop, $reference, $variant) = _interpret_insertion($entry, $variant_allele);
+        my ($start, $stop, $reference, $variant);
+        if (length($variant_allele) < length($entry->{reference_allele})
+            or length($variant_allele) > length($entry->{reference_allele})) {
+            ($start, $stop, $reference, $variant) = $self->_interpret_indel($entry, $variant_allele);
         }
         else {
+            $start = $entry->{position};
             $stop = $entry->{position} + length($variant_allele) - 1;
             $reference = $entry->{reference_allele};
             $variant = $variant_allele;
         }
         $return_values{$variant_allele} = {
             chromosome_name => $entry->{chrom},
-            start           => $entry->{position},
+            start           => $start,
             stop            => $stop,
             reference       => $reference,
             variant         => $variant,
@@ -57,21 +57,31 @@ sub _interpret_entry {
     return %return_values;
 }
 
-sub _interpret_deletion {
-    my ($entry, $variant_allele) = @_;
-    my $deletion_length = length($entry->{reference_allele}) - length($variant_allele);
-    my $stop = $entry->{position} + $deletion_length;
-    my $reference = substr($entry->{reference_allele}, length($variant_allele));
-    my $variant = "-";
-    return ($stop, $reference, $variant);
-}
+sub _interpret_indel {
+    my ($self, $entry, $variant_allele) = @_;
+    my ($indel_gts, $indel_shifts) = convert_indel_gt_to_bed($entry->{reference_allele}, $variant_allele);
+    if (@$indel_gts != 1) {
+        die $self->error_message("Vcf indel did not translate to exactly one bed genotype");
+    }
+    my $indel = $indel_gts->[0];
+    my ($ref, $var) = @$indel;
+    my $shift = $indel_shifts->[0];
 
-sub _interpret_insertion {
-    my ($entry, $variant_allele) = @_;
-    my $stop = $entry->{position} + 1;
-    my $reference = "-";
-    my $variant = substr($variant_allele, length($entry->{reference_allele}));
-    return ($stop, $reference, $variant);
+    my $start = $entry->{position} + $shift;
+    my ($stop, $reference, $variant);
+    if ($ref eq '*') {
+        $ref = '-';
+        $start--;
+        $stop = $start+1;
+    }
+    elsif ($var eq '*') {
+        $var = '-';
+        $stop = $start + length($ref) - 1;
+    }
+    else {
+        die $self->error_Message("Vcf indel translated with unexpected ref and var");
+    }
+    return ($start, $stop, $ref, $var);
 }
 
 1;
