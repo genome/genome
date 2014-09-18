@@ -329,22 +329,12 @@ sub _delete {
     }
 
     my $self = $class->get($id);
-    my $path = $self->absolute_path;
 
     $self->_delete_timeline_events;
+    my @deletion_observers = $self->_get_deletion_observers;
     $self->SUPER::delete;
 
-    if ($self->is_archived) {
-        $class->_create_observer(sub {
-            $class->_cleanup_archive_directory($path);
-        });
-
-    } else {
-        $class->_create_observer(
-            $class->_mark_for_deletion_closure($path),
-            $class->_remove_directory_closure($path),
-        );
-    }
+    $class->_create_observer(@deletion_observers);
 
     return 1;
 }
@@ -355,6 +345,24 @@ sub _delete_timeline_events {
     for my $event ($self->timeline_events) {
         $event->delete();
     }
+}
+
+sub _get_deletion_observers {
+    my $self = shift;
+
+    my $class = $self->class;
+    my $path = $self->absolute_path;
+
+    if ($self->is_archived) {
+        return sub {$class->_cleanup_archive_directory($path)};
+
+    } else {
+        return (
+            $class->_mark_for_deletion_closure($path),
+            $class->_remove_directory_closure($path),
+        );
+    }
+
 }
 
 sub _reallocate {
