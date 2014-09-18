@@ -139,7 +139,6 @@ sub parse_variant_file {
         }
         $variant_files{$tumor_prefix} = $variant_file_temp;
     }
-    $self->status_message("keys " . keys %variant_files);
     return %variant_files;
 }
 
@@ -164,7 +163,6 @@ sub parse_cnv_file {
     my $clinseq_build = shift;
     my $cnv_file = shift;
     my $gender = $clinseq_build->subject->gender;
-    $self->status_message($gender);
     my $cnv_file_temp = $cnv_file . ".tmp";
     my @cnvhmm_header = qw/chr start end size adjusted_size tumor_cn
         tumor_adjusted_cn normal_cn normal_adjusted_cn unknown_column status/;
