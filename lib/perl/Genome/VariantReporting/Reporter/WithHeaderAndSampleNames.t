@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Test::Exception;
+use Sub::Override;
 
 my $pkg = 'Genome::VariantReporting::Framework::Test::WithHeaderAndSampleNamesReporter';
 use_ok($pkg);
@@ -23,8 +24,12 @@ ok($reporter, "Reporter created successfully");
 
 lives_ok(sub {$reporter->validate}, "Reporter validates correctly");
 
+my $override = Sub::Override->new('Genome::VariantReporting::Reporter::WithHeader::write_legend_file', sub {return 1});
+
 my $output_dir = Genome::Sys->create_temp_directory();
 $reporter->initialize($output_dir);
+
+$override->restore;
 
 my %expected_available_fields_dict = (
     S1_info => {

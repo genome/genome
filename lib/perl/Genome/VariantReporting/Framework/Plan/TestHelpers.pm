@@ -58,6 +58,12 @@ sub set_what_interpreter_x_requires {
         return %dict;
     }
 
+    sub field_descriptions {
+        return (
+            exp1 => 'Expert 1 info field',
+        );
+    }
+
     1;
 }
 
@@ -100,6 +106,13 @@ sub set_what_interpreter_x_requires {
             };
         }
         return %dict;
+    }
+
+    sub field_descriptions {
+        return (
+            chrom => 'Chromosome',
+            pos => 'Position',
+        );
     }
 
     1;
@@ -423,6 +436,14 @@ sub set_what_interpreter_x_requires {
         return %returns;
     }
 
+    sub vcf_id {
+        return "FIRST_FILTER";
+    }
+
+    sub vcf_description  {
+        return "The first filter";
+    }
+
     1;
 }
 
@@ -453,6 +474,14 @@ sub set_what_interpreter_x_requires {
         my $self = shift;
         my $entry = shift;
         return map{$_ => 1} @{$entry->{alternate_alleles}};
+    }
+
+    sub vcf_id {
+        return "OTHER_FILTER";
+    }
+
+    sub vcf_description  {
+        return "The other filter";
     }
 
     1;
