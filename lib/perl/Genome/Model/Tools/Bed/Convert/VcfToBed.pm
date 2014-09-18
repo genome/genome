@@ -9,7 +9,7 @@ use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Genotype;
 use Genome::File::Vcf::Entry;
 use Genome::Info::IUB;
-use Genome::Model::Tools::Bed::Convert::CoordinateConverter qw(convert_indel_gt_to_bed);
+use Genome::Utility::Vcf qw(convert_indel_gt_to_bed);
 
 class Genome::Model::Tools::Bed::Convert::VcfToBed {
     is => ['Genome::Model::Tools::Bed::Convert'],

@@ -3,7 +3,7 @@ package Genome::VariantReporting::Generic::PositionInterpreter;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::Tools::Bed::Convert::CoordinateConverter qw(convert_indel_gt_to_bed);
+use Genome::Utility::Vcf qw(convert_indel_gt_to_bed);
 
 class Genome::VariantReporting::Generic::PositionInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
