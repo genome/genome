@@ -35,8 +35,7 @@ sub _interpret_entry {
     my %return_values;
     for my $variant_allele (@$passed_alt_alleles) {
         my ($start, $stop, $reference, $variant);
-        if (length($variant_allele) < length($entry->{reference_allele})
-            or length($variant_allele) > length($entry->{reference_allele})) {
+        if (length($variant_allele) != length($entry->{reference_allele})) {
             ($start, $stop, $reference, $variant) = $self->_interpret_indel($entry, $variant_allele);
         }
         else {
