@@ -35,6 +35,11 @@ class Genome::Utility::IO::SeparatedValueReader {
             type => 'Text',
             doc => 'The current original line of input from the file, pre splitting.'
         },
+        current_extra_columns => {
+            type => 'Text',
+            is_many => 1,
+            doc => 'if "ignore_extra_columns" is set, any additional columns for the current line',
+        }
     ],
 };
 
@@ -120,6 +125,7 @@ sub next {
     my @values = $self->_splitline($line)
         or return;
 
+    my @extra_columns;
     unless ( @{$self->headers} == @values ) {
 
         # If we dont care about extra columns, all is well... unless we dont at least have the minimum required
@@ -135,11 +141,14 @@ sub next {
                 )
             );
             return;
+        } else {
+            @extra_columns = splice @values, scalar(@{$self->headers});
         }
     }
 
     my %data;
     @data{ @{$self->headers} } = @values;
+    $self->current_extra_columns(\@extra_columns);
     $self->current_line($line);
     return \%data;
 }

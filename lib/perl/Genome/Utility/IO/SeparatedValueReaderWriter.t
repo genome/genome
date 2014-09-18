@@ -115,6 +115,8 @@ $reader = Genome::Utility::IO::SeparatedValueReader->create(
 );
 ok($reader, 'Created SVR to test too many columns while ignoring extra columns');
 ok($reader->next, 'Succeeded as expected');
+my @extra = $reader->current_extra_columns;
+ok(scalar(@extra), 'extra columns set as expected');
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
