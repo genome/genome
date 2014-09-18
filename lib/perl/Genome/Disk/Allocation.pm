@@ -330,18 +330,24 @@ sub _delete {
 
     my $self = $class->get($id);
 
-    my $path = $self->absolute_path;
+    if ($self->is_archived) {
+        $self->_cleanup_archive_directory($self->absolute_path);
+        $self->SUPER::delete;
 
-    for my $event ($self->timeline_events) {
-        $event->delete();
+    } else {
+        my $path = $self->absolute_path;
+
+        for my $event ($self->timeline_events) {
+            $event->delete();
+        }
+
+        $self->SUPER::delete;
+
+        $class->_create_observer(
+            $class->_mark_for_deletion_closure($path),
+            $class->_remove_directory_closure($path),
+        );
     }
-
-    $self->SUPER::delete;
-
-    $class->_create_observer(
-        $class->_mark_for_deletion_closure($path),
-        $class->_remove_directory_closure($path),
-    );
 
     return 1;
 }
