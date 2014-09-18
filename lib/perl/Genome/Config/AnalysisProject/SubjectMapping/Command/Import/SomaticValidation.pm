@@ -93,8 +93,7 @@ sub _create_subject {
     my $label = shift;
     my $subject_identifier = shift;
 
-    my $subject = Genome::Subject->get($subject_identifier);
-    $subject = Genome::Subject->get(name => $subject_identifier) unless $subject;
+    my $subject = Genome::Subject->get($subject_identifier) || Genome::Subject->get(name => $subject_identifier);
     die($self->error_message("Unable to find a subject from identifier: %s", $subject_identifier)) unless $subject_identifier;
     Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
         subject_mapping => $mapping,
@@ -124,8 +123,7 @@ sub _link_to_tag {
     my $mapping = shift;
     my $tag_string = shift;
 
-    my $tag = Genome::Config::Tag->get($tag_string);
-    $tag = Genome::Config::Tag->get(name => $tag_string) unless $tag;
+    my $tag = Genome::Config::Tag->get($tag_string) || Genome::Config::Tag->get(name => $tag_string);
     die($self->error_message("Unable to find a tag from identifier: %s", $tag_string)) unless $tag;
 
     $tag->add_subject_mapping($mapping);
