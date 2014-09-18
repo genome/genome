@@ -332,6 +332,7 @@ sub _delete {
 
     if ($self->is_archived) {
         $self->_cleanup_archive_directory($self->absolute_path);
+        $self->_delete_timeline_events;
         $self->SUPER::delete;
 
     } else {
