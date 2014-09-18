@@ -336,12 +336,10 @@ sub _delete {
         $self->SUPER::delete;
 
     } else {
-        my $path = $self->absolute_path;
-
         $self->_delete_timeline_events;
-
         $self->SUPER::delete;
 
+        my $path = $self->absolute_path;
         $class->_create_observer(
             $class->_mark_for_deletion_closure($path),
             $class->_remove_directory_closure($path),
