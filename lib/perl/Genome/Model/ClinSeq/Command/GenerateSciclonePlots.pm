@@ -97,7 +97,7 @@ sub parse_variant_file {
     }
     my %variant_files;
     foreach my $tumor_prefix(@tumor_prefixes) {
-        my $variant_file_temp = $variant_file . "_" . $tumor_prefix;
+        my $variant_file_temp = $variant_file . "_" . $tumor_prefix . ".tsv";
         my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
             output => $variant_file_temp,
             separator => "\t",
@@ -146,7 +146,7 @@ sub parse_variant_file {
 sub get_variant_files {
     my $self = shift;
     my $clinseq_build = shift;
-    my $outfile = $self->outdir . "/variants.clean.tsv";
+    my $outfile = $self->outdir . "/variants.filtered.clean.tsv";
     my $snv_indel_report_clean_file =
         $clinseq_build->snv_indel_report_clean_filtered_file;
     if(-e $snv_indel_report_clean_file) {
@@ -260,8 +260,10 @@ sub execute {
     my %variant_files = $self->get_variant_files($clinseq_build);
     my $cnv_f = $self->get_cnv_file($clinseq_build);
     foreach my $prefix (keys %variant_files) {
-        $self->run_sciclone($variant_files{$prefix}, $cnv_f, $clinseq_build,
-            $prefix);
+        if (not $prefix =~ /rnaseq/) {
+            $self->run_sciclone($variant_files{$prefix}, $cnv_f,
+                $clinseq_build, $prefix);
+        }
     }
     return 1;
 }
