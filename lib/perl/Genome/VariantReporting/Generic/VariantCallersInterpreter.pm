@@ -24,6 +24,14 @@ sub available_fields {
     /
 }
 
+sub field_descriptions {
+    my $self = shift;
+    return (
+        variant_callers => 'List of variant callers that called this position for sample ' . $self->sample_name,
+        variant_caller_count => 'Number of callers that called this position for sample ' . $self->sample_name,
+    );
+}
+
 sub _interpret_entry {
     my $self = shift;
     my $entry = shift;

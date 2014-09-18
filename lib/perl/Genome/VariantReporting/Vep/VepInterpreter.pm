@@ -18,21 +18,21 @@ sub requires_annotations {
     return ('vep');
 }
 
-sub available_fields {
-    return qw/
-        transcript_name
-        trv_type
-        trv_type_category
-        amino_acid_change
-        default_gene_name
-        ensembl_gene_id
-        c_position
-        gene_name_source
-        canonical
-        sift
-        polyphen
-        condel
-    /;
+sub field_descriptions {
+    return (
+        transcript_name   => 'Ensembl stable ID of feature',
+        trv_type          => 'Consequence type of this variation',
+        trv_type_category => 'The category for the trv type: splice_site, non_synonymous, other',
+        amino_acid_change => 'The HGVS protein sequence name',
+        default_gene_name => 'The gene symbol',
+        ensembl_gene_id   => 'Ensembl stable ID of affected gene',
+        c_position        => 'The HGVS coding sequence name',
+        gene_name_source  => 'The source of the gene symbol',
+        canonical         => 'Is this transcript canonical',
+        sift              => 'The SIFT prediction and/or score, with both given as prediction(score)',
+        polyphen          => 'The PolyPhen prediction and/or score',
+        condel            => 'The Consensus Deleteriousness (Condel) score',
+    )
 }
 
 sub _interpret_entry {

@@ -67,4 +67,14 @@ sub acmg_gene_set {
     );
 }
 
+sub vcf_id {
+    my $self = shift;
+    return "GENE_IS_" . $self->gene_set;
+}
+
+sub vcf_description {
+    my $self = shift;
+    return "This transcript is part of the " . $self->gene_set . " gene set";
+}
+
 1;

@@ -39,6 +39,14 @@ sub available_fields {
     /;
 }
 
+sub field_descriptions {
+    my $self = shift;
+    return (
+        max_normal_vaf_observed => sprintf('The maximum vaf value observed between all the normal samples : %s', join(', ', $self->normal_sample_names)),
+        max_tumor_vaf_observed => sprintf('The maximum vaf value observed between all the tumor samples : %s', join(', ', $self->tumor_sample_names)),
+    );
+}
+
 sub _interpret_entry {
     my $self = shift;
     my $entry = shift;

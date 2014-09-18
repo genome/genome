@@ -18,6 +18,20 @@ sub requires_annotations {
     return ('bam-readcount');
 }
 
+sub field_descriptions {
+    my $self = shift;
+
+    my %field_descriptions;
+    for my $sample_name ($self->sample_names) {
+        my %field_descriptions_for_sample = field_descriptions_for_sample($sample_name);
+        for my $field ($self->vaf_fields()) {
+            my $sample_specific_field = $self->create_sample_specific_field_name($field, $sample_name);
+            $field_descriptions{$sample_specific_field} = $field_descriptions_for_sample{$field};
+        }
+    }
+    return %field_descriptions;
+}
+
 sub available_fields {
     my $self = shift;
     my @sample_names = @_;
@@ -27,6 +41,11 @@ sub available_fields {
 
 sub vaf_fields {
     return Genome::VariantReporting::BamReadcount::VafInterpreter::available_fields();
+}
+
+sub field_descriptions_for_sample {
+    my $sample_name = shift;
+    return Genome::VariantReporting::BamReadcount::VafInterpreter->field_descriptions($sample_name);
 }
 
 sub _interpret_entry {
