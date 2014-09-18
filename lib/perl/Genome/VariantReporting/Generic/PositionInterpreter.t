@@ -84,6 +84,43 @@ subtest "insertion" => sub {
     is_deeply({$interpreter->interpret_entry($entry, ['AT', 'ATT'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
+subtest "ambiguous insertion" => sub {
+    my $interpreter = $pkg->create();
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected_return_values = (
+        AGGGGGC => {
+            chromosome_name => '1',
+            start           => 10,
+            stop            => 11,
+            reference       => '-',
+            variant         => 'GGGG',
+        },
+    );
+    my $entry = create_entry("AGC","AGGGGGC");
+    is_deeply({$interpreter->interpret_entry($entry, ['AGGGGGC',])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest "offset insertion" => sub {
+    my $interpreter = $pkg->create();
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    # AGT--C
+    # AGTGTC
+
+    my %expected_return_values = (
+        AGTGTC => {
+            chromosome_name => '1',
+            start           => 12,
+            stop            => 13,
+            reference       => '-',
+            variant         => 'GT',
+        },
+    );
+    my $entry = create_entry("AGTC","AGTGTC");
+    is_deeply({$interpreter->interpret_entry($entry, ['AGTGTC',])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
 subtest "deletion" => sub {
     my $interpreter = $pkg->create();
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
@@ -114,6 +151,46 @@ subtest "deletion" => sub {
     );
     my $entry = create_entry("ATT", "AT", "A");
     is_deeply({$interpreter->interpret_entry($entry, ['AT', 'A'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest "ambiguous deletion" => sub {
+    my $interpreter = $pkg->create();
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    # GTTTC
+    # G--TC
+
+    my %expected_return_values = (
+        GTC => {
+            chromosome_name => '1',
+            start           => 11,
+            stop            => 12,
+            reference       => 'TT',
+            variant         => '-'
+        },
+    );
+    my $entry = create_entry("GTTTC", "GTC",);
+    is_deeply({$interpreter->interpret_entry($entry, ['GTC',])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest "offset deletion" => sub {
+    my $interpreter = $pkg->create();
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    # GTGTAC
+    # GT---C
+
+    my %expected_return_values = (
+        GTC => {
+            chromosome_name => '1',
+            start           => 12,
+            stop            => 14,
+            reference       => 'GTA',
+            variant         => '-'
+        },
+    );
+    my $entry = create_entry("GTGTAC", "GTC",);
+    is_deeply({$interpreter->interpret_entry($entry, ['GTC',])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
 sub create_vcf_header {
