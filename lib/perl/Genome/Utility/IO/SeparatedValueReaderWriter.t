@@ -102,7 +102,7 @@ ok(!$reader->next, 'Failed as expected - next');
 $reader = Genome::Utility::IO::SeparatedValueReader->create(
     input => $albums_no_headers,
     headers => [qw/ dont have data to fill all these columns /],
-    ignore_extra_columns => 1,
+    allow_extra_columns => 1,
 );
 ok($reader, 'Created SVR to test too few columns while ignoring extra columns');
 ok(!$reader->next, 'Failed as expected - next');
@@ -111,7 +111,7 @@ ok(!$reader->next, 'Failed as expected - next');
 $reader = Genome::Utility::IO::SeparatedValueReader->create(
     input => $albums_no_headers,
     headers => [qw/ have enough data /],
-    ignore_extra_columns => 1,
+    allow_extra_columns => 1,
 );
 ok($reader, 'Created SVR to test too many columns while ignoring extra columns');
 ok($reader->next, 'Succeeded as expected');

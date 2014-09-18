@@ -22,10 +22,10 @@ class Genome::Utility::IO::SeparatedValueReader {
             default => 0,
             doc => 'Interprets separator as regex'
         },
-        ignore_extra_columns => {
+        allow_extra_columns => {
             type => 'Boolean',
             default => 0,
-            doc => 'Rather than crash when extra columns are found, just drop/ignore them.'
+            doc => 'Rather than crash when extra columns are found, store them in "current_extra_columns".'
         },
         ignore_lines_starting_with => {
             type => 'Text',
@@ -38,7 +38,7 @@ class Genome::Utility::IO::SeparatedValueReader {
         current_extra_columns => {
             type => 'Text',
             is_many => 1,
-            doc => 'if "ignore_extra_columns" is set, any additional columns for the current line',
+            doc => 'if "allow_extra_columns" is set, any additional columns for the current line',
         }
     ],
 };
@@ -129,7 +129,7 @@ sub next {
     unless ( @{$self->headers} == @values ) {
 
         # If we dont care about extra columns, all is well... unless we dont at least have the minimum required
-        if (!($self->ignore_extra_columns)||(@{$self->headers} > @values)) {
+        if (!($self->allow_extra_columns)||(@{$self->headers} > @values)) {
             #  Bomb out if we dont want extra columns
             $self->error_message(
                sprintf(
