@@ -38,6 +38,7 @@ class Genome::Config::Tag {
             to => 'profile_item',
             is_many => 1,
             is_optional => 1,
+            is_mutable => 1,
         },
         subject_mapping_bridges => {
             is => 'Genome::Config::Tag::AnalysisProject::SubjectMapping',
@@ -51,6 +52,7 @@ class Genome::Config::Tag {
             to => 'subject_mapping',
             is_many => 1,
             is_optional => 1,
+            is_mutable => 1,
         },
     ],
 };
