@@ -115,6 +115,62 @@ build_and_run_cmd(@$data1[0], @$data2[0]);
 assert_failed(@$data1[0], 'Found no mapping information');
 assert_failed(@$data2[0], 'Found no mapping information');
 
+#test with tags
+$subject_mapping = Genome::Config::AnalysisProject::SubjectMapping->create(
+    analysis_project => $analysis_project
+);
+my $tag = Genome::Config::Tag->create(name => 'test tag for somval 1');
+$subject_mapping->add_tag($tag);
+
+my $profile_item = $analysis_project->get_configuration_profile->get_config->{'Genome::Model::SomaticValidation'}{config_profile_item};
+$profile_item->add_tag($tag);
+
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'normal_sample',
+    subject_mapping => $subject_mapping,
+    subject => @$data1[1],
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'subject',
+    subject_mapping => $subject_mapping,
+    subject => @$data2[1]->source,
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'tumor_sample',
+    subject_mapping => $subject_mapping,
+    subject => @$data2[1],
+);
+
+$subject_mapping2 = Genome::Config::AnalysisProject::SubjectMapping->create(
+    analysis_project => $analysis_project
+);
+my $tag2 = Genome::Config::Tag->create(name => 'test tag for somval 2');
+$subject_mapping2->add_tag($tag2);
+
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'normal_sample',
+    subject_mapping => $subject_mapping2,
+    subject => @$data2[1],
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'subject',
+    subject_mapping => $subject_mapping2,
+    subject => @$data1[1]->source,
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'tumor_sample',
+    subject_mapping => $subject_mapping2,
+    subject => @$data1[1],
+);
+
+build_and_run_cmd(@$data1[0], @$data2[0]);
+assert_succeeded(@$data1[0], $model_types_somval);
+assert_succeeded(@$data2[0], $model_types_somval);
+@models = $analysis_project->models;
+ok(@models, 'it registers created models with the analysis_project');
+ok(scalar(@models) == 1, 'it creates one model per SubjectMapping that matches the tag');
+
+
 #inst data with no ap
 my $inst_data_without_a_project = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
 my $cmd = build_and_run_cmd($inst_data_without_a_project);
