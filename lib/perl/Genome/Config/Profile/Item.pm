@@ -58,6 +58,7 @@ class Genome::Config::Profile::Item {
             via => 'tag_bridges',
             to => 'tag',
             is_many => 1,
+            is_mutable => 1,
         },
         tag_names => {
             is => 'Text',
