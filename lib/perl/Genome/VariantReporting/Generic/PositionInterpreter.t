@@ -105,11 +105,11 @@ subtest "offset insertion" => sub {
     my $interpreter = $pkg->create();
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
-    # AGT--C
-    # AGTGTC
+    # ACA--C
+    # ACAGTC
 
     my %expected_return_values = (
-        AGTGTC => {
+        ACAGTC => {
             chromosome_name => '1',
             start           => 12,
             stop            => 13,
@@ -117,8 +117,8 @@ subtest "offset insertion" => sub {
             variant         => 'GT',
         },
     );
-    my $entry = create_entry("AGTC","AGTGTC");
-    is_deeply({$interpreter->interpret_entry($entry, ['AGTGTC',])}, \%expected_return_values, "Entry gets interpreted correctly");
+    my $entry = create_entry("ACAC","ACAGTC");
+    is_deeply({$interpreter->interpret_entry($entry, ['ACAGTC',])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
 subtest "deletion" => sub {
