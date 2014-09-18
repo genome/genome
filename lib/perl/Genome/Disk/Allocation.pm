@@ -337,9 +337,7 @@ sub _delete {
     } else {
         my $path = $self->absolute_path;
 
-        for my $event ($self->timeline_events) {
-            $event->delete();
-        }
+        $self->_delete_timeline_events;
 
         $self->SUPER::delete;
 
@@ -350,6 +348,14 @@ sub _delete {
     }
 
     return 1;
+}
+
+sub _delete_timeline_events {
+    my $self = shift;
+
+    for my $event ($self->timeline_events) {
+        $event->delete();
+    }
 }
 
 sub _reallocate {
