@@ -278,7 +278,7 @@ sub execute {
         chomp($sline);
 
         #skip header lines
-        next if($sline =~ /^(#|Hugo_Symbol|Chr|chromosome)/i);
+        next if($sline =~ /^(#|Hugo_Symbol|chr\s)/i);
 
         my @fields = split("\t",$sline);
 
