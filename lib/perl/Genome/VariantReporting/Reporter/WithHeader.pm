@@ -62,7 +62,7 @@ sub initialize {
     my $output_dir = shift;
 
     $self->SUPER::initialize($output_dir);
-    my $legend_fh = Genome::Sys->open_file_for_writing(File::Spec->join($output_dir, 'legend.tsv'));
+    my $legend_fh = Genome::Sys->open_file_for_writing(File::Spec->join($output_dir, $self->file_name . '.legend.tsv'));
     $self->_legend_fh($legend_fh);
     $self->write_legend_file();
     $self->print_headers();
