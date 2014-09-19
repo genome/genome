@@ -883,7 +883,7 @@ sub _retrieve_mode {
 
 sub _cleanup_archive_directory {
     my ($class, $directory) = @_;
-    my $cmd = "if [ -d $directory ] ; then rm -rf $directory ; fi";
+    my $cmd = "if [ -d $directory ] ; then rm -rf $directory ; else exit 1; fi";
     unless ($ENV{UR_DBI_NO_COMMIT}) {
         my ($job_id, $status) = Genome::Sys->bsub_and_wait(
             queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
