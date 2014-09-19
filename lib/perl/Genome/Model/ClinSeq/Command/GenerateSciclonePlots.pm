@@ -22,10 +22,11 @@ class Genome::Model::ClinSeq::Command::GenerateSciclonePlots {
             is_optional => 1,
             doc => 'Maximum number of clusters.',
         },
-        minimum_depth => {
+        min_coverage => {
             is => 'Number',
             is_optional => 1,
             doc => 'Minimum depth of variants.',
+            default => 20,
         },
         test => {
             is => 'Boolean',
@@ -228,12 +229,8 @@ sub run_sciclone {
     } else {
         $maximum_clusters = 6;
     }
-    my $minimum_depth;
-    if ($self->minimum_depth) {
-        $minimum_depth = $self->minimum_depth;
-    } else {
-        $minimum_depth = 1;
-    }
+    my $min_coverage;
+    $min_coverage = $self->min_coverage;
     my $sample_name = $clinseq_build->subject->common_name;
     my $sciclone = Genome::Model::Tools::Sciclone->create(
         clusters_file => $clusters_f,
@@ -241,7 +238,7 @@ sub run_sciclone {
         variant_files => $variant_f,
         copy_number_files => $cnv_f,
         maximum_clusters => $maximum_clusters,
-        minimum_depth => $minimum_depth,
+        minimum_depth => $min_coverage,
         sample_names => $prefix,
         plot1d_file => $plot_f,
         cn_calls_are_log2 => 1,
