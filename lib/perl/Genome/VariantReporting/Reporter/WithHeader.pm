@@ -190,9 +190,18 @@ sub write_legend_file {
     $self->_legend_fh->print("Filters\n");
     my %filters = %{$self->filters || {}};
     while( my ($filter_name, $filter) = each %filters) {
-        next if $filter_name eq 'allele-in-genotype';
+        next if $self->_skip_list->contains($filter_name);
         $self->_legend_fh->print(join($self->delimiter, $filter_name, $filter->vcf_id, $filter->vcf_description) . "\n");
     }
+}
+
+# List of filters that should not be included in the legend file
+sub _skip_list {
+    return Set::Scalar->new(
+        'allele-in-genotype'    #Special filter that is used in all WithHeader reports.
+                                #Filters out alternate alleles that are not part of the discovery sample's genotype.
+                                #Not useful for analysts to include in legend.
+    );
 }
 
 1;
