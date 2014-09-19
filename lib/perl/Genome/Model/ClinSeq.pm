@@ -29,6 +29,9 @@ class Genome::Model::ClinSeq {
     ],
     has_param => [ # Processing profile parameters
         bam_readcount_version => { is => 'Text', doc => 'The bam readcount version to use during clonality analysis' },
+        sireport_min_tumor_vaf => { is => 'Number', doc => 'Variants with a tumor VAF less than this (in any tumor sample) will be filtered out.'},
+        sireport_max_normal_vaf => { is => 'Number', doc => 'Variants with a normal VAF greater than this (in any normal sample) will be filtered out.'},
+        sireport_min_coverage => { is => 'Number', doc => 'Variants with coverage less than this (in any sample) will be filtered out.'},
     ],
     has_optional_metric => [
         common_name         => { is => 'Text', doc => 'the name chosen for the root directory in the build' },
@@ -233,6 +236,9 @@ sub map_workflow_inputs {
       misc_annotation_db => $misc_annotation_db,
       cosmic_annotation_db => $cosmic_annotation_db,
       bam_readcount_version => $self->bam_readcount_version,
+      sireport_min_tumor_vaf => $self->sireport_min_tumor_vaf,
+      sireport_max_normal_vaf => $self->sireport_max_normal_vaf,
+      sireport_min_coverage => $self->sireport_min_coverage,
   );
 
   my $annotation_build = $self->_resolve_annotation;
@@ -1188,6 +1194,9 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'annotation_build', $converge_snv_indel_report_op, 'annotation_build');
     $add_link->($input_connector, 'snv_indel_report_target_gene_list', $converge_snv_indel_report_op, 'target_gene_list');
     $add_link->($input_connector, 'snv_indel_report_target_gene_list_name', $converge_snv_indel_report_op, 'target_gene_list_name');
+    $add_link->($input_connector, 'sireport_min_tumor_vaf', $converge_snv_indel_report_op, 'min_tumor_vaf');
+    $add_link->($input_connector, 'sireport_max_normal_vaf', $converge_snv_indel_report_op, 'max_normal_vaf');
+    $add_link->($input_connector, 'sireport_min_coverage', $converge_snv_indel_report_op, 'min_coverage');
     if ($build->wgs_build){
       $add_link->($wgs_variant_sources_op, 'snv_variant_sources_file', $converge_snv_indel_report_op, '_wgs_snv_variant_sources_file');
       $add_link->($wgs_variant_sources_op, 'indel_variant_sources_file', $converge_snv_indel_report_op, '_wgs_indel_variant_sources_file');
@@ -1204,6 +1213,7 @@ sub _resolve_workflow_for_build {
       $sciclone_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateSciclonePlots");
       $add_link->($input_connector, 'sciclone_dir', $sciclone_op, 'outdir');
       $add_link->($input_connector, 'build', $sciclone_op, 'clinseq_build');
+      $add_link->($input_connector, 'sireport_min_coverage', $sciclone_op, 'min_coverage');
       if ($build->wgs_build) {
         $add_link->($run_cn_view_op, 'result', $sciclone_op, 'wgs_cnv_result');
       }
