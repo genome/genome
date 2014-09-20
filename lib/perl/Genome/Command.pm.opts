@@ -38234,15 +38234,11 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>wrappers',
     [
-      '>somatic-only',
+      '>model-report',
       [
         'model=s',
         undef,
         'output-directory=s',
-        undef,
-        'indels-input-vcf=s',
-        undef,
-        'snvs-input-vcf=s',
         undef,
         'help!',
         undef
@@ -38284,11 +38280,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>germline-only',
+      '>gold-evaluation',
       [
+        'indels-input-vcf=s',
+        undef,
         'model=s',
         undef,
         'output-directory=s',
+        undef,
+        'snvs-input-vcf=s',
         undef,
         'help!',
         undef
