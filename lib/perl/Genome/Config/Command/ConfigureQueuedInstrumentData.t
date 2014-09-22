@@ -114,6 +114,8 @@ ok(scalar(@models) == 2, 'it creates one model per SubjectMapping');
 build_and_run_cmd(@$data1[0], @$data2[0]);
 assert_failed(@$data1[0], 'Found no mapping information');
 assert_failed(@$data2[0], 'Found no mapping information');
+@models = $analysis_project->models;
+is(scalar(@models), 0, 'no models created during failure running CQID');
 
 #test with tags
 $subject_mapping = Genome::Config::AnalysisProject::SubjectMapping->create(
