@@ -26,6 +26,19 @@ sub available_fields {
         per_library_ref_count
         per_library_vaf
     /;
+};
+
+sub field_descriptions {
+    my $self = shift;
+    my $sample_name = shift || $self->sample_name;
+    return (
+        vaf => "Variant allele frequency for sample $sample_name",
+        ref_count => "Number of reads supporting the reference for sample $sample_name",
+        var_count => "Number of reads supporting variant for sample $sample_name",
+        per_library_var_count => "Number of reads supporting variant for each library of sample $sample_name",
+        per_library_ref_count => "Number of reads supporting the reference for each library of sample $sample_name",
+        per_library_vaf => "Variant allele frequency for each library of sample $sample_name",
+    );
 }
 
 sub _interpret_entry {

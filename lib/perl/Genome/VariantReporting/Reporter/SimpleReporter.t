@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
+use Sub::Override;
 
 my $pkg = 'Genome::VariantReporting::Reporter::SimpleReporter';
 use_ok($pkg);
@@ -23,8 +24,12 @@ my $data_dir = __FILE__.".d";
 my $reporter = Genome::VariantReporting::Reporter::SimpleReporter->create(file_name => 'simple');
 ok($reporter, "Reporter created successfully");
 
+my $override = Sub::Override->new('Genome::VariantReporting::Reporter::WithHeader::write_legend_file', sub {return 1});
+
 my $output_dir = Genome::Sys->create_temp_directory();
 $reporter->initialize($output_dir);
+
+$override->restore;
 
 my %interpretations = (
     'position' => {

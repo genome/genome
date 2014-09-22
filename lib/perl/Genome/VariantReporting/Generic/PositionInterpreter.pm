@@ -17,14 +17,14 @@ sub requires_annotations {
     ();
 }
 
-sub available_fields {
-    return qw/
-        chromosome_name
-        start
-        stop
-        reference
-        variant
-    /;
+sub field_descriptions {
+    return (
+        chromosome_name => 'Chromosome: an identifier from the reference genome or an angle-bracketed ID String ("<ID>") pointing to a contig in the assembly file',
+        start => 'The start position of the variant. One-based',
+        stop => 'The end position of the variant. One-based, inclusive',
+        reference => 'The reference allele at this position',
+        variant => 'The variant called at this position',
+    );
 }
 
 sub _interpret_entry {

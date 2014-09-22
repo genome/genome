@@ -20,11 +20,11 @@ sub requires_annotations {
     /;
 }
 
-sub available_fields {
-    return qw/
-        caf
-        max_alt_af
-    /;
+sub field_descriptions {
+    return (
+        caf => 'Allele frequency at this position based on 1000Genomes',
+        max_alt_af => 'The highest allele frequency at this position'
+    );
 }
 
 sub _interpret_entry {
