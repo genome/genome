@@ -25,7 +25,7 @@ class Genome::Model::ReferenceAlignment::Command::VcfSymlinks {
     has_optional => [
         exclude => {
             is=>'String',
-            doc=>'Don\'t include models that contain this string in the name. This can be a string or a regular expression.',
+            doc=>'Don\'t include models that contain this string in the name.',
             example_values => ['Pooled_Library'],
         }
     ],
@@ -43,7 +43,7 @@ sub execute {
     my @builds = grep {$_ eq $_->model->last_succeeded_build} $self->builds;
 
     my $exclude = $self->exclude;
-    @builds = grep {not $_->model->name =~ /$exclude/} @builds if $exclude;
+    @builds = grep {not $_->model->name =~ /\Q$exclude\E/} @builds if $exclude;
 
 
     my $output_dir = $self->output_directory;
