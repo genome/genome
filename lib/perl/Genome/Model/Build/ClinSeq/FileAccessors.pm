@@ -29,7 +29,13 @@ sub indel_dir {
 
 sub snv_indel_report_dir {
   my $self = shift;
-  my $snv_indel_report_dir = $self->case_dir . "/snv_indel_report";
+  my $stringent = shift;
+  my $snv_indel_report_dir;
+  if($stringent) {
+    $snv_indel_report_dir = $self->case_dir . "/snv_indel_report/stringent/";
+  } else {
+    $snv_indel_report_dir = $self->case_dir . "/snv_indel_report/nonstringent/";
+  }
   return $snv_indel_report_dir;
 }
 
@@ -254,7 +260,9 @@ sub wgs_exome_snv_summary_dir {
 
 sub snv_indel_report_clean_filtered_file {
   my $self = shift;
-  my $snv_indel_report_clean_filtered_file = $self->snv_indel_report_dir .
+  my $stringent = shift;
+  my $snv_indel_report_dir = $self->snv_indel_report_dir($stringent);
+  my $snv_indel_report_clean_filtered_file = $snv_indel_report_dir .
     "/" . $self->common_name . "_final_filtered_clean.tsv";
   if(-e $snv_indel_report_clean_filtered_file) {
     return $snv_indel_report_clean_filtered_file;
