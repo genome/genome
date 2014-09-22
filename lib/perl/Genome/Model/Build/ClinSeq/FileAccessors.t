@@ -56,7 +56,7 @@ is($b->wgs_cnv_dir, $case_dir . "/cnv/wgs_cnv", "found wgs_cnv_dir");
 is($b->wgs_cnv_summary_dir, $case_dir . "/cnv/wgs_cnv/summary", "found wgs_cnv_summary_dir");
 is($b->wgs_cnv_cnview_dir, $case_dir . "/cnv/wgs_cnv/cnview/CNView_All", "found wgs_cnv_cnview_dir");
 is($b->wgs_exome_snv_dir, $case_dir . "/snv/wgs_exome", "found wgs_exome_snv_dir");
-is($b->snv_indel_report_clean_filtered_file, $case_dir . "/snv_indel_report/" .
+is($b->snv_indel_report_clean_filtered_file, $case_dir . "/snv_indel_report/nonstringent/" .
    $b->common_name . "_final_filtered_clean.tsv",
    "found snv_indel_report_clean_filtered_file");
 is($b->wgs_cnvhmm_file, $case_dir . "/cnv/wgs_cnv/cnview/CNView_All/cnaseq.cnvhmm.tsv", "found wgs_cnvhmm_file");
