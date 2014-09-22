@@ -8,32 +8,14 @@ class Genome::Model::Build::Input {
     table_name => 'model.build_input',
     type_name => 'genome model build input',
     id_by => [
-        build_id => {
-            is => 'Text',
-            len => 64,
-        },
-        value_class_name => {
-            is => 'Text',
-            len => 255,
-        },
-        value_id => {
-            is => 'Text',
-            len => 1000,
-        },
-        name => {
-            is => 'Text',
-            len => 255,
-        },
+        build_id => { is => 'Text', len => 64 },
+        value_class_name => { is => 'Text', len => 255 },
+        value_id => { is => 'Text', len => 1000 },
+        name => { is => 'Text', len => 255 },
     ],
     has => [
-        model => {
-            is => 'Genome::Model',
-            via => 'build',
-        },
-        model_name => {
-            via => 'model',
-            to => 'name',
-        },
+        model => { is => 'Genome::Model', via => 'build' },
+        model_name => { via => 'model', to => 'name' },
         build => {
             is => 'Genome::Model::Build',
             id_by => 'build_id',
@@ -44,14 +26,8 @@ class Genome::Model::Build::Input {
             id_by => 'value_id',
             id_class_by => 'value_class_name',
         },
-        value_model => {
-            is => 'Genome::Model',
-            id_by => 'value_id',
-        },
-        value_build => {
-            is => 'Genome::Model::Build',
-            id_by => 'value_id',
-        },
+        value_model => { is => 'Genome::Model', id_by => 'value_id' },
+        value_build => { is => 'Genome::Model::Build', id_by => 'value_id' },
         value_inst_data => {
             is => 'Genome::InstrumentData',
             id_by => 'value_id',

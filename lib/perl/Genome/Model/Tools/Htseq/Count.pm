@@ -5,16 +5,22 @@ use Genome;
 
 class Genome::Model::Tools::Htseq::Count {
     is => 'Genome::Command::WithSavedResults',
-    parallelize_by => ['alignment_results'],
-    has_input => [
-        alignment_results => { 
-            is => 'Genome::InstrumentData::AlignmentResult',
-            is_many => 1,
-            example_values => [
-                { 'instrument_data.sample.patient.common_name like' => 'HCC%' }
-            ],
-            where => [ 'instrument_data.sample.extraction_type in' => ['rna','cdna','total rna'] ], 
-            doc => 'alignment results, typically from an RNA aligner',
+    parallelize_by => [ "alignment_results" ],
+    has_optional_output => [
+        # outputs should NOT need to be flagged as optional, 
+        # but until a bug is fixed they must be
+        gene_hits_file_path => {
+            is => 'FilesystemPath',
+            doc => 'the path to the file of hit counts by gene',
+        },
+        transcript_hits_file_path => {
+            is => 'FilesystemPath',
+            doc => 'the path to the file of hit counts by transcript',
+        },
+        output_dir => {
+            is => 'FilesystemPath',
+            is_input => 1,
+            doc => 'the results directory',
         },
     ],
     has_param => [
@@ -28,30 +34,32 @@ class Genome::Model::Tools::Htseq::Count {
         result_version => {
             # Required by all ::WithSavedResults
             is => 'Integer',
-            valid_values => [1, 2],
-            default_value => '2',
+            default_value => 2,
+            valid_values => [ 1, 2 ],
             doc => 'the version of results, which may iterate as this logic iterates',
         },
         mode => {
             is => 'Text',
-            valid_values => ['intersection-strict'],
             default_value => 'intersection-strict',
+            valid_values => [ "intersection-strict" ],
             doc => 'mode',
         },
         minaqual => {
             is => 'Integer',
             default_value => 1,
-            doc => 'minaqual'
+            doc => 'minaqual',
         },
         whitelist_alignments_flags => {
             is => 'Text',
             is_optional => 1,
+            is_param => 1,
             doc => 'require alignments to match the specified flags (-f): 0x0002 limits to only properly-paired alignments',
         },
         blacklist_alignments_flags => {
             is => 'Text',
-            is_optional => 1,
             default_value => '0x0104',
+            is_optional => 1,
+            is_param => 1,
             doc => 'exclude alignments which match the specified flags (-F): 0x0104 excludes non-primary alignments and unaligned reads',
         },
         limit => {
@@ -71,22 +79,13 @@ class Genome::Model::Tools::Htseq::Count {
         #    doc => 'samtools $VERSION [-p1 -p2]'
         #},
     ],
-    has_optional_output => [
-        # outputs should NOT need to be flagged as optional, 
-        # but until a bug is fixed they must be
-        gene_hits_file_path => { 
-            is => 'FilesystemPath',
-            doc => 'the path to the file of hit counts by gene',
-        },
-        transcript_hits_file_path => {
-            is => 'FilesystemPath',
-            doc => 'the path to the file of hit counts by transcript',
-        },
-        output_dir => {
-            is => 'FilesystemPath',
-            is_optional => 1,
-            is_input => 1,
-            doc => 'the results directory',
+    has_input => [
+        alignment_results => {
+            is => 'Genome::InstrumentData::AlignmentResult',
+            where => [ 'instrument_data.sample.extraction_type in' => [ "rna", "cdna", "total rna" ] ],
+            example_values => [ { "instrument_data.sample.patient.common_name like" => "HCC%" } ],
+            is_many => 1,
+            doc => 'alignment results, typically from an RNA aligner',
         },
     ],
     doc => 'generate htseq results for an (annotation-based) alignment result',

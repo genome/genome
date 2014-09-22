@@ -22,90 +22,169 @@ use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
 
 class Genome::Model::Build {
-    is => [qw/
-        Genome::Notable Genome::Searchable
-        Genome::Utility::ObjectWithAllocations
-        Genome::Utility::ObjectWithCreatedBy
-        Genome::Utility::ObjectWithTimestamps
-    /],
-    type_name => 'genome model build',
+    is => [ "Genome::Notable", "Genome::Searchable", "Genome::Utility::ObjectWithAllocations", "Genome::Utility::ObjectWithCreatedBy", "Genome::Utility::ObjectWithTimestamps" ],
     table_name => 'model.build',
     is_abstract => 1,
+    attributes_have => [
+        is_input => { is => 'Boolean', is_optional => 1 },
+        is_param => { is => 'Boolean', is_optional => 1 },
+        is_output => { is => 'Boolean', is_optional => 1 },
+        is_metric => { is => 'Boolean', is_optional => 1 },
+    ],
+    subclass_description_preprocessor => 'Genome::Model::Build::_preprocess_subclass_description',
     subclassify_by => 'subclass_name',
-    subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
+    type_name => 'genome model build',
     id_by => [
         # TODO: change to just "id"
         build_id => { is => 'Text', len => 64 },
     ],
-    attributes_have => [
-        is_input    => { is => 'Boolean', is_optional => 1, },
-        is_param    => { is => 'Boolean', is_optional => 1, },
-        is_output   => { is => 'Boolean', is_optional => 1, },
-        is_metric   => { is => 'Boolean', is_optional => 1 },
-    ],
     has => [
         is_last_complete => {
             is => 'Boolean',
-            calculate_from => ['id','model'],
-            calculate => q|my $build = $model->last_complete_build; return $build && $build->id eq $id|,
+            calculate_from => [ 'id', 'model' ],
+            calculate => q(my $build = $model->last_complete_build; return $build && $build->id eq $id),
             doc => 'true for any build which is the last complete bulid for a model',
         },
         subclass_name => {
             is => 'Text',
             len => 255,
-            is_mutable => 0,
-            column_name => 'SUBCLASS_NAME',
-            calculate_from => ['model_id'],
-            # We subclass via our model's type_name (which is via it's processing profile's type_name)
+            calculate_from => 'model_id',
             calculate => sub {
                 my($model_id) = @_;
                 return unless $model_id;
                 my $model = Genome::Model->get($model_id);
                 Carp::croak("Can't find Genome::Model with ID $model_id while resolving subclass for Build") unless $model;
                 return __PACKAGE__ . '::' . Genome::Utility::Text::string_to_camel_case($model->type_name);
-            }
+            },
         },
-        data_directory          => { is => 'Text', len => 1000, is_optional => 1 },
-        model                   => { is => 'Genome::Model', id_by => 'model_id' },
-        type_name               => { via => 'model', is => 'Text' },
-        subject                 => { via => 'model', is => 'Genome::Subject' },
-        processing_profile      => { via => 'model', is => 'Genome::ProcessingProfile' },
-        run_by                  => { is => 'Text', doc => "the user whose build is run" },
-        status                  => { is => 'Text', doc => "the current status of the build" },
-        date_scheduled          => { is => 'Timestamp', is_optional => 1, doc => "when the build was originally scheduled" },
-        date_completed          => { is => 'Timestamp', is_optional => 1, doc => "when the build has finally completed" },
-
+        data_directory => { is => 'Text', len => 1000, is_optional => 1 },
+        model => { is => 'Genome::Model', id_by => 'model_id' },
+        type_name => { is => 'Text', via => 'model' },
+        subject => { is => 'Genome::Subject', via => 'model' },
+        processing_profile => { is => 'Genome::ProcessingProfile', via => 'model' },
+        run_by => { is => 'Text', doc => 'the user whose build is run' },
+        status => { is => 'Text', doc => 'the current status of the build' },
+        date_scheduled => {
+            is => 'DateTime',
+            is_optional => 1,
+            doc => 'when the build was originally scheduled',
+        },
+        date_completed => {
+            is => 'DateTime',
+            is_optional => 1,
+            doc => 'when the build has finally completed',
+        },
         # this is the one event type we tentatively intended to keep for builds
         # even fully workflowified, it is possibly still a candidate for retention, logging things like input changes, etc.
-        creation_event          => { is => 'Genome::Model::Event', reverse_as => 'build', where => [ event_type => 'genome model build' ], is_many => 1, is_constant => 1},
-        _events                 => { is => 'Genome::Model::Event', reverse_as => 'build', is_many => 1 },
+        creation_event => {
+            is => 'Genome::Model::Event',
+            reverse_as => 'build',
+            where => [ event_type => 'genome model build' ],
+            is_constant => 1,
+            is_many => 1,
+        },
+        _events => {
+            is => 'Genome::Model::Event',
+            reverse_as => 'build',
+            is_many => 1,
+        },
     ],
     has_optional => [
         _newest_workflow_instance => {
             is => 'Workflow::Operation::Instance',
-            is_calculated => 1,
-            calculate => q{ return $self->newest_workflow_instance(); }
+            calculate => q( return $self->newest_workflow_instance(); ),
         },
-        software_revision => { 
-            is => 'Text', 
-            len => 1000 
+        software_revision => { is => 'Text', len => 1000 },
+    ],
+    has_many_optional_deprecated => [
+        # the_* ?
+        # I don't believe anythign which uses events actually needs these
+        the_events => {
+            is => 'Genome::Model::Event',
+            via => '__self__',
+            to => '_events',
+        },
+        the_events_statuses => {
+            is => 'Text',
+            via => 'event_status',
+            to => '_events',
+            is_many => 1,
+        },
+        # these are ambiguosuly named and are still present only for backward compatibility
+        # these returns the "bridge", but are named for the thing on the other side of the bridge
+        # now there is "*_associations", which are clearly a bridge,
+        attributes => {
+            is => 'Genome::MiscAttribute',
+            via => 'attribute_associations',
+            to => '__self__',
+        },
+        instrument_data_inputs => {
+            is => 'Genome::Model::Build::Input',
+            via => '__self__',
+            to => 'instrument_data_associations',
+        },
+        result_users => {
+            # this is particularly confusing, because it is giving the user
+            # of the builds's results, but the cases where the build itself
+            # is the user of the result (ie: use $build->result_associations)
+            is => 'Genome::SoftwareResult::User',
+            via => '__self__',
+            to => 'result_associations',
+        },
+        # unnecessary now that the dot syntax is supported on the command line, and also in get():
+        instrument_data_ids => { via => 'instrument_data', to => 'id' },
+        model_groups => { via => 'model', is_many => 1 },
+        work_order_names => { via => 'work_orders', to => 'name' },
+        work_order_numbers => { via => 'work_orders', to => 'id' },
+
+        # this is just a duplicate of "status" with a different name
+        master_event_status => {
+            via => 'the_master_event',
+            to => 'event_status',
+            is_many => 1,
+        },
+
+        # we now use model/build inputs instead of links
+        # when these can be removed do
+        # see "downstream_builds"
+        from_build_links => {
+            is => 'Genome::Model::Build::Link',
+            reverse_as => 'to_build',
+            doc => q(bridge table entries where this is the "to" build(used to retrieve builds this build is "from")),
+        },
+        from_builds => {
+            is => 'Genome::Model::Build',
+            via => 'from_build_links',
+            to => 'from_build',
+            doc => q(Genome builds that contribute "to" this build),
+        },
+        to_build_links => {
+            is => 'Genome::Model::Build::Link',
+            reverse_as => 'from_build',
+            doc => q(bridge entries where this is the "from" build(used to retrieve builds builds this build is "to")),
+        },
+        to_builds => {
+            is => 'Genome::Model::Build',
+            via => 'to_build_links',
+            to => 'to_build',
+            doc => q(Genome builds this build contributes "to"),
         },
     ],
     has_many_optional => [
         input_values => {
             via => 'inputs',
             to => 'value',
-            doc => "The values associated with a build's input associations.",
+            doc => q(The values associated with a build's input associations.),
         },
         inputs => {
             is => 'Genome::Model::Build::Input',
             reverse_as => 'build',
-            doc => 'Links between a build and its input values, including the specification of which input the value satisfies.'
+            doc => 'Links between a build and its input values, including the specification of which input the value satisfies.',
         },
         downstream_build_associations => {
             is => 'Genome::Model::Build::Input',
             reverse_as => '_build_value',
-            doc => 'links to models which use this model as an input', 
+            doc => 'links to models which use this model as an input',
         },
         downstream_builds => {
             is => 'Genome::Model::Build',
@@ -113,14 +192,13 @@ class Genome::Model::Build {
             to => 'build',
             doc => 'models which use this model as an input',
         },
-
-        instrument_data  => {
+        instrument_data => {
             is => 'Genome::InstrumentData',
             via => 'inputs',
             to => 'value',
             is_mutable => 1,
             where => [ name => 'instrument_data' ],
-            doc => 'Instrument data assigned to the model when the build was created.'
+            doc => 'Instrument data assigned to the model when the build was created.',
         },
         instrument_data_associations => {
             is => 'Genome::Model::Build::Input',
@@ -139,95 +217,51 @@ class Genome::Model::Build {
             is => 'Genome::SoftwareResult::User',
             reverse_as => 'user',
         },
-        attribute_associations => { 
-            is => 'Genome::MiscAttribute', 
-            reverse_as => '_build', 
-            where => [ entity_class_name => 'Genome::Model::Build' ] 
+        attribute_associations => {
+            is => 'Genome::MiscAttribute',
+            reverse_as => '_build',
+            where => [ entity_class_name => 'Genome::Model::Build' ],
         },
-        metrics => { 
-            is => 'Genome::Model::Metric', 
+        metrics => {
+            is => 'Genome::Model::Metric',
             reverse_as => 'build',
-            doc => 'Build metrics' 
+            doc => 'Build metrics',
         },
         projects => {
             # TODO: shoudln't this be Genome::Project?  Genome::Site::TGI::Project is used by the sync cron only, right?
-            is => 'Genome::Site::TGI::Project', 
-            via => 'model' 
+            is => 'Genome::Site::TGI::Project',
+            via => 'model',
+            is_many => 1,
         },
         work_orders => {
             # TODO: is this relationship correct?
             # workorders should be more granular than projects
-            is => 'Genome::WorkOrder', 
-            via => 'projects' 
+            is => 'Genome::WorkOrder',
+            via => 'projects',
         },
     ],
     has_optional_deprecated => [
         # unnecessary now that the dot syntax is supported on the command line, and also in get():
-        processing_profile_id   => { via => 'model' },
+        processing_profile_id => { via => 'model' },
         processing_profile_name => { via => 'model' },
-        subject_id              => { via => 'model' },
-        subject_name            => { via => 'subject', to => 'name' },
-        model_id                => { is => 'NUMBER', implied_by => 'model', constraint_name => 'GMB_GMM_FK' },
-        model_name              => { via => 'model', to => 'name' },
-        
+        subject_id => { via => 'model' },
+        subject_name => { via => 'subject', to => 'name' },
+        model_name => { via => 'model', to => 'name' },
         # this should be moved down into the classes which actually use it
         region_of_interest_set_name => {
             is => 'Text',
-            is_many => 1,
-            is_mutable => 1,
             via => 'inputs',
             to => 'value_id',
+            is_mutable => 1,
             where => [ name => 'region_of_interest_set_name', value_class_name => 'UR::Value' ],
+            is_many => 1,
         },
-        
-        # poorly named 
-        the_master_event => { 
-            is => 'Genome::Model::Event', 
-            via => 'creation_event', 
-            to => '__self__' 
-        }, 
-    ],
-    has_many_optional_deprecated => [
-        # the_* ?
-        # I don't believe anythign which uses events actually needs these
-        the_events => { is => 'Genome::Model::Event', to => '_events', via => '__self__' },
-        the_events_statuses => { is => 'Text', to => '_events', via => 'event_status' },
-        
-        # these are ambiguosuly named and are still present only for backward compatibility
-        # these returns the "bridge", but are named for the thing on the other side of the bridge
-        # now there is "*_associations", which are clearly a bridge,
-        # and "*_values", which are unambiguously the value across the bridge
-        attributes => { is => 'Genome::MiscAttribute', via => 'attribute_associations', to => '__self__', },
-        instrument_data_inputs => { is => 'Genome::Model::Build::Input', to => 'instrument_data_associations', via => '__self__', },
-        result_users => {
-            # this is particularly confusing, because it is giving the user
-            # of the builds's results, but the cases where the build itself
-            # is the user of the result (ie: use $build->result_associations)
-            is => 'Genome::SoftwareResult::User',
-            to => 'result_associations',
-            via => '__self__',
+        the_master_event => {
+            is => 'Genome::Model::Event',
+            via => 'creation_event',
+            to => '__self__',
+            is_many => 0,
         },
-       
-        # unnecessary now that the dot syntax is supported on the command line, and also in get():
-        instrument_data_ids => { via => 'instrument_data', to => 'id', is_many => 1, }, # use instrument_data.id instead
-        model_groups     => { via => 'model', is_many => 1, },      # use model.groups instead
-        work_order_names => { via => 'work_orders', to => 'name' }, # use work_orders.name instead
-        work_order_numbers => { via => 'work_orders', to => 'id' }, # use work_orders.number instead
-        
-        # this is just a duplicate of "status" with a different name
-        master_event_status     => { via => 'the_master_event', to => 'event_status' },
-
-        # we now use model/build inputs instead of links
-        # when these can be removed do
-        # see "downstream_builds" 
-        from_build_links => { is => 'Genome::Model::Build::Link', reverse_as => 'to_build',
-                              doc => 'bridge table entries where this is the \"to\" build(used to retrieve builds this build is \"from\")' },
-        from_builds      => { is => 'Genome::Model::Build', via => 'from_build_links', to => 'from_build',
-                              doc => 'Genome builds that contribute \"to\" this build' },
-        to_build_links   => { is => 'Genome::Model::Build::Link', reverse_as => 'from_build',
-                              doc => 'bridge entries where this is the \"from\" build(used to retrieve builds builds this build is \"to\")' },
-        to_builds        => { is => 'Genome::Model::Build', via => 'to_build_links', to => 'to_build',
-                              doc => 'Genome builds this build contributes \"to\"' },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',

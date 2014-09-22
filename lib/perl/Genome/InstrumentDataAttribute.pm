@@ -7,22 +7,10 @@ use Genome;
 class Genome::InstrumentDataAttribute {
     table_name => 'instrument.data_attribute',
     id_by => [
-        instrument_data_id => {
-            is => 'Text',
-            len => 64,
-        },
-        attribute_label => {
-            is => 'Text',
-            len => 64,
-        },
-        attribute_value => {
-            is => 'Text',
-            len => 512,
-        },
-        nomenclature => {
-            is => 'Text',
-            len => 64,
-        },
+        instrument_data_id => { is => 'Text', len => 64 },
+        attribute_label => { is => 'Text', len => 64 },
+        attribute_value => { is => 'Text', len => 512 },
+        nomenclature => { is => 'Text', len => 64 },
     ],
     has => [
         instrument_data => {
@@ -32,14 +20,8 @@ class Genome::InstrumentDataAttribute {
         },
         # TODO: we have been simplifying the name/value stuff for some time
         # Switch to these by default, and test the inversion.
-        name => {
-            via => '__self__',
-            to => 'attribute_label',
-        },
-        value => {
-            via => '__self__',
-            to => 'attribute_value',
-        },
+        name => { via => '__self__', to => 'attribute_label' },
+        value => { via => '__self__', to => 'attribute_value' },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
