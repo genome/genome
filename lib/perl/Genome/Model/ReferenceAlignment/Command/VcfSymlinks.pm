@@ -40,7 +40,7 @@ sub help_detail {
 sub execute {
     my $self = shift;
 
-    my @builds = grep {$_ == $_->model->last_succeeded_build} $self->builds;
+    my @builds = grep {$_ eq $_->model->last_succeeded_build} $self->builds;
 
     my $exclude = $self->exclude;
     @builds = grep {not $_->model->name =~ /$exclude/} @builds if $exclude;
