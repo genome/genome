@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use Lingua::EN::Inflect;
+use List::MoreUtils qw();
 
 class Genome::Config::Command::ConfigureQueuedInstrumentData {
     is => 'Command::V2',
@@ -308,7 +309,7 @@ sub _model_hash_matches_tags {
 
     my @model_hash_tags = $model_hash->{config_profile_item}->tags;
     if(keys %$tag_hash) {
-        return grep { exists $tag_hash->{$_->id} } @model_hash_tags;
+        return List::MoreUtils::any { exists $tag_hash->{$_->id} } @model_hash_tags;
     } else {
         return !@model_hash_tags;
     }
