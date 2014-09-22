@@ -31,7 +31,7 @@ class Genome::Model::Command::InitiateDownsample {
             valid_values => ['clusters','ratio'],
         },
         step_fraction => {
-            is => 'Number',
+            is => 'Float',
             doc => 'The fraction (decimal value) of the property used in each downsample step.',
             is_optional => 1,
             default_value => 0.5,
