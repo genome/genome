@@ -767,13 +767,18 @@ sub add_read_counts{
     $self->warning_message("using pre-generated bam read count file: $output_file");
   }
   my ($b_quality, $m_quality);
-  if($self->stringent) {
+  my $stringent = $self->stringent;
+  if($stringent == 1) {
       $b_quality = 20;
       $m_quality = 30;
   } else {
       $b_quality = $self->min_quality_score;
       $m_quality = $self->min_base_quality;
   }
+  $self->status_message("genome_build: $reference_fasta");
+  $self->status_message("indel_size_limit: $indel_size_limit");
+  $self->status_message("min_quality_score: $m_quality");
+  $self->status_message("min_base_quality: $b_quality");
   my $add_count_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
       bam_files=>$bam_list,
       genome_build=>$reference_fasta,
