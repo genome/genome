@@ -64,14 +64,37 @@ sub execute {
         unless($sanitized_name eq $subject_name) {
             $self->status_message("Sanitized subject name $subject_name to $sanitized_name for use in filename.");
         }
-        my $indel_vcf = $build->data_directory . "/variants/indels.vcf.gz";
-        Genome::Sys->create_symlink($indel_vcf, "$output_dir/$sanitized_name.indels.vcf.gz");
-        my $snv_vcf = $build->data_directory . "/variants/snvs.vcf.gz";
-        Genome::Sys->create_symlink($indel_vcf, "$output_dir/$sanitized_name.snvs.vcf.gz");
+        
+        if(defined $build->model->indel_detection_strategy) {
+            $self->_create_symlinked_vcf_file($build, $sanitized_name, 'indels', $output_dir);
+        }
+        
+        if(defined $build->model->snv_detection_strategy) {
+            $self->_create_symlinked_vcf_file($build, $sanitized_name, 'snvs', $output_dir);
+        }
+
     }
 
     return 1;
 }
+
+sub _create_symlinked_vcf_file {
+    my ($self, $build, $name, $type, $output_dir) = @_;
+    unless($type eq 'snvs' || $type eq 'indels') {
+        die "Invalid variant type $type requested for symlink.";
+    }
+    my $vcf = $build->data_directory . "/variants/$type.vcf.gz";
+    eval {
+        Genome::Sys->create_symlink($vcf, "$output_dir/$name.indels.vcf.gz");
+    };
+    if($@) {
+        die $self->error_message("Unable to create a symlink for the indel VCF in build " . $build->id . " for " . $build->model->subject_name . ". Check that the subject name is unique and the $type.vcf.gz file exists in the build."); 
+    }
+    return 1;
+}
+
+
+
 
 1;
 
