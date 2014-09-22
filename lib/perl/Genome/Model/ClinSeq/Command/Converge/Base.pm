@@ -11,18 +11,36 @@ class Genome::Model::ClinSeq::Command::Converge::Base {
     is_abstract => 1,
     has_input => [
         builds => { 
-                    is => 'Genome::Model::Build::ClinSeq',
-                    is_many => 1,
-                    require_user_verify => 0,
-                    doc => 'clinseq builds to converge', 
-                  },
-        outdir => {
-                    is => 'FilesystemPath',
-                    doc => 'Directory where output files will be written',
-                   },
+            is => 'Genome::Model::Build::ClinSeq',
+            is_many => 1,
+            require_user_verify => 0,
+            doc => 'clinseq builds to converge',
+        },
         bam_readcount_version => {
             is => 'String',
             doc => 'version of bam-readcount to use',
+        }
+        outdir => {
+            is => 'FilesystemPath',
+            doc => 'Directory where output files will be written',
+        },
+        min_quality_score => {
+            is => 'Integer',
+            is_optional => 1,
+            doc => 'minimum mapping quality of reads to be considered',
+            default => '1',
+        },
+        min_base_quality => {
+            is => 'Integer',
+            is_optional => 1,
+            doc => 'minimum base quality of bases in reads to be considered',
+            default => '0',
+        },
+        stringent => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => 'Flag to set stringent quality filters, mapping quality filter = 30, baseq = 20',
+            default => 0,
         },
     ],
     doc => 'converge various data types across clinseq inputs'
@@ -747,19 +765,27 @@ sub add_read_counts{
   my $output_file = $self->outdir . "variants.all.anno.readcounts";
   if (-e $output_file){
     $self->warning_message("using pre-generated bam read count file: $output_file");
-  }else{
-    my $add_count_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
-            bam_files=>$bam_list,
-            genome_build=>$reference_fasta,
-            output_file=>$output_file,
-            variant_file=>$grand_anno_file,
-            header_prefixes=>$header_prefixes,
-            indel_size_limit => $indel_size_limit,
-            bam_readcount_version => $self->bam_readcount_version,
-          );
-    my $r = $add_count_cmd->execute();
-    die $self->error_message("add-readcounts cmd unsuccessful") unless ($r);
   }
+  my ($b_quality, $m_quality);
+  if($self->stringent) {
+      $b_quality = 20;
+      $m_quality = 30;
+  } else {
+      $b_quality = $self->min_quality_score;
+      $m_quality = $self->min_base_quality;
+  }
+  my $add_count_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
+      bam_files=>$bam_list,
+      genome_build=>$reference_fasta,
+      output_file=>$output_file,
+      variant_file=>$grand_anno_file,
+      header_prefixes=>$header_prefixes,
+      indel_size_limit => $indel_size_limit,
+      min_quality_score => $m_quality,
+      min_base_quality => $b_quality,
+  );
+  my $r = $add_count_cmd->execute();
+  die $self->error_message("add-readcounts cmd unsuccessful") unless ($r);
 
   #If there are missing cells relative to the header, fill in with 'NA's
   my $tmp_file = $output_file . ".tmp";
