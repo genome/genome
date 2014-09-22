@@ -10,9 +10,9 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-use Genome::VariantReporting::Framework::Command::Wrappers::TestHelpers qw(get_build compare_directories);
+use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build compare_directories);
 
-my $pkg = "Genome::VariantReporting::Framework::Command::Wrappers::ModelPair";
+my $pkg = "Genome::VariantReporting::Command::Wrappers::ModelPair";
 
 use_ok($pkg);
 
@@ -32,7 +32,7 @@ my $model_pair = $pkg->create(discovery => $discovery_build,
     #base_output_dir => $expected_dir,
     base_output_dir => $output_dir,
 );
-is($model_pair->class, "Genome::VariantReporting::Framework::Command::Wrappers::ModelPair");
+is($model_pair->class, "Genome::VariantReporting::Command::Wrappers::ModelPair");
 compare_directories($expected_dir, $output_dir);
 done_testing;
 

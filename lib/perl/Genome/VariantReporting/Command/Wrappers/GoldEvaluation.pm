@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Framework::Command::Wrappers::ModelReport;
+package Genome::VariantReporting::Command::Wrappers::GoldEvaluation;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use Genome;
 use File::Basename qw(dirname);
 use File::Spec;
 
-class Genome::VariantReporting::Framework::Command::Wrappers::ModelReport {
+class Genome::VariantReporting::Command::Wrappers::GoldEvaluation {
     is => 'Command::V2',
     has_input => {
         model => {
@@ -18,6 +18,12 @@ class Genome::VariantReporting::Framework::Command::Wrappers::ModelReport {
             is => 'Path',
             is_output => 1,
         },
+        snvs_input_vcf => {
+            is => 'Path',
+        },
+        indels_input_vcf => {
+            is => 'Path',
+        },
     },
 };
 
@@ -25,32 +31,34 @@ sub execute {
     my $self = shift;
 
     my $model = $self->model;
-     my $model_pair;
+
+    my $model_pair;
     if ($self->is_single_bam($model)) {
         # Germline
-        $model_pair = Genome::VariantReporting::Framework::Command::Wrappers::SingleModel->create(
+        $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
             discovery => $model->last_succeeded_build,
             base_output_dir => $self->output_directory,
             plan_file_basename => 'germline_report_TYPE.yaml',
         );
     } else {
         #Somatic
-        $model_pair = Genome::VariantReporting::Framework::Command::Wrappers::ModelPair->create(
+        $model_pair = Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $model->last_succeeded_build,
             base_output_dir => $self->output_directory,
             plan_file_basename => 'somatic_TYPE_report.yaml',
         );
     }
-    for my $variant_type(qw(snvs indels)) {
+    for my $variant_type (qw(snvs indels)) {
+        my $vcf_method = $variant_type .'_input_vcf';
         my %params = (
-            input_vcf => $model_pair->input_vcf($variant_type),
+            input_vcf => $self->$vcf_method,
             variant_type => $variant_type,
             output_directory => $model_pair->reports_directory($variant_type),
             plan_file => $model_pair->plan_file($variant_type),
             resource_file => $model_pair->resource_file,
             log_directory => $model_pair->logs_directory($variant_type),
         );
-        Genome::VariantReporting::Framework::Command::CreateReport->execute(%params);
+        Genome::VariantReporting::Command::CreateReport->execute(%params);
     }
     return 1;
 };

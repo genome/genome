@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Framework::Command::Wrappers::Trio;
+package Genome::VariantReporting::Command::Wrappers::Trio;
 
 use strict;
 use warnings;
 use Genome;
 use File::Basename qw(basename);
 
-class Genome::VariantReporting::Framework::Command::Wrappers::Trio {
+class Genome::VariantReporting::Command::Wrappers::Trio {
     is => 'Command::V2',
     has_input => [
         models => {
@@ -58,7 +58,7 @@ sub execute {
     $self->_workflow->execute(%{$self->_workflow_inputs});
     my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
     for my $roi_directory (@roi_directories) {
-        for my $base (Genome::VariantReporting::Framework::Command::Wrappers::ModelPair->report_names) {
+        for my $base (Genome::VariantReporting::Command::Wrappers::ModelPair->report_names) {
             my $discovery_report = File::Spec->join($self->output_directory, "discovery", $roi_directory, $base);
             my $additional_report = File::Spec->join($self->output_directory, "additional", $roi_directory, $base);
             Genome::VariantReporting::PostProcessing::CombineReports->execute(
@@ -89,7 +89,7 @@ sub add_final_converge {
 
 sub get_model_pairs {
     my $self = shift;
-    my $factory = Genome::VariantReporting::Framework::Command::Wrappers::ModelPairFactory->create(
+    my $factory = Genome::VariantReporting::Command::Wrappers::ModelPairFactory->create(
         models => [$self->models],
         d0_sample => $self->tumor_sample,
         d30_sample => $self->additional_sample,
@@ -187,7 +187,7 @@ sub add_combine_to_workflow {
 sub add_report_to_workflow {
     my ($self, $params) = @_;
     my $counter = $self->_workflow_counter;
-    my $report_creator = Genome::VariantReporting::Framework::Command::CreateReport->create(%$params);
+    my $report_creator = Genome::VariantReporting::Command::CreateReport->create(%$params);
     my $report_dag = $report_creator->dag;
     $report_dag->name(join(" ", $report_dag->name, $counter));
     $self->_add_operation_to_workflow($report_dag, {$report_creator->params_for_execute}, $counter);

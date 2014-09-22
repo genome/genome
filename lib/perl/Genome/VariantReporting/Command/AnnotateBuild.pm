@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Framework::Command::AnnotateBuild;
+package Genome::VariantReporting::Command::AnnotateBuild;
 
 use strict;
 use warnings FATAL => 'all';
@@ -6,7 +6,7 @@ use Genome;
 use Genome::VariantReporting::Framework::Dag qw(generate_dag);
 use Memoize qw();
 
-class Genome::VariantReporting::Framework::Command::AnnotateBuild {
+class Genome::VariantReporting::Command::AnnotateBuild {
     is => 'Command::V2',
     has_input => [
         build => {

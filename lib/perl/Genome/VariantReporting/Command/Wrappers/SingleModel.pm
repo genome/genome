@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Framework::Command::Wrappers::SingleModel;
+package Genome::VariantReporting::Command::Wrappers::SingleModel;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Framework::Command::Wrappers::SingleModel {
-    is => 'Genome::VariantReporting::Framework::Command::Wrappers::ModelPair',
+class Genome::VariantReporting::Command::Wrappers::SingleModel {
+    is => 'Genome::VariantReporting::Command::Wrappers::ModelPair',
     has => [
         plan_file_basename => {
             default_value => "cle_germline_report_TYPE.yaml",

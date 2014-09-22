@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Framework::Command::Wrappers::RnaSeq;
+package Genome::VariantReporting::Command::Wrappers::RnaSeq;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use Genome;
 use File::Basename qw(dirname);
 use File::Spec;
 
-class Genome::VariantReporting::Framework::Command::Wrappers::RnaSeq {
+class Genome::VariantReporting::Command::Wrappers::RnaSeq {
     is => 'Command::V2',
     has => {
         somatic_build => {
@@ -105,7 +105,7 @@ sub run_reports {
     my $self = shift;
 
     my $variant_type = 'snvs';
-    Genome::VariantReporting::Framework::Command::CreateReport->execute(
+    Genome::VariantReporting::Command::CreateReport->execute(
         input_vcf => $self->input_vcf($variant_type),
         variant_type => $variant_type,
         output_directory => $self->reports_directory($variant_type),
@@ -127,7 +127,7 @@ sub input_vcf {
 }
 
 sub _plan_search_dir {
-    my $variant_reporting_base_dir = dirname(dirname(dirname(dirname(__FILE__))));
+    my $variant_reporting_base_dir = dirname(dirname(dirname(__FILE__)));
     return File::Spec->join($variant_reporting_base_dir, 'plan_files');
 }
 
