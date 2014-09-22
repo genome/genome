@@ -54,12 +54,13 @@ sub execute {
     #now we should have all the builds
     #for each build
     #symlink each indel and SNV file into the directory.
-    #assuming that sample names are valid file names. I think we sanitize them such that this is true
 
     for my $build (@builds) {
         my $subject_name = $build->model->subject_name;
         
-        #This should clean unsavory characters out of the sample name. In theory could alter the sample name to match another sample in the same cohort. I think if this happens we will get a failed symlink.
+        #This should clean unsavory characters out of the sample name. 
+        #In theory could alter the sample name to match another sample in the same cohort.
+        #If this happens we will get a failed symlink.
         my $sanitized_name = sanitize_string_for_filesystem($subject_name); 
         unless($sanitized_name eq $subject_name) {
             $self->status_message("Sanitized subject name $subject_name to $sanitized_name for use in filename.");
