@@ -148,8 +148,10 @@ sub get_variant_files {
     my $self = shift;
     my $clinseq_build = shift;
     my $outfile = $self->outdir . "/variants.filtered.clean.tsv";
+    my $stringent_quality = 1;
     my $snv_indel_report_clean_file =
-        $clinseq_build->snv_indel_report_clean_filtered_file;
+        $clinseq_build->snv_indel_report_clean_filtered_file(
+            $stringent_quality);
     if(-e $snv_indel_report_clean_file) {
         Genome::Sys->copy_file($snv_indel_report_clean_file, $outfile);
     } else {
