@@ -11,41 +11,69 @@ class Genome::InstrumentData::Solexa {
     has_constant => [
         sequencing_platform => { value => 'solexa' },
     ],
-    has_optional => [
+    has_optional_attribute => [
         project_name => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'project_name' ],
-            is_mutable => 1,
         },
         target_region_set_name => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'target_region_set_name' ],
-            is_mutable => 1,
         },
         flow_cell_id => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'flow_cell_id' ],
-            is_mutable => 1,
         },
+        lane => {
+        },
+        read_length => {
+        },
+        rev_filt_aligned_clusters_pct => {
+        },
+        fwd_filt_aligned_clusters_pct => {
+        },
+        rev_seq_id => {
+        },
+        fwd_seq_id => {
+        },
+        rev_read_length => {
+        },
+        fwd_read_length => {
+        },
+        rev_kilobases_read => {
+        },
+        fwd_kilobases_read => {
+        },
+        rev_run_type => {
+        },
+        fwd_run_type => {
+        },
+        run_type => {
+        },
+        gerald_directory => {
+        },
+        is_external => {
+        },
+        archive_path => {
+        },
+        bam_path => {
+        },
+        adaptor_path => {
+        },
+        rev_clusters => {
+        },
+        fwd_clusters => {
+        },
+        clusters => {
+        },
+        analysis_software_version => {
+        },
+        index_sequence => {
+        },
+        gc_bias_path => {
+        },
+        fastqc_path => {
+        },
+    ],
+    has_optional => [
         # TODO Need to remove, depends on LIMS tables
         flow_cell => {
             is => 'Genome::InstrumentData::FlowCell',
             id_by => 'flow_cell_id',
-        },
-        lane => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'lane' ],
-            is_mutable => 1,
-        },
-        read_length => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'read_length' ],
-            is_mutable => 1,
         },
         old_filt_error_rate_avg => {
             via => 'attributes',
@@ -63,78 +91,6 @@ class Genome::InstrumentData::Solexa {
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'fwd_filt_error_rate_avg' ],
-            is_mutable => 1,
-        },
-        rev_filt_aligned_clusters_pct => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'rev_filt_aligned_clusters_pct' ],
-            is_mutable => 1,
-        },
-        fwd_filt_aligned_clusters_pct => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fwd_filt_aligned_clusters_pct' ],
-            is_mutable => 1,
-        },
-        rev_seq_id => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'rev_seq_id' ],
-            is_mutable => 1,
-        },
-        fwd_seq_id => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fwd_seq_id' ],
-            is_mutable => 1,
-        },
-        rev_read_length => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'rev_read_length' ],
-            is_mutable => 1,
-        },
-        fwd_read_length => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fwd_read_length' ],
-            is_mutable => 1,
-        },
-        rev_kilobases_read => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'rev_kilobases_read' ],
-            is_mutable => 1,
-        },
-        fwd_kilobases_read => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fwd_kilobases_read' ],
-            is_mutable => 1,
-        },
-        rev_run_type => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'rev_run_type' ],
-            is_mutable => 1,
-        },
-        fwd_run_type => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fwd_run_type' ],
-            is_mutable => 1,
-        },
-        run_type => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'run_type' ],
-            is_mutable => 1,
-        },
-        gerald_directory => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'gerald_directory' ],
             is_mutable => 1,
         },
         old_median_insert_size => {
@@ -155,74 +111,8 @@ class Genome::InstrumentData::Solexa {
             where => [ attribute_label => 'sd_below_insert_size' ],
             is_mutable => 1,
         },
-        is_external => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'is_external' ],
-            is_mutable => 1,
-        },
-        archive_path => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'archive_path' ],
-            is_mutable => 1,
-        },
-        bam_path => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'bam_path' ],
-            is_mutable => 1,
-        },
-        adaptor_path => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'adaptor_path' ],
-            is_mutable => 1,
-        },
-        rev_clusters => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'rev_clusters' ],
-            is_mutable => 1,
-        },
-        fwd_clusters => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fwd_clusters' ],
-            is_mutable => 1,
-        },
-        clusters => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'clusters' ],
-            is_mutable => 1,
-        },
         read_count => {
             calculate => q| my $reads = $self->clusters; $reads *= 2 if $self->is_paired_end; return $reads; |,
-        },
-        analysis_software_version => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'analysis_software_version' ],
-            is_mutable => 1,
-        },
-        index_sequence => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'index_sequence' ],
-            is_mutable => 1,
-        },
-        gc_bias_path => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'gc_bias_path' ],
-            is_mutable => 1,
-        },
-        fastqc_path => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fastqc_path' ],
-            is_mutable => 1,
         },
 
         #TODO These three columns will point to "read_length" or whatever name is decided
