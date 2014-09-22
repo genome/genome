@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use File::Basename;
+use Genome::Utility::Text qw( sanitize_string_for_filesystem );
 
 class Genome::Model::ReferenceAlignment::Command::VcfSymlinks {
     is => 'Genome::Command::Base',
@@ -55,11 +56,17 @@ sub execute {
     #assuming that sample names are valid file names. I think we sanitize them such that this is true
 
     for my $build (@builds) {
-        my $sample_name = $build->model->subject_name;
+        my $subject_name = $build->model->subject_name;
+        
+        #This should clean unsavory characters out of the sample name. In theory could alter the sample name to match another sample in the same cohort. I think if this happens we will get a failed symlink.
+        my $sanitized_name = sanitize_string_for_filesystem($subject_name); 
+        unless($sanitized_name eq $subject_name) {
+            $self->status_message("Sanitized subject name $subject_name to $sanitized_name for use in filename.");
+        }
         my $indel_vcf = $build->data_directory . "/variants/indels.vcf.gz";
-        Genome::Sys->create_symlink($indel_vcf, "$output_dir/$sample_name.indels.vcf.gz");
+        Genome::Sys->create_symlink($indel_vcf, "$output_dir/$sanitized_name.indels.vcf.gz");
         my $snv_vcf = $build->data_directory . "/variants/snvs.vcf.gz";
-        Genome::Sys->create_symlink($indel_vcf, "$output_dir/$sample_name.snvs.vcf.gz");
+        Genome::Sys->create_symlink($indel_vcf, "$output_dir/$sanitized_name.snvs.vcf.gz");
     }
 
     return 1;
