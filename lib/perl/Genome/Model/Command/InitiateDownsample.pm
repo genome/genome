@@ -16,12 +16,12 @@ class Genome::Model::Command::InitiateDownsample {
             doc => 'the models to downsample',
         },
         upper_bound => {
-            is => 'Integer',
+            is => 'Float',
             doc => 'The upper bound of the property used to determine the downsample ratio.',
             example_values => ['0.50000','500000000'],
         },
         lower_bound => {
-            is => 'Integer',
+            is => 'Float',
             doc => 'The lower bound of the property used to determine the downsample ratio.',
             example_values => ['0.03125','1000000'],
         },
