@@ -13,7 +13,7 @@ class Genome::Model::ReferenceAlignment::Command::VcfSymlinks {
     has => [
         output_directory => {
             is=> 'String',
-            doc => 'a directory to place the symlnks',
+            doc => 'a directory to place the symlnks to SNV and Indel VCFs',
         }, 
         builds => {
             is => 'Genome::Model::Build::ReferenceAlignment',
@@ -32,7 +32,7 @@ class Genome::Model::ReferenceAlignment::Command::VcfSymlinks {
 
 
 sub help_detail {
-    return "Create a directory of symlinks to builds' VCF files, suitably renamed for transfer.";
+    return "Create a directory of symlinks to builds' SNV and Indel VCF files, suitably renamed for transfer. Note that subject names will be used as the file names and may be sanitized for the filesystem.";
 }
 
 
