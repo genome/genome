@@ -25,7 +25,8 @@ class Genome::Model::ReferenceAlignment::Command::VcfSymlinks {
     has_optional => [
         exclude => {
             is=>'String',
-            doc=>'Don\'t include models that contain this string in the name (ie. "Pooled_Library")',
+            doc=>'Don\'t include models that contain this string in the name. This is can be a regular expression',
+            example_values => ['Pooled_Library'],
         }
     ],
 };
