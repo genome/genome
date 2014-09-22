@@ -13,60 +13,88 @@ class Genome::InstrumentData::Solexa {
     ],
     has_optional_attribute => [
         project_name => {
+            is => 'Text',
         },
         target_region_set_name => {
+            is => 'Text',
         },
         flow_cell_id => {
+            is => 'Text',
         },
         lane => {
+            is => 'Text',
         },
         read_length => {
+            is => 'Integer',
         },
         rev_filt_aligned_clusters_pct => {
+            is => 'Float',
         },
         fwd_filt_aligned_clusters_pct => {
+            is => 'Float',
         },
         rev_seq_id => {
+            is => 'Integer',
         },
         fwd_seq_id => {
+            is => 'Integer',
         },
         rev_read_length => {
+            is => 'Integer',
         },
         fwd_read_length => {
+            is => 'Integer',
         },
         rev_kilobases_read => {
+            is => 'Integer',
         },
         fwd_kilobases_read => {
+            is => 'Integer',
         },
         rev_run_type => {
+            is => 'Text',
         },
         fwd_run_type => {
+            is => 'Text',
         },
         run_type => {
+            is => 'Text',
         },
         gerald_directory => {
+            is => 'Text',
         },
         is_external => {
+            is => 'Boolean',
         },
         archive_path => {
+            is => 'Text',
         },
         bam_path => {
+            is => 'Text',
         },
         adaptor_path => {
+            is => 'Text',
         },
         rev_clusters => {
+            is => 'Integer',
         },
         fwd_clusters => {
+            is => 'Integer',
         },
         clusters => {
+            is => 'Integer',
         },
         analysis_software_version => {
+            is => 'Text',
         },
         index_sequence => {
+            is => 'Text',
         },
         gc_bias_path => {
+            is => 'Text',
         },
         fastqc_path => {
+            is => 'Text',
         },
     ],
     has_optional => [
@@ -76,36 +104,42 @@ class Genome::InstrumentData::Solexa {
             id_by => 'flow_cell_id',
         },
         old_filt_error_rate_avg => {
+            is => 'Float',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'filt_error_rate_avg' ],
             is_mutable => 1,
         },
         old_rev_filt_error_rate_avg => {
+            is => 'Float',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'rev_filt_error_rate_avg' ],
             is_mutable => 1,
         },
         old_fwd_filt_error_rate_avg => {
+            is => 'Float',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'fwd_filt_error_rate_avg' ],
             is_mutable => 1,
         },
         old_median_insert_size => {
+            is => 'Integer',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'median_insert_size' ],
             is_mutable => 1,
         },
         old_sd_above_insert_size => {
+            is => 'Integer',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'sd_above_insert_size' ],
             is_mutable => 1,
         },
         old_sd_below_insert_size => {
+            is => 'Integer',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'sd_below_insert_size' ],
