@@ -46,7 +46,7 @@ sub execute {
         $self->debug_message('Model: '. $model->id);
         my $model_count = $self->_resolve_model_count($model);
         my $ratios = $self->_resolve_model_ratios($model_count);
-        my $cmd = 'genome instrument-data import generate-file-for-import --instrument-data='. join(',', map{$_->id} $model->instrument_data) .' --file='. $model->id .'.tsv --downsample-ratios='. join(',',@{$ratios});
+        my $cmd = 'genome instrument-data import generate-file-for-reimport --instrument-data='. join(',', map{$_->id} $model->instrument_data) .' --file='. $model->id .'.tsv --downsample-ratios='. join(',',@{$ratios});
         print $cmd ."\n";
     }
     return 1;
