@@ -13,19 +13,19 @@ class Genome::Model::ReferenceAlignment::Command::VcfSymlinks {
     has => [
         output_directory => {
             is=> 'String',
-            doc => 'a directory to place the symlnks to SNV and Indel VCFs',
+            doc => 'a directory to place the symlnks to SNV and Indel VCFs.',
         }, 
         builds => {
             is => 'Genome::Model::Build::ReferenceAlignment',
             is_many => 1,
             shell_args_position => 1,
-            doc => 'List of builds to use if searching on a list of builds'
+            doc => 'List of builds to use if searching on a list of builds.'
         },
     ],
     has_optional => [
         exclude => {
             is=>'String',
-            doc=>'Don\'t include models that contain this string in the name. This is can be a regular expression',
+            doc=>'Don\'t include models that contain this string in the name. This is can be a regular expression.',
             example_values => ['Pooled_Library'],
         }
     ],
