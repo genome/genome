@@ -25,26 +25,73 @@ my $pkg = 'Genome::VariantReporting::Framework::Command::CreateReport';
 use_ok($pkg);
 
 my $code_test_dir = __FILE__ . '.d';
-my $test_dir = Genome::Sys->create_temp_directory;
-Genome::Sys->rsync_directory(
-    source_directory => $code_test_dir,
-    target_directory => $test_dir
-);
 
-my $output_dir = Genome::Sys->create_temp_directory;
+subtest 'working_command' => sub {
+    my $test_dir = Genome::Sys->create_temp_directory;
+    Genome::Sys->rsync_directory(
+        source_directory => $code_test_dir,
+        target_directory => $test_dir
+    );
 
-my $input_vcf = File::Spec->join($test_dir, "input.vcf");
-my $cmd = $pkg->execute(
-    input_vcf => $input_vcf,
-    variant_type => 'snvs',
-    output_directory => $output_dir,
-    log_directory => Genome::Sys->create_temp_directory,
-    plan_file => File::Spec->join($test_dir, 'plan.yaml'),
-    resource_file => get_resource_file($input_vcf),
-);
+    my $output_dir = Genome::Sys->create_temp_directory;
 
-my $expected_dir = File::Spec->join($test_dir, "expected");
-compare_dir_ok($output_dir, $expected_dir, 'All reports are as expected');
+    my $input_vcf = File::Spec->join($test_dir, "input.vcf");
+    my $cmd = $pkg->execute(
+        input_vcf => $input_vcf,
+        variant_type => 'snvs',
+        output_directory => $output_dir,
+        log_directory => Genome::Sys->create_temp_directory,
+        plan_file => File::Spec->join($test_dir, 'plan.yaml'),
+        resource_file => get_resource_file($input_vcf),
+    );
+
+    my $expected_dir = File::Spec->join($test_dir, "expected");
+    compare_dir_ok($output_dir, $expected_dir, 'All reports are as expected');
+};
+
+subtest 'no_resource_file' => sub {
+    my $test_dir = Genome::Sys->create_temp_directory;
+    Genome::Sys->rsync_directory(
+        source_directory => $code_test_dir,
+        target_directory => $test_dir
+    );
+
+    my $output_dir = Genome::Sys->create_temp_directory;
+
+    my $input_vcf = File::Spec->join($test_dir, "input.vcf");
+    my $cmd = $pkg->create(
+        input_vcf => $input_vcf,
+        variant_type => 'snvs',
+        output_directory => $output_dir,
+        log_directory => Genome::Sys->create_temp_directory,
+        plan_file => File::Spec->join($test_dir, 'plan.yaml'),
+        resource_file => "does_not_exist.yaml",
+    );
+
+    ok(! eval {$cmd->execute}, 'Command fails with nonexistant resource_file');
+};
+
+subtest 'no_vcf' => sub {
+    my $test_dir = Genome::Sys->create_temp_directory;
+    Genome::Sys->rsync_directory(
+        source_directory => $code_test_dir,
+        target_directory => $test_dir
+    );
+
+    my $output_dir = Genome::Sys->create_temp_directory;
+
+    my $input_vcf = File::Spec->join($test_dir, "input.vcf");
+    my $cmd = $pkg->create(
+        input_vcf => 'does_not_exist.vcf',
+        variant_type => 'snvs',
+        output_directory => $output_dir,
+        log_directory => Genome::Sys->create_temp_directory,
+        plan_file => File::Spec->join($test_dir, 'plan.yaml'),
+        resource_file => get_resource_file($input_vcf),
+    );
+
+    ok(! eval {$cmd->execute}, 'Command fails with nonexistant input vcf');
+};
 
 done_testing;
 
