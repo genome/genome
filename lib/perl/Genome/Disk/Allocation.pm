@@ -1037,7 +1037,7 @@ sub _default_archive_after_time {
 sub _get_trash_folder {
     my $self = shift;
 
-    return $self->volume->get_trash_folder();
+    return File::Spec->join($self->volume->get_trash_folder(), $self->id);
 }
 
 1;

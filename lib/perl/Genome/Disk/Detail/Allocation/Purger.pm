@@ -141,9 +141,8 @@ sub _destination_dir {
     my $self = shift;
     my $allocation_object = shift;
 
-    return Genome::Sys->create_directory(File::Spec->join(
-            $allocation_object->_get_trash_folder(),
-            $allocation_object->id));
+    return Genome::Sys->create_directory(
+        $allocation_object->_get_trash_folder());
 }
 
 
