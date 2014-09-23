@@ -7,6 +7,7 @@ use above 'Genome';
 
 require File::Compare;
 use Test::More;
+use Test::Deep qw(cmp_bag);
 
 use_ok('Genome::Utility::IO::SeparatedValueReader') or die;
 use_ok('Genome::Utility::IO::SeparatedValueWriter') or die;
@@ -116,6 +117,7 @@ ok($reader, 'Created SVR to test too many columns while ignoring extra columns')
 ok($reader->next, 'Succeeded as expected');
 my @extra = $reader->current_extra_columns;
 ok(scalar(@extra), 'extra columns set as expected');
+cmp_bag(\@extra, ['legend', 'reggae'], 'extra columns are the trailing ones in the file');
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
