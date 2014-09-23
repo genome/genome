@@ -30,9 +30,6 @@ is($pg->id, $id, "id: $id");
 is($pg->subject_type, 'population group', 'subject type is population group');
 print Data::Dumper::Dumper($pg);
 
-my $commit = eval{ UR::Context->commit; };
-ok($commit, 'commit');
-
 $pg = Genome::Site::TGI::PopulationGroup->get($id);
 ok($pg, 're-get pg');
 
