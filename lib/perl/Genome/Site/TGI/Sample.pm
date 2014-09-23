@@ -1,5 +1,5 @@
 
-package Genome::Site::TGI::Sample; 
+package Genome::Site::TGI::Sample;
 
 # Adaptor for GSC Organism::Sample
 
@@ -38,7 +38,7 @@ use Genome;
                 s.source_id,
                 s.source_type,
 
-		s.taxon_id
+                s.taxon_id
 
             from GSC.organism_sample s
         ) sample
@@ -50,56 +50,56 @@ class Genome::Site::TGI::Sample {
     table_name => 'ORGANISM_SAMPLE',
     id_by => [
         id                          => { is => 'Number',
-                                        doc => 'the numeric ID for the specimen in both the LIMS and the analysis system', 
+                                        doc => 'the numeric ID for the specimen in both the LIMS and the analysis system',
                                         column_name => 'ORGANISM_SAMPLE_ID',
                                     },
     ],
     has => [
-        name                        => { is => 'Text',     len => 64, 
-                                        doc => 'the fully qualified name for the sample (the "DNA NAME" in LIMS for both DNA and RNA)', 
+        name                        => { is => 'Text',     len => 64,
+                                        doc => 'the fully qualified name for the sample (the "DNA NAME" in LIMS for both DNA and RNA)',
                                         column_name => 'FULL_NAME',
                                     },
         subject_type => { is => 'Text', is_constant => 1, value => 'organism sample', column_name => '', },
-        _nomenclature                => { column_name => 'NOMENCLATURE', default_value => "WUGC" }, 
+        _nomenclature                => { column_name => 'NOMENCLATURE', default_value => "WUGC" },
 
     ],
-    has_optional => [	
-        taxon			    => { is => 'Genome::Site::TGI::Taxon', id_by => 'taxon_id' },
-	default_genotype_seq_id     => {
+    has_optional => [
+        taxon                       => { is => 'Genome::Site::TGI::Taxon', id_by => 'taxon_id' },
+        default_genotype_seq_id     => {
             is => 'Text',
             doc => 'Seq ID of corresponding genotype data',
         },
-        common_name                 => { is => 'Text', 
-                                        doc => 'a name like "tumor1" for a given sample',                                        
+        common_name                 => { is => 'Text',
+                                        doc => 'a name like "tumor1" for a given sample',
                                     },
 
-        extraction_label            => { is => 'Text', 
+        extraction_label            => { is => 'Text',
                                         doc => 'identifies the specimen sent from the laboratory which extracted DNA/RNA',
                                         column_name => 'SAMPLE_NAME',
                                     },
-                
-        extraction_type             => { is => 'Text', 
+
+        extraction_type             => { is => 'Text',
                                         doc => 'either "genomic dna" or "rna" in most cases', column_name => 'SAMPLE_TYPE' },
-                
-        extraction_desc             => { is => 'Text', 
-                                        doc => 'notes specified when the specimen entered this site', 
+
+        extraction_desc             => { is => 'Text',
+                                        doc => 'notes specified when the specimen entered this site',
                                         column_name => 'DESCRIPTION'
                                     },
-                
+
         cell_type                   => { is => 'Text', len => 100,
                                         doc => 'typically "primary"' },
 
-        tissue_label	            => { is => 'Text', 
+        tissue_label                => { is => 'Text',
                                         doc => 'identifies/labels the original tissue sample from which this extraction was made' },
-        								
-        tissue_desc                 => { is => 'Text', len => 64, 
+
+        tissue_desc                 => { is => 'Text', len => 64,
                                         doc => 'describes the original tissue sample', column_name => 'TISSUE_NAME' },
 
-        organ_name                  => { is => 'Text', len => 64, 
-                                        doc => 'the name of the organ from which the sample was taken' }, 
-        
+        organ_name                  => { is => 'Text', len => 64,
+                                        doc => 'the name of the organ from which the sample was taken' },
+
         # these are optional only b/c our data is not fully back-filled
-        source => { 
+        source => {
             calculate_from => ['source_id', 'source_type'],
             calculate => q{
                 if($source_type eq 'organism individual') {
@@ -114,23 +114,23 @@ class Genome::Site::TGI::Sample {
         },
         source_type                 => { is => 'Text',
                                         doc => 'either "organism individual" for individual patients, or "population group" for cross-individual samples' },
-        
+
         source_name                 => { via => 'source', to => 'name' },
-        
+
         source_common_name          => { via => 'source', to => 'common_name' },
 
 
         # the above are overly generic, since all of our sources are Genome::Individuals, and slow, so...
         patient                      => { is => 'Genome::Site::TGI::Individual', id_by => 'source_id',
                                            doc => 'The patient/individual organism from which the sample was taken.' },
-        
+
         patient_name                 => { via => 'patient', to => 'name', doc => 'the system name for a patient (subset of the sample name)' },
-        
+
         patient_common_name          => { via => 'patient', to => 'common_name', doc => 'names like AML1, BRC50, etc' },
-        age => { 
+        age => {
             is => 'Number',
-            via => 'attributes', 
-            where => [ name => 'age', nomenclature => 'WUGC', ], 
+            via => 'attributes',
+            where => [ name => 'age', nomenclature => 'WUGC', ],
             to => 'value',
             is_optional => 1,
             is_many => 0,
@@ -139,7 +139,7 @@ class Genome::Site::TGI::Sample {
         },
         body_mass_index => {
             via => 'attributes',
-            where => [ name => 'body_mass_index', nomenclature => 'WUGC', ] ,
+            where => [ name => 'body_mass_index', nomenclature => 'WUGC', ],
             to => 'value',
             is_optional => 1,
             is_many => 0,
@@ -147,10 +147,10 @@ class Genome::Site::TGI::Sample {
             doc => 'BMI of the patient at the time of sample taking.',
         },
         tcga_name                   => { via => 'attributes', where => [ 'nomenclature like' => 'TCGA%', name => 'biospecimen_barcode_side'], to => 'value' },
-        sub_type                    => { calculate_from => ['_sub_type1','_sub_type2'], calculate => q|$_sub_type1 or $_sub_type2| }, 
+        sub_type                    => { calculate_from => ['_sub_type1','_sub_type2'], calculate => q|$_sub_type1 or $_sub_type2| },
         _sub_type1                  => { via => 'attributes', where => [ name => 'sub-type' ], to => 'value' },
         _sub_type2                  => { via => 'attributes', where => [ name => 'subtype' ], to => 'value' },
-        
+
         models                      => { is => 'Genome::Model', reverse_as => 'subject', is_many => 1 },
     ],
     has_many => [
