@@ -77,7 +77,7 @@ sub _purge_archived {
             $allocation_object->absolute_path);
     }
 
-    $self->_add_timeline_event($allocation_object);
+    $self->_finalize_purge($allocation_object);
 
     return 1;
 }
@@ -104,13 +104,13 @@ sub _purge_unarchived {
         };
     }
 
-    $self->_add_timeline_event($allocation_object);
+    $self->_finalize_purge($allocation_object);
 
     return 1;
 }
 
 
-sub _add_timeline_event {
+sub _finalize_purge {
     my $self = shift;
     my $allocation_object = shift;
 
