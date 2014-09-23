@@ -415,4 +415,24 @@ sub is_near_soft_limit {
     return ($kb + $avg_allocated_kb > $self->soft_limit_kb);
 }
 
+sub get_trash_folder {
+    my $self = shift;
+
+    my @dv = Genome::Disk::Volume->get(
+        disk_group_names => $ENV{GENOME_DISK_GROUP_TRASH});
+    my %trash_map = map {
+       _extract_aggr($_->physical_path) => File::Spec->join(
+           $_->mount_path, '.trash');
+    } @dv;
+
+    my $aggr = _extract_aggr($self->physical_path);
+
+    return $trash_map{$aggr};
+}
+
+sub _extract_aggr {
+    return (shift =~ m!/(aggr\d{2})/!)[0];
+}
+
+
 1;
