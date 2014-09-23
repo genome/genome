@@ -101,9 +101,16 @@ class Genome::Site::TGI::Sample {
         
         # these are optional only b/c our data is not fully back-filled
         source => { 
-            is => 'Genome::Site::TGI::Measurable',
-            id_by => 'source_id',
-            where => [ 'subject_type in' => [qw/ organism_individual population_group /, 'organism individual', 'population group', ]],
+            calculate_from => ['source_id', 'source_type'],
+            calculate => q{
+                if($source_type eq 'organism individual') {
+                    return Genome::Site::TGI::Individual->get($source_id);
+                } elsif ($source_type eq 'population group') {
+                    return Genome::Site::TGI::PopulationGroup->get($source_id);
+                } else {
+                    die 'Unexpected source type: ' . $source_type;
+                }
+            },
             doc => 'The patient/individual organism from which the sample was taken, or the population for pooled samples.',
         },
         source_type                 => { is => 'Text',
