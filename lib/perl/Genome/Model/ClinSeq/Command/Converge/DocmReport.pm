@@ -139,7 +139,6 @@ sub execute {
   my $variants = $result->{'variants'};
   my $header = $result->{'header'};
 
-
   #Get bam-readcounts for all positions for all BAM files
   my @prefixes = $self->get_header_prefixes('-align_builds'=>$align_builds);
   my $grand_anno_count_file = $self->add_read_counts(
