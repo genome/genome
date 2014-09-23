@@ -68,7 +68,7 @@ subtest 'no_resource_file' => sub {
         resource_file => "does_not_exist.yaml",
     );
 
-    ok(! eval {$cmd->execute}, 'Command fails with nonexistant resource_file');
+    ok(!$cmd->execute, 'Command fails with nonexistant resource_file');
 };
 
 subtest 'no_vcf' => sub {
@@ -90,7 +90,7 @@ subtest 'no_vcf' => sub {
         resource_file => get_resource_file($input_vcf),
     );
 
-    ok(! eval {$cmd->execute}, 'Command fails with nonexistant input vcf');
+    ok(!$cmd->execute, 'Command fails with nonexistant input vcf');
 };
 
 done_testing;

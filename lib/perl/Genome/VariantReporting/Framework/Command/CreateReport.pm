@@ -30,7 +30,6 @@ class Genome::VariantReporting::Framework::Command::CreateReport {
         },
         resource_file => {
             is => 'Path',
-            is_optional => 1,
             doc => 'A resource (yaml) file describing the inputs to the report generation workflow',
         },
         log_directory => {
@@ -40,13 +39,33 @@ class Genome::VariantReporting::Framework::Command::CreateReport {
     ],
 };
 
+sub __errors__ {
+    my $self = shift;
+    my @errors = $self->SUPER::__errors__(@_);
+    return @errors if @errors;
+
+    unless (-s $self->resource_file) {
+        push @errors, UR::Object::Tag->create(
+            type => 'invalid',
+            properties => [qw/ resource_file /],
+            desc => sprintf('Resource file specified (%s) does not exist! You must supply a resource (yaml) file with the following entries: %s',
+                $self->resource_file, join(', ', $self->plan->resources_required, 'translations')),
+        );
+    }
+
+    unless (-s $self->input_vcf) {
+        push @errors, UR::Object::Tag->create(
+            type => 'invalid',
+            properties => [qw/ input_vcf /],
+            desc => sprintf('Input vcf specified (%s) does not exist!', $self->input_vcf),
+        );
+    }
+
+    return @errors;
+}
+
 sub execute {
     my $self = shift;
-
-    unless ($self->resource_file) {
-        die sprintf("You must supply a resource (yaml) file with the following entries: %s",
-            join(', ', $self->plan->resources_required, 'translations'));
-    }
 
     $self->status_message("Executing workflow.");
     $self->dag->execute(
