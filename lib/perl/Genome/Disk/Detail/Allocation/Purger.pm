@@ -59,6 +59,14 @@ sub purge {
 
     return 1 if $allocation_object->status eq 'purged';
 
+    return $self->_purge_unarchived($allocation_object);
+}
+
+
+sub _purge_unarchived {
+    my $self = shift;
+    my $allocation_object = shift;
+
     $allocation_object->_create_file_summaries();
 
     unless ($ENV{UR_DBI_NO_COMMIT}) {
