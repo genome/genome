@@ -61,11 +61,17 @@ sub purge {
 
     $allocation_object->_create_file_summaries();
 
-    unless($ENV{UR_DBI_NO_COMMIT}) {
+    unless ($ENV{UR_DBI_NO_COMMIT}) {
         my $destination_directory = $self->_destination_dir($allocation_object);
-        $self->status_message('Moving allocation path \''. $allocation_object->absolute_path .'\' to temporary path \''. $destination_directory .'\'');
-        unless (dirmove($allocation_object->absolute_path, $destination_directory) ) {
-            $self->error_message('Failed to move allocation path \''. $allocation_object->absolute_path .'\' to destination path \''. $destination_directory .'\': '. $!);
+        $self->status_message('Moving allocation path \''.
+            $allocation_object->absolute_path .'\' to temporary path \''.
+            $destination_directory .'\'');
+
+        unless (dirmove($allocation_object->absolute_path,
+                    $destination_directory)) {
+            $self->error_message('Failed to move allocation path \''.
+                $allocation_object->absolute_path .'\' to destination path \''.
+                $destination_directory .'\': '. $!);
             return;
         };
     }
