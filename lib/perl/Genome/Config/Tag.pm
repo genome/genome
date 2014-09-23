@@ -14,7 +14,7 @@ class Genome::Config::Tag {
     has => [
         name => {
             is => 'Text',
-            doc => 'The canonical "name" of the tag'
+            doc => 'The canonical "name" of the tag',
         },
         description => {
             is => 'Text',
