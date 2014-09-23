@@ -26,7 +26,6 @@ $pg = Genome::Site::TGI::PopulationGroup->create(
 );
 ok($pg, 'created pg');
 isa_ok($pg, 'Genome::Site::TGI::PopulationGroup');
-isa_ok($pg, 'Genome::Site::TGI::Measurable');
 is($pg->id, $id, "id: $id");
 is($pg->subject_type, 'population group', 'subject type is population group');
 print Data::Dumper::Dumper($pg);

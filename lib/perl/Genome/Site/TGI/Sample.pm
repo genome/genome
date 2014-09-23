@@ -47,7 +47,6 @@ use Genome;
 =cut
 
 class Genome::Site::TGI::Sample {
-    is => 'Genome::Site::TGI::Measurable',
     table_name => 'ORGANISM_SAMPLE',
     id_by => [
         id                          => { is => 'Number',

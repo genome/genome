@@ -7,7 +7,6 @@ use Genome;
 require Carp;
 
 class Genome::Site::TGI::SampleSource {
-    is => 'Genome::Site::TGI::Measurable',
     is_abstract => 1,
     subclassify_by => '_subclass_by_subject_type',
     has_optional => [

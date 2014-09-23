@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 class Genome::Site::TGI::Taxon {
-    is => 'Genome::Site::TGI::Measurable',
     table_name => "organism_taxon",
     id_by => [
         id         => { is => 'Number', len => 10, column_name => 'TAXON_ID' },

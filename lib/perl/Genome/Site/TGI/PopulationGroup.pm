@@ -14,7 +14,6 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::PopulationGroup {
-    is => 'Genome::Site::TGI::Measurable',
     table_name => 'POPULATION_GROUP',
     id_by => [
         individual_id => { is => 'Number', len => 10, column_name => 'PG_ID' },
