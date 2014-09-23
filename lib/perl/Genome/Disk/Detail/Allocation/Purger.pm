@@ -72,6 +72,16 @@ sub purge {
         };
     }
 
+    $self->_add_timeline_event($allocation_object);
+
+    return 1;
+}
+
+
+sub _add_timeline_event {
+    my $self = shift;
+    my $allocation_object = shift;
+
     my $event = Genome::Timeline::Event::Allocation->purged(
         $self->reason,
         $allocation_object,
