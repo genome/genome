@@ -10,7 +10,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-use Genome::VariantReporting::Framework::Command::Wrappers::TestHelpers qw(get_build compare_directories);
+use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build compare_directories);
 use Test::MockObject::Extends;
 use Genome::Test::Factory::ProcessingProfile::RnaSeq;
 use Genome::Test::Factory::Model::RnaSeq;
@@ -18,7 +18,7 @@ use Genome::Test::Factory::Build;
 use Genome::Utility::Test qw(compare_ok);
 use Sub::Install qw(reinstall_sub);
 
-my $pkg = "Genome::VariantReporting::Framework::Command::Wrappers::RnaSeq";
+my $pkg = "Genome::VariantReporting::Command::Wrappers::RnaSeq";
 
 use_ok($pkg);
 
@@ -43,7 +43,7 @@ is($wrapper->class, $pkg, 'wrapper command looks ok');
 
 # Turn off report running, as it's out of the scope/time for this test
 reinstall_sub({
-    into => "Genome::VariantReporting::Framework::Command::CreateReport",
+    into => "Genome::VariantReporting::Command::CreateReport",
     as => "execute",
     code => sub {return 1},
 });

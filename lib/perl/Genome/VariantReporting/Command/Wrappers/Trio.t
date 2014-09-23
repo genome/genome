@@ -13,9 +13,9 @@ use above "Genome";
 use Test::More;
 use Sub::Install qw(reinstall_sub);
 use File::Basename qw(basename);
-use Genome::VariantReporting::Framework::Command::Wrappers::TestHelpers qw(get_build succeed_build compare_directories);
+use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build succeed_build compare_directories);
 
-my $pkg = "Genome::VariantReporting::Framework::Command::Wrappers::Trio";
+my $pkg = "Genome::VariantReporting::Command::Wrappers::Trio";
 use_ok($pkg);
 my $test_dir = __FILE__.".d";
 

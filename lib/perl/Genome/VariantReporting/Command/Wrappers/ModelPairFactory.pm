@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Framework::Command::Wrappers::ModelPairFactory;
+package Genome::VariantReporting::Command::Wrappers::ModelPairFactory;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::VariantReporting::Framework::Command::Wrappers::ModelPairFactory {
+class Genome::VariantReporting::Command::Wrappers::ModelPairFactory {
     has => {
         models => {
             is => 'Genome::Model::SomaticValidation',
@@ -60,7 +60,7 @@ sub get_model_pairs {
             next;
         }
         if ($self->is_single_bam($model)) {
-            push @model_pairs, Genome::VariantReporting::Framework::Command::Wrappers::SingleModel->create(
+            push @model_pairs, Genome::VariantReporting::Command::Wrappers::SingleModel->create(
                 discovery => $model->last_succeeded_build,
                 base_output_dir => $self->germline_output_dir,
             );
@@ -100,13 +100,13 @@ sub get_model_pairs {
             next;
         }
 
-        push @model_pairs, Genome::VariantReporting::Framework::Command::Wrappers::ModelPair->create(
+        push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $discovery_build,
             validation => $validation_build,
             base_output_dir => $self->discovery_output_dir,
         );
 
-        push @model_pairs, Genome::VariantReporting::Framework::Command::Wrappers::ModelPair->create(
+        push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $validation_build,
             validation => $discovery_build,
             base_output_dir => $self->additional_output_dir,

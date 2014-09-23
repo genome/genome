@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Framework::Command::CreateReport;
+package Genome::VariantReporting::Command::CreateReport;
 
 use strict;
 use warnings FATAL => 'all';
@@ -6,7 +6,7 @@ use Genome::VariantReporting::Framework::Dag qw(generate_dag);
 use Memoize qw();
 use Genome;
 
-class Genome::VariantReporting::Framework::Command::CreateReport {
+class Genome::VariantReporting::Command::CreateReport {
     is => 'Command::V2',
     has_input => [
         input_vcf => {

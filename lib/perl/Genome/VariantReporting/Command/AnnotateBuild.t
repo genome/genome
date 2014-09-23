@@ -18,7 +18,7 @@ use Genome::VariantReporting::Framework::TestHelpers qw(get_test_somatic_variati
 use Genome::Utility::Test qw(compare_ok);
 use Sub::Install qw(reinstall_sub);
 
-my $pkg = 'Genome::VariantReporting::Framework::Command::AnnotateBuild';
+my $pkg = 'Genome::VariantReporting::Command::AnnotateBuild';
 use_ok($pkg);
 
 my $version = 6;

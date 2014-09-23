@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Framework::Command::Wrappers::Fasta;
+package Genome::VariantReporting::Command::Wrappers::Fasta;
 
 use strict;
 use warnings;
 use Genome;
 use File::Basename qw(dirname);
 
-class Genome::VariantReporting::Framework::Command::Wrappers::Fasta {
+class Genome::VariantReporting::Command::Wrappers::Fasta {
     is => 'Command::V2',
     has_input => [
         model => {
@@ -82,7 +82,7 @@ sub run_reports {
             resource_file => $self->resource_file,
             log_directory => $self->log_directory($variant_type),
         );
-        Genome::VariantReporting::Framework::Command::CreateReport->execute(%params);
+        Genome::VariantReporting::Command::CreateReport->execute(%params);
     }
 }
 

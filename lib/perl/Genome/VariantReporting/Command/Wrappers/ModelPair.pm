@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Framework::Command::Wrappers::ModelPair;
+package Genome::VariantReporting::Command::Wrappers::ModelPair;
 
 use strict;
 use warnings;
@@ -9,7 +9,7 @@ use File::Basename qw(dirname);
 use File::Spec;
 use Genome::File::Tsv;
 
-class Genome::VariantReporting::Framework::Command::Wrappers::ModelPair {
+class Genome::VariantReporting::Command::Wrappers::ModelPair {
     has => {
         discovery => { is => 'Genome::Model::Build', },
         validation => {
@@ -49,7 +49,7 @@ sub plan_file {
 }
 
 sub _plan_search_dir {
-    my $variant_reporting_base_dir = dirname(dirname(dirname(dirname(__FILE__))));
+    my $variant_reporting_base_dir = dirname(dirname(dirname(__FILE__)));
     return File::Spec->join($variant_reporting_base_dir, 'plan_files');
 }
 

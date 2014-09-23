@@ -21,7 +21,7 @@ use File::Spec;
 use Genome::Utility::Test qw(compare_ok);
 use Sub::Install qw(reinstall_sub);
 
-my $pkg = 'Genome::VariantReporting::Framework::Command::CreateReport';
+my $pkg = 'Genome::VariantReporting::Command::CreateReport';
 use_ok($pkg);
 
 my $code_test_dir = __FILE__ . '.d';

@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Framework::Command;
+package Genome::VariantReporting::Command;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::VariantReporting::Framework::Command {
+class Genome::VariantReporting::Command {
     is => 'Command::Tree',
     doc => 'Annotation related commands',
 };
