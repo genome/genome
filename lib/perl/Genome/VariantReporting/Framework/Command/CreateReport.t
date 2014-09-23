@@ -90,7 +90,7 @@ subtest 'no_vcf' => sub {
         resource_file => get_resource_file($input_vcf),
     );
 
-    ok(!$cmd->execute, 'Command fails with nonexistant input vcf');
+    ok(!$cmd->execute, 'Command fails with nonexistant input_vcf');
 };
 
 done_testing;
