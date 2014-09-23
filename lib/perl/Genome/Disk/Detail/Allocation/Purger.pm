@@ -90,7 +90,9 @@ sub _purge_unarchived {
     $allocation_object->_create_file_summaries();
 
     unless ($ENV{UR_DBI_NO_COMMIT}) {
-        my $destination_directory = $self->_destination_dir($allocation_object);
+        my $destination_directory = $allocation_object->_get_trash_folder();
+        Genome::Sys->create_directory($destination_directory);
+
         $self->status_message('Moving allocation path \''.
             $allocation_object->absolute_path .'\' to temporary path \''.
             $destination_directory .'\'');
@@ -134,15 +136,6 @@ sub _update_allocation_status {
     $allocation_object->status('purged');
     $allocation_object->kilobytes_requested(0);
     $allocation_object->kilobytes_used(0);
-}
-
-
-sub _destination_dir {
-    my $self = shift;
-    my $allocation_object = shift;
-
-    return Genome::Sys->create_directory(
-        $allocation_object->_get_trash_folder());
 }
 
 
