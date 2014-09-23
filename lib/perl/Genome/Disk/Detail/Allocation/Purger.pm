@@ -121,11 +121,19 @@ sub _finalize_purge {
 
     $self->_update_owner_test_name($allocation_object, $event);
 
+    $self->_update_allocation_status($allocation_object);
+
+    return 1;
+}
+
+
+sub _update_allocation_status {
+    my $self = shift;
+    my $allocation_object = shift;
+
     $allocation_object->status('purged');
     $allocation_object->kilobytes_requested(0);
     $allocation_object->kilobytes_used(0);
-
-    return 1;
 }
 
 
