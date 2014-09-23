@@ -111,6 +111,9 @@ sub parse_variant_file {
         );
         my $out_data;
         while (my $data = $reader->next) {
+            unless ($data->{type} =~ /SNP/) {
+                next;
+            }
             if ($data->{chromosome_name} =~ /Y|MT|GL/) {
                 next;
             }
