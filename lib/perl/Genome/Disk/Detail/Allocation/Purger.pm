@@ -59,7 +59,27 @@ sub purge {
 
     return 1 if $allocation_object->status eq 'purged';
 
-    return $self->_purge_unarchived($allocation_object);
+    if ($allocation_object->is_archived) {
+        return $self->_purge_archived($allocation_object);
+
+    } else {
+        return $self->_purge_unarchived($allocation_object);
+    }
+}
+
+
+sub _purge_archived {
+    my $self = shift;
+    my $allocation_object = shift;
+
+    unless ($ENV{UR_DBI_NO_COMMIT}) {
+        $allocation_object->_cleanup_archive_directory(
+            $allocation_object->absolute_path);
+    }
+
+    $self->_add_timeline_event($allocation_object);
+
+    return 1;
 }
 
 
