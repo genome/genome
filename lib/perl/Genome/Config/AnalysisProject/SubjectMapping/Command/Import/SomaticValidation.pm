@@ -16,7 +16,7 @@ class Genome::Config::AnalysisProject::SubjectMapping::Command::Import::SomaticV
         file_path => {
             is => 'Text',
             shell_args_position => 2,
-            doc => 'optional path to a newline delimited, tab separated list of sample ids'
+            doc => 'path to a newline-delimited, tab-separated list of samples, variant lists, and tags (See description section of --help for details.)'
         }
     ],
 };
