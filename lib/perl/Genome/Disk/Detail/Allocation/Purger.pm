@@ -60,11 +60,9 @@ sub purge {
     return 1 if $allocation_object->status eq 'purged';
 
     $allocation_object->_create_file_summaries();
-    my $trash_folder = $allocation_object->_get_trash_folder();
 
     unless($ENV{UR_DBI_NO_COMMIT}) {
-        my $destination_directory = Genome::Sys->create_directory(
-            File::Spec->join($trash_folder, $allocation_object->id));
+        my $destination_directory = $self->_destination_dir($allocation_object);
         $self->status_message('Moving allocation path \''. $allocation_object->absolute_path .'\' to temporary path \''. $destination_directory .'\'');
         unless (dirmove($allocation_object->absolute_path, $destination_directory) ) {
             $self->error_message('Failed to move allocation path \''. $allocation_object->absolute_path .'\' to destination path \''. $destination_directory .'\': '. $!);
@@ -94,6 +92,16 @@ sub _add_timeline_event {
     $allocation_object->kilobytes_used(0);
 
     return 1;
+}
+
+
+sub _destination_dir {
+    my $self = shift;
+    my $allocation_object = shift;
+
+    return Genome::Sys->create_directory(File::Spec->join(
+            $allocation_object->_get_trash_folder(),
+            $allocation_object->id));
 }
 
 
