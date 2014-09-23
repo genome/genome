@@ -42,7 +42,6 @@ class Genome::VariantReporting::Command::CreateReport {
 sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__(@_);
-    return @errors if @errors;
 
     unless (-s $self->resource_file) {
         push @errors, UR::Object::Tag->create(
