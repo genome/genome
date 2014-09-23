@@ -6,7 +6,6 @@ use warnings;
 use above 'Genome';
 
 require File::Compare;
-use Storable 'retrieve';
 use Test::More;
 
 use_ok('Genome::Utility::IO::SeparatedValueReader') or die;
