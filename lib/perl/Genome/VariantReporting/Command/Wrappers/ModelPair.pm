@@ -7,6 +7,7 @@ use Genome;
 
 use File::Basename qw(dirname);
 use File::Spec;
+use Genome::File::Tsv;
 
 class Genome::VariantReporting::Command::Wrappers::ModelPair {
     has => {
@@ -33,6 +34,10 @@ class Genome::VariantReporting::Command::Wrappers::ModelPair {
             calculate_from => [qw/ output_dir /],
             calculate => q( File::Spec->join($output_dir, "resource.yaml") ),
         },
+        sample_legend => {
+            calculate_from => [qw/ output_dir /],
+            calculate => q( File::Spec->join($output_dir, "sample_legend.tsv") ),
+        }
     },
 };
 
@@ -66,6 +71,7 @@ sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
     Genome::Sys->create_directory($self->output_dir);
+    $self->generate_sample_legend_file;
     $self->generate_resource_file;
     my $provider = Genome::VariantReporting::Framework::Component::ResourceProvider->create_from_file($self->resource_file);
     for my $variant_type (qw(snvs indels)) {
@@ -115,6 +121,21 @@ sub get_translations {
         $translations{d30_tumor} = $self->validation->tumor_sample->name;
     }
     return \%translations;
+}
+
+sub generate_sample_legend_file {
+    my $self = shift;
+
+    my $translations = $self->get_translations;
+    my $legend_file = Genome::File::Tsv->create($self->sample_legend);
+    my @headers = ('sample label', 'sample name');
+    my $writer = $legend_file->create_writer(headers => \@headers);
+    while ( my ($sample_label, $sample_name) = each %$translations ) {
+        $writer->write_one({
+            'sample label' => $sample_label,
+            'sample name' => $sample_name,
+         });
+    }
 }
 
 sub generate_resource_file {
