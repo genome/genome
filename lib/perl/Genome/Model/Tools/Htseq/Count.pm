@@ -6,23 +6,6 @@ use Genome;
 class Genome::Model::Tools::Htseq::Count {
     is => 'Genome::Command::WithSavedResults',
     parallelize_by => [ "alignment_results" ],
-    has_optional_output => [
-        # outputs should NOT need to be flagged as optional, 
-        # but until a bug is fixed they must be
-        gene_hits_file_path => {
-            is => 'FilesystemPath',
-            doc => 'the path to the file of hit counts by gene',
-        },
-        transcript_hits_file_path => {
-            is => 'FilesystemPath',
-            doc => 'the path to the file of hit counts by transcript',
-        },
-        output_dir => {
-            is => 'FilesystemPath',
-            is_input => 1,
-            doc => 'the results directory',
-        },
-    ],
     has_param => [
         app_version => {
             is => 'SoftwareVersion',
@@ -86,6 +69,23 @@ class Genome::Model::Tools::Htseq::Count {
             example_values => [ { "instrument_data.sample.patient.common_name like" => "HCC%" } ],
             is_many => 1,
             doc => 'alignment results, typically from an RNA aligner',
+        },
+    ],
+    has_optional_output => [
+        # outputs should NOT need to be flagged as optional,
+        # but until a bug is fixed they must be
+        gene_hits_file_path => {
+            is => 'FilesystemPath',
+            doc => 'the path to the file of hit counts by gene',
+        },
+        transcript_hits_file_path => {
+            is => 'FilesystemPath',
+            doc => 'the path to the file of hit counts by transcript',
+        },
+        output_dir => {
+            is => 'FilesystemPath',
+            is_input => 1,
+            doc => 'the results directory',
         },
     ],
     doc => 'generate htseq results for an (annotation-based) alignment result',
