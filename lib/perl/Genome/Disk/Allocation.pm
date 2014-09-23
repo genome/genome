@@ -641,7 +641,7 @@ sub _reload_allocation {
         $allocation = UR::Context->current->reload($class, id => $id);
         if ($allocation) {
             my $owner = $allocation->owner;
-            if($owner and exists $owner->{db_committed}) {
+            if($owner and UR::Context->current->object_exists_in_underlying_context($owner)) {
                 UR::Context->current->reload($owner);
             }
         }
