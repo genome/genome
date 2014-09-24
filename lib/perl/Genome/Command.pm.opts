@@ -37847,6 +37847,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'instrument-data=s@',
         undef,
+        'downsample-ratios=s@',
+        undef,
         'instrument-data-and-new-source-files=s@',
         'files',
         'help!',
