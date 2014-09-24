@@ -445,7 +445,7 @@ sub _create_variant_reader {
         headers => \@columns,
         separator => "\t",
         is_regex => 1,
-        ignore_extra_columns => 1,
+        allow_extra_columns => 1,
     );
     unless ($variant_svr) {
         $self->error_message("error opening file " . $self->variant_file);
