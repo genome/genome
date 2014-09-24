@@ -340,25 +340,25 @@ sub map_workflow_inputs {
     if ($tumor_rnaseq_build){
       #Check for ChimeraScan fusion results
       if(-e $tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
-          #copy over fusion files to this dir even if SV calls do not exist.
-          my $tumor_filtered_fusion_dir = $patient_dir . '/rnaseq/tumor/fusions';
-          push @dirs, $tumor_filtered_fusion_dir;
-          if ($wgs_build){
-            #Check for SV calls file
-            if(-e $wgs_build->data_directory . '/effects/svs.hq.annotated'){
-              my $ncbi_human_ensembl_build_id = $tumor_rnaseq_build->annotation_build->id;
-              my $tumor_filtered_fusion_file =  $tumor_filtered_fusion_dir . '/filtered_chimeras.bedpe';
-              my $wgs_sv_file = $build->wgs_build->data_directory . '/effects/svs.hq.annotated';
-              my $tumor_filtered_intersected_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.intersected.bedpe';
-              push @inputs, ncbi_human_ensembl_build_id => $ncbi_human_ensembl_build_id;
-              push @inputs, wgs_sv_file => $wgs_sv_file;
-              push @inputs, tumor_filtered_fusion_file => $tumor_filtered_fusion_file;
-              push @inputs, tumor_filtered_intersected_fusion_file => $tumor_filtered_intersected_fusion_file;
-            }
+        #copy over fusion files to this dir even if SV calls do not exist.
+        my $tumor_filtered_fusion_dir = $patient_dir . '/rnaseq/tumor/fusions';
+        push @dirs, $tumor_filtered_fusion_dir;
+        if ($wgs_build){
+          #Check for SV calls file
+          if(-e $wgs_build->data_directory . '/effects/svs.hq.annotated'){
+            my $ncbi_human_ensembl_build_id = $tumor_rnaseq_build->annotation_build->id;
+            my $tumor_filtered_fusion_file =  $tumor_filtered_fusion_dir . '/filtered_chimeras.bedpe';
+            my $wgs_sv_file = $build->wgs_build->data_directory . '/effects/svs.hq.annotated';
+            my $tumor_filtered_intersected_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.intersected.bedpe';
+            push @inputs, ncbi_human_ensembl_build_id => $ncbi_human_ensembl_build_id;
+            push @inputs, wgs_sv_file => $wgs_sv_file;
+            push @inputs, tumor_filtered_fusion_file => $tumor_filtered_fusion_file;
+            push @inputs, tumor_filtered_intersected_fusion_file => $tumor_filtered_intersected_fusion_file;
           }
         }
-     }
+      }
     }
+  }
 
     #GenerateClonalityPlots
     if ($wgs_build){
