@@ -25,22 +25,14 @@ class Genome::Model::ClinSeq::Command::Converge::Base {
             doc => 'Directory where output files will be written',
         },
         min_quality_score => {
-            is => 'Integer',
-            is_optional => 1,
-            doc => 'minimum mapping quality of reads to be considered',
-            default => '1',
+              is => 'Integer',
+              doc => 'minimum mapping quality of reads to be considered',
+              default => '1',
         },
         min_base_quality => {
-            is => 'Integer',
-            is_optional => 1,
-            doc => 'minimum base quality of bases in reads to be considered',
-            default => '0',
-        },
-        stringent => {
-            is => 'Boolean',
-            is_optional => 1,
-            doc => 'Flag to set stringent quality filters, mapping quality filter = 30, baseq = 20',
-            default => 0,
+              is => 'Integer',
+              doc => 'minimum base quality of bases in reads to be considered',
+              default => '0',
         },
     ],
     doc => 'converge various data types across clinseq inputs'
@@ -665,6 +657,12 @@ sub get_ref_align_builds{
     my $tumor_bam_path = $tumor_build->whole_rmdup_bam_file;
     my @normal_timepoints = $normal_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
     my @tumor_timepoints = $tumor_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+    my $tumor_tissue_desc = $tumor_build->subject->tissue_desc;
+    $tumor_tissue_desc =~ s/\s+/\-/g;
+    $tumor_tissue_desc =~ s/\,//g;
+    my $normal_tissue_desc = $normal_build->subject->tissue_desc;
+    $normal_tissue_desc =~ s/\s+/\-/g;
+    $normal_tissue_desc =~ s/\,//g;
 
     my $normal_time_point = "day0";
     if (@normal_timepoints){
@@ -687,6 +685,7 @@ sub get_ref_align_builds{
     $ref_builds{$normal_refalign_name}{sample_common_name} = $normal_subject_common_name;
     $ref_builds{$normal_refalign_name}{bam_path} = $normal_bam_path;
     $ref_builds{$normal_refalign_name}{time_point} = $normal_subject_common_name . "_" . $normal_time_point;
+    $ref_builds{$normal_refalign_name}{timepoint_tissue} = $normal_subject_common_name . "_" . $normal_tissue_desc . "_" . $normal_time_point;
     $ref_builds{$normal_refalign_name}{day} = $normal_time_point;
 
     $ref_builds{$tumor_refalign_name}{type} = $build_type;
@@ -694,11 +693,11 @@ sub get_ref_align_builds{
     $ref_builds{$tumor_refalign_name}{sample_common_name} = $tumor_subject_common_name;
     $ref_builds{$tumor_refalign_name}{bam_path} = $tumor_bam_path;
     $ref_builds{$tumor_refalign_name}{time_point} = $tumor_subject_common_name . "_" . $tumor_time_point;
+    $ref_builds{$tumor_refalign_name}{timepoint_tissue} = $tumor_subject_common_name . "_" . $tumor_tissue_desc . "_" . $tumor_time_point;
     $ref_builds{$tumor_refalign_name}{day} = $tumor_time_point;
   }
 
   $self->get_rnaseq_ref_builds(\%ref_builds, $rnaseq_builds);
-
   #Set an order on refalign builds (use time points if available, otherwise name)
   my $o = 0;
   if ($sort_on_time_point){
@@ -737,61 +736,47 @@ sub get_ref_align_builds{
     $ref_builds{$name}{timepoint_position} = $position;
   }
 
+  my @time_points;
+  my @timepoints_tissues;
+  my @samples;
+  my @names;
+  foreach my $name (sort {$ref_builds{$a}->{order} <=> $ref_builds{$b}->{order}} keys %ref_builds){
+    push(@time_points, $ref_builds{$name}{time_point});
+    push(@timepoints_tissues, $ref_builds{$name}{timepoint_tissue});
+    push(@samples, $ref_builds{$name}{sample_name});
+    push(@names, $name);
+  }
+
+  #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
+  my @prefixes;
+  my @unique_time_points = uniq @time_points;
+  my @unique_timepoints_tissues = uniq @timepoints_tissues;
+  my @unique_samples = uniq @samples;
+  my @unique_names = uniq @names;
+  if (scalar(@unique_time_points) == scalar(@time_points)){
+    @prefixes = @time_points;
+  }elsif(scalar(@unique_timepoints_tissues) == scalar(@timepoints_tissues)){
+    @prefixes = @timepoints_tissues;    
+  }elsif(scalar(@unique_samples) == scalar(@samples)){
+    @prefixes = @samples;
+  }elsif(scalar(@unique_names) == scalar(@names)){
+    @prefixes = @names;
+  }else{
+    die $self->error_message("could not resolve unique prefixes for add-readcounts");
+  }
+  my $header_prefixes = join(",", @prefixes);
+
+  #Record the header prefix chosen on the ref_builds object
+  foreach my $name (sort {$ref_builds{$a}->{order} <=> $ref_builds{$b}->{order}} keys  %ref_builds){
+    my $prefix = shift @prefixes;
+    $ref_builds{$name}{prefix} = $prefix;
+  }
   return(\%ref_builds);
 }
 
-sub add_read_counts{
+sub fill_missing_output {
   my $self = shift;
-  my %args = @_;
-  my $align_builds = $args{'-align_builds'};
-  my $grand_anno_file = $args{'-anno_file'};
-  my @prefixes = @{$args{'-prefixes'}};
-  my $header_prefixes = join(",", @prefixes);
-  my $indel_size_limit = 25; #max size of indels to report counts for.
-
-  my @bam_files;
-  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
-    push(@bam_files, $align_builds->{$name}->{bam_path});
-    my $prefix = shift @prefixes;
-    $align_builds->{$name}->{prefix} = $prefix;
-  }
-  my $bam_list = join(",", @bam_files);
-
-  #Get the reference fasta
-  my $reference_build = $self->resolve_clinseq_reference_build;
-  my $reference_fasta = $reference_build->full_consensus_path('fa');
-
-  #gmt analysis coverage add-readcounts --bam-files=? --genome-build=? --output-file=? --variant-file=? [--header-prefixes=?] 
-  my $output_file = $self->outdir . "variants.all.anno.readcounts";
-  if (-e $output_file){
-    $self->warning_message("using pre-generated bam read count file: $output_file");
-  }
-  my ($b_quality, $m_quality);
-  my $stringent = $self->stringent;
-  if($stringent == 1) {
-      $b_quality = 20;
-      $m_quality = 30;
-  } else {
-      $m_quality = $self->min_quality_score;
-      $b_quality = $self->min_base_quality;
-  }
-  $self->status_message("genome_build: $reference_fasta");
-  $self->status_message("indel_size_limit: $indel_size_limit");
-  $self->status_message("min_quality_score: $m_quality");
-  $self->status_message("min_base_quality: $b_quality");
-  my $add_count_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
-    bam_files=>$bam_list,
-    genome_build=>$reference_fasta,
-    output_file=>$output_file,
-    variant_file=>$grand_anno_file,
-    header_prefixes=>$header_prefixes,
-    indel_size_limit => $indel_size_limit,
-    min_quality_score => $m_quality,
-    min_base_quality => $b_quality,
-  );
-  my $r = $add_count_cmd->execute();
-  die $self->error_message("add-readcounts cmd unsuccessful") unless ($r);
-
+  my $output_file = shift;
   #If there are missing cells relative to the header, fill in with 'NA's
   my $tmp_file = $output_file . ".tmp";
   open (TMP_IN, "$output_file") || die $self->error_message("Could not open file: $output_file");
@@ -823,7 +808,53 @@ sub add_read_counts{
   close(TMP_OUT);
   my $mv_cmd = "mv $tmp_file $output_file";
   Genome::Sys->shellcmd(cmd => $mv_cmd);
+}
 
+sub add_read_counts{
+  my $self = shift;
+  my %args = @_;
+  my $align_builds = $args{'-align_builds'};
+  my $grand_anno_file = $args{'-anno_file'};
+  my $indel_size_limit = 25; #max size of indels to report counts for.
+  my ($b_quality, $m_quality);
+  $m_quality = $self->min_quality_score;
+  $b_quality = $self->min_base_quality;
+  my (@prefixes, @bam_files);
+  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys %{$align_builds}){
+    push(@prefixes, $align_builds->{$name}->{prefix});
+    push(@bam_files, $align_builds->{$name}->{bam_path});
+  }
+  my $header_prefixes = join(",", @prefixes);
+  my $bam_list = join(",", @bam_files);
+
+  #Get the reference fasta
+  my $reference_build = $self->resolve_clinseq_reference_build;
+  my $reference_fasta = $reference_build->full_consensus_path('fa');
+
+  #gmt analysis coverage add-readcounts --bam-files=? --genome-build=? --output-file=? --variant-file=? [--header-prefixes=?] 
+  my $output_file = $self->outdir . "variants.all.anno.readcounts";
+  if (-e $output_file){
+    $self->warning_message("using pre-generated bam read count file: $output_file");
+  }
+
+  $self->status_message("genome_build: $reference_fasta");
+  $self->status_message("indel_size_limit: $indel_size_limit");
+  $self->status_message("min_quality_score: $m_quality");
+  $self->status_message("min_base_quality: $b_quality");
+
+  my $add_count_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
+    bam_files=>$bam_list,
+    genome_build=>$reference_fasta,
+    output_file=>$output_file,
+    variant_file=>$grand_anno_file,
+    header_prefixes=>$header_prefixes,
+    indel_size_limit => $indel_size_limit,
+    min_quality_score => $m_quality,
+    min_base_quality => $b_quality,
+  );
+  my $r = $add_count_cmd->execute();
+  die $self->error_message("add-readcounts cmd unsuccessful") unless ($r);
+  $self->fill_missing_output($output_file);
   return ($output_file);
 }
 
