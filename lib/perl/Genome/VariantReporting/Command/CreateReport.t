@@ -20,6 +20,7 @@ use File::Basename qw(basename);
 use File::Spec;
 use Genome::Utility::Test qw(compare_ok);
 use Sub::Install qw(reinstall_sub);
+use Test::Exception;
 
 my $pkg = 'Genome::VariantReporting::Command::CreateReport';
 use_ok($pkg);
@@ -68,7 +69,29 @@ subtest 'no_resource_file' => sub {
         resource_file => "does_not_exist.yaml",
     );
 
-    ok(!$cmd->execute, 'Command fails with nonexistant resource_file');
+    dies_ok { $cmd->execute } 'Command fails with nonexistant resource_file';
+};
+
+subtest 'no_plan_file' => sub {
+    my $test_dir = Genome::Sys->create_temp_directory;
+    Genome::Sys->rsync_directory(
+        source_directory => $code_test_dir,
+        target_directory => $test_dir
+    );
+
+    my $output_dir = Genome::Sys->create_temp_directory;
+
+    my $input_vcf = File::Spec->join($test_dir, "input.vcf");
+    my $cmd = $pkg->create(
+        input_vcf => $input_vcf,
+        variant_type => 'snvs',
+        output_directory => $output_dir,
+        log_directory => Genome::Sys->create_temp_directory,
+        plan_file => 'does_not_exist.plan',
+        resource_file => get_resource_file($input_vcf),
+    );
+
+    dies_ok { $cmd->execute } 'Command fails with nonexistant plan_file';
 };
 
 subtest 'no_vcf' => sub {

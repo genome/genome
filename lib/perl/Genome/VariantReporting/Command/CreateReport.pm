@@ -43,15 +43,6 @@ sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__(@_);
 
-    unless (-s $self->resource_file) {
-        push @errors, UR::Object::Tag->create(
-            type => 'invalid',
-            properties => [qw/ resource_file /],
-            desc => sprintf('Resource file specified (%s) does not exist! You must supply a resource (yaml) file with the following entries: %s',
-                $self->resource_file, join(', ', $self->plan->resources_required, 'translations')),
-        );
-    }
-
     unless (-s $self->input_vcf) {
         push @errors, UR::Object::Tag->create(
             type => 'invalid',
