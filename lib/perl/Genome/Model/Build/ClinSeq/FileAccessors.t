@@ -8,14 +8,14 @@ use Test::More;
 
 use_ok('Genome::Model::Build::ClinSeq::FileAccessors');
 
-my $b = Genome::Model::Build->get("b7e68f8041b04efbaacfc9c3f6d92855");
+my $b = Genome::Model::Build->get("50fb5001e35943ff9f87c2d83311ee92");
 ok($b, 'got a succesful build for apipe-test-clinseq-wer');
 
 my $case_dir = $b->data_directory . "/" . $b->common_name;
 is($b->case_dir, $case_dir, 'found case_dir');
 
 is($b->snv_dir, $case_dir . "/snv", "found snv_dir");
-is($b->snv_indel_report_dir, $case_dir . "/snv_indel_report",
+is($b->snv_indel_report_dir(20, 30), $case_dir . "/snv_indel_report/b20_q30",
   "found snv_indel_report dir");
 is($b->rnaseq_dir, $case_dir . "/rnaseq", "found rnaseq_dir");
 is($b->sv_dir, $case_dir . "/sv", "found sv_dir");
@@ -56,10 +56,10 @@ is($b->wgs_cnv_dir, $case_dir . "/cnv/wgs_cnv", "found wgs_cnv_dir");
 is($b->wgs_cnv_summary_dir, $case_dir . "/cnv/wgs_cnv/summary", "found wgs_cnv_summary_dir");
 is($b->wgs_cnv_cnview_dir, $case_dir . "/cnv/wgs_cnv/cnview/CNView_All", "found wgs_cnv_cnview_dir");
 is($b->wgs_exome_snv_dir, $case_dir . "/snv/wgs_exome", "found wgs_exome_snv_dir");
-is($b->snv_indel_report_clean_unfiltered_file, $case_dir . "/snv_indel_report/nonstringent/" .
+is($b->snv_indel_report_clean_unfiltered_file(20, 30), $case_dir . "/snv_indel_report/b20_q30/" .
    $b->common_name . "_final_unfiltered_clean.tsv",
    "found snv_indel_report_clean_unfiltered_file");
-is($b->snv_indel_report_clean_filtered_file, $case_dir . "/snv_indel_report/nonstringent/" .
+is($b->snv_indel_report_clean_filtered_file(20, 30), $case_dir . "/snv_indel_report/b20_q30/" .
    $b->common_name . "_final_filtered_clean.tsv",
    "found snv_indel_report_clean_filtered_file");
 is($b->wgs_cnvhmm_file, $case_dir . "/cnv/wgs_cnv/cnview/CNView_All/cnaseq.cnvhmm.tsv", "found wgs_cnvhmm_file");
