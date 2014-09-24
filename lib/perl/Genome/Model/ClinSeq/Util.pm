@@ -1419,31 +1419,11 @@ sub get_header_prefixes {
   my $self = shift;
   my %args = @_;
   my $align_builds = $args{'-align_builds'};
-
-  my @time_points;
-  my @samples;
-  my @names;
-  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
-    push(@time_points, $align_builds->{$name}->{time_point});
-    push(@samples, $align_builds->{$name}->{sample_name});
-    push(@names, $name);
-  }
-
   #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
   my @prefixes;
-  my @unique_time_points = uniq @time_points;
-  my @unique_samples = uniq @samples;
-  my @unique_names = uniq @names;
-  if (scalar(@unique_time_points) == scalar(@time_points)){
-    @prefixes = @time_points;
-  }elsif(scalar(@unique_samples) == scalar(@samples)){
-    @prefixes = @samples;
-  }elsif(scalar(@unique_names) == scalar(@names)){
-    @prefixes = @names;
-  }else{
-    die $self->error_message("could not resolve unique prefixes for add-readcounts");
+  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys %{$align_builds}){
+    push(@prefixes, $align_builds->{$name}->{prefix});
   }
-
   return @prefixes;
 }
 
