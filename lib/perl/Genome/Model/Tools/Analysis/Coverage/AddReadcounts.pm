@@ -94,6 +94,11 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
             doc => 'whether or not to report counts on a per-library basis',
             default => 0,
         },
+        bam_readcount_version => {
+            is => 'String',
+            is_optional => 1,
+            doc => 'version of bam-readcount to use',
+        },
 
 
         ]
@@ -197,9 +202,10 @@ sub execute {
             max_vaf => $max_vaf,
             indel_size_limit => $indel_size_limit,
             min_mapping_quality => $min_quality_score,
-	    min_base_quality => $min_base_quality,
+            min_base_quality => $min_base_quality,
             per_library => $self->per_library,
-            );
+            bam_readcount_version => $self->bam_readcount_version,
+        );
         unless ($cmd->execute) {
             die "Bam-readcount failed";
         }
