@@ -48,6 +48,8 @@ class Genome::Model::Build {
         subclass_name => {
             is => 'Text',
             len => 255,
+            is_mutable => 0,
+            column_name => 'SUBCLASS_NAME',
             calculate_from => 'model_id',
             calculate => sub {
                 my($model_id) = @_;
