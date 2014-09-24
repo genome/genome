@@ -640,7 +640,10 @@ sub _reload_allocation {
     } elsif ($mode eq 'load') {
         $allocation = UR::Context->current->reload($class, id => $id);
         if ($allocation) {
-            UR::Context->current->reload($allocation->owner_class_name, id => $allocation->owner_id);
+            my $owner = $allocation->owner;
+            if($owner and UR::Context->current->object_exists_in_underlying_context($owner)) {
+                UR::Context->current->reload($owner);
+            }
         }
     } else {
         die 'Unrecognized _retrieve_mode: ' . $class->_retrieve_mode;
