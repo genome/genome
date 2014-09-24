@@ -19,7 +19,6 @@ use Test::Deep;
 use File::Basename qw(basename);
 use File::Spec;
 use Genome::Utility::Test qw(compare_ok);
-use Sub::Install qw(reinstall_sub);
 use Test::Exception;
 
 my $pkg = 'Genome::VariantReporting::Command::CreateReport';
