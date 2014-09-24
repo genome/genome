@@ -24,7 +24,7 @@ class Genome::Model::Tools::Picard::StandardSamToFastq {
         },
         re_reverse => {
             is          => 'Boolean',
-            default     => 0,
+            default     => 1,
             doc         => 'Whether or not to re-reverse reads and qualities reported as negative strand.',
         },
         output_per_rg => {
@@ -88,7 +88,7 @@ sub execute {
     my @args;
 
     push @args,
-        map { $make_arg->($self, $_, 0) } ('input', 'fastq', 'second_end_fastq', 'output_dir');
+        map { $make_arg->($self, $_, 0) } ('input', 'fastq', 'second_end_fastq', 'output_dir','max_records_in_ram');
     push @args,
         map { $make_arg->($self, $_, 1) } ('re_reverse', 'output_per_rg', 'include_non_pf_reads', 'include_non_primary_alignments');
 
