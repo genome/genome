@@ -258,6 +258,21 @@ sub wgs_exome_snv_summary_dir {
   }
 }
 
+sub snv_indel_report_clean_unfiltered_file {
+  my $self = shift;
+  my $stringent = shift;
+  my $snv_indel_report_dir = $self->snv_indel_report_dir($stringent);
+  my $snv_indel_report_clean_unfiltered_file = $snv_indel_report_dir .
+    "/" . $self->common_name . "_final_unfiltered_clean.tsv";
+  if(-e $snv_indel_report_clean_unfiltered_file) {
+    return $snv_indel_report_clean_unfiltered_file;
+  } else {
+    $self->warning_message("unable to find " .
+      $snv_indel_report_clean_unfiltered_file);
+    return 0;
+  }
+}
+
 sub snv_indel_report_clean_filtered_file {
   my $self = shift;
   my $stringent = shift;
