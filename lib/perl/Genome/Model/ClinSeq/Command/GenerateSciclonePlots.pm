@@ -54,6 +54,11 @@ class Genome::Model::ClinSeq::Command::GenerateSciclonePlots {
             doc => 'Link in workflow',
             is_optional => 1
         },
+        do_clustering => {
+            is => 'Boolean',
+            doc => 'Flag to turn clustering on/off. Minimum of 10 sites required to turn on clustering.',
+            default => '1',
+        },
         min_mq => {
             is => 'Integer',
             doc => 'minimum mapping quality of reads to be considered',
@@ -257,6 +262,21 @@ sub run_sciclone {
     my $min_coverage;
     $min_coverage = $self->min_coverage;
     my $sample_name = $clinseq_build->subject->common_name;
+    if(-z $variant_f) {
+        $self->warning_message("variant file $variant_f empty. skipping sciclone step.");
+        return;
+    }
+    if(-z $cnv_f) {
+        $self->warning_message("cnv file $variant_f empty. skipping sciclone step.");
+        return;
+    }
+    my $number_of_variants = Genome::Sys->line_count($variant_f);
+    my $do_clustering = $self->do_clustering;
+    if($number_of_variants < 10) {
+        $do_clustering = 0;
+        $self->status_message("Number of variants is $number_of_variants. Less than 10, ".
+            "turning off clustering.");
+    }
     my $sciclone = Genome::Model::Tools::Sciclone->create(
         clusters_file => $clusters_f,
         r_script_file => $rscript_f,
@@ -269,8 +289,10 @@ sub run_sciclone {
         cn_calls_are_log2 => 1,
         label_highlighted_points => 1,
         plot_only_cn2 => 1,
+        do_clustering => $do_clustering,
     );
     $sciclone->execute();
+    return;
 }
 
 #SciClone needs two files
