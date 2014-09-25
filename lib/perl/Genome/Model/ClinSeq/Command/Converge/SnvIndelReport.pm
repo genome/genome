@@ -475,6 +475,7 @@ sub gather_variants{
   foreach my $file (sort keys %bed_files){
     my $tier = $bed_files{$file}{tier};
     my $rsid_file = $bed_files{$file}{rsid_file};
+    my $data_type = $bed_files{$file}{data_type};
     open (VAR, $rsid_file) || die $self->error_message("could not open file: $rsid_file");
     while(<VAR>){
       chomp($_);
@@ -492,7 +493,14 @@ sub gather_variants{
       $variants{$v}{tier} = $tier;
       $variants{$v}{ensembl_gene_id} = $ensembl_gene_id;
       $variants{$v}{trv_type} = $trv_type;
-      $variants{$v}{filtered} = 0;
+      $variants{$v}{filtered} = "";
+      if(defined $variants{$v}{data_type}) {
+        unless ($variants{$v}{data_type} =~ /$data_type/) {
+          $variants{$v}{data_type} .= $data_type . ","; 
+        }
+      } else {
+        $variants{$v}{data_type} = $data_type . ",";
+      }
     }
     close(VAR);
   }
@@ -961,7 +969,7 @@ sub apply_filter_list{
       my ($chr, $start, $stop, $ref, $var) = ($1, $2, $3, $4, $5);
       my $v = $chr . "_$start" . "_$stop" . "_$ref" . "_$var";
       die $self->error_message("parsed a variant that is not defined in the variant hash") unless $variants->{$v};
-      $variants->{$v}->{filtered} = 1;
+      $variants->{$v}->{filtered} = "Filter_List";
       $filtered_variants++;
     }
   }
@@ -993,33 +1001,38 @@ sub apply_variant_filters{
   
     #Normal VAF filter
     if ($max_normal_vaf_observed =~ /\d+/){
-      $variants->{$v}->{filtered} = 1 if ($max_normal_vaf_observed > $max_normal_vaf);
+      $variants->{$v}->{filtered} .= "Max_Normal_VAF," if ($max_normal_vaf_observed > $max_normal_vaf);
     }elsif($max_normal_vaf_observed eq "NA"){
-      $variants->{$v}->{filtered} = 1;
+      $variants->{$v}->{filtered} .= "Max_Normal_VAF,";
     }
 
     #Tumor VAF filter
     if ($max_tumor_vaf_observed =~ /\d+/){
-      $variants->{$v}->{filtered} = 1 if ($max_tumor_vaf_observed < $min_tumor_vaf);
+      $variants->{$v}->{filtered} .= "Min_Tumor_VAF," if ($max_tumor_vaf_observed < $min_tumor_vaf);
     }elsif($max_tumor_vaf_observed eq "NA"){
-      $variants->{$v}->{filtered} = 1;
+      $variants->{$v}->{filtered} .= "Min_Tumor_VAF,";
     }
 
     #Coverage filter
     if ($min_coverage_observed =~ /\d+/){
-      $variants->{$v}->{filtered} = 1 if ($min_coverage_observed < $min_coverage);
+      $variants->{$v}->{filtered} .= "Min_Coverage," if ($min_coverage_observed < $min_coverage);
     }elsif($min_coverage_observed eq "NA"){
-      $variants->{$v}->{filtered} = 1;
+      $variants->{$v}->{filtered} .= "Min_Coverage,";
     }
     
     #GMAF filter
     if ($gmaf =~ /\d+/){
-      $variants->{$v}->{filtered} = 1 if (($gmaf*100) > $max_gmaf);
+      $variants->{$v}->{filtered} .= "Max_GMAF," if (($gmaf*100) > $max_gmaf);
     }
 
     #Min library support filter
     if (defined($tumor_var_supporting_libs) && $min_tumor_var_supporting_libs){
-      $variants->{$v}->{filtered} = 1 if ($tumor_var_supporting_libs < $min_tumor_var_supporting_libs);
+      $variants->{$v}->{filtered} .= "Min_Library_Support," if ($tumor_var_supporting_libs < $min_tumor_var_supporting_libs);
+    }
+
+    #If not filtered by any category, don't filter. Keep this at the end.
+    if($variants->{$v}->{filtered} eq "") {
+      $variants->{$v}->{filtered} = 0;
     }
   }
 
@@ -1104,7 +1117,7 @@ sub print_final_files{
       }
 
       #Print headers for each out file
-      my $header_extension = "min_coverage_observed\tmax_normal_vaf_observed\tmax_tumor_vaf_observed\tvariant_source_callers\tvariant_source_caller_count\tfiltered";
+      my $header_extension = "min_coverage_observed\tmax_normal_vaf_observed\tmax_tumor_vaf_observed\tvariant_source_callers\tvariant_source_caller_count\tdata_type\tfiltered";
       my $full_header = "$_"."\t$header_extension";
       $full_header .= "\t$per_lib_header" if $per_lib_header;
       print OUT1 "$full_header\n";
@@ -1126,8 +1139,10 @@ sub print_final_files{
 
     my @per_lib_counts = @{$variants->{$v}->{per_lib_counts}} if defined($variants->{$v}->{per_lib_counts});
     my $per_lib_count_line = join("\t", @per_lib_counts) if defined($variants->{$v}->{per_lib_counts});
+    $variants->{$v}->{data_type} =~ s/,$//;
+    $variants->{$v}->{filtered} =~ s/,$//;
 
-    my $line_extension = "$variants->{$v}->{min_coverage_observed}\t$variants->{$v}->{max_normal_vaf_observed}\t$variants->{$v}->{max_tumor_vaf_observed}\t$variants->{$v}->{variant_source_callers}\t$variants->{$v}->{variant_source_caller_count}\t$variants->{$v}->{filtered}";  
+    my $line_extension = "$variants->{$v}->{min_coverage_observed}\t$variants->{$v}->{max_normal_vaf_observed}\t$variants->{$v}->{max_tumor_vaf_observed}\t$variants->{$v}->{variant_source_callers}\t$variants->{$v}->{variant_source_caller_count}\t$variants->{$v}->{data_type}\t$variants->{$v}->{filtered}";  
     my $full_line = "$_\t$line_extension";
     $full_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
 
