@@ -38,7 +38,7 @@ sub create {
         input => $self->input_file,
         separator => "\t",
         headers => [qw(something0 something1 something2 hugo transcript_name something5 class something7 something8 protein_pos aa_change extra)],
-        allow_extra_columns => 1,
+        ignore_extra_columns => 1,
     );
     my $header = $reader->next;
     $self->reader($reader);

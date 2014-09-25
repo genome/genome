@@ -597,7 +597,7 @@ sub resize_contig {
     my $contig_length = $contig->{'length'};
     my $indel_size = $contig->{'assem_size'};
     my $type_size_toggle_var = $contig->{'assem_type'} eq 'DEL' ? 0 : 1;
-    my $left_flank_size = $contig->{'contig_location_of_variant'} - 1; #the number of bases of the contig preceding the variant
+    my $left_flank_size = $contig->{'contig_location_of_variant'} - 1; #the number of bases of the contig preceeding the variant
     my $right_flank_size = $contig_length - $contig->{'microhomology_contig_endpoint'}; #the number of bases of the contig succeeding the variant
     
     my $chr = $contig->{'assem_chr1'};

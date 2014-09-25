@@ -73,7 +73,7 @@ sub _convert_input_file{
         headers => \@columns,
         separator => "\t|\/",
         is_regex => 1,
-        allow_extra_columns => 1,
+        ignore_extra_columns => 1,
     );
     unless ($svr){
        $self->error_message("No separated value reader for $input_file, exiting") and die; 
