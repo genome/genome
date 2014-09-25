@@ -32,8 +32,8 @@ class Genome::Model::ClinSeq {
         sireport_min_tumor_vaf => { is => 'Number', doc => 'Variants with a tumor VAF less than this (in any tumor sample) will be filtered out.'},
         sireport_max_normal_vaf => { is => 'Number', doc => 'Variants with a normal VAF greater than this (in any normal sample) will be filtered out.'},
         sireport_min_coverage => { is => 'Number', doc => 'Variants with coverage less than this (in any sample) will be filtered out.'},
-        sireport_min_mq => { is => 'Text', doc => 'Comma separated list of minimum mapping qualities for bam-readcounting.'},
-        sireport_min_bq => { is => 'Text', doc => 'Comma separated list of Minimum base qualities for bam-readcounting.'},
+        sireport_min_mq => { is => 'Text', doc => 'Comma separated increasing-list of minimum mapping qualities for bam-readcounting.'},
+        sireport_min_bq => { is => 'Text', doc => 'Comma separated increasing-list of Minimum base qualities for bam-readcounting.'},
     ],
     has_optional_metric => [
         common_name         => { is => 'Text', doc => 'the name chosen for the root directory in the build' },
@@ -397,13 +397,6 @@ sub map_workflow_inputs {
       push @inputs, exome_cnv_dir => $exome_cnv_dir;
     }
 
-    #SciClone
-    if ($wgs_build or $exome_build) {
-      my $sciclone_dir = $patient_dir . "/clonality/sciclone/";
-      push @dirs, $sciclone_dir;
-      push @inputs, sciclone_dir => $sciclone_dir;
-    }
-
     my $docm_variants_file = $self->_get_docm_variants_file($self->cancer_annotation_db);
     #Make DOCM report
     if (($exome_build or $wgs_build) and $docm_variants_file) {
@@ -448,15 +441,19 @@ sub map_workflow_inputs {
       push @inputs, circos_outdir => $circos_dir;
     }
 
-    #Converge SnvIndelReport
+    #Converge SnvIndelReport and SciClone
     if ($exome_build || $wgs_build) {
       my $i = 1;
       foreach my $mq(@$mqs) {
         foreach my $bq(@$bqs) {
           my $snv_indel_report_dir1 = $patient_dir .
             "/snv_indel_report/" . "b" . $bq . "_" . "q" . $mq;
+          my $sciclone_dir1 = $patient_dir .
+            "/clonality/sciclone/" . "b" . $bq . "_" . "q" . $mq;
           push @dirs, $snv_indel_report_dir1;
+          push @dirs, $sciclone_dir1;
           push @inputs, "snv_indel_report_dir" . $i => $snv_indel_report_dir1;
+          push @inputs, "sciclone_dir" . $i  => $sciclone_dir1;
           push @inputs, "sireport_min_bq" . $i => $bq;
           push @inputs, "sireport_min_mq" . $i => $mq;
           $i++;
@@ -555,12 +552,13 @@ sub _resolve_workflow_for_build {
   if ($build->wgs_build or $build->exome_build) {
       push @output_properties, 'mutation_diagram_result';
       push @output_properties, 'import_snvs_indels_result';
-      push @output_properties, 'sciclone_result';
       my $i = 1;
       #Create a report for each $bq $mq combo.
       foreach my $mq(@$mqs) {
         foreach my $bq(@$bqs) {
-          push @output_properties, 'converge_snv_indel_report_result' . $i++;
+          push @output_properties, 'converge_snv_indel_report_result' . $i;
+          push @output_properties, 'sciclone_result' . $i;
+          $i++;
         }
       }
   }
@@ -1246,23 +1244,31 @@ sub _resolve_workflow_for_build {
   my $best_si_index = scalar(@$mqs) * scalar(@$bqs) - 1;
   #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
   my $sciclone_op;
+  my $i = 1;
   if ($build->wgs_build or $build->exome_build){
-    my $msg = "Run clonality analysis and produce clonality plots using SciClone";
-    $sciclone_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateSciclonePlots");
-    $add_link->($input_connector, 'sciclone_dir', $sciclone_op, 'outdir');
-    $add_link->($input_connector, 'build', $sciclone_op, 'clinseq_build');
-    $add_link->($input_connector, 'sireport_min_coverage', $sciclone_op, 'min_coverage');
-    if ($build->wgs_build) {
-        $add_link->($run_cn_view_op, 'result', $sciclone_op, 'wgs_cnv_result');
+    foreach my $mq(@$mqs) {
+      foreach my $bq(@$bqs) {
+        my $msg = "Run clonality analysis and produce clonality plots using SciClone " . $i;
+        $sciclone_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateSciclonePlots");
+        $add_link->($input_connector, 'sciclone_dir' . $i, $sciclone_op, 'outdir');
+        $add_link->($input_connector, 'build', $sciclone_op, 'clinseq_build');
+        $add_link->($input_connector, 'sireport_min_coverage', $sciclone_op, 'min_coverage');
+        $add_link->($input_connector, 'sireport_min_mq' . $i, $sciclone_op, 'min_mq');
+        $add_link->($input_connector, 'sireport_min_bq' . $i, $sciclone_op, 'min_bq');
+        if ($build->wgs_build) {
+            $add_link->($run_cn_view_op, 'result', $sciclone_op, 'wgs_cnv_result');
+        }
+        if ($build->exome_build) {
+            $add_link->($exome_cnv_op, 'result', $sciclone_op, 'exome_cnv_result');
+        }
+        if ($self->has_microarray_build()) {
+            $add_link->($microarray_cnv_op, 'result', $sciclone_op, 'microarray_cnv_result');
+        }
+        $add_link->($converge_snv_indel_report_ops[$best_si_index], 'result', $sciclone_op, 'converge_snv_indel_report_result');
+        $add_link->($sciclone_op, 'result', $output_connector, 'sciclone_result' . $i);
+        $i++;
+      }
     }
-    if ($build->exome_build) {
-        $add_link->($exome_cnv_op, 'result', $sciclone_op, 'exome_cnv_result');
-    }
-    if ($self->has_microarray_build()) {
-        $add_link->($microarray_cnv_op, 'result', $sciclone_op, 'microarray_cnv_result');
-    }
-    $add_link->($converge_snv_indel_report_ops[$best_si_index], 'result', $sciclone_op, 'converge_snv_indel_report_result');
-    $add_link->($sciclone_op, 'result', $output_connector, 'sciclone_result');
   }
 
 
