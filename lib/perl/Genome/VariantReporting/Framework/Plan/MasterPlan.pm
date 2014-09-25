@@ -93,6 +93,7 @@ sub create_from_file {
     my $class = shift;
     my $file = shift;
 
+    Genome::Sys->validate_file_for_reading($file);
     my ($hashref, undef, undef) = YAML::LoadFile($file);
 
     my $self = $class->create_from_hashref($hashref);

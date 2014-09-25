@@ -58,17 +58,27 @@ sub overload_archiving_methods {
 sub generate_obj {
     my ($self, %params) = @_;
 
-
     my $owner = delete $params{owner};
     Carp::confess('No owner given!') if not $owner;
     $params{owner_id} = $owner->id;
     $params{owner_class_name} = $owner->class;
 
+    if ( not $params{mount_path} ) { 
+        my $tmp_volume = $self->tmp_volume;
+        $params{mount_path} = $tmp_volume->mount_path;
+    }
+    else {
+        my $volume = Genome::Disk::Volume->get(mount_path => $params{mount_path});
+        if ( not $volume ) {
+            $volume = Genome::Disk::Volume->__define__(mount_path => $params{mount_path}, disk_status => 'active');
+        }
+    }
+
     $params{mount_path} //= $self->tmp_volume->mount_path;
     $params{kilobytes_requested} //= 2000;
     $params{disk_group_name} //= 'info_apipe';
-    $params{group_subdirectory} //= Genome::Test::Factory::Util::generate_name('group_subdirectory');
-    $params{allocation_path} //= Genome::Test::Factory::Util::generate_name('allocation_path');
+    $params{group_subdirectory} //= '';
+    $params{allocation_path} //= '';
 
     my $disk_allocation = Genome::Disk::Allocation->__define__(%params);
     File::Path::mkpath($disk_allocation->absolute_path);

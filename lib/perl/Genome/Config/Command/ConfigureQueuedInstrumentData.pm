@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use Lingua::EN::Inflect;
+use List::MoreUtils qw();
 
 class Genome::Config::Command::ConfigureQueuedInstrumentData {
     is => 'Command::V2',
@@ -294,12 +295,24 @@ sub _process_mapped_samples {
 
     return [ map {
         my $mapping = $_;
+        my %tags = map { $_->id => 1 } $mapping->tags;
         map { {
           (map { $_->label => $_->subject } $mapping->subject_bridges),
           (map { $_->key => $_->value } $mapping->inputs),
           %$_
-        } } @$model_hashes
+        } } grep { $self->_model_hash_matches_tags($_, \%tags) } @$model_hashes
     } @subject_mappings ];
+}
+
+sub _model_hash_matches_tags {
+    my ($self, $model_hash, $tag_hash) = @_;
+
+    my @model_hash_tags = $model_hash->{config_profile_item}->tags;
+    if(keys %$tag_hash) {
+        return List::MoreUtils::any { exists $tag_hash->{$_->id} } @model_hash_tags;
+    } else {
+        return !@model_hash_tags;
+    }
 }
 
 sub _get_items_to_process {

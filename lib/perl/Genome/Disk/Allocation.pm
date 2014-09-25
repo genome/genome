@@ -641,7 +641,10 @@ sub _reload_allocation {
     } elsif ($mode eq 'load') {
         $allocation = UR::Context->current->reload($class, id => $id);
         if ($allocation) {
-            UR::Context->current->reload($allocation->owner_class_name, id => $allocation->owner_id);
+            my $owner = $allocation->owner;
+            if($owner and UR::Context->current->object_exists_in_underlying_context($owner)) {
+                UR::Context->current->reload($owner);
+            }
         }
     } else {
         die 'Unrecognized _retrieve_mode: ' . $class->_retrieve_mode;
@@ -1038,19 +1041,7 @@ sub _default_archive_after_time {
 sub _get_trash_folder {
     my $self = shift;
 
-    my @dv = Genome::Disk::Volume->get(disk_group_names => $ENV{GENOME_DISK_GROUP_TRASH});
-    my %trash_map = map {
-       $self->_extract_aggr($_->physical_path) => File::Spec->join($_->mount_path, '.trash');
-    } @dv;
-
-    my $aggr = $self->_extract_aggr($self->volume->physical_path);
-
-    return $trash_map{$aggr};
-}
-
-sub _extract_aggr {
-    my $self = shift;
-    return (shift =~ m!/(aggr\d{2})/!)[0];
+    return File::Spec->join($self->volume->get_trash_folder(), $self->id);
 }
 
 1;

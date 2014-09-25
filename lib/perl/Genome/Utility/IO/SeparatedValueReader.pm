@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Utility::IO::SeparatedValueReader {
-    is => 'Genome::Utility::IO::Reader', 
+    is => 'Genome::Utility::IO::Reader',
     has_optional => [
         headers => {
             type => 'Array',
@@ -22,10 +22,10 @@ class Genome::Utility::IO::SeparatedValueReader {
             default => 0,
             doc => 'Interprets separator as regex'
         },
-        ignore_extra_columns => {
+        allow_extra_columns => {
             type => 'Boolean',
             default => 0,
-            doc => 'Rather than crash when extra columns are found, just drop/ignore them.'
+            doc => 'Rather than crash when extra columns are found, store them in "current_extra_columns".'
         },
         ignore_lines_starting_with => {
             type => 'Text',
@@ -35,6 +35,11 @@ class Genome::Utility::IO::SeparatedValueReader {
             type => 'Text',
             doc => 'The current original line of input from the file, pre splitting.'
         },
+        current_extra_columns => {
+            type => 'Text',
+            is_many => 1,
+            doc => 'if "allow_extra_columns" is set, any additional columns for the current line',
+        }
     ],
 };
 
@@ -42,7 +47,7 @@ sub line_number {
     return $_[0]->{_line_number};
 }
 
-sub reset { 
+sub reset {
     my $self = shift;
 
     $self->SUPER::reset;
@@ -55,7 +60,7 @@ sub reset {
     return 1;
 }
 
-sub getline { 
+sub getline {
     my $self = shift;
 
     my $line = $self->SUPER::getline
@@ -77,8 +82,8 @@ sub create {
     my $sep = $self->separator;
 
     my $regexp;
-    if ($self->is_regex){ 
-        # Adding -1 as the LIMIT argument to split ensures that the correct # of values on the line 
+    if ($self->is_regex){
+        # Adding -1 as the LIMIT argument to split ensures that the correct # of values on the line
         #  are returned, regardless of empty trailing results
         $regexp = qr/$sep/;
     }
@@ -98,7 +103,7 @@ sub create {
         my $begin = tell($self->input) - $offset;
         $self->input->seek($begin,0);
     }
-    
+
     if ( $headers ) {
         $self->headers($headers);
     }
@@ -120,26 +125,30 @@ sub next {
     my @values = $self->_splitline($line)
         or return;
 
+    my @extra_columns;
     unless ( @{$self->headers} == @values ) {
 
         # If we dont care about extra columns, all is well... unless we dont at least have the minimum required
-        if (!($self->ignore_extra_columns)||(@{$self->headers} > @values)) {
+        if (!($self->allow_extra_columns)||(@{$self->headers} > @values)) {
             #  Bomb out if we dont want extra columns
             $self->error_message(
                sprintf(
-                    'Expected %d values, got %d on line %d in %s', 
-                    scalar @{$self->headers}, 
+                    'Expected %d values, got %d on line %d in %s',
+                    scalar @{$self->headers},
                     scalar @values,
                     $self->line_number,
                     ( $self->get_original_input || ref $self->io ),
                 )
             );
             return;
+        } else {
+            @extra_columns = splice @values, scalar(@{$self->headers});
         }
     }
-    
+
     my %data;
     @data{ @{$self->headers} } = @values;
+    $self->current_extra_columns(\@extra_columns);
     $self->current_line($line);
     return \%data;
 }
@@ -149,7 +158,7 @@ sub _splitline {
     my $line = shift;
     chomp $line;
 
-    return $self->{_split}->($line); 
+    return $self->{_split}->($line);
 }
 
 sub _increment_line_number {
@@ -194,7 +203,7 @@ A stream based reader that splits each line by the given separator.  If no heade
     print sprintf('%s by the famous %s', $album->{title}, $album->{artist}),"\n";
  }
 
-=head1 Methods 
+=head1 Methods
 
 =head2 next
 

@@ -110,10 +110,10 @@ Status Output
 
  Example:
 
- library_name      # status  inst_data
- Sample-01-extlibs 1 success 6c43929f065943a09f8ccc769e42c41d
- Sample-01-extlibs 2 run     NA
- Sample-02-extlibs 1 needed  NA
+ library_name      job_name status  inst_data
+ Sample-01-extlibs ahsgdj   success 6c43929f065943a09f8ccc769e42c41d
+ Sample-01-extlibs jfuexm   run     NA
+ Sample-02-extlibs oodkmq   needed  NA
 
  Column definitions:
 
@@ -200,7 +200,7 @@ sub _load_source_files_tsv {
 
     my (@imports, %seen);
     while ( my $hash = $info_reader->next ) {
-        my $id = Genome::Sys->md5sum_data( join('', map { $hash->{$_} } sort keys %$hash) );
+        my $id = substr(Genome::Sys->md5sum_data( join('', map { $hash->{$_} } sort keys %$hash) ), 0, 6);
         my $source_files = delete $hash->{source_files};
         if ( $seen{$id} ) {
             $self->error_message('Duplicate entry on line '.$info_reader->line_number.'!');
@@ -215,6 +215,7 @@ sub _load_source_files_tsv {
         my $import = {
             library_name => $library_name,
             source_files => $source_files,
+            job_name => $id,
         };
         push @imports, $import;
         my %instrument_data_properties;
@@ -307,7 +308,6 @@ sub _load_libraries {
         # library name, number and job name
         my $library_name = $import->{library_name};
         $import->{library_number} = ++$library_names_seen{$library_name};
-        $import->{job_name} = $import->{library_name}.'.'.$import->{library_number};
         # genome library - get as array in case there are many with the same name
         my @libraries = Genome::Library->get(name => $library_name);
         $import->{library} = \@libraries if @libraries;
@@ -368,7 +368,7 @@ sub _load_statuses {
 
     my $imports = $self->_imports;
     for my $import ( @$imports ) {
-        $import->{job_status} = $job_statuses->{ $import->{job_name} } if $import->{job_name};
+        $import->{job_status} = $job_statuses->{ $import->{job_name} };
         $import->{status} = $get_status_for_import->($import);
     }
 
@@ -484,14 +484,14 @@ sub _resolve_launch_command_for_import {
 sub _output_status {
     my $self = shift;
 
-    my @status = ( ['library_name'], ['#'], ['status'], ['inst_data'], );
+    my @status = ( ['library_name'], ['job_name'], ['status'], ['inst_data'], );
     my ($i, @row, %totals);
     for my $import ( sort { $a->{library_name} cmp $b->{library_name} } @{$self->_imports} ) {
         $totals{total}++;
         $totals{ $import->{status} }++;
         @row = (
-            $import->{library_name},
-            $import->{library_number}, 
+            $import->{library_name}, 
+            $import->{job_name}, 
             $import->{status}, 
             ( $import->{instrument_data} ? join(' ', map { $_->id } @{$import->{instrument_data}}) : 'NA' ),
         );

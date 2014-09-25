@@ -40,6 +40,8 @@ class Genome::Config::AnalysisProject::SubjectMapping {
             is => 'Genome::Config::Tag',
             via => 'tag_bridges',
             to => 'tag',
+            is_many => 1,
+            is_mutable => 1,
         },
     ],
     schema_name => 'GMSchema',
