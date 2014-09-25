@@ -12,6 +12,7 @@ use above 'Genome';
 use Test::More tests => 19;
 
 use Genome::Test::Factory::InstrumentData::Solexa;
+use Genome::Test::Factory::ProcessingProfile::SomaticVariation;
 
 my $temp_build_data_dir = File::Temp::tempdir('t_SomaticValidation_Build-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $temp_dir = File::Temp::tempdir('Model-Command-Define-SomaticValidation-XXXXX', CLEANUP => 1, TMPDIR => 1);
@@ -129,7 +130,7 @@ sub setup_somatic_variation_models {
         snv_detection_strategy => 'samtools',
     );
 
-    my $test_somvar_pp = Genome::ProcessingProfile::SomaticVariation->create(
+    my $test_somvar_pp = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object(
         name => 'test somvar pp',
         snv_detection_strategy => 'samtools r599 [--test=1]',
         tiering_version => 1,
