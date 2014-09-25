@@ -11,7 +11,7 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
     is => ['Genome::Model::ClinSeq::Command::Converge::Base',
            'Genome::Model::ClinSeq::Util'],
     has_input => [
-        outdir => { 
+        outdir => {
                is => 'FilesystemPath',
                doc => 'Directory where output files will be written',
         },
@@ -51,7 +51,7 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               doc => 'Variants with a normal VAF greater than this (in any normal sample) will be filtered out'
         },
         min_tumor_vaf => {
-              is => 'Number', 
+              is => 'Number',
               default => 2.5,
               doc => 'Variants with a tumor VAF less than this (in any tumor sample) will be filtered out',
         },
@@ -117,7 +117,7 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
         lsf_resource => {
             value => q{-R 'select[mem>12000] rusage[mem=12000]' -M 12000000},
         },
-    ],   
+    ],
     doc => 'converge SNV and InDels from multiple clin-seq builds, annotate, bam-readcount, etc. and summarize into a single spreadsheet',
 };
 
@@ -138,7 +138,7 @@ EOS
 sub help_detail {
   return <<EOS
 
-Create a summary spreadsheet of SNVs and Indels for a set of clin-seq builds (e.g. an AML normal, day0_tumor, day30_tumor trio) 
+Create a summary spreadsheet of SNVs and Indels for a set of clin-seq builds (e.g. an AML normal, day0_tumor, day30_tumor trio)
 
 EOS
 }
@@ -235,7 +235,7 @@ sub execute {
   my $result = $self->gather_variants('-somatic_builds'=>$somatic_builds, '-bed_dir'=>$bed_dir);
   my $variants = $result->{'variants'};
   my $header = $result->{'header'};
-  
+
   #If no variants were found, warn the user and end here end here
   unless (keys %{$variants}){
     my $rm_cmd = "rm -fr $bed_dir $subject_table_file";
@@ -266,7 +266,7 @@ sub execute {
     '-align_builds'=>$align_builds,
     '-anno_file'=>$grand_anno_file,
     '-prefixes'=>\@prefixes);
-  
+
   #Parse the BAM read count info and gather minimal data needed to apply filters:
   #Max normal VAF, Min Coverage
   $self->parse_read_counts('-align_builds'=>$align_builds, '-grand_anno_count_file'=>$grand_anno_count_file, '-variants'=>$variants);
@@ -281,7 +281,7 @@ sub execute {
   if ($self->per_library){
     $per_lib_header = $self->parse_per_lib_read_counts('-align_builds'=>$align_builds, '-grand_anno_per_lib_count_file'=>$grand_anno_per_lib_count_file, '-variants'=>$variants);
   }
-  
+
   #Apply arbitrary variant filter list
   if ($self->variant_filter_list){
     $self->apply_filter_list('-variants'=>$variants);
@@ -403,8 +403,8 @@ sub gather_variants{
     my $tier = $bed_files{$file}{tier};
     my $somatic_build_id = $bed_files{$file}{somatic_build_id};
     my $new_file = $bed_dir . "$somatic_build_id" . "_$data_type" . "_$var_type" . "_$tier" . "clean.bed";
-    $self->status_message("\nProcessing $var_type $data_type $tier file: $file"); 
-    
+    $self->status_message("\nProcessing $var_type $data_type $tier file: $file");
+
     if (-e $new_file){
       $self->warning_message("Using pre-generated file: $new_file");
     }else{
@@ -434,7 +434,7 @@ sub gather_variants{
     }else{
       if (-s $bed_files{$file}{clean_bed_file}){
         my $annotate_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
-              variant_bed_file=>$bed_files{$file}{clean_bed_file}, 
+              variant_bed_file=>$bed_files{$file}{clean_bed_file},
               output_file=>$anno_file,
               annotation_filter=>'top',
               reference_transcripts=>$self->annotation_build->name,
@@ -448,7 +448,7 @@ sub gather_variants{
     }
     $bed_files{$file}{anno_file} = $anno_file;
 
-    #Get RSIDs and GMAFs for all variants 
+    #Get RSIDs and GMAFs for all variants
     #gmt annotate add-rsid --anno-file='' --output-file='' --vcf-file=''
     my $vcf_file = $bed_files{$file}{vcf_file};
     my $rsid_file = $anno_file . ".rsid";
@@ -466,7 +466,7 @@ sub gather_variants{
     }
     $bed_files{$file}{rsid_file} = $rsid_file;
   }
-  
+
   #Parse all variants into a single hash (keyed on $chr_$start_$end_$ref_$var)
   my $header;
   my %headers;
@@ -496,7 +496,7 @@ sub gather_variants{
       $variants{$v}{filtered} = "";
       if(defined $variants{$v}{data_type}) {
         unless ($variants{$v}{data_type} =~ /$data_type/) {
-          $variants{$v}{data_type} .= $data_type . ","; 
+          $variants{$v}{data_type} .= $data_type . ",";
         }
       } else {
         $variants{$v}{data_type} = $data_type . ",";
@@ -564,7 +564,7 @@ sub intersect_target_gene_list{
     $genes{$ensg}{name} = $line[1];
   }
   close(GENES);
- 
+
   foreach my $v (keys %{$variants}){
     my $ensembl_gene_id = $variants->{$v}->{ensembl_gene_id};
     $variants->{$v}->{target_gene_list_match} = 0;
@@ -576,7 +576,7 @@ sub intersect_target_gene_list{
   return;
 }
 
-  
+
 sub get_variant_caller_sources{
   my $self = shift;
   my %args = @_;
@@ -919,19 +919,19 @@ sub parse_per_lib_read_counts{
         my $per_lib_vaf_col = $prefix . "_" . $lib . "_VAF";
 
         if (defined($line[$columns{$per_lib_ref_col}{c}])){
-          push(@per_lib_counts, $line[$columns{$per_lib_ref_col}{c}]);      
+          push(@per_lib_counts, $line[$columns{$per_lib_ref_col}{c}]);
         }else{
           push(@per_lib_counts, "NA");
         }
 
         if (defined($line[$columns{$per_lib_var_col}{c}])){
-          push(@per_lib_counts, $line[$columns{$per_lib_var_col}{c}]);      
+          push(@per_lib_counts, $line[$columns{$per_lib_var_col}{c}]);
         }else{
           push(@per_lib_counts, "NA");
         }
 
         if (defined($line[$columns{$per_lib_vaf_col}{c}])){
-          push(@per_lib_counts, $line[$columns{$per_lib_vaf_col}{c}]);      
+          push(@per_lib_counts, $line[$columns{$per_lib_vaf_col}{c}]);
         }else{
           push(@per_lib_counts, "NA");
         }
@@ -991,14 +991,14 @@ sub apply_variant_filters{
   my $min_coverage = $self->min_coverage;
   my $max_gmaf = $self->max_gmaf;
   my $min_tumor_var_supporting_libs = $self->min_tumor_var_supporting_libs;
-  
+
   foreach my $v (keys %{$variants}){
     my $max_normal_vaf_observed = $variants->{$v}->{max_normal_vaf_observed};
     my $max_tumor_vaf_observed = $variants->{$v}->{max_tumor_vaf_observed};
     my $min_coverage_observed = $variants->{$v}->{min_coverage_observed};
     my $gmaf = $variants->{$v}->{gmaf};
     my $tumor_var_supporting_libs = $variants->{$v}->{tumor_var_supporting_libs} if defined($variants->{$v}->{tumor_var_supporting_libs});
-  
+
     #Normal VAF filter
     if ($max_normal_vaf_observed =~ /\d+/){
       $variants->{$v}->{filtered} .= "Max_Normal_VAF," if ($max_normal_vaf_observed > $max_normal_vaf);
@@ -1019,7 +1019,7 @@ sub apply_variant_filters{
     }elsif($min_coverage_observed eq "NA"){
       $variants->{$v}->{filtered} .= "Min_Coverage,";
     }
-    
+
     #GMAF filter
     if ($gmaf =~ /\d+/){
       $variants->{$v}->{filtered} .= "Max_GMAF," if (($gmaf*100) > $max_gmaf);
@@ -1142,7 +1142,7 @@ sub print_final_files{
     $variants->{$v}->{data_type} =~ s/,$//;
     $variants->{$v}->{filtered} =~ s/,$//;
 
-    my $line_extension = "$variants->{$v}->{min_coverage_observed}\t$variants->{$v}->{max_normal_vaf_observed}\t$variants->{$v}->{max_tumor_vaf_observed}\t$variants->{$v}->{variant_source_callers}\t$variants->{$v}->{variant_source_caller_count}\t$variants->{$v}->{data_type}\t$variants->{$v}->{filtered}";  
+    my $line_extension = "$variants->{$v}->{min_coverage_observed}\t$variants->{$v}->{max_normal_vaf_observed}\t$variants->{$v}->{max_tumor_vaf_observed}\t$variants->{$v}->{variant_source_callers}\t$variants->{$v}->{variant_source_caller_count}\t$variants->{$v}->{data_type}\t$variants->{$v}->{filtered}";
     my $full_line = "$_\t$line_extension";
     $full_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
 
@@ -1230,7 +1230,7 @@ sub create_plots{
 
   #Get the header for the file to be fed into R to determine per-lib VAF column positions
   open (TMP, $final_filtered_clean_tsv) || die $self->error_message("Could not open file: $final_filtered_clean_tsv");
-  my $header = <TMP>; 
+  my $header = <TMP>;
   close(TMP);
   chomp($header);
   my @cols = split("\t", $header);
