@@ -12,27 +12,28 @@ use above 'Genome';
 
 use Test::More;
 
-use_ok('Genome::Model::Tools::Picard::DownsampleRatioMixin') or die;
+use_ok('Genome::Model::Tools::Picard::WithDownsampleRatio') or die;
 
-class DownsampleRatioMixinTester {
-    has => {
-        downsample_ratio => Genome::Model::Tools::Picard::DownsampleRatioMixin->downsample_ratio_property,
-    },
+class DownsampleRatioTester {
+    is => 'Genome::Model::Tools::Picard::WithDownsampleRatio', 
 };
-sub DownsampleRatioMixinTester::__errors__ {
-    my $self = shift;
-    return Genome::Model::Tools::Picard::DownsampleRatioMixin::__errors__($self);
-}
+ok(DownsampleRatioTester->__meta__->property_meta_for_name('downsample_ratio')->is_optional, 'downsample_ratio is optional');
 
-my $tester = DownsampleRatioMixinTester->create(
+class DownsampleRatioIsRequiredTester {
+    is => 'Genome::Model::Tools::Picard::WithDownsampleRatio', 
+    has_optional_transient => { _make_downsample_ratio_required => {}, },
+};
+ok(!DownsampleRatioIsRequiredTester->__meta__->property_meta_for_name('downsample_ratio')->is_optional, 'downsample_ratio is not optional');
+
+my $tester = DownsampleRatioTester->create(
     downsample_ratio => 'NA',
 );
 ok($tester, 'create');
 my @errors = $tester->__errors__;
 ok(@errors, 'errors for downsample_ratio of NA');
-is($errors[0]->desc, 'Invalid number! NA', 'correct error desc for downsample_ratio of NA');
+is($errors[0]->desc, 'Invalid Float value.', 'correct error desc for downsample_ratio of NA');
 
-$tester = DownsampleRatioMixinTester->create(
+$tester = DownsampleRatioTester->create(
     downsample_ratio => 0,
 );
 ok($tester, 'create');
@@ -40,7 +41,7 @@ ok($tester, 'create');
 ok(@errors, 'errors for downsample_ratio of 0');
 is($errors[0]->desc, 'Must be greater than 0 and less than 1! 0', 'correct error desc for downsample_ratio of 0');
 
-$tester = DownsampleRatioMixinTester->create(
+$tester = DownsampleRatioTester->create(
     downsample_ratio => 1,
 );
 ok($tester, 'create');
@@ -48,12 +49,12 @@ ok($tester, 'create');
 ok(@errors, 'errors for downsample_ratio of 1');
 is($errors[0]->desc, 'Must be greater than 0 and less than 1! 1', 'correct error desc for downsample_ratio of 1');
 
-$tester = DownsampleRatioMixinTester->create(
+$tester = DownsampleRatioTester->create(
     downsample_ratio => 0.333333,
 );
 ok($tester, 'create');
 @errors = $tester->__errors__;
 ok(!@errors, 'no errors for valid downsample_ratio');
-is($tester->downsample_ratio, 0.33, 'correctly set the down sample ratio from 0.333333 to 0.33');
+is($tester->downsample_ratio, 0.333333, 'correctly set the down sample ratio from 0.333333 to 0.33');
 
 done_testing();

@@ -5,12 +5,11 @@ use warnings;
 
 use Genome;
 
-use Genome::Model::Tools::Picard::DownsampleRatioMixin;
 require List::MoreUtils;
 use Workflow::Simple;
 
 class Genome::InstrumentData::Command::Import::Basic { 
-    is => 'Command::V2',
+    is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithDownsampleRatio /],
     has_input => [
         import_source_name => {
             is => 'Text',
@@ -35,7 +34,6 @@ class Genome::InstrumentData::Command::Import::Basic {
             is => 'Text',
             doc => 'Description of the data.',
         },
-        downsample_ratio => Genome::Model::Tools::Picard::DownsampleRatioMixin->downsample_ratio_property,
         instrument_data_properties => {
             is => 'Text',
             is_many => 1,
@@ -81,18 +79,6 @@ Instrument Data Properties
   flow_cell_id=AXXAX,index_sequence=AATTGGCC
 
 HELP
-}
-
-sub __errors__ {
-    my $self = shift;
-
-    my @errors = $self->SUPER::__errors__;
-    return @errors if @errors;
-
-    @errors = Genome::Model::Tools::Picard::DownsampleRatioMixin::__errors__($self);
-    return @errors if @errors;
-
-    return;
 }
 
 sub execute {

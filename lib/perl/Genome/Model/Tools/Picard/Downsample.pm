@@ -5,13 +5,12 @@ use warnings;
 
 use Genome;
 
-use Genome::Model::Tools::Picard::DownsampleRatioMixin;
 use File::Basename;
 use IO::File;
 
 class Genome::Model::Tools::Picard::Downsample {
-    is  => 'Genome::Model::Tools::Picard',
-    has_input => [
+    is => [qw/ Genome::Model::Tools::Picard Genome::Model::Tools::Picard::WithDownsampleRatio /],
+    has_input => {
         input_file => {
             is  => 'String',
             doc => 'The SAM/BAM file to downsample.',
@@ -22,7 +21,6 @@ class Genome::Model::Tools::Picard::Downsample {
             doc => 'The resulting downsampled SAM/BAM file.  File type is determined by suffix.',
             is_optional => 0,
         },
-        downsample_ratio => Genome::Model::Tools::Picard::DownsampleRatioMixin->downsample_ratio_property,
         use_version => {
             is => 'String',
             doc => 'Version must be 1.52 or greater, default is 1.52',
@@ -38,7 +36,8 @@ class Genome::Model::Tools::Picard::Downsample {
             doc => 'Set this to attain reproducability',
             is_optional => 1,
         },
-    ],
+    },
+    has_optional_transient => { _make_downsample_ratio_required => {}, },
 };
 
 sub help_detail {
@@ -46,18 +45,6 @@ sub help_detail {
     Tool to downsample a BAM or SAM file using Picard.  For Picard documentation of this command see:
     http://picard.sourceforge.net/command-line-overview.shtml#DownsampleSam
 EOS
-}
-
-sub __errors__ {
-    my $self = shift;
-
-    my @errors = $self->SUPER::__errors__;
-    return @errors if @errors;
-
-    @errors = Genome::Model::Tools::Picard::DownsampleRatioMixin::__errors__($self);
-    return @errors if @errors;
-
-    return;
 }
 
 sub execute {

@@ -6,10 +6,9 @@ use warnings;
 use Genome;
 
 require File::Basename;
-use Genome::Model::Tools::Picard::DownsampleRatioMixin;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported { 
-    is => 'Command::V2',
+    is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithDownsampleRatio /],
     has_input => {
         working_directory => {
             is => 'Text',
@@ -19,9 +18,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported {
             is => 'Text',
             doc => 'Source path of sequences to get.',
         },
-    },
-    has_optional_input => {
-        downsample_ratio => Genome::Model::Tools::Picard::DownsampleRatioMixin->downsample_ratio_property,
     },
     has_output => {
         source_md5 => {
@@ -50,18 +46,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported {
         },
     },
 };
-
-sub __errors__ {
-    my $self = shift;
-
-    my @errors = $self->SUPER::__errors__;
-    return @errors if @errors;
-
-    @errors = Genome::Model::Tools::Picard::DownsampleRatioMixin::__errors__($self);
-    return @errors if @errors;
-
-    return;
-}
 
 sub execute {
     my $self = shift;

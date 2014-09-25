@@ -76,5 +76,5 @@ my $allocation = $instrument_data->disk_allocation;
 ok($allocation, 'got allocation');
 ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 
-print $instrument_data->data_directory."\n";<STDIN>;
+#print $instrument_data->data_directory."\n";<STDIN>;
 done_testing();
