@@ -1382,6 +1382,41 @@ sub get_ref_align_builds{
     $ref_builds{$name}{timepoint_position} = $position;
   }
 
+  my @time_points;
+  my @time_points2;
+  my @samples;
+  my @names;
+  foreach my $name (sort {$ref_builds{$a}->{order} <=> $ref_builds{$b}->{order}} keys %ref_builds){
+    push(@time_points, $ref_builds{$name}{time_point});
+    push(@time_points2, $ref_builds{$name}{time_point2});
+    push(@samples, $ref_builds{$name}{sample_name});
+    push(@names, $name);
+  }
+
+  #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
+  my @prefixes;
+  my @unique_time_points = uniq @time_points;
+  my @unique_time_points2 = uniq @time_points2;
+  my @unique_samples = uniq @samples;
+  my @unique_names = uniq @names;
+  if (scalar(@unique_time_points) == scalar(@time_points)){
+    @prefixes = @time_points;
+  }elsif(scalar(@unique_time_points2) == scalar(@time_points2)){
+    @prefixes = @time_points2;
+  }elsif(scalar(@unique_samples) == scalar(@samples)){
+    @prefixes = @samples;
+  }elsif(scalar(@unique_names) == scalar(@names)){
+    @prefixes = @names;
+  }else{
+    die $self->error_message("could not resolve unique prefixes for add-readcounts");
+  }
+
+  #Record the header prefix chosen on the ref_builds object
+  foreach my $name (sort {$ref_builds{$a}->{order} <=> $ref_builds{$b}->{order}} keys  %ref_builds){
+    my $prefix = shift @prefixes;
+    $ref_builds{$name}{prefix} = $prefix;
+  }
+
   return(\%ref_builds);
 }
 
