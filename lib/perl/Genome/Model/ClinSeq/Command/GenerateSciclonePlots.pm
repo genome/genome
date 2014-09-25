@@ -54,6 +54,16 @@ class Genome::Model::ClinSeq::Command::GenerateSciclonePlots {
             doc => 'Link in workflow',
             is_optional => 1
         },
+        min_mq => {
+            is => 'Integer',
+            doc => 'minimum mapping quality of reads to be considered',
+            default => '30',
+        },
+        min_bq => {
+            is => 'Integer',
+            doc => 'minimum base quality of bases in reads to be considered',
+            default => '20',
+        },
     ],
     doc => 'Create clonality plots with SciClone.',
 };
@@ -98,6 +108,12 @@ sub parse_variant_file {
     }
     my %variant_files;
     foreach my $tumor_prefix(@tumor_prefixes) {
+        my $data_type = "";
+        if($tumor_prefix =~ /wgs/) {
+            $data_type = "wgs";
+        } elsif($tumor_prefix =~ /exome/) {
+            $data_type = "exome";
+        }
         my $variant_file_temp = $variant_file . "_" . $tumor_prefix . ".tsv";
         my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
             output => $variant_file_temp,
@@ -115,6 +131,9 @@ sub parse_variant_file {
                 next;
             }
             if ($data->{chromosome_name} =~ /Y|MT|GL/) {
+                next;
+            }
+            unless ($data->{data_type} =~ /$data_type/) {
                 next;
             }
             if ($gender ne "female" and $data->{chr} =~ /X/) {
@@ -151,10 +170,11 @@ sub get_variant_files {
     my $self = shift;
     my $clinseq_build = shift;
     my $outfile = $self->outdir . "/variants.filtered.clean.tsv";
-    my $stringent_quality = 1;
+    my $bq = $self->min_bq;
+    my $mq = $self->min_mq;
     my $snv_indel_report_clean_file =
         $clinseq_build->snv_indel_report_clean_filtered_file(
-            $stringent_quality);
+            $bq, $mq);
     if(-e $snv_indel_report_clean_file) {
         Genome::Sys->copy_file($snv_indel_report_clean_file, $outfile);
     } else {

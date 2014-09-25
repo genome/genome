@@ -23,10 +23,8 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 #Run GenerateSciclone on the 'apipe-test-clinseq-wer' model
-my $clinseq_model =
-  Genome::Model->get(name => 'apipe-test-clinseq-wer');
-ok($clinseq_model, "Found clinseq model.");
-my $clinseq_build = $clinseq_model->last_succeeded_build;
+my $clinseq_build =
+  Genome::Model::Build->get(id => '84b87bb59d994a48a7bb1bee785b4ccd');
 ok($clinseq_build, "Found clinseq build.");
 my $run_sciclone = Genome::Model::ClinSeq::Command::GenerateSciclonePlots->create(
   outdir => $temp_dir,
