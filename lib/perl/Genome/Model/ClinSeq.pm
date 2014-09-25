@@ -1241,7 +1241,7 @@ sub _resolve_workflow_for_build {
     }
   }
 
-  my $best_si_index = scalar(@$mqs) * scalar(@$bqs) - 1;
+  my $best_si_index = scalar(@converge_snv_indel_report_ops) - 1;
   #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
   my $sciclone_op;
   my $i = 1;
