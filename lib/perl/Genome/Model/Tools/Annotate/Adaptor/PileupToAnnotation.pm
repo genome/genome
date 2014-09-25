@@ -64,7 +64,7 @@ sub execute{
             headers => \@headers,
             separator => "\t",
             is_regex => 1, 
-            allow_extra_columns => 1,
+            ignore_extra_columns => 1,
         );
         my $converted_snp_file = IO::File->new($temp_snp_path, 'w');
         while (my $line = $svr->next){
@@ -84,7 +84,7 @@ sub execute{
             headers => \@headers,
             separator => "\t",
             is_regex => 1, 
-            allow_extra_columns => 1,
+            ignore_extra_columns => 1,
         );
         my $converted_indel_file = IO::File->new($temp_indel_path, 'w');
         while (my $line = $svr->next){

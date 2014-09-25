@@ -144,7 +144,7 @@ sub pre_execute {
             headers => \@variant_columns,
             separator => '\t',
             is_regex => 1,
-            allow_extra_columns => 1,
+            ignore_extra_columns => 1,
         );
         unless ($reader) {
             $self->error_message("Could not get reader for " . $self->variant_file);

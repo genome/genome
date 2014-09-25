@@ -16,7 +16,7 @@ class Genome::Config::AnalysisProject::SubjectMapping::Command::Import::SomaticV
         file_path => {
             is => 'Text',
             shell_args_position => 2,
-            doc => 'path to a newline-delimited, tab-separated list of samples, variant lists, and tags (See description section of --help for details.)'
+            doc => 'optional path to a newline delimited, tab separated list of sample ids'
         }
     ],
 };
@@ -33,14 +33,15 @@ sub help_detail {
     return <<"EOS"
 This command allows you to import subject mapping information for an AnalysisProject in bulk via a TSV file.
 
-It expects the file to be in a 5+ column, tab separated format with the following columns:
+It expects the file to be in a 5 column, tab separated format with the following columns:
 
-tumor_subject normal_subject snv_variant_list_id indel_variant_list_id sv_variant_list_id [tag...]
+tumor_subject normal_subject snv_variant_list_id indel_variant_list_id sv_variant_list_id
 
-Only a tumor_subject is required, but the tab separators must be present as placeholders for the normal_subject and variant lists.  If any number of tags are desired, they can be listed as extra columns beginning with the sixth.
-A header is optional and should be preceded with a '#' if present.
+All columns but tumor_subject are optional and can be left blank, though the tab separators must be present.
+This is useful for setting up single-sample validation models.
+A header is optional and should be preceeded with a '#' if present.
 Both tumor and normal subject can be specified by either ID or Name.
-Tags may also be specified by either ID or Name.
+
 EOS
 }
 
@@ -55,7 +56,6 @@ sub execute {
         separator                  => "\t",
         ignore_lines_starting_with => '#',
         headers                    => [@subjects, @inputs],
-        allow_extra_columns        => 1,
     );
 
     my $count = 0;
@@ -74,11 +74,6 @@ sub execute {
             $self->_create_input($mapping, $_, $value);
         }
 
-        my @tags = $reader->current_extra_columns;
-        for(@tags) {
-            $self->_link_to_tag($mapping, $_);
-        }
-
         $count++;
     }
 
@@ -93,7 +88,8 @@ sub _create_subject {
     my $label = shift;
     my $subject_identifier = shift;
 
-    my $subject = Genome::Subject->get($subject_identifier) || Genome::Subject->get(name => $subject_identifier);
+    my $subject = Genome::Subject->get($subject_identifier);
+    $subject = Genome::Subject->get(name => $subject_identifier) unless $subject;
     die($self->error_message("Unable to find a subject from identifier: %s", $subject_identifier)) unless $subject_identifier;
     Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
         subject_mapping => $mapping,
@@ -116,17 +112,6 @@ sub _create_input {
         value => $value,
         key => $key,
     );
-}
-
-sub _link_to_tag {
-    my $self = shift;
-    my $mapping = shift;
-    my $tag_string = shift;
-
-    my $tag = Genome::Config::Tag->get($tag_string) || Genome::Config::Tag->get(name => $tag_string);
-    die($self->error_message("Unable to find a tag from identifier: %s", $tag_string)) unless $tag;
-
-    $tag->add_subject_mapping($mapping);
 }
 
 1;

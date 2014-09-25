@@ -6,8 +6,8 @@ use warnings;
 use above 'Genome';
 
 require File::Compare;
+use Storable 'retrieve';
 use Test::More;
-use Test::Deep qw(cmp_bag);
 
 use_ok('Genome::Utility::IO::SeparatedValueReader') or die;
 use_ok('Genome::Utility::IO::SeparatedValueWriter') or die;
@@ -92,7 +92,7 @@ for my $desc ( keys %fails ) {
 
 # READER FAILS
 $reader = Genome::Utility::IO::SeparatedValueReader->create(
-    input => $albums_no_headers,
+    input => $albums_no_headers, 
     headers => [qw/ not the right number of headers /],
 );
 ok($reader, 'create reader');
@@ -102,7 +102,7 @@ ok(!$reader->next, 'Failed as expected - next');
 $reader = Genome::Utility::IO::SeparatedValueReader->create(
     input => $albums_no_headers,
     headers => [qw/ dont have data to fill all these columns /],
-    allow_extra_columns => 1,
+    ignore_extra_columns => 1,
 );
 ok($reader, 'Created SVR to test too few columns while ignoring extra columns');
 ok(!$reader->next, 'Failed as expected - next');
@@ -111,13 +111,10 @@ ok(!$reader->next, 'Failed as expected - next');
 $reader = Genome::Utility::IO::SeparatedValueReader->create(
     input => $albums_no_headers,
     headers => [qw/ have enough data /],
-    allow_extra_columns => 1,
+    ignore_extra_columns => 1,
 );
 ok($reader, 'Created SVR to test too many columns while ignoring extra columns');
 ok($reader->next, 'Succeeded as expected');
-my @extra = $reader->current_extra_columns;
-ok(scalar(@extra), 'extra columns set as expected');
-cmp_bag(\@extra, ['legend', 'reggae'], 'extra columns are the trailing ones in the file');
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();
