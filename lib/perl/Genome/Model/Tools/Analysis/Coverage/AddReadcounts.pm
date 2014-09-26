@@ -84,7 +84,6 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
         },
         bam_readcount_version => {
             is => 'String',
-            is_optional => 1,
             doc => 'version of bam-readcount to use',
         },
     ],
