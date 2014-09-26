@@ -1241,7 +1241,6 @@ sub _resolve_workflow_for_build {
     }
   }
 
-  my $best_si_index = scalar(@converge_snv_indel_report_ops) - 1;
   #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
   my $sciclone_op;
   my $i = 1;
@@ -1264,7 +1263,7 @@ sub _resolve_workflow_for_build {
         if ($self->has_microarray_build()) {
             $add_link->($microarray_cnv_op, 'result', $sciclone_op, 'microarray_cnv_result');
         }
-        $add_link->($converge_snv_indel_report_ops[$best_si_index], 'result', $sciclone_op, 'converge_snv_indel_report_result');
+        $add_link->($converge_snv_indel_report_ops[$i-1], 'result', $sciclone_op, 'converge_snv_indel_report_result');
         $add_link->($sciclone_op, 'result', $output_connector, 'sciclone_result' . $i);
         $i++;
       }
