@@ -38155,9 +38155,9 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       'plan-file=s',
       undef,
-      'log-directory=s',
-      undef,
       'resource-file=s',
+      undef,
+      'log-directory=s',
       undef,
       'help!',
       undef
