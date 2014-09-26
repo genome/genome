@@ -9,7 +9,7 @@ use File::Basename;
 use IO::File;
 
 class Genome::Model::Tools::Picard::Downsample {
-    is => [qw/ Genome::Model::Tools::Picard Genome::Model::Tools::Picard::WithDownsampleRatio /],
+    is => [qw/ Genome::Model::Tools::Picard Genome::Model::Tools::Picard::WithRequiredDownsampleRatio /],
     has_input => {
         input_file => {
             is  => 'String',
@@ -38,8 +38,6 @@ class Genome::Model::Tools::Picard::Downsample {
         },
     },
 };
-
-sub _downsample_ratio_is_required { 1; }
 
 sub help_detail {
     return <<EOS

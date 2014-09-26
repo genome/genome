@@ -5,6 +5,7 @@ use warnings;
 
 use UR;
 
+require List::MoreUtils;
 use Regexp::Common;
 
 class Genome::Model::Tools::Picard::WithDownsampleRatio {
@@ -36,32 +37,18 @@ sub __errors__ {
     my $self = shift;
 
     my @errors = $self->SUPER::__errors__;
-    return @errors if @errors;
+    my $downsample_ratio_error = List::MoreUtils::any { $_ eq 'downsample_ratio' } map { $_->properties } @errors;
 
     my $downsample_ratio = $self->downsample_ratio;
-    return if not defined $downsample_ratio;
-
-    if ( $downsample_ratio !~ /$RE{num}{real}/ ) {
-        return (
-            UR::Object::Tag->create(
-                type => 'invalid',
-                properties => [qw/ downsample_ratio /],
-                desc => 'Invalid number! '.$downsample_ratio,
-            )
-        );
-    }
-
-    if ( $downsample_ratio <= 0 or $downsample_ratio >= 1 ) {
-        return (
-            UR::Object::Tag->create(
+    if ( not $downsample_ratio_error and ( $downsample_ratio <= 0 or $downsample_ratio >= 1 ) ) {
+        push @errors, UR::Object::Tag->create(
                 type => 'invalid',
                 properties => [qw/ downsample_ratio /],
                 desc => 'Must be greater than 0 and less than 1! '.$downsample_ratio,
-            )
         );
     }
 
-    return;
+    return @errors;
 }
 
 1;

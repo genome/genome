@@ -14,42 +14,39 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Picard::WithDownsampleRatio') or die;
 
-class DownsampleRatioTester {
+class WithDownsampleRatio {
     is => 'Genome::Model::Tools::Picard::WithDownsampleRatio', 
 };
-ok(DownsampleRatioTester->__meta__->property_meta_for_name('downsample_ratio')->is_optional, 'downsample_ratio is optional');
+my $downsample_ratio_property = WithDownsampleRatio->__meta__->property_meta_for_name('downsample_ratio');
+ok($downsample_ratio_property, 'downsample_ratio property');
+ok($downsample_ratio_property->is_optional, 'downsample_ratio is not optional')
+    or diag explain $downsample_ratio_property;
 
-class DownsampleRatioIsRequiredTester {
-    is => 'Genome::Model::Tools::Picard::WithDownsampleRatio', 
-};
-sub DownsampleRatioIsRequiredTester::_downsample_ratio_is_required { return 1; }
-ok(!DownsampleRatioIsRequiredTester->__meta__->property_meta_for_name('downsample_ratio')->is_optional, 'downsample_ratio is not optional');
-
-my $tester = DownsampleRatioTester->create(
+my $tester = WithDownsampleRatio->create(
     downsample_ratio => 'NA',
 );
 ok($tester, 'create');
 my @errors = $tester->__errors__;
-ok(@errors, 'errors for downsample_ratio of NA');
-is($errors[0]->desc, 'Invalid Float value.', 'correct error desc for downsample_ratio of NA');
+is(@errors, 1, 'errors for downsample_ratio of NA');
+is($errors[0]->__display_name__, "INVALID: property 'downsample_ratio': Invalid Float value.", 'correct error __display_name__ for downsample_ratio of NA');
 
-$tester = DownsampleRatioTester->create(
+$tester = WithDownsampleRatio->create(
     downsample_ratio => 0,
 );
 ok($tester, 'create');
 @errors = $tester->__errors__;
-ok(@errors, 'errors for downsample_ratio of 0');
-is($errors[0]->desc, 'Must be greater than 0 and less than 1! 0', 'correct error desc for downsample_ratio of 0');
+is(@errors, 1, 'errors for downsample_ratio of 0');
+is($errors[0]->__display_name__, "INVALID: property 'downsample_ratio': Must be greater than 0 and less than 1! 0", 'correct error __display_name__ for downsample_ratio of 0');
 
-$tester = DownsampleRatioTester->create(
+$tester = WithDownsampleRatio->create(
     downsample_ratio => 1,
 );
 ok($tester, 'create');
 @errors = $tester->__errors__;
-ok(@errors, 'errors for downsample_ratio of 1');
-is($errors[0]->desc, 'Must be greater than 0 and less than 1! 1', 'correct error desc for downsample_ratio of 1');
+is(@errors, 1, 'errors for downsample_ratio of 1');
+is($errors[0]->__display_name__, "INVALID: property 'downsample_ratio': Must be greater than 0 and less than 1! 1", 'correct error __display_name__ for downsample_ratio of 1');
 
-$tester = DownsampleRatioTester->create(
+$tester = WithDownsampleRatio->create(
     downsample_ratio => 0.333333,
 );
 ok($tester, 'create');

@@ -8,7 +8,7 @@ use Genome;
 use Genome::InstrumentData::Command::Import::WorkFlow::Helpers;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam {
-    is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithDownsampleRatio /],
+    is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithRequiredDownsampleRatio /],
     has_input => {
         bam_path => {
             is => 'Genome::InstrumentData',
@@ -24,8 +24,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam {
         },
     },
 };
-
-sub _downsample_ratio_is_required { 1; }
 
 sub execute {
     my $self = shift;
