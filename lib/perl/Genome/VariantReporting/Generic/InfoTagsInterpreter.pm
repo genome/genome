@@ -16,8 +16,10 @@ sub requires_annotations {
     return ();
 }
 
-sub available_fields {
-    return qw/info_tags/;
+sub field_descriptions {
+    return (
+        info_tags => 'A list of info tags at this position'
+    );
 }
 
 sub _interpret_entry {

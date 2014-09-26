@@ -20,6 +20,13 @@ sub available_fields {
     return qw/filter_status/;
 }
 
+sub field_descriptions {
+    my $self = shift;
+    return (
+        filter_status => $self->vcf_description
+    );
+}
+
 sub interpret_entry {
     my ($self, $entry, $passed_alt_alleles) = @_;
 
@@ -53,5 +60,15 @@ sub pass_all_sample_alts {
     return %return_values;
 }
 
+
+sub vcf_description {
+    my $self = shift;
+    confess sprintf("Abstract method 'vcf_description' must be defined in class '%s'", $self->class);
+}
+
+sub vcf_id {
+    my $self = shift;
+    confess sprintf("Abstract method 'vcf_id' must be defined in class '%s'", $self->class);
+}
 
 1;

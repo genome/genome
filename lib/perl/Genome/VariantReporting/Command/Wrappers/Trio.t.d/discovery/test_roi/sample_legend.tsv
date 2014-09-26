@@ -1,0 +1,4 @@
+sample label	sample name
+d30_normal	TEST-patient1-somval_normal1
+d30_tumor	TEST-patient1-somval_tumor2
+d0_tumor	TEST-patient1-somval_tumor1

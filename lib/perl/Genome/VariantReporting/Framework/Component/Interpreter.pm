@@ -63,4 +63,22 @@ sub interpretation_null_character {
     return '.';
 }
 
+sub field_description {
+    my ($self, $field) = @_;
+
+    my %field_descriptions = $self->field_descriptions;
+    return $field_descriptions{$field};
+}
+
+sub field_descriptions {
+    my $class = shift->class;
+    confess "Abstract method 'field_descriptions' must be defined in subclass '$class'. This is a hash of available_fields mapped to their respective description";
+}
+
+sub available_fields {
+    my $self = shift;
+    my %field_descriptions = $self->field_descriptions;
+    return keys %field_descriptions;
+}
+
 1;

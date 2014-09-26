@@ -26,7 +26,7 @@ sub create {
         input => $self->input_file,
         separator => "\t",
         headers => [qw(na0 na1 na2 na3 na4 na5 hugo transcript_name na8 na9 na10 na11 na12 class c_position aa_change)],
-        ignore_extra_columns => 1,
+        allow_extra_columns => 1,
     );
     $self->reader($reader);
     return $self;

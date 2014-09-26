@@ -19,9 +19,10 @@ sub requires_annotations {
     return ('bam-readcount');
 }
 
-
-sub available_fields {
-    return qw/min_coverage_observed/;
+sub field_descriptions {
+    return (
+        min_coverage_observed => 'Minimum coverage (ref_count+var_count) between all the samples at this position'
+    );
 }
 
 sub _interpret_entry {

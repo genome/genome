@@ -16,10 +16,10 @@ sub requires_annotations {
     ();
 }
 
-sub available_fields {
-    return qw/
-        rsid
-    /;
+sub field_descriptions {
+    return (
+        rsid => "A list of rsids at this position",
+    );
 }
 
 sub _interpret_entry {

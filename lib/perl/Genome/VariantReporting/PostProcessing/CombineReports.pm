@@ -10,7 +10,7 @@ use Memoize;
 
 class Genome::VariantReporting::PostProcessing::CombineReports {
     is => 'Command',
-    has => [
+    has_input => [
         reports => {
             is => 'Path',
             doc => 'The reports you wish to combine. They must all be the same type of report (same columns).',
@@ -29,6 +29,7 @@ class Genome::VariantReporting::PostProcessing::CombineReports {
         output_file => {
             is => 'Path',
             doc => 'Where the combined report should go',
+            is_output => 1,
         },
         separator => {
             is => 'Text',

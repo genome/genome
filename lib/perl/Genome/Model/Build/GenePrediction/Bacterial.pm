@@ -369,7 +369,7 @@ sub compare_output {
         unless ($diff_result) {
             my $build_dir = $self->data_directory;
             my $other_build_dir = $other_build->data_directory;
-            $diffs{$rel_path} = "files are not the same (diff -u {$build_dir,$other_build_dir}/$rel_path)";
+            $diffs{$rel_path} = "files are not the same (diff -u $abs_path $other_abs_path)";
         }
     }
 

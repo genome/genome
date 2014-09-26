@@ -17,7 +17,10 @@ class Genome::VariantReporting::Reporter::WithHeader {
             is => 'Text',
             default => "\t",
         },
-    }
+    },
+    has_transient_optional => [
+        _legend_fh => {},
+    ],
 };
 
 sub __errors__ {
@@ -59,7 +62,17 @@ sub initialize {
     my $output_dir = shift;
 
     $self->SUPER::initialize($output_dir);
+    my $legend_fh = Genome::Sys->open_file_for_writing(File::Spec->join($output_dir, $self->file_name . '.legend.tsv'));
+    $self->_legend_fh($legend_fh);
+    $self->write_legend_file();
     $self->print_headers();
+}
+
+sub finalize {
+    my $self = shift;
+    $self->SUPER::finalize(@_);
+    $self->_legend_fh->close;
+    return
 }
 
 sub headers {
@@ -159,6 +172,36 @@ sub header_is_unavailable {
 # Override this method if some fields are not available from interpreters but should be in the report as null values
 sub unavailable_headers {
     return;
+}
+
+sub write_legend_file {
+    my $self = shift;
+
+    my %fields = $self->available_fields_dict;
+    my $interpreters = $self->interpreters;
+    $self->_legend_fh->print("Headers\n");
+    for my $header ($self->headers) {
+        my $field = $fields{$header}->{field};
+        my $interpreter_name = $fields{$header}->{interpreter};
+        my $interpreter = $interpreters->{$interpreter_name};
+        $self->_legend_fh->print(join($self->delimiter, $header, $interpreter->field_description($field)) . "\n");
+    }
+
+    $self->_legend_fh->print("Filters\n");
+    my %filters = %{$self->filters || {}};
+    while( my ($filter_name, $filter) = each %filters) {
+        next if $self->_skip_list->contains($filter_name);
+        $self->_legend_fh->print(join($self->delimiter, $filter_name, $filter->vcf_id, $filter->vcf_description) . "\n");
+    }
+}
+
+# List of filters that should not be included in the legend file
+sub _skip_list {
+    return Set::Scalar->new(
+        'allele-in-genotype'    #Special filter that is used in all WithHeader reports.
+                                #Filters out alternate alleles that are not part of the discovery sample's genotype.
+                                #Not useful for analysts to include in legend.
+    );
 }
 
 1;

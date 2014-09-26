@@ -28,7 +28,7 @@ subtest "one alt allele" => sub {
             max_alt_af => 0.3,
         }
     );
-    my $entry = create_entry('[0.7,0.3,.]');
+    my $entry = create_entry('0.7,0.3,.');
     is_deeply({$interpreter->interpret_entry($entry, ['C'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
@@ -60,21 +60,21 @@ subtest "two alt allele" => sub {
             max_alt_af => 0.3,
         },
     );
-    my $entry = create_entry('[0.7,0.3,.]');
+    my $entry = create_entry('0.7,0.3,.');
     is_deeply({$interpreter->interpret_entry($entry, ['C', 'G'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
 sub create_vcf_header {
     my $header_txt = <<EOS;
-##fileformat=VCFv4.1
+##fileformat=VCFv4.2
 ##FILTER=<ID=PASS,Description="Passed all filters">
 ##FILTER=<ID=BAD,Description="This entry is bad and it should feel bad">
-##INFO=<ID=CAF,Number=.,Type=Float,Description="CAF">
+##INFO=<ID=CAF,Number=R,Type=Float,Description="CAF">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
 EOS
     my @lines = split("\n", $header_txt);
     my $header = Genome::File::Vcf::Header->create(lines => \@lines);
-    return $header
+    return $header;
 }
 
 sub create_entry {

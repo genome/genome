@@ -273,12 +273,15 @@ sub execute {
         or die "can't open file: $variant_file\n";
     open(SNVFILE,">$tempdir/snvpos");
     open(INDELFILE,">$tempdir/indelpos");
+    my $on_first_line = 1;
     while( my $sline = $inFh->getline )
     {
         chomp($sline);
 
         #skip header lines
-        next if($sline =~ /^(#|Hugo_Symbol|Chr|chromosome)/i);
+        next if ($on_first_line
+            && ($sline =~ /^(#|Hugo_Symbol|Chrom|chromosome|chr\s)/i));
+        $on_first_line = 0;
 
         my @fields = split("\t",$sline);
 

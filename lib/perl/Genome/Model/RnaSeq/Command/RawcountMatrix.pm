@@ -152,30 +152,16 @@ sub execute
 
     # open the gtf file and read it creating a hash of ensemble_id => gene name
 
-    open(GTF, "$gene_gtf_path") || die "Can not open path to file: $!";
+    my $gtf_reader = Genome::Utility::IO::GffReader->create(
+        input => $gene_gtf_path,
+    );
+    unless ($gtf_reader) {
+        die "Can not open path to file: $!";
+    }
 
-    while(<GTF>)
-    {
-        chomp $_;
-        my @tmp = split("\t", $_);
-       
-    # extract just the gene name from the annotation file
-
-        $tmp[8] =~ /gene_name\s*"[A-Za-z0-9._-]*"/;
-        my $gene_name = $&;
-        $gene_name =~ s/gene_name\s*"//g;
-        $gene_name =~ s/"//g;
-
-    # extract just the ensemble id from the annotation file
-
-        $tmp[8] =~ /gene_id\s*"\w+"/;
-        my $ensemble_id = $&;
-        $ensemble_id =~ s/gene_id\s*"//g;
-        $ensemble_id =~ s/"//g;
-
-    # build the hash
-        
-        $annotation_hash{$ensemble_id} = "$gene_name\t";
+    while (my $data = $gtf_reader->next_with_attributes) {
+        # build the hash
+        $annotation_hash{$data->{gene_id}} = $data->{gene_name} ."\t";
     }
 
     $self->debug_message('There are '. scalar(keys %annotation_hash). ' genes in the annotation file: '. $gene_gtf_path);

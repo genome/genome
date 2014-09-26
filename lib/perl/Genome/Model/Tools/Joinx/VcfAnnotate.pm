@@ -76,7 +76,6 @@ EOS
 
 sub execute {
     my $self = shift;
-    $DB::single = 1;
 
     if($self->use_version < $MINIMUM_JOINX_VERSION) {
         die $self->error_message("This module requires joinx version $MINIMUM_JOINX_VERSION or higher to function correctly.");

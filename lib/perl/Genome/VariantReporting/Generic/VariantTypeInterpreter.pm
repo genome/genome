@@ -16,6 +16,10 @@ sub requires_annotations {
     ();
 }
 
+sub field_description {
+    return 'The type of variant: snp, ins (insertion), del (deletion), other';
+}
+
 sub available_fields {
     return qw/
         variant_type

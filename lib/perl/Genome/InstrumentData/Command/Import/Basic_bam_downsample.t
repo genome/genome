@@ -55,6 +55,7 @@ is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correct
 is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
 is($instrument_data->read_count, 68, 'read_count correctly set');
 is($instrument_data->read_length, 100, 'read_length correctly set');
+cmp_ok(eval{$instrument_data->attributes(attribute_label => 'downsample_ratio')->attribute_value;}, '==', 0.25, 'downsample_ratio correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'segment_id')->attribute_value;}, 2883581797, 'segment_id correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, 'f81fbc3d3a6b57d11e60b016bb2c950c', 'original_data_path_md5 correctly set');
 is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');

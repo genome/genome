@@ -16,9 +16,12 @@ class Genome::InstrumentData::Command::Import::GenerateFileForReimport {
             doc => 'Instrument data to use to create file to reimport.',
         },
     },
-    has_optional_input => {
+    has_many_optional_input => {
+        downsample_ratios => {
+            is => 'Float',
+            doc => 'Downsample ratios to add to each instruemnt data reimport.',
+        },
         instrument_data_and_new_source_files => {
-            is => 'Text',
             is_many => 1,
             doc => 'Mapping of instrument data ids and new source files. ',
         },
@@ -76,6 +79,7 @@ sub execute {
     my $self = shift;
     $self->status_message('Generate file to reimport instrument data...');
 
+    my @downsample_ratios = $self->downsample_ratios;
     my $instrument_data_and_new_source_files = $self->_instrument_data_and_new_source_files;
     my @reimports;
     for my $instrument_data ( $self->instrument_data ) {
@@ -87,12 +91,25 @@ sub execute {
         : $instdata_attrs->{source_files};
 
         for my $source_file ( @source_files ) {
-            my %reimport = %$instdata_attrs;
-            if ( not -s $source_file ) {
+            if ( not $source_file or not -s $source_file ) {
                 die $self->error_message("Source file does not exist! $source_file");
             }
-            $reimport{source_files} = $source_file;
-            push @reimports, \%reimport;
+
+            if ( @downsample_ratios ) {
+                for my $downsample_ratio ( @downsample_ratios ) {
+                    push @reimports, {
+                        %$instdata_attrs,
+                        source_files => $source_file,
+                        downsample_ratio => $downsample_ratio,
+                    };
+                }
+            }
+            else {
+                push @reimports, {
+                    %$instdata_attrs,
+                    source_files => $source_file,
+                };
+            }
         }
     }
     $self->status_message('Found '.@reimports.' instrument data...');

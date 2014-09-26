@@ -1185,8 +1185,6 @@ sub expunge {
         $child->expunge($reason);
     }
 
-    $self->test_name($reason);
-
     if($self->disk_allocation) {
         eval {
             $self->disk_allocation->purge($reason);
@@ -1195,6 +1193,9 @@ sub expunge {
             $self->warning_message($@);
         }
     }
+
+    #disk allocation activity may have updated object so set this afterwards.
+    $self->test_name($reason);
 
     return 1;
 }

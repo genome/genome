@@ -149,8 +149,16 @@ sub _header_line {
 
 sub _metainfo_lines {
     my $self = shift;
-    return unless $self->metainfo;
-    return map {sprintf "##%s=%s", $_, $self->_metainfo_to_string($self->metainfo->{$_})} sort keys %{$self->metainfo};
+    my $metainfo = $self->metainfo;
+    return unless $metainfo;
+
+    my @metainfo_lines;
+    for my $key (sort keys %$metainfo) {
+        my $value = $metainfo->{$key};
+        my @values = (ref $value eq 'ARRAY'? @$value : $value);
+        push @metainfo_lines, map { sprintf "##%s=%s", $key, $self->_metainfo_to_string($_) } @values;
+    }
+    return @metainfo_lines;
 }
 
 sub _metainfo_to_string {
@@ -168,9 +176,6 @@ sub _metainfo_to_string {
     }
     elsif (ref $metainfo eq 'HASH') {
         return "<".join(",", map {$self->_format_hash_entry($_, $metainfo->{$_})} sort keys %$metainfo).">";
-    }
-    elsif (ref $metainfo eq 'ARRAY') {
-        return join(",", map {$self->_metainfo_to_string($_) } @$metainfo);
     }
     else {
         confess "Unknown metainfo object ".Data::Dumper::Dumper($metainfo);
