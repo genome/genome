@@ -11,10 +11,10 @@ use warnings;
 use above "Genome";
 use Test::More;
 
-my $pkg = "Genome::VariantReporting::PostProcessing::CombineSnvIndelReports";
+my $pkg = "Genome::VariantReporting::Command::CombineSnvIndelReports";
 use_ok($pkg);
 
-my $cmd = Genome::VariantReporting::PostProcessing::CombineSnvIndelReports->create(
+my $cmd = Genome::VariantReporting::Command::CombineSnvIndelReports->create(
     input_directories => [
         qw(/a/file/path /another/file/path/)
     ],

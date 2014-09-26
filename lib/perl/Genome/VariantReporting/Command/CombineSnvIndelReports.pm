@@ -1,10 +1,10 @@
-package Genome::VariantReporting::PostProcessing::CombineSnvIndelReports;
+package Genome::VariantReporting::Command::CombineSnvIndelReports;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::PostProcessing::CombineSnvIndelReports {
+class Genome::VariantReporting::Command::CombineSnvIndelReports {
     is => 'Command::V2',
     has_input => [
         input_directories => {
