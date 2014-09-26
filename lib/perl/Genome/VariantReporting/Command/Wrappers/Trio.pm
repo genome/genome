@@ -61,7 +61,7 @@ sub execute {
         for my $base (Genome::VariantReporting::Command::Wrappers::ModelPair->report_names) {
             my $discovery_report = File::Spec->join($self->output_directory, "discovery", $roi_directory, $base);
             my $additional_report = File::Spec->join($self->output_directory, "additional", $roi_directory, $base);
-            Genome::VariantReporting::PostProcessing::CombineReports->execute(
+            Genome::VariantReporting::Command::CombineReports->execute(
                 reports => [$discovery_report, $additional_report],
                 sort_columns => [qw(chromosome_name start stop reference variant)],
                 contains_header => 1,
@@ -143,12 +143,12 @@ sub add_combine_to_workflow {
     my $counter = $self->_workflow_counter;
     my $combine_command = Genome::WorkflowBuilder::Command->create(
         name => join(" ", "Combine snv and indel", $counter),
-        command => "Genome::VariantReporting::PostProcessing::CombineReports",
+        command => "Genome::VariantReporting::Command::CombineReports",
     );
     $self->_add_operation_to_workflow($combine_command, $params, $counter);
     my $generate_file_names = Genome::WorkflowBuilder::Command->create(
         name => join(" ", "Generate filenames", $counter),
-        command => "Genome::VariantReporting::PostProcessing::CombineSnvIndelReports",
+        command => "Genome::VariantReporting::Command::CombineSnvIndelReports",
     );
     $self->_workflow->add_operation($generate_file_names);
     my $converge = Genome::WorkflowBuilder::Converge->create(
