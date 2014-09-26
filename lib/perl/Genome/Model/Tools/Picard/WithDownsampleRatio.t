@@ -21,8 +21,8 @@ ok(DownsampleRatioTester->__meta__->property_meta_for_name('downsample_ratio')->
 
 class DownsampleRatioIsRequiredTester {
     is => 'Genome::Model::Tools::Picard::WithDownsampleRatio', 
-    has_optional_transient => { _make_downsample_ratio_required => {}, },
 };
+sub DownsampleRatioIsRequiredTester::_downsample_ratio_is_required { return 1; }
 ok(!DownsampleRatioIsRequiredTester->__meta__->property_meta_for_name('downsample_ratio')->is_optional, 'downsample_ratio is not optional');
 
 my $tester = DownsampleRatioTester->create(

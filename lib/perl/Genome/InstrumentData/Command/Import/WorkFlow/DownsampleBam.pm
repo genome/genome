@@ -23,8 +23,9 @@ class Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam {
             doc => 'The path of the downsampled bam.',
         },
     },
-    has_optional_transient => { _make_downsample_ratio_required => {}, },
 };
+
+sub _downsample_ratio_is_required { 1; }
 
 sub execute {
     my $self = shift;
