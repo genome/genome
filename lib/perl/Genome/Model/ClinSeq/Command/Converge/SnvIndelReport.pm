@@ -711,6 +711,7 @@ sub add_per_lib_read_counts{
             variant_file=>$grand_anno_file,
             header_prefixes=>$header_prefixes,
             per_library=>1,
+            bam_readcount_version => $self->bam_readcount_version,
           );
     my $r = $add_count_cmd->execute();
     die $self->error_message("per-lane add-readcounts cmd unsuccessful") unless ($r);
