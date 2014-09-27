@@ -30,20 +30,26 @@ ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 
 #Get a wgs somatic variation build
-my $build_id = 129399487;
-my $build = Genome::Model::Build->get($build_id);
-ok ($build, "obtained somatic variation build from db") or die;
+my $clinseq_build_id = "27b94a6da5a44520bf7816ac26650f6e";
+my $clinseq_build = Genome::Model::Build->get($clinseq_build_id);
+ok ($clinseq_build, "obtained clinseq build from db") or die;
+
+#Get a wgs somatic variation build
+my $somvar_build_id = 129399487;
+my $somvar_build = Genome::Model::Build->get($somvar_build_id);
+ok ($somvar_build, "obtained somatic variation build from db") or die;
 
 #Get a 'final' name for the sample
-my $final_name = $build->model->id;
-$final_name = $build->model->subject->name if ($build->model->subject->name);
-$final_name = $build->model->subject->individual->common_name if ($build->model->subject->individual->common_name);
+my $final_name = $somvar_build->model->id;
+$final_name = $somvar_build->model->subject->name if ($somvar_build->model->subject->name);
+$final_name = $somvar_build->model->subject->patient->common_name if ($somvar_build->model->subject->patient->common_name);
 ok ($final_name, "found final name from build object") or die;
 
 #Create create-mutation-spectrum command and execute
 #genome model clin-seq create-mutation-spectrum --outdir=/tmp/create_mutation_spectrum/ --datatype=wgs --max-snvs=100 129855269
 
-my $mutation_spectrum_cmd = Genome::Model::ClinSeq::Command::CreateMutationSpectrum->create(outdir=>$temp_dir, datatype=>'wgs', max_snvs=>100, build=>$build);
+my $mutation_spectrum_cmd = Genome::Model::ClinSeq::Command::CreateMutationSpectrum->create(
+  outdir=>$temp_dir, datatype=>'wgs', max_snvs=>100, somvar_build=>$somvar_build, clinseq_build=>$clinseq_build);
 $mutation_spectrum_cmd->queue_status_messages(1);
 my $r1 = $mutation_spectrum_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
