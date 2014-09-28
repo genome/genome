@@ -43,7 +43,7 @@ sub execute {
     my @builds = map { $_->last_succeeded_build } $self->models;
 
     my $exclude = $self->exclude;
-    @builds = grep {not $_->model->name =~ /\Q$exclude\E/} @builds if $exclude;
+    @builds = grep { $_->model->name !~ /\Q$exclude\E/} @builds if $exclude;
 
 
     my $output_dir = $self->output_directory;
