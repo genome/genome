@@ -84,7 +84,7 @@ sub _create_symlinked_vcf_file {
     unless($type eq 'snvs' || $type eq 'indels') {
         die "Invalid variant type $type requested for symlink.";
     }
-    my $vcf = $build->data_directory . "/variants/$type.vcf.gz";
+    my $vcf = $type eq 'snvs' ? $build->get_snvs_vcf : $build->get_indels_vcf;
     eval {
         Genome::Sys->create_symlink($vcf, "$output_dir/$name.$type.vcf.gz");
     };
