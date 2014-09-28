@@ -15,11 +15,11 @@ class Genome::Model::ReferenceAlignment::Command::VcfSymlinks {
             is=> 'String',
             doc => 'a directory to place the symlnks to SNV and Indel VCFs.',
         }, 
-        builds => {
-            is => 'Genome::Model::Build::ReferenceAlignment',
+        models => {
+            is => 'Genome::Model::ReferenceAlignment',
             is_many => 1,
             shell_args_position => 1,
-            doc => 'List of builds to use if searching on a list of builds.'
+            doc => 'List of models to use if searching on a list of models.'
         },
     ],
     has_optional => [
@@ -40,7 +40,7 @@ sub help_detail {
 sub execute {
     my $self = shift;
 
-    my @builds = grep {$_ eq $_->model->last_succeeded_build} $self->builds;
+    my @builds = map { $_->last_succeeded_build } $self->models;
 
     my $exclude = $self->exclude;
     @builds = grep {not $_->model->name =~ /\Q$exclude\E/} @builds if $exclude;
