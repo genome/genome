@@ -89,7 +89,7 @@ sub _create_symlinked_vcf_file {
         Genome::Sys->create_symlink($vcf, "$output_dir/$name.$type.vcf.gz");
     };
     if($@) {
-        die "Unable to create a symlink for the indel VCF in build " . $build->id . " for " . $build->model->subject_name . ". Check that the subject name is unique and the $type.vcf.gz file exists in the build.\n"; 
+        die "Unable to create a symlink for the $type VCF in build " . $build->id . " for " . $build->model->subject_name . ". Check that the subject name is unique and the $type.vcf.gz file exists in the build.\n"; 
     }
     return 1;
 }
