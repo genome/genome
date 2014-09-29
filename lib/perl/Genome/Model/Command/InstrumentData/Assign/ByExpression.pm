@@ -1,11 +1,11 @@
-package Genome::Model::Command::InstrumentData::Assign::Expression;
+package Genome::Model::Command::InstrumentData::Assign::ByExpression;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Command::InstrumentData::Assign::Expression {
+class Genome::Model::Command::InstrumentData::Assign::ByExpression {
     is => 'Genome::Model::Command::InstrumentData::Assign::Base',
     has_input => [
         instrument_data => {

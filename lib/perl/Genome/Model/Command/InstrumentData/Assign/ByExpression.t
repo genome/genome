@@ -12,7 +12,7 @@ use above 'Genome';
 
 use Test::More;
 
-use_ok('Genome::Model::Command::InstrumentData::Assign::Expression') or die;
+use_ok('Genome::Model::Command::InstrumentData::Assign::ByExpression') or die;
 
 my $pp = Genome::ProcessingProfile::TestPipeline->create(
     name => 'Test Pipeline Test for Testing',
@@ -31,7 +31,7 @@ ok($model, 'create model') or die;
 my @sanger_id = map { Genome::InstrumentData::Sanger->create(id => '0'.$_.'jan00.101amaa') } (1..4);
 is(@sanger_id, 4, 'create instrument data') or die;
 
-my $assign = Genome::Model::Command::InstrumentData::Assign::Expression->create(
+my $assign = Genome::Model::Command::InstrumentData::Assign::ByExpression->create(
     model => $model,
     instrument_data => [$sanger_id[0]],
     force => 1,
@@ -42,7 +42,7 @@ ok($assign->execute, 'execute');
 my @assigned_inst_data = $model->instrument_data;
 is_deeply(\@assigned_inst_data, [ $sanger_id[0], ], 'confirmed assigned inst data');
 
-$assign = Genome::Model::Command::InstrumentData::Assign::Expression->create(
+$assign = Genome::Model::Command::InstrumentData::Assign::ByExpression->create(
     model => $model,
     instrument_data => [ $sanger_id[1], $sanger_id[2], ],
     force => 1,
