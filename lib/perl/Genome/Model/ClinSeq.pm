@@ -421,13 +421,27 @@ sub map_workflow_inputs {
     }
 
     #CreateMutationSpectrum
-    if ($wgs_build) {
-      push @inputs, 'wgs_mutation_spectrum_outdir' => $patient_dir . '/mutation-spectrum';
-      push @inputs, 'wgs_mutation_spectrum_datatype' => 'wgs';
+    my $i = 1;
+    foreach my $mq(@$mqs) {
+      foreach my $bq(@$bqs) {
+        if ($wgs_build) {
+          push @inputs, 'wgs_mutation_spectrum_outdir' . $i =>
+            $patient_dir . "/mutation-spectrum/b". $bq . "_q" . $mq .  "/";
+          push @inputs, 'wgs_mutation_spectrum_datatype' . $i =>
+            'wgs';
+        }
+        if ($exome_build) {
+          push @inputs, 'exome_mutation_spectrum_outdir' . $i  =>
+            $patient_dir . "/mutation-spectrum/b". $bq . "_q" . $mq .  "/";
+          push @inputs, 'exome_mutation_spectrum_datatype' . $i =>
+            'exome';
+        }
+        $i++;
+      }
     }
-    if ($exome_build) {
-      push @inputs, 'exome_mutation_spectrum_outdir' => $patient_dir . '/mutation-spectrum';
-      push @inputs, 'exome_mutation_spectrum_datatype' => 'exome';
+    if($wgs_build or $exome_build) {
+      my $mutation_spectrum_dir = $patient_dir . "/mutation-spectrum";
+      push @dirs, $mutation_spectrum_dir;
     }
 
     #AnnotateGenesByCategory
@@ -512,7 +526,6 @@ sub _resolve_workflow_for_build {
           summarize_wgs_tier1_snv_support_result
           summarize_svs_result
           summarize_cnvs_result
-          wgs_mutation_spectrum_result
           clonality_result
           run_cn_view_result
           gene_category_cnv_amp_result
@@ -532,7 +545,6 @@ sub _resolve_workflow_for_build {
   if ($build->exome_build) {
       push @output_properties, qw(
           summarize_exome_tier1_snv_support_result
-          exome_mutation_spectrum_result
           gene_category_exome_snv_result
           gene_category_exome_indel_result
           dgidb_exome_snv_result
@@ -550,17 +562,22 @@ sub _resolve_workflow_for_build {
   }
 
   if ($build->wgs_build or $build->exome_build) {
-      push @output_properties, 'mutation_diagram_result';
-      push @output_properties, 'import_snvs_indels_result';
-      my $i = 1;
-      #Create a report for each $bq $mq combo.
-      foreach my $mq(@$mqs) {
-        foreach my $bq(@$bqs) {
-          push @output_properties, 'converge_snv_indel_report_result' . $i;
-          push @output_properties, 'sciclone_result' . $i;
-          $i++;
+    push @output_properties, 'mutation_diagram_result';
+    push @output_properties, 'import_snvs_indels_result';
+    my $i = 1;
+    foreach my $mq(@$mqs) {
+      foreach my $bq(@$bqs) {
+        if($build->wgs_build) {
+          push @output_properties,  'wgs_mutation_spectrum_result' . $i;
         }
+        if($build->exome_build) {
+          push @output_properties, 'exome_mutation_spectrum_result' . $i;
+        }
+        push @output_properties, 'converge_snv_indel_report_result' . $i;
+        push @output_properties, 'sciclone_result' . $i;
+        $i++;
       }
+    }
   }
 
   if ($self->has_microarray_build()) {
@@ -804,26 +821,6 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'exome_build_as_array', $exome_variant_sources_op, 'builds');
     $add_link->($input_connector, 'exome_variant_sources_dir', $exome_variant_sources_op, 'outdir');
     $add_link->($exome_variant_sources_op, 'result', $output_connector, 'exome_variant_sources_result');
-  }
-
-  #CreateMutationDiagrams - Create mutation spectrum results for wgs data
-  if ($build->wgs_build) {
-    my $msg = "Creating mutation spectrum results for wgs snvs using create-mutation-spectrum";
-    my $create_mutation_spectrum_wgs_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
-    $add_link->($input_connector, 'wgs_build', $create_mutation_spectrum_wgs_op, 'build');
-    $add_link->($input_connector, 'wgs_mutation_spectrum_outdir', $create_mutation_spectrum_wgs_op, 'outdir');
-    $add_link->($input_connector, 'wgs_mutation_spectrum_datatype', $create_mutation_spectrum_wgs_op, 'datatype');
-    $add_link->($create_mutation_spectrum_wgs_op, 'result', $output_connector, 'wgs_mutation_spectrum_result')
-  }
-
-  #CreateMutationDiagrams - Create mutation spectrum results for exome data
-  if ($build->exome_build) {
-    my $msg = "Creating mutation spectrum results for exome snvs using create-mutation-spectrum";
-    my $create_mutation_spectrum_exome_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
-    $add_link->($input_connector, 'exome_build', $create_mutation_spectrum_exome_op, 'build');
-    $add_link->($input_connector, 'exome_mutation_spectrum_outdir', $create_mutation_spectrum_exome_op, 'outdir');
-    $add_link->($input_connector, 'exome_mutation_spectrum_datatype', $create_mutation_spectrum_exome_op, 'datatype');
-    $add_link->($create_mutation_spectrum_exome_op, 'result', $output_connector, 'exome_mutation_spectrum_result')
   }
 
   #CreateMutationDiagrams - Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
@@ -1236,6 +1233,46 @@ sub _resolve_workflow_for_build {
         }
         $add_link->($converge_snv_indel_report_op1, 'result', $output_connector, 'converge_snv_indel_report_result' . $i);
         push @converge_snv_indel_report_ops, $converge_snv_indel_report_op1;
+        $i++;
+      }
+    }
+  }
+
+  #CreateMutationDiagrams - Create mutation spectrum results for wgs data
+  if ($build->wgs_build) {
+    my $i = 1;
+    foreach my $mq(@$mqs) {
+      foreach my $bq(@$bqs) {
+        my $msg = "Creating mutation spectrum results for wgs snvs using create-mutation-spectrum" . $i;
+        my $create_mutation_spectrum_wgs_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
+        $add_link->($input_connector, 'build', $create_mutation_spectrum_wgs_op, 'clinseq_build');
+        $add_link->($input_connector, 'wgs_build', $create_mutation_spectrum_wgs_op, 'somvar_build');
+        $add_link->($input_connector, 'wgs_mutation_spectrum_outdir' . $i, $create_mutation_spectrum_wgs_op, 'outdir');
+        $add_link->($input_connector, 'wgs_mutation_spectrum_datatype' . $i, $create_mutation_spectrum_wgs_op, 'datatype');
+        $add_link->($input_connector, 'sireport_min_bq' . $i, $create_mutation_spectrum_wgs_op, 'min_base_quality');
+        $add_link->($input_connector, 'sireport_min_mq' . $i, $create_mutation_spectrum_wgs_op, 'min_quality_score');
+        $add_link->($converge_snv_indel_report_ops[$i-1], 'result', $create_mutation_spectrum_wgs_op, 'converge_snv_indel_report_result');
+        $add_link->($create_mutation_spectrum_wgs_op, 'result', $output_connector, 'wgs_mutation_spectrum_result' . $i);
+        $i++;
+      }
+    }
+  }
+
+  #CreateMutationDiagrams - Create mutation spectrum results for exome data
+  if ($build->exome_build) {
+    my $i = 1;
+    foreach my $mq(@$mqs) {
+      foreach my $bq(@$bqs) {
+        my $msg = "Creating mutation spectrum results for exome snvs using create-mutation-spectrum " . $i;
+        my $create_mutation_spectrum_exome_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
+        $add_link->($input_connector, 'build', $create_mutation_spectrum_exome_op, 'clinseq_build');
+        $add_link->($input_connector, 'exome_build', $create_mutation_spectrum_exome_op, 'somvar_build');
+        $add_link->($input_connector, 'exome_mutation_spectrum_outdir' . $i, $create_mutation_spectrum_exome_op, 'outdir' );
+        $add_link->($input_connector, 'exome_mutation_spectrum_datatype' . $i, $create_mutation_spectrum_exome_op, 'datatype');
+        $add_link->($input_connector, 'sireport_min_bq' . $i, $create_mutation_spectrum_exome_op, 'min_base_quality');
+        $add_link->($input_connector, 'sireport_min_mq' . $i, $create_mutation_spectrum_exome_op, 'min_quality_score');
+        $add_link->($converge_snv_indel_report_ops[$i-1], 'result', $create_mutation_spectrum_exome_op, 'converge_snv_indel_report_result');
+        $add_link->($create_mutation_spectrum_exome_op, 'result', $output_connector, 'exome_mutation_spectrum_result' . $i);
         $i++;
       }
     }
