@@ -113,7 +113,7 @@ if ($sample_names){
 
     my $sample = Genome::Sample->get( name => $sample_name);
     my $patient = $sample->patient;
-    my $patient_name = $patient->name;
+    my $individual_name = $patient->name;
     my $individual_common_name = $patient->common_name || "UNDEF";
 
     #Display basic sample info
@@ -154,7 +154,7 @@ if ($sample_names){
     #If a target region set name is defined, this is not WGS data, do not list
     if ($grand_ii_count > 0){
       if ($report_only){
-        print "$individual_common_name\t$patient_name\t$sample_common_name\t$sample_name\t$extraction_type\t$sample_common_name\t$tissue_desc\t$cell_type\n";
+        print "$individual_common_name\t$individual_name\t$sample_common_name\t$sample_name\t$extraction_type\t$sample_common_name\t$tissue_desc\t$cell_type\n";
       }
     }
   }

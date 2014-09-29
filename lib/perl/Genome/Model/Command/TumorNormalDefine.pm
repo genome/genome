@@ -160,12 +160,12 @@ sub linked_models {
 
     my %result;
     for my $model ($self->matching_models) {
-        my $patient_name = $model->subject->patient_name;
+        my $individual_name = $model->subject->individual_name;
 
-        $result{$patient_name}{$match_label} =
-            [grep {$_->subject->patient_name eq $patient_name} $self->matching_models];
-        $result{$patient_name}{$non_match_label} =
-            [grep {$_->subject->patient_name eq $patient_name} $self->non_matching_models];
+        $result{$individual_name}{$match_label} =
+            [grep {$_->subject->individual_name eq $individual_name} $self->matching_models];
+        $result{$individual_name}{$non_match_label} =
+            [grep {$_->subject->individual_name eq $individual_name} $self->non_matching_models];
     }
     return %result;
 }
@@ -209,7 +209,7 @@ sub define_params {
         for my $tumor_model (@{$models->{'tumor'}}) {
             for my $normal_model (@{$models->{'normal'}}) {
                 my $model_name = sprintf("%s (%s vs %s)",
-                    $tumor_model->subject->patient_name,
+                    $tumor_model->subject->individual_name,
                     $tumor_model->subject->extraction_label,
                     $normal_model->subject->extraction_label,
                 );

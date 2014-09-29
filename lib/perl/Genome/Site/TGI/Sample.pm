@@ -118,7 +118,7 @@ class Genome::Site::TGI::Sample {
         patient                      => { is => 'Genome::Site::TGI::Individual', id_by => 'source_id',
                                            doc => 'The patient/individual organism from which the sample was taken.' },
         
-        patient_name                 => { via => 'patient', to => 'name', doc => 'the system name for a patient (subset of the sample name)' },
+        individual_name                 => { via => 'patient', to => 'name', doc => 'the system name for a patient (subset of the sample name)' },
         
         individual_common_name          => { via => 'patient', to => 'common_name', doc => 'names like AML1, BRC50, etc' },
         age => { 

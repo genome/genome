@@ -54,7 +54,7 @@ sub resolve_clinseq_subject_labels{
   my %individual_common_names;
   my %patient_and_subject_type_names;
   my %clinseq_subject_names;
-  my %patient_names; 
+  my %individual_names; 
   my %wgs_subject_names; 
   my %exome_subject_names;
   my %dna_subject_names;
