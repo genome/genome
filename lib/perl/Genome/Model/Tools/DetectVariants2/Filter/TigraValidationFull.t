@@ -12,7 +12,8 @@ if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 19;
+    plan skip_all => 'test data deleted';
+    # plan tests => 19;
 }
 
 BEGIN {
