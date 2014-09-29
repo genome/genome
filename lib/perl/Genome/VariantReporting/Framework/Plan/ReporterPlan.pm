@@ -77,22 +77,12 @@ sub __interpreter_plan_errors__ {
     my $have = Set::Scalar->new(map {$_->name} $self->interpreter_plans);
 
     my @errors;
-    unless($needed->is_equal($have)) {
-        if (my $still_needed = $needed - $have) {
-            push @errors, UR::Object::Tag->create(
-                type => 'error',
-                properties => [$still_needed->members],
-                desc => sprintf("Interpreters required by reporter (%s) but not provided: (%s)", $self->name, join(",", $still_needed->members)),
-            );
-        }
-        if (my $not_needed = $have - $needed) {
-            push @errors, UR::Object::Tag->create(
-                type => 'error',
-                properties => [$not_needed->members],
-                desc => sprintf("Interpreters provided by plan but not required by reporter (%s): (%s)",
-                    $self->name, join(",", $not_needed->members)),
-            );
-        }
+    if (my $still_needed = $needed - $have) {
+        push @errors, UR::Object::Tag->create(
+            type => 'error',
+            properties => [$still_needed->members],
+            desc => sprintf("Interpreters required by reporter (%s) but not provided: (%s)", $self->name, join(",", $still_needed->members)),
+        );
     }
     return @errors;
 }
