@@ -6,16 +6,24 @@ use warnings;
 
 use Genome;
 class Genome::Model::Link {
-    type_name => 'genome model link',
     table_name => 'model.model_link',
+    type_name => 'genome model link',
     id_by => [
-        from_model_id => { is => 'Text', len => 32, implied_by => 'from_model' },
-        to_model_id   => { is => 'Text', len => 32, implied_by => 'to_model' },
+        from_model_id => { is => 'Text', len => 32 },
+        to_model_id => { is => 'Text', len => 32 },
     ],
     has => [
-        role       => { is => 'VARCHAR2', len => 56 },
-        from_model => { is => 'Genome::Model', id_by => 'from_model_id', constraint_name => 'GML_FB_GM_FK' },
-        to_model   => { is => 'Genome::Model', id_by => 'to_model_id', constraint_name => 'GML_TB_GM_FK' },
+        role => { is => 'Text', len => 56 },
+        from_model => {
+            is => 'Genome::Model',
+            id_by => 'from_model_id',
+            constraint_name => 'GML_FB_GM_FK',
+        },
+        to_model => {
+            is => 'Genome::Model',
+            id_by => 'to_model_id',
+            constraint_name => 'GML_TB_GM_FK',
+        },
     ],
     unique_constraints => [
         { properties => [qw/from_model_id to_model_id/], sql => 'GML_PK' },

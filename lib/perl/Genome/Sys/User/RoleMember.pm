@@ -9,14 +9,8 @@ use Carp;
 class Genome::Sys::User::RoleMember {
     table_name => 'subject.role_member',
     id_by => [
-        user_email => {
-            is => 'Text',
-            len => 255,
-        },
-        role_id => {
-            is => 'Text',
-            len => 32,
-        },
+        user_email => { is => 'Text', len => 255 },
+        role_id => { is => 'Text', len => 32 },
     ],
     has => [
         user => {
