@@ -505,7 +505,7 @@ sub get_samples{
     next if $skip;
 
     #Make sure the individual specified matches that of every sample
-    my $patient_id = $sample->patient->id;
+    my $patient_id = $sample->individual->id;
     my $individual_id = $individual->id;
     unless ($patient_id eq $individual_id){
       $self->error_message("ID of individual supplied by user ($individual_id) does not match that associated with a sample ($patient_id)");
@@ -1083,7 +1083,7 @@ sub check_ref_align_models{
   my @sample_instrument_data = $self->get_dna_instrument_data('-sample'=>$sample, '-data_type'=>$data_type);
   return @tmp unless (scalar(@sample_instrument_data));
 
-  my $subject_id = $sample->patient->id;
+  my $subject_id = $sample->individual->id;
   my @models = $sample->models;
   my $model_count = scalar(@models);
   $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet basic criteria:");
@@ -1214,7 +1214,7 @@ sub check_rnaseq_models{
     $self->status_message("\tCould not find any rna-seq data");
     return @tmp;
   }
-  my $subject_id = $sample->patient->id;
+  my $subject_id = $sample->individual->id;
   my @models = $sample->models;
   my $model_count = scalar(@models);
   $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet basic criteria:");
