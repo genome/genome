@@ -1605,11 +1605,11 @@ sub create_de_model{
   my $individual_name = $self->individual->name;
   my $normal_rnaseq_model_id = $normal_rnaseq_model->id;
   my $normal_subject_name = $normal_rnaseq_model->subject->name;
-  my $normal_individual_common_name = $normal_rnaseq_model->subject->patient_common_name;
+  my $normal_individual_common_name = $normal_rnaseq_model->subject->individual_common_name;
   my $normal_sample_common_name = $normal_rnaseq_model->subject->common_name;
   my $tumor_rnaseq_model_id = $tumor_rnaseq_model->id;
   my $tumor_subject_name = $tumor_rnaseq_model->subject->name;
-  my $tumor_individual_common_name = $tumor_rnaseq_model->subject->patient_common_name;
+  my $tumor_individual_common_name = $tumor_rnaseq_model->subject->individual_common_name;
   my $tumor_sample_common_name = $tumor_rnaseq_model->subject->common_name;
   my $differential_expression_pp_id = $self->differential_expression_pp->id;
 

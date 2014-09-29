@@ -151,7 +151,7 @@ class Genome::ModelDeprecated {
                 if ($subject->class eq 'Genome::Individual') {
                     return $subject->common_name();
                 } elsif($subject->class eq 'Genome::Sample') {
-                    return $subject->patient_common_name();
+                    return $subject->individual_common_name();
                 } else {
                     return undef;
                 }
