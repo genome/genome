@@ -11,7 +11,7 @@ class Genome::Model::Command::InstrumentData::Assign::ByExpression {
         instrument_data => {
             is => 'Genome::InstrumentData',
             is_many => 1,
-            doc => 'instrument data to assign (resolved by expression)',
+            doc => 'instrument data to assign (resolved by expression or list of comma-delimited ids)',
             shell_args_position => 1,
         },
     ],
@@ -24,7 +24,7 @@ class Genome::Model::Command::InstrumentData::Assign::ByExpression {
 };
 
 sub help_brief {
-    return "Assign specific instrument data to a model by boolean expression";
+    return "Assign specific instrument data to a model by boolean expression or id(s)";
 }
 
 sub help_detail {
