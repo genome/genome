@@ -119,7 +119,7 @@ sub _assign_instrument_data_to_model {
             $executed_all_ok &&= eval{ $cmd->execute; };
         }
     } else {
-        my $cmd = Genome::Model::Command::InstrumentData::Assign::Expression->create(
+        my $cmd = Genome::Model::Command::InstrumentData::Assign::ByExpression->create(
             model => $model,
             instrument_data => [$instrument_data]
         );
