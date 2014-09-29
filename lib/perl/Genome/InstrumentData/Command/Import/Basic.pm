@@ -9,7 +9,7 @@ require List::MoreUtils;
 use Workflow::Simple;
 
 class Genome::InstrumentData::Command::Import::Basic { 
-    is => 'Command::V2',
+    is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithDownsampleRatio /],
     has_input => [
         import_source_name => {
             is => 'Text',
@@ -33,10 +33,6 @@ class Genome::InstrumentData::Command::Import::Basic {
         description  => {
             is => 'Text',
             doc => 'Description of the data.',
-        },
-        downsample_ratio => {
-            is => 'Text',
-            doc => 'Ratio at which to keep reads in order to downsample. A value of 0.01 means keep 1 in 100 reads.',
         },
         instrument_data_properties => {
             is => 'Text',
@@ -83,20 +79,6 @@ Instrument Data Properties
   flow_cell_id=AXXAX,index_sequence=AATTGGCC
 
 HELP
-}
-
-sub __errors__ {
-    my $self = shift;
-
-    my @errors = $self->SUPER::__errors__;
-    return @errors if @errors;
-
-    if ( defined $self->downsample_ratio ) {
-        @errors = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->is_downsample_ratio_invalid($self->downsample_ratio);
-        return @errors if @errors;
-    }
-
-    return;
 }
 
 sub execute {
