@@ -46,10 +46,8 @@ $final_name = $somvar_build->model->subject->patient->common_name if ($somvar_bu
 ok ($final_name, "found final name from build object") or die;
 
 #Create create-mutation-spectrum command and execute
-#genome model clin-seq create-mutation-spectrum --outdir=/tmp/create_mutation_spectrum/ --datatype=wgs --max-snvs=100 129855269
-
 my $mutation_spectrum_cmd = Genome::Model::ClinSeq::Command::CreateMutationSpectrum->create(
-  outdir=>$temp_dir, datatype=>'wgs', max_snvs=>100, somvar_build=>$somvar_build, clinseq_build=>$clinseq_build);
+  outdir=>$temp_dir, datatype=>'wgs', test => 1, somvar_build=>$somvar_build, clinseq_build=>$clinseq_build, test => 1);
 $mutation_spectrum_cmd->queue_status_messages(1);
 my $r1 = $mutation_spectrum_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
