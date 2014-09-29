@@ -17,7 +17,7 @@ use Set::Scalar;
 #use Sub::Install; # Sub::Install::install_sub({code => sub {} , into => $package, as => $subname});
 #use Test::MockObject::Extends; # my $o = T:MO:E->new($obj); $o->mock($methodname, sub { }); $o->unmock($methodname);
 
-my $pkg = 'Genome::VariantReporting::PostProcessing::CombineReports';
+my $pkg = 'Genome::VariantReporting::Command::CombineReports';
 use_ok($pkg) or die;
 my $data_dir = __FILE__.".d";
 

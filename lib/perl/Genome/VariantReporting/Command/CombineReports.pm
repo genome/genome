@@ -1,4 +1,4 @@
-package Genome::VariantReporting::PostProcessing::CombineReports;
+package Genome::VariantReporting::Command::CombineReports;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use List::MoreUtils qw(firstidx);
 use Set::Scalar;
 use Memoize;
 
-class Genome::VariantReporting::PostProcessing::CombineReports {
+class Genome::VariantReporting::Command::CombineReports {
     is => 'Command',
     has_input => [
         reports => {
