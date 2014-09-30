@@ -59,7 +59,6 @@ my $cmd = $pkg->create(
     normal_sample => $normal_sample1,
 );
 
-$DB::single=1;
 
 is($cmd->class, $pkg);
 ok($cmd->execute);
