@@ -92,13 +92,19 @@ sub combine_files {
     for my $report ($self->reports) {
         my $file_to_combine;
         if ($self->contains_header) {
-            my @order = $self->get_header_order($report);
-            my @original_order = (0..$#order);
-            if (@order ~~ @original_order) {
-                $file_to_combine = $self->file_without_header($report);
-            }
-            else {
-                $file_to_combine = $self->reordered_columns_file($report, \@order);
+            $file_to_combine = Genome::Sys->create_temp_file_path;
+            my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+                input => $report,
+                separator => $self->separator,
+            );
+            my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
+                headers => [$self->get_master_header],
+                print_headers => 0,
+                separator => $self->separator,
+                output => $file_to_combine,
+            );
+            while (my $entry = $reader->next) {
+                $writer->write_one($entry);
             }
         } else {
             $file_to_combine = $report;
@@ -108,49 +114,6 @@ sub combine_files {
         Genome::Sys->shellcmd(cmd => sprintf($combine_command, $with_source, $combined_file));
     }
     return $combined_file;
-}
-
-sub get_header_order {
-    my ($self, $file) = @_;
-    my @header = $self->get_header($file);
-    my @order;
-    for my $field ($self->get_master_header) {
-        push @order, firstidx {$_ eq $field} @header;
-    }
-    return @order;
-}
-
-sub file_without_header {
-    my ($self, $file) = @_;
-    my $out_file = Genome::Sys->create_temp_file_path;
-    my $cmd = sprintf('tail -n +2 %s > %s', $file, $out_file);
-    Genome::Sys->shellcmd(
-        cmd => $cmd,
-        output_files => [$out_file],
-        input_files => [$file],
-        allow_zero_size_output_files => 1,
-    );
-    return $out_file;
-}
-
-sub reordered_columns_file {
-    my ($self, $file, $order) = @_;
-    my $out_file = Genome::Sys->create_temp_file_path;
-    my $out = Genome::Sys->open_file_for_writing($out_file);
-    my $in = Genome::Sys->open_file_for_reading($file);
-    my $header_line = <$in>;
-    while (my $line = <$in>) {
-        chomp $line;
-        my @fields = split ($self->separator, $line);
-        my @new_fields;
-        for my $index (@$order) {
-            push @new_fields, $fields[$index];
-        }
-        print $out join($self->separator, @new_fields)."\n";
-    }
-    $out->close;
-    $in->close;
-    return $out_file;
 }
 
 sub add_source {
