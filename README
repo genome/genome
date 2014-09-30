@@ -5,8 +5,8 @@ School of Medicine, funded by the National Human Genome Research Institute.
 
 ## Testing
 
-Running tests currently depends on many internal resources so cannot be done so
-externally.  Within The Genome Institute you can run tests by doing,
+Running tests currently depends on many TGI resources so testing cannot be
+performed outside TGI at this time.  Within TGI you can run tests by doing,
 
     genome-test-env test-tracker prove --lsf --git
 
