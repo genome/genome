@@ -49,7 +49,7 @@ ok(-e $ignore_gene_list, "Found ignore genes list file: $ignore_gene_list") or d
 
 #genome model clin-seq converge all-events --builds='id in [135220643,135220652,135220657]' --outdir=/tmp/converge_all_events/ --snv-label=S --indel-label=I --cnv-gain-label=A --cnv-loss-label=D --de-up-label=G --de-down-label=L --sv-fusion-label=T --tophat-outlier-label=J --cufflinks-outlier-label=C --target-gene-list=/tmp/target_genes.tsv --ignore-gene-list=/tmp/genes_to_ignore.tsv
 
-my $converge_all_events_cmd = Genome::Model::ClinSeq::Command::Converge::AllEvents->create(outdir=>$temp_dir, builds=>[$build1,$build2,$build3], snv_label=>'S', indel_label=>'I', cnv_gain_label=>'A', cnv_loss_label=>'D', de_up_label=>'G', de_down_label=>'L', sv_fusion_label=>'T', tophat_outlier_label=>'J', cufflinks_outlier_label=>'C', target_gene_list=>$target_gene_list, ignore_gene_list=>$ignore_gene_list);
+my $converge_all_events_cmd = Genome::Model::ClinSeq::Command::Converge::AllEvents->create(outdir=>$temp_dir, builds=>[$build1,$build2,$build3], snv_label=>'S', indel_label=>'I', cnv_gain_label=>'A', cnv_loss_label=>'D', de_up_label=>'G', de_down_label=>'L', sv_fusion_label=>'T', tophat_outlier_label=>'J', cufflinks_outlier_label=>'C', target_gene_list=>$target_gene_list, ignore_gene_list=>$ignore_gene_list, bam_readcount_version => 0.6);
 $converge_all_events_cmd->queue_status_messages(1);
 my $r1 = $converge_all_events_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);

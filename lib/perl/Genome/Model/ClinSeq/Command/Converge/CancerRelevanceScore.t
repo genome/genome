@@ -27,6 +27,7 @@ my $converge_cancerRelevanceScore = Genome::Model::ClinSeq::Command::Converge::C
       builds => \@builds,
       outfile => $op_file,
       outdir => $op_dir,
+      bam_readcount_version => 0.6,
 );
 
 my $return = $converge_cancerRelevanceScore->execute();

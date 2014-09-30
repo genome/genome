@@ -45,6 +45,7 @@ run_test(
     $main_dir,
     $output_exists,
     somatic_variation_build => $somatic_variation_build,
+    bam_readcount_version   => 0.6,
 );
 
 done_testing();
