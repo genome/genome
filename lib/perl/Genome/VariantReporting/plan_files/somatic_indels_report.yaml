@@ -28,12 +28,12 @@ reporters:
     'full':
         filters:
             'allele-in-genotype':
-                sample_name: d0_tumor
+                sample_name: discovery_tumor
             'ft-keep':
                 keep_filter_values:
                     - PASS
                     - .
-                sample_name: d0_tumor
+                sample_name: discovery_tumor
             'contains-tag':
                 info_tag: ON_TARGET
             homopolymer:
@@ -47,36 +47,36 @@ reporters:
             caf: {}
             'min-coverage':
                 min_coverage: 10
-                sample_name: d0_tumor
+                sample_name: discovery_tumor
             'min-coverage-observed':
                 sample_names:
-                    - d0_tumor
-                    - d30_normal
+                    - discovery_tumor
+                    - normal
             'max-vaf-observed':
                 tumor_sample_names:
-                    - d0_tumor
+                    - discovery_tumor
                 normal_sample_names:
-                    - d30_normal
+                    - normal
             'variant-callers':
-                sample_name: d0_tumor
+                sample_name: discovery_tumor
             'many-samples-vaf':
                 sample_names:
-                    - d0_tumor
-                    - d30_normal
+                    - discovery_tumor
+                    - normal
         params:
             file_name: 'somatic_report_full.tsv'
             sample_names:
-                - d0_tumor
-                - d30_normal
+                - discovery_tumor
+                - normal
     'simple':
         filters:
             'allele-in-genotype':
-                sample_name: d0_tumor
+                sample_name: discovery_tumor
             'ft-keep':
                 keep_filter_values:
                     - PASS
                     - .
-                sample_name: d0_tumor
+                sample_name: discovery_tumor
             'contains-tag':
                 info_tag: ON_TARGET
             homopolymer:
@@ -95,7 +95,7 @@ reporters:
                 keep_filter_values:
                     - PASS
                     - .
-                sample_name: d0_tumor
+                sample_name: discovery_tumor
             'contains-tag':
                 info_tag: ON_TARGET
             homopolymer:

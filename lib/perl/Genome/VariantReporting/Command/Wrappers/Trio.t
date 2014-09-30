@@ -55,7 +55,7 @@ my $cmd = $pkg->create(
     coverage_models => [$discovery_build->model, $d30_build->model, $normal_build->model],
     output_directory => $output_dir,
     tumor_sample => $tumor_sample1,
-    additional_sample => $tumor_sample2,
+    followup_sample => $tumor_sample2,
     normal_sample => $normal_sample1,
 );
 

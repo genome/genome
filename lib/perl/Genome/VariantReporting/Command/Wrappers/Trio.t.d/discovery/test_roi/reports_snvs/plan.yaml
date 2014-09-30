@@ -25,59 +25,58 @@ reporters:
   full:
     filters:
       allele-in-genotype:
-        sample_name: d0_tumor
+        sample_name: discovery_tumor
       contains-tag:
         info_tag: ON_TARGET
       ft-keep:
         keep_filter_values:
           - PASS
           - .
-        sample_name: d0_tumor
+        sample_name: discovery_tumor
     interpreters:
       caf: {}
       info-tags: {}
       many-samples-vaf:
         sample_names:
-          - d0_tumor
-          - d30_tumor
-          - d30_normal
+          - discovery_tumor
+          - followup_tumor
+          - normal
       max-vaf-observed:
         normal_sample_names:
-          - d30_normal
+          - normal
         tumor_sample_names:
-          - d0_tumor
-          - d30_tumor
+          - discovery_tumor
+          - followup_tumor
       min-coverage:
         min_coverage: 10
-        sample_name: d0_tumor
+        sample_name: discovery_tumor
       min-coverage-observed:
         sample_names:
-          - d0_tumor
-          - d30_tumor
-          - d30_normal
+          - discovery_tumor
+          - followup_tumor
+          - normal
       position: {}
       rsid: {}
       variant-callers:
-        sample_name: d0_tumor
+        sample_name: discovery_tumor
       variant-type: {}
       vep: {}
     params:
       file_name: trio_full_report.tsv
       sample_names:
-        - d0_tumor
-        - d30_tumor
-        - d30_normal
-  simple:
+        - discovery_tumor
+        - followup_tumor
+        - normal
     filters:
       allele-in-genotype:
-        sample_name: d0_tumor
+        sample_name: discovery_tumor
       contains-tag:
         info_tag: ON_TARGET
       ft-keep:
         keep_filter_values:
           - PASS
           - .
-        sample_name: d0_tumor
+        sample_name: discovery_tumor
     interpreters:
       position: {}
       variant-type: {}
@@ -89,11 +88,12 @@ reporters:
     interpreters:
       contains-tag:
         info_tag: ON_TARGET
+        sample_name: discovery_tumor
       ft-keep:
         keep_filter_values:
           - PASS
           - .
-        sample_name: d0_tumor
+        sample_name: discovery_tumor
       vcf-entry: {}
     params:
       file_name: trio_report.vcf

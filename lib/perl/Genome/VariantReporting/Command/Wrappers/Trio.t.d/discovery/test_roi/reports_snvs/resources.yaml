@@ -11,6 +11,6 @@ feature_list_ids:
 homopolymer_list_id: 696318bab30d47d49fab9afa845691b7
 reference_fasta: /gscmnt/gc13003/info/test_suite_data/Genome-VariantReporting-Framework-Component-ResourceProvider/v3/reference.fasta
 translations:
-  d0_tumor: TEST-patient1-somval_tumor1
-  d30_normal: TEST-patient1-somval_normal1
-  d30_tumor: TEST-patient1-somval_tumor2
+  discovery_tumor: TEST-patient1-somval_tumor1
+  normal: TEST-patient1-somval_normal1
+  followup_tumor: TEST-patient1-somval_tumor2

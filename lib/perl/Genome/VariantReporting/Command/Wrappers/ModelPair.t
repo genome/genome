@@ -28,7 +28,7 @@ my $discovery_build = get_build($roi_name, $tumor_sample, $normal_sample);
 is($discovery_build->class, "Genome::Model::Build::SomaticValidation");
 
 my $model_pair = $pkg->create(discovery => $discovery_build,
-    validation => $discovery_build,
+    followup => $discovery_build,
     #base_output_dir => $expected_dir,
     base_output_dir => $output_dir,
 );

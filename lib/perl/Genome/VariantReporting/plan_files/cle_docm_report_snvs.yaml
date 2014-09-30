@@ -13,12 +13,12 @@ reporters:
             position: {}
             'many-samples-vaf':
                 sample_names:
-                    - d0_tumor
-                    - d30_tumor
-                    - d30_normal
+                    - discovery_tumor
+                    - followup_tumor
+                    - normal
         params:
             file_name: 'cle_docm_report'
             sample_names:
-                - d0_tumor
-                - d30_tumor
-                - d30_normal
+                - discovery_tumor
+                - followup_tumor
+                - normal
