@@ -54,7 +54,7 @@ sub _plan_search_dir {
 }
 
 sub report_names {
-    return qw(cle_full_report cle_simple_report);
+    return qw(trio_full_report.tsv trio_simple_report.tsv);
 }
 
 sub reports_directory {

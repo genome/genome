@@ -1,0 +1,12 @@
+---
+aligned_bam_result_id:
+  - -ghij4i5j230509ug345
+dbsnp_vcf: /gscmnt/gc13001/info/model_data/jwalker_scratch/genome/lib/perl/Genome/VariantReporting/Command/Wrappers/TestHelpers.pm.d/dbsnp.vcf
+feature_list_ids:
+  AML_RMG: 0e4973c600244c3f804d54bee6f81145
+  ON_TARGET: -1
+  SEG_DUP: -1
+homopolymer_list_id: 696318bab30d47d49fab9afa845691b7
+reference_fasta: /gscmnt/gc13003/info/test_suite_data/Genome-VariantReporting-Framework-Component-ResourceProvider/v3/reference.fasta
+translations:
+  d30_normal: TEST-patient1-somval_normal1

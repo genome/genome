@@ -14,6 +14,7 @@ experts:
     custom_annotation_tags:
       - ON_TARGET
       - SEG_DUP
+      - AML_RMG
     ensembl_version: 75
     joinx_version: 1.9
     plugins:
@@ -27,21 +28,10 @@ reporters:
         sample_name: d0_tumor
       contains-tag:
         info_tag: ON_TARGET
-      coverage-vaf:
-        coverages_and_vafs:
-          1000: 5
-          200: 10
-        sample_name: d0_tumor
       ft-keep:
         keep_filter_values:
           - PASS
           - .
-        sample_name: d0_tumor
-      genotype-vaf:
-        max_het_vaf: 60
-        max_hom_vaf: 100
-        min_het_vaf: 40
-        min_hom_vaf: 85
         sample_name: d0_tumor
     interpreters:
       caf: {}
@@ -72,65 +62,7 @@ reporters:
       variant-type: {}
       vep: {}
     params:
-      file_name: cle_full_report
-      sample_names:
-        - d0_tumor
-        - d30_tumor
-        - d30_normal
-  full.acmg:
-    filters:
-      allele-in-genotype:
-        sample_name: d0_tumor
-      contains-tag:
-        info_tag: ON_TARGET
-      coverage-vaf:
-        coverages_and_vafs:
-          1000: 5
-          200: 10
-        sample_name: d0_tumor
-      ft-keep:
-        keep_filter_values:
-          - PASS
-          - .
-        sample_name: d0_tumor
-      gene:
-        gene_set: acmg
-      genotype-vaf:
-        max_het_vaf: 60
-        max_hom_vaf: 100
-        min_het_vaf: 40
-        min_hom_vaf: 85
-        sample_name: d0_tumor
-    interpreters:
-      caf: {}
-      info-tags: {}
-      many-samples-vaf:
-        sample_names:
-          - d0_tumor
-          - d30_tumor
-          - d30_normal
-      max-vaf-observed:
-        normal_sample_names:
-          - d30_normal
-        tumor_sample_names:
-          - d0_tumor
-          - d30_tumor
-      min-coverage:
-        min_coverage: 10
-        sample_name: d0_tumor
-      min-coverage-observed:
-        sample_names:
-          - d0_tumor
-          - d30_tumor
-          - d30_normal
-      position: {}
-      rsid: {}
-      variant-callers:
-        sample_name: d0_tumor
-      variant-type: {}
-      vep: {}
-    params:
-      file_name: cle_acmg_full_report
+      file_name: trio_full_report.tsv
       sample_names:
         - d0_tumor
         - d30_tumor
@@ -141,53 +73,27 @@ reporters:
         sample_name: d0_tumor
       contains-tag:
         info_tag: ON_TARGET
-      coverage-vaf:
-        coverages_and_vafs:
-          1000: 5
-          200: 10
-        sample_name: d0_tumor
       ft-keep:
         keep_filter_values:
           - PASS
           - .
         sample_name: d0_tumor
-      genotype-vaf:
-        max_het_vaf: 60
-        max_hom_vaf: 100
-        min_het_vaf: 40
-        min_hom_vaf: 85
-        sample_name: d0_tumor
     interpreters:
       position: {}
+      variant-type: {}
       vep: {}
     params:
-      file_name: cle_simple_report
-  simple.acmg:
-    filters:
-      allele-in-genotype:
-        sample_name: d0_tumor
+      file_name: trio_simple_report.tsv
+  vcf:
+    filters: {}
+    interpreters:
       contains-tag:
         info_tag: ON_TARGET
-      coverage-vaf:
-        coverages_and_vafs:
-          1000: 5
-          200: 10
-        sample_name: d0_tumor
       ft-keep:
         keep_filter_values:
           - PASS
           - .
         sample_name: d0_tumor
-      gene:
-        gene_set: acmg
-      genotype-vaf:
-        max_het_vaf: 60
-        max_hom_vaf: 100
-        min_het_vaf: 40
-        min_hom_vaf: 85
-        sample_name: d0_tumor
-    interpreters:
-      position: {}
-      vep: {}
+      vcf-entry: {}
     params:
-      file_name: cle_acmg_simple_report
+      file_name: trio_report.vcf

@@ -33,7 +33,7 @@ sub get_translations {
 }
 
 sub report_names {
-    return qw(cle_germline_simple_report cle_germline_full_report);
+    return qw(germline_simple_report.tsv germline_full_report.tsv);
 }
 1;
 
