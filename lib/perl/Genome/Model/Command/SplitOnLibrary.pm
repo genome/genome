@@ -21,7 +21,7 @@ class Genome::Model::Command::SplitOnLibrary {
             doc => 'the newly created models',
         },
     ],
-    doc => 'command to make per-library models based on a per-sample model',
+    doc => 'make per-library models based on a per-sample model',
 };
 
 sub help_detail {
