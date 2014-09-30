@@ -114,8 +114,8 @@ sub get_header_order {
     my ($self, $file) = @_;
     my @header = $self->get_header($file);
     my @order;
-    for my $field (@header) {
-        push @order, firstidx {$_ eq $field} $self->get_master_header;
+    for my $field ($self->get_master_header) {
+        push @order, firstidx {$_ eq $field} @header;
     }
     return @order;
 }
