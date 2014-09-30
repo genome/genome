@@ -261,6 +261,7 @@ sub modify_index {
     # so it is acknowledged that the fork is a fork and not a duplicate daemon
     $0 = join(' ', $action, $subject_class, $subject_id);
 
+    my $tx = UR::Context::Transaction->begin();
     my $display_name = "(Class: $subject_class, ID: $subject_id)";
 
     my ($rv, $error);
@@ -285,10 +286,14 @@ sub modify_index {
     if ($rv) {
         my $display_action = ($action eq 'add' ? 'Added' : 'Deleted');
         $self->info("$display_action $display_name");
+        unless ($tx->commit) {
+            $tx->rollback;
+        }
     }
     else {
         my $display_action = ($action eq 'add' ? 'Failed to add' : 'Failed to delete');
         $self->info("$display_action $display_name\n$@");
+        $tx->rollback;
     }
 
     return $rv;
