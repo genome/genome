@@ -64,6 +64,7 @@ class Genome::Model {
         },
         subclass_name => {
             is => 'Text',
+            column_name => 'SUBCLASS_NAME',
             calculate_from => 'processing_profile_id',
             calculate => sub {
                 my $pp_id = shift;
