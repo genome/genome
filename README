@@ -1,2 +1,16 @@
+# Genome
+
 Genome analysis software from The Genome Institute at Washington University
 School of Medicine, funded by the National Human Genome Research Institute.
+
+## Testing
+
+Running tests currently depends on many TGI resources so testing cannot be
+performed outside TGI at this time.  Within TGI you can run tests by doing,
+
+    genome-test-env test-tracker prove --lsf --git
+
+This chains the `genome-test-env` and `test-tracker` commands together.  See
+`test-tracker prove --help` for its usage.  For example, you may need to pass a
+value to the `--git` option if your branch is not setup to track
+`origin/master`.
