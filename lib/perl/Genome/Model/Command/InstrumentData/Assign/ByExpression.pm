@@ -1,17 +1,17 @@
-package Genome::Model::Command::InstrumentData::Assign::Expression;
+package Genome::Model::Command::InstrumentData::Assign::ByExpression;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Command::InstrumentData::Assign::Expression {
+class Genome::Model::Command::InstrumentData::Assign::ByExpression {
     is => 'Genome::Model::Command::InstrumentData::Assign::Base',
     has_input => [
         instrument_data => {
             is => 'Genome::InstrumentData',
             is_many => 1,
-            doc => 'instrument data to assign (resolved by expression)',
+            doc => 'instrument data to assign (resolved by expression or list of comma-delimited ids)',
             shell_args_position => 1,
         },
     ],
@@ -24,7 +24,7 @@ class Genome::Model::Command::InstrumentData::Assign::Expression {
 };
 
 sub help_brief {
-    return "Assign specific instrument data to a model by boolean expression";
+    return "Assign specific instrument data to a model by boolean expression or id(s)";
 }
 
 sub help_detail {
