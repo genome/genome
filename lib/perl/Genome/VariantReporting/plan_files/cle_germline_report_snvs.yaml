@@ -32,19 +32,6 @@ reporters:
                 sample_name: d30_normal
             'contains-tag':
                 info_tag: ON_TARGET
-            'coverage-vaf':
-                coverages_and_vafs:
-                    1000: 5
-                    200: 10
-                sample_name: d30_normal
-            'genotype-vaf':
-                min_het_vaf: 40
-                max_het_vaf: 60
-                min_hom_vaf: 85
-                max_hom_vaf: 100
-                sample_name: d30_normal
-            gene:
-                gene_set: acmg
         interpreters:
             position: {}
             'variant-type': {}
@@ -68,7 +55,7 @@ reporters:
                 sample_names:
                     - d30_normal
         params:
-            file_name: 'cle_germline_full_report'
+            file_name: 'germline_full_report.tsv'
             sample_names:
                 - d30_normal
     'simple':
@@ -82,22 +69,22 @@ reporters:
                 sample_name: d30_normal
             'contains-tag':
                 info_tag: ON_TARGET
-            'coverage-vaf':
-                coverages_and_vafs:
-                    1000: 5
-                    200: 10
-                sample_name: d30_normal
-            'genotype-vaf':
-                min_het_vaf: 40
-                max_het_vaf: 60
-                min_hom_vaf: 85
-                max_hom_vaf: 100
-                sample_name: d30_normal
-            gene:
-                gene_set: acmg
         interpreters:
             position: {}
             vep: {}
             'variant-type': {}
         params:
-            file_name: 'cle_germline_simple_report'
+            file_name: 'germline_simple_report.tsv'
+    'vcf':
+        filters: {}
+        interpreters:
+            'vcf-entry': {}
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: d30_normal
+            'contains-tag':
+                info_tag: ON_TARGET
+        params:
+            file_name: 'germline_report.vcf'
