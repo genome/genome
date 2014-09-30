@@ -36,6 +36,10 @@ class Genome::Model::Build::SomaticVariation {
             is => 'Text',
             via => 'model',
         },
+        bam_readcount_version =>{
+            is => 'Text',
+            via => 'model',
+        },
 
         # INPUTS
         normal_model => {

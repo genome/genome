@@ -16,7 +16,7 @@ experts:
         plugins_version: 1
         joinx_version: 1.9
 reporters:
-    'vcf-indels':
+    'vcf':
         filters: {}
         interpreters:
             'vcf-entry': {}

@@ -23,7 +23,7 @@ test_bad_plan('missing_interpreter', qr(interpreter_missing) );
 test_bad_plan('missing_reporter', qr(reporter_missing) );
 
 test_bad_plan('misspelled_parameter', qr(bad_parameter_name) );
-test_bad_plan('invalid_reporter', qr(Interpreters required), qr(Interpreters provided) );
+test_bad_plan('invalid_reporter', qr(Interpreters required));
 test_bad_plan('invalid_reporter_with_filter', qr(not allow any hard filters) );
 test_bad_plan('invalid_experts', qr(Annotations required));
 

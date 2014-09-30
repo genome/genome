@@ -1,4 +1,4 @@
-package Genome::VariantReporting::PostProcessing::CombineReports;
+package Genome::VariantReporting::Command::CombineReports;
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ use List::MoreUtils qw(firstidx);
 use Set::Scalar;
 use Memoize;
 
-class Genome::VariantReporting::PostProcessing::CombineReports {
+class Genome::VariantReporting::Command::CombineReports {
     is => 'Command',
     has_input => [
         reports => {
@@ -114,8 +114,8 @@ sub get_header_order {
     my ($self, $file) = @_;
     my @header = $self->get_header($file);
     my @order;
-    for my $field (@header) {
-        push @order, firstidx {$_ eq $field} $self->get_master_header;
+    for my $field ($self->get_master_header) {
+        push @order, firstidx {$_ eq $field} @header;
     }
     return @order;
 }

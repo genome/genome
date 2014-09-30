@@ -30,6 +30,7 @@ run_test(
     $output_exists,
     somatic_variation_build => $somatic_variation_build,
     target_regions          => "$input_dir/target_regions.bed",
+    bam_readcount_version   => 0.6,
 );
 
 done_testing();

@@ -109,7 +109,7 @@ reporters:
             'variant-type': {}
         params:
             file_name: 'cle_simple_report'
-    'vcf-indels':
+    'vcf':
         filters: {}
         interpreters:
             'vcf-entry': {}

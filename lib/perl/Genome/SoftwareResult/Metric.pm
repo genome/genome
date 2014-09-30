@@ -8,20 +8,11 @@ class Genome::SoftwareResult::Metric {
     table_name => 'result.metric',
     type_name => 'software result metric',
     id_by => [
-        metric_name => {
-            is => 'VARCHAR2',
-            len => 1000,
-        },
-        software_result_id => {
-            is => 'Text',
-            len => 32,
-        },
+        metric_name => { is => 'Text', len => 1000 },
+        software_result_id => { is => 'Text', len => 32 },
     ],
     has => [
-        metric_value => {
-            is => 'VARCHAR2',
-            len => 1000,
-        },
+        metric_value => { is => 'Text', len => 1000 },
         software_result => {
             is => 'Genome::SoftwareResult',
             id_by => 'software_result_id',

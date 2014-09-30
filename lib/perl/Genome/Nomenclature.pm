@@ -12,17 +12,10 @@ use JSON::XS;
 class Genome::Nomenclature {
     table_name => 'web.nomenclature',
     id_by => [
-        id => {
-            is => 'Text',
-            len => 255,
-        },
+        id => { is => 'Text', len => 255 },
     ],
     has => [
-        name => {
-            is => 'Text',
-            len => 255,
-            doc => 'Nomenclature name',
-        },
+        name => { is => 'Text', len => 255, doc => 'Nomenclature name' },
         empty_equivalent => {
             is => 'Text',
             len => 25,
@@ -30,7 +23,7 @@ class Genome::Nomenclature {
             doc => 'Empty-equivalent string (NA, n/a, etc)',
         },
         accepts_any_field => {
-            is => 'Number',
+            is => 'Boolean',
             len => 1,
             default_value => 0,
             is_optional => 1,
@@ -41,6 +34,9 @@ class Genome::Nomenclature {
             reverse_as => 'nomenclature',
             is_many => 1,
         },
+
+        # Added by 'ur update classes-from-db' on 22 Sep 2014 - Is this a real, used column?
+        #default_value => { is => 'Text', len => 255, is_optional => 1 },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',

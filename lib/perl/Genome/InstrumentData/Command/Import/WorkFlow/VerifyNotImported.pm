@@ -8,7 +8,7 @@ use Genome;
 require File::Basename;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported { 
-    is => 'Command::V2',
+    is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithDownsampleRatio /],
     has_input => {
         working_directory => {
             is => 'Text',
@@ -17,12 +17,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported {
         source_path => {
             is => 'Text',
             doc => 'Source path of sequences to get.',
-        },
-    },
-    has_optional_input => {
-        downsample_ratio => {
-            is => 'Text',
-            doc => 'Ratio at which to keep reads in order to downsample. A value of 0.01 means keep 1 in 100 reads.',
         },
     },
     has_output => {

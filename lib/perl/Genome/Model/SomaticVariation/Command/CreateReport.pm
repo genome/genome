@@ -22,6 +22,10 @@ class Genome::Model::SomaticVariation::Command::CreateReport {
             doc => 'Somactic Variation build',
             is_output => 1,
         },
+        bam_readcount_version => {
+            is => 'String',
+            doc => 'version of bam-readcount to use',
+        },
     ],
     has_optional_input => [
         restrict_to_target_regions =>{
@@ -524,6 +528,7 @@ sub add_read_counts {
             genome_build     => $self->ref_seq_fasta,
             header_prefixes  => $header,
             indel_size_limit => 4,
+            bam_readcount_version => $self->bam_readcount_version,
         );
         unless ($rc_cmd->execute) {
             confess $self->error_message("Failed to obtain read counts for file $variants_file.");

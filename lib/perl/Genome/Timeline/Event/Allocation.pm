@@ -8,32 +8,42 @@ use Genome;
 class Genome::Timeline::Event::Allocation {
     is => 'Genome::Timeline::Event',
     table_name => 'timeline.allocation',
+    id_by => [
+        id => { is => 'Text', len => 64 },
+    ],
     has => [
+        object_id => { is => 'Text' },
+        allocation => {
+            is => 'UR::Object',
+            id_by => 'object_id',
+            id_class_by => 'object_class_name',
+            constraint_name => 'allocation_event_allocation_fk',
+        },
+        kilobytes_requested => { is => 'Text' },
+        absolute_path => { is => 'Text' },
         object_class_name => {
+            is => 'Text',
             is_constant => 1,
             default_value => 'Genome::Disk::Allocation',
             valid_values => ['Genome::Disk::Allocation'],
         },
-        allocation => {
-            id_by => 'object_id',
-            is => 'UR::Object',
-            id_class_by => 'object_class_name'
-        },
-        kilobytes_requested => {
-            is => 'Number',
-        },
-        absolute_path => {
-            is => 'Text',
-        },
         status => {
             is => 'Text',
-            valid_values => Genome::Disk::Allocation->__meta__->property('status')->valid_values()
+            valid_values => Genome::Disk::Allocation->__meta__->property('status')->valid_values(),
         },
         type => {
             is => 'Genome::Timeline::Event::AllocationEventType',
             id_by => 'name',
+            constraint_name => 'allocation_event_typ_fk',
         },
+
+        # added by 'ur update classes-from-db' on 22 Sep 2014 - Are these columns used?
+        reason => { is => 'Text' },
+        name => { is => 'Text' },
     ],
+    schema_name => 'GMSchema',
+    data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 Genome::Timeline::Event->_define_event_constructors(

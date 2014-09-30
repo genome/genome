@@ -17,7 +17,7 @@ use Set::Scalar;
 #use Sub::Install; # Sub::Install::install_sub({code => sub {} , into => $package, as => $subname});
 #use Test::MockObject::Extends; # my $o = T:MO:E->new($obj); $o->mock($methodname, sub { }); $o->unmock($methodname);
 
-my $pkg = 'Genome::VariantReporting::PostProcessing::CombineReports';
+my $pkg = 'Genome::VariantReporting::Command::CombineReports';
 use_ok($pkg) or die;
 my $data_dir = __FILE__.".d";
 
@@ -30,7 +30,7 @@ subtest "test with headers" => sub {
     my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['chr', 'pos'], contains_header => 1, output_file => $output_file);
     isa_ok($cmd, $pkg);
 
-    my @expected_header = qw(chr pos data1 data2);
+    my @expected_header = qw(chr pos data1 data2 data3);
     is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
     is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
 
@@ -59,7 +59,7 @@ subtest "test with headers with source" => sub {
     );
     isa_ok($cmd, $pkg);
 
-    my @expected_header = qw(chr pos data1 data2);
+    my @expected_header = qw(chr pos data1 data2 data3);
     is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
     is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
 
@@ -79,7 +79,7 @@ subtest "test with different orders of headers" => sub {
     my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['chr', 'pos'], contains_header => 1, output_file => $output_file);
     isa_ok($cmd, $pkg);
 
-    my @expected_header = qw(chr pos data1 data2);
+    my @expected_header = qw(chr pos data1 data2 data3);
     is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
     is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
 
