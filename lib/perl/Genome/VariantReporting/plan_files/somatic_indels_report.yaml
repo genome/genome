@@ -87,7 +87,7 @@ reporters:
             'variant-type': {}
         params:
             file_name: 'somatic_report_simple.tsv'
-    'vcf-homopolymer':
+    'vcf':
         filters: {}
         interpreters:
             'vcf-entry': {}
