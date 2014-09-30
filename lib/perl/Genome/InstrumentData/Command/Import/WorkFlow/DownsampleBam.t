@@ -27,33 +27,24 @@ ok(-s $bam_path, 'linked bam path');
 Genome::Sys->create_symlink( File::Spec->catfile($test_dir, $bam_base_name.'.flagstat'), $bam_path.'.flagstat');
 ok(-s $bam_path.'.flagstat', 'linked bam flagstat path');
 
-# Check downsample value errors
+# Check downsample_ratio is required
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam->create(
+    bam_path => $bam_path,
+);
+ok($cmd, 'create');
+my @errors = $cmd->__errors__;
+ok(@errors, 'errors w/o downsample_ratio');
+is($errors[0]->desc, 'No value specified for required property', 'correct error desc for downsample_ratio of 0');
+
+# Check that the downsample_ratio errors is called
+$cmd = Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam->create(
     bam_path => $bam_path,
     downsample_ratio => 'NA',
 );
 ok($cmd, 'create');
-my @errors = $cmd->__errors__;
+@errors = $cmd->__errors__;
 ok(@errors, 'errors for downsample_ratio of NA');
-is($errors[0]->desc, 'Invalid number! NA', 'correct error desc for downsample_ratio of NA');
-
-$cmd = Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam->create(
-    bam_path => $bam_path,
-    downsample_ratio => 0,
-);
-ok($cmd, 'create');
-@errors = $cmd->__errors__;
-ok(@errors, 'errors for downsample_ratio of 0');
-is($errors[0]->desc, 'Must be greater than 0 and less than 1! 0', 'correct error desc for downsample_ratio of 0');
-
-$cmd = Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam->create(
-    bam_path => $bam_path,
-    downsample_ratio => 1,
-);
-ok($cmd, 'create');
-@errors = $cmd->__errors__;
-ok(@errors, 'errors for downsample_ratio of 1');
-is($errors[0]->desc, 'Must be greater than 0 and less than 1! 1', 'correct error desc for downsample_ratio of 1');
+is($errors[0]->desc, 'Invalid Float value.', 'correct error desc for downsample_ratio of NA');
 
 # Success
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam->create(

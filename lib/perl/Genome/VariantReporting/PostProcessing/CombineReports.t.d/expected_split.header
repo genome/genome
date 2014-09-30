@@ -1,5 +1,0 @@
-chr	pos	data1	data2	split1-lib3	split1-lib2	split1-lib1	split2-lib3	split2-lib2	split2-lib1
-1	100	ABC	14	.	b	a	.	B	A
-2	2500	XYZ	9	.	.	a	.	B	.
-X	500	SOME	84	.	.	.	.	.	.
-Y	2500	THING	9001	a	.	.	C	.	.

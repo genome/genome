@@ -159,6 +159,13 @@ class Genome::InstrumentData::Imported {
             calculate_from => [ 'run_name', 'subset_name' ],
             calculate => q( $subset_name ? "$run_name/$subset_name" : $run_name ),
         },
+        downsample_ratio => {
+            is => 'Float',
+            via => 'attributes',
+            to => 'attribute_value',
+            is_mutable => 1,
+            where => [ attribute_label => 'downsample_ratio' ],
+        },
     ],
 };
 

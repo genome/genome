@@ -11,22 +11,10 @@ class Genome::Model::Input {
     table_name => 'model.model_input',
     type_name => 'genome model input',
     id_by => [
-        value_class_name => {
-            is => 'VARCHAR2',
-            len => 255,
-        },
-        value_id => {
-            is => 'VARCHAR2',
-            len => 1000,
-        },
-        model_id => {
-            is => 'Text',
-            len => 32,
-        },
-        name => {
-            is => 'VARCHAR2',
-            len => 255,
-        },
+        value_class_name => { is => 'Text', len => 255 },
+        value_id => { is => 'Text', len => 1000 },
+        model_id => { is => 'Text', len => 32 },
+        name => { is => 'Text', len => 255 },
     ],
     has => [
         model => {
@@ -47,10 +35,7 @@ class Genome::Model::Input {
         },
     ],
     has_optional => [
-        _model_value => {
-            is => 'Genome::Model',
-            id_by => 'value_id',
-        },
+        _model_value => { is => 'Genome::Model', id_by => 'value_id' },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',

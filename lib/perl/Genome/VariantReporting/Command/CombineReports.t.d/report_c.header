@@ -1,0 +1,5 @@
+chr	pos	data1	data2	split1	split2
+1	100	ABC	14	lib1:a,lib2:b	lib1:A,lib2:B
+2	2500	XYZ	9	lib1:a	lib2:B
+X	500	SOME	84	.	.
+Y	2500	THING	9001	lib3:a	lib3:C
