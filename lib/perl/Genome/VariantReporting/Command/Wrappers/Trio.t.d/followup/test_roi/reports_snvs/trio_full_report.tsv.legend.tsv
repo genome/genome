@@ -42,6 +42,5 @@ TEST-patient1-somval_normal1_per_library_var_count	Number of reads supporting va
 TEST-patient1-somval_normal1_per_library_ref_count	Number of reads supporting the reference for each library of sample TEST-patient1-somval_normal1
 TEST-patient1-somval_normal1_per_library_vaf	Variant allele frequency for each library of sample TEST-patient1-somval_normal1
 Filters
-homopolymer	HOMOPOLYMERS	Filter out indels hitting homo-polymers
 ft-keep	FTPASS	FT value for sample TEST-patient1-somval_tumor2 is one of [PASS,.]
 contains-tag	CONTAINS_TAG_ON_TARGET	INFO field for entry contains tag ON_TARGET

@@ -1,16 +1,13 @@
 ##fileformat=VCFv4.1
-##annotation=/gscmnt/gc13001/info/model_data/jwalker_scratch/genome/lib/perl/Genome/VariantReporting/Command/Wrappers/TestHelpers.pm.d/dbsnp.vcf
+##annotation=/home/archive/ssiebert/genome/lib/perl/Genome/VariantReporting/Framework/Command/Wrappers/TestHelpers.pm.d/dbsnp.vcf
 ##center=genome.wustl.edu
-##fileDate=20140924
+##fileDate=20140822
 ##phasing=none
 ##reference=ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/ARCHIVE/BUILD.36.3/special_requests/assembly_variants/NCBI36_WUGSC_variant.fa.gz
-##source=Samtools
-##source=Sniper
-##source=VarscanSomatic
-##source=Strelka
+##source=Samtools,Sniper,VarscanSomatic,Strelka
 ##INFO=<ID=NT,Number=1,Type=String,Description="Genotype of the normal in all data tiers, as used to classify somatic variants. One of {ref,het,hom,conflict}.">
 ##INFO=<ID=ON_TARGET,Number=.,Type=String,Description="test roi (overlap)">
-##INFO=<ID=ALLFILTERSPASS,Number=A,Type=Integer,Description="Flags whether the alternate allele passed all the soft filters: HOMOPOLYMERS, FTPASS, CONTAINS_TAG_ON_TARGET">
+##INFO=<ID=ALLFILTERSPASS,Number=A,Type=Integer,Description="Flags whether the alternate allele passed all the soft filters: COVERAGE_VAF, GENOTYPE_VAF, FTPASS, MAXINDEL4, CONTAINS_TAG_ON_TARGET">
 ##INFO=<ID=QSS,Number=1,Type=Integer,Description="Quality score for any somatic snv, ie. for the ALT allele to be present at a significantly different frequency in the tumor and normal">
 ##INFO=<ID=dbSNPBuildID,Number=A,Type=String,Description="Allele frequencies">
 ##INFO=<ID=MUT,Number=.,Type=String,Description="Allele frequencies">
@@ -21,7 +18,6 @@
 ##INFO=<ID=CAF,Number=.,Type=String,Description="Allele frequencies">
 ##INFO=<ID=AML_RMG,Number=.,Type=String,Description="AML RMG pooled probes + WO2830729 pooled probes + WO2840081 pooled probes (overlap)">
 ##INFO=<ID=SEG_DUP,Number=.,Type=String,Description="test roi (overlap)">
-##INFO=<ID=HOMP_FILTER,Number=A,Type=Integer,Description="short (maximum of 2bp) homopolymer indel">
 ##INFO=<ID=TQSS_NT,Number=1,Type=Integer,Description="Data tier used to compute QSS_NT">
 ##FORMAT=<ID=BQ,Number=.,Type=Integer,Description="Average base quality for reads supporting alleles">
 ##FORMAT=<ID=BRCT,Number=1,Type=String,Description="Bam readcount line, gzipped then base-64 encoded">
@@ -50,16 +46,18 @@
 ##FILTER=<ID=PASS,Description="Passed all filters">
 ##FILTER=<ID=VarscanHighConfidence,Description="Filter description">
 ##FILTER=<ID=BCNoise,Description="Fraction of basecalls filtered at this site in either sample is at or above 0.4">
+##FILTER=<ID=MAXINDEL4,Description="The size of an indel is less than or equal to 4">
 ##FILTER=<ID=DP,Description="Greater than 3x chromosomal mean depth in Normal sample">
+##FILTER=<ID=COVERAGE_VAF,Description="Coverage and VAF for sample TEST-patient1-somval_tumor2 follows criteria: [1000X and VAF>5%,200X and VAF>10%]">
 ##FILTER=<ID=FalsePositive,Description="Filter description">
 ##FILTER=<ID=SnpFilter,Description="Filter description">
 ##FILTER=<ID=SomaticScoreMappingQuality,Description="Filter description">
 ##FILTER=<ID=SpanDel,Description="Fraction of reads crossing site with spanning deletions in either sample exceeeds 0.75">
 ##FILTER=<ID=QSS_ref,Description="Normal sample is not homozygous ref or ssnv Q-score < 15, ie calls with NT!=ref or QSS_NT < 15">
+##FILTER=<ID=GENOTYPE_VAF,Description="Coverage and VAF for sample TEST-patient1-somval_tumor2 follows criteria: [heterozygous: VAF between 40 and 60,homozygous: VAF between 85 and 100]">
 ##FILTER=<ID=FTPASS,Description="FT value for sample TEST-patient1-somval_tumor2 is one of [PASS,.]">
 ##FILTER=<ID=CONTAINS_TAG_ON_TARGET,Description="INFO field for entry contains tag ON_TARGET">
 ##FILTER=<ID=IntersectionFailure,Description="Variant callers do not agree on this position">
-##FILTER=<ID=HOMOPOLYMERS,Description="Filter out indels hitting homo-polymers">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TEST-patient1-somval_tumor2	TEST-patient1-somval_tumor2-[Samtools]	TEST-patient1-somval_normal1	TEST-patient1-somval_normal1-[Sniper]	TEST-patient1-somval_tumor2-[Sniper]	TEST-patient1-somval_normal1-[VarscanSomatic]	TEST-patient1-somval_tumor2-[VarscanSomatic]	TEST-patient1-somval_normal1-[Strelka]	TEST-patient1-somval_tumor2-[Strelka]
 1	511466	.	G	A	.	.	CSQ=A||||intergenic_variant||||||||||||||||||||;ALLFILTERSPASS=0	GT:GQ:DP:BQ:MQ:AD:FA:VAQ:SS:FT:BRCT	1/1:0:1:0,37:32:0,1:1:2:.:IntersectionFailure;SnpFilter	1/1:0:1:0,37:32:0,1:1:2:.:SnpFilter	.:.:.:.:.:.:.:.:.:.:1?511466?G?1?TEST-patient1-somval_tumor1-extlibs?{?=;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?A;1;32.00;37.00;16.00;0;1;0.10;0.01;37.00;0;0.00;100.00;0.95?C;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?G;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?T;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?N;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?}	.	.	.	.	.	.
 1	558077	.	C	T	.	.	CSQ=T|ENSG00000223659|ENST00000452176|Transcript|downstream_gene_variant|||||||||||4680|-1|YES|RP5-857K21.5|Clone_based_vega_gene|||||;ALLFILTERSPASS=0	GT:GQ:DP:BQ:MQ:AD:FA:VAQ:SS:FT:BRCT	0/1:0:1:0,34:46:0,1:1:4:.:IntersectionFailure;SnpFilter	0/1:0:1:0,34:46:0,1:1:4:.:SnpFilter	.:.:.:.:.:.:.:.:.:.:1?558077?C?1?TEST-patient1-somval_tumor1-extlibs?{?=;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?A;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?C;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?G;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?T;1;46.00;34.00;23.00;1;0;0.10;0.01;34.00;1;0.03;100.00;0.03?N;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?}	.	.	.	.	.	.

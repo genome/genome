@@ -60,7 +60,7 @@ sub execute {
     for my $roi_directory (@roi_directories) {
         for my $base (Genome::VariantReporting::Command::Wrappers::ModelPair->report_names) {
             my $discovery_report = File::Spec->join($self->output_directory, "discovery", $roi_directory, $base);
-            my $additional_report = File::Spec->join($self->output_directory, "additional", $roi_directory, $base);
+            my $additional_report = File::Spec->join($self->output_directory, "followup", $roi_directory, $base);
             Genome::VariantReporting::Command::CombineReports->execute(
                 reports => [$discovery_report, $additional_report],
                 sort_columns => [qw(chromosome_name start stop reference variant)],

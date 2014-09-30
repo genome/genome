@@ -21,7 +21,7 @@ class Genome::VariantReporting::Command::Wrappers::ModelPairFactory {
         },
         additional_output_dir => {
             calculate_from => [qw/output_dir/],
-            calculate => q/return File::Spec->join($output_dir, "additional");/,
+            calculate => q/return File::Spec->join($output_dir, "followup");/,
         },
         germline_output_dir => {
             calculate_from => [qw/output_dir/],

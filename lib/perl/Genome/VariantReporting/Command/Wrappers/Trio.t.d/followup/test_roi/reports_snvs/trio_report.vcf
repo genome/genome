@@ -1,16 +1,13 @@
 ##fileformat=VCFv4.1
-##annotation=/gscmnt/gc13001/info/model_data/jwalker_scratch/genome/lib/perl/Genome/VariantReporting/Command/Wrappers/TestHelpers.pm.d/dbsnp.vcf
+##annotation=/home/archive/ssiebert/genome/lib/perl/Genome/VariantReporting/Framework/Command/Wrappers/TestHelpers.pm.d/dbsnp.vcf
 ##center=genome.wustl.edu
-##fileDate=20140924
+##fileDate=20140822
 ##phasing=none
 ##reference=ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/ARCHIVE/BUILD.36.3/special_requests/assembly_variants/NCBI36_WUGSC_variant.fa.gz
-##source=Samtools
-##source=Sniper
-##source=VarscanSomatic
-##source=Strelka
+##source=Samtools,Sniper,VarscanSomatic,Strelka
 ##INFO=<ID=NT,Number=1,Type=String,Description="Genotype of the normal in all data tiers, as used to classify somatic variants. One of {ref,het,hom,conflict}.">
 ##INFO=<ID=ON_TARGET,Number=.,Type=String,Description="test roi (overlap)">
-##INFO=<ID=ALLFILTERSPASS,Number=A,Type=Integer,Description="Flags whether the alternate allele passed all the soft filters: FTPASS, CONTAINS_TAG_ON_TARGET">
+##INFO=<ID=ALLFILTERSPASS,Number=A,Type=Integer,Description="Flags whether the alternate allele passed all the soft filters: COVERAGE_VAF, GENOTYPE_VAF, FTPASS, CONTAINS_TAG_ON_TARGET">
 ##INFO=<ID=QSS,Number=1,Type=Integer,Description="Quality score for any somatic snv, ie. for the ALT allele to be present at a significantly different frequency in the tumor and normal">
 ##INFO=<ID=dbSNPBuildID,Number=A,Type=String,Description="Allele frequencies">
 ##INFO=<ID=MUT,Number=.,Type=String,Description="Allele frequencies">
@@ -50,11 +47,13 @@
 ##FILTER=<ID=VarscanHighConfidence,Description="Filter description">
 ##FILTER=<ID=BCNoise,Description="Fraction of basecalls filtered at this site in either sample is at or above 0.4">
 ##FILTER=<ID=DP,Description="Greater than 3x chromosomal mean depth in Normal sample">
+##FILTER=<ID=COVERAGE_VAF,Description="Coverage and VAF for sample TEST-patient1-somval_tumor2 follows criteria: [1000X and VAF>5%,200X and VAF>10%]">
 ##FILTER=<ID=FalsePositive,Description="Filter description">
 ##FILTER=<ID=SnpFilter,Description="Filter description">
 ##FILTER=<ID=SomaticScoreMappingQuality,Description="Filter description">
 ##FILTER=<ID=SpanDel,Description="Fraction of reads crossing site with spanning deletions in either sample exceeeds 0.75">
 ##FILTER=<ID=QSS_ref,Description="Normal sample is not homozygous ref or ssnv Q-score < 15, ie calls with NT!=ref or QSS_NT < 15">
+##FILTER=<ID=GENOTYPE_VAF,Description="Coverage and VAF for sample TEST-patient1-somval_tumor2 follows criteria: [heterozygous: VAF between 40 and 60,homozygous: VAF between 85 and 100]">
 ##FILTER=<ID=FTPASS,Description="FT value for sample TEST-patient1-somval_tumor2 is one of [PASS,.]">
 ##FILTER=<ID=CONTAINS_TAG_ON_TARGET,Description="INFO field for entry contains tag ON_TARGET">
 ##FILTER=<ID=IntersectionFailure,Description="Variant callers do not agree on this position">

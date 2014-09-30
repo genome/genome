@@ -11,6 +11,5 @@ amino_acid_change	The HGVS protein sequence name
 default_gene_name	The gene symbol
 ensembl_gene_id	Ensembl stable ID of affected gene
 Filters
-homopolymer	HOMOPOLYMERS	Filter out indels hitting homo-polymers
 ft-keep	FTPASS	FT value for sample TEST-patient1-somval_tumor2 is one of [PASS,.]
 contains-tag	CONTAINS_TAG_ON_TARGET	INFO field for entry contains tag ON_TARGET
