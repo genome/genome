@@ -31,7 +31,7 @@ class Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport {
     has_param => [
         verbose => { is => 'Boolean', default_value => 0 },
     ],
-    doc => 'Get BAM red counts for SNV positions from WGS, Exome and RNAseq BAMS',     
+    doc => 'get BAM read counts for SNV positions from WGS, Exome and RNA-seq BAMS',     
 };
 
 sub positions_files {

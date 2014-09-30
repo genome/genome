@@ -41,7 +41,7 @@ class Genome::Model::ClinSeq::Command::GetBamReadCounts {
                                      doc => 'database of cancer annotation' },
 
     ],
-    doc => 'This script attempts to get read counts, frequencies and gene expression values for a series of genome positions',
+    doc => 'get read counts, frequencies and gene expression values for a series of genome positions',
 };
 
 

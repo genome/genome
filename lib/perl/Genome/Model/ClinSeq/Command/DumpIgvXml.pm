@@ -23,7 +23,7 @@ class Genome::Model::ClinSeq::Command::DumpIgvXml {
               doc => 'Directory where output files will be written', 
         },
     ],
-    doc => 'Based on the inputs of a clinseq build create a series of IGV session XML files',
+    doc => 'based on the inputs of a clinseq build, create a series of IGV session XML files',
 };
 
 sub help_synopsis {

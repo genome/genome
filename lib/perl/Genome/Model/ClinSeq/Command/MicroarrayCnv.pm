@@ -59,7 +59,7 @@ class Genome::Model::ClinSeq::Command::MicroarrayCnv {
             default_value => '124434505',
         },
     ],
-    doc => 'Create somatic CopyNumber plots using MicroArray build files with CnView',
+    doc => 'create somatic copy number plots using genotype-microarray build files with CnView',
 };
 
 sub help_synopsis {
