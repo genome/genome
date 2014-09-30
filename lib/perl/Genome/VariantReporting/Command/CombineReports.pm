@@ -386,15 +386,15 @@ sub get_master_header_with_source {
 sub get_header {
     my ($self, $file) = @_;
 
-    my $fh = Genome::Sys->open_file_for_reading($file);
-    my $line = $fh->getline;
-    chomp $line;
-    my @columns = split $self->separator, $line;
+    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $file,
+        separator => $self->separator,
+    );
 
     if ($self->contains_header) {
-        return @columns;
+        return @{$reader->headers};
     } else {
-        return ( 1..scalar(@columns) );
+        return ( 1..scalar(@{$reader->headers}) );
     }
 }
 
