@@ -40,20 +40,20 @@ class Genome::Model::ClinSeq {
             calculate => q|
               my ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
               if ($wgs_model) {
-                  $wgs_common_name = $wgs_model->subject->patient->common_name;
-                  $wgs_name = $wgs_model->subject->patient->name;
+                  $wgs_common_name = $wgs_model->subject->individual->common_name;
+                  $wgs_name = $wgs_model->subject->individual->name;
               }
               if ($exome_model) {
-                  $exome_common_name = $exome_model->subject->patient->common_name;
-                  $exome_name = $exome_model->subject->patient->name;
+                  $exome_common_name = $exome_model->subject->individual->common_name;
+                  $exome_name = $exome_model->subject->individual->name;
               }
               if ($tumor_rnaseq_model) {
-                  $tumor_rnaseq_common_name = $tumor_rnaseq_model->subject->patient->common_name;
-                  $tumor_rnaseq_name = $tumor_rnaseq_model->subject->patient->name;
+                  $tumor_rnaseq_common_name = $tumor_rnaseq_model->subject->individual->common_name;
+                  $tumor_rnaseq_name = $tumor_rnaseq_model->subject->individual->name;
               }
               if ($normal_rnaseq_model) {
-                  $normal_rnaseq_common_name = $normal_rnaseq_model->subject->patient->common_name;
-                  $normal_rnaseq_name = $normal_rnaseq_model->subject->patient->name;
+                  $normal_rnaseq_common_name = $normal_rnaseq_model->subject->individual->common_name;
+                  $normal_rnaseq_name = $normal_rnaseq_model->subject->individual->name;
               }
               my @names = ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
               my $final_name = "UnknownName";
@@ -1235,15 +1235,15 @@ sub _infer_candidate_subjects_from_input_models {
     if ($input_model->subject->isa("Genome::Individual")){
       $patient = $input_model->subject;
     }else {
-      $patient = $input_model->subject->patient;
+      $patient = $input_model->subject->individual;
     }
     $subjects{ $patient->id } = $patient;
 
     if ($input_model->can("tumor_model")) {
-      $subjects{ $input_model->tumor_model->subject->patient->id } = $input_model->tumor_model->subject->patient;
+      $subjects{ $input_model->tumor_model->subject->individual->id } = $input_model->tumor_model->subject->individual;
     }
     if ($input_model->can("normal_model")) {
-      $subjects{ $input_model->normal_model->subject->patient->id } = $input_model->normal_model->subject->patient;
+      $subjects{ $input_model->normal_model->subject->individual->id } = $input_model->normal_model->subject->individual;
     }
   }
   my @subjects = sort { $a->id cmp $b->id } values %subjects;
