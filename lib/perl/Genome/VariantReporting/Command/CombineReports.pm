@@ -180,31 +180,28 @@ sub split_file {
 
 sub get_keys_to_append {
     my ($self, $file) = @_;
-    my @header_fields = $self->get_header($file);
+
     my %keys_to_append;
-    for my $header_field (@header_fields) {
-        if (first {$_ eq $header_field} $self->columns_to_split) {
-            $keys_to_append{$header_field} = {};
-        }
+    for my $header_field ($self->columns_to_split) {
+        $keys_to_append{$header_field} = {};
     }
 
-    my $in = Genome::Sys->open_file_for_reading($file);
-    my $header = <$in>;
-    while (my $line = <$in>) {
-        chomp $line;
-        my @fields = split ($self->separator, $line);
-        for my $field_name (keys %keys_to_append) {
-            my $field_index = firstidx {$_ eq $field_name} @header_fields; 
-            my @values = split(",", $fields[$field_index]);
+    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $file,
+        separator => $self->separator,
+    );
+
+    while (my $entry = $reader->next) {
+        for my $field_name ($self->columns_to_split) {
+            my @values = split(",", $entry->{$field_name});
             for my $value (@values) {
                 unless ($value eq ".") {
                     my ($sub_field, $sub_value) = split(":", $value);
-                    $keys_to_append{$field_name}->{$sub_field} = $header_fields[$field_index]."-".$sub_field;
+                    $keys_to_append{$field_name}->{$sub_field} = $field_name."-".$sub_field;
                 }
             }
         }
     }
-    $in->close;
     return %keys_to_append;
 }
 
