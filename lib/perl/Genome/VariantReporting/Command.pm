@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::VariantReporting::Command {
     is => 'Command::Tree',
-    doc => 'Annotation related commands',
+    doc => 'annotation related commands',
 };
 
 1;

@@ -57,7 +57,7 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
             is_optional => 1,
         },
     ],
-    doc => "This script attempts to automate the process of creating a 'clonality' plot"
+    doc => "creates clonality plots"
 };
 
 sub help_synopsis {
