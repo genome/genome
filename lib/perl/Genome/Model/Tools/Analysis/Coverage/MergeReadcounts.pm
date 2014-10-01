@@ -94,6 +94,10 @@ class Genome::Model::Tools::Analysis::Coverage::MergeReadcounts{
 	    doc => 'whether or not to report counts on a per-library basis',
 	    default => 0,
 	},
+    bam_readcount_version => {
+        is => 'String',
+        doc => 'version of bam-readcount to use',
+    },
 
         ]
 };
@@ -323,6 +327,7 @@ sub execute {
 	    indel_size_limit => $indel_size_limit,
 	    min_quality_score => $min_quality_score,
 	    per_library => $self->per_library,
+        bam_readcount_version => $self->bam_readcount_version,
 	);
     
     unless ($cmd->execute) {

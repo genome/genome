@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 class Genome::Command::ColorMixin {
-    doc => "Mixin that gives commands color option",
     has => [
         color => {
             is => 'Boolean',

@@ -48,8 +48,8 @@ sub execute {
         Carp::confess "Could not resolve processing profile!";
     }
 
-    unless ($self->processing_profile->name =~ /wugc/) {
-        Carp:confess "GenotypeMicroarray Models must use one of the [microarray-type]/wugc processing-profiles.";
+    unless ($self->processing_profile->input_format eq 'wugc') {
+        Carp:confess "GenotypeMicroarray Models must use a 'wugc' input_format processing profile.";
     }
 
     return $self->SUPER::_execute_body(@_);

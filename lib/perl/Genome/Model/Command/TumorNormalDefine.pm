@@ -64,8 +64,8 @@ class Genome::Model::Command::TumorNormalDefine {
                     "instead of 'H_ND_196Y (TD196Y vs ND196Y)'",
         },
     ],
-    doc => 'Define new somatic-variation model(s) from a set of '.
-        'reference-alignment models.'
+    doc => 'define new somatic-variation model(s) from a set of '.
+        'reference-alignment models'
 };
 
 sub help_synopsis {

@@ -1,4 +1,4 @@
-package Genome::Model::Command::Admin::FixOrhpanedAllocationsForDv2Results;
+package Genome::Model::Command::Admin::FixOrphanedAllocationsForDv2Results;
 
 use warnings;
 use strict;
@@ -8,7 +8,7 @@ use Genome;
 use File::Find::Rule qw();
 use List::MoreUtils qw(uniq);
 
-class Genome::Model::Command::Admin::FixOrhpanedAllocationsForDv2Results {
+class Genome::Model::Command::Admin::FixOrphanedAllocationsForDv2Results {
     is => 'Command::V2',
     has => [
         build => {

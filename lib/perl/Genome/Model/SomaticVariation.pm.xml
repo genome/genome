@@ -19,6 +19,7 @@
   
   <link fromOperation="Annotate And Upload Variants" fromProperty="build" toOperation="Create Report" toProperty="somatic_variation_build" />
 
+  <link fromOperation="input connector" fromProperty="bam_readcount_version" toOperation="Create Report" toProperty="bam_readcount_version" />
   <link fromOperation="input connector" fromProperty="required_snv_callers" toOperation="Create Report" toProperty="required_snv_callers" />
   <link fromOperation="input connector" fromProperty="tiers_to_review" toOperation="Create Report" toProperty="tiers_to_review" />
   <link fromOperation="input connector" fromProperty="restrict_to_target_regions" toOperation="Create Report" toProperty="restrict_to_target_regions" />
@@ -58,6 +59,7 @@
     <inputproperty>tiers_to_review</inputproperty>
     <inputproperty>restrict_to_target_regions</inputproperty>
     <inputproperty>target_regions</inputproperty>
+    <inputproperty>bam_readcount_version</inputproperty>
     <outputproperty>somatic_variation_build</outputproperty>
   </operationtype>
 

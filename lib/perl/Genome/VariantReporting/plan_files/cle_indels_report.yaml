@@ -91,7 +91,7 @@ reporters:
             'variant-type': {}
         params:
             file_name: 'trio_simple_report.tsv'
-    'vcf-homopolymer':
+    'vcf':
         filters: {}
         interpreters:
             'vcf-entry': {}
