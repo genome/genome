@@ -141,7 +141,7 @@ sub parse_variant_file {
             unless ($data->{data_type} =~ /$data_type/) {
                 next;
             }
-            if ($gender ne "female" and $data->{chr} =~ /X/) {
+            if ($gender ne "female" and $data->{chromosome_name} =~ /X/) {
                 next;
             }
             $out_data->{chr} = $data->{chromosome_name};
@@ -267,7 +267,7 @@ sub run_sciclone {
         return;
     }
     if(-z $cnv_f) {
-        $self->warning_message("cnv file $variant_f empty. skipping sciclone step.");
+        $self->warning_message("cnv file $cnv_f empty. skipping sciclone step.");
         return;
     }
     my $number_of_variants = Genome::Sys->line_count($variant_f);
