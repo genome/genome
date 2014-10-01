@@ -20,6 +20,10 @@ experts:
     dbsnp:
         joinx_version: 1.9
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+    'homo-polymer':
+        joinx_version: 1.9
+        max_length: 2
+        info_string: 'HOMP_FILTER'
 reporters:
     'full':
         filters:
@@ -32,6 +36,8 @@ reporters:
                 sample_name: d0_tumor
             'contains-tag':
                 info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER
         interpreters:
             position: {}
             'variant-type': {}
@@ -61,7 +67,7 @@ reporters:
                     - d30_tumor
                     - d30_normal
         params:
-            file_name: 'cle_full_report'
+            file_name: 'trio_full_report.tsv'
             sample_names:
                 - d0_tumor
                 - d30_tumor
@@ -77,12 +83,14 @@ reporters:
                 sample_name: d0_tumor
             'contains-tag':
                 info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER
         interpreters:
             position: {}
             vep: {}
             'variant-type': {}
         params:
-            file_name: 'cle_simple_report'
+            file_name: 'trio_simple_report.tsv'
     'vcf':
         filters: {}
         interpreters:
@@ -94,5 +102,7 @@ reporters:
                 sample_name: d0_tumor
             'contains-tag':
                 info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER  
         params:
-            file_name: 'cle_vcf_report'
+            file_name: 'trio_report.vcf'

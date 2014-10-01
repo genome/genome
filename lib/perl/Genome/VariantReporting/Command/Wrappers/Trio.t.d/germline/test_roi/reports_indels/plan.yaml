@@ -1,0 +1,101 @@
+---
+experts:
+  bam-readcount:
+    insertion_centric: 1
+    max_count: 10000000
+    minimum_base_quality: 0
+    minimum_mapping_quality: 0
+    per_library: 1
+    version: 0.5
+  dbsnp:
+    info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+    joinx_version: 1.9
+  homo-polymer:
+    info_string: HOMP_FILTER
+    joinx_version: 1.9
+    max_length: 2
+  vep:
+    custom_annotation_tags:
+      - ON_TARGET
+      - SEG_DUP
+      - AML_RMG
+    ensembl_version: 75
+    joinx_version: 1.9
+    plugins:
+      - Condel@PLUGIN_DIR@b@2
+    plugins_version: 1
+    species: homo-sapiens
+reporters:
+  full:
+    filters:
+      allele-in-genotype:
+        sample_name: d30_normal
+      contains-tag:
+        info_tag: ON_TARGET
+      ft-keep:
+        keep_filter_values:
+          - PASS
+          - .
+        sample_name: d30_normal
+      homopolymer:
+        info_tag: HOMP_FILTER
+    interpreters:
+      caf: {}
+      info-tags: {}
+      many-samples-vaf:
+        sample_names:
+          - d30_normal
+      max-vaf-observed:
+        normal_sample_names:
+          - d30_normal
+        tumor_sample_names: []
+      min-coverage:
+        min_coverage: 10
+        sample_name: d30_normal
+      min-coverage-observed:
+        sample_names:
+          - d30_normal
+      position: {}
+      rsid: {}
+      variant-callers:
+        sample_name: d30_normal
+      variant-type: {}
+      vep: {}
+    params:
+      file_name: germline_full_report.tsv
+      sample_names:
+        - d30_normal
+  simple:
+    filters:
+      allele-in-genotype:
+        sample_name: d30_normal
+      contains-tag:
+        info_tag: ON_TARGET
+      ft-keep:
+        keep_filter_values:
+          - PASS
+          - .
+        sample_name: d30_normal
+      homopolymer:
+        info_tag: HOMP_FILTER
+    interpreters:
+      position: {}
+      variant-type: {}
+      vep: {}
+    params:
+      file_name: germline_simple_report.tsv
+  vcf-homopolymer:
+    filters: {}
+    interpreters:
+      contains-tag:
+        info_tag: ON_TARGET
+      ft-keep:
+        keep_filter_values:
+          - PASS
+          - .
+        sample_name: d30_normal
+      homopolymer:
+        info_tag: HOMP_FILTER
+      vcf-entry: {}
+    params:
+      file_name: germline_report.vcf
