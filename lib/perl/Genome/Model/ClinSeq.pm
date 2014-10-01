@@ -948,6 +948,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'docm_report_dir', $docm_report_op, 'outdir');
     $add_link->($input_connector, 'build_as_array', $docm_report_op, 'builds');
     $add_link->($input_connector, 'docm_variants_file', $docm_report_op, 'docm_variants_file');
+    $add_link->($input_connector, 'bam_readcount_version', $docm_report_op, 'bam_readcount_version');
     $add_link->($docm_report_op, 'result', $output_connector, 'docm_report_result');
   }
 
@@ -1176,6 +1177,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'build_as_array', $converge_snv_indel_report_op, 'builds');
     $add_link->($input_connector, 'snv_indel_report_dir', $converge_snv_indel_report_op, 'outdir');
     $add_link->($input_connector, 'snv_indel_report_clean', $converge_snv_indel_report_op, 'clean');
+    $add_link->($input_connector, 'bam_readcount_version', $converge_snv_indel_report_op, 'bam_readcount_version');
     $add_link->($input_connector, 'snv_indel_report_tmp_space', $converge_snv_indel_report_op, 'tmp_space');
     $add_link->($input_connector, 'annotation_build', $converge_snv_indel_report_op, 'annotation_build');
     $add_link->($input_connector, 'snv_indel_report_target_gene_list', $converge_snv_indel_report_op, 'target_gene_list');
