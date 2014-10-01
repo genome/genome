@@ -264,7 +264,7 @@ sub parse_variant_file {
       unless ($data->{data_type} =~ /$data_type/) {
         next;
       }
-      if ($gender ne "female" and $data->{chr} =~ /X/) {
+      if ($gender ne "female" and $data->{chromosome_name} =~ /X/) {
         next;
       }
       $out_data->{chr} = $data->{chromosome_name};
