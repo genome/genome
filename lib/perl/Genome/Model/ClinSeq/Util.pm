@@ -1462,5 +1462,24 @@ sub get_header_prefixes {
   return @prefixes;
 }
 
+sub parse_qualities {
+  my $self = shift;
+  my $min_mq = $self->sireport_min_mq;
+  my $min_bq = $self->sireport_min_bq;
+  my @mqs = split(",", $min_mq);
+  my @bqs = split(",", $min_bq);
+  foreach my $mq(@mqs) {
+    if($mq < 0) {
+      die $self->error_message("Negative mapping quality $mq in Processing Profile");
+    }
+  }
+  foreach my $bq(@bqs) {
+    if($bq < 0) {
+      die $self->error_message("Negative mapping quality $bq in Processing Profile");
+    }
+  }
+  return (\@mqs, \@bqs);
+}
+
 1;
 

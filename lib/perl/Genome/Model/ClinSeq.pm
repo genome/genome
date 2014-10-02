@@ -11,7 +11,8 @@ our $DEFAULT_MISC_ANNOTATION_DB_ID      = 'tgi/misc-annotation/human/build37-201
 our $DEFAULT_COSMIC_ANNOTATION_DB_ID    = 'cosmic/65.3';
 
 class Genome::Model::ClinSeq {
-    is => 'Genome::Model',
+    is => ['Genome::Model',
+           'Genome::Model::ClinSeq::Util',],
     has_optional_input => [
         wgs_model               => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for wgs data' },
         exome_model             => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for exome data' },
@@ -1577,25 +1578,6 @@ sub has_microarray_build {
   } else {
       return 0;
   }
-}
-
-sub parse_qualities {
-  my $self = shift;
-  my $min_mq = $self->sireport_min_mq;
-  my $min_bq = $self->sireport_min_bq;
-  my @mqs = split(",", $min_mq);
-  my @bqs = split(",", $min_bq);
-  foreach my $mq(@mqs) {
-    if($mq < 0) {
-      die $self->error_message("Negative mapping quality $mq in Processing Profile");
-    }
-  }
-  foreach my $bq(@bqs) {
-    if($bq < 0) {
-      die $self->error_message("Negative mapping quality $bq in Processing Profile");
-    }
-  }
-  return (\@mqs, \@bqs);
 }
 
 sub _get_docm_variants_file {
