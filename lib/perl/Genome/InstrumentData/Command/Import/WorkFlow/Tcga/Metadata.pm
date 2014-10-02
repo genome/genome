@@ -121,7 +121,36 @@ sub get_attribute_value {
     return $value;
 }
 
+sub reference_assembly_shortname {
+    my $self = shift;
+
+    my $reference_shortname = $self->get_attribute_value('refassem_short_name');
+    return $reference_shortname if $reference_shortname;
+
+    $reference_shortname = $self->_metadata->{Result}->{analysis_xml}->{ANALYSIS_SET}->{ANALYSIS}->{ANALYSIS_TYPE}->{REFERENCE_ALIGNMENT}->{ASSEMBLY}->{STANDARD}->{shortname};
+    return $reference_shortname if $reference_shortname;
+
+    return;
+}
+
+sub reference_assembly_version {
+    my $self = shift;
+
+    my $reference_assembly_shortname = $self->reference_assembly_shortname;
+    return if not $reference_assembly_shortname;
+
+    if ( $reference_assembly_shortname =~ /hg(\d\d)/i ) {
+        return $1 + 18;
+    }
+    elsif ( $reference_assembly_shortname =~ /ncbi(\d\d)/i ) {
+        return $1;
+    }
+
+    return;
+}
+
 sub target_region {
+    # This will need to be updated
     my $self = shift;
 
     die $self->error_message('No metadata set to get target region!') if not $self->_metadata;
@@ -134,7 +163,10 @@ sub target_region {
     elsif ( $library_strategy eq 'WGS' or $library_strategy eq 'RNA-Seq' ) {
         $target_region = 'none';
     } elsif($library_strategy eq 'WXS') { #exome
-        $target_region = 'agilent_sureselect_exome_version_2_broad_refseq_cds_only_hs37';
+        my $reference_assembly_version = $self->reference_assembly_version;
+        $target_region = ( $reference_assembly_version eq '37' )
+        ? 'agilent_sureselect_exome_version_2_broad_refseq_cds_only_hs37'
+        : 'agilent sureselect exome version 2 broad refseq cds only';
     }
     else {
         # unknown library strategy
