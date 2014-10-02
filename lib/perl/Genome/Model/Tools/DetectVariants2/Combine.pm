@@ -21,6 +21,13 @@ class Genome::Model::Tools::DetectVariants2::Combine {
             is => 'Text',
             is_output => 1,
         },
+        aligned_reads_sample => {
+            is => 'Text',
+        },
+        control_aligned_reads_sample => {
+            is => 'Text',
+            is_optional => 1,
+        },
     ],
     has_param => [
         lsf_queue => {
@@ -162,7 +169,7 @@ sub _try_vcf {
             $self->debug_message("No software-result associated with input_id: ".$input_id);
             return 0;
         }
-        my $input_vcf_result = $input_result->get_vcf_result;
+        my $input_vcf_result = $input_result->get_vcf_result($self->aligned_reads_sample, $self->control_aligned_reads_sample);
         $vcf_count++ if $input_vcf_result;
     }
     if($vcf_count == 2){
@@ -265,12 +272,14 @@ sub params_for_combine_result {
 
 sub params_for_vcf_result {
     my $self = shift;
+    my $aligned_reads_sample = $self->aligned_reads_sample;
+    my $control_aligned_reads_sample = $self->control_aligned_reads_sample;
 
     my $prev_result_a = Genome::SoftwareResult->get($self->input_a_id);
     my $prev_result_b = Genome::SoftwareResult->get($self->input_b_id);
 
-    my $prev_vcf_result_a = $prev_result_a->get_vcf_result;
-    my $prev_vcf_result_b = $prev_result_b->get_vcf_result;
+    my $prev_vcf_result_a = $prev_result_a->get_vcf_result($aligned_reads_sample, $control_aligned_reads_sample);
+    my $prev_vcf_result_b = $prev_result_b->get_vcf_result($aligned_reads_sample, $control_aligned_reads_sample);
 
     my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
     my $joinx_version = Genome::Model::Tools::Joinx->get_default_version;

@@ -673,6 +673,15 @@ sub create_combine_operation {
     $workflow_links->{$unique_combine_name."_output_directory"}->{right_operation} = $combine_operation;
     $workflow_links->{$unique_combine_name."_output_directory"}->{last_operation} = $unique_combine_name;
 
+    for my $sample_type ('aligned_reads_sample', 'control_aligned_reads_sample') {
+        $workflow_model->add_link(
+            left_operation => $workflow_model->get_input_connector,
+            left_property => $sample_type,
+            right_operation => $combine_operation,
+            right_property => $sample_type,
+        );
+    }
+
     # Add this output directory to the list of expected directories so we can compile all LQ variants later
     push @{$self->{_expected_output_directories}->{$variant_type}}, $combine_directory;
 

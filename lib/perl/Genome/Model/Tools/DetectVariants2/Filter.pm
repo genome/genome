@@ -760,7 +760,8 @@ sub params_for_filter_result {
 
 sub params_for_vcf_result {
     my $self = shift;
-    my $prev_vcf_result = $self->previous_result->get_vcf_result;
+
+    my $prev_vcf_result = $self->previous_result->get_vcf_result($self->aligned_reads_sample, $self->control_aligned_reads_sample);
     my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
     unless($prev_vcf_result->vcf_version eq $vcf_version){
         die $self->error_message("Couldn't locate a vcf_result with the same vcf_version");
