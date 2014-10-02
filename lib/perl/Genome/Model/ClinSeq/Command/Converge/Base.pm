@@ -51,10 +51,10 @@ sub resolve_clinseq_subject_labels{
 
   my $build_count = scalar(@builds);
 
-  my %individual_common_names;
+  my %patient_common_names;
   my %patient_and_subject_type_names;
   my %clinseq_subject_names;
-  my %individual_names; 
+  my %patient_names; 
   my %wgs_subject_names; 
   my %exome_subject_names;
   my %dna_subject_names;
@@ -66,14 +66,14 @@ sub resolve_clinseq_subject_labels{
   foreach my $build (@builds){
 
     #Patient common names. e.g. PNC6
-    my $individual_common_name = $self->get_final_common_name('-clinseq_build'=>$build);
-    $individual_common_names{$individual_common_name} = $build->id if $individual_common_name;
+    my $patient_common_name = $self->get_final_common_name('-clinseq_build'=>$build);
+    $patient_common_names{$patient_common_name} = $build->id if $patient_common_name;
 
     #Patient common name combined with dna sample type.  e.g. PNC6_tumor
     my $dna_subject_type = $self->get_dna_sample_type('-clinseq_build'=>$build);
     my $patient_and_subject_type_name;
-    if ($individual_common_name && $dna_subject_type){
-      $patient_and_subject_type_name = $individual_common_name . "_" . $dna_subject_type;
+    if ($patient_common_name && $dna_subject_type){
+      $patient_and_subject_type_name = $patient_common_name . "_" . $dna_subject_type;
     }
     $patient_and_subject_type_names{$patient_and_subject_type_name} = $build->id if $patient_and_subject_type_name;
 
@@ -90,7 +90,7 @@ sub resolve_clinseq_subject_labels{
     $exome_subject_names{$exome_subject_name} = $build->id if $build->exome_build;
 
     #DNA subject name. e.g. H_KA-306905-1121472
-    my $dna_subject_name = $self->get_dna_subject_name('-clinseq_build'=>$build, '-individual_common_name'=>$individual_common_name);
+    my $dna_subject_name = $self->get_dna_subject_name('-clinseq_build'=>$build, '-patient_common_name'=>$patient_common_name);
     $dna_subject_names{$dna_subject_name} = $build->id if $dna_subject_name;
 
     #Tumor RNA subject name
@@ -106,7 +106,7 @@ sub resolve_clinseq_subject_labels{
     $model_id_names{$model_id} = $build->id;
 
   }
-  push (@name_lists, \%individual_common_names);
+  push (@name_lists, \%patient_common_names);
   push (@name_lists, \%patient_and_subject_type_names);
   push (@name_lists, \%clinseq_subject_names);
   push (@name_lists, \%wgs_subject_names);
@@ -254,7 +254,7 @@ sub get_dna_subject_name{
   my $self = shift;
   my %args = @_;
   my $clinseq_build = $args{'-clinseq_build'};
-  my $individual_common_name = $args{'-individual_common_name'};
+  my $patient_common_name = $args{'-patient_common_name'};
 
   my $subject_name;
   my $wgs_build = $clinseq_build->wgs_build;
@@ -268,12 +268,12 @@ sub get_dna_subject_name{
     if ($build->subject->class eq 'Genome::Sample'){
       my $sample_name = $build->subject->name;
       my $sample_common_name = $build->subject->common_name;
-      if ($sample_name && $individual_common_name && $sample_common_name){
-        $sample_name = $individual_common_name . "_" . $sample_name . "_" . $sample_common_name;
+      if ($sample_name && $patient_common_name && $sample_common_name){
+        $sample_name = $patient_common_name . "_" . $sample_name . "_" . $sample_common_name;
       }elsif($sample_name && $sample_common_name){
         $sample_name = $sample_name . "_" . $sample_common_name;
-      }elsif ($sample_name && $individual_common_name){
-        $sample_name = $individual_common_name . "_" . $sample_name;
+      }elsif ($sample_name && $patient_common_name){
+        $sample_name = $patient_common_name . "_" . $sample_name;
       }
       $names{$sample_name}=1 if $sample_name;
       $final_name = $sample_name if $sample_name;
