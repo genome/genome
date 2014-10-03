@@ -206,7 +206,8 @@ sub get_vcf_result {
         return;
     } else {
         return Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->get_with_lock(
-            $self->vcf_result_params);
+            %params
+        );
     }
 }
 
