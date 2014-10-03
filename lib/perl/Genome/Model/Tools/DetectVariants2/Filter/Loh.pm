@@ -124,6 +124,7 @@ sub _generate_control_file {
     my $filter_command = Genome::Model::Tools::DetectVariants2::Filter::SnpFilter->create(
         previous_result_id => $detector_command->_result_id,
         output_directory => $filter_output,
+        aligned_reads_sample => 'TEST',
     );
 
     unless($filter_command->execute) {
