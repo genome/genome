@@ -33,8 +33,7 @@ class Genome::Model::ClinSeq {
         sireport_min_tumor_vaf => { is => 'Number', doc => 'Variants with a tumor VAF less than this (in any tumor sample) will be filtered out.'},
         sireport_max_normal_vaf => { is => 'Number', doc => 'Variants with a normal VAF greater than this (in any normal sample) will be filtered out.'},
         sireport_min_coverage => { is => 'Number', doc => 'Variants with coverage less than this (in any sample) will be filtered out.'},
-        sireport_min_mq => { is => 'Text', doc => 'Comma separated increasing-list of minimum mapping qualities for bam-readcounting.'},
-        sireport_min_bq => { is => 'Text', doc => 'Comma separated increasing-list of Minimum base qualities for bam-readcounting.'},
+        sireport_min_mq_bq => { is => 'Text', doc => 'Comma separated increasing-list of minimum mapping qualities for bam-readcounting.'},
     ],
     has_optional_metric => [
         common_name         => { is => 'Text', doc => 'the name chosen for the root directory in the build' },
@@ -424,21 +423,20 @@ sub map_workflow_inputs {
     #CreateMutationSpectrum
     my $i = 1;
     foreach my $mq(@$mqs) {
-      foreach my $bq(@$bqs) {
-        if ($wgs_build) {
-          push @inputs, 'wgs_mutation_spectrum_outdir' . $i =>
-            $patient_dir . "/mutation-spectrum/b". $bq . "_q" . $mq .  "/";
-          push @inputs, 'wgs_mutation_spectrum_datatype' . $i =>
-            'wgs';
-        }
-        if ($exome_build) {
-          push @inputs, 'exome_mutation_spectrum_outdir' . $i  =>
-            $patient_dir . "/mutation-spectrum/b". $bq . "_q" . $mq .  "/";
-          push @inputs, 'exome_mutation_spectrum_datatype' . $i =>
-            'exome';
-        }
-        $i++;
+      my $bq = $bqs->[$i-1];
+      if ($wgs_build) {
+        push @inputs, 'wgs_mutation_spectrum_outdir' . $i =>
+        $patient_dir . "/mutation-spectrum/b". $bq . "_q" . $mq .  "/";
+        push @inputs, 'wgs_mutation_spectrum_datatype' . $i =>
+        'wgs';
       }
+      if ($exome_build) {
+        push @inputs, 'exome_mutation_spectrum_outdir' . $i  =>
+        $patient_dir . "/mutation-spectrum/b". $bq . "_q" . $mq .  "/";
+        push @inputs, 'exome_mutation_spectrum_datatype' . $i =>
+        'exome';
+      }
+      $i++;
     }
     if($wgs_build or $exome_build) {
       my $mutation_spectrum_dir = $patient_dir . "/mutation-spectrum";
@@ -460,19 +458,18 @@ sub map_workflow_inputs {
     if ($exome_build || $wgs_build) {
       my $i = 1;
       foreach my $mq(@$mqs) {
-        foreach my $bq(@$bqs) {
-          my $snv_indel_report_dir1 = $patient_dir .
-            "/snv_indel_report/" . "b" . $bq . "_" . "q" . $mq;
-          my $sciclone_dir1 = $patient_dir .
-            "/clonality/sciclone/" . "b" . $bq . "_" . "q" . $mq;
-          push @dirs, $snv_indel_report_dir1;
-          push @dirs, $sciclone_dir1;
-          push @inputs, "snv_indel_report_dir" . $i => $snv_indel_report_dir1;
-          push @inputs, "sciclone_dir" . $i  => $sciclone_dir1;
-          push @inputs, "sireport_min_bq" . $i => $bq;
-          push @inputs, "sireport_min_mq" . $i => $mq;
-          $i++;
-        }
+        my $bq = $bqs->[$i-1];
+        my $snv_indel_report_dir1 = $patient_dir .
+        "/snv_indel_report/" . "b" . $bq . "_" . "q" . $mq;
+        my $sciclone_dir1 = $patient_dir .
+        "/clonality/sciclone/" . "b" . $bq . "_" . "q" . $mq;
+        push @dirs, $snv_indel_report_dir1;
+        push @dirs, $sciclone_dir1;
+        push @inputs, "snv_indel_report_dir" . $i => $snv_indel_report_dir1;
+        push @inputs, "sciclone_dir" . $i  => $sciclone_dir1;
+        push @inputs, "sireport_min_bq" . $i => $bq;
+        push @inputs, "sireport_min_mq" . $i => $mq;
+        $i++;
       }
       my $target_gene_list = $cancer_annotation_db->data_directory . "/CancerGeneCensus/cancer_gene_census_ensgs.tsv";
       my $target_gene_list_name = "CancerGeneCensus";
@@ -567,7 +564,6 @@ sub _resolve_workflow_for_build {
     push @output_properties, 'import_snvs_indels_result';
     my $i = 1;
     foreach my $mq(@$mqs) {
-      foreach my $bq(@$bqs) {
         if($build->wgs_build) {
           push @output_properties,  'wgs_mutation_spectrum_result' . $i;
         }
@@ -577,7 +573,6 @@ sub _resolve_workflow_for_build {
         push @output_properties, 'converge_snv_indel_report_result' . $i;
         push @output_properties, 'sciclone_result' . $i;
         $i++;
-      }
     }
   }
 
@@ -1204,8 +1199,8 @@ sub _resolve_workflow_for_build {
     my $i = 1;
     #Create a report for each $bq $mq combo.
     foreach my $mq(@$mqs) {
-      foreach my $bq(@$bqs) {
-        $msg = "Generate SnvIndel Report with non stringent filters " . $i . ".";
+        my $bq = $bqs->[$i-1];
+        $msg = "Generate SnvIndel Report" . $i . ".";
         $converge_snv_indel_report_op1 = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::SnvIndelReport");
         $add_link->($input_connector, 'build_as_array', $converge_snv_indel_report_op1, 'builds');
         $add_link->($input_connector, 'snv_indel_report_dir' . $i, $converge_snv_indel_report_op1, 'outdir');
@@ -1235,7 +1230,6 @@ sub _resolve_workflow_for_build {
         $add_link->($converge_snv_indel_report_op1, 'result', $output_connector, 'converge_snv_indel_report_result' . $i);
         push @converge_snv_indel_report_ops, $converge_snv_indel_report_op1;
         $i++;
-      }
     }
   }
 
@@ -1243,19 +1237,18 @@ sub _resolve_workflow_for_build {
   if ($build->wgs_build) {
     my $i = 1;
     foreach my $mq(@$mqs) {
-      foreach my $bq(@$bqs) {
-        my $msg = "Creating mutation spectrum results for wgs snvs using create-mutation-spectrum" . $i;
-        my $create_mutation_spectrum_wgs_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
-        $add_link->($input_connector, 'build', $create_mutation_spectrum_wgs_op, 'clinseq_build');
-        $add_link->($input_connector, 'wgs_build', $create_mutation_spectrum_wgs_op, 'somvar_build');
-        $add_link->($input_connector, 'wgs_mutation_spectrum_outdir' . $i, $create_mutation_spectrum_wgs_op, 'outdir');
-        $add_link->($input_connector, 'wgs_mutation_spectrum_datatype' . $i, $create_mutation_spectrum_wgs_op, 'datatype');
-        $add_link->($input_connector, 'sireport_min_bq' . $i, $create_mutation_spectrum_wgs_op, 'min_base_quality');
-        $add_link->($input_connector, 'sireport_min_mq' . $i, $create_mutation_spectrum_wgs_op, 'min_quality_score');
-        $add_link->($converge_snv_indel_report_ops[$i-1], 'result', $create_mutation_spectrum_wgs_op, 'converge_snv_indel_report_result');
-        $add_link->($create_mutation_spectrum_wgs_op, 'result', $output_connector, 'wgs_mutation_spectrum_result' . $i);
-        $i++;
-      }
+      my $bq = $bqs->[$i-1];
+      my $msg = "Creating mutation spectrum results for wgs snvs using create-mutation-spectrum" . $i;
+      my $create_mutation_spectrum_wgs_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
+      $add_link->($input_connector, 'build', $create_mutation_spectrum_wgs_op, 'clinseq_build');
+      $add_link->($input_connector, 'wgs_build', $create_mutation_spectrum_wgs_op, 'somvar_build');
+      $add_link->($input_connector, 'wgs_mutation_spectrum_outdir' . $i, $create_mutation_spectrum_wgs_op, 'outdir');
+      $add_link->($input_connector, 'wgs_mutation_spectrum_datatype' . $i, $create_mutation_spectrum_wgs_op, 'datatype');
+      $add_link->($input_connector, 'sireport_min_bq' . $i, $create_mutation_spectrum_wgs_op, 'min_base_quality');
+      $add_link->($input_connector, 'sireport_min_mq' . $i, $create_mutation_spectrum_wgs_op, 'min_quality_score');
+      $add_link->($converge_snv_indel_report_ops[$i-1], 'result', $create_mutation_spectrum_wgs_op, 'converge_snv_indel_report_result');
+      $add_link->($create_mutation_spectrum_wgs_op, 'result', $output_connector, 'wgs_mutation_spectrum_result' . $i);
+      $i++;
     }
   }
 
@@ -1263,48 +1256,45 @@ sub _resolve_workflow_for_build {
   if ($build->exome_build) {
     my $i = 1;
     foreach my $mq(@$mqs) {
-      foreach my $bq(@$bqs) {
-        my $msg = "Creating mutation spectrum results for exome snvs using create-mutation-spectrum " . $i;
-        my $create_mutation_spectrum_exome_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
-        $add_link->($input_connector, 'build', $create_mutation_spectrum_exome_op, 'clinseq_build');
-        $add_link->($input_connector, 'exome_build', $create_mutation_spectrum_exome_op, 'somvar_build');
-        $add_link->($input_connector, 'exome_mutation_spectrum_outdir' . $i, $create_mutation_spectrum_exome_op, 'outdir' );
-        $add_link->($input_connector, 'exome_mutation_spectrum_datatype' . $i, $create_mutation_spectrum_exome_op, 'datatype');
-        $add_link->($input_connector, 'sireport_min_bq' . $i, $create_mutation_spectrum_exome_op, 'min_base_quality');
-        $add_link->($input_connector, 'sireport_min_mq' . $i, $create_mutation_spectrum_exome_op, 'min_quality_score');
-        $add_link->($converge_snv_indel_report_ops[$i-1], 'result', $create_mutation_spectrum_exome_op, 'converge_snv_indel_report_result');
-        $add_link->($create_mutation_spectrum_exome_op, 'result', $output_connector, 'exome_mutation_spectrum_result' . $i);
-        $i++;
-      }
+      my $bq = $bqs->[$i-1];
+      my $msg = "Creating mutation spectrum results for exome snvs using create-mutation-spectrum " . $i;
+      my $create_mutation_spectrum_exome_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
+      $add_link->($input_connector, 'build', $create_mutation_spectrum_exome_op, 'clinseq_build');
+      $add_link->($input_connector, 'exome_build', $create_mutation_spectrum_exome_op, 'somvar_build');
+      $add_link->($input_connector, 'exome_mutation_spectrum_outdir' . $i, $create_mutation_spectrum_exome_op, 'outdir' );
+      $add_link->($input_connector, 'exome_mutation_spectrum_datatype' . $i, $create_mutation_spectrum_exome_op, 'datatype');
+      $add_link->($input_connector, 'sireport_min_bq' . $i, $create_mutation_spectrum_exome_op, 'min_base_quality');
+      $add_link->($input_connector, 'sireport_min_mq' . $i, $create_mutation_spectrum_exome_op, 'min_quality_score');
+      $add_link->($converge_snv_indel_report_ops[$i-1], 'result', $create_mutation_spectrum_exome_op, 'converge_snv_indel_report_result');
+      $add_link->($create_mutation_spectrum_exome_op, 'result', $output_connector, 'exome_mutation_spectrum_result' . $i);
+      $i++;
     }
   }
 
   #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
-  my $sciclone_op;
   my $i = 1;
   if ($build->wgs_build or $build->exome_build){
     foreach my $mq(@$mqs) {
-      foreach my $bq(@$bqs) {
-        my $msg = "Run clonality analysis and produce clonality plots using SciClone " . $i;
-        $sciclone_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateSciclonePlots");
-        $add_link->($input_connector, 'sciclone_dir' . $i, $sciclone_op, 'outdir');
-        $add_link->($input_connector, 'build', $sciclone_op, 'clinseq_build');
-        $add_link->($input_connector, 'sireport_min_coverage', $sciclone_op, 'min_coverage');
-        $add_link->($input_connector, 'sireport_min_mq' . $i, $sciclone_op, 'min_mq');
-        $add_link->($input_connector, 'sireport_min_bq' . $i, $sciclone_op, 'min_bq');
-        if ($build->wgs_build) {
-            $add_link->($run_cn_view_op, 'result', $sciclone_op, 'wgs_cnv_result');
-        }
-        if ($build->exome_build) {
-            $add_link->($exome_cnv_op, 'result', $sciclone_op, 'exome_cnv_result');
-        }
-        if ($self->has_microarray_build()) {
-            $add_link->($microarray_cnv_op, 'result', $sciclone_op, 'microarray_cnv_result');
-        }
-        $add_link->($converge_snv_indel_report_ops[$i-1], 'result', $sciclone_op, 'converge_snv_indel_report_result');
-        $add_link->($sciclone_op, 'result', $output_connector, 'sciclone_result' . $i);
-        $i++;
+      my $bq = $bqs->[$i-1];
+      my $msg = "Run clonality analysis and produce clonality plots using SciClone " . $i;
+      my $sciclone_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateSciclonePlots");
+      $add_link->($input_connector, 'sciclone_dir' . $i, $sciclone_op, 'outdir');
+      $add_link->($input_connector, 'build', $sciclone_op, 'clinseq_build');
+      $add_link->($input_connector, 'sireport_min_coverage', $sciclone_op, 'min_coverage');
+      $add_link->($input_connector, 'sireport_min_mq' . $i, $sciclone_op, 'min_mq');
+      $add_link->($input_connector, 'sireport_min_bq' . $i, $sciclone_op, 'min_bq');
+      if ($build->wgs_build) {
+        $add_link->($run_cn_view_op, 'result', $sciclone_op, 'wgs_cnv_result');
       }
+      if ($build->exome_build) {
+        $add_link->($exome_cnv_op, 'result', $sciclone_op, 'exome_cnv_result');
+      }
+      if ($self->has_microarray_build()) {
+        $add_link->($microarray_cnv_op, 'result', $sciclone_op, 'microarray_cnv_result');
+      }
+      $add_link->($converge_snv_indel_report_ops[$i-1], 'result', $sciclone_op, 'converge_snv_indel_report_result');
+      $add_link->($sciclone_op, 'result', $output_connector, 'sciclone_result' . $i);
+      $i++;
     }
   }
 
