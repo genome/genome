@@ -72,6 +72,7 @@ sub run_test {
         previous_result_id => $detector_result->id,
         output_directory   => $output_dir,
         params => $params,
+        aligned_reads_sample => "TEST",
     );
 
     my $filter_command = Genome::Model::Tools::DetectVariants2::Filter::FalseIndel->create(%params);
