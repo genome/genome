@@ -16,8 +16,8 @@ use Test::More;
 use_ok('Genome::Sample::Command::Import') or die;
 ok(Genome::Sample::Command::Import::EmblEbi->__meta__, 'class meta for import embl-ebi sample');
 
-my $patient_name = 'EMBL-HCT00000';
-my $name = $patient_name.'-ERS000000';
+my $individual_name = 'EMBL-HCT00000';
+my $name = $individual_name.'-ERS000000';
 my $import = Genome::Sample::Command::Import::EmblEbi->create(
     name => $name,
     ethnicity => 'caucasian',
@@ -29,7 +29,7 @@ my $import = Genome::Sample::Command::Import::EmblEbi->create(
 ok($import, 'create');
 ok($import->execute, 'execute');
 
-is($import->_individual->name, $patient_name, 'patient name');
+is($import->_individual->name, $individual_name, 'patient name');
 is($import->_individual->nomenclature, 'EMBL-EBI', 'patient nomenclature');
 is($import->_individual->gender, 'male', 'patient gender');
 is($import->_individual->ethnicity, 'caucasian', 'patient ethnicity');

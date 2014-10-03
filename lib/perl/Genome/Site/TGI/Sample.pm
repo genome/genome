@@ -118,9 +118,9 @@ class Genome::Site::TGI::Sample {
         patient                      => { is => 'Genome::Site::TGI::Individual', id_by => 'source_id',
                                            doc => 'The patient/individual organism from which the sample was taken.' },
         
-        patient_name                 => { via => 'patient', to => 'name', doc => 'the system name for a patient (subset of the sample name)' },
+        individual_name                 => { via => 'patient', to => 'name', doc => 'the system name for a patient (subset of the sample name)' },
         
-        patient_common_name          => { via => 'patient', to => 'common_name', doc => 'names like AML1, BRC50, etc' },
+        individual_common_name          => { via => 'patient', to => 'common_name', doc => 'names like AML1, BRC50, etc' },
         age => { 
             is => 'Number',
             via => 'attributes', 
@@ -159,7 +159,7 @@ class Genome::Site::TGI::Sample {
 
 sub __display_name__ {
     my $self = $_[0];
-    return $self->name . ($self->patient_common_name ? ' (' . $self->patient_common_name . ' ' . $self->common_name . ')' : '');
+    return $self->name . ($self->individual_common_name ? ' (' . $self->individual_common_name . ' ' . $self->common_name . ')' : '');
 }
 
 sub create {

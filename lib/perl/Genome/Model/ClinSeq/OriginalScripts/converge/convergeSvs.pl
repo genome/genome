@@ -104,12 +104,12 @@ foreach my $m (@models){
 
   my ($wgs_common_name, $wgs_name, $exome_common_name, $exome_name);
   if ($wgs_build){
-    $wgs_common_name = $wgs_build->subject->patient->common_name;
-    $wgs_name = $wgs_build->subject->patient->name;
+    $wgs_common_name = $wgs_build->subject->individual->common_name;
+    $wgs_name = $wgs_build->subject->individual->name;
   }
   if ($exome_build){
-    $exome_common_name = $exome_build->subject->patient->common_name;
-    $exome_name = $exome_build->subject->patient->name;
+    $exome_common_name = $exome_build->subject->individual->common_name;
+    $exome_name = $exome_build->subject->individual->name;
   }
 
   #Get the patient common name from one of the builds, if none can be found, use the individual name instead, if that can't be found either set the name to 'UnknownName'

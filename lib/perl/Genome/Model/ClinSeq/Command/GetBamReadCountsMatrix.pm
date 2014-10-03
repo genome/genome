@@ -529,7 +529,7 @@ sub get_ref_align_builds{
       my $tumor_label = $tumor_build_id . "_tumor";
       my $common_name = '';
       my $subject = $somatic_build->subject;
-      my $patient = $subject->patient;
+      my $patient = $subject->individual;
       if ($patient){
         if ($patient->can("common_name")){
           if ($patient->common_name){

@@ -17,7 +17,7 @@ use_ok($pkg);
 
 
 my @samples = map {
-        Genome::Test::Factory::Sample->setup_object(name => "s_${pkg}_$_", source_id => $pkg)
+        Genome::Test::Factory::Sample->setup_object(name => "s_${pkg}_$_")
         } 1..3;
 
 my @libs = map {

@@ -306,7 +306,7 @@ sub infer_group_subject {
         next unless $subject;
 
         if ($subject->isa('Genome::Sample')) {
-            my $indiv = $subject->patient;
+            my $indiv = $subject->individual;
             unless ($indiv) {
                 $use_taxon = 1;
                 next;

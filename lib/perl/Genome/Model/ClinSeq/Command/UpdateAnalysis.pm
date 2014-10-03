@@ -505,7 +505,7 @@ sub get_samples{
     next if $skip;
 
     #Make sure the individual specified matches that of every sample
-    my $patient_id = $sample->patient->id;
+    my $patient_id = $sample->individual->id;
     my $individual_id = $individual->id;
     unless ($patient_id eq $individual_id){
       $self->error_message("ID of individual supplied by user ($individual_id) does not match that associated with a sample ($patient_id)");
@@ -1083,7 +1083,7 @@ sub check_ref_align_models{
   my @sample_instrument_data = $self->get_dna_instrument_data('-sample'=>$sample, '-data_type'=>$data_type);
   return @tmp unless (scalar(@sample_instrument_data));
 
-  my $subject_id = $sample->patient->id;
+  my $subject_id = $sample->individual->id;
   my @models = $sample->models;
   my $model_count = scalar(@models);
   $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet basic criteria:");
@@ -1214,7 +1214,7 @@ sub check_rnaseq_models{
     $self->status_message("\tCould not find any rna-seq data");
     return @tmp;
   }
-  my $subject_id = $sample->patient->id;
+  my $subject_id = $sample->individual->id;
   my @models = $sample->models;
   my $model_count = scalar(@models);
   $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet basic criteria:");
@@ -1605,11 +1605,11 @@ sub create_de_model{
   my $individual_name = $self->individual->name;
   my $normal_rnaseq_model_id = $normal_rnaseq_model->id;
   my $normal_subject_name = $normal_rnaseq_model->subject->name;
-  my $normal_individual_common_name = $normal_rnaseq_model->subject->patient_common_name;
+  my $normal_individual_common_name = $normal_rnaseq_model->subject->individual_common_name;
   my $normal_sample_common_name = $normal_rnaseq_model->subject->common_name;
   my $tumor_rnaseq_model_id = $tumor_rnaseq_model->id;
   my $tumor_subject_name = $tumor_rnaseq_model->subject->name;
-  my $tumor_individual_common_name = $tumor_rnaseq_model->subject->patient_common_name;
+  my $tumor_individual_common_name = $tumor_rnaseq_model->subject->individual_common_name;
   my $tumor_sample_common_name = $tumor_rnaseq_model->subject->common_name;
   my $differential_expression_pp_id = $self->differential_expression_pp->id;
 

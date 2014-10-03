@@ -176,7 +176,7 @@ sub get_final_common_name{
       $names{$common_name}=1 if $common_name;
       $final_name = $common_name if $common_name;
     }elsif ($build->subject->class eq 'Genome::Sample'){
-      my $common_name = $build->subject->patient->common_name;
+      my $common_name = $build->subject->individual->common_name;
       $names{$common_name}=1 if $common_name;
       $final_name = $common_name if $common_name;
     }
@@ -211,7 +211,7 @@ sub get_final_name{
       $names{$name}=1 if $name;
       $final_name = $name if $name;
     }elsif ($build->subject->class eq 'Genome::Sample'){
-      my $name = $build->subject->patient->name;
+      my $name = $build->subject->individual->name;
       $names{$name}=1 if $name;
       $final_name = $name if $name;
     }
