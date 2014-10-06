@@ -6,6 +6,7 @@ use strict;
 use Genome;
 use Cwd qw(abs_path);
 use File::Spec;
+use List::Util qw(first);
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -41,11 +42,7 @@ sub final_result_for_variants_directory {
         $variant_type .= 's';
     }
 
-    my $file;
-    TRY: for my $try (File::Spec->join($dir, "$variant_type.hq"), File::Spec->join($dir, "$variant_type.hq.bed")) {
-        if(-e $try) { $file = $try; last TRY; }
-    }
-
+    my $file = first { -e $_ } (File::Spec->join($dir, "$variant_type.hq"), File::Spec->join($dir, "$variant_type.hq.bed"));
     if($file) {
         my $abs_file = abs_path($file);
         my $alloc = Genome::Disk::Allocation->get_allocation_for_path($abs_file);
