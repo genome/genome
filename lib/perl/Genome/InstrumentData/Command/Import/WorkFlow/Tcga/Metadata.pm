@@ -59,6 +59,7 @@ sub _retrieve_metadata_file {
     $metadata_file = $self->metadata_file( File::Spec->catfile($tmp_dir, 'metadata.xml') ) if not defined $metadata_file;
     my $output_file = File::Spec->catfile($tmp_dir, 'cgquery.out');
 
+    local $ENV{PATH} = $ENV{PATH} . ':/cghub/bin';
     my $cmd = "cgquery -o $metadata_file analysis_id=$uuid > $output_file";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $output_file ) {
