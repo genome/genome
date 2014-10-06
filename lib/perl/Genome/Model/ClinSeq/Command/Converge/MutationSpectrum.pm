@@ -12,6 +12,18 @@ class Genome::Model::ClinSeq::Command::Converge::MutationSpectrum {
       is => 'FilesystemPath',
       doc => 'File to write converged-mutation-spectrum results',
     },
+    bq => {
+      is => 'Number',
+      doc => 'Baseq cutoff for mutation-spectrum results.',
+      is_optional => 1,
+      default => 30,
+    },
+    mq => {
+      is => 'Number',
+      doc => 'Mappingq cutoff for mutation-spectrum results.',
+      is_optional => 1,
+      default => 20,
+    },
   ],
   doc => 'converge Stats from mutiple clinseq builds'
 };
@@ -36,9 +48,11 @@ EOS
 sub resolve_which_stats_tsv {
   my $self = shift;
   my $b = shift;
+  my $bq = $self->bq;
+  my $mq = $self->mq;
   my @stats_files;
-  push @stats_files, $b->mutation_spectrum_exome_summary_file; 
-  push @stats_files, $b->mutation_spectrum_wgs_summary_file;
+  push @stats_files, $b->mutation_spectrum_exome_summary_file($bq, $mq);
+  push @stats_files, $b->mutation_spectrum_wgs_summary_file($bq, $mq);
   return @stats_files;
 }
 
