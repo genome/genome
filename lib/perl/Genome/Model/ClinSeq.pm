@@ -28,7 +28,8 @@ class Genome::Model::ClinSeq {
         #processing_profile      => { is => 'Genome::ProcessingProfile::ClinSeq', id_by => 'processing_profile_id', default_value => { } },
     ],
     has_param => [ # Processing profile parameters
-        bam_readcount_version => { is => 'Text', doc => 'The bam readcount version to use during clonality analysis' },
+        bamrc_version_clonality => { is => 'Text', doc => 'The bam readcount version to use during clonality analysis.' },
+        bamrc_version => { is => 'Text', doc => 'The bam readcount version to use for all read-counting(except clonality.)' },
     ],
     has_optional_metric => [
         common_name         => { is => 'Text', doc => 'the name chosen for the root directory in the build' },
@@ -232,7 +233,8 @@ sub map_workflow_inputs {
       cancer_annotation_db => $cancer_annotation_db,
       misc_annotation_db => $misc_annotation_db,
       cosmic_annotation_db => $cosmic_annotation_db,
-      bam_readcount_version => $self->bam_readcount_version,
+      bamrc_version_clonality => $self->bamrc_version_clonality,
+      bamrc_version => $self->bamrc_version,
   );
 
   my $annotation_build = $self->_resolve_annotation;
@@ -901,7 +903,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'wgs_build', $clonality_op, 'somatic_var_build');
     $add_link->($input_connector, 'clonality_dir', $clonality_op, 'output_dir');
     $add_link->($input_connector, 'common_name', $clonality_op, 'common_name');
-    $add_link->($input_connector, 'bam_readcount_version', $clonality_op, 'bam_readcount_version');
+    $add_link->($input_connector, 'bamrc_version_clonality', $clonality_op, 'bam_readcount_version');
     $add_link->($clonality_op, 'result', $output_connector, 'clonality_result');
   }
 
@@ -948,7 +950,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'docm_report_dir', $docm_report_op, 'outdir');
     $add_link->($input_connector, 'build_as_array', $docm_report_op, 'builds');
     $add_link->($input_connector, 'docm_variants_file', $docm_report_op, 'docm_variants_file');
-    $add_link->($input_connector, 'bam_readcount_version', $docm_report_op, 'bam_readcount_version');
+    $add_link->($input_connector, 'bamrc_version', $docm_report_op, 'bam_readcount_version');
     $add_link->($docm_report_op, 'result', $output_connector, 'docm_report_result');
   }
 
@@ -1177,7 +1179,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'build_as_array', $converge_snv_indel_report_op, 'builds');
     $add_link->($input_connector, 'snv_indel_report_dir', $converge_snv_indel_report_op, 'outdir');
     $add_link->($input_connector, 'snv_indel_report_clean', $converge_snv_indel_report_op, 'clean');
-    $add_link->($input_connector, 'bam_readcount_version', $converge_snv_indel_report_op, 'bam_readcount_version');
+    $add_link->($input_connector, 'bamrc_version', $converge_snv_indel_report_op, 'bam_readcount_version');
     $add_link->($input_connector, 'snv_indel_report_tmp_space', $converge_snv_indel_report_op, 'tmp_space');
     $add_link->($input_connector, 'annotation_build', $converge_snv_indel_report_op, 'annotation_build');
     $add_link->($input_connector, 'snv_indel_report_target_gene_list', $converge_snv_indel_report_op, 'target_gene_list');
