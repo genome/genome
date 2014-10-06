@@ -122,6 +122,12 @@ ok(
 throws_ok(sub{ $metadata2->checksum_content_for_file_name(); }, qr/No file name given to get attribute value!/, 'checksum_content_for_file_name fails w/o file name');
 throws_ok(sub{ $metadata2->checksum_type_for_file_name(); }, qr/No file name given to get attribute value!/, 'checksum_type_for_file_name fails w/o file name');
 
+# Fail to get target region when no library strategy is given
+my $library_strategy = $metadata2->_metadata->{Result}->{library_strategy};
+$metadata2->_metadata->{Result}->{library_strategy} = undef;
+throws_ok(sub{ $metadata2->target_region; }, qr/No library strategy in metadata to resolve target region!/, 'failed to get target region w/o library strategy');
+$metadata2->_metadata->{Result}->{library_strategy} = $library_strategy;
+
 done_testing();
 
 ###

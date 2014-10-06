@@ -157,10 +157,8 @@ sub target_region {
 
     my $target_region;
     my $library_strategy = $self->get_attribute_value('library_strategy');
-    if ( not $library_strategy ) {
-        $target_region = 'none';
-    }
-    elsif ( $library_strategy eq 'WGS' or $library_strategy eq 'RNA-Seq' ) {
+    die $self->error_message('No library strategy in metadata to resolve target region!') if not $library_strategy;
+    if ( $library_strategy eq 'WGS' or $library_strategy eq 'RNA-Seq' ) {
         $target_region = 'none';
     } elsif($library_strategy eq 'WXS') { #exome
         my $reference_assembly_version = $self->reference_assembly_version;
