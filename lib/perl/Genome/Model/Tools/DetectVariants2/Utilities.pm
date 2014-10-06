@@ -47,9 +47,11 @@ sub final_result_for_variants_directory {
     if($file) {
         my $abs_file = abs_path($file);
         my $alloc = Genome::Disk::Allocation->get_allocation_for_path($abs_file);
-        my $owner = $alloc->owner;
-        if($owner->isa('Genome::SoftwareResult')) {
-            return $owner;
+        if($alloc) {
+            my $owner = $alloc->owner;
+            if($owner and $owner->isa('Genome::SoftwareResult')) {
+                return $owner;
+            }
         }
     }
 
