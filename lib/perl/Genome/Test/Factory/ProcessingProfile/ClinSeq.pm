@@ -6,9 +6,13 @@ use Genome::Model::Tools::Sam::Readcount;
 use strict;
 use warnings;
 
-our @required_params = qw(bam_readcount_version);
+our @required_params = qw(bamrc_version bamrc_version_clonality);
 
-sub create_bam_readcount_version {
+sub create_bamrc_version {
+    return Genome::Model::Tools::Sam::Readcount->default_version;
+}
+
+sub create_bamrc_version_clonality {
     return Genome::Model::Tools::Sam::Readcount->default_version;
 }
 
