@@ -19,7 +19,7 @@ class Genome::Model::ClinSeq::Command::Converge::Base {
         bam_readcount_version => {
             is => 'String',
             doc => 'version of bam-readcount to use',
-        }
+        },
         outdir => {
             is => 'FilesystemPath',
             doc => 'Directory where output files will be written',
