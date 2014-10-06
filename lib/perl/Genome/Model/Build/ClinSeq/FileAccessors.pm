@@ -69,7 +69,10 @@ sub variant_sc_dir {
 
 sub mutation_spectrum_dir {
   my $self = shift;
-  my $mutation_spectrum_dir = $self->case_dir . "/mutation-spectrum";
+  my $bq = shift;
+  my $mq = shift;
+  my $mutation_spectrum_dir = $self->case_dir . "/mutation-spectrum/b" .
+    $bq . "_q" . $mq;
   return $mutation_spectrum_dir;
 }
 
@@ -646,7 +649,9 @@ sub sv_stats_file {
 
 sub mutation_spectrum_wgs_summary_file {
   my $self = shift;
-  my $mutation_spectrum_wgs_summary_file = $self->mutation_spectrum_dir.
+  my $bq = shift;
+  my $mq = shift;
+  my $mutation_spectrum_wgs_summary_file = $self->mutation_spectrum_dir($bq, $mq).
       "/wgs/summarize_mutation_spectrum/mutation_spectrum.tsv";
   if(-e $mutation_spectrum_wgs_summary_file ){
     return $mutation_spectrum_wgs_summary_file ;
@@ -659,7 +664,9 @@ sub mutation_spectrum_wgs_summary_file {
 
 sub mutation_spectrum_exome_summary_file {
   my $self = shift;
-  my $mutation_spectrum_exome_summary_file = $self->mutation_spectrum_dir.
+  my $bq = shift;
+  my $mq = shift;
+  my $mutation_spectrum_exome_summary_file = $self->mutation_spectrum_dir($bq, $mq).
       "/exome/summarize_mutation_spectrum/mutation_spectrum.tsv";
   if(-e $mutation_spectrum_exome_summary_file ){
     return $mutation_spectrum_exome_summary_file ;
