@@ -12,6 +12,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
     final_result_for_variant_type
+    final_result_for_variants_directory
 );
 
 sub final_result_for_variant_type {
