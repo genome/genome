@@ -4,6 +4,8 @@ use warnings;
 use strict;
 
 use Genome;
+use Cwd qw(abs_path);
+use File::Spec;
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -29,6 +31,31 @@ sub final_result_for_variant_type {
     }
 
     return $relevant_results[0];
+}
+
+sub final_result_for_variants_directory {
+    my $dir = shift;
+    my $variant_type = shift;
+
+    unless($variant_type =~ /s$/) {
+        $variant_type .= 's';
+    }
+
+    my $file;
+    TRY: for my $try (File::Spec->join($dir, "$variant_type.hq"), File::Spec->join($dir, "$variant_type.hq.bed")) {
+        if(-e $try) { $file = $try; last TRY; }
+    }
+
+    if($file) {
+        my $abs_file = abs_path($file);
+        my $alloc = Genome::Disk::Allocation->get_allocation_for_path($abs_file);
+        my $owner = $alloc->owner;
+        if($owner->isa('Genome::SoftwareResult')) {
+            return $owner;
+        }
+    }
+
+    return;
 }
 
 1;
