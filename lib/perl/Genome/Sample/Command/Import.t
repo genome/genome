@@ -53,8 +53,8 @@ is($individual_gender_property->{is}, $gender_property->{is}, 'gender type (is)'
 is($individual_gender_property->doc, $gender_property->doc, 'gender doc');
 is_deeply($gender_property->valid_values, [qw/ male female /], 'gender valid_values');
 
-my $patient_name = 'TeSt-1111';
-my $name = $patient_name.'-A1A-1A-1111';
+my $individual_name = 'TeSt-1111';
+my $name = $individual_name.'-A1A-1A-1111';
 my %import_params = (
     gender => 'female',
     tissue_desc => 'blood',
@@ -71,8 +71,8 @@ ok($import, 'create');
 ok($import->execute, 'execute');
 
 is($import->_individual->taxon->name, 'human', 'taxon name');
-is($import->_individual->name, $patient_name, 'patient name');
-is($import->_individual->upn, $patient_name, 'patient name');
+is($import->_individual->name, $individual_name, 'patient name');
+is($import->_individual->upn, $individual_name, 'patient name');
 is($import->_individual->nomenclature, 'TeSt', 'patient nomenclature');
 is($import->_individual->gender, 'female', 'patient gender');
 is($import->_individual->common_name, '1111', 'patient common_name');

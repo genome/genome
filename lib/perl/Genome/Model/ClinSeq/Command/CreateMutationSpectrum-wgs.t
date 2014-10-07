@@ -37,7 +37,7 @@ ok ($build, "obtained somatic variation build from db") or die;
 #Get a 'final' name for the sample
 my $final_name = $build->model->id;
 $final_name = $build->model->subject->name if ($build->model->subject->name);
-$final_name = $build->model->subject->patient->common_name if ($build->model->subject->patient->common_name);
+$final_name = $build->model->subject->individual->common_name if ($build->model->subject->individual->common_name);
 ok ($final_name, "found final name from build object") or die;
 
 #Create create-mutation-spectrum command and execute

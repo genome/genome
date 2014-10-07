@@ -64,7 +64,7 @@ run_ok(\@cmd, 'genome model clin-seq list2');
 run_ok(\@cmd, 'genome model clin-seq list3');
 
 #GENOME MODEL SOMATIC-VARIATION LIST
-@cmd = (qw(genome model somatic-variation list --filter), sprintf('group_ids=%s', $model_group->id), '--show', 'subject.patient_common_name,subject.name,id');
+@cmd = (qw(genome model somatic-variation list --filter), sprintf('group_ids=%s', $model_group->id), '--show', 'subject.individual_common_name,subject.name,id');
 run_ok(\@cmd, 'genome model somatic-variation list1');
 
 @cmd = (qw(genome model somatic-variation list --filter), sprintf('group_ids=%s', $model_group->id), '--show', 'subject.name,last_succeeded_build_directory', '--noheaders');
@@ -89,11 +89,11 @@ run_ok(\@cmd, 'genome instrument-data list1');
 run_ok(\@cmd, 'genome instrument-data list2');
 
 #GENOME MODEL-GROUP MEMBER LIST
-@cmd = (qw(genome model-group member list --filter), sprintf('model.subclass_name=Genome::Model::ClinSeq,model_group_id=%s', $model_group->id), '--show', 'model.wgs_model.id,model.wgs_model.subject.patient_common_name,model.last_succeeded_build,model.last_succeeded_build.data_directory');
+@cmd = (qw(genome model-group member list --filter), sprintf('model.subclass_name=Genome::Model::ClinSeq,model_group_id=%s', $model_group->id), '--show', 'model.wgs_model.id,model.wgs_model.subject.individual_common_name,model.last_succeeded_build,model.last_succeeded_build.data_directory');
 run_ok(\@cmd, 'genome model-group member list1');
 
 #GENOME MODEL SOMATIC-VALIDATION LIST
-@cmd = (qw(genome model somatic-validation list --filter), sprintf('model_groups.id=%s', $model_group->id), '--show', 'tumor_sample.patient_common_name,tumor_sample.name,last_complete_build.tumor_bam');
+@cmd = (qw(genome model somatic-validation list --filter), sprintf('model_groups.id=%s', $model_group->id), '--show', 'tumor_sample.individual_common_name,tumor_sample.name,last_complete_build.tumor_bam');
 run_ok(\@cmd, 'genome somatic-validation list1');
 
 $DB::single = 1;

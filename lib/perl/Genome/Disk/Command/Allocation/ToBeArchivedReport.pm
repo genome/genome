@@ -51,7 +51,7 @@ sub output_fields {
         allocation_owner_id
 	run_by
         build_id
-        patient_common_name
+        individual_common_name
         created_by
     /;
 }
@@ -101,10 +101,10 @@ sub execute {
                      && $build->subject->subclass_name ne "Genome::PopulationGroup"
                      && $build->subject->subclass_name ne "Genome::Taxon") {
 
-                        $model_fields{patient_common_name} = $build->subject->patient_common_name;
+                        $model_fields{individual_common_name} = $build->subject->individual_common_name;
                     }
                     elsif ($build->model) {
-                        $model_fields{patient_common_name} = "none";
+                        $model_fields{individual_common_name} = "none";
                     }
                 }
 

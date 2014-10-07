@@ -87,9 +87,9 @@ sub execute {
         my $subject_name = $subject->name;
         my $subject_common_name = $subject->common_name;
         my $subject_tissue_desc = $subject->tissue_desc || "NULL";
-        my $patient_common_name = $subject->individual_common_name || "NULL";
+        my $individual_common_name = $subject->individual_common_name || "NULL";
 
-        $self->debug_message("\nProcessing somatic-variation build: $somvar_build_id ($patient_common_name, $subject_name, $subject_tissue_desc, $subject_common_name)");
+        $self->debug_message("\nProcessing somatic-variation build: $somvar_build_id ($individual_common_name, $subject_name, $subject_tissue_desc, $subject_common_name)");
 
         #Get the tumor and normal sample names
         my $tumor_sample = $somvar_build->tumor_model->subject->name;
@@ -111,7 +111,7 @@ sub execute {
             my $find_method = "find_" . $type . "_vcf_file";
             my $original_vcf_path = $self->$find_method('-build'=>$somvar_build);
 
-            #Name the output file in a human readable way ($patient_common_name . $subject_name . $somatic_variation_build_id . passing.somatic.snvs.vcf
+            #Name the output file in a human readable way ($individual_common_name . $subject_name . $somatic_variation_build_id . passing.somatic.snvs.vcf
             my $resolve_method = "resolve_" . $type . "_vcf_filename";
             $DB::single=1;
             my $new_vcf_path = $self->$resolve_method($somvar_build);
@@ -175,11 +175,11 @@ sub resolve_vcf_filename{
   my $subject_common_name = $subject->common_name;
   $subject_name=~s/\(/_/g; $subject_name=~s/\)/_/g;
   my $subject_tissue_desc = $subject->tissue_desc;
-  my $patient_common_name = $subject->individual_common_name;
+  my $individual_common_name = $subject->individual_common_name;
 
-  #Name the output file in a human readable way ($patient_common_name . $subject_name . $somatic_variation_build_id . passing.somatic.snvs.vcf
+  #Name the output file in a human readable way ($individual_common_name . $subject_name . $somatic_variation_build_id . passing.somatic.snvs.vcf
   my @names;
-  push(@names, $patient_common_name) if ($patient_common_name);
+  push(@names, $individual_common_name) if ($individual_common_name);
   push(@names, $subject_name) if ($subject_name);
   push(@names, $build_id);
   push(@names, "passing.somatic." . $type . ".vcf");
