@@ -19,7 +19,7 @@ use Module::Pluggable
     search_path => search_path(),
     only => qr(Expert$),
     except => ['Genome::VariantReporting::Framework::Component::Expert',
-               'Genome::VariantReporting::Joinx::Expert'],
+               'Genome::VariantReporting::Expert::Joinx::Expert'],
     sub_name => 'experts';
 
 use Module::Pluggable
@@ -27,7 +27,7 @@ use Module::Pluggable
     search_path => search_path(),
     only => qr(Adaptor$),
     except => ['Genome::VariantReporting::Framework::Component::Adaptor',
-               'Genome::VariantReporting::Joinx::Adaptor'],
+               'Genome::VariantReporting::Expert::Joinx::Adaptor'],
     sub_name => 'adaptors';
 
 use Module::Pluggable

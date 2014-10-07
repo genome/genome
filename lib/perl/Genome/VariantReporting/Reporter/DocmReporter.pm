@@ -3,7 +3,7 @@ package Genome::VariantReporting::Reporter::DocmReporter;
 use strict;
 use warnings;
 use Genome;
-use Genome::VariantReporting::BamReadcount::VafInterpreter;
+use Genome::VariantReporting::Expert::BamReadcount::VafInterpreter;
 
 class Genome::VariantReporting::Reporter::DocmReporter {
     is => [ 'Genome::VariantReporting::Reporter::WithHeaderAndSampleNames'],
@@ -35,7 +35,7 @@ sub headers {
 
 sub _vaf_headers {
     my $self = shift;
-    Genome::VariantReporting::BamReadcount::ManySamplesVafInterpreter->available_fields($self->sample_names);
+    Genome::VariantReporting::Expert::BamReadcount::ManySamplesVafInterpreter->available_fields($self->sample_names);
 }
 
 1;
