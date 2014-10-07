@@ -49,15 +49,13 @@ sub _preprocess_subclass_description {
     for my $property (keys %$properties) {
         $desc->{has}{$property} = $properties->{$property};
     }
+    $desc->{id_by} = [ id => { is => 'Text', len => 64, }, ];
+
     return $desc;
 }
 
 sub _object_properties {
     return {
-        id => {
-            is => 'Text',
-            len => 64,
-        },
         object => {
             is => 'UR::Object',
             id_by => 'object_id',
