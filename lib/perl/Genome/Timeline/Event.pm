@@ -49,7 +49,7 @@ sub _preprocess_subclass_description {
     for my $property (keys %$properties) {
         $desc->{has}{$property} = $properties->{$property};
     }
-    $desc->{id_by} = [ id => { is => 'Text', len => 64, }, ];
+    $desc->{id_by} = [ id => { data_type => 'Text', data_length => 64, }, ];
 
     return $desc;
 }
