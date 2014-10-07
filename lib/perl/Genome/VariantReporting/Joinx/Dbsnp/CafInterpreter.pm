@@ -54,7 +54,7 @@ sub _interpret_entry {
 sub _highest_af {
     my $caf = shift;
 
-    return max(grep {$_ ne "."} values %$caf);
+    return max(grep {defined $_ and $_ ne "."} values %$caf);
 }
 1;
 

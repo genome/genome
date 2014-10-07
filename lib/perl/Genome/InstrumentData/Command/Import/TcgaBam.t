@@ -11,6 +11,8 @@ BEGIN {
 
 use above "Genome";
 
+require Genome::Utility::Test;
+require File::Spec;
 use Test::More;
 
 # for samtools
@@ -19,12 +21,14 @@ if (Genome::Config->arch_os ne 'x86_64') {
 }
 
 use_ok('Genome::InstrumentData::Command::Import::TcgaBam') or die;
+my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', File::Spec->catfile('tcga', 'v2')) or die;
 
+my $source_bam = File::Spec->catfile($data_dir, 'TCGA-A6-2674-01A-02W-0831-10_SOLiD.bam');
 my $cmd = Genome::InstrumentData::Command::Import::TcgaBam->create(
     target_region       => 'none',
     tcga_name           => "TCGA-AB-2804-03B-01W-0728-08",  
     import_source_name  => 'Broad',
-    original_data_path  => $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData--Command-Import-Bam/test.bam',
+    original_data_path  => $source_bam,
     reference_sequence_build_id => 101947881,
 );
 ok($cmd, "created cmd object");
@@ -33,7 +37,7 @@ ok($cmd->execute,"executed command");
 my $i_d = $cmd->_inst_data;
 ok($i_d, 'created instrument data');
 is($i_d->sequencing_platform, 'solexa', 'platform');
-is($i_d->original_data_path, $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData--Command-Import-Bam/test.bam', 'original data path');
+is($i_d->original_data_path, $source_bam, 'original data path');
 is($i_d->user_name, Genome::Sys->username, "user name is correct");
 ok($i_d->description,"description was created: ".$i_d->description);
 ok($i_d->import_date, "date is set");
@@ -50,9 +54,6 @@ my $aid_attr = $inst_data->attributes(attribute_label=>"analysis_id");
 ok($aid_attr, 'attribute exists.');
 is($aid_attr->attribute_value, "a1d11d67-4d5f-4db9-a61d-a0279c3c3d4f", 'attribute has correct value.');
 is($aid_attr->nomenclature, "CGHub", 'nomeclature set on attribute properly');
-my $isn_attr = $inst_data->attributes(attribute_label=>"participant_id");
-ok((not defined $isn_attr), "attribute doesn't exist.");
-
 
 # getting args from passed in first then from metadata file.
 my $test_cmd1 = Genome::InstrumentData::Command::Import::TcgaBam->create(
@@ -68,8 +69,6 @@ is($test_cmd1->tcga_name, 'test_tcga_passed_in', 'read in tcga_name from passed 
 is($test_cmd1->target_region, "agilent sureselect exome version 2 broad refseq cds only", 'read in and translated target_region from the metadata file.');
 is($test_cmd1->analysis_id, "test_analysis_id", 'read in test_analysis_id as passed arg not from metadata file.');
 is($test_cmd1->aliquot_id, "f957194b-6da9-4690-a87d-0051e239bf3f", 'read in aliquot_id from metadata file.');
-is($test_cmd1->participant_id, undef, 'participant_id was not defined and that is a-OK.');
-
 
 # alternative md5 value from passed in
 my $test_cmd2 = Genome::InstrumentData::Command::Import::TcgaBam->create(
