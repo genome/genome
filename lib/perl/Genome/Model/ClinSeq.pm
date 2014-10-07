@@ -233,6 +233,7 @@ sub map_workflow_inputs {
       misc_annotation_db => $misc_annotation_db,
       cosmic_annotation_db => $cosmic_annotation_db,
       bam_readcount_version => $self->bam_readcount_version,
+      tmp_bam_readcount_version => 0.6, # before bam_readcount_version was specified model was using different versions
   );
 
   my $annotation_build = $self->_resolve_annotation;
@@ -948,6 +949,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'docm_report_dir', $docm_report_op, 'outdir');
     $add_link->($input_connector, 'build_as_array', $docm_report_op, 'builds');
     $add_link->($input_connector, 'docm_variants_file', $docm_report_op, 'docm_variants_file');
+    $add_link->($input_connector, 'tmp_bam_readcount_version', $docm_report_op, 'bam_readcount_version');
     $add_link->($docm_report_op, 'result', $output_connector, 'docm_report_result');
   }
 
@@ -1176,6 +1178,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'build_as_array', $converge_snv_indel_report_op, 'builds');
     $add_link->($input_connector, 'snv_indel_report_dir', $converge_snv_indel_report_op, 'outdir');
     $add_link->($input_connector, 'snv_indel_report_clean', $converge_snv_indel_report_op, 'clean');
+    $add_link->($input_connector, 'tmp_bam_readcount_version', $converge_snv_indel_report_op, 'bam_readcount_version');
     $add_link->($input_connector, 'snv_indel_report_tmp_space', $converge_snv_indel_report_op, 'tmp_space');
     $add_link->($input_connector, 'annotation_build', $converge_snv_indel_report_op, 'annotation_build');
     $add_link->($input_connector, 'snv_indel_report_target_gene_list', $converge_snv_indel_report_op, 'target_gene_list');
