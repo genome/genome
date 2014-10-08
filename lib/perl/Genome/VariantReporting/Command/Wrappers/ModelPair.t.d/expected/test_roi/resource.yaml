@@ -9,6 +9,6 @@ feature_list_ids:
   SEG_DUP: -1
 reference_fasta: /gscmnt/gc13003/info/test_suite_data/Genome-VariantReporting-Framework-Component-ResourceProvider/v3/reference.fasta
 translations:
-  d0_tumor: sample_name_1
-  d30_normal: sample_name_2
-  d30_tumor: sample_name_1
+  discovery_tumor: sample_name_1
+  normal: sample_name_2
+  followup_tumor: sample_name_1

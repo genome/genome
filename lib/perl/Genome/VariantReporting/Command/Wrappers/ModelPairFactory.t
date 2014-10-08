@@ -32,8 +32,8 @@ my $build5 = get_build($roi2, $tumor_sample2, $normal_sample1);
 subtest "Only one model for an roi" => sub {
 
     my $factory = $pkg->create(models => [$build1->model],
-        d0_sample => $tumor_sample1,
-        d30_sample => $tumor_sample2,
+        discovery_sample => $tumor_sample1,
+        followup_sample => $tumor_sample2,
         normal_sample => $normal_sample1,
         output_dir => Genome::Sys->create_temp_directory,
     );
@@ -46,8 +46,8 @@ subtest "Only one model for an roi" => sub {
 
 subtest "Three models for an roi" => sub {
     my $factory = $pkg->create(models => [$build1->model, $build2->model, $build3->model],
-        d0_sample => $tumor_sample1,
-        d30_sample => $tumor_sample2,
+        discovery_sample => $tumor_sample1,
+        followup_sample => $tumor_sample2,
         normal_sample => $normal_sample1,
         output_dir => Genome::Sys->create_temp_directory,
     );
@@ -62,22 +62,22 @@ subtest "Three models for an roi" => sub {
 subtest "Models for an roi don't have the right samples" => sub {
     my $bad_sample = Genome::Test::Factory::Sample->setup_object();
     my $factory = $pkg->create(models => [$build1->model, $build2->model],
-        d0_sample => $tumor_sample1,
-        d30_sample => $bad_sample,
+        discovery_sample => $tumor_sample1,
+        followup_sample => $bad_sample,
         normal_sample => $normal_sample1,
         output_dir => Genome::Sys->create_temp_directory,
     );
 
     my @pairs = $factory->get_model_pairs;
     ok(@pairs == 0, "Factory with only one model returned no pairs");
-    ok($factory->warning_message =~ /Incorrect discovery\/validation pairing for models for ROI \($roi_name\)/,
+    ok($factory->warning_message =~ /Incorrect discovery\/followup pairing for models for ROI \($roi_name\)/,
         "Warning message set correctly");
 };
 
 subtest "One model doesn't have last succeeded build" => sub {
     my $factory = $pkg->create(models => [$build1->model, $build2->model],
-        d0_sample => $tumor_sample1,
-        d30_sample => $tumor_sample2,
+        discovery_sample => $tumor_sample1,
+        followup_sample => $tumor_sample2,
         normal_sample => $normal_sample1,
         output_dir => Genome::Sys->create_temp_directory,
     );
@@ -95,8 +95,8 @@ subtest "Two valid model pairs" => sub {
     succeed_build($build4);
     succeed_build($build5);
     my $factory = $pkg->create(models => [$build1->model, $build2->model, $build4->model, $build5->model],
-        d0_sample => $tumor_sample1,
-        d30_sample => $tumor_sample2,
+        discovery_sample => $tumor_sample1,
+        followup_sample => $tumor_sample2,
         normal_sample => $normal_sample1,
         output_dir => Genome::Sys->create_temp_directory,
     );

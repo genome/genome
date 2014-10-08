@@ -11,8 +11,8 @@ class Genome::VariantReporting::Command::Wrappers::ModelPairFactory {
             is => 'Genome::Model::SomaticValidation',
             is_many => 1,
         },
-        d0_sample => { is => 'Genome::Sample', },
-        d30_sample => { is => 'Genome::Sample', },
+        discovery_sample => { is => 'Genome::Sample', },
+        followup_sample => { is => 'Genome::Sample', },
         normal_sample => { is => 'Genome::Sample',},
         output_dir => { is => 'Text', },
         discovery_output_dir => {
@@ -21,7 +21,7 @@ class Genome::VariantReporting::Command::Wrappers::ModelPairFactory {
         },
         additional_output_dir => {
             calculate_from => [qw/output_dir/],
-            calculate => q/return File::Spec->join($output_dir, "additional");/,
+            calculate => q/return File::Spec->join($output_dir, "followup");/,
         },
         germline_output_dir => {
             calculate_from => [qw/output_dir/],
@@ -80,10 +80,10 @@ sub get_model_pairs {
         }
 
         my @discovery_models = grep { $self->is_model_discovery($_) } @models;
-        my @validation_models = grep { $self->is_model_validation($_) } @models;
+        my @validation_models = grep { $self->is_model_followup($_) } @models;
 
         if ( @discovery_models != 1 or @validation_models != 1 ) {
-            $self->warning_message("Incorrect discovery/validation pairing for models for ROI (%s). One of each is required!\nDiscovery:%s\nValidation:%s\n", $roi, join(", ", map {$_->__display_name__} @discovery_models),
+            $self->warning_message("Incorrect discovery/followup pairing for models for ROI (%s). One of each is required!\nDiscovery:%s\nFollowup:%s\n", $roi, join(", ", map {$_->__display_name__} @discovery_models),
             join(", ", map {$_->__display_name__} @validation_models));
             next;
         }
@@ -96,19 +96,19 @@ sub get_model_pairs {
 
         my $validation_build = $validation_models[0]->last_succeeded_build;
         if ( not $validation_build ) {
-            $self->warning_message('No last succeeded build for validation model (%s). Skipping ROI %s.', $validation_models[0]->__display_name__, $roi);
+            $self->warning_message('No last succeeded build for followup model (%s). Skipping ROI %s.', $validation_models[0]->__display_name__, $roi);
             next;
         }
 
         push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $discovery_build,
-            validation => $validation_build,
+            followup => $validation_build,
             base_output_dir => $self->discovery_output_dir,
         );
 
         push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $validation_build,
-            validation => $discovery_build,
+            followup => $discovery_build,
             base_output_dir => $self->additional_output_dir,
         );
     }
@@ -118,12 +118,12 @@ sub get_model_pairs {
 
 sub is_model_discovery {
     my ($self, $model) = @_;
-    return $self->d0_sample->id eq $model->tumor_sample->id;
+    return $self->discovery_sample->id eq $model->tumor_sample->id;
 }
 
-sub is_model_validation {
+sub is_model_followup {
     my ($self, $model) = @_;
-    return $self->d30_sample->id eq $model->tumor_sample->id;
+    return $self->followup_sample->id eq $model->tumor_sample->id;
 }
 
 sub is_single_bam {
