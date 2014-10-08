@@ -80,7 +80,7 @@ sub get_model_pairs {
         }
 
         my @discovery_models = grep { $self->is_model_discovery($_) } @models;
-        my @validation_models = grep { $self->is_model_validation($_) } @models;
+        my @validation_models = grep { $self->is_model_followup($_) } @models;
 
         if ( @discovery_models != 1 or @validation_models != 1 ) {
             $self->warning_message("Incorrect discovery/followup pairing for models for ROI (%s). One of each is required!\nDiscovery:%s\nFollowup:%s\n", $roi, join(", ", map {$_->__display_name__} @discovery_models),
@@ -121,7 +121,7 @@ sub is_model_discovery {
     return $self->discovery_sample->id eq $model->tumor_sample->id;
 }
 
-sub is_model_validation {
+sub is_model_followup {
     my ($self, $model) = @_;
     return $self->followup_sample->id eq $model->tumor_sample->id;
 }
