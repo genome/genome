@@ -8,11 +8,7 @@ use Genome;
 class Genome::Timeline::Event::Allocation {
     is => 'Genome::Timeline::Event',
     table_name => 'timeline.allocation',
-    id_by => [
-        id => { is => 'Text', len => 64 },
-    ],
     has => [
-        object_id => { is => 'Text' },
         allocation => {
             is => 'UR::Object',
             id_by => 'object_id',
@@ -36,10 +32,6 @@ class Genome::Timeline::Event::Allocation {
             id_by => 'name',
             constraint_name => 'allocation_event_typ_fk',
         },
-
-        # added by 'ur update classes-from-db' on 22 Sep 2014 - Are these columns used?
-        reason => { is => 'Text' },
-        name => { is => 'Text' },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
