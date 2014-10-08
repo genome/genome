@@ -118,12 +118,12 @@ sub get_model_pairs {
 
 sub is_model_discovery {
     my ($self, $model) = @_;
-    return $self->followup_sample->id eq $model->tumor_sample->id;
+    return $self->discovery_sample->id eq $model->tumor_sample->id;
 }
 
 sub is_model_validation {
     my ($self, $model) = @_;
-    return $self->discovery_sample->id eq $model->tumor_sample->id;
+    return $self->followup_sample->id eq $model->tumor_sample->id;
 }
 
 sub is_single_bam {
