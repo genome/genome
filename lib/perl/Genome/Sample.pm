@@ -53,13 +53,9 @@ class Genome::Sample {
             doc => 'Either "genomic dna" or "rna" in most cases',
         },
         sample_type => {
-            calculate_from => 'extraction_type',
-            calculate => q{
-                $self = shift;
-                my $new_type = shift;
-                if ($new_type) { $self->extraction_type($new_type); }
-                return $extraction_type;
-            },
+            is => 'Text',
+            via => '__self__',
+            to => 'extraction_type',
         },
         is_rna => {
             calculate_from => [qw/ extraction_type /],
