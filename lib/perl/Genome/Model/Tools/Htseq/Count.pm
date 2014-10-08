@@ -66,7 +66,7 @@ class Genome::Model::Tools::Htseq::Count {
         alignment_results => {
             is => 'Genome::InstrumentData::AlignmentResult',
             where => [ 'instrument_data.sample.extraction_type in' => [ "rna", "cdna", "total rna" ] ],
-            example_values => [ { "instrument_data.sample.patient.common_name like" => "HCC%" } ],
+            example_values => [ { "instrument_data.sample.individual.common_name like" => "HCC%" } ],
             is_many => 1,
             doc => 'alignment results, typically from an RNA aligner',
         },
@@ -334,10 +334,10 @@ gmt htseq count --alignment-results "instrument_data.id=2890686892" --app-versio
 
 gmt htseq count --alignment-results "instrument_data.sample.name='H_MU-752713-1209062'" --app-version 0.5.4p1
 
-gmt htseq count --alignment-results "instrument_data.sample.patient.common_name like 'HCC%'" --app-version 0.5.4p1
+gmt htseq count --alignment-results "instrument_data.sample.individual.common_name like 'HCC%'" --app-version 0.5.4p1
 
 # skip any data sets flagged as test data
-gmt htseq count --alignment-results "instrument_data.sample.patient.common_name like 'HCC%' and test_name is null"
+gmt htseq count --alignment-results "instrument_data.sample.individual.common_name like 'HCC%' and test_name is null"
 EOS
 }
 
