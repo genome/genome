@@ -314,7 +314,7 @@ sub importPositions{
       $header_line = $_;
       #Make sure all neccessary columns are defined
       unless (defined($columns{'coord'}) && defined($columns{'mapped_gene_name'}) && defined($columns{'ref_base'}) && defined($columns{'var_base'}) && defined($columns{'ensembl_gene_id'})){
-        die $self->error_message("\n\nRequired column missing from file: $infile (need: coord, mapped_gene_name, ref_base, var_base, ensembl_gene_id)");
+        die $self->error_message("Required column missing from file: $infile (need: coord, mapped_gene_name, ref_base, var_base, ensembl_gene_id)");
       }
       next();
     }
@@ -332,7 +332,7 @@ sub importPositions{
       $s{$coord}{start} = $2;
       $s{$coord}{end} = $3;
     }else{
-      die $self->error_message("\n\nCoord: $coord not understood\n\n");
+      die $self->error_message("Coord: $coord not understood");
     }
 
   }
@@ -381,7 +381,7 @@ sub getFilePaths_Genome{
       $d{$b}{ref_fasta} = $reference_fasta_path;
       $d{$b}{ref_name} = $reference_display_name;
     }else{
-      die $self->error_message("\n\nA WGS build was specified, but it has not succeeded!\n\n");
+      die $self->error_message("A WGS build was specified, but it has not succeeded!");
     }
   }
 
@@ -408,7 +408,7 @@ sub getFilePaths_Genome{
       $d{$b}{ref_fasta} = $reference_fasta_path;
       $d{$b}{ref_name} = $reference_display_name;
     }else{
-      die $self->error_message("\n\nAn Exome build was specified, but it has not succeeded!\n\n");
+      die $self->error_message("An Exome build was specified, but it has not succeeded!");
     }
   }
 
@@ -428,7 +428,7 @@ sub getFilePaths_Genome{
       $d{$b}{ref_fasta} = $reference_fasta_path;
       $d{$b}{ref_name} = $reference_display_name;
     }else{
-      die $self->error_message("\n\nAn RNA-seq build was specified, but it has not succeeded!\n\n");
+      die $self->error_message("An RNA-seq build was specified, but it has not succeeded!");
     }
   }
 
@@ -448,7 +448,7 @@ sub getFilePaths_Genome{
       $d{$b}{ref_fasta} = $reference_fasta_path;
       $d{$b}{ref_name} = $reference_display_name;
     }else{
-      die $self->error_message("\n\nAn RNA-seq build was specified, but it has not succeeded!\n\n");
+      die $self->error_message("An RNA-seq build was specified, but it has not succeeded!");
     }
   }
 
@@ -458,7 +458,7 @@ sub getFilePaths_Genome{
     my $ref_name = $d{$b}{ref_name};
     unless ($ref_name eq $test_ref_name){
       #print Dumper %d;
-      die $self->error_message("\n\nOne or more of the reference build names used to generate BAMs did not match\n\n");
+      die $self->error_message("One or more of the reference build names used to generate BAMs did not match");
     }
   }
 
@@ -494,7 +494,7 @@ sub getBamReadCounts{
         my $ref_base = $fai->fetch($data->{chr} .':'. $data->{start} .'-'. $data->{stop});
         unless ($data->{reference} eq $ref_base) {
           #print RED, "\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path", RESET;
-          die $self->error_message("\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path");
+          die $self->error_message("Reference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path");
         }
       }
       for my $pileup ( @{$pileups} ) {
