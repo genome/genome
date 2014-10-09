@@ -21,7 +21,7 @@ class Genome::Model::ClinSeq::Command::GetBamReadCounts {
 
         exome_som_var_build     => { is => 'Genome::Model::Build::SomaticVariation', is_optional => 1,
                                      doc => 'Exome capture sequence somatic variation build' },
-        
+
         rna_seq_normal_build    => { is => "Genome::Model::Build", is_optional => 1,
                                      doc => "RNA-seq model id for normal" },
 
@@ -73,16 +73,16 @@ sub __errors__ {
 
   unless (($self->wgs_som_var_build || $self->exome_som_var_build || $self->rna_seq_normal_build || $self->rna_seq_tumor_build)) {
       push @errors, UR::Object::Tag->create(
-	                                          type => 'error',
-	                                          properties => [qw/wgs_som_var_build exome_som_var_build rna_seq_normal_build rna_seq_tumor_build/],
-	                                          desc => 'at least one of the four build types must be specified!'
-                                          );
+          type => 'error',
+          properties => [qw/wgs_som_var_build exome_som_var_build rna_seq_normal_build rna_seq_tumor_build/],
+          desc => 'at least one of the four build types must be specified!'
+      );
   }
   unless (-e $self->positions_file) {
       push @errors, UR::Object::Tag->create(
-	                                          type => 'error',
-	                                          properties => ['positions_file'],
-	                                          desc => "Positions file: " . $self->positions_file . " not found",
+          type => 'error',
+          properties => ['positions_file'],
+          desc => "Positions file: " . $self->positions_file . " not found",
       );
   }
   return @errors;
@@ -123,7 +123,7 @@ sub _get_gtf_path {
     unless (defined($gtf_path)) {
         my $derived_reference_build = $reference_build->derived_from;
         unless (defined($derived_reference_build)) {
-            die $self->error_message("'There is no annotation GTF file " . 
+            die $self->error_message("'There is no annotation GTF file " .
               "defined for annotation_reference_transcripts build: ".
               $annotation_build->__display_name__);
         }
@@ -134,13 +134,13 @@ sub _get_gtf_path {
 
 sub execute {
   my $self = shift;
-  
+
   eval "require Bio::DB::Sam";
   if ($@) {
       die "Failed to use the Bio::DB::Sam module.  Use /usr/bin/perl (5.10 or greater!) instead of /gsc/bin/perl.:\n$@";
   }
 
-  my $positions_file = $self->positions_file; 
+  my $positions_file = $self->positions_file;
   my $wgs_som_var_build = $self->wgs_som_var_build;
   my $exome_som_var_build = $self->exome_som_var_build;
   my $rna_seq_normal_build = $self->rna_seq_normal_build;
@@ -190,9 +190,9 @@ sub execute {
   #Get BAM file paths from build IDs.  Perform sanity checks
   my $data;
   $data = $self->getFilePaths_Genome(
-    '-wgs_som_var_model_id'     => ($wgs_som_var_build      ? $wgs_som_var_build->model_id : undef), 
-    '-exome_som_var_model_id'   => ($exome_som_var_build    ? $exome_som_var_build->model_id : undef), 
-    '-rna_seq_normal_model_id'  => ($rna_seq_normal_build   ? $rna_seq_normal_build->model_id : undef), 
+    '-wgs_som_var_model_id'     => ($wgs_som_var_build      ? $wgs_som_var_build->model_id : undef),
+    '-exome_som_var_model_id'   => ($exome_som_var_build    ? $exome_som_var_build->model_id : undef),
+    '-rna_seq_normal_model_id'  => ($rna_seq_normal_build   ? $rna_seq_normal_build->model_id : undef),
     '-rna_seq_tumor_model_id'   => ($rna_seq_tumor_build    ? $rna_seq_tumor_build->model_id : undef)
    );
 
@@ -205,7 +205,7 @@ sub execute {
     my $snv_count = keys %{$snvs};
 
     if ($verbose){
-	  $self->debug_message("\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$ref_fasta\n")
+      $self->debug_message("\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$ref_fasta\n")
     }
     my $counts = $self->getBamReadCounts('-snvs'=>$snvs, '-data_type'=>$data_type, '-sample_type'=>$sample_type, '-bam_path'=>$bam_path, '-ref_fasta'=>$ref_fasta, '-verbose'=>$verbose, '-no_fasta_check'=>$no_fasta_check);
     $data->{$bam}->{read_counts} = $counts;
@@ -266,9 +266,9 @@ sub execute {
         my $rank = $gene_exp->{$snv_pos}->{rank};
         if ($new_snv{$snv_pos}){
           $new_snv{$snv_pos}{read_count_string} .= "\t$fpkm\t$percentile";
-	      }else{
-	        $new_snv{$snv_pos}{read_count_string} = "\t$fpkm\t$percentile";
-	      }
+        }else{
+          $new_snv{$snv_pos}{read_count_string} = "\t$fpkm\t$percentile";
+        }
       }
     }
   }
@@ -277,7 +277,7 @@ sub execute {
   print OUT "$snv_header\n";
   foreach my $snv_pos (sort {$snvs->{$a}->{order} <=> $snvs->{$b}->{order}} keys %{$snvs}){
     my $read_count_string = $new_snv{$snv_pos}{read_count_string};
-    print OUT "$snvs->{$snv_pos}->{line}"."$read_count_string\n";  
+    print OUT "$snvs->{$snv_pos}->{line}"."$read_count_string\n";
   }
   close (OUT);
 
@@ -610,7 +610,7 @@ sub getExpressionValues{
   #Import FPKM values from the gene-level expression file created by merging the isoforms of each gene
   my $isoforms_infile = "$build_dir"."expression/isoforms.fpkm_tracking";
   my $merged_fpkm = $self->mergeIsoformsFile('-infile'=>$isoforms_infile, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$verbose);
-  
+
   #Calculate the ranks and percentiles for all genes
   my $rank = 0;
   my $gene_count = keys %{$merged_fpkm};
