@@ -190,10 +190,10 @@ sub execute {
   #Get BAM file paths from build IDs.  Perform sanity checks
   my $data;
   $data = $self->getFilePaths_Genome(
-    '-wgs_som_var_model_id'     => ($wgs_som_var_build      ? $wgs_som_var_build->model_id : undef),
-    '-exome_som_var_model_id'   => ($exome_som_var_build    ? $exome_som_var_build->model_id : undef),
-    '-rna_seq_normal_model_id'  => ($rna_seq_normal_build   ? $rna_seq_normal_build->model_id : undef),
-    '-rna_seq_tumor_model_id'   => ($rna_seq_tumor_build    ? $rna_seq_tumor_build->model_id : undef)
+    '-wgs_som_var_build'     => $wgs_som_var_build,
+    '-exome_som_var_build'   => $exome_som_var_build,
+    '-rna_seq_normal_build'  => $rna_seq_normal_build,
+    '-rna_seq_tumor_build'   => $rna_seq_tumor_build,
    );
 
   #For each mutation get BAM read counts for a tumor/normal pair of BAM files
@@ -344,135 +344,111 @@ sub importPositions{
 
 
 #########################################################################################################################################
-#getFilePaths_Genome - Get file paths from model IDs                                                                                    #
+#getFilePaths_Genome - Get file paths from builds                                                                                    #
 #########################################################################################################################################
 sub getFilePaths_Genome{
   my $self = shift;
   my %args = @_;
-  my $wgs_som_var_model_id = $args{'-wgs_som_var_model_id'};
-  my $exome_som_var_model_id = $args{'-exome_som_var_model_id'};
-  my $rna_seq_normal_model_id = $args{'-rna_seq_normal_model_id'};
-  my $rna_seq_tumor_model_id = $args{'-rna_seq_tumor_model_id'};
+  my $wgs_som_var_build = $args{'-wgs_som_var_build'};
+  my $exome_som_var_build = $args{'-exome_som_var_build'};
+  my $rna_seq_normal_build = $args{'-rna_seq_normal_build'};
+  my $rna_seq_tumor_build = $args{'-rna_seq_tumor_build'};
 
   my %d;
 
   my $b = 0;
   #WGS tumor normal BAMs
-  if ($wgs_som_var_model_id){
-    my $wgs_som_var_model = Genome::Model->get($wgs_som_var_model_id);
-    if ($wgs_som_var_model){
-      my $wgs_som_var_build = $wgs_som_var_model->last_succeeded_build;
-      if ($wgs_som_var_build){
+  if ($wgs_som_var_build){
+    if ($wgs_som_var_build->status eq 'Succeeded'){
 
-        #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
-        my $reference_build = $wgs_som_var_build->reference_sequence_build;
-        my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-        my $reference_display_name = $reference_build->__display_name__;
-        my $build_dir = $wgs_som_var_build->data_directory ."/";
-        $b++;
-        $d{$b}{build_dir} = $build_dir;
-        $d{$b}{data_type} = "WGS";
-        $d{$b}{sample_type} = "Normal";
-        $d{$b}{bam_path} = $wgs_som_var_build->normal_bam;
-        $d{$b}{ref_fasta} = $reference_fasta_path;
-        $d{$b}{ref_name} = $reference_display_name;
-        $b++;
-        $d{$b}{build_dir} = $build_dir;
-        $d{$b}{data_type} = "WGS";
-        $d{$b}{sample_type} = "Tumor";
-        $d{$b}{bam_path} = $wgs_som_var_build->tumor_bam;
-        $d{$b}{ref_fasta} = $reference_fasta_path;
-        $d{$b}{ref_name} = $reference_display_name;
-      }else{
-        die $self->error_message("\n\nA WGS model ID was specified, but a successful build could not be found!\n\n");
-      }
+      #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
+      my $reference_build = $wgs_som_var_build->reference_sequence_build;
+      my $reference_fasta_path = $reference_build->full_consensus_path('fa');
+      my $reference_display_name = $reference_build->__display_name__;
+      my $build_dir = $wgs_som_var_build->data_directory ."/";
+      $b++;
+      $d{$b}{build_dir} = $build_dir;
+      $d{$b}{data_type} = "WGS";
+      $d{$b}{sample_type} = "Normal";
+      $d{$b}{bam_path} = $wgs_som_var_build->normal_bam;
+      $d{$b}{ref_fasta} = $reference_fasta_path;
+      $d{$b}{ref_name} = $reference_display_name;
+      $b++;
+      $d{$b}{build_dir} = $build_dir;
+      $d{$b}{data_type} = "WGS";
+      $d{$b}{sample_type} = "Tumor";
+      $d{$b}{bam_path} = $wgs_som_var_build->tumor_bam;
+      $d{$b}{ref_fasta} = $reference_fasta_path;
+      $d{$b}{ref_name} = $reference_display_name;
     }else{
-      die $self->error_message("\n\nA WGS model ID was specified, but it could not be found!\n\n");
+      die $self->error_message("\n\nA WGS build was specified, but it has not succeeded!\n\n");
     }
   }
 
   #Exome tumor normal BAMs
-  if ($exome_som_var_model_id){
-    my $exome_som_var_model = Genome::Model->get($exome_som_var_model_id);
-    if ($exome_som_var_model){
-      my $exome_som_var_build = $exome_som_var_model->last_succeeded_build;
-      if ($exome_som_var_build){
-        #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
-        my $reference_build = $exome_som_var_build->reference_sequence_build;
-        my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-        my $reference_display_name = $reference_build->__display_name__;
-        my $build_dir = $exome_som_var_build->data_directory ."/";
-        $b++;
-        $d{$b}{build_dir} = $build_dir;
-        $d{$b}{data_type} = "Exome";
-        $d{$b}{sample_type} = "Normal";
-        $d{$b}{bam_path} = $exome_som_var_build->normal_bam;
-        $d{$b}{ref_fasta} = $reference_fasta_path;
-        $d{$b}{ref_name} = $reference_display_name;
-        $b++;
-        $d{$b}{build_dir} = $build_dir;
-        $d{$b}{data_type} = "Exome";
-        $d{$b}{sample_type} = "Tumor";
-        $d{$b}{bam_path} = $exome_som_var_build->tumor_bam;
-        $d{$b}{ref_fasta} = $reference_fasta_path;
-        $d{$b}{ref_name} = $reference_display_name;
-      }else{
-        die $self->error_message("\n\nA Exome model ID was specified, but a successful build could not be found!\n\n");
-      }
+  if ($exome_som_var_build){
+    if ($exome_som_var_build->status eq 'Succeeded'){
+      #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
+      my $reference_build = $exome_som_var_build->reference_sequence_build;
+      my $reference_fasta_path = $reference_build->full_consensus_path('fa');
+      my $reference_display_name = $reference_build->__display_name__;
+      my $build_dir = $exome_som_var_build->data_directory ."/";
+      $b++;
+      $d{$b}{build_dir} = $build_dir;
+      $d{$b}{data_type} = "Exome";
+      $d{$b}{sample_type} = "Normal";
+      $d{$b}{bam_path} = $exome_som_var_build->normal_bam;
+      $d{$b}{ref_fasta} = $reference_fasta_path;
+      $d{$b}{ref_name} = $reference_display_name;
+      $b++;
+      $d{$b}{build_dir} = $build_dir;
+      $d{$b}{data_type} = "Exome";
+      $d{$b}{sample_type} = "Tumor";
+      $d{$b}{bam_path} = $exome_som_var_build->tumor_bam;
+      $d{$b}{ref_fasta} = $reference_fasta_path;
+      $d{$b}{ref_name} = $reference_display_name;
     }else{
-      die $self->error_message("\n\nA Exome model ID was specified, but it could not be found!\n\n");
+      die $self->error_message("\n\nAn Exome build was specified, but it has not succeeded!\n\n");
     }
   }
 
   #RNAseq normal BAM
-  if ($rna_seq_normal_model_id){
-    my $rna_seq_model = Genome::Model->get($rna_seq_normal_model_id);
-      if ($rna_seq_model){
-      my $rna_seq_build = $rna_seq_model->last_succeeded_build;
-      if ($rna_seq_build){
-        my $reference_build = $rna_seq_model->reference_sequence_build;
-        my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-        my $reference_display_name = $reference_build->__display_name__;
-        my $build_dir = $rna_seq_build->data_directory ."/";
-        $b++;
-        $d{$b}{build_dir} = $build_dir;
-        $d{$b}{data_type} = "RNAseq";
-        $d{$b}{sample_type} = "Normal";
-        my $alignment_result = $rna_seq_build->alignment_result;
-        $d{$b}{bam_path} = $alignment_result->bam_file;
-        $d{$b}{ref_fasta} = $reference_fasta_path;
-        $d{$b}{ref_name} = $reference_display_name;
-      }else{
-        die $self->error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
-      }
+  if ($rna_seq_normal_build){
+    if ($rna_seq_normal_build->status eq 'Succeeded'){
+      my $reference_build = $rna_seq_normal_build->reference_sequence_build;
+      my $reference_fasta_path = $reference_build->full_consensus_path('fa');
+      my $reference_display_name = $reference_build->__display_name__;
+      my $build_dir = $rna_seq_normal_build->data_directory ."/";
+      $b++;
+      $d{$b}{build_dir} = $build_dir;
+      $d{$b}{data_type} = "RNAseq";
+      $d{$b}{sample_type} = "Normal";
+      my $alignment_result = $rna_seq_normal_build->alignment_result;
+      $d{$b}{bam_path} = $alignment_result->bam_file;
+      $d{$b}{ref_fasta} = $reference_fasta_path;
+      $d{$b}{ref_name} = $reference_display_name;
     }else{
-      die $self->error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
+      die $self->error_message("\n\nAn RNA-seq build was specified, but it has not succeeded!\n\n");
     }
   }
 
   #RNAseq tumor BAM
-  if ($rna_seq_tumor_model_id){
-    my $rna_seq_model = Genome::Model->get($rna_seq_tumor_model_id);
-      if ($rna_seq_model){
-      my $rna_seq_build = $rna_seq_model->last_succeeded_build;
-      if ($rna_seq_build){
-        my $reference_build = $rna_seq_model->reference_sequence_build;
-        my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-        my $reference_display_name = $reference_build->__display_name__;
-        my $build_dir = $rna_seq_build->data_directory ."/";
-        $b++;
-        $d{$b}{build_dir} = $build_dir;
-        $d{$b}{data_type} = "RNAseq";
-        $d{$b}{sample_type} = "Tumor";
-        my $alignment_result = $rna_seq_build->alignment_result;
-        $d{$b}{bam_path} = $alignment_result->bam_file;
-        $d{$b}{ref_fasta} = $reference_fasta_path;
-        $d{$b}{ref_name} = $reference_display_name;
-      }else{
-        die $self->error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
-      }
+  if ($rna_seq_tumor_build){
+    if ($rna_seq_tumor_build->status eq 'Succeeded'){
+      my $reference_build = $rna_seq_tumor_build->reference_sequence_build;
+      my $reference_fasta_path = $reference_build->full_consensus_path('fa');
+      my $reference_display_name = $reference_build->__display_name__;
+      my $build_dir = $rna_seq_tumor_build->data_directory ."/";
+      $b++;
+      $d{$b}{build_dir} = $build_dir;
+      $d{$b}{data_type} = "RNAseq";
+      $d{$b}{sample_type} = "Tumor";
+      my $alignment_result = $rna_seq_tumor_build->alignment_result;
+      $d{$b}{bam_path} = $alignment_result->bam_file;
+      $d{$b}{ref_fasta} = $reference_fasta_path;
+      $d{$b}{ref_name} = $reference_display_name;
     }else{
-      die $self->error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
+      die $self->error_message("\n\nAn RNA-seq build was specified, but it has not succeeded!\n\n");
     }
   }
 
