@@ -40,8 +40,7 @@ EOS
 sub help_synopsis {
   return <<EOS
   Example usage: 
-  genome model clin-seq converge mutation-spectrum --builds='model_groups.id=786367aa2edc41e1b4a5d33787a8c003,is_last_complete=1' --outfile=metris.tsv --outdir=/tmp/
-  ";
+  genome model clin-seq converge mutation-spectrum --builds='model_groups.id=6fa120dc0afb400596a1e3d6ecf6167d,is_last_complete=1' --outfile=metris.tsv --outdir=/tmp/
 EOS
 }
 
