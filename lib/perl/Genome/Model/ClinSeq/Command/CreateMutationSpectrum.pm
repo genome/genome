@@ -95,7 +95,7 @@ sub get_final_name {
   my $somvar_build = shift;
   my $somvar_build_id = $somvar_build->model->id;
   my $final_name = $somvar_build->model->subject->name if ($somvar_build->model->subject->name);
-  $final_name = $somvar_build->model->subject->patient->common_name if ($somvar_build->model->subject->patient->common_name);
+  $final_name = $somvar_build->model->subject->individual->common_name if ($somvar_build->model->subject->individual->common_name);
   return $final_name;
 }
 
