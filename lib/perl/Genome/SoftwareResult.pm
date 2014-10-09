@@ -240,12 +240,6 @@ sub get_with_lock {
 sub get_or_create {
     my $class = shift;
 
-
-    my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
-
-    my %is_input = %{$params_processed->{inputs}};
-    my %is_param = %{$params_processed->{params}};
-
     my @objects = $class->_faster_get(@_);
 
     unless (@objects) {
@@ -281,91 +275,147 @@ sub create {
         return $class->SUPER::create(@_);
     }
 
-    my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
-
-    my %is_input = %{$params_processed->{inputs}};
-    my %is_param = %{$params_processed->{params}};
-
     my @previously_existing = $class->_faster_get(@_);
-
     if (@previously_existing > 0) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
         return;
     }
 
-    my $lock;
     my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@_);
-    unless ($lock = $class->_lock($lookup_hash)) {
-        die "Failed to get a lock for " . Dumper(@_);
-    }
+    my $lock = $class->_get_lock_or_die($lookup_hash);
 
     # we might have had to wait on the lock, in which case someone else was probably creating that entity
     # do a "reload" here to force another trip back to the database to see if a software result was created
     # while we were waiting on the lock.
     (@previously_existing) = UR::Context->current->reload($class,
-        lookup_hash => $class->calculate_lookup_hash_from_arguments(@_));
+        lookup_hash => $lookup_hash);
 
     if (@previously_existing > 0) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
-        $class->_release_lock_or_die($lock, "Failed to release lock in create before committing SoftwareResult.");
+        $class->_release_lock_or_die($lock,
+            "Failed to unlock in create before constructing SoftwareResult.");
         return;
     }
 
-    # We need to update the indirect mutable accessor logic for non-nullable
-    # hang-offs to delete the entry instead of setting it to null.  Otherwise
-    # we get SOFTWARE_RESULT_PARAM entries with a NULL, and unsavable PARAM_VALUE.
-    # also remove empty strings because that's equivalent to a NULL to the database
-
-    # Do the same for inputs (e.g. alignment results have nullable segment values for instrument data, which are treated as inputs)
-    my @param_remove = grep { not (defined $is_param{$_}) || $is_param{$_} eq "" } keys %is_param;
-    my @input_remove = grep { not (defined $is_input{$_}) || $is_input{$_} eq "" } keys %is_input;
-    my $bx = $class->define_boolexpr($class->_preprocess_params_for_get_or_create(@_));
-    for my $i (@param_remove, @input_remove) {
-        $bx = $bx->remove_filter($i);
-    }
-
+    my $bx = $class->_get_creation_boolexpr(@_);
     my $self = $class->SUPER::create($bx);
     unless ($self) {
-        $class->_release_lock_or_die($lock,"Failed to unlock during create after committing SoftwareResult.");
+        $class->_release_lock_or_die($lock,
+            "Failed to unlock in create after failing to construct SoftwareResult.");
         return;
     }
 
     $self->_lock_name($lock);
+    $self->_set_unlock_callbacks();
+
+    if ($self->output_dir) {
+        if (-d $self->output_dir) {
+            $self->_validate_output_dir_is_empty;
+        } else {
+            $self->_create_output_dir_or_die;
+        }
+    }
+
+    $self->module_version($self->resolve_module_version) unless defined $self->module_version;
+    $self->subclass_name($class);
+
+    $self->_set_and_validate_lookup_hash($lookup_hash);
+
+    return $self;
+}
+
+sub _get_lock_or_die {
+    my $class = shift;
+    my $lookup_hash = shift;
+
+    my $lock;
+    if (my $lock = $class->_lock($lookup_hash)) {
+        return $lock;
+    } else {
+        die "Failed to get a lock for class ($class) and " .
+            "lookup_hash ($lookup_hash)";
+    }
+}
+
+# TODO update the indirect mutable accessor logic for non-nullable
+# hang-offs to delete the entry instead of setting it to null.
+#
+# Otherwise we get SOFTWARE_RESULT_PARAM entries with a NULL, and unsavable
+# PARAM_VALUE.  also remove empty strings because that's equivalent to a
+# NULL to the database
+#
+# This function generates a boolexpr that filters out such params and inputs.
+sub _get_creation_boolexpr {
+    my $class = shift;
+
+    my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
+
+    my %is_input = %{$params_processed->{inputs}};
+    my %is_param = %{$params_processed->{params}};
+
+    my @param_remove = grep { not (defined $is_param{$_}) || $is_param{$_} eq "" } keys %is_param;
+
+    # Do the same for inputs (e.g. alignment results have nullable segment values for instrument data, which are treated as inputs)
+    my @input_remove = grep { not (defined $is_input{$_}) || $is_input{$_} eq "" } keys %is_input;
+
+    my $bx = $class->define_boolexpr($class->_preprocess_params_for_get_or_create(@_));
+    for my $i (@param_remove, @input_remove) {
+        $bx = $bx->remove_filter($i);
+    }
+    return $bx;
+}
+
+# Ensure that we release the lock we have obtained if the SR object gets
+# committed or deleted.
+sub _set_unlock_callbacks {
+    my $self = shift;
 
     my $unlock_callback = sub {
         $self->_unlock;
     };
     $self->create_subscription(method=>'commit', callback=>$unlock_callback);
     $self->create_subscription(method=>'delete', callback=>$unlock_callback);
+    return;
+}
 
-    if (my $output_dir = $self->output_dir) {
-        if (-d $output_dir) {
-            my @files = glob("$output_dir/*");
-            if (@files) {
-                $self->delete;
-                die "Found files in output directory $output_dir!:\n\t"
-                    . join("\n\t", @files);
-            }
-            else {
-                $self->debug_message("No files in $output_dir.");
-            }
-        }
-        else {
-            $self->debug_message("Creating output directory $output_dir...");
-            eval {
-                Genome::Sys->create_directory($output_dir)
-            };
-            if ($@) {
-                $self->delete;
-                die $@;
-            }
-        }
+
+sub _validate_output_dir_is_empty {
+    my $self = shift;
+
+    my $output_dir = $self->output_dir;
+    my @files = glob("$output_dir/*");
+    if (@files) {
+        $self->delete;
+        die "Found files in output directory $output_dir!:\n\t"
+            . join("\n\t", @files);
     }
+    else {
+        $self->debug_message("No files in $output_dir.");
+    }
+}
 
-    $self->module_version($self->resolve_module_version) unless defined $self->module_version;
-    $self->subclass_name($class);
+sub _create_output_dir_or_die {
+    my $self = shift;
+
+    $self->debug_message("Creating output directory (%s)...", $self->output_dir);
+    eval {
+        Genome::Sys->create_directory($self->output_dir)
+    };
+    if ($@) {
+        $self->delete;
+        die $@;
+    }
+}
+
+sub _set_and_validate_lookup_hash {
+    my ($self, $lookup_hash) = @_;
+
     $self->lookup_hash($self->calculate_lookup_hash());
-    return $self;
+    if ($self->lookup_hash ne $lookup_hash) {
+        $self->delete;
+        die sprintf("The newly created object's lookup-hash (%s) does not match that used to create the lock (%s)",
+            $self->lookup_hash, $lookup_hash);
+    }
 }
 
 sub _gather_params_for_get_or_create {

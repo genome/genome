@@ -10,7 +10,7 @@ use above 'Genome';
 BEGIN {
     if (`uname -a` =~ /x86_64/) {
         #plan tests => 31; # TODO change this back when force_fragment is fixed
-        plan tests => 23;
+        plan tests => 22;
     } else {
         plan skip_all => 'Must run on a 64 bit machine';
     }
@@ -183,7 +183,6 @@ sub test_shortcutting {
                                                               reference_build => $reference_build, 
                                                           );
     ok(!$bad_alignment, "this should have returned undef, for attempting to create an alignment that is already created!");
-    ok($alignment_result_class_name->error_message =~ m/already have one/, "the exception is what we expect to see");
 
 
     #
