@@ -8,9 +8,6 @@ use Genome;
 class Genome::Timeline::Event::AnalysisProject {
     is => 'Genome::Timeline::Event',
     table_name => 'timeline.analysis_project',
-    id_by => [
-        id => { is => 'Text', len => 64 },
-    ],
     has => [
         object_class_name => {
             is => 'Text',
@@ -18,14 +15,12 @@ class Genome::Timeline::Event::AnalysisProject {
             default_value => 'Genome::Config::AnalysisProject',
             valid_values => ['Genome::Config::AnalysisProject'],
         },
-        object_id => { is => 'Text' },
         analysis_project => {
             is => 'UR::Object',
             id_by => 'object_id',
             id_class_by => 'object_class_name',
             constraint_name => 'anp_event_anp_fk',
         },
-        name => { is => 'Text' },
         type => {
             is => 'Genome::Timeline::Event::AnalysisProjectEventType',
             id_by => 'name',
@@ -39,9 +34,6 @@ class Genome::Timeline::Event::AnalysisProject {
         },
         is_cle => { is => 'Boolean', len => 1 },
         run_as => { is => 'Text', len => 64 },
-
-        # added by "ur update classes-from-db" on 22 Sep 2014 - is this column used?
-        reason => { is => 'Text' },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',

@@ -12,7 +12,7 @@ class Genome::VariantReporting::Command::Wrappers::SingleModel {
         },
     ],
     has_calculated => [
-        validation => {
+        followup => {
             calculate => q| return undef|,
         },
     ],
@@ -28,7 +28,7 @@ sub get_aligned_bams {
 sub get_translations {
     my $self = shift;
     my %translations;
-    $translations{d30_normal} = $self->discovery->tumor_sample->name;
+    $translations{normal} = $self->discovery->tumor_sample->name;
     return \%translations;
 }
 

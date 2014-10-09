@@ -24,12 +24,12 @@ reporters:
     'full':
         filters:
             'allele-in-genotype':
-                sample_name: d30_normal
+                sample_name: normal
             'ft-keep':
                 keep_filter_values:
                     - PASS
                     - .
-                sample_name: d30_normal
+                sample_name: normal
             'contains-tag':
                 info_tag: ON_TARGET
         interpreters:
@@ -41,32 +41,32 @@ reporters:
             caf: {}
             'min-coverage':
                 min_coverage: 10
-                sample_name: d30_normal
+                sample_name: normal
             'min-coverage-observed':
                 sample_names:
-                    - d30_normal
+                    - normal
             'max-vaf-observed':
                 tumor_sample_names: []
                 normal_sample_names:
-                    - d30_normal
+                    - normal
             'variant-callers':
-                sample_name: d30_normal
+                sample_name: normal
             'many-samples-vaf':
                 sample_names:
-                    - d30_normal
+                    - normal
         params:
             file_name: 'germline_full_report.tsv'
             sample_names:
-                - d30_normal
+                - normal
     'simple':
         filters:
             'allele-in-genotype':
-                sample_name: d30_normal
+                sample_name: normal
             'ft-keep':
                 keep_filter_values:
                     - PASS
                     - .
-                sample_name: d30_normal
+                sample_name: normal
             'contains-tag':
                 info_tag: ON_TARGET
         interpreters:
@@ -83,7 +83,7 @@ reporters:
                 keep_filter_values:
                     - PASS
                     - .
-                sample_name: d30_normal
+                sample_name: normal
             'contains-tag':
                 info_tag: ON_TARGET
         params:

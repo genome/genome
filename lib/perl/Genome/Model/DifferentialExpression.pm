@@ -227,7 +227,7 @@ sub _infer_candidate_subjects_from_input_models {
             $patient = $input_model->subject;
         }
         else {
-            $patient = $input_model->subject->patient;
+            $patient = $input_model->subject->individual;
         }
         $patients{ $patient->id } = $patient;
     }

@@ -40,20 +40,20 @@ class Genome::Model::ClinSeq {
             calculate => q|
               my ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
               if ($wgs_model) {
-                  $wgs_common_name = $wgs_model->subject->patient->common_name;
-                  $wgs_name = $wgs_model->subject->patient->name;
+                  $wgs_common_name = $wgs_model->subject->individual->common_name;
+                  $wgs_name = $wgs_model->subject->individual->name;
               }
               if ($exome_model) {
-                  $exome_common_name = $exome_model->subject->patient->common_name;
-                  $exome_name = $exome_model->subject->patient->name;
+                  $exome_common_name = $exome_model->subject->individual->common_name;
+                  $exome_name = $exome_model->subject->individual->name;
               }
               if ($tumor_rnaseq_model) {
-                  $tumor_rnaseq_common_name = $tumor_rnaseq_model->subject->patient->common_name;
-                  $tumor_rnaseq_name = $tumor_rnaseq_model->subject->patient->name;
+                  $tumor_rnaseq_common_name = $tumor_rnaseq_model->subject->individual->common_name;
+                  $tumor_rnaseq_name = $tumor_rnaseq_model->subject->individual->name;
               }
               if ($normal_rnaseq_model) {
-                  $normal_rnaseq_common_name = $normal_rnaseq_model->subject->patient->common_name;
-                  $normal_rnaseq_name = $normal_rnaseq_model->subject->patient->name;
+                  $normal_rnaseq_common_name = $normal_rnaseq_model->subject->individual->common_name;
+                  $normal_rnaseq_name = $normal_rnaseq_model->subject->individual->name;
               }
               my @names = ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
               my $final_name = "UnknownName";
@@ -219,11 +219,8 @@ sub map_workflow_inputs {
   my @inputs = (
       model => $model,
       build => $build,
-      build_as_array => [$build],
       wgs_build => $wgs_build,
-      wgs_build_as_array => [$wgs_build],
       exome_build => $exome_build,
-      exome_build_as_array => [$exome_build],
       tumor_rnaseq_build => $tumor_rnaseq_build,
       normal_rnaseq_build => $normal_rnaseq_build,
       working_dir => $data_directory,
@@ -233,6 +230,7 @@ sub map_workflow_inputs {
       misc_annotation_db => $misc_annotation_db,
       cosmic_annotation_db => $cosmic_annotation_db,
       bam_readcount_version => $self->bam_readcount_version,
+      tmp_bam_readcount_version => 0.6, # before bam_readcount_version was specified model was using different versions
   );
 
   my $annotation_build = $self->_resolve_annotation;
@@ -734,7 +732,7 @@ sub _resolve_workflow_for_build {
   #SummarizeBuilds - Summarize build inputs using SummarizeBuilds.pm
   my $msg = "Creating a summary of input builds using summarize-builds";
   my $summarize_builds_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeBuilds");
-  $add_link->($input_connector, 'build_as_array', $summarize_builds_op, 'builds');
+  $add_link->($input_connector, 'build', $summarize_builds_op, 'builds');
   $add_link->($input_connector, 'summarize_builds_outdir', $summarize_builds_op, 'outdir');
   $add_link->($input_connector, 'summarize_builds_skip_lims_reports', $summarize_builds_op, 'skip_lims_reports');
   $add_link->($input_connector, 'summarize_builds_log_file', $summarize_builds_op, 'log_file');
@@ -761,7 +759,7 @@ sub _resolve_workflow_for_build {
   if ($build->wgs_build) {
     my $msg = "Determining source variant callers of all tier1-3 SNVs and InDels for wgs data";
     $wgs_variant_sources_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GetVariantSources");
-    $add_link->($input_connector, 'wgs_build_as_array', $wgs_variant_sources_op, 'builds');
+    $add_link->($input_connector, 'wgs_build', $wgs_variant_sources_op, 'builds');
     $add_link->($input_connector, 'wgs_variant_sources_dir', $wgs_variant_sources_op, 'outdir');
     $add_link->($wgs_variant_sources_op, 'result', $output_connector, 'wgs_variant_sources_result');
   }
@@ -770,7 +768,7 @@ sub _resolve_workflow_for_build {
   if ($build->exome_build) {
     my $msg = "Determining source variant callers of all tier1-3 SNVs and InDels for exome data";
     $exome_variant_sources_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GetVariantSources");
-    $add_link->($input_connector, 'exome_build_as_array', $exome_variant_sources_op, 'builds');
+    $add_link->($input_connector, 'exome_build', $exome_variant_sources_op, 'builds');
     $add_link->($input_connector, 'exome_variant_sources_dir', $exome_variant_sources_op, 'outdir');
     $add_link->($exome_variant_sources_op, 'result', $output_connector, 'exome_variant_sources_result');
   }
@@ -802,9 +800,9 @@ sub _resolve_workflow_for_build {
     if ($build->wgs_build and $build->exome_build) {
         $add_link->($input_connector, ['wgs_build','exome_build'], $mutation_diagram_op, 'builds');
     } elsif ($build->wgs_build) {
-        $add_link->($input_connector, 'wgs_build_as_array', $mutation_diagram_op, 'builds');
+        $add_link->($input_connector, 'wgs_build', $mutation_diagram_op, 'builds');
     } elsif ($build->exome_build) {
-        $add_link->($input_connector, 'exome_build_as_array', $mutation_diagram_op, 'builds');
+        $add_link->($input_connector, 'exome_build', $mutation_diagram_op, 'builds');
     }
     $add_link->($mutation_diagram_op,'result',$output_connector,'mutation_diagram_result');
 
@@ -889,7 +887,7 @@ sub _resolve_workflow_for_build {
   #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
   $msg = "Create IGV XML session files for varying levels of detail using the input builds";
   my $igv_session_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::DumpIgvXml");
-  $add_link->($input_connector, 'build_as_array', $igv_session_op, 'builds');
+  $add_link->($input_connector, 'build', $igv_session_op, 'builds');
   $add_link->($input_connector, 'igv_session_dir', $igv_session_op, 'outdir');
   $add_link->($igv_session_op, 'result', $output_connector, 'igv_session_result');
 
@@ -946,8 +944,9 @@ sub _resolve_workflow_for_build {
     my $msg = "Produce a report using DOCM";
     $docm_report_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::DocmReport");
     $add_link->($input_connector, 'docm_report_dir', $docm_report_op, 'outdir');
-    $add_link->($input_connector, 'build_as_array', $docm_report_op, 'builds');
+    $add_link->($input_connector, 'build', $docm_report_op, 'builds');
     $add_link->($input_connector, 'docm_variants_file', $docm_report_op, 'docm_variants_file');
+    $add_link->($input_connector, 'tmp_bam_readcount_version', $docm_report_op, 'bam_readcount_version');
     $add_link->($docm_report_op, 'result', $output_connector, 'docm_report_result');
   }
 
@@ -972,7 +971,7 @@ sub _resolve_workflow_for_build {
   if ($build->wgs_build){
       my $msg = "Summarize SV results from WGS somatic variation";
       $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
-      $add_link->($input_connector, 'wgs_build_as_array', $summarize_svs_op, 'builds');
+      $add_link->($input_connector, 'wgs_build', $summarize_svs_op, 'builds');
       $add_link->($input_connector, 'sv_dir', $summarize_svs_op, 'outdir');
       $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
   }
@@ -1173,9 +1172,10 @@ sub _resolve_workflow_for_build {
   if ($build->wgs_build || $build->exome_build){
     $msg = "Generate SnvIndel Report";
     $converge_snv_indel_report_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::SnvIndelReport");
-    $add_link->($input_connector, 'build_as_array', $converge_snv_indel_report_op, 'builds');
+    $add_link->($input_connector, 'build', $converge_snv_indel_report_op, 'builds');
     $add_link->($input_connector, 'snv_indel_report_dir', $converge_snv_indel_report_op, 'outdir');
     $add_link->($input_connector, 'snv_indel_report_clean', $converge_snv_indel_report_op, 'clean');
+    $add_link->($input_connector, 'tmp_bam_readcount_version', $converge_snv_indel_report_op, 'bam_readcount_version');
     $add_link->($input_connector, 'snv_indel_report_tmp_space', $converge_snv_indel_report_op, 'tmp_space');
     $add_link->($input_connector, 'annotation_build', $converge_snv_indel_report_op, 'annotation_build');
     $add_link->($input_connector, 'snv_indel_report_target_gene_list', $converge_snv_indel_report_op, 'target_gene_list');
@@ -1235,15 +1235,15 @@ sub _infer_candidate_subjects_from_input_models {
     if ($input_model->subject->isa("Genome::Individual")){
       $patient = $input_model->subject;
     }else {
-      $patient = $input_model->subject->patient;
+      $patient = $input_model->subject->individual;
     }
     $subjects{ $patient->id } = $patient;
 
     if ($input_model->can("tumor_model")) {
-      $subjects{ $input_model->tumor_model->subject->patient->id } = $input_model->tumor_model->subject->patient;
+      $subjects{ $input_model->tumor_model->subject->individual->id } = $input_model->tumor_model->subject->individual;
     }
     if ($input_model->can("normal_model")) {
-      $subjects{ $input_model->normal_model->subject->patient->id } = $input_model->normal_model->subject->patient;
+      $subjects{ $input_model->normal_model->subject->individual->id } = $input_model->normal_model->subject->individual;
     }
   }
   my @subjects = sort { $a->id cmp $b->id } values %subjects;

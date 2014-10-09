@@ -2615,17 +2615,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>maize-blast',
-    [
-      'string=s',
-      'files',
-      'debug!',
-      undef,
-      'output-file=s',
-      'files',
-      'help!',
-      undef
-    ],
     '>merge-contigs',
     [
       'contigs=s',

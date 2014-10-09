@@ -14147,17 +14147,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>maize-blast',
-      [
-        'string=s',
-        'files',
-        'debug!',
-        undef,
-        'output-file=s',
-        'files',
-        'help!',
-        undef
-      ],
       '>merge-contigs',
       [
         'contigs=s',
@@ -38274,7 +38263,7 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'tumor-sample=s',
         undef,
-        'additional-sample=s',
+        'followup-sample=s',
         undef,
         'normal-sample=s',
         undef,

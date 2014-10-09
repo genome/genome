@@ -58,6 +58,9 @@ for my $build (
         ok(e("junk/build$build_id/junk"),                           "works with part of a build path");
         ok(e("${build_id}_merged_rmdup.bam"),                       "works with part of a bam file name");
     };
+    if ($@) {
+    diag $@;
+    }
 }
 
 # ensure /tmp/? can clean up
