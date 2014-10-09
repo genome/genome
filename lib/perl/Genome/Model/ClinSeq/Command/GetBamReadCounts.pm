@@ -357,30 +357,7 @@ sub getFilePaths_Genome{
   #WGS tumor normal BAMs
   if ($wgs_som_var_build){
     if ($wgs_som_var_build->status eq 'Succeeded'){
-
-      #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
-      my $reference_build = $wgs_som_var_build->reference_sequence_build;
-      my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-      my $reference_display_name = $reference_build->__display_name__;
-      my $build_dir = $wgs_som_var_build->data_directory ."/";
-
-      my %normal_data;
-      $normal_data{build_dir} = $build_dir;
-      $normal_data{data_type} = "WGS";
-      $normal_data{sample_type} = "Normal";
-      $normal_data{bam_path} = $wgs_som_var_build->normal_bam;
-      $normal_data{ref_fasta} = $reference_fasta_path;
-      $normal_data{ref_name} = $reference_display_name;
-
-      my %tumor_data;
-      $tumor_data{build_dir} = $build_dir;
-      $tumor_data{data_type} = "WGS";
-      $tumor_data{sample_type} = "Tumor";
-      $tumor_data{bam_path} = $wgs_som_var_build->tumor_bam;
-      $tumor_data{ref_fasta} = $reference_fasta_path;
-      $tumor_data{ref_name} = $reference_display_name;
-
-      push @data, \%normal_data, \%tumor_data;
+      push @data, $self->_getFilePaths_Genome_forSomVar($wgs_som_var_build, 'WGS');
     }else{
       die $self->error_message("A WGS build was specified, but it has not succeeded!");
     }
@@ -389,29 +366,7 @@ sub getFilePaths_Genome{
   #Exome tumor normal BAMs
   if ($exome_som_var_build){
     if ($exome_som_var_build->status eq 'Succeeded'){
-      #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
-      my $reference_build = $exome_som_var_build->reference_sequence_build;
-      my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-      my $reference_display_name = $reference_build->__display_name__;
-      my $build_dir = $exome_som_var_build->data_directory ."/";
-
-      my %normal_data;
-      $normal_data{build_dir} = $build_dir;
-      $normal_data{data_type} = "Exome";
-      $normal_data{sample_type} = "Normal";
-      $normal_data{bam_path} = $exome_som_var_build->normal_bam;
-      $normal_data{ref_fasta} = $reference_fasta_path;
-      $normal_data{ref_name} = $reference_display_name;
-
-      my %tumor_data;
-      $tumor_data{build_dir} = $build_dir;
-      $tumor_data{data_type} = "Exome";
-      $tumor_data{sample_type} = "Tumor";
-      $tumor_data{bam_path} = $exome_som_var_build->tumor_bam;
-      $tumor_data{ref_fasta} = $reference_fasta_path;
-      $tumor_data{ref_name} = $reference_display_name;
-
-      push @data, \%normal_data, \%tumor_data;
+      push @data, $self->_getFilePaths_Genome_forSomVar($exome_som_var_build, 'Exome');
     }else{
       die $self->error_message("An Exome build was specified, but it has not succeeded!");
     }
@@ -475,6 +430,35 @@ sub getFilePaths_Genome{
   return(\@data)
 }
 
+sub _getFilePaths_Genome_forSomVar {
+    my $self = shift;
+    my $som_var_build = shift;
+    my $data_type = shift;
+
+    #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
+    my $reference_build = $som_var_build->reference_sequence_build;
+    my $reference_fasta_path = $reference_build->full_consensus_path('fa');
+    my $reference_display_name = $reference_build->__display_name__;
+    my $build_dir = $som_var_build->data_directory ."/";
+
+    my %normal_data;
+    $normal_data{build_dir} = $build_dir;
+    $normal_data{data_type} = $data_type;
+    $normal_data{sample_type} = "Normal";
+    $normal_data{bam_path} = $som_var_build->normal_bam;
+    $normal_data{ref_fasta} = $reference_fasta_path;
+    $normal_data{ref_name} = $reference_display_name;
+
+    my %tumor_data;
+    $tumor_data{build_dir} = $build_dir;
+    $tumor_data{data_type} = $data_type;
+    $tumor_data{sample_type} = "Tumor";
+    $tumor_data{bam_path} = $som_var_build->tumor_bam;
+    $tumor_data{ref_fasta} = $reference_fasta_path;
+    $tumor_data{ref_name} = $reference_display_name;
+
+    return \%normal_data, \%tumor_data;
+}
 
 #########################################################################################################################################
 #getBamReadCounts                                                                                                                       #
