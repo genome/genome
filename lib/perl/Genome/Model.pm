@@ -8,7 +8,6 @@ use Carp;
 
 class Genome::Model {
     is => [ "Genome::Notable", "Genome::Searchable" ],
-    subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     table_name => 'model.model',
     is_abstract => 1,
     attributes_have => [
@@ -38,8 +37,8 @@ class Genome::Model {
             doc => 'on is_param attribute, the default value is stored here, since it is used when making profiles, not making models',
         },
     ],
+    subclass_description_preprocessor => 'Genome::Model::_preprocess_subclass_description',
     subclassify_by => 'subclass_name',
-    id_generator => '-uuid',
     id_by => [
         genome_model_id => {
             # TODO: change to just "id"
@@ -66,7 +65,7 @@ class Genome::Model {
         subclass_name => {
             is => 'Text',
             column_name => 'SUBCLASS_NAME',
-            calculate_from => ['processing_profile_id'],
+            calculate_from => 'processing_profile_id',
             calculate => sub {
                 my $pp_id = shift;
                 return unless $pp_id;
@@ -76,6 +75,7 @@ class Genome::Model {
                 }
                 return __PACKAGE__ . '::' . Genome::Utility::Text::string_to_camel_case($pp->type_name);
             },
+
             doc => 'the software subclass for the model in question',
         },
         type_name => {
@@ -83,29 +83,62 @@ class Genome::Model {
             via => 'processing_profile',
             doc => 'the name of the type of model (pipeline name)',
         },
+# These were added by 'ur update classes-from-db' on 22 Sep 2014.  They look like
+# old columns that should be removed
+#        _user_name => {
+#            is => 'Text',
+#            len => 64,
+#            column_name => 'user_name',
+#            is_optional => 1,
+#        },
+#        build_granularity_unit => {
+#            is => 'Text',
+#            len => 20,
+#            is_optional => 1,
+#        },
+#        build_granularity_value => {
+#            is => 'Integer',
+#            len => 4,
+#            is_optional => 1,
+#        },
+#        comparable_normal_model_id => {
+#            is => 'Text',
+#            len => 32,
+#            is_optional => 1,
+#        },
+#        current_running_build_id => {
+#            is => 'Text',
+#            len => 32,
+#            is_optional => 1,
+#        },
+#        data_directory => { is => 'Text', len => 1000, is_optional => 1 },
+#        is_default => { is => 'Boolean', len => 1, is_optional => 1 },
+#        keep => { is => 'Boolean', len => 1, is_optional => 1 },
+#        sample_name => { is => 'Text', len => 255, is_optional => 1 },
     ],
     has_optional => [
         user_name => {
             is => 'Text',
-            is_deprecated => 1,
             via => '__self__',
             to => 'created_by',
+            is_deprecated => 1,
             doc => 'use created_by (or maybe run_as)',
         },
         created_by => {
             is => 'Text',
+            len => 64,
             doc => 'entity that created the model',
         },
         run_as => {
             is => 'Text',
+            len => 64,
             doc => 'username to run builds as',
         },
         creation_date => {
-            # TODO: switch from timestamp to Date when we go Oracle to PostgreSQL
             # TODO: this is redundant with the model creation event.
             # Rails standard is created_at and updated_at.
             # Switching from timestamp in Oracle simplifies querying.  Not sure about postgres.
-            is => 'Timestamp',
+            is => 'DateTime',
             doc => 'the time at which the model was defined',
         },
         auto_build => {
@@ -128,7 +161,7 @@ class Genome::Model {
             # ssmith: I agree it is more work to write code to get this set correctly.
             # The only issue with that is that having to figure this dynamically is slow.
             # If we do it once when it changes, instead of every time someone wants to check, it could be more DRY.
-            is => 'Number',
+            is => 'Text',
             column_name => 'LAST_COMPLETE_BUILD_ID',
             doc => 'the last complete build id',
         },
@@ -186,13 +219,13 @@ class Genome::Model {
         builds => {
             is => 'Genome::Model::Build',
             reverse_as => 'model',
+            where => [ -order_by => '-created_at' ],
             doc => 'Versions of a model over time, with varying quantities of evidence',
-            where => [ -order_by => '-created_at', ],
         },
         downstream_model_associations => {
             is => 'Genome::Model::Input',
             reverse_as => '_model_value',
-            doc => 'links to models which use this model as an input', 
+            doc => 'links to models which use this model as an input',
         },
         downstream_models => {
             is => 'Genome::Model',
@@ -200,11 +233,9 @@ class Genome::Model {
             to => 'model',
             doc => 'models which use this model as an input',
         },
-
         inputs => {
             is => 'Genome::Model::Input',
             reverse_as => 'model',
-            is_many => 1,
             doc => 'links to data currently assigned to the model for processing',
         },
         input_values => {
@@ -284,6 +315,7 @@ class Genome::Model {
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
     doc => 'a data model describing the sequence and/or features of a genome',
 };
 

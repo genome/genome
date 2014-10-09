@@ -5,34 +5,39 @@ use warnings;
 
 use Genome;
 class Genome::MiscNote {
-    type_name => 'misc note',
     table_name => 'subject.misc_note',
-    id_generator => '-uuid',
+    type_name => 'misc note',
     id_by => [
-        id => {
-            is => 'Text',
-            len => 32,
-        },
+        id => { is => 'Text', len => 32 },
     ],
     has => [
         subject_class_name => { is => 'Text' },
-        subject_id         => { is => 'Text' },
-        header_text        => { is => 'Text' },
-        subject            => { is => 'UR::Object', id_class_by => 'subject_class_name', id_by => 'subject_id' },
-        editor_id          => { is => 'Text' },
-        entry_date         => { is => 'DateTime' },
-        entry_date_sort    => { 
-            is => 'Number',
-            calculate_from => ['entry_date'],
-            calculate => q{ (my $sort_date = $entry_date) =~ s/[-: ]//g; return $sort_date; } # for easier XSLT sorting
+        subject_id => { is => 'Text' },
+        header_text => { is => 'Text' },
+        subject => {
+            is => 'UR::Object',
+            id_by => 'subject_id',
+            id_class_by => 'subject_class_name',
         },
-        auto_truncate_body_text => { is => 'Boolean', default => '1', is_transient => 1},
+        editor_id => { is => 'Text' },
+        entry_date => { is => 'DateTime' },
+        entry_date_sort => {
+            is => 'Number',
+            calculate_from => 'entry_date',
+            calculate => q( (my $sort_date = $entry_date) =~ s/[-: ]//g; return $sort_date; ),  # for easier XSLT sorting
+        },
+        auto_truncate_body_text => {
+            is => 'Boolean',
+            default_value => 1,
+            is_transient => 1,
+        },
     ],
     has_optional => [
-        body_text          => { is => 'VARCHAR2', len => 4000, default => '' },
+        body_text => { is => 'Text', len => 4000, default_value => '' },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 sub create {

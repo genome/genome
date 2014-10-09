@@ -35,7 +35,7 @@ class Genome::Model::ClinSeq::Command::MakeCircosPlot {
                                 default_value => '0.64',
                                 doc => 'the version of circos to use' },
     ],
-    doc => 'This module interfaces with the circos program to produce a circos plot for a clin-seq build.',
+    doc => 'interfaces with the circos program to produce a circos plot for a clin-seq build',
 };
 
 sub sub_command_category { 'pipeline' }

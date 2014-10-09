@@ -6,20 +6,16 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject::SubjectMapping {
-    is           => ['Genome::Utility::ObjectWithTimestamps', 'Genome::Utility::ObjectWithCreatedBy'],
-    id_generator => '-uuid',
-    data_source  => 'Genome::DataSource::GMSchema',
-    table_name   => 'config.subject_mapping',
-    id_by        => [
-        id => {
-            is => 'Text',
-            len => 64,
-        },
+    is => [ "Genome::Utility::ObjectWithTimestamps", "Genome::Utility::ObjectWithCreatedBy" ],
+    table_name => 'config.subject_mapping',
+    id_by => [
+        id => { is => 'Text', len => 64 },
     ],
     has => [
         analysis_project => {
-            is    => 'Genome::Config::AnalysisProject',
-            id_by => 'analysis_project_id'
+            is => 'Genome::Config::AnalysisProject',
+            id_by => 'analysis_project_id',
+            constraint_name => 'subject_mapping_analysis_project_id_fkey',
         },
         subject_bridges => {
             is => 'Genome::Config::AnalysisProject::SubjectMapping::Subject',
@@ -44,8 +40,13 @@ class Genome::Config::AnalysisProject::SubjectMapping {
             is => 'Genome::Config::Tag',
             via => 'tag_bridges',
             to => 'tag',
+            is_many => 1,
+            is_mutable => 1,
         },
-    ]
+    ],
+    schema_name => 'GMSchema',
+    data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 sub delete {

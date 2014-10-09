@@ -912,7 +912,7 @@ sub create_symlink {
         Carp::croak("Can't create_symlink: no 'link' given");
     }
 
-    if ( -e $link ) { # the link exists and points to spmething
+    if ( -e $link ) { # the link exists and points to something
         Carp::croak("Link ($link) for target ($target) already exists.");
     }
 

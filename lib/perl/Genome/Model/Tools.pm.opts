@@ -2615,17 +2615,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>maize-blast',
-    [
-      'string=s',
-      'files',
-      'debug!',
-      undef,
-      'output-file=s',
-      'files',
-      'help!',
-      undef
-    ],
     '>merge-contigs',
     [
       'contigs=s',
@@ -4430,6 +4419,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       [
         'bam-files=s',
         'files',
+        'bam-readcount-version=s',
+        'files',
         'genome-build=s',
         'files',
         'output-file=s',
@@ -4533,6 +4524,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       '>merge-readcounts',
       [
         'bam-files=s',
+        'files',
+        'bam-readcount-version=s',
         'files',
         'genome-build=s',
         'files',
@@ -12840,7 +12833,7 @@ $Genome::Model::Tools::OPTS_SPEC = [
     '>downsample',
     [
       'downsample-ratio=s',
-      'files',
+      undef,
       'input-file=s',
       'files',
       'max-records-in-ram=s',

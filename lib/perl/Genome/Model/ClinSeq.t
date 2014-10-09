@@ -100,14 +100,14 @@ ok($wf, "workflow validates");
 #
 {
 my $b2 = Genome::Model::Build::Command::DiffBlessed::retrieve_blessed_build('apipe-test-clinseq-wer', '5.10' ) or die "Unable to grab blessed clinseq build";
-my $patient_name = $b2->common_name or die "Unable to grab a common name for blessed clinseq build";
+my $individual_name = $b2->common_name or die "Unable to grab a common name for blessed clinseq build";
 my $data_dir = $b2->data_directory or die "Unable to grab data_directory of blessed clinseq build";
-is( Genome::Model::ClinSeq::->patient_dir($b2), $data_dir . "/$patient_name", "patient directory returned as expected" ) or die "Patient dir test failed. Aborting testing";
-is( Genome::Model::ClinSeq::->snv_variant_source_file($b2,'wgs'), $data_dir . "/$patient_name/variant_source_callers/wgs/snv_sources.tsv", "wgs variant sources constructed as expected");
+is( Genome::Model::ClinSeq::->patient_dir($b2), $data_dir . "/$individual_name", "patient directory returned as expected" ) or die "Patient dir test failed. Aborting testing";
+is( Genome::Model::ClinSeq::->snv_variant_source_file($b2,'wgs'), $data_dir . "/$individual_name/variant_source_callers/wgs/snv_sources.tsv", "wgs variant sources constructed as expected");
 dies_ok( sub { Genome::Model::ClinSeq::->snv_variant_source_file($b2,'nonsense') },  "nonsense data source for variant source type dies as expected");
-is( Genome::Model::ClinSeq::->clonality_dir($b2), $data_dir . "/$patient_name/clonality", "clonality directory returned as expected");
-is( Genome::Model::ClinSeq::->varscan_formatted_readcount_file($b2), $data_dir . "/$patient_name/clonality/allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan", "varscan counts returned as expected");
-is( Genome::Model::ClinSeq::->cnaseq_hmm_file($b2), $data_dir . "/$patient_name/clonality/cnaseq.cnvhmm", "cnaseq file returned as expected");
+is( Genome::Model::ClinSeq::->clonality_dir($b2), $data_dir . "/$individual_name/clonality", "clonality directory returned as expected");
+is( Genome::Model::ClinSeq::->varscan_formatted_readcount_file($b2), $data_dir . "/$individual_name/clonality/allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan", "varscan counts returned as expected");
+is( Genome::Model::ClinSeq::->cnaseq_hmm_file($b2), $data_dir . "/$individual_name/clonality/cnaseq.cnvhmm", "cnaseq file returned as expected");
 }
 
 done_testing()

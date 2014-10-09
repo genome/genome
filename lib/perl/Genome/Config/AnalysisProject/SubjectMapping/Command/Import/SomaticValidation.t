@@ -38,6 +38,11 @@ my @mappings = $analysis_project->subject_mappings;
 is(scalar(@mappings), $number_of_mappings,
     'we associated the correct number of pairings with the AnalysisProject');
 
+for my $mapping (@mappings) {
+    my @tags = $mapping->tags;
+    ok(scalar(@tags), 'tags found assigned to mapping');
+}
+
 done_testing();
 
 sub _test_file {
@@ -45,20 +50,23 @@ sub _test_file {
 
     for(1..$number_of_mappings) {
         if ($_ % 2 == 0) {
-            $fh->printf("%s\t%s\t%s\t%s\t%s\n",
+            $fh->printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
                 Genome::Test::Factory::Sample->setup_object()->id,
                 Genome::Test::Factory::Sample->setup_object()->id,
                 Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id,
                 Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id,
-                Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id
+                Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id,
+                Genome::Config::Tag->__define__(name => 'test'.$_)->id,
+                Genome::Config::Tag->__define__(name => 'second_test'.$_)->name,
             );
         } else {
-            $fh->printf("%s\t%s\t%s\t%s\t%s\n",
+            $fh->printf("%s\t%s\t%s\t%s\t%s\t%s\n",
                 Genome::Test::Factory::Sample->setup_object()->name,
                 Genome::Test::Factory::Sample->setup_object()->name,
                 Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id,
                 Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id,
-                Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id
+                Genome::Model::Tools::DetectVariants2::Result::Manual->__define__()->id,
+                Genome::Config::Tag->__define__(name => 'test'.$_)->name,
             );
         }
     }

@@ -20,6 +20,10 @@ class Genome::Model::ClinSeq::Command::Converge::Base {
                     is => 'FilesystemPath',
                     doc => 'Directory where output files will be written',
                    },
+        bam_readcount_version => {
+            is => 'String',
+            doc => 'version of bam-readcount to use',
+        },
     ],
     doc => 'converge various data types across clinseq inputs'
 };
@@ -172,7 +176,7 @@ sub get_final_common_name{
       $names{$common_name}=1 if $common_name;
       $final_name = $common_name if $common_name;
     }elsif ($build->subject->class eq 'Genome::Sample'){
-      my $common_name = $build->subject->patient->common_name;
+      my $common_name = $build->subject->individual->common_name;
       $names{$common_name}=1 if $common_name;
       $final_name = $common_name if $common_name;
     }
@@ -207,7 +211,7 @@ sub get_final_name{
       $names{$name}=1 if $name;
       $final_name = $name if $name;
     }elsif ($build->subject->class eq 'Genome::Sample'){
-      my $name = $build->subject->patient->name;
+      my $name = $build->subject->individual->name;
       $names{$name}=1 if $name;
       $final_name = $name if $name;
     }
@@ -841,6 +845,7 @@ sub add_read_counts{
             variant_file=>$grand_anno_file,
             header_prefixes=>$header_prefixes,
             indel_size_limit => $indel_size_limit,
+            bam_readcount_version => $self->bam_readcount_version,
           );
     my $r = $add_count_cmd->execute();
     die $self->error_message("add-readcounts cmd unsuccessful") unless ($r);

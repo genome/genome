@@ -122,6 +122,13 @@ class Genome::InstrumentData::Imported {
             is_mutable => 1,
             where => [ attribute_label => 'sra_sample_id' ],
         },
+        downsample_ratio => {
+            is => 'Number',
+            via => 'attributes',
+            to => 'attribute_value',
+            is_mutable => 1,
+            where => [ attribute_label => 'downsample_ratio' ],
+        },
         barcode => {
             is => 'Text',
             via => 'attributes',
@@ -151,6 +158,13 @@ class Genome::InstrumentData::Imported {
         full_name => {
             calculate_from => [ 'run_name', 'subset_name' ],
             calculate => q( $subset_name ? "$run_name/$subset_name" : $run_name ),
+        },
+        downsample_ratio => {
+            is => 'Float',
+            via => 'attributes',
+            to => 'attribute_value',
+            is_mutable => 1,
+            where => [ attribute_label => 'downsample_ratio' ],
         },
     ],
 };

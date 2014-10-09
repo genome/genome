@@ -12,7 +12,7 @@ class Genome::Command {
 # This map allows the top-level genome commands to be whatever
 # we wish, instead of having to match the directory structure.
 my %command_map = (
-    'variant-reporting' => 'Genome::VariantReporting::Framework::Command',
+    'variant-reporting' => 'Genome::VariantReporting::Command',
     'analysis-project' => 'Genome::Config::AnalysisProject::Command',
     'config' => 'Genome::Config::Command',
     'db' => 'Genome::Db::Command',

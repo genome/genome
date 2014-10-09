@@ -1,9 +1,0 @@
-chr	pos	data1	data2	Source
-1	99	ABC	12	report_b
-1	100	ABC	14	report_a
-2	2500	XYZ	9	report_a
-2	2501	XYZ	10	report_b
-X	499	SOME	85	report_b
-X	500	SOME	84	report_a
-Y	2500	THING	9001	report_a
-Y	2501	THING	9002	report_b

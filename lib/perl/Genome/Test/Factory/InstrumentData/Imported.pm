@@ -23,18 +23,11 @@ sub generate_obj {
 
     my $instrument_data = Genome::InstrumentData::Imported->create(%params);
     die 'Failed to create instrument data' if not $instrument_data;
-    return $instrument_data if not $genotype_file;
-
-    my $volume = Genome::Disk::Volume->get(mount_path => $mount_path);
-    if ( not $volume ) {
-        $volume = Genome::Disk::Volume->__define__(mount_path => $mount_path, disk_status => 'active');
-    }
+    return $instrument_data if not $mount_path;
 
     my $alloc = Genome::Test::Factory::DiskAllocation->generate_obj(
         owner => $instrument_data,
-        mount_path => $volume->mount_path,
-        group_subdirectory => '',
-        allocation_path => '',
+        mount_path => $mount_path,
     );
     die "Failed to define allocation for genotype file!" if not $alloc;
 

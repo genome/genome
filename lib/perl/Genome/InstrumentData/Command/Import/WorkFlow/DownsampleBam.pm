@@ -8,15 +8,11 @@ use Genome;
 use Genome::InstrumentData::Command::Import::WorkFlow::Helpers;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam {
-    is => 'Command::V2',
+    is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithRequiredDownsampleRatio /],
     has_input => {
         bam_path => {
             is => 'Genome::InstrumentData',
             doc => 'Instrument data to use to create file to reimport.',
-        },
-        downsample_ratio => {
-            is => 'String',
-            doc => 'Ratio at which to keep reads in order to downsample. 0.01 means keep 1 in 100 reads. ',
         },
     },
     has_output => {
@@ -28,23 +24,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::DownsampleBam {
         },
     },
 };
-
-sub help_detail {
-    return <<HELP;
-HELP
-}
-    
-sub __errors__ {
-    my $self = shift;
-
-    my @errors = $self->SUPER::__errors__;
-    return @errors if @errors;
-
-    @errors = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->is_downsample_ratio_invalid($self->downsample_ratio);
-    return @errors if @errors;
-
-    return;
-}
 
 sub execute {
     my $self = shift;

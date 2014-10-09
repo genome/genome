@@ -25,6 +25,7 @@ class Genome::Model::MetagenomicComposition16s::Command {
             doc => 'Use these builds, resolved via text string',
         },
     ],
+    doc => 'operate on metagenomic-composition-16s models',
 };
 
 sub sub_command_category { 'type specific' }

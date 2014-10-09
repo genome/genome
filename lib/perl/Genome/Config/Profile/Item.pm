@@ -9,19 +9,16 @@ use File::Basename;
 use Lingua::EN::Inflect;
 
 class Genome::Config::Profile::Item {
-    is => ['Genome::Utility::ObjectWithTimestamps','Genome::Utility::ObjectWithCreatedBy'],
-    data_source => 'Genome::DataSource::GMSchema',
+    is => [ "Genome::Utility::ObjectWithTimestamps", "Genome::Utility::ObjectWithCreatedBy" ],
     table_name => 'config.profile_item',
-    id_generator => '-uuid',
+    id_by => [
+        id => { is => 'Text', len => 64 },
+    ],
     has => [
-        id => {
-            is => 'Text',
-            len => 64,
-        },
         allocation => {
             is => 'Genome::Disk::Allocation',
+            reverse_as => 'owner',
             is_many => 1,
-            reverse_as => 'owner'
         },
         analysis_menu_item => {
             is => 'Genome::Config::AnalysisMenu::Item',
@@ -31,10 +28,11 @@ class Genome::Config::Profile::Item {
         analysis_project => {
             is => 'Genome::Config::AnalysisProject',
             id_by => 'analysis_project_id',
+            constraint_name => 'profile_item_analysis_project_id_fkey',
         },
         status => {
             is => 'Text',
-            valid_values => [qw/ disabled active /],
+            valid_values => [ "disabled", "active" ],
             is_optional => 1,
         },
         model_bridges => {
@@ -58,6 +56,7 @@ class Genome::Config::Profile::Item {
             via => 'tag_bridges',
             to => 'tag',
             is_many => 1,
+            is_mutable => 1,
         },
         tag_names => {
             is => 'Text',
@@ -66,6 +65,9 @@ class Genome::Config::Profile::Item {
             is_many => 1,
         },
     ],
+    schema_name => 'GMSchema',
+    data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 __PACKAGE__->add_observer(aspect => 'create', callback => \&_is_created);

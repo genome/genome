@@ -10,16 +10,10 @@ use Text::ParseWords;
 class Genome::FeatureList {
     table_name => 'model.feature_list',
     id_by => [
-        id => {
-            is => 'Text',
-            len => 64,
-        },
+        id => { is => 'Text', len => 64 },
     ],
     has => [
-        name => {
-            is => 'Text',
-            len => 1500,
-        },
+        name => { is => 'Text', len => 1500 },
         format => {
             is => 'Text',
             len => 64,
@@ -41,6 +35,7 @@ class Genome::FeatureList {
             calculate_from => 'format',
             calculate => q( return scalar ($format =~ /1-based/); ),
         },
+        #file_id => { is => 'Integer', len => 8, is_optional => 1 },
     ],
     has_optional => [
         source => {
@@ -57,19 +52,13 @@ class Genome::FeatureList {
             is => 'Genome::Model::Build::ReferenceSequence',
             id_by => 'reference_id',
         },
-        reference_name => {
-            via => 'reference',
-            to => 'name',
-        },
+        reference_name => { via => 'reference', to => 'name' },
         subject_id => {
             is => 'Text',
             len => 32,
             doc => 'ID of the subject to which the features are relevant',
         },
-        subject => {
-            is => 'Genome::Model::Build',
-            id_by => 'subject_id',
-        },
+        subject => { is => 'Genome::Model::Build', id_by => 'subject_id' },
         disk_allocation => {
             is => 'Genome::Disk::Allocation',
             reverse_as => 'owner',
@@ -91,13 +80,13 @@ class Genome::FeatureList {
                ),
         },
         content_type => {
-            is => 'VARCHAR2',
+            is => 'Text',
             len => 255,
             valid_values => [ "exome", "targeted", "validation", "roi", undef ],
             doc => 'The type of list (used for determining automated processing)',
         },
         description => {
-            is => 'VARCHAR2',
+            is => 'Text',
             len => 255,
             doc => 'General description of the BED file',
         },

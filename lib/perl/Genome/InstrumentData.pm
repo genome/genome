@@ -78,7 +78,7 @@ class Genome::InstrumentData {
         individual => {
             is => 'Genome::Individual',
             via => 'sample',
-            to => 'patient',
+            to => 'individual',
         },
         taxon => {
             is => 'Genome::Taxon',

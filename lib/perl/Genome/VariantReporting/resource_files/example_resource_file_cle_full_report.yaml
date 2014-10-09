@@ -7,7 +7,7 @@ feature_list_ids:
     SEG_DUP: 4e77d10f29f44a0792ebc8d6ea0c4a2b
 reference_fasta: /gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa
 translations:
-    d0_tumor: H_KA-220882-1309235
-    d30_normal: H_KA-220882-1222132
-    d30_tumor: H_KA-220882-1309236
+    discovery_tumor: H_KA-220882-1309235
+    normal: H_KA-220882-1222132
+    followup_tumor: H_KA-220882-1309236
 dbsnp_vcf: '/gscmnt/sata903/info/build_merged_alignments/detect-variants--blade10-2-15.gsc.wustl.edu-aregier-15734-141765550/snvs.hq.vcf'
