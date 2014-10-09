@@ -17,7 +17,7 @@ my $expected_out = $ENV{GENOME_TEST_INPUTS} . 'Genome-Model-ClinSeq-Command-Summ
 ok(-d $expected_out, "Directory of expected output exists: $expected_out") or die;
 
 #Get an exome somatic variation build
-my $exome_build_id = 138012408;
+my $exome_build_id = 'e1094ea82292499cba50a90bfbd6e390';
 my $exome_build = Genome::Model::Build->get($exome_build_id);
 ok($exome_build, "Got exome somatic variation build from id: $exome_build_id") or die;
 
