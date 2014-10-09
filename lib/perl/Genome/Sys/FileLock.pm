@@ -139,39 +139,6 @@ sub lock {
                 $class->warning_message("Invalid lock for resource $resource_lock\n"
                     ." lock info was:\n". $info_content ."\n"
                     ."Removing old resource lock $resource_lock\n");
-                unless ($Genome::Sys::IS_TESTING) {
-                    my $message_content = <<END_CONTENT;
-Hey Apipe,
-
-This is a lock attempt on %s running as PID $$ LSF job %s and user %s.
-
-I'm about to remove a lock file held by a LSF job that I think is dead.
-
-The resource is:
-
-%s
-
-Here's info about the job that I think is gone.
-
-%s
-
-I'll remove the lock in an hour.  If you want to save the lock, kill me
-before I unlock the process!
-
-Your pal,
-Genome::Utility::Filesystem
-
-END_CONTENT
-
-                    my $msg = MIME::Lite->new(From    => sprintf('"Genome::Utility::Filesystem" <%s@%s>', $ENV{'USER'}, $ENV{GENOME_EMAIL_DOMAIN}),
-                        To      => $ENV{GENOME_EMAIL_PIPELINE_NOISY},
-                        Subject => 'Attempt to release a lock held by a dead process',
-                        Data    => sprintf($message_content, $my_host, $ENV{'LSB_JOBID'}, $ENV{'USER'}, $resource_lock, $info_content),
-                    );
-                    $msg->send();
-                    $class->status_message('Sleeping for one hour...');
-                    sleep 60 * 60;
-                }
                 $class->unlock(resource_lock => $resource_lock, force => 1);
                 #maybe warn here before stealing the lock...
             }
