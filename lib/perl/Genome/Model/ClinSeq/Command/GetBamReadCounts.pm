@@ -166,10 +166,8 @@ sub execute {
       }
     }
   }
-  $self->error_message("Could not resolve annotation build from input builds") unless $annotation_build;
-  die $self->error_message unless $annotation_build;
-  $self->error_message("Could not resolve reference sequence build from input builds") unless $reference_build;
-  die $self->error_message unless $reference_build;
+  die $self->error_message("Could not resolve annotation build from input builds") unless $annotation_build;
+  die $self->error_message("Could not resolve reference sequence build from input builds") unless $reference_build;
 
   my $reference_build_id = $reference_build->id;
   my $annotation_build_name = $annotation_build->name;
