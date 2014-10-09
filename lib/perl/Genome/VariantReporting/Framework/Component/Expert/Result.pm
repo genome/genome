@@ -34,9 +34,9 @@ sub output_file_path {
     return File::Spec->join($self->output_dir, $self->output_filename);
 }
 
-sub create {
+sub get_or_create {
     my $class = shift;
-    my $self = $class->SUPER::create(@_);
+    my $self = $class->SUPER::get_or_create(@_);
 
     $self->_prepare_staging_directory;
     $self->_run;
