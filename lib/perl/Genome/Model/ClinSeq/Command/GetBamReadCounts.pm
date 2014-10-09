@@ -195,31 +195,31 @@ sub execute {
    );
 
   #For each mutation get BAM read counts for a tumor/normal pair of BAM files
-  foreach my $bam (sort {$a <=> $b} keys %{$data}){
-    my $data_type = $data->{$bam}->{data_type};
-    my $sample_type = $data->{$bam}->{sample_type};
-    my $bam_path = $data->{$bam}->{bam_path};
-    my $ref_fasta = $data->{$bam}->{ref_fasta};
+  foreach my $bam (@$data){
+    my $data_type = $bam->{data_type};
+    my $sample_type = $bam->{sample_type};
+    my $bam_path = $bam->{bam_path};
+    my $ref_fasta = $bam->{ref_fasta};
     my $snv_count = keys %{$snvs};
 
     if ($verbose){
       $self->debug_message("\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$ref_fasta\n")
     }
     my $counts = $self->getBamReadCounts('-snvs'=>$snvs, '-data_type'=>$data_type, '-sample_type'=>$sample_type, '-bam_path'=>$bam_path, '-ref_fasta'=>$ref_fasta, '-verbose'=>$verbose, '-no_fasta_check'=>$no_fasta_check);
-    $data->{$bam}->{read_counts} = $counts;
+    $bam->{read_counts} = $counts;
   }
 
 
   #Get the FPKM and calculate a percentile value from the RNAseq build dir - do this for tumor and normal if available
-  foreach my $bam (sort {$a <=> $b} keys %{$data}){
-    my $data_type = $data->{$bam}->{data_type};
-    my $sample_type = $data->{$bam}->{sample_type};
+  foreach my $bam (@$data){
+    my $data_type = $bam->{data_type};
+    my $sample_type = $bam->{sample_type};
     unless ($data_type eq "RNAseq"){
       next();
     }
-    my $build_dir = $data->{$bam}->{build_dir};
+    my $build_dir = $bam->{build_dir};
     my $exp = $self->getExpressionValues('-snvs'=>$snvs, '-build_dir'=>$build_dir, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$verbose);
-    $data->{$bam}->{gene_expression} = $exp;
+    $bam->{gene_expression} = $exp;
   }
 
 
@@ -235,10 +235,10 @@ sub execute {
   #8.) RNAseq Tumor Gene FPKM, RNAseq Tumor Gene Percentile
 
   my %new_snv;
-  foreach my $bam (sort {$a <=> $b} keys %{$data}){
-    my $data_type = $data->{$bam}->{data_type};
-    my $sample_type = $data->{$bam}->{sample_type};
-    my $read_counts = $data->{$bam}->{read_counts};
+  foreach my $bam (@$data){
+    my $data_type = $bam->{data_type};
+    my $sample_type = $bam->{sample_type};
+    my $read_counts = $bam->{read_counts};
 
     my $new_header = "\t$data_type"."_"."$sample_type"."_ref_rc\t"."$data_type"."_"."$sample_type"."_var_rc\t"."$data_type"."_"."$sample_type"."_VAF";
     $snv_header .= $new_header;
@@ -254,8 +254,8 @@ sub execute {
       }
     }
 
-    if (defined($data->{$bam}->{gene_expression})){
-      my $gene_exp = $data->{$bam}->{gene_expression};
+    if (defined($bam->{gene_expression})){
+      my $gene_exp = $bam->{gene_expression};
       my $new_header = "\t$data_type"."_"."$sample_type"."_gene_FPKM\t"."$data_type"."_"."$sample_type"."_gene_FPKM_percentile";
       $snv_header .= $new_header;
       foreach my $snv_pos (keys %{$gene_exp}){
@@ -352,9 +352,8 @@ sub getFilePaths_Genome{
   my $rna_seq_normal_build = $args{'-rna_seq_normal_build'};
   my $rna_seq_tumor_build = $args{'-rna_seq_tumor_build'};
 
-  my %d;
+  my @data;
 
-  my $b = 0;
   #WGS tumor normal BAMs
   if ($wgs_som_var_build){
     if ($wgs_som_var_build->status eq 'Succeeded'){
@@ -364,20 +363,24 @@ sub getFilePaths_Genome{
       my $reference_fasta_path = $reference_build->full_consensus_path('fa');
       my $reference_display_name = $reference_build->__display_name__;
       my $build_dir = $wgs_som_var_build->data_directory ."/";
-      $b++;
-      $d{$b}{build_dir} = $build_dir;
-      $d{$b}{data_type} = "WGS";
-      $d{$b}{sample_type} = "Normal";
-      $d{$b}{bam_path} = $wgs_som_var_build->normal_bam;
-      $d{$b}{ref_fasta} = $reference_fasta_path;
-      $d{$b}{ref_name} = $reference_display_name;
-      $b++;
-      $d{$b}{build_dir} = $build_dir;
-      $d{$b}{data_type} = "WGS";
-      $d{$b}{sample_type} = "Tumor";
-      $d{$b}{bam_path} = $wgs_som_var_build->tumor_bam;
-      $d{$b}{ref_fasta} = $reference_fasta_path;
-      $d{$b}{ref_name} = $reference_display_name;
+
+      my %normal_data;
+      $normal_data{build_dir} = $build_dir;
+      $normal_data{data_type} = "WGS";
+      $normal_data{sample_type} = "Normal";
+      $normal_data{bam_path} = $wgs_som_var_build->normal_bam;
+      $normal_data{ref_fasta} = $reference_fasta_path;
+      $normal_data{ref_name} = $reference_display_name;
+
+      my %tumor_data;
+      $tumor_data{build_dir} = $build_dir;
+      $tumor_data{data_type} = "WGS";
+      $tumor_data{sample_type} = "Tumor";
+      $tumor_data{bam_path} = $wgs_som_var_build->tumor_bam;
+      $tumor_data{ref_fasta} = $reference_fasta_path;
+      $tumor_data{ref_name} = $reference_display_name;
+
+      push @data, \%normal_data, \%tumor_data;
     }else{
       die $self->error_message("A WGS build was specified, but it has not succeeded!");
     }
@@ -391,20 +394,24 @@ sub getFilePaths_Genome{
       my $reference_fasta_path = $reference_build->full_consensus_path('fa');
       my $reference_display_name = $reference_build->__display_name__;
       my $build_dir = $exome_som_var_build->data_directory ."/";
-      $b++;
-      $d{$b}{build_dir} = $build_dir;
-      $d{$b}{data_type} = "Exome";
-      $d{$b}{sample_type} = "Normal";
-      $d{$b}{bam_path} = $exome_som_var_build->normal_bam;
-      $d{$b}{ref_fasta} = $reference_fasta_path;
-      $d{$b}{ref_name} = $reference_display_name;
-      $b++;
-      $d{$b}{build_dir} = $build_dir;
-      $d{$b}{data_type} = "Exome";
-      $d{$b}{sample_type} = "Tumor";
-      $d{$b}{bam_path} = $exome_som_var_build->tumor_bam;
-      $d{$b}{ref_fasta} = $reference_fasta_path;
-      $d{$b}{ref_name} = $reference_display_name;
+
+      my %normal_data;
+      $normal_data{build_dir} = $build_dir;
+      $normal_data{data_type} = "Exome";
+      $normal_data{sample_type} = "Normal";
+      $normal_data{bam_path} = $exome_som_var_build->normal_bam;
+      $normal_data{ref_fasta} = $reference_fasta_path;
+      $normal_data{ref_name} = $reference_display_name;
+
+      my %tumor_data;
+      $tumor_data{build_dir} = $build_dir;
+      $tumor_data{data_type} = "Exome";
+      $tumor_data{sample_type} = "Tumor";
+      $tumor_data{bam_path} = $exome_som_var_build->tumor_bam;
+      $tumor_data{ref_fasta} = $reference_fasta_path;
+      $tumor_data{ref_name} = $reference_display_name;
+
+      push @data, \%normal_data, \%tumor_data;
     }else{
       die $self->error_message("An Exome build was specified, but it has not succeeded!");
     }
@@ -417,14 +424,17 @@ sub getFilePaths_Genome{
       my $reference_fasta_path = $reference_build->full_consensus_path('fa');
       my $reference_display_name = $reference_build->__display_name__;
       my $build_dir = $rna_seq_normal_build->data_directory ."/";
-      $b++;
-      $d{$b}{build_dir} = $build_dir;
-      $d{$b}{data_type} = "RNAseq";
-      $d{$b}{sample_type} = "Normal";
+
+      my %normal_data;
+      $normal_data{build_dir} = $build_dir;
+      $normal_data{data_type} = "RNAseq";
+      $normal_data{sample_type} = "Normal";
       my $alignment_result = $rna_seq_normal_build->alignment_result;
-      $d{$b}{bam_path} = $alignment_result->bam_file;
-      $d{$b}{ref_fasta} = $reference_fasta_path;
-      $d{$b}{ref_name} = $reference_display_name;
+      $normal_data{bam_path} = $alignment_result->bam_file;
+      $normal_data{ref_fasta} = $reference_fasta_path;
+      $normal_data{ref_name} = $reference_display_name;
+
+      push @data, \%normal_data;
     }else{
       die $self->error_message("An RNA-seq build was specified, but it has not succeeded!");
     }
@@ -437,30 +447,32 @@ sub getFilePaths_Genome{
       my $reference_fasta_path = $reference_build->full_consensus_path('fa');
       my $reference_display_name = $reference_build->__display_name__;
       my $build_dir = $rna_seq_tumor_build->data_directory ."/";
-      $b++;
-      $d{$b}{build_dir} = $build_dir;
-      $d{$b}{data_type} = "RNAseq";
-      $d{$b}{sample_type} = "Tumor";
+
+      my %tumor_data;
+      $tumor_data{build_dir} = $build_dir;
+      $tumor_data{data_type} = "RNAseq";
+      $tumor_data{sample_type} = "Tumor";
       my $alignment_result = $rna_seq_tumor_build->alignment_result;
-      $d{$b}{bam_path} = $alignment_result->bam_file;
-      $d{$b}{ref_fasta} = $reference_fasta_path;
-      $d{$b}{ref_name} = $reference_display_name;
+      $tumor_data{bam_path} = $alignment_result->bam_file;
+      $tumor_data{ref_fasta} = $reference_fasta_path;
+      $tumor_data{ref_name} = $reference_display_name;
+
+      push @data, \%tumor_data;
     }else{
       die $self->error_message("An RNA-seq build was specified, but it has not succeeded!");
     }
   }
 
   #Make sure the same reference build was used to create all BAM files!
-  my $test_ref_name = $d{1}{ref_name};
-  foreach my $b (keys %d){
-    my $ref_name = $d{$b}{ref_name};
+  my $test_ref_name = $data[0]{ref_name};
+  foreach my $d (@data){
+    my $ref_name = $d->{ref_name};
     unless ($ref_name eq $test_ref_name){
-      #print Dumper %d;
       die $self->error_message("One or more of the reference build names used to generate BAMs did not match");
     }
   }
 
-  return(\%d)
+  return(\@data)
 }
 
 
