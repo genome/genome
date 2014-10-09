@@ -134,13 +134,13 @@ sub lock {
 
         if ($lsf_id ne "NONE") {
             my ($job_info,$events) = Genome::Model::Event->lsf_state($lsf_id);
-                 unless ($job_info) {
-                     Genome::Utility::Instrumentation::increment('sys.lock.lock.found_orphan');
-                     $class->warning_message("Invalid lock for resource $resource_lock\n"
-                                            ." lock info was:\n". $info_content ."\n"
-                                            ."Removing old resource lock $resource_lock\n");
-                     unless ($Genome::Sys::IS_TESTING) {
-                        my $message_content = <<END_CONTENT;
+            unless ($job_info) {
+                Genome::Utility::Instrumentation::increment('sys.lock.lock.found_orphan');
+                $class->warning_message("Invalid lock for resource $resource_lock\n"
+                    ." lock info was:\n". $info_content ."\n"
+                    ."Removing old resource lock $resource_lock\n");
+                unless ($Genome::Sys::IS_TESTING) {
+                    my $message_content = <<END_CONTENT;
 Hey Apipe,
 
 This is a lock attempt on %s running as PID $$ LSF job %s and user %s.
@@ -163,22 +163,22 @@ Genome::Utility::Filesystem
 
 END_CONTENT
 
-                        my $msg = MIME::Lite->new(From    => sprintf('"Genome::Utility::Filesystem" <%s@%s>', $ENV{'USER'}, $ENV{GENOME_EMAIL_DOMAIN}),
-                                              To      => $ENV{GENOME_EMAIL_PIPELINE_NOISY},
-                                              Subject => 'Attempt to release a lock held by a dead process',
-                                              Data    => sprintf($message_content, $my_host, $ENV{'LSB_JOBID'}, $ENV{'USER'}, $resource_lock, $info_content),
-                                            );
-                        $msg->send();
-                        $class->status_message('Sleeping for one hour...');
-                        sleep 60 * 60;
-                 }
-                     $class->unlock(resource_lock => $resource_lock, force => 1);
-                     #maybe warn here before stealing the lock...
-               }
-           }
+                    my $msg = MIME::Lite->new(From    => sprintf('"Genome::Utility::Filesystem" <%s@%s>', $ENV{'USER'}, $ENV{GENOME_EMAIL_DOMAIN}),
+                        To      => $ENV{GENOME_EMAIL_PIPELINE_NOISY},
+                        Subject => 'Attempt to release a lock held by a dead process',
+                        Data    => sprintf($message_content, $my_host, $ENV{'LSB_JOBID'}, $ENV{'USER'}, $resource_lock, $info_content),
+                    );
+                    $msg->send();
+                    $class->status_message('Sleeping for one hour...');
+                    sleep 60 * 60;
+                }
+                $class->unlock(resource_lock => $resource_lock, force => 1);
+                #maybe warn here before stealing the lock...
+            }
+        }
         sleep $block_sleep;
         $lock_attempts += 1;
-       }
+    }
     $SYMLINKS_TO_REMOVE{$resource_lock} = $$;
 
     my $total_lock_stop_time = Time::HiRes::time();
