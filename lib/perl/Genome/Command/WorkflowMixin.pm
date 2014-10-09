@@ -506,8 +506,9 @@ sub _print_error_log_preview {
     # If the log is less than 5MB, try to find the error message
     my @error_lines;
     if ( (-s $log_path) < (5 * 1024 * 1024) ) {
-        my @lines = `grep 'ERROR' $log_path`;
-        @error_lines = grep {$_ =~ m/ERROR/} @lines;
+        @error_lines = `grep --max-count=1 'ERROR' $log_path`;
+    } else {
+        print $handle " Max file size exceeded, skipped error preview.\n";
     }
 
     my $preview;
