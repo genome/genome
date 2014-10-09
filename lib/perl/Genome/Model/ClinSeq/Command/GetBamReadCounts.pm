@@ -375,21 +375,7 @@ sub getFilePaths_Genome{
   #RNAseq normal BAM
   if ($rna_seq_normal_build){
     if ($rna_seq_normal_build->status eq 'Succeeded'){
-      my $reference_build = $rna_seq_normal_build->reference_sequence_build;
-      my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-      my $reference_display_name = $reference_build->__display_name__;
-      my $build_dir = $rna_seq_normal_build->data_directory ."/";
-
-      my %normal_data;
-      $normal_data{build_dir} = $build_dir;
-      $normal_data{data_type} = "RNAseq";
-      $normal_data{sample_type} = "Normal";
-      my $alignment_result = $rna_seq_normal_build->alignment_result;
-      $normal_data{bam_path} = $alignment_result->bam_file;
-      $normal_data{ref_fasta} = $reference_fasta_path;
-      $normal_data{ref_name} = $reference_display_name;
-
-      push @data, \%normal_data;
+      push @data, $self->_getFilePaths_Genome_forRnaSeq($rna_seq_normal_build, 'Normal');
     }else{
       die $self->error_message("An RNA-seq build was specified, but it has not succeeded!");
     }
@@ -398,21 +384,7 @@ sub getFilePaths_Genome{
   #RNAseq tumor BAM
   if ($rna_seq_tumor_build){
     if ($rna_seq_tumor_build->status eq 'Succeeded'){
-      my $reference_build = $rna_seq_tumor_build->reference_sequence_build;
-      my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-      my $reference_display_name = $reference_build->__display_name__;
-      my $build_dir = $rna_seq_tumor_build->data_directory ."/";
-
-      my %tumor_data;
-      $tumor_data{build_dir} = $build_dir;
-      $tumor_data{data_type} = "RNAseq";
-      $tumor_data{sample_type} = "Tumor";
-      my $alignment_result = $rna_seq_tumor_build->alignment_result;
-      $tumor_data{bam_path} = $alignment_result->bam_file;
-      $tumor_data{ref_fasta} = $reference_fasta_path;
-      $tumor_data{ref_name} = $reference_display_name;
-
-      push @data, \%tumor_data;
+      push @data, $self->_getFilePaths_Genome_forRnaSeq($rna_seq_tumor_build, 'Tumor');
     }else{
       die $self->error_message("An RNA-seq build was specified, but it has not succeeded!");
     }
@@ -458,6 +430,28 @@ sub _getFilePaths_Genome_forSomVar {
     $tumor_data{ref_name} = $reference_display_name;
 
     return \%normal_data, \%tumor_data;
+}
+
+sub _getFilePaths_Genome_forRnaSeq {
+    my $self = shift;
+    my $rna_seq_build = shift;
+    my $sample_type = shift;
+
+    my $reference_build = $rna_seq_build->reference_sequence_build;
+    my $reference_fasta_path = $reference_build->full_consensus_path('fa');
+    my $reference_display_name = $reference_build->__display_name__;
+    my $build_dir = $rna_seq_build->data_directory ."/";
+
+    my %data;
+    $data{build_dir} = $build_dir;
+    $data{data_type} = "RNAseq";
+    $data{sample_type} = $sample_type;
+    my $alignment_result = $rna_seq_build->alignment_result;
+    $data{bam_path} = $alignment_result->bam_file;
+    $data{ref_fasta} = $reference_fasta_path;
+    $data{ref_name} = $reference_display_name;
+
+    return \%data;
 }
 
 #########################################################################################################################################
