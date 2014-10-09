@@ -122,51 +122,6 @@ sub make_outdirs {
   return ($sub_outdir, $sub_outdir2, $sub_outdir3, $sub_outdir4);
 }
 
-sub reduce_file_length {
-  my $self = shift;
-  my $variant_file = shift;
-  #Reduce file length if max_snvs was supplied
-  if ($self->max_snvs){
-    my $tmp_file = $variant_file . ".tmp";
-    my $cmd = "grep -v GL $variant_file > $tmp_file; mv $tmp_file $variant_file; head -n " . $self->max_snvs . " $variant_file > $tmp_file; mv $tmp_file $variant_file";
-    $self->debug_message($cmd);
-    Genome::Sys->shellcmd(cmd => $cmd);
-  }
-}
-
-sub get_mutation_spectrum_sequence_context_result {
-  my $self = shift;
-  my $final_name = shift;
-  my $sub_outdir2 = shift;
-  my $somvar_build = $self->somvar_build;
-  my $reference_sequence_build = $somvar_build->tumor_model->reference_sequence_build;
-  my $reference_fasta_path = $reference_sequence_build->full_consensus_path('fa');
-  #5.) Generate mutation-spectrum-sequence-context result
-  my $variant_file2 = $sub_outdir2 . "variants.tsv";
-  my $cut_cmd = "cut -f 1-5";
-  $self->debug_message($cut_cmd);
-  Genome::Sys->shellcmd(cmd => $cut_cmd);
-  my $mssc_file4plot = $sub_outdir2 . $final_name . ".data.tsv";
-  my $mssc_outfile = $sub_outdir2 . $final_name .".mutation-spectrum-sequence-context.pdf";
-  my $mssc_proportiontest_outfile =  $sub_outdir2 . $final_name . ".prop.test";
-  my $plot_title = "Mutation Spectrum Sequence Context for " . $final_name;
-  my $mssc_cmd = Genome::Model::Tools::Analysis::MutationSpectrumSequenceContext->create(output_file=>$mssc_outfile, roi_file=>$variant_file2, file4plot=>$mssc_file4plot, plot_title=>$plot_title, ref_seq=>$reference_fasta_path, proportiontest=>$mssc_proportiontest_outfile, random_trials=>100, random_seed=>2013, window_size=>10);
-  $mssc_cmd->execute();
-}
-
-sub generate_summarize_mutation_spectrum_result {
-  my $self = shift;
-  my $somvar_build = shift;
-  my $final_name = shift;
-  my $sub_outdir3 = shift;
-  #6.) Generate summarize-mutation-spectrum result
-  my $somatic_id = $somvar_build->model->id;
-  my $mut_spec_file = $sub_outdir3 . "mutation_spectrum.tsv";
-  my $sms_file = $sub_outdir3 . $final_name . "_summarize-mutation-spectrum.pdf";
-  my $sms_cmd = Genome::Model::Tools::Analysis::SummarizeMutationSpectrum->create(exclude_gl_contigs=>1, somatic_id=>$somatic_id, mut_spec_file=>$mut_spec_file, output_file=>$sms_file);
-  $sms_cmd->execute();
-}
-
 sub parse_variant_file {
   my $self = shift;
   my $clinseq_build = shift;
