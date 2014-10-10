@@ -3,6 +3,7 @@ package Genome::Model::Tools::EpitopePrediction::RemoveUnknownSequences;
 use strict;
 use warnings;
 use Bio::SeqIO;
+use Genome::Info::CodonToAminoAcid;
 
 class Genome::Model::Tools::EpitopePrediction::RemoveUnknownSequences {
     is => 'Genome::Model::Tools::EpitopePrediction::Base',
@@ -46,7 +47,7 @@ sub execute {
 
     while ( my $seq = $in->next_seq() ) {
         my $seq_string = $seq->seq;
-        if ( $seq_string =~ /^[ARDNCEQGHILKMFPSTWYV]+$/ ) {
+        if ( is_valid_sequence($seq_string) ) {
             $out->write_seq($seq);
         }
         else {
@@ -55,6 +56,16 @@ sub execute {
     }
 
     return 1;
+}
+
+sub is_valid_sequence {
+    my $seq_string = shift;
+
+    my %conversions = %Genome::Info::CodonToAminoAcid::convert;
+    delete $conversions{Z};
+    my $allowed_amino_acids = join('', keys %conversions);
+
+    return $seq_string =~ /^[$allowed_amino_acids]+$/;
 }
 
 1;

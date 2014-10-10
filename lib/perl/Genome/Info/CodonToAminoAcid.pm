@@ -140,7 +140,7 @@ my %stop_codons = (
     TGA => ['X', 'OPA'],
 );
 
-my %convert = (
+our %convert = (
     S => 'Ser',
     F => 'Phe',
     L => 'Leu',
