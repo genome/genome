@@ -130,9 +130,6 @@ sub parse_variant_file {
   my $gender = $clinseq_build->subject->gender;
   my @headers = qw/chr start end ref_allele var_allele/;
   my @tumor_prefixes = $self->_get_si_report_tumor_prefix($clinseq_build);
-  if($self->test) {
-    @tumor_prefixes = $tumor_prefixes[0];
-  }
   my @tiers = ("tier1", "tier2", "tier3", "tier1-3");
   my $variant_file_temp = $variant_file . "_" . $data_type;
   $variant_file_temp =~ s/\.tsv//;
@@ -228,13 +225,16 @@ sub get_alltier_snvs {
 sub reduce_file_length {
   my $self = shift;
   my @variant_files = @_;
+  my $max_snvs = $self->max_snvs;
+  unless ($max_snvs > 0){
+    die $self->error_message("Invalid max_snvs $max_snvs");
+  }
   foreach my $variant_file(@variant_files) {
-    my $max_snvs = $self->max_snvs;
-    unless ($max_snvs > 0){
-      die $self->error_message("Invalid max_snvs $max_snvs");
-    }
     my $tmp_file = $variant_file . ".tmp";
-    my $cmd = "head -n " . $max_snvs . " $variant_file > $tmp_file; mv $tmp_file $variant_file";
+    my $cmd = "head -n " . $max_snvs . " $variant_file > $tmp_file";
+    $self->debug_message($cmd);
+    Genome::Sys->shellcmd(cmd => $cmd);
+    $cmd = "mv $tmp_file $variant_file";
     $self->debug_message($cmd);
     Genome::Sys->shellcmd(cmd => $cmd);
   }
