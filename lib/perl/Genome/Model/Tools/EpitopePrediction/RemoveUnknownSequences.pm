@@ -1,12 +1,12 @@
-package Genome::Model::Tools::EpitopePrediction::RemoveStarSequences;
+package Genome::Model::Tools::EpitopePrediction::RemoveUnknownSequences;
 
 use strict;
 use warnings;
 use Bio::SeqIO;
 
-class Genome::Model::Tools::EpitopePrediction::RemoveStarSequences {
+class Genome::Model::Tools::EpitopePrediction::RemoveUnknownSequences {
     is => 'Genome::Model::Tools::EpitopePrediction::Base',
-    doc => "Outputs a FASTA file after removing *s from the input Fasta sequence",
+    doc => "Outputs a FASTA file after removing unknown sequences from the input Fasta sequence",
     has_input => [
         input_file => {
             is => 'Text',
@@ -20,7 +20,7 @@ class Genome::Model::Tools::EpitopePrediction::RemoveStarSequences {
     has_output => [
         output_file => {
             is => 'Text',
-            doc => 'The output FASTA file after removing star sequences',
+            doc => 'The output FASTA file after removing unknown sequences sequences',
             is_calculated => 1,
             calculate_from => ['output_directory'],
             calculate => q| return File::Spec->join($output_directory, "variant_sequences_filtered.fasta"); |,
