@@ -47,7 +47,7 @@ ok ($final_name, "found final name from build object") or die;
 
 #Create create-mutation-spectrum command and execute
 my $mutation_spectrum_cmd = Genome::Model::ClinSeq::Command::CreateMutationSpectrum->create(
-  outdir=>$temp_dir, datatype=>'wgs', test => 1, somvar_build=>$somvar_build, clinseq_build=>$clinseq_build, test => 1);
+  outdir=>$temp_dir, datatype=>'wgs', somvar_build=>$somvar_build, clinseq_build=>$clinseq_build, test => 1);
 $mutation_spectrum_cmd->queue_status_messages(1);
 my $r1 = $mutation_spectrum_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);
