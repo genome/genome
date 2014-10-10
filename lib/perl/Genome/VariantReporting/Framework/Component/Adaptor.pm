@@ -6,7 +6,7 @@ use Genome;
 use Params::Validate qw(validate validate_pos :types);
 
 class Genome::VariantReporting::Framework::Component::Adaptor {
-    is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base'],
+    is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base', 'Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
     is_abstract => 1,
     attributes_have => {
         is_planned => {
@@ -58,8 +58,24 @@ sub resolve_plan_attributes {
     my $variant_reporting_plan = $self->plan;
     my $specific_plan = $variant_reporting_plan->get_plan('expert', $self->name);
     for my $name (keys %{$specific_plan->params}) {
-        $self->$name($specific_plan->params->{$name});
+        my $value = $specific_plan->params->{$name};
+        if ($self->is_property_translated($name)) {
+            my $provider = $self->provider;
+#might be hash?
+            my $translations = $provider->get_attribute('translations');
+            $self->$name($translations->{$value});
+        }
+        else {
+            $self->$name($value);
+        }
     }
+}
+
+sub is_property_translated {
+    my $self = shift;
+    my $property = shift;
+
+    return $self->__meta__->properties(property_name => $property, is_translated => 1) ? 1 : 0;
 }
 
 sub plan {
