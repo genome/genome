@@ -995,7 +995,7 @@ sub _resolve_workflow_for_build {
   if ($build->wgs_build){
     my $msg = "Summarize SV results from WGS somatic variation";
     $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
-    $add_link->($input_connector, 'wgs_build_as_array', $summarize_svs_op, 'builds');
+    $add_link->($input_connector, 'wgs_build', $summarize_svs_op, 'builds');
     $add_link->($input_connector, 'sv_dir', $summarize_svs_op, 'outdir');
     $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
   }
@@ -1201,8 +1201,8 @@ sub _resolve_workflow_for_build {
         my $bq = $bqs->[$i-1];
         $msg = "Generate SnvIndel Report" . $i . ".";
         $converge_snv_indel_report_op1 = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::SnvIndelReport");
-        $add_link->($input_connector, 'build_as_array', $converge_snv_indel_report_op1, 'builds');
-        $add_link->($input_connector, 'tmp_bam_readcount_version', $converge_snv_indel_report_op, 'bam_readcount_version');
+        $add_link->($input_connector, 'build', $converge_snv_indel_report_op1, 'builds');
+        $add_link->($input_connector, 'tmp_bam_readcount_version', $converge_snv_indel_report_op1, 'bam_readcount_version');
         $add_link->($input_connector, 'snv_indel_report_dir' . $i, $converge_snv_indel_report_op1, 'outdir');
         $add_link->($input_connector, 'snv_indel_report_clean', $converge_snv_indel_report_op1, 'clean');
         $add_link->($input_connector, 'snv_indel_report_tmp_space', $converge_snv_indel_report_op1, 'tmp_space');
