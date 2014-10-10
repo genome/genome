@@ -20,7 +20,7 @@ class Genome::VariantReporting::Command::Wrappers::RnaSeq {
         },
         base_output_dir => { is => 'Text', },
     },
-    has_calculated => {
+    has_calculated_optional => {
         output_dir => {
             calculate_from => [qw/ base_output_dir somatic_build/],
             calculate => q| my $model_nospace  = $somatic_build->model->name;
