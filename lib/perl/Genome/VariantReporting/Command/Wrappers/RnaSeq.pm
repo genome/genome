@@ -108,8 +108,6 @@ sub generate_resource_file {
     }
     $resource->{translations} = \%translations;
 
-    # This should be handled by the translated properties once experts can have translations
-    $resource->{tumor_sample_name} = $self->somatic_build->tumor_sample->name;
     YAML::DumpFile($self->resource_file, $resource);
 
     return 1;

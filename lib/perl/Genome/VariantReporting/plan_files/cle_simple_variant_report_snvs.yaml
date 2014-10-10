@@ -15,6 +15,7 @@ experts:
             - Condel@PLUGIN_DIR@b@2
         plugins_version: 1
         joinx_version: 1.9
+        sample_name: tumor
 reporters:
     'simple':
         filters:

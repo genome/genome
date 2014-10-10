@@ -10,7 +10,7 @@ class Genome::VariantReporting::Fpkm::RunResult {
         fpkm_file_lookup => {
             is => 'Text',
         },
-        tumor_sample_name => {
+        sample_name => {
             is => 'String',
         },
     ],
@@ -39,7 +39,7 @@ sub _run {
         vcf_file => $self->input_vcf,
         output_file => $self->fpkm_output_file,
         fpkm_file => $self->fpkm_file,
-        sample_name => $self->tumor_sample_name,
+        sample_name => $self->sample_name,
     );
     $command->execute;
 
