@@ -16,7 +16,7 @@ use_ok('Genome::Model::ClinSeq::Command::GenerateSciclonePlots') or die;
  
 #Define the test where expected results are stored
 my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} .
-  "Genome-Model-ClinSeq-Command-GenerateSciclonePlots/2014-09-15/";
+  "Genome-Model-ClinSeq-Command-GenerateSciclonePlots/2014-10-06/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 my $temp_dir = Genome::Sys->create_temp_directory();
@@ -43,6 +43,9 @@ $log->close();
 ok(-e $log_file, "Wrote message file from generate-sciclone-plots to a log
      file: $log_file");
 
+my $format_clusters_command = "cut -f 1-10 $temp_dir/sciclone.H_KA-763312-1224733_exome_tumor_day0.clusters.txt > $temp_dir/sciclone.H_KA-763312-1224733_exome_tumor_day0.clusters.txt.formatted";
+Genome::Sys->shellcmd(cmd => $format_clusters_command);
+
 my @diff = `diff -r -x '*.log.txt' -x '*.pdf' -x '*.jpeg' -x '*clusters.txt' -x '*R' $expected_output_dir $temp_dir`;
 ok(@diff == 0, "Found only expected number of differences between expected
   results and test results")
@@ -56,17 +59,4 @@ or do {
   die print "\n\nFound $diff_line_count differing lines\n\n";
 };
 
-@diff = `diff $expected_output_dir/*clusters.txt $temp_dir/*clusters.txt`;
-ok(@diff == 0, "Found only expected number of differences between expected
-  results and test results")
-or do {
-  diag("expected: $expected_output_dir\nactual: $temp_dir\n");
-  diag("differences are:");
-  diag(@diff);
-  my $diff_line_count = scalar(@diff);
-  print "\n\nFound $diff_line_count differing lines\n\n";
-  Genome::Sys->shellcmd(cmd => "rm -fr /tmp/last-run-generatescicloneplots/");
-  Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-run-generatescicloneplots");
-  die print "\n\nFound $diff_line_count differing lines\n\n";
-};
 done_testing();

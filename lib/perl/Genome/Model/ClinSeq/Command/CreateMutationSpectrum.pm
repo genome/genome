@@ -95,7 +95,7 @@ sub get_final_name {
   my $somvar_build = shift;
   my $somvar_build_id = $somvar_build->model->id;
   my $final_name = $somvar_build->model->subject->name if ($somvar_build->model->subject->name);
-  $final_name = $somvar_build->model->subject->patient->common_name if ($somvar_build->model->subject->patient->common_name);
+  $final_name = $somvar_build->model->subject->individual->common_name if ($somvar_build->model->subject->individual->common_name);
   return $final_name;
 }
 
@@ -120,91 +120,6 @@ sub make_outdirs {
   Genome::Sys->create_directory($sub_outdir3);
   Genome::Sys->create_directory($sub_outdir4);
   return ($sub_outdir, $sub_outdir2, $sub_outdir3, $sub_outdir4);
-}
-
-  #Run various mutation-spectrum tools in various modes.  
-
-  #Get data directory, reference annotation etc.
-  my $data_directory = $build->data_directory;
-  my $reference_annotation_name = $build->model->annotation_build->name;
-  my $reference_annotation_dir = $build->model->annotation_build->data_directory;
-  my $reference_sequence_build = $build->tumor_model->reference_sequence_build;
-  my $reference_fasta_path = $reference_sequence_build->full_consensus_path('fa');
-  my $reference_sequence_dir = $reference_sequence_build->data_directory;
-  
-  #Find tier1-3 SNV bed files
-  my $tier1_snvs = "$data_directory/effects/snvs.hq.novel.tier1.v2.bed";
-  my $tier2_snvs = "$data_directory/effects/snvs.hq.novel.tier2.v2.bed";
-  my $tier3_snvs = "$data_directory/effects/snvs.hq.novel.tier3.v2.bed";
-
-  unless (-e $tier1_snvs && -e $tier2_snvs && $tier3_snvs){
-    $self->error_message("Could not find snv files at expected path: $data_directory" . "/effects/");
-    exit 1;
-  }
-
-  #Get a 'final' name for the sample
-  my $final_name = $build->model->id;
-  $final_name = $build->model->subject->name if ($build->model->subject->name);
-  $final_name = $build->model->subject->individual->common_name if ($build->model->subject->individual->common_name);
-
-  #1.) Get variants from somatic variation build (tier1-3 for wgs and tier1 for exome?)
-  my $variant_file;
-  if ($datatype =~ /wgs/i){
-    $variant_file = $sub_outdir2 . "snvs.hq.novel.tier123.v2.bed";
-    my $snv_cat_cmd = "cat $tier1_snvs $tier2_snvs $tier3_snvs > $variant_file";
-    $self->debug_message($snv_cat_cmd);
-    Genome::Sys->shellcmd(cmd => $snv_cat_cmd, output_files=>["$variant_file"]);  
-  }
-  if ($datatype =~ /exome/i){
-    $variant_file = $sub_outdir2 . "snvs.hq.novel.tier1.v2.bed";
-    my $snv_cat_cmd = "cat $tier1_snvs > $variant_file";
-    $self->debug_message($snv_cat_cmd);
-    Genome::Sys->shellcmd(cmd => $snv_cat_cmd, output_files=>["$variant_file"]);
-  }
-
-sub reduce_file_length {
-  my $self = shift;
-  my $variant_file = shift;
-  #Reduce file length if max_snvs was supplied
-  if ($self->max_snvs){
-    my $tmp_file = $variant_file . ".tmp";
-    my $cmd = "grep -v GL $variant_file > $tmp_file; mv $tmp_file $variant_file; head -n " . $self->max_snvs . " $variant_file > $tmp_file; mv $tmp_file $variant_file";
-    $self->debug_message($cmd);
-    Genome::Sys->shellcmd(cmd => $cmd);
-  }
-}
-
-sub get_mutation_spectrum_sequence_context_result {
-  my $self = shift;
-  my $final_name = shift;
-  my $sub_outdir2 = shift;
-  my $somvar_build = $self->somvar_build;
-  my $reference_sequence_build = $somvar_build->tumor_model->reference_sequence_build;
-  my $reference_fasta_path = $reference_sequence_build->full_consensus_path('fa');
-  #5.) Generate mutation-spectrum-sequence-context result
-  my $variant_file2 = $sub_outdir2 . "variants.tsv";
-  my $cut_cmd = "cut -f 1-5";
-  $self->debug_message($cut_cmd);
-  Genome::Sys->shellcmd(cmd => $cut_cmd);
-  my $mssc_file4plot = $sub_outdir2 . $final_name . ".data.tsv";
-  my $mssc_outfile = $sub_outdir2 . $final_name .".mutation-spectrum-sequence-context.pdf";
-  my $mssc_proportiontest_outfile =  $sub_outdir2 . $final_name . ".prop.test";
-  my $plot_title = "Mutation Spectrum Sequence Context for " . $final_name;
-  my $mssc_cmd = Genome::Model::Tools::Analysis::MutationSpectrumSequenceContext->create(output_file=>$mssc_outfile, roi_file=>$variant_file2, file4plot=>$mssc_file4plot, plot_title=>$plot_title, ref_seq=>$reference_fasta_path, proportiontest=>$mssc_proportiontest_outfile, random_trials=>100, random_seed=>2013, window_size=>10);
-  $mssc_cmd->execute();
-}
-
-sub generate_summarize_mutation_spectrum_result {
-  my $self = shift;
-  my $somvar_build = shift;
-  my $final_name = shift;
-  my $sub_outdir3 = shift;
-  #6.) Generate summarize-mutation-spectrum result
-  my $somatic_id = $somvar_build->model->id;
-  my $mut_spec_file = $sub_outdir3 . "mutation_spectrum.tsv";
-  my $sms_file = $sub_outdir3 . $final_name . "_summarize-mutation-spectrum.pdf";
-  my $sms_cmd = Genome::Model::Tools::Analysis::SummarizeMutationSpectrum->create(exclude_gl_contigs=>1, somatic_id=>$somatic_id, mut_spec_file=>$mut_spec_file, output_file=>$sms_file);
-  $sms_cmd->execute();
 }
 
 sub parse_variant_file {
