@@ -46,8 +46,11 @@ sub execute {
 
     while ( my $seq = $in->next_seq() ) {
         my $seq_string = $seq->seq;
-        if ( $seq_string =~ /^[ARDNCEQGHILKMFPSTWYV]*$/ ) {
+        if ( $seq_string =~ /^[ARDNCEQGHILKMFPSTWYV]+$/ ) {
             $out->write_seq($seq);
+        }
+        else {
+            $self->warning_message("Sequence for id (%s) contains unknown amino acids: (%s)", $seq->primary_id, $seq_string);
         }
     }
 
