@@ -8,4 +8,3 @@ reference_fasta: /gscmnt/gc13003/info/test_suite_data/Genome-VariantReporting-Fr
 translations:
   normal: TEST-patient1-somval_normal1
   tumor: TEST-patient1-somval_tumor1
-tumor_sample_name: TEST-patient1-somval_tumor1

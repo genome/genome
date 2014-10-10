@@ -49,7 +49,7 @@ sub generate_test_cmd {
     my %params = (
         input_vcf => __FILE__,
         fpkm_file => __FILE__,
-        tumor_sample_name => 'TEST-patient1-somval_tumor1',
+        sample_name => 'TEST-patient1-somval_tumor1',
         variant_type      => 'snvs',
         fpkm_file         => __FILE__,
     );

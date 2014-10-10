@@ -7,15 +7,15 @@ use File::Spec;
 
 class Genome::VariantReporting::Suite::Fpkm::Adaptor {
     is => "Genome::VariantReporting::Framework::Component::Adaptor",
-
     has_planned_output => [
+        sample_name => {
+            is => 'Text',
+            is_translated => 1,
+        }
     ],
     has_provided_output => [
         fpkm_file => {
             is => 'Path',
-        },
-        tumor_sample_name => {
-            is => 'Text',
         },
     ],
 };
