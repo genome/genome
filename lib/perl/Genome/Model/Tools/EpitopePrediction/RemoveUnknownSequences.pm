@@ -46,7 +46,7 @@ sub execute {
 
     while ( my $seq = $in->next_seq() ) {
         my $seq_string = $seq->seq;
-        unless ( $seq_string =~ /[^A-Z]/ ) {
+        if ( $seq_string =~ /^[ARDNCEQGHILKMFPSTWYV]*$/ ) {
             $out->write_seq($seq);
         }
     }
