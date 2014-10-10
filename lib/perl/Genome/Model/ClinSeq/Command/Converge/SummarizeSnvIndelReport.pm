@@ -60,7 +60,6 @@ sub parse_snv_indel_report {
   my $snv_stats = shift;
   my $indel_stats = shift;
   my $stats;
-  print $snv_indel_report;
   my $reader = Genome::Utility::IO::SeparatedValueReader->create(
     separator => "\t",
     input => $snv_indel_report,
@@ -71,21 +70,18 @@ sub parse_snv_indel_report {
     }
     if ($data->{type} =~ /SNP/) {
       $stats = $snv_stats; 
-    } elsif ($data->{type} =~ /INDEL/) {
+    } elsif ($data->{type} =~ /INS|DEL/) {
       $stats = $indel_stats; 
     }
-    #print %$data;
-    my @callers = split($data->{variant_source_callers}, ",");
-    my @data_types = split($data->{data_type}, ",");
+    my @callers = split(",", $data->{variant_source_callers});
+    my @data_types = split(",", $data->{data_type});
     foreach my $caller (@callers) {
       foreach my $data_type (@data_types) {
         if($stats->{$data_type}->{caller}->{$caller}) {
-          $stats->{$data_type}->{caller}->{$caller} = 1;
-        } else {
           $stats->{$data_type}->{caller}->{$caller} += 1;
+        } else {
+          $stats->{$data_type}->{caller}->{$caller} = 1;
         }
-        #print $data_type, $caller;
-        #print keys(%$stats). " " . $data_type . " key\n";
       }
     }
   }
@@ -99,8 +95,6 @@ sub write_stats {
   open my $STATS, ">$stats_file";
   print $STATS "Question\tAnswer\tData_Type\tAnalysis_Type\tStatistic_Type\tExtra_Description\n";
   foreach my $data_source ("wgs", "exome") {
-    print $data_source, " ", "\n";
-    print keys(%{$snv_stats->{$data_source}}) . "\n";
     $self->write_snv_stats($snv_stats, $data_source, $STATS);
     $self->write_indel_stats($indel_stats, $data_source, $STATS);
   }
@@ -112,6 +106,11 @@ sub write_snv_stats {
   my $snv_stats = shift;
   my $data_source = shift;
   my $STATS = shift;
+  foreach my $caller ("strelka", "sniper", "samtools", "varscan", "mutect") {
+    unless ($snv_stats->{$data_source}->{caller}->{$caller}) {
+      $snv_stats->{$data_source}->{caller}->{$caller} = 0;
+    }
+  }
   print $STATS "Number of Strelka SNV calls\t" . $snv_stats->{$data_source}->{caller}->{"strelka"}.
   "\t" . $data_source . "\tClinseq Build Summary\tCount\tNumber of SNVs called by Strelka\n";
   print $STATS "Number of Sniper SNV calls\t" . $snv_stats->{$data_source}->{caller}->{"sniper"}.
@@ -129,6 +128,11 @@ sub write_indel_stats {
   my $indel_stats = shift;
   my $data_source = shift;
   my $STATS = shift;
+  foreach my $caller ("strelka", "gatk", "pindel", "varscan") {
+    unless ($indel_stats->{$data_source}->{caller}->{$caller}) {
+      $indel_stats->{$data_source}->{caller}->{$caller} = 0;
+    }
+  }
   print $STATS "Number of Strelka Indel calls\t" . $indel_stats->{$data_source}->{caller}->{"strelka"}.
   "\t" . $data_source . "\tClinseq Build Summary\tCount\tNumber of Indels called by Strelka\n";
   print $STATS "Number of GATK Indel calls\t" . $indel_stats->{$data_source}->{caller}->{"gatk"}.
