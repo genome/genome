@@ -19,7 +19,7 @@ class Genome::Model::ClinSeq::Command::Converge::Base {
         bam_readcount_version => {
             is => 'String',
             doc => 'version of bam-readcount to use',
-        }
+        },
         outdir => {
             is => 'FilesystemPath',
             doc => 'Directory where output files will be written',
@@ -869,6 +869,7 @@ sub add_read_counts{
     indel_size_limit => $indel_size_limit,
     min_quality_score => $m_quality,
     min_base_quality => $b_quality,
+    bam_readcount_version => $self->bam_readcount_version,
   );
   my $r = $add_count_cmd->execute();
   die $self->error_message("add-readcounts cmd unsuccessful") unless ($r);
