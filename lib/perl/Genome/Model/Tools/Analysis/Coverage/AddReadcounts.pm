@@ -176,41 +176,25 @@ sub execute {
     my $prefix = 1;
     for my $bam (@bams){
         #run bam-readcount, stick the files in the tempdir
-        my $cmd;
-        if($self->bam_readcount_version){ #there's a better way to do this, I'm sure...
-            $cmd = Genome::Model::Tools::Analysis::Coverage::BamReadcount->create(
-                bam_file => $bam,
-                output_file =>  "$tempdir/$prefix.rcfile",
-                variant_file => $variant_file,
-                genome_build => $genome_build,
-                chrom => $chrom,
-                min_depth  => $min_depth,
-                max_depth => $max_depth,
-                min_vaf => $min_vaf,
-                max_vaf => $max_vaf,
-                indel_size_limit => $indel_size_limit,
-                min_mapping_quality => $min_quality_score,
-                min_base_quality => $min_base_quality,
-                per_library => $self->per_library,
-                bam_readcount_version => $self->bam_readcount_version,
-                );
-        } else {
-            $cmd = Genome::Model::Tools::Analysis::Coverage::BamReadcount->create(
-                bam_file => $bam,
-                output_file =>  "$tempdir/$prefix.rcfile",
-                variant_file => $variant_file,
-                genome_build => $genome_build,
-                chrom => $chrom,
-                min_depth  => $min_depth,
-                max_depth => $max_depth,
-                min_vaf => $min_vaf,
-                max_vaf => $max_vaf,
-                indel_size_limit => $indel_size_limit,
-                min_mapping_quality => $min_quality_score,
-                min_base_quality => $min_base_quality,
-                per_library => $self->per_library
-                );
+        my %params = (
+            bam_file => $bam,
+            output_file =>  "$tempdir/$prefix.rcfile",
+            variant_file => $variant_file,
+            genome_build => $genome_build,
+            chrom => $chrom,
+            min_depth  => $min_depth,
+            max_depth => $max_depth,
+            min_vaf => $min_vaf,
+            max_vaf => $max_vaf,
+            indel_size_limit => $indel_size_limit,
+            min_mapping_quality => $min_quality_score,
+            min_base_quality => $min_base_quality,
+            per_library => $self->per_library,
+            );
+        if ($self->bam_readcount_version) {
+            $params{bam_readcount_version} = $self->bam_readcount_version;
         }
+        my $cmd = Genome::Model::Tools::Analysis::Coverage::BamReadcount->create(%params);
         unless ($cmd->execute) {
             die "Bam-readcount failed";
         }

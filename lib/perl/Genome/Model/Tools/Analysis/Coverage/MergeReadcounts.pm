@@ -314,42 +314,27 @@ sub execute {
     my $pathmerge = "$tempdir/snvs.indels.annotated-merge";
     
     # makes an AddReadcounts run
-    my $cmd;
+    my %params = (
+        bam_files => $bam_files,
+        output_file =>  $pathmerge,
+        variant_file => $pathtab,
+        genome_build => $genome_build, 
+        header_prefixes => join(",", @header_prefixes),
+        chrom => $chrom,
+        min_depth  => $min_depth,
+        max_depth => $max_depth,
+        min_vaf => $min_vaf,
+        max_vaf => $max_vaf,
+        indel_size_limit => $indel_size_limit,
+        min_quality_score => $min_quality_score,
+        per_library => $self->per_library,
+        bam_readcount_version => $self->bam_readcount_version,
+        );
+
     if($self->bam_readcount_version){
-        $cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
-            bam_files => $bam_files,
-	    output_file =>  $pathmerge,
-	    variant_file => $pathtab,
-	    genome_build => $genome_build, 
-	    header_prefixes => join(",", @header_prefixes),
-	    chrom => $chrom,
-	    min_depth  => $min_depth,
-	    max_depth => $max_depth,
-	    min_vaf => $min_vaf,
-	    max_vaf => $max_vaf,
-	    indel_size_limit => $indel_size_limit,
-	    min_quality_score => $min_quality_score,
-	    per_library => $self->per_library,
-            bam_readcount_version => $self->bam_readcount_version,
-            );
-    } else {
-        $cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
-            bam_files => $bam_files,
-	    output_file =>  $pathmerge,
-	    variant_file => $pathtab,
-	    genome_build => $genome_build, 
-	    header_prefixes => join(",", @header_prefixes),
-	    chrom => $chrom,
-	    min_depth  => $min_depth,
-	    max_depth => $max_depth,
-	    min_vaf => $min_vaf,
-	    max_vaf => $max_vaf,
-	    indel_size_limit => $indel_size_limit,
-	    min_quality_score => $min_quality_score,
-	    per_library => $self->per_library,
-            );
+        $params{bam_readcount_version} = $self->bam_readcount_version;
     }
-    
+    my $cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(%params);
     unless ($cmd->execute) {
 	die "add-readcounts failed";
     }

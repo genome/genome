@@ -353,31 +353,21 @@ sub execute {
     #------------------------------------------
     #now run the readcounting on snvs
     if( -s "$tempdir/snvpos"){
-        my $return;
+        my %params = (
+                bam_file => $bam_file,
+                minimum_mapping_quality => $min_mapping_quality,
+                minimum_base_quality => $min_base_quality,
+                output_file => "$tempdir/readcounts",
+                reference_fasta => $fasta,
+                region_list => "$tempdir/snvpos",
+                per_library => $self->per_library,
+                );
         if($self->bam_readcount_version){
-            $return = Genome::Model::Tools::Sam::Readcount->execute(
-                use_version => $self->bam_readcount_version,
-                bam_file => $bam_file,
-                minimum_mapping_quality => $min_mapping_quality,
-                minimum_base_quality => $min_base_quality,
-                output_file => "$tempdir/readcounts",
-                reference_fasta => $fasta,
-                region_list => "$tempdir/snvpos",
-                per_library => $self->per_library,
-                );
-        } else {
-            $return = Genome::Model::Tools::Sam::Readcount->execute(
-                bam_file => $bam_file,
-                minimum_mapping_quality => $min_mapping_quality,
-                minimum_base_quality => $min_base_quality,
-                output_file => "$tempdir/readcounts",
-                reference_fasta => $fasta,
-                region_list => "$tempdir/snvpos",
-                per_library => $self->per_library,
-                );
+            $params{use_version} => $self->bam_readcount_version;
         }
+        my $return = Genome::Model::Tools::Sam::Readcount->execute(%params);
         unless($return) {
-            $self->error_message("Failed to execute: Returned $return");
+            $self->error_message("Failed to execute sam readcount: Returned $return");
             die $self->error_message;
         }
         
