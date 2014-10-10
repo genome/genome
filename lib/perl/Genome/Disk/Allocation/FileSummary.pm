@@ -24,7 +24,7 @@ class Genome::Disk::Allocation::FileSummary {
             doc => 'relative path to file from the allocation root',
         },
         digest => { is => 'Text', is_optional => 1 },
-        size_in_bytes => { is => 'Integer', len => 8, is_optional => 1 },
+        size_in_bytes => { is => 'Integer', is_optional => 1 },
         is_symlink => { is => 'Boolean', len => 1 },
         destination => { is => 'Text', is_optional => 1 },
     ],
