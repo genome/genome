@@ -140,7 +140,6 @@ sub lock {
                     ." lock info was:\n". $info_content ."\n"
                     ."Removing old resource lock $resource_lock\n");
                 $class->unlock(resource_lock => $resource_lock, force => 1);
-                #maybe warn here before stealing the lock...
             }
         }
         sleep $block_sleep;
