@@ -153,7 +153,13 @@ sub execute {
   my @builds = ($wgs_som_var_build, $exome_som_var_build, $rna_seq_normal_build, $rna_seq_tumor_build);
   foreach my $build (@builds){
     if ($build){
-      $reference_build = $build->reference_sequence_build;
+      if($reference_build) {
+        unless($reference_build eq $build->reference_sequence_build) {
+          die $self->error_message("One or more of the reference builds used to generate BAMs did not match");
+        }
+      } else {
+        $reference_build = $build->reference_sequence_build;
+      }
       my $model = $build->model;
       if ($model->can("annotation_reference_build")){
         $annotation_build = $model->annotation_reference_build;
@@ -380,15 +386,6 @@ sub getFilePaths_Genome{
     }
   }
 
-  #Make sure the same reference build was used to create all BAM files!
-  my $test_ref_name = $data[0]{ref_name};
-  foreach my $d (@data){
-    my $ref_name = $d->{ref_name};
-    unless ($ref_name eq $test_ref_name){
-      die $self->error_message("One or more of the reference build names used to generate BAMs did not match");
-    }
-  }
-
   return(\@data)
 }
 
@@ -400,7 +397,6 @@ sub _getFilePaths_Genome_forSomVar {
     #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
     my $reference_build = $som_var_build->reference_sequence_build;
     my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-    my $reference_display_name = $reference_build->__display_name__;
     my $build_dir = $som_var_build->data_directory ."/";
 
     my %normal_data;
@@ -409,7 +405,6 @@ sub _getFilePaths_Genome_forSomVar {
     $normal_data{sample_type} = "Normal";
     $normal_data{bam_path} = $som_var_build->normal_bam;
     $normal_data{ref_fasta} = $reference_fasta_path;
-    $normal_data{ref_name} = $reference_display_name;
 
     my %tumor_data;
     $tumor_data{build_dir} = $build_dir;
@@ -417,7 +412,6 @@ sub _getFilePaths_Genome_forSomVar {
     $tumor_data{sample_type} = "Tumor";
     $tumor_data{bam_path} = $som_var_build->tumor_bam;
     $tumor_data{ref_fasta} = $reference_fasta_path;
-    $tumor_data{ref_name} = $reference_display_name;
 
     return \%normal_data, \%tumor_data;
 }
@@ -429,7 +423,6 @@ sub _getFilePaths_Genome_forRnaSeq {
 
     my $reference_build = $rna_seq_build->reference_sequence_build;
     my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-    my $reference_display_name = $reference_build->__display_name__;
     my $build_dir = $rna_seq_build->data_directory ."/";
 
     my %data;
@@ -439,7 +432,6 @@ sub _getFilePaths_Genome_forRnaSeq {
     my $alignment_result = $rna_seq_build->alignment_result;
     $data{bam_path} = $alignment_result->bam_file;
     $data{ref_fasta} = $reference_fasta_path;
-    $data{ref_name} = $reference_display_name;
 
     return \%data;
 }
