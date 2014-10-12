@@ -153,6 +153,10 @@ sub execute {
   my @builds = ($wgs_som_var_build, $exome_som_var_build, $rna_seq_normal_build, $rna_seq_tumor_build);
   foreach my $build (@builds){
     if ($build){
+      unless($build->status eq 'Succeeded') {
+        die $self->error_message('Build %s was specified, but it is not succeeded!', $build->__display_name__);
+      }
+
       if($reference_build) {
         unless($reference_build eq $build->reference_sequence_build) {
           die $self->error_message("One or more of the reference builds used to generate BAMs did not match");
@@ -349,38 +353,22 @@ sub getFilePaths_Genome{
 
   #WGS tumor normal BAMs
   if ($wgs_som_var_build){
-    if ($wgs_som_var_build->status eq 'Succeeded'){
-      push @data, $self->_getFilePaths_Genome_forSomVar($wgs_som_var_build, 'WGS');
-    }else{
-      die $self->error_message("A WGS build was specified, but it has not succeeded!");
-    }
+    push @data, $self->_getFilePaths_Genome_forSomVar($wgs_som_var_build, 'WGS');
   }
 
   #Exome tumor normal BAMs
   if ($exome_som_var_build){
-    if ($exome_som_var_build->status eq 'Succeeded'){
-      push @data, $self->_getFilePaths_Genome_forSomVar($exome_som_var_build, 'Exome');
-    }else{
-      die $self->error_message("An Exome build was specified, but it has not succeeded!");
-    }
+    push @data, $self->_getFilePaths_Genome_forSomVar($exome_som_var_build, 'Exome');
   }
 
   #RNAseq normal BAM
   if ($rna_seq_normal_build){
-    if ($rna_seq_normal_build->status eq 'Succeeded'){
-      push @data, $self->_getFilePaths_Genome_forRnaSeq($rna_seq_normal_build, 'Normal');
-    }else{
-      die $self->error_message("An RNA-seq build was specified, but it has not succeeded!");
-    }
+    push @data, $self->_getFilePaths_Genome_forRnaSeq($rna_seq_normal_build, 'Normal');
   }
 
   #RNAseq tumor BAM
   if ($rna_seq_tumor_build){
-    if ($rna_seq_tumor_build->status eq 'Succeeded'){
-      push @data, $self->_getFilePaths_Genome_forRnaSeq($rna_seq_tumor_build, 'Tumor');
-    }else{
-      die $self->error_message("An RNA-seq build was specified, but it has not succeeded!");
-    }
+    push @data, $self->_getFilePaths_Genome_forRnaSeq($rna_seq_tumor_build, 'Tumor');
   }
 
   return(\@data)
