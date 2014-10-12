@@ -2,6 +2,7 @@ package Genome::Model::ClinSeq::Command::GetBamReadCounts;
 
 use strict;
 use warnings;
+
 use Genome;
 use Genome::Model::ClinSeq::Util qw(:all);
 use Genome::Model::ClinSeq::RnaSeqUtil qw(:all);
