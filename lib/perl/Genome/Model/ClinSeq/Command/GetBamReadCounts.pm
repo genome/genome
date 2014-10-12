@@ -160,12 +160,11 @@ sub execute {
       } else {
         $reference_build = $build->reference_sequence_build;
       }
-      my $model = $build->model;
-      if ($model->can("annotation_reference_build")){
-        $annotation_build = $model->annotation_reference_build;
+      if ($build->can("annotation_reference_build")){
+        $annotation_build = $build->annotation_reference_build;
       }
-      if ($model->can("annotation_build")){
-        $annotation_build = $model->annotation_build;
+      if ($build->can("annotation_build")){
+        $annotation_build = $build->annotation_build;
       }
     }
   }
