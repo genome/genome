@@ -183,7 +183,6 @@ sub execute {
   my $result = $self->importPositions('-positions_file'=>$positions_file);
   my $snvs = $result->{'snvs'};
   my $snv_header = $result->{'header'};
-  #print Dumper $result;
 
   #Get BAM file paths from build IDs.  Perform sanity checks
   my $data;
@@ -477,11 +476,9 @@ sub getBamReadCounts{
     my $fai = $callback_data->[2];
 
     if ( ($pos == ($data->{start} - 1) ) ) {
-      #print STDERR 'PILEUP:'. $data->{chr} ."\t". $tid ."\t". $pos ."\t". $data->{start} ."\t". $data->{stop}."\n";
       unless ($no_fasta_check){
         my $ref_base = $fai->fetch($data->{chr} .':'. $data->{start} .'-'. $data->{stop});
         unless ($data->{reference} eq $ref_base) {
-          #print RED, "\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path", RESET;
           die $self->error_message("Reference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path");
         }
       }
@@ -502,14 +499,6 @@ sub getBamReadCounts{
   my $index = Bio::DB::Bam->index($bam_path);
   my $fai = Bio::DB::Sam::Fai->load($ref_fasta);
 
-  #my $name_arrayref = $header->target_name;
-  #my %chr_tid;
-  #for (my $i = 0; $i < scalar@{$name_arrayref}; $i++){
-  #  my $seq_id = $name_arrayref->[$i];
-  #  $chr_tid{$seq_id}=$i;
-  #}
-  #print Dumper %chr_tid;
-
   foreach my $snv_pos (sort keys %{$snvs}){
     my %data;
     my $data = \%data;
@@ -520,8 +509,6 @@ sub getBamReadCounts{
     $data->{variant} = $snvs->{$snv_pos}->{var_base};
     my $seq_id = $data->{chr} .':'. $data->{start} .'-'. $data->{stop};
     my ($tid,$start,$end) = $header->parse_region($seq_id);
-    #$tid = $chr_tid{$data->{chr}};
-    #print "\n\nseq_id: $seq_id\ttid: $tid\tstart: $start\tend: $end";
 
     my %read_counts;
     if ($verbose){print "\n\n$sample_type\t$data_type\t$snv_pos\ttid: $tid\tstart: $start\tend: $end\tref_base: $data->{reference}\tvar_base: $data->{variant}";}
