@@ -96,11 +96,10 @@ sub _get_transcript_info_path {
     my $self = shift;
     my $reference_build = shift;
     my $annotation_build = shift;
-    my $annotation_data_dir = $annotation_build->data_directory;
+
     my $rb_id = $reference_build->id;
-    my $transcript_info_path = $annotation_data_dir .
-          "/annotation_data/rna_annotation/$rb_id-transcript_info.tsv";
-    unless (-e $transcript_info_path) {
+    my $transcript_info_path = $annotation_build->transcript_info_file($rb_id);
+    unless ($transcript_info_path) {
         my $derived_reference_build = $reference_build->derived_from;
         unless (defined($derived_reference_build)) {
             die $self->error_message("'There is no transcript " .
