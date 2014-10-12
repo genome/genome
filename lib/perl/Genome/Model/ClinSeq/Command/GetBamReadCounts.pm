@@ -172,6 +172,7 @@ sub execute {
   die $self->error_message("Could not resolve annotation build from input builds") unless $annotation_build;
   die $self->error_message("Could not resolve reference sequence build from input builds") unless $reference_build;
 
+  my $reference_fasta_path = $reference_build->full_consensus_path('fa');
   my $gtf_path = $self->_get_gtf_path($reference_build, $annotation_build);
   my $transcript_info_path = $self->_get_transcript_info_path($reference_build, $annotation_build);
   my $ensembl_map = $self->loadEnsemblMap('-gtf_path'=>$gtf_path,
@@ -199,13 +200,12 @@ sub execute {
     my $data_type = $bam->{data_type};
     my $sample_type = $bam->{sample_type};
     my $bam_path = $bam->{bam_path};
-    my $ref_fasta = $bam->{ref_fasta};
     my $snv_count = keys %{$snvs};
 
     if ($verbose){
-      $self->debug_message("\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$ref_fasta\n")
+      $self->debug_message("\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$reference_fasta_path\n")
     }
-    my $counts = $self->getBamReadCounts('-snvs'=>$snvs, '-data_type'=>$data_type, '-sample_type'=>$sample_type, '-bam_path'=>$bam_path, '-ref_fasta'=>$ref_fasta, '-verbose'=>$verbose, '-no_fasta_check'=>$no_fasta_check);
+    my $counts = $self->getBamReadCounts('-snvs'=>$snvs, '-data_type'=>$data_type, '-sample_type'=>$sample_type, '-bam_path'=>$bam_path, '-ref_fasta'=>$reference_fasta_path, '-verbose'=>$verbose, '-no_fasta_check'=>$no_fasta_check);
     $bam->{read_counts} = $counts;
   }
 
@@ -393,8 +393,6 @@ sub _getFilePaths_Genome_forSomVar {
     my $data_type = shift;
 
     #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
-    my $reference_build = $som_var_build->reference_sequence_build;
-    my $reference_fasta_path = $reference_build->full_consensus_path('fa');
     my $build_dir = $som_var_build->data_directory ."/";
 
     my %normal_data;
@@ -402,14 +400,12 @@ sub _getFilePaths_Genome_forSomVar {
     $normal_data{data_type} = $data_type;
     $normal_data{sample_type} = "Normal";
     $normal_data{bam_path} = $som_var_build->normal_bam;
-    $normal_data{ref_fasta} = $reference_fasta_path;
 
     my %tumor_data;
     $tumor_data{build_dir} = $build_dir;
     $tumor_data{data_type} = $data_type;
     $tumor_data{sample_type} = "Tumor";
     $tumor_data{bam_path} = $som_var_build->tumor_bam;
-    $tumor_data{ref_fasta} = $reference_fasta_path;
 
     return \%normal_data, \%tumor_data;
 }
@@ -419,8 +415,6 @@ sub _getFilePaths_Genome_forRnaSeq {
     my $rna_seq_build = shift;
     my $sample_type = shift;
 
-    my $reference_build = $rna_seq_build->reference_sequence_build;
-    my $reference_fasta_path = $reference_build->full_consensus_path('fa');
     my $build_dir = $rna_seq_build->data_directory ."/";
 
     my %data;
@@ -429,7 +423,6 @@ sub _getFilePaths_Genome_forRnaSeq {
     $data{sample_type} = $sample_type;
     my $alignment_result = $rna_seq_build->alignment_result;
     $data{bam_path} = $alignment_result->bam_file;
-    $data{ref_fasta} = $reference_fasta_path;
 
     return \%data;
 }
