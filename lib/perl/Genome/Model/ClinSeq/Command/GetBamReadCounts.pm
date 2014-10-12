@@ -172,8 +172,6 @@ sub execute {
   die $self->error_message("Could not resolve annotation build from input builds") unless $annotation_build;
   die $self->error_message("Could not resolve reference sequence build from input builds") unless $reference_build;
 
-  my $reference_build_id = $reference_build->id;
-  my $annotation_build_name = $annotation_build->name;
   my $gtf_path = $self->_get_gtf_path($reference_build, $annotation_build);
   my $transcript_info_path = $self->_get_transcript_info_path($reference_build, $annotation_build);
   my $ensembl_map = $self->loadEnsemblMap('-gtf_path'=>$gtf_path,
