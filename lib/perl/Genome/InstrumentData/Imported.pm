@@ -122,13 +122,6 @@ class Genome::InstrumentData::Imported {
             is_mutable => 1,
             where => [ attribute_label => 'sra_sample_id' ],
         },
-        downsample_ratio => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'downsample_ratio' ],
-        },
         barcode => {
             is => 'Text',
             via => 'attributes',
