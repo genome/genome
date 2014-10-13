@@ -22,7 +22,7 @@ class Genome::Model::Tools::EpitopePrediction::RemoveUnknownSequences {
     has_output => [
         output_file => {
             is => 'Text',
-            doc => 'The output FASTA file after removing unknown sequences sequences',
+            doc => 'The output FASTA file after removing unknown sequences',
             is_calculated => 1,
             calculate_from => ['output_directory'],
             calculate => q| return File::Spec->join($output_directory, "variant_sequences_filtered.fasta"); |,
