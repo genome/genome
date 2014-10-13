@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
-      
+
 require Carp;
 use Data::Dumper 'Dumper';
 require Lingua::EN::Inflect;
@@ -77,7 +77,7 @@ sub init_sub_commands {
     $config{target_name_ub} = $config{target_name};
     $config{target_name_ub} =~ s/ /_/;
     $config{target_name_pl} = ( exists $incoming_config{target_name_pl} )
-    ? delete $incoming_config{target_name_pl} 
+    ? delete $incoming_config{target_name_pl}
     : Lingua::EN::Inflect::PL($target_name);
     $config{target_name_pl_ub} = $config{target_name_pl};
     $config{target_name_pl_ub} =~ s/ /_/;
@@ -254,7 +254,7 @@ sub _build_list_command {
 
     return $list_command_class_name;
 }
-   
+
 sub _build_update_command {
     my ($class, %config) = @_;
 
@@ -365,7 +365,7 @@ sub _build_update_property_sub_command {
     UR::Object::Type->define(
         class_name => $update_property_class_name,
         is => 'Genome::Command::UpdateProperty',
-        has => [ 
+        has => [
             $config{target_name_pl_ub} => {
                 is => $config{target_class},
                 is_many => 1,
@@ -392,7 +392,7 @@ sub _build_update_property_sub_command {
     return $update_property_class_name;
 }
 
-sub _build_add_remove_property_sub_commands { 
+sub _build_add_remove_property_sub_commands {
     my ($class, %config) = @_;
 
     my $property = $config{property};
@@ -419,7 +419,7 @@ sub _build_add_remove_property_sub_commands {
         UR::Object::Type->define(
             class_name => $update_sub_command_class_name,
             is => 'Genome::Command::AddRemoveProperty',
-            has => [ 
+            has => [
                 $config{target_name_pl_ub} => {
                     is => $config{target_class},
                     is_many => 1,
@@ -456,7 +456,7 @@ sub _build_delete_command {
     UR::Object::Type->define(
         class_name => $sub_class,
         is => 'Genome::Command::Delete',
-        has => [ 
+        has => [
             $config{target_name_pl_ub} => {
                 is => $config{target_class},
                 is_many => 1,
