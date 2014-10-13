@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Bio::SeqIO;
 use Genome::Info::CodonToAminoAcid;
+use feature "state";
 
 class Genome::Model::Tools::EpitopePrediction::RemoveUnknownSequences {
     is => 'Genome::Model::Tools::EpitopePrediction::Base',
@@ -58,14 +59,18 @@ sub execute {
     return 1;
 }
 
-sub is_valid_sequence {
-    my $seq_string = shift;
-
+sub _generate_valid_sequence_regex {
     my %conversions = %Genome::Info::CodonToAminoAcid::convert;
     delete $conversions{Z};
     my $allowed_amino_acids = join('', keys %conversions);
+    return qr/^[$allowed_amino_acids]+$/;
+}
 
-    return $seq_string =~ /^[$allowed_amino_acids]+$/;
+sub is_valid_sequence {
+    my $seq_string = shift;
+
+    state $valid_sequence_regex = _generate_valid_sequence_regex;
+    return $seq_string =~ $valid_sequence_regex;
 }
 
 1;
