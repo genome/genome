@@ -59,6 +59,9 @@ sub execute {
     my @failures = grep { $_->has_failed } @updates;
     if(@failures) {
         $self->status_message('Found %s updates that need attention.', scalar(@failures));
+        for my $failure (@failures) {
+            $self->status_message('Need %s renamed to %s', $failure->old_value, $failure->new_value);
+        }
     } else {
         $self->status_message('No updates need attention.');
     }
