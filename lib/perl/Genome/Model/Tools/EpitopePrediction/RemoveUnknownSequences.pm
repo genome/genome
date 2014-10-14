@@ -48,7 +48,10 @@ sub execute {
 
     while ( my $seq = $in->next_seq() ) {
         my $seq_string = $seq->seq;
-        if ( is_valid_sequence($seq_string) ) {
+        if (!defined($seq_string)) {
+            $self->warning_message("Sequence for id (%s) is undefined", $seq->primary_id);
+        }
+        elsif ( is_valid_sequence($seq_string) ) {
             $out->write_seq($seq);
         }
         else {
