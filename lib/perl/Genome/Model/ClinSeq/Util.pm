@@ -1481,5 +1481,55 @@ sub parse_qualities {
   return (\@mqs, \@bqs);
 }
 
+sub create_copycat_cnv_hmm_file {
+    my $self = shift;
+    my $somatic_var_build = shift;
+    my $copycat_cnvhmm_file = shift;
+    my @copycat_dirs = glob($somatic_var_build->data_directory ."/variants/cnv/copy-cat*");
+    my $alt_paired;
+    for my $copycat_dir (@copycat_dirs) {
+        if(-e $copycat_dir . "/alts.paired.dat") {
+            $alt_paired =  $copycat_dir . "/alts.paired.dat";
+            last;
+        }
+    }
+    my $awk_command = "awk \'BEGIN { print \"CHR\\tSTART\\tEND\\tSIZE\\tnMarkers\\tCN1\\tAdjusted_CN1\\tCN2\\tAdjusted_CN2\\tLLR_Somatic\\tStatus\" }\'" .
+        "\'{ if(\$5>2) { status = \"Gain\"; } else { status = \"Loss\"; } print \$1\"\\t\"\$2\"\\t\"\$3\"\\t\"\$3-\$2\"\\t\"\$4\"\\t\"\$5\"\\t\"\$5\"\\t2\\t2\\tNA\\t\"status }\' " .
+        "$alt_paired > $copycat_cnvhmm_file";
+    Genome::Sys->status_message("$awk_command");
+    Genome::Sys->shellcmd(cmd => $awk_command);
+    return $copycat_cnvhmm_file;
+}
+
+sub _is_copycat_somvar {
+    my $self = shift;
+    my $somatic_var_build = shift;
+    if(not -s $somatic_var_build->data_directory . "/variants/cnvs.hq" and
+        glob( $somatic_var_build->data_directory . "/variants/cnv/copy-cat*")) {
+          return 1;
+    } else {
+      return 0;
+    }
+}
+
+sub _get_copycat_cnvhq {
+    my $self = shift;
+    my $somatic_var_build = shift;
+    my $output_dir = shift;
+    my $copycat_dir = glob($somatic_var_build->data_directory . "/variants/cnv/copy-cat*");
+    my $rd_bins;
+    if(-e $copycat_dir . "/rd.bins.dat") {
+        $rd_bins = $copycat_dir . "/rd.bins.dat";
+    } else {
+        die $self->error_message("Unable to find rd.bins.dat in " . $copycat_dir);
+    }
+    my $copycat_cnvhmm = $output_dir . "/copycat.cnvs.hq";
+    my $awk_cmd = "awk 'BEGIN { print \"CHR\\tPOS\\tTUM\\tNORMAL\\tDIFF\" }" .
+        "!/NA|Inf/ {  print \$1\"\\t\"\$2\"\\t\"\$3\"\\t2\\t\"\$3-2}\' " .
+        "$rd_bins > $copycat_cnvhmm";
+    Genome::Sys->shellcmd(cmd => $awk_cmd);
+    return $copycat_cnvhmm;
+}
+
 1;
 

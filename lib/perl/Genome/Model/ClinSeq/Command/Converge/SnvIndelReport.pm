@@ -84,6 +84,10 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               is => 'Boolean',
               doc => 'Do per library bam-readcounting and generate associated statistics, summaries and figures'
         },
+        summarize => {
+              is => 'Boolean',
+              doc => 'Summarize the SnvIndel report.'
+        },
         test => {
               is => 'Number',
               doc => 'Only import this many variants (for testing purposes)',
@@ -322,6 +326,18 @@ sub execute {
   if ($self->tmp_space){
     my $cp_cmd = "cp -fr " . $self->outdir . "* $original_outdir";
     Genome::Sys->shellcmd(cmd => $cp_cmd);
+  }
+
+  if($self->summarize) {
+    foreach my $build1 (@builds) {
+      my $summarize = Genome::Model::ClinSeq::Command::Converge::SummarizeSnvIndelReport(
+        clinseq_build => $build1,
+        outdir => $self->outdir,
+        min_mq => $self->min_quality_score,
+        min_bq => $self->min_base_quality,
+      );
+      $summarize->execute();
+    }
   }
 
   return 1;
@@ -1318,7 +1334,6 @@ sub create_plots{
     my $r_cmd2 = "$r_script $case_name $final_filtered_coding_clean_tsv \"$prefix_string\" \"$combined_vaf_col_string\" \"$target_gene_list_name\" $outdir2 \"$sample_types_string\" \"$timepoint_names_string\" \"$timepoint_positions_string\" $vaf_cols_string";
     Genome::Sys->shellcmd(cmd => $r_cmd2);
   }
-
   return;
 }
 
