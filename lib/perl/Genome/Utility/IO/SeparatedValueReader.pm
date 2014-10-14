@@ -36,8 +36,7 @@ class Genome::Utility::IO::SeparatedValueReader {
             doc => 'The current original line of input from the file, pre splitting.'
         },
         current_extra_columns => {
-            type => 'Text',
-            is_many => 1,
+            type => 'ARRAY',
             doc => 'if "allow_extra_columns" is set, any additional columns for the current line',
         }
     ],

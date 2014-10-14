@@ -74,8 +74,8 @@ sub execute {
             $self->_create_input($mapping, $_, $value);
         }
 
-        my @tags = $reader->current_extra_columns;
-        for(@tags) {
+        my $tags = $reader->current_extra_columns;
+        for(@$tags) {
             $self->_link_to_tag($mapping, $_);
         }
 
