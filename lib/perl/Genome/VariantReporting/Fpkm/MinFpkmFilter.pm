@@ -61,4 +61,14 @@ sub value_passes {
     }
 }
 
+sub vcf_id {
+    my $self = shift;
+    return sprintf("MIN_FPKM_%s_%s", $self->min_fpkm, $self->sample_name);
+}
+
+sub vcf_description {
+    my $self = shift;
+    return sprintf("The FPKM value for sample %s is at least %s", $self->sample_name, $self->min_fpkm);
+}
+
 1;
