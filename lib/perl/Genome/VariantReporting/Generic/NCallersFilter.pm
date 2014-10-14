@@ -58,5 +58,15 @@ sub filter_entry {
 
     return %return_values;
 }
-1;
 
+sub vcf_id {
+    my $self = shift;
+    return sprintf("MIN_CALLERS_%s_%s", $self->min_callers, $self->sample_name);
+}
+
+sub vcf_description {
+    my $self = shift;
+    return sprintf("Variant was called by at least %s callers for sample %s", $self->min_callers, $self->sample_name);
+}
+
+1;
