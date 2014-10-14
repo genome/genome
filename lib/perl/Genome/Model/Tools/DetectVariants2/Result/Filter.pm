@@ -60,6 +60,8 @@ sub vcf_result_params {
         previous_filter_strategy => $self->previous_filter_strategy,
         test_name => $self->test_name,
         vcf_version => Genome::Model::Tools::Vcf->get_vcf_version,
+        aligned_reads_sample => $aligned_reads_sample,
+        ($control_aligned_reads_sample? (control_aligned_reads_sample => $control_aligned_reads_sample) : ()),
     );
 }
 
