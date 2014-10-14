@@ -7,6 +7,7 @@ use Genome;
 
 use File::Basename qw(dirname);
 use File::Spec;
+use Genome::Utility::Text;
 
 class Genome::VariantReporting::Command::Wrappers::RnaSeq {
     is => 'Command::V2',
@@ -23,9 +24,9 @@ class Genome::VariantReporting::Command::Wrappers::RnaSeq {
     has_calculated => {
         output_dir => {
             calculate_from => [qw/ base_output_dir somatic_build/],
-            calculate => q| my $model_nospace  = $somatic_build->model->name;
-                $model_nospace =~ s/ /_/g;
-                return File::Spec->join($base_output_dir, $model_nospace); |,
+            calculate => q| my $model_name  = $somatic_build->model->name;
+                my $safe_model_name = Genome::Utility::Text::sanitize_string_for_filesystem($model_name);
+                return File::Spec->join($base_output_dir, $safe_model_name); |,
         },
         resource_file => {
             calculate_from => [qw/ output_dir /],
