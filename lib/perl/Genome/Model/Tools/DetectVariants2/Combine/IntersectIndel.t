@@ -66,9 +66,10 @@ isa_ok($detector_b, 'Genome::Model::Tools::DetectVariants2::Result', 'detector_b
 my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Combine-IntersectIndel-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_symlink  = join('/', $test_output_dir, 'intersect-indel');
 my $union_indel_object = Genome::Model::Tools::DetectVariants2::Combine::IntersectIndel->create(
-    input_a_id       => $detector_a->id,
-    input_b_id       => $detector_b->id,
-    output_directory => $output_symlink,
+    input_a_id           => $detector_a->id,
+    input_b_id           => $detector_b->id,
+    output_directory     => $output_symlink,
+    aligned_reads_sample => 'TEST',
 );
 ok($union_indel_object, 'created IntersectIndel object');
 ok($union_indel_object->execute(), 'executed IntersectIndel object');

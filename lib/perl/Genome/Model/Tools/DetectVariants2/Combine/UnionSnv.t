@@ -95,6 +95,8 @@ my $union_snv_object = Genome::Model::Tools::DetectVariants2::Combine::UnionSnv-
     input_a_id       => $detector_a->id,
     input_b_id       => $detector_b->id,
     output_directory => $output_symlink,
+    aligned_reads_sample => "TEST",
+    control_aligned_reads_sample => "TEST-normal",
 );
 ok($union_snv_object, 'created UnionSnv object');
 ok($union_snv_object->execute(), 'executed UnionSnv object');
