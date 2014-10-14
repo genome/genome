@@ -63,9 +63,8 @@ sub execute {
 }
 
 sub _generate_valid_sequence_regex {
-    my %conversions = %Genome::Info::CodonToAminoAcid::convert;
-    delete $conversions{Z};
-    my $allowed_amino_acids = join('', keys %conversions);
+    my @valid_amino_acid_codes = Genome::Info::CodonToAminoAcid::valid_amino_acid_codes;
+    my $allowed_amino_acids = join('', @valid_amino_acid_codes);
     return qr/^[$allowed_amino_acids]+$/;
 }
 
