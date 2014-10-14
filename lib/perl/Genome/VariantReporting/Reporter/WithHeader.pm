@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Memoize qw();
+use Set::Scalar;
 
 class Genome::VariantReporting::Reporter::WithHeader {
     is => 'Genome::VariantReporting::Framework::Component::Reporter::SingleFile',
@@ -180,11 +181,18 @@ sub write_legend_file {
     my %fields = $self->available_fields_dict;
     my $interpreters = $self->interpreters;
     $self->_legend_fh->print("Headers\n");
+    my $unavailable_headers = Set::Scalar->new($self->unavailable_headers);
     for my $header ($self->headers) {
-        my $field = $fields{$header}->{field};
-        my $interpreter_name = $fields{$header}->{interpreter};
-        my $interpreter = $interpreters->{$interpreter_name};
-        $self->_legend_fh->print(join($self->delimiter, $header, $interpreter->field_description($field)) . "\n");
+        # We don't have an interpreter that provides this field
+        if ($unavailable_headers->contains($header)) {
+            $self->_legend_fh->print(join($self->delimiter, $header, 'undefined') . "\n");
+        }
+        else {
+            my $field = $fields{$header}->{field};
+            my $interpreter_name = $fields{$header}->{interpreter};
+            my $interpreter = $interpreters->{$interpreter_name};
+            $self->_legend_fh->print(join($self->delimiter, $header, $interpreter->field_description($field)) . "\n");
+        }
     }
 
     $self->_legend_fh->print("Filters\n");
