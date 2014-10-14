@@ -201,10 +201,6 @@ class Genome::InstrumentData {
             via => 'sample_source',
             to => 'name',
         },
-        taxon => {
-            is => 'Genome::Taxon',
-            via => 'sample',
-        },
         species_name => { via => 'taxon' },
     ],
     has_many_optional => [
