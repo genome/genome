@@ -60,9 +60,7 @@ sub resolve_plan_attributes {
     for my $name (keys %{$specific_plan->params}) {
         my $value = $specific_plan->params->{$name};
         if ($self->is_property_translated($name)) {
-            my $provider = $self->provider;
-#might be hash?
-            my $translations = $provider->get_attribute('translations');
+            my $translations = $self->provider->get_attribute('translations');
             $self->$name($translations->{$value});
         }
         else {
