@@ -58,15 +58,10 @@ sub resolve_plan_attributes {
     my $variant_reporting_plan = $self->plan;
     my $specific_plan = $variant_reporting_plan->get_plan('expert', $self->name);
     for my $name (keys %{$specific_plan->params}) {
-        my $value = $specific_plan->params->{$name};
-        if ($self->is_property_translated($name)) {
-            my $translations = $self->provider->get_attribute('translations');
-            $self->$name($translations->{$value});
-        }
-        else {
-            $self->$name($value);
-        }
+        $self->$name($specific_plan->params->{$name});
     }
+    my $translations = $self->provider->get_attribute('translations');
+    $self->translate_inputs($translations);
 }
 
 sub is_property_translated {
