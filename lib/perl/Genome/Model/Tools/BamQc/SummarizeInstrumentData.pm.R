@@ -19,6 +19,31 @@ load_isize_data <- function(path) {
     x
 }
 
+load_gc_data <- function(path) {
+    read.table(path, head=TRUE, sep="\t", skip=6)
+}
+
+load_sample_gc <- function(name, data) {
+    ds <- data[data$sample_name == name,]
+    rv <- NULL
+    for (i in 1:nrow(ds)) {
+        path <- Sys.glob(sprintf("%s/*PicardGC_metrics.txt", ds$bamqc_path[i]))
+        lib <- ds$library_name[i]
+        id <- ds$id[i]
+        x <- load_gc_data(path)
+        x$lib <- lib
+        x$id <- id
+        x$flow_cell_id <- ds$flow_cell_id[i]
+        x$lane <- ds$lane[i]
+        rv <- rbind(rv, x)
+    }
+    rv$lib <- factor(rv$lib)
+    o <- order(rv$lib, rv$id)
+    rv$id <- factor(rv$id, levels=unique(rv$id[o]))
+    rv$flow_cell_id <- paste(rv$flow_cell_id, rv$lane)
+    rv
+}
+
 load_sample <- function(name, data) {
     ds <- data[data$sample_name == name,]
     rv <- NULL
@@ -50,6 +75,26 @@ isize_plot <- function(df) {
         scale_fill_brewer(palette="Set1", name="Library") +
         opts(panel.background=theme_blank(), panel.grid=theme_blank(),
             legend.position="top", legend.direction="vertical")
+}
+
+gc_plot <- function(df) {
+    maxwin <- max(df$WINDOWS)
+    gcdens <- df[df$id == df$id[1], c("GC", "WINDOWS")]
+    gcdens$WINDOWS <- gcdens$WINDOWS * 0.5 / maxwin
+
+    ggplot() +
+        geom_hline(yintercept=1, color="darkgrey") +
+        geom_vline(xintercept=50, color="darkgrey") +
+        geom_line(data=df, mapping=aes(GC, NORMALIZED_COVERAGE, color=lib, fill=id), alpha=0.4) +
+        scale_fill_discrete(legend=FALSE) +
+        scale_color_brewer(palette="Set1", name="Library") +
+        geom_bar(data=gcdens, mapping=aes(GC, 0.5 * WINDOWS),
+            stat="identity", fill="lightgrey", color="lightgrey") +
+        coord_cartesian(ylim=c(0, 2.5)) +
+        opts(legend.position="top", legend.direction="vertical", panel.background=theme_blank(),
+            panel.grid=theme_blank(),
+            title="GC Bias for 1TB vs 2500") +
+        labs(x="GC% (100bp windows)", y="Normalized coverage")
 }
 
 data <- read.table(input_file,
@@ -94,7 +139,7 @@ ggplot(dup.smp, aes(sample_name, duplication)) +
     geom_text(aes(label=sprintf("%.2f%%", duplication), color=common_name), hjust=text_hjust) +
     opts(panel.background=theme_blank(), panel.grid=theme_blank()) +
     opts(title="Duplication by Sample") +
-    labs(x="Duplicate percent", y="Sample name") +
+    labs(y="Duplicate percent", x="Sample name") +
     scale_color_brewer(palette="Set2")
 
 ggplot(dup.lib, aes(library_name, duplication, color=common_name)) +
@@ -103,7 +148,7 @@ ggplot(dup.lib, aes(library_name, duplication, color=common_name)) +
     geom_text(aes(label=sprintf("%.2f%%", duplication)), hjust=text_hjust) +
     opts(panel.background=theme_blank(), panel.grid=theme_blank()) +
     opts(title="Duplication by Library") +
-    labs(x="Duplicate percent", y="Sample name") +
+    labs(y="Duplicate percent", x="Library name") +
     scale_color_brewer(palette="Set2")
 
 ggplot(data, aes(duplicate_percent, fill=common_name)) +
@@ -127,11 +172,16 @@ for (s in samples) {
     ds <- ds[order(ds$library_name, ds$flow_cell_id, ds$lane),]
     libs <- unique(ds$library_name)
     df <- load_sample(s, data)
-    title <- sprintf("Insert Size: Sample %s (%s)", s, unique(ds$common_name))
-    p <- isize_plot(df) + opts(title=title)
+    gc_df <- load_sample_gc(s, data)
+    title <- sprintf("Sample %s (%s)", s, unique(ds$common_name))
+
     tbl <- ds[, c("library_name", "id", "flow_cell_id", "lane", "clusters", "duplicate_percent")]
     textplot(tbl, show.rownames=FALSE)
     title(title)
+
+    p <- isize_plot(df) + opts(title=sprintf("Insert Size: %s", title))
+    print(p)
+    p <- gc_plot(gc_df) + opts(title=sprintf("GC Bias: %s", title))
     print(p)
 }
 
