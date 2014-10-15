@@ -4,6 +4,9 @@ use strict;
 use warnings;
 use Genome;
 
+use Genome::Utility::Text qw(sanitize_string_for_filesystem);
+use File::Spec;
+
 my $DEFAULT_VERSION = '2.6';
 my $METHRATIO_COMMAND = 'methratio.py';
 
@@ -92,8 +95,10 @@ sub execute {
     }
 
     if ($self->chromosome) {
-        mkdir $self->output_directory . '/' . $self->chromosome;
-        $self->output_directory($self->output_directory . '/' . $self->chromosome);
+        my $sanitized_chromosome = sanitize_string_for_filesystem($self->chromosome);
+        my $chromosome_output_dir = File::Spec->join($self->output_directory, $sanitized_chromosome);
+        Genome::Sys->create_directory($chromosome_output_dir);
+        $self->output_directory($chromosome_output_dir);
     }
 
     if(!(defined($self->version))){
