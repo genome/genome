@@ -81,7 +81,7 @@ class Genome::Model::Tools::Gatk::GermlineIndelUnifiedGenotyper {
             default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         }, 
         lsf_resource => {
-            default_value => "-R 'rusage[mem=6000] select[type==LINUX64 && model != Opteron250 && mem>6000 && maxtmp>100000] span[hosts=1]' -M 6000000",
+            default_value => "-R 'rusage[mem=6000] select[model != Opteron250 && mem>6000 && maxtmp>100000] span[hosts=1]' -M 6000000",
         },
     ],
 };

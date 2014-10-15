@@ -32,7 +32,7 @@ class Genome::Model::Tools::GenePredictor::Snap {
     ],
     has_param => [
         lsf_resource => {
-            default_value => "-M 80000000 -R 'select[type==LINUX64 && mem>80000] rusage[mem=80000]'",
+            default_value => "-M 80000000 -R 'select[mem>80000] rusage[mem=80000]'",
         }
     ],
 };

@@ -47,7 +47,7 @@ class Genome::Model::Tools::Predictor::Ber {
         },
         lsf_resource => {
             is => 'Text',
-            default => "-M 4000000 -R 'select[type==LINUX64 && mem>4000] rusage[mem=4000]'",
+            default => "-M 4000000 -R 'select[mem>4000] rusage[mem=4000]'",
         },
     ],
     has_transient_optional => [

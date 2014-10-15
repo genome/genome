@@ -136,7 +136,7 @@ class Genome::Model::Tools::Somatic::FilterFalsePositives {
         # Make workflow choose 64 bit blades
         lsf_resource => {
             is_param => 1,
-            default_value => 'rusage[mem=4000,tmp=1000] select[type==LINUX64 && tmp>1000] span[hosts=1]',
+            default_value => 'rusage[mem=4000,tmp=1000] select[tmp>1000] span[hosts=1]',
         },
         lsf_queue => {
             is_param => 1,
