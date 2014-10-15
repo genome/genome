@@ -364,10 +364,11 @@ sub execute {
     }
 
     if (-s "$tempdir/snvpos") {
-        $params{output_file} = "$tempdir/readcounts";
-        $params{region_list} = "$tempdir/snvpos";
-
-        my $return = Genome::Model::Tools::Sam::Readcount->execute(%params);
+        my $return = Genome::Model::Tools::Sam::Readcount->execute(
+            %params,
+            output_file => "$tempdir/readcounts",
+            region_list => "$tempdir/snvpos",
+        );
         unless($return) {
             $self->error_message("Failed to execute sam readcount: Returned $return");
             die $self->error_message;
@@ -475,11 +476,12 @@ sub execute {
 
     #if there are no indels, skip
     if (-s "$tempdir/indelpos") {
-        $params{output_file}       = "$tempdir/readcounts_indel";
-        $params{region_list}       = "$tempdir/indelpos";
-        $params{insertion_centric} = 1;
-
-        my $return = Genome::Model::Tools::Sam::Readcount->execute(%params);
+        my $return = Genome::Model::Tools::Sam::Readcount->execute(
+            %params,
+            output_file       => "$tempdir/readcounts_indel",
+            region_list       => "$tempdir/indelpos",
+            insertion_centric => 1,
+        );
         unless($return) {
             $self->error_message("Failed to execute: Returned $return");
             die $self->error_message;
