@@ -214,6 +214,7 @@ sub execute {
         cmd => $cmd,
         output_files => [$tmp_file, $flt_tmp_file],
         skip_if_output_is_present => 0,
+        allow_zero_size_output_files => 1,
     );
         
     unless ($rv == 1) {
@@ -259,10 +260,13 @@ sub execute {
         $header_fh->close;
 
         my @touch_files;
-
         if ($snv_out_file) {
-            Genome::Sys->cat(input_files => [$header_file, $tmp_snv_file],     output_file => $snv_out_file);
-            Genome::Sys->cat(input_files => [$header_file, $tmp_flt_snv_file], output_file => $flt_snv_out_file);
+            Genome::Sys->cat(input_files => [$header_file, $tmp_snv_file],
+                allow_zero_size_input_files => 1,
+                output_file => $snv_out_file);
+            Genome::Sys->cat(input_files => [$header_file, $tmp_flt_snv_file],
+                allow_zero_size_input_files => 1,
+                output_file => $flt_snv_out_file);
         }
         if ($indel_out_file) { #sometimes for testing data, pass_indel_filter or fail_indel_filter file could be empty
             if (-z $tmp_indel_file) {
