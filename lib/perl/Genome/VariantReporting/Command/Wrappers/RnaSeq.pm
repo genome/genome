@@ -77,19 +77,19 @@ sub generate_resource_file {
     return if not $self->is_valid;
     my $resource = {};
 
-    my @aligned_bams;
+    my @aligned_bam_results;
     if ($self->somatic_build->isa('Genome::Model::Build::SomaticValidation')) {
-        push @aligned_bams, $self->somatic_build->merged_alignment_result->id;
-        push @aligned_bams, $self->somatic_build->control_merged_alignment_result->id;
+        push @aligned_bam_results, $self->somatic_build->merged_alignment_result->id;
+        push @aligned_bam_results, $self->somatic_build->control_merged_alignment_result->id;
     }
     elsif ($self->somatic_build->isa('Genome::Model::Build::SomaticVariation')) {
-        push @aligned_bams, $self->somatic_build->tumor_build->merged_alignment_result->id;
-        push @aligned_bams, $self->somatic_build->normal_build->merged_alignment_result->id;
+        push @aligned_bam_results, $self->somatic_build->tumor_build->merged_alignment_result->id;
+        push @aligned_bam_results, $self->somatic_build->normal_build->merged_alignment_result->id;
     }
     else {
         die $self->error_message("somatic_build is of unhandled type: (%s). Needs to be either 'Genome::Model::Build::SomaticValidation' or 'Genome::Model::Build::SomaticVariation'", $self->somatic_build->class);
     }
-    $resource->{aligned_bam_result_id} = \@aligned_bams;
+    $resource->{aligned_bam_result_id} = \@aligned_bam_results;
 
     $resource->{reference_fasta} = $self->somatic_build->reference_sequence_build->full_consensus_path("fa");
 
