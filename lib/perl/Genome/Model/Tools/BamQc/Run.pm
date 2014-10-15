@@ -326,7 +326,7 @@ sub execute {
     }
     my $picard_metrics_operation = $self->setup_workflow_operation(%picard_metrics_operation_params);
     my $max_memory = $self->picard_maximum_memory + 2;
-    $picard_metrics_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[model!=Opteron250 && tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
+    $picard_metrics_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
     
     # PicardGcBias
     if ($workflow_params{reference_sequence}) {
@@ -354,7 +354,7 @@ sub execute {
             if $picard_gc_assume_sorted; 
         
         my $picard_gc_bias_operation = $self->setup_workflow_operation(%picard_gc_bias_operation_params);
-        $picard_gc_bias_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[model!=Opteron250 && tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
+        $picard_gc_bias_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
     }
     
     # SamStat
@@ -406,7 +406,7 @@ sub execute {
             },
         );
         my $error_rate_operation = $self->setup_workflow_operation(%error_rate_operation_params);
-        $error_rate_operation->operation_type->lsf_resource('-M 8000000 -R \'select[model!=Opteron250 && tmp>1000 && mem>8000] rusage[tmp=1000, mem=8000]\'');
+        $error_rate_operation->operation_type->lsf_resource('-M 8000000 -R \'select[tmp>1000 && mem>8000] rusage[tmp=1000, mem=8000]\'');
     }
     
     # Read Length

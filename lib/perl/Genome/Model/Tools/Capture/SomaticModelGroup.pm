@@ -400,11 +400,11 @@ sub execute {                               # replace with real execution logic.
 						{
 							if($self->reference)
 							{
-								system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[model!=Opteron250 && mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file --reference " . $self->reference);
+								system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file --reference " . $self->reference);
 							}
 							else
 							{
-								system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[model!=Opteron250 && mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file");															
+								system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file");															
 							}
 
 						}
@@ -436,7 +436,7 @@ sub execute {                               # replace with real execution logic.
 						$cmd .= " --reference " . $self->reference if($self->reference);
 						if(!(-e "$output_dir/varScan.output.copynumber"))
 						{
-							system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[model!=Opteron250 && mem>4000]\" $cmd");							
+							system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>4000]\" $cmd");							
 						}
 						else
 						{
