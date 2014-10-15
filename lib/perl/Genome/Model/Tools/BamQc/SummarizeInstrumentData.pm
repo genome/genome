@@ -1,4 +1,4 @@
-package Genome::Model::Tools::BamQc::SummaryFromInstrumentData;
+package Genome::Model::Tools::BamQc::SummarizeInstrumentData;
 
 use strict;
 use warnings;
@@ -18,7 +18,7 @@ my %INSTRUMENT_DATA_PROPERTIES = (
     , clusters => "clusters"
     );
 
-class Genome::Model::Tools::BamQc::SummaryFromInstrumentData {
+class Genome::Model::Tools::BamQc::SummarizeInstrumentData {
     is => "Genome::Command::Base",
     has_input => [
         instrument_data => {
