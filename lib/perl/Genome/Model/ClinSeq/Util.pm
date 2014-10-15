@@ -1489,7 +1489,7 @@ sub parse_qualities {
   return (\@mqs, \@bqs);
 }
 
-sub create_copycat_cnv_hmm_file {
+sub create_copycat_cnvhmm_file {
     my $self = shift;
     my $somatic_var_build = shift;
     my $copycat_cnvhmm_file = shift;
@@ -1506,21 +1506,9 @@ sub create_copycat_cnv_hmm_file {
         "$alt_paired > $copycat_cnvhmm_file";
     Genome::Sys->status_message("$awk_command");
     Genome::Sys->shellcmd(cmd => $awk_command);
-    return $copycat_cnvhmm_file;
 }
 
-sub _is_copycat_somvar {
-    my $self = shift;
-    my $somatic_var_build = shift;
-    if(not -s $somatic_var_build->data_directory . "/variants/cnvs.hq" and
-        glob( $somatic_var_build->data_directory . "/variants/cnv/copy-cat*")) {
-          return 1;
-    } else {
-      return 0;
-    }
-}
-
-sub _get_copycat_cnvhq {
+sub create_copycat_cnvhq_file {
     my $self = shift;
     my $somatic_var_build = shift;
     my $output_dir = shift;
@@ -1538,6 +1526,18 @@ sub _get_copycat_cnvhq {
     Genome::Sys->shellcmd(cmd => $awk_cmd);
     return $copycat_cnvhmm;
 }
+
+sub _is_copycat_somvar {
+    my $self = shift;
+    my $somatic_var_build = shift;
+    if(not -s $somatic_var_build->data_directory . "/variants/cnvs.hq" and
+        glob( $somatic_var_build->data_directory . "/variants/cnv/copy-cat*")) {
+          return 1;
+    } else {
+      return 0;
+    }
+}
+
 
 1;
 
