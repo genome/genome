@@ -76,7 +76,7 @@ class Genome::Model::Tools::HmpShotgun::FilterResults {
         ],
         has_param => [
                        #lsf_resource => {
-           #     default_value => 'select[model!=Opteron250 && type==LINUX64] rusage[mem=12000] -M 24000000',
+           #     default_value => 'rusage[mem=12000] -M 24000000',
            #},
         ],
 };
