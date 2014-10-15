@@ -66,8 +66,8 @@ class Genome::Model::Tools::HmpShotgun::FilterResults {
         },
         lsf_resource => {
                 is_param => 1,
-                value => "-R 'select[mem>64000 && model!=Opteron250 && type==LINUX64] span[hosts=1] rusage[mem=64000]' -M 64000000",
-                #value => "-R 'select[mem>30000 && model!=Opteron250 && type==LINUX64] span[hosts=1] rusage[mem=30000]' -M 30000000",
+                value => "-R 'select[mem>64000 && model!=Opteron250] span[hosts=1] rusage[mem=64000]' -M 64000000",
+                #value => "-R 'select[mem>30000 && model!=Opteron250] span[hosts=1] rusage[mem=30000]' -M 30000000",
         },
         lsf_queue => {
                 is_param => 1,
