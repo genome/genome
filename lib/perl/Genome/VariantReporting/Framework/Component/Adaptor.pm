@@ -64,13 +64,6 @@ sub resolve_plan_attributes {
     $self->translate_inputs($translations);
 }
 
-sub is_property_translated {
-    my $self = shift;
-    my $property = shift;
-
-    return $self->__meta__->properties(property_name => $property, is_translated => 1) ? 1 : 0;
-}
-
 sub plan {
     my $self = shift;
 
