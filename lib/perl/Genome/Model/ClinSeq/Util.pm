@@ -1308,6 +1308,12 @@ sub get_ref_align_builds{
     my $tumor_bam_path = $tumor_build->whole_rmdup_bam_file;
     my @normal_timepoints = $normal_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
     my @tumor_timepoints = $tumor_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+    my $tumor_tissue_desc = $tumor_build->subject->tissue_desc;
+    $tumor_tissue_desc =~ s/\s+/\-/g;
+    $tumor_tissue_desc =~ s/\,//g;
+    my $normal_tissue_desc = $normal_build->subject->tissue_desc;
+    $normal_tissue_desc =~ s/\s+/\-/g;
+    $normal_tissue_desc =~ s/\,//g;
 
     my $normal_time_point = "day0";
     if (@normal_timepoints){
@@ -1330,6 +1336,7 @@ sub get_ref_align_builds{
     $ref_builds{$normal_refalign_name}{sample_common_name} = $normal_subject_common_name;
     $ref_builds{$normal_refalign_name}{bam_path} = $normal_bam_path;
     $ref_builds{$normal_refalign_name}{time_point} = $normal_subject_common_name . "_" . $normal_time_point;
+    $ref_builds{$normal_refalign_name}{time_point_tissue} = $normal_subject_common_name . "_" . $normal_tissue_desc . "_" . $normal_time_point;
     $ref_builds{$normal_refalign_name}{day} = $normal_time_point;
 
     $ref_builds{$tumor_refalign_name}{type} = $build_type;
@@ -1337,6 +1344,7 @@ sub get_ref_align_builds{
     $ref_builds{$tumor_refalign_name}{sample_common_name} = $tumor_subject_common_name;
     $ref_builds{$tumor_refalign_name}{bam_path} = $tumor_bam_path;
     $ref_builds{$tumor_refalign_name}{time_point} = $tumor_subject_common_name . "_" . $tumor_time_point;
+    $ref_builds{$tumor_refalign_name}{time_point_tissue} = $tumor_subject_common_name . "_" . $tumor_tissue_desc . "_" . $tumor_time_point;
     $ref_builds{$tumor_refalign_name}{day} = $tumor_time_point;
   }
 
@@ -1383,26 +1391,26 @@ sub get_ref_align_builds{
   }
 
   my @time_points;
-  my @time_points2;
+  my @time_points_tissue;
   my @samples;
   my @names;
   foreach my $name (sort {$ref_builds{$a}->{order} <=> $ref_builds{$b}->{order}} keys %ref_builds){
     push(@time_points, $ref_builds{$name}{time_point});
-    push(@time_points2, $ref_builds{$name}{time_point2});
-    push(@samples, $ref_builds{$name}{sample_name});
-    push(@names, $name);
+    push(@time_points_tissue, $ref_builds{$name}{time_point_tissue});
+    push(@samples, $ref_builds{$name}{sample_name} . "_" . $ref_builds{$name}{sample_common_name});
+    push(@names, $name . "_" . $ref_builds{$name}{sample_common_name});
   }
 
   #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
   my @prefixes;
   my @unique_time_points = uniq @time_points;
-  my @unique_time_points2 = uniq @time_points2;
+  my @unique_time_points_tissue = uniq @time_points_tissue;
   my @unique_samples = uniq @samples;
   my @unique_names = uniq @names;
   if (scalar(@unique_time_points) == scalar(@time_points)){
     @prefixes = @time_points;
-  }elsif(scalar(@unique_time_points2) == scalar(@time_points2)){
-    @prefixes = @time_points2;
+  }elsif(scalar(@unique_time_points_tissue) == scalar(@time_points_tissue)){
+    @prefixes = @time_points_tissue;
   }elsif(scalar(@unique_samples) == scalar(@samples)){
     @prefixes = @samples;
   }elsif(scalar(@unique_names) == scalar(@names)){
