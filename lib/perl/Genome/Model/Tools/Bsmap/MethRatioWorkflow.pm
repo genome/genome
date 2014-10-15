@@ -102,7 +102,7 @@ sub execute {
     }
 
     if(!(defined($self->version))){
-        $self->error_message('methratio version "$self->version" not found.');
+        $self->error_message('methratio version %s not found.', $self->version);
         return 0;
     }
 
