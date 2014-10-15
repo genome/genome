@@ -37,7 +37,7 @@ class Genome::Model::Tools::Bsmap::MethRatioWorkflow {
             is_input => 1,
             default_value => $DEFAULT_VERSION,
             doc => "Version of methratio to use",
-        },        
+        },
     ],
     has_optional => [
         chromosome => {
@@ -114,16 +114,16 @@ sub execute {
         $cmd .= " -n";
     }
     $cmd .= " " . $self->bam_file;
-    
+
     $self->debug_message("Running command: $cmd");
 
     my $return = Genome::Sys->shellcmd(
         cmd => "$cmd",
-        );
+    );
     unless($return) {
         $self->error_message("Failed to execute: Returned $return");
         die $self->error_message;
-    }    
+    }
 
     return 1;
 }
