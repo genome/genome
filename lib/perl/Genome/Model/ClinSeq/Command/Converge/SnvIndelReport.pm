@@ -201,7 +201,6 @@ sub __errors__ {
 
 sub execute {
   my $self = shift;
-  my @builds = $self->builds;
 
   #Add trailing '/' to outdir if needed
   unless ($self->outdir =~ /\/$/){
@@ -329,8 +328,8 @@ sub execute {
   }
 
   if($self->summarize) {
-    foreach my $build1 (@builds) {
-      my $summarize = Genome::Model::ClinSeq::Command::Converge::SummarizeSnvIndelReport(
+    foreach my $build1 (@clinseq_builds) {
+      my $summarize = Genome::Model::ClinSeq::Command::Converge::SummarizeSnvIndelReport->create(
         clinseq_build => $build1,
         outdir => $self->outdir,
         min_mq => $self->min_quality_score,
