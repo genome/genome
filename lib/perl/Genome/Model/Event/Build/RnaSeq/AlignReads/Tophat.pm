@@ -16,7 +16,7 @@ class Genome::Model::Event::Build::RnaSeq::AlignReads::Tophat {
 };
 
 sub bsub_rusage {
-    return "-R 'select[model!=Opteron250 && type==LINUX64 && mem>16000 && tmp>150000] span[hosts=1] rusage[tmp=150000, mem=16000]' -M 16000000 -n 4";
+    return "-R 'select[mem>16000 && tmp>150000] span[hosts=1] rusage[tmp=150000, mem=16000]' -M 16000000 -n 4";
 }
 
 sub shortcut {

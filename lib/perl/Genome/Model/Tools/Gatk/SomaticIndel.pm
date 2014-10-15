@@ -79,7 +79,7 @@ class Genome::Model::Tools::Gatk::SomaticIndel {
     ],
     has_param => [
         lsf_resource => {
-            default => "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>1000] span[hosts=1] rusage[mem=6000, tmp=1000]' -M 6000000",
+            default => "-R 'select[tmp>1000] span[hosts=1] rusage[mem=6000, tmp=1000]' -M 6000000",
         }
     ],
 };
