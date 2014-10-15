@@ -94,14 +94,16 @@ ggplot(dup.smp, aes(sample_name, duplication)) +
     geom_text(aes(label=sprintf("%.2f%%", duplication), color=common_name), hjust=text_hjust) +
     opts(panel.background=theme_blank(), panel.grid=theme_blank()) +
     opts(title="Duplication by Sample") +
+    labs(x="Duplicate percent", y="Sample name") +
     scale_color_brewer(palette="Set2")
 
-ggplot(dup.lib, aes(library_name, duplication)) +
-    geom_bar(aes(color=common_name), stat="identity", position="stack") +
+ggplot(dup.lib, aes(library_name, duplication, color=common_name)) +
+    geom_bar(stat="identity", position="stack") +
     coord_flip(ylim=c(0, maxdup)) +
-    geom_text(aes(label=sprintf("%.2f%%", duplication)), hjust=text_hjust, color="lightgrey") +
+    geom_text(aes(label=sprintf("%.2f%%", duplication)), hjust=text_hjust) +
     opts(panel.background=theme_blank(), panel.grid=theme_blank()) +
     opts(title="Duplication by Library") +
+    labs(x="Duplicate percent", y="Sample name") +
     scale_color_brewer(palette="Set2")
 
 ggplot(data, aes(duplicate_percent, fill=common_name)) +
@@ -125,7 +127,7 @@ for (s in samples) {
     ds <- ds[order(ds$library_name, ds$flow_cell_id, ds$lane),]
     libs <- unique(ds$library_name)
     df <- load_sample(s, data)
-    title <- sprintf("Sample %s (%s)", s, unique(ds$common_name))
+    title <- sprintf("Insert Size: Sample %s (%s)", s, unique(ds$common_name))
     p <- isize_plot(df) + opts(title=title)
     tbl <- ds[, c("library_name", "id", "flow_cell_id", "lane", "clusters", "duplicate_percent")]
     textplot(tbl, show.rownames=FALSE)
