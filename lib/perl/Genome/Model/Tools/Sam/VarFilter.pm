@@ -200,8 +200,8 @@ sub execute {
         $cmd .= $self->_get_cmd_opts(%common_options, %pileup_options);
     }
 
-    my $tmp_file     = Genome::Sys->create_temp_file_path('tmp_var.'.$input_var_format);
-    my $flt_tmp_file = Genome::Sys->create_temp_file_path('tmp_var_filtered.'.$input_var_format);
+    my $tmp_file     = Genome::Sys->create_temp_file_path();
+    my $flt_tmp_file = Genome::Sys->create_temp_file_path();
    
     if ($input_var_format eq 'bcf') { #stdout for good vars, stderr for filtered vars
         $cmd .= " - 1> $tmp_file 2> $flt_tmp_file";
@@ -224,13 +224,13 @@ sub execute {
     my ($tmp_snv_fh, $tmp_snv_file, $tmp_flt_snv_fh, $tmp_flt_snv_file, $tmp_indel_fh, $tmp_indel_file, $tmp_flt_indel_fh, $tmp_flt_indel_file);
 
     if ($snv_out_file) {
-        ($tmp_snv_fh, $tmp_snv_file)         = Genome::Sys->create_temp_file('tmp_snv.'.$input_var_format);
-        ($tmp_flt_snv_fh, $tmp_flt_snv_file) = Genome::Sys->create_temp_file('tmp_snv_filtered.'.$input_var_format);
+        ($tmp_snv_fh, $tmp_snv_file)         = Genome::Sys->create_temp_file();
+        ($tmp_flt_snv_fh, $tmp_flt_snv_file) = Genome::Sys->create_temp_file();
     }
 
     if ($indel_out_file) {
-        ($tmp_indel_fh, $tmp_indel_file)         = Genome::Sys->create_temp_file('tmp_indel.'.$input_var_format);
-        ($tmp_flt_indel_fh, $tmp_flt_indel_file) = Genome::Sys->create_temp_file('tmp_indel_filtered.'.$input_var_format);
+        ($tmp_indel_fh, $tmp_indel_file)         = Genome::Sys->create_temp_file();
+        ($tmp_flt_indel_fh, $tmp_flt_indel_file) = Genome::Sys->create_temp_file();
     }
 
     my $header;
@@ -254,7 +254,7 @@ sub execute {
     map{$_->close if $_}($tmp_flt_snv_fh, $tmp_flt_indel_fh);
 
     if ($header) {
-        my ($header_fh, $header_file) = Genome::Sys->create_temp_file('tmp_header_'.$input_var_format);
+        my ($header_fh, $header_file) = Genome::Sys->create_temp_file();
         $header_fh->print($header);
         $header_fh->close;
 
