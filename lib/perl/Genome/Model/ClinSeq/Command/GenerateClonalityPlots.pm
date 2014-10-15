@@ -291,7 +291,7 @@ sub execute {
         $self->cnv_hmm_file($cnvhmm_file);
     } else {
         my $copycat_cnvhmm_file = $output_dir . "cnaseq.cnvhmm";
-        $copycat_cnvhmm_file = $self->create_copycat_cnv_hmm_file($somatic_var_build, $copycat_cnvhmm_file);
+        $self->create_copycat_cnvhmm_file($somatic_var_build, $copycat_cnvhmm_file);
         $self->cnv_hmm_file($copycat_cnvhmm_file);
     }
     $self->cnv_hq_file($cnvs_output_path);
@@ -310,7 +310,7 @@ sub get_data_paths {
     if(not $is_copycat) {
         $data_paths->{cnvs_hq} = $data_paths->{root_dir} . "variants/cnvs.hq";
     } else {
-        $data_paths->{cnvs_hq} = $self->_get_copycat_cnvhq($somatic_var_build, $output_dir);
+        $data_paths->{cnvs_hq} = $self->create_copycat_cnvhq_file($somatic_var_build, $output_dir);
     }
     $data_paths->{normal_bam} = $somatic_var_build->normal_bam;
     $data_paths->{tumor_bam} = $somatic_var_build->tumor_bam;
