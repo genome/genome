@@ -401,6 +401,7 @@ sub cat {
             input_files => \@next,
             output_files => [$output_file],
             skip_if_output_is_present => $skip_if_output_is_present,
+            allow_zero_size_input_files => 1,
         );
 
         unless($rv) {
