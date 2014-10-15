@@ -113,7 +113,7 @@ sub execute {
         $cmd .= " -z";
     }
     if($self->chromosome){
-        $cmd .= " -c " . $self->chromosome;
+        $cmd .= " -c " . Genome::Sys->quote_for_shell($self->chromosome);
     }
     if($self->no_header){
         $cmd .= " -n";
