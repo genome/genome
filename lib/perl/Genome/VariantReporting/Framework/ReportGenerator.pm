@@ -71,14 +71,6 @@ sub entry_processors {
         for (@filters) {$_->translate_inputs($self->translations)};
         for (@interpreters) {$_->translate_inputs($self->translations)};
 
-        #this needs to happen in object
-        for my $filter (@filters) {
-            $reporter->add_filter_object($filter)
-        }
-        for my $interpreter (@interpreters) {
-            $reporter->add_interpreter_object($interpreter)
-        }
-
         $reporter->initialize($self->output_directory);
 
         push @entry_processors, Genome::VariantReporting::Framework::EntryProcessor->create(
