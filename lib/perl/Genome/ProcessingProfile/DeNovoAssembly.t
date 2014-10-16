@@ -112,7 +112,36 @@ my @params_and_xml_list = (
     <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="MergeAndLinkSxResults">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-R 'select[mem&gt;30000] rusage[mem=30000]' -M 30000000" typeClass="Workflow::OperationType::Command" />
+    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-R 'select[gtmp&gt;1000] rusage[gtmp=1000] span[hosts=1]'" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operation name="Report">
+    <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::Report" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" typeClass="Workflow::OperationType::Command" />
+  </operation>
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>build</inputproperty>
+    <inputproperty>instrument_data</inputproperty>
+    <outputproperty>report_directory</outputproperty>
+  </operationtype>
+</workflow>
+EOS
+    },
+
+    {
+        params => { name => 'velvet test pp', coverage => 30,
+            assembler_name => 'velvet one-button',
+            assembler_version => '1.1.06',
+            post_assemble => 'metrics'
+        },
+        workflow_xml_template => <<EOS
+<?xml version='1.0' standalone='yes'?>
+<workflow name="%s all stages" executor="Workflow::Executor::SerialDeferred" logDir="%s">
+  <link fromOperation="PrepareInstrumentData" fromProperty="build" toOperation="Assemble" toProperty="build" />
+  <link fromOperation="input connector" fromProperty="build" toOperation="PrepareInstrumentData" toProperty="build" />
+  <link fromOperation="Assemble" fromProperty="build" toOperation="PostAssemble" toProperty="build" />
+  <link fromOperation="PostAssemble" fromProperty="build" toOperation="Report" toProperty="build" />
+  <link fromOperation="Report" fromProperty="report_directory" toOperation="output connector" toProperty="report_directory" />
+  <operation name="Assemble">
+    <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::Assemble" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-n 4 -R 'span[hosts=1] select[mem&gt;30000] rusage[mem=30000]' -M 30000000" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="PrepareInstrumentData">
     <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::PrepareInstrumentData" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000" typeClass="Workflow::OperationType::Command" />
