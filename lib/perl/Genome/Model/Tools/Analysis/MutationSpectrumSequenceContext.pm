@@ -37,14 +37,12 @@ class Genome::Model::Tools::Analysis::MutationSpectrumSequenceContext {
         is  => 'String',
         is_input=>1,
         is_optional => 0,
-        #default_value => 'output.pdf',
         doc => 'The name of pdf file to save the plot to',
     },
     proportiontest => {
         is  => 'String',
         is_input=>1,
         is_optional => 0,
-        #default_value => 'output.pdf',
         doc => 'The name of the file to save the proportion result to',
     },
     file4plot => {
@@ -195,13 +193,11 @@ sub generate_mutation_seq_context {
 
 
     my $joinxRefstatInput = makeinput4Joinx($ROI_file,$window_size);
-    #my $joinxOUT = "joinx.output";
     my ($fh, $joinxOUT) = Genome::Sys->create_temp_file;
     my $cmd = "joinx1.6 ref-stats -b $joinxRefstatInput -f $ref_fasta -r  | cut -f 1-4,8 > $joinxOUT ";
     system($cmd);
 
     my $joinx_FH = IO::File->new($joinxOUT) or die "Failed to open the file $joinxOUT\n";
-    #open (JOINX, $joinxOUT) or die "Can't read the file $joinxOUT due to $!";
     while(my $line = $joinx_FH->getline) {
         next if($line =~ /\#/);
         chomp $line;
@@ -310,7 +306,6 @@ sub prepare_file4_proportion_test_4type {
   my $contextB = shift;  #based on random
   my $output_file = shift;
 
-  #my $tmp_file = "test.proportion.in";
   my $fh_out = IO::File->new($output_file,"w") or die "Unable to write to $output_file\n";
   my @mutation_class = keys %$contextA;
   foreach my $category(@mutation_class) {
@@ -344,7 +339,6 @@ sub prepare_file4_proportion_test_2type {
   };
 
 
-  #my $tmp_file = "test.proportion.in";
   my $fh_out = IO::File->new($output_file,"w") or die "Unable to write to $output_file\n";
   my @mutation_class = keys %$contextA;
   foreach my $category(@mutation_class) {
@@ -465,10 +459,8 @@ sub makeinput4Joinx {
     my $file = shift;
     my $window_size = shift;
 
-    #open(ROI, $file) or die "Unable to open the file $file due to $!";
     my $input_fh = IO::File->new($file) or die "Failed to open the file $file\n";
     my ($output_fh, $tempfile) = Genome::Sys->create_temp_file;
-    #open(OUT, "> ROI.out") or die "Can't write to ROI.out\n";
     while(my $line = $input_fh->getline) {
         chomp $line;
         next if($line =~ /chromo/);
