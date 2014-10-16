@@ -68,6 +68,7 @@ my $union_sv_object = Genome::Model::Tools::DetectVariants2::Combine::UnionSv->c
     input_a_id => $detector_a->id,
     input_b_id => $detector_b->id,
     output_directory => $output_symlink,
+    aligned_reads_sample => 'TEST',
 );
 
 ok($union_sv_object, 'created UnionSv object');

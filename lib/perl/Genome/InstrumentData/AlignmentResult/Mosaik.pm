@@ -23,11 +23,11 @@ sub required_rusage {
     my %p = @_;
     my $instrument_data = delete $p{instrument_data};
 
-    return "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>4000] span[hosts=1] rusage[tmp=90000, mem=4000]' -M 24000000 -n 4";
+    return "-R 'select[tmp>90000 && mem>4000] span[hosts=1] rusage[tmp=90000, mem=4000]' -M 24000000 -n 4";
 }
 
 sub required_rusage_for_building_index { #NOT sure what appropriate reserve here is
-    return "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>4000] span[hosts=1] rusage[tmp=90000, mem=4000]' -M 24000000 -n 4";
+    return "-R 'select[tmp>90000 && mem>4000] span[hosts=1] rusage[tmp=90000, mem=4000]' -M 24000000 -n 4";
 }
 # TODO should generate the reference index and jump databases using MosaikJump and MosaikBuild
 

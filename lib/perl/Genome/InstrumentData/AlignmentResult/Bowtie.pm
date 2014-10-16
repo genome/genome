@@ -22,7 +22,7 @@ sub required_arch_os { 'x86_64' }
 sub required_rusage { 
     my $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
     $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD} if (Genome::Config->should_use_alignment_pd);
-    "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>10000] span[hosts=1] rusage[tmp=90000, mem=10000]' -M 10000000 -n 4 -m $queue -q $queue";
+    "-R 'select[tmp>90000 && mem>10000] span[hosts=1] rusage[tmp=90000, mem=10000]' -M 10000000 -n 4 -m $queue -q $queue";
 }
 
 

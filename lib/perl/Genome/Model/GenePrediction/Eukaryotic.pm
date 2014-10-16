@@ -266,7 +266,7 @@ sub map_workflow_inputs {
 sub _resolve_resource_requirements_for_build {
     # This is called during '_resolve_workflow_for_build' to specify the lsf resource requirements of the one-step
     # workflow that is generated from '_execute_build'.
-    return "-M 8000000 -R 'select[type==LINUX64 && mem>8000] rusage[mem=8000]'";
+    return "-M 8000000 -R 'select[mem>8000] rusage[mem=8000]'";
 }
 
 1;

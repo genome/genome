@@ -85,6 +85,7 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
         bam_readcount_version => {
             is => 'String',
             doc => 'version of bam-readcount to use',
+            is_optional => 1,
         },
     ],
 };
@@ -175,7 +176,7 @@ sub execute {
     my $prefix = 1;
     for my $bam (@bams){
         #run bam-readcount, stick the files in the tempdir
-        my $cmd = Genome::Model::Tools::Analysis::Coverage::BamReadcount->create(
+        my %params = (
             bam_file => $bam,
             output_file =>  "$tempdir/$prefix.rcfile",
             variant_file => $variant_file,
@@ -189,8 +190,11 @@ sub execute {
             min_mapping_quality => $min_quality_score,
             min_base_quality => $min_base_quality,
             per_library => $self->per_library,
-            bam_readcount_version => $self->bam_readcount_version,
-        );
+            );
+        if ($self->bam_readcount_version) {
+            $params{bam_readcount_version} = $self->bam_readcount_version;
+        }
+        my $cmd = Genome::Model::Tools::Analysis::Coverage::BamReadcount->create(%params);
         unless ($cmd->execute) {
             die "Bam-readcount failed";
         }

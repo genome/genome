@@ -38,14 +38,14 @@ sub execute {
         $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
             discovery => $model->last_succeeded_build,
             base_output_dir => $self->output_directory,
-            plan_file_basename => 'germline_report_TYPE.yaml',
+            plan_file_basename => 'gold_germline_report_TYPE.yaml',
         );
     } else {
         #Somatic
         $model_pair = Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $model->last_succeeded_build,
             base_output_dir => $self->output_directory,
-            plan_file_basename => 'somatic_TYPE_report.yaml',
+            plan_file_basename => 'gold_somatic_report_TYPE.yaml',
         );
     }
     for my $variant_type (qw(snvs indels)) {

@@ -19,7 +19,7 @@ class Genome::InstrumentData::Command::Import::GenerateFileForReimport {
     has_many_optional_input => {
         downsample_ratios => {
             is => 'Float',
-            doc => 'Downsample ratios to add to each instruemnt data reimport.',
+            doc => 'Downsample ratios to add to each instrument data reimport.',
         },
         instrument_data_and_new_source_files => {
             is_many => 1,

@@ -105,7 +105,7 @@ sub _construct_workflow {
 
     my $get_wildtype_command = $self->_attach_get_wildtype_command($workflow);
     my $generate_variant_sequences_command = $self->_attach_generate_variant_sequences_command($workflow);
-    my $remove_star_sequences_command = $self->_attach_remove_star_sequences_command($workflow);
+    my $remove_unknown_sequences_command = $self->_attach_remove_unknown_sequences_command($workflow);
     my $generate_fasta_key_command = $self->_attach_generate_fasta_key_command($workflow);
     my $run_netmhc_command = $self->_attach_run_netmhc_command($workflow);
     my $parse_netmhc_command = $self->_attach_parse_netmhc_command($workflow);
@@ -119,17 +119,17 @@ sub _construct_workflow {
     $workflow->create_link(
         source => $generate_variant_sequences_command,
         source_property => 'output_file',
-        destination => $remove_star_sequences_command,
+        destination => $remove_unknown_sequences_command,
         destination_property => 'input_file',
     );
     $workflow->create_link(
-        source => $remove_star_sequences_command,
+        source => $remove_unknown_sequences_command,
         source_property => 'output_file',
         destination => $generate_fasta_key_command,
         destination_property => 'input_file',
     );
     $workflow->create_link(
-        source => $remove_star_sequences_command,
+        source => $remove_unknown_sequences_command,
         source_property => 'output_file',
         destination => $run_netmhc_command,
         destination_property => 'fasta_file',
@@ -196,17 +196,17 @@ sub _attach_generate_variant_sequences_command {
     return $generate_variant_sequences_command;
 }
 
-sub _attach_remove_star_sequences_command {
+sub _attach_remove_unknown_sequences_command {
     my $self = shift;
     my $workflow = shift;
 
-    my $remove_star_sequences_command = Genome::WorkflowBuilder::Command->create(
-        name => 'RemoveStarSequencesCommand',
-        command => $self->remove_star_sequences_command_name,
+    my $remove_unknown_sequences_command = Genome::WorkflowBuilder::Command->create(
+        name => 'RemoveUnknownSequencesCommand',
+        command => $self->remove_unknown_sequences_command_name,
     );
-    $workflow->add_operation($remove_star_sequences_command);
-    $self->_add_common_inputs($workflow, $remove_star_sequences_command);
-    return $remove_star_sequences_command;
+    $workflow->add_operation($remove_unknown_sequences_command);
+    $self->_add_common_inputs($workflow, $remove_unknown_sequences_command);
+    return $remove_unknown_sequences_command;
 }
 
 sub _attach_generate_fasta_key_command {
@@ -274,10 +274,10 @@ sub generate_variant_sequences_command_name {
     return $self->command_class_prefix . "::GenerateVariantSequences";
 }
 
-sub remove_star_sequences_command_name {
+sub remove_unknown_sequences_command_name {
     my $self = shift;
 
-    return $self->command_class_prefix . "::RemoveStarSequences";
+    return $self->command_class_prefix . "::RemoveUnknownSequences";
 }
 
 sub generate_fasta_key_command_name {

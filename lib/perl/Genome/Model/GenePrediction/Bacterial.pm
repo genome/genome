@@ -179,7 +179,7 @@ sub _resolve_resource_requirements_for_build {
     # This is called during '_resolve_workflow_for_build' to specify the lsf resource requirements of the one-step
     # workflow that is generated from '_execute_build'.
     my ($build) = @_;
-    return "-R 'select[model!=Opteron250 && type==LINUX64] rusage[tmp=10000:mem=2000]' -M 2000000";
+    return "-R 'rusage[tmp=10000:mem=2000]' -M 2000000";
 }
 
 1;

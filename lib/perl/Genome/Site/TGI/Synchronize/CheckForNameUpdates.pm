@@ -59,6 +59,12 @@ sub execute {
     my @failures = grep { $_->has_failed } @updates;
     if(@failures) {
         $self->status_message('Found %s updates that need attention.', scalar(@failures));
+        for my $failure (@failures) {
+            my $ident = $failure->genome_entity
+                      ? $failure->genome_entity->__display_name__
+                      : sprintf("(%s=%s)", $failure->genome_class_name, $failure->subject_id);
+            $self->status_message('%s needs %s renamed to %s', $ident, $failure->old_value, $failure->new_value);
+        }
     } else {
         $self->status_message('No updates need attention.');
     }

@@ -37,6 +37,7 @@ sub output_file_path {
 sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
+    return unless $self;
 
     $self->_prepare_staging_directory;
     $self->_run;

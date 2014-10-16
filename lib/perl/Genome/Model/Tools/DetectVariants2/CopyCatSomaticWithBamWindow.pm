@@ -14,7 +14,7 @@ class Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow{
     doc => "Produces somatic copy-number calls from paired samples",
     has_param => [
         lsf_resource => {
-            default_value => 'rusage[mem=4000] select[type==LINUX64 && maxtmp>10000] span[hosts=1]',
+            default_value => 'rusage[mem=4000] select[maxtmp>10000] span[hosts=1]',
         },
     ],
     has => [

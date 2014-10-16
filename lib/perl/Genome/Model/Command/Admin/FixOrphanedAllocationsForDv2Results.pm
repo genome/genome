@@ -51,7 +51,9 @@ sub execute {
 
         next unless $a && $a->owner_class_name->isa('Genome::Model::Tools::DetectVariants2::Result::Base');
 
-        my $lookup_hash = (split /-/, $s)[-1];
+        my $lookup_hash = eval { Genome::SoftwareResult::_validate_lookup_hash((split /-/, $s)[-1]) };
+        next unless $lookup_hash;
+
         my $owner_lock = $a->owner_class_name->_lock($lookup_hash, undef);
 
         # the owner is generating if it's locked?

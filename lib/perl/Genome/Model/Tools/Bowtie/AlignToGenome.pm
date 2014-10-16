@@ -94,7 +94,7 @@ sub execute {                               # replace with real execution logic.
 		}
 	}
 
-	system("bsub -q $lsf_queue -R\"select[type==LINUX64 && model != Opteron250 && mem>12000] rusage[mem=12000] span[hosts=1]\" -n $num_cores -M 12000000 \"$path_to_novoalign $novoalign_params -d $reference -f $query_file >$output_file\"");
+	system("bsub -q $lsf_queue -R\"select[mem>12000] rusage[mem=12000] span[hosts=1]\" -n $num_cores -M 12000000 \"$path_to_novoalign $novoalign_params -d $reference -f $query_file >$output_file\"");
 
 	return 1;                               # exits 0 for true, exits 1 for false (retval/exit code mapping is overridable)
 }
