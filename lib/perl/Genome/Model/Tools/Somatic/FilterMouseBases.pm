@@ -29,7 +29,7 @@ class Genome::Model::Tools::Somatic::FilterMouseBases {
            type => 'String',
            is_input => 1,
            is_output => 1,
-           doc => 'Indexed FASTA of the human genome (defaults to build 37)',
+           doc => 'Indexed FASTA of the human genome',
            example_values => ['/gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa'],
        },
        'mouse_reference' => {
