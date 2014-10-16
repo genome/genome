@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Genome;
+use Try::Tiny;
+use IO::File;
 
 require Cwd;
 require File::Basename;
@@ -85,16 +87,14 @@ sub _dump_bam_from_sra {
     $self->debug_message('Check SRA database...done');
     
     $self->debug_message('Dump aligned bam...');
-    my $aligned_bam = ( $sra_has_primary_alignment_info ) ? $self->working_directory.'/aligned.bam' : $self->output_bam_path;
-    $self->debug_message('Aligned bam: '.$aligned_bam);
-    $cmd = "/usr/bin/sam-dump --primary $sra_path | samtools view -h -b -S - > $aligned_bam";
-    $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv or not -s $aligned_bam ) {
-        $self->error_message($@) if $@;
+    my $aligned_bam = $self->dump_aligned_bam($sra_path, $sra_has_primary_alignment_info);
+    if (defined $aligned_bam) {
+        $self->debug_message('Dump aligned bam...done');
+    }
+    else {
         $self->error_message('Failed to run sra sam dump aligned bam!');
         return;
     }
-    $self->debug_message('Dump aligned bam...done');
 
     if ( $sra_has_primary_alignment_info ) { # if primary alignment info exists, only aligned are dumped above.
         $self->debug_message('Dump unaligned from sra to fastq...');
@@ -135,6 +135,45 @@ sub _dump_bam_from_sra {
             $self->debug_message('Add bam from unaligned fastq to unsorted bam...done');
             unlink($unaligned_bam);
         }
+    }
+
+    return 1;
+}
+
+sub dump_aligned_bam {
+    my $self = shift;
+    my ($sra_path, $sra_has_primary_alignment_info) = @_;
+
+    my $aligned_bam = ( $sra_has_primary_alignment_info )
+        ? $self->working_directory.'/aligned.bam'
+        : $self->output_bam_path;
+
+    my $stderr = join('.', $aligned_bam, 'err');
+
+    my $sam_dump_ok = try {
+        Genome::Sys->shellcmd(
+            cmd => sprintf(
+                '/usr/bin/sam-dump --primary %s | samtools view -h -b -S -',
+                $sra_path),
+            output_files    =>[$aligned_bam],
+            redirect_stdout => $aligned_bam,
+            redirect_stderr => $stderr,
+        );
+
+        return -s $aligned_bam;
+    }
+    catch {
+        $self->error_message('Caught exception from shellcmd: '. $_);
+        return;
+    };
+
+    unless ($sam_dump_ok) {
+        $self->error_message('Failed to dump aligned bam.  Dumping stderr...');
+        my $fh = IO::File->new;
+        $fh->open($stderr, '<');
+        $self->debug_message($_) while $fh->getline;
+
+        return;
     }
 
     return 1;
