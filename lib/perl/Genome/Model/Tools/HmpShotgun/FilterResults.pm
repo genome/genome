@@ -73,11 +73,6 @@ class Genome::Model::Tools::HmpShotgun::FilterResults {
                 value => $ENV{GENOME_LSF_QUEUE_BIGMEM},
                 }	
         ],
-        has_param => [
-                       #lsf_resource => {
-           #     default_value => 'rusage[mem=12000] -M 24000000',
-           #},
-        ],
 };
 
 sub help_brief {
