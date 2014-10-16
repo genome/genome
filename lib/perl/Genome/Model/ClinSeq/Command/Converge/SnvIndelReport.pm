@@ -86,7 +86,8 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
         },
         summarize => {
               is => 'Boolean',
-              doc => 'Summarize the SnvIndel report.'
+              doc => 'Summarize the SnvIndel report.',
+              default => 1,
         },
         test => {
               is => 'Number',
@@ -328,15 +329,14 @@ sub execute {
   }
 
   if($self->summarize) {
-    foreach my $build1 (@clinseq_builds) {
-      my $summarize = Genome::Model::ClinSeq::Command::Converge::SummarizeSnvIndelReport->create(
-        clinseq_build => $build1,
-        outdir => $self->outdir,
-        min_mq => $self->min_quality_score,
-        min_bq => $self->min_base_quality,
-      );
-      $summarize->execute();
-    }
+    my $summarize = Genome::Model::ClinSeq::Command::Converge::SummarizeSnvIndelReport->create(
+      outdir => $original_outdir,
+      min_mq => $self->min_quality_score,
+      min_bq => $self->min_base_quality,
+      filtered_report => $result_files->{final_filtered_clean_tsv},
+      unfiltered_report => $result_files->{final_unfiltered_clean_tsv},
+    );
+    $summarize->execute();
   }
 
   return 1;
@@ -1054,17 +1054,10 @@ sub apply_variant_filters{
   return;
 }
 
-
-sub print_final_files{
+sub get_result_files {
   my $self = shift;
-  my %args = @_;
-  my $variants = $args{'-variants'};
-  my $grand_anno_count_file = $args{'-grand_anno_count_file'};
-  my $case_name = $args{'-case_name'};
-  my $align_builds = $args{'-align_builds'};
-  my $per_lib_header = $args{'-per_lib_header'};
-  my $trv_type_filter = $self->trv_type_filter;
-
+  my $case_name = shift;
+  my $result_files;
 
   #Write out final tsv files (filtered and unfiltered), a clean version with useless columns removed, and an Excel spreadsheet version of the final file
   my $final_unfiltered_tsv = $self->outdir . "$case_name" . "_final_unfiltered.tsv"; #OUT1
@@ -1075,22 +1068,35 @@ sub print_final_files{
   my $final_filtered_clean_xls = $self->outdir . "$case_name" . "_final_filtered_clean.xls"; #OUT5
   my $final_filtered_coding_clean_xls = $self->outdir . "$case_name" . "_final_filtered_coding_clean.xls"; #OUT6
 
-  open(ANNO, $grand_anno_count_file) || die $self->error_message("could not open grand anno read counts file: $grand_anno_count_file");
-  open(OUT1, ">$final_unfiltered_tsv") || die $self->error_message("could not open output file: $final_unfiltered_tsv");
-  open(OUT1b, ">$final_unfiltered_clean_tsv") || die $self->error_message("could not open output file: $final_unfiltered_clean_tsv");
-  open(OUT2, ">$final_filtered_tsv") || die $self->error_message("could not open output file: $final_filtered_tsv");
-  open(OUT3, ">$final_filtered_clean_tsv") || die $self->error_message("could not open output file: $final_filtered_clean_tsv");
-  open(OUT4, ">$final_filtered_coding_clean_tsv") || die $self->error_message("could not open output file: $final_filtered_coding_clean_tsv");
-
   #Store the result files paths and pass out to be used in the visualization step
-  my %result_files;
-  $result_files{final_unfiltered_tsv}{path} = $final_unfiltered_tsv;
-  $result_files{final_unfiltered_clean_tsv}{path} = $final_unfiltered_clean_tsv;
-  $result_files{final_filtered_tsv}{path} = $final_filtered_tsv;
-  $result_files{final_filtered_clean_tsv}{path} = $final_filtered_clean_tsv;
-  $result_files{final_filtered_coding_clean_tsv}{path} = $final_filtered_coding_clean_tsv;
-  $result_files{final_filtered_clean_xls}{path} = $final_filtered_clean_xls;
-  $result_files{final_filtered_coding_clean_xls}{path} = $final_filtered_coding_clean_xls;
+  $result_files->{final_unfiltered_tsv} = $final_unfiltered_tsv;
+  $result_files->{final_unfiltered_clean_tsv} = $final_unfiltered_clean_tsv;
+  $result_files->{final_filtered_tsv} = $final_filtered_tsv;
+  $result_files->{final_filtered_clean_tsv} = $final_filtered_clean_tsv;
+  $result_files->{final_filtered_coding_clean_tsv} = $final_filtered_coding_clean_tsv;
+  $result_files->{final_filtered_clean_xls} = $final_filtered_clean_xls;
+  $result_files->{final_filtered_coding_clean_xls} = $final_filtered_coding_clean_xls;
+
+  return $result_files;
+}
+
+sub print_final_files{
+  my $self = shift;
+  my %args = @_;
+  my $variants = $args{'-variants'};
+  my $grand_anno_count_file = $args{'-grand_anno_count_file'};
+  my $case_name = $args{'-case_name'};
+  my $align_builds = $args{'-align_builds'};
+  my $per_lib_header = $args{'-per_lib_header'};
+  my $trv_type_filter = $self->trv_type_filter;
+  my $result_files = $self->get_result_files($case_name);
+
+  open(ANNO, $grand_anno_count_file) || die $self->error_message("could not open grand anno read counts file: $grand_anno_count_file}");
+  open(OUT1, ">$result_files->{final_unfiltered_tsv}") || die $self->error_message("could not open output file: $result_files->{final_unfiltered_tsv}");
+  open(OUT1b, ">$result_files->{final_unfiltered_clean_tsv}") || die $self->error_message("could not open output file: $result_files->{final_unfiltered_clean_tsv}");
+  open(OUT2, ">$result_files->{final_filtered_tsv}") || die $self->error_message("could not open output file: $result_files->{final_filtered_tsv}");
+  open(OUT3, ">$result_files->{final_filtered_clean_tsv}") || die $self->error_message("could not open output file: $result_files->{final_filtered_clean_tsv}");
+  open(OUT4, ">$result_files->{final_filtered_coding_clean_tsv}") || die $self->error_message("could not open output file: $result_files->{final_filtered_coding_clean_tsv}");
 
   my @skip = qw (gene_name transcript_species transcript_source transcript_version transcript_status c_position ucsc_cons domain all_domains deletion_substructures transcript_error gene_name_source);
   my %skip_columns;
@@ -1194,9 +1200,9 @@ sub print_final_files{
   close(OUT4);
 
   # convert master table to excel
-  my $final_filtered_clean_workbook  = Spreadsheet::WriteExcel->new("$final_filtered_clean_xls");
+  my $final_filtered_clean_workbook  = Spreadsheet::WriteExcel->new("$result_files->{final_filtered_clean_xls}");
   my $final_filtered_clean_worksheet = $final_filtered_clean_workbook->add_worksheet();
-  open (IN, $final_filtered_clean_tsv) || die $self->error_message("Could not open in file: $final_filtered_clean_tsv");
+  open (IN, $result_files->{final_filtered_clean_tsv}) || die $self->error_message("Could not open in file: $result_files->{final_filtered_clean_tsv}");
   my $row=0;
   while(<IN>){
     chomp($_);
@@ -1212,9 +1218,9 @@ sub print_final_files{
   close(IN);
   $final_filtered_clean_workbook->close();
 
-  my $final_filtered_coding_clean_workbook  = Spreadsheet::WriteExcel->new("$final_filtered_coding_clean_xls");
+  my $final_filtered_coding_clean_workbook  = Spreadsheet::WriteExcel->new("$result_files->{final_filtered_coding_clean_xls}");
   my $final_filtered_coding_clean_worksheet = $final_filtered_coding_clean_workbook->add_worksheet();
-  open (IN, $final_filtered_coding_clean_tsv) || die $self->error_message("Could not open in file: $final_filtered_coding_clean_tsv");
+  open (IN, $result_files->{final_filtered_coding_clean_tsv}) || die $self->error_message("Could not open in file: $result_files->{final_filtered_coding_clean_tsv}");
   $row=0;
   while(<IN>){
     chomp($_);
@@ -1230,7 +1236,7 @@ sub print_final_files{
   close(IN);
   $final_filtered_coding_clean_workbook->close();
 
-  return(\%result_files);
+  return($result_files);
 }
 
 sub create_plots{
@@ -1240,8 +1246,8 @@ sub create_plots{
   my $align_builds = $args{'-align_builds'};
   my $case_name = $args{'-case_name'};
 
-  my $final_filtered_clean_tsv = $result_files->{final_filtered_clean_tsv}->{path};
-  my $final_filtered_coding_clean_tsv = $result_files->{final_filtered_coding_clean_tsv}->{path};
+  my $final_filtered_clean_tsv = $result_files->{final_filtered_clean_tsv};
+  my $final_filtered_coding_clean_tsv = $result_files->{final_filtered_coding_clean_tsv};
 
   #Get the header for the file to be fed into R to determine per-lib VAF column positions
   open (TMP, $final_filtered_clean_tsv) || die $self->error_message("Could not open file: $final_filtered_clean_tsv");
