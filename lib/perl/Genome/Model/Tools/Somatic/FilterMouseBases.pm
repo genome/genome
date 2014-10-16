@@ -421,14 +421,6 @@ sub flip_base {
         return("C");
     } elsif($base eq 'T') {
         return("A");
-    } elsif($base eq 'a') {
-        return("t");
-    } elsif($base eq 'c') {
-        return("g");
-    } elsif($base eq 'g') {
-        return("c");
-    } elsif($base eq 't') {
-        return("a");
     } else {
         return($base);
     }
