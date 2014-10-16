@@ -31,11 +31,11 @@ class Genome::Model::Tools::Blat::AlignToGenome {
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		reference_dir	=> { is => 'Text', doc => "Directory containing chromosome files in FASTA format" },
-		search_string	=> { is => 'Text', doc => "Seach string to identify chromosome files, [*.fasta]", is_optional => 1 },		
+		search_string	=> { is => 'Text', doc => "Seach string to identify chromosome files", default_value => '*.fasta', is_optional => 1 },
 		query_file	=> { is => 'Text', doc => "Query file in FASTA format" },
 		output_dir	=> { is => 'Text', doc => "Directory to store output files" },
-		params		=> { is => 'Text', doc => "BLAT parameters [-mask=lower -out=pslx -noHead]", is_optional => 1 },
-		lsf_queue	=> { is => 'Text', doc => "LSF queue if other than $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} [$ENV{GENOME_LSF_QUEUE_BUILD_WORKER}]", is_optional => 1 },	
+		params		=> { is => 'Text', doc => "BLAT parameters", default_value => '-mask=lower -out=pslx -noHead', is_optional => 1 },
+		lsf_queue	=> { is => 'Text', doc => "LSF queue", default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER}, is_optional => 1 },
 	],
 };
 
@@ -75,17 +75,12 @@ sub execute {                               # replace with real execution logic.
 	## Get required parameters ##
 	my $query_file = $self->query_file;
 	my $output_dir = $self->output_dir;
-	
-	## Set defaults for optional parameters ##
-	my $search_string = "*.fasta";
-	my $blat_params = "-mask=lower -out=pslx -noHead";
-	my $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
 
-	## Get optional parameters if provided ##
-	$dir = $self->reference_dir if($self->reference_dir);
-	$search_string = $self->search_string if($self->search_string);
-	$blat_params = $self->params if($self->params);
-	$lsf_queue = $self->lsf_queue if($self->lsf_queue);
+	## Get optional parameters ##
+	my $dir = $self->reference_dir;
+	my $search_string = $self->search_string;
+	my $blat_params = $self->params;
+	my $lsf_queue = $self->lsf_queue;
 
 	## Verify that query file exists ##
 	
