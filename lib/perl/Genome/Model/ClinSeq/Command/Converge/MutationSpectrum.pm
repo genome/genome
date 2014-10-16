@@ -259,9 +259,9 @@ sub _get_data_type {
   my $self = shift;
   my $stats_file = shift;
   my $data_type = "WGS/Exome";
-  if($stats_file =~ /mutation-spectrum\/exome\/summarize_mutation_spectrum/) {
+  if($stats_file =~ /mutation-spectrum.*\/exome\/.*summarize_mutation_spectrum/) {
     $data_type = "exome";
-  } elsif($stats_file =~ /mutation-spectrum\/wgs\/summarize_mutation_spectrum/) {
+  } elsif($stats_file =~ /mutation-spectrum.*\/wgs\/.*summarize_mutation_spectrum/) {
     $data_type = "wgs";
   }
   return $data_type;
