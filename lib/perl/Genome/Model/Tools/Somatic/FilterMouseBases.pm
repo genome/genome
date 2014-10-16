@@ -37,7 +37,7 @@ class Genome::Model::Tools::Somatic::FilterMouseBases {
            is_input => 1,
            is_output => 1,
            doc => 'Indexed FASTA of the mouse genome ',
-           example_values => ['/gscmnt/839/info/medseq/reference_sequences/NCBI-mouse-build37/all_sequences.fa'],
+           example_values => ['/gscmnt/sata420/info/reference_sequences/NCBI-mouse-build37/all_sequences.fa'],
        },
        'output_file' => {
            type => 'String',
