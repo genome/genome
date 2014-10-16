@@ -413,17 +413,8 @@ sub flip_base {
     my $base = shift(@_);
     $base = uc($base);
 
-    if($base eq 'A') {
-        return("T");
-    } elsif($base eq 'C') {
-        return("G");
-    } elsif($base eq 'G') {
-        return("C");
-    } elsif($base eq 'T') {
-        return("A");
-    } else {
-        return($base);
-    }
+    $base =~ tr/ACGT/TGCA/;
+    return $base;
 }
 
 1;
