@@ -29,6 +29,8 @@ ok($clinseq_build, "Found clinseq build.");
 my $run_summarize_sireport = Genome::Model::ClinSeq::Command::Converge::SummarizeSnvIndelReport->create(
   outdir => $temp_dir,
   clinseq_build => $clinseq_build,
+  min_bq => 20,
+  min_mq => 30,
 );
 $run_summarize_sireport->queue_status_messages(1);
 $run_summarize_sireport->execute();

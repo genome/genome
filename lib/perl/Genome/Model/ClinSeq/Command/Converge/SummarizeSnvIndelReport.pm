@@ -10,6 +10,17 @@ class Genome::Model::ClinSeq::Command::Converge::SummarizeSnvIndelReport {
   clinseq_build => {
     is => 'Genome::Model::Build::ClinSeq',
     doc => 'ClinSeq build to summarize snv_indel_report for.',
+    is_optional => 1,
+  },
+  filtered_report => {
+    is => 'FilesystemPath',
+    doc => 'Filtered SnvIndel report. If not specified, this file is obtained from the snv_indel report from the clinseq build.',
+    is_optional => 1,
+  },
+  unfiltered_report => {
+    is => 'FilesystemPath',
+    doc => 'Unfiltered SnvIndel report. If not specified, this file is obtained from the snv_indel report from the clinseq build.',
+    is_optional => 1,
   },
   outdir => {
     is => 'FilesystemPath',
@@ -18,12 +29,10 @@ class Genome::Model::ClinSeq::Command::Converge::SummarizeSnvIndelReport {
   min_mq => {
     is => 'Integer',
     doc => 'minimum mapping quality of reads to be considered',
-    default => '30',
   },
   min_bq => {
     is => 'Integer',
     doc => 'minimum base quality of bases in reads to be considered',
-    default => '20',
   },
   ],
   doc => 'Summarize SNVIndel Report in ClinSeq.',
@@ -45,12 +54,13 @@ EOS
 
 sub execute {
   my $self = shift;
-  my $build = $self->clinseq_build;
-  my $reports = $self->get_sireports($build);
+  my $reports = $self->get_sireports();
   my $stats_file = $self->outdir . "/Stats.tsv";
-  unlink $stats_file;
-  foreach my $report(keys %$reports) {
-    my $filter = $reports->{$report};
+  if(-e $stats_file) {
+    unlink $stats_file;
+  }
+  foreach my $filter(keys %$reports) {
+    my $report = $reports->{$filter};
     my (%snv_stats, %indel_stats);
     $self->parse_snv_indel_report($report, \%snv_stats, \%indel_stats);
     $self->write_stats(\%snv_stats, \%indel_stats, $stats_file, $filter);
@@ -59,14 +69,22 @@ sub execute {
 
 sub get_sireports {
   my $self = shift;
-  my $build = shift;
   my $reports;
   my $bq = $self->min_bq;
   my $mq = $self->min_mq;
-  my $snv_indel_report1 = $build->snv_indel_report_clean_filtered_file($bq, $mq);
-  my $snv_indel_report2 = $build->snv_indel_report_clean_unfiltered_file($bq, $mq);
-  $reports->{$snv_indel_report1} = "filtered";
-  $reports->{$snv_indel_report2} = "unfiltered";
+  my ($snv_indel_report1, $snv_indel_report2);
+  if($self->clinseq_build) {
+    my $build = $self->clinseq_build;
+    $snv_indel_report1 = $build->snv_indel_report_clean_filtered_file($bq, $mq);
+    $snv_indel_report2 = $build->snv_indel_report_clean_unfiltered_file($bq, $mq);
+  } elsif ($self->filtered_report and $self->unfiltered_report) {
+    $snv_indel_report1 = $self->filtered_report;
+    $snv_indel_report2 = $self->unfiltered_report;
+  } else {
+    die $self->error_message("SnvIndel reports or a clinseq build not specified.");
+  }
+  $reports->{"filtered"} = $snv_indel_report1;
+  $reports->{"unfiltered"} = $snv_indel_report2;
   return $reports;
 }
 
