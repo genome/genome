@@ -6880,15 +6880,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>remove-star-sequences',
-    [
-      'input-file=s',
-      'files',
-      'output-directory=s',
-      'files',
-      'help!',
-      undef
-    ],
     '>parse-netmhc-output',
     [
       'netmhc-file=s',
@@ -6956,6 +6947,15 @@ $Genome::Model::Tools::OPTS_SPEC = [
         '3.0',
         '3.4'
       ],
+      'help!',
+      undef
+    ],
+    '>remove-unknown-sequences',
+    [
+      'input-file=s',
+      'files',
+      'output-directory=s',
+      'files',
       'help!',
       undef
     ],
@@ -25149,6 +25149,21 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>bam-qc',
   [
+    '>summarize-instrument-data',
+    [
+      'output-tsv=s',
+      'files',
+      'color!',
+      undef,
+      'debug!',
+      undef,
+      'output-pdf=s',
+      'files',
+      'instrument-data=s@',
+      undef,
+      'help!',
+      undef
+    ],
     '>run',
     [
       'bam-file=s',
