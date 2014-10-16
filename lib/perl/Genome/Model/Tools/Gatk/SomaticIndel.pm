@@ -63,7 +63,7 @@ class Genome::Model::Tools::Gatk::SomaticIndel {
             doc => "Parameters for GATK",
             is_optional => 1,
             is_input => 1,
-            example_values => ["/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa"],
+            example_values => ["/gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa"],
         },
         mb_of_ram => {
             is => 'Text',

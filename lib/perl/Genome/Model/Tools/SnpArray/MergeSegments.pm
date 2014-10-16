@@ -35,7 +35,7 @@ class Genome::Model::Tools::SnpArray::MergeSegments {
         size_threshold      => { is => 'Text', doc => "Fraction of chromosome arm length above which an event is considered large-scale", is_input => 1, default => 0.25},
         min_num_mark        => { is => 'Text', doc => "Minimum number of markers to include a segment (higher = more stringent); 30 is a good start", is_optional => 0, is_input => 1, default => 1},
         output_basename     => { is => 'Text', doc => "Base name for output", is_optional => 1, is_input => 1},
-        ref_arm_sizes       => { is => 'Text', doc => "Two column file of reference name and size in bp for calling by chromosome arm", example_values => ["/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/chromosome_arm_coordinates.tsv"]},
+        ref_arm_sizes       => { is => 'Text', doc => "Two column file of reference name and size in bp for calling by chromosome arm", example_values => ["/gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/chromosome_arm_coordinates.tsv"]},
         verbose     => { is => 'Text', doc => "If set to 1, use for verbose output", is_optional => 1, is_input => 1},
         ],
 };
