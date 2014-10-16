@@ -796,7 +796,7 @@ sub parse_read_counts{
         $samples{$sample_name}{coverage} = $coverage;
       }
     }
-    my $min_coverage_observed = 10000000000000000;
+    my $min_coverage_observed = 'inf';
     foreach my $sample_name (keys %samples){
       my $prefix = $samples{$sample_name}{prefix};
       my $coverage = $samples{$sample_name}{coverage};
