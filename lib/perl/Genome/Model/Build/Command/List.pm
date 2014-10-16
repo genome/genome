@@ -37,7 +37,7 @@ sub help_synopsis {
   genome model build list mymodel
 
   # or use standard filters
-  genome model build list --filter status=Abandoned,data_directory~/gscmnt/839% --show id,subject_name,data_directory
+  genome model build list --filter status=Running,subject.name~TCGA% --show id,subject_name,data_directory
 EOS
     return $syn;
 }
