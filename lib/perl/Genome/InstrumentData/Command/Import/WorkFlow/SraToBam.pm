@@ -87,8 +87,11 @@ sub _dump_bam_from_sra {
     $self->debug_message('Check SRA database...done');
     
     $self->debug_message('Dump aligned bam...');
-    my $aligned_bam = $self->dump_aligned_bam($sra_path, $sra_has_primary_alignment_info);
-    if (defined $aligned_bam) {
+    my $aligned_bam = ( $sra_has_primary_alignment_info )
+        ? $self->working_directory.'/aligned.bam'
+        : $self->output_bam_path;
+
+    if ( $self->dump_aligned_bam($sra_path, $aligned_bam) ) {
         $self->debug_message('Dump aligned bam...done');
     }
     else {
@@ -142,11 +145,7 @@ sub _dump_bam_from_sra {
 
 sub dump_aligned_bam {
     my $self = shift;
-    my ($sra_path, $sra_has_primary_alignment_info) = @_;
-
-    my $aligned_bam = ( $sra_has_primary_alignment_info )
-        ? $self->working_directory.'/aligned.bam'
-        : $self->output_bam_path;
+    my ($sra_path, $aligned_bam) = @_;
 
     my $stderr = join('.', $aligned_bam, 'err');
 
