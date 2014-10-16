@@ -210,8 +210,8 @@ Email a Genome::Report
         description => 'GC Logo GIF',
         ctype => 'image/jpeg',
         encoding => 'base64',
-        disposition => "inline; filename=\"genome_center_logo.gif\";\r\nContent-ID: <footerimg>",
-        file => '/gscmnt/839/info/medseq/images/genome_center_logo.gif'
+        disposition => "inline; filename=\"gc_logo_28.png\";\r\nContent-ID: <footerimg>",
+        file => '/path/to/Genome/View/Resource/Html/img/gc_logo_28.png'
     },
     # ...
     ],
