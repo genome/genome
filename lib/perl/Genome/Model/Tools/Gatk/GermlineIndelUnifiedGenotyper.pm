@@ -9,27 +9,27 @@ use Genome;
 class Genome::Model::Tools::Gatk::GermlineIndelUnifiedGenotyper {
     is => 'Genome::Model::Tools::Gatk::Base',
     has => [
-        bam_file => { 
-            is => 'Text', 
-            doc => "BAM File for Sample", 
-            is_optional => 0, 
-            is_input => 1, 
+        bam_file => {
+            is => 'Text',
+            doc => "BAM File for Sample",
+            is_optional => 0,
+            is_input => 1,
         },
-        vcf_output_file => { 
+        vcf_output_file => {
             is => 'Text',
             doc => "Output file to receive GATK vcf format lines",
             is_optional => 0,
-            is_input => 1, 
-            is_output => 1, 
+            is_input => 1,
+            is_output => 1,
         },
-        verbose_output_file => { 
+        verbose_output_file => {
             is => 'Text',
             doc => "STDOUT from GATK",
             is_optional => 1,
             is_input => 1,
-            is_output => 1, 
+            is_output => 1,
         },
-        gatk_params => { 
+        gatk_params => {
             is => 'Text',
             doc => "Parameters for GATK",
             is_optional => 1,
@@ -37,7 +37,7 @@ class Genome::Model::Tools::Gatk::GermlineIndelUnifiedGenotyper {
             is_output => 1,
             default => "-T UnifiedGenotyper -et NO_ET",
         },
-        reference_fasta => { 
+        reference_fasta => {
             is => 'Text',
             doc => "Parameters for GATK",
             is_optional => 1,
@@ -67,7 +67,7 @@ class Genome::Model::Tools::Gatk::GermlineIndelUnifiedGenotyper {
     has_param => [
         lsf_queue => {
             default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
-        }, 
+        },
         lsf_resource => {
             default_value => "-R 'rusage[mem=6000] select[mem>6000 && maxtmp>100000] span[hosts=1]' -M 6000000",
         },
@@ -76,8 +76,8 @@ class Genome::Model::Tools::Gatk::GermlineIndelUnifiedGenotyper {
 
 sub sub_command_sort_position { 12 }
 
-sub help_brief {  
-    "Runs the GATK germline indel detection pipeline"                 
+sub help_brief {
+    "Runs the GATK germline indel detection pipeline"
 }
 
 sub help_synopsis {
@@ -88,7 +88,7 @@ EOS
 }
 
 sub help_detail {
-    return <<EOS 
+    return <<EOS
 
 EOS
 }
@@ -122,7 +122,7 @@ sub execute {
     my $ram = $self->mb_of_ram;
     my $cmd = 'java -Xms'.$ram.'m -Xmx'.$ram.'m -jar ';
     $cmd .= join(" ", $path_to_gatk, $gatk_params, $reference_fasta, $bam_input, $output_file);
-    
+
     ## Optionally append STDOUT output file ##
 
     if($self->verbose_output_file) {
@@ -139,13 +139,13 @@ sub execute {
     my $return;
     unless($self->skip_if_output_present && -e $output_file){
         my $file = $self->vcf_output_file;
-        system("touch $file"); # This will create an empty output file to help prevent GATK from crashing 
+        system("touch $file"); # This will create an empty output file to help prevent GATK from crashing
         $return = Genome::Sys->shellcmd(
             cmd => "$cmd",
             output_files => [$file],
             skip_if_output_is_present => 0,
         );
-        unless($return) { 
+        unless($return) {
             die $self->error_message("Failed to execute GATK: GATK Returned $return");
         }
     }
