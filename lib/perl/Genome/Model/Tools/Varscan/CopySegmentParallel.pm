@@ -70,7 +70,7 @@ class Genome::Model::Tools::Varscan::CopySegmentParallel {
         },
     ],
     has_param => [
-        lsf_resource => { default_value => 'select[model!=Opteron250 && type==LINUX64 && tmp>1000] rusage[mem=4000]'},
+        lsf_resource => { default_value => 'select[tmp>1000] rusage[mem=4000]'},
     ],
 };
 

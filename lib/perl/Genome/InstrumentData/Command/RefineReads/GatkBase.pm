@@ -38,7 +38,7 @@ class Genome::InstrumentData::Command::RefineReads::GatkBase {
 };
 
 sub bsub_rusage {
-    return "-R 'select[mem>12000 && gtmp>90 && type==LINUX64] rusage[mem=12000, gtmp=90] span[hosts=1]' -M 12000000 -n 8";
+    return "-R 'select[mem>12000 && gtmp>90] rusage[mem=12000, gtmp=90] span[hosts=1]' -M 12000000 -n 8";
 }
 
 sub result_names {
