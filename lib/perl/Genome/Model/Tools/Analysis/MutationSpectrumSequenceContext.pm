@@ -79,7 +79,7 @@ sub help_synopsis {
     return <<"EOS"
 gmt analysis mutation-spectrum-sequence-context --roi-file=SJMEL001003-0260.alltier.snv --proportiontest SJMEL001003.prop.test --output-file=SJMEL.pdf --plot-title=SJMEL001003-0260 --window-size=10
 
- build36 refseq fasta  => "/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fasta",
+ build36 refseq fasta  => "/gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa",
  build37 refseq fasta  => "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa",
 
 
