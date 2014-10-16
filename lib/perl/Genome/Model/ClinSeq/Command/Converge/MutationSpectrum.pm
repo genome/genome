@@ -16,13 +16,13 @@ class Genome::Model::ClinSeq::Command::Converge::MutationSpectrum {
       is => 'Number',
       doc => 'Baseq cutoff for mutation-spectrum results.',
       is_optional => 1,
-      default => 30,
+      default => 20,
     },
     mq => {
       is => 'Number',
       doc => 'Mappingq cutoff for mutation-spectrum results.',
       is_optional => 1,
-      default => 20,
+      default => 30,
     },
   ],
   doc => 'converge Stats from mutiple clinseq builds'
