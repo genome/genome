@@ -9,8 +9,8 @@ class Genome::Model::ReferenceSequence::Command::ListBuilds {
     is => 'Genome::Model::Command::BuildRelatedList',
     has => [
         subject_class_name  => {
-            is_constant => 1, 
-            value => 'Genome::Model::Build::ImportedReferenceSequence' 
+            is_constant => 1,
+            value => 'Genome::Model::Build::ImportedReferenceSequence'
         },
         show => { default_value => 'id,name,model.subject.name,date_scheduled,status,run_by,data_directory' },
     ],
