@@ -69,7 +69,7 @@ sub _dump_bam_from_sra {
     $self->debug_message('DBCC file: '.$dbcc_file);
     my $cwd = Cwd::getcwd();
     my ($source_sra_basename, $source_sra_directory) = File::Basename::fileparse($sra_path);
-    chdir $source_sra_directory;
+    chdir($source_sra_directory) or die "Failed to chdir('$source_sra_directory')";
     my $cmd = "/usr/bin/sra-dbcc $source_sra_basename &> $dbcc_file";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $dbcc_file ) {
@@ -83,7 +83,7 @@ sub _dump_bam_from_sra {
         return;
     }
     my $sra_has_primary_alignment_info = grep { $_ =~ /PRIMARY_ALIGNMENT/ } @dbcc_lines;
-    chdir $cwd;
+    chdir($cwd) or die "Failed to chdir('$cwd')";
     $self->debug_message('Check SRA database...done');
     
     $self->debug_message('Dump aligned bam...');
@@ -176,7 +176,7 @@ sub dump_aligned_bam {
         return;
     }
 
-    return 1;
+    return $aligned_bam;
 }
 
 1;
