@@ -60,7 +60,8 @@ sub resolve_plan_attributes {
     for my $name (keys %{$specific_plan->params}) {
         $self->$name($specific_plan->params->{$name});
     }
-    my $translations = $self->provider->get_attribute('translations');
+    my $translations;
+    eval { $translations = $self->provider->get_attribute('translations') };
     $self->translate_inputs($translations);
 }
 
