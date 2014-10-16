@@ -1397,8 +1397,8 @@ sub get_ref_align_builds{
   foreach my $name (sort {$ref_builds{$a}->{order} <=> $ref_builds{$b}->{order}} keys %ref_builds){
     push(@time_points, $ref_builds{$name}{time_point});
     push(@time_points_tissue, $ref_builds{$name}{time_point_tissue});
-    push(@samples, $ref_builds{$name}{sample_name} . "_" . $ref_builds{$name}{sample_common_name});
-    push(@names, $name . "_" . $ref_builds{$name}{sample_common_name});
+    push(@samples, $ref_builds{$name}{sample_name});
+    push(@names, $name);
   }
 
   #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
