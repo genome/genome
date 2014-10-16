@@ -5,17 +5,17 @@ use above "Genome";
 use Test::More;
 
 my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} .
-  "Genome-Model-ClinSeq-Command-Converge-MutationSpectrum/2014-07-09/";
+  "Genome-Model-ClinSeq-Command-Converge-MutationSpectrum/2014-10-16/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 my $op_dir = Genome::Sys->create_temp_directory();
 ok($op_dir, "Created test dir");
 
 my $op_file = "converge_mutspec.out";
-my $bid1="d0f2169786074f6e9609a9f6de3754c7";
+my $bid1="da3b27e756ab49418b23da896698e635";
 my $clinseq_build1 = Genome::Model::Build->get($bid1);
 ok($clinseq_build1, "Found test build1");
-my $bid2="638b5e3c3e7548df94351907d6d8c714";
+my $bid2="0aeb0be6424446d8a75e42fa377438f2";
 my $clinseq_build2 = Genome::Model::Build->get($bid2);
 ok($clinseq_build2, "Found test build 2");
 my @builds = ($clinseq_build1, $clinseq_build2);
@@ -25,6 +25,8 @@ my $converge_mutspec = Genome::Model::ClinSeq::Command::Converge::MutationSpectr
       outfile => $op_file,
       outdir => $op_dir,
       bam_readcount_version => 0.6,
+      bq => 0,
+      mq => 1,
 );
 my $return = $converge_mutspec->execute();
 ok($clinseq_build2, "Executed succesfully");
