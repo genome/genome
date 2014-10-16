@@ -63,11 +63,15 @@ sub entry_processors {
 
     my @entry_processors;
     for my $reporter_plan ($self->plan->reporter_plans) {
-        my $reporter = $self->object_with_translations($reporter_plan);
+        my $reporter = $reporter_plan->object;
+        my @filters = map {$_->object} $reporter_plan->filter_plans;
+        my @interpreters = map {$_->object} $reporter_plan->interpreter_plans;
 
-        my @filters = map {$self->object_with_translations($_)} $reporter_plan->filter_plans;
-        my @interpreters = map {$self->object_with_translations($_)} $reporter_plan->interpreter_plans;
+        $reporter->translate_inputs($self->translations);
+        for (@filters) {$_->translate_inputs($self->translations)};
+        for (@interpreters) {$_->translate_inputs($self->translations)};
 
+        #this needs to happen in object
         for my $filter (@filters) {
             $reporter->add_filter_object($filter)
         }
@@ -86,14 +90,5 @@ sub entry_processors {
     return @entry_processors;
 }
 Memoize::memoize('entry_processors');
-
-sub object_with_translations {
-    my ($self, $plan) = @_;
-
-    my $object = $plan->object;
-    $object->translate_inputs($self->translations);
-    return $object;
-}
-
 
 1;
