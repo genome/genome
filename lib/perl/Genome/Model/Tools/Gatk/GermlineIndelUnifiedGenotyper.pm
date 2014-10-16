@@ -1,18 +1,6 @@
 
 package Genome::Model::Tools::Gatk::GermlineIndelUnifiedGenotyper;
 
-#####################################################################################################################################
-# GermlineIndel - Call the GATK germline indel detection pipeline
-#					
-#	AUTHOR:		Will Schierding
-#
-#	CREATED:	03-Mar-2011 by W.S.
-#	MODIFIED:	03-Mar-2011 by W.S.
-#
-#	NOTES:	
-#			
-#####################################################################################################################################
-
 use strict;
 use warnings;
 use FileHandle;
@@ -104,11 +92,6 @@ sub help_detail {
 
 EOS
 }
-
-################################################################################################
-# Execute - the main program logic
-#
-################################################################################################
 
 sub execute {
     my $self = shift;
