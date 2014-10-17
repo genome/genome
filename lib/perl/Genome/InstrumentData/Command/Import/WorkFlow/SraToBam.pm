@@ -37,17 +37,23 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SraToBam {
 
 sub execute {
     my $self = shift;
-    $self->debug_message('Dump bam from SRA...');
 
-    my $dump_ok = $self->_dump_bam_from_sra;
-    return if not $dump_ok;
+    return try {
+        $self->debug_message('Dump bam from SRA...');
+        my $dump_ok = $self->_dump_bam_from_sra;
+        return if not $dump_ok;
 
-    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $flagstat = $helpers->validate_bam($self->output_bam_path);
-    return if not $flagstat;
+        my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
+        my $flagstat = $helpers->validate_bam($self->output_bam_path);
+        return if not $flagstat;
 
-    $self->debug_message('Dump bam from SRA...done');
-    return 1;
+        $self->debug_message('Dump bam from SRA...done');
+        return 1;
+    }
+    catch {
+        $self->debug_message('Dumping BAM from SRA failed: '.$_);
+        return;
+    };
 }
 
 sub _dump_bam_from_sra {
