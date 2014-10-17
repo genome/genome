@@ -98,7 +98,8 @@ sub _dump_bam_from_sra {
         ? $self->working_directory.'/aligned.bam'
         : $self->output_bam_path;
 
-    if ( $self->dump_aligned_bam($sra_path, $aligned_bam) ) {
+    my $dump_aligned_bam_ok = $self->dump_aligned_bam($sra_path, $aligned_bam);
+    if ( $dump_aligned_bam_ok and (-s $aligned_bam) ) {
         $self->debug_message('Dump aligned bam...done');
     }
     else {
@@ -165,7 +166,7 @@ sub dump_aligned_bam {
 
     my $stderr = join('.', $aligned_bam, 'err');
 
-    my $sam_dump_ok = try {
+    return try {
         Genome::Sys->shellcmd(
             cmd => sprintf(
                 '/usr/bin/sam-dump --primary %s | samtools view -h -b -S -',
@@ -174,24 +175,16 @@ sub dump_aligned_bam {
             redirect_stdout => $aligned_bam,
             redirect_stderr => $stderr,
         );
-
-        return -s $aligned_bam;
+        return 1;
     }
     catch {
         $self->error_message('Caught exception from shellcmd: '. $_);
-        return;
-    };
-
-    unless ($sam_dump_ok) {
         $self->error_message('Failed to dump aligned bam.  Dumping stderr...');
         my $fh = IO::File->new;
         $fh->open($stderr, '<');
         $self->debug_message($_) while $fh->getline;
-
         return;
-    }
-
-    return 1;
+    };
 }
 
 sub dump_unaligned_fastq {
