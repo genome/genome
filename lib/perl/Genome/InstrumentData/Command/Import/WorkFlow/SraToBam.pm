@@ -198,13 +198,26 @@ sub dump_unaligned_fastq {
     my $self = shift;
     my ($sra_path, $unaligned_fastq) = @_;
 
-    my $cmd = "/usr/bin/fastq-dump --unaligned --origfmt $sra_path --stdout > $unaligned_fastq";
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv ) {
-        $self->error_message($@) if $@;
-        $self->error_message('Failed to run sra sam dump unaligned fastq!');
-        return;
+    my $stderr = join('.', $unaligned_fastq, 'err');
+
+    return try {
+        Genome::Sys->shellcmd(
+            cmd => sprintf(
+                '/usr/bin/fastq-dump --unaligned --origfmt --stdout %s',
+                $sra_path),
+            redirect_stdout => $unaligned_fastq,
+            redirect_stderr => $stderr,
+        );
+        return 1;
     }
+    catch {
+        $self->error_message('Caught exception from shellcmd: '. $_);
+        $self->error_message('Failed to dump aligned bam.  Dumping stderr...');
+        my $fh = IO::File->new;
+        $fh->open($stderr, '<');
+        $self->debug_message($_) while $fh->getline;
+        return;
+    };
 }
 
 1;
