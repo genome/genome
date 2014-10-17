@@ -16,12 +16,12 @@ sub requires_annotations {
     return qw/nhlbi/;
 }
 
-sub available_fields {
-    return qw/
-        EU_MAF
-        AA_MAF
-        All_MAF
-    /;
+sub field_descriptions {
+    return (
+        EU_MAF => 'European minor allele frequency from NHLBI',
+        AA_MAF => 'African American minor allele frequency from NHLBI',
+        All_MAF => 'Overall minor allele frequency from NHLBI',
+    );
 }
 
 sub _interpret_entry {

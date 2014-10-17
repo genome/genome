@@ -16,10 +16,10 @@ sub requires_annotations {
     return qw/1kg/;
 }
 
-sub available_fields {
-    return qw/
-        1kg-af
-    /;
+sub field_descriptions {
+    return (
+        '1kg-af' => 'Allele frequency based on thousand genomes project'
+    );
 }
 
 sub _interpret_entry {
