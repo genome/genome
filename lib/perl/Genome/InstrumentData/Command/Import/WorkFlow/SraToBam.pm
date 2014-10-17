@@ -109,16 +109,15 @@ sub _dump_bam_from_sra {
     if ( $sra_has_primary_alignment_info ) {
         # if primary alignment info exists, only aligned are dumped above.
         $self->debug_message('Dump unaligned from sra to fastq...');
+
         my $unaligned_fastq = $self->working_directory.'/unaligned.fastq';
-        $self->debug_message("Unaligned fastq: $unaligned_fastq");
-        $cmd = "/usr/bin/fastq-dump --unaligned --origfmt $sra_path --stdout > $unaligned_fastq";
-        $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-        if ( not $rv ) {
-            $self->error_message($@) if $@;
-            $self->error_message('Failed to run sra sam dump unaligned fastq!');
+        if ( $self->dump_unaligned_fastq($sra_path, $unaligned_fastq) ) {
+            $self->debug_message('Dump unaligned from sra to fastq...done');
+        }
+        else {
+            $self->error_message('Failed to run sra fastq-dump !');
             return;
         }
-        $self->debug_message('Dump unaligned from sra to fastq...done');
 
         if ( -s $unaligned_fastq ) {
             $self->debug_message('Convert unaligned fastq to bam...');
@@ -193,6 +192,19 @@ sub dump_aligned_bam {
     }
 
     return 1;
+}
+
+sub dump_unaligned_fastq {
+    my $self = shift;
+    my ($sra_path, $unaligned_fastq) = @_;
+
+    my $cmd = "/usr/bin/fastq-dump --unaligned --origfmt $sra_path --stdout > $unaligned_fastq";
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    if ( not $rv ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to run sra sam dump unaligned fastq!');
+        return;
+    }
 }
 
 1;
