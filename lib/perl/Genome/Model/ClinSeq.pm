@@ -1201,7 +1201,7 @@ sub _resolve_workflow_for_build {
         $msg = "Generate SnvIndel Report" . $i . ".";
         $converge_snv_indel_report_op1 = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::SnvIndelReport");
         $add_link->($input_connector, 'build', $converge_snv_indel_report_op1, 'builds');
-        $add_link->($input_connector, 'tmp_bam_readcount_version', $converge_snv_indel_report_op1, 'bam_readcount_version');
+        $add_link->($input_connector, 'bam_readcount_version', $converge_snv_indel_report_op1, 'bam_readcount_version');
         $add_link->($input_connector, 'snv_indel_report_dir' . $i, $converge_snv_indel_report_op1, 'outdir');
         $add_link->($input_connector, 'snv_indel_report_clean', $converge_snv_indel_report_op1, 'clean');
         $add_link->($input_connector, 'snv_indel_report_tmp_space', $converge_snv_indel_report_op1, 'tmp_space');
