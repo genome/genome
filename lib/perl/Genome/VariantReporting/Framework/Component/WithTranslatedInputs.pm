@@ -3,6 +3,7 @@ package Genome::VariantReporting::Framework::Component::WithTranslatedInputs;
 use strict;
 use warnings;
 use Genome;
+use Exception::Class ('NoTranslationsException');
 
 class Genome::VariantReporting::Framework::Component::WithTranslatedInputs {
     attributes_have => [
@@ -43,11 +44,20 @@ sub translated_is_many_input_names {
 sub translate {
     my ($self, $old_value, $translations, $name) = @_;
 
+    unless (defined($translations)) {
+        NoTranslationsException->throw(
+            error => sprintf(
+                "Could not translate input (%s) with value (%s) for object (%s). No translations provided.",
+                $name, $old_value, $self->class
+            )
+        );
+    }
+
     if (exists($translations->{$old_value})) {
         return $translations->{$old_value};
     } else {
-        die sprintf("Could not translate input (%s) with value (%s) for object (%s) with name (%s)",
-            $name, $old_value, $self->class, $self->name);
+        die sprintf("Could not translate input (%s) with value (%s) for object (%s)",
+            $name, $old_value, $self->class);
     }
 }
 
