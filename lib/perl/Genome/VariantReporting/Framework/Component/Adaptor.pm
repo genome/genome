@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Params::Validate qw(validate validate_pos :types);
+use Exception::Class;
 
 class Genome::VariantReporting::Framework::Component::Adaptor {
     is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base', 'Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
@@ -62,8 +63,7 @@ sub resolve_plan_attributes {
     }
     my $translations;
     eval { $translations = $self->provider->get_attribute('translations') };
-    my $error = $@;
-    if ($error and $error !~ /^Attempted to get non-existing attribute \(translations\) from resource-provider, available attributes are/) {
+    if (my $error = Exception::Class->caught('NoTranslationsException')) {
         die $error;
     }
     else {

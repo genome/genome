@@ -36,7 +36,7 @@ class Genome::Model::Tools::Samtools::Mpileup {
     has_param => [
     lsf_resource => {
         is => 'Text',
-        default => "-M 5000000 -R 'select[type==LINUX64 && mem>4500 && tmp>20000] rusage[mem=4500]'",
+        default => "-M 5000000 -R 'select[mem>4500 && tmp>20000] rusage[mem=4500]'",
     },
     lsf_queue => {
         is => 'Text',

@@ -50,7 +50,7 @@ class Genome::InstrumentData::Command::RefineReads {
 };
 
 sub bsub_rusage {
-    return "-R 'select[model!=Opteron250 && type==LINUX64] span[hosts=1] rusage[tmp=90000:mem=16000]' -M 16000000";
+    return "-R 'span[hosts=1] rusage[tmp=90000:mem=16000]' -M 16000000";
 }
 
 sub shortcut {

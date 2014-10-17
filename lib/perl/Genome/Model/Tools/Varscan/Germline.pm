@@ -91,7 +91,7 @@ class Genome::Model::Tools::Varscan::Germline {
 
     has_param => [
         lsf_resource => {
-            default_value => 'select[model!=Opteron250 && type==LINUX64 && mem>4000] rusage[mem=4000]',
+            default_value => 'select[mem>4000] rusage[mem=4000]',
             doc => "LSF resource requirements [default: 64-bit, 4 GB RAM]",
             is_optional => 1
         },

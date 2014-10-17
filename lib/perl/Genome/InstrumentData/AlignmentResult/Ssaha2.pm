@@ -19,7 +19,7 @@ class Genome::InstrumentData::AlignmentResult::Ssaha2 {
 sub required_arch_os { 'x86_64' }
 
 sub required_rusage { 
-    "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>24000] rusage[tmp=90000, mem=24000]' -M 24000000";
+    "-R 'select[tmp>90000 && mem>24000] rusage[tmp=90000, mem=24000]' -M 24000000";
 }
 
 sub _run_aligner {

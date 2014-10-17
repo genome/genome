@@ -35,7 +35,7 @@ class Genome::Model::Tools::Gatk::Base {
     ],
     has_param => [
         lsf_resource => {
-            default => '-M 16777216 rusage[mem=16384] select[type==LINUX64 & mem > 16384] span[hosts=1]',
+            default => '-M 16777216 rusage[mem=16384] select[mem > 16384] span[hosts=1]',
         },
     ],
 };

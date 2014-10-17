@@ -132,6 +132,7 @@ sub _detect_variants {
     my $self = shift;
 
     $self->_ensure_chromosome_list_set;
+    $self->_verify_chromosome_list_is_safe_for_filesystem;
 
     $self->set_output;
 
@@ -221,6 +222,24 @@ sub _ensure_chromosome_list_set {
         $self->chromosome_list($self->default_chromosomes);
     }
     return;
+}
+
+sub _verify_chromosome_list_is_safe_for_filesystem {
+    my $self = shift;
+
+    my $chromosome_list = $self->chromosome_list;
+
+    my %seen;
+    for my $chr (@$chromosome_list) {
+        my $sanitized_chr = Genome::Utility::Text::sanitize_string_for_filesystem($chr);
+        if(exists $seen{$sanitized_chr}) {
+            die $self->error_message('Multiple chromosomes in reference map to same directory name "%s".  Cannot run!', $sanitized_chr);
+        } else {
+            $seen{$sanitized_chr} = 1;
+        }
+    }
+
+    return 1;
 }
 
 1;
