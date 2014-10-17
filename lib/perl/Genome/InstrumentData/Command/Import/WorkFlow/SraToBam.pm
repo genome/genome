@@ -160,26 +160,21 @@ sub _dump_bam_from_sra {
     return 1;
 }
 
-sub dump_aligned_bam {
+sub do_shellcmd {
     my $self = shift;
-    my ($sra_path, $aligned_bam) = @_;
+    my ($cmd, $output_path) = @_;
 
-    my $stderr = join('.', $aligned_bam, 'err');
+    my $stderr = join('.', $output_path, 'err');
 
     return try {
         Genome::Sys->shellcmd(
-            cmd => sprintf(
-                '/usr/bin/sam-dump --primary %s | samtools view -h -b -S -',
-                $sra_path),
-            output_files    =>[$aligned_bam],
-            redirect_stdout => $aligned_bam,
-            redirect_stderr => $stderr,
-        );
+            cmd             => $cmd,
+            redirect_stdout => $output_path,
+            redirect_stderr => $stderr);
         return 1;
     }
     catch {
         $self->error_message('Caught exception from shellcmd: '. $_);
-        $self->error_message('Failed to dump aligned bam.  Dumping stderr...');
         my $fh = IO::File->new;
         $fh->open($stderr, '<');
         $self->debug_message($_) while $fh->getline;
@@ -187,30 +182,20 @@ sub dump_aligned_bam {
     };
 }
 
+sub dump_aligned_bam {
+    my $self = shift;
+    my ($sra_path, $aligned_bam) = @_;
+
+    my $command = "/usr/bin/sam-dump --primary $sra_path | samtools view -h -b -S -";
+    return $self->do_shellcmd( $command, $aligned_bam);
+}
+
 sub dump_unaligned_fastq {
     my $self = shift;
     my ($sra_path, $unaligned_fastq) = @_;
 
-    my $stderr = join('.', $unaligned_fastq, 'err');
-
-    return try {
-        Genome::Sys->shellcmd(
-            cmd => sprintf(
-                '/usr/bin/fastq-dump --unaligned --origfmt --stdout %s',
-                $sra_path),
-            redirect_stdout => $unaligned_fastq,
-            redirect_stderr => $stderr,
-        );
-        return 1;
-    }
-    catch {
-        $self->error_message('Caught exception from shellcmd: '. $_);
-        $self->error_message('Failed to dump aligned bam.  Dumping stderr...');
-        my $fh = IO::File->new;
-        $fh->open($stderr, '<');
-        $self->debug_message($_) while $fh->getline;
-        return;
-    };
+    my $command = "/usr/bin/fastq-dump --unaligned --origfmt --stdout $sra_path";
+    return $self->do_shellcmd( $command, $unaligned_fastq);
 }
 
 1;
