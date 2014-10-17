@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use Try::Tiny;
 use IO::File;
+use File::Copy qw(move);
 
 require Cwd;
 require File::Basename;
@@ -143,6 +144,15 @@ sub _dump_bam_from_sra {
             }
             $self->debug_message('Add bam from unaligned fastq to unsorted bam...done');
             unlink($unaligned_bam);
+        }
+
+        else {
+            unless ( move($aligned_bam, $self->output_bam_path) ) {
+                $self->error_message( sprintf(
+                    'Failed to move aligned bam to output bam path. '
+                    .'Source: %s, Destination %s, Error Status %s',
+                    $aligned_bam, $self->output_bam_path, $!));
+            }
         }
     }
 
