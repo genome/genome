@@ -87,6 +87,19 @@ sub object {
 }
 Memoize::memoize("object");
 
+sub object_with_translations {
+    my $self = shift;
+    my $translations = shift;
+    my %overrides = @_;
+
+    my $object = $self->object(%overrides);
+    if ($object->can('translate_inputs')) {
+        $object->translate_inputs($translations);
+    }
+    return $object;
+}
+Memoize::memoize("object_with_translations");
+
 sub __errors__ {
     my $self = shift;
 

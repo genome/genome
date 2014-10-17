@@ -63,13 +63,9 @@ sub entry_processors {
 
     my @entry_processors;
     for my $reporter_plan ($self->plan->reporter_plans) {
-        my $reporter = $reporter_plan->object;
-        my @filters = map {$_->object} $reporter_plan->filter_plans;
-        my @interpreters = map {$_->object} $reporter_plan->interpreter_plans;
-
-        $reporter->translate_inputs($self->translations);
-        for (@filters) {$_->translate_inputs($self->translations)};
-        for (@interpreters) {$_->translate_inputs($self->translations)};
+        my $reporter = $reporter_plan->object_with_translations($self->translations);
+        my @filters = map {$_->object_with_translations($self->translations)} $reporter_plan->filter_plans;
+        my @interpreters = map {$_->object_with_translations($self->translations)} $reporter_plan->interpreter_plans;
 
         $reporter->initialize($self->output_directory);
 
