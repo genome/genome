@@ -181,7 +181,7 @@ sub dump_aligned_bam {
         return;
     }
 
-    return $aligned_bam;
+    return 1;
 }
 
 1;
