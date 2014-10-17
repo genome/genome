@@ -45,7 +45,7 @@ sub translate {
     my ($self, $old_value, $translations, $name) = @_;
 
     unless (defined($translations)) {
-        die NoTranslationsException->throw(
+        NoTranslationsException->throw(
             error => sprintf(
                 "Could not translate input (%s) with value (%s) for object (%s). No translations provided.",
                 $name, $old_value, $self->class
