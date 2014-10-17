@@ -99,12 +99,33 @@ sub execute {
     if (defined($self->min_dp)) {
         $gc_cmd .= ' MIN_DP='. $self->min_dp;
     }
+    if (defined($self->min_gq)) {
+        $gc_cmd .= ' MIN_GQ='. $self->min_gq;
+    }
+    if (defined($self->intervals)) {
+        $gc_cmd .= ' INTERVALS='. $self->intervals;
+    }
+    if (defined($self->intersect_intervals)) {
+        if ($self->intersect_intervals) {
+            $gc_cmd .= ' INTERSECT_INTERVALS=TRUE';
+        }
+    }
+    if (defined($self->output_all_rows)) {
+        if ($self->output_all_rows) {
+            $gc_cmd .= ' OUTPUT_ALL_ROWS=TRUE';
+        }
+    }
+    if (defined($self->use_vcf_index)) {
+        if ($self->use_vcf_index) {
+            $gc_cmd .= ' USE_VCF_INDEX=TRUE';
+        }
+    }
     $self->run_java_vm(
         cmd => $gc_cmd,
         input_files => [$self->truth_vcf,$self->call_vcf],
         skip_if_output_is_present => 0,
     );
-    $DB::single=1;
+    
     return 1;
 }
 
