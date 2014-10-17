@@ -63,7 +63,7 @@ sub resolve_plan_attributes {
     my $translations;
     eval { $translations = $self->provider->get_attribute('translations') };
     my $error = $@;
-    if (defined($error) and $error != /^Attempted to get non-existing attribute \(translations\) from resource-provider, available attributes are/) {
+    if ($error and $error !~ /^Attempted to get non-existing attribute \(translations\) from resource-provider, available attributes are/) {
         die $error;
     }
     else {
