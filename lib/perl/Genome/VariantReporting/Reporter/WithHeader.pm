@@ -130,21 +130,22 @@ sub report {
 
     my %fields = $self->available_fields_dict();
     for my $allele (keys %{$interpretations->{($self->requires_interpreters)[0]}}) {
+        my @outputs;
         for my $header ($self->headers()) {
             my $interpreter = $fields{$header}->{interpreter};
             my $field = $fields{$header}->{field};
 
             # If we don't have an interpreter that provides this field, handle it cleanly if the field is known unavailable
             if ($self->header_is_unavailable($header)) {
-                $self->_output_fh->print( $self->_format() . "\t");
+                push @outputs, $self->_format();
             } elsif ($interpreter) {
-                $self->_output_fh->print($self->_format($interpretations->{$interpreter}->{$allele}->{$field}) . "\t");
+                push @outputs, $self->_format($interpretations->{$interpreter}->{$allele}->{$field});
             } else {
                 # We use $header here because $field will be undefined due to it not being in an interpreter
                 die $self->error_message("Field (%s) is not available from any of the interpreters provided", $header);
             }
         }
-        $self->_output_fh->print("\n");
+        $self->_output_fh->print(join($self->delimiter, @outputs) . "\n");
     }
 }
 
