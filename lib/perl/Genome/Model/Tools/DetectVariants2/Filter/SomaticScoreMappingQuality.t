@@ -65,8 +65,9 @@ sub run_test {
     my $expect_dir = $expected_output_dir."/$type";
 
     my %params = (
-        previous_result_id => $detector_result->id,
-        output_directory   => $output_dir,
+        previous_result_id   => $detector_result->id,
+        output_directory     => $output_dir,
+        aligned_reads_sample => "TEST",
     );
     
     $params{params} = $params if $params;

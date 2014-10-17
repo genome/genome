@@ -40,12 +40,6 @@ class Genome::Model::Tools::BioSamtools::ProgressionInstance {
             is_optional => 1,
         },
     ],
-    has_param => [
-        lsf_resource => {
-            is_optional => 1,
-            default_value => "-R 'select[type==LINUX64]'",
-        },
-    ],
 };
 
 sub create {

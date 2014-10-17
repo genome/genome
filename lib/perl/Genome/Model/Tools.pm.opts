@@ -2615,17 +2615,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>maize-blast',
-    [
-      'string=s',
-      'files',
-      'debug!',
-      undef,
-      'output-file=s',
-      'files',
-      'help!',
-      undef
-    ],
     '>merge-contigs',
     [
       'contigs=s',
@@ -3275,8 +3264,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
     '>execute',
     [
       'data-directory=s',
-      'files',
-      'lsf-resource=s',
       'files',
       'step-size=s',
       'files',
@@ -4436,6 +4423,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'files',
         'variant-file=s',
         'files',
+        'bam-readcount-version=s',
+        'files',
         'chrom=s',
         'files',
         'debug!',
@@ -4541,6 +4530,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
         'variant-files=s',
         'files',
         'variant-sources=s',
+        'files',
+        'bam-readcount-version=s',
         'files',
         'chrom=s',
         'files',
@@ -6887,15 +6878,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>remove-star-sequences',
-    [
-      'input-file=s',
-      'files',
-      'output-directory=s',
-      'files',
-      'help!',
-      undef
-    ],
     '>parse-netmhc-output',
     [
       'netmhc-file=s',
@@ -6963,6 +6945,15 @@ $Genome::Model::Tools::OPTS_SPEC = [
         '3.0',
         '3.4'
       ],
+      'help!',
+      undef
+    ],
+    '>remove-unknown-sequences',
+    [
+      'input-file=s',
+      'files',
+      'output-directory=s',
+      'files',
       'help!',
       undef
     ],
@@ -10465,8 +10456,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'lsf-queue=s',
       'files',
-      'lsf-resource=s',
-      'files',
       'maximum-alignment-count=s',
       undef,
       'maximum-depth=s',
@@ -10558,8 +10547,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'lsf-queue=s',
       'files',
-      'lsf-resource=s',
-      'files',
       'maximum-alignment-count=s',
       'files',
       'maximum-depth=s',
@@ -10631,8 +10618,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'genome-normalized-coverage!',
       undef,
       'lsf-queue=s',
-      'files',
-      'lsf-resource=s',
       'files',
       'maximum-alignment-count=s',
       undef,
@@ -10732,8 +10717,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'genome-normalized-coverage=s',
       'files',
       'lsf-queue=s',
-      'files',
-      'lsf-resource=s',
       'files',
       'maximum-alignment-count=s',
       undef,
@@ -25156,6 +25139,21 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>bam-qc',
   [
+    '>summarize-instrument-data',
+    [
+      'output-tsv=s',
+      'files',
+      'color!',
+      undef,
+      'debug!',
+      undef,
+      'output-pdf=s',
+      'files',
+      'instrument-data=s@',
+      undef,
+      'help!',
+      undef
+    ],
     '>run',
     [
       'bam-file=s',

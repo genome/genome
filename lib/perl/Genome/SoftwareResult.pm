@@ -867,7 +867,7 @@ sub _resolve_lock_name {
 
 sub _validate_lookup_hash {
     my $lookup_hash = shift;
-    unless (length($lookup_hash) == 32 && $lookup_hash =~ /^[\d\w]+$/) {
+    unless ($lookup_hash =~ /^[[:xdigit:]]{32}$/) {
         croak "invalid lookup_hash: $lookup_hash";
     }
     return $lookup_hash;

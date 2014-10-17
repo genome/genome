@@ -68,6 +68,7 @@ my $union_snv_object = Genome::Model::Tools::DetectVariants2::Combine::Intersect
     input_a_id       => $detector_a->id,
     input_b_id       => $detector_b->id,
     output_directory => $output_symlink,
+    aligned_reads_sample => 'TEST',
 );
 isa_ok($union_snv_object, 'Genome::Model::Tools::DetectVariants2::Combine::IntersectSnv', 'union_snv_object');
 ok($union_snv_object->execute(), 'executed IntersectSnv object');

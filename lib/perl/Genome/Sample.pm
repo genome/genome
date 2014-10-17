@@ -53,13 +53,9 @@ class Genome::Sample {
             doc => 'Either "genomic dna" or "rna" in most cases',
         },
         sample_type => {
-            calculate_from => 'extraction_type',
-            calculate => q{
-                $self = shift;
-                my $new_type = shift;
-                if ($new_type) { $self->extraction_type($new_type); }
-                return $extraction_type;
-            },
+            is => 'Text',
+            via => '__self__',
+            to => 'extraction_type',
         },
         is_rna => {
             calculate_from => [qw/ extraction_type /],
@@ -164,22 +160,20 @@ class Genome::Sample {
             to => 'common_name',
             doc => 'Common name of the sample source',
         },
-        # These patient properties are for convenience, since the vast majority of sample
-        # sources are of type Genome::Individual
-        patient => {
+        individual => {
             is => 'Genome::Individual',
             id_by => 'source_id',
-            doc => 'The patient/individual organism from which the sample was taken.'
+            doc => 'The individual (previously patient) organism from which the sample was taken.'
         },
-        patient_name => {
-            via => 'patient',
+        individual_name => {
+            via => 'individual',
             to => 'name',
-            doc => 'The system name for a patient (subset of the sample name)'
+            doc => 'The system name for an individual (often a substring of the sample name)'
         },
-        patient_common_name => {
-            via => 'patient',
+        individual_common_name => {
+            via => 'individual',
             to => 'common_name',
-            doc => 'Common name of the patient, eg AML1',
+            doc => 'Common name of the individual, eg AML1',
         },
         age => {
             is => 'Number',

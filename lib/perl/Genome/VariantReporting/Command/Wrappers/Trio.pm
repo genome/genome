@@ -27,7 +27,7 @@ class Genome::VariantReporting::Command::Wrappers::Trio {
             is => 'Genome::Sample',
             doc => 'Main tumor sample used for discovery',
         },
-        additional_sample => {
+        followup_sample => {
             is => 'Genome::Sample',
             doc => 'Additional sample to report readcounts on at discovery variant positions',
         },
@@ -60,13 +60,13 @@ sub execute {
     for my $roi_directory (@roi_directories) {
         for my $base (Genome::VariantReporting::Command::Wrappers::ModelPair->report_names) {
             my $discovery_report = File::Spec->join($self->output_directory, "discovery", $roi_directory, $base);
-            my $additional_report = File::Spec->join($self->output_directory, "additional", $roi_directory, $base);
+            my $additional_report = File::Spec->join($self->output_directory, "followup", $roi_directory, $base);
             Genome::VariantReporting::Command::CombineReports->execute(
                 reports => [$discovery_report, $additional_report],
                 sort_columns => [qw(chromosome_name start stop reference variant)],
                 contains_header => 1,
                 output_file => File::Spec->join($self->output_directory, "$base-$roi_directory"),
-                entry_sources =>  {$discovery_report => $self->tumor_sample->name, $additional_report => $self->additional_sample->name},
+                entry_sources =>  {$discovery_report => $self->tumor_sample->name, $additional_report => $self->followup_sample->name},
             );
         }
     }
@@ -91,8 +91,8 @@ sub get_model_pairs {
     my $self = shift;
     my $factory = Genome::VariantReporting::Command::Wrappers::ModelPairFactory->create(
         models => [$self->models],
-        d0_sample => $self->tumor_sample,
-        d30_sample => $self->additional_sample,
+        discovery_sample => $self->tumor_sample,
+        followup_sample => $self->followup_sample,
         normal_sample => $self->normal_sample,
         output_dir => $self->output_directory,
     );

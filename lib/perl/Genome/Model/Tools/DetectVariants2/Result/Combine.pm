@@ -177,10 +177,12 @@ sub _add_as_user_of_inputs {
 
 sub vcf_result_params {
     my $self = shift;
+    my $aligned_reads_sample = shift;
+    my $control_aligned_reads_sample = shift;
 
     return (
-        incoming_vcf_result_a => $self->input_a->get_vcf_result,
-        incoming_vcf_result_b => $self->input_b->get_vcf_result,
+        incoming_vcf_result_a => $self->input_a->get_vcf_result($aligned_reads_sample, $control_aligned_reads_sample),
+        incoming_vcf_result_b => $self->input_b->get_vcf_result($aligned_reads_sample, $control_aligned_reads_sample),
         input_a_id => $self->input_a_id,
         input_b_id => $self->input_b_id,
         input_id => $self->id,
@@ -194,15 +196,18 @@ sub vcf_result_params {
 
 sub get_vcf_result {
     my $self = shift;
+    my $aligned_reads_sample = shift;
+    my $control_aligned_reads_sample = shift;
 
-    my %params = $self->vcf_result_params;
+    my %params = $self->vcf_result_params($aligned_reads_sample, $control_aligned_reads_sample);
     if (!defined($params{incoming_vcf_result_a}) or !defined($params{incoming_vcf_result_b})) {
         # Either one or both of the input results did not produce a vcf.
         # That means that this result didn't produce one either.
         return;
     } else {
         return Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->get_with_lock(
-            $self->vcf_result_params);
+            %params
+        );
     }
 }
 

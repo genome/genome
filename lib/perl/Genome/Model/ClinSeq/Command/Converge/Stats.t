@@ -22,6 +22,7 @@ my @builds = ($clinseq_build1, $clinseq_build2);
 my $converge_stats = Genome::Model::ClinSeq::Command::Converge::Stats->create(
       builds => \@builds,
       outdir => $op_dir,
+      bam_readcount_version => 0.6,
 );
 my $return = $converge_stats->execute();
 ok($clinseq_build2, "Executed succesfully");

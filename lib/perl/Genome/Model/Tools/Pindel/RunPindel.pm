@@ -136,7 +136,7 @@ class Genome::Model::Tools::Pindel::RunPindel {
             default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         }, 
         lsf_resource => {
-            default_value => "-M 12000000 -R 'select[type==LINUX64 && mem>12000] rusage[mem=12000]'",
+            default_value => "-M 12000000 -R 'select[mem>12000] rusage[mem=12000]'",
         },
     ],
     # These are params from the superclass' standard API that we do not require for this class (dont show in the help)

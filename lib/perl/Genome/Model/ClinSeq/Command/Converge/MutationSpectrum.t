@@ -24,6 +24,7 @@ my $converge_mutspec = Genome::Model::ClinSeq::Command::Converge::MutationSpectr
       builds => \@builds,
       outfile => $op_file,
       outdir => $op_dir,
+      bam_readcount_version => 0.6,
 );
 my $return = $converge_mutspec->execute();
 ok($clinseq_build2, "Executed succesfully");

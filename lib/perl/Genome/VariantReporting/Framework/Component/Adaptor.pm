@@ -6,7 +6,7 @@ use Genome;
 use Params::Validate qw(validate validate_pos :types);
 
 class Genome::VariantReporting::Framework::Component::Adaptor {
-    is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base'],
+    is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base', 'Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
     is_abstract => 1,
     attributes_have => {
         is_planned => {
@@ -60,6 +60,9 @@ sub resolve_plan_attributes {
     for my $name (keys %{$specific_plan->params}) {
         $self->$name($specific_plan->params->{$name});
     }
+    my $translations;
+    eval { $translations = $self->provider->get_attribute('translations') };
+    $self->translate_inputs($translations);
 }
 
 sub plan {

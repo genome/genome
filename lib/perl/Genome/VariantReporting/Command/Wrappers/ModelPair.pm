@@ -12,7 +12,7 @@ use Genome::File::Tsv;
 class Genome::VariantReporting::Command::Wrappers::ModelPair {
     has => {
         discovery => { is => 'Genome::Model::Build', },
-        validation => {
+        followup => {
             is => 'Genome::Model::Build',
             is_optional => 1,
         },
@@ -54,7 +54,7 @@ sub _plan_search_dir {
 }
 
 sub report_names {
-    return qw(cle_full_report cle_simple_report);
+    return qw(trio_full_report.tsv trio_simple_report.tsv);
 }
 
 sub reports_directory {
@@ -106,8 +106,8 @@ sub get_aligned_bams {
     my @aligned_bams;
     push @aligned_bams, $self->discovery->merged_alignment_result->id;
     push @aligned_bams, $self->discovery->control_merged_alignment_result->id;
-    if ($self->validation) {
-        push @aligned_bams, $self->validation->merged_alignment_result->id;
+    if ($self->followup) {
+        push @aligned_bams, $self->followup->merged_alignment_result->id;
     }
     return \@aligned_bams;
 }
@@ -115,10 +115,10 @@ sub get_aligned_bams {
 sub get_translations {
     my $self = shift;
     my %translations;
-    $translations{d0_tumor} = $self->discovery->tumor_sample->name;
-    $translations{d30_normal} = $self->discovery->normal_sample->name;
-    if ($self->validation) {
-        $translations{d30_tumor} = $self->validation->tumor_sample->name;
+    $translations{discovery_tumor} = $self->discovery->tumor_sample->name;
+    $translations{normal} = $self->discovery->normal_sample->name;
+    if ($self->followup) {
+        $translations{followup_tumor} = $self->followup->tumor_sample->name;
     }
     return \%translations;
 }

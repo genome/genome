@@ -1,3 +1,3 @@
-SUBJECT.PATIENT_COMMON_NAME   SUBJECT.NAME                         ID
----------------------------   ------------                         --
-TEST_1                        H_TEST-ClinSeqGenomeCommands-tumor   -65
+SUBJECT.INDIVIDUAL_COMMON_NAME   SUBJECT.NAME                         ID
+------------------------------   ------------                         --
+TEST_1                           H_TEST-ClinSeqGenomeCommands-tumor   -65

@@ -93,7 +93,7 @@ class Genome::Model::GenePrediction::Command::Pap::KEGGScan {
     # These parameters tell workflow the requirements needed for this module 
     has_param => [
         lsf_resource => {
-            default => "-R 'select[mem=8192,type==LINUX64] rusage[mem=8192,tmp=1024]' -M 8192000",
+            default => "-R 'select[mem=8192] rusage[mem=8192,tmp=1024]' -M 8192000",
         },
         lsf_queue => {
             default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},

@@ -65,9 +65,10 @@ isa_ok($detector_b, 'Genome::Model::Tools::DetectVariants2::Result', 'detector_b
 my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-DetectVariants2-Combine-UnionuniqueSnv-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_symlink  = join('/', $test_output_dir, 'union-snv');
 my $union_snv_object = Genome::Model::Tools::DetectVariants2::Combine::UnionuniqueSnv->create(
-    input_a_id       => $detector_a->id,
-    input_b_id       => $detector_b->id,
-    output_directory => $output_symlink,
+    input_a_id           => $detector_a->id,
+    input_b_id           => $detector_b->id,
+    output_directory     => $output_symlink,
+    aligned_reads_sample => 'TEST',
 );
 ok($union_snv_object, 'created UnionuniqueSnv object');
 ok($union_snv_object->execute(), 'executed UnionuniqueSnv object');

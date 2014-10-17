@@ -27,17 +27,17 @@ my $exome_common_name = '';
 my $rnaseq_common_name = '';
 
 
-my $wgs_patient_name = $wgs_build->subject->patient->name;
-my $exome_patient_name = $exome_build->subject->patient->name;
-my $rnaseq_patient_name = $rnaseq_build->subject->patient->name;
+my $wgs_individual_name = $wgs_build->subject->patient->name;
+my $exome_individual_name = $exome_build->subject->patient->name;
+my $rnaseq_individual_name = $rnaseq_build->subject->patient->name;
 
 my $wgs_subject_name = $wgs_build->subject->name;
 my $exome_subject_name = $exome_build->subject->name;
 my $rnaseq_subject_name = $rnaseq_build->subject->name;
 
-print BLUE, "\n\nwgs_common_name = $wgs_common_name\twgs_subject_name = $wgs_subject_name\twgs_patient_name = $wgs_patient_name\nexome_common_name = $exome_common_name\texome_subject_name = $exome_subject_name\texome_patient_name = $exome_patient_name\nrnaseq_common_name = $rnaseq_common_name\trnaseq_subject_name = $rnaseq_subject_name\trnaseq_patient_name = $rnaseq_patient_name\n\n", RESET;
+print BLUE, "\n\nwgs_common_name = $wgs_common_name\twgs_subject_name = $wgs_subject_name\twgs_individual_name = $wgs_individual_name\nexome_common_name = $exome_common_name\texome_subject_name = $exome_subject_name\texome_individual_name = $exome_individual_name\nrnaseq_common_name = $rnaseq_common_name\trnaseq_subject_name = $rnaseq_subject_name\trnaseq_individual_name = $rnaseq_individual_name\n\n", RESET;
 
-my @names = ($wgs_common_name, $exome_common_name, $rnaseq_common_name, $wgs_patient_name, $exome_patient_name, $rnaseq_patient_name, $wgs_subject_name, $exome_subject_name, $rnaseq_subject_name);
+my @names = ($wgs_common_name, $exome_common_name, $rnaseq_common_name, $wgs_individual_name, $exome_individual_name, $rnaseq_individual_name, $wgs_subject_name, $exome_subject_name, $rnaseq_subject_name);
 
 my $final_name;
 

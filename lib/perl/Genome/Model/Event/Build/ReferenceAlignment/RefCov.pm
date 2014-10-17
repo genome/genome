@@ -22,7 +22,7 @@ class Genome::Model::Event::Build::ReferenceAlignment::RefCov {
 };
 
 sub bsub_rusage {
-    return "-R 'select[type==LINUX64]'";
+    return '';
 }
 
 sub sorted_instrument_data {

@@ -92,13 +92,19 @@ sub combine_files {
     for my $report ($self->reports) {
         my $file_to_combine;
         if ($self->contains_header) {
-            my @order = $self->get_header_order($report);
-            my @original_order = (0..$#order);
-            if (@order ~~ @original_order) {
-                $file_to_combine = $self->file_without_header($report);
-            }
-            else {
-                $file_to_combine = $self->reordered_columns_file($report, \@order);
+            $file_to_combine = Genome::Sys->create_temp_file_path;
+            my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+                input => $report,
+                separator => $self->separator,
+            );
+            my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
+                headers => [$self->get_master_header],
+                print_headers => 0,
+                separator => $self->separator,
+                output => $file_to_combine,
+            );
+            while (my $entry = $reader->next) {
+                $writer->write_one($entry);
             }
         } else {
             $file_to_combine = $report;
@@ -108,49 +114,6 @@ sub combine_files {
         Genome::Sys->shellcmd(cmd => sprintf($combine_command, $with_source, $combined_file));
     }
     return $combined_file;
-}
-
-sub get_header_order {
-    my ($self, $file) = @_;
-    my @header = $self->get_header($file);
-    my @order;
-    for my $field ($self->get_master_header) {
-        push @order, firstidx {$_ eq $field} @header;
-    }
-    return @order;
-}
-
-sub file_without_header {
-    my ($self, $file) = @_;
-    my $out_file = Genome::Sys->create_temp_file_path;
-    my $cmd = sprintf('tail -n +2 %s > %s', $file, $out_file);
-    Genome::Sys->shellcmd(
-        cmd => $cmd,
-        output_files => [$out_file],
-        input_files => [$file],
-        allow_zero_size_output_files => 1,
-    );
-    return $out_file;
-}
-
-sub reordered_columns_file {
-    my ($self, $file, $order) = @_;
-    my $out_file = Genome::Sys->create_temp_file_path;
-    my $out = Genome::Sys->open_file_for_writing($out_file);
-    my $in = Genome::Sys->open_file_for_reading($file);
-    my $header_line = <$in>;
-    while (my $line = <$in>) {
-        chomp $line;
-        my @fields = split ($self->separator, $line);
-        my @new_fields;
-        for my $index (@$order) {
-            push @new_fields, $fields[$index];
-        }
-        print $out join($self->separator, @new_fields)."\n";
-    }
-    $out->close;
-    $in->close;
-    return $out_file;
 }
 
 sub add_source {
@@ -192,51 +155,53 @@ sub sort_file {
 sub split_file {
     my ($self, $file) = @_;
     my $split_file = Genome::Sys->create_temp_file_path;
-    my $fh = Genome::Sys->open_file_for_writing($split_file);
 
     my @header_fields = $self->get_header($file);
     my %keys_to_append = $self->get_keys_to_append($file);
-
     my @new_header = $self->calculate_new_header(\@header_fields, \%keys_to_append);
-    $fh->print(join($self->separator, @new_header),"\n");
 
-    my $in = Genome::Sys->open_file_for_reading($file);
-    my $header = <$in>;
-    while (my $line = <$in>) {
-        my $new_line = $self->calculate_new_line($line, \@header_fields, \%keys_to_append);
-        $fh->print($new_line,"\n");
+    my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
+        headers => [@new_header],
+        print_headers => 1,
+        separator => $self->separator,
+        output => $split_file,
+    );
+
+    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+        separator => $self->separator,
+        input => $file,
+    );
+    while (my $entry = $reader->next) {
+        my $new_entry = $self->calculate_new_entry($entry, \@header_fields, \%keys_to_append);
+        $writer->write_one($new_entry);
     }
-    $fh->close;
     return $split_file;
 }
 
 sub get_keys_to_append {
     my ($self, $file) = @_;
-    my @header_fields = $self->get_header($file);
+
     my %keys_to_append;
-    for my $header_field (@header_fields) {
-        if (first {$_ eq $header_field} $self->columns_to_split) {
-            $keys_to_append{$header_field} = {};
-        }
+    for my $header_field ($self->columns_to_split) {
+        $keys_to_append{$header_field} = {};
     }
 
-    my $in = Genome::Sys->open_file_for_reading($file);
-    my $header = <$in>;
-    while (my $line = <$in>) {
-        chomp $line;
-        my @fields = split ($self->separator, $line);
-        for my $field_name (keys %keys_to_append) {
-            my $field_index = firstidx {$_ eq $field_name} @header_fields; 
-            my @values = split(",", $fields[$field_index]);
+    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $file,
+        separator => $self->separator,
+    );
+
+    while (my $entry = $reader->next) {
+        for my $field_name ($self->columns_to_split) {
+            my @values = split(",", $entry->{$field_name});
             for my $value (@values) {
                 unless ($value eq ".") {
                     my ($sub_field, $sub_value) = split(":", $value);
-                    $keys_to_append{$field_name}->{$sub_field} = $header_fields[$field_index]."-".$sub_field;
+                    $keys_to_append{$field_name}->{$sub_field} = $field_name."-".$sub_field;
                 }
             }
         }
     }
-    $in->close;
     return %keys_to_append;
 }
 
@@ -256,15 +221,12 @@ sub calculate_new_header {
     return @new_header;
 }
 
-sub calculate_new_line {
-    my ($self, $line, $header_fields, $keys_to_append) = @_;
-    chomp $line;
-    my @fields = split ($self->separator, $line);
-    my @new_fields;
-    my $counter = 0;
+sub calculate_new_entry {
+    my ($self, $entry, $header_fields, $keys_to_append) = @_;
+    my $new_entry;
     for my $header_field (@$header_fields) {
         if (defined $keys_to_append->{$header_field}) {
-            my @split_field = split(",", $fields[$counter]);
+            my @split_field = split(",", $entry->{$header_field});
             my %split_field_dict;
             for my $split_field_item (@split_field) {
                 my ($subfield, $subvalue) = split(":", $split_field_item);
@@ -272,19 +234,18 @@ sub calculate_new_line {
             }
             for my $split_header (values %{$keys_to_append->{$header_field}}) {
                 if (defined $split_field_dict{$split_header}) {
-                    push @new_fields, $split_field_dict{$split_header};
+                    $new_entry->{$split_header} = $split_field_dict{$split_header};
                 }
                 else {
-                    push @new_fields, ".";
+                    $new_entry->{$split_header} = ".";
                 }
             }
         }
         else {
-            push @new_fields, $fields[$counter];
+            $new_entry->{$header_field} = $entry->{$header_field};
         }
-        $counter++;
     }
-    return join($self->separator, @new_fields);
+    return $new_entry;
 }
 
 sub print_header_to_fh {
@@ -386,15 +347,15 @@ sub get_master_header_with_source {
 sub get_header {
     my ($self, $file) = @_;
 
-    my $fh = Genome::Sys->open_file_for_reading($file);
-    my $line = $fh->getline;
-    chomp $line;
-    my @columns = split $self->separator, $line;
+    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+        input => $file,
+        separator => $self->separator,
+    );
 
     if ($self->contains_header) {
-        return @columns;
+        return @{$reader->headers};
     } else {
-        return ( 1..scalar(@columns) );
+        return ( 1..scalar(@{$reader->headers}) );
     }
 }
 

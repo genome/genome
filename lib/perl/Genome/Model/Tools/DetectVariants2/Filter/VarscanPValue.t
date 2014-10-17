@@ -55,18 +55,24 @@ my %variant_p_value_only = (
     previous_result_id => $detector_result->id,
     output_directory => $output_base . '/variant-p-value-only',
     params => '--variant-p-value 0.5',
+    aligned_reads_sample => "TEST",
+    control_aligned_reads_sample => "TEST-normal",
 );
 
 my %somatic_p_value_only = (
     previous_result_id => $detector_result->id,
     output_directory => $output_base . '/somatic-p-value-only',
     params => '--somatic-p-value 0.5',
+    aligned_reads_sample => "TEST",
+    control_aligned_reads_sample => "TEST-normal",
 );
 
 my %combined_params = (
     previous_result_id => $detector_result->id,
     output_directory => $output_base . '/combined',
     params => '--variant-p-value 0.5 --somatic-p-value 0.5',
+    aligned_reads_sample => "TEST",
+    control_aligned_reads_sample => "TEST-normal",
 );
 
 my @expected_output_files = qw| 

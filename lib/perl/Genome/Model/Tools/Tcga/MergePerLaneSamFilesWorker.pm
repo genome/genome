@@ -35,7 +35,7 @@ class Genome::Model::Tools::Tcga::MergePerLaneSamFilesWorker {
     ],
     has_param => [
            lsf_resource => {
-           default_value => 'select[model!=Opteron250 && type==LINUX64] rusage[mem=2000]',
+           default_value => 'rusage[mem=2000]',
            },
     ],
 

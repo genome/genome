@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata;
 use Workflow;
 use Workflow::Simple;
 
@@ -201,28 +202,12 @@ sub _import_from_uuids {
         }
 
         my $tmp_xml = '/tmp/tcga_import_cgquery_data.xml';
+        my $metadata = Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata->create(
+            metadata_file => $tmp_xml,
+        );
 
-        $self->_sys_out('cgquery -o ' . $tmp_xml . ' analysis_id=' . $uuid);
-
-        my $info = XMLin($tmp_xml);
-        my $size = $info->{ResultSummary}->{downloadable_file_size};
-
-        my $kb_usage = 0;
-
-        if ($size->{units} eq 'GB') {
-            $kb_usage = $size->{content} * 1024 * 1024;
-        }
-        elsif ($size->{units} eq 'MB') {
-            $kb_usage = $size->{content} * 1024;
-        }
-        elsif ($size->{units} eq 'KB') {
-            $kb_usage = $size->{content};
-        }
-        else {
-            $self->error_message('Units on target BAM size not recognized: ' . $size->{units});
-            return;
-        }
-
+        my $bam_file_name = $metadata->bam_file_names;
+        my $kb_usage = $metadata->filesize_in_kb_for_file_name($bam_file_name);
         $self->status_message('Target BAM file has KB size of: ' . $kb_usage);
 
         my $alloc_path = 'build_merged_alignments/tcga_import_bams/' . $self->uuid;
@@ -326,7 +311,7 @@ sub _import_from_filepath {
 sub _resolve_args {
     my ($self) = @_;
 
-    my %metadata = %{$self->_read_in_metadata};
+    my $metadata = $self->_read_in_metadata;
 
     unless ($self->original_data_path or $self->uuid or $self->uuid_file) {
         die $self->error_message("One of original_data_path or uuid or uuid_file is required.");
@@ -334,12 +319,12 @@ sub _resolve_args {
 
     my @optional_arg_names = qw| aliquot_id analysis_id participant_id sample_id |;
     for my $arg_name (@optional_arg_names){
-        $self->$arg_name($self->_resolve_single_arg($arg_name, $metadata{$arg_name}));
+        $self->$arg_name($self->_resolve_single_arg($arg_name, ($metadata ? $metadata->get_attribute_value($arg_name) : undef)));
     }
 
     my @required_arg_names = qw| import_source_name tcga_name target_region |;
     for my $arg_name (@required_arg_names){
-        $self->$arg_name($self->_resolve_single_arg($arg_name, $metadata{$arg_name}));
+        $self->$arg_name($self->_resolve_single_arg($arg_name, ($metadata ? $metadata->get_attribute_value($arg_name) : undef)));
         if(not defined $self->$arg_name) {
             die $self->error_message("Required argument ($arg_name) was not passed and couldn't be found in the metadata.");
         }
@@ -347,7 +332,8 @@ sub _resolve_args {
 
     # handle bam_md5 carefully
     unless($self->no_md5) {
-        $self->bam_md5($self->_resolve_single_arg('bam_md5', $metadata{'bam_md5'}));
+        my $bam_file_name = ($metadata ? $metadata->bam_file_names : undef);
+        $self->bam_md5($self->_resolve_single_arg('bam_md5', ($metadata ? $metadata->checksum_content_for_file_name($bam_file_name) : undef)));
         $self->bam_md5($self->_resolve_bam_md5);
         if(not defined $self->bam_md5) {
             die $self->error_message("Required argument (bam_md5) was not passed and couldn't be found in the metadata or an .md5 file in the directory where the bam file is.");
@@ -411,7 +397,7 @@ sub _read_in_metadata {
     }
 
     $self->status_message('No metadata file found.');
-    return {};
+    return;
 }
 
 sub _create_attributes {
@@ -436,33 +422,9 @@ sub _create_attributes {
 sub _parse_metadata_file {
     my ($self, $metadata_file) = @_;
 
-    my $md = XMLin($metadata_file);
-
-    my %metadata;
-    $metadata{bam_md5}            = $self->_md5_checksum_content($md);
-    $metadata{tcga_name}          = $md->{Result}->{legacy_sample_id};
-    $metadata{import_source_name} = $md->{Result}->{center_name};
-    $metadata{analysis_id}        = $md->{Result}->{analysis_id};
-    $metadata{aliquot_id}         = $md->{Result}->{aliquot_id};
-    $metadata{participant_id}     = $md->{Result}->{participant_id};
-    $metadata{sample_id}          = $md->{Result}->{sample_id};
-
-    my $library_strategy          = $md->{Result}->{library_strategy};
-    my $target_region;
-    if($library_strategy eq 'WGS') { #whole genome
-        $target_region = 'none';
-    } elsif($library_strategy eq 'WXS') { #exome
-        $target_region = $self->reference_sequence_build_id eq '106942997'?
-            'agilent_sureselect_exome_version_2_broad_refseq_cds_only_hs37':
-            'agilent sureselect exome version 2 broad refseq cds only';
-    } elsif($library_strategy eq 'RNA-Seq') { #RNA
-        $target_region = 'none';
-    } else {
-        $self->warning_message('Unknown library strategy: ' . $library_strategy);
-    }
-    $metadata{target_region}      = $target_region;
-
-    return \%metadata
+    return Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata->create(
+        metadata_file => $metadata_file,
+    );
 }
 
 sub _md5_checksum_content {

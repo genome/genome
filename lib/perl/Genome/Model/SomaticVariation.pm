@@ -89,6 +89,10 @@ class Genome::Model::SomaticVariation {
             is_optional => 1,
             doc => "path to a target file region. Used in conjunction with --restrict-to-target-regions to limit sites to those appearing in these regions",
         },
+        bam_readcount_version =>{
+            is => 'Text',
+            doc => "Bam readcount version to use. This is used in the reporting step for readcount information. It should match the version in snv/indel_detection_strategy for consistency.",
+        },
     ],
     has => [
         tumor_model_id => {
@@ -498,6 +502,7 @@ sub map_workflow_inputs {
     push @inputs, tiers_to_review => $self->tiers_to_review;
     push @inputs, restrict_to_target_regions => $self->restrict_to_target_regions;
     push @inputs, target_regions => $self->target_regions;
+    push @inputs, bam_readcount_version => $self->bam_readcount_version;
 
     push @inputs, $self->variant_reporting_related_workflow_inputs($build);
 

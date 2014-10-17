@@ -503,8 +503,13 @@ sub _recursively_find_unfinished_steps {
 sub _print_error_log_preview {
     my ($self, $handle, $log_path) = @_;
 
-    my @lines = `grep 'ERROR' $log_path`;
-    my @error_lines = grep {$_ =~ m/ERROR/} @lines;
+    # If the log is less than 5MB, try to find the error message
+    my @error_lines;
+    if ( (-s $log_path) < (5 * 1024 * 1024) ) {
+        @error_lines = `grep --max-count=1 'ERROR' $log_path`;
+    } else {
+        print $handle " Max file size exceeded, skipped error preview.\n";
+    }
 
     my $preview;
     if (@error_lines) {

@@ -8,85 +8,73 @@ use warnings;
 class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
     is => 'Command',
     has => [
-	bam_files => {
-	    is => 'String',
-	    is_optional => 0,
-	    doc => 'comma-separated list of bam files to grab readcounts from. Output columns will be appended in this order',
-	},
-
-	variant_file => {
-	    is => 'String',
-	    is_optional => 0,
-	    doc => 'File containing snvs in annotation format (1-based, first 5-cols =  [chr, st, sp, ref, var])',
-	},
-
-        output_file => {
-	    is => 'String',
-	    is_optional => 0,
-	    doc => 'output file will be indentical to the input file with readcounts appended as the last two columns',
+        bam_files => {
+            is => 'String',
+            is_optional => 0,
+            doc => 'comma-separated list of bam files to grab readcounts from. Output columns will be appended in this order',
         },
-
+        variant_file => {
+            is => 'String',
+            is_optional => 0,
+            doc => 'File containing snvs in annotation format (1-based, first 5-cols =  [chr, st, sp, ref, var])',
+        },
+        output_file => {
+            is => 'String',
+            is_optional => 0,
+            doc => 'output file will be indentical to the input file with readcounts appended as the last two columns',
+        },
         genome_build => {
             is => 'String',
             is_optional => 0,
-	    doc => 'takes either a string describing the genome build (one of 36, 37, mm9, mus37, mus37wOSK) or a path to the genome fasta file',
+            doc => 'takes either a string describing the genome build (one of 36, 37, mm9, mus37, mus37wOSK) or a path to the genome fasta file',
         },
-
         min_quality_score => {
             is => 'Integer',
             is_optional => 1,
-	    doc => 'minimum mapping quality of reads to be considered',
+            doc => 'minimum mapping quality of reads to be considered',
             default => '1',
         },
-
-	min_base_quality => {
-	    is => 'Integer',
-	    is_optional => 1,
-	    doc => 'minimum base quality of bases in reads to be considered',
-	    default => '0',
-	},
-
+        min_base_quality => {
+            is => 'Integer',
+            is_optional => 1,
+            doc => 'minimum base quality of bases in reads to be considered',
+            default => '0',
+        },
         chrom => {
             is => 'String',
             is_optional => 1,
-	    doc => 'only process this chromosome.  Useful for enormous files',
+            doc => 'only process this chromosome.  Useful for enormous files',
         },
-
         min_depth  => {
             is => 'Integer',
             is_optional => 1,
-	    doc => 'minimum depth required for a site to be reported',
+            doc => 'minimum depth required for a site to be reported',
         },
-
         max_depth => {
             is => 'Integer',
             is_optional => 1,
-	    doc => 'maximum depth allowed for a site to be reported',
+            doc => 'maximum depth allowed for a site to be reported',
         },
-
         min_vaf => {
             is => 'Integer',
             is_optional => 1,
-	    doc => 'minimum variant allele frequency required for a site to be reported (0-100)',
+            doc => 'minimum variant allele frequency required for a site to be reported (0-100)',
         },
-
         max_vaf => {
             is => 'Integer',
             is_optional => 1,
-	    doc => 'maximum variant allele frequency allowed for a site to be reported (0-100)',
+            doc => 'maximum variant allele frequency allowed for a site to be reported (0-100)',
         },
-
         indel_size_limit => {
             is => 'Integer',
             is_optional => 1,
-	    doc => 'maximum indel size to grab readcounts for. (The larger the indel, the more skewed the readcounts due to mapping problems)',
+            doc => 'maximum indel size to grab readcounts for. (The larger the indel, the more skewed the readcounts due to mapping problems)',
             default => 4,
         },
-
         header_prefixes => {
             is => 'String',
             is_optional => 1,
-	    doc => 'Comma-separated list - if the file has a header, three column titles get added for each bam ("ref_count","var_count","VAF"). This specifies a prefix for those columns. (i.e.  "Normal" will lead to "Normal_ref_count","Normal_var_count","Normal_VAF").',
+            doc => 'Comma-separated list - if the file has a header, three column titles get added for each bam ("ref_count","var_count","VAF"). This specifies a prefix for those columns. (i.e.  "Normal" will lead to "Normal_ref_count","Normal_var_count","Normal_VAF").',
         },
         per_library => {
             is => 'Boolean',
@@ -94,9 +82,12 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
             doc => 'whether or not to report counts on a per-library basis',
             default => 0,
         },
-
-
-        ]
+        bam_readcount_version => {
+            is => 'String',
+            doc => 'version of bam-readcount to use',
+            is_optional => 1,
+        },
+    ],
 };
 
 sub help_brief {
@@ -185,7 +176,7 @@ sub execute {
     my $prefix = 1;
     for my $bam (@bams){
         #run bam-readcount, stick the files in the tempdir
-        my $cmd = Genome::Model::Tools::Analysis::Coverage::BamReadcount->create(
+        my %params = (
             bam_file => $bam,
             output_file =>  "$tempdir/$prefix.rcfile",
             variant_file => $variant_file,
@@ -197,9 +188,13 @@ sub execute {
             max_vaf => $max_vaf,
             indel_size_limit => $indel_size_limit,
             min_mapping_quality => $min_quality_score,
-	    min_base_quality => $min_base_quality,
+            min_base_quality => $min_base_quality,
             per_library => $self->per_library,
             );
+        if ($self->bam_readcount_version) {
+            $params{bam_readcount_version} = $self->bam_readcount_version;
+        }
+        my $cmd = Genome::Model::Tools::Analysis::Coverage::BamReadcount->create(%params);
         unless ($cmd->execute) {
             die "Bam-readcount failed";
         }

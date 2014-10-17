@@ -6,7 +6,6 @@ sleep 5;
 use strict;
 use warnings;
 
-$Genome::Sys::IS_TESTING=1;
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
 };

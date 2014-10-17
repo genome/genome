@@ -140,7 +140,7 @@ my %stop_codons = (
     TGA => ['X', 'OPA'],
 );
 
-my %convert = (
+my %amino_acids = (
     S => 'Ser',
     F => 'Phe',
     L => 'Leu',
@@ -161,9 +161,13 @@ my %convert = (
     D => 'Asp',
     E => 'Glu',
     G => 'Gly',
-    Z => 'Z',
 );
 
+my %convert = (%amino_acids, Z => 'Z');
+
+sub amino_acids { %amino_acids }
+
+sub valid_amino_acid_codes { keys %amino_acids }
 
 sub single_letter {
     my %_stop_codons = _stop_codons('single');

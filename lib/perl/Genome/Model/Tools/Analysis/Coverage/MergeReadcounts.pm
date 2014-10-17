@@ -94,6 +94,11 @@ class Genome::Model::Tools::Analysis::Coverage::MergeReadcounts{
 	    doc => 'whether or not to report counts on a per-library basis',
 	    default => 0,
 	},
+    bam_readcount_version => {
+        is => 'String',
+        doc => 'version of bam-readcount to use',
+        is_optional => 1,
+    },
 
         ]
 };
@@ -309,22 +314,27 @@ sub execute {
     my $pathmerge = "$tempdir/snvs.indels.annotated-merge";
     
     # makes an AddReadcounts run
-    my $cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
-	    bam_files => $bam_files,
-	    output_file =>  $pathmerge,
-	    variant_file => $pathtab,
-	    genome_build => $genome_build, 
-	    header_prefixes => join(",", @header_prefixes),
-	    chrom => $chrom,
-	    min_depth  => $min_depth,
-	    max_depth => $max_depth,
-	    min_vaf => $min_vaf,
-	    max_vaf => $max_vaf,
-	    indel_size_limit => $indel_size_limit,
-	    min_quality_score => $min_quality_score,
-	    per_library => $self->per_library,
-	);
-    
+    my %params = (
+        bam_files => $bam_files,
+        output_file =>  $pathmerge,
+        variant_file => $pathtab,
+        genome_build => $genome_build, 
+        header_prefixes => join(",", @header_prefixes),
+        chrom => $chrom,
+        min_depth  => $min_depth,
+        max_depth => $max_depth,
+        min_vaf => $min_vaf,
+        max_vaf => $max_vaf,
+        indel_size_limit => $indel_size_limit,
+        min_quality_score => $min_quality_score,
+        per_library => $self->per_library,
+        bam_readcount_version => $self->bam_readcount_version,
+        );
+
+    if($self->bam_readcount_version){
+        $params{bam_readcount_version} = $self->bam_readcount_version;
+    }
+    my $cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(%params);
     unless ($cmd->execute) {
 	die "add-readcounts failed";
     }

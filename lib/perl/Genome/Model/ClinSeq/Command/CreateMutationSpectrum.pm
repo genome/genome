@@ -113,7 +113,7 @@ sub execute {
   #Get a 'final' name for the sample
   my $final_name = $build->model->id;
   $final_name = $build->model->subject->name if ($build->model->subject->name);
-  $final_name = $build->model->subject->patient->common_name if ($build->model->subject->patient->common_name);
+  $final_name = $build->model->subject->individual->common_name if ($build->model->subject->individual->common_name);
 
   #1.) Get variants from somatic variation build (tier1-3 for wgs and tier1 for exome?)
   my $variant_file;
