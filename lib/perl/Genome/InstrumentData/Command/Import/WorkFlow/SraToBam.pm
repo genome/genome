@@ -106,7 +106,8 @@ sub _dump_bam_from_sra {
         return;
     }
 
-    if ( $sra_has_primary_alignment_info ) { # if primary alignment info exists, only aligned are dumped above.
+    if ( $sra_has_primary_alignment_info ) {
+        # if primary alignment info exists, only aligned are dumped above.
         $self->debug_message('Dump unaligned from sra to fastq...');
         my $unaligned_fastq = $self->working_directory.'/unaligned.fastq';
         $self->debug_message("Unaligned fastq: $unaligned_fastq");
