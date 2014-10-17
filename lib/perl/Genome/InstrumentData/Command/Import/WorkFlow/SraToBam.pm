@@ -160,7 +160,7 @@ sub _dump_bam_from_sra {
     return 1;
 }
 
-sub do_shellcmd {
+sub do_shellcmd_with_stdout {
     my $self = shift;
     my ($cmd, $output_path) = @_;
 
@@ -187,7 +187,7 @@ sub dump_aligned_bam {
     my ($sra_path, $aligned_bam) = @_;
 
     my $command = "/usr/bin/sam-dump --primary $sra_path | samtools view -h -b -S -";
-    return $self->do_shellcmd( $command, $aligned_bam);
+    return $self->do_shellcmd_with_stdout( $command, $aligned_bam);
 }
 
 sub dump_unaligned_fastq {
@@ -195,7 +195,7 @@ sub dump_unaligned_fastq {
     my ($sra_path, $unaligned_fastq) = @_;
 
     my $command = "/usr/bin/fastq-dump --unaligned --origfmt --stdout $sra_path";
-    return $self->do_shellcmd( $command, $unaligned_fastq);
+    return $self->do_shellcmd_with_stdout( $command, $unaligned_fastq);
 }
 
 1;
