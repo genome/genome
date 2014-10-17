@@ -68,6 +68,7 @@ $detector_result->add_user(user => $detector_vcf_result, label => 'uses');
 my $indel_filter_high_confidence = Genome::Model::Tools::DetectVariants2::Filter::IndelFilter->create(
     previous_result_id => $detector_result->id,
     output_directory => $test_output_dir,
+    aligned_reads_sample => "TEST",
 );
 
 ok($indel_filter_high_confidence, "created IndelFilter object");

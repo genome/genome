@@ -15951,13 +15951,13 @@ $Genome::Command::OPTS_SPEC = [
         [
           'bam-files=s',
           'files',
-          'bam-readcount-version=s',
-          'files',
           'genome-build=s',
           'files',
           'output-file=s',
           'files',
           'variant-file=s',
+          'files',
+          'bam-readcount-version=s',
           'files',
           'chrom=s',
           'files',
@@ -16057,8 +16057,6 @@ $Genome::Command::OPTS_SPEC = [
         [
           'bam-files=s',
           'files',
-          'bam-readcount-version=s',
-          'files',
           'genome-build=s',
           'files',
           'output-file=s',
@@ -16066,6 +16064,8 @@ $Genome::Command::OPTS_SPEC = [
           'variant-files=s',
           'files',
           'variant-sources=s',
+          'files',
+          'bam-readcount-version=s',
           'files',
           'chrom=s',
           'files',
@@ -18412,15 +18412,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>remove-star-sequences',
-      [
-        'input-file=s',
-        'files',
-        'output-directory=s',
-        'files',
-        'help!',
-        undef
-      ],
       '>parse-netmhc-output',
       [
         'netmhc-file=s',
@@ -18488,6 +18479,15 @@ $Genome::Command::OPTS_SPEC = [
           '3.0',
           '3.4'
         ],
+        'help!',
+        undef
+      ],
+      '>remove-unknown-sequences',
+      [
+        'input-file=s',
+        'files',
+        'output-directory=s',
+        'files',
         'help!',
         undef
       ],
@@ -36681,6 +36681,21 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>bam-qc',
     [
+      '>summarize-instrument-data',
+      [
+        'output-tsv=s',
+        'files',
+        'color!',
+        undef,
+        'debug!',
+        undef,
+        'output-pdf=s',
+        'files',
+        'instrument-data=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>run',
       [
         'bam-file=s',

@@ -170,7 +170,7 @@ class Genome::Model::Tools::Annotate::TranscriptVariants {
     has_param => [
         lsf_resource => {
             is => 'Text',
-            default => "-M 7000000 -R 'select[type==LINUX64 && mem>7000 && tmp>10240] rusage[mem=7000]'",
+            default => "-M 7000000 -R 'select[mem>7000 && tmp>10240] rusage[mem=7000]'",
         },
         lsf_queue => {
             is => 'Text',

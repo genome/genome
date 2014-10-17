@@ -236,7 +236,6 @@ sub map_workflow_inputs {
       misc_annotation_db => $misc_annotation_db,
       cosmic_annotation_db => $cosmic_annotation_db,
       bam_readcount_version => $self->bam_readcount_version,
-      tmp_bam_readcount_version => 0.6, # before bam_readcount_version was specified model was using different versions
       sireport_min_tumor_vaf => $self->sireport_min_tumor_vaf,
       sireport_max_normal_vaf => $self->sireport_max_normal_vaf,
       sireport_min_coverage => $self->sireport_min_coverage,
@@ -970,7 +969,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'docm_report_dir', $docm_report_op, 'outdir');
     $add_link->($input_connector, 'build', $docm_report_op, 'builds');
     $add_link->($input_connector, 'docm_variants_file', $docm_report_op, 'docm_variants_file');
-    $add_link->($input_connector, 'tmp_bam_readcount_version', $docm_report_op, 'bam_readcount_version');
+    $add_link->($input_connector, 'bam_readcount_version', $docm_report_op, 'bam_readcount_version');
     $add_link->($docm_report_op, 'result', $output_connector, 'docm_report_result');
   }
 
@@ -1202,7 +1201,7 @@ sub _resolve_workflow_for_build {
         $msg = "Generate SnvIndel Report" . $i . ".";
         $converge_snv_indel_report_op1 = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::SnvIndelReport");
         $add_link->($input_connector, 'build', $converge_snv_indel_report_op1, 'builds');
-        $add_link->($input_connector, 'tmp_bam_readcount_version', $converge_snv_indel_report_op1, 'bam_readcount_version');
+        $add_link->($input_connector, 'bam_readcount_version', $converge_snv_indel_report_op1, 'bam_readcount_version');
         $add_link->($input_connector, 'snv_indel_report_dir' . $i, $converge_snv_indel_report_op1, 'outdir');
         $add_link->($input_connector, 'snv_indel_report_clean', $converge_snv_indel_report_op1, 'clean');
         $add_link->($input_connector, 'snv_indel_report_tmp_space', $converge_snv_indel_report_op1, 'tmp_space');
@@ -1397,7 +1396,7 @@ sub _infer_references_from_input_models {
 
 sub _resolve_resource_requirements_for_build {
   #Set LSF parameters for the ClinSeq job
-  my $lsf_resource_string = "-R 'select[model!=Opteron250 && type==LINUX64] rusage[tmp=10000:mem=4000]' -M 4000000";
+  my $lsf_resource_string = "-R 'rusage[tmp=10000:mem=4000]' -M 4000000";
   return($lsf_resource_string);
 }
 

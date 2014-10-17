@@ -11,7 +11,7 @@ class Genome::Model::Tools::SvSim::RunBreakdancer {
     is => "Command::V2",
     has_param => [
         lsf_resource => {
-            default_value => "-M 4000000 -R 'select[type==LINUX64 && mem>4000] rusage[mem=4000]'"
+            default_value => "-M 4000000 -R 'select[mem>4000] rusage[mem=4000]'"
         },
     ],
     has_input => [

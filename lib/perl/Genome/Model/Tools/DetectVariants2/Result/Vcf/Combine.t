@@ -238,6 +238,7 @@ sub run_combine_test {
         input_a_id => $result_a->id,
         input_b_id => $result_b->id,
         output_directory => $test_working_dir,
+        aligned_reads_sample => "TEST",
     );
 
     my $command_type = "Genome::Model::Tools::DetectVariants2::Combine::" . $operation . "Snv";

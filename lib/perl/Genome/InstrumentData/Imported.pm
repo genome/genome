@@ -17,154 +17,73 @@ class Genome::InstrumentData::Imported {
         source => { is => 'Genome::Subject', via => 'sample', to => 'source', },
         source_id => { is=> 'Text', via => 'source', to => 'id', },
         source_name => { is=> 'Text', via => 'source', to => 'name', },
-        import_date => {
-            is => 'DateTime',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'import_date' ],
-        },
-        user_name => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'user_name' ],
-        },
-        original_data_path => {
-            is => 'DirectoryPath',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'original_data_path' ],
-        },
-        read_count => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'read_count' ],
-        },
-        base_count => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'base_count' ],
-        },
-        fragment_count => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'fragment_count' ],
-        },
-        fwd_read_length => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'fwd_read_length' ],
-        },
-        is_paired_end => {
-            is => 'Boolean',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'is_paired_end' ],
-        },
-        median_insert_size => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'median_insert_size' ],
-        },
-        read_length => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'read_length' ],
-        },
-        rev_read_length => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'rev_read_length' ],
-        },
-        sd_above_insert_size => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'sd_above_insert_size' ],
-        },
-        target_region_set_name => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'target_region_set_name' ],
-        },
-        sra_accession => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'sra_accession' ],
-        },
-        sra_sample_id => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'sra_sample_id' ],
-        },
-        downsample_ratio => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'downsample_ratio' ],
-        },
-        barcode => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'barcode' ],
-        },
-        reference_sequence_build_id => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'reference_sequence_build_id' ],
-        },
         reference_sequence_build => {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
             id_by => 'reference_sequence_build_id',
-        },
-        blacklisted_segments => {
-            is_many => 1,
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'blacklisted_segments' ],
         },
         full_name => {
             calculate_from => [ 'run_name', 'subset_name' ],
             calculate => q( $subset_name ? "$run_name/$subset_name" : $run_name ),
         },
+    ],
+    has_optional_attribute => [
+        import_date => {
+            is => 'DateTime',
+        },
+        user_name => {
+            is => 'Text',
+        },
+        original_data_path => {
+            is => 'DirectoryPath',
+        },
+        read_count => {
+            is => 'Number',
+        },
+        base_count => {
+            is => 'Number',
+        },
+        fragment_count => {
+            is => 'Number',
+        },
+        fwd_read_length => {
+            is => 'Number',
+        },
+        is_paired_end => {
+            is => 'Boolean',
+        },
+        median_insert_size => {
+            is => 'Number',
+        },
+        read_length => {
+            is => 'Number',
+        },
+        rev_read_length => {
+            is => 'Number',
+        },
+        sd_above_insert_size => {
+            is => 'Number',
+        },
+        target_region_set_name => {
+            is => 'Text',
+        },
+        sra_accession => {
+            is => 'Text',
+        },
+        sra_sample_id => {
+            is => 'Text',
+        },
+        barcode => {
+            is => 'Text',
+        },
+        reference_sequence_build_id => {
+            is => 'Number',
+        },
+        blacklisted_segments => {
+            is_many => 1,
+            is => 'Text',
+        },
         downsample_ratio => {
             is => 'Float',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'downsample_ratio' ],
         },
     ],
 };

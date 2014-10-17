@@ -33,10 +33,10 @@ sub required_rusage {
         }
     }
     if ($max > 0) { 
-        return "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>24000] span[hosts=1] rusage[tmp=90000, mem=24000]' -M 24000000 -n $max";
+        return "-R 'select[tmp>90000 && mem>24000] span[hosts=1] rusage[tmp=90000, mem=24000]' -M 24000000 -n $max";
     } else {
         print "Could not determine number of cores to use from params! Defaulting to 4.";
-        return "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>24000] span[hosts=1] rusage[tmp=90000, mem=24000]' -M 24000000 -n 4";
+        return "-R 'select[tmp>90000 && mem>24000] span[hosts=1] rusage[tmp=90000, mem=24000]' -M 24000000 -n 4";
     }
 }
 

@@ -31,10 +31,10 @@ sub required_rusage {
     my %params = $self->decomposed_aligner_params;
     my $cores_to_use = $params{'cores_to_use'};
     if ($cores_to_use =~ /(\d+)/) { 
-        return "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>16000] span[hosts=1] rusage[tmp=90000, mem=16000]' -M 16000000 -n $1";
+        return "-R 'select[tmp>90000 && mem>16000] span[hosts=1] rusage[tmp=90000, mem=16000]' -M 16000000 -n $1";
     } else {
         print "Could not determine number of cores to use from params! Defaulting to 4.";
-        return "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>16000] span[hosts=1] rusage[tmp=90000, mem=16000]' -M 16000000 -n 4";
+        return "-R 'select[tmp>90000 && mem>16000] span[hosts=1] rusage[tmp=90000, mem=16000]' -M 16000000 -n 4";
     }
 }
 

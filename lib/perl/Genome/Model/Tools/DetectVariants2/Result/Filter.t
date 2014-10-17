@@ -53,6 +53,7 @@ my %filter_params = (
     previous_result_id => $result->id,
     version => 'v1',
     output_directory => $test_working_dir . '/test/filter1',
+    aligned_reads_sample => 'TEST',
 );
 
 my $filter_command = Genome::Model::Tools::DetectVariants2::Filter::SnpFilter->create(%filter_params);

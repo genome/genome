@@ -39,7 +39,7 @@ class Genome::Model::Tools::SmrtAnalysis::MakeAdapterReport {
         },
     ],
     has_optional_param => [
-        lsf_resource => { default_value => "-g /pacbio/smrtanalysis -M 16000000 -R 'select[type==LINUX64 && mem>=16000 && gtmp>=160] rusage[mem=16000,gtmp=80]'" },
+        lsf_resource => { default_value => "-g /pacbio/smrtanalysis -M 16000000 -R 'select[mem>=16000 && gtmp>=160] rusage[mem=16000,gtmp=80]'" },
     ],
 };
 

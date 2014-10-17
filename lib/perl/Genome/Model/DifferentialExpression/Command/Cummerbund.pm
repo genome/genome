@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-my $DEFAULT_LSF_RESOURCE = "-R 'select[type==LINUX64 && mem>=16000] rusage[mem=16000] span[hosts=1]' -M 16000000 ";
+my $DEFAULT_LSF_RESOURCE = "-R 'select[mem>=16000] rusage[mem=16000] span[hosts=1]' -M 16000000 ";
 
 class Genome::Model::DifferentialExpression::Command::Cummerbund {
     is => ['Command::V2'],

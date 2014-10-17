@@ -26,7 +26,6 @@ class Genome::InstrumentData::AlignmentResult::Bsmap {
 sub required_arch_os { 'x86_64' }
 
 # LSF resources required to run the alignment.
-#"-R 'select[model!=Opteron250 && type==LINUX64 && mem>16000 ** tmp > 150000] span[hosts=1] rusage[tmp=150000, mem=16000]' -M 16000000 -n 1";
 sub required_rusage {
     my $self = shift;
     my $cores = 4; # default to 4, although decomposed_aligner_params should always include "-p N" even if the processing-profile does not
@@ -36,7 +35,7 @@ sub required_rusage {
         $cores = $1;
     }
 
-    return "-R 'select[type==LINUX64 && mem>16000 && tmp > 300000] span[hosts=1] rusage[tmp=300000, mem=16000]' -M 16000000 -n $cores";
+    return "-R 'select[mem>16000 && tmp > 300000] span[hosts=1] rusage[tmp=300000, mem=16000]' -M 16000000 -n $cores";
 }
 
 #

@@ -72,6 +72,7 @@ $detector_result->add_user(user => $detector_vcf_result, label => 'uses');
 my $loh = Genome::Model::Tools::DetectVariants2::Filter::Loh->create(
     previous_result_id => $detector_result->id,
     output_directory => $test_output_dir,
+    aligned_reads_sample => "TEST",
 );
 
 ok($loh, 'created loh object');

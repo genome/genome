@@ -65,7 +65,7 @@ class Genome::Model::Tools::Varscan::NormalizeCopySegments {
     ],
     has_param => [
         lsf_resource => {
-            default_value => 'select[model!=Opteron250 && type==LINUX64 && tmp>1000] rusage[mem=4000]'
+            default_value => 'select[tmp>1000] rusage[mem=4000]'
         },
     ],
 };
