@@ -1332,19 +1332,19 @@ sub get_ref_align_builds{
     $tumor_refalign_name .= "_$tumor_time_point";
 
     $ref_builds{$normal_refalign_name}{type} = $build_type;
-    $ref_builds{$normal_refalign_name}{sample_name} = $normal_subject_name;
+    $ref_builds{$normal_refalign_name}{sample_name} = $normal_subject_name . "_" . $build_type;
     $ref_builds{$normal_refalign_name}{sample_common_name} = $normal_subject_common_name;
     $ref_builds{$normal_refalign_name}{bam_path} = $normal_bam_path;
-    $ref_builds{$normal_refalign_name}{time_point} = $normal_subject_common_name . "_" . $normal_time_point;
-    $ref_builds{$normal_refalign_name}{time_point_tissue} = $normal_subject_common_name . "_" . $normal_tissue_desc . "_" . $normal_time_point;
+    $ref_builds{$normal_refalign_name}{time_point} = $normal_subject_common_name . "_" .  $build_type . "_" . $normal_time_point;
+    $ref_builds{$normal_refalign_name}{time_point_tissue} = $normal_subject_common_name . "_" . $build_type . "_" . $normal_tissue_desc . "_" . $normal_time_point;
     $ref_builds{$normal_refalign_name}{day} = $normal_time_point;
 
     $ref_builds{$tumor_refalign_name}{type} = $build_type;
-    $ref_builds{$tumor_refalign_name}{sample_name} = $tumor_subject_name;
+    $ref_builds{$tumor_refalign_name}{sample_name} = $tumor_subject_name . "_" . $build_type;
     $ref_builds{$tumor_refalign_name}{sample_common_name} = $tumor_subject_common_name;
     $ref_builds{$tumor_refalign_name}{bam_path} = $tumor_bam_path;
-    $ref_builds{$tumor_refalign_name}{time_point} = $tumor_subject_common_name . "_" . $tumor_time_point;
-    $ref_builds{$tumor_refalign_name}{time_point_tissue} = $tumor_subject_common_name . "_" . $tumor_tissue_desc . "_" . $tumor_time_point;
+    $ref_builds{$tumor_refalign_name}{time_point} = $tumor_subject_common_name  . "_" . $build_type . "_" . $tumor_time_point;
+    $ref_builds{$tumor_refalign_name}{time_point_tissue} = $tumor_subject_common_name  . "_" . $build_type . "_" . $tumor_tissue_desc . "_" . $tumor_time_point;
     $ref_builds{$tumor_refalign_name}{day} = $tumor_time_point;
   }
 
