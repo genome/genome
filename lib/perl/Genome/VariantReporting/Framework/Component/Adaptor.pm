@@ -65,7 +65,7 @@ sub resolve_plan_attributes {
     my $translations;
     eval { $translations = $self->provider->get_attribute('translations') };
     if (my $error = Exception::Class->caught()) {
-        if (blessed $error) {
+        if (blessed $error && $error->can('rethrow')) {
             if ($error->isa('NonexistentAttributeException')) {
                 # This dies if object needs translations and none are provided
                 $self->translate_inputs($translations);
