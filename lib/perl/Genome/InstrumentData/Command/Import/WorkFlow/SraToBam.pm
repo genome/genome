@@ -134,7 +134,6 @@ sub _dump_bam_from_sra {
                 $self->error_message('Failed to convert unaligned fastq to bam.');
                 return;
             }
-            unlink($unaligned_fastq);
 
             $self->debug_message('Add bam from unaligned fastq to unsorted bam...');
             my $bam_path = $self->output_bam_path;
@@ -157,6 +156,8 @@ sub _dump_bam_from_sra {
                     $aligned_bam, $self->output_bam_path, $!));
             }
         }
+
+        unlink($unaligned_fastq);
     }
 
     return 1;
