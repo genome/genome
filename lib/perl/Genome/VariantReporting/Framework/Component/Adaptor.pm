@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 use Params::Validate qw(validate validate_pos :types);
 use Exception::Class;
+use Scalar::Util qw(blessed);
 
 class Genome::VariantReporting::Framework::Component::Adaptor {
     is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base', 'Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
@@ -64,11 +65,21 @@ sub resolve_plan_attributes {
     my $translations;
     eval { $translations = $self->provider->get_attribute('translations') };
     if (my $error = Exception::Class->caught()) {
-        unless ($error->isa('NonexistentAttributeException')) {
+        if (blessed $error) {
+            if ($error->isa('NonexistentAttributeException')) {
+                # This dies if object needs translations and none are provided
+                $self->translate_inputs($translations);
+            }
+            else {
+                $error->rethrow;
+            }
+        }
+        else {
             die $error;
         }
     }
     else {
+        # Translations are provided
         $self->translate_inputs($translations);
     }
 }
