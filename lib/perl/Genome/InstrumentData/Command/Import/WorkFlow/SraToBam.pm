@@ -44,8 +44,12 @@ sub execute {
         my $config_ok = $self->check_ncbi_config;
         return unless $config_ok;
 
+        $self->debug_message('Check SRA database...');
+        my $sra_has_primary_alignment_info = $self->check_sra_database;
+        $self->debug_message('Check SRA database...done');
+
         $self->debug_message('Dump bam from SRA...');
-        my $dump_ok = $self->_dump_bam_from_sra;
+        my $dump_ok = $self->_dump_bam_from_sra($sra_has_primary_alignment_info);
         return if not $dump_ok;
 
         my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
@@ -64,34 +68,10 @@ sub execute {
 
 sub _dump_bam_from_sra {
     my $self = shift;
-
-    my $sra_path = $self->sra_path;
-    $self->debug_message('SRA path: '.$sra_path);
-
-    $self->debug_message('Check SRA database...');
-    my $dbcc_file = $sra_path.'.dbcc';
-    $self->debug_message('DBCC file: '.$dbcc_file);
-    my $cwd = Cwd::getcwd();
-    my ($source_sra_basename, $source_sra_directory) = File::Basename::fileparse($sra_path);
-    chdir($source_sra_directory) or die "Failed to chdir('$source_sra_directory')";
-    my $cmd = "/usr/bin/sra-dbcc $source_sra_basename &> $dbcc_file";
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv or not -s $dbcc_file ) {
-        $self->error_message($@) if $@;
-        $self->error_message('Failed to run sra dbcc!');
-        return;
-    }
-    my @dbcc_lines = eval{ Genome::Sys->read_file($dbcc_file); };
-    if ( not @dbcc_lines ) {
-        $self->error_message('Failed to read SRA DBCC file! ');
-        return;
-    }
-    my $sra_has_primary_alignment_info = grep { $_ =~ /PRIMARY_ALIGNMENT/ } @dbcc_lines;
-    chdir($cwd) or die "Failed to chdir('$cwd')";
-    $self->debug_message('Check SRA database...done');
+    my ($sra_has_primary_alignment_info) = @_;
     
     my $aligned_bam = $self->working_directory.'/aligned.bam';
-    my $dump_aligned_bam_ok = $self->dump_aligned_bam($sra_path, $aligned_bam);
+    my $dump_aligned_bam_ok = $self->dump_aligned_bam($self->sra_path, $aligned_bam);
     if ( $dump_aligned_bam_ok and (-s $aligned_bam) ) {
         $self->debug_message('Dump aligned bam...done');
     }
@@ -106,7 +86,7 @@ sub _dump_bam_from_sra {
         $self->debug_message('Dump unaligned from sra to fastq...');
 
         my $unaligned_fastq = $self->working_directory.'/unaligned.fastq';
-        if ( $self->dump_unaligned_fastq($sra_path, $unaligned_fastq) ) {
+        if ( $self->dump_unaligned_fastq($self->sra_path, $unaligned_fastq) ) {
             $self->debug_message('Dump unaligned from sra to fastq...done');
         }
         else {
@@ -180,6 +160,54 @@ sub check_ncbi_config {
             ."This file is required for most NCBI SRA operations.");
         return;
     }
+}
+
+sub run_sra_dbcc {
+    my $self = shift;
+    my ($source_sra_basename, $source_sra_directory, $dbcc_file) = @_;
+
+    my $cwd = Cwd::getcwd();
+    chdir($source_sra_directory) or die "Failed to chdir('$source_sra_directory')";
+    my $cmd = "/usr/bin/sra-dbcc $source_sra_basename &> $dbcc_file";
+    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+    if ( not $rv or not -s $dbcc_file ) {
+        $self->error_message($@) if $@;
+        $self->error_message('Failed to run sra dbcc!');
+        return;
+    }
+
+    chdir($cwd) or die "Failed to chdir('$cwd')";
+}
+
+sub read_dbcc_file {
+    my $self = shift;
+    my ($dbcc_file) = @_;
+
+    my @dbcc_lines = eval{ Genome::Sys->read_file($dbcc_file); };
+    if ( not @dbcc_lines ) {
+        $self->error_message('Failed to read SRA DBCC file! ');
+        return;
+    }
+
+    return @dbcc_lines;
+}
+
+sub check_sra_database {
+    my $self = shift;
+    my $sra_path = $self->sra_path;
+    my $dbcc_file = $sra_path.'.dbcc';
+
+    $self->debug_message('DBCC file: '.$dbcc_file);
+    my ($source_sra_basename, $source_sra_directory) = File::Basename::fileparse($sra_path);
+    my $run_ok = $self->run_sra_dbcc($source_sra_basename, $source_sra_directory, $dbcc_file);
+    unless ($run_ok) {
+        $self->error_message('Failed to run sra-dbcc');
+        return;
+    }
+
+    my @dbcc_lines = $self->read_dbcc_file($dbcc_file);
+    my $sra_has_primary_alignment_info = grep { $_ =~ /PRIMARY_ALIGNMENT/ } @dbcc_lines;
+    return $sra_has_primary_alignment_info;
 }
 
 sub do_shellcmd {
