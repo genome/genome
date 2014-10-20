@@ -31,9 +31,9 @@ sub execute {
     $self->status_message("Starting archive command...");
 
     for my $allocation ($self->allocations) {
-        $self->debug_message("Archiving allocation " . $allocation->id);
+        $self->status_message("Archiving allocation " . $allocation->id);
         if ($allocation->archivable == 0) {
-            $self->debug_message("Skipping allocation " . $allocation->id . ", not set to archivable");
+            $self->status_message("Skipping allocation " . $allocation->id . ", not set to archivable");
             next;
         }
 
@@ -41,7 +41,7 @@ sub execute {
         unless ($rv) {
             Carp::confess "Could not archive allocation " . $allocation->id;
         }
-        $self->debug_message("Finished archiving allocation " . $allocation->id);
+        $self->status_message("Finished archiving allocation " . $allocation->id);
     }
 
     $self->status_message("Done archiving, exiting...");
