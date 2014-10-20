@@ -90,11 +90,7 @@ sub _dump_bam_from_sra {
     chdir($cwd) or die "Failed to chdir('$cwd')";
     $self->debug_message('Check SRA database...done');
     
-    $self->debug_message('Dump aligned bam...');
-    my $aligned_bam = ( $sra_has_primary_alignment_info )
-        ? $self->working_directory.'/aligned.bam'
-        : $self->output_bam_path;
-
+    my $aligned_bam = $self->working_directory.'/aligned.bam';
     my $dump_aligned_bam_ok = $self->dump_aligned_bam($sra_path, $aligned_bam);
     if ( $dump_aligned_bam_ok and (-s $aligned_bam) ) {
         $self->debug_message('Dump aligned bam...done');
@@ -104,6 +100,7 @@ sub _dump_bam_from_sra {
         return;
     }
 
+    $self->debug_message('Dump aligned bam...');
     if ( $sra_has_primary_alignment_info ) {
         # if primary alignment info exists, only aligned are dumped above.
         $self->debug_message('Dump unaligned from sra to fastq...');
@@ -155,6 +152,14 @@ sub _dump_bam_from_sra {
         }
 
         unlink($unaligned_fastq);
+    }
+    else {
+        unless ( move($aligned_bam, $self->output_bam_path) ) {
+            $self->error_message( sprintf(
+                'Failed to move aligned bam to output bam path. '
+                .'Source: %s, Destination %s, Error Status %s',
+                $aligned_bam, $self->output_bam_path, $!));
+        }
     }
 
     return 1;
