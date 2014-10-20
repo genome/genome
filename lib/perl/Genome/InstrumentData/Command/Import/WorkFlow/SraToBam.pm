@@ -44,12 +44,8 @@ sub execute {
         my $config_ok = $self->check_ncbi_config;
         return unless $config_ok;
 
-        $self->debug_message('Check SRA database...');
-        my $sra_has_primary_alignment_info = $self->check_sra_database;
-        $self->debug_message('Check SRA database...done');
-
         $self->debug_message('Dump bam from SRA...');
-        my $dump_ok = $self->_dump_bam_from_sra($sra_has_primary_alignment_info);
+        my $dump_ok = $self->_dump_bam_from_sra;
         return if not $dump_ok;
 
         my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
@@ -68,7 +64,6 @@ sub execute {
 
 sub _dump_bam_from_sra {
     my $self = shift;
-    my ($sra_has_primary_alignment_info) = @_;
     
     my $aligned_bam = $self->working_directory.'/aligned.bam';
     my $dump_aligned_bam_ok = $self->dump_aligned_bam($self->sra_path, $aligned_bam);
@@ -80,58 +75,14 @@ sub _dump_bam_from_sra {
         return;
     }
 
+    $self->debug_message('Check SRA database...');
+    my $sra_has_primary_alignment_info = $self->check_sra_database;
+    $self->debug_message('Check SRA database...done');
+
     $self->debug_message('Dump aligned bam...');
     if ( $sra_has_primary_alignment_info ) {
         # if primary alignment info exists, only aligned are dumped above.
-        $self->debug_message('Dump unaligned from sra to fastq...');
-
-        my $unaligned_fastq = $self->working_directory.'/unaligned.fastq';
-        if ( $self->dump_unaligned_fastq($self->sra_path, $unaligned_fastq) ) {
-            $self->debug_message('Dump unaligned from sra to fastq...done');
-        }
-        else {
-            $self->error_message('Failed to run sra fastq-dump !');
-            return;
-        }
-
-        if ( -s $unaligned_fastq ) {
-            my $unaligned_bam = $unaligned_fastq.'.bam';
-
-            $self->debug_message('Convert unaligned fastq to bam...');
-            my $conversion_ok = $self->convert_fastq_to_bam(
-                $self->library->sample->name,
-                $unaligned_fastq, $unaligned_bam);
-            if ($conversion_ok) {
-                $self->debug_message('Convert unaligned fastq to bam...done');
-            }
-            else {
-                $self->error_message('Failed to convert unaligned fastq to bam.');
-                return;
-            }
-
-            $self->debug_message('Add bam from unaligned fastq to unsorted bam...');
-            my $merge_ok = $self->merge_bams($aligned_bam, $unaligned_bam, $self->output_bam_path);
-            if ($merge_ok) {
-                $self->debug_message('Add bam from unaligned fastq to unsorted bam...done');
-            }
-            else {
-                $self->error_message('Failed to add bam from unaligned fastq to unsorted bam');
-                return;
-            }
-
-            unlink($unaligned_bam);
-        }
-
-        else {
-            unless ( move($aligned_bam, $self->output_bam_path) ) {
-                $self->error_message( sprintf(
-                    'Failed to move aligned bam to output bam path. '
-                    .'Source: %s, Destination %s, Error Status %s',
-                    $aligned_bam, $self->output_bam_path, $!));
-            }
-        }
-
-        unlink($unaligned_fastq);
+        return $self->add_unaligned_reads_to_bam($aligned_bam);
     }
     else {
         unless ( move($aligned_bam, $self->output_bam_path) ) {
@@ -208,6 +159,69 @@ sub check_sra_database {
     my @dbcc_lines = $self->read_dbcc_file($dbcc_file);
     my $sra_has_primary_alignment_info = grep { $_ =~ /PRIMARY_ALIGNMENT/ } @dbcc_lines;
     return $sra_has_primary_alignment_info;
+}
+
+
+sub add_unaligned_reads_to_bam {
+    my $self = shift;
+    my ($aligned_bam) = @_;
+
+    $self->debug_message('Dump unaligned from sra to fastq...');
+    my $unaligned_fastq = $self->working_directory.'/unaligned.fastq';
+    if ( $self->dump_unaligned_fastq($self->sra_path, $unaligned_fastq) ) {
+        $self->debug_message('Dump unaligned from sra to fastq...done');
+    }
+    else {
+        $self->error_message('Failed to run sra fastq-dump !');
+        return;
+    }
+
+    if ( -s $unaligned_fastq ) {
+        return unless $self->merge_unaligned_fastq_into_bam($unaligned_fastq, $aligned_bam);
+    }
+    else {
+        unless ( move($aligned_bam, $self->output_bam_path) ) {
+            $self->error_message( sprintf(
+                'Failed to move aligned bam to output bam path. '
+                .'Source: %s, Destination %s, Error Status %s',
+                $aligned_bam, $self->output_bam_path, $!));
+        }
+    }
+
+    unlink($unaligned_fastq);
+}
+
+sub merge_unaligned_fastq_into_bam {
+    my $self = shift;
+    my ($unaligned_fastq, $aligned_bam) = @_;
+
+    $self->debug_message('Convert unaligned fastq to bam...');
+    my $unaligned_bam = $unaligned_fastq.'.bam';
+
+    my $conversion_ok = $self->convert_fastq_to_bam(
+        $self->library->sample->name,
+        $unaligned_fastq, $unaligned_bam);
+    if ($conversion_ok) {
+        $self->debug_message('Convert unaligned fastq to bam...done');
+    }
+    else {
+        $self->error_message('Failed to convert unaligned fastq to bam.');
+        return;
+    }
+
+    $self->debug_message('Add bam from unaligned fastq to unsorted bam...');
+    my $merge_ok = $self->merge_bams($aligned_bam, $unaligned_bam, $self->output_bam_path);
+    if ($merge_ok) {
+        $self->debug_message('Add bam from unaligned fastq to unsorted bam...done');
+    }
+    else {
+        $self->error_message('Failed to add bam from unaligned fastq to unsorted bam');
+        return;
+    }
+
+    unlink($unaligned_bam);
+
+    return 1;
 }
 
 sub do_shellcmd {
