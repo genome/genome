@@ -40,6 +40,10 @@ sub execute {
     my $self = shift;
 
     return try {
+        $self->debug_message('Check for NCBI config file...');
+        my $config_ok = $self->check_ncbi_config;
+        return unless $config_ok;
+
         $self->debug_message('Dump bam from SRA...');
         my $dump_ok = $self->_dump_bam_from_sra;
         return if not $dump_ok;
@@ -57,16 +61,9 @@ sub execute {
     };
 }
 
+
 sub _dump_bam_from_sra {
     my $self = shift;
-
-    $self->debug_message('Check for NCBI config file...');
-    my $ncbi_config_file = $ENV{HOME}.'/.ncbi/user-settings.mkfg';
-    if ( not -s $ncbi_config_file ) {
-        $self->error_message("No NCBI config file ($ncbi_config_file) found. Please run 'perl /usr/bin/sra-configuration-assistant' to set it up. This file is required for most NCBI SRA operations.");
-        return
-    }
-    $self->debug_message('Check for NCBI config file...done');
 
     my $sra_path = $self->sra_path;
     $self->debug_message('SRA path: '.$sra_path);
@@ -161,6 +158,23 @@ sub _dump_bam_from_sra {
     }
 
     return 1;
+}
+
+sub check_ncbi_config {
+    my $self = shift;
+
+    $self->debug_message('Check for NCBI config file...done');
+    my $ncbi_config_file = $ENV{HOME}.'/.ncbi/user-settings.mkfg';
+
+    if (-s $ncbi_config_file) {
+        return 1;
+    }
+    else {
+        $self->error_message("No NCBI config file ($ncbi_config_file) found. "
+            ."Please run 'perl /usr/bin/sra-configuration-assistant' to set it up. "
+            ."This file is required for most NCBI SRA operations.");
+        return;
+    }
 }
 
 sub do_shellcmd {
