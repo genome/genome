@@ -160,6 +160,34 @@ sub _dump_bam_from_sra {
     return 1;
 }
 
+sub do_shellcmd {
+    my $self = shift;
+    my ($cmd) = @_;
+
+    my ($stdout, $stderr) = Genome::Sys->create_temp_file_path for qw(1 2);
+
+    return try {
+        Genome::Sys->shellcmd(
+            cmd             => $cmd,
+            redirect_stdout => $stdout,
+            redirect_stderr => $stderr);
+        return 1;
+    }
+    catch {
+        $self->error_message('Caught exception from shellcmd: '. $_);
+
+        my $out = IO::File->new;
+        $out->open($stdout, '<');
+        $self->debug_message('STDOUT'. $_) while $out->getline;
+
+        my $err = IO::File->new;
+        $err->open($stderr, '<');
+        $self->debug_message('STDERR'. $_) while $err->getline;
+
+        return;
+    };
+}
+
 sub do_shellcmd_with_stdout {
     my $self = shift;
     my ($cmd, $output_path) = @_;
