@@ -136,15 +136,15 @@ sub _dump_bam_from_sra {
             }
 
             $self->debug_message('Add bam from unaligned fastq to unsorted bam...');
-            my $bam_path = $self->output_bam_path;
-            $cmd = "samtools merge $bam_path $aligned_bam $unaligned_bam";
-            $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-            if ( not $rv ) {
-                $self->error_message($@) if $@;
-                $self->error_message('Failed to run samtools view!');
+            my $merge_ok = $self->merge_bams($aligned_bam, $unaligned_bam, $self->output_bam_path);
+            if ($merge_ok) {
+                $self->debug_message('Add bam from unaligned fastq to unsorted bam...done');
+            }
+            else {
+                $self->error_message('Failed to add bam from unaligned fastq to unsorted bam');
                 return;
             }
-            $self->debug_message('Add bam from unaligned fastq to unsorted bam...done');
+
             unlink($unaligned_bam);
         }
 
@@ -240,5 +240,12 @@ sub convert_fastq_to_bam {
     return $self->do_shellcmd($command);
 }
 
+sub merge_bams {
+    my $self = shift;
+    my ($a,$b,$dest) = @_;
+
+    my $command = "samtools merge $dest $a $b";
+    return $self->do_shellcmd($command);
+}
 
 1;
