@@ -37,18 +37,17 @@ sub create {
     if (my $build_spec = $bx->value_for("build_spec")) {
         my $filter_updated;
         my $filter_prefix = ($bx->value_for("filter") ? ($bx->value_for("filter") . ',') : '');
-        if ($build_spec !~ /\D/) {
-            my $build = Genome::Model::Build->get($build_spec);
-            if ($build) {
-                $filter_updated = $filter_prefix . 'build_id=' . $build->id
-            }
-            else {
-                my $model = Genome::Model->get($build_spec);
-                if ($model) {
-                    $filter_updated = $filter_prefix . 'model_id=' . $model->id;
-                }
+        my $build = Genome::Model::Build->get($build_spec);
+        if ($build) {
+            $filter_updated = $filter_prefix . 'build_id=' . $build->id
+        }
+        else {
+            my $model = Genome::Model->get($build_spec);
+            if ($model) {
+                $filter_updated = $filter_prefix . 'model_id=' . $model->id;
             }
         }
+
         unless ($filter_updated) {
             my @models = Genome::Model->get(name => $build_spec);
             unless (@models) {
