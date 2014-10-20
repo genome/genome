@@ -121,17 +121,19 @@ sub _dump_bam_from_sra {
         }
 
         if ( -s $unaligned_fastq ) {
-            $self->debug_message('Convert unaligned fastq to bam...');
             my $unaligned_bam = $unaligned_fastq.'.bam';
-            my $sample_name = $self->library->sample->name;
-            my $cmd = "gmt picard fastq-to-sam --fastq $unaligned_fastq --output $unaligned_bam --quality-format Standard --sample-name $sample_name";
-            my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-            if ( not $rv or not -s $unaligned_bam ) {
-                $self->error_message($@) if $@;
-                $self->error_message('Failed to run sam fastq to sam on unaligned fastq!');
+
+            $self->debug_message('Convert unaligned fastq to bam...');
+            my $conversion_ok = $self->convert_fastq_to_bam(
+                $self->library->sample->name,
+                $unaligned_fastq, $unaligned_bam);
+            if ($conversion_ok) {
+                $self->debug_message('Convert unaligned fastq to bam...done');
+            }
+            else {
+                $self->error_message('Failed to convert unaligned fastq to bam.');
                 return;
             }
-            $self->debug_message('Convert unaligned fastq to bam...done');
             unlink($unaligned_fastq);
 
             $self->debug_message('Add bam from unaligned fastq to unsorted bam...');
@@ -226,5 +228,16 @@ sub dump_unaligned_fastq {
     return $self->do_shellcmd_with_stdout( $command, $unaligned_fastq);
 }
 
-1;
+sub convert_fastq_to_bam {
+    my $self = shift;
+    my ($sample_name, $unaligned_fastq, $unaligned_bam) = @_;
 
+    my $command = "gmt picard fastq-to-sam "
+        ."--fastq $unaligned_fastq "
+        ."--output $unaligned_bam "
+        ."--quality-format Standard --sample-name $sample_name";
+    return $self->do_shellcmd($command);
+}
+
+
+1;
