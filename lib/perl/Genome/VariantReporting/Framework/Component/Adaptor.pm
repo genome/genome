@@ -63,8 +63,13 @@ sub resolve_plan_attributes {
     }
     my $translations;
     eval { $translations = $self->provider->get_attribute('translations') };
-    if (my $error = Exception::Class->caught('NoTranslationsException')) {
-        die $error;
+    if (my $error = Exception::Class->caught()) {
+        if ($error->isa('NonexistentAttributeException')) {
+            $self->translate_inputs($translations);
+        }
+        else {
+            die $error;
+        }
     }
     else {
         $self->translate_inputs($translations);
