@@ -1256,10 +1256,10 @@ sub resolve_rnaseq_builds {
   foreach my $clinseq_build (@$clinseq_builds){
     my $tumor_build = $clinseq_build->tumor_rnaseq_build;
     $rnaseq_builds{$tumor_build->id}{build} = $tumor_build if $tumor_build;
-    $rnaseq_builds{$tumor_build->id}{type} = 'tumor_rnaseq' if $tumor_build;
+    $rnaseq_builds{$tumor_build->id}{type} = 'rnaseq' if $tumor_build;
     my $normal_build = $clinseq_build->normal_rnaseq_build;
     $rnaseq_builds{$normal_build->id}{build} = $normal_build if $normal_build;
-    $rnaseq_builds{$normal_build->id}{type} = 'normal_rnaseq' if $normal_build;
+    $rnaseq_builds{$normal_build->id}{type} = 'rnaseq' if $normal_build;
   }
   return (\%rnaseq_builds);
 }
@@ -1332,7 +1332,8 @@ sub get_ref_align_builds{
     $tumor_refalign_name .= "_$tumor_time_point";
 
     $ref_builds{$normal_refalign_name}{type} = $build_type;
-    $ref_builds{$normal_refalign_name}{sample_name} = $normal_subject_name . "_" . $build_type;
+    $ref_builds{$normal_refalign_name}{sample_name} = $normal_subject_name;
+    $ref_builds{$normal_refalign_name}{sample_name_build_type} = $normal_subject_name . "_" . $build_type;
     $ref_builds{$normal_refalign_name}{sample_common_name} = $normal_subject_common_name;
     $ref_builds{$normal_refalign_name}{bam_path} = $normal_bam_path;
     $ref_builds{$normal_refalign_name}{time_point} = $normal_subject_common_name . "_" .  $build_type . "_" . $normal_time_point;
@@ -1340,7 +1341,8 @@ sub get_ref_align_builds{
     $ref_builds{$normal_refalign_name}{day} = $normal_time_point;
 
     $ref_builds{$tumor_refalign_name}{type} = $build_type;
-    $ref_builds{$tumor_refalign_name}{sample_name} = $tumor_subject_name . "_" . $build_type;
+    $ref_builds{$tumor_refalign_name}{sample_name} = $tumor_subject_name;
+    $ref_builds{$tumor_refalign_name}{sample_name_build_type} = $tumor_subject_name . "_" . $build_type;
     $ref_builds{$tumor_refalign_name}{sample_common_name} = $tumor_subject_common_name;
     $ref_builds{$tumor_refalign_name}{bam_path} = $tumor_bam_path;
     $ref_builds{$tumor_refalign_name}{time_point} = $tumor_subject_common_name  . "_" . $build_type . "_" . $tumor_time_point;
@@ -1349,7 +1351,7 @@ sub get_ref_align_builds{
   }
 
   if($rnaseq_builds) {
-    $self->get_rnaseq_ref_builds(\%ref_builds, $rnaseq_builds);
+    $self->add_rnaseq_ref_builds(\%ref_builds, $rnaseq_builds);
   }
 
   #Set an order on refalign builds (use time points if available, otherwise name)
@@ -1397,7 +1399,7 @@ sub get_ref_align_builds{
   foreach my $name (sort {$ref_builds{$a}->{order} <=> $ref_builds{$b}->{order}} keys %ref_builds){
     push(@time_points, $ref_builds{$name}{time_point});
     push(@time_points_tissue, $ref_builds{$name}{time_point_tissue});
-    push(@samples, $ref_builds{$name}{sample_name});
+    push(@samples, $ref_builds{$name}{sample_name_build_type});
     push(@names, $name);
   }
 
@@ -1428,7 +1430,7 @@ sub get_ref_align_builds{
   return(\%ref_builds);
 }
 
-sub get_rnaseq_ref_builds {
+sub add_rnaseq_ref_builds {
   my $self = shift;
   my $ref_builds = shift;
   my $rnaseq_builds = shift;
@@ -1447,14 +1449,21 @@ sub get_rnaseq_ref_builds {
       $time_point = $timepoints[0]->attribute_value;
       $time_point =~ s/\s+//g;
     }
-    my $refalign_name = $subject_name . "_$build_type" . "_" .
-      $subject_common_name . "_$time_point";;
-    $ref_builds->{$refalign_name}{type} = $build_type;
-    $ref_builds->{$refalign_name}{sample_name} = $subject_name;
-    $ref_builds->{$refalign_name}{sample_common_name} = $subject_common_name;
-    $ref_builds->{$refalign_name}{bam_path} = $bam_path;
-    $ref_builds->{$refalign_name}{time_point} = $subject_common_name . "_" . $time_point;
-    $ref_builds->{$refalign_name}{day} = $time_point;
+
+    my $tissue_desc = $rnaseq_build->subject->tissue_desc;
+    $tissue_desc =~ s/\s+/\-/g;
+    $tissue_desc =~ s/\,//g;
+
+    my $rnaseq_name = $subject_name . "_$build_type" . "_" .
+      $subject_common_name . "_$time_point";
+    $ref_builds->{$rnaseq_name}{type} = $build_type;
+    $ref_builds->{$rnaseq_name}{sample_name} = $subject_name;
+    $ref_builds->{$rnaseq_name}{sample_name_build_type} = $subject_name . "_" . $build_type;
+    $ref_builds->{$rnaseq_name}{sample_common_name} = $subject_common_name;
+    $ref_builds->{$rnaseq_name}{bam_path} = $bam_path;
+    $ref_builds->{$rnaseq_name}{time_point} = $subject_common_name . "_" . $build_type . "_" . $time_point;
+    $ref_builds->{$rnaseq_name}{time_point_tissue} = $subject_common_name  . "_" . $build_type . "_" . $tissue_desc . "_" . $time_point;
+    $ref_builds->{$rnaseq_name}{day} = $time_point;
   }
 }
 
