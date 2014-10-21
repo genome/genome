@@ -86,10 +86,10 @@ sub _dump_bam_from_sra {
     }
     else {
         unless ( move($aligned_bam, $self->output_bam_path) ) {
-            $self->error_message( sprintf(
+            $self->error_message(
                 'Failed to move aligned bam to output bam path. '
                 .'Source: %s, Destination %s, Error Status %s',
-                $aligned_bam, $self->output_bam_path, $!));
+                $aligned_bam, $self->output_bam_path, $!);
         }
     }
 
@@ -181,10 +181,10 @@ sub add_unaligned_reads_to_bam {
     }
     else {
         unless ( move($aligned_bam, $self->output_bam_path) ) {
-            $self->error_message( sprintf(
+            $self->error_message(
                 'Failed to move aligned bam to output bam path. '
                 .'Source: %s, Destination %s, Error Status %s',
-                $aligned_bam, $self->output_bam_path, $!));
+                $aligned_bam, $self->output_bam_path, $!);
         }
     }
 
