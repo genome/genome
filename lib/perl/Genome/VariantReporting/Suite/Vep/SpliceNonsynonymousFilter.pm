@@ -35,7 +35,7 @@ sub filter_entry {
             my @types = split /\&/, lc($consequence);
 
             if (Genome::VariantReporting::Suite::Vep::SpliceNonsynonymousList::is_splice_site(@types)
-                    or Genome::VariantReporting::Suite::Vep::SpliceNonsynonymousList::is_non_synonymous(@types)) {
+                or Genome::VariantReporting::Suite::Vep::SpliceNonsynonymousList::is_non_synonymous(@types)) {
                 $value = 1;
             }
         }
