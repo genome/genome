@@ -96,7 +96,8 @@ sub print_headers {
 sub available_fields_dict {
     my $self = shift;
 
-    my @interpreters = $self->requires_interpreters_classes;
+    my $interpreters_ref = $self->interpreters || {};
+    my @interpreters = values %{$interpreters_ref};
     my %available_fields;
     for my $interpreter (@interpreters) {
         for my $field ($self->available_fields_for_interpreter($interpreter)) {

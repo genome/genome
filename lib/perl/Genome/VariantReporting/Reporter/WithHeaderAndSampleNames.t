@@ -22,6 +22,9 @@ isa_ok($factory->get_class('reporters', $pkg->name), $pkg);
 my $reporter = $pkg->create(file_name => 'simple', sample_names => ['S1', 'S2']);
 ok($reporter, "Reporter created successfully");
 
+my $interpreter = Genome::VariantReporting::Framework::Test::WithManySampleNamesInterpreter->create(sample_names => ['S1', 'S2']);
+$reporter->add_interpreter_objects($interpreter);
+
 lives_ok(sub {$reporter->validate}, "Reporter validates correctly");
 
 my $override = Sub::Override->new('Genome::VariantReporting::Reporter::WithHeader::write_legend_file', sub {return 1});
@@ -45,6 +48,6 @@ my %expected_available_fields_dict = (
 my @expected_interpreter_fields = qw/S1_info S2_info/;
 
 is_deeply({$reporter->available_fields_dict()}, \%expected_available_fields_dict, "Available fields dictionary as expected");
-is_deeply([$reporter->available_fields_for_interpreter('Genome::VariantReporting::Framework::Test::WithManySampleNamesInterpreter')], \@expected_interpreter_fields, "Interpreter fields as expected");
+is_deeply([$reporter->available_fields_for_interpreter($interpreter)], \@expected_interpreter_fields, "Interpreter fields as expected");
 
 done_testing;
