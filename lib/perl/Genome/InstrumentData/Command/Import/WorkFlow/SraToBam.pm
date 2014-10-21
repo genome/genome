@@ -56,7 +56,7 @@ sub execute {
         return 1;
     }
     catch {
-        $self->debug_message('Dumping BAM from SRA failed: '.$_);
+        $self->error_message('Dumping BAM from SRA failed: '.$_);
         return;
     };
 }
