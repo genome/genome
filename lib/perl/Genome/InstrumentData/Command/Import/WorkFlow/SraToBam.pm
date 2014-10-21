@@ -5,7 +5,6 @@ use warnings;
 
 use Genome;
 use Try::Tiny;
-use IO::File;
 use File::Copy qw(move);
 
 require Cwd;
@@ -240,13 +239,11 @@ sub do_shellcmd {
     catch {
         $self->error_message('Caught exception from shellcmd: '. $_);
 
-        my $out = IO::File->new;
-        $out->open($stdout, '<');
-        $self->debug_message('STDOUT'. $_) while $out->getline;
+        my $out = Genome::Sys->open_file_for_reading($stdout);
+        $self->debug_message('STDOUT: '. $_) while $out->getline;
 
-        my $err = IO::File->new;
-        $err->open($stderr, '<');
-        $self->debug_message('STDERR'. $_) while $err->getline;
+        my $err = Genome::Sys->open_file_for_reading($stderr);
+        $self->debug_message('STDERR: '. $_) while $err->getline;
 
         return;
     };
@@ -267,9 +264,9 @@ sub do_shellcmd_with_stdout {
     }
     catch {
         $self->error_message('Caught exception from shellcmd: '. $_);
-        my $fh = IO::File->new;
-        $fh->open($stderr, '<');
-        $self->debug_message($_) while $fh->getline;
+        my $err = Genome::Sys->open_file_for_reading($stderr);
+        $self->debug_message('STDERR: '. $_) while $err->getline;
+        $self->debug_message($_) while $err->getline;
         return;
     };
 }
