@@ -46,14 +46,13 @@ EOS
 sub execute {
     my $self = shift;
 
-    my $analysis_project = $self->analysis_project;
-    return unless $self->_verify_analysis_project_status($analysis_project);
+    return unless $self->_verify_analysis_project_status();
 
     my @models = $self->models;
     return unless $self->_verify_models_are_assignable(@models);
 
     for my $model (@models) {
-        $self->_assign_model($analysis_project, $model);
+        $self->_assign_model($model);
     }
 
     $self->status_message('Models added to analysis project.');
@@ -63,8 +62,8 @@ sub execute {
 
 sub _verify_analysis_project_status {
     my $self = shift;
-    my $analysis_project = shift;
 
+    my $analysis_project = $self->analysis_project;
     unless($analysis_project->status eq 'In Progress') {
         if($self->allow_projects_not_in_progress) {
             $self->debug_message(
@@ -112,8 +111,9 @@ sub _verify_models_are_assignable {
 
 sub _assign_model {
     my $self = shift;
-    my $analysis_project = shift;
     my $model = shift;
+
+    my $analysis_project = $self->analysis_project;
 
     if($model->analysis_projects) {
         $self->debug_message(
