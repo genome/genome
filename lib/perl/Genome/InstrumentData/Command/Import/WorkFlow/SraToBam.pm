@@ -243,10 +243,10 @@ sub do_shellcmd {
         $self->error_message('Caught exception from shellcmd: '. $_);
 
         my $out = Genome::Sys->open_file_for_reading($stdout);
-        $self->debug_message('STDOUT: '. $_) while $out->getline;
+        $self->error_message('STDOUT: '. $_) while $out->getline;
 
         my $err = Genome::Sys->open_file_for_reading($stderr);
-        $self->debug_message('STDERR: '. $_) while $err->getline;
+        $self->error_message('STDERR: '. $_) while $err->getline;
 
         return;
     };
@@ -268,8 +268,8 @@ sub do_shellcmd_with_stdout {
     catch {
         $self->error_message('Caught exception from shellcmd: '. $_);
         my $err = Genome::Sys->open_file_for_reading($stderr);
-        $self->debug_message('STDERR: '. $_) while $err->getline;
-        $self->debug_message($_) while $err->getline;
+        $self->error_message('STDERR: '. $_) while $err->getline;
+        $self->error_message($_) while $err->getline;
         return;
     };
 }
