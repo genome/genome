@@ -97,7 +97,7 @@ sub _verify_models_are_assignable {
             my $model_anp = $model->analysis_projects;
             unless($model_anp eq $analysis_project) {
                 $self->error_message(
-                    'Model %s is already assigned to analysis project %s.  Cannot assign it to %s.',
+                    'Model %s is already assigned to another analysis project, %s.  Cannot assign it to %s.',
                     $model->id,
                     $model_anp->id,
                     $analysis_project->id,
