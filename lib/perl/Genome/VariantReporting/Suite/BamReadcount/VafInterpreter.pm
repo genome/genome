@@ -17,17 +17,6 @@ sub requires_annotations {
     return ('bam-readcount');
 }
 
-sub available_fields {
-    return qw/
-        vaf
-        ref_count
-        var_count
-        per_library_var_count
-        per_library_ref_count
-        per_library_vaf
-    /;
-};
-
 sub field_descriptions {
     my $self = shift;
     my $sample_name = shift || $self->sample_name;

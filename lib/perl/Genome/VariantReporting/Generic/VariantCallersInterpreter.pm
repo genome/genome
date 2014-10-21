@@ -17,13 +17,6 @@ sub requires_annotations {
     return ();
 }
 
-sub available_fields {
-    return qw /
-        variant_callers
-        variant_caller_count
-    /
-}
-
 sub field_descriptions {
     my $self = shift;
     return (

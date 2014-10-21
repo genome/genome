@@ -31,14 +31,6 @@ sub requires_annotations {
     return ('bam-readcount');
 }
 
-
-sub available_fields {
-    return qw/
-        max_normal_vaf_observed
-        max_tumor_vaf_observed
-    /;
-}
-
 sub field_descriptions {
     my $self = shift;
     return (
