@@ -9,17 +9,17 @@ use Set::Scalar;
 class Genome::Config::AnalysisProject::Command::AddInstrumentDataToAnalysisProject {
     is => 'Command::V2',
     has_input => [
-       analysis_project  => {
+       analysis_project => {
             is                  => 'Genome::Config::AnalysisProject',
             doc                 => 'the analysis project to add the config file to',
             shell_args_position => 1,
-        },
+       },
        instrument_data  => {
             is                  => 'Genome::InstrumentData::Imported',
             doc                 => 'imported instrument data to add to this analysis project',
             is_many             => 1,
             shell_args_position => 2,
-        },
+       },
     ],
 };
 
