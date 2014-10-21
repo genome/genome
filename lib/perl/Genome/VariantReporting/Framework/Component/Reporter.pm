@@ -53,19 +53,23 @@ sub finalize {
     return;
 }
 
-sub add_filter_object {
-    my ($self, $filter) = @_;
+sub add_filter_objects {
+    my ($self, @filters) = @_;
 
     my $filters_ref = $self->filters || {};
-    $filters_ref->{$filter->name} = $filter;
+    for my $filter (@filters) {
+        $filters_ref->{$filter->name} = $filter;
+    }
     $self->filters($filters_ref);
 }
 
-sub add_interpreter_object {
-    my ($self, $interpreter) = @_;
+sub add_interpreter_objects {
+    my ($self, @interpreters) = @_;
 
     my $interpreters_ref = $self->interpreters || {};
-    $interpreters_ref->{$interpreter->name} = $interpreter;
+    for my $interpreter (@interpreters) {
+        $interpreters_ref->{$interpreter->name} = $interpreter;
+    }
     $self->interpreters($interpreters_ref);
 }
 

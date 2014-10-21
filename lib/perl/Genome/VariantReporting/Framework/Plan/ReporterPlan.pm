@@ -117,12 +117,8 @@ sub object {
 
     my @filters      = map {$_->object} $self->filter_plans;
     my @interpreters = map {$_->object} $self->interpreter_plans;
-    for my $filter (@filters) {
-        $reporter_object->add_filter_object($filter);
-    }
-    for my $interpreter (@interpreters) {
-        $reporter_object->add_interpreter_object($interpreter);
-    }
+    $reporter_object->add_filter_objects(@filters);
+    $reporter_object->add_interpreter_objects(@interpreters);
     return $reporter_object;
 }
 Memoize::memoize("object");
@@ -135,12 +131,8 @@ sub object_with_translations {
 
     my @filters      = map {$_->object_with_translations($translations)} $self->filter_plans;
     my @interpreters = map {$_->object_with_translations($translations)} $self->interpreter_plans;
-    for my $filter (@filters) {
-        $reporter_object->add_filter_object($filter);
-    }
-    for my $interpreter (@interpreters) {
-        $reporter_object->add_interpreter_object($interpreter);
-    }
+    $reporter_object->add_filter_objects(@filters);
+    $reporter_object->add_interpreter_objects(@interpreters);
     return $reporter_object;
 }
 Memoize::memoize("object_with_translations");
