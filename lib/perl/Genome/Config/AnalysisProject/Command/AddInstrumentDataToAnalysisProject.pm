@@ -11,7 +11,7 @@ class Genome::Config::AnalysisProject::Command::AddInstrumentDataToAnalysisProje
     has_input => [
        analysis_project => {
             is                  => 'Genome::Config::AnalysisProject',
-            doc                 => 'the analysis project to add the config file to',
+            doc                 => 'the analysis project to which to add the instrument data',
             shell_args_position => 1,
        },
        instrument_data  => {
