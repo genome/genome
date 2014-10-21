@@ -34,9 +34,8 @@ sub field_descriptions {
 
 sub available_fields {
     my $self = shift;
-    my @sample_names = @_;
 
-    return $self->create_sample_specific_field_names([$self->vaf_fields()], \@sample_names);
+    return $self->create_sample_specific_field_names([$self->vaf_fields()], [$self->sample_names]);
 }
 
 sub vaf_fields {

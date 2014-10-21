@@ -28,7 +28,6 @@ sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__;
 
-    my @sample_names = eval{$self->sample_names};
     my %available_fields = $self->available_fields_dict();
     for my $header ($self->headers) {
         my $error_desc;

@@ -16,7 +16,7 @@ sub available_fields_for_interpreter {
     my $self = shift;
     my $interpreter = shift;
 
-    return $interpreter->available_fields($self->sample_names);
+    return $interpreter->available_fields();
 }
 
 1;
