@@ -50,7 +50,7 @@ sub execute {
         my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
         my $flagstat = $helpers->validate_bam($self->output_bam_path);
         unless ($flagstat) {
-            $self->error_message('Validate to validate bam.');
+            $self->error_message('Failed to validate bam.');
             return;
         }
 
