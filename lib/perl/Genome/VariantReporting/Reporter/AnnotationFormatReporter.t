@@ -25,6 +25,10 @@ my $file_name = 'annotation';
 my $reporter = $pkg->create(file_name => $file_name);
 ok($reporter, "Reporter created successfully");
 
+my $position_interpreter = Genome::VariantReporting::Generic::PositionInterpreter->create();
+my $vep_interpreter = Genome::VariantReporting::Suite::Vep::VepInterpreter->create();
+$reporter->add_interpreter_objects($position_interpreter, $vep_interpreter);
+
 my $override = Sub::Override->new('Genome::VariantReporting::Reporter::WithHeader::write_legend_file', sub {return 1});
 
 my $output_dir = Genome::Sys->create_temp_directory();
