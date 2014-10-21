@@ -10,7 +10,7 @@ class Genome::Config::AnalysisProject::Command::AddModelToAnalysisProject {
     has_input => [
        analysis_project => {
             is                  => 'Genome::Config::AnalysisProject',
-            doc                 => 'the analysis project to which to add the model',
+            doc                 => 'the analysis project to which to add the model(s)',
             shell_args_position => 1,
        },
        models  => {
