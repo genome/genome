@@ -62,25 +62,32 @@ sub resolve_plan_attributes {
     for my $name (keys %{$specific_plan->params}) {
         $self->$name($specific_plan->params->{$name});
     }
+
     my $translations;
     eval { $translations = $self->provider->get_attribute('translations') };
     if (my $error = Exception::Class->caught()) {
-        if (blessed $error && $error->can('rethrow')) {
-            if ($error->isa('NonexistentAttributeException')) {
-                # This dies if object needs translations and none are provided
-                $self->translate_inputs($translations);
-            }
-            else {
-                $error->rethrow;
-            }
+      $self->_handle_get_attribute_error($error); #either dies or returns to proceed
+    }
+
+    $self->translate_inputs($translations);
+}
+
+sub _handle_get_attribute_error {
+    my $self = shift;
+    my $error = shift;
+
+    if (blessed $error && $error->can('rethrow')) {
+        if ($error->isa('NonexistentAttributeException')) {
+            # Return and call translate_inputs
+            # which dies if object needs translations and none are provided
+            return;
         }
         else {
-            die $error;
+            $error->rethrow;
         }
     }
     else {
-        # Translations are provided
-        $self->translate_inputs($translations);
+        die $error;
     }
 }
 
