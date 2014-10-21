@@ -151,6 +151,10 @@ sub parse_variant_file {
             my $ref_rc = $data->{$tumor_prefix . "_ref_count"};
             my $var_rc = $data->{$tumor_prefix . "_var_count"};
             my $vaf = $data->{$tumor_prefix . "_VAF"};
+            if(not $ref_rc and not $var_rc  and not $vaf) {
+                die $self->error_message("Unable to find ref, alt readcounts and vaf for ".
+                    $tumor_prefix);
+            }
             if($ref_rc eq "NA") { 
                 $ref_rc = 0;
             }
@@ -159,10 +163,6 @@ sub parse_variant_file {
             }
             if($vaf eq "NA") {
                 $vaf = 0;
-            }
-            if(not $ref_rc and not $var_rc  and not $vaf) {
-                die $self->error_message("Unable to find ref, alt readcounts and vaf for ".
-                    $tumor_prefix);
             }
             $out_data->{ref_rc} = $ref_rc;
             $out_data->{var_rc} = $var_rc;
