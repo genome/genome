@@ -121,15 +121,10 @@ sub run_sra_dbcc {
 
     my $cwd = Cwd::getcwd();
     chdir($source_sra_directory) or die "Failed to chdir('$source_sra_directory')";
-    my $cmd = "/usr/bin/sra-dbcc $source_sra_basename &> $dbcc_file";
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv or not -s $dbcc_file ) {
-        $self->error_message($@) if $@;
-        $self->error_message('Failed to run sra dbcc!');
-        return;
-    }
-
+    my $cmd = "/usr/bin/sra-dbcc $source_sra_basename &>";
+    my $sra_dbcc_ok = $self->do_shellcmd_with_stdout($cmd, $dbcc);
     chdir($cwd) or die "Failed to chdir('$cwd')";
+    return $sra_dbcc_ok;
 }
 
 sub read_dbcc_file {
