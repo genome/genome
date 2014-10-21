@@ -5,8 +5,14 @@ use warnings;
 
 use Genome;
 
-my $DEFAULT_PICARD_VERSION = '1.122';
-my $DEFAULT_MAX_RECORDS_IN_RAM = 500000;
+my %STATES_TO_IGNORE = (
+    'MISSING' => 1,
+    'NO_CALL' => 1,
+    'VC_FILTERED' => 1,
+    'LOW_DP' => 1,
+    'LOW_GQ' => 1,
+    'GT_FILTERED' => 1,
+);
 
 class Genome::Model::Tools::Picard::GenotypeConcordance {
     is  => 'Genome::Model::Tools::Picard',
@@ -67,11 +73,6 @@ class Genome::Model::Tools::Picard::GenotypeConcordance {
             doc => 'If true, use the VCF index, else iterate over the entire VCF.',
             is_optional => 1,
         },
-        use_version => {
-            is => 'String',
-            doc => 'Version must be 1.122 or greater.',
-            default_value => $DEFAULT_PICARD_VERSION,
-        },
     ],
 };
 
@@ -94,8 +95,13 @@ EOS
 sub execute {
     my $self = shift;
 
+    my $jar_path = $self->picard_path .'/GenotypeConcordance.jar';
+    unless (-e $jar_path) {
+        $self->error_message('Failed to find '. $jar_path .'!  GenotypeConcordance is only available in Picard version 1.122 or greater.  The version requested is '. $self->use_version);
+        die($self->error_message);
+    }
 
-    my $gc_cmd = $self->picard_path .'/GenotypeConcordance.jar picard.vcf.GenotypeConcordance TRUTH_VCF='. $self->truth_vcf .' CALL_VCF='.$self->call_vcf .' OUTPUT='. $self->output .' TRUTH_SAMPLE='. $self->truth_sample .' CALL_SAMPLE='. $self->call_sample;
+    my $gc_cmd = $jar_path .' picard.vcf.GenotypeConcordance TRUTH_VCF='. $self->truth_vcf .' CALL_VCF='.$self->call_vcf .' OUTPUT='. $self->output .' TRUTH_SAMPLE='. $self->truth_sample .' CALL_SAMPLE='. $self->call_sample;
     if (defined($self->min_dp)) {
         $gc_cmd .= ' MIN_DP='. $self->min_dp;
     }
@@ -158,5 +164,13 @@ sub parse_file_into_metrics_hashref {
     return \%data;
 }
 
+sub ignore_state {
+    my $class = shift;
+    my $state = shift;
+    if ( defined($STATES_TO_IGNORE{$state}) ) {
+        return $STATES_TO_IGNORE{$state};
+    }
+    return 0;
+}
 
 1;
