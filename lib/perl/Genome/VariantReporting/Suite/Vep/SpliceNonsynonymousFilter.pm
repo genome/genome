@@ -29,15 +29,17 @@ sub filter_entry {
     for my $alt_allele (@{$entry->{alternate_alleles}}) {
         my ($transcript) = $vep_parser->transcripts($entry, $alt_allele);
         my $consequence  = $transcript->{consequence};
-        my @types        = split /\&/, $consequence;
+        my $value        = 0;
 
-        if (Genome::VariantReporting::Suite::Vep::SpliceNonsynonymousList::is_splice_site(@types)
-            or Genome::VariantReporting::Suite::Vep::SpliceNonsynonymousList::is_non_synonymous(@types)) {
-            $return_values{$alt_allele} = 1;
+        if (defined $consequence) {
+            my @types = split /\&/, lc($consequence);
+
+            if (Genome::VariantReporting::Suite::Vep::SpliceNonsynonymousList::is_splice_site(@types)
+                    or Genome::VariantReporting::Suite::Vep::SpliceNonsynonymousList::is_non_synonymous(@types)) {
+                $value = 1;
+            }
         }
-        else {
-            $return_values{$alt_allele} = 0;
-        }
+        $return_values{$alt_allele} = $value;
     }
 
     return %return_values;
