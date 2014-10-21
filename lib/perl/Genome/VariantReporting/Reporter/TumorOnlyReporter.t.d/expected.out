@@ -1,3 +1,3 @@
 chromosome_name	start	stop	reference	variant	rsid	transcript_name	trv_type	amino_acid_change	default_gene_name	gene_name_source	ensembl_gene_id	c_position	canonical	sift	polyphen	condel	caf	All_MAF	AA_MAF	EU_MAF	1kg-af	vaf	ref_count	var_count
-1	1	1	A	T	rs1	ENST00000452176	DOWNSTREAM		RP5-857K21.5	HGNC	ENSG00000223659	c.456	1	deleterious(5.4)	-	-	.1	0.1	0.3	0.1	0.001	30	0	200	
-1	1	1	A	G	rs1	ENST00000452176	DOWNSTREAM		RP5-857K22.5	HGNC	ENSG00000223695	c.456	1	-	-	-	.1	0.1	0.3	0.1	0.001	70	0	1000	
+1	1	1	A	T	rs1	ENST00000452176	DOWNSTREAM		RP5-857K21.5	HGNC	ENSG00000223659	c.456	1	deleterious(5.4)	-	-	.1	0.1	0.3	0.1	0.001	30	0	200
+1	1	1	A	G	rs1	ENST00000452176	DOWNSTREAM		RP5-857K22.5	HGNC	ENSG00000223695	c.456	1	-	-	-	.1	0.1	0.3	0.1	0.001	70	0	1000

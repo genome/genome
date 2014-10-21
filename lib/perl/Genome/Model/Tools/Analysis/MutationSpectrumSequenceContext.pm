@@ -16,13 +16,13 @@ class Genome::Model::Tools::Analysis::MutationSpectrumSequenceContext {
     roi_file => {
         is  => 'String',
         is_input=>1,
-	is_optional => 0,
+        is_optional => 0,
         doc => 'name of the input file with SNVs (standard 5 column annotation format) ',
     },
     window_size => {
-	is  => 'String',
+        is  => 'String',
         is_input=>1,
-	is_optional => 1,
+        is_optional => 1,
         default_value => '10',
         doc => 'number of bases before and after each position in ROI file to look',
     },
@@ -37,37 +37,35 @@ class Genome::Model::Tools::Analysis::MutationSpectrumSequenceContext {
         is  => 'String',
         is_input=>1,
         is_optional => 0,
-        #default_value => 'output.pdf',
         doc => 'The name of pdf file to save the plot to',
     },
     proportiontest => {
-	is  => 'String',
+        is  => 'String',
         is_input=>1,
         is_optional => 0,
-        #default_value => 'output.pdf',
         doc => 'The name of the file to save the proportion result to',
     },
     file4plot => {
-	is_input => 1,
+        is_input => 1,
         is_optional => 1,
-	is => 'String',
-	doc => 'The name of the file to save the sequence context data to be plotted.  If not specified, file will be deleted after use',
+        is => 'String',
+        doc => 'The name of the file to save the sequence context data to be plotted.  If not specified, file will be deleted after use',
     },
     ref_seq => {
-	is_input => 1,
-	is_optional => 0,
-	doc => 'specify full path to a ref seq fasta',
+        is_input => 1,
+        is_optional => 0,
+        doc => 'specify full path to a ref seq fasta',
     },
     random_seed => {
-	is_input => 1,
-	is_optional => 1,
-	doc => 'set the seed for random number generator (useful for generating consistent results for testing purpose.  Use a integer',
+        is_input => 1,
+        is_optional => 1,
+        doc => 'set the seed for random number generator (useful for generating consistent results for testing purpose.  Use a integer',
     },
     random_trials => {
-	is_input => 1,
-	is_optional => 1,
-	doc => 'number of random sampling - useful for background mutation context calculation',
-	default => '10000',
+        is_input => 1,
+        is_optional => 1,
+        doc => 'number of random sampling - useful for background mutation context calculation',
+        default => '10000',
     },
     ],
 };
@@ -81,7 +79,7 @@ sub help_synopsis {
     return <<"EOS"
 gmt analysis mutation-spectrum-sequence-context --roi-file=SJMEL001003-0260.alltier.snv --proportiontest SJMEL001003.prop.test --output-file=SJMEL.pdf --plot-title=SJMEL001003-0260 --window-size=10
 
- build36 refseq fasta  => "/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fasta",
+ build36 refseq fasta  => "/gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa",
  build37 refseq fasta  => "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa",
 
 
@@ -114,16 +112,16 @@ sub execute {
     my $plot_title = $self->plot_title;
     my $plot_input_file;
     if($self->file4plot) {
-	$plot_input_file = abs_path($self->file4plot);
+        $plot_input_file = abs_path($self->file4plot);
     }else {
-	my ($fh, $tempfile) = Genome::Sys->create_temp_file;
-	$plot_input_file = abs_path($tempfile);
+        my ($fh, $tempfile) = Genome::Sys->create_temp_file;
+        $plot_input_file = abs_path($tempfile);
     }
 
 
     if($window_size !~ /^\d+$/) {
-	print STDERR "--window_size $window_size is not a integer!\n";
-	return 0;
+        print STDERR "--window_size $window_size is not a integer!\n";
+        return 0;
     }
 
 
@@ -172,18 +170,18 @@ sub generate_mutation_seq_context {
 
     #data structures to hold the sequence context count
     my $mutation_context1={'A->C' => {},
-		           'A->G' => {},
-		           'A->T' => {},
-		           'C->A' => {},
-		           'C->G' => {},
-		           'C->T' => {},
+                           'A->G' => {},
+                           'A->T' => {},
+                           'C->A' => {},
+                           'C->G' => {},
+                           'C->T' => {},
                          };
     my $mutation_context2={'A->C' => {},
-		           'A->G' => {},
-		           'A->T' => {},
-		           'C->A' => {},
-		           'C->G' => {},
-		           'C->T' => {},
+                           'A->G' => {},
+                           'A->T' => {},
+                           'C->A' => {},
+                           'C->G' => {},
+                           'C->T' => {},
                          };
 
 
@@ -195,40 +193,38 @@ sub generate_mutation_seq_context {
 
 
     my $joinxRefstatInput = makeinput4Joinx($ROI_file,$window_size);
-    #my $joinxOUT = "joinx.output";
     my ($fh, $joinxOUT) = Genome::Sys->create_temp_file;
     my $cmd = "joinx1.6 ref-stats -b $joinxRefstatInput -f $ref_fasta -r  | cut -f 1-4,8 > $joinxOUT ";
     system($cmd);
 
     my $joinx_FH = IO::File->new($joinxOUT) or die "Failed to open the file $joinxOUT\n";
-    #open (JOINX, $joinxOUT) or die "Can't read the file $joinxOUT due to $!";
     while(my $line = $joinx_FH->getline) {
-	next if($line =~ /\#/);
-	chomp $line;
-	my @list = split(/\t/,$line);
-	my ($chr,$pos,$ref,$var) = split(/\_/,$list[3]);
+        next if($line =~ /\#/);
+        chomp $line;
+        my @list = split(/\t/,$line);
+        my ($chr,$pos,$ref,$var) = split(/\_/,$list[3]);
 
-	my $key = join("->",($ref,$var));
-	my $rev_compl=0; #boolean to determine if we should reverse complement a seq
-	if(!exists($mutation_context1->{$key})) {
-	    $key = return_mutation_spectrum_category($ref,$var);
-	    if(!defined($key)) {
-		STDERR->print("Warning, cannot classify mutation category for $list[3], skipping...\n");
-		next;
-	    }
-	    $rev_compl= 1;
-	}
-	my $relative_pos = -1*$window_size;
-	my $seq = $list[4]; #reference sequence fragment
-	$seq = reverse_complement($seq) if($rev_compl);
-	my @seq = split('',$seq);
-	foreach my $base (@seq) {
-	    $mutation_context1->{$key}->{$relative_pos}->{$base}++;
-	    #instead of keeping count for all 4 bases, collapse down to purine,pyrimidines
-	    my $pur_pyr = $nitrogen_base->{$base} || 'unknown';
-	    $mutation_context2->{$key}->{$relative_pos}->{$pur_pyr}++;
-	    $relative_pos++;
-	}
+        my $key = join("->",($ref,$var));
+        my $rev_compl=0; #boolean to determine if we should reverse complement a seq
+        if(!exists($mutation_context1->{$key})) {
+            $key = return_mutation_spectrum_category($ref,$var);
+            if(!defined($key)) {
+                STDERR->print("Warning, cannot classify mutation category for $list[3], skipping...\n");
+                next;
+            }
+            $rev_compl= 1;
+        }
+        my $relative_pos = -1*$window_size;
+        my $seq = $list[4]; #reference sequence fragment
+        $seq = reverse_complement($seq) if($rev_compl);
+        my @seq = split('',$seq);
+        foreach my $base (@seq) {
+            $mutation_context1->{$key}->{$relative_pos}->{$base}++;
+            #instead of keeping count for all 4 bases, collapse down to purine,pyrimidines
+            my $pur_pyr = $nitrogen_base->{$base} || 'unknown';
+            $mutation_context2->{$key}->{$relative_pos}->{$pur_pyr}++;
+            $relative_pos++;
+        }
 
 
 
@@ -268,32 +264,32 @@ sub generate_random_seq_context {
                        };
 
     while($base_count->{'C'} < $number_trials || $base_count->{'A'} < $number_trials) {
-	my $random_number = int(rand($max_pos));
-	next if(exists($previously_sampled->{$random_number})); #avoid randomly sample the same base twice
-	$previously_sampled->{$random_number} = 1;
-	my $win_start = $random_number - $window_size;
-	my $win_end = $random_number + $window_size;
-	next if($win_start < 0);
-	my $ROI = "${chr}:$win_start-$win_end"; #region to grab seq from ref_seq
-	my $seq_fragment = `samtools faidx $ref_fasta $ROI | grep -v '>' `;
-	$seq_fragment =~ s/\n//g; #remove all newline in the sequence string
-	my $base = substr($seq_fragment,$window_size,1);
-	next if($seq_fragment =~ /[^ATCG]/); #skip if the sequence fragment contain at least 1 base that is not A,T,C,G
+        my $random_number = int(rand($max_pos));
+        next if(exists($previously_sampled->{$random_number})); #avoid randomly sample the same base twice
+        $previously_sampled->{$random_number} = 1;
+        my $win_start = $random_number - $window_size;
+        my $win_end = $random_number + $window_size;
+        next if($win_start < 0);
+        my $ROI = "${chr}:$win_start-$win_end"; #region to grab seq from ref_seq
+        my $seq_fragment = `samtools faidx $ref_fasta $ROI | grep -v '>' `;
+        $seq_fragment =~ s/\n//g; #remove all newline in the sequence string
+        my $base = substr($seq_fragment,$window_size,1);
+        next if($seq_fragment =~ /[^ATCG]/); #skip if the sequence fragment contain at least 1 base that is not A,T,C,G
 
-	if(exists($mutation_context1->{$base})) {
-	    if($base_count->{$base} < $number_trials) {
-		my $relative_pos = -1*$window_size;
-		my @seq = split('',$seq_fragment);
-		foreach (@seq) {
-		    $mutation_context1->{$base}->{$relative_pos}->{$_}++;
+        if(exists($mutation_context1->{$base})) {
+            if($base_count->{$base} < $number_trials) {
+                my $relative_pos = -1*$window_size;
+                my @seq = split('',$seq_fragment);
+                foreach (@seq) {
+                    $mutation_context1->{$base}->{$relative_pos}->{$_}++;
                     #instead of keeping count for all 4 bases, collapse down to purine,pyrimidines
-		    my $pur_pyr = $nitrogen_base->{$_} || 'unknown';
-		    $mutation_context2->{$base}->{$relative_pos}->{$pur_pyr}++;
-		    $relative_pos++;
-		}
-		$base_count->{$base}++;
-	    }
-	}
+                    my $pur_pyr = $nitrogen_base->{$_} || 'unknown';
+                    $mutation_context2->{$base}->{$relative_pos}->{$pur_pyr}++;
+                    $relative_pos++;
+                }
+                $base_count->{$base}++;
+            }
+        }
 
     }
 
@@ -310,7 +306,6 @@ sub prepare_file4_proportion_test_4type {
   my $contextB = shift;  #based on random
   my $output_file = shift;
 
-  #my $tmp_file = "test.proportion.in";
   my $fh_out = IO::File->new($output_file,"w") or die "Unable to write to $output_file\n";
   my @mutation_class = keys %$contextA;
   foreach my $category(@mutation_class) {
@@ -344,7 +339,6 @@ sub prepare_file4_proportion_test_2type {
   };
 
 
-  #my $tmp_file = "test.proportion.in";
   my $fh_out = IO::File->new($output_file,"w") or die "Unable to write to $output_file\n";
   my @mutation_class = keys %$contextA;
   foreach my $category(@mutation_class) {
@@ -376,16 +370,16 @@ sub make_file4plot_4type {
 
     my $output_FH = IO::File->new($output_file,"w") or die "Can't write to $output_file\n";
     foreach my $hashref (@mutation_contexts) {
-	next if(ref($hashref) ne 'HASH');
-	foreach my $category (keys %$hashref) {
-	    foreach my $rel_pos (sort{$a<=>$b} keys %{ $hashref->{$category} } ) {
-		foreach my $base(qw(A T C G)) {
-		    my $count = $hashref->{$category}->{$rel_pos}->{$base} || 0;
-		    $output_FH->print("$category\t$rel_pos\t$base\t$count\n");
-		}
+        next if(ref($hashref) ne 'HASH');
+        foreach my $category (keys %$hashref) {
+            foreach my $rel_pos (sort{$a<=>$b} keys %{ $hashref->{$category} } ) {
+                foreach my $base(qw(A T C G)) {
+                    my $count = $hashref->{$category}->{$rel_pos}->{$base} || 0;
+                    $output_FH->print("$category\t$rel_pos\t$base\t$count\n");
+                }
 
-	    }
-	}
+            }
+        }
     }
     $output_FH->close;
 
@@ -399,16 +393,16 @@ sub make_file4plot_2type {
 
     my $output_FH = IO::File->new($output_file,"w") or die "Can't write to $output_file\n";
     foreach my $hashref (@mutation_contexts) {
-	next if(ref($hashref) ne 'HASH');
-	foreach my $category (keys %$hashref) {
-	    foreach my $rel_pos (sort{$a<=>$b} keys %{ $hashref->{$category} } ) {
-		foreach my $base(qw(purine pyrimidine)) {
-		    my $count = $hashref->{$category}->{$rel_pos}->{$base} || 0;
-		    $output_FH->print("$category\t$rel_pos\t$base\t$count\n");
-		}
+        next if(ref($hashref) ne 'HASH');
+        foreach my $category (keys %$hashref) {
+            foreach my $rel_pos (sort{$a<=>$b} keys %{ $hashref->{$category} } ) {
+                foreach my $base(qw(purine pyrimidine)) {
+                    my $count = $hashref->{$category}->{$rel_pos}->{$base} || 0;
+                    $output_FH->print("$category\t$rel_pos\t$base\t$count\n");
+                }
 
-	    }
-	}
+            }
+        }
     }
     $output_FH->close;
 
@@ -438,24 +432,24 @@ sub return_mutation_spectrum_category {
     my $var = shift;
 
     my $mutation_spectrum = { 'A->C' => 'A->C',
-			      'T->G' => 'A->C',
+                              'T->G' => 'A->C',
                               'A->G' => 'A->G',
                               'T->C' => 'A->G',
                               'A->T' => 'A->T',
                               'T->A' => 'A->T',
-			      'C->A' => 'C->A',
-			      'G->T' => 'C->A',
-			      'C->G' => 'C->G',
-			      'G->C' => 'C->G',
-			      'C->T' => 'C->T',
-			      'G->A' => 'C->T',
+                              'C->A' => 'C->A',
+                              'G->T' => 'C->A',
+                              'C->G' => 'C->G',
+                              'G->C' => 'C->G',
+                              'C->T' => 'C->T',
+                              'G->A' => 'C->T',
     };
 
 
     if(!exists($mutation_spectrum->{"${ref}->${var}"})) {
-	return undef;
+        return undef;
     }else {
-	return $mutation_spectrum->{"${ref}->${var}"};
+        return $mutation_spectrum->{"${ref}->${var}"};
     }
 
 }
@@ -465,18 +459,16 @@ sub makeinput4Joinx {
     my $file = shift;
     my $window_size = shift;
 
-    #open(ROI, $file) or die "Unable to open the file $file due to $!";
     my $input_fh = IO::File->new($file) or die "Failed to open the file $file\n";
     my ($output_fh, $tempfile) = Genome::Sys->create_temp_file;
-    #open(OUT, "> ROI.out") or die "Can't write to ROI.out\n";
     while(my $line = $input_fh->getline) {
-	chomp $line;
-	next if($line =~ /chromo/);
-	my @list = split(/\t/,$line);
-	my $key = join("_",@list[0,1,3,4]);
-	my $win_start = $list[1]-$window_size-1; #zero based for the joinx tool
-	my $win_end = $list[1]+$window_size;
-	$output_fh->print("$list[0]\t$win_start\t$win_end\t$key\n");
+        chomp $line;
+        next if($line =~ /chromo/);
+        my @list = split(/\t/,$line);
+        my $key = join("_",@list[0,1,3,4]);
+        my $win_start = $list[1]-$window_size-1; #zero based for the joinx tool
+        my $win_end = $list[1]+$window_size;
+        $output_fh->print("$list[0]\t$win_start\t$win_end\t$key\n");
     }
     $input_fh->close;
     $output_fh->close;

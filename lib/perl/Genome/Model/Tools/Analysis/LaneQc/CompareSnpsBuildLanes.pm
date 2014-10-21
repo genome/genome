@@ -122,7 +122,6 @@ sub execute {
     my @instrument_data = $build->instrument_data;
 
 # find reference sequences
-#	my $reference_file="/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa"; 
     my $reference_file=$model->reference_sequence_build->full_consensus_path('fa') ;
     print "reference: $reference_file User: $user\n";
     for my $data (@instrument_data) {
