@@ -9,7 +9,6 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
-use Genome::Test::Factory::InstrumentData::Solexa;
 
 my $class = 'Genome::Config::AnalysisProject::Command::AddInstrumentDataToAnalysisProject';
 use_ok($class);
