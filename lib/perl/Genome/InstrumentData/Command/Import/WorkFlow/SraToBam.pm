@@ -294,11 +294,19 @@ sub convert_fastq_to_bam {
     my $self = shift;
     my ($sample_name, $unaligned_fastq, $unaligned_bam) = @_;
 
-    my $command = "gmt picard fastq-to-sam "
-        ."--fastq $unaligned_fastq "
-        ."--output $unaligned_bam "
-        ."--quality-format Standard --sample-name $sample_name";
-    return $self->do_shellcmd($command);
+    return try {
+        my $fastq_to_sam = Genome::Model::Tools::Picard::FastqToSam->create(
+            fastq           => "$unaligned_fastq",
+            output          => "$unaligned_bam",
+            sample_name     => "$sample_name",
+            quality_format  => 'Standard');
+        return $fastq_to_sam->execute;
+    }
+    catch {
+        $self->error_message('Caught exception from '
+            .'Genome::Model::Tools::Picard::FastqToSam: '. $_);
+        return;
+    };
 }
 
 sub merge_bams {
