@@ -87,11 +87,8 @@ sub define_by { 'Genome::Model::Command::Define::BaseMinimal' }
 sub _help_synopsis {
     my $self = shift;
     return <<"EOS"
-
     genome processing-profile create clin-seq  --name 'November 2011 Clinical Sequencing'
-
     genome model define clin-seq  --processing-profile='November 2011 Clinical Sequencing'  --wgs-model=2882504846 --exome-model=2882505032 --tumor-rnaseq-model=2880794613
-
     # Automatically builds if/when the models have a complete underlying build
 EOS
 }
