@@ -96,11 +96,15 @@ sub _help_synopsis {
 EOS
 }
 
-sub _help_detail_for_profile_create {
+sub help_detail_for_create_profile {
     return <<EOS
-
-The ClinSeq pipeline has parameters bam_readcount_version, sireport_min_tumor_vaf, sireport_max_normal_vaf, sireport_min_coverage, sireport_min_mq, sireport_min_bq.
-
+The ClinSeq pipeline has the following processing-profile parameters.
+  bam_readcount_version => version of bamreadcounts to use for read-counting steps,
+  sireport_min_tumor_vaf => minimum tumor VAF cutoff to filter out variants in SnvIndelReport,
+  sireport_max_normal_vaf   => maximum normal VAF cutoff to filter out variants in SnvIndelReport,
+  sireport_min_coverage => minimum coverage cutoff to filter out variants in SnvIndelReport,
+  sireport_min_mq_bq => semicolon delimited list of comma separated mapping quality and base quality scores, these
+    are used as cutoffs for read-counting in SnvIndelReport.
 EOS
 }
 
