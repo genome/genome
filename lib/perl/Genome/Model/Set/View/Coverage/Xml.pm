@@ -476,19 +476,10 @@ sub _get_model_node {
 sub _resolve_target_total_bp_for_result {
     my ($self, $result) = @_;
 
-    my $target_total_bp = $self->_get_target_total_bp_from_result_metrics($result);
+    my $target_total_bp = $result->get_target_total_bp;
     return $target_total_bp if defined $target_total_bp;
 
     return $self->_get_target_total_bp_from_result_bed_file($result);
-}
-
-sub _get_target_total_bp_from_result_metrics {
-    my ($self, $result) = @_;
-
-    my $metric = $result->metrics(metric_name => 'target_total_bp');
-    return if not $metric;
-
-    return $metric->metric_value;
 }
 
 sub _get_target_total_bp_from_result_bed_file {
