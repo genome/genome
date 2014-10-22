@@ -114,9 +114,7 @@ class Genome::WorkOrder {
     data_source => 'Genome::DataSource::Oltp',
 };
 
-sub xitems {
-    return Genome::WorkOrderItem->get(setup_wo_id => $_[0]->id);
-}
+sub xitems { return shift->items }
 
 sub sample_description {
     my ($self) = @_;
