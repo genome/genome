@@ -94,6 +94,7 @@ class Genome::WorkOrder {
             is => 'Genome::WorkOrderItem',
             is_many => 1,
             reverse_as => 'work_order',
+            where => [ status => 'active' ],
         },
         samples => {
             is => 'Genome::Sample',
