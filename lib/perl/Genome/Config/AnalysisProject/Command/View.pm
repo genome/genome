@@ -55,6 +55,11 @@ class Genome::Config::AnalysisProject::Command::View {
             default_value => 0,
             doc => 'Display timeline events',
         },
+        fast_model_summary => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => "Use fast model summary that does not due 'Build Needed' check",
+        },
     ],
 };
 
@@ -266,7 +271,9 @@ sub _write_model_summary {
     if ($self->_should_write_models) {
         $self->_write_section_heading($handle, 'Models');
 
-        my $summary = $self->_get_model_summary;
+        my $summary = $self->fast_model_summary
+                    ? $self->_get_fast_model_summary
+                    : $self->_get_model_summary;
         $self->_write_summary_data($handle, $summary);
     }
 }
@@ -285,6 +292,20 @@ sub _should_write_models {
 
 
 sub _get_model_summary {
+    my $self = shift;
+
+    my $summary = {};
+    my $model_iterator = Genome::Model->create_iterator(
+        'analysis_projects.id' => $self->analysis_project->id,
+    );
+    while (my $model = $model_iterator->next) {
+        $summary->{$model->class}->{$model->status}++;
+    }
+    return $summary;
+}
+
+
+sub _get_fast_model_summary {
     my $self = shift;
 
     return $self->_summary_data_from_query($self->_model_summary_query);
