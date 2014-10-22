@@ -25,7 +25,7 @@ my @non_synonymous = qw(
 );
 
 
-sub spilce_sites {
+sub splice_sites {
     return @splice_sites;
 }
 
