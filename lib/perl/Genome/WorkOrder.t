@@ -12,11 +12,9 @@ use_ok('Genome::WorkOrder');
 
 my $wo = Genome::WorkOrder->get(2231383);
 ok($wo, 'Got work order');
-#print Dumper($wo);
 
 my @woi = $wo->items;
 ok(@woi, 'Got work order items');
-#print Dumper(\@$woi);
 
 done_testing();
 
@@ -39,6 +37,3 @@ done_testing();
  Eddie Belter <ebelter@watson.wustl.edu>
 
 =cut
-
-#$HeadURL$
-#$Id$
