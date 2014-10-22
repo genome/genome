@@ -227,6 +227,10 @@ sub do_shellcmd {
 
     my ($stdout, $stderr) = Genome::Sys->create_temp_file_path for qw(1 2);
 
+    # Capturing output of command in case the command fails so that an
+    # informative error message can be recorded.  Using temp files instead of
+    # temp vars to protect against potentially large outputs.
+
     return try {
         Genome::Sys->shellcmd(
             cmd             => $cmd,
@@ -252,6 +256,10 @@ sub do_shellcmd_with_stdout {
     my ($cmd, $output_path) = @_;
 
     my $stderr = join('.', $output_path, 'err');
+
+    # Capturing stderr of command in case the command fails so that an
+    # informative error message can be recorded.  Using a temp file instead of
+    # a temp var to protect against a potentially large output.
 
     return try {
         Genome::Sys->shellcmd(
