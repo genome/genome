@@ -127,19 +127,6 @@ sub run_sra_dbcc {
     return $sra_dbcc_ok;
 }
 
-sub read_dbcc_file {
-    my $self = shift;
-    my ($dbcc_file) = @_;
-
-    my @dbcc_lines = eval{ Genome::Sys->read_file($dbcc_file); };
-    if ( not @dbcc_lines ) {
-        $self->error_message('Failed to read SRA DBCC file! ');
-        return;
-    }
-
-    return @dbcc_lines;
-}
-
 sub check_sra_database {
     my $self = shift;
     my $sra_path = $self->sra_path;
@@ -153,7 +140,7 @@ sub check_sra_database {
         return;
     }
 
-    my @dbcc_lines = $self->read_dbcc_file($dbcc_file);
+    my @dbcc_lines = Genome::Sys->read_file($dbcc_file);
     my $sra_has_primary_alignment_info = grep { $_ =~ /PRIMARY_ALIGNMENT/ } @dbcc_lines;
     return $sra_has_primary_alignment_info;
 }
