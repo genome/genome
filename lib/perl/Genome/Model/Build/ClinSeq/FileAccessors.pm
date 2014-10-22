@@ -182,13 +182,7 @@ sub exome_snv_summary_dir {
   my $self = shift;
   my $exome_snv_summary_dir =
       $self->exome_snv_dir . "/summary";
-  if(-e $exome_snv_summary_dir){
-    return $exome_snv_summary_dir;
-  } else {
-    $self->warning_message("unable to find " .
-        $exome_snv_summary_dir);
-    return 0;
-  }
+  return $exome_snv_summary_dir;
 }
 
 sub wgs_snv_dir {
@@ -225,13 +219,7 @@ sub wgs_snv_summary_dir {
   my $self = shift;
   my $wgs_snv_summary_dir =
       $self->wgs_snv_dir . "/summary";
-  if(-e $wgs_snv_summary_dir){
-    return $wgs_snv_summary_dir;
-  } else {
-    $self->warning_message("unable to find " .
-        $wgs_snv_summary_dir);
-    return 0;
-  }
+  return $wgs_snv_summary_dir;
 }
 
 sub wgs_exome_indel_dir {
@@ -250,13 +238,7 @@ sub wgs_exome_snv_summary_dir {
   my $self = shift;
   my $wgs_exome_snv_summary_dir =
       $self->wgs_exome_snv_dir . "/summary";
-  if(-e $wgs_exome_snv_summary_dir){
-    return $wgs_exome_snv_summary_dir;
-  } else {
-    $self->warning_message("unable to find " .
-        $wgs_exome_snv_summary_dir);
-    return 0;
-  }
+  return $wgs_exome_snv_summary_dir;
 }
 
 sub snv_indel_report_clean_unfiltered_file {
@@ -271,7 +253,7 @@ sub snv_indel_report_clean_unfiltered_file {
   } else {
     $self->warning_message("unable to find " .
       $snv_indel_report_clean_unfiltered_file);
-    return 0;
+    return;
   }
 }
 
@@ -287,7 +269,7 @@ sub snv_indel_report_clean_filtered_file {
   } else {
     $self->warning_message("unable to find " .
       $snv_indel_report_clean_filtered_file);
-    return 0;
+    return;
   }
 }
 
@@ -298,7 +280,7 @@ sub wgs_cnvhmm_file {
     return $wgs_cnvhmm_file;
   } else {
     $self->warning_message("unable to find $wgs_cnvhmm_file");
-    return 0;
+    return;
   }
 }
 
@@ -309,7 +291,7 @@ sub wgs_cnv_wg_plot {
     return $wgs_cnv_wg_plot;
   } else {
     $self->warning_message("unable to find $wgs_cnv_wg_plot");
-    return 0;
+    return;
   }
 }
 
@@ -320,7 +302,7 @@ sub exome_cnvs_file{
     return $exome_cnvs_file;
   } else {
     $self->warning_message("unable to find $exome_cnvs_file");
-    return 0;
+    return;
   }
 }
 
@@ -331,7 +313,7 @@ sub exome_cnv_wg_plot{
     return $exome_cnv_wg_plot;
   } else {
     $self->warning_message("unable to find $exome_cnv_wg_plot");
-    return 0;
+    return;
   }
 }
 
@@ -342,7 +324,7 @@ sub exome_cnvhmm_file{
     return $exome_cnvhmm_file;
   } else {
     $self->warning_message("unable to find $exome_cnvhmm_file");
-    return 0;
+    return;
   }
 }
 
@@ -353,7 +335,7 @@ sub microarray_cnvhmm_file {
     return $microarray_cnvhmm_file
   } else {
     $self->warning_message("unable to find $microarray_cnvhmm_file");
-    return 0;
+    return;
   }
 }
 
@@ -364,7 +346,7 @@ sub microarray_cnv_wg_plot {
     return $microarray_cnv_wg_plot
   } else {
     $self->warning_message("unable to find $microarray_cnv_wg_plot");
-    return 0;
+    return;
   }
 }
 
@@ -379,7 +361,7 @@ sub best_cnvhmm_file {
     }
     unless ($best_cnvhmm_file) {
         $self->warning_message("unable to find cnvhmm files");
-        return 0;
+        return;
     }
     return $best_cnvhmm_file;
 }
@@ -393,7 +375,7 @@ sub wgs_exome_snv_tier1_annotated_compact_file {
   } else {
     $self->warning_message("unable to find " .
         $wgs_exome_snv_tier1_annotated_compact_file);
-    return 0;
+    return;
   }
 }
 
@@ -406,7 +388,7 @@ sub wgs_snv_tier1_annotated_compact_catanno_file {
   } else {
     $self->warning_message("unable to find " .
         $wgs_snv_tier1_annotated_compact_catanno_file);
-    return 0;
+    return;
   }
 }
 
@@ -420,7 +402,7 @@ sub exome_snv_tier1_annotated_compact_catanno_file {
   } else {
     $self->warning_message("unable to find " .
         $exome_snv_tier1_annotated_compact_catanno_file);
-    return 0;
+    return;
   }
 }
 
@@ -433,7 +415,7 @@ sub wgs_exome_snv_tier1_annotated_compact_catanno_file {
   } else {
     $self->warning_message("unable to find " .
         $wgs_exome_snv_tier1_annotated_compact_catanno_file);
-    return 0;
+    return;
   }
 }
 
@@ -446,7 +428,7 @@ sub wgs_indel_tier1_annotated_compact_catanno_file {
   } else {
     $self->warning_message("unable to find " .
         $wgs_indel_tier1_annotated_compact_catanno_file);
-    return 0;
+    return;
   }
 }
 
@@ -460,7 +442,7 @@ sub exome_indel_tier1_annotated_compact_catanno_file {
   } else {
     $self->warning_message("unable to find " .
         $exome_indel_tier1_annotated_compact_catanno_file);
-    return 0;
+    return;
   }
 }
 
@@ -473,7 +455,7 @@ sub wgs_exome_indel_tier1_annotated_compact_catanno_file {
   } else {
     $self->warning_message("unable to find " .
         $wgs_exome_indel_tier1_annotated_compact_catanno_file);
-    return 0;
+    return;
   }
 }
 
@@ -486,7 +468,7 @@ sub wgs_exome_snv_tier1_annotated_compact_readcounts_file {
   } else {
     $self->warning_message("unable to find " .
         $wgs_exome_snv_tier1_annotated_compact_readcounts_file);
-    return 0;
+    return;
   }
 }
 
@@ -499,7 +481,7 @@ sub input_summary_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $input_summary_stats_file);
-    return 0;
+    return;
   }
 }
 
@@ -512,7 +494,7 @@ sub exome_snv_summary_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $exome_snv_summary_stats_file);
-    return 0;
+    return;
   }
 }
 
@@ -525,7 +507,7 @@ sub wgs_exome_snv_summary_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $wgs_exome_snv_summary_stats_file);
-    return 0;
+    return;
   }
 }
 
@@ -538,7 +520,7 @@ sub wgs_snv_summary_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $wgs_snv_summary_stats_file);
-    return 0;
+    return;
   }
 }
 
@@ -552,7 +534,7 @@ sub wgs_cnv_summary_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $wgs_cnv_summary_stats_file);
-    return 0;
+    return;
   }
 }
 
@@ -565,7 +547,7 @@ sub rnaseq_tumor_cufflinks_genes_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $rnaseq_tumor_cufflinks_genes_stats_file);
-    return 0;
+    return;
   }
 }
 
@@ -578,7 +560,7 @@ sub rnaseq_tumor_cufflinks_isoforms_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $rnaseq_tumor_cufflinks_isoforms_stats_file);
-    return 0;
+    return;
   }
 }
 
@@ -591,7 +573,7 @@ sub rnaseq_tumor_cufflinks_isoforms_merged_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $rnaseq_tumor_cufflinks_isoforms_merged_stats_file);
-    return 0;
+    return;
   }
 }
 
@@ -604,7 +586,7 @@ sub rnaseq_tumor_tophat_junctions_absolute_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $rnaseq_tumor_tophat_junctions_absolute_stats_file);
-    return 0;
+    return;
   }
 }
 
@@ -617,7 +599,7 @@ sub variant_sc_wgs_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $variant_sc_wgs_stats_file);
-    return 0;
+    return;
   }
 }
 
@@ -630,7 +612,7 @@ sub variant_sc_exome_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $variant_sc_exome_stats_file);
-    return 0;
+    return;
   }
 }
 
@@ -643,7 +625,7 @@ sub sv_stats_file {
   } else {
     $self->warning_message("unable to find " .
         $sv_stats_file);
-    return 0;
+    return;
   }
 }
 
@@ -658,7 +640,7 @@ sub mutation_spectrum_wgs_summary_file {
   } else {
     $self->warning_message("unable to find " .
         $mutation_spectrum_wgs_summary_file);
-    return 0;
+    return;
   }
 }
 
@@ -673,7 +655,7 @@ sub mutation_spectrum_exome_summary_file {
   } else {
     $self->warning_message("unable to find " .
         $mutation_spectrum_exome_summary_file);
-    return 0;
+    return;
   }
 }
 
