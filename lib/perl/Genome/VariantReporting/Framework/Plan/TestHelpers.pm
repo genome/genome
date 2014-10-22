@@ -119,6 +119,48 @@ sub set_what_interpreter_x_requires {
 }
 
 {
+    package Genome::VariantReporting::WithTranslationTestInterpreter;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::VariantReporting::WithTranslationTestInterpreter {
+        is => 'Genome::VariantReporting::Framework::Component::Interpreter',
+        has => [
+            iz_p1 => { is_translated => 1 },
+            iz_p2 => {},
+        ],
+    };
+
+    sub name {
+        "interpreter_z";
+    }
+
+    sub interpret_entry {
+        my $self = shift;
+        my $entry = shift;
+        my $passed_alleles = shift;
+        my %dict;
+        for my $allele (@$passed_alleles) {
+            $dict{$allele} = {
+                iz_p1 => $self->iz_p1,
+            };
+        }
+        return %dict;
+    }
+
+    sub field_descriptions {
+        return (
+            iz_p1 => 'The value iz_p1',
+        );
+    }
+
+    1;
+}
+
+
+{
     package Genome::VariantReporting::TestReporter;
 
     use strict;
@@ -272,6 +314,35 @@ sub set_what_interpreter_x_requires {
 
     1;
 }
+
+{
+    package Genome::VariantReporting::TestEpsilonReporter;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::VariantReporting::TestEpsilonReporter {
+        is => 'Genome::VariantReporting::Framework::Component::Reporter',
+        has => [
+        ],
+    };
+
+    sub name {
+        "reporter_epsilon";
+    }
+
+    sub requires_interpreters {
+        return qw(interpreter_z);
+    }
+
+    sub allows_hard_filters {
+        return 0;
+    }
+
+    1;
+}
+
 
 {
     package Genome::VariantReporting::TestExpert;
