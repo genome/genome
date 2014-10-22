@@ -121,7 +121,7 @@ sub run_sra_dbcc {
 
     my $cwd = Cwd::getcwd();
     chdir($source_sra_directory) or die "Failed to chdir('$source_sra_directory')";
-    my $cmd = "/usr/bin/sra-dbcc $source_sra_basename &>";
+    my $cmd = "/usr/bin/sra-dbcc $source_sra_basename 2>&1";
     my $sra_dbcc_ok = $self->do_shellcmd_with_stdout($cmd, $dbcc_file);
     chdir($cwd) or die "Failed to chdir('$cwd')";
     return $sra_dbcc_ok;
