@@ -68,8 +68,6 @@ sub entry_processors {
     my @entry_processors;
     for my $reporter_plan ($self->plan->reporter_plans) {
         my $reporter = $reporter_plan->object_with_translations($self->translations);
-        my @filters = map {$_->object_with_translations($self->translations)} $reporter_plan->filter_plans;
-        my @interpreters = map {$_->object_with_translations($self->translations)} $reporter_plan->interpreter_plans;
 
         # We initialize an object with translations here. If we ever change
         # that, we need to change which object gets finalized during execute
@@ -77,8 +75,8 @@ sub entry_processors {
 
         push @entry_processors, Genome::VariantReporting::Framework::EntryProcessor->create(
             reporter => $reporter,
-            filters => \@filters,
-            interpreters => \@interpreters,
+            filters => [values %{$reporter->filters}],
+            interpreters => [values %{$reporter->interpreters}],
         );
     }
     return @entry_processors;
