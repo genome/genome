@@ -1,0 +1,24 @@
+experts:
+    'bam-readcount':
+        version: 0.6
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 1
+reporters:
+    'docm':
+        filters: {}
+        interpreters:
+            position: {}
+            'many-samples-vaf':
+                sample_names:
+                    - discovery_tumor
+                    - followup_tumor
+                    - normal
+        params:
+            file_name: 'cle_docm_report'
+            sample_names:
+                - discovery_tumor
+                - followup_tumor
+                - normal

@@ -6,6 +6,11 @@ use Genome;
 use File::Basename qw(basename);
 use Set::Scalar;
 
+my $DOCM = {
+    "DocM" => ["/gscuser/aregier/scratch/docm_test/snvs.vcf.gz",
+               "/gscuser/aregier/scratch/docm_test/indels.vcf.gz"],
+};
+
 class Genome::VariantReporting::Command::Wrappers::Trio {
     is => 'Command::V2',
     has_input => [
@@ -100,6 +105,7 @@ sub get_model_pairs {
         followup_sample => $self->followup_sample,
         normal_sample => $self->normal_sample,
         output_dir => $self->output_directory,
+        other_input_vcf_pairs => $DOCM,
     );
     return $factory->get_model_pairs;
 }

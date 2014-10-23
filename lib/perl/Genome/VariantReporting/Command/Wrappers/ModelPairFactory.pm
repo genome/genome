@@ -15,6 +15,7 @@ class Genome::VariantReporting::Command::Wrappers::ModelPairFactory {
         followup_sample => { is => 'Genome::Sample', },
         normal_sample => { is => 'Genome::Sample',},
         output_dir => { is => 'Text', },
+        other_input_vcf_pairs => { is => 'Hashref', default_value => {}},
         discovery_output_dir => {
             calculate_from => [qw/output_dir/],
             calculate => q/return File::Spec->join($output_dir, "discovery");/,
@@ -111,9 +112,26 @@ sub get_model_pairs {
             followup => $discovery_build,
             base_output_dir => $self->additional_output_dir,
         );
+
+        for my $other_input_vcf_pair (keys %{$self->other_input_vcf_pairs}) {
+            push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPairWithInput->create(
+                discovery => $discovery_build,
+                followup => $validation_build,
+                plan_file_basename => "cle_docm_report_TYPE.yaml",
+                base_output_dir => $self->other_output_dir($other_input_vcf_pair),
+                other_snvs_vcf_input => $self->other_input_vcf_pairs->{$other_input_vcf_pair}->[0],
+                other_indels_vcf_input => $self->other_input_vcf_pairs->{$other_input_vcf_pair}->[1],
+            );
+        }
     }
 
     return @model_pairs;
+}
+
+sub other_output_dir {
+    my $self = shift;
+    my $name = shift;
+    return File::Spec->join($self->output_dir, $name);
 }
 
 sub is_model_discovery {
