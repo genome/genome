@@ -63,12 +63,14 @@ sub pass_all_sample_alts {
 
 sub vcf_description {
     my $self = shift;
-    confess sprintf("Abstract method 'vcf_description' must be defined in class '%s'", $self->class);
+    return sprintf("Override method 'vcf_description' must be defined in class '%s' with the real description", $self->class);
 }
 
 sub vcf_id {
     my $self = shift;
-    confess sprintf("Abstract method 'vcf_id' must be defined in class '%s'", $self->class);
+    my $class_name = $self->class;
+    $class_name =~ s/::/_/g;
+    return $class_name;
 }
 
 1;
