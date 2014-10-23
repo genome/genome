@@ -36,6 +36,30 @@ class Genome::Disk::Group {
                 return $group_name;
             |,
         },
+        total_kb => {
+            calculate => q(
+                my $agg_bx = Genome::Disk::Volume->define_boolexpr(
+                    disk_group_names => $self->disk_group_name,
+                );
+                $self->_uncached_aggregate_sum($agg_bx, 'total_kb');
+            ),
+        },
+        allocated_kb => {
+            calculate => q(
+                my $agg_bx = Genome::Disk::Allocation->define_boolexpr(
+                    disk_group_name => $self->disk_group_name,
+                );
+                $self->_uncached_aggregate_sum($agg_bx, 'kilobytes_requested');
+            ),
+        },
+        percent_allocated => {
+            calculate_from => ['total_kb', 'allocated_kb'],
+            calculate => q{ return sprintf("%.2f", ( $allocated_kb / $total_kb ) * 100); },
+        },
+        unallocated_kb => {
+            calculate_from => ['total_kb', 'allocated_kb'],
+            calculate => q{ return $total_kb - $allocated_kb },
+        },
     ],
     has_many_optional => [
         mount_paths => {
@@ -117,6 +141,23 @@ memoize('_resolve_group_name');
 sub _resolve_group_name {
     my($self, $gid) = @_;
     return getgrgid($gid);
+}
+
+sub _uncached_aggregate_sum {
+    my ($self, $agg_bx, $agg_field) = @_;
+
+    my $set = $agg_bx->subject_class_name->define_set($agg_bx);
+
+    # UR caches the value so we're just going to reach in and "fix" it.
+    # Newer UR Sets store all their cached aggregate values under the __aggregates key
+    my $f = "sum($agg_field)";
+    if (exists $set->{__aggregates}) {
+        $set->__invalidate_cache__($f);
+    } elsif (exists $set->{$f}) {
+        delete $set->{$f}
+    }
+
+    return ($set->sum($agg_field) || 0);
 }
 
 1;
