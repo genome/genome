@@ -91,30 +91,13 @@ sub readcount_path {
     return $path;
 }
 
-sub execute {
+sub command {
     my $self = shift;
+
     my $version = $self->use_version || "";
 
-    my $bam = $self->bam_file;
-    unless (-s $bam) {
-        die $self->error_message("Bam file $bam does not exist or does not have size");
-    }
-    my $reference = $self->reference_fasta;
-    unless (-s $reference) {
-        die $self->error_message("Reference fasta $reference does not exist or does not have size");
-    }
+    my $command = sprintf "%s %s -f %s -l %s", $self->readcount_path, $self->bam_file, $self->reference_fasta, $self->region_list;
 
-    my $output_file = $self->output_file;
-    Genome::Sys->validate_file_for_writing($output_file);
-
-    my $region_file = $self->region_list;
-    unless (-s $region_file) {
-        $self->warning_message("Region list provided $region_file does not exist or does not have size. Skipping run and touching output ($output_file).");
-        touch($output_file);
-        return 1;
-    }
-
-    my $command = $self->readcount_path . " $bam -f $reference -l $region_file";
     if ($self->minimum_mapping_quality) {
         $command .= " -q " . $self->minimum_mapping_quality;
     }
@@ -137,15 +120,48 @@ sub execute {
         $command .= " -w 1";    # suppress error messages to a single report
     }
 
+    return $command;
+}
+
+sub validate {
+    my $self = shift;
+
+    my $bam = $self->bam_file;
+    unless (-s $bam) {
+        die $self->error_message("Bam file $bam does not exist or does not have size");
+    }
+    my $reference = $self->reference_fasta;
+    unless (-s $reference) {
+        die $self->error_message("Reference fasta $reference does not exist or does not have size");
+    }
+
+    my $output_file = $self->output_file;
+    Genome::Sys->validate_file_for_writing($output_file);
+
     if ($output_file =~ /[\(\)]/) {
         $output_file =~ s{\(}{\\(}g;
         $output_file =~ s{\)}{\\)}g;
+        $self->output_file($output_file);
+    }
+
+    return 1;
+}
+
+sub execute {
+    my $self = shift;
+
+    $self->validate;
+
+    unless (-s $self->region_list) {
+        $self->warning_message("Region list provided (%s) does not exist or does not have size. Skipping run and touching output (%s).", $self->region_list, $self->output_file);
+        touch($self->output_file);
+        return 1;
     }
 
     Genome::Sys->shellcmd(
-        cmd => "$command > $output_file",
-        input_files => [$bam, $reference, $region_file],
-        output_files => [$output_file],
+        cmd => $self->command . " > " . $self->output_file,
+        input_files => [$self->bam_file, $self->reference_fasta, $self->region_list],
+        output_files => [$self->output_file],
         allow_zero_size_output_files => 1,
     );
     $self->debug_message('Done running BAM Readcounts.');
