@@ -28,8 +28,25 @@ my $cmd = $pkg->create(
     reference_fasta => $reference->full_consensus_path('fa'),
 );
 
-ok($cmd->execute, "Executed $pkg");
+subtest 'testing command execution' => sub {
+    ok($cmd->execute, "Executed $pkg");
+    compare_ok($expected, $output, 'readcount file looks as expected');
+};
 
-compare_ok($expected, $output, 'readcount file looks as expected');
+subtest 'testing command strings' => sub {
+
+    my %expected_command = (
+        0.3 => '/usr/bin/bam-readcount0.3 /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/tiny.bam -f /gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa -l /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/regions',
+        0.4 => '/usr/bin/bam-readcount0.4 /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/tiny.bam -f /gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa -l /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/regions',
+        0.5 => '/usr/bin/bam-readcount0.5 /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/tiny.bam -f /gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa -l /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/regions -w 1',
+        0.6 => '/usr/bin/bam-readcount0.6 /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/tiny.bam -f /gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa -l /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/regions -w 1',
+    );
+
+    for my $version (qw( 0.3 0.4 0.5 0.6)) {
+        $cmd->use_version($version);
+        is($cmd->command, $expected_command{$version}, "The command string looks as expected for version $version");
+    }
+};
+
 done_testing();
 
