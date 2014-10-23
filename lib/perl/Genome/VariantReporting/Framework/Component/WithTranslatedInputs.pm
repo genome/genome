@@ -56,8 +56,8 @@ sub translate {
     if (exists($translations->{$old_value})) {
         return $translations->{$old_value};
     } else {
-        die sprintf("Could not translate input (%s) with value (%s) for object (%s)",
-            $name, $old_value, $self->class);
+        die sprintf("Could not translate input (%s) with value (%s) for object (%s). Available translations are: %s",
+            $name, $old_value, $self->class, Data::Dumper::Dumper($translations));
     }
 }
 

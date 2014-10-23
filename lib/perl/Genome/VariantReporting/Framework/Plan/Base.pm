@@ -79,13 +79,38 @@ sub get_class {
     return $FACTORY->get_class($self->category, $self->name);
 }
 
-sub object {
+# We want to be able to get different perl objects when object vs
+# object_with_translations is called -> don't memoize this
+sub _object {
     my $self = shift;
     my %overrides = @_;
     return $FACTORY->get_object($self->category,
             $self->name, $self->params, \%overrides);
 }
-Memoize::memoize("object");
+
+sub object {
+    my $self = shift;
+    my %overrides = @_;
+    return $self->_object(%overrides);
+}
+Memoize::memoize("object", LIST_CACHE => 'MERGE');
+
+sub object_with_translations {
+    my $self = shift;
+    my $translations = shift;
+    my %overrides = @_;
+
+    # Get a new perl object
+    # For child classes that overwrite object: Using $self->_object rather
+    # than $self->object ensures that we always call the base class' function
+    my $object = $self->_object();
+
+    if ($object->can('translate_inputs')) {
+        $object->translate_inputs($translations);
+    }
+    return $object;
+}
+Memoize::memoize("object_with_translations", LIST_CACHE => 'MERGE');
 
 sub __errors__ {
     my $self = shift;

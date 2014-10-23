@@ -110,5 +110,39 @@ sub requires_annotations {
     }
     return $needed->members;
 }
+sub object {
+    my $self = shift;
+    my %overrides = @_;
+    my $reporter_object = $self->SUPER::object(%overrides);
+
+    my @filters      = map {$_->object} $self->filter_plans;
+    my @interpreters = map {$_->object} $self->interpreter_plans;
+    for my $filter (@filters) {
+        $reporter_object->add_filter_object($filter);
+    }
+    for my $interpreter (@interpreters) {
+        $reporter_object->add_interpreter_object($interpreter);
+    }
+    return $reporter_object;
+}
+Memoize::memoize("object", LIST_CACHE => 'MERGE');
+
+sub object_with_translations {
+    my $self = shift;
+    my $translations = shift;
+    my %overrides = @_;
+    my $reporter_object = $self->SUPER::object_with_translations($translations, %overrides);
+
+    my @filters      = map {$_->object_with_translations($translations, %overrides)} $self->filter_plans;
+    my @interpreters = map {$_->object_with_translations($translations, %overrides)} $self->interpreter_plans;
+    for my $filter (@filters) {
+        $reporter_object->add_filter_object($filter);
+    }
+    for my $interpreter (@interpreters) {
+        $reporter_object->add_interpreter_object($interpreter);
+    }
+    return $reporter_object;
+}
+Memoize::memoize("object_with_translations", LIST_CACHE => 'MERGE');
 
 1;
