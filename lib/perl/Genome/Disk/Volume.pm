@@ -409,7 +409,9 @@ sub is_near_soft_limit {
     my $self = shift;
 
     my ($total_allocated_kb, $allocation_count) = $self->allocated_kb;
-    my $avg_allocated_kb = $total_allocated_kb / $allocation_count;
+    my $avg_allocated_kb = $allocation_count
+                         ? ($total_allocated_kb / $allocation_count)
+                         : 0;
 
     my $kb = max($self->used_kb, $total_allocated_kb);
     return ($kb + $avg_allocated_kb > $self->soft_limit_kb);
