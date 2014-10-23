@@ -83,22 +83,19 @@ sub get_class {
 # object_with_translations is called -> don't memoize this
 sub _object {
     my $self = shift;
-    my %overrides = @_;
     return $FACTORY->get_object($self->category,
-            $self->name, $self->params, \%overrides);
+            $self->name, $self->params);
 }
 
 sub object {
     my $self = shift;
-    my %overrides = @_;
-    return $self->_object(%overrides);
+    return $self->_object();
 }
 Memoize::memoize("object", LIST_CACHE => 'MERGE');
 
 sub object_with_translations {
     my $self = shift;
     my $translations = shift;
-    my %overrides = @_;
 
     # Get a new perl object
     # For child classes that overwrite object: Using $self->_object rather

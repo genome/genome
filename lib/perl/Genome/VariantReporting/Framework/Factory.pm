@@ -72,16 +72,9 @@ sub names {
 }
 
 sub get_object {
-    my ($self, $accessor, $name, $params, $overrides) = validate_pos(@_, 1, 1, 1, 1, 0);
+    my ($self, $accessor, $name, $params) = validate_pos(@_, 1, 1, 1, 1);
     my $pkg = $self->get_class($accessor, $name);
-    return $pkg->create(resolve_params($params, $overrides));
-}
-
-sub resolve_params {
-    my ($params, $overrides) = @_;
-    my %resolved_params = %$params;
-    @resolved_params{keys %$overrides} = values %$overrides;
-    return %resolved_params;
+    return $pkg->create(%$params);
 }
 
 sub get_class {
