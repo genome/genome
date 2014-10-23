@@ -12,6 +12,7 @@ class Genome::VariantReporting::Suite::Vep::AnnotationCategoryFilter {
         category_list => {
             is => 'Text',
             is_many => 1,
+            valid_values => ['splice_site', 'non_synonymous'],
         },
     },
 };
@@ -41,14 +42,7 @@ sub filter_entry {
             my @types = split /\&/, lc($consequence);
 
             LIST: for my $category ($self->category_list) {
-                my $method = 'is_'.$category;
-                my $category_class = 'Genome::VariantReporting::Suite::Vep::AnnotationCategory';
-
-                unless ($category_class->can($method)) {
-                    die $self->error_message('No method (%s) defined for (%s) in %s', $method, $category, $category_class);
-                }
-
-                if ($category_class->$method(@types)) {
+                if (Genome::VariantReporting::Suite::Vep::AnnotationCategory->is_category($category, @types)) {
                     $value = 1;
                     last LIST;
                 }
@@ -63,14 +57,14 @@ sub filter_entry {
 
 sub vcf_id {
     my $self = shift;
-    my @list = map{s/\_//g}$self->category_list;
+    my @list = map{s/\_//g; uc($_)}$self->category_list;
     return 'ANNOT_' . join '_', @list;
 }
 
 
 sub vcf_description {
     my $self = shift;
-    return 'Variant hits annotation categories: ' . join ',', $self->category_list;
+    return 'Variant hits annotation categories: ' . join ', ', $self->category_list;
 }
 
 1;

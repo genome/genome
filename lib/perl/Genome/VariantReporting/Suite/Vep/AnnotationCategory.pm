@@ -25,27 +25,25 @@ my @non_synonymous = qw(
 );
 
 
-sub splice_sites {
+sub splice_site {
     return @splice_sites;
 }
 
 
-sub nonsynonymous_list {
+sub non_synonymous {
     return @non_synonymous;
 }
 
 
-sub is_splice_site {
-    my $class = shift;
-    my $splice_sites = Set::Scalar->new(@splice_sites);
-    return !$splice_sites->intersection(Set::Scalar->new(@_))->is_null;
-}
+sub is_category {
+    my ($class, $category_name, @terms) = @_;
 
+    unless (__PACKAGE__->can($category_name)) {
+        Carp::confess("category $category_name is not implemented");
+    }
 
-sub is_non_synonymous {
-    my $class = shift;
-    my $non_synonymous = Set::Scalar->new(@non_synonymous);
-    return !$non_synonymous->intersection(Set::Scalar->new(@_))->is_null;
+    my $category = Set::Scalar->new(__PACKAGE__->$category_name);
+    return !$category->intersection(Set::Scalar->new(@terms))->is_null;
 }
 
 1;

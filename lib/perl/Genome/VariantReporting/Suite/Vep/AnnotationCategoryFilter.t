@@ -23,7 +23,7 @@ my @bad_list      = qw(bad_category);
 
 subtest "bad annotation category" => sub {
     my $filter = $pkg->create(category_list => \@bad_list);
-    lives_ok(sub {$filter->validate}, "Filter validates");
+    dies_ok(sub {$filter->validate}, "Filter validates");
 
     my $entry = create_entry_with_vep('CSQ=C|ENSG00000035115|ENST00000356150|Transcript|INTRON_VARIANT||||||||-1|SH3YL1|HGNC');
     dies_ok(sub {$filter->filter_entry($entry)}, "Invalid annotation category");
@@ -76,6 +76,17 @@ subtest "with passing vep information II" => sub {
     my $entry = create_entry_with_vep('CSQ=G|ENSG00000035115|ENST00000356150|Transcript|MISSENSE_VARIANT&INTRON_VARIANT||||||||-1|SH3YL1|HGNC');
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry gets filtered correctly");
 };
+
+subtest "test vcf_id and vcf_description" => sub {
+    my $filter = $pkg->create(category_list => \@category_list);
+    lives_ok(sub {$filter->validate}, "Filter validates");
+    my $vcf_id = 'ANNOT_SPLICESITE_NONSYNONYMOUS';
+    my $vcf_description = 'Variant hits annotation categories: splice_site, non_synonymous';
+    is($filter->vcf_id, $vcf_id, 'filter vcf_id created correctly');
+    is($filter->vcf_description, $vcf_description, 'filter vcf_description created correctly');
+    
+};
+
 
 done_testing;
 

@@ -71,19 +71,18 @@ sub _interpret_entry {
 }
 
 sub trv_type_category {
-    my $trv_type = shift;
-    my @types    = split('&', $trv_type);
-    my $category = 'Genome::VariantReporting::Suite::Vep::AnnotationCategory';
+    my $type_info = shift;
+    my @types     = split('&', $type_info);
+    my $category  = 'Genome::VariantReporting::Suite::Vep::AnnotationCategory';
+    my $trv_type  = 'other';
 
-    if ($category->is_splice_site(@types)) {
-        return 'splice_site';
+    for my $category_type qw(splice_site non_synonymous) {
+        if ($category->is_category($category_type, @types)) {
+            $trv_type = $category_type;
+            last;
+        }
     }
-    elsif ($category->is_non_synonymous(@types)) {
-        return 'non_synonymous';
-    }
-    else {
-        return 'other';
-    }
+    return $trv_type;
 }
 
 
