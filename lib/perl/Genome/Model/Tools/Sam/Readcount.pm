@@ -10,33 +10,35 @@ my $DEFAULT_VER = '0.6';
 
 class Genome::Model::Tools::Sam::Readcount {
     is  => 'Command',
-    has_optional_input => [
-        use_version => {
-            is  => 'Version',
-            doc => "bam-readcount version to be used.",
-            default_value => $DEFAULT_VER,
-        },
+    has_input => [
         bam_file => {
             is => 'String',
             doc => "The bam file from which to obtain readcounts",
+        },
+        reference_fasta => {
+            is => 'String',
+            doc => "The reference fasta to be used. This corresponds to the -f parameter.",
         },
         output_file => {
             is => 'String',
             doc => "The output file containing readcounts",
             is_output => 1,
         },
+        region_list => {
+            is => 'String',
+            doc => "list of regions to report readcounts within. This should be in a tab delimited format with 'chromosome start stop'. This is the -l parameter.",
+        },
+    ],
+    has_optional_input => [
+        use_version => {
+            is  => 'Version',
+            doc => "bam-readcount version to be used.",
+            default_value => $DEFAULT_VER,
+        },
         minimum_mapping_quality => {
             is => 'Integer',
             default => 0,
             doc => "filter reads with mapping quality less than this. This is the -q parameter.",
-        },
-        reference_fasta => {
-            is => 'String',
-            doc => "The reference fasta to be used. This corresponds to the -f parameter.",
-        },
-        region_list => {
-            is => 'String',
-            doc => "list of regions to report readcounts within. This should be in a tab delimited format with 'chromosome start stop'. This is the -l parameter.",
         },
         minimum_base_quality => {
             is => 'Integer',
