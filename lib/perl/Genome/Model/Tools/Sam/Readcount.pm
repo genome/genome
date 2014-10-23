@@ -82,15 +82,7 @@ sub readcount_path {
     my $self = shift;
     my $version = $self->use_version || "";
 
-    # This is hacky but the original bam-readcount version in use, 0.2, is simply deployed as "bam-readcount"
-    my $path;
-    if ($version eq "0.2") {
-        $path = "/gsc/bin/bam-readcount";
-    } 
-    else {
-        $path = "/usr/bin/bam-readcount$version";
-    }
-
+    my $path = "/usr/bin/bam-readcount$version";
     if (! -x $path) {
         die $self->error_message("Failed to find executable bam-readcount version $version at $path!");
     }
