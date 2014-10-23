@@ -80,6 +80,12 @@ sub default_version {
     return $DEFAULT_VER;
 }
 
+# The -w option was introduced in 0.5
+sub version_has_warning_suppression {
+    my ($self, $version) = @_;
+    return ($version >= "0.5");
+}
+
 sub readcount_path {
     my $self = shift;
     my $version = $self->use_version || "";
@@ -116,8 +122,10 @@ sub command {
     if($self->insertion_centric) {
         $command .= " -i";
     }
-    if($version >= "0.5") {
+    if($self->version_has_warning_suppression($version)) {
         $command .= " -w 1";    # suppress error messages to a single report
+    } else {
+        $command .= ' 2> /dev/null';
     }
 
     return $command;

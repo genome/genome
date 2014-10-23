@@ -36,8 +36,8 @@ subtest 'testing command execution' => sub {
 subtest 'testing command strings' => sub {
 
     my %expected_command = (
-        0.3 => '/usr/bin/bam-readcount0.3 /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/tiny.bam -f /gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa -l /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/regions',
-        0.4 => '/usr/bin/bam-readcount0.4 /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/tiny.bam -f /gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa -l /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/regions',
+        0.3 => '/usr/bin/bam-readcount0.3 /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/tiny.bam -f /gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa -l /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/regions 2> /dev/null',
+        0.4 => '/usr/bin/bam-readcount0.4 /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/tiny.bam -f /gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa -l /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/regions 2> /dev/null',
         0.5 => '/usr/bin/bam-readcount0.5 /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/tiny.bam -f /gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa -l /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/regions -w 1',
         0.6 => '/usr/bin/bam-readcount0.6 /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/tiny.bam -f /gscmnt/gc4096/info/model_data/2741951221/build101947881/all_sequences.fa -l /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Sam-Readcount/1/regions -w 1',
     );
