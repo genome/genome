@@ -125,7 +125,7 @@ sub object {
     }
     return $reporter_object;
 }
-Memoize::memoize("object");
+Memoize::memoize("object", LIST_CACHE => 'MERGE');
 
 sub object_with_translations {
     my $self = shift;
@@ -133,8 +133,8 @@ sub object_with_translations {
     my %overrides = @_;
     my $reporter_object = $self->SUPER::object_with_translations($translations, %overrides);
 
-    my @filters      = map {$_->object_with_translations($translations)} $self->filter_plans;
-    my @interpreters = map {$_->object_with_translations($translations)} $self->interpreter_plans;
+    my @filters      = map {$_->object_with_translations($translations, %overrides)} $self->filter_plans;
+    my @interpreters = map {$_->object_with_translations($translations, %overrides)} $self->interpreter_plans;
     for my $filter (@filters) {
         $reporter_object->add_filter_object($filter);
     }
@@ -143,6 +143,6 @@ sub object_with_translations {
     }
     return $reporter_object;
 }
-Memoize::memoize("object_with_translations");
+Memoize::memoize("object_with_translations", LIST_CACHE => 'MERGE');
 
 1;
