@@ -5,8 +5,7 @@ use warnings;
 
 use Genome;
 use Genome::File::Vcf::VepConsequenceParser;
-use Genome::VariantReporting::Suite::Vep::SpliceNonsynonymousList;
-
+use Genome::VariantReporting::Suite::Vep::AnnotationCategory;
 
 class Genome::VariantReporting::Suite::Vep::VepInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
@@ -74,11 +73,12 @@ sub _interpret_entry {
 sub trv_type_category {
     my $trv_type = shift;
     my @types    = split('&', $trv_type);
+    my $category = 'Genome::VariantReporting::Suite::Vep::AnnotationCategory';
 
-    if (Genome::VariantReporting::Suite::Vep::SpliceNonsynonymousList::is_splice_site(@types)) {
+    if ($category->is_splice_site(@types)) {
         return 'splice_site';
     }
-    elsif (Genome::VariantReporting::Suite::Vep::SpliceNonsynonymousList::is_non_synonymous(@types)) {
+    elsif ($category->is_non_synonymous(@types)) {
         return 'non_synonymous';
     }
     else {

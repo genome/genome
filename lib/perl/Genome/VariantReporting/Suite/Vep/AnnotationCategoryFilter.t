@@ -13,13 +13,24 @@ use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
 
-my $pkg = 'Genome::VariantReporting::Suite::Vep::SpliceNonsynonymousFilter';
+my $pkg = 'Genome::VariantReporting::Suite::Vep::AnnotationCategoryFilter';
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 
+my @category_list = qw(splice_site non_synonymous);
+my @bad_list      = qw(bad_category);
+
+subtest "bad annotation category" => sub {
+    my $filter = $pkg->create(category_list => \@bad_list);
+    lives_ok(sub {$filter->validate}, "Filter validates");
+
+    my $entry = create_entry_with_vep('CSQ=C|ENSG00000035115|ENST00000356150|Transcript|INTRON_VARIANT||||||||-1|SH3YL1|HGNC');
+    dies_ok(sub {$filter->filter_entry($entry)}, "Invalid annotation category");
+};
+
 subtest "with no vep information" => sub {
-    my $filter = $pkg->create();
+    my $filter = $pkg->create(category_list => \@category_list);
     lives_ok(sub {$filter->validate}, "Filter validates");
 
     my %expected_return_values = (
@@ -31,7 +42,7 @@ subtest "with no vep information" => sub {
 };
 
 subtest "with failing vep information" => sub {
-    my $filter = $pkg->create();
+    my $filter = $pkg->create(category_list => \@category_list);
     lives_ok(sub {$filter->validate}, "Filter validates");
 
     my %expected_return_values = (
@@ -43,7 +54,7 @@ subtest "with failing vep information" => sub {
 };
 
 subtest "with passing vep information I" => sub {
-    my $filter = $pkg->create();
+    my $filter = $pkg->create(category_list => \@category_list);
     lives_ok(sub {$filter->validate}, "Filter validates");
 
     my %expected_return_values = (
@@ -55,7 +66,7 @@ subtest "with passing vep information I" => sub {
 };
 
 subtest "with passing vep information II" => sub {
-    my $filter = $pkg->create();
+    my $filter = $pkg->create(category_list => \@category_list);
     lives_ok(sub {$filter->validate}, "Filter validates");
 
     my %expected_return_values = (

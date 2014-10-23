@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Suite::Vep::SpliceNonsynonymousList;
+package Genome::VariantReporting::Suite::Vep::AnnotationCategory;
 
 use strict;
 use warnings;
@@ -36,12 +36,14 @@ sub nonsynonymous_list {
 
 
 sub is_splice_site {
+    my $class = shift;
     my $splice_sites = Set::Scalar->new(@splice_sites);
     return !$splice_sites->intersection(Set::Scalar->new(@_))->is_null;
 }
 
 
 sub is_non_synonymous {
+    my $class = shift;
     my $non_synonymous = Set::Scalar->new(@non_synonymous);
     return !$non_synonymous->intersection(Set::Scalar->new(@_))->is_null;
 }
