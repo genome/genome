@@ -18,7 +18,7 @@ if ($] < 5.010) {
 } elsif (`uname -a` !~ /64/) {
     plan skip_all => "this test requires 64-bit architecture"
 } else {
-    plan tests => 11;
+    plan tests => 12;
 }
 
 use_ok('Genome::InstrumentData::AlignmentResult::Merged::CoverageStats');
@@ -41,6 +41,7 @@ my %coverage_stats_params = (
 
 my $coverage_result = Genome::InstrumentData::AlignmentResult::Merged::CoverageStats->get_or_create(%coverage_stats_params);
 isa_ok($coverage_result, 'Genome::InstrumentData::AlignmentResult::Merged::CoverageStats', 'sucessful run');
+is($coverage_result->get_target_total_bp, 130000, 'target_total_bp');
 
 my $alignment_summary = $coverage_result->alignment_summary_hash_ref;
 ok($alignment_summary, 'produced alignment summary');
