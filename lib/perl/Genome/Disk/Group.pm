@@ -60,6 +60,22 @@ class Genome::Disk::Group {
             calculate_from => ['total_kb', 'allocated_kb'],
             calculate => q{ return $total_kb - $allocated_kb },
         },
+        used_kb => {
+            calculate => q{
+                my $sum = 0;
+                my $vi = Genome::Disk::Volume->create_iterator(
+                    disk_group_names => $self->disk_group_name,
+                );
+                while (my $v = $vi->next) {
+                    $sum += $v->used_kb;
+                }
+                return $sum;
+            },
+        },
+        percent_used => {
+            calculate_from => ['total_kb', 'used_kb'],
+            calculate => q{ return sprintf("%.2f", ( $used_kb / $total_kb ) * 100); },
+        },
     ],
     has_many_optional => [
         mount_paths => {
