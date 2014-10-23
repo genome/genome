@@ -32,8 +32,5 @@ sub get_translations {
     return \%translations;
 }
 
-sub report_names {
-    return qw(germline_simple_report.tsv germline_full_report.tsv);
-}
 1;
 
