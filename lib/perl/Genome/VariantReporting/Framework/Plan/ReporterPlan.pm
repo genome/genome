@@ -110,37 +110,22 @@ sub requires_annotations {
     }
     return $needed->members;
 }
+
 sub object {
     my $self = shift;
-    my $reporter_object = $self->SUPER::object();
 
-    my @filters      = map {$_->object} $self->filter_plans;
-    my @interpreters = map {$_->object} $self->interpreter_plans;
-    for my $filter (@filters) {
-        $reporter_object->add_filter_object($filter);
+    my $reporter = $self->SUPER::object(@_);
+
+    for my $filter_plan ($self->filter_plans) {
+        $reporter->add_filter_object($filter_plan->object(@_));
     }
-    for my $interpreter (@interpreters) {
-        $reporter_object->add_interpreter_object($interpreter);
+    for my $interpreter_plan ($self->interpreter_plans) {
+        $reporter->add_interpreter_object($interpreter_plan->object(@_));
     }
-    return $reporter_object;
+
+    return $reporter;
 }
 Memoize::memoize("object", LIST_CACHE => 'MERGE');
 
-sub object_with_translations {
-    my $self = shift;
-    my $translations = shift;
-    my $reporter_object = $self->SUPER::object_with_translations($translations);
-
-    my @filters      = map {$_->object_with_translations($translations)} $self->filter_plans;
-    my @interpreters = map {$_->object_with_translations($translations)} $self->interpreter_plans;
-    for my $filter (@filters) {
-        $reporter_object->add_filter_object($filter);
-    }
-    for my $interpreter (@interpreters) {
-        $reporter_object->add_interpreter_object($interpreter);
-    }
-    return $reporter_object;
-}
-Memoize::memoize("object_with_translations", LIST_CACHE => 'MERGE');
 
 1;

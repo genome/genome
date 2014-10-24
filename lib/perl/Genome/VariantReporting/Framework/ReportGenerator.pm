@@ -52,12 +52,12 @@ sub execute {
         }
     }
 
-    # We initialize the reporter as object_with_translations during
+    # We initialize the reporter with translations during
     # entry_processors, so we need to finalize the same object with
     # translation (or certain parameters that were attached during
     # initialization won't exist on the object)
     for my $reporter_plan ($self->plan->reporter_plans) {
-        $reporter_plan->object_with_translations($self->translations)->finalize();
+        $reporter_plan->object($self->translations)->finalize();
     }
     return 1;
 }
@@ -67,7 +67,7 @@ sub entry_processors {
 
     my @entry_processors;
     for my $reporter_plan ($self->plan->reporter_plans) {
-        my $reporter = $reporter_plan->object_with_translations($self->translations);
+        my $reporter = $reporter_plan->object($self->translations);
 
         # We initialize an object with translations here. If we ever change
         # that, we need to change which object gets finalized during execute

@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Memoize qw(memoize);
+use Params::Validate qw(validate_pos :types);
 
 class Genome::VariantReporting::Framework::Plan::Base {
     is => 'Genome::VariantReporting::Framework::Component::Base',
@@ -77,35 +78,21 @@ sub get_class {
     return $FACTORY->get_class($self->category, $self->name);
 }
 
-# We want to be able to get different perl objects when object vs
-# object_with_translations is called -> don't memoize this
-sub _object {
-    my $self = shift;
-    return $FACTORY->get_object($self->category,
-            $self->name, $self->params);
-}
-
 sub object {
-    my $self = shift;
-    return $self->_object();
-}
-Memoize::memoize("object", LIST_CACHE => 'MERGE');
+    my ($self, $translations) = validate_pos(@_,
+        OBJECT,
+        {type => HASHREF, optional => 1},
+    );
 
-sub object_with_translations {
-    my $self = shift;
-    my $translations = shift;
+    my $object = $FACTORY->get_object($self->category,
+            $self->name, $self->params);
 
-    # Get a new perl object
-    # For child classes that overwrite object: Using $self->_object rather
-    # than $self->object ensures that we always call the base class' function
-    my $object = $self->_object();
-
-    if ($object->can('translate_inputs')) {
+    if (defined($translations) && $object->can('translate_inputs')) {
         $object->translate_inputs($translations);
     }
     return $object;
 }
-Memoize::memoize("object_with_translations", LIST_CACHE => 'MERGE');
+Memoize::memoize("object", LIST_CACHE => 'MERGE');
 
 sub __errors__ {
     my $self = shift;
