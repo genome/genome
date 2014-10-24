@@ -17,7 +17,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup {
         }
     ],
     has_output => [ 
-        read_group_bam_paths => {
+        output_bam_paths => {
             is => 'Text',
             is_many => 1,
             doc => 'The paths of the read group bams.',
@@ -146,23 +146,23 @@ sub _verify_read_count {
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
-    my @read_group_bam_paths = $self->read_group_bam_paths;
-    my @validated_read_group_bam_paths;
+    my @output_bam_paths = $self->output_bam_paths;
+    my @validated_output_bam_paths;
     my $read_count = 0;
-    for my $read_group_bam_path ( @read_group_bam_paths ) {
+    for my $read_group_bam_path ( @output_bam_paths ) {
         my $flagstat = $helpers->run_flagstat($read_group_bam_path);
         return if not $flagstat;
         next if $flagstat->{total_reads} == 0; # skip
         $read_count += $flagstat->{total_reads};
-        push @validated_read_group_bam_paths, $read_group_bam_path;
+        push @validated_output_bam_paths, $read_group_bam_path;
     }
 
-    if ( not @validated_read_group_bam_paths ) {
+    if ( not @validated_output_bam_paths ) {
         $self->error_message('No read group bams passed validation!');
         return;
     }
 
-    $self->read_group_bam_paths(\@validated_read_group_bam_paths);
+    $self->output_bam_paths(\@validated_output_bam_paths);
 
     my $original_flagstat = $helpers->load_or_run_flagstat($self->bam_path);
     return if not $original_flagstat;
@@ -207,9 +207,9 @@ sub _open_fh_for_read_group_and_pairedness {
 
     $self->_write_headers_for_read_group($fh, $read_group_id);
 
-    my @read_group_bam_paths = $self->read_group_bam_paths;
-    push @read_group_bam_paths, $read_group_bam_path;
-    $self->read_group_bam_paths(\@read_group_bam_paths);
+    my @output_bam_paths = $self->output_bam_paths;
+    push @output_bam_paths, $read_group_bam_path;
+    $self->output_bam_paths(\@output_bam_paths);
 
     return $fh;
 }

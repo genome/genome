@@ -25,24 +25,6 @@ class Genome::Taxon::View::Solr::Xml {
             calculate_from => ['subject'],
             calculate => sub { return join ('?id=', '/view/genome/taxon/status.html',$_[0]->id()); },
         },
-        display_label1 => {
-            is  => 'Text',
-        },
-        display_url1 => {
-            is  => 'Text',
-        },
-        display_label2 => {
-            is  => 'Text',
-        },
-        display_url2 => {
-            is  => 'Text',
-        },
-        display_label3 => {
-            is  => 'Text',
-        },
-        display_url3 => {
-            is  => 'Text',
-        },
         default_aspects => {
             is => 'ARRAY',
             default => [
@@ -72,7 +54,27 @@ class Genome::Taxon::View::Solr::Xml {
                 },
             ],
         }
-    ]
+    ],
+    has_optional_field => [
+        display_label1 => {
+            is  => 'Text',
+        },
+        display_url1 => {
+            is  => 'Text',
+        },
+        display_label2 => {
+            is  => 'Text',
+        },
+        display_url2 => {
+            is  => 'Text',
+        },
+        display_label3 => {
+            is  => 'Text',
+        },
+        display_url3 => {
+            is  => 'Text',
+        },
+    ],
 };
 
 1;

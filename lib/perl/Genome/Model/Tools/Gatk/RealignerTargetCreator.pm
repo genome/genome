@@ -47,9 +47,7 @@ sub execute {
     }
     my $command = $self->realigner_creator_command;
 
-    unless (Genome::Sys->shellcmd(cmd => $command)) {
-        die $self->error_message("Failed to execute $command");
-    }
+    Genome::Sys->shellcmd(cmd => $command); # croaks on error
 
     return 1;
 }

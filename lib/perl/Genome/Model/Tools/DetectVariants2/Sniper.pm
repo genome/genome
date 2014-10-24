@@ -18,7 +18,7 @@ class Genome::Model::Tools::DetectVariants2::Sniper {
     # Make workflow choose 64 bit blades
     has_param => [
         lsf_resource => {
-            default_value => 'rusage[mem=4000] select[type==LINUX64 && maxtmp>100000] span[hosts=1]',
+            default_value => 'rusage[mem=4000] select[maxtmp>100000] span[hosts=1]',
         },
     ],
 };

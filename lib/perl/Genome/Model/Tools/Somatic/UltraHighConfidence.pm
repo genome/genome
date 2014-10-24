@@ -10,6 +10,10 @@ class Genome::Model::Tools::Somatic::UltraHighConfidence {
     has => [
 
     ## INPUT/OUTPUT OPTIONS ##
+        bam_readcount_version => {
+            is => 'Version',
+            doc => 'Version of bam readcount to utilize',
+        },
         'normal_bam_file' => {
             type => 'String',
             doc => 'The normal BAM file in which to examine reads ',
@@ -40,7 +44,7 @@ class Genome::Model::Tools::Somatic::UltraHighConfidence {
         },
         'reference' => {
             type => 'String',
-            example_values => ['/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa'],
+            example_values => ['/gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa'],
             is_optional => 1,
             is_input => 1,
             doc => 'Reference sequence to use',
@@ -88,12 +92,6 @@ class Genome::Model::Tools::Somatic::UltraHighConfidence {
             is_input => 1,
             doc => 'Minimum coverage in the tumor BAM',
         },
-        'use_readcounts' => {
-            type => 'String',
-            is_input => 1,
-            is_optional => 1,
-            doc => 'Existing BAM-Readcounts file to save execution time',
-        },
         ## WGS FILTER OPTIONS ##
 
 
@@ -115,7 +113,7 @@ class Genome::Model::Tools::Somatic::UltraHighConfidence {
         # Make workflow choose 64 bit blades
         lsf_resource => {
             is_param => 1,
-            default_value => 'rusage[mem=4000,tmp=1000] select[type==LINUX64 && tmp>1000] span[hosts=1]',
+            default_value => 'rusage[mem=4000,tmp=1000] select[tmp>1000] span[hosts=1]',
         },
         lsf_queue => {
             is_param => 1,
@@ -310,6 +308,7 @@ sub run_filter {
         minimum_base_quality => 15,
         output_file => $readcount_file_tumor,
         region_list => $temp_path,
+        use_version => $self->bam_readcount_version,
     );
 
     print "Running bam-readcounts on normal BAM...\n";
@@ -320,6 +319,7 @@ sub run_filter {
         minimum_base_quality => 15,
         output_file => $readcount_file_normal,
         region_list => $temp_path,
+        use_version => $self->bam_readcount_version,
     );
 
     unless($tumor_rv and $normal_rv) {

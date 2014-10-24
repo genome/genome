@@ -9,34 +9,34 @@ use Genome;
 # Modified to support exome only data by Kilannin Krysiak
 
 class Genome::Model::ClinSeq::Command::MakeCircosPlot {
-	is => 'Command::V2',
-	   has_input => [
+   is => 'Command::V2',
+    has_input => [
+        
+        output_directory    => { is => 'FilesystemPath',
+                                doc => 'Directory where output will be written', },
+                                
+        build               => { is => 'Genome::Model::Build::ClinSeq',
+                                doc => 'Clinseq build' },
+                                
+        candidate_fusion_infile      => {  is => 'FilesystemPath', doc => 'fusion_output_file file from SummarizeSvs.pm' , is_optional => 1 },
+        cnv_hmm_file				 => {  is => 'FilesystemPath', doc => 'cnv_hmm_file is from GenerateClonalityPlots.pm', is_optional => 1 },
+        coding_hq_de_file			 => {  is => 'FilesystemPath', doc => 'coding_hq_de_file is from CufflinksDifferentialExpression.pm', is_optional => 1 },
+        tumor_fpkm_topnpercent_file  => {  is => 'FilesystemPath', doc => 'tumor_fpkm_topnpercent_file is from CufflinksExpressionAbsolute.pm', is_optional => 1 },
+        import_snvs_indels_result    => {  is => 'Boolean', doc => 'Used in the to link in workflow', is_optional => 1 },
+        gene_ampdel_file             => {  is => 'FilesystemPath', doc => 'gene_ampdel_file is from RunCnView.pm and is used to provide gene lables for Deletions and Focal Amps', is_optional => 1 },
 
-		   output_directory    => { is => 'FilesystemPath',
-			   doc => 'Directory where output will be written', },
-
-	   build               => { is => 'Genome::Model::Build::ClinSeq',
-		   doc => 'Clinseq build' },
-
-	   candidate_fusion_infile      => {  is => 'FilesystemPath', doc => 'fusion_output_file file from SummarizeSvs.pm' , is_optional => 1 },
-	   cnv_hmm_file				    => {  is => 'FilesystemPath', doc => 'cnv_hmm_file is from GenerateClonalityPlots.pm', is_optional => 1 },
-	   coding_hq_de_file			=> {  is => 'FilesystemPath', doc => 'coding_hq_de_file is from CufflinksDifferentialExpression.pm', is_optional => 1 },
-	   tumor_fpkm_topnpercent_file  => {  is => 'FilesystemPath', doc => 'tumor_fpkm_topnpercent_file is from CufflinksExpressionAbsolute.pm', is_optional => 1 },
-	   import_snvs_indels_result    => {  is => 'Boolean', doc => 'Used in the to link in workflow', is_optional => 1 },
-	   gene_ampdel_file             => {  is => 'FilesystemPath', doc => 'gene_ampdel_file is from RunCnView.pm and is used to provide gene lables for Deletions and Focal Amps', is_optional => 1 },
-
-#TODO: Define all input files as optional inputs here
-#TODO: Each of these will have to be defined as output on the commands they come from.
+        #TODO: Define all input files as optional inputs here
+        #TODO: Each of these will have to be defined as output on the commands they come from.
 
 
-	   ], 
-	   has_param => [
-		   use_version         => { is => 'Text',
-			   valid_values => [ Genome::Sys->sw_versions("circos") ],
-			   default_value => '0.64',
-			   doc => 'the version of circos to use' },
-	   ],
-	   doc => 'This module interfaces with the circos program to produce a circos plot for a clin-seq build.',
+    ], 
+    has_param => [
+        use_version         => { is => 'Text',
+                                valid_values => [ Genome::Sys->sw_versions("circos") ],
+                                default_value => '0.64',
+                                doc => 'the version of circos to use' },
+    ],
+    doc => 'interfaces with the circos program to produce a circos plot for a clin-seq build',
 };
 
 sub sub_command_category { 'pipeline' }

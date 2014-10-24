@@ -14,12 +14,8 @@ class Genome::Model::Event {
     sub_classification_method_name => '_resolve_subclass_name',
     subclass_description_preprocessor => 'Genome::Model::Event::_preprocess_subclass_description',
     type_name => 'genome model event',
-    id_generator => '-uuid',
     id_by => [
-        genome_model_event_id => {
-            is => 'Text',
-            len => 32,
-        },
+        genome_model_event_id => { is => 'Text', len => 32 },
     ],
     has => [
         model => {
@@ -27,40 +23,19 @@ class Genome::Model::Event {
             id_by => 'model_id',
             constraint_name => 'GME_GM_FK',
         },
-        event_type => {
-            is => 'VARCHAR2',
-            len => 255,
-        },
-        event_status => {
-            is => 'VARCHAR2',
-            len => 32,
-            is_optional => 1,
-        },
-        user_name => {
-            is => 'VARCHAR2',
-            len => 64,
-            is_optional => 1,
-        },
-        build_id => {
-            is => 'NUMBER',
-            is_optional => 1,
-        },
-        run_id => {
-            is => 'NUMBER',
-            len => 11,
-            is_optional => 1,
-        },
+        event_type => { is => 'Text', len => 255 },
+        event_status => { is => 'Text', len => 32, is_optional => 1 },
+        user_name => { is => 'Text', len => 64, is_optional => 1 },
+        build_id => { is => 'Text', is_optional => 1 },
+        run_id => { is => 'Text', len => 11, is_optional => 1 },
         workflow_instance_id => {
-            is => 'Number',
+            is => 'Text',
             len => 11,
             is_optional => 1,
         },
     ],
     has_optional => [
-        instrument_data_id => {
-            is => 'VARCHAR2',
-            len => 100,
-        },
+        instrument_data_id => { is => 'Text', len => 100 },
         instrument_data => {
             is => 'Genome::InstrumentData',
             id_by => 'instrument_data_id',
@@ -72,10 +47,7 @@ class Genome::Model::Event {
                 return $model->input_for_instrument_data_id($instrument_data_id);
             ),
         },
-        ref_seq_id => {
-            is => 'VARCHAR2',
-            len => 64,
-        },
+        ref_seq_id => { is => 'Text', len => 64 },
         parent_event => {
             is => 'Genome::Model::Event',
             id_by => 'parent_event_id',
@@ -86,24 +58,12 @@ class Genome::Model::Event {
             id_by => 'prior_event_id',
             constraint_name => 'GME_PPEID_FK',
         },
-        date_completed => { is => 'TIMESTAMP' },
-        date_scheduled => { is => 'TIMESTAMP' },
-        lsf_job_id => {
-            is => 'VARCHAR2',
-            len => 64,
-        },
-        retry_count => {
-            is => 'NUMBER',
-            len => 3,
-        },
-        status_detail => {
-            is => 'VARCHAR2',
-            len => 200,
-        },
-        build => {
-            is => 'Genome::Model::Build',
-            id_by => 'build_id',
-        },
+        date_completed => { is => 'DateTime' },
+        date_scheduled => { is => 'DateTime' },
+        lsf_job_id => { is => 'Text', len => 64 },
+        retry_count => { is => 'Integer', len => 3 },
+        status_detail => { is => 'Text', len => 200 },
+        build => { is => 'Genome::Model::Build', id_by => 'build_id' },
         should_calculate => {
             calculate_from => 'event_status',
             calculate => q(
@@ -142,10 +102,7 @@ class Genome::Model::Event {
             is => 'Genome::Model::Event::Metric',
             reverse_as => 'event',
         },
-        metric_names => {
-            via => 'metrics',
-            to => 'name',
-        },
+        metric_names => { via => 'metrics', to => 'name' },
         instrument_data_segment_id_param => {
             is => 'Genome::Model::Event::Input',
             reverse_as => 'event',
@@ -167,6 +124,7 @@ class Genome::Model::Event {
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 sub command_name {
@@ -529,7 +487,7 @@ sub desc {
 
 #< Bsub >#
 sub bsub_rusage {
-    return "-R 'select[model!=Opteron250 && type==LINUX64] span[hosts=1]'";
+    return "-R 'span[hosts=1]'";
 }
 
 sub lsf_queue {

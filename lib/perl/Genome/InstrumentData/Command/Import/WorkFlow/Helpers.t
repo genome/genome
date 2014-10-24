@@ -42,6 +42,13 @@ is($helpers->source_file_format('source.fasta'), 'fasta', 'format for fasta sour
 is($helpers->source_file_format('source.fa'), 'fasta', 'format for fa source file is fasta');
 is($helpers->source_file_format('source.fna'), 'fasta', 'format for fna source file is fasta');
 
+# is_source_file_archived
+throws_ok(sub {$helpers->is_source_file_archived; }, qr/No source file to determined if archived!/, 'is_source_file_archived failed w/o source file');
+ok($helpers->is_source_file_archived('file.tar.gz'), 'file.tar.gz is archived');
+ok($helpers->is_source_file_archived('file.tar'), 'file.tar is archived');
+ok($helpers->is_source_file_archived('file.tgz'), 'file.tgz is archived');
+ok(!$helpers->is_source_file_archived('filetar.gz'), 'filetar.gz is not archived');
+
 ok(!eval{$helpers->size_of_source_file;}, 'failed to get size for source file w/o source file');
 ok(!eval{$helpers->size_of_remote_file;}, 'failed to get size for remote file w/o remote file');
 
@@ -122,17 +129,54 @@ is_deeply($load_md5, $run_md5, 'load md5');
 
 # previously imported
 my @md5s = map { $_ x 32 } (qw/ a b c /);
-ok(!$helpers->were_original_path_md5s_previously_imported(@md5s), 'as expected, no inst data found for md5s');
+my @instrument_data = map {
+    Genome::InstrumentData::Imported->__define__(
+        id => $_ - 11,
+    )
+} (0..$#md5s);
+is(@instrument_data, 3, '__define__ instdata');
+ok(!$helpers->were_original_path_md5s_previously_imported(md5s => \@md5s), 'as expected, no inst data found for md5s');
 my @mdr_attrs = map { 
-    Genome::InstrumentDataAttribute->create(
-    instrument_data_id => $_ - 11,
+    Genome::InstrumentDataAttribute->__define__(
+    instrument_data_id => $instrument_data[$_]->id,
     attribute_label => 'original_data_path_md5',
     attribute_value => $md5s[$_],
     nomenclature => 'WUGC',
-) } ( 0..1); # none for c
-ok($helpers->were_original_path_md5s_previously_imported(@md5s), 'inst data found for md5s "a" & "b"');
-is($helpers->error_message, 'Instrument data was previously imported! Found existing instrument data with MD5s: -10 => bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, -11 => aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'correct error message');
-ok(!$helpers->were_original_path_md5s_previously_imported($md5s[2]), 'as expected, no inst data found for "c" md5');
+) } (0..$#md5s);
+is(@mdr_attrs, 3, '__define__ md5 attrs');
+my $ds_attr = Genome::InstrumentDataAttribute->__define__(
+    instrument_data_id => $instrument_data[2]->id,
+    attribute_label => 'downsample_ratio',
+    attribute_value => 0.25,
+    nomenclature => 'WUGC',
+);
+ok($ds_attr, '__define__ downsample attr for instdata 3');
+
+## no downsample ratio
+ok(# a & b w/o downsample_ratio should be found
+    $helpers->were_original_path_md5s_previously_imported(md5s => \@md5s),
+    'inst data found for md5s "a" & "b" w/o downsample_ratio',
+);
+is($helpers->error_message, 'Instrument data was previously imported! Found existing instrument data: -10, -11', 'correct error message');
+ok(# c w/o downsample_ratio should not be found
+    !$helpers->were_original_path_md5s_previously_imported(md5s => [$md5s[2]]),
+    'as expected, no inst data found for "c" md5',
+);
+
+## w/ downsample ratio
+ok(# a, b & c w/ downsample_ratio 0.33 should not be found
+    !$helpers->were_original_path_md5s_previously_imported(md5s => \@md5s, downsample_ratio => 0.33),
+    'as expected, no inst data found for "a", "b" & "c" md5 w/ downsample_ratio of .33',
+);
+ok(# a & b w/ downsample_ratio 0.25 should not be found
+    !$helpers->were_original_path_md5s_previously_imported(md5s => [$md5s[0..1]], downsample_ratio => 0.25),
+    'as expected, no inst data found for "a" and "b" md5 w/ downsample_ratio of .25',
+);
+ok(# c w/ downsample_ratio of 0.25 should be found
+    $helpers->were_original_path_md5s_previously_imported(md5s => \@md5s, downsample_ratio => 0.25),
+    'instdata found for md5 "c" and downsample_ratio 0.25',
+);
+is($helpers->error_message, 'Instrument data was previously downsampled by a ratio of 0.25 and imported! Found existing instrument data: -9', 'correct error message');
 
 # properties
 my $properties = $helpers->key_value_pairs_to_hash(qw/ sequencing_platform=solexa lane=2 flow_cell_id=XXXXXX /);
@@ -159,5 +203,20 @@ throws_ok( sub{ $helpers->insert_extension_into_bam_path(); }, qr/^No bam path g
 throws_ok( sub{ $helpers->insert_extension_into_bam_path('in.bam'); }, qr/^No extension given to insert extension to bam path!/, 'insert_extension_into_bam_path fails w/o extension');
 throws_ok( sub{ $helpers->insert_extension_into_bam_path('bam', 'sorted'); }, qr/^Failed to insert extension into bam path! Bam path does not end in .bam! bam/, 'insert_extension_into_bam_path fails w/ invalid bam');
 is($helpers->insert_extension_into_bam_path('in.bam', 'sorted'), 'in.sorted.bam', 'insert_extension_into_bam_path');
+
+# validators
+throws_ok(sub{ $helpers->is_downsample_ratio_invalid(); }, qr/No downsample ratio to check!/, 'is_downsample_ratio_invalid fails w/o downsample_ratio');
+
+my @errors = $helpers->is_downsample_ratio_invalid('NA');
+ok(@errors, 'errors for downsample_ratio of NA');
+is($errors[0]->desc, 'Invalid number! NA', 'correct error desc for downsample_ratio of NA');
+
+@errors = $helpers->is_downsample_ratio_invalid('0');
+ok(@errors, 'errors for downsample_ratio of 0');
+is($errors[0]->desc, 'Must be greater than 0 and less than 1! 0', 'correct error desc for downsample_ratio of 0');
+
+@errors = $helpers->is_downsample_ratio_invalid('1');
+ok(@errors, 'errors for downsample_ratio of 1');
+is($errors[0]->desc, 'Must be greater than 0 and less than 1! 1', 'correct error desc for downsample_ratio of 1');
 
 done_testing();

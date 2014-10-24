@@ -39,7 +39,7 @@ class Genome::Model::ReferenceSequence::Command::CreateAlignerIndex {
     has_param => [
         lsf_resource => {
             is => 'Text',
-            value => "-R 'select[type==LINUX64 && mem>16000 && tmp>150000] span[hosts=1] rusage[tmp=150000, mem=16000]' -M 16000000",
+            value => "-R 'select[mem>16000 && tmp>150000] span[hosts=1] rusage[tmp=150000, mem=16000]' -M 16000000",
         }
     ],
 };

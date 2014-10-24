@@ -43,12 +43,6 @@ class Genome::Sys::User::View::Solr::Xml {
             calculate_from => ['subject'],
             calculate => sub { return $ENV{GENOME_SYS_SERVICES_WIKI_URL} . 'User:' . $_[0]->username(); },
         },
-        display_label3 => {
-            is  => 'Text',
-        },
-        display_url3 => {
-            is  => 'Text',
-        },
         display_title => {
             is => 'Text',
             calculate_from => ['subject'],
@@ -67,7 +61,15 @@ class Genome::Sys::User::View::Solr::Xml {
                 },
             ],
         }
-    ]
+    ],
+    has_optional_field => [
+        display_label3 => {
+            is  => 'Text',
+        },
+        display_url3 => {
+            is  => 'Text',
+        },
+    ],
 };
 
 1;

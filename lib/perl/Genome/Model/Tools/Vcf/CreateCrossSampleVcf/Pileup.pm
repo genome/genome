@@ -35,7 +35,7 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Pileup {
     ],
     has_param => [
         lsf_resource => {
-            default => "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>1000 && mem>16000] span[hosts=1] rusage[tmp=1000:mem=16000]' -M 1610612736",
+            default => "-R 'select[tmp>1000 && mem>16000] span[hosts=1] rusage[tmp=1000:mem=16000]' -M 1610612736",
         }
     ],
 };

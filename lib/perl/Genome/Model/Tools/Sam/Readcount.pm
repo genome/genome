@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 use File::Touch qw(touch);
 
-my $DEFAULT_VER = '0.4';
+my $DEFAULT_VER = '0.6';
 
 class Genome::Model::Tools::Sam::Readcount {
     is  => 'Command',
@@ -72,6 +72,10 @@ sub help_synopsis {
 
 sub help_detail {
     "used to get readcount information from a bam";
+}
+
+sub default_version {
+    return $DEFAULT_VER;
 }
 
 sub readcount_path {

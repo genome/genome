@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Config::Command {
     is => 'Command::Tree',
-    doc => 'commands that deal with analysis project configuration',
+    doc => 'work with analysis project configurations',
 };
 
 1;

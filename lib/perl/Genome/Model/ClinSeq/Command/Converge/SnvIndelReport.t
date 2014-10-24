@@ -4,7 +4,7 @@ use warnings;
 use above "Genome";
 use Test::More tests => 6; 
 
-my $expected_out = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-ClinSeq-Command-Converge-SnvIndelReport/2014-05-06/';
+my $expected_out = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-ClinSeq-Command-Converge-SnvIndelReport/2014-10-15/';
 ok(-d $expected_out, "directory of expected output exists: $expected_out") or die;
 
 my $clinseq_build_id = 'a2eb4f40a47a4dc5ac410c81b3d2fc17';
@@ -23,6 +23,7 @@ my $cmd = Genome::Model::ClinSeq::Command::Converge::SnvIndelReport->create(
     test => 10,
     chromosome => '1',
     tiers => 'tier3',
+    bam_readcount_version => 0.6,
 );
 $cmd->queue_status_messages(1);
 my $r1 = $cmd->execute();

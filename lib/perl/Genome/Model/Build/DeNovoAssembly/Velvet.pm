@@ -178,7 +178,7 @@ sub regex_files_for_diff {
 #</ DIFF >#
 
 sub resolve_assemble_lsf_resource {
-    return "-n 4 -R 'span[hosts=1] select[type==LINUX64 && mem>30000] rusage[mem=30000]' -M 30000000";
+    return "-n 4 -R 'span[hosts=1] select[mem>30000] rusage[mem=30000]' -M 30000000";
 }
 
 1;

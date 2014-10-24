@@ -1,6 +1,6 @@
 package Genome::File::Vep::Reader;
 
-use Genome::File::TypedStream;
+use Genome::File::TypedReader;
 use Genome::File::Vep::Header;
 use Genome::File::Vep::Entry;
 use Data::Dumper;
@@ -9,7 +9,7 @@ use Carp qw/confess/;
 use strict;
 use warnings;
 
-use base qw(Genome::File::TypedStream);
+use base qw(Genome::File::TypedReader);
 
 sub _parse_header {
     my $self = shift;

@@ -7,46 +7,30 @@ use Genome;
 use File::Spec;
 
 class Genome::Disk::Allocation::FileSummary {
-    is => ['Genome::Utility::ObjectWithTimestamps', 'Genome::Utility::ObjectWithCreatedBy'],
+    is => [ "Genome::Utility::ObjectWithTimestamps", "Genome::Utility::ObjectWithCreatedBy" ],
     table_name => 'disk.file_summary',
-    id_generator => '-uuid',
-    data_source => 'Genome::DataSource::GMSchema',
     id_by => [
-        id => {
-            is => 'Text',
-            len => 64,
-        }
+        id => { is => 'Text', len => 64 },
     ],
     has => [
-        allocation_id => {
-            is => 'Text',
-            len => 64,
-        },
+        allocation_id => { is => 'Text', len => 64 },
         allocation => {
             is => 'Genome::Disk::Allocation',
             id_by => 'allocation_id',
+            constraint_name => 'file_summary_allocation_id_fkey',
         },
         file => {
             is => 'Text',
             doc => 'relative path to file from the allocation root',
         },
-        digest => {
-            is => 'Text',
-            is_optional => 1,
-        },
-        size_in_bytes => {
-            is => 'Number',
-            is_optional => 1,
-        },
-        is_symlink => {
-            is => 'Boolean',
-        },
-        destination => {
-            is => 'Text',
-            is_optional => 1,
-        }
-
+        digest => { is => 'Text', is_optional => 1 },
+        size_in_bytes => { is => 'Integer', is_optional => 1 },
+        is_symlink => { is => 'Boolean', len => 1 },
+        destination => { is => 'Text', is_optional => 1 },
     ],
+    schema_name => 'GMSchema',
+    data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 sub create {

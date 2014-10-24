@@ -6,7 +6,7 @@ package Genome::Model::ReferenceSequence::Command;
 
 class Genome::Model::ReferenceSequence::Command {
     is => 'Command',
-    doc => 'operate on reference alignment models',
+    doc => 'operate on reference sequence models',
 };
 
 sub sub_command_category { 'type specific' }

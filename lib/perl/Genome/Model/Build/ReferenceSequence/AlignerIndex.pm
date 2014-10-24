@@ -71,13 +71,21 @@ sub __display_name__ {
 
 sub required_rusage {
     # override in subclasses
-    # e.x.: "-R 'select[model!=Opteron250 && type==LINUX64] span[hosts=1] rusage[tmp=50000:mem=12000]' -M 1610612736";
+    # e.x.: "-R 'span[hosts=1] rusage[tmp=50000:mem=12000]' -M 1610612736";
     ''
 }
 
 sub aligner_requires_param_masking {
     my $class = shift;
     my $aligner_name = shift;
+
+    # If $aligner_name is not known then we can't ask.  While this could be an
+    # exception it is the case that while an object is being created its
+    # params/inputs getted added one-by-one which means sometime $aligner_name
+    # was not yet known.
+    unless ($aligner_name) {
+        return 0;
+    }
 
     my $aligner_class = 'Genome::InstrumentData::AlignmentResult::'  . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($aligner_name);
 

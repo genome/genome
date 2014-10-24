@@ -12,32 +12,17 @@ class Genome::SubjectAttribute {
             len => 64,
             default_value => 'NONE',
         },
-        attribute_value => {
-            is => 'Text',
-            len => 512,
-        },
-        subject_id => {
-            is => 'Text',
-            len => 32,
-        },
-        nomenclature => {
-            is => 'Text',
-            len => 64,
-        },
+        attribute_value => { is => 'Text', len => 512 },
+        subject_id => { is => 'Text', len => 32 },
+        nomenclature => { is => 'Text', len => 64 },
     ],
     has => [
         nomenclature_field => {
             is => 'Genome::Nomenclature::Field',
             id_by => 'nomenclature',
         },
-        subject => {
-            is => 'Genome::Subject',
-            id_by => 'subject_id',
-        },
-        subject_name => {
-            via => 'subject',
-            to => 'name',
-        },
+        subject => { is => 'Genome::Subject', id_by => 'subject_id' },
+        subject_name => { via => 'subject', to => 'name' },
         nomenclature_field_name => {
             via => 'nomenclature_field',
             to => 'name',

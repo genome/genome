@@ -11,6 +11,12 @@ use Genome::File::BamReadcount::Reader;
 class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
     is => 'Command',
     has => [
+    bam_readcount_version => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'version of bam-readcount to use',
+    },
+
     bam_file => {
         is => 'String',
         is_optional => 0,
@@ -266,12 +272,15 @@ sub execute {
         or die "can't open file: $variant_file\n";
     open(SNVFILE,">$tempdir/snvpos");
     open(INDELFILE,">$tempdir/indelpos");
+    my $on_first_line = 1;
     while( my $sline = $inFh->getline )
     {
         chomp($sline);
 
         #skip header lines
-        next if($sline =~ /^(#|Hugo_Symbol|Chr|chromosome)/i);
+        next if ($on_first_line
+            && ($sline =~ /^(#|Hugo_Symbol|Chrom|chromosome|chr\s)/i));
+        $on_first_line = 0;
 
         my @fields = split("\t",$sline);
 
@@ -339,31 +348,37 @@ sub execute {
         print $OUTFILE "\n";
     }
 
-
-
     #------------------------------------------
     #now run the readcounting on snvs
-    if( -s "$tempdir/snvpos"){
+
+    my %params = (
+        bam_file                => $bam_file,
+        per_library             => $self->per_library,
+        reference_fasta         => $fasta,
+        minimum_base_quality    => $min_base_quality,
+        minimum_mapping_quality => $min_mapping_quality,
+    );
+
+    if ($self->bam_readcount_version){
+        $params{use_version} = $self->bam_readcount_version;
+    }
+
+    if (-s "$tempdir/snvpos") {
         my $return = Genome::Model::Tools::Sam::Readcount->execute(
-            use_version => 0.6,
-            bam_file => $bam_file,
-            minimum_mapping_quality => $min_mapping_quality,
-            minimum_base_quality => $min_base_quality,
+            %params,
             output_file => "$tempdir/readcounts",
-            reference_fasta => $fasta,
             region_list => "$tempdir/snvpos",
-            per_library => $self->per_library,
         );
         unless($return) {
-            $self->error_message("Failed to execute: Returned $return");
+            $self->error_message("Failed to execute sam readcount: Returned $return");
             die $self->error_message;
         }
-
+        
         #sort and dedup the bam-readcount output
         my $cmd_obj = Genome::Model::Tools::Joinx::Sort->create(
             input_files => [ "$tempdir/readcounts" ],
             output_file => "$tempdir/readcounts.sorted",
-            );
+        );
         $cmd_obj->execute;
         system( "uniq $tempdir/readcounts.sorted >$tempdir/readcounts.sorted.uniq" );
 
@@ -460,17 +475,12 @@ sub execute {
     #the way pileup places the coordinates gets weird, so output the appropriate bases to look at:
 
     #if there are no indels, skip
-    if( -s "$tempdir/indelpos"){
+    if (-s "$tempdir/indelpos") {
         my $return = Genome::Model::Tools::Sam::Readcount->execute(
-            use_version => 0.5,
-            bam_file => $bam_file,
-            minimum_mapping_quality => $min_mapping_quality,
-            minimum_base_quality => $min_base_quality,
-            output_file => "$tempdir/readcounts_indel",
-            reference_fasta => $fasta,
-            region_list => "$tempdir/indelpos",
+            %params,
+            output_file       => "$tempdir/readcounts_indel",
+            region_list       => "$tempdir/indelpos",
             insertion_centric => 1,
-            per_library => $self->per_library,
         );
         unless($return) {
             $self->error_message("Failed to execute: Returned $return");
@@ -481,7 +491,7 @@ sub execute {
         my $cmd_obj = Genome::Model::Tools::Joinx::Sort->create(
             input_files => [ "$tempdir/readcounts_indel" ],
             output_file => "$tempdir/readcounts_indel.sorted",
-            );
+        );
         $cmd_obj->execute;
         system( "uniq $tempdir/readcounts_indel.sorted >$tempdir/readcounts_indel.sorted.uniq" );
 

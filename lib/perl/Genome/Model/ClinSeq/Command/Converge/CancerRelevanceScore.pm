@@ -8,13 +8,15 @@ use File::Basename;
 class Genome::Model::ClinSeq::Command::Converge::CancerRelevanceScore {
   is => 'Genome::Model::ClinSeq::Command::Converge::Base',
   has_input => [  
-    gene_category_sum => {
-      is => 'Integer',
-      doc => 'Cutoff for gene_category_sum value',
-    },
     outfile => {
       is => 'FilesystemPath',
       doc => 'File to write converged cancer-relevance-score results',
+    },
+    gene_category_sum => {
+      is => 'Integer',
+      is_optional => 1,
+      default => 5,
+      doc => 'Cutoff for gene_category_sum value',
     },
   ],
   doc => 'converge Stats from mutiple clinseq builds'
@@ -33,8 +35,8 @@ EOS
 sub help_synopsis {
   return <<EOS
   Example usage: 
-  genome model clin-seq converge cancer-relevance-score 
-  --builds='model_groups.id=786367aa2edc41e1b4a5d33787a8c003,is_last_complete=1'
+  genome model clin-seq converge cancer-relevance-score \\
+  --builds='model_groups.id=786367aa2edc41e1b4a5d33787a8c003,is_last_complete=1' \\
   --outfile=metris.tsv --outdir=/tmp/ --gene-category-sum=0
 EOS
 }

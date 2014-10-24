@@ -27,7 +27,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
         },
     ],
     has_output => [ 
-        bam_path => {
+        output_bam_path => {
             is => 'Text',
             calculate_from => [qw/ working_directory sample_name /],
             calculate => q( return $working_directory.'/'.$sample_name.'.bam'; ),
@@ -67,16 +67,27 @@ sub _fastqs_to_bam {
     my $read_group_name = $self->library->name;
     my @fastqs = $self->fastq_paths;
     $self->debug_message("Fastq 1: $fastqs[0]");
-    my $bam_path = $self->bam_path;
-    my $cmd = "gmt picard fastq-to-sam --fastq $fastqs[0] --output $bam_path --quality-format Standard --sample-name $sample_name --read-group-name $read_group_name";
+    my $output_bam_path = $self->output_bam_path;
+    my %fastq_to_sam_params = (
+        fastq => $fastqs[0],
+        output => $output_bam_path,
+        quality_format => 'Standard',
+        sample_name => $sample_name,
+        read_group_name => $read_group_name,
+    );
     if ( $fastqs[1] ) {
-        $self->debug_message("Fastq 2: $fastqs[1]") if $fastqs[1];
-        $cmd .= ' --fastq2 '.$fastqs[1]
+        $self->debug_message("Fastq 2: $fastqs[1]");
+        $fastq_to_sam_params{fastq2} = $fastqs[1];
     }
-    $self->debug_message("Bam path: $bam_path");
+    $self->debug_message("Bam path: $output_bam_path");
 
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv or not -s $bam_path ) {
+    my $cmd = Genome::Model::Tools::Picard::FastqToSam->create(%fastq_to_sam_params);
+    if ( not $cmd ) {
+        $self->error_message('Failed to create sam to fastq command!');
+        return;
+    }
+    my $execute_ok = eval{ $cmd->execute; };
+    if ( not $execute_ok or not -s $output_bam_path ) {
         $self->error_message($@) if $@;
         $self->error_message('Failed to run picard fastq to sam!');
         return;
@@ -92,7 +103,7 @@ sub _verify_bam {
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
 
-    my $flagstat = $helpers->validate_bam($self->bam_path);
+    my $flagstat = $helpers->validate_bam($self->output_bam_path);
     return if not $flagstat;
 
     $self->debug_message('Bam read count: '.$flagstat->{total_reads});

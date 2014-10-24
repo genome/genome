@@ -93,10 +93,16 @@ sub _display_matches {
                     $self->_color($m->[0]->__display_name__,'magenta')
                 );
             }
+
         } else {
-            print sprintf("  Matches config %s.\n",
-                $self->_color($map->config->file_path,'green')
-            );
+            if ($map->config->has_model_for($instrument_data)) {
+                print sprintf("  Matches config %s.\n",
+                    $self->_color($map->config->file_path,'green')
+                );
+            } else {
+                printf("  Missing expected model for matched config %s.\n",
+                    $self->_color($map->config->file_path, 'blue'));
+            }
         }
     }
 }

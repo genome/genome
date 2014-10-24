@@ -20,33 +20,24 @@ experts:
     dbsnp:
         joinx_version: 1.9
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+    'homo-polymer':
+        joinx_version: 1.9
+        max_length: 2
+        info_string: 'HOMP_FILTER'
 reporters:
     'full':
         filters:
             'allele-in-genotype':
-                sample_name: d30_normal
+                sample_name: normal
             'ft-keep':
                 keep_filter_values:
                     - PASS
                     - .
-                sample_name: d30_normal
+                sample_name: normal
             'contains-tag':
                 info_tag: ON_TARGET
-            'coverage-vaf':
-                coverages_and_vafs:
-                    1000: 5
-                    200: 10
-                sample_name: d30_normal
-            'genotype-vaf':
-                min_het_vaf: 40
-                max_het_vaf: 60
-                min_hom_vaf: 85
-                max_hom_vaf: 100
-                sample_name: d30_normal
-            'max-indel-size':
-                size: 4
-            gene:
-                gene_set: acmg
+            homopolymer:
+                info_tag: HOMP_FILTER
         interpreters:
             position: {}
             'variant-type': {}
@@ -56,51 +47,54 @@ reporters:
             caf: {}
             'min-coverage':
                 min_coverage: 10
-                sample_name: d30_normal
+                sample_name: normal
             'min-coverage-observed':
                 sample_names:
-                    - d30_normal
+                    - normal
             'max-vaf-observed':
                 tumor_sample_names: []
                 normal_sample_names:
-                    - d30_normal
+                    - normal
             'variant-callers':
-                sample_name: d30_normal
+                sample_name: normal
             'many-samples-vaf':
                 sample_names:
-                    - d30_normal
+                    - normal
         params:
-            file_name: 'cle_germline_full_report'
+            file_name: 'germline_full_report.tsv'
             sample_names:
-                - d30_normal
+                - normal
     'simple':
         filters:
             'allele-in-genotype':
-                sample_name: d30_normal
+                sample_name: normal
             'ft-keep':
                 keep_filter_values:
                     - PASS
                     - .
-                sample_name: d30_normal
+                sample_name: normal
             'contains-tag':
                 info_tag: ON_TARGET
-            'coverage-vaf':
-                coverages_and_vafs:
-                    1000: 5
-                    200: 10
-                sample_name: d30_normal
-            'genotype-vaf':
-                min_het_vaf: 40
-                max_het_vaf: 60
-                min_hom_vaf: 85
-                max_hom_vaf: 100
-                sample_name: d30_normal
-            'max-indel-size':
-                size: 4
-            gene:
-                gene_set: acmg
+            homopolymer:
+                info_tag: HOMP_FILTER
         interpreters:
             position: {}
             vep: {}
+            'variant-type': {}
         params:
-            file_name: 'cle_germline_simple_report'
+            file_name: 'germline_simple_report.tsv'
+    'vcf':
+        filters: {}
+        interpreters:
+            'vcf-entry': {}
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: normal
+            'contains-tag':
+                info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER  
+        params:
+            file_name: 'germline_report.vcf'

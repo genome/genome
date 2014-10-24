@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
+use Sub::Override;
 
 my $pkg = 'Genome::VariantReporting::Reporter::TumorOnlyReporter';
 use_ok($pkg);
@@ -23,8 +24,12 @@ my $data_dir = __FILE__.".d";
 my $reporter = $pkg->create(file_name => 'tumor-only');
 ok($reporter, "Reporter created successfully");
 
+my $override = Sub::Override->new('Genome::VariantReporting::Reporter::WithHeader::write_legend_file', sub {return 1});
+
 my $output_dir = Genome::Sys->create_temp_directory();
 $reporter->initialize($output_dir);
+
+$override->restore;
 
 my %interpretations = (
     'position' => {
@@ -80,6 +85,26 @@ my %interpretations = (
         },
         G => {
             caf => ".1",
+        },
+    },
+    'nhlbi' => {
+        T => {
+            All_MAF => "0.1",
+            EU_MAF => "0.1",
+            AA_MAF => "0.3",
+        },
+        G => {
+            All_MAF => "0.1",
+            EU_MAF => "0.1",
+            AA_MAF => "0.3",
+        },
+    },
+    '1kg' => {
+        T => {
+            '1kg-af' => 0.001,
+        },
+        G => {
+            '1kg-af' => 0.001,
         },
     },
     'vaf' => {

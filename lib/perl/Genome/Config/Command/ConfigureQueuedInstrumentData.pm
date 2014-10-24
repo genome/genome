@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use Lingua::EN::Inflect;
+use List::MoreUtils qw();
 
 class Genome::Config::Command::ConfigureQueuedInstrumentData {
     is => 'Command::V2',
@@ -91,12 +92,12 @@ sub _process_models {
     my $model_list = shift;
 
     for my $model_instance (@$model_list) {
-        my ($model, $created_new) = $self->_get_model_for_config_hash($model_type, $model_instance, $analysis_project);
+        my ($model, $created_new, $config_profile_item) = $self->_get_model_for_config_hash($model_type, $model_instance, $analysis_project);
 
         $self->status_message(sprintf('Model: %s %s for instrument data: %s.',
                 $model->id, ($created_new ? 'created' : 'found'), $instrument_data->id ));
 
-        $self->_assign_model_to_analysis_project($analysis_project, $model, $created_new);
+        $self->_assign_model_to_analysis_project($analysis_project, $model, $config_profile_item, $created_new);
         $self->_assign_instrument_data_to_model($model, $instrument_data, $created_new);
         $self->_update_model($model);
         $self->_request_build_if_necessary($model, $created_new);
@@ -118,7 +119,7 @@ sub _assign_instrument_data_to_model {
             $executed_all_ok &&= eval{ $cmd->execute; };
         }
     } else {
-        my $cmd = Genome::Model::Command::InstrumentData::Assign::Expression->create(
+        my $cmd = Genome::Model::Command::InstrumentData::Assign::ByExpression->create(
             model => $model,
             instrument_data => [$instrument_data]
         );
@@ -224,6 +225,7 @@ sub _get_model_for_config_hash {
     my $config = shift;
     my $analysis_project = shift;
 
+    my $config_profile_item = delete $config->{config_profile_item};
     my %read_config = %$config;
     for my $key (keys %read_config) {
         my $value = $read_config{$key};
@@ -234,13 +236,14 @@ sub _get_model_for_config_hash {
 
     my @extra_params = (auto_assign_inst_data => 1);
 
-    my @m = $class_name->get(@extra_params, %read_config, analysis_projects => [$analysis_project]);
+    my @found_models = $class_name->get(@extra_params, %read_config, analysis_projects => [$analysis_project]);
+    my @m = grep { $_->analysis_project_bridges->profile_item_id eq $config_profile_item->id } @found_models;
 
     if (scalar(@m) > 1) {
         die(sprintf("Sorry, but multiple identical models were found: %s", join(',', map { $_->id } @m)));
     };
     #return the model, plus a 'boolean' value indicating if we created a new model
-    my @model_info =  $m[0] ? ($m[0], 0) : ($class_name->create(@extra_params, %$config), 1);
+    my @model_info =  $m[0] ? ($m[0], 0, $config_profile_item) : ($class_name->create(@extra_params, %$config), 1, $config_profile_item);
     return wantarray ? @model_info : $model_info[0];
 }
 
@@ -292,12 +295,24 @@ sub _process_mapped_samples {
 
     return [ map {
         my $mapping = $_;
+        my %tags = map { $_->id => 1 } $mapping->tags;
         map { {
           (map { $_->label => $_->subject } $mapping->subject_bridges),
           (map { $_->key => $_->value } $mapping->inputs),
           %$_
-        } } @$model_hashes
+        } } grep { $self->_model_hash_matches_tags($_, \%tags) } @$model_hashes
     } @subject_mappings ];
+}
+
+sub _model_hash_matches_tags {
+    my ($self, $model_hash, $tag_hash) = @_;
+
+    my @model_hash_tags = $model_hash->{config_profile_item}->tags;
+    if(keys %$tag_hash) {
+        return List::MoreUtils::any { exists $tag_hash->{$_->id} } @model_hash_tags;
+    } else {
+        return !@model_hash_tags;
+    }
 }
 
 sub _get_items_to_process {
@@ -323,11 +338,12 @@ sub _assign_model_to_analysis_project {
     my $self = shift;
     my $analysis_project = shift;
     my $model = shift;
+    my $config_profile_item = shift;
     my $created_new = shift;
 
-    die('Must specify an analysis project and a model!') unless $analysis_project && $model;
+    die('Must specify an analysis project and a model!') unless $analysis_project && $model && $config_profile_item;
 
-    $analysis_project->add_model_bridge(model => $model) if $created_new;
+    $analysis_project->add_model_bridge(model => $model, config_profile_item => $config_profile_item) if $created_new;
     return $analysis_project->model_group->assign_models($model);
 }
 

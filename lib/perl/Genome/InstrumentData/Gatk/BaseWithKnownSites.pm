@@ -17,9 +17,15 @@ class Genome::InstrumentData::Gatk::BaseWithKnownSites {
 
 sub known_sites_vcfs {
     my $self = shift;
-    my @vcfs = @{$self->known_sites_indel_vcfs};
+
+    my @vcfs;
+    my $indel_vcfs = $self->known_sites_indel_vcfs;
+    push @vcfs, @$indel_vcfs if $indel_vcfs;
+
+    my $snv_vcfs = $self->known_sites_snv_vcfs;
+    push @vcfs, @$snv_vcfs if $snv_vcfs;
+
     return if not @vcfs;
-    push @vcfs, @{$self->known_sites_snv_vcfs};
     return \@vcfs;
 }
 
@@ -40,15 +46,23 @@ sub _known_sites_vcfs {
 
     if ( not $self->{_known_sites_vcfs} ) {
         my %known_sites_vcfs = $self->link_known_sites_vcfs;
-        return if not %known_sites_vcfs;
         $self->{_known_sites_vcfs} = \%known_sites_vcfs;
     }
 
-    return [ @{$self->{_known_sites_vcfs}->{$type}} ];
+    return if not @{$self->{_known_sites_vcfs}->{$type}};
+    return $self->{_known_sites_vcfs}->{$type};
 }
 
 sub link_known_sites_vcfs {
     my $self = shift;
+
+    if ( not $self->__meta__->property_meta_for_name('known_sites')->is_optional ) {
+        my @known_sites = $self->known_sites;
+        if ( not @known_sites ) {
+            $self->error_message('Known sites are required for '.$self->class);
+            return;
+        }
+    }
 
     my %known_sites_vcfs = ( indel => [], snv => [] );
     for my $known_site ( $self->known_sites ) { # all have indels for now...

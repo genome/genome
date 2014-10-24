@@ -39,6 +39,7 @@ eval {
         snp_file    => $snp_file,
         reference_genome    => $reference_genome,
         output_file => "$tmpdir/out_file",
+        bam_readcount_version => 0.6,
     );
 
     ok($cmd, 'created command') or abort;

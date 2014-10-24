@@ -321,3 +321,9 @@ add_config_id_to_anp_model_bridges [config_analysis_project_model_bridge] 2014-0
 
 config.subject_mapping_subject_index [config.subject_mapping] 2014-08-14T19:33:06Z Thomas B. Mooney <tmooney@genome.wustl.edu> # add index to speed up query in CQID
 @1408045247 2014-08-14T19:40:48Z Thomas B. Mooney <tmooney@genome.wustl.edu># Added index on query frequently used by CQID
+
+unconstrain_model_name_length [model_model] 2014-09-04T13:19:39Z Thomas B. Mooney <tmooney@genome.wustl.edu> # remove 255 char limit on names
+@1409840677 2014-09-04T14:24:38Z Thomas B. Mooney <tmooney@genome.wustl.edu># Allow longer names for models.
+
+config.tag_subject_mapping [config_tag config.subject_mapping] 2014-09-16T20:14:12Z Thomas B. Mooney <tmooney@genome.wustl.edu> # bridge between tags and subject mappings
+@1410987296 2014-09-17T20:54:57Z Thomas B. Mooney <tmooney@genome.wustl.edu># Add bridge between tags and subject mappings.

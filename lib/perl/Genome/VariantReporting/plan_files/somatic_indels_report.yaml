@@ -1,0 +1,104 @@
+experts:
+    'bam-readcount':
+        version: 0.5
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 1
+    vep:
+        ensembl_version: 75
+        custom_annotation_tags:
+            - ON_TARGET
+            - SEG_DUP
+            - AML_RMG
+        species: 'homo-sapiens'
+        plugins:
+            - Condel@PLUGIN_DIR@b@2
+        plugins_version: 1
+        joinx_version: 1.9
+    dbsnp:
+        joinx_version: 1.9
+        info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+    'homo-polymer':
+        joinx_version: 1.9
+        max_length: 2
+        info_string: 'HOMP_FILTER'
+reporters:
+    'full':
+        filters:
+            'allele-in-genotype':
+                sample_name: discovery_tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: discovery_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER
+        interpreters:
+            position: {}
+            'variant-type': {}
+            vep: {}
+            'info-tags': {}
+            rsid: {}
+            caf: {}
+            'min-coverage':
+                min_coverage: 10
+                sample_name: discovery_tumor
+            'min-coverage-observed':
+                sample_names:
+                    - discovery_tumor
+                    - normal
+            'max-vaf-observed':
+                tumor_sample_names:
+                    - discovery_tumor
+                normal_sample_names:
+                    - normal
+            'variant-callers':
+                sample_name: discovery_tumor
+            'many-samples-vaf':
+                sample_names:
+                    - discovery_tumor
+                    - normal
+        params:
+            file_name: 'somatic_report_full.tsv'
+            sample_names:
+                - discovery_tumor
+                - normal
+    'simple':
+        filters:
+            'allele-in-genotype':
+                sample_name: discovery_tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: discovery_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER
+        interpreters:
+            position: {}
+            vep: {}
+            'variant-type': {}
+        params:
+            file_name: 'somatic_report_simple.tsv'
+    'vcf':
+        filters: {}
+        interpreters:
+            'vcf-entry': {}
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: discovery_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER  
+        params:
+            file_name: 'somatic_report.vcf'

@@ -6,32 +6,27 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject {
-    is => ['Genome::Utility::ObjectWithTimestamps', 'Genome::Utility::ObjectWithCreatedBy', 'Genome::Searchable'],
-    id_generator => '-uuid',
-    data_source => 'Genome::DataSource::GMSchema',
+    is => [ "Genome::Utility::ObjectWithTimestamps", "Genome::Utility::ObjectWithCreatedBy", "Genome::Searchable" ],
     table_name => 'config.analysis_project',
     id_by => [
-        id => {
-            is => 'Text',
-            len => 64,
-        },
+        id => { is => 'Text', len => 64 },
     ],
     has => [
         _model_group_id => {
             is => 'Text',
+            len => 64,
             column_name => 'model_group_id',
         },
         model_group => {
             is => 'Genome::ModelGroup',
             id_by => '_model_group_id',
         },
-        name => {
-            is => 'Text',
-        },
+        name => { is => 'Text' },
         status => {
             is => 'Text',
+            len => 255,
             default_value => 'Pending',
-            valid_values => ['Pending', 'Approved', 'In Progress', 'Completed', 'Archived', 'Hold'],
+            valid_values => [ "Pending", "Approved", "In Progress", "Completed", "Archived", "Hold" ],
         },
         is_cle => {
             is => 'Boolean',
@@ -40,12 +35,14 @@ class Genome::Config::AnalysisProject {
         },
         run_as => {
             is => 'Text',
+            len => 64,
+            is_optional => 1,
             doc => 'The user account that will be used to run these models',
         },
         subject_mappings => {
-            is_many => 1,
             is => 'Genome::Config::AnalysisProject::SubjectMapping',
             reverse_as => 'analysis_project',
+            is_many => 1,
         },
         analysis_project_bridges => {
             is => 'Genome::Config::AnalysisProject::InstrumentDataBridge',
@@ -55,13 +52,13 @@ class Genome::Config::AnalysisProject {
         instrument_data => {
             is => 'Genome::InstrumentData',
             via => 'analysis_project_bridges',
-            to => 'instrument_data',
             is_many => 1,
         },
         samples => {
             is => 'Genome::Subject',
             via => 'instrument_data',
             to => 'sample',
+            is_many => 0,
         },
         model_bridges => {
             is => 'Genome::Config::AnalysisProject::ModelBridge',
@@ -76,15 +73,16 @@ class Genome::Config::AnalysisProject {
         },
         config_items => {
             is => 'Genome::Config::Profile::Item',
-            is_many => 1,
             reverse_as => 'analysis_project',
+            is_many => 1,
         },
     ],
     has_transient_optional => [
-        configuration_profile => {
-            is => 'Genome::Config::Profile'
-        }
+        configuration_profile => { is => 'Genome::Config::Profile' },
     ],
+    schema_name => 'GMSchema',
+    data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 __PACKAGE__->add_observer(aspect => 'is_cle', callback => \&_is_updated);

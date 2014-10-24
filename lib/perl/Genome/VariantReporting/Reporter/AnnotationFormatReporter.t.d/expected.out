@@ -1,3 +1,3 @@
 chromosome_name	start	stop	reference	variant	type	gene_name	transcript_name	transcript_species	transcript_source	transcript_version	strand	transcript_status	trv_type	c_position	amino_acid_change	ucsc_cons	domain	all_domains	deletion_substructures	transcript_error	default_gene_name	gene_name_source	ensembl_gene_id
-1	1	1	A	T	-	-	ENST00000452176	-	-	-	-	-	DOWNSTREAM	c.456		-	-	-	-	-	RP5-857K21.5	HGNC	ENSG00000223659	
-1	1	1	A	G	-	-	ENST00000452176	-	-	-	-	-	DOWNSTREAM	c.456		-	-	-	-	-	RP5-857K22.5	HGNC	ENSG00000223695	
+1	1	1	A	T	-	-	ENST00000452176	-	-	-	-	-	DOWNSTREAM	c.456		-	-	-	-	-	RP5-857K21.5	HGNC	ENSG00000223659
+1	1	1	A	G	-	-	ENST00000452176	-	-	-	-	-	DOWNSTREAM	c.456		-	-	-	-	-	RP5-857K22.5	HGNC	ENSG00000223695

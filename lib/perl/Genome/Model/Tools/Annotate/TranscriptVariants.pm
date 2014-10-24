@@ -170,7 +170,7 @@ class Genome::Model::Tools::Annotate::TranscriptVariants {
     has_param => [
         lsf_resource => {
             is => 'Text',
-            default => "-M 7000000 -R 'select[type==LINUX64 && mem>7000 && tmp>10240] rusage[mem=7000]'",
+            default => "-M 7000000 -R 'select[mem>7000 && tmp>10240] rusage[mem=7000]'",
         },
         lsf_queue => {
             is => 'Text',
@@ -445,7 +445,7 @@ sub _create_variant_reader {
         headers => \@columns,
         separator => "\t",
         is_regex => 1,
-        ignore_extra_columns => 1,
+        allow_extra_columns => 1,
     );
     unless ($variant_svr) {
         $self->error_message("error opening file " . $self->variant_file);

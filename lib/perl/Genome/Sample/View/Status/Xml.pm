@@ -21,7 +21,7 @@ class Genome::Sample::View::Status::Xml {
                 'tissue_label',
                 'tissue_desc',
                 'organ_name',
-                'patient_common_name',
+                'individual_common_name',
                 {
                     name => 'models',
                     perspective => 'status',

@@ -7,6 +7,7 @@ use YAML;
 use JSON;
 use Data::Dump qw(pp);
 use Params::Validate qw(validate validate_pos :types);
+use Exception::Class ('NonexistentAttributeException');
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 
@@ -30,8 +31,10 @@ sub get_attribute {
     if (exists $self->attributes->{$name}) {
         return $self->attributes->{$name};
     } else {
-        die "Attempted to get non-existing attribute ($name) from resource-provider, available attributes are ".
-          pp(keys %{$self->attributes});
+        NonexistentAttributeException->throw(
+          error => "Attempted to get non-existing attribute ($name) from resource-provider, available attributes are ".
+                    pp(keys %{$self->attributes})
+        );
     }
 }
 
@@ -60,6 +63,7 @@ sub create_from_file {
     my $class = shift;
     my $file = shift;
 
+    Genome::Sys->validate_file_for_reading($file);
     my ($hashref, undef, undef) = YAML::LoadFile($file);
 
     return $class->create(attributes => $hashref);

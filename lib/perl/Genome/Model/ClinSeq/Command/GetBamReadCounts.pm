@@ -1,10 +1,8 @@
 package Genome::Model::ClinSeq::Command::GetBamReadCounts;
 
-#Written by Malachi Griffith and Scott Smith
-
-#Load modules
 use strict;
 use warnings;
+
 use Genome;
 use Genome::Model::ClinSeq::Util qw(:all);
 use Genome::Model::ClinSeq::RnaSeqUtil qw(:all);
@@ -21,7 +19,7 @@ class Genome::Model::ClinSeq::Command::GetBamReadCounts {
 
         exome_som_var_build     => { is => 'Genome::Model::Build::SomaticVariation', is_optional => 1,
                                      doc => 'Exome capture sequence somatic variation build' },
-        
+
         rna_seq_normal_build    => { is => "Genome::Model::Build", is_optional => 1,
                                      doc => "RNA-seq model id for normal" },
 
@@ -41,7 +39,7 @@ class Genome::Model::ClinSeq::Command::GetBamReadCounts {
                                      doc => 'database of cancer annotation' },
 
     ],
-    doc => 'This script attempts to get read counts, frequencies and gene expression values for a series of genome positions',
+    doc => 'get read counts, frequencies and gene expression values for a series of genome positions',
 };
 
 
@@ -73,16 +71,16 @@ sub __errors__ {
 
   unless (($self->wgs_som_var_build || $self->exome_som_var_build || $self->rna_seq_normal_build || $self->rna_seq_tumor_build)) {
       push @errors, UR::Object::Tag->create(
-	                                          type => 'error',
-	                                          properties => [qw/wgs_som_var_build exome_som_var_build rna_seq_normal_build rna_seq_tumor_build/],
-	                                          desc => 'at least one of the four build types must be specified!'
-                                          );
+          type => 'error',
+          properties => [qw/wgs_som_var_build exome_som_var_build rna_seq_normal_build rna_seq_tumor_build/],
+          desc => 'at least one of the four build types must be specified!'
+      );
   }
   unless (-e $self->positions_file) {
       push @errors, UR::Object::Tag->create(
-	                                          type => 'error',
-	                                          properties => ['positions_file'],
-	                                          desc => "Positions file: " . $self->positions_file . " not found",
+          type => 'error',
+          properties => ['positions_file'],
+          desc => "Positions file: " . $self->positions_file . " not found",
       );
   }
   return @errors;
@@ -94,15 +92,52 @@ sub help_usage {
     return $usage;
 }
 
+sub _get_transcript_info_path {
+    my $self = shift;
+    my $reference_build = shift;
+    my $annotation_build = shift;
+
+    my $rb_id = $reference_build->id;
+    my $transcript_info_path = $annotation_build->transcript_info_file($rb_id);
+    unless ($transcript_info_path) {
+        my $derived_reference_build = $reference_build->derived_from;
+        unless (defined($derived_reference_build)) {
+            die $self->error_message("'There is no transcript " .
+                "info file for annotation_reference_transcripts build: ".
+                $annotation_build->__display_name__);
+        }
+        $transcript_info_path = $self->_get_transcript_info_path($derived_reference_build, $annotation_build);
+    }
+    return $transcript_info_path;
+}
+
+sub _get_gtf_path {
+    my $self = shift;
+    my $reference_build = shift;
+    my $annotation_build = shift;
+    my $reference_build_id = $reference_build->id;
+    my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build_id);
+    unless (defined($gtf_path)) {
+        my $derived_reference_build = $reference_build->derived_from;
+        unless (defined($derived_reference_build)) {
+            die $self->error_message("'There is no annotation GTF file " .
+              "defined for annotation_reference_transcripts build: ".
+              $annotation_build->__display_name__);
+        }
+        $gtf_path = $self->_get_gtf_path($derived_reference_build, $annotation_build);
+    }
+    return $gtf_path;
+}
+
 sub execute {
   my $self = shift;
-  
+
   eval "require Bio::DB::Sam";
   if ($@) {
       die "Failed to use the Bio::DB::Sam module.  Use /usr/bin/perl (5.10 or greater!) instead of /gsc/bin/perl.:\n$@";
   }
 
-  my $positions_file = $self->positions_file; 
+  my $positions_file = $self->positions_file;
   my $wgs_som_var_build = $self->wgs_som_var_build;
   my $exome_som_var_build = $self->exome_som_var_build;
   my $rna_seq_normal_build = $self->rna_seq_normal_build;
@@ -118,34 +153,33 @@ sub execute {
   my @builds = ($wgs_som_var_build, $exome_som_var_build, $rna_seq_normal_build, $rna_seq_tumor_build);
   foreach my $build (@builds){
     if ($build){
-      $reference_build = $build->reference_sequence_build;
-      my $model = $build->model;
-      if ($model->can("annotation_reference_build")){
-        $annotation_build = $model->annotation_reference_build;
+      unless($build->status eq 'Succeeded') {
+        die $self->error_message('Build %s was specified, but it is not succeeded!', $build->__display_name__);
       }
-      if ($model->can("annotation_build")){
-        $annotation_build = $model->annotation_build;
+
+      if($reference_build) {
+        unless($reference_build eq $build->reference_sequence_build) {
+          die $self->error_message("One or more of the reference builds used to generate BAMs did not match");
+        }
+      } else {
+        $reference_build = $build->reference_sequence_build;
+      }
+      if ($build->can("annotation_reference_build")){
+        $annotation_build = $build->annotation_reference_build;
+      }
+      if ($build->can("annotation_build")){
+        $annotation_build = $build->annotation_build;
       }
     }
   }
-  $self->error_message("Could not resolve annotation build from input builds") unless $annotation_build;
-  die $self->error_message unless $annotation_build;
-  $self->error_message("Could not resolve reference sequence build from input builds") unless $reference_build;
-  die $self->error_message unless $reference_build;
+  die $self->error_message("Could not resolve annotation build from input builds") unless $annotation_build;
+  die $self->error_message("Could not resolve reference sequence build from input builds") unless $reference_build;
 
-  my $reference_build_id = $reference_build->id;
-  my $annotation_build_name = $annotation_build->name;
-  my $annotation_data_dir = $annotation_build->data_directory;
-  my $transcript_info_path = $annotation_data_dir . "/annotation_data/rna_annotation/$reference_build_id-transcript_info.tsv";
-  my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build_id);
-  unless (defined($gtf_path)) {
-    die $self->error_message("'There is no annotation GTF file defined for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
-  }
-  unless (-e $transcript_info_path) {
-    die $self->error_message("'There is no transcript info file for annotation_reference_transcripts build: ". $annotation_build->__display_name__);
-  }
-
-  my $ensembl_map = $self->loadEnsemblMap('-gtf_path'=>$gtf_path, '-transcript_info_path'=>$transcript_info_path);
+  my $reference_fasta_path = $reference_build->full_consensus_path('fa');
+  my $gtf_path = $self->_get_gtf_path($reference_build, $annotation_build);
+  my $transcript_info_path = $self->_get_transcript_info_path($reference_build, $annotation_build);
+  my $ensembl_map = $self->loadEnsemblMap('-gtf_path'=>$gtf_path,
+      '-transcript_info_path'=>$transcript_info_path);
 
   #Get Entrez and Ensembl data for gene name mappings
   my $entrez_ensembl_data = $self->loadEntrezEnsemblData(-cancer_db => $cancer_annotation_db);
@@ -154,43 +188,41 @@ sub execute {
   my $result = $self->importPositions('-positions_file'=>$positions_file);
   my $snvs = $result->{'snvs'};
   my $snv_header = $result->{'header'};
-  #print Dumper $result;
 
   #Get BAM file paths from build IDs.  Perform sanity checks
   my $data;
   $data = $self->getFilePaths_Genome(
-    '-wgs_som_var_model_id'     => ($wgs_som_var_build      ? $wgs_som_var_build->model_id : undef), 
-    '-exome_som_var_model_id'   => ($exome_som_var_build    ? $exome_som_var_build->model_id : undef), 
-    '-rna_seq_normal_model_id'  => ($rna_seq_normal_build   ? $rna_seq_normal_build->model_id : undef), 
-    '-rna_seq_tumor_model_id'   => ($rna_seq_tumor_build    ? $rna_seq_tumor_build->model_id : undef)
+    '-wgs_som_var_build'     => $wgs_som_var_build,
+    '-exome_som_var_build'   => $exome_som_var_build,
+    '-rna_seq_normal_build'  => $rna_seq_normal_build,
+    '-rna_seq_tumor_build'   => $rna_seq_tumor_build,
    );
 
   #For each mutation get BAM read counts for a tumor/normal pair of BAM files
-  foreach my $bam (sort {$a <=> $b} keys %{$data}){
-    my $data_type = $data->{$bam}->{data_type};
-    my $sample_type = $data->{$bam}->{sample_type};
-    my $bam_path = $data->{$bam}->{bam_path};
-    my $ref_fasta = $data->{$bam}->{ref_fasta};
+  foreach my $bam (@$data){
+    my $data_type = $bam->{data_type};
+    my $sample_type = $bam->{sample_type};
+    my $bam_path = $bam->{bam_path};
     my $snv_count = keys %{$snvs};
 
     if ($verbose){
-	  $self->debug_message("\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$ref_fasta\n")
+      $self->debug_message("\n\nSNV count = $snv_count\n$data_type\n$sample_type\n$bam_path\n$reference_fasta_path\n")
     }
-    my $counts = $self->getBamReadCounts('-snvs'=>$snvs, '-data_type'=>$data_type, '-sample_type'=>$sample_type, '-bam_path'=>$bam_path, '-ref_fasta'=>$ref_fasta, '-verbose'=>$verbose, '-no_fasta_check'=>$no_fasta_check);
-    $data->{$bam}->{read_counts} = $counts;
+    my $counts = $self->getBamReadCounts('-snvs'=>$snvs, '-data_type'=>$data_type, '-sample_type'=>$sample_type, '-bam_path'=>$bam_path, '-ref_fasta'=>$reference_fasta_path, '-verbose'=>$verbose, '-no_fasta_check'=>$no_fasta_check);
+    $bam->{read_counts} = $counts;
   }
 
 
   #Get the FPKM and calculate a percentile value from the RNAseq build dir - do this for tumor and normal if available
-  foreach my $bam (sort {$a <=> $b} keys %{$data}){
-    my $data_type = $data->{$bam}->{data_type};
-    my $sample_type = $data->{$bam}->{sample_type};
+  foreach my $bam (@$data){
+    my $data_type = $bam->{data_type};
+    my $sample_type = $bam->{sample_type};
     unless ($data_type eq "RNAseq"){
       next();
     }
-    my $build_dir = $data->{$bam}->{build_dir};
+    my $build_dir = $bam->{build_dir};
     my $exp = $self->getExpressionValues('-snvs'=>$snvs, '-build_dir'=>$build_dir, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$verbose);
-    $data->{$bam}->{gene_expression} = $exp;
+    $bam->{gene_expression} = $exp;
   }
 
 
@@ -206,10 +238,10 @@ sub execute {
   #8.) RNAseq Tumor Gene FPKM, RNAseq Tumor Gene Percentile
 
   my %new_snv;
-  foreach my $bam (sort {$a <=> $b} keys %{$data}){
-    my $data_type = $data->{$bam}->{data_type};
-    my $sample_type = $data->{$bam}->{sample_type};
-    my $read_counts = $data->{$bam}->{read_counts};
+  foreach my $bam (@$data){
+    my $data_type = $bam->{data_type};
+    my $sample_type = $bam->{sample_type};
+    my $read_counts = $bam->{read_counts};
 
     my $new_header = "\t$data_type"."_"."$sample_type"."_ref_rc\t"."$data_type"."_"."$sample_type"."_var_rc\t"."$data_type"."_"."$sample_type"."_VAF";
     $snv_header .= $new_header;
@@ -225,8 +257,8 @@ sub execute {
       }
     }
 
-    if (defined($data->{$bam}->{gene_expression})){
-      my $gene_exp = $data->{$bam}->{gene_expression};
+    if (defined($bam->{gene_expression})){
+      my $gene_exp = $bam->{gene_expression};
       my $new_header = "\t$data_type"."_"."$sample_type"."_gene_FPKM\t"."$data_type"."_"."$sample_type"."_gene_FPKM_percentile";
       $snv_header .= $new_header;
       foreach my $snv_pos (keys %{$gene_exp}){
@@ -235,9 +267,9 @@ sub execute {
         my $rank = $gene_exp->{$snv_pos}->{rank};
         if ($new_snv{$snv_pos}){
           $new_snv{$snv_pos}{read_count_string} .= "\t$fpkm\t$percentile";
-	      }else{
-	        $new_snv{$snv_pos}{read_count_string} = "\t$fpkm\t$percentile";
-	      }
+        }else{
+          $new_snv{$snv_pos}{read_count_string} = "\t$fpkm\t$percentile";
+        }
       }
     }
   }
@@ -246,7 +278,7 @@ sub execute {
   print OUT "$snv_header\n";
   foreach my $snv_pos (sort {$snvs->{$a}->{order} <=> $snvs->{$b}->{order}} keys %{$snvs}){
     my $read_count_string = $new_snv{$snv_pos}{read_count_string};
-    print OUT "$snvs->{$snv_pos}->{line}"."$read_count_string\n";  
+    print OUT "$snvs->{$snv_pos}->{line}"."$read_count_string\n";
   }
   close (OUT);
 
@@ -255,9 +287,7 @@ sub execute {
   return 1;
 }
 
-#########################################################################################################################################
-#Import SNVs from the specified file                                                                                                    #
-#########################################################################################################################################
+#Import SNVs from the specified file
 sub importPositions{
   my $self = shift;
   my %args = @_;
@@ -283,7 +313,7 @@ sub importPositions{
       $header_line = $_;
       #Make sure all neccessary columns are defined
       unless (defined($columns{'coord'}) && defined($columns{'mapped_gene_name'}) && defined($columns{'ref_base'}) && defined($columns{'var_base'}) && defined($columns{'ensembl_gene_id'})){
-        die $self->error_message("\n\nRequired column missing from file: $infile (need: coord, mapped_gene_name, ref_base, var_base, ensembl_gene_id)");
+        die $self->error_message("Required column missing from file: $infile (need: coord, mapped_gene_name, ref_base, var_base, ensembl_gene_id)");
       }
       next();
     }
@@ -301,7 +331,7 @@ sub importPositions{
       $s{$coord}{start} = $2;
       $s{$coord}{end} = $3;
     }else{
-      die $self->error_message("\n\nCoord: $coord not understood\n\n");
+      die $self->error_message("Coord: $coord not understood");
     }
 
   }
@@ -311,157 +341,79 @@ sub importPositions{
   return(\%result);
 }
 
-
-#########################################################################################################################################
-#getFilePaths_Genome - Get file paths from model IDs                                                                                    #
-#########################################################################################################################################
 sub getFilePaths_Genome{
   my $self = shift;
   my %args = @_;
-  my $wgs_som_var_model_id = $args{'-wgs_som_var_model_id'};
-  my $exome_som_var_model_id = $args{'-exome_som_var_model_id'};
-  my $rna_seq_normal_model_id = $args{'-rna_seq_normal_model_id'};
-  my $rna_seq_tumor_model_id = $args{'-rna_seq_tumor_model_id'};
+  my $wgs_som_var_build = $args{'-wgs_som_var_build'};
+  my $exome_som_var_build = $args{'-exome_som_var_build'};
+  my $rna_seq_normal_build = $args{'-rna_seq_normal_build'};
+  my $rna_seq_tumor_build = $args{'-rna_seq_tumor_build'};
 
-  my %d;
+  my @data;
 
-  my $b = 0;
   #WGS tumor normal BAMs
-  if ($wgs_som_var_model_id){
-    my $wgs_som_var_model = Genome::Model->get($wgs_som_var_model_id);
-    if ($wgs_som_var_model){
-      my $wgs_som_var_build = $wgs_som_var_model->last_succeeded_build;
-      if ($wgs_som_var_build){
-
-        #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
-        my $reference_build = $wgs_som_var_build->reference_sequence_build;
-        my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-        my $reference_display_name = $reference_build->__display_name__;
-        my $build_dir = $wgs_som_var_build->data_directory ."/";
-        $b++;
-        $d{$b}{build_dir} = $build_dir;
-        $d{$b}{data_type} = "WGS";
-        $d{$b}{sample_type} = "Normal";
-        $d{$b}{bam_path} = $wgs_som_var_build->normal_bam;
-        $d{$b}{ref_fasta} = $reference_fasta_path;
-        $d{$b}{ref_name} = $reference_display_name;
-        $b++;
-        $d{$b}{build_dir} = $build_dir;
-        $d{$b}{data_type} = "WGS";
-        $d{$b}{sample_type} = "Tumor";
-        $d{$b}{bam_path} = $wgs_som_var_build->tumor_bam;
-        $d{$b}{ref_fasta} = $reference_fasta_path;
-        $d{$b}{ref_name} = $reference_display_name;
-      }else{
-        die $self->error_message("\n\nA WGS model ID was specified, but a successful build could not be found!\n\n");
-      }
-    }else{
-      die $self->error_message("\n\nA WGS model ID was specified, but it could not be found!\n\n");
-    }
+  if ($wgs_som_var_build){
+    push @data, $self->_getFilePaths_Genome_forSomVar($wgs_som_var_build, 'WGS');
   }
 
   #Exome tumor normal BAMs
-  if ($exome_som_var_model_id){
-    my $exome_som_var_model = Genome::Model->get($exome_som_var_model_id);
-    if ($exome_som_var_model){
-      my $exome_som_var_build = $exome_som_var_model->last_succeeded_build;
-      if ($exome_som_var_build){
-        #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
-        my $reference_build = $exome_som_var_build->reference_sequence_build;
-        my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-        my $reference_display_name = $reference_build->__display_name__;
-        my $build_dir = $exome_som_var_build->data_directory ."/";
-        $b++;
-        $d{$b}{build_dir} = $build_dir;
-        $d{$b}{data_type} = "Exome";
-        $d{$b}{sample_type} = "Normal";
-        $d{$b}{bam_path} = $exome_som_var_build->normal_bam;
-        $d{$b}{ref_fasta} = $reference_fasta_path;
-        $d{$b}{ref_name} = $reference_display_name;
-        $b++;
-        $d{$b}{build_dir} = $build_dir;
-        $d{$b}{data_type} = "Exome";
-        $d{$b}{sample_type} = "Tumor";
-        $d{$b}{bam_path} = $exome_som_var_build->tumor_bam;
-        $d{$b}{ref_fasta} = $reference_fasta_path;
-        $d{$b}{ref_name} = $reference_display_name;
-      }else{
-        die $self->error_message("\n\nA Exome model ID was specified, but a successful build could not be found!\n\n");
-      }
-    }else{
-      die $self->error_message("\n\nA Exome model ID was specified, but it could not be found!\n\n");
-    }
+  if ($exome_som_var_build){
+    push @data, $self->_getFilePaths_Genome_forSomVar($exome_som_var_build, 'Exome');
   }
 
   #RNAseq normal BAM
-  if ($rna_seq_normal_model_id){
-    my $rna_seq_model = Genome::Model->get($rna_seq_normal_model_id);
-      if ($rna_seq_model){
-      my $rna_seq_build = $rna_seq_model->last_succeeded_build;
-      if ($rna_seq_build){
-        my $reference_build = $rna_seq_model->reference_sequence_build;
-        my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-        my $reference_display_name = $reference_build->__display_name__;
-        my $build_dir = $rna_seq_build->data_directory ."/";
-        $b++;
-        $d{$b}{build_dir} = $build_dir;
-        $d{$b}{data_type} = "RNAseq";
-        $d{$b}{sample_type} = "Normal";
-        my $alignment_result = $rna_seq_build->alignment_result;
-        $d{$b}{bam_path} = $alignment_result->bam_file;
-        $d{$b}{ref_fasta} = $reference_fasta_path;
-        $d{$b}{ref_name} = $reference_display_name;
-      }else{
-        die $self->error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
-      }
-    }else{
-      die $self->error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
-    }
+  if ($rna_seq_normal_build){
+    push @data, $self->_getFilePaths_Genome_forRnaSeq($rna_seq_normal_build, 'Normal');
   }
 
   #RNAseq tumor BAM
-  if ($rna_seq_tumor_model_id){
-    my $rna_seq_model = Genome::Model->get($rna_seq_tumor_model_id);
-      if ($rna_seq_model){
-      my $rna_seq_build = $rna_seq_model->last_succeeded_build;
-      if ($rna_seq_build){
-        my $reference_build = $rna_seq_model->reference_sequence_build;
-        my $reference_fasta_path = $reference_build->full_consensus_path('fa');
-        my $reference_display_name = $reference_build->__display_name__;
-        my $build_dir = $rna_seq_build->data_directory ."/";
-        $b++;
-        $d{$b}{build_dir} = $build_dir;
-        $d{$b}{data_type} = "RNAseq";
-        $d{$b}{sample_type} = "Tumor";
-        my $alignment_result = $rna_seq_build->alignment_result;
-        $d{$b}{bam_path} = $alignment_result->bam_file;
-        $d{$b}{ref_fasta} = $reference_fasta_path;
-        $d{$b}{ref_name} = $reference_display_name;
-      }else{
-        die $self->error_message("\n\nAn RNA-seq model ID was specified, but a successful build could not be found!\n\n");
-      }
-    }else{
-      die $self->error_message("\n\nAn RNA-seq model ID was specified, but it could not be found!\n\n");
-    }
+  if ($rna_seq_tumor_build){
+    push @data, $self->_getFilePaths_Genome_forRnaSeq($rna_seq_tumor_build, 'Tumor');
   }
 
-  #Make sure the same reference build was used to create all BAM files!
-  my $test_ref_name = $d{1}{ref_name};
-  foreach my $b (keys %d){
-    my $ref_name = $d{$b}{ref_name};
-    unless ($ref_name eq $test_ref_name){
-      #print Dumper %d;
-      die $self->error_message("\n\nOne or more of the reference build names used to generate BAMs did not match\n\n");
-    }
-  }
-
-  return(\%d)
+  return(\@data)
 }
 
+sub _getFilePaths_Genome_forSomVar {
+    my $self = shift;
+    my $som_var_build = shift;
+    my $data_type = shift;
 
-#########################################################################################################################################
-#getBamReadCounts                                                                                                                       #
-#########################################################################################################################################
+    #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
+    my $build_dir = $som_var_build->data_directory ."/";
+
+    my %normal_data;
+    $normal_data{build_dir} = $build_dir;
+    $normal_data{data_type} = $data_type;
+    $normal_data{sample_type} = "Normal";
+    $normal_data{bam_path} = $som_var_build->normal_bam;
+
+    my %tumor_data;
+    $tumor_data{build_dir} = $build_dir;
+    $tumor_data{data_type} = $data_type;
+    $tumor_data{sample_type} = "Tumor";
+    $tumor_data{bam_path} = $som_var_build->tumor_bam;
+
+    return \%normal_data, \%tumor_data;
+}
+
+sub _getFilePaths_Genome_forRnaSeq {
+    my $self = shift;
+    my $rna_seq_build = shift;
+    my $sample_type = shift;
+
+    my $build_dir = $rna_seq_build->data_directory ."/";
+
+    my %data;
+    $data{build_dir} = $build_dir;
+    $data{data_type} = "RNAseq";
+    $data{sample_type} = $sample_type;
+    my $alignment_result = $rna_seq_build->alignment_result;
+    $data{bam_path} = $alignment_result->bam_file;
+
+    return \%data;
+}
+
 sub getBamReadCounts{
   my $self = shift;
   my %args = @_;
@@ -482,12 +434,10 @@ sub getBamReadCounts{
     my $fai = $callback_data->[2];
 
     if ( ($pos == ($data->{start} - 1) ) ) {
-      #print STDERR 'PILEUP:'. $data->{chr} ."\t". $tid ."\t". $pos ."\t". $data->{start} ."\t". $data->{stop}."\n";
       unless ($no_fasta_check){
         my $ref_base = $fai->fetch($data->{chr} .':'. $data->{start} .'-'. $data->{stop});
         unless ($data->{reference} eq $ref_base) {
-          #print RED, "\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path", RESET;
-          die $self->error_message("\n\nReference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path");
+          die $self->error_message("Reference base " . $ref_base .' does not match expected '. $data->{reference} .' at postion '. $pos .' for chr '. $data->{chr} . '(tid = '. $tid . ')' . "\n$bam_path");
         }
       }
       for my $pileup ( @{$pileups} ) {
@@ -507,14 +457,6 @@ sub getBamReadCounts{
   my $index = Bio::DB::Bam->index($bam_path);
   my $fai = Bio::DB::Sam::Fai->load($ref_fasta);
 
-  #my $name_arrayref = $header->target_name;
-  #my %chr_tid;
-  #for (my $i = 0; $i < scalar@{$name_arrayref}; $i++){
-  #  my $seq_id = $name_arrayref->[$i];
-  #  $chr_tid{$seq_id}=$i;
-  #}
-  #print Dumper %chr_tid;
-
   foreach my $snv_pos (sort keys %{$snvs}){
     my %data;
     my $data = \%data;
@@ -525,8 +467,6 @@ sub getBamReadCounts{
     $data->{variant} = $snvs->{$snv_pos}->{var_base};
     my $seq_id = $data->{chr} .':'. $data->{start} .'-'. $data->{stop};
     my ($tid,$start,$end) = $header->parse_region($seq_id);
-    #$tid = $chr_tid{$data->{chr}};
-    #print "\n\nseq_id: $seq_id\ttid: $tid\tstart: $start\tend: $end";
 
     my %read_counts;
     if ($verbose){print "\n\n$sample_type\t$data_type\t$snv_pos\ttid: $tid\tstart: $start\tend: $end\tref_base: $data->{reference}\tvar_base: $data->{variant}";}
@@ -559,10 +499,6 @@ sub getBamReadCounts{
   return(\%c);
 }
 
-
-#########################################################################################################################################
-#getExpressionValues                                                                                                                    #
-#########################################################################################################################################
 sub getExpressionValues{
   my $self = shift;
   my %args = @_;
@@ -579,7 +515,7 @@ sub getExpressionValues{
   #Import FPKM values from the gene-level expression file created by merging the isoforms of each gene
   my $isoforms_infile = "$build_dir"."expression/isoforms.fpkm_tracking";
   my $merged_fpkm = $self->mergeIsoformsFile('-infile'=>$isoforms_infile, '-entrez_ensembl_data'=>$entrez_ensembl_data, '-ensembl_map'=>$ensembl_map, '-verbose'=>$verbose);
-  
+
   #Calculate the ranks and percentiles for all genes
   my $rank = 0;
   my $gene_count = keys %{$merged_fpkm};
@@ -607,4 +543,4 @@ sub getExpressionValues{
   return(\%e);
 }
 
-
+1;

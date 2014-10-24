@@ -19,7 +19,7 @@ class Genome::InstrumentData::AlignmentResult::Imported {
 sub required_arch_os { 'x86_64' }
 
 sub required_rusage { 
-    "-R 'select[model!=Opteron250 && type==LINUX64 && mem>10000] span[hosts=1] rusage[mem=10000]' -M 10000000";
+    "-R 'select[mem>10000] span[hosts=1] rusage[mem=10000]' -M 10000000";
 }
 
 # No need to extract fastqs & run aligner

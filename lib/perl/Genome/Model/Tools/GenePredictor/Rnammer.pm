@@ -57,7 +57,7 @@ class Genome::Model::Tools::GenePredictor::Rnammer {
     ],
     has_param => [
         lsf_resource => {
-            default_value => "-M 12000000 -R 'select[type==LINUX64 && mem>12000] rusage[mem=12000]'",
+            default_value => "-M 12000000 -R 'select[mem>12000] rusage[mem=12000]'",
         }
     ],
 };

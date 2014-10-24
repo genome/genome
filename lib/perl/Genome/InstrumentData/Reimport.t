@@ -16,7 +16,7 @@ ok($attribute_label_for_reimported_from, 'attribute_label_for_reimported_from');
 ok($class->attribute_labels_to_ignore_when_reimporting, 'attribute_labels_to_ignore_when_reimporting');
 
 throws_ok { $class->attributes_for_reimport_from_instrument_data; } qr/^No instrument data given!/;
-my $instdata = Genome::InstrumentData::Imported->__define__(
+my $instdata = Genome::InstrumentData::Solexa->__define__(
     run_name => 'RUN',
     subset_name => 'SUBSET_NAME',
     library => Genome::Library->__define__(name => 'LIBRARY'),

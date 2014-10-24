@@ -71,9 +71,10 @@ class Genome::Disk::Allocation {
         },
         status => {
             is => 'Text',
-            valid_values => ['active', 'completed', 'purged', 'archived', 'invalid'],
-            doc => 'The current status of this allocation',
+            len => 40,
             default_value => 'active',
+            valid_values => [ "active", "purged", "archived", "invalid" ],
+            doc => 'The current status of this allocation',
         },
         absolute_path => {
             calculate_from => [ 'mount_path', 'group_subdirectory', 'allocation_path' ],
@@ -98,13 +99,13 @@ class Genome::Disk::Allocation {
             is => 'DateTime',
             len => 11,
             default_value => &_default_archive_after_time,
-            doc => 'After this time, this allocation is subject to being archived'
+            doc => 'After this time, this allocation is subject to being archived',
         },
         timeline_events => {
-            is_many => 1,
             is => 'Genome::Timeline::Event::Allocation',
             reverse_as => 'object',
-            where => ['-order_by' => ['created_at']],
+            where => [ -order_by => [ "created_at" ] ],
+            is_many => 1,
         },
     ],
     has_optional => [
@@ -145,9 +146,9 @@ class Genome::Disk::Allocation {
         },
         file_summaries => {
             is => 'Genome::Disk::Allocation::FileSummary',
+            reverse_as => 'allocation',
             is_many => 1,
-            reverse_as => 'allocation'
-        }
+        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -330,20 +331,39 @@ sub _delete {
 
     my $self = $class->get($id);
 
-    my $path = $self->absolute_path;
+    $self->_delete_timeline_events;
+    my @deletion_observers = $self->_get_deletion_observers;
+    $self->SUPER::delete;
+
+    $class->_create_observer(@deletion_observers);
+
+    return 1;
+}
+
+sub _delete_timeline_events {
+    my $self = shift;
 
     for my $event ($self->timeline_events) {
         $event->delete();
     }
+}
 
-    $self->SUPER::delete;
+sub _get_deletion_observers {
+    my $self = shift;
 
-    $class->_create_observer(
-        $class->_mark_for_deletion_closure($path),
-        $class->_remove_directory_closure($path),
-    );
+    my $class = $self->class;
+    my $path = $self->absolute_path;
 
-    return 1;
+    if ($self->is_archived) {
+        return sub {$class->_cleanup_archive_directory($path)};
+
+    } else {
+        return (
+            $class->_mark_for_deletion_closure($path),
+            $class->_remove_directory_closure($path),
+        );
+    }
+
 }
 
 sub _reallocate {
@@ -620,6 +640,12 @@ sub _reload_allocation {
         $allocation = Genome::Disk::Allocation->get($id);
     } elsif ($mode eq 'load') {
         $allocation = UR::Context->current->reload($class, id => $id);
+        if ($allocation) {
+            my $owner = $allocation->owner;
+            if($owner and UR::Context->current->object_exists_in_underlying_context($owner)) {
+                UR::Context->current->reload($owner);
+            }
+        }
     } else {
         die 'Unrecognized _retrieve_mode: ' . $class->_retrieve_mode;
     }
@@ -882,7 +908,7 @@ sub _retrieve_mode {
 
 sub _cleanup_archive_directory {
     my ($class, $directory) = @_;
-    my $cmd = "if [ -a $directory] ; then rm -rf $directory ; fi";
+    my $cmd = "if [ -d $directory ] ; then rm -rf $directory ; else exit 1; fi";
     unless ($ENV{UR_DBI_NO_COMMIT}) {
         my ($job_id, $status) = Genome::Sys->bsub_and_wait(
             queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
@@ -1015,19 +1041,7 @@ sub _default_archive_after_time {
 sub _get_trash_folder {
     my $self = shift;
 
-    my @dv = Genome::Disk::Volume->get(disk_group_names => $ENV{GENOME_DISK_GROUP_TRASH});
-    my %trash_map = map {
-       $self->_extract_aggr($_->physical_path) => File::Spec->join($_->mount_path, '.trash');
-    } @dv;
-
-    my $aggr = $self->_extract_aggr($self->volume->physical_path);
-
-    return $trash_map{$aggr};
-}
-
-sub _extract_aggr {
-    my $self = shift;
-    return (shift =~ m!/(aggr\d{2})/!)[0];
+    return File::Spec->join($self->volume->get_trash_folder(), $self->id);
 }
 
 1;

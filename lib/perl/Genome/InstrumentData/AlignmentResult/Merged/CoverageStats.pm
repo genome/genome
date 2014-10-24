@@ -533,10 +533,10 @@ sub coverage_stats_summary_hash_ref {
 sub _generate_total_bp_metrics {
     my $self = shift;
 
-    return ($self->_generate_genome_total_bp_metric, $self->_generate_target_total_bp_metric);
+    return ($self->_add_genome_total_bp_metric, $self->_add_target_total_bp_metric);
 }
 
-sub _generate_genome_total_bp_metric {
+sub _add_genome_total_bp_metric {
     my $self = shift;
 
     my $genome_total_bp = 0;
@@ -561,8 +561,19 @@ sub _generate_genome_total_bp_metric {
     return $self->add_metric(metric_name => 'genome_total_bp', metric_value => $genome_total_bp);
 }
 
-sub _generate_target_total_bp_metric {
+sub _add_target_total_bp_metric {
     my $self = shift;
+    my $metric = $self->metrics(metric_name => 'target_total_bp');
+    return $metric if $metric;
+    my $target_total_bp = $self->get_target_total_bp;
+    return $self->add_metric(metric_name => 'target_total_bp', metric_value => $target_total_bp);
+}
+
+sub get_target_total_bp {
+    my $self = shift;
+
+    my $metric = $self->metrics(metric_name => 'target_total_bp');
+    return $metric->metric_value if $metric;
 
     my $target_total_bp = 0;
     my ($bed_file) = glob($self->output_dir . '/*.bed');
@@ -578,12 +589,13 @@ sub _generate_target_total_bp_metric {
         my @f      = split (/\t/, $_);
         my $start  = $f[1];
         my $stop   = $f[2];
+        next if not defined $stop; # Meta info may be present
         my $length = ($stop - $start);
         $target_total_bp += $length;
     }
     $bed_fh->close;
 
-    return $self->add_metric(metric_name => 'target_total_bp', metric_value => $target_total_bp);
+    return $target_total_bp;
 }
 
 sub _cleanup_files {

@@ -54,18 +54,24 @@ my %minimum_only_params = (
     previous_result_id => $detector_result->id,
     output_directory => $output_base . '/filter-minimum-only',
     params => '--minimum-depth 3',
+    aligned_reads_sample => "TEST",
+    control_aligned_reads_sample => "TEST-normal",
 );
 
 my %maximum_only_params = (
     previous_result_id => $detector_result->id,
     output_directory => $output_base . '/filter-maximum-only',
     params => '--maximum-depth 3',
+    aligned_reads_sample => "TEST",
+    control_aligned_reads_sample => "TEST-normal",
 );
 
 my %combined_params = (
     previous_result_id => $detector_result->id,
     output_directory => $output_base . '/filter-combined',
     params => '--minimum-depth 3 --maximum-depth 3',
+    aligned_reads_sample => "TEST",
+    control_aligned_reads_sample => "TEST-normal",
 );
 
 my @expected_output_files = qw| 

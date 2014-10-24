@@ -441,13 +441,26 @@ sub _preprocess_params_for_get_or_create {
     return %params;
 }
 
+my $recalculate_lookup_hash_callback = sub {
+    my ($object, $aspect) = @_;
+    return unless $object;
+    return unless $object->software_result;
+    local $@;
+    $object->software_result->recalculate_lookup_hash();
+};
+for my $name (qw(Param Input)) {
+    my $classname = join('::', qw(Genome SoftwareResult), $name);
+    for my $aspect (qw(create value_id)) {
+        $classname->add_observer(aspect => $aspect, callback => $recalculate_lookup_hash_callback);
+    }
+}
+
 sub calculate_query {
     my $self = shift;
 
     # Pre-fetch things, since we're going loop through them.
     $self->inputs;
     $self->params;
-    $self->metrics;
 
     my @query;
 
@@ -481,6 +494,11 @@ sub calculate_lookup_hash {
 
     my @query = $self->calculate_query;
     return $self->calculate_lookup_hash_from_arguments(@query);
+}
+
+sub recalculate_lookup_hash {
+    my $self = shift;
+    return $self->lookup_hash($self->calculate_lookup_hash);
 }
 
 sub _process_params_for_lookup_hash {
@@ -572,21 +590,10 @@ sub _generate_lookup_hash {
     return Genome::Sys->md5sum_data($result);
 }
 
-sub set_test_name {
-    my ($self, $new_test_name) = @_;
-
-    $self->test_name($new_test_name);
-    return $self->lookup_hash($self->calculate_lookup_hash);
-}
-
 sub remove_test_name {
     my $self = shift;
-
-    my $param = Genome::SoftwareResult::Param->get(name => 'test_name',
-        software_result_id => $self->id);
-    $param->delete;
-
-    return $self->lookup_hash($self->calculate_lookup_hash);
+    my $param = $self->params(name => 'test_name');
+    return $param->delete;
 }
 
 sub resolve_module_version {
@@ -860,7 +867,7 @@ sub _resolve_lock_name {
 
 sub _validate_lookup_hash {
     my $lookup_hash = shift;
-    unless (length($lookup_hash) == 32 && $lookup_hash =~ /^[\d\w]+$/) {
+    unless ($lookup_hash =~ /^[[:xdigit:]]{32}$/) {
         croak "invalid lookup_hash: $lookup_hash";
     }
     return $lookup_hash;
@@ -1178,8 +1185,6 @@ sub expunge {
         $child->expunge($reason);
     }
 
-    $self->set_test_name($reason);
-
     if($self->disk_allocation) {
         eval {
             $self->disk_allocation->purge($reason);
@@ -1188,6 +1193,9 @@ sub expunge {
             $self->warning_message($@);
         }
     }
+
+    #disk allocation activity may have updated object so set this afterwards.
+    $self->test_name($reason);
 
     return 1;
 }

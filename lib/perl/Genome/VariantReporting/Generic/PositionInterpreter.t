@@ -60,6 +60,139 @@ subtest "two alt allele" => sub {
     is_deeply({$interpreter->interpret_entry($entry, ['C', 'G'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
+subtest "insertion" => sub {
+    my $interpreter = $pkg->create();
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected_return_values = (
+        AT => {
+            chromosome_name => '1',
+            start           => 10,
+            stop            => 11,
+            reference       => '-',
+            variant         => 'T'
+        },
+        ATT => {
+            chromosome_name => '1',
+            start           => 10,
+            stop            => 11,
+            reference       => '-',
+            variant         => 'TT'
+        },
+    );
+    my $entry = create_entry("A", "AT", "ATT");
+    is_deeply({$interpreter->interpret_entry($entry, ['AT', 'ATT'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest "ambiguous insertion" => sub {
+    my $interpreter = $pkg->create();
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected_return_values = (
+        AGGGGGC => {
+            chromosome_name => '1',
+            start           => 10,
+            stop            => 11,
+            reference       => '-',
+            variant         => 'GGGG',
+        },
+    );
+    my $entry = create_entry("AGC","AGGGGGC");
+    is_deeply({$interpreter->interpret_entry($entry, ['AGGGGGC',])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest "offset insertion" => sub {
+    my $interpreter = $pkg->create();
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    # ACA--C
+    # ACAGTC
+
+    my %expected_return_values = (
+        ACAGTC => {
+            chromosome_name => '1',
+            start           => 12,
+            stop            => 13,
+            reference       => '-',
+            variant         => 'GT',
+        },
+    );
+    my $entry = create_entry("ACAC","ACAGTC");
+    is_deeply({$interpreter->interpret_entry($entry, ['ACAGTC',])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest "deletion" => sub {
+    my $interpreter = $pkg->create();
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    # two examples here. Report coordinates are for the deleted bases.
+    # VCF typically reports the base before the indel, but this isn't required
+    # as long as alleles are non-empty.
+    #       111
+    #       012
+    # Ref:  ATT
+    # Alt1: A-T
+    # Alt2: A--
+    my %expected_return_values = (
+        AT => {
+            chromosome_name => '1',
+            start           => 11,
+            stop            => 11,
+            reference       => 'T',
+            variant         => '-'
+        },
+        A => {
+            chromosome_name => '1',
+            start           => 11,
+            stop            => 12,
+            reference       => 'TT',
+            variant         => '-'
+        },
+    );
+    my $entry = create_entry("ATT", "AT", "A");
+    is_deeply({$interpreter->interpret_entry($entry, ['AT', 'A'])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest "ambiguous deletion" => sub {
+    my $interpreter = $pkg->create();
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    # GTTTC
+    # G--TC
+
+    my %expected_return_values = (
+        GTC => {
+            chromosome_name => '1',
+            start           => 11,
+            stop            => 12,
+            reference       => 'TT',
+            variant         => '-'
+        },
+    );
+    my $entry = create_entry("GTTTC", "GTC",);
+    is_deeply({$interpreter->interpret_entry($entry, ['GTC',])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
+subtest "offset deletion" => sub {
+    my $interpreter = $pkg->create();
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    # GTGTAC
+    # GT---C
+
+    my %expected_return_values = (
+        GTC => {
+            chromosome_name => '1',
+            start           => 12,
+            stop            => 14,
+            reference       => 'GTA',
+            variant         => '-'
+        },
+    );
+    my $entry = create_entry("GTGTAC", "GTC",);
+    is_deeply({$interpreter->interpret_entry($entry, ['GTC',])}, \%expected_return_values, "Entry gets interpreted correctly");
+};
+
 sub create_vcf_header {
     my $header_txt = <<EOS;
 ##fileformat=VCFv4.1
@@ -79,12 +212,17 @@ EOS
 }
 
 sub create_entry {
+    my ($ref, @alts) = @_;
+    unless (defined $ref) {
+        $ref = "A";
+        @alts = qw(C G);
+    }
     my @fields = (
         '1',            # CHROM
         10,             # POS
         '.',            # ID
-        'A',            # REF
-        'C,G',            # ALT
+        $ref,           # REF
+        join(",", @alts), # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
         'A=B;C=8,9;E',  # INFO

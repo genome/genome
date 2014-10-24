@@ -252,7 +252,7 @@ sub execute {
     #    variant_file => $snv_anno_file,
     #    output_file => $snv_file,
     #    filtered_file => $self->output_dir."/".$self->somatic_variation_build->id.".not_uhc.anno",
-    #    reference => $self->somatic_variation_build->reference_sequence_build->fasta_file,
+    #    reference => $self->somatic_variation_build->reference_sequence_build->full_consensus_path('fa'),
     #);
 
     #my $uhc_result = $uhc_cmd->execute;

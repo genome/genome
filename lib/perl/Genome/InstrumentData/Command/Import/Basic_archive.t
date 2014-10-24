@@ -35,7 +35,6 @@ my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     source_files => [$source_file],
     import_source_name => 'broad',
     instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],
-    original_format => 'fastq',
 );
 ok($cmd, "create import command");
 ok($cmd->execute, "excute import command");

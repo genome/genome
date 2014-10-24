@@ -22,6 +22,10 @@ class Genome::Model::SomaticVariation::Command::CreateReport {
             doc => 'Somactic Variation build',
             is_output => 1,
         },
+        bam_readcount_version => {
+            is => 'String',
+            doc => 'version of bam-readcount to use',
+        },
     ],
     has_optional_input => [
         restrict_to_target_regions =>{
@@ -524,6 +528,7 @@ sub add_read_counts {
             genome_build     => $self->ref_seq_fasta,
             header_prefixes  => $header,
             indel_size_limit => 4,
+            bam_readcount_version => $self->bam_readcount_version,
         );
         unless ($rc_cmd->execute) {
             confess $self->error_message("Failed to obtain read counts for file $variants_file.");
@@ -843,27 +848,44 @@ sub _create_review_files {
 }
 
 sub _create_review_bed {
-    my $self = shift;
+    my $self       = shift;
+    my $report     = $self->report;
+    my $review_bed = $self->review_bed;
 
     my @tiers = split(",", $self->tiers_to_review);
-
     my $tempfile_path = Genome::Sys->create_temp_file_path();
 
-    for my $tier (@tiers) {
-        Genome::Sys->shellcmd(
-            cmd => sprintf('grep -w tier%s %s >> %s',
-                $tier, $self->report, $tempfile_path),
-        );
+    if (-s $report) {
+        my $report_content = Genome::Sys->read_file($report);
+        for my $tier (@tiers) {
+            if ($report_content =~ /\stier$tier\s/) {
+                Genome::Sys->shellcmd(
+                    cmd => sprintf('grep -w tier%s %s >> %s', $tier, $report, $tempfile_path),
+                );
+            }
+            else {
+                $self->warning_message("Report: $report does not have line for tier$tier")
+            }
+        }
+
+        if (-s $tempfile_path) {
+            my $tier_restricted_file = sprintf('%s.tier%s', $report, join('', @tiers));
+            Genome::Sys->shellcmd(
+                cmd => sprintf('joinx sort -i %s -o %s', $tempfile_path, $tier_restricted_file),
+            );
+
+            convert_from_one_based_to_bed_file($tier_restricted_file, $review_bed);
+        }
+        else {
+            my $tiers = join ',', @tiers;
+            $self->warning_message("Report: $report does not contain any line for provided tiers: $tiers");
+            Genome::Sys->shellcmd( cmd => "touch $review_bed" );
+        }
     }
-
-    my $tier_restricted_file = sprintf('%s.tier%s',
-        $self->report, join('', @tiers));
-    Genome::Sys->shellcmd(
-        cmd => sprintf('joinx sort -i %s -o %s',
-            $tempfile_path, $tier_restricted_file),
-    );
-
-    convert_from_one_based_to_bed_file($tier_restricted_file, $self->review_bed);
+    else {
+        $self->warning_message("Report: $report is zero size");
+        Genome::Sys->shellcmd( cmd => "touch $review_bed" );
+    }
 }
 
 sub _create_review_xml {

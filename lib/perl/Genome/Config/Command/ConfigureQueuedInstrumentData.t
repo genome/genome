@@ -8,9 +8,11 @@ use Test::More;
 use above "Genome";
 use Carp::Always;
 
+use Genome::Test::Factory::Config::Profile::Item;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::Imported;
 use Genome::Test::Factory::AnalysisProject;
+use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Individual;
 use Genome::Test::Factory::Library;
 use Genome::Test::Factory::Sample;
@@ -30,10 +32,15 @@ build_and_run_cmd($rna_instrument_data);
 assert_succeeded($rna_instrument_data, $model_types);
 is($rna_instrument_data->models->auto_assign_inst_data, 1, 'it should default to setting auto assign inst data to 1');
 
-#existing model
-($rna_instrument_data, $model_types) = generate_rna_seq_instrument_data();
+#find the same model again
+build_and_run_cmd($rna_instrument_data);
+assert_succeeded($rna_instrument_data, $model_types);
+is(scalar(@{[$rna_instrument_data->models]}), 1, 'it should use the same model again instead of creating a new one');
+
+#find existing model should be scoped to AnP
 my $config_hash = _rna_seq_config_hash();
 delete $config_hash->{instrument_data_properties};
+delete $config_hash->{config_profile_item};
 $config_hash->{subject} = $rna_instrument_data->sample;
 $config_hash->{target_region_set_name} = $rna_instrument_data->target_region_set_name;
 $config_hash->{auto_assign_inst_data} = 1;
@@ -107,6 +114,64 @@ ok(scalar(@models) == 2, 'it creates one model per SubjectMapping');
 build_and_run_cmd(@$data1[0], @$data2[0]);
 assert_failed(@$data1[0], 'Found no mapping information');
 assert_failed(@$data2[0], 'Found no mapping information');
+@models = $analysis_project->models;
+is(scalar(@models), 0, 'no models created during failure running CQID');
+
+#test with tags
+$subject_mapping = Genome::Config::AnalysisProject::SubjectMapping->create(
+    analysis_project => $analysis_project
+);
+my $tag = Genome::Config::Tag->create(name => 'test tag for somval 1');
+$subject_mapping->add_tag($tag);
+
+my $profile_item = $analysis_project->get_configuration_profile->get_config->{'Genome::Model::SomaticValidation'}{config_profile_item};
+$profile_item->add_tag($tag);
+
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'normal_sample',
+    subject_mapping => $subject_mapping,
+    subject => @$data1[1],
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'subject',
+    subject_mapping => $subject_mapping,
+    subject => @$data2[1]->source,
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'tumor_sample',
+    subject_mapping => $subject_mapping,
+    subject => @$data2[1],
+);
+
+$subject_mapping2 = Genome::Config::AnalysisProject::SubjectMapping->create(
+    analysis_project => $analysis_project
+);
+my $tag2 = Genome::Config::Tag->create(name => 'test tag for somval 2');
+$subject_mapping2->add_tag($tag2);
+
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'normal_sample',
+    subject_mapping => $subject_mapping2,
+    subject => @$data2[1],
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'subject',
+    subject_mapping => $subject_mapping2,
+    subject => @$data1[1]->source,
+);
+Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+    label => 'tumor_sample',
+    subject_mapping => $subject_mapping2,
+    subject => @$data1[1],
+);
+
+build_and_run_cmd(@$data1[0], @$data2[0]);
+assert_succeeded(@$data1[0], $model_types_somval);
+assert_succeeded(@$data2[0], $model_types_somval);
+@models = $analysis_project->models;
+ok(@models, 'it registers created models with the analysis_project');
+ok(scalar(@models) == 1, 'it creates one model per SubjectMapping that matches the tag');
+
 
 #inst data with no ap
 my $inst_data_without_a_project = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
@@ -161,6 +226,8 @@ sub assert_succeeded {
     ok($bridge->status eq 'processed', 'it should mark the inst data as succeeded');
     is($bridge->fail_count, 0, 'it should remove the fail count');
     for my $model_instance ($inst_data->models) {
+        my @config_items = $model_instance->config_profile_items;
+        ok(scalar(@config_items), 'it sets a config profile item on the model');
         ok($model_instance->build_requested, 'it sets build requested on constructed models');
         is($model_instance->user_name, 'apipe-builder');
     }
@@ -291,7 +358,7 @@ sub _generate_lane_qc_instrument_data {
     my $genotype_sample = Genome::Test::Factory::Sample->setup_object();
 
     my $genotype_library => Genome::Test::Factory::Library->setup_object(
-        sample_id => $genotype_sample, 
+        sample_id => $genotype_sample,
     );
 
     my $genotype_data = Genome::Test::Factory::InstrumentData::Imported->setup_object(
@@ -302,7 +369,7 @@ sub _generate_lane_qc_instrument_data {
     my $sans_sample = Genome::Test::Factory::Sample->setup_object();
 
     my $sans_library = Genome::Test::Factory::Library->setup_object(
-        sample_id => $sans_sample, 
+        sample_id => $sans_sample,
     );
 
     my $sans_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
@@ -318,7 +385,7 @@ sub _generate_lane_qc_instrument_data {
     );
 
     my $plus_library = Genome::Test::Factory::Library->setup_object(
-        sample_id => $plus_sample, 
+        sample_id => $plus_sample,
     );
 
     my $plus_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
@@ -335,9 +402,11 @@ sub _generate_lane_qc_instrument_data {
     );
 
     my $tmp_dir = Genome::Sys->create_temp_directory;
-    my $gmb = Genome::Model::Build->create(model_id => $genotype_microarray_model->id, data_directory => $tmp_dir);
-    $gmb->success();
-
+    my $gmb = Genome::Test::Factory::Build->setup_object(
+        model_id => $genotype_microarray_model->id,
+        data_directory => $tmp_dir,
+        status => 'Succeeded',
+    );
 
     for my $inst_data ($sans_data, $plus_data) {
         my $ap = Genome::Test::Factory::AnalysisProject->setup_object(
@@ -352,7 +421,7 @@ sub _generate_lane_qc_instrument_data {
         );
     }
 
-    return ($sans_data, $plus_data, ['Genome::Model::ReferenceAlignment']); 
+    return ($sans_data, $plus_data, ['Genome::Model::ReferenceAlignment']);
 }
 
 

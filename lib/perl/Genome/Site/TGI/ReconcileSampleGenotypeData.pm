@@ -12,7 +12,7 @@ class Genome::Site::TGI::ReconcileSampleGenotypeData {
 sub execute {
     my $self = shift;
 
-    my @organism_samples = Genome::Site::TGI::Sample->get('default_genotype_seq_id >' => '0');
+    my @organism_samples = Genome::Site::TGI::Synchronize::Classes::OrganismSample->get('default_genotype_data_id >' => '0');
     print "Found " . @organism_samples . " samples.\n";
 
     my @organism_sample_ids = map { $_->id } @organism_samples;
@@ -28,14 +28,14 @@ sub execute {
     for my $organism_sample (@organism_samples) {
         my ($attribute) = grep { $_->subject_id eq $organism_sample->id } @attributes;
 
-        if (!$attribute || $organism_sample->default_genotype_seq_id ne $attribute->attribute_value) {
+        if (!$attribute || $organism_sample->default_genotype_data_id ne $attribute->attribute_value) {
             push @changed_organism_samples, $organism_sample;
         }
     }
     print "Found " . @changed_organism_samples . " changed organism samples.\n";
 
     # This is pre-fetching the instrument data so it will be faster during the loop.
-    my @default_genotype_seq_id = map { $_->default_genotype_seq_id } @changed_organism_samples;
+    my @default_genotype_seq_id = map { $_->default_genotype_data_id } @changed_organism_samples;
     my @imported_instrument_data = Genome::InstrumentData::Imported->get(\@default_genotype_seq_id);
     print "Found " . @imported_instrument_data. " instrument data.\n";
 
@@ -52,9 +52,9 @@ sub execute {
         #   if the individual has changed in lims, Genome::Sample wont let you change
         #   the default genotype data without first changing the individual of one or the other
         my $genome_source = $genome_sample->source();
-        my $genotype_instdata = Genome::InstrumentData->get($organism_sample->default_genotype_seq_id);
+        my $genotype_instdata = Genome::InstrumentData->get($organism_sample->default_genotype_data_id);
         if (!$genotype_instdata) {
-            print "SKIPPING- no genotype inst data for id " . $organism_sample->default_genotype_seq_id . " (sample " . $genome_sample->id . ")\n"; 
+            print "SKIPPING- no genotype inst data for id " . $organism_sample->default_genotype_data_id . " (sample " . $genome_sample->id . ")\n";
             next SAMPLE;
         }
 
@@ -67,10 +67,10 @@ sub execute {
         }
 
         eval{
-            $genome_sample->set_default_genotype_data($organism_sample->default_genotype_seq_id, 'sure overwrite stuff');
+            $genome_sample->set_default_genotype_data($organism_sample->default_genotype_data_id, 'sure overwrite stuff');
         };
         if($@){
-            print "Failed to set default genotype data: " . $organism_sample->default_genotype_seq_id .
+            print "Failed to set default genotype data: " . $organism_sample->default_genotype_data_id .
                 " for Genome::Sample: " . $genome_sample->id . " (err: $@)\n";
             next;
         }

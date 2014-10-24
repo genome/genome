@@ -18,7 +18,7 @@ class Genome::Command::WorkflowMixin {
             is => 'Int',
             is_optional => 1,
             default_value => 5,
-            doc => 'Parallel by stages with this many steps will be summarized.  Negative values disable summarizing.'
+            doc => 'Parallel by stages with this many steps will be summarized. Use zero to summarize every step. Use a negative value to never summarize.'
         },
         connectors => {
             is => 'Boolean',
@@ -237,8 +237,8 @@ sub summarize {
 sub _should_summarize {
     my ($self, $child_bunch) = @_;
 
-    if ((scalar(@$child_bunch) >= $self->summary_threshold) or
-        ($self->summary_threshold == -1)) {
+    if ((scalar(@$child_bunch) >= $self->summary_threshold) and
+        ($self->summary_threshold >= 0)) {
         return 1;
     } else {
         return 0;
@@ -503,8 +503,13 @@ sub _recursively_find_unfinished_steps {
 sub _print_error_log_preview {
     my ($self, $handle, $log_path) = @_;
 
-    my @lines = `grep 'ERROR' $log_path`;
-    my @error_lines = grep {$_ =~ m/ERROR/} @lines;
+    # If the log is less than 5MB, try to find the error message
+    my @error_lines;
+    if ( (-s $log_path) < (5 * 1024 * 1024) ) {
+        @error_lines = `grep --max-count=1 'ERROR' $log_path`;
+    } else {
+        print $handle " Max file size exceeded, skipped error preview.\n";
+    }
 
     my $preview;
     if (@error_lines) {

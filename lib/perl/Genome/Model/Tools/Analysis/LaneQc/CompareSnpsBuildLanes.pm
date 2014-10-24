@@ -122,7 +122,6 @@ sub execute {
     my @instrument_data = $build->instrument_data;
 
 # find reference sequences
-#	my $reference_file="/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa"; 
     my $reference_file=$model->reference_sequence_build->full_consensus_path('fa') ;
     print "reference: $reference_file User: $user\n";
     for my $data (@instrument_data) {
@@ -145,7 +144,7 @@ sub execute {
 samtools pileup -vc -f $reference_file $alignment_file | perl -pe '\@F = split /\\t/; \\\$_=q{} unless(\\\$F[7] > 2);' > $dir/$lane_name.var
 gmt analysis lane-qc compare-snps --genotype-file $genotype_file --variant-file $dir/$lane_name.var > $dir/$lane_name.var.compare_snps
 COMMANDS
-                print `bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -R 'select[type==LINUX64]' "$command"`;
+                print `bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} "$command"`;
             }else{
                 $self->error_message("No alignment object for $lane_name");
                 return;

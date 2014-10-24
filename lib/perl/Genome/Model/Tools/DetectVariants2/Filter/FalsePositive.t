@@ -74,6 +74,8 @@ sub run_test {
         previous_result_id => $detector_result->id,
         output_directory   => $output_dir,
         params => $params,
+        aligned_reads_sample => "TEST",
+        control_aligned_reads_sample => "TEST-normal",
     );
 
     my $filter_command = Genome::Model::Tools::DetectVariants2::Filter::FalsePositive->create(%params);

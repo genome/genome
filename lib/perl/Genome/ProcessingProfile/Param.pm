@@ -14,11 +14,7 @@ class Genome::ProcessingProfile::Param {
             len => 32,
             constraint_name => 'PPP_PP_FK',
         },
-        name => {
-            is => 'Text',
-            len => 255,
-            column_name => 'param_name',
-        },
+        name => { is => 'Text', len => 255, column_name => 'param_name' },
         value_id => {
             is => 'Text',
             len => 1000,
@@ -26,10 +22,7 @@ class Genome::ProcessingProfile::Param {
         },
     ],
     has => [
-        value_class_name => {
-            is => 'Text',
-            len => 255,
-        },
+        value_class_name => { is => 'Text', len => 255 },
         value_obj => {
             is => 'UR::Object',
             id_by => 'value_id',

@@ -33,7 +33,7 @@ sub _update_owner_test_name {
 
     my $owner = $allocation->owner;
 
-    # Make sure the owner is a SoftwareResult before we set_test_name.
+    # Make sure the owner is a SoftwareResult before we set test_name.
     return unless defined $owner;
     return unless $owner->isa('Genome::SoftwareResult');
     return if defined $owner->test_name;
@@ -45,7 +45,7 @@ sub _update_owner_test_name {
         $allocation->id, $timestamp,
         (defined $reason ? "with reason '$reason'" : 'no reason specified');
 
-    $owner->set_test_name($test_name);
+    $owner->test_name($test_name);
 
     return;
 }
@@ -59,18 +59,62 @@ sub purge {
 
     return 1 if $allocation_object->status eq 'purged';
 
-    $allocation_object->_create_file_summaries();
-    my $trash_folder = $allocation_object->_get_trash_folder();
+    if ($allocation_object->is_archived) {
+        return $self->_purge_archived($allocation_object);
 
-    unless($ENV{UR_DBI_NO_COMMIT}) {
-        my $destination_directory = Genome::Sys->create_directory(
-            File::Spec->join($trash_folder, $allocation_object->id));
-        $self->status_message('Moving allocation path \''. $allocation_object->absolute_path .'\' to temporary path \''. $destination_directory .'\'');
-        unless (dirmove($allocation_object->absolute_path, $destination_directory) ) {
-            $self->error_message('Failed to move allocation path \''. $allocation_object->absolute_path .'\' to destination path \''. $destination_directory .'\': '. $!);
+    } else {
+        return $self->_purge_unarchived($allocation_object);
+    }
+}
+
+
+sub _purge_archived {
+    my $self = shift;
+    my $allocation_object = shift;
+
+    unless ($ENV{UR_DBI_NO_COMMIT}) {
+        $allocation_object->_cleanup_archive_directory(
+            $allocation_object->absolute_path);
+    }
+
+    $self->_finalize_purge($allocation_object);
+
+    return 1;
+}
+
+
+sub _purge_unarchived {
+    my $self = shift;
+    my $allocation_object = shift;
+
+    $allocation_object->_create_file_summaries();
+
+    unless ($ENV{UR_DBI_NO_COMMIT}) {
+        my $destination_directory = $allocation_object->_get_trash_folder();
+        Genome::Sys->create_directory($destination_directory);
+
+        $self->status_message('Moving allocation path \''.
+            $allocation_object->absolute_path .'\' to temporary path \''.
+            $destination_directory .'\'');
+
+        unless (dirmove($allocation_object->absolute_path,
+                    $destination_directory)) {
+            $self->error_message('Failed to move allocation path \''.
+                $allocation_object->absolute_path .'\' to destination path \''.
+                $destination_directory .'\': '. $!);
             return;
         };
     }
+
+    $self->_finalize_purge($allocation_object);
+
+    return 1;
+}
+
+
+sub _finalize_purge {
+    my $self = shift;
+    my $allocation_object = shift;
 
     my $event = Genome::Timeline::Event::Allocation->purged(
         $self->reason,
@@ -79,11 +123,19 @@ sub purge {
 
     $self->_update_owner_test_name($allocation_object, $event);
 
+    $self->_update_allocation_status($allocation_object);
+
+    return 1;
+}
+
+
+sub _update_allocation_status {
+    my $self = shift;
+    my $allocation_object = shift;
+
     $allocation_object->status('purged');
     $allocation_object->kilobytes_requested(0);
     $allocation_object->kilobytes_used(0);
-
-    return 1;
 }
 
 

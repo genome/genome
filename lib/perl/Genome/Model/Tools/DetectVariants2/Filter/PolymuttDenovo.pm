@@ -13,15 +13,21 @@ use File::Path;
 
 class Genome::Model::Tools::DetectVariants2::Filter::PolymuttDenovo {
     is => 'Genome::Model::Tools::DetectVariants2::Filter',
+    has => [
+        bam_readcount_version => {
+            is => 'Version',
+            doc => 'Version of bam readcount to utilize',
+        },
+    ],
     has_optional_input => [
-    min_read_qual=> {
-        doc=>'the lowest quality reads to use in the calculation. default q20',
-        default=>"20",
-    },
-    min_unaffected_pvalue=> {
-        doc=>"the minimum binomial test result from unaffected members to pass through the filter",
-        default=>"1.0e-4",
-    },
+        min_read_qual=> {
+            doc=>'the lowest quality reads to use in the calculation. default q20',
+            default=>"20",
+        },
+        min_unaffected_pvalue=> {
+            doc=>"the minimum binomial test result from unaffected members to pass through the filter",
+            default=>"1.0e-4",
+        },
     ],
     doc => "A binomial filter for polymutt denovo output",
 };
@@ -240,6 +246,7 @@ sub prepare_readcount_files {
                 output_file => $readcount_out,
                 reference_fasta => $ref_fasta,
                 region_list => $sites_file,
+                use_version => $self->bam_readcount_version,
             );
             unless($rv) {
                 $self->error_message("bam-readcount failed");

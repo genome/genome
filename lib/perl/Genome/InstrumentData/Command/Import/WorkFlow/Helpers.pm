@@ -9,7 +9,9 @@ require Carp;
 require File::Basename;
 require File::Copy;
 require Filesys::Df;
+require List::MoreUtils;
 require LWP::Simple;
+use Regexp::Common;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::Helpers { 
     is => 'UR::Singleton',
@@ -110,18 +112,6 @@ sub source_file_format {
 
     Carp::confess('No source file to get format!') if not $source_file;
 
-    my $source_file_base_name = File::Basename::basename($source_file);
-    my @parts = split(/\./, $source_file_base_name);
-    my $suffix;
-    do {
-        $suffix = pop @parts;
-    } until not defined $suffix or ( $suffix !~ /t?gz/ and $suffix ne 'tar' );
-
-    if ( not $suffix ) {
-        $self->error_message("Failed to get suffix from source file! $source_file");
-        return;
-    }
-
     my %suffixes_to_original_format = (
         fastq => 'fastq',
         fq => 'fastq',
@@ -131,13 +121,26 @@ sub source_file_format {
         bam => 'bam',
         sra => 'sra',
     );
-    my $format = $suffixes_to_original_format{$suffix};
-    if ( not $format ) {
+    $source_file =~ s/\Q.$_\E$// for Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs->types;
+    my ($source_file_base_name, $path, $suffix) = File::Basename::fileparse(
+        $source_file, keys %suffixes_to_original_format
+    );
+    if ( not $suffix or not $suffixes_to_original_format{$suffix} ) {
         $self->error_message('Unrecognized source file format! '.$source_file_base_name);
         return;
     }
 
-    return $format;
+    return $suffixes_to_original_format{$suffix};
+}
+
+sub is_source_file_archived {
+    my ($self, $source_file) = @_;
+
+    Carp::confess('No source file to determined if archived!') if not $source_file;
+
+    return grep { 
+        $source_file =~ /\Q$_\E$/
+    } (qw/ .tgz .tar .tar.gz /);
 }
 
 sub verify_adequate_disk_space_is_available_for_source_files {
@@ -527,24 +530,54 @@ sub load_md5 {
 }
 
 sub were_original_path_md5s_previously_imported {
-    my ($self, @md5s) = @_;
+    my ($self, %params) = @_;
 
-    Carp::confess('No md5s given to check if previously imported!') if not @md5s;
+    my $md5s = delete $params{md5s};
+    Carp::confess('No md5s given to check if previously imported!') if not $md5s or not @$md5s;
+    my $downsample_ratio = delete $params{downsample_ratio};
+    Carp::confess('Unknown params sent to were_original_path_md5s_previously_imported: '.Data::Dumper::Dumper(\%params)) if %params;
 
-    my @instrument_data_attr = Genome::InstrumentDataAttribute->get(
+    # Gather original_data_path_md5 attrs
+    my @original_data_path_md5_attrs = Genome::InstrumentDataAttribute->get(
         attribute_label => 'original_data_path_md5',
-        'attribute_value in' => \@md5s,
+        'attribute_value in' => $md5s,
     );
 
-    if ( @instrument_data_attr ) {
-        $self->error_message(
-            "Instrument data was previously imported! Found existing instrument data with MD5s: ".
-            join(', ', map { $_->instrument_data_id.' => '.$_->attribute_value } @instrument_data_attr),
-        );
-        return 1;
-    }
+    # No existing original_data_path_md5s == not previously imported
+    return if not @original_data_path_md5_attrs;
 
-    return;
+    # Get unique inst data from original_data_path_md5 attrs
+    my @instrument_data = List::MoreUtils::uniq( map { $_->instrument_data } @original_data_path_md5_attrs);
+
+    # Check if md5 was previously imported
+    my @previously_imported_instrument_data;
+    my $was_previously_imported = sub{
+        my ($downsample_ratio_attr) = @_;
+        # if no downsample_ratio given and no downsample_ratio for inst data
+        return 1 if not defined $downsample_ratio and not $downsample_ratio_attr;
+        # if given a downsample_ratio and there is a downsample_ratio_attr
+        #  and the attribute_value matches the given downsample_ratio
+        return 1 if defined $downsample_ratio and $downsample_ratio_attr
+            and $downsample_ratio == $downsample_ratio_attr->attribute_value;
+        # not previously imported
+        return;
+    };
+    for my $instrument_data ( @instrument_data ) {
+        my $downsample_ratio_attr = Genome::InstrumentDataAttribute->get(
+            instrument_data_id => $instrument_data->id,
+            attribute_label => 'downsample_ratio',
+        );
+        push @previously_imported_instrument_data, $instrument_data if $was_previously_imported->($downsample_ratio_attr);
+    }
+    return if not @previously_imported_instrument_data;
+
+    $self->error_message(
+        'Instrument data was previously'.
+            ( $downsample_ratio ? " downsampled by a ratio of $downsample_ratio and" : '' ).
+            ' imported! Found existing instrument data: '.
+            join(', ', sort map { $_->id } @previously_imported_instrument_data)
+    );
+    return 1;
 }
 #<>#
 
@@ -613,6 +646,36 @@ sub insert_extension_into_bam_path {
 
     return join('.', $bam_path, $ext, 'bam');
 }
+
+#<VALIDATORS>#
+sub is_downsample_ratio_invalid {
+    my ($self, $downsample_ratio) = @_;
+
+    Carp::confess('No downsample ratio to check!') if not defined $downsample_ratio;
+
+    if ( $downsample_ratio !~ /$RE{num}{real}/ ) {
+        return (
+            UR::Object::Tag->create(
+                type => 'invalid',
+                properties => [qw/ downsample_ratio /],
+                desc => 'Invalid number! '.$downsample_ratio,
+            )
+        );
+    }
+
+    if ( $downsample_ratio <= 0 or $downsample_ratio >= 1 ) {
+        return (
+            UR::Object::Tag->create(
+                type => 'invalid',
+                properties => [qw/ downsample_ratio /],
+                desc => 'Must be greater than 0 and less than 1! '.$downsample_ratio,
+            )
+        );
+    }
+
+    return;
+}
+#<>#
 
 1;
 

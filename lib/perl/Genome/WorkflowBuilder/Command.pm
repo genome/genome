@@ -78,7 +78,7 @@ sub operation_type_attributes {
         if (defined($self->$name)) {
             $value = $self->$name;
         } else {
-            $value = $self->_get_attribue_from_command($name);
+            $value = $self->_get_attribute_from_command($name);
         }
 
         if (defined($value)) {
@@ -135,7 +135,7 @@ sub is_many_property {
 # Private Methods
 # ------------------------------------------------------------------------------
 
-sub _get_attribue_from_command {
+sub _get_attribute_from_command {
     my ($self, $property_name) = @_;
 
     my $property = $self->command->__meta__->properties(

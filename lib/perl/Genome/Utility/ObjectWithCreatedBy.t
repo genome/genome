@@ -19,6 +19,9 @@ use above "Genome";
 
 use_ok('Genome::Utility::ObjectWithCreatedBy');
 
+my $property_object = Genome::HasCreatedBy->__meta__->properties(property_name => 'created_by');
+is($property_object->data_type, 'Text', 'the stapled in property should be of type Text');
+
 my $obj1 = Genome::HasCreatedBy->create(dummy_val => 6);
 is(Genome::Sys->username, $obj1->created_by, 'created_by should be automatically set the first time an object is created');
 

@@ -27,7 +27,7 @@ class Genome::Model::Tools::Analysis::454::AlignReads {
 		samples_file	=> { is => 'Text', doc => "Tab-delimited file of sample and SFF file(s)" },
 		output_dir	=> { is => 'Text', doc => "Output directory" },
 		aligner		=> { is => 'Text', doc => "Aligner to use" },
-		reference		=> { is => 'Text', doc => "Reference sequence [default=Hs36 ssaha2]", is_optional => 1 },
+		reference		=> { is => 'Text', doc => "Reference sequence",},
 		skip_if_output_present	=> { is => 'Text', doc => "Skip if output present", is_optional => 1 },		
 	],
 };
@@ -200,8 +200,7 @@ sub execute {                               # replace with real execution logic.
 			{
 				## Define reference ##
 				
-				my $reference = "/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa";
-				$reference = $self->reference if($self->reference);
+				my $reference = $self->reference if($self->reference);
 
 				## Run the runassembly ##
 				my $cmd = "runMapping -o $aligner_output_dir -pairt $reference $sff_file";

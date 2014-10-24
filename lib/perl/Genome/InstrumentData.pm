@@ -78,7 +78,7 @@ class Genome::InstrumentData {
         individual => {
             is => 'Genome::Individual',
             via => 'sample',
-            to => 'patient',
+            to => 'individual',
         },
         taxon => {
             is => 'Genome::Taxon',
@@ -200,10 +200,6 @@ class Genome::InstrumentData {
         sample_source_name => {
             via => 'sample_source',
             to => 'name',
-        },
-        taxon => {
-            is => 'Genome::Taxon',
-            via => 'sample',
         },
         species_name => { via => 'taxon' },
     ],

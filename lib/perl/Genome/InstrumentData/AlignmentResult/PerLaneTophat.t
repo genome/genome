@@ -57,7 +57,7 @@ ok(-s $fake_reads_file, "found fake reads file: $fake_reads_file");
 
 
 my $starting_aligner_params = "--bowtie-version=$BOWTIE_VERSION";
-my ($reference_build, $annotation_build, $annotation_index) = _create_entities($starting_aligner_params);
+my ($reference_build, $annotation_build, $aligner_index, $annotation_index) = _create_entities($starting_aligner_params);
 
 # _get_gtf_file
 my $found_gtf_file = $class->_get_gtf_file($annotation_index);
@@ -75,15 +75,6 @@ my $aligner_params = $class->_get_aligner_params_to_generate_annotation_index(
 is(substr($aligner_params, 0, length($expected_aligner_params)),
     $expected_aligner_params, "Constructed aligner_params correctly");
 
-# create
-my $aligner_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(
-    reference_build => $reference_build,
-    aligner_name => 'PerLaneTophat',
-    aligner_version => $TOPHAT_VERSION,
-    aligner_params => $starting_aligner_params,
-);
-ok($aligner_index, 'created aligner_index');
-
 Genome::Sys->rsync_directory(
         source_directory => _join($aligner_index->output_dir),
         target_directory => _join($temp_input_dir),
@@ -94,21 +85,11 @@ Genome::Sys->rsync_directory(
 my $found_reference_fasta = $class->_get_reference_fasta($annotation_index);
 is($found_reference_fasta, $aligner_index->full_consensus_path("fa"), 'Looked up correct reference_fasta');
 
-
-my $created_annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->create(
-    annotation_build => $annotation_build,
-    reference_build => $reference_build,
-    aligner_name => 'PerLaneTophat',
-    aligner_version => $TOPHAT_VERSION,
-    aligner_params => $starting_aligner_params,
-);
-ok($created_annotation_index, 'created an annotation index');
-
 my $expected_dir = _join($data_dir, 'expected', '*');
 my @expected_files = glob($expected_dir);
 for my $expected_file (@expected_files) {
     my $filename = basename($expected_file);
-    my $output_file = _join($created_annotation_index->output_dir, $filename);
+    my $output_file = _join($annotation_index->output_dir, $filename);
     compare_ok($output_file, $expected_file, name => "$filename matches expected", diag => 1);
 }
 
@@ -160,7 +141,15 @@ sub _create_entities {
     *Genome::Model::Build::ImportedAnnotation::annotation_file = sub {return $gtf_file};
     ok($annotation_build, "Created annotation build");
 
-    my $annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->__define__(
+    my $aligner_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(
+        reference_build => $reference_build,
+        aligner_name => 'PerLaneTophat',
+        aligner_version => $TOPHAT_VERSION,
+        aligner_params => $starting_aligner_params,
+    );
+    ok($aligner_index, 'created aligner_index');
+
+    my $annotation_index = Genome::Model::Build::ReferenceSequence::AnnotationIndex->create(
         annotation_build => $annotation_build,
         reference_build => $reference_build,
         aligner_name => 'PerLaneTophat',
@@ -169,7 +158,7 @@ sub _create_entities {
     );
     ok($annotation_index, 'Defined an annotation index');
 
-    return $reference_build, $annotation_build, $annotation_index;
+    return $reference_build, $annotation_build, $aligner_index, $annotation_index;
 }
 
 1;

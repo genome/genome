@@ -17,34 +17,48 @@ class Genome::ProcessingProfile {
     ],
     subclass_description_preprocessor => 'Genome::ProcessingProfile::_expand_param_properties',
     subclassify_by => 'subclass_name',
-    id_generator => '-uuid',
     id_by => [
         id => { is => 'Text', len => 32 },
     ],
     has => [
-        name          => { is => 'VARCHAR2', len => 255, is_optional => 1, 
-                           doc => 'Human readable name' },
-        type_name     => { is => 'VARCHAR2', len => 255, is_optional => 1, 
-                           doc => 'The type of processing profile' },
+        name => {
+            is => 'Text',
+            len => 255,
+            is_optional => 1,
+            doc => 'Human readable name',
+        },
+        type_name => {
+            is => 'Text',
+            len => 255,
+            is_optional => 1,
+            doc => 'The type of processing profile',
+        },
         subclass_name => {
-            is => 'VARCHAR2',
+            is => 'Text',
             len => 255,
             is_mutable => 0,
-            column_name => 'SUBCLASS_NAME',
-            calculate_from => ['type_name'],
+            column_name => 'subclass_name',
+            calculate_from => 'type_name',
             calculate => sub { 
                 my($type_name) = @_;
                 confess "No type name given to resolve subclass name" unless $type_name;
                 return __PACKAGE__ . '::' . Genome::Utility::Text::string_to_camel_case($type_name);
-            }
+            },
         },
     ],
     has_many_optional => [
-        params => { is => 'Genome::ProcessingProfile::Param', reverse_as => 'processing_profile' },
-        models => { is => 'Genome::Model', reverse_as => 'processing_profile' },
+        params => {
+            is => 'Genome::ProcessingProfile::Param',
+            reverse_as => 'processing_profile',
+        },
+        models => {
+            is => 'Genome::Model',
+            reverse_as => 'processing_profile',
+        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 sub __display_name__ {
@@ -136,7 +150,7 @@ sub create {
     }
 
     # Identical PPs
-    $subclass->_validate_no_existing_processing_profiles_with_idential_params(%params)
+    $subclass->_validate_no_existing_processing_profiles_with_identical_params(%params)
         or return;
 
     #unless ($params{'subclass_name'}) {
@@ -189,7 +203,7 @@ sub _validate_name_and_uniqueness {
     return 1;
 }
 
-sub _validate_no_existing_processing_profiles_with_idential_params {
+sub _validate_no_existing_processing_profiles_with_identical_params {
     my ($subclass, %params) = @_;
     my @existing_pp = _profiles_matching_subclass_and_params($subclass,%params);
 

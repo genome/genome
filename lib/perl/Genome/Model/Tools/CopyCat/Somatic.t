@@ -4,7 +4,8 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 14;
+use Test::More tests => 16;
+use Test::Exception;
 use Genome::Utility::Test;
 use File::Spec;
 use File::Compare;
@@ -33,7 +34,7 @@ my $reference_build_id = '106942997';
 my $output_directory = Genome::Sys->create_temp_directory();
 my $version = _create_test_annotation_data($reference_build_id, File::Spec->join($test_dir, 'annotation_data'));
 
-my $cmd = Genome::Model::Tools::CopyCat::Somatic->create(
+my %params = (
     normal_window_file => $normal_window_file,
     tumor_window_file => $tumor_window_file,
     output_directory => $output_directory,
@@ -45,6 +46,8 @@ my $cmd = Genome::Model::Tools::CopyCat::Somatic->create(
     reference_build_id => $reference_build_id,
     annotation_version => $version,
 );
+
+my $cmd = Genome::Model::Tools::CopyCat::Somatic->create( %params );
 ok($cmd, "Created command successfully");
 ok($cmd->execute, "Executed the command successfully");
 
@@ -68,6 +71,16 @@ for my $file (@non_diffable_files){
     my ($expected_wc) = split(" ", `wc -l $expected`);    
     ok(abs ($expected_wc - $actual_wc) <= 1, "$file line length is withing tolerance");
 }
+
+#test that we're able to catch errors. This is a regression test.
+my ($mfh, $malformed_file) = Genome::Sys->create_temp_file();
+print $mfh "gobbledygook\n";
+$mfh->close;
+
+$params{normal_window_file} = $malformed_file;
+my $fail_cmd = Genome::Model::Tools::CopyCat::Somatic->create( %params );
+ok($fail_cmd, "Created command successfully");
+dies_ok { $fail_cmd->execute } "Command failed correctly";
 
 sub _create_test_annotation_data{
     my $reference_build_id = shift;

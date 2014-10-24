@@ -53,8 +53,8 @@
                     </td>
                     <td class="value">
                       <xsl:choose>
-                        <xsl:when test="string(normalize-space(aspect[@name='patient_common_name']/value))">
-                          <xsl:value-of select="normalize-space(aspect[@name='patient_common_name']/value)"/>
+                        <xsl:when test="string(normalize-space(aspect[@name='individual_common_name']/value))">
+                          <xsl:value-of select="normalize-space(aspect[@name='individual_common_name']/value)"/>
                         </xsl:when>
                         <xsl:otherwise>
                           --
@@ -254,7 +254,7 @@
                 Patient Common Name:
               </td>
               <td class="value">
-                <xsl:value-of select="aspect[@name='patient_common_name']/value"/>
+                <xsl:value-of select="aspect[@name='individual_common_name']/value"/>
               </td>
             </tr>
 

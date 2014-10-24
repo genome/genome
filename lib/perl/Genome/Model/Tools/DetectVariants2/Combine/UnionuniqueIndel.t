@@ -68,6 +68,7 @@ my $union_indel_object = Genome::Model::Tools::DetectVariants2::Combine::Unionun
     input_a_id       => $detector_a->id,
     input_b_id       => $detector_b->id,
     output_directory => $output_symlink,
+    aligned_reads_sample => 'TEST',
 );
 ok($union_indel_object, 'created UnionuniqueIndel object');
 ok($union_indel_object->execute(), 'executed UnionuniqueIndel object');
