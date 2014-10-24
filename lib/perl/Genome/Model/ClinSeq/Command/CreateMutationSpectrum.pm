@@ -28,9 +28,10 @@ class Genome::Model::ClinSeq::Command::CreateMutationSpectrum {
               is => 'Text',
               doc => 'wgs or exome datatype',
         },
-        max_snvs => {
+        limit_snvs => {
               is => 'Number',
-              doc => 'Limit analysis to the first N SNVs',
+              doc => 'Limit analysis to the first N SNVs.' .
+                'This parameter is used only when "test" is true',
               is_optional => 1,
               default => 50,
         },
@@ -225,7 +226,7 @@ sub get_alltier_snvs {
 sub reduce_file_length {
   my $self = shift;
   my @variant_files = @_;
-  my $max_snvs = $self->max_snvs;
+  my $max_snvs = $self->limit_snvs;
   unless ($max_snvs > 0){
     die $self->error_message("Invalid max_snvs $max_snvs");
   }
