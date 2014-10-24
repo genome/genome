@@ -8,9 +8,7 @@ use List::MoreUtils qw/ uniq /;
 class Genome::Model::ClinSeq::Util{
 };
 
-###############################################################################################################
-#Create a new directory in a specified location                                                               #
-###############################################################################################################
+#Create a new directory in a specified location
 sub createNewDir{
   my $self = shift;
   my %args = @_;
@@ -74,10 +72,6 @@ sub createNewDir{
   return($new_path);
 }
 
-
-#############################################################################################################################
-#Check dir
-#############################################################################################################################
 sub checkDir{
   my $self = shift;
   my %args = @_;
@@ -150,10 +144,8 @@ sub checkDir{
 }
 
 
-#######################################################################################################################################################################
 #Load Ensembl Transcript ID - Gene ID - Gene Name mappings from flatfiles                                                                                             #
 #The GTF file seems to be the best for obtaining ensg -> enst -> gene name mappings.  But it does not contain biotypes so an extra file need to be parse for those    #
-#######################################################################################################################################################################
 sub loadEnsemblMap{
   my $self = shift;
   my %args = @_;
@@ -223,9 +215,7 @@ sub loadEnsemblMap{
 }
 
 
-#######################################################################################################################################################################
-#Load Entrez Data from flatfiles                                                                                                                                      #
-#######################################################################################################################################################################
+#Load Entrez Data from flatfiles
 sub loadEntrezEnsemblData {
   my $self = shift;
   my %args = @_;
@@ -482,9 +472,7 @@ sub loadEntrezEnsemblData {
 }
 
 
-#######################################################################################################################################################################
-#If possible translate the current gene name or ID into an official gene name from Entrez                                                                             #
-#######################################################################################################################################################################
+#If possible translate the current gene name or ID into an official gene name from Entrez
 sub mapGeneName{
   my $self = shift;
   my %args = @_;
@@ -691,8 +679,6 @@ sub mapGeneName{
       $corrected_name = $original_name;
     }
   }
-
-
   if ($verbose){
     if ($entrez_name_string eq $original_name){
       $self->status_message("\nSimple Entrez match: $original_name -> $corrected_name");
@@ -707,9 +693,7 @@ sub mapGeneName{
 }
 
 
-###################################################################################################################################
-#Attempt to fix gene names to Entrez                                                                                              #
-###################################################################################################################################
+#Attempt to fix gene names to Entrez
 sub fixGeneName{
   my $self = shift;
   my %args = @_;
@@ -731,9 +715,7 @@ sub fixGeneName{
 }
 
 
-###################################################################################################################################
-#List gene category files and the number of genes, return the names and counts for each                                           #
-###################################################################################################################################
+#List gene category files and the number of genes, return the names and counts for each
 sub listGeneCategories{
   my $self = shift;
   my %args = @_;
@@ -777,9 +759,7 @@ sub listGeneCategories{
 }
 
 
-###################################################################################################################################
-#Import symbol list names                                                                                               #
-###################################################################################################################################
+#Import symbol list names
 sub importSymbolListNames{
   my $self = shift;
   my %args = @_;
@@ -923,9 +903,7 @@ sub importSymbolListNames{
 }
 
 
-###################################################################################################################################
-#Import a set of gene symbol lists                                                                                                #
-###################################################################################################################################
+#Import a set of gene symbol lists
 sub importGeneSymbolLists{
   my $self = shift;
   my %args = @_;
@@ -960,9 +938,7 @@ sub importGeneSymbolLists{
 }
 
 
-#############################################################################################################################
-#Add commas to number.  e.g. 1000000 to 1,000,000                                                                           #
-#############################################################################################################################
+#Add commas to number.  e.g. 1000000 to 1,000,000
 sub commify {
    local $_  = shift;
    1 while s/^(-?\d+)(\d{3})/$1,$2/;
@@ -970,9 +946,7 @@ sub commify {
 }
 
 
-#############################################################################################################################
-#Return message describing memory usage of the current process                                                              #
-#############################################################################################################################
+#Return message describing memory usage of the current process
 sub memoryUsage{
   my $pid = $$;
   my $ps_query = `ps -p $pid -o pmem,rss`;
@@ -989,10 +963,8 @@ sub memoryUsage{
 }
 
 
-#############################################################################################################################
-#Parse import the coordinates of the ideogram file using a subroutine                                                       #
-#Example input file: /gscmnt/sata132/techd/mgriffit/reference_annotations/hg19/ideogram/ChrBandIdeogram.tsv                 #
-#############################################################################################################################
+#Parse import the coordinates of the ideogram file using a subroutine
+#Example input file: /gscmnt/sata132/techd/mgriffit/reference_annotations/hg19/ideogram/ChrBandIdeogram.tsv
 sub importIdeogramData{
   my $self = shift;
   my %args = @_;
@@ -1041,9 +1013,7 @@ sub importIdeogramData{
 }
 
 
-#############################################################################################################################
-#Given some chromosome coordinates and an object of ideogram data, generate a cytoband string                               #
-#############################################################################################################################
+#Given some chromosome coordinates and an object of ideogram data, generate a cytoband string
 sub getCytoband{
   my $self = shift;
   my %args = @_;
@@ -1089,9 +1059,7 @@ sub getCytoband{
 }
 
 
-#############################################################################################################################
-#Get column position                                                                                                        #
-#############################################################################################################################
+#Get column position
 sub getColumnPosition{
   my $self = shift;
   my %args = @_;
@@ -1123,9 +1091,7 @@ sub getColumnPosition{
 }
 
 
-#############################################################################################################################
-#Given a file name or path, return the path with the extension removed as well as the extension as a hash                   #
-#############################################################################################################################
+#Given a file name or path, return the path with the extension removed as well as the extension as a hash
 sub getFilePathBase{
   my $self = shift;
   my %args = @_;
@@ -1163,9 +1129,7 @@ sub getFilePathBase{
 }
 
 
-#############################################################################################################################
-#Given a clinseq object, resolve to a single reference sequence object based on the inputs                                  #
-#############################################################################################################################
+#Given a clinseq object, resolve to a single reference sequence object based on the inputs
 sub resolve_reference_sequence_build {
     my $clinseq_build = shift;
     my ($wgs_somvar_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $wgs_normal_refalign_build, $wgs_tumor_refalign_build, $exome_normal_refalign_build, $exome_tumor_refalign_build);
