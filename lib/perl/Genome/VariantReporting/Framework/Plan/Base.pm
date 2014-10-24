@@ -37,19 +37,19 @@ sub as_hashref {
         $body{params} = $self->params;
 
         my %children = $self->children;
-        for my $child_category (keys %children) {
-            my @child_plans = @{$children{$child_category}};
+        while (my ($child_category, $child_plans_ref) = each %children) {
+            my @child_plans = @$child_plans_ref;
             $body{$child_category} = {};
             for my $child_plan (@child_plans) {
                 my $child_hashref = $child_plan->as_hashref;
-                for my $key (keys %{$child_hashref}) {
-                    $body{$child_category}{$key} = $child_hashref->{$key};
+                while (my ($name, $child) = each %$child_hashref) {
+                    $body{$child_category}{$name} = $child;
                 }
             }
         }
     } else {
-        for my $param_name (keys %{$self->params}) {
-            $body{$param_name} = $self->params->{$param_name};
+        while (my ($name, $value) = each %{$self->params}) {
+            $body{$name} = $value;
         }
     }
 

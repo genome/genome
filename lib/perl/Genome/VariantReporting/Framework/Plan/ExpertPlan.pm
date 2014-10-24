@@ -36,8 +36,8 @@ sub as_hashref {
     my $self = shift;
 
     my %body;
-    for my $param_name (keys %{$self->adaptor_params}) {
-        $body{$param_name} = $self->adaptor_params->{$param_name};
+    while (my ($name, $value) = each %{$self->adaptor_params}) {
+        $body{$name} = $value;
     }
 
     my %result;

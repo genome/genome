@@ -41,19 +41,19 @@ sub create_from_hashref {
     );
 
     my @filter_plans;
-    for my $filter_name (keys %{$hashref->{filters}}) {
+    while (my ($name, $params) = each %{$hashref->{filters}}) {
         push @filter_plans, Genome::VariantReporting::Framework::Plan::FilterPlan->create(
-            name => $filter_name,
-            params => $hashref->{filters}->{$filter_name},
+            name => $name,
+            params => $params,
         );
     }
     $self->filter_plans(\@filter_plans);
 
     my @interpreter_plans;
-    for my $interpreter_name (keys %{$hashref->{interpreters}}) {
+    while (my ($name, $params) = each %{$hashref->{interpreters}}) {
         push @interpreter_plans, Genome::VariantReporting::Framework::Plan::InterpreterPlan->create(
-            name => $interpreter_name,
-            params => $hashref->{interpreters}->{$interpreter_name},
+            name => $name,
+            params => $params,
         );
     }
     $self->interpreter_plans(\@interpreter_plans);

@@ -126,18 +126,18 @@ sub create_from_hashref {
     my $self = $class->SUPER::create(name => 'root',
         params => {});
     my @expert_plans;
-    for my $expert_name (keys %{$hashref->{experts}}) {
+    while (my ($expert_name, $adaptor_params) = each %{$hashref->{experts}}) {
         push @expert_plans, Genome::VariantReporting::Framework::Plan::ExpertPlan->create(
             name => $expert_name,
-            adaptor_params => $hashref->{experts}->{$expert_name},
+            adaptor_params => $adaptor_params,
         );
     }
     $self->expert_plans(\@expert_plans);
 
     my @reporter_plans;
-    for my $reporter_name (keys %{$hashref->{reporters}}) {
+    while (my ($reporter_name, $reporter_params) = each %{$hashref->{reporters}}) {
         push @reporter_plans, Genome::VariantReporting::Framework::Plan::ReporterPlan->create_from_hashref(
-            $reporter_name, $hashref->{reporters}->{$reporter_name},
+            $reporter_name, $reporter_params,
         );
     }
     $self->reporter_plans(\@reporter_plans);

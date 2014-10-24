@@ -9,8 +9,8 @@ sub calculate_vaf_for_all_alts {
     my $per_lib_vafs = calculate_per_library_vaf_for_all_alts(@_);
 
     my $vafs;
-    for my $allele (keys %$per_lib_vafs) {
-        $vafs->{$allele} = sum(values %{$per_lib_vafs->{$allele}});
+    while (my ($allele, $allele_vafs) = each %$per_lib_vafs) {
+        $vafs->{$allele} = sum(values %{$allele_vafs});
     }
     return %$vafs;
 }
