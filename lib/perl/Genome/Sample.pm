@@ -198,6 +198,14 @@ class Genome::Sample {
             is_mutable => 1,
             doc => 'TCGA name of the sample, if available',
         },
+        timepoint => {
+            is => 'Text',
+            via => 'attributes',
+            to => 'attribute_value',
+            where => [ attribute_label => 'timepoint' ],
+            is_mutable => 1,
+            doc => 'Point in time at which this sample was taken',
+        },
         taxon => {
             is => 'Genome::Taxon',
             via => 'source',
