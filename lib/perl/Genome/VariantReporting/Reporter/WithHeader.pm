@@ -99,7 +99,7 @@ sub available_fields_dict {
     my @interpreters = values %{$interpreters_ref};
     my %available_fields;
     for my $interpreter (@interpreters) {
-        for my $field ($self->available_fields_for_interpreter($interpreter)) {
+        for my $field ($interpreter->available_fields) {
             if (defined $available_fields{$field}) {
                 die $self->error_message("Fields are not unique. Field: %s, Interpreters: %s and %s",
                     $field, $interpreter->name, $available_fields{$field}->{interpreter});
@@ -113,13 +113,6 @@ sub available_fields_dict {
     return %available_fields;
 }
 Memoize::memoize('available_fields_dict');
-
-sub available_fields_for_interpreter {
-    my $self = shift;
-    my $interpreter = shift;
-
-    return $interpreter->available_fields();
-}
 
 # Default report method
 # Prints the fields in order of the headers.
