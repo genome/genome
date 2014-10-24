@@ -225,12 +225,15 @@ sub execute {
   #Get these from the underlying somatic-variation builds.
   #Annotate all variants (gmt annotate transcript-variants --help)
   my @clinseq_builds = $self->builds;
-  my $somatic_builds = $self->resolve_somatic_builds(\@clinseq_builds);
-  my $rnaseq_builds = $self->resolve_rnaseq_builds(\@clinseq_builds);
+  my (%somatic_builds, %rnaseq_builds);
+  foreach my $clinseq_build(@clinseq_builds) {
+    $clinseq_build->resolve_somatic_builds(\%somatic_builds);
+    $clinseq_build->resolve_rnaseq_builds(\%rnaseq_builds);
+  }
   my $annotation_build_name = $self->annotation_build->name;
   $self->status_message("Using annotation build: $annotation_build_name");
   my $bed_dir = $self->outdir . "bed_files/";
-  my $result = $self->gather_variants('-somatic_builds'=>$somatic_builds, '-bed_dir'=>$bed_dir);
+  my $result = $self->gather_variants('-somatic_builds'=>\%somatic_builds, '-bed_dir'=>$bed_dir);
   my $variants = $result->{'variants'};
   my $header = $result->{'header'};
 
@@ -256,8 +259,8 @@ sub execute {
 
   #Identify underlying reference-alignments, sample names, sample common names, and timepoints (if available)
   my $align_builds = $self->get_ref_align_builds(
-    '-somatic_builds'=>$somatic_builds,
-    '-rnaseq_builds'=>$rnaseq_builds);
+    '-somatic_builds'=>\%somatic_builds,
+    '-rnaseq_builds'=>\%rnaseq_builds);
   my @prefixes = $self->get_header_prefixes('-align_builds'=>$align_builds);
   #Get bam-readcounts for all positions for all BAM files
   my $grand_anno_count_file = $self->add_read_counts(

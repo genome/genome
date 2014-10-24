@@ -128,10 +128,13 @@ sub execute {
 
   #Get somatic builds associated with the clin-seq builds
   my @clinseq_builds = $self->builds;
-  my $somatic_builds = $self->resolve_somatic_builds(\@clinseq_builds);
+  my %somatic_builds;
+  foreach my $clinseq_build(@clinseq_builds) {
+    $clinseq_build->resolve_somatic_builds(\%somatic_builds);
+  }
 
   #Get reference alignment builds associated with the somatic builds
-  my $align_builds = $self->get_ref_align_builds('-somatic_builds'=>$somatic_builds);
+  my $align_builds = $self->get_ref_align_builds('-somatic_builds'=>\%somatic_builds);
 
   #Import the variants, save a local copy for reference, if specified by the user, filter by chr and number
   my $result = $self->gather_variants;

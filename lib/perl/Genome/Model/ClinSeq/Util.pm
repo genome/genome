@@ -1197,42 +1197,22 @@ sub resolve_reference_sequence_build {
     return $rb_names{$rb_names[0]};
 }
 
-sub _get_somatic_builds {
-  my $self = shift;
-  my $clinseq_build = shift;
-  my (%somatic_builds, $build_type);
-  if($clinseq_build->wgs_build) {
-    $build_type = "wgs";
-    $somatic_builds{$build_type} = $clinseq_build->wgs_build;
-  } 
-  if ($clinseq_build->exome_build){
-    $build_type = "exome";
-    $somatic_builds{$build_type} = $clinseq_build->exome_build;
-  }
-  if(not keys %somatic_builds){
-    die $self->error_message("Unable to find somatic build for clinseq build:" .
-        $clinseq_build->{id});
-  }
-  return (%somatic_builds);
-}
-
 sub _get_si_report_tumor_prefix {
   my $self = shift;
   my $clinseq_build = shift;
-  my @clinseq_builds = ($clinseq_build);
-  my $somatic_builds = $self->resolve_somatic_builds(\@clinseq_builds);
-  my $rnaseq_builds = $self->resolve_rnaseq_builds(\@clinseq_builds);
+  my (%somatic_builds, %rnaseq_builds);
+  $clinseq_build->resolve_somatic_builds(\%somatic_builds);
+  $clinseq_build->resolve_rnaseq_builds(\%rnaseq_builds);
   my $align_builds = $self->get_ref_align_builds(
-    '-somatic_builds'=>$somatic_builds,
-    '-rnaseq_builds'=>$rnaseq_builds);
+    '-somatic_builds'=>\%somatic_builds,
+    '-rnaseq_builds'=>\%rnaseq_builds);
   my @prefixes = $self->get_header_prefixes(
     '-align_builds'=>$align_builds);
-  my (%somatic_builds) = $self->_get_somatic_builds(
-    $clinseq_build);
   my (@tumor_refalign_names, $somatic_build, $tumor_build);
   my ($tumor_subject_name, $tumor_subject_common_name);
-  foreach my $build_type (keys %somatic_builds) {
-    $somatic_build = $somatic_builds{$build_type};
+  $self->status_message("keys " . keys %somatic_builds);
+  foreach my $somatic_build_id (keys %somatic_builds){
+    $somatic_build = $somatic_builds{$somatic_build_id}{build};
     $tumor_build = $somatic_build->tumor_build;
     $tumor_subject_name = $tumor_build->subject->name;
     $tumor_subject_common_name = $tumor_build->subject->common_name;
@@ -1247,36 +1227,6 @@ sub _get_si_report_tumor_prefix {
     }
   }
   return @tumor_refalign_names;
-}
-
-sub resolve_rnaseq_builds {
-  my $self = shift;
-  my $clinseq_builds = shift;
-  my %rnaseq_builds;
-  foreach my $clinseq_build (@$clinseq_builds){
-    my $tumor_build = $clinseq_build->tumor_rnaseq_build;
-    $rnaseq_builds{$tumor_build->id}{build} = $tumor_build if $tumor_build;
-    $rnaseq_builds{$tumor_build->id}{type} = 'rnaseq' if $tumor_build;
-    my $normal_build = $clinseq_build->normal_rnaseq_build;
-    $rnaseq_builds{$normal_build->id}{build} = $normal_build if $normal_build;
-    $rnaseq_builds{$normal_build->id}{type} = 'rnaseq' if $normal_build;
-  }
-  return (\%rnaseq_builds);
-}
-
-sub resolve_somatic_builds{
-  my $self = shift;
-  my $clinseq_builds = shift;
-  my %somatic_builds;
-  foreach my $clinseq_build (@$clinseq_builds){
-    my $wgs_build = $clinseq_build->wgs_build;
-    $somatic_builds{$wgs_build->id}{build} = $wgs_build if $wgs_build;
-    $somatic_builds{$wgs_build->id}{type} = 'wgs' if $wgs_build;
-    my $exome_build = $clinseq_build->exome_build;
-    $somatic_builds{$exome_build->id}{build} = $exome_build if $exome_build;
-    $somatic_builds{$exome_build->id}{type} = 'exome' if $exome_build;
-  }
-  return (\%somatic_builds);
 }
 
 sub get_ref_align_builds{
@@ -1546,7 +1496,6 @@ sub _is_copycat_somvar {
       return 0;
     }
 }
-
 
 1;
 
