@@ -6,7 +6,7 @@ use Genome;
 use List::Util qw( min );
 
 class Genome::VariantReporting::Reporter::FullReporter {
-    is => [ 'Genome::VariantReporting::Reporter::WithHeaderAndSampleNames'],
+    is => [ 'Genome::VariantReporting::Reporter::WithHeader', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
     has => [
     ],
 };

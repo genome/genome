@@ -6,7 +6,7 @@ use Genome;
 use Genome::VariantReporting::Suite::BamReadcount::VafInterpreter;
 
 class Genome::VariantReporting::Reporter::DocmReporter {
-    is => [ 'Genome::VariantReporting::Reporter::WithHeaderAndSampleNames'],
+    is => [ 'Genome::VariantReporting::Reporter::WithHeader', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
     has => [
     ],
 };
