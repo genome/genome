@@ -75,7 +75,6 @@ sub execute {
     $self->debug_message("Calculated query for result:\n".pp({$result->calculate_query()}));
     $self->output_result($result);
     $self->output_vcf($result->output_file_path);
-    print "output file path: " . pp($result->output_file_path) . "\n";
     return 1;
 }
 
