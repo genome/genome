@@ -19,9 +19,8 @@ sub requires_annotations {
 
 sub available_fields {
     my $self = shift;
-    my @sample_names = @_;
 
-    return $self->create_sample_specific_field_names([$self->fields()], \@sample_names);
+    return $self->create_sample_specific_field_names([$self->fields()], [$self->sample_names]);
 }
 
 sub fields {

@@ -34,13 +34,15 @@ sub field_descriptions {
 
 sub available_fields {
     my $self = shift;
-    my @sample_names = @_;
 
-    return $self->create_sample_specific_field_names([$self->vaf_fields()], \@sample_names);
+    return $self->create_sample_specific_field_names([$self->vaf_fields()], [$self->sample_names]);
 }
 
 sub vaf_fields {
-    return Genome::VariantReporting::Suite::BamReadcount::VafInterpreter::available_fields();
+    my $self = shift;
+    my $sample_name = ($self->sample_names)[0];
+    my %field_descriptions = Genome::VariantReporting::Suite::BamReadcount::VafInterpreter->field_descriptions($sample_name);
+    return keys %field_descriptions;
 }
 
 sub field_descriptions_for_sample {
@@ -58,7 +60,7 @@ sub _interpret_entry {
         my $interpreter = Genome::VariantReporting::Suite::BamReadcount::VafInterpreter->create(sample_name => $sample_name);
         my %result = $interpreter->interpret_entry($entry, $passed_alt_alleles);
         for my $alt_allele (@$passed_alt_alleles) {
-            for my $vaf_field (vaf_fields()) {
+            for my $vaf_field ($self->vaf_fields()) {
                 my $sample_specific_field_name = $self->create_sample_specific_field_name($vaf_field, $sample_name);
                 $return_values{$alt_allele}->{$sample_specific_field_name} = $result{$alt_allele}->{$vaf_field};
             }
