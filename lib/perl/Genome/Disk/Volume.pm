@@ -145,12 +145,8 @@ sub allocated_kb {
     my $field = 'kilobytes_requested';
     my $f = "sum($field)";
 
-    # UR caches the value so we're just going to reach in and "fix" it.
-    # Newer UR Sets store all their cached aggregate values under the __aggregates key
     if (exists $set->{__aggregates}) {
         $set->__invalidate_cache__($f);
-    } elsif (exists $set->{$f}) {
-        delete $set->{$f}
     }
 
     # We only want to time the sum aggregate, not including any time to connect to the DB

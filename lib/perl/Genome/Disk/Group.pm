@@ -164,13 +164,9 @@ sub _uncached_aggregate_sum {
 
     my $set = $agg_bx->subject_class_name->define_set($agg_bx);
 
-    # UR caches the value so we're just going to reach in and "fix" it.
-    # Newer UR Sets store all their cached aggregate values under the __aggregates key
     my $f = "sum($agg_field)";
     if (exists $set->{__aggregates}) {
         $set->__invalidate_cache__($f);
-    } elsif (exists $set->{$f}) {
-        delete $set->{$f}
     }
 
     return ($set->sum($agg_field) || 0);
