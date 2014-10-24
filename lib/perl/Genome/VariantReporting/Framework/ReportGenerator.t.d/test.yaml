@@ -38,3 +38,9 @@ reporters:
             rc_p1: something
             rc_p2: something else
             delimiter: " "
+    reporter_epsilon:
+        interpreters:
+            interpreter_z:
+                iz_p1: untranslated
+                iz_p2: something else
+        params: {}

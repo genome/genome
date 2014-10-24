@@ -121,7 +121,7 @@ sub object {
     $reporter_object->add_interpreter_objects(@interpreters);
     return $reporter_object;
 }
-Memoize::memoize("object");
+Memoize::memoize("object", LIST_CACHE => 'MERGE');
 
 sub object_with_translations {
     my $self = shift;
@@ -135,6 +135,6 @@ sub object_with_translations {
     $reporter_object->add_interpreter_objects(@interpreters);
     return $reporter_object;
 }
-Memoize::memoize("object_with_translations");
+Memoize::memoize("object_with_translations", LIST_CACHE => 'MERGE');
 
 1;
