@@ -1132,7 +1132,7 @@ sub validate_instrument_data{
                 push @tags, UR::Object::Tag->create(
                     type => 'error',
                     properties => ['instrument_data'],
-                    desc => 'instrument data (' . $instrument_data->id . ') has bam_path but the file fies not exist',
+                    desc => 'instrument data (' . $instrument_data->id . ') has bam_path but the file does not exist',
                 );
 
             } elsif (! -s $bam_path) {
