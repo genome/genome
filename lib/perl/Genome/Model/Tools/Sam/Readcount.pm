@@ -88,7 +88,7 @@ sub version_has_warning_suppression {
 
 sub readcount_path {
     my $self = shift;
-    my $version = $self->use_version || "";
+    my $version = $self->use_version;
 
     my $path = "/usr/bin/bam-readcount$version";
     if (! -x $path) {
@@ -100,7 +100,7 @@ sub readcount_path {
 sub command {
     my $self = shift;
 
-    my $version = $self->use_version || "";
+    my $version = $self->use_version;
 
     my $command = sprintf "%s %s -f %s -l %s", $self->readcount_path, $self->bam_file, $self->reference_fasta, $self->region_list;
 
@@ -134,23 +134,16 @@ sub command {
 sub validate {
     my $self = shift;
 
-    my $bam = $self->bam_file;
-    unless (-s $bam) {
-        die $self->error_message("Bam file $bam does not exist or does not have size");
-    }
-    my $reference = $self->reference_fasta;
-    unless (-s $reference) {
-        die $self->error_message("Reference fasta $reference does not exist or does not have size");
-    }
+    Genome::Sys->validate_file_for_reading($self->bam_file);
+    Genome::Sys->validate_file_for_reading($self->reference_fasta);
 
     my $output_file = $self->output_file;
-    Genome::Sys->validate_file_for_writing($output_file);
-
     if ($output_file =~ /[\(\)]/) {
         $output_file =~ s{\(}{\\(}g;
         $output_file =~ s{\)}{\\)}g;
         $self->output_file($output_file);
     }
+    Genome::Sys->validate_file_for_writing($output_file);
 
     return 1;
 }
