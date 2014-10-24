@@ -129,7 +129,7 @@ sub create_from_hashref {
     for my $expert_name (keys %{$hashref->{experts}}) {
         push @expert_plans, Genome::VariantReporting::Framework::Plan::ExpertPlan->create(
             name => $expert_name,
-            params => $hashref->{experts}->{$expert_name},
+            adaptor_params => $hashref->{experts}->{$expert_name},
         );
     }
     $self->expert_plans(\@expert_plans);

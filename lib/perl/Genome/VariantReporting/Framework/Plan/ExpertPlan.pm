@@ -7,6 +7,12 @@ use Genome::VariantReporting::Framework::Plan::Base;
 
 class Genome::VariantReporting::Framework::Plan::ExpertPlan {
     is => 'Genome::VariantReporting::Framework::Plan::Base',
+    has => [
+        adaptor_params => {
+            is => 'HASH',
+            default => {},
+        },
+    ],
 };
 
 sub category {
@@ -19,16 +25,25 @@ sub resources_required {
     return $self->get_class->resources_required;
 }
 
-sub object {
-    my $self = shift;
-    return $Genome::VariantReporting::Framework::Plan::Base::FACTORY->get_object($self->category,
-        $self->name, {});
-}
-
 sub adaptor_object {
     my $self = shift;
     my $adaptor_class = $self->object->adaptor_class;
     return $adaptor_class->create();
+}
+
+# ExpertPlans don't have any params but have adaptor_params instead
+sub as_hashref {
+    my $self = shift;
+
+    my %body;
+    for my $param_name (keys %{$self->adaptor_params}) {
+        $body{$param_name} = $self->adaptor_params->{$param_name};
+    }
+
+    my %result;
+    $result{$self->name} = \%body;
+
+    return \%result;
 }
 
 sub __class_errors__ {
@@ -56,7 +71,7 @@ sub __class_errors__ {
 sub __object_errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__object_errors__;
-    push @errors, $self->object->adaptor_class->__planned_output_errors__($self->params);
+    push @errors, $self->object->adaptor_class->__planned_output_errors__($self->adaptor_params);
     return @errors;
 }
 
