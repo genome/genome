@@ -30,7 +30,12 @@ class Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics {
     has_param => [
         picard_version => {
             is => 'Text',
-            doc => 'The version of picard to use.',
+            doc => 'The version of Picard to use.',
+        },
+        picard_strand_specificity => {
+            is => 'Text',
+            doc => 'The transcript strand specificity used by Picard.',
+            is_optional => 1,
         },
     ],
     has => [
@@ -139,8 +144,7 @@ sub execute {
         $self->error_message('Failed to reorder BAM file: '. $bam_file);
         return;
     }
-    
-    unless (Genome::Model::Tools::Picard::CollectRnaSeqMetrics->execute(
+    my %picard_params = (
         input_file => $tmp_bam_file,
         output_file => $metrics_output_file,
         refseq_file => $reference_fasta_file,
@@ -148,7 +152,11 @@ sub execute {
         ref_flat_file => $mRNA_ref_flat,
         use_version => $picard_version,
         chart_output => $chart_output_file,
-    )) {
+    );
+    if ($self->picard_strand_specificity) {
+        $picard_params{strand_specificity} = $self->picard_strand_specificity;
+    }
+    unless (Genome::Model::Tools::Picard::CollectRnaSeqMetrics->execute(%picard_params)) {
         $self->error_message('Failed to run Picard CollectRnaSeqMetrics for alignment result: '. $alignment_result->id);
         return;
     }
