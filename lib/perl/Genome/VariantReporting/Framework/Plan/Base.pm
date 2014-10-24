@@ -13,6 +13,7 @@ class Genome::VariantReporting::Framework::Plan::Base {
         },
         params => {
             is => 'HASH',
+            default => {},
         },
     ],
 };
@@ -46,11 +47,8 @@ sub as_hashref {
             }
         }
     } else {
-        # If we don't have any params, keys will crash
-        if (defined $self->params) {
-            for my $param_name (keys %{$self->params}) {
-                $body{$param_name} = $self->params->{$param_name};
-            }
+        for my $param_name (keys %{$self->params}) {
+            $body{$param_name} = $self->params->{$param_name};
         }
     }
 
