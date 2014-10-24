@@ -117,7 +117,6 @@ EOS
 # Please put the most recent first.
 my @PICARD_VERSIONS = (
     '1.123' => '/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123',
-    '1.122' => '/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.122',
     '1.82' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.82',
     '1.77' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.77',
     '1.52' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.52',
