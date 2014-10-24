@@ -62,7 +62,6 @@ ok(-e $output_summary_metrics, 'summary metrics exist');
 ok(-e $output_detailed_metrics, 'detailed metrics exist');       
 
 
-$DB::single=1;
 # Compare output files to expected
 my $filters = [
    qr(^# .*$),
