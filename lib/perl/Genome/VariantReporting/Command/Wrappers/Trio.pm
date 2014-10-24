@@ -7,8 +7,8 @@ use File::Basename qw(basename);
 use Set::Scalar;
 
 my $DOCM = {
-    "DocM" => ["/gscuser/aregier/scratch/docm_test/snvs.vcf.gz",
-               "/gscuser/aregier/scratch/docm_test/indels.vcf.gz"],
+    snvs_build => "a06152c107884ba78b90c5f09be17163",
+    indels_build => "45841689d047419ea26df89128d6f121",
 };
 
 class Genome::VariantReporting::Command::Wrappers::Trio {
@@ -105,9 +105,19 @@ sub get_model_pairs {
         followup_sample => $self->followup_sample,
         normal_sample => $self->normal_sample,
         output_dir => $self->output_directory,
-        other_input_vcf_pairs => $DOCM,
+        other_input_vcf_pairs => {docm => $self->vcf_files_from_imported_variation_builds($DOCM)},
     );
     return $factory->get_model_pairs;
+}
+
+sub vcf_files_from_imported_variation_builds {
+    my ($self, $builds) = @_;
+    my $snvs_build = Genome::Model::Build->get($builds->{snvs_build});
+    my $indels_build = Genome::Model::Build->get($builds->{indels_build});
+    return [
+        $snvs_build->snvs_vcf,
+        $indels_build->snvs_vcf,
+    ];
 }
 
 sub add_reports_to_workflow {
