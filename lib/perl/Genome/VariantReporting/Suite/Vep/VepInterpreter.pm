@@ -2,9 +2,10 @@ package Genome::VariantReporting::Suite::Vep::VepInterpreter;
 
 use strict;
 use warnings;
+
 use Genome;
 use Genome::File::Vcf::VepConsequenceParser;
-use feature "state";
+use Genome::VariantReporting::Suite::Vep::AnnotationCategory;
 
 class Genome::VariantReporting::Suite::Vep::VepInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
@@ -46,17 +47,17 @@ sub _interpret_entry {
     for my $variant_allele (@$passed_alt_alleles) {
         my ($transcript) = $vep_parser->transcripts($entry, $variant_allele);
         $return_values{$variant_allele} = {
-            transcript_name   =>$transcript->{'feature'},
+            transcript_name   => $transcript->{'feature'},
             trv_type          => $transcript->{'consequence'},
             trv_type_category => trv_type_category($transcript->{'consequence'}),
             amino_acid_change => $transcript->{'hgvsp'},
             default_gene_name => $transcript->{'symbol'} ,
             ensembl_gene_id   => $transcript->{'gene'},
-            gene_name_source => $transcript->{'symbol_source'},
-            c_position => $transcript->{'hgvsc'},
-            sift => $transcript->{'sift'},
-            polyphen => $transcript->{'polyphen'},
-            condel => $transcript->{'condel'},
+            gene_name_source  => $transcript->{'symbol_source'},
+            c_position        => $transcript->{'hgvsc'},
+            sift              => $transcript->{'sift'},
+            polyphen          => $transcript->{'polyphen'},
+            condel            => $transcript->{'condel'},
         };
         if ($transcript->{'canonical'} eq "YES") {
             $return_values{$variant_allele}->{'canonical'} = 1,
@@ -70,46 +71,19 @@ sub _interpret_entry {
 }
 
 sub trv_type_category {
-    my $trv_type = shift;
+    my $type_info = shift;
+    my @types     = split('&', $type_info);
+    my $category  = 'Genome::VariantReporting::Suite::Vep::AnnotationCategory';
+    my $trv_type  = 'other';
 
-    my $trv_types = Set::Scalar->new(split('&', $trv_type));
-    if (is_splice_site($trv_types)) {
-        return 'splice_site';
+    for my $category_type qw(splice_site non_synonymous) {
+        if ($category->is_category($category_type, @types)) {
+            $trv_type = $category_type;
+            last;
+        }
     }
-    elsif (is_non_synonymous($trv_types)) {
-        return 'non_synonymous';
-    }
-    else {
-        return 'other';
-    }
+    return $trv_type;
 }
 
-sub is_splice_site {
-    my $trv_types = shift;
-
-    state $splice_sites = Set::Scalar->new(
-        'splice_acceptor_variant',
-        'splice_donor_variant'
-    );
-    return !$splice_sites->intersection($trv_types)->is_null;
-}
-
-sub is_non_synonymous {
-    my $trv_types = shift;
-
-    state $non_synonymous = Set::Scalar->new(
-        'transcript_ablation',
-        'stop_gained',
-        'frameshift_variant',
-        'stop_lost',
-        'initiator_codon_variant',
-        'transcript_amplification',
-        'inframe_insertion',
-        'inframe_deletion',
-        'missense_variant',
-        'incomplete_terminal_codon_variant'
-    );
-    return !$non_synonymous->intersection($trv_types)->is_null;
-}
 
 1;

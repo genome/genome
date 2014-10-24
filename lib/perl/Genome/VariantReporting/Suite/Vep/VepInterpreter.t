@@ -81,57 +81,12 @@ subtest "two alt allele" => sub {
     is_deeply({$interpreter->interpret_entry($entry, ['C', 'G'])}, \%expected_return_values, "Entry gets interpreted correctly");
 };
 
-subtest 'is_splice_site' => sub {
-    ok(
-        Genome::VariantReporting::Suite::Vep::VepInterpreter::is_splice_site(Set::Scalar->new('splice_acceptor_variant')),
-        "('splice_acceptor_variant') is splice site"
-    );
-    ok(
-        Genome::VariantReporting::Suite::Vep::VepInterpreter::is_splice_site(Set::Scalar->new('splice_acceptor_variant', 'not_splice_site')),
-        "('splice_acceptor_variant', 'not_splice_site') is splice site"
-    );
-    ok(
-        !Genome::VariantReporting::Suite::Vep::VepInterpreter::is_splice_site(Set::Scalar->new('not_splice_site')),
-        "('not_splice_site') is not splice site"
-    );
-};
-
-subtest 'is_non_synonymous' => sub {
-    ok(
-        Genome::VariantReporting::Suite::Vep::VepInterpreter::is_non_synonymous(Set::Scalar->new('transcript_ablation')),
-        "('transcript_ablation') is non synonymous"
-    );
-    ok(
-        Genome::VariantReporting::Suite::Vep::VepInterpreter::is_non_synonymous(Set::Scalar->new('transcript_ablation', 'not_non_synonymous')),
-        "('transcript_ablation', 'not_non_synonymous') is non synonymous"
-    );
-    ok(
-        !Genome::VariantReporting::Suite::Vep::VepInterpreter::is_non_synonymous(Set::Scalar->new('not_non_synonymous')),
-        "('not_non_synonymous') is not non synonymous"
-    );
-};
 
 subtest 'trv_type_category' => sub {
-    is(
-        Genome::VariantReporting::Suite::Vep::VepInterpreter::trv_type_category('splice_acceptor_variant'),
-        'splice_site',
-        'trv type category as expected'
-    );
-    is(
-        Genome::VariantReporting::Suite::Vep::VepInterpreter::trv_type_category('transcript_ablation'),
-        'non_synonymous',
-        'trv type category as expected'
-    );
-    is(
-        Genome::VariantReporting::Suite::Vep::VepInterpreter::trv_type_category('splice_acceptor_variant&transcript_ablation'),
-        'splice_site',
-        'trv type category as expected'
-    );
-    is(
-        Genome::VariantReporting::Suite::Vep::VepInterpreter::trv_type_category('no_splice_site'),
-        'other',
-        'trv type category as expected'
-    );
+    is(Genome::VariantReporting::Suite::Vep::VepInterpreter::trv_type_category('splice_acceptor_variant'), 'splice_site', 'trv type category as expected');
+    is(Genome::VariantReporting::Suite::Vep::VepInterpreter::trv_type_category('transcript_ablation'), 'non_synonymous', 'trv type category as expected');
+    is(Genome::VariantReporting::Suite::Vep::VepInterpreter::trv_type_category('splice_acceptor_variant&transcript_ablation'), 'splice_site', 'trv type category as expected');
+    is(Genome::VariantReporting::Suite::Vep::VepInterpreter::trv_type_category('no_splice_site'), 'other', 'trv type category as expected');
 };
 
 sub create_vcf_header {
