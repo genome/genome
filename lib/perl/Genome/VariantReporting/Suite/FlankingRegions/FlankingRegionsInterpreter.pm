@@ -16,11 +16,11 @@ sub requires_annotations {
     return ('flanking-regions');
 }
 
-sub available_fields {
-    return qw/
-        reference_fasta
-        alt_fasta
-    /;
+sub field_descriptions {
+    return (
+        reference_fasta => 'Sequence surrounding the reference version of this position',
+        alt_fasta => 'Sequence surrounding the mutated version of this position',
+    );
 }
 
 sub interpret_entry {

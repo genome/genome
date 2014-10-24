@@ -17,10 +17,10 @@ sub requires_annotations {
     ();
 }
 
-sub available_fields {
-    return qw/
-        ft_string
-    /;
+sub field_descriptions {
+    return (
+        ft_string => 'FT entry in sample field',
+    );
 }
 
 sub _interpret_entry {

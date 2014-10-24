@@ -16,10 +16,10 @@ sub requires_annotations {
     ('fpkm');
 }
 
-sub available_fields {
-    return qw/
-        fpkm
-    /;
+sub field_descriptions {
+    return (
+        fpkm => 'Expression level of the the transcript annotated for this allele',
+    );
 }
 
 sub _interpret_entry {
