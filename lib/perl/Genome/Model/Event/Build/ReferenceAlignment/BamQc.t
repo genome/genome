@@ -11,3 +11,6 @@ use Test::More tests => 1;
 # created unnecessarily.  This is a bare minimum test that just compiles Perl
 # and the UR class.
 use_ok('Genome::Model::Event::Build::ReferenceAlignment::BamQc');
+
+is(Genome::Model::Event::Build::ReferenceAlignment::BamQc->_select_picard_version(1.13), Genome::Model::Tools::Picard->default_picard_version, "Picard version < 1.40 selected correctly.");
+is(Genome::Model::Event::Build::ReferenceAlignment::BamQc->_select_picard_version(1.113), 1.113, "Picard version > 1.100 selected correctly.");

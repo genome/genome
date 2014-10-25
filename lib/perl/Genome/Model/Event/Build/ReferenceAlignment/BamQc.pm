@@ -73,15 +73,8 @@ sub params_for_result {
         $self->_alignment_result($align_result);
     }
 
-    my $picard_version = $pp->picard_version;
+    my $picard_version = $self->_select_picard_version($pp->picard_version);
 
-    #picard versions are a little odd. 1.40 is less than 1.113 but then simple arithmetic doesn't work
-    #version->declare seems to give us the correct behavior for Picard
-    if (version->declare($picard_version) < version->declare(1.40)) {
-        my $pp_picard_version = $picard_version;
-        $picard_version = Genome::Model::Tools::Picard->default_picard_version;
-        $self->warning_message('Given picard version: '.$pp_picard_version.' not compatible to CollectMultipleMetrics. Use default: '.$picard_version);
-    }
 
     my $instr_data  = $self->instrument_data;
     #read length takes long time to run and seems not useful for illumina/solexa data
@@ -135,6 +128,20 @@ sub link_result {
     }
 
     return 1;
+}
+
+sub _select_picard_version {
+    my ($self, $picard_version) = @_;
+
+    my $selected_picard_version = $picard_version;
+    #picard versions are a little odd. 1.40 is less than 1.113 but then simple arithmetic doesn't work
+    #version->declare seems to give us the correct behavior for Picard
+    if (version->declare("v$picard_version") < version->declare("v1.40")) {
+        $selected_picard_version = Genome::Model::Tools::Picard->default_picard_version;
+        $self->warning_message('Requested picard version: '.$picard_version.' is not compatible with CollectMultipleMetrics. Using default: '.$selected_picard_version);
+    }
+
+    return $selected_picard_version;
 }
 
 1;
