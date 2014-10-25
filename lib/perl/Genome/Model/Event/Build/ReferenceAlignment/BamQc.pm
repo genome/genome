@@ -144,4 +144,35 @@ sub _select_picard_version {
     return $selected_picard_version;
 }
 
+sub _select_error_rate_version_for_pp {
+    my ($self, $pp) = @_;
+
+    my $error_rate_version = Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version;
+
+    if ($pp->can('read_aligner_name')
+        and $pp->can('read_aligner_version')
+        and defined $pp->read_aligner_name
+        and defined $pp->read_aligner_version
+        and ($pp->read_aligner_name eq 'bwamem')
+    ) {
+        my $mem_version = $self->_bwa_mem_version_object($pp->read_aligner_version);
+        if($mem_version > $self->_bwa_mem_version_object("0.7.5")) {
+            $error_rate_version = '1.0a2';
+        }
+    }
+    
+    return $error_rate_version;
+}
+
+sub _bwa_mem_version_object {
+    my ($self, $mem_version) = @_;
+    my ($main_version, $letter_version) = $mem_version =~ /(\d+\.\d+.\d+)([a-z]){0,1}/;
+    my $full_version = "v$main_version";
+    if(defined $letter_version) {
+        $full_version = join("_",$main_version,ord($letter_version) - 96);
+    }
+    return version->parse($full_version);
+}
+
+
 1;
