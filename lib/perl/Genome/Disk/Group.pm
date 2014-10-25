@@ -161,14 +161,8 @@ sub _resolve_group_name {
 
 sub _uncached_aggregate_sum {
     my ($self, $agg_bx, $agg_field) = @_;
-
     my $set = $agg_bx->subject_class_name->define_set($agg_bx);
-
-    my $f = "sum($agg_field)";
-    if (exists $set->{__aggregates}) {
-        $set->__invalidate_cache__($f);
-    }
-
+    $set->__invalidate_cache__("sum($agg_field)");
     return ($set->sum($agg_field) || 0);
 }
 

@@ -143,11 +143,8 @@ sub allocated_kb {
 
     my $set = Genome::Disk::Allocation->define_set(mount_path => $self->mount_path);
     my $field = 'kilobytes_requested';
-    my $f = "sum($field)";
 
-    if (exists $set->{__aggregates}) {
-        $set->__invalidate_cache__($f);
-    }
+    $set->__invalidate_cache__("sum($field)");
 
     # We only want to time the sum aggregate, not including any time to connect to the DB
     Genome::Disk::Allocation->__meta__->data_source->get_default_handle();
