@@ -157,12 +157,6 @@ sub allocated_kb {
         $allocation_count = $set->count();
     });
 
-    # Now we'll check that it is cached so we test that the underlying
-    # structure hasn't changed.
-    unless(exists($set->{$f}) || (exists($set->{__aggregates}) && exists($set->{__aggregates}->{$f}))) {
-        die $self->error_message("$f value not found in set's hash. Did underlying object structure change?");
-    }
-
     if (wantarray) {
         return $allocated_kb, $allocation_count;
     } else {
