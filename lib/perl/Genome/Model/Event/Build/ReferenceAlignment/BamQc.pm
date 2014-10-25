@@ -3,6 +3,7 @@ package Genome::Model::Event::Build::ReferenceAlignment::BamQc;
 use strict;
 use warnings;
 
+use version 0.77;
 use Genome;
 
 class Genome::Model::Event::Build::ReferenceAlignment::BamQc {
@@ -74,7 +75,9 @@ sub params_for_result {
 
     my $picard_version = $pp->picard_version;
 
-    if ($picard_version < 1.40) {
+    #picard versions are a little odd. 1.40 is less than 1.113 but then simple arithmetic doesn't work
+    #version->declare seems to give us the correct behavior for Picard
+    if (version->declare($picard_version) < version->declare(1.40)) {
         my $pp_picard_version = $picard_version;
         $picard_version = Genome::Model::Tools::Picard->default_picard_version;
         $self->warning_message('Given picard version: '.$pp_picard_version.' not compatible to CollectMultipleMetrics. Use default: '.$picard_version);
