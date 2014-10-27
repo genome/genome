@@ -54,7 +54,13 @@ sub _plan_search_dir {
 }
 
 sub report_names {
-    return qw(trio_full_report.tsv trio_simple_report.tsv);
+    my ($self, $variant_type) = @_;
+    my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file($variant_type));
+    my @file_names;
+    for my $reporter_plan ($plan->reporter_plans) {
+        push @file_names, $reporter_plan->object->file_name;
+    }
+    return @file_names;
 }
 
 sub reports_directory {

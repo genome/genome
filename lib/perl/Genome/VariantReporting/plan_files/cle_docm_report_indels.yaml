@@ -5,7 +5,7 @@ experts:
         minimum_base_quality: 0
         max_count: 10000000
         per_library: 1
-        insertion_centric: 0
+        insertion_centric: 1
 reporters:
     'docm':
         filters: {}
