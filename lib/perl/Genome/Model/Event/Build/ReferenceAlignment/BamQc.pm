@@ -135,7 +135,6 @@ sub _select_picard_version {
 
     my $selected_picard_version = $picard_version;
     #picard versions are a little odd. 1.40 is less than 1.113 but then simple arithmetic doesn't work
-    #version->declare seems to give us the correct behavior for Picard
     if (version->parse("v$picard_version") < version->parse("v1.40")) {
         $selected_picard_version = Genome::Model::Tools::Picard->default_picard_version;
         $self->warning_message('Requested picard version: '.$picard_version.' is not compatible with CollectMultipleMetrics. Using default: '.$selected_picard_version);
