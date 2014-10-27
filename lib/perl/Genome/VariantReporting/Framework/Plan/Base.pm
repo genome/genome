@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Memoize qw(memoize);
+use Params::Validate qw(validate_pos :types);
 
 class Genome::VariantReporting::Framework::Plan::Base {
     is => 'Genome::VariantReporting::Framework::Component::Base',
@@ -13,6 +14,7 @@ class Genome::VariantReporting::Framework::Plan::Base {
         },
         params => {
             is => 'HASH',
+            default => {},
         },
     ],
 };
@@ -35,22 +37,19 @@ sub as_hashref {
         $body{params} = $self->params;
 
         my %children = $self->children;
-        for my $child_category (keys %children) {
-            my @child_plans = @{$children{$child_category}};
+        while (my ($child_category, $child_plans_ref) = each %children) {
+            my @child_plans = @$child_plans_ref;
             $body{$child_category} = {};
             for my $child_plan (@child_plans) {
                 my $child_hashref = $child_plan->as_hashref;
-                for my $key (keys %{$child_hashref}) {
-                    $body{$child_category}{$key} = $child_hashref->{$key};
+                while (my ($name, $child) = each %$child_hashref) {
+                    $body{$child_category}{$name} = $child;
                 }
             }
         }
     } else {
-        # If we don't have any params, keys will crash
-        if (defined $self->params) {
-            for my $param_name (keys %{$self->params}) {
-                $body{$param_name} = $self->params->{$param_name};
-            }
+        while (my ($name, $value) = each %{$self->params}) {
+            $body{$name} = $value;
         }
     }
 
@@ -79,38 +78,21 @@ sub get_class {
     return $FACTORY->get_class($self->category, $self->name);
 }
 
-# We want to be able to get different perl objects when object vs
-# object_with_translations is called -> don't memoize this
-sub _object {
-    my $self = shift;
-    my %overrides = @_;
-    return $FACTORY->get_object($self->category,
-            $self->name, $self->params, \%overrides);
-}
-
 sub object {
-    my $self = shift;
-    my %overrides = @_;
-    return $self->_object(%overrides);
-}
-Memoize::memoize("object", LIST_CACHE => 'MERGE');
+    my ($self, $translations) = validate_pos(@_,
+        OBJECT,
+        {type => HASHREF, optional => 1},
+    );
 
-sub object_with_translations {
-    my $self = shift;
-    my $translations = shift;
-    my %overrides = @_;
+    my $object = $FACTORY->get_object($self->category,
+            $self->name, $self->params);
 
-    # Get a new perl object
-    # For child classes that overwrite object: Using $self->_object rather
-    # than $self->object ensures that we always call the base class' function
-    my $object = $self->_object();
-
-    if ($object->can('translate_inputs')) {
+    if (defined($translations) && $object->can('translate_inputs')) {
         $object->translate_inputs($translations);
     }
     return $object;
 }
-Memoize::memoize("object_with_translations", LIST_CACHE => 'MERGE');
+Memoize::memoize("object", LIST_CACHE => 'MERGE');
 
 sub __errors__ {
     my $self = shift;

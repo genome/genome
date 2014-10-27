@@ -77,8 +77,8 @@ sub combine {
 sub all_zeros {
     my $filter_results = shift;
 
-    for my $key (keys %$filter_results) {
-        return 0 if $filter_results->{$key};
+    for my $value (values %$filter_results) {
+        return 0 if $value;
     }
 
     return 1;

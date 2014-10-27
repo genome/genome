@@ -59,8 +59,8 @@ sub resolve_plan_attributes {
 
     my $variant_reporting_plan = $self->plan;
     my $specific_plan = $variant_reporting_plan->get_plan('expert', $self->name);
-    for my $name (keys %{$specific_plan->params}) {
-        $self->$name($specific_plan->params->{$name});
+    while (my ($name, $value) = each %{$specific_plan->adaptor_params}) {
+        $self->$name($value);
     }
 
     my $translations;

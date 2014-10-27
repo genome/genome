@@ -14,9 +14,11 @@ class Genome::VariantReporting::Framework::Component::Reporter {
     has_transient_optional => [
         filters => {
             is => 'HASH',
+            default => {},
         },
         interpreters => {
             is => 'HASH',
+            default => {},
         },
     ],
 };
@@ -56,17 +58,13 @@ sub finalize {
 sub add_filter_object {
     my ($self, $filter) = @_;
 
-    my $filters_ref = $self->filters || {};
-    $filters_ref->{$filter->name} = $filter;
-    $self->filters($filters_ref);
+    $self->filters->{$filter->name} = $filter;
 }
 
 sub add_interpreter_object {
     my ($self, $interpreter) = @_;
 
-    my $interpreters_ref = $self->interpreters || {};
-    $interpreters_ref->{$interpreter->name} = $interpreter;
-    $self->interpreters($interpreters_ref);
+    $self->interpreters->{$interpreter->name} = $interpreter;
 }
 
 1;

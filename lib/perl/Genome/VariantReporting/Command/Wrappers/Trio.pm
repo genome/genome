@@ -156,9 +156,9 @@ sub add_combine_to_workflow {
         name => join(" ", "Converge", $counter),
     );
     $self->_workflow->add_operation($converge);
-    for my $variant_type (keys %$reports_to_combine) {
+    while (my ($variant_type, $report) = each %$reports_to_combine) {
         $self->_workflow->create_link(
-            source => $reports_to_combine->{$variant_type}, source_property => "output_directory",
+            source => $report, source_property => "output_directory",
             destination => $converge, destination_property => $variant_type."_output_dir",
         );
     }

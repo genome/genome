@@ -190,8 +190,8 @@ sub set_what_interpreter_x_requires {
     sub report {
         my $self = shift;
         my $interpretations = shift;
-        for my $allele (keys %{$interpretations->{interpreter_x}}) {
-            $self->_output_fh->print(_format($interpretations->{interpreter_x}->{$allele}->{exp1})."\n");
+        while (my ($allele, $interpretations_for_allele) = each %{$interpretations->{interpreter_x}}) {
+            $self->_output_fh->print(_format($interpretations_for_allele->{exp1})."\n");
         }
     }
 
