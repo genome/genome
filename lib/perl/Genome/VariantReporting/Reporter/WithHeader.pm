@@ -48,15 +48,6 @@ sub __errors__ {
     return @errors;
 }
 
-sub requires_interpreters_classes {
-    my $self = shift;
-    my @interpreters;
-    for my $interpreter_name ($self->requires_interpreters) {
-        push @interpreters, Genome::VariantReporting::Framework::Factory->get_class('interpreters', $interpreter_name);
-    }
-    return @interpreters;
-}
-
 sub initialize {
     my $self = shift;
     my $output_dir = shift;
