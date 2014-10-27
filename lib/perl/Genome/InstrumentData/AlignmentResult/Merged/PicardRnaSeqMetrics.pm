@@ -23,6 +23,7 @@ class Genome::InstrumentData::AlignmentResult::Merged::PicardRnaSeqMetrics {
         picard_strand_specificity => {
             is => 'Text',
             doc => 'The transcript strand specificity used by Picard.',
+            valid_values => Genome::Model::Tools::Picard::CollectRnaSeqMetrics->__meta__->property("strand_specificity")->valid_values,
             is_optional => 1,
         },
     ],

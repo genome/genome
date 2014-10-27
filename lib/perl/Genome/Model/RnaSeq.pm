@@ -84,6 +84,7 @@ class Genome::Model::RnaSeq {
         },
         picard_strand_specificity => {
             doc => 'The transcript strand used by Picard for evaluatin RNA-seq QC metrics.',
+            valid_values => Genome::Model::Tools::Picard::CollectRnaSeqMetrics->__meta__->property("strand_specificity")->valid_values,
             is_optional => 1,
         },
         deduplication_handler => {

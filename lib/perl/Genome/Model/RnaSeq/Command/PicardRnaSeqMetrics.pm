@@ -18,6 +18,7 @@ class Genome::Model::RnaSeq::Command::PicardRnaSeqMetrics {
             is_input => 1,
         },
         picard_strand_specificity => {
+            valid_values => Genome::Model::Tools::Picard::CollectRnaSeqMetrics->__meta__->property("strand_specificity")->valid_values,
             is_optional => 1,
             is_input => 1,
         },
