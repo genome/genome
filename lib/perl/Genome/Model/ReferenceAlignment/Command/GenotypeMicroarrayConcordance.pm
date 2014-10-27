@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::ReferenceAlignment::Command::GenotypeMicroarrayConcordance {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => 'Determine concordance between a genotype microarray VCF and a Reference Alignment build',
     has => [
         build => {

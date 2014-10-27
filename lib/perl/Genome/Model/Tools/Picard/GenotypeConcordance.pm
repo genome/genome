@@ -139,9 +139,7 @@ sub parse_file_into_metrics_hashref {
     my ($class,$metrics_file) = @_;
 
     my $is_fh = Genome::Sys->open_file_for_reading($metrics_file);
-    unless ($is_fh) {
-        die('Failed to open file for reading: '. $metrics_file);
-    }
+
     my @headers;
     my %data;
     while (my $line = $is_fh->getline) {

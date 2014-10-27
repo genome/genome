@@ -73,5 +73,3 @@ compare_ok($expected_summary_metrics,$output_summary_metrics, filters => $filter
 my $expected_summary_metrics_hashref = Genome::Model::Tools::Picard->parse_file_into_metrics_hashref($expected_summary_metrics);  
 my $output_summary_metrics_hashref = Genome::Model::Tools::Picard->parse_file_into_metrics_hashref($output_summary_metrics);
 is_deeply($output_summary_metrics_hashref, $expected_summary_metrics_hashref, 'expected and output summary metrics are the same');
-
-exit;
