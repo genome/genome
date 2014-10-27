@@ -18,10 +18,10 @@ sub requires_annotations {
     return qw/ /;
 }
 
-sub available_fields {
-    return qw/
-        genotype
-    /;
+sub field_descriptions {
+    return (
+        genotype => 'Genotype of the sample [not called, missing, homozygous, or heterozygous]',
+    );
 }
 
 sub _interpret_entry {

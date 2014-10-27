@@ -16,10 +16,10 @@ sub requires_annotations {
     return qw/ /;
 }
 
-sub available_fields {
-    return qw/
-        indel_size
-    /;
+sub field_descriptions {
+    return (
+        indel_size => 'Difference in length between the reference allele and the alt allele'
+    );
 }
 
 sub _interpret_entry {
