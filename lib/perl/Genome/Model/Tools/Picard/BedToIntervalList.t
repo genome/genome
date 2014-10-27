@@ -39,5 +39,3 @@ ok($cmd,'create BedToIntervalList command');
 ok($cmd->execute, 'execute BedToIntervalList command');
 
 compare_ok($expected_interval_file,$observed_interval_file);    
-
-exit;
