@@ -42,7 +42,7 @@ sub help_detail {
 sub execute {
     my $self = shift;
 
-    my $ref_seq_build = $self->build->model->reference_sequence_build;
+    my $ref_seq_build = $self->build->reference_sequence_build;
     my $seqdict = $ref_seq_build->get_sequence_dictionary('sam',$ref_seq_build->species_name,$self->picard_version);
     $self->_seqdict($seqdict);
 
@@ -63,20 +63,25 @@ sub execute {
         my ($microarray_vcf,$genotype_sample) = $self->resolve_genotype_microarray_vcf_and_sample($qc_build);
         
         my $intersect_vcf = Genome::Sys->create_temp_file_path($genotype_sample->name .'_x_'. $instrument_data->id .'.vcf');
-        unless ( Genome::Model::Tools::BedTools::Intersect->execute(
+        my $intersect_cmd = Genome::Model::Tools::BedTools::Intersect->create(
             input_file_a => $lane_qc_vcf,
             input_file_a_format => 'bed',
             input_file_b => $microarray_vcf,
             output_file => $intersect_vcf,
             header => 1,
-        ) ) {
+        );
+        unless ($intersect_cmd) {
+            $self->error_message('Failed to create bedtools intersect!');
+            die($self->error_message);
+        }
+        unless ($intersect_cmd->execute) {
             $self->error_message('Failed to execute bedtools intersect!');
             die($self->error_message);
         }
 
         # TODO: For exome limit to ROI from input model
         my $output = Genome::Sys->create_temp_file_path($instrument_data->id);
-        unless (Genome::Model::Tools::Picard::GenotypeConcordance->execute(
+        my $gc_cmd = Genome::Model::Tools::Picard::GenotypeConcordance->create(
             truth_vcf => $microarray_vcf,
             call_vcf => $intersect_vcf,
             output => $output,
@@ -84,7 +89,12 @@ sub execute {
             call_sample => $qc_build->model->subject->name,
             min_dp => $self->minimum_depth,
             use_version => $self->picard_version,
-        ) ) {
+        );
+        unless ($gc_cmd) {
+            $self->error_message('Failed to create GenotypeConcordance!');
+            die($self->error_message);
+        }
+        unless ($gc_cmd->execute) {
             $self->error_message('Failed to execute GenotypeConcordance!');
             die($self->error_message);
         }
@@ -156,22 +166,26 @@ sub resolve_lane_qc_vcf {
     my $self = shift;
     my $qc_build = shift;
     
-    my $build_vcf = $qc_build->data_directory .'/variants/snvs.detailed.vcf.gz';
+    my $build_vcf = $qc_build->get_detailed_snvs_vcf;
     unless (-e $build_vcf) {
         $self->error_message('Unable to find the snvs VCF for build : '. $qc_build->display_name);
         die($self->error_message);
     }
     
-    
-    # Sort the build VCF which adds the contig info to the VCF header (required by Picard Genotype Concordance)
+    # Sort the build VCF which adds the contig info to the VCF header (required by Picard GenotypeConcordance)
     # TODO : Add something here or to SortVcf that ensures the file is complete
     my $sorted_build_vcf = Genome::Sys->create_temp_file_path($qc_build->id .'_sorted.vcf');
-    unless (Genome::Model::Tools::Picard::SortVcf->execute(
+    my $sort_cmd = Genome::Model::Tools::Picard::SortVcf->create(
         input_vcf => $build_vcf,
         output_vcf => $sorted_build_vcf,
         sequence_dictionary => $self->_seqdict,
         use_version => $self->picard_version,
-    )) {
+    );
+    unless ($sort_cmd) {
+        $self->error_message('Failed to create sort VCF command!');
+        die($self->error_message);
+    }
+    unless ($sort_cmd->execute) {
         $self->error_message('Failed to sort reference alignment VCF: '. $build_vcf);
         die($self->error_message);
     }
@@ -183,22 +197,18 @@ sub resolve_genotype_microarray_vcf_and_sample {
     my $qc_build = shift;
 
     my $genotype_sample = $qc_build->model->subject;
-    my $genotype_model = $qc_build->model->genotype_microarray;
+    my $microarray_build = $qc_build->genotype_microarray_build;
     
     # get the VCF from an existing genotype microarray build if it exists already
     my $microarray_vcf;
-    if ($genotype_model) {
-        my $genotype_build = $genotype_model->last_succeeded_build;
-        unless ($genotype_build) {
-            $self->warning_message('No succeeded genotype builds found for model: '. $genotype_model->display_name);
-        } else {
-            $microarray_vcf = $genotype_build->original_genotype_vcf_file_path;
-            if (-e $microarray_vcf) {
-                $genotype_sample = $genotype_model->subject;
-            }
+    if ($microarray_build) {
+        $microarray_vcf = $microarray_build->original_genotype_vcf_file_path;
+        if (-e $microarray_vcf) {
+            $genotype_sample = $microarray_build->model->subject;
         }
     }
-    # there is no existing genotype build or the VCF does not exist (ie. old genotype build)
+
+    # there is no existing microarray build or the VCF does not exist (ie. old genotype build)
     unless (-e $microarray_vcf) {
         $self->debug_message('Get or create genotype VCF result for sample: '. $genotype_sample->display_name);
         
@@ -214,12 +224,17 @@ sub resolve_genotype_microarray_vcf_and_sample {
     }
     
     my $sorted_microarray_vcf = Genome::Sys->create_temp_file_path($genotype_sample->name .'_microarray_sorted.vcf');
-    unless (Genome::Model::Tools::Picard::SortVcf->execute(
+    my $sort_cmd = Genome::Model::Tools::Picard::SortVcf->create(
         input_vcf => $microarray_vcf,
         output_vcf => $sorted_microarray_vcf,
         sequence_dictionary => $self->_seqdict,
         use_version => $self->picard_version,
-    )) {
+    );
+    unless ($sort_cmd) {
+        $self->error_message('Failed to create sort VCF command!');
+        die($self->error_message);
+    }
+    unless ($sort_cmd->execute) {
         $self->error_message('Failed to sort genotype microarray VCF: '. $microarray_vcf);
         die($self->error_message);
     }

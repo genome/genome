@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-my $DEFAULT_PICARD_VERSION = '1.122';
+my $DEFAULT_PICARD_VERSION = '1.123';
 
 class Genome::Model::Tools::Picard::SortVcf {
     is  => 'Genome::Model::Tools::Picard',
