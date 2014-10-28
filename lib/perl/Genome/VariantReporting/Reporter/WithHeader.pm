@@ -28,7 +28,6 @@ sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__;
 
-    my @sample_names = eval{$self->sample_names};
     my %available_fields = $self->available_fields_dict();
     for my $header ($self->headers) {
         my $error_desc;
@@ -47,15 +46,6 @@ sub __errors__ {
     }
 
     return @errors;
-}
-
-sub requires_interpreters_classes {
-    my $self = shift;
-    my @interpreters;
-    for my $interpreter_name ($self->requires_interpreters) {
-        push @interpreters, Genome::VariantReporting::Framework::Factory->get_class('interpreters', $interpreter_name);
-    }
-    return @interpreters;
 }
 
 sub initialize {
@@ -96,10 +86,10 @@ sub print_headers {
 sub available_fields_dict {
     my $self = shift;
 
-    my @interpreters = $self->requires_interpreters_classes;
+    my @interpreters = values %{$self->interpreters};
     my %available_fields;
     for my $interpreter (@interpreters) {
-        for my $field ($self->available_fields_for_interpreter($interpreter)) {
+        for my $field ($interpreter->available_fields) {
             if (defined $available_fields{$field}) {
                 die $self->error_message("Fields are not unique. Field: %s, Interpreters: %s and %s",
                     $field, $interpreter->name, $available_fields{$field}->{interpreter});
@@ -113,13 +103,6 @@ sub available_fields_dict {
     return %available_fields;
 }
 Memoize::memoize('available_fields_dict');
-
-sub available_fields_for_interpreter {
-    my $self = shift;
-    my $interpreter = shift;
-
-    return $interpreter->available_fields();
-}
 
 # Default report method
 # Prints the fields in order of the headers.

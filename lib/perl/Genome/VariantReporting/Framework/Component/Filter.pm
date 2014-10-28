@@ -16,10 +16,6 @@ sub filter_entry {
     confess "Abstract method 'filter_entry' must be defined in class '$class'";
 }
 
-sub available_fields {
-    return qw/filter_status/;
-}
-
 sub field_descriptions {
     my $self = shift;
     return (

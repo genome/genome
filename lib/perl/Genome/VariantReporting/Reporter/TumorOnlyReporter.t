@@ -24,6 +24,15 @@ my $data_dir = __FILE__.".d";
 my $reporter = $pkg->create(file_name => 'tumor-only');
 ok($reporter, "Reporter created successfully");
 
+my $position_interpreter = Genome::VariantReporting::Generic::PositionInterpreter->create();
+my $vep_interpreter = Genome::VariantReporting::Suite::Vep::VepInterpreter->create();
+my $rsid_interpreter = Genome::VariantReporting::Generic::RsidInterpreter->create();
+my $caf_interpreter = Genome::VariantReporting::Suite::Joinx::Dbsnp::CafInterpreter->create();
+my $nhlbi_interpreter = Genome::VariantReporting::Suite::Joinx::Nhlbi::MafInterpreter->create();
+my $vaf_interpreter = Genome::VariantReporting::Suite::BamReadcount::VafInterpreter->create();
+my $thousand_interpreter = Genome::VariantReporting::Suite::Joinx::ThousandGenomes::AfInterpreter->create();
+$reporter->add_interpreter_objects($position_interpreter, $vep_interpreter, $rsid_interpreter, $caf_interpreter, $nhlbi_interpreter, $vaf_interpreter, $thousand_interpreter);
+
 my $override = Sub::Override->new('Genome::VariantReporting::Reporter::WithHeader::write_legend_file', sub {return 1});
 
 my $output_dir = Genome::Sys->create_temp_directory();

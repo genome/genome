@@ -61,10 +61,26 @@ sub add_filter_object {
     $self->filters->{$filter->name} = $filter;
 }
 
+sub add_filter_objects {
+    my ($self, @filters) = @_;
+
+    for my $filter (@filters) {
+        $self->add_filter_object($filter);
+    }
+}
+
 sub add_interpreter_object {
     my ($self, $interpreter) = @_;
 
     $self->interpreters->{$interpreter->name} = $interpreter;
+}
+
+sub add_interpreter_objects {
+    my ($self, @interpreters) = @_;
+
+    for my $interpreter (@interpreters) {
+        $self->add_interpreter_object($interpreter);
+    }
 }
 
 1;
