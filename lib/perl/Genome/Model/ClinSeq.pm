@@ -1258,7 +1258,6 @@ sub _resolve_workflow_for_build {
   }
 
   #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
-  my $i = 1;
   if ($build->wgs_build or $build->exome_build){
     while(my ($i, $mq, $bq) = $iterator->()) {
       my $msg = "Run clonality analysis and produce clonality plots using SciClone " . $i;
