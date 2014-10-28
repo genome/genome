@@ -35,7 +35,12 @@ sub headers {
 
 sub _vaf_headers {
     my $self = shift;
-    Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter->available_fields($self->sample_names);
+    Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter::available_fields($self);
+}
+
+sub vaf_fields {
+    my $self = shift;
+    Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter::vaf_fields($self);
 }
 
 1;
