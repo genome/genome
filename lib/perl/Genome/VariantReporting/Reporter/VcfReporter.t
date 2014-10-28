@@ -149,7 +149,7 @@ subtest 'add_final_results subroutine' => sub {
     is($entry->info('ALLFILTERSPASS'), '1,0,0', 'ALLFILTERPASS INFO field added correctly');
 };
 
-subtest 'process_entry subroutine' => sub {
+subtest '_process_entry subroutine' => sub {
     my $reporter = get_test_reporter();
 
     my $output_dir = Genome::Sys->create_temp_directory();
@@ -159,7 +159,7 @@ subtest 'process_entry subroutine' => sub {
     $reporter->header($entry->{'header'});
     $reporter->print_vcf_header;
 
-    $reporter->process_entry(create_entry(), interpretations());
+    $reporter->_process_entry(create_entry(), interpretations());
     $reporter->finalize();
 
     compare_ok(
