@@ -36,10 +36,6 @@ class Genome::Model::ClinSeq::Command::Converge::Base {
               doc => 'minimum base quality of bases in reads to be considered',
               default => '0',
         },
-        outdir => {
-            is => 'FilesystemPath',
-            doc => 'Directory where output files will be written',
-        },
     ],
     doc => 'converge various data types across clinseq inputs'
 };
