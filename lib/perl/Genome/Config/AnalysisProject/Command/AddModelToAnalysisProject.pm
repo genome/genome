@@ -41,7 +41,7 @@ sub help_detail {
     return <<EOS
 This will associate one or more models with an analysis project.  This will fail if a model is already associated with an analysis project.
 
-This command expects a manual configuration to already exist for the model(s) to be added.  If one does not already exist, it can be added using `genome analysis-project add-config-file` with the --store-only option.
+This command expects a manual configuration to already exist for the model(s) to be added.  The available configurations for an analysis-project can be listed with `genome analysis-project show-config`.  If one does not already exist, it can be added using `genome analysis-project add-config-file` with the --store-only option.
 EOS
 }
 
