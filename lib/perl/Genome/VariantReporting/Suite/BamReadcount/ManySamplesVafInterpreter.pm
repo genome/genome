@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::VariantReporting::Suite::BamReadcount::VafInterpreter;
-use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(basic_available_fields basic_field_descriptions);
+use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(basic_available_fields many_samples_field_descriptions);
 
 class Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
@@ -21,22 +21,7 @@ sub requires_annotations {
 
 sub field_descriptions {
     my $self = shift;
-
-    my %field_descriptions;
-    for my $sample_name ($self->sample_names) {
-        my %field_descriptions_for_sample = basic_field_descriptions($sample_name);
-        for my $field (basic_available_fields()) {
-            my $sample_specific_field = $self->create_sample_specific_field_name($field, $sample_name);
-            $field_descriptions{$sample_specific_field} = $field_descriptions_for_sample{$field};
-        }
-    }
-    return %field_descriptions;
-}
-
-sub available_fields {
-    my $self = shift;
-
-    return $self->create_sample_specific_field_names([basic_available_fields()], [$self->sample_names]);
+    return many_samples_field_descriptions([$self->sample_names]);
 }
 
 sub _interpret_entry {
