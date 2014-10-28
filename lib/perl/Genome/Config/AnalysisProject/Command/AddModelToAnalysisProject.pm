@@ -8,14 +8,14 @@ use Genome;
 class Genome::Config::AnalysisProject::Command::AddModelToAnalysisProject {
     is => 'Command::V2',
     has_input => [
-       analysis_project => {
-            is                  => 'Genome::Config::AnalysisProject',
-            doc                 => 'the analysis project to which to add the model(s)',
+       profile_item => {
+            is                  => 'Genome::Config::Profile::Item',
+            doc                 => 'the configuration to which to associate the model(s) to the analysis project',
             shell_args_position => 1,
        },
        models  => {
             is                  => 'Genome::Model',
-            doc                 => 'model(s) to add to this analysis project',
+            doc                 => 'model(s) to add to the analysis project',
             is_many             => 1,
             shell_args_position => 2,
        },
@@ -34,19 +34,21 @@ sub help_brief {
 }
 
 sub help_synopsis {
-    return 'genome config analysis-project add-model-to-analysis-project <analysis-project> <model> [<model> ...]';
+    return 'genome config analysis-project add-model-to-analysis-project <profile-item> <model> [<model> ...]';
 }
 
 sub help_detail {
     return <<EOS
 This will associate one or more models with an analysis project.  This will fail if a model is already associated with an analysis project.
+
+This command expects a manual configuration to already exist for the model(s) to be added.  If one does not already exist, it can be added using `genome analysis-project add-config-file` with the --store-only option.
 EOS
 }
 
 sub execute {
     my $self = shift;
 
-    return unless $self->_verify_analysis_project_status();
+    return unless $self->_verify_config_status();
 
     my @models = $self->models;
     return unless $self->_verify_models_are_assignable(@models);
@@ -60,10 +62,16 @@ sub execute {
     return 1;
 }
 
-sub _verify_analysis_project_status {
+sub _verify_config_status {
     my $self = shift;
 
-    my $analysis_project = $self->analysis_project;
+    my $profile_item = $self->profile_item;
+    if($profile_item->status eq 'active') {
+        $self->error_message('Cannot manually assign a model to an active configuration.');
+        return;
+    }
+
+    my $analysis_project = $profile_item->analysis_project;
     unless($analysis_project->status eq 'In Progress') {
         if($self->allow_projects_not_in_progress) {
             $self->debug_message(
@@ -88,7 +96,7 @@ sub _verify_models_are_assignable {
     my $self = shift;
     my @models = @_;
 
-    my $analysis_project = $self->analysis_project;
+    my $analysis_project = $self->profile_item->analysis_project;
 
     my $all_models_are_assignable = 1;
     for my $model (@models) {
@@ -113,7 +121,8 @@ sub _assign_model {
     my $self = shift;
     my $model = shift;
 
-    my $analysis_project = $self->analysis_project;
+    my $profile_item = $self->profile_item;
+    my $analysis_project = $profile_item->analysis_project;
 
     if($model->analysis_projects) {
         $self->debug_message(
@@ -124,7 +133,7 @@ sub _assign_model {
         return 1;
     }
 
-    $analysis_project->add_model_bridge(model => $model);
+    $analysis_project->add_model_bridge(model => $model, config_profile_item => $profile_item);
     $self->debug_message(
         'Model %s assigned to analysis project %s.',
         $model->id,
