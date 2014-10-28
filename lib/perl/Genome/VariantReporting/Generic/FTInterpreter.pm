@@ -17,10 +17,11 @@ sub requires_annotations {
     ();
 }
 
-sub available_fields {
-    return qw/
-        ft_string
-    /;
+sub field_descriptions {
+    my $self = shift;
+    return (
+        ft_string => sprintf('FT sample field for sample %s', $self->sample_name),
+    );
 }
 
 sub _interpret_entry {

@@ -16,10 +16,10 @@ sub requires_annotations {
     return qw/ /;
 }
 
-sub available_fields {
-    return qw/
-        indel_size
-    /;
+sub field_descriptions {
+    return (
+        indel_size => 'Length of indel',
+    );
 }
 
 sub _interpret_entry {

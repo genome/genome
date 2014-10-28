@@ -17,10 +17,10 @@ sub requires_annotations {
     ();
 }
 
-sub available_fields {
-    return qw/
-        vcf_entry
-    /;
+sub field_descriptions {
+    return (
+        vcf_entry => 'Complete vcf entry object',
+    );
 }
 
 sub _interpret_entry {

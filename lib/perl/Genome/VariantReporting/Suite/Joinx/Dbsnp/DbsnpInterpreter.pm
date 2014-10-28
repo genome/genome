@@ -19,10 +19,10 @@ sub requires_annotations {
     /;
 }
 
-sub available_fields {
-    return qw/
-        allele_frequency
-    /;
+sub field_descriptions {
+    return (
+        allele_frequency => 'Allele frequency from dbsnp CAF field',
+    );
 }
 
 sub _caf_parser {

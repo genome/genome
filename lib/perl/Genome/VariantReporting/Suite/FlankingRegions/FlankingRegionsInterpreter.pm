@@ -16,11 +16,11 @@ sub requires_annotations {
     return ('flanking-regions');
 }
 
-sub available_fields {
-    return qw/
-        reference_fasta
-        alt_fasta
-    /;
+sub field_descriptions {
+    return (
+        reference_fasta => 'Reference allele with flanking region',
+        alt_fasta => 'Alternate allele with flanking region',
+    );
 }
 
 sub interpret_entry {
