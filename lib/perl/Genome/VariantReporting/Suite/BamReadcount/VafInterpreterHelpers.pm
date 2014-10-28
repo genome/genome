@@ -11,6 +11,10 @@ our @EXPORT_OK = qw(
     basic_field_descriptions
     many_samples_available_fields
     many_samples_field_descriptions
+    single_vaf_fields
+    per_library_vaf_fields
+    single_vaf_headers
+    per_library_vaf_headers
 );
 
 sub basic_available_fields {
@@ -18,6 +22,22 @@ sub basic_available_fields {
         vaf
         ref_count
         var_count
+        per_library_var_count
+        per_library_ref_count
+        per_library_vaf
+    );
+}
+
+sub single_vaf_fields {
+    return qw(
+        vaf
+        ref_count
+        var_count
+    );
+}
+
+sub per_library_vaf_fields {
+    return qw(
         per_library_var_count
         per_library_ref_count
         per_library_vaf
@@ -58,6 +78,22 @@ sub many_samples_field_descriptions {
         }
     }
     return %field_descriptions;
+}
+
+sub single_vaf_headers {
+    my $sample_names = shift;
+    return Genome::VariantReporting::Framework::Component::WithManySampleNames->create_sample_specific_field_names(
+        [single_vaf_fields()],
+        $sample_names
+    );
+}
+
+sub per_library_vaf_headers {
+    my $sample_names = shift;
+    return Genome::VariantReporting::Framework::Component::WithManySampleNames->create_sample_specific_field_names(
+        [per_library_vaf_fields()],
+        $sample_names
+    );
 }
 
 1;
