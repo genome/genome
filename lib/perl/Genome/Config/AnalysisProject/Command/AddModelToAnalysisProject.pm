@@ -96,7 +96,10 @@ sub _verify_models_are_assignable {
     my $self = shift;
     my @models = @_;
 
-    my $analysis_project = $self->profile_item->analysis_project;
+    my $profile_item = $self->profile_item;
+    my $analysis_project = $profile_item->analysis_project;
+
+    my $config_text = Genome::Sys->read_file($profile_item->file_path);
 
     my $all_models_are_assignable = 1;
     for my $model (@models) {
@@ -111,6 +114,17 @@ sub _verify_models_are_assignable {
                 );
                 $all_models_are_assignable = 0;
             }
+        }
+
+        my $model_class = $model->class;
+        if(index($config_text, $model_class) < 0) {
+            $self->error_message(
+                'Model %s is not a type of model specified in the configuration profile item %s.  Cannot assign it to %s.',
+                $model->id,
+                $profile_item->id,
+                $analysis_project->id,
+            );
+            $all_models_are_assignable = 0;
         }
     }
 
