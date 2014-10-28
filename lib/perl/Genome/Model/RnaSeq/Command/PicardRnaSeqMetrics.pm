@@ -116,7 +116,7 @@ sub params_for_result {
     );
     if ($self->picard_strand_specificity) {
         $params{picard_strand_specificity} = $self->picard_strand_specificity;
-    } elsif ($build->picard_strand_specificity) {
+    } elsif ($build->model->picard_strand_specificity) {
         $params{picard_strand_specificity} = $build->model->picard_strand_specificity;
     }
     return %params;
