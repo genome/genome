@@ -101,9 +101,16 @@ sub _run_verify_bam_id {
     my $bam_file = $self->_resolve_bam_file;
     my $vcf_file = $self->_resolve_vcf_file;
     my $out_prefix = File::Spec->join($self->temp_staging_directory, "output");
-    return Genome::Model::Tools::VerifyBamId->execute(vcf => $vcf_file,
-                bam => $bam_file, out_prefix => $out_prefix, max_depth => $self->max_depth,
-                precise => $self->precise, version => $self->version);
+    my $cmd = Genome::Model::Tools::VerifyBamId->create(
+        vcf => $vcf_file,
+        bam => $bam_file,
+        out_prefix => $out_prefix,
+        max_depth => $self->max_depth,
+        precise => $self->precise,
+        version => $self->version
+    );
+    return $cmd->execute if $cmd;
+    return;
 }
 
 sub _resolve_bam_file {
@@ -160,7 +167,7 @@ sub _clean_vcf {
             output_file => $on_target_path,
             header => 1,
         );
-        $self->_error("Could not intersect with on target bed") unless $rv;
+        $self->_error("Could not intersect with on target bed") unless $rv && $rv->result;
         $vcf_path = $on_target_path;
     }
 
