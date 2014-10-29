@@ -31,7 +31,6 @@ my $command = Genome::Model::ClinSeq::Command::MakeCircosPlot->create(
     build => $test_build,
     output_directory => $actual_output_dir,
 );
-print $command."\n";
 ok($command->execute, "execution succeeded");
 
 # verify results
