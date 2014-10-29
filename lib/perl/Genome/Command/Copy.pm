@@ -6,7 +6,6 @@ use warnings FATAL => 'all';
 use Genome;
 
 use Carp qw(croak);
-use Genome::Utility::Copy qw();
 use Try::Tiny qw(try catch);
 
 class Genome::Command::Copy {
@@ -42,10 +41,10 @@ sub execute {
     # try was return exception
     my ($copy, $error);
     try {
-        $copy = Genome::Utility::Copy::copy($self->source);
+        $copy = $self->source->copy();
 
         my $copyable_property_names = Set::Scalar->new(
-            map { $_->property_name } Genome::Utility::Copy::copyable_properties($self->source->class),
+            map { $_->property_name } $self->source->copyable_properties(),
         );
 
         for my $change ($self->changes) {
