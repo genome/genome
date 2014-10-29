@@ -17,15 +17,15 @@ class Genome::Model::DifferentialExpression::Command::Cuffcompare {
 
 sub execute {
     my $self = shift;
-    
+
     my $build = $self->build;
     my $model = $build->model;
-    
+
     my $output_directory = $build->transcript_convergence_directory;
     unless (-d $output_directory) {
         Genome::Sys->create_directory($output_directory);
     }
-    
+
     my $reference_fasta_path = $model->reference_sequence_build->full_consensus_path('fa');
 
     my $annotation_gtf_path = $model->annotation_build->annotation_file('gtf',$model->reference_sequence_build->id);
@@ -43,7 +43,7 @@ sub execute {
         }
         $annotation_gtf_path = $tmp_annotation_gtf_path;
     }
-    
+
     my $transcript_convergence_params = eval($model->transcript_convergence_params);
     $transcript_convergence_params->{use_version} = $model->transcript_convergence_version;
     unless ($transcript_convergence_params->{input_gtf_paths}) {
