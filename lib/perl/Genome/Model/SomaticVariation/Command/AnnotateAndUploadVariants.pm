@@ -244,7 +244,8 @@ sub execute{
                     info_fields=>$info_string,
                     info => $info,
                     use_version => $self->joinx_version,
-                ) || die "Failed to execute Joinx Vcf annotation using db: $annotation_vcf";
+                );
+                $vcf_annotator->result || die "Failed to execute Joinx Vcf annotation using db: $annotation_vcf";
                 $self->debug_message("Successfully annotated VCF with information from $annotation_vcf");
             }
             foreach my $annotation_prefix ("snvs.hq.tier1", "snvs.hq.tier2") {
@@ -375,7 +376,7 @@ sub execute{
                 use_version => "2.16.2",
                 null => '-',
             );
-            unless ($rt) {
+            unless ($rt and $rt->result) {
                 $self->error_message("Failed to annotate with bedtools map");
                 return;
             }
@@ -405,7 +406,7 @@ sub execute{
                 start_column => 2,
                 stop_column => 3,
             );
-            unless ($append) {
+            unless ($append and $append->result) {
                 $self->error_message("Append columns failed for ".$in_file);
                 return;
             }
