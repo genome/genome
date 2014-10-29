@@ -90,7 +90,8 @@ sub execute {
         );
         #This is not a software result, yet...
         delete($params{test_name});
-        unless (Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics->execute(%params)) {
+        my $cmd = Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics->create(%params);
+        unless($cmd and $cmd->execute) {
             return;
         }
     }
