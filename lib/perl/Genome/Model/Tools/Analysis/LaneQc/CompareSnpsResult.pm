@@ -8,7 +8,7 @@ use FileHandle;
 use Genome;
 
 class Genome::Model::Tools::Analysis::LaneQc::CompareSnpsResult {
-	is => 'Genome::SoftwareResult::Stageable',
+    is => 'Genome::SoftwareResult::Stageable',
 
     #TODO: Use class pre-processor to sync the result class and the command class
     has_param => [
