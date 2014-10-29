@@ -45,42 +45,42 @@ sub execute {
     my $self = shift;
 
     $self->status_message("Reading from: ".$self->input_vcf."\n");
+
+    my @reporters = $self->create_reporters;
+    $self->initialize_reporters(@reporters);
+
     my $vcf_reader = Genome::File::Vcf::Reader->new($self->input_vcf);
     while (my $entry = $vcf_reader->next) {
-        for my $processor ($self->entry_processors) {
-            $processor->process_entry($entry);
+        for my $reporter (@reporters) {
+            $reporter->process_entry($entry);
         }
     }
 
-    # We initialize the reporter with translations during
-    # entry_processors, so we need to finalize the same object with
-    # translation (or certain parameters that were attached during
-    # initialization won't exist on the object)
-    for my $reporter_plan ($self->plan->reporter_plans) {
-        $reporter_plan->object($self->translations)->finalize();
-    }
+    $self->finalize_reporters(@reporters);
     return 1;
 }
 
-sub entry_processors {
+sub create_reporters {
     my $self = shift;
 
-    my @entry_processors;
+    my @reporters;
     for my $reporter_plan ($self->plan->reporter_plans) {
-        my $reporter = $reporter_plan->object($self->translations);
-
-        # We initialize an object with translations here. If we ever change
-        # that, we need to change which object gets finalized during execute
-        $reporter->initialize($self->output_directory);
-
-        push @entry_processors, Genome::VariantReporting::Framework::EntryProcessor->create(
-            reporter => $reporter,
-            filters => [values %{$reporter->filters}],
-            interpreters => [values %{$reporter->interpreters}],
-        );
+        push @reporters, $reporter_plan->object($self->translations);
     }
-    return @entry_processors;
+
+    return @reporters;
 }
-Memoize::memoize('entry_processors');
+
+sub initialize_reporters {
+    my $self = shift;
+    map {$_->initialize($self->output_directory)} @_;
+    return;
+}
+
+sub finalize_reporters {
+    my $self = shift;
+    map {$_->finalize()} @_;
+    return;
+}
 
 1;
