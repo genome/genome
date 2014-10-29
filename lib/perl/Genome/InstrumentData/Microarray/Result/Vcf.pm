@@ -42,7 +42,7 @@ sub create {
         $params->{filters} = [$self->filters];
     }
     my $rv = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->execute(%{$params});
-    unless ($rv and -s $vcf) {
+    unless ($rv and $rv->result and -s $vcf) {
         $self->_error("Could not get vcf file for ".Data::Dumper::Dumper($params));
     }
 
