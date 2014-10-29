@@ -217,7 +217,7 @@ sub execute {
             ),
             to => $me,
         );
-        unless ($r) {
+        unless ($r and $r->result) {
             $self->error_message("Failed to send email!");
         }
     }
