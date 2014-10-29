@@ -42,12 +42,12 @@ sub execute {
 
 
     my $instrument_data = $self->instrument_data;
-    
+
     my $quality_format;
     my @fastq_filenames;
-    
+
     my $quality_converter = $instrument_data->resolve_quality_converter;
-    
+
     if($quality_converter eq 'sol2sanger') {
         $quality_format = 'Solexa';
         @fastq_filenames = $instrument_data->dump_solexa_fastq_files;
@@ -58,7 +58,7 @@ sub execute {
         $quality_format = 'Sanger';
         @fastq_filenames = $instrument_data->dump_sanger_fastq_files;
     }
-    
+
     #my @fastq_filenames = $instrument_data->fastq_filenames;
     my $tmp_bam = Genome::Sys->base_temp_directory .'/'. $instrument_data->id .'.bam';
     unless (Genome::Model::Tools::Picard::FastqToSam->execute(
