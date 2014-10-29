@@ -179,3 +179,4 @@ sub aligner_params_required_for_index {
     return 1;
 }
 
+1;
