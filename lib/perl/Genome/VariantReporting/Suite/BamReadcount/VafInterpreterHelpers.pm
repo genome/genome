@@ -18,14 +18,7 @@ our @EXPORT_OK = qw(
 );
 
 sub basic_available_fields {
-    return qw(
-        vaf
-        ref_count
-        var_count
-        per_library_var_count
-        per_library_ref_count
-        per_library_vaf
-    );
+    return single_vaf_fields(), per_library_vaf_fields();
 }
 
 sub single_vaf_fields {
