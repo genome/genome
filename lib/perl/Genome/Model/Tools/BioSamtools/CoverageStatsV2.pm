@@ -104,14 +104,16 @@ sub execute {
                 output_file => $tmp_slop_bed_file,
                 both => $wingspan,
             );
-            unless (Genome::Model::Tools::BedTools::Slop->execute(%slop_bed_params)) {
+            my $slop_cmd = Genome::Model::Tools::BedTools::Slop->create(%slop_bed_params);
+            unless ($slop_cmd and $slop_cmd->execute) {
                 die('Failed to run SlopBed with params : '. Data::Dumper::Dumper(%slop_bed_params));
             }
-            unless (Genome::Model::Tools::BedTools::Merge->execute(
+            my $merge_cmd = Genome::Model::Tools::BedTools::Merge->create(
                 input_file => $tmp_slop_bed_file,
                 output_file => $wingspan_bed_file,
                 report_names => 1,
-            )) {
+            );
+            unless ($merge_cmd and $merge_cmd->execute) {
                 die('Failed to run MergeBed after wingspan slop added!');
             }
         } else {
