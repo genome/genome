@@ -27,10 +27,11 @@ sub execute {
     unless (-d $output_dir) {
         Genome::Sys->create_directory($output_dir);
     }
-    unless (Genome::Model::Tools::Cufflinks::Cummerbund->execute(
+    my $cmd = Genome::Model::Tools::Cufflinks::Cummerbund->execute(
         cuffdiff_directory => $self->build->differential_expression_directory,
         pdf_report_file => $self->build->summary_report_pdf_file,
-    )) {
+    );
+    unless ($cmd and $cmd->result) {
         $self->error_message('Failed to run cummerbund!');
         return;
     }
