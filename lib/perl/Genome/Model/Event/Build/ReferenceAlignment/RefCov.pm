@@ -199,12 +199,13 @@ sub execute {
 
     my @progression_instrument_data_ids = $self->sorted_instrument_data_ids;
     unless (-s $self->build->coverage_progression_file) {
-        unless (Genome::Model::Tools::BioSamtools::Progression->execute(
+        my $progression_cmd = Genome::Model::Tools::BioSamtools::Progression->execute(
             stats_files => \@progression_stats_files,
             instrument_data_ids => \@progression_instrument_data_ids,
             sample_name => $self->model->subject_name,
             output_file => $self->build->coverage_progression_file,
-        ) ) {
+        );
+        unless ($progression_cmd and $progression_cmd->result) {
             $self->error_message('Failed to execute the progression for progressions:  '. join("\n",@progression_stats_files));
             die($self->error_message);
         }
