@@ -153,13 +153,13 @@ sub execute {
                 $params{regulome_db_file} = $rdb_file;
             }
 
-            my $rv = Genome::Model::MutationalSignificance::Command::MergeAnnotations->execute(
+            my $merge_cmd = Genome::Model::MutationalSignificance::Command::MergeAnnotations->execute(
                 %params
             );
            
-            unless ($rv) {
+            unless ($merge_cmd->result) {
                 $self->error_message("Failed to merge annotations for tier $tier");
-                return $rv;
+                return $merge_cmd->result;
             }
         }
 
