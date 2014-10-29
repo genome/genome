@@ -88,7 +88,7 @@ sub execute {
     }
 
     my ($bed_basename,$bed_dirname,$bed_suffix) = File::Basename::fileparse($self->bed_file,qw/\.bed/);
-    
+
     my @wingspans = split(',',$self->wingspan_values);
     my @bed_files;
     for my $wingspan (@wingspans) {
@@ -121,7 +121,7 @@ sub execute {
         }
         push @bed_files, $wingspan_bed_file;
     }
-    
+
     my $module_path = $self->__meta__->module_path;
     my $xml_path = $module_path;
     $xml_path =~ s/\.pm/\.xml/;
@@ -183,7 +183,7 @@ sub setup_workflow_operation {
     my $input_properties = delete($params{'input_properties'});
     my $output_properties = delete($params{'output_properties'});
     my $parallel_by = delete($params{'parallel_by'});
-    
+
     my $input_connector = $workflow->get_input_connector;
     my $output_connector = $workflow->get_output_connector;
 
