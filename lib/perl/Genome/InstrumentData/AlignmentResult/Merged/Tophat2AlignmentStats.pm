@@ -101,7 +101,7 @@ sub _generate_metrics {
             metric_value => $metrics_hash_ref->{$metric_name},
         );
     }
-    
+
     return 1;
 }
 
