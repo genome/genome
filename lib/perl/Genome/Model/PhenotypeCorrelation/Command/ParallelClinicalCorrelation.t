@@ -76,10 +76,10 @@ my %orig_params = (
     categorical_clinical_data_file => $categorical_clinical_data_file,
 );
 
-my $orig_result = Genome::Model::Tools::Music::ClinicalCorrelation->execute(
+my $orig_cmd = Genome::Model::Tools::Music::ClinicalCorrelation->execute(
     %orig_params
 );
-ok($orig_result, "Ran non-parallel clinical correlation");
+ok($orig_cmd->result, "Ran non-parallel clinical correlation");
 my $diff = Genome::Sys->diff_file_vs_file($glm_output_file, $orig_glm_output_file);
 ok(!$diff, 'Parallel method got same glm result as original method')
     or diag("diff results:\n" . $diff);
