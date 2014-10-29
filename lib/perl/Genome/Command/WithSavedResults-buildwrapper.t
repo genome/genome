@@ -80,11 +80,11 @@ Genome::TestCommand->dump_status_messages(0);
 Genome::TestCommand::BuildStepWrapper->dump_status_messages(0);
 Genome::SoftwareResult::Stageable->dump_status_messages(0);
 my $wrapper_result1 = Genome::TestCommand::BuildStepWrapper->execute(
-    p1 => "P1", 
-    i1 => "I1", 
+    p1 => "P1",
+    i1 => "I1",
     output_dir => $dir2,
-    wrapper_build => $build, 
-    wrapper_build_label => "test_label", 
+    wrapper_build => $build,
+    wrapper_build_label => "test_label",
     result_version => 1,
 );
 ok($wrapper_result1->result, 'wrapper executed');
@@ -113,11 +113,11 @@ $build->data_directory($dir3);
 my $dir4 = Genome::Sys->create_temp_directory();
 
 my $wrapper_result2 = Genome::TestCommand::BuildStepWrapper->execute(
-    p1 => "P1", 
-    i1 => "I1", 
+    p1 => "P1",
+    i1 => "I1",
     output_dir => $dir4,
-    wrapper_build => $build, 
-    wrapper_build_label => "test_label", 
+    wrapper_build => $build,
+    wrapper_build_label => "test_label",
     result_version => 1,
 );
 ok($wrapper_result2->result, 'wrapper executed a second time');
