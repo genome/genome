@@ -22,7 +22,7 @@ class Genome::Model::DifferentialExpression::Command::Cuffdiff {
 
 sub execute {
     my $self = shift;
-    
+
     my $build = $self->build;
     my $model = $build->model;
 
