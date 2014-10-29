@@ -63,7 +63,7 @@ sub execute {
         die('Something BAD!');
     }
     my $input_fasta_file = $reference_sequence_build->full_consensus_path('fa');
-    unless (Genome::Model::Tools::RefCov::BuildReferenceFromRoi->execute(
+    my $cmd = Genome::Model::Tools::RefCov::BuildReferenceFromRoi->execute(
         bed_file => $bed_file,
         stitch_level => $self->merge_level,
         junctions_bed_file => $self->junctions_bed_file,
@@ -71,7 +71,8 @@ sub execute {
         input_fasta_file => $input_fasta_file,
         # The input BED file should serve as the coordinates of exons
         # coordinates => 1,
-    )) {
+    );
+    unless ($cmd and $cmd->result) {
         die('Failed to generate new FASTA!');
     }
     return 1;
