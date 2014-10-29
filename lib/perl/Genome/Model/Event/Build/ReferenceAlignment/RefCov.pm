@@ -37,7 +37,7 @@ sub sorted_instrument_data_ids {
     my @ids;
     my @sorted_instrument_data = $self->sorted_instrument_data;
     my $build = $self->build;
-    
+
     for my $instrument_data (@sorted_instrument_data) {
         my @alignments = $build->alignment_results_for_instrument_data($instrument_data);
         unless (@alignments) {
@@ -144,7 +144,7 @@ sub execute {
                 'target_query_file' => $self->build->transcript_bed_file,
             );
         }
-        #check workflow for errors 
+        #check workflow for errors
         if (!defined $output) {
             foreach my $error (@Workflow::Simple::ERROR) {
                 $self->error_message($error->error);
@@ -156,7 +156,7 @@ sub execute {
             for (my $i = 0; $i < scalar(@$results); $i++) {
                 my $rv = $results->[$i];
                 if ($rv != 1) {
-                    $self->error_message("Workflow had an error while running progression instance: ". $result_instances->[$i]); 
+                    $self->error_message("Workflow had an error while running progression instance: ". $result_instances->[$i]);
                     die($self->error_message);
                 }
             }
