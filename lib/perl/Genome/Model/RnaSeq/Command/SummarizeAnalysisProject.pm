@@ -97,7 +97,7 @@ sub execute {
     }
 
     my @naming_headers = ($self->model_identifier,'model_id','build_id');
-    
+
     # TODO: Summarize Chimerascan Results
     my $model_identifier_method = $self->model_identifier;
     my $naming_key_tsv_file = $base_file_path .'-naming_key.tsv';
