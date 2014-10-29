@@ -18,7 +18,7 @@ my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath-
     working_directory => $tmp_dir,
     source_path => $source_path,
 );
-ok($cmd, 'execute');
+ok($cmd->result, 'execute');
 my $destination_path = $cmd->destination_path;
 is($destination_path, $tmp_dir.'/input.bam', 'destination path named correctly');
 ok(-s $destination_path, 'destination path exists');

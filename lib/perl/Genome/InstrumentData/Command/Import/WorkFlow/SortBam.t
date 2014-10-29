@@ -29,7 +29,7 @@ ok(-s $bam_path.'.flagstat', 'linked unsorted bam flagstat path');
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::SortBam->execute(
     bam_path => $bam_path,
 );
-ok($cmd, 'execute');
+ok($cmd->result, 'execute');
 my $output_bam_path = $cmd->output_bam_path;
 my $sorted_bam_base_name = 'input.clean.sorted.bam';
 is($output_bam_path, $tmp_dir.'/'.$sorted_bam_base_name, 'sorted bam path named correctly');
