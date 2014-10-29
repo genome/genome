@@ -5,6 +5,10 @@ use warnings FATAL => 'all';
 
 use Genome;
 
+use Carp qw(croak);
+use Genome::Utility::Copy qw();
+use Try::Tiny qw(try catch);
+
 class Genome::Command::Copy {
     is => 'Command::V2',
     is_abstract => 1,
@@ -33,49 +37,64 @@ sub help_detail {
 sub execute {
     my $self = shift;
 
-    my $source_type = $self->source->__meta__;
-    my @copyable_properties = grep { !$_->is_delegated && !$_->is_id } $source_type->properties;
-    my %params = map {
-        my $name = $_->property_name;
-        my $value = $self->source->$name;
-        defined $value ? ($name => $value) : ();
-    } @copyable_properties;
+    my $tx = UR::Context::Transaction->begin();
 
-    for my $change ($self->changes) {
-        my ($key, $op, $value) = $change =~ /^(.+?)(=|\+=|\-=|\.=)(.*)$/;
-        unless ($key && $op) {
-            $self->error_message("invalid change: $change");
-            return;
-        }
+    # try was return exception
+    my ($copy, $error);
+    try {
+        $copy = Genome::Utility::Copy::copy($self->source);
 
-        if ($value eq 'undef') {
-            $value = undef;
-        }
+        my $copyable_property_names = Set::Scalar->new(
+            map { $_->property_name } Genome::Utility::Copy::copyable_properties($self->source->class),
+        );
 
-        my $property = grep { $_->property_name eq $key } @copyable_properties;
+        for my $change ($self->changes) {
+            my ($key, $op, $value) = $change =~ /^(.+?)(=|\+=|\-=|\.=)(.*)$/;
+            unless ($key && $op) {
+                $self->error_message("invalid change: $change");
+                return;
+            }
 
-        unless ($property) {
-            $self->error_message("unrecognized property: $key");
-            return;
-        }
+            unless ($copyable_property_names->has($key)) {
+                croak "uncopyable property: $key";
+            }
 
-        if ($op eq '=') {
-            $params{$key} = $value;
-        }
-        elsif ($op eq '+=') {
-            $params{$key} += $value;
-        }
-        elsif ($op eq '-=') {
-            $params{$key} -= $value;
-        }
-        elsif ($op eq '.=') {
-            $params{$key} .= $value;
+            if ($value eq 'undef') {
+                $value = undef;
+            }
+
+            if ($op eq '=') {
+                $copy->$key($value);
+            }
+            elsif ($op eq '+=') {
+                $copy->$key($copy->$key + $value);
+            }
+            elsif ($op eq '-=') {
+                $copy->$key($copy->$key - $value);
+            }
+            elsif ($op eq '.=') {
+                $copy->$key($copy->$key . $value);
+            }
         }
     }
+    catch {
+        $tx->rollback();
+        $error = $_;
+        undef $copy;
+    };
 
-    my $source_class = $source_type->class_name;
-    my $copy = $source_class->create(%params);
-    $self->status_message('Created new %s with ID %s', $source_class, $copy->id);
-
-    return 1;
+    if ($copy && $tx->commit) {
+        $self->status_message('Created new %s with ID %s', $copy->class, $copy->id);
+        return 1;
+    }
+    else {
+        unless ($error) {
+            $error = 'unknown error';
+        }
+        if ($tx->isa('UR::Context::Transaction')) {
+            $tx->rollback();
+        }
+        $self->error_message('Failed to create new %s: %s', $self->source->class, $error);
+        return;
+    }
 }

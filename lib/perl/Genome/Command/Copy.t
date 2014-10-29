@@ -3,7 +3,6 @@ use warnings;
 
 use Test::More tests => 4;
 use Test::Deep qw(cmp_bag);
-use Test::Fatal qw(exception);
 
 use Genome;
 
@@ -45,17 +44,17 @@ UR::Object::Type->define(
 my $lakers = Sports::Team->create(name => 'Lakers');
 my $mj = Sports::Player->create(team_id => $lakers->id, name => 'Magic Johnson');
 
-my $ex = exception {
-    Sports::Team::Command::Copy->execute(
+{
+    my $cmd = Sports::Team::Command::Copy->create(
         source => $lakers,
         changes => ['name+=II'],
     );
+    ok(!$cmd->execute, 'command failed when trying to += Text');
 };
-ok($ex, 'threw an exception when trying to += Text');
 
 
 Sports::Team::Command::Copy->dump_status_messages(0);
-my $rv = Sports::Team::Command::Copy->execute(
+Sports::Team::Command::Copy->execute(
     source => $lakers,
     changes => ['name.=II'],
 );
