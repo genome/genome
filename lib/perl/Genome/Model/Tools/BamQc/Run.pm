@@ -165,13 +165,14 @@ sub execute {
         } 
         else {
             # TODO: test if BAM file is sorted before indexing
-            unless (Genome::Model::Tools::Picard::BuildBamIndex->execute(
+            my $index_cmd = Genome::Model::Tools::Picard::BuildBamIndex->create(
                 use_version            => $self->picard_version,
                 maximum_permgen_memory => $self->picard_maximum_permgen_memory,
                 maximum_memory         => $self->picard_maximum_memory,
                 input_file             => $bam_path,
                 output_file            => $bai_path,
-            )) {
+            );
+            unless ($index_cmd->execute) {
                 die('Failed to index BAM file: '. $bam_path);
             }
         }
