@@ -179,21 +179,21 @@ sub execute {
         $gene_file->close;
 
         my $sorted_gene_bed = Genome::Sys->create_temp_file_path;
-        my $sort_rv = Genome::Model::Tools::Joinx::Sort->execute(
+        my $sort_cmd = Genome::Model::Tools::Joinx::Sort->execute(
             input_files => [$gene_file_path],
             unique => 1,
             output_file => $sorted_gene_bed,
         );
-        unless ($sort_rv) {
+        unless ($sort_cmd and $sort_cmd->result) {
             $self->error_message("Joinx sort failed");
             return;
         }
 
-        my $merge_rv = Genome::Model::Tools::BedTools::Merge->execute(
+        my $merge_cmd = Genome::Model::Tools::BedTools::Merge->execute(
             input_file => $sorted_gene_bed,
             output_file => $genes_to_include_bed_file,
         );
-        unless ($merge_rv) {
+        unless ($merge_cmd and $merge_cmd->result) {
             $self->error_message("MergeBed failed");
             return;
         }
@@ -313,7 +313,7 @@ sub execute {
             include_y_chrom_sites => $self->include_y_chrom_sites,
             reference => $self->reference_sequence_build->name,
         );
-        unless($nimblegen_design) {
+        unless($nimblegen_design and $nimblegen_design->result) {
             $self->error_message("Failed to generate nimblegen design");
             return;
         };
@@ -327,12 +327,12 @@ sub _filtered_file_based_on_variant_black_list {
     if ($self->variant_black_lists) {
         foreach my $variant_black_list ($self->variant_black_lists) {
             $filtered_file = Genome::Sys->create_temp_file_path;
-            my $rv = Genome::Model::Tools::Joinx::Intersect->execute(
+            my $intersect_cmd = Genome::Model::Tools::Joinx::Intersect->execute(
                 input_file_a => $file_name,
                 input_file_b => $variant_black_list->file_path,
                 miss_a_file => $filtered_file,
             );
-            unless ($rv) {
+            unless ($intersect_cmd and $intersect_cmd->result) {
                 $self->error_message("Failed to filter black listed variants");
                 return;
             }
