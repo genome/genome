@@ -65,7 +65,7 @@ my $feature_list_2;
 ok($feature_list_2, 'created another feature list');
 isa_ok($feature_list_2, 'Genome::FeatureList');
 
-my $fail_change_format_2; 
+my $fail_change_format_2;
 eval {
     $fail_change_format_2 = Genome::FeatureList::Command::ChangeFormat->execute(
         feature_list => $feature_list_2,
