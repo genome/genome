@@ -255,7 +255,7 @@ sub execute{
                 $vcf_file = $vcf_file.".annotated.vcf.gz";
                 $vcf_file =~ s/vcf.gz.//;
                 $self->debug_message("Adding rsid column for $annotation_prefix from vcf file ".$vcf_file);
-                my $rv = Genome::Model::Tools::Annotate::AddRsid->execute(
+                Genome::Model::Tools::Annotate::AddRsid->execute(
                     anno_file => $annotation_top_file,
                     vcf_file => $vcf_file,
                     output_file => $build->data_set_path("effects/$annotation_prefix.rsid", $annotation_output_version, "annotated.top"),
@@ -414,7 +414,7 @@ sub execute{
     }
     if ($self->get_regulome_db) {
         my $rdb_file = $build->data_set_path("effects/snvs.hq.regulomedb", 1, "full");
-        my $rdb_rv = Genome::Model::Tools::RegulomeDb::GetAnnotationsForVariants->execute(
+        Genome::Model::Tools::RegulomeDb::GetAnnotationsForVariants->execute(
             variant_list => $build->data_set_path("variants/snvs.hq", 2, "bed"),
             output_file => $rdb_file,
             format => "full",
