@@ -123,7 +123,7 @@ sub execute {
 
                 #filter
                 my $filtered_out_zero_based = Genome::Sys->create_temp_file_path;
-                my $rv = Genome::Model::Tools::RegulomeDb::ModifyRoisBasedOnScore->execute(
+                Genome::Model::Tools::RegulomeDb::ModifyRoisBasedOnScore->execute(
                     roi_list => $zero_based,
                     scored_regions => $self->regulome_bed->file_path,
                     output_file => $filtered_out_zero_based,
@@ -178,7 +178,7 @@ sub create_new_feature_list {
     my $format = shift;
     my @files = @_;
     my $sorted_out = Genome::Sys->create_temp_file_path;
-    my $rv = Genome::Model::Tools::Joinx::Sort->execute(
+    Genome::Model::Tools::Joinx::Sort->execute(
         input_files => [@files],
         unique => 1,
         output_file => $sorted_out,
