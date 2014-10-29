@@ -391,9 +391,11 @@ sub dump_sanger_fastq_files {
         if ($self->resolve_quality_converter eq 'sol2sanger') {
             $converted_fastq_pathname = $requested_directory . '/' . $self->id . '-sanger-fastq-'. $counter . ".fastq";
             $self->debug_message("Applying sol2sanger quality conversion.  Converting to $converted_fastq_pathname");
-            unless (Genome::Model::Tools::Fastq::Sol2sanger->execute(
-                                                                    fastq_file => $illumina_fastq_pathname,
-                                                                    sanger_fastq_file => $converted_fastq_pathname)) {
+            my $sol2sanger_cmd = Genome::Model::Tools::Fastq::Sol2sanger->execute(
+                fastq_file => $illumina_fastq_pathname,
+                sanger_fastq_file => $converted_fastq_pathname
+            );
+            unless ($sol2sanger_cmd and $sol2sanger_cmd->result) {
                 $self->error_message('Failed to execute sol2sanger quality conversion $illumina_fastq_pathname $converted_fastq_pathname.');
                 die($self->error_message);
             }
@@ -401,8 +403,11 @@ sub dump_sanger_fastq_files {
             $converted_fastq_pathname = $requested_directory . '/' . $self->id . '-sanger-fastq-'. $counter . ".fastq";
             $self->debug_message("Applying sol2phred quality conversion.  Converting to $converted_fastq_pathname");
 
-            unless (Genome::Model::Tools::Fastq::Sol2phred->execute(fastq_file => $illumina_fastq_pathname,
-                                                                    phred_fastq_file => $converted_fastq_pathname)) {
+            my $sol2phred_cmd = Genome::Model::Tools::Fastq::Sol2phred->execute(
+                fastq_file => $illumina_fastq_pathname,
+                phred_fastq_file => $converted_fastq_pathname
+            );
+            unless ($sol2phred_cmd and $sol2phred_cmd->result) {
                 $self->error_message('Failed to execute sol2phred quality conversion.');
                 die($self->error_message);
             }
@@ -642,7 +647,7 @@ sub dump_trimmed_fastq_files {
                     input => $input_fastq_pathname,
                     output => $trimmed_input_fastq_pathname,
                 );
-                unless ($trim) {
+                unless ($trim and $trim->result) {
                     die('Failed to trim reads using test_trim_and_random_subset');
                 }
                 my $random_input_fastq_pathname = $data_directory . '/random-sanger-fastq-' . $counter;
