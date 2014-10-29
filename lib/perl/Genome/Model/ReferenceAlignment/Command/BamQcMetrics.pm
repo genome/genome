@@ -72,12 +72,13 @@ sub execute {
         $self->warning_message('No BamQc output found for instrument data. Unable to run SummarizeAsText on BamQC output for build: '. $self->build_id);
         return 0;
     }
-    unless (Genome::Model::Tools::BamQc::SummarizeAsText->execute(
+    my $summarize_cmd = Genome::Model::Tools::BamQc::SummarizeAsText->execute(
         labels => join(',',@labels),
         directories => join(',',@directories),
         output_basename => $output_basename,
         labels_are_instrument_data_ids => 1,
-    )) {
+    );
+    unless ($summarize_cmd and $summarize_cmd->result) {
         die $self->error_message('Failed to run SummarizeAsText on BamQc output for build: '. $self->build_id);
     }
 
