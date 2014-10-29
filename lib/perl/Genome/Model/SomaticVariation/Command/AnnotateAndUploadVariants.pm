@@ -54,7 +54,7 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
             is_optional => 1,
             doc => "Version of joinx to use, will be resolved to the latest default if not specified",
         },
-        lsf_resource => { 
+        lsf_resource => {
             is => 'Text',
             default => "-R 'rusage[mem=16000]' -M 16000000",
         },
@@ -74,12 +74,12 @@ sub execute{
 
     my $version = 2;
     #my $version = GMT:BED:CONVERT::version();  TODO, something like this instead of hardcoding
-    
+
     my %files;
     my %vcf_files;
 
     my ($tier1_snvs, $tier2_snvs, $tier3_snvs, $tier4_snvs, $tier1_indels, $tier2_indels, $tier3_indels, $tier4_indels);
-    
+
     if ($build->snv_detection_strategy){
         $tier1_snvs = $build->data_set_path("effects/snvs.hq.novel.tier1",$version,'bed');
         unless(-e $tier1_snvs){
@@ -163,7 +163,7 @@ sub execute{
         my $uploaded_file = $build->data_set_path("effects/$key", $upload_output_version, "uploaded");
 
         $annotation_params{variant_bed_file} = $variant_file;
-        
+
         if (-s $variant_file){
 
             # Run annotation twice, once for the "none" annotation filter and once for the "top" annotation filter
@@ -175,7 +175,7 @@ sub execute{
                 if ($annotation_filter eq "none") {
                     $final_output_file = $annotated_file;
                     $annotation_params{output_file} = $final_output_file.".non-dedup";
-                } 
+                }
                 else {
                     $final_output_file = "$annotated_file.$annotation_filter";
                     $annotation_params{output_file} = "$final_output_file.non-dedup";
@@ -210,7 +210,7 @@ sub execute{
                 $output->close;
                 my $rm_cmd = "rm -f ".$annotation_params{output_file};
                 `$rm_cmd`;
-                
+
                 #Make a version of the annotation file without a header
                 `mv $final_output_file $final_output_file.header`;
                 `grep -v "^chromosome_name" $final_output_file.header > $final_output_file`;
@@ -226,7 +226,7 @@ sub execute{
 
     #Annotate vcfs with dbsnp ids
     $self->debug_message("Adding dbsnp ids to vcf");
-    
+
     if ($build->previously_discovered_variations_build) {
         my $annotation_vcf = $build->previously_discovered_variations_build->snvs_vcf;
         if ($annotation_vcf && -e $annotation_vcf) {
@@ -266,12 +266,12 @@ sub execute{
             $self->warning_message("No snvs vcf available for previously_discovered_variations_build");
         }
     }
-    
+
     #Annotate SVs. Need to handle mouse vs human and human 36 vs 37
     $self->debug_message("Executing sv annotation");
 
     my $species_name = $build->subject->species_name;
-    
+
     if ($build->sv_detection_strategy) {
         my $sv_sr  = final_result_for_variant_type([$build->results], 'sv');
         if ($sv_sr) {
@@ -300,9 +300,9 @@ sub execute{
                             bpB_column        => 5,
                             event_type_column => 7,
                             orient_column     => 8,
-                            score_column      => 12,  
+                            score_column      => 12,
                         );
-                        
+
                         my $ref_seq_build = $build->reference_sequence_build;
                         if ($species_name eq 'human') {
                             my $annot_file = $self->_get_human_sv_annot_file();
@@ -330,7 +330,7 @@ sub execute{
 
                         if (%params) {
                             my $sv_annot = Genome::Model::Tools::Annotate::Sv::Combine->create(%params);
-                            my $rv = $sv_annot->execute;    
+                            my $rv = $sv_annot->execute;
                             $self->warning_message("sv annotation did not finish ok") unless $rv == 1;
                         }
                     }
@@ -383,7 +383,7 @@ sub execute{
             $header .= "\t$base_name";
             $input_file = $output_file;
         }
-        
+
         my $cmd = "echo \"$header\" > $final_name; cat ".$build->data_directory."/effects/snvs.hq.$count.bed >> $final_name";
         $self->debug_message("Running command $cmd");
         `$cmd`;
@@ -459,10 +459,10 @@ sub execute{
         }
 
         if($build->sv_detection_strategy) {
-            chomp($number_of_svs = `wc -l $svs | cut -f 1 -d' '`); 
+            chomp($number_of_svs = `wc -l $svs | cut -f 1 -d' '`);
             $build->set_metric("sv_count", $number_of_svs);
         }
-    }; 
+    };
     $self->debug_message("Metric setting problem: $@") if $@;
 
     return 1;
@@ -487,10 +487,10 @@ sub _get_db_version {
         elsif ($version =~ /37/) {
             $type = "build37";
         }
-    } 
+    }
     if ($ref_seq_build->id == 109104543) {
         $type = "build36";
-    }   
+    }
     return $type;
 }
 
