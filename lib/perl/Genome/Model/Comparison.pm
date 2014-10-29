@@ -129,7 +129,7 @@ sub _execute_build {
 
     unless ($to_group) {
         my @changes = $build->changes;
-        my $copy_result = Genome::ModelGroup::Command::Copy->execute(
+        Genome::ModelGroup::Command::Copy->execute(
             from => $from_group,
             to => $to_group_name,
             changes => \@changes,
