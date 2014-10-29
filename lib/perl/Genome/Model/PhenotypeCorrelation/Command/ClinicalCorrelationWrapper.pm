@@ -85,10 +85,10 @@ sub execute {
     $self->status_message("Preparing to run clinical correlation with params:");
     $self->status_message(Dumper(\%params));
 
-    my $result = Genome::Model::Tools::Music::ClinicalCorrelation->execute(
+    my $command = Genome::Model::Tools::Music::ClinicalCorrelation->create(
         %params
     );
-    confess "Clinical correlation failed for $variant_matrix!" unless $result;
+    confess "Clinical correlation failed for $variant_matrix!" unless $command->execute;
     $self->status_message("Output files:\n\t" . join("\n\t", glob("$output_file*")));
 
     return 1;
