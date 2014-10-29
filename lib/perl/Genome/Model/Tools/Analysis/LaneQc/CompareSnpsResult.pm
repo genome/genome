@@ -1,17 +1,5 @@
 package Genome::Model::Tools::Analysis::LaneQc::CompareSnpsResult;
 
-#####################################################################################################################################
-# SearchRuns - Search the database for runs
-#
-#	AUTHOR:		Dan Koboldt (dkoboldt@watson.wustl.edu)
-#
-#	CREATED:	04/01/2009 by D.K.
-#	MODIFIED:	04/01/2009 by D.K.
-#
-#	NOTES:
-#
-#####################################################################################################################################
-
 use strict;
 use warnings;
 
