@@ -97,10 +97,11 @@ sub execute {
         for my $stats_output_file (@squashed_output_files, @output_files) {
             my ($basename,$dirname,$suffix) = File::Basename::fileparse($stats_output_file,qw/\.tsv/);
             my $summary_output_file = $dirname . $basename .'.txt';
-            unless (Genome::Model::Tools::BioSamtools::StatsSummary->execute(
+            my $summary_cmd = Genome::Model::Tools::BioSamtools::StatsSummary->execute(
                 stats_file => $stats_output_file,
                 output_file => $summary_output_file,
-            )) {
+            );
+            unless ($summary_cmd and $summary_cmd->result) {
                 die('Failed to generate stats sumamry for stats file: '. $stats_output_file);
             }
         }
