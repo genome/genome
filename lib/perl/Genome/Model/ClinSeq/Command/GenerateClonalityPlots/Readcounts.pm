@@ -72,7 +72,7 @@ sub execute {
         my $temp_readcount_file = Genome::Sys->create_temp_file_path();
         my ($type,$bam) = split /:/,$bam;
 
-        my $rv = Genome::Model::Tools::Sam::Readcount->execute(
+        Genome::Model::Tools::Sam::Readcount->execute(
             bam_file => $bam,
             minimum_mapping_quality => 1,
             output_file => $temp_readcount_file,
