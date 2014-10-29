@@ -17,8 +17,12 @@ my %HARD_CODED_PROTOCOLS = (
                                                      description => "Automatic and manual filtering and curation of variants"},
     "nucleic acid sequencing"                    => {name => "genome.wustl.edu:DNA_sequencing:Illumina:01", 
                                                      description => "Illumina sequencing by synthesis"},
+    "imported nucleic acid sequencing"           => {name => "genome.wustl.edu:DNA_sequencing:Imported:01", 
+                                                     description => "Imported data"},
     "library preparation"                        => {name => "genome.wustl.edu:library_preparation:IlluminaHiSeq_DNASeq:01",
                                                      description => "Illumina library prep"},
+    "imported library preparation"               => {name => "genome.wustl.edu:library_preparation:Imported:01",
+                                                     description => "Imported data"},
 
 );
 
@@ -100,8 +104,14 @@ sub resolve_maf_protocol {
 
 sub resolve_sequencing_protocol {
     my $self = shift;
+    my $build = shift;
 
-    return $self->_resolve_hard_coded_protocol("nucleic acid sequencing");
+    if (build_is_imported($build)) {
+        return $self->_resolve_hard_coded_protocol("imported nucleic acid sequencing");
+    }
+    else {
+        return $self->_resolve_hard_coded_protocol("nucleic acid sequencing");
+    }
 }
 
 sub _resolve_protocol_with_pp {
@@ -141,8 +151,25 @@ sub resolve_mapping_protocol {
 
 sub resolve_library_protocol {
     my $self = shift;
+    my $build = shift;
 
-    return $self->_resolve_hard_coded_protocol("library preparation");
+    if (build_is_imported($build)) {
+        return $self->_resolve_hard_coded_protocol("imported library preparation");
+    }
+    else {
+        return $self->_resolve_hard_coded_protocol("library preparation");
+    }
+}
+
+sub build_is_imported {
+    my $build = shift;
+    my @instrument_data = $build->instrument_data;
+    for my $id (@instrument_data) {
+        if ($id->class eq 'Genome::InstrumentData::Imported') {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 sub resolve_variants_protocol {
@@ -163,8 +190,10 @@ sub print_idf {
     my @protocol_parameters;
     for my $protocol_type (sort keys %{$self->protocols}) {
         for my $protocol (@{$self->protocols->{$protocol_type}}) {
+            my $base_protocol_type = $protocol_type;
+            $base_protocol_type =~ s/^imported //;
             push @protocol_names, $protocol->{name};
-            push @protocol_types, $protocol_type;
+            push @protocol_types, $base_protocol_type;
             push @protocol_descriptions, $protocol->{description};
             push @protocol_parameters, $PROTOCOL_PARAMS{$protocol_type};
         }
