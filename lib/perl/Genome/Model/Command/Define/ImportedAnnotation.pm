@@ -42,7 +42,7 @@ class Genome::Model::Command::Define::ImportedAnnotation {
 };
 
 sub help_synopsis {
-    return "genome model define imported-annotation --species-name=human --version=58_37c --reference-sequence-build=GRCh37-lite-build37 --build_name=NCBI-human.ensembl/58_37c --processing-profile=imported-annotation.ensembl --model_name=NCBI-human.ensembl" 
+    return "genome model define imported-annotation --species-name=human --version=58_37c --reference-sequence-build=GRCh37-lite-build37 --build_name=NCBI-human.ensembl/58_37c --processing-profile=imported-annotation.ensembl --model_name=NCBI-human.ensembl"
 }
 
 sub help_detail {
@@ -99,7 +99,7 @@ sub _get_or_create_model {
     #Generate a name if one wasn't specified
     unless($model_name){
         $model_name = join('_', $self->reference_sequence_build->name, $species_name, $self->version);
-    }   
+    }
 
     $model = Genome::Model::ImportedAnnotation->create(
                                                     reference_sequence => $self->reference_sequence_build->model,
@@ -127,7 +127,7 @@ sub _create_build {
         $self->error_message('Matching build already exists with id: ' . $build->id . ', exiting!');
         return;
     }
-    
+
     push(@build_parameters, (name => $self->build_name));
 
     $build = Genome::Model::Build::ImportedAnnotation->create(@build_parameters);
