@@ -76,7 +76,7 @@ sub create {
     $self->_prepare_output_directory;
     $self->_promote_data;
     $self->_reallocate_disk_allocation;
-    
+
     $self->_error("Failed to add metrics") unless $self->_add_metrics;
 
     return $self;
