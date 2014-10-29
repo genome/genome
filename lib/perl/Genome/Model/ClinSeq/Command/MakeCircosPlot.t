@@ -27,12 +27,12 @@ my $actual_output_dir = Genome::Sys->create_temp_directory();
 ok(-e $actual_output_dir, "test output dir exists");
 
 # run the command
-my $result = Genome::Model::ClinSeq::Command::MakeCircosPlot->execute(
+my $command = Genome::Model::ClinSeq::Command::MakeCircosPlot->create(
     build => $test_build,
     output_directory => $actual_output_dir,
 );
-print $result."\n";
-ok($result, "execution succeeded");
+print $command."\n";
+ok($command->execute, "execution succeeded");
 
 # verify results
 
