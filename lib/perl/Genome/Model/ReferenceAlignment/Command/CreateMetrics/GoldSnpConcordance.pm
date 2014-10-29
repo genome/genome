@@ -151,14 +151,14 @@ sub _create_target_region_genotype_file {
         return $roi_genotype_file;
     }
 
-    my $intersect_rv = eval {
+    my $intersect_cmd = eval {
         Genome::Model::Tools::Joinx::Intersect->execute(
             input_file_a => $gold_snp_file,
             input_file_b => $roi_bed_file,
             output_file => $roi_genotype_file,
         );
     };
-    if ($intersect_rv and not $@ and -e $roi_genotype_file) {
+    if ($intersect_cmd and $intersect_cmd->result and not $@ and -e $roi_genotype_file) {
         return $roi_genotype_file;
     }
 
