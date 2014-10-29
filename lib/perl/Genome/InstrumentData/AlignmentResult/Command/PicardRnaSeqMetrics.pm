@@ -108,7 +108,7 @@ sub execute {
     
     # Get all MT and rRNA annotation in intervals format
     my $rRNA_MT_gtf_file = $annotation_build->rRNA_MT_file('gtf',$reference_build->id,0);
-    unless(-s $rRNA_MT_gtf_file) {
+    unless (-s $rRNA_MT_gtf_file) {
         $rRNA_MT_gtf_file = $annotation_build->rRNA_MT_file('gtf',undef,0);
     }
     my $seqdict_file = $reference_build->get_sequence_dictionary('sam',$reference_build->species_name,$picard_version);
@@ -124,14 +124,14 @@ sub execute {
 
     # Get all mRNA annotation in RefFlat format
     my $mRNA_gtf_file = $annotation_build->annotation_file('gtf',$reference_build->id,0);
-    unless(-s $mRNA_gtf_file) {
+    unless (-s $mRNA_gtf_file) {
         $mRNA_gtf_file = $annotation_build->annotation_file('gtf',undef,0);
     }
     my $to_ref_flat_cmd = Genome::Model::Tools::Gtf::ToRefFlat->execute(
         input_gtf_file => $mRNA_gtf_file,
         output_file => $mRNA_ref_flat,
     );
-    unless($to_ref_flat_cmd && $to_ref_flat_cmd->result) {
+    unless ($to_ref_flat_cmd && $to_ref_flat_cmd->result) {
         $self->error_message('Failed to convert the all_sequences GTF file '. $mRNA_gtf_file .'  to RefFlat: '. $mRNA_ref_flat);
         return;
     }
@@ -170,7 +170,7 @@ sub execute {
         output_file => $pie_chart_file,
         label => $alignment_result->id,
     );
-    unless($plot_rna_seq_metrics_cmd && $plot_rna_seq_metrics_cmd->result) {
+    unless ($plot_rna_seq_metrics_cmd && $plot_rna_seq_metrics_cmd->result) {
         $self->error_message('Failed to run PlotRnaSeqMetrics for alignment result: '. $alignment_result->id);
         return;
     }
