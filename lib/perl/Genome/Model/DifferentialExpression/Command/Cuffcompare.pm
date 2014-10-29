@@ -32,12 +32,13 @@ sub execute {
     if ($model->transcript_convergence_biotypes) {
         my $transcript_info_tsv_file = $model->annotation_build->transcript_info_file($model->reference_sequence_build->id);
         my $tmp_annotation_gtf_path = Genome::Sys->create_temp_file_path();
-        unless (Genome::Model::Tools::Gtf::LimitByBiotype->execute(
+        my $limit_cmd = Genome::Model::Tools::Gtf::LimitByBiotype->execute(
             input_gtf_file => $annotation_gtf_path,
             output_gtf_file => $tmp_annotation_gtf_path,
             gene_biotypes => $model->transcript_convergence_biotypes,
             transcript_info_tsv_file => $transcript_info_tsv_file,
-        )) {
+        );
+        unless ($limit_cmd and $limit_cmd->result) {
             $self->error_message('Failed to limit transcripts by gene biotypes: '. $model->transcript_convergence_biotypes);
             return;
         }
@@ -54,7 +55,8 @@ sub execute {
 
     # TODO: Setup as SoftwareResult
     $transcript_convergence_params->{output_prefix} = $build->transcript_gtf_prefix;
-    unless (Genome::Model::Tools::Cufflinks::Cuffcompare->execute($transcript_convergence_params)) {
+    my $compare_cmd = Genome::Model::Tools::Cufflinks::Cuffcompare->execute($transcript_convergence_params);
+    unless ($compare_cmd and $compare_cmd->result) {
         $self->error_message('Failed to execute Cuffcompare with params: '. Data::Dumper::Dumper($transcript_convergence_params));
         return;
     }
