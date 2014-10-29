@@ -146,8 +146,8 @@ sub _generate_clonality_for_callers {
 
     $self->_create_readcount_file_for_callers($varscan_readcount_file, $callers, $readcount_output_file);
 
-    my $retval = Genome::Model::Tools::Validation::ClonalityPlot->execute( cnvhmm_file => $cnaseq_hmm_file, output_image => $image_file, r_script_output_file => $rscript_output, varscan_file => $readcount_output_file, analysis_type => "wgs", sample_id => $graph_title);
-    unless($retval) {
+    my $cmd = Genome::Model::Tools::Validation::ClonalityPlot->execute( cnvhmm_file => $cnaseq_hmm_file, output_image => $image_file, r_script_output_file => $rscript_output, varscan_file => $readcount_output_file, analysis_type => "wgs", sample_id => $graph_title);
+    unless($cmd and $cmd->result) {
         die $self->error_message("Error generating clonality plot.");
     }
 }
