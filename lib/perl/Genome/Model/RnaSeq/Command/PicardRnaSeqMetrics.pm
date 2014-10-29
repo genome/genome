@@ -17,6 +17,11 @@ class Genome::Model::RnaSeq::Command::PicardRnaSeqMetrics {
             is_optional => 1,
             is_input => 1,
         },
+        picard_strand_specificity => {
+            valid_values => Genome::Model::Tools::Picard::CollectRnaSeqMetrics->__meta__->property("strand_specificity")->valid_values,
+            is_optional => 1,
+            is_input => 1,
+        },
         build => { is => 'Genome::Model::Build', id_by => 'build_id', },
     ],
     has_param => [
@@ -104,12 +109,17 @@ sub params_for_result {
     unless ($alignment_result) {
         die $self->error_message('No alignment result found for build: '. $build->id);
     }
-
-    return (
+    my %params = (
         alignment_result_id => $alignment_result->id,
         picard_version => $self->picard_version,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
     );
+    if ($self->picard_strand_specificity) {
+        $params{picard_strand_specificity} = $self->picard_strand_specificity;
+    } elsif ($build->model->picard_strand_specificity) {
+        $params{picard_strand_specificity} = $build->model->picard_strand_specificity;
+    }
+    return %params;
 }
 
 sub link_result_to_build {

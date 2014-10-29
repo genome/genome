@@ -82,6 +82,11 @@ class Genome::Model::RnaSeq {
             doc => 'the version of Picard to use when manipulating SAM/BAM files',
             is_optional => 1,
         },
+        picard_strand_specificity => {
+            doc => 'The transcript strand used by Picard for evaluatin RNA-seq QC metrics.',
+            valid_values => Genome::Model::Tools::Picard::CollectRnaSeqMetrics->__meta__->property("strand_specificity")->valid_values,
+            is_optional => 1,
+        },
         deduplication_handler => {
             doc => 'the software used to deduplicate or mark duplicates in the aligned BAM file',
             is_optional => 1,
