@@ -64,18 +64,18 @@ class Genome::InstrumentData::AlignmentResult::Command::TranscriptomeCoverage {
 
 sub execute {
     my $self = shift;
-    
+
     # Reference inputs
     my $reference_build = $self->reference_build;
     my $reference_fasta_file = $reference_build->full_consensus_path('fa');
     die $self->error_message("Reference FASTA File ($reference_fasta_file) is missing") unless -s $reference_fasta_file;
-    
+
     # Annotation inputs
     my $annotation_build = $self->annotation_build;
 
     # Alignment inputs
     my $bam_file = $self->alignment_result->bam_file;
-    
+
     my $coverage_directory = $self->coverage_directory;
     unless (-d $coverage_directory) {
         Genome::Sys->create_directory($coverage_directory);
@@ -121,7 +121,7 @@ sub execute {
                 $self->warning_message('Failed to find squashed '. $annotation_file_method .' BED file for reference build '. $reference_build->id .' in: '. $annotation_build->data_directory);
                 next;
             }
-            
+
             if ($self->mask_reference_transcripts) {
                 $squashed_bed_file = $self->remove_reference_transcripts($squashed_bed_file,1);
                 unless ($squashed_bed_file) {
@@ -166,10 +166,10 @@ sub remove_reference_transcripts {
     my $self = shift;
     my $bed_file = shift;
     my $squashed_flag = shift;
-    
+
     my $annotation_build = $self->annotation_build;
     my $reference_build = $self->reference_build;
-    
+
     my $annotation_file_method = $self->mask_reference_transcripts .'_file';
     my $mask_bed_file = $annotation_build->$annotation_file_method('bed',$reference_build->id,$squashed_flag);
     my $tmp_bed_file = Genome::Sys->create_temp_file_path();
