@@ -50,7 +50,7 @@ sub execute {
 	{
 		
 		my (undef, $bed_temp_name) = Genome::Sys->create_temp_file();
-   		unless (Genome::Model::Tools::BedTools::Intersect ->execute
+		my $intersect_cmd = Genome::Model::Tools::BedTools::Intersect->create
   			 	(
    					input_file_a 		=> $cluster_bed,
    					input_file_a_format => 'bed',
@@ -58,8 +58,8 @@ sub execute {
    					intersection_type	=> 'overlap_both',
    					output_file 		=> $bed_temp_name,
    					
-   				)
-   			)
+				);
+		unless ( $intersect_cmd->execute )
    			{die;}			
    		push (@bed_names_array,$bed_temp_name);
     
