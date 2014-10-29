@@ -106,7 +106,8 @@ sub execute {
         );
         #This is not a software result, yet...
         delete($params{test_name});
-        unless (Genome::InstrumentData::AlignmentResult::Command::TranscriptomeCoverage->execute(%params)) {
+        my $cmd = Genome::InstrumentData::AlignmentResult::Command::TranscriptomeCoverage->create(%params);
+        unless ($cmd and $cmd->execute) {
             return;
         }
     }
