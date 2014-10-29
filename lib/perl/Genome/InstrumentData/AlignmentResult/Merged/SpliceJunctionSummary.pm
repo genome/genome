@@ -105,11 +105,12 @@ sub create {
     if (scalar(@alignment_junctions_bed12_files) == 1) {
         Genome::Sys->create_symlink($alignment_junctions_bed12_files[0], $merged_junctions_bed12_file);
     } else {
-        unless (Genome::Model::Tools::Bed::MergeBed12Junctions->execute(
+        my $merge_cmd = Genome::Model::Tools::Bed::MergeBed12Junctions->execute(
             input_files => \@alignment_junctions_bed12_files,
             output_file => $merged_junctions_bed12_file,
             bedtools_version => $self->bedtools_version,
-        )) {
+        );
+        unless ($merge_cmd and $merge_cmd->result) {
             die();
         }
     }
