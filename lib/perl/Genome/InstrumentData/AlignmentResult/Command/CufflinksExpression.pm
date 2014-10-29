@@ -93,10 +93,11 @@ sub execute {
             $tophat_file = $alignment_result->bam_file;
         } else {
             $tophat_file = Genome::Sys->create_temp_file_path($self->build->id .'.sam');
-            unless (Genome::Model::Tools::Sam::BamToSam->execute(
+            my $bam_to_sam_cmd = Genome::Model::Tools::Sam::BamToSam->execute(
                 bam_file => $alignment_result->bam_file,
                 sam_file => $tophat_file,
-            )) {
+            );
+            unless ($bam_to_sam_cmd and $bam_to_sam_cmd->result) {
                 $self->error_message('Failed to convert BAM '. $alignment_result->bam_file .' to tmp SAM file '. $tophat_file);
                 return;
             }
@@ -169,12 +170,13 @@ sub execute {
         }
     }
 
-    unless (Genome::Model::Tools::Cufflinks::Assemble->execute(
+    my $assemble_cmd = Genome::Model::Tools::Cufflinks::Assemble->execute(
         input_file => $tophat_file,
         params => $params,
         output_directory => $expression_directory,
         use_version => $self->cufflinks_version,
-    )) {
+    );
+    unless ($assemble_cmd and $assemble_cmd->result) {
         $self->error_message('Failed to execute cufflinks!');
         return;
     }
