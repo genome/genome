@@ -366,13 +366,12 @@ sub execute {
             ######## MERGING BED FILE TO GET A SUBCLUSTERS BED FILE OF ENTRIES########
             if ( -s $bed_temp_name ) {
                 my $merged_bed_temp_name = Genome::Sys->create_temp_file_path();
-                unless (
-                    Genome::Model::Tools::BedTools::Merge->execute(
-                        input_file    => $bed_temp_name,
-                        output_file   => $merged_bed_temp_name,
-                        report_number => 1 )
-                    )
-                {die;}
+                my $merge_cmd = Genome::Model::Tools::BedTools::Merge->create(
+                    input_file    => $bed_temp_name,
+                    output_file   => $merged_bed_temp_name,
+                    report_number => 1
+                );
+                unless ($merge_cmd->execute) {die;}
 
                 my $total_sub_depth=0;
                 my $j = 0;
@@ -412,16 +411,14 @@ sub execute {
     } #### CLOSING COVERAGE FILE
 
     if ( -s $sub_output ) {
-        unless (
-            Genome::Model::Tools::BedTools::Intersect->execute(
-                input_file_b        => $output_cluster_bed,
-                input_file_a_format => 'bed',
-                input_file_a        => $sub_output,
-                intersection_type   => 'overlap_both',
-                output_file         => $self->output_subcluster_intersect_file,
-            )
-        )
-        {
+        my $cmd = Genome::Model::Tools::BedTools::Intersect->execute(
+            input_file_b        => $output_cluster_bed,
+            input_file_a_format => 'bed',
+            input_file_a        => $sub_output,
+            intersection_type   => 'overlap_both',
+            output_file         => $self->output_subcluster_intersect_file,
+        );
+        unless ( $cmd->execute ) {
             die;
         }
     }
