@@ -79,7 +79,7 @@ sub create {
     my $reference_build = $self->alignment_result->reference_build;
     my $reference_fasta_file = $reference_build->full_consensus_path('fa');
     die $self->error_message("Reference FASTA File ($reference_fasta_file) is missing") unless -s $reference_fasta_file;
-    
+
     # Annotation inputs
     my $annotation_build = $self->alignment_result->annotation_build;
     my $annotation_gtf_file = $annotation_build->annotation_file('gtf',$reference_build->id);
@@ -161,13 +161,13 @@ sub _generate_metrics {
     my $self = shift;
     $self->debug_message('Currently no metrics are saved for: '. __PACKAGE__);
     #my $metrics = shift;
-    
+
     #for my $type_label (keys %{$metrics}) {
         # Currently, do not store insert size, quality by cycle, or mean quality histograms
     #    if ($type_label =~ /Histogram/) { next; }
         # Currently, do not store the GcBiasMetrics, 100 Windows of normalized coverage
      #   if ($type_label eq 'GcBiasMetrics') { next; }
-        
+
       #  my $type_metrics = $metrics->{$type_label};
         # The FlagstatMetrics hashref are one-level
        # if ($type_label eq 'FlagstatMetrics') {
