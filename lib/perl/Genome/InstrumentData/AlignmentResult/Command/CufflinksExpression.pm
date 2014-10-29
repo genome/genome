@@ -78,7 +78,7 @@ sub execute {
         $self->error_message("Reference FASTA File ($reference_fasta_file) is missing");
         return;
     }
-    
+
     # Annotation inputs
     my $annotation_build = $self->annotation_build;
 
@@ -105,7 +105,7 @@ sub execute {
         # Tophat versions before v1.1.0 and produce sam output and cufflinks __SHOULD__ run on sam or bam input
         $tophat_file = $alignment_result->sam_file;
     }
-    
+
     my $expression_directory = $self->expression_directory;
     unless (-d $expression_directory) {
         Genome::Sys->create_directory($expression_directory);
@@ -134,7 +134,7 @@ sub execute {
                 }
                 $params .= ' -M '. $mask_gtf_path;
             }
-            
+
             # Determine both the annotation file and mode to use it with Currlinks
             my $gtf_path = $annotation_build->annotation_file('gtf',$reference_build->id);
             unless($gtf_path) {
@@ -168,7 +168,7 @@ sub execute {
             }
         }
     }
-    
+
     unless (Genome::Model::Tools::Cufflinks::Assemble->execute(
         input_file => $tophat_file,
         params => $params,
