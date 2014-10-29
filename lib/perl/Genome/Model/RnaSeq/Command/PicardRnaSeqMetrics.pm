@@ -100,7 +100,7 @@ sub execute {
 
 sub params_for_result {
     my $self = shift;
-    
+
     my $build = $self->build;
     unless ($self->picard_version) {
         $self->picard_version($build->model->picard_version);
