@@ -32,8 +32,8 @@ subtest 'export' => sub {
         $scrubbed_outfile = Genome::Sys->create_temp_file_path();
     }
 
-    my $result = Genome::Model::Command::Export::Metadata->execute(models => [$model], output_path => $intermediate_outfile, verbose => 1);
-    ok($result, "ran");
+    my $command = Genome::Model::Command::Export::Metadata->execute(models => [$model], output_path => $intermediate_outfile, verbose => 1);
+    ok($command->result, "ran");
     ok(-e $intermediate_outfile, "intermediate_outfile $intermediate_outfile exists");
 
     Genome::Sys->shellcmd(cmd => "grep -v 'Genome::Disk::Allocation\\|Genome::Disk::Assignment' <$intermediate_outfile | grep -v Genome::Disk::Volume >  $scrubbed_outfile");
@@ -70,8 +70,8 @@ subtest 'import' => sub {
     }
 
     my $tx = UR::Context::Transaction->begin();
-    my $result = Genome::Model::Command::Import::Metadata->execute(input_path => $input_path, log_path => $actual_log_path, verbose => 1, skip_file_db_install => 1);
-    ok($result, "ran");
+    my $command = Genome::Model::Command::Import::Metadata->execute(input_path => $input_path, log_path => $actual_log_path, verbose => 1, skip_file_db_install => 1);
+    ok($command->result, "ran");
     $tx->rollback();
     ok(-e $actual_log_path, "actual_log_path $actual_log_path exists");
 
