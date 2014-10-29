@@ -350,13 +350,13 @@ sub execute
 
         $self->debug_message("Running ace dump from " . ($self->dev ? "dev" : "prod"));
         $self->debug_message("sequence set id, $ssid : phase, $phase : ace file, $dump_output");
-        my $rv = Genome::Model::Tools::Bacterial::AceDumpGenes->execute(
+        my $cmd = Genome::Model::Tools::Bacterial::AceDumpGenes->execute(
             sequence_set_id => $ssid,
             phase => $phase,
             ace_file => $dump_output,
             dev => $self->dev,
         );
-        unless ($rv) {
+        unless ($cmd and $cmd->result) {
             $self->error_message("Ace dumping failed with sequence set id $ssid");
             confess;
         }
