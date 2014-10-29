@@ -297,7 +297,7 @@ sub execute {
         #is it an indel?
         if (($fields[3] =~ /\-/) || ($fields[4] =~ /\-/) ||
             (length($fields[3]) > 1) || (length($fields[4]) > 1)){
-            
+
             #is it longer than the max length?
             if((length($fields[3]) > $indel_size_limit) || (length($fields[4]) > $indel_size_limit)){
                 $tooLongIndels{join("\t",($fields[0],$fields[1],$fields[3],$fields[4]))} = 0;
@@ -373,7 +373,7 @@ sub execute {
             $self->error_message("Failed to execute sam readcount.");
             die $self->error_message;
         }
-        
+
         #sort and dedup the bam-readcount output
         my $cmd_obj = Genome::Model::Tools::Joinx::Sort->create(
             input_files => [ "$tempdir/readcounts" ],
@@ -599,7 +599,7 @@ sub execute {
         }
     }
     close($OUTFILE);
-    
+
     return(1);
 }
 
