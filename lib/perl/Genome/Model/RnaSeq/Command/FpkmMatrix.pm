@@ -156,12 +156,13 @@ sub execute {
     if ($self->gene_biotypes) {
         my $transcript_info_tsv_file = $annotation_build->transcript_info_file($reference_build->id);
         my $tmp_gtf_path = Genome::Sys->create_temp_file_path();
-        unless (Genome::Model::Tools::Gtf::LimitByBiotype->execute(
+        my $limit_cmd = Genome::Model::Tools::Gtf::LimitByBiotype->execute(
             input_gtf_file => $gene_gtf_path,
             output_gtf_file => $tmp_gtf_path,
             gene_biotypes => $self->gene_biotypes,
             transcript_info_tsv_file => $transcript_info_tsv_file,
-        )) {
+        );
+        unless($limit_cmd and $limit_cmd->result) {
             $self->error_message('Failed to limit  by gene biotypes: '. $self->gene_biotypes);
             return;
         }
