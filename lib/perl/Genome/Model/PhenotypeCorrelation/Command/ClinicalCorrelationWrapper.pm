@@ -71,7 +71,7 @@ sub execute {
     my $samples_file = $self->sample_list_file;
     # the .glm.tsv is added by the actual ClinicalCorrelation command
     my $output_file = join("/", $out_dir, basename($variant_matrix)) . ".results";
-    
+
     my %params = (
         genetic_data_type => "variant",
         bam_list => $samples_file,
