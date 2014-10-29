@@ -84,7 +84,7 @@ sub create {
     return unless ($self);
 
     $self->_prepare_staging_directory;
-    
+
     my $log_dir = $self->log_directory;
     unless($log_dir) {
         $log_dir = '' . $self->temp_staging_directory;
@@ -116,7 +116,7 @@ sub create {
 
 sub _generate_metrics {
     my $self = shift;
-    
+
     my $coverage_dir = $self->output_dir;
     my @metric_files = glob($coverage_dir . "/*_STATS.txt");
     for my $metric_file (@metric_files) {
