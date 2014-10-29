@@ -66,7 +66,7 @@ sub execute {
     my $pid  = getppid();
 
     #Use Path::Class::Dir to correctly handle relative path when accumulated_alignments_dir is a symlink
-    my $log_dir = Path::Class::Dir->new($self->accumulated_alignments_dir)->parent->subdir('logs')->stringify;;
+    my $log_dir = Path::Class::Dir->new($self->accumulated_alignments_dir)->parent->subdir('logs')->stringify;
     unless (-e $log_dir ) {
         unless( Genome::Sys->create_directory($log_dir) ) {
             $self->error_message("Failed to create log directory for dedup process: $log_dir");
