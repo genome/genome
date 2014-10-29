@@ -40,10 +40,6 @@ sub set_what_interpreter_x_requires {
         return qw(expert_one);
     }
 
-    sub available_fields {
-        return qw(exp1);
-    }
-
     sub interpret_entry {
         my $self = shift;
         my $entry = shift;
@@ -88,10 +84,6 @@ sub set_what_interpreter_x_requires {
 
     sub name {
         "interpreter_y";
-    }
-
-    sub available_fields {
-        return qw(chrom pos);
     }
 
     sub interpret_entry {

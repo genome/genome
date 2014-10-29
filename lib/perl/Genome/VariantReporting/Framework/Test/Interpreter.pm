@@ -17,10 +17,10 @@ sub requires_annotations {
     return qw(__test__);
 }
 
-sub available_fields {
-    return qw/
-        info
-    /;
+sub field_descriptions {
+    return (
+        info => 'Description of info',
+    );
 }
 
 sub _interpret_entry {

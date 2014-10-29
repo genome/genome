@@ -17,8 +17,10 @@ sub requires_annotations {
     return ('bam-readcount');
 }
 
-sub available_fields {
-    return qw/coverage/;
+sub field_descriptions {
+    return (
+        coverage => 'Read depth at position'
+    );
 }
 
 sub _interpret_entry {

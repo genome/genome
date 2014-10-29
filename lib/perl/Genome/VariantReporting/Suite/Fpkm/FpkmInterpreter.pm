@@ -16,10 +16,10 @@ sub requires_annotations {
     ('fpkm');
 }
 
-sub available_fields {
-    return qw/
-        fpkm
-    /;
+sub field_descriptions {
+    return (
+        fpkm => 'Fragments per kilobase of transcript per million mapped reads',
+    );
 }
 
 sub _interpret_entry {
