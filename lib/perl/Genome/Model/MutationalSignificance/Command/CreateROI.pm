@@ -102,7 +102,7 @@ sub execute {
         my $new_name = $feature_list->name;
         my ($names, @files) = $self->collect_files_from_extra_rois($new_name);
         $new_name = $names;
-        
+
         $new_feature_list = Genome::FeatureList->get(name => $new_name);
 
         unless ($new_feature_list) {
@@ -164,7 +164,7 @@ sub execute {
             $new_feature_list = $self->create_new_feature_list($names, $subject, $reference, $format, @files);
         }
     }
-    
+
     $self->roi_path($new_feature_list->file_path);
     $self->status_message('Using ROI file: '.$self->roi_path);
     return 1;
