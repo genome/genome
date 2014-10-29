@@ -102,7 +102,7 @@ sub _generate_data {
         bam_file => $self->bam_file,
         sample_name => $self->sample_name,
         reference_build => $self->reference_build,
-    );
+    )->result;
 }
 
 sub resolve_allocation_subdirectory {
