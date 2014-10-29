@@ -123,7 +123,7 @@ sub execute {
                     $self->debug_message("Disconnecting GMSchema default handle.");
                     Genome::DataSource::GMSchema->disconnect_default_dbh();
                 }
-                my $merge_rv = Genome::Model::Tools::Sam::Merge->execute(
+                my $merge = Genome::Model::Tools::Sam::Merge->execute(
                     files_to_merge => \@library_maps,
                     merged_file => $merged_file,
                     is_sorted => 1,
@@ -133,7 +133,7 @@ sub execute {
                     use_version => $self->dedup_version,
                 );
 
-                unless ($merge_rv) {
+                unless ($merge and $merge->result) {
                     print $log_fh "There was a problem merging ".join(",",@library_maps). " to $merged_file.";
                     $log_fh->close;
                     return;
