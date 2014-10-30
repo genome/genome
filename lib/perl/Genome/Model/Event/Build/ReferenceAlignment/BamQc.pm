@@ -80,7 +80,7 @@ sub params_for_result {
     #read length takes long time to run and seems not useful for illumina/solexa data
     my $read_length = $instr_data->sequencing_platform =~ /^solexa$/i ? 0 : 1;
 
-    my $error_rate_version = $self->_select_error_rate_version_for_pp($self->pp);
+    my $error_rate_version = $self->_select_error_rate_version_for_pp($pp);
 
     return (
         alignment_result_id => $self->_alignment_result->id,
