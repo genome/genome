@@ -210,7 +210,7 @@ sub execute {
 
 
 
-    my $rv = Genome::Model::Tools::Validation::LongIndelsGenerateMergedAssemblies->execute(
+    my $cmd = Genome::Model::Tools::Validation::LongIndelsGenerateMergedAssemblies->create(
         long_indel_bed_file => $self->long_indel_bed_file,
         output_dir => $output_dir,
         reference_transcripts => $self->reference_transcripts,
@@ -219,12 +219,12 @@ sub execute {
         reference_fasta => $ref_seq_fasta,
     );
 
-    unless ($rv) {
+    unless ($cmd->execute) {
         $self->error_message("Failed to generate contigs_fasta file");
         return;
     }
 
-    my $contigs_file = $rv->contigs_fasta;
+    my $contigs_file = $cmd->contigs_fasta;
 
     print STDERR "##### $contigs_file #####\n";
 
