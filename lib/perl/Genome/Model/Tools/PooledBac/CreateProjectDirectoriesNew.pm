@@ -106,6 +106,8 @@ sub execute {
         $ut->create_project_from_contig_names($ao,$bac_dir."/edit_dir/$bac_name.fasta.screen.ace", \@contig_names, $pooled_bac_dir);    
         chdir($old_dir);
     }
+
+    return 1;
 }
 
 
