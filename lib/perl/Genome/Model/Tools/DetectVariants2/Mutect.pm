@@ -48,7 +48,7 @@ sub _detect_variants {
 
     my $output_dir = $self->_temp_staging_directory;
     my $scratch_dir = $self->_temp_scratch_directory;
-    my @basic_params = (   
+    my @basic_params = (
         '--normal-bam' => $self->control_aligned_reads_input,
         '--tumor-bam' => $self->aligned_reads_input,
         '--version' => $self->version,
