@@ -80,7 +80,7 @@ sub execute {
 }
 
 sub _trio_report_file_names {
-    return qw(trio_full_report.tsv trio_simple_report.tsv);
+    return qw(trio_full_report.tsv trio_simple_report.tsv trio_acmg_report.tsv);
 }
 
 sub add_final_converge {

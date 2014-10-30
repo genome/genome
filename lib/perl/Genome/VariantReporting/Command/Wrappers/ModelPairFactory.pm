@@ -113,13 +113,6 @@ sub get_model_pairs {
             base_output_dir => $self->additional_output_dir,
         );
 
-        push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
-            discovery => $discovery_build,
-            followup => $validation_build,
-            base_output_dir => $self->other_output_dir('acmg'),
-            plan_file_basename => "cle_acmg_report_TYPE.yaml",
-        );
-
         for my $other_input_vcf_pair (keys %{$self->other_input_vcf_pairs}) {
             push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPairWithInput->create(
                 discovery => $discovery_build,
