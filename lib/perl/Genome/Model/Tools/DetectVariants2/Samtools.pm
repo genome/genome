@@ -156,11 +156,12 @@ sub _detect_variants {
                 }
                 my $tmp_limited_file = $var_file .'_limited';
                 my $no_limit_file    = $var_file .'.no_bed_limit';
-                unless (Genome::Model::Tools::Sam::LimitVariants->execute(
+                my $limit_variants = Genome::Model::Tools::Sam::LimitVariants->create(
                     variants_file => $var_file,
                     bed_file      => $bed_file,
                     output_file   => $tmp_limited_file,
-                )) {
+                );
+                unless ($limit_variants->execute) {
                     $self->error_message('Failed to limit samtools variants '. $var_file .' to within capture target regions '. $bed_file);
                     die $self->error_message;
                 }
