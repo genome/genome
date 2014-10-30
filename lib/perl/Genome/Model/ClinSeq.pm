@@ -222,7 +222,6 @@ sub map_workflow_inputs {
   my $misc_annotation_db = $build->misc_annotation_db;
   my $cosmic_annotation_db = $build->cosmic_annotation_db;
   my ($mqs, $bqs) = $self->parse_qualities;
-  my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
 
   # initial inputs used for various steps
   my @inputs = (
@@ -421,6 +420,7 @@ sub map_workflow_inputs {
     }
 
     #CreateMutationSpectrum
+    my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
     while(my ($i, $mq, $bq) = $iterator->()) {
       if ($wgs_build) {
         push @inputs, 'wgs_mutation_spectrum_outdir' . $i =>
@@ -453,6 +453,7 @@ sub map_workflow_inputs {
 
     #Converge SnvIndelReport and SciClone
     if ($exome_build || $wgs_build) {
+      my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
       while(my ($i, $mq, $bq) = $iterator->()) {
         my $snv_indel_report_dir1 = $patient_dir .
         "/snv_indel_report/" . "b" . $bq . "_" . "q" . $mq;
@@ -492,8 +493,6 @@ sub _resolve_workflow_for_build {
   my $lsf_queue = shift;   # TODO: the workflow shouldn't need this yet
   my $lsf_project = shift;
   my ($mqs, $bqs) = $self->parse_qualities;
-  my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
-
   if (!defined $lsf_queue || $lsf_queue eq '' || $lsf_queue eq 'inline') {
       $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
   }
@@ -557,6 +556,7 @@ sub _resolve_workflow_for_build {
   if ($build->wgs_build or $build->exome_build) {
     push @output_properties, 'mutation_diagram_result';
     push @output_properties, 'import_snvs_indels_result';
+    my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
     while(my ($i, $mq, $bq) = $iterator->()) {
       if($build->wgs_build) {
         push @output_properties,  'wgs_mutation_spectrum_result' . $i;
@@ -1191,6 +1191,7 @@ sub _resolve_workflow_for_build {
   my @converge_snv_indel_report_ops;
   if ($build->wgs_build || $build->exome_build) {
     #Create a report for each $bq $mq combo.
+    my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
     while(my ($i, $mq, $bq) = $iterator->()) {
         $msg = "Generate SnvIndel Report" . $i . ".";
         $converge_snv_indel_report_op1 = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::SnvIndelReport");
@@ -1227,6 +1228,7 @@ sub _resolve_workflow_for_build {
 
   #CreateMutationDiagrams - Create mutation spectrum results for wgs data
   if ($build->wgs_build) {
+    my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
     while(my ($i, $mq, $bq) = $iterator->()) {
       my $msg = "Creating mutation spectrum results for wgs snvs using create-mutation-spectrum" . $i;
       my $create_mutation_spectrum_wgs_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
@@ -1243,6 +1245,7 @@ sub _resolve_workflow_for_build {
 
   #CreateMutationDiagrams - Create mutation spectrum results for exome data
   if ($build->exome_build) {
+    my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
     while(my ($i, $mq, $bq) = $iterator->()) {
       my $msg = "Creating mutation spectrum results for exome snvs using create-mutation-spectrum " . $i;
       my $create_mutation_spectrum_exome_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
@@ -1259,6 +1262,7 @@ sub _resolve_workflow_for_build {
 
   #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
   if ($build->wgs_build or $build->exome_build){
+    my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
     while(my ($i, $mq, $bq) = $iterator->()) {
       my $msg = "Run clonality analysis and produce clonality plots using SciClone " . $i;
       my $sciclone_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateSciclonePlots");
