@@ -14,7 +14,7 @@ use Test::More tests => 35;
 use Genome::Test::Factory::AnalysisProject;
 use Genome::Test::Factory::Model::ReferenceAlignment;
 
-my $class = 'Genome::Config::AnalysisProject::Command::AddModelToAnalysisProject';
+my $class = 'Genome::Config::AnalysisProject::Command::AddModel';
 
 use_ok($class);
 

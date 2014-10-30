@@ -10,7 +10,7 @@ BEGIN {
 use above 'Genome';
 use Test::More;
 
-my $class = 'Genome::Config::AnalysisProject::Command::AddInstrumentDataToAnalysisProject';
+my $class = 'Genome::Config::AnalysisProject::Command::AddInstrumentData';
 use_ok($class);
 
 my $inst_data_1 = Genome::InstrumentData::Imported->create();

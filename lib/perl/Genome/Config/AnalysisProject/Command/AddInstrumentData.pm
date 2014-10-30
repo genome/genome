@@ -1,4 +1,4 @@
-package Genome::Config::AnalysisProject::Command::AddInstrumentDataToAnalysisProject;
+package Genome::Config::AnalysisProject::Command::AddInstrumentData;
 
 use strict;
 use warnings;
@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 use Set::Scalar;
 
-class Genome::Config::AnalysisProject::Command::AddInstrumentDataToAnalysisProject {
+class Genome::Config::AnalysisProject::Command::AddInstrumentData {
     is => 'Command::V2',
     has_input => [
        analysis_project => {
@@ -28,7 +28,7 @@ sub help_brief {
 }
 
 sub help_synopsis {
-    return "genome config analysis-project add-instrument-data-to-analysis-project <analysis-project> <instrument-data>";
+    return "genome config analysis-project add-instrument-data <analysis-project> <instrument-data>";
 }
 
 sub help_detail {

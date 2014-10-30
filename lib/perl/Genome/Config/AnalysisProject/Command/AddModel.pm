@@ -1,11 +1,11 @@
-package Genome::Config::AnalysisProject::Command::AddModelToAnalysisProject;
+package Genome::Config::AnalysisProject::Command::AddModel;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Config::AnalysisProject::Command::AddModelToAnalysisProject {
+class Genome::Config::AnalysisProject::Command::AddModel {
     is => 'Command::V2',
     has_input => [
        profile_item => {
@@ -34,7 +34,7 @@ sub help_brief {
 }
 
 sub help_synopsis {
-    return 'genome config analysis-project add-model-to-analysis-project <profile-item> <model> [<model> ...]';
+    return 'genome config analysis-project add-model <profile-item> <model> [<model> ...]';
 }
 
 sub help_detail {
