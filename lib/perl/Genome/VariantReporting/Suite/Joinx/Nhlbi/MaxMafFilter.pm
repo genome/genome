@@ -44,5 +44,18 @@ sub filter_entry {
     return %return_values;
 }
 
+sub vcf_id {
+    my $self = shift;
+    my $num  = $self->max_maf;
+    $num =~ s/\.//g;
+    return 'MAXMAF'.uc($self->population_code).$num;
+}
+
+sub vcf_description {
+    my $self = shift;
+    return 'Filter out variants with '.$self->population_code.' maf being greater than '.$self->max_maf;
+}
+
+
 1;
 

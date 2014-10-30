@@ -49,5 +49,16 @@ sub filter_entry {
     return %return_values;
 }
 
+sub vcf_id {
+    my $num = shift->max_af;
+    $num =~ s/\.//g;
+    return 'MAXAF'.$num;
+}
+
+sub vcf_description {
+    return 'Filter out variants with maf being greater than '.shift->max_af;
+}
+
+
 1;
 

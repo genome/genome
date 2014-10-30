@@ -167,6 +167,8 @@ sub generate_resource_file {
     $resource->{translations} = $self->get_translations;
 
     $resource->{dbsnp_vcf} = $self->discovery->previously_discovered_variations_build->snvs_vcf;
+    #nhlbi-esp-GRCh37-lite-build37
+    $resource->{nhlbi_vcf} = Genome::Model::Build->get(126747180)->snvs_vcf; 
 
     YAML::DumpFile(File::Spec->join($self->resource_file), $resource);
 

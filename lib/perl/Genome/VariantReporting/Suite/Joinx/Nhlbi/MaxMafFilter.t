@@ -76,6 +76,18 @@ subtest "Malformed MAF" => sub {
     throws_ok(sub {$filter->filter_entry($entry)}, qr(MAF in unexpected format));
 };
 
+subtest "test vcf_id and vcf_description" => sub {
+    my $filter = $pkg->create(
+        max_maf => '.5',
+        population_code => 'All',
+    );
+    lives_ok(sub {$filter->validate}, "Filter validates ok");
+    my $vcf_id = 'MAXMAFALL5';
+    my $vcf_description = 'Filter out variants with All maf being greater than .5';
+    is($filter->vcf_id, $vcf_id, 'filter vcf_id is created correctly');
+    is($filter->vcf_description, $vcf_description, 'filter vcf_description is created correctly');
+};
+
 sub create_vcf_header {
     my $header_txt = <<EOS;
 ##fileformat=VCFv4.1
