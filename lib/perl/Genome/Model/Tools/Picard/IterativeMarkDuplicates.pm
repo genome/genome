@@ -182,7 +182,7 @@ sub execute {
                     maximum_memory => $self->maximum_memory,
                     maximum_permgen_memory => $self->maximum_permgen_memory,
                     #sort_order => 'coordinate',
-                ) ) {
+                )->result ) {
                     die('Failed to randomly revert BAM : '. $previous_bam);
                 }
                 # Remove the previous temporary MarkDuplicate BAM file to save /tmp disk space
@@ -201,7 +201,7 @@ sub execute {
                     maximum_memory => $self->maximum_memory,
                     maximum_permgen_memory => $self->maximum_permgen_memory,
                     max_records_in_ram => $self->max_records_in_ram,
-                )) {
+                )->result) {
                     die('Failed to sort BAM : '. $tmp_sorted_revert_bam);
                 }
                 unlink($tmp_revert_bam) || die ('Failed to remove reverted BAM file : '. $tmp_revert_bam);
@@ -219,7 +219,7 @@ sub execute {
                     max_sequences_for_disk_read_ends_map => $self->max_sequences_for_disk_read_ends_map,
                     max_records_in_ram => $self->max_records_in_ram,
                     assume_sorted => $self->assume_sorted,
-                ) ) {
+                )->result ) {
                     die('Failed to mark duplicates of BAM : '. $tmp_revert_bam);
                 }
                 unlink($tmp_sorted_revert_bam) || die ('Failed to remove sorted and reverted BAM file : '. $tmp_sorted_revert_bam);
@@ -261,7 +261,7 @@ sub execute {
                     #    maximum_memory => $self->maximum_memory,
                     #    maximum_permgen_memory => $self->maximum_permgen_memory,
                     #    sort_order => 'coordinate',
-                    # ) ) {
+                    # )->result ) {
                     #     die('Failed to revert duplicate marks in BAM : '. $self->input_file);
                     # }
 
@@ -278,7 +278,7 @@ sub execute {
                         max_sequences_for_disk_read_ends_map => $self->max_sequences_for_disk_read_ends_map,
                         max_records_in_ram => $self->max_records_in_ram,
                         assume_sorted => $self->assume_sorted,
-                    ) ) {
+                    )->result ) {
                         die('Failed to mark duplicates of BAM : '. $self->input_file);
                     }
                     $metrics_hash_ref = Genome::Model::Tools::Picard::MarkDuplicates->parse_file_into_metrics_hashref($tmp_mrkdup_metrics);
