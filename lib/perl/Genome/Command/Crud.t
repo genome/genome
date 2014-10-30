@@ -65,7 +65,6 @@ class Person {
         },
         job => { 
             is => 'Person::Job', 
-            is_optional => 1, 
             id_by => 'job_id', 
             is_optional => 1,
             doc => 'The person\'s job',
