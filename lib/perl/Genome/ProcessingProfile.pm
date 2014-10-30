@@ -333,7 +333,7 @@ sub param_summary {
             $summary .= join(",",@values)
         } 
         elsif ($values[0] =~ /\s/) {
-            $summary .= '"$values[0]"'
+            $summary .= '"'.$values[0].'"'
         }
         else {
             $summary .= $values[0]
