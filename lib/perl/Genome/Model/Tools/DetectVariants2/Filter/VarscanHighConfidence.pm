@@ -85,7 +85,7 @@ sub prepare_output {
     my $lq_scratch_file = $self->_temp_scratch_directory."/snvs.lq";
 
     Genome::Sys->copy_file( $somatic_hq, $hq_file );
-    
+
     # FIXME other is possibly not sorted by position
     my @lq_source = ($somatic_lq, $germline, $loh);
     if (-e $other) {
@@ -105,7 +105,7 @@ sub prepare_output {
     unless( $chrom_sort_cmd->execute ){
         die $self->error_message("Failed to chrom sort lq output.");
     }
-    return 1; 
+    return 1;
 }
 
 #check that the natively formatted file matches expectation
