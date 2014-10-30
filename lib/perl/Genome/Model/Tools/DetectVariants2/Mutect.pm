@@ -92,13 +92,13 @@ sub _detect_variants {
             die $self->error_message;
         }
         print Dumper $output,"\n";
-        my $merger = Genome::Model::Tools::Mutect::MergeOutputFiles->execute(mutect_output_files => $output->{output_file}, merged_file => $self->_snv_staging_output);
-        unless($merger) {
+        my $merger = Genome::Model::Tools::Mutect::MergeOutputFiles->create(mutect_output_files => $output->{output_file}, merged_file => $self->_snv_staging_output);
+        unless($merger->execute()) {
             die "Error merging mutect sub-job output files\n";
         }
 
-        my $vcf_merger = Genome::Model::Tools::Joinx::VcfMerge->execute(input_files => $output->{vcf}, output_file => $self->_snv_staging_output . ".raw.vcf", merge_samples => 1);
-        unless($vcf_merger) {
+        my $vcf_merger = Genome::Model::Tools::Joinx::VcfMerge->create(input_files => $output->{vcf}, output_file => $self->_snv_staging_output . ".raw.vcf", merge_samples => 1);
+        unless($vcf_merger->execute()) {
             die "Error merging mutect sub-job vcf files\n";
         }
     }
