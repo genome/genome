@@ -157,7 +157,7 @@ sub find_indexes_of_unaffecteds {
 sub output_passing_vcf {
     my($self, $input_filename, $r_output, $pvalue_cutoff, $output_filename, $ped_hashref) = @_;
     my $pvalues = Genome::Sys->open_file_for_reading($r_output);
-    my %pass_hash;    
+    my %pass_hash;
 
     while(my $pvalues_line = $pvalues->getline) { #parse pvalue returns and figure out who is gonna pass
         my @fields = split"\t", $pvalues_line;
@@ -183,8 +183,8 @@ sub output_passing_vcf {
     my @filtered_already=`zcat $input_filename | grep "DNFT"`; #we got hacks
     if(@filtered_already) {
         $header_printed=1;
-    }    
-    while(my $line = $input_file->getline) { #stream through whole file and only touch the members of the hash we filled out above 
+    }
+    while(my $line = $input_file->getline) { #stream through whole file and only touch the members of the hash we filled out above
 
         if($line =~m/^#/) {
             if($line=~m/^##FORMAT/ && !$header_printed) {
@@ -269,7 +269,7 @@ sub prepare_r_input {
         my @alts = split ",", $alt;
         my @possible_alleles = ($ref, @alts);
         my @novel = ();
-        my @info_fields = split";", $info; 
+        my @info_fields = split";", $info;
         for my $info_field (@info_fields) {
             if($info_field =~m/^DA=/) {
                 my ($novel_string) = ($info_field =~m/^DA=(\d+)/);
@@ -287,7 +287,7 @@ sub prepare_r_input {
         }
         if(scalar(@novel) >= 1) {
             $r_input_fh->print("$chr\t$pos");
-            for (my $i=0; $i < scalar(@samples); $i++) {    
+            for (my $i=0; $i < scalar(@samples); $i++) {
                 my $readcount_file = $readcount_files->[$i];
                 chomp(my $readcount_line = `grep "^$chr\t$pos" $readcount_file`);
                 my ($chr, $pos, $rc_ref, $depth, @fields) = split "\t", $readcount_line;
