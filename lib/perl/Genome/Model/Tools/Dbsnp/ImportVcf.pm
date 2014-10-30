@@ -99,7 +99,7 @@ sub execute {
             input_files => \@files_to_merge,
             use_bgzip => 1,
         );
-        unless ($sort) {
+        unless ($sort and $sort->result) {
             $self->error_message("Unable to merge the vcf files");
             return;
         }
@@ -142,8 +142,8 @@ sub execute {
 
     $vcf_input_fh->close;
     $vcf_output_fh->close;
-    my $rv = Genome::Model::Tools::Bed::ChromSort->execute(input => $vcf_temp_output, output => $self->output_file_path);
-    unless ($rv) {
+    my $chromsort = Genome::Model::Tools::Bed::ChromSort->execute(input => $vcf_temp_output, output => $self->output_file_path);
+    unless ($chromsort and $chromsort->result) {
         $self->error_message("Failed to sort dbsnp VCF file");
         return;
     }
