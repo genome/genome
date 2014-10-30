@@ -341,7 +341,7 @@ $update_bf->dump_status_messages(0);
 ok(($update_bf->execute && $update_bf->result), "UPDATE PROPERTY best_friend: execute");
 is_deeply($ronnie->best_friend, $george, "UPDATE PROPERTY best_friend: Ronnie is now best friends w/ George!");
 
-# FIXME per Scott this is to fail - object to null/undef
+# fail - object to null/undef
 my $update_job_null = Person::Command::Update::Job->create(
     people => [$george],
     value => '',
@@ -355,9 +355,9 @@ ok(eval{(!$update_job_null->execute && !$update_job_null->result)}, 'UPDATE PROP
 is_deeply(\@error_messages,
     [q(Cannot set job to NULL. Sorry.)],
     'Expected error message');
-is_deeply($george->job, $vice_president, 'UPDATE PROPERTY job: George does not have a job.');
+is_deeply($george->job, $vice_president, 'UPDATE PROPERTY job: George is still VP.');
 
-# FIXME per Scott this is to fail - object, single prop via a many property
+# fail - object, single prop via a many property to null
 my $update_bf_null = Person::Command::Update::BestFriend->create(
     people => [$ronnie],
     value => '',
