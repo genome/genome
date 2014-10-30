@@ -15,7 +15,7 @@ class Genome::Model::Build::Command::List {
         show => { default_value => 'id,model_id,model_name,run_by,status,date_scheduled,date_completed,software_revision,data_directory' },
     },
     has_optional => {
-        order_by => { default_value => 'date_scheduled', },
+        order_by => { default_value => 'created_at', },
     },
 };
 
