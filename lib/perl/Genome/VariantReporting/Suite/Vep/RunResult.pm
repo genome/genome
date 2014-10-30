@@ -129,7 +129,7 @@ sub _annotate {
         input_file => $self->split_vcf,
         output_file => $self->vep_output_file,
         $self->vep_params,
-    );
+    )->result;
     unlink $self->split_vcf;
 }
 
