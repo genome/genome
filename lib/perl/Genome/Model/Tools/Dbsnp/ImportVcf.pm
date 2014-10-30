@@ -78,7 +78,7 @@ sub execute {
 
     my $vcf_url = $self->vcf_file_url;
     my $vcf_download_location = Genome::Sys->create_temp_file_path();
-    
+
     if ($self->vcf_file_pattern) {
         unless ($self->chromosome_names) {
             die ($self->error_message("If you specify a vcf_file_pattern, you must also specify chromosome_names"));
@@ -114,8 +114,8 @@ sub execute {
     my ($vcf_output_fh, $vcf_temp_output) = Genome::Sys->create_temp_file();
 
     my @vcf_row = ();
-    while (my $line = <$vcf_input_fh>) {                                                                                                                                                                    
-        chomp $line;                                                                                                                                                                                  
+    while (my $line = <$vcf_input_fh>) {
+        chomp $line;
 
          if ($line =~ /^#/ ){
             if($start_info && !$end_info){
@@ -127,7 +127,7 @@ sub execute {
             }elsif(!$end_info){
                 $start_info = $line =~ /^##INFO/;
             }
-            print $vcf_output_fh  $line . "\n"; 
+            print $vcf_output_fh  $line . "\n";
             # this is a normal data line
         } else {
             my @line = split '\s+', $line;
@@ -192,17 +192,17 @@ sub _build_hash_table_for_flat_file {
     my @block = ();
     while(<$flat_input_fh>){
         chomp;
-        next if ($. <= 3); # each file has a 3-line header                                                                                                                                      
+        next if ($. <= 3); # each file has a 3-line header
 
-        my @split_line = split(/\s*\|\s*/, $_);                                                                                                                                             
-        if (@split_line == 0) { # blank line                                                                                                                                                    
+        my @split_line = split(/\s*\|\s*/, $_);
+        if (@split_line == 0) { # blank line
             my @submitters = uniq(map {$_->[1]} (sort { $b->[-1] cmp $a->[-1] } (grep { $_->[0] =~ /^ss/ } @block)));
             #add hash table entry
             $self->_submitter_map->{$block[0][0]} = join(',', @submitters);
-            @block = ();                                                                                                                                                                        
-        } else {                                                                                                                                                                                
-            push @block, \@split_line;                                                                                                                                                          
-        }                                                                                                                                                                                       
+            @block = ();
+        } else {
+            push @block, \@split_line;
+        }
     }
 
     $flat_input_fh->close;
