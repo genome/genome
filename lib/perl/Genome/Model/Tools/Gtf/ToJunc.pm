@@ -55,7 +55,7 @@ sub execute {
         separator => "\t",
         print_headers => 0,
     );
-    
+
     my $gene_label_key = 'gene_'. $self->gene_label;
     my %transcript_id_to_gene_label;
     $self->debug_message('Mapping transcript_id to '. $gene_label_key .' from GTF file \''. $self->gtf_file .'\'');
@@ -74,7 +74,7 @@ sub execute {
         }
     }
     $gff_reader->input->close;
-    
+
     my $tmp_bed12_file = Genome::Sys->create_temp_file_path('gtf_to_bed12.bed');
     $self->debug_message('Converting GTF format file \''. $self->gtf_file .'\' to BED12 format file \''. $tmp_bed12_file .'\'');
     my $gtf_to_bed12_cmd = Genome::Model::Tools::Gtf::ToBed12->execute(
@@ -140,7 +140,7 @@ sub execute {
             $junc_writer->write_one($junc_data);
         }
     }
-    
+
     return 1;
 }
 
