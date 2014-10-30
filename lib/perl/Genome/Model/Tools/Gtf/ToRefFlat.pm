@@ -23,7 +23,7 @@ sub execute {
         input_gtf_file => $self->input_gtf_file,
         extended => 1,
         output_file => $tmp_gene_pred,
-    )) {
+    )->result) {
         $self->error_message('Failed to convert GTF to genePredExt: '. $self->input_gtf_file);
         return;
     }
