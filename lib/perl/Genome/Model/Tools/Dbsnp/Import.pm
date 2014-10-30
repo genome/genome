@@ -107,8 +107,9 @@ sub execute {
 
     my @output_files = ($output_file);
 
-    unless(Genome::Model::Tools::Joinx::Sort->execute(input_files => \@output_files, output_file => $self->output_file)){
-        $self->error_message("Failed to merge and sort imported flatfiles: $@");
+    my $sort = Genome::Model::Tools::Joinx::Sort->create(input_files => \@output_files, output_file => $self->output_file);
+    unless($sort->execute) {
+        $self->error_message("Failed to merge and sort imported flatfiles.");
         return 0;
     }
     #TODO: do gabe's white/black listing, make a feature list out of the filtered bed file and use it to create a new build of the dbsnp model
