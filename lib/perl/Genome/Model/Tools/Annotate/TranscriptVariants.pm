@@ -796,7 +796,7 @@ Goes through each variant in a file, retrieving annotation information from Geno
 
  in Perl:
 
-     $success = Genome::Model::Tools::Annotate::TranscriptVariants->execute(
+     Genome::Model::Tools::Annotate::TranscriptVariants->execute(
          variant_file => 'myoutput.csv',
          output_file => 'myoutput.csv',
      );

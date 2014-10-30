@@ -185,7 +185,7 @@ Gets every transcript for a given build, runs them through Interpro, and creates
 
  in Perl:
 
-     $success = Genome::Model::Tools::Annotate::ImportInterpro::Run->execute(
+     Genome::Model::Tools::Annotate::ImportInterpro::Run->execute(
          reference_transcripts => 'NCBI-human.combined-annotation/54_36p',
          interpro_version => '4.1', #default 4.5
          chunk_size => 40000, #default 25000
