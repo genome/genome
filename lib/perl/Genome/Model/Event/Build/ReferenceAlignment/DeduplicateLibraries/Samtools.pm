@@ -171,7 +171,7 @@ sub execute {
    #    }
 
    # these are already sorted coming out of the initial merge, so don't bother re-sorting
-   Genome::Model::Tools::Sam::Merge->execute(
+   my $merge = Genome::Model::Tools::Sam::Merge->execute(
        files_to_merge => \@bam_files,
        merged_file => $bam_merged_output_file,
        is_sorted => 1,
@@ -180,6 +180,9 @@ sub execute {
        merger_version => $merger_version,
        merger_params => $merger_params
    );
+   unless($merge and $merge->result) {
+       die $self->error_message('Failed to merge');
+   }
 
    $now = UR::Context->current->now;
    $self->debug_message("<<< Completing Bam merge at $now.");
