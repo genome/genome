@@ -43,7 +43,7 @@ sub execute {
         input_files => \@cs,
         labels => \@labels,
         output_file => $self->output_file,
-    )) {
+    )->result) {
         die('Failed to compare alignment summaries!');
     }
     return 1;
