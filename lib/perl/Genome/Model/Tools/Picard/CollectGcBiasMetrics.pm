@@ -112,7 +112,7 @@ sub execute {
             maximum_permgen_memory => $self->maximum_permgen_memory,
             use_version => $self->use_version,
             temp_directory => $tmpdir,
-        )) {
+        )->result) {
             die('Failed to run G:M:T:Picard::SortSam on BAM file: '. $input_file);
         }
         $input_file = $sorted_bam_file;
@@ -125,7 +125,7 @@ sub execute {
             input_bam_file => $self->input_file,
             output_bam_file => $clean_bam_file,
             summary_output_file => $self->clean_bam_summary,
-        )) {
+        )->result) {
             die('Failed to run G:M:T:BioSamtools::CleanBam on BAM file: '. $input_file);
         }
         $input_file = $clean_bam_file;
@@ -138,7 +138,7 @@ sub execute {
             maximum_memory => $self->maximum_memory,
             maximum_permgen_memory => $self->maximum_permgen_memory,
             temp_directory => $tmpdir,
-        )) {
+        )->result) {
             die('Failed to run G:M:T:Picard::CleanSam on BAM file: '. $input_file);
         }
         $input_file = $clean_bam_file;
