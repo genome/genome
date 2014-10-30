@@ -69,7 +69,7 @@ sub execute {
     my $blastfile = $project_dir."/bac_region_db.blast";
     $self->error_message("$blastfile does not exist") and die unless (-e $blastfile);
     my $out = Genome::Model::Tools::WuBlast::Parse->execute(blast_outfile => $blastfile);   
-    $self->error_message("Failed to parse $blastfile") and die unless defined $out;
+    $self->error_message("Failed to parse $blastfile") and die unless defined $out && $out->result;
 
     my $ace_file = $pooled_bac_dir.'/consed/edit_dir/'.$self->ace_file_name;
     $self->error_message("Ace file $ace_file does not exist") and die unless (-e $ace_file);

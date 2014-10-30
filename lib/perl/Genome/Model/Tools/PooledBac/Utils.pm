@@ -237,7 +237,7 @@ sub create_contig_map
 
     $self->error_message("$blastfile does not exist") and die unless (-e $blastfile);
     my $out = Genome::Model::Tools::WuBlast::Parse->execute(blast_outfile => $blastfile);   
-    $self->error_message("Failed to parse $blastfile") and die unless defined $out;
+    $self->error_message("Failed to parse $blastfile") and die unless defined $out && $out->result;
 
     $self->error_message("Ace file $ace_file does not exist") and die unless (-e $ace_file);    
 
