@@ -62,7 +62,7 @@ sub execute {
     unless (Genome::Model::Tools::SmrtAnalysis::CatMerge->execute(
         input_files => [$tmp_header_file,$tmp_gff_file],
         output_file => $self->output_file,
-    )) {
+    )->result) {
         die('Failed to merge the header and GFF file!');
     }
     if ($self->remove_originals) {
