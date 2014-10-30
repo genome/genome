@@ -21,7 +21,7 @@ print join("\n", @INC)."\n";
 ok(Genome::Model::Tools::Sam::SortAndMergeSplitReferenceAlignments->execute(
         input_files => \@bams,
         output_file => $output_file,
-    ), 'executed sort and merge bam');
+    )->result, 'executed sort and merge bam');
 
 ok (-s $output_file, "output file has size");
 }
