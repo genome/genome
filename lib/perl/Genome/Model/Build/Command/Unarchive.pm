@@ -109,9 +109,11 @@ sub _execute {
 
         # Set the data directory to the absolute path of the main alloc
         my $main_allocation = $build->disk_allocation;
-        UR::Context->reload($main_allocation); # this may have been loaded and unarchived earlier
-        if ( $build->data_directory ne $main_allocation->absolute_path ) {
-            $build->data_directory($main_allocation->absolute_path);
+        if ($main_allocation) {
+            UR::Context->reload($main_allocation); # this may have been loaded and unarchived earlier
+            if ( $build->data_directory ne $main_allocation->absolute_path ) {
+                $build->data_directory($main_allocation->absolute_path);
+            }
         }
 
         if ( $num_allocations == 0 ) {
