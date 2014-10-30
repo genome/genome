@@ -101,7 +101,8 @@ sub prepare_output {
     my $lq_scratch_file_temp = $lq_scratch_file.".tmp";
     my $result = `sort -k2 -n $lq_scratch_file > $lq_scratch_file_temp`;
 
-    unless(Genome::Model::Tools::Bed::ChromSort->execute( input => $lq_scratch_file_temp, output => $lq_file)){
+    my $chrom_sort_cmd = Genome::Model::Tools::Bed::ChromSort->create( input => $lq_scratch_file_temp, output => $lq_file);
+    unless( $chrom_sort_cmd->execute ){
         die $self->error_message("Failed to chrom sort lq output.");
     }
     return 1; 
