@@ -163,13 +163,8 @@ sub resolve_library_protocol {
 
 sub build_is_imported {
     my $build = shift;
-    my @instrument_data = $build->instrument_data;
-    for my $id (@instrument_data) {
-        if ($id->class eq 'Genome::InstrumentData::Imported') {
-            return 1;
-        }
-    }
-    return 0;
+    my @instrument_data = $build->instrument_data(subclass_name => 'Genome::InstrumentData::Imported');
+    return scalar(@instrument_data)? 1 : 0;
 }
 
 sub resolve_variants_protocol {
