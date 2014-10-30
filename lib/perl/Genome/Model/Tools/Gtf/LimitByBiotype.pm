@@ -53,7 +53,7 @@ sub execute {
         output_gtf_file => $self->output_gtf_file,
         id_type => 'transcript_id',
         ids => \@keeper_transcript_ids,
-    )) {
+    )->result) {
         die('Failed to limit genes to only defined biotypes!');
     }
     return 1;
