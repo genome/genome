@@ -208,7 +208,7 @@ sub sort_lq_output {
     my $lq_output_file = shift;
     my $sorted_lq_output_file = shift;
     my @sort_input = ($lq_output_file);
-    unless ( Genome::Model::Tools::Joinx::Sort->execute(input_files => \@sort_input, output_file => $sorted_lq_output_file) ) {
+    unless ( Genome::Model::Tools::Joinx::Sort->execute(input_files => \@sort_input, output_file => $sorted_lq_output_file)->result ) {
         $self->error_message("Failed to sort the LQ output $lq_output_file into $sorted_lq_output_file using Joinx::Sort");
         die $self->error_message;
     }
