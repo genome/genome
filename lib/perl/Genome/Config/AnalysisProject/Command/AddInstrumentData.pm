@@ -1,4 +1,4 @@
-package Genome::Config::AnalysisProject::Command::AddInstrumentDataToAnalysisProject;
+package Genome::Config::AnalysisProject::Command::AddInstrumentData;
 
 use strict;
 use warnings;
@@ -6,20 +6,20 @@ use warnings;
 use Genome;
 use Set::Scalar;
 
-class Genome::Config::AnalysisProject::Command::AddInstrumentDataToAnalysisProject {
+class Genome::Config::AnalysisProject::Command::AddInstrumentData {
     is => 'Command::V2',
     has_input => [
-       analysis_project  => {
+       analysis_project => {
             is                  => 'Genome::Config::AnalysisProject',
-            doc                 => 'the analysis project to add the config file to',
+            doc                 => 'the analysis project to which to add the instrument data',
             shell_args_position => 1,
-        },
+       },
        instrument_data  => {
             is                  => 'Genome::InstrumentData::Imported',
             doc                 => 'imported instrument data to add to this analysis project',
             is_many             => 1,
             shell_args_position => 2,
-        },
+       },
     ],
 };
 
@@ -28,7 +28,7 @@ sub help_brief {
 }
 
 sub help_synopsis {
-    return "genome config analysis-project add-instrument-data-to-analysis-project <analysis-project> <instrument-data>";
+    return "genome config analysis-project add-instrument-data <analysis-project> <instrument-data>";
 }
 
 sub help_detail {
