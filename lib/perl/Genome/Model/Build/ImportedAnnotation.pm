@@ -334,11 +334,15 @@ sub get_or_create_roi_bed {
     close $out_file;
 
     my $sorted_out = Genome::Sys->create_temp_file_path;
-    Genome::Model::Tools::Joinx::Sort->execute(
+    my $sort = Genome::Model::Tools::Joinx::Sort->execute(
         input_files => [$out],
         unique => 1,
         output_file => $sorted_out
     );
+    unless($sort->result) {
+        $self->error_message('Failed to sort %s', $out);
+        return;
+    }
     my $file_content_hash = Genome::Sys->md5sum($sorted_out);
 
     my $format;
