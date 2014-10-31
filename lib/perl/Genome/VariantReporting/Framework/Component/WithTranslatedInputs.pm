@@ -13,7 +13,6 @@ class Genome::VariantReporting::Framework::Component::WithTranslatedInputs {
 
 sub translate_inputs {
     my ($self, $translations) = @_;
-
     for my $name ($self->translated_input_names) {
         my $old_value = $self->$name;
         $self->$name($self->translate($old_value, $translations, $name));
@@ -21,7 +20,22 @@ sub translate_inputs {
 
     for my $name ($self->translated_is_many_input_names) {
         my @old_values = $self->$name;
-        $self->$name([map {$self->translate($_, $translations, $name)} @old_values]);
+        if ($self->__meta__->property_meta_for_name($name)->data_type eq 'ARRAY') {
+            $self->$name([map {$self->translate($_, $translations, $name)} @old_values]);
+        }
+        else {
+            my @translated;
+            for my $value (@old_values) {
+                my $translated_value = $self->translate($value, $translations, $name);
+                if (ref($translated_value) eq 'ARRAY') {
+                    push @translated, @$translated_value;
+                }
+                else {
+                    push @translated, $translated_value;
+                }
+            }
+            $self->$name(\@translated);
+        }
     }
 }
 

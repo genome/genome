@@ -151,6 +151,15 @@ sub set_what_interpreter_x_requires {
     1;
 }
 
+{
+    package Test::TranslatedComponent;
+    use Genome;
+    class Test::TranslatedComponent {
+        is => 'Genome::VariantReporting::Framework::Component::Interpreter',
+        has => [to_translate => {is_translated => 1, is_many => 1, is => 'Text'}],
+    };
+}
+
 
 {
     package Genome::VariantReporting::TestReporter;
