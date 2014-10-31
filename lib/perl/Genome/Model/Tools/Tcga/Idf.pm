@@ -163,7 +163,7 @@ sub resolve_library_protocol {
 
 sub build_is_imported {
     my $build = shift;
-    my @instrument_data = $build->instrument_data(subclass_name => 'Genome::InstrumentData::Imported');
+    my @instrument_data = $build->instrument_data('subclass_name isa' => 'Genome::InstrumentData::Imported');
     return scalar(@instrument_data)? 1 : 0;
 }
 
