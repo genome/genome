@@ -43,19 +43,11 @@ sub execute {
     try {
         $copy = $self->source->copy();
 
-        my $copyable_property_names = Set::Scalar->new(
-            map { $_->property_name } $self->source->copyable_properties(),
-        );
-
         for my $change ($self->changes) {
             my ($key, $op, $value) = $change =~ /^(.+?)(=|\+=|\-=|\.=)(.*)$/;
             unless ($key && $op) {
                 $self->error_message("invalid change: $change");
                 return;
-            }
-
-            unless ($copyable_property_names->has($key)) {
-                croak "uncopyable property: $key";
             }
 
             if ($value eq 'undef') {
