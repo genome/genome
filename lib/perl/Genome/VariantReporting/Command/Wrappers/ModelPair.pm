@@ -16,6 +16,10 @@ class Genome::VariantReporting::Command::Wrappers::ModelPair {
             is => 'Genome::Model::Build',
             is_optional => 1,
         },
+        gold_sample_name => {
+            is => 'Text',
+            is_optional => 1,
+        },
         base_output_dir => { is => 'Text', },
         plan_file_basename => {
             is => 'Text',
@@ -125,6 +129,9 @@ sub get_translations {
     $translations{normal} = $self->discovery->normal_sample->name;
     if ($self->followup) {
         $translations{followup_tumor} = $self->followup->tumor_sample->name;
+    }
+    if ($self->gold_sample_name) {
+        $translations{gold} = $self->gold_sample_name;
     }
     return \%translations;
 }

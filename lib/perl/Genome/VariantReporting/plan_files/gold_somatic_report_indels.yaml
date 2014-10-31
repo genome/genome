@@ -28,7 +28,7 @@ reporters:
     'full':
         filters:
             'allele-in-genotype':
-                sample_name: discovery_tumor
+                sample_name: gold
             'contains-tag':
                 info_tag: ON_TARGET
             homopolymer:
@@ -66,7 +66,7 @@ reporters:
     'simple':
         filters:
             'allele-in-genotype':
-                sample_name: discovery_tumor
+                sample_name: gold
             'contains-tag':
                 info_tag: ON_TARGET
             homopolymer:
