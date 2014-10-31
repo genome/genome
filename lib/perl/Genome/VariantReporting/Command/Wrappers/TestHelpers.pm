@@ -70,7 +70,7 @@ sub get_build {
             into => "Genome::Model::Build::ImportedVariationList",
             as => "snvs_vcf",
             code => sub {
-                return File::Spec->join($TEST_DIR, "dbsnp.vcf");
+                return File::Spec->join($TEST_DIR, "dbsnp_nhlbi.vcf");
             },
         }
     );

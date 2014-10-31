@@ -1,0 +1,13 @@
+##fileDate=2014.07.21
+##INFO=<ID=CAF,Number=.,Type=String,Description="Allele frequencies">
+##INFO=<ID=dbSNPBuildID,Number=.,Type=String,Description="Allele frequencies">
+##INFO=<ID=MUT,Number=.,Type=String,Description="Allele frequencies">
+##INFO=<ID=AAC,Number=.,Type=String,Description="aminoAcidChange">
+##INFO=<ID=PP,Number=.,Type=String,Description="proteinPosition">
+##INFO=<ID=CDP,Number=.,Type=String,Description="cDNAPosition">
+##INFO=<ID=PH,Number=.,Type=String,Description="polyPhen">
+##INFO=<ID=EA_GTC,Number=.,Type=String,Description="European American Genotype Counts in the order of listed GTS">
+##INFO=<ID=AA_GTC,Number=.,Type=String,Description="African American Genotype Counts in the order of listed GTS">
+##INFO=<ID=MAF,Number=.,Type=String,Description="Minor Allele Frequency in percent in the order of EA,AA,All">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT
+1	2013	.	A	T	.	.	.

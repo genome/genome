@@ -1,6 +1,0 @@
-##fileDate=2014.07.21
-##INFO=<ID=CAF,Number=.,Type=String,Description="Allele frequencies">
-##INFO=<ID=dbSNPBuildID,Number=.,Type=String,Description="Allele frequencies">
-##INFO=<ID=MUT,Number=.,Type=String,Description="Allele frequencies">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT
-1	2013	.	A	T	.	.	.

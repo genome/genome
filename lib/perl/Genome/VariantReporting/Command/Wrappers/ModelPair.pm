@@ -167,6 +167,7 @@ sub generate_resource_file {
     $resource->{translations} = $self->get_translations;
 
     $resource->{dbsnp_vcf} = $self->discovery->previously_discovered_variations_build->snvs_vcf;
+    $resource->{nhlbi_vcf} = _get_nhlbi_vcf(); 
 
     YAML::DumpFile(File::Spec->join($self->resource_file), $resource);
 
@@ -177,5 +178,13 @@ sub input_vcf {
     my ($self, $variant_type) = @_;
     return $self->discovery->get_detailed_vcf_result($variant_type)->get_vcf($variant_type);
 }
+
+sub _get_nhlbi_vcf {
+    return Genome::Model::Build::ImportedVariationList->get(
+        version    => '2012.07.23', 
+        model_name => 'nhlbi-esp-GRCh37-lite-build37',
+    )->snvs_vcf;
+}
+
 1;
 
