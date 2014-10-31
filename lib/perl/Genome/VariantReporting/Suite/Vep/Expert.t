@@ -28,7 +28,7 @@ use_ok($pkg) || die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('experts', $pkg->name), $pkg);
 
-my $VERSION = 10; # Bump these each time test data changes
+my $VERSION = 11; # Bump these each time test data changes
 my $RESOURCE_VERSION = 2;
 
 my $test_dir = get_test_dir($pkg, $VERSION);
@@ -54,7 +54,7 @@ my $feature_list_cmd = Genome::FeatureList::Command::Create->create(
     name => "test",
 );
 my $feature_list = $feature_list_cmd->execute;
-$provider->set_attribute(feature_list_ids => {TEST => $feature_list->id});
+$provider->set_attribute('translations', {%{$provider->get_attribute('translations')}, feature_list_ids => {TEST => $feature_list->id}});
 
 
 my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(

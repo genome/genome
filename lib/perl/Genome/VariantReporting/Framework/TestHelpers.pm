@@ -75,11 +75,11 @@ sub get_resource_provider {
     return Genome::VariantReporting::Framework::Component::ResourceProvider->create(
         attributes => {
             reference_sequence_build_id => $reference_sequence_build->id,
-            reference_fasta => $fasta_file,
             snvs_vcf => File::Spec->join($test_dir, 'snvs.vcf.gz'),
             indels_vcf => File::Spec->join($test_dir, 'indels.vcf.gz'),
             translations => {
                 aligned_bam_result_id => [map {$_->id} @bam_results],
+                reference_fasta => $fasta_file,
             },
         },
     );

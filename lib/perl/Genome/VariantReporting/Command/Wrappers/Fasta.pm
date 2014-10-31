@@ -60,12 +60,11 @@ sub generate_resource_file {
     push @aligned_bams, $self->build->tumor_build->merged_alignment_result->id;
     $translations{aligned_bam_result_id} = \@aligned_bams;
 
-    $resource->{reference_fasta} = $self->build->tumor_build->reference_sequence_build->full_consensus_path("fa");
-    my %translations;
+    $translations{reference_fasta} = $self->build->tumor_build->reference_sequence_build->full_consensus_path("fa");
+    my %feature_list_ids;
+    $translations{feature_list_ids} = \%feature_list_ids;
     $translations{tumor} = $self->build->tumor_build->subject->name;
     $resource->{translations} = \%translations;
-    my %feature_list_ids;
-    $resource->{feature_list_ids} = \%feature_list_ids;
     $resource->{tumor_sample_name} = $translations{tumor};
     YAML::DumpFile(File::Spec->join($self->resource_file), $resource);
 }

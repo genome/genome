@@ -93,9 +93,9 @@ sub generate_resource_file {
     }
     $translations{aligned_bam_result_id} = \@aligned_bam_results;
 
-    $resource->{reference_fasta} = $self->somatic_build->reference_sequence_build->full_consensus_path("fa");
+    $translations{reference_fasta} = $self->somatic_build->reference_sequence_build->full_consensus_path("fa");
 
-    $resource->{feature_list_ids} = {};
+    $translations{feature_list_ids} = {};
 
     $resource->{fpkm_file} = File::Spec->join($self->tumor_build->data_directory, 'expression', 'genes.fpkm_tracking');
 

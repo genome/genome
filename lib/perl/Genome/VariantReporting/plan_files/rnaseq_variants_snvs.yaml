@@ -10,6 +10,8 @@ experts:
     vep:
         ensembl_version: 75
         custom_annotation_tags: []
+        feature_list_ids: feature_list_ids
+        reference_fasta: reference_fasta
         species: 'homo-sapiens'
         plugins: []
         joinx_version: 1.8
