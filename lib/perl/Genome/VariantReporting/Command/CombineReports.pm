@@ -7,6 +7,7 @@ use List::Util qw(first);
 use List::MoreUtils qw(firstidx);
 use Set::Scalar;
 use Memoize;
+use File::Touch;
 
 class Genome::VariantReporting::Command::CombineReports {
     is => 'Command',
@@ -53,9 +54,21 @@ class Genome::VariantReporting::Command::CombineReports {
 sub execute {
     my $self = shift;
 
-    $self->validate;
+    my @reports_with_size;
+    for my $report ($self->reports) {
+        if (-s $report) {
+            push @reports_with_size, $report;
+        }
+    }
+    if (scalar(@reports_with_size) == 0) {
+        #Create an empty output file
+        touch($self->output_file);
+        return 1;
+    }
 
-    my $combined_file = $self->combine_files;
+    $self->validate(@reports_with_size);
+
+    my $combined_file = $self->combine_files(@reports_with_size);
 
     my $sorted_file = $self->sort_file($combined_file);
 
@@ -87,9 +100,11 @@ sub move_file_to_output {
 
 sub combine_files {
     my $self = shift;
+    my @reports_with_size = @_;
 
     my $combined_file = Genome::Sys->create_temp_file_path;
-    for my $report ($self->reports) {
+
+    for my $report (@reports_with_size) {
         my $file_to_combine;
         if ($self->contains_header) {
             $file_to_combine = Genome::Sys->create_temp_file_path;
@@ -259,6 +274,7 @@ sub print_header_to_fh {
 # Make sure all inputs and outputs are readable. Make sure all headers are the same. Make sure sort_columns are contained in the header (this also ensures they are numeric if they must be).
 sub validate {
     my $self = shift;
+    my @reports_with_size = @_;
 
     if ($self->split_indicators and !$self->contains_header) {
         die $self->error_message("If split_indicators are specified, then a header must be present");
@@ -276,7 +292,7 @@ sub validate {
     Genome::Sys->validate_file_for_writing($self->output_file);
 
     my $master_header = Set::Scalar->new($self->get_master_header);
-    for my $report ($self->reports) {
+    for my $report (@reports_with_size) {
         Genome::Sys->validate_file_for_reading($report);
 
         my $current_header = Set::Scalar->new($self->get_header($report));

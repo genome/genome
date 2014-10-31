@@ -186,4 +186,41 @@ subtest "with split" => sub {
     ok($cmd->execute, 'Executed the test command');
     compare_ok($output_file, $expected, 'Output file looks as expected');
 };
+
+subtest "test one empty file" => sub {
+    my $report_a = File::Spec->join($data_dir, 'report_a.noheader');
+    my $report_b = File::Spec->join($data_dir, 'report_empty');
+    my $expected = File::Spec->join($data_dir, 'report_a.noheader');
+
+    my $output_file = Genome::Sys->create_temp_file_path;
+    my $cmd = $pkg->create(
+        reports => [$report_a, $report_b],
+        sort_columns => ['1', '2'],
+        contains_header => 0,
+        output_file => $output_file,
+    );
+    isa_ok($cmd, $pkg);
+
+    ok($cmd->execute, 'Executed the test command');
+    compare_ok($output_file, $expected, 'Output file looks as expected');
+};
+
+subtest "test all empty files" => sub {
+    my $report_a = File::Spec->join($data_dir, 'report_empty');
+    my $report_b = File::Spec->join($data_dir, 'report_empty');
+    my $expected = File::Spec->join($data_dir, 'report_empty');
+
+    my $output_file = Genome::Sys->create_temp_file_path;
+    my $cmd = $pkg->create(
+        reports => [$report_a, $report_b],
+        sort_columns => ['1', '2'],
+        contains_header => 0,
+        output_file => $output_file,
+    );
+    isa_ok($cmd, $pkg);
+
+    ok($cmd->execute, 'Executed the test command');
+    compare_ok($output_file, $expected, 'Output file looks as expected');
+};
+
 done_testing();
