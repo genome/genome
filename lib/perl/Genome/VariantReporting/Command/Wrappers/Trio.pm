@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 use File::Basename qw(basename);
 use Set::Scalar;
+use List::MoreUtils qw(uniq);
 
 my $DOCM = {
     snvs_build => "a06152c107884ba78b90c5f09be17163",
@@ -62,6 +63,50 @@ sub execute {
     }
     File::Slurp::write_file(File::Spec->join($self->output_directory, "workflow.xml"), $self->_workflow->get_xml);
     $self->_workflow->execute(%{$self->_workflow_inputs});
+    $self->combine_discovery_and_followup_reports;
+    $self->create_igv_xml(\@model_pairs);
+    return 1;
+}
+
+sub create_igv_xml {
+    my $self = shift;
+    my $model_pairs = shift;
+
+    my %bams = map { $_->get_sample_and_bam_map } @$model_pairs;
+    my @reference_sequence_builds = uniq map { $_->reference_sequence_build } @$model_pairs;
+    unless (scalar(@reference_sequence_builds) == 1) {
+        die $self->error_message("Found more than one reference sequence build:" . Data::Dumper::Dumper(@reference_sequence_builds));
+    }
+
+    my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
+    for my $roi_directory (@roi_directories) {
+        my $discovery_bed = File::Spec->join($self->output_directory, 'discovery', $roi_directory, 'trio_report.bed');
+        my $additional_bed = File::Spec->join($self->output_directory, 'followup', $roi_directory, 'trio_report.bed');
+        my $germline_bed = File::Spec->join($self->output_directory, 'germline', $roi_directory, 'germline_report.bed');
+        my $docm_bed = File::Spec->join($self->output_directory, 'docm', $roi_directory, 'cle_docm_report.bed');
+
+        my $reference_sequence_name_cmd = Genome::Model::Tools::Analysis::ResolveIgvReferenceName->execute(
+            reference_name => $reference_sequence_builds[0]->name,
+        );
+
+        #create the xml file for review
+        my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
+            bams            => join(',', values %bams),
+            labels          => join(',', keys %bams),
+            output_file     => File::Spec->join($self->output_directory, "$roi_directory.igv.xml"),
+            genome_name     => $self->tumor_sample->name,
+            review_bed_file => [$discovery_bed, $additional_bed, $germline_bed, $docm_bed],
+            reference_name  => $reference_sequence_name_cmd->igv_reference_name,
+        );
+        unless ($dumpXML->execute) {
+            confess $self->error_message("Failed to create IGV xml file");
+        }
+    }
+}
+
+sub combine_discovery_and_followup_reports {
+    my $self = shift;
+
     my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
     for my $roi_directory (@roi_directories) {
         for my $base ($self->_trio_report_file_names) {

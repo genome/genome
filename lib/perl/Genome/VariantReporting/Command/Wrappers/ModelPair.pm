@@ -118,6 +118,19 @@ sub get_aligned_bams {
     return \@aligned_bams;
 }
 
+sub get_sample_and_bam_map {
+    my $self = shift;
+
+    my %bams = (
+        $self->discovery->tumor_sample->name  => $self->discovery->tumor_bam,
+        $self->discovery->normal_sample->name => $self->discovery->normal_bam,
+    );
+    if ($self->followup) {
+        $bams{$self->followup->tumor_sample->name} = $self->followup->tumor_bam,
+    }
+    return %bams;
+}
+
 sub get_translations {
     my $self = shift;
     my %translations;
@@ -162,7 +175,7 @@ sub generate_resource_file {
     $resource->{feature_list_ids} = \%feature_list_ids;
     $resource->{homopolymer_list_id} = '696318bab30d47d49fab9afa845691b7';
 
-    $resource->{reference_fasta} = $self->discovery->reference_sequence_build->full_consensus_path("fa");
+    $resource->{reference_fasta} = $self->reference_sequence_build->full_consensus_path("fa");
 
     $resource->{translations} = $self->get_translations;
 
@@ -172,6 +185,11 @@ sub generate_resource_file {
     YAML::DumpFile(File::Spec->join($self->resource_file), $resource);
 
     return 1;
+}
+
+sub reference_sequence_build {
+    my $self = shift;
+    return $self->discovery->reference_sequence_build;
 }
 
 sub input_vcf {
