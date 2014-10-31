@@ -242,7 +242,9 @@ sub checksum_content_for_file_name {
 
 sub filesize_in_kb_for_file_name {
     my ($self, $bam_file) = @_;
-    return $self->_get_attribute_value_for_file_name($bam_file, 'filesize');
+    my $filesize = $self->_get_attribute_value_for_file_name($bam_file, 'filesize');
+    return if not defined $filesize;
+    return sprintf('%d', ($filesize / 1024));
 }
 
 1;
