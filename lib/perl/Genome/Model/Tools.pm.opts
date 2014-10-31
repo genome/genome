@@ -16292,23 +16292,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>germline-model-group2',
-    [
-      'color!',
-      undef,
-      'debug!',
-      undef,
-      'output-directory=s',
-      'files',
-      'overwrite-cached-metrics!',
-      undef,
-      'qc-directory=s',
-      'files',
-      'models=s@',
-      undef,
-      'help!',
-      undef
-    ],
     '>germline-model-group-qc',
     [
       'color!',
@@ -16348,21 +16331,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'whitelist-snps-file=s',
       'files',
-      'help!',
-      undef
-    ],
-    '>germline-model-group-restart',
-    [
-      'group-ids=s',
-      'files',
-      'output-file=s',
-      'files',
-      'rebuild=s',
-      'files',
-      'check-coverage=s',
-      'files',
-      'debug!',
-      undef,
       'help!',
       undef
     ],
