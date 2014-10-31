@@ -140,12 +140,18 @@ sub add_reports_to_workflow {
     my $both_reports = $snv_reports->intersection($indel_reports);
     for my $base ($both_reports->members) {
         my %combine_params = (
-            sort_columns => [qw(chromosome_name start stop reference variant)],
-            contains_header => 1,
             output_file => File::Spec->join($model_pair->output_dir, $base),
-            split_indicators => [qw(per_library)],
             separator => "\t",
         );
+        if ($base =~ m/bed$/) {
+            $combine_params{sort_columns} = [qw(1 2 3)];
+            $combine_params{contains_header} = 0,
+        }
+        else {
+            $combine_params{sort_columns} = [qw(chromosome_name start stop reference variant)];
+            $combine_params{contains_header} = 1,
+            $combine_params{split_indicators} = [qw(per_library)],
+        }
         $self->add_combine_to_workflow(\%combine_params, \%report_operations, $base);
     }
 }
