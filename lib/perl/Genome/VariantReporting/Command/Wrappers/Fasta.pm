@@ -55,9 +55,10 @@ sub execute {
 sub generate_resource_file {
     my $self = shift;
     my $resource = {};
+    my %translations;
     my @aligned_bams;
     push @aligned_bams, $self->build->tumor_build->merged_alignment_result->id;
-    $resource->{aligned_bam_result_id} = \@aligned_bams;
+    $translations{aligned_bam_result_id} = \@aligned_bams;
 
     $resource->{reference_fasta} = $self->build->tumor_build->reference_sequence_build->full_consensus_path("fa");
     my %translations;

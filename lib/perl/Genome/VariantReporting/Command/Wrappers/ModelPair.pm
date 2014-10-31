@@ -150,7 +150,9 @@ sub generate_resource_file {
     return if not $self->is_valid;
     my $resource = {};
 
-    $resource->{aligned_bam_result_id} = $self->get_aligned_bams;
+    my $translations = $self->get_translations;
+
+    $translations->{aligned_bam_result_id} = $self->get_aligned_bams;
 
     my %feature_list_ids;
     my $on_target_feature_list = Genome::FeatureList->get(name => $self->discovery->region_of_interest_set->name);
@@ -168,6 +170,7 @@ sub generate_resource_file {
 
     $resource->{dbsnp_vcf} = $self->discovery->previously_discovered_variations_build->snvs_vcf;
     $resource->{nhlbi_vcf} = _get_nhlbi_vcf(); 
+    $resource->{translations} = $translations;
 
     YAML::DumpFile(File::Spec->join($self->resource_file), $resource);
 
