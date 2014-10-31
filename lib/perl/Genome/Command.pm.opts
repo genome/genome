@@ -1229,6 +1229,15 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>copy-config',
+    [
+      'from-project=s',
+      undef,
+      'to-project=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>disable-config-file',
     [
       'profile-item=s',
@@ -1236,11 +1245,29 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>copy-config',
+    '>view',
     [
-      'from-project=s',
+      'color!',
       undef,
-      'to-project=s',
+      'COLUMN-WIDTH=s',
+      undef,
+      'config=s',
+      [
+        'verbose',
+        'terse',
+        'quiet'
+      ],
+      'disabled-configs!',
+      undef,
+      'instrument-data!',
+      undef,
+      'models!',
+      undef,
+      'timeline!',
+      undef,
+      'fast-model-summary!',
+      undef,
+      'analysis-project=s',
       undef,
       'help!',
       undef
@@ -1272,38 +1299,13 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>view',
+    '>add-model',
     [
-      'color!',
+      'allow-projects-not-in-progress!',
       undef,
-      'COLUMN-WIDTH=s',
+      'profile-item=s',
       undef,
-      'config=s',
-      [
-        'verbose',
-        'terse',
-        'quiet'
-      ],
-      'disabled-configs!',
-      undef,
-      'instrument-data!',
-      undef,
-      'models!',
-      undef,
-      'timeline!',
-      undef,
-      'fast-model-summary!',
-      undef,
-      'analysis-project=s',
-      undef,
-      'help!',
-      undef
-    ],
-    '>add-instrument-data-to-analysis-project',
-    [
-      'analysis-project=s',
-      undef,
-      'instrument-data=s@',
+      'models=s@',
       undef,
       'help!',
       undef
@@ -1352,9 +1354,13 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>update-config-to-current',
+    '>add-menu-item',
     [
-      'profile-item=s',
+      'reprocess-existing!',
+      undef,
+      'analysis-menu-items=s@',
+      undef,
+      'analysis-project=s',
       undef,
       'help!',
       undef
@@ -1372,13 +1378,16 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>add-menu-item',
+    '>update-config-to-current',
     [
-      'reprocess-existing!',
+      'profile-item=s',
       undef,
-      'analysis-menu-items=s@',
-      undef,
-      'analysis-project=s',
+      'help!',
+      undef
+    ],
+    '>release',
+    [
+      'analysis-projects=s@',
       undef,
       'help!',
       undef
@@ -1392,16 +1401,18 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>release',
+    '>config-for-instrument-data',
     [
-      'analysis-projects=s@',
+      'color!',
+      undef,
+      'instrument-data=s@',
       undef,
       'help!',
       undef
     ],
-    '>config-for-instrument-data',
+    '>add-instrument-data',
     [
-      'color!',
+      'analysis-project=s',
       undef,
       'instrument-data=s@',
       undef,
@@ -4524,19 +4535,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>check-roi',
-      [
-        'auto-action!',
-        undef,
-        'color!',
-        undef,
-        'debug!',
-        undef,
-        'models=s@',
-        undef,
-        'help!',
-        undef
-      ],
       'help!',
       undef
     ],
@@ -4612,32 +4610,6 @@ $Genome::Command::OPTS_SPEC = [
         'force-new-metrics!',
         undef,
         'build=s',
-        undef,
-        'help!',
-        undef
-      ],
-      '>convert36-to37',
-      [
-        'color!',
-        undef,
-        'debug!',
-        undef,
-        'region-of-interest-set-name=s',
-        'files',
-        'models=s@',
-        undef,
-        'help!',
-        undef
-      ],
-      '>convert37-to36',
-      [
-        'color!',
-        undef,
-        'debug!',
-        undef,
-        'region-of-interest-set-name=s',
-        'files',
-        'models=s@',
         undef,
         'help!',
         undef
@@ -9483,6 +9455,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'filter=s',
         'files',
+        'order-by=s',
+        'files',
         'style=s',
         [
           'text',
@@ -9497,8 +9471,6 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'noheaders!',
         undef,
-        'order-by=s',
-        'files',
         'build-spec=s',
         'files',
         'help!',
@@ -27847,23 +27819,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>germline-model-group2',
-      [
-        'color!',
-        undef,
-        'debug!',
-        undef,
-        'output-directory=s',
-        'files',
-        'overwrite-cached-metrics!',
-        undef,
-        'qc-directory=s',
-        'files',
-        'models=s@',
-        undef,
-        'help!',
-        undef
-      ],
       '>germline-model-group-qc',
       [
         'color!',
@@ -27903,21 +27858,6 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'whitelist-snps-file=s',
         'files',
-        'help!',
-        undef
-      ],
-      '>germline-model-group-restart',
-      [
-        'group-ids=s',
-        'files',
-        'output-file=s',
-        'files',
-        'rebuild=s',
-        'files',
-        'check-coverage=s',
-        'files',
-        'debug!',
-        undef,
         'help!',
         undef
       ],
@@ -38786,6 +38726,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>copy-config',
+      [
+        'from-project=s',
+        undef,
+        'to-project=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>disable-config-file',
       [
         'profile-item=s',
@@ -38793,11 +38742,29 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>copy-config',
+      '>view',
       [
-        'from-project=s',
+        'color!',
         undef,
-        'to-project=s',
+        'COLUMN-WIDTH=s',
+        undef,
+        'config=s',
+        [
+          'verbose',
+          'terse',
+          'quiet'
+        ],
+        'disabled-configs!',
+        undef,
+        'instrument-data!',
+        undef,
+        'models!',
+        undef,
+        'timeline!',
+        undef,
+        'fast-model-summary!',
+        undef,
+        'analysis-project=s',
         undef,
         'help!',
         undef
@@ -38829,38 +38796,13 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>view',
+      '>add-model',
       [
-        'color!',
+        'allow-projects-not-in-progress!',
         undef,
-        'COLUMN-WIDTH=s',
+        'profile-item=s',
         undef,
-        'config=s',
-        [
-          'verbose',
-          'terse',
-          'quiet'
-        ],
-        'disabled-configs!',
-        undef,
-        'instrument-data!',
-        undef,
-        'models!',
-        undef,
-        'timeline!',
-        undef,
-        'fast-model-summary!',
-        undef,
-        'analysis-project=s',
-        undef,
-        'help!',
-        undef
-      ],
-      '>add-instrument-data-to-analysis-project',
-      [
-        'analysis-project=s',
-        undef,
-        'instrument-data=s@',
+        'models=s@',
         undef,
         'help!',
         undef
@@ -38909,9 +38851,13 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>update-config-to-current',
+      '>add-menu-item',
       [
-        'profile-item=s',
+        'reprocess-existing!',
+        undef,
+        'analysis-menu-items=s@',
+        undef,
+        'analysis-project=s',
         undef,
         'help!',
         undef
@@ -38929,13 +38875,16 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>add-menu-item',
+      '>update-config-to-current',
       [
-        'reprocess-existing!',
+        'profile-item=s',
         undef,
-        'analysis-menu-items=s@',
-        undef,
-        'analysis-project=s',
+        'help!',
+        undef
+      ],
+      '>release',
+      [
+        'analysis-projects=s@',
         undef,
         'help!',
         undef
@@ -38949,16 +38898,18 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>release',
+      '>config-for-instrument-data',
       [
-        'analysis-projects=s@',
+        'color!',
+        undef,
+        'instrument-data=s@',
         undef,
         'help!',
         undef
       ],
-      '>config-for-instrument-data',
+      '>add-instrument-data',
       [
-        'color!',
+        'analysis-project=s',
         undef,
         'instrument-data=s@',
         undef,
