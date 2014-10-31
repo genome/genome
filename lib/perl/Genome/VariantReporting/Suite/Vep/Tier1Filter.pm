@@ -66,4 +66,12 @@ sub tier1_consequence_types {
     return \%consequences;
 }
 
+sub vcf_id {
+    return 'TIER1';
+}
+
+sub vcf_description {
+    return 'Variant is a tier 1 variant type';
+}
+
 1;

@@ -40,10 +40,6 @@ sub set_what_interpreter_x_requires {
         return qw(expert_one);
     }
 
-    sub available_fields {
-        return qw(exp1);
-    }
-
     sub interpret_entry {
         my $self = shift;
         my $entry = shift;
@@ -90,10 +86,6 @@ sub set_what_interpreter_x_requires {
         "interpreter_y";
     }
 
-    sub available_fields {
-        return qw(chrom pos);
-    }
-
     sub interpret_entry {
         my $self = shift;
         my $entry = shift;
@@ -117,6 +109,48 @@ sub set_what_interpreter_x_requires {
 
     1;
 }
+
+{
+    package Genome::VariantReporting::WithTranslationTestInterpreter;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::VariantReporting::WithTranslationTestInterpreter {
+        is => 'Genome::VariantReporting::Framework::Component::Interpreter',
+        has => [
+            iz_p1 => { is_translated => 1 },
+            iz_p2 => {},
+        ],
+    };
+
+    sub name {
+        "interpreter_z";
+    }
+
+    sub interpret_entry {
+        my $self = shift;
+        my $entry = shift;
+        my $passed_alleles = shift;
+        my %dict;
+        for my $allele (@$passed_alleles) {
+            $dict{$allele} = {
+                iz_p1 => $self->iz_p1,
+            };
+        }
+        return %dict;
+    }
+
+    sub field_descriptions {
+        return (
+            iz_p1 => 'The value iz_p1',
+        );
+    }
+
+    1;
+}
+
 
 {
     package Genome::VariantReporting::TestReporter;
@@ -148,8 +182,8 @@ sub set_what_interpreter_x_requires {
     sub report {
         my $self = shift;
         my $interpretations = shift;
-        for my $allele (keys %{$interpretations->{interpreter_x}}) {
-            $self->_output_fh->print(_format($interpretations->{interpreter_x}->{$allele}->{exp1})."\n");
+        while (my ($allele, $interpretations_for_allele) = each %{$interpretations->{interpreter_x}}) {
+            $self->_output_fh->print(_format($interpretations_for_allele->{exp1})."\n");
         }
     }
 
@@ -272,6 +306,35 @@ sub set_what_interpreter_x_requires {
 
     1;
 }
+
+{
+    package Genome::VariantReporting::TestEpsilonReporter;
+
+    use strict;
+    use warnings FATAL => 'all';
+    use Genome;
+
+    class Genome::VariantReporting::TestEpsilonReporter {
+        is => 'Genome::VariantReporting::Framework::Component::Reporter',
+        has => [
+        ],
+    };
+
+    sub name {
+        "reporter_epsilon";
+    }
+
+    sub requires_interpreters {
+        return qw(interpreter_z);
+    }
+
+    sub allows_hard_filters {
+        return 0;
+    }
+
+    1;
+}
+
 
 {
     package Genome::VariantReporting::TestExpert;

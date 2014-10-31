@@ -13,7 +13,8 @@ experts:
         plugins: []
         joinx_version: 1.8
         plugins_version: 1
-    fpkm: {}
+    fpkm:
+        sample_name: tumor
 reporters:
     'annotation-format':
         filters:

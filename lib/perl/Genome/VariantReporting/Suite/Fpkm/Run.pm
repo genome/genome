@@ -8,7 +8,7 @@ class Genome::VariantReporting::Suite::Fpkm::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     has_input => [
         fpkm_file => {is => 'Path'},
-        tumor_sample_name => {is => 'Text'},
+        sample_name => {is => 'Text'},
     ],
 };
 

@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::VariantReporting::Suite::BamReadcount::VafCalculator;
+use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(basic_field_descriptions);
 
 class Genome::VariantReporting::Suite::BamReadcount::VafInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Suite::BamReadcount::ComponentBase'],
@@ -17,28 +18,9 @@ sub requires_annotations {
     return ('bam-readcount');
 }
 
-sub available_fields {
-    return qw/
-        vaf
-        ref_count
-        var_count
-        per_library_var_count
-        per_library_ref_count
-        per_library_vaf
-    /;
-};
-
 sub field_descriptions {
     my $self = shift;
-    my $sample_name = shift || $self->sample_name;
-    return (
-        vaf => "Variant allele frequency for sample $sample_name",
-        ref_count => "Number of reads supporting the reference for sample $sample_name",
-        var_count => "Number of reads supporting variant for sample $sample_name",
-        per_library_var_count => "Number of reads supporting variant for each library of sample $sample_name",
-        per_library_ref_count => "Number of reads supporting the reference for each library of sample $sample_name",
-        per_library_vaf => "Variant allele frequency for each library of sample $sample_name",
-    );
+    return basic_field_descriptions($self->sample_name);
 }
 
 sub _interpret_entry {

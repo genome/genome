@@ -487,7 +487,7 @@ sub desc {
 
 #< Bsub >#
 sub bsub_rusage {
-    return "-R 'select[model!=Opteron250 && type==LINUX64] span[hosts=1]'";
+    return "-R 'span[hosts=1]'";
 }
 
 sub lsf_queue {

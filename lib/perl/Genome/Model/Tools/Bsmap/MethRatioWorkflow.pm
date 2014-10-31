@@ -4,6 +4,9 @@ use strict;
 use warnings;
 use Genome;
 
+use Genome::Utility::Text qw(sanitize_string_for_filesystem);
+use File::Spec;
+
 my $DEFAULT_VERSION = '2.6';
 my $METHRATIO_COMMAND = 'methratio.py';
 
@@ -37,7 +40,7 @@ class Genome::Model::Tools::Bsmap::MethRatioWorkflow {
             is_input => 1,
             default_value => $DEFAULT_VERSION,
             doc => "Version of methratio to use",
-        },        
+        },
     ],
     has_optional => [
         chromosome => {
@@ -92,12 +95,14 @@ sub execute {
     }
 
     if ($self->chromosome) {
-        mkdir $self->output_directory . '/' . $self->chromosome;
-        $self->output_directory($self->output_directory . '/' . $self->chromosome);
+        my $sanitized_chromosome = sanitize_string_for_filesystem($self->chromosome);
+        my $chromosome_output_dir = File::Spec->join($self->output_directory, $sanitized_chromosome);
+        Genome::Sys->create_directory($chromosome_output_dir);
+        $self->output_directory($chromosome_output_dir);
     }
 
     if(!(defined($self->version))){
-        $self->error_message('methratio version "$self->version" not found.');
+        $self->error_message('methratio version %s not found.', $self->version);
         return 0;
     }
 
@@ -108,22 +113,14 @@ sub execute {
         $cmd .= " -z";
     }
     if($self->chromosome){
-        $cmd .= " -c " . $self->chromosome;
+        $cmd .= " -c " . Genome::Sys->quote_for_shell($self->chromosome);
     }
     if($self->no_header){
         $cmd .= " -n";
     }
     $cmd .= " " . $self->bam_file;
-    
-    $self->debug_message("Running command: $cmd");
 
-    my $return = Genome::Sys->shellcmd(
-        cmd => "$cmd",
-        );
-    unless($return) {
-        $self->error_message("Failed to execute: Returned $return");
-        die $self->error_message;
-    }    
+    Genome::Sys->shellcmd(cmd => $cmd);
 
     return 1;
 }

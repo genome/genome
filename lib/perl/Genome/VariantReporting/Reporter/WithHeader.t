@@ -46,8 +46,10 @@ use_ok($pkg);
     sub name {
         'duplicate';
     }
-    sub available_fields {
-        return qw(chrom);
+    sub field_descriptions {
+        return (
+            chrom => 'Description of chrom',
+        );
     }
 }
 

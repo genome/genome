@@ -69,7 +69,7 @@ class Genome::Model::Tools::Somatic::CalculatePindelReadSupport {
              default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
          }, 
          lsf_resource => {
-             default_value => "-M 16000000 -R 'select[type==LINUX64 && mem>16000] rusage[mem=16000]'",
+             default_value => "-M 16000000 -R 'select[mem>16000] rusage[mem=16000]'",
          },
      ],
 };

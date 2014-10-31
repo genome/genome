@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Memoize qw();
+use Set::Scalar;
 
 class Genome::VariantReporting::Reporter::WithHeader {
     is => 'Genome::VariantReporting::Framework::Component::Reporter::SingleFile',
@@ -27,7 +28,6 @@ sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__;
 
-    my @sample_names = eval{$self->sample_names};
     my %available_fields = $self->available_fields_dict();
     for my $header ($self->headers) {
         my $error_desc;
@@ -46,15 +46,6 @@ sub __errors__ {
     }
 
     return @errors;
-}
-
-sub requires_interpreters_classes {
-    my $self = shift;
-    my @interpreters;
-    for my $interpreter_name ($self->requires_interpreters) {
-        push @interpreters, Genome::VariantReporting::Framework::Factory->get_class('interpreters', $interpreter_name);
-    }
-    return @interpreters;
 }
 
 sub initialize {
@@ -95,10 +86,10 @@ sub print_headers {
 sub available_fields_dict {
     my $self = shift;
 
-    my @interpreters = $self->requires_interpreters_classes;
+    my @interpreters = values %{$self->interpreters};
     my %available_fields;
     for my $interpreter (@interpreters) {
-        for my $field ($self->available_fields_for_interpreter($interpreter)) {
+        for my $field ($interpreter->available_fields) {
             if (defined $available_fields{$field}) {
                 die $self->error_message("Fields are not unique. Field: %s, Interpreters: %s and %s",
                     $field, $interpreter->name, $available_fields{$field}->{interpreter});
@@ -113,13 +104,6 @@ sub available_fields_dict {
 }
 Memoize::memoize('available_fields_dict');
 
-sub available_fields_for_interpreter {
-    my $self = shift;
-    my $interpreter = shift;
-
-    return $interpreter->available_fields();
-}
-
 # Default report method
 # Prints the fields in order of the headers.
 # Overwrite in child class if different behavior desired.
@@ -129,21 +113,22 @@ sub report {
 
     my %fields = $self->available_fields_dict();
     for my $allele (keys %{$interpretations->{($self->requires_interpreters)[0]}}) {
+        my @outputs;
         for my $header ($self->headers()) {
             my $interpreter = $fields{$header}->{interpreter};
             my $field = $fields{$header}->{field};
 
             # If we don't have an interpreter that provides this field, handle it cleanly if the field is known unavailable
             if ($self->header_is_unavailable($header)) {
-                $self->_output_fh->print( $self->_format() . "\t");
+                push @outputs, $self->_format();
             } elsif ($interpreter) {
-                $self->_output_fh->print($self->_format($interpretations->{$interpreter}->{$allele}->{$field}) . "\t");
+                push @outputs, $self->_format($interpretations->{$interpreter}->{$allele}->{$field});
             } else {
                 # We use $header here because $field will be undefined due to it not being in an interpreter
                 die $self->error_message("Field (%s) is not available from any of the interpreters provided", $header);
             }
         }
-        $self->_output_fh->print("\n");
+        $self->_output_fh->print(join($self->delimiter, @outputs) . "\n");
     }
 }
 
@@ -180,11 +165,18 @@ sub write_legend_file {
     my %fields = $self->available_fields_dict;
     my $interpreters = $self->interpreters;
     $self->_legend_fh->print("Headers\n");
+    my $unavailable_headers = Set::Scalar->new($self->unavailable_headers);
     for my $header ($self->headers) {
-        my $field = $fields{$header}->{field};
-        my $interpreter_name = $fields{$header}->{interpreter};
-        my $interpreter = $interpreters->{$interpreter_name};
-        $self->_legend_fh->print(join($self->delimiter, $header, $interpreter->field_description($field)) . "\n");
+        # We don't have an interpreter that provides this field
+        if ($unavailable_headers->contains($header)) {
+            $self->_legend_fh->print(join($self->delimiter, $header, 'undefined') . "\n");
+        }
+        else {
+            my $field = $fields{$header}->{field};
+            my $interpreter_name = $fields{$header}->{interpreter};
+            my $interpreter = $interpreters->{$interpreter_name};
+            $self->_legend_fh->print(join($self->delimiter, $header, $interpreter->field_description($field)) . "\n");
+        }
     }
 
     $self->_legend_fh->print("Filters\n");

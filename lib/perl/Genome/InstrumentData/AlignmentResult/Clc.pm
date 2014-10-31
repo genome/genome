@@ -38,7 +38,7 @@ sub required_rusage {
         $mem_million = 47000000;
     }
         
-    return "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>" . $estimated_usage_mb . " && mem>$mem_thousand] span[hosts=1] rusage[mem=$mem_thousand]' -M $mem_million -n 4 -q hmp -m hmp";
+    return "-R 'select[tmp>" . $estimated_usage_mb . " && mem>$mem_thousand] span[hosts=1] rusage[mem=$mem_thousand]' -M $mem_million -n 4 -q hmp -m hmp";
 }
 
 sub _run_aligner {

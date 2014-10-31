@@ -41,7 +41,7 @@ class Genome::Model::Tools::Bed::Convert::Indel::PindelToBed {
     has_param => [
         # Make workflow choose 64 bit blades, this is needed for samtools faidx
         lsf_resource => {
-            default_value => 'rusage[mem=4000] select[type==LINUX64] span[hosts=1] -M 4000000',
+            default_value => 'rusage[mem=4000] span[hosts=1] -M 4000000',
         },
         lsf_queue => {
             default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},

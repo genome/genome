@@ -40,7 +40,7 @@ class Genome::Model::Tools::Gatk::GermlineIndel {
             is_optional => 1, 
             is_input => 1, 
             is_output => 1, 
-            example_values => ["/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa"], 
+            example_values => ["/gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa"],
         },
 	        mb_of_ram => {
 	            is => 'Text',
@@ -56,7 +56,7 @@ class Genome::Model::Tools::Gatk::GermlineIndel {
             default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         }, 
         lsf_resource => {
-            default_value => "-R 'rusage[mem=6000] select[type==LINUX64 && model != Opteron250 && mem>6000 && maxtmp>100000] span[hosts=1]' -M 6000000",
+            default_value => "-R 'rusage[mem=6000] select[mem>6000 && maxtmp>100000] span[hosts=1]' -M 6000000",
         },
     ],
 };

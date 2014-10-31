@@ -4,9 +4,11 @@ use strict;
 use warnings;
 use Genome;
 use Params::Validate qw(validate validate_pos :types);
+use Exception::Class;
+use Scalar::Util qw(blessed);
 
 class Genome::VariantReporting::Framework::Component::Adaptor {
-    is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base'],
+    is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base', 'Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
     is_abstract => 1,
     attributes_have => {
         is_planned => {
@@ -57,8 +59,35 @@ sub resolve_plan_attributes {
 
     my $variant_reporting_plan = $self->plan;
     my $specific_plan = $variant_reporting_plan->get_plan('expert', $self->name);
-    for my $name (keys %{$specific_plan->params}) {
-        $self->$name($specific_plan->params->{$name});
+    while (my ($name, $value) = each %{$specific_plan->adaptor_params}) {
+        $self->$name($value);
+    }
+
+    my $translations;
+    eval { $translations = $self->provider->get_attribute('translations') };
+    if (my $error = Exception::Class->caught()) {
+      $self->_handle_get_attribute_error($error); #either dies or returns to proceed
+    }
+
+    $self->translate_inputs($translations);
+}
+
+sub _handle_get_attribute_error {
+    my $self = shift;
+    my $error = shift;
+
+    if (blessed $error && $error->can('rethrow')) {
+        if ($error->isa('NonexistentAttributeException')) {
+            # Return and call translate_inputs
+            # which dies if object needs translations and none are provided
+            return;
+        }
+        else {
+            $error->rethrow;
+        }
+    }
+    else {
+        die $error;
     }
 }
 

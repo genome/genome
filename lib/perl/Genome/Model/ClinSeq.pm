@@ -1296,7 +1296,7 @@ sub _infer_references_from_input_models {
 
 sub _resolve_resource_requirements_for_build {
   #Set LSF parameters for the ClinSeq job
-  my $lsf_resource_string = "-R 'select[model!=Opteron250 && type==LINUX64] rusage[tmp=10000:mem=4000]' -M 4000000";
+  my $lsf_resource_string = "-R 'rusage[tmp=10000:mem=4000]' -M 4000000";
   return($lsf_resource_string);
 }
 

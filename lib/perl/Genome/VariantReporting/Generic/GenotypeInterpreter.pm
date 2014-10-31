@@ -18,10 +18,11 @@ sub requires_annotations {
     return qw/ /;
 }
 
-sub available_fields {
-    return qw/
-        genotype
-    /;
+sub field_descriptions {
+    my $self = shift;
+    return (
+        genotype => sprintf('Genotype for sample %s', $self->sample_name),
+    );
 }
 
 sub _interpret_entry {

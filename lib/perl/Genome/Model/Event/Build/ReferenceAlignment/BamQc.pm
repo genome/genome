@@ -3,6 +3,7 @@ package Genome::Model::Event::Build::ReferenceAlignment::BamQc;
 use strict;
 use warnings;
 
+use version 0.77;
 use Genome;
 
 class Genome::Model::Event::Build::ReferenceAlignment::BamQc {
@@ -72,29 +73,14 @@ sub params_for_result {
         $self->_alignment_result($align_result);
     }
 
-    my $picard_version = $pp->picard_version;
+    my $picard_version = $self->_select_picard_version($pp->picard_version);
 
-    if ($picard_version < 1.40) {
-        my $pp_picard_version = $picard_version;
-        $picard_version = Genome::Model::Tools::Picard->default_picard_version;
-        $self->warning_message('Given picard version: '.$pp_picard_version.' not compatible to CollectMultipleMetrics. Use default: '.$picard_version);
-    }
 
     my $instr_data  = $self->instrument_data;
     #read length takes long time to run and seems not useful for illumina/solexa data
     my $read_length = $instr_data->sequencing_platform =~ /^solexa$/i ? 0 : 1;
 
-    my $error_rate_version = Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version;
-
-    if ($pp->can('read_aligner_name')
-        and $pp->can('read_aligner_version')
-        and defined $pp->read_aligner_name
-        and defined $pp->read_aligner_version
-        and ($pp->read_aligner_name eq 'bwamem')
-        and ($pp->read_aligner_version =~ /^0\.7\.(5a|7)$/)
-    ) {
-        $error_rate_version = '1.0a2';
-    }
+    my $error_rate_version = $self->_select_error_rate_version_for_pp($pp);
 
     return (
         alignment_result_id => $self->_alignment_result->id,
@@ -133,5 +119,49 @@ sub link_result {
 
     return 1;
 }
+
+sub _select_picard_version {
+    my ($self, $picard_version) = @_;
+
+    my $selected_picard_version = $picard_version;
+    #picard versions are a little odd. 1.40 is less than 1.113 but then simple arithmetic doesn't work
+    if (version->parse("v$picard_version") < version->parse("v1.40")) {
+        $selected_picard_version = Genome::Model::Tools::Picard->default_picard_version;
+        $self->warning_message('Requested picard version: '.$picard_version.' is not compatible with CollectMultipleMetrics. Using default: '.$selected_picard_version);
+    }
+
+    return $selected_picard_version;
+}
+
+sub _select_error_rate_version_for_pp {
+    my ($self, $pp) = @_;
+
+    my $error_rate_version = Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version;
+
+    if ($pp->can('read_aligner_name')
+        and $pp->can('read_aligner_version')
+        and defined $pp->read_aligner_name
+        and defined $pp->read_aligner_version
+        and ($pp->read_aligner_name eq 'bwamem')
+    ) {
+        my $mem_version = $self->_bwa_mem_version_object($pp->read_aligner_version);
+        if($mem_version > $self->_bwa_mem_version_object("0.7.5")) {
+            $error_rate_version = '1.0a2';
+        }
+    }
+    
+    return $error_rate_version;
+}
+
+sub _bwa_mem_version_object {
+    my ($self, $mem_version) = @_;
+    my ($main_version, $letter_version) = $mem_version =~ /(\d+\.\d+.\d+)([a-z]){0,1}/;
+    my $full_version = "v$main_version";
+    if(defined $letter_version) {
+        $full_version = join("_",$main_version,ord($letter_version) - 96);
+    }
+    return version->parse($full_version);
+}
+
 
 1;

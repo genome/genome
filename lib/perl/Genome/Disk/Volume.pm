@@ -143,15 +143,8 @@ sub allocated_kb {
 
     my $set = Genome::Disk::Allocation->define_set(mount_path => $self->mount_path);
     my $field = 'kilobytes_requested';
-    my $f = "sum($field)";
 
-    # UR caches the value so we're just going to reach in and "fix" it.
-    # Newer UR Sets store all their cached aggregate values under the __aggregates key
-    if (exists $set->{__aggregates}) {
-        $set->__invalidate_cache__($f);
-    } elsif (exists $set->{$f}) {
-        delete $set->{$f}
-    }
+    $set->__invalidate_cache__("sum($field)");
 
     # We only want to time the sum aggregate, not including any time to connect to the DB
     Genome::Disk::Allocation->__meta__->data_source->get_default_handle();
@@ -160,12 +153,6 @@ sub allocated_kb {
         $allocated_kb = ($set->sum($field) or 0);
         $allocation_count = $set->count();
     });
-
-    # Now we'll check that it is cached so we test that the underlying
-    # structure hasn't changed.
-    unless(exists($set->{$f}) || (exists($set->{__aggregates}) && exists($set->{__aggregates}->{$f}))) {
-        die $self->error_message("$f value not found in set's hash. Did underlying object structure change?");
-    }
 
     if (wantarray) {
         return $allocated_kb, $allocation_count;
@@ -409,7 +396,9 @@ sub is_near_soft_limit {
     my $self = shift;
 
     my ($total_allocated_kb, $allocation_count) = $self->allocated_kb;
-    my $avg_allocated_kb = $total_allocated_kb / $allocation_count;
+    my $avg_allocated_kb = $allocation_count
+                         ? ($total_allocated_kb / $allocation_count)
+                         : 0;
 
     my $kb = max($self->used_kb, $total_allocated_kb);
     return ($kb + $avg_allocated_kb > $self->soft_limit_kb);

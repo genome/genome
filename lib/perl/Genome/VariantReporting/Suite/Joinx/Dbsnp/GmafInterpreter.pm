@@ -23,10 +23,10 @@ sub requires_annotations {
     /;
 }
 
-sub available_fields {
-    return qw/
-        gmaf
-    /;
+sub field_descriptions {
+    return (
+        gmaf => 'Global minor allele frequency from dbsnp',
+    );
 }
 
 sub _interpret_entry {

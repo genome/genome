@@ -94,6 +94,7 @@ class Genome::WorkOrder {
             is => 'Genome::WorkOrderItem',
             is_many => 1,
             reverse_as => 'work_order',
+            where => [ 'status not in' => ['abandoned', 'inactive'] ],
         },
         samples => {
             is => 'Genome::Sample',
@@ -113,9 +114,7 @@ class Genome::WorkOrder {
     data_source => 'Genome::DataSource::Oltp',
 };
 
-sub xitems {
-    return Genome::WorkOrderItem->get(setup_wo_id => $_[0]->id);
-}
+sub xitems { return shift->items }
 
 sub sample_description {
     my ($self) = @_;

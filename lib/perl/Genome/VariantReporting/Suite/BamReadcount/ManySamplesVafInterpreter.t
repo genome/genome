@@ -55,6 +55,7 @@ subtest "one alt allele" => sub {
     is_deeply(\%result, \%expected, "Values are as expected");
     cmp_ok($result{G}->{S1_vaf}, ">", 99, 'vaf is in the desired range');
     cmp_ok($result{G}->{S1_vaf},  "<", 100, 'vaf is in the desired range');
+    is($interpreter->available_fields, keys %{$expected{G}}, 'Available fields as expected');
 };
 
 done_testing;

@@ -12,6 +12,8 @@ use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok); 
 use Genome::Test::Factory::ProcessingProfile::SomaticVariation;
+use Genome::Test::Factory::Model::SomaticVariation;
+use Genome::Test::Factory::Build;
 
 my $class = "Genome::Model::Tools::Tcga::Idf";
 
@@ -25,12 +27,16 @@ subtest add_pp_protocol => sub {
     my $expected = {
         "library preparation" => [{name => 'genome.wustl.edu:library_preparation:IlluminaHiSeq_DNASeq:01',
                                     description => 'Illumina library prep'}],
+        "imported library preparation" => [{name => 'genome.wustl.edu:library_preparation:Imported:01',
+                                    description => 'Imported data'}],
         "mutation filtering annotation and curation" => [{name => 'genome.wustl.edu:maf_creation:data_consolidation:01',
                                     description => 'Automatic and manual filtering and curation of variants'}],
         "variant calling" => [{name => 'genome.wustl.edu:variant_calling:'.$test_pp->id.':01',
                                     description => 'test_processing_profile_1'}],
         "nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Illumina:01',
                                     description => 'Illumina sequencing by synthesis'}],
+        "imported nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Imported:01',
+                                    description => 'Imported data'}],
         "sequence alignment" => [{name => 'genome.wustl.edu:alignment:'.$test_pp->id.':01',
                                     description => 'test_processing_profile_1'}],
     };
@@ -47,6 +53,8 @@ subtest add_same_pp_protocols => sub {
     my $expected = {
         "library preparation" => [{name => 'genome.wustl.edu:library_preparation:IlluminaHiSeq_DNASeq:01',
                                     description => 'Illumina library prep'}],
+        "imported library preparation" => [{name => 'genome.wustl.edu:library_preparation:Imported:01',
+                                    description => 'Imported data'}],
         "mutation filtering annotation and curation" => [{name => 'genome.wustl.edu:maf_creation:data_consolidation:01',
                                     description => 'Automatic and manual filtering and curation of variants'}],
         "variant calling" => [{name => 'genome.wustl.edu:variant_calling:'.$test_pp->id.':01',
@@ -55,6 +63,8 @@ subtest add_same_pp_protocols => sub {
                                     description => 'Illumina sequencing by synthesis'}],
         "sequence alignment" => [{name => 'genome.wustl.edu:alignment:'.$test_pp->id.':01',
                                     description => 'test_processing_profile_1'}],
+        "imported nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Imported:01',
+                                    description => 'Imported data'}],
     };
 
     is_deeply($idf->protocols, $expected, "Fill in idf worked as expected after adding the same processing profile twice");
@@ -70,6 +80,8 @@ subtest add_different_pp_protocols => sub {
     my $expected = {
         "library preparation" => [{name => 'genome.wustl.edu:library_preparation:IlluminaHiSeq_DNASeq:01',
                                     description => 'Illumina library prep'}],
+        "imported library preparation" => [{name => 'genome.wustl.edu:library_preparation:Imported:01',
+                                    description => 'Imported data'}],
         "mutation filtering annotation and curation" => [{name => 'genome.wustl.edu:maf_creation:data_consolidation:01',
                                     description => 'Automatic and manual filtering and curation of variants'}],
         "variant calling" => [{name => 'genome.wustl.edu:variant_calling:'.$test_pp->id.':01',
@@ -78,6 +90,8 @@ subtest add_different_pp_protocols => sub {
                                     description => 'test_processing_profile_2'}],
         "nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Illumina:01',
                                     description => 'Illumina sequencing by synthesis'}],
+        "imported nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Imported:01',
+                                    description => 'Imported data'}],
         "sequence alignment" => [{name => 'genome.wustl.edu:alignment:'.$test_pp->id.':01',
                                     description => 'test_processing_profile_1'},
                                  {name => 'genome.wustl.edu:alignment:'.$test_pp2->id.':01',
@@ -90,11 +104,12 @@ subtest add_different_pp_protocols => sub {
 subtest resolve_x_protocol => sub {
     my $idf = $class->create;
     my $test_pp = get_test_pp();
+    my $test_build = get_test_build();
     is($idf->resolve_maf_protocol, "genome.wustl.edu:maf_creation:data_consolidation:01", "Maf protocol resolved correctly");
     is($idf->resolve_mapping_protocol($test_pp), "genome.wustl.edu:alignment:".$test_pp->id.":01", "Mapping protocol resolved correctly");
-    is($idf->resolve_library_protocol, "genome.wustl.edu:library_preparation:IlluminaHiSeq_DNASeq:01", "Library protocol resolved correctly");
+    is($idf->resolve_library_protocol($test_build), "genome.wustl.edu:library_preparation:IlluminaHiSeq_DNASeq:01", "Library protocol resolved correctly");
     is($idf->resolve_variants_protocol($test_pp), "genome.wustl.edu:variant_calling:".$test_pp->id.":01", "Variants protocol defined correctly");
-    is($idf->resolve_sequencing_protocol(), "genome.wustl.edu:DNA_sequencing:Illumina:01", "Sequencing protocol defined correctly");
+    is($idf->resolve_sequencing_protocol($test_build), "genome.wustl.edu:DNA_sequencing:Illumina:01", "Sequencing protocol defined correctly");
 };
 
 subtest "print IDF" => sub {
@@ -136,6 +151,11 @@ sub get_test_pp2 {
         $TEST_PP2 = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object(tiering_version => 3);
     }
     return $TEST_PP2;
+}
+
+sub get_test_build {
+    my $model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object;
+    my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
 }
 
 done_testing;

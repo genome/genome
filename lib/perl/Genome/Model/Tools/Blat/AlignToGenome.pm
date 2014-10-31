@@ -30,12 +30,12 @@ class Genome::Model::Tools::Blat::AlignToGenome {
 	is => 'Command',                       
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
-		reference_dir	=> { is => 'Text', doc => "Directory containing chromosome files in FASTA format /gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/", is_optional => 1 },
-		search_string	=> { is => 'Text', doc => "Seach string to identify chromosome files, [*.fasta]", is_optional => 1 },		
+		reference_dir	=> { is => 'Text', doc => "Directory containing chromosome files in FASTA format" },
+		search_string	=> { is => 'Text', doc => "Seach string to identify chromosome files", default_value => '*.fasta', is_optional => 1 },
 		query_file	=> { is => 'Text', doc => "Query file in FASTA format" },
 		output_dir	=> { is => 'Text', doc => "Directory to store output files" },
-		params		=> { is => 'Text', doc => "BLAT parameters [-mask=lower -out=pslx -noHead]", is_optional => 1 },
-		lsf_queue	=> { is => 'Text', doc => "LSF queue if other than $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} [$ENV{GENOME_LSF_QUEUE_BUILD_WORKER}]", is_optional => 1 },	
+		params		=> { is => 'Text', doc => "BLAT parameters", default_value => '-mask=lower -out=pslx -noHead', is_optional => 1 },
+		lsf_queue	=> { is => 'Text', doc => "LSF queue", default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER}, is_optional => 1 },
 	],
 };
 
@@ -54,7 +54,7 @@ EOS
 sub help_detail {                           # this is what the user will see with the longer version of help. <---
     return <<EOS 
 This command would spawn BLAT alignments between myDeletions.fasta and each of the 24 human chrom refseqs:
- gmt blat align-to-genome --reference-dir /gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/ --search-string *.fasta --query-file myDeletions.fasta --output-dir ./ 
+ gmt blat align-to-genome --reference-dir /gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/ --search-string *.fasta --query-file myDeletions.fasta --output-dir ./ 
 
 By default, each BLAT alignment will be launched in the $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} queue, and outputs will be in the ./ directory.
 
@@ -75,18 +75,12 @@ sub execute {                               # replace with real execution logic.
 	## Get required parameters ##
 	my $query_file = $self->query_file;
 	my $output_dir = $self->output_dir;
-	
-	## Set defaults for optional parameters ##
-	my $dir = "/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/";
-	my $search_string = "*.fasta";
-	my $blat_params = "-mask=lower -out=pslx -noHead";
-	my $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
 
-	## Get optional parameters if provided ##
-	$dir = $self->reference_dir if($self->reference_dir);
-	$search_string = $self->search_string if($self->search_string);
-	$blat_params = $self->params if($self->params);
-	$lsf_queue = $self->lsf_queue if($self->lsf_queue);
+	## Get optional parameters ##
+	my $dir = $self->reference_dir;
+	my $search_string = $self->search_string;
+	my $blat_params = $self->params;
+	my $lsf_queue = $self->lsf_queue;
 
 	## Verify that query file exists ##
 	

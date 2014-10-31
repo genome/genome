@@ -4,6 +4,12 @@ use strict;
 use warnings;
 use Genome;
 use File::Basename qw(basename);
+use Set::Scalar;
+
+my $DOCM = {
+    snvs_build => "a06152c107884ba78b90c5f09be17163",
+    indels_build => "45841689d047419ea26df89128d6f121",
+};
 
 class Genome::VariantReporting::Command::Wrappers::Trio {
     is => 'Command::V2',
@@ -58,7 +64,7 @@ sub execute {
     $self->_workflow->execute(%{$self->_workflow_inputs});
     my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
     for my $roi_directory (@roi_directories) {
-        for my $base (Genome::VariantReporting::Command::Wrappers::ModelPair->report_names) {
+        for my $base ($self->_trio_report_file_names) {
             my $discovery_report = File::Spec->join($self->output_directory, "discovery", $roi_directory, $base);
             my $additional_report = File::Spec->join($self->output_directory, "followup", $roi_directory, $base);
             Genome::VariantReporting::Command::CombineReports->execute(
@@ -71,6 +77,10 @@ sub execute {
         }
     }
     return 1;
+}
+
+sub _trio_report_file_names {
+    return qw(trio_full_report.tsv trio_simple_report.tsv);
 }
 
 sub add_final_converge {
@@ -95,8 +105,19 @@ sub get_model_pairs {
         followup_sample => $self->followup_sample,
         normal_sample => $self->normal_sample,
         output_dir => $self->output_directory,
+        other_input_vcf_pairs => {docm => $self->vcf_files_from_imported_variation_builds($DOCM)},
     );
     return $factory->get_model_pairs;
+}
+
+sub vcf_files_from_imported_variation_builds {
+    my ($self, $builds) = @_;
+    my $snvs_build = Genome::Model::Build->get($builds->{snvs_build});
+    my $indels_build = Genome::Model::Build->get($builds->{indels_build});
+    return [
+        $snvs_build->snvs_vcf,
+        $indels_build->snvs_vcf,
+    ];
 }
 
 sub add_reports_to_workflow {
@@ -114,7 +135,10 @@ sub add_reports_to_workflow {
         );
         $report_operations{$variant_type} = $self->add_report_to_workflow(\%params);
     }
-    for my $base ($model_pair->report_names) {
+    my $snv_reports = Set::Scalar->new(grep {!($_ =~ /vcf$/)} $model_pair->report_names("snvs"));
+    my $indel_reports = Set::Scalar->new(grep {!($_ =~ /vcf$/)} $model_pair->report_names("indels"));
+    my $both_reports = $snv_reports->intersection($indel_reports);
+    for my $base ($both_reports->members) {
         my %combine_params = (
             sort_columns => [qw(chromosome_name start stop reference variant)],
             contains_header => 1,
@@ -156,9 +180,9 @@ sub add_combine_to_workflow {
         name => join(" ", "Converge", $counter),
     );
     $self->_workflow->add_operation($converge);
-    for my $variant_type (keys %$reports_to_combine) {
+    while (my ($variant_type, $report) = each %$reports_to_combine) {
         $self->_workflow->create_link(
-            source => $reports_to_combine->{$variant_type}, source_property => "output_directory",
+            source => $report, source_property => "output_directory",
             destination => $converge, destination_property => $variant_type."_output_dir",
         );
     }

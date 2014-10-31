@@ -10,33 +10,35 @@ my $DEFAULT_VER = '0.6';
 
 class Genome::Model::Tools::Sam::Readcount {
     is  => 'Command',
-    has_optional_input => [
-        use_version => {
-            is  => 'Version',
-            doc => "bam-readcount version to be used.",
-            default_value => $DEFAULT_VER,
-        },
+    has_input => [
         bam_file => {
             is => 'String',
             doc => "The bam file from which to obtain readcounts",
+        },
+        reference_fasta => {
+            is => 'String',
+            doc => "The reference fasta to be used. This corresponds to the -f parameter.",
         },
         output_file => {
             is => 'String',
             doc => "The output file containing readcounts",
             is_output => 1,
         },
+        region_list => {
+            is => 'String',
+            doc => "list of regions to report readcounts within. This should be in a tab delimited format with 'chromosome start stop'. This is the -l parameter.",
+        },
+    ],
+    has_optional_input => [
+        use_version => {
+            is  => 'Version',
+            doc => "bam-readcount version to be used.",
+            default_value => $DEFAULT_VER,
+        },
         minimum_mapping_quality => {
             is => 'Integer',
             default => 0,
             doc => "filter reads with mapping quality less than this. This is the -q parameter.",
-        },
-        reference_fasta => {
-            is => 'String',
-            doc => "The reference fasta to be used. This corresponds to the -f parameter.",
-        },
-        region_list => {
-            is => 'String',
-            doc => "list of regions to report readcounts within. This should be in a tab delimited format with 'chromosome start stop'. This is the -l parameter.",
         },
         minimum_base_quality => {
             is => 'Integer',
@@ -78,49 +80,30 @@ sub default_version {
     return $DEFAULT_VER;
 }
 
+# The -w option was introduced in 0.5
+sub version_has_warning_suppression {
+    my ($self, $version) = @_;
+    return ($version >= "0.5");
+}
+
 sub readcount_path {
     my $self = shift;
-    my $version = $self->use_version || "";
+    my $version = $self->use_version;
 
-    # This is hacky but the original bam-readcount version in use, 0.2, is simply deployed as "bam-readcount"
-    my $path;
-    if ($version eq "0.2") {
-        $path = "/gsc/bin/bam-readcount";
-    } 
-    else {
-        $path = "/usr/bin/bam-readcount$version";
-    }
-
+    my $path = "/usr/bin/bam-readcount$version";
     if (! -x $path) {
         die $self->error_message("Failed to find executable bam-readcount version $version at $path!");
     }
     return $path;
 }
 
-sub execute {
+sub command {
     my $self = shift;
-    my $version = $self->use_version || "";
 
-    my $bam = $self->bam_file;
-    unless (-s $bam) {
-        die $self->error_message("Bam file $bam does not exist or does not have size");
-    }
-    my $reference = $self->reference_fasta;
-    unless (-s $reference) {
-        die $self->error_message("Reference fasta $reference does not exist or does not have size");
-    }
+    my $version = $self->use_version;
 
-    my $output_file = $self->output_file;
-    Genome::Sys->validate_file_for_writing($output_file);
+    my $command = sprintf "%s %s -f %s -l %s", $self->readcount_path, $self->bam_file, $self->reference_fasta, $self->region_list;
 
-    my $region_file = $self->region_list;
-    unless (-s $region_file) {
-        $self->warning_message("Region list provided $region_file does not exist or does not have size. Skipping run and touching output ($output_file).");
-        touch($output_file);
-        return 1;
-    }
-
-    my $command = $self->readcount_path . " $bam -f $reference -l $region_file";
     if ($self->minimum_mapping_quality) {
         $command .= " -q " . $self->minimum_mapping_quality;
     }
@@ -139,19 +122,47 @@ sub execute {
     if($self->insertion_centric) {
         $command .= " -i";
     }
-    if($version >= "0.5") {
+    if($self->version_has_warning_suppression($version)) {
         $command .= " -w 1";    # suppress error messages to a single report
+    } else {
+        $command .= ' 2> /dev/null';
     }
 
+    return $command;
+}
+
+sub validate {
+    my $self = shift;
+
+    Genome::Sys->validate_file_for_reading($self->bam_file);
+    Genome::Sys->validate_file_for_reading($self->reference_fasta);
+
+    my $output_file = $self->output_file;
     if ($output_file =~ /[\(\)]/) {
         $output_file =~ s{\(}{\\(}g;
         $output_file =~ s{\)}{\\)}g;
+        $self->output_file($output_file);
+    }
+    Genome::Sys->validate_file_for_writing($output_file);
+
+    return 1;
+}
+
+sub execute {
+    my $self = shift;
+
+    $self->validate;
+
+    unless (-s $self->region_list) {
+        $self->warning_message("Region list provided (%s) does not exist or does not have size. Skipping run and touching output (%s).", $self->region_list, $self->output_file);
+        touch($self->output_file);
+        return 1;
     }
 
     Genome::Sys->shellcmd(
-        cmd => "$command > $output_file",
-        input_files => [$bam, $reference, $region_file],
-        output_files => [$output_file],
+        cmd => $self->command . " > " . $self->output_file,
+        input_files => [$self->bam_file, $self->reference_fasta, $self->region_list],
+        output_files => [$self->output_file],
         allow_zero_size_output_files => 1,
     );
     $self->debug_message('Done running BAM Readcounts.');

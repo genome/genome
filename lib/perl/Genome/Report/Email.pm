@@ -41,22 +41,22 @@ sub send_report {
         $class->error_message('Report is required to be able to email it');
         return;
     }
-    
+
     # Email addresses
     my $to = delete $params{to};
     $class->_validate_to_addressees($to)
         or return;
-    my $from = ( defined $params{from} ) 
+    my $from = ( defined $params{from} )
     ? delete $params{from}
     : Genome::Config->user_email;
     $class->_validate_email_address_string('from', $from)
         or return;
-    my $reply_to = ( defined $params{replyto} ) 
+    my $reply_to = ( defined $params{replyto} )
     ? delete $params{replyto}
     : Genome::Config->user_email;
     $class->_validate_email_address_string('reply to', $reply_to)
         or return;
-    
+
     my $tries = 3;
     my $count = 0;
     my $success = 0;
@@ -64,7 +64,7 @@ sub send_report {
         eval {
             my $sender = Mail::Sender->new({
                     smtp => 'gscsmtp.wustl.edu',
-                    to => $to, 
+                    to => $to,
                     from => $from,
                     replyto => $reply_to,
                     subject => Genome::Utility::Text::capitalize_words( $report->description ),
@@ -161,7 +161,7 @@ sub _validate_to_addressees {
         return;
     }
 
-    unless ( ref($to) ) { 
+    unless ( ref($to) ) {
         return $class->_validate_email_address_string('to', $to);
     }
 
@@ -210,8 +210,8 @@ Email a Genome::Report
         description => 'GC Logo GIF',
         ctype => 'image/jpeg',
         encoding => 'base64',
-        disposition => "inline; filename=\"genome_center_logo.gif\";\r\nContent-ID: <footerimg>",
-        file => '/gscmnt/839/info/medseq/images/genome_center_logo.gif'
+        disposition => "inline; filename=\"gc_logo_28.png\";\r\nContent-ID: <footerimg>",
+        file => '/path/to/Genome/View/Resource/Html/img/gc_logo_28.png'
     },
     # ...
     ],
@@ -220,9 +220,9 @@ Email a Genome::Report
  unless ( $confirmation ) {
     die "Can't send report\n";
  }
- 
+
  ...
- 
+
 =head1 Public Methods
 
 =head2 transform_report

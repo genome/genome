@@ -7,7 +7,7 @@ use Test::More tests => 6;
 
 # this gets a canonical test build, and is set up to not really hit the db
 # we temporarily have it overridden to test against Obi's example
-my $base_dir= $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-MakeCircosPlot/2014-2-5";
+my $base_dir= $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-MakeCircosPlot/2014-10-23";
 my $expected_output_dir = "$base_dir/expected-output";
 ok(-e $expected_output_dir, "expected output dir exists: $expected_output_dir");
 

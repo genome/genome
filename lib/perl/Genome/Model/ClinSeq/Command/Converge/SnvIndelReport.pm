@@ -213,15 +213,9 @@ sub execute {
     $self->outdir($outdir);
   }
 
-  #Get human readable names hash, keyed on build id
-  my $subject_labels = $self->resolve_clinseq_subject_labels;
-
   #Get the case name for this set of builds, if more than one are found, warn the user
   my $case_name = $self->get_case_name;
   $self->status_message("Producing report for individual: $case_name");
-
-  #Print out a table of subject names for reference
-  my $subject_table_file = $self->print_subject_table('-subject_labels'=>$subject_labels);
 
   #Gather variants for the tiers specified by the user from each build. Note which build each came from.
   #Get these from the underlying somatic-variation builds.
@@ -237,7 +231,7 @@ sub execute {
   
   #If no variants were found, warn the user and end here end here
   unless (keys %{$variants}){
-    my $rm_cmd = "rm -fr $bed_dir $subject_table_file";
+    my $rm_cmd = "rm -fr $bed_dir";
     $self->warning_message("no variants found, no snv-indel report will be created");
     Genome::Sys->shellcmd(cmd => $rm_cmd);
     exit 1;
@@ -290,11 +284,11 @@ sub execute {
   #TODO: Make note of which variants lie within a particular set of regions of interest (e.g. nimblegen v3 + AML RMG).  Have option to filter these out
   # - Allow for wingspan to be added to these regions
 
-  #TODO: Filter out variants falling within false positive regions/genes?
+  #TODO: Filter out variants falling within known false positive regions/genes?
 
   #TODO: Limit analysis to variants *called in* a particular tumor only (e.g. day0 tumor) - rather than taking the union of calls from all samples
 
-  #TODO: Add additional filters for low VAF variants (e.g. if VAF < 10%, require at least 3 callers or support from all three libraries)
+  #TODO: Add additional filters for low VAF variants (e.g. if VAF < 10%, require at least 3 callers, support from multiple libraries, etc.)
 
   #TODO: Get Exome Sequencing Project MAF and filter on this value as well (use existing gmt for this)
 
@@ -305,7 +299,11 @@ sub execute {
   #Also for certain sample combinations create custom visualizations using R
   $self->create_plots('-result_files'=>$result_files, '-align_builds'=>$align_builds, '-case_name'=>$case_name);
 
-  #TODO: If there are two tumors, Produce SciClone plots showing tumor1 vs. tumor2 VAF and with gene names labelled
+  #TODO: If there are two tumors being converged, Produce SciClone plots showing tumor1 vs. tumor2 VAF and with gene names labelled
+
+
+  #Print out a table of subject names for reference
+  my $subject_table_file = $self->print_subject_table('-align_builds'=>$align_builds);
 
 
   #If the user specified the --clean option, remove intermediate files from the output dir
@@ -334,20 +332,18 @@ sub fixIUB{
 sub print_subject_table{
   my $self = shift;
   my %args = @_;
-  my $subject_labels = $args{'-subject_labels'};
+  my $align_builds = $args{'-align_builds'};
 
   my $outfile = $self->outdir . "subjects_legend.txt";
   open (OUT, ">$outfile") || die $self->error_message("Could not open output file: $outfile for writing");
-  print OUT "build_id\tname\tname_abr\torder\n";
-  foreach my $bid (sort {$subject_labels->{$a}->{order} <=> $subject_labels->{$b}->{order}} keys %{$subject_labels}){
-    my $name = $subject_labels->{$bid}->{name};
-    $name =~ s/\,//g;
-    my $name_abr = $subject_labels->{$bid}->{name_abr};
-    $name_abr =~ s/\,//g;
-    my $order = $subject_labels->{$bid}->{order};
-    print OUT "$bid\t$name\t$name_abr\t$order\n";
+  print OUT "name\tprefix\tday\ttimepoint_position\tsample_type\n";
+  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys %{$align_builds}){
+    my $prefix = $align_builds->{$name}->{prefix};
+    my $day = $align_builds->{$name}->{day};
+    my $timepoint_position = $align_builds->{$name}->{timepoint_position};
+    my $sample_type = $align_builds->{$name}->{sample_common_name};
+    print OUT "$name\t$prefix\t$day\t$timepoint_position\t$sample_type\n";
   }
-
   close(OUT);
 
   return $outfile;
@@ -760,13 +756,16 @@ sub parse_read_counts{
     die $self->error_message("parsed a variant that is not defined in the variant hash") unless $variants->{$v};
 
     #Get max normal VAF (across all 'normal' samples) and min coverage (across all samples)
+    #If there are multiple data types for a single sample.  Only consider the highest coverage for that sample when determining $min_coverage_observed
+    #For example if there is exome AND WGS data we want the min coverage criteria to applied to either of these (whichever is higher)
+    my %samples;
     my $max_normal_vaf_observed = 0;
     my $max_tumor_vaf_observed = 0;
-    my $min_coverage_observed = 10000000000000000;
     my $na_found = 0;
     my @covs;
     foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
       my $prefix = $align_builds->{$name}->{prefix};
+      my $sample_name = $align_builds->{$name}->{sample_name};
       my $sample_common_name = $align_builds->{$name}->{sample_common_name};
       my $ref_count_colname = $prefix . "_ref_count";
       my $var_count_colname = $prefix . "_var_count";
@@ -789,6 +788,18 @@ sub parse_read_counts{
       }
       my $coverage = $line[$columns{$ref_count_colname}{c}] + $line[$columns{$var_count_colname}{c}];
       push(@covs, $coverage);
+
+      if (defined($samples{$sample_name})){
+        $samples{$sample_name}{coverage} = $coverage if ($coverage > $samples{$sample_name}{coverage});
+      }else{
+        $samples{$sample_name}{prefix} = $prefix;
+        $samples{$sample_name}{coverage} = $coverage;
+      }
+    }
+    my $min_coverage_observed = 'inf';
+    foreach my $sample_name (keys %samples){
+      my $prefix = $samples{$sample_name}{prefix};
+      my $coverage = $samples{$sample_name}{coverage};
       #don't apply min_coverage on rnaseq, the transcript might not be expressed.
       $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed and $prefix !~ /rnaseq/);
     }

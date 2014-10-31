@@ -19,8 +19,8 @@ class Genome::Model::Tools::FastTier::MakeTierBitmasksFromTier2Bed {
         reference_sequence => {
             type => 'Text',
             is_input => 1,
-            doc => 'Reference sequence to use for tier mask creation, default is NCBI human build36',
-            example_values => ['/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa'],
+            doc => 'Reference sequence to use for tier mask creation',
+            example_values => ['/gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa'],
         },
         transcript_version => {
             type => 'Text',
@@ -32,7 +32,7 @@ class Genome::Model::Tools::FastTier::MakeTierBitmasksFromTier2Bed {
             type => 'Text',
             is_input => 1,
             default => '2771411739',
-            doc => 'which annotation model to look in for the particular build that contains the \"transcript version\" specified as input',
+            doc => 'which annotation model to look in for the particular build that contains the "transcript version" specified as input',
         },
         tier1_output => {
             calculate_from => ['output_directory'],
@@ -75,7 +75,7 @@ sub help_brief {
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-genome-model tools fast-tier make-tier-bitmask ...    
+genome-model tools fast-tier make-tier-bitmask ...
 EOS
 }
 
@@ -92,8 +92,6 @@ sub execute {
         push @chromosomes, $chr; 
     }
     $ref_list_fh->close;
-
-    #my @references = grep {$_ =~ /[0-9,X,Y]{1,2}\.fasta/} glob("/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/*.fasta");
 
     my %genome;
     my $genome_size = 0;

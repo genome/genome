@@ -1,6 +1,6 @@
 experts:
     'bam-readcount':
-        version: 0.5
+        version: 0.6
         minimum_mapping_quality: 0
         minimum_base_quality: 0
         max_count: 10000000

@@ -117,8 +117,13 @@ plotChrCNV = function(target_chr, direction){
 
   #Get the limits for the X axis
   x_ideo_chr = c(ideo_thischr[,"chromStart"], ideo_thischr[,"chromEnd"])
-  xlim_lower = min(x_ideo_chr)
-  xlim_upper = max(x_ideo_chr)
+  if (chr_start > 0){
+    xlim_lower = chr_start
+    xlim_upper = chr_end
+  } else {
+    xlim_lower = min(x_ideo_chr)
+    xlim_upper = max(x_ideo_chr)
+  }
 
   #Axis labels
   xlabel=paste("Position (bp) on ", target_chr, sep="")
@@ -274,8 +279,13 @@ plotChrCNV_Compact = function(target_chr, type){
 
   #Get the limits for the X axis
   x_ideo_chr = c(ideo_thischr[,"chromStart"], ideo_thischr[,"chromEnd"])
-  xlim_lower = min(x_ideo_chr)
-  xlim_upper = max(x_ideo_chr)
+  if (chr_start > 0){
+    xlim_lower = chr_start
+    xlim_upper = chr_end
+  } else {
+    xlim_lower = min(x_ideo_chr)
+    xlim_upper = max(x_ideo_chr)
+  }
 
   #Grab the CNV HMM segments
   j = which(segments[,"CHR"] == target_chr)

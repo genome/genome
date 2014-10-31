@@ -4,9 +4,10 @@ use strict;
 use warnings;
 use Genome;
 use List::Util qw( min );
+use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(single_vaf_headers per_library_vaf_headers);
 
 class Genome::VariantReporting::Reporter::FullReporter {
-    is => [ 'Genome::VariantReporting::Reporter::WithHeaderAndSampleNames'],
+    is => [ 'Genome::VariantReporting::Reporter::WithHeader', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
     has => [
     ],
 };
@@ -43,7 +44,7 @@ sub headers {
         MeetsMinDepthCutoff
     /;
 
-    push @headers, $self->_single_vaf_headers;
+    push @headers, single_vaf_headers([$self->sample_names]);
 
     push @headers, qw/
         min_coverage_observed
@@ -53,35 +54,9 @@ sub headers {
         variant_caller_count
     /;
 
-    push @headers, $self->_per_library_vaf_headers;
+    push @headers, per_library_vaf_headers([$self->sample_names]);
 
     return @headers;
-}
-
-sub _single_vaf_headers {
-    my $self = shift;
-    return $self->create_sample_specific_field_names([_single_vaf_fields()], [$self->sample_names]);
-}
-
-sub _per_library_vaf_headers {
-    my $self = shift;
-    return $self->create_sample_specific_field_names([_per_library_vaf_fields()], [$self->sample_names]);
-}
-
-sub _single_vaf_fields {
-    return qw/
-        vaf
-        ref_count
-        var_count
-    /;
-}
-
-sub _per_library_vaf_fields {
-    return qw/
-        per_library_var_count
-        per_library_ref_count
-        per_library_vaf
-    /;
 }
 
 sub _header_to_info_tag_conversion {

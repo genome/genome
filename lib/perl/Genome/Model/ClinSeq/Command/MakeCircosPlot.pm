@@ -6,9 +6,10 @@ use Genome;
 
 # Written by Ben Ainscough and Scott Smith, based on prototype from Obi Griffith
 # See JIRA issue https://jira.gsc.wustl.edu/browse/TD-691
+# Modified to support exome only data by Kilannin Krysiak
 
 class Genome::Model::ClinSeq::Command::MakeCircosPlot {
-    is => 'Command::V2',
+   is => 'Command::V2',
     has_input => [
         
         output_directory    => { is => 'FilesystemPath',
@@ -52,6 +53,202 @@ sub help_synopsis {
 EOS
 }
 
+sub rnaExpression {
+	my $self = shift;
+	my $build = shift;
+	my $output_directory = shift;
+	my $dataDir = shift;
+	my $genes_AmpDel = shift;
+	my $genes_noAmpDel = shift;
+# 	my $config = shift;
+	my $RNAconfig = "";
+	
+	###Differential Expression
+	# Differential Expression data is only included if rnaseq builds are present for tumor and normal
+	# If not the rna expression is displayed.
+	if($build->normal_rnaseq_build || $build->tumor_rnaseq_build){
+		if($build->normal_rnaseq_build){
+			Genome::Sys->copy_file("$dataDir/rnaseq/cufflinks_differential_expression/genes/case_vs_control.coding.hq.de.tsv", "$output_directory/raw/case_vs_control.coding.hq.de.tsv");
+			if($self->coding_hq_de_file){
+				system("rm -f $output_directory/raw/case_vs_control.coding.hq.de.tsv");
+				Genome::Sys->copy_file($self->coding_hq_de_file , "$output_directory/raw/case_vs_control.coding.hq.de.tsv");
+			}
+		}else{
+			Genome::Sys->copy_file("$dataDir/rnaseq/tumor/cufflinks_expression_absolute/genes/genes.fpkm.expsort.top1percent.tsv", "$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
+			if($self->tumor_fpkm_topnpercent_file){
+				system("rm -f $output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
+				Genome::Sys->copy_file($self->tumor_fpkm_topnpercent_file , "$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
+			}
+		}
+	}
+	
+	if($build->normal_rnaseq_build || $build->tumor_rnaseq_build){
+    
+    ###Differential Expression
+    # Differential Expression data is only included if rnaseq builds are present for tumor and normal
+    # If not the rna expression is displayed in this track.
+
+    if($build->normal_rnaseq_build){
+        my $diffExpression = Genome::Sys->read_file("$output_directory/raw/case_vs_control.coding.hq.de.tsv");
+        my $diffExpressionPositive_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.positive.txt");
+        my $diffExpressionNegative_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.negative.txt");
+        while ($diffExpression =~ /ENS\w+\s(\w+)\s\S+\s\S+\s(\w+):(\d+)-(\d+)\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s(\S+)/g) {
+            $$genes_noAmpDel{$1}="hs$2\t$3\t$4";
+			$$genes_AmpDel{$1}="hs$2\t$3\t$4";
+            if($5>=2){
+                print $diffExpressionPositive_fh ("hs$2 $3 $4 $5\n");
+            }elsif($5<=-2){
+                print $diffExpressionNegative_fh ("hs$2 $3 $4 $5\n");
+            }
+        }
+        $diffExpressionPositive_fh->close;    
+        $diffExpressionNegative_fh->close;    
+        
+        $RNAconfig.=<<EOS;
+
+#DIFFERENTIAL EXPRESSION DATA 
+<plot>
+# The type sets the format of the track.
+type = histogram
+file = $output_directory/data/case_vs_control.coding.hq.de.positive.txt
+min=-10
+max=10 #Cap, otherwise outliers hide everything
+
+# The track is confined within r0/r1 radius limits. When using the
+# relative "r" suffix, the values are relative to the position of the ideogram.
+r1   = 0.80r
+r0   = 0.70r
+
+# Histograms can have both a fill and outline. The default outline is 1px thick black.
+fill_color = red
+
+# To turn off default outline, set the outline thickness to zero. If
+# you want to permanently disable this default, edit
+# etc/tracks/histogram.conf in the Circos distribution.
+thickness = 0p
+
+# Do not join histogram bins that do not abut.
+extend_bin = no
+orientation = out
+
+#Draw background to highlight track
+<backgrounds>
+show  = yes
+<background>
+color = vvlgrey
+</background>
+</backgrounds>
+
+#Draw axes lines
+<axes>
+show = yes
+thickness = 1
+color     = lgrey
+<axis>
+spacing   = 0.1r
+</axis>
+</axes>
+
+</plot>
+    
+<plot>
+# The type sets the format of the track.
+type = histogram
+file = $output_directory/data/case_vs_control.coding.hq.de.negative.txt
+min=-10
+max=10 #Cap, otherwise outliers hide everything
+
+# The track is confined within r0/r1 radius limits. When using the
+# relative "r" suffix, the values are relative to the position of the ideogram.
+r1   = 0.80r
+r0   = 0.70r
+
+# Histograms can have both a fill and outline. The default outline is 1px thick black.
+fill_color = blue
+
+# To turn off default outline, set the outline thickness to zero. If
+# you want to permanently disable this default, edit
+# etc/tracks/histogram.conf in the Circos distribution.
+thickness = 0p
+
+# Do not join histogram bins that do not abut.
+extend_bin = no
+orientation = out
+
+</plot>
+
+EOS
+    
+    }else{
+        my $tumor_rnaseq_build=$build->tumor_rnaseq_build;
+        my $expression = Genome::Sys->read_file("$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
+        my $expression_fh = Genome::Sys->open_file_for_writing("$output_directory/data/genes.fpkm.expsort.top1percent.tsv");
+        while ($expression =~ /\w+\t(\w+)\t\w+\t\w+\t(\w+):(\d+)-(\d+)\t\w+\t\w+\t(\S+)/g) {
+            $$genes_noAmpDel{$1}="hs$2\t$3\t$4";
+            $$genes_AmpDel{$1}="hs$2\t$3\t$4";
+            #if($5>=2 || $5<=-2){ Is this necessary
+                print $expression_fh ("hs$2 $3 $4 ".log($5)/log(2)."\n");
+            #}
+        }
+        $expression_fh->close;    
+
+        $RNAconfig.=<<EOS;
+
+#RNA EXPRESSION DATA 
+<plot>
+# The type sets the format of the track.
+type = histogram
+file = $output_directory/data/genes.fpkm.expsort.top1percent.tsv
+min=0
+max=15 #Cap, otherwise outliers hide everything
+
+# The track is confined within r0/r1 radius limits. When using the
+# relative "r" suffix, the values are relative to the position of the ideogram.
+r1   = 0.80r
+r0   = 0.70r
+
+# Histograms can have both a fill and outline. The default outline is 1px thick black.
+fill_color = red
+
+# To turn off default outline, set the outline thickness to zero. If
+# you want to permanently disable this default, edit
+# etc/tracks/histogram.conf in the Circos distribution.
+thickness = 0p
+
+# Do not join histogram bins that do not abut.
+extend_bin = no
+orientation = out
+
+#Draw background to highlight track
+<backgrounds>
+show  = yes
+<background>
+color = vvlgrey
+</background>
+</backgrounds>
+
+#Draw axes lines
+<axes>
+show = yes
+thickness = 1
+color     = lgrey
+<axis>
+spacing   = 0.1r
+</axis>
+</axes>
+
+</plot>
+    
+
+
+EOS
+    }
+    }else{
+        $self->status_message("There was no rna data for this build. This track will be empty");
+    }
+    
+   return $RNAconfig;     
+}
 
 sub execute {
     my $self = shift;
@@ -63,9 +260,10 @@ sub execute {
     # grab params from $self
     my $build = $self->build;
     my $wgs_build = $build->wgs_build;
+    my $exo_build = $build->exome_build;
     
-    unless($wgs_build){
-        $self->status_message("There is no WGS build for this Clinseq build. This tool cannot be run");
+    unless($wgs_build||$exo_build){
+        $self->status_message("There is no WGS or exome build for this Clinseq build. This tool cannot be run");
         return;
     }
     
@@ -92,73 +290,313 @@ sub execute {
 
     my $dataDir = $build->data_directory . "/" . $build->common_name;
 
+ 
 
-    ###Candidate Fusions
-    Genome::Sys->copy_file("$dataDir/sv/CandidateSvCodingFusions.tsv", "$output_directory/raw/CandidateSvCodingFusions.tsv");
-    ### The following if statement is necessary to integrate MakeCircosPlot into the ClinSeq pipeline.
-    if($self->candidate_fusion_infile){
-	    system("rm -f $output_directory/raw/CandidateSvCodingFusions.tsv");
-	    Genome::Sys->copy_file($self->candidate_fusion_infile , "$output_directory/raw/CandidateSvCodingFusions.tsv");
-	}
-    ###Fusions
-    if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rnaseq/tumor/fusions/filtered_chimeras.bedpe"){
-        Genome::Sys->copy_file($dataDir."/rnaseq/tumor/fusions/filtered_chimeras.bedpe", "$output_directory/raw/filtered_chimeras.bedpe");
-	}
-	###Deletions and Focal Amplifications
-    Genome::Sys->copy_file("$dataDir/clonality/cnaseq.cnvhmm", "$output_directory/raw/cnaseq.cnvhmm");
-    if($self->cnv_hmm_file){
-	    system("rm -f $output_directory/raw/cnaseq.cnvhmm");
-	    Genome::Sys->copy_file($self->cnv_hmm_file , "$output_directory/raw/cnaseq.cnvhmm");
-	}
-	###Deletions and focal amplifications gene files
-	Genome::Sys->copy_file("$dataDir/cnv/wgs_cnv/cnview/cnv.All_genes.ampdel.tsv" , "$output_directory/raw/cnv.All_genes.ampdel.tsv");
-	if($self->gene_ampdel_file){
-	    system("rm -f $output_directory/raw/cnv.All_genes.ampdel.tsv");
-	    Genome::Sys->copy_file($self->gene_ampdel_file , "$output_directory/raw/cnv.All_genes.ampdel.tsv");
-	}
-	
-	###Differential Expression
-    # Differential Expression data is only included if rnaseq builds are present for tumor and normal
-    # If not the rna expression is displayed.
-	if($build->normal_rnaseq_build || $build->tumor_rnaseq_build){
-        if($build->normal_rnaseq_build){
-            Genome::Sys->copy_file("$dataDir/rnaseq/cufflinks_differential_expression/genes/case_vs_control.coding.hq.de.tsv", "$output_directory/raw/case_vs_control.coding.hq.de.tsv");
-            if($self->coding_hq_de_file){
-	            system("rm -f $output_directory/raw/case_vs_control.coding.hq.de.tsv");
-	            Genome::Sys->copy_file($self->coding_hq_de_file , "$output_directory/raw/case_vs_control.coding.hq.de.tsv");
-	        }
-        }else{
-            Genome::Sys->copy_file("$dataDir/rnaseq/tumor/cufflinks_expression_absolute/genes/genes.fpkm.expsort.top1percent.tsv", "$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
-            if($self->tumor_fpkm_topnpercent_file){
-	            system("rm -f $output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
-	            Genome::Sys->copy_file($self->tumor_fpkm_topnpercent_file , "$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
-	        }
+    # declare variable to contain text for circos.conf file output
+    my $config;
+
+    # Gene hash is a union of all of the different genes in each file used for the gene annotations on the plot.
+    # Two gene hashes are created and two files are produced that could be used for gene labels on the circos plot
+    #    1. genes-noAmpDel is a hash with all of genes except for amplifications and deletions
+    #    2. genes-AmpDel is a wash with the amplifications and deletions (This file could enrich lables to only be in the AmpDel regions)
+    my %genes_noAmpDel;
+    my %genes_AmpDel;
+
+
+    # determine if data is exome or WGS and access correct folders for input files
+    
+    if($wgs_build){
+
+        ###Candidate Fusions
+        Genome::Sys->copy_file("$dataDir/sv/CandidateSvCodingFusions.tsv", "$output_directory/raw/CandidateSvCodingFusions.tsv");
+        ### The following if statement is necessary to integrate MakeCircosPlot into the ClinSeq pipeline.
+        if($self->candidate_fusion_infile){
+	        system("rm -f $output_directory/raw/CandidateSvCodingFusions.tsv");
+	        Genome::Sys->copy_file($self->candidate_fusion_infile , "$output_directory/raw/CandidateSvCodingFusions.tsv");
+	    }
+        ###Fusions
+        if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rnaseq/tumor/fusions/filtered_chimeras.bedpe"){
+            Genome::Sys->copy_file($dataDir."/rnaseq/tumor/fusions/filtered_chimeras.bedpe", "$output_directory/raw/filtered_chimeras.bedpe");
+	    }
+	    ###Deletions and Focal Amplifications
+        Genome::Sys->copy_file("$dataDir/clonality/cnaseq.cnvhmm", "$output_directory/raw/cnaseq.cnvhmm");
+        if($self->cnv_hmm_file){
+	        system("rm -f $output_directory/raw/cnaseq.cnvhmm");
+	        Genome::Sys->copy_file($self->cnv_hmm_file , "$output_directory/raw/cnaseq.cnvhmm");
+	    }
+        ###Deletions and focal amplifications gene files
+        Genome::Sys->copy_file("$dataDir/cnv/wgs_cnv/cnview/cnv.All_genes.ampdel.tsv" , "$output_directory/raw/cnv.All_genes.ampdel.tsv");
+        if($self->gene_ampdel_file){
+            system("rm -f $output_directory/raw/cnv.All_genes.ampdel.tsv");
+            Genome::Sys->copy_file($self->gene_ampdel_file , "$output_directory/raw/cnv.All_genes.ampdel.tsv");
         }
-    }    
-    ### Tier1 SNVs and INDELs
-    #decides which somatic variation model to use
-    #my $wgs_build = $build->wgs_build; #WGS build required at beginning of execute
-    my $exo_build = $build->exome_build;
-    my $snv_data_dir;
-    my $indel_data_dir;
-    if($wgs_build && $exo_build){
-        $snv_data_dir="$dataDir/snv/wgs_exome";
-        $indel_data_dir="$dataDir/indel/wgs_exome";
-    }elsif($exo_build){
-        $snv_data_dir="$dataDir/snv/exome";
-        $indel_data_dir="$dataDir/indel/exome";
-    }else{
-        $snv_data_dir="$dataDir/snv/wgs";
-        $indel_data_dir="$dataDir/indel/wgs";
-    }
-    Genome::Sys->copy_file("$snv_data_dir/snvs.hq.tier1.v1.annotated.compact.tsv", "$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv");
-    Genome::Sys->copy_file("$indel_data_dir/indels.hq.tier1.v1.annotated.compact.tsv", "$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv");
-    
+       
+        #TODO tidy this section, superfluous since exome or WGS has already been defined
 
-	
-#TODO if user enters specific files to run then overide the standard files retrived from the build here
+        ### Tier1 SNVs and INDELs
+        #decides which somatic variation model to use
+        my $snv_data_dir;
+        my $indel_data_dir;
+        if($wgs_build && $exo_build){
+            $snv_data_dir="$dataDir/snv/wgs_exome";
+            $indel_data_dir="$dataDir/indel/wgs_exome";
+        }elsif($exo_build){
+            $snv_data_dir="$dataDir/snv/exome";
+            $indel_data_dir="$dataDir/indel/exome";
+        }else{
+            $snv_data_dir="$dataDir/snv/wgs";
+            $indel_data_dir="$dataDir/indel/wgs";
+        }
+        Genome::Sys->copy_file("$snv_data_dir/snvs.hq.tier1.v1.annotated.compact.tsv", "$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv");
+        Genome::Sys->copy_file("$indel_data_dir/indels.hq.tier1.v1.annotated.compact.tsv", "$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv");
+
+ 
+        $config =<<EOS;
+# Chromosome name, size and color definition
+karyotype = data/karyotype/karyotype.human.txt
+
+# The <ideogram> block defines the position, size, labels and other
+# properties of the segments on which data are drawn. These segments
+# are usually chromosomes, but can be any integer axis.
+
+<ideogram>
+
+<spacing>
+# Spacing between ideograms. Suffix "r" denotes a relative value. It
+# is relative to circle circumference (e.g. space is 0.5% of
+# circumference).
+default = 0.005r
+</spacing>
+
+# Ideogram position, thickness and fill. 
+#
+# Radial position within the image of the ideograms. This value is
+# usually relative ("r" suffix).
+radius           = 0.80r
+
+# Thickness of ideograms, which can be absolute (e.g. pixels, "p"
+# suffix) or relative ("r" suffix). When relative, it is a fraction of
+# image radius.
+thickness        = 20p
+
+# Ideograms can be drawn as filled, outlined, or both. When filled,
+# the color will be taken from the last field in the karyotype file,
+# or set by chromosomes_colors. Color names are discussed in
+# http://www.circos.ca/documentation/tutorials/configuration/configuration_files
+# When stroke_thickness=0p or if the parameter is missing, the ideogram is
+# has no outline and the value of stroke_color is not used.
+
+fill             = yes   # A
+stroke_color     = dgrey # B
+stroke_thickness = 2p    # B
+
+# Definition for ideogram labels.
+show_label       = yes
+# see etc/fonts.conf for list of font names
+label_font       = default 
+label_radius     = 1.15r
+label_size       = 30
+label_parallel   = yes
+
+#draw chromosome bands
+show_bands = yes
+fill_bands = yes
+band_transparency = 4
+
+</ideogram>
+
+##Define some tick marks
+#show_ticks          = yes
+#show_tick_labels    = yes
+
+#<ticks>
+#radius           = 1r
+#color            = black
+#thickness        = 2p
+
+## the tick label is derived by multiplying the tick position
+## by 'multiplier' and casting it in 'format':
+## sprintf(format,position*multiplier)
+#multiplier       = 1e-6
+
+## \%d   - integer
+## \%f   - float
+## \%.1f - float with one decimal
+## \%.2f - float with two decimals
+## for other formats, see http://perldoc.perl.org/functions/sprintf.html
+#format           = \%d
+
+#<tick>
+#spacing        = 5u
+#size           = 10p
+#</tick>
+
+#<tick>
+#spacing        = 25u
+#size           = 15p
+#show_label     = yes
+#label_size     = 20p
+#label_offset   = 10p
+#format         = \%d
+#</tick>
+
+#</ticks>
+EOS
+
+        ###Candidate Fusions
+        my $candidate_fusions = Genome::Sys->read_file("$output_directory/raw/CandidateSvCodingFusions.tsv");
+        my $candidate_fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/CandidateSvCodingFusions.txt");
+        while ($candidate_fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
+            $genes_noAmpDel{$1}="hs$3\t$4\t$5";
+            $genes_noAmpDel{$2}="hs$6\t$7\t$8";
+            $genes_AmpDel{$1}="hs$3\t$4\t$5";
+            $genes_AmpDel{$2}="hs$6\t$7\t$8";
+            print $candidate_fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
+        }
+        $candidate_fusions_fh->close;
+        $config .=<<EOS;
+#FUSION DATA
+<links>
+<link>
+file          = $output_directory/data/CandidateSvCodingFusions.txt
+radius        = 0.50r
+bezier_radius = 0r
+color         = black_a1
+thickness     = 2
+</link>
+
+EOS
+
+        ###Fusions
+        if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rnaseq/tumor/fusions/filtered_chimeras.bedpe"){
+            my $fusions = Genome::Sys->read_file("$output_directory/raw/filtered_chimeras.bedpe");
+            my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/filtered_chimeras.bedpe");
+            while ($fusions =~ /(\d+|X|Y)\s(\d+)\s(\d+)\s(\d+|X|Y)\s(\d+)\s(\d+)\s+\w+\s\d+\s[+|-]\s[+|-]\s(\S+):(\S+)/g) {
+#           		print "gene 1 : $7 hs$1 $2 $3";
+#           		print "gene 2 : $8 hs$4 $5 $6";
+#                $genes_noAmpDel{$7}="hs$1 $2 $3";
+#                $genes_noAmpDel{$8}="hs$4 $5 $6";
+#                $genes_AmpDel{$7}="hs$1 $2 $3";
+#                $genes_AmpDel{$8}="hs$4 $5 $6";
+                print $fusions_fh ("hs$1 $2 $3 hs$4 $5 $6\n");
+            }
+            $fusions_fh->close;
+            $config .=<<EOS;
+#Fusions RNAseq support
+<link>
+file          = $output_directory/data/filtered_chimeras.bedpe
+radius          = 0.50r
+bezier_radius = 0r
+color         = red_a1
+thickness     = 2
+</link>        
+EOS
+       }
+
+    $config.=<<EOS;
+</links>
+
+EOS
+
+    $config.=<<EOS;
+
+<plots>
+EOS
+
+        ###Deletions and Focal Amplifications
+        my $deletions_and_focal_amps = Genome::Sys->read_file("$output_directory/raw/cnaseq.cnvhmm");
+        my $deletions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/deletions.txt");
+        my $focal_amps_fh = Genome::Sys->open_file_for_writing("$output_directory/data/focalAmps.txt");
+        while ($deletions_and_focal_amps =~ /(\S+)\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+\S+\s+(\S+)\s+\S+\s+(\S+)\s+\S+\s+(\S+)\n/g) {
+        
+            if($6 eq "Loss"){
+                my $loss;
+                if($4<$5){
+                    $loss = $4-$5;
+                }else{
+                    $loss = $5-$4;
+                }
+                #this is the max deletion threshold
+                if($loss>2){
+                    $loss=2;
+                }
+                print $deletions_fh ("hs$1 $2 $3 $loss\n");
+            }else{
+                my $gain;
+                if($4>$5){
+                    $gain = $4-$5;
+                }else{
+                    $gain = $5-$4;
+                }
+                #this is the max amplification threshold
+                if($gain>6){
+                    $gain=6;
+                }
+                print $focal_amps_fh ("hs$1 $2 $3 $gain\n");
+            }
+        
+        }
+        $deletions_fh->close;
+        $focal_amps_fh->close;
     
-    my $config =<<EOS;
+        #the gene names for deletions and focal amplifications is in another file so it needs to be read in here
+        my $ampdel_genes = Genome::Sys->read_file("$output_directory/raw/cnv.All_genes.ampdel.tsv");
+        while ($ampdel_genes =~ /ENS\w+\s\w+\s(\S+)\s\S+\s(\w+)\s(\d+)\s(\d+)/g) {
+            $genes_AmpDel{$1}="hs$2\t$3\t$4";
+        }
+         
+
+
+    ## if exome build data is available, collects input files from appropriate folders 
+
+    }else{
+
+        ###Candidate Fusions
+        # not availabe for exome only data
+        
+        ###Fusions
+        if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rnaseq/tumor/fusions/filtered_chimeras.bedpe"){
+            Genome::Sys->copy_file($dataDir."/rnaseq/tumor/fusions/filtered_chimeras.bedpe", "$output_directory/raw/filtered_chimeras.bedpe");
+        }
+        ###Deletions and Focal Amplifications
+        Genome::Sys->copy_file("$dataDir/cnv/exome_cnv/cnmops.cnvhmm", "$output_directory/raw/cnmops.cnvhmm");
+        if($self->cnv_hmm_file){
+            system("rm -f $output_directory/raw/cnmops.cnvhmm");
+            Genome::Sys->copy_file($self->cnv_hmm_file , "$output_directory/raw/cnmops.cnvhmm");
+        }
+        ###Deletions and focal amplifications gene files
+        Genome::Sys->copy_file("$dataDir/cnv/exome_cnv/CNView_All/CNView_All_genes.ampdel.tsv" , "$output_directory/raw/CNView_All_genes.ampdel.tsv");
+        if($self->gene_ampdel_file){
+            system("rm -f $output_directory/raw/cnv.All_genes.ampdel.tsv");
+            Genome::Sys->copy_file($self->gene_ampdel_file , "$output_directory/raw/cnv.All_genes.ampdel.tsv");
+        }
+        
+        
+
+        #TODO tidy this section, superfluous since exome or WGS has already been defined
+
+        ### Tier1 SNVs and INDELs
+        #decides which somatic variation model to use
+        my $snv_data_dir;
+        my $indel_data_dir;
+        if($wgs_build && $exo_build){
+            $snv_data_dir="$dataDir/snv/wgs_exome";
+            $indel_data_dir="$dataDir/indel/wgs_exome";
+        }elsif($exo_build){
+            $snv_data_dir="$dataDir/snv/exome";
+            $indel_data_dir="$dataDir/indel/exome";
+        }else{
+            $snv_data_dir="$dataDir/snv/wgs";
+            $indel_data_dir="$dataDir/indel/wgs";
+        }
+        Genome::Sys->copy_file("$snv_data_dir/snvs.hq.tier1.v1.annotated.compact.tsv", "$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv");
+        Genome::Sys->copy_file("$indel_data_dir/indels.hq.tier1.v1.annotated.compact.tsv", "$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv");
+        
+
+        
+    #TODO if user enters specific files to run then overide the standard files retrived from the build here
+        
+        $config =<<EOS;
 # Chromosome name, size and color definition
 karyotype = data/karyotype/karyotype.human.txt
 
@@ -251,26 +689,21 @@ band_transparency = 4
 EOS
 
 
-    #Gene hash is a union of all of the different genes in each file used for the gene annotations on the plot.
-    # Two gene hashes are created and two files are produced that could be used for gene labels on the circo plot
-    #    1. genes-noAmpDel is a hash with all of genes except for amplifications and deletions
-    #    2. genes-AmpDel is a wash with the amplifications and deletions (This file could enrich lables to only be in the AmpDel regions)
-    my %genes_noAmpDel ;
-	my %genes_AmpDel;
-
-    #TODO I am assuming that this comes from the WGS data. I am not sure on this, however if it does not the <links> tag needs to be brought out of the conf section here
-    ###Candidate Fusions
-    my $candidate_fusions = Genome::Sys->read_file("$output_directory/raw/CandidateSvCodingFusions.tsv");
-    my $candidate_fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/CandidateSvCodingFusions.txt");
-    while ($candidate_fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
-        $genes_noAmpDel{$1}="hs$3\t$4\t$5";
-        $genes_noAmpDel{$2}="hs$6\t$7\t$8";
-        $genes_AmpDel{$1}="hs$3\t$4\t$5";
-        $genes_AmpDel{$2}="hs$6\t$7\t$8";
-        print $candidate_fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
-    }
-    $candidate_fusions_fh->close;
-    $config .=<<EOS;
+# WGS Fusions not available for exome so this will be skipped
+=cut
+        #TODO I am assuming that this comes from the WGS data. I am not sure on this, however if it does not the <links> tag needs to be brought out of the conf section here
+        ###Candidate Fusions
+        my $candidate_fusions = Genome::Sys->read_file("$output_directory/raw/CandidateSvCodingFusions.tsv");
+        my $candidate_fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/CandidateSvCodingFusions.txt");
+        while ($candidate_fusions =~ /(\S+)\s+(\S+)\s+chr(\S+):(\d+)-(\d+)\s+chr(\S+):(\d+)-(\d+)/g) {
+            $genes_noAmpDel{$1}="hs$3\t$4\t$5";
+            $genes_noAmpDel{$2}="hs$6\t$7\t$8";
+            $genes_AmpDel{$1}="hs$3\t$4\t$5";
+            $genes_AmpDel{$2}="hs$6\t$7\t$8";
+            print $candidate_fusions_fh ("hs$3 $4 $5 hs$6 $7 $8\n");
+        }
+        $candidate_fusions_fh->close;
+        $config .=<<EOS;
 #FUSION DATA
 <links>
 <link>
@@ -282,23 +715,19 @@ thickness     = 2
 </link>
 
 EOS
+=cut
 
-###Fusions
+        ###Fusions
         if(my $tumor_rnaseq_build = $build->tumor_rnaseq_build && -e $dataDir."/rnaseq/tumor/fusions/filtered_chimeras.bedpe"){
             my $fusions = Genome::Sys->read_file("$output_directory/raw/filtered_chimeras.bedpe");
             my $fusions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/filtered_chimeras.bedpe");
-           while ($fusions =~ /(\d+|X|Y)\s(\d+)\s(\d+)\s(\d+|X|Y)\s(\d+)\s(\d+)\s+\w+\s\d+\s[+|-]\s[+|-]\s(\S+):(\S+)/g) {
-#           		print "gene 1 : $7 hs$1 $2 $3";
-#           		print "gene 2 : $8 hs$4 $5 $6";
-#                $genes_noAmpDel{$7}="hs$1 $2 $3";
-#                $genes_noAmpDel{$8}="hs$4 $5 $6";
-#                $genes_AmpDel{$7}="hs$1 $2 $3";
-#                $genes_AmpDel{$8}="hs$4 $5 $6";
+            while ($fusions =~ /(\d+|X|Y)\s(\d+)\s(\d+)\s(\d+|X|Y)\s(\d+)\s(\d+)\s+\w+\s\d+\s[+|-]\s[+|-]\s(\S+):(\S+)/g) {
                 print $fusions_fh ("hs$1 $2 $3 hs$4 $5 $6\n");
             }
             $fusions_fh->close;
             $config .=<<EOS;
 #Fusions RNAseq support
+<links>
 <link>
 file          = $output_directory/data/filtered_chimeras.bedpe
 radius          = 0.50r
@@ -320,50 +749,54 @@ EOS
 EOS
 
 
-
-
-    ###Deletions and Focal Amplifications
-    my $deletions_and_focal_amps = Genome::Sys->read_file("$output_directory/raw/cnaseq.cnvhmm");
-    my $deletions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/deletions.txt");
-    my $focal_amps_fh = Genome::Sys->open_file_for_writing("$output_directory/data/focalAmps.txt");
-    while ($deletions_and_focal_amps =~ /(\S+)\s(\d+)\s(\d+)\s\d+\s\d+\s\d+\s(\S+)\s\d+\s(\S+)\s\S+\s(\S+)/g) {
-    
-        if($6 eq "Loss"){
-            my $loss;
-            if($4<$5){
-                $loss = $4-$5;
+        ###Deletions and Focal Amplifications
+        my $deletions_and_focal_amps = Genome::Sys->read_file("$output_directory/raw/cnmops.cnvhmm");
+        my $deletions_fh = Genome::Sys->open_file_for_writing("$output_directory/data/deletions.txt");
+        my $focal_amps_fh = Genome::Sys->open_file_for_writing("$output_directory/data/focalAmps.txt");
+        while ($deletions_and_focal_amps =~ /(\S+)\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+\S+\s+(\S+)\s+\S+\s+(\S+)\s+\S+\s+(\S+)\n/g) {
+        
+            if($6 eq "Loss"){
+                my $loss;
+                if($4<$5){
+                    $loss = $4-$5;
+                }else{
+                    $loss = $5-$4;
+                }
+                #this is the max deletion threshold
+                if($loss>2){
+                    $loss=2;
+                }
+                print $deletions_fh ("hs$1 $2 $3 $loss\n");
             }else{
-                $loss = $5-$4;
+                my $gain;
+                if($4>$5){
+                    $gain = $4-$5;
+                }else{
+                    $gain = $5-$4;
+                }
+                #this is the max amplification threshold
+                if($gain>6){
+                    $gain=6;
+                }
+                print $focal_amps_fh ("hs$1 $2 $3 $gain\n");
             }
-            #this is the max deletion threshold
-            if($loss>2){
-                $loss=2;
-            }
-            print $deletions_fh ("hs$1 $2 $3 $loss\n");
-        }else{
-            my $gain;
-            if($4>$5){
-                $gain = $4-$5;
-            }else{
-                $gain = $5-$4;
-            }
-            #this is the max amplification threshold
-            if($gain>6){
-                $gain=6;
-            }
-            print $focal_amps_fh ("hs$1 $2 $3 $gain\n");
+        
         }
+        $deletions_fh->close;
+        $focal_amps_fh->close;  
     
+        #the gene names for deletions and focal amplifications is in another file so it needs to be read in here
+        my $ampdel_genes = Genome::Sys->read_file("$output_directory/raw/CNView_All_genes.ampdel.tsv");
+        while ($ampdel_genes =~ /ENS\w+\s\w+\s(\S+)\s\S+\s(\w+)\s(\d+)\s(\d+)/g) {
+            $genes_AmpDel{$1}="hs$2\t$3\t$4";
+        }
+        
+		
     }
-    $deletions_fh->close;
-    $focal_amps_fh->close;
-    
-    #the gene names for deletions and focal amplifications is in another file so it needs to be read in here
-    my $ampdel_genes = Genome::Sys->read_file("$output_directory/raw/cnv.All_genes.ampdel.tsv");
-    while ($ampdel_genes =~ /ENS\w+\s\w+\s(\S+)\s\S+\s(\w+)\s(\d+)\s(\d+)/g) {
-        $genes_AmpDel{$1}="hs$2\t$3\t$4";
-    }
-    
+
+
+    ## following occurs with WGS or exome data input
+
     $config .=<<EOS;
 
 #DELETIONS DATA
@@ -441,177 +874,15 @@ orientation = out
 
 </plot>
 EOS
-    if($build->normal_rnaseq_build || $build->tumor_rnaseq_build){
-    
-    ###Differential Expression
-    # Differential Expression data is only included if rnaseq builds are present for tumor and normal
-    # If not the rna expression is displayed in this track.
-
-    if($build->normal_rnaseq_build){
-        my $diffExpression = Genome::Sys->read_file("$output_directory/raw/case_vs_control.coding.hq.de.tsv");
-        my $diffExpressionPositive_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.positive.txt");
-        my $diffExpressionNegative_fh = Genome::Sys->open_file_for_writing("$output_directory/data/case_vs_control.coding.hq.de.negative.txt");
-        while ($diffExpression =~ /ENS\w+\s(\w+)\s\S+\s\S+\s(\w+):(\d+)-(\d+)\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s\S+\s(\S+)/g) {
-            $genes_noAmpDel{$1}="hs$2\t$3\t$4";
-			$genes_AmpDel{$1}="hs$2\t$3\t$4";
-            if($5>=2){
-                print $diffExpressionPositive_fh ("hs$2 $3 $4 $5\n");
-            }elsif($5<=-2){
-                print $diffExpressionNegative_fh ("hs$2 $3 $4 $5\n");
-            }
-        }
-        $diffExpressionPositive_fh->close;    
-        $diffExpressionNegative_fh->close;    
+	#DIFFERENTIAL EXPRESSION
+	$config .= $self->rnaExpression($build, $output_directory, $dataDir, \%genes_AmpDel, \%genes_noAmpDel, $config);
         
-        $config.=<<EOS;
-
-#DIFFERENTIAL EXPRESSION DATA 
-<plot>
-# The type sets the format of the track.
-type = histogram
-file = $output_directory/data/case_vs_control.coding.hq.de.positive.txt
-min=-10
-max=10 #Cap, otherwise outliers hide everything
-
-# The track is confined within r0/r1 radius limits. When using the
-# relative "r" suffix, the values are relative to the position of the ideogram.
-r1   = 0.80r
-r0   = 0.70r
-
-# Histograms can have both a fill and outline. The default outline is 1px thick black.
-fill_color = red
-
-# To turn off default outline, set the outline thickness to zero. If
-# you want to permanently disable this default, edit
-# etc/tracks/histogram.conf in the Circos distribution.
-thickness = 0p
-
-# Do not join histogram bins that do not abut.
-extend_bin = no
-orientation = out
-
-#Draw background to highlight track
-<backgrounds>
-show  = yes
-<background>
-color = vvlgrey
-</background>
-</backgrounds>
-
-#Draw axes lines
-<axes>
-show = yes
-thickness = 1
-color     = lgrey
-<axis>
-spacing   = 0.1r
-</axis>
-</axes>
-
-</plot>
-    
-<plot>
-# The type sets the format of the track.
-type = histogram
-file = $output_directory/data/case_vs_control.coding.hq.de.negative.txt
-min=-10
-max=10 #Cap, otherwise outliers hide everything
-
-# The track is confined within r0/r1 radius limits. When using the
-# relative "r" suffix, the values are relative to the position of the ideogram.
-r1   = 0.80r
-r0   = 0.70r
-
-# Histograms can have both a fill and outline. The default outline is 1px thick black.
-fill_color = blue
-
-# To turn off default outline, set the outline thickness to zero. If
-# you want to permanently disable this default, edit
-# etc/tracks/histogram.conf in the Circos distribution.
-thickness = 0p
-
-# Do not join histogram bins that do not abut.
-extend_bin = no
-orientation = out
-
-</plot>
-
-EOS
-    
-    }else{
-        my $tumor_rnaseq_build=$build->tumor_rnaseq_build;
-        my $expression = Genome::Sys->read_file("$output_directory/raw/genes.fpkm.expsort.top1percent.tsv");
-        my $expression_fh = Genome::Sys->open_file_for_writing("$output_directory/data/genes.fpkm.expsort.top1percent.tsv");
-        while ($expression =~ /\w+\t(\w+)\t\w+\t\w+\t(\w+):(\d+)-(\d+)\t\w+\t\w+\t(\S+)/g) {
-            $genes_noAmpDel{$1}="hs$2\t$3\t$4";
-            $genes_AmpDel{$1}="hs$2\t$3\t$4";
-            #if($5>=2 || $5<=-2){ Is this necessary
-                print $expression_fh ("hs$2 $3 $4 ".log($5)/log(2)."\n");
-            #}
-        }
-        $expression_fh->close;    
-
-        $config.=<<EOS;
-
-#RNA EXPRESSION DATA 
-<plot>
-# The type sets the format of the track.
-type = histogram
-file = $output_directory/data/genes.fpkm.expsort.top1percent.tsv
-min=0
-max=15 #Cap, otherwise outliers hide everything
-
-# The track is confined within r0/r1 radius limits. When using the
-# relative "r" suffix, the values are relative to the position of the ideogram.
-r1   = 0.80r
-r0   = 0.70r
-
-# Histograms can have both a fill and outline. The default outline is 1px thick black.
-fill_color = red
-
-# To turn off default outline, set the outline thickness to zero. If
-# you want to permanently disable this default, edit
-# etc/tracks/histogram.conf in the Circos distribution.
-thickness = 0p
-
-# Do not join histogram bins that do not abut.
-extend_bin = no
-orientation = out
-
-#Draw background to highlight track
-<backgrounds>
-show  = yes
-<background>
-color = vvlgrey
-</background>
-</backgrounds>
-
-#Draw axes lines
-<axes>
-show = yes
-thickness = 1
-color     = lgrey
-<axis>
-spacing   = 0.1r
-</axis>
-</axes>
-
-</plot>
-    
-
-
-EOS
-    }
-    }else{
-        $self->status_message("There was no rna data for this build. This track will be empty");
-    }
-    
     ### Tier1 SNVs and INDELs
 
     #SNV
     my $snv_file = Genome::Sys->read_file("$output_directory/raw/snvs.hq.tier1.v1.annotated.compact.tsv");
     my $snv_fh = Genome::Sys->open_file_for_writing("$output_directory/data/snvs.hq.tier1.v1.annotated.compact.tsv");
-    while ($snv_file =~ /(\S+):(\d+)-(\d+)\s+\S+\s+(\S+)\s+\w+\s+(\S+)\s+(\S+)\s+(\S+)\s+.+/g) {
+    while ($snv_file =~ /(\S+):(\d+)-(\d+)\s+\S+\s+(\S+)\s+\w+\s+(\S+)\s+(\S+)\s+(\S+).*/g) {
     
         $genes_noAmpDel{$4}="hs$1\t$2\t$3";
         $genes_AmpDel{$4}="hs$1\t$2\t$3";
@@ -633,11 +904,11 @@ EOS
     my $indel_file = Genome::Sys->read_file("$output_directory/raw/indels.hq.tier1.v1.annotated.compact.tsv");
     my $indel_fh = Genome::Sys->open_file_for_writing("$output_directory/data/indels.hq.tier1.v1.annotated.compact.tsv");
     my $color;
-    while ($indel_file =~ /(\S+):(\d+)-(\d+)\t\S+\t(\S+)\t\w+\t(\S+)\t(\S+)\t(\S+)\t.+/g) {
+    while ($indel_file =~ /(\S+):(\d+)-(\d+)\s+\S+\s+(\S+)\s+\w+\s+(\S+)\s+(\S+)\s+(\S+).*/g) {
     
         $genes_noAmpDel{$4}="hs$1\t$2\t$3";
         $genes_AmpDel{$4}="hs$1\t$2\t$3";
-        if (length($6)>length($7)){$color="red";}
+        if ($6 eq "-"){$color="red";}
         else {$color="blue";}
 
         print $indel_fh "hs$1 $2 $3 0.5 fill_color=$color\n";
@@ -727,7 +998,14 @@ EOS
         gene_name_columns => ['gene'],
     );
     $annotate_genes_cmd1->execute() or die;
-    my $sort_cmd1 = "sort -rnk 102 $output_directory/raw/genes_noAmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_noAmpDel.catanno.sorted.txt";
+    
+    open (ANNOT_FILE, "<$output_directory/raw/genes_noAmpDel.catanno.txt") or die "\nCouldn't open genes_noAmpDel.catanno.txt file.";
+    my $head = <ANNOT_FILE>;
+    my @columns = split('\t',$head);
+    my $last_column = scalar @columns;
+    close (ANNOT_FILE);
+
+    my $sort_cmd1 = "sort -rnk $last_column $output_directory/raw/genes_noAmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_noAmpDel.catanno.sorted.txt";
     Genome::Sys->shellcmd(cmd => $sort_cmd1, set_pipefail => 1,);
 
 
@@ -745,7 +1023,7 @@ EOS
         gene_name_columns => ['gene'],
     );
     $annotate_genes_cmd2->execute() or die;
-    my $sort_cmd2 = "sort -rnk 102 $output_directory/raw/genes_AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_AmpDel.catanno.sorted.txt";
+    my $sort_cmd2 = "sort -rnk $last_column $output_directory/raw/genes_AmpDel.catanno.txt|head -100 |cut -d \"\t\" -f 1-4  > $output_directory/data/genes_AmpDel.catanno.sorted.txt";
     Genome::Sys->shellcmd(cmd => $sort_cmd2, set_pipefail => 1,);
 
     $config .=<<EOS;
@@ -865,7 +1143,9 @@ EOS
 
     my $path_to_circos_executable = Genome::Sys->sw_path("circos",$self->use_version);
     $self->status_message("using path $path_to_circos_executable");
-    Genome::Sys->shellcmd(cmd => "cd $output_directory; $path_to_circos_executable -conf ./circos.conf");
+
+
+   Genome::Sys->shellcmd(cmd => "cd $output_directory; $path_to_circos_executable -conf ./circos.conf");
 
 
     return 1;

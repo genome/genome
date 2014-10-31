@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::VariantReporting::Suite::BamReadcount::VafInterpreter;
+use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(basic_available_fields many_samples_field_descriptions);
 
 class Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
@@ -20,32 +21,7 @@ sub requires_annotations {
 
 sub field_descriptions {
     my $self = shift;
-
-    my %field_descriptions;
-    for my $sample_name ($self->sample_names) {
-        my %field_descriptions_for_sample = field_descriptions_for_sample($sample_name);
-        for my $field ($self->vaf_fields()) {
-            my $sample_specific_field = $self->create_sample_specific_field_name($field, $sample_name);
-            $field_descriptions{$sample_specific_field} = $field_descriptions_for_sample{$field};
-        }
-    }
-    return %field_descriptions;
-}
-
-sub available_fields {
-    my $self = shift;
-    my @sample_names = @_;
-
-    return $self->create_sample_specific_field_names([$self->vaf_fields()], \@sample_names);
-}
-
-sub vaf_fields {
-    return Genome::VariantReporting::Suite::BamReadcount::VafInterpreter::available_fields();
-}
-
-sub field_descriptions_for_sample {
-    my $sample_name = shift;
-    return Genome::VariantReporting::Suite::BamReadcount::VafInterpreter->field_descriptions($sample_name);
+    return many_samples_field_descriptions([$self->sample_names]);
 }
 
 sub _interpret_entry {
@@ -58,7 +34,7 @@ sub _interpret_entry {
         my $interpreter = Genome::VariantReporting::Suite::BamReadcount::VafInterpreter->create(sample_name => $sample_name);
         my %result = $interpreter->interpret_entry($entry, $passed_alt_alleles);
         for my $alt_allele (@$passed_alt_alleles) {
-            for my $vaf_field (vaf_fields()) {
+            for my $vaf_field (basic_available_fields()) {
                 my $sample_specific_field_name = $self->create_sample_specific_field_name($vaf_field, $sample_name);
                 $return_values{$alt_allele}->{$sample_specific_field_name} = $result{$alt_allele}->{$vaf_field};
             }

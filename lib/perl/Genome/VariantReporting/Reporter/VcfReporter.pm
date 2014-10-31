@@ -44,7 +44,7 @@ sub report {
         $self->process_header($entry->{'header'});
     }
 
-    $self->process_entry($entry, $interpretations);
+    $self->_process_entry($entry, $interpretations);
 }
 
 sub process_header {
@@ -89,7 +89,7 @@ sub print_vcf_header {
     $self->vcf_file(Genome::File::Vcf::Writer->fhopen($self->_output_fh, $self->file_name, $self->header));
 }
 
-sub process_entry {
+sub _process_entry {
     my $self = shift;
     my $entry = shift;
     my $interpretations = shift;

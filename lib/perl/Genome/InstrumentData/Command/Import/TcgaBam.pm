@@ -201,9 +201,8 @@ sub _import_from_uuids {
             return;
         }
 
-        my $tmp_xml = '/tmp/tcga_import_cgquery_data.xml';
         my $metadata = Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata->create(
-            metadata_file => $tmp_xml,
+            uuid => $uuid,
         );
 
         my $bam_file_name = $metadata->bam_file_names;

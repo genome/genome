@@ -175,14 +175,14 @@ sub fill_in_common_fields {
     $row{"Material Comment [is tumor]"} = $is_tumor;
     $row{"Material Material Type"} = "DNA";
     $row{"Material Comment [TCGA Genome Reference]"} = "GRCh37-lite";
-    $row{"Library Protocol REF"} = $self->idf->resolve_library_protocol();
+    $row{"Library Protocol REF"} = $self->idf->resolve_library_protocol($build);
     ($row{"Library Parameter Value [Vendor]"},
     $row{"Library Parameter Value [Catalog Name]"},
     $row{"Library Parameter Value [Catalog Number]"},
     $row{"Library Parameter Value [Target File URL]"},
     $row{"Library Parameter Value [Target File Format]"},
     $row{"Library Parameter Value [Target File Format Version]"}) = $self->resolve_capture_reagent($build);
-    $row{"Sequencing Protocol REF"} = $self->idf->resolve_sequencing_protocol();
+    $row{"Sequencing Protocol REF"} = $self->idf->resolve_sequencing_protocol($build);
     $row{"Mapping Protocol REF"} = $self->idf->resolve_mapping_protocol($somatic_build->processing_profile);
     $row{"Mapping Comment [Derived Data File REF]"} =  $sample->{"File"}->{content};
     $row{"Mapping Comment [TCGA CGHub ID]"} = $self->resolve_cghub_id($build);

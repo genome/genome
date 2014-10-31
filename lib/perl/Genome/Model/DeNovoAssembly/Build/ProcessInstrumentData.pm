@@ -28,7 +28,7 @@ class Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData {
     has_constant => [
         lsf_resource => { 
             is => 'Text',
-            default_value => "-R 'select[type==LINUX64 && mem>32000 && gtmp>200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000",
+            default_value => "-R 'select[mem>32000 && gtmp>200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000",
         },
     ],
 };

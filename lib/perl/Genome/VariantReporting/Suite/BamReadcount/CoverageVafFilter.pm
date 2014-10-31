@@ -23,7 +23,7 @@ sub __errors__ {
     my @errors = $self->SUPER::__errors__;
     return @errors if @errors;
 
-    for my $coverage ( keys %{$self->coverages_and_vafs} ) {
+    while (my ($coverage, $value) = each %{$self->coverages_and_vafs}) {
         my $error = $self->_validate_is_int(
             name => 'coverages_and_vafs',
             display_name => 'coverage',
@@ -33,7 +33,7 @@ sub __errors__ {
         $error = $self->_validate_is_int(
             name => 'coverages_and_vafs',
             display_name => 'vaf',
-            value => $self->coverages_and_vafs->{$coverage},
+            value => $value,
             max => 100,
         );
         push @errors, $error if $error;

@@ -112,7 +112,7 @@ sub get_build {
             as => "merged_alignment_result",
             code => sub {
                 my $self = shift;
-                if ($self->subject->name eq "TEST-patient1-somval_tumor1") {
+                if ($self->tumor_sample->name eq "TEST-patient1-somval_tumor1") {
                     return $alignment_result;
                 }
                 else {

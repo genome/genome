@@ -58,7 +58,7 @@ class Genome::Model::Tools::Somatic::IndelpeRunner {
        # Make workflow choose 64 bit blades
         lsf_resource => {
             is_param => 1,
-            default_value => 'rusage[mem=2000] select[type==LINUX64 & mem > 2000] span[hosts=1]',
+            default_value => 'rusage[mem=2000] select[mem > 2000] span[hosts=1]',
         },
         lsf_queue => {
             is_param => 1,

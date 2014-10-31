@@ -4,9 +4,10 @@ use strict;
 use warnings;
 use Genome;
 use Genome::VariantReporting::Suite::BamReadcount::VafInterpreter;
+use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(many_samples_available_fields);
 
 class Genome::VariantReporting::Reporter::DocmReporter {
-    is => [ 'Genome::VariantReporting::Reporter::WithHeaderAndSampleNames'],
+    is => [ 'Genome::VariantReporting::Reporter::WithHeader', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
     has => [
     ],
 };
@@ -28,14 +29,9 @@ sub headers {
         reference
         variant
     /;
-    push @headers, $self->_vaf_headers;
+    push @headers, many_samples_available_fields([$self->sample_names]);
 
     return @headers;
-}
-
-sub _vaf_headers {
-    my $self = shift;
-    Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter->available_fields($self->sample_names);
 }
 
 1;

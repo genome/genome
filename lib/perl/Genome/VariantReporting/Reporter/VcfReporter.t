@@ -36,12 +36,7 @@ ok($ft_filter->isa($ft_filter_pkg), 'Filter created successfully');
 my $data_dir = __FILE__.".d";
 
 subtest 'report subroutine' => sub {
-    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
-    ok($reporter, "Reporter created successfully");
-
-    $reporter->add_interpreter_object($indel_filter);
-    $reporter->add_interpreter_object($ft_filter);
-
+    my $reporter = get_test_reporter();
     my $output_dir = Genome::Sys->create_temp_directory();
     $reporter->initialize($output_dir);
 
@@ -55,11 +50,7 @@ subtest 'report subroutine' => sub {
 };
 
 subtest 'soft_filters subroutine' => sub {
-    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
-    ok($reporter, "Reporter created successfully");
-
-    $reporter->add_interpreter_object($indel_filter);
-    $reporter->add_interpreter_object($ft_filter);
+    my $reporter = get_test_reporter();
 
     my $expected_filters = Set::Scalar->new($indel_filter, $ft_filter);
     my $actual_filters = Set::Scalar->new($reporter->soft_filters);
@@ -67,11 +58,7 @@ subtest 'soft_filters subroutine' => sub {
 };
 
 subtest 'add_header_for_main_filter subroutine' => sub {
-    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
-    ok($reporter, "Reporter created successfully");
-
-    $reporter->add_interpreter_object($indel_filter);
-    $reporter->add_interpreter_object($ft_filter);
+    my $reporter = get_test_reporter();
 
     my $entry = create_entry();
     my $header = $entry->{'header'};
@@ -81,11 +68,7 @@ subtest 'add_header_for_main_filter subroutine' => sub {
 };
 
 subtest 'add_headers_for_soft_filters subroutine' => sub {
-    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
-    ok($reporter, "Reporter created successfully");
-
-    $reporter->add_interpreter_object($indel_filter);
-    $reporter->add_interpreter_object($ft_filter);
+    my $reporter = get_test_reporter();
 
     my $entry = create_entry();
     my $header = $entry->{'header'};
@@ -98,8 +81,7 @@ subtest 'add_headers_for_soft_filters subroutine' => sub {
 };
 
 subtest 'print_vcf_header subroutine' => sub {
-    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
-    ok($reporter, "Reporter created successfully");
+    my $reporter = get_test_reporter();
 
     my $entry = create_entry();
     my $header = $entry->{'header'};
@@ -119,11 +101,7 @@ subtest 'print_vcf_header subroutine' => sub {
 };
 
 subtest 'process_header subroutine' => sub {
-    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
-    ok($reporter, "Reporter created successfully");
-
-    $reporter->add_interpreter_object($indel_filter);
-    $reporter->add_interpreter_object($ft_filter);
+    my $reporter = get_test_reporter();
 
     my $output_dir = Genome::Sys->create_temp_directory();
     $reporter->initialize($output_dir);
@@ -140,11 +118,7 @@ subtest 'process_header subroutine' => sub {
 };
 
 subtest 'all_filters_passed_for_allele subroutine' => sub {
-    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
-    ok($reporter, "Reporter created successfully");
-
-    $reporter->add_interpreter_object($indel_filter);
-    $reporter->add_interpreter_object($ft_filter);
+    my $reporter = get_test_reporter();
 
     my @alleles = qw( C AT T );
     my @results = @{expected_final_results()};
@@ -160,19 +134,14 @@ subtest 'all_filters_passed_for_allele subroutine' => sub {
 };
 
 subtest 'determine_final_results subroutine' => sub {
-    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
-    ok($reporter, "Reporter created successfully");
-
-    $reporter->add_interpreter_object($indel_filter);
-    $reporter->add_interpreter_object($ft_filter);
+    my $reporter = get_test_reporter();
 
     my @final_results = $reporter->determine_final_results(interpretations(), create_entry());
     is_deeply(\@final_results, expected_final_results(), "Final filter results as expected");
 };
 
 subtest 'add_final_results subroutine' => sub {
-    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
-    ok($reporter, "Reporter created successfully");
+    my $reporter = get_test_reporter();
 
     my $entry = create_entry();
 
@@ -180,12 +149,8 @@ subtest 'add_final_results subroutine' => sub {
     is($entry->info('ALLFILTERSPASS'), '1,0,0', 'ALLFILTERPASS INFO field added correctly');
 };
 
-subtest 'process_entry subroutine' => sub {
-    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
-    ok($reporter, "Reporter created successfully");
-
-    $reporter->add_interpreter_object($indel_filter);
-    $reporter->add_interpreter_object($ft_filter);
+subtest '_process_entry subroutine' => sub {
+    my $reporter = get_test_reporter();
 
     my $output_dir = Genome::Sys->create_temp_directory();
     $reporter->initialize($output_dir);
@@ -194,7 +159,7 @@ subtest 'process_entry subroutine' => sub {
     $reporter->header($entry->{'header'});
     $reporter->print_vcf_header;
 
-    $reporter->process_entry(create_entry(), interpretations());
+    $reporter->_process_entry(create_entry(), interpretations());
     $reporter->finalize();
 
     compare_ok(
@@ -205,6 +170,15 @@ subtest 'process_entry subroutine' => sub {
 };
 
 done_testing;
+
+sub get_test_reporter {
+    my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
+    ok($reporter, "Reporter created successfully");
+
+    $reporter->add_interpreter_object($indel_filter);
+    $reporter->add_interpreter_object($ft_filter);
+    return $reporter;
+}
 
 sub interpretations {
     my $entry = create_entry();
