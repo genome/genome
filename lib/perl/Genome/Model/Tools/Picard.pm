@@ -221,6 +221,11 @@ sub run_java_vm {
     if ($self->log_file) {
         $java_vm_cmd .= ' >> ' . $self->log_file;
     }
+
+    # hack to workaround premature release of 1.123 with altered classnames
+    if ($java_vm_cmd ~= /picard-tools.?1\.123/) {
+        $java_vm_cmd ~= s/net\.sf\.picard\./picard./;
+    }
     
     $params{'cmd'} = $java_vm_cmd;
     
