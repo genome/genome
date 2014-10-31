@@ -3,7 +3,6 @@ package Genome::VariantReporting::Reporter::AcmgReporter;
 use strict;
 use warnings;
 use Genome;
-use List::Util qw( min );
 
 class Genome::VariantReporting::Reporter::AcmgReporter {
     is  => ['Genome::VariantReporting::Reporter::FullReporter'],
