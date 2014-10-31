@@ -16,49 +16,11 @@ sub name {
 }
 
 sub requires_interpreters {
-    return qw(position vep info-tags variant-type min-coverage min-coverage-observed max-vaf-observed variant-callers many-samples-vaf rsid caf nhlbi);
+    return (shift->SUPER::requires_interpreters, 'nhlbi');
 }
 
 sub headers {
-    my $self = shift;
-    my @headers = qw/
-        chromosome_name
-        start
-        stop
-        reference
-        variant
-        variant_type
-        transcript_name
-        trv_type
-        trv_type_category
-        amino_acid_change
-        default_gene_name
-        ensembl_gene_id
-        inSegDup
-        AML_RMG
-        rsid
-        caf
-        All_MAF
-        AA_MAF
-        EU_MAF
-        max_alt_af
-        onTarget
-        MeetsMinDepthCutoff
-    /;
-
-    push @headers, $self->_single_vaf_headers;
-
-    push @headers, qw/
-        min_coverage_observed
-        max_normal_vaf_observed
-        max_tumor_vaf_observed
-        variant_callers
-        variant_caller_count
-    /;
-
-    push @headers, $self->_per_library_vaf_headers;
-
-    return @headers;
+    return (shift->SUPER::headers, 'All_MAF', 'AA_MAF', 'EU_MAF');
 }
 
 1;
