@@ -7,7 +7,6 @@ use List::Util qw(first);
 use List::MoreUtils qw(firstidx);
 use Set::Scalar;
 use Memoize;
-use File::Touch;
 
 class Genome::VariantReporting::Command::CombineReports {
     is => 'Command',
@@ -57,7 +56,7 @@ sub execute {
     my @reports_with_size = grep {-s $_} $self->reports;
     if (scalar(@reports_with_size) == 0) {
         #Create an empty output file
-        touch($self->output_file);
+        Genome::Sys->touch($self->output_file);
         return 1;
     }
 
