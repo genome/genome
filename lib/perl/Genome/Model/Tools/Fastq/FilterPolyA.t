@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use above "Genome";  # forces a 'use lib' when run directly from the cmdline
-use Test::More tests => 3;
+use Test::More tests => 4;
 use File::Temp;
 
 my $data_dir = __FILE__ . '.d';
@@ -12,8 +12,9 @@ my $dir = File::Temp::tempdir(CLEANUP => 1);
 $dir or die "Failed to create temp directory!";
 my $out = "$dir/out.fastq";
 
-my $result = Genome::Model::Tools::Fastq::FilterPolyA->execute(input1 => $in, output1 => $out);
-ok($result, "got result");
+my $cmd = Genome::Model::Tools::Fastq::FilterPolyA->execute(input1 => $in, output1 => $out);
+ok($cmd, "got command");
+ok($cmd->result, "got result");
 
 ok(-e $out, "ouput file exists");
 

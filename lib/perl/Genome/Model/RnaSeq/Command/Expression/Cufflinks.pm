@@ -90,7 +90,8 @@ sub execute {
             $params{annotation_build} = $build->annotation_build;
         }
         delete($params{test_name});
-        unless (Genome::InstrumentData::AlignmentResult::Command::CufflinksExpression->execute(%params)) {
+        my $cmd = Genome::InstrumentData::AlignmentResult::Command::CufflinksExpression->create(%params);
+        unless ($cmd and $cmd->execute) {
             return;
         }
     }

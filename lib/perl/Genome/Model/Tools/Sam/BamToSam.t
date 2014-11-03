@@ -29,8 +29,8 @@ my $tmp_dir  = File::Temp::tempdir(
 my $bam_file = $tmp_dir .'/test.bam';
 copy $data_dir.'/test.bam', $bam_file;
 
-my $result = Genome::Model::Tools::Sam::BamToSam->execute(bam_file => $bam_file);
+my $cmd = Genome::Model::Tools::Sam::BamToSam->execute(bam_file => $bam_file);
 
 ok(-e $tmp_dir."/test.sam","Found output file, properly named.");
-ok($result,"Tool exited properly.");
+ok($cmd->result,"Tool exited properly.");
 

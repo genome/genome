@@ -123,13 +123,11 @@ sub annotate_snvs {
                     'Executing GMT:AnnotateTranscriptVariants with parameters: %s',
                     join('', Data::Dumper::Dumper(%annotation_params))));
 
-            my $annotation_rv = Genome::Model::Tools::Annotate::TranscriptVariants->execute(
-                %annotation_params);
-            my $annotation_error = $@;
-
-            unless ($annotation_rv) {
-                die $self->error_message(sprintf(
-                        'Failed to execute GMT:Annotate::TranscriptVariants: %s', $@));
+            my $annotation_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
+                %annotation_params
+            );
+            unless ($annotation_cmd->execute) {
+                die $self->error_message('Failed to execute GMT:Annotate::TranscriptVariants.');
             }
 
             # verify output file exists?

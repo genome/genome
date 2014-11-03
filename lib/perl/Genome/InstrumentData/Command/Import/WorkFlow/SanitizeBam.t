@@ -28,7 +28,7 @@ ok(-s $dirty_flagstat_path, 'linked dirty bam flagstat path');
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::SanitizeBam->execute(
     bam_path => $dirty_bam_path,
 );
-ok($cmd, 'execute');
+ok($cmd->result, 'execute');
 
 my $clean_bam_base_name = 'test.clean.bam';
 my $clean_bam_path = File::Spec->catfile($tmp_dir, $clean_bam_base_name);

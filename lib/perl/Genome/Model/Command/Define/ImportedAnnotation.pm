@@ -42,7 +42,7 @@ class Genome::Model::Command::Define::ImportedAnnotation {
 };
 
 sub help_synopsis {
-    return "genome model define imported-annotation --species-name=human --version=58_37c --reference-sequence-build=GRCh37-lite-build37 --build_name=NCBI-human.ensembl/58_37c --processing-profile=imported-annotation.ensembl --model_name=NCBI-human.ensembl" 
+    return "genome model define imported-annotation --species-name=human --version=58_37c --reference-sequence-build=GRCh37-lite-build37 --build_name=NCBI-human.ensembl/58_37c --processing-profile=imported-annotation.ensembl --model_name=NCBI-human.ensembl"
 }
 
 sub help_detail {
@@ -99,7 +99,7 @@ sub _get_or_create_model {
     #Generate a name if one wasn't specified
     unless($model_name){
         $model_name = join('_', $self->reference_sequence_build->name, $species_name, $self->version);
-    }   
+    }
 
     $model = Genome::Model::ImportedAnnotation->create(
                                                     reference_sequence => $self->reference_sequence_build->model,
@@ -127,7 +127,7 @@ sub _create_build {
         $self->error_message('Matching build already exists with id: ' . $build->id . ', exiting!');
         return;
     }
-    
+
     push(@build_parameters, (name => $self->build_name));
 
     $build = Genome::Model::Build::ImportedAnnotation->create(@build_parameters);
@@ -155,20 +155,20 @@ sub _create_build {
             }
             Genome::Sys->copy_file($self->gtf_file, $annotation_file_path);
             my $bed_file_path = $build->_resolve_annotation_file_name("all_sequences", "bed", $build->reference_sequence_id, 0, 0);
-            my $rv = Genome::Model::Tools::RefCov::GtfToBed->execute(
+            my $convert_cmd = Genome::Model::Tools::RefCov::GtfToBed->execute(
                 bed_file => $bed_file_path,
                 gff_file => $annotation_file_path,
             );
-            unless($rv) {
+            unless($convert_cmd and $convert_cmd->result) {
                 $self->error_message("Failed to create bed file from gff file");
                 return;
             }
             my $squashed_bed_file_path = $build->_resolve_annotation_file_name("all_sequences-squashed", "bed", $build->reference_sequence_id, 0, 0);
-            $rv = Genome::Model::Tools::BedTools::MergeByGene->execute(
+            my $merge_cmd = Genome::Model::Tools::BedTools::MergeByGene->execute(
                 input_file => $bed_file_path,
                 output_file => $squashed_bed_file_path,
             );
-            unless($rv) {
+            unless($merge_cmd and $merge_cmd->result) {
                 $self->error_message("Failed to create squashed bed file");
                 return;
             }

@@ -244,7 +244,7 @@ sub _generate_observed_junctions {
     unless ( Genome::Model::Tools::Bed::ToBedJunc->execute(
         bed12_file => $self->observed_junctions_bed12_file,
         bed_file => $tmp_junctions_bed6_file,
-    ) ) {
+    )->result ) {
         $self->error_message('Failed to convert BED12 file \''. $self->observed_junctions_bed12_file .'\' to junctions BED file \''. $tmp_junctions_bed6_file .'\'');
         die($self->error_message);
     }
@@ -255,7 +255,7 @@ sub _generate_observed_junctions {
         input_file => $tmp_junctions_bed6_file,
         output_file => $self->observed_junctions_bed6_file,
         use_version => $self->bedtools_version,
-    )) {
+    )->result) {
         $self->error_message('Failed to sort tmp junctions BED file \''. $tmp_junctions_bed6_file .'\' to \''. $self->observed_junctions_bed6_file .'\'');
         die($self->error_message);
     }
@@ -285,7 +285,7 @@ sub _generate_known_junctions {
     unless (Genome::Model::Tools::Gtf::ToBed12->execute(
         gtf_file => $self->annotation_gtf_file,
         bed12_file => $self->annotation_genes_bed12_file,
-    ) ) {
+    )->result) {
         $self->error_message('Failed to generate BED12 format genes file: '. $self->annotation_genes_bed12_file);
         die($self->error_message);
     }
@@ -296,7 +296,7 @@ sub _generate_known_junctions {
     unless (Genome::Model::Tools::Bed::ToBedJunc->execute(
         bed12_file => $self->annotation_genes_bed12_file,
         bed_file => $tmp_known_junctions_bed_file,
-    )) {
+    )->result ) {
         $self->error_message('Failed to convert BED12 file \''. $self->annotation_genes_bed12_file .'\' to unosrted BED6 junctions file \''. $tmp_known_junctions_bed_file .'\'');
         die($self->error_message);
     }
@@ -339,7 +339,7 @@ sub _generate_known_junctions {
         input_file => $tmp_unsorted_known_junctions_bed_file,
         output_file => $self->known_junctions_bed6_file,
         use_version => $self->bedtools_version,
-    )) {
+    )->result) {
         $self->error_message('Failed to sort known junctions BED6 file \''. $tmp_unsorted_known_junctions_bed_file .'\' to \''. $self->known_junctions_bed6_file.'\'');
         die($self->error_message);
     }
@@ -393,7 +393,7 @@ sub _generate_exon_content {
         input_bed12_file => $self->annotation_genes_bed12_file,
         output_bed6_file => $self->annotation_exons_bed6_file,
         use_version => $self->bedtools_version,
-    ) ) {
+    )->result) {
         $self->error_message('Failed to generate BED6 format exons file: '. $self->annotation_exons_bed6_file);
         die($self->error_message);
     }
@@ -406,7 +406,7 @@ sub _generate_exon_content {
         force_strandedness => 1,
         report_number => 1,
         use_version => $self->bedtools_version,
-    )) {
+    )->result) {
         $self->error_message('Failed to generate merged exon BED6 format file: '. $self->annotation_merged_exon_bed_file);
         die($self->error_message);
     }
@@ -734,7 +734,7 @@ sub annotate_skipping {
         output_file => $temp_exons_intersect_bed,
         output_file_format => 'bed',
         use_version => $self->bedtools_version,
-    )) {
+    )->result) {
         die('Failed to intersect exons and observed junctions.');
     }
     
@@ -802,7 +802,7 @@ sub annotate_skipping {
         output_file => $temp_donors_intersect_bed,
         output_file_format => 'bed',
         use_version => $self->bedtools_version,
-    )) {
+    )->result) {
         die('Failed to intersect donors and observed junctions.');
     }
     
@@ -870,7 +870,7 @@ sub annotate_skipping {
         output_file => $temp_acceptors_intersect_bed,
         output_file_format => 'bed',
         use_version => $self->bedtools_version,
-    )) {
+    )->result) {
         die('Failed to intersect acceptors and observed junctions.');
     }
     

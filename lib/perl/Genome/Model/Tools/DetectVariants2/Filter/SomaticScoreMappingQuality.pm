@@ -17,7 +17,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::SomaticScoreMappingQuality{
     has => [
         bam_readcount_version => {
             is => 'Version',
-            is_input=>1, 
+            is_input=>1,
             is_optional => 1,
             default_value => $DEFAULT_VERSION,
             doc => "Version of bam-readcount to use, default is $DEFAULT_VERSION"
@@ -25,7 +25,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::SomaticScoreMappingQuality{
         bam_readcount_params => {
             is => 'String',
             is_optional => 1,
-            is_input=>1, 
+            is_input=>1,
             default_value => "-q 1",
             doc => "Parameters to pass to bam-readcount"
         },
@@ -57,12 +57,12 @@ sub help_brief {
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-    gmt filter-variants high-confidence --sniper-file sniper,out --tumor-bam somefile.bam 
+    gmt filter-variants high-confidence --sniper-file sniper,out --tumor-bam somefile.bam
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
 This module takes in somatic sniper output and filters it to high confidence variants
 EOS
 }
@@ -130,7 +130,7 @@ sub _filter_variants {
         $self->sort_lq_output($lq_output_file, $sorted_lq_output_file);
         return 1;
     }
-    #Run readcount program 
+    #Run readcount program
     my $readcount_command = sprintf("%s %s -l %s %s |",$self->readcount_path, $self->bam_readcount_params, $temp_path, $tumor_bam_file);
     $self->debug_message("Running: $readcount_command");
 
@@ -139,7 +139,7 @@ sub _filter_variants {
     while(my $count_line = $readcounts->getline) {
         chomp $count_line;
         my ($chr, $pos, $ref, $depth, @base_stats) = split /\t/, $count_line;
-        
+
         my $current_variant = shift @sniper_lines;
         last unless $current_variant;
         my ($vchr, $vstart, $vstop, $ref_iub, $somatic_score, $tumor_read_depth) = split /\t/, $current_variant;
@@ -150,7 +150,7 @@ sub _filter_variants {
         #check if the sniper line was present in the readcount output
         while($vchr ne $chr && $vstart != $pos && @sniper_lines) {
             $self->debug_message("Skipped $current_variant");
-            
+
             print $lq_output_fh $current_variant ."\n";;
             $current_variant = shift @sniper_lines;
             last unless $current_variant;
@@ -160,7 +160,7 @@ sub _filter_variants {
             $vstart++;
         }
         last unless $current_variant;
-        
+
         my %bases;
         for my $base_stat (@base_stats) {
             my ($base,$reads,$avg_mq, $avg_bq) = split /:/, $base_stat;
@@ -185,7 +185,7 @@ sub _filter_variants {
     }
 
     # If we ran out of readcount lines before we ran out of input variant lines, print the rest to LQ
-    for my $line (@sniper_lines) { 
+    for my $line (@sniper_lines) {
         print $lq_output_fh $line ."\n";
     }
 
@@ -208,7 +208,7 @@ sub sort_lq_output {
     my $lq_output_file = shift;
     my $sorted_lq_output_file = shift;
     my @sort_input = ($lq_output_file);
-    unless ( Genome::Model::Tools::Joinx::Sort->execute(input_files => \@sort_input, output_file => $sorted_lq_output_file) ) {
+    unless ( Genome::Model::Tools::Joinx::Sort->execute(input_files => \@sort_input, output_file => $sorted_lq_output_file)->result ) {
         $self->error_message("Failed to sort the LQ output $lq_output_file into $sorted_lq_output_file using Joinx::Sort");
         die $self->error_message;
     }

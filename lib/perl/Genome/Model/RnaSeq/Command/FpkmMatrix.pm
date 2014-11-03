@@ -106,7 +106,7 @@ sub execute {
     my $self = shift;
 
     my %valid_fpkm_status = map { $_ => 1 } $self->valid_fpkm_status;
-    
+
     my @models = $self->models;
     # The values are attributes in the GTF file of known annotation
     my %feature_types = (
@@ -151,17 +151,18 @@ sub execute {
         }
     }
     my @model_identifiers = sort keys %model_identifiers;
-    
+
     my $gene_gtf_path = $annotation_build->annotation_file('gtf',$reference_build->id);
     if ($self->gene_biotypes) {
         my $transcript_info_tsv_file = $annotation_build->transcript_info_file($reference_build->id);
         my $tmp_gtf_path = Genome::Sys->create_temp_file_path();
-        unless (Genome::Model::Tools::Gtf::LimitByBiotype->execute(
+        my $limit_cmd = Genome::Model::Tools::Gtf::LimitByBiotype->execute(
             input_gtf_file => $gene_gtf_path,
             output_gtf_file => $tmp_gtf_path,
             gene_biotypes => $self->gene_biotypes,
             transcript_info_tsv_file => $transcript_info_tsv_file,
-        )) {
+        );
+        unless($limit_cmd and $limit_cmd->result) {
             $self->error_message('Failed to limit  by gene biotypes: '. $self->gene_biotypes);
             return;
         }
@@ -263,7 +264,7 @@ sub execute {
             $tsv_writers{$feature_type} = $tsv_writer;
         }
     }
-    
+
     # Iterate over all objects and write output to the correct writer
     for my $gene_id (sort keys %gene_transcripts) {
         for my $feature_type (keys %feature_types) {
@@ -301,7 +302,7 @@ sub execute {
             }
         }
     }
-    
+
     if ($self->de_model_groups) {
          my $r_script_path = $self->__meta__->module_path;
          $r_script_path =~ s/\.pm/\.R/;

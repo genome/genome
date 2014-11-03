@@ -66,7 +66,7 @@ sub execute {
         use_version => $self->samtools_version,
     );
     my $merge = Genome::Model::Tools::Sam::Merge->execute(%params);
-    unless ($merge) {
+    unless ($merge and $merge->result) {
         $self->error_message('Failed to execute bam file merge tool with params '. Data::Dumper::Dumper(%params));
         die($self->error_message);
     }
@@ -80,7 +80,7 @@ sub execute {
         stats_file => $self->stats_file,
         bias_file => $self->bias_basename,
     );
-    unless ($cmd) {
+    unless ($cmd and $cmd->result) {
         die('Failed to execute relative reference coverage.');
     }
     return 1;

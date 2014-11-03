@@ -49,12 +49,12 @@ $ifh->close;
 my $output_test_dir = Genome::Sys->create_temp_directory;
 isnt($output_test_dir, undef, "Created an output temp directory");
 
-my $return = Genome::Model::ReferenceAlignment::Command::VcfSymlinks->execute(
+my $command = Genome::Model::ReferenceAlignment::Command::VcfSymlinks->execute(
     output_directory => $output_test_dir,
     models => [$model],
 );
 
-ok($return,"Successfully executed command");
+ok($command->result,"Successfully executed command");
 my $sample = $model->subject_name;
 isnt($sample, undef, "Sample name $sample retrieved from model");
 ok(-e File::Spec->join($output_test_dir,"$sample.snvs.vcf.gz"), "SNVs VCF linked in");

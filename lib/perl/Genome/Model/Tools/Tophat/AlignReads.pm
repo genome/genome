@@ -246,7 +246,7 @@ sub execute {
                                           skip_if_output_is_present   => 1,
                                       );
     if (version->parse($self->use_version) < version->parse('1.1.0')) {
-        my $sam_to_bam = Genome::Model::Tools::Sam::SamToBam->execute(
+        my $sam_to_bam = Genome::Model::Tools::Sam::SamToBam->create(
             sam_file    => $self->sam_file,
             bam_file    => $self->bam_file,
             ref_list    => $ref_seq_file .'.fai',
@@ -255,14 +255,15 @@ sub execute {
             fix_mate    => 1,
             keep_sam    => 1,
         );
-        unless ($sam_to_bam) {
+        unless ($sam_to_bam->execute) {
             $self->error_message('Error converting SAM file: '. $self->sam_file .' to BAM file '. $self->bam_file);
             die($self->error_message);
         }
     } else {
-        unless (Genome::Model::Tools::Sam::IndexBam->execute(
-                bam_file => $self->bam_file,
-            )) {
+        my $index_bam = Genome::Model::Tools::Sam::IndexBam->create(
+            bam_file => $self->bam_file,
+        );
+        unless ($index_bam->execute) {
             die $self->error_message('Failed to index BAM file '. $self->bam_file);
         }
     }

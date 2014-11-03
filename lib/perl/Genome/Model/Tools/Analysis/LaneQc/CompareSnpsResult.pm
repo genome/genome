@@ -1,17 +1,5 @@
 package Genome::Model::Tools::Analysis::LaneQc::CompareSnpsResult;
 
-#####################################################################################################################################
-# SearchRuns - Search the database for runs
-#
-#	AUTHOR:		Dan Koboldt (dkoboldt@watson.wustl.edu)
-#
-#	CREATED:	04/01/2009 by D.K.
-#	MODIFIED:	04/01/2009 by D.K.
-#
-#	NOTES:
-#
-#####################################################################################################################################
-
 use strict;
 use warnings;
 
@@ -20,7 +8,7 @@ use FileHandle;
 use Genome;
 
 class Genome::Model::Tools::Analysis::LaneQc::CompareSnpsResult {
-	is => 'Genome::SoftwareResult::Stageable',
+    is => 'Genome::SoftwareResult::Stageable',
 
     #TODO: Use class pre-processor to sync the result class and the command class
     has_param => [
@@ -102,7 +90,7 @@ sub _generate_data {
         bam_file => $self->bam_file,
         sample_name => $self->sample_name,
         reference_build => $self->reference_build,
-    );
+    )->result;
 }
 
 sub resolve_allocation_subdirectory {

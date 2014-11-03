@@ -44,7 +44,7 @@ sub sub_command_sort_position { 7 }
 sub shortcut {
     my $self = shift;
     my $build = $self->build;
-    
+
     my $pp = $build->processing_profile;
     if ($pp->transcriptome_coverage_annotation_file_basenames eq 'none') {
         $self->debug_message('The annotation file defined in the processing profile is \'none\'.  Transcriptome coverage will be skipped.');
@@ -88,7 +88,7 @@ sub execute {
     unless  (version->parse($alignment_result->aligner_version) >= version->parse('1.1.0')) {
         die('Coverage requires a BAM file produced by TopHat v1.1.0 or greater');
     }
-    
+
     if ($alignment_result->isa('Genome::InstrumentData::AlignmentResult::Merged')) {
         my %params = (
             $self->params_for_result,
@@ -106,7 +106,8 @@ sub execute {
         );
         #This is not a software result, yet...
         delete($params{test_name});
-        unless (Genome::InstrumentData::AlignmentResult::Command::TranscriptomeCoverage->execute(%params)) {
+        my $cmd = Genome::InstrumentData::AlignmentResult::Command::TranscriptomeCoverage->create(%params);
+        unless ($cmd and $cmd->execute) {
             return;
         }
     }

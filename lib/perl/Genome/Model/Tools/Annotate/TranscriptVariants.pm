@@ -336,7 +336,7 @@ sub _convert_bed_file {
     if ($self->extra_columns and $self->use_version >= 3){
         $bed_converter_params{'extra_columns'} = $self->extra_columns;
     }
-    $bed_converter_class->execute(%bed_converter_params) || ($self->error_message("Could not convert BED file to annotator format") and return);
+    $bed_converter_class->execute(%bed_converter_params)->result || ($self->error_message("Could not convert BED file to annotator format") and return);
     $self->variant_file($converted_bed_file);
 }
 
@@ -796,7 +796,7 @@ Goes through each variant in a file, retrieving annotation information from Geno
 
  in Perl:
 
-     $success = Genome::Model::Tools::Annotate::TranscriptVariants->execute(
+     Genome::Model::Tools::Annotate::TranscriptVariants->execute(
          variant_file => 'myoutput.csv',
          output_file => 'myoutput.csv',
      );

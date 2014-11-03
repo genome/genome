@@ -18,7 +18,7 @@ my $multi_rg_bam_path = $tmp_dir.'/'.$multi_rg_base_name.'.bam';
 Genome::Sys->create_symlink($test_dir.'/bam-rg-multi/v3/'.$multi_rg_base_name.'.bam', $multi_rg_bam_path);
 ok(-s $multi_rg_bam_path, 'linked two read groups bam');
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::SplitBamByReadGroup->execute(bam_path => $multi_rg_bam_path);
-ok($cmd, 'execute');
+ok($cmd->result, 'execute');
 my @output_bam_paths = $cmd->output_bam_paths;
 is(@output_bam_paths, 4, '4 read group bam paths');
 is_deeply(

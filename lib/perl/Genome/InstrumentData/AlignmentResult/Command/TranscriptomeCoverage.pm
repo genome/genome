@@ -64,18 +64,18 @@ class Genome::InstrumentData::AlignmentResult::Command::TranscriptomeCoverage {
 
 sub execute {
     my $self = shift;
-    
+
     # Reference inputs
     my $reference_build = $self->reference_build;
     my $reference_fasta_file = $reference_build->full_consensus_path('fa');
     die $self->error_message("Reference FASTA File ($reference_fasta_file) is missing") unless -s $reference_fasta_file;
-    
+
     # Annotation inputs
     my $annotation_build = $self->annotation_build;
 
     # Alignment inputs
     my $bam_file = $self->alignment_result->bam_file;
-    
+
     my $coverage_directory = $self->coverage_directory;
     unless (-d $coverage_directory) {
         Genome::Sys->create_directory($coverage_directory);
@@ -108,8 +108,8 @@ sub execute {
                 stats_file => $stats_file,
                 merged_stats_file => $transcript_stats_file,
             );
-            # This works now that perl5.10 is the default perl interpretter
-            unless (Genome::Model::Tools::RefCov::RnaSeq->execute(%ref_cov_params)) {
+            my $refcov_cmd = Genome::Model::Tools::RefCov::RnaSeq->execute(%ref_cov_params);
+            unless ($refcov_cmd and $refcov_cmd->result) {
                 die('Failed to run ref_cov with params: '. %ref_cov_params);
             }
             push @output_stats_files, $stats_file;
@@ -121,7 +121,7 @@ sub execute {
                 $self->warning_message('Failed to find squashed '. $annotation_file_method .' BED file for reference build '. $reference_build->id .' in: '. $annotation_build->data_directory);
                 next;
             }
-            
+
             if ($self->mask_reference_transcripts) {
                 $squashed_bed_file = $self->remove_reference_transcripts($squashed_bed_file,1);
                 unless ($squashed_bed_file) {
@@ -139,8 +139,8 @@ sub execute {
                 merged_stats_file => $genes_stats_file,
                 merge_by => 'gene',
             );
-            # This works now that perl5.10 is the default perl interpretter
-            unless (Genome::Model::Tools::RefCov::RnaSeq->execute(%ref_cov_params)) {
+            my $refcov_cmd = Genome::Model::Tools::RefCov::RnaSeq->execute(%ref_cov_params);
+            unless ($refcov_cmd and $refcov_cmd->result) {
                 die('Failed to run ref_cov with params: '. %ref_cov_params);
             }
             push @output_stats_files, $squashed_stats_file;
@@ -149,10 +149,11 @@ sub execute {
         for my $stats_output_file (@output_stats_files) {
             my ($basename,$dirname,$suffix) = File::Basename::fileparse($stats_output_file,qw/\.tsv/);
             my $summary_output_file = $dirname . $basename .'.txt';
-            unless (Genome::Model::Tools::BioSamtools::StatsSummary->execute(
+            my $stats_cmd = Genome::Model::Tools::BioSamtools::StatsSummary->execute(
                 stats_file => $stats_output_file,
                 output_file => $summary_output_file,
-            )) {
+            );
+            unless ($stats_cmd and $stats_cmd->result) {
                 die('Failed to generate stats sumamry for stats file: '. $stats_output_file);
             }
         }
@@ -166,18 +167,19 @@ sub remove_reference_transcripts {
     my $self = shift;
     my $bed_file = shift;
     my $squashed_flag = shift;
-    
+
     my $annotation_build = $self->annotation_build;
     my $reference_build = $self->reference_build;
-    
+
     my $annotation_file_method = $self->mask_reference_transcripts .'_file';
     my $mask_bed_file = $annotation_build->$annotation_file_method('bed',$reference_build->id,$squashed_flag);
     my $tmp_bed_file = Genome::Sys->create_temp_file_path();
-    unless (Genome::Model::Tools::BedTools::Subtract->execute(
+    my $mask_cmd = Genome::Model::Tools::BedTools::Subtract->execute(
         input_file_a => $bed_file,
         input_file_b => $mask_bed_file,
         output_file => $tmp_bed_file,
-    )) {
+    );
+    unless ($mask_cmd and $mask_cmd->result) {
         $self->error_message('Failed to mask '. $self->mask_reference_transcripts .' reference transcripts!');
         return;
     }

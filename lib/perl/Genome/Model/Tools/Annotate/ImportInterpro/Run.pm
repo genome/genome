@@ -120,13 +120,13 @@ sub execute {
         benchmark => $self->benchmark,
         scratch_dir => $scratch_dir,
     );
-    die "Could not generate .fasta files: $!" unless $fasta_success;
+    die "Could not generate .fasta files: $!" unless $fasta_success->result;
     print "Finished GenerateTranscriptFastas" . "\n";
     my $interpro_success = Genome::Model::Tools::Annotate::ImportInterpro::ExecuteIprscan->execute(
         benchmark => $self->benchmark,
         scratch_dir => $scratch_dir,
     );
-    die "Could not complete Interpro scan: $!" unless $interpro_success;
+    die "Could not complete Interpro scan: $!" unless $interpro_success->result;
     print "Finished Iprscan" . "\n";
 
     #Here, we are manually unloading UR objects that are sticking around in
@@ -147,7 +147,7 @@ sub execute {
         commit_size => $commit_size,
         reference_transcripts => $self->reference_transcripts,
     );
-    die "Could not generate Interpro results: $!" unless $results_success;
+    die "Could not generate Interpro results: $!" unless $results_success->result;
     print "Finished GenerateInterproResuts" . "\n";
     
     close(STDOUT);
@@ -185,7 +185,7 @@ Gets every transcript for a given build, runs them through Interpro, and creates
 
  in Perl:
 
-     $success = Genome::Model::Tools::Annotate::ImportInterpro::Run->execute(
+     Genome::Model::Tools::Annotate::ImportInterpro::Run->execute(
          reference_transcripts => 'NCBI-human.combined-annotation/54_36p',
          interpro_version => '4.1', #default 4.5
          chunk_size => 40000, #default 25000

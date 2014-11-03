@@ -16,4 +16,4 @@ my $path = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Assembly-MergeContigs
 my $output_file_name = 'out.ace';
 chdir($path);
 system "/bin/rm -f *.db";
-ok(Genome::Model::Tools::Assembly::MergeContigs->execute(contigs => $contigs, o => $output_file_name, cc => 1), "MergeContigs executed successfully");
+ok(Genome::Model::Tools::Assembly::MergeContigs->execute(contigs => $contigs, o => $output_file_name, cc => 1)->result, "MergeContigs executed successfully");

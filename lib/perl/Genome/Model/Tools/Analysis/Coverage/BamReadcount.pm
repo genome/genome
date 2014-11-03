@@ -297,7 +297,7 @@ sub execute {
         #is it an indel?
         if (($fields[3] =~ /\-/) || ($fields[4] =~ /\-/) ||
             (length($fields[3]) > 1) || (length($fields[4]) > 1)){
-            
+
             #is it longer than the max length?
             if((length($fields[3]) > $indel_size_limit) || (length($fields[4]) > $indel_size_limit)){
                 $tooLongIndels{join("\t",($fields[0],$fields[1],$fields[3],$fields[4]))} = 0;
@@ -364,16 +364,16 @@ sub execute {
     }
 
     if (-s "$tempdir/snvpos") {
-        my $return = Genome::Model::Tools::Sam::Readcount->execute(
+        my $readcount_cmd = Genome::Model::Tools::Sam::Readcount->create(
             %params,
             output_file => "$tempdir/readcounts",
             region_list => "$tempdir/snvpos",
         );
-        unless($return) {
-            $self->error_message("Failed to execute sam readcount: Returned $return");
+        unless($readcount_cmd->execute) {
+            $self->error_message("Failed to execute sam readcount.");
             die $self->error_message;
         }
-        
+
         #sort and dedup the bam-readcount output
         my $cmd_obj = Genome::Model::Tools::Joinx::Sort->create(
             input_files => [ "$tempdir/readcounts" ],
@@ -476,14 +476,14 @@ sub execute {
 
     #if there are no indels, skip
     if (-s "$tempdir/indelpos") {
-        my $return = Genome::Model::Tools::Sam::Readcount->execute(
+        my $readcount_cmd = Genome::Model::Tools::Sam::Readcount->create(
             %params,
             output_file       => "$tempdir/readcounts_indel",
             region_list       => "$tempdir/indelpos",
             insertion_centric => 1,
         );
-        unless($return) {
-            $self->error_message("Failed to execute: Returned $return");
+        unless($readcount_cmd->execute) {
+            $self->error_message("Failed to execute.");
             die $self->error_message;
         }
 
@@ -599,7 +599,7 @@ sub execute {
         }
     }
     close($OUTFILE);
-    
+
     return(1);
 }
 

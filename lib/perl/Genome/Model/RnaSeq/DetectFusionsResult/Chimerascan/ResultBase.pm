@@ -251,7 +251,7 @@ sub _convert_bam_to_fastqs {
 sub _qname_sort_bam {
     my ($self, $bam_path, $output_bam_path) = @_;
 
-    my $rv = Genome::Model::Tools::Picard::SortSam->execute(
+    my $cmd = Genome::Model::Tools::Picard::SortSam->create(
         input_file             => $bam_path,
         output_file            => $output_bam_path,
         sort_order             => 'queryname',
@@ -260,7 +260,7 @@ sub _qname_sort_bam {
         maximum_memory         => 16,
         use_version            => $self->picard_version,
     );
-    unless ($rv) {
+    unless ($cmd->execute) {
         die ("Failed to queryname sort BAM file: $bam_path");
     }
 
@@ -292,13 +292,13 @@ sub _create_both_mates_bam {
 
     $self->debug_message("Sorting both_mates_bam by position");
     my $sorted_both_mates_bam = File::Spec->join($reusable_dir, 'sorted_both_mates.bam');
-    my $rv = Genome::Model::Tools::Picard::SortSam->execute(
+    my $cmd = Genome::Model::Tools::Picard::SortSam->create(
         input_file => $both_mates_bam,
         output_file => $sorted_both_mates_bam,
         sort_order => 'coordinate',
         use_version => $self->picard_version,
     );
-    unless ($rv) {
+    unless ($cmd->execute) {
         die('Failed to sort by position!');
     }
 
@@ -327,12 +327,12 @@ sub _create_reheadered_bam {
     my $seqdict_file = $index->get_sequence_dictionary;
     my $new_bam_header = $self->_get_new_bam_header($reusable_dir, $qname_sorted_bam, $seqdict_file);
     my $reheadered_bam = File::Spec->join($reusable_dir, 'reheadered.bam');
-    my $rv = Genome::Model::Tools::Picard::ReplaceSamHeader->execute(
+    my $cmd = Genome::Model::Tools::Picard::ReplaceSamHeader->create(
         input_file => $qname_sorted_bam,
         output_file => $reheadered_bam,
         header_file => $new_bam_header,
     );
-    unless ($rv) {
+    unless ($cmd->execute) {
         die('Failed to reheader alignment result BAM file!');
     }
     unlink($new_bam_header);

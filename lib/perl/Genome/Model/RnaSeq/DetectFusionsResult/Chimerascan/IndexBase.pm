@@ -91,23 +91,24 @@ sub get_sequence_dictionary {
     unless ($assembly_name) {
         $assembly_name = $self->reference_build->name;
     }
-    # gmt picard create-sequence-dictionary
-    unless (Genome::Model::Tools::Picard::CreateSequenceDictionary->execute(
+
+    my $seqdict_cmd = Genome::Model::Tools::Picard::CreateSequenceDictionary->execute(
         use_version => $self->picard_version,
         output_file => $sam_file,
         reference_fasta => $fasta_file,
         species => $species_name,
         genome_assembly => $assembly_name,
-    )) {
+    );
+    unless ($seqdict_cmd and $seqdict_cmd->result) {
         die('Failed to create sequence dictionary!');
     }
 
-    # gmt picard sort-sam
-    unless (Genome::Model::Tools::Picard::SortSam->execute(
+    my $sort_cmd = Genome::Model::Tools::Picard::SortSam->execute(
         use_version => $self->picard_version,
         input_file => $sam_file,
         output_file => $seqdict_file,
-    )) {
+    );
+    unless ($sort_cmd and $sort_cmd->result) {
         die('Failed to sort sam file!');
     }
     # TODO:

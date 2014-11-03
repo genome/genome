@@ -24,7 +24,7 @@ class Genome::Model::Tools::Dbsnp::Import {
             is_output => 1,
             doc => 'Path to the final output file in .bed',
         },
-        
+
     ],
     has_optional => [
         reference_coordinates => {
@@ -56,7 +56,7 @@ sub help_brief {
 
 sub help_synopsis {
     return <<EOS
-gmt dbsnp import --flat_file_url ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606/ASN1_flat/ --output_file output.bed 
+gmt dbsnp import --flat_file_url ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606/ASN1_flat/ --output_file output.bed
 EOS
 }
 
@@ -94,7 +94,7 @@ sub execute {
     my $file_url = join('/', $self->flat_file_url, $flatfile);
     my $cmd = Genome::Model::Tools::Dbsnp::Import::Flatfile->create(
                 ($self->reference_coordinates ? (reference_coordinates => $self->reference_coordinates):()),
-                flatfile => $file_url, 
+                flatfile => $file_url,
                 output_file => $output_file,
                 ($self->contig_name_translation_file ? (contig_name_translation_file => $self->contig_name_translation_file) : ()),
                 ($self->from_names_column ? (from_names_column => $self->from_names_column) :()),
@@ -107,8 +107,9 @@ sub execute {
 
     my @output_files = ($output_file);
 
-    unless(Genome::Model::Tools::Joinx::Sort->execute(input_files => \@output_files, output_file => $self->output_file)){
-        $self->error_message("Failed to merge and sort imported flatfiles: $@");
+    my $sort = Genome::Model::Tools::Joinx::Sort->create(input_files => \@output_files, output_file => $self->output_file);
+    unless($sort->execute) {
+        $self->error_message("Failed to merge and sort imported flatfiles.");
         return 0;
     }
     #TODO: do gabe's white/black listing, make a feature list out of the filtered bed file and use it to create a new build of the dbsnp model

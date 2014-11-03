@@ -7,15 +7,15 @@ use Genome;
 class Genome::Model::ClinSeq::Command::CreateWgsClonalityPlotByVariantSource {
     is => 'Command::V2',
     has_input => [
-        build => { 
+        build => {
               is => 'Genome::Model::Build::ClinSeq',
               shell_args_position => 1,
               require_user_verify => 0,
               doc => 'clinseq build to get variant sources from',
         },
-        outdir => { 
+        outdir => {
               is => 'FilesystemPath',
-              doc => 'Directory where output files will be written', 
+              doc => 'Directory where output files will be written',
         },
         callers => {
             is => 'String',
@@ -57,7 +57,7 @@ EOS
 sub execute {
     my $self = shift;
     #grab the variant source file
-    
+
     my $variant_source_file;
     eval {
         $variant_source_file = $self->_snv_variant_source_file($self->build, "wgs"); #this will die if wgs doesn't exist
@@ -81,8 +81,6 @@ sub execute {
     }
     return 1;
 }
-
-
 
 #most likely the number of calls is much smaller than we can fit in memory so just do that with a hash.
 sub _load_source_file_into_memory {
@@ -123,7 +121,7 @@ sub _create_readcount_file_for_callers {
             $retain_line{$key} = 1;
         }
     }
-    
+
     my $ofh = Genome::Sys->open_file_for_overwriting($output_file);
     my $fh = Genome::Sys->open_file_for_reading($input_readcount_file);
     while(my $line = $fh->getline) {
@@ -148,17 +146,12 @@ sub _generate_clonality_for_callers {
 
     $self->_create_readcount_file_for_callers($varscan_readcount_file, $callers, $readcount_output_file);
 
-    my $retval = Genome::Model::Tools::Validation::ClonalityPlot->execute( cnvhmm_file => $cnaseq_hmm_file, output_image => $image_file, r_script_output_file => $rscript_output, varscan_file => $readcount_output_file, analysis_type => "wgs", sample_id => $graph_title); 
-    unless($retval) {
+    my $cmd = Genome::Model::Tools::Validation::ClonalityPlot->execute( cnvhmm_file => $cnaseq_hmm_file, output_image => $image_file, r_script_output_file => $rscript_output, varscan_file => $readcount_output_file, analysis_type => "wgs", sample_id => $graph_title);
+    unless($cmd and $cmd->result) {
         die $self->error_message("Error generating clonality plot.");
     }
 }
 
-
-
-
-
-        
 #this is probably overkill below, but recursion is nice
 sub combination_of_callers {
     my @array = @_;
@@ -171,9 +164,6 @@ sub combination_of_callers {
     }
     return @list;
 }
-
-
-
 
 
 1;

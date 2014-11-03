@@ -21,7 +21,7 @@ my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->
     working_directory => $tmp_dir,
     source_path => $source_path,
 );
-ok($cmd, 'execute');
+ok($cmd->result, 'execute');
 my $md5_path = $cmd->source_md5_path;
 is($md5_path, $cmd->helpers->md5_path_for($cmd->source_path), 'md5 path named correctly');
 ok(-s $md5_path, 'md5 path exists');
@@ -35,7 +35,7 @@ $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->exe
     working_directory => $tmp_dir,
     source_path => $source_path,
 );
-ok($cmd, 'execute');
+ok($cmd->result, 'execute');
 $md5_path = $cmd->source_md5_path;
 is($md5_path, $cmd->helpers->md5_path_for($cmd->source_path), 'md5 path named correctly');
 ok(-s $md5_path, 'md5 path exists');

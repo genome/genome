@@ -127,9 +127,9 @@ sub execute
 
     my %params = $self->gather_details();
 
-    my $rv = Genome::Model::GenePrediction::Command::Bacterial::Finish->execute(%params);
+    my $cmd = Genome::Model::GenePrediction::Command::Bacterial::Finish->execute(%params);
 
-    unless($rv) {
+    unless($cmd and $cmd->result) {
         $self->error_message("can't run finish project step");
         return 0;
     }

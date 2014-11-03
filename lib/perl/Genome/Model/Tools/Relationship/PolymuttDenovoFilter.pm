@@ -150,7 +150,7 @@ sub prepare_readcount_files {
         push @readcount_files, $readcount_out;
         unless(-s $readcount_out) {
             print STDERR "running bam-readcount";
-            my $rv = Genome::Model::Tools::Sam::Readcount->execute(
+            my $rc = Genome::Model::Tools::Sam::Readcount->execute(
                 bam_file => $bam,
                 minimum_mapping_quality => $qual,
                 output_file => $readcount_out,
@@ -158,7 +158,7 @@ sub prepare_readcount_files {
                 region_list => $sites_file,
                 use_version => $self->bam_readcount_version,
             );
-            unless ($rv) {
+            unless ($rc and $rc->result) {
                 $self->error_message("Failed to run readcount");
                 return;
             }

@@ -72,7 +72,7 @@ sub execute {
         my $temp_readcount_file = Genome::Sys->create_temp_file_path();
         my ($type,$bam) = split /:/,$bam;
 
-        my $rv = Genome::Model::Tools::Sam::Readcount->execute(
+        my $readcounts = Genome::Model::Tools::Sam::Readcount->create(
             bam_file => $bam,
             minimum_mapping_quality => 1,
             output_file => $temp_readcount_file,
@@ -80,6 +80,9 @@ sub execute {
             region_list => $site_list_for_readcount,
             use_version => $self->bam_readcount_version,
         );
+        unless($readcounts->execute) {
+            die $self->error_message('Failed to execute readcounts on BAM: %s', $bam);
+        }
 
         $self->convert_readcounts_to_stats(
             \%output,

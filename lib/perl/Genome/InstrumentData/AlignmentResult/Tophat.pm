@@ -309,7 +309,8 @@ sub _gather_input_fastqs {
             # If these are paired-end reads, then don't forget the second fastq file
             $params{fastq2} = $files[1] if( scalar(@files) == 2 );
 
-            unless (Genome::Model::Tools::Picard::FastqToSam->execute( %params )) {
+            my $fastq_to_sam_cmd = Genome::Model::Tools::Picard::FastqToSam->execute( %params );
+            unless ($fastq_to_sam_cmd and $fastq_to_sam_cmd->result) {
                 die $self->error_message('Failed to create per lane, unaligned BAM file: '
                 .$self->temp_scratch_directory .'/s_'. $instrument_data->subset_name .'_sequence.bam');
             }
@@ -426,20 +427,21 @@ sub _merge_and_calculate_stats {
     my $unaligned_bams = shift;
 
     my $tmp_all_reads_bam_file = $self->temp_scratch_directory . '/all_fastq_reads.bam';
-    unless (Genome::Model::Tools::Picard::MergeSamFiles->execute(
+    my $merge_cmd = Genome::Model::Tools::Picard::MergeSamFiles->execute(
         input_files => $unaligned_bams,
         output_file => $tmp_all_reads_bam_file,
         maximum_memory => 12,
         maximum_permgen_memory => 256,
         sort_order => 'queryname',
         use_version => $self->picard_version,
-    )) {
+    );
+    unless ($merge_cmd and $merge_cmd->result) {
         die $self->error_message('Failed to merge unaligned BAM files!');
     }
 
     # queryname sort the aligned BAM file
     my $tmp_aligned_bam_file = $self->temp_scratch_directory . '/accepted_hits_queryname_sort.bam';
-    unless (Genome::Model::Tools::Picard::SortSam->execute(
+    my $sort_cmd = Genome::Model::Tools::Picard::SortSam->execute(
         sort_order => 'queryname',
         input_file => $self->temp_staging_directory .'/accepted_hits.bam',
         output_file => $tmp_aligned_bam_file,
@@ -448,7 +450,8 @@ sub _merge_and_calculate_stats {
         maximum_permgen_memory => 256,
         temp_directory => $self->temp_scratch_directory,
         use_version => $self->picard_version,
-    )) {
+    );
+    unless ($sort_cmd and $sort_cmd->result) {
         die $self->error_message('Failed to queryname sort the aligned BAM file!');
     }
 

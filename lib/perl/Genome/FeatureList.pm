@@ -548,8 +548,8 @@ sub chromosome_list {
         input_file => $indexed_bed,
     );
 
-    my @chromosomes = $list_command->chromosomes;
-    unless ($list_command and @chromosomes) {
+    my @chromosomes = $list_command? ($list_command->chromosomes) : ();
+    unless (@chromosomes) {
         die $self->error_message("Failed to tabix list-chromosomes on indexed bed (%s) of bed (%s)", $indexed_bed, $self->processed_bed_file(short_name => 0));
     }
 

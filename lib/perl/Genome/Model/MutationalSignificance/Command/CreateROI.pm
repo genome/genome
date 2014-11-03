@@ -102,7 +102,7 @@ sub execute {
         my $new_name = $feature_list->name;
         my ($names, @files) = $self->collect_files_from_extra_rois($new_name);
         $new_name = $names;
-        
+
         $new_feature_list = Genome::FeatureList->get(name => $new_name);
 
         unless ($new_feature_list) {
@@ -123,7 +123,7 @@ sub execute {
 
                 #filter
                 my $filtered_out_zero_based = Genome::Sys->create_temp_file_path;
-                my $rv = Genome::Model::Tools::RegulomeDb::ModifyRoisBasedOnScore->execute(
+                Genome::Model::Tools::RegulomeDb::ModifyRoisBasedOnScore->execute(
                     roi_list => $zero_based,
                     scored_regions => $self->regulome_bed->file_path,
                     output_file => $filtered_out_zero_based,
@@ -164,7 +164,7 @@ sub execute {
             $new_feature_list = $self->create_new_feature_list($names, $subject, $reference, $format, @files);
         }
     }
-    
+
     $self->roi_path($new_feature_list->file_path);
     $self->status_message('Using ROI file: '.$self->roi_path);
     return 1;
@@ -178,7 +178,7 @@ sub create_new_feature_list {
     my $format = shift;
     my @files = @_;
     my $sorted_out = Genome::Sys->create_temp_file_path;
-    my $rv = Genome::Model::Tools::Joinx::Sort->execute(
+    Genome::Model::Tools::Joinx::Sort->execute(
         input_files => [@files],
         unique => 1,
         output_file => $sorted_out,

@@ -104,7 +104,7 @@ sub create {
     unless (Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics->execute(%picard_params)) {
         return;
     }
-    
+
     $self->_prepare_output_directory;
     $self->_promote_data;
     $self->_reallocate_disk_allocation;

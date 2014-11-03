@@ -102,7 +102,7 @@ sub execute {
         use_version => '2.14.3',
         input_file => $self->bed_file,
         output_file => $sorted_bed_file,
-    )) {
+    )->result) {
         die('Failed to sort BED file'. $self->bed_file);
     }
     my $regions = Genome::Model::Tools::RefCov::ROI::Bed->create(

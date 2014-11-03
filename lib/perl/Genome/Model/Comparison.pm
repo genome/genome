@@ -12,7 +12,7 @@ class Genome::Model::Comparison {
             doc => 'the models built in a prior way for which a new model will be made and tested (i.e. "groups.name=cancer-test1")',
         },
         changes => {
-            is => 'Text', #'UR::BoolExpr' with extensions 
+            is => 'Text', #'UR::BoolExpr' with extensions
             is_many => 1,
             doc => 'changes to the "from" models which are being tested (param=value or input=value)',
         },
@@ -34,19 +34,19 @@ sub _help_synopsis {
     return <<EOS;
  genome model define comparison \
     --name test-bwasw1-on-somatic \
-    --from test-cancer-aml31 \ 
-    --changes "tumor_model.read_aligner_name=bwa-sw 
-                and normal_model.read_aligner_name=bwa-sw 
-                and tumor_model.read_aligner_version=0.6.1  
-                and normal_model.read_aligner_version=0.6.1 " \ 
-    --aspects alignments,variants,metrics 
- 
+    --from test-cancer-aml31 \
+    --changes "tumor_model.read_aligner_name=bwa-sw
+                and normal_model.read_aligner_name=bwa-sw
+                and tumor_model.read_aligner_version=0.6.1
+                and normal_model.read_aligner_version=0.6.1 " \
+    --aspects alignments,variants,metrics
+
  genome model define comparison \
     --name test-clinseq-noexome-dgidb \
     --from id:2890260793/2890224790 \
     --changes "exome_model=''" \
-    #--aspects drug-gene-interactions,metrics,run-time 
-    --processing-profile "compare clinseq default" 
+    #--aspects drug-gene-interactions,metrics,run-time
+    --processing-profile "compare clinseq default"
 EOS
 }
 
@@ -78,7 +78,7 @@ sub _execute_build {
     #
 
     my @from_builds = sort $build->from_builds;
-    
+
     my @from_models = sort {$a->id cmp $b->id } map { $_->model } @from_builds;
 
     # Get From group
@@ -91,7 +91,7 @@ sub _execute_build {
 
     # TODO: Rather that relying on the above names there should be a linkage or sorts to
     # show the connections between these from/to models and groups
-    
+
     if ($from_group) {
         my @members = sort $from_group->models;
         unless ("@members" eq "@from_models") {
@@ -108,11 +108,11 @@ sub _execute_build {
         }
     }
     $self->status_message('Found "from" model group : '. $from_group->__display_name__);
-    
+
     #
     # make a set of "to" models with the changes and build them
     #
-    
+
     # TODO: # pull the logic from this copy command and call it on each $from_model
     # then make an entity representing a pair (UR::Value::Pair?)
     # and set these on the build in some way.
@@ -122,14 +122,14 @@ sub _execute_build {
     # break each down into N model group copies.  If multiple are ambiguous
     # (M) there will be a matrix of model groups created of M dimensions
     # for all combinations.
-    
+
     # TODO: when changes has a field name which is indirect through an input model,
     # make a copy of the input model and use it as an input so the change is "true"
     # for the new model
 
     unless ($to_group) {
         my @changes = $build->changes;
-        my $copy_result = Genome::ModelGroup::Command::Copy->execute(
+        Genome::ModelGroup::Command::Copy->execute(
             from => $from_group,
             to => $to_group_name,
             changes => \@changes,
@@ -145,7 +145,7 @@ sub _execute_build {
     #
     # go through each of the build pairs and compare aspects
     #
-    
+
     my @aspects = $build->processing_profile->aspects;
     for my $aspect (@aspects) {
         my $aspect_dir = $build->data_directory .'/'. $aspect;
@@ -189,7 +189,7 @@ sub _execute_build {
             $self->status_message('Comparing '. $n .' : '. $from_build->model->name .' to '. $to_build->model->name);
             Genome::Sys->shellcmd( cmd => 'touch '.$compare_aspect_dir .'/from_'. $from_build->id );
             Genome::Sys->shellcmd( cmd => 'touch '. $compare_aspect_dir .'/to_'. $to_build->id );
-            
+
             my $from_model = $from_build->model;
             my $from_model_class = $from_model->class;
             my @classes_to_check = ($from_model_class,$from_model_class->inheritance);
@@ -218,7 +218,7 @@ sub _execute_build {
                     die('Failed to execute '. $comparison_class);
                 }
             }
-            
+
             # TODO: figure out how to pair @from_sr and @to_sr
             #my %comparisons;
             #my @from_sr = $from_build->software_results;
@@ -231,7 +231,7 @@ sub _execute_build {
             #        push @$a, $from_sr;
             #    }
             #}
-            
+
             # each ::Compare::X module should produce a software result for the build pair
             # each comparison should have an output directory linked under the build directory
         }
@@ -249,16 +249,16 @@ sub _doc_examples {
     return <<EOS
  More examples.  Edit these.
 
- # this takes two clinseq models and performs a null comparison 
- # that profile is mostly for testing, or to make it easy to build things 
+ # this takes two clinseq models and performs a null comparison
+ # that profile is mostly for testing, or to make it easy to build things
  # and decide later what to compare when you copy the model
  # (this runs now)
  genome model define comparison \
     --from id:2890260793/2890224790 \
     --changes "exome_model=''" \
     --processing-profile name="compare nothing" \
-    --name my-comparison1 
- 
+    --name my-comparison1
+
  # see how drug-gene-interactions change when exome data is not used
  # (presumes Genome::Model::ClinSeq::Comparison::DrugGeneInteractions exists and is put into a processing profile)
  genome model define comparison \
@@ -266,7 +266,7 @@ sub _doc_examples {
     --changes "exome_model=''" \
     --processing-profile name="compare dgidb results" \
     --name my-comparison2
- 
+
  # see how switching breakdancer version and subsampling to 1/2 depth affects metrics
  # (presumes Genome::Model::Comparison::Metrics exists)
  # (presumes we hae a subsample_reads parameter which can take N% or Nx)
@@ -276,7 +276,7 @@ sub _doc_examples {
     --changes "subsample_reads=50%" \
     --processing-profile name="compare metrics" \
     --name my-comparison3
- 
+
  # see how varying bwa -q from nothing to 0, 2, 5, and 10 compares
  # because the changes has an in-clause, we will do multiple output model groups
  # because aspects are listed explicitly it will dynamically will get/create a processing profile to compare those things

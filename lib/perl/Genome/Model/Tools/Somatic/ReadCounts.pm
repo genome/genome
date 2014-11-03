@@ -91,7 +91,7 @@ sub execute {
     my $min_mapping_quality = $self->minimum_mapping_quality;
     my $normal_temp = Genome::Sys->create_temp_file_path;
     my $tumor_temp = Genome::Sys->create_temp_file_path;
-    my $normal_rv = Genome::Model::Tools::Sam::Readcount->execute(
+    my $normal_rc = Genome::Model::Tools::Sam::Readcount->execute(
         bam_file => $self->normal_bam,
         minimum_mapping_quality => $min_mapping_quality,
         output_file => $normal_temp,
@@ -99,7 +99,7 @@ sub execute {
         region_list => $readcount_regions_file,
         use_version => $self->bam_readcount_version,
     );
-    my $tumor_rv = Genome::Model::Tools::Sam::Readcount->execute(
+    my $tumor_rc = Genome::Model::Tools::Sam::Readcount->execute(
         bam_file => $self->tumor_bam,
         minimum_mapping_quality => $min_mapping_quality,
         output_file => $tumor_temp,
@@ -107,7 +107,7 @@ sub execute {
         region_list => $readcount_regions_file,
         use_version => $self->bam_readcount_version,
     );
-    unless ($normal_rv and $tumor_rv) {
+    unless ($normal_rc->result and $tumor_rc->result) {
         $self->error_message("readcount failed\n");
         return;
     }

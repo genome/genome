@@ -48,7 +48,7 @@ sub _execute_v1 {
 }
 
 package main;
-use Test::More tests => 13;
+use Test::More tests => 15;
 
 my $result_meta = Genome::TestCommand::Result->__meta__;
 ok($result_meta, "got result meta for new class");
@@ -80,13 +80,14 @@ Genome::TestCommand->dump_status_messages(0);
 Genome::TestCommand::BuildStepWrapper->dump_status_messages(0);
 Genome::SoftwareResult::Stageable->dump_status_messages(0);
 my $wrapper_result1 = Genome::TestCommand::BuildStepWrapper->execute(
-    p1 => "P1", 
-    i1 => "I1", 
+    p1 => "P1",
+    i1 => "I1",
     output_dir => $dir2,
-    wrapper_build => $build, 
-    wrapper_build_label => "test_label", 
+    wrapper_build => $build,
+    wrapper_build_label => "test_label",
     result_version => 1,
 );
+ok($wrapper_result1->result, 'wrapper executed');
 is($count, 1, "the underlying command has run one time");
 
 Genome::TestCommand::Result->dump_error_messages(0);
@@ -112,13 +113,14 @@ $build->data_directory($dir3);
 my $dir4 = Genome::Sys->create_temp_directory();
 
 my $wrapper_result2 = Genome::TestCommand::BuildStepWrapper->execute(
-    p1 => "P1", 
-    i1 => "I1", 
+    p1 => "P1",
+    i1 => "I1",
     output_dir => $dir4,
-    wrapper_build => $build, 
-    wrapper_build_label => "test_label", 
+    wrapper_build => $build,
+    wrapper_build_label => "test_label",
     result_version => 1,
 );
+ok($wrapper_result2->result, 'wrapper executed a second time');
 is($count, 1, "the underlying command has still run just one time");
 
 

@@ -47,13 +47,13 @@ sub execute {
 
     $self->validate_input_tsv_file();
 
-    my $result = Genome::Model::Tools::Annotate::VariantProtein->execute(
+    my $cmd = Genome::Model::Tools::Annotate::VariantProtein->execute(
         input_tsv_file  => $input,
         output_tsv_file => $output,
         anno_db         => $self->anno_db,
         version => $self->anno_db_version,
     );
-    unless ($result) {
+    unless ($cmd->result) {
         confess $self->error_message("Couldn't execute Genome::Model::Tools::Annotate::VariantProtein $!");
     }
 

@@ -58,7 +58,7 @@ sub execute {
             models => \@rna_models,
             gene_fpkm_tsv_file => $gene_fpkm_tsv_file,
             model_identifier => $self->model_identifier,
-        )) {
+        )->result) {
             die('Failed to execute FpkmMatrix!');
         }
     }
@@ -70,7 +70,7 @@ sub execute {
             metrics_tsv_file => $rna_seq_metrics_tsv_file,
             normalized_transcript_coverage_file => $normalized_coverage_tsv_file,
             model_identifier => $self->model_identifier,
-        )) {
+        )->result) {
             die('Failed to execute RnaSeqMetrics!');
         }
     }
@@ -80,7 +80,7 @@ sub execute {
             models => \@rna_models,
             splice_junction_metrics_tsv_file => $splice_junction_metrics_tsv_file,
             model_identifier => $self->model_identifier,
-        )) {
+        )->result) {
             die('Failed to execute SpliceJunctionMetrics!');
         }
     }
@@ -91,13 +91,13 @@ sub execute {
             models => \@rna_models,
             output => $rawcount_tsv_file,
             model_identifier => $self->model_identifier,
-        )) {
+        )->result) {
             die ('Failed to execute RawcountMatrix!');
         }
     }
 
     my @naming_headers = ($self->model_identifier,'model_id','build_id');
-    
+
     # TODO: Summarize Chimerascan Results
     my $model_identifier_method = $self->model_identifier;
     my $naming_key_tsv_file = $base_file_path .'-naming_key.tsv';

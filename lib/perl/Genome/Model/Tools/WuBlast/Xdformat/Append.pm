@@ -47,7 +47,7 @@ sub _verify_db {
     return Genome::Model::Tools::WuBlast::Xdformat::Verify->execute(
         database => $self->database,
         db_type => $self->db_type,
-    );
+    )->result;
 }
 
 #< Operation >#

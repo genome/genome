@@ -71,10 +71,10 @@ sub execute {
     die 'Missing args for creating symlink' unless $result->output_file and $build->compare_snps_file;
     Genome::Sys->create_symlink_and_log_change($self, $result->output_file, $build->compare_snps_file);
 
-    my $metrics_rv = Genome::Model::ReferenceAlignment::Command::CreateMetrics::CompareSnps->execute(
+    my $metrics_cmd = Genome::Model::ReferenceAlignment::Command::CreateMetrics::CompareSnps->execute(
         build_id => $self->build_id,
     );
-    Carp::confess "Could not create compare_snps metrics for build " . $self->build_id unless $metrics_rv;
+    Carp::confess "Could not create compare_snps metrics for build " . $self->build_id unless $metrics_cmd && $metrics_cmd->result;
 
     return 1;
 }
