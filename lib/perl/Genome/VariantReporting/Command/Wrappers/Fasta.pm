@@ -54,7 +54,6 @@ sub execute {
 
 sub generate_resource_file {
     my $self = shift;
-    my $resource = {};
     my %translations;
     my @aligned_bams;
     push @aligned_bams, $self->build->tumor_build->merged_alignment_result->id;
@@ -65,8 +64,7 @@ sub generate_resource_file {
     $translations{feature_list_ids} = \%feature_list_ids;
     $translations{tumor_sample_name} = $translations{tumor};
     $translations{tumor} = $self->build->tumor_build->subject->name;
-    $resource->{translations} = \%translations;
-    YAML::DumpFile(File::Spec->join($self->resource_file), $resource);
+    YAML::DumpFile(File::Spec->join($self->resource_file), \%translations);
 }
 
 sub run_reports {

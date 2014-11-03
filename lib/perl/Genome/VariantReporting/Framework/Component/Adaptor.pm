@@ -58,7 +58,7 @@ sub resolve_plan_attributes {
     }
 
     my $translations;
-    eval { $translations = $self->provider->get_translations};
+    eval { $translations = $self->provider->translations};
     if (my $error = Exception::Class->caught()) {
       $self->_handle_get_attribute_error($error); #either dies or returns to proceed
     }

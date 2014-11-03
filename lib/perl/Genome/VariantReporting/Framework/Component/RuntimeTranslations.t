@@ -14,15 +14,11 @@ use Test::Exception;
 
 subtest 'get_attribute' => sub {
     my $resource_provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
-        attributes => {
-            translations => { tumor => 'test sample name', },
-        },
+        translations => { tumor => 'test sample name', },
     );
 
-    lives_ok {$resource_provider->get_translations} 'get_attribute for attribute (translations) executes ok';
-    is_deeply($resource_provider->get_translations, { tumor => 'test sample name', }, 'return value as expected');
-
-    throws_ok(sub { $resource_provider->_get_attribute('nonexistent_attribute') }, 'NonexistentAttributeException', 'get_attributes throws a NonexistentAttributeException');
+    lives_ok {$resource_provider->translations} 'property translations executes ok';
+    is_deeply($resource_provider->translations, { tumor => 'test sample name', }, 'return value as expected');
 };
 
 done_testing;

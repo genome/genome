@@ -55,7 +55,7 @@ my $feature_list_cmd = Genome::FeatureList::Command::Create->create(
     name      => "homp_test",
 );
 my $feature_list = $feature_list_cmd->execute;
-$provider->set_translations({homopolymer_list_id => $feature_list->id});
+$provider->translations({homopolymer_list_id => $feature_list->id});
 
 my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),

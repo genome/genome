@@ -76,7 +76,6 @@ sub generate_resource_file {
     my $self = shift;
 
     return if not $self->is_valid;
-    my $resource = {};
     my %translations;
 
     my @aligned_bam_results;
@@ -107,9 +106,8 @@ sub generate_resource_file {
         $translations{tumor} = $self->somatic_build->tumor_build->subject->name;
         $translations{normal} = $self->somatic_build->normal_build->subject->name;
     }
-    $resource->{translations} = \%translations;
 
-    YAML::DumpFile($self->resource_file, $resource);
+    YAML::DumpFile($self->resource_file, \%translations);
 
     return 1;
 }

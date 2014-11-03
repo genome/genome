@@ -43,7 +43,7 @@ my %translations = (
     tumor =>  'TEST-patient1-somval_tumor1',
     fpkm_file => File::Spec->join($test_dir, 'test.fpkm')
 );
-$provider->set_translations(\%translations);
+$provider->translations(\%translations);
 
 my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),

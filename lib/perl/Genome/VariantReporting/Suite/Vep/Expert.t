@@ -53,7 +53,7 @@ my $feature_list_cmd = Genome::FeatureList::Command::Create->create(
     name => "test",
 );
 my $feature_list = $feature_list_cmd->execute;
-$provider->set_translations({%{$provider->get_translations}, feature_list_ids => {TEST => $feature_list->id}});
+$provider->translations({%{$provider->translations}, feature_list_ids => {TEST => $feature_list->id}});
 
 
 my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(

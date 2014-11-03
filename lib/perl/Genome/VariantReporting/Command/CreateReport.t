@@ -120,11 +120,7 @@ done_testing;
 sub get_resource_file {
     my $input_vcf = shift;
 
-    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
-        attributes => {
-            translations => {},
-        },
-    );
+    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create();
     my $tmp_dir = Genome::Sys->create_temp_directory;
     my $resource_file = File::Spec->join($tmp_dir, 'resources.yaml');
     $provider->write_to_file($resource_file);

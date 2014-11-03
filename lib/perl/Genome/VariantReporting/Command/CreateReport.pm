@@ -81,7 +81,7 @@ sub params_for_execute {
         output_directory => $self->output_directory,
         plan_json => $self->plan->as_json,
         provider_json => $self->provider->as_json,
-        translations => $self->provider->get_translations,
+        translations => $self->provider->translations,
     );
 }
 

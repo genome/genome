@@ -13,45 +13,17 @@ my $_JSON_CODEC = new JSON->allow_nonref;
 
 class Genome::VariantReporting::Framework::Component::RuntimeTranslations {
     has => [
-        attributes => {
+        translations => {
             is => 'HASH',
             default => {},
         },
     ],
 };
 
-sub get_translations {
-    my $self = shift;
-    return $self->_get_attribute("translations");
-}
-
-sub set_translations {
-    my $self = shift;
-    $self->_set_attribute("translations", @_);
-}
-
-sub _set_attribute {
-    my ($self, $name, $value) = validate_pos(@_, 1, 1, 1);
-    $self->attributes->{$name} = $value;
-}
-
-sub _get_attribute {
-    my ($self, $name) = validate_pos(@_, 1, 1);
-
-    if (exists $self->attributes->{$name}) {
-        return $self->attributes->{$name};
-    } else {
-        NonexistentAttributeException->throw(
-          error => "Attempted to get non-existing attribute ($name) from resource-provider, available attributes are ".
-                    pp(keys %{$self->attributes})
-        );
-    }
-}
-
 sub as_json {
     my $self = shift;
 
-    return $_JSON_CODEC->canonical->encode($self->attributes);
+    return $_JSON_CODEC->canonical->encode($self->translations);
 }
 
 sub create_from_json {
@@ -59,14 +31,14 @@ sub create_from_json {
     my $json = shift;
 
     my $hashref = $_JSON_CODEC->decode($json);
-    return $class->create(attributes => $hashref);
+    return $class->create(translations => $hashref);
 }
 
 sub write_to_file {
     my $self = shift;
     my $filename = shift;
 
-    YAML::DumpFile($filename, $self->attributes);
+    YAML::DumpFile($filename, $self->translations);
 }
 
 sub create_from_file {
@@ -76,7 +48,7 @@ sub create_from_file {
     Genome::Sys->validate_file_for_reading($file);
     my ($hashref, undef, undef) = YAML::LoadFile($file);
 
-    return $class->create(attributes => $hashref);
+    return $class->create(translations => $hashref);
 }
 
 

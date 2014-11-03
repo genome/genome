@@ -148,7 +148,6 @@ sub generate_resource_file {
     my $self = shift;
 
     return if not $self->is_valid;
-    my $resource = {};
 
     my $translations = $self->get_translations;
 
@@ -169,9 +168,7 @@ sub generate_resource_file {
 
     $translations->{reference_fasta} = $self->discovery->reference_sequence_build->full_consensus_path("fa");
 
-    $resource->{translations} = $translations;
-
-    YAML::DumpFile(File::Spec->join($self->resource_file), $resource);
+    YAML::DumpFile(File::Spec->join($self->resource_file), $translations);
 
     return 1;
 }

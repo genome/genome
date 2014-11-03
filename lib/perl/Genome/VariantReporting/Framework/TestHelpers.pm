@@ -82,14 +82,10 @@ sub get_resource_provider {
         $fasta_file,
     );
     return Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
-        attributes => {
-            snvs_vcf => File::Spec->join($test_dir, 'snvs.vcf.gz'),
-            indels_vcf => File::Spec->join($test_dir, 'indels.vcf.gz'),
             translations => {
                 aligned_bam_result_id => [map {$_->id} @bam_results],
                 reference_fasta => $fasta_file,
             },
-        },
     );
 }
 

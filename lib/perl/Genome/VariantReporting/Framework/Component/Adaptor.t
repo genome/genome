@@ -19,8 +19,6 @@ use_ok($pkg);
 
 my $test_data_dir = __FILE__ . '.d';
 
-
-
 subtest 'without translations needed - without translations provided' => sub {
     my $resource_provider = resource_provider_without_translations();
     my $adaptor = adaptor_without_translations($resource_provider);
@@ -38,7 +36,7 @@ subtest 'without translations needed - with translations provided' => sub {
 subtest 'with translations needed - without translations provided' => sub {
     my $resource_provider = resource_provider_without_translations();
     my $adaptor = adaptor_with_translations($resource_provider);
-    throws_ok(sub { $adaptor->resolve_plan_attributes }, 'NoTranslationsException', 'resolve_plan_attributes throws a NoTranslationsException error');
+    throws_ok(sub { $adaptor->resolve_plan_attributes }, qr/Could not translate input/, 'resolve_plan_attributes throws an error because it cannot translate inputs');
 };
 
 subtest 'with translations needed - with translations provided' => sub {
@@ -48,50 +46,17 @@ subtest 'with translations needed - with translations provided' => sub {
     is($adaptor->__planned__, 'test sample name', 'Value of __planned__ is as expected');
 };
 
-subtest 'rethrow' => sub {
-    my $override = Sub::Override->new(
-        'Genome::VariantReporting::Framework::Component::RuntimeTranslations::_get_attribute',
-        sub {
-            use Exception::Class ('OtherNamedException');
-            OtherNamedException->throw(error => 'some error message');
-        }
-    );
-
-    my $resource_provider = resource_provider_with_translations();
-    my $adaptor = adaptor_with_translations($resource_provider);
-    throws_ok(sub { $adaptor->resolve_plan_attributes }, 'OtherNamedException', 'resolve_plan_attributes throws a OtherNamedException error');
-
-    $override->restore;
-};
-
-subtest 'die' => sub {
-    my $override = Sub::Override->new(
-        'Genome::VariantReporting::Framework::Component::RuntimeTranslations::_get_attribute',
-        sub {
-            die 'some error message'
-        }
-    );
-
-    my $resource_provider = resource_provider_with_translations();
-    my $adaptor = adaptor_with_translations($resource_provider);
-    throws_ok(sub { $adaptor->resolve_plan_attributes }, qr/some error message/, 'resolve_plan_attributes dies with correct error message');
-
-    $override->restore;
-};
-
 done_testing;
 
 sub resource_provider_with_translations {
     return Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
-        attributes => {
-            translations => { tumor => 'test sample name', __provided__ => '__provided__'},
-        },
+        translations => { tumor => 'test sample name', __provided__ => '__provided__'},
     );
 }
 
 sub resource_provider_without_translations {
     return Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
-        attributes => {},
+        translations => {},
     );
 }
 
