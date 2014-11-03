@@ -14,6 +14,9 @@ class Genome::Model::GenotypeMicroarray::Build::CreateOriginalGenotypeFiles {
         alleles => { is => 'Hash', },
         genotypes_output => { is => 'Number', },
     },
+    has_param => {
+        lsf_resource => { default_value => "-R 'select[mem>=16000] rusage[mem=16000] span[hosts=1]' -M 16000000", },
+    },
 };
 
 sub help_brief {
