@@ -56,7 +56,7 @@ my $model = Genome::Model::GenePrediction::Eukaryotic->create(
     subject_class_name => 'Genome::Taxon',
     assembly_contigs_file => $test_contigs,
     repeat_library => '/gsc/var/lib/repeat/Ancylostoma_caninum-7.0_100524.newb.lib',
-    snap_models => "$test_dir/A.canium.hmm,$test_dir/caninum_cegma.hmm",
+    snap_models => join(',', map { File::Spec->join($test_dir, $_) } qw(A.canium.hmm caninum_cegma.hmm)),
     fgenesh_model => $ENV{GENOME_SW} . '/softberry/Softberry_gf-2.1/sprog/C_elegans',
 );
 ok($model, 'successfully created model');
