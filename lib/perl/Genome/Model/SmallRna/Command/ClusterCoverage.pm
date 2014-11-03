@@ -15,7 +15,7 @@ class Genome::Model::SmallRna::Command::ClusterCoverage {
     is => ['Genome::Model::SmallRna::Command::Base'],
     has_input => [
         bam_file => {
-        	is => 'Text',
+            is => 'Text',
             doc => 'Input file of BAM alignments',
         },
         zenith_depth => {
@@ -58,9 +58,9 @@ sub execute {
     my $bam_file   = $self->bam_file;
     my $stats_file = $self->stats_file;
     my $bed_file   = $self->bed_file;
-    
+
     my $cmd = 'genome-perl5.10 -S gmt ref-cov cluster-coverage --bam-file='. $bam_file .' --minimum-zenith='. $self->zenith_depth .' --minimum-depth='. $self->minimum_depth .' --stats-file='. $stats_file .' --bed-file='. $bed_file;
-    
+
     my $rv = Genome::Sys->shellcmd(
         cmd => $cmd,
         input_files  => [$bam_file],
@@ -81,8 +81,8 @@ sub execute {
     unless (-s $bed_file) {
         $self->warning_message("Output bed file: $bed_file is not valid. $err_msg");
     }
-    
-    return 1;   
+
+    return 1;
 }
 
 1;
