@@ -6,6 +6,7 @@ use warnings;
 use parent 'Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstData';
 
 use Genome::File::Vcf::Reader;
+require List::MoreUtils;
 use Regexp::Common;
 
 sub header {
@@ -173,7 +174,7 @@ sub _add_alleles_to_entry {
     my ($self, $genotype, $entry) = @_;
     
     for my $allele ( map { $genotype->{$_} } (qw/ allele1 allele2 /) ) { 
-        next if $allele eq '-';
+        next unless List::MoreUtils::any { $allele eq $_ } (qw/ A C G T /);
         $entry->add_allele($allele);
     }
 
