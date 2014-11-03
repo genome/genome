@@ -28,6 +28,7 @@ experts:
         joinx_version: 1.9
         max_length: 2
         info_string: 'HOMP_FILTER'
+        homopolymer_list_id: homopolymer_list_id
 reporters:
     'full':
         filters:

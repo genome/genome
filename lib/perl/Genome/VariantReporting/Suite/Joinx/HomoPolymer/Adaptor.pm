@@ -19,10 +19,9 @@ class Genome::VariantReporting::Suite::Joinx::HomoPolymer::Adaptor {
         info_string => { 
             is => 'Text', 
         },
-    ],
-    has_provided_output => [
         homopolymer_list_id => {
             is => 'String',
+            is_translated => 1,
         },
     ],
 };

@@ -29,7 +29,7 @@ use_ok($pkg) || die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('experts', $pkg->name), $pkg);
 
-my $VERSION = 1; # Bump these each time test data changes
+my $VERSION = 2; # Bump these each time test data changes
 my $RESOURCE_VERSION = 3;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
@@ -56,7 +56,7 @@ my $feature_list_cmd = Genome::FeatureList::Command::Create->create(
     name      => "homp_test",
 );
 my $feature_list = $feature_list_cmd->execute;
-$provider->set_attribute(homopolymer_list_id => $feature_list->id);
+$provider->set_attribute(translations => {homopolymer_list_id => $feature_list->id});
 
 my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),

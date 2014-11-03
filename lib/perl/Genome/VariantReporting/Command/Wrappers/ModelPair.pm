@@ -161,8 +161,8 @@ sub generate_resource_file {
     $feature_list_ids{SEG_DUP} = $segdup_feature_list->id;
     # TODO: There has to be a better way...
     $feature_list_ids{AML_RMG} = '0e4973c600244c3f804d54bee6f81145';
-    $resource->{homopolymer_list_id} = '696318bab30d47d49fab9afa845691b7';
     $translations->{feature_list_ids} = \%feature_list_ids;
+    $translations->{homopolymer_list_id} = '696318bab30d47d49fab9afa845691b7';
 
     $translations->{dbsnp_vcf} = $self->discovery->previously_discovered_variations_build->snvs_vcf;
     $translations->{nhlbi_vcf} = _get_nhlbi_vcf(); 
