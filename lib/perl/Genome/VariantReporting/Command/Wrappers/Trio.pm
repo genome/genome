@@ -84,7 +84,6 @@ sub create_igv_xml {
         my $additional_bed = File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $self->output_directory, 'followup', $roi_directory, 'trio_report.bed');
         my $germline_bed = File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $self->output_directory, 'germline', $roi_directory, 'germline_report.bed');
         my $docm_bed = File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $self->output_directory, 'docm', $roi_directory, 'cle_docm_report.bed');
-        $DB::single=1;
 
         my $reference_sequence_name_cmd = Genome::Model::Tools::Analysis::ResolveIgvReferenceName->execute(
             reference_name => $reference_sequence_builds[0]->name,
