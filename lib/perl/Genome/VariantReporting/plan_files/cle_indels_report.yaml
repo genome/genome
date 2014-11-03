@@ -23,6 +23,7 @@ experts:
     dbsnp:
         joinx_version: 1.9
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+        vcf: dbsnp_vcf
     'homo-polymer':
         joinx_version: 1.9
         max_length: 2
@@ -30,6 +31,7 @@ experts:
     nhlbi:
         joinx_version: 1.9
         info_string: 'AAC:PP:CDP:PH:EA_GTC:AA_GTC:MAF'
+        vcf: nhlbi_vcf
 reporters:
     'full':
         filters:

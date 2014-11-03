@@ -164,11 +164,11 @@ sub generate_resource_file {
     $resource->{homopolymer_list_id} = '696318bab30d47d49fab9afa845691b7';
     $translations->{feature_list_ids} = \%feature_list_ids;
 
+    $translations->{dbsnp_vcf} = $self->discovery->previously_discovered_variations_build->snvs_vcf;
+    $translations->{nhlbi_vcf} = _get_nhlbi_vcf(); 
 
     $translations->{reference_fasta} = $self->discovery->reference_sequence_build->full_consensus_path("fa");
 
-    $resource->{dbsnp_vcf} = $self->discovery->previously_discovered_variations_build->snvs_vcf;
-    $resource->{nhlbi_vcf} = _get_nhlbi_vcf(); 
     $resource->{translations} = $translations;
 
     YAML::DumpFile(File::Spec->join($self->resource_file), $resource);
