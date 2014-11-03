@@ -19,12 +19,6 @@ sub category {
     'experts';
 }
 
-sub resources_required {
-    my $self = shift;
-
-    return $self->get_class->resources_required;
-}
-
 sub adaptor_object {
     my $self = shift;
     my $adaptor_class = $self->object->adaptor_class;
@@ -73,14 +67,6 @@ sub __object_errors__ {
     my @errors = $self->SUPER::__object_errors__;
     push @errors, $self->object->adaptor_class->__planned_output_errors__($self->adaptor_params);
     return @errors;
-}
-
-sub __provider_errors__ {
-    my $self = shift;
-    my $provider = shift;
-
-    return $self->object->adaptor_class->__provided_output_errors__(
-        $provider->attributes);
 }
 
 1;

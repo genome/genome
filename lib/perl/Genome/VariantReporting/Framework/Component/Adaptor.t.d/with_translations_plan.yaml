@@ -1,6 +1,7 @@
 experts:
     __translated_test__:
         __planned__: tumor
+        __provided__: __provided__
 reporters:
     __test__:
         interpreters:

@@ -46,7 +46,7 @@ $plan->validate();
 my $variant_type = 'snvs';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
 my $provider = get_resource_provider(version => $RESOURCE_VERSION);
-$provider->set_attribute(translations => {"1kg_vcf" => File::Spec->join($test_dir, '1kg.vcf')});
+$provider->set_translations({"1kg_vcf" => File::Spec->join($test_dir, '1kg.vcf')});
 
 my $input_vcf = File::Spec->join($test_dir, "$variant_type.vcf.gz");
 test_dag_execute($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $plan);

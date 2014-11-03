@@ -9,8 +9,6 @@ class Genome::VariantReporting::Framework::Test::WithTranslationsAdaptor {
 
     has_planned_translated_output => [
         __planned__ => {},
-    ],
-    has_provided_output => [
         __provided__ => {},
     ],
 };

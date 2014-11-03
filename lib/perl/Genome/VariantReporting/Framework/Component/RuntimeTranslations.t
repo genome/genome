@@ -19,10 +19,10 @@ subtest 'get_attribute' => sub {
         },
     );
 
-    lives_ok {$resource_provider->get_attribute('translations')} 'get_attribute for attribute (translations) executes ok';
-    is_deeply($resource_provider->get_attribute('translations'), { tumor => 'test sample name', }, 'return value as expected');
+    lives_ok {$resource_provider->get_translations} 'get_attribute for attribute (translations) executes ok';
+    is_deeply($resource_provider->get_translations, { tumor => 'test sample name', }, 'return value as expected');
 
-    throws_ok(sub { $resource_provider->get_attribute('nonexistent_attribute') }, 'NonexistentAttributeException', 'get_attributes throws a NonexistentAttributeException');
+    throws_ok(sub { $resource_provider->_get_attribute('nonexistent_attribute') }, 'NonexistentAttributeException', 'get_attributes throws a NonexistentAttributeException');
 };
 
 done_testing;

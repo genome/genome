@@ -122,7 +122,6 @@ sub get_resource_file {
 
     my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
         attributes => {
-            __provided__ => [$input_vcf, $input_vcf],
             translations => {},
         },
     );

@@ -20,12 +20,22 @@ class Genome::VariantReporting::Framework::Component::RuntimeTranslations {
     ],
 };
 
-sub set_attribute {
+sub get_translations {
+    my $self = shift;
+    return $self->_get_attribute("translations");
+}
+
+sub set_translations {
+    my $self = shift;
+    $self->_set_attribute("translations", @_);
+}
+
+sub _set_attribute {
     my ($self, $name, $value) = validate_pos(@_, 1, 1, 1);
     $self->attributes->{$name} = $value;
 }
 
-sub get_attribute {
+sub _get_attribute {
     my ($self, $name) = validate_pos(@_, 1, 1);
 
     if (exists $self->attributes->{$name}) {

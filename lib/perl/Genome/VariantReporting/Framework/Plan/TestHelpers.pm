@@ -377,10 +377,8 @@ sub set_what_interpreter_x_requires {
         has_planned_output => [
             e1_p1 => {},
             e1_p2 => {},
-        ],
-        has_provided_output => [
-            e1_provided1 => {},
-            e1_provided2 => {},
+            e1_provided1 => {is_translated => 1},
+            e1_provided2 => {is_translated => 1},
         ],
     };
 
@@ -441,10 +439,8 @@ sub set_what_interpreter_x_requires {
         has_planned_output => [
             e2_p1 => {},
             e2_p2 => {},
-        ],
-        has_provided_output => [
-            e2_provided1 => {},
-            e2_provided2 => {},
+            e2_provided1 => {is_translated => 1},
+            e2_provided2 => {is_translated => 1},
         ],
     };
 

@@ -15,10 +15,6 @@ class Genome::VariantReporting::Framework::Component::Adaptor {
             is => "Boolean",
             default => 0,
         },
-        is_provided => {
-            is => "Boolean",
-            default => 0,
-        },
     },
     has_input => [
         provider_json => {
@@ -49,8 +45,6 @@ sub execute {
     $self->debug_message("Resolving plan attributes");
     $self->resolve_plan_attributes;
 
-    $self->debug_message("Resolving attributes from the resource-provider");
-    $self->resolve_provided_attributes;
     return 1;
 }
 
@@ -64,7 +58,7 @@ sub resolve_plan_attributes {
     }
 
     my $translations;
-    eval { $translations = $self->provider->get_attribute('translations') };
+    eval { $translations = $self->provider->get_translations};
     if (my $error = Exception::Class->caught()) {
       $self->_handle_get_attribute_error($error); #either dies or returns to proceed
     }
@@ -111,22 +105,6 @@ sub provider {
     return Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_json($self->provider_json);
 }
 
-sub provided_output_names {
-    my $self = shift;
-
-    my @properties = $self->__meta__->properties(
-        is_output => 1, is_provided => 1);
-    return map {$_->property_name} @properties;
-}
-
-sub resolve_provided_attributes {
-    my $self = shift;
-
-    for my $name ($self->provided_output_names) {
-        $self->$name($self->provider->get_attribute($name));
-    }
-}
-
 # TODO this is not covered by tests
 sub validate_with_plan_params {
     my ($self, $params) = validate_pos(@_, 1, 1);
@@ -144,12 +122,6 @@ sub __planned_output_errors__ {
     my $needed = Set::Scalar->new($self->planned_output_names);
     return $self->_get_missing_errors($params, $needed),
         $self->_get_extra_errors($params, $needed);
-}
-
-sub __provided_output_errors__ {
-    my ($self, $params) = validate_pos(@_, 1, 1);
-    my $needed = Set::Scalar->new($self->provided_output_names);
-    return $self->_get_missing_errors($params, $needed);
 }
 
 sub _get_missing_errors {

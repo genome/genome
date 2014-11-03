@@ -27,6 +27,7 @@ our @EXPORT_OK = qw(
     test_cmd_and_result_are_in_sync
     get_test_dir
     get_resource_provider
+    get_reference_build
     get_resource_provider_with_vep
     test_dag_xml
     test_dag_execute
@@ -59,11 +60,20 @@ sub test_cmd_and_result_are_in_sync {
         'All command inputs are persisted SoftwareResult properties');
 }
 
+sub get_reference_build {
+    my %p = validate(@_, {
+        version => {type => SCALAR},
+    });
+    my $test_dir = get_test_dir('Genome::VariantReporting::Framework::Component::RuntimeTranslations', $p{version});
+
+    my $fasta_file = readlink(File::Spec->join($test_dir, 'reference.fasta'));
+    return Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build($fasta_file);
+}
+
 sub get_resource_provider {
     my %p = validate(@_, {
         version => {type => SCALAR},
     });
-
     my $test_dir = get_test_dir('Genome::VariantReporting::Framework::Component::RuntimeTranslations', $p{version});
     my $fasta_file = readlink(File::Spec->join($test_dir, 'reference.fasta'));
     my @bam_results = setup_bam_results(
@@ -71,10 +81,8 @@ sub get_resource_provider {
         File::Spec->join($test_dir, 'bam2.bam'),
         $fasta_file,
     );
-    my $reference_sequence_build = Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build($fasta_file);
     return Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
         attributes => {
-            reference_sequence_build_id => $reference_sequence_build->id,
             snvs_vcf => File::Spec->join($test_dir, 'snvs.vcf.gz'),
             indels_vcf => File::Spec->join($test_dir, 'indels.vcf.gz'),
             translations => {

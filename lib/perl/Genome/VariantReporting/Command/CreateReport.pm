@@ -81,7 +81,7 @@ sub params_for_execute {
         output_directory => $self->output_directory,
         plan_json => $self->plan->as_json,
         provider_json => $self->provider->as_json,
-        translations => $self->provider->get_attribute('translations'),
+        translations => $self->provider->get_translations,
     );
 }
 
@@ -102,9 +102,6 @@ sub provider {
 
     $self->status_message("Constructing resource-provider from file (%s)", $self->resource_file);
     my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->resource_file);
-    $self->status_message("Checking for compatibility between resource-provider and plan...");
-    $self->plan->validate_resource_provider($provider);
-    $self->status_message("ResourceProvider is compatible with plan.");
     return $provider;
 }
 Memoize::memoize('provider');

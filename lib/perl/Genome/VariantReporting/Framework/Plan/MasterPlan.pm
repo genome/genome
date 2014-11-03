@@ -25,40 +25,6 @@ class Genome::VariantReporting::Framework::Plan::MasterPlan {
     ],
 };
 
-sub validate_resource_provider {
-    my $self = shift;
-    my $provider = shift;
-
-    my @errors = $self->__provider_errors__($provider);
-    if (@errors) {
-        $self->print_errors(@errors);
-        die "Plan is incompatible with ResourceProvider.";
-    }
-    return;
-}
-
-sub __provider_errors__ {
-    my $self = shift;
-    my $provider = shift;
-
-    my @errors;
-    for my $expert_plan ($self->expert_plans) {
-        push @errors, $expert_plan->__provider_errors__($provider);
-    }
-    return @errors;
-}
-
-
-sub resources_required {
-    my $self = shift;
-
-    my $resource_names = Set::Scalar->new();
-    for my $expert_plan ($self->expert_plans) {
-        $resource_names->insert($expert_plan->resources_required)
-    }
-    return $resource_names->members();
-}
-
 sub get_plan {
     my ($self, $category, $name) = validate_pos(@_, 1, 1, 1);
 
