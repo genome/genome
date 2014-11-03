@@ -68,5 +68,3 @@ sub execute {
 
 1;
 
-__END__
-
