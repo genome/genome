@@ -776,19 +776,15 @@ sub _run_refcov {
         die $self->error_message("No regions file ($regions_file) does not exist");
     }
 
-    my $command = "genome-perl5.10 -S gmt ref-cov standard";
-    $command .= " --alignment-file-path ".$sorted_bam;
-    $command .= " --roi-file-path ".$regions_file;
-    $command .= " --stats-file ".$refcov_output;
-    $command .= " --min-depth-filter 0";
+    my $command = Genome::Model::Tools::RefCov::Standard->create(
+        alignment_file_path => $sorted_bam,
+        roi_file_path => $regions_file,
+        stats_file => $refcov_output,
+        min_depth_filter => 0,
+    );
 
-    $self->debug_message($command);
     my $rv = eval{
-        Genome::Sys->shellcmd(
-            cmd=>$command,
-            #output_files=>[$refcov_output],
-            #input_files => [$sorted_bam, $regions_file],
-        );
+        $command->execute();
     };
     if ( not $rv ) {
         $self->error_message("Failed to run refcov command: $@");
@@ -897,20 +893,12 @@ sub extract_reads_from_bam {
     }
 
     $self->debug_message("Preparing imported instrument data for import path $output_dir");
-#    my $extract_unaligned = Genome::Model::Tools::BioSamtools::BamToUnalignedFastq->create(
-#        bam_file => $bam,
-#        output_directory => $output_dir,
-#        print_aligned => $extract_aligned_reads,
-#        );
-#    $self->execute_or_die($extract_unaligned);
-
-    my $cmd = "genome-perl5.10 -S gmt bio-samtools bam-to-unaligned-fastq --bam-file $bam --output-directory $output_dir";
-    if($extract_aligned_reads) {
-        $cmd .= " --print-aligned";
-    }
-    if(system($cmd)) {
-        die("$cmd failed: $?");
-    }
+    my $extract_unaligned = Genome::Model::Tools::BioSamtools::BamToUnalignedFastq->create(
+        bam_file => $bam,
+        output_directory => $output_dir,
+        print_aligned => $extract_aligned_reads,
+    );
+    $self->execute_or_die($extract_unaligned);
 
     my @files = glob("$output_dir/*/*_sequence.txt");
 
@@ -1434,21 +1422,15 @@ sub _process_unaligned_reads {
         }
         $self->debug_message("Preparing imported instrument data for import path $tmp_dir/$subdir");
         $self->debug_message("Extracting unaligned reads from $bam");
-        my $cmd = "genome-perl5.10 -S gmt bio-samtools bam-to-unaligned-fastq --bam-file $bam --output-directory $tmp_dir";
-        my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-        if ( not $rv ) {
-            die "Failed to extract unaligned reads: $@";
-        }
 
-        #$self->debug_message("Perl version: $]");
-        #my $extract_unaligned = Genome::Model::Tools::BioSamtools::BamToUnalignedFastq->create(
-        #    bam_file => $bam,
-        #    output_directory =>$tmp_dir,
-        #);
-        #my $rv = $extract_unaligned->execute;
-        #unless ($rv){
-        #    die $self->error_message("Couldn't extract unaligned reads from bam file $bam");
-        #}
+        my $extract_unaligned = Genome::Model::Tools::BioSamtools::BamToUnalignedFastq->create(
+            bam_file => $bam,
+            output_directory =>$tmp_dir,
+        );
+        my $rv = $extract_unaligned->execute;
+        unless ($rv){
+            die $self->error_message("Couldn't extract unaligned reads from bam file $bam");
+        }
 
         my @expected_output_fastqs = ( $instrument_data->is_paired_end )
         ?  ($forward_unaligned_data_path, $reverse_unaligned_data_path, $fragment_unaligned_data_path)
