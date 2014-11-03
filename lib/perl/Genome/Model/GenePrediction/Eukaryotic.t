@@ -14,7 +14,7 @@ BEGIN {
 use_ok('Genome::Model::GenePrediction');
 use_ok('Genome::Model::GenePrediction::Eukaryotic');
 
-my $analysis_dir = "/gscmnt/277/analysis";
+my $analysis_dir = "/gscmnt/gc2514/mitrevalab/";
 ok(-d $analysis_dir, "Analysis directory exists at $analysis_dir") or die "Could not access $analysis_dir"; 
 
 my $test_contigs = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-GenePrediction-Eukaryotic/short_ctg.dna';
@@ -52,7 +52,7 @@ my $model = Genome::Model::GenePrediction::Eukaryotic->create(
     subject_class_name => 'Genome::Taxon',
     assembly_contigs_file => $test_contigs,
     repeat_library => '/gsc/var/lib/repeat/Ancylostoma_caninum-7.0_100524.newb.lib',
-    snap_models => '/gscmnt/277/analysis/snap_model_files/A.canium.hmm,/gscmnt/277/analysis/snap_model_files/caninum_cegma.hmm',
+    snap_models => '/gscmnt/gc2514/mitrevalab/snap_model_files/A.canium.hmm,/gscmnt/gc2514/mitrevalab/snap_model_files/caninum_cegma.hmm',
     fgenesh_model => $ENV{GENOME_SW} . '/softberry/Softberry_gf-2.1/sprog/C_elegans',
 );
 ok($model, 'successfully created model');
