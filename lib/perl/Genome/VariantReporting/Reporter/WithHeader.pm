@@ -19,7 +19,7 @@ class Genome::VariantReporting::Reporter::WithHeader {
             default => "\t",
         },
         generate_legend_file => {
-            is => 'Bool',
+            is => 'Boolean',
             default => 1,
         }
     },
