@@ -173,23 +173,9 @@ sub create {
 	alignment_file_format => 'bam',
    );
 
-    unless($] > 5.010) {
-        #need to shell out to a newer perl #TODO remove this once 5.10 transition complete
-        my $cmd = 'genome-perl5.10 -S gmt ref-cov standard ';
-        while (my ($key, $value) = (each %refcov_params)) {
-            $key =~ s/_/-/g;
-            $cmd .= " --$key=$value";
-        }
-
-        Genome::Sys->shellcmd(
-            cmd => $cmd,
-            input_files => [$bed_file, $bam_file],
-        );
-    } else {
-        my $cmd = Genome::Model::Tools::RefCov::Standard->create(%refcov_params);
-        unless($cmd->execute) {
-            die('Failed to run RefCov');
-        }
+    my $cmd = Genome::Model::Tools::RefCov::Standard->create(%refcov_params);
+    unless($cmd->execute) {
+        die('Failed to run RefCov');
     }
 
     $self->_promote_data;
