@@ -13,7 +13,7 @@ use Test::More;
 use Test::Exception;
 
 subtest 'get_attribute' => sub {
-    my $resource_provider = Genome::VariantReporting::Framework::Component::ResourceProvider->create(
+    my $resource_provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
         attributes => {
             translations => { tumor => 'test sample name', },
         },

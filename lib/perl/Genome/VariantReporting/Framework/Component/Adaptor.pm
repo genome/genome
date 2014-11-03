@@ -108,7 +108,7 @@ sub planned_output_names {
 sub provider {
     my $self = shift;
 
-    return Genome::VariantReporting::Framework::Component::ResourceProvider->create_from_json($self->provider_json);
+    return Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_json($self->provider_json);
 }
 
 sub provided_output_names {

@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Framework::Component::ResourceProvider;
+package Genome::VariantReporting::Framework::Component::RuntimeTranslations;
 
 use strict;
 use warnings FATAL => 'all';
@@ -11,7 +11,7 @@ use Exception::Class ('NonexistentAttributeException');
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 
-class Genome::VariantReporting::Framework::Component::ResourceProvider {
+class Genome::VariantReporting::Framework::Component::RuntimeTranslations {
     has => [
         attributes => {
             is => 'HASH',

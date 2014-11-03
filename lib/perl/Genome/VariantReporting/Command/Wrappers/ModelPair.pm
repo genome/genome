@@ -79,7 +79,7 @@ sub create {
     Genome::Sys->create_directory($self->output_dir);
     $self->generate_sample_legend_file;
     $self->generate_resource_file;
-    my $provider = Genome::VariantReporting::Framework::Component::ResourceProvider->create_from_file($self->resource_file);
+    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->resource_file);
     for my $variant_type (qw(snvs indels)) {
         Genome::Sys->create_directory($self->reports_directory($variant_type));
         my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file($variant_type));

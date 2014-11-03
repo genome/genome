@@ -101,7 +101,7 @@ sub provider {
     my $self = shift;
 
     $self->status_message("Constructing resource-provider from file (%s)", $self->resource_file);
-    my $provider = Genome::VariantReporting::Framework::Component::ResourceProvider->create_from_file($self->resource_file);
+    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->resource_file);
     $self->status_message("Checking for compatibility between resource-provider and plan...");
     $self->plan->validate_resource_provider($provider);
     $self->status_message("ResourceProvider is compatible with plan.");

@@ -23,7 +23,7 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw(get_build succeed_build compare_directories);
 my $TEST_DIR = __FILE__.".d";
-my $PROVIDER_TEST_DIR = Genome::Utility::Test->data_dir("Genome::VariantReporting::Framework::Component::ResourceProvider", "v3");
+my $PROVIDER_TEST_DIR = Genome::Utility::Test->data_dir("Genome::VariantReporting::Framework::Component::RuntimeTranslations", "v3");
 
 sub _get_pp {
     return Genome::Test::Factory::ProcessingProfile::SomaticValidation->setup_object();

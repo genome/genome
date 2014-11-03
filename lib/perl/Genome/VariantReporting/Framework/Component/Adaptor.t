@@ -50,7 +50,7 @@ subtest 'with translations needed - with translations provided' => sub {
 
 subtest 'rethrow' => sub {
     my $override = Sub::Override->new(
-        'Genome::VariantReporting::Framework::Component::ResourceProvider::get_attribute',
+        'Genome::VariantReporting::Framework::Component::RuntimeTranslations::get_attribute',
         sub {
             use Exception::Class ('OtherNamedException');
             OtherNamedException->throw(error => 'some error message');
@@ -66,7 +66,7 @@ subtest 'rethrow' => sub {
 
 subtest 'die' => sub {
     my $override = Sub::Override->new(
-        'Genome::VariantReporting::Framework::Component::ResourceProvider::get_attribute',
+        'Genome::VariantReporting::Framework::Component::RuntimeTranslations::get_attribute',
         sub {
             die 'some error message'
         }
@@ -82,7 +82,7 @@ subtest 'die' => sub {
 done_testing;
 
 sub resource_provider_with_translations {
-    return Genome::VariantReporting::Framework::Component::ResourceProvider->create(
+    return Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
         attributes => {
             translations => { tumor => 'test sample name', },
         },
@@ -90,7 +90,7 @@ sub resource_provider_with_translations {
 }
 
 sub resource_provider_without_translations {
-    return Genome::VariantReporting::Framework::Component::ResourceProvider->create(
+    return Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
         attributes => {},
     );
 }

@@ -64,7 +64,7 @@ sub get_resource_provider {
         version => {type => SCALAR},
     });
 
-    my $test_dir = get_test_dir('Genome::VariantReporting::Framework::Component::ResourceProvider', $p{version});
+    my $test_dir = get_test_dir('Genome::VariantReporting::Framework::Component::RuntimeTranslations', $p{version});
     my $fasta_file = readlink(File::Spec->join($test_dir, 'reference.fasta'));
     my @bam_results = setup_bam_results(
         File::Spec->join($test_dir, 'bam1.bam'),
@@ -72,7 +72,7 @@ sub get_resource_provider {
         $fasta_file,
     );
     my $reference_sequence_build = Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build($fasta_file);
-    return Genome::VariantReporting::Framework::Component::ResourceProvider->create(
+    return Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
         attributes => {
             reference_sequence_build_id => $reference_sequence_build->id,
             snvs_vcf => File::Spec->join($test_dir, 'snvs.vcf.gz'),
