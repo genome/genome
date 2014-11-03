@@ -7,7 +7,7 @@ use Test::More;
 use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
 use Genome::VariantReporting::Framework::TestHelpers qw(
-    get_resource_provider
+    get_translation_provider
     test_dag_xml
     test_dag_execute
     get_test_dir
@@ -39,7 +39,7 @@ test_dag_xml($dag, $expected_xml);
 set_what_interpreter_x_requires('bam-readcount');
 my $variant_type = 'snvs';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
-my $provider = get_resource_provider(version => $RESOURCE_VERSION);
+my $provider = get_translation_provider(version => $RESOURCE_VERSION);
 
 my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),

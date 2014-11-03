@@ -28,7 +28,7 @@ class Genome::VariantReporting::Command::Wrappers::RnaSeq {
                 my $safe_model_name = Genome::Utility::Text::sanitize_string_for_filesystem($model_name);
                 return File::Spec->join($base_output_dir, $safe_model_name); |,
         },
-        resource_file => {
+        translations_file => {
             calculate_from => [qw/ output_dir /],
             calculate => q( File::Spec->join($output_dir, "resource.yaml") ),
         },
@@ -50,7 +50,7 @@ sub execute {
     Genome::Sys->create_directory($self->output_dir);
     Genome::Sys->create_directory($self->reports_directory("snvs"));
     Genome::Sys->create_directory($self->logs_directory("snvs"));
-    $self->generate_resource_file;
+    $self->generate_translations_file;
     $self->run_reports;
     return 1;
 };
@@ -72,7 +72,7 @@ sub is_valid {
     return 1;
 }
 
-sub generate_resource_file {
+sub generate_translations_file {
     my $self = shift;
 
     return if not $self->is_valid;
@@ -107,7 +107,7 @@ sub generate_resource_file {
         $translations{normal} = $self->somatic_build->normal_build->subject->name;
     }
 
-    YAML::DumpFile($self->resource_file, \%translations);
+    YAML::DumpFile($self->translations_file, \%translations);
 
     return 1;
 }
@@ -121,7 +121,7 @@ sub run_reports {
         variant_type => $variant_type,
         output_directory => $self->reports_directory($variant_type),
         plan_file => $self->plan_file($variant_type),
-        resource_file => $self->resource_file,
+        translations_file => $self->translations_file,
         log_directory => $self->logs_directory($variant_type),
     );
 

@@ -26,9 +26,9 @@ use Exporter 'import';
 our @EXPORT_OK = qw(
     test_cmd_and_result_are_in_sync
     get_test_dir
-    get_resource_provider
+    get_translation_provider
     get_reference_build
-    get_resource_provider_with_vep
+    get_translation_provider_with_vep
     test_dag_xml
     test_dag_execute
     test_expert_is_registered
@@ -70,7 +70,7 @@ sub get_reference_build {
     return Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build($fasta_file);
 }
 
-sub get_resource_provider {
+sub get_translation_provider {
     my %p = validate(@_, {
         version => {type => SCALAR},
     });

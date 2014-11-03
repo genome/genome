@@ -30,7 +30,7 @@ class Genome::VariantReporting::Command::Wrappers::ModelPair {
                 $roi_nospace =~ s/ /_/g;
                 return File::Spec->join($base_output_dir, $roi_nospace); |,
         },
-        resource_file => {
+        translations_file => {
             calculate_from => [qw/ output_dir /],
             calculate => q( File::Spec->join($output_dir, "resource.yaml") ),
         },
@@ -78,8 +78,8 @@ sub create {
     my $self = $class->SUPER::create(@_);
     Genome::Sys->create_directory($self->output_dir);
     $self->generate_sample_legend_file;
-    $self->generate_resource_file;
-    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->resource_file);
+    $self->generate_translations_file;
+    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->translations_file);
     for my $variant_type (qw(snvs indels)) {
         Genome::Sys->create_directory($self->reports_directory($variant_type));
         my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file($variant_type));
@@ -144,7 +144,7 @@ sub generate_sample_legend_file {
     }
 }
 
-sub generate_resource_file {
+sub generate_translations_file {
     my $self = shift;
 
     return if not $self->is_valid;
@@ -168,7 +168,7 @@ sub generate_resource_file {
 
     $translations->{reference_fasta} = $self->discovery->reference_sequence_build->full_consensus_path("fa");
 
-    YAML::DumpFile(File::Spec->join($self->resource_file), $translations);
+    YAML::DumpFile(File::Spec->join($self->translations_file), $translations);
 
     return 1;
 }

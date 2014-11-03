@@ -7,7 +7,7 @@ use Test::More;
 use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
 use Genome::VariantReporting::Framework::TestHelpers qw(
-    get_resource_provider
+    get_translation_provider
     test_dag_xml
     test_dag_execute
     get_test_dir
@@ -38,7 +38,7 @@ my $expected_xml = File::Spec->join($test_dir, 'expected.xml');
 test_dag_xml($dag, $expected_xml);
 
 set_what_interpreter_x_requires('fpkm');
-my $provider = get_resource_provider(version => $RESOURCE_VERSION);
+my $provider = get_translation_provider(version => $RESOURCE_VERSION);
 my %translations = (
     tumor =>  'TEST-patient1-somval_tumor1',
     fpkm_file => File::Spec->join($test_dir, 'test.fpkm')

@@ -28,7 +28,7 @@ class Genome::VariantReporting::Command::CreateReport {
             is => 'Path',
             doc => 'A plan (yaml) file describing the report generation workflow',
         },
-        resource_file => {
+        translations_file => {
             is => 'Path',
             doc => 'A resource (yaml) file describing the inputs to the report generation workflow',
         },
@@ -100,8 +100,8 @@ Memoize::memoize('plan');
 sub provider {
     my $self = shift;
 
-    $self->status_message("Constructing resource-provider from file (%s)", $self->resource_file);
-    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->resource_file);
+    $self->status_message("Constructing translation-provider from file (%s)", $self->translations_file);
+    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->translations_file);
     return $provider;
 }
 Memoize::memoize('provider');
