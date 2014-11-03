@@ -59,16 +59,17 @@ sub execute {
     my $stats_file = $self->stats_file;
     my $bed_file   = $self->bed_file;
 
-    my $cmd = 'genome-perl5.10 -S gmt ref-cov cluster-coverage --bam-file='. $bam_file .' --minimum-zenith='. $self->zenith_depth .' --minimum-depth='. $self->minimum_depth .' --stats-file='. $stats_file .' --bed-file='. $bed_file;
-
-    my $rv = Genome::Sys->shellcmd(
-        cmd => $cmd,
-        input_files  => [$bam_file],
-        skip_if_output_is_present => 0,
+    my $cmd = Genome::Model::Tools::RefCov::ClusterCoverage->create(
+        bam_file => $bam_file,
+        minimum_zenith => $self->zenith_depth,
+        minimum_depth => $self->minimum_depth,
+        stats_file => $stats_file,
+        bed_file => $bed_file,
     );
+    my $rv = $cmd->execute();
 
     unless ($rv) {
-        $self->error_message('Failed to execute command: '. $cmd);
+        $self->error_message('Failed to execute command.');
         die $self->error_message;
     }
 
@@ -89,7 +90,7 @@ sub execute {
 
 __END__
 
-genome-perl5.10 -S gmt bio-samtools cluster-coverage 
+gmt bio-samtools cluster-coverage 
 --bam-file=/gscmnt/sata141/techd/jhundal/miRNA/64LY0AAXX_AML/NEW_FAR/Lane3_filtered.bam 
 --minimum-zenith=5 
 --bed-file=/gscmnt/sata141/techd/jhundal/miRNA/64LY0AAXX_AML/NEW_FAR/Lane3_zenith5.bed 
