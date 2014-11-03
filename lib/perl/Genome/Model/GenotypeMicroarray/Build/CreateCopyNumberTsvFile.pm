@@ -24,7 +24,7 @@ sub execute {
     my $extract = Genome::Model::GenotypeMicroarray::Command::ExtractToCsv->create(
         build => $build,
         output => $copy_number_file,
-        fields => [qw/ chromosome position log_r_ratio /],
+        fields => [qw/ chromosome position cnv_value /],
         headers => 0,
         filters => $build->model->genotype_filters,
     );
