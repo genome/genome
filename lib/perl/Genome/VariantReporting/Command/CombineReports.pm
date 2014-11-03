@@ -54,12 +54,7 @@ class Genome::VariantReporting::Command::CombineReports {
 sub execute {
     my $self = shift;
 
-    my @reports_with_size;
-    for my $report ($self->reports) {
-        if (-s $report) {
-            push @reports_with_size, $report;
-        }
-    }
+    my @reports_with_size = grep {-s $_} $self->reports;
     if (scalar(@reports_with_size) == 0) {
         #Create an empty output file
         touch($self->output_file);
