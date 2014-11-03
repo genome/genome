@@ -18,6 +18,7 @@ experts:
         plugins_version: 1
     fpkm:
         sample_name: tumor
+        fpkm_file: fpkm_file
 reporters:
     'annotation-format':
         filters:

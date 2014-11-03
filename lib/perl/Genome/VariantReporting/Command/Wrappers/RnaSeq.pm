@@ -97,7 +97,7 @@ sub generate_resource_file {
 
     $translations{feature_list_ids} = {};
 
-    $resource->{fpkm_file} = File::Spec->join($self->tumor_build->data_directory, 'expression', 'genes.fpkm_tracking');
+    $translations{fpkm_file} = File::Spec->join($self->tumor_build->data_directory, 'expression', 'genes.fpkm_tracking');
 
     if ($self->somatic_build->isa('Genome::Model::Build::SomaticValidation')) {
         $translations{tumor} = $self->somatic_build->tumor_sample->name;
