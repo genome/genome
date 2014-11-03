@@ -7,6 +7,7 @@ use above 'Genome';
 use Test::More tests => 8;
 
 use File::Spec;
+use Genome::Utility::Test;
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -19,7 +20,7 @@ use_ok('Genome::Model::GenePrediction::Eukaryotic');
 my $analysis_dir = "/gscmnt/gc2514/mitrevalab/";
 ok(-d $analysis_dir, "Analysis directory exists at $analysis_dir") or die "Could not access $analysis_dir"; 
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-GenePrediction-Eukaryotic/';
+my $test_dir = Genome::Utility::Test->data_dir('Genome::Model::GenePrediction::Eukaryotic');
 my $test_contigs = File::Spec->join($test_dir, 'short_ctg.dna');
 ok(-e $test_contigs, "found test contigs at $test_contigs");
 
