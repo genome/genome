@@ -80,10 +80,11 @@ sub create_igv_xml {
 
     my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
     for my $roi_directory (@roi_directories) {
-        my $discovery_bed = File::Spec->join('https://gscweb.gsc.wustl.edu', $self->output_directory, 'discovery', $roi_directory, 'trio_report.bed');
-        my $additional_bed = File::Spec->join('https://gscweb.gsc.wustl.edu', $self->output_directory, 'followup', $roi_directory, 'trio_report.bed');
-        my $germline_bed = File::Spec->join('https://gscweb.gsc.wustl.edu', $self->output_directory, 'germline', $roi_directory, 'germline_report.bed');
-        my $docm_bed = File::Spec->join('https://gscweb.gsc.wustl.edu', $self->output_directory, 'docm', $roi_directory, 'cle_docm_report.bed');
+        my $discovery_bed = File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $self->output_directory, 'discovery', $roi_directory, 'trio_report.bed');
+        my $additional_bed = File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $self->output_directory, 'followup', $roi_directory, 'trio_report.bed');
+        my $germline_bed = File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $self->output_directory, 'germline', $roi_directory, 'germline_report.bed');
+        my $docm_bed = File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $self->output_directory, 'docm', $roi_directory, 'cle_docm_report.bed');
+        $DB::single=1;
 
         my $reference_sequence_name_cmd = Genome::Model::Tools::Analysis::ResolveIgvReferenceName->execute(
             reference_name => $reference_sequence_builds[0]->name,
@@ -91,7 +92,7 @@ sub create_igv_xml {
 
         #create the xml file for review
         my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-            bams             => join(',', map {File::Spec->join('https://gscweb.gsc.wustl.edu', $_)} values %bams),
+            bams             => join(',', map {File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $_)} values %bams),
             labels           => join(',', keys %bams),
             output_file      => File::Spec->join($self->output_directory, "$roi_directory.igv.xml"),
             genome_name      => $self->tumor_sample->name,
