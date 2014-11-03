@@ -11,13 +11,13 @@ class Genome::VariantReporting::Suite::FlankingRegions::Adaptor {
         flank_size => {
             is => 'Integer',
         },
-    ],
-    has_provided_output => [
         reference_fasta => {
             is => 'Path',
+            is_translated => 1,
         },
         tumor_sample_name => {
             is => 'Text',
+            is_translated => 1,
         },
     ],
 };

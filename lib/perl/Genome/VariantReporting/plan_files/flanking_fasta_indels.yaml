@@ -9,6 +9,8 @@ experts:
         insertion_centric: 1
     'flanking-regions':
         flank_size: 25
+        reference_fasta: reference_fasta
+        tumor_sample_name: tumor_sample_name
     vep:
         ensembl_version: 75
         custom_annotation_tags: []

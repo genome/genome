@@ -63,9 +63,9 @@ sub generate_resource_file {
     $translations{reference_fasta} = $self->build->tumor_build->reference_sequence_build->full_consensus_path("fa");
     my %feature_list_ids;
     $translations{feature_list_ids} = \%feature_list_ids;
+    $translations{tumor_sample_name} = $translations{tumor};
     $translations{tumor} = $self->build->tumor_build->subject->name;
     $resource->{translations} = \%translations;
-    $resource->{tumor_sample_name} = $translations{tumor};
     YAML::DumpFile(File::Spec->join($self->resource_file), $resource);
 }
 
