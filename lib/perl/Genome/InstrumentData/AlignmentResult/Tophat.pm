@@ -459,12 +459,15 @@ sub _merge_and_calculate_stats {
     my $tmp_unaligned_bam_file = $self->temp_scratch_directory . '/unaligned_reads.bam';
     my $unaligned_bam_file = $self->temp_staging_directory . '/unaligned_reads.bam';
     my $alignment_stats_file = $self->temp_staging_directory . '/alignment_stats.txt';
-    my $cmd = "genome-perl5.10 -S gmt bio-samtools tophat-alignment-stats --aligned-bam-file=$tmp_aligned_bam_file --all-reads-bam-file=$tmp_all_reads_bam_file --unaligned-bam-file=$tmp_unaligned_bam_file --alignment-stats-file=$alignment_stats_file";
-    Genome::Sys->shellcmd(
-        cmd => $cmd,
-        input_files => [$tmp_aligned_bam_file,$tmp_all_reads_bam_file],
-        output_files => [$tmp_unaligned_bam_file,$alignment_stats_file],
+    my $cmd = Genome::Model::Tools::BioSamtools::TophatAlignmentStats->create(
+        aligned_bam_file => $tmp_aligned_bam_file,
+        all_reads_bam_file => $tmp_all_reads_bam_file,
+        unaligned_bam_file => $tmp_unaligned_bam_file,
+        alignment_stats_file => $alignment_stats_file,
     );
+    unless($cmd->execute) {
+        die $self->error_message('Failed to generate alignment stats!');
+    }
     unlink($tmp_all_reads_bam_file);
     unlink($tmp_aligned_bam_file);
 
