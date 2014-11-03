@@ -982,7 +982,7 @@ sub execute {
           labels => "$labels",
           output_file => "$output_dir/review/$sample_name.xml",
           genome_name => $sample_name,
-          review_bed_file => "$output_dir/review/$sample_name.bed",
+          review_bed_files => "$output_dir/review/$sample_name.bed",
           reference_name => $igv_reference_name,
           );
       unless ($dumpXML->execute) {

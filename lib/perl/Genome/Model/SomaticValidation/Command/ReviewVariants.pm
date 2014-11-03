@@ -896,7 +896,7 @@ sub recover_low_coverage_variants {
                 labels => join(",",("validation normal $sample_name","validation tumor $sample_name","original normal $sample_name","original tumor $sample_name")),
                 output_file => "$output_dir/review/poorValCoverage.xml",
                 genome_name => $sample_name,
-                review_bed_file => "$output_dir/review/poorValCoverage.bed",
+                review_bed_files => "$output_dir/review/poorValCoverage.bed",
                 reference_name => $self->igv_reference_name,
             );
             unless ($dump_cov_xml->execute) {
@@ -998,7 +998,7 @@ sub gather_new_sites {
             labels => $labels,
             output_file => "$output_dir/review/newcalls.xml",
             genome_name => $sample_name,
-            review_bed_file => $tier1_review_bed_file,
+            review_bed_files => $tier1_review_bed_file,
             reference_name => $self->igv_reference_name,
         );
         unless ($dump_xml->execute) {

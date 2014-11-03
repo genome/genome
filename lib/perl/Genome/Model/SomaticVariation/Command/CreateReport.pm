@@ -902,12 +902,12 @@ sub _create_review_xml {
 
     #create the xml file for review
     my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-        bams            => $bam_files,
-        labels          => $labels,
-        output_file     => $self->review_xml,
-        genome_name     => $self->sample_name,
-        review_bed_file => $self->review_bed,
-        reference_name  => $cmd->igv_reference_name,
+        bams             => $bam_files,
+        labels           => $labels,
+        output_file      => $self->review_xml,
+        genome_name      => $self->sample_name,
+        review_bed_files => $self->review_bed,
+        reference_name   => $cmd->igv_reference_name,
     );
     unless ($dumpXML->execute) {
         confess $self->error_message("Failed to create IGV xml file");

@@ -21,7 +21,7 @@ class Genome::Model::Tools::Analysis::DumpIgvXmlMulti {
         is_optional=>0,
         doc => "labels for the data (single label or comma separated list)",,
     },
-    review_bed_file => {
+    review_bed_files => {
         type => 'String',
         is_optional => 0,
         is_many => 1,
@@ -71,7 +71,7 @@ sub execute {
     my $tumor_common_name = $self->genome_name;   
     my $output_file = $self->output_file;
     my $genome_name = $self->genome_name;
-    my @review_bed_files = map { abs_path($_) }$self->review_bed_file;
+    my @review_bed_files = map { abs_path($_) }$self->review_bed_files;
     my $reference_name = $self->reference_name;
 
     my @bams = split(/\,/,$self->bams);

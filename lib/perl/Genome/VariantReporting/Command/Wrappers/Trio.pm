@@ -91,12 +91,12 @@ sub create_igv_xml {
 
         #create the xml file for review
         my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-            bams            => join(',', map {File::Spec->join('https://gscweb.gsc.wustl.edu', $_)} values %bams),
-            labels          => join(',', keys %bams),
-            output_file     => File::Spec->join($self->output_directory, "$roi_directory.igv.xml"),
-            genome_name     => $self->tumor_sample->name,
-            review_bed_file => [$discovery_bed, $additional_bed, $germline_bed, $docm_bed],
-            reference_name  => $reference_sequence_name_cmd->igv_reference_name,
+            bams             => join(',', map {File::Spec->join('https://gscweb.gsc.wustl.edu', $_)} values %bams),
+            labels           => join(',', keys %bams),
+            output_file      => File::Spec->join($self->output_directory, "$roi_directory.igv.xml"),
+            genome_name      => $self->tumor_sample->name,
+            review_bed_files => [$discovery_bed, $additional_bed, $germline_bed, $docm_bed],
+            reference_name   => $reference_sequence_name_cmd->igv_reference_name,
         );
         unless ($dumpXML->execute) {
             confess $self->error_message("Failed to create IGV xml file");
