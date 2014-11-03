@@ -57,32 +57,9 @@ sub resolve_plan_attributes {
         $self->$name($value);
     }
 
-    my $translations;
-    eval { $translations = $self->provider->translations};
-    if (my $error = Exception::Class->caught()) {
-      $self->_handle_get_attribute_error($error); #either dies or returns to proceed
-    }
+    my $translations = $self->provider->translations;
 
     $self->translate_inputs($translations);
-}
-
-sub _handle_get_attribute_error {
-    my $self = shift;
-    my $error = shift;
-
-    if (blessed $error && $error->can('rethrow')) {
-        if ($error->isa('NonexistentAttributeException')) {
-            # Return and call translate_inputs
-            # which dies if object needs translations and none are provided
-            return;
-        }
-        else {
-            $error->rethrow;
-        }
-    }
-    else {
-        die $error;
-    }
 }
 
 sub plan {
