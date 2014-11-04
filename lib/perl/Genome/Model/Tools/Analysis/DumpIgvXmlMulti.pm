@@ -25,7 +25,7 @@ class Genome::Model::Tools::Analysis::DumpIgvXmlMulti {
         type => 'String',
         is_optional => 0,
         is_many => 1,
-        doc => "Bed file of sites to review",
+        doc => "Bed files of sites to review (single file or comma separated list)",
     },
     genome_name => {
         type => 'String',
