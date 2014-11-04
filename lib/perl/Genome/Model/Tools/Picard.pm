@@ -189,7 +189,8 @@ sub installed_picard_versions {
         return 0;
     };
 
-    return sort { $sortsub->($b, $a) } @versions;
+    # Don't return Picard versions beyond 1.113
+    return grep { $sortsub->('1.113', $_) != -1 } sort { $sortsub->($b, $a) } @versions;
 }
 
 sub default_picard_version {
