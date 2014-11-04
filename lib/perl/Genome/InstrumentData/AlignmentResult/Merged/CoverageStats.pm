@@ -151,23 +151,9 @@ sub create {
         minimum_mapping_quality => $self->minimum_mapping_quality,
     );
 
-    unless($] > 5.010) {
-        #need to shell out to a newer perl #TODO remove this once 5.10 transition complete
-        my $cmd = 'genome-perl5.10 -S gmt bio-samtools coverage-stats ';
-        while (my ($key, $value) = (each %coverage_params)) {
-            $key =~ s/_/-/g;
-            $cmd .= " --$key=$value";
-        }
-
-        Genome::Sys->shellcmd(
-            cmd => $cmd,
-            input_files => [$bed_file, $bam_file],
-        );
-    } else {
-        my $cmd = Genome::Model::Tools::BioSamtools::CoverageStats->create(%coverage_params);
-        unless($cmd->execute) {
-            die('Failed to run coverage stats tool');
-        }
+    my $cmd = Genome::Model::Tools::BioSamtools::CoverageStats->create(%coverage_params);
+    unless($cmd->execute) {
+        die('Failed to run coverage stats tool');
     }
 
     $self->_promote_data;

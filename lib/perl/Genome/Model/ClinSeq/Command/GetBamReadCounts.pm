@@ -134,7 +134,7 @@ sub execute {
 
   eval "require Bio::DB::Sam";
   if ($@) {
-      die "Failed to use the Bio::DB::Sam module.  Use /usr/bin/perl (5.10 or greater!) instead of /gsc/bin/perl.:\n$@";
+      die "Failed to use the Bio::DB::Sam module.  (This requires perl 5.10 or greater.  Are you using `genome-perl`?):\n$@";
   }
 
   my $positions_file = $self->positions_file;

@@ -605,7 +605,6 @@ sub generate_annotation_file {
         if ($squashed) {
             die('Support for squashed representations of GTF files is not supported!');
         }
-        # TODO: Once we have perl5.12.1 or perl5.10.1 working, this command can be removed and replaced with in-line code to generate the file
         my %params = (
             anno_db => $self->model_name,
             version => $self->version,
