@@ -2,14 +2,11 @@
 
 use strict;
 use warnings;
-#use Genome::Model::phaseVariants;
+
 use above "Genome";
 use Test::More tests => 1;
 use File::Basename;
-#use File::Spec my $dirName = dirname(__FILE__);
 use File::Temp qw(tempfile);
-
-#print($INC{"phaseVariants.pm"}, "\n");
 
 my $plot = Genome::Model::Tools::Analysis::PhaseVariants->create(
     distance  => 700,

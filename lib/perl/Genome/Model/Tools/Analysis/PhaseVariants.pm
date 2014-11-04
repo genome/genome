@@ -1,14 +1,14 @@
-package Genome::Model::Tools::Analysis::PhaseVariants;     # rename this when you give the module file a different name <--
+package Genome::Model::Tools::Analysis::PhaseVariants;
 
 use strict;
 use warnings;
 use File::Basename;
 use File::Spec;
-use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
+use Genome;
 
 class Genome::Model::Tools::Analysis::PhaseVariants {
     is => 'Command',
-    has => [                                # specify the command's single-value properties (parameters) <---
+    has => [
         distance    => { is => 'String', is_optional => 1, doc => "Max Distance between SNV location to check if in phase" },
         command     => { is => 'String', is_optional => 1, doc => "Command user wants to run - B for build or C for check"},
         vcfFile     => { is => 'String', is_optional => 1, doc => "Path to VCF file to find SNVs"},
@@ -79,6 +79,6 @@ sub execute {
 
     print($command);
     print("\n");
-    system($command); # this executes the command
+    system($command);
     1;
 }
