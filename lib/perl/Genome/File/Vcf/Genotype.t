@@ -14,19 +14,19 @@ use Test::More;
 my $pkg = "Genome::File::Vcf::Genotype";
 use_ok($pkg);
 
-my $wild_type = $pkg->new("A", \("T"), "0/0");
+my $wild_type = $pkg->new("A", ["T"], "0/0");
 ok($wild_type->has_wildtype, "Wild type is wild type");
 ok(!$wild_type->has_variant, "Wild type is not variant");
 ok($wild_type->is_homozygous, "Wild type is homozygous");
 ok(!$wild_type->is_heterozygous, "Wild type is not heterozygous");
 
-my $hom_variant = $pkg->new("A", \("T"), "1/1");
+my $hom_variant = $pkg->new("A", ["T"], "1/1");
 ok($hom_variant->is_homozygous, "Hom is homozygous");
 ok(!$hom_variant->is_heterozygous, "Hom is not heterozygous");
 ok(!$hom_variant->has_wildtype, "Hom is not wildtype");
 ok($hom_variant->has_variant, "Hom is variant");
 
-my $het_variant = $pkg->new("A", \("T"), "0/1");
+my $het_variant = $pkg->new("A", ["T"], "0/1");
 ok(!$het_variant->is_homozygous, "Het is not homozygous");
 ok($het_variant->is_heterozygous, "Het is heterozygous");
 ok($het_variant->has_wildtype, "Het is wildtype");
@@ -42,7 +42,7 @@ ok(!$het2->has_wildtype, "Het2 is not wildtype");
 ok($het2->has_variant, "Het2 is variant");
 ok(!$het2->is_phased, "Het2 is not phased");
 
-my $missing = Genome::File::Vcf::Genotype->new("A", \("T"), ".");
+my $missing = Genome::File::Vcf::Genotype->new("A", ["T"], ".");
 ok($missing->is_missing, "Missing is missing");
 ok(!$missing->is_homozygous, "Missing is not homozygous");
 ok(!$missing->is_heterozygous, "Missing is not heterozygous");
@@ -50,18 +50,18 @@ ok(!$missing->has_wildtype, "Missing is not wildtype");
 ok(!$missing->has_variant, "Missing is not variant");
 is($missing->ploidy, 1, "Missing is haploid");
 
-my $phased = Genome::File::Vcf::Genotype->new("A", \("T"), "0|0");
+my $phased = Genome::File::Vcf::Genotype->new("A", ["T"], "0|0");
 ok($phased->is_phased, "Phased genotype is phased");
 my @alleles_from_phased = $phased->get_allele_indexes;
 is_deeply(\@alleles_from_phased, [0,0], "Correctly got allele_indexes from phased");
 is($phased->ploidy, 2, "Phased genotype is diploid");
 
-my $triploid = Genome::File::Vcf::Genotype->new("A", \("T"), "0/0/1");
+my $triploid = Genome::File::Vcf::Genotype->new("A", ["T"], "0/0/1");
 is($triploid->ploidy, 3, "Triploid genotype parsed ok");
 is_deeply([$triploid->get_allele_indexes], [0, 0, 1], "Got triploid allele_indexes correctly");
 
 eval {
-    my $non_numeric = Genome::File::Vcf::Genotype->new("A", \("T"), "A/C");
+    my $non_numeric = Genome::File::Vcf::Genotype->new("A", ["T"], "A/C");
 };
 ok($@, "Non-numeric genotypes cause errors");
 
