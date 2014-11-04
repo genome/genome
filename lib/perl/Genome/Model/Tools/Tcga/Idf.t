@@ -17,7 +17,7 @@ use Genome::Test::Factory::Build;
 
 my $class = "Genome::Model::Tools::Tcga::Idf";
 
-my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v2");
+my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v3");
 
 subtest add_pp_protocol => sub {
     my $idf = $class->create;

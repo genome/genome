@@ -31,7 +31,7 @@ my %PROCESSING_PROFILE_PROTOCOL_TYPES = (
     "variant calling" => "variant_calling",
 );
 
-my @HARD_CODED_ROW_HEADERS = (
+my @HARD_CODED_ROW_HEADERS_BEFORE_PROTOCOL = (
     "Investigation Title",
     "Experimental Design",
     "Experimental Design Term Source REF",
@@ -39,11 +39,19 @@ my @HARD_CODED_ROW_HEADERS = (
     "Experimental Factor Type",
     "Person Last Name",
     "Person First Name",
+    "Person Middle Initials",
     "Person Email",
+    "Person Address",
     "Person Affiliation",
     "Person Roles",
+    "PubMed ID",
+    "Publication Author List",
+    "Publication Title",
+    "Publication Status",
     "Experiment Description",
-    "Protocol Term Source REF",
+);
+
+my @HARD_CODED_ROW_HEADERS_AFTER_PROTOCOL = (
     "Term Source Name",
     "Term Source File",
     "Term Source Version",
@@ -194,12 +202,16 @@ sub print_idf {
         }
     }
 
+    for my $row_header (@HARD_CODED_ROW_HEADERS_BEFORE_PROTOCOL) {
+        $out->print("$row_header\n");
+    }
     $out->print(join("\t", "Protocol Name", @protocol_names)."\n");
     $out->print(join("\t", "Protocol Type", @protocol_types)."\n");
     $out->print(join("\t", "Protocol Description", @protocol_descriptions)."\n");
     $out->print(join("\t", "Protocol Parameters", map {if (defined $_){join(";", @{$_})}else {""}} @protocol_parameters)."\n");
-    $out->print(join("\t", "SDRF Files", $self->sdrf_file)."\n");
-    for my $row_header (@HARD_CODED_ROW_HEADERS) {
+    $out->print("Protocol Term Source REF\n");
+    $out->print(join("\t", "SDRF File", $self->sdrf_file)."\n");
+    for my $row_header (@HARD_CODED_ROW_HEADERS_AFTER_PROTOCOL) {
         $out->print("$row_header\n");
     }
 
