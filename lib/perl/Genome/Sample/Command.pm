@@ -11,6 +11,7 @@ Genome::Command::Crud->init_sub_commands(
     list => { show => 'id,name,species_name,individual_common_name,common_name,tissue_label,tissue_desc,extraction_type,extraction_label,extraction_desc' },
     update => { only_if_null => 1, },
     delete => { do_not_init => 1, },
+    copy => { },
 );
 
 1;

@@ -170,5 +170,17 @@ sub delete {
     return $self->SUPER::delete;
 }
 
-1;
+sub copy {
+    my $self = shift;
+    my $copy = $self->SUPER::copy();
+    for my $attribute ($self->attributes) {
+        $copy->add_attribute(
+            attribute_label => $attribute->attribute_label,
+            attribute_value => $attribute->attribute_value,
+            nomenclature    => $attribute->nomenclature,
+        );
+    }
+    return $copy;
+}
 
+1;

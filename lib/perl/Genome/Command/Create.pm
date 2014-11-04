@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
-      
+
 require Lingua::EN::Inflect;
 
 class Genome::Command::Create {
