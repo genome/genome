@@ -74,7 +74,7 @@ sub execute {
     }
     catch {
         $tx->rollback();
-        $error = $_;
+        $error = $_ || 'unknown error';
         undef; # catch is returned as value of try/catch
     };
 
@@ -83,9 +83,6 @@ sub execute {
         return 1;
     }
     else {
-        unless ($error) {
-            $error = 'unknown error';
-        }
         $self->error_message('Failed to create new %s: %s', $self->source->class, $error);
         return;
     }
