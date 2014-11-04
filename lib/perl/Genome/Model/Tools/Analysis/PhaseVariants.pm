@@ -78,6 +78,7 @@ sub execute {
     #$command .= $javaLib;
 
     $self->debug_message($command);
+    #TODO replace with Genome::Sys->shellcmd(cmd => $command);
     system($command);
 
     1;
