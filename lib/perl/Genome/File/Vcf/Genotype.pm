@@ -49,7 +49,6 @@ sub is_homozygous {
     if ($self->is_missing) {
         return 0;
     }
-    my $is_homozygous = 0;
     my $prevAllele;
     for my $allele (@{$self->{_alleles}}) {
         unless (defined $prevAllele) {
