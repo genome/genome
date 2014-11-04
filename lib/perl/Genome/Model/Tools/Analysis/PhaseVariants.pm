@@ -77,8 +77,8 @@ sub execute {
     #$command .= ' --java-lib-file=';
     #$command .= $javaLib;
 
-    print($command);
-    print("\n");
+    $self->debug_message($command);
     system($command);
+
     1;
 }
