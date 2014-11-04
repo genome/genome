@@ -24,7 +24,9 @@ sub resolve_plan_attributes {
     my $self = shift;
     $self->SUPER::resolve_plan_attributes();
     my $input_vcf = dirname(__FILE__)."/Expert.t.d/input.vcf.gz";
-    $self->__provided__([$input_vcf, $input_vcf]);
+    my $tmp_vcf = Genome::Sys->create_temp_file_path;
+    Genome::Sys->copy_file($input_vcf, $tmp_vcf);
+    $self->__provided__([$tmp_vcf, $tmp_vcf]);
 }
 
 1;
