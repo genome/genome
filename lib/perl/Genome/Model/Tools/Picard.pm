@@ -166,6 +166,7 @@ sub installed_picard_versions {
     my @versions;
     for my $f (@files) {
         if($f =~ /picard-([\d\.]+).jar$/) {
+            next if $1 eq '1.124';
             push @versions, $1;
         }
     }
