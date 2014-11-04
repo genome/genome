@@ -25,6 +25,14 @@ sub get_aligned_bams {
     return \@aligned_bams;
 }
 
+sub get_sample_and_bam_map {
+    my $self = shift;
+
+    return (
+        $self->discovery->tumor_sample->name  => $self->discovery->tumor_bam,
+    );
+}
+
 sub get_translations {
     my $self = shift;
     my %translations;
