@@ -1,4 +1,4 @@
-package Genome::Model::phaseVariants;     # rename this when you give the module file a different name <--
+package Genome::Model::Tools::Analysis::PhaseVariants;     # rename this when you give the module file a different name <--
 
 use strict;
 use warnings;
@@ -6,7 +6,7 @@ use File::Basename;
 use File::Spec; 
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
 
-class Genome::Model::phaseVariants {
+class Genome::Model::Tools::Analysis::PhaseVariants {
     is => 'Command',                       
     has => [                                # specify the command's single-value properties (parameters) <--- 
        distance      	=> { is => 'String', is_optional => 1, doc => "Max Distance between SNV location to check if in phase" },

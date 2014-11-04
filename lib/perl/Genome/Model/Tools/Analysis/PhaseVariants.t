@@ -11,7 +11,7 @@ use File::Temp qw(tempfile);
 
 #print($INC{"phaseVariants.pm"}, "\n");
 
-my $plot = Genome::Model::phaseVariants->create(
+my $plot = Genome::Model::Tools::Analysis::PhaseVariants->create(
                                                          distance  => 700,
                                                          command => "C",
 							 vcfFile => "/gscuser/cfederer/Documents/mysnvs.vcf",
