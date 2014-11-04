@@ -46,8 +46,7 @@ sub execute {
         for my $change ($self->changes) {
             my ($key, $op, $value) = $change =~ /^(.+?)(=|\+=|\-=|\.=)(.*)$/;
             unless ($key && $op) {
-                $self->error_message("invalid change: $change");
-                return;
+                die $self->error_message("invalid change: $change");
             }
 
             if ($value eq 'undef') {
@@ -67,6 +66,10 @@ sub execute {
                 $copy->$key($copy->$key . $value);
             }
         }
+
+        unless ($tx->commit) {
+            die 'commit failed';
+        }
     }
     catch {
         $tx->rollback();
@@ -74,16 +77,13 @@ sub execute {
         undef $copy;
     };
 
-    if ($copy && $tx->commit) {
+    if ($copy) {
         $self->status_message('Created new %s with ID %s', $copy->class, $copy->id);
         return 1;
     }
     else {
         unless ($error) {
             $error = 'unknown error';
-        }
-        if ($tx->isa('UR::Context::Transaction')) {
-            $tx->rollback();
         }
         $self->error_message('Failed to create new %s: %s', $self->source->class, $error);
         return;
