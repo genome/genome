@@ -8,7 +8,7 @@ class Genome::VariantReporting::Framework::Test::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     has_input => [
         __planned__ => {},
-        __provided__ => {
+        __input__ => {
             is_many => 1,
         },
     ],

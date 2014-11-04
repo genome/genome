@@ -50,7 +50,7 @@ done_testing;
 
 sub resource_provider_with_translations {
     return Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
-        translations => { tumor => 'test sample name', __provided__ => '__provided__'},
+        translations => { tumor => 'test sample name', __input__ => '__input__'},
     );
 }
 

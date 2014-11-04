@@ -12,7 +12,7 @@ class Genome::VariantReporting::Framework::Test::Adaptor {
         __planned__ => {},
     ],
     has_output => [
-        __provided__ => {is_many => 1},
+        __input__ => {is_many => 1},
     ],
 };
 
@@ -26,7 +26,7 @@ sub resolve_plan_attributes {
     my $input_vcf = dirname(__FILE__)."/Expert.t.d/input.vcf.gz";
     my $tmp_vcf = Genome::Sys->create_temp_file_path;
     Genome::Sys->copy_file($input_vcf, $tmp_vcf);
-    $self->__provided__([$tmp_vcf, $tmp_vcf]);
+    $self->__input__([$tmp_vcf, $tmp_vcf]);
 }
 
 1;

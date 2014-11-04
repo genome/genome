@@ -1,7 +1,7 @@
 experts:
     __test__:
         __planned__: foo
-        __provided__: __provided__
+        __input__: __input__
 reporters:
     __test__:
         interpreters:
