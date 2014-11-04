@@ -12,6 +12,7 @@ use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok); 
 use Genome::Test::Factory::ProcessingProfile::SomaticVariation;
+use Genome::Test::Factory::ProcessingProfile::ReferenceAlignment;
 use Genome::Test::Factory::Model::SomaticVariation;
 use Genome::Test::Factory::Build;
 
@@ -22,7 +23,9 @@ my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v3");
 subtest add_pp_protocol => sub {
     my $idf = $class->create;
     my $test_pp = get_test_pp();
-    $idf->add_pp_protocols($test_pp);
+    my $test_refalign_pp = get_test_refalign_pp();
+    $idf->add_somatic_pp_protocols($test_pp);
+    $idf->add_refalign_pp_protocols($test_refalign_pp);
 
     my $expected = {
         "library preparation" => [{name => 'genome.wustl.edu:library_preparation:IlluminaHiSeq_DNASeq:01',
@@ -32,13 +35,13 @@ subtest add_pp_protocol => sub {
         "mutation filtering annotation and curation" => [{name => 'genome.wustl.edu:maf_creation:data_consolidation:01',
                                     description => 'Automatic and manual filtering and curation of variants'}],
         "variant calling" => [{name => 'genome.wustl.edu:variant_calling:'.$test_pp->id.':01',
-                                    description => 'test_processing_profile_1'}],
+                                    description => 'tiering_version=1 transcript_variant_annotator_version=4 get_regulome_db=0 filter_previously_discovered_variants=0 vcf_annotate_dbsnp_info_field_string=NO_INFO required_snv_callers=1 tiers_to_review=1 restrict_to_target_regions=1 bam_readcount_version=0.6'}],
         "nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Illumina:01',
                                     description => 'Illumina sequencing by synthesis'}],
         "imported nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Imported:01',
                                     description => 'Imported data'}],
-        "sequence alignment" => [{name => 'genome.wustl.edu:alignment:'.$test_pp->id.':01',
-                                    description => 'test_processing_profile_1'}],
+        "sequence alignment" => [{name => 'genome.wustl.edu:alignment:'.$test_refalign_pp->id.':01',
+                                    description => 'sequencing_platform=solexa dna_type=cdna transcript_variant_annotator_version=4 transcript_variant_annotator_filter=top transcript_variant_annotator_accept_reference_IUB_codes=0 snv_detection_strategy="samtools [ --test 1 ]" read_aligner_name=bwa force_fragment=0'}],
     };
 
     is_deeply($idf->protocols, $expected, "Fill in idf worked as expected after adding one processing profile");
@@ -47,8 +50,11 @@ subtest add_pp_protocol => sub {
 subtest add_same_pp_protocols => sub {
     my $idf = $class->create;
     my $test_pp = get_test_pp();
-    $idf->add_pp_protocols($test_pp);
-    $idf->add_pp_protocols($test_pp);
+    my $test_refalign_pp = get_test_refalign_pp();
+    $idf->add_somatic_pp_protocols($test_pp);
+    $idf->add_somatic_pp_protocols($test_pp);
+    $idf->add_refalign_pp_protocols($test_refalign_pp);
+    $idf->add_refalign_pp_protocols($test_refalign_pp);
 
     my $expected = {
         "library preparation" => [{name => 'genome.wustl.edu:library_preparation:IlluminaHiSeq_DNASeq:01',
@@ -58,11 +64,11 @@ subtest add_same_pp_protocols => sub {
         "mutation filtering annotation and curation" => [{name => 'genome.wustl.edu:maf_creation:data_consolidation:01',
                                     description => 'Automatic and manual filtering and curation of variants'}],
         "variant calling" => [{name => 'genome.wustl.edu:variant_calling:'.$test_pp->id.':01',
-                                    description => 'test_processing_profile_1'}],
+                                    description => 'tiering_version=1 transcript_variant_annotator_version=4 get_regulome_db=0 filter_previously_discovered_variants=0 vcf_annotate_dbsnp_info_field_string=NO_INFO required_snv_callers=1 tiers_to_review=1 restrict_to_target_regions=1 bam_readcount_version=0.6'}],
         "nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Illumina:01',
                                     description => 'Illumina sequencing by synthesis'}],
-        "sequence alignment" => [{name => 'genome.wustl.edu:alignment:'.$test_pp->id.':01',
-                                    description => 'test_processing_profile_1'}],
+        "sequence alignment" => [{name => 'genome.wustl.edu:alignment:'.$test_refalign_pp->id.':01',
+                                    description => 'sequencing_platform=solexa dna_type=cdna transcript_variant_annotator_version=4 transcript_variant_annotator_filter=top transcript_variant_annotator_accept_reference_IUB_codes=0 snv_detection_strategy="samtools [ --test 1 ]" read_aligner_name=bwa force_fragment=0'}],
         "imported nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Imported:01',
                                     description => 'Imported data'}],
     };
@@ -74,8 +80,10 @@ subtest add_different_pp_protocols => sub {
     my $idf = $class->create;
     my $test_pp = get_test_pp();
     my $test_pp2 = get_test_pp2();
-    $idf->add_pp_protocols($test_pp);
-    $idf->add_pp_protocols($test_pp2);
+    my $test_refalign_pp = get_test_refalign_pp();
+    $idf->add_somatic_pp_protocols($test_pp);
+    $idf->add_somatic_pp_protocols($test_pp2);
+    $idf->add_refalign_pp_protocols($test_refalign_pp);
 
     my $expected = {
         "library preparation" => [{name => 'genome.wustl.edu:library_preparation:IlluminaHiSeq_DNASeq:01',
@@ -85,17 +93,15 @@ subtest add_different_pp_protocols => sub {
         "mutation filtering annotation and curation" => [{name => 'genome.wustl.edu:maf_creation:data_consolidation:01',
                                     description => 'Automatic and manual filtering and curation of variants'}],
         "variant calling" => [{name => 'genome.wustl.edu:variant_calling:'.$test_pp->id.':01',
-                                    description => 'test_processing_profile_1'},
+                                    description => 'tiering_version=1 transcript_variant_annotator_version=4 get_regulome_db=0 filter_previously_discovered_variants=0 vcf_annotate_dbsnp_info_field_string=NO_INFO required_snv_callers=1 tiers_to_review=1 restrict_to_target_regions=1 bam_readcount_version=0.6'},
                               {name => 'genome.wustl.edu:variant_calling:'.$test_pp2->id.':01',
-                                    description => 'test_processing_profile_2'}],
+                                    description => 'tiering_version=3 transcript_variant_annotator_version=4 get_regulome_db=0 filter_previously_discovered_variants=0 vcf_annotate_dbsnp_info_field_string=NO_INFO required_snv_callers=1 tiers_to_review=1 restrict_to_target_regions=1 bam_readcount_version=0.6'}],
         "nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Illumina:01',
                                     description => 'Illumina sequencing by synthesis'}],
         "imported nucleic acid sequencing" => [{name => 'genome.wustl.edu:DNA_sequencing:Imported:01',
                                     description => 'Imported data'}],
-        "sequence alignment" => [{name => 'genome.wustl.edu:alignment:'.$test_pp->id.':01',
-                                    description => 'test_processing_profile_1'},
-                                 {name => 'genome.wustl.edu:alignment:'.$test_pp2->id.':01',
-                                    description => 'test_processing_profile_2'}],
+        "sequence alignment" => [{name => 'genome.wustl.edu:alignment:'.$test_refalign_pp->id.':01',
+                                    description => 'sequencing_platform=solexa dna_type=cdna transcript_variant_annotator_version=4 transcript_variant_annotator_filter=top transcript_variant_annotator_accept_reference_IUB_codes=0 snv_detection_strategy="samtools [ --test 1 ]" read_aligner_name=bwa force_fragment=0'}],
     };
 
     is_deeply($idf->protocols, $expected, "Fill in idf worked as expected after adding the same processing profile twice");
@@ -139,6 +145,7 @@ subtest "print IDF" => sub {
 
 my $TEST_PP;
 my $TEST_PP2;
+my $TEST_REFALIGN_PP;
 sub get_test_pp {
     unless (defined $TEST_PP) {
         $TEST_PP = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object;
@@ -151,6 +158,13 @@ sub get_test_pp2 {
         $TEST_PP2 = Genome::Test::Factory::ProcessingProfile::SomaticVariation->setup_object(tiering_version => 3);
     }
     return $TEST_PP2;
+}
+
+sub get_test_refalign_pp {
+    unless (defined $TEST_REFALIGN_PP) {
+        $TEST_REFALIGN_PP = Genome::Test::Factory::ProcessingProfile::ReferenceAlignment->setup_object;
+    }
+    return $TEST_REFALIGN_PP;
 }
 
 sub get_test_build {

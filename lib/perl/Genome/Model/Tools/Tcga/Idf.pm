@@ -26,9 +26,17 @@ my %HARD_CODED_PROTOCOLS = (
 
 );
 
-my %PROCESSING_PROFILE_PROTOCOL_TYPES = (
-    "sequence alignment" => "alignment",
+my %SOMATIC_PROCESSING_PROFILE_PROTOCOL_TYPES = (
     "variant calling" => "variant_calling",
+);
+
+my %REFALIGN_PROCESSING_PROFILE_PROTOCOL_TYPES = (
+    "sequence alignment" => "alignment",
+);
+
+my %PROCESSING_PROFILE_PROTOCOL_TYPES = (
+    %SOMATIC_PROCESSING_PROFILE_PROTOCOL_TYPES,
+    %REFALIGN_PROCESSING_PROFILE_PROTOCOL_TYPES
 );
 
 my @HARD_CODED_ROW_HEADERS_BEFORE_PROTOCOL = (
@@ -79,11 +87,20 @@ sub create {
     return $self;
 }
 
-sub add_pp_protocols {
+sub add_somatic_pp_protocols {
     my $self = shift;
     my $processing_profile = shift;
 
-    for my $type (keys %PROCESSING_PROFILE_PROTOCOL_TYPES) {
+    for my $type (keys %SOMATIC_PROCESSING_PROFILE_PROTOCOL_TYPES) {
+        $self->_add_protocol_with_pp($processing_profile, $type);
+    }
+}
+
+sub add_refalign_pp_protocols {
+    my $self = shift;
+    my $processing_profile = shift;
+
+    for my $type (keys %REFALIGN_PROCESSING_PROFILE_PROTOCOL_TYPES) {
         $self->_add_protocol_with_pp($processing_profile, $type);
     }
 }
@@ -136,7 +153,7 @@ sub _add_protocol_with_pp {
     my $type = shift;
 
     my $name = $self->_resolve_protocol_with_pp($processing_profile, $type);
-    my $description = $processing_profile->name;
+    my $description = $processing_profile->param_summary;
     my $found = 0;
     for my $protocol (@{$self->protocols->{$type}}) {
         if ($protocol->{name} eq $name) {
