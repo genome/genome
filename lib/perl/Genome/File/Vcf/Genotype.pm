@@ -2,7 +2,6 @@ package Genome::File::Vcf::Genotype;
 
 use strict;
 use warnings;
-use Genome;
 use Carp qw/confess/;
 
 sub new {
