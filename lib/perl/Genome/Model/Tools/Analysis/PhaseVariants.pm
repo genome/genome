@@ -11,14 +11,14 @@ class Genome::Model::Tools::Analysis::PhaseVariants {
     has => [
         distance    => { is => 'String', is_optional => 1, doc => "Max Distance between SNV location to check if in phase" },
         command     => { is => 'String', is_optional => 1, doc => "Command user wants to run - B for build or C for check"},
-        vcfFile     => { is => 'String', is_optional => 1, doc => "Path to VCF file to find SNVs"},
-        bamFile     => { is => 'String', is_optional => 1, doc => "Path to bam file"},
+        vcf_file    => { is => 'String', is_optional => 1, doc => "Path to VCF file to find SNVs"},
+        bam_file    => { is => 'String', is_optional => 1, doc => "Path to bam file"},
         chromosome  => { is => 'String', is_optional => 1, doc => "Chromosome of interest"},
         snvs        => { is => 'String', is_optional => 1, doc => "location and alt alleles"},
         relax       => { is => 'String', is_optional => 1, doc => "use intsec failed SNVs"},
         sample      => { is => 'String', is_optional => 1, doc => "sample name"},
-        printReads  => { is => 'String', is_optional => 1, doc => " print reads?"},
-        outFile     => { is => 'String', is_optional => 1, doc => " output file"},
+        print_reads => { is => 'String', is_optional => 1, doc => " print reads?"},
+        out_file    => { is => 'String', is_optional => 1, doc => " output file"},
     ],
 };
 
@@ -38,10 +38,10 @@ sub execute {
     $command .= File::Spec->catfile( $dirName, 'PhaseVariants.jar' );
 
     $command .= ' --o ';
-    $command .= $self->outFile;
+    $command .= $self->out_file;
 
     $command .= ' --p ';
-    $command .= $self->printReads;
+    $command .= $self->print_reads;
 
     $command .= ' --m ';
     $command .= $self->distance;
@@ -50,10 +50,10 @@ sub execute {
     $command .= $self->command;
 
     $command .= ' --f ';
-    $command .= $self->vcfFile;
+    $command .= $self->vcf_file;
 
     $command .= ' --b ';
-    $command .= $self->bamFile;
+    $command .= $self->bam_file;
 
     $command .= ' --chr ';
     $command .= $self->chromosome;
