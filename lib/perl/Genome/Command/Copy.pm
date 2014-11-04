@@ -38,10 +38,9 @@ sub execute {
 
     my $tx = UR::Context::Transaction->begin();
 
-    # try was return exception
-    my ($copy, $error);
-    try {
-        $copy = $self->source->copy();
+    my $error;
+    my $copy = try {
+        my $copy = $self->source->copy();
 
         for my $change ($self->changes) {
             my ($key, $op, $value) = $change =~ /^(.+?)(=|\+=|\-=|\.=)(.*)$/;
@@ -70,11 +69,13 @@ sub execute {
         unless ($tx->commit) {
             die 'commit failed';
         }
+
+        return $copy;
     }
     catch {
         $tx->rollback();
         $error = $_;
-        undef $copy;
+        undef; # catch is returned as value of try/catch
     };
 
     if ($copy) {
