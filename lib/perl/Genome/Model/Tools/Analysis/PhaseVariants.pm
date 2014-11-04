@@ -22,13 +22,6 @@ class Genome::Model::Tools::Analysis::PhaseVariants {
     ],
 };
 
-sub new {
-    my ($class) = @_;
-    my $self = bless {}, $class;
-    return $self;
-}
-
-
 sub help_brief {
      "A tool to find SNVs in phase",
 }
