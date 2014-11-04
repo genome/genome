@@ -5,8 +5,6 @@ use warnings;
 
 use above "Genome";
 use Test::More tests => 1;
-use File::Basename;
-use File::Temp qw(tempfile);
 
 my $plot = Genome::Model::Tools::Analysis::PhaseVariants->create(
     distance  => 700,
