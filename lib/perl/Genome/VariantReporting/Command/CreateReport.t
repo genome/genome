@@ -68,7 +68,7 @@ subtest 'no_translations_file' => sub {
         translations_file => "does_not_exist.yaml",
     );
 
-    dies_ok { $cmd->execute } 'Command fails with nonexistant translations_file';
+    dies_ok { $cmd->execute } 'Command fails with non-existent translations_file';
 };
 
 subtest 'no_plan_file' => sub {
