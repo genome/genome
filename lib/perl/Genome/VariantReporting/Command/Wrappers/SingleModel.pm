@@ -29,6 +29,9 @@ sub get_translations {
     my $self = shift;
     my %translations;
     $translations{normal} = $self->discovery->tumor_sample->name;
+    if ($self->gold_sample_name) {
+        $translations{gold} = $self->gold_sample_name;
+    }
     return \%translations;
 }
 
