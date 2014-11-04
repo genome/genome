@@ -20,13 +20,13 @@ sub _parse {
     my $self = shift;
     confess "Attempted to parse null genotype" unless $self->{_gt};
 
-    my @alleles = split(/[\/\|]/, $self->{_gt});
-    for my $allele (@alleles) {
-        unless ($allele =~ /[(\d+).]/) {
-            confess "Non-numeric allele detected: $allele";
+    my @allele_indexes = split(/[\/\|]/, $self->{_gt});
+    for my $index (@allele_indexes) {
+        unless ($index =~ /[(\d+).]/) {
+            confess "Non-numeric allele-index detected: $index";
         }
     }
-    $self->{_alleles} = \@alleles;
+    $self->{_allele_indexes} = \@allele_indexes;
 
     $self->{_is_phased} = _is_phased($self->{_gt});
 }
@@ -49,13 +49,13 @@ sub is_homozygous {
     if ($self->is_missing) {
         return 0;
     }
-    my $prevAllele;
-    for my $allele (@{$self->{_alleles}}) {
-        unless (defined $prevAllele) {
-            $prevAllele = $allele;
+    my $prev;
+    for my $index (@{$self->{_allele_indexes}}) {
+        unless (defined $prev) {
+            $prev = $index;
             next;
         }
-        if ($prevAllele != $allele) {
+        if ($prev != $index) {
             return 0;
         }
     }
@@ -72,12 +72,12 @@ sub is_heterozygous {
 
 sub is_missing {
     my $self = shift;
-    return grep {$_ =~ /\./} @{$self->{_alleles}};
+    return grep {$_ =~ /\./} @{$self->{_allele_indexes}};
 }
 
 sub ploidy {
     my $self = shift;
-    return scalar @{$self->{_alleles}};
+    return scalar @{$self->{_allele_indexes}};
 }
 
 sub has_wildtype {
@@ -85,8 +85,8 @@ sub has_wildtype {
     if ($self->is_missing) {
         return 0;
     }
-    for my $allele (@{$self->{_alleles}}) {
-        if ($allele == 0) {
+    for my $index (@{$self->{_allele_indexes}}) {
+        if ($index == 0) {
             return 1;
         }
     }
@@ -97,17 +97,18 @@ sub has_variant {
     my $self = shift;
     if ($self->is_missing) {
         return 0;
-    }for my $allele (@{$self->{_alleles}}) {
-        if ($allele != 0) {
+    }
+    for my $index (@{$self->{_allele_indexes}}) {
+        if ($index != 0) {
             return 1;
         }
     }
     return 0;
 }
 
-sub get_alleles {
+sub get_allele_indexes {
     my $self = shift;
-    return @{$self->{_alleles}};
+    return @{$self->{_allele_indexes}};
 }
 
 1;

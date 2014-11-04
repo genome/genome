@@ -31,8 +31,8 @@ ok(!$het_variant->is_homozygous, "Het is not homozygous");
 ok($het_variant->is_heterozygous, "Het is heterozygous");
 ok($het_variant->has_wildtype, "Het is wildtype");
 ok($het_variant->has_variant, "Het variant is variant");
-my @alleles_from_het = $het_variant->get_alleles;
-is_deeply(\@alleles_from_het, [0,1], "Correctly got alleles");
+my @alleles_from_het = $het_variant->get_allele_indexes;
+is_deeply(\@alleles_from_het, [0,1], "Correctly got allele_indexes");
 
 my @multi_alts = ("T", "C");
 my $het2 = $pkg->new("A", \@multi_alts, "1/2");
@@ -52,13 +52,13 @@ is($missing->ploidy, 1, "Missing is haploid");
 
 my $phased = Genome::File::Vcf::Genotype->new("A", \("T"), "0|0");
 ok($phased->is_phased, "Phased genotype is phased");
-my @alleles_from_phased = $phased->get_alleles;
-is_deeply(\@alleles_from_phased, [0,0], "Correctly got alleles from phased");
+my @alleles_from_phased = $phased->get_allele_indexes;
+is_deeply(\@alleles_from_phased, [0,0], "Correctly got allele_indexes from phased");
 is($phased->ploidy, 2, "Phased genotype is diploid");
 
 my $triploid = Genome::File::Vcf::Genotype->new("A", \("T"), "0/0/1");
 is($triploid->ploidy, 3, "Triploid genotype parsed ok");
-is_deeply([$triploid->get_alleles], [0, 0, 1], "Got triploid alleles correctly");
+is_deeply([$triploid->get_allele_indexes], [0, 0, 1], "Got triploid allele_indexes correctly");
 
 eval {
     my $non_numeric = Genome::File::Vcf::Genotype->new("A", \("T"), "A/C");

@@ -46,7 +46,7 @@ sub process_source {
         #ok, we're converting this bad boy!
         my $gt = $entry->genotype_for_sample($sample_index);
         my @entry_alleles = $entry->alleles;
-        my @genotype_alleles = map {$entry_alleles[$_]} $gt->get_alleles;
+        my @genotype_alleles = map {$entry_alleles[$_]} $gt->get_allele_indexes;
 
         if($entry->has_indel) {
             my ($indel_gts, $indel_shifts) = convert_indel_gt_to_bed($entry->{reference_allele}, @genotype_alleles);
