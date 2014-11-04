@@ -865,12 +865,7 @@ sub bases_for_sample {
     my $genotype = $self->genotype_for_sample($sample_index);
     return unless defined $genotype;
 
-    my @allele_pointers = grep {$_ ne '.'} $genotype->get_allele_indexes;
-
-    my @alleles = $self->alleles;
-    my @bases = map {$alleles[$_]} @allele_pointers;
-
-    return @bases;
+    return $genotype->get_alleles;
 }
 
 sub to_hashref {
