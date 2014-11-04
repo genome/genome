@@ -111,5 +111,21 @@ sub get_allele_indexes {
     return @{$self->{_allele_indexes}};
 }
 
+sub get_alleles {
+    my $self = shift;
+
+    return () if $self->is_missing;
+
+    my @alleles;
+    for my $index (@{$self->{_allele_indexes}}) {
+        if ($index == 0) {
+            push @alleles, $self->{_ref_allele};
+        } else {
+            push @alleles, $self->{_alt_alleles}->[$index - 1];
+        }
+    }
+    return @alleles;
+}
+
 1;
 
