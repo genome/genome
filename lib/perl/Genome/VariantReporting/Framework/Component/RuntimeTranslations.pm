@@ -5,9 +5,7 @@ use warnings FATAL => 'all';
 use UR;
 use YAML;
 use JSON;
-use Data::Dump qw(pp);
 use Params::Validate qw(validate validate_pos :types);
-use Exception::Class ('NonexistentAttributeException');
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 
