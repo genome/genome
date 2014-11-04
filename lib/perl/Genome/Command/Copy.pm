@@ -75,7 +75,7 @@ sub execute {
     catch {
         $tx->rollback();
         $error = $_ || 'unknown error';
-        undef; # catch is returned as value of try/catch
+        return;
     };
 
     if ($copy) {
