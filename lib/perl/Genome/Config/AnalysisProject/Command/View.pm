@@ -414,7 +414,7 @@ sub _config_items {
             '-order_by' => 'created_at');
     } else {
         return $self->analysis_project->config_items(
-            'status in' => ['active', undef], '-order_by' => 'created_at');
+            'status' => 'active', '-order_by' => 'created_at');
     }
 }
 
@@ -465,17 +465,10 @@ sub _get_config_item_lines {
             'Concrete', $self->_get_concrete_string($config_item)],
         ['Created by', $config_item->created_by,
             'Status', $self->_color_status(
-                $self->_get_config_status($config_item))],
+                $config_item->status)],
         ['Created', $config_item->created_at,
             'Updated', $config_item->updated_at],
     );
-}
-
-
-sub _get_config_status {
-    my ($self, $config_item) = @_;
-
-    return $config_item->status || 'active';
 }
 
 
