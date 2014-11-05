@@ -9,14 +9,6 @@ use IO::Handle;
 class Genome::Command::Viewer {
     doc => "Base class for 'view' commands.",
     is => 'Command::V2',
-    has => [
-        color => {
-            is => 'Boolean',
-            is_optional => 1,
-            default_value => 1,
-            doc => 'Display report in color.'
-        },
-    ],
 };
 
 
