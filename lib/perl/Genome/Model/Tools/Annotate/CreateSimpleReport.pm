@@ -78,7 +78,7 @@ sub variant_allele {
 
     my $genotype = $entry->genotype_for_sample($self->_sample_index);
     my @entry_allele_amino_acids = $entry->alleles;
-    my @genotype_allele_pointers = $genotype->get_alleles;
+    my @genotype_allele_pointers = $genotype->get_allele_indexes;
     my @genotype_allele_amino_acids = map {$entry_allele_amino_acids[$_]} @genotype_allele_pointers;
     return $genotype_allele_amino_acids[1];
 }

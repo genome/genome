@@ -73,13 +73,12 @@ sub write_fpkm_for_sample {
 
     my $gene_to_fpkm_map = $self->map_genes_to_fpkm;
     my @fpkms;
-    for my $genotype_allele_index ($gt->get_alleles) {
+    for my $genotype_allele ($gt->get_alleles) {
         # Handle the reference allele which doesn't have an FPKM value
-        if ($genotype_allele_index == 0) {
+        if ($genotype_allele eq $entry->{reference_allele}) {
             push @fpkms, '.';
             next;
         }
-        my $genotype_allele = ($entry->alleles)[$genotype_allele_index];
         my ($transcript, @extra) = $vep_parser->transcripts($entry, $genotype_allele);
 
         if (not defined $transcript) {

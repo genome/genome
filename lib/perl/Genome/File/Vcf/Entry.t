@@ -374,7 +374,8 @@ subtest "get genotype for sample" => sub {
 };
 
 subtest "get alt bases for sample" => sub {
-    my @fields = ('1', 99, '.', 'CG', 'CA,C', '.', '.', '.', 'GT:DP:FT', '0/1', '0/0', '0/2', '1/2', './.');
+    my @fields = ('1', 99, '.', 'CG', 'CA,C', '.', '.', '.', 'GT:DP:FT',
+        '0/1', '0/0', '0/2', '1/2', './.');
     my $entry_txt = join("\t", @fields);
     my $entry = $pkg->new($header, $entry_txt);
     ok($entry, "Created entry");
@@ -396,6 +397,27 @@ subtest "get alt bases for sample" => sub {
         # my $non_genotype = $entry->genotype_for_sample(3);
     # };
     # ok($@, "Getting a genotype for an out-of-bounds sample index is an error");
+};
+
+subtest "bases_for_sample" => sub {
+    my @fields = ('1', 99, '.', 'CG', 'CA,C', '.', '.', '.', 'GT:DP:FT',
+        '0/0', '0/1', '1/2', './.', '.');
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+
+    my @expected_bases = (
+        ['CG', 'CG'],
+        ['CG', 'CA'],
+        ['CA', 'C'],
+        [],
+        [],
+    );
+
+    for my $i (0..$#expected_bases) {
+        my @got = $entry->bases_for_sample($i);
+        is_deeply(\@got, $expected_bases[$i], "Sample index: $i");
+    }
 };
 
 subtest "add_allele" => sub {

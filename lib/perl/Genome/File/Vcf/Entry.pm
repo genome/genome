@@ -845,13 +845,7 @@ params:
 
 sub alt_bases_for_sample {
     my ($self, $sample_index) = @_;
-
-    my $genotype = $self->genotype_for_sample($sample_index);
-    return unless defined $genotype;
-    my @entry_allele_nucleotides = $self->alleles;
-    my @alt_allele_pointers = grep { $_ ne '.' && $_ != 0 } $genotype->get_alleles;
-    my @alt_allele_nucleotides = map {$entry_allele_nucleotides[$_]} @alt_allele_pointers;
-    return @alt_allele_nucleotides;
+    return grep {$_ ne $self->{reference_allele}} $self->bases_for_sample($sample_index);
 }
 
 =item C<bases_for_sample>
@@ -869,9 +863,9 @@ sub bases_for_sample {
     my ($self, $sample_index) = @_;
 
     my $genotype = $self->genotype_for_sample($sample_index);
-    my @entry_allele_nucleotides = $self->alleles;
-    my @genotype_allele_nucleotides = map {$entry_allele_nucleotides[$_]} $genotype->get_alleles;
-    return @genotype_allele_nucleotides;
+    return unless defined $genotype;
+
+    return $genotype->get_alleles;
 }
 
 sub to_hashref {
