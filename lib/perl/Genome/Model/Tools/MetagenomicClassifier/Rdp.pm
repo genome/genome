@@ -18,12 +18,12 @@ class Genome::Model::Tools::MetagenomicClassifier::Rdp {
         },
         training_set => {
             type => 'String',
-            valid_values => [qw/ 4 6 9 broad /],
+            valid_values => [qw/ 4 6 9 10 broad /],
             doc => 'Name of training set.',
         },
         version => {
             type => 'String',
-            valid_values => [qw/ 2x1 2x2 2x3 2x5 /],
+            valid_values => [qw/ 2x1 2x2 2x3 2x5 2x9 2x10 /],
             doc => 'Version of rdp to run.',
         },
         format => {

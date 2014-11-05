@@ -23,7 +23,7 @@ class Genome::Model::Tools::MetagenomicClassifier::Rdp::ClassifierBase {
 $ENV{PERL_INLINE_JAVA_JNI} = 1;
 
 sub valid_training_sets {
-    return (qw/ 4 6 9 broad /);
+    return (qw/ 4 6 9 10 broad /);
 }
 
 sub get_training_path {
