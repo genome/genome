@@ -46,14 +46,14 @@ class Genome::Model::Tools::CopyNumber::PlotSegments {
 	gain_threshold => {
 	    is => 'Float',
 	    is_optional => 1,
-	    doc => 'CN threshold for coloring a segment as a gain - defaults to 2.5 or the log2/10 equivalent',
+	    doc => 'CN threshold for coloring a segment as a gain. Always set in terms of absolute copy number (2 = neutral) and will be converted as necessary for log2 data'
             default => 2.5,
 	},
 
 	loss_threshold => {
 	    is => 'Float',
 	    is_optional => 1,
-	    doc => 'CN threshold for coloring a segment as a loss - defaults to 1.5 or the log2/10 equivalent',
+	    doc => 'CN threshold for coloring a segment as a loss. Always set in terms of absolute copy number (2 = neutral) and will be converted as necessary for log2 data'
             default => 1.5,
 	},
 
@@ -393,9 +393,7 @@ sub scoreConv{
             $fields[4] = 2+($fields[4]-2)/$purity;
             print OUTFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3], log_base(10,$fields[4]/2))) . "\n";
         } elsif( ($from eq "abs") && ($to eq "abs")){
-            print STDERR $fields[4] . "\t";
             $fields[4] = 2+($fields[4]-2)/$purity;
-            print STDERR $fields[4] . "\n"; 
             print OUTFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3], $fields[4])) . "\n";
         }
     }
