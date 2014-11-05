@@ -34,7 +34,7 @@ class Genome::Model::Tools::EpitopePrediction::AddCoords {
 };
 
 sub help_brief {
-    "Takes in the \"Parsed output file from NetMHC as well as the SNVs file and output a file with genomic coordinates for all epitopes."
+    "Takes in the \"Parsed\" output file from NetMHC as well as the SNVs file and output a file with genomic coordinates for all epitopes."
 }
 
 sub execute {
