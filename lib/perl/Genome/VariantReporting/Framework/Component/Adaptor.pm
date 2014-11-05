@@ -95,27 +95,8 @@ sub validate_with_plan_params {
 sub __planned_output_errors__ {
     my ($self, $params) = validate_pos(@_, 1, 1);
     my $needed = Set::Scalar->new($self->planned_output_names);
-    return $self->_get_missing_errors($params, $needed),
+    return Genome::VariantReporting::Framework::Utility::get_missing_errors($self->class, $params, $needed, "Parameters", "adaptor"),
         $self->_get_extra_errors($params, $needed);
-}
-
-sub _get_missing_errors {
-    my ($self, $params, $needed) = validate_pos(@_, 1, 1, 1);
-
-    my $have = Set::Scalar->new(keys %{$params});
-    my @errors;
-    unless($needed->is_equal($have)) {
-        if (my $still_needed = $needed - $have) {
-            push @errors, UR::Object::Tag->create(
-                type => 'error',
-                properties => [$still_needed->members],
-                desc => sprintf("Parameters required by adaptor (%s) but not provided: (%s)", 
-                    $self->class, join(",", $still_needed->members)),
-            );
-        }
-    }
-
-    return @errors;
 }
 
 sub _get_extra_errors {
