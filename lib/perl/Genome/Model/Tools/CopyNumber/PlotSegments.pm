@@ -46,13 +46,15 @@ class Genome::Model::Tools::CopyNumber::PlotSegments {
 	gain_threshold => {
 	    is => 'Float',
 	    is_optional => 1,
-	    doc => 'CN threshold for coloring a segment as a gain - defaults to 2.5 or the log2/10 equivalent',
+	    doc => 'CN threshold for coloring a segment as a gain. Always set in terms of absolute copy number (2 = neutral) and will be converted as necessary for log2 data',
+            default => 2.5,
 	},
 
 	loss_threshold => {
 	    is => 'Float',
 	    is_optional => 1,
-	    doc => 'CN threshold for coloring a segment as a loss - defaults to 1.5 or the log2/10 equivalent',
+	    doc => 'CN threshold for coloring a segment as a loss. Always set in terms of absolute copy number (2 = neutral) and will be converted as necessary for log2 data',
+            default => 1.5,
 	},
 
 	# male_sex_loss_threshold => {
@@ -264,6 +266,14 @@ class Genome::Model::Tools::CopyNumber::PlotSegments {
 	    is_optional => 1,
 	    doc => 'Search in the current (or a specified) folder for files matching the keyword you supply here',
 	},
+
+        purity => {
+	    is => 'Float',
+	    is_optional => 1,
+	    doc => 'Provided a fractional estimate of tumor purity, scales the plot accordingly. Assumes the inputs are uncorrected for purity.',
+            default => 1,
+	},
+       
 	
     ]
 };
@@ -305,26 +315,31 @@ sub convertSegs{
 # convert scores between bases and write out a new file for
 # the R script to read in
 sub convertScores{
-    my ($self, $segfiles, $log2_input, $log2_plot, $log10_plot) = @_;
+    my ($self, $segfiles, $log2_input, $log2_plot, $log10_plot, $purity) = @_;
     my @newfiles;
     my @infiles = split(",",$segfiles);
 
     foreach my $file (@infiles){
         if ($log2_input && $log10_plot){
-            my $cbsfile = scoreConv(2, 10, $file, $self);
+            my $cbsfile = scoreConv(2, 10, $file, $self, $purity);
             push(@newfiles,$cbsfile);
 
         } elsif ($log2_input && (!($log2_plot))){
-            my $cbsfile = scoreConv(2, "abs", $file, $self);
+            my $cbsfile = scoreConv(2, "abs", $file, $self, $purity);
             push(@newfiles,$cbsfile);
 
         } elsif (!($log2_input) && $log2_plot){
-            my $cbsfile = scoreConv("abs", 2, $file, $self);
+            my $cbsfile = scoreConv("abs", 2, $file, $self, $purity);
             push(@newfiles,$cbsfile);
 
         } elsif (!($log2_input) && $log10_plot){
-            my $cbsfile = scoreConv("abs", 10, $file, $self);
+            my $cbsfile = scoreConv("abs", 10, $file, $self, $purity);
             push(@newfiles,$cbsfile);
+
+        } elsif ($purity != 1) { #just correct purity
+            my $cbsfile = scoreConv("abs", "abs", $file, $self, $purity);
+            push(@newfiles,$cbsfile);
+
         } else {
             return $segfiles;
         }
@@ -346,7 +361,7 @@ sub log_base {
 #-----------------------------------------------------
 #convert scores from log to abs, vice-versa, or between different bases
 sub scoreConv{
-    my ($from, $to, $file, $self) = @_;
+    my ($from, $to, $file, $self, $purity) = @_;
 
     #create a tmp file for this output
     my ($tfh,$newfile) = Genome::Sys->create_temp_file;
@@ -363,15 +378,23 @@ sub scoreConv{
     {
         next if $line =~/^#/;
         my @fields = split("\t",$line);
-
+        
+        #adjust for purity in here too
         if( ($from eq 2) && ($to eq "abs")){
-            print OUTFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3],((2**$fields[4])*2))) . "\n";
+            $fields[4] = 2+((((2**$fields[4])*2)-2)/$purity);
+            print OUTFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3], $fields[4])) . "\n";
         } elsif( ($from eq 2) && ($to eq 10)){
-            print OUTFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3],$fields[4]/(log_base(2,10)))) . "\n";
+            $fields[4] = 2+((((2**$fields[4])*2)-2)/$purity);
+            print OUTFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3], log_base(10,$fields[4]/2))) . "\n";
         } elsif( ($from eq "abs") && ($to eq 2)){
-            print OUTFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3],log_base(2,$fields[4]/2))) . "\n";
+            $fields[4] = 2+($fields[4]-2)/$purity;
+            print OUTFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3], log_base(2,$fields[4]/2))) . "\n";
         } elsif( ($from eq "abs") && ($to eq 10)){
-            print OUTFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3],log_base(10,$fields[4]/2))) . "\n";
+            $fields[4] = 2+($fields[4]-2)/$purity;
+            print OUTFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3], log_base(10,$fields[4]/2))) . "\n";
+        } elsif( ($from eq "abs") && ($to eq "abs")){
+            $fields[4] = 2+($fields[4]-2)/$purity;
+            print OUTFILE join("\t",($fields[0],$fields[1],$fields[2],$fields[3], $fields[4])) . "\n";
         }
     }
 
@@ -545,7 +568,8 @@ sub execute {
     my $normal_segment_file = $self->normal_segment_file;
     my $label_size = $self->label_size;
     my $multiple_plot_list = $self->multiple_plot_list;
-	my $multiple_plot_keyword = $self->multiple_plot_keyword;
+    my $multiple_plot_keyword = $self->multiple_plot_keyword;
+    my $purity = $self->purity;
 
     #sanity checks
     unless( (defined($segment_files)) xor (defined($tumor_segment_file) && defined($normal_segment_file))){
@@ -557,7 +581,7 @@ sub execute {
         die $self->error_message("You must specify either a list of files to plot OR
 		                          the keyword of a group. You cannot use both parameters together.");
     }
-
+    
     if(defined($tumor_segment_file)){
         if(!defined($segment_files)){    
             $segment_files = $segment_files . "," . $tumor_segment_file;
@@ -625,9 +649,8 @@ sub execute {
             $input = convertSegs($self, $input, $cnvhmm_input, $cnahmm_input);
             $log2_input = 1;
         }
-
         #then do score conversion between log2/log10/absolute CN as necessary
-        $input = convertScores($self, $input, $log2_input, $log2_plot, $log10_plot);
+        $input = convertScores($self, $input, $log2_input, $log2_plot, $log10_plot, $purity);
         
         push (@infiles, split(",", $input));
     }
@@ -636,11 +659,12 @@ sub execute {
     my $temp_path;
     my $tfh;
     my $outfile = "";
+    my $tfile;
 
     if (defined($rcommands_file)){
 	$outfile = $rcommands_file;
     } else {
-    	my ($tfh,$tfile) = Genome::Sys->create_temp_file;
+    	($tfh,$tfile) = Genome::Sys->create_temp_file;
     	unless($tfh) {
     	    $self->error_message("Unable to create temporary file $!");
     	    die;
@@ -650,23 +674,14 @@ sub execute {
 
 
     #preset some params for the different plot styles
+    if ($log2_plot){
+        $gain_threshold = log_base(2,$gain_threshold/2);
+        $loss_threshold = log_base(2,$loss_threshold/2);
+    } elsif ($log10_plot){
+        $gain_threshold = log_base(10,$gain_threshold/2);
+        $loss_threshold = log_base(10,$loss_threshold/2);
+    }
 
-    unless(defined($gain_threshold)){
-        $gain_threshold = 2.5;
-        if ($log2_plot){
-            $gain_threshold = log_base(2,$gain_threshold/2);
-        } elsif ($log10_plot){
-            $gain_threshold = log_base(10,$gain_threshold/2);
-        }
-    }
-    unless(defined($loss_threshold)){
-        $loss_threshold = 1.5;
-        if ($log2_plot){
-            $loss_threshold = log_base(2,$loss_threshold/2);
-        } elsif ($log10_plot){
-            $loss_threshold = log_base(10,$loss_threshold/2);
-        }
-    }
 
     unless(defined($baseline)){
         if ($log2_plot){
@@ -684,11 +699,11 @@ sub execute {
         }
     }
     
-	if (defined($multiple_plot_list) || defined($multiple_plot_keyword)){
-	    if ($label_size < 1){
-	    	$label_size = 1;
-	    }
-	}
+    if (defined($multiple_plot_list) || defined($multiple_plot_keyword)){
+        if ($label_size < 1){
+            $label_size = 1;
+        }
+    }
     
     #open the R file
     open(R_COMMANDS,">$outfile") || die "can't open $outfile for writing\n";
