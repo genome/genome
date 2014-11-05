@@ -3,6 +3,7 @@ package Genome::VariantReporting::Framework::Component::WithTranslatedInputs;
 use strict;
 use warnings;
 use Genome;
+use Genome::VariantReporting::Framework::Utility;
 use Exception::Class ('NoTranslationsException');
 
 class Genome::VariantReporting::Framework::Component::WithTranslatedInputs {
@@ -45,6 +46,18 @@ sub translated_input_names {
         is_translated => 1,
         is_many => 0,
     );
+}
+
+sub needed_translations {
+    my $self = shift;
+    my @needed_translations;
+    return map {$self->$_} $self->translated_input_names;
+}
+
+sub _translation_errors {
+    my ($self, $translations, $component_name) = @_;
+    my $needed = Set::Scalar->new($self->needed_translations);
+    return Genome::VariantReporting::Framework::Utility::get_missing_errors($component_name, $translations, $needed, "Translations", "component");
 }
 
 sub translated_is_many_input_names {

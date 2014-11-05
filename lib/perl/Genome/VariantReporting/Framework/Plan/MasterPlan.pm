@@ -25,6 +25,28 @@ class Genome::VariantReporting::Framework::Plan::MasterPlan {
     ],
 };
 
+sub validate_translation_provider {
+    my $self = shift;
+    my $provider = shift;
+    my @errors = $self->__translation_errors__($provider);
+    if (@errors) {
+        $self->print_errors(@errors);
+        die "Plan is incompatible with translations file.";
+    }
+    return;
+}
+
+sub __translation_errors__ {
+    my $self = shift;
+    my $provider = shift;
+
+    my @errors;
+    for my $plan ($self->expert_plans, $self->reporter_plans) {
+        push @errors, $plan->__translation_errors__($provider);
+    }
+    return @errors;
+}
+
 sub get_plan {
     my ($self, $category, $name) = validate_pos(@_, 1, 1, 1);
 

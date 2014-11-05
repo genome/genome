@@ -22,7 +22,14 @@ sub category {
 sub adaptor_object {
     my $self = shift;
     my $adaptor_class = $self->object->adaptor_class;
-    return $adaptor_class->create();
+    return $adaptor_class->create($self->adaptor_params);
+}
+
+sub __translation_errors__ {
+    my $self = shift;
+    my $provider = shift;
+    my @errors = $self->adaptor_object->_translation_errors($provider->translations, $self->adaptor_object->name);
+    return @errors;
 }
 
 # ExpertPlans don't have any params but have adaptor_params instead

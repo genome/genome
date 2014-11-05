@@ -61,6 +61,16 @@ sub create_from_hashref {
     return $self;
 }
 
+sub __translation_errors__ {
+    my ($self, $provider) = @_;
+    my @errors;
+    push @errors, $self->object->_translation_errors($provider->translations, $self->object->name);
+    for my $child (values(%{$self->object->interpreters}), values(%{$self->object->filters})) {
+        push @errors, $child->_translation_errors($provider->translations, $child->name);
+    }
+    return @errors;
+}
+
 sub __plan_errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__plan_errors__;

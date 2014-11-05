@@ -102,6 +102,10 @@ sub provider {
 
     $self->status_message("Constructing translation-provider from file (%s)", $self->translations_file);
     my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->translations_file);
+
+    $self->status_message("Checking for compatibility between translations and plan...");
+    $self->plan->validate_translation_provider($provider);
+    $self->status_message("Translations file is compatible with plan.");
     return $provider;
 }
 Memoize::memoize('provider');
