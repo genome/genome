@@ -174,3 +174,21 @@ reporters:
                 info_tag: HOMP_FILTER  
         params:
             file_name: 'trio_report.vcf'
+    'bed':
+        filters:
+            'allele-in-genotype':
+                sample_name: discovery_tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: discovery_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            homopolymer:
+                info_tag: HOMP_FILTER
+        interpreters:
+            'bed-entry': {}
+        params:
+            file_name: 'trio_report.bed'
+            generate_legend_file: 0

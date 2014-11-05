@@ -16,6 +16,10 @@ class Genome::VariantReporting::Command::Wrappers::ModelPair {
             is => 'Genome::Model::Build',
             is_optional => 1,
         },
+        gold_sample_name => {
+            is => 'Text',
+            is_optional => 1,
+        },
         base_output_dir => { is => 'Text', },
         plan_file_basename => {
             is => 'Text',
@@ -118,6 +122,19 @@ sub get_aligned_bams {
     return \@aligned_bams;
 }
 
+sub get_sample_and_bam_map {
+    my $self = shift;
+
+    my %bams = (
+        $self->discovery->tumor_sample->name  => $self->discovery->tumor_bam,
+        $self->discovery->normal_sample->name => $self->discovery->normal_bam,
+    );
+    if ($self->followup) {
+        $bams{$self->followup->tumor_sample->name} = $self->followup->tumor_bam,
+    }
+    return %bams;
+}
+
 sub get_translations {
     my $self = shift;
     my %translations;
@@ -125,6 +142,9 @@ sub get_translations {
     $translations{normal} = $self->discovery->normal_sample->name;
     if ($self->followup) {
         $translations{followup_tumor} = $self->followup->tumor_sample->name;
+    }
+    if ($self->gold_sample_name) {
+        $translations{gold} = $self->gold_sample_name;
     }
     return \%translations;
 }
@@ -163,14 +183,19 @@ sub generate_translations_file {
     $translations->{feature_list_ids} = \%feature_list_ids;
     $translations->{homopolymer_list_id} = '696318bab30d47d49fab9afa845691b7';
 
+    $translations->{reference_fasta} = $self->reference_sequence_build->full_consensus_path("fa");
+
     $translations->{dbsnp_vcf} = $self->discovery->previously_discovered_variations_build->snvs_vcf;
     $translations->{nhlbi_vcf} = _get_nhlbi_vcf(); 
-
-    $translations->{reference_fasta} = $self->discovery->reference_sequence_build->full_consensus_path("fa");
 
     YAML::DumpFile(File::Spec->join($self->translations_file), $translations);
 
     return 1;
+}
+
+sub reference_sequence_build {
+    my $self = shift;
+    return $self->discovery->reference_sequence_build;
 }
 
 sub input_vcf {

@@ -18,6 +18,10 @@ class Genome::VariantReporting::Reporter::WithHeader {
             is => 'Text',
             default => "\t",
         },
+        generate_legend_file => {
+            is => 'Boolean',
+            default => 1,
+        }
     },
     has_transient_optional => [
         _legend_fh => {},
@@ -53,16 +57,20 @@ sub initialize {
     my $output_dir = shift;
 
     $self->SUPER::initialize($output_dir);
-    my $legend_fh = Genome::Sys->open_file_for_writing(File::Spec->join($output_dir, $self->file_name . '.legend.tsv'));
-    $self->_legend_fh($legend_fh);
-    $self->write_legend_file();
+    if ($self->generate_legend_file) {
+        my $legend_fh = Genome::Sys->open_file_for_writing(File::Spec->join($output_dir, $self->file_name . '.legend.tsv'));
+        $self->_legend_fh($legend_fh);
+        $self->write_legend_file();
+    }
     $self->print_headers();
 }
 
 sub finalize {
     my $self = shift;
     $self->SUPER::finalize(@_);
-    $self->_legend_fh->close;
+    if ($self->generate_legend_file) {
+        $self->_legend_fh->close;
+    }
     return
 }
 

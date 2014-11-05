@@ -21,7 +21,7 @@ isa_ok($factory->get_class('reporters', $pkg->name), $pkg);
 
 my $data_dir = __FILE__.".d";
 
-my $reporter = Genome::VariantReporting::Reporter::SimpleReporter->create(file_name => 'simple');
+my $reporter = Genome::VariantReporting::Reporter::SimpleReporter->create(file_name => 'simple', generate_legend_file => 0);
 ok($reporter, "Reporter created successfully");
 
 my $position_interpreter = Genome::VariantReporting::Generic::PositionInterpreter->create();
@@ -29,12 +29,8 @@ my $vep_interpreter = Genome::VariantReporting::Suite::Vep::VepInterpreter->crea
 my $variant_type_interpreter= Genome::VariantReporting::Generic::VariantTypeInterpreter->create();
 $reporter->add_interpreter_objects($position_interpreter, $vep_interpreter, $variant_type_interpreter);
 
-my $override = Sub::Override->new('Genome::VariantReporting::Reporter::WithHeader::write_legend_file', sub {return 1});
-
 my $output_dir = Genome::Sys->create_temp_directory();
 $reporter->initialize($output_dir);
-
-$override->restore;
 
 my %interpretations = (
     'position' => {

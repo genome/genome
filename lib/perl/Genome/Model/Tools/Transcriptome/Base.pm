@@ -15,7 +15,7 @@ sub create {
     my $self = $class->SUPER::create(@_);
     unless ($self) { return; }
     unless ($] > 5.010) {
-        die 'Bio::DB::Sam requires perl 5.10 or greater! Consider using \'/usr/bin/perl -S gmt\' instead of \'gmt\' for all bio-samtools commands!';
+        die 'Bio::DB::Sam requires perl 5.10 or greater!';
     }
     require Bio::DB::Sam;
     return $self;

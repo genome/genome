@@ -33,12 +33,12 @@ class Genome::InstrumentData::AlignmentResult::Merged::RefCov{
             is => 'Text',
             doc => 'For multi-tracked ROI use this named track',
         },
-	maximum_depth => {
+        maximum_depth => {
             is => 'Integer',
             doc => 'The maximum depth to evaluate by samtools pileup.',
             is_optional => 1,
         },
-	alignment_count => {
+        alignment_count => {
             is => 'Boolean',
             doc => 'Calculate the number of alignments that overlap region.',
             is_optional => 1,
@@ -58,14 +58,14 @@ class Genome::InstrumentData::AlignmentResult::Merged::RefCov{
             is_optional => 1,
         },
         embed_bed => {
-            is		  => 'Boolean',
-            doc		  => 'Include associated BED information (REF:START-STOP) per target ID when reporting. Returns 0-based BED coords.',
-            is_optional	  => 1,
+            is => 'Boolean',
+            doc => 'Include associated BED information (REF:START-STOP) per target ID when reporting. Returns 0-based BED coords.',
+            is_optional  => 1,
         },
         normalize_with_formula => {
-            is		  => 'String',
-            doc		  => 'Runs normalization on AVE DEPTH and MIN & MAX DEPTHs (opt) given a Perl compatible formula, replacing $X with depth value per ROI. EXAMPLE: --normalize-with-formula=\'log( ( $X / 250_000_000 ) * 1_000_000 ) / log( 2 )\'',
-            is_optional	  => 1,
+            is => 'String',
+            doc => 'Runs normalization on AVE DEPTH and MIN & MAX DEPTHs (opt) given a Perl compatible formula, replacing $X with depth value per ROI. EXAMPLE: --normalize-with-formula=\'log( ( $X / 250_000_000 ) * 1_000_000 ) / log( 2 )\'',
+            is_optional  => 1,
         },
 
     ],
@@ -152,8 +152,8 @@ sub create {
 
     die $self->error_message("Bed File ($bed_file) is missing") unless -s $bed_file;
     die $self->error_message("Bam File ($bam_file) is missing") unless -s $bam_file;
-    
-	
+
+
     my $log_dir = $self->log_directory;
     unless($log_dir) {
         $log_dir = '' . $self->temp_staging_directory;
@@ -165,31 +165,17 @@ sub create {
         roi_file_path => $bed_file,
         alignment_file_path => $bam_file,
         min_depth_filter => $self->minimum_depths,
-	embed_bed => $self->embed_bed,
-	alignment_count =>$self->alignment_count,
-	print_min_max => $self->print_min_max,
-	print_headers => $self->print_headers,
-	roi_file_format => 'bed',
-	alignment_file_format => 'bam',
-   );
+        embed_bed => $self->embed_bed,
+        alignment_count =>$self->alignment_count,
+        print_min_max => $self->print_min_max,
+        print_headers => $self->print_headers,
+        roi_file_format => 'bed',
+        alignment_file_format => 'bam',
+    );
 
-    unless($] > 5.010) {
-        #need to shell out to a newer perl #TODO remove this once 5.10 transition complete
-        my $cmd = 'genome-perl5.10 -S gmt ref-cov standard ';
-        while (my ($key, $value) = (each %refcov_params)) {
-            $key =~ s/_/-/g;
-            $cmd .= " --$key=$value";
-        }
-
-        Genome::Sys->shellcmd(
-            cmd => $cmd,
-            input_files => [$bed_file, $bam_file],
-        );
-    } else {
-        my $cmd = Genome::Model::Tools::RefCov::Standard->create(%refcov_params);
-        unless($cmd->execute) {
-            die('Failed to run RefCov');
-        }
+    my $cmd = Genome::Model::Tools::RefCov::Standard->create(%refcov_params);
+    unless($cmd->execute) {
+        die('Failed to run RefCov');
     }
 
     $self->_promote_data;
@@ -244,14 +230,13 @@ sub stats_file {
     }
     unless (scalar(@stats_files) == 1) {
         die("Found multiple stats files:\n". join("\n",@stats_files));
-}
+    }
 
 }
 
 
-sub _generate_metrics
-{
-return 1;
+sub _generate_metrics {
+    return 1;
 }
 
 1;

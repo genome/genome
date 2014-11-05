@@ -16,7 +16,7 @@ sub execute {
     my $self = shift;
     $self->debug_message('Create copy number TSV file...');
     $self->debug_message('Headers: not printed');
-    $self->debug_message('Fields: chromosome, position, log r ratio');
+    $self->debug_message('Fields: chromosome, position, cnv_value');
 
     my $build = $self->build;
     my $copy_number_file = $build->copy_number_file_path;
@@ -24,7 +24,7 @@ sub execute {
     my $extract = Genome::Model::GenotypeMicroarray::Command::ExtractToCsv->create(
         build => $build,
         output => $copy_number_file,
-        fields => [qw/ chromosome position log_r_ratio /],
+        fields => [qw/ chromosome position cnv_value /],
         headers => 0,
         filters => $build->model->genotype_filters,
     );

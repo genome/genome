@@ -23,3 +23,10 @@ reporters:
                 - discovery_tumor
                 - followup_tumor
                 - normal
+    'bed':
+        filters: {}
+        interpreters:
+            'bed-entry': {}
+        params:
+            file_name: 'cle_docm_report.bed'
+            generate_legend_file: 0
