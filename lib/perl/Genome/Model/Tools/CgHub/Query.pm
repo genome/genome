@@ -22,6 +22,7 @@ class Genome::Model::Tools::CgHub::Query {
             doc => 'Save standard output/error to this file. If given the xml file, the will only contain the status of the query.',
         },
     },
+    doc => 'Query CG Hub for metadata.',
 };
 
 sub _build_command {

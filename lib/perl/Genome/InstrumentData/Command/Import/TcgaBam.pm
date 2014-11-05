@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata;
 use Workflow;
 use Workflow::Simple;
 
@@ -202,9 +201,17 @@ sub _import_from_uuids {
         }
 
         my $tmp_xml = '/tmp/tcga_import_cgquery_data.xml';
-        my $metadata = Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata->create(
+        my $query = Genome::Model::Tools::CgHub::Query->create(
+            uuid => $uuid,
             metadata_file => $tmp_xml,
         );
+        return if not $query;
+        return if not $query->execute;
+
+        my $metadata = Genome::Model::Tools::CgHub::Metadata->create(
+            metadata_file => $tmp_xml,
+        );
+        return if not $metadata;
 
         my $bam_file_name = $metadata->bam_file_names;
         my $kb_usage = $metadata->filesize_in_kb_for_file_name($bam_file_name);
@@ -266,7 +273,7 @@ sub _import_from_filepath {
     my $inst_data = $self->_create_imported_instrument_data;
     return if not $inst_data;
 
-    # create attributes out of some of the metadata
+    # Create attributes out of some of the metadata
     $self->_create_attributes($inst_data);
 
     # Copy and create md5 at the same time w/ tee
@@ -422,7 +429,7 @@ sub _create_attributes {
 sub _parse_metadata_file {
     my ($self, $metadata_file) = @_;
 
-    return Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata->create(
+    return Genome::Model::Tools::CgHub::Metadata->create(
         metadata_file => $metadata_file,
     );
 }

@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Model::Tools::CgHub::GeneTorrent {
     is => "Genome::Model::Tools::CgHub::Base",
-    has_input => [
+    has_input => {
         uuid => {
             is => "Text",
             is_output => 1,
@@ -16,13 +16,14 @@ class Genome::Model::Tools::CgHub::GeneTorrent {
             is => "Text",
             is_output => 1,
         },
-    ],
-    has => [
+    },
+    has => {
         lsf_resource => {
             # mbps -> mega-BITS per second (see --rate-limit below)
             default_value => '-q lims-long -R "rusage[internet_download_mbps=80]"',
         },
-    ]
+    },
+    doc => 'Download from CG Hub using Gene Torrent.',
 };
 
 sub _build_command {

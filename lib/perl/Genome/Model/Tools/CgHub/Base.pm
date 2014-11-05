@@ -10,6 +10,7 @@ require File::Spec;
 
 class Genome::Model::Tools::CgHub::Base {
     is => "Command::V2",
+    is_abstract => 1,
     has_optional_output => {
         output_file => {
             is => 'Text', 
