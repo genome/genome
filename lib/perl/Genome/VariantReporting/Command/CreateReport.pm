@@ -30,7 +30,7 @@ class Genome::VariantReporting::Command::CreateReport {
         },
         translations_file => {
             is => 'Path',
-            doc => 'A resource (yaml) file describing the inputs to the report generation workflow',
+            doc => 'A yaml file containing key-value pairs where the key is a value from the plan file that needs to be translated at runtime',
         },
         log_directory => {
             is => 'Path',
