@@ -46,14 +46,14 @@ class Genome::Model::Tools::CopyNumber::PlotSegments {
 	gain_threshold => {
 	    is => 'Float',
 	    is_optional => 1,
-	    doc => 'CN threshold for coloring a segment as a gain. Always set in terms of absolute copy number (2 = neutral) and will be converted as necessary for log2 data'
+	    doc => 'CN threshold for coloring a segment as a gain. Always set in terms of absolute copy number (2 = neutral) and will be converted as necessary for log2 data',
             default => 2.5,
 	},
 
 	loss_threshold => {
 	    is => 'Float',
 	    is_optional => 1,
-	    doc => 'CN threshold for coloring a segment as a loss. Always set in terms of absolute copy number (2 = neutral) and will be converted as necessary for log2 data'
+	    doc => 'CN threshold for coloring a segment as a loss. Always set in terms of absolute copy number (2 = neutral) and will be converted as necessary for log2 data',
             default => 1.5,
 	},
 
