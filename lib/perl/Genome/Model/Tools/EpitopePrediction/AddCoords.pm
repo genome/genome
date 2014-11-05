@@ -8,7 +8,7 @@ class Genome::Model::Tools::EpitopePrediction::AddCoords {
     is        => ['Genome::Model::Tools::EpitopePrediction::Base'],
     has_input => [
         epitope_file => {
-            is  => 'Text',
+            is  => 'FilePath',
             doc => 'Consolidated and filtered (based on binding affinities) epitope file from all lengths & alleles',
         },
 	somatic_variation_build => {
@@ -25,14 +25,14 @@ class Genome::Model::Tools::EpitopePrediction::AddCoords {
 ],
     has_output => [
         coords_file => {
-            is => 'Text',
+            is => 'FilePath',
             doc => 'File to write the output with genomic coordinates',
 		}    
 	],
 };
 
 sub help_brief {
-    "Takes in the candiate epitope file as well as the SNVs file and outputs a file with genomic coordinates for all epitopes."
+    "Takes in the candidate epitope file as well as the SNVs file and outputs a file with genomic coordinates for all epitopes."
 }
 
 sub execute {
@@ -51,7 +51,7 @@ sub execute {
 					'effects',
 					'snvs.hq.tier1.v1.annotated.top.header'
 					);
-			$self->status_message("Somatic variation build given. Setting input_tsv_file to $tsv_file");
+			$self->warning_message("Somatic variation build given. Setting input_tsv_file to $tsv_file");
 			$self->input_tsv_file($tsv_file);
 		}
 	}
@@ -113,8 +113,7 @@ sub execute {
 			}
 			else {
 
-				$self->status_message('[could not resolve: %s]', $key)
-#	 print "[could not resolve: $key]\n";
+				$self->warning_message('[could not resolve: %s]', $key)
 			}
 		}
 	}
