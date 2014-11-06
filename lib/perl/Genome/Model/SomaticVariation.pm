@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::SomaticVariation {
-    is  => 'Genome::Model::Detail::RunsVariantReporting',
+    is  => 'Genome::ModelDeprecated',
     has_param => [
         snv_detection_strategy => {
             is => "Text",
@@ -428,8 +428,7 @@ sub _resolve_workflow_for_build {
     my $self = shift;
     my $build = shift;
 
-    my $workflow_xml = $self->workflow_xml_file(__FILE__ . '.xml');
-    my $operation = Workflow::Operation->create_from_xml($workflow_xml);
+    my $operation = Workflow::Operation->create_from_xml(__FILE__ . '.xml');
 
     my $log_directory = $build->log_directory;
     $operation->log_dir($log_directory);
@@ -503,8 +502,6 @@ sub map_workflow_inputs {
     push @inputs, restrict_to_target_regions => $self->restrict_to_target_regions;
     push @inputs, target_regions => $self->target_regions;
     push @inputs, bam_readcount_version => $self->bam_readcount_version;
-
-    push @inputs, $self->variant_reporting_related_workflow_inputs($build);
 
     return @inputs;
 }
