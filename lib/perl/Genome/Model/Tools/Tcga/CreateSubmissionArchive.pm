@@ -57,7 +57,9 @@ sub execute {
     my $idf = Genome::Model::Tools::Tcga::Idf->create;
     
     for my $somatic_model ($self->models) {
-        $idf->add_pp_protocols($somatic_model->last_succeeded_build->processing_profile);
+        $idf->add_somatic_pp_protocols($somatic_model->last_succeeded_build->processing_profile);
+        $idf->add_refalign_pp_protocols($somatic_model->last_succeeded_build->normal_build->processing_profile);
+        $idf->add_refalign_pp_protocols($somatic_model->last_succeeded_build->tumor_build->processing_profile);
     }
 
     my $sdrf = Genome::Model::Tools::Tcga::Sdrf->create(idf => $idf, 

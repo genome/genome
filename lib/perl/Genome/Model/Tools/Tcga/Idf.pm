@@ -26,24 +26,40 @@ my %HARD_CODED_PROTOCOLS = (
 
 );
 
-my %PROCESSING_PROFILE_PROTOCOL_TYPES = (
-    "sequence alignment" => "alignment",
+my %SOMATIC_PROCESSING_PROFILE_PROTOCOL_TYPES = (
     "variant calling" => "variant_calling",
 );
 
-my @HARD_CODED_ROW_HEADERS = (
+my %REFALIGN_PROCESSING_PROFILE_PROTOCOL_TYPES = (
+    "sequence alignment" => "alignment",
+);
+
+my %PROCESSING_PROFILE_PROTOCOL_TYPES = (
+    %SOMATIC_PROCESSING_PROFILE_PROTOCOL_TYPES,
+    %REFALIGN_PROCESSING_PROFILE_PROTOCOL_TYPES
+);
+
+my @HARD_CODED_ROW_HEADERS_BEFORE_PROTOCOL = (
     "Investigation Title",
     "Experimental Design",
     "Experimental Design Term Source REF",
     "Experimental Factor Name",
     "Experimental Factor Type",
-    "Person Last Name",
-    "Person First Name",
-    "Person Email",
-    "Person Affiliation",
+    "Person Last Name\tMcLellan",
+    "Person First Name\tMichael",
+    "Person Middle Initials\tD",
+    "Person Email\ttcga-help\@genome.wustl.edu",
+    "Person Address\tWashington University School of Medicine,Campus Box 8501,4444 Forest Park Ave,St Louis,MO 63108",
+    "Person Affiliation\tThe Genome Institute, Washington University School of Medicine",
     "Person Roles",
+    "PubMed ID",
+    "Publication Author List",
+    "Publication Title",
+    "Publication Status",
     "Experiment Description",
-    "Protocol Term Source REF",
+);
+
+my @HARD_CODED_ROW_HEADERS_AFTER_PROTOCOL = (
     "Term Source Name",
     "Term Source File",
     "Term Source Version",
@@ -71,11 +87,20 @@ sub create {
     return $self;
 }
 
-sub add_pp_protocols {
+sub add_somatic_pp_protocols {
     my $self = shift;
     my $processing_profile = shift;
 
-    for my $type (keys %PROCESSING_PROFILE_PROTOCOL_TYPES) {
+    for my $type (keys %SOMATIC_PROCESSING_PROFILE_PROTOCOL_TYPES) {
+        $self->_add_protocol_with_pp($processing_profile, $type);
+    }
+}
+
+sub add_refalign_pp_protocols {
+    my $self = shift;
+    my $processing_profile = shift;
+
+    for my $type (keys %REFALIGN_PROCESSING_PROFILE_PROTOCOL_TYPES) {
         $self->_add_protocol_with_pp($processing_profile, $type);
     }
 }
@@ -128,7 +153,7 @@ sub _add_protocol_with_pp {
     my $type = shift;
 
     my $name = $self->_resolve_protocol_with_pp($processing_profile, $type);
-    my $description = $processing_profile->name;
+    my $description = $processing_profile->param_summary;
     my $found = 0;
     for my $protocol (@{$self->protocols->{$type}}) {
         if ($protocol->{name} eq $name) {
@@ -194,12 +219,16 @@ sub print_idf {
         }
     }
 
+    for my $row_header (@HARD_CODED_ROW_HEADERS_BEFORE_PROTOCOL) {
+        $out->print("$row_header\n");
+    }
     $out->print(join("\t", "Protocol Name", @protocol_names)."\n");
     $out->print(join("\t", "Protocol Type", @protocol_types)."\n");
     $out->print(join("\t", "Protocol Description", @protocol_descriptions)."\n");
     $out->print(join("\t", "Protocol Parameters", map {if (defined $_){join(";", @{$_})}else {""}} @protocol_parameters)."\n");
-    $out->print(join("\t", "SDRF Files", $self->sdrf_file)."\n");
-    for my $row_header (@HARD_CODED_ROW_HEADERS) {
+    $out->print("Protocol Term Source REF\n");
+    $out->print(join("\t", "SDRF File", $self->sdrf_file)."\n");
+    for my $row_header (@HARD_CODED_ROW_HEADERS_AFTER_PROTOCOL) {
         $out->print("$row_header\n");
     }
 
