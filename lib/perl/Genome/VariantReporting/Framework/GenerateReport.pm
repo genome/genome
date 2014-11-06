@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Framework::ReportGenerator;
+package Genome::VariantReporting::Framework::GenerateReport;
 
 use strict;
 use warnings;
@@ -6,7 +6,7 @@ use Genome;
 use Genome::File::Vcf::Reader;
 use Memoize;
 
-class Genome::VariantReporting::Framework::ReportGenerator {
+class Genome::VariantReporting::Framework::GenerateReport {
     is => 'Command::V2',
     has_input => [
         input_vcf => {

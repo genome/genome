@@ -10,7 +10,7 @@
     <outputproperty>output_directory</outputproperty>
   </operationtype>
   <operation name="Generate Reports">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::ReportGenerator">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
       <inputproperty>input_vcf</inputproperty>
       <inputproperty>output_directory</inputproperty>
       <inputproperty>plan_json</inputproperty>
