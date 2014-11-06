@@ -17,11 +17,23 @@ use_ok('Genome::Config::AnalysisProject::Command::Create');
 
 my $cmd = Genome::Config::AnalysisProject::Command::Create->create(
     name => 'test proj',
+    is_production => 1,
 );
 ok($cmd, 'constructed create command');
 isa_ok($cmd, 'Genome::Config::AnalysisProject::Command::Create');
 my $res = $cmd->execute;
 ok($res, 'command executed successfully');
 isa_ok($res, 'Genome::Config::AnalysisProject', 'command returned a Genome::Config::AnalysisProject');
+
+my $cmd2 = Genome::Config::AnalysisProject::Command::Create->create(
+    name => 'test proj non-production',
+    is_production => 0,
+);
+ok($cmd2, 'constructed second create command');
+isa_ok($cmd2, 'Genome::Config::AnalysisProject::Command::Create');
+my $res2 = $cmd2->execute;
+ok($res2, 'second command executed successfully');
+isa_ok($res2, 'Genome::Config::AnalysisProject', 'command returned a Genome::Config::AnalysisProject');
+is($res2->run_as, Genome::Sys->username, 'run_as set correctly');
 
 done_testing();

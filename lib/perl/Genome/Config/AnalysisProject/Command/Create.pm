@@ -19,6 +19,12 @@ class Genome::Config::AnalysisProject::Command::Create {
             default_value => 0,
             doc => 'If specified, this will flag this analysis project as being CLIA-related. All models will be created accordingly.',
         },
+        is_production => {
+            is => 'Boolean',
+            is_optional => 1,
+            default_value => 0,
+            doc => 'If specified, this will flag this analysis project as being production data. All models will be created accordingly.',
+        },
         no_config => {
             is => 'Boolean',
             is_optional => 1,
@@ -31,7 +37,7 @@ class Genome::Config::AnalysisProject::Command::Create {
             is_many             => 1,
             doc                 => 'the analysis menu items to associate with this project.',
             require_user_verify => 1,
-        }
+        },
     ],
 };
 
@@ -54,10 +60,14 @@ sub execute {
     my $self = shift;
 
     $self->_validate_name($self->name);
-    my $project = Genome::Config::AnalysisProject->create(
+    my @params = (
         name => $self->name,
         is_cle => $self->is_cle,
     );
+    unless($self->is_production) {
+        push @params, run_as => Genome::Sys->username;
+    }
+    my $project = Genome::Config::AnalysisProject->create(@params);
     die('No project created!') unless $project;
 
     eval {
