@@ -9,7 +9,7 @@ use Genome::File::Vcf::Writer;
 class Genome::VariantReporting::Framework::Test::RunResult {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
     has_input => [
-        __provided___lookup => {
+        __input___lookup => {
             is_many => 1,
         },
     ],
@@ -17,7 +17,7 @@ class Genome::VariantReporting::Framework::Test::RunResult {
         __planned__ => {},
     ],
     has_transient_optional => [
-        __provided__ => {
+        __input__ => {
             is_many => 1,
         },
     ],
@@ -44,8 +44,8 @@ sub _run {
     my $output_file = File::Spec->join($self->temp_staging_directory, $self->output_filename);
     my $writer = Genome::File::Vcf::Writer->new($output_file, $reader->header);
 
-    my $some_info = sprintf("__provided___lookups|%s|__planned__|%s",
-        join('|', $self->__provided___lookup),
+    my $some_info = sprintf("__input___lookups|%s|__planned__|%s",
+        join('|', $self->__input___lookup),
         $self->__planned__,
     );
     while (my $entry = $reader->next) {

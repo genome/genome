@@ -36,8 +36,8 @@
         <inputproperty>variant_type</inputproperty>
         <outputproperty>e1_p1</outputproperty>
         <outputproperty>e1_p2</outputproperty>
-        <outputproperty>e1_provided1</outputproperty>
-        <outputproperty>e1_provided2</outputproperty>
+        <outputproperty>e1_translated1</outputproperty>
+        <outputproperty>e1_translated2</outputproperty>
         <outputproperty>result</outputproperty>
         <outputproperty>variant_type</outputproperty>
       </operationtype>
@@ -75,8 +75,8 @@
         <inputproperty>variant_type</inputproperty>
         <outputproperty>e2_p1</outputproperty>
         <outputproperty>e2_p2</outputproperty>
-        <outputproperty>e2_provided1</outputproperty>
-        <outputproperty>e2_provided2</outputproperty>
+        <outputproperty>e2_translated1</outputproperty>
+        <outputproperty>e2_translated2</outputproperty>
         <outputproperty>result</outputproperty>
         <outputproperty>variant_type</outputproperty>
       </operationtype>

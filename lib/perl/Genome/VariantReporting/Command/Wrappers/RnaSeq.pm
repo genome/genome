@@ -28,7 +28,7 @@ class Genome::VariantReporting::Command::Wrappers::RnaSeq {
                 my $safe_model_name = Genome::Utility::Text::sanitize_string_for_filesystem($model_name);
                 return File::Spec->join($base_output_dir, $safe_model_name); |,
         },
-        resource_file => {
+        translations_file => {
             calculate_from => [qw/ output_dir /],
             calculate => q( File::Spec->join($output_dir, "resource.yaml") ),
         },
@@ -50,7 +50,7 @@ sub execute {
     Genome::Sys->create_directory($self->output_dir);
     Genome::Sys->create_directory($self->reports_directory("snvs"));
     Genome::Sys->create_directory($self->logs_directory("snvs"));
-    $self->generate_resource_file;
+    $self->generate_translations_file;
     $self->run_reports;
     return 1;
 };
@@ -72,11 +72,11 @@ sub is_valid {
     return 1;
 }
 
-sub generate_resource_file {
+sub generate_translations_file {
     my $self = shift;
 
     return if not $self->is_valid;
-    my $resource = {};
+    my %translations;
 
     my @aligned_bam_results;
     if ($self->somatic_build->isa('Genome::Model::Build::SomaticValidation')) {
@@ -90,15 +90,14 @@ sub generate_resource_file {
     else {
         die $self->error_message("somatic_build is of unhandled type: (%s). Needs to be either 'Genome::Model::Build::SomaticValidation' or 'Genome::Model::Build::SomaticVariation'", $self->somatic_build->class);
     }
-    $resource->{aligned_bam_result_id} = \@aligned_bam_results;
+    $translations{aligned_bam_result_id} = \@aligned_bam_results;
 
-    $resource->{reference_fasta} = $self->somatic_build->reference_sequence_build->full_consensus_path("fa");
+    $translations{reference_fasta} = $self->somatic_build->reference_sequence_build->full_consensus_path("fa");
 
-    $resource->{feature_list_ids} = {};
+    $translations{feature_list_ids} = {};
 
-    $resource->{fpkm_file} = File::Spec->join($self->tumor_build->data_directory, 'expression', 'genes.fpkm_tracking');
+    $translations{fpkm_file} = File::Spec->join($self->tumor_build->data_directory, 'expression', 'genes.fpkm_tracking');
 
-    my %translations;
     if ($self->somatic_build->isa('Genome::Model::Build::SomaticValidation')) {
         $translations{tumor} = $self->somatic_build->tumor_sample->name;
         $translations{normal} = $self->somatic_build->normal_sample->name;
@@ -107,9 +106,8 @@ sub generate_resource_file {
         $translations{tumor} = $self->somatic_build->tumor_build->subject->name;
         $translations{normal} = $self->somatic_build->normal_build->subject->name;
     }
-    $resource->{translations} = \%translations;
 
-    YAML::DumpFile($self->resource_file, $resource);
+    YAML::DumpFile($self->translations_file, \%translations);
 
     return 1;
 }
@@ -123,7 +121,7 @@ sub run_reports {
         variant_type => $variant_type,
         output_directory => $self->reports_directory($variant_type),
         plan_file => $self->plan_file($variant_type),
-        resource_file => $self->resource_file,
+        translations_file => $self->translations_file,
         log_directory => $self->logs_directory($variant_type),
     );
 

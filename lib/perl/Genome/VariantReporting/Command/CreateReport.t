@@ -42,14 +42,14 @@ subtest 'working_command' => sub {
         output_directory => $output_dir,
         log_directory => Genome::Sys->create_temp_directory,
         plan_file => File::Spec->join($test_dir, 'plan.yaml'),
-        resource_file => get_resource_file($input_vcf),
+        translations_file => get_translations_file($input_vcf),
     );
 
     my $expected_dir = File::Spec->join($test_dir, "expected");
     compare_dir_ok($output_dir, $expected_dir, 'All reports are as expected');
 };
 
-subtest 'no_resource_file' => sub {
+subtest 'no_translations_file' => sub {
     my $test_dir = Genome::Sys->create_temp_directory;
     Genome::Sys->rsync_directory(
         source_directory => $code_test_dir,
@@ -65,10 +65,10 @@ subtest 'no_resource_file' => sub {
         output_directory => $output_dir,
         log_directory => Genome::Sys->create_temp_directory,
         plan_file => File::Spec->join($test_dir, 'plan.yaml'),
-        resource_file => "does_not_exist.yaml",
+        translations_file => "does_not_exist.yaml",
     );
 
-    dies_ok { $cmd->execute } 'Command fails with nonexistant resource_file';
+    dies_ok { $cmd->execute } 'Command fails with non-existent translations_file';
 };
 
 subtest 'no_plan_file' => sub {
@@ -87,7 +87,7 @@ subtest 'no_plan_file' => sub {
         output_directory => $output_dir,
         log_directory => Genome::Sys->create_temp_directory,
         plan_file => 'does_not_exist.plan',
-        resource_file => get_resource_file($input_vcf),
+        translations_file => get_translations_file($input_vcf),
     );
 
     dies_ok { $cmd->execute } 'Command fails with nonexistant plan_file';
@@ -109,7 +109,7 @@ subtest 'no_vcf' => sub {
         output_directory => $output_dir,
         log_directory => Genome::Sys->create_temp_directory,
         plan_file => File::Spec->join($test_dir, 'plan.yaml'),
-        resource_file => get_resource_file($input_vcf),
+        translations_file => get_translations_file($input_vcf),
     );
 
     ok(!$cmd->execute, 'Command fails with nonexistant input_vcf');
@@ -117,19 +117,14 @@ subtest 'no_vcf' => sub {
 
 done_testing;
 
-sub get_resource_file {
+sub get_translations_file {
     my $input_vcf = shift;
 
-    my $provider = Genome::VariantReporting::Framework::Component::ResourceProvider->create(
-        attributes => {
-            __provided__ => [$input_vcf, $input_vcf],
-            translations => {},
-        },
-    );
+    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create();
     my $tmp_dir = Genome::Sys->create_temp_directory;
-    my $resource_file = File::Spec->join($tmp_dir, 'resources.yaml');
-    $provider->write_to_file($resource_file);
-    return $resource_file;
+    my $translations_file = File::Spec->join($tmp_dir, 'resources.yaml');
+    $provider->write_to_file($translations_file);
+    return $translations_file;
 }
 
 sub compare_dir_ok {

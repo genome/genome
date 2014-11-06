@@ -47,7 +47,7 @@ sub execute {
             variant_type => $variant_type,
             output_directory => $model_pair->reports_directory($variant_type),
             plan_file => $model_pair->plan_file($variant_type),
-            resource_file => $model_pair->resource_file,
+            translations_file => $model_pair->translations_file,
             log_directory => $model_pair->logs_directory($variant_type),
         );
         Genome::VariantReporting::Command::CreateReport->execute(%params);

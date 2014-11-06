@@ -1,5 +1,6 @@
 experts:
     'bam-readcount':
+        aligned_bam_result_id: aligned_bam_result_id
         version: 0.5
         minimum_mapping_quality: 0
         minimum_base_quality: 0
@@ -20,10 +21,12 @@ experts:
     dbsnp:
         joinx_version: 1.9
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+        vcf: dbsnp_vcf
     'homo-polymer':
         joinx_version: 1.9
         max_length: 2
         info_string: 'HOMP_FILTER'
+        homopolymer_list_id: homopolymer_list_id
 reporters:
     'full':
         filters:

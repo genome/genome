@@ -13,16 +13,16 @@
       <inputproperty>plan_json</inputproperty>
       <inputproperty>provider_json</inputproperty>
       <inputproperty>variant_type</inputproperty>
+      <outputproperty>__input__</outputproperty>
       <outputproperty>__planned__</outputproperty>
-      <outputproperty>__provided__</outputproperty>
       <outputproperty>result</outputproperty>
       <outputproperty>variant_type</outputproperty>
     </operationtype>
   </operation>
   <operation name="Run __test__">
     <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Framework::Test::Run">
+      <inputproperty>__input__</inputproperty>
       <inputproperty>__planned__</inputproperty>
-      <inputproperty>__provided__</inputproperty>
       <inputproperty>input_vcf</inputproperty>
       <inputproperty>variant_type</inputproperty>
       <outputproperty>output_result</outputproperty>
@@ -30,8 +30,8 @@
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
+  <link fromOperation="Get inputs from provider and plan" fromProperty="__input__" toOperation="Run __test__" toProperty="__input__"/>
   <link fromOperation="Get inputs from provider and plan" fromProperty="__planned__" toOperation="Run __test__" toProperty="__planned__"/>
-  <link fromOperation="Get inputs from provider and plan" fromProperty="__provided__" toOperation="Run __test__" toProperty="__provided__"/>
   <link fromOperation="Get inputs from provider and plan" fromProperty="variant_type" toOperation="Run __test__" toProperty="variant_type"/>
   <link fromOperation="Run __test__" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
   <link fromOperation="Run __test__" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>

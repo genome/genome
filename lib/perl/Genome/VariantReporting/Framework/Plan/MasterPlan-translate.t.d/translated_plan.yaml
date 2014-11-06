@@ -1,0 +1,14 @@
+experts:
+    __translated_test__:
+        __planned__: tumor
+        __input__: __input__
+reporters:
+    __translated_test__:
+        interpreters:
+            __translated_test__:
+                translated1: to_translate1
+        filters:
+            __translated_test_filter__:
+                translated2: to_translate2
+        params:
+            file_name: report.txt

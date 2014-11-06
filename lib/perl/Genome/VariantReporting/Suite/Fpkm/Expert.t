@@ -7,7 +7,7 @@ use Test::More;
 use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
 use Genome::VariantReporting::Framework::TestHelpers qw(
-    get_resource_provider
+    get_translation_provider
     test_dag_xml
     test_dag_execute
     get_test_dir
@@ -28,7 +28,7 @@ use_ok($pkg) || die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('experts', $pkg->name), $pkg);
 
-my $VERSION = 4; # Bump these each time test data changes
+my $VERSION = 5; # Bump these each time test data changes
 my $RESOURCE_VERSION = 2;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
@@ -38,10 +38,12 @@ my $expected_xml = File::Spec->join($test_dir, 'expected.xml');
 test_dag_xml($dag, $expected_xml);
 
 set_what_interpreter_x_requires('fpkm');
-my $provider = get_resource_provider(version => $RESOURCE_VERSION);
-$provider->set_attribute(fpkm_file => File::Spec->join($test_dir, 'test.fpkm'));
-my %translations = ( tumor =>  'TEST-patient1-somval_tumor1' );
-$provider->set_attribute(translations => \%translations);
+my $provider = get_translation_provider(version => $RESOURCE_VERSION);
+my %translations = (
+    tumor =>  'TEST-patient1-somval_tumor1',
+    fpkm_file => File::Spec->join($test_dir, 'test.fpkm')
+);
+$provider->translations(\%translations);
 
 my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),

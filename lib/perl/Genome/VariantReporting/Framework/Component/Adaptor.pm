@@ -4,18 +4,12 @@ use strict;
 use warnings;
 use Genome;
 use Params::Validate qw(validate validate_pos :types);
-use Exception::Class;
-use Scalar::Util qw(blessed);
 
 class Genome::VariantReporting::Framework::Component::Adaptor {
     is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base', 'Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
     is_abstract => 1,
     attributes_have => {
         is_planned => {
-            is => "Boolean",
-            default => 0,
-        },
-        is_provided => {
             is => "Boolean",
             default => 0,
         },
@@ -49,8 +43,6 @@ sub execute {
     $self->debug_message("Resolving plan attributes");
     $self->resolve_plan_attributes;
 
-    $self->debug_message("Resolving attributes from the resource-provider");
-    $self->resolve_provided_attributes;
     return 1;
 }
 
@@ -63,32 +55,9 @@ sub resolve_plan_attributes {
         $self->$name($value);
     }
 
-    my $translations;
-    eval { $translations = $self->provider->get_attribute('translations') };
-    if (my $error = Exception::Class->caught()) {
-      $self->_handle_get_attribute_error($error); #either dies or returns to proceed
-    }
+    my $translations = $self->provider->translations;
 
     $self->translate_inputs($translations);
-}
-
-sub _handle_get_attribute_error {
-    my $self = shift;
-    my $error = shift;
-
-    if (blessed $error && $error->can('rethrow')) {
-        if ($error->isa('NonexistentAttributeException')) {
-            # Return and call translate_inputs
-            # which dies if object needs translations and none are provided
-            return;
-        }
-        else {
-            $error->rethrow;
-        }
-    }
-    else {
-        die $error;
-    }
 }
 
 sub plan {
@@ -108,23 +77,7 @@ sub planned_output_names {
 sub provider {
     my $self = shift;
 
-    return Genome::VariantReporting::Framework::Component::ResourceProvider->create_from_json($self->provider_json);
-}
-
-sub provided_output_names {
-    my $self = shift;
-
-    my @properties = $self->__meta__->properties(
-        is_output => 1, is_provided => 1);
-    return map {$_->property_name} @properties;
-}
-
-sub resolve_provided_attributes {
-    my $self = shift;
-
-    for my $name ($self->provided_output_names) {
-        $self->$name($self->provider->get_attribute($name));
-    }
+    return Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_json($self->provider_json);
 }
 
 # TODO this is not covered by tests
@@ -142,33 +95,8 @@ sub validate_with_plan_params {
 sub __planned_output_errors__ {
     my ($self, $params) = validate_pos(@_, 1, 1);
     my $needed = Set::Scalar->new($self->planned_output_names);
-    return $self->_get_missing_errors($params, $needed),
+    return Genome::VariantReporting::Framework::Utility::get_missing_errors($self->class, $params, $needed, "Parameters", "adaptor"),
         $self->_get_extra_errors($params, $needed);
-}
-
-sub __provided_output_errors__ {
-    my ($self, $params) = validate_pos(@_, 1, 1);
-    my $needed = Set::Scalar->new($self->provided_output_names);
-    return $self->_get_missing_errors($params, $needed);
-}
-
-sub _get_missing_errors {
-    my ($self, $params, $needed) = validate_pos(@_, 1, 1, 1);
-
-    my $have = Set::Scalar->new(keys %{$params});
-    my @errors;
-    unless($needed->is_equal($have)) {
-        if (my $still_needed = $needed - $have) {
-            push @errors, UR::Object::Tag->create(
-                type => 'error',
-                properties => [$still_needed->members],
-                desc => sprintf("Parameters required by adaptor (%s) but not provided: (%s)", 
-                    $self->class, join(",", $still_needed->members)),
-            );
-        }
-    }
-
-    return @errors;
 }
 
 sub _get_extra_errors {

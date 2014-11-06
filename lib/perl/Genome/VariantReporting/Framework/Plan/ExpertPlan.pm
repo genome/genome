@@ -19,16 +19,17 @@ sub category {
     'experts';
 }
 
-sub resources_required {
-    my $self = shift;
-
-    return $self->get_class->resources_required;
-}
-
 sub adaptor_object {
     my $self = shift;
     my $adaptor_class = $self->object->adaptor_class;
-    return $adaptor_class->create();
+    return $adaptor_class->create($self->adaptor_params);
+}
+
+sub __translation_errors__ {
+    my $self = shift;
+    my $provider = shift;
+    my @errors = $self->adaptor_object->_translation_errors($provider->translations, $self->adaptor_object->name);
+    return @errors;
 }
 
 # ExpertPlans don't have any params but have adaptor_params instead
@@ -73,14 +74,6 @@ sub __object_errors__ {
     my @errors = $self->SUPER::__object_errors__;
     push @errors, $self->object->adaptor_class->__planned_output_errors__($self->adaptor_params);
     return @errors;
-}
-
-sub __provider_errors__ {
-    my $self = shift;
-    my $provider = shift;
-
-    return $self->object->adaptor_class->__provided_output_errors__(
-        $provider->attributes);
 }
 
 1;

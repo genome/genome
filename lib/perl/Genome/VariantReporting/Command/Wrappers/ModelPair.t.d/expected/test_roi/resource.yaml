@@ -7,8 +7,7 @@ dbsnp_vcf: /gscuser/aregier/git/genome/fireteam/lib/perl/Genome/VariantReporting
 feature_list_ids:
   ON_TARGET: -1
   SEG_DUP: -1
-reference_fasta: /gscmnt/gc13003/info/test_suite_data/Genome-VariantReporting-Framework-Component-ResourceProvider/v3/reference.fasta
-translations:
-  discovery_tumor: sample_name_1
-  normal: sample_name_2
-  followup_tumor: sample_name_1
+reference_fasta: /gscmnt/gc13003/info/test_suite_data/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/reference.fasta
+discovery_tumor: sample_name_1
+normal: sample_name_2
+followup_tumor: sample_name_1

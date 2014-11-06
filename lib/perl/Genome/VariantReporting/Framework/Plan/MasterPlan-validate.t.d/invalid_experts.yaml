@@ -2,6 +2,8 @@ experts:
     expert_two:
         e2_p1: something
         e2_p2: something else
+        e2_translated1: e2_translated
+        e2_translated2: e2_translated
 reporters:
     reporter_alpha:
         interpreters:

@@ -12,6 +12,8 @@ experts:
             - ON_TARGET
             - SEG_DUP
             - AML_RMG
+        feature_list_ids: feature_list_ids
+        reference_fasta: reference_fasta
         species: 'homo-sapiens'
         plugins:
             - Condel@PLUGIN_DIR@b@2
@@ -20,6 +22,7 @@ experts:
     dbsnp:
         joinx_version: 1.9
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+        vcf: dbsnp_vcf
 reporters:
     'full':
         filters:

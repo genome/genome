@@ -1,14 +1,14 @@
 {
   __test__ => {
         A => {
-               info => "{\n  TST => \"__provided___lookups|ec86bc1427d3359970b506663971da84|ec86bc1427d3359970b506663971da84|__planned__|foo\",\n}",
+               info => "{\n  TST => \"__input___lookups|b040fd2544f0e2b5452e5a3268a2b3d4|b040fd2544f0e2b5452e5a3268a2b3d4|__planned__|foo\",\n}",
              },
       },
 }
 {
   __test__ => {
         T => {
-               info => "{\n  TST => \"__provided___lookups|ec86bc1427d3359970b506663971da84|ec86bc1427d3359970b506663971da84|__planned__|foo\",\n}",
+               info => "{\n  TST => \"__input___lookups|b040fd2544f0e2b5452e5a3268a2b3d4|b040fd2544f0e2b5452e5a3268a2b3d4|__planned__|foo\",\n}",
              },
       },
 }

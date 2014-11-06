@@ -34,7 +34,7 @@ class Genome::VariantReporting::Command::Wrappers::ModelPair {
                 $roi_nospace =~ s/ /_/g;
                 return File::Spec->join($base_output_dir, $roi_nospace); |,
         },
-        resource_file => {
+        translations_file => {
             calculate_from => [qw/ output_dir /],
             calculate => q( File::Spec->join($output_dir, "resource.yaml") ),
         },
@@ -82,8 +82,8 @@ sub create {
     my $self = $class->SUPER::create(@_);
     Genome::Sys->create_directory($self->output_dir);
     $self->generate_sample_legend_file;
-    $self->generate_resource_file;
-    my $provider = Genome::VariantReporting::Framework::Component::ResourceProvider->create_from_file($self->resource_file);
+    $self->generate_translations_file;
+    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->translations_file);
     for my $variant_type (qw(snvs indels)) {
         Genome::Sys->create_directory($self->reports_directory($variant_type));
         my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file($variant_type));
@@ -164,13 +164,14 @@ sub generate_sample_legend_file {
     }
 }
 
-sub generate_resource_file {
+sub generate_translations_file {
     my $self = shift;
 
     return if not $self->is_valid;
-    my $resource = {};
 
-    $resource->{aligned_bam_result_id} = $self->get_aligned_bams;
+    my $translations = $self->get_translations;
+
+    $translations->{aligned_bam_result_id} = $self->get_aligned_bams;
 
     my %feature_list_ids;
     my $on_target_feature_list = Genome::FeatureList->get(name => $self->discovery->region_of_interest_set->name);
@@ -179,17 +180,15 @@ sub generate_resource_file {
     $feature_list_ids{SEG_DUP} = $segdup_feature_list->id;
     # TODO: There has to be a better way...
     $feature_list_ids{AML_RMG} = '0e4973c600244c3f804d54bee6f81145';
-    $resource->{feature_list_ids} = \%feature_list_ids;
-    $resource->{homopolymer_list_id} = '696318bab30d47d49fab9afa845691b7';
+    $translations->{feature_list_ids} = \%feature_list_ids;
+    $translations->{homopolymer_list_id} = '696318bab30d47d49fab9afa845691b7';
 
-    $resource->{reference_fasta} = $self->reference_sequence_build->full_consensus_path("fa");
+    $translations->{reference_fasta} = $self->reference_sequence_build->full_consensus_path("fa");
 
-    $resource->{translations} = $self->get_translations;
+    $translations->{dbsnp_vcf} = $self->discovery->previously_discovered_variations_build->snvs_vcf;
+    $translations->{nhlbi_vcf} = _get_nhlbi_vcf(); 
 
-    $resource->{dbsnp_vcf} = $self->discovery->previously_discovered_variations_build->snvs_vcf;
-    $resource->{nhlbi_vcf} = _get_nhlbi_vcf(); 
-
-    YAML::DumpFile(File::Spec->join($self->resource_file), $resource);
+    YAML::DumpFile(File::Spec->join($self->translations_file), $translations);
 
     return 1;
 }

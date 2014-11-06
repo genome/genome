@@ -11,11 +11,10 @@ class Genome::VariantReporting::Suite::Fpkm::Adaptor {
         sample_name => {
             is => 'Text',
             is_translated => 1,
-        }
-    ],
-    has_provided_output => [
+        },
         fpkm_file => {
             is => 'Path',
+            is_translated => 1,
         },
     ],
 };

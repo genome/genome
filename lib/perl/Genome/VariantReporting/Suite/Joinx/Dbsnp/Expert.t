@@ -7,7 +7,7 @@ use Test::More;
 use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
 use Genome::VariantReporting::Framework::TestHelpers qw(
-    get_resource_provider
+    get_translation_provider
     test_dag_xml
     test_dag_execute
     get_test_dir
@@ -28,7 +28,7 @@ use_ok($pkg) || die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('experts', $pkg->name), $pkg);
 
-my $VERSION = 4; # Bump these each time test data changes
+my $VERSION = 5; # Bump these each time test data changes
 my $RESOURCE_VERSION = 1;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
@@ -45,8 +45,8 @@ $plan->validate();
 
 my $variant_type = 'snvs';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
-my $provider = get_resource_provider(version => $RESOURCE_VERSION);
-$provider->set_attribute(dbsnp_vcf => File::Spec->join($test_dir, 'dbsnp.vcf'));
+my $provider = get_translation_provider(version => $RESOURCE_VERSION);
+$provider->translations({dbsnp_vcf => File::Spec->join($test_dir, 'dbsnp.vcf')});
 
 my $input_vcf = File::Spec->join($test_dir, "$variant_type.vcf.gz");
 test_dag_execute($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $plan);

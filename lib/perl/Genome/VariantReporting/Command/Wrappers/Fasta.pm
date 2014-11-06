@@ -20,7 +20,7 @@ class Genome::VariantReporting::Command::Wrappers::Fasta {
             calculate_from => [qw(model)],
             calculate => q/$model->last_succeeded_build/,
         },
-        resource_file => {
+        translations_file => {
             calculate_from => [qw(output_directory)],
             calculate => q/File::Spec->join($output_directory, "resources.yaml")/,
         },
@@ -45,28 +45,26 @@ class Genome::VariantReporting::Command::Wrappers::Fasta {
 
 sub execute {
     my $self = shift;
-    $self->generate_resource_file;
+    $self->generate_translations_file;
     $self->run_reports;
     $self->combine_snvs_and_indels;
     $self->run_fimo;
     $self->combine_fimo_output;
 }
 
-sub generate_resource_file {
+sub generate_translations_file {
     my $self = shift;
-    my $resource = {};
+    my %translations;
     my @aligned_bams;
     push @aligned_bams, $self->build->tumor_build->merged_alignment_result->id;
-    $resource->{aligned_bam_result_id} = \@aligned_bams;
+    $translations{aligned_bam_result_id} = \@aligned_bams;
 
-    $resource->{reference_fasta} = $self->build->tumor_build->reference_sequence_build->full_consensus_path("fa");
-    my %translations;
-    $translations{tumor} = $self->build->tumor_build->subject->name;
-    $resource->{translations} = \%translations;
+    $translations{reference_fasta} = $self->build->tumor_build->reference_sequence_build->full_consensus_path("fa");
     my %feature_list_ids;
-    $resource->{feature_list_ids} = \%feature_list_ids;
-    $resource->{tumor_sample_name} = $translations{tumor};
-    YAML::DumpFile(File::Spec->join($self->resource_file), $resource);
+    $translations{feature_list_ids} = \%feature_list_ids;
+    $translations{tumor_sample_name} = $translations{tumor};
+    $translations{tumor} = $self->build->tumor_build->subject->name;
+    YAML::DumpFile(File::Spec->join($self->translations_file), \%translations);
 }
 
 sub run_reports {
@@ -79,7 +77,7 @@ sub run_reports {
             variant_type => $variant_type,
             output_directory => $self->report_directory($variant_type),
             plan_file => $self->plan_file($variant_type),
-            resource_file => $self->resource_file,
+            translations_file => $self->translations_file,
             log_directory => $self->log_directory($variant_type),
         );
         Genome::VariantReporting::Command::CreateReport->execute(%params);

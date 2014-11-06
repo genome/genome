@@ -28,9 +28,9 @@ class Genome::VariantReporting::Command::CreateReport {
             is => 'Path',
             doc => 'A plan (yaml) file describing the report generation workflow',
         },
-        resource_file => {
+        translations_file => {
             is => 'Path',
-            doc => 'A resource (yaml) file describing the inputs to the report generation workflow',
+            doc => 'A yaml file containing key-value pairs where the key is a value from the plan file that needs to be translated at runtime',
         },
         log_directory => {
             is => 'Path',
@@ -81,7 +81,7 @@ sub params_for_execute {
         output_directory => $self->output_directory,
         plan_json => $self->plan->as_json,
         provider_json => $self->provider->as_json,
-        translations => $self->provider->get_attribute('translations'),
+        translations => $self->provider->translations,
     );
 }
 
@@ -100,11 +100,12 @@ Memoize::memoize('plan');
 sub provider {
     my $self = shift;
 
-    $self->status_message("Constructing resource-provider from file (%s)", $self->resource_file);
-    my $provider = Genome::VariantReporting::Framework::Component::ResourceProvider->create_from_file($self->resource_file);
-    $self->status_message("Checking for compatibility between resource-provider and plan...");
-    $self->plan->validate_resource_provider($provider);
-    $self->status_message("ResourceProvider is compatible with plan.");
+    $self->status_message("Constructing translation-provider from file (%s)", $self->translations_file);
+    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->translations_file);
+
+    $self->status_message("Checking for compatibility between translations and plan...");
+    $self->plan->validate_translation_provider($provider);
+    $self->status_message("Translations file is compatible with plan.");
     return $provider;
 }
 Memoize::memoize('provider');

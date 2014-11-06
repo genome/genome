@@ -1,5 +1,6 @@
 experts:
     'bam-readcount':
+        aligned_bam_result_id: aligned_bam_result_id
         version: 0.5
         minimum_mapping_quality: 0
         minimum_base_quality: 0
@@ -9,6 +10,8 @@ experts:
     vep:
         ensembl_version: 75
         feature_list_names_and_tags: {}
+        feature_list_ids: {}
+        reference_fasta: reference_fasta
         species: 'homo-sapiens'
         plugins: []
         joinx_version: 1.9

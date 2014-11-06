@@ -1,5 +1,6 @@
 experts:
     'bam-readcount':
+        aligned_bam_result_id: aligned_bam_result_id
         version: 0.5
         minimum_mapping_quality: 0
         minimum_base_quality: 0
@@ -10,6 +11,8 @@ experts:
         ensembl_version: 75
         custom_annotation_tags:
             - ON_TARGET
+        feature_list_ids: feature_list_ids
+        reference_fasta: reference_fasta
         species: 'homo-sapiens'
         plugins:
             - Condel@PLUGIN_DIR@b@2
@@ -18,12 +21,15 @@ experts:
     dbsnp:
         joinx_version: 1.9
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+        vcf: dbsnp_vcf
     nhlbi:
         joinx_version: 1.9
         info_string: 'AAC:PP:CDP:PH:EA_GTC:AA_GTC:MAF'
+        vcf: nhlbi_vcf
     '1kg':
         joinx_version: 1.9
         info_string: 'AF:AFR_AF:AMR_AF'
+        vcf: thousand_genomes_vcf
 reporters:
     'tumor-only':
         filters:

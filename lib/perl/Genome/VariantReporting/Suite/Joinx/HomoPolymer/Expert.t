@@ -7,7 +7,8 @@ use Test::More;
 use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
 use Genome::VariantReporting::Framework::TestHelpers qw(
-    get_resource_provider
+    get_translation_provider
+    get_reference_build
     test_dag_xml
     test_dag_execute
     get_test_dir
@@ -29,7 +30,7 @@ use_ok($pkg) || die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('experts', $pkg->name), $pkg);
 
-my $VERSION = 1; # Bump these each time test data changes
+my $VERSION = 2; # Bump these each time test data changes
 my $RESOURCE_VERSION = 3;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
@@ -43,10 +44,8 @@ set_what_interpreter_x_requires('homo-polymer');
 
 my $variant_type = 'indels';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
-my $provider = get_resource_provider(version => $RESOURCE_VERSION);
-my $reference_sequence_build => Genome::Model::ReferenceSequence->get(
-    $provider->get_attribute('reference_sequence_build_id'),
-);
+my $provider = get_translation_provider(version => $RESOURCE_VERSION);
+my $reference_sequence_build => get_reference_build(version => $RESOURCE_VERSION);
 
 my $feature_list_cmd = Genome::FeatureList::Command::Create->create(
     reference => $reference_sequence_build,
@@ -56,7 +55,7 @@ my $feature_list_cmd = Genome::FeatureList::Command::Create->create(
     name      => "homp_test",
 );
 my $feature_list = $feature_list_cmd->execute;
-$provider->set_attribute(homopolymer_list_id => $feature_list->id);
+$provider->translations({homopolymer_list_id => $feature_list->id});
 
 my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
     File::Spec->join($test_dir, 'plan.yaml'),

@@ -12,6 +12,7 @@ use above "Genome";
 use Test::More;
 use Test::Exception;
 use Exception::Class;
+use Genome::VariantReporting::Framework::Plan::TestHelpers;
 
 my $pkg = 'Genome::VariantReporting::Framework::Component::WithTranslatedInputs';
 use_ok($pkg);
@@ -20,6 +21,24 @@ subtest 'translate' => sub {
     throws_ok(sub {$pkg->translate('old value', undef, 'attribute')}, qr(No translations provided), 'translate dies if no translations are provided');
     eval {$pkg->translate('old value', undef, 'attribute')};
     ok(Exception::Class->caught('NoTranslationsException'), 'Exception is of correct type')
+};
+
+subtest 'translate is many input' => sub {
+    my $component = Test::TranslatedComponent->create(to_translate => ['old_value']);
+    my @new_value = qw(new_value1 new_value2);
+    my $array_translations = {
+        old_value => \@new_value,
+    };
+    $component->translate_inputs($array_translations);
+    is_deeply([$component->to_translate], \@new_value, "Array translation is flattened correctly");
+
+    my $single_translations = {
+        old_value1 => 'new_value1',
+        old_value2 => 'new_value2',
+    };
+    my $component2 = Test::TranslatedComponent->create(to_translate => ['old_value1', 'old_value2']);
+    $component2->translate_inputs($single_translations);
+    is_deeply([$component2->to_translate], \@new_value, "Individual values are correctly inserted in the array");
 };
 
 done_testing;

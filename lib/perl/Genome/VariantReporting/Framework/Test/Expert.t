@@ -42,12 +42,7 @@ my $variant_type = 'snvs';
 my $expected_vcf = File::Spec->join($test_dir, "expected.vcf");
 my $input_vcf = File::Spec->join($test_dir, "input.vcf.gz");
 
-my $provider = Genome::VariantReporting::Framework::Component::ResourceProvider->create(
-    attributes => {
-        __provided__ => [$input_vcf, $input_vcf],
-        translations => {},
-    },
-);
+my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create();
 
 test_dag_execute($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $plan);
 
