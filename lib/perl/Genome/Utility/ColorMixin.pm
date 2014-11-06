@@ -9,7 +9,7 @@ class Genome::Utility::ColorMixin {
             is => 'Boolean',
             is_optional => 1,
             default_value => 1,
-            doc => 'Display report in color.'
+            doc => 'Use color in display.'
         },
     ],
 };
