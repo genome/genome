@@ -13,7 +13,7 @@
 
 [4mOPTIONAL ARGUMENTS[0m
   [1mcolor[0m   Boolean
-    Display report in color. 
+    Use color in display. 
     Default value 'true' if not specified
   [1mnocolor[0m   Boolean
     Make color 'false' 
