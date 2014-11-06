@@ -33,7 +33,6 @@ class Genome::Config::Profile::Item {
         status => {
             is => 'Text',
             valid_values => [ "disabled", "active" ],
-            is_optional => 1,
         },
         model_bridges => {
             is => 'Genome::Config::AnalysisProject::ModelBridge',
