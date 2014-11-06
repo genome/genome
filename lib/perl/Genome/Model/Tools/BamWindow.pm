@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Carp qw(confess);
 
 class Genome::Model::Tools::BamWindow {
     is => 'Command::V2',
@@ -76,17 +77,38 @@ class Genome::Model::Tools::BamWindow {
     },
 };
 
+my %versions_ = (
+    "0.4" => {
+        path => "/usr/bin/bam-window",
+        per_seq => 0,
+    },
+    "0.5" => {
+        path => "/usr/bin/bam-window0.5",
+        per_seq => 1,
+    },
+);
+
+sub get_version {
+    my $self = shift;
+    my $v = $self->version;
+    if (!exists $versions_{$v}) {
+        confess sprintf "Invalid version for bam-window: %s", $v;
+    }
+    return $versions_{$v};
+}
+
 sub execute {
     my $self = shift;
-    
-    my $base_cmd = "bam-window"; #TODO: choose this based on $self->version
+    my $ver = $self->get_version;
+
+    my $base_cmd = $ver->{path};
     my $bam_file = $self->bam_file;
 
     my $options_string = $self->options;
     unless($options_string){
         $options_string = $self->_get_options_string;
     }
-    
+
     my $tmp_file = Genome::Sys->create_temp_file_path;
     my $output_file = $self->output_file;
 
@@ -101,7 +123,7 @@ sub execute {
     }
 
     if ($self->filter_to_chromosomes){
-       $self->_filter_to_chromosomes($tmp_file, $output_file); 
+       $self->_filter_to_chromosomes($tmp_file, $output_file);
     }else{
         Genome::Sys->copy_file($tmp_file, $output_file);
     }
@@ -149,7 +171,7 @@ sub _get_options_string {
 }
 
 sub _filter_to_chromosomes{
-    my ($self, $tmp_file, $output_file) = @_; 
+    my ($self, $tmp_file, $output_file) = @_;
     my @filter_to_chromosomes = $self->filter_to_chromosomes;
     my $ifh = Genome::Sys->open_file_for_reading($tmp_file);
     my $ofh = Genome::Sys->open_file_for_writing($output_file);

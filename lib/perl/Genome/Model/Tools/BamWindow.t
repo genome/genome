@@ -18,7 +18,7 @@ use File::Compare;
 my $class = 'Genome::Model::Tools::BamWindow';
 use_ok($class);
 
-my $test_version = 1;
+my $test_version = 2;
 my $test_dir = File::Spec->join(Genome::Utility::Test->data_dir($class), "v$test_version");
 ok(-e $test_dir, "Test directory $test_dir exists");
 
@@ -31,7 +31,7 @@ ok(-s $input_file, "input bam exists");
 my $output_file = Genome::Sys->create_temp_file_path;
 
 my $cmd = Genome::Model::Tools::BamWindow->create(
-    version => '0.4',
+    version => '0.5',
     bam_file => $input_file,
     output_file => $output_file,
     window_size => 10000,
@@ -47,7 +47,7 @@ is(compare($output_file, $expected),0,"Actual file is the same as the expected f
 my $options_output_file = Genome::Sys->create_temp_file_path;
 
 my $options_cmd = Genome::Model::Tools::BamWindow->create(
-    version => '0.4',
+    version => '0.5',
     bam_file => $input_file,
     output_file => $options_output_file,
     options => '-w 10000 -r -l -s -q 1',
