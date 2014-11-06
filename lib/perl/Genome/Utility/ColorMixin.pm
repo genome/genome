@@ -1,9 +1,9 @@
-package Genome::Command::ColorMixin;
+package Genome::Utility::ColorMixin;
 
 use strict;
 use warnings;
 
-class Genome::Command::ColorMixin {
+class Genome::Utility::ColorMixin {
     has => [
         color => {
             is => 'Boolean',

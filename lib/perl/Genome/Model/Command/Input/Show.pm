@@ -10,7 +10,7 @@ use Genome::Utility::Text "justify";
 
 
 class Genome::Model::Command::Input::Show {
-    is => ['Genome::Command::Viewer', 'Genome::Command::ColorMixin'],
+    is => ['Genome::Command::Viewer', 'Genome::Utility::ColorMixin'],
     has => [
         model => {
             is => 'Genome::Model',

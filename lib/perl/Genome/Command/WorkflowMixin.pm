@@ -12,7 +12,7 @@ use DateTime::Format::Strptime;
 use Date::Calc "Delta_DHMS";
 
 class Genome::Command::WorkflowMixin {
-    is => ['Command::V2', 'Genome::Command::ColorMixin'],
+    is => ['Command::V2', 'Genome::Utility::ColorMixin'],
     has => [
         summary_threshold => {
             is => 'Int',
