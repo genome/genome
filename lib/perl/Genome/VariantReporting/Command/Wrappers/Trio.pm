@@ -6,6 +6,7 @@ use Genome;
 use File::Basename qw(basename);
 use Set::Scalar;
 use List::MoreUtils qw(uniq);
+use File::Slurp qw();
 
 my $DOCM = {
     snvs_build => "a06152c107884ba78b90c5f09be17163",
