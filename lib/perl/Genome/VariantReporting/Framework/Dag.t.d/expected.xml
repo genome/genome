@@ -5,7 +5,6 @@
     <inputproperty>output_directory</inputproperty>
     <inputproperty>plan_json</inputproperty>
     <inputproperty>provider_json</inputproperty>
-    <inputproperty>translations</inputproperty>
     <inputproperty>variant_type</inputproperty>
     <outputproperty>output_directory</outputproperty>
   </operationtype>
@@ -14,7 +13,7 @@
       <inputproperty>input_vcf</inputproperty>
       <inputproperty>output_directory</inputproperty>
       <inputproperty>plan_json</inputproperty>
-      <inputproperty>translations</inputproperty>
+      <inputproperty>provider_json</inputproperty>
       <inputproperty>variant_type</inputproperty>
       <outputproperty>output_directory</outputproperty>
       <outputproperty>result</outputproperty>
@@ -103,7 +102,7 @@
   <link fromOperation="expert_two" fromProperty="output_vcf" toOperation="Generate Reports" toProperty="input_vcf"/>
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="Generate Reports" toProperty="output_directory"/>
   <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Reports" toProperty="plan_json"/>
-  <link fromOperation="input connector" fromProperty="translations" toOperation="Generate Reports" toProperty="translations"/>
+  <link fromOperation="input connector" fromProperty="provider_json" toOperation="Generate Reports" toProperty="provider_json"/>
   <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Reports" toProperty="variant_type"/>
   <link fromOperation="input connector" fromProperty="input_vcf" toOperation="expert_one" toProperty="input_vcf"/>
   <link fromOperation="input connector" fromProperty="plan_json" toOperation="expert_one" toProperty="plan_json"/>

@@ -119,11 +119,6 @@ sub connect_report_generator {
     );
 
     $dag->connect_input(
-        input_property => 'translations',
-        destination => $report_generator_op,
-        destination_property => 'translations',
-    );
-    $dag->connect_input(
         input_property => 'output_directory',
         destination => $report_generator_op,
         destination_property => 'output_directory',

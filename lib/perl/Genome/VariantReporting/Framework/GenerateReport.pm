@@ -23,8 +23,8 @@ class Genome::VariantReporting::Framework::GenerateReport {
             is => 'Text',
             valid_values => ['snvs', 'indels'],
         },
-        translations => {
-            is => 'HASH',
+        provider_json => {
+            is => 'Text',
         },
     ],
     has_param => [
@@ -40,6 +40,14 @@ sub plan {
     return Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_json($self->plan_json);
 }
 Memoize::memoize('plan');
+
+sub translations {
+    my $self = shift;
+    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_json($self->provider_json);
+
+    return $provider->translations;
+}
+Memoize::memoize('translations');
 
 sub execute {
     my $self = shift;
