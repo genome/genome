@@ -25,15 +25,18 @@ my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_fi
 my $output_dir = Genome::Sys->create_temp_directory;
 
 my $translations = { untranslated => 'translated'};
+my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
+    translations => $translations,
+);
 my $generator = $pkg->create(input_vcf => $vcf_file,
                              plan_json => $plan->as_json,
                              variant_type => "snvs",
                              output_directory => $output_dir,
-                             translations => $translations);
+                             provider_json => $provider->as_json);
 ok($generator->isa($pkg), "Generator created ok");
 ok($generator->execute, "Generator executed ok");
 
-my ($epsilon_reporter_object) = grep {$_->isa('Genome::VariantReporting::TestEpsilonReporter')} $generator->create_reporters();
+my ($epsilon_reporter_object) = grep {$_->isa('Genome::VariantReporting::TestEpsilonReporter')} $generator->software_result->create_reporters();
 my $translated_interpreter = $epsilon_reporter_object->interpreters->{interpreter_z};
 is($translated_interpreter->iz_p1, 'translated', 'Attached interpreter\'s parameters were translated correctly');
 

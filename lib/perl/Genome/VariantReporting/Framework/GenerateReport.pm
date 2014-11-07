@@ -3,8 +3,11 @@ package Genome::VariantReporting::Framework::GenerateReport;
 use strict;
 use warnings;
 use Genome;
-use Genome::File::Vcf::Reader;
-use Memoize;
+use Data::Dump qw(pp);
+
+use Genome::VariantReporting::Framework::FileLookup qw(
+    calculate_lookup
+);
 
 class Genome::VariantReporting::Framework::GenerateReport {
     is => 'Command::V2',
@@ -32,63 +35,77 @@ class Genome::VariantReporting::Framework::GenerateReport {
             value => q{-R 'select[mem>16000] rusage[mem=16000]' -M 16000000},
         },
     ],
+    has_optional_output => [
+        software_result => {
+            is => 'Genome::SoftwareResult',
+        },
+    ],
 };
 
-sub plan {
+sub result_class {
+    return 'Genome::VariantReporting::Framework::ReportResult';
+}
+
+sub shortcut {
     my $self = shift;
 
-    return Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_json($self->plan_json);
+    $self->debug_message("Attempting to get a %s with arugments %s",
+        $self->result_class, pp($self->input_hash));
+    my $result = $self->result_class->get_with_lock($self->input_hash);
+    if ($result) {
+        $self->debug_message("Found existing result (%s)", $result->id);
+        $self->software_result($result);
+        $self->symlink_results;
+        return 1;
+    } else {
+        $self->debug_message("Found no existing result.");
+        return 0;
+    }
 }
-Memoize::memoize('plan');
-
-sub translations {
-    my $self = shift;
-    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_json($self->provider_json);
-
-    return $provider->translations;
-}
-Memoize::memoize('translations');
 
 sub execute {
     my $self = shift;
 
-    $self->status_message("Reading from: ".$self->input_vcf."\n");
-
-    my @reporters = $self->create_reporters;
-    $self->initialize_reporters(@reporters);
-
-    my $vcf_reader = Genome::File::Vcf::Reader->new($self->input_vcf);
-    while (my $entry = $vcf_reader->next) {
-        for my $reporter (@reporters) {
-            $reporter->process_entry($entry);
-        }
-    }
-
-    $self->finalize_reporters(@reporters);
+    $self->debug_message("Attempting to get or create a %s with arugments %s",
+        $self->result_class, pp({$self->input_hash}));
+    my $result = $self->result_class->get_or_create($self->input_hash);
+    $self->debug_message("Got or created result (%s)", $result->id);
+    $self->debug_message("Calculated query for result:\n".pp({$result->calculate_query()}));
+    $self->software_result($result);
+    $self->symlink_results;
     return 1;
 }
 
-sub create_reporters {
+sub symlink_results {
     my $self = shift;
 
-    my @reporters;
-    for my $reporter_plan ($self->plan->reporter_plans) {
-        push @reporters, $reporter_plan->object($self->translations);
+    local $@;
+    eval {
+        Genome::Sys->create_directory($self->output_directory);
+        Genome::Sys->symlink_directory(
+            $self->software_result->output_dir,
+            $self->output_directory,
+        );
+    };
+    my $error = $@;
+    if ($error) {
+        $self->error_message("Could not symlink to output_directory because %s", $error);
+        $self->output_directory($self->software_result->output_dir);
     }
-
-    return @reporters;
+    $self->status_message("Outputs located at %s", $self->output_directory);
 }
 
-sub initialize_reporters {
+sub input_hash {
     my $self = shift;
-    map {$_->initialize($self->output_directory)} @_;
-    return;
+    return (
+        input_vcf => $self->input_vcf,
+        input_vcf_lookup => calculate_lookup($self->input_vcf),
+        plan_json => $self->plan_json,
+        variant_type => $self->variant_type,
+        provider_json => $self->provider_json,
+        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
+    );
 }
 
-sub finalize_reporters {
-    my $self = shift;
-    map {$_->finalize()} @_;
-    return;
-}
 
 1;

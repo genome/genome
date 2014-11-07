@@ -17,6 +17,7 @@
       <inputproperty>variant_type</inputproperty>
       <outputproperty>output_directory</outputproperty>
       <outputproperty>result</outputproperty>
+      <outputproperty>software_result</outputproperty>
     </operationtype>
   </operation>
   <operation name="expert_one">
