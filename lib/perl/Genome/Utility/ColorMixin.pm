@@ -1,15 +1,15 @@
-package Genome::Command::ColorMixin;
+package Genome::Utility::ColorMixin;
 
 use strict;
 use warnings;
 
-class Genome::Command::ColorMixin {
+class Genome::Utility::ColorMixin {
     has => [
         color => {
             is => 'Boolean',
             is_optional => 1,
             default_value => 1,
-            doc => 'Display report in color.'
+            doc => 'Use color in display.'
         },
     ],
 };

@@ -13,7 +13,7 @@ use YAML::Syck qw();
 class Genome::Config::AnalysisProject::Command::View {
     is => [
         'Genome::Command::Viewer',
-        'Genome::Command::ColorMixin',
+        'Genome::Command::WithColor',
     ],
 
     has_input => [

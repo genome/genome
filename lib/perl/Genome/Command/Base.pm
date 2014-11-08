@@ -10,7 +10,7 @@ use IO::File;
 require File::Basename;
 
 class Genome::Command::Base {
-    is => ['Genome::Command::ColorMixin', 'Command'],
+    is => ['Genome::Utility::ColorMixin', 'Command'],
     is_abstract => 1,
     has => [
         show_display_command_summary_report => {
