@@ -3,7 +3,6 @@ package Genome::VariantReporting::Framework::Component::Expert::Command;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
-use Data::Dump qw(pp);
 use Set::Scalar;
 use JSON;
 
@@ -16,7 +15,7 @@ use Genome::VariantReporting::Framework::FileLookup qw(
 
 class Genome::VariantReporting::Framework::Component::Expert::Command {
     is_abstract => 1,
-    is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base'],
+    is => ['Genome::Command::DelegatesToResult', 'Genome::VariantReporting::Framework::Component::Base'],
     has_input => [
         input_vcf => {
             is => 'Path',
@@ -43,39 +42,10 @@ sub result_class {
     die "Abstract method 'result_class' must be defined in class $class";
 }
 
-sub shortcut {
-    my $self = shift;
-
-    $self->debug_message("Attempting to get a %s with arugments %s",
-        $self->result_class, pp($self->input_hash));
-    my $result = $self->result_class->get_with_lock($self->input_hash);
-    if ($result) {
-        $self->debug_message("Found existing result (%s) with output_file_path (%s)",
-            $result->id, $result->output_file_path);
-        $self->output_result($result);
-        $self->output_vcf($result->output_file_path);
-        return 1;
-    } else {
-        $self->debug_message("Found no existing result.");
-        return 0;
-    }
-}
-
-sub execute {
-    my $self = shift;
-
-    $self->debug_message("Validating inputs");
-    $self->validate();
-
-    $self->debug_message("Attempting to get or create a %s with arugments %s",
-        $self->result_class, pp({$self->input_hash}));
-    my $result = $self->result_class->get_or_create($self->input_hash);
-    $self->debug_message("Got or created result (%s) with output file path (%s)",
-        $result->id, $result->output_file_path);
-    $self->debug_message("Calculated query for result:\n".pp({$result->calculate_query()}));
+sub post_get_or_create {
+    my ($self, $result) = @_;
     $self->output_result($result);
     $self->output_vcf($result->output_file_path);
-    return 1;
 }
 
 sub input_names {
