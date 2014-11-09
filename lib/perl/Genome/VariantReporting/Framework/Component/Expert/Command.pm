@@ -93,6 +93,7 @@ sub input_hash {
     }
 
     $hash{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
+    delete $hash{user};
     return %hash;
 }
 

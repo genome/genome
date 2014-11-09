@@ -12,6 +12,12 @@ class Genome::Command::DelegatesToResult {
             is => 'Genome::SoftwareResult',
         },
     ],
+    has_optional_input => [
+        user => {
+            is => 'UR::Object',
+            doc => 'To generate a SoftwareResult::User',
+        }
+    ],
 };
 
 sub result_class {
@@ -41,6 +47,7 @@ sub shortcut {
     if ($result) {
         $self->debug_message("Found existing result (%s)", $result->id);
         $self->output_result($result);
+        $self->create_software_result_user('shortcut');
         $self->post_get_or_create;
         return 1;
     } else {
@@ -59,6 +66,7 @@ sub execute {
     if ($result) {
         $self->debug_message("Got or created result (%s)", $result->id);
         $self->output_result($result);
+        $self->create_software_result_user('created');
         $self->post_get_or_create;
         return 1;
     } else {
@@ -67,5 +75,23 @@ sub execute {
     }
 }
 
+sub create_software_result_user {
+    my ($self, $label) = @_;
+
+    if ($self->user) {
+        $self->debug_message(
+            "Making %s(%s) a user of SoftwareResult(%s) with label '%s'",
+            $self->user->class, $self->user->id, $self->output_result->id, $label,
+        );
+        $self->output_result->add_user(user => $self->user, label => $label);
+        return;
+    } else {
+        $self->debug_message("Not making anything a user of " .
+            "SoftwareResult(%s) because no 'user' was provided as an input",
+            $self->output_result->id
+        );
+        return;
+    }
+}
 
 1;
