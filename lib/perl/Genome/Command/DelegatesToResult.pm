@@ -36,7 +36,7 @@ sub shortcut {
     my $self = shift;
 
     $self->debug_message("Attempting to get a %s with arguments %s",
-        $self->result_class, pp($self->input_hash));
+        $self->result_class, pp({$self->input_hash}));
     my $result = $self->result_class->get_with_lock($self->input_hash);
     if ($result) {
         $self->debug_message("Found existing result (%s)", $result->id);
