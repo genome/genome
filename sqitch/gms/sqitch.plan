@@ -331,3 +331,4 @@ config.tag_subject_mapping [config_tag config.subject_mapping] 2014-09-16T20:14:
 process_schema [empty_db] 2014-11-08T02:40:17Z David Morton <dmorton@linus265.gsc.wustl.edu> # Add process_schema
 process_schema_permissions [process_schema] 2014-11-08T02:49:44Z David Morton <dmorton@linus265.gsc.wustl.edu> # permissions on process schema
 process_process [process_schema] 2014-11-08T03:18:00Z David Morton <dmorton@linus265.gsc.wustl.edu> # table process.process
+process.process.status_index [process_process] 2014-11-09T20:58:16Z David Morton <dmorton@linus265.gsc.wustl.edu> # index process.status
