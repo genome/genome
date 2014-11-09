@@ -34,11 +34,6 @@ class Genome::VariantReporting::Framework::GenerateReport {
             value => q{-R 'select[mem>16000] rusage[mem=16000]' -M 16000000},
         },
     ],
-    has_optional_output => [
-        software_result => {
-            is => 'Genome::SoftwareResult',
-        },
-    ],
 };
 
 sub result_class {
@@ -58,8 +53,7 @@ sub input_hash {
 }
 
 sub post_get_or_create {
-    my ($self, $result) = @_;
-    $self->software_result($result);
+    my $self = shift;
     $self->symlink_results;
 }
 
@@ -70,14 +64,14 @@ sub symlink_results {
     eval {
         Genome::Sys->create_directory($self->output_directory);
         Genome::Sys->symlink_directory(
-            $self->software_result->output_dir,
+            $self->output_result->output_dir,
             $self->output_directory,
         );
     };
     my $error = $@;
     if ($error) {
         $self->error_message("Could not symlink to output_directory because %s", $error);
-        $self->output_directory($self->software_result->output_dir);
+        $self->output_directory($self->output_result->output_dir);
     }
     $self->status_message("Outputs located at %s", $self->output_directory);
 }

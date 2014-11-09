@@ -36,7 +36,7 @@ my $generator = $pkg->create(input_vcf => $vcf_file,
 ok($generator->isa($pkg), "Generator created ok");
 ok($generator->execute, "Generator executed ok");
 
-my ($epsilon_reporter_object) = grep {$_->isa('Genome::VariantReporting::TestEpsilonReporter')} $generator->software_result->create_reporters();
+my ($epsilon_reporter_object) = grep {$_->isa('Genome::VariantReporting::TestEpsilonReporter')} $generator->output_result->create_reporters();
 my $translated_interpreter = $epsilon_reporter_object->interpreters->{interpreter_z};
 is($translated_interpreter->iz_p1, 'translated', 'Attached interpreter\'s parameters were translated correctly');
 

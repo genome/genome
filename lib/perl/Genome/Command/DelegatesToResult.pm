@@ -7,6 +7,11 @@ use Data::Dump qw(pp);
 
 class Genome::Command::DelegatesToResult {
     is => ['Command::V2'],
+    has_output => [
+        output_result => {
+            is => 'Genome::SoftwareResult',
+        },
+    ],
 };
 
 sub result_class {
@@ -24,7 +29,6 @@ sub input_hash {
 # Do whatever you want to after a result was created or looked up.
 sub post_get_or_create {
     my $self = shift;
-    my $result = shift;
     return;
 }
 
@@ -36,7 +40,8 @@ sub shortcut {
     my $result = $self->result_class->get_with_lock($self->input_hash);
     if ($result) {
         $self->debug_message("Found existing result (%s)", $result->id);
-        $self->post_get_or_create($result);
+        $self->output_result($result);
+        $self->post_get_or_create;
         return 1;
     } else {
         $self->debug_message("Found no existing result.");
@@ -53,7 +58,8 @@ sub execute {
 
     if ($result) {
         $self->debug_message("Got or created result (%s)", $result->id);
-        $self->post_get_or_create($result);
+        $self->output_result($result);
+        $self->post_get_or_create;
         return 1;
     } else {
         $self->debug_message("Failed to get or create result.");

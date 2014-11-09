@@ -16,8 +16,8 @@
       <inputproperty>provider_json</inputproperty>
       <inputproperty>variant_type</inputproperty>
       <outputproperty>output_directory</outputproperty>
+      <outputproperty>output_result</outputproperty>
       <outputproperty>result</outputproperty>
-      <outputproperty>software_result</outputproperty>
     </operationtype>
   </operation>
   <operation name="expert_one">
