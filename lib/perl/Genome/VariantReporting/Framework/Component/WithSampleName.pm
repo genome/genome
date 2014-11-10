@@ -22,7 +22,7 @@ sub sample_index {
     return $header->index_for_sample_name($self->sample_name);
 }
 
-Memoize::memoize("sample_index");
+Memoize::memoize("sample_index", LIST_CACHE => 'MERGE');
 
 sub sample_name_with_suffix {
     my $self = shift;

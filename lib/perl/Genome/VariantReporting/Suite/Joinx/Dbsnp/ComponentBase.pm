@@ -13,6 +13,6 @@ sub _caf_parser {
     return Genome::File::Vcf::DbsnpAFParser->new($header);
 }
 
-Memoize::memoize('_caf_parser');
+Memoize::memoize('_caf_parser', LIST_CACHE => 'MERGE');
 1;
 

@@ -90,7 +90,7 @@ sub get_class {
             join("\n    ", $self->names($accessor)));
     }
 }
-Memoize::memoize('get_class');
+Memoize::memoize('get_class', LIST_CACHE => 'MERGE');
 
 sub _truncate_name {
     my $name = shift;

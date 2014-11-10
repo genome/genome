@@ -81,7 +81,7 @@ sub sample_index {
 
     return $header->index_for_sample_name($self->tumor_sample_name);
 }
-Memoize::memoize("sample_index");
+Memoize::memoize("sample_index", LIST_CACHE => 'MERGE');
 
 sub get_left_flanking_region {
     my $self = shift;

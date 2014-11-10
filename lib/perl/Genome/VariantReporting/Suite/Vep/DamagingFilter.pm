@@ -37,7 +37,7 @@ sub vep_parser {
     my $header = shift;
     return new Genome::File::Vcf::VepConsequenceParser($header);
 }
-Memoize::memoize('vep_parser');
+Memoize::memoize('vep_parser', LIST_CACHE => 'MERGE');
 
 sub is_damaging {
     my $transcript = shift;

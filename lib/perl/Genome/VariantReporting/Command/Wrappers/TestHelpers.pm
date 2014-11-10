@@ -28,7 +28,7 @@ my $PROVIDER_TEST_DIR = Genome::Utility::Test->data_dir("Genome::VariantReportin
 sub _get_pp {
     return Genome::Test::Factory::ProcessingProfile::SomaticValidation->setup_object();
 }
-Memoize::memoize("_get_pp");
+Memoize::memoize("_get_pp", LIST_CACHE => 'MERGE');
 
 my $fl_counter = -1;
 sub _get_or_create_feature_list {
@@ -194,17 +194,17 @@ sub _get_alignment_result {
         });
     return $result;
 }
-Memoize::memoize("_get_alignment_result");
+Memoize::memoize("_get_alignment_result", LIST_CACHE => 'MERGE');
 
 sub _get_control_alignment_result {
     Genome::InstrumentData::AlignmentResult::Merged->__define__(id => "-533e0bb1a99f4fbe9e31cf6e19907133", output_dir => $TEST_DIR);
 }
-Memoize::memoize("_get_control_alignment_result");
+Memoize::memoize("_get_control_alignment_result", LIST_CACHE => 'MERGE');
 
 sub _get_third_alignment_result {
     Genome::InstrumentData::AlignmentResult::Merged->__define__(id => "-ghij4i5j230509ug345", output_dir => $TEST_DIR);
 }
-Memoize::memoize("_get_third_alignment_result");
+Memoize::memoize("_get_third_alignment_result", LIST_CACHE => 'MERGE');
 
 sub compare_directories {
     my ($expected_dir, $output_dir) = @_;

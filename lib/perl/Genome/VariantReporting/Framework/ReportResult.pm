@@ -61,7 +61,7 @@ sub plan {
 
     return Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_json($self->plan_json);
 }
-Memoize::memoize('plan');
+Memoize::memoize('plan', LIST_CACHE => 'MERGE');
 
 sub translations {
     my $self = shift;
@@ -69,7 +69,7 @@ sub translations {
 
     return $provider->translations;
 }
-Memoize::memoize('translations');
+Memoize::memoize('translations', LIST_CACHE => 'MERGE');
 
 sub _run {
     my $self = shift;
