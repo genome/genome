@@ -2,6 +2,6 @@
 
 BEGIN;
 
-SELECT 1/count(*) FROM pg_class WHERE relkind = 'i' and relname = 'process_process_status_idx';
+SELECT 1/count(*) FROM pg_class WHERE relkind = 'i' and relname = 'process_status_idx';
 
 ROLLBACK;

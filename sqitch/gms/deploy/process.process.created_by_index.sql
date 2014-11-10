@@ -3,6 +3,6 @@
 
 BEGIN;
 
-CREATE INDEX process_process_created_by_idx ON process.process USING btree (created_by);
+CREATE INDEX process_created_by_idx ON process.process USING btree (created_by);
 
 COMMIT;

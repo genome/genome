@@ -2,6 +2,6 @@
 
 BEGIN;
 
-DROP INDEX process.process_process_created_by_idx;
+DROP INDEX process.process_created_by_idx;
 
 COMMIT;

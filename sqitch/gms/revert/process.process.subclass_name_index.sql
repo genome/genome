@@ -2,6 +2,6 @@
 
 BEGIN;
 
-DROP INDEX process.process_process_subclass_name_idx;
+DROP INDEX process.process_subclass_name_idx;
 
 COMMIT;

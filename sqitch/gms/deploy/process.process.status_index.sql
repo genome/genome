@@ -3,6 +3,6 @@
 
 BEGIN;
 
-CREATE INDEX process_process_status_idx ON process.process USING btree (status);
+CREATE INDEX process_status_idx ON process.process USING btree (status);
 
 COMMIT;

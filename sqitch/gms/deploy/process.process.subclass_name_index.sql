@@ -3,7 +3,7 @@
 
 BEGIN;
 
-CREATE INDEX process_process_subclass_name_idx ON process.process
+CREATE INDEX process_subclass_name_idx ON process.process
     USING btree (subclass_name);
 
 COMMIT;
