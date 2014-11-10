@@ -23,7 +23,7 @@ class Genome::Config::AnalysisProject::Command::Create {
             is => 'Boolean',
             is_optional => 1,
             default_value => 0,
-            doc => 'If specified, this will flag this analysis project as being production data. All models will be created accordingly.',
+            doc => 'If specified, this will flag this analysis project as being production data (and not CLIA-related). All models will be created accordingly.',
         },
         no_config => {
             is => 'Boolean',
@@ -58,6 +58,10 @@ EOS
 
 sub execute {
     my $self = shift;
+
+    if($self->is_cle and $self->is_production) {
+        die('The --is-cle and --is-production options are mutually exclusive.');
+    }
 
     $self->_validate_name($self->name);
     my @params = (

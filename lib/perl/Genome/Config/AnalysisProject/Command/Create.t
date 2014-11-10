@@ -36,4 +36,16 @@ ok($res2, 'second command executed successfully');
 isa_ok($res2, 'Genome::Config::AnalysisProject', 'command returned a Genome::Config::AnalysisProject');
 is($res2->run_as, Genome::Sys->username, 'run_as set correctly');
 
+my $cmd3 = Genome::Config::AnalysisProject::Command::Create->create(
+    name => 'test bad create options',
+    is_production => 1,
+    is_cle => 1,
+);
+ok($cmd3, 'constructed third create command');
+isa_ok($cmd3, 'Genome::Config::AnalysisProject::Command::Create');
+my $res3 = eval { $cmd3->execute };
+my $err3 = $@;
+ok(!$res3, 'third command fails with bad options');
+ok($err3, 'error thrown with bad options');
+
 done_testing();
