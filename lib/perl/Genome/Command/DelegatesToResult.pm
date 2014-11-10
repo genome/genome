@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Data::Dump qw(pp);
+use Params::Validate qw(validate_pos :types);
 
 class Genome::Command::DelegatesToResult {
     is => ['Command::V2'],
@@ -41,38 +42,33 @@ sub post_get_or_create {
 sub shortcut {
     my $self = shift;
 
-    $self->debug_message("Attempting to get a %s with arguments %s",
-        $self->result_class, pp({$self->input_hash}));
-    my $result = $self->result_class->get_with_lock($self->input_hash);
-    if ($result) {
-        $self->debug_message("Found existing result (%s)", $result->id);
-        $self->output_result($result);
-        $self->create_software_result_user('shortcut');
-        $self->post_get_or_create;
-        return 1;
-    } else {
-        $self->debug_message("Found no existing result.");
-        return 0;
-    }
+    return $self->_fetch_result('get_with_lock', 'shortcut');
 }
 
 sub execute {
     my $self = shift;
 
-    $self->debug_message("Attempting to get or create a %s with arguments %s",
-        $self->result_class, pp({$self->input_hash}));
-    my $result = $self->result_class->get_or_create($self->input_hash);
+    return $self->_fetch_result('get_or_create', 'created');
+}
+
+sub _fetch_result {
+    my ($self, $method, $user_label) = validate_pos(@_, OBJECT, SCALAR, SCALAR);
+
+    $self->debug_message("Attempting to %s a %s with arguments %s",
+        $method, $self->result_class, pp({$self->input_hash}));
+    my $result = $self->result_class->$method($self->input_hash);
 
     if ($result) {
-        $self->debug_message("Got or created result (%s)", $result->id);
+        $self->debug_message("%s returned result (%s)", $method, $result->id);
         $self->output_result($result);
-        $self->create_software_result_user('created');
+        $self->create_software_result_user($user_label);
         $self->post_get_or_create;
         return 1;
     } else {
-        $self->debug_message("Failed to get or create result.");
+        $self->debug_message("Failed to %s result.", $method);
         return 0;
     }
+
 }
 
 sub create_software_result_user {
