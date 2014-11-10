@@ -14,8 +14,8 @@ use Genome::Test::Factory::InstrumentData::Solexa;
 my $class = 'Genome::Config::AnalysisProject::Command::AddMenuItem';
 use_ok($class);
 
-my $inst_data_1 = Genome::InstrumentData::Imported->create();
-my $inst_data_2 = Genome::InstrumentData::Imported->create();
+my $inst_data_1 = Genome::Test::Factory::InstrumentData::Solexa->setup_object;
+my $inst_data_2 = Genome::Test::Factory::InstrumentData::Solexa->setup_object;
 
 my $ap = Genome::Config::AnalysisProject->create(
     name => 'Test Project'
