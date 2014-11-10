@@ -32,6 +32,12 @@ class Genome::Process {
             is => 'Text',
             doc => 'The current status of the process',
         },
+        status_events => {
+            is => 'Genome::Process::StatusEvent',
+            where => [ -order_by => [ "timestamp" ] ],
+            is_many => 1,
+            reverse_as => 'process',
+        },
         created_at => {
             is => 'Timestamp',
             is_optional => 1,
@@ -77,12 +83,43 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return unless $self;
 
-    $self->status('New');
-    $self->created_at(UR::Context->current->now);
+    $self->update_status('New');
     $self->subclass_name($class);
     $self->software_revision(Genome::Sys->snapshot_revision);
 
     return $self;
+}
+
+my $SET_TIMESTAMP_ON_STATUS = {
+    New => 'created_at',
+    Running => 'started_at',
+    Crashed => 'ended_at',
+    Succeeded => 'ended_at',
+};
+
+sub update_status {
+    my ($self, $new_status) = validate_pos(@_, OBJECT, SCALAR);
+
+    my $old_status = $self->status;
+
+    my $now = UR::Context->current->now;
+    my $event = Genome::Process::StatusEvent->create(
+        process => $self,
+        old_status => $old_status,
+        new_status => $new_status,
+        timestamp => $now,
+    );
+
+    if ($event) {
+        my $timestamp_accessor = $SET_TIMESTAMP_ON_STATUS->{$new_status};
+        if ($timestamp_accessor) {
+            $self->$timestamp_accessor($now);
+        }
+        $self->status($new_status);
+    } else {
+        die sprintf("Cannot transition Process (%s) from (%s) to (%s)",
+            $self->id, $old_status, $new_status);
+    }
 }
 
 
