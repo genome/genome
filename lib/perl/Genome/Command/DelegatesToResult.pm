@@ -34,9 +34,10 @@ sub input_hash {
 }
 
 # Do whatever you want to after a result was created or looked up.
+# Return undef on failure.
 sub post_get_or_create {
     my $self = shift;
-    return;
+    return 1;
 }
 
 sub shortcut {
@@ -62,8 +63,7 @@ sub _fetch_result {
         $self->debug_message("%s returned result (%s)", $method, $result->id);
         $self->output_result($result);
         $self->create_software_result_user($user_label);
-        $self->post_get_or_create;
-        return 1;
+        return $self->post_get_or_create;
     } else {
         $self->debug_message("Failed to %s result.", $method);
         return 0;
