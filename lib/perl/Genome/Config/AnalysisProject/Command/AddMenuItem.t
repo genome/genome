@@ -25,7 +25,7 @@ my $b1 = Genome::Config::AnalysisProject::InstrumentDataBridge->create( analysis
 
 my $b2 = Genome::Config::AnalysisProject::InstrumentDataBridge->create( analysis_project => $ap, instrument_data => $inst_data_2, status => 'processed');
 
-my $item = Genome::Config::AnalysisMenu::Item->create( name => 'test_item', file_path => '/tmp/idontexist');
+my $item = Genome::Config::AnalysisMenu::Item->create( name => 'test_item', file_path => '/tmp/idontexist', description => 'test');
 
 my $cmd = $class->create(
     analysis_project => $ap,
