@@ -3,7 +3,7 @@ package Genome::VariantReporting::Framework::Component::WithSampleName;
 use strict;
 use warnings;
 use Genome;
-use Memoize qw(memoize);
+use Memoize qw();
 
 class Genome::VariantReporting::Framework::Component::WithSampleName {
     is => ['Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],

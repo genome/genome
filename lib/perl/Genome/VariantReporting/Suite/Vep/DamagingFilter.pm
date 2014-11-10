@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::VepConsequenceParser;
+use Memoize qw();
 
 class Genome::VariantReporting::Suite::Vep::DamagingFilter {
     is => 'Genome::VariantReporting::Framework::Component::Filter',

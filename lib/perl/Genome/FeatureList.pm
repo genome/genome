@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Genome::Utility::File::Mode qw(mode);
+use Memoize qw();
 use Text::ParseWords;
 
 class Genome::FeatureList {

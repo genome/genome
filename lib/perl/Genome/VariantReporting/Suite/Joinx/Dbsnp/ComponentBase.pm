@@ -3,6 +3,7 @@ package Genome::VariantReporting::Suite::Joinx::Dbsnp::ComponentBase;
 use strict;
 use warnings;
 use Genome;
+use Memoize qw();
 
 class Genome::VariantReporting::Suite::Joinx::Dbsnp::ComponentBase {
 };

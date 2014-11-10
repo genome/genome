@@ -20,6 +20,7 @@ use File::DirCompare;
 use File::Basename qw(dirname basename);
 use Sub::Install qw(reinstall_sub);
 use Exporter 'import';
+use Memoize qw();
 
 our @EXPORT_OK = qw(get_build succeed_build compare_directories);
 my $TEST_DIR = __FILE__.".d";

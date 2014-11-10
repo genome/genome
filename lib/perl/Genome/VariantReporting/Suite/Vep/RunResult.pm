@@ -7,6 +7,7 @@ use Sys::Hostname;
 use IPC::Run qw(run);
 use File::Basename qw(dirname);
 use JSON;
+use Memoize qw();
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 

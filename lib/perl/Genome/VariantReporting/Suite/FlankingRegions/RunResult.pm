@@ -8,6 +8,7 @@ use IPC::Run qw(run);
 use File::Basename qw(dirname);
 use Genome::File::Vcf::Writer;
 use Genome::File::Vcf::Reader;
+use Memoize qw();
 
 
 class Genome::VariantReporting::Suite::FlankingRegions::RunResult {

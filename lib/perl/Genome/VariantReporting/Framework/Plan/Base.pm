@@ -3,7 +3,7 @@ package Genome::VariantReporting::Framework::Plan::Base;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
-use Memoize qw(memoize);
+use Memoize qw();
 use Params::Validate qw(validate_pos :types);
 
 class Genome::VariantReporting::Framework::Plan::Base {

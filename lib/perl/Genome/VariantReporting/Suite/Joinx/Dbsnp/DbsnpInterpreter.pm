@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::DbsnpAFParser;
+use Memoize qw();
 
 class Genome::VariantReporting::Suite::Joinx::Dbsnp::DbsnpInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
