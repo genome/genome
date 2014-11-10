@@ -36,7 +36,6 @@ use_ok($pkg) || die;
         my $self = shift;
         return (test_name => $self->test_name);
     }
-    1;
 }
 {
     package TestResult;
@@ -48,7 +47,6 @@ use_ok($pkg) || die;
     class TestResult {
         is => 'Genome::SoftwareResult',
     };
-    1;
 }
 {
     package TestUser;
@@ -63,7 +61,6 @@ use_ok($pkg) || die;
             name => {},
         ],
     };
-    1;
 }
 
 my $USER1 = TestUser->create(name => 'USER1');
