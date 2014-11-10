@@ -336,3 +336,4 @@ process.process.created_by_index [process_process] 2014-11-09T21:08:19Z David Mo
 process.process.times_index [process_process] 2014-11-09T21:17:28Z David Morton <dmorton@linus265.gsc.wustl.edu> # index various process.process timestamps
 process.process.subclass_name_index [process_process] 2014-11-09T22:46:24Z David Morton <dmorton@linus265.gsc.wustl.edu> # index process.process subclass_name
 process_status_event [process_schema] 2014-11-10T00:56:36Z David Morton <dmorton@linus265.gsc.wustl.edu> # add process.status_event table
+process.status_event.timestamp_index [process_status_event] 2014-11-10T02:48:04Z David Morton <dmorton@linus265.gsc.wustl.edu> # index process.status_event timestamp
