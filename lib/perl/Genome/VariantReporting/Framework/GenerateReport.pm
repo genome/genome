@@ -20,7 +20,6 @@ class Genome::VariantReporting::Framework::GenerateReport {
         },
         output_directory => {
             is => 'Path',
-            is_output => 1,
         },
         variant_type => {
             is => 'Text',
@@ -61,17 +60,18 @@ sub post_get_or_create {
 sub symlink_results {
     my $self = shift;
 
+    my $actual_output_directory = $self->output_directory;
     try {
         Genome::Sys->create_directory($self->output_directory);
         Genome::Sys->symlink_directory(
             $self->output_result->output_dir,
-            $self->output_directory,
+            $actual_output_directory,
         );
     } catch {
         $self->error_message("Could not symlink to output_directory because %s", $_);
-        $self->output_directory($self->output_result->output_dir);
+        $actual_output_directory = $self->output_result->output_dir;
     };
-    $self->status_message("Outputs located at %s", $self->output_directory);
+    $self->status_message("Outputs located at %s", $actual_output_directory);
 }
 
 

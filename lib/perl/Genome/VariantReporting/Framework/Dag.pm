@@ -124,9 +124,9 @@ sub connect_report_generator {
         destination_property => 'output_directory',
     );
     $dag->connect_output(
-        output_property => 'output_directory',
+        output_property => 'result',
         source => $report_generator_op,
-        source_property => 'output_directory',
+        source_property => 'result',
     );
 }
 
