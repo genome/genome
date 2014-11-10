@@ -4,7 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome::File::Vcf::Reader;
 use Genome;
-use Memoize;
+use Memoize qw();
 
 class Genome::VariantReporting::Framework::ReportResult {
     is => 'Genome::SoftwareResult::Stageable',
