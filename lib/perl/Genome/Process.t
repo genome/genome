@@ -22,7 +22,7 @@ use_ok($pkg) || die;
     use Genome;
 
     class TestProcess {
-        is => ['Genome::Process'],
+        is => [$pkg],
     };
 
     1;
