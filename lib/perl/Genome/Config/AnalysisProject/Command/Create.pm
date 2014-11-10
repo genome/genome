@@ -112,6 +112,7 @@ sub _add_config_items_to_project {
         Genome::Config::Profile::Item->create(
             analysis_menu_item => $_,
             analysis_project => $project,
+            status => 'active',
         );
     }
 

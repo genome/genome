@@ -24,4 +24,6 @@ my $res = $cmd->execute;
 ok($res, 'command executed successfully');
 isa_ok($res, 'Genome::Config::AnalysisProject', 'command returned a Genome::Config::AnalysisProject');
 
+ok(UR::Context->commit, 'created objects can be committed');
+
 done_testing();
