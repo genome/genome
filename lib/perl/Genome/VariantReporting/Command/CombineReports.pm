@@ -341,7 +341,7 @@ sub get_master_header {
     my @reports = $self->reports;
     return $self->get_header($reports[0]);
 }
-memoize('get_master_header', LIST_CACHE => 'MERGE');
+memoize('get_master_header', SCALAR_CACHE => 'MERGE');
 
 sub get_master_header_with_source {
     my $self = shift;
