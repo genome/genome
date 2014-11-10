@@ -22,7 +22,7 @@ use_ok($pkg) || die;
     use Genome;
 
     class TestCommand {
-        is => ['Genome::Command::DelegatesToResult'],
+        is => [$pkg],
         has => [
             test_name => {},
         ],
