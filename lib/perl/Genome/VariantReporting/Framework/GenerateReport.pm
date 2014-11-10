@@ -3,6 +3,7 @@ package Genome::VariantReporting::Framework::GenerateReport;
 use strict;
 use warnings;
 use Genome;
+use Try::Tiny qw(try catch);
 
 use Genome::VariantReporting::Framework::FileLookup qw(
     calculate_lookup
@@ -60,19 +61,16 @@ sub post_get_or_create {
 sub symlink_results {
     my $self = shift;
 
-    local $@;
-    eval {
+    try {
         Genome::Sys->create_directory($self->output_directory);
         Genome::Sys->symlink_directory(
             $self->output_result->output_dir,
             $self->output_directory,
         );
-    };
-    my $error = $@;
-    if ($error) {
-        $self->error_message("Could not symlink to output_directory because %s", $error);
+    } catch {
+        $self->error_message("Could not symlink to output_directory because %s", $_);
         $self->output_directory($self->output_result->output_dir);
-    }
+    };
     $self->status_message("Outputs located at %s", $self->output_directory);
 }
 
