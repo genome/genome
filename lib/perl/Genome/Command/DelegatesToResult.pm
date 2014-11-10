@@ -80,14 +80,13 @@ sub create_software_result_user {
             $self->user->class, $self->user->id, $self->output_result->id, $label,
         );
         $self->output_result->add_user(user => $self->user, label => $label);
-        return;
     } else {
         $self->debug_message("Not making anything a user of " .
             "SoftwareResult(%s) because no 'user' was provided as an input",
             $self->output_result->id
         );
-        return;
     }
+    return;
 }
 
 1;
