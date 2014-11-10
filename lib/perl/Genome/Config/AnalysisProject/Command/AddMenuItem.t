@@ -40,4 +40,6 @@ ok(Genome::Config::Profile::Item->get(analysis_project => $ap, analysis_menu_ite
 ok($b1->status eq 'new', 'first instrument data set to new');
 ok($b2->status eq 'new', 'second instrument data set to new');
 
+ok(UR::Context->commit(), 'created objects are valid');
+
 done_testing();
