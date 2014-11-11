@@ -11,6 +11,8 @@ BEGIN {
 
 use above 'Genome';
 
+require File::Temp;
+require Genome::Utility::Test;
 use Test::More;
 
 use_ok('Genome::Model::GenotypeMicroarray::Command::ExtractToVcf') or die;
@@ -20,11 +22,45 @@ my $build = Genome::Model::GenotypeMicroarray::Test::example_build();
 my $variation_list_build = $build->dbsnp_build;
 my $instrument_data = $build->instrument_data;
 
-my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
-my $output_tsv = $tmpdir.'/genotypes';
+# RESOLVE SOURCE
+my $extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create(
+    sample => $build->model->subject,
+    variation_list_build => $variation_list_build,
+); # FIXME test sample priority
+$extract->resolve_source;
+is($extract->source, $instrument_data, 'resolve_source from sample is instdata');
 
+$extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create(
+    model => $build->model,
+);
+$extract->resolve_source;
+is($extract->source, $instrument_data, 'resolve_source from model is instdata');
+
+$extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create(
+    instrument_data => $instrument_data,
+    variation_list_build => $variation_list_build,
+);
+$extract->resolve_source;
+is($extract->source, $instrument_data, 'resolve_source from instdata is instdata');
+
+# SUCCESS
+my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
+my $output_vcf = $tmpdir.'/genotypes.vcf';
+$extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create(
+    build => $build,
+    output => $output_vcf,
+);
+ok($extract, 'create extract command');
+ok($extract->execute, 'execute extract command');
+is_deeply($extract->alleles, { 'TC' => 1, 'AA' => 1, 'CC' => 2, 'AG' => 3, 'TT' => 1, 'GG' => 1 }, 'alleles match');
+is($extract->genotypes_input, 9, 'genotypes input');
+is($extract->genotypes_output, 9, 'genotypes output');
+is($extract->genotypes_filtered, 0, 'genotypes filtered');
+Genome::Utility::Test::compare_ok($output_vcf, $build->original_genotype_vcf_file_path, 'vcf matches');
+
+# FAILS
 # no source
-my $extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create();
+$extract = Genome::Model::GenotypeMicroarray::Command::ExtractToVcf->create();
 ok(!$extract->execute, 'failed to execute command w/o source');
 is($extract->error_message, 'No source given! Can be build, model, instrument data or sample.', 'correct error');
 
