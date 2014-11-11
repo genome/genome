@@ -98,7 +98,6 @@ sub create {
     my $self = $class->SUPER::create(@_);
     eval {
         $self->_create_model_group();
-        $self->_set_run_as();
     };
     if(my $error = $@) {
         $self->delete();
@@ -149,18 +148,6 @@ sub _create_model_group {
     my $mg_name = sprintf("%s - %s - Analysis Project", $self->name, $self->id);
     my $mg = Genome::ModelGroup->create(name => $mg_name);
     $self->model_group($mg);
-}
-
-sub _set_run_as {
-    my $self = shift;
-
-    return if $self->run_as;
-
-    if ($self->is_cle) {
-        $self->run_as('cle');
-    } else {
-        $self->run_as('apipe-builder');
-    }
 }
 
 sub _is_updated {
