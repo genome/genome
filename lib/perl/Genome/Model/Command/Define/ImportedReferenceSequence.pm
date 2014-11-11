@@ -97,11 +97,15 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
             doc => 'Indicates if this reference could be rederived from other internal results or if it is an external import',
         },
     ],
-    has_transient => [
+    has_transient_optional => [
         result_build_id => {
             is => 'Text',
-            is_optional => 1,
             doc => 'newly created build ID of reference sequence model',
+        },
+        analysis_projects => {
+            is => 'Genome::Config::AnalysisProject',
+            is_many => 1,
+            doc => 'Analysis Project to which to associate the new model (if any)',
         },
     ],
 };
@@ -306,6 +310,7 @@ sub _get_or_create_model {
             'processing_profile_id' => $irs_pp->id,
             'name' => $self->model_name,
             'is_rederivable' => $self->is_rederivable,
+            'analysis_projects' => [$self->analysis_projects],
         );
 
         if($model) {
