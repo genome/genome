@@ -33,7 +33,7 @@ class Genome::Config::AnalysisProject::Command::View {
             is => 'Text',
             valid_values => ['verbose', 'terse', 'quiet'],
             default_value => 'terse',
-            doc => 'How to configuration items',
+            doc => 'How much detail to display about configuration',
         },
         disabled_configs => {
             is => 'Boolean',
@@ -58,11 +58,21 @@ class Genome::Config::AnalysisProject::Command::View {
         fast_model_summary => {
             is => 'Boolean',
             default_value => 0,
-            doc => "Use fast model summary that does not due 'Build Needed' check",
+            doc => "Use fast model summary that does not do 'Build Needed' check",
         },
     ],
 };
 
+sub help_detail {
+    return <<EOHELP;
+View information about an analysis-project.
+
+For the --config parameter, the effect of the various options is:
+  quiet:   no configuration shown
+  terse:   information about each configuration file shown
+  verbose: in addition to the terse output, the full configuration shown
+EOHELP
+}
 
 my %STATUS_COLORS = (
     # shared values
