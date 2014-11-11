@@ -5,6 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 use Data::Dump qw(pp);
 use Params::Validate qw(validate_pos :types);
+use Try::Tiny qw(try catch);
 
 class Genome::Command::DelegatesToResult {
     is => ['Command::V2'],
@@ -43,13 +44,43 @@ sub post_get_or_create {
 sub shortcut {
     my $self = shift;
 
-    return $self->_fetch_result('get_with_lock', 'shortcut');
+    return $self->_protect('shortcut',
+        sub {$self->_fetch_result('get_with_lock', 'shortcut')});
 }
 
 sub execute {
     my $self = shift;
 
-    return $self->_fetch_result('get_or_create', 'created');
+    return $self->_protect('execute',
+        sub {$self->_fetch_result('get_or_create', 'created')});
+}
+
+sub _protect {
+    my ($self, $name, $coderef) = validate_pos(@_, OBJECT, SCALAR, CODEREF);
+
+    my $transaction = UR::Context::Transaction->begin();
+    my ($rv, $error);
+    try {
+        $rv = $coderef->();
+    } catch {
+        $error = $_;
+    };
+
+    if (!$error && $transaction->commit()) {
+        return $rv;
+    } else {
+        my $transaction_error = $transaction->error_message();
+        if ($transaction_error) {
+            $self->error_message("Transaction error in %s: %s", $name, $transaction_error);
+        } elsif ($error) {
+            $self->error_message("Exception in %s: %s", $name, $error);
+        } else {
+            $self->error_message("Unknown error in %s", $name);
+        }
+
+        $transaction->rollback();
+        return;
+    }
 }
 
 sub _fetch_result {

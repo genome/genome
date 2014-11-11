@@ -5,6 +5,7 @@ use warnings FATAL => 'all';
 
 use Test::More;
 use above 'Genome';
+use Sub::Override qw();
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -88,6 +89,22 @@ check_sr_user($USER2, 'shortcut');
 $cmd = TestCommand->create(test_name => 'bar');
 $cmd->execute();
 is_deeply([$cmd->output_result->users], [], "No users created when 'user' is not passed as an input");
+
+subtest 'exception_safety' => sub {
+    my $cmd = TestCommand->create(test_name => 'exception_safe');
+    my $override = Sub::Override->new(
+        'Genome::Command::DelegatesToResult::_fetch_result' => sub {die 'test'});
+
+    is($cmd->shortcut(), undef, 'shortcut returns undef instead of dying');
+    my $error_message = $cmd->error_message();
+    like($error_message, qr/Exception in shortcut: test/, 'Found appropriate error message for shortcut failure');
+
+    is($cmd->execute(), undef, 'execute returns undef instead of dying');
+    $error_message = $cmd->error_message();
+    like($error_message, qr/Exception in execute: test/, 'Found appropriate error message for execute failure');
+
+    $override->restore();
+};
 
 done_testing();
 
