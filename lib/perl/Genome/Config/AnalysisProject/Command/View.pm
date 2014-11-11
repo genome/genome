@@ -514,7 +514,7 @@ sub _write_config_item_body {
     my $yaml = YAML::Syck::Dump($config_data);
 
     if($self->config eq 'parsed') {
-        my @potential_ids = $yaml =~ /([[:xdigit:]]{9,})/g;
+        my @potential_ids = $yaml =~ /([[:xdigit:]]{6,})/g;
         for my $id (uniq @potential_ids) {
             if(my $entity = $self->_find_matching_entity($id)) {
                 my $display_name = $entity->__display_name__;
