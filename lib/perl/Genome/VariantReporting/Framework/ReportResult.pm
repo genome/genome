@@ -29,6 +29,9 @@ class Genome::VariantReporting::Framework::ReportResult {
         input_vcf => {
             is => 'Path',
         },
+        plan => {
+            is => 'Genome::VariantReporting::Framework::Plan::MasterPlan',
+        }
     ],
 };
 
@@ -59,9 +62,11 @@ sub resolve_allocation_disk_group_name {
 sub plan {
     my $self = shift;
 
-    return Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_json($self->plan_json);
+    unless (defined($self->__plan)) {
+        $self->__plan(Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_json($self->plan_json));
+    }
+    return $self->__plan;
 }
-Memoize::memoize('plan', LIST_CACHE => 'MERGE');
 
 sub translations {
     my $self = shift;
