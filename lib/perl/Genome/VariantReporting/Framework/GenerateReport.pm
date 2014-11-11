@@ -55,6 +55,7 @@ sub input_hash {
 sub post_get_or_create {
     my $self = shift;
     $self->symlink_results;
+    return 1;
 }
 
 sub symlink_results {

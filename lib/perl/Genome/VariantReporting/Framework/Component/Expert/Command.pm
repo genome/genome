@@ -45,6 +45,7 @@ sub result_class {
 sub post_get_or_create {
     my $self = shift;
     $self->output_vcf($self->output_result->output_file_path);
+    return 1;
 }
 
 sub input_names {
