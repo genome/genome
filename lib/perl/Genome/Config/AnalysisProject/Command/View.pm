@@ -31,7 +31,7 @@ class Genome::Config::AnalysisProject::Command::View {
         },
         config => {
             is => 'Text',
-            valid_values => ['verbose', 'terse', 'quiet'],
+            valid_values => ['parsed', 'verbose', 'terse', 'quiet'],
             default_value => 'terse',
             doc => 'How much detail to display about configuration',
         },
@@ -71,6 +71,7 @@ For the --config parameter, the effect of the various options is:
   quiet:   no configuration shown
   terse:   information about each configuration file shown
   verbose: in addition to the terse output, the full configuration shown
+  parsed:  same as verbose, but attempts to convert IDs to display names
 EOHELP
 }
 
@@ -398,7 +399,7 @@ sub _write_config_items {
         if ($self->config eq 'terse') {
             $self->_write_terse_config_items($handle);
 
-        } elsif ($self->config eq 'verbose') {
+        } elsif ($self->config eq 'verbose' or $self->config eq 'parsed') {
             $self->_write_verbose_config_items($handle);
         }
     }
@@ -512,9 +513,30 @@ sub _write_config_item_body {
     my $config_data = Genome::Config::Parser->parse($config_item->file_path);
     my $yaml = YAML::Syck::Dump($config_data);
 
+    if($self->config eq 'parsed') {
+        my @potential_ids = $yaml =~ /([[:xdigit:]]{9,})/g;
+        for my $id (@potential_ids) {
+            if(my $entity = $self->_find_matching_entity($id)) {
+                my $display_name = $entity->__display_name__;
+                $yaml =~ s/\Q$id\E/$display_name/;
+            }
+        }
+    }
+
     $yaml =~ s/^/    /gm;
 
     print $handle $yaml, "\n";
+}
+
+sub _find_matching_entity {
+    my ($self, $query) = @_;
+
+    my $response = Genome::Search->search($query);
+    my @docs = $response->docs;
+    my ($doc) = grep { $_->value_for('object_id') eq $query } @docs;
+    return unless $doc;
+
+    return Genome::Search->get_subject_from_doc($doc);
 }
 
 
