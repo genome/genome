@@ -3,7 +3,6 @@ package Genome::VariantReporting::Reporter::WithHeader;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
-use Memoize qw();
 use Set::Scalar;
 
 class Genome::VariantReporting::Reporter::WithHeader {
@@ -25,6 +24,9 @@ class Genome::VariantReporting::Reporter::WithHeader {
     },
     has_transient_optional => [
         _legend_fh => {},
+        available_fields_dict => {
+            is => 'HASH',
+        },
     ],
 };
 
@@ -32,7 +34,7 @@ sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__;
 
-    my %available_fields = $self->available_fields_dict();
+    my %available_fields = %{$self->available_fields_dict()};
     for my $header ($self->headers) {
         my $error_desc;
         if( defined($available_fields{$header}) and $self->header_is_unavailable($header) ) {
@@ -94,23 +96,25 @@ sub print_headers {
 sub available_fields_dict {
     my $self = shift;
 
-    my @interpreters = values %{$self->interpreters};
-    my %available_fields;
-    for my $interpreter (@interpreters) {
-        for my $field ($interpreter->available_fields) {
-            if (defined $available_fields{$field}) {
-                die $self->error_message("Fields are not unique. Field: %s, Interpreters: %s and %s",
-                    $field, $interpreter->name, $available_fields{$field}->{interpreter});
-            }
-            $available_fields{$field} = {
-                interpreter => $interpreter->name,
-                field => $field,
+    unless (defined($self->__available_fields_dict)) {
+        my @interpreters = values %{$self->interpreters};
+        my %available_fields;
+        for my $interpreter (@interpreters) {
+            for my $field ($interpreter->available_fields) {
+                if (defined $available_fields{$field}) {
+                    die $self->error_message("Fields are not unique. Field: %s, Interpreters: %s and %s",
+                        $field, $interpreter->name, $available_fields{$field}->{interpreter});
+                }
+                $available_fields{$field} = {
+                    interpreter => $interpreter->name,
+                    field => $field,
+                }
             }
         }
+        $self->__available_fields_dict(\%available_fields);
     }
-    return %available_fields;
+    return $self->__available_fields_dict;
 }
-Memoize::memoize('available_fields_dict', SCALAR_CACHE => 'MERGE');
 
 # Default report method
 # Prints the fields in order of the headers.
@@ -119,7 +123,7 @@ sub report {
     my $self = shift;
     my $interpretations = shift;
 
-    my %fields = $self->available_fields_dict();
+    my %fields = %{$self->available_fields_dict()};
     for my $allele (keys %{$interpretations->{($self->requires_interpreters)[0]}}) {
         my @outputs;
         for my $header ($self->headers()) {
@@ -170,7 +174,7 @@ sub unavailable_headers {
 sub write_legend_file {
     my $self = shift;
 
-    my %fields = $self->available_fields_dict;
+    my %fields = %{$self->available_fields_dict};
     my $interpreters = $self->interpreters;
     $self->_legend_fh->print("Headers\n");
     my $unavailable_headers = Set::Scalar->new($self->unavailable_headers);
