@@ -69,8 +69,7 @@ sub symlink_results {
             $self->output_directory,
         );
     } catch {
-        $self->error_message("Could not symlink to output_directory because %s", $_);
-        $self->output_directory($self->output_result->output_dir);
+        die sprintf("Could not symlink to output_directory because %s", $_);
     };
     $self->status_message("Outputs located at %s", $self->output_directory);
 }
