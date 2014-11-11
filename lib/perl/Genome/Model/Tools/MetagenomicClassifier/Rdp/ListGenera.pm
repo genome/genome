@@ -3,38 +3,63 @@ package Genome::Model::Tools::MetagenomicClassifier::Rdp::ListGenera;
 use strict;
 use warnings;
 
-use Bio::SeqIO;
-require Genome::Utility::MetagenomicClassifier::Rdp;
-require Genome::Utility::MetagenomicClassifier::Rdp::TrainingSet;
+require Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet;
 
 class Genome::Model::Tools::MetagenomicClassifier::Rdp::ListGenera {
     is => 'Command',
-    has_optional => [
+    has_optional => {
         training_set => {
             type => 'String',
-            doc => 'name of training set (broad)',
+            valid_values => [ Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->valid_training_sets ],
+            doc => 'Name of training set (broad)',
         },
         training_path => {
             type => 'String',
-            doc => 'name of training set (broad)',
+            doc => 'Path to training set.',
         },
-    ],
+    },
+    has_optional_transient => {
+        _training_set => { is => 'Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet', },
+    },
 };
+
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+    return @errors if @errors;
+
+    if ( $self->training_set and $self->training_path ) {
+        return (
+            UR::Object::Tag->create(
+                type => 'invalid',
+                properties => [qw/ training_path training_set /],
+                desc => 'Both training_set and training_path are specified! Please only include one option.', 
+            )
+        );
+    }
+
+    my $training_set;
+    if ( $self->training_set ) {
+        $training_set = Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->create_from_training_set_name(
+            $self->training_set
+        );
+        $self->training_path( $training_set->training_path );
+    }
+    else {
+        $training_set = Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->create(
+            training_path => $self->training_path,
+        );
+    }
+    $self->_training_set($training_set);
+
+    return;
+}
 
 sub execute {
     my $self = shift;
-    
 
-    my $path = $self->training_path;
-    unless ($path) {
-        $path = Genome::Utility::MetagenomicClassifier::Rdp->get_training_path($self->training_set);
-    }
-
-    my $training_set = Genome::Utility::MetagenomicClassifier::Rdp::TrainingSet->create(path => $path);
-
-    my @genera = @{$training_set->get_genera};
-
-    foreach my $genus (@genera) {
+    foreach my $genus ( @{$self->_training_set->get_genera} ) {
         print _to_string($genus) . "\n";
     }
 
@@ -92,5 +117,3 @@ EOS
 
 1;
 
-#$HeadURL$
-#$Id$
