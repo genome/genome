@@ -37,6 +37,11 @@ class Genome::VariantReporting::Command::CreateReport {
             doc => 'The directory where log files will be written.',
         },
     ],
+    has_transient_optional => [
+        plan => {
+            is => 'Genome::VariantReporting::Framework::Plan::MasterPlan',
+        },
+    ],
 };
 
 sub __errors__ {
@@ -87,14 +92,16 @@ sub params_for_execute {
 sub plan {
     my $self = shift;
 
-    $self->status_message("Constructing plan from file (%s)", $self->plan_file);
-    my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file);
-    $self->status_message("Validating plan...");
-    $plan->validate();
-    $self->status_message("Plan is valid.");
-    return $plan;
+    unless (defined($self->__plan)) {
+        $self->status_message("Constructing plan from file (%s)", $self->plan_file);
+        my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file);
+        $self->status_message("Validating plan...");
+        $plan->validate();
+        $self->status_message("Plan is valid.");
+        $self->__plan($plan);
+    }
+    return $self->__plan;
 }
-Memoize::memoize('plan', LIST_CACHE => 'MERGE');
 
 sub provider {
     my $self = shift;
