@@ -6,7 +6,7 @@
     <inputproperty>plan_json</inputproperty>
     <inputproperty>provider_json</inputproperty>
     <inputproperty>variant_type</inputproperty>
-    <outputproperty>result</outputproperty>
+    <outputproperty>output_directory</outputproperty>
   </operationtype>
   <operation name="Generate Reports">
     <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -15,6 +15,7 @@
       <inputproperty>plan_json</inputproperty>
       <inputproperty>provider_json</inputproperty>
       <inputproperty>variant_type</inputproperty>
+      <outputproperty>output_directory</outputproperty>
       <outputproperty>output_result</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
@@ -97,7 +98,7 @@
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from provider and plan" toProperty="variant_type"/>
     <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run expert_two" toProperty="input_vcf"/>
   </operation>
-  <link fromOperation="Generate Reports" fromProperty="result" toOperation="output connector" toProperty="result"/>
+  <link fromOperation="Generate Reports" fromProperty="output_directory" toOperation="output connector" toProperty="output_directory"/>
   <link fromOperation="expert_one" fromProperty="output_vcf" toOperation="expert_two" toProperty="input_vcf"/>
   <link fromOperation="expert_two" fromProperty="output_vcf" toOperation="Generate Reports" toProperty="input_vcf"/>
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="Generate Reports" toProperty="output_directory"/>
