@@ -21,7 +21,7 @@ my $classification = $classifier->classify($seq);
 ok($classification, 'got classification');
 
 my $i = 0;
-my @taxa = (qw/ Root Bacteria Firmicutes Bacilli Bacillales Pasteuriaceae Pasteuria /);
+my @taxa = (qw/ Root Bacteria Planctomycetes Planctomycetia Planctomycetales Planctomycetaceae Pirellula /);
 for my $rank (qw/ root domain phylum class order family genus /) {
     is($classification->{$rank}->{id}, $taxa[$i], "$rank: $taxa[$i]");
     is($classification->{$rank}->{confidence}, '1.0', 'confidence: 1.0');
