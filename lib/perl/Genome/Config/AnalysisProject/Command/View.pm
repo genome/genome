@@ -8,7 +8,7 @@ use Genome::Utility::Text qw(justify);
 
 use List::Util qw(max sum);
 use YAML::Syck qw();
-
+use List::MoreUtils qw(uniq);
 
 class Genome::Config::AnalysisProject::Command::View {
     is => [
@@ -515,10 +515,10 @@ sub _write_config_item_body {
 
     if($self->config eq 'parsed') {
         my @potential_ids = $yaml =~ /([[:xdigit:]]{9,})/g;
-        for my $id (@potential_ids) {
+        for my $id (uniq @potential_ids) {
             if(my $entity = $self->_find_matching_entity($id)) {
                 my $display_name = $entity->__display_name__;
-                $yaml =~ s/\Q$id\E/$display_name/;
+                $yaml =~ s/\Q$id\E/$display_name/g;
             }
         }
     }
