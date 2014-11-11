@@ -519,6 +519,8 @@ sub _write_config_item_body {
             if(my $entity = $self->_find_matching_entity($id)) {
                 my $display_name = $entity->__display_name__;
                 $yaml =~ s/\b\Q$id\E\b/$display_name/g;
+            } else {
+                $self->warning_message('No Genome entity found for ID "%s" in configuration %s.', $id, $config_item->id);
             }
         }
     }
