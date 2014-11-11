@@ -6,7 +6,6 @@ use Genome;
 use List::Util qw(first);
 use List::MoreUtils qw(firstidx);
 use Set::Scalar;
-use Memoize;
 
 class Genome::VariantReporting::Command::CombineReports {
     is => 'Command',
@@ -48,6 +47,11 @@ class Genome::VariantReporting::Command::CombineReports {
             doc => 'Hash of report => TAG If entry_sources are specified, a column will be added to the combined report with a tag on each entry indicating which report it originally came from',
         },
     ],
+    has_transient_optional => [
+        _master_header => {
+            is => 'ARRAY',
+        },
+    ],
 };
 
 sub execute {
@@ -81,7 +85,7 @@ sub columns_to_split {
     return grep {
         my $field = $_;
         first {$field =~ $_} $self->split_indicators
-    } $self->get_master_header;
+    } @{$self->get_master_header};
 }
 
 sub move_file_to_output {
@@ -107,7 +111,7 @@ sub combine_files {
                 separator => $self->separator,
             );
             my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
-                headers => [$self->get_master_header],
+                headers => $self->get_master_header,
                 print_headers => 0,
                 separator => $self->separator,
                 output => $file_to_combine,
@@ -285,7 +289,7 @@ sub validate {
 
     Genome::Sys->validate_file_for_writing($self->output_file);
 
-    my $master_header = Set::Scalar->new($self->get_master_header);
+    my $master_header = Set::Scalar->new(@{$self->get_master_header});
     for my $report (@reports_with_size) {
         Genome::Sys->validate_file_for_reading($report);
 
@@ -316,7 +320,7 @@ sub get_sort_column_numbers {
     # If the header is provided by name, we have to find the indices
     my @indices;
     if ($self->contains_header) {
-        my @header = $self->get_master_header;
+        my @header = @{$self->get_master_header};
         for my $column ($self->sort_columns) {
             my $index = firstidx { $_ eq $column } @header;
             if ($index == -1) {
@@ -332,24 +336,28 @@ sub get_sort_column_numbers {
     if (@indices) {
         return @indices;
     } else {
-        die $self->error_message('Failed to get the indices for the sort columns (%s) in the master header (%s)', $self->sort_columns, join(",", $self->get_master_header) );
+        die $self->error_message('Failed to get the indices for the sort columns (%s) in the master header (%s)', $self->sort_columns, join(",", @{$self->get_master_header}) );
     }
 }
 
 sub get_master_header {
     my $self = shift;
-    my @reports = $self->reports;
-    return $self->get_header($reports[0]);
+
+    unless (defined($self->_master_header)) {
+        my @reports = $self->reports;
+        my @header = $self->get_header($reports[0]);
+        $self->_master_header(\@header);
+    }
+    return $self->_master_header;
 }
-memoize('get_master_header', SCALAR_CACHE => 'MERGE');
 
 sub get_master_header_with_source {
     my $self = shift;
     if ($self->entry_sources) {
-        return ($self->get_master_header, "Source");
+        return (@{$self->get_master_header}, "Source");
     }
     else {
-        return $self->get_master_header;
+        return @{$self->get_master_header};
     }
 }
 

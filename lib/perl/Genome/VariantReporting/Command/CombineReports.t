@@ -32,7 +32,7 @@ subtest "test with headers" => sub {
 
     my @expected_header = qw(chr pos data1 data2 data3);
     is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
-    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
+    is_deeply($cmd->get_master_header, \@expected_header, 'Master header looks as expected');
 
     is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
     is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
@@ -61,7 +61,7 @@ subtest "test with headers with source" => sub {
 
     my @expected_header = qw(chr pos data1 data2 data3);
     is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
-    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
+    is_deeply($cmd->get_master_header, \@expected_header, 'Master header looks as expected');
 
     is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
     is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
@@ -81,7 +81,7 @@ subtest "test with different orders of headers" => sub {
 
     my @expected_header = qw(chr pos data1 data2 data3);
     is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
-    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
+    is_deeply($cmd->get_master_header, \@expected_header, 'Master header looks as expected');
 
     is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
     is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
@@ -101,7 +101,7 @@ subtest "test without headers" => sub {
 
     my @expected_header = qw(1 2 3 4);
     is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
-    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
+    is_deeply($cmd->get_master_header, \@expected_header, 'Master header looks as expected');
 
     is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
     is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
@@ -130,7 +130,7 @@ subtest "test without headers with source" => sub {
 
     my @expected_header = qw(1 2 3 4);
     is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
-    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
+    is_deeply($cmd->get_master_header, \@expected_header, 'Master header looks as expected');
 
     is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
     is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
@@ -178,7 +178,7 @@ subtest "with split" => sub {
 
     my @expected_header = qw(chr pos data1 data2 split1 split2);
     is_deeply([$cmd->get_header($report_c)], \@expected_header, 'Header looks as expected');
-    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
+    is_deeply($cmd->get_master_header, \@expected_header, 'Master header looks as expected');
 
     is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
     is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
