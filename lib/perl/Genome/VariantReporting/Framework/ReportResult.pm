@@ -4,7 +4,6 @@ use strict;
 use warnings FATAL => 'all';
 use Genome::File::Vcf::Reader;
 use Genome;
-use Memoize qw();
 
 class Genome::VariantReporting::Framework::ReportResult {
     is => 'Genome::SoftwareResult::Stageable',
@@ -31,7 +30,10 @@ class Genome::VariantReporting::Framework::ReportResult {
         },
         plan => {
             is => 'Genome::VariantReporting::Framework::Plan::MasterPlan',
-        }
+        },
+        translations => {
+            is => 'HASH',
+        },
     ],
 };
 
@@ -70,11 +72,13 @@ sub plan {
 
 sub translations {
     my $self = shift;
-    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_json($self->provider_json);
 
-    return $provider->translations;
+    unless ($self->__translations) {
+        my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_json($self->provider_json);
+        $self->__translations($provider->translations);
+    }
+    return $self->__translations;
 }
-Memoize::memoize('translations', LIST_CACHE => 'MERGE');
 
 sub _run {
     my $self = shift;
