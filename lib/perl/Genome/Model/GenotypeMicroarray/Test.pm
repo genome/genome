@@ -7,7 +7,7 @@ require Genome::Test::Factory::InstrumentData::Imported;
 require File::Temp;
 
 sub testdir {
-    return $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/v6';
+    return $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/v7';
 }
 
 my %cache;
@@ -101,7 +101,7 @@ sub instrument_data {
         sequencing_platform => 'infinium',
         import_source_name => 'WUGC',
         import_date => '2014-01-01 00:00:00',
-        genotype_file => testdir().'/instdata/snpreport/genotypes.tsv',
+        genotype_file => testdir().'/instdata/snpreport/2879594813',
     );
     die 'Failed to define instrument data' if not $cache{instrument_data};
 
