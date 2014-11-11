@@ -41,6 +41,9 @@ class Genome::VariantReporting::Command::CreateReport {
         plan => {
             is => 'Genome::VariantReporting::Framework::Plan::MasterPlan',
         },
+        provider => {
+            is => 'Genome::VariantReporting::Framework::Component::RuntimeTranslations',
+        },
     ],
 };
 
@@ -106,15 +109,17 @@ sub plan {
 sub provider {
     my $self = shift;
 
-    $self->status_message("Constructing translation-provider from file (%s)", $self->translations_file);
-    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->translations_file);
+    unless (defined($self->__provider)) {
+        $self->status_message("Constructing translation-provider from file (%s)", $self->translations_file);
+        my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->translations_file);
 
-    $self->status_message("Checking for compatibility between translations and plan...");
-    $self->plan->validate_translation_provider($provider);
-    $self->status_message("Translations file is compatible with plan.");
-    return $provider;
+        $self->status_message("Checking for compatibility between translations and plan...");
+        $self->plan->validate_translation_provider($provider);
+        $self->status_message("Translations file is compatible with plan.");
+        $self->__provider($provider);
+    }
+    return $self->__provider;
 }
-Memoize::memoize('provider', LIST_CACHE => 'MERGE');
 
 sub dag {
     my $self = shift;
