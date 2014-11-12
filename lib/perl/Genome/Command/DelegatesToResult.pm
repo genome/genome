@@ -58,7 +58,6 @@ sub execute {
 sub _protect {
     my ($self, $name, $coderef) = validate_pos(@_, OBJECT, SCALAR, CODEREF);
 
-    my $transaction = UR::Context::Transaction->begin();
     my ($rv, $error);
     try {
         $rv = $coderef->();
@@ -66,20 +65,11 @@ sub _protect {
         $error = $_;
     };
 
-    if (!$error && $transaction->commit()) {
-        return $rv;
-    } else {
-        my $transaction_error = $transaction->error_message();
-        if ($transaction_error) {
-            $self->error_message("Transaction error in %s: %s", $name, $transaction_error);
-        } elsif ($error) {
-            $self->error_message("Exception in %s: %s", $name, $error);
-        } else {
-            $self->error_message("Unknown error in %s", $name);
-        }
-
-        $transaction->rollback();
+    if ($error) {
+        $self->error_message("Exception in %s: %s", $name, $error);
         return;
+    } else {
+        return $rv;
     }
 }
 
