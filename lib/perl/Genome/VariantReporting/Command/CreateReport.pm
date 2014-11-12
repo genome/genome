@@ -3,7 +3,6 @@ package Genome::VariantReporting::Command::CreateReport;
 use strict;
 use warnings FATAL => 'all';
 use Genome::VariantReporting::Framework::Dag qw(generate_dag);
-use Memoize qw();
 use Genome;
 
 class Genome::VariantReporting::Command::CreateReport {
@@ -44,6 +43,9 @@ class Genome::VariantReporting::Command::CreateReport {
         provider => {
             is => 'Genome::VariantReporting::Framework::Component::RuntimeTranslations',
         },
+        dag => {
+            is => 'Genome::WorkflowBuilder::DAG',
+        }
     ],
 };
 
@@ -124,15 +126,16 @@ sub provider {
 sub dag {
     my $self = shift;
 
-    $self->status_message("Constructing workflow from plan.");
-    my $dag = generate_dag($self->plan, $self->variant_type);
+    unless (defined($self->__dag)) {
+        $self->status_message("Constructing workflow from plan.");
+        my $dag = generate_dag($self->plan, $self->variant_type);
 
-    $self->status_message("Setting log-directory to (%s)", $self->log_directory);
-    Genome::Sys->create_directory($self->log_directory);
-    $dag->log_dir($self->log_directory);
-
-    return $dag;
+        $self->status_message("Setting log-directory to (%s)", $self->log_directory);
+        Genome::Sys->create_directory($self->log_directory);
+        $dag->log_dir($self->log_directory);
+        $self->__dag($dag);
+    }
+    return $self->__dag;
 }
-Memoize::memoize('dag', LIST_CACHE => 'MERGE');
 
 1;
