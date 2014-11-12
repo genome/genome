@@ -90,7 +90,7 @@ sub create {
     my $self = $class->SUPER::create(%params);
     return unless $self;
 
-    $self->update_status('New');
+    $self->status('New');
 
     return $self;
 }
@@ -102,8 +102,10 @@ my $SET_TIMESTAMP_ON_STATUS = {
     Succeeded => 'ended_at',
 };
 
-sub update_status {
-    my ($self, $new_status) = validate_pos(@_, OBJECT, SCALAR);
+sub status {
+    my ($self, $new_status) = validate_pos(@_, OBJECT,
+        {type => SCALAR, optional=> 1});
+    return $self->__status unless $new_status;
 
     my $old_status = $self->status;
 
@@ -120,11 +122,12 @@ sub update_status {
         if ($timestamp_accessor) {
             $self->$timestamp_accessor($now);
         }
-        $self->status($new_status);
+        $self->__status($new_status);
     } else {
         die sprintf("Cannot transition Process (%s) from (%s) to (%s)",
             $self->id, $old_status, $new_status);
     }
+    return $self->__status;
 }
 
 
