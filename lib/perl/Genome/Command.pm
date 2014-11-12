@@ -41,4 +41,10 @@ my %command_map = (
 
 $Genome::Command::SUB_COMMAND_MAPPING = \%command_map;
 
+use Genome::Command::Base;
+%Command::V2::ALTERNATE_FROM_CLASS = (
+    %Command::V2::ALTERNATE_FROM_CLASS,
+    %Genome::Command::Base::ALTERNATE_FROM_CLASS,
+);
+
 1;
