@@ -16,8 +16,6 @@ use Genome::Test::Factory::Sample;
 use Genome::Utility::Test;
 Genome::Report::Email->silent();
 
-use File::Spec;
-
 my $pkg = 'Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledContigReference';
 use_ok($pkg) or die();
 
