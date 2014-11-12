@@ -46,6 +46,7 @@ ok($p, "Created TestProcess object");
 
 ok($p->software_revision, 'software_revision automatically set');
 ok($p->status, 'status automatically set');
+is($p->subclass_name, 'TestProcess', 'subclass_name is properly set');
 ok(defined($p->created_at), 'created_at automatically set');
 is(scalar(@{[$p->status_events]}), 1, 'one status_event created');
 

@@ -84,7 +84,6 @@ sub create {
     return unless $self;
 
     $self->update_status('New');
-    $self->subclass_name($class);
     $self->software_revision(Genome::Sys->snapshot_revision);
 
     return $self;
