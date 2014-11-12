@@ -25,8 +25,8 @@ class Genome::Model::GenotypeMicroarray::Command::ExtractToCsv {
         fields => {
             is => 'Text',
             is_many => 1,
-            valid_values => [qw/ chromosome position alleles reference id sample_name log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 / ],
-            default_value => [qw/ chromosome position alleles reference id sample_name log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 / ],
+            valid_values => [qw/ chromosome position alleles reference id sample_name log_r_ratio gc_score cnv_value cnv_confidence build b_allele_freq allele1 allele2 / ],
+            default_value => [qw/ chromosome position alleles reference id sample_name log_r_ratio gc_score cnv_value cnv_confidence b_allele_freq allele1 allele2 / ],
             doc => 'The fields to include in the output CSV output.',
         },
         separator => {
