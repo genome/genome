@@ -18,7 +18,8 @@ my $inst_data_1 = Genome::Test::Factory::InstrumentData::Solexa->setup_object;
 my $inst_data_2 = Genome::Test::Factory::InstrumentData::Solexa->setup_object;
 
 my $ap = Genome::Config::AnalysisProject->create(
-    name => 'Test Project'
+    name => 'Test Project',
+    run_as => 'nobody',
 );
 
 my $b1 = Genome::Config::AnalysisProject::InstrumentDataBridge->create( analysis_project => $ap, instrument_data => $inst_data_1, status => 'processed');
