@@ -55,6 +55,7 @@ class Genome::Process {
         },
         software_revision => {
             is => 'Text',
+            is_mutable => 0,
             doc => 'The version of the Genome code the process was created with',
         },
         results => {
@@ -80,11 +81,16 @@ class Genome::Process {
 sub create {
     my $class = shift;
 
-    my $self = $class->SUPER::create(@_);
+    my ($bx, @extra) = $class->define_boolexpr(@_);
+    my %params = ($bx->params_list,
+        software_revision => Genome::Sys->snapshot_revision,
+        @extra,
+    );
+
+    my $self = $class->SUPER::create(%params);
     return unless $self;
 
     $self->update_status('New');
-    $self->software_revision(Genome::Sys->snapshot_revision);
 
     return $self;
 }
