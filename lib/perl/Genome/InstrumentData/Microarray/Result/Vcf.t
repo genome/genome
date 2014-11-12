@@ -20,7 +20,7 @@ use Genome::Test::Factory::Build;
 my $package = 'Genome::InstrumentData::Microarray::Result::Vcf';
 
 use_ok($package);
-my $test_dir = Genome::Utility::Test->data_dir_ok($package, "v1");
+my $test_dir = Genome::Utility::Test->data_dir_ok($package, "v2");
 
 my ($sample, $dbsnp_build) = setup_objects();
 

@@ -101,6 +101,11 @@ our $format_types = {
         name => 'alleles',
         header => ',Number=1,Type=String,Description="Alleles called from the microarray chip">',
     },
+    BAF => {
+        id => 'BAF',
+        name => 'b_allele_freq',
+        header => ',Number=1,Type=Float,Description="B allele frequency">',
+    },
     CNV_CONF => {
         id => 'CNV_CONF',
         name => 'cnv_confidence',
