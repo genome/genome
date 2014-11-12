@@ -151,6 +151,7 @@ sub _resolve_source_for_model {
 
     my $build = $self->model->last_succeeded_build;
     if ( not $build ) {
+        $self->variation_list_build( $self->model->dbsnp_build ); 
         $self->instrument_data( $self->model->instrument_data );
         return $self->_resolve_source_for_instrument_data;
     }
