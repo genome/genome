@@ -8,7 +8,7 @@ use Genome::Utility::Text qw(justify);
 
 use List::Util qw(max sum);
 use YAML::Syck qw();
-
+use List::MoreUtils qw(uniq);
 
 class Genome::Config::AnalysisProject::Command::View {
     is => [
@@ -31,9 +31,9 @@ class Genome::Config::AnalysisProject::Command::View {
         },
         config => {
             is => 'Text',
-            valid_values => ['verbose', 'terse', 'quiet'],
+            valid_values => ['parsed', 'verbose', 'terse', 'quiet'],
             default_value => 'terse',
-            doc => 'How to configuration items',
+            doc => 'How much detail to display about configuration',
         },
         disabled_configs => {
             is => 'Boolean',
@@ -58,11 +58,22 @@ class Genome::Config::AnalysisProject::Command::View {
         fast_model_summary => {
             is => 'Boolean',
             default_value => 0,
-            doc => "Use fast model summary that does not due 'Build Needed' check",
+            doc => "Use fast model summary that does not do 'Build Needed' check",
         },
     ],
 };
 
+sub help_detail {
+    return <<EOHELP;
+View information about an analysis-project.
+
+For the --config parameter, the effect of the various options is:
+  quiet:   no configuration shown
+  terse:   information about each configuration file shown
+  verbose: in addition to the terse output, the full configuration shown
+  parsed:  same as verbose, but attempts to convert IDs to display names
+EOHELP
+}
 
 my %STATUS_COLORS = (
     # shared values
@@ -388,7 +399,7 @@ sub _write_config_items {
         if ($self->config eq 'terse') {
             $self->_write_terse_config_items($handle);
 
-        } elsif ($self->config eq 'verbose') {
+        } elsif ($self->config eq 'verbose' or $self->config eq 'parsed') {
             $self->_write_verbose_config_items($handle);
         }
     }
@@ -502,9 +513,32 @@ sub _write_config_item_body {
     my $config_data = Genome::Config::Parser->parse($config_item->file_path);
     my $yaml = YAML::Syck::Dump($config_data);
 
+    if($self->config eq 'parsed') {
+        my @potential_ids = $yaml =~ /\b([[:xdigit:]]{6,}\b)/g;
+        for my $id (uniq @potential_ids) {
+            if(my $entity = $self->_find_matching_entity($id)) {
+                my $display_name = $entity->__display_name__;
+                $yaml =~ s/\b\Q$id\E\b/$display_name/g;
+            } else {
+                $self->warning_message('No Genome entity found for ID "%s" in configuration %s.', $id, $config_item->id);
+            }
+        }
+    }
+
     $yaml =~ s/^/    /gm;
 
     print $handle $yaml, "\n";
+}
+
+sub _find_matching_entity {
+    my ($self, $query) = @_;
+
+    my $response = Genome::Search->search($query);
+    my @docs = $response->docs;
+    my ($doc) = grep { $_->value_for('object_id') eq $query } @docs;
+    return unless $doc;
+
+    return Genome::Search->get_subject_from_doc($doc);
 }
 
 
