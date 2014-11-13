@@ -10,7 +10,7 @@ use POSIX qw/strftime/;
 use DBI;
 
 class Genome::DruggableGene::Command::Import::Pubchem {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_optional => [
         postgres_host => {
             is => 'text',

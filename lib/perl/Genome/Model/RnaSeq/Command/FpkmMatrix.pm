@@ -7,7 +7,7 @@ use Genome;
 use Statistics::Descriptive;
 
 class Genome::Model::RnaSeq::Command::FpkmMatrix {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         models => {
             is => 'Genome::Model::RnaSeq',

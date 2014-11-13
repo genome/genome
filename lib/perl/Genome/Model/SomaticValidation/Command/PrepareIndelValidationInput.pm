@@ -7,7 +7,7 @@ use Genome;
 use File::Spec;
 
 class Genome::Model::SomaticValidation::Command::PrepareIndelValidationInput {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         build => {
             is => 'Genome::Model::Build::SomaticValidation',

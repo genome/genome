@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::CaptureSet::Command::Synchronize {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         direction => {
             is => 'Text',

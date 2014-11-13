@@ -48,11 +48,11 @@ ok($b1, "made test build 1");
 # run the command, and capture the exit code
 # this way invokes the command right in this process, with an array of command-line arguments
 # to test that we parse correctly
-$ENV{GENOME_NO_REQUIRE_USER_VERIFY} = 1;
+$ENV{UR_NO_REQUIRE_USER_VERIFY} = 1;
 my $exit_code1 = eval { 
     Genome::Model::Command::Update::RemoveBuild->_execute_with_shell_params_and_return_exit_code('--', $b1->id);
 };
-$ENV{GENOME_NO_REQUIRE_USER_VERIFY} = 0;
+$ENV{UR_NO_REQUIRE_USER_VERIFY} = 0;
 
 # ensure it ran without errors
 ok(!$@, "the command did not crash");

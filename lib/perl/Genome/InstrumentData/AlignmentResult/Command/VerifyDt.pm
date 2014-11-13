@@ -6,7 +6,7 @@ use Genome;
 use DateTime;
 
 class Genome::InstrumentData::AlignmentResult::Command::VerifyDt {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         instrument_data => {
             is => 'Genome::InstrumentData',

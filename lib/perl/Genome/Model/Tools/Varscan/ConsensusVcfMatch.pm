@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::Varscan::ConsensusVcfMatch {
-    is => ['Genome::Command::Base'],
+    is => ['Command::V2'],
     has_input => [
         indel_vcf => {
             is => 'Text',

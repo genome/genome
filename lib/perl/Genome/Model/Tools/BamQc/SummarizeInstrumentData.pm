@@ -19,7 +19,7 @@ my %INSTRUMENT_DATA_PROPERTIES = (
     );
 
 class Genome::Model::Tools::BamQc::SummarizeInstrumentData {
-    is => "Genome::Command::Base",
+    is => "Command::V2",
     has_input => [
         instrument_data => {
             is => "Genome::InstrumentData",

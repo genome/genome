@@ -74,7 +74,7 @@ sub execute {
         my @model_inputs = $self->model;
         my @models;
         for my $m (@model_inputs){
-            my @results = Genome::Command::Base->resolve_param_value_from_text($m,'Genome::Model');
+            my @results = Command::V2->resolve_param_value_from_text($m,'Genome::Model');
             unless(scalar(@results)==1){
                 $self->error_message("Found multiple results for ".$m);
                 die $self->error_message;

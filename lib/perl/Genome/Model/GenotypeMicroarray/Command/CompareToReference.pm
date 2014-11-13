@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::GenotypeMicroarray::Command::CompareToReference {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => 'Compare reference bases in a genotype file of a given genotype microarray build to a reference sequence',
     has_input => [
         build_id => {

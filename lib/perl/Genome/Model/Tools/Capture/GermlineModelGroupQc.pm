@@ -10,7 +10,7 @@ my %already_reviewed = ();
 my %wildtype_sites = my %germline_sites = ();
 
 class Genome::Model::Tools::Capture::GermlineModelGroupQc {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
 
     has_optional => [
         models                 => { is => 'Genome::Model', is_many => 1, shell_args_position => 1, doc => 'names or group of models to work on' },

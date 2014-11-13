@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::DruggableGene::Command::Import {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [],
 };
 

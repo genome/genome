@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::ReferenceAlignment::Command::BamQcMetrics {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => "Generate tab-delimited (*.tsv) files with BamQc metrics summarized by instrument data id.",
     has => [
         build_id => {

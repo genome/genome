@@ -7,7 +7,7 @@ use File::Basename;
 use Workflow::Simple;
 
 class Genome::Model::Tools::Relationship::BackfillPolymuttVcf {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => 'Use polymutt to force-genotype all segregating sites and produce one final vcf',
     has_input => [
        model_group => {

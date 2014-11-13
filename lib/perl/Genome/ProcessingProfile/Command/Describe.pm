@@ -8,7 +8,7 @@ use Genome;
 require Term::ANSIColor;
       
 class Genome::ProcessingProfile::Command::Describe {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         processing_profiles => {
             is => 'Genome::ProcessingProfile',

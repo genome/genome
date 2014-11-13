@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::ReferenceAlignment::Command::InstrumentDataAlignmentBams {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => "List the paths of the instrument data alignment BAMs for the provided build.",
     has => [
         build_id => {

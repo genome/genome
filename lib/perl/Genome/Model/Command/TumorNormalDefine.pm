@@ -7,7 +7,7 @@ use Genome;
 use Memoize;
 
 class Genome::Model::Command::TumorNormalDefine {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         reference_alignment_models => {
             is => 'Genome::Model',

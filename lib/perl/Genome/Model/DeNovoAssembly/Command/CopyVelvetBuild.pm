@@ -7,7 +7,7 @@ use Genome;
 use Data::Dumper;
 
 class Genome::Model::DeNovoAssembly::Command::CopyVelvetBuild {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
 	to => {
 	    is => 'Text',

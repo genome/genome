@@ -7,7 +7,7 @@ use Genome;
 
 
 class Genome::FeatureList::Command::Create {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         name => { is => 'Text', doc => 'The name of the feature-list' },
         format => { is => 'Text', doc => 'Indicates whether the file follows the BED spec.', valid_values => Genome::FeatureList->__meta__->property('format')->valid_values },

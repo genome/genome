@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::ModelGroup::Command::GenerateReport {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         group => {
             shell_args_position => 1,

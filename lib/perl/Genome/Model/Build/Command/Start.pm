@@ -12,7 +12,7 @@ use Data::Dumper 'Dumper';
 use Regexp::Common;
 
 class Genome::Model::Build::Command::Start {
-    is => 'Genome::Command::Base',
+    is => 'Genome::Command::WithColor',
     doc => "Create and start a build.",
     has => [
         models => {

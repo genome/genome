@@ -6,7 +6,7 @@ use Genome;
 use Cwd;
 
 class Genome::Model::Tools::Cmds::CompileCnaOutput {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
     window_size=> {
         type => 'String',

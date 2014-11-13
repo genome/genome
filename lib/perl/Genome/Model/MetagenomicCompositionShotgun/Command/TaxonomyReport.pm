@@ -9,7 +9,7 @@ use File::Path;
 use File::Find;
 
 class Genome::Model::MetagenomicCompositionShotgun::Command::TaxonomyReport{
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => 'Generate metagenomic reports for a MetagenomicCompositionShotgun build.',
     has => [
         build => {

@@ -8,7 +8,7 @@ use Genome;
 use Regexp::Common;
 
 class Genome::Model::MetagenomicComposition16s::Command {
-    is => 'Genome::Command::Base',
+    is => 'Command::Tree',
     has => [
         models => {
             is => 'Genome::Model::MetagenomicComposition16s',

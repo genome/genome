@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 class Genome::Sys::Command::Completion {
-    is => 'Genome::Command::Base',
+    is => 'Command::Tree',
     is_abstract => 1,
     doc => 'Commands to assist with shell tab completion.',
 };

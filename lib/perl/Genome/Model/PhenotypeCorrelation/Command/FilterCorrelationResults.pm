@@ -9,7 +9,7 @@ use strict;
 use warnings;
 
 class Genome::Model::PhenotypeCorrelation::Command::FilterCorrelationResults {
-    is => "Genome::Command::Base",
+    is => "Command::V2",
     doc => "Remove lines from a variant matrix based on MAF",
     has_input => [
         input_file => {

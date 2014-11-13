@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Backfill {
-    is  => 'Genome::Command::Base',
+    is  => 'Command::V2',
     has_input => [
         build_clump => {
             is => 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf::BuildClump',

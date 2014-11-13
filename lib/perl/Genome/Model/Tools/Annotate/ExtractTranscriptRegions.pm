@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 class Genome::Model::Tools::Annotate::ExtractTranscriptRegions {
-    is => "Genome::Command::Base",
+    is => "Command::V2",
     doc => "Generate a bed file describing transcript regions",
     has_input => [
         transcripts_file => {

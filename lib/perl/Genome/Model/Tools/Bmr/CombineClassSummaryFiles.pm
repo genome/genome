@@ -7,7 +7,7 @@ use IO::File;
 use Genome;
 
 class Genome::Model::Tools::Bmr::CombineClassSummaryFiles {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
     class_summary_output_dir => {
         is => 'String',

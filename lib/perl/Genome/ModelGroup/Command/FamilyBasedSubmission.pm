@@ -9,7 +9,7 @@ use Workflow::Simple;
 
 use List::MoreUtils qw/ uniq /;
 class Genome::ModelGroup::Command::FamilyBasedSubmission {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
     model_group => {
         is => 'Genome::ModelGroup',

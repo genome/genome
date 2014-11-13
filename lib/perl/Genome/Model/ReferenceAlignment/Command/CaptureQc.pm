@@ -4,7 +4,7 @@ use warnings;
 use Cwd;
 
 class Genome::Model::ReferenceAlignment::Command::CaptureQc {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         models => {
             is => 'Genome::Model',

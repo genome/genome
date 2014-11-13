@@ -8,7 +8,7 @@ use Genome::Model::Tools::DetectVariants2::Utilities qw(
 );
 
 class Genome::Model::SomaticVariation::Command::IdentifyPreviouslyDiscoveredVariations{
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has =>[
         build_id => {
             is => 'Text',

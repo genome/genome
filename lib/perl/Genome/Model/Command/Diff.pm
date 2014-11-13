@@ -6,7 +6,7 @@ use Genome;
 use Carp 'confess';
 
 class Genome::Model::Command::Diff {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         models => {
             is => 'Genome::Model',

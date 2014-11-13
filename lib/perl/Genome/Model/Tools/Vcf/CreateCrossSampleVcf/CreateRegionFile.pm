@@ -7,7 +7,7 @@ use Genome;
 use Genome::File::Vcf::Reader;
 
 class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateRegionFile {
-    is  => 'Genome::Command::Base',
+    is  => 'Command::V2',
     has_input => [
         segregating_sites_vcf_file => {
             is => 'File',

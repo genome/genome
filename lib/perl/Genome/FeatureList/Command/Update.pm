@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::FeatureList::Command::Update{
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         feature_list => { 
             is => 'Genome::FeatureList', 

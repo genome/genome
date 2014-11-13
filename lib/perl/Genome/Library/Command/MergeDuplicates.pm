@@ -1,6 +1,6 @@
 package Genome::Library::Command::MergeDuplicates;
 class Genome::Library::Command::MergeDuplicates {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_many => [
         libraries => { is => 'Genome::Library', shell_args_position => 1 },
     ],

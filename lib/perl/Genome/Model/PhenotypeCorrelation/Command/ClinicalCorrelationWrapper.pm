@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 class Genome::Model::PhenotypeCorrelation::Command::ClinicalCorrelationWrapper {
-    is => ["Genome::Command::Base"],
+    is => ["Command::V2"],
     doc => "Run the clinical correlation tool from the music suite.",
     has => [
         variant_matrix => {

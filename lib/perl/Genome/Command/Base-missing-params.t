@@ -12,7 +12,7 @@ use Data::Dumper;
 use Test::More tests => 4;
 
 class Genome::Model::Command::Test {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         bucket => { is => 'Text' },
         stick => { is => 'Text' },

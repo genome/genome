@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Command::InstrumentData::Unassign {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         model => {
             is => 'Genome::Model', 

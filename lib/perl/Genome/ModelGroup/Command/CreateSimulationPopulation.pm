@@ -8,7 +8,7 @@ use Workflow;
 use Workflow::Simple;
 use File::Basename;
 class Genome::ModelGroup::Command::CreateSimulationPopulation {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
     output_directory => {
         is => 'Text',
