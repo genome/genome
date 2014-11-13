@@ -56,6 +56,7 @@ our %ALTERNATE_FROM_CLASS = (
     'Genome::Model' => {
         'Genome::Model::Build' => ['model'],
         'Genome::ModelGroup' => ['models'],
+        'Genome::Config::AnalysisProject' => ['models'],
     },
     'Genome::Model::Build' => {
         'Genome::Model' => ['builds'],
