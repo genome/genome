@@ -4,11 +4,11 @@ use strict;
 use warnings;
 
 use Genome;
-use Genome::Model::ClinSeq::Util qw(:all);
 use Genome::Model::ClinSeq::RnaSeqUtil qw(:all);
 
 class Genome::Model::ClinSeq::Command::GetBamReadCounts {
-    is => 'Command::V2',
+    is => ['Command::V2',
+           'Genome::Model::ClinSeq::Util'],
     has => [
         positions_file          => { is => "FilesystemPath",
                                      doc => "File containing SNV positions of interest and ref/var bases\n"

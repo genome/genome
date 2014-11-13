@@ -7,11 +7,11 @@ use List::MoreUtils qw/ uniq /;
 use Genome::Info::IUB;
 use Spreadsheet::WriteExcel;
 
-
 class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
-    is => 'Genome::Model::ClinSeq::Command::Converge::Base',
+    is => ['Genome::Model::ClinSeq::Command::Converge::Base',
+           'Genome::Model::ClinSeq::Util'],
     has_input => [
-        outdir => { 
+        outdir => {
                is => 'FilesystemPath',
                doc => 'Directory where output files will be written',
         },
@@ -51,7 +51,7 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               doc => 'Variants with a normal VAF greater than this (in any normal sample) will be filtered out'
         },
         min_tumor_vaf => {
-              is => 'Number', 
+              is => 'Number',
               default => 2.5,
               doc => 'Variants with a tumor VAF less than this (in any tumor sample) will be filtered out',
         },
@@ -83,6 +83,11 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
         per_library => {
               is => 'Boolean',
               doc => 'Do per library bam-readcounting and generate associated statistics, summaries and figures'
+        },
+        summarize => {
+              is => 'Boolean',
+              doc => 'Summarize the SnvIndel report.',
+              default => 1,
         },
         test => {
               is => 'Number',
@@ -117,7 +122,7 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
         lsf_resource => {
             value => q{-R 'select[mem>12000] rusage[mem=12000]' -M 12000000},
         },
-    ],   
+    ],
     doc => 'converge SNV and InDels from multiple clin-seq builds, annotate, bam-readcount, etc. and summarize into a single spreadsheet',
 };
 
@@ -138,7 +143,7 @@ EOS
 sub help_detail {
   return <<EOS
 
-Create a summary spreadsheet of SNVs and Indels for a set of clin-seq builds (e.g. an AML normal, day0_tumor, day30_tumor trio) 
+Create a summary spreadsheet of SNVs and Indels for a set of clin-seq builds (e.g. an AML normal, day0_tumor, day30_tumor trio)
 
 EOS
 }
@@ -197,7 +202,6 @@ sub __errors__ {
 
 sub execute {
   my $self = shift;
-  my @builds = $self->builds;
 
   #Add trailing '/' to outdir if needed
   unless ($self->outdir =~ /\/$/){
@@ -220,15 +224,19 @@ sub execute {
   #Gather variants for the tiers specified by the user from each build. Note which build each came from.
   #Get these from the underlying somatic-variation builds.
   #Annotate all variants (gmt annotate transcript-variants --help)
-  my $somatic_builds = $self->resolve_somatic_builds;
-  my $rnaseq_builds = $self->resolve_rnaseq_builds;
+  my @clinseq_builds = $self->builds;
+  my (%somatic_builds, %rnaseq_builds);
+  foreach my $clinseq_build(@clinseq_builds) {
+    $clinseq_build->resolve_somatic_builds(\%somatic_builds);
+    $clinseq_build->resolve_rnaseq_builds(\%rnaseq_builds);
+  }
   my $annotation_build_name = $self->annotation_build->name;
   $self->status_message("Using annotation build: $annotation_build_name");
   my $bed_dir = $self->outdir . "bed_files/";
-  my $result = $self->gather_variants('-somatic_builds'=>$somatic_builds, '-bed_dir'=>$bed_dir);
+  my $result = $self->gather_variants('-somatic_builds'=>\%somatic_builds, '-bed_dir'=>$bed_dir);
   my $variants = $result->{'variants'};
   my $header = $result->{'header'};
-  
+
   #If no variants were found, warn the user and end here end here
   unless (keys %{$variants}){
     my $rm_cmd = "rm -fr $bed_dir";
@@ -251,12 +259,15 @@ sub execute {
 
   #Identify underlying reference-alignments, sample names, sample common names, and timepoints (if available)
   my $align_builds = $self->get_ref_align_builds(
-    '-somatic_builds'=>$somatic_builds,
-    '-rnaseq_builds'=>$rnaseq_builds);
-
+    '-somatic_builds'=>\%somatic_builds,
+    '-rnaseq_builds'=>\%rnaseq_builds);
+  my @prefixes = $self->get_header_prefixes('-align_builds'=>$align_builds);
   #Get bam-readcounts for all positions for all BAM files
-  my $grand_anno_count_file = $self->add_read_counts('-align_builds'=>$align_builds, '-anno_file'=>$grand_anno_file);
-  
+  my $grand_anno_count_file = $self->add_read_counts(
+    '-align_builds'=>$align_builds,
+    '-anno_file'=>$grand_anno_file,
+    '-prefixes'=>\@prefixes);
+
   #Parse the BAM read count info and gather minimal data needed to apply filters:
   #Max normal VAF, Min Coverage
   $self->parse_read_counts('-align_builds'=>$align_builds, '-grand_anno_count_file'=>$grand_anno_count_file, '-variants'=>$variants);
@@ -271,7 +282,7 @@ sub execute {
   if ($self->per_library){
     $per_lib_header = $self->parse_per_lib_read_counts('-align_builds'=>$align_builds, '-grand_anno_per_lib_count_file'=>$grand_anno_per_lib_count_file, '-variants'=>$variants);
   }
-  
+
   #Apply arbitrary variant filter list
   if ($self->variant_filter_list){
     $self->apply_filter_list('-variants'=>$variants);
@@ -318,6 +329,17 @@ sub execute {
     Genome::Sys->shellcmd(cmd => $cp_cmd);
   }
 
+  if($self->summarize) {
+    my $summarize = Genome::Model::ClinSeq::Command::Converge::SummarizeSnvIndelReport->create(
+      outdir => $original_outdir,
+      min_mq => $self->min_quality_score,
+      min_bq => $self->min_base_quality,
+      filtered_report => $result_files->{final_filtered_clean_tsv},
+      unfiltered_report => $result_files->{final_unfiltered_clean_tsv},
+    );
+    $summarize->execute();
+  }
+
   return 1;
 };
 
@@ -335,16 +357,16 @@ sub print_subject_table{
   my $align_builds = $args{'-align_builds'};
 
   my $outfile = $self->outdir . "subjects_legend.txt";
-  open (OUT, ">$outfile") || die $self->error_message("Could not open output file: $outfile for writing");
-  print OUT "name\tprefix\tday\ttimepoint_position\tsample_type\n";
+  my $out_fh = Genome::Sys->open_file_for_writing($outfile);
+  print $out_fh "name\tprefix\tday\ttimepoint_position\tsample_type\n";
   foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys %{$align_builds}){
     my $prefix = $align_builds->{$name}->{prefix};
     my $day = $align_builds->{$name}->{day};
     my $timepoint_position = $align_builds->{$name}->{timepoint_position};
     my $sample_type = $align_builds->{$name}->{sample_common_name};
-    print OUT "$name\t$prefix\t$day\t$timepoint_position\t$sample_type\n";
+    print $out_fh "$name\t$prefix\t$day\t$timepoint_position\t$sample_type\n";
   }
-  close(OUT);
+  close($out_fh);
 
   return $outfile;
 }
@@ -395,14 +417,14 @@ sub gather_variants{
     my $tier = $bed_files{$file}{tier};
     my $somatic_build_id = $bed_files{$file}{somatic_build_id};
     my $new_file = $bed_dir . "$somatic_build_id" . "_$data_type" . "_$var_type" . "_$tier" . "clean.bed";
-    $self->status_message("\nProcessing $var_type $data_type $tier file: $file"); 
-    
+    $self->status_message("\nProcessing $var_type $data_type $tier file: $file");
+
     if (-e $new_file){
       $self->warning_message("Using pre-generated file: $new_file");
     }else{
-      open(VAR, $file) || die $self->error_message("Could not open var file: $file");
-      open(NEW, ">$new_file") || die $self->error_message("Could not open new var file: $new_file");
-      while(<VAR>){
+      my $var_fh = Genome::Sys->open_file_for_reading($file);
+      my $new_fh = Genome::Sys->open_file_for_writing($new_file);
+      while(<$var_fh>){
         $c++;
         chomp($_);
         my @line = split("\t", $_);
@@ -410,11 +432,11 @@ sub gather_variants{
         if ($self->chromosome){next unless ($chr eq $self->chromosome);}
         #Make indel format consistent
         $var =~ s/\*/0/g;
-        print NEW "$chr\t$start\t$end\t$var\n";
+        print $new_fh "$chr\t$start\t$end\t$var\n";
         if ($self->test){last if $c > $self->test;}
       }
-      close(VAR);
-      close(NEW);
+      close($var_fh);
+      close($new_fh);
     }
     $bed_files{$file}{clean_bed_file} = $new_file;
 
@@ -426,7 +448,7 @@ sub gather_variants{
     }else{
       if (-s $bed_files{$file}{clean_bed_file}){
         my $annotate_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
-              variant_bed_file=>$bed_files{$file}{clean_bed_file}, 
+              variant_bed_file=>$bed_files{$file}{clean_bed_file},
               output_file=>$anno_file,
               annotation_filter=>'top',
               reference_transcripts=>$self->annotation_build->name,
@@ -440,7 +462,7 @@ sub gather_variants{
     }
     $bed_files{$file}{anno_file} = $anno_file;
 
-    #Get RSIDs and GMAFs for all variants 
+    #Get RSIDs and GMAFs for all variants
     #gmt annotate add-rsid --anno-file='' --output-file='' --vcf-file=''
     my $vcf_file = $bed_files{$file}{vcf_file};
     my $rsid_file = $anno_file . ".rsid";
@@ -458,7 +480,7 @@ sub gather_variants{
     }
     $bed_files{$file}{rsid_file} = $rsid_file;
   }
-  
+
   #Parse all variants into a single hash (keyed on $chr_$start_$end_$ref_$var)
   my $header;
   my %headers;
@@ -467,8 +489,9 @@ sub gather_variants{
   foreach my $file (sort keys %bed_files){
     my $tier = $bed_files{$file}{tier};
     my $rsid_file = $bed_files{$file}{rsid_file};
-    open (VAR, $rsid_file) || die $self->error_message("could not open file: $rsid_file");
-    while(<VAR>){
+    my $data_type = $bed_files{$file}{data_type};
+    my $var_fh = Genome::Sys->open_file_for_reading($rsid_file);
+    while(<$var_fh>){
       chomp($_);
       if ($_ =~ /^chromosome\_name/){
         $header = $_;
@@ -484,9 +507,16 @@ sub gather_variants{
       $variants{$v}{tier} = $tier;
       $variants{$v}{ensembl_gene_id} = $ensembl_gene_id;
       $variants{$v}{trv_type} = $trv_type;
-      $variants{$v}{filtered} = 0;
+      $variants{$v}{filtered} = "";
+      if(defined $variants{$v}{data_type}) {
+        unless ($variants{$v}{data_type} =~ /$data_type/) {
+          $variants{$v}{data_type} .= $data_type . ",";
+        }
+      } else {
+        $variants{$v}{data_type} = $data_type . ",";
+      }
     }
-    close(VAR);
+    close($var_fh);
   }
 
   #Make sure all headers came out identical
@@ -512,14 +542,14 @@ sub print_grand_anno_table{
   if (-e $grand_anno_file){
     $self->warning_message("using pre-generated file: $grand_anno_file");
   }else{
-    open (ANNO, ">$grand_anno_file") || die $self->error_message("could not open grand anno file: $grand_anno_file");
+    my $anno_fh = Genome::Sys->open_file_for_writing($grand_anno_file);
     my $target_gene_list_name = $self->target_gene_list_name;
     my $new_header = "$header\ttier\t$target_gene_list_name";
-    print ANNO "$new_header\n";
+    print $anno_fh "$new_header\n";
     foreach my $v (sort keys %{$variants}){
-      print ANNO "$variants->{$v}->{anno_line}\t$variants->{$v}->{tier}\t$variants->{$v}->{target_gene_list_match}\n";
+      print $anno_fh "$variants->{$v}->{anno_line}\t$variants->{$v}->{tier}\t$variants->{$v}->{target_gene_list_match}\n";
     }
-    close(ANNO);
+    close($anno_fh);
   }
 
   #delete the anno line now that it is not needed
@@ -540,15 +570,15 @@ sub intersect_target_gene_list{
   my $target_gene_list_name = $self->target_gene_list_name;
 
   my %genes;
-  open (GENES, $target_gene_list) || die $self->error_message("could not open target gene list: $target_gene_list");
-  while(<GENES>){
+  my $genes_fh = Genome::Sys->open_file_for_reading($target_gene_list);
+  while(<$genes_fh>){
     chomp($_);
     my @line = split("\t", $_);
     my $ensg = $line[0];
     $genes{$ensg}{name} = $line[1];
   }
-  close(GENES);
- 
+  close($genes_fh);
+
   foreach my $v (keys %{$variants}){
     my $ensembl_gene_id = $variants->{$v}->{ensembl_gene_id};
     $variants->{$v}->{target_gene_list_match} = 0;
@@ -560,7 +590,7 @@ sub intersect_target_gene_list{
   return;
 }
 
-  
+
 sub get_variant_caller_sources{
   my $self = shift;
   my %args = @_;
@@ -596,8 +626,8 @@ sub get_variant_caller_sources{
   foreach my $file (@files){
     $self->status_message("processing variant caller sources file: $file");
     next unless (-e $file);
-    open (SOURCES, $file) || die $self->error_message("could not open variant caller sources file: $file");
-    while(<SOURCES>){
+    my $source_fh = Genome::Sys->open_file_for_reading($file);
+    while(<$source_fh>){
       chomp($_);
       my @line = split("\t", $_);
       if ($_ =~ /^coord/){
@@ -651,7 +681,7 @@ sub get_variant_caller_sources{
         die $self->error_message("file not recognized as snv or indel: $file");
       }
     }
-    close (SOURCES);
+    close ($source_fh);
   }
 
   #Initialize all variants with a list of source callers
@@ -726,8 +756,8 @@ sub parse_read_counts{
 
   my %columns;
   my $l = 0;
-  open (VAR, $grand_anno_count_file) || die $self->error_message("could not open var anno count file: $grand_anno_count_file");
-  while(<VAR>){
+  my $var_fh = Genome::Sys->open_file_for_reading($grand_anno_count_file);
+  while(<$var_fh>){
     chomp($_);
     my @line = split("\t", $_);
     if ($l == 0){
@@ -788,7 +818,6 @@ sub parse_read_counts{
       }
       my $coverage = $line[$columns{$ref_count_colname}{c}] + $line[$columns{$var_count_colname}{c}];
       push(@covs, $coverage);
-
       if (defined($samples{$sample_name})){
         $samples{$sample_name}{coverage} = $coverage if ($coverage > $samples{$sample_name}{coverage});
       }else{
@@ -826,7 +855,7 @@ sub parse_read_counts{
     }
     $variants->{$v}->{gmaf} = $gmaf;
   }
-  close(VAR);
+  close($var_fh);
 
   return;
 }
@@ -846,8 +875,8 @@ sub parse_per_lib_read_counts{
   my %columns;
   my %libs;
   my $l = 0;
-  open (VAR, $grand_anno_per_lib_count_file) || die $self->error_message("could not open var anno count file: $grand_anno_per_lib_count_file");
-  while(<VAR>){
+  my $var_fh = Genome::Sys->open_file_for_reading($grand_anno_per_lib_count_file);
+  while(<$var_fh>){
     chomp($_);
     my @line = split("\t", $_);
     my $tumor_var_supporting_libs = 0;
@@ -918,19 +947,19 @@ sub parse_per_lib_read_counts{
         my $per_lib_vaf_col = $prefix . "_" . $lib . "_VAF";
 
         if (defined($line[$columns{$per_lib_ref_col}{c}])){
-          push(@per_lib_counts, $line[$columns{$per_lib_ref_col}{c}]);      
+          push(@per_lib_counts, $line[$columns{$per_lib_ref_col}{c}]);
         }else{
           push(@per_lib_counts, "NA");
         }
 
         if (defined($line[$columns{$per_lib_var_col}{c}])){
-          push(@per_lib_counts, $line[$columns{$per_lib_var_col}{c}]);      
+          push(@per_lib_counts, $line[$columns{$per_lib_var_col}{c}]);
         }else{
           push(@per_lib_counts, "NA");
         }
 
         if (defined($line[$columns{$per_lib_vaf_col}{c}])){
-          push(@per_lib_counts, $line[$columns{$per_lib_vaf_col}{c}]);      
+          push(@per_lib_counts, $line[$columns{$per_lib_vaf_col}{c}]);
         }else{
           push(@per_lib_counts, "NA");
         }
@@ -948,6 +977,7 @@ sub parse_per_lib_read_counts{
     $variants->{$v}->{per_lib_counts} = \@per_lib_counts;
     $variants->{$v}->{tumor_var_supporting_libs} = $tumor_var_supporting_libs;
   }
+  close($var_fh);
   my $per_lib_header = join("\t", @per_lib_header);
 
   return $per_lib_header;
@@ -960,22 +990,22 @@ sub apply_filter_list{
   my $variants = $args{'-variants'};
 
   my $filtered_variants = 0;
-  open(VAR, $self->variant_filter_list) || die $self->error_message("could not open file: " . $self->variant_filter_list);
-  while(<VAR>){
+  my $var_fh = Genome::Sys->open_file_for_reading($self->variant_filter_list);
+  while(<$var_fh>){
     chomp($_);
     next if ($_ =~ /chr/);
     if ($_ =~ /^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/){
       my ($chr, $start, $stop, $ref, $var) = ($1, $2, $3, $4, $5);
       my $v = $chr . "_$start" . "_$stop" . "_$ref" . "_$var";
       die $self->error_message("parsed a variant that is not defined in the variant hash") unless $variants->{$v};
-      $variants->{$v}->{filtered} = 1;
+      $variants->{$v}->{filtered} = "Filter_List";
       $filtered_variants++;
     }
   }
 
   $self->status_message("Filtered $filtered_variants variants because they were specified in the variant filter list: " . $self->variant_filter_list);
 
-  close(VAR);
+  close($var_fh);
 
   return;
 }
@@ -990,60 +1020,58 @@ sub apply_variant_filters{
   my $min_coverage = $self->min_coverage;
   my $max_gmaf = $self->max_gmaf;
   my $min_tumor_var_supporting_libs = $self->min_tumor_var_supporting_libs;
-  
+
   foreach my $v (keys %{$variants}){
     my $max_normal_vaf_observed = $variants->{$v}->{max_normal_vaf_observed};
     my $max_tumor_vaf_observed = $variants->{$v}->{max_tumor_vaf_observed};
     my $min_coverage_observed = $variants->{$v}->{min_coverage_observed};
     my $gmaf = $variants->{$v}->{gmaf};
     my $tumor_var_supporting_libs = $variants->{$v}->{tumor_var_supporting_libs} if defined($variants->{$v}->{tumor_var_supporting_libs});
-  
+
     #Normal VAF filter
     if ($max_normal_vaf_observed =~ /\d+/){
-      $variants->{$v}->{filtered} = 1 if ($max_normal_vaf_observed > $max_normal_vaf);
+      $variants->{$v}->{filtered} .= "Max_Normal_VAF," if ($max_normal_vaf_observed > $max_normal_vaf);
     }elsif($max_normal_vaf_observed eq "NA"){
-      $variants->{$v}->{filtered} = 1;
+      $variants->{$v}->{filtered} .= "Max_Normal_VAF,";
     }
 
     #Tumor VAF filter
     if ($max_tumor_vaf_observed =~ /\d+/){
-      $variants->{$v}->{filtered} = 1 if ($max_tumor_vaf_observed < $min_tumor_vaf);
+      $variants->{$v}->{filtered} .= "Min_Tumor_VAF," if ($max_tumor_vaf_observed < $min_tumor_vaf);
     }elsif($max_tumor_vaf_observed eq "NA"){
-      $variants->{$v}->{filtered} = 1;
+      $variants->{$v}->{filtered} .= "Min_Tumor_VAF,";
     }
 
     #Coverage filter
     if ($min_coverage_observed =~ /\d+/){
-      $variants->{$v}->{filtered} = 1 if ($min_coverage_observed < $min_coverage);
+      $variants->{$v}->{filtered} .= "Min_Coverage," if ($min_coverage_observed < $min_coverage);
     }elsif($min_coverage_observed eq "NA"){
-      $variants->{$v}->{filtered} = 1;
+      $variants->{$v}->{filtered} .= "Min_Coverage,";
     }
-    
+
     #GMAF filter
     if ($gmaf =~ /\d+/){
-      $variants->{$v}->{filtered} = 1 if (($gmaf*100) > $max_gmaf);
+      $variants->{$v}->{filtered} .= "Max_GMAF," if (($gmaf*100) > $max_gmaf);
     }
 
     #Min library support filter
     if (defined($tumor_var_supporting_libs) && $min_tumor_var_supporting_libs){
-      $variants->{$v}->{filtered} = 1 if ($tumor_var_supporting_libs < $min_tumor_var_supporting_libs);
+      $variants->{$v}->{filtered} .= "Min_Library_Support," if ($tumor_var_supporting_libs < $min_tumor_var_supporting_libs);
+    }
+
+    #If not filtered by any category, don't filter. Keep this at the end.
+    if($variants->{$v}->{filtered} eq "") {
+      $variants->{$v}->{filtered} = 0;
     }
   }
 
   return;
 }
 
-
-sub print_final_files{
+sub get_result_files {
   my $self = shift;
-  my %args = @_;
-  my $variants = $args{'-variants'};
-  my $grand_anno_count_file = $args{'-grand_anno_count_file'};
-  my $case_name = $args{'-case_name'};
-  my $align_builds = $args{'-align_builds'};
-  my $per_lib_header = $args{'-per_lib_header'};
-  my $trv_type_filter = $self->trv_type_filter;
-
+  my $case_name = shift;
+  my $result_files;
 
   #Write out final tsv files (filtered and unfiltered), a clean version with useless columns removed, and an Excel spreadsheet version of the final file
   my $final_unfiltered_tsv = $self->outdir . "$case_name" . "_final_unfiltered.tsv"; #OUT1
@@ -1054,22 +1082,35 @@ sub print_final_files{
   my $final_filtered_clean_xls = $self->outdir . "$case_name" . "_final_filtered_clean.xls"; #OUT5
   my $final_filtered_coding_clean_xls = $self->outdir . "$case_name" . "_final_filtered_coding_clean.xls"; #OUT6
 
-  open(ANNO, $grand_anno_count_file) || die $self->error_message("could not open grand anno read counts file: $grand_anno_count_file");
-  open(OUT1, ">$final_unfiltered_tsv") || die $self->error_message("could not open output file: $final_unfiltered_tsv");
-  open(OUT1b, ">$final_unfiltered_clean_tsv") || die $self->error_message("could not open output file: $final_unfiltered_clean_tsv");
-  open(OUT2, ">$final_filtered_tsv") || die $self->error_message("could not open output file: $final_filtered_tsv");
-  open(OUT3, ">$final_filtered_clean_tsv") || die $self->error_message("could not open output file: $final_filtered_clean_tsv");
-  open(OUT4, ">$final_filtered_coding_clean_tsv") || die $self->error_message("could not open output file: $final_filtered_coding_clean_tsv");
-
   #Store the result files paths and pass out to be used in the visualization step
-  my %result_files;
-  $result_files{final_unfiltered_tsv}{path} = $final_unfiltered_tsv;
-  $result_files{final_unfiltered_clean_tsv}{path} = $final_unfiltered_clean_tsv;
-  $result_files{final_filtered_tsv}{path} = $final_filtered_tsv;
-  $result_files{final_filtered_clean_tsv}{path} = $final_filtered_clean_tsv;
-  $result_files{final_filtered_coding_clean_tsv}{path} = $final_filtered_coding_clean_tsv;
-  $result_files{final_filtered_clean_xls}{path} = $final_filtered_clean_xls;
-  $result_files{final_filtered_coding_clean_xls}{path} = $final_filtered_coding_clean_xls;
+  $result_files->{final_unfiltered_tsv} = $final_unfiltered_tsv;
+  $result_files->{final_unfiltered_clean_tsv} = $final_unfiltered_clean_tsv;
+  $result_files->{final_filtered_tsv} = $final_filtered_tsv;
+  $result_files->{final_filtered_clean_tsv} = $final_filtered_clean_tsv;
+  $result_files->{final_filtered_coding_clean_tsv} = $final_filtered_coding_clean_tsv;
+  $result_files->{final_filtered_clean_xls} = $final_filtered_clean_xls;
+  $result_files->{final_filtered_coding_clean_xls} = $final_filtered_coding_clean_xls;
+
+  return $result_files;
+}
+
+sub print_final_files{
+  my $self = shift;
+  my %args = @_;
+  my $variants = $args{'-variants'};
+  my $grand_anno_count_file = $args{'-grand_anno_count_file'};
+  my $case_name = $args{'-case_name'};
+  my $align_builds = $args{'-align_builds'};
+  my $per_lib_header = $args{'-per_lib_header'};
+  my $trv_type_filter = $self->trv_type_filter;
+  my $result_files = $self->get_result_files($case_name);
+
+  my $anno_fh = Genome::Sys->open_file_for_reading($grand_anno_count_file);
+  my $final_unfiltered_fh = Genome::Sys->open_file_for_writing($result_files->{final_unfiltered_tsv});
+  my $final_unfiltered_clean_fh = Genome::Sys->open_file_for_writing($result_files->{final_unfiltered_clean_tsv});
+  my $final_filtered_fh = Genome::Sys->open_file_for_writing($result_files->{final_filtered_tsv});
+  my $final_filtered_clean_fh = Genome::Sys->open_file_for_writing($result_files->{final_filtered_clean_tsv});
+  my $final_filtered_coding_clean_fh = Genome::Sys->open_file_for_writing($result_files->{final_filtered_coding_clean_tsv});
 
   my @skip = qw (gene_name transcript_species transcript_source transcript_version transcript_status c_position ucsc_cons domain all_domains deletion_substructures transcript_error gene_name_source);
   my %skip_columns;
@@ -1081,7 +1122,7 @@ sub print_final_files{
   my $header = 1;
   my $l = 0;
   my %columns;
-  while(<ANNO>){
+  while(<$anno_fh>){
     chomp($_);
 
     #Remove ugly GMAF=$val from annotation lines to tidy up output
@@ -1111,19 +1152,19 @@ sub print_final_files{
       }
 
       #Print headers for each out file
-      my $header_extension = "min_coverage_observed\tmax_normal_vaf_observed\tmax_tumor_vaf_observed\tvariant_source_callers\tvariant_source_caller_count\tfiltered";
+      my $header_extension = "min_coverage_observed\tmax_normal_vaf_observed\tmax_tumor_vaf_observed\tvariant_source_callers\tvariant_source_caller_count\tdata_type\tfiltered";
       my $full_header = "$_"."\t$header_extension";
       $full_header .= "\t$per_lib_header" if $per_lib_header;
-      print OUT1 "$full_header\n";
-      print OUT2 "$full_header\n";
+      print $final_unfiltered_fh "$full_header\n";
+      print $final_filtered_fh "$full_header\n";
 
       my @include_values = @line[@include_col_pos];
       my $include_values_string = join("\t", @include_values);
       my $short_header = "$include_values_string"."\t$header_extension";
       $short_header .= "\t$per_lib_header" if $per_lib_header;
-      print OUT1b "$short_header\n";
-      print OUT3 "$short_header\n";
-      print OUT4 "$short_header\n";
+      print $final_unfiltered_clean_fh "$short_header\n";
+      print $final_filtered_clean_fh "$short_header\n";
+      print $final_filtered_coding_clean_fh "$short_header\n";
       next;
     }
 
@@ -1133,14 +1174,16 @@ sub print_final_files{
 
     my @per_lib_counts = @{$variants->{$v}->{per_lib_counts}} if defined($variants->{$v}->{per_lib_counts});
     my $per_lib_count_line = join("\t", @per_lib_counts) if defined($variants->{$v}->{per_lib_counts});
+    $variants->{$v}->{data_type} =~ s/,$//;
+    $variants->{$v}->{filtered} =~ s/,$//;
 
-    my $line_extension = "$variants->{$v}->{min_coverage_observed}\t$variants->{$v}->{max_normal_vaf_observed}\t$variants->{$v}->{max_tumor_vaf_observed}\t$variants->{$v}->{variant_source_callers}\t$variants->{$v}->{variant_source_caller_count}\t$variants->{$v}->{filtered}";  
+    my $line_extension = "$variants->{$v}->{min_coverage_observed}\t$variants->{$v}->{max_normal_vaf_observed}\t$variants->{$v}->{max_tumor_vaf_observed}\t$variants->{$v}->{variant_source_callers}\t$variants->{$v}->{variant_source_caller_count}\t$variants->{$v}->{data_type}\t$variants->{$v}->{filtered}";
     my $full_line = "$_\t$line_extension";
     $full_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
 
-    print OUT1 "$full_line\n";
+    print $final_unfiltered_fh "$full_line\n";
     unless ($variants->{$v}->{filtered}){
-      print OUT2 "$full_line\n";
+      print $final_filtered_fh "$full_line\n";
     }
 
     my @include_values = @line[@include_col_pos];
@@ -1149,33 +1192,33 @@ sub print_final_files{
     my $short_line = "$include_values_string"."\t$line_extension";
     $short_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
 
-    print OUT1b "$short_line\n";
+    print $final_unfiltered_clean_fh "$short_line\n";
     unless ($variants->{$v}->{filtered}){
-      print OUT3 "$short_line\n";
+      print $final_filtered_clean_fh "$short_line\n";
     }
 
     #apply a transcript variant type filter to define the 'coding' result
     my $trv_type = $variants->{$v}->{trv_type};
     unless ($variants->{$v}->{filtered}){
       unless ($trv_type_filter =~ /$trv_type/i){
-        print OUT4 "$short_line\n";
+        print $final_filtered_coding_clean_fh "$short_line\n";
       }
     }
     $l++;
   }
-  close(ANNO);
-  close(OUT1);
-  close(OUT1b);
-  close(OUT2);
-  close(OUT3);
-  close(OUT4);
+  close($anno_fh);
+  close($final_unfiltered_fh);
+  close($final_unfiltered_clean_fh);
+  close($final_filtered_fh);
+  close($final_filtered_clean_fh);
+  close($final_filtered_coding_clean_fh);
 
   # convert master table to excel
-  my $final_filtered_clean_workbook  = Spreadsheet::WriteExcel->new("$final_filtered_clean_xls");
+  my $final_filtered_clean_workbook  = Spreadsheet::WriteExcel->new("$result_files->{final_filtered_clean_xls}");
   my $final_filtered_clean_worksheet = $final_filtered_clean_workbook->add_worksheet();
-  open (IN, $final_filtered_clean_tsv) || die $self->error_message("Could not open in file: $final_filtered_clean_tsv");
+  my $in_fh = Genome::Sys->open_file_for_reading($result_files->{final_filtered_clean_tsv});
   my $row=0;
-  while(<IN>){
+  while(<$in_fh>){
     chomp($_);
     if ($row == 0){
       $_ =~ s/\_/ /g;
@@ -1186,14 +1229,14 @@ sub print_final_files{
     }
     $row++;
   }
-  close(IN);
+  close($in_fh);
   $final_filtered_clean_workbook->close();
 
-  my $final_filtered_coding_clean_workbook  = Spreadsheet::WriteExcel->new("$final_filtered_coding_clean_xls");
+  my $final_filtered_coding_clean_workbook  = Spreadsheet::WriteExcel->new("$result_files->{final_filtered_coding_clean_xls}");
   my $final_filtered_coding_clean_worksheet = $final_filtered_coding_clean_workbook->add_worksheet();
-  open (IN, $final_filtered_coding_clean_tsv) || die $self->error_message("Could not open in file: $final_filtered_coding_clean_tsv");
+  $in_fh = Genome::Sys->open_file_for_reading($result_files->{final_filtered_coding_clean_tsv});
   $row=0;
-  while(<IN>){
+  while(<$in_fh>){
     chomp($_);
     if ($row == 0){
       $_ =~ s/\_/ /g;
@@ -1204,10 +1247,10 @@ sub print_final_files{
     }
     $row++;
   }
-  close(IN);
+  close($in_fh);
   $final_filtered_coding_clean_workbook->close();
 
-  return(\%result_files);
+  return($result_files);
 }
 
 sub create_plots{
@@ -1217,13 +1260,13 @@ sub create_plots{
   my $align_builds = $args{'-align_builds'};
   my $case_name = $args{'-case_name'};
 
-  my $final_filtered_clean_tsv = $result_files->{final_filtered_clean_tsv}->{path};
-  my $final_filtered_coding_clean_tsv = $result_files->{final_filtered_coding_clean_tsv}->{path};
+  my $final_filtered_clean_tsv = $result_files->{final_filtered_clean_tsv};
+  my $final_filtered_coding_clean_tsv = $result_files->{final_filtered_coding_clean_tsv};
 
   #Get the header for the file to be fed into R to determine per-lib VAF column positions
-  open (TMP, $final_filtered_clean_tsv) || die $self->error_message("Could not open file: $final_filtered_clean_tsv");
-  my $header = <TMP>; 
-  close(TMP);
+  my $tmp_fh = Genome::Sys->open_file_for_reading($final_filtered_clean_tsv);
+  my $header = <$tmp_fh>;
+  close($tmp_fh);
   chomp($header);
   my @cols = split("\t", $header);
   my $p = 0;
@@ -1310,7 +1353,6 @@ sub create_plots{
     my $r_cmd2 = "$r_script $case_name $final_filtered_coding_clean_tsv \"$prefix_string\" \"$combined_vaf_col_string\" \"$target_gene_list_name\" $outdir2 \"$sample_types_string\" \"$timepoint_names_string\" \"$timepoint_positions_string\" $vaf_cols_string";
     Genome::Sys->shellcmd(cmd => $r_cmd2);
   }
-
   return;
 }
 

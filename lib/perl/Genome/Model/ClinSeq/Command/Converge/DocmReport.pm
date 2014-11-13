@@ -7,7 +7,8 @@ use Genome::Info::IUB;
 use Spreadsheet::WriteExcel;
 
 class Genome::Model::ClinSeq::Command::Converge::DocmReport {
-    is => 'Genome::Model::ClinSeq::Command::Converge::Base',
+    is => ['Genome::Model::ClinSeq::Command::Converge::Base',
+           'Genome::Model::ClinSeq::Util'],
     has_input => [
         outdir => {
                is => 'FilesystemPath',
@@ -126,10 +127,14 @@ sub execute {
   $self->status_message("Producing report for individual: $case_name");
 
   #Get somatic builds associated with the clin-seq builds
-  my $somatic_builds = $self->resolve_somatic_builds;
+  my @clinseq_builds = $self->builds;
+  my %somatic_builds;
+  foreach my $clinseq_build(@clinseq_builds) {
+    $clinseq_build->resolve_somatic_builds(\%somatic_builds);
+  }
 
   #Get reference alignment builds associated with the somatic builds
-  my $align_builds = $self->get_ref_align_builds('-somatic_builds'=>$somatic_builds);
+  my $align_builds = $self->get_ref_align_builds('-somatic_builds'=>\%somatic_builds);
 
   #Import the variants, save a local copy for reference, if specified by the user, filter by chr and number
   my $result = $self->gather_variants;
@@ -137,9 +142,12 @@ sub execute {
   my $variants = $result->{'variants'};
   my $header = $result->{'header'};
 
-
   #Get bam-readcounts for all positions for all BAM files
-  my $grand_anno_count_file = $self->add_read_counts('-align_builds'=>$align_builds, '-anno_file'=>$variant_file);
+  my @prefixes = $self->get_header_prefixes('-align_builds'=>$align_builds);
+  my $grand_anno_count_file = $self->add_read_counts(
+      '-align_builds'=>$align_builds,
+      '-anno_file'=>$variant_file,
+      '-prefixes'=>\@prefixes);
 
   #Parse the variants and readcounts so that they can be summarized and manipulated
   #For each position determine the following by summarizing across data sets (e.g. across samples)

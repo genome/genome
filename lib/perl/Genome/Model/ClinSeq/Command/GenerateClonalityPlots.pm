@@ -5,11 +5,10 @@ package Genome::Model::ClinSeq::Command::GenerateClonalityPlots;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::ClinSeq::Util qw(:all);
-
 
 class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
-    is => 'Command::V2',
+    is => ['Command::V2',
+          'Genome::Model::ClinSeq::Util'],
     has_input => [
         somatic_var_build   => { is => 'Genome::Model::Build::SomaticVariation', id_by => 'somatic_var_build_id',
                                 doc => 'Build ID for a somatic variation model' },
@@ -292,63 +291,13 @@ sub execute {
         $self->cnv_hmm_file($cnvhmm_file);
     } else {
         my $copycat_cnvhmm_file = $output_dir . "cnaseq.cnvhmm";
-        $copycat_cnvhmm_file = $self->create_copycat_cnv_hmm_file($somatic_var_build, $copycat_cnvhmm_file);
+        $self->create_copycat_cnvhmm_file($somatic_var_build, $copycat_cnvhmm_file);
         $self->cnv_hmm_file($copycat_cnvhmm_file);
     }
     $self->cnv_hq_file($cnvs_output_path);
 
     return 1;
 };
-
-sub create_copycat_cnv_hmm_file {
-    my $self = shift;
-    my $somatic_var_build = shift;
-    my $copycat_cnvhmm_file = shift;
-    my @copycat_dirs = glob($somatic_var_build->data_directory ."/variants/cnv/copy-cat*");
-    my $alt_paired;
-    for my $copycat_dir (@copycat_dirs) {
-        if(-e $copycat_dir . "/alts.paired.dat") {
-            $alt_paired =  $copycat_dir . "/alts.paired.dat";
-            last;
-        }
-    }
-    my $awk_command = "awk \'BEGIN { print \"CHR\\tSTART\\tEND\\tSIZE\\tnMarkers\\tCN1\\tAdjusted_CN1\\tCN2\\tAdjusted_CN2\\tLLR_Somatic\\tStatus\" }\'" .
-        "\'{ if(\$5>2) { status = \"Gain\"; } else { status = \"Loss\"; } print \$1\"\\t\"\$2\"\\t\"\$3\"\\t\"\$3-\$2\"\\t\"\$4\"\\t\"\$5\"\\t\"\$5\"\\t2\\t2\\tNA\\t\"status }\' " .
-        "$alt_paired > $copycat_cnvhmm_file";
-    Genome::Sys->status_message("$awk_command");
-    Genome::Sys->shellcmd(cmd => $awk_command);
-    return $copycat_cnvhmm_file;
-}
-
-sub _is_copycat_somvar {
-    my $self = shift;
-    my $somatic_var_build = shift;
-    if(not -s $somatic_var_build->data_directory . "/variants/cnvs.hq" and
-        glob( $somatic_var_build->data_directory . "/variants/cnv/copy-cat*")) {
-          return 1;
-    } else {
-      return 0;
-    }
-}
-
-sub _get_copycat_cnvhq {
-    my $self = shift;
-    my $somatic_var_build = shift;
-    my $output_dir = shift;
-    my $copycat_dir = glob($somatic_var_build->data_directory . "/variants/cnv/copy-cat*");
-    my $rd_bins;
-    if(-e $copycat_dir . "/rd.bins.dat") {
-        $rd_bins = $copycat_dir . "/rd.bins.dat";
-    } else {
-        die $self->error_message("Unable to find rd.bins.dat in " . $copycat_dir);
-    }
-    my $copycat_cnvhmm = $output_dir . "/copycat.cnvs.hq";
-    my $awk_cmd = "awk 'BEGIN { print \"CHR\\tPOS\\tTUM\\tNORMAL\\tDIFF\" }" .
-        "!/NA|Inf/ {  print \$1\"\\t\"\$2\"\\t\"\$3\"\\t2\\t\"\$3-2}\' " .
-        "$rd_bins > $copycat_cnvhmm";
-    Genome::Sys->shellcmd(cmd => $awk_cmd);
-    return $copycat_cnvhmm;
-}
 
 sub get_data_paths {
     my $self = shift;
@@ -361,7 +310,7 @@ sub get_data_paths {
     if(not $is_copycat) {
         $data_paths->{cnvs_hq} = $data_paths->{root_dir} . "variants/cnvs.hq";
     } else {
-        $data_paths->{cnvs_hq} = $self->_get_copycat_cnvhq($somatic_var_build, $output_dir);
+        $data_paths->{cnvs_hq} = $self->create_copycat_cnvhq_file($somatic_var_build, $output_dir);
     }
     $data_paths->{normal_bam} = $somatic_var_build->normal_bam;
     $data_paths->{tumor_bam} = $somatic_var_build->tumor_bam;

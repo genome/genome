@@ -23,7 +23,7 @@ class Genome::Model::Tools::Analysis::SummarizeMutationSpectrum {
             is => 'String',
             is_input => 1,
             is_optional => 1,
-            doc => '.tsv file consiting of 2 entries per line: label and input file path. The input files should consist of 4-column, tab-separated bed files (chr start stop ref/var)',
+            doc => '.tsv file consiting of 2 entries per line: label and input file path. The input files should consist of 4-column, tab-separated bed files of type (chr start stop ref/var) or (chr start stop ref var)',
         },
         somatic_id => {
             is  => 'String',
@@ -320,6 +320,9 @@ sub parse_bed_file {
         my ($chr,$start,$stop,$ref_var,@rest) = split(/\t/,$_);
         next if($chr =~ /GL/);
         my ($ref,$var) = split(/\//,$ref_var);
+        unless($var) {
+          $var = $rest[0];
+        }
         my @variants = Genome::Info::IUB::variant_alleles_for_iub($ref,$var);
         if(@variants>1) {
             #warn "more than 1 variant allele detected for '$_'\n";
@@ -360,15 +363,24 @@ sub make_output {
     $transition = $total->{'A->G'}[0] + $total->{'C->T'}[0];
     $transversion = $total->{'A->C'}[0] + $total->{'A->T'}[0] + $total->{'C->A'}[0] + $total->{'C->G'}[0];
     $total_SNV = $transition+$transversion;
-    $transition_percent = nearest(0.001,$transition/$total_SNV);
-    $transversion_percent = nearest(0.001,$transversion/$total_SNV);
-
-
-    #print OUT "BaseChg\tcount\tpercent\tlabel\n" if($print_header);
-    foreach my $k (keys %$total) {
-        $total->{$k}[1] = nearest(0.001,$total->{$k}[0]/$total_SNV);
-        print OUT "$k\t$total->{$k}[0]\t$total->{$k}[1]\t$label\n";
+    if($total_SNV != 0) {
+        $transition_percent = nearest(0.001,$transition/$total_SNV);
+        $transversion_percent = nearest(0.001,$transversion/$total_SNV);
+        #print OUT "BaseChg\tcount\tpercent\tlabel\n" if($print_header);
+        foreach my $k (keys %$total) {
+            $total->{$k}[1] = nearest(0.001,$total->{$k}[0]/$total_SNV);
+            print OUT "$k\t$total->{$k}[0]\t$total->{$k}[1]\t$label\n";
+        }
+    } else {
+        $transition_percent = 0;
+        $transversion_percent = 0;
+        #print OUT "BaseChg\tcount\tpercent\tlabel\n" if($print_header);
+        foreach my $k (keys %$total) {
+            $total->{$k}[1] = 0;
+            print OUT "$k\t$total->{$k}[0]\t$total->{$k}[1]\t$label\n";
+        }
     }
+
     print OUT "Transitions\t$transition\t$transition_percent\t$label\n";
     print OUT "Transversion\t$transversion\t$transversion_percent\t$label\n";
     close OUT;
