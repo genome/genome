@@ -1253,6 +1253,7 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       'config=s',
       [
+        'parsed',
         'verbose',
         'terse',
         'quiet'
@@ -38211,6 +38212,7 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'config=s',
         [
+          'parsed',
           'verbose',
           'terse',
           'quiet'
