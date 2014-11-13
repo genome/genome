@@ -81,7 +81,6 @@ sub params_for_execute {
         output_directory => $self->output_directory,
         plan_json => $self->plan->as_json,
         provider_json => $self->provider->as_json,
-        translations => $self->provider->translations,
     );
 }
 
@@ -95,7 +94,7 @@ sub plan {
     $self->status_message("Plan is valid.");
     return $plan;
 }
-Memoize::memoize('plan');
+Memoize::memoize('plan', LIST_CACHE => 'MERGE');
 
 sub provider {
     my $self = shift;
@@ -108,7 +107,7 @@ sub provider {
     $self->status_message("Translations file is compatible with plan.");
     return $provider;
 }
-Memoize::memoize('provider');
+Memoize::memoize('provider', LIST_CACHE => 'MERGE');
 
 sub dag {
     my $self = shift;
@@ -122,6 +121,6 @@ sub dag {
 
     return $dag;
 }
-Memoize::memoize('dag');
+Memoize::memoize('dag', LIST_CACHE => 'MERGE');
 
 1;

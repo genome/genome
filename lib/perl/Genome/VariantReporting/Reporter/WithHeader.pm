@@ -110,7 +110,7 @@ sub available_fields_dict {
     }
     return %available_fields;
 }
-Memoize::memoize('available_fields_dict');
+Memoize::memoize('available_fields_dict', SCALAR_CACHE => 'MERGE');
 
 # Default report method
 # Prints the fields in order of the headers.

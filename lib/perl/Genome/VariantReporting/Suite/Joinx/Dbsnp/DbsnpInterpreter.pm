@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::DbsnpAFParser;
+use Memoize qw();
 
 class Genome::VariantReporting::Suite::Joinx::Dbsnp::DbsnpInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
@@ -30,7 +31,7 @@ sub _caf_parser {
     return Genome::File::Vcf::DbsnpAFParser->new($header);
 }
 
-Memoize::memoize('_caf_parser');
+Memoize::memoize('_caf_parser', LIST_CACHE => 'MERGE');
 
 sub _interpret_entry {
     my $self = shift;

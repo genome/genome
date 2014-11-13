@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Set::Scalar;
+use Memoize qw();
 
 class Genome::VariantReporting::Framework::Plan::ReporterPlan {
     is => 'Genome::VariantReporting::Framework::Plan::Base',

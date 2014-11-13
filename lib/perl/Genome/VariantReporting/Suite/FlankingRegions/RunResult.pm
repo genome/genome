@@ -8,6 +8,7 @@ use IPC::Run qw(run);
 use File::Basename qw(dirname);
 use Genome::File::Vcf::Writer;
 use Genome::File::Vcf::Reader;
+use Memoize qw();
 
 
 class Genome::VariantReporting::Suite::FlankingRegions::RunResult {
@@ -81,7 +82,7 @@ sub sample_index {
 
     return $header->index_for_sample_name($self->tumor_sample_name);
 }
-Memoize::memoize("sample_index");
+Memoize::memoize("sample_index", LIST_CACHE => 'MERGE');
 
 sub get_left_flanking_region {
     my $self = shift;

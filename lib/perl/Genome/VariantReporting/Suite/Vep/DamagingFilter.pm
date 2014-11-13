@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::File::Vcf::VepConsequenceParser;
+use Memoize qw();
 
 class Genome::VariantReporting::Suite::Vep::DamagingFilter {
     is => 'Genome::VariantReporting::Framework::Component::Filter',
@@ -37,7 +38,7 @@ sub vep_parser {
     my $header = shift;
     return new Genome::File::Vcf::VepConsequenceParser($header);
 }
-Memoize::memoize('vep_parser');
+Memoize::memoize('vep_parser', LIST_CACHE => 'MERGE');
 
 sub is_damaging {
     my $transcript = shift;

@@ -7,6 +7,7 @@ use Sys::Hostname;
 use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Writer;
 use Genome::File::Vcf::DbsnpAFParser;
+use Memoize qw();
 
 use constant AF_HEADER => '<ID=AF,Number=A,Type=Float,Description="Allele frequence for non-reference alleles">';
 

@@ -5,18 +5,18 @@
     <inputproperty>output_directory</inputproperty>
     <inputproperty>plan_json</inputproperty>
     <inputproperty>provider_json</inputproperty>
-    <inputproperty>translations</inputproperty>
     <inputproperty>variant_type</inputproperty>
     <outputproperty>output_directory</outputproperty>
   </operationtype>
   <operation name="Generate Reports">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::ReportGenerator">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
       <inputproperty>input_vcf</inputproperty>
       <inputproperty>output_directory</inputproperty>
       <inputproperty>plan_json</inputproperty>
-      <inputproperty>translations</inputproperty>
+      <inputproperty>provider_json</inputproperty>
       <inputproperty>variant_type</inputproperty>
       <outputproperty>output_directory</outputproperty>
+      <outputproperty>output_result</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
@@ -103,7 +103,7 @@
   <link fromOperation="expert_two" fromProperty="output_vcf" toOperation="Generate Reports" toProperty="input_vcf"/>
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="Generate Reports" toProperty="output_directory"/>
   <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Reports" toProperty="plan_json"/>
-  <link fromOperation="input connector" fromProperty="translations" toOperation="Generate Reports" toProperty="translations"/>
+  <link fromOperation="input connector" fromProperty="provider_json" toOperation="Generate Reports" toProperty="provider_json"/>
   <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Reports" toProperty="variant_type"/>
   <link fromOperation="input connector" fromProperty="input_vcf" toOperation="expert_one" toProperty="input_vcf"/>
   <link fromOperation="input connector" fromProperty="plan_json" toOperation="expert_one" toProperty="plan_json"/>
