@@ -34,7 +34,7 @@ $extract = Genome::Model::GenotypeMicroarray::Command::ExtractToCsv->create(
 ok($extract, 'create extract command');
 ok($extract->execute, 'execute extract command');
 is(File::Compare::compare($output_tsv, $build->original_genotype_file_path), 0, 'genotype tsv matches');
-i($extract->genotypes_input, 9, 'genotypes input');
+is($extract->genotypes_input, 9, 'genotypes input');
 is($extract->genotypes_output, 9, 'genotypes output');
 is($extract->genotypes_filtered, 0, 'genotypes filtered');
 #print "gvimdiff $output_tsv ".$build->original_genotype_file_path."\n"; <STDIN>;
