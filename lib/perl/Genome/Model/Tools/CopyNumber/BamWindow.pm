@@ -62,6 +62,12 @@ class Genome::Model::Tools::CopyNumber::BamWindow {
         default => 1,
     },
 
+    version => {
+        is => 'Float',
+        is_optional => 1,
+        doc => 'Version of bam-window to use',
+        default => "0.5",
+    },
 
     ]
 };
@@ -80,8 +86,11 @@ sub execute {
     my $self = shift;
 
     #create the bam-window command
-    # TODO change this path once it is installed system-wide
-    my $cmd = "/gsc/bin/bam-window"; 
+    my $cmd = "/usr/bin/bam-window"; 
+    if($self->version eq "0.4"){
+        $cmd = $cmd . $self->version;
+    }
+
     $cmd .= " -q " . $self->minimum_mapping_quality;
     $cmd .= " -w " . $self->window_size;
 
