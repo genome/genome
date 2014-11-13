@@ -48,6 +48,11 @@ class Genome::VariantReporting::Command::CombineReports {
             doc => 'Hash of report => TAG If entry_sources are specified, a column will be added to the combined report with a tag on each entry indicating which report it originally came from',
         },
     ],
+    has_transient_optional => [
+        _master_header => {
+            is => 'ARRAY',
+        },
+    ],
 };
 
 sub execute {
@@ -338,10 +343,14 @@ sub get_sort_column_numbers {
 
 sub get_master_header {
     my $self = shift;
-    my @reports = $self->reports;
-    return $self->get_header($reports[0]);
+
+    unless (defined($self->_master_header)) {
+        my @reports = $self->reports;
+        my @header = $self->get_header($reports[0]);
+        $self->_master_header(\@header);
+    }
+    return @{$self->_master_header};
 }
-memoize('get_master_header', SCALAR_CACHE => 'MERGE');
 
 sub get_master_header_with_source {
     my $self = shift;
