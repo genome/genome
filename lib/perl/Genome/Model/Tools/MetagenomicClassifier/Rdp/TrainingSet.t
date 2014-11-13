@@ -4,30 +4,51 @@ use strict;
 use warnings;
 
 use above 'Genome';
+
+require File::Spec;
+require Genome::Utility::Test;
 use Test::Exception;
 use Test::More;
 
 my $class = 'Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet';
 use_ok($class) or die;
+my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::Model::Tools::MetagenomicClassifier::Rdp');
+my $training_set_path = File::Spec->catfile($data_dir, 'training-set');
 
-my $training_set_name = 10;
-my $ts_10 = $class->create_from_training_set_name($training_set_name);
-ok($ts_10, "create training set $training_set_name");
-my $training_path = $ts_10->training_path;
-ok($training_path, "path for training set $training_set_name");
-ok($ts_10->classifier_properties_path, 'classifier properties path');
+my $set_name = 10;
+my @valid_set_names = $class->valid_set_names;
+ok(@valid_set_names, 'valid set names');
+my $path_for_set_name = $class->path_for_set_name($valid_set_names[0]);
+is($path_for_set_name, File::Spec->catfile($class->base_path, $valid_set_names[0]), 'path for set name');
+
+my $ts = $class->create(path => $training_set_path);
+ok($ts, "create training set");
+ok($ts->classifier_properties_path, 'classifier properties path');
 
 # Failures
+$ts = $class->create(path => '0');
+ok($ts, "create w/ invalid training path");
 throws_ok(
-    sub{ $class->create_from_training_set_name() },
-    qr/No training set given to get training path!/,
-    'Failed to create without training set name',
+    sub{ $ts->classifier_properties_path; },
+    qr/No classifier properties \(rRNAClassifier.properties\) in training path! 0/,
+    'Correct error for non existing classifier_properties_path',
+);
+throws_ok(
+    sub{ $ts->taxonomy_path; },
+    qr/No taxonomy XML \(bergeyTrainingTree.xml\) in training path! 0/,
+    'Correct error for non existing taxonomy_path',
 );
 
 throws_ok(
-    sub{ $class->create_from_training_set_name(0) },
-    qr/Invalid training set \(0\) given to create_from_training_set_name!/,
-    'Failed to create without training set name',
+    sub{ $class->path_for_set_name() },
+    qr/No set name given to get path!/,
+    'Failed to get path w/o set name',
+);
+
+throws_ok(
+    sub{ $class->path_for_set_name(0) },
+    qr/Invalid set name! 0/,
+    'Failed to get path w/ invalid set name',
 );
 
 done_testing();

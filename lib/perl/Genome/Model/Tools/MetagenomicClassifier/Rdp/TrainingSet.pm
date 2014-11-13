@@ -6,57 +6,64 @@ use warnings;
 use Genome;
 
 require Bio::Taxon;
+require File::Spec;
 require List::MoreUtils;
 
 class Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet {
     id_by => {
-        training_path => {
+        path => {
             is => 'Text',
             doc => 'Training path to inspect.'
         },
     },
 };
 
-sub valid_training_sets {
+sub valid_set_names {
     return (qw/ 4 6 9 10 broad /);
 }
 
-sub base_training_path {
-    return "/gsc/scripts/share/rdp/";
+sub base_path {
+    return File::Spec->join(File::Spec->rootdir, 'gsc', 'scripts', 'share', 'rdp'); # FIXME should be ENV
 }
 
-sub create_from_training_set_name {
-    my ($class, $training_set_name) = @_;
+sub path_for_set_name {
+    my ($class, $set_name) = @_;
 
-    die $class->error_message('No training set given to get training path!') if not defined $training_set_name;
-    if ( List::MoreUtils::none { $training_set_name eq $_ } $class->valid_training_sets ) {
-        die $class->error_message("Invalid training set ($training_set_name) given to create_from_training_set_name!");
+    die $class->error_message('No set name given to get path!') if not defined $set_name;
+    if ( List::MoreUtils::none { $set_name eq $_ } $class->valid_set_names ) {
+        die $class->error_message("Invalid set name! $set_name");
     }
 
-    my $training_path = $class->base_training_path.'/'.$training_set_name;
-    if ( not -d $training_path ) {
-        die $class->error_message("Training path does not exist: $training_path");
-    }
-
-    return $class->create(training_path => $training_path);
+    return File::Spec->join(base_path(), $set_name);
 }
 
 sub classifier_properties_path {
     my $self = shift;
 
-    my $classifier_properties_path = $self->training_path.'/rRNAClassifier.properties';
+    my $classifier_properties_path = File::Spec->join($self->path, 'rRNAClassifier.properties');
     if ( not -s $classifier_properties_path ) {
-        die $self->error_message('No rRNAClassifier.properties in training path! '.$self->training_path);
+        die $self->error_message('No classifier properties (rRNAClassifier.properties) in training path! '.$self->path);
     }
 
     return $classifier_properties_path;
+}
+
+sub taxonomy_path {
+    my $self = shift;
+    my $path = $self->path;
+    my $taxonomy_path = File::Spec->join($path, "bergeyTrainingTree.xml"); 
+    unless (-e $taxonomy_path) {
+        die $self->error_message("No taxonomy XML (bergeyTrainingTree.xml) in training path! $path");
+    }
+    return $taxonomy_path;
 }
 
 
 sub get_genera {
     my $self = shift;
     unless ($self->{_genera}) {
-        $self->_build_taxonomy();
+        my $build_ok = $self->_build_taxonomy();
+        return if not $build_ok;
     }
     return $self->{_genera};
 }
@@ -64,25 +71,16 @@ sub get_genera {
 sub get_taxonomy {
     my $self = shift;
     unless ($self->{_taxonomy}) {
-        $self->_build_taxonomy();
+        my $build_ok = $self->_build_taxonomy();
+        return if not $build_ok;
     }
     return $self->{_taxonomy};
-}
-
-sub _get_taxonomy_path {
-    my $self = shift;
-    my $path = $self->training_path;
-    my $taxonomy_path = $path."/bergeyTrainingTree.xml"; 
-    unless (-e $taxonomy_path) {
-        die __PACKAGE__.": can't find bergeyTrainingTree.xml in $path";
-    }
-    return $taxonomy_path;
 }
 
 sub _build_taxonomy {
     my $self = shift;
 
-    my $in = Genome::Sys->open_file_for_reading($self->_get_taxonomy_path);
+    my $in = Genome::Sys->open_file_for_reading($self->taxonomy_path);
 
     my %taxons;
     my @genera;
@@ -100,6 +98,7 @@ sub _build_taxonomy {
                              -id        => $attributes{taxid},
                              -rank      => $attributes{rank},
                          );
+            $attributes{name} =~ s/&quot;//g;
             $taxon->node_name($attributes{name});
             $taxons{$taxon->id} = $taxon;
             my $parent = $taxons{$attributes{parentTaxid}};
