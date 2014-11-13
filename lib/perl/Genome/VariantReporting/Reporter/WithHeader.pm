@@ -34,7 +34,7 @@ sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__;
 
-    my %available_fields = %{$self->available_fields_dict()};
+    my %available_fields = $self->available_fields_dict();
     for my $header ($self->headers) {
         my $error_desc;
         if( defined($available_fields{$header}) and $self->header_is_unavailable($header) ) {
@@ -113,7 +113,7 @@ sub available_fields_dict {
         }
         $self->__available_fields_dict(\%available_fields);
     }
-    return $self->__available_fields_dict;
+    return %{$self->__available_fields_dict};
 }
 
 # Default report method
@@ -123,7 +123,7 @@ sub report {
     my $self = shift;
     my $interpretations = shift;
 
-    my %fields = %{$self->available_fields_dict()};
+    my %fields = $self->available_fields_dict();
     for my $allele (keys %{$interpretations->{($self->requires_interpreters)[0]}}) {
         my @outputs;
         for my $header ($self->headers()) {
@@ -174,7 +174,7 @@ sub unavailable_headers {
 sub write_legend_file {
     my $self = shift;
 
-    my %fields = %{$self->available_fields_dict};
+    my %fields = $self->available_fields_dict;
     my $interpreters = $self->interpreters;
     $self->_legend_fh->print("Headers\n");
     my $unavailable_headers = Set::Scalar->new($self->unavailable_headers);

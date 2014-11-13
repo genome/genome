@@ -71,7 +71,7 @@ sub report {
     my $self = shift;
     my $interpretations = shift;
 
-    my %fields = %{$self->available_fields_dict()};
+    my %fields = $self->available_fields_dict();
     for my $allele (keys %{$interpretations->{($self->requires_interpreters)[0]}}) {
         for my $header ($self->headers()) {
             my $interpreter = $fields{$header}->{interpreter};
@@ -104,7 +104,7 @@ sub available_fields_dict {
     my $self = shift;
 
     unless (defined($self->__available_fields_dict)) {
-        my %available_fields = %{$self->SUPER::available_fields_dict()};
+        my %available_fields = $self->SUPER::available_fields_dict();
         for my $info_tag_field (qw/inSegDup onTarget AML_RMG/) {
             $available_fields{$info_tag_field} = {
                 interpreter => 'info-tags',
@@ -118,7 +118,7 @@ sub available_fields_dict {
         };
         $self->__available_fields_dict(\%available_fields);
     }
-    return $self->__available_fields_dict;
+    return %{$self->__available_fields_dict};
 }
 
 sub _print_info_tag {
