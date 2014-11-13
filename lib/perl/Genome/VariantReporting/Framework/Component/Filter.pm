@@ -56,6 +56,13 @@ sub pass_all_sample_alts {
     return %return_values;
 }
 
+sub print {
+    my $self = shift;
+    $self->SUPER::print;
+    print Term::ANSIColor::colored("FILTER DESCRIPTION", 'underline')."\n";
+    print $self->vcf_description."\n";
+}
+
 
 sub vcf_description {
     my $self = shift;

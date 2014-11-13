@@ -14,10 +14,12 @@ class Genome::VariantReporting::Framework::Component::Reporter {
     has_transient_optional => [
         filters => {
             is => 'HASH',
+            is_structural => 1,
             default => {},
         },
         interpreters => {
             is => 'HASH',
+            is_structural => 1,
             default => {},
         },
     ],

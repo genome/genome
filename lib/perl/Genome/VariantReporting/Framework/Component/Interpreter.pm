@@ -81,4 +81,30 @@ sub available_fields {
     return keys %field_descriptions;
 }
 
+sub print {
+    my $self = shift;
+    $self->SUPER::print;
+    print "\n";
+    if ($self->requires_annotations) {
+        print Term::ANSIColor::colored("REQUIRED EXPERTS", 'underline')."\n";
+        print join("\n", "  ".$self->requires_annotations);
+    }
+    print "\n\n";
+    print Term::ANSIColor::colored("AVAILABLE FIELDS", 'underline')."\n";
+    my %descriptions = $self->field_descriptions;
+    while (my ($name, $description) = each %descriptions) {
+        print sprintf
+        (
+            "  %s\n%s\n",
+            Term::ANSIColor::colored($name, 'bold'),
+            Text::Wrap::wrap(
+                "    ",
+                "    ",
+                $description,
+            ),
+        );
+    }
+    print "\n";
+}
+
 1;

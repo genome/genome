@@ -14,7 +14,7 @@ class Genome::VariantReporting::Framework::Component::Adaptor {
             default => 0,
         },
     },
-    has_input => [
+    has_structural_input => [
         provider_json => {
             is => 'Text',
         },
