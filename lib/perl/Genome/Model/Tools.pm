@@ -29,6 +29,11 @@ associated LICENSE file in this distribution.
 EOS
 }
 
+%Command::V2::ALTERNATE_FROM_CLASS = (
+    %Command::V2::ALTERNATE_FROM_CLASS,
+    Genome::Command->ALTERNATE_FROM_CLASS,
+);
+
 1;
 
 =pod
