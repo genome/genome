@@ -52,7 +52,7 @@ ok($wrapper->execute, 'wrapper executed');
 
 #compare_directories($expected_dir, $output_dir);
 
-my $relative_yaml_path = File::Spec->join(qw(test_model_1 resource.yaml));
+my $relative_yaml_path = File::Spec->join(qw(test_model_2 resource.yaml));
 my $yaml = File::Spec->join($output_dir, $relative_yaml_path);
 my $expected_yaml = File::Spec->join($expected_dir, $relative_yaml_path);
 compare_ok(
