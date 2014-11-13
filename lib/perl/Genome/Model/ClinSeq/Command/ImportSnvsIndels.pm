@@ -3,10 +3,10 @@ package Genome::Model::ClinSeq::Command::ImportSnvsIndels;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::ImportSnvsIndels {
-    is => 'Command::V2',
+    is => ['Command::V2',
+           'Genome::Model::ClinSeq::Util'],
     has_input => [
         wgs_build => { 
               is => 'Genome::Model::Build::SomaticVariation',

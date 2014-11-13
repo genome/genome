@@ -12,6 +12,18 @@ class Genome::Model::ClinSeq::Command::Converge::MutationSpectrum {
       is => 'FilesystemPath',
       doc => 'File to write converged-mutation-spectrum results',
     },
+    bq => {
+      is => 'Number',
+      doc => 'Baseq cutoff for mutation-spectrum results.',
+      is_optional => 1,
+      default => 20,
+    },
+    mq => {
+      is => 'Number',
+      doc => 'Mappingq cutoff for mutation-spectrum results.',
+      is_optional => 1,
+      default => 30,
+    },
   ],
   doc => 'converge Stats from mutiple clinseq builds'
 };
@@ -28,17 +40,18 @@ EOS
 sub help_synopsis {
   return <<EOS
   Example usage: 
-  genome model clin-seq converge mutation-spectrum --builds='model_groups.id=786367aa2edc41e1b4a5d33787a8c003,is_last_complete=1' --outfile=metris.tsv --outdir=/tmp/
-  ";
+  genome model clin-seq converge mutation-spectrum --builds='model_groups.id=6fa120dc0afb400596a1e3d6ecf6167d,is_last_complete=1' --outfile=metris.tsv --outdir=/tmp/
 EOS
 }
 
 sub resolve_which_stats_tsv {
   my $self = shift;
   my $b = shift;
+  my $bq = $self->bq;
+  my $mq = $self->mq;
   my @stats_files;
-  push @stats_files, $b->mutation_spectrum_exome_summary_file; 
-  push @stats_files, $b->mutation_spectrum_wgs_summary_file;
+  push @stats_files, $b->mutation_spectrum_exome_summary_file($bq, $mq);
+  push @stats_files, $b->mutation_spectrum_wgs_summary_file($bq, $mq);
   return @stats_files;
 }
 
@@ -246,9 +259,9 @@ sub _get_data_type {
   my $self = shift;
   my $stats_file = shift;
   my $data_type = "WGS/Exome";
-  if($stats_file =~ /mutation-spectrum\/exome\/summarize_mutation_spectrum/) {
+  if($stats_file =~ /mutation-spectrum.*\/exome\/.*summarize_mutation_spectrum/) {
     $data_type = "exome";
-  } elsif($stats_file =~ /mutation-spectrum\/wgs\/summarize_mutation_spectrum/) {
+  } elsif($stats_file =~ /mutation-spectrum.*\/wgs\/.*summarize_mutation_spectrum/) {
     $data_type = "wgs";
   }
   return $data_type;

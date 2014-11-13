@@ -4,7 +4,8 @@ use warnings;
 use Genome;
 
 class Genome::Model::ClinSeq::Command::RunCnView {
-    is => 'Command::V2',
+    is => ['Command::V2',
+          'Genome::Model::ClinSeq::Util'],
     has_input => [
         build  => { 
             is => 'Genome::Model::Build::SomaticVariation',
@@ -24,6 +25,7 @@ class Genome::Model::ClinSeq::Command::RunCnView {
         },
         cnv_hmm_file => {
             is => 'FilesystemPath',
+            is_optional => 1,
             doc => 'CNVhmm results file from clonality analysis (or elsewhere)'
         },
         cnv_hq_file => {
@@ -75,9 +77,7 @@ sub execute {
   my $self = shift;
   my $build = $self->build;
   my $outdir = $self->outdir;
-  my $cnv_hmm_file = $self->cnv_hmm_file;
   $outdir .= "/" unless ($outdir =~ /\/$/);
-$DB::single = 1;
   my @cnv_symbol_lists;
   if ($self->test){
     @cnv_symbol_lists = qw (Kinase_dGene);
@@ -86,27 +86,33 @@ $DB::single = 1;
   }
 
   my $cancer_annotation_db = $self->cancer_annotation_db;
-
   my $gene_symbol_lists_dir = $cancer_annotation_db->data_directory . "/GeneSymbolLists/";
-  #my $gene_symbol_lists_dir = "/gscmnt/sata132/techd/mgriffit/reference_annotations/GeneSymbolLists";
-
   die $self->error_message("outdir does not exist") unless (-e $outdir && -d $outdir);
-  die $self->error_message("segments file does not exist: $cnv_hmm_file") unless (-e $cnv_hmm_file);
   die $self->error_message("could not resolve annotation build id") unless ($build->annotation_build->id);
   die $self->error_message("could not find gene symbol lists dir: $gene_symbol_lists_dir") unless (-e $gene_symbol_lists_dir);
   my $annotation_build_id = $build->annotation_build->id;
- 
-  my $variants_dir = $build->data_directory . "/variants/";
-  my $cnv_data_file = $self->cnv_hq_file || $variants_dir . "cnvs.hq";
-  die $self->error_message("could not find cnvs.hq file somatic build here: $variants_dir") unless (-e $cnv_data_file);
-
+  my ($cnv_data_file, $cnv_hmm_file);
+  my $is_copycat = $self->_is_copycat_somvar($build);
+  if($self->cnv_hq_file and $self->cnv_hmm_file) {
+    $cnv_data_file = $self->cnv_hq_file;
+    $cnv_hmm_file = $self->cnv_hmm_file;
+  } elsif($is_copycat) {
+    $cnv_data_file = $self->create_copycat_cnvhq_file($build, $outdir);
+    $cnv_hmm_file = $outdir . "cnvs.hmm";
+    $self->create_copycat_cnvhmm_file($build, $cnv_hmm_file);
+  } else {
+    my $variants_dir = $build->data_directory . "/variants/";
+    $cnv_data_file = $self->cnv_hq_file || $variants_dir . "cnvs.hq";
+    $cnv_hmm_file = $self->cnv_hmm_file;
+  }
+  die $self->error_message("segments file does not exist: $cnv_hmm_file") unless (-e $cnv_hmm_file);
+  die $self->error_message("could not find cnvs.hq $cnv_data_file file.") unless (-e $cnv_data_file);
   #Create main CNV dir: 'cnv'
   my $cnview_dir = $outdir . "cnview/";
 
   #Create a copy of the cnvs.hq file for later convenience
   my $new_cnv_data_file = $outdir . "cnvs.hq";
   Genome::Sys->copy_file($cnv_data_file, $new_cnv_data_file) unless (-e $new_cnv_data_file);
-
   #For each list of gene symbols, run the CNView analysis
   foreach my $symbol_list_name (@cnv_symbol_lists){
     if ($symbol_list_name eq "All"){

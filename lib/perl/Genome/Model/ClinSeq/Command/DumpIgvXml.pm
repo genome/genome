@@ -4,12 +4,11 @@ package Genome::Model::ClinSeq::Command::DumpIgvXml;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::ClinSeq::Util;
-
 use Genome::Utility::List;
 
 class Genome::Model::ClinSeq::Command::DumpIgvXml {
-    is => 'Command::V2',
+    is => ['Command::V2',
+           'Genome::Model::ClinSeq::Util'],
     has_input => [
         builds => { 
               is => 'Genome::Model::Build::ClinSeq',

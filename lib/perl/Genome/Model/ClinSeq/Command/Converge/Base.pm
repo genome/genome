@@ -11,18 +11,30 @@ class Genome::Model::ClinSeq::Command::Converge::Base {
     is_abstract => 1,
     has_input => [
         builds => { 
-                    is => 'Genome::Model::Build::ClinSeq',
-                    is_many => 1,
-                    require_user_verify => 0,
-                    doc => 'clinseq builds to converge', 
-                  },
-        outdir => {
-                    is => 'FilesystemPath',
-                    doc => 'Directory where output files will be written',
-                   },
+            is => 'Genome::Model::Build::ClinSeq',
+            is_many => 1,
+            require_user_verify => 0,
+            doc => 'clinseq builds to converge',
+        },
         bam_readcount_version => {
             is => 'String',
             doc => 'version of bam-readcount to use',
+        },
+        outdir => {
+            is => 'FilesystemPath',
+            doc => 'Directory where output files will be written',
+        },
+        min_quality_score => {
+              is => 'Integer',
+              is_optional => 1,
+              doc => 'minimum mapping quality of reads to be considered',
+              default => '1',
+        },
+        min_base_quality => {
+              is => 'Integer',
+              is_optional => 1,
+              doc => 'minimum base quality of bases in reads to be considered',
+              default => '0',
         },
     ],
     doc => 'converge various data types across clinseq inputs'
@@ -315,39 +327,6 @@ sub resolve_input_builds{
   }
   return(\@defined_builds);
 }
-
-sub resolve_rnaseq_builds {
-  my $self = shift;
-  my @clinseq_builds = $self->builds;
-
-  my %rnaseq_builds;
-  foreach my $clinseq_build (@clinseq_builds){
-    my $tumor_build = $clinseq_build->tumor_rnaseq_build;
-    $rnaseq_builds{$tumor_build->id}{build} = $tumor_build if $tumor_build;
-    $rnaseq_builds{$tumor_build->id}{type} = 'tumor_rnaseq' if $tumor_build;
-    my $normal_build = $clinseq_build->normal_rnaseq_build;
-    $rnaseq_builds{$normal_build->id}{build} = $normal_build if $normal_build;
-    $rnaseq_builds{$normal_build->id}{type} = 'normal_rnaseq' if $normal_build;
-  }
-  return (\%rnaseq_builds);
-}
-
-sub resolve_somatic_builds{
-  my $self = shift;
-  my @clinseq_builds = $self->builds;
-
-  my %somatic_builds;
-  foreach my $clinseq_build (@clinseq_builds){
-    my $wgs_build = $clinseq_build->wgs_build;
-    $somatic_builds{$wgs_build->id}{build} = $wgs_build if $wgs_build;
-    $somatic_builds{$wgs_build->id}{type} = 'wgs' if $wgs_build;
-    my $exome_build = $clinseq_build->exome_build;
-    $somatic_builds{$exome_build->id}{build} = $exome_build if $exome_build;
-    $somatic_builds{$exome_build->id}{type} = 'exome' if $exome_build;
-  }
-  return (\%somatic_builds);
-}
-
 
 sub resolve_clinseq_reference_build{
   my $self = shift;
@@ -651,206 +630,9 @@ sub get_case_name{
   return $resolved_name;
 }
 
-
-sub get_rnaseq_ref_builds {
+sub fill_missing_output {
   my $self = shift;
-  my $ref_builds = shift;
-  my $rnaseq_builds = shift;
-  foreach my $rnaseq_build_id (keys %{$rnaseq_builds}){
-    my $build_type = $rnaseq_builds->{$rnaseq_build_id}->{type};
-    my $rnaseq_build = $rnaseq_builds->{$rnaseq_build_id}->{build};
-    my $subject_name = $rnaseq_build->subject->name;
-    my $subject_common_name = $rnaseq_build->subject->common_name;
-    $subject_common_name =~ s/\,//g;
-    $subject_common_name =~ s/\s+/\_/g;
-    my $bam_path = $rnaseq_build->alignment_result->bam_file;
-    my @timepoints = $rnaseq_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
-
-    my $time_point = "day0";
-    if (@timepoints){
-      $time_point = $timepoints[0]->attribute_value;
-      $time_point =~ s/\s+//g;
-    }
-    my $refalign_name = $subject_name . "_$build_type" . "_" .
-      $subject_common_name . "_$time_point";;
-    $ref_builds->{$refalign_name}{type} = $build_type;
-    $ref_builds->{$refalign_name}{sample_name} = $subject_name;
-    $ref_builds->{$refalign_name}{sample_common_name} = $subject_common_name;
-    $ref_builds->{$refalign_name}{bam_path} = $bam_path;
-    $ref_builds->{$refalign_name}{time_point} = $subject_common_name . "_" . $time_point;
-    $ref_builds->{$refalign_name}{day} = $time_point;
-  }
-}
-
-
-sub get_ref_align_builds{
-  my $self = shift;
-  my %args = @_;
-  my $somatic_builds = $args{'-somatic_builds'};
-  my $rnaseq_builds = $args{'-rnaseq_builds'};
-
-  my %ref_builds;
-
-  my $sort_on_time_point = 0;
-
-  foreach my $somatic_build_id (keys %{$somatic_builds}){
-    my $build_type = $somatic_builds->{$somatic_build_id}->{type};
-    my $somatic_build = $somatic_builds->{$somatic_build_id}->{build};
-    my $normal_build = $somatic_build->normal_build;
-    my $normal_subject_name = $normal_build->subject->name;
-    my $normal_subject_common_name = $normal_build->subject->common_name;
-    $normal_subject_common_name =~ s/\,//g;
-    $normal_subject_common_name =~ s/\s+/\_/g;
-    my $tumor_build = $somatic_build->tumor_build;
-    my $tumor_subject_name = $tumor_build->subject->name;
-    my $tumor_subject_common_name = $tumor_build->subject->common_name;
-    $tumor_subject_common_name =~ s/\,//g;
-    $tumor_subject_common_name =~ s/\s+/\_/g;
-    my $normal_refalign_name = $normal_subject_name . "_$build_type" . "_" . $normal_subject_common_name;
-    my $tumor_refalign_name = $tumor_subject_name . "_$build_type" . "_" . $tumor_subject_common_name;
-    my $normal_bam_path = $normal_build->whole_rmdup_bam_file;
-    my $tumor_bam_path = $tumor_build->whole_rmdup_bam_file;
-    my @normal_timepoints = $normal_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
-    my @tumor_timepoints = $tumor_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
-
-    my $normal_time_point = "day0";
-    if (@normal_timepoints){
-      $normal_time_point = $normal_timepoints[0]->attribute_value;
-      $normal_time_point =~ s/\s+//g;
-      $sort_on_time_point = 1;
-    }
-    $normal_refalign_name .= "_$normal_time_point";
-
-    my $tumor_time_point = "day0";
-    if (@tumor_timepoints){
-      $tumor_time_point = $tumor_timepoints[0]->attribute_value;
-      $tumor_time_point =~ s/\s+//g;
-      $sort_on_time_point = 1;
-    }
-    $tumor_refalign_name .= "_$tumor_time_point";
-
-    $ref_builds{$normal_refalign_name}{type} = $build_type;
-    $ref_builds{$normal_refalign_name}{sample_name} = $normal_subject_name;
-    $ref_builds{$normal_refalign_name}{sample_common_name} = $normal_subject_common_name;
-    $ref_builds{$normal_refalign_name}{bam_path} = $normal_bam_path;
-    $ref_builds{$normal_refalign_name}{time_point} = $normal_subject_common_name . "_" . $normal_time_point;
-    $ref_builds{$normal_refalign_name}{day} = $normal_time_point;
-
-    $ref_builds{$tumor_refalign_name}{type} = $build_type;
-    $ref_builds{$tumor_refalign_name}{sample_name} = $tumor_subject_name;
-    $ref_builds{$tumor_refalign_name}{sample_common_name} = $tumor_subject_common_name;
-    $ref_builds{$tumor_refalign_name}{bam_path} = $tumor_bam_path;
-    $ref_builds{$tumor_refalign_name}{time_point} = $tumor_subject_common_name . "_" . $tumor_time_point;
-    $ref_builds{$tumor_refalign_name}{day} = $tumor_time_point;
-  }
-
-  $self->get_rnaseq_ref_builds(\%ref_builds, $rnaseq_builds);
-
-  #Set an order on refalign builds (use time points if available, otherwise name)
-  my $o = 0;
-  if ($sort_on_time_point){
-    foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
-      $o++;
-      $ref_builds{$name}{order} = $o;
-    }
-  }else{
-    foreach my $name (sort keys %ref_builds){
-      $o++;
-      $ref_builds{$name}{order} = $o;
-    }
-  }
-
-  #Determine the time point position
-  my %timepoint_positions;
-  foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
-    my $day = $ref_builds{$name}{day};
-    if ($day =~ /day(\d+)/){
-      my $day_number = $1;
-      $timepoint_positions{$day_number}{position} = 0;
-      $ref_builds{$name}{day_number} = $day_number;
-    }else{
-      die $self->error_message("could not parse day value from sample attribute (caTissue timepoint): $day");
-    }
-  }
-  my $time_point_counter = 0;
-  foreach my $day_number (sort {$a <=> $b} keys %timepoint_positions){
-    $time_point_counter++;
-    $timepoint_positions{$day_number}{position} = $time_point_counter;
-  }
-
-  foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
-    my $day_number = $ref_builds{$name}{day_number};
-    my $position = $timepoint_positions{$day_number}{position};
-    $ref_builds{$name}{timepoint_position} = $position;
-  }
-
-  return(\%ref_builds);
-}
-
-
-sub add_read_counts{
-  my $self = shift;
-  my %args = @_;
-  my $align_builds = $args{'-align_builds'};
-  my $grand_anno_file = $args{'-anno_file'};
-  my $indel_size_limit = 25; #max size of indels to report counts for.
-
-  my @bam_files;
-  my @time_points;
-  my @samples;
-  my @names;
-  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
-    push(@bam_files, $align_builds->{$name}->{bam_path});
-    push(@time_points, $align_builds->{$name}->{time_point});
-    push(@samples, $align_builds->{$name}->{sample_name});
-    push(@names, $name);
-  }
-  my $bam_list = join(",", @bam_files);
-
-  #Get the reference fasta
-  my $reference_build = $self->resolve_clinseq_reference_build;
-  my $reference_fasta = $reference_build->full_consensus_path('fa');
-
-  #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
-  my @prefixes;
-  my @unique_time_points = uniq @time_points;
-  my @unique_samples = uniq @samples;
-  my @unique_names = uniq @names;
-  if (scalar(@unique_time_points) == scalar(@time_points)){
-    @prefixes = @time_points;
-  }elsif(scalar(@unique_samples) == scalar(@samples)){
-    @prefixes = @samples;
-  }elsif(scalar(@unique_names) == scalar(@names)){
-    @prefixes = @names;
-  }else{
-    die $self->error_message("could not resolve unique prefixes for add-readcounts");
-  }
-  my $header_prefixes = join(",", @prefixes);
-
-  #Record the header prefix chosen on the align_builds object
-  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
-    my $prefix = shift @prefixes;
-    $align_builds->{$name}->{prefix} = $prefix;
-  }
-
-  #gmt analysis coverage add-readcounts --bam-files=? --genome-build=? --output-file=? --variant-file=? [--header-prefixes=?] 
-  my $output_file = $self->outdir . "variants.all.anno.readcounts";
-  if (-e $output_file){
-    $self->warning_message("using pre-generated bam read count file: $output_file");
-  }else{
-    my $add_count_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
-            bam_files=>$bam_list,
-            genome_build=>$reference_fasta,
-            output_file=>$output_file,
-            variant_file=>$grand_anno_file,
-            header_prefixes=>$header_prefixes,
-            indel_size_limit => $indel_size_limit,
-            bam_readcount_version => $self->bam_readcount_version,
-          );
-    my $r = $add_count_cmd->execute();
-    die $self->error_message("add-readcounts cmd unsuccessful") unless ($r);
-  }
-
+  my $output_file = shift;
   #If there are missing cells relative to the header, fill in with 'NA's
   my $tmp_file = $output_file . ".tmp";
   open (TMP_IN, "$output_file") || die $self->error_message("Could not open file: $output_file");
@@ -882,7 +664,54 @@ sub add_read_counts{
   close(TMP_OUT);
   my $mv_cmd = "mv $tmp_file $output_file";
   Genome::Sys->shellcmd(cmd => $mv_cmd);
+}
 
+sub add_read_counts{
+  my $self = shift;
+  my %args = @_;
+  my $align_builds = $args{'-align_builds'};
+  my $grand_anno_file = $args{'-anno_file'};
+  my $indel_size_limit = 25; #max size of indels to report counts for.
+  my ($b_quality, $m_quality);
+  $m_quality = $self->min_quality_score;
+  $b_quality = $self->min_base_quality;
+  my (@prefixes, @bam_files);
+  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys %{$align_builds}){
+    push(@prefixes, $align_builds->{$name}->{prefix});
+    push(@bam_files, $align_builds->{$name}->{bam_path});
+  }
+  my $header_prefixes = join(",", @prefixes);
+  my $bam_list = join(",", @bam_files);
+
+  #Get the reference fasta
+  my $reference_build = $self->resolve_clinseq_reference_build;
+  my $reference_fasta = $reference_build->full_consensus_path('fa');
+
+  #gmt analysis coverage add-readcounts --bam-files=? --genome-build=? --output-file=? --variant-file=? [--header-prefixes=?] 
+  my $output_file = $self->outdir . "variants.all.anno.readcounts";
+  if (-e $output_file){
+    $self->warning_message("using pre-generated bam read count file: $output_file");
+  }
+
+  $self->status_message("genome_build: $reference_fasta");
+  $self->status_message("indel_size_limit: $indel_size_limit");
+  $self->status_message("min_quality_score: $m_quality");
+  $self->status_message("min_base_quality: $b_quality");
+
+  my $add_count_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
+    bam_files=>$bam_list,
+    genome_build=>$reference_fasta,
+    output_file=>$output_file,
+    variant_file=>$grand_anno_file,
+    header_prefixes=>$header_prefixes,
+    indel_size_limit => $indel_size_limit,
+    min_quality_score => $m_quality,
+    min_base_quality => $b_quality,
+    bam_readcount_version => $self->bam_readcount_version,
+  );
+  my $r = $add_count_cmd->execute();
+  die $self->error_message("add-readcounts cmd unsuccessful") unless ($r);
+  $self->fill_missing_output($output_file);
   return ($output_file);
 }
 
