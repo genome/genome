@@ -326,13 +326,22 @@ sub _get_input_params {
 sub __errors__ {
     my $self = shift;
 
-    my @errors = $self->SUPER::__errors__();
+    return (
+        $self->SUPER::__errors__(),
+        $self->__input_errors__,
+    );
+}
 
+sub __input_errors__ {
+    my $self = shift;
+
+    my @errors;
     for my $property ($self->__meta__->properties(
             is_input=>1, is_optional=>0)) {
         my $property_name = $property->property_name;
 
-        unless (defined($self->$property_name)) {
+        my @values = $self->$property_name;
+        unless (scalar(@values)) {
             push @errors, UR::Object::Tag->create(
                 type => 'invalid',
                 properties => [$property_name],
