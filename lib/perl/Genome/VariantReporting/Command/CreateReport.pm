@@ -3,7 +3,6 @@ package Genome::VariantReporting::Command::CreateReport;
 use strict;
 use warnings FATAL => 'all';
 use Genome::VariantReporting::Framework::Dag qw(generate_dag);
-use Memoize qw();
 use Genome;
 
 class Genome::VariantReporting::Command::CreateReport {
@@ -36,6 +35,17 @@ class Genome::VariantReporting::Command::CreateReport {
             is => 'Path',
             doc => 'The directory where log files will be written.',
         },
+    ],
+    has_transient_optional => [
+        plan => {
+            is => 'Genome::VariantReporting::Framework::Plan::MasterPlan',
+        },
+        provider => {
+            is => 'Genome::VariantReporting::Framework::Component::RuntimeTranslations',
+        },
+        dag => {
+            is => 'Genome::WorkflowBuilder::DAG',
+        }
     ],
 };
 
@@ -87,40 +97,45 @@ sub params_for_execute {
 sub plan {
     my $self = shift;
 
-    $self->status_message("Constructing plan from file (%s)", $self->plan_file);
-    my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file);
-    $self->status_message("Validating plan...");
-    $plan->validate();
-    $self->status_message("Plan is valid.");
-    return $plan;
+    unless (defined($self->__plan)) {
+        $self->status_message("Constructing plan from file (%s)", $self->plan_file);
+        my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file);
+        $self->status_message("Validating plan...");
+        $plan->validate();
+        $self->status_message("Plan is valid.");
+        $self->__plan($plan);
+    }
+    return $self->__plan;
 }
-Memoize::memoize('plan', LIST_CACHE => 'MERGE');
 
 sub provider {
     my $self = shift;
 
-    $self->status_message("Constructing translation-provider from file (%s)", $self->translations_file);
-    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->translations_file);
+    unless (defined($self->__provider)) {
+        $self->status_message("Constructing translation-provider from file (%s)", $self->translations_file);
+        my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->translations_file);
 
-    $self->status_message("Checking for compatibility between translations and plan...");
-    $self->plan->validate_translation_provider($provider);
-    $self->status_message("Translations file is compatible with plan.");
-    return $provider;
+        $self->status_message("Checking for compatibility between translations and plan...");
+        $self->plan->validate_translation_provider($provider);
+        $self->status_message("Translations file is compatible with plan.");
+        $self->__provider($provider);
+    }
+    return $self->__provider;
 }
-Memoize::memoize('provider', LIST_CACHE => 'MERGE');
 
 sub dag {
     my $self = shift;
 
-    $self->status_message("Constructing workflow from plan.");
-    my $dag = generate_dag($self->plan, $self->variant_type);
+    unless (defined($self->__dag)) {
+        $self->status_message("Constructing workflow from plan.");
+        my $dag = generate_dag($self->plan, $self->variant_type);
 
-    $self->status_message("Setting log-directory to (%s)", $self->log_directory);
-    Genome::Sys->create_directory($self->log_directory);
-    $dag->log_dir($self->log_directory);
-
-    return $dag;
+        $self->status_message("Setting log-directory to (%s)", $self->log_directory);
+        Genome::Sys->create_directory($self->log_directory);
+        $dag->log_dir($self->log_directory);
+        $self->__dag($dag);
+    }
+    return $self->__dag;
 }
-Memoize::memoize('dag', LIST_CACHE => 'MERGE');
 
 1;
