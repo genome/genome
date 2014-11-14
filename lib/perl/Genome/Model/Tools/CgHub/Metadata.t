@@ -38,7 +38,7 @@ ok(
         files => [
             { 
                 file_name => 'C508.TCGA-77-8154-10A-01D-2244-08.1.bam',
-                file_size => 12322789137,
+                file_size => 12033973,
                 checksum => {
                     content => '5d2c5cbfc7420405fd4e8e7491a56dc8',
                     type => 'MD5',
@@ -46,7 +46,7 @@ ok(
             },
             {
                 file_name => 'C508.TCGA-77-8154-10A-01D-2244-08.1.bam.bai',
-                file_size => 5731680,
+                file_size => 5597,
                 checksum => {
                     content => '10b2dd0951d76c4813e91e33074d1680',
                     type => 'MD5',
@@ -86,7 +86,7 @@ ok(
         files => [
             {
                 file_name => 'TCGA-A6-2674-01A-02W-0831-10_SOLiD.bam',
-				file_size => 18604187778,
+				file_size => 18168152,
 				checksum => {
                     type => "MD5",
                     content => '0f307401916947ab16e37b225da8c919',
@@ -94,7 +94,7 @@ ok(
             },
             {
                 file_name => 'TCGA-A6-2674-01A-02W-0831-10_SOLiD.bam.bai',
-                file_size => 7121464,
+                file_size => 6954,
                 checksum => {
                     type => "MD5",
                     content => '89a44bbea9fcd62e5c5e1a3dc3610014',
