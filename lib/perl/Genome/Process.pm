@@ -323,5 +323,25 @@ sub _get_input_params {
     return $input_params;
 }
 
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__();
+
+    for my $property ($self->__meta__->properties(
+            is_input=>1, is_optional=>0)) {
+        my $property_name = $property->property_name;
+
+        unless (defined($self->$property_name)) {
+            push @errors, UR::Object::Tag->create(
+                type => 'invalid',
+                properties => [$property_name],
+                desc => 'no value for required input'
+            );
+        }
+    }
+    return @errors;
+}
+
 
 1;
