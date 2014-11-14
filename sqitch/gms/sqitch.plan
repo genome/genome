@@ -344,3 +344,4 @@ process_status_event_permissions [process_status_event] 2014-11-12T01:52:40Z Dav
 @1415936417 2014-11-14T03:40:18Z David Morton <dmorton@genome.wustl.edu> # restrict gms-user permissions on Process tables
 
 process_input [process_process] 2014-11-12T02:18:57Z David Morton <dmorton@genome.wustl.edu> # Add process.input table
+@1416002215 2014-11-14T21:56:56Z David Morton <dmorton@genome.wustl.edu> # Add process.input table
