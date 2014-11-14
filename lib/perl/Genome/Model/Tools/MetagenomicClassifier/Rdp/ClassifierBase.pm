@@ -13,7 +13,7 @@ class Genome::Model::Tools::MetagenomicClassifier::Rdp::ClassifierBase {
     has => [
         training_set => {
             is => 'Text',
-            valid_values => [ Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->valid_training_sets ],
+            valid_values => [ Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->valid_set_names ],
             doc => 'Training set to use.'
         },
     ],
@@ -31,11 +31,18 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
-    my $training_set = eval{
-        Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->create_from_training_set_name(
-            $self->training_set,
+    my $training_path = eval{ Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->path_for_set_name(
+            $self->training_set
         );
     };
+    if ( not $training_path ) {
+        $self->error_message($@);
+        return;
+    }
+
+    my $training_set = Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->create(
+        path => $training_path,
+    );
     return if not $training_set;
 
     my $factory = new FactoryInstance($training_set->classifier_properties_path);
