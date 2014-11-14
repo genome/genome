@@ -19,6 +19,7 @@ class Genome::Process::StatusEvent {
     table_name => 'process.status_event',
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
     id_by => [
         id => {is => 'Text'},
     ],
