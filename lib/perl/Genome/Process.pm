@@ -343,5 +343,37 @@ sub __errors__ {
     return @errors;
 }
 
+sub delete {
+    my $self = shift;
+
+    for my $status_event ($self->status_events) {
+        $status_event->delete;
+    }
+
+    for my $input ($self->inputs) {
+        $input->delete;
+    }
+
+    #creating an anonymous sub to delete allocations when commit happens
+    my $allocation_id = $self->disk_allocation_id;
+    my $process_id = $self->id;
+    my $observer;
+    my $upon_delete_callback = sub {
+        print "Now deleting disk allocation ($allocation_id) associated " .
+            "with process ($process_id)\n";
+        $observer->delete if $observer;
+        my $allocation = Genome::Disk::Allocation->get($allocation_id);
+        if ($allocation) {
+            $allocation->deallocate;
+        }
+    };
+
+    #hook our anonymous sub into the commit callback
+    $observer = $self->class->ghost_class->add_observer(aspect=>'commit',
+        callback=>$upon_delete_callback);
+
+    return $self->SUPER::delete(@_);
+}
+
 
 1;
