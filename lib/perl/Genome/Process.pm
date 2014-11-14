@@ -55,6 +55,7 @@ class Genome::Process {
         },
         software_revision => {
             is => 'Text',
+            is_mutable => 0,
             doc => 'The version of the Genome code the process was created with',
         },
         results => {
@@ -80,12 +81,16 @@ class Genome::Process {
 sub create {
     my $class = shift;
 
-    my $self = $class->SUPER::create(@_);
+    my ($bx, @extra) = $class->define_boolexpr(@_);
+    my %params = ($bx->params_list,
+        software_revision => Genome::Sys->snapshot_revision,
+        @extra,
+    );
+
+    my $self = $class->SUPER::create(%params);
     return unless $self;
 
-    $self->update_status('New');
-    $self->subclass_name($class);
-    $self->software_revision(Genome::Sys->snapshot_revision);
+    $self->status('New');
 
     return $self;
 }
@@ -97,8 +102,10 @@ my $SET_TIMESTAMP_ON_STATUS = {
     Succeeded => 'ended_at',
 };
 
-sub update_status {
-    my ($self, $new_status) = validate_pos(@_, OBJECT, SCALAR);
+sub status {
+    my ($self, $new_status) = validate_pos(@_, OBJECT,
+        {type => SCALAR, optional=> 1});
+    return $self->__status unless $new_status;
 
     my $old_status = $self->status;
 
@@ -115,11 +122,12 @@ sub update_status {
         if ($timestamp_accessor) {
             $self->$timestamp_accessor($now);
         }
-        $self->status($new_status);
+        $self->__status($new_status);
     } else {
         die sprintf("Cannot transition Process (%s) from (%s) to (%s)",
             $self->id, $old_status, $new_status);
     }
+    return $self->__status;
 }
 
 

@@ -28,20 +28,24 @@ class Genome::Process::StatusEvent {
         },
         process_id => {
             is => 'Text',
+            is_mutable => 0,
         },
         old_status => {
             is => 'Text',
             is_optional => 1,
             valid_values => $Genome::Process::VALID_STATUS_VALUES,
+            is_mutable => 0,
             doc => 'The status of the process before the event',
         },
         new_status => {
             is => 'Text',
             valid_values => $Genome::Process::VALID_STATUS_VALUES,
+            is_mutable => 0,
             doc => 'The status of the process after the event',
         },
         timestamp => {
             is => 'Timestamp',
+            is_mutable => 0,
             doc => "When the status changed from 'old_status' to 'new_status'",
         },
     ],
@@ -60,10 +64,18 @@ sub valid_transitions {
 sub create {
     my $class = shift;
 
-    my $self = $class->SUPER::create(@_);
+    my ($bx, @extra) = $class->define_boolexpr(@_);
+    my %params = ($bx->params_list,
+        timestamp => UR::Context->current->now,
+        @extra,
+    );
+
+    my $self = $class->SUPER::create(%params);
     return unless $self;
 
-    unless ($self->valid_transitions->contains($self->new_status)) {
+    if ($self->valid_transitions->contains($self->new_status)) {
+        return $self;
+    } else {
         $self->error_message("Invalid transition from (%s) to (%s) only %s " .
             "is allowed.",
             $self->old_status || 'undef',
@@ -71,9 +83,6 @@ sub create {
             pp($self->valid_transitions->members));
         return;
     }
-    $self->timestamp(UR::Context->current->now);
-
-    return $self;
 }
 
 1;
