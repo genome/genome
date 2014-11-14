@@ -24,7 +24,7 @@ use_ok($pkg) || die;
 
     class Genome::TestProcess {
         is => ['Genome::Process'],
-        has => [
+        has_optional => [
             some_non_object_input => {
                 is_input => 1,
             },

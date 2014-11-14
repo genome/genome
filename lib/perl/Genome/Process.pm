@@ -108,8 +108,25 @@ sub create {
     return unless $self;
 
     $self->status('New');
+    $self->bail_out_if_input_errors(\%params);
 
     return $self;
+}
+
+# because inputs are immutable, there are no opportunities to correct these
+# errors, so we should die.
+sub bail_out_if_input_errors {
+    my $self = shift;
+    my $params = shift;
+
+    my @errors = $self->__input_errors__;
+    if (@errors) {
+        my $class = $self->class;
+        $self->print_errors(@errors);
+        $self->delete();
+        die sprintf("Failed to create (%s) with params: %s",
+            $class, pp($params));
+    }
 }
 
 my $SET_TIMESTAMP_ON_STATUS = {
@@ -351,6 +368,19 @@ sub __input_errors__ {
     }
     return @errors;
 }
+
+sub print_errors {
+    my ($self, @errors) = @_;
+
+    for my $error (@errors) {
+        my @properties = $error->properties;
+        $self->error_message("Property " .
+            join(',', map { "'$_'" } @properties) .
+            ': ' . $error->desc);
+    }
+    return;
+}
+
 
 sub delete {
     my $self = shift;

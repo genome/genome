@@ -7,6 +7,7 @@ use Test::More;
 use Test::Exception;
 use Test::Deep;
 use above 'Genome';
+use Sub::Override qw();
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -25,7 +26,7 @@ use_ok($pkg) || die;
 
     class Genome::TestProcess {
         is => ['Genome::Process'],
-        has => [
+        has_optional => [
             non_input => {
             },
             some_non_object_input => {
@@ -47,6 +48,10 @@ use_ok($pkg) || die;
         ],
     };
 }
+
+# Carp does not always play nice with Test::Exception
+my $override = Sub::Override->new(
+    'Carp::croak' => sub {die @_});
 
 my $p = Genome::TestProcess->create();
 throws_ok {$p->some_non_object_input('foo')}
