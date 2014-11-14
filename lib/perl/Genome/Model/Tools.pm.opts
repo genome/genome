@@ -673,27 +673,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>bam-window',
-    [
-      'bam-file=s',
-      'files',
-      'output-file=s',
-      'files',
-      'debug!',
-      undef,
-      'extra-params=s',
-      'files',
-      'minimum-mapping-quality=s',
-      undef,
-      'per-library!',
-      undef,
-      'per-read-length!',
-      undef,
-      'window-size=s',
-      undef,
-      'help!',
-      undef
-    ],
     '>calc-bin-size',
     [
       'entrypoints=s',
