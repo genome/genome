@@ -21,11 +21,9 @@ class Genome::Model::Tools::CgHub::Query {
             doc => 'Save XML output to this file instead of formatted results.',
         },
         output_file => {
+            is => 'Text',
             doc => 'Save standard output/error to this file. If given the xml file, this fie will only contain the status of the query.',
         },
-    },
-    has_transient => {
-        _was_output_file_given => { is => 'Boolean', },
     },
     doc => 'Query CG Hub for metadata.',
 };
@@ -40,10 +38,10 @@ sub _build_command {
 
     my $output_file = $self->output_file;
     if ( not $output_file ) {
-        $output_file = $self->output_file( File::Temp::tempfile(CLEANP => 1) );
-        $self->_was_output_file_given(1);
+        my $tempdir = File::Temp::tempdir(CLEANUP => 1);
+        $output_file = $self->output_file( File::Spec->catfile($tempdir, 'query.out') );
     }
-    push @cmd_parts, '>', $output_file;
+    push @cmd_parts, '|', 'tee', $output_file;
 
     return join(' ', @cmd_parts);
 }
@@ -56,21 +54,12 @@ sub _verify_success {
         die $self->error_message('CG Query failed to generate output file!');
     }
 
-    my $print_output;
-    if ( $self->_was_output_file_given ) {
-        my $fh = Genome::Sys->open_file_for_reading($output_file);
-        $print_output = sub{ $fh->print($_); };
-    }
-    else {
-        $print_output = sub{ print $_; };
-    }
-
     my $output_fh = Genome::Sys->open_file_for_reading($output_file);
     my $number_of_hits = 0;
     while ( my $line = $output_fh->getline ) {
-        $print_output->($line);
         if ( $line =~ /Matching Objects\s+:\s+(\d+)/ ) {
             $number_of_hits = $1;
+            last;
         }
     }
     $output_fh->close;

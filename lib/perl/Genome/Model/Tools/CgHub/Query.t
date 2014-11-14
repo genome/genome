@@ -25,7 +25,7 @@ my $query = $class->create(
     xml_file => $xml_file,
 );
 ok($query, 'create cg hub query cmd');
-is($query->_build_command, "cgquery -o $xml_file analysis_id=$uuid", 'correct command');
+like($query->_build_command, qr/cgquery analysis_id=$uuid \-o $xml_file/, 'correct command');
 is($query->uuid, $uuid, 'uuid');
 ok($query->execute, 'execute cg hub query cmd');
 ok(-s $query->xml_file, 'xml file downloaded'); # should be temp file
