@@ -72,26 +72,32 @@ sub _get_dummy_params {
     return \%params;
 }
 
-sub print {
+sub vr_doc_sections {
     my $self = shift;
-    print "\n";
+
     my @properties;
+    my %properties_section;
     map {push @properties, _property_to_string($_)} $self->properties_in_plan;
     @properties = grep {$_->[0] ne "id"} @properties;
-    if (@properties) {
-        print Term::ANSIColor::colored("PROPERTIES", 'underline')."\n";
-    }
     for my $row (@properties) {
-        print sprintf(
-            "  %s\n%s\n",
-            Term::ANSIColor::colored($row->[0], 'bold'), # . "   " . $row->[1],
-            Text::Wrap::wrap(
-                "    ", # 1st line indent,
-                "    ", # all other lines indent,
-                $row->[2],
-                $row->[3] || '',
-            ),
-        );
+        push @{$properties_section{items}},
+            sprintf(
+                "  %s\n%s",
+                Term::ANSIColor::colored($row->[0], 'bold'), # . "   " . $row->[1],
+                Text::Wrap::wrap(
+                    "    ", # 1st line indent,
+                    "    ", # all other lines indent,
+                    $row->[2],
+                    $row->[3] || '',
+                ),
+            );
+    }
+    if (@properties) {
+        $properties_section{header} = "PROPERTIES";
+        return (\%properties_section);
+    }
+    else {
+        return ();
     }
 }
 

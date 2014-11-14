@@ -56,11 +56,15 @@ sub pass_all_sample_alts {
     return %return_values;
 }
 
-sub print {
+sub vr_doc_sections {
     my $self = shift;
-    $self->SUPER::print;
-    print Term::ANSIColor::colored("FILTER DESCRIPTION", 'underline')."\n";
-    print $self->vcf_description."\n";
+    my @sections = $self->SUPER::vr_doc_sections;
+    push @sections,
+        {
+            header => "FILTER DESCRIPTION",
+            items => [$self->vcf_description],
+        };
+    return @sections;
 }
 
 

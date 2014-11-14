@@ -34,18 +34,29 @@ sub execute {
 
     if (defined $self->component_name) {
         my $component = $factory->get_dummy_object($type_lookup{$self->component_type}, $self->component_name);
-        $component->print;
+        for my $section ($component->vr_doc_sections) {
+            _print_section($section);
+        }
         $component->delete;
     }
     else {
-        my $text = sprintf (
-            "%s\n%s\n",
-            Term::ANSIColor::colored("Available ".$self->component_type, 'underline'),
-            join("\n", sort grep {$_ !~ /^__/} $factory->names($type_lookup{$self->component_type})),
+        _print_section (
+            {
+                header => "Available ".$self->component_type,
+                items => [sort grep {$_ !~ /^__/} $factory->names($type_lookup{$self->component_type})],
+            }
         );
-        print $text;
     }
     return 1;
+}
+
+sub _print_section {
+    my $section = shift;
+    print sprintf (
+        "%s\n%s\n\n",
+        Term::ANSIColor::colored($section->{header}, 'underline'),
+        join("\n", @{$section->{items}}),
+    );
 }
 
 1;

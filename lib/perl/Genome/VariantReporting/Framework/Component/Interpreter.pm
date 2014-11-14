@@ -81,21 +81,22 @@ sub available_fields {
     return keys %field_descriptions;
 }
 
-sub print {
+sub vr_doc_sections {
     my $self = shift;
-    $self->SUPER::print;
-    print "\n";
+    my @sections = $self->SUPER::vr_doc_sections;
     if ($self->requires_annotations) {
-        print Term::ANSIColor::colored("REQUIRED EXPERTS", 'underline')."\n";
-        print join("\n", "  ".$self->requires_annotations);
+        push @sections,
+            {
+                header => "REQUIRED EXPERTS",
+                items => [$self->requires_annotations],
+            };
     }
-    print "\n\n";
-    print Term::ANSIColor::colored("AVAILABLE FIELDS", 'underline')."\n";
+    my @items;
     my %descriptions = $self->field_descriptions;
     while (my ($name, $description) = each %descriptions) {
-        print sprintf
+        push @items, sprintf
         (
-            "  %s\n%s\n",
+            "  %s\n%s",
             Term::ANSIColor::colored($name, 'bold'),
             Text::Wrap::wrap(
                 "    ",
@@ -104,7 +105,12 @@ sub print {
             ),
         );
     }
-    print "\n";
+    push @sections,
+        {
+            header => "AVAILABLE FIELDS",
+            items => \@items
+        };
+    return @sections;
 }
 
 1;
