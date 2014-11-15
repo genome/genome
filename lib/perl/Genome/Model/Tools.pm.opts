@@ -7404,6 +7404,35 @@ $Genome::Model::Tools::OPTS_SPEC = [
     'help!',
     undef
   ],
+  '>cg-hub',
+  [
+    '>gene-torrent',
+    [
+      'lsf-resource=s',
+      'files',
+      'target-path=s',
+      'files',
+      'uuid=s',
+      'files',
+      'output-file=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>query',
+    [
+      'uuid=s',
+      'files',
+      'output-file=s',
+      'files',
+      'xml-file=s',
+      'files',
+      'help!',
+      undef
+    ],
+    'help!',
+    undef
+  ],
   '>bmr',
   [
     '>calculate-fdr',
@@ -10550,17 +10579,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
-    'help!',
-    undef
-  ],
-  '>gene-torrent',
-  [
-    'lsf-resource=s',
-    'files',
-    'uuid=s',
-    'files',
-    'target-path=s',
-    'files',
     'help!',
     undef
   ],
