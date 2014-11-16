@@ -226,11 +226,46 @@ sub create_disk_allocation {
         $self->disk_allocation($disk_allocation);
         $self->status_message("Process (%s) now has disk_allocation (%s)",
             $self->id, $self->disk_allocation->id);
+        $self->_ensure_disk_allocation_gets_cleaned_up();
         return $self->disk_allocation;
     } else {
         die sprintf("Failed to create disk allocation with " .
             "arguments: %s", pp(\%args));
     }
+}
+
+#XXX not sure why but this only works with a UR software transaction
+sub _ensure_disk_allocation_gets_cleaned_up {
+    my $self = shift;
+
+    my $cleanup_closure = $self->_disk_allocation_cleanup_closure();
+    my $create_disk_allocation = UR::Context::Transaction->log_change(
+            $self, 'UR::Value', $self->disk_allocation_id,
+            'external_change', $cleanup_closure);
+    unless ($create_disk_allocation) {
+        die sprintf("Couldn't log allocation (%s) created",
+            $self->disk_allocation_id);
+    }
+}
+
+sub _disk_allocation_cleanup_closure {
+    my $self = shift;
+    my $observer = shift;
+
+    my $allocation_id = $self->disk_allocation_id;
+    my $process_id = $self->id;
+    my $remove_allocation = sub {
+        print "Now deleting disk allocation ($allocation_id) associated " .
+            "with process ($process_id)\n";
+        ${$observer}->delete if $observer;
+        my $allocation = Genome::Disk::Allocation->get($allocation_id);
+        if ($allocation) {
+            $allocation->delete;
+        }
+    };
+    $self->debug_message("Created closure to delete disk allocation (%s) " .
+        "assocatied with process (%s)", $allocation_id, $process_id);
+    return $remove_allocation;
 }
 
 
@@ -393,23 +428,17 @@ sub delete {
         $input->delete;
     }
 
-    #creating an anonymous sub to delete allocations when commit happens
-    my $allocation_id = $self->disk_allocation_id;
-    my $process_id = $self->id;
     my $observer;
-    my $upon_delete_callback = sub {
-        print "Now deleting disk allocation ($allocation_id) associated " .
-            "with process ($process_id)\n";
-        $observer->delete if $observer;
-        my $allocation = Genome::Disk::Allocation->get($allocation_id);
-        if ($allocation) {
-            $allocation->deallocate;
-        }
-    };
-
-    #hook our anonymous sub into the commit callback
     $observer = $self->class->ghost_class->add_observer(aspect=>'commit',
-        callback=>$upon_delete_callback);
+        callback=>$self->_disk_allocation_cleanup_closure(\$observer));
+    if ($observer) {
+        $self->status_message("Registered observer to delete disk allocation " .
+            "(%s) upon commit", $self->disk_allocation_id);
+    } else {
+        $self->error_message("Failed to register observer to delete disk " .
+            "allocation (%s), you need to delete it manually, after commiting",
+            $self->disk_allocation_id);
+    }
 
     return $self->SUPER::delete(@_);
 }
