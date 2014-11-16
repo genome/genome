@@ -429,7 +429,7 @@ sub delete {
     }
 
     my $observer;
-    $observer = $self->class->ghost_class->add_observer(aspect=>'commit',
+    $observer = UR::Context->current->add_observer(aspect=>'commit',
         callback=>$self->_disk_allocation_cleanup_closure(\$observer));
     if ($observer) {
         $self->status_message("Registered observer to delete disk allocation " .
