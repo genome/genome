@@ -90,7 +90,7 @@ sub _additional_parts_for_default_name {
     return ( $instrument_data->import_source_name, $instrument_data->sequencing_platform, $self->refseq_name );
 }
 
-our @format_types = (
+my @format_types = (
     {
         id => 'GT',
         name => 'genotype',
@@ -134,10 +134,9 @@ sub format_types {
 
 sub format_name_for_id {
     my ($self, $format_type_id) = @_;
-    for my $format_type ( @format_types ) {
-        return $format_type->{name} if $format_type->{id} eq $format_type_id;
-    }
-    return;
+    my $format = List::Util::first { $_->{id} eq $format_type_id }  @format_types;
+    return if not $format;
+    return $format->{name};
 }
 
 sub genotype_filters {
