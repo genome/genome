@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS process.input (
     value_id text NOT NULL,
     name text NOT NULL,
     array_index int NOT NULL,
-    CONSTRAINT status_event_process_fkey FOREIGN KEY (process_id) REFERENCES process.process(id),
+    CONSTRAINT input_process_fkey FOREIGN KEY (process_id) REFERENCES process.process(id),
     CONSTRAINT process_input_unique_name_index UNIQUE (process_id, name, array_index)
 );
 
