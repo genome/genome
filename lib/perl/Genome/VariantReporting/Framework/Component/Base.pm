@@ -75,6 +75,24 @@ sub _get_dummy_params {
 sub vr_doc_sections {
     my $self = shift;
 
+    my @sections;
+
+    my %overview_section;
+    $overview_section{header} = "OVERVIEW";
+    $overview_section{items} = [$self->__meta__->doc ? $self->__meta__->doc : "(undocumented)"];
+
+    push @sections, \%overview_section;
+
+    my $properties_section = $self->_properties_section;
+    if ($properties_section) {
+        push @sections, $properties_section;
+    }
+
+    return @sections;
+}
+
+sub _properties_section {
+    my $self = shift;
     my @properties;
     my %properties_section;
     map {push @properties, _property_to_string($_)} $self->properties_in_plan;
@@ -94,10 +112,10 @@ sub vr_doc_sections {
     }
     if (@properties) {
         $properties_section{header} = "PROPERTIES";
-        return (\%properties_section);
+        return \%properties_section;
     }
     else {
-        return ();
+        return;
     }
 }
 
