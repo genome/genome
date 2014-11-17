@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata;
+package Genome::Model::Tools::CgHub::Metadata;
 
 use strict;
 use warnings;
@@ -9,7 +9,7 @@ require File::Spec;
 require File::Temp;
 use XML::Simple;
 
-class Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata { 
+class Genome::Model::Tools::CgHub::Metadata {
     is => 'UR::Object',
     has => {
         metadata_file => {

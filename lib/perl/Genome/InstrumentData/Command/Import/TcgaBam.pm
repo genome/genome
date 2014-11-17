@@ -201,7 +201,7 @@ sub _import_from_uuids {
             return;
         }
 
-        my $metadata = Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata->create(
+        my $metadata = Genome::Model::Tools::CgHub::Metadata->create(
             uuid => $uuid,
         );
 
@@ -421,7 +421,7 @@ sub _create_attributes {
 sub _parse_metadata_file {
     my ($self, $metadata_file) = @_;
 
-    return Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata->create(
+    return Genome::Model::Tools::CgHub::Metadata->create(
         metadata_file => $metadata_file,
     );
 }
