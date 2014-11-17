@@ -147,7 +147,7 @@ sub _execute_process {
         process => $self,
         update_with_commit => 0
     );
-    if (my $rv = $cmd->execute_process(with_commit => 0)) {
+    if (my $rv = $cmd->execute()) {
         if ($transaction->commit()) {
             $self->status_message("Successfully ran process (%s)",
                 $self->id);
