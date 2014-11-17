@@ -24,8 +24,6 @@ use_ok($pkg) || die;
     class TestProcess {
         is => [$pkg],
     };
-
-    1;
 }
 {
     package TestResult;
@@ -37,8 +35,6 @@ use_ok($pkg) || die;
     class TestResult {
         is => ['Genome::SoftwareResult'],
     };
-
-    1;
 }
 
 my $p = TestProcess->create();
