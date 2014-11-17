@@ -7,6 +7,10 @@ use File::Spec;
 use Params::Validate qw(validate_pos :types);
 use Data::Dump qw(pp);
 use Scalar::Util qw();
+use Try::Tiny qw(try catch);
+use JSON;
+
+my $_JSON_CODEC = new JSON->allow_nonref;
 
 class Genome::Process {
     is => [
@@ -91,6 +95,96 @@ class Genome::Process {
     ],
     doc => 'A base class to manage meta-data related to running a process (workflow)',
 };
+
+
+sub run {
+    my $self = shift;
+    my %p = Params::Validate::validate(@_, {
+            workflow_xml => {type => SCALAR},
+            workflow_inputs => {type => HASHREF},
+    });
+
+    my $transaction = UR::Context::Transaction->begin();
+    $self->create_disk_allocation();
+
+    $self->_write_workflow_file($p{workflow_xml});
+    $self->_write_inputs_file($p{workflow_inputs});
+
+    local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
+    local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
+    local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+
+    if ($ENV{UR_DBI_NO_COMMIT}) {
+        return $self->_execute_process($transaction);
+    } else {
+        local $ENV{WF_USE_FLOW} = 1;
+        $self->_schedule_process($transaction);
+        return;
+    }
+}
+
+sub _write_workflow_file {
+    my $self = shift;
+    my $workflow_xml = shift;
+
+    Genome::Sys->write_file($self->workflow_file, $workflow_xml);
+}
+
+sub _write_inputs_file {
+    my $self = shift;
+    my $inputs = shift;
+
+    my $json = $_JSON_CODEC->canonical->pretty->encode($inputs);
+    Genome::Sys->write_file($self->inputs_file, $json);
+}
+
+sub _execute_process {
+    my $self = shift;
+    my $transaction = shift;
+
+    my $cmd = Genome::Process::Command::Run->create(
+        process => $self,
+        update_with_commit => 0
+    );
+    if (my $rv = $cmd->execute_process(with_commit => 0)) {
+        if ($transaction->commit()) {
+            $self->status_message("Successfully ran process (%s)",
+                $self->id);
+            return $rv;
+        } else {
+            $transaction->rollback();
+            die sprintf("Failed to commit process (%s): %s",
+                $self->id, $transaction->error_message || 'Reason Unknown');
+        }
+    } else {
+        die sprintf("Failed to run process (%s) for some reason",
+            $self->id);
+    }
+}
+
+sub _schedule_process {
+    my $self = shift;
+    my $transaction = shift;
+
+    try {
+        my $cmd = Genome::Process::Command::Run->create(process => $self);
+        $cmd->schedule();
+    } catch {
+        my $error = $_;
+        $transaction->rollback();
+        die sprintf("Failed to schedule process (%s): %s",
+            $self->id, $error);
+    };
+    if ($transaction->commit()) {
+        $self->status_message("Successfully launched process (%s)",
+            $self->id);
+    } else {
+        $transaction->rollback();
+        die sprintf("Failed to schedule process (%s): %s",
+            $self->id, $transaction->error_message || 'Reason Unknown');
+    }
+}
 
 
 sub create {
@@ -185,6 +279,21 @@ sub _workflow_instances {
         name => $self->workflow_name,
     );
     return @instances;
+}
+
+sub environment_file {
+    my $self = shift;
+    return File::Spec->join($self->metadata_directory, 'environment.txt');
+}
+
+sub inputs_file {
+    my $self = shift;
+    return File::Spec->join($self->metadata_directory, 'inputs.json');
+}
+
+sub workflow_file {
+    my $self = shift;
+    return File::Spec->join($self->metadata_directory, 'workflow.xml');
 }
 
 sub log_directory {
