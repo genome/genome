@@ -49,12 +49,12 @@ is(scalar(@{[$p->status_events]}), 1, 'one status_event created');
 ok(! defined($p->started_at), 'started_at NOT automatically set');
 ok(! defined($p->ended_at), 'ended_at NOT automatically set');
 
-$p->status('Running');
+$p->update_status('Running');
 ok(defined($p->started_at), 'updating status to "Running" sets started_at');
 is(scalar(@{[$p->status_events]}), 2, 'two status_events created');
 is($p->status, 'Running', 'Status was set properly');
 
-$p->status('Crashed');
+$p->update_status('Crashed');
 ok(defined($p->ended_at), 'updating status to "Crashed" sets ended_at');
 is(scalar(@{[$p->status_events]}), 3, 'thee status_events created');
 

@@ -107,7 +107,7 @@ sub create {
         $class->_preprocess_params_for_create(%params));
     return unless $self;
 
-    $self->status('New');
+    $self->update_status('New');
     $self->bail_out_if_input_errors(\%params);
 
     return $self;
@@ -136,10 +136,9 @@ my $SET_TIMESTAMP_ON_STATUS = {
     Succeeded => 'ended_at',
 };
 
-sub status {
-    my ($self, $new_status) = validate_pos(@_, OBJECT,
-        {type => SCALAR, optional=> 1});
-    return $self->__status unless $new_status;
+sub update_status {
+    my ($self, $new_status) = validate_pos(@_,
+        {type => OBJECT}, {type => SCALAR});
 
     my $old_status = $self->status;
 
@@ -156,12 +155,12 @@ sub status {
         if ($timestamp_accessor) {
             $self->$timestamp_accessor($now);
         }
-        $self->__status($new_status);
+        $self->status($new_status);
     } else {
         die sprintf("Cannot transition Process (%s) from (%s) to (%s)",
             $self->id, $old_status, $new_status);
     }
-    return $self->__status;
+    return $self->status;
 }
 
 
