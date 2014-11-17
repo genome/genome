@@ -121,6 +121,7 @@ sub _properties_section {
 
 sub _property_to_string {
     my $property_meta = shift;
+    my @lines;
     my $param_name = $property_meta->{property_name};
     my $param_type = $property_meta->data_type || '';
     if (defined($param_type) and $param_type !~ m/::/) {
@@ -141,31 +142,29 @@ sub _property_to_string {
         };
     }
 
-    if (!$doc) {
+    if ($doc) {
+        push @lines, $doc;
+    }
+    else {
         if (!$valid_values and !$property_meta->{is_translated}) {
-            $doc = "(undocumented)";
-        }
-        else {
-            $doc = '';
+            push @lines, "(undocumented)";
         }
     }
     if ($valid_values) {
-        $doc .= "\nvalid values:\n";
+        push @lines, "valid values:";
         for my $v (@$valid_values) {
-            $doc .= " ". $v . "\n";
+            push @lines, " ". $v;
             $max_name_length = length($v)+2 if $max_name_length < length($v)+2;
         }
-        chomp $doc;
     }
     if ($property_meta->{is_translated}) {
-        $doc .= "This is a translated property.\n";
+        push @lines, "This is a translated property.";
     }
     if ($example_values && @$example_values) {
-        $doc .= "\nexample". (@$example_values > 1 and 's') . ":\n";
-        $doc .= join(', ',
+        push @lines, "example". (@$example_values > 1 and 's') . ":";
+        push @lines, join(', ',
             map { ref($_) ? Data::Dumper->new([$_])->Terse(1)->Dump() : $_ } @$example_values
             );
-        chomp $doc;
     }
     $max_name_length = length($param_name) if $max_name_length < length($param_name);
 
@@ -187,7 +186,7 @@ sub _property_to_string {
         }
         $default_value = "\nDefault value $default_value if not specified";
     }
-    return [$param_name, $param_type, $doc, $default_value];
+    return [$param_name, $param_type, join("\n", @lines), $default_value];
 }
 
 1;

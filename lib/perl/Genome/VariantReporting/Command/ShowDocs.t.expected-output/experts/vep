@@ -7,8 +7,8 @@
   [1mensembl_version[0m
     (undocumented) 
   [1mfeature_list_ids[0m
-    A hash keyed on INFO TAG with values of FeatureList IDsThis is a translated property.
-
+    A hash keyed on INFO TAG with values of FeatureList IDs
+    This is a translated property. 
   [1mjoinx_version[0m
     (undocumented) 
   [1mplugins[0m
@@ -16,8 +16,7 @@
   [1mplugins_version[0m
     (undocumented) 
   [1mreference_fasta[0m
-    This is a translated property.
-
+    This is a translated property. 
   [1mspecies[0m
     (undocumented) 
 

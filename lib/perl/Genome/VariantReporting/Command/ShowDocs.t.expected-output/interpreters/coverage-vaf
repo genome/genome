@@ -9,8 +9,7 @@ Argument "coverages_and_vafs.key" isn't numeric in sort at /gscuser/aregier/git/
   [1mcoverages_and_vafs[0m
     A mapping of coverages and the minimum vafs. 
   [1msample_name[0m
-    This is a translated property.
-
+    This is a translated property. 
 
 [4mREQUIRED EXPERTS[0m
 bam-readcount

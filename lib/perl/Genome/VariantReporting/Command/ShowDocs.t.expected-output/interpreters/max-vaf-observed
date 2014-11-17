@@ -3,11 +3,9 @@
 
 [4mPROPERTIES[0m
   [1mnormal_sample_names[0m
-    This is a translated property.
-
+    This is a translated property. 
   [1mtumor_sample_names[0m
-    This is a translated property.
-
+    This is a translated property. 
 
 [4mREQUIRED EXPERTS[0m
 bam-readcount

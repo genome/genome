@@ -5,8 +5,7 @@
   [1mmin_callers[0m
     Variant must be called by at least this many callers 
   [1msample_name[0m
-    This is a translated property.
-
+    This is a translated property. 
   [1mvalid_callers[0m
     (undocumented) 
     Default value ('VarscanSomatic','Sniper','Strelka') if not specified
