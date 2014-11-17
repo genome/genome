@@ -97,16 +97,16 @@ sub _properties_section {
     my %properties_section;
     map {push @properties, _property_to_string($_)} $self->properties_in_plan;
     @properties = grep {$_->[0] ne "id"} @properties;
-    for my $row (@properties) {
-        my $type = $row->[1] ? "   ".$row->[1] : "";
+    for my $property (@properties) {
+        my $type = $property->[1] ? "   ".$property->[1] : "";
         push @{$properties_section{items}},
             sprintf(
                 "  %s\n%s",
-                Term::ANSIColor::colored($row->[0], 'bold') . $type,
+                Term::ANSIColor::colored($property->[0], 'bold') . $type,
                 Text::Wrap::wrap(
                     "    ", # 1st line indent,
                     "    ", # all other lines indent,
-                    $row->[2],
+                    $property->[2],
                 ),
             );
     }
