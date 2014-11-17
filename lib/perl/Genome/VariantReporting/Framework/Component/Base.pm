@@ -130,7 +130,6 @@ sub _property_to_string {
     my $doc = $property_meta->doc;
     my $valid_values = $property_meta->valid_values;
     my $example_values = $property_meta->example_values;
-    my $max_name_length = 0;
     unless ($doc) {
         eval {
             foreach my $ancestor_class_meta ($property_meta->class_meta->ancestry_class_metas) {
@@ -154,7 +153,6 @@ sub _property_to_string {
         push @lines, "valid values:";
         for my $v (@$valid_values) {
             push @lines, " ". $v;
-            $max_name_length = length($v)+2 if $max_name_length < length($v)+2;
         }
     }
     if ($property_meta->{is_translated}) {
@@ -166,7 +164,6 @@ sub _property_to_string {
             map { ref($_) ? Data::Dumper->new([$_])->Terse(1)->Dump() : $_ } @$example_values
             );
     }
-    $max_name_length = length($param_name) if $max_name_length < length($param_name);
 
     my $default_value = $property_meta->default_value;
     if (defined $default_value) {
