@@ -50,6 +50,11 @@ sub execute {
     return 1;
 }
 
+sub type_lookup {
+    my $type = shift;
+    return $type_lookup{$type};
+}
+
 sub _print_section {
     my $section = shift;
     print sprintf (
