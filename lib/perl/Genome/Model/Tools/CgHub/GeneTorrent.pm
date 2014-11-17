@@ -25,20 +25,10 @@ class Genome::Model::Tools::CgHub::GeneTorrent {
     ]
 };
 
-sub execute {
+sub _build_command {
     my $self = shift;
 
-    # genetorrent-download debian package for 10.04 lives in /cghub
-    local $ENV{'PATH'} = $ENV{'PATH'} . ':/cghub/bin';
-
-    # version 3.3.4 has GeneTorrent binary
-    # version 3.8.3 has gtdownload binary
-    my $exe = do {
-        `gtdownload --help`;
-        ($? == 0) ? 'gtdownload' : 'GeneTorrent';
-    };
-
-    my $cmd = "$exe"
+    my $cmd = 'gtdownload'
         . ' --credential-file /gscuser/kochoa/mykey.pem'    # TODO: do not hardcode
         . ' --download https://cghub.ucsc.edu/cghub/data/analysis/download/' . $self->uuid
         . ' --path ' . $self->target_path
@@ -48,17 +38,6 @@ sub execute {
         . ' --rate-limit '.$self->rate_limit # mega-BYTES per second (see internet_download_mbps above)
         . ' --inactivity-timeout ' . 3 * 60 * 24   # in minutes - instead of bsub -W
     ;
-
-    $self->debug_message('Cmd: ' . $cmd);
-
-    my $res = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-
-    if ( not $res ) {
-        $self->error_message('Cannot execute command "' . $cmd . '" : ' . $@);
-        return;
-    }
-
-    return 1;
 }
 
 sub rate_limit {
