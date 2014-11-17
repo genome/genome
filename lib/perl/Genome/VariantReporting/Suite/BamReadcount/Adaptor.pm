@@ -17,8 +17,8 @@ class Genome::VariantReporting::Suite::BamReadcount::Adaptor {
         minimum_mapping_quality => { is => 'Integer', },
         minimum_base_quality => { is => 'Integer', },
         max_count => { is  => 'Integer', },
-        per_library => { is  => 'Bool', },
-        insertion_centric => { is  => 'Bool', },
+        per_library => { is  => 'Boolean', },
+        insertion_centric => { is  => 'Boolean', },
     ],
 };
 
