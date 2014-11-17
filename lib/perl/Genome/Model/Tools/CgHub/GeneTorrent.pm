@@ -22,7 +22,8 @@ class Genome::Model::Tools::CgHub::GeneTorrent {
             # mbps -> mega-BITS per second (see --rate-limit below)
             default_value => '-q lims-long -R "rusage[internet_download_mbps=80]"',
         },
-    ]
+    ],
+    doc => 'Download files from CG Hub using gene-torrent',
 };
 
 sub _build_command {
