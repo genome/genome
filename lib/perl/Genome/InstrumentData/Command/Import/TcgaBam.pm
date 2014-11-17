@@ -923,11 +923,8 @@ sub _cghub_download {
 
     my $op = $workflow->add_operation(
         name => 'genetorrent',
-        operation_type => Workflow::OperationType::Command->get(id => 'Genome::Model::Tools::GeneTorrent'),
-#        parallel_by => "file"
+        operation_type => Workflow::OperationType::Command->get(id => 'Genome::Model::Tools::CgHub::GeneTorrent'),
     );
-
-#    my %params = (file => ["a".."d"]);
 
     my $input_connector = $workflow->get_input_connector;
     my $output_connector = $workflow->get_output_connector;

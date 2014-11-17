@@ -1,11 +1,11 @@
-package Genome::Model::Tools::GeneTorrent;
+package Genome::Model::Tools::CgHub::GeneTorrent;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Tools::GeneTorrent {
+class Genome::Model::Tools::CgHub::GeneTorrent {
     is => "Command::V2",
     has_input => [
         uuid => {
