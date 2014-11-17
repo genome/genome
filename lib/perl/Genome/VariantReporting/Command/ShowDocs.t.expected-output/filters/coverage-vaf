@@ -1,0 +1,25 @@
+Argument "coverages_and_vafs.key" isn't numeric in sort at /gscuser/aregier/git/genome/copy/lib/perl/Genome/VariantReporting/Suite/BamReadcount/CoverageVafFilter.pm line 87.
+Argument "coverages_and_vafs.key" isn't numeric in sort at /gscuser/aregier/git/genome/copy/lib/perl/Genome/VariantReporting/Suite/BamReadcount/CoverageVafFilter.pm line 87.
+Argument "coverages_and_vafs.key" isn't numeric in sort at /gscuser/aregier/git/genome/copy/lib/perl/Genome/VariantReporting/Suite/BamReadcount/CoverageVafFilter.pm line 87.
+Argument "coverages_and_vafs.key" isn't numeric in sort at /gscuser/aregier/git/genome/copy/lib/perl/Genome/VariantReporting/Suite/BamReadcount/CoverageVafFilter.pm line 87.
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mPROPERTIES[0m
+  [1mcoverages_and_vafs[0m
+    A mapping of coverages and the minimum vafs. 
+  [1msample_name[0m
+    This is a translated property.
+
+
+[4mREQUIRED EXPERTS[0m
+bam-readcount
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Coverage and VAF for sample sample_name follows criteria: [coverages_and_vafs.keyX and
+    VAF>coverages_and_vafs.value%]
+
+[4mFILTER DESCRIPTION[0m
+Coverage and VAF for sample sample_name follows criteria: [coverages_and_vafs.keyX and VAF>coverages_and_vafs.value%]
+

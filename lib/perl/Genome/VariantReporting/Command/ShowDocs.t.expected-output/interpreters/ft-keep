@@ -1,0 +1,18 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mPROPERTIES[0m
+  [1mkeep_filter_values[0m
+    (undocumented) 
+    Default value ('PASS') if not specified
+  [1msample_name[0m
+    This is a translated property.
+
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    FT value for sample sample_name is one of [keep_filter_values]
+
+[4mFILTER DESCRIPTION[0m
+FT value for sample sample_name is one of [keep_filter_values]
+

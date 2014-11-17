@@ -1,0 +1,20 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mPROPERTIES[0m
+  [1mmin_callers[0m
+    Variant must be called by at least this many callers 
+  [1msample_name[0m
+    This is a translated property.
+
+  [1mvalid_callers[0m
+    (undocumented) 
+    Default value ('VarscanSomatic','Sniper','Strelka') if not specified
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Variant was called by at least min_callers callers for sample sample_name
+
+[4mFILTER DESCRIPTION[0m
+Variant was called by at least min_callers callers for sample sample_name
+

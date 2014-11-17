@@ -1,0 +1,17 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mPROPERTIES[0m
+  [1minfo_tag[0m
+    custom tag name in the info field to show threshold, like SEGDUP=82 
+  [1mthreshold[0m
+    The maximum thresold to pass 
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Override method 'vcf_description' must be defined in class
+    'Genome::VariantReporting::Generic::MaxInfoThresholdFilter' with the real description
+
+[4mFILTER DESCRIPTION[0m
+Override method 'vcf_description' must be defined in class 'Genome::VariantReporting::Generic::MaxInfoThresholdFilter' with the real description
+

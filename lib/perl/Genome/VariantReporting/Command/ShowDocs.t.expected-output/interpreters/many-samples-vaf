@@ -1,0 +1,25 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mPROPERTIES[0m
+  [1msample_names[0m
+    This is a translated property.
+
+
+[4mREQUIRED EXPERTS[0m
+bam-readcount
+
+[4mAVAILABLE FIELDS[0m
+  [1msample_names_vaf[0m
+    Variant allele frequency for sample sample_names
+  [1msample_names_var_count[0m
+    Number of reads supporting variant for sample sample_names
+  [1msample_names_per_library_var_count[0m
+    Number of reads supporting variant for each library of sample sample_names
+  [1msample_names_per_library_vaf[0m
+    Variant allele frequency for each library of sample sample_names
+  [1msample_names_per_library_ref_count[0m
+    Number of reads supporting the reference for each library of sample sample_names
+  [1msample_names_ref_count[0m
+    Number of reads supporting the reference for sample sample_names
+
