@@ -195,17 +195,14 @@ sub _import_from_uuids {
 
     $self->status_message('Importing the following UUIDs: ' . join(', ',@uuid));
 
-    my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
     for my $uuid (@uuid) {
         unless($self->_validate_uuid($uuid)) {
             $self->error_message('Not a valid uuid: ' . $uuid);
             return;
         }
 
-        my $tmp_xml = File::Spec->catfile($tmpdir, $uuid, '.xml');
-        my $query = Genome::Model::Tools::CgHub::Metadata::Query->create(
+        my $metadata = Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata->create(
             uuid => $uuid,
-            xml_file => $tmp_xml,
         );
 
         my $bam_file_name = $metadata->bam_file_names;
