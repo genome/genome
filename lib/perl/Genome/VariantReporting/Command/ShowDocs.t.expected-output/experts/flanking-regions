@@ -3,9 +3,9 @@
 
 [4mPROPERTIES[0m
   [1mflank_size[0m   Integer
-    (undocumented) 
+    (undocumented)
   [1mreference_fasta[0m   Path
-    This is a translated property. 
+    This is a translated property.
   [1mtumor_sample_name[0m   Text
-    This is a translated property. 
+    This is a translated property.
 

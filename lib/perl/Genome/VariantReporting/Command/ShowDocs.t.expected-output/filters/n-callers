@@ -3,11 +3,11 @@
 
 [4mPROPERTIES[0m
   [1mmin_callers[0m   Integer
-    Variant must be called by at least this many callers 
+    Variant must be called by at least this many callers
   [1msample_name[0m   Text
-    This is a translated property. 
+    This is a translated property.
   [1mvalid_callers[0m   String
-    (undocumented) 
+    (undocumented)
     Default value ('VarscanSomatic','Sniper','Strelka') if not specified
 
 [4mAVAILABLE FIELDS[0m

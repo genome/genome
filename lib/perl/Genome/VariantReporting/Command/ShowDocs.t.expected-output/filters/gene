@@ -5,7 +5,7 @@
   [1mgene_set[0m   String
     Name of the gene set to utilize for filtering
     valid values:
-     acmg 
+     acmg
 
 [4mREQUIRED EXPERTS[0m
 vep

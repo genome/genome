@@ -3,11 +3,11 @@
 
 [4mPROPERTIES[0m
   [1mmax_vaf[0m   Number
-    The inclusive upper bound for VAF values that will pass the filter (will be kept) 
+    The inclusive upper bound for VAF values that will pass the filter (will be kept)
   [1mmin_vaf[0m   Number
-    The inclusive lower bound for VAF values that will pass the filter (will be kept) 
+    The inclusive lower bound for VAF values that will pass the filter (will be kept)
   [1msample_name[0m   Text
-    This is a translated property. 
+    This is a translated property.
 
 [4mREQUIRED EXPERTS[0m
 bam-readcount

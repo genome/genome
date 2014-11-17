@@ -3,13 +3,13 @@
 
 [4mPROPERTIES[0m
   [1mmax_maf[0m   Number
-    Maximum minor allele frequency 
+    Maximum minor allele frequency
   [1mpopulation_code[0m   String
     Population for which to compare MAF
     valid values:
      All
      EU
-     AA 
+     AA
 
 [4mREQUIRED EXPERTS[0m
 nhlbi

@@ -107,7 +107,6 @@ sub _properties_section {
                     "    ", # 1st line indent,
                     "    ", # all other lines indent,
                     $row->[2],
-                    $row->[3] || '',
                 ),
             );
     }
@@ -182,9 +181,9 @@ sub _property_to_string {
         else {
             $default_value = "'$default_value'";
         }
-        $default_value = "\nDefault value $default_value if not specified";
+        push @lines, "Default value $default_value if not specified";
     }
-    return [$param_name, $param_type, join("\n", @lines), $default_value];
+    return [$param_name, $param_type, join("\n", @lines)];
 }
 
 1;

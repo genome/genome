@@ -3,11 +3,11 @@
 
 [4mPROPERTIES[0m
   [1mhomopolymer_list_id[0m   String
-    This is a translated property. 
+    This is a translated property.
   [1minfo_string[0m   Text
-    (undocumented) 
+    (undocumented)
   [1mjoinx_version[0m   Version
-    (undocumented) 
+    (undocumented)
   [1mmax_length[0m   Integer
-    (undocumented) 
+    (undocumented)
 
