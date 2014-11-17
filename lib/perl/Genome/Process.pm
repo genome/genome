@@ -226,6 +226,8 @@ sub create_disk_allocation {
         $self->status_message("Process (%s) now has disk_allocation (%s)",
             $self->id, $self->disk_allocation->id);
         $self->_ensure_disk_allocation_gets_cleaned_up();
+
+        Genome::Sys->create_directory($self->log_directory);
         return $self->disk_allocation;
     } else {
         die sprintf("Failed to create disk allocation with " .
