@@ -2,7 +2,7 @@
 (undocumented)
 
 [4mPROPERTIES[0m
-  [1msize[0m
+  [1msize[0m   Number
     The maximum size of an INDEL to pass 
 
 [4mAVAILABLE FIELDS[0m

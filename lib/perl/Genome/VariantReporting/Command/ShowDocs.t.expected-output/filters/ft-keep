@@ -2,10 +2,10 @@
 (undocumented)
 
 [4mPROPERTIES[0m
-  [1mkeep_filter_values[0m
+  [1mkeep_filter_values[0m   Text
     (undocumented) 
     Default value ('PASS') if not specified
-  [1msample_name[0m
+  [1msample_name[0m   Text
     This is a translated property. 
 
 [4mAVAILABLE FIELDS[0m

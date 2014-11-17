@@ -2,15 +2,15 @@
 (undocumented)
 
 [4mPROPERTIES[0m
-  [1mmax_het_vaf[0m
+  [1mmax_het_vaf[0m   Number
     Maximum VAF value if the genotype if heterozygous. Expressed as a whole percentage. 
-  [1mmax_hom_vaf[0m
+  [1mmax_hom_vaf[0m   Number
     Maximum VAF value if the genotype if homozygous. Expressed as a whole percentage. 
-  [1mmin_het_vaf[0m
+  [1mmin_het_vaf[0m   Number
     Minimum VAF value if the genotype if heterozygous. Expressed as a whole percentage. 
-  [1mmin_hom_vaf[0m
+  [1mmin_hom_vaf[0m   Number
     Minimum VAF value if the genotype if homozygous. Expressed as a whole percentage. 
-  [1msample_name[0m
+  [1msample_name[0m   Text
     This is a translated property. 
 
 [4mREQUIRED EXPERTS[0m

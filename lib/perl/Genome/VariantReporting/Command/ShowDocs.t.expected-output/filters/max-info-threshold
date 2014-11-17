@@ -2,9 +2,9 @@
 (undocumented)
 
 [4mPROPERTIES[0m
-  [1minfo_tag[0m
+  [1minfo_tag[0m   String
     custom tag name in the info field to show threshold, like SEGDUP=82 
-  [1mthreshold[0m
+  [1mthreshold[0m   Number
     The maximum thresold to pass 
 
 [4mAVAILABLE FIELDS[0m

@@ -2,21 +2,21 @@
 (undocumented)
 
 [4mPROPERTIES[0m
-  [1mcustom_annotation_tags[0m
+  [1mcustom_annotation_tags[0m   String
     (undocumented) 
-  [1mensembl_version[0m
+  [1mensembl_version[0m   String
     (undocumented) 
-  [1mfeature_list_ids[0m
+  [1mfeature_list_ids[0m   Hash
     A hash keyed on INFO TAG with values of FeatureList IDs
     This is a translated property. 
-  [1mjoinx_version[0m
+  [1mjoinx_version[0m   String
     (undocumented) 
-  [1mplugins[0m
+  [1mplugins[0m   String
     (undocumented) 
-  [1mplugins_version[0m
+  [1mplugins_version[0m   String
     (undocumented) 
-  [1mreference_fasta[0m
+  [1mreference_fasta[0m   Path
     This is a translated property. 
-  [1mspecies[0m
+  [1mspecies[0m   Text
     (undocumented) 
 

@@ -2,7 +2,7 @@
 (undocumented)
 
 [4mPROPERTIES[0m
-  [1mgene_set[0m
+  [1mgene_set[0m   String
     Name of the gene set to utilize for filtering
     valid values:
      acmg 
