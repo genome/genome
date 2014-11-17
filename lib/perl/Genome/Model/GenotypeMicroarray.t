@@ -16,6 +16,11 @@ use Test::More;
 ok(init(), 'succesfully completed init');
 ok(test_dependent_cron_ref_align(), 'successfully completed test_dependent_cron_ref_align');
 ok(test_run_build(), 'successfully completed test_run_build');
+
+# FORMAT TYPES
+ok(Genome::Model::GenotypeMicroarray->format_types, 'format_types');
+is(Genome::Model::GenotypeMicroarray->format_name_for_id('BAF'), 'b_allele_freq', 'format_name_for_id BAF');
+
 done_testing();
 
 ###
