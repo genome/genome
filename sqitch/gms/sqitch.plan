@@ -342,3 +342,6 @@ process.status_event.timestamp_index [process_status_event] 2014-11-10T02:48:04Z
 process_process_permissions [process_process] 2014-11-12T01:41:28Z David Morton <dmorton@genome.wustl.edu> # Don't let gms-user delete processes
 process_status_event_permissions [process_status_event] 2014-11-12T01:52:40Z David Morton <dmorton@genome.wustl.edu> # Don't let gms-user delete or update entries
 @1415936417 2014-11-14T03:40:18Z David Morton <dmorton@genome.wustl.edu> # restrict gms-user permissions on Process tables
+
+process_input [process_process] 2014-11-12T02:18:57Z David Morton <dmorton@genome.wustl.edu> # Add process.input table
+@1416002215 2014-11-14T21:56:56Z David Morton <dmorton@genome.wustl.edu> # Add process.input table
