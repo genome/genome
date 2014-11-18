@@ -8,9 +8,7 @@ use Params::Validate qw(validate_pos :types);
 use Data::Dump qw(pp);
 use Scalar::Util qw();
 use Try::Tiny qw(try catch);
-use JSON;
-
-my $_JSON_CODEC = new JSON->allow_nonref;
+use JSON qw(to_json);
 
 class Genome::Process {
     is => [
@@ -140,8 +138,15 @@ sub _write_inputs_file {
     my $self = shift;
     my $inputs = shift;
 
-    my $json = $_JSON_CODEC->canonical->pretty->encode($inputs);
-    Genome::Sys->write_file($self->inputs_file, $json);
+    Genome::Sys->write_file($self->inputs_file,
+        to_json($inputs, {pretty => 1, canonical => 1}));
+}
+
+sub write_environment_file {
+    my $self = shift;
+
+    Genome::Sys->write_file($self->environment_file,
+        to_json({%ENV}, {pretty => 1, canonical => 1}));
 }
 
 sub _execute_process {
@@ -288,7 +293,7 @@ sub _workflow_instances {
 
 sub environment_file {
     my $self = shift;
-    return File::Spec->join($self->metadata_directory, 'environment.txt');
+    return File::Spec->join($self->metadata_directory, 'environment.json');
 }
 
 sub inputs_file {

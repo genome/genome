@@ -55,7 +55,7 @@ sub get_workflow_inputs {
 sub execute {
     my $self = shift;
 
-    $self->save_run_environment();
+    $self->process->write_environment_file;
 
     $self->status_message("Reading in workflow from file: %s",
         $self->process->workflow_file);
@@ -89,12 +89,6 @@ sub update_status {
     if ($self->update_with_commit) {
         UR::Context->commit;
     }
-}
-
-sub save_run_environment {
-    my $self = shift;
-
-    system("env > " . $self->process->environment_file);
 }
 
 sub workflow_process_error_log {
