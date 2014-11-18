@@ -127,7 +127,7 @@ sub _bsub_in_pend_state {
     my $job_id = try {
         Genome::Sys::LSF::bsub::run(['bsub'], @bsub_args);
     } catch {
-        die sprintf("Failed to launch bsub:\n$_\n");
+        die "Failed to launch bsub:\n$_\n";
     };
     $self->process->update_status('Scheduled');
     return $job_id;
