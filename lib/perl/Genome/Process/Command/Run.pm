@@ -119,9 +119,9 @@ sub _bsub_in_pend_state {
         log_file => $self->workflow_process_out_log,
         hold_job => 1,
         project => $self->process->workflow_name,
+        queue => $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW},
         send_job_report => 1,
         never_rerunnable => 1,
-        # XXX resources? this job just runs a workflow with flow so should use very little
     );
 
     my $job_id = try {
