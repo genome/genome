@@ -31,10 +31,6 @@ class Genome::VariantReporting::Command::CreateReport {
             is => 'Path',
             doc => 'A yaml file containing key-value pairs where the key is a value from the plan file that needs to be translated at runtime',
         },
-        log_directory => {
-            is => 'Path',
-            doc => 'The directory where log files will be written.',
-        },
     ],
     has_transient_optional => [
         plan => {

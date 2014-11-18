@@ -40,7 +40,6 @@ subtest 'working_command' => sub {
         input_vcf => $input_vcf,
         variant_type => 'snvs',
         output_directory => $output_dir,
-        log_directory => Genome::Sys->create_temp_directory,
         plan_file => File::Spec->join($test_dir, 'plan.yaml'),
         translations_file => get_translations_file($input_vcf),
     );
@@ -69,7 +68,6 @@ subtest 'no_translations_file' => sub {
         input_vcf => $input_vcf,
         variant_type => 'snvs',
         output_directory => $output_dir,
-        log_directory => Genome::Sys->create_temp_directory,
         plan_file => File::Spec->join($test_dir, 'plan.yaml'),
         translations_file => "does_not_exist.yaml",
     );
@@ -91,7 +89,6 @@ subtest 'no_plan_file' => sub {
         input_vcf => $input_vcf,
         variant_type => 'snvs',
         output_directory => $output_dir,
-        log_directory => Genome::Sys->create_temp_directory,
         plan_file => 'does_not_exist.plan',
         translations_file => get_translations_file($input_vcf),
     );
@@ -113,7 +110,6 @@ subtest 'no_vcf' => sub {
         input_vcf => 'does_not_exist.vcf',
         variant_type => 'snvs',
         output_directory => $output_dir,
-        log_directory => Genome::Sys->create_temp_directory,
         plan_file => File::Spec->join($test_dir, 'plan.yaml'),
         translations_file => get_translations_file($input_vcf),
     );
