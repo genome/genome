@@ -12,7 +12,6 @@ class Genome::Command {
 # This map allows the top-level genome commands to be whatever
 # we wish, instead of having to match the directory structure.
 my %command_map = (
-    'process' => 'Genome::Process::Command',
     'variant-reporting' => 'Genome::VariantReporting::Command',
     'analysis-project' => 'Genome::Config::AnalysisProject::Command',
     'config' => 'Genome::Config::Command',
@@ -26,6 +25,7 @@ my %command_map = (
     'model' => 'Genome::Model::Command',
     'model-group' => 'Genome::ModelGroup::Command',
     'population-group' => 'Genome::PopulationGroup::Command',
+    'process' => 'Genome::Process::Command',
     'processing-profile' => 'Genome::ProcessingProfile::Command',
     'project' => 'Genome::Project::Command',
     'project-part' => 'Genome::ProjectPart::Command',

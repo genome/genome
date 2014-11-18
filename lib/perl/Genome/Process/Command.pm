@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Process::Command {
     is => 'Command::Tree',
-    doc => 'process related commands',
+    doc => 'commands for working with processes',
 };
 
 1;
