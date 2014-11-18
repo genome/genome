@@ -48,7 +48,6 @@ for my $component_type qw(experts interpreters filters reporters) {
                 unlink $actual_out;
             }
             local *STDOUT = Genome::Sys->open_file_for_writing($actual_out);
-            local *STDERR = *STDOUT;
             my @argv = ("variant-reporting", "show-docs", $component_type, $component);
 
             my $exit = Genome::Command->_cmdline_run(@argv);
