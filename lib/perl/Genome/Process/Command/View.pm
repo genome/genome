@@ -95,7 +95,8 @@ sub _display_process {
 %s
 
 %s
-%s%s
+%s
+%s
 %s
 
 EOS
@@ -114,59 +115,9 @@ EOS
         ),
         $self->_color_pair('Process Class', $process->class),
         $self->_color_pair('Software Revision', $process->software_revision),
-        $self->_software_result_test_name,
+        $self->_color_pair('SoftwareResult Test Name(s)',
+            $self->_software_result_test_names($process->results)),
         $self->_color_pair('MetaData Directory', $process->metadata_directory));
-}
-
-sub _software_result_test_name {
-    my ($self) = @_;
-    my $process = $self->process;
-    my @results = $process->results;
-    my $label = 'SoftwareResult Test Name(s)';
-
-    unless (scalar(@results)) {
-        return "\n" . $self->_color_pair($label, "No results found for this process");
-    }
-    return '' unless scalar(@results);
-
-    my $UNDEF = '***undef***';
-    my @test_names = map {$_->test_name ? $_->test_name : $UNDEF} @results;
-
-    my %counts;
-    $counts{$_}++ for @test_names;
-    my @sorted_counts = (
-        sort { $b->[1] <=> $a->[1] }
-        map { [ $_, $counts{$_} ] } keys %counts
-    );
-
-    my @entries;
-    while (my $entry = shift(@sorted_counts)) {
-        my ($name, $count) = @{$entry};
-        if ($name eq $UNDEF) {
-            $name = "undef";
-        } else {
-            $name = '"' . $name . '"';
-        }
-
-        push @entries, sprintf("%s (%d)", $name, $count);
-    }
-    my $value = join(", ", @entries);
-
-    return "\n" . $self->_color_pair($label, $value);
-}
-
-sub _display_many {
-    my ($self, $handle, $section_name, $method_name, @items) = @_;
-
-    print $handle $self->_color_heading($section_name) . "\n";
-    if(@items) {
-        for my $item (@items) {
-            $self->$method_name($handle, $item);
-        }
-    } else {
-        print $handle "None\n";
-    }
-    print $handle "\n";
 }
 
 sub _display_input {
