@@ -7,9 +7,7 @@ use Try::Tiny qw(try catch);
 use File::Slurp qw(read_file);
 use Data::Dump qw(pp);
 use Genome::Utility::Email;
-use JSON;
-
-my $_JSON_CODEC = new JSON->allow_nonref;
+use JSON qw(from_json);
 
 class Genome::Process::Command::Run {
     is => ['Command::V2'],
@@ -49,7 +47,7 @@ sub get_workflow_inputs {
     my $self = shift;
 
     my $json = read_file($self->process->inputs_file);
-    return $_JSON_CODEC->decode($json);
+    return from_json($json);
 }
 
 sub execute {
