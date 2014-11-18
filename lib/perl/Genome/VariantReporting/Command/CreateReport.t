@@ -36,7 +36,7 @@ subtest 'working_command' => sub {
     my $output_dir = Genome::Sys->create_temp_directory;
 
     my $input_vcf = File::Spec->join($test_dir, "input.vcf");
-    my $cmd = $pkg->execute(
+    my $cmd = $pkg->create(
         input_vcf => $input_vcf,
         variant_type => 'snvs',
         output_directory => $output_dir,
@@ -44,9 +44,15 @@ subtest 'working_command' => sub {
         plan_file => File::Spec->join($test_dir, 'plan.yaml'),
         translations_file => get_translations_file($input_vcf),
     );
+    my $p = $cmd->execute();
 
-    my $expected_dir = File::Spec->join($test_dir, "expected");
-    compare_dir_ok($output_dir, $expected_dir, 'All reports are as expected');
+    my $expected_result_dir = File::Spec->join($test_dir, "expected_in_result");
+    compare_dir_ok($output_dir, $expected_result_dir,
+        'All reports are as expected');
+
+    my $expected_process_dir = File::Spec->join($test_dir, "expected_in_process");
+    compare_dir_ok($p->metadata_directory, $expected_process_dir,
+        'All metadata files are as expected');
 };
 
 subtest 'no_translations_file' => sub {
@@ -133,14 +139,18 @@ sub compare_dir_ok {
     my @got_files = map {basename($_)} glob(File::Spec->join($got_dir, '*'));
     my @expected_files = map {basename($_)} glob(File::Spec->join($expected_dir, '*'));
 
-    cmp_bag(\@got_files, \@expected_files, 'Got all expected files') or die;
+    my $got_files = Set::Scalar->new(@got_files);
+    for my $filename (@expected_files) {
+        ok($got_files->contains($filename), sprintf(
+            "Found file (%s) in directory (%s)", $filename, $got_dir),
+        ) || die;
 
-    for my $filename (@got_files) {
         # this file has absolute paths to test files in it
         next if $filename eq 'resources.yaml';
 
         my $got = File::Spec->join($got_dir, $filename);
         my $expected = File::Spec->join($expected_dir, $filename);
         compare_ok($got, $expected, "File ($filename) is as expected");
+
     }
 }

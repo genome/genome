@@ -49,6 +49,10 @@ class Genome::VariantReporting::Command::CreateReport {
     ],
 };
 
+sub process_class {
+    return "Genome::VariantReporting::Process::CreateReport";
+}
+
 sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__(@_);
@@ -67,31 +71,29 @@ sub __errors__ {
 sub execute {
     my $self = shift;
 
-    $self->status_message("Executing workflow.");
-    $self->dag->execute(
-        $self->params_for_execute
+    my $p = $self->process_class->create(
+        input_vcf => $self->input_vcf,
+        variant_type => $self->variant_type,
+    );
+    $p->save_plan_file($self->plan_file);
+    $p->save_translations_file($self->translations_file);
+
+    $p->run(workflow_xml => $self->dag->get_xml,
+        workflow_inputs => $self->workflow_inputs,
     );
 
-    $self->status_message("Writing plan file and provider file to output_directory (%s)",
-        $self->output_directory);
-    $self->plan->write_to_file(File::Spec->join($self->output_directory, 'plan.yaml'));
-    $self->provider->write_to_file(File::Spec->join($self->output_directory, 'resources.yaml'));
-
-    $self->status_message("Report Generation complete, reports are located at (%s).",
-        $self->output_directory);
-
-    return 1;
+    return $p;
 }
 
-sub params_for_execute {
+sub workflow_inputs {
     my $self = shift;
-    return (
+    return {
         input_vcf => $self->input_vcf,
         variant_type => $self->variant_type,
         output_directory => $self->output_directory,
         plan_json => $self->plan->as_json,
         provider_json => $self->provider->as_json,
-    );
+    };
 }
 
 sub plan {
@@ -129,10 +131,6 @@ sub dag {
     unless (defined($self->__dag)) {
         $self->status_message("Constructing workflow from plan.");
         my $dag = generate_dag($self->plan, $self->variant_type);
-
-        $self->status_message("Setting log-directory to (%s)", $self->log_directory);
-        Genome::Sys->create_directory($self->log_directory);
-        $dag->log_dir($self->log_directory);
         $self->__dag($dag);
     }
     return $self->__dag;
