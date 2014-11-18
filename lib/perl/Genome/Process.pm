@@ -110,15 +110,20 @@ sub run {
     $self->_write_workflow_file($p{workflow_xml});
     $self->_write_inputs_file($p{workflow_inputs});
 
-    local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
-    local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
-    local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
-    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
+    local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1 unless
+        exists $ENV{UR_DUMP_DEBUG_MESSAGES};
+    local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1 unless
+        exists $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES};
+    local $ENV{UR_DUMP_STATUS_MESSAGES} = 1 unless
+        exists $ENV{UR_DUMP_STATUS_MESSAGES};
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1 unless
+        exists $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES};
 
     if ($ENV{UR_DBI_NO_COMMIT}) {
         return $self->_execute_process($transaction);
     } else {
-        local $ENV{WF_USE_FLOW} = 1;
+        local $ENV{WF_USE_FLOW} = 1 unless
+            exists $ENV{WF_USE_FLOW};
         $self->_schedule_process($transaction);
         return;
     }
