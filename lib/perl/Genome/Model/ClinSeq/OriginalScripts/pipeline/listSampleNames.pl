@@ -69,7 +69,7 @@ if ($common_names){
       }
 
       #Print summary line
-      print MAGENTA, "\nSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc\t", RESET;
+      print MAGENTA, "\nSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc", RESET;
       push(@outlines, "$common_name\t$sample_name\t$extraction_type\t$sample_common_name\t$tissue_desc\n");
     }
   }
@@ -94,7 +94,7 @@ if ($model_group){
         next unless ($extraction_type =~ /$extraction_type_filter/);
       }
 
-      print MAGENTA, "\nSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc\t", RESET;
+      print MAGENTA, "\nSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc", RESET;
       push(@outlines, "$common_name\t$sample_name\t$extraction_type\t$sample_common_name\t$tissue_desc");
     }
   }

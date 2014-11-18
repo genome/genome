@@ -55,7 +55,7 @@ for my $common_name (@common_names) {
     my $sample_common_name = $sample->common_name || "UNDEF";
     my $tissue_desc = $sample->tissue_desc || "UNDEF";
     if ($extraction_type eq "rna"){
-      print MAGENTA, "\n\t\tSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc\t", RESET;
+      print MAGENTA, "\n\t\tSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc", RESET;
       #Get libraries associated with each sample
       my @libraries = $sample->libraries;
       for my $library (@libraries) {
