@@ -161,9 +161,9 @@ sub _entity_attrs {
         { _type => 'PopulationGroup', id => -300, taxon_id => -100, },
         { _type => 'PopulationGroup', id => -301, taxon_id => -100, },
         # Sample
-        { _type => 'Sample', _site_tgi_subclass => 'OrganismSample', id => -400, source_id => -200, cell_type => 'primary', nomenclature => 'WUGC', },
-        { _type => 'Sample', _site_tgi_subclass => 'OrganismSample', id => -401, source_id => -201, cell_type => 'primary', nomenclature => 'WUGC', },
-        { _type => 'Sample', _site_tgi_subclass => 'OrganismSample', id => -402, source_id => -202, cell_type => 'primary', nomenclature => 'WUGC', },
+        { _type => 'Sample', _site_tgi_subclass => 'OrganismSample', id => -400, source_id => -200, nomenclature => 'WUGC', },
+        { _type => 'Sample', _site_tgi_subclass => 'OrganismSample', id => -401, source_id => -201, nomenclature => 'WUGC', },
+        { _type => 'Sample', _site_tgi_subclass => 'OrganismSample', id => -402, source_id => -202, nomenclature => 'WUGC', },
     ];
 }
 
@@ -203,7 +203,6 @@ sub _update_params {
         [ 'PopulationGroup', 0, 'name', 'NEW_NAME' ], # has value
         [ 'PopulationGroup', 1, 'taxon_id', -101 ], # has value, is FK
         # Sample
-        [ 'Sample', 0, 'cell_type', 'primary' ], # is undef
         [ 'Sample', 0, 'extraction_label', 'NEW_EXTRACTION_LABEL' ], # has value
         [ 'Sample', 1, 'source_id', -201 ],# has value, is FK
     ];
