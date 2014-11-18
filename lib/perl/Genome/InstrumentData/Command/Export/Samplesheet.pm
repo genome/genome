@@ -76,7 +76,6 @@ our @context_headers = qw(
     
     sample.name
     sample.common_name
-    sample.cell_type
     sample.default_genotype_data_id
     sample.extraction_label
     sample.extraction_type
