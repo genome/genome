@@ -18,13 +18,13 @@ class Genome::Model::Tools::EpitopePrediction::BindingFilter {
     has_output => [
         output_file => {
             is => 'FilePath',
-            doc => 'Output .xls file containing list of filtered epitopes based on binding affinity for each allele-length combination',
+            doc => 'Output .xls file containing list of filtered epitopes based on binding affinity for each allele-length combination per gene',
                 }
         ],
 };
 
 sub help_brief {
-    "Takes in a FOF with parsed NetMHC files for different allele-length combinations and outputs best candidates based on binding affinity."
+    "Takes in a FOF with parsed NetMHC files for different allele-length combinations and outputs best candidates per gene based on binding affinity."
 }
 
 sub execute {
@@ -54,7 +54,6 @@ sub execute {
 		my $length = $f[2];
 
 		my $mode = 'filtered';
-		if ($file =~ /nofilter/i) { $mode = 'not filtered' }
 
 		my $i = 0;
 
@@ -96,7 +95,6 @@ sub execute {
 
 	my %best;
 	foreach my $mode (sort keys %prediction) {
-		if ($mode eq 'not filtered') { next ;}
 		foreach my $sample (sort keys %{ $prediction{$mode} }) {
 			foreach my $length (sort keys %{ $prediction{$mode}->{$sample} }) {
 				foreach my $gene (sort @{ $prediction{$mode}->{$sample}->{$length}->{genes} }) {
@@ -126,28 +124,15 @@ sub execute {
 						push( @{ $best{$sample}->{$$gene->{gene_name}}->{GENES} }, $gene );
 					}
 
+
 				}
 			}
 		}
 	}
 
 # REPORTING
+	$self->print_header($out_fh);
 	foreach my $sample (sort keys %best) {
-		print $out_fh join(
-				"\t",
-				'Mode',
-				'Sample',
-				'Length',
-				'Gene Name',
-				'Allele',
-				'Point Mutation',
-				'Sub Peptide Position',
-				'MT Score',
-				'WT Score',
-				'MT Epitope Seq',
-				'WT Epitope Seq',
-				'Fold Change',
-				) . "\n";
 		foreach my $gene (sort keys %{ $best{$sample} }) {
 			foreach my $entry (@{ $best{$sample}->{$gene}->{GENES} }) {
 				print $out_fh join(
@@ -167,8 +152,31 @@ sub execute {
 						) . "\n" if ($$entry->{mt_score} < $threshold);
 			}
 		}
-		close( $out_fh );
 	}
 	return 1;
+	close( $out_fh );
+
+}
+
+
+sub print_header {
+	my $self      = shift;
+	my $output_fh = shift;
+
+	print $output_fh join("\t",
+			'Mode', 
+			'Sample', 
+			'Length', 
+			'Gene Name', 
+			'Allele', 
+			'Point Mutation', 
+			'Sub Peptide Position', 
+			'MT Score', 
+			'WT Score', 
+			'MT Epitope Seq', 
+			'WT Epitope Seq', 
+			'Fold Change', 
+			) . "\n"; 
+
 }
 __END__
