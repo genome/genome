@@ -4271,7 +4271,6 @@ $Genome::Command::OPTS_SPEC = [
           'gc_score',
           'cnv_value',
           'cnv_confidence',
-          'build',
           'b_allele_freq',
           'allele1',
           'allele2'
@@ -19058,35 +19057,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>cg-hub',
-    [
-      '>gene-torrent',
-      [
-        'lsf-resource=s',
-        'files',
-        'target-path=s',
-        'files',
-        'uuid=s',
-        'files',
-        'output-file=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>query',
-      [
-        'uuid=s',
-        'files',
-        'output-file=s',
-        'files',
-        'xml-file=s',
-        'files',
-        'help!',
-        undef
-      ],
-      'help!',
-      undef
-    ],
     '>bmr',
     [
       '>calculate-fdr',
@@ -22233,6 +22203,17 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      'help!',
+      undef
+    ],
+    '>gene-torrent',
+    [
+      'lsf-resource=s',
+      'files',
+      'uuid=s',
+      'files',
+      'target-path=s',
+      'files',
       'help!',
       undef
     ],
@@ -32477,9 +32458,15 @@ $Genome::Command::OPTS_SPEC = [
         [
           'debug!',
           undef,
-          'training-path=s',
-          'files',
-          'training-set=s',
+          'training-set-name=s',
+          [
+            '4',
+            '6',
+            '9',
+            '10',
+            'broad'
+          ],
+          'training-set-path=s',
           'files',
           'help!',
           undef
@@ -37498,17 +37485,6 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'instrument-data=s@',
         undef,
-        'help!',
-        undef
-      ],
-      '>verify-headers',
-      [
-        'color!',
-        undef,
-        'debug!',
-        undef,
-        'alignment-spec=s',
-        'files',
         'help!',
         undef
       ],
