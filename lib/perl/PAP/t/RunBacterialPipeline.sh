@@ -51,7 +51,7 @@ SCREENOUT="/gscmnt/278/analysis/HGMI/config_files/Screenoutput/batch_runs/"$LOCU
 SCREENERR="/gscmnt/278/analysis/HGMI/config_files/Screenoutput/batch_runs/"$LOCUS_NAME"_Screenoutput_"$NOW".bsub.err"
 
 ## bsub command
-BSUB="bsub -o $SCREENOUT -e $SCREENERR -q long -n 2 -R 'span[hosts=1] rusage[mem=4098]' -N -u ssurulir@genome.wustl.edu,vbhonagi@genome.wustl.edu gmt hgmi hap --config $CONFIG_FNAME $CORE_GENE_CHECK"
+BSUB="bsub -o $SCREENOUT -e $SCREENERR -q long -n 2 -R 'span[hosts=1] rusage[mem=4098]' -N -u ssurulir@genome.wustl.edu gmt hgmi hap --config $CONFIG_FNAME $CORE_GENE_CHECK"
 
 if [ -f $CONFIG_FNAME ];
 then
