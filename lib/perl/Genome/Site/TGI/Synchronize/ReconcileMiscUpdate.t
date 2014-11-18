@@ -74,7 +74,7 @@ ok(!@errors, 'No errors for test date');
 $reconcile->_stop_at('2000-01-08 23:59:59'); # set stop at so we only do the updates for Jan 01 01
 diag('Check that the correct misc updates were retrieved');
 ok($reconcile->_load_misc_updates, 'load misc updates');
-is(@{$reconcile->_misc_updates}, 44, 'loaded 44 misc updates');
+is(@{$reconcile->_misc_updates}, 43, 'loaded 43 misc updates');
 is_deeply(
     [ map { $_->id } grep { $_->description eq 'UPDATE' } @{$reconcile->_misc_updates} ], 
     [ map { $_->id } grep { $_->description eq 'UPDATE' } @misc_updates, @sub_attr_misc_updates, @misc_updates_that_skip_or_fail ],
