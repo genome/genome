@@ -65,7 +65,6 @@ for my $common_name (@common_names) {
     my $extraction_type = $sample->extraction_type || "UNDEF";
     my $sample_common_name = $sample->common_name || "UNDEF";
     my $tissue_desc = $sample->tissue_desc || "UNDEF";
-    my $cell_type = $sample->cell_type || "UNDEF";
 
     #Skip all but 'genomic dna' samples
     unless ($extraction_type eq "genomic dna"){
@@ -81,7 +80,7 @@ for my $common_name (@common_names) {
     }else{
       $tumor_subjects{$sample_name}{type}=$sample_common_name;
     }
-    #print MAGENTA, "\n\t\tSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc\tCT: $cell_type", RESET;
+    #print MAGENTA, "\n\t\tSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc", RESET;
   }
 
   my $normal_count = keys %normal_subjects;

@@ -148,7 +148,6 @@ sub setup_test_data {
         common_name => 'tumor',
         extraction_type => 'genomic dna',
         extraction_label => 'TESTY',
-        cell_type => 'primary',
         tissue_desc => 'liver',
         default_genotype_data_id => $tumor_genotype->id,
         source_id => $individual->id,
@@ -164,7 +163,6 @@ sub setup_test_data {
         common_name => 'normal',
         extraction_type => 'genomic dna',
         extraction_label => 'TESTY control',
-        cell_type => 'primary',
         tissue_desc => 'skin',
         default_genotype_data_id => $normal_genotype->id,
         source_id => $individual->id,
@@ -176,7 +174,6 @@ sub setup_test_data {
         common_name => 'tumor',
         extraction_type => 'rna',
         extraction_label => 'TESTY rna',
-        cell_type => 'primary',
         tissue_desc => 'liver',
         source_id => $individual->id,
     );
