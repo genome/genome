@@ -4,7 +4,6 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Try::Tiny qw(try catch);
-use File::Slurp qw(read_file);
 use Data::Dump qw(pp);
 use Genome::Utility::Email;
 use JSON qw(from_json);
@@ -46,7 +45,7 @@ sub shortcut {
 sub get_workflow_inputs {
     my $self = shift;
 
-    my $json = read_file($self->process->inputs_file);
+    my $json = Genome::Sys->read_file($self->process->inputs_file);
     return from_json($json);
 }
 
