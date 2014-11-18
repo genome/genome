@@ -75,14 +75,6 @@ class Genome::Sample {
             is_mutable => 1,
             doc => 'Notes specified when the specimen entered this site',
         },
-        cell_type => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'cell_type', nomenclature => $default_nomenclature ],
-            is_mutable => 1,
-            doc => 'Typically "primary"'
-        },
         tissue_label => {
             is => 'Text',
             via => 'attributes',
