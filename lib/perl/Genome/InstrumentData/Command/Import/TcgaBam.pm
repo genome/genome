@@ -5,7 +5,8 @@ use warnings;
 
 use File::Temp;
 use Genome;
-use Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata;
+use Genome::Model::Tools::CgHub::Metadata;
+use Genome::Model::Tools::CgHub::Query;
 use Workflow;
 use Workflow::Simple;
 
