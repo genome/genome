@@ -7,7 +7,7 @@ use Genome;
 our $VERSION = $Genome::VERSION;
 
 class Genome::Model::Tools {
-    is => 'Command::Tree',
+    is => 'Genome::Command::Base',
     doc => 'bioinformatics tools for genomics'
 };
 
@@ -28,11 +28,6 @@ It is released under the Lesser GNU Public License (LGPL) version 3.  See the
 associated LICENSE file in this distribution.
 EOS
 }
-
-%Command::V2::ALTERNATE_FROM_CLASS = (
-    %Command::V2::ALTERNATE_FROM_CLASS,
-    Genome::Command->ALTERNATE_FROM_CLASS,
-);
 
 1;
 
