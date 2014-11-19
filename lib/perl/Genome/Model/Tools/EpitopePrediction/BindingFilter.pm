@@ -86,7 +86,7 @@ sub execute {
 				wt_epitope_seq       => $wt_epitope_seq,
 				fold_change          => $fold_change,
 			};
-			push( @{ $prediction{$mode}->{$sample}->{$length}->{genes} }, \$gene_name );
+			push( @{ $prediction{$mode}->{$sample}->{$length}->{genes} }, $gene_name );
 		}
 		close ($parsed_fh);
 
@@ -99,29 +99,29 @@ sub execute {
 			foreach my $length (sort keys %{ $prediction{$mode}->{$sample} }) {
 				foreach my $gene (sort @{ $prediction{$mode}->{$sample}->{$length}->{genes} }) {
 # BEST
-					unless( !$best{$sample}->{$$gene->{gene_name}}->{SCORE} ) {
-						if ($$gene->{mt_score} < $best{$sample}->{$$gene->{gene_name}}->{SCORE}) {
-							$best{$sample}->{$$gene->{gene_name}}->{SCORE} = $$gene->{mt_score};
-							$best{$sample}->{$$gene->{gene_name}}->{GENES} = [];
-							$$gene->{sample} = $sample;
-							$$gene->{length} = $length;
-							$$gene->{mode}   = $mode;
-							push( @{ $best{$sample}->{$$gene->{gene_name}}->{GENES} }, $gene );
+					unless( !$best{$sample}->{$gene->{gene_name}}->{SCORE} ) {
+						if ($gene->{mt_score} < $best{$sample}->{$gene->{gene_name}}->{SCORE}) {
+							$best{$sample}->{$gene->{gene_name}}->{SCORE} = $gene->{mt_score};
+							$best{$sample}->{$gene->{gene_name}}->{GENES} = [];
+							$gene->{sample} = $sample;
+							$gene->{length} = $length;
+							$gene->{mode}   = $mode;
+							push( @{ $best{$sample}->{$gene->{gene_name}}->{GENES} }, $gene );
 						}
-						elsif ($$gene->{mt_score} == $best{$sample}->{$$gene->{gene_name}}->{SCORE}) {
-							$best{$sample}->{$$gene->{gene_name}}->{SCORE} = $$gene->{mt_score};
-							$$gene->{sample} = $sample;
-							$$gene->{length} = $length;
-							$$gene->{mode}   = $mode;
-							push( @{ $best{$sample}->{$$gene->{gene_name}}->{GENES} }, $gene );
+						elsif ($gene->{mt_score} == $best{$sample}->{$gene->{gene_name}}->{SCORE}) {
+							$best{$sample}->{$gene->{gene_name}}->{SCORE} = $gene->{mt_score};
+							$gene->{sample} = $sample;
+							$gene->{length} = $length;
+							$gene->{mode}   = $mode;
+							push( @{ $best{$sample}->{$gene->{gene_name}}->{GENES} }, $gene );
 						}
 					}
 					else {
-						$best{$sample}->{$$gene->{gene_name}}->{SCORE} = $$gene->{mt_score};
-						$$gene->{sample} = $sample;
-						$$gene->{length} = $length;
-						$$gene->{mode}   = $mode;
-						push( @{ $best{$sample}->{$$gene->{gene_name}}->{GENES} }, $gene );
+						$best{$sample}->{$gene->{gene_name}}->{SCORE} = $gene->{mt_score};
+						$gene->{sample} = $sample;
+						$gene->{length} = $length;
+						$gene->{mode}   = $mode;
+						push( @{ $best{$sample}->{$gene->{gene_name}}->{GENES} }, $gene );
 					}
 
 
@@ -137,19 +137,19 @@ sub execute {
 			foreach my $entry (@{ $best{$sample}->{$gene}->{GENES} }) {
 				print $out_fh join(
 						"\t",
-						$$entry->{mode},
-						$$entry->{sample},
-						$$entry->{length},
-						$$entry->{gene_name},
-						$$entry->{allele},
-						$$entry->{point_mutation},
-						$$entry->{sub_peptide_mutation},
-						$$entry->{mt_score},
-						$$entry->{wt_score},
-						$$entry->{mt_epitope_seq},
-						$$entry->{wt_epitope_seq},
-						$$entry->{fold_change},
-						) . "\n" if ($$entry->{mt_score} < $threshold);
+						$entry->{mode},
+						$entry->{sample},
+						$entry->{length},
+						$entry->{gene_name},
+						$entry->{allele},
+						$entry->{point_mutation},
+						$entry->{sub_peptide_mutation},
+						$entry->{mt_score},
+						$entry->{wt_score},
+						$entry->{mt_epitope_seq},
+						$entry->{wt_epitope_seq},
+						$entry->{fold_change},
+						) . "\n" if ($entry->{mt_score} < $threshold);
 			}
 		}
 	}
