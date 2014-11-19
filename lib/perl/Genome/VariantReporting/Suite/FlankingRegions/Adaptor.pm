@@ -20,6 +20,7 @@ class Genome::VariantReporting::Suite::FlankingRegions::Adaptor {
             is_translated => 1,
         },
     ],
+    doc => 'Extract flanking sequence around variant and reference allele',
 };
 
 sub name {

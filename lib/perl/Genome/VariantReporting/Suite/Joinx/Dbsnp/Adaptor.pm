@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Suite::Joinx::Dbsnp::Adaptor {
     is => 'Genome::VariantReporting::Suite::Joinx::Adaptor',
+    doc => 'Annotate vcf with results from dbsnp vcf',
 };
 
 sub name {

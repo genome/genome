@@ -32,6 +32,7 @@ class Genome::VariantReporting::Suite::Vep::Adaptor {
             is_translated => 1,
         },
     ],
+    doc => 'Annotate vcf with results from Ensembl VEP (Variant Effect Predictor)',
 };
 
 sub name {

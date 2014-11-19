@@ -17,6 +17,7 @@ class Genome::VariantReporting::Suite::Fpkm::Adaptor {
             is_translated => 1,
         },
     ],
+    doc => 'Annotate variants with FPKM value for the sample specified',
 };
 
 sub name {

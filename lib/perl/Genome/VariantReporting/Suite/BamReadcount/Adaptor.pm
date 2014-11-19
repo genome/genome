@@ -20,6 +20,7 @@ class Genome::VariantReporting::Suite::BamReadcount::Adaptor {
         per_library => { is  => 'Bool', },
         insertion_centric => { is  => 'Bool', },
     ],
+    doc => 'Add bam readcount information to a vcf',
 };
 
 sub name {

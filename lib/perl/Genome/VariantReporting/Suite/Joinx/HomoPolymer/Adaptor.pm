@@ -24,6 +24,7 @@ class Genome::VariantReporting::Suite::Joinx::HomoPolymer::Adaptor {
             is_translated => 1,
         },
     ],
+    doc => 'Annotate vcf with information from one homopolymer bed file',
 };
 
 sub name {
