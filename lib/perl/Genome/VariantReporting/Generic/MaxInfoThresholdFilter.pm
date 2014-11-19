@@ -49,5 +49,14 @@ sub filter_entry {
     return %return_values;
 }
 
+sub vcf_id {
+    my $self = shift;
+    return $self->info_tag , '_' . $self->threshold;
+}
+
+sub vcf_description {
+    my $self = shift;
+    return 'Filter out variants with info field ' . $self->info_tag . ' being greater than ' . $self->threshold;
+}
 
 1;

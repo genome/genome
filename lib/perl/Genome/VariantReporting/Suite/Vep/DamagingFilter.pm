@@ -97,5 +97,14 @@ sub non_synonymous_damaging_expression {
     );
     return join("|", @damaging);
 }
+
+sub vcf_id {
+    return 'DAMAGING';
+}
+
+sub vcf_description {
+    return 'Filter out variants that aren\'t considered to be damaging';
+}
+
 1;
 

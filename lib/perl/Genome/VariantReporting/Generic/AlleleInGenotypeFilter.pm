@@ -36,5 +36,15 @@ sub filter_entry {
     return %return_values;
 }
 
+sub vcf_id {
+    my $self = shift;
+    return 'ALLELE_IN_SAMPLE_GENOTYPE_' . $self->sample_name;
+}
+
+sub vcf_description {
+    my $self = shift;
+    return 'Filter out alleles that are not part of the genotype of sample ' . $self->sample_name;
+}
+
 1;
 
