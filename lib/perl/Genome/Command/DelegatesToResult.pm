@@ -54,7 +54,8 @@ sub execute {
 }
 
 sub _protected_fetch {
-    my ($self, $name, $coderef) = validate_pos(@_, OBJECT, SCALAR, SCALAR, SCALAR);
+    my ($self, $name, $coderef) = validate_pos(@_, {type => OBJECT},
+        {type => SCALAR}, {type => SCALAR}, {type => SCALAR});
 
     my $error;
     my $rv = try {
@@ -72,7 +73,8 @@ sub _protected_fetch {
 }
 
 sub _fetch_result {
-    my ($self, $method, $user_label) = validate_pos(@_, OBJECT, SCALAR, SCALAR);
+    my ($self, $method, $user_label) = validate_pos(@_, {type => OBJECT},
+        {type => SCALAR}, {type => SCALAR});
 
     $self->debug_message("Attempting to %s a %s with arguments %s",
         $method, $self->result_class, pp({$self->input_hash}));
