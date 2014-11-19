@@ -81,7 +81,6 @@ my %STATUS_COLORS = (
     new => "white",
 
     # values for AnalysisProjects
-    approved => "blue",
     archived => "magenta",
     completed => "green",
     hold => "red",
