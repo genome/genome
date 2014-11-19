@@ -468,7 +468,7 @@ sub get_samples{
   my $sample_count = scalar(@samples);
   $self->status_message("\nEXAMINE SAMPLES");
   $self->status_message("Found $sample_count samples:");
-  $self->status_message("id\tname\tsample_common_name\tsample_type\tcell_type\ttissue_desc\tdefault_genotype_data_id\tmodel_count\tlibrary_count\tid_count");
+  $self->status_message("id\tname\tsample_common_name\tsample_type\ttissue_desc\tdefault_genotype_data_id\tmodel_count\tlibrary_count\tid_count");
   my $skip_count = 0;
   my $sample_mismatch = 0;
   foreach my $sample (@samples){
@@ -479,7 +479,6 @@ sub get_samples{
     my $extraction_type = $sample->extraction_type || "NULL";
     my $sample_type = $sample->sample_type || "NULL";
     my $extraction_desc = $sample->extraction_desc || "NULL";
-    my $cell_type = $sample->cell_type || "NULL";
     my $tissue_label = $sample->tissue_label || "NULL";
     my $tissue_desc = $sample->tissue_desc || "NULL";
     my $organ_name = $sample->organ_name || "NULL";
@@ -511,8 +510,8 @@ sub get_samples{
       $self->error_message("ID of individual supplied by user ($individual_id) does not match that associated with a sample ($patient_id)");
       $sample_mismatch++;
     }
-    #$self->status_message("id\tname\tsample_common_name\tsample_type\tcell_type\ttissue_desc\tdefault_genotype_data_id\tmodel_count\tlibrary_count\tid_count");
-    $self->status_message("$id\t$name\t$sample_common_name\t$sample_type\t$cell_type\t$tissue_desc\t$default_genotype_data_id\t$model_count\t$library_count\t$id_count");
+    #$self->status_message("id\tname\tsample_common_name\tsample_type\ttissue_desc\tdefault_genotype_data_id\tmodel_count\tlibrary_count\tid_count");
+    $self->status_message("$id\t$name\t$sample_common_name\t$sample_type\t$tissue_desc\t$default_genotype_data_id\t$model_count\t$library_count\t$id_count");
     push(@final_samples, $sample);
   }
 
