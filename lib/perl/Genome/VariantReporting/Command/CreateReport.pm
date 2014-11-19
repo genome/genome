@@ -75,7 +75,7 @@ sub execute {
     $p->save_translations_file($self->translations_file);
 
     $p->run(workflow_xml => $self->dag->get_xml,
-        workflow_inputs => $self->workflow_inputs,
+        workflow_inputs => $self->workflow_inputs($p->id),
     );
 
     return $p;
@@ -83,7 +83,9 @@ sub execute {
 
 sub workflow_inputs {
     my $self = shift;
+    my $process_id = shift;
     return {
+        process_id => $process_id,
         input_vcf => $self->input_vcf,
         variant_type => $self->variant_type,
         output_directory => $self->output_directory,

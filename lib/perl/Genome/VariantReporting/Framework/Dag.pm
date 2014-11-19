@@ -63,8 +63,8 @@ sub connect_to_dag {
     });
 
     $p{dag}->add_operation($p{target});
-    for my $name qw(provider_json variant_type plan_json) {
-        if (in($name, $p{target}->input_properties)) {
+    for my $name qw(process_id provider_json variant_type plan_json) {
+        if ($p{target}->is_input_property($name)) {
             $p{dag}->connect_input(
                 input_property => $name,
                 destination => $p{target},

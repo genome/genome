@@ -25,6 +25,14 @@ class Genome::VariantReporting::Framework::Component::Expert::Command {
             valid_values => ['snvs', 'indels'],
             doc => "The type of variant the input_result represents",
         },
+        user => {
+            is => 'Genome::Process',
+            is_optional => 1,
+            id_by => 'process_id',
+        },
+        process_id => {
+            is => 'Text',
+        },
     ],
     has_optional_output => [
         output_vcf => {
@@ -95,6 +103,7 @@ sub input_hash {
 
     $hash{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
     delete $hash{user};
+    delete $hash{process_id};
     return %hash;
 }
 

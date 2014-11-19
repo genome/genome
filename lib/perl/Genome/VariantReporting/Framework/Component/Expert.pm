@@ -56,11 +56,13 @@ sub connected_run_operation {
 
     my $run_operation = $self->run_operation;
     $dag->add_operation($run_operation);
-    $dag->connect_input(
-        input_property => 'input_vcf',
-        destination => $run_operation,
-        destination_property => 'input_vcf',
-    );
+    for my $name qw(process_id input_vcf) {
+        $dag->connect_input(
+            input_property => $name,
+            destination => $run_operation,
+            destination_property => $name,
+        );
+    }
     for my $name qw(output_result output_vcf) {
         $dag->connect_output(
             output_property => $name,

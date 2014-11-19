@@ -30,6 +30,14 @@ class Genome::VariantReporting::Framework::GenerateReport {
         provider_json => {
             is => 'Text',
         },
+        user => {
+            is => 'Genome::Process',
+            is_optional => 1,
+            id_by => 'process_id',
+        },
+        process_id => {
+            is => 'Text',
+        },
     ],
     has_param => [
         lsf_resource => {
