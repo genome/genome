@@ -11,6 +11,7 @@ class Genome::VariantReporting::Suite::Joinx::Dbsnp::GmafInterpreter {
             is_optional => 1,
         },
     ],
+    doc => 'Output the global minor allele frequency from the dbsnp GMAF field',
 };
 
 sub name {

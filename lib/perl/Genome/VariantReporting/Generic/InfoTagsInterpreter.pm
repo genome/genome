@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Generic::InfoTagsInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
+    doc => 'Output a list of all info tags',
 };
 
 sub name {

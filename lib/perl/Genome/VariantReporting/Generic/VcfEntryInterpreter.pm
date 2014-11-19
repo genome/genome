@@ -7,6 +7,7 @@ use Set::Scalar;
 
 class Genome::VariantReporting::Generic::VcfEntryInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter'],
+    doc => 'Output the entire vcf entry',
 };
 
 sub name {

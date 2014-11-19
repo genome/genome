@@ -9,6 +9,7 @@ use Scalar::Util qw( looks_like_number );
 class Genome::VariantReporting::Suite::BamReadcount::MinCoverageObservedInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
     has => [],
+    doc => 'Calculate the minimum coverage (ref_count+var_count) between all the samples specified',
 };
 
 sub name {

@@ -9,6 +9,7 @@ use Genome::VariantReporting::Suite::Vep::AnnotationCategory;
 
 class Genome::VariantReporting::Suite::Vep::VepInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
+    doc => 'Output transcript information from VEP',
 };
 
 sub name {

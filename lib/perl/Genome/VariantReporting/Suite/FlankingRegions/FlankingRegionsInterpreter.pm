@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Suite::FlankingRegions::FlankingRegionsInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter'],
+    doc => 'Output the flanking sequence for the reference (FSRF info field) and the alternate allele (FSAF info field)',
 };
 
 sub name {

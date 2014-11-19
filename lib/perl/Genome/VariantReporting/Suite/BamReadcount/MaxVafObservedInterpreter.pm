@@ -21,6 +21,7 @@ class Genome::VariantReporting::Suite::BamReadcount::MaxVafObservedInterpreter {
             is_translated => 1,
         },
     ],
+    doc => 'Calculate the maximum vaf value observed between all the specified normal samples, and the maximum vaf value observed between all the tumor samples',
 };
 
 sub name {

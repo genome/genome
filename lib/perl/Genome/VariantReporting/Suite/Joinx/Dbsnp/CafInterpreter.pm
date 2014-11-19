@@ -8,6 +8,7 @@ use List::Util qw(max);
 
 class Genome::VariantReporting::Suite::Joinx::Dbsnp::CafInterpreter {
     is => ['Genome::VariantReporting::Suite::Joinx::Dbsnp::ComponentBase', 'Genome::VariantReporting::Framework::Component::Interpreter'],
+    doc => 'Calculate the allele frequence based on 1000Genomes and the highest allele frequency',
 };
 
 sub name {

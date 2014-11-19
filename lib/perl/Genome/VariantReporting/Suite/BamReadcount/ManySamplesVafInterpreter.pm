@@ -9,6 +9,7 @@ use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(basi
 class Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
     has => [],
+    doc => 'Calculate the variant allele frequency, number of reads supporting the reference, and number of reads supporting variant for mutliple samples and their libraries',
 };
 
 sub name {

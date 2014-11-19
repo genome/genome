@@ -7,6 +7,7 @@ use List::MoreUtils qw/uniq/;
 
 class Genome::VariantReporting::Generic::VariantCallersInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::WithSampleName'],
+    doc => 'Output a list of variant callers that called this position for the specified sample, as well as the number of callers',
 };
 
 sub name {

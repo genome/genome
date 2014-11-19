@@ -8,6 +8,7 @@ use Set::Scalar;
 
 class Genome::VariantReporting::Generic::GenotypeInterpreter {
       is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::WithSampleName'],
+      doc => 'Output the genotype of the specified sample',
 };
 
 sub name {
