@@ -45,11 +45,9 @@ sub part {
 sub properties_in_plan {
     my $class = shift;
     my @properties;
-    for my $property ($class->__meta__->properties) {
-        next if $property->class_name eq "UR::Object" or $property->class_name eq "Command::V2";
-        if (!($property->can("is_structural")) or !($property->is_structural)) {
-            push @properties, $property;
-        }
+    for my $property ($class->__meta__->properties(is_structural => 0),
+        $class->__meta__->properties(is_structural => undef)) {
+        push @properties, $property;
     }
     return @properties;
 }
