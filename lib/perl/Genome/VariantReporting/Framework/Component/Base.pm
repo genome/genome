@@ -117,43 +117,85 @@ sub _properties_section {
 
 sub _property_to_string {
     my $property_meta = shift;
-    my @lines;
     my $param_name = $property_meta->{property_name};
+    my $param_type = get_param_type_string($property_meta);
+
+    my @lines = (get_doc_lines($property_meta),
+        get_valid_values_lines($property_meta),
+        get_example_value_lines($property_meta),
+        get_default_value_lines($property_meta),
+        get_is_translated_lines($property_meta),
+    );
+
+    unless (@lines) {
+        push @lines, "(undocumented)";
+    }
+
+    return [$param_name, $param_type, join("\n", @lines)];
+}
+
+sub get_param_type_string {
+    my $property_meta = shift;
+
     my $param_type = $property_meta->data_type || '';
     if (defined($param_type) and $param_type !~ m/::/) {
         $param_type = ucfirst(lc($param_type));
     }
-    my $doc = $property_meta->doc;
-    my $valid_values = $property_meta->valid_values;
-    my $example_values = $property_meta->example_values;
+    return $param_type;
+}
 
-    if ($doc) {
-        push @lines, $doc;
+sub get_doc_lines {
+    my $property_meta = shift;
+    if ($property_meta->doc) {
+        return ($property_meta->doc);
     }
     else {
-        if (!$valid_values and !$property_meta->{is_translated}) {
-            push @lines, "(undocumented)";
-        }
+        return ();
     }
+}
+
+sub get_is_translated_lines {
+    my $property_meta = shift;
+    if ($property_meta->{is_translated}) {
+        return ("This is a translated property.");
+    }
+    else {
+        return ();
+    }
+}
+
+sub get_valid_values_lines {
+    my $property_meta = shift;
+    my $valid_values = $property_meta->valid_values;
+    my @lines;
     if ($valid_values) {
         push @lines, "valid values:";
         for my $v (@$valid_values) {
             push @lines, " ". $v;
         }
     }
-    if ($property_meta->{is_translated}) {
-        push @lines, "This is a translated property.";
-    }
+    return @lines;
+}
+
+sub get_example_value_lines {
+    my $property_meta = shift;
+    my @lines;
+    my $example_values = $property_meta->example_values;
     if ($example_values && @$example_values) {
         push @lines, "example". (@$example_values > 1 and 's') . ":";
         push @lines, join(', ',
             map { ref($_) ? Data::Dumper->new([$_])->Terse(1)->Dump() : $_ } @$example_values
             );
     }
+    return @lines;
+}
 
+sub get_default_value_lines {
+    my $property_meta = shift;
+    my @lines;
     my $default_value = $property_meta->default_value;
     if (defined $default_value) {
-        if ($param_type eq 'Boolean') {
+        if (get_param_type_string($property_meta) eq 'Boolean') {
             $default_value = $default_value ? "'true'" : "'false'";
         }
         elsif ($property_meta->is_many && ref($default_value) eq 'ARRAY') {
@@ -169,7 +211,6 @@ sub _property_to_string {
         }
         push @lines, "Default value $default_value if not specified";
     }
-    return [$param_name, $param_type, join("\n", @lines)];
+    return @lines;
 }
-
 1;

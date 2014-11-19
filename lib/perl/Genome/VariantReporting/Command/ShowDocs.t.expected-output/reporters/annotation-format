@@ -5,14 +5,11 @@
   [1mavailable_fields_dict[0m   Hash
     (undocumented)
   [1mdelimiter[0m   Text
-    (undocumented)
     Default value ' ' if not specified
   [1mfile_name[0m
     (undocumented)
   [1mgenerate_legend_file[0m   Boolean
-    (undocumented)
     Default value 'true' if not specified
   [1mnull_character[0m   Text
-    (undocumented)
     Default value '-' if not specified
 

@@ -7,7 +7,6 @@
   [1msample_name[0m   Text
     This is a translated property.
   [1mvalid_callers[0m   String
-    (undocumented)
     Default value ('VarscanSomatic','Sniper','Strelka') if not specified
 
 [4mAVAILABLE FIELDS[0m
