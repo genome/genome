@@ -42,4 +42,18 @@ sub execute {
     return 1;
 }
 
+sub __errors__ {
+    my $self = shift;
+    my @errors = $self->SUPER::__errors__(@_);
+    my $status = $self->analysis_project->status;
+    unless(grep{$_ eq $status} ("Pending", "Hold", "In Progress")){
+        push @errors, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['analysis_project'],
+            desc => "Can't release analysis project with status: $status" 
+        );
+    }
+    return @errors;
+}
+
 1;

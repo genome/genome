@@ -57,4 +57,20 @@ sub execute {
     return 1;
 }
 
+sub __errors__ {
+    my $self = shift;
+    my @errors = $self->SUPER::__errors__(@_);
+    my @statuses = map{$_->analysis_project->status} $self->profile_items;
+    for my $status (@statuses){
+        unless(grep{$_ eq $status} ("Pending", "Hold", "In Progress", "Template")){
+            push @errors, UR::Object::Tag->create(
+                type => 'error',
+                properties => ['profile_items'],
+                desc => "Can't tag config file to analysis project with status: $status" 
+            );
+        }
+    }
+    return @errors;
+}
+
 1;
