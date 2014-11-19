@@ -53,7 +53,7 @@ ok(!eval{$helpers->size_of_source_file;}, 'failed to get size for source file w/
 ok(!eval{$helpers->size_of_remote_file;}, 'failed to get size for remote file w/o remote file');
 
 ok(!eval{$helpers->kilobytes_required_for_processing_of_source_files;}, 'failed to get kilobytes needed for processing w/o source files');
-is($helpers->kilobytes_required_for_processing_of_source_files(@source_files), 738, 'kilobytes needed for processing source files');
+is($helpers->kilobytes_required_for_processing_of_source_files(@source_files), 746, 'kilobytes needed for processing source files');
 
 # headers
 ok(!eval{$helpers->load_headers_from_bam;}, 'failed to get headers w/o bam');
