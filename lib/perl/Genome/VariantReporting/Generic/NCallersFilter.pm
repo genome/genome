@@ -15,6 +15,7 @@ class Genome::VariantReporting::Generic::NCallersFilter {
             is => 'String',
             is_many => 1,
             default_value => [qw(VarscanSomatic Sniper Strelka)],
+            doc => 'List of variant callers to include in determination for filtering',
         },
     ],
     doc => 'Filter out variants that weren\'t called by the minimum number of the specified callers',

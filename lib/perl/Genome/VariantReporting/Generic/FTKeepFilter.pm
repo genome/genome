@@ -12,6 +12,7 @@ class Genome::VariantReporting::Generic::FTKeepFilter {
             is => 'Text',
             is_many => 1,
             default_value => ['PASS'],
+            doc => 'A list of FT values',
         },
     },
     doc => 'Filter out variants that don\'t contain the specified FT values',
