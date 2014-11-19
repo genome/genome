@@ -1,0 +1,12 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mREQUIRED EXPERTS[0m
+flanking-regions
+
+[4mAVAILABLE FIELDS[0m
+  [1mreference_fasta[0m
+    Reference allele with flanking region
+  [1malt_fasta[0m
+    Alternate allele with flanking region
+

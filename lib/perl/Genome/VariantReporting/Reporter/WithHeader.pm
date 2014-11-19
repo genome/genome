@@ -23,9 +23,11 @@ class Genome::VariantReporting::Reporter::WithHeader {
         }
     },
     has_transient_optional => [
-        _legend_fh => {},
         available_fields_dict => {
             is => 'HASH',
+        },
+        _legend_fh => {
+            is_structural => 1,
         },
     ],
 };

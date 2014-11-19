@@ -7,17 +7,18 @@ use Carp qw(confess);
 
 class Genome::VariantReporting::Framework::Component::Reporter {
     is => [
-        'Genome::VariantReporting::Framework::Component::Base',
         'Genome::VariantReporting::Framework::Component::WithTranslatedInputs',
     ],
     is_abstract => 1,
     has_transient_optional => [
         filters => {
             is => 'HASH',
+            is_structural => 1,
             default => {},
         },
         interpreters => {
             is => 'HASH',
+            is_structural => 1,
             default => {},
         },
     ],

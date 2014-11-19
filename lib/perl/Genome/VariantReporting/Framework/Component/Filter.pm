@@ -56,6 +56,17 @@ sub pass_all_sample_alts {
     return %return_values;
 }
 
+sub vr_doc_sections {
+    my $self = shift;
+    my @sections = $self->SUPER::vr_doc_sections;
+    push @sections,
+        {
+            header => "FILTER DESCRIPTION",
+            items => [$self->vcf_description],
+        };
+    return @sections;
+}
+
 
 sub vcf_description {
     my $self = shift;

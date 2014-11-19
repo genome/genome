@@ -1,0 +1,14 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mPROPERTIES[0m
+  [1mdummy[0m
+    (undocumented)
+
+[4mREQUIRED EXPERTS[0m
+dbsnp
+
+[4mAVAILABLE FIELDS[0m
+  [1mgmaf[0m
+    Global minor allele frequency from dbsnp
+

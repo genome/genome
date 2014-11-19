@@ -1,0 +1,18 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mPROPERTIES[0m
+  [1mnormal_sample_names[0m   Text
+    This is a translated property.
+  [1mtumor_sample_names[0m   Text
+    This is a translated property.
+
+[4mREQUIRED EXPERTS[0m
+bam-readcount
+
+[4mAVAILABLE FIELDS[0m
+  [1mmax_tumor_vaf_observed[0m
+    The maximum vaf value observed between all the tumor samples : tumor_sample_names
+  [1mmax_normal_vaf_observed[0m
+    The maximum vaf value observed between all the normal samples : normal_sample_names
+
