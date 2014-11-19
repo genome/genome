@@ -86,6 +86,7 @@ my %STATUS_COLORS = (
     hold => "red",
     inprogress => "cyan",
     pending => "yellow",
+    template => "white",
 
     # values for InstrumentData
     processed => "green",
