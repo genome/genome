@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Try::Tiny qw(try catch);
+use Digest::MD5 qw(md5_hex);
 
 use Genome::VariantReporting::Framework::FileLookup qw(
     calculate_lookup
@@ -47,8 +48,10 @@ sub input_hash {
         input_vcf => $self->input_vcf,
         input_vcf_lookup => calculate_lookup($self->input_vcf),
         plan_json => $self->plan_json,
+        plan_json_lookup => md5_hex($self->plan_json),
         variant_type => $self->variant_type,
         provider_json => $self->provider_json,
+        provider_json_lookup => md5_hex($self->provider_json),
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
     );
 }

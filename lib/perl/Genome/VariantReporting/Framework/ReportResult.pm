@@ -14,20 +14,26 @@ class Genome::VariantReporting::Framework::ReportResult {
         },
     ],
     has_param => [
-        plan_json => {
+        plan_json_lookup => {
             is => 'Text',
         },
         variant_type => {
             is => 'Text',
             valid_values => ['snvs', 'indels'],
         },
-        provider_json => {
+        provider_json_lookup => {
             is => 'Text',
         },
     ],
     has_transient_optional => [
         input_vcf => {
             is => 'Path',
+        },
+        plan_json => {
+            is => 'Text',
+        },
+        provider_json => {
+            is => 'Text',
         },
     ],
 };
