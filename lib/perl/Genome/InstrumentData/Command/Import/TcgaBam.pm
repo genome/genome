@@ -3,6 +3,7 @@ package Genome::InstrumentData::Command::Import::TcgaBam;
 use strict;
 use warnings;
 
+use File::Temp;
 use Genome;
 use Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata;
 use Workflow;
@@ -195,15 +196,23 @@ sub _import_from_uuids {
 
     $self->status_message('Importing the following UUIDs: ' . join(', ',@uuid));
 
+    my $tempdir = File::Temp->tempdir(CLEANUP => 1);
     for my $uuid (@uuid) {
         unless($self->_validate_uuid($uuid)) {
             $self->error_message('Not a valid uuid: ' . $uuid);
             return;
         }
 
-        my $metadata = Genome::Model::Tools::CgHub::Metadata->create(
+        my $metadata_file = $tempdir.'metadata.xml';
+        my $query = Genome::Model::Tools::CgHub::Query->create(
             uuid => $uuid,
+            xml_file =>$metadata_file,
         );
+        return if not $query;
+        return if not $query->execute;
+
+        my $metadata = $self->_parse_metadata_file($metadata_file);
+        return if not $metadata;
 
         my $bam_file_name = $metadata->bam_file_names;
         my $kb_usage = $metadata->filesize_in_kb_for_file_name($bam_file_name);
@@ -321,12 +330,17 @@ sub _resolve_args {
         $self->$arg_name($self->_resolve_single_arg($arg_name, ($metadata ? $metadata->get_attribute_value($arg_name) : undef)));
     }
 
-    my @required_arg_names = qw| import_source_name tcga_name target_region |;
+    my @required_arg_names = qw| import_source_name tcga_name |;
     for my $arg_name (@required_arg_names){
         $self->$arg_name($self->_resolve_single_arg($arg_name, ($metadata ? $metadata->get_attribute_value($arg_name) : undef)));
         if(not defined $self->$arg_name) {
             die $self->error_message("Required argument ($arg_name) was not passed and couldn't be found in the metadata.");
         }
+    }
+
+    $self->target_region($self->_resolve_single_arg('target_region', ($metadata ? $metadata->target_region : undef)));
+    if(not defined $self->target_region) {
+        die $self->error_message("Required argument (target_region) was not passed and couldn't be found in the metadata.");
     }
 
     # handle bam_md5 carefully
