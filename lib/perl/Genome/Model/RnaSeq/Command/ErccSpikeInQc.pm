@@ -45,7 +45,7 @@ sub execute {
     my $ercc_hash_ref = $self->_load_ercc_hash_ref;
     
     for my $model ($self->models) {
-        my $build = $model->latest_build;
+        my $build = $model->last_succeeded_build;
         my $fpkm_hash_ref = $self->_load_fpkm_hash_ref($build);
         my $count_hash_ref = $self->_load_count_hash_ref($build);
 
