@@ -14,11 +14,13 @@ class Genome::VariantReporting::Suite::BamReadcount::MaxVafObservedInterpreter {
             is => 'Text',
             is_many => 1,
             is_translated => 1,
+            doc => 'A list of tumor samples to use for calculation'
         },
         normal_sample_names => {
             is => 'Text',
             is_many => 1,
             is_translated => 1,
+            doc => 'A list of normal samples to use for calculation'
         },
     ],
     doc => 'Calculate the maximum vaf value observed between all the specified normal samples, and the maximum vaf value observed between all the tumor samples',
