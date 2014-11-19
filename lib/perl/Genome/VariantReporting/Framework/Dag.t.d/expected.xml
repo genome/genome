@@ -4,6 +4,7 @@
     <inputproperty>input_vcf</inputproperty>
     <inputproperty>output_directory</inputproperty>
     <inputproperty>plan_json</inputproperty>
+    <inputproperty>process_id</inputproperty>
     <inputproperty>provider_json</inputproperty>
     <inputproperty>variant_type</inputproperty>
     <outputproperty>output_directory</outputproperty>
@@ -24,6 +25,7 @@
     <operationtype typeClass="Workflow::OperationType::Model">
       <inputproperty>input_vcf</inputproperty>
       <inputproperty>plan_json</inputproperty>
+      <inputproperty>process_id</inputproperty>
       <inputproperty>provider_json</inputproperty>
       <inputproperty>variant_type</inputproperty>
       <outputproperty>output_result</outputproperty>
@@ -58,11 +60,13 @@
     <link fromOperation="input connector" fromProperty="provider_json" toOperation="Get inputs from provider and plan" toProperty="provider_json"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from provider and plan" toProperty="variant_type"/>
     <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run expert_one" toProperty="input_vcf"/>
+    <link fromOperation="input connector" fromProperty="process_id" toOperation="Run expert_one" toProperty="process_id"/>
   </operation>
   <operation name="expert_two">
     <operationtype typeClass="Workflow::OperationType::Model">
       <inputproperty>input_vcf</inputproperty>
       <inputproperty>plan_json</inputproperty>
+      <inputproperty>process_id</inputproperty>
       <inputproperty>provider_json</inputproperty>
       <inputproperty>variant_type</inputproperty>
       <outputproperty>output_result</outputproperty>
@@ -97,19 +101,23 @@
     <link fromOperation="input connector" fromProperty="provider_json" toOperation="Get inputs from provider and plan" toProperty="provider_json"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from provider and plan" toProperty="variant_type"/>
     <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run expert_two" toProperty="input_vcf"/>
+    <link fromOperation="input connector" fromProperty="process_id" toOperation="Run expert_two" toProperty="process_id"/>
   </operation>
   <link fromOperation="Generate Reports" fromProperty="output_directory" toOperation="output connector" toProperty="output_directory"/>
   <link fromOperation="expert_one" fromProperty="output_vcf" toOperation="expert_two" toProperty="input_vcf"/>
   <link fromOperation="expert_two" fromProperty="output_vcf" toOperation="Generate Reports" toProperty="input_vcf"/>
   <link fromOperation="input connector" fromProperty="output_directory" toOperation="Generate Reports" toProperty="output_directory"/>
   <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Reports" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="Generate Reports" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="provider_json" toOperation="Generate Reports" toProperty="provider_json"/>
   <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Reports" toProperty="variant_type"/>
   <link fromOperation="input connector" fromProperty="input_vcf" toOperation="expert_one" toProperty="input_vcf"/>
   <link fromOperation="input connector" fromProperty="plan_json" toOperation="expert_one" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="expert_one" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="provider_json" toOperation="expert_one" toProperty="provider_json"/>
   <link fromOperation="input connector" fromProperty="variant_type" toOperation="expert_one" toProperty="variant_type"/>
   <link fromOperation="input connector" fromProperty="plan_json" toOperation="expert_two" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="expert_two" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="provider_json" toOperation="expert_two" toProperty="provider_json"/>
   <link fromOperation="input connector" fromProperty="variant_type" toOperation="expert_two" toProperty="variant_type"/>
 </operation>
