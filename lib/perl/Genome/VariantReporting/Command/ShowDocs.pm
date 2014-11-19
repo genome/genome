@@ -9,6 +9,10 @@ my %type_lookup = (
     interpreters => 'interpreters',
     experts => 'adaptors',
     reporters => 'reporters',
+    filter => 'filters',
+    interpreter => 'interpreters',
+    expert => 'adaptors',
+    reporter => 'reporters',
 );
 
 class Genome::VariantReporting::Command::ShowDocs {
@@ -17,7 +21,7 @@ class Genome::VariantReporting::Command::ShowDocs {
         component_type => {
             is => 'Text',
             shell_args_position => 1,
-            valid_values => [qw(filters interpreters reporters experts)],
+            valid_values => [sort keys %type_lookup],
             doc => "To list all components of this type by name, only specify the type.",
         },
         component_name => {
