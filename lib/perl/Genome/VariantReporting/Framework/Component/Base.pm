@@ -126,16 +126,6 @@ sub _property_to_string {
     my $doc = $property_meta->doc;
     my $valid_values = $property_meta->valid_values;
     my $example_values = $property_meta->example_values;
-    unless ($doc) {
-        eval {
-            foreach my $ancestor_class_meta ($property_meta->class_meta->ancestry_class_metas) {
-                my $ancestor_property_meta = $ancestor_class_meta->property_meta_for_name($property_meta->property_name);
-                if ($ancestor_property_meta and $doc = $ancestor_property_meta->doc) {
-                    last;
-                }
-            }
-        };
-    }
 
     if ($doc) {
         push @lines, $doc;
