@@ -54,7 +54,7 @@ sub execute {
 }
 
 sub _protected_fetch {
-    my ($self, $name, $coderef) = validate_pos(@_, {type => OBJECT},
+    my ($self, $name, $method, $label) = validate_pos(@_, {type => OBJECT},
         {type => SCALAR}, {type => SCALAR}, {type => SCALAR});
 
     my $error;
