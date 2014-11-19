@@ -7,6 +7,8 @@ use File::Spec;
 use Params::Validate qw(validate_pos :types);
 use Data::Dump qw(pp);
 use Scalar::Util qw();
+use Try::Tiny qw(try catch);
+use JSON qw(to_json);
 
 class Genome::Process {
     is => [
@@ -93,6 +95,108 @@ class Genome::Process {
 };
 
 
+sub run {
+    my $self = shift;
+    my %p = Params::Validate::validate(@_, {
+            workflow_xml => {type => SCALAR},
+            workflow_inputs => {type => HASHREF},
+    });
+
+    my $transaction = UR::Context::Transaction->begin();
+    $self->create_disk_allocation();
+
+    $self->_write_workflow_file($p{workflow_xml});
+    $self->_write_inputs_file($p{workflow_inputs});
+
+    local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1 unless
+        exists $ENV{UR_DUMP_DEBUG_MESSAGES};
+    local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1 unless
+        exists $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES};
+    local $ENV{UR_DUMP_STATUS_MESSAGES} = 1 unless
+        exists $ENV{UR_DUMP_STATUS_MESSAGES};
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1 unless
+        exists $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES};
+
+    if ($ENV{UR_DBI_NO_COMMIT}) {
+        return $self->_execute_process($transaction);
+    } else {
+        local $ENV{WF_USE_FLOW} = 1 unless
+            exists $ENV{WF_USE_FLOW};
+        $self->_schedule_process($transaction);
+        return;
+    }
+}
+
+sub _write_workflow_file {
+    my $self = shift;
+    my $workflow_xml = shift;
+
+    Genome::Sys->write_file($self->workflow_file, $workflow_xml);
+}
+
+sub _write_inputs_file {
+    my $self = shift;
+    my $inputs = shift;
+
+    Genome::Sys->write_file($self->inputs_file,
+        to_json($inputs, {pretty => 1, canonical => 1}));
+}
+
+sub write_environment_file {
+    my $self = shift;
+
+    Genome::Sys->write_file($self->environment_file,
+        to_json({%ENV}, {pretty => 1, canonical => 1}));
+}
+
+sub _execute_process {
+    my $self = shift;
+    my $transaction = shift;
+
+    my $cmd = Genome::Process::Command::Run->create(
+        process => $self,
+        update_with_commit => 0
+    );
+    if (my $rv = $cmd->execute()) {
+        if ($transaction->commit()) {
+            $self->status_message("Successfully ran process (%s)",
+                $self->id);
+            return $rv;
+        } else {
+            $transaction->rollback();
+            die sprintf("Failed to commit process (%s): %s",
+                $self->id, $transaction->error_message || 'Reason Unknown');
+        }
+    } else {
+        die sprintf("Failed to run process (%s) for some reason",
+            $self->id);
+    }
+}
+
+sub _schedule_process {
+    my $self = shift;
+    my $transaction = shift;
+
+    try {
+        my $cmd = Genome::Process::Command::Run->create(process => $self);
+        $cmd->schedule();
+    } catch {
+        my $error = $_;
+        $transaction->rollback();
+        die sprintf("Failed to schedule process (%s): %s",
+            $self->id, $error);
+    };
+    if ($transaction->commit()) {
+        $self->status_message("Successfully launched process (%s)",
+            $self->id);
+    } else {
+        $transaction->rollback();
+        die sprintf("Failed to schedule process (%s): %s",
+            $self->id, $transaction->error_message || 'Reason Unknown');
+    }
+}
+
+
 sub create {
     my $class = shift;
     # we do not support creating from a boolexpr because the boolexpr logic
@@ -107,7 +211,7 @@ sub create {
         $class->_preprocess_params_for_create(%params));
     return unless $self;
 
-    $self->status('New');
+    $self->update_status('New');
     $self->bail_out_if_input_errors(\%params);
 
     return $self;
@@ -136,10 +240,9 @@ my $SET_TIMESTAMP_ON_STATUS = {
     Succeeded => 'ended_at',
 };
 
-sub status {
-    my ($self, $new_status) = validate_pos(@_, OBJECT,
-        {type => SCALAR, optional=> 1});
-    return $self->__status unless $new_status;
+sub update_status {
+    my ($self, $new_status) = validate_pos(@_,
+        {type => OBJECT}, {type => SCALAR});
 
     my $old_status = $self->status;
 
@@ -156,12 +259,12 @@ sub status {
         if ($timestamp_accessor) {
             $self->$timestamp_accessor($now);
         }
-        $self->__status($new_status);
+        $self->status($new_status);
     } else {
         die sprintf("Cannot transition Process (%s) from (%s) to (%s)",
             $self->id, $old_status, $new_status);
     }
-    return $self->__status;
+    return $self->status;
 }
 
 
@@ -186,6 +289,21 @@ sub _workflow_instances {
         name => $self->workflow_name,
     );
     return @instances;
+}
+
+sub environment_file {
+    my $self = shift;
+    return File::Spec->join($self->metadata_directory, 'environment.json');
+}
+
+sub inputs_file {
+    my $self = shift;
+    return File::Spec->join($self->metadata_directory, 'inputs.json');
+}
+
+sub workflow_file {
+    my $self = shift;
+    return File::Spec->join($self->metadata_directory, 'workflow.xml');
 }
 
 sub log_directory {
@@ -226,11 +344,48 @@ sub create_disk_allocation {
         $self->disk_allocation($disk_allocation);
         $self->status_message("Process (%s) now has disk_allocation (%s)",
             $self->id, $self->disk_allocation->id);
+        $self->_ensure_disk_allocation_gets_cleaned_up();
+
+        Genome::Sys->create_directory($self->log_directory);
         return $self->disk_allocation;
     } else {
         die sprintf("Failed to create disk allocation with " .
             "arguments: %s", pp(\%args));
     }
+}
+
+#XXX not sure why but this only works with a UR software transaction
+sub _ensure_disk_allocation_gets_cleaned_up {
+    my $self = shift;
+
+    my $cleanup_closure = $self->_disk_allocation_cleanup_closure();
+    my $create_disk_allocation = UR::Context::Transaction->log_change(
+            $self, 'UR::Value', $self->disk_allocation_id,
+            'external_change', $cleanup_closure);
+    unless ($create_disk_allocation) {
+        die sprintf("Couldn't log allocation (%s) created",
+            $self->disk_allocation_id);
+    }
+}
+
+sub _disk_allocation_cleanup_closure {
+    my $self = shift;
+    my $observer = shift;
+
+    my $allocation_id = $self->disk_allocation_id;
+    my $process_id = $self->id;
+    my $remove_allocation = sub {
+        print "Now deleting disk allocation ($allocation_id) associated " .
+            "with process ($process_id)\n";
+        ${$observer}->delete if $observer;
+        my $allocation = Genome::Disk::Allocation->get($allocation_id);
+        if ($allocation) {
+            $allocation->delete;
+        }
+    };
+    $self->debug_message("Created closure to delete disk allocation (%s) " .
+        "assocatied with process (%s)", $allocation_id, $process_id);
+    return $remove_allocation;
 }
 
 
@@ -393,23 +548,17 @@ sub delete {
         $input->delete;
     }
 
-    #creating an anonymous sub to delete allocations when commit happens
-    my $allocation_id = $self->disk_allocation_id;
-    my $process_id = $self->id;
     my $observer;
-    my $upon_delete_callback = sub {
-        print "Now deleting disk allocation ($allocation_id) associated " .
-            "with process ($process_id)\n";
-        $observer->delete if $observer;
-        my $allocation = Genome::Disk::Allocation->get($allocation_id);
-        if ($allocation) {
-            $allocation->deallocate;
-        }
-    };
-
-    #hook our anonymous sub into the commit callback
-    $observer = $self->class->ghost_class->add_observer(aspect=>'commit',
-        callback=>$upon_delete_callback);
+    $observer = UR::Context->current->add_observer(aspect=>'commit',
+        callback=>$self->_disk_allocation_cleanup_closure(\$observer));
+    if ($observer) {
+        $self->status_message("Registered observer to delete disk allocation " .
+            "(%s) upon commit", $self->disk_allocation_id);
+    } else {
+        $self->error_message("Failed to register observer to delete disk " .
+            "allocation (%s), you need to delete it manually, after commiting",
+            $self->disk_allocation_id);
+    }
 
     return $self->SUPER::delete(@_);
 }
