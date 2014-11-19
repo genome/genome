@@ -12,16 +12,20 @@ class Genome::VariantReporting::Suite::Joinx::HomoPolymer::Adaptor {
     has_planned_output => [
         joinx_version => {
             is => 'Version',
+            doc => "joinx version to be used.",
         },
         max_length => {
             is => 'Integer',
+            doc => 'maximum indel length to annotate as in homopolymer',
         },
-        info_string => { 
-            is => 'Text', 
+        info_string => {
+            is => 'Text',
+            doc => 'Info field id for homopolymer',
         },
         homopolymer_list_id => {
             is => 'String',
             is_translated => 1,
+            doc => 'Bed File FeatureList id containing homopolymer',
         },
     ],
     doc => 'Annotate vcf with information from one homopolymer bed file',
