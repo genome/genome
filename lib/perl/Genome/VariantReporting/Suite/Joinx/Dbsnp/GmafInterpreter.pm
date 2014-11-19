@@ -6,11 +6,6 @@ use Genome;
 
 class Genome::VariantReporting::Suite::Joinx::Dbsnp::GmafInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
-    has => [
-        dummy => {
-            is_optional => 1,
-        },
-    ],
     doc => 'Output the global minor allele frequency from the dbsnp GMAF field',
 };
 
