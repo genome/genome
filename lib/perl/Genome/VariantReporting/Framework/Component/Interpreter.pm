@@ -7,7 +7,7 @@ use Set::Scalar;
 use Carp qw(confess);
 
 class Genome::VariantReporting::Framework::Component::Interpreter {
-    is => ['Genome::VariantReporting::Framework::Component::Base', 'Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
+    is => ['Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
     is_abstract => 1,
 };
 

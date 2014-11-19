@@ -7,6 +7,7 @@ use Genome::VariantReporting::Framework::Utility;
 use Exception::Class ('NoTranslationsException');
 
 class Genome::VariantReporting::Framework::Component::WithTranslatedInputs {
+    is => 'Genome::VariantReporting::Framework::Component::Base',
     attributes_have => [
         is_translated => {is => 'Boolean', default => 0},
     ],

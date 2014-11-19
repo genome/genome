@@ -6,7 +6,7 @@ use Genome;
 use Params::Validate qw(validate validate_pos :types);
 
 class Genome::VariantReporting::Framework::Component::Adaptor {
-    is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::Base', 'Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
+    is => ['Command::V2', 'Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
     is_abstract => 1,
     attributes_have => {
         is_planned => {
