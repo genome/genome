@@ -192,7 +192,7 @@
 	url = git@github.com:genome-vendor/bedtools.git
 [submodule "genome-snapshot-deps"]
 	path = genome-snapshot-deps
-	url = ssh://git/srv/git/genome-snapshot-deps.git
+	url = git@github.com:genome/genome-snapshot-deps.git
 [submodule "vendor/polymutt"]
 	path = vendor/polymutt
 	url = git@github.com:genome-vendor/polymutt.git
