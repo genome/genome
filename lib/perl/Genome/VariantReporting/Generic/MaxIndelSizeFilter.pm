@@ -12,6 +12,7 @@ class Genome::VariantReporting::Generic::MaxIndelSizeFilter {
             doc => "The maximum size of an INDEL to pass",
         },
     ],
+    doc => 'Filter out indels that exceed the specified size',
 };
 
 sub __errors__ {

@@ -12,6 +12,7 @@ class Genome::VariantReporting::Suite::Joinx::Dbsnp::MaxGmafFilter {
             doc => 'Maximum allele frequency',
         },
     ],
+    doc => 'Filter variants that exceed maximum allele frequency cutoff',
 };
 
 sub name {

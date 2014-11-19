@@ -14,6 +14,7 @@ class Genome::VariantReporting::Generic::FTKeepFilter {
             default_value => ['PASS'],
         },
     },
+    doc => 'Filter out variants that don\'t contain the specified FT values',
 };
 
 sub name {

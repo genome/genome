@@ -12,6 +12,7 @@ class Genome::VariantReporting::Suite::BamReadcount::MinCoverageFilter {
             is => 'Number',
         },
     },
+    doc => 'Filter variants that don\'t meet minimum coverage',
 };
 
 sub name {

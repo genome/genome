@@ -12,6 +12,7 @@ class Genome::VariantReporting::Suite::Joinx::HomoPolymer::HomopolymerFilter {
             doc => 'custom tag name in the info field to show homopolymer status, like HOMP_FILTER=0,1',
         },
     ],
+    doc => 'Filter out indels hitting homo-polymers',
 };
 
 sub name {

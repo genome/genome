@@ -12,6 +12,7 @@ class Genome::VariantReporting::Suite::Joinx::ThousandGenomes::MaxAfFilter {
             doc => 'Maximum minor allele frequency',
         },
     ],
+    doc => 'Filter variants that exceed maximum minor allele frequency',
 };
 
 sub name {

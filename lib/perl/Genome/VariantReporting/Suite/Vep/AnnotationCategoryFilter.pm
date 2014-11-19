@@ -15,6 +15,7 @@ class Genome::VariantReporting::Suite::Vep::AnnotationCategoryFilter {
             valid_values => ['splice_site', 'non_synonymous'],
         },
     },
+    doc => 'Filter out variants that don\'t belong to the specified category',
 };
 
 

@@ -8,6 +8,7 @@ use Memoize qw();
 
 class Genome::VariantReporting::Suite::Vep::DamagingFilter {
     is => 'Genome::VariantReporting::Framework::Component::Filter',
+    doc => 'Filter out variants that aren\'t considered damaging',
 };
 
 sub name {

@@ -17,6 +17,7 @@ class Genome::VariantReporting::Suite::Joinx::Nhlbi::MaxMafFilter {
             doc => 'Population for which to compare MAF',
         },
     ],
+    doc => 'Filter variants that exceed maximum minor allele frequency for the specified population',
 };
 
 sub name {

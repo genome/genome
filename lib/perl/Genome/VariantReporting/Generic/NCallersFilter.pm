@@ -17,6 +17,7 @@ class Genome::VariantReporting::Generic::NCallersFilter {
             default_value => [qw(VarscanSomatic Sniper Strelka)],
         },
     ],
+    doc => 'Filter out variants that weren\'t called by the minimum number of the specified callers',
 };
 
 sub name {

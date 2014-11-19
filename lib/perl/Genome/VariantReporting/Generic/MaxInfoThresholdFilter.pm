@@ -16,6 +16,7 @@ class Genome::VariantReporting::Generic::MaxInfoThresholdFilter {
             doc => 'The maximum thresold to pass',
         }
     ],
+    doc => 'Filter out variants that exceed the specified threshold in the specified INFO field',
 };
 
 sub name {
