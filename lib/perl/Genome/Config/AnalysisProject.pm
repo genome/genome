@@ -26,7 +26,7 @@ class Genome::Config::AnalysisProject {
             is => 'Text',
             len => 255,
             default_value => 'Pending',
-            valid_values => [ "Pending", "Approved", "In Progress", "Completed", "Archived", "Hold" ],
+            valid_values => [ 'Pending', 'Approved', 'In Progress', 'Completed', 'Archived', 'Hold', 'Template' ],
         },
         is_cle => {
             is => 'Boolean',
