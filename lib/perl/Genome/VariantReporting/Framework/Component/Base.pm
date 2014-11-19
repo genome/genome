@@ -73,13 +73,12 @@ sub _get_dummy_params {
 sub vr_doc_sections {
     my $self = shift;
 
-    my @sections;
-
-    my %overview_section;
-    $overview_section{header} = "OVERVIEW";
-    $overview_section{items} = [$self->__meta__->doc ? $self->__meta__->doc : "(undocumented)"];
-
-    push @sections, \%overview_section;
+    my @sections = (
+        {
+            header => "OVERVIEW",
+            items  => [$self->__meta__->doc ? $self->__meta__->doc : "(undocumented)"],
+        }
+    );
 
     my $properties_section = $self->_properties_section;
     if ($properties_section) {
