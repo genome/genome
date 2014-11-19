@@ -30,7 +30,7 @@ class Genome::Model::Tools::CgHub::Query {
 sub _build_command {
     my $self = shift;
 
-    my @cmd_parts = ( "cgquery", "analysis_id=".$self->uuid );
+    my @cmd_parts = ( "cgquery", "'analysis_id=".$self->uuid."'" );
     if ( $self->xml_file ) {
         push @cmd_parts, "-o", $self->xml_file;
     }
