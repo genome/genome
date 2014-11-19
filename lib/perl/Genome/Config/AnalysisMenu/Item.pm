@@ -25,6 +25,19 @@ class Genome::Config::AnalysisMenu::Item {
             is => 'Text',
         },
     ],
+    has_many => [
+        config_items => {
+            is => 'Genome::Config::Profile::Item',
+            reverse_as => 'analysis_menu_item',
+            doc => 'Config Items based on this menu item',
+        },
+        analysis_projects => {
+            is => 'Genome::Config::AnalysisProject',
+            via => 'config_items',
+            to => 'analysis_project',
+            doc => 'Analysis Projects using this menu item',
+        },
+    ],
 };
 
 sub __display_name__ {
