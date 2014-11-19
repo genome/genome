@@ -93,7 +93,6 @@ sub _properties_section {
     my @properties;
     my %properties_section;
     map {push @properties, _property_to_string($_)} $self->properties_in_plan;
-    @properties = grep {$_->[0] ne "id"} @properties;
     for my $property (@properties) {
         my $type = $property->[1] ? "   ".$property->[1] : "";
         push @{$properties_section{items}},
