@@ -39,6 +39,11 @@ sub execute {
         return;
     }
 
+    unless(grep{$_ eq $profile_item->analysis_project->status} ('In Progress', 'Hold', 'Pending')){
+        $self->error_message('Profile item for analysis project with status: ' . $profile_item->analysis_project->status . ' cannot be changed');
+        return;
+    }
+
     my $new_profile_item = Genome::Config::Profile::Item->create(
         analysis_project => $profile_item->analysis_project,
         status => $profile_item->status,

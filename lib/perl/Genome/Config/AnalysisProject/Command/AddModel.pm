@@ -20,13 +20,6 @@ class Genome::Config::AnalysisProject::Command::AddModel {
             shell_args_position => 2,
        },
     ],
-    has_optional_input => {
-        allow_projects_not_in_progress => {
-            is                  => 'Boolean',
-            doc                 => 'add the model(s) even if the analysis project is not "In Progress"',
-            default_value       => 0,
-        },
-    },
 };
 
 sub help_brief {
@@ -72,21 +65,13 @@ sub _verify_config_status {
     }
 
     my $analysis_project = $profile_item->analysis_project;
-    unless($analysis_project->status eq 'In Progress') {
-        if($self->allow_projects_not_in_progress) {
-            $self->debug_message(
-                'Allowing assignment to Analysis Project %s in status %s',
-                $analysis_project->id,
-                $analysis_project->status
-            );
-        } else {
-            $self->error_message(
-                'Analysis Project %s has status %s. Not assigning models.',
-                $analysis_project->id,
-                $analysis_project->status
-            );
-            return;
-        }
+    unless(grep{$_ eq $analysis_project->status} ('In Progress', 'Hold', 'Pending')) {
+        $self->error_message(
+            'Analysis Project %s has status %s. Not assigning models.',
+            $analysis_project->id,
+            $analysis_project->status
+        );
+        return;
     }
 
     return 1;
