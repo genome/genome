@@ -1,9 +1,5 @@
 [4mOVERVIEW[0m
-(undocumented)
-
-[4mPROPERTIES[0m
-  [1mdummy[0m
-    (undocumented)
+Output the global minor allele frequency from the dbsnp GMAF field
 
 [4mREQUIRED EXPERTS[0m
 dbsnp

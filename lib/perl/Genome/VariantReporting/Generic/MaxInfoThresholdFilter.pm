@@ -16,6 +16,7 @@ class Genome::VariantReporting::Generic::MaxInfoThresholdFilter {
             doc => 'The maximum thresold to pass',
         }
     ],
+    doc => 'Filter out variants that exceed the specified threshold in the specified INFO field',
 };
 
 sub name {
@@ -48,5 +49,14 @@ sub filter_entry {
     return %return_values;
 }
 
+sub vcf_id {
+    my $self = shift;
+    return $self->info_tag , '_' . $self->threshold;
+}
+
+sub vcf_description {
+    my $self = shift;
+    return 'Filter out variants with info field ' . $self->info_tag . ' being greater than ' . $self->threshold;
+}
 
 1;

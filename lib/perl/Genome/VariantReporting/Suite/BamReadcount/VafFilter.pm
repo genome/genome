@@ -17,6 +17,7 @@ class Genome::VariantReporting::Suite::BamReadcount::VafFilter {
             doc => 'The inclusive upper bound for VAF values that will pass the filter (will be kept)',
         },
     ],
+    doc => q{Filter variants that don't match vaf cutoffs},
 };
 
 sub name {

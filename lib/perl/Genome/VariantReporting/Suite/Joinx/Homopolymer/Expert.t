@@ -25,12 +25,12 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 };
 
-my $pkg = 'Genome::VariantReporting::Suite::Joinx::HomoPolymer::Expert';
+my $pkg = 'Genome::VariantReporting::Suite::Joinx::Homopolymer::Expert';
 use_ok($pkg) || die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('experts', $pkg->name), $pkg);
 
-my $VERSION = 3; # Bump these each time test data changes
+my $VERSION = 4; # Bump these each time test data changes
 my $RESOURCE_VERSION = 3;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
@@ -40,7 +40,7 @@ my $expected_xml = File::Spec->join($test_dir, 'expected.xml');
 
 test_dag_xml($dag, $expected_xml);
 
-set_what_interpreter_x_requires('homo-polymer');
+set_what_interpreter_x_requires('homopolymer');
 
 my $variant_type = 'indels';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");

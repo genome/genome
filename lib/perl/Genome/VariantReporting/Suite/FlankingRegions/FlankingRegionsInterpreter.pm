@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Suite::FlankingRegions::FlankingRegionsInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter'],
+    doc => 'Output the flanking sequence for the reference (FSRF info field) and the alternate allele (FSAF info field)',
 };
 
 sub name {
@@ -31,8 +32,8 @@ sub interpret_entry {
     my %return_values;
     for my $alt_allele (@$passed_alt_alleles) {
         $return_values{$alt_allele} = {
-            reference_fasta => $entry->info_for_allele($alt_allele, 'FSAF'),
-            alt_fasta => $entry->info->{FSRF},
+            alt_fasta => $entry->info_for_allele($alt_allele, 'FSAF'),
+            reference_fasta => $entry->info->{FSRF},
         }
     }
     return %return_values;

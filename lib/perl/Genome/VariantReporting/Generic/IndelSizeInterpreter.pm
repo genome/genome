@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Generic::IndelSizeInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
+    doc => 'Calculate the size of indels',
 };
 
 sub name {

@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Suite::Joinx::Nhlbi::MafInterpreter {
     is => ['Genome::VariantReporting::Suite::Joinx::Nhlbi::ComponentBase', 'Genome::VariantReporting::Framework::Component::Interpreter'],
+    doc => 'Output the European, African American, and overall minor allele frequencies from NHLBI',
 };
 
 sub name {

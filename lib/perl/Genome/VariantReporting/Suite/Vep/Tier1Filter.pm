@@ -9,6 +9,7 @@ class Genome::VariantReporting::Suite::Vep::Tier1Filter {
     is => ['Genome::VariantReporting::Framework::Component::Filter'],
     has => [
     ],
+    doc => q{Filter out variants that aren't considered tier 1},
 };
 
 sub name {

@@ -18,13 +18,13 @@ use Genome::VariantReporting::Framework::TestHelpers qw(test_cmd_and_result_are_
 
 use Test::More;
 
-my $cmd_class = 'Genome::VariantReporting::Suite::Joinx::HomoPolymer::Run';
+my $cmd_class = 'Genome::VariantReporting::Suite::Joinx::Homopolymer::Run';
 use_ok($cmd_class) or die;
 
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('runners', $cmd_class->name), $cmd_class);
 
-my $result_class = 'Genome::VariantReporting::Suite::Joinx::HomoPolymer::RunResult';
+my $result_class = 'Genome::VariantReporting::Suite::Joinx::Homopolymer::RunResult';
 use_ok($result_class) or die;
 
 my $tool_class = 'Genome::Model::Tools::Joinx::VcfAnnotateHomopolymer';

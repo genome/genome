@@ -16,6 +16,7 @@ class Genome::VariantReporting::Reporter::VcfReporter {
             is => 'Genome::Vcf::Header',
         },
     ],
+    doc => 'Output variants in vcf format. Set soft filter result ALLFILTERSPASS based on chosen filters specified in the interpreters section.'
 };
 
 sub name {

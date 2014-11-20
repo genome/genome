@@ -1,0 +1,14 @@
+[4mOVERVIEW[0m
+Annotate vcf with information from one homopolymer bed file
+
+[4mPROPERTIES[0m
+  [1mhomopolymer_list_id[0m   String
+    Bed File FeatureList id containing homopolymer
+    This is a translated property.
+  [1minfo_string[0m   Text
+    Info field id for homopolymer
+  [1mjoinx_version[0m   Version
+    joinx version to be used.
+  [1mmax_length[0m   Integer
+    maximum indel length to annotate as in homopolymer
+

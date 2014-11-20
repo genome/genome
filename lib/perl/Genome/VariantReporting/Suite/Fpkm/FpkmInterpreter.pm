@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Suite::Fpkm::FpkmInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Suite::Fpkm::EntryParser'],
+    doc => 'Output the FPKM values',
 };
 
 sub name {

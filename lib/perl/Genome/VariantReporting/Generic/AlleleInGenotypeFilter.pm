@@ -8,6 +8,7 @@ class Genome::VariantReporting::Generic::AlleleInGenotypeFilter {
     is => ['Genome::VariantReporting::Framework::Component::Filter', 'Genome::VariantReporting::Framework::Component::WithSampleName'],
     has => [
     ],
+    doc => q{Filter out alternate alleles that aren't part of the specified sample's genotype},
 };
 
 sub name {
@@ -33,6 +34,16 @@ sub filter_entry {
     }
 
     return %return_values;
+}
+
+sub vcf_id {
+    my $self = shift;
+    return 'ALLELE_IN_SAMPLE_GENOTYPE_' . $self->sample_name;
+}
+
+sub vcf_description {
+    my $self = shift;
+    return 'Filter out alleles that are not part of the genotype of sample ' . $self->sample_name;
 }
 
 1;

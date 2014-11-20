@@ -11,6 +11,7 @@ class Genome::VariantReporting::Framework::Component::WithManySampleNames {
             is => 'Text',
             is_many => 1,
             is_translated => 1,
+            doc => 'List of sample names to be used in the report',
         },
     ],
 };

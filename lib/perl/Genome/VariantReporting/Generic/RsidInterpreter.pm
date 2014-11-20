@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Generic::RsidInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
+    doc => 'Output a list of rsids',
 };
 
 sub name {

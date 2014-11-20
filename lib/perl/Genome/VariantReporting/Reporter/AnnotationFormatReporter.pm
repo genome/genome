@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Reporter::AnnotationFormatReporter {
     is => 'Genome::VariantReporting::Reporter::WithHeader',
+    doc => 'Report to mimic the legacy annotation format',
 };
 
 sub name {

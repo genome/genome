@@ -7,6 +7,7 @@ use Genome::Utility::Vcf qw(convert_indel_gt_to_bed);
 
 class Genome::VariantReporting::Generic::BedEntryInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter'],
+    doc => 'Output the chromosome, start position, and stop position in bed format',
 };
 
 sub name {

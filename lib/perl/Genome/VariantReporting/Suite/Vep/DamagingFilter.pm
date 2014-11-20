@@ -8,6 +8,7 @@ use Memoize qw();
 
 class Genome::VariantReporting::Suite::Vep::DamagingFilter {
     is => 'Genome::VariantReporting::Framework::Component::Filter',
+    doc => q{Filter out variants that aren't considered damaging},
 };
 
 sub name {
@@ -96,5 +97,14 @@ sub non_synonymous_damaging_expression {
     );
     return join("|", @damaging);
 }
+
+sub vcf_id {
+    return 'DAMAGING';
+}
+
+sub vcf_description {
+    return 'Filter out variants that aren\'t considered to be damaging';
+}
+
 1;
 
