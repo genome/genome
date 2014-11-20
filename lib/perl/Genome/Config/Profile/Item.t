@@ -31,6 +31,7 @@ my $profile_item_from_menu_item = Genome::Config::Profile::Item->create(
 ok(!$profile_item_from_menu_item->is_concrete, 'it shouldnt start as concrete when made from a menu item');
 is($menu_item_file, $profile_item_from_menu_item->file_path, 'it should point to the original menu item file');
 is($profile_item_from_menu_item->allocation, undef, 'it should not have an allocation yet');
+is($profile_item_from_menu_item->status, 'active', 'it starts in active state');
 
 $profile_item_from_menu_item->concretize();
 
@@ -51,6 +52,7 @@ my $profile_item_from_file = Genome::Config::Profile::Item->create_from_file_pat
 ok($profile_item_from_file->is_concrete, 'it should start out as concrete');
 ok($profile_item_from_file->allocation, 'it should start out with an allocation');
 ok($profile_item_from_file->file_path ne $custom_config_file_path, 'it should not point to the original file');
+is($profile_item_from_file->status, 'active', 'it starts in active state');
 is(Genome::Sys->read_file($profile_item_from_file->file_path), $custom_config_file_contents, 'it should copy the original file to the new location');
 ok(!$profile_item_from_file->analysis_menu_item, 'it should not have a menu item selected');
 
