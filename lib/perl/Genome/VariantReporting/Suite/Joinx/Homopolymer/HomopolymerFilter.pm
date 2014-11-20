@@ -12,7 +12,7 @@ class Genome::VariantReporting::Suite::Joinx::Homopolymer::HomopolymerFilter {
             doc => 'custom tag name in the info field to show homopolymer status, like HOMP_FILTER=0,1',
         },
     ],
-    doc => 'Filter out indels hitting homo-polymers',
+    doc => 'Filter out indels hitting homopolymers',
 };
 
 sub name {
@@ -20,7 +20,7 @@ sub name {
 }
 
 sub requires_annotations {
-    return ('homo-polymer');
+    return ('homopolymer');
 }
 
 sub filter_entry {
@@ -52,7 +52,7 @@ sub vcf_id {
 }
 
 sub vcf_description {
-    return 'Filter out indels hitting homo-polymers';
+    return 'Filter out indels hitting homopolymers';
 }
 
 

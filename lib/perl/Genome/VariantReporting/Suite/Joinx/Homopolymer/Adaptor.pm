@@ -32,7 +32,7 @@ class Genome::VariantReporting::Suite::Joinx::Homopolymer::Adaptor {
 };
 
 sub name {
-    'homo-polymer';
+    'homopolymer';
 }
 
 

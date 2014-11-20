@@ -27,7 +27,7 @@ class Genome::VariantReporting::Suite::Joinx::Homopolymer::Run {
 };
 
 sub name {
-    'homo-polymer';
+    'homopolymer';
 }
 
 sub result_class {

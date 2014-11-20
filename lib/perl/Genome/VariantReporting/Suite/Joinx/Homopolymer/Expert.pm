@@ -9,7 +9,7 @@ class Genome::VariantReporting::Suite::Joinx::Homopolymer::Expert {
 };
 
 sub name {
-    'homo-polymer';
+    'homopolymer';
 }
 
 1;

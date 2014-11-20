@@ -40,7 +40,7 @@ my $expected_xml = File::Spec->join($test_dir, 'expected.xml');
 
 test_dag_xml($dag, $expected_xml);
 
-set_what_interpreter_x_requires('homo-polymer');
+set_what_interpreter_x_requires('homopolymer');
 
 my $variant_type = 'indels';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
