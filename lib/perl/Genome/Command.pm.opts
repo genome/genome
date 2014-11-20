@@ -37941,6 +37941,70 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>show-docs',
+    [
+      'component-type=s',
+      [
+        'filters',
+        'interpreters',
+        'reporters',
+        'experts'
+      ],
+      'component-name=s',
+      'files',
+      'help!',
+      undef
+    ],
+    'help!',
+    undef
+  ],
+  '>process',
+  [
+    '>test',
+    [
+      'some-output=s',
+      'files',
+      'statement=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>run',
+    [
+      'update-with-commit!',
+      undef,
+      'process=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>view',
+    [
+      'COLUMN-WIDTH=s',
+      undef,
+      'color!',
+      undef,
+      'summary-threshold=s',
+      undef,
+      'connectors!',
+      undef,
+      'status-events!',
+      undef,
+      'depth=s',
+      undef,
+      'inputs!',
+      undef,
+      'full!',
+      undef,
+      'logs!',
+      undef,
+      'workflow!',
+      undef,
+      'process=s',
+      undef,
+      'help!',
+      undef
+    ],
     'help!',
     undef
   ],
