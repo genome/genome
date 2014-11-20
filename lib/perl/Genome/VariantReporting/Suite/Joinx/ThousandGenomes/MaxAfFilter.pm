@@ -12,6 +12,7 @@ class Genome::VariantReporting::Suite::Joinx::ThousandGenomes::MaxAfFilter {
             doc => 'Maximum minor allele frequency',
         },
     ],
+    doc => 'Filter variants that exceed maximum minor allele frequency',
 };
 
 sub name {
@@ -37,6 +38,16 @@ sub filter_entry {
     }
 
     return %return_values;
+}
+
+sub vcf_id {
+    my $self = shift;
+    return 'MAXAF' . $self->max_af;
+}
+
+sub vcf_description {
+    my $self = shift;
+    return 'Filter out variants with minor allele frequency being greater than ' . $self->max_af;
 }
 
 1;

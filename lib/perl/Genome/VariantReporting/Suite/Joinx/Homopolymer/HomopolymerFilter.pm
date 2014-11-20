@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Suite::Joinx::HomoPolymer::HomopolymerFilter;
+package Genome::VariantReporting::Suite::Joinx::Homopolymer::HomopolymerFilter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Suite::Joinx::HomoPolymer::HomopolymerFilter {
+class Genome::VariantReporting::Suite::Joinx::Homopolymer::HomopolymerFilter {
     is  => ['Genome::VariantReporting::Framework::Component::Filter'],
     has => [
         info_tag => {
@@ -12,6 +12,7 @@ class Genome::VariantReporting::Suite::Joinx::HomoPolymer::HomopolymerFilter {
             doc => 'custom tag name in the info field to show homopolymer status, like HOMP_FILTER=0,1',
         },
     ],
+    doc => 'Filter out indels hitting homopolymers',
 };
 
 sub name {
@@ -19,7 +20,7 @@ sub name {
 }
 
 sub requires_annotations {
-    return ('homo-polymer');
+    return ('homopolymer');
 }
 
 sub filter_entry {
@@ -51,7 +52,7 @@ sub vcf_id {
 }
 
 sub vcf_description {
-    return 'Filter out indels hitting homo-polymers';
+    return 'Filter out indels hitting homopolymers';
 }
 
 

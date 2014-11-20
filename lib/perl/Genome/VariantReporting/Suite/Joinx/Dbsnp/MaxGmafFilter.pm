@@ -12,6 +12,7 @@ class Genome::VariantReporting::Suite::Joinx::Dbsnp::MaxGmafFilter {
             doc => 'Maximum allele frequency',
         },
     ],
+    doc => 'Filter variants that exceed maximum allele frequency cutoff',
 };
 
 sub name {
@@ -41,6 +42,16 @@ sub filter_entry {
     }
 
     return %return_values;
+}
+
+sub vcf_id {
+    my $self = shift;
+    return 'MAXGMAF' . $self->max_gmaf;
+}
+
+sub vcf_description {
+    my $self = shift;
+    return 'Filter out variants with gmaf being greater than ' . $self->max_gmaf;
 }
 
 1;

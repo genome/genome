@@ -12,6 +12,7 @@ class Genome::VariantReporting::Generic::ContainsTagFilter {
             doc => "Entry must contain this tag in the info field to keep",
         },
     ],
+    doc => q{Filter out variants that don't contain the specified info tag},
 };
 
 sub name {

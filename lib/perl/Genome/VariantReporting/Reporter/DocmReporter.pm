@@ -10,6 +10,7 @@ class Genome::VariantReporting::Reporter::DocmReporter {
     is => [ 'Genome::VariantReporting::Reporter::WithHeader', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
     has => [
     ],
+    doc => 'Output readcount information from bam readcount',
 };
 
 sub name {

@@ -13,8 +13,10 @@ class Genome::VariantReporting::Suite::Vep::AnnotationCategoryFilter {
             is => 'Text',
             is_many => 1,
             valid_values => ['splice_site', 'non_synonymous'],
+            doc => 'A list of annotation categories',
         },
     },
+    doc => q{Filter out variants that don't belong to one of the specified categories},
 };
 
 

@@ -7,6 +7,7 @@ use Set::Scalar;
 
 class Genome::VariantReporting::Generic::FTInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::WithSampleName'],
+    doc => 'Output the value of the FT field',
 };
 
 sub name {

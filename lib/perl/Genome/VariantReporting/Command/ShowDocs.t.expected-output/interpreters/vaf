@@ -1,5 +1,5 @@
 [4mOVERVIEW[0m
-(undocumented)
+Calculate the variant allele frequency, number of reads supporting the reference, and number of reads supporting variant for a sample and its libraries
 
 [4mPROPERTIES[0m
   [1msample_name[0m   Text

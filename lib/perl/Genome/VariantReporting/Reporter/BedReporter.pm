@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Reporter::BedReporter {
     is => 'Genome::VariantReporting::Reporter::WithHeader',
+    doc => 'Output variants in bed format',
 };
 
 sub name {

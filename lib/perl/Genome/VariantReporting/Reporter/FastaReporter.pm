@@ -11,6 +11,7 @@ class Genome::VariantReporting::Reporter::FastaReporter {
     has_transient_optional => [
         _output_fh => {},
     ],
+    doc => 'Prints out a fasta file with both reference and alternate alleles surrounded by a short flanking sequence',
 };
 
 sub name {

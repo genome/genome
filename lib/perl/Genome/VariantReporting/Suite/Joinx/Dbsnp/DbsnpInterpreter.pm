@@ -8,6 +8,7 @@ use Memoize qw();
 
 class Genome::VariantReporting::Suite::Joinx::Dbsnp::DbsnpInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
+    doc => 'Output the allele frequency from dbsnp CAF field',
 };
 
 sub name {

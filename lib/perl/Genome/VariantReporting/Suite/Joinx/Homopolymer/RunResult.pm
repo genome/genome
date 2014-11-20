@@ -1,11 +1,11 @@
-package Genome::VariantReporting::Suite::Joinx::HomoPolymer::RunResult;
+package Genome::VariantReporting::Suite::Joinx::Homopolymer::RunResult;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 use File::Spec;
 
-class Genome::VariantReporting::Suite::Joinx::HomoPolymer::RunResult {
+class Genome::VariantReporting::Suite::Joinx::Homopolymer::RunResult {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
     has_input => [
         homopolymer_list_id => {

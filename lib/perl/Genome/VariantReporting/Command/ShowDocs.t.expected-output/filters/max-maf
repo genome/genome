@@ -1,5 +1,5 @@
 [4mOVERVIEW[0m
-(undocumented)
+Filter variants that exceed maximum minor allele frequency for the specified population
 
 [4mPROPERTIES[0m
   [1mmax_maf[0m   Number

@@ -1,5 +1,5 @@
 [4mOVERVIEW[0m
-(undocumented)
+Filter variants based on the sample genotype and matching vaf values
 
 [4mPROPERTIES[0m
   [1mmax_het_vaf[0m   Number

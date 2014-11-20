@@ -14,6 +14,7 @@ class Genome::VariantReporting::Suite::BamReadcount::GenotypeVafFilter {
         min_hom_vaf => { is => 'Number', doc => 'Minimum VAF value if the genotype if homozygous. Expressed as a whole percentage.', },
         max_hom_vaf => { is => 'Number', doc => 'Maximum VAF value if the genotype if homozygous. Expressed as a whole percentage.', },
     },
+    doc => 'Filter variants based on the sample genotype and matching vaf values'
 };
 
 sub __errors__ {

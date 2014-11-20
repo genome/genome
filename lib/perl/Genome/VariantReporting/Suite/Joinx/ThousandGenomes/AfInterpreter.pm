@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Suite::Joinx::ThousandGenomes::AfInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter'],
+    doc => 'Output the allele frequency based on 1000Genomes',
 };
 
 sub name {

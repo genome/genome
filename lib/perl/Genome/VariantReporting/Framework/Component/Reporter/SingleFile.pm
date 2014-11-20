@@ -7,7 +7,9 @@ use Genome;
 class Genome::VariantReporting::Framework::Component::Reporter::SingleFile {
     is => 'Genome::VariantReporting::Framework::Component::Reporter',
     has => [
-        file_name => {},
+        file_name => {
+            doc => 'file name to use for report',
+        },
     ],
     has_transient_optional => [
         _output_fh => {

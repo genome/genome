@@ -7,6 +7,7 @@ use Genome::Utility::Vcf qw(convert_indel_gt_to_bed);
 
 class Genome::VariantReporting::Generic::PositionInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
+    doc => 'Output the chromosome name, the start position, the stop position, the reference allele, and the variant allele',
 };
 
 sub name {

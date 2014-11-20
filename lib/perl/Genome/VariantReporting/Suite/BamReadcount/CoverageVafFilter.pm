@@ -15,6 +15,7 @@ class Genome::VariantReporting::Suite::BamReadcount::CoverageVafFilter {
             doc => 'A mapping of coverages and the minimum vafs.'
         },
     },
+    doc => 'Filter variants based on coverage and matching vaf values',
 };
 
 sub __errors__ {

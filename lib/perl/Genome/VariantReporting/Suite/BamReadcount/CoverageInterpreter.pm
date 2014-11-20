@@ -7,6 +7,7 @@ use List::Util qw/first/;
 
 class Genome::VariantReporting::Suite::BamReadcount::CoverageInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Suite::BamReadcount::ComponentBase'],
+    doc => 'Determine the read depth at the variant position',
 };
 
 sub name {

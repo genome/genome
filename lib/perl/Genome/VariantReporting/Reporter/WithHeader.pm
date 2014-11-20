@@ -11,15 +11,18 @@ class Genome::VariantReporting::Reporter::WithHeader {
     has => {
         null_character => {
             is => 'Text',
-            default => '-'
+            default => '-',
+            doc => 'Character to be used for undefined values in the report',
         },
         delimiter => {
             is => 'Text',
             default => "\t",
+            doc => 'Character to be used to separate columns',
         },
         generate_legend_file => {
             is => 'Boolean',
             default => 1,
+            doc => 'Boolean flag to control whether or not a legend file will be created',
         }
     },
     has_transient_optional => [

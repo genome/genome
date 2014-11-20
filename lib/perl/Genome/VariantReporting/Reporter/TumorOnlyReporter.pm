@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Reporter::TumorOnlyReporter {
     is => 'Genome::VariantReporting::Reporter::WithHeader',
+    doc => 'Basic variant information and annotation from vep, bam readcount, and population allele frequencies',
 };
 
 sub name {

@@ -13,6 +13,7 @@ class Genome::VariantReporting::Suite::Fpkm::MinFpkmFilter {
             doc => "The minimum FPKM value to pass",
         },
     ],
+    doc => q{Filter variants that don't meet minimum FPKM value},
 };
 
 sub name {
