@@ -18,11 +18,6 @@ class Genome::VariantReporting::Command::CreateReport {
             valid_values => ['snvs', 'indels'],
             doc => "The type of variants used for annotation",
         },
-        output_directory => {
-            is => 'Path',
-            is_output => 1,
-            doc => "The location of the reports to be generated",
-        },
         plan_file => {
             is => 'Path',
             doc => 'A plan (yaml) file describing the report generation workflow',
@@ -88,7 +83,6 @@ sub workflow_inputs {
         process_id => $process_id,
         input_vcf => $self->input_vcf,
         variant_type => $self->variant_type,
-        output_directory => $self->output_directory,
         plan_json => $self->plan->as_json,
         provider_json => $self->provider->as_json,
     };

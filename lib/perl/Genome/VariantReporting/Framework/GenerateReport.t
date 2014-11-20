@@ -22,8 +22,6 @@ my $data_dir = __FILE__.".d";
 my $vcf_file = File::Spec->join($data_dir, "test.vcf");
 my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(File::Spec->join($data_dir, "test.yaml"));
 
-my $output_dir = Genome::Sys->create_temp_directory;
-
 my $translations = { untranslated => 'translated'};
 my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
     translations => $translations,
@@ -31,7 +29,6 @@ my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslatio
 my $generator = $pkg->create(input_vcf => $vcf_file,
                              plan_json => $plan->as_json,
                              variant_type => "snvs",
-                             output_directory => $output_dir,
                              provider_json => $provider->as_json);
 ok($generator->isa($pkg), "Generator created ok");
 ok($generator->execute, "Generator executed ok");
@@ -41,7 +38,7 @@ my $translated_interpreter = $epsilon_reporter_object->interpreters->{interprete
 is($translated_interpreter->iz_p1, 'translated', 'Attached interpreter\'s parameters were translated correctly');
 
 for my $expected_report (glob File::Spec->join($data_dir, "expected", "*")) {
-    compare_ok(File::Spec->join($output_dir, basename($expected_report)), 
+    compare_ok(File::Spec->join($generator->output_result->output_dir, basename($expected_report)), 
                     $expected_report,
                     sprintf("Report %s generated as expected", basename($expected_report)));
 }

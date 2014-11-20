@@ -33,20 +33,17 @@ subtest 'working_command' => sub {
         target_directory => $test_dir
     );
 
-    my $output_dir = Genome::Sys->create_temp_directory;
-
     my $input_vcf = File::Spec->join($test_dir, "input.vcf");
     my $cmd = $pkg->create(
         input_vcf => $input_vcf,
         variant_type => 'snvs',
-        output_directory => $output_dir,
         plan_file => File::Spec->join($test_dir, 'plan.yaml'),
         translations_file => get_translations_file($input_vcf),
     );
     my $p = $cmd->execute();
 
     my $expected_result_dir = File::Spec->join($test_dir, "expected_in_result");
-    compare_dir_ok($output_dir, $expected_result_dir,
+    compare_dir_ok($p->output_directory, $expected_result_dir,
         'All reports are as expected');
 
     my $expected_process_dir = File::Spec->join($test_dir, "expected_in_process");
@@ -67,7 +64,6 @@ subtest 'no_translations_file' => sub {
     my $cmd = $pkg->create(
         input_vcf => $input_vcf,
         variant_type => 'snvs',
-        output_directory => $output_dir,
         plan_file => File::Spec->join($test_dir, 'plan.yaml'),
         translations_file => "does_not_exist.yaml",
     );
@@ -88,7 +84,6 @@ subtest 'no_plan_file' => sub {
     my $cmd = $pkg->create(
         input_vcf => $input_vcf,
         variant_type => 'snvs',
-        output_directory => $output_dir,
         plan_file => 'does_not_exist.plan',
         translations_file => get_translations_file($input_vcf),
     );
@@ -109,7 +104,6 @@ subtest 'no_vcf' => sub {
     my $cmd = $pkg->create(
         input_vcf => 'does_not_exist.vcf',
         variant_type => 'snvs',
-        output_directory => $output_dir,
         plan_file => File::Spec->join($test_dir, 'plan.yaml'),
         translations_file => get_translations_file($input_vcf),
     );

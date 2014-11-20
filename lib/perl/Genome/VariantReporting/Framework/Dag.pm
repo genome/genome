@@ -118,15 +118,10 @@ sub connect_report_generator {
         target => $report_generator_op,
     );
 
-    $dag->connect_input(
-        input_property => 'output_directory',
-        destination => $report_generator_op,
-        destination_property => 'output_directory',
-    );
     $dag->connect_output(
-        output_property => 'output_directory',
+        output_property => 'output_result',
         source => $report_generator_op,
-        source_property => 'output_directory',
+        source_property => 'output_result',
     );
 }
 
