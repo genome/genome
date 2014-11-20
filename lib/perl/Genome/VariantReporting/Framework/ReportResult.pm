@@ -6,7 +6,7 @@ use Genome::File::Vcf::Reader;
 use Genome;
 
 class Genome::VariantReporting::Framework::ReportResult {
-    is => 'Genome::SoftwareResult::Stageable',
+    is => 'Genome::SoftwareResult::StageableSimple',
     has_input => [
         input_vcf_lookup => {
             is => 'Text',
@@ -33,30 +33,6 @@ class Genome::VariantReporting::Framework::ReportResult {
         },
     ],
 };
-
-sub create {
-    my $class = shift;
-    my $self = $class->SUPER::create(@_);
-    return unless $self;
-
-    $self->_prepare_staging_directory;
-    $self->_run;
-
-    $self->_prepare_output_directory;
-    $self->_promote_data;
-    $self->_reallocate_disk_allocation;
-
-    return $self;
-}
-
-sub resolve_allocation_subdirectory {
-    my $self = shift;
-    return File::Spec->join('/', 'model_data', 'software-result', $self->id);
-}
-
-sub resolve_allocation_disk_group_name {
-    $ENV{GENOME_DISK_GROUP_MODELS};
-}
 
 sub plan {
     my $self = shift;
