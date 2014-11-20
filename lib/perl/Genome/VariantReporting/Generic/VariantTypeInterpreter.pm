@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Generic::VariantTypeInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
-    doc => 'Determine the type of variant: snp, ins (insertion), del (deletion), other',
+    doc => 'Determine the type of variant: snp (single-nucleotide polymorphism), ins (insertion), del (deletion), other',
 };
 
 sub name {

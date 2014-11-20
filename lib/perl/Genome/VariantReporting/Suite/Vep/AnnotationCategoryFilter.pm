@@ -16,7 +16,7 @@ class Genome::VariantReporting::Suite::Vep::AnnotationCategoryFilter {
             doc => 'A list of annotation categories',
         },
     },
-    doc => q{Filter out variants that don't belong to the specified category},
+    doc => q{Filter out variants that don't belong to one of the specified categories},
 };
 
 
