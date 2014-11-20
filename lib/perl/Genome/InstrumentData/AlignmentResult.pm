@@ -627,8 +627,10 @@ sub _extract_input_read_group_bam {
     my $file = sprintf("%s/%s.rg_extracted_%s.bam", $self->temp_scratch_directory,  $self->instrument_data_id, $self->instrument_data_segment_id);
     
     my $cmd = Genome::Model::Tools::Sam::ExtractReadGroup->create(
-        input  => $self->instrument_data->bam_path,
-        output => $file,
+        input         => $self->instrument_data->bam_path,
+        output        => $file,
+        name_sort     => 1,
+        use_version   => $self->samtools_version, 
         read_group_id => $self->instrument_data_segment_id,
     );
 
