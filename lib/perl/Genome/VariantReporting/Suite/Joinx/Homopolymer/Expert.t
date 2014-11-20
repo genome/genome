@@ -25,7 +25,7 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 };
 
-my $pkg = 'Genome::VariantReporting::Suite::Joinx::HomoPolymer::Expert';
+my $pkg = 'Genome::VariantReporting::Suite::Joinx::Homopolymer::Expert';
 use_ok($pkg) || die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('experts', $pkg->name), $pkg);

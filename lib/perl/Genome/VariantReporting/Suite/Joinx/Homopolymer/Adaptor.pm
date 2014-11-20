@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Suite::Joinx::HomoPolymer::Adaptor;
+package Genome::VariantReporting::Suite::Joinx::Homopolymer::Adaptor;
 
 use strict;
 use warnings FATAL => 'all';
@@ -6,7 +6,7 @@ use Genome;
 
 our $MINIMUM_JOINX_VERSION = 1.9;
 
-class Genome::VariantReporting::Suite::Joinx::HomoPolymer::Adaptor {
+class Genome::VariantReporting::Suite::Joinx::Homopolymer::Adaptor {
     is => "Genome::VariantReporting::Framework::Component::Adaptor",
 
     has_planned_output => [

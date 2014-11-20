@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Suite::Joinx::HomoPolymer::HomopolymerFilter;
+package Genome::VariantReporting::Suite::Joinx::Homopolymer::HomopolymerFilter;
 
 use strict;
 use warnings;
 use Genome;
 
-class Genome::VariantReporting::Suite::Joinx::HomoPolymer::HomopolymerFilter {
+class Genome::VariantReporting::Suite::Joinx::Homopolymer::HomopolymerFilter {
     is  => ['Genome::VariantReporting::Framework::Component::Filter'],
     has => [
         info_tag => {

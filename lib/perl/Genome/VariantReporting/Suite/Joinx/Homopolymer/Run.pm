@@ -1,10 +1,10 @@
-package Genome::VariantReporting::Suite::Joinx::HomoPolymer::Run;
+package Genome::VariantReporting::Suite::Joinx::Homopolymer::Run;
 
 use strict;
 use warnings FATAL => 'all';
 use Genome;
 
-class Genome::VariantReporting::Suite::Joinx::HomoPolymer::Run {
+class Genome::VariantReporting::Suite::Joinx::Homopolymer::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     has_input => [
         joinx_version => {
@@ -31,5 +31,5 @@ sub name {
 }
 
 sub result_class {
-    'Genome::VariantReporting::Suite::Joinx::HomoPolymer::RunResult';
+    'Genome::VariantReporting::Suite::Joinx::Homopolymer::RunResult';
 }
