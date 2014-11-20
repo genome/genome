@@ -8,6 +8,7 @@ class Genome::VariantReporting::Reporter::AcmgReporter {
     is  => ['Genome::VariantReporting::Reporter::FullReporter'],
     has => [
     ],
+    doc => 'Full reporter with additional population allele frequencies from NHLBI',
 };
 
 sub name {
