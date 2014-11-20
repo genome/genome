@@ -2,8 +2,6 @@
 Output readcount information from bam readcount
 
 [4mPROPERTIES[0m
-  [1mavailable_fields_dict[0m   Hash
-    (undocumented)
   [1mdelimiter[0m   Text
     Character to be used to separate columns
     Default value ' ' if not specified

@@ -2,8 +2,6 @@
 Prints out a fasta file with both reference and alternate alleles surrounded by a short flanking sequence
 
 [4mPROPERTIES[0m
-  [1m_output_fh[0m
-    (undocumented)
   [1mfile_name[0m
     file name to use for report
 
