@@ -16,7 +16,7 @@ class Genome::VariantReporting::Process::CreateReport {
             is => 'Text',
         },
     ],
-    has_transient => [
+    has_transient_optional => [
         _plan_file => {
             is => 'Path',
         },
