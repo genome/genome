@@ -33,6 +33,7 @@ class Genome::VariantReporting::Framework::ReportResult {
         },
         provider_json => {
             is => 'Text',
+        },
         plan => {
             is => 'Genome::VariantReporting::Framework::Plan::MasterPlan',
         },
