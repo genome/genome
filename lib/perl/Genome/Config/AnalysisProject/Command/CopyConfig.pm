@@ -59,11 +59,13 @@ sub _copy_config_profile_items_to_project {
             Genome::Config::Profile::Item->create(
                 analysis_project => $analysis_project,
                 analysis_menu_item => $original_config_item->analysis_menu_item,
+                status => $original_config_item->status,
             );
         } else {
             Genome::Config::Profile::Item->create_from_file_path(
                 analysis_project => $analysis_project,
                 file_path => $original_config_item->file_path,
+                status => $original_config_item->status,
             );
         }
     }
