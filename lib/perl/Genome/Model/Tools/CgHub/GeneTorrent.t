@@ -27,7 +27,7 @@ is($gene_torrent->rate_limit, 10, 'correct rate limit');
 is(
     $gene_torrent->_build_command,
     'gtdownload'
-    . ' --credential-file /gscuser/kochoa/mykey.pem'    # TODO: do not hardcode
+    . ' --credential-file '.$gene_torrent->credential_file
     . ' --download '. $gene_torrent->source_url
     . ' --path ' . $gene_torrent->target_path
     . ' --log stdout:verbose'

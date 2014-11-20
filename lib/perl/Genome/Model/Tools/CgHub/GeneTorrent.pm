@@ -28,6 +28,9 @@ class Genome::Model::Tools::CgHub::GeneTorrent {
             calculate_from => [qw/ uuid /],
             calculate => q( return 'https://cghub.ucsc.edu/cghub/data/analysis/download/'.$uuid; ),
         },
+        credential_file => { #FIXME each user should have their own
+            calculate => q( return '/gscuser/kochoa/mykey.pem'; ),
+        }
     },
     doc => 'Download files from CG Hub using gene-torrent',
 };
@@ -36,7 +39,7 @@ sub _build_command {
     my $self = shift;
 
     my $cmd = 'gtdownload'
-        . ' --credential-file /gscuser/kochoa/mykey.pem'    # TODO: do not hardcode
+        . ' --credential-file '.$self->credential_file 
         . ' --download ' . $self->source_url
         . ' --path ' . $self->target_path
         . ' --log stdout:verbose'
