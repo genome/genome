@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::CgHub::GeneTorrent {
-    is => "Command::V2",
+    is => 'Genome::Model::Tools::CgHub::Base',
     has_input => [
         uuid => {
             is => "Text",
@@ -23,6 +23,12 @@ class Genome::Model::Tools::CgHub::GeneTorrent {
             default_value => '-q lims-long -R "rusage[internet_download_mbps=80]"',
         },
     ],
+    has_calculated => {
+        source_url => {
+            calculate_from => [qw/ uuid /],
+            calculate => q( return 'https://cghub.ucsc.edu/cghub/data/analysis/download/'.$uuid; ),
+        },
+    },
     doc => 'Download files from CG Hub using gene-torrent',
 };
 
@@ -31,7 +37,7 @@ sub _build_command {
 
     my $cmd = 'gtdownload'
         . ' --credential-file /gscuser/kochoa/mykey.pem'    # TODO: do not hardcode
-        . ' --download https://cghub.ucsc.edu/cghub/data/analysis/download/' . $self->uuid
+        . ' --download ' . $self->source_url
         . ' --path ' . $self->target_path
         . ' --log stdout:verbose'
         . ' --verbose 2'
@@ -39,6 +45,17 @@ sub _build_command {
         . ' --rate-limit '.$self->rate_limit # mega-BYTES per second (see internet_download_mbps above)
         . ' --inactivity-timeout ' . 3 * 60 * 24   # in minutes - instead of bsub -W
     ;
+}
+
+sub _verify_success {
+    my $self = shift;
+
+    if ( not -s $self->target_path ) {
+        $self->error_message('Failed to download source URL! '.$self->source_url);
+        return;
+    }
+
+    return 1;
 }
 
 sub rate_limit {
