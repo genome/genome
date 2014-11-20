@@ -1,0 +1,19 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mPROPERTIES[0m
+  [1mmax_af[0m   Number
+    Maximum minor allele frequency
+
+[4mREQUIRED EXPERTS[0m
+1kg
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Override method 'vcf_description' must be defined in class
+    'Genome::VariantReporting::Suite::Joinx::ThousandGenomes::MaxAfFilter' with the real
+    description
+
+[4mFILTER DESCRIPTION[0m
+Override method 'vcf_description' must be defined in class 'Genome::VariantReporting::Suite::Joinx::ThousandGenomes::MaxAfFilter' with the real description
+

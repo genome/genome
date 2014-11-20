@@ -20,7 +20,6 @@ use_ok('Genome::Model::GenotypeMicroarray::Test') or die;
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 my $build = Genome::Model::GenotypeMicroarray::Test::example_build();
-my $legacy_build = Genome::Model::GenotypeMicroarray::Test::example_legacy_build();
 
 # FAIL - no build
 my $extract = Genome::Model::GenotypeMicroarray::Command::ExtractToCsv->create();
@@ -40,19 +39,4 @@ is($extract->genotypes_output, 9, 'genotypes output');
 is($extract->genotypes_filtered, 0, 'genotypes filtered');
 #print "gvimdiff $output_tsv ".$build->original_genotype_file_path."\n"; <STDIN>;
 
-# LEGACY BUILD - NO REF in original file
-$output_tsv = $tmpdir.'/genotypes-from-legacy-build.tsv';
-$extract = Genome::Model::GenotypeMicroarray::Command::ExtractToCsv->create(
-    build => $build,
-    output => $output_tsv,
-    fields => [qw/ chromosome position alleles id sample_name log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 / ],
-);
-ok($extract, 'create extract command');
-ok($extract->execute, 'execute extract command');
-is(File::Compare::compare($output_tsv, $build->original_genotype_file_path.'-with-ref'), 0, 'genotype tsv matches');
-is($extract->genotypes_input, 9, 'genotypes input');
-is($extract->genotypes_output, 9, 'genotypes output');
-is($extract->genotypes_filtered, 0, 'genotypes filtered');
-
-#print "gvimdiff $output_tsv ".$build->original_genotype_file_path."\n"; <STDIN>;
 done_testing();

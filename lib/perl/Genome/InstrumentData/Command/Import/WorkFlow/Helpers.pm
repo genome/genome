@@ -64,7 +64,7 @@ sub kilobytes_required_for_processing_of_source_files {
         my $format = $self->source_file_format($source_file);
         return if not $format;
 
-        my $kb_required_for_source_file = int($size / 1024); #convert to kb
+        my $kb_required_for_source_file = int($size / 1024) + 1; #convert to kb, +1 for ceiling
         $kb_required_for_source_file *= 3 if $source_file =~ /\.gz$/; # assume ~30% compression rate for gzipped fasta/q
 
         my $multiplier = $formats_and_multipliers{$format};

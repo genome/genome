@@ -26,7 +26,6 @@ my $sample = Genome::Sample->create(
     extraction_label => 'TCGA-1234-232-12',
     extraction_type  => 'genomic dna',
     extraction_desc  => 'This is a test',
-    cell_type        => 'primary',
     source           => $source,
     tissue_desc      => 'normal',
     age => 99,

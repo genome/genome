@@ -8,8 +8,7 @@ use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(sing
 
 class Genome::VariantReporting::Reporter::FullReporter {
     is => [ 'Genome::VariantReporting::Reporter::WithHeader', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
-    has => [
-    ],
+    doc => "Extensive tab-delimited report covering a set of one or more samples",
 };
 
 sub name {

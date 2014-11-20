@@ -10,7 +10,9 @@ class Genome::VariantReporting::Framework::Component::Reporter::SingleFile {
         file_name => {},
     ],
     has_transient_optional => [
-        _output_fh => {},
+        _output_fh => {
+            is_structural => 1,
+        },
     ],
 };
 

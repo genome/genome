@@ -37,7 +37,7 @@ my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],
 );
 ok($cmd, "create import command");
-ok($cmd->execute, "excute import command") or die;
+ok($cmd->execute, "execute import command") or die;
 
 my $md5 = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->load_md5($source_sra.'.md5');
 ok($md5, 'load source md5');

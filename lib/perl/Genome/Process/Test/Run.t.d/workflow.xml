@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<operation name="dummy" logDir="/">
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>statement</inputproperty>
+    <outputproperty>some_output</outputproperty>
+  </operationtype>
+  <operation name="TestCommand">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Process::Test::Command">
+      <inputproperty>statement</inputproperty>
+      <outputproperty>some_output</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <link fromOperation="input connector" fromProperty="statement" toOperation="TestCommand" toProperty="statement"/>
+  <link fromOperation="TestCommand" fromProperty="some_output" toOperation="output connector" toProperty="some_output"/>
+</operation>

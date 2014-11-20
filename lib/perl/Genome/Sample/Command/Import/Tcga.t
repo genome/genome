@@ -47,7 +47,6 @@ my $sample = Genome::Sample->create(
     name => 'TCGA-11-1111-10A-00D-0000-00',
     extraction_label => 'TCGA-11-1111-10A-00D-0000-00',
     extraction_type => 'genomic dna',
-    cell_type => 'primary',
     source => $patient,
     source_type => 'individual',
 );

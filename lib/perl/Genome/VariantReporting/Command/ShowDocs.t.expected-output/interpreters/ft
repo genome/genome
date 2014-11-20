@@ -1,0 +1,11 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mPROPERTIES[0m
+  [1msample_name[0m   Text
+    This is a translated property.
+
+[4mAVAILABLE FIELDS[0m
+  [1mft_string[0m
+    FT sample field for sample sample_name
+

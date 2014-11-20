@@ -1,0 +1,14 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mREQUIRED EXPERTS[0m
+nhlbi
+
+[4mAVAILABLE FIELDS[0m
+  [1mAll_MAF[0m
+    Overall minor allele frequency from NHLBI
+  [1mEU_MAF[0m
+    European minor allele frequency from NHLBI
+  [1mAA_MAF[0m
+    African American minor allele frequency from NHLBI
+

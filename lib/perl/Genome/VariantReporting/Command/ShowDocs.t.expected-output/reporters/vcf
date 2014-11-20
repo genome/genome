@@ -1,0 +1,11 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mPROPERTIES[0m
+  [1mfile_name[0m
+    (undocumented)
+  [1mheader[0m   Genome::Vcf::Header
+    (undocumented)
+  [1mvcf_file[0m   Genome::File::Vcf
+    (undocumented)
+

@@ -31,11 +31,11 @@ class Genome::VariantReporting::Suite::BamReadcount::Adaptor {
             doc => "max depth to avoid excessive memory. This is the -d parameter in version 0.5.",
         },
         per_library => {
-            is  => 'Bool',
+            is  => 'Boolean',
             doc => "report results per library. This is the -p parameter in version 0.5.",
         },
         insertion_centric => {
-            is  => 'Bool',
+            is  => 'Boolean',
             doc => "do not include reads containing insertions after the current position in per-base counts. This is the -i parameter in version 0.5.",
         },
     ],

@@ -5,7 +5,6 @@ use warnings;
 
 =pod
 ARRIVAL_DATE                DATE                             {null} {null}   NOT_SYNCED
-CELL_TYPE                   VARCHAR2 (100)                   {null} NOT NULL ok
 COMMON_NAME                 VARCHAR2 (32)                    {null} {null}   ok
 CONFIRM_EXT_GENOTYPE_SEQ_ID NUMBER   (15)                    {null} {null}   NOT_SYNCED
 DEFAULT_GENOTYPE_SEQ_ID     NUMBER   (15)                    {null} {null}   ok [updated by reconcile genotype]
@@ -36,7 +35,6 @@ class Genome::Site::TGI::Synchronize::Classes::OrganismSample {
         id => { is => 'Number', column_name => 'ORGANISM_SAMPLE_ID', },
     ],
     has => [
-        cell_type => { is => 'Text', },
         name => { is => 'Text', column_name => 'FULL_NAME', },
         nomenclature => { is => 'Text', },
     ],
@@ -62,7 +60,6 @@ sub properties_to_copy {# 15
 
 sub properties_to_keep_updated {# 12
     return (qw/ 
-        cell_type
         common_name
         extraction_desc
         extraction_label

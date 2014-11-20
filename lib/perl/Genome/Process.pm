@@ -6,6 +6,9 @@ use Genome;
 use File::Spec;
 use Params::Validate qw(validate_pos :types);
 use Data::Dump qw(pp);
+use Scalar::Util qw();
+use Try::Tiny qw(try catch);
+use JSON qw(to_json);
 
 class Genome::Process {
     is => [
@@ -20,6 +23,14 @@ class Genome::Process {
     id_generator => '-uuid',
     id_by => [
         id => {is => 'Text'},
+    ],
+
+    subclass_description_preprocessor => 'Genome::Process::_preprocess_for_inputs',
+    attributes_have => [
+        is_input => {
+            is => 'Boolean',
+            default => 0,
+        }
     ],
 
     has => [
@@ -73,26 +84,153 @@ class Genome::Process {
             is_mutable => 0,
             doc => 'Used by UR to instantiate the correct sub-class',
         },
+        inputs => {
+            is => 'Genome::Process::Input',
+            is_many => 1,
+            is_optional => 1,
+            reverse_as => 'process',
+        }
     ],
     doc => 'A base class to manage meta-data related to running a process (workflow)',
 };
 
 
+sub run {
+    my $self = shift;
+    my %p = Params::Validate::validate(@_, {
+            workflow_xml => {type => SCALAR},
+            workflow_inputs => {type => HASHREF},
+    });
+
+    my $transaction = UR::Context::Transaction->begin();
+    $self->create_disk_allocation();
+
+    $self->_write_workflow_file($p{workflow_xml});
+    $self->_write_inputs_file($p{workflow_inputs});
+
+    local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1 unless
+        exists $ENV{UR_DUMP_DEBUG_MESSAGES};
+    local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1 unless
+        exists $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES};
+    local $ENV{UR_DUMP_STATUS_MESSAGES} = 1 unless
+        exists $ENV{UR_DUMP_STATUS_MESSAGES};
+    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1 unless
+        exists $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES};
+
+    if ($ENV{UR_DBI_NO_COMMIT}) {
+        return $self->_execute_process($transaction);
+    } else {
+        local $ENV{WF_USE_FLOW} = 1 unless
+            exists $ENV{WF_USE_FLOW};
+        $self->_schedule_process($transaction);
+        return;
+    }
+}
+
+sub _write_workflow_file {
+    my $self = shift;
+    my $workflow_xml = shift;
+
+    Genome::Sys->write_file($self->workflow_file, $workflow_xml);
+}
+
+sub _write_inputs_file {
+    my $self = shift;
+    my $inputs = shift;
+
+    Genome::Sys->write_file($self->inputs_file,
+        to_json($inputs, {pretty => 1, canonical => 1}));
+}
+
+sub write_environment_file {
+    my $self = shift;
+
+    Genome::Sys->write_file($self->environment_file,
+        to_json({%ENV}, {pretty => 1, canonical => 1}));
+}
+
+sub _execute_process {
+    my $self = shift;
+    my $transaction = shift;
+
+    my $cmd = Genome::Process::Command::Run->create(
+        process => $self,
+        update_with_commit => 0
+    );
+    if (my $rv = $cmd->execute()) {
+        if ($transaction->commit()) {
+            $self->status_message("Successfully ran process (%s)",
+                $self->id);
+            return $rv;
+        } else {
+            $transaction->rollback();
+            die sprintf("Failed to commit process (%s): %s",
+                $self->id, $transaction->error_message || 'Reason Unknown');
+        }
+    } else {
+        die sprintf("Failed to run process (%s) for some reason",
+            $self->id);
+    }
+}
+
+sub _schedule_process {
+    my $self = shift;
+    my $transaction = shift;
+
+    try {
+        my $cmd = Genome::Process::Command::Run->create(process => $self);
+        $cmd->schedule();
+    } catch {
+        my $error = $_;
+        $transaction->rollback();
+        die sprintf("Failed to schedule process (%s): %s",
+            $self->id, $error);
+    };
+    if ($transaction->commit()) {
+        $self->status_message("Successfully launched process (%s)",
+            $self->id);
+    } else {
+        $transaction->rollback();
+        die sprintf("Failed to schedule process (%s): %s",
+            $self->id, $transaction->error_message || 'Reason Unknown');
+    }
+}
+
+
 sub create {
     my $class = shift;
+    # we do not support creating from a boolexpr because the boolexpr logic
+    # will silently filter out some invalid param-values.
+    my %params = @_;
 
-    my ($bx, @extra) = $class->define_boolexpr(@_);
-    my %params = ($bx->params_list,
-        software_revision => Genome::Sys->snapshot_revision,
-        @extra,
-    );
+    unless (exists $params{software_revision}) {
+        $params{software_revision} = Genome::Sys->snapshot_revision();
+    }
 
-    my $self = $class->SUPER::create(%params);
+    my $self = $class->SUPER::create(
+        $class->_preprocess_params_for_create(%params));
     return unless $self;
 
-    $self->status('New');
+    $self->update_status('New');
+    $self->bail_out_if_input_errors(\%params);
 
     return $self;
+}
+
+# because inputs are immutable, there are no opportunities to correct these
+# errors, so we should die.
+sub bail_out_if_input_errors {
+    my $self = shift;
+    my $params = shift;
+
+    my @errors = $self->__input_errors__;
+    if (@errors) {
+        my $class = $self->class;
+        $self->print_errors(@errors);
+        $self->delete();
+        die sprintf("Failed to create (%s) with params: %s",
+            $class, pp($params));
+    }
 }
 
 my $SET_TIMESTAMP_ON_STATUS = {
@@ -102,10 +240,9 @@ my $SET_TIMESTAMP_ON_STATUS = {
     Succeeded => 'ended_at',
 };
 
-sub status {
-    my ($self, $new_status) = validate_pos(@_, OBJECT,
-        {type => SCALAR, optional=> 1});
-    return $self->__status unless $new_status;
+sub update_status {
+    my ($self, $new_status) = validate_pos(@_,
+        {type => OBJECT}, {type => SCALAR});
 
     my $old_status = $self->status;
 
@@ -122,12 +259,12 @@ sub status {
         if ($timestamp_accessor) {
             $self->$timestamp_accessor($now);
         }
-        $self->__status($new_status);
+        $self->status($new_status);
     } else {
         die sprintf("Cannot transition Process (%s) from (%s) to (%s)",
             $self->id, $old_status, $new_status);
     }
-    return $self->__status;
+    return $self->status;
 }
 
 
@@ -152,6 +289,21 @@ sub _workflow_instances {
         name => $self->workflow_name,
     );
     return @instances;
+}
+
+sub environment_file {
+    my $self = shift;
+    return File::Spec->join($self->metadata_directory, 'environment.json');
+}
+
+sub inputs_file {
+    my $self = shift;
+    return File::Spec->join($self->metadata_directory, 'inputs.json');
+}
+
+sub workflow_file {
+    my $self = shift;
+    return File::Spec->join($self->metadata_directory, 'workflow.xml');
 }
 
 sub log_directory {
@@ -192,11 +344,223 @@ sub create_disk_allocation {
         $self->disk_allocation($disk_allocation);
         $self->status_message("Process (%s) now has disk_allocation (%s)",
             $self->id, $self->disk_allocation->id);
+        $self->_ensure_disk_allocation_gets_cleaned_up();
+
+        Genome::Sys->create_directory($self->log_directory);
         return $self->disk_allocation;
     } else {
         die sprintf("Failed to create disk allocation with " .
             "arguments: %s", pp(\%args));
     }
+}
+
+#XXX not sure why but this only works with a UR software transaction
+sub _ensure_disk_allocation_gets_cleaned_up {
+    my $self = shift;
+
+    my $cleanup_closure = $self->_disk_allocation_cleanup_closure();
+    my $create_disk_allocation = UR::Context::Transaction->log_change(
+            $self, 'UR::Value', $self->disk_allocation_id,
+            'external_change', $cleanup_closure);
+    unless ($create_disk_allocation) {
+        die sprintf("Couldn't log allocation (%s) created",
+            $self->disk_allocation_id);
+    }
+}
+
+sub _disk_allocation_cleanup_closure {
+    my $self = shift;
+    my $observer = shift;
+
+    my $allocation_id = $self->disk_allocation_id;
+    my $process_id = $self->id;
+    my $remove_allocation = sub {
+        print "Now deleting disk allocation ($allocation_id) associated " .
+            "with process ($process_id)\n";
+        ${$observer}->delete if $observer;
+        my $allocation = Genome::Disk::Allocation->get($allocation_id);
+        if ($allocation) {
+            $allocation->delete;
+        }
+    };
+    $self->debug_message("Created closure to delete disk allocation (%s) " .
+        "assocatied with process (%s)", $allocation_id, $process_id);
+    return $remove_allocation;
+}
+
+
+sub _preprocess_for_inputs {
+    my ($class, $class_description) = @_;
+
+    while (my ($property_name, $property_description) =
+            each %{$class_description->{has}}) {
+        if ($property_description->{is_input}) {
+            _expand_is_input($class, $property_description, $property_name);
+        }
+    }
+    return $class_description;
+}
+
+sub _expand_is_input {
+    my $class = shift;
+    my $property_description = shift;
+    my $property_name = shift;
+
+    $property_description->{'is_mutable'} = 0;
+    $property_description->{'via'} = 'inputs';
+    $property_description->{'is_delegated'} = 1;
+    $property_description->{'to'} = 'value_id';
+    $property_description->{'where'} = [
+        name => $property_name,
+        '-order_by' => 'array_index',
+    ];
+    if (my $data_type = $property_description->{data_type}) {
+        my $value_class_name = UR::Object::Property->_convert_data_type_for_source_class_to_final_class(
+            $data_type, $class);
+        unless ($value_class_name->isa("UR::Value")) {
+            $property_description->{'to'} = 'value';
+        }
+    }
+}
+
+sub _preprocess_params_for_create {
+    my $self = shift;
+    my %params = @_;
+
+    my $input_params_list = $params{inputs} || [];
+    for my $property ($self->__meta__->properties) {
+        my $property_name = $property->property_name;
+
+        if ($property->{is_input}) {
+            my $value = delete $params{$property_name};
+            next unless defined($value);
+            if ($property->{is_many}) {
+                push @$input_params_list,
+                    @{_get_input_params_list($property, $value)};
+            } else {
+                push @$input_params_list, _get_input_params($property, $value);
+            }
+        }
+    }
+    $params{inputs} = $input_params_list;
+    return %params;
+}
+
+sub _get_input_params_list {
+    my ($property, $value_list) = @_;
+
+    if (!ref $value_list || (ref $value_list && ref $value_list ne 'ARRAY')) {
+        die sprintf(
+            "Cannot set 'is_many' input named (%s) with non-arrayref (%s)",
+            $property->property_name, $value_list);
+    }
+
+    my $input_params_list = [];
+    if (defined($value_list) && scalar(@$value_list)) {
+        my $index = 0;
+        for my $value (@$value_list) {
+            push @$input_params_list,
+                _get_input_params($property, $value, $index);
+            $index++;
+        }
+    }
+    return $input_params_list;
+}
+
+sub _get_input_params {
+    my ($property, $value, $index) = validate_pos(@_, 1, 1, 0);
+
+    my $input_params = {name => $property->property_name};
+    $input_params->{array_index} = $index if defined($index);
+
+    if ($property->to eq 'value') {
+        if (Scalar::Util::blessed($value) &&
+                $property->is_valid_storage_for_value($value)) {
+            $input_params->{value} = $value;
+        } else {
+            die sprintf("Cannot set input named (%s) to value (%s), " .
+                "because it is not a (%s)",
+                $property->property_name, $value, $property->data_type);
+        }
+    } else {
+        if (ref($value)) {
+            die sprintf("Cannot set input named (%s) to value (%s), " .
+                "because it is a reference (%s)",
+                $property->property_name, $value, ref($value));
+        } else {
+            $input_params->{value_class_name} = 'UR::Value',
+            $input_params->{value_id} = $value,
+        }
+    }
+    return $input_params;
+}
+
+sub __errors__ {
+    my $self = shift;
+
+    return (
+        $self->SUPER::__errors__(),
+        $self->__input_errors__,
+    );
+}
+
+sub __input_errors__ {
+    my $self = shift;
+
+    my @errors;
+    for my $property ($self->__meta__->properties(
+            is_input=>1, is_optional=>0)) {
+        my $property_name = $property->property_name;
+
+        my @values = $self->$property_name;
+        unless (scalar(@values)) {
+            push @errors, UR::Object::Tag->create(
+                type => 'invalid',
+                properties => [$property_name],
+                desc => 'no value for required input'
+            );
+        }
+    }
+    return @errors;
+}
+
+sub print_errors {
+    my ($self, @errors) = @_;
+
+    for my $error (@errors) {
+        my @properties = $error->properties;
+        $self->error_message("Property " .
+            join(',', map { "'$_'" } @properties) .
+            ': ' . $error->desc);
+    }
+    return;
+}
+
+
+sub delete {
+    my $self = shift;
+
+    for my $status_event ($self->status_events) {
+        $status_event->delete;
+    }
+
+    for my $input ($self->inputs) {
+        $input->delete;
+    }
+
+    my $observer;
+    $observer = UR::Context->current->add_observer(aspect=>'commit',
+        callback=>$self->_disk_allocation_cleanup_closure(\$observer));
+    if ($observer) {
+        $self->status_message("Registered observer to delete disk allocation " .
+            "(%s) upon commit", $self->disk_allocation_id);
+    } else {
+        $self->error_message("Failed to register observer to delete disk " .
+            "allocation (%s), you need to delete it manually, after commiting",
+            $self->disk_allocation_id);
+    }
+
+    return $self->SUPER::delete(@_);
 }
 
 

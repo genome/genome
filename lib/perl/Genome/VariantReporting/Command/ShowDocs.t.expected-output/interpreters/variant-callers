@@ -1,0 +1,13 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mPROPERTIES[0m
+  [1msample_name[0m   Text
+    This is a translated property.
+
+[4mAVAILABLE FIELDS[0m
+  [1mvariant_caller_count[0m
+    Number of callers that called this position for sample sample_name
+  [1mvariant_callers[0m
+    List of variant callers that called this position for sample sample_name
+

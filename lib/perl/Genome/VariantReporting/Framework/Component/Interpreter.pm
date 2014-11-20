@@ -7,7 +7,7 @@ use Set::Scalar;
 use Carp qw(confess);
 
 class Genome::VariantReporting::Framework::Component::Interpreter {
-    is => ['Genome::VariantReporting::Framework::Component::Base', 'Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
+    is => ['Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
     is_abstract => 1,
 };
 
@@ -79,6 +79,38 @@ sub available_fields {
     my $self = shift;
     my %field_descriptions = $self->field_descriptions;
     return keys %field_descriptions;
+}
+
+sub vr_doc_sections {
+    my $self = shift;
+    my @sections = $self->SUPER::vr_doc_sections;
+    if ($self->requires_annotations) {
+        push @sections,
+            {
+                header => "REQUIRED EXPERTS",
+                items => [$self->requires_annotations],
+            };
+    }
+    my @items;
+    my %descriptions = $self->field_descriptions;
+    while (my ($name, $description) = each %descriptions) {
+        push @items, sprintf
+        (
+            "  %s\n%s",
+            Term::ANSIColor::colored($name, 'bold'),
+            Text::Wrap::wrap(
+                "    ",
+                "    ",
+                $description,
+            ),
+        );
+    }
+    push @sections,
+        {
+            header => "AVAILABLE FIELDS",
+            items => \@items
+        };
+    return @sections;
 }
 
 1;

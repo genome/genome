@@ -79,21 +79,6 @@
                   </tr>
 
                   <tr>
-                    <td class="name">Cell Type:
-                    </td>
-                    <td class="value">
-                      <xsl:choose>
-                        <xsl:when test="string(normalize-space(aspect[@name='cell_type']/value))">
-                          <xsl:value-of select="normalize-space(aspect[@name='cell_type']/value)"/>
-                        </xsl:when>
-                        <xsl:otherwise>
-                          --
-                        </xsl:otherwise>
-                      </xsl:choose>
-                    </td>
-                  </tr>
-
-                  <tr>
                     <td class="name">Tissue Type:
                     </td>
                     <td class="value">
