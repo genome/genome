@@ -49,7 +49,7 @@ sub __errors__ {
         unless(grep{$_ eq $status} ("Pending", "Hold", "In Progress")){
             push @errors, UR::Object::Tag->create(
                 type => 'error',
-                properties => ['analysis_project'],
+                properties => ['analysis_projects'],
                 desc => "Can't hold analysis project with status: $status" 
             );
         }
