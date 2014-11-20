@@ -1,4 +1,4 @@
-#! /gsc/bin/perl
+#!/usr/bin/env genome-perl
 
 BEGIN {
     $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
