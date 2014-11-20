@@ -6,6 +6,8 @@ use warnings;
 use Genome;
 use File::Basename;
 
+use Genome::Utility::IO::SeparatedValueReader qw();
+
 class Genome::Model::Tools::EpitopePrediction::BindingFilter {
     is        => ['Genome::Model::Tools::EpitopePrediction::Base'],
     has_input => [
@@ -54,42 +56,25 @@ sub execute {
 		my $length = $f[2];
 
 		my $mode = 'filtered';
-
-		my $i = 0;
-
-		my $parsed_fh  = Genome::Sys->open_file_for_reading($file);
-
-		while (my $line = $parsed_fh->getline) {
-			chomp $line;
-			$i++;
-			next if ($i == 1);  # skips headers....
-				my (
-						$gene_name,
-						$point_mutation,
-						$sub_peptide_mutation,
-						$mt_score,
-						$wt_score,
-						$mt_epitope_seq,
-						$wt_epitope_seq,
-						$fold_change,
-				   ) = split( "\t", $line );
-
-
-			$gene_name = {
-				gene_name            => $gene_name,
-				allele               => $allele,
-				point_mutation       => $point_mutation,
-				sub_peptide_mutation => $sub_peptide_mutation,
-				mt_score             => $mt_score,
-				wt_score             => $wt_score,
-				mt_epitope_seq       => $mt_epitope_seq,
-				wt_epitope_seq       => $wt_epitope_seq,
-				fold_change          => $fold_change,
-			};
+		my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+			input => $file,
+			separator => "\t",
+			headers => [qw(
+				gene_name
+				point_mutation
+				sub_peptide_mutation
+				mt_score
+				wt_score
+				mt_epitope_seq
+				wt_epitope_seq
+				fold_change
+			)],
+		);
+		$reader->next; # skip headers
+		while (my $gene_name = $reader->next) {
+			$gene_name->{allele} = $allele;
 			push( @{ $prediction{$mode}->{$sample}->{$length}->{genes} }, $gene_name );
 		}
-		close ($parsed_fh);
-
 	}
 	close ($fof_fh);
 
