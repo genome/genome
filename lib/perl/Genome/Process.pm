@@ -317,7 +317,7 @@ sub metadata_directory {
 }
 
 sub create_disk_allocation {
-    my ($self, $kb_requested) = validate_pos(@_, OBJECT,
+    my ($self, $kb_requested) = validate_pos(@_, {type => OBJECT},
         {default => 50 * 1024},
     );
 

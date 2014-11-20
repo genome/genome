@@ -44,25 +44,24 @@ sub post_get_or_create {
 sub shortcut {
     my $self = shift;
 
-    return $self->_protect('shortcut',
-        sub {$self->_fetch_result('get_with_lock', 'shortcut')});
+    return $self->_protected_fetch('shortcut', 'get_with_lock', 'shortcut');
 }
 
 sub execute {
     my $self = shift;
 
-    return $self->_protect('execute',
-        sub {$self->_fetch_result('get_or_create', 'created')});
+    return $self->_protected_fetch('execute', 'get_or_create', 'created');
 }
 
-sub _protect {
-    my ($self, $name, $coderef) = validate_pos(@_, OBJECT, SCALAR, CODEREF);
+sub _protected_fetch {
+    my ($self, $name, $method, $label) = validate_pos(@_, {type => OBJECT},
+        {type => SCALAR}, {type => SCALAR}, {type => SCALAR});
 
-    my ($rv, $error);
-    try {
-        $rv = $coderef->();
+    my $error;
+    my $rv = try {
+        $self->_fetch_result($method, $label);
     } catch {
-        $error = $_;
+        $error = $_ || 'unknown error';
     };
 
     if ($error) {
@@ -74,7 +73,8 @@ sub _protect {
 }
 
 sub _fetch_result {
-    my ($self, $method, $user_label) = validate_pos(@_, OBJECT, SCALAR, SCALAR);
+    my ($self, $method, $user_label) = validate_pos(@_, {type => OBJECT},
+        {type => SCALAR}, {type => SCALAR});
 
     $self->debug_message("Attempting to %s a %s with arguments %s",
         $method, $self->result_class, pp({$self->input_hash}));

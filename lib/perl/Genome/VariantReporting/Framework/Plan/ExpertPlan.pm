@@ -19,16 +19,15 @@ sub category {
     'experts';
 }
 
-sub adaptor_object {
-    my $self = shift;
-    my $adaptor_class = $self->object->adaptor_class;
-    return $adaptor_class->create($self->adaptor_params);
-}
-
 sub __translation_errors__ {
     my $self = shift;
     my $provider = shift;
-    my @errors = $self->adaptor_object->_translation_errors($provider->translations, $self->adaptor_object->name);
+
+    my $adaptor_class = $self->object->adaptor_class;
+    my $adaptor_object = $adaptor_class->create($self->adaptor_params);
+    my @errors = $adaptor_object->_translation_errors($provider->translations, $adaptor_object->name);
+    $adaptor_object->delete();
+
     return @errors;
 }
 

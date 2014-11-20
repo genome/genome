@@ -66,17 +66,22 @@ sub execute {
     my $inputs = $self->get_workflow_inputs;
     $self->status_message("Executing workflow with inputs: %s", pp($inputs));
 
+    my $error;
     my $outputs = try {
         $dag->execute(%$inputs);
     } catch {
-        $self->error_message("Workflow failed to complete: $_");
+        $error = $_;
+        $self->error_message("Workflow failed to complete: $error");
         $self->update_status('Crashed');
-        return 0;
     };
 
-    $self->update_status('Succeeded');
-    $self->status_message("Workflow completed with outputs: %s", pp($outputs));
-    return $outputs;
+    if ($error) {
+        return 0;
+    } else {
+        $self->update_status('Succeeded');
+        $self->status_message("Workflow completed with outputs: %s", pp($outputs));
+        return $outputs;
+    }
 }
 
 sub update_status {
