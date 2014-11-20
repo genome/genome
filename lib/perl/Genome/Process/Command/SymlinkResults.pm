@@ -10,7 +10,7 @@ class Genome::Process::Command::SymlinkResults {
         process => {
             is => 'Genome::Process',
             shell_args_position => 1,
-            doc => 'Genome::Process',
+            doc => "The Genome::Process that has results you'd like to create symlinks to",
         },
         destination => {
             is => 'Path',
@@ -18,25 +18,15 @@ class Genome::Process::Command::SymlinkResults {
             doc => 'The desired location of the created symlink(s)',
         }
     ],
+    doc => 'Creates symlinks to the results of a process.',
 };
-
-sub help_synopsis {
-    my $self = shift;
-    my $result .= <<EOP;
-    Creates symlinks to the results of a process.
-EOP
-    return $result;
-}
 
 sub help_detail {
     my $self = shift;
-    my $result .= <<EOP;
-The <destination> option should be an existing directory, or one that could be
-created.
-
-    genome process symlink-results <process_id> <destination>
+    return <<EOP;
+Creates symlinks to the results of a process.  The <destination> option should
+be an existing directory, or one that could be created.
 EOP
-    return $result;
 }
 
 sub shortcut {

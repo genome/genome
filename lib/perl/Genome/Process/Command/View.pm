@@ -34,26 +34,25 @@ class Genome::Process::Command::View {
             doc => 'Display all process information. Equivalent to "--events --inputs --workflow".'
         },
     ],
+    doc => 'Displays basic information about a process.',
 };
-
-sub help_synopsis {
-    my $self = shift;
-    my $result .= <<EOP;
-    Displays basic information about a process.
-EOP
-    return $result;
-}
 
 sub help_detail {
     my $self = shift;
-    my $result .= <<EOP;
+    return <<EOP;
+    Displays basic information about a process.
+EOP
+}
+
+sub help_synopsis {
+    my $self = shift;
+    return <<EOP;
 Displays information about the events, inputs, and workflow for a process.
 
 To display a full report about a process try:
 
     genome process view --full <process_id>
 EOP
-    return $result;
 }
 
 sub write_report {
