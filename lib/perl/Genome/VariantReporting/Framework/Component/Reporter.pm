@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Carp qw(confess);
+use List::MoreUtils qw(uniq);
 
 class Genome::VariantReporting::Framework::Component::Reporter {
     is => [
@@ -150,6 +151,38 @@ sub all_zeros {
     }
 
     return 1;
+}
+
+sub vr_doc_sections {
+    my $self = shift;
+
+    my @sections = $self->SUPER::vr_doc_sections;
+
+    if ($self->requires_experts) {
+        push @sections, {
+            header => "REQUIRED EXPERTS",
+            items => [$self->requires_experts],
+        };
+    }
+    if ($self->requires_interpreters) {
+        push @sections, {
+            header => "REQUIRED INTERPRETERS",
+            items => [$self->requires_interpreters],
+        };
+    }
+    return @sections;
+}
+
+sub requires_experts {
+    my $self = shift;
+
+    my $factory = Genome::VariantReporting::Framework::Factory->create();
+    my @experts;
+    for my $interpreter ($self->requires_interpreters) {
+        my $class = $factory->get_class("interpreters", $interpreter);
+        push @experts, $class->requires_annotations;
+    }
+    return uniq @experts;
 }
 
 1;

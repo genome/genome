@@ -17,3 +17,21 @@ Extensive tab-delimited report covering a set of one or more samples
     List of sample names to be used in the report
     This is a translated property.
 
+[4mREQUIRED EXPERTS[0m
+vep
+bam-readcount
+dbsnp
+
+[4mREQUIRED INTERPRETERS[0m
+position
+vep
+info-tags
+variant-type
+min-coverage
+min-coverage-observed
+max-vaf-observed
+variant-callers
+many-samples-vaf
+rsid
+caf
+

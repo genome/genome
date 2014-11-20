@@ -17,3 +17,10 @@ Output readcount information from bam readcount
     List of sample names to be used in the report
     This is a translated property.
 
+[4mREQUIRED EXPERTS[0m
+bam-readcount
+
+[4mREQUIRED INTERPRETERS[0m
+position
+many-samples-vaf
+
