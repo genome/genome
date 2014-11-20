@@ -1,5 +1,5 @@
 [4mOVERVIEW[0m
-(undocumented)
+Filter out variants that weren't called by the minimum number of the specified callers
 
 [4mPROPERTIES[0m
   [1mmin_callers[0m   Integer
@@ -7,6 +7,7 @@
   [1msample_name[0m   Text
     This is a translated property.
   [1mvalid_callers[0m   String
+    List of variant callers to include in determination for filtering
     Default value ('VarscanSomatic','Sniper','Strelka') if not specified
 
 [4mAVAILABLE FIELDS[0m

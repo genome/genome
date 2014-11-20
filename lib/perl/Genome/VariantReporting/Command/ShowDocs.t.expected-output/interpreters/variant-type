@@ -1,5 +1,5 @@
 [4mOVERVIEW[0m
-(undocumented)
+Determine the type of variant: snp (single-nucleotide polymorphism), ins (insertion), del (deletion), other
 
 [4mAVAILABLE FIELDS[0m
   [1mvariant_type[0m

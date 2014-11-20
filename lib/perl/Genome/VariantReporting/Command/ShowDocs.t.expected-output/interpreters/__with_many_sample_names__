@@ -3,6 +3,7 @@
 
 [4mPROPERTIES[0m
   [1msample_names[0m   Text
+    List of sample names to be used in the report
     This is a translated property.
 
 [4mREQUIRED EXPERTS[0m

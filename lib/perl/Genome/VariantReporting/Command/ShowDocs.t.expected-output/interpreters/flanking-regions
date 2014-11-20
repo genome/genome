@@ -1,5 +1,5 @@
 [4mOVERVIEW[0m
-(undocumented)
+Output the flanking sequence for the reference (FSRF info field) and the alternate allele (FSAF info field)
 
 [4mREQUIRED EXPERTS[0m
 flanking-regions

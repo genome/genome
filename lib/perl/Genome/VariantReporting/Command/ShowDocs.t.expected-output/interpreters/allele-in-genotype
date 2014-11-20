@@ -1,5 +1,5 @@
 [4mOVERVIEW[0m
-(undocumented)
+Filter out alternate alleles that aren't part of the specified sample's genotype
 
 [4mPROPERTIES[0m
   [1msample_name[0m   Text
@@ -7,9 +7,8 @@
 
 [4mAVAILABLE FIELDS[0m
   [1mfilter_status[0m
-    Override method 'vcf_description' must be defined in class
-    'Genome::VariantReporting::Generic::AlleleInGenotypeFilter' with the real description
+    Filter out alleles that are not part of the genotype of sample sample_name
 
 [4mFILTER DESCRIPTION[0m
-Override method 'vcf_description' must be defined in class 'Genome::VariantReporting::Generic::AlleleInGenotypeFilter' with the real description
+Filter out alleles that are not part of the genotype of sample sample_name
 

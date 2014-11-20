@@ -1,5 +1,5 @@
 [4mOVERVIEW[0m
-(undocumented)
+Filter out variants that don't contain the specified info tag
 
 [4mPROPERTIES[0m
   [1minfo_tag[0m   String

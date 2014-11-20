@@ -1,5 +1,5 @@
 [4mOVERVIEW[0m
-(undocumented)
+Output the chromosome name, the start position, the stop position, the reference allele, and the variant allele
 
 [4mAVAILABLE FIELDS[0m
   [1mstop[0m

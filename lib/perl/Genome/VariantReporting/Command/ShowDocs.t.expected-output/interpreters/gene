@@ -1,5 +1,5 @@
 [4mOVERVIEW[0m
-(undocumented)
+Filter out variants that aren't part of the specified gene set
 
 [4mPROPERTIES[0m
   [1mgene_set[0m   String

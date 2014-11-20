@@ -1,9 +1,9 @@
 [4mOVERVIEW[0m
-(undocumented)
+Filter variants that don't meet minimum coverage
 
 [4mPROPERTIES[0m
   [1mmin_coverage[0m   Number
-    (undocumented)
+    Miminum coverage
   [1msample_name[0m   Text
     This is a translated property.
 

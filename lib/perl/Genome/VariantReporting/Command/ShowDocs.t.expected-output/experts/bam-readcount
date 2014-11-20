@@ -1,19 +1,22 @@
 [4mOVERVIEW[0m
-(undocumented)
+Add bam readcount information to a vcf
 
 [4mPROPERTIES[0m
   [1maligned_bam_result_id[0m   Text
+    The bam result used to calculate read counts
     This is a translated property.
   [1minsertion_centric[0m   Boolean
-    (undocumented)
+    do not include reads containing insertions after the current position in per-base counts. This
+    is the -i parameter in version 0.5.
   [1mmax_count[0m   Integer
-    (undocumented)
+    max depth to avoid excessive memory. This is the -d parameter in version 0.5.
   [1mminimum_base_quality[0m   Integer
-    (undocumented)
+    don't include reads where the base quality is less than this. This is the -b parameter. This is
+    only available in versions 0.3 and later.
   [1mminimum_mapping_quality[0m   Integer
-    (undocumented)
+    filter reads with mapping quality less than this. This is the -q parameter.
   [1mper_library[0m   Boolean
-    (undocumented)
+    report results per library. This is the -p parameter in version 0.5.
   [1mversion[0m   Version
-    (undocumented)
+    bam-readcount version to be used.
 
