@@ -4,6 +4,9 @@
 
 use strict;
 use warnings;
+
+use feature qw(state);
+
 use File::Basename;
 use Cwd 'abs_path';
 
@@ -14,14 +17,32 @@ BEGIN {
 };
 
 use above "Genome";
-use Test::More tests=>7; #One per 'ok', 'is', etc. statement below
-use Genome::Model::ClinSeq::Command::DumpIgvXml;
+use Test::More tests=>8; #One per 'ok', 'is', etc. statement below
 use Data::Dumper;
+use File::Spec;
 
-use_ok('Genome::Model::ClinSeq::Command::DumpIgvXml') or die;
+use Genome::Test::Factory::Individual;
+use Genome::Test::Factory::InstrumentData::Imported;
+use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
+use Genome::Test::Factory::Model::SomaticVariation;
+use Genome::Test::Factory::Model::ReferenceAlignment;
+use Genome::Test::Factory::Model::RnaSeq;
+use Genome::Test::Factory::Model::ClinSeq;
+use Genome::Test::Factory::ProcessingProfile::RnaSeq;
+use Genome::Test::Factory::Sample;
+
+use Genome::Utility::Test;
+
+use constant INDIVIDUAL_NAME => 'H_TEST-ClinSeqDumpIgvXml';
+use constant FLOW_CELL_ID => 'TEST1ABXX';
+
+my $igv_class = 'Genome::Model::ClinSeq::Command::DumpIgvXml';
+
+use_ok($igv_class) or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-DumpIgvXml2/2014-03-18/";
+my $test_data_dir = Genome::Utility::Test->data_dir_ok($igv_class, '2014-11-20');
+my $expected_output_dir = File::Spec->join($test_data_dir, 'expected');
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results
@@ -29,9 +50,8 @@ my $temp_dir = Genome::Sys->create_temp_directory();
 ok($temp_dir, "created temp directory: $temp_dir") or die;
 
 #Get an existing ClinSeq build to use as a test
-my $clinseq_build_id = 119971814;
-my $clinseq_build = Genome::Model::Build->get($clinseq_build_id);
-ok($clinseq_build, "Obtained a clinseq build from id: $clinseq_build_id") or die;
+my $clinseq_build = setup_test_data($test_data_dir);
+ok($clinseq_build, "Fabricated a clinseq build") or die;
 
 #Create the dump-igv-xml command
 my $igv_xml_cmd = Genome::Model::ClinSeq::Command::DumpIgvXml->create(builds=>[$clinseq_build], outdir=>$temp_dir);
@@ -61,3 +81,193 @@ or do {
   Genome::Sys->shellcmd(cmd => "mv $temp_dir /tmp/last-dump-igv-xml-test-result");
 };
 
+
+#mock all of the various sorts of data needed to run this test
+sub setup_test_data {
+    my $test_data_dir = shift;
+
+    my $individual = Genome::Test::Factory::Individual->setup_object(
+        id => _next_id(),
+        name => INDIVIDUAL_NAME
+    );
+    my $tumor_genotype = Genome::Test::Factory::InstrumentData::Imported->setup_object(
+        id => _next_id(),
+    );
+    my $tumor_sample = Genome::Test::Factory::Sample->setup_object(
+        id => _next_id(),
+        name => join('-', INDIVIDUAL_NAME, 'tumor'),
+        common_name => 'tumor',
+        extraction_type => 'genomic dna',
+        extraction_label => 'TESTY',
+        tissue_desc => 'liver',
+        default_genotype_data_id => $tumor_genotype->id,
+        source_id => $individual->id,
+    );
+
+
+    my $normal_genotype = Genome::Test::Factory::InstrumentData::Imported->setup_object(
+        id => _next_id(),
+    );
+    my $normal_sample = Genome::Test::Factory::Sample->setup_object(
+        id => _next_id(),
+        name => join('-', INDIVIDUAL_NAME, 'normal'),
+        common_name => 'normal',
+        extraction_type => 'genomic dna',
+        extraction_label => 'TESTY control',
+        tissue_desc => 'skin',
+        default_genotype_data_id => $normal_genotype->id,
+        source_id => $individual->id,
+    );
+
+    my $rna_sample = Genome::Test::Factory::Sample->setup_object(
+        id => _next_id(),
+        name => join('-', INDIVIDUAL_NAME, 'tumor_cdna'),
+        common_name => 'tumor',
+        extraction_type => 'rna',
+        extraction_label => 'TESTY rna',
+        tissue_desc => 'liver',
+        source_id => $individual->id,
+    );
+
+    for my $sample ($tumor_sample, $normal_sample, $rna_sample) {
+        for(1..3) {
+            my $library = Genome::Test::Factory::Library->setup_object(
+                id => _next_id(),
+                name => $sample->name . "-lib$_",
+                sample_id => $sample->id,
+            );
+            for(1..2) {
+                my $index_sequence = _next_id();
+                my $id = _next_id();
+                Genome::Test::Factory::InstrumentData::Solexa->setup_object(
+                    flow_cell_id => FLOW_CELL_ID,
+                    lane => $_,
+                    index_sequence => $index_sequence,
+                    subset_name => join('-', $_, $index_sequence),
+                    id => $id,
+                    library_id => $library->id,
+                    read_length => 100,
+                    clusters => (12345678 + $id),
+                    old_median_insert_size => '50',
+                    old_sd_above_insert_size => '85',
+                    bam_path => sprintf('/tmp/fake-csf-dir/%s.bam', $id),
+                );
+            }
+        }
+    }
+
+    #A real build is used here!  (At press time this reference is hardcoded into dump-igv-xml.)
+    my $reference = Genome::Model::Build::ReferenceSequence->get(name => 'GRCh37-lite-build37');
+
+    my $rnaseq_processing_profile = Genome::Test::Factory::ProcessingProfile::RnaSeq->setup_object(
+        id => _next_id(),
+        name => 'TestGenomeCommands RnaSeq ProcessingProfile',
+        read_aligner_name => 'tophat',
+        read_aligner_version => '2.0.8',
+    );
+    my $rnaseq_model = Genome::Test::Factory::Model::RnaSeq->setup_object(
+        subject_id => $rna_sample->id,
+        instrument_data => [$rna_sample->instrument_data],
+        id => _next_id(),
+        processing_profile_id => $rnaseq_processing_profile->id,
+        name => $rna_sample->name . '.rnaseq',
+        reference_sequence_build => $reference,
+    );
+    my $rnaseq_data_dir = File::Spec->join($test_data_dir, 'rnaseq');
+    my $rnaseq_build = Genome::Test::Factory::Build->setup_object(
+        model_id => $rnaseq_model->id,
+        id => _next_id(),
+        status => 'Succeeded',
+        data_directory => $rnaseq_data_dir,
+    );
+    my $rnaseq_alignment = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
+        output_dir => '/tmp/fake-rna-path',
+        id => _next_id(),
+    );
+    Genome::SoftwareResult::User->__define__(
+        label => 'uses',
+        user => $rnaseq_build,
+        software_result => $rnaseq_alignment,
+    );
+
+    my $tumor_refalign_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
+        subject_id => $tumor_sample->id,
+        instrument_data => [$tumor_sample->instrument_data],
+        id => _next_id(),
+        name => $tumor_sample->name . '.refalign',
+        reference_sequence_build => $reference,
+    );
+    my $tumor_refalign_build = Genome::Test::Factory::Build->setup_object(
+        id => _next_id(),
+        model_id => $tumor_refalign_model->id,
+        status => 'Succeeded',
+    );
+    my $tumor_alignment = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
+        output_dir => '/tmp/fake-tumor-path',
+        id => _next_id(),
+    );
+    Genome::SoftwareResult::User->__define__(
+        label => 'uses',
+        user => $tumor_refalign_build,
+        software_result => $tumor_alignment,
+    );
+
+    my $normal_refalign_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(
+        subject_id => $normal_sample->id,
+        instrument_data => [$normal_sample->instrument_data],
+        id => _next_id(),
+        name => $normal_sample->name . '.refalign',
+        reference_sequence_build => $reference,
+    );
+    my $normal_refalign_build = Genome::Test::Factory::Build->setup_object(
+        id => _next_id(),
+        model_id => $normal_refalign_model->id,
+        status => 'Succeeded',
+    );
+    my $normal_alignment = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
+        output_dir => '/tmp/fake-normal-path',
+        id => _next_id(),
+    );
+    Genome::SoftwareResult::User->__define__(
+        label => 'uses',
+        user => $normal_refalign_build,
+        software_result => $normal_alignment,
+    );
+
+    my $somvar_model = Genome::Test::Factory::Model::SomaticVariation->setup_object(
+        subject_id => $tumor_sample->id,
+        tumor_model => $tumor_refalign_model,
+        normal_model => $normal_refalign_model,
+        id => _next_id(),
+        name => $tumor_sample->name . '.somatic-variation',
+    );
+
+    my $somvar_build_dir = File::Spec->join($test_data_dir, 'somvar');
+    Genome::Test::Factory::Build->setup_object(
+        id => _next_id(),
+        model_id => $somvar_model->id,
+        status => 'Succeeded',
+        data_directory => $somvar_build_dir,
+    );
+
+    my $clinseq_model = Genome::Test::Factory::Model::ClinSeq->setup_object(
+        subject_id => $individual->id,
+        wgs_model => $somvar_model,
+        tumor_rnaseq_model => $rnaseq_model,
+        id => _next_id(),
+        name => $individual->name . '.clin-seq',
+    );
+    my $clinseq_build = Genome::Test::Factory::Build->setup_object(
+        id => _next_id(),
+        model_id => $clinseq_model->id,
+        status => 'Succeeded',
+        data_directory => '/tmp/clinseq-build-dir',
+    );
+
+    return $clinseq_build;
+}
+
+sub _next_id {
+    state $next_id = -1;
+    return $next_id--;
+}

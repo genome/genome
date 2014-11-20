@@ -1420,6 +1420,8 @@ sub files_ignored_by_build_diff {
         .*LIMS_Sample_Sequence_QC_library.tsv$
         .*.R.stderr$
         .*/snv_indel_report/subjects_legend.txt$
+        .*sciclone.*.clusters.txt$
+        .*mutation_spectrum.input.tsv$
     );
 };
 

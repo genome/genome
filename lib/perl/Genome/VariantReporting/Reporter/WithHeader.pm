@@ -3,7 +3,6 @@ package Genome::VariantReporting::Reporter::WithHeader;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
-use Memoize qw();
 use Set::Scalar;
 
 class Genome::VariantReporting::Reporter::WithHeader {
@@ -24,7 +23,12 @@ class Genome::VariantReporting::Reporter::WithHeader {
         }
     },
     has_transient_optional => [
-        _legend_fh => {},
+        available_fields_dict => {
+            is => 'HASH',
+        },
+        _legend_fh => {
+            is_structural => 1,
+        },
     ],
 };
 
@@ -94,23 +98,25 @@ sub print_headers {
 sub available_fields_dict {
     my $self = shift;
 
-    my @interpreters = values %{$self->interpreters};
-    my %available_fields;
-    for my $interpreter (@interpreters) {
-        for my $field ($interpreter->available_fields) {
-            if (defined $available_fields{$field}) {
-                die $self->error_message("Fields are not unique. Field: %s, Interpreters: %s and %s",
-                    $field, $interpreter->name, $available_fields{$field}->{interpreter});
-            }
-            $available_fields{$field} = {
-                interpreter => $interpreter->name,
-                field => $field,
+    unless (defined($self->__available_fields_dict)) {
+        my @interpreters = values %{$self->interpreters};
+        my %available_fields;
+        for my $interpreter (@interpreters) {
+            for my $field ($interpreter->available_fields) {
+                if (defined $available_fields{$field}) {
+                    die $self->error_message("Fields are not unique. Field: %s, Interpreters: %s and %s",
+                        $field, $interpreter->name, $available_fields{$field}->{interpreter});
+                }
+                $available_fields{$field} = {
+                    interpreter => $interpreter->name,
+                    field => $field,
+                }
             }
         }
+        $self->__available_fields_dict(\%available_fields);
     }
-    return %available_fields;
+    return %{$self->__available_fields_dict};
 }
-Memoize::memoize('available_fields_dict', SCALAR_CACHE => 'MERGE');
 
 # Default report method
 # Prints the fields in order of the headers.

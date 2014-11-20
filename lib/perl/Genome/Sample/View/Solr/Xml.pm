@@ -45,10 +45,6 @@ class Genome::Sample::View::Solr::Xml {
                     position => 'content',
                 },
                 {
-                    name => 'cell_type',
-                    position => 'content',
-                },
-                {
                     name => 'tissue_label',
                     position => 'content',
                 },

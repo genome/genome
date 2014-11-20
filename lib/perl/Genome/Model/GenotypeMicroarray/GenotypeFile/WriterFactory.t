@@ -63,9 +63,11 @@ is($writer->{name}, $output_file, "original output is $output_file");
 # Defaults
 $writer = Genome::Model::GenotypeMicroarray::GenotypeFile::WriterFactory->build_writer( $writer_params_generator->(output => '', format => 'csv', separator => 'TAB') );
 isa_ok($writer, 'Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv');
+my @available_fields = $writer->available_fields;
+is(@available_fields, 13, 'available fields');
 is($writer->get_original_output, $output_file, "original output is $output_file");
 is($writer->separator, "\t", 'separator is TAB');
-is_deeply($writer->headers, [qw/ chromosome position alleles reference id sample_name log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 /], 'headers are correct');
+is_deeply($writer->headers, [qw/ chromosome position alleles reference id sample_name log_r_ratio gc_score cnv_value cnv_confidence b_allele_freq allele1 allele2 /], 'headers are correct');
 ok($writer->print_headers, 'print_headers is true');
 
 # Everything specified

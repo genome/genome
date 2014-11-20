@@ -42,9 +42,9 @@ like($@, qr(Seq does not have an id:), 'fail to classify w/o sequence id');
 ok(!$classifier->classify({ id => 'Short Seq', -seq => 'A' }), 'fail to classify short sequence');
 
 # create fails
-my $fail = Genome::Model::Tools::MetagenomicClassifier::Rdp::Version2x1->create( );
+my $fail = Genome::Model::Tools::MetagenomicClassifier::Rdp::Version2x1->create();
 ok(!$fail, 'fail w/o training set');
-$fail = Genome::Model::Tools::MetagenomicClassifier::Rdp::Version2x1->create( training_set => 5,);
+$fail = Genome::Model::Tools::MetagenomicClassifier::Rdp::Version2x1->create(training_set => 5);
 ok(!$fail, 'fail w/ invalid training set');
 
 done_testing();

@@ -62,7 +62,6 @@ if ($common_names){
       my $extraction_type = $sample->extraction_type;
       my $sample_common_name = $sample->common_name || "UNDEF";
       my $tissue_desc = $sample->tissue_desc || "UNDEF";
-      my $cell_type = $sample->cell_type || "UNDEF";
 
       #Apply filters
       if ($extraction_type_filter){
@@ -70,8 +69,8 @@ if ($common_names){
       }
 
       #Print summary line
-      print MAGENTA, "\nSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc\tCT: $cell_type", RESET;
-      push(@outlines, "$common_name\t$sample_name\t$extraction_type\t$sample_common_name\t$tissue_desc\t$cell_type\n");
+      print MAGENTA, "\nSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc", RESET;
+      push(@outlines, "$common_name\t$sample_name\t$extraction_type\t$sample_common_name\t$tissue_desc\n");
     }
   }
 }
@@ -89,15 +88,14 @@ if ($model_group){
       my $extraction_type = $sample->extraction_type;
       my $sample_common_name = $sample->common_name || "UNDEF";
       my $tissue_desc = $sample->tissue_desc || "UNDEF";
-      my $cell_type = $sample->cell_type || "UNDEF";
 
       #Apply filters
       if ($extraction_type_filter){
         next unless ($extraction_type =~ /$extraction_type_filter/);
       }
 
-      print MAGENTA, "\nSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc\tCT: $cell_type", RESET;
-      push(@outlines, "$common_name\t$sample_name\t$extraction_type\t$sample_common_name\t$tissue_desc\t$cell_type");
+      print MAGENTA, "\nSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc", RESET;
+      push(@outlines, "$common_name\t$sample_name\t$extraction_type\t$sample_common_name\t$tissue_desc");
     }
   }
 }

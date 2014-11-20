@@ -46,7 +46,6 @@ sub load {
         name => "clinseq-normal-dna",
         common_name => "normal",
         extraction_type => "genomic dna",
-        cell_type => "primary",
         tissue_desc => "blood",
     );
     my $normal_dna_sample_id = $normal_dna_sample->id;
@@ -58,7 +57,6 @@ sub load {
         name => "clinseq_normal_rna",
         common_name => "normal",
         extraction_type => "rna",
-        cell_type => "primary",
         tissue_desc => "brain",
     );
     my $normal_rna_sample_id = $normal_rna_sample->id;
@@ -71,7 +69,6 @@ sub load {
         name => "clinseq-tumor-dna",
         common_name => "met",
         extraction_type => "genomic dna",
-        cell_type => "primary",
         tissue_desc => "brain",
     );
     my $tumor_dna_sample_id = $tumor_dna_sample->id;
@@ -83,7 +80,6 @@ sub load {
         name => "clinseq_tumor_rna",
         common_name => "met",
         extraction_type => "rna",
-        cell_type => "primary",
         tissue_desc => "brain",
     );
     my $tumor_rna_sample_id = $tumor_rna_sample->id;

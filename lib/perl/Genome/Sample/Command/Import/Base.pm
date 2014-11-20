@@ -380,7 +380,6 @@ sub _resolve_sample_attributes {
         nomenclature => $self->nomenclature,
         name => $self->name,
         extraction_label => $self->name,
-        cell_type => 'unknown',
     );
     return if not $self->_resolve_attributes('sample', \%attributes);
     $attributes{extraction_type} = $self->extraction_type if not defined $attributes{extraction_type};

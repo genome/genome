@@ -41,7 +41,7 @@ my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     original_format => 'fastq',
 );
 ok($cmd, "create import command");
-ok($cmd->execute, "excute import command");
+ok($cmd->execute, "execute import command");
 
 my %instrument_data;
 for my $source_file ( @source_files ) {

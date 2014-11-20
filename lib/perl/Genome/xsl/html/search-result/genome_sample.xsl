@@ -46,18 +46,6 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
             </xsl:otherwise>
           </xsl:choose>
 
-          <strong>Cell Type: </strong>
-          <xsl:choose>
-            <xsl:when test="string(aspect[@name='cell_tyle']/value)">
-              <xsl:value-of select="aspect[@name='cell_type']/value"/>
-              <xsl:text>; </xsl:text>
-            </xsl:when>
-            <xsl:otherwise>
-               --
-              <xsl:text> ; </xsl:text>
-            </xsl:otherwise>
-          </xsl:choose>
-
           <strong>Tissue Description: </strong>
           <xsl:choose>
             <xsl:when test="string(aspect[@name='tissue_desc']/value)">

@@ -24,9 +24,9 @@ cosmic_annotation_db: cosmic/65.3 (/gsc/scripts/opt/genome/db/cosmic/65_v3)
 
 EXAMINE SAMPLES
 Found 2 samples:
-id	name	sample_common_name	sample_type	cell_type	tissue_desc	default_genotype_data_id	model_count	library_count	id_count
--5	H_TEST-ClinSeqGenomeCommands-normal	normal	genomic dna	primary	skin	-4	1	3	6
--6	H_TEST-ClinSeqGenomeCommands-tumor_cdna	tumor	rna	primary	liver	NULL	1	3	6
+id	name	sample_common_name	sample_type	tissue_desc	default_genotype_data_id	model_count	library_count	id_count
+-5	H_TEST-ClinSeqGenomeCommands-normal	normal	genomic dna	skin	-4	1	3	6
+-6	H_TEST-ClinSeqGenomeCommands-tumor_cdna	tumor	rna	liver	NULL	1	3	6
 
 Exiting...  --display-samples mode is used for summarizing purposes only
 

@@ -127,7 +127,6 @@ foreach my $group_name (sort keys %mg_list){
     my $extraction_type = $sample->extraction_type || "UNDEF";
     my $sample_common_name = $sample->common_name || "UNDEF";
     my $tissue_desc = $sample->tissue_desc || "UNDEF";
-    my $cell_type = $sample->cell_type || "UNDEF";
     my $effects_directory = "NA";
     if ($m->last_succeeded_build){
        my $b = $m->last_succeeded_build;

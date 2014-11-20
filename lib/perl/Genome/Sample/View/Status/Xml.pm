@@ -17,7 +17,6 @@ class Genome::Sample::View::Status::Xml {
                 'extraction_label',
                 'extraction_type',
                 'extraction_desc',
-                'cell_type',
                 'tissue_label',
                 'tissue_desc',
                 'organ_name',

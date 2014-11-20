@@ -28,7 +28,6 @@ class Genome::Individual::View::Status::Xml {
                         'individual_common_name',
                         'extraction_type',
                         'extraction_desc',
-                        'cell_type',
                         'tissue_label',
                         'tissue_desc',
                         'organ_name',

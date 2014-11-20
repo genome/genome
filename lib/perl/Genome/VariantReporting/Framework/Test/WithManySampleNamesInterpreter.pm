@@ -19,12 +19,14 @@ sub requires_annotations {
 
 sub available_fields {
     my $self = shift;
-
-    return $self->create_sample_specific_field_names([$self->fields()], [$self->sample_names]);
+    my %field_descriptions = $self->field_descriptions;
+    return $self->create_sample_specific_field_names([keys %field_descriptions], [$self->sample_names]);
 }
 
-sub fields {
-    return qw/info/;
+sub field_descriptions {
+    return (
+        info => "info description",
+    );
 }
 
 sub interpret_entry {

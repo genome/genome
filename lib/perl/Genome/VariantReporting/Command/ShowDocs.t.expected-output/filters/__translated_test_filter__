@@ -1,0 +1,18 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mPROPERTIES[0m
+  [1mtranslated2[0m
+    This is a translated property.
+
+[4mREQUIRED EXPERTS[0m
+__translated_test__
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Override method 'vcf_description' must be defined in class
+    'Genome::VariantReporting::Framework::Test::WithTranslationsFilter' with the real description
+
+[4mFILTER DESCRIPTION[0m
+Override method 'vcf_description' must be defined in class 'Genome::VariantReporting::Framework::Test::WithTranslationsFilter' with the real description
+

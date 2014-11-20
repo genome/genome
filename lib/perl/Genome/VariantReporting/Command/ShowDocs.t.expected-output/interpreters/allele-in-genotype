@@ -1,0 +1,15 @@
+[4mOVERVIEW[0m
+(undocumented)
+
+[4mPROPERTIES[0m
+  [1msample_name[0m   Text
+    This is a translated property.
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Override method 'vcf_description' must be defined in class
+    'Genome::VariantReporting::Generic::AlleleInGenotypeFilter' with the real description
+
+[4mFILTER DESCRIPTION[0m
+Override method 'vcf_description' must be defined in class 'Genome::VariantReporting::Generic::AlleleInGenotypeFilter' with the real description
+
