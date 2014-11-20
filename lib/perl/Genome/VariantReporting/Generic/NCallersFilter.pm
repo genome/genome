@@ -18,7 +18,7 @@ class Genome::VariantReporting::Generic::NCallersFilter {
             doc => 'List of variant callers to include in determination for filtering',
         },
     ],
-    doc => 'Filter out variants that weren\'t called by the minimum number of the specified callers',
+    doc => q{Filter out variants that weren't called by the minimum number of the specified callers},
 };
 
 sub name {

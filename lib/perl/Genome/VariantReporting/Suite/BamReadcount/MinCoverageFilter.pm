@@ -13,7 +13,7 @@ class Genome::VariantReporting::Suite::BamReadcount::MinCoverageFilter {
             doc => 'Miminum coverage',
         },
     },
-    doc => 'Filter variants that don\'t meet minimum coverage',
+    doc => q{Filter variants that don't meet minimum coverage},
 };
 
 sub name {

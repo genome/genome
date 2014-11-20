@@ -15,7 +15,7 @@ class Genome::VariantReporting::Generic::FTKeepFilter {
             doc => 'A list of FT values',
         },
     },
-    doc => 'Filter out variants that don\'t contain the specified FT values',
+    doc => q{Filter out variants that don't contain the specified FT values},
 };
 
 sub name {

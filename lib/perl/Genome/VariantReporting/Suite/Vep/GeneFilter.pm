@@ -15,7 +15,7 @@ class Genome::VariantReporting::Suite::Vep::GeneFilter {
             valid_values => ['acmg'],
         },
     ],
-    doc => 'Filter out variants that aren\'t part of the specified gene set',
+    doc => q{Filter out variants that aren't part of the specified gene set},
 };
 
 sub name {

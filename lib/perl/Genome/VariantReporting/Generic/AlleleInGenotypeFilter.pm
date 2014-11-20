@@ -8,7 +8,7 @@ class Genome::VariantReporting::Generic::AlleleInGenotypeFilter {
     is => ['Genome::VariantReporting::Framework::Component::Filter', 'Genome::VariantReporting::Framework::Component::WithSampleName'],
     has => [
     ],
-    doc => 'Filter out alternate alleles that aren\'t part of the specified sample\'s genotype',
+    doc => q{Filter out alternate alleles that aren't part of the specified sample's genotype},
 };
 
 sub name {
