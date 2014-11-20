@@ -4,8 +4,4 @@ Output variants in vcf format. Set soft filter result ALLFILTERSPASS based on ch
 [4mPROPERTIES[0m
   [1mfile_name[0m
     file name to use for report
-  [1mheader[0m   Genome::Vcf::Header
-    (undocumented)
-  [1mvcf_file[0m   Genome::File::Vcf
-    (undocumented)
 

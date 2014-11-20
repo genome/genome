@@ -45,8 +45,8 @@ sub part {
 sub properties_in_plan {
     my $class = shift;
     my @properties;
-    for my $property ($class->__meta__->properties(is_structural => 0),
-        $class->__meta__->properties(is_structural => undef)) {
+    for my $property ($class->__meta__->properties(is_structural => 0, is_transient => 0),
+        $class->__meta__->properties(is_structural => undef, is_transient => 0)) {
         push @properties, $property;
     }
     return @properties;
