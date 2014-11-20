@@ -26,6 +26,16 @@ class Genome::VariantReporting::Process::CreateReport {
     ],
 };
 
+sub symlink_results {
+    my $self = shift;
+    my $destination = shift;
+
+    Genome::Sys->create_directory($destination);
+    Genome::Sys->symlink_directory($self->output_directory, $destination);
+
+    return 1;
+}
+
 sub result_class {
     return "Genome::VariantReporting::Framework::ReportResult";
 }
