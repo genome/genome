@@ -321,7 +321,7 @@ sub _get_items_to_process {
     if ($self->instrument_data) {
         return Genome::Config::AnalysisProject::InstrumentDataBridge->get(
             instrument_data_id => [map { $_->id } $self->instrument_data],
-            'analysis_project.status in' => ['In Progress'],
+            'analysis_project.status' => 'In Progress',
             -hint => ['analysis_project', 'instrument_data', 'instrument_data.sample']
         );
     } else {
