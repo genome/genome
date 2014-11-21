@@ -17,7 +17,7 @@ sub name {
     return 'docm';
 }
 
-sub requires_interpreters {
+sub required_interpreters {
     return qw(position many-samples-vaf);
 }
 

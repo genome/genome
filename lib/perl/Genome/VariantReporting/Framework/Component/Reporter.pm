@@ -31,10 +31,10 @@ sub name {
     confess "Abstract method 'name' must be defined in class '$class'";
 }
 
-sub requires_interpreters {
+sub required_interpreters {
     my $self = shift;
     my $class = $self->class;
-    confess "Abstract method 'requires_interpreters' must be defined in class '$class'";
+    confess "Abstract method 'required_interpreters' must be defined in class '$class'";
 }
 
 sub allows_hard_filters {
@@ -158,27 +158,27 @@ sub vr_doc_sections {
 
     my @sections = $self->SUPER::vr_doc_sections;
 
-    if ($self->requires_experts) {
+    if ($self->required_experts) {
         push @sections, {
             header => "REQUIRED EXPERTS",
-            items => [$self->requires_experts],
+            items => [$self->required_experts],
         };
     }
-    if ($self->requires_interpreters) {
+    if ($self->required_interpreters) {
         push @sections, {
             header => "REQUIRED INTERPRETERS",
-            items => [$self->requires_interpreters],
+            items => [$self->required_interpreters],
         };
     }
     return @sections;
 }
 
-sub requires_experts {
+sub required_experts {
     my $self = shift;
 
     my $factory = Genome::VariantReporting::Framework::Factory->create();
     my @experts;
-    for my $interpreter ($self->requires_interpreters) {
+    for my $interpreter ($self->required_interpreters) {
         my $class = $factory->get_class("interpreters", $interpreter);
         push @experts, $class->requires_annotations;
     }

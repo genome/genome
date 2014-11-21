@@ -27,7 +27,7 @@ use_ok($pkg);
         "bad_reporter";
     }
 
-    sub requires_interpreters {
+    sub required_interpreters {
         return qw(interpreter_y);
     }
 
@@ -64,7 +64,7 @@ use_ok($pkg);
         "bad_reporter2";
     }
 
-    sub requires_interpreters {
+    sub required_interpreters {
         return qw(interpreter_y duplicate);
     }
 

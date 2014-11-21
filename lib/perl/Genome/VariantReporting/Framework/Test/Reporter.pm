@@ -13,7 +13,7 @@ sub name {
     return '__test__';
 }
 
-sub requires_interpreters {
+sub required_interpreters {
     return qw(__test__);
 }
 

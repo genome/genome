@@ -15,8 +15,8 @@ sub name {
     return 'acmg';
 }
 
-sub requires_interpreters {
-    return (shift->SUPER::requires_interpreters, 'nhlbi');
+sub required_interpreters {
+    return (shift->SUPER::required_interpreters, 'nhlbi');
 }
 
 sub headers {
