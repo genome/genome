@@ -98,26 +98,16 @@ sub execute {
 						if ($gene->{'MT Score'} > $best{$sample}->{$gene->{'Gene Name'}}->{SCORE}) {
 							next;
 						}
-
 						if ($gene->{'MT Score'} < $best{$sample}->{$gene->{'Gene Name'}}->{SCORE}) {
 							$best{$sample}->{$gene->{'Gene Name'}}->{GENES} = [];
 						}
-
-						$best{$sample}->{$gene->{'Gene Name'}}->{SCORE} = $gene->{'MT Score'};
-						$gene->{Sample} = $sample;
-						$gene->{Length} = $length;
-						$gene->{Mode}   = $mode;
-						push( @{ $best{$sample}->{$gene->{'Gene Name'}}->{GENES} }, $gene );
-					}
-					else {
-						$best{$sample}->{$gene->{'Gene Name'}}->{SCORE} = $gene->{'MT Score'};
-						$gene->{Sample} = $sample;
-						$gene->{Length} = $length;
-						$gene->{Mode}   = $mode;
-						push( @{ $best{$sample}->{$gene->{'Gene Name'}}->{GENES} }, $gene );
 					}
 
-
+					$best{$sample}->{$gene->{'Gene Name'}}->{SCORE} = $gene->{'MT Score'};
+					$gene->{Sample} = $sample;
+					$gene->{Length} = $length;
+					$gene->{Mode}   = $mode;
+					push( @{ $best{$sample}->{$gene->{'Gene Name'}}->{GENES} }, $gene );
 				}
 			}
 		}
