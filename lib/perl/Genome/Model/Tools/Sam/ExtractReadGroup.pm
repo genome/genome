@@ -4,7 +4,6 @@ use strict;
 use warnings FATAL => 'all';
 
 use Genome;
-use File::Basename;
 
 class Genome::Model::Tools::Sam::ExtractReadGroup {
     is  => 'Genome::Model::Tools::Sam',
@@ -97,7 +96,7 @@ sub execute {
     );
 
     if ($self->name_sort) {
-        my $sorted_temp_bam_file = dirname($temp_bam_file).'/temp_rg.sorted.'.$$.'.bam';
+        my $sorted_temp_bam_file = Genome::Sys->create_temp_file_path() . '.bam';
 
         my $sort_cmd = Genome::Model::Tools::Sam::SortBam->create(
             file_name   => $temp_bam_file,
