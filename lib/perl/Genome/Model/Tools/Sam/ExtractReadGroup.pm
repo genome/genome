@@ -96,8 +96,6 @@ sub execute {
     );
 
     if ($self->name_sort) {
-        my $sorted_temp_bam_file = Genome::Sys->create_temp_file_path() . '.bam';
-
         my $sort_cmd = Genome::Model::Tools::Sam::SortBam->create(
             file_name   => $temp_bam_file,
             name_sort   => 1, 
@@ -118,9 +116,10 @@ sub execute {
 
         $self->debug_message('VERIFY READ COUNTS: READ GROUP BAM v. SORTED READ GROUP BAM');
         $self->debug_message("$temp_bam_read_count reads in READ GROUP BAM: $temp_bam_file");
-        $self->debug_message("$sorted_temp_bam_read_count reads in SORTED READ GROUP BAM: $sorted_temp_bam_file");
+        $self->debug_message("$sorted_temp_bam_read_count reads in SORTED READ GROUP BAM: $output_file");
+
         if ($temp_bam_read_count ne $sorted_temp_bam_read_count) {
-            $self->error_message("Sort of read group BAM resulted in different number of reads in the sorted file! $temp_bam_read_count <=> $sorted_temp_bam_read_count");
+            $self->error_message("Before and after name-sort resulted in different number of reads: $temp_bam_read_count <=> $sorted_temp_bam_read_count");
             return;
         }
         $self->read_count($temp_bam_read_count);
