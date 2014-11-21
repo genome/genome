@@ -13,7 +13,7 @@ sub name {
     return 'tumor-only';
 }
 
-sub requires_interpreters {
+sub required_interpreters {
     return qw(position
     rsid
     caf

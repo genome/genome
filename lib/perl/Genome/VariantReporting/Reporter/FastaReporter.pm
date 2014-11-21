@@ -18,7 +18,7 @@ sub name {
     return 'fasta';
 }
 
-sub requires_interpreters {
+sub required_interpreters {
     return qw(position flanking-regions vaf vep);
 }
 

@@ -13,7 +13,7 @@ sub name {
     return 'annotation-format';
 }
 
-sub requires_interpreters {
+sub required_interpreters {
     return qw(
         position
         vep

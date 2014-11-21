@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Carp qw(confess);
+use List::MoreUtils qw(uniq);
 
 class Genome::VariantReporting::Framework::Component::Reporter {
     is => [
@@ -30,10 +31,10 @@ sub name {
     confess "Abstract method 'name' must be defined in class '$class'";
 }
 
-sub requires_interpreters {
+sub required_interpreters {
     my $self = shift;
     my $class = $self->class;
-    confess "Abstract method 'requires_interpreters' must be defined in class '$class'";
+    confess "Abstract method 'required_interpreters' must be defined in class '$class'";
 }
 
 sub allows_hard_filters {
@@ -150,6 +151,38 @@ sub all_zeros {
     }
 
     return 1;
+}
+
+sub vr_doc_sections {
+    my $self = shift;
+
+    my @sections = $self->SUPER::vr_doc_sections;
+
+    if ($self->required_experts) {
+        push @sections, {
+            header => "REQUIRED EXPERTS",
+            items => [$self->required_experts],
+        };
+    }
+    if ($self->required_interpreters) {
+        push @sections, {
+            header => "REQUIRED INTERPRETERS",
+            items => [$self->required_interpreters],
+        };
+    }
+    return @sections;
+}
+
+sub required_experts {
+    my $self = shift;
+
+    my $factory = Genome::VariantReporting::Framework::Factory->create();
+    my @experts;
+    for my $interpreter ($self->required_interpreters) {
+        my $class = $factory->get_class("interpreters", $interpreter);
+        push @experts, $class->requires_annotations;
+    }
+    return uniq @experts;
 }
 
 1;

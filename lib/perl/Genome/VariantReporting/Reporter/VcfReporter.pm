@@ -23,7 +23,7 @@ sub name {
     return 'vcf';
 }
 
-sub requires_interpreters {
+sub required_interpreters {
     return qw(vcf-entry);
 }
 

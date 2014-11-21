@@ -15,7 +15,7 @@ sub name {
     return 'simple';
 }
 
-sub requires_interpreters {
+sub required_interpreters {
     return qw(position variant-type vep);
 }
 

@@ -84,7 +84,7 @@ sub __plan_errors__ {
 
 sub __interpreter_plan_errors__ {
     my $self = shift;
-    my $needed = Set::Scalar->new($self->get_class->requires_interpreters);
+    my $needed = Set::Scalar->new($self->get_class->required_interpreters);
     my $have = Set::Scalar->new(map {$_->name} $self->interpreter_plans);
 
     my @errors;

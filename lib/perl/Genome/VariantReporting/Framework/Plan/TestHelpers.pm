@@ -180,7 +180,7 @@ sub set_what_interpreter_x_requires {
         "reporter_alpha";
     }
 
-    sub requires_interpreters {
+    sub required_interpreters {
         return qw(interpreter_x);
     }
 
@@ -228,7 +228,7 @@ sub set_what_interpreter_x_requires {
         "reporter_beta";
     }
 
-    sub requires_interpreters {
+    sub required_interpreters {
         return qw(interpreter_x interpreter_y);
     }
 
@@ -255,7 +255,7 @@ sub set_what_interpreter_x_requires {
         "reporter_gamma";
     }
 
-    sub requires_interpreters {
+    sub required_interpreters {
         return qw(interpreter_x interpreter_y);
     }
 
@@ -305,7 +305,7 @@ sub set_what_interpreter_x_requires {
         "reporter_delta";
     }
 
-    sub requires_interpreters {
+    sub required_interpreters {
         return qw(interpreter_x);
     }
 
@@ -333,7 +333,7 @@ sub set_what_interpreter_x_requires {
         "reporter_epsilon";
     }
 
-    sub requires_interpreters {
+    sub required_interpreters {
         return qw(interpreter_z);
     }
 

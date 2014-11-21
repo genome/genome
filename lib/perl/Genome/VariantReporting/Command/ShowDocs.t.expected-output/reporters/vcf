@@ -5,3 +5,6 @@ Output variants in vcf format. Set soft filter result ALLFILTERSPASS based on ch
   [1mfile_name[0m
     file name to use for report
 
+[4mREQUIRED INTERPRETERS[0m
+vcf-entry
+

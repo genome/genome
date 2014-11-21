@@ -15,7 +15,7 @@ sub name {
     return 'full';
 }
 
-sub requires_interpreters {
+sub required_interpreters {
     return qw(position vep info-tags variant-type min-coverage min-coverage-observed max-vaf-observed variant-callers many-samples-vaf rsid caf);
 }
 

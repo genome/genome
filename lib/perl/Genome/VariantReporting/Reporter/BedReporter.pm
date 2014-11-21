@@ -13,7 +13,7 @@ sub name {
     return 'bed';
 }
 
-sub requires_interpreters {
+sub required_interpreters {
     return qw(bed-entry);
 }
 
