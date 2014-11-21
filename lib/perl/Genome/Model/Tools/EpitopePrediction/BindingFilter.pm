@@ -4,7 +4,7 @@ package Genome::Model::Tools::EpitopePrediction::BindingFilter;
 use strict;
 use warnings;
 use Genome;
-use File::Basename;
+use File::Basename qw(basename);
 
 use Genome::Utility::IO::SeparatedValueReader qw();
 use Genome::Utility::IO::SeparatedValueWriter qw();
