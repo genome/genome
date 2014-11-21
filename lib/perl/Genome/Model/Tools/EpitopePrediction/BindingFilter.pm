@@ -32,7 +32,6 @@ sub help_brief {
 
 sub execute {
 	my $self = shift;
-       
 
 	my $fof_fh  = Genome::Sys->open_file_for_reading($self->fof_file);
 	my $out_fh = Genome::Utility::IO::SeparatedValueWriter->create(
