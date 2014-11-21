@@ -1302,8 +1302,6 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>add-model',
     [
-      'allow-projects-not-in-progress!',
-      undef,
       'profile-item=s',
       undef,
       'models=s@',
@@ -37855,13 +37853,9 @@ $Genome::Command::OPTS_SPEC = [
         'snvs',
         'indels'
       ],
-      'output-directory=s',
-      undef,
       'plan-file=s',
       undef,
       'translations-file=s',
-      undef,
-      'log-directory=s',
       undef,
       'help!',
       undef
@@ -37945,10 +37939,14 @@ $Genome::Command::OPTS_SPEC = [
     [
       'component-type=s',
       [
+        'expert',
+        'experts',
+        'filter',
         'filters',
+        'interpreter',
         'interpreters',
-        'reporters',
-        'experts'
+        'reporter',
+        'reporters'
       ],
       'component-name=s',
       'files',
@@ -38002,6 +38000,40 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       'process=s',
       undef,
+      'help!',
+      undef
+    ],
+    '>symlink-results',
+    [
+      'process=s',
+      undef,
+      'destination=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>list',
+    [
+      'show=s',
+      'files',
+      'style=s',
+      [
+        'text',
+        'csv',
+        'tsv',
+        'pretty',
+        'html',
+        'xml',
+        'newtext'
+      ],
+      'csv-delimiter=s',
+      'files',
+      'noheaders!',
+      undef,
+      'order-by=s',
+      'files',
+      'filter=s',
+      'files',
       'help!',
       undef
     ],
@@ -38414,8 +38446,6 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>add-model',
       [
-        'allow-projects-not-in-progress!',
-        undef,
         'profile-item=s',
         undef,
         'models=s@',
