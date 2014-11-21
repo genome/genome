@@ -70,7 +70,8 @@ sub execute {
         die $self->error_message("output $output_file is not writable");
     }
     
-    my $temp_bam_file = Genome::Sys->create_temp_file_path('temp_rg.'.$$.'.bam');
+    my $temp_bam_file = Genome::Sys->create_temp_file_path() . '.bam';
+
     my $samtools_check_cmd = sprintf("%s view -r%s %s | head -1", $samtools_path, $rg_id, $input_file);
     my $samtools_check_output = `$samtools_check_cmd`;
 
@@ -146,7 +147,7 @@ sub _read_count_for_bam {
     my $gmt = Genome::Model::Tools::Sam::Flagstat->create(
         bam_file => $bam,
         output_file => $flagstat_file,
-        use_version => $self->samtools_version,
+        use_version => $self->use_version,
     );
     if ( not $gmt ) {
         $self->error_message('Failed to create gmt same flagstat!');
