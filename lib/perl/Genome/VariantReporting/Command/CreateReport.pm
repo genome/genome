@@ -18,11 +18,6 @@ class Genome::VariantReporting::Command::CreateReport {
             valid_values => ['snvs', 'indels'],
             doc => "The type of variants used for annotation",
         },
-        output_directory => {
-            is => 'Path',
-            is_output => 1,
-            doc => "The location of the reports to be generated",
-        },
         plan_file => {
             is => 'Path',
             doc => 'A plan (yaml) file describing the report generation workflow',
@@ -30,10 +25,6 @@ class Genome::VariantReporting::Command::CreateReport {
         translations_file => {
             is => 'Path',
             doc => 'A yaml file containing key-value pairs where the key is a value from the plan file that needs to be translated at runtime',
-        },
-        log_directory => {
-            is => 'Path',
-            doc => 'The directory where log files will be written.',
         },
     ],
     has_transient_optional => [
@@ -48,6 +39,10 @@ class Genome::VariantReporting::Command::CreateReport {
         }
     ],
 };
+
+sub process_class {
+    return "Genome::VariantReporting::Process::CreateReport";
+}
 
 sub __errors__ {
     my $self = shift;
@@ -67,31 +62,30 @@ sub __errors__ {
 sub execute {
     my $self = shift;
 
-    $self->status_message("Executing workflow.");
-    $self->dag->execute(
-        $self->params_for_execute
-    );
-
-    $self->status_message("Writing plan file and provider file to output_directory (%s)",
-        $self->output_directory);
-    $self->plan->write_to_file(File::Spec->join($self->output_directory, 'plan.yaml'));
-    $self->provider->write_to_file(File::Spec->join($self->output_directory, 'resources.yaml'));
-
-    $self->status_message("Report Generation complete, reports are located at (%s).",
-        $self->output_directory);
-
-    return 1;
-}
-
-sub params_for_execute {
-    my $self = shift;
-    return (
+    my $p = $self->process_class->create(
         input_vcf => $self->input_vcf,
         variant_type => $self->variant_type,
-        output_directory => $self->output_directory,
+    );
+    $p->save_plan_file($self->plan_file);
+    $p->save_translations_file($self->translations_file);
+
+    $p->run(workflow_xml => $self->dag->get_xml,
+        workflow_inputs => $self->workflow_inputs($p->id),
+    );
+
+    return $p;
+}
+
+sub workflow_inputs {
+    my $self = shift;
+    my $process_id = shift;
+    return {
+        process_id => $process_id,
+        input_vcf => $self->input_vcf,
+        variant_type => $self->variant_type,
         plan_json => $self->plan->as_json,
         provider_json => $self->provider->as_json,
-    );
+    };
 }
 
 sub plan {
@@ -129,10 +123,6 @@ sub dag {
     unless (defined($self->__dag)) {
         $self->status_message("Constructing workflow from plan.");
         my $dag = generate_dag($self->plan, $self->variant_type);
-
-        $self->status_message("Setting log-directory to (%s)", $self->log_directory);
-        Genome::Sys->create_directory($self->log_directory);
-        $dag->log_dir($self->log_directory);
         $self->__dag($dag);
     }
     return $self->__dag;

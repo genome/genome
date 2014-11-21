@@ -94,6 +94,12 @@ class Genome::Process {
     doc => 'A base class to manage meta-data related to running a process (workflow)',
 };
 
+sub symlink_results {
+    my $self = shift;
+    $self->status_message("Process (%s) is a %s which does not symlink results.",
+        $self->id, $self->class);
+    return 1;
+}
 
 sub run {
     my $self = shift;

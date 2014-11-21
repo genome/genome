@@ -10,7 +10,7 @@ use strict;
 use warnings;
 
 use above "Genome";
-use Test::More;
+use Test::More skip_all => 'disabled until Genome::Process integration is completed';
 use Sub::Install qw(reinstall_sub);
 use File::Basename qw(basename);
 use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build succeed_build compare_directories);

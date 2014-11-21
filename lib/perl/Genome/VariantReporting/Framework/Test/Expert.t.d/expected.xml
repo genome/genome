@@ -3,6 +3,7 @@
   <operationtype typeClass="Workflow::OperationType::Model">
     <inputproperty>input_vcf</inputproperty>
     <inputproperty>plan_json</inputproperty>
+    <inputproperty>process_id</inputproperty>
     <inputproperty>provider_json</inputproperty>
     <inputproperty>variant_type</inputproperty>
     <outputproperty>output_result</outputproperty>
@@ -39,4 +40,5 @@
   <link fromOperation="input connector" fromProperty="provider_json" toOperation="Get inputs from provider and plan" toProperty="provider_json"/>
   <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from provider and plan" toProperty="variant_type"/>
   <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run __test__" toProperty="input_vcf"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="Run __test__" toProperty="process_id"/>
 </operation>

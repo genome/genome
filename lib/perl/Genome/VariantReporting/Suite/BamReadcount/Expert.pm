@@ -25,11 +25,13 @@ sub dag {
     my $run_op = $self->run_op;
     $dag->add_operation($run_op);
     $run_op->parallel_by('aligned_bam_result_id');
-    $dag->connect_input(
-        input_property => 'input_vcf',
-        destination => $run_op,
-        destination_property => 'input_vcf',
-    );
+    for my $name qw(process_id input_vcf) {
+        $dag->connect_input(
+            input_property => $name,
+            destination => $run_op,
+            destination_property => $name,
+        );
+    }
     $self->_link(dag => $dag,
           adaptor => $adaptor_op,
           target => $run_op,
@@ -37,11 +39,13 @@ sub dag {
 
     my $annotate_op = $self->annotate_op;
     $dag->add_operation($annotate_op);
-    $dag->connect_input(
-        input_property => 'input_vcf',
-        destination => $annotate_op,
-        destination_property => 'input_vcf',
-    );
+    for my $name qw(process_id input_vcf) {
+        $dag->connect_input(
+            input_property => $name,
+            destination => $annotate_op,
+            destination_property => $name,
+        );
+    }
     $dag->create_link(
         source => $run_op,
         source_property => 'output_result',

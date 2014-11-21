@@ -22,6 +22,7 @@ class Genome::Process::Command::Run {
             doc => 'Execute UR::Context->commit() after each status update',
         },
     ],
+    doc => 'This command is not designed for users to run.',
 };
 
 sub help_synopsis {
