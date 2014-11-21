@@ -10,7 +10,7 @@ use Genome::Utility::IO::SeparatedValueReader qw();
 use Genome::Utility::IO::SeparatedValueWriter qw();
 
 class Genome::Model::Tools::EpitopePrediction::BindingFilter {
-    is        => ['Genome::Model::Tools::EpitopePrediction::Base'],
+    is => ['Genome::Model::Tools::EpitopePrediction::Base'],
     has_input => [
         fof_file => {
             is  => 'FilePath',
@@ -19,7 +19,7 @@ class Genome::Model::Tools::EpitopePrediction::BindingFilter {
     ],
     has_output => [
         output_file => {
-            is => 'FilePath',
+            is  => 'FilePath',
             doc => 'Output .xls file containing list of filtered epitopes based on binding affinity for each allele-length combination per gene',
         }
     ],
@@ -55,7 +55,7 @@ sub execute {
     my %prediction;
     my $threshold = 500 ;
     while (my $file = $fof_fh->getline) {
-        chomp $file ;
+        chomp $file;
         my $basename = basename( $file);
         my @f      = split( /\./, $basename );
         my $sample = $f[0];
