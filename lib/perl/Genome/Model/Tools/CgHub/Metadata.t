@@ -1,4 +1,4 @@
-#! /gsc/bin/perl
+#!/usr/bin/env genome-perl
 
 BEGIN {
     $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
@@ -9,29 +9,29 @@ use warnings;
 
 use above 'Genome';
 
+require File::Spec;
 require Genome::Utility::Test;
 use Test::Exception;
 use Test::More;
 
-my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata';
+my $class = 'Genome::Model::Tools::CgHub::Metadata';
 use_ok($class) or die;
 
-my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', File::Spec->catfile('tcga', 'v2'));
+my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::Model::Tools::CgHub');
+my $xml_file = File::Spec->join($data_dir, 'metadata.xml');
+my $b36_xml_file = File::Spec->join($data_dir, 'metadata.b36.xml');
 
 # Failures 
-throws_ok(sub{ $class->create(); } , qr/Need UUID or existing metadata file!/, 'create w/o uuid and existing metadata_file');
-throws_ok(sub{ $class->create(metadata_file => 'blah'); } , qr/Need UUID or existing metadata file!/, 'create w/o uuid and existing metadata_file');
-throws_ok(sub{ $class->create(uuid => 'INVALID'); }, qr/\QFailed to find uuid (INVALID) on CG Hub!\E/, 'create w/ invalid uuid fails');
+throws_ok(sub{ $class->create(metadata_file => 'blah'); }, qr/File \(blah\) does not exist/, 'create failed w/ invalid metadata file');
 
-# Success - uuid [b37]
+# Success [b37]
 my $uuid = '387c3f70-46e9-4669-80e3-694d450f2919';
 my $metadata1 = $class->create(
-    uuid => $uuid,
+    metadata_file => $xml_file,
 );
-ok($metadata1, 'create w/ uuid') or die;
-is($metadata1->uuid, $uuid, 'uuid');
-ok(-s $metadata1->metadata_file, 'metadata_file downloaded'); # should be temp file
+ok($metadata1, 'create') or die;
 ok($metadata1->_metadata, '_metadata');
+is($metadata1->uuid, $uuid, 'uuid');
 ok(
     _test_metadata(
         metadata => $metadata1,
@@ -61,25 +61,25 @@ ok(
             library_strategy => 'WXS',
             tcga_name => 'TCGA-77-8154-10A-01D-2244-08',
             sample_id => 'f39b4cc9-9253-4cf9-8827-ebf26af1003a',
-            target_region => 'agilent_sureselect_exome_version_2_broad_refseq_cds_only_hs37',
             uuid => $uuid,
         },
+        target_region => 'agilent_sureselect_exome_version_2_broad_refseq_cds_only_hs37',
         reference_assembly_attrs => {
             shortname => 'HG19_Broad_variant',
             version => '37',
         }
-    ));
+    ),
+    'test metadata'
+);
 
 # Success - load [b36]
 my $uuid2 = 'a1d11d67-4d5f-4db9-a61d-a0279c3c3d4f';
-my $metadata_file = File::Spec->catfile($data_dir, 'metadata.b36.xml');
 my $metadata2 = $class->create(
-    metadata_file => $metadata_file,
+    metadata_file => $b36_xml_file,
 );
-ok($metadata2, 'create w/ metadata_file') or die;
-is($metadata2->uuid, $uuid2, 'uuid');
-is($metadata2->metadata_file, $metadata_file, 'metadata_file'); # should be temp file
+ok($metadata2, 'create w/ b36 xml file') or die;
 ok($metadata2->_metadata, '_metadata');
+is($metadata2->uuid, $uuid2, 'uuid');
 ok(
     _test_metadata(
         metadata => $metadata2,
@@ -109,14 +109,16 @@ ok(
             library_strategy => 'WXS',
             tcga_name => 'TCGA-A6-2674-01A-02W-0831-10',
             sample_id => '8aca008c-f55a-420a-82c7-acd2cca77d85',
-            target_region => 'agilent sureselect exome version 2 broad refseq cds only',
             uuid => $uuid2,
         },
+        target_region => 'agilent sureselect exome version 2 broad refseq cds only',
         reference_assembly_attrs => {
             shortname => 'NCBI36_BCM_variant',
             version => '36',
         }
-    ));
+    ),
+    'test metadata'
+);
 
 # Fails to get checksum type/content
 throws_ok(sub{ $metadata2->checksum_content_for_file_name(); }, qr/No file name given to get attribute value!/, 'checksum_content_for_file_name fails w/o file name');
@@ -175,6 +177,9 @@ sub _test_metadata {
             "checksum_type_for_file_name for $file_name",
         );
     }
+
+    # target region
+    is($metadata->target_region, $params{target_region}, 'correct target_region');
 
     return 1;
 }

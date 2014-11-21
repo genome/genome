@@ -1,12 +1,12 @@
-package Genome::Model::Tools::GeneTorrent;
+package Genome::Model::Tools::CgHub::GeneTorrent;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Tools::GeneTorrent {
-    is => "Command::V2",
+class Genome::Model::Tools::CgHub::GeneTorrent {
+    is => 'Genome::Model::Tools::CgHub::Base',
     has_input => [
         uuid => {
             is => "Text",
@@ -22,25 +22,25 @@ class Genome::Model::Tools::GeneTorrent {
             # mbps -> mega-BITS per second (see --rate-limit below)
             default_value => '-q lims-long -R "rusage[internet_download_mbps=80]"',
         },
-    ]
+    ],
+    has_calculated => {
+        source_url => {
+            calculate_from => [qw/ uuid /],
+            calculate => q( return 'https://cghub.ucsc.edu/cghub/data/analysis/download/'.$uuid; ),
+        },
+        credential_file => { #FIXME each user should have their own
+            calculate => q( return '/gscuser/kochoa/mykey.pem'; ),
+        }
+    },
+    doc => 'Download files from CG Hub using gene-torrent',
 };
 
-sub execute {
+sub _build_command {
     my $self = shift;
 
-    # genetorrent-download debian package for 10.04 lives in /cghub
-    local $ENV{'PATH'} = $ENV{'PATH'} . ':/cghub/bin';
-
-    # version 3.3.4 has GeneTorrent binary
-    # version 3.8.3 has gtdownload binary
-    my $exe = do {
-        `gtdownload --help`;
-        ($? == 0) ? 'gtdownload' : 'GeneTorrent';
-    };
-
-    my $cmd = "$exe"
-        . ' --credential-file /gscuser/kochoa/mykey.pem'    # TODO: do not hardcode
-        . ' --download https://cghub.ucsc.edu/cghub/data/analysis/download/' . $self->uuid
+    my $cmd = 'gtdownload'
+        . ' --credential-file '.$self->credential_file 
+        . ' --download ' . $self->source_url
         . ' --path ' . $self->target_path
         . ' --log stdout:verbose'
         . ' --verbose 2'
@@ -48,13 +48,13 @@ sub execute {
         . ' --rate-limit '.$self->rate_limit # mega-BYTES per second (see internet_download_mbps above)
         . ' --inactivity-timeout ' . 3 * 60 * 24   # in minutes - instead of bsub -W
     ;
+}
 
-    $self->debug_message('Cmd: ' . $cmd);
+sub _verify_success {
+    my $self = shift;
 
-    my $res = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-
-    if ( not $res ) {
-        $self->error_message('Cannot execute command "' . $cmd . '" : ' . $@);
+    if ( not -s $self->target_path ) {
+        $self->error_message('Failed to download source URL! '.$self->source_url);
         return;
     }
 

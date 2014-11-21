@@ -1,26 +1,18 @@
-package Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata;
+package Genome::Model::Tools::CgHub::Metadata;
 
 use strict;
 use warnings;
 
 use Genome;
 
-require File::Spec;
-require File::Temp;
 use XML::Simple;
 
-class Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata { 
+class Genome::Model::Tools::CgHub::Metadata {
     is => 'UR::Object',
     has => {
         metadata_file => {
             is => 'Text',
             doc => 'The full path of a XML metadata file containing information about a particular TCGA run including sequence file information. A temp file will be used if not given.',
-        },
-    },
-    has_optional => {
-        uuid => {
-            is => 'Text',
-            doc => 'The UUID (analysis_id) for the TCGA run used to retrieve the metadata file.',
         },
     },
     has_optional_transient => {
@@ -32,56 +24,15 @@ class Genome::InstrumentData::Command::Import::WorkFlow::Tcga::Metadata {
 };
 
 sub create {
-    my ($class, %params) = @_;
+    my $class = shift;
 
-    my $self = $class->SUPER::create(%params);
+    my $self = $class->SUPER::create(@_);
     return if not $self;
-
-    my $retrieve = $self->_retrieve_metadata_file;
-    return if not $retrieve;
 
     my $load = $self->_load_metadata_file;
     return if not $load;
 
     return $self;
-}
-
-sub _retrieve_metadata_file {
-    my $self = shift;
-
-    my $metadata_file = $self->metadata_file;
-    return 1 if defined $metadata_file and -s $self->metadata_file;
-
-    my $uuid = $self->uuid;
-    die $self->error_message('Need UUID or existing metadata file!') if not defined $uuid;
-
-    my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
-    $metadata_file = $self->metadata_file( File::Spec->catfile($tmp_dir, 'metadata.xml') ) if not defined $metadata_file;
-    my $output_file = File::Spec->catfile($tmp_dir, 'cgquery.out');
-
-    local $ENV{PATH} = $ENV{PATH} . ':/cghub/bin';
-    my $cmd = "cgquery -o $metadata_file analysis_id=$uuid > $output_file";
-    my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv or not -s $output_file ) {
-        $self->error_message($@) if $@;
-        die $self->error_message('Failed to run cgquery to retrieve metadata file!');
-    }
-
-    my $output_fh = Genome::Sys->open_file_for_reading($output_file);
-    my $number_of_hits = 0;
-    while ( my $line = $output_fh->getline ) {
-        if ( $line =~ /Matching Objects\s+:\s+(\d+)/ ) {
-            $number_of_hits = $1;
-            last;
-        }
-    }
-    $output_fh->close;
-    if ( $number_of_hits == 0 ) {
-        die $self->error_message("Failed to find uuid ($uuid) on CG Hub!");
-    }
-
-
-    return 1;
 }
 
 sub _load_metadata_file {
@@ -95,7 +46,6 @@ sub _load_metadata_file {
     }
 
     $self->_metadata($metadata);
-    $self->uuid( $metadata->{Result}->{analysis_id} ) if not defined $self->uuid;
 
     return 1;
 }
@@ -111,15 +61,15 @@ sub get_attribute_value {
     die $self->error_message('No metadata set to get attribute value!') if not $self->_metadata;
     die $self->error_message('No name to get attribute value!') if not $name;
 
-    if ( $self->can($name) ) {
-        return $self->$name;
-    }
-
     $name = $attribute_mapping{$name} if exists $attribute_mapping{$name};
     my $value = $self->_metadata->{Result}->{$name};
 
     return if not defined $value or $value eq '';
     return $value;
+}
+
+sub uuid {
+    return $_[0]->get_attribute_value('uuid');
 }
 
 sub reference_assembly_shortname {
@@ -139,6 +89,7 @@ sub reference_assembly_version {
 
     my $reference_assembly_shortname = $self->reference_assembly_shortname;
     return if not $reference_assembly_shortname;
+
 
     if ( $reference_assembly_shortname =~ /hg(\d\d)/i ) {
         return $1 + 18;
