@@ -10,7 +10,7 @@ use Genome::Utility::IO::SeparatedValueReader qw();
 use Genome::Utility::IO::SeparatedValueWriter qw();
 
 class Genome::Model::Tools::EpitopePrediction::BindingFilter {
-    is => ['Genome::Model::Tools::EpitopePrediction::Base'],
+    is => 'Genome::Model::Tools::EpitopePrediction::Base',
     has_input => [
         fof_file => {
             is  => 'FilePath',
