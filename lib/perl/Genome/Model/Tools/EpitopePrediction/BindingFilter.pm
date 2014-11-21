@@ -94,7 +94,7 @@ sub execute {
 			foreach my $length (sort keys %{ $prediction{$mode}->{$sample} }) {
 				foreach my $gene (sort @{ $prediction{$mode}->{$sample}->{$length}->{genes} }) {
 # BEST
-					unless( !$best{$sample}->{$gene->{'Gene Name'}}->{SCORE} ) {
+					if ( $best{$sample}->{$gene->{'Gene Name'}}->{SCORE} ) {
 						if ($gene->{'MT Score'} < $best{$sample}->{$gene->{'Gene Name'}}->{SCORE}) {
 							$best{$sample}->{$gene->{'Gene Name'}}->{SCORE} = $gene->{'MT Score'};
 							$best{$sample}->{$gene->{'Gene Name'}}->{GENES} = [];
