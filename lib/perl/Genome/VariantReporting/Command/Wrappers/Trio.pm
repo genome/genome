@@ -9,8 +9,8 @@ use List::MoreUtils qw(uniq);
 use File::Slurp qw();
 
 my $DOCM = {
-    snvs_build => "a06152c107884ba78b90c5f09be17163",
-    indels_build => "45841689d047419ea26df89128d6f121",
+    snvs_build => "847b3cacad1249b8b7e46f89e02d96da",
+    indels_build => "1040bf09070c4176a5256fa8a075378f",
 };
 
 class Genome::VariantReporting::Command::Wrappers::Trio {
