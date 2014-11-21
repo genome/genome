@@ -95,21 +95,19 @@ sub execute {
 				foreach my $gene (sort @{ $prediction{$mode}->{$sample}->{$length}->{genes} }) {
 # BEST
 					if ( $best{$sample}->{$gene->{'Gene Name'}}->{SCORE} ) {
+						if ($gene->{'MT Score'} > $best{$sample}->{$gene->{'Gene Name'}}->{SCORE}) {
+							next;
+						}
+
 						if ($gene->{'MT Score'} < $best{$sample}->{$gene->{'Gene Name'}}->{SCORE}) {
-							$best{$sample}->{$gene->{'Gene Name'}}->{SCORE} = $gene->{'MT Score'};
 							$best{$sample}->{$gene->{'Gene Name'}}->{GENES} = [];
-							$gene->{Sample} = $sample;
-							$gene->{Length} = $length;
-							$gene->{Mode}   = $mode;
-							push( @{ $best{$sample}->{$gene->{'Gene Name'}}->{GENES} }, $gene );
 						}
-						elsif ($gene->{'MT Score'} == $best{$sample}->{$gene->{'Gene Name'}}->{SCORE}) {
-							$best{$sample}->{$gene->{'Gene Name'}}->{SCORE} = $gene->{'MT Score'};
-							$gene->{Sample} = $sample;
-							$gene->{Length} = $length;
-							$gene->{Mode}   = $mode;
-							push( @{ $best{$sample}->{$gene->{'Gene Name'}}->{GENES} }, $gene );
-						}
+
+						$best{$sample}->{$gene->{'Gene Name'}}->{SCORE} = $gene->{'MT Score'};
+						$gene->{Sample} = $sample;
+						$gene->{Length} = $length;
+						$gene->{Mode}   = $mode;
+						push( @{ $best{$sample}->{$gene->{'Gene Name'}}->{GENES} }, $gene );
 					}
 					else {
 						$best{$sample}->{$gene->{'Gene Name'}}->{SCORE} = $gene->{'MT Score'};
