@@ -15,13 +15,15 @@ class Genome::WorkflowBuilder::DAG {
 
     has => [
         operations => {
-            is => 'Genome::WorkflowBuilder',
-            is_many => 1,
+            is => 'ARRAY',
+            default => [],
+            doc => 'Genome::WorkflowBuilder::Detail::Operation objects',
         },
 
         links => {
-            is => 'Genome::WorkflowBuilder::Link',
-            is_many => 1,
+            is => 'ARRAY',
+            default => [],
+            doc => 'Genome::WorkflowBuilder::Link objects',
         },
 
         log_dir => {
@@ -31,6 +33,17 @@ class Genome::WorkflowBuilder::DAG {
     ],
 };
 
+sub add_operation {
+    my ($self, $op) = Params::Validate::validate_pos(@_, 1, 1);
+    push @{$self->operations}, $op;
+    return $op;
+}
+
+sub add_link {
+    my ($self, $link) = Params::Validate::validate_pos(@_, 1, 1);
+    push @{$self->links}, $link;
+    return $link;
+}
 
 # ------------------------------------------------------------------------------
 # Public Methods
@@ -77,7 +90,7 @@ sub connect_output {
 sub operation_named {
     my ($self, $name) = @_;
 
-    for my $op ($self->operations) {
+    for my $op (@{$self->operations}) {
         if ($op->name eq $name) {
             return $op
         }
@@ -135,9 +148,9 @@ sub get_xml_element {
     }
 
     map {$element->addChild($_->get_xml_element)}
-        sort {$a->name cmp $b->name} $self->operations;
+        sort {$a->name cmp $b->name} @{$self->operations};
     map {$element->addChild($_->get_xml_element)}
-        sort {$a->sort_key cmp $b->sort_key} $self->links;
+        sort {$a->sort_key cmp $b->sort_key} @{$self->links};
 
     return $element;
 }
@@ -164,11 +177,11 @@ sub validate {
     $self->_validate_mandatory_inputs;
     $self->_validate_non_conflicting_inputs;
 
-    for my $op ($self->operations) {
+    for my $op (@{$self->operations}) {
         $op->validate;
     }
 
-    for my $link ($self->links) {
+    for my $link (@{$self->links}) {
         $link->validate;
     }
 
@@ -220,7 +233,7 @@ sub _property_names_from_links {
 
     my $property_names = new Set::Scalar;
 
-    for my $link ($self->links) {
+    for my $link (@{$self->links}) {
         if ($link->$query_name) {
             $property_names->insert($link->$property_holder);
         }
@@ -232,7 +245,7 @@ sub _validate_operation_names_are_unique {
     my $self = shift;
 
     my $operation_names = new Set::Scalar;
-    for my $op ($self->operations) {
+    for my $op (@{$self->operations}) {
         if ($operation_names->contains($op->name)) {
             die $self->error_message(sprintf(
                     "Workflow DAG '%s' contains multiple operations named '%s'",
@@ -248,9 +261,9 @@ sub _validate_linked_operation_ownership {
     my $self = shift;
 
     my %operations_hash;
-    for my $op ($self->operations) {$operations_hash{$op} = 1;}
+    for my $op (@{$self->operations}) {$operations_hash{$op} = 1;}
 
-    for my $link ($self->links) {
+    for my $link (@{$self->links}) {
         $self->_validate_operation_ownership($link->source, \%operations_hash);
         $self->_validate_operation_ownership($link->destination,
             \%operations_hash);
@@ -275,7 +288,7 @@ sub _validate_mandatory_inputs {
     my $self = shift;
 
     my $mandatory_inputs = $self->_get_mandatory_inputs;
-    for my $link ($self->links) {
+    for my $link (@{$self->links}) {
         my $ei = $self->_encode_input($link->destination_operation_name,
             $link->destination_property);
         if ($mandatory_inputs->contains($ei)) {
@@ -296,7 +309,7 @@ sub _get_mandatory_inputs {
 
     my $result = new Set::Scalar;
 
-    for my $op ($self->operations) {
+    for my $op (@{$self->operations}) {
         for my $prop_name ($op->input_properties) {
             $result->insert($self->_encode_input($op->name, $prop_name));
         }
@@ -319,7 +332,7 @@ sub _validate_non_conflicting_inputs {
     my $self = shift;
 
     my $encoded_inputs = new Set::Scalar;
-    for my $link ($self->links) {
+    for my $link (@{$self->links}) {
         my $ei = $self->_encode_input($link->destination_operation_name,
             $link->destination_property);
         if ($encoded_inputs->contains($ei)) {
