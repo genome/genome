@@ -18644,6 +18644,22 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>parse-netmhcpan-key-mutant',
+      [
+        'netmhc-file=s',
+        'files',
+        'parsed-file=s',
+        'files',
+        'output-type=s',
+        [
+          'top',
+          'all'
+        ],
+        'key-file=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>generate-fasta-key',
       [
         'input-file=s',
@@ -18675,22 +18691,6 @@ $Genome::Command::OPTS_SPEC = [
         'anno-db=s',
         'files',
         'anno-db-version=s',
-        'files',
-        'help!',
-        undef
-      ],
-      '>parse-netmhcpan-key-mutant',
-      [
-        'netmhc-file=s',
-        'files',
-        'parsed-file=s',
-        'files',
-        'output-type=s',
-        [
-          'top',
-          'all'
-        ],
-        'key-file=s',
         'files',
         'help!',
         undef
@@ -18728,6 +18728,15 @@ $Genome::Command::OPTS_SPEC = [
         'anno-db=s',
         'files',
         'anno-db-version=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>binding-filter',
+      [
+        'fof-file=s',
+        'files',
+        'output-file=s',
         'files',
         'help!',
         undef
@@ -19049,6 +19058,35 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'debug!',
         undef,
+        'help!',
+        undef
+      ],
+      'help!',
+      undef
+    ],
+    '>cg-hub',
+    [
+      '>gene-torrent',
+      [
+        'lsf-resource=s',
+        'files',
+        'uuid=s',
+        'files',
+        'target-path=s',
+        'files',
+        'output-file=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>query',
+      [
+        'uuid=s',
+        'files',
+        'output-file=s',
+        'files',
+        'xml-file=s',
+        'files',
         'help!',
         undef
       ],
@@ -22201,17 +22239,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      'help!',
-      undef
-    ],
-    '>gene-torrent',
-    [
-      'lsf-resource=s',
-      'files',
-      'uuid=s',
-      'files',
-      'target-path=s',
-      'files',
       'help!',
       undef
     ],
