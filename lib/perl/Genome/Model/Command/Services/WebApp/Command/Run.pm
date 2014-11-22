@@ -2,7 +2,7 @@
 package Genome::Model::Command::Services::WebApp::Command::Run;
 
 class Genome::Model::Command::Services::WebApp::Command::Run {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_optional => [
         fixed_port => {
             is => Boolean,

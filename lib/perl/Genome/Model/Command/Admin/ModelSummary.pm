@@ -1,7 +1,7 @@
 package Genome::Model::Command::Admin::ModelSummary;
 
 class Genome::Model::Command::Admin::ModelSummary {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => 'Tool for the Cron Tzar to review builds, e.g. missing builds, failed builds, etc.',
     has => [
         models => {

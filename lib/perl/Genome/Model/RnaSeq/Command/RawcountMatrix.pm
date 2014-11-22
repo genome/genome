@@ -16,7 +16,7 @@ use Genome;
 
 class Genome::Model::RnaSeq::Command::RawcountMatrix
 {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input =>
     [
         models =>

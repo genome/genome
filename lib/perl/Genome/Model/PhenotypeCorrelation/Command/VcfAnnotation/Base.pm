@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 class Genome::Model::PhenotypeCorrelation::Command::VcfAnnotation::Base {
-    is => "Genome::Command::Base",
+    is => "Command::V2",
     has_input => [
         input_file => {
             is => "Text",

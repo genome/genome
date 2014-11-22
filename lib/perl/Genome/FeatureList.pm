@@ -458,7 +458,7 @@ sub _resolve_param_value_from_text_by_name_or_id {
     my $param_arg = shift;
 
     #First try default behaviour of looking up by name or id
-    my @results = Genome::Command::Base->_resolve_param_value_from_text_by_name_or_id($class, $param_arg);
+    my @results = Command::V2->_resolve_param_value_from_text_by_name_or_id($class, $param_arg);
 
     #If that didn't work, and the argument is a filename, see if we have a feature list matching the provided file.
     if(!@results and -f $param_arg) {

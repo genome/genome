@@ -12,7 +12,7 @@ use strict;
 use warnings;
 
 class Genome::Model::PhenotypeCorrelation::Command::ParallelVep {
-    is => ["Genome::Command::Base"],
+    is => ["Command::V2"],
     doc => "Run VEP in parallel by chromosome.",
     has_input => [
         input_vcf => {

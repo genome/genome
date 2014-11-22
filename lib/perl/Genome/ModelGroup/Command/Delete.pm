@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::ModelGroup::Command::Delete {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         model_group => {
             is => 'Genome::ModelGroup',

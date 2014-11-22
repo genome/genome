@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::Command::Validate {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => "Validate a build.",
     has_input => [
         builds => {

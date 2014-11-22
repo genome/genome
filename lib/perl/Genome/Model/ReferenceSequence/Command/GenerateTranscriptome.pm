@@ -6,7 +6,7 @@ use strict;
 use Genome;
 
 class Genome::Model::ReferenceSequence::Command::GenerateTranscriptome{
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         reference_sequence_build_name => {
             is => 'Text',

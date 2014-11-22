@@ -1,7 +1,7 @@
 package Genome::Model::Build::Command::Base;
 
 class Genome::Model::Build::Command::Base {
-    is          => 'Genome::Command::Base',
+    is          => 'Command::V2',
     is_abstract => 1,
     has         => [
         builds => {

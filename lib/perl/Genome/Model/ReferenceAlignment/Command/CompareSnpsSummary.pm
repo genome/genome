@@ -6,7 +6,7 @@ use Genome;
 use Carp 'confess';
 
 class Genome::Model::ReferenceAlignment::Command::CompareSnpsSummary {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         build => {
             is => 'Genome::Model::Build::ReferenceAlignment',

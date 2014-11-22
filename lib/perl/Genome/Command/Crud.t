@@ -272,7 +272,7 @@ like($help_text,
     qr(USAGE\s+person update title)s,
     'person update title help header');
 like($help_text,
-    qr(REQUIRED ARGUMENTS\s+value\s+Text.*?PEOPLE\s+Person\s+People to update, resolved via string\.)s,
+    qr(REQUIRED PARAMS\s+value.*?PEOPLE\s+People to update, resolved via string\.)s,
     'person update required args help');
 
 
@@ -281,7 +281,7 @@ like($help_text,
     qr(USAGE\s+person update best-friend),
     'person update best-friend help header');
 like($help_text,
-    qr(REQUIRED ARGUMENTS\s+value\s+Person\s+Best friend of this person\s+PEOPLE\s+Person\s+People to update, resolved via string\.),
+    qr(REQUIRED PARAMS\s+value\s+Best friend of this person\s+PEOPLE\s+People to update, resolved via string\.),
     'person update best-friend required args help');
 
 # update property
@@ -381,10 +381,10 @@ $update_no_people_fail->dump_status_messages(0);
 $update_no_people_fail->dump_error_messages(0);
 $update_no_people_fail->queue_error_messages(1);
 ok((!$update_no_people_fail->execute && !$update_no_people_fail->result), 'UPDATE PROPERTY name: execute failed w/o people');
+$DB::single = 1;
 @error_messages = $update_no_people_fail->error_messages();
 is_deeply(\@error_messages,
-    [ q(Property 'people': No value specified for required property),
-      q(Please see 'person update name --help' for more information.), ],
+    [ q(Property 'people': No value specified for required property), ],
     'Expected error messages');
 $update_no_people_fail->delete;
 
@@ -446,8 +446,7 @@ ok((!$update_pets_fail->execute && !$update_pets_fail->result), 'UPDATE PROPERTY
 is($ronnie->has_pets, $ronnie_has_pets, 'UPDATE PROPERTY has pets: unchanged');
 @error_messages = $update_pets_fail->error_messages();
 is_deeply(\@error_messages,
-    [   q(Property 'value': The value blah is not in the list of valid values for value.  Valid values are: yes, no),
-        q(Please see 'person update has-pets --help' for more information.) ],
+    [   q(Property 'value': The value blah is not in the list of valid values for value.  Valid values are: yes, no), ],
     'Expected error messages');
 $update_pets_fail->delete;
 
@@ -466,7 +465,7 @@ like($help_text,
     qr(USAGE\s+person update friends add),
     'person update friends add help header');
 like($help_text,
-    qr(REQUIRED ARGUMENTS\s+values\s+Person\s+Friends of this person\s+PEOPLE\s+Person\s+People to update, resolved via string\.),
+    qr(REQUIRED PARAMS\s+values\s+Friends of this person\s+PEOPLE\s+People to update, resolved via string\.),
     'person update friends add required args help');
 
 $help_text = strip_ansi( Person::Command::Update::Friends::Remove->help_usage_complete_text );
@@ -474,7 +473,7 @@ like($help_text,
     qr(USAGE\s+person update friends remove),
     'person update friends remove help header');
 like($help_text,
-    qr(REQUIRED ARGUMENTS\s+values\s+Person\s+Friends of this person\s+PEOPLE\s+Person\s+People to update, resolved via string\.),
+    qr(REQUIRED PARAMS\s+values\s+Friends of this person\s+PEOPLE\s+People to update, resolved via string\.),
     'person update friends add required args help');
 
 my @georges_friends = $george->friends;
@@ -529,8 +528,7 @@ $update_add_fail_no_people->queue_error_messages(1);
 ok((!$update_add_fail_no_people->execute && !$update_add_fail_no_people->result), 'UPDATE ADD friends: execute fails as expected, no people');
 @error_messages = $update_add_fail_no_people->error_messages();
 is_deeply(\@error_messages,
-    [   q(Property 'people': No value specified for required property),
-        q(Please see 'person update friends add --help' for more information.) ],
+    [   q(Property 'people': No value specified for required property), ],
     'Expected error messages');
 $update_add_fail_no_people->delete;
 
@@ -544,8 +542,7 @@ $update_add_fail_no_values->queue_error_messages(1);
 ok((!$update_add_fail_no_values->execute && !$update_add_fail_no_values->result), 'UPDATE ADD friends: execute fails as expected, no values');
 @error_messages = $update_add_fail_no_values->error_messages();
 is_deeply(\@error_messages,
-    [   q(Property 'values': No value specified for required property),
-        q(Please see 'person update friends add --help' for more information.) ],
+    [   q(Property 'values': No value specified for required property), ],
     'Expected error messages');
 $update_add_fail_no_values->delete;
 

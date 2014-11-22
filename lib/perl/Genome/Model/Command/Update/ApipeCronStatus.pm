@@ -1,12 +1,12 @@
 package Genome::Model::Command::Update::ApipeCronStatus;
 
 class Genome::Model::Command::Update::ApipeCronStatus {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         models => {
             is => 'Genome::Model',
             is_many => 1,
-            doc => 'Models for which apipe_cron_status will be set. Resolved by Genome::Command::Base.',
+            doc => 'Models for which apipe_cron_status will be set.',
         },
         value => {
             is => 'Text',

@@ -12,7 +12,7 @@ use File::Spec qw();
 use File::Basename qw();
 
 class Genome::Model::SomaticValidation::Command::AnnotateVariants {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         annotator_version => {
             doc => 'Version of the "annotate transcript-variants" tool to run   during the annotation step',

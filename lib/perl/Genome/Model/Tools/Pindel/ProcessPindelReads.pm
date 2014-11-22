@@ -8,7 +8,7 @@ use Workflow;
 use Genome::Statistics;
 
 class Genome::Model::Tools::Pindel::ProcessPindelReads {
-    is => [ 'Genome::Command::Base' ],
+    is => [ 'Command::V2' ],
     has => [
         input_file => {
             is => 'String',

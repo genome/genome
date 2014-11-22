@@ -12,7 +12,7 @@ use File::Spec;
 use Bio::SeqIO;
 
 class Genome::Model::GenePrediction::Command::Eukaryotic::PredictionsToAce {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_optional => [
         ace_file => {
             is => 'FilePath',

@@ -8,7 +8,7 @@ use File::Basename;
 use Genome::Utility::Text qw( sanitize_string_for_filesystem );
 
 class Genome::Model::ReferenceAlignment::Command::VcfSymlinks {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => "Create a directory of symlinks to builds' VCF files, suitably renamed for data transfer",
     has => [
         output_directory => {

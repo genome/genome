@@ -7,7 +7,7 @@ use Genome;
 
 
 class Genome::FeatureList::Command::DumpMergedList {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         feature_list => {
             is => 'Genome::FeatureList',

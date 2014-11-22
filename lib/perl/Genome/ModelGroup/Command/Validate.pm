@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::ModelGroup::Command::Validate {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => "Validate a model group.",
     has_input => [
         model_group => {

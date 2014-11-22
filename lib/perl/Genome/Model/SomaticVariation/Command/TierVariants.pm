@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::SomaticVariation::Command::TierVariants{
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has =>[
         build_id => {
             is => 'Text',

@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Command {
-    is => 'Command::Tree',
+    is => 'Genome::Command::Base',
 };
 
 # This map allows the top-level genome commands to be whatever

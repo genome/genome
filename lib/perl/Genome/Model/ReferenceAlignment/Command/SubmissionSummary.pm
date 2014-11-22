@@ -7,7 +7,7 @@ use Genome;
 use File::Basename;
 
 class Genome::Model::ReferenceAlignment::Command::SubmissionSummary {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => "List a summary of the merged alignment BAMs for the provided builds and a file suitable for submitting the bam list.",
     has => [
         sample_mapping_file => {

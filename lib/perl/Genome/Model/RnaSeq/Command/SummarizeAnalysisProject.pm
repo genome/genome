@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::RnaSeq::Command::SummarizeAnalysisProject {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         analysis_project => {
             is => 'Genome::Config::AnalysisProject',

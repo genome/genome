@@ -9,7 +9,7 @@ use Data::Dumper 'Dumper';
 use Regexp::Common;
 
 class Genome::Model::Build::Command::Queue {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => "Queue the starting of a build.",
     has => [
         models => {

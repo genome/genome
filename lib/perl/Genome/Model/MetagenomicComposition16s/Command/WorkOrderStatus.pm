@@ -9,8 +9,8 @@ use Data::Dumper 'Dumper';
 require Carp;
 
 class Genome::Model::MetagenomicComposition16s::Command::WorkOrderStatus {
-    is => [qw/ Genome::Command::Base Genome::Report::GeneratorCommand /],
-    has => [
+    is => 'Genome::Report::GeneratorCommand',
+    has_param => [
         work_order => {
             is => 'Genome::WorkOrder',
             is_many => 0,

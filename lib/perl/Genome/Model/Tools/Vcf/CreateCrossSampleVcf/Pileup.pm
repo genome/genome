@@ -7,7 +7,7 @@ use Genome;
 use Genome::File::Vcf::Reader;
 
 class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Pileup {
-    is  => 'Genome::Command::Base',
+    is  => 'Command::V2',
     has_input => [
         build_clump => {
             is => 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf::BuildClump',

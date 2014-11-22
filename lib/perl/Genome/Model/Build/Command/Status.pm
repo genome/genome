@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::Command::Status {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => "prints status of non-succeeded builds and tallies all build statuses",
     has => [
         builds => {

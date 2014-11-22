@@ -8,7 +8,7 @@ use Data::Dump qw(pp);
 use File::Basename;
 
 class Genome::Model::Tools::DetectVariants2::Combine {
-    is  => ['Genome::Command::Base'],
+    is  => ['Command::V2'],
     is_abstract => 1,
     has_input => [
         input_a_id => {

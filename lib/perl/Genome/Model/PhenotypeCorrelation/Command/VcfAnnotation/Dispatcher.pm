@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 class Genome::Model::PhenotypeCorrelation::Command::VcfAnnotation::Dispatcher {
-    is => "Genome::Command::Base",
+    is => "Command::V2",
     has_input => [
         species_name => {
             is => "Text",

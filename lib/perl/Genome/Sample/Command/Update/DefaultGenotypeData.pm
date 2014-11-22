@@ -11,7 +11,7 @@ class Genome::Sample::Command::Update::DefaultGenotypeData {
         sample => {
             is => 'Genome::Sample',
             is_many => 0,
-            doc => 'Sample for which default genotype data will be set. Resolved by Genome::Command::Base.',
+            doc => 'Sample for which default genotype data will be set.',
         },
         genotype_id => {
             is => 'Text',

@@ -7,7 +7,7 @@ use Genome;
 
 
 class Genome::Model::ReferenceSequence::Command::Converter::Create {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         source_reference => { is => 'Genome::Model::Build::ReferenceSequence', doc => 'the reference to convert from' },
         destination_reference => { is => 'Genome::Model::Build::ReferenceSequence', doc => 'the reference to convert to' },

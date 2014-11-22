@@ -11,7 +11,7 @@ use File::Basename;
 use Genome;
 
 class Genome::Model::Tools::DetectVariants2::Base {
-    is => ['Genome::Command::Base'],
+    is => ['Command::V2'],
     is_abstract => 1,
     has => [
         # TODO: update the workflow to be smart enough to let reference_build be an input, so we don't need to independently declare the _id

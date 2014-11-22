@@ -8,7 +8,7 @@ use Genome;
 use Regexp::Common;
 
 class Genome::Model::Command::Define::Base {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     is_abstract => 1,
     has => [
         name => {
@@ -58,14 +58,14 @@ sub help_detail {
     my $help = <<HELP;
 This will define a model, setting inputs, instrument data as given. List params as space separated bare args. Use the format: property=value. The value can be an id or filter string.  If the property can have many values, use a filter string, or multiple key=value pairs.
 
-Params for all model types
- * auto_assign_inst_data
- * auto_build_alignments
- * instrument_data
+ Params for all model types
+  * auto_assign_inst_data
+  * auto_build_alignments
+  * instrument_data
 HELP
-    $help .= "\nSpecific params for $model_class\n";
+    $help .= "\n Specific params for $model_class\n";
     for my $input ( $class->inputs_for_model_class ) {
-        $help .= ' * '.$input->property_name.' ('.($input->is_many ? 'many' : 'singular').")\n";
+        $help .= '  * '.$input->property_name.' ('.($input->is_many ? 'many' : 'singular').")\n";
     }
     return $help;
 }

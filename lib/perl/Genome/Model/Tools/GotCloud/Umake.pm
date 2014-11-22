@@ -7,7 +7,7 @@ use Genome;
 use Memoize;
 
 class Genome::Model::Tools::GotCloud::Umake {
-    is => ['Genome::Command::Base', 'Genome::Model::Tools::GotCloud'],
+    is => ['Command::V2', 'Genome::Model::Tools::GotCloud'],
     has => [
         model_group => {
             is => 'Genome::ModelGroup',

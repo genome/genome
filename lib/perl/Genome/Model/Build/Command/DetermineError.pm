@@ -9,7 +9,7 @@ use IPC::System::Simple qw(capture);
 use Try::Tiny;
 
 class Genome::Model::Build::Command::DetermineError {
-    is => 'Genome::Command::Base',
+    is => 'Genome::Command::WithColor',
     has => [
         build => {
             is => 'Genome::Model::Build',

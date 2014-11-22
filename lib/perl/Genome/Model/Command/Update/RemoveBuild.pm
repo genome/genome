@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Command::Update::RemoveBuild {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         builds => {
             is                  => 'Genome::Model::Build',

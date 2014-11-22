@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Command::Export::Pcgp { 
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         paths => { shell_args_position => 1, is => 'FilePath', is_many => 1, doc => 'path(s) to BAMs' }, 
     ],

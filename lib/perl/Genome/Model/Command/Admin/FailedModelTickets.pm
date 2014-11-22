@@ -19,7 +19,7 @@ BEGIN {
 }
 
 class Genome::Model::Command::Admin::FailedModelTickets {
-    is => 'Genome::Command::Base',
+    is => 'Genome::Command::WithColor',
     doc => 'find failed cron models, check that they are in a ticket',
     has_input => [
         include_failed => {
