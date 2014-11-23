@@ -36,6 +36,18 @@ class Genome::WorkflowBuilder::DAG {
 sub add_operation {
     my ($self, $op) = Params::Validate::validate_pos(@_, 1, 1);
     push @{$self->operations}, $op;
+
+    my %constant_values = %{$op->constant_values};
+    while (my ($constant_name, $value) = each %constant_values) {
+        my $input_property = sprintf('%s.%s', $op->name, $constant_name);
+        $self->connect_input(
+            input_property => $input_property,
+            destination => $op,
+            destination_property => $constant_name,
+        );
+        $self->declare_constant($input_property => $value);
+    }
+
     return $op;
 }
 

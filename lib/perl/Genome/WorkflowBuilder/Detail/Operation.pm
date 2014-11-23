@@ -10,6 +10,7 @@ use Set::Scalar qw();
 use XML::LibXML qw();
 use Carp qw(confess);
 use Data::Dumper qw();
+use List::MoreUtils qw(firstval);
 
 
 class Genome::WorkflowBuilder::Detail::Operation {
@@ -31,6 +32,12 @@ class Genome::WorkflowBuilder::Detail::Operation {
             is_optional => 1,
         },
     ],
+    has_transient => {
+        constant_values => {
+            is => 'HASH',
+            default => {},
+        },
+    }
 };
 
 
@@ -104,6 +111,22 @@ sub operation_type {
     return Genome::WorkflowBuilder::Detail::TypeMap::type_from_class($self->class);
 }
 
+sub declare_constant {
+    my $self = shift;
+    my %constants = @_;
+
+    while (my ($key, $value) = each %constants) {
+        unless ($self->is_input_property($key)) {
+            die sprintf("No input named (%s) on operation named (%s)",
+                $key, $self->name);
+        }
+        if (exists $self->constant_values->{$key}) {
+            die sprintf("Input named (%s) on operation named (%s) has " .
+                "already been declared a constant", $key, $self->name);
+        }
+        $self->constant_values->{$key} = $value;
+    }
+}
 
 # ------------------------------------------------------------------------------
 # Inherited methods
