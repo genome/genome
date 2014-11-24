@@ -72,7 +72,13 @@ sub execute {
 
         my $temp = Genome::Sys->base_temp_directory;
         my $sorted_temp_bam_file = $temp . "/temp_rg.sorted." . $$ . ".bam";
-        my $extract_rg_cmd = Genome::Model::Tools::Sam::ExtractReadGroup->create(input=>$input_file, output=>$sorted_temp_bam_file, read_group_id=>$self->read_group_id);
+        my $extract_rg_cmd = Genome::Model::Tools::Sam::ExtractReadGroup->create(
+            input         => $input_file, 
+            output        => $sorted_temp_bam_file, 
+            name_sort     => 1,
+            use_version   => $self->samtools_version,
+            read_group_id => $self->read_group_id,
+        );
         unless ($extract_rg_cmd->execute()) {
             $self->error_message("Failed to extract read group.");
             return;
