@@ -85,6 +85,11 @@ is($shortcut_sr, $sr, 'Found the same TestResult when shortcutting') or die;
 
 check_sr_user($sr, $USER2, 'shortcut');
 
+$cmd = TestCommand->create(user => $USER2, label => "label2", test_name => 'baz');
+$cmd->execute();
+check_sr_user($cmd->output_result, $USER2, 'label2');
+check_sr_user($cmd->output_result, $USER2, 'created');
+
 $cmd = TestCommand->create(test_name => 'bar');
 $cmd->execute();
 is_deeply([$cmd->output_result->users], [], "No users created when 'user' is not passed as an input");

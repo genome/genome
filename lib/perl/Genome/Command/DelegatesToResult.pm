@@ -18,6 +18,10 @@ class Genome::Command::DelegatesToResult {
         user => {
             is => 'UR::Object',
             doc => 'To generate a SoftwareResult::User',
+        },
+        label => {
+            is => 'Text',
+            doc => 'Add the user with this label',
         }
     ],
 };
@@ -84,6 +88,9 @@ sub _fetch_result {
         $self->debug_message("%s returned result (%s)", $method, $result->id);
         $self->output_result($result);
         $self->create_software_result_user($user_label);
+        if (defined $self->label) {
+            $self->create_software_result_user($self->label);
+        }
         return $self->post_get_or_create;
     } else {
         $self->debug_message("Failed to %s result.", $method);

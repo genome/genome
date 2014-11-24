@@ -104,6 +104,7 @@ sub input_hash {
     $hash{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
     delete $hash{user};
     delete $hash{process_id};
+    delete $hash{label};
     return %hash;
 }
 
