@@ -75,7 +75,8 @@ sub execute {
     require Workflow::Simple;
 
     my $self = shift;
-    my $result = Workflow::Simple::run_workflow_lsf($self->get_xml, @_);
+    my %inputs = (%{$self->constant_values}, @_);
+    my $result = Workflow::Simple::run_workflow_lsf($self->get_xml, %inputs);
     unless (defined($result)) {
         die $self->error_message(sprintf(
             "Workflow failed with these errors: %s",
