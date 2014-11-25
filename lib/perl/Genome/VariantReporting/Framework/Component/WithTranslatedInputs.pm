@@ -42,22 +42,11 @@ sub translate_inputs {
 }
 
 sub translated_input_names {
-    my $self = shift;
-    return map {$_->property_name} $self->__meta__->properties(
+    my $class = shift;
+    return map {$_->property_name} $class->__meta__->properties(
         is_translated => 1,
         is_many => 0,
     );
-}
-
-sub needed_translations {
-    my $self = shift;
-    return Set::Scalar->new(map {$self->$_} $self->translated_input_names);
-}
-
-sub _translation_errors {
-    my ($self, $translations, $component_name) = @_;
-    return Genome::VariantReporting::Framework::Utility::get_missing_errors($component_name,
-        $translations, $self->needed_translations, "Translations", "component");
 }
 
 sub translated_is_many_input_names {

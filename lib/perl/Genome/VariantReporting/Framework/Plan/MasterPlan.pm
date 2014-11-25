@@ -28,7 +28,7 @@ class Genome::VariantReporting::Framework::Plan::MasterPlan {
 sub validate_translation_provider {
     my $self = shift;
     my $provider = shift;
-    my @errors = $self->__translation_errors__($provider);
+    my @errors = $self->__translation_errors__($provider->translations);
     if (@errors) {
         $self->print_errors(@errors);
         die "Plan is incompatible with translations file.";

@@ -134,6 +134,20 @@ sub __plan_errors__ {
     return;
 }
 
+sub __translation_errors__ {
+    my $self = shift;
+    my $translations = shift;
+
+    return Genome::VariantReporting::Framework::Utility::get_missing_errors($self->get_class->name,
+        $translations, $self->needed_translations, "Translations", "component");
+}
+
+sub needed_translations {
+    my $self = shift;
+    return Set::Scalar->new(map {$self->params->{$_}} $self->get_class->translated_input_names);
+}
+
+
 sub __object_errors__ {
     my $self = shift;
 

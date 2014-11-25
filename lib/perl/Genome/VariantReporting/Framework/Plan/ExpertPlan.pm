@@ -19,16 +19,9 @@ sub category {
     'experts';
 }
 
-sub __translation_errors__ {
+sub needed_translations {
     my $self = shift;
-    my $provider = shift;
-
-    my $adaptor_class = $self->object->adaptor_class;
-    my $adaptor_object = $adaptor_class->create($self->adaptor_params);
-    my @errors = $adaptor_object->_translation_errors($provider->translations, $adaptor_object->name);
-    $adaptor_object->delete();
-
-    return @errors;
+    return Set::Scalar->new(map {$self->adaptor_params->{$_}} $self->get_class->adaptor_class->translated_input_names);
 }
 
 # ExpertPlans don't have any params but have adaptor_params instead
