@@ -7,11 +7,12 @@ use Genome;
 use Genome::Utility::Text qw(sanitize_string_for_filesystem);
 use File::Spec;
 
-my $DEFAULT_VERSION = '2.6';
+my $DEFAULT_VERSION = '2.74';
 my $METHRATIO_COMMAND = 'methratio.py';
 
 my %METHRATIO_VERSIONS = (
-    '2.6' => '/gscuser/cmiller/usr/src/bsmap-2.6/' . $METHRATIO_COMMAND,
+#    '2.6' => '/gscuser/cmiller/usr/src/bsmap-2.6/' . $METHRATIO_COMMAND,
+    '2.74' => '/gsc/pkg/bio/bsmap/bsmap-2.74/' . $METHRATIO_COMMAND,
 );
 
 
