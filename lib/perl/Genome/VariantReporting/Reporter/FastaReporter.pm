@@ -48,11 +48,5 @@ sub report {
     }
 }
 
-sub finalize {
-    my $self = shift;
-    $self->_output_fh->close;
-    $self->_output_fh->close;
-}
 
 1;
-
