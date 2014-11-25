@@ -26,9 +26,6 @@ class Genome::VariantReporting::Reporter::WithHeader {
         }
     },
     has_transient_optional => [
-        available_fields_dict => {
-            is => 'HASH',
-        },
         _legend_fh => {
             is_structural => 1,
         },
@@ -101,24 +98,21 @@ sub print_headers {
 sub available_fields_dict {
     my $self = shift;
 
-    unless (defined($self->__available_fields_dict)) {
-        my @interpreters = values %{$self->interpreters};
-        my %available_fields;
-        for my $interpreter (@interpreters) {
-            for my $field ($interpreter->available_fields) {
-                if (defined $available_fields{$field}) {
-                    die $self->error_message("Fields are not unique. Field: %s, Interpreters: %s and %s",
-                        $field, $interpreter->name, $available_fields{$field}->{interpreter});
-                }
-                $available_fields{$field} = {
-                    interpreter => $interpreter->name,
-                    field => $field,
-                }
+    my @interpreters = values %{$self->interpreters};
+    my %available_fields;
+    for my $interpreter (@interpreters) {
+        for my $field ($interpreter->available_fields) {
+            if (defined $available_fields{$field}) {
+                die $self->error_message("Fields are not unique. Field: %s, Interpreters: %s and %s",
+                    $field, $interpreter->name, $available_fields{$field}->{interpreter});
+            }
+            $available_fields{$field} = {
+                interpreter => $interpreter->name,
+                field => $field,
             }
         }
-        $self->__available_fields_dict(\%available_fields);
     }
-    return %{$self->__available_fields_dict};
+    return %available_fields;
 }
 
 # Default report method

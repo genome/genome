@@ -102,22 +102,19 @@ sub report {
 sub available_fields_dict {
     my $self = shift;
 
-    unless (defined($self->__available_fields_dict)) {
-        my %available_fields = $self->SUPER::available_fields_dict();
-        for my $info_tag_field (qw/inSegDup onTarget AML_RMG/) {
-            $available_fields{$info_tag_field} = {
-                interpreter => 'info-tags',
-                field => 'info_tags',
-            };
-        }
-
-        $available_fields{MeetsMinDepthCutoff} = {
-            interpreter => 'min-coverage',
-            field => 'filter_status',
+    my %available_fields = $self->SUPER::available_fields_dict();
+    for my $info_tag_field (qw/inSegDup onTarget AML_RMG/) {
+        $available_fields{$info_tag_field} = {
+            interpreter => 'info-tags',
+            field => 'info_tags',
         };
-        $self->__available_fields_dict(\%available_fields);
     }
-    return %{$self->__available_fields_dict};
+
+    $available_fields{MeetsMinDepthCutoff} = {
+        interpreter => 'min-coverage',
+        field => 'filter_status',
+    };
+    return %available_fields;
 }
 
 sub _print_info_tag {
