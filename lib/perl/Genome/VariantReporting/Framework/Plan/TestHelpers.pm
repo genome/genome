@@ -329,8 +329,6 @@ sub set_what_interpreter_x_requires {
 
     class Genome::VariantReporting::TestEpsilonReporter {
         is => 'Genome::VariantReporting::Framework::Component::Reporter',
-        has => [
-        ],
     };
 
     sub name {
