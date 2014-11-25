@@ -28826,6 +28826,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'maximum-memory=s',
         undef,
+        'name-sort!',
+        undef,
         'read-count=s',
         undef,
         'use-version=s',
