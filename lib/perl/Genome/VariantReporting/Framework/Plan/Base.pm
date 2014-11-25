@@ -60,21 +60,6 @@ sub as_hashref {
     return \%result;
 }
 
-# We overide ComponentBase validate because only plans have objects to validate
-sub validate {
-    my $self = shift;
-
-    $self->SUPER::validate;
-    $self->validate_object;
-}
-
-sub validate_object {
-    my $self = shift;
-    if (my $object = $self->object) {
-        $object->validate();
-    }
-}
-
 sub get_class {
     my $self = shift;
     return $FACTORY->get_class($self->category, $self->name);
