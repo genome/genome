@@ -50,6 +50,11 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               default => 10,
               doc => 'Variants with a normal VAF greater than this (in any normal sample) will be filtered out'
         },
+        min_tumor_var_count => {
+              is => 'Number',
+              default => 3,
+              doc => 'Variants with a tumor var count less than this (in any tumor sample) will be filtered out',
+        },
         min_tumor_vaf => {
               is => 'Number',
               default => 2.5,
@@ -283,7 +288,7 @@ sub execute {
     $per_lib_header = $self->parse_per_lib_read_counts('-align_builds'=>$align_builds, '-grand_anno_per_lib_count_file'=>$grand_anno_per_lib_count_file, '-variants'=>$variants);
   }
 
-  #Apply arbitrary variant filter list
+  #Apply arbitrary variant filter list (a list of variants supplied in a file that are to be removed)
   if ($self->variant_filter_list){
     $self->apply_filter_list('-variants'=>$variants);
   }
@@ -298,6 +303,8 @@ sub execute {
   #TODO: Filter out variants falling within known false positive regions/genes?
 
   #TODO: Limit analysis to variants *called in* a particular tumor only (e.g. day0 tumor) - rather than taking the union of calls from all samples
+
+  #TODO: Add an additional filter that uses the false postive filter: 'gmt validation identify-outliers'
 
   #TODO: Add additional filters for low VAF variants (e.g. if VAF < 10%, require at least 3 callers, support from multiple libraries, etc.)
 
@@ -795,6 +802,7 @@ sub parse_read_counts{
     #For example if there is exome AND WGS data we want the min coverage criteria to applied to either of these (whichever is higher)
     my %samples;
     my $max_normal_vaf_observed = 0;
+    my $max_tumor_var_count_observed = 0;
     my $max_tumor_vaf_observed = 0;
     my $na_found = 0;
     my @covs;
@@ -818,6 +826,8 @@ sub parse_read_counts{
         my $normal_vaf = $line[$columns{$vaf_colname}{c}];
         $max_normal_vaf_observed = $normal_vaf if ($normal_vaf > $max_normal_vaf_observed);
       }else{
+        my $tumor_var_count = $line[$columns{$var_count_colname}{c}];
+        $max_tumor_var_count_observed = $tumor_var_count if ($tumor_var_count > $max_tumor_var_count_observed);
         my $tumor_vaf = $line[$columns{$vaf_colname}{c}];
         $max_tumor_vaf_observed = $tumor_vaf if ($tumor_vaf > $max_tumor_vaf_observed);
       }
@@ -845,6 +855,7 @@ sub parse_read_counts{
     }
 
     $variants->{$v}->{max_normal_vaf_observed} = $max_normal_vaf_observed;
+    $variants->{$v}->{max_tumor_var_count_observed} = $max_tumor_var_count_observed;
     $variants->{$v}->{max_tumor_vaf_observed} = $max_tumor_vaf_observed;
     $variants->{$v}->{min_coverage_observed} = $min_coverage_observed;
     $variants->{$v}->{coverages} = \@covs;
@@ -1021,6 +1032,7 @@ sub apply_variant_filters{
   my %args = @_;
   my $variants = $args{'-variants'};
   my $max_normal_vaf = $self->max_normal_vaf;
+  my $min_tumor_var_count = $self->min_tumor_var_count;
   my $min_tumor_vaf = $self->min_tumor_vaf;
   my $min_coverage = $self->min_coverage;
   my $max_gmaf = $self->max_gmaf;
@@ -1028,6 +1040,7 @@ sub apply_variant_filters{
 
   foreach my $v (keys %{$variants}){
     my $max_normal_vaf_observed = $variants->{$v}->{max_normal_vaf_observed};
+    my $max_tumor_var_count_observed = $variants->{$v}->{max_tumor_var_count_observed};
     my $max_tumor_vaf_observed = $variants->{$v}->{max_tumor_vaf_observed};
     my $min_coverage_observed = $variants->{$v}->{min_coverage_observed};
     my $gmaf = $variants->{$v}->{gmaf};
@@ -1038,6 +1051,13 @@ sub apply_variant_filters{
       $variants->{$v}->{filtered} .= "Max_Normal_VAF," if ($max_normal_vaf_observed > $max_normal_vaf);
     }elsif($max_normal_vaf_observed eq "NA"){
       $variants->{$v}->{filtered} .= "Max_Normal_VAF,";
+    }
+
+    #Tumor var count filter
+    if ($max_tumor_var_count_observed =~ /\d+/){
+      $variants->{$v}->{filtered} .= "Min_Tumor_Var_Count," if ($max_tumor_var_count_observed < $min_tumor_var_count);
+    }elsif($max_tumor_var_count_observed eq "NA"){
+      $variants->{$v}->{filtered} .= "Min_Tumor_Var_Count,";
     }
 
     #Tumor VAF filter
