@@ -1,17 +1,11 @@
 #!/usr/bin/env Rscript
 
 library(ggplot2)
-library(optparse)
 
-option_parser <- OptionParser(option_list=list(
-    make_option(c("-f", "--filename")),
-    make_option(c("--epsilon"), type="double", default=0.001)
-))
+args <- commandArgs(TRUE)
 
-options  <- parse_args(option_parser)
-filename <- options[[1]]
-epsilon  <- options[[2]]
-
+filename <- args[1]
+epsilon  <- 0.001
 
 data = read.delim(filename)
 

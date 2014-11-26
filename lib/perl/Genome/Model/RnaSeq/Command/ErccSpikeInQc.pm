@@ -183,7 +183,7 @@ sub _generate_r_plots {
     
     my $r_script_path = $self->__meta__->module_path;
     $r_script_path =~ s/\.pm/\.R/;
-    my $cmd = 'Rscript '. $r_script_path .' --filename '. $summary_file;
+    my $cmd = 'Rscript '. $r_script_path .' '. $summary_file;
 
     my $cwd = getcwd();
     chdir($output_directory);
