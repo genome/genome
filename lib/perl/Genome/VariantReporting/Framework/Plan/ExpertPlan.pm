@@ -64,7 +64,7 @@ sub __class_errors__ {
 sub __object_errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__object_errors__;
-    push @errors, $self->object->adaptor_class->__planned_output_errors__($self->adaptor_params);
+    push @errors, $self->get_class->adaptor_class->__planned_output_errors__($self->adaptor_params);
     return @errors;
 }
 
