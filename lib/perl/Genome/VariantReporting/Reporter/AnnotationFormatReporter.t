@@ -11,7 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
-use Sub::Override;
+use Genome::VariantReporting::Reporter::TestHelper qw(test_report_result);
 
 my $pkg = 'Genome::VariantReporting::Reporter::AnnotationFormatReporter';
 use_ok($pkg);
@@ -21,18 +21,7 @@ isa_ok($factory->get_class('reporters', $pkg->name), $pkg);
 
 my $data_dir = __FILE__.".d";
 
-my $file_name = 'annotation';
-my $reporter = $pkg->create(file_name => $file_name, generate_legend_file => 0);
-ok($reporter, "Reporter created successfully");
-
-my $position_interpreter = Genome::VariantReporting::Generic::PositionInterpreter->create();
-my $vep_interpreter = Genome::VariantReporting::Suite::Vep::VepInterpreter->create();
-$reporter->add_interpreter_objects($position_interpreter, $vep_interpreter);
-
-my $output_dir = Genome::Sys->create_temp_directory();
-$reporter->initialize($output_dir);
-
-my %interpretations = (
+my $interpretations = {
     'position' => {
         T => {
             chromosome_name => 1,
@@ -71,10 +60,12 @@ my %interpretations = (
             canonical         => 1,
         },
     },
+};
+
+test_report_result(
+    data_dir => $data_dir,
+    pkg => $pkg,
+    interpretations => $interpretations,
 );
 
-$reporter->report(\%interpretations);
-$reporter->finalize();
-
-compare_ok(File::Spec->join($output_dir, $file_name), File::Spec->join($data_dir, "expected.out"), "Output as expected");
 done_testing;

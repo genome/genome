@@ -74,13 +74,26 @@ use_ok($pkg);
     1;
 }
 
-my $reporter = Test::BadReporter->create(file_name => 'bad');
-ok($reporter, 'Reporter created successfully');
-dies_ok(sub {$reporter->validate;}, "Reporter does not validate");
+my $reporter = Test::BadReporter->__define__(
+    filters => {},
+    interpreters => {
+        interpreter_y => Genome::VariantReporting::AnotherTestInterpreter->create()
+    },
+);
+my @errors = $reporter->__errors__;
+is(scalar(@errors), 1, 'Found an error');
+ok(($errors[0])->desc =~ /\(different_field\) is not defined/,
+    'Error is of correct type');
 
-my $reporter2 = Test::BadReporter2->create(file_name => 'bad');
-ok($reporter2, 'Reporter created successfully');
-dies_ok(sub {$reporter2->validate;}, "Reporter does not validate");
+throws_ok(sub {
+    Test::BadReporter2->__define__(
+        filters => {},
+        interpreters => {
+            interpreter_y => Genome::VariantReporting::AnotherTestInterpreter->create(),
+            duplicate =>  Genome::VariantReporting::DuplicateInterpreter->create(),
+        },
+    );
+}, qr/Fields are not unique/, "Reporter does not validate");
 
 done_testing;
 
