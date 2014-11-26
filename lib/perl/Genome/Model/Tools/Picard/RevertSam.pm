@@ -47,14 +47,12 @@ class Genome::Model::Tools::Picard::RevertSam {
             doc => 'When removing alignment information, the set of optional tags to remove. This option may be specified 0 or more times.',
             is_optional => 1,
         },
-        #Only available in picard 1.108 or later
         sanitize => {
             is => 'Boolean',
             doc => 'WARNING: This option is potentially destructive. If enabled will discard reads in order to produce a consistent output BAM. Reads discarded include (but are not limited to) paired reads with missing mates, duplicated records, records with mismatches in length of bases and qualities. This option can only be enabled if the output sort order is queryname and will always cause sorting to occur.',
             default_value => 0,
             is_optional => 1,
         },
-        #Only available in picard 1.108 or later
         max_discard_fraction => {
             is => 'Float',
             doc => 'If SANITIZE=true and higher than MAX_DISCARD_FRACTION reads are discarded due to sanitization thenthe program will exit with an Exception instead of exiting cleanly. Output BAM will still be valid. Default value: 0.01.',
@@ -97,6 +95,14 @@ sub execute {
         }
     }
     my $cmd = $jar_path .' net.sf.picard.sam.RevertSam INPUT='. $self->input_file .' OUTPUT='. $self->output_file .' SORT_ORDER='. $self->sort_order;
+
+    if ($self->sanitize) {
+        if ($self->use_version < 1.108) {
+            die('Version '. $self->use_version .' does not support the sanitize option.');
+        }
+        $cmd .= ' MAX_DISCARD_FRACTION='. $self->max_discard_fraction;
+    }
+
     my @boolean_attributes = qw/
                                     restore_original_qualities
                                     remove_duplicate_information
@@ -113,9 +119,6 @@ sub execute {
     }
     for my $attribute ($self->attribute_to_clear) {
         $cmd .= ' ATTRIBUTE_TO_CLEAR='. $attribute;
-    }
-    if ($self->sanitize) {
-        $cmd .= ' MAX_DISCARD_FRACTION='. $self->max_discard_fraction;
     }
     $self->run_java_vm(
         cmd          => $cmd,
