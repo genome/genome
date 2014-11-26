@@ -28,19 +28,16 @@ class Genome::Model::Tools::Picard::RevertSam {
             is => 'Boolean',
             doc => 'True to restore original qualities from the OQ field to the QUAL field if available.',
             default_value => 1,
-            is_optional => 1,
         },
         remove_duplicate_information => {
             is => 'Boolean',
             doc => 'Remove duplicate read flags from all reads.',
             default_value => 1,
-            is_optional => 1,
         },
         remove_alignment_information => {
             is => 'Boolean',
             doc => 'Remove all alignment information from the file.',
             default_value => 1,
-            is_optional => 1,
         },
         attribute_to_clear => {
             is => 'String',
@@ -52,13 +49,11 @@ class Genome::Model::Tools::Picard::RevertSam {
             is => 'Boolean',
             doc => 'WARNING: This option is potentially destructive. If enabled will discard reads in order to produce a consistent output BAM. Reads discarded include (but are not limited to) paired reads with missing mates, duplicated records, records with mismatches in length of bases and qualities. This option can only be enabled if the output sort order is queryname and will always cause sorting to occur.',
             default_value => 0,
-            is_optional => 1,
         },
         max_discard_fraction => {
             is => 'Float',
             doc => 'If SANITIZE=true and higher than MAX_DISCARD_FRACTION reads are discarded due to sanitization thenthe program will exit with an Exception instead of exiting cleanly. Output BAM will still be valid. Default value: 0.01.',
             default_value => '0.01',
-            is_optional => 1,
         },
         sample_alias => {
             is => 'String',
@@ -67,8 +62,8 @@ class Genome::Model::Tools::Picard::RevertSam {
         },
         library_name => {
             is => 'String',
+            doc => 'The library name to use in the reverted output file. This will override the existing sample alias in the file and is used only if all the read groups in the input file have the same sample alias.',
             is_optional => 1,
-            doc => 'The library name to use in the reverted output file. This will override the existing sample alias in the file and is used only if all the read groups in the input file have the same sample alias.'
         },
     ],
 };
