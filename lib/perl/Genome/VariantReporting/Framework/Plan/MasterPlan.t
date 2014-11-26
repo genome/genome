@@ -33,6 +33,7 @@ my $expected_hashref = {
             e2_p2 => 'something else'
         }
     },
+    needs_translation => 1,
     reporters => {
         reporter_alpha => {
             filters      => {
@@ -119,5 +120,22 @@ is($reporter_alpha2_plan->name, 'reporter_alpha.2', "Got correct plan ('reporter
 
 throws_ok sub {$plan->get_plan('bad_category', 'bad_name');}, qr(bad_category), "Dies when given a bad category";
 throws_ok sub {$plan->get_plan('expert', 'bad_name');}, qr(bad_name), "Dies when given a bad name";
+
+subtest 'Does not need translation' => sub {
+    my $plan = $pkg->create_from_file($plan_file);
+    ok($plan, "Made a plan from file ($plan_file).");
+    my $expected_hashref = {%{$expected_hashref}};
+
+    $plan->needs_translation(0);
+    $expected_hashref->{needs_translation} = 0;
+
+    is_deeply($pkg->create_from_hashref($plan->as_hashref)->as_hashref, $plan->as_hashref, "Roundtrip hashref test successful.");
+    is_deeply($pkg->create_from_json($plan->as_json)->as_hashref, $expected_hashref, "Roundtrip JSON test successful.");
+
+    my $path = Genome::Sys->create_temp_file_path;
+    $plan->write_to_file($path);
+    is_deeply($pkg->create_from_file($path)->as_hashref, $expected_hashref, "Roundtrip yaml file test successful.");
+};
+
 
 done_testing();

@@ -22,6 +22,9 @@ class Genome::VariantReporting::Framework::Plan::MasterPlan {
             is => 'Genome::VariantReporting::Framework::Plan::ReporterPlan',
             is_many => 1,
         },
+        needs_translation => {
+            is => 'Boolean',
+        },
     ],
 };
 
@@ -87,6 +90,7 @@ sub create_from_file {
 
     Genome::Sys->validate_file_for_reading($file);
     my ($hashref, undef, undef) = YAML::LoadFile($file);
+    $hashref->{needs_translation} = 1 unless exists $hashref->{needs_translation};
 
     my $self = $class->create_from_hashref($hashref);
 
@@ -103,6 +107,7 @@ sub as_hashref {
     my $self = shift;
 
     my $hashref = $self->SUPER::as_hashref;
+    $hashref->{root}->{needs_translation} = $self->needs_translation;
     my $result = $hashref->{root};
     delete $result->{params};
 
@@ -115,8 +120,14 @@ sub create_from_hashref {
 
     # TODO make a copy of the hashref so we don't change the original via perl autovivify when we access filters (or anything else that is optional)
     # we will need to specifically initialize these optional things to empty refs
-    my $self = $class->SUPER::create(name => 'root',
-        params => {});
+    my %params_for_create = (
+        name => 'root',
+        params => {},
+    );
+    if (exists $hashref->{needs_translation}) {
+        $params_for_create{needs_translation} = $hashref->{needs_translation};
+    }
+    my $self = $class->SUPER::create(%params_for_create);
     my @expert_plans;
     while (my ($expert_name, $adaptor_params) = each %{$hashref->{experts}}) {
         push @expert_plans, Genome::VariantReporting::Framework::Plan::ExpertPlan->create(
@@ -187,6 +198,7 @@ sub translate {
     for my $plan ($self->expert_plans, $self->reporter_plans) {
         $plan->translate(@_);
     }
+    $self->needs_translation(0);
     return;
 }
 
