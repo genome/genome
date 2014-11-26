@@ -809,7 +809,7 @@ sub parse_read_counts{
         push(@covs, "NA");
         next;
       }
-      if ($sample_common_name =~ /normal/){
+      if ($sample_common_name =~ /normal/i){
         my $normal_vaf = $line[$columns{$vaf_colname}{c}];
         $max_normal_vaf_observed = $normal_vaf if ($normal_vaf > $max_normal_vaf_observed);
       }else{
