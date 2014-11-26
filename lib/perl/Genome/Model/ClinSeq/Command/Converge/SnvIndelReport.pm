@@ -85,6 +85,16 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               default => 0,
               doc => 'In per library analysis, variants with less than this number of tumor libraries supporting will be filtered out',
         },
+        min_snv_caller_count => {
+              is => 'Number',
+              default => 1,
+              doc => 'SNV variants called by fewer this number of SNV variant callers will be filtered out',
+        },
+        min_indel_caller_count => {
+              is => 'Number',
+              default => 1,
+              doc => 'INDEL variants called by fewer this number of INDEL variant callers will be filtered out',
+        },
         per_library => {
               is => 'Boolean',
               doc => 'Do per library bam-readcounting and generate associated statistics, summaries and figures'
@@ -512,12 +522,14 @@ sub gather_variants{
       }
       my @line = split("\t", $_);
       my ($chr, $start, $stop, $ref, $var) = ($line[0], $line[1], $line[2], $line[3], $line[4]);
-      my $ensembl_gene_id = $line[23];
+      my $variant_type = $line[5];
       my $trv_type = $line[13];
+      my $ensembl_gene_id = $line[23];
       my $v = $chr . "_$start" . "_$stop" . "_$ref" . "_$var";
       $variants{$v}{anno_line} = $_;
       $variants{$v}{tier} = $tier;
       $variants{$v}{ensembl_gene_id} = $ensembl_gene_id;
+      $variants{$v}{variant_type} = $variant_type;
       $variants{$v}{trv_type} = $trv_type;
       $variants{$v}{filtered} = "";
       if(defined $variants{$v}{data_type}) {
@@ -1037,6 +1049,8 @@ sub apply_variant_filters{
   my $min_coverage = $self->min_coverage;
   my $max_gmaf = $self->max_gmaf;
   my $min_tumor_var_supporting_libs = $self->min_tumor_var_supporting_libs;
+  my $min_snv_caller_count = $self->min_snv_caller_count;
+  my $min_indel_caller_count = $self->min_indel_caller_count;
 
   foreach my $v (keys %{$variants}){
     my $max_normal_vaf_observed = $variants->{$v}->{max_normal_vaf_observed};
@@ -1045,6 +1059,7 @@ sub apply_variant_filters{
     my $min_coverage_observed = $variants->{$v}->{min_coverage_observed};
     my $gmaf = $variants->{$v}->{gmaf};
     my $tumor_var_supporting_libs = $variants->{$v}->{tumor_var_supporting_libs} if defined($variants->{$v}->{tumor_var_supporting_libs});
+    my $variant_source_caller_count = $variants->{$v}->{variant_source_caller_count};
 
     #Normal VAF filter
     if ($max_normal_vaf_observed =~ /\d+/){
@@ -1082,6 +1097,17 @@ sub apply_variant_filters{
     #Min library support filter
     if (defined($tumor_var_supporting_libs) && $min_tumor_var_supporting_libs){
       $variants->{$v}->{filtered} .= "Min_Library_Support," if ($tumor_var_supporting_libs < $min_tumor_var_supporting_libs);
+    }
+
+    #Min variant caller count filters (variant_source_caller_count)
+    if ($variants->{$v}->{variant_type} =~ /SNP/i){
+      #Min SNV variant caller count filter
+      $variants->{$v}->{filtered} .= "Min_SNV_Caller_Count," if ($variant_source_caller_count < $min_snv_caller_count);
+    }elsif($variants->{$v}->{variant_type} =~ /INS|DEL/i){
+      #Min INDEL variant caller count filter
+      $variants->{$v}->{filtered} .= "Min_INDEL_Caller_Count," if ($variant_source_caller_count < $min_indel_caller_count);
+    }else{
+      die $self->error_message("unrecognized variant type: $variants->{$v}->{variant_type}");
     }
 
     #If not filtered by any category, don't filter. Keep this at the end.
