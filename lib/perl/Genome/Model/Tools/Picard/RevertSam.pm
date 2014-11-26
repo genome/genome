@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Sort::strverscmp;
 
 class Genome::Model::Tools::Picard::RevertSam {
     is  => 'Genome::Model::Tools::Picard',
@@ -88,7 +89,7 @@ sub execute {
 
     my $jar_path = $self->picard_path .'/RevertSam.jar';
     unless (-e $jar_path) {
-        if ($self->use_version < 1.29) {
+        if ( strverscmp($self->use_version,'1.29') == -1 ) {
             die('Please define version 1.29 or greater.');
         } else {
             die('Missing jar path: '. $jar_path);
@@ -96,19 +97,19 @@ sub execute {
     }
     my $cmd = $jar_path .' net.sf.picard.sam.RevertSam INPUT='. $self->input_file .' OUTPUT='. $self->output_file .' SORT_ORDER='. $self->sort_order;
 
-    if ($self->sanitize) {
-        if ($self->use_version < 1.108) {
-            die('Version '. $self->use_version .' does not support the sanitize option.');
-        }
+    my @boolean_attributes = qw/
+                                   restore_original_qualities
+                                   remove_duplicate_information
+                                   remove_alignment_information
+                               /;
+
+    if ( strverscmp($self->use_version,'1.108') == 1 ) {
+        push @boolean_attributes, 'sanitize';
         $cmd .= ' MAX_DISCARD_FRACTION='. $self->max_discard_fraction;
+    } elsif ($self->sanitize) {
+        die('Version '. $self->use_version .' does not support the sanitize option.');
     }
 
-    my @boolean_attributes = qw/
-                                    restore_original_qualities
-                                    remove_duplicate_information
-                                    remove_alignment_information
-                                    sanitize
-                                /;
     my $string = $self->resolve_boolean_attributes_string(\@boolean_attributes);
     $cmd .= $string;
     if (defined($self->sample_alias)) {
