@@ -46,66 +46,73 @@ sub execute {
     
     for my $model ($self->models) {
         my $build = $model->last_succeeded_build;
+
         my $fpkm_hash_ref = $self->_load_fpkm_hash_ref($build);
         my $count_hash_ref = $self->_load_count_hash_ref($build);
 
-        my $r_tsv_file = $self->_write_temp_file($ercc_hash_ref,$fpkm_hash_ref,$count_hash_ref);
-        $self->_generate_r_plots($r_tsv_file,$model);
+        my $model_output_dir = $self->output_directory .'/'. $model->id;
+        unless (-d $model_output_dir ) {
+            Genome::Sys->create_directory($model_output_dir);
+        }
+        
+        my $tsv_file_path = $model_output_dir .'/summary.tsv';
+        $self->_write_tsv_file($ercc_hash_ref,$fpkm_hash_ref,$count_hash_ref,$tsv_file_path);
+        $self->_generate_r_plots($tsv_file_path,$model_output_dir);
     }
     
     return 1;
 }
 
-sub _write_temp_file {
+sub _write_tsv_file {
     my $self = shift;
     
-    my $ercc_hash_ref = shift;
-    my $fpkm_hash_ref = shift;
-    my $count_hash_ref = shift;
+    my $ercc_data = shift;
+    my $fpkm_data = shift;
+    my $count_data = shift;
+
+    my $tsv_file_path = shift;
     
-    # TODO: resolve the mix from the build or input instrument data once LIMS library attribute exists
+    # TODO: resolve the mix from the build or input instrument data once LIMS library attribute exists for this
     my $mix = $self->ercc_spike_in_mix;
-    
-    my $ercc_file_path = Genome::Sys->create_temp_file_path();
+
     my @output_headers = ('Re-sort ID','ERCC ID','subgroup','ERCC Mix','concentration (attomoles/ul)','FPKM','FPKM_conf_lo','FPKM_conf_hi','count');
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
-        output => $ercc_file_path,
+        output => $tsv_file_path,
         separator => "\t",
         headers => \@output_headers,
     );
+    unless ($writer) {
+        die($self->error_message('Failed to load TSV summary writer for file : '. $tsv_file_path));
+    }
 
-    my %ercc_data = %{$ercc_hash_ref};
-    my %fpkm_data = %{$fpkm_hash_ref};
-    my %count_data = %{$count_hash_ref};
-
-    my $concentration_key = 'concentration in Mix '. $mix .' (attomoles/ul)'
-    for my $gene_id (sort { $ercc_data{$a}->{'Re-sort ID'} <=> $ercc_data{$b}->{'Re-sort ID'}} keys %ercc_data   ) {
+    my $concentration_key = 'concentration in Mix '. $mix .' (attomoles/ul)';
+    for my $gene_id (sort { $ercc_data->{$a}{'Re-sort ID'} <=> $ercc_data->{$b}{'Re-sort ID'}} keys %{$ercc_data}   ) {
         my %data = (
-            'Re-sort ID' => $ercc_data->{'Re-sort ID'},
-            'ERCC ID' => $ercc_data->{'ERCC ID'},
-            'subgroup' => $ercc_data->{'subgroup'},
+            'Re-sort ID' => $ercc_data->{$gene_id}{'Re-sort ID'},
+            'ERCC ID' => $ercc_data->{$gene_id}{'ERCC ID'},
+            'subgroup' => $ercc_data->{$gene_id}{'subgroup'},
             'ERCC Mix' => $mix,
-            'concentration (attomoles/ul)' => $ercc_data{$gene_id}{$concentration_key},
-            'FPKM' => $fpkm_data{$gene_id}{'FPKM'},
-            'FPKM_conf_lo' => $fpkm_data{$gene_id}{'FPKM_conf_lo'},
-            'FPKM_conf_hi' => $fpkm_data{$gene_id}{'FPKM_conf_hi'},
-            'count' => $count_data{$gene_id},
+            'concentration (attomoles/ul)' => $ercc_data->{$gene_id}{$concentration_key},
+            'FPKM' => $fpkm_data->{$gene_id}{'FPKM'},
+            'FPKM_conf_lo' => $fpkm_data->{$gene_id}{'FPKM_conf_lo'},
+            'FPKM_conf_hi' => $fpkm_data->{$gene_id}{'FPKM_conf_hi'},
+            'count' => $count_data->{$gene_id},
         );
         $writer->write_one(\%data);
     }
     $writer->output->close;
-    return $ercc_file_path;
+    return 1;
 }
 
 sub _load_ercc_hash_ref {
     my $self = shift;
-    my $ercc_spike_in_file = $self->ercc_spike_in_file;
+
     my $reader = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $ercc_spike_in_file,
+        input => $self->ercc_spike_in_file,
         separator => "\t",
     );
     unless ($reader) {
-        die($self->error_message('Failed to load ERCC control file: '. $ercc_spike_in_file));
+        die($self->error_message('Failed to load ERCC control file: '. $self->ercc_spike_in_file));
     }
     my %ercc_data;
     while (my $data = $reader->next) {
@@ -117,10 +124,11 @@ sub _load_ercc_hash_ref {
 
 sub _load_fpkm_hash_ref {
     my $self = shift;
+    
     my $build = shift;
     
     # Cufflinks FPKM values
-    my $genes_fpkm_file = $build->data_directory.'/expression/genes.fpkm_tracking';
+    my $genes_fpkm_file = $build->data_directory .'/expression/genes.fpkm_tracking';
     my $genes_fpkm_reader = Genome::Utility::IO::SeparatedValueReader->create(
         input => $genes_fpkm_file,
         separator => "\t",
@@ -169,20 +177,15 @@ sub _load_count_hash_ref {
 
 sub _generate_r_plots {
     my $self = shift;
+    
     my $summary_file = shift;
-    my $model = shift;
+    my $output_directory = shift;
     
     my $r_script_path = $self->__meta__->module_path;
     $r_script_path =~ s/\.pm/\.R/;
-
-    my $cwd = getcwd();
-
     my $cmd = 'Rscript '. $r_script_path .' --filename '. $summary_file;
 
-    my $output_directory = $self->output_directory .'/'. $model->id;
-    unless (-d $output_directory ) {
-        Genome::Sys->create_directory($output_directory);
-    }
+    my $cwd = getcwd();
     chdir($output_directory);
     Genome::Sys->shellcmd(
         cmd => $cmd,
