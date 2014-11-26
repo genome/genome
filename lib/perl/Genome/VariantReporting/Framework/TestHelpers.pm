@@ -155,7 +155,6 @@ sub test_dag_execute {
     $plan->translate($provider->translations);
     my $output = $dag->execute(
         input_vcf => $input_vcf,
-        provider_json => $provider->as_json,
         variant_type => $variant_type,
         plan_json => $plan->as_json,
     );

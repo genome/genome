@@ -31,10 +31,11 @@ $plan->validate();
 $plan->validate_translation_provider($provider);
 $plan->translate($provider->translations);
 
-my $generator = $pkg->create(input_vcf => $vcf_file,
-                             plan_json => $plan->as_json,
-                             variant_type => "snvs",
-                             provider_json => $provider->as_json);
+my $generator = $pkg->create(
+    input_vcf => $vcf_file,
+    plan_json => $plan->as_json,
+    variant_type => "snvs",
+);
 ok($generator->isa($pkg), "Generator created ok");
 ok($generator->execute, "Generator executed ok");
 

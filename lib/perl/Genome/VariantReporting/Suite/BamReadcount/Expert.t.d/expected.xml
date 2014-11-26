@@ -4,7 +4,6 @@
     <inputproperty>input_vcf</inputproperty>
     <inputproperty>plan_json</inputproperty>
     <inputproperty>process_id</inputproperty>
-    <inputproperty>provider_json</inputproperty>
     <inputproperty>variant_type</inputproperty>
     <outputproperty>output_vcf</outputproperty>
   </operationtype>
@@ -18,10 +17,9 @@
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
-  <operation name="Get inputs from provider and plan">
+  <operation name="Get inputs from plan">
     <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Adaptor">
       <inputproperty>plan_json</inputproperty>
-      <inputproperty>provider_json</inputproperty>
       <inputproperty>variant_type</inputproperty>
       <outputproperty>aligned_bam_result_id</outputproperty>
       <outputproperty>insertion_centric</outputproperty>
@@ -51,21 +49,20 @@
     </operationtype>
   </operation>
   <link fromOperation="Annotate vcf with readcounts" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-  <link fromOperation="Get inputs from provider and plan" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
-  <link fromOperation="Get inputs from provider and plan" fromProperty="aligned_bam_result_id" toOperation="Run bam-readcount" toProperty="aligned_bam_result_id"/>
-  <link fromOperation="Get inputs from provider and plan" fromProperty="insertion_centric" toOperation="Run bam-readcount" toProperty="insertion_centric"/>
-  <link fromOperation="Get inputs from provider and plan" fromProperty="max_count" toOperation="Run bam-readcount" toProperty="max_count"/>
-  <link fromOperation="Get inputs from provider and plan" fromProperty="minimum_base_quality" toOperation="Run bam-readcount" toProperty="minimum_base_quality"/>
-  <link fromOperation="Get inputs from provider and plan" fromProperty="minimum_mapping_quality" toOperation="Run bam-readcount" toProperty="minimum_mapping_quality"/>
-  <link fromOperation="Get inputs from provider and plan" fromProperty="per_library" toOperation="Run bam-readcount" toProperty="per_library"/>
-  <link fromOperation="Get inputs from provider and plan" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
-  <link fromOperation="Get inputs from provider and plan" fromProperty="version" toOperation="Run bam-readcount" toProperty="version"/>
+  <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
+  <link fromOperation="Get inputs from plan" fromProperty="aligned_bam_result_id" toOperation="Run bam-readcount" toProperty="aligned_bam_result_id"/>
+  <link fromOperation="Get inputs from plan" fromProperty="insertion_centric" toOperation="Run bam-readcount" toProperty="insertion_centric"/>
+  <link fromOperation="Get inputs from plan" fromProperty="max_count" toOperation="Run bam-readcount" toProperty="max_count"/>
+  <link fromOperation="Get inputs from plan" fromProperty="minimum_base_quality" toOperation="Run bam-readcount" toProperty="minimum_base_quality"/>
+  <link fromOperation="Get inputs from plan" fromProperty="minimum_mapping_quality" toOperation="Run bam-readcount" toProperty="minimum_mapping_quality"/>
+  <link fromOperation="Get inputs from plan" fromProperty="per_library" toOperation="Run bam-readcount" toProperty="per_library"/>
+  <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
+  <link fromOperation="Get inputs from plan" fromProperty="version" toOperation="Run bam-readcount" toProperty="version"/>
   <link fromOperation="Run bam-readcount" fromProperty="output_result" toOperation="Annotate vcf with readcounts" toProperty="readcount_results"/>
   <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Annotate vcf with readcounts" toProperty="input_vcf"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Annotate vcf with readcounts" toProperty="process_id"/>
-  <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from provider and plan" toProperty="plan_json"/>
-  <link fromOperation="input connector" fromProperty="provider_json" toOperation="Get inputs from provider and plan" toProperty="provider_json"/>
-  <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from provider and plan" toProperty="variant_type"/>
+  <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
   <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run bam-readcount" toProperty="input_vcf"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Run bam-readcount" toProperty="process_id"/>
 </operation>

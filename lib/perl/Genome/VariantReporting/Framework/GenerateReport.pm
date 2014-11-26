@@ -23,9 +23,6 @@ class Genome::VariantReporting::Framework::GenerateReport {
             is => 'Text',
             valid_values => ['snvs', 'indels'],
         },
-        provider_json => {
-            is => 'Text',
-        },
         user => {
             is => 'Genome::Process',
             is_optional => 1,
@@ -54,8 +51,6 @@ sub input_hash {
         plan_json => $self->plan_json,
         plan_json_lookup => md5_hex($self->plan_json),
         variant_type => $self->variant_type,
-        provider_json => $self->provider_json,
-        provider_json_lookup => md5_hex($self->provider_json),
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
     );
 }

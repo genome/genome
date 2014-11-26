@@ -20,18 +20,12 @@ class Genome::VariantReporting::Framework::ReportResult {
             is => 'Text',
             valid_values => ['snvs', 'indels'],
         },
-        provider_json_lookup => {
-            is => 'Text',
-        },
     ],
     has_transient_optional => [
         input_vcf => {
             is => 'Path',
         },
         plan_json => {
-            is => 'Text',
-        },
-        provider_json => {
             is => 'Text',
         },
         plan => {
@@ -68,9 +62,7 @@ sub plan {
     my $self = shift;
 
     unless (defined($self->__plan)) {
-        my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_json($self->provider_json);
         my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_json($self->plan_json);
-        $plan->translate($provider->translations);
         $self->__plan($plan);
     }
     return $self->__plan;

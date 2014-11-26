@@ -84,7 +84,6 @@ sub workflow_inputs {
         input_vcf => $self->input_vcf,
         variant_type => $self->variant_type,
         plan_json => $self->plan->as_json,
-        provider_json => $self->provider->as_json,
     };
 }
 
