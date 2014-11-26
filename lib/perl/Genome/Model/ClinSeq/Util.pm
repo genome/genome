@@ -1167,11 +1167,8 @@ sub _get_si_report_tumor_prefix {
   my (%somatic_builds, %rnaseq_builds);
   $clinseq_build->resolve_somatic_builds(\%somatic_builds);
   $clinseq_build->resolve_rnaseq_builds(\%rnaseq_builds);
-  my $align_builds = $self->get_ref_align_builds(
-    '-somatic_builds'=>\%somatic_builds,
-    '-rnaseq_builds'=>\%rnaseq_builds);
-  my @prefixes = $self->get_header_prefixes(
-    '-align_builds'=>$align_builds);
+  my $align_builds = $self->get_ref_align_builds('-somatic_builds'=>\%somatic_builds, '-rnaseq_builds'=>\%rnaseq_builds);
+  my @prefixes = $self->get_header_prefixes('-align_builds'=>$align_builds);
   my (@tumor_refalign_names, $somatic_build, $tumor_build);
   my ($tumor_subject_name, $tumor_subject_common_name);
   $self->status_message("keys " . keys %somatic_builds);
@@ -1206,62 +1203,41 @@ sub get_ref_align_builds{
   foreach my $somatic_build_id (keys %{$somatic_builds}){
     my $build_type = $somatic_builds->{$somatic_build_id}->{type};
     my $somatic_build = $somatic_builds->{$somatic_build_id}->{build};
-    my $normal_build = $somatic_build->normal_build;
-    my $normal_subject_name = $normal_build->subject->name;
-    my $normal_subject_common_name = $normal_build->subject->common_name;
-    $normal_subject_common_name =~ s/\,//g;
-    $normal_subject_common_name =~ s/\s+/\_/g;
-    my $tumor_build = $somatic_build->tumor_build;
-    my $tumor_subject_name = $tumor_build->subject->name;
-    my $tumor_subject_common_name = $tumor_build->subject->common_name;
-    $tumor_subject_common_name =~ s/\,//g;
-    $tumor_subject_common_name =~ s/\s+/\_/g;
-    my $normal_refalign_name = $normal_subject_name . "_$build_type" . "_" . $normal_subject_common_name;
-    my $tumor_refalign_name = $tumor_subject_name . "_$build_type" . "_" . $tumor_subject_common_name;
-    my $normal_bam_path = $normal_build->whole_rmdup_bam_file;
-    my $tumor_bam_path = $tumor_build->whole_rmdup_bam_file;
-    my @normal_timepoints = $normal_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
-    my @tumor_timepoints = $tumor_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
-    my $tumor_tissue_desc = $tumor_build->subject->tissue_desc;
-    $tumor_tissue_desc =~ s/\s+/\-/g;
-    $tumor_tissue_desc =~ s/\,//g;
-    my $normal_tissue_desc = $normal_build->subject->tissue_desc;
-    $normal_tissue_desc =~ s/\s+/\-/g;
-    $normal_tissue_desc =~ s/\,//g;
+    my @builds = ($somatic_build->normal_build, $somatic_build->tumor_build);
+    foreach my $build (@builds){
+      my $subject_name = $build->subject->name;
+      my $subject_common_name = $build->subject->common_name;
+      $subject_common_name =~ s/\,//g;
+      $subject_common_name =~ s/\s+/\_/g;
+      my $refalign_name = $subject_name . "_$build_type" . "_" . $subject_common_name;
+      my $bam_path = $build->whole_rmdup_bam_file;
+      my @timepoints = $build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+      my $tissue_desc = $build->subject->tissue_desc;
+      $tissue_desc =~ s/\s+/\-/g;
+      $tissue_desc =~ s/\,//g;
 
-    my $normal_time_point = "day0";
-    if (@normal_timepoints){
-      $normal_time_point = $normal_timepoints[0]->attribute_value;
-      $normal_time_point =~ s/\s+//g;
-      $sort_on_time_point = 1;
+      my $time_point = "day0";
+      if (@timepoints){
+        $time_point = $timepoints[0]->attribute_value;
+        $time_point =~ s/\s+//g;
+        $sort_on_time_point = 1;
+      }
+      $refalign_name .= "_"."$time_point";
+
+      $ref_builds{$refalign_name}{type} = $build_type;
+      $ref_builds{$refalign_name}{sample_name} = $subject_name;
+      $ref_builds{$refalign_name}{sample_name_build_type} = $subject_name . "_" . $build_type;
+      $ref_builds{$refalign_name}{sample_common_name} = $subject_common_name;
+      $ref_builds{$refalign_name}{bam_path} = $bam_path;
+      $ref_builds{$refalign_name}{time_point} = $subject_common_name . "_" .  $build_type . "_" . $time_point;
+      $ref_builds{$refalign_name}{time_point_tissue} = $subject_common_name . "_" . $build_type . "_" . $tissue_desc . "_" . $time_point;
+      $ref_builds{$refalign_name}{day} = $time_point;
+      $ref_builds{$refalign_name}{tissue_desc} = $tissue_desc;
+      $ref_builds{$refalign_name}{tissue_label} = $build->subject->tissue_label;
+      $ref_builds{$refalign_name}{tissue_label} = '' unless defined($build->subject->tissue_label);
+      $ref_builds{$refalign_name}{extraction_type} = $build->subject->extraction_type;
+      $ref_builds{$refalign_name}{extraction_label} = $build->subject->extraction_label;
     }
-    $normal_refalign_name .= "_$normal_time_point";
-
-    my $tumor_time_point = "day0";
-    if (@tumor_timepoints){
-      $tumor_time_point = $tumor_timepoints[0]->attribute_value;
-      $tumor_time_point =~ s/\s+//g;
-      $sort_on_time_point = 1;
-    }
-    $tumor_refalign_name .= "_$tumor_time_point";
-
-    $ref_builds{$normal_refalign_name}{type} = $build_type;
-    $ref_builds{$normal_refalign_name}{sample_name} = $normal_subject_name;
-    $ref_builds{$normal_refalign_name}{sample_name_build_type} = $normal_subject_name . "_" . $build_type;
-    $ref_builds{$normal_refalign_name}{sample_common_name} = $normal_subject_common_name;
-    $ref_builds{$normal_refalign_name}{bam_path} = $normal_bam_path;
-    $ref_builds{$normal_refalign_name}{time_point} = $normal_subject_common_name . "_" .  $build_type . "_" . $normal_time_point;
-    $ref_builds{$normal_refalign_name}{time_point_tissue} = $normal_subject_common_name . "_" . $build_type . "_" . $normal_tissue_desc . "_" . $normal_time_point;
-    $ref_builds{$normal_refalign_name}{day} = $normal_time_point;
-
-    $ref_builds{$tumor_refalign_name}{type} = $build_type;
-    $ref_builds{$tumor_refalign_name}{sample_name} = $tumor_subject_name;
-    $ref_builds{$tumor_refalign_name}{sample_name_build_type} = $tumor_subject_name . "_" . $build_type;
-    $ref_builds{$tumor_refalign_name}{sample_common_name} = $tumor_subject_common_name;
-    $ref_builds{$tumor_refalign_name}{bam_path} = $tumor_bam_path;
-    $ref_builds{$tumor_refalign_name}{time_point} = $tumor_subject_common_name  . "_" . $build_type . "_" . $tumor_time_point;
-    $ref_builds{$tumor_refalign_name}{time_point_tissue} = $tumor_subject_common_name  . "_" . $build_type . "_" . $tumor_tissue_desc . "_" . $tumor_time_point;
-    $ref_builds{$tumor_refalign_name}{day} = $tumor_time_point;
   }
 
   if($rnaseq_builds) {
