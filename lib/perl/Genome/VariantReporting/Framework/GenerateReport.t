@@ -26,6 +26,11 @@ my $translations = { untranslated => 'translated'};
 my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
     translations => $translations,
 );
+
+$plan->validate();
+$plan->validate_translation_provider($provider);
+$plan->translate($provider->translations);
+
 my $generator = $pkg->create(input_vcf => $vcf_file,
                              plan_json => $plan->as_json,
                              variant_type => "snvs",

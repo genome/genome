@@ -138,5 +138,15 @@ sub object {
 }
 Memoize::memoize("object", LIST_CACHE => 'MERGE');
 
+sub translate {
+    my $self = shift;
+
+    $self->SUPER::translate(@_);
+
+    for my $child_plan ($self->interpreter_plans, $self->filter_plans) {
+        $child_plan->translate(@_);
+    }
+    return;
+}
 
 1;

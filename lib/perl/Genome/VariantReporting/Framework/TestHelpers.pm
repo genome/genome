@@ -142,6 +142,9 @@ sub test_dag_xml {
 
 sub test_dag_execute {
     my ($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $plan) = @_;
+    $plan->validate();
+    $plan->validate_translation_provider($provider);
+    $plan->translate($provider->translations);
     my $output = $dag->execute(
         input_vcf => $input_vcf,
         provider_json => $provider->as_json,

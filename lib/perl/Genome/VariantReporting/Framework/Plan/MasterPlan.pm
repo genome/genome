@@ -25,6 +25,10 @@ class Genome::VariantReporting::Framework::Plan::MasterPlan {
     ],
 };
 
+sub category {
+    return 'master';
+}
+
 sub validate_translation_provider {
     my $self = shift;
     my $provider = shift;
@@ -173,6 +177,16 @@ sub __class_errors__ {
 }
 
 sub __object_errors__ {
+    return;
+}
+
+sub translate {
+    my $self = shift;
+    return unless ($self->needs_translation);
+
+    for my $plan ($self->expert_plans, $self->reporter_plans) {
+        $plan->translate(@_);
+    }
     return;
 }
 

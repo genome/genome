@@ -97,6 +97,14 @@ sub plan {
         $self->status_message("Validating plan...");
         $plan->validate();
         $self->status_message("Plan is valid.");
+
+        $self->status_message("Checking for compatibility between translations and plan...");
+        $plan->validate_translation_provider($self->provider);
+        $self->status_message("Translations file is compatible with plan.");
+
+        $self->status_message("Translating plan");
+        $plan->translate($self->provider->translations);
+
         $self->__plan($plan);
     }
     return $self->__plan;
@@ -109,9 +117,6 @@ sub provider {
         $self->status_message("Constructing translation-provider from file (%s)", $self->translations_file);
         my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->translations_file);
 
-        $self->status_message("Checking for compatibility between translations and plan...");
-        $self->plan->validate_translation_provider($provider);
-        $self->status_message("Translations file is compatible with plan.");
         $self->__provider($provider);
     }
     return $self->__provider;

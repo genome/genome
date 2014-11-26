@@ -1,3 +1,8 @@
 tumor: tumor1
 __input__: an_input
 to_translate2: translation2
+old_value:
+    - new_value1
+    - new_value2
+old_value1: new_value1
+old_value2: new_value2

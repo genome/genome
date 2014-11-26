@@ -5,6 +5,8 @@ use warnings FATAL => 'all';
 use Genome;
 use Memoize qw();
 use Params::Validate qw(validate_pos :types);
+use Data::Dump qw(pp);
+use Exception::Class ('NoTranslationsException');
 
 class Genome::VariantReporting::Framework::Plan::Base {
     is => 'Genome::VariantReporting::Framework::Component::Base',
@@ -79,18 +81,10 @@ sub get_class {
 }
 
 sub object {
-    my ($self, $translations) = validate_pos(@_,
-        OBJECT,
-        {type => HASHREF, optional => 1},
-    );
+    my ($self) = validate_pos(@_, {type => OBJECT});
 
-    my $object = $FACTORY->get_object($self->category,
+    return $FACTORY->get_object($self->category,
             $self->name, $self->params);
-
-    if (defined($translations) && $object->can('translate_inputs')) {
-        $object->translate_inputs($translations);
-    }
-    return $object;
 }
 Memoize::memoize("object", LIST_CACHE => 'MERGE');
 
@@ -191,5 +185,66 @@ sub __class_errors__ {
 
     return @errors;
 }
+
+sub translate {
+    my ($self, $translations) = @_;
+    return $self->_translate($translations, 'params', $self->get_class);
+}
+
+sub _translate {
+    my ($self, $translations, $params_accessor, $object_class) = @_;
+
+    for my $name ($object_class->translated_input_names) {
+        my $old_value = $self->$params_accessor->{$name};
+        $self->$params_accessor->{$name} = $self->_translate_single($old_value, $translations, $name);
+    }
+
+    for my $name ($object_class->translated_is_many_input_names) {
+        my @old_values = @{$self->$params_accessor->{$name}};
+        my $data_type = $object_class->__meta__->property_meta_for_name($name)->data_type;
+        if (defined($data_type) && $data_type eq 'ARRAY') {
+            $self->$params_accessor->{$name} = [map {$self->_translate_single($_, $translations, $name)} @old_values];
+        }
+        else {
+            my @translated;
+            for my $value (@old_values) {
+                my $translated_value = $self->_translate_single($value, $translations, $name);
+                if (ref($translated_value) eq 'ARRAY') {
+                    push @translated, @$translated_value;
+                }
+                else {
+                    push @translated, $translated_value;
+                }
+            }
+            $self->$params_accessor->{$name} = \@translated;
+        }
+    }
+    return;
+}
+
+sub _translate_single {
+    my ($self, $old_value, $translations, $name) = @_;
+
+    unless (defined($translations)) {
+        NoTranslationsException->throw(
+            error => sprintf(
+                "Could not translate input (%s) with value (%s) for plan (%s) which is a (%s). No translations provided.",
+                $name, $old_value, $self->name, $self->category,
+            )
+        );
+    }
+
+    unless (defined($old_value)) {
+        die sprintf("No old_value for input (%s) for plan (%s) which is a (%s):\n%s",
+            $name, $self->name, $self->category, pp($self->as_hashref));
+    }
+    if (exists($translations->{$old_value})) {
+        return $translations->{$old_value};
+    } else {
+        die sprintf("Could not translate input (%s) with value (%s) for plan (%s) which is a (%s). Available translations are: %s",
+            $name, $old_value, $self->name, $self->category, Data::Dumper::Dumper($translations));
+    }
+}
+
 
 1;

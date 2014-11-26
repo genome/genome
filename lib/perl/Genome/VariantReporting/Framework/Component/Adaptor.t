@@ -33,19 +33,6 @@ subtest 'without translations needed - with translations provided' => sub {
     is($adaptor->__planned__, 'foo', 'Value of __planned__ is as expected');
 };
 
-subtest 'with translations needed - without translations provided' => sub {
-    my $resource_provider = resource_provider_without_translations();
-    my $adaptor = adaptor_with_translations($resource_provider);
-    throws_ok(sub { $adaptor->resolve_plan_attributes }, qr/Could not translate input/, 'resolve_plan_attributes throws an error because it cannot translate inputs');
-};
-
-subtest 'with translations needed - with translations provided' => sub {
-    my $resource_provider = resource_provider_with_translations();
-    my $adaptor = adaptor_with_translations($resource_provider);
-    lives_ok { $adaptor->resolve_plan_attributes } 'resolve_plan_attributes execute successfully';
-    is($adaptor->__planned__, 'test sample name', 'Value of __planned__ is as expected');
-};
-
 done_testing;
 
 sub resource_provider_with_translations {
@@ -57,16 +44,6 @@ sub resource_provider_with_translations {
 sub resource_provider_without_translations {
     return Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
         translations => {},
-    );
-}
-
-sub adaptor_with_translations {
-    my $resource_provider = shift;
-
-    my $plan_with_translations = File::Spec->join($test_data_dir, 'with_translations_plan.yaml');
-    return Genome::VariantReporting::Framework::Test::WithTranslationsAdaptor->create(
-        provider_json => $resource_provider->as_json,
-        plan_json => Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($plan_with_translations)->as_json,
     );
 }
 

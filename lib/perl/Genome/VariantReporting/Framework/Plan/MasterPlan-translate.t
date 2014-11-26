@@ -21,6 +21,44 @@ test_bad_translations('missing_expert_translation', qr(Plan is incompatible with
 test_bad_translations('missing_interpreter_translation', qr(Plan is incompatible with translations file) );
 test_bad_translations('missing_filter_translation', qr(Plan is incompatible with translations file) );
 
+subtest 'translate' => sub {
+    my $plan_file = yaml_file("translated_plan.yaml");
+    my $plan = $pkg->create_from_file($plan_file);
+    ok($plan, "Made a plan from file ($plan_file).");
+
+    throws_ok(sub {$plan->_translate_single('old value', undef, 'attribute')},
+        qr(No translations provided), 'translate dies if no translations are provided');
+    eval {$plan->_translate_single('old value', undef, 'attribute')};
+    ok(Exception::Class->caught('NoTranslationsException'), 'Exception is of correct type')
+};
+
+subtest 'translate is many input' => sub {
+    my $plan_file = yaml_file("translated_plan.yaml");
+    my $plan = $pkg->create_from_file($plan_file);
+    ok($plan, "Made a plan from file ($plan_file).");
+
+    my $new_value = [qw(new_value1 new_value2)];
+    my $translations = {
+        old_value => $new_value,
+        old_value1 => 'new_value1',
+        old_value2 => 'new_value2',
+        tumor => 'tumor1',
+        to_translate1 => 'translation1',
+        to_translate2 => 'translation2',
+        __input__ => 'an_input',
+    };
+    $plan->translate($translations);
+    my $hashref = $plan->as_hashref;
+    my $translated_interpreter = $hashref->{reporters}->{__translated_test__}->{interpreters}->
+            {__translated_test__};
+
+    my $translated_value = $translated_interpreter->{translated2};
+    is_deeply($translated_value, $new_value, "Array translation is flattened correctly");
+
+    my $translated_value2 = $translated_interpreter->{translated3};
+    is_deeply($translated_value, $new_value, "Individual values are correctly inserted in the array");
+};
+
 done_testing();
 
 

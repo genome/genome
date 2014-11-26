@@ -24,6 +24,11 @@ sub needed_translations {
     return Set::Scalar->new(map {$self->adaptor_params->{$_}} $self->get_class->adaptor_class->translated_input_names);
 }
 
+sub translate {
+    my ($self, $translations) = @_;
+    return $self->_translate($translations, 'adaptor_params', $self->get_class->adaptor_class);
+}
+
 # ExpertPlans don't have any params but have adaptor_params instead
 sub as_hashref {
     my $self = shift;
