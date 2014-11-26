@@ -64,7 +64,6 @@ reporters:
                     - discovery_tumor
                     - normal
         params:
-            file_name: 'gold_somatic_report_full.tsv'
             sample_names:
                 - discovery_tumor
                 - normal
@@ -80,8 +79,6 @@ reporters:
             position: {}
             vep: {}
             'variant-type': {}
-        params:
-            file_name: 'gold_somatic_report_simple.tsv'
     'vcf':
         filters: {}
         interpreters:
@@ -90,5 +87,3 @@ reporters:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER  
-        params:
-            file_name: 'gold_somatic_report.vcf'

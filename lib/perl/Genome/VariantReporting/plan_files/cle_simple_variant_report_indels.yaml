@@ -47,5 +47,3 @@ reporters:
             position: {}
             vep: {}
             'variant-type': {}
-        params:
-            file_name: 'cle_simple_indel_report'

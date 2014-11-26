@@ -15,5 +15,3 @@ reporters:
         filters:
             __translated_test_filter__:
                 translated2: to_translate2
-        params:
-            file_name: report.txt

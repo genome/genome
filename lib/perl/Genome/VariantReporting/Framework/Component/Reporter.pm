@@ -5,22 +5,46 @@ use warnings FATAL => 'all';
 use Genome;
 use Carp qw(confess);
 use List::MoreUtils qw(uniq);
+use Genome::File::Vcf::Reader;
 
 class Genome::VariantReporting::Framework::Component::Reporter {
     is => [
+        'Genome::SoftwareResult::StageableSimple',
         'Genome::VariantReporting::Framework::Component::WithTranslatedInputs',
     ],
     is_abstract => 1,
+    has_input => [
+        input_vcf_lookup => {
+            is_structural => 1,
+            is => 'Text',
+        },
+    ],
+    has_param => [
+        variant_type => {
+            is => 'Text',
+            is_structural => 1,
+            valid_values => ['snvs', 'indels'],
+        },
+        plan_json_lookup => {
+            is => 'Text',
+            is_structural => 1,
+        }
+    ],
     has_transient_optional => [
+        input_vcf => {
+            is => 'File',
+        },
+        plan_json => {
+            is => 'Text',
+            is_structural => 1,
+        },
         filters => {
             is => 'HASH',
             is_structural => 1,
-            default => {},
         },
         interpreters => {
             is => 'HASH',
             is_structural => 1,
-            default => {},
         },
     ],
 };
@@ -57,32 +81,21 @@ sub finalize {
     return;
 }
 
-sub add_filter_object {
-    my ($self, $filter) = @_;
+sub _run {
+    my $self = shift;
 
-    $self->filters->{$filter->name} = $filter;
-}
+    $self->debug_message("Initializing");
+    $self->initialize();
 
-sub add_filter_objects {
-    my ($self, @filters) = @_;
-
-    for my $filter (@filters) {
-        $self->add_filter_object($filter);
+    $self->debug_message("Processing (%s) entry by entry", $self->input_vcf);
+    my $vcf_reader = Genome::File::Vcf::Reader->new($self->input_vcf);
+    while (my $entry = $vcf_reader->next) {
+        $self->process_entry($entry);
     }
-}
 
-sub add_interpreter_object {
-    my ($self, $interpreter) = @_;
-
-    $self->interpreters->{$interpreter->name} = $interpreter;
-}
-
-sub add_interpreter_objects {
-    my ($self, @interpreters) = @_;
-
-    for my $interpreter (@interpreters) {
-        $self->add_interpreter_object($interpreter);
-    }
+    $self->debug_message("Finalizing");
+    $self->finalize();
+    return 1;
 }
 
 sub process_entry {

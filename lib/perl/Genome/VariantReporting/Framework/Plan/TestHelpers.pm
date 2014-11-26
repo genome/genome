@@ -174,7 +174,7 @@ sub set_what_interpreter_x_requires {
 
     class Genome::VariantReporting::TestReporter {
         is => 'Genome::VariantReporting::Reporter::WithHeader',
-        has => [
+        has_param => [
             ra_p1 => {},
             ra_p2 => {},
         ],
@@ -222,7 +222,7 @@ sub set_what_interpreter_x_requires {
 
     class Genome::VariantReporting::AnotherTestReporter {
         is => 'Genome::VariantReporting::Framework::Component::Reporter::SingleFile',
-        has => [
+        has_param => [
             rb_p1 => {},
             rb_p2 => {},
         ],
@@ -248,7 +248,7 @@ sub set_what_interpreter_x_requires {
 
     class Genome::VariantReporting::YetAnotherTestReporter {
         is => 'Genome::VariantReporting::Reporter::WithHeader',
-        has => [
+        has_param => [
             rc_p1 => {},
             rc_p2 => {},
         ],
@@ -300,7 +300,7 @@ sub set_what_interpreter_x_requires {
 
     class Genome::VariantReporting::TestDeltaReporter {
         is => 'Genome::VariantReporting::Framework::Component::Reporter',
-        has => [
+        has_param => [
             p1 => {},
         ],
     };

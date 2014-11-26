@@ -36,5 +36,3 @@ reporters:
             vaf:
                 sample_name: tumor
             vep: {}
-        params:
-            file_name: 'report1.fa'

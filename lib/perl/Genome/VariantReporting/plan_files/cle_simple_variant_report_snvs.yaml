@@ -46,5 +46,3 @@ reporters:
             position: {}
             vep: {}
             'variant-type': {}
-        params:
-            file_name: 'cle_simple_snv_report'

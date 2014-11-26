@@ -66,7 +66,6 @@ reporters:
                 sample_names:
                     - normal
         params:
-            file_name: 'germline_full_report.tsv'
             sample_names:
                 - normal
     'simple':
@@ -86,8 +85,6 @@ reporters:
             position: {}
             vep: {}
             'variant-type': {}
-        params:
-            file_name: 'germline_simple_report.tsv'
     'vcf':
         filters: {}
         interpreters:
@@ -101,8 +98,6 @@ reporters:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER  
-        params:
-            file_name: 'germline_report.vcf'
     'bed':
         filters:
             'allele-in-genotype':
@@ -119,5 +114,4 @@ reporters:
         interpreters:
             'bed-entry': {}
         params:
-            file_name: 'germline_report.bed'
             generate_legend_file: 0

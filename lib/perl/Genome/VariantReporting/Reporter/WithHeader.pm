@@ -8,7 +8,7 @@ use Set::Scalar;
 class Genome::VariantReporting::Reporter::WithHeader {
     is => 'Genome::VariantReporting::Framework::Component::Reporter::SingleFile',
     is_abstract => 1,
-    has => {
+    has_param => {
         null_character => {
             is => 'Text',
             default => '-',
@@ -56,13 +56,19 @@ sub __errors__ {
     return @errors;
 }
 
+sub legend_file_name {
+    my $self = shift;
+    return $self->file_name . ".legend";
+}
+
 sub initialize {
     my $self = shift;
-    my $output_dir = shift;
 
-    $self->SUPER::initialize($output_dir);
+    $self->SUPER::initialize(@_);
     if ($self->generate_legend_file) {
-        my $legend_fh = Genome::Sys->open_file_for_writing(File::Spec->join($output_dir, $self->file_name . '.legend.tsv'));
+        my $legend_fh = Genome::Sys->open_file_for_writing(
+            File::Spec->join($self->temp_staging_directory,
+                $self->legend_file_name));
         $self->_legend_fh($legend_fh);
         $self->write_legend_file();
     }

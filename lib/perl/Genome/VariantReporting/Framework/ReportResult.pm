@@ -2,7 +2,6 @@ package Genome::VariantReporting::Framework::ReportResult;
 
 use strict;
 use warnings FATAL => 'all';
-use Genome::File::Vcf::Reader;
 use Genome;
 
 class Genome::VariantReporting::Framework::ReportResult {

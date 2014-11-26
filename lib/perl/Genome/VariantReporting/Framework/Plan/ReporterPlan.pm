@@ -125,16 +125,11 @@ sub requires_annotations {
 sub object {
     my $self = shift;
 
-    my $reporter = $self->SUPER::object(@_);
-
-    for my $filter_plan ($self->filter_plans) {
-        $reporter->add_filter_object($filter_plan->object(@_));
-    }
-    for my $interpreter_plan ($self->interpreter_plans) {
-        $reporter->add_interpreter_object($interpreter_plan->object(@_));
-    }
-
-    return $reporter;
+    return $self->get_class->__define__(
+        %{$self->params},
+        filters => {map {$_->name, $_->object} $self->filter_plans},
+        interpreters => {map {$_->name, $_->object} $self->interpreter_plans},
+    );
 }
 Memoize::memoize("object", LIST_CACHE => 'MERGE');
 

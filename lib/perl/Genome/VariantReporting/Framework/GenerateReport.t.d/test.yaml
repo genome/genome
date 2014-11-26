@@ -26,7 +26,6 @@ reporters:
                 iy_p1: something
                 iy_p2: something else
         params:
-            file_name: reporter_alpha
             ra_p1: something
             ra_p2: something else
     reporter_gamma:
@@ -38,7 +37,6 @@ reporters:
                 iy_p1: something
                 iy_p2: something else
         params:
-            file_name: reporter_gamma
             rc_p1: something
             rc_p2: something else
             delimiter: " "
