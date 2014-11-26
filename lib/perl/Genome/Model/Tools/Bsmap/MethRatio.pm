@@ -4,8 +4,13 @@ use strict;
 use warnings;
 use Genome;
 
-my $DEFAULT_VERSION = '2.6';
+my $DEFAULT_VERSION = '2.74';
 my $METHRATIO_COMMAND = 'methratio.py';
+
+my %METHRATIO_VERSIONS = (
+    '2.6' => '/gscuser/cmiller/usr/src/bsmap-2.6/' . $METHRATIO_COMMAND,
+    '2.74' => '/gsc/pkg/bio/bsmap/bsmap-2.74/' . $METHRATIO_COMMAND,
+);
 
 class Genome::Model::Tools::Bsmap::MethRatio {
     is => 'Command',
@@ -87,8 +92,7 @@ sub execute {
         }
     }
 
-#    my $cmd = "python /gscuser/cmiller/usr/src/bsmap-2.6/methratio.py";
-    my $cmd = "python /gsc/pkg/bio/bsmap/bsmap-2.74/methratio.py";
+    my $cmd = "python " . $METHRATIO_VERSIONS{$self->version};
     $cmd .= " -o ". $self->output_file;
     $cmd .= " -d " . $fasta;
     if($self->output_zeros){
@@ -113,11 +117,6 @@ sub execute {
 }
 
 1;
-
-my %METHRATIO_VERSIONS = (
-#    '2.6' => '/gscuser/cmiller/usr/src/bsmap-2.6/' . $METHRATIO_COMMAND,
-    '2.74' => '/gsc/pkg/bio/bsmap/bsmap-2.74/' . $METHRATIO_COMMAND,
-);
 
 sub available_methratio_versions {
     my $self = shift;
