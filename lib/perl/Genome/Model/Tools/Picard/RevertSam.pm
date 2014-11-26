@@ -47,6 +47,20 @@ class Genome::Model::Tools::Picard::RevertSam {
             doc => 'When removing alignment information, the set of optional tags to remove. This option may be specified 0 or more times.',
             is_optional => 1,
         },
+        #Only available in picard 1.108 or later
+        sanitize => {
+            is => 'Boolean',
+            doc => 'WARNING: This option is potentially destructive. If enabled will discard reads in order to produce a consistent output BAM. Reads discarded include (but are not limited to) paired reads with missing mates, duplicated records, records with mismatches in length of bases and qualities. This option can only be enabled if the output sort order is queryname and will always cause sorting to occur.',
+            default_value => 0,
+            is_optional => 1,
+        },
+        #Only available in picard 1.108 or later
+        max_discard_fraction => {
+            is => 'Float',
+            doc => 'If SANITIZE=true and higher than MAX_DISCARD_FRACTION reads are discarded due to sanitization thenthe program will exit with an Exception instead of exiting cleanly. Output BAM will still be valid. Default value: 0.01.',
+            default_value => '0.01',
+            is_optional => 1,
+        },
         sample_alias => {
             is => 'String',
             doc => 'The sample alias to use in the reverted output file. This will override the existing sample alias in the file and is used only if all the read groups in the input file have the same sample alias',
@@ -87,6 +101,7 @@ sub execute {
                                     restore_original_qualities
                                     remove_duplicate_information
                                     remove_alignment_information
+                                    sanitize
                                 /;
     my $string = $self->resolve_boolean_attributes_string(\@boolean_attributes);
     $cmd .= $string;
@@ -98,6 +113,9 @@ sub execute {
     }
     for my $attribute ($self->attribute_to_clear) {
         $cmd .= ' ATTRIBUTE_TO_CLEAR='. $attribute;
+    }
+    if ($self->sanitize) {
+        $cmd .= ' MAX_DISCARD_FRACTION='. $self->max_discard_fraction;
     }
     $self->run_java_vm(
         cmd          => $cmd,
