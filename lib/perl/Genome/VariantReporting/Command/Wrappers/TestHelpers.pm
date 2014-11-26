@@ -22,7 +22,7 @@ use Sub::Install qw(reinstall_sub);
 use Exporter 'import';
 use Memoize qw();
 
-our @EXPORT_OK = qw(get_build succeed_build compare_directories);
+our @EXPORT_OK = qw(get_build succeed_build compare_directories compare_directories_and_files);
 my $TEST_DIR = __FILE__.".d";
 my $PROVIDER_TEST_DIR = Genome::Utility::Test->data_dir("Genome::VariantReporting::Framework::Component::RuntimeTranslations", "v3");
 
@@ -209,8 +209,18 @@ Memoize::memoize("_get_third_alignment_result", LIST_CACHE => 'MERGE');
 
 sub compare_directories {
     my ($expected_dir, $output_dir) = @_;
+    compare_directories_and_files($expected_dir,
+        $output_dir,
+        {cmp=> sub {return 0;}}
+    );
+}
+
+sub compare_directories_and_files {
+    my ($expected_dir, $output_dir, $options) = @_;
     my (@a_only, @b_only, @diff);
-    my $comparison = File::DirCompare->compare($expected_dir, $output_dir, sub {
+    my $comparison = File::DirCompare->compare($expected_dir,
+        $output_dir,
+        sub {
             my ($a, $b) = @_;
             if (! $b) {
                 printf "Only in %s: %s\n", dirname($a), basename($a);
@@ -222,13 +232,14 @@ sub compare_directories {
                 print "Files $a and $b differ\n";
                 push @diff, $a;
             }
-        }, {cmp => sub {
-               return 0; 
-            }
-        });
+        },
+        $options
+    );
     is(scalar (grep {!($_ =~ /logs_|ignore/)} @a_only), 0, "No files only in expected dir");
     is(scalar (grep {!($_ =~ /logs_|ignore/)} @b_only), 0, "No files only in output dir");
+    is(scalar (grep {!($_ =~ /logs_|ignore/)} @diff), 0, "No files diffed");
 }
+
 sub unzip {
     my $file = shift;
     my $unzipped = Genome::Sys->create_temp_file_path;
