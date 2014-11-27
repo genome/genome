@@ -37,10 +37,6 @@ my $dag = $expert->dag();
 test_dag_xml($dag, __FILE__);
 
 set_what_interpreter_x_requires('nhlbi');
-my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
-    File::Spec->join($test_dir, 'plan.yaml'),
-);
-$plan->validate();
 
 my $variant_type = 'snvs';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
@@ -48,5 +44,5 @@ my $provider = get_translation_provider(version => $RESOURCE_VERSION);
 $provider->translations({nhlbi_vcf => File::Spec->join($test_dir, 'nhlbi.vcf')});
 
 my $input_vcf = File::Spec->join($test_dir, "$variant_type.vcf.gz");
-test_dag_execute($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $plan);
+test_dag_execute($dag, $expected_vcf, $input_vcf, $provider, $variant_type, __FILE__);
 done_testing();

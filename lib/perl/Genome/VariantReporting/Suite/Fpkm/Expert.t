@@ -44,14 +44,9 @@ my %translations = (
 );
 $provider->translations(\%translations);
 
-my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
-    File::Spec->join($test_dir, 'plan.yaml'),
-);
-$plan->validate();
-
 my $variant_type = 'snvs';
 my $expected_vcf = File::Spec->join($test_dir, "expected_$variant_type.vcf.gz");
 my $input_vcf = File::Spec->join($test_dir, "$variant_type.vcf.gz");
-test_dag_execute($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $plan);
+test_dag_execute($dag, $expected_vcf, $input_vcf, $provider, $variant_type, __FILE__);
 
 done_testing();
