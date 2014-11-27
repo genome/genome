@@ -45,4 +45,3 @@ reporters:
             interpreter_z:
                 iz_p1: untranslated
                 iz_p2: something else
-        params: {}

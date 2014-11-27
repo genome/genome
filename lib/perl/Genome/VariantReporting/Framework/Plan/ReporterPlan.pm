@@ -123,14 +123,20 @@ sub requires_annotations {
     return $needed->members;
 }
 
-sub object {
+sub params_for_create {
     my $self = shift;
 
-    return $self->get_class->__define__(
+    return (
         %{$self->params},
         filters => {map {$_->name, $_->object} $self->filter_plans},
         interpreters => {map {$_->name, $_->object} $self->interpreter_plans},
     );
+}
+
+sub object {
+    my $self = shift;
+
+    return $self->get_class->__define__($self->params_for_create);
 }
 Memoize::memoize("object", LIST_CACHE => 'MERGE');
 
