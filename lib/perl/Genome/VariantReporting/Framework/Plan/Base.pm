@@ -36,7 +36,7 @@ sub as_hashref {
 
     my %body;
     if ($self->children) {
-        $body{params} = $self->params;
+        $body{params} = $self->params if keys %{$self->params};
 
         my %children = $self->children;
         while (my ($child_category, $child_plans_ref) = each %children) {

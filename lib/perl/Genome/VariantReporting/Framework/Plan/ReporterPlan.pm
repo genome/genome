@@ -36,10 +36,11 @@ sub create_from_hashref {
     my $name = shift;
     my $hashref = shift;
 
-    my $self = $class->SUPER::create(
-        name => $name,
-        params => $hashref->{params},
-    );
+    my %params_for_create = (name => $name);
+    if (exists $hashref->{params}) {
+        $params_for_create{params} = $hashref->{params};
+    }
+    my $self = $class->SUPER::create(%params_for_create);
 
     my @filter_plans;
     while (my ($name, $params) = each %{$hashref->{filters}}) {
