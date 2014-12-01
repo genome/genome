@@ -19,10 +19,10 @@ class Genome::Model::Tools::Picard::RevertSam {
         },
         sort_order => {
             is => 'String',
-            is_optional => 1,
             doc => 'The sort order to create the reverted output file with.',
             default_value => 'queryname',
             valid_values => ['unsorted', 'queryname', 'coordinate'],
+            is_optional => 1,
         },
         restore_original_qualities => {
             is => 'Boolean',
@@ -34,11 +34,13 @@ class Genome::Model::Tools::Picard::RevertSam {
             is => 'Boolean',
             doc => 'Remove duplicate read flags from all reads.',
             default_value => 1,
+            is_optional => 1,
         },
         remove_alignment_information => {
             is => 'Boolean',
             doc => 'Remove all alignment information from the file.',
             default_value => 1,
+            is_optional => 1,
         },
         attribute_to_clear => {
             is => 'String',
@@ -50,11 +52,13 @@ class Genome::Model::Tools::Picard::RevertSam {
             is => 'Boolean',
             doc => 'WARNING: This option is potentially destructive. If enabled will discard reads in order to produce a consistent output BAM. Reads discarded include (but are not limited to) paired reads with missing mates, duplicated records, records with mismatches in length of bases and qualities. This option can only be enabled if the output sort order is queryname and will always cause sorting to occur.',
             default_value => 0,
+            is_optional => 1,
         },
         max_discard_fraction => {
             is => 'Float',
             doc => 'If SANITIZE=true and higher than MAX_DISCARD_FRACTION reads are discarded due to sanitization then the program will exit with an Exception instead of exiting cleanly. Output BAM will still be valid.',
             default_value => '0.01',
+            is_optional => 1,
         },
         sample_alias => {
             is => 'String',
