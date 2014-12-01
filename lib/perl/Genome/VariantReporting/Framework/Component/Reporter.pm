@@ -41,10 +41,12 @@ class Genome::VariantReporting::Framework::Component::Reporter {
         filters => {
             is => 'HASH',
             is_structural => 1,
+            default => {},
         },
         interpreters => {
             is => 'HASH',
             is_structural => 1,
+            default => {},
         },
     ],
 };
