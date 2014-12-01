@@ -50,6 +50,11 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               default => 10,
               doc => 'Variants with a normal VAF greater than this (in any normal sample) will be filtered out'
         },
+        min_tumor_var_count => {
+              is => 'Number',
+              default => 3,
+              doc => 'Variants with a tumor var count less than this (in any tumor sample) will be filtered out',
+        },
         min_tumor_vaf => {
               is => 'Number',
               default => 2.5,
@@ -79,6 +84,16 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
               is => 'Number',
               default => 0,
               doc => 'In per library analysis, variants with less than this number of tumor libraries supporting will be filtered out',
+        },
+        min_snv_caller_count => {
+              is => 'Number',
+              default => 1,
+              doc => 'SNV variants called by fewer this number of SNV variant callers will be filtered out',
+        },
+        min_indel_caller_count => {
+              is => 'Number',
+              default => 1,
+              doc => 'INDEL variants called by fewer this number of INDEL variant callers will be filtered out',
         },
         per_library => {
               is => 'Boolean',
@@ -283,7 +298,7 @@ sub execute {
     $per_lib_header = $self->parse_per_lib_read_counts('-align_builds'=>$align_builds, '-grand_anno_per_lib_count_file'=>$grand_anno_per_lib_count_file, '-variants'=>$variants);
   }
 
-  #Apply arbitrary variant filter list
+  #Apply arbitrary variant filter list (a list of variants supplied in a file that are to be removed)
   if ($self->variant_filter_list){
     $self->apply_filter_list('-variants'=>$variants);
   }
@@ -298,6 +313,8 @@ sub execute {
   #TODO: Filter out variants falling within known false positive regions/genes?
 
   #TODO: Limit analysis to variants *called in* a particular tumor only (e.g. day0 tumor) - rather than taking the union of calls from all samples
+
+  #TODO: Add an additional filter that uses the false postive filter: 'gmt validation identify-outliers'
 
   #TODO: Add additional filters for low VAF variants (e.g. if VAF < 10%, require at least 3 callers, support from multiple libraries, etc.)
 
@@ -358,13 +375,18 @@ sub print_subject_table{
 
   my $outfile = $self->outdir . "subjects_legend.txt";
   my $out_fh = Genome::Sys->open_file_for_writing($outfile);
-  print $out_fh "name\tprefix\tday\ttimepoint_position\tsample_type\n";
+  print $out_fh "name\tprefix\tday\ttimepoint_position\tsample_type\torder\ttissue_desc\ttissue_label\textraction_type\textraction_label\n";
   foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys %{$align_builds}){
+    my $order = $align_builds->{$name}->{order};
     my $prefix = $align_builds->{$name}->{prefix};
     my $day = $align_builds->{$name}->{day};
     my $timepoint_position = $align_builds->{$name}->{timepoint_position};
     my $sample_type = $align_builds->{$name}->{sample_common_name};
-    print $out_fh "$name\t$prefix\t$day\t$timepoint_position\t$sample_type\n";
+    my $tissue_desc = $align_builds->{$name}->{tissue_desc};
+    my $tissue_label = $align_builds->{$name}->{tissue_label};
+    my $extraction_type = $align_builds->{$name}->{extraction_type};
+    my $extraction_label = $align_builds->{$name}->{extraction_label};
+    print $out_fh "$name\t$prefix\t$day\t$timepoint_position\t$sample_type\t$order\t$tissue_desc\t$tissue_label\t$extraction_type\t$extraction_label\n";
   }
   close($out_fh);
 
@@ -500,12 +522,14 @@ sub gather_variants{
       }
       my @line = split("\t", $_);
       my ($chr, $start, $stop, $ref, $var) = ($line[0], $line[1], $line[2], $line[3], $line[4]);
-      my $ensembl_gene_id = $line[23];
+      my $variant_type = $line[5];
       my $trv_type = $line[13];
+      my $ensembl_gene_id = $line[23];
       my $v = $chr . "_$start" . "_$stop" . "_$ref" . "_$var";
       $variants{$v}{anno_line} = $_;
       $variants{$v}{tier} = $tier;
       $variants{$v}{ensembl_gene_id} = $ensembl_gene_id;
+      $variants{$v}{variant_type} = $variant_type;
       $variants{$v}{trv_type} = $trv_type;
       $variants{$v}{filtered} = "";
       if(defined $variants{$v}{data_type}) {
@@ -790,6 +814,7 @@ sub parse_read_counts{
     #For example if there is exome AND WGS data we want the min coverage criteria to applied to either of these (whichever is higher)
     my %samples;
     my $max_normal_vaf_observed = 0;
+    my $max_tumor_var_count_observed = 0;
     my $max_tumor_vaf_observed = 0;
     my $na_found = 0;
     my @covs;
@@ -809,10 +834,12 @@ sub parse_read_counts{
         push(@covs, "NA");
         next;
       }
-      if ($sample_common_name =~ /normal/){
+      if ($sample_common_name =~ /normal/i){
         my $normal_vaf = $line[$columns{$vaf_colname}{c}];
         $max_normal_vaf_observed = $normal_vaf if ($normal_vaf > $max_normal_vaf_observed);
       }else{
+        my $tumor_var_count = $line[$columns{$var_count_colname}{c}];
+        $max_tumor_var_count_observed = $tumor_var_count if ($tumor_var_count > $max_tumor_var_count_observed);
         my $tumor_vaf = $line[$columns{$vaf_colname}{c}];
         $max_tumor_vaf_observed = $tumor_vaf if ($tumor_vaf > $max_tumor_vaf_observed);
       }
@@ -840,6 +867,7 @@ sub parse_read_counts{
     }
 
     $variants->{$v}->{max_normal_vaf_observed} = $max_normal_vaf_observed;
+    $variants->{$v}->{max_tumor_var_count_observed} = $max_tumor_var_count_observed;
     $variants->{$v}->{max_tumor_vaf_observed} = $max_tumor_vaf_observed;
     $variants->{$v}->{min_coverage_observed} = $min_coverage_observed;
     $variants->{$v}->{coverages} = \@covs;
@@ -1016,23 +1044,35 @@ sub apply_variant_filters{
   my %args = @_;
   my $variants = $args{'-variants'};
   my $max_normal_vaf = $self->max_normal_vaf;
+  my $min_tumor_var_count = $self->min_tumor_var_count;
   my $min_tumor_vaf = $self->min_tumor_vaf;
   my $min_coverage = $self->min_coverage;
   my $max_gmaf = $self->max_gmaf;
   my $min_tumor_var_supporting_libs = $self->min_tumor_var_supporting_libs;
+  my $min_snv_caller_count = $self->min_snv_caller_count;
+  my $min_indel_caller_count = $self->min_indel_caller_count;
 
   foreach my $v (keys %{$variants}){
     my $max_normal_vaf_observed = $variants->{$v}->{max_normal_vaf_observed};
+    my $max_tumor_var_count_observed = $variants->{$v}->{max_tumor_var_count_observed};
     my $max_tumor_vaf_observed = $variants->{$v}->{max_tumor_vaf_observed};
     my $min_coverage_observed = $variants->{$v}->{min_coverage_observed};
     my $gmaf = $variants->{$v}->{gmaf};
     my $tumor_var_supporting_libs = $variants->{$v}->{tumor_var_supporting_libs} if defined($variants->{$v}->{tumor_var_supporting_libs});
+    my $variant_source_caller_count = $variants->{$v}->{variant_source_caller_count};
 
     #Normal VAF filter
     if ($max_normal_vaf_observed =~ /\d+/){
       $variants->{$v}->{filtered} .= "Max_Normal_VAF," if ($max_normal_vaf_observed > $max_normal_vaf);
     }elsif($max_normal_vaf_observed eq "NA"){
       $variants->{$v}->{filtered} .= "Max_Normal_VAF,";
+    }
+
+    #Tumor var count filter
+    if ($max_tumor_var_count_observed =~ /\d+/){
+      $variants->{$v}->{filtered} .= "Min_Tumor_Var_Count," if ($max_tumor_var_count_observed < $min_tumor_var_count);
+    }elsif($max_tumor_var_count_observed eq "NA"){
+      $variants->{$v}->{filtered} .= "Min_Tumor_Var_Count,";
     }
 
     #Tumor VAF filter
@@ -1057,6 +1097,17 @@ sub apply_variant_filters{
     #Min library support filter
     if (defined($tumor_var_supporting_libs) && $min_tumor_var_supporting_libs){
       $variants->{$v}->{filtered} .= "Min_Library_Support," if ($tumor_var_supporting_libs < $min_tumor_var_supporting_libs);
+    }
+
+    #Min variant caller count filters (variant_source_caller_count)
+    if ($variants->{$v}->{variant_type} =~ /SNP/i){
+      #Min SNV variant caller count filter
+      $variants->{$v}->{filtered} .= "Min_SNV_Caller_Count," if ($variant_source_caller_count < $min_snv_caller_count);
+    }elsif($variants->{$v}->{variant_type} =~ /INS|DEL/i){
+      #Min INDEL variant caller count filter
+      $variants->{$v}->{filtered} .= "Min_INDEL_Caller_Count," if ($variant_source_caller_count < $min_indel_caller_count);
+    }else{
+      die $self->error_message("unrecognized variant type: $variants->{$v}->{variant_type}");
     }
 
     #If not filtered by any category, don't filter. Keep this at the end.
