@@ -22,7 +22,7 @@ sub generate_dag {
     );
 
     my $last_expert_op = connect_experts($dag, $plan);
-    connect_report_generator($dag, $last_expert_op);
+    connect_reporters($dag, $last_expert_op, $plan);
 
     return $dag;
 }
@@ -101,28 +101,35 @@ sub experts {
     } @unsorted_experts;
 }
 
-sub connect_report_generator {
-    my ($dag, $last_expert_op) = validate_pos(@_, 1, 1);
+sub connect_reporters {
+    my ($dag, $last_expert_op, $plan) = validate_pos(@_, 1, 1, 1);
 
-    my $report_generator_op = Genome::WorkflowBuilder::Command->create(
-        name => 'Generate Reports',
-        command => 'Genome::VariantReporting::Framework::GenerateReport',
-    );
-    connect_to_previous(
-        dag => $dag,
-        previous => $last_expert_op,
-        target => $report_generator_op,
-    );
-    connect_to_dag(
-        dag => $dag,
-        target => $report_generator_op,
-    );
+    for my $reporter_plan ($plan->reporter_plans) {
+        my $name = $reporter_plan->name;
+        my $reporter_op = Genome::WorkflowBuilder::Command->create(
+            name => sprintf('Generate Report (%s)', $name),
+            command => 'Genome::VariantReporting::Framework::GenerateReport',
+        );
+        $reporter_op->declare_constant(
+            reporter_name => $name,
+            label => $name,
+        );
+        connect_to_previous(
+            dag => $dag,
+            previous => $last_expert_op,
+            target => $reporter_op,
+        );
+        connect_to_dag(
+            dag => $dag,
+            target => $reporter_op,
+        );
 
-    $dag->connect_output(
-        output_property => 'output_result',
-        source => $report_generator_op,
-        source_property => 'output_result',
-    );
+        $dag->connect_output(
+            output_property => sprintf('output_result (%s)', $name),
+            source => $reporter_op,
+            source_property => 'output_result',
+        );
+    }
 }
 
 
