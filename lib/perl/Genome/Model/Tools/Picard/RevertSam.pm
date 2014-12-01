@@ -28,6 +28,7 @@ class Genome::Model::Tools::Picard::RevertSam {
             is => 'Boolean',
             doc => 'True to restore original qualities from the OQ field to the QUAL field if available.',
             default_value => 1,
+            is_optional => 1,
         },
         remove_duplicate_information => {
             is => 'Boolean',
@@ -52,7 +53,7 @@ class Genome::Model::Tools::Picard::RevertSam {
         },
         max_discard_fraction => {
             is => 'Float',
-            doc => 'If SANITIZE=true and higher than MAX_DISCARD_FRACTION reads are discarded due to sanitization thenthe program will exit with an Exception instead of exiting cleanly. Output BAM will still be valid. Default value: 0.01.',
+            doc => 'If SANITIZE=true and higher than MAX_DISCARD_FRACTION reads are discarded due to sanitization then the program will exit with an Exception instead of exiting cleanly. Output BAM will still be valid.',
             default_value => '0.01',
         },
         sample_alias => {
@@ -98,7 +99,8 @@ sub execute {
                                    remove_alignment_information
                                /;
 
-    if ( strverscmp($self->use_version,'1.108') == 1 ) {
+    # Sanitize option was first made available in Picard v1.108
+    if ( strverscmp($self->use_version,'1.107') == 1 ) {
         push @boolean_attributes, 'sanitize';
         $cmd .= ' MAX_DISCARD_FRACTION='. $self->max_discard_fraction;
     } elsif ($self->sanitize) {
