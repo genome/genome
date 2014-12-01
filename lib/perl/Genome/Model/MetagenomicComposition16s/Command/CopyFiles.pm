@@ -9,7 +9,7 @@ require File::Basename;
 require File::Copy;
 
 class Genome::Model::MetagenomicComposition16s::Command::CopyFiles {
-    is => 'Genome::Model::MetagenomicComposition16s::Command',
+    is => 'Genome::Model::MetagenomicComposition16s::Command::Base',
     has => [
         file_type => {
             is => 'Text',
