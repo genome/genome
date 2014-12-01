@@ -247,19 +247,9 @@ sub create_cnv_diff_hq_file {
     $diff_data->{pos} = $data_n->{position};
     $cnvhq_data->{POS} = $data_n->{position};
     #copynumber ~ 2^(log_r_ratio + 1)
-    my $cn_normal = $data_n->{cnv_value};
-    $cn_normal = sprintf("%.5f", $cn_normal);
-    my $cn_tumor = $data_t->{cnv_value};
-    $cn_tumor = sprintf("%.5f", $cn_tumor);
-    if( $cn_tumor == 0) {
-      $cn_tumor = 0.0001;
-    }
-    if( $cn_normal == 0) {
-      $cn_normal = 0.0001;
-    }
-    my $cnv_diff = $cn_tumor - $cn_normal;
-    my $cnv_ratio = log($cn_tumor/$cn_normal)/log(2);
-    $cnv_diff = sprintf("%.6f", $cnv_diff);
+    my $log_cn_normal = $data_n->{log_r_ratio};
+    my $log_cn_tumor = $data_t->{log_r_ratio};
+    my $cnv_ratio = $log_cn_tumor - $log_cn_normal;
     $cnvhq_data->{TUMOR} = 2.0**($data_t->{log_r_ratio} + 1.0);
     $cnvhq_data->{NORMAL} = 2.0**($data_n->{log_r_ratio} + 1.0);;
     $diff_data->{cnv_diff} = $cnv_ratio; #segment the ratio of LRR
