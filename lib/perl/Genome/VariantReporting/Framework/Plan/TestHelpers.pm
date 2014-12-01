@@ -129,6 +129,10 @@ sub set_what_interpreter_x_requires {
         "interpreter_z";
     }
 
+    sub requires_annotations {
+        return ();
+    }
+
     sub interpret_entry {
         my $self = shift;
         my $entry = shift;
@@ -487,6 +491,10 @@ sub set_what_interpreter_x_requires {
 
     sub name {
         'filter_one';
+    }
+
+    sub requires_annotations {
+        return qw(expert_one);
     }
 
     sub filter_entry {

@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<operation name="homopolymer">
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>input_vcf</inputproperty>
+    <inputproperty>plan_json</inputproperty>
+    <inputproperty>process_id</inputproperty>
+    <inputproperty>variant_type</inputproperty>
+    <outputproperty>output_result</outputproperty>
+    <outputproperty>output_vcf</outputproperty>
+  </operationtype>
+  <operation name="Get inputs from plan">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Homopolymer::Adaptor">
+      <inputproperty>plan_json</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>homopolymer_list_id</outputproperty>
+      <outputproperty>info_string</outputproperty>
+      <outputproperty>joinx_version</outputproperty>
+      <outputproperty>max_length</outputproperty>
+      <outputproperty>result</outputproperty>
+      <outputproperty>variant_type</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="Run homopolymer">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Homopolymer::Run">
+      <inputproperty>homopolymer_list_id</inputproperty>
+      <inputproperty>info_string</inputproperty>
+      <inputproperty>input_vcf</inputproperty>
+      <inputproperty>joinx_version</inputproperty>
+      <inputproperty>max_length</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>output_result</outputproperty>
+      <outputproperty>output_vcf</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <link fromOperation="Get inputs from plan" fromProperty="homopolymer_list_id" toOperation="Run homopolymer" toProperty="homopolymer_list_id"/>
+  <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run homopolymer" toProperty="info_string"/>
+  <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run homopolymer" toProperty="joinx_version"/>
+  <link fromOperation="Get inputs from plan" fromProperty="max_length" toOperation="Run homopolymer" toProperty="max_length"/>
+  <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run homopolymer" toProperty="variant_type"/>
+  <link fromOperation="Run homopolymer" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
+  <link fromOperation="Run homopolymer" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
+  <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
+  <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run homopolymer" toProperty="input_vcf"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="Run homopolymer" toProperty="process_id"/>
+</operation>

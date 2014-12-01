@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<operation name="fpkm">
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>input_vcf</inputproperty>
+    <inputproperty>plan_json</inputproperty>
+    <inputproperty>process_id</inputproperty>
+    <inputproperty>variant_type</inputproperty>
+    <outputproperty>output_result</outputproperty>
+    <outputproperty>output_vcf</outputproperty>
+  </operationtype>
+  <operation name="Get inputs from plan">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Fpkm::Adaptor">
+      <inputproperty>plan_json</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>fpkm_file</outputproperty>
+      <outputproperty>result</outputproperty>
+      <outputproperty>sample_name</outputproperty>
+      <outputproperty>variant_type</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="Run fpkm">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Fpkm::Run">
+      <inputproperty>fpkm_file</inputproperty>
+      <inputproperty>input_vcf</inputproperty>
+      <inputproperty>sample_name</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>output_result</outputproperty>
+      <outputproperty>output_vcf</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <link fromOperation="Get inputs from plan" fromProperty="fpkm_file" toOperation="Run fpkm" toProperty="fpkm_file"/>
+  <link fromOperation="Get inputs from plan" fromProperty="sample_name" toOperation="Run fpkm" toProperty="sample_name"/>
+  <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run fpkm" toProperty="variant_type"/>
+  <link fromOperation="Run fpkm" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
+  <link fromOperation="Run fpkm" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
+  <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
+  <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run fpkm" toProperty="input_vcf"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="Run fpkm" toProperty="process_id"/>
+</operation>

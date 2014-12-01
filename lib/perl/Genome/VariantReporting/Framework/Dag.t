@@ -15,12 +15,9 @@ BEGIN {
 };
 
 my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(plan_file());
-test_dag_xml(generate_dag($plan, 'snvs'), expected_xml());
-done_testing();
+test_dag_xml(generate_dag($plan, 'snvs'), __FILE__);
 
-sub expected_xml {
-    return File::Spec->join(test_dir(), 'expected.xml');
-}
+done_testing();
 
 sub plan_file {
     return File::Spec->join(test_dir(), 'test.yaml');

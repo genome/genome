@@ -7,6 +7,11 @@ reporters:
         interpreters:
             __translated_test__:
                 translated1: to_translate1
+                translated2:
+                    - old_value
+                translated3:
+                    - old_value1
+                    - old_value2
         filters:
             __translated_test_filter__:
                 translated2: to_translate2
