@@ -401,7 +401,8 @@ sub is_near_soft_limit {
                          : 0;
 
     my $kb = max($self->used_kb, $total_allocated_kb);
-    return ($kb + $avg_allocated_kb > $self->soft_limit_kb);
+    my $threshold = $avg_allocated_kb;
+    return (($self->soft_limit_kb - $kb) < $threshold );
 }
 
 sub get_trash_folder {
