@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Framework::Component::Reporter::SingleFile {
     is => 'Genome::VariantReporting::Framework::Component::Reporter',
+    is_abstract => 1,
     has_transient_optional => [
         _output_fh => {
             is_structural => 1,
