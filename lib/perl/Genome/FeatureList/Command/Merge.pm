@@ -77,17 +77,18 @@ sub execute {
         my $temp_file = Genome::Sys->create_temp_file_path;
         Genome::Sys->write_file($temp_file, $new_bed_content);
 
-        my $cmd = Genome::FeatureList::Command::Create->create(
+        my $cmd = Genome::FeatureList::Command::Import->create(
             name => $self->name,
             reference => $self->reference,
             file_path => $temp_file,
             content_type => 'targeted',
-            format => Genome::FeatureList->_derive_format($is_1_based, $is_multitracked),
+            is_1_based => $is_1_based,
             description => 'generated with `genome feature-list merge`',
         );
-        unless($merged_list = $cmd->execute) {
+        unless($cmd->execute && $cmd->new_feature_list) {
             die $self->error_message('Failed to create FeatureList');
         }
+        $merged_list = $cmd->new_feature_list;
     }
 
     say $merged_list->id;
