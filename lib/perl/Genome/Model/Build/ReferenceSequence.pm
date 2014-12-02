@@ -352,7 +352,7 @@ sub full_consensus_path {
 }
 
 #This is for samtools faidx output that can be used as ref_list for
-#SamToBam convertion
+#SamToBam conversion
 sub full_consensus_sam_index_path {
     my $self        = shift;
     my $sam_version = shift;
