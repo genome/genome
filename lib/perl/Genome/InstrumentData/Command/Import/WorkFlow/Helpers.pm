@@ -187,7 +187,7 @@ sub load_or_run_flagstat {
 
     my $flagstat_path = $bam_path.'.flagstat';
     if ( -s $flagstat_path ) {
-        return $self->load_flagstat($flagstat_path);
+        return $self->load_flagstat_for_bam_path($bam_path);
     }
     else {
         return $self->run_flagstat($bam_path);
@@ -212,21 +212,22 @@ sub run_flagstat {
         return;
     }
 
-    my $flagstat = $self->load_flagstat($flagstat_path);
+    my $flagstat = $self->load_flagstat_for_bam_path($bam_path);
     return if not $flagstat;
 
     $self->debug_message('Run flagstat...done');
     return $flagstat;
 }
 
-sub load_flagstat {
-    my ($self, $flagstat_path) = @_;
-    $self->debug_message('Load flagstat...');
+sub load_flagstat_for_bam_path {
+    my ($self, $bam_path) = @_;
+    $self->debug_message('Load flagstat for bam path...');
 
-    Carp::confess('No flagstat path to load!') if not $flagstat_path;
-    Carp::confess('Flagstat file is empty!') if not -s $flagstat_path;
+    Carp::confess('No bam path to derive flagstat path to load!') if not $bam_path;
 
+    my $flagstat_path = $bam_path.'.flagstat';
     $self->debug_message('Flagstat path: '.$flagstat_path);
+    Carp::confess('Flagstat file is empty!') if not -s $flagstat_path;
     my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
     if ( not $flagstat ) {
         $self->error_message('Failed to load flagstat file!');
@@ -250,7 +251,7 @@ sub load_flagstat {
     $self->debug_message('Flagstat output:');
     $self->debug_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
 
-    $self->debug_message('Load flagstat...done');
+    $self->debug_message('Load flagstat for bam path...done');
     return $flagstat;
 }
 

@@ -115,17 +115,17 @@ sub execute {
         return if not $allocation;
 
         # Flagstat
-        my $flagstat_path = $bam_path.'.flagstat';
-        $self->debug_message("Flagstat path: $flagstat_path");
-        my $flagstat = $helpers->load_flagstat($flagstat_path);
+        my $flagstat = $helpers->load_flagstat_for_bam_path($bam_path);
         return if not $flagstat;
+        $self->debug_message("Flagstat path: ".$flagstat->{path});
 
         # Move bam and flagstat
         my $final_bam_path = $instrument_data->data_directory.'/all_sequences.bam';
         my $move_ok = $helpers->move_path($bam_path, $final_bam_path);
         return if not $move_ok;
+
         my $final_flagstat_path = $final_bam_path . '.flagstat';
-        $move_ok = $helpers->move_path($flagstat_path, $final_flagstat_path);
+        $move_ok = $helpers->move_path($flagstat->{path}, $final_flagstat_path);
         return if not $move_ok;
 
         # Attrs
