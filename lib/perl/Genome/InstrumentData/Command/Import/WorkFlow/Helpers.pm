@@ -179,32 +179,29 @@ sub verify_adequate_disk_space_is_available_for_source_files {
 
 #<SAMTOOLS>#
 sub load_or_run_flagstat {
-    my ($self, $bam_path, $flagstat_path) = @_;
+    my ($self, $bam_path) = @_;
     $self->debug_message('Load or run flagstat...');
 
     Carp::confess('No bam path given to run flagstat!') if not $bam_path;
     Carp::confess('Bam path given to run flagstat does not exist!') if not -s $bam_path;
 
-    $flagstat_path ||= $bam_path.'.flagstat';
-    my $flagstat;
+    my $flagstat_path = $bam_path.'.flagstat';
     if ( -s $flagstat_path ) {
-        $flagstat = $self->load_flagstat($flagstat_path);
+        return $self->load_flagstat($flagstat_path);
     }
     else {
-        $flagstat = $self->run_flagstat($bam_path, $flagstat_path);
+        return $self->run_flagstat($bam_path);
     }
-
-    return $flagstat;
 }
 
 sub run_flagstat {
-    my ($self, $bam_path, $flagstat_path) = @_;
+    my ($self, $bam_path) = @_;
     $self->debug_message('Run flagstat...');
 
     Carp::confess('No bam path given to run flagstat!') if not $bam_path;
     Carp::confess('Bam path given to run flagstat does not exist!') if not -s $bam_path;
 
-    $flagstat_path ||= $bam_path.'.flagstat';
+    my $flagstat_path = $bam_path.'.flagstat';
     $self->debug_message("Bam path: $bam_path");
     $self->debug_message("Flagstat path: $flagstat_path");
     my $cmd = "samtools flagstat $bam_path > $flagstat_path";
@@ -235,6 +232,7 @@ sub load_flagstat {
         $self->error_message('Failed to load flagstat file!');
         return;
     }
+    $flagstat->{path} = $flagstat_path;
 
     # FIXME What is paired end?
     if($flagstat_path =~ /\.paired\.bam\.flagstat$/) {
