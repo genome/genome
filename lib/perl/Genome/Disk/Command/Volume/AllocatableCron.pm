@@ -99,18 +99,57 @@ sub enable_volumes {
     my $message_method = (($self->dry_run || !$self->quiet) ? 'print_message' : 'debug_message');
 
     for my $v (@volumes) {
-        my $m = sprintf('%s: enabling', $v->mount_path);
-        $self->$message_method($m);
-        if (!$self->quiet) {
-            if (! $v->is_used_over_soft_limit) {
-                $self->$message_method("\tVolume is not used over soft limit.");
-            }
-            if (! $v->is_allocated_over_soft_limit) {
-                $self->$message_method("\tVolume is not allocated over soft limit.");
-            }
+        my $error = sanity_check_for_enable($v);
+        if ($error) {
+            my $m = sprintf('%s: skipping: %s', $v->mount_path, $error);
+            $self->$message_method($m);
+            next;
         }
+        else {
+            my $m = sprintf('%s: enabling', $v->mount_path);
+            $self->$message_method($m);
+        }
+
         unless ($self->dry_run) {
             $v->can_allocate(1);
         }
     }
+}
+
+sub sanity_check_for_enable {
+    my $volume = shift;
+
+    unless (-d $volume->mount_path) {
+        return 'mount_path is not a directory';
+    }
+
+    my $disk_group = $volume->groups;
+
+    my $subdir_path = File::Spec->join($volume->mount_path, $disk_group->subdirectory);
+    unless (-d $subdir_path) {
+        return 'expected subdirectory is not a directory';
+    }
+
+    my $subdir_stat = stat($subdir_path);
+    unless ($subdir_stat->gid == $disk_group->unix_gid) {
+        return sprintf 'subdirectory is not owned by %s', $disk_group->group_name;
+    }
+
+    my $subdir_mode = mode($subdir_path);
+    unless ($subdir_mode->is_setgid) {
+        return 'subdirectory is not setgid';
+    }
+    unless ($subdir_mode->is_group_rwx) {
+        return 'subdirectory is not rwx';
+    }
+
+    if ($volume->is_used_over_soft_limit) {
+        return 'volume usage is over soft limit';
+    }
+
+    if ($volume->is_allocated_over_soft_limit) {
+        return 'volume is allocated over soft limit';
+    }
+
+    return;
 }
