@@ -60,6 +60,8 @@ sub execute {
         die $self->error_message('Must provide at least two FeatureLists to combine. Got %s.', scalar(@inputs));
     }
 
+    $self->validate_properties_required_for_merge(@inputs);
+
     unless($self->reference) {
         $self->reference($inputs[0]->reference);
     }
