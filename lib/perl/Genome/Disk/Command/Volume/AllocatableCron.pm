@@ -20,7 +20,7 @@ class Genome::Disk::Command::Volume::AllocatableCron {
         },
         enable => {
             is => 'Boolean',
-            default => 0,
+            default => 1,
         },
         volumes => {
             is => 'Genome::Disk::Volume',
@@ -43,7 +43,6 @@ sub execute {
     }
 
     if ($self->enable) {
-        die 'How can we prevent disks pulled out for maintenance from being auto-added?';
         my @volumes_to_enable  = $self->select_volumes_to_enable(@active_volumes);
         $self->enable_volumes(@volumes_to_enable);
     }
