@@ -1,7 +1,12 @@
+package Genome::Disk::Command::Volume::AllocatableCron;
+
 use strict;
 use warnings;
 
-package Genome::Disk::Command::Volume::AllocatableCron;
+use Genome;
+
+use File::stat qw(stat);
+use Genome::Utility::File::Mode qw(mode);
 
 class Genome::Disk::Command::Volume::AllocatableCron {
     is => 'Command::V2',
