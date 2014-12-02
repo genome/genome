@@ -82,9 +82,6 @@ sub workflow_inputs {
     my $process_id = shift;
     return {
         process_id => $process_id,
-        input_vcf => $self->input_vcf,
-        variant_type => $self->variant_type,
-        plan_json => $self->plan->as_json,
         %{$self->dag->constant_values},
     };
 }
@@ -129,6 +126,11 @@ sub dag {
     unless (defined($self->__dag)) {
         $self->status_message("Constructing workflow from plan.");
         my $dag = generate_dag($self->plan, $self->variant_type);
+        $dag->declare_constant(
+            input_vcf => $self->input_vcf,
+            variant_type => $self->variant_type,
+            plan_json => $self->plan->as_json,
+        );
         $self->__dag($dag);
     }
     return $self->__dag;
