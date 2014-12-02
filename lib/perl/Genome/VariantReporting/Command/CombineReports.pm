@@ -32,6 +32,7 @@ class Genome::VariantReporting::Command::CombineReports {
         },
         separator => {
             is => 'Text',
+            is_optional => 1,
             default => "\t",
             doc => 'Field separator for the reports',
         },
