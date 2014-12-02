@@ -287,6 +287,10 @@ sub _move_files_from_working_directory {
         my @missing = sort keys %suffix_to_property_mapping;
         $self->warning_message("Found no output files in working directory $working_dir " .
             "with suffixes: " . join(" ", @missing));
+        if(exists($suffix_to_property_mapping{masked})) {
+            #test shortcutting just the fasta as if we're skipping repeatmasker.
+            $self->_prepare_for_skip;
+        }
     }
 
     return 1;
