@@ -18,6 +18,11 @@ sub file_name {
     return 'report.txt';
 }
 
+sub report_path {
+    my $self = shift;
+    return File::Spec->join($self->output_dir, $self->file_name);
+}
+
 sub initialize {
     my $self = shift;
     $self->SUPER::initialize(@_);
