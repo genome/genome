@@ -65,13 +65,13 @@ sub print_message {
 sub select_volumes_to_disable {
     my $self = shift;
     my @volumes = @_;
-    return grep {   $_->is_near_soft_limit } @volumes;
+    return grep { $_->can_allocate && $_->is_near_soft_limit } @volumes;
 }
 
 sub select_volumes_to_enable {
     my $self = shift;
     my @volumes = @_;
-    return grep { ! $_->is_near_soft_limit } @volumes;
+    return grep { ! $_->can_allocate && ! $_->is_near_soft_limit } @volumes;
 }
 
 sub disable_volumes {
