@@ -9,7 +9,7 @@ my $FACTORY = Genome::VariantReporting::Framework::Factory->create();
 class Genome::VariantReporting::Command::CreateCombinedReports {
     is => 'Command::V2',
     has_input => [
-        label => {
+        combination_label => {
             is => 'Text',
             doc => 'A way to distinguish this set of reports from others.',
         },
@@ -63,7 +63,7 @@ sub dag {
     unless (defined($self->__dag)) {
         my $dag = Genome::WorkflowBuilder::DAG->create(
             name => sprintf('Create Snvs, Indels, and Combined Reports (%s)',
-                $self->label),
+                $self->combination_label),
         );
         my $snvs_dag = $self->get_connected_dag($dag, 'snvs');
         my $indels_dag = $self->get_connected_dag($dag, 'indels');
@@ -91,8 +91,6 @@ sub get_connected_dag {
         translations_file => $self->$translations_file_accessor,
     );
     my $dag = $cmd->dag;
-    $outer_dag->add_operation($dag);
-
     $outer_dag->connect_input(
         input_property => 'process_id',
         destination => $dag,
@@ -102,16 +100,34 @@ sub get_connected_dag {
     for my $output_name ($dag->output_properties) {
         if ($output_name =~ m/output_result \((.*)\)/) {
             my $report_name = $1;
+
             $outer_dag->connect_output(
                 output_property => sprintf('%s_result (%s)', $variant_type,
                     $report_name),
                 source => $dag,
                 source_property => $output_name,
             );
+
+            $self->redeclare_label_constant($dag, $report_name, $variant_type);
         }
     }
+    $outer_dag->add_operation($dag);
 
     return $dag;
+}
+
+sub redeclare_label_constant {
+    my $self = shift;
+    my $dag = shift;
+    my $report_name = shift;
+    my $variant_type = shift;
+
+    my $input_name = sprintf('Generate Report (%s).label', $report_name);
+    my $value = sprintf('%s.%s.%s', $self->combination_label,
+        $report_name, $variant_type);
+    $dag->declare_constant(
+        $input_name => $value,
+    );
 }
 
 sub connect_combine_operations {
@@ -175,7 +191,8 @@ sub connect_combine_operations {
             }
 
             $combine_op->declare_constant(
-                label => sprintf('%s.%s.combined', $self->label, $report_name),
+                label => sprintf('%s.%s.combined',
+                    $self->combination_label, $report_name),
                 %{$reporter_class->combine_parameters},
             );
             # this has to be done AFTER the constants are declared.
