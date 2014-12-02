@@ -155,9 +155,11 @@ sub get_copynumber_files {
             die $self->error_message("Unable to find copynumber file for " . $microarray_normal->name);
         }
     }
-    Genome::Sys->copy_file($copynumber_tumor, $self->outdir."/tumor.copynumber.original");
-    Genome::Sys->copy_file($copynumber_normal, $self->outdir."/normal.copynumber.original");
-    return ($copynumber_tumor, $copynumber_normal);
+    my $copynumber_tumor_copy = $self->outdir."/tumor.copynumber.original";
+    my $copynumber_normal_copy = $self->outdir."/normal.copynumber.original";
+    Genome::Sys->copy_file($copynumber_tumor, $copynumber_tumor_copy);
+    Genome::Sys->copy_file($copynumber_normal, $copynumber_normal_copy);
+    return ($copynumber_tumor_copy, $copynumber_normal_copy);
 }
 
 sub intersect_files {
