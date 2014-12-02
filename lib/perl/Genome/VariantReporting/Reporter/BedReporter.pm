@@ -9,6 +9,17 @@ class Genome::VariantReporting::Reporter::BedReporter {
     doc => 'Output variants in bed format',
 };
 
+sub can_be_combined {
+    return 1;
+}
+
+sub combine_parameters {
+    return {
+        sort_columns => [qw(1 2 3)],
+        contains_header => 0,
+    };
+}
+
 sub name {
     return 'bed';
 }

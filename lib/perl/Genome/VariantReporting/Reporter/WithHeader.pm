@@ -32,6 +32,18 @@ class Genome::VariantReporting::Reporter::WithHeader {
     ],
 };
 
+sub can_be_combined {
+    return 1;
+}
+
+sub combine_parameters {
+    return {
+        sort_columns => [qw(chromosome_name start stop reference variant)],
+        contains_header => 1,
+        split_indicators => [qw(per_library)],
+    };
+}
+
 sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__;

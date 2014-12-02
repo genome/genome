@@ -14,6 +14,14 @@ class Genome::VariantReporting::Framework::Component::Reporter::SingleFile {
     ],
 };
 
+sub can_be_combined {
+    return 0;
+}
+
+sub combine_parameters {
+    return {};
+}
+
 sub file_name {
     return 'report.txt';
 }
