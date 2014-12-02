@@ -10,217 +10,195 @@ BEGIN {
 
 use above "Genome";
 use Test::More;
-use Test::Exception;
 use Genome::Utility::Test qw(compare_ok);
-use Set::Scalar;
-#use Test::Exception; #  lives/dies_ok { $foo->method } 'this died'; throws_ok( sub { $foo->method }, qw/an error/, 'caught');
-#use Sub::Install; # Sub::Install::install_sub({code => sub {} , into => $package, as => $subname});
-#use Test::MockObject::Extends; # my $o = T:MO:E->new($obj); $o->mock($methodname, sub { }); $o->unmock($methodname);
 
 my $pkg = 'Genome::VariantReporting::Command::CombineReports';
 use_ok($pkg) or die;
 my $data_dir = __FILE__.".d";
 
-subtest "test with headers" => sub {
-    my $report_a = File::Spec->join($data_dir, 'report_a.header');
-    my $report_b = File::Spec->join($data_dir, 'report_b.header');
-    my $expected = File::Spec->join($data_dir, 'expected.header');
+sub get_data {
+    return File::Spec->join($data_dir, @_);
+}
 
-    my $output_file = Genome::Sys->create_temp_file_path;
-    my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['chr', 'pos'], contains_header => 1, output_file => $output_file);
+sub get_report_result {
+    my $report_filename = shift;
+
+    my $report_path = get_data($report_filename);
+    return Genome::VariantReporting::Framework::Test::Reporter->__define__(
+        _report_path => $report_path,
+    );
+}
+
+subtest "test with headers" => sub {
+    my $result_a = get_report_result('report_a.header');
+    my $result_b = get_report_result('report_b.header');
+    my $expected = get_data('expected.header');
+
+    my $cmd = $pkg->create(
+        report_results => [$result_a, $result_b],
+        sort_columns => ['chr', 'pos'],
+        contains_header => 1,
+    );
     isa_ok($cmd, $pkg);
 
-    my @expected_header = qw(chr pos data1 data2 data3);
-    is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
-    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
-
-    is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
-    is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
-
     ok($cmd->execute, 'Executed the test command');
-    compare_ok($output_file, $expected, 'Output file looks as expected');
+    compare_ok($cmd->output_result->report_path, $expected, 'Output file looks as expected');
 };
 
 subtest "test with headers with source" => sub {
-    my $report_a = File::Spec->join($data_dir, 'report_a.header');
-    my $report_b = File::Spec->join($data_dir, 'report_b.header');
-    my $expected = File::Spec->join($data_dir, 'expected_with_source.header');
+    my $result_a = get_report_result('report_a.header');
+    my $result_b = get_report_result('report_b.header');
+    my $expected = get_data('expected_with_source.header');
 
-    my $output_file = Genome::Sys->create_temp_file_path;
     my $cmd = $pkg->create(
-        reports => [$report_a, $report_b],
+        report_results => [$result_a, $result_b],
         sort_columns => ['chr', 'pos'],
         contains_header => 1,
-        output_file => $output_file,
-        entry_sources => {
-            File::Spec->join($data_dir, 'report_a.header') => "report_a",
-            File::Spec->join($data_dir, 'report_b.header') => "report_b"
-        }
+        entry_sources => [
+            sprintf("%s|%s", $result_a->id, 'report_a'),
+            sprintf("%s|%s", $result_b->id, 'report_b'),
+        ],
     );
     isa_ok($cmd, $pkg);
 
-    my @expected_header = qw(chr pos data1 data2 data3);
-    is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
-    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
-
-    is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
-    is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
-
     ok($cmd->execute, 'Executed the test command');
-    compare_ok($output_file, $expected, 'Output file looks as expected');
+    compare_ok($cmd->output_result->report_path, $expected, 'Output file looks as expected');
 };
 
 subtest "test with different orders of headers" => sub {
-    my $report_a = File::Spec->join($data_dir, 'report_a.header');
-    my $report_b = File::Spec->join($data_dir, 'report_b2.header');
-    my $expected = File::Spec->join($data_dir, 'expected.header');
-
-    my $output_file = Genome::Sys->create_temp_file_path;
-    my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['chr', 'pos'], contains_header => 1, output_file => $output_file);
+    my $result_a = get_report_result('report_a.header');
+    my $result_b = get_report_result('report_b2.header');
+    my $expected = get_data('expected.header');
+    my $cmd = $pkg->create(
+        report_results => [$result_a, $result_b],
+        sort_columns => ['chr', 'pos'],
+        use_header_from => $result_a,
+        contains_header => 1,
+    );
     isa_ok($cmd, $pkg);
 
-    my @expected_header = qw(chr pos data1 data2 data3);
-    is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
-    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
-
-    is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
-    is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
-
     ok($cmd->execute, 'Executed the test command');
-    compare_ok($output_file, $expected, 'Output file looks as expected');
+    compare_ok($cmd->output_result->report_path, $expected, 'Output file looks as expected');
 };
 
 subtest "test without headers" => sub {
-    my $report_a = File::Spec->join($data_dir, 'report_a.noheader');
-    my $report_b = File::Spec->join($data_dir, 'report_b.noheader');
-    my $expected = File::Spec->join($data_dir, 'expected.noheader');
+    my $result_a = get_report_result('report_a.noheader');
+    my $result_b = get_report_result('report_b.noheader');
+    my $expected = get_data('expected.noheader');
 
-    my $output_file = Genome::Sys->create_temp_file_path;
-    my $cmd = $pkg->create(reports => [$report_a, $report_b], sort_columns => ['1', '2'], contains_header => 0, output_file => $output_file);
+    my $cmd = $pkg->create(
+        report_results => [$result_a, $result_b],
+        sort_columns => ['1', '2'],
+        contains_header => 0,
+    );
     isa_ok($cmd, $pkg);
 
-    my @expected_header = qw(1 2 3 4);
-    is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
-    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
-
-    is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
-    is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
-
     ok($cmd->execute, 'Executed the test command');
-    compare_ok($output_file, $expected, 'Output file looks as expected');
+    compare_ok($cmd->output_result->report_path, $expected, 'Output file looks as expected');
 };
 
 subtest "test without headers with source" => sub {
-    my $report_a = File::Spec->join($data_dir, 'report_a.noheader');
-    my $report_b = File::Spec->join($data_dir, 'report_b.noheader');
-    my $expected = File::Spec->join($data_dir, 'expected_with_source.noheader');
+    my $result_a = get_report_result('report_a.noheader');
+    my $result_b = get_report_result('report_b.noheader');
+    my $expected = get_data('expected_with_source.noheader');
 
-    my $output_file = Genome::Sys->create_temp_file_path;
     my $cmd = $pkg->create(
-        reports => [$report_a, $report_b],
+        report_results => [$result_a, $result_b],
         sort_columns => ['1', '2'],
         contains_header => 0,
-        output_file => $output_file,
-        entry_sources => {
-            File::Spec->join($data_dir, 'report_a.noheader') => "report_a",
-            File::Spec->join($data_dir, 'report_b.noheader') => "report_b"
-        }
+        entry_sources => [
+            sprintf("%s|%s", $result_a->id, 'report_a'),
+            sprintf("%s|%s", $result_b->id, 'report_b'),
+        ],
     );
     isa_ok($cmd, $pkg);
 
-    my @expected_header = qw(1 2 3 4);
-    is_deeply([$cmd->get_header($report_a)], \@expected_header, 'Header looks as expected');
-    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
-
-    is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
-    is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
-
     ok($cmd->execute, 'Executed the test command');
-    compare_ok($output_file, $expected, 'Output file looks as expected');
+    compare_ok($cmd->output_result->report_path, $expected, 'Output file looks as expected');
 };
 
 subtest "Source tags must be defined" => sub {
-    my $cmd = $pkg->create(reports => ["report1", "report2"], output_file => "output", entry_sources => {"report2" => "report2"});
-    throws_ok(sub {$cmd->validate}, qr(No source tag defined for report report1), "Error if source tag is not defined for one report");
+    my $result_a = get_report_result('report_a.noheader');
+    my $result_b = get_report_result('report_b.noheader');
+    my $expected = get_data('expected_with_source.noheader');
+
+    my $cmd = $pkg->create(
+        report_results => [$result_a, $result_b],
+        sort_columns => ['1', '2'],
+        contains_header => 0,
+        entry_sources => [
+            sprintf("%s|%s", $result_b->id, 'report_b'),
+        ],
+    );
+    ok(!$cmd->execute, "Execute returns false value");
+    ok($cmd->error_message =~ qr/No entry source for report/,
+        "Error if source tag is not defined for one report");
 };
 
 subtest "columns to split only works with headers" => sub {
-    my $report_a = File::Spec->join($data_dir, 'report_a.noheader');
-    my $report_b = File::Spec->join($data_dir, 'report_b.noheader');
-    my $expected = File::Spec->join($data_dir, 'expected.noheader');
+    my $result_a = get_report_result('report_a.noheader');
+    my $result_b = get_report_result('report_b.noheader');
+    my $expected = get_data('expected.noheader');
 
-    my $output_file = Genome::Sys->create_temp_file_path;
     my $cmd = $pkg->create(
-        reports => [$report_a, $report_b],
+        report_results => [$result_a, $result_b],
         sort_columns => ['1', '2'],
         contains_header => 0,
-        output_file => $output_file,
         split_indicators => ["split"]
     );
     isa_ok($cmd, $pkg);
 
-    throws_ok(sub {$cmd->execute}, qr/If split_indicators are specified, then a header must be present/, 'columns_to_split fails without header');
+    ok(!$cmd->execute, "Execute returns false value");
+    ok($cmd->error_message =~ qr/If split_indicators are specified, then a header must be present/,
+        'columns_to_split fails without header');
 };
 
 subtest "with split" => sub {
-    my $report_c = File::Spec->join($data_dir, 'report_c.header');
-    my $expected = File::Spec->join($data_dir, 'expected_split.header');
+    my $result_c = get_report_result('report_c.header');
+    my $expected = get_data('expected_split.header');
 
-    my $output_file = Genome::Sys->create_temp_file_path;
     my $cmd = $pkg->create(
-        reports => [$report_c],
+        report_results => [$result_c],
         sort_columns => ['chr', 'pos'],
         contains_header => 1,
-        output_file => $output_file,
         split_indicators => ["split"]
     );
     isa_ok($cmd, $pkg);
 
-    my @expected_header = qw(chr pos data1 data2 split1 split2);
-    is_deeply([$cmd->get_header($report_c)], \@expected_header, 'Header looks as expected');
-    is_deeply([$cmd->get_master_header], \@expected_header, 'Master header looks as expected');
-
-    is_deeply([$cmd->get_sort_column_numbers], [1,2], 'get_sort_column_numbers works');
-    is($cmd->get_sort_params, '-V -k1 -k2', 'get_sort_params works');
-
     ok($cmd->execute, 'Executed the test command');
-    compare_ok($output_file, $expected, 'Output file looks as expected');
+    compare_ok($cmd->output_result->report_path, $expected, 'Output file looks as expected');
 };
 
 subtest "test one empty file" => sub {
-    my $report_a = File::Spec->join($data_dir, 'report_a.noheader');
-    my $report_b = File::Spec->join($data_dir, 'report_empty');
-    my $expected = File::Spec->join($data_dir, 'report_a.noheader');
+    my $result_a = get_report_result('report_a.noheader');
+    my $result_b = get_report_result('report_empty');
+    my $expected = get_data('report_a.noheader');
 
-    my $output_file = Genome::Sys->create_temp_file_path;
     my $cmd = $pkg->create(
-        reports => [$report_a, $report_b],
+        report_results => [$result_a, $result_b],
         sort_columns => ['1', '2'],
         contains_header => 0,
-        output_file => $output_file,
     );
     isa_ok($cmd, $pkg);
 
     ok($cmd->execute, 'Executed the test command');
-    compare_ok($output_file, $expected, 'Output file looks as expected');
+    compare_ok($cmd->output_result->report_path, $expected, 'Output file looks as expected');
 };
 
 subtest "test all empty files" => sub {
-    my $report_a = File::Spec->join($data_dir, 'report_empty');
-    my $report_b = File::Spec->join($data_dir, 'report_empty');
-    my $expected = File::Spec->join($data_dir, 'report_empty');
+    my $result_a = get_report_result('report_empty');
+    my $result_b = get_report_result('report_empty');
+    my $expected = get_data('report_empty');
 
-    my $output_file = Genome::Sys->create_temp_file_path;
     my $cmd = $pkg->create(
-        reports => [$report_a, $report_b],
+        report_results => [$result_a, $result_b],
         sort_columns => ['1', '2'],
         contains_header => 0,
-        output_file => $output_file,
     );
     isa_ok($cmd, $pkg);
 
     ok($cmd->execute, 'Executed the test command');
-    compare_ok($output_file, $expected, 'Output file looks as expected');
+    compare_ok($cmd->output_result->report_path, $expected, 'Output file looks as expected');
 };
 
 done_testing();
