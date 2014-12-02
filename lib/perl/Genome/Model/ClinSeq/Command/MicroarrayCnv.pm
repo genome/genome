@@ -176,17 +176,30 @@ sub intersect_files {
 
   my %f1;
   my %chr_pos1;
+  my $is_header = 1;
 
   while(<$f1_fh>) {
     my $line = $_;
+    if($is_header) {
+      $f1{"header"} = $line;
+      $is_header = 0;
+      next;
+    }
     my @fields = split("\t", $line);
     my $key = $fields[0] . ":" . $fields[1];
     $chr_pos1{$key} = 1;
     $f1{$key} = $line;
   }
 
+  $is_header = 1;
   while(<$f2_fh>) {
     my $line = $_;
+    if($is_header) {
+      print $f2_ofh $line;
+      print $f1_ofh $f1{"header"};
+      $is_header = 0;
+      next;
+    }
     my @fields = split("\t", $line);
     my $key = $fields[0] . ":" . $fields[1];
     if($chr_pos1{$key}) {
