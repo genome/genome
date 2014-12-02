@@ -7,13 +7,13 @@ use Genome;
 
 use Genome::InlineConfig;
 use Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet;
+require Scalar::Util;
 
 class Genome::Model::Tools::MetagenomicClassifier::Rdp::ClassifierBase {
     is_abstract => 1,
     has => [
         training_set => {
-            is => 'Text',
-            valid_values => [ Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->valid_set_names ],
+            is => 'Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet',
             doc => 'Training set to use.'
         },
     ],
@@ -25,27 +25,39 @@ class Genome::Model::Tools::MetagenomicClassifier::Rdp::ClassifierBase {
 
 $ENV{PERL_INLINE_JAVA_JNI} = 1;
 
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+    return @errors if @errors;
+
+    my $training_set_class = 'Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet';
+    if ( not Scalar::Util::blessed($self->training_set) ) {
+        return (
+            UR::Object::Tag->create(
+                type => 'invalid',
+                properties => [qw/ training_set /],
+                desc => "Training set must be an obejct of the $training_set_class",
+            )
+        );
+    }
+
+    return;
+}
+
 sub create {
     my $class = shift;
 
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
-    my $training_path = eval{ Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->path_for_set_name(
-            $self->training_set
-        );
-    };
-    if ( not $training_path ) {
-        $self->error_message($@);
+    my @errors = $self->__errors__;
+    if ( @errors ) {
+        $self->error_message( $errors[0]->__display_name__ );
         return;
     }
 
-    my $training_set = Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->create(
-        path => $training_path,
-    );
-    return if not $training_set;
-
-    my $factory = new FactoryInstance($training_set->classifier_properties_path);
+    my $factory = new FactoryInstance( $self->training_set->classifier_properties_path );
     $self->_factory($factory);
     $self->_classifier( $factory->createClassifier );
 

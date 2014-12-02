@@ -9,6 +9,12 @@ class Genome::VariantReporting::Framework::Test::WithTranslationsInterpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
     has_translated => {
         translated1 => {},
+        translated2 => {
+            is_many => 1,
+        },
+        translated3 => {
+            is_many => 1,
+        },
     },
 };
 

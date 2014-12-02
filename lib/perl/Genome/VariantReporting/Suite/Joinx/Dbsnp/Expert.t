@@ -34,8 +34,7 @@ my $test_dir = get_test_dir($pkg, $VERSION);
 
 my $expert = $pkg->create();
 my $dag = $expert->dag();
-my $expected_xml = File::Spec->join($test_dir, 'expected.xml');
-test_dag_xml($dag, $expected_xml);
+test_dag_xml($dag, __FILE__);
 
 set_what_interpreter_x_requires('dbsnp');
 my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(

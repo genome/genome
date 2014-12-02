@@ -20,6 +20,7 @@ use Genome::File::Vcf::Differ;
 use Genome::Utility::Test;
 use File::Slurp qw(write_file);
 use Genome::Utility::Test qw(compare_ok);
+use File::Copy qw();
 
 use Exporter 'import';
 
@@ -134,17 +135,26 @@ sub get_sample_name {
 }
 
 sub test_dag_xml {
-    my ($dag, $expected_xml) = @_;
+    my ($dag, $test_file) = @_;
+
+    my $expected_xml_path = File::Spec->join($test_file . '.d', 'expected.xml');
+
     my $xml_path = Genome::Sys->create_temp_file_path;
     write_file($xml_path, $dag->get_xml);
-    compare_ok($expected_xml, $xml_path, "Xml looks as expected");
+
+    if ($ENV{GENERATE_TEST_DATA}) {
+        File::Copy::copy($xml_path, $expected_xml_path);
+    }
+    compare_ok($expected_xml_path, $xml_path, "Xml looks as expected");
 }
 
 sub test_dag_execute {
     my ($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $plan) = @_;
+    $plan->validate();
+    $plan->validate_translation_provider($provider);
+    $plan->translate($provider->translations);
     my $output = $dag->execute(
         input_vcf => $input_vcf,
-        provider_json => $provider->as_json,
         variant_type => $variant_type,
         plan_json => $plan->as_json,
     );

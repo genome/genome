@@ -691,6 +691,7 @@ sub add_read_counts{
   my $output_file = $self->outdir . "variants.all.anno.readcounts";
   if (-e $output_file){
     $self->warning_message("using pre-generated bam read count file: $output_file");
+    return($output_file)
   }
 
   $self->status_message("genome_build: $reference_fasta");

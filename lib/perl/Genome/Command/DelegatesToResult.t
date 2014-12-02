@@ -73,7 +73,7 @@ is($cmd->execute(), 1, 'Execute returns 1 when successful') or die;
 my $sr = $cmd->output_result;
 ok($sr, 'Found a TestResult was created') or die;
 
-check_sr_user($USER1, 'created');
+check_sr_user($sr, $USER1, 'created');
 
 
 my $USER2 = TestUser->create(name => 'USER2');
@@ -83,8 +83,12 @@ is($cmd->shortcut(), 1, 'Shortcut returns 1 when result exists') or die;
 my $shortcut_sr = $cmd->output_result;
 is($shortcut_sr, $sr, 'Found the same TestResult when shortcutting') or die;
 
-check_sr_user($USER2, 'shortcut');
+check_sr_user($sr, $USER2, 'shortcut');
 
+$cmd = TestCommand->create(user => $USER2, label => "label2", test_name => 'baz');
+$cmd->execute();
+check_sr_user($cmd->output_result, $USER2, 'label2');
+check_sr_user($cmd->output_result, $USER2, 'created');
 
 $cmd = TestCommand->create(test_name => 'bar');
 $cmd->execute();
@@ -109,14 +113,15 @@ subtest 'exception_safety' => sub {
 done_testing();
 
 sub check_sr_user {
+    my $sr = shift;
     my $user = shift;
     my $label = shift;
 
     subtest sprintf("SoftwareResult::User (%s)", $user->name) => sub {
-        my $sr_user = Genome::SoftwareResult::User->get(user => $user);
+        my $sr_user = Genome::SoftwareResult::User->get(
+            user => $user,
+            software_result => $sr,
+            label => $label);
         ok($sr_user, 'Found a SoftwareResult::User was created') or die;
-
-        is($sr_user->software_result, $sr, 'User has correct software_result');
-        is($sr_user->label, $label, "User has label: $label");
     };
 }

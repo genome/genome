@@ -20,9 +20,6 @@ class Genome::VariantReporting::Framework::ReportResult {
             is => 'Text',
             valid_values => ['snvs', 'indels'],
         },
-        provider_json_lookup => {
-            is => 'Text',
-        },
     ],
     has_transient_optional => [
         input_vcf => {
@@ -31,14 +28,8 @@ class Genome::VariantReporting::Framework::ReportResult {
         plan_json => {
             is => 'Text',
         },
-        provider_json => {
-            is => 'Text',
-        },
         plan => {
             is => 'Genome::VariantReporting::Framework::Plan::MasterPlan',
-        },
-        translations => {
-            is => 'HASH',
         },
     ],
 };
@@ -71,19 +62,10 @@ sub plan {
     my $self = shift;
 
     unless (defined($self->__plan)) {
-        $self->__plan(Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_json($self->plan_json));
+        my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_json($self->plan_json);
+        $self->__plan($plan);
     }
     return $self->__plan;
-}
-
-sub translations {
-    my $self = shift;
-
-    unless ($self->__translations) {
-        my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_json($self->provider_json);
-        $self->__translations($provider->translations);
-    }
-    return $self->__translations;
 }
 
 sub _run {
@@ -110,7 +92,7 @@ sub create_reporters {
 
     my @reporters;
     for my $reporter_plan ($self->plan->reporter_plans) {
-        push @reporters, $reporter_plan->object($self->translations);
+        push @reporters, $reporter_plan->object;
     }
 
     return @reporters;

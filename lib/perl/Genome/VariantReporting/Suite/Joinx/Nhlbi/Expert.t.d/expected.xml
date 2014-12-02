@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<operation name="nhlbi">
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>input_vcf</inputproperty>
+    <inputproperty>plan_json</inputproperty>
+    <inputproperty>process_id</inputproperty>
+    <inputproperty>variant_type</inputproperty>
+    <outputproperty>output_result</outputproperty>
+    <outputproperty>output_vcf</outputproperty>
+  </operationtype>
+  <operation name="Get inputs from plan">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Nhlbi::Adaptor">
+      <inputproperty>plan_json</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>info_string</outputproperty>
+      <outputproperty>joinx_version</outputproperty>
+      <outputproperty>result</outputproperty>
+      <outputproperty>variant_type</outputproperty>
+      <outputproperty>vcf</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="Run nhlbi">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Run">
+      <inputproperty>info_string</inputproperty>
+      <inputproperty>input_vcf</inputproperty>
+      <inputproperty>joinx_version</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <inputproperty>vcf</inputproperty>
+      <outputproperty>output_result</outputproperty>
+      <outputproperty>output_vcf</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run nhlbi" toProperty="info_string"/>
+  <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run nhlbi" toProperty="joinx_version"/>
+  <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run nhlbi" toProperty="variant_type"/>
+  <link fromOperation="Get inputs from plan" fromProperty="vcf" toOperation="Run nhlbi" toProperty="vcf"/>
+  <link fromOperation="Run nhlbi" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
+  <link fromOperation="Run nhlbi" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
+  <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
+  <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run nhlbi" toProperty="input_vcf"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="Run nhlbi" toProperty="process_id"/>
+</operation>

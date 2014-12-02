@@ -27,14 +27,13 @@ use_ok($pkg) || die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('experts', $pkg->name), $pkg);
 
-my $VERSION = 10; # Bump these each time test data changes
+my $VERSION = 11; # Bump these each time test data changes
 my $RESOURCE_VERSION = 1;
 my $test_dir = get_test_dir($pkg, $VERSION);
 
 my $expert = $pkg->create();
 my $dag = $expert->dag();
-my $expected_xml = File::Spec->join($test_dir, 'expected.xml');
-test_dag_xml($dag, $expected_xml);
+test_dag_xml($dag, __FILE__);
 
 set_what_interpreter_x_requires('bam-readcount');
 my $variant_type = 'snvs';

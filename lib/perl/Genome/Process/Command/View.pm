@@ -115,7 +115,7 @@ EOS
         $self->_color_pair('Process Class', $process->class),
         $self->_color_pair('Software Revision', $process->software_revision),
         $self->_color_pair('SoftwareResult Test Name(s)',
-            $self->_software_result_test_names($process->results)),
+            $self->_software_result_test_names($process->unique_results)),
         $self->_color_pair('MetaData Directory', $process->metadata_directory));
 }
 

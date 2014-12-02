@@ -9,6 +9,7 @@ use Data::Dump qw(pp);
 use Scalar::Util qw();
 use Try::Tiny qw(try catch);
 use JSON qw(to_json);
+use List::MoreUtils qw(uniq);
 
 class Genome::Process {
     is => [
@@ -567,6 +568,12 @@ sub delete {
     }
 
     return $self->SUPER::delete(@_);
+}
+
+sub unique_results {
+    my $self = shift;
+    my @results = $self->results;
+    return uniq @results;
 }
 
 

@@ -63,11 +63,11 @@ sub create_from_hashref {
 }
 
 sub __translation_errors__ {
-    my ($self, $provider) = @_;
-    my @errors;
-    push @errors, $self->object->_translation_errors($provider->translations, $self->object->name);
-    for my $child (values(%{$self->object->interpreters}), values(%{$self->object->filters})) {
-        push @errors, $child->_translation_errors($provider->translations, $child->name);
+    my $self = shift;
+    my @errors = $self->SUPER::__translation_errors__(@_);
+
+    for my $child_plan ($self->interpreter_plans, $self->filter_plans) {
+        push @errors, $child_plan->__translation_errors__(@_);
     }
     return @errors;
 }
@@ -138,5 +138,15 @@ sub object {
 }
 Memoize::memoize("object", LIST_CACHE => 'MERGE');
 
+sub translate {
+    my $self = shift;
+
+    $self->SUPER::translate(@_);
+
+    for my $child_plan ($self->interpreter_plans, $self->filter_plans) {
+        $child_plan->translate(@_);
+    }
+    return;
+}
 
 1;
