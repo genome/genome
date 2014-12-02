@@ -121,14 +121,13 @@ sub validate_bed_content_line {
     my $self = shift;
     my $line = shift;
 
-    my $chromosomes = $self->{_chromosome_hash};
-    unless(exists $self->{_chromosome_list}) {
+    unless(exists $self->{_chromosome_hash}) {
         my $reference = $self->reference;
 
         my $chromosome_list = $reference->chromosome_array_ref;
-        $chromosomes = +{ map {; $_ => 1 } @$chromosome_list };
-        $self->{_chromosome_hash} = $chromosomes;
+        $self->{_chromosome_hash} = +{ map {; $_ => 1 } @$chromosome_list };
     }
+    my $chromosomes = $self->{_chromosome_hash};
 
     my @fields = Genome::FeatureList->_parse_entry($line);
     unless(exists $chromosomes->{$fields[0]}) {
