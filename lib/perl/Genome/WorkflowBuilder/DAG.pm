@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
-use Params::Validate qw();
+use Params::Validate qw(:types);
 use Set::Scalar qw();
 use JSON;
 use List::MoreUtils qw();
@@ -34,7 +34,7 @@ class Genome::WorkflowBuilder::DAG {
 };
 
 sub add_operation {
-    my ($self, $op) = Params::Validate::validate_pos(@_, 1, 1);
+    my ($self, $op) = Params::Validate::validate_pos(@_, 1, {type => OBJECT});
     push @{$self->operations}, $op;
 
     my %constant_values = %{$op->constant_values};
