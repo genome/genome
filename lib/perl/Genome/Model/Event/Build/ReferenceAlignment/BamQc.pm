@@ -5,6 +5,7 @@ use warnings;
 
 use version 0.77;
 use Genome;
+use Set::Scalar;
 
 class Genome::Model::Event::Build::ReferenceAlignment::BamQc {
     is  => ['Genome::Model::Event'],
@@ -159,12 +160,16 @@ sub _should_run_error_rate_for_pp {
 
     if ($pp->can('read_aligner_name')
         and defined $pp->read_aligner_name
-        and ($pp->read_aligner_name eq 'bsmap')
+        and $self->_aligner_blacklist->has($pp->read_aligner_name)
     ) {
         return 0;
     }
 
     return 1;
+}
+
+sub _aligner_blacklist {
+    return Set::Scalar->new(qw(bsmap));
 }
 
 sub _bwa_mem_version_object {
