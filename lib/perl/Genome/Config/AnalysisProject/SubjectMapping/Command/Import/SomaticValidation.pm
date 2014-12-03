@@ -94,7 +94,7 @@ sub _create_subject {
     my $subject_identifier = shift;
 
     my $subject = Genome::Subject->get($subject_identifier) || Genome::Subject->get(name => $subject_identifier);
-    die($self->error_message("Unable to find a subject from identifier: %s", $subject_identifier)) unless $subject_identifier;
+    die($self->error_message("Unable to find a subject from identifier: %s", $subject_identifier)) unless $subject;
     Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
         subject_mapping => $mapping,
         subject_id => $subject,
