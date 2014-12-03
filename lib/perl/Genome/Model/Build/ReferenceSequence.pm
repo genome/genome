@@ -86,6 +86,30 @@ class Genome::Model::Build::ReferenceSequence {
             doc => 'If specified, merges several other references into one.', 
         },
     ],
+    has_many_optional => [
+        convertible_to_bridges => {
+            is => 'Genome::Model::Build::ReferenceSequence::Converter',
+            reverse_as => 'source_reference_build',
+            doc => 'converters which convert this reference to other references',
+        },
+        convertible_to => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            via => 'convertible_to_bridges',
+            to => 'destination_reference_build',
+            doc => 'other references to which this reference can be converted',
+        },
+        convertible_from_bridges => {
+            is => 'Genome::Model::Build::ReferenceSequence::Converter',
+            reverse_as => 'destination_reference_build',
+            doc => 'converters which convert other references to this reference',
+        },
+        convertible_from => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            via => 'converters_from_bridges',
+            to => 'source_reference_build',
+            doc => 'other references that can be converted to this reference',
+        },
+    ],
 
     doc => 'a specific version of a reference sequence, with cordinates suitable for annotation',
 };
