@@ -111,7 +111,7 @@ class Genome::Model::Build::ReferenceSequence {
         },
     ],
 
-    doc => 'a specific version of a reference sequence, with cordinates suitable for annotation',
+    doc => 'a specific version of a reference sequence, with coordinates suitable for annotation',
 };
 
 
