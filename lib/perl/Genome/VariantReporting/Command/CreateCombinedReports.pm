@@ -139,8 +139,8 @@ sub connect_combine_operations {
     for my $output_name ($snvs_dag->output_properties) {
         if ($output_name =~ m/output_result \((.*)\)/) {
             my $report_name = $1;
-            my $reporter_class = $FACTORY->get_class('reporters', $report_name);
-            next unless $reporter_class->can_be_combined;
+            my $report_class = $FACTORY->get_class('reports', $report_name);
+            next unless $report_class->can_be_combined;
 
             my $combine_op = Genome::WorkflowBuilder::Command->create(
                 name => sprintf('Combine Reports (%s)', $report_name),
@@ -193,7 +193,7 @@ sub connect_combine_operations {
             $combine_op->declare_constant(
                 label => sprintf('%s.%s.combined',
                     $self->combination_label, $report_name),
-                %{$reporter_class->combine_parameters},
+                %{$report_class->combine_parameters},
             );
             # this has to be done AFTER the constants are declared.
             $dag->add_operation($combine_op);

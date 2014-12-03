@@ -24,7 +24,7 @@ sub get_report_result {
     my $report_filename = shift;
 
     my $report_path = get_data($report_filename);
-    return Genome::VariantReporting::Framework::Test::Reporter->__define__(
+    return Genome::VariantReporting::Framework::Test::Report->__define__(
         _report_path => $report_path,
     );
 }

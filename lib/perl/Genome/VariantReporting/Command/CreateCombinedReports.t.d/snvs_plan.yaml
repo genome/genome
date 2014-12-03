@@ -8,7 +8,7 @@ experts:
         joinx_version: 1.8
         plugins: []
         plugins_version: 1
-reporters:
+reports:
     bed:
         interpreters:
             'bed-entry': {}

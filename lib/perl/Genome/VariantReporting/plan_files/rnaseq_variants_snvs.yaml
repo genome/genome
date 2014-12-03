@@ -19,7 +19,7 @@ experts:
     fpkm:
         sample_name: tumor
         fpkm_file: fpkm_file
-reporters:
+reports:
     'annotation-format':
         filters:
             'allele-in-genotype':

@@ -19,7 +19,7 @@ experts:
         plugins_version: 1
         joinx_version: 1.9
         sample_name: tumor
-reporters:
+reports:
     'simple':
         filters:
             'allele-in-genotype':

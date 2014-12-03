@@ -30,7 +30,7 @@ experts:
         joinx_version: 1.9
         info_string: 'AF:AFR_AF:AMR_AF'
         vcf: thousand_genomes_vcf
-reporters:
+reports:
     'tumor-only':
         filters:
             'allele-in-genotype':

@@ -7,8 +7,8 @@ experts:
         max_count: 10000000
         per_library: 0
         insertion_centric: 0
-reporters:
-    reporter_alpha:
+reports:
+    report_alpha:
         interpreters:
             interpreter_x:
                 ix_p1: something

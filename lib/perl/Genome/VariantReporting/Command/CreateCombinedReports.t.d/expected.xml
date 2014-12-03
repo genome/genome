@@ -9,20 +9,20 @@
     <inputproperty>Combine Reports (simple).sort_columns</inputproperty>
     <inputproperty>Combine Reports (simple).split_indicators</inputproperty>
     <inputproperty>Variant Reporting (indels).Generate Report (bed).label</inputproperty>
-    <inputproperty>Variant Reporting (indels).Generate Report (bed).reporter_name</inputproperty>
+    <inputproperty>Variant Reporting (indels).Generate Report (bed).report_name</inputproperty>
     <inputproperty>Variant Reporting (indels).Generate Report (simple).label</inputproperty>
-    <inputproperty>Variant Reporting (indels).Generate Report (simple).reporter_name</inputproperty>
+    <inputproperty>Variant Reporting (indels).Generate Report (simple).report_name</inputproperty>
     <inputproperty>Variant Reporting (indels).Generate Report (vcf).label</inputproperty>
-    <inputproperty>Variant Reporting (indels).Generate Report (vcf).reporter_name</inputproperty>
+    <inputproperty>Variant Reporting (indels).Generate Report (vcf).report_name</inputproperty>
     <inputproperty>Variant Reporting (indels).input_vcf</inputproperty>
     <inputproperty>Variant Reporting (indels).plan_json</inputproperty>
     <inputproperty>Variant Reporting (indels).variant_type</inputproperty>
     <inputproperty>Variant Reporting (snvs).Generate Report (bed).label</inputproperty>
-    <inputproperty>Variant Reporting (snvs).Generate Report (bed).reporter_name</inputproperty>
+    <inputproperty>Variant Reporting (snvs).Generate Report (bed).report_name</inputproperty>
     <inputproperty>Variant Reporting (snvs).Generate Report (simple).label</inputproperty>
-    <inputproperty>Variant Reporting (snvs).Generate Report (simple).reporter_name</inputproperty>
+    <inputproperty>Variant Reporting (snvs).Generate Report (simple).report_name</inputproperty>
     <inputproperty>Variant Reporting (snvs).Generate Report (vcf).label</inputproperty>
-    <inputproperty>Variant Reporting (snvs).Generate Report (vcf).reporter_name</inputproperty>
+    <inputproperty>Variant Reporting (snvs).Generate Report (vcf).report_name</inputproperty>
     <inputproperty>Variant Reporting (snvs).input_vcf</inputproperty>
     <inputproperty>Variant Reporting (snvs).plan_json</inputproperty>
     <inputproperty>Variant Reporting (snvs).variant_type</inputproperty>
@@ -69,11 +69,11 @@
   <operation name="Variant Reporting (indels)">
     <operationtype typeClass="Workflow::OperationType::Model">
       <inputproperty>Generate Report (bed).label</inputproperty>
-      <inputproperty>Generate Report (bed).reporter_name</inputproperty>
+      <inputproperty>Generate Report (bed).report_name</inputproperty>
       <inputproperty>Generate Report (simple).label</inputproperty>
-      <inputproperty>Generate Report (simple).reporter_name</inputproperty>
+      <inputproperty>Generate Report (simple).report_name</inputproperty>
       <inputproperty>Generate Report (vcf).label</inputproperty>
-      <inputproperty>Generate Report (vcf).reporter_name</inputproperty>
+      <inputproperty>Generate Report (vcf).report_name</inputproperty>
       <inputproperty>input_vcf</inputproperty>
       <inputproperty>plan_json</inputproperty>
       <inputproperty>process_id</inputproperty>
@@ -86,7 +86,7 @@
       <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
         <inputproperty>input_vcf</inputproperty>
         <inputproperty>plan_json</inputproperty>
-        <inputproperty>reporter_name</inputproperty>
+        <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
         <outputproperty>result</outputproperty>
@@ -96,7 +96,7 @@
       <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
         <inputproperty>input_vcf</inputproperty>
         <inputproperty>plan_json</inputproperty>
-        <inputproperty>reporter_name</inputproperty>
+        <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
         <outputproperty>result</outputproperty>
@@ -106,7 +106,7 @@
       <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
         <inputproperty>input_vcf</inputproperty>
         <inputproperty>plan_json</inputproperty>
-        <inputproperty>reporter_name</inputproperty>
+        <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
         <outputproperty>result</outputproperty>
@@ -172,17 +172,17 @@
     <link fromOperation="Generate Report (simple)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (simple)"/>
     <link fromOperation="Generate Report (vcf)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (vcf)"/>
     <link fromOperation="input connector" fromProperty="Generate Report (bed).label" toOperation="Generate Report (bed)" toProperty="label"/>
-    <link fromOperation="input connector" fromProperty="Generate Report (bed).reporter_name" toOperation="Generate Report (bed)" toProperty="reporter_name"/>
+    <link fromOperation="input connector" fromProperty="Generate Report (bed).report_name" toOperation="Generate Report (bed)" toProperty="report_name"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (bed)" toProperty="plan_json"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Generate Report (bed)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Report (bed)" toProperty="variant_type"/>
     <link fromOperation="input connector" fromProperty="Generate Report (simple).label" toOperation="Generate Report (simple)" toProperty="label"/>
-    <link fromOperation="input connector" fromProperty="Generate Report (simple).reporter_name" toOperation="Generate Report (simple)" toProperty="reporter_name"/>
+    <link fromOperation="input connector" fromProperty="Generate Report (simple).report_name" toOperation="Generate Report (simple)" toProperty="report_name"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (simple)" toProperty="plan_json"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Generate Report (simple)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Report (simple)" toProperty="variant_type"/>
     <link fromOperation="input connector" fromProperty="Generate Report (vcf).label" toOperation="Generate Report (vcf)" toProperty="label"/>
-    <link fromOperation="input connector" fromProperty="Generate Report (vcf).reporter_name" toOperation="Generate Report (vcf)" toProperty="reporter_name"/>
+    <link fromOperation="input connector" fromProperty="Generate Report (vcf).report_name" toOperation="Generate Report (vcf)" toProperty="report_name"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (vcf)" toProperty="plan_json"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Generate Report (vcf)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Report (vcf)" toProperty="variant_type"/>
@@ -197,11 +197,11 @@
   <operation name="Variant Reporting (snvs)">
     <operationtype typeClass="Workflow::OperationType::Model">
       <inputproperty>Generate Report (bed).label</inputproperty>
-      <inputproperty>Generate Report (bed).reporter_name</inputproperty>
+      <inputproperty>Generate Report (bed).report_name</inputproperty>
       <inputproperty>Generate Report (simple).label</inputproperty>
-      <inputproperty>Generate Report (simple).reporter_name</inputproperty>
+      <inputproperty>Generate Report (simple).report_name</inputproperty>
       <inputproperty>Generate Report (vcf).label</inputproperty>
-      <inputproperty>Generate Report (vcf).reporter_name</inputproperty>
+      <inputproperty>Generate Report (vcf).report_name</inputproperty>
       <inputproperty>input_vcf</inputproperty>
       <inputproperty>plan_json</inputproperty>
       <inputproperty>process_id</inputproperty>
@@ -214,7 +214,7 @@
       <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
         <inputproperty>input_vcf</inputproperty>
         <inputproperty>plan_json</inputproperty>
-        <inputproperty>reporter_name</inputproperty>
+        <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
         <outputproperty>result</outputproperty>
@@ -224,7 +224,7 @@
       <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
         <inputproperty>input_vcf</inputproperty>
         <inputproperty>plan_json</inputproperty>
-        <inputproperty>reporter_name</inputproperty>
+        <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
         <outputproperty>result</outputproperty>
@@ -234,7 +234,7 @@
       <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
         <inputproperty>input_vcf</inputproperty>
         <inputproperty>plan_json</inputproperty>
-        <inputproperty>reporter_name</inputproperty>
+        <inputproperty>report_name</inputproperty>
         <inputproperty>variant_type</inputproperty>
         <outputproperty>output_result</outputproperty>
         <outputproperty>result</outputproperty>
@@ -300,17 +300,17 @@
     <link fromOperation="Generate Report (simple)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (simple)"/>
     <link fromOperation="Generate Report (vcf)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (vcf)"/>
     <link fromOperation="input connector" fromProperty="Generate Report (bed).label" toOperation="Generate Report (bed)" toProperty="label"/>
-    <link fromOperation="input connector" fromProperty="Generate Report (bed).reporter_name" toOperation="Generate Report (bed)" toProperty="reporter_name"/>
+    <link fromOperation="input connector" fromProperty="Generate Report (bed).report_name" toOperation="Generate Report (bed)" toProperty="report_name"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (bed)" toProperty="plan_json"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Generate Report (bed)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Report (bed)" toProperty="variant_type"/>
     <link fromOperation="input connector" fromProperty="Generate Report (simple).label" toOperation="Generate Report (simple)" toProperty="label"/>
-    <link fromOperation="input connector" fromProperty="Generate Report (simple).reporter_name" toOperation="Generate Report (simple)" toProperty="reporter_name"/>
+    <link fromOperation="input connector" fromProperty="Generate Report (simple).report_name" toOperation="Generate Report (simple)" toProperty="report_name"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (simple)" toProperty="plan_json"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Generate Report (simple)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Report (simple)" toProperty="variant_type"/>
     <link fromOperation="input connector" fromProperty="Generate Report (vcf).label" toOperation="Generate Report (vcf)" toProperty="label"/>
-    <link fromOperation="input connector" fromProperty="Generate Report (vcf).reporter_name" toOperation="Generate Report (vcf)" toProperty="reporter_name"/>
+    <link fromOperation="input connector" fromProperty="Generate Report (vcf).report_name" toOperation="Generate Report (vcf)" toProperty="report_name"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (vcf)" toProperty="plan_json"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Generate Report (vcf)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Report (vcf)" toProperty="variant_type"/>
@@ -348,21 +348,21 @@
   <link fromOperation="input connector" fromProperty="Combine Reports (simple).split_indicators" toOperation="Combine Reports (simple)" toProperty="split_indicators"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Combine Reports (simple)" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (bed).label" toOperation="Variant Reporting (indels)" toProperty="Generate Report (bed).label"/>
-  <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (bed).reporter_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (bed).reporter_name"/>
+  <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (bed).report_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (bed).report_name"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (simple).label" toOperation="Variant Reporting (indels)" toProperty="Generate Report (simple).label"/>
-  <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (simple).reporter_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (simple).reporter_name"/>
+  <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (simple).report_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (simple).report_name"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (vcf).label" toOperation="Variant Reporting (indels)" toProperty="Generate Report (vcf).label"/>
-  <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (vcf).reporter_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (vcf).reporter_name"/>
+  <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (vcf).report_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (vcf).report_name"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).input_vcf" toOperation="Variant Reporting (indels)" toProperty="input_vcf"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).plan_json" toOperation="Variant Reporting (indels)" toProperty="plan_json"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).variant_type" toOperation="Variant Reporting (indels)" toProperty="variant_type"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Variant Reporting (indels)" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (bed).label" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (bed).label"/>
-  <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (bed).reporter_name" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (bed).reporter_name"/>
+  <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (bed).report_name" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (bed).report_name"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (simple).label" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (simple).label"/>
-  <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (simple).reporter_name" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (simple).reporter_name"/>
+  <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (simple).report_name" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (simple).report_name"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (vcf).label" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (vcf).label"/>
-  <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (vcf).reporter_name" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (vcf).reporter_name"/>
+  <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (vcf).report_name" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (vcf).report_name"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).input_vcf" toOperation="Variant Reporting (snvs)" toProperty="input_vcf"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).plan_json" toOperation="Variant Reporting (snvs)" toProperty="plan_json"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).variant_type" toOperation="Variant Reporting (snvs)" toProperty="variant_type"/>

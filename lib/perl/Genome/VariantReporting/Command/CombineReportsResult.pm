@@ -9,7 +9,7 @@ use Set::Scalar;
 use Memoize;
 use Params::Validate qw(validate_pos :types);
 
-our $REPORT_PKG = 'Genome::VariantReporting::Framework::Component::Reporter::SingleFile';
+our $REPORT_PKG = 'Genome::VariantReporting::Framework::Component::Report::SingleFile';
 
 class Genome::VariantReporting::Command::CombineReportsResult {
     is => 'Genome::SoftwareResult::StageableSimple',
@@ -424,10 +424,10 @@ sub get_entry_source {
     my ($self, $report) = validate_pos(@_, 1, 1);
 
     for my $entry_source ($self->entry_sources) {
-        my ($reporter_id, $tag) = split(/\|/, $entry_source);
-        my $reporter = $REPORT_PKG->get($reporter_id);
+        my ($report_id, $tag) = split(/\|/, $entry_source);
+        my $report_result = $REPORT_PKG->get($report_id);
 
-        if ($reporter->report_path eq $report) {
+        if ($report_result->report_path eq $report) {
             return $tag;
         }
     }

@@ -18,8 +18,8 @@ class Genome::VariantReporting::Framework::Plan::MasterPlan {
             is => 'Genome::VariantReporting::Framework::Plan::ExpertPlan',
             is_many => 1,
         },
-        reporter_plans => {
-            is => 'Genome::VariantReporting::Framework::Plan::ReporterPlan',
+        report_plans => {
+            is => 'Genome::VariantReporting::Framework::Plan::ReportPlan',
             is_many => 1,
         },
         needs_translation => {
@@ -48,7 +48,7 @@ sub __translation_errors__ {
     my $provider = shift;
 
     my @errors;
-    for my $plan ($self->expert_plans, $self->reporter_plans) {
+    for my $plan ($self->expert_plans, $self->report_plans) {
         push @errors, $plan->__translation_errors__($provider);
     }
     return @errors;
@@ -74,7 +74,7 @@ sub object {
 
 sub children {
     my $self = shift;
-    return ('experts' => [$self->expert_plans], 'reporters' => [$self->reporter_plans]);
+    return ('experts' => [$self->expert_plans], 'reports' => [$self->report_plans]);
 }
 
 sub write_to_file {
@@ -137,13 +137,13 @@ sub create_from_hashref {
     }
     $self->expert_plans(\@expert_plans);
 
-    my @reporter_plans;
-    while (my ($reporter_name, $reporter_params) = each %{$hashref->{reporters}}) {
-        push @reporter_plans, Genome::VariantReporting::Framework::Plan::ReporterPlan->create_from_hashref(
-            $reporter_name, $reporter_params,
+    my @report_plans;
+    while (my ($report_name, $report_params) = each %{$hashref->{reports}}) {
+        push @report_plans, Genome::VariantReporting::Framework::Plan::ReportPlan->create_from_hashref(
+            $report_name, $report_params,
         );
     }
-    $self->reporter_plans(\@reporter_plans);
+    $self->report_plans(\@report_plans);
 
     return $self;
 }
@@ -167,15 +167,15 @@ sub __plan_errors__ {
 
     my @errors = $self->SUPER::__plan_errors__;
     my $have = Set::Scalar->new(map {$_->name} $self->expert_plans);
-    for my $reporter_plan ($self->reporter_plans) {
-        my $needed = Set::Scalar->new($reporter_plan->requires_annotations);
+    for my $report_plan ($self->report_plans) {
+        my $needed = Set::Scalar->new($report_plan->requires_annotations);
 
         if (my $still_needed = $needed - $have) {
             push @errors, UR::Object::Tag->create(
                 type => 'error',
                 properties => [$still_needed->members],
-                desc => sprintf("Annotations required by reporter (%s) but not provided by any experts: (%s)",
-                    $reporter_plan->name, join(",", $still_needed->members)),
+                desc => sprintf("Annotations required by report (%s) but not provided by any experts: (%s)",
+                    $report_plan->name, join(",", $still_needed->members)),
             );
         }
     }
@@ -195,7 +195,7 @@ sub translate {
     my $self = shift;
     return unless ($self->needs_translation);
 
-    for my $plan ($self->expert_plans, $self->reporter_plans) {
+    for my $plan ($self->expert_plans, $self->report_plans) {
         $plan->translate(@_);
     }
     $self->needs_translation(0);

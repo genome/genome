@@ -46,7 +46,7 @@ class Genome::VariantReporting::Command::CombineReports {
             is_many => 'Text',
             is => 'Text',
             is_optional => 1,
-            doc => "An array of strings of the format <Reporter ID>|<TAG>",
+            doc => "An array of strings of the format <Report ID>|<TAG>",
         },
         user => {
             is => 'Genome::Process',

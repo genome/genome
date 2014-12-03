@@ -33,7 +33,7 @@ experts:
         joinx_version: 1.9
         info_string: 'AAC:PP:CDP:PH:EA_GTC:AA_GTC:MAF'
         vcf: nhlbi_vcf
-reporters:
+reports:
     'full':
         filters:
             'allele-in-genotype':

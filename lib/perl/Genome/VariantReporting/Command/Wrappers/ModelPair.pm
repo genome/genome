@@ -61,8 +61,8 @@ sub report_names {
     my ($self, $variant_type) = @_;
     my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file($variant_type));
     my @file_names;
-    for my $reporter_plan ($plan->reporter_plans) {
-        push @file_names, $reporter_plan->object->file_name;
+    for my $report_plan ($plan->report_plans) {
+        push @file_names, $report_plan->object->file_name;
     }
     return @file_names;
 }

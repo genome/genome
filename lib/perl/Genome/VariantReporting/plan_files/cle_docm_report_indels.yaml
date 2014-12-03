@@ -7,7 +7,7 @@ experts:
         max_count: 10000000
         per_library: 1
         insertion_centric: 1
-reporters:
+reports:
     'docm':
         filters: {}
         interpreters:

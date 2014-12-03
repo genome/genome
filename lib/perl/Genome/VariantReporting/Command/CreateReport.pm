@@ -65,7 +65,7 @@ sub execute {
     my $p = $self->process_class->create(
         input_vcf => $self->input_vcf,
         variant_type => $self->variant_type,
-        reporter_names => [map {$_->name} $self->plan->reporter_plans],
+        report_names => [map {$_->name} $self->plan->report_plans],
     );
     $p->save_plan_file($self->plan_file);
     $p->save_translations_file($self->translations_file);

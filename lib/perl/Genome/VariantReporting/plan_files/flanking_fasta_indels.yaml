@@ -20,7 +20,7 @@ experts:
         plugins: []
         joinx_version: 1.9
         plugins_version: 1
-reporters:
+reports:
     fasta:
         filters:
             'allele-in-genotype':

@@ -18,7 +18,7 @@ experts:
             - Condel@PLUGIN_DIR@b@2
         plugins_version: 1
         joinx_version: 1.9
-reporters:
+reports:
     'simple':
         filters:
             'allele-in-genotype':

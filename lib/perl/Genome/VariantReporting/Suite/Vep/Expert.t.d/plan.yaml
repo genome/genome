@@ -8,8 +8,8 @@ experts:
         joinx_version: 1.8
         plugins: []
         plugins_version: 1
-reporters:
-    reporter_alpha:
+reports:
+    report_alpha:
         interpreters:
             interpreter_x:
                 ix_p1: something

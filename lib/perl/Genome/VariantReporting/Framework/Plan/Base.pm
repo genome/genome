@@ -24,7 +24,7 @@ class Genome::VariantReporting::Framework::Plan::Base {
 our $FACTORY = Genome::VariantReporting::Framework::Factory->create();
 
 sub category {
-    die "Abstract (eg 'expert', 'filter', 'interpreter', or 'reporter')";
+    die "Abstract (eg 'expert', 'filter', 'interpreter', or 'report')";
 }
 
 sub children {
