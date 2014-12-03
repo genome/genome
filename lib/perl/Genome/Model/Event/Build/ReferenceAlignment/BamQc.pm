@@ -158,14 +158,10 @@ sub _select_error_rate_version_for_pp {
 sub _should_run_error_rate_for_pp {
     my ($self, $pp) = @_;
 
-    if ($pp->can('read_aligner_name')
-        and defined $pp->read_aligner_name
-        and $self->_aligner_blacklist->has($pp->read_aligner_name)
-    ) {
-        return 0;
-    }
+    my $aligner_black_listed = ($pp->can('read_aligner_name')
+        and $self->_aligner_blacklist->has($pp->read_aligner_name));
 
-    return 1;
+    return $aligner_black_listed ? 0 : 1;
 }
 
 sub _aligner_blacklist {
