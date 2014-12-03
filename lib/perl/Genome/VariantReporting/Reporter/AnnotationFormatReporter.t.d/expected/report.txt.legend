@@ -1,0 +1,26 @@
+Headers
+chromosome_name	Chromosome: an identifier from the reference genome or an angle-bracketed ID String ("<ID>") pointing to a contig in the assembly file
+start	The start position of the variant. One-based
+stop	The end position of the variant. One-based, inclusive
+reference	The reference allele at this position
+variant	The variant called at this position
+type	undefined
+gene_name	undefined
+transcript_name	Ensembl stable ID of feature
+transcript_species	undefined
+transcript_source	undefined
+transcript_version	undefined
+strand	undefined
+transcript_status	undefined
+trv_type	Consequence type of this variation
+c_position	The HGVS coding sequence name
+amino_acid_change	The HGVS protein sequence name
+ucsc_cons	undefined
+domain	undefined
+all_domains	undefined
+deletion_substructures	undefined
+transcript_error	undefined
+default_gene_name	The gene symbol
+gene_name_source	The source of the gene symbol
+ensembl_gene_id	Ensembl stable ID of affected gene
+Filters

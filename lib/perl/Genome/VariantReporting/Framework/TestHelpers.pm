@@ -149,7 +149,10 @@ sub test_dag_xml {
 }
 
 sub test_dag_execute {
-    my ($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $plan) = @_;
+    my ($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $test_file) = @_;
+
+    my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->
+        create_from_file(File::Spec->join($test_file . '.d', 'plan.yaml'));
     $plan->validate();
     $plan->validate_translation_provider($provider);
     $plan->translate($provider->translations);

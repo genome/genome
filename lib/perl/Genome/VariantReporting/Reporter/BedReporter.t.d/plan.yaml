@@ -1,0 +1,5 @@
+reporters:
+    bed:
+        interpreters:
+            'bed-entry': {}
+        filters: {}

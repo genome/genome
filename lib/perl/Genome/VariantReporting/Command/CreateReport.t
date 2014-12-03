@@ -43,7 +43,10 @@ subtest 'working_command' => sub {
     my $p = $cmd->execute();
 
     my $expected_result_dir = File::Spec->join($test_dir, "expected_in_result");
-    compare_dir_ok($p->output_directory, $expected_result_dir,
+
+    my $output_dir = Genome::Sys->create_temp_directory;
+    $p->symlink_results($output_dir);
+    compare_dir_ok($output_dir, $expected_result_dir,
         'All reports are as expected');
 
     my $expected_process_dir = File::Spec->join($test_dir, "expected_in_process");

@@ -15,6 +15,10 @@ class Genome::VariantReporting::Process::CreateReport {
         variant_type => {
             is => 'Text',
         },
+        reporter_names => {
+            is => 'Text',
+            is_many => 1,
+        }
     ],
     has_transient_optional => [
         _plan_file => {
@@ -31,19 +35,21 @@ sub symlink_results {
     my $destination = shift;
 
     Genome::Sys->create_directory($destination);
-    Genome::Sys->symlink_directory($self->output_directory, $destination);
+    for my $reporter_name ($self->reporter_names) {
+        my $specific_destination = File::Spec->join($destination, $reporter_name);
+        Genome::Sys->create_directory($specific_destination);
+        Genome::Sys->symlink_directory($self->output_directory($reporter_name),
+            $specific_destination);
+    }
 
     return 1;
 }
 
-sub result_class {
-    return "Genome::VariantReporting::Framework::ReportResult";
-}
-
 sub output_directory {
-    my $self = shift;
-    my $generate_reports_result = $self->results(subclass_name => $self->result_class);
-    return $generate_reports_result->output_dir;
+    my ($self, $reporter_name) = validate_pos(@_, 1, 1);
+
+    my $result = $self->result_with_label($reporter_name);
+    return $result->output_dir;
 }
 
 sub save_plan_file {

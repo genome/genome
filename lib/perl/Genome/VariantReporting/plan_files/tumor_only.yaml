@@ -64,5 +64,3 @@ reporters:
             '1kg': {}
             vaf:
                 sample_name: tumor
-        params:
-            file_name: 'report.1'

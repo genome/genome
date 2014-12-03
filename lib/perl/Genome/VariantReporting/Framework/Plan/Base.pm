@@ -36,7 +36,7 @@ sub as_hashref {
 
     my %body;
     if ($self->children) {
-        $body{params} = $self->params;
+        $body{params} = $self->params if keys %{$self->params};
 
         my %children = $self->children;
         while (my ($child_category, $child_plans_ref) = each %children) {
@@ -58,21 +58,6 @@ sub as_hashref {
     my %result;
     $result{$self->name} = \%body;
     return \%result;
-}
-
-# We overide ComponentBase validate because only plans have objects to validate
-sub validate {
-    my $self = shift;
-
-    $self->SUPER::validate;
-    $self->validate_object;
-}
-
-sub validate_object {
-    my $self = shift;
-    if (my $object = $self->object) {
-        $object->validate();
-    }
 }
 
 sub get_class {

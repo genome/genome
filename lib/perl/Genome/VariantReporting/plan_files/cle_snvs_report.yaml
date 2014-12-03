@@ -69,7 +69,6 @@ reporters:
                     - followup_tumor
                     - normal
         params:
-            file_name: 'trio_full_report.tsv'
             sample_names:
                 - discovery_tumor
                 - followup_tumor
@@ -126,7 +125,6 @@ reporters:
                     - followup_tumor
                     - normal
         params:
-            file_name: 'trio_acmg_report.tsv'
             sample_names:
                 - discovery_tumor
                 - followup_tumor
@@ -146,8 +144,6 @@ reporters:
             position: {}
             vep: {}
             'variant-type': {}
-        params:
-            file_name: 'trio_simple_report.tsv'
     'vcf':
         filters: {}
         interpreters:
@@ -159,8 +155,6 @@ reporters:
                 sample_name: discovery_tumor
             'contains-tag':
                 info_tag: ON_TARGET
-        params:
-            file_name: 'trio_report.vcf'
     'bed':
         filters:
             'allele-in-genotype':
@@ -175,5 +169,4 @@ reporters:
         interpreters:
             'bed-entry': {}
         params:
-            file_name: 'trio_report.bed'
             generate_legend_file: 0

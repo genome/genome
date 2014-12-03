@@ -11,8 +11,12 @@ use warnings;
 use above "Genome";
 use Test::More;
 use File::Basename qw(basename);
+use File::Copy::Recursive qw(dircopy);
 use Genome::Utility::Test qw(compare_ok);
 use Genome::VariantReporting::Framework::Plan::TestHelpers;
+use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(
+    compare_directories_and_files
+);
 
 my $pkg = "Genome::VariantReporting::Framework::GenerateReport";
 
@@ -31,22 +35,29 @@ $plan->validate();
 $plan->validate_translation_provider($provider);
 $plan->translate($provider->translations);
 
-my $generator = $pkg->create(
-    input_vcf => $vcf_file,
-    plan_json => $plan->as_json,
-    variant_type => "snvs",
-);
-ok($generator->isa($pkg), "Generator created ok");
-ok($generator->execute, "Generator executed ok");
+for my $reporter_name (qw(reporter_alpha reporter_gamma)) {
+    subtest "reporter_name = $reporter_name" => sub {
+        my $generator = $pkg->create(
+            input_vcf => $vcf_file,
+            plan_json => $plan->as_json,
+            reporter_name => 'reporter_alpha',
+            variant_type => "snvs",
+        );
+        ok($generator->isa($pkg), "Generator created ok");
+        ok($generator->execute, "Generator executed ok");
 
-my ($epsilon_reporter_object) = grep {$_->isa('Genome::VariantReporting::TestEpsilonReporter')} $generator->output_result->create_reporters();
-my $translated_interpreter = $epsilon_reporter_object->interpreters->{interpreter_z};
-is($translated_interpreter->iz_p1, 'translated', 'Attached interpreter\'s parameters were translated correctly');
+        my $result = $generator->output_result;
+        my $expected_directory = File::Spec->join($data_dir,
+            'expected', $reporter_name);
 
-for my $expected_report (glob File::Spec->join($data_dir, "expected", "*")) {
-    compare_ok(File::Spec->join($generator->output_result->output_dir, basename($expected_report)), 
-                    $expected_report,
-                    sprintf("Report %s generated as expected", basename($expected_report)));
+        if ($ENV{GENERATE_TEST_DATA}) {
+            local $File::Copy::Recursive::RMTrgDir = 1;
+            dircopy($result->output_dir, $expected_directory);
+        }
+        compare_directories_and_files($result->output_dir,
+            $expected_directory);
+    }
 }
+
 done_testing;
 

@@ -8,7 +8,7 @@ use Set::Scalar;
 class Genome::VariantReporting::Reporter::WithHeader {
     is => 'Genome::VariantReporting::Framework::Component::Reporter::SingleFile',
     is_abstract => 1,
-    has => {
+    has_param => {
         null_character => {
             is => 'Text',
             default => '-',
@@ -26,9 +26,6 @@ class Genome::VariantReporting::Reporter::WithHeader {
         }
     },
     has_transient_optional => [
-        available_fields_dict => {
-            is => 'HASH',
-        },
         _legend_fh => {
             is_structural => 1,
         },
@@ -59,13 +56,19 @@ sub __errors__ {
     return @errors;
 }
 
+sub legend_file_name {
+    my $self = shift;
+    return $self->file_name . ".legend";
+}
+
 sub initialize {
     my $self = shift;
-    my $output_dir = shift;
 
-    $self->SUPER::initialize($output_dir);
+    $self->SUPER::initialize(@_);
     if ($self->generate_legend_file) {
-        my $legend_fh = Genome::Sys->open_file_for_writing(File::Spec->join($output_dir, $self->file_name . '.legend.tsv'));
+        my $legend_fh = Genome::Sys->open_file_for_writing(
+            File::Spec->join($self->temp_staging_directory,
+                $self->legend_file_name));
         $self->_legend_fh($legend_fh);
         $self->write_legend_file();
     }
@@ -101,24 +104,21 @@ sub print_headers {
 sub available_fields_dict {
     my $self = shift;
 
-    unless (defined($self->__available_fields_dict)) {
-        my @interpreters = values %{$self->interpreters};
-        my %available_fields;
-        for my $interpreter (@interpreters) {
-            for my $field ($interpreter->available_fields) {
-                if (defined $available_fields{$field}) {
-                    die $self->error_message("Fields are not unique. Field: %s, Interpreters: %s and %s",
-                        $field, $interpreter->name, $available_fields{$field}->{interpreter});
-                }
-                $available_fields{$field} = {
-                    interpreter => $interpreter->name,
-                    field => $field,
-                }
+    my @interpreters = values %{$self->interpreters};
+    my %available_fields;
+    for my $interpreter (@interpreters) {
+        for my $field ($interpreter->available_fields) {
+            if (defined $available_fields{$field}) {
+                die $self->error_message("Fields are not unique. Field: %s, Interpreters: %s and %s",
+                    $field, $interpreter->name, $available_fields{$field}->{interpreter});
+            }
+            $available_fields{$field} = {
+                interpreter => $interpreter->name,
+                field => $field,
             }
         }
-        $self->__available_fields_dict(\%available_fields);
     }
-    return %{$self->__available_fields_dict};
+    return %available_fields;
 }
 
 # Default report method

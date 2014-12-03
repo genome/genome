@@ -14,6 +14,7 @@ use Genome::Utility::Test qw(compare_ok);
 use Set::Scalar;
 use List::MoreUtils qw(each_array);
 use Genome::File::Vcf::Entry;
+use Genome::VariantReporting::Reporter::TestHelper qw(test_report_result);
 
 my $pkg = 'Genome::VariantReporting::Reporter::VcfReporter';
 use_ok($pkg);
@@ -21,34 +22,19 @@ use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('reporters', $pkg->name), $pkg);
 
-my $indel_filter_pkg = 'Genome::VariantReporting::Generic::ContainsTagFilter';
-use_ok($indel_filter_pkg);
-
-my $ft_filter_pkg = 'Genome::VariantReporting::Generic::FTKeepFilter';
-use_ok($ft_filter_pkg);
-
-my $indel_filter = $indel_filter_pkg->create(info_tag => 'ON_TARGET');
-ok($indel_filter->isa($indel_filter_pkg), 'Filter created successfully');
-
-my $ft_filter = $ft_filter_pkg->create(sample_name => 'S1');
-ok($ft_filter->isa($ft_filter_pkg), 'Filter created successfully');
-
 my $data_dir = __FILE__.".d";
 
 subtest 'report subroutine' => sub {
-    my $reporter = get_test_reporter();
-    my $output_dir = Genome::Sys->create_temp_directory();
-    $reporter->initialize($output_dir);
-
-    $reporter->report(interpretations());
-    $reporter->finalize();
-    compare_ok(
-        File::Spec->join($output_dir, 'vcf'),
-        File::Spec->join($data_dir, 'expected_after_report.vcf'),
-        'Output vcf as expected'
+    test_report_result(
+        data_dir => $data_dir,
+        pkg => $pkg,
+        interpretations => interpretations(),
     );
-};
 
+
+};
+done_testing;
+=cut
 subtest 'soft_filters subroutine' => sub {
     my $reporter = get_test_reporter();
 
@@ -169,7 +155,6 @@ subtest '_process_entry subroutine' => sub {
     );
 };
 
-done_testing;
 
 sub get_test_reporter {
     my $reporter = Genome::VariantReporting::Reporter::VcfReporter->create(file_name => 'vcf');
@@ -179,16 +164,16 @@ sub get_test_reporter {
     $reporter->add_interpreter_object($ft_filter);
     return $reporter;
 }
-
+=cut
 sub interpretations {
     my $entry = create_entry();
     return {
-        $indel_filter->name => {
+        'contains-tag' => {
             C  => { filter_status => 1, },
             AT => { filter_status => 1, },
             T  => { filter_status => 0, },
         },
-        $ft_filter->name => {
+        'ft-keep' => {
             C  => { filter_status => 1, },
             AT => { filter_status => 0, },
             T  => { filter_status => 0, },

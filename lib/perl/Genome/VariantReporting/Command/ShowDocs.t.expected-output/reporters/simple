@@ -5,8 +5,6 @@ Output basic variant information, including transcript annotation from vep.
   [1mdelimiter[0m   Text
     Character to be used to separate columns
     Default value ' ' if not specified
-  [1mfile_name[0m
-    file name to use for report
   [1mgenerate_legend_file[0m   Boolean
     Boolean flag to control whether or not a legend file will be created
     Default value 'true' if not specified

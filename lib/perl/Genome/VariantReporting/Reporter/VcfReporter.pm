@@ -31,6 +31,10 @@ sub allows_hard_filters {
     return 0;
 }
 
+sub file_name {
+    return 'report.vcf';
+}
+
 sub report {
     my $self = shift;
     my $interpretations = shift;
@@ -87,7 +91,10 @@ sub add_header_for_main_filter {
 sub print_vcf_header {
     my $self = shift;
 
-    $self->vcf_file(Genome::File::Vcf::Writer->fhopen($self->_output_fh, $self->file_name, $self->header));
+    my $output_file_path = File::Spec->join($self->temp_staging_directory,
+        $self->file_name);
+    $self->vcf_file(Genome::File::Vcf::Writer->fhopen($self->_output_fh,
+        $output_file_path, $self->header));
 }
 
 sub _process_entry {

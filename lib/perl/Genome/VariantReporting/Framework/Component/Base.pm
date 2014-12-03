@@ -9,7 +9,7 @@ class Genome::VariantReporting::Framework::Component::Base {
     attributes_have => {
         is_structural => {
             is => "Boolean",
-            default => 0,
+            is_optional => 1,
         },
     },
 };
@@ -45,8 +45,10 @@ sub part {
 sub properties_in_plan {
     my $class = shift;
     my @properties;
-    for my $property ($class->__meta__->properties(is_structural => 0, is_transient => 0),
-        $class->__meta__->properties(is_structural => undef, is_transient => 0)) {
+    for my $property ($class->__meta__->properties(
+            implied_by => undef,
+            is_structural => undef,
+            is_transient => 0)) {
         push @properties, $property;
     }
     return @properties;

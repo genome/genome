@@ -11,28 +11,14 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
-use Sub::Override;
+use Genome::VariantReporting::Reporter::TestHelper qw(test_report_result);
 
 my $pkg = 'Genome::VariantReporting::Reporter::SimpleReporter';
 use_ok($pkg);
 
-my $factory = Genome::VariantReporting::Framework::Factory->create();
-isa_ok($factory->get_class('reporters', $pkg->name), $pkg);
-
 my $data_dir = __FILE__.".d";
 
-my $reporter = Genome::VariantReporting::Reporter::SimpleReporter->create(file_name => 'simple', generate_legend_file => 0);
-ok($reporter, "Reporter created successfully");
-
-my $position_interpreter = Genome::VariantReporting::Generic::PositionInterpreter->create();
-my $vep_interpreter = Genome::VariantReporting::Suite::Vep::VepInterpreter->create();
-my $variant_type_interpreter= Genome::VariantReporting::Generic::VariantTypeInterpreter->create();
-$reporter->add_interpreter_objects($position_interpreter, $vep_interpreter, $variant_type_interpreter);
-
-my $output_dir = Genome::Sys->create_temp_directory();
-$reporter->initialize($output_dir);
-
-my %interpretations = (
+my $interpretations = {
     'position' => {
         T => {
             chromosome_name => 1,
@@ -73,11 +59,12 @@ my %interpretations = (
             variant_type => "snv",
         },
     },
+};
+
+test_report_result(
+    data_dir => $data_dir,
+    pkg => $pkg,
+    interpretations => $interpretations,
 );
-
-$reporter->report(\%interpretations);
-$reporter->finalize();
-
-compare_ok(File::Spec->join($output_dir, 'simple'), File::Spec->join($data_dir, "expected.out"), "Output as expected");
 
 done_testing;

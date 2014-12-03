@@ -55,12 +55,7 @@ my $feature_list = $feature_list_cmd->execute;
 $provider->translations({%{$provider->translations}, feature_list_ids => {TEST => $feature_list->id}});
 
 
-my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file(
-    File::Spec->join($test_dir, 'plan.yaml'),
-);
-$plan->validate();
-
 my $input_vcf = File::Spec->join($test_dir, "$variant_type.vcf.gz");
-test_dag_execute($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $plan);
+test_dag_execute($dag, $expected_vcf, $input_vcf, $provider, $variant_type, __FILE__);
 
 done_testing();

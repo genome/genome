@@ -18,7 +18,6 @@ reporters:
                     - followup_tumor
                     - normal
         params:
-            file_name: 'cle_docm_report'
             sample_names:
                 - discovery_tumor
                 - followup_tumor
@@ -28,5 +27,4 @@ reporters:
         interpreters:
             'bed-entry': {}
         params:
-            file_name: 'cle_docm_report.bed'
             generate_legend_file: 0
