@@ -13,11 +13,11 @@ class Genome::Model::SomaticValidation::Command::AlignmentStatsSummary {
             is => 'String',
             doc => 'The output tsv file path to report coverage metrics to',
         },
-        models => {
-            is => 'Genome::Model::SomaticValidation',
+        builds => {
+            is => 'Genome::Model::Build::SomaticValidation',
             is_many => 1,
             shell_args_position => 1,
-            doc => 'The Somatic Validation models or an expression to resolve the Somatic Validation models.',
+            doc => 'The Somatic Validation builds or an expression to resolve the Somatic Validation builds.',
         },
     ],
     has_optional => [
@@ -38,7 +38,7 @@ class Genome::Model::SomaticValidation::Command::AlignmentStatsSummary {
 };
 
 sub help_detail {
-    return "Summarize the alignment stats for all listed somatic validation models.  One line will be output in the tsv file for each sample."
+    return "Summarize the alignment stats for all listed somatic validation builds.  One line will be output in the tsv file for each sample."
 }
 
 sub execute {
@@ -48,12 +48,7 @@ sub execute {
 
     # TODO: This should probably use the merged_alignment_result to make unique entries per sample and avoid duplicates.
     my %sample_to_pp;
-    for my $model ($self->models) {
-        my $build = $model->last_succeeded_build;
-        unless ($build) {
-            die('Failed to find last succeeded build for model: '. $model->id);
-        }
-
+    for my $build ($self->builds) {
         my $tumor_sample = $build->tumor_sample;
         if ($sample_to_pp{$tumor_sample->name}) {
             if ($sample_to_pp{$tumor_sample->name} eq $build->processing_profile->id) {

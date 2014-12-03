@@ -291,13 +291,25 @@ sub run_summary_stats {
     if ($self->coverage_models) {
         Genome::Model::SomaticValidation::Command::AlignmentStatsSummary->execute(
             output_tsv_file => File::Spec->join($self->output_directory, "alignment_summary.tsv"),
-            models => [$self->coverage_models],
+            builds => [$self->_coverage_builds],
         );
         Genome::Model::SomaticValidation::Command::CoverageStatsSummary->execute(
             output_tsv_file => File::Spec->join($self->output_directory, "coverage_summary.tsv"),
-            models => [$self->coverage_models],
+            builds => [$self->_coverage_builds],
         );
     }
+}
+
+sub _coverage_builds {
+    my $self = shift;
+    my @builds;
+    for my $model ($self->coverage_models) {
+        unless (defined $model->last_succeeded_build) {
+            die sprintf("No succeeded build found for model %s", $model->id);
+        }
+        push @builds, $model->last_succeeded_build;
+    }
+    return @builds;
 }
 
 {

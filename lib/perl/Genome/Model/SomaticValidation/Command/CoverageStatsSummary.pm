@@ -7,17 +7,17 @@ use Genome;
 
 class Genome::Model::SomaticValidation::Command::CoverageStatsSummary {
     is => 'Command::V2',
-    doc => 'Generate a spreadsheet, tsv file, of coverage metrics for Somatic Validation models.  Duplicate normal samples will only be reported once.',
+    doc => 'Generate a spreadsheet, tsv file, of coverage metrics for Somatic Validation builds.  Duplicate normal samples will only be reported once.',
     has => [
         output_tsv_file => {
             is => 'String',
             doc => 'The output tsv file path to report coverage metrics to',
         },
-        models => {
-            is => 'Genome::Model::SomaticValidation',
+        builds => {
+            is => 'Genome::Model::Build::SomaticValidation',
             is_many => 1,
             shell_args_position => 1,
-            doc => 'The Somatic Validation models or an expression to resolve the Somatic Validation models.',
+            doc => 'The Somatic Validation builds or an expression to resolve the Somatic Validation builds.',
         },
     ],
     has_optional => [
@@ -28,7 +28,7 @@ class Genome::Model::SomaticValidation::Command::CoverageStatsSummary {
 };
 
 sub help_detail {
-    return "Summarize the coverage stats for all listed somatic validation models.  One line will be output in the tsv file for each sample, region of interest, wingspan and minimum depth filter."
+    return "Summarize the coverage stats for all listed somatic validation builds.  One line will be output in the tsv file for each sample, region of interest, wingspan and minimum depth filter."
 }
 
 sub execute {
@@ -37,16 +37,12 @@ sub execute {
     $self->_load_writer;
 
     my %sample_roi_to_pp;
-    for my $model ($self->models) {
-        my $roi_name = $model->region_of_interest_set_name;
-        my $build = $model->last_succeeded_build;
-        unless ($build) {
-            die('Failed to find last succeeded build for model: '. $model->id);
-        }
+    for my $build ($self->builds) {
+        my $roi_name = $build->region_of_interest_set_name;
 
         my $tumor_sample = $build->tumor_sample;
         if ($sample_roi_to_pp{$tumor_sample->name}{$roi_name}) {
-            die('Duplicate models for tumor sample \''. $tumor_sample->name .'\' region of interest \''. $roi_name .'\' found!.');
+            die('Duplicate builds for tumor sample \''. $tumor_sample->name .'\' region of interest \''. $roi_name .'\' found!.');
         }
         $sample_roi_to_pp{$tumor_sample->name}{$roi_name} = $build->processing_profile->id;
         my $tumor_coverage_stats = $build->coverage_stats_result;
