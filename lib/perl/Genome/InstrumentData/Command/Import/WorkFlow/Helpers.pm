@@ -234,25 +234,61 @@ sub load_flagstat_for_bam_path {
         return;
     }
     $flagstat->{path} = $flagstat_path;
-
-    # FIXME What is paired end?
-    if($flagstat_path =~ /\.paired\.bam\.flagstat$/) {
-        $flagstat->{is_paired_end} = 1;
-    } elsif($flagstat_path =~ /\.singleton\.bam\.flagstat$/) {
-        $flagstat->{is_paired_end} = 0;
-    } elsif ( $flagstat->{reads_paired_in_sequencing} > 0 and $flagstat->{reads_marked_as_read1} == $flagstat->{reads_marked_as_read2} ) {
-        # Only set paired end if read1 and read2 are equal
-        $flagstat->{is_paired_end} = 1;
-    }
-    else {
-        $flagstat->{is_paired_end} = 0;
-    }
+    $flagstat->{is_paired_end} = $self->is_bam_paired_end($bam_path);
 
     $self->debug_message('Flagstat output:');
     $self->debug_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
 
     $self->debug_message('Load flagstat for bam path...done');
     return $flagstat;
+}
+
+sub is_bam_paired_end {
+    # Assumes bam is sorted with secondary alignemnts and duplicate reads removed!
+    # Only checks first 10K reads
+    my ($self, $bam_path, $flagstat) = @_;
+
+    Carp::confess('No bam path given to is_bam_paired_end!') if not $bam_path;
+    Carp::confess('Bam path given to is_bam_paired_end does not exist!') if not -s $bam_path;
+
+    if ( $flagstat ) {
+        return 0 if $flagstat->{reads_paired_in_sequencing} == 0; # no reads marked as read 1/2
+        return 0 if $flagstat->{reads_marked_as_read1} != $flagstat->{reads_marked_as_read2}; # uneven read 1/2
+    }
+
+    my $bam_fh = IO::File->new("samtools view $bam_path | head -10000 |");
+    if ( not $bam_fh ) {
+        $self->error_message('Failed to open file handle to samtools command!');
+        return;
+    }
+
+    my (%seen, $line1, $line2, $name1, $name2);
+    my $is_paired_end = 1;
+    while ( $line1 = $bam_fh->getline ) {
+        $line2 = $bam_fh->getline;
+        if ( not $line2 ) {
+            # missing next line
+            $is_paired_end = 0;
+            last;
+        }
+        my ($name1) = split(/\t/, $line1);
+        my ($name2) = split(/\t/, $line2);
+        if ( $name1 ne $name2 ) {
+            # different templates - maybe not sorted, but we shouldn't be imported these
+            $is_paired_end = 0;
+            last;
+        }
+        if ( exists $seen{$name1} ) {
+            # template has multiple entries
+            $is_paired_end = 0;
+            last;
+        }
+        $seen{$name1} = 1;
+        # check flags?
+    }
+    $bam_fh->close;
+
+    return $is_paired_end;
 }
 
 sub validate_bam {

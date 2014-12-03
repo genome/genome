@@ -219,4 +219,15 @@ is($errors[0]->desc, 'Must be greater than 0 and less than 1! 0', 'correct error
 ok(@errors, 'errors for downsample_ratio of 1');
 is($errors[0]->desc, 'Must be greater than 0 and less than 1! 1', 'correct error desc for downsample_ratio of 1');
 
+# is_bam_paired_end
+throws_ok(sub{ $helpers->is_bam_paired_end(); }, qr/No bam path given to is_bam_paired_end!/, 'is_bam_paired_end fails w/o bam');
+throws_ok(sub{ $helpers->is_bam_paired_end('does_not_exist'); }, qr/Bam path given to is_bam_paired_end does not exist!/, 'is_bam_paired_end fails w/ non existing bam');
+my $data_dir2 = File::Spec->join($test_dir, 'bam-rg-multi', 'v4');
+my $bam_path2 = File::Spec->join($data_dir2, '2883581797.paired.bam');
+my $is_paired_end = $helpers->is_bam_paired_end($bam_path2);
+is($is_paired_end, 1, "bam $bam_path2 is paired end");
+$bam_path2 = File::Spec->join($data_dir2, '2883581797.singleton.bam');
+$is_paired_end = $helpers->is_bam_paired_end($bam_path2);
+is($is_paired_end, 0, "bam $bam_path2 is not paired end");
+
 done_testing();
