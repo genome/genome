@@ -35,7 +35,6 @@ subtest "Only one model for an roi" => sub {
         discovery_sample => $tumor_sample1,
         followup_sample => $tumor_sample2,
         normal_sample => $normal_sample1,
-        output_dir => Genome::Sys->create_temp_directory,
     );
 
     my @pairs = $factory->get_model_pairs;
@@ -49,7 +48,6 @@ subtest "Three models for an roi" => sub {
         discovery_sample => $tumor_sample1,
         followup_sample => $tumor_sample2,
         normal_sample => $normal_sample1,
-        output_dir => Genome::Sys->create_temp_directory,
     );
 
     my @pairs = $factory->get_model_pairs;
@@ -65,7 +63,6 @@ subtest "Models for an roi don't have the right samples" => sub {
         discovery_sample => $tumor_sample1,
         followup_sample => $bad_sample,
         normal_sample => $normal_sample1,
-        output_dir => Genome::Sys->create_temp_directory,
     );
 
     my @pairs = $factory->get_model_pairs;
@@ -79,7 +76,6 @@ subtest "One model doesn't have last succeeded build" => sub {
         discovery_sample => $tumor_sample1,
         followup_sample => $tumor_sample2,
         normal_sample => $normal_sample1,
-        output_dir => Genome::Sys->create_temp_directory,
     );
 
     my @pairs = $factory->get_model_pairs;
@@ -98,7 +94,6 @@ subtest "Two valid model pairs" => sub {
         discovery_sample => $tumor_sample1,
         followup_sample => $tumor_sample2,
         normal_sample => $normal_sample1,
-        output_dir => Genome::Sys->create_temp_directory,
     );
 
     reinstall_sub({

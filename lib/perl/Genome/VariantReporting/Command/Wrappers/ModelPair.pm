@@ -20,27 +20,19 @@ class Genome::VariantReporting::Command::Wrappers::ModelPair {
             is => 'Text',
             is_optional => 1,
         },
-        base_output_dir => { is => 'Text', },
+        label => { is => 'Text', },
         plan_file_basename => {
             is => 'Text',
             default_value => "cle_TYPE_report.yaml",
             doc => "plan file name where 'snvs' or 'indels' is substituted by placeholder TYPE",
         },
     },
-    has_calculated => {
-        output_dir => {
-            calculate_from => [qw/ base_output_dir discovery /],
-            calculate => q| my $roi_nospace  = $discovery->region_of_interest_set->name;
-                $roi_nospace =~ s/ /_/g;
-                return File::Spec->join($base_output_dir, $roi_nospace); |,
-        },
+    has_constant => {
         translations_file => {
-            calculate_from => [qw/ output_dir /],
-            calculate => q( File::Spec->join($output_dir, "resource.yaml") ),
+            calculate => q( Genome::Sys->create_temp_file_path; ),
         },
         sample_legend => {
-            calculate_from => [qw/ output_dir /],
-            calculate => q( File::Spec->join($output_dir, "sample_legend.tsv") ),
+            calculate => q( Genome::Sys->create_temp_file_path; ),
         }
     },
 };
@@ -67,30 +59,11 @@ sub report_names {
     return @file_names;
 }
 
-sub reports_directory {
-    my ($self, $variant_type) = @_;
-    return File::Spec->join($self->output_dir, "reports_$variant_type");
-};
-
-sub logs_directory {
-    my ($self, $variant_type) = @_;
-    return  File::Spec->join($self->output_dir, "logs_$variant_type");
-};
-
 sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
-    Genome::Sys->create_directory($self->output_dir);
     $self->generate_sample_legend_file;
     $self->generate_translations_file;
-    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->translations_file);
-    for my $variant_type (qw(snvs indels)) {
-        Genome::Sys->create_directory($self->reports_directory($variant_type));
-        my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file($variant_type));
-        $plan->write_to_file(File::Spec->join($self->reports_directory($variant_type), "plan.yaml"));
-        Genome::Sys->create_directory($self->logs_directory($variant_type));
-        $provider->write_to_file(File::Spec->join($self->reports_directory($variant_type), "resources.yaml"));
-    }
     return $self;
 };
 
@@ -188,7 +161,7 @@ sub generate_translations_file {
     $translations->{dbsnp_vcf} = $self->discovery->previously_discovered_variations_build->snvs_vcf;
     $translations->{nhlbi_vcf} = _get_nhlbi_vcf(); 
 
-    YAML::DumpFile(File::Spec->join($self->translations_file), $translations);
+    YAML::DumpFile($self->translations_file, $translations);
 
     return 1;
 }

@@ -14,20 +14,7 @@ class Genome::VariantReporting::Command::Wrappers::ModelPairFactory {
         discovery_sample => { is => 'Genome::Sample', },
         followup_sample => { is => 'Genome::Sample', },
         normal_sample => { is => 'Genome::Sample',},
-        output_dir => { is => 'Text', },
         other_input_vcf_pairs => { is => 'Hashref', default_value => {}},
-        discovery_output_dir => {
-            calculate_from => [qw/output_dir/],
-            calculate => q/return File::Spec->join($output_dir, "discovery");/,
-        },
-        additional_output_dir => {
-            calculate_from => [qw/output_dir/],
-            calculate => q/return File::Spec->join($output_dir, "followup");/,
-        },
-        germline_output_dir => {
-            calculate_from => [qw/output_dir/],
-            calculate => q/return File::Spec->join($output_dir, "germline");/,
-        },
     },
 };
 
@@ -63,7 +50,7 @@ sub get_model_pairs {
         if ($self->is_single_bam($model)) {
             push @model_pairs, Genome::VariantReporting::Command::Wrappers::SingleModel->create(
                 discovery => $model->last_succeeded_build,
-                base_output_dir => $self->germline_output_dir,
+                label => 'germline',
             );
         }
         else {
@@ -104,13 +91,13 @@ sub get_model_pairs {
         push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $discovery_build,
             followup => $validation_build,
-            base_output_dir => $self->discovery_output_dir,
+            label => "$roi-discovery",
         );
 
         push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $validation_build,
             followup => $discovery_build,
-            base_output_dir => $self->additional_output_dir,
+            label => "$roi-additional",
         );
 
         for my $other_input_vcf_pair (keys %{$self->other_input_vcf_pairs}) {
@@ -118,7 +105,7 @@ sub get_model_pairs {
                 discovery => $discovery_build,
                 followup => $validation_build,
                 plan_file_basename => "cle_docm_report_TYPE.yaml",
-                base_output_dir => $self->other_output_dir($other_input_vcf_pair),
+                label => "$roi-$other_input_vcf_pair",
                 other_snvs_vcf_input => $self->other_input_vcf_pairs->{$other_input_vcf_pair}->[0],
                 other_indels_vcf_input => $self->other_input_vcf_pairs->{$other_input_vcf_pair}->[1],
             );
@@ -126,12 +113,6 @@ sub get_model_pairs {
     }
 
     return @model_pairs;
-}
-
-sub other_output_dir {
-    my $self = shift;
-    my $name = shift;
-    return File::Spec->join($self->output_dir, $name);
 }
 
 sub is_model_discovery {
