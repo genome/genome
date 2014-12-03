@@ -3,9 +3,9 @@ package Genome::VariantReporting::Command::MergeReports;
 use strict;
 use warnings;
 use Genome;
-use Genome::VariantReporting::Command::MergeReportsResult;
+use Genome::VariantReporting::Command::MergedReport;
 
-my $REPORT_PKG = $Genome::VariantReporting::Command::MergeReportsResult::REPORT_PKG;
+my $REPORT_PKG = $Genome::VariantReporting::Command::MergedReport::REPORT_PKG;
 
 class Genome::VariantReporting::Command::MergeReports {
     is => 'Genome::Command::DelegatesToResult',
@@ -60,7 +60,7 @@ class Genome::VariantReporting::Command::MergeReports {
 };
 
 sub result_class {
-    return "Genome::VariantReporting::Command::MergeReportsResult";
+    return "Genome::VariantReporting::Command::MergedReport";
 }
 
 sub input_hash {

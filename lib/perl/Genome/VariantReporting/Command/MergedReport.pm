@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Command::MergeReportsResult;
+package Genome::VariantReporting::Command::MergedReport;
 
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ use Params::Validate qw(validate_pos :types);
 
 our $REPORT_PKG = 'Genome::VariantReporting::Framework::Component::Report::SingleFile';
 
-class Genome::VariantReporting::Command::MergeReportsResult {
+class Genome::VariantReporting::Command::MergedReport {
     is => 'Genome::SoftwareResult::StageableSimple',
     has_input => [
         report_results => {
