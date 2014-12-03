@@ -40,6 +40,15 @@ sub target_bed {
 
 sub _generate_result {
     my ($self, $staging_directory) = @_;
+
+    my $bed_md5 = Genome::Sys->md5sum($self->source_bed);
+    unless($bed_md5 eq $self->source_md5) {
+        die $self->error_message(
+            'Source BED failed MD5 check. Expected %s, got %s.',
+            $self->source_md5sum, $bed_md5,
+        );
+    }
+
     my $converted_file_path = File::Spec->join($staging_directory, $self->_target_bed);
     my $converted_bed_file = Genome::Model::Build::ReferenceSequence::Converter->convert_bed(
         $self->source_bed, $self->source_reference, $converted_file_path, $self->target_reference);
