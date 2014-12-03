@@ -14,11 +14,11 @@ class Genome::VariantReporting::Framework::Component::Report::SingleFile {
     ],
 };
 
-sub can_be_combined {
+sub can_be_merged {
     return 0;
 }
 
-sub combine_parameters {
+sub merge_parameters {
     return {};
 }
 

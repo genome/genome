@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Command::CombineReportsResult;
+package Genome::VariantReporting::Command::MergeReportsResult;
 
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ use Params::Validate qw(validate_pos :types);
 
 our $REPORT_PKG = 'Genome::VariantReporting::Framework::Component::Report::SingleFile';
 
-class Genome::VariantReporting::Command::CombineReportsResult {
+class Genome::VariantReporting::Command::MergeReportsResult {
     is => 'Genome::SoftwareResult::StageableSimple',
     has_input => [
         report_results => {
@@ -65,9 +65,9 @@ sub _run {
 
     $self->validate(@reports_with_size);
 
-    my $combined_file = $self->combine_files(@reports_with_size);
+    my $merged_file = $self->merge_files(@reports_with_size);
 
-    my $sorted_file = $self->sort_file($combined_file);
+    my $sorted_file = $self->sort_file($merged_file);
 
     if ($self->split_indicators) {
         my $split_file = $self->split_file($sorted_file);
@@ -107,16 +107,16 @@ sub move_file_to_output {
     );
 }
 
-sub combine_files {
+sub merge_files {
     my $self = shift;
     my @reports_with_size = @_;
 
-    my $combined_file = Genome::Sys->create_temp_file_path;
+    my $merged_file = Genome::Sys->create_temp_file_path;
 
     for my $report (@reports_with_size) {
-        my $file_to_combine;
+        my $file_to_merge;
         if ($self->contains_header) {
-            $file_to_combine = Genome::Sys->create_temp_file_path;
+            $file_to_merge = Genome::Sys->create_temp_file_path;
             my $reader = Genome::Utility::IO::SeparatedValueReader->create(
                 input => $report,
                 separator => $self->separator,
@@ -125,19 +125,19 @@ sub combine_files {
                 headers => [$self->get_master_header],
                 print_headers => 0,
                 separator => $self->separator,
-                output => $file_to_combine,
+                output => $file_to_merge,
             );
             while (my $entry = $reader->next) {
                 $writer->write_one($entry);
             }
         } else {
-            $file_to_combine = $report;
+            $file_to_merge = $report;
         }
-        my $with_source = $self->add_source($report, $file_to_combine);
-        my $combine_command = 'cat %s >> %s';
-        Genome::Sys->shellcmd(cmd => sprintf($combine_command, $with_source, $combined_file));
+        my $with_source = $self->add_source($report, $file_to_merge);
+        my $merge_command = 'cat %s >> %s';
+        Genome::Sys->shellcmd(cmd => sprintf($merge_command, $with_source, $merged_file));
     }
-    return $combined_file;
+    return $merged_file;
 }
 
 sub add_source {
@@ -161,17 +161,17 @@ sub add_source {
 
 # Sort the file if required. Regardless, put the header in place.
 sub sort_file {
-    my ($self, $combined_file) = @_;
+    my ($self, $merged_file) = @_;
 
     my $sorted_file = Genome::Sys->create_temp_file_path;
     if ($self->has_sort_columns) {
         my $fh = Genome::Sys->open_file_for_writing($sorted_file);
         $self->print_header_to_fh($fh);
-        Genome::Sys->shellcmd(cmd => sprintf('sort %s %s >> %s', $self->get_sort_params, $combined_file, $sorted_file));
+        Genome::Sys->shellcmd(cmd => sprintf('sort %s %s >> %s', $self->get_sort_params, $merged_file, $sorted_file));
     } else {
         my ($fh, $header_file) = Genome::Sys->create_temp_file;
         $self->print_header_to_fh($fh);
-        Genome::Sys->concatenate_files( [$header_file, $combined_file], $sorted_file );
+        Genome::Sys->concatenate_files( [$header_file, $merged_file], $sorted_file );
     }
     return $sorted_file;
 }

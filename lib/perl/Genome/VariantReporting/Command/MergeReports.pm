@@ -1,18 +1,18 @@
-package Genome::VariantReporting::Command::CombineReports;
+package Genome::VariantReporting::Command::MergeReports;
 
 use strict;
 use warnings;
 use Genome;
-use Genome::VariantReporting::Command::CombineReportsResult;
+use Genome::VariantReporting::Command::MergeReportsResult;
 
-my $REPORT_PKG = $Genome::VariantReporting::Command::CombineReportsResult::REPORT_PKG;
+my $REPORT_PKG = $Genome::VariantReporting::Command::MergeReportsResult::REPORT_PKG;
 
-class Genome::VariantReporting::Command::CombineReports {
+class Genome::VariantReporting::Command::MergeReports {
     is => 'Genome::Command::DelegatesToResult',
     has_input => [
         report_results => {
             is => $REPORT_PKG,
-            doc => 'The reports you wish to combine. They must all be the same type of report (same columns).',
+            doc => 'The reports you wish to merge. They must all be the same type of report (same columns).',
             is_many => 1,
         },
         sort_columns => {
@@ -27,7 +27,7 @@ class Genome::VariantReporting::Command::CombineReports {
         },
         use_header_from => {
             is => $REPORT_PKG,
-            doc => 'Use the header from this report_result in the combined report',
+            doc => 'Use the header from this report_result in the merged report',
             is_optional => 1,
         },
         separator => {
@@ -60,7 +60,7 @@ class Genome::VariantReporting::Command::CombineReports {
 };
 
 sub result_class {
-    return "Genome::VariantReporting::Command::CombineReportsResult";
+    return "Genome::VariantReporting::Command::MergeReportsResult";
 }
 
 sub input_hash {

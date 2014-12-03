@@ -64,7 +64,7 @@ sub execute {
     }
     File::Slurp::write_file(File::Spec->join($self->output_directory, "workflow.xml"), $self->_workflow->get_xml);
     $self->_workflow->execute(%{$self->_workflow_inputs});
-    $self->combine_discovery_and_followup_reports;
+    $self->merge_discovery_and_followup_reports;
     $self->create_igv_xml(\@model_pairs);
     return 1;
 }
@@ -105,7 +105,7 @@ sub create_igv_xml {
     }
 }
 
-sub combine_discovery_and_followup_reports {
+sub merge_discovery_and_followup_reports {
     my $self = shift;
 
     my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
@@ -113,7 +113,7 @@ sub combine_discovery_and_followup_reports {
         for my $base ($self->_trio_report_file_names) {
             my $discovery_report = File::Spec->join($self->output_directory, "discovery", $roi_directory, $base);
             my $additional_report = File::Spec->join($self->output_directory, "followup", $roi_directory, $base);
-            Genome::VariantReporting::Command::CombineReports->execute(
+            Genome::VariantReporting::Command::MergeReports->execute(
                 reports => [$discovery_report, $additional_report],
                 sort_columns => [qw(chromosome_name start stop reference variant)],
                 contains_header => 1,
@@ -185,20 +185,20 @@ sub add_reports_to_workflow {
     my $indel_reports = Set::Scalar->new(grep {!($_ =~ /vcf$/)} $model_pair->report_names("indels"));
     my $both_reports = $snv_reports->intersection($indel_reports);
     for my $base ($both_reports->members) {
-        my %combine_params = (
+        my %merge_params = (
             output_file => File::Spec->join($model_pair->output_dir, $base),
             separator => "\t",
         );
         if ($base =~ m/bed$/) {
-            $combine_params{sort_columns} = [qw(1 2 3)];
-            $combine_params{contains_header} = 0,
+            $merge_params{sort_columns} = [qw(1 2 3)];
+            $merge_params{contains_header} = 0,
         }
         else {
-            $combine_params{sort_columns} = [qw(chromosome_name start stop reference variant)];
-            $combine_params{contains_header} = 1,
-            $combine_params{split_indicators} = [qw(per_library)],
+            $merge_params{sort_columns} = [qw(chromosome_name start stop reference variant)];
+            $merge_params{contains_header} = 1,
+            $merge_params{split_indicators} = [qw(per_library)],
         }
-        $self->add_combine_to_workflow(\%combine_params, \%report_operations, $base);
+        $self->add_merge_to_workflow(\%merge_params, \%report_operations, $base);
     }
 }
 
@@ -213,18 +213,18 @@ sub initialize_dag {
     $self->add_final_converge;
 }
 
-sub add_combine_to_workflow {
-    my ($self, $params, $reports_to_combine, $file_name) = @_;
-    #snv report and indel report => combine_snv_indel_reports helper => combine_reports => output_connector
+sub add_merge_to_workflow {
+    my ($self, $params, $reports_to_merge, $file_name) = @_;
+    #snv report and indel report => merge_snv_indel_reports helper => merge_reports => output_connector
     my $counter = $self->_workflow_counter;
-    my $combine_command = Genome::WorkflowBuilder::Command->create(
-        name => join(" ", "Combine snv and indel", $counter),
-        command => "Genome::VariantReporting::Command::CombineReports",
+    my $merge_command = Genome::WorkflowBuilder::Command->create(
+        name => join(" ", "Merge snv and indel", $counter),
+        command => "Genome::VariantReporting::Command::MergeReports",
     );
-    $self->_add_operation_to_workflow($combine_command, $params, $counter);
+    $self->_add_operation_to_workflow($merge_command, $params, $counter);
     my $generate_file_names = Genome::WorkflowBuilder::Command->create(
         name => join(" ", "Generate filenames", $counter),
-        command => "Genome::VariantReporting::Command::CombineSnvIndelReports",
+        command => "Genome::VariantReporting::Command::MergeSnvIndelReports",
     );
     $self->_workflow->add_operation($generate_file_names);
     my $converge = Genome::WorkflowBuilder::Converge->create(
@@ -232,7 +232,7 @@ sub add_combine_to_workflow {
         name => join(" ", "Converge", $counter),
     );
     $self->_workflow->add_operation($converge);
-    while (my ($variant_type, $report) = each %$reports_to_combine) {
+    while (my ($variant_type, $report) = each %$reports_to_merge) {
         $self->_workflow->create_link(
             source => $report, source_property => "output_directory",
             destination => $converge, destination_property => $variant_type."_output_dir",
@@ -251,12 +251,12 @@ sub add_combine_to_workflow {
     );
     $self->_workflow->create_link(
         source => $generate_file_names, source_property => "reports",
-        destination => $combine_command, destination_property => "reports"
+        destination => $merge_command, destination_property => "reports"
     );
     my $final_converge = $self->_workflow->operation_named("Final Converge");
     $self->_workflow->create_link(
-        source => $combine_command, source_property => "output_file",
-        destination => $final_converge, destination_property => $combine_command->name,
+        source => $merge_command, source_property => "output_file",
+        destination => $final_converge, destination_property => $merge_command->name,
     );
 }
 

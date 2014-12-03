@@ -9,11 +9,11 @@ class Genome::VariantReporting::Report::BedReport {
     doc => 'Output variants in bed format',
 };
 
-sub can_be_combined {
+sub can_be_merged {
     return 1;
 }
 
-sub combine_parameters {
+sub merge_parameters {
     return {
         sort_columns => [qw(1 2 3)],
         contains_header => 0,

@@ -133,7 +133,7 @@ sub passed_alleles {
 
     my $filter_results = initialize_filters($entry);
     for my $filter (values %{$self->filters}) {
-        _boolean_combine($filter_results, {$filter->filter_entry($entry)});
+        _boolean_merge($filter_results, {$filter->filter_entry($entry)});
         last if(all_zeros($filter_results));
     }
 
@@ -149,7 +149,7 @@ sub initialize_filters {
     return \%filter_values;
 }
 
-sub _boolean_combine {
+sub _boolean_merge {
     my $accumulator = shift;
     my $new_result = shift;
     for my $allele (keys %$accumulator) {

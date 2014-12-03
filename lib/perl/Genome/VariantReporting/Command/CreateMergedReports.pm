@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Command::CreateCombinedReports;
+package Genome::VariantReporting::Command::CreateMergedReports;
 
 use strict;
 use warnings FATAL => 'all';
@@ -6,7 +6,7 @@ use Genome;
 
 my $FACTORY = Genome::VariantReporting::Framework::Factory->create();
 
-class Genome::VariantReporting::Command::CreateCombinedReports {
+class Genome::VariantReporting::Command::CreateMergedReports {
     is => 'Command::V2',
     has_input => [
         combination_label => {
@@ -42,7 +42,7 @@ class Genome::VariantReporting::Command::CreateCombinedReports {
         use_header_from => {
             is => 'Text',
             valid_values => ['snvs', 'indels'],
-            doc => 'Use the header from this report type in the combined report',
+            doc => 'Use the header from this report type in the merged report',
             is_optional => 1,
         },
     ],
@@ -62,12 +62,12 @@ sub dag {
 
     unless (defined($self->__dag)) {
         my $dag = Genome::WorkflowBuilder::DAG->create(
-            name => sprintf('Create Snvs, Indels, and Combined Reports (%s)',
+            name => sprintf('Create Snvs, Indels, and Merged Reports (%s)',
                 $self->combination_label),
         );
         my $snvs_dag = $self->get_connected_dag($dag, 'snvs');
         my $indels_dag = $self->get_connected_dag($dag, 'indels');
-        $self->connect_combine_operations($dag, $snvs_dag, $indels_dag);
+        $self->connect_merge_operations($dag, $snvs_dag, $indels_dag);
 
         $self->__dag($dag);
     }
@@ -130,7 +130,7 @@ sub redeclare_label_constant {
     );
 }
 
-sub connect_combine_operations {
+sub connect_merge_operations {
     my $self = shift;
     my $dag = shift;
     my $snvs_dag = shift;
@@ -140,11 +140,11 @@ sub connect_combine_operations {
         if ($output_name =~ m/output_result \((.*)\)/) {
             my $report_name = $1;
             my $report_class = $FACTORY->get_class('reports', $report_name);
-            next unless $report_class->can_be_combined;
+            next unless $report_class->can_be_merged;
 
-            my $combine_op = Genome::WorkflowBuilder::Command->create(
-                name => sprintf('Combine Reports (%s)', $report_name),
-                command => 'Genome::VariantReporting::Command::CombineReports',
+            my $merge_op = Genome::WorkflowBuilder::Command->create(
+                name => sprintf('Merge Reports (%s)', $report_name),
+                command => 'Genome::VariantReporting::Command::MergeReports',
             );
 
             my $converge = Genome::WorkflowBuilder::Converge->create(
@@ -170,7 +170,7 @@ sub connect_combine_operations {
             $dag->create_link(
                 source => $converge,
                 source_property => 'report_results',
-                destination => $combine_op,
+                destination => $merge_op,
                 destination_property => 'report_results',
             );
 
@@ -178,35 +178,35 @@ sub connect_combine_operations {
                 $dag->create_link(
                     source => $indels_dag,
                     source_property => $output_name,
-                    destination => $combine_op,
+                    destination => $merge_op,
                     destination_property => 'use_header_from',
                 );
             } else {
                 $dag->create_link(
                     source => $snvs_dag,
                     source_property => $output_name,
-                    destination => $combine_op,
+                    destination => $merge_op,
                     destination_property => 'use_header_from',
                 );
             }
 
-            $combine_op->declare_constant(
-                label => sprintf('%s.%s.combined',
+            $merge_op->declare_constant(
+                label => sprintf('%s.%s.merged',
                     $self->combination_label, $report_name),
-                %{$report_class->combine_parameters},
+                %{$report_class->merge_parameters},
             );
             # this has to be done AFTER the constants are declared.
-            $dag->add_operation($combine_op);
+            $dag->add_operation($merge_op);
 
             $dag->connect_input(
                 input_property => 'process_id',
-                destination => $combine_op,
+                destination => $merge_op,
                 destination_property => 'process_id',
             );
 
             $dag->connect_output(
-                output_property => sprintf('combined_result (%s)', $report_name),
-                source => $combine_op,
+                output_property => sprintf('merged_result (%s)', $report_name),
+                source => $merge_op,
                 source_property => 'output_result',
             );
         }

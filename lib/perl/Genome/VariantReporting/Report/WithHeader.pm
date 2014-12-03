@@ -32,11 +32,11 @@ class Genome::VariantReporting::Report::WithHeader {
     ],
 };
 
-sub can_be_combined {
+sub can_be_merged {
     return 1;
 }
 
-sub combine_parameters {
+sub merge_parameters {
     return {
         sort_columns => [qw(chromosome_name start stop reference variant)],
         contains_header => 1,
