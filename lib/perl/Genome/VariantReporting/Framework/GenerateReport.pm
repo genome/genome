@@ -31,6 +31,10 @@ class Genome::VariantReporting::Framework::GenerateReport {
         process_id => {
             is => 'Text',
         },
+        reporter_name => {
+            is => 'Text',
+            doc => 'The name of the reporter to use',
+        },
     ],
     has_param => [
         lsf_resource => {
@@ -40,7 +44,15 @@ class Genome::VariantReporting::Framework::GenerateReport {
 };
 
 sub result_class {
-    return 'Genome::VariantReporting::Framework::ReportResult';
+    my $self = shift;
+    return $self->reporter_plan->get_class();
+}
+
+sub reporter_plan {
+    my $self = shift;
+
+    my $master_plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_json($self->plan_json);
+    my $plan = $master_plan->get_plan('reporter', $self->reporter_name);
 }
 
 sub input_hash {
@@ -52,6 +64,7 @@ sub input_hash {
         plan_json_lookup => md5_hex($self->plan_json),
         variant_type => $self->variant_type,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
+        $self->reporter_plan->params_for_create,
     );
 }
 

@@ -3770,6 +3770,27 @@ $Genome::Command::OPTS_SPEC = [
     [
       '>copy-files',
       [
+        'file-type=s',
+        [
+          'oriented_fasta',
+          'oriented_qual',
+          'chimera_free_fasta',
+          'chimera_free_qual',
+          'processed_fasta',
+          'processed_qual',
+          'classification',
+          'chimera_free_classification'
+        ],
+        'models=s@',
+        undef,
+        'builds=s@',
+        undef,
+        'destination=s',
+        'files',
+        'force!',
+        undef,
+        'list!',
+        undef,
         'help!',
         undef
       ],

@@ -6,11 +6,6 @@ use Genome;
 
 class Genome::VariantReporting::Framework::Component::Reporter::SingleFile {
     is => 'Genome::VariantReporting::Framework::Component::Reporter',
-    has => [
-        file_name => {
-            doc => 'file name to use for report',
-        },
-    ],
     has_transient_optional => [
         _output_fh => {
             is_structural => 1,
@@ -18,13 +13,16 @@ class Genome::VariantReporting::Framework::Component::Reporter::SingleFile {
     ],
 };
 
+sub file_name {
+    return 'report.txt';
+}
+
 sub initialize {
     my $self = shift;
     $self->SUPER::initialize(@_);
 
-    my $output_dir = shift;
-    Genome::Sys->create_directory($output_dir);
-    my $fh = Genome::Sys->open_file_for_writing(File::Spec->join($output_dir, $self->file_name));
+    my $fh = Genome::Sys->open_file_for_writing(
+        File::Spec->join($self->temp_staging_directory, $self->file_name));
     $self->_output_fh($fh);
     return;
 }

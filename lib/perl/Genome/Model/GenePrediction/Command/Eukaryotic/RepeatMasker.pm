@@ -287,6 +287,11 @@ sub _move_files_from_working_directory {
         my @missing = sort keys %suffix_to_property_mapping;
         $self->warning_message("Found no output files in working directory $working_dir " .
             "with suffixes: " . join(" ", @missing));
+        if(exists($suffix_to_property_mapping{masked})) {
+            $self->debug_message("Repeatmasker completed successfully but didn't produce output.");
+            $self->debug_message("Assuming that we didn't identify any repetitive sequence and copying input fasta forwards as masked fasta");
+            return $self->_copy_input_fasta_as_masked_output;
+        }
     }
 
     return 1;
@@ -433,13 +438,19 @@ sub _set_excluded_sequence_file_location {
     return 1;
 }
 
-sub _prepare_for_skip {
+sub _copy_input_fasta_as_masked_output {
     my $self = shift;
-    $self->debug_message("skip_masking flag is set, copying input fasta to masked fasta location");
     my $rv = Genome::Sys->copy_file($self->fasta_file, $self->masked_fasta);
     confess "Trouble executing copy of " . $self->fasta_file . " to " . $self->masked_fasta unless defined $rv and $rv;
     $self->debug_message("Copy of input fasta at " . $self->fasta_file . " to masked fasta path at " .
-        $self->masked_fasta . " successful, exiting!");
+        $self->masked_fasta . " successful!");
+    return 1;
+}
+
+sub _prepare_for_skip {
+    my $self = shift;
+    $self->debug_message("skip_masking flag is set, copying input fasta to masked fasta location");
+    $self->debug_message("Successfully skipped running Repeatmasker") if $self->_copy_input_fasta_as_masked_output;
     return 1;
 }
 

@@ -54,5 +54,3 @@ reporters:
         interpreters:
             position: {}
             vep: {}
-        params:
-            file_name: 'annotation'

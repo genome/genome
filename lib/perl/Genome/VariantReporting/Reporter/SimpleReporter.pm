@@ -6,8 +6,6 @@ use Genome;
 
 class Genome::VariantReporting::Reporter::SimpleReporter {
     is => 'Genome::VariantReporting::Reporter::WithHeader',
-    has => [
-    ],
     doc => 'Output basic variant information, including transcript annotation from vep.'
 };
 

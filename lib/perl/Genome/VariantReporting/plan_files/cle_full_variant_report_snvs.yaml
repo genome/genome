@@ -76,7 +76,6 @@ reporters:
                     - followup_tumor
                     - normal
         params:
-            file_name: 'cle_full_report'
             sample_names:
                 - discovery_tumor
                 - followup_tumor
@@ -107,8 +106,6 @@ reporters:
             position: {}
             vep: {}
             'variant-type': {}
-        params:
-            file_name: 'cle_simple_report'
     'vcf':
         filters: {}
         interpreters:
@@ -131,5 +128,3 @@ reporters:
                 min_hom_vaf: 85
                 max_hom_vaf: 100
                 sample_name: discovery_tumor
-        params:
-            file_name: 'cle_vcf_report'

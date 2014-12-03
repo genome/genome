@@ -8,8 +8,6 @@ use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(many
 
 class Genome::VariantReporting::Reporter::DocmReporter {
     is => [ 'Genome::VariantReporting::Reporter::WithHeader', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
-    has => [
-    ],
     doc => 'Output readcount information from bam readcount',
 };
 

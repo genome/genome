@@ -1,0 +1,5 @@
+reporters:
+    'annotation-format':
+        interpreters:
+            position: {}
+            vep: {}

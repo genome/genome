@@ -1,5 +1,0 @@
-##fileformat=VCFv4.1
-##INFO=<ID=ALLFILTERSPASS,Number=A,Type=Integer,Description="Flags whether the alternate allele passed all the soft filters: FTPASS, CONTAINS_TAG_ON_TARGET">
-##FILTER=<ID=FTPASS,Description="FT value for sample S1 is one of [PASS]">
-##FILTER=<ID=CONTAINS_TAG_ON_TARGET,Description="INFO field for entry contains tag ON_TARGET">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S2	S3	S4	S5

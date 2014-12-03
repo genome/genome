@@ -1,16 +1,32 @@
 <?xml version="1.0"?>
 <operation name="Variant Reporting (snvs)">
   <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>Generate Report (reporter_alpha).label</inputproperty>
+    <inputproperty>Generate Report (reporter_alpha).reporter_name</inputproperty>
+    <inputproperty>Generate Report (reporter_beta).label</inputproperty>
+    <inputproperty>Generate Report (reporter_beta).reporter_name</inputproperty>
     <inputproperty>input_vcf</inputproperty>
     <inputproperty>plan_json</inputproperty>
     <inputproperty>process_id</inputproperty>
     <inputproperty>variant_type</inputproperty>
-    <outputproperty>output_result</outputproperty>
+    <outputproperty>output_result (reporter_alpha)</outputproperty>
+    <outputproperty>output_result (reporter_beta)</outputproperty>
   </operationtype>
-  <operation name="Generate Reports">
+  <operation name="Generate Report (reporter_alpha)">
     <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
       <inputproperty>input_vcf</inputproperty>
       <inputproperty>plan_json</inputproperty>
+      <inputproperty>reporter_name</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>output_result</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="Generate Report (reporter_beta)">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
+      <inputproperty>input_vcf</inputproperty>
+      <inputproperty>plan_json</inputproperty>
+      <inputproperty>reporter_name</inputproperty>
       <inputproperty>variant_type</inputproperty>
       <outputproperty>output_result</outputproperty>
       <outputproperty>result</outputproperty>
@@ -92,12 +108,21 @@
     <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run expert_two" toProperty="input_vcf"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Run expert_two" toProperty="process_id"/>
   </operation>
-  <link fromOperation="Generate Reports" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
+  <link fromOperation="Generate Report (reporter_alpha)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (reporter_alpha)"/>
+  <link fromOperation="Generate Report (reporter_beta)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (reporter_beta)"/>
   <link fromOperation="expert_one" fromProperty="output_vcf" toOperation="expert_two" toProperty="input_vcf"/>
-  <link fromOperation="expert_two" fromProperty="output_vcf" toOperation="Generate Reports" toProperty="input_vcf"/>
-  <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Reports" toProperty="plan_json"/>
-  <link fromOperation="input connector" fromProperty="process_id" toOperation="Generate Reports" toProperty="process_id"/>
-  <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Reports" toProperty="variant_type"/>
+  <link fromOperation="expert_two" fromProperty="output_vcf" toOperation="Generate Report (reporter_alpha)" toProperty="input_vcf"/>
+  <link fromOperation="expert_two" fromProperty="output_vcf" toOperation="Generate Report (reporter_beta)" toProperty="input_vcf"/>
+  <link fromOperation="input connector" fromProperty="Generate Report (reporter_alpha).label" toOperation="Generate Report (reporter_alpha)" toProperty="label"/>
+  <link fromOperation="input connector" fromProperty="Generate Report (reporter_alpha).reporter_name" toOperation="Generate Report (reporter_alpha)" toProperty="reporter_name"/>
+  <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (reporter_alpha)" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="Generate Report (reporter_alpha)" toProperty="process_id"/>
+  <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Report (reporter_alpha)" toProperty="variant_type"/>
+  <link fromOperation="input connector" fromProperty="Generate Report (reporter_beta).label" toOperation="Generate Report (reporter_beta)" toProperty="label"/>
+  <link fromOperation="input connector" fromProperty="Generate Report (reporter_beta).reporter_name" toOperation="Generate Report (reporter_beta)" toProperty="reporter_name"/>
+  <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (reporter_beta)" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="Generate Report (reporter_beta)" toProperty="process_id"/>
+  <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Report (reporter_beta)" toProperty="variant_type"/>
   <link fromOperation="input connector" fromProperty="input_vcf" toOperation="expert_one" toProperty="input_vcf"/>
   <link fromOperation="input connector" fromProperty="plan_json" toOperation="expert_one" toProperty="plan_json"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="expert_one" toProperty="process_id"/>

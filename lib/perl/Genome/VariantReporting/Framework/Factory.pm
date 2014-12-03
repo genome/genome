@@ -81,7 +81,7 @@ sub get_dummy_object {
     my ($self, $accessor, $name) = validate_pos(@_, 1, 1, 1);
     my $pkg = $self->get_class($accessor, $name);
     my $params = $pkg->_get_dummy_params;
-    return $self->get_object($accessor, $name, $params);
+    return $pkg->__define__(%$params);
 }
 
 sub get_class {

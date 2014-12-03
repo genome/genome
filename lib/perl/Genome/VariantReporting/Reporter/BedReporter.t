@@ -10,8 +10,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-use Genome::Utility::Test qw(compare_ok);
-use Sub::Override;
+use Genome::VariantReporting::Reporter::TestHelper qw(test_report_result);
 
 my $pkg = 'Genome::VariantReporting::Reporter::BedReporter';
 use_ok($pkg);
@@ -21,16 +20,7 @@ isa_ok($factory->get_class('reporters', $pkg->name), $pkg);
 
 my $data_dir = __FILE__.".d";
 
-my $reporter = $pkg->create(file_name => 'bed', generate_legend_file => 0);
-ok($reporter, "Reporter created successfully");
-
-my $bed_interpreter = Genome::VariantReporting::Generic::BedEntryInterpreter->create();
-$reporter->add_interpreter_object($bed_interpreter);
-
-my $output_dir = Genome::Sys->create_temp_directory();
-$reporter->initialize($output_dir);
-
-my %interpretations = (
+my $interpretations = {
     'bed-entry' => {
         T => {
             chromosome_name => 1,
@@ -43,11 +33,12 @@ my %interpretations = (
             stop => 1,
         },
     },
+};
+
+test_report_result(
+    data_dir => $data_dir,
+    pkg => $pkg,
+    interpretations => $interpretations,
 );
-
-$reporter->report(\%interpretations);
-$reporter->finalize();
-
-compare_ok(File::Spec->join($output_dir, 'bed'), File::Spec->join($data_dir, "expected.out"), "Output as expected");
 
 done_testing;

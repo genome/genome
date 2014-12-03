@@ -57,7 +57,6 @@ reporters:
                     - discovery_tumor
                     - normal
         params:
-            file_name: 'gold_somatic_report_full.tsv'
             sample_names:
                 - discovery_tumor
                 - normal
@@ -71,13 +70,9 @@ reporters:
             position: {}
             vep: {}
             'variant-type': {}
-        params:
-            file_name: 'gold_somatic_report_simple.tsv'
     'vcf':
         filters: {}
         interpreters:
             'vcf-entry': {}
             'contains-tag':
                 info_tag: ON_TARGET
-        params:
-            file_name: 'gold_somatic_report.vcf'

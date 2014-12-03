@@ -36,10 +36,11 @@ sub create_from_hashref {
     my $name = shift;
     my $hashref = shift;
 
-    my $self = $class->SUPER::create(
-        name => $name,
-        params => $hashref->{params},
-    );
+    my %params_for_create = (name => $name);
+    if (exists $hashref->{params}) {
+        $params_for_create{params} = $hashref->{params};
+    }
+    my $self = $class->SUPER::create(%params_for_create);
 
     my @filter_plans;
     while (my ($name, $params) = each %{$hashref->{filters}}) {
@@ -122,19 +123,20 @@ sub requires_annotations {
     return $needed->members;
 }
 
+sub params_for_create {
+    my $self = shift;
+
+    return (
+        %{$self->params},
+        filters => {map {$_->name, $_->object} $self->filter_plans},
+        interpreters => {map {$_->name, $_->object} $self->interpreter_plans},
+    );
+}
+
 sub object {
     my $self = shift;
 
-    my $reporter = $self->SUPER::object(@_);
-
-    for my $filter_plan ($self->filter_plans) {
-        $reporter->add_filter_object($filter_plan->object(@_));
-    }
-    for my $interpreter_plan ($self->interpreter_plans) {
-        $reporter->add_interpreter_object($interpreter_plan->object(@_));
-    }
-
-    return $reporter;
+    return $self->get_class->__define__($self->params_for_create);
 }
 Memoize::memoize("object", LIST_CACHE => 'MERGE');
 
