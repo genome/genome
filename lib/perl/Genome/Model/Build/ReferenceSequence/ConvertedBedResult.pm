@@ -44,8 +44,8 @@ sub _generate_result {
     my $bed_md5 = Genome::Sys->md5sum($self->source_bed);
     unless($bed_md5 eq $self->source_md5) {
         die $self->error_message(
-            'Source BED failed MD5 check. Expected %s, got %s.',
-            $self->source_md5sum, $bed_md5,
+            'Source BED <%s> failed MD5 check. Expected %s, got %s.',
+            $self->source_bed, $self->source_md5sum, $bed_md5,
         );
     }
 
