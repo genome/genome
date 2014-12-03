@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Session genome="b37" locus="1:1-100" version="3">
+    <Resources>
+     <Resource path="/bed/path" relativePath="false"/>
+     <Resource path="/fake/path1" relativePath="false"/>
+     <Resource path="/fake/path2" relativePath="false"/>
+    </Resources>
+   <Panel height="1000" name="Panel0" width="1901">
+        <Track color="200,200,200" expand="false" fontSize="9" height="40" id="/fake/path1_coverage" name="label1 Coverage" showDataRange="true" visible="true">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track expand="true" fontSize="9" height="1000" id="/fake/path1" name="label1" showDataRange="true" visible="true">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+   </Panel>
+   <Panel height="1000" name="Panel1" width="1901">
+        <Track color="200,200,200" expand="false" fontSize="9" height="40" id="/fake/path2_coverage" name="label2 Coverage" showDataRange="true" visible="true">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track expand="true" fontSize="9" height="1000" id="/fake/path2" name="label2" showDataRange="true" visible="true">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+   </Panel>
+    <Panel height="60" name="FeaturePanel" width="1901">
+        <Track color="0,0,0" expand="false" fontSize="9" height="14" id="Reference" name="Reference" showDataRange="true" visible="true">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track color="0,0,178" expand="true" featureVisibilityWindow="-1" fontSize="9" height="45" id="/bed/path" name="/bed/path" renderer="BASIC_FEATURE" showDataRange="true" visible="true" windowFunction="count">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+    </Panel>
+</Session>
