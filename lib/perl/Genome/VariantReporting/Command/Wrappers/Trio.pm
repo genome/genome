@@ -289,10 +289,10 @@ sub _add_operation_to_workflow {
 sub run_summary_stats {
     my $self = shift;
     if ($self->coverage_models) {
-        Genome::Model::SomaticValidation::Command::AlignmentStatsSummary->execute(
+        Genome::Model::SomaticValidation::Command::RunAlignmentStatsSummary->execute(
             models => [$self->coverage_models],
         );
-        Genome::Model::SomaticValidation::Command::CoverageStatsSummary->execute(
+        Genome::Model::SomaticValidation::Command::RunCoverageStatsSummary->execute(
             models => [$self->coverage_models],
         );
     }

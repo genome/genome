@@ -6,18 +6,11 @@ use warnings;
 use Genome;
 
 class Genome::Model::SomaticValidation::Command::CoverageStatsSummary {
-    is => 'Command::V2',
-    doc => 'Generate a spreadsheet, tsv file, of coverage metrics for Somatic Validation builds.  Duplicate normal samples will only be reported once.',
-    has => [
-        output_tsv_file => {
-            is => 'String',
-            doc => 'The output tsv file path to report coverage metrics to',
-        },
+    is => 'Genome::SoftwareResult::StageableSimple',
+    has_input => [
         builds => {
             is => 'Genome::Model::Build::SomaticValidation',
             is_many => 1,
-            shell_args_position => 1,
-            doc => 'The Somatic Validation builds or an expression to resolve the Somatic Validation builds.',
         },
     ],
     has_optional => [
@@ -27,11 +20,20 @@ class Genome::Model::SomaticValidation::Command::CoverageStatsSummary {
     ],
 };
 
-sub help_detail {
-    return "Summarize the coverage stats for all listed somatic validation builds.  One line will be output in the tsv file for each sample, region of interest, wingspan and minimum depth filter."
+sub output_tsv_file_name {
+    return "coverage_stats.tsv";
 }
 
-sub execute {
+sub output_tsv_file_path {
+    my $self = shift;
+    return File::Spec->join($self->output_dir, $self->output_tsv_file_name);
+}
+
+sub _temp_file_path {
+    my $self = shift;
+    return File::Spec->join($self->temp_staging_directory, $self->output_tsv_file_name);
+}
+sub _run {
     my $self = shift;
 
     $self->_load_writer;
@@ -76,13 +78,10 @@ sub _load_writer {
     my @headers = ('subject_name','region_of_interest_set_name','wingspan',@{$stats_summary_headers} );
 
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
-        output => $self->output_tsv_file,
+        output => $self->_temp_file_path,
         separator => "\t",
         headers => \@headers,
     );
-    unless ($writer) {
-        die('Failed to open output tsv file path: '. $self->output_tsv_file);
-    }
     $self->_writer($writer);
     return 1;
 }

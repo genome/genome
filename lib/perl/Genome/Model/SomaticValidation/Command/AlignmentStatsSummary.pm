@@ -6,42 +6,44 @@ use warnings;
 use Genome;
 
 class Genome::Model::SomaticValidation::Command::AlignmentStatsSummary {
-    is => 'Command::V2',
+    is => 'Genome::SoftwareResult::StageableSimple',
     doc => 'Generate a spreadsheet, tsv file, of alignment metrics for Somatic Validation models.  Duplicate samples using the same processing profile will only be reported once.',
-    has => [
-        output_tsv_file => {
-            is => 'String',
-            doc => 'The output tsv file path to report coverage metrics to',
-        },
+    has_input => [
         builds => {
             is => 'Genome::Model::Build::SomaticValidation',
             is_many => 1,
-            shell_args_position => 1,
-            doc => 'The Somatic Validation builds or an expression to resolve the Somatic Validation builds.',
+        },
+    ],
+    has_param => [
+        haploid_coverage => {
+            is => 'Boolean',
+        },
+        targeted_insert_length => {
+            is => 'Boolean',
         },
     ],
     has_optional => [
         _writer => {
             is => 'Genome::Utility::IO::SeparatedValueWriter',
         },
-        haploid_coverage => {
-            is => 'Boolean',
-            doc => 'Execute bam-check to calculate the haploid coverage. This can take a LONG time!',
-            default_value => 0,
-        },
-        targeted_insert_length => {
-            is => 'Boolean',
-            doc => 'Add the targeted insert length for each sequence item.',
-            default_value => 0,
-        },
     ],
 };
 
-sub help_detail {
-    return "Summarize the alignment stats for all listed somatic validation builds.  One line will be output in the tsv file for each sample."
+sub output_tsv_file_name {
+    return "alignment_stats.tsv";
 }
 
-sub execute {
+sub output_tsv_file_path {
+    my $self = shift;
+    return File::Spec->join($self->output_dir, $self->output_tsv_file_name);
+}
+
+sub _temp_file_path {
+    my $self = shift;
+    return File::Spec->join($self->temp_staging_directory, $self->output_tsv_file_name);
+}
+
+sub _run {
     my $self = shift;
 
     $self->_load_writer;
@@ -105,13 +107,10 @@ sub _load_writer {
         push @headers, 'Targeted Insert Length';
     }
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
-        output => $self->output_tsv_file,
+        output => $self->_temp_file_path,
         separator => "\t",
         headers => \@headers,
     );
-    unless ($writer) {
-        die('Failed to open output tsv file path: '. $self->output_tsv_file);
-    }
     $self->_writer($writer);
     return 1;
 }
