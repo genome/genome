@@ -12,7 +12,7 @@ use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
 
-my $pkg = 'Genome::VariantReporting::Command::MergeReports';
+my $pkg = 'Genome::VariantReporting::Framework::MergeReports';
 use_ok($pkg) or die;
 my $data_dir = __FILE__.".d";
 

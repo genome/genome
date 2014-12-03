@@ -51,7 +51,7 @@
     </operationtype>
   </operation>
   <operation name="Merge Reports (bed)">
-    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Command::MergeReports">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Framework::MergeReports">
       <inputproperty>contains_header</inputproperty>
       <inputproperty>report_results</inputproperty>
       <outputproperty>output_result</outputproperty>
@@ -59,7 +59,7 @@
     </operationtype>
   </operation>
   <operation name="Merge Reports (simple)">
-    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Command::MergeReports">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Framework::MergeReports">
       <inputproperty>contains_header</inputproperty>
       <inputproperty>report_results</inputproperty>
       <outputproperty>output_result</outputproperty>

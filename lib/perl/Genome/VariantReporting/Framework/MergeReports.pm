@@ -1,13 +1,13 @@
-package Genome::VariantReporting::Command::MergeReports;
+package Genome::VariantReporting::Framework::MergeReports;
 
 use strict;
 use warnings;
 use Genome;
-use Genome::VariantReporting::Command::MergedReport;
+use Genome::VariantReporting::Framework::MergedReport;
 
-my $REPORT_PKG = $Genome::VariantReporting::Command::MergedReport::REPORT_PKG;
+my $REPORT_PKG = $Genome::VariantReporting::Framework::MergedReport::REPORT_PKG;
 
-class Genome::VariantReporting::Command::MergeReports {
+class Genome::VariantReporting::Framework::MergeReports {
     is => 'Genome::Command::DelegatesToResult',
     has_input => [
         report_results => {
@@ -60,7 +60,7 @@ class Genome::VariantReporting::Command::MergeReports {
 };
 
 sub result_class {
-    return "Genome::VariantReporting::Command::MergedReport";
+    return "Genome::VariantReporting::Framework::MergedReport";
 }
 
 sub input_hash {

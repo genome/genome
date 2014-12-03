@@ -144,7 +144,7 @@ sub connect_merge_operations {
 
             my $merge_op = Genome::WorkflowBuilder::Command->create(
                 name => sprintf('Merge Reports (%s)', $report_name),
-                command => 'Genome::VariantReporting::Command::MergeReports',
+                command => 'Genome::VariantReporting::Framework::MergeReports',
             );
 
             my $converge = Genome::WorkflowBuilder::Converge->create(
