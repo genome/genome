@@ -712,5 +712,69 @@ sub is_downsample_ratio_invalid {
 }
 #<>#
 
+#< InstData Metrics >#
+sub update_bam_metrics_for_instrument_data {
+    my ($self, $instrument_data) = @_;
+
+    Carp::confess('No instrument data given to update bam for instrument data!') if not $instrument_data;
+
+    my $bam_path = $instrument_data->bam_path;
+    Carp::confess('No bam path set to update bam for instrument data!') if not $bam_path;
+    Carp::confess('Bam path to update bam for instrument data does not exist!') if not -s $bam_path;
+
+    my $flagstat_path = $bam_path.'.flagstat';
+    my $flagstat = $self->load_flagstat_for_bam_path($bam_path);
+    return if not $flagstat;
+
+    my $read_length = $self->determine_read_length_in_bam($bam_path);
+    return if not defined $read_length;
+
+    my %metrics = (
+        bam_path => $bam_path,
+        is_paired_end => $flagstat->{is_paired_end},
+        read_count => $flagstat->{total_reads},
+        read_length => $read_length,
+        # TODO add these?
+        #base_count => $read_length * $read_count, # might be inaccurate if reads are not the same length
+        #fragment_count => $read_count * 2, # needed? add other fragment info?
+    );
+
+    for my $name ( keys %metrics ) {
+        eval{ $instrument_data->attributes(attribute_label => $name)->delete; }; # remove existing
+        $instrument_data->add_attribute(
+            attribute_label => $name,
+            attribute_value => $metrics{$name},
+            nomenclature => 'WUGC',
+        );
+    }
+
+    return 1;
+}
+
+sub determine_read_length_in_bam {
+    my ($self, $bam_path) = @_;
+
+    my $read_length = `samtools view $bam_path | head -n 1000 | awk '{print \$10}'  | xargs -I{} expr length {} | perl -mstrict -e 'my \$c = 0; my \$t = 0; while (<>) { chomp; \$c++; \$t += \$_; } printf("%d\\n", \$t/\$c);'`;
+    chomp $read_length;
+
+    if ( not $read_length ) {
+        $self->error_message('Failed to get read length from bam! '.$bam_path);
+        return;
+    }
+
+    if ( $read_length !~ /^\d+$/ ) {
+        $self->error_message("Non numeric read length ($read_length) from bam! ".$bam_path);
+        return;
+    }
+
+    if ( $read_length == 0 ) {
+        $self->error_message('Read length for bam is 0! '.$bam_path);
+        return;
+    }
+
+    return $read_length;
+}
+#<>#
+
 1;
 

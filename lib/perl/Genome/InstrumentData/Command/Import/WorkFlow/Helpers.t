@@ -230,4 +230,32 @@ $bam_path2 = File::Spec->join($data_dir2, '2883581797.singleton.bam');
 $is_paired_end = $helpers->is_bam_paired_end($bam_path2);
 is($is_paired_end, 0, "bam $bam_path2 is not paired end");
 
+# update bam
+my $instdata = Genome::InstrumentData::Imported->__define__(
+    id => -1111,
+);
+ok($instdata, '__define__ instdata');
+Sub::Install::reinstall_sub({
+        code => sub{ return $bam_path2; },
+        into => "Genome::InstrumentData::Imported",
+        as   => 'bam_path',
+    });
+$instdata->add_attribute( # test removal
+    attribute_label => 'read_length',
+    attribute_value => -1,
+    nomenclature => 'WUGC',
+);
+ok($ds_attr, '__define__ downsample attr for instdata 3');
+throws_ok(sub{ $helpers->update_bam_metrics_for_instrument_data(); }, qr/No instrument data given to update bam for instrument data!/, 'update_bam_metrics_for_instrument_data fails w/o instdata');
+ok($helpers->update_bam_metrics_for_instrument_data($instdata, $bam_path2), 'update_bam_metrics_for_instrument_data');
+my %expected_attrs = (
+    bam_path => $bam_path2,
+    read_count => 94,
+    read_length => 100,
+    is_paired_end => 0,
+);
+for my $attr (qw/ bam_path is_paired_end read_count read_length /) {
+    is($instdata->attributes(attribute_label => $attr)->attribute_value, $expected_attrs{$attr}, "$attr set")
+}
+
 done_testing();
