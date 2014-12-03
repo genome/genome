@@ -114,7 +114,7 @@ sub execute {
         return if not $move_ok;
 
         # Attrs
-        $self->helpers->update_bam_metrics_for_instrument_data($instrument_data, $final_bam_path);
+        $self->helpers->update_bam_metrics_for_instrument_data($instrument_data);
 
         # Analysis Project
         if ($self->analysis_project) {
