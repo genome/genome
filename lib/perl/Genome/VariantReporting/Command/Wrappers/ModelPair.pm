@@ -37,6 +37,28 @@ class Genome::VariantReporting::Command::Wrappers::ModelPair {
     },
 };
 
+sub dag {
+    my $self = shift;
+    my $cmd = Genome::VariantReporting::Command::CreateMergedReports->create(
+        $self->params_for_dag,
+    );
+    return $cmd->dag;
+}
+
+sub params_for_dag {
+    my $self = shift;
+    return (
+        combination_label => $self->label,
+        snvs_input_vcf => $self->input_vcf('snvs'),
+        snvs_plan_file => $self->plan_file('snvs'),
+        snvs_translations_file => $self->translations_file,
+        indels_input_vcf => $self->input_vcf('indels'),
+        indels_plan_file => $self->plan_file('indels'),
+        indels_translations_file => $self->translations_file,
+        use_header_from => 'snvs',
+    );
+}
+
 sub plan_file {
     my ($self, $type) = @_;
     my $base_name = $self->plan_file_basename;
