@@ -12,6 +12,7 @@ use above "Genome";
 use Test::More;
 use File::Slurp qw(read_file);
 use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build compare_directories);
+use Genome::Utility::Test qw(compare_ok);
 
 my $pkg = "Genome::VariantReporting::Command::Wrappers::ModelPair";
 
@@ -34,7 +35,10 @@ my $model_pair = $pkg->create(
     label => "test",
 );
 is($model_pair->class, $pkg, "Model pair created correctly");
-is(read_file($expected_xml), $model_pair->dag->get_xml, "dag for model pair was created correctly");
+my $xml = $model_pair->dag->get_xml;
+my $xml_file = Genome::Sys->create_temp_file_path;
+Genome::Sys->write_file($xml_file, $xml);
+compare_ok($expected_xml, $xml_file, "dag for model pair was created correctly");
 
 my $expected_params = {
     combination_label => "test",
