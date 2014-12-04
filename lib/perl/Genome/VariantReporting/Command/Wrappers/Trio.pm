@@ -13,6 +13,8 @@ my $DOCM = {
     indels_build => "1040bf09070c4176a5256fa8a075378f",
 };
 
+my $_JSON_CODEC = new JSON->allow_nonref;
+
 class Genome::VariantReporting::Command::Wrappers::Trio {
     is => 'Command::V2',
     has_input => [
@@ -89,7 +91,7 @@ sub add_igv_xml_to_workflow {
 
     #TODO: find the right way to get these
     my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
-    for my $roi_directory (@roi_directories) {
+    for my $roi_name (@roi_directories) {
 
         my $params = {
             bam_hash_json => $_JSON_CODEC->canonical->encode(\%bams),
@@ -109,7 +111,7 @@ sub add_igv_xml_to_workflow {
         );
 
         for my $bed_report_type (qw(discovery followup germline docm)) {
-            $self->link_bed_report_to_igv($bed_report_type, $roi);
+            $self->link_bed_report_to_igv($bed_report_type, $roi_name);
         }
     }
 }
@@ -124,12 +126,12 @@ sub add_merge_discovery_and_followup_reports_to_workflow {
 
     #TODO - find a better way of getting these
     my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
-    for my $roi_directory (@roi_directories) {
+    for my $roi_name (@roi_directories) {
         for my $base ($self->_trio_report_file_names) {
-            my $discovery_report = File::Spec->join($self->output_directory, "discovery", $roi_directory, $base);
-            my $additional_report = File::Spec->join($self->output_directory, "followup", $roi_directory, $base);
+            my $discovery_report = File::Spec->join($self->output_directory, "discovery", $roi_name, $base);
+            my $additional_report = File::Spec->join($self->output_directory, "followup", $roi_name, $base);
             my $merge_op = Genome::WorkflowBuilder::Command->new(
-                name => "Merge discovery and followup reports ($report_name)",
+                name => "Merge discovery and followup reports ($roi_name)",
                 command => "Genome::VariantReporting::Framework::MergeReports",
             );
             my $params = {
