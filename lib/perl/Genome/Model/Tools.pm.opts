@@ -13403,6 +13403,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'log-file=s',
       'files',
+      'max-discard-fraction=s',
+      undef,
       'max-records-in-ram=s',
       'files',
       'maximum-memory=s',
@@ -13417,6 +13419,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'sample-alias=s',
       'files',
+      'sanitize!',
+      undef,
       'sort-order=s',
       [
         'unsorted',
