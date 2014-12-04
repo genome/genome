@@ -8,6 +8,7 @@ use Genome;
 use File::Basename qw(dirname);
 use File::Spec;
 use Genome::File::Tsv;
+use YAML qw();
 
 class Genome::VariantReporting::Command::Wrappers::ModelPair {
     has => {
