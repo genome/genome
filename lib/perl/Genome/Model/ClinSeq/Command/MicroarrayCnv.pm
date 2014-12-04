@@ -155,9 +155,11 @@ sub get_copynumber_files {
             die $self->error_message("Unable to find copynumber file for " . $microarray_normal->name);
         }
     }
-    Genome::Sys->copy_file($copynumber_tumor, $self->outdir."/tumor.copynumber.original");
-    Genome::Sys->copy_file($copynumber_normal, $self->outdir."/normal.copynumber.original");
-    return ($copynumber_tumor, $copynumber_normal);
+    my $copynumber_tumor_copy = $self->outdir."/tumor.copynumber.original";
+    my $copynumber_normal_copy = $self->outdir."/normal.copynumber.original";
+    Genome::Sys->copy_file($copynumber_tumor, $copynumber_tumor_copy);
+    Genome::Sys->copy_file($copynumber_normal, $copynumber_normal_copy);
+    return ($copynumber_tumor_copy, $copynumber_normal_copy);
 }
 
 sub intersect_files {
@@ -174,17 +176,30 @@ sub intersect_files {
 
   my %f1;
   my %chr_pos1;
+  my $is_header = 1;
 
   while(<$f1_fh>) {
     my $line = $_;
+    if($is_header) {
+      $f1{"header"} = $line;
+      $is_header = 0;
+      next;
+    }
     my @fields = split("\t", $line);
     my $key = $fields[0] . ":" . $fields[1];
     $chr_pos1{$key} = 1;
     $f1{$key} = $line;
   }
 
+  $is_header = 1;
   while(<$f2_fh>) {
     my $line = $_;
+    if($is_header) {
+      print $f2_ofh $line;
+      print $f1_ofh $f1{"header"};
+      $is_header = 0;
+      next;
+    }
     my @fields = split("\t", $line);
     my $key = $fields[0] . ":" . $fields[1];
     if($chr_pos1{$key}) {
@@ -247,19 +262,9 @@ sub create_cnv_diff_hq_file {
     $diff_data->{pos} = $data_n->{position};
     $cnvhq_data->{POS} = $data_n->{position};
     #copynumber ~ 2^(log_r_ratio + 1)
-    my $cn_normal = $data_n->{cnv_value};
-    $cn_normal = sprintf("%.5f", $cn_normal);
-    my $cn_tumor = $data_t->{cnv_value};
-    $cn_tumor = sprintf("%.5f", $cn_tumor);
-    if( $cn_tumor == 0) {
-      $cn_tumor = 0.0001;
-    }
-    if( $cn_normal == 0) {
-      $cn_normal = 0.0001;
-    }
-    my $cnv_diff = $cn_tumor - $cn_normal;
-    my $cnv_ratio = log($cn_tumor/$cn_normal)/log(2);
-    $cnv_diff = sprintf("%.6f", $cnv_diff);
+    my $log_cn_normal = $data_n->{log_r_ratio};
+    my $log_cn_tumor = $data_t->{log_r_ratio};
+    my $cnv_ratio = $log_cn_tumor - $log_cn_normal;
     $cnvhq_data->{TUMOR} = 2.0**($data_t->{log_r_ratio} + 1.0);
     $cnvhq_data->{NORMAL} = 2.0**($data_n->{log_r_ratio} + 1.0);;
     $diff_data->{cnv_diff} = $cnv_ratio; #segment the ratio of LRR
