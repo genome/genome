@@ -28,10 +28,12 @@ class Genome::VariantReporting::Command::Wrappers::ModelPair {
             doc => "plan file name where 'snvs' or 'indels' is substituted by placeholder TYPE",
         },
     },
-    has_constant => {
+    has_transient => [
         translations_file => {
-            calculate => q( Genome::Sys->create_temp_file_path; ),
-        },
+            is => 'Path',
+        }
+    ],
+    has_constant => {
         sample_legend => {
             calculate => q( Genome::Sys->create_temp_file_path; ),
         }
@@ -86,7 +88,9 @@ sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
     $self->generate_sample_legend_file;
-    $self->generate_translations_file;
+
+    my $translations_file = $self->generate_translations_file;
+    $self->translations_file($translations_file);
     return $self;
 };
 
@@ -184,9 +188,10 @@ sub generate_translations_file {
     $translations->{dbsnp_vcf} = $self->discovery->previously_discovered_variations_build->snvs_vcf;
     $translations->{nhlbi_vcf} = _get_nhlbi_vcf(); 
 
-    YAML::DumpFile($self->translations_file, $translations);
+    my $temp_file = Genome::Sys->create_temp_file_path;
+    YAML::DumpFile($temp_file, $translations);
 
-    return 1;
+    return $temp_file;
 }
 
 sub reference_sequence_build {
