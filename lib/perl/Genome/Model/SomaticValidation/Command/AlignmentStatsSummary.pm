@@ -22,7 +22,7 @@ class Genome::Model::SomaticValidation::Command::AlignmentStatsSummary {
             is => 'Boolean',
         },
     ],
-    has_optional => [
+    has_transient_optional => [
         _writer => {
             is => 'Genome::Utility::IO::SeparatedValueWriter',
         },

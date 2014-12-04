@@ -13,7 +13,7 @@ class Genome::Model::SomaticValidation::Command::CoverageStatsSummary {
             is_many => 1,
         },
     ],
-    has_optional => [
+    has_transient_optional => [
         _writer => {
             is => 'Genome::Utility::IO::SeparatedValueWriter',
         }
