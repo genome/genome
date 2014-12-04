@@ -154,9 +154,8 @@ sub _get_heading_lines {
     my $ap = $self->analysis_project;
     return (
         ["ID", $ap->id, "Name", $ap->name],
-        ["Run as", $ap->run_as, "Model Group", $ap->_model_group_id],
-        ["Created", $ap->created_at, "Updated", $ap->updated_at],
-        ["Created by", $ap->created_by],
+        ["Run as", $ap->run_as, "Created", $ap->created_at,],
+        [ "Updated", $ap->updated_at, "Created by", $ap->created_by]
     );
 }
 
