@@ -77,11 +77,35 @@ sub get_object {
     return $pkg->create(%$params);
 }
 
+{
+    package Genome::VariantReporting::Framework::Factory::Dummy;
+
+    sub AUTOLOAD {
+        my $self = shift;
+
+        my $target_sub = our $AUTOLOAD;
+        $target_sub =~ s/.+:://;
+        if(exists( $self->{$target_sub} )) {
+            return $self->{$target_sub};
+        } else {
+            my $pkg = $self->{class};
+            my $sub = $pkg->can($target_sub);
+            die "Subroutine $target_sub not found on package $pkg" unless $sub;
+
+            $sub->($self, @_);
+        }
+    }
+}
+
 sub get_dummy_object {
     my ($self, $accessor, $name) = validate_pos(@_, 1, 1, 1);
     my $pkg = $self->get_class($accessor, $name);
     my $params = $pkg->_get_dummy_params;
-    return $pkg->__define__(%$params);
+
+    $params->{class} = $pkg;
+    bless $params, 'Genome::VariantReporting::Framework::Factory::Dummy';
+
+    return $params;
 }
 
 sub get_class {
