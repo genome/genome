@@ -68,7 +68,7 @@ sub execute {
     for my $model_pair (@model_pairs) {
         $self->add_reports_to_workflow($model_pair);
     }
-    $self->merge_discovery_and_followup_reports;
+    $self->add_merge_discovery_and_followup_reports_to_workflow;
     $self->add_igv_xml_to_workflow(\@model_pairs);
     $process->run(
         workflow_xml => $self->_workflow->get_xml
@@ -87,6 +87,7 @@ sub add_igv_xml_to_workflow {
         die $self->error_message("Found more than one reference sequence build:" . Data::Dumper::Dumper(@reference_sequence_builds));
     }
 
+    #TODO: find the right way to get these
     my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
     for my $roi_directory (@roi_directories) {
 
@@ -118,21 +119,25 @@ sub link_bed_report_to_igv {
     #TODO
 }
 
-sub merge_discovery_and_followup_reports {
+sub add_merge_discovery_and_followup_reports_to_workflow {
     my $self = shift;
 
+    #TODO - find a better way of getting these
     my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
     for my $roi_directory (@roi_directories) {
         for my $base ($self->_trio_report_file_names) {
             my $discovery_report = File::Spec->join($self->output_directory, "discovery", $roi_directory, $base);
             my $additional_report = File::Spec->join($self->output_directory, "followup", $roi_directory, $base);
-            Genome::VariantReporting::Command::MergeReports->execute(
+            my $merge_op = Genome::WorkflowBuilder::Command->new(
+                name => "Merge discovery and followup reports ($report_name)",
+                command => "Genome::VariantReporting::Framework::MergeReports",
+            );
+            my $params = {
                 reports => [$discovery_report, $additional_report],
                 sort_columns => [qw(chromosome_name start stop reference variant)],
                 contains_header => 1,
-                output_file => File::Spec->join($self->output_directory, "$base-$roi_directory"),
                 entry_sources =>  {$discovery_report => $self->tumor_sample->name, $additional_report => $self->followup_sample->name},
-            );
+            };
         }
     }
     return 1;
