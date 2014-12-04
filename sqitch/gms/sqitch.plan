@@ -345,3 +345,5 @@ process_status_event_permissions [process_status_event] 2014-11-12T01:52:40Z Dav
 
 process_input [process_process] 2014-11-12T02:18:57Z David Morton <dmorton@genome.wustl.edu> # Add process.input table
 @1416002215 2014-11-14T21:56:56Z David Morton <dmorton@genome.wustl.edu> # Add process.input table
+
+make_model_group_id_nullable [config_analysis_project] 2014-12-03T19:07:30Z Adam Coffman <acoffman@genome.wustl.edu> # make this column nullable to prepare for its removal
