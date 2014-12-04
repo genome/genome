@@ -249,12 +249,5 @@ sub add_summary_stats_to_dag {
     }
 }
 
-{
-    my $counter = 0;
-    sub _workflow_counter {
-        return $counter++;
-    }
-}
-
 1;
 
