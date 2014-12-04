@@ -84,13 +84,13 @@ sub execute {
         my $patient_id = $self->resolve_patient_id($somatic_build);
         my $patient_id_counter = ++$patient_ids{$patient_id};
         
-        my $snvs_vcf = $self->construct_vcf_name("snv", $patient_id, $patient_id_counter);
-        my $indels_vcf = $self->construct_vcf_name("indel", $patient_id, $patient_id_counter);
+        my $snvs_vcf = $self->construct_vcf_name("snv", $patient_id, $patient_id_counter, $somatic_build->id);
+        my $indels_vcf = $self->construct_vcf_name("indel", $patient_id, $patient_id_counter, $somatic_build->id);
 
         for my $variant_type (qw(snv indel)) {
             my $local_file = $somatic_build->data_directory."/variants/".$variant_type."s_tcga/".$variant_type."s_tcga.vcf";
             die "Tcga compliant $variant_type vcf not found for build ".$somatic_build->id unless(-s $local_file);
-            my $tcga_vcf_file = "$vcf_archive_dir/".$self->construct_vcf_name($variant_type, $patient_id, $patient_id_counter);
+            my $tcga_vcf_file = "$vcf_archive_dir/".$self->construct_vcf_name($variant_type, $patient_id, $patient_id_counter, $somatic_build->id);
 
             #Some snv vcf lines have null ALT column as '.', it should be 'N' to pass the validator
             if ($variant_type eq 'indel') {
@@ -161,11 +161,8 @@ sub complete_archive_name {
 }
 
 sub construct_vcf_name {
-    my $self = shift;
-    my $variant_type = shift;
-    my $patient_id = shift;
-    my $patient_id_counter = shift;
-    my $snvs_vcf = "genome.wustl.edu.$patient_id.$variant_type.".$patient_id_counter.".vcf";
+    my ($self, $variant_type, $patient_id, $patient_id_counter, $build_id) = @_;
+    return "genome.wustl.edu.$patient_id.$variant_type.".$patient_id_counter.".vcf";
 }
 
 sub print_manifest {
