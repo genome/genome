@@ -133,10 +133,35 @@ sub params_for_create {
     );
 }
 
+{
+    package Genome::VariantReporting::Framework::Plan::PlannedResult;
+
+    sub AUTOLOAD {
+        my $self = shift;
+
+        my $target_sub = our $AUTOLOAD;
+        $target_sub =~ s/.+:://;
+        if(exists( $self->{$target_sub} )) {
+            return $self->{$target_sub};
+        } elsif($target_sub eq 'id') {
+            return '-1';
+        } else {
+            my $pkg = $self->{class};
+            my $sub = $pkg->can($target_sub);
+            die "Subroutine $target_sub not found on package $pkg" unless $sub;
+
+            $sub->($self, @_);
+        }
+    }
+}
+
 sub object {
     my $self = shift;
 
-    return $self->get_class->__define__($self->params_for_create);
+    my $params = { $self->params_for_create, class => $self->get_class };
+    bless $params, 'Genome::VariantReporting::Framework::Plan::PlannedResult';
+
+    return $params;
 }
 Memoize::memoize("object", LIST_CACHE => 'MERGE');
 
