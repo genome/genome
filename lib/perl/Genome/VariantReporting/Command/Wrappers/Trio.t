@@ -10,7 +10,7 @@ use strict;
 use warnings;
 
 use above "Genome";
-use Test::More skip_all => 'disabled until Genome::Process integration is completed';
+use Test::More;
 use Sub::Install qw(reinstall_sub);
 use File::Basename qw(basename);
 use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build succeed_build compare_directories);
@@ -60,6 +60,7 @@ my $cmd = $pkg->create(
     normal_sample => $normal_sample1,
 );
 
+=cut
 my $xml = $cmd->dag->get_xml;
 my $xml_file = Genome::Sys->create_temp_file_path;
 Genome::Sys->write_file($xml_file, $xml);
@@ -68,7 +69,6 @@ compare_ok($expected_xml, $xml_file, "dag for trio was created correctly");
 my $expected_params = {
 };
 #is_deeply($expected_params, $cmd->params_for_execute, "params were created correctly");
-=cut
 ok($cmd->execute);
 compare_directories($test_dir, $output_dir);
 =cut
