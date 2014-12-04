@@ -155,13 +155,7 @@ sub _find_combined_reference {
     my $class = shift;
     my @references = @_;
 
-    my @reference_ids = sort map $_->id, @references;
-
-    my @combined_reference_inputs = Genome::Model::Build::Input->get(name => 'combines', value_id => \@reference_ids);
-    my @combined_references = Genome::Model::Build->get([map $_->build_id, @combined_reference_inputs]);
-
-    #filter to only those that combine exactly all our references
-    my @exact_combined_references = grep { \@reference_ids ~~ [sort(map $_->id, $_->combines)] } @combined_references;
+    my @exact_combined_references = Genome::Model::Build::ReferenceSequence->combined_references(@references);
 
     if (scalar(@exact_combined_references) > 1) {
         $class->_die_with_multiple_candidate_references(

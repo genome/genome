@@ -911,4 +911,19 @@ sub get_feature_list {
     }
 }
 
+sub combined_references {
+    my $class = shift;
+    my @references = @_;
+
+    my $reference_set = Set::Scalar->new(map $_->id, @references);
+
+    my @combined_reference_inputs = Genome::Model::Build::Input->get(name => 'combines', value_id => [$reference_set->members]);
+    my @combined_references = Genome::Model::Build->get([map $_->build_id, @combined_reference_inputs]);
+
+    #filter to only those that combine exactly all our references
+    my @exact_combined_references = grep { $reference_set == Set::Scalar->new(map $_->id, $_->combines) } @combined_references;
+
+    return @exact_combined_references;
+}
+
 1;
