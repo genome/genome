@@ -54,22 +54,30 @@ class Genome::VariantReporting::Command::Wrappers::Trio {
     ],
 };
 
+sub process_class {
+    return "Genome::VariantReporting::Process::Trio";
+}
+
 sub execute {
     my $self = shift;
+
+    my $process = $self->process_class->create();
     $self->initialize_dag;
-    $self->run_summary_stats;
+    $self->add_summary_stats_to_dag;
     my @model_pairs = $self->get_model_pairs;
     for my $model_pair (@model_pairs) {
         $self->add_reports_to_workflow($model_pair);
     }
-    File::Slurp::write_file(File::Spec->join($self->output_directory, "workflow.xml"), $self->_workflow->get_xml);
-    $self->_workflow->execute(%{$self->_workflow_inputs});
     $self->merge_discovery_and_followup_reports;
-    $self->create_igv_xml(\@model_pairs);
+    $self->add_igv_xml_to_workflow(\@model_pairs);
+    $process->run(
+        workflow_xml => $self->_workflow->get_xml
+        workflow_inputs => $self->_workflow_inputs,
+    );
     return 1;
 }
 
-sub create_igv_xml {
+sub add_igv_xml_to_workflow {
     my $self = shift;
     my $model_pairs = shift;
 
@@ -81,28 +89,33 @@ sub create_igv_xml {
 
     my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
     for my $roi_directory (@roi_directories) {
-        my $discovery_bed = File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $self->output_directory, 'discovery', $roi_directory, 'trio_report.bed');
-        my $additional_bed = File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $self->output_directory, 'followup', $roi_directory, 'trio_report.bed');
-        my $germline_bed = File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $self->output_directory, 'germline', $roi_directory, 'germline_report.bed');
-        my $docm_bed = File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $self->output_directory, 'docm', $roi_directory, 'cle_docm_report.bed');
 
-        my $reference_sequence_name_cmd = Genome::Model::Tools::Analysis::ResolveIgvReferenceName->execute(
+        my $params = {
+            bam_hash_json => $_JSON_CODEC->canonical->encode(\%bams),
+            genome_name => $self->tumor_sample->name,
             reference_name => $reference_sequence_builds[0]->name,
+        };
+
+        my $igv_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Create IGV session',
+            command => 'Genome::VariantReporting::Command::Wrappers::CreateIGVSession'
         );
 
-        #create the xml file for review
-        my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-            bams             => join(',', map {File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $_)} values %bams),
-            labels           => join(',', keys %bams),
-            output_file      => File::Spec->join($self->output_directory, "$roi_directory.igv.xml"),
-            genome_name      => $self->tumor_sample->name,
-            review_bed_files => [$discovery_bed, $additional_bed, $germline_bed, $docm_bed],
-            reference_name   => $reference_sequence_name_cmd->igv_reference_name,
+        $self->_add_operation_to_workflow(
+            $igv_op,
+            $params,
+            "igv-$roi_name",
         );
-        unless ($dumpXML->execute) {
-            confess $self->error_message("Failed to create IGV xml file");
+
+        for my $bed_report_type (qw(discovery followup germline docm)) {
+            $self->link_bed_report_to_igv($bed_report_type, $roi);
         }
     }
+}
+
+sub link_bed_report_to_igv {
+    my $self = shift;
+    #TODO
 }
 
 sub merge_discovery_and_followup_reports {
@@ -169,37 +182,11 @@ sub vcf_files_from_imported_variation_builds {
 sub add_reports_to_workflow {
     my ($self, $model_pair) = @_;
 
-    my %report_operations;
-    for my $variant_type(qw(snvs indels)) {
-        my %params = (
-            input_vcf => $model_pair->input_vcf($variant_type),
-            variant_type => $variant_type,
-            output_directory => $model_pair->reports_directory($variant_type),
-            plan_file => $model_pair->plan_file($variant_type),
-            translations_file => $model_pair->translations_file,
-            log_directory => $model_pair->logs_directory($variant_type),
-        );
-        $report_operations{$variant_type} = $self->add_report_to_workflow(\%params);
-    }
-    my $snv_reports = Set::Scalar->new(grep {!($_ =~ /vcf$/)} $model_pair->report_names("snvs"));
-    my $indel_reports = Set::Scalar->new(grep {!($_ =~ /vcf$/)} $model_pair->report_names("indels"));
-    my $both_reports = $snv_reports->intersection($indel_reports);
-    for my $base ($both_reports->members) {
-        my %merge_params = (
-            output_file => File::Spec->join($model_pair->output_dir, $base),
-            separator => "\t",
-        );
-        if ($base =~ m/bed$/) {
-            $merge_params{sort_columns} = [qw(1 2 3)];
-            $merge_params{contains_header} = 0,
-        }
-        else {
-            $merge_params{sort_columns} = [qw(chromosome_name start stop reference variant)];
-            $merge_params{contains_header} = 1,
-            $merge_params{split_indicators} = [qw(per_library)],
-        }
-        $self->add_merge_to_workflow(\%merge_params, \%report_operations, $base);
-    }
+    $self->_add_operation_to_workflow(
+        $model_pair->dag,
+        $model_pair->params_for_dag,
+        $model_pair->label
+    );
 }
 
 sub initialize_dag {
@@ -213,68 +200,14 @@ sub initialize_dag {
     $self->add_final_converge;
 }
 
-sub add_merge_to_workflow {
-    my ($self, $params, $reports_to_merge, $file_name) = @_;
-    #snv report and indel report => merge_snv_indel_reports helper => merge_reports => output_connector
-    my $counter = $self->_workflow_counter;
-    my $merge_command = Genome::WorkflowBuilder::Command->create(
-        name => join(" ", "Merge snv and indel", $counter),
-        command => "Genome::VariantReporting::Command::MergeReports",
-    );
-    $self->_add_operation_to_workflow($merge_command, $params, $counter);
-    my $generate_file_names = Genome::WorkflowBuilder::Command->create(
-        name => join(" ", "Generate filenames", $counter),
-        command => "Genome::VariantReporting::Command::MergeSnvIndelReports",
-    );
-    $self->_workflow->add_operation($generate_file_names);
-    my $converge = Genome::WorkflowBuilder::Converge->create(
-        output_properties => ['output_dirs'],
-        name => join(" ", "Converge", $counter),
-    );
-    $self->_workflow->add_operation($converge);
-    while (my ($variant_type, $report) = each %$reports_to_merge) {
-        $self->_workflow->create_link(
-            source => $report, source_property => "output_directory",
-            destination => $converge, destination_property => $variant_type."_output_dir",
-        );
-    }
-    my $full_param_name = join("_", "file_name", $counter);
-    $self->_workflow->connect_input(
-            input_property => $full_param_name,
-            destination => $generate_file_names,
-            destination_property => "file_name",
-    );
-    $self->_workflow_inputs->{$full_param_name} = $file_name;
-    $self->_workflow->create_link(
-        source => $converge, source_property => "output_dirs",
-        destination => $generate_file_names, destination_property => "input_directories",
-    );
-    $self->_workflow->create_link(
-        source => $generate_file_names, source_property => "reports",
-        destination => $merge_command, destination_property => "reports"
-    );
-    my $final_converge = $self->_workflow->operation_named("Final Converge");
-    $self->_workflow->create_link(
-        source => $merge_command, source_property => "output_file",
-        destination => $final_converge, destination_property => $merge_command->name,
-    );
-}
-
-sub add_report_to_workflow {
-    my ($self, $params) = @_;
-    my $counter = $self->_workflow_counter;
-    my $report_creator = Genome::VariantReporting::Command::CreateReport->create(%$params);
-    my $report_dag = $report_creator->dag;
-    $report_dag->name(join(" ", $report_dag->name, $counter));
-    $self->_add_operation_to_workflow($report_dag, {$report_creator->params_for_execute}, $counter);
-    return $report_dag;
-}
-
 sub _add_operation_to_workflow {
     my ($self, $operation, $params, $counter) = @_;
     $self->_workflow->add_operation($operation);
     for my $param (keys %$params) {
-        my $full_param_name = join("_", $param, $counter);
+        my $full_param_name = $param;
+        if (defined $counter) {
+            $full_param_name = join("_", $param, $counter);
+        }
         $self->_workflow->connect_input(
             input_property => $full_param_name,
             destination => $operation,
@@ -286,14 +219,27 @@ sub _add_operation_to_workflow {
     }
 }
 
-sub run_summary_stats {
+sub add_summary_stats_to_dag {
     my $self = shift;
     if ($self->coverage_models) {
-        Genome::Model::SomaticValidation::Command::RunAlignmentStatsSummary->execute(
-            models => [$self->coverage_models],
+        my $alignment_stats_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Alignment stats',
+            command => 'Genome::Model::SomaticValidation::Command::RunAlignmentStatsSummary'
         );
-        Genome::Model::SomaticValidation::Command::RunCoverageStatsSummary->execute(
+        my $coverage_stats_op = Genome::WorkflowBuilder::Command->create(
+            name => 'Coverage stats',
+            command => 'Genome::Model::SomaticValidation::Command::RunCoverageStatsSummary'
+        );
+        my $stats_params = {
             models => [$self->coverage_models],
+        };
+        $self->_add_operation_to_workflow(
+            $alignment_stats_op,
+            $stats_params,
+        );
+        $self->_add_operation_to_workflow(
+            $coverage_stats_op,
+            $stats_params,
         );
     }
 }
