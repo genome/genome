@@ -211,8 +211,10 @@ sub _reference_contains {
     my $other = shift;
 
     return 1 if $reference eq $other;
-    return 1 if ($reference->coordinates_from // '') eq $other;
-    return 1 if $reference->is_derived_from($other);
+
+    if(($reference->coordinates_from // '') eq $other or $reference->is_derived_from($other)) {
+        return $reference->is_superset_of($other);
+    }
 
     return 0;
 }
