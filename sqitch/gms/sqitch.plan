@@ -348,3 +348,5 @@ process_input [process_process] 2014-11-12T02:18:57Z David Morton <dmorton@genom
 
 make_model_group_id_nullable [config_analysis_project] 2014-12-03T19:07:30Z Adam Coffman <acoffman@genome.wustl.edu> # make this column nullable to prepare for its removal
 @1417712498 2014-12-04T17:01:39Z Adam Coffman <acoffman@genome.wustl.edu># Make model_group_id nullable
+
+remove_model_groups_from_analysis_project [make_model_group_id_nullable] 2014-12-04T19:05:22Z Adam Coffman <acoffman@genome.wustl.edu> # removing model groups from analysis projects
