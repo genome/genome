@@ -271,8 +271,7 @@ sub run_sciclone {
         return;
     }
     if(-z $cnv_f) {
-        $self->warning_message("cnv file $cnv_f empty. skipping sciclone step.");
-        return;
+        $self->warning_message("cnv file $cnv_f empty. assuming all variants are CN2.");
     }
     my $number_of_variants = Genome::Sys->line_count($variant_f);
     my $do_clustering = $self->do_clustering;
