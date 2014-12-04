@@ -183,7 +183,6 @@ sub get_model_pairs {
         discovery_sample => $self->tumor_sample,
         followup_sample => $self->followup_sample,
         normal_sample => $self->normal_sample,
-        output_dir => $self->output_directory,
         other_input_vcf_pairs => {docm => $self->vcf_files_from_imported_variation_builds($DOCM)},
     );
     return $factory->get_model_pairs;
