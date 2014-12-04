@@ -60,12 +60,12 @@ my $cmd = $pkg->create(
     normal_sample => $normal_sample1,
 );
 
-=cut
 my $xml = $cmd->dag->get_xml;
 my $xml_file = Genome::Sys->create_temp_file_path;
 Genome::Sys->write_file($xml_file, $xml);
 compare_ok($expected_xml, $xml_file, "dag for trio was created correctly");
 
+=cut
 my $expected_params = {
 };
 #is_deeply($expected_params, $cmd->params_for_execute, "params were created correctly");
