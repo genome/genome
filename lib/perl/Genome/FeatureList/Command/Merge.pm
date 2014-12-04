@@ -212,14 +212,7 @@ sub _reference_contains {
 
     return 1 if $reference eq $other;
     return 1 if $reference->coordinates_from eq $other;
-
-    my %seen;
-    my $next = $reference->derived_from;
-    for(my $next = $reference->derived_from; $next; $next = $next->derived_from) {
-        last if $seen{$next->id}++;
-
-        return 1 if $next eq $other;
-    }
+    return 1 if $reference->is_derived_from($other);
 
     return 0;
 }
