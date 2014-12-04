@@ -51,7 +51,7 @@ my $expected_params = {
     use_header_from => "snvs",
 };
 #TODO compare these in a sensible way
-#is_deeply($expected_params, {$model_pair->params_for_dag}, "params were created correctly");
+#is_deeply($expected_params, $model_pair->params_for_dag, "params were created correctly");
 done_testing;
 
 

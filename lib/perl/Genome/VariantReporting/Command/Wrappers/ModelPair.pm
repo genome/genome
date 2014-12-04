@@ -40,14 +40,14 @@ class Genome::VariantReporting::Command::Wrappers::ModelPair {
 sub dag {
     my $self = shift;
     my $cmd = Genome::VariantReporting::Command::CreateMergedReports->create(
-        $self->params_for_dag,
+        %{$self->params_for_dag},
     );
     return $cmd->dag;
 }
 
 sub params_for_dag {
     my $self = shift;
-    return (
+    return {
         combination_label => $self->label,
         snvs_input_vcf => $self->input_vcf('snvs'),
         snvs_plan_file => $self->plan_file('snvs'),
@@ -56,7 +56,7 @@ sub params_for_dag {
         indels_plan_file => $self->plan_file('indels'),
         indels_translations_file => $self->translations_file,
         use_header_from => 'snvs',
-    );
+    };
 }
 
 sub plan_file {
