@@ -47,7 +47,7 @@ class Genome::VariantReporting::Command::Wrappers::Trio {
         },
     ],
     has_transient_optional => [
-        _workflow => {
+        dag => {
             is => 'Genome::WorkflowBuilder::DAG',
         },
         _workflow_inputs => {
@@ -64,19 +64,32 @@ sub execute {
     my $self = shift;
 
     my $process = $self->process_class->create();
-    $self->initialize_dag;
-    $self->add_summary_stats_to_dag;
-    my @model_pairs = $self->get_model_pairs;
-    for my $model_pair (@model_pairs) {
-        $self->add_reports_to_workflow($model_pair);
-    }
-    $self->add_merge_discovery_and_followup_reports_to_workflow;
-    $self->add_igv_xml_to_workflow(\@model_pairs);
     $process->run(
-        workflow_xml => $self->_workflow->get_xml
+        workflow_xml => $self->dag->get_xml,
         workflow_inputs => $self->_workflow_inputs,
     );
     return 1;
+}
+
+sub dag {
+    my $self = shift;
+    unless (defined($self->__dag)) {
+        my $dag = Genome::WorkflowBuilder::DAG->create(
+            name => 'Trio Report',
+            log_dir => File::Spec->join($self->output_directory, "logs_main"),
+        );
+        Genome::Sys->create_directory(File::Spec->join($self->output_directory, "logs_main"));
+        $self->__dag($dag);
+        $self->add_final_converge;
+        $self->add_summary_stats_to_dag;
+        my @model_pairs = $self->get_model_pairs;
+        for my $model_pair (@model_pairs) {
+            $self->add_reports_to_workflow($model_pair);
+        }
+        $self->add_merge_discovery_and_followup_reports_to_workflow;
+        $self->add_igv_xml_to_workflow(\@model_pairs);
+    }
+    return $self->__dag;
 }
 
 sub add_igv_xml_to_workflow {
@@ -155,8 +168,8 @@ sub add_final_converge {
         name => "Final Converge",
         output_properties => ['reports'],
     );
-    $self->_workflow->add_operation($converge);
-    $self->_workflow->connect_output(
+    $self->dag->add_operation($converge);
+    $self->dag->connect_output(
         output_property => "reports",
         source => $converge,
         source_property => "reports",
@@ -196,26 +209,15 @@ sub add_reports_to_workflow {
     );
 }
 
-sub initialize_dag {
-    my $self = shift;
-    my $dag = Genome::WorkflowBuilder::DAG->create(
-        name => 'Trio Report',
-        log_dir => File::Spec->join($self->output_directory, "logs_main"),
-    );
-    Genome::Sys->create_directory(File::Spec->join($self->output_directory, "logs_main"));
-    $self->_workflow($dag);
-    $self->add_final_converge;
-}
-
 sub _add_operation_to_workflow {
     my ($self, $operation, $params, $counter) = @_;
-    $self->_workflow->add_operation($operation);
+    $self->dag->add_operation($operation);
     for my $param (keys %$params) {
         my $full_param_name = $param;
         if (defined $counter) {
             $full_param_name = join("_", $param, $counter);
         }
-        $self->_workflow->connect_input(
+        $self->dag->connect_input(
             input_property => $full_param_name,
             destination => $operation,
             destination_property => $param,
