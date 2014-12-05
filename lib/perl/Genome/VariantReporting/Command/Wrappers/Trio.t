@@ -18,7 +18,6 @@ use Genome::VariantReporting::Framework::TestHelpers qw(test_xml);
 
 my $pkg = "Genome::VariantReporting::Command::Wrappers::Trio";
 use_ok($pkg);
-my $test_dir = __FILE__.".d";
 
 my $roi_name = "test roi";
 my $tumor_sample1 = Genome::Test::Factory::Sample->setup_object(name => "TEST-patient1-somval_tumor1");
@@ -34,8 +33,11 @@ succeed_build($normal_build);
 use Genome::Model::SomaticValidation::Command::AlignmentStatsSummary;
 reinstall_sub( {
         into => "Genome::Model::SomaticValidation::Command::AlignmentStatsSummary",
-        as => "_execute_body",
+        as => "_run",
         code => sub {
+            my $self = shift;
+            my $file = $self->_temp_file_path;
+            system("touch $file");
             return 1;
         },
     }
@@ -43,8 +45,11 @@ reinstall_sub( {
 use Genome::Model::SomaticValidation::Command::CoverageStatsSummary;
 reinstall_sub( {
         into => "Genome::Model::SomaticValidation::Command::CoverageStatsSummary",
-        as => "_execute_body",
+        as => "_run",
         code => sub {
+            my $self = shift;
+            my $file = $self->_temp_file_path;
+            system("touch $file");
             return 1;
         },
     }
@@ -63,13 +68,10 @@ isa_ok($p, 'Genome::VariantReporting::Process::Trio');
 
 test_xml($p->workflow_file, __FILE__);
 
+my $output_dir = Genome::Sys->create_temp_directory();
+$p->symlink_results($output_dir);
 
-=cut
-my $expected_params = {
-};
-#is_deeply($expected_params, $cmd->params_for_execute, "params were created correctly");
-ok($cmd->execute);
+my $test_dir = File::Spec->join(__FILE__.".d", 'expected_output');
 compare_directories($test_dir, $output_dir);
-=cut
-done_testing;
 
+done_testing;

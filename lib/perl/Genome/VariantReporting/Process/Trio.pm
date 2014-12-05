@@ -32,9 +32,82 @@ class Genome::VariantReporting::Process::Trio {
 sub get_reports_structure {
     my $self = shift;
 
-    my @report_users = $self->result_users('label like' => '%.%.%');
-    use Data::Dump qw(pp);
-    print "#\e[34mDEBUG:\e[0m \e[31m" . '\@report_users' . "\e[0m " . pp(\@report_users) . "\n";
+    my @report_users = $self->result_users('label like' => 'report:%');
+
+    my $reports_structure = {};
+    for my $user (@report_users) {
+        my $m;
+        if ($user->label =~ /report:(.*)/) {
+            my $metadata_json = $1;
+            $m = from_json($metadata_json);
+        }
+        $reports_structure->{$m->{category}}->{$m->{roi_name}}->
+            {$m->{variant_type}}->{$m->{report_name}} =
+            $user->software_result;
+    }
+
+    return $reports_structure;
+}
+
+sub get_igv_session_results {
+    my $self = shift;
+
+    my @report_users = $self->result_users('label like' => 'igv_session:%');
+
+    my $results = {};
+    for my $user (@report_users) {
+        my $m;
+        if ($user->label =~ /igv_session:(.*)/) {
+            my $metadata_json = $1;
+            $m = from_json($metadata_json);
+        }
+        $results->{$m->{roi_name}} = $user->software_result;
+    }
+
+    return $results;
+}
+
+sub symlink_results {
+    my $self = shift;
+    my $destination = shift;
+
+    my %structure = %{$self->get_reports_structure};
+    while (my ($category, $roi_structure) = each %structure) {
+        my %roi_structure = %{$roi_structure};
+        while (my ($roi_name, $variant_type_structure) = each %roi_structure) {
+            my %variant_type_structure = %{$variant_type_structure};
+            while (my ($variant_type, $report_name_structure) = each %variant_type_structure) {
+                my %report_name_structure = %{$report_name_structure};
+                while (my ($report_name, $report) = each %report_name_structure) {
+                    my $link_dir = Genome::Sys->create_directory(File::Spec->join($destination,
+                            $category, $roi_name, $variant_type, $report_name));
+                    Genome::Sys->symlink_directory($report->output_dir, $link_dir)
+                }
+            }
+        }
+    }
+
+    my $alignment_stats_summary_result = $self->results(
+        'subclass_name' => 'Genome::Model::SomaticValidation::Command::AlignmentStatsSummary');
+    my $alignment_stats_dir = Genome::Sys->create_directory(
+        File::Spec->join($destination, 'alignment_stats_summary'));
+    Genome::Sys->symlink_directory($alignment_stats_summary_result->output_dir,
+        $alignment_stats_dir);
+
+    my $coverage_stats_summary_result = $self->results(
+        'subclass_name' => 'Genome::Model::SomaticValidation::Command::CoverageStatsSummary');
+    my $coverage_stats_dir = Genome::Sys->create_directory(
+        File::Spec->join($destination, 'coverage_stats_summary'));
+    Genome::Sys->symlink_directory($coverage_stats_summary_result->output_dir,
+        $coverage_stats_dir);
+
+    my %igv_session_results = %{$self->get_igv_session_results};
+    while (my($roi_name, $result) = each %igv_session_results) {
+        my $link_dir = Genome::Sys->create_directory(File::Spec->join($destination,
+                'igv_sessions', $roi_name));
+        Genome::Sys->symlink_directory($result->output_dir, $link_dir)
+    }
+
     return 1;
 }
 
