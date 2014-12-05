@@ -40,6 +40,12 @@ reporters:
                 sample_name: discovery_tumor
             'contains-tag':
                 info_tag: ON_TARGET
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             'variant-type': {}
@@ -95,6 +101,12 @@ reporters:
                 population_code: All
             'max-af':
                 max_af: 0.5
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             'variant-type': {}
@@ -140,6 +152,12 @@ reporters:
                 sample_name: discovery_tumor
             'contains-tag':
                 info_tag: ON_TARGET
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             vep: {}
@@ -155,6 +173,12 @@ reporters:
                 sample_name: discovery_tumor
             'contains-tag':
                 info_tag: ON_TARGET
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
     'bed':
         filters:
             'allele-in-genotype':
@@ -166,6 +190,12 @@ reporters:
                 sample_name: discovery_tumor
             'contains-tag':
                 info_tag: ON_TARGET
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             'bed-entry': {}
         params:
