@@ -14,6 +14,7 @@ my $DOCM = {
 };
 
 my $_JSON_CODEC = new JSON->allow_nonref;
+my $FACTORY = Genome::VariantReporting::Framework::Factory->create();
 
 class Genome::VariantReporting::Command::Wrappers::Trio {
     is => 'Command::V2',
@@ -43,9 +44,6 @@ class Genome::VariantReporting::Command::Wrappers::Trio {
         },
     ],
     has_transient_optional => [
-        dag => {
-            is => 'Genome::WorkflowBuilder::DAG',
-        },
         _workflow_inputs => {
             is => 'Hash',
         },
@@ -69,60 +67,87 @@ sub execute {
 
 sub dag {
     my $self = shift;
-    unless (defined($self->__dag)) {
-        my $dag = Genome::WorkflowBuilder::DAG->create(
-            name => 'Trio Report',
-            log_dir => File::Spec->join($self->output_directory, "logs_main"),
-        );
-        Genome::Sys->create_directory(File::Spec->join($self->output_directory, "logs_main"));
-        $self->__dag($dag);
-        $self->add_final_converge;
-        $self->add_summary_stats_to_dag;
-        my @model_pairs = $self->get_model_pairs;
-        for my $model_pair (@model_pairs) {
-            $self->add_reports_to_workflow($model_pair);
-        }
-        $self->add_merge_discovery_and_followup_reports_to_workflow;
-        $self->add_igv_xml_to_workflow(\@model_pairs);
+
+    my $dag = Genome::WorkflowBuilder::DAG->create(
+        name => 'Trio Report',
+    );
+
+    $self->add_summary_stats_to_dag($dag);
+    my ($model_pairs, $models_for_roi) = $self->get_model_pairs_and_models_for_roi;
+
+    for my $model_pair (@{$model_pairs}) {
+        $self->add_reports_to_workflow($dag, $model_pair);
     }
-    return $self->__dag;
+
+    $self->add_merge_discovery_and_followup_reports_to_workflow(
+        $dag, keys %{$models_for_roi});
+    $self->add_igv_xml_to_workflow($dag, $model_pairs, keys %{$models_for_roi});
+
+    return $dag;
 }
 
 sub add_igv_xml_to_workflow {
     my $self = shift;
+    my $dag = shift;
     my $model_pairs = shift;
+    my @roi_names = @_;
 
     my %bams = map { $_->get_sample_and_bam_map } @$model_pairs;
     my @reference_sequence_builds = uniq map { $_->reference_sequence_build } @$model_pairs;
     unless (scalar(@reference_sequence_builds) == 1) {
-        die $self->error_message("Found more than one reference sequence build:" . Data::Dumper::Dumper(@reference_sequence_builds));
+        die $self->error_message("Found more than one reference sequence build:" .
+            Data::Dumper::Dumper(@reference_sequence_builds));
     }
 
-    #TODO: find the right way to get these
-    my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
-    for my $roi_name (@roi_directories) {
+    for my $roi_name (@roi_names) {
+        my $converge = Genome::WorkflowBuilder::Converge->create(
+            output_properties => ['report_results'],
+            name => "Converge for igv ($roi_name)",
+        );
+        $dag->add_operation($converge);
 
-        my $params = {
+        for my $category (qw(discovery followup germline), keys %{$self->other_input_vcf_pairs}) {
+            my $sub_dag = $dag->operation_named(sub_dag_name($roi_name, $category));
+            my $output_name = "merged_result (bed)";
+
+            $dag->create_link(
+                source => $sub_dag,
+                source_property => $output_name,
+                destination => $converge,
+                destination_property => sprintf('%s_bed_report_result', $category),
+            );
+
+        }
+        my $igv_op = Genome::WorkflowBuilder::Command->create(
+            name => sprintf('Create IGV session (%s)', $roi_name),
+            command => 'Genome::VariantReporting::Command::Wrappers::CreateIgvSession'
+        );
+        $dag->create_link(
+            source => $converge,
+            source_property => 'report_results',
+            destination => $igv_op,
+            destination_property => 'merged_bed_reports',
+        );
+        $igv_op->declare_constant(
             bam_hash_json => $_JSON_CODEC->canonical->encode(\%bams),
             genome_name => $self->tumor_sample->name,
             reference_name => $reference_sequence_builds[0]->name,
-        };
-
-        my $igv_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Create IGV session',
-            command => 'Genome::VariantReporting::Command::Wrappers::CreateIGVSession'
+            label => sprintf("igv_session.%s", $roi_name),
+        );
+        $dag->connect_input(
+            input_property => 'process_id',
+            destination => $igv_op,
+            destination_property => 'process_id',
         );
 
-        $self->_add_operation_to_workflow(
-            $igv_op,
-            $params,
-            "igv-$roi_name",
+        $dag->connect_output(
+            output_property => sprintf("igv_session.%s", $roi_name),
+            source => $igv_op,
+            source_property => 'output_result',
         );
-
-        for my $bed_report_type (qw(discovery followup germline docm)) {
-            $self->link_bed_report_to_igv($bed_report_type, $roi_name);
-        }
+        $dag->add_operation($igv_op);
     }
+    return;
 }
 
 sub link_bed_report_to_igv {
@@ -130,58 +155,115 @@ sub link_bed_report_to_igv {
     #TODO
 }
 
+sub sub_dag_name {
+    my ($roi_name, $category) = @_;
+
+    # TODO do something less smart.
+    return sprintf('Create Snvs, Indels, and Merged Reports (%s-%s)',
+        $roi_name, $category);
+}
+
 sub add_merge_discovery_and_followup_reports_to_workflow {
     my $self = shift;
+    my $dag = shift;
+    my @roi_names = @_;
 
-    #TODO - find a better way of getting these
-    my @roi_directories = map {basename $_} glob(File::Spec->join($self->output_directory, "discovery", "*"));
-    for my $roi_name (@roi_directories) {
-        for my $base ($self->_trio_report_file_names) {
-            my $discovery_report = File::Spec->join($self->output_directory, "discovery", $roi_name, $base);
-            my $additional_report = File::Spec->join($self->output_directory, "followup", $roi_name, $base);
-            my $merge_op = Genome::WorkflowBuilder::Command->new(
-                name => "Merge discovery and followup reports ($roi_name)",
-                command => "Genome::VariantReporting::Framework::MergeReports",
-            );
-            my $params = {
-                reports => [$discovery_report, $additional_report],
-                sort_columns => [qw(chromosome_name start stop reference variant)],
-                contains_header => 1,
-                entry_sources =>  {$discovery_report => $self->tumor_sample->name, $additional_report => $self->followup_sample->name},
-            };
+    for my $roi_name (@roi_names) {
+        my $discovery_dag = $dag->operation_named(
+            sub_dag_name($roi_name, 'discovery'));
+        for my $output_name ($discovery_dag->output_properties) {
+            if ($output_name =~ m/merged_result \((.*)\)/) {
+                my $report_name = $1;
+                my $report_class = $FACTORY->get_class('reports', $report_name);
+                next unless $report_class->can_be_merged;
+
+                my $merge_op = Genome::WorkflowBuilder::Command->create(
+                    name => sprintf('Merge Discovery and Followup Reports (%s)', $report_name),
+                    command => 'Genome::VariantReporting::Framework::MergeReports',
+                );
+
+                my $converge = Genome::WorkflowBuilder::Converge->create(
+                    output_properties => ['report_results'],
+                    name => "Converge ($output_name)",
+                );
+                $dag->add_operation($converge);
+
+                $dag->create_link(
+                    source => $discovery_dag,
+                    source_property => $output_name,
+                    destination => $converge,
+                    destination_property => 'discovery_report_result',
+                );
+
+                my $followup_dag = $dag->operation_named(sub_dag_name(
+                        $roi_name, 'followup'));
+                $dag->create_link(
+                    source => $followup_dag,
+                    source_property => $output_name,
+                    destination => $converge,
+                    destination_property => 'followup_report_result',
+                );
+
+                $dag->create_link(
+                    source => $converge,
+                    source_property => 'report_results',
+                    destination => $merge_op,
+                    destination_property => 'report_results',
+                );
+
+                $dag->create_link(
+                    source => $discovery_dag,
+                    source_property => $output_name,
+                    destination => $merge_op,
+                    destination_property => 'use_header_from',
+                );
+
+                $merge_op->declare_constant(
+                    label => sprintf('%s.%s.discovery_and_followup',
+                        $roi_name, $report_name),
+                    %{$report_class->merge_parameters},
+                );
+                # this has to be done AFTER the constants are declared.
+                $dag->add_operation($merge_op);
+
+                $dag->connect_input(
+                    input_property => 'process_id',
+                    destination => $merge_op,
+                    destination_property => 'process_id',
+                );
+
+                $dag->connect_output(
+                    output_property => sprintf('%s.%s.discovery_and_followup',
+                        $roi_name, $report_name),
+                    source => $merge_op,
+                    source_property => 'output_result',
+                );
+            }
         }
     }
-    return 1;
+    return;
 }
 
 sub _trio_report_file_names {
     return qw(trio_full_report.tsv trio_simple_report.tsv trio_acmg_report.tsv);
 }
 
-sub add_final_converge {
+sub other_input_vcf_pairs {
     my $self = shift;
-    my $converge = Genome::WorkflowBuilder::Converge->create(
-        name => "Final Converge",
-        output_properties => ['reports'],
-    );
-    $self->dag->add_operation($converge);
-    $self->dag->connect_output(
-        output_property => "reports",
-        source => $converge,
-        source_property => "reports",
-    );
+
+    return {docm => $self->vcf_files_from_imported_variation_builds($DOCM)};
 }
 
-sub get_model_pairs {
+sub get_model_pairs_and_models_for_roi {
     my $self = shift;
     my $factory = Genome::VariantReporting::Command::Wrappers::ModelPairFactory->create(
         models => [$self->models],
         discovery_sample => $self->tumor_sample,
         followup_sample => $self->followup_sample,
         normal_sample => $self->normal_sample,
-        other_input_vcf_pairs => {docm => $self->vcf_files_from_imported_variation_builds($DOCM)},
+        other_input_vcf_pairs => $self->other_input_vcf_pairs,
     );
-    return $factory->get_model_pairs;
+    return $factory->get_model_pairs, $factory->get_models_for_roi;
 }
 
 sub vcf_files_from_imported_variation_builds {
@@ -195,57 +277,45 @@ sub vcf_files_from_imported_variation_builds {
 }
 
 sub add_reports_to_workflow {
-    my ($self, $model_pair) = @_;
+    my ($self, $dag, $model_pair) = @_;
 
-    $self->_add_operation_to_workflow(
-        $model_pair->dag,
-        $model_pair->params_for_dag,
-        $model_pair->label
+    my $model_pair_dag = $model_pair->dag;
+    $dag->add_operation($model_pair_dag);
+    $dag->connect_input(
+        input_property => 'process_id',
+        destination => $model_pair_dag,
+        destination_property => 'process_id',
     );
-}
 
-sub _add_operation_to_workflow {
-    my ($self, $operation, $params, $counter) = @_;
-    $self->dag->add_operation($operation);
-    for my $param (keys %$params) {
-        my $full_param_name = $param;
-        if (defined $counter) {
-            $full_param_name = join("_", $param, $counter);
-        }
-        $self->dag->connect_input(
-            input_property => $full_param_name,
-            destination => $operation,
-            destination_property => $param,
-        );
-        my $inputs = $self->_workflow_inputs;
-        $inputs->{$full_param_name} = $params->{$param};
-        $self->_workflow_inputs($inputs);
-    }
+    return;
 }
 
 sub add_summary_stats_to_dag {
     my $self = shift;
+    my $dag = shift;
+
     if ($self->coverage_models) {
-        my $alignment_stats_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Alignment stats',
-            command => 'Genome::Model::SomaticValidation::Command::RunAlignmentStatsSummary'
+        my %commands = (
+                'Alignment stats' => 'Genome::Model::SomaticValidation::Command::RunAlignmentStatsSummary',
+                'Coverage stats' => 'Genome::Model::SomaticValidation::Command::RunCoverageStatsSummary',
         );
-        my $coverage_stats_op = Genome::WorkflowBuilder::Command->create(
-            name => 'Coverage stats',
-            command => 'Genome::Model::SomaticValidation::Command::RunCoverageStatsSummary'
-        );
-        my $stats_params = {
-            models => [$self->coverage_models],
-        };
-        $self->_add_operation_to_workflow(
-            $alignment_stats_op,
-            $stats_params,
-        );
-        $self->_add_operation_to_workflow(
-            $coverage_stats_op,
-            $stats_params,
-        );
+        while (my($name, $command) = each %commands) {
+            my $op = Genome::WorkflowBuilder::Command->create(
+                name => $name,
+                command => $command,
+            );
+            $op->declare_constant(
+                models => [$self->coverage_models],
+            );
+            $dag->connect_output(
+                output_property => sprintf("%s result", $name),
+                source => $op,
+                source_property => 'output_result',
+            );
+            $dag->add_operation($op);
+        }
     }
+    return;
 }
 
 1;
