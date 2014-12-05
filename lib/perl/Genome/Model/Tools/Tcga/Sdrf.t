@@ -112,7 +112,7 @@ subtest "resolve cghub id" => sub {
 
 subtest "resolve capture reagent" => sub {
     my $test_somatic_build = setup_test_build();
-    is_deeply([$class->resolve_capture_reagent($test_somatic_build->normal_build)], ["Nimblegen", "Nimblegen EZ Exome v3.0", "06465692001", "Proprietary", "BED", "http://genome.ucsc.edu/FAQ/FAQformat.html#format1"], "Capture reagent resolved correctly");
+    is_deeply([$class->resolve_capture_reagent($test_somatic_build->normal_build)], ["Nimblegen", "Nimblegen EZ Exome v3.0", "06465692001", "http://www.nimblegen.com/downloads/annotation/ez_exome_v3/SeqCapEZ_Exome_v3.0_Design_Annotation_files.zip#SeqCap_EZ_Exome_v3_capture.bed", "BED", "http://genome.ucsc.edu/FAQ/FAQformat.html#format1"], "Capture reagent resolved correctly");
 };
 
 sub setup_cghubids_file {
