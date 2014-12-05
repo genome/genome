@@ -91,13 +91,13 @@ sub get_model_pairs {
         push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $discovery_build,
             followup => $validation_build,
-            label => "$roi-discovery",
+            label => "discovery",
         );
 
         push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $validation_build,
             followup => $discovery_build,
-            label => "$roi-additional",
+            label => "followup",
         );
 
         for my $other_input_vcf_pair (keys %{$self->other_input_vcf_pairs}) {
@@ -105,7 +105,7 @@ sub get_model_pairs {
                 discovery => $discovery_build,
                 followup => $validation_build,
                 plan_file_basename => "cle_docm_report_TYPE.yaml",
-                label => "$roi-$other_input_vcf_pair",
+                label => $other_input_vcf_pair,
                 other_snvs_vcf_input => $self->other_input_vcf_pairs->{$other_input_vcf_pair}->[0],
                 other_indels_vcf_input => $self->other_input_vcf_pairs->{$other_input_vcf_pair}->[1],
             );

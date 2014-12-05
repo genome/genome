@@ -51,7 +51,7 @@ sub dag {
 sub params_for_dag {
     my $self = shift;
     return {
-        combination_label => $self->label,
+        combination_label => $self->combination_label,
         snvs_input_vcf => $self->input_vcf('snvs'),
         snvs_plan_file => $self->plan_file('snvs'),
         snvs_translations_file => $self->translations_file,
@@ -60,6 +60,16 @@ sub params_for_dag {
         indels_translations_file => $self->translations_file,
         use_header_from => 'snvs',
     };
+}
+
+sub roi {
+    my $self = shift;
+    return $self->discovery->region_of_interest_set->name;
+}
+
+sub combination_label {
+    my $self = shift;
+    return sprintf('%s-%s', $self->roi, $self->label);
 }
 
 sub plan_file {

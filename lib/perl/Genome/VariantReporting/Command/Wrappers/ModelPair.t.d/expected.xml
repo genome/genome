@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<operation name="Create Snvs, Indels, and Merged Reports (test)">
+<operation name="Create Snvs, Indels, and Merged Reports (test_roi-test)">
   <operationtype typeClass="Workflow::OperationType::Model">
     <inputproperty>Merge Reports (acmg).contains_header</inputproperty>
     <inputproperty>Merge Reports (acmg).label</inputproperty>
