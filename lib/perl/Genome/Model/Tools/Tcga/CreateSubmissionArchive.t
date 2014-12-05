@@ -18,7 +18,7 @@ use Genome::Test::Factory::Build;
 my $class = "Genome::Model::Tools::Tcga::CreateSubmissionArchive";
 use_ok($class);
 
-my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v9");
+my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v10");
 
 
 my $test_somatic_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
@@ -46,6 +46,7 @@ my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
     archive_version => "1.0.0",
     cghub_id_file => $cghub_ids,
     create_archive => 1,
+    vcf_suffix => "1", # arbitrary, just for backwards compatibility for file names
 );
 ok($cmd, "Command created");
 ok($cmd->execute, "Command executed");
