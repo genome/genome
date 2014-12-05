@@ -45,6 +45,34 @@ subtest "test with headers" => sub {
     compare_ok($cmd->output_result->report_path, $expected, 'Output file looks as expected');
 };
 
+subtest "merged test with headers" => sub {
+    my $result_a = get_report_result('report_a.header');
+    my $result_b = get_report_result('report_b.header');
+    my $expected = get_data('expected.header');
+
+    my $cmd = $pkg->create(
+        report_results => [$result_a, $result_b],
+        sort_columns => ['chr', 'pos'],
+        contains_header => 1,
+    );
+    isa_ok($cmd, $pkg);
+
+    ok($cmd->execute, 'Executed the test command');
+    compare_ok($cmd->output_result->report_path, $expected, 'Output file looks as expected');
+
+    my $result_d = get_report_result('report_d.header');
+    my $expected_merged = get_data('expected_merged.header');
+    my $second_cmd = $pkg->create(
+        report_results => [$cmd->output_result, $result_d],
+        sort_columns => ['chr', 'pos'],
+        contains_header => 1,
+    );
+    isa_ok($second_cmd, $pkg);
+
+    ok($second_cmd->execute, 'Executed the test command');
+    compare_ok($second_cmd->output_result->report_path, $expected_merged, 'Output file looks as expected');
+};
+
 subtest "test with headers with source" => sub {
     my $result_a = get_report_result('report_a.header');
     my $result_b = get_report_result('report_b.header');

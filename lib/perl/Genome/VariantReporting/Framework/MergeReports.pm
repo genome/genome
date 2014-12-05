@@ -3,15 +3,12 @@ package Genome::VariantReporting::Framework::MergeReports;
 use strict;
 use warnings;
 use Genome;
-use Genome::VariantReporting::Framework::MergedReport;
-
-my $REPORT_PKG = $Genome::VariantReporting::Framework::MergedReport::REPORT_PKG;
 
 class Genome::VariantReporting::Framework::MergeReports {
     is => 'Genome::Command::DelegatesToResult',
     has_input => [
         report_results => {
-            is => $REPORT_PKG,
+            is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
             doc => 'The reports you wish to merge. They must all be the same type of report (same columns).',
             is_many => 1,
         },
@@ -26,7 +23,7 @@ class Genome::VariantReporting::Framework::MergeReports {
             doc => 'Set to true if the report contains headers'
         },
         use_header_from => {
-            is => $REPORT_PKG,
+            is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
             doc => 'Use the header from this report_result in the merged report',
             is_optional => 1,
         },
@@ -60,7 +57,7 @@ class Genome::VariantReporting::Framework::MergeReports {
 };
 
 sub result_class {
-    return "Genome::VariantReporting::Framework::MergedReport";
+    return "Genome::VariantReporting::Framework::Component::Report::MergedReport";
 }
 
 sub input_hash {

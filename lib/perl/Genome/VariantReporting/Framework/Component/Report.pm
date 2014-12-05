@@ -9,7 +9,7 @@ use Genome::File::Vcf::Reader;
 
 class Genome::VariantReporting::Framework::Component::Report {
     is => [
-        'Genome::SoftwareResult::StageableSimple',
+        'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
         'Genome::VariantReporting::Framework::Component::WithTranslatedInputs',
     ],
     is_abstract => 1,

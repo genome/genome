@@ -20,7 +20,7 @@ class Genome::VariantReporting::Command::Wrappers::CreateIgvSession {
             doc => 'Name for the file and tracks',
         },
         merged_bed_reports => {
-            is => 'Genome::VariantReporting::Framework::MergedReport',
+            is => 'Genome::VariantReporting::Framework::Component::Report::MergedReport',
             is_many => 1,
             doc => 'Reports to get the bed files from',
         },

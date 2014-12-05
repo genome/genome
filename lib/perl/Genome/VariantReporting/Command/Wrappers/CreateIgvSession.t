@@ -21,9 +21,9 @@ reinstall_sub({
         return shift;
     }
 });
-use Genome::VariantReporting::Framework::MergedReport;
+use Genome::VariantReporting::Framework::Component::Report::MergedReport;
 reinstall_sub({
-    into => 'Genome::VariantReporting::Framework::MergedReport',
+    into => 'Genome::VariantReporting::Framework::Component::Report::MergedReport',
     as => 'report_path',
     code => sub {
         return "/bed/path";
@@ -51,7 +51,7 @@ my $bams = {
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 
-my $merged_report = Genome::VariantReporting::Framework::MergedReport->__define__(
+my $merged_report = Genome::VariantReporting::Framework::Component::Report::MergedReport->__define__(
 );
 
 my $cmd = $pkg->create(

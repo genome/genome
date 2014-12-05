@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Framework::MergedReport;
+package Genome::VariantReporting::Framework::Component::Report::MergedReport;
 
 use strict;
 use warnings;
@@ -11,11 +11,13 @@ use Params::Validate qw(validate_pos :types);
 
 our $REPORT_PKG = 'Genome::VariantReporting::Framework::Component::Report::SingleFile';
 
-class Genome::VariantReporting::Framework::MergedReport {
-    is => 'Genome::SoftwareResult::StageableSimple',
+class Genome::VariantReporting::Framework::Component::Report::MergedReport {
+    is => [
+        'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
+    ],
     has_input => [
         report_results => {
-            is => $REPORT_PKG,
+            is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
             is_many => 1,
         },
     ],
@@ -29,7 +31,7 @@ class Genome::VariantReporting::Framework::MergedReport {
             is => 'Boolean',
         },
         use_header_from => {
-            is => $REPORT_PKG,
+            is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
             is_optional => 1,
         },
         separator => {
@@ -290,6 +292,17 @@ sub report_path {
     return File::Spec->join($self->output_dir, $self->file_name);
 }
 
+sub can_be_merged {
+    return 1;
+}
+
+sub merge_parameters {
+    my $self = shift;
+    my @report_results = $self->report_results;
+    my $result_class = $report_results[0]->class;
+    return $result_class->merge_parameters;
+}
+
 
 sub file_name {
     my $self = shift;
@@ -425,7 +438,7 @@ sub get_entry_source {
 
     for my $entry_source ($self->entry_sources) {
         my ($report_id, $tag) = split(/\|/, $entry_source);
-        my $report_result = $REPORT_PKG->get($report_id);
+        my $report_result = Genome::VariantReporting::Framework::Component::Report::MergeCompatible->get($report_id);
 
         if ($report_result->report_path eq $report) {
             return $tag;
