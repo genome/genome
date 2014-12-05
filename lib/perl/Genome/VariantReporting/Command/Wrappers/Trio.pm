@@ -61,6 +61,7 @@ sub execute {
         normal_sample => $self->normal_sample,
     );
 
+    $self->status_message("Constructing workflow from inputs. (this may take a while...)");
     $p->run(workflow_xml => $self->dag->get_xml,
         workflow_inputs => $self->workflow_inputs($p->id),
     );
