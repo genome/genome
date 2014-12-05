@@ -43,11 +43,6 @@ class Genome::VariantReporting::Command::Wrappers::Trio {
             doc => 'Normal sample',
         },
     ],
-    has_transient_optional => [
-        _workflow_inputs => {
-            is => 'Hash',
-        },
-    ],
 };
 
 sub process_class {
@@ -57,12 +52,38 @@ sub process_class {
 sub execute {
     my $self = shift;
 
-    my $process = $self->process_class->create();
-    $process->run(
-        workflow_xml => $self->dag->get_xml,
-        workflow_inputs => $self->_workflow_inputs,
+    my $p = $self->process_class->create(
+        builds => [$self->builds],
+        coverage_builds => [$self->coverage_builds],
+        tumor_sample => $self->tumor_sample,
+        followup_sample => $self->followup_sample,
+        normal_sample => $self->normal_sample,
     );
-    return 1;
+
+    $p->run(workflow_xml => $self->dag->get_xml,
+        workflow_inputs => $self->workflow_inputs($p->id),
+    );
+
+    return $p;
+}
+
+sub builds {
+    my $self = shift;
+    return map {$_->last_succeeded_build} $self->models;
+}
+
+sub coverage_builds {
+    my $self = shift;
+    return map {$_->last_succeeded_build} $self->coverage_models;
+}
+
+sub workflow_inputs {
+    my $self = shift;
+    my $process_id = shift;
+    return {
+        process_id => $process_id,
+        %{$self->dag->constant_values},
+    };
 }
 
 sub dag {
