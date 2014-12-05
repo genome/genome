@@ -7,6 +7,7 @@ use File::Basename qw(basename);
 use Set::Scalar;
 use List::MoreUtils qw(uniq);
 use File::Slurp qw();
+use JSON qw(to_json);
 
 my $DOCM = {
     snvs_build => "847b3cacad1249b8b7e46f89e02d96da",
@@ -153,7 +154,9 @@ sub add_igv_xml_to_workflow {
             bam_hash_json => $_JSON_CODEC->canonical->encode(\%bams),
             genome_name => $self->tumor_sample->name,
             reference_name => $reference_sequence_builds[0]->name,
-            label => sprintf("igv_session.%s", $roi_name),
+            label => 'igv_session:' . to_json({
+                'roi_name' => $roi_name
+            }, {canonical => 1}),
         );
         $dag->connect_input(
             input_property => 'process_id',
@@ -240,8 +243,12 @@ sub add_merge_discovery_and_followup_reports_to_workflow {
                 );
 
                 $merge_op->declare_constant(
-                    label => sprintf('%s.%s.discovery_and_followup',
-                        $roi_name, $report_name),
+                    label => 'report:' . to_json({
+                            roi_name => $roi_name,
+                            category => 'discovery_and_followup',
+                            variant_type => 'merged',
+                            report_name => $report_name,
+                        }, {canonical=>1}),
                     %{$report_class->merge_parameters},
                 );
                 # this has to be done AFTER the constants are declared.
@@ -254,7 +261,7 @@ sub add_merge_discovery_and_followup_reports_to_workflow {
                 );
 
                 $dag->connect_output(
-                    output_property => sprintf('%s.%s.discovery_and_followup',
+                    output_property => sprintf('%s-discovery_and_followup.merged.%s',
                         $roi_name, $report_name),
                     source => $merge_op,
                     source_property => 'output_result',

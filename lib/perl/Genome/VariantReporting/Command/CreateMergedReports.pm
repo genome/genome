@@ -3,15 +3,16 @@ package Genome::VariantReporting::Command::CreateMergedReports;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use JSON qw(to_json);
 
 my $FACTORY = Genome::VariantReporting::Framework::Factory->create();
 
 class Genome::VariantReporting::Command::CreateMergedReports {
     is => 'Command::V2',
     has_input => [
-        combination_label => {
-            is => 'Text',
-            doc => 'A way to distinguish this set of reports from others.',
+        label_fields => {
+            is => 'HASH',
+            default => {},
         },
         snvs_input_vcf => {
             is => 'Path',
@@ -62,8 +63,8 @@ sub dag {
 
     unless (defined($self->__dag)) {
         my $dag = Genome::WorkflowBuilder::DAG->create(
-            name => sprintf('Create Snvs, Indels, and Merged Reports (%s)',
-                $self->combination_label),
+            name => sprintf('Create Snvs, Indels, and Merged Reports (%s-%s)',
+                $self->label_fields->{roi_name}, $self->label_fields->{category}),
         );
         my $snvs_dag = $self->get_connected_dag($dag, 'snvs');
         my $indels_dag = $self->get_connected_dag($dag, 'indels');
@@ -123,8 +124,11 @@ sub redeclare_label_constant {
     my $variant_type = shift;
 
     my $input_name = sprintf('Generate Report (%s).label', $report_name);
-    my $value = sprintf('%s.%s.%s', $self->combination_label,
-        $report_name, $variant_type);
+    my $value = 'report:' . to_json({
+        %{$self->label_fields},
+        variant_type => $variant_type,
+        report_name => $report_name,
+    }, {canonical=>1});
     $dag->declare_constant(
         $input_name => $value,
     );
@@ -191,8 +195,11 @@ sub connect_merge_operations {
             }
 
             $merge_op->declare_constant(
-                label => sprintf('%s.%s.merged',
-                    $self->combination_label, $report_name),
+                label => 'report:' . to_json({
+                    %{$self->label_fields},
+                    variant_type => 'merged',
+                    report_name => $report_name,
+                }, {canonical=>1}),
                 %{$report_class->merge_parameters},
             );
             # this has to be done AFTER the constants are declared.

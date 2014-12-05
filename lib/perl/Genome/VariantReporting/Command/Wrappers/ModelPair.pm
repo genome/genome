@@ -60,7 +60,10 @@ sub dag {
 sub params_for_command {
     my $self = shift;
     return {
-        combination_label => $self->combination_label,
+        label_fields => {
+            roi_name => $self->roi,
+            category => $self->label,
+        },
         snvs_input_vcf => $self->input_vcf('snvs'),
         snvs_plan_file => $self->plan_file('snvs'),
         snvs_translations_file => $self->translations_file,

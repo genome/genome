@@ -3,6 +3,7 @@ package Genome::VariantReporting::Process::Trio;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use JSON qw(from_json);
 
 class Genome::VariantReporting::Process::Trio {
     is => 'Genome::Process',
