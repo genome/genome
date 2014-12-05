@@ -328,6 +328,11 @@ sub add_summary_stats_to_dag {
             $op->declare_constant(
                 models => [$self->coverage_models],
             );
+            $dag->connect_input(
+                input_property => 'process_id',
+                destination => $op,
+                destination_property => 'process_id',
+            );
             $dag->connect_output(
                 output_property => sprintf("%s result", $name),
                 source => $op,
