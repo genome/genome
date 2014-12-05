@@ -52,7 +52,10 @@ sub dag {
         my $cmd = Genome::VariantReporting::Command::CreateMergedReports->create(
             %{$self->params_for_command},
         );
-        $self->__dag($cmd->dag);
+        my $dag = $cmd->dag;
+        $dag->name(sprintf('%s (%s-%s)',
+                $dag->name, $self->roi, $self->label));
+        $self->__dag($dag);
     }
     return $self->__dag;
 }

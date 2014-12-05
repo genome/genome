@@ -63,8 +63,7 @@ sub dag {
 
     unless (defined($self->__dag)) {
         my $dag = Genome::WorkflowBuilder::DAG->create(
-            name => sprintf('Create Snvs, Indels, and Merged Reports (%s-%s)',
-                $self->label_fields->{roi_name}, $self->label_fields->{category}),
+            name => 'Create Snvs, Indels, and Merged Reports',
         );
         my $snvs_dag = $self->get_connected_dag($dag, 'snvs');
         my $indels_dag = $self->get_connected_dag($dag, 'indels');
