@@ -41,6 +41,9 @@ reporters:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             'variant-type': {}
@@ -79,6 +82,9 @@ reporters:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             vep: {}
@@ -95,4 +101,7 @@ reporters:
             'contains-tag':
                 info_tag: ON_TARGET
             homopolymer:
-                info_tag: HOMP_FILTER    
+                info_tag: HOMP_FILTER
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
