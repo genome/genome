@@ -14,7 +14,7 @@ use Test::More;
 use Sub::Install qw(reinstall_sub);
 use File::Basename qw(basename);
 use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build succeed_build compare_directories);
-use Genome::VariantReporting::Framework::TestHelpers qw(test_dag_xml);
+use Genome::VariantReporting::Framework::TestHelpers qw(test_xml);
 
 my $pkg = "Genome::VariantReporting::Command::Wrappers::Trio";
 use_ok($pkg);
@@ -58,7 +58,11 @@ my $cmd = $pkg->create(
     normal_sample => $normal_sample1,
 );
 
-test_dag_xml($cmd->dag, __FILE__);
+my $p = $cmd->execute();
+isa_ok($p, 'Genome::VariantReporting::Process::Trio');
+
+test_xml($p->workflow_file, __FILE__);
+
 
 =cut
 my $expected_params = {

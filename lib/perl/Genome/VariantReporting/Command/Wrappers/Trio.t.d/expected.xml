@@ -159,11 +159,13 @@
     <inputproperty>Merge Discovery and Followup Reports (simple).sort_columns</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (simple).split_indicators</inputproperty>
     <inputproperty>process_id</inputproperty>
+    <outputproperty>Alignment stats result</outputproperty>
+    <outputproperty>Coverage stats result</outputproperty>
     <outputproperty>igv_session.test roi</outputproperty>
-    <outputproperty>test roi.acmg.discovery_and_followup</outputproperty>
-    <outputproperty>test roi.bed.discovery_and_followup</outputproperty>
-    <outputproperty>test roi.full.discovery_and_followup</outputproperty>
-    <outputproperty>test roi.simple.discovery_and_followup</outputproperty>
+    <outputproperty>test roi-discovery_and_followup.merged.acmg</outputproperty>
+    <outputproperty>test roi-discovery_and_followup.merged.bed</outputproperty>
+    <outputproperty>test roi-discovery_and_followup.merged.full</outputproperty>
+    <outputproperty>test roi-discovery_and_followup.merged.simple</outputproperty>
   </operationtype>
   <operation name="Alignment stats">
     <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::Model::SomaticValidation::Command::RunAlignmentStatsSummary">
@@ -3160,11 +3162,13 @@
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
+  <link fromOperation="Alignment stats" fromProperty="output_result" toOperation="output connector" toProperty="Alignment stats result"/>
   <link fromOperation="Converge (merged_result (acmg))" fromProperty="report_results" toOperation="Merge Discovery and Followup Reports (acmg)" toProperty="report_results"/>
   <link fromOperation="Converge (merged_result (bed))" fromProperty="report_results" toOperation="Merge Discovery and Followup Reports (bed)" toProperty="report_results"/>
   <link fromOperation="Converge (merged_result (full))" fromProperty="report_results" toOperation="Merge Discovery and Followup Reports (full)" toProperty="report_results"/>
   <link fromOperation="Converge (merged_result (simple))" fromProperty="report_results" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="report_results"/>
   <link fromOperation="Converge for igv (test roi)" fromProperty="report_results" toOperation="Create IGV session (test roi)" toProperty="merged_bed_reports"/>
+  <link fromOperation="Coverage stats" fromProperty="output_result" toOperation="output connector" toProperty="Coverage stats result"/>
   <link fromOperation="Create IGV session (test roi)" fromProperty="output_result" toOperation="output connector" toProperty="igv_session.test roi"/>
   <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" fromProperty="merged_result (acmg)" toOperation="Converge (merged_result (acmg))" toProperty="discovery_report_result"/>
   <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" fromProperty="merged_result (bed)" toOperation="Converge (merged_result (bed))" toProperty="discovery_report_result"/>
@@ -3182,12 +3186,14 @@
   <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" fromProperty="merged_result (simple)" toOperation="Converge (merged_result (simple))" toProperty="followup_report_result"/>
   <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" fromProperty="merged_result (bed)" toOperation="Converge for igv (test roi)" toProperty="followup_bed_report_result"/>
   <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" fromProperty="merged_result (bed)" toOperation="Converge for igv (test roi)" toProperty="germline_bed_report_result"/>
-  <link fromOperation="Merge Discovery and Followup Reports (acmg)" fromProperty="output_result" toOperation="output connector" toProperty="test roi.acmg.discovery_and_followup"/>
-  <link fromOperation="Merge Discovery and Followup Reports (bed)" fromProperty="output_result" toOperation="output connector" toProperty="test roi.bed.discovery_and_followup"/>
-  <link fromOperation="Merge Discovery and Followup Reports (full)" fromProperty="output_result" toOperation="output connector" toProperty="test roi.full.discovery_and_followup"/>
-  <link fromOperation="Merge Discovery and Followup Reports (simple)" fromProperty="output_result" toOperation="output connector" toProperty="test roi.simple.discovery_and_followup"/>
+  <link fromOperation="Merge Discovery and Followup Reports (acmg)" fromProperty="output_result" toOperation="output connector" toProperty="test roi-discovery_and_followup.merged.acmg"/>
+  <link fromOperation="Merge Discovery and Followup Reports (bed)" fromProperty="output_result" toOperation="output connector" toProperty="test roi-discovery_and_followup.merged.bed"/>
+  <link fromOperation="Merge Discovery and Followup Reports (full)" fromProperty="output_result" toOperation="output connector" toProperty="test roi-discovery_and_followup.merged.full"/>
+  <link fromOperation="Merge Discovery and Followup Reports (simple)" fromProperty="output_result" toOperation="output connector" toProperty="test roi-discovery_and_followup.merged.simple"/>
   <link fromOperation="input connector" fromProperty="Alignment stats.models" toOperation="Alignment stats" toProperty="models"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="Alignment stats" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="Coverage stats.models" toOperation="Coverage stats" toProperty="models"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="Coverage stats" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="Create IGV session (test roi).bam_hash_json" toOperation="Create IGV session (test roi)" toProperty="bam_hash_json"/>
   <link fromOperation="input connector" fromProperty="Create IGV session (test roi).genome_name" toOperation="Create IGV session (test roi)" toProperty="genome_name"/>
   <link fromOperation="input connector" fromProperty="Create IGV session (test roi).label" toOperation="Create IGV session (test roi)" toProperty="label"/>
