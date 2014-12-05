@@ -29,10 +29,6 @@ class Genome::VariantReporting::Command::Wrappers::Trio {
             is_optional => 1,
             doc => "Models to run coverage reports on",
         },
-        output_directory => {
-            is => 'Path',
-            is_output => 1,
-        },
         tumor_sample => {
             is => 'Genome::Sample',
             doc => 'Main tumor sample used for discovery',
