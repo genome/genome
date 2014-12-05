@@ -38,7 +38,6 @@ is($model_pair->class, $pkg, "Model pair created correctly");
 test_dag_xml($model_pair->dag, __FILE__);
 
 my $expected_params = {
-    combination_label => "test",
     snvs_input_vcf => "/gscuser/aregier/git/genome/fix/lib/perl/Genome/VariantReporting/Command/Wrappers/TestHelpers.pm.d/TEST-patient1-somval_tumor1.snvs.vcf.gz",
     snvs_plan_file => "/gscuser/aregier/git/genome/fix/lib/perl/Genome/VariantReporting/plan_files/cle_snvs_report.yaml",
     snvs_translations_file => "/tmp/gm-genome_sys-2014-12-03_17_46_01--dy8W/anonymous6",

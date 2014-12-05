@@ -43,7 +43,6 @@ $provider->write_to_file(test_data('snvs_translations.yaml'));
 
 
 my $cmd = $pkg->create(
-    combination_label => 'test',
     snvs_input_vcf => test_data('snvs.vcf.gz'),
     snvs_plan_file => test_data('snvs_plan.yaml'),
     snvs_translations_file => test_data('snvs_translations.yaml'),
