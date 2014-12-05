@@ -71,7 +71,7 @@ sub report {
     my $interpretations = shift;
 
     my %fields = $self->available_fields_dict();
-    for my $allele (keys %{$interpretations->{($self->requires_interpreters)[0]}}) {
+    for my $allele (keys %{$interpretations->{($self->required_interpreters)[0]}}) {
         for my $header ($self->headers()) {
             my $interpreter = $fields{$header}->{interpreter};
             my $field = $fields{$header}->{field};
