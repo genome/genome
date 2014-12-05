@@ -35,32 +35,38 @@ sub is_valid {
     return 1;
 }
 
+sub get_models_for_roi {
+    my $self = shift;
+
+    my %models_for_roi;
+    for my $model ($self->models) {
+        next unless defined $model->region_of_interest_set;
+        push @{$models_for_roi{$model->region_of_interest_set->name}}, $model;
+    }
+    return \%models_for_roi;
+}
+
 sub get_model_pairs {
     my $self = shift;
 
     return if not $self->is_valid;
 
-    my %models_for_roi;
     my @model_pairs;
-    for my $model ($self->models) {
-        unless (defined $model->region_of_interest_set) {
-            $self->warning_message("Skipping model %s because ROI is not defined", $model->__display_name__);
-            next;
-        }
-        if ($self->is_single_bam($model)) {
-            push @model_pairs, Genome::VariantReporting::Command::Wrappers::SingleModel->create(
-                discovery => $model->last_succeeded_build,
-                label => 'germline',
-            );
-        }
-        else {
-            push @{$models_for_roi{$model->region_of_interest_set->name}}, $model;
+    for my $model_list (values %{$self->get_models_for_roi}) {
+        for my $model (@{$model_list}) {
+            if ($self->is_single_bam($model)) {
+                push @model_pairs, Genome::VariantReporting::Command::Wrappers::SingleModel->create(
+                    discovery => $model->last_succeeded_build,
+                    label => 'germline',
+                );
+            }
         }
     }
 
-    for my $roi (keys %models_for_roi) {
+    my %models_for_roi = %{$self->get_models_for_roi};
+    while (my ($roi, $model_list) = each %models_for_roi) {
+        my @models = grep {!$self->is_single_bam($_)} @{$model_list};
 
-        my @models = @{$models_for_roi{$roi}};
         unless (@models == 2) {
             $self->warning_message("Skipping models for ROI %s because there are not exactly two models: %s",
                 $roi, join(", ", map {$_->__display_name__} @models));
@@ -112,7 +118,7 @@ sub get_model_pairs {
         }
     }
 
-    return @model_pairs;
+    return \@model_pairs;
 }
 
 sub is_model_discovery {
