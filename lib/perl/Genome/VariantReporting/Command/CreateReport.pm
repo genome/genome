@@ -90,17 +90,17 @@ sub plan {
     my $self = shift;
 
     unless (defined($self->__plan)) {
-        $self->status_message("Constructing plan from file (%s)", $self->plan_file);
+        $self->debug_message("Constructing plan from file (%s)", $self->plan_file);
         my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file);
-        $self->status_message("Validating plan...");
+        $self->debug_message("Validating plan...");
         $plan->validate();
-        $self->status_message("Plan is valid.");
+        $self->debug_message("Plan is valid.");
 
-        $self->status_message("Checking for compatibility between translations and plan...");
+        $self->debug_message("Checking for compatibility between translations and plan...");
         $plan->validate_translation_provider($self->provider);
-        $self->status_message("Translations file is compatible with plan.");
+        $self->debug_message("Translations file is compatible with plan.");
 
-        $self->status_message("Translating plan");
+        $self->debug_message("Translating plan");
         $plan->translate($self->provider->translations);
 
         $self->__plan($plan);
