@@ -83,8 +83,30 @@ sub finalize {
     return;
 }
 
+sub plan_filename {
+    return 'plan.yaml';
+}
+
+sub plan_file {
+    my $self = shift;
+    return File::Spec->join($self->output_dir, $self->plan_filename);
+}
+
+sub write_out_plan_file {
+    my $self = shift;
+
+    my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->
+        create_from_json($self->plan_json);
+    $plan->write_to_file(File::Spec->join($self->temp_staging_directory,
+            $self->plan_filename));
+    return;
+}
+
 sub _run {
     my $self = shift;
+
+    $self->debug_message("Writing out plan file");
+    $self->write_out_plan_file();
 
     $self->debug_message("Initializing");
     $self->initialize();
