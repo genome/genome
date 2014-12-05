@@ -79,11 +79,6 @@ sub roi {
     return $self->discovery->region_of_interest_set->name;
 }
 
-sub combination_label {
-    my $self = shift;
-    return sprintf('%s-%s', $self->roi, $self->label);
-}
-
 sub plan_file {
     my ($self, $type) = @_;
     my $base_name = $self->plan_file_basename;
