@@ -14,11 +14,11 @@ use Test::More;
 use Sub::Install qw(reinstall_sub);
 use File::Basename qw(basename);
 use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build succeed_build compare_directories);
+use Genome::VariantReporting::Framework::TestHelpers qw(test_dag_xml);
 
 my $pkg = "Genome::VariantReporting::Command::Wrappers::Trio";
 use_ok($pkg);
 my $test_dir = __FILE__.".d";
-my $expected_xml = File::Spec->join($test_dir, "expected.xml");
 
 my $roi_name = "test roi";
 my $tumor_sample1 = Genome::Test::Factory::Sample->setup_object(name => "TEST-patient1-somval_tumor1");
@@ -58,10 +58,7 @@ my $cmd = $pkg->create(
     normal_sample => $normal_sample1,
 );
 
-my $xml = $cmd->dag->get_xml;
-my $xml_file = Genome::Sys->create_temp_file_path;
-Genome::Sys->write_file($xml_file, $xml);
-compare_ok($expected_xml, $xml_file, "dag for trio was created correctly");
+test_dag_xml($cmd->dag, __FILE__);
 
 =cut
 my $expected_params = {
