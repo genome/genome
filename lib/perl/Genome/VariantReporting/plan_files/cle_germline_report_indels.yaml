@@ -43,6 +43,9 @@ reporters:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             'variant-type': {}
@@ -81,6 +84,9 @@ reporters:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             vep: {}
@@ -98,6 +104,9 @@ reporters:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER  
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
     'bed':
         filters:
             'allele-in-genotype':
@@ -111,6 +120,9 @@ reporters:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             'bed-entry': {}
         params:

@@ -31,8 +31,10 @@ class Genome::Model::Tools::GenePredictor::Snap {
         },        
     ],
     has_param => [
+    # Added an environment variable here to reduce the resource requirements during the long test.
+    # This is a horrible hack, but should hopefully reduce timeouts due to long LSF PEND times.
         lsf_resource => {
-            default_value => "-M 80000000 -R 'select[mem>80000] rusage[mem=80000]'",
+            default_value => $ENV{GENOMEX_GMT_GENE_PREDICTOR_SNAP_LSF} || "-M 80000000 -R 'select[mem>80000] rusage[mem=80000]'",
         }
     ],
 };

@@ -162,7 +162,7 @@ sub vcf_files_from_imported_variation_builds {
     my $indels_build = Genome::Model::Build->get($builds->{indels_build});
     return [
         $snvs_build->snvs_vcf,
-        $indels_build->snvs_vcf,
+        $indels_build->indels_vcf,
     ];
 }
 

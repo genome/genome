@@ -3506,6 +3506,22 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>ercc-spike-in-qc',
+      [
+        'ercc-spike-in-mix=s',
+        [
+          '1',
+          '2'
+        ],
+        'ercc-spike-in-file=s',
+        'files',
+        'output-directory=s',
+        'files',
+        'models=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>instrument-data-alignment-bams',
       [
         'outdir=s',
@@ -3663,17 +3679,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>bam-qc',
-      [
-        'build=s',
-        undef,
-        'lsf-queue=s',
-        'files',
-        'bam-qc-result=s',
-        undef,
-        'help!',
-        undef
-      ],
       '>run-edge-r',
       [
         'normal-models=s@',
@@ -3687,6 +3692,17 @@ $Genome::Command::OPTS_SPEC = [
         'num-samples=s',
         undef,
         'p-value=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>bam-qc',
+      [
+        'build=s',
+        undef,
+        'lsf-queue=s',
+        'files',
+        'bam-qc-result=s',
         undef,
         'help!',
         undef
@@ -9352,6 +9368,8 @@ $Genome::Command::OPTS_SPEC = [
       '>status',
       [
         'show-event-info!',
+        undef,
+        'color!',
         undef,
         'hide-statuses=s@',
         'files',
@@ -24388,6 +24406,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'log-file=s',
         'files',
+        'max-discard-fraction=s',
+        undef,
         'max-records-in-ram=s',
         'files',
         'maximum-memory=s',
@@ -24402,6 +24422,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'sample-alias=s',
         'files',
+        'sanitize!',
+        undef,
         'sort-order=s',
         [
           'unsorted',
