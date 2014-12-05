@@ -38,17 +38,26 @@ class Genome::VariantReporting::Command::Wrappers::ModelPair {
             calculate => q( Genome::Sys->create_temp_file_path; ),
         }
     },
+    has_transient_optional => {
+        dag => {
+            is => 'Genome::WorkflowBuilder::DAG',
+        }
+    }
 };
 
 sub dag {
     my $self = shift;
-    my $cmd = Genome::VariantReporting::Command::CreateMergedReports->create(
-        %{$self->params_for_dag},
-    );
-    return $cmd->dag;
+
+    unless (defined($self->__dag)) {
+        my $cmd = Genome::VariantReporting::Command::CreateMergedReports->create(
+            %{$self->params_for_command},
+        );
+        $self->__dag($cmd->dag);
+    }
+    return $self->__dag;
 }
 
-sub params_for_dag {
+sub params_for_command {
     my $self = shift;
     return {
         combination_label => $self->combination_label,
@@ -103,23 +112,6 @@ sub create {
     $self->translations_file($translations_file);
     return $self;
 };
-
-sub is_valid {
-    my $self = shift;
-
-    if (my @problems = $self->__errors__) {
-        $self->error_message('Model pair is invalid!');
-        for my $problem (@problems) {
-            my @properties = $problem->properties;
-            $self->error_message("Property " .
-                join(',', map { "'$_'" } @properties) .
-                ': ' . $problem->desc);
-        }
-        return;
-    }
-
-    return 1;
-}
 
 sub get_aligned_bams {
     my $self = shift;
@@ -176,8 +168,6 @@ sub generate_sample_legend_file {
 
 sub generate_translations_file {
     my $self = shift;
-
-    return if not $self->is_valid;
 
     my $translations = $self->get_translations;
 
