@@ -9369,6 +9369,8 @@ $Genome::Command::OPTS_SPEC = [
       [
         'show-event-info!',
         undef,
+        'color!',
+        undef,
         'hide-statuses=s@',
         'files',
         'builds=s@',
