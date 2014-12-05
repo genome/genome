@@ -30,7 +30,7 @@ sub input_hash {
     my $self = shift;
 
     return (
-        builds => $self->_builds,
+        builds => [$self->_builds],
     );
 }
 
