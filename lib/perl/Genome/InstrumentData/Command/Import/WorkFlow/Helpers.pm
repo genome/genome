@@ -179,32 +179,29 @@ sub verify_adequate_disk_space_is_available_for_source_files {
 
 #<SAMTOOLS>#
 sub load_or_run_flagstat {
-    my ($self, $bam_path, $flagstat_path) = @_;
+    my ($self, $bam_path) = @_;
     $self->debug_message('Load or run flagstat...');
 
     Carp::confess('No bam path given to run flagstat!') if not $bam_path;
     Carp::confess('Bam path given to run flagstat does not exist!') if not -s $bam_path;
 
-    $flagstat_path ||= $bam_path.'.flagstat';
-    my $flagstat;
+    my $flagstat_path = $bam_path.'.flagstat';
     if ( -s $flagstat_path ) {
-        $flagstat = $self->load_flagstat($flagstat_path);
+        return $self->load_flagstat_for_bam_path($bam_path);
     }
     else {
-        $flagstat = $self->run_flagstat($bam_path, $flagstat_path);
+        return $self->run_flagstat($bam_path);
     }
-
-    return $flagstat;
 }
 
 sub run_flagstat {
-    my ($self, $bam_path, $flagstat_path) = @_;
+    my ($self, $bam_path) = @_;
     $self->debug_message('Run flagstat...');
 
     Carp::confess('No bam path given to run flagstat!') if not $bam_path;
     Carp::confess('Bam path given to run flagstat does not exist!') if not -s $bam_path;
 
-    $flagstat_path ||= $bam_path.'.flagstat';
+    my $flagstat_path = $bam_path.'.flagstat';
     $self->debug_message("Bam path: $bam_path");
     $self->debug_message("Flagstat path: $flagstat_path");
     my $cmd = "samtools flagstat $bam_path > $flagstat_path";
@@ -215,45 +212,83 @@ sub run_flagstat {
         return;
     }
 
-    my $flagstat = $self->load_flagstat($flagstat_path);
+    my $flagstat = $self->load_flagstat_for_bam_path($bam_path);
     return if not $flagstat;
 
     $self->debug_message('Run flagstat...done');
     return $flagstat;
 }
 
-sub load_flagstat {
-    my ($self, $flagstat_path) = @_;
-    $self->debug_message('Load flagstat...');
+sub load_flagstat_for_bam_path {
+    my ($self, $bam_path) = @_;
+    $self->debug_message('Load flagstat for bam path...');
 
-    Carp::confess('No flagstat path to load!') if not $flagstat_path;
-    Carp::confess('Flagstat file is empty!') if not -s $flagstat_path;
+    Carp::confess('No bam path to derive flagstat path to load!') if not $bam_path;
 
+    my $flagstat_path = $bam_path.'.flagstat';
     $self->debug_message('Flagstat path: '.$flagstat_path);
+    Carp::confess('Flagstat file is empty!') if not -s $flagstat_path;
     my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
     if ( not $flagstat ) {
         $self->error_message('Failed to load flagstat file!');
         return;
     }
-
-    # FIXME What is paired end?
-    if($flagstat_path =~ /\.paired\.bam\.flagstat$/) {
-        $flagstat->{is_paired_end} = 1;
-    } elsif($flagstat_path =~ /\.singleton\.bam\.flagstat$/) {
-        $flagstat->{is_paired_end} = 0;
-    } elsif ( $flagstat->{reads_paired_in_sequencing} > 0 and $flagstat->{reads_marked_as_read1} == $flagstat->{reads_marked_as_read2} ) {
-        # Only set paired end if read1 and read2 are equal
-        $flagstat->{is_paired_end} = 1;
-    }
-    else {
-        $flagstat->{is_paired_end} = 0;
-    }
+    $flagstat->{path} = $flagstat_path;
+    $flagstat->{is_paired_end} = $self->is_bam_paired_end($bam_path);
 
     $self->debug_message('Flagstat output:');
     $self->debug_message( join("\n", map { ' '.$_.': '.$flagstat->{$_} } sort keys %$flagstat) );
 
-    $self->debug_message('Load flagstat...done');
+    $self->debug_message('Load flagstat for bam path...done');
     return $flagstat;
+}
+
+sub is_bam_paired_end {
+    # Assumes bam is sorted with secondary alignemnts and duplicate reads removed!
+    # Only checks first 10K reads
+    my ($self, $bam_path, $flagstat) = @_;
+
+    Carp::confess('No bam path given to is_bam_paired_end!') if not $bam_path;
+    Carp::confess('Bam path given to is_bam_paired_end does not exist!') if not -s $bam_path;
+
+    if ( $flagstat ) {
+        return 0 if $flagstat->{reads_paired_in_sequencing} == 0; # no reads marked as read 1/2
+        return 0 if $flagstat->{reads_marked_as_read1} != $flagstat->{reads_marked_as_read2}; # uneven read 1/2
+    }
+
+    my $bam_fh = IO::File->new("samtools view $bam_path | head -10000 |");
+    if ( not $bam_fh ) {
+        $self->error_message('Failed to open file handle to samtools command!');
+        return;
+    }
+
+    my (%seen, $line1, $line2, $name1, $name2);
+    my $is_paired_end = 1;
+    while ( $line1 = $bam_fh->getline ) {
+        $line2 = $bam_fh->getline;
+        if ( not $line2 ) {
+            # missing next line
+            $is_paired_end = 0;
+            last;
+        }
+        my ($name1) = split(/\t/, $line1);
+        my ($name2) = split(/\t/, $line2);
+        if ( $name1 ne $name2 ) {
+            # different templates - maybe not sorted, but we shouldn't be imported these
+            $is_paired_end = 0;
+            last;
+        }
+        if ( exists $seen{$name1} ) {
+            # template has multiple entries
+            $is_paired_end = 0;
+            last;
+        }
+        $seen{$name1} = 1;
+        # check flags?
+    }
+    $bam_fh->close;
+
+    return $is_paired_end;
 }
 
 sub validate_bam {
@@ -674,6 +709,70 @@ sub is_downsample_ratio_invalid {
     }
 
     return;
+}
+#<>#
+
+#< InstData Metrics >#
+sub update_bam_metrics_for_instrument_data {
+    my ($self, $instrument_data) = @_;
+
+    Carp::confess('No instrument data given to update bam for instrument data!') if not $instrument_data;
+
+    my $bam_path = $instrument_data->bam_path;
+    Carp::confess('No bam path set to update bam for instrument data!') if not $bam_path;
+    Carp::confess('Bam path to update bam for instrument data does not exist!') if not -s $bam_path;
+
+    my $flagstat_path = $bam_path.'.flagstat';
+    my $flagstat = $self->load_flagstat_for_bam_path($bam_path);
+    return if not $flagstat;
+
+    my $read_length = $self->determine_read_length_in_bam($bam_path);
+    return if not defined $read_length;
+
+    my %metrics = (
+        bam_path => $bam_path,
+        is_paired_end => $flagstat->{is_paired_end},
+        read_count => $flagstat->{total_reads},
+        read_length => $read_length,
+        # TODO add these?
+        #base_count => $read_length * $read_count, # might be inaccurate if reads are not the same length
+        #fragment_count => $read_count * 2, # needed? add other fragment info?
+    );
+
+    for my $name ( keys %metrics ) {
+        eval{ $instrument_data->attributes(attribute_label => $name)->delete; }; # remove existing
+        $instrument_data->add_attribute(
+            attribute_label => $name,
+            attribute_value => $metrics{$name},
+            nomenclature => 'WUGC',
+        );
+    }
+
+    return 1;
+}
+
+sub determine_read_length_in_bam {
+    my ($self, $bam_path) = @_;
+
+    my $read_length = `samtools view $bam_path | head -n 1000 | awk '{print \$10}'  | xargs -I{} expr length {} | perl -mstrict -e 'my \$c = 0; my \$t = 0; while (<>) { chomp; \$c++; \$t += \$_; } printf("%d\\n", \$t/\$c);'`;
+    chomp $read_length;
+
+    if ( not $read_length ) {
+        $self->error_message('Failed to get read length from bam! '.$bam_path);
+        return;
+    }
+
+    if ( $read_length !~ /^\d+$/ ) {
+        $self->error_message("Non numeric read length ($read_length) from bam! ".$bam_path);
+        return;
+    }
+
+    if ( $read_length == 0 ) {
+        $self->error_message('Read length for bam is 0! '.$bam_path);
+        return;
+    }
+
+    return $read_length;
 }
 #<>#
 

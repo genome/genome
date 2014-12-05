@@ -95,17 +95,6 @@ sub execute {
     my @instrument_data;
     my @bam_paths = $self->bam_paths;
     for my $bam_path ( @bam_paths ) {
-        #$inst_data->read_count($data->{'total_reads'});
-        #$inst_data->fragment_count($data->{'total_reads'}*2);
-        #$inst_data->read_length($self->_read_length);
-        #$inst_data->base_count(int($inst_data->read_length) * int($inst_data->fragment_count));
-        #$inst_data->is_paired_end(1);
-
-
-        # Read length FIXME get from metrics or something else while processing!
-        my $read_length = $self->_determine_read_length_in_bam($bam_path);
-        return if not $read_length;
-
         # Create inst data
         my $instrument_data = $self->_create_instrument_data_for_bam_path($bam_path);
         return if not $instrument_data;
@@ -114,25 +103,18 @@ sub execute {
         my $allocation = $self->_create_allocation($instrument_data, $bam_path);
         return if not $allocation;
 
-        # Flagstat
-        my $flagstat_path = $bam_path.'.flagstat';
-        $self->debug_message("Flagstat path: $flagstat_path");
-        my $flagstat = $helpers->load_flagstat($flagstat_path);
-        return if not $flagstat;
-
         # Move bam and flagstat
         my $final_bam_path = $instrument_data->data_directory.'/all_sequences.bam';
         my $move_ok = $helpers->move_path($bam_path, $final_bam_path);
         return if not $move_ok;
-        my $final_flagstat_path = $final_bam_path . '.flagstat';
+
+        my $flagstat_path = $bam_path.'.flagstat';
+        my $final_flagstat_path = $final_bam_path.'.flagstat';
         $move_ok = $helpers->move_path($flagstat_path, $final_flagstat_path);
         return if not $move_ok;
 
         # Attrs
-        $instrument_data->add_attribute(attribute_label => 'bam_path', attribute_value => $final_bam_path);
-        $instrument_data->add_attribute(attribute_label => 'is_paired_end', attribute_value => $flagstat->{is_paired_end});
-        $instrument_data->add_attribute(attribute_label => 'read_count', attribute_value => $flagstat->{total_reads});
-        $instrument_data->add_attribute(attribute_label => 'read_length', attribute_value => $read_length);
+        $self->helpers->update_bam_metrics_for_instrument_data($instrument_data);
 
         # Analysis Project
         if ($self->analysis_project) {
@@ -229,30 +211,6 @@ sub _create_allocation {
 
     $self->debug_message('Create instrument data for bam path...done');
     return $instrument_data;
-}
-
-sub _determine_read_length_in_bam {
-    my ($self, $bam_path) = @_;
-
-    my $read_length = `samtools view $bam_path | head -n 1000 | awk '{print \$10}'  | xargs -I{} expr length {} | perl -mstrict -e 'my \$c = 0; my \$t = 0; while (<>) { chomp; \$c++; \$t += \$_; } printf("%d\\n", \$t/\$c);'`;
-    chomp $read_length;
-
-    if ( not $read_length ) {
-        $self->error_message('Failed to get read length from bam! '.$bam_path);
-        return;
-    }
-
-    if ( $read_length !~ /^\d+$/ ) {
-        $self->error_message("Non numeric read length ($read_length) from bam! ".$bam_path);
-        return;
-    }
-
-    if ( $read_length == 0 ) {
-        $self->error_message('Read length for bam is 0! '.$bam_path);
-        return;
-    }
-
-    return $read_length;
 }
 
 1;
