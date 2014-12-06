@@ -121,10 +121,6 @@ sub declare_constant {
             die sprintf("No input named (%s) on operation named (%s)",
                 $key, $self->name);
         }
-        if (exists $self->constant_values->{$key}) {
-            die sprintf("Input named (%s) on operation named (%s) has " .
-                "already been declared a constant", $key, $self->name);
-        }
         $self->constant_values->{$key} = $value;
     }
 }

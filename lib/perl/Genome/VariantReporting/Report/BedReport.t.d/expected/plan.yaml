@@ -1,0 +1,8 @@
+---
+experts: {}
+needs_translation: 1
+reports:
+  bed:
+    filters: {}
+    interpreters:
+      bed-entry: {}

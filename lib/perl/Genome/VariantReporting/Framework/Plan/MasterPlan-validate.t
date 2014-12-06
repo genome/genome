@@ -20,11 +20,11 @@ use_ok($pkg) || die;
 test_bad_plan('missing_expert', qr(expert_missing) );
 test_bad_plan('missing_filter', qr(filter_missing) );
 test_bad_plan('missing_interpreter', qr(interpreter_missing) );
-test_bad_plan('missing_reporter', qr(reporter_missing) );
+test_bad_plan('missing_report', qr(report_missing) );
 
 test_bad_plan('misspelled_parameter', qr(bad_parameter_name) );
-test_bad_plan('invalid_reporter', qr(Interpreters required));
-test_bad_plan('invalid_reporter_with_filter', qr(not allow any hard filters) );
+test_bad_plan('invalid_report', qr(Interpreters required));
+test_bad_plan('invalid_report_with_filter', qr(not allow any hard filters) );
 test_bad_plan('invalid_experts', qr(Annotations required));
 
 test_bad_yaml('invalid_yaml');

@@ -2,8 +2,8 @@ experts:
     fpkm:
         sample_name: tumor
         fpkm_file: fpkm_file
-reporters:
-    reporter_alpha:
+reports:
+    report_alpha:
         interpreters:
             interpreter_x:
                 ix_p1: something

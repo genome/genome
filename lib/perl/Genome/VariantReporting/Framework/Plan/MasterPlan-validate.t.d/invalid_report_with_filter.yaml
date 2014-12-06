@@ -1,0 +1,16 @@
+experts:
+    expert_one:
+        e1_p1: something
+        e1_p2: something else
+reports:
+    report_delta:
+        filters:
+            filter_one:
+                f1_p1: something
+                f1_p2: something else
+        interpreters:
+            interpreter_x:
+                ix_p1: something
+                ix_p2: something else
+        params:
+            p1: something

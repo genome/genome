@@ -3,8 +3,8 @@ experts:
         joinx_version: 1.9
         info_string: 'AAC:PP:CDP:PH:EA_GTC:AA_GTC'
         vcf: nhlbi_vcf
-reporters:
-    reporter_alpha:
+reports:
+    report_alpha:
         interpreters:
             interpreter_x:
                 ix_p1: something

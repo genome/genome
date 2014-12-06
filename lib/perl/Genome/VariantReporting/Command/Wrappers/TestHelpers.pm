@@ -21,6 +21,7 @@ use File::Basename qw(dirname basename);
 use Sub::Install qw(reinstall_sub);
 use Exporter 'import';
 use Memoize qw();
+use Params::Validate qw(validate_pos :types);
 
 our @EXPORT_OK = qw(get_build succeed_build compare_directories compare_directories_and_files);
 my $TEST_DIR = __FILE__.".d";
@@ -208,15 +209,14 @@ sub _get_third_alignment_result {
 Memoize::memoize("_get_third_alignment_result", LIST_CACHE => 'MERGE');
 
 sub compare_directories {
-    my ($expected_dir, $output_dir) = @_;
-    compare_directories_and_files($expected_dir,
-        $output_dir,
-        {cmp=> sub {return 0;}}
-    );
+    my ($output_dir, $expected_dir) = @_;
+    compare_directories_and_files($output_dir, $expected_dir, 0);
 }
 
 sub compare_directories_and_files {
-    my ($expected_dir, $output_dir, $options) = @_;
+    my ($output_dir, $expected_dir, $compare_file_contents) = validate_pos(
+        @_, 1, 1, {default => 1},
+    );
     my (@a_only, @b_only, @diff);
     my $comparison = File::DirCompare->compare($expected_dir,
         $output_dir,
@@ -233,11 +233,12 @@ sub compare_directories_and_files {
                 push @diff, $a;
             }
         },
-        $options
     );
-    is(scalar (grep {!($_ =~ /logs_|ignore/)} @a_only), 0, "No files only in expected dir");
-    is(scalar (grep {!($_ =~ /logs_|ignore/)} @b_only), 0, "No files only in output dir");
-    is(scalar (grep {!($_ =~ /logs_|ignore/)} @diff), 0, "No files diffed");
+    is(scalar (grep {!($_ =~ /logs_|ignore/)} @a_only), 0, sprintf("No files only in expected dir (%s)", $expected_dir));
+    is(scalar (grep {!($_ =~ /logs_|ignore/)} @b_only), 0, sprintf("No files only in output dir (%s)", $output_dir));
+    if ($compare_file_contents) {
+        is(scalar (grep {!($_ =~ /logs_|ignore/)} @diff), 0, "No files diffed");
+    }
 }
 
 sub unzip {

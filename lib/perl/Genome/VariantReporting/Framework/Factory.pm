@@ -57,12 +57,12 @@ use Module::Pluggable
 use Module::Pluggable
     require => 1,
     search_path => search_path(),
-    only => qr(Reporter$),
+    only => qr(Report$),
     except => [
-        'Genome::VariantReporting::Framework::Component::Reporter',
-        'Genome::VariantReporting::Framework::Component::Reporter::SingleFile',
+        'Genome::VariantReporting::Framework::Component::Report',
+        'Genome::VariantReporting::Framework::Component::Report::SingleFile',
     ],
-    sub_name => 'reporters';
+    sub_name => 'reports';
 
 class Genome::VariantReporting::Framework::Factory {};
 

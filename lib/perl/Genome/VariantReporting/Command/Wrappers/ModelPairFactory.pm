@@ -14,20 +14,7 @@ class Genome::VariantReporting::Command::Wrappers::ModelPairFactory {
         discovery_sample => { is => 'Genome::Sample', },
         followup_sample => { is => 'Genome::Sample', },
         normal_sample => { is => 'Genome::Sample',},
-        output_dir => { is => 'Text', },
         other_input_vcf_pairs => { is => 'Hashref', default_value => {}},
-        discovery_output_dir => {
-            calculate_from => [qw/output_dir/],
-            calculate => q/return File::Spec->join($output_dir, "discovery");/,
-        },
-        additional_output_dir => {
-            calculate_from => [qw/output_dir/],
-            calculate => q/return File::Spec->join($output_dir, "followup");/,
-        },
-        germline_output_dir => {
-            calculate_from => [qw/output_dir/],
-            calculate => q/return File::Spec->join($output_dir, "germline");/,
-        },
     },
 };
 
@@ -48,32 +35,38 @@ sub is_valid {
     return 1;
 }
 
+sub get_models_for_roi {
+    my $self = shift;
+
+    my %models_for_roi;
+    for my $model ($self->models) {
+        next unless defined $model->region_of_interest_set;
+        push @{$models_for_roi{$model->region_of_interest_set->name}}, $model;
+    }
+    return \%models_for_roi;
+}
+
 sub get_model_pairs {
     my $self = shift;
 
     return if not $self->is_valid;
 
-    my %models_for_roi;
     my @model_pairs;
-    for my $model ($self->models) {
-        unless (defined $model->region_of_interest_set) {
-            $self->warning_message("Skipping model %s because ROI is not defined", $model->__display_name__);
-            next;
-        }
-        if ($self->is_single_bam($model)) {
-            push @model_pairs, Genome::VariantReporting::Command::Wrappers::SingleModel->create(
-                discovery => $model->last_succeeded_build,
-                base_output_dir => $self->germline_output_dir,
-            );
-        }
-        else {
-            push @{$models_for_roi{$model->region_of_interest_set->name}}, $model;
+    for my $model_list (values %{$self->get_models_for_roi}) {
+        for my $model (@{$model_list}) {
+            if ($self->is_single_bam($model)) {
+                push @model_pairs, Genome::VariantReporting::Command::Wrappers::SingleModel->create(
+                    discovery => $model->last_succeeded_build,
+                    label => 'germline',
+                );
+            }
         }
     }
 
-    for my $roi (keys %models_for_roi) {
+    my %models_for_roi = %{$self->get_models_for_roi};
+    while (my ($roi, $model_list) = each %models_for_roi) {
+        my @models = grep {!$self->is_single_bam($_)} @{$model_list};
 
-        my @models = @{$models_for_roi{$roi}};
         unless (@models == 2) {
             $self->warning_message("Skipping models for ROI %s because there are not exactly two models: %s",
                 $roi, join(", ", map {$_->__display_name__} @models));
@@ -104,13 +97,13 @@ sub get_model_pairs {
         push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $discovery_build,
             followup => $validation_build,
-            base_output_dir => $self->discovery_output_dir,
+            label => "discovery",
         );
 
         push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $validation_build,
             followup => $discovery_build,
-            base_output_dir => $self->additional_output_dir,
+            label => "followup",
         );
 
         for my $other_input_vcf_pair (keys %{$self->other_input_vcf_pairs}) {
@@ -118,20 +111,14 @@ sub get_model_pairs {
                 discovery => $discovery_build,
                 followup => $validation_build,
                 plan_file_basename => "cle_docm_report_TYPE.yaml",
-                base_output_dir => $self->other_output_dir($other_input_vcf_pair),
+                label => $other_input_vcf_pair,
                 other_snvs_vcf_input => $self->other_input_vcf_pairs->{$other_input_vcf_pair}->[0],
                 other_indels_vcf_input => $self->other_input_vcf_pairs->{$other_input_vcf_pair}->[1],
             );
         }
     }
 
-    return @model_pairs;
-}
-
-sub other_output_dir {
-    my $self = shift;
-    my $name = shift;
-    return File::Spec->join($self->output_dir, $name);
+    return \@model_pairs;
 }
 
 sub is_model_discovery {

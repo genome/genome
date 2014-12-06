@@ -5,8 +5,8 @@ experts:
     expert_two:
         e2_p1: something
         e2_p2: something else
-reporters:
-    reporter_alpha:
+reports:
+    report_alpha:
         filters:
             filter_one:
                 f1_p1: something
@@ -21,7 +21,7 @@ reporters:
         params:
             ra_p1: something
             ra_p2: something else
-    reporter_beta:
+    report_beta:
         interpreters:
             interpreter_x:
                 ix_p1: something

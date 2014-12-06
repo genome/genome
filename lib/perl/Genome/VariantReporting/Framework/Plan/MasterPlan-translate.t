@@ -49,7 +49,7 @@ subtest 'translate is many input' => sub {
     };
     $plan->translate($translations);
     my $hashref = $plan->as_hashref;
-    my $translated_interpreter = $hashref->{reporters}->{__translated_test__}->{interpreters}->
+    my $translated_interpreter = $hashref->{reports}->{__translated_test__}->{interpreters}->
             {__translated_test__};
 
     my $translated_value = $translated_interpreter->{translated2};
