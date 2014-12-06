@@ -38,9 +38,6 @@ class Genome::VariantReporting::Framework::Component::Expert::Command {
         output_vcf => {
             is => 'Path',
         },
-        output_result => {
-            is => 'Genome::SoftwareResult',
-        },
     ],
 };
 
