@@ -109,7 +109,6 @@ $generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->cr
 ok($generate, 'create generate file for reimport w/ new source files');
 ok($generate->execute, 'execute');
 compare_ok($file, $expected_source_files_with_new_source_files_tsv, 'file matches', %compare_args);
-#print "$file\n"; <STDIN>;
 
 # success w/ downsample ratios
 unlink $file;
@@ -121,6 +120,5 @@ $generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->cr
 ok($generate, 'create generate file for reimport w/ downsample ratios');
 ok($generate->execute, 'execute');
 compare_ok($file, $test_dir.'/source_files.with_downsample_ratios.tsv', 'file matches', %compare_args);
-#print "$file\n"; <STDIN>;
 
 done_testing();
