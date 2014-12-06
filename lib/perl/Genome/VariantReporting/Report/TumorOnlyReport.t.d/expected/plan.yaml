@@ -1,0 +1,15 @@
+---
+experts: {}
+needs_translation: 1
+reports:
+  tumor-only:
+    filters: {}
+    interpreters:
+      1kg: {}
+      caf: {}
+      nhlbi: {}
+      position: {}
+      rsid: {}
+      vaf:
+        sample_name: sample_name
+      vep: {}

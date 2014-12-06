@@ -1,0 +1,9 @@
+---
+experts: {}
+needs_translation: 1
+reports:
+  annotation-format:
+    filters: {}
+    interpreters:
+      position: {}
+      vep: {}
