@@ -7,7 +7,9 @@ use Genome;
 class Genome::VariantReporting::Report::FastaReport {
     is => 'Genome::VariantReporting::Framework::Component::Report::SingleFile',
     has_transient_optional => [
-        _output_fh => {},
+        _output_fh => {
+            is_structural => 1,
+        },
     ],
     doc => 'Prints out a fasta file with both reference and alternate alleles surrounded by a short flanking sequence',
 };

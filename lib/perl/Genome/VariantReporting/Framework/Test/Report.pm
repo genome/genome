@@ -9,6 +9,7 @@ class Genome::VariantReporting::Framework::Test::Report {
     is => 'Genome::VariantReporting::Framework::Component::Report::SingleFile',
     has_optional_transient => [
         _report_path => {
+            is_structural => 1,
             is => 'Text',
         }
     ],

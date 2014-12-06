@@ -10,9 +10,11 @@ class Genome::VariantReporting::Report::VcfReport {
     is => 'Genome::VariantReporting::Framework::Component::Report::SingleFile',
     has_transient_optional => [
         vcf_file => {
+            is_structural => 1,
             is => 'Genome::File::Vcf',
         },
         header => {
+            is_structural => 1,
             is => 'Genome::Vcf::Header',
         },
     ],

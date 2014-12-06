@@ -33,6 +33,7 @@ class Genome::VariantReporting::Framework::Component::Report {
     has_transient_optional => [
         input_vcf => {
             is => 'File',
+            is_structural => 1,
         },
         plan_json => {
             is => 'Text',
