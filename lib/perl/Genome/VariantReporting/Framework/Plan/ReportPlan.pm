@@ -133,12 +133,14 @@ sub params_for_create {
     );
 }
 
+sub __object_errors__ {
+    return ();
+}
+
 sub object {
     my $self = shift;
-
-    return $self->get_class->__define__($self->params_for_create);
+    Carp::confess("We don't support creating Reports this way");
 }
-Memoize::memoize("object", LIST_CACHE => 'MERGE');
 
 sub translate {
     my $self = shift;

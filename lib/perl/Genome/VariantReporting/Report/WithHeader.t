@@ -80,19 +80,21 @@ my $report = Test::BadReport->__define__(
         interpreter_y => Genome::VariantReporting::AnotherTestInterpreter->create()
     },
 );
-my @errors = $report->__errors__;
-is(scalar(@errors), 1, 'Found an error');
+my @errors = $report->_validation_errors;
+is(scalar(@errors), 1, 'Found an error') || die;
 ok(($errors[0])->desc =~ /\(different_field\) is not defined/,
     'Error is of correct type');
 
-throws_ok(sub {
-    Test::BadReport2->__define__(
+$report = Test::BadReport2->__define__(
         filters => {},
         interpreters => {
             interpreter_y => Genome::VariantReporting::AnotherTestInterpreter->create(),
             duplicate =>  Genome::VariantReporting::DuplicateInterpreter->create(),
         },
-    );
+);
+
+throws_ok(sub {
+        $report->_validation_errors,
 }, qr/Fields are not unique/, "Report does not validate");
 
 done_testing;
