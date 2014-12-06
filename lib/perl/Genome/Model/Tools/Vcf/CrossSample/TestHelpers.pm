@@ -258,6 +258,7 @@ sub test_indel_cmd {
         replace => [
             [ qr(^region_bed_file\t.*$) => "region_bed_file\tSOMEPATH" ],
             [ qr(merge\.joinx_version\t.*$) => "merge.joinx_version\tSOMEVERSION" ],
+            [ qr(\Q$test_dir\E) => 'TEST_INPUTS_DIR' ],
         ],
     );
 
