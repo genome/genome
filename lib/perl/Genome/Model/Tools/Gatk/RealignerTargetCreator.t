@@ -35,7 +35,7 @@ my $cmd = $class->create(
 ok($cmd, "Command was created correctly");
 is(
     $cmd->realigner_creator_command,
-    $cmd->base_java_command.' -T RealignerTargetCreator -I /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Gatk-RealignerTargetCreator/v1/in.bam -R /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Gatk-RealignerTargetCreator/v1/reference.fasta -o '.$out,
+    $cmd->base_java_command . " -T RealignerTargetCreator -I $data_dir/in.bam -R $data_dir/reference.fasta -o $out",
     'base recalibrator command',
 );
 ok($cmd->execute, "Command was executed successfuly");
@@ -53,7 +53,7 @@ $cmd = $class->create(
 ok($cmd, "Command was created correctly");
 is(
     $cmd->realigner_creator_command,
-    $cmd->base_java_command.' -T RealignerTargetCreator --known /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Gatk-RealignerTargetCreator/v1/temp.vcf -I /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Gatk-RealignerTargetCreator/v1/in.bam -R /gscmnt/gc13003/info/test_suite_data/Genome-Model-Tools-Gatk-RealignerTargetCreator/v1/reference.fasta -o '.$out2.' -nt 1',
+    $cmd->base_java_command . " -T RealignerTargetCreator --known $data_dir/temp.vcf -I $data_dir/in.bam -R $data_dir/reference.fasta -o $out2 -nt 1",
     'base recalibrator command',
 );
 ok($cmd->execute, "Command was executed successfuly");
