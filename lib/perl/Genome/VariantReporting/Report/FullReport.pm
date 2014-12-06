@@ -72,31 +72,32 @@ sub report {
 
     my %fields = $self->available_fields_dict();
     for my $allele (keys %{$interpretations->{($self->required_interpreters)[0]}}) {
+        my @line_fields;
         for my $header ($self->headers()) {
             my $interpreter = $fields{$header}->{interpreter};
             my $field = $fields{$header}->{field};
 
             if ($header eq 'inSegDup' || $header eq 'onTarget' || $header eq 'AML_RMG') {
                 my $info_tags = $interpretations->{$interpreter}->{$allele}->{$field};
-                $self->_print_info_tag(_header_to_info_tag_conversion()->{$header}, $info_tags);
+                push @line_fields, $self->_get_info_tag(_header_to_info_tag_conversion()->{$header}, $info_tags);
             }
             elsif ($header eq 'variant_callers') {
                 my @variant_callers = @{$interpretations->{$interpreter}->{$allele}->{$field}};
-                $self->_output_fh->print($self->_format(join(", ", @variant_callers)) . "\t");
+                push @line_fields, $self->_format(join(", ", @variant_callers));
             }
             # If we don't have an interpreter that provides this field, handle it cleanly if the field is known unavailable
             elsif ($self->header_is_unavailable($header)) {
-                $self->_output_fh->print( $self->_format() . "\t");
+                push @line_fields, $self->_format();
             }
             elsif ($interpreter) {
-                $self->_output_fh->print($self->_format($interpretations->{$interpreter}->{$allele}->{$field}) . "\t");
+                push @line_fields, $self->_format($interpretations->{$interpreter}->{$allele}->{$field});
             }
             else {
                 # We use $header here because $field will be undefined due to it not being in an interpreter
                 die $self->error_message("Field (%s) is not available from any of the interpreters provided", $header);
             }
         }
-        $self->_output_fh->print("\n");
+        $self->_output_fh->print(join("\t", @line_fields) . "\n");
     }
 }
 sub available_fields_dict {
@@ -117,14 +118,15 @@ sub available_fields_dict {
     return %available_fields;
 }
 
-sub _print_info_tag {
+sub _get_info_tag {
     my ($self, $info_tag, $info_tags_string) = @_;
 
     if ($info_tags_string =~ /$info_tag/) {
-        $self->_output_fh->print($self->_format(1) . "\t");
+        return $self->_format(1);
     }
     else {
-        $self->_output_fh->print($self->_format(0) . "\t");
+        return $self->_format(0);
     }
 }
+
 1;
