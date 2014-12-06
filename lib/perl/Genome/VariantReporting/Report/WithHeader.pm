@@ -44,7 +44,7 @@ sub merge_parameters {
     };
 }
 
-sub __errors__ {
+sub _validation_errors {
     my $self = shift;
     my @errors = $self->SUPER::__errors__;
 
@@ -75,6 +75,12 @@ sub legend_file_name {
 
 sub initialize {
     my $self = shift;
+
+    my @errors = $self->_validation_errors;
+    if (@errors) {
+        $self->print_errors(@errors);
+        die $self->error_message("Failed to validate");
+    }
 
     $self->SUPER::initialize(@_);
     if ($self->generate_legend_file) {
