@@ -26,15 +26,18 @@ my $library = Genome::Library->create(
 );
 ok($library, 'Create library');
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam-rg-multi/v1');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'bam-rg-multi/v4');
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
-my @bam_paths;
-for my $bam_base_name (qw/ 2883581797.bam 2883581798.bam /) {
+my @bams = (
+    [qw/ 2883581797.paired.bam 1 34 100 /],
+    [qw/ 2883581797.singleton.bam 0 94 100 /],
+);
+for my $bam ( @bams ) {
+    my $bam_base_name = $bam->[0];
     my $bam_path = $tmp_dir.'/'.$bam_base_name;
     Genome::Sys->create_symlink($test_dir.'/'.$bam_base_name, $bam_path);
     Genome::Sys->create_symlink($test_dir.'/'.$bam_base_name.'.flagstat', $bam_path.'.flagstat');
     ok(-s $bam_path, 'linked bam path') or die;
-    push @bam_paths, $bam_path
 }
 
 my $source_bam = $test_dir.'/input.rg-multi.bam';
@@ -45,7 +48,7 @@ ok($md5, 'load source md5');
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
     library => $library,
     analysis_project => $analysis_project,
-    bam_paths => \@bam_paths,
+    bam_paths => [ map { $tmp_dir.'/'.$_->[0] } @bams ],
     instrument_data_properties => { },
     source_md5s => [ $md5 ],
 );
@@ -72,19 +75,24 @@ my @instrument_data_attributes = Genome::InstrumentDataAttribute->get(
     attribute_label => 'original_data_path_md5',
     attribute_value => $md5,
 );
-my @instrument_data = Genome::InstrumentData::Imported->get(id => [ map { $_->instrument_data_id } @instrument_data_attributes ]);
+my @instrument_data = Genome::InstrumentData::Imported->get(
+    id => [ map { $_->instrument_data_id } @instrument_data_attributes ],
+    '-order_by' => 'import_date',
+);
 @instrument_data = sort { $a->attributes(attribute_label => 'segment_id')->attribute_value cmp $b->attributes(attribute_label => 'segment_id')->attribute_value } @instrument_data;
 is(@instrument_data, 2, "got instrument data for md5 $md5");
 my $read_group = 2883581797;
+my $cnt = 0;
 for my $instrument_data ( @instrument_data ) {
+    my ($bam_base_name, $is_paired_end, $read_count, $read_length) = @{$bams[$cnt]};
     is($instrument_data->subset_name, 'unknown', 'subset_name correctly set');
     is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
 
     is($instrument_data->original_data_path, $source_bam, 'original_data_path correctly set');
     is($instrument_data->import_format, 'bam', 'import_format is bam');
-    is($instrument_data->is_paired_end, 1, 'is_paired_end correctly set');
-    is($instrument_data->read_count, 128, 'read_count correctly set');
-    is($instrument_data->read_length, 100, 'read_length correctly set');
+    is($instrument_data->is_paired_end, $is_paired_end, 'is_paired_end correctly set');
+    is($instrument_data->read_count, $read_count, 'read_count correctly set');
+    is($instrument_data->read_length, $read_length, 'read_length correctly set');
     is($instrument_data->attributes(attribute_label => 'index_sequence')->attribute_value, 'ATGCTA', 'index_sequence correctly set');
     is($instrument_data->attributes(attribute_label => 'segment_id')->attribute_value, $read_group, 'segment_id correctly set');
     is($instrument_data->analysis_projects, $analysis_project, 'set ana;yis project');
@@ -93,21 +101,21 @@ for my $instrument_data ( @instrument_data ) {
     ok(-s $bam_path, 'bam path exists');
     is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
     is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-    is(File::Compare::compare($bam_path, $test_dir.'/'.$read_group.'.bam'), 0, 'flagstat matches');
-    is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/'.$read_group.'.bam.flagstat'), 0, 'flagstat matches');
+    is(File::Compare::compare($bam_path, $test_dir.'/'.$bam_base_name), 0, 'bam matches');
+    is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/'.$bam_base_name.'.flagstat'), 0, 'flagstat matches');
 
     my $allocation = $instrument_data->disk_allocation;
     ok($allocation, 'got allocation');
     ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 
-    $read_group++;
+    $cnt++;
 }
 
 # recreate
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAndCopyBam->create(
     library => $library,
     analysis_project => $analysis_project,
-    bam_paths => \@bam_paths,
+    bam_paths => [ map { $tmp_dir.'/'.$_->[0] } @bams ],
     instrument_data_properties => {
         original_data_path => $source_bam, 
         sequencing_platform => 'solexa',
@@ -121,5 +129,4 @@ ok($cmd, "create command");
 ok(!$cmd->execute, "execute command");
 like(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, qr/^Instrument data was previously imported! Found existing instrument data: /, 'correct error message');
 
-#print $instrument_data->data_directory."\n";<STDIN>;
 done_testing();

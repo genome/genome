@@ -42,34 +42,36 @@ sub _run {
     for my $build ($self->builds) {
         my $roi_name = $build->region_of_interest_set_name;
 
-        my $tumor_sample = $build->tumor_sample;
-        if ($sample_roi_to_pp{$tumor_sample->name}{$roi_name}) {
-            die('Duplicate builds for tumor sample \''. $tumor_sample->name .'\' region of interest \''. $roi_name .'\' found!.');
+        my %sample_name_to_coverage_stats_method = (
+            $build->tumor_sample->name => 'coverage_stats_result',
+        );
+        if ($build->normal_sample) {
+            $sample_name_to_coverage_stats_method{$build->normal_sample->name} = 'control_coverage_stats_result';
         }
-        $sample_roi_to_pp{$tumor_sample->name}{$roi_name} = $build->processing_profile->id;
-        my $tumor_coverage_stats = $build->coverage_stats_result;
-        unless ($self->write_sample_coverage($tumor_sample,$tumor_coverage_stats,$roi_name)) {
-            die('Failed to write coverage stats for tumor sample: '. $tumor_sample->name);
-        }
-
-        my $normal_sample = $build->normal_sample;
-        if ($sample_roi_to_pp{$normal_sample->name}{$roi_name}) {
-            if ($sample_roi_to_pp{$normal_sample->name}{$roi_name} eq $build->processing_profile->id) {
-                $self->status_message('Duplicate normal sample \''. $normal_sample->name .'\' and region of interest \''. $roi_name .'\' allowed, but only reported once in output.');
+        for my $sample_name (keys %sample_name_to_coverage_stats_method) {
+            my $coverage_stats_result_method = $sample_name_to_coverage_stats_method{$sample_name};
+            if ($sample_roi_to_pp{$sample_name}{$roi_name}) {
+                # Previously seen sample, either skip or report error when multiple PP used
+                if ($sample_roi_to_pp{$sample_name}{$roi_name} eq $build->processing_profile->id) {
+                    $self->status_message('Duplicate sample \''. $sample_name .'\' and region of interest \''. $roi_name .'\' allowed, but only reported once in output.');
+                } else {
+                    $self->error_message('Duplicate sample \''. $sample_name .'\' and region of interest \''. $roi_name .'\' found with different processing profile IDs!.');
+                    die($self->error_message);
+                }
             } else {
-                die('Duplicate normal sample \''. $normal_sample->name .'\' and region of interest \''. $roi_name .'\' found with different processing profile IDs.  Exiting!');
-            }
-        } else {
-            $sample_roi_to_pp{$normal_sample->name}{$roi_name} = $build->processing_profile->id;
-            my $normal_coverage_stats = $build->control_coverage_stats_result;
-            unless ($self->write_sample_coverage($normal_sample,$normal_coverage_stats,$roi_name)) {
-                die('Failed to write coverage stats for normal sample: '. $normal_sample->name);
+                # First time we have seen this sample and ROI combination
+                $sample_roi_to_pp{$sample_name}{$roi_name} = $build->processing_profile->id;
+                my $coverage_stats = $build->$coverage_stats_result_method;
+                unless ($self->write_sample_coverage($sample_name,$coverage_stats,$roi_name)) {
+                    die('Failed to write coverage stats for sample: '. $sample_name);
+                }
             }
         }
     }
     $self->_writer->output->close;
     return 1;
 }
+
 
 sub _load_writer {
     my $self = shift;
@@ -88,7 +90,7 @@ sub _load_writer {
 
 sub write_sample_coverage {
     my $self = shift;
-    my ($sample,$coverage_stats,$roi_name) = @_;
+    my ($sample_name,$coverage_stats,$roi_name) = @_;
 
     my $writer = $self->_writer;
 
@@ -98,7 +100,7 @@ sub write_sample_coverage {
         my $wingspan_coverage_stats_summary_hash_ref = $coverage_stats_summary_hash_ref->{$wingspan};
         for my $min_depth (sort { $a <=> $b } keys %{$wingspan_coverage_stats_summary_hash_ref}) {
             my $data = $wingspan_coverage_stats_summary_hash_ref->{$min_depth};
-            $data->{subject_name} = $sample->name;
+            $data->{subject_name} = $sample_name;
             $data->{region_of_interest_set_name} = $roi_name;
             $data->{wingspan} = $wingspan;
             $writer->write_one($data);
