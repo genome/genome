@@ -14,7 +14,7 @@ use Genome::Model::Tools::Vcf::CrossSample::TestHelpers qw(
     test_indel_cmd
 );
 
-my $VERSION = 1;
+my $VERSION = 2;
 my $use_mg = 0;
 my $region_limiting = 0;
 subtest 'no mg, no region limit' => sub { test_indel_cmd($VERSION, $use_mg, $region_limiting); };
