@@ -13,8 +13,7 @@ eval {
     use_ok($class);
 
     # check test data files
-    my $data_dir = Genome::Utility::Test->data_dir($class);
-    # $data_dir = "$data_dir/v1";
+    my $data_dir = Genome::Utility::Test->data_dir($class, 'v2');
     ok(-d $data_dir, "data_dir exists: $data_dir") or abort;
 
     # check inputs
@@ -47,5 +46,10 @@ eval {
 
     # check outputs
     ok(-s "$tmpdir/out_file", 'output_file has size');
-    compare_ok("$tmpdir/out_file", "$data_dir/168_comp.chr21", 'output_file matched expected');
+    my %compare_args = (
+        replace => [
+            [ qr(\Q$data_dir\E) => 'TEST_INPUTS_DIR' ],
+        ],
+    );
+    compare_ok("$tmpdir/out_file", "$data_dir/168_comp.chr21", 'output_file matched expected', %compare_args);
 };
