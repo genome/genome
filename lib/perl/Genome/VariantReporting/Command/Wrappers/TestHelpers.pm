@@ -209,12 +209,12 @@ sub _get_third_alignment_result {
 Memoize::memoize("_get_third_alignment_result", LIST_CACHE => 'MERGE');
 
 sub compare_directories {
-    my ($expected_dir, $output_dir) = @_;
-    compare_directories_and_files($expected_dir, $output_dir, 0);
+    my ($output_dir, $expected_dir) = @_;
+    compare_directories_and_files($output_dir, $expected_dir, 0);
 }
 
 sub compare_directories_and_files {
-    my ($expected_dir, $output_dir, $compare_file_contents) = validate_pos(
+    my ($output_dir, $expected_dir, $compare_file_contents) = validate_pos(
         @_, 1, 1, {default => 1},
     );
     my (@a_only, @b_only, @diff);
@@ -234,8 +234,8 @@ sub compare_directories_and_files {
             }
         },
     );
-    is(scalar (grep {!($_ =~ /logs_|ignore/)} @a_only), 0, "No files only in expected dir");
-    is(scalar (grep {!($_ =~ /logs_|ignore/)} @b_only), 0, "No files only in output dir");
+    is(scalar (grep {!($_ =~ /logs_|ignore/)} @a_only), 0, sprintf("No files only in expected dir (%s)", $expected_dir));
+    is(scalar (grep {!($_ =~ /logs_|ignore/)} @b_only), 0, sprintf("No files only in output dir (%s)", $output_dir));
     if ($compare_file_contents) {
         is(scalar (grep {!($_ =~ /logs_|ignore/)} @diff), 0, "No files diffed");
     }

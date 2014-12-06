@@ -72,6 +72,6 @@ my $output_dir = Genome::Sys->create_temp_directory();
 $p->symlink_results($output_dir);
 
 my $test_dir = File::Spec->join(__FILE__.".d", 'expected_output');
-compare_directories($test_dir, $output_dir);
+compare_directories($output_dir, $test_dir);
 
 done_testing;
