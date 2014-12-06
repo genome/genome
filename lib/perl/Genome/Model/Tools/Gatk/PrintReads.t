@@ -45,7 +45,7 @@ isa_ok($gatk_cmd, 'Genome::Model::Tools::Gatk::PrintReads', "Made the command");
 diag($gatk_cmd->print_reads_command); 
 is(
     $gatk_cmd->print_reads_command, 
-    $gatk_cmd->base_java_command.' -R /gscmnt/gc13003/info/test_suite_data//Genome-Model-Tools-Gatk-PrintReads/v1/all_sequences.MT.fa -T PrintReads -o '.$output_bam.' -I /gscmnt/gc13003/info/test_suite_data//Genome-Model-Tools-Gatk-PrintReads/v1/input1.bam  -I /gscmnt/gc13003/info/test_suite_data//Genome-Model-Tools-Gatk-PrintReads/v1/input2.bam  --BQSR /gscmnt/gc13003/info/test_suite_data//Genome-Model-Tools-Gatk-PrintReads/v1/input.grp -nct 1',
+    $gatk_cmd->base_java_command . " -R $test_data_dir/all_sequences.MT.fa -T PrintReads -o $output_bam -I $test_data_dir/input1.bam  -I $test_data_dir/input2.bam  --BQSR $test_data_dir/input.grp -nct 1",
     'print reads command',
 );
 ok($gatk_cmd->execute, "Executed the command");

@@ -16,6 +16,7 @@ use Genome::Test::Factory::ProcessingProfile::RnaSeq;
 use Genome::Test::Factory::Model::RnaSeq;
 use Genome::Test::Factory::Build;
 use Genome::Utility::Test qw(compare_ok);
+use Cwd qw(realpath);
 use Sub::Install qw(reinstall_sub);
 
 my $pkg = "Genome::VariantReporting::Command::Wrappers::RnaSeq";
@@ -49,6 +50,22 @@ reinstall_sub({
 });
 
 ok($wrapper->execute, 'wrapper executed');
+
+my $relative_yaml_path = File::Spec->join(qw(test_model_2 resource.yaml));
+my $yaml = File::Spec->join($output_dir, $relative_yaml_path);
+my $expected_yaml = File::Spec->join($expected_dir, $relative_yaml_path);
+my $GENOME_TEST_INPUTS = realpath($ENV{GENOME_TEST_INPUTS});
+my %compare_args = (
+    replace => [
+        [ qr(\Q$GENOME_TEST_INPUTS\E) => 'GENOME_TEST_INPUTS' ],
+    ],
+    filters => sub {
+        my $o = shift;
+        $o =~ s!fpkm_file: .+/genes.fpkm_tracking!fpkm_file: genes.fpkm_tracking!;
+        return $o;
+    },
+);
+compare_ok($yaml, $expected_yaml, 'yaml looks as expected', %compare_args);
 
 done_testing;
 
