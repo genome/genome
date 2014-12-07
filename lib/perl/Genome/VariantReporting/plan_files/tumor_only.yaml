@@ -19,15 +19,15 @@ experts:
         plugins_version: 1
         joinx_version: 1.9
     dbsnp:
-        joinx_version: 1.9
+        joinx_version: 1.10
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
         vcf: dbsnp_vcf
     nhlbi:
-        joinx_version: 1.9
+        joinx_version: 1.10
         info_string: 'AAC:PP:CDP:PH:EA_GTC:AA_GTC:MAF'
         vcf: nhlbi_vcf
     '1kg':
-        joinx_version: 1.9
+        joinx_version: 1.10
         info_string: 'AF:AFR_AF:AMR_AF'
         vcf: thousand_genomes_vcf
 reports:
