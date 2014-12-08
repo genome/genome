@@ -24,6 +24,10 @@ experts:
         joinx_version: 1.10
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
         vcf: dbsnp_vcf
+    nhlbi:
+        joinx_version: 1.10
+        info_string: 'AAC:PP:CDP:PH:EA_GTC:AA_GTC:MAF'
+        vcf: nhlbi_vcf
 reports:
     'full':
         filters:
@@ -36,6 +40,12 @@ reports:
                 sample_name: discovery_tumor
             'contains-tag':
                 info_tag: ON_TARGET
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             'variant-type': {}
@@ -65,6 +75,66 @@ reports:
             sample_names:
                 - discovery_tumor
                 - normal
+            library_names: [library_names]
+    'acmg':
+        filters:
+            'allele-in-genotype':
+                sample_name: discovery_tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: discovery_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            gene:
+                gene_set: acmg
+            'annotation-category':
+                category_list:
+                    - splice_site
+                    - non_synonymous
+            'max-maf':
+                max_maf: 0.5
+                population_code: All
+            'max-af':
+                max_af: 0.5
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
+        interpreters:
+            position: {}
+            'variant-type': {}
+            vep: {}
+            'info-tags': {}
+            rsid: {}
+            caf: {}
+            nhlbi: {}
+            'min-coverage':
+                min_coverage: 10
+                sample_name: discovery_tumor
+            'min-coverage-observed':
+                sample_names:
+                    - discovery_tumor
+                    - normal
+            'max-vaf-observed':
+                tumor_sample_names:
+                    - discovery_tumor
+                normal_sample_names:
+                    - normal
+            'variant-callers':
+                sample_name: discovery_tumor
+            'many-samples-vaf':
+                sample_names:
+                    - discovery_tumor
+                    - normal
+        params:
+            sample_names:
+                - discovery_tumor
+                - normal
+            library_names: [library_names]
     'simple':
         filters:
             'allele-in-genotype':
@@ -76,6 +146,12 @@ reports:
                 sample_name: discovery_tumor
             'contains-tag':
                 info_tag: ON_TARGET
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             vep: {}
@@ -91,3 +167,30 @@ reports:
                 sample_name: discovery_tumor
             'contains-tag':
                 info_tag: ON_TARGET
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
+    'bed':
+        filters:
+            'allele-in-genotype':
+                sample_name: discovery_tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: discovery_tumor
+            'contains-tag':
+                info_tag: ON_TARGET
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
+        interpreters:
+            'bed-entry': {}
+        params:
+            generate_legend_file: 0
