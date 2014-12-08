@@ -348,7 +348,7 @@ sub prepare_reference_sequence_index {
 }
 
 sub fillmd_for_sam {
-    return 1;
+    return 0;
 }
 
 sub requires_read_group_addition {
