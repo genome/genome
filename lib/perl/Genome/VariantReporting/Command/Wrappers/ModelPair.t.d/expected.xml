@@ -4,18 +4,15 @@
     <inputproperty>Merge Reports (acmg).contains_header</inputproperty>
     <inputproperty>Merge Reports (acmg).label</inputproperty>
     <inputproperty>Merge Reports (acmg).sort_columns</inputproperty>
-    <inputproperty>Merge Reports (acmg).split_indicators</inputproperty>
     <inputproperty>Merge Reports (bed).contains_header</inputproperty>
     <inputproperty>Merge Reports (bed).label</inputproperty>
     <inputproperty>Merge Reports (bed).sort_columns</inputproperty>
     <inputproperty>Merge Reports (full).contains_header</inputproperty>
     <inputproperty>Merge Reports (full).label</inputproperty>
     <inputproperty>Merge Reports (full).sort_columns</inputproperty>
-    <inputproperty>Merge Reports (full).split_indicators</inputproperty>
     <inputproperty>Merge Reports (simple).contains_header</inputproperty>
     <inputproperty>Merge Reports (simple).label</inputproperty>
     <inputproperty>Merge Reports (simple).sort_columns</inputproperty>
-    <inputproperty>Merge Reports (simple).split_indicators</inputproperty>
     <inputproperty>Variant Reporting (indels).Generate Report (acmg).label</inputproperty>
     <inputproperty>Variant Reporting (indels).Generate Report (acmg).report_name</inputproperty>
     <inputproperty>Variant Reporting (indels).Generate Report (bed).label</inputproperty>
@@ -867,7 +864,6 @@
   <link fromOperation="input connector" fromProperty="Merge Reports (acmg).contains_header" toOperation="Merge Reports (acmg)" toProperty="contains_header"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (acmg).label" toOperation="Merge Reports (acmg)" toProperty="label"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (acmg).sort_columns" toOperation="Merge Reports (acmg)" toProperty="sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Merge Reports (acmg).split_indicators" toOperation="Merge Reports (acmg)" toProperty="split_indicators"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (acmg)" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (bed).contains_header" toOperation="Merge Reports (bed)" toProperty="contains_header"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (bed).label" toOperation="Merge Reports (bed)" toProperty="label"/>
@@ -876,12 +872,10 @@
   <link fromOperation="input connector" fromProperty="Merge Reports (full).contains_header" toOperation="Merge Reports (full)" toProperty="contains_header"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (full).label" toOperation="Merge Reports (full)" toProperty="label"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (full).sort_columns" toOperation="Merge Reports (full)" toProperty="sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Merge Reports (full).split_indicators" toOperation="Merge Reports (full)" toProperty="split_indicators"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (full)" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (simple).contains_header" toOperation="Merge Reports (simple)" toProperty="contains_header"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (simple).label" toOperation="Merge Reports (simple)" toProperty="label"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (simple).sort_columns" toOperation="Merge Reports (simple)" toProperty="sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Merge Reports (simple).split_indicators" toOperation="Merge Reports (simple)" toProperty="split_indicators"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (simple)" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (acmg).label" toOperation="Variant Reporting (indels)" toProperty="Generate Report (acmg).label"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (acmg).report_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (acmg).report_name"/>
