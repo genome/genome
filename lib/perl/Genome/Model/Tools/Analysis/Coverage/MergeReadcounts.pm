@@ -258,8 +258,9 @@ sub execute {
 	    # gets the field values
 	    my ($chr, $start, $stop, $ref, $var, $type, @vs) = split /\t/, $i;
 	    
-	    # chops off the read count columns assuming about the 25 extra columns
-	    # keeps the original columns in the input		   @vs = splice @vs, 0, (25 - 6);   # prints only 25 fields
+	    # The following line was to chop off the read count columns assuming about the 25 extra columns,
+	    # but inactivated in order to keep the original header line.
+	    # @vs = splice @vs, 0, (25 - 6);   # prints only 25 fields
 	    
 	    # creates a hash with the field values
 	    my %h = ("chr" => $chr, "start" => $start, "stop" => $stop, "ref" => $ref, "var" => $var, "type" => $type, "extra" => \@vs,
@@ -302,8 +303,9 @@ sub execute {
     my $fh = FileHandle->new("> $pathtab");
     die "Cannot write a file: " . $pathtab unless defined $fh;
     
-    # chops off the head columns assuming about the 25 extra columns
-    # keeps the original columns in the input		   @header = splice @header, 0, 25;   # prints only 25 columns in the columns
+    # The following line was to chop off the read count columns assuming about the 25 extra columns,
+    # but inactivated in order to keep the original header line.
+    # @header = splice @header, 0, 25;   # prints only 25 columns in the header line
     
     # writes the header line
     print $fh join("\t", @header, "source") . "\n";
