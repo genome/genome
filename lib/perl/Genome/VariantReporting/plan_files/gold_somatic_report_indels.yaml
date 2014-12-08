@@ -44,7 +44,7 @@ reports:
                 info_tag: HOMP_FILTER
             'min-coverage.tumor':
                 min_coverage: 20
-                sample_name: gold
+                sample_name: discovery_tumor
             'min-coverage.normal':
                 min_coverage: 20
                 sample_name: normal
@@ -57,24 +57,24 @@ reports:
             caf: {}
             'min-coverage':
                 min_coverage: 10
-                sample_name: gold
+                sample_name: discovery_tumor
             'min-coverage-observed':
                 sample_names:
-                    - gold
+                    - discovery_tumor
                     - normal
             'max-vaf-observed':
                 tumor_sample_names:
-                    - gold
+                    - discovery_tumor
                 normal_sample_names:
                     - normal
             'variant-callers':
-                sample_name: gold
+                sample_name: discovery_tumor
             'many-samples-vaf':
                 sample_names:
-                    - gold
+                    - discovery_tumor
                     - normal
             sample_names:
-                - gold
+                - discovery_tumor
                 - normal
     'acmg':
         filters:
@@ -97,7 +97,7 @@ reports:
                 max_af: 0.5
             'min-coverage.tumor':
                 min_coverage: 20
-                sample_name: gold
+                sample_name: discovery_tumor
             'min-coverage.normal':
                 min_coverage: 20
                 sample_name: normal
@@ -111,25 +111,25 @@ reports:
             nhlbi: {}
             'min-coverage':
                 min_coverage: 10
-                sample_name: gold
+                sample_name: discovery_tumor
             'min-coverage-observed':
                 sample_names:
-                    - gold
+                    - discovery_tumor
                     - normal
             'max-vaf-observed':
                 tumor_sample_names:
-                    - gold
+                    - discovery_tumor
                 normal_sample_names:
                     - normal
             'variant-callers':
-                sample_name: gold
+                sample_name: discovery_tumor
             'many-samples-vaf':
                 sample_names:
-                    - gold
+                    - discovery_tumor
                     - normal
         params:
             sample_names:
-                - gold
+                - discovery_tumor
                 - normal
             library_names: [library_names]
     'simple':
@@ -142,7 +142,7 @@ reports:
                 info_tag: HOMP_FILTER
             'min-coverage.tumor':
                 min_coverage: 20
-                sample_name: gold
+                sample_name: discovery_tumor
             'min-coverage.normal':
                 min_coverage: 20
                 sample_name: normal
@@ -160,7 +160,7 @@ reports:
                 info_tag: HOMP_FILTER  
             'min-coverage.tumor':
                 min_coverage: 20
-                sample_name: gold
+                sample_name: discovery_tumor
             'min-coverage.normal':
                 min_coverage: 20
                 sample_name: normal
@@ -174,7 +174,7 @@ reports:
                 info_tag: HOMP_FILTER
             'min-coverage.tumor':
                 min_coverage: 20
-                sample_name: gold
+                sample_name: discovery_tumor
             'min-coverage.normal':
                 min_coverage: 20
                 sample_name: normal

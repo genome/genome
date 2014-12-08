@@ -38,9 +38,9 @@ reports:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER
-            'min-coverage.gold':
+            'min-coverage':
                 min_coverage: 20
-                sample_name: gold
+                sample_name: normal
         interpreters:
             position: {}
             'variant-type': {}
@@ -50,22 +50,22 @@ reports:
             caf: {}
             'min-coverage':
                 min_coverage: 10
-                sample_name: gold
+                sample_name: normal
             'min-coverage-observed':
                 sample_names:
-                    - gold
+                    - normal
             'max-vaf-observed':
                 tumor_sample_names: []
-                gold_sample_names:
-                    - gold
+                normal_sample_names:
+                    - normal
             'variant-callers':
-                sample_name: gold
+                sample_name: normal
             'many-samples-vaf':
                 sample_names:
-                    - gold
+                    - normal
         params:
             sample_names:
-                - gold
+                - normal
     'simple':
         filters:
             'allele-in-genotype':
@@ -74,9 +74,9 @@ reports:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER
-            'min-coverage.gold':
+            'min-coverage':
                 min_coverage: 20
-                sample_name: gold
+                sample_name: normal
         interpreters:
             position: {}
             vep: {}
@@ -89,9 +89,9 @@ reports:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER  
-            'min-coverage.gold':
+            'min-coverage':
                 min_coverage: 20
-                sample_name: gold
+                sample_name: normal
     'bed':
         filters:
             'allele-in-genotype':
@@ -100,9 +100,9 @@ reports:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER
-            'min-coverage.gold':
+            'min-coverage':
                 min_coverage: 20
-                sample_name: gold
+                sample_name: normal
         interpreters:
             'bed-entry': {}
         params:
