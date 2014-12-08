@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use version 0.77;
 use Carp qw/confess/;
 use Sys::Hostname;
 
