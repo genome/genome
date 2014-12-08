@@ -81,13 +81,7 @@ sub use_zcat {
 }
 
 sub check_minimum_version {
-    my ($self) = @_;
-    my $min_version = eval "\$" . $self->class . "::MINIMUM_JOINX_VERSION";
-    unless($min_version) {
-        $self->error_message("This module doesn't have a package level minimum version variable defined. Define 'our \$MINIMUM_JOINX_VERSION' within your module");
-        die;
-    }
-
+    my ($self, $min_version) = @_;
     if(version->parse("v".$self->use_version) < version->parse("v$min_version")) {
         die $self->error_message("This module requires joinx version $min_version or higher to function correctly.");
     }

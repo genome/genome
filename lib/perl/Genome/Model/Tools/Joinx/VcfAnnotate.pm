@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Genome;
-use version 0.77;
 use Data::Dumper;
 
 our $MINIMUM_JOINX_VERSION = 1.4; #available but horribly broken in 1.3
@@ -78,7 +77,7 @@ EOS
 sub execute {
     my $self = shift;
 
-    $self->check_minimum_version;
+    $self->check_minimum_version($MINIMUM_JOINX_VERSION);
 
     if($self->use_bgzip && not defined($self->output_file)){
        die $self->error_message("If use_bgzip is set, output_file must also be set, otherwise binary nonsense will spew forth."); 
