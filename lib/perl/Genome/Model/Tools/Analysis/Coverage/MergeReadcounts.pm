@@ -237,7 +237,17 @@ sub execute {
 	else
 	{
 	    my @new = split /\t/, $line;
-	    die "Inconsistent annotation format found: " . $variant unless scalar(@header) == scalar(@new);
+	    
+	    die "Inconsistent table format found in the header line: " . $variant unless scalar(@header) == scalar(@new);
+	    
+	    # double-checks whether they share the same column header
+	    for (my $i=0; $i<@header; $i ++)
+	    {
+		unless ($header[$i] eq $new[$i])
+		{
+		    die "Inconsistent table format found in the header line: " . $variant;
+		}
+	    }
 	}
 	
 	while (my $i = $fh->getline)
@@ -249,7 +259,7 @@ sub execute {
 	    my ($chr, $start, $stop, $ref, $var, $type, @vs) = split /\t/, $i;
 	    
 	    # chops off the read count columns assuming about the 25 extra columns
-	    @vs = splice @vs, 0, (25 - 6);
+	    # keeps the original columns in the input		   @vs = splice @vs, 0, (25 - 6);   # prints only 25 fields
 	    
 	    # creates a hash with the field values
 	    my %h = ("chr" => $chr, "start" => $start, "stop" => $stop, "ref" => $ref, "var" => $var, "type" => $type, "extra" => \@vs,
@@ -293,7 +303,7 @@ sub execute {
     die "Cannot write a file: " . $pathtab unless defined $fh;
     
     # chops off the head columns assuming about the 25 extra columns
-    @header = splice @header, 0, 25;
+    # keeps the original columns in the input		   @header = splice @header, 0, 25;   # prints only 25 columns in the columns
     
     # writes the header line
     print $fh join("\t", @header, "source") . "\n";
