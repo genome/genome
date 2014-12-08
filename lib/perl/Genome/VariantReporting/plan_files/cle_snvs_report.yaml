@@ -79,6 +79,7 @@ reports:
                 - discovery_tumor
                 - followup_tumor
                 - normal
+            library_names: [library_names]
     'acmg':
         filters:
             'allele-in-genotype':
@@ -141,6 +142,7 @@ reports:
                 - discovery_tumor
                 - followup_tumor
                 - normal
+            library_names: [library_names]
     'simple':
         filters:
             'allele-in-genotype':

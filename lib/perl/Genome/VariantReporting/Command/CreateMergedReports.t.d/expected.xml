@@ -7,7 +7,6 @@
     <inputproperty>Merge Reports (simple).contains_header</inputproperty>
     <inputproperty>Merge Reports (simple).label</inputproperty>
     <inputproperty>Merge Reports (simple).sort_columns</inputproperty>
-    <inputproperty>Merge Reports (simple).split_indicators</inputproperty>
     <inputproperty>Variant Reporting (indels).Generate Report (bed).label</inputproperty>
     <inputproperty>Variant Reporting (indels).Generate Report (bed).report_name</inputproperty>
     <inputproperty>Variant Reporting (indels).Generate Report (simple).label</inputproperty>
@@ -345,7 +344,6 @@
   <link fromOperation="input connector" fromProperty="Merge Reports (simple).contains_header" toOperation="Merge Reports (simple)" toProperty="contains_header"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (simple).label" toOperation="Merge Reports (simple)" toProperty="label"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (simple).sort_columns" toOperation="Merge Reports (simple)" toProperty="sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Merge Reports (simple).split_indicators" toOperation="Merge Reports (simple)" toProperty="split_indicators"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (simple)" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (bed).label" toOperation="Variant Reporting (indels)" toProperty="Generate Report (bed).label"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (bed).report_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (bed).report_name"/>

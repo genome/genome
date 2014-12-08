@@ -8,6 +8,9 @@ Full report with additional population allele frequencies from NHLBI
   [1mgenerate_legend_file[0m   Boolean
     Boolean flag to control whether or not a legend file will be created
     Default value 'true' if not specified
+  [1mlibrary_names[0m   Text
+    List of library names to be used in the report
+    This is a translated property.
   [1mnull_character[0m   Text
     Character to be used for undefined values in the report
     Default value '-' if not specified
