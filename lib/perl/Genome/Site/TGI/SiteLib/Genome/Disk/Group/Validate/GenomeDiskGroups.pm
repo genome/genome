@@ -38,6 +38,7 @@ sub genome_disk_group_names {
         'cle_genome_models',
         'info_genome_models',
         'info_alignments',
+        'apipe_ci',
         $ENV{GENOME_DISK_GROUP_DEV},
         $ENV{GENOME_DISK_GROUP_REFERENCES},
         $ENV{GENOME_DISK_GROUP_ALIGNMENTS},

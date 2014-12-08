@@ -1,0 +1,23 @@
+experts:
+    'vep':
+        ensembl_version: 75
+        custom_annotation_tags: []
+        feature_list_ids: feature_list_ids
+        reference_fasta: reference_fasta
+        species: 'homo-sapiens'
+        joinx_version: 1.8
+        plugins: []
+        plugins_version: 1
+reports:
+    bed:
+        interpreters:
+            'bed-entry': {}
+        filters: {}
+    simple:
+        interpreters:
+            position: {}
+            vep: {}
+            "variant-type": {}
+    vcf:
+        interpreters:
+           'vcf-entry': {}

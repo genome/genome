@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Framework::Component::WithManySampleNames {
     is => ['Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
-    has => [
+    has_transient_optional => [
         sample_names => {
             is => 'Text',
             is_many => 1,

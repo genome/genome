@@ -35,10 +35,9 @@ subtest "Only one model for an roi" => sub {
         discovery_sample => $tumor_sample1,
         followup_sample => $tumor_sample2,
         normal_sample => $normal_sample1,
-        output_dir => Genome::Sys->create_temp_directory,
     );
 
-    my @pairs = $factory->get_model_pairs;
+    my @pairs = @{$factory->get_model_pairs};
     ok(@pairs == 0, "Factory with only one model returned no pairs");
     ok($factory->warning_message =~ /Skipping models for ROI $roi_name because there are not exactly two models/,
         "Warning message set correctly");
@@ -49,10 +48,9 @@ subtest "Three models for an roi" => sub {
         discovery_sample => $tumor_sample1,
         followup_sample => $tumor_sample2,
         normal_sample => $normal_sample1,
-        output_dir => Genome::Sys->create_temp_directory,
     );
 
-    my @pairs = $factory->get_model_pairs;
+    my @pairs = @{$factory->get_model_pairs};
     ok(@pairs == 0, "Factory with only one model returned no pairs");
     ok($factory->warning_message =~ /Skipping models for ROI $roi_name because there are not exactly two models/,
         "Warning message set correctly");
@@ -65,10 +63,9 @@ subtest "Models for an roi don't have the right samples" => sub {
         discovery_sample => $tumor_sample1,
         followup_sample => $bad_sample,
         normal_sample => $normal_sample1,
-        output_dir => Genome::Sys->create_temp_directory,
     );
 
-    my @pairs = $factory->get_model_pairs;
+    my @pairs = @{$factory->get_model_pairs};
     ok(@pairs == 0, "Factory with only one model returned no pairs");
     ok($factory->warning_message =~ /Incorrect discovery\/followup pairing for models for ROI \($roi_name\)/,
         "Warning message set correctly");
@@ -79,10 +76,9 @@ subtest "One model doesn't have last succeeded build" => sub {
         discovery_sample => $tumor_sample1,
         followup_sample => $tumor_sample2,
         normal_sample => $normal_sample1,
-        output_dir => Genome::Sys->create_temp_directory,
     );
 
-    my @pairs = $factory->get_model_pairs;
+    my @pairs = @{$factory->get_model_pairs};
     ok(@pairs == 0, "Factory with only one model returned no pairs");
     ok($factory->warning_message =~ /No last succeeded build for discovery model/,
 
@@ -98,7 +94,6 @@ subtest "Two valid model pairs" => sub {
         discovery_sample => $tumor_sample1,
         followup_sample => $tumor_sample2,
         normal_sample => $normal_sample1,
-        output_dir => Genome::Sys->create_temp_directory,
     );
 
     reinstall_sub({
@@ -110,7 +105,7 @@ subtest "Two valid model pairs" => sub {
     }
     );
 
-    my @pairs = $factory->get_model_pairs;
+    my @pairs = @{$factory->get_model_pairs};
     is(scalar @pairs, 4, "2 model pairs for 2 pairs of models returned");
 };
 

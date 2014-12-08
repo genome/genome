@@ -91,8 +91,23 @@ sub snvs_vcf {
     return $self->snvs_file($version, "vcf");
 }
 
+sub indels_vcf {
+    my ($self, $version) = @_;
+    return $self->indels_file($version, "vcf");
+}
+
 sub snvs_file {
-    my ($self, $version,$format) = @_;
+    my ($self, $version, $format) = @_;
+    return $self->file_of_type('snv', $version, $format);
+}
+
+sub indels_file {
+    my ($self, $version, $format) = @_;
+    return $self->file_of_type('indel', $version, $format);
+}
+
+sub file_of_type {
+    my ($self, $type, $version, $format) = @_;
    
     if (not defined($self->version)) {
         $self->error_message("No version set on build?: " . $self->__display_name__);
@@ -102,24 +117,26 @@ sub snvs_file {
     # TODO: get a real api for this
     my $name = $self->model->name . "-" . $self->version;
     if (defined $version and $version ne "v1") {
-        die "No version of snvs .bed file version $version available for $name";
+        die "No version of $type .bed file version $version available for $name";
     }
-    
-    my $snv_result = $self->snv_result;
-    unless ($snv_result) {
-        $self->warning_message("No snv result for " . $self->__display_name__);
+
+    my $result_accessor = join("_", $type, "result");
+    my $result = $self->$result_accessor;
+    unless ($result) {
+        $self->warning_message("No $type result for " . $self->__display_name__);
         return;
     }
-    $self->debug_message("Found SNV result: " . $snv_result->__display_name__);
+    $self->debug_message("Found $type result: " . $result->__display_name__);
 
-    my $snvs_file_path = join('/', $snv_result->output_dir, "snvs.hq.$format");
-    unless (-e $snvs_file_path) {
-        $self->error_message("SNVs file not found: $snvs_file_path");
+    my $file_name = $type."s.hq.$format";
+    my $file_path = join('/', $result->output_dir, $file_name);
+    unless (-e $file_path) {
+        $self->error_message("$type file not found: $file_path");
         return;
     }
-    $self->debug_message("Found SNV file path: " . $snvs_file_path);
+    $self->debug_message("Found $type file path: " . $file_path);
 
-    return $snvs_file_path;
+    return $file_path;
 }
 
 1;

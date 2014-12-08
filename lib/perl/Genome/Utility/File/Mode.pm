@@ -41,7 +41,7 @@ sub _bit_shift {
 
 sub _has_bit {
     my ($mode, $bit) = (shift, shift);
-    return ($mode & $bit) >> _bit_shift($bit);
+    return ($mode & $bit) == $bit;
 }
 
 sub new {

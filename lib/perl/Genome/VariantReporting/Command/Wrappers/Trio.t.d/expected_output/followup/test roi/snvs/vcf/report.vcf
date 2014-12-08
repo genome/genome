@@ -1,0 +1,71 @@
+##fileformat=VCFv4.1
+##annotation=/gscuser/dmorton/deployments/trio/genome/lib/perl/Genome/VariantReporting/Command/Wrappers/TestHelpers.pm.d/dbsnp_nhlbi.vcf
+##annotation=/gscuser/dmorton/deployments/trio/genome/lib/perl/Genome/VariantReporting/Command/Wrappers/TestHelpers.pm.d/dbsnp_nhlbi.vcf
+##center=genome.wustl.edu
+##fileDate=20141205
+##phasing=none
+##reference=ftp://ftp.ncbi.nlm.nih.gov/genomes/H_sapiens/ARCHIVE/BUILD.36.3/special_requests/assembly_variants/NCBI36_WUGSC_variant.fa.gz
+##source=Samtools
+##source=Sniper
+##source=VarscanSomatic
+##source=Strelka
+##INFO=<ID=ALLFILTERSPASS,Number=A,Type=Integer,Description="Flags whether the alternate allele passed all the soft filters: FTPASS, CONTAINS_TAG_ON_TARGET">
+##INFO=<ID=PH,Number=.,Type=String,Description="polyPhen">
+##INFO=<ID=TQSS,Number=1,Type=Integer,Description="Data tier used to compute QSS">
+##INFO=<ID=AA_GTC,Number=.,Type=String,Description="African American Genotype Counts in the order of listed GTS">
+##INFO=<ID=EA_GTC,Number=.,Type=String,Description="European American Genotype Counts in the order of listed GTS">
+##INFO=<ID=AML_RMG,Number=.,Type=String,Description="AML RMG pooled probes + WO2830729 pooled probes + WO2840081 pooled probes (overlap)">
+##INFO=<ID=TQSS_NT,Number=1,Type=Integer,Description="Data tier used to compute QSS_NT">
+##INFO=<ID=ON_TARGET,Number=.,Type=String,Description="test roi (overlap)">
+##INFO=<ID=NT,Number=1,Type=String,Description="Genotype of the normal in all data tiers, as used to classify somatic variants. One of {ref,het,hom,conflict}.">
+##INFO=<ID=AAC,Number=.,Type=String,Description="aminoAcidChange">
+##INFO=<ID=QSS,Number=1,Type=Integer,Description="Quality score for any somatic snv, ie. for the ALT allele to be present at a significantly different frequency in the tumor and normal">
+##INFO=<ID=dbSNPBuildID,Number=A,Type=String,Description="Allele frequencies">
+##INFO=<ID=MUT,Number=.,Type=String,Description="Allele frequencies">
+##INFO=<ID=MAF,Number=.,Type=String,Description="Minor Allele Frequency in percent in the order of EA,AA,All">
+##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence type as predicted by VEP. Format: Allele|Gene|Feature|Feature_type|Consequence|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|DISTANCE|STRAND|CANONICAL|SYMBOL|SYMBOL_SOURCE|SIFT|PolyPhen|HGVSc|HGVSp|Condel">
+##INFO=<ID=QSS_NT,Number=1,Type=Integer,Description="Quality score reflecting the joint probability of a somatic variant and NT">
+##INFO=<ID=PP,Number=.,Type=String,Description="proteinPosition">
+##INFO=<ID=CAF,Number=.,Type=String,Description="Allele frequencies">
+##INFO=<ID=SGT,Number=1,Type=String,Description="Most likely somatic genotype excluding normal noise states">
+##INFO=<ID=CDP,Number=.,Type=String,Description="cDNAPosition">
+##INFO=<ID=SEG_DUP,Number=.,Type=String,Description="test roi (overlap)">
+##FORMAT=<ID=BQ,Number=.,Type=Integer,Description="Average base quality for reads supporting alleles">
+##FORMAT=<ID=BRCT,Number=1,Type=String,Description="Bam readcount line, gzipped then base-64 encoded">
+##FORMAT=<ID=AU,Number=2,Type=Integer,Description="Number of 'A' alleles used in tiers 1,2">
+##FORMAT=<ID=BCOUNT,Number=4,Type=Integer,Description="Occurrence count for each base at this site (A,C,G,T)">
+##FORMAT=<ID=GU,Number=2,Type=Integer,Description="Number of 'G' alleles used in tiers 1,2">
+##FORMAT=<ID=FA,Number=1,Type=Float,Description="Fraction of reads supporting ALT">
+##FORMAT=<ID=SSC,Number=1,Type=Integer,Description="Somatic score between 0 and 255">
+##FORMAT=<ID=DP4,Number=4,Type=Integer,Description="Number of high-quality ref-forward, ref-reverse, alt-forward and alt-reverse bases">
+##FORMAT=<ID=SDP,Number=1,Type=Integer,Description="Number of reads with deletions spanning this site at tier1">
+##FORMAT=<ID=TU,Number=2,Type=Integer,Description="Number of 'T' alleles used in tiers 1,2">
+##FORMAT=<ID=SS,Number=1,Type=Integer,Description="Variant status relative to non-adjacent Normal,0=wildtype,1=germline,2=somatic,3=LOH,4=post-transcriptional modification,5=unknown">
+##FORMAT=<ID=AD,Number=.,Type=Integer,Description="Depth of reads supporting alleles 0/1/2/3...">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=VAQ,Number=1,Type=Integer,Description="Variant allele quality">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth at this position in the sample">
+##FORMAT=<ID=GQ,Number=.,Type=Integer,Description="Conditional Phred-scaled genotype quality">
+##FORMAT=<ID=AMQ,Number=.,Type=Integer,Description="Average mapping quality for each allele present in the genotype">
+##FORMAT=<ID=SUBDP,Number=1,Type=Integer,Description="Number of reads below tier1 mapping quality threshold aligned across this site">
+##FORMAT=<ID=JGQ,Number=1,Type=Integer,Description="Joint genotype quality (only filled if called in join prior mode)">
+##FORMAT=<ID=FT,Number=1,Type=String,Description="Sample genotype filter">
+##FORMAT=<ID=FDP,Number=1,Type=Integer,Description="Number of basecalls filtered from original read depth for tier1">
+##FORMAT=<ID=IGT,Number=1,Type=String,Description="Genotype when called independently (only filled if called in joint prior mode)">
+##FORMAT=<ID=MQ,Number=1,Type=Integer,Description="Phred style probability score that the variant is novel with respect to the genome's ancestor">
+##FORMAT=<ID=CU,Number=2,Type=Integer,Description="Number of 'C' alleles used in tiers 1,2">
+##FILTER=<ID=PASS,Description="Passed all filters">
+##FILTER=<ID=VarscanHighConfidence,Description="Filter description">
+##FILTER=<ID=BCNoise,Description="Fraction of basecalls filtered at this site in either sample is at or above 0.4">
+##FILTER=<ID=DP,Description="Greater than 3x chromosomal mean depth in Normal sample">
+##FILTER=<ID=FalsePositive,Description="Filter description">
+##FILTER=<ID=SnpFilter,Description="Filter description">
+##FILTER=<ID=SomaticScoreMappingQuality,Description="Filter description">
+##FILTER=<ID=SpanDel,Description="Fraction of reads crossing site with spanning deletions in either sample exceeeds 0.75">
+##FILTER=<ID=QSS_ref,Description="Normal sample is not homozygous ref or ssnv Q-score < 15, ie calls with NT!=ref or QSS_NT < 15">
+##FILTER=<ID=FTPASS,Description="FT value for sample TEST-patient1-somval_tumor2 is one of [PASS,.]">
+##FILTER=<ID=CONTAINS_TAG_ON_TARGET,Description="INFO field for entry contains tag ON_TARGET">
+##FILTER=<ID=IntersectionFailure,Description="Variant callers do not agree on this position">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	TEST-patient1-somval_tumor2	TEST-patient1-somval_tumor2-[Samtools]	TEST-patient1-somval_normal1	TEST-patient1-somval_normal1-[Sniper]	TEST-patient1-somval_tumor2-[Sniper]	TEST-patient1-somval_normal1-[VarscanSomatic]	TEST-patient1-somval_tumor2-[VarscanSomatic]	TEST-patient1-somval_normal1-[Strelka]	TEST-patient1-somval_tumor2-[Strelka]	TEST-patient1-somval_tumor1
+1	511466	.	G	A	.	.	CSQ=A||||intergenic_variant||||||||||||||||||||;ALLFILTERSPASS=0	GT:GQ:DP:BQ:MQ:AD:FA:VAQ:SS:FT:BRCT	1/1:0:1:0,37:32:0,1:1:2:.:IntersectionFailure;SnpFilter	1/1:0:1:0,37:32:0,1:1:2:.:SnpFilter	.:.:.:.:.:.:.:.:.:.:1?511466?G?1?TEST-patient1-somval_tumor1-extlibs?{?=;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?A;1;32.00;37.00;16.00;0;1;0.10;0.01;37.00;0;0.00;100.00;0.95?C;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?G;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?T;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?N;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?}	.	.	.	.	.	.
+1	558077	.	C	T	.	.	CSQ=T|ENSG00000223659|ENST00000452176|Transcript|downstream_gene_variant|||||||||||4680|-1|YES|RP5-857K21.5|Clone_based_vega_gene|||||;ALLFILTERSPASS=0	GT:GQ:DP:BQ:MQ:AD:FA:VAQ:SS:FT:BRCT	0/1:0:1:0,34:46:0,1:1:4:.:IntersectionFailure;SnpFilter	0/1:0:1:0,34:46:0,1:1:4:.:SnpFilter	.:.:.:.:.:.:.:.:.:.:1?558077?C?1?TEST-patient1-somval_tumor1-extlibs?{?=;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?A;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?C;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?G;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?T;1;46.00;34.00;23.00;1;0;0.10;0.01;34.00;1;0.03;100.00;0.03?N;0;0.00;0.00;0.00;0;0;0.00;0.00;0.00;0;0.00;0.00;0.00?}	.	.	.	.	.	.

@@ -4,8 +4,8 @@ experts:
         joinx_version: 1.9
         info_string: 'HOMP_FILTER'
         homopolymer_list_id: homopolymer_list_id
-reporters:
-    reporter_alpha:
+reports:
+    report_alpha:
         interpreters:
             interpreter_x:
                 ix_p1: something

@@ -5,6 +5,7 @@ use warnings;
 
 use version 0.77;
 use Genome;
+use Set::Scalar;
 
 class Genome::Model::Event::Build::ReferenceAlignment::BamQc {
     is  => ['Genome::Model::Event'],
@@ -81,6 +82,7 @@ sub params_for_result {
     my $read_length = $instr_data->sequencing_platform =~ /^solexa$/i ? 0 : 1;
 
     my $error_rate_version = $self->_select_error_rate_version_for_pp($pp);
+    my $should_run_error_rate = $self->_should_run_error_rate_for_pp($pp);
 
     return (
         alignment_result_id => $self->_alignment_result->id,
@@ -89,7 +91,7 @@ sub params_for_result {
         fastqc_version      => Genome::Model::Tools::Fastqc->default_fastqc_version,
         samstat_version     => Genome::Model::Tools::SamStat::Base->default_samstat_version,
         error_rate_version  => $error_rate_version,
-        error_rate          => 1,
+        error_rate          => $should_run_error_rate,
         read_length         => $read_length,
         test_name           => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );
@@ -149,8 +151,21 @@ sub _select_error_rate_version_for_pp {
             $error_rate_version = '1.0a2';
         }
     }
-    
+
     return $error_rate_version;
+}
+
+sub _should_run_error_rate_for_pp {
+    my ($self, $pp) = @_;
+
+    my $aligner_black_listed = ($pp->can('read_aligner_name')
+        and $self->_aligner_blacklist->has($pp->read_aligner_name));
+
+    return $aligner_black_listed ? 0 : 1;
+}
+
+sub _aligner_blacklist {
+    return Set::Scalar->new(qw(bsmap));
 }
 
 sub _bwa_mem_version_object {

@@ -20,10 +20,10 @@ experts:
         plugins_version: 1
         joinx_version: 1.9
     dbsnp:
-        joinx_version: 1.9
+        joinx_version: 1.10
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
         vcf: dbsnp_vcf
-reporters:
+reports:
     'full':
         filters:
             'allele-in-genotype':
@@ -35,6 +35,9 @@ reporters:
                 sample_name: normal
             'contains-tag':
                 info_tag: ON_TARGET
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             'variant-type': {}
@@ -71,6 +74,9 @@ reporters:
                 sample_name: normal
             'contains-tag':
                 info_tag: ON_TARGET
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             vep: {}
@@ -86,3 +92,6 @@ reporters:
                 sample_name: normal
             'contains-tag':
                 info_tag: ON_TARGET
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal

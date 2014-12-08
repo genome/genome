@@ -65,11 +65,12 @@ sub execute {
     my $p = $self->process_class->create(
         input_vcf => $self->input_vcf,
         variant_type => $self->variant_type,
-        reporter_names => [map {$_->name} $self->plan->reporter_plans],
+        report_names => [map {$_->name} $self->plan->report_plans],
     );
     $p->save_plan_file($self->plan_file);
     $p->save_translations_file($self->translations_file);
 
+    $self->status_message("Constructing workflow from plan file (%s)", $self->plan_file);
     $p->run(workflow_xml => $self->dag->get_xml,
         workflow_inputs => $self->workflow_inputs($p->id),
     );
@@ -82,9 +83,6 @@ sub workflow_inputs {
     my $process_id = shift;
     return {
         process_id => $process_id,
-        input_vcf => $self->input_vcf,
-        variant_type => $self->variant_type,
-        plan_json => $self->plan->as_json,
         %{$self->dag->constant_values},
     };
 }
@@ -93,17 +91,17 @@ sub plan {
     my $self = shift;
 
     unless (defined($self->__plan)) {
-        $self->status_message("Constructing plan from file (%s)", $self->plan_file);
+        $self->debug_message("Constructing plan from file (%s)", $self->plan_file);
         my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_file($self->plan_file);
-        $self->status_message("Validating plan...");
+        $self->debug_message("Validating plan...");
         $plan->validate();
-        $self->status_message("Plan is valid.");
+        $self->debug_message("Plan is valid.");
 
-        $self->status_message("Checking for compatibility between translations and plan...");
+        $self->debug_message("Checking for compatibility between translations and plan...");
         $plan->validate_translation_provider($self->provider);
-        $self->status_message("Translations file is compatible with plan.");
+        $self->debug_message("Translations file is compatible with plan.");
 
-        $self->status_message("Translating plan");
+        $self->debug_message("Translating plan");
         $plan->translate($self->provider->translations);
 
         $self->__plan($plan);
@@ -115,7 +113,7 @@ sub provider {
     my $self = shift;
 
     unless (defined($self->__provider)) {
-        $self->status_message("Constructing translation-provider from file (%s)", $self->translations_file);
+        $self->debug_message("Constructing translation-provider from file (%s)", $self->translations_file);
         my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create_from_file($self->translations_file);
 
         $self->__provider($provider);
@@ -127,8 +125,12 @@ sub dag {
     my $self = shift;
 
     unless (defined($self->__dag)) {
-        $self->status_message("Constructing workflow from plan.");
         my $dag = generate_dag($self->plan, $self->variant_type);
+        $dag->declare_constant(
+            input_vcf => $self->input_vcf,
+            variant_type => $self->variant_type,
+            plan_json => $self->plan->as_json,
+        );
         $self->__dag($dag);
     }
     return $self->__dag;

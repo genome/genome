@@ -270,8 +270,8 @@ subtest 'Nested DAG with constant input' => sub {
     dies_ok {$op->declare_constant('non-property' => 'value')}
         'cannot declare constants that are not input properties';
     $op->declare_constant(input => 'foo');
-    dies_ok {$op->declare_constant(input => 'foo')}
-        'cannot declare constants more than once';
+    lives_ok {$op->declare_constant(input => 'bar')}
+        'can declare constants more than once';
 
     $inner->add_operation($op);
 
@@ -317,7 +317,7 @@ subtest 'Nested DAG with constant input' => sub {
   <link fromOperation="input connector" fromProperty="inner.some op.input" toOperation="inner" toProperty="some op.input"/>
 </operation>
 EOS
-    is_deeply($outer->constant_values, {'inner.some op.input' => 'foo'},
+    is_deeply($outer->constant_values, {'inner.some op.input' => 'bar'},
         'found expected constants');
     cmp_xml($outer->get_xml, $expected_xml);
 };

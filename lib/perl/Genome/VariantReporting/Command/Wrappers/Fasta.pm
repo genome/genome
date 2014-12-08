@@ -24,13 +24,13 @@ class Genome::VariantReporting::Command::Wrappers::Fasta {
             calculate_from => [qw(output_directory)],
             calculate => q/File::Spec->join($output_directory, "resources.yaml")/,
         },
-        combined_fasta_file => {
+        merged_fasta_file => {
             calculate_from => [qw(output_directory)],
             calculate => q/File::Spec->join($output_directory, "all.fa")/,
         },
         final_fimo_output_file => {
             calculate_from => [qw(output_directory)],
-            calculate => q/File::Spec->join($output_directory, "combined_fimo_output.txt")/,
+            calculate => q/File::Spec->join($output_directory, "merged_fimo_output.txt")/,
         },
         meme_directory => {
             calculate_from => [qw(output_directory)],
@@ -47,9 +47,9 @@ sub execute {
     my $self = shift;
     $self->generate_translations_file;
     $self->run_reports;
-    $self->combine_snvs_and_indels;
+    $self->merge_snvs_and_indels;
     $self->run_fimo;
-    $self->combine_fimo_output;
+    $self->merge_fimo_output;
 }
 
 sub generate_translations_file {
@@ -88,14 +88,14 @@ sub run_fimo {
     my $self = shift;
     Genome::Sys->create_directory($self->meme_directory);
     my $cmd = "/gscuser/aregier/scratch/meme/meme_4.10.0/meme/bin/fimo --text -oc ".
-        $self->meme_directory." /gscuser/aregier/scratch/tfbs/motifs.meme ".$self->combined_fasta_file." > ".$self->fimo_output_file;
+        $self->meme_directory." /gscuser/aregier/scratch/tfbs/motifs.meme ".$self->merged_fasta_file." > ".$self->fimo_output_file;
     Genome::Sys->shellcmd(
         cmd => $cmd,
         output_files => [$self->fimo_output_file],
     );
 }
 
-sub combine_fimo_output {
+sub merge_fimo_output {
     my $self = shift;
     my $fimo_file = $self->fimo_output_file;
     my $fimo = Genome::Sys->open_file_for_reading($fimo_file);
@@ -144,13 +144,13 @@ sub _run_awk_cmd {
     return $out;
 }
 
-sub combine_snvs_and_indels {
+sub merge_snvs_and_indels {
     my $self = shift;
     my $cmd = "cat ".File::Spec->join($self->report_directory("snvs"), "report1.fa")." ".
-        File::Spec->join($self->report_directory("indels"), "report1.fa"). " > ".$self->combined_fasta_file;
+        File::Spec->join($self->report_directory("indels"), "report1.fa"). " > ".$self->merged_fasta_file;
     Genome::Sys->shellcmd(
         cmd => $cmd,
-        output_files => [$self->combined_fasta_file],
+        output_files => [$self->merged_fasta_file],
     );
 }
 

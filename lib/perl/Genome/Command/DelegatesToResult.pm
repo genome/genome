@@ -86,6 +86,7 @@ sub _fetch_result {
 
     if ($result) {
         $self->debug_message("%s returned result (%s)", $method, $result->id);
+        $self->delete_transients($result);
         $self->output_result($result);
         $self->create_software_result_user($user_label);
         if (defined $self->label) {
@@ -97,6 +98,22 @@ sub _fetch_result {
         return 0;
     }
 
+}
+
+sub delete_transients {
+    my ($self, $result) = @_;
+    for my $transient_property ($result->__meta__->properties(is_transient => 1)) {
+        next if $transient_property->property_name eq '_lock_name';
+
+        my $value = undef;
+        if (defined($transient_property->default_value)) {
+            $value = $transient_property->default_value;
+        }
+
+        my $name = $transient_property->property_name;
+        $result->$name($value);
+    }
+    return;
 }
 
 sub create_software_result_user {

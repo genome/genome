@@ -47,8 +47,7 @@ sub properties_in_plan {
     my @properties;
     for my $property ($class->__meta__->properties(
             implied_by => undef,
-            is_structural => undef,
-            is_transient => 0)) {
+            is_structural => undef)) {
         push @properties, $property;
     }
     return @properties;

@@ -2,7 +2,7 @@ experts:
     __translated_test__:
         __planned__: tumor
         __input__: __input__
-reporters:
+reports:
     __translated_test__:
         interpreters:
             __translated_test__:

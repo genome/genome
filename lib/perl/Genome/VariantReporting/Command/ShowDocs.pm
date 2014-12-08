@@ -13,11 +13,11 @@ my %type_lookup = (
     filters => 'filters',
     interpreters => 'interpreters',
     experts => 'adaptors',
-    reporters => 'reporters',
+    reports => 'reports',
     filter => 'filters',
     interpreter => 'interpreters',
     expert => 'adaptors',
-    reporter => 'reporters',
+    report => 'reports',
 );
 
 class Genome::VariantReporting::Command::ShowDocs {
