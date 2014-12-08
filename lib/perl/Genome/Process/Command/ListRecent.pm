@@ -48,6 +48,7 @@ sub execute{
         $self->days,
     );
     $self->show('id,subclass_name,status,ended_at,metadata_directory');
+    $self->order_by('ended_at');
 
     my $user = $self->get_user();
     $self->filter(join(',',
@@ -60,6 +61,7 @@ sub execute{
 
     $self->status_message("\nActive processes:");
     $self->show('id,subclass_name,status,started_at,metadata_directory');
+    $self->order_by('started_at');
     $self->filter(join(',',
         sprintf('created_by=%s', $user->username),
         "status:New/Scheduled/Running",
