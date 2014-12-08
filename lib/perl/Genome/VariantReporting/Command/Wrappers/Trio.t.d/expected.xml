@@ -10,18 +10,15 @@
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (acmg).contains_header</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (acmg).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (acmg).sort_columns</inputproperty>
-    <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (acmg).split_indicators</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (bed).contains_header</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (bed).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (bed).sort_columns</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (full).contains_header</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (full).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (full).sort_columns</inputproperty>
-    <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (full).split_indicators</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (simple).contains_header</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (simple).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (simple).sort_columns</inputproperty>
-    <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (simple).split_indicators</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Variant Reporting (indels).Generate Report (acmg).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Variant Reporting (indels).Generate Report (acmg).report_name</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-discovery).Variant Reporting (indels).Generate Report (bed).label</inputproperty>
@@ -54,7 +51,6 @@
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-docm).Merge Reports (docm).contains_header</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-docm).Merge Reports (docm).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-docm).Merge Reports (docm).sort_columns</inputproperty>
-    <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-docm).Merge Reports (docm).split_indicators</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-docm).Variant Reporting (indels).Generate Report (bed).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-docm).Variant Reporting (indels).Generate Report (bed).report_name</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-docm).Variant Reporting (indels).Generate Report (docm).label</inputproperty>
@@ -72,18 +68,15 @@
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (acmg).contains_header</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (acmg).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (acmg).sort_columns</inputproperty>
-    <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (acmg).split_indicators</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (bed).contains_header</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (bed).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (bed).sort_columns</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (full).contains_header</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (full).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (full).sort_columns</inputproperty>
-    <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (full).split_indicators</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (simple).contains_header</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (simple).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (simple).sort_columns</inputproperty>
-    <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (simple).split_indicators</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Variant Reporting (indels).Generate Report (acmg).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Variant Reporting (indels).Generate Report (acmg).report_name</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-followup).Variant Reporting (indels).Generate Report (bed).label</inputproperty>
@@ -116,11 +109,9 @@
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (full).contains_header</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (full).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (full).sort_columns</inputproperty>
-    <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (full).split_indicators</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (simple).contains_header</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (simple).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (simple).sort_columns</inputproperty>
-    <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (simple).split_indicators</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Variant Reporting (indels).Generate Report (bed).label</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Variant Reporting (indels).Generate Report (bed).report_name</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Variant Reporting (indels).Generate Report (full).label</inputproperty>
@@ -146,18 +137,15 @@
     <inputproperty>Merge Discovery and Followup Reports (acmg).contains_header</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (acmg).label</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (acmg).sort_columns</inputproperty>
-    <inputproperty>Merge Discovery and Followup Reports (acmg).split_indicators</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (bed).contains_header</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (bed).label</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (bed).sort_columns</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (full).contains_header</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (full).label</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (full).sort_columns</inputproperty>
-    <inputproperty>Merge Discovery and Followup Reports (full).split_indicators</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (simple).contains_header</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (simple).label</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (simple).sort_columns</inputproperty>
-    <inputproperty>Merge Discovery and Followup Reports (simple).split_indicators</inputproperty>
     <inputproperty>process_id</inputproperty>
     <outputproperty>Alignment stats result</outputproperty>
     <outputproperty>Coverage stats result</outputproperty>
@@ -233,18 +221,15 @@
       <inputproperty>Merge Reports (acmg).contains_header</inputproperty>
       <inputproperty>Merge Reports (acmg).label</inputproperty>
       <inputproperty>Merge Reports (acmg).sort_columns</inputproperty>
-      <inputproperty>Merge Reports (acmg).split_indicators</inputproperty>
       <inputproperty>Merge Reports (bed).contains_header</inputproperty>
       <inputproperty>Merge Reports (bed).label</inputproperty>
       <inputproperty>Merge Reports (bed).sort_columns</inputproperty>
       <inputproperty>Merge Reports (full).contains_header</inputproperty>
       <inputproperty>Merge Reports (full).label</inputproperty>
       <inputproperty>Merge Reports (full).sort_columns</inputproperty>
-      <inputproperty>Merge Reports (full).split_indicators</inputproperty>
       <inputproperty>Merge Reports (simple).contains_header</inputproperty>
       <inputproperty>Merge Reports (simple).label</inputproperty>
       <inputproperty>Merge Reports (simple).sort_columns</inputproperty>
-      <inputproperty>Merge Reports (simple).split_indicators</inputproperty>
       <inputproperty>Variant Reporting (indels).Generate Report (acmg).label</inputproperty>
       <inputproperty>Variant Reporting (indels).Generate Report (acmg).report_name</inputproperty>
       <inputproperty>Variant Reporting (indels).Generate Report (bed).label</inputproperty>
@@ -1096,7 +1081,6 @@
     <link fromOperation="input connector" fromProperty="Merge Reports (acmg).contains_header" toOperation="Merge Reports (acmg)" toProperty="contains_header"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (acmg).label" toOperation="Merge Reports (acmg)" toProperty="label"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (acmg).sort_columns" toOperation="Merge Reports (acmg)" toProperty="sort_columns"/>
-    <link fromOperation="input connector" fromProperty="Merge Reports (acmg).split_indicators" toOperation="Merge Reports (acmg)" toProperty="split_indicators"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (acmg)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (bed).contains_header" toOperation="Merge Reports (bed)" toProperty="contains_header"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (bed).label" toOperation="Merge Reports (bed)" toProperty="label"/>
@@ -1105,12 +1089,10 @@
     <link fromOperation="input connector" fromProperty="Merge Reports (full).contains_header" toOperation="Merge Reports (full)" toProperty="contains_header"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (full).label" toOperation="Merge Reports (full)" toProperty="label"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (full).sort_columns" toOperation="Merge Reports (full)" toProperty="sort_columns"/>
-    <link fromOperation="input connector" fromProperty="Merge Reports (full).split_indicators" toOperation="Merge Reports (full)" toProperty="split_indicators"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (full)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (simple).contains_header" toOperation="Merge Reports (simple)" toProperty="contains_header"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (simple).label" toOperation="Merge Reports (simple)" toProperty="label"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (simple).sort_columns" toOperation="Merge Reports (simple)" toProperty="sort_columns"/>
-    <link fromOperation="input connector" fromProperty="Merge Reports (simple).split_indicators" toOperation="Merge Reports (simple)" toProperty="split_indicators"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (simple)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (acmg).label" toOperation="Variant Reporting (indels)" toProperty="Generate Report (acmg).label"/>
     <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (acmg).report_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (acmg).report_name"/>
@@ -1149,7 +1131,6 @@
       <inputproperty>Merge Reports (docm).contains_header</inputproperty>
       <inputproperty>Merge Reports (docm).label</inputproperty>
       <inputproperty>Merge Reports (docm).sort_columns</inputproperty>
-      <inputproperty>Merge Reports (docm).split_indicators</inputproperty>
       <inputproperty>Variant Reporting (indels).Generate Report (bed).label</inputproperty>
       <inputproperty>Variant Reporting (indels).Generate Report (bed).report_name</inputproperty>
       <inputproperty>Variant Reporting (indels).Generate Report (docm).label</inputproperty>
@@ -1461,7 +1442,6 @@
     <link fromOperation="input connector" fromProperty="Merge Reports (docm).contains_header" toOperation="Merge Reports (docm)" toProperty="contains_header"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (docm).label" toOperation="Merge Reports (docm)" toProperty="label"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (docm).sort_columns" toOperation="Merge Reports (docm)" toProperty="sort_columns"/>
-    <link fromOperation="input connector" fromProperty="Merge Reports (docm).split_indicators" toOperation="Merge Reports (docm)" toProperty="split_indicators"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (docm)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (bed).label" toOperation="Variant Reporting (indels)" toProperty="Generate Report (bed).label"/>
     <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (bed).report_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (bed).report_name"/>
@@ -1485,18 +1465,15 @@
       <inputproperty>Merge Reports (acmg).contains_header</inputproperty>
       <inputproperty>Merge Reports (acmg).label</inputproperty>
       <inputproperty>Merge Reports (acmg).sort_columns</inputproperty>
-      <inputproperty>Merge Reports (acmg).split_indicators</inputproperty>
       <inputproperty>Merge Reports (bed).contains_header</inputproperty>
       <inputproperty>Merge Reports (bed).label</inputproperty>
       <inputproperty>Merge Reports (bed).sort_columns</inputproperty>
       <inputproperty>Merge Reports (full).contains_header</inputproperty>
       <inputproperty>Merge Reports (full).label</inputproperty>
       <inputproperty>Merge Reports (full).sort_columns</inputproperty>
-      <inputproperty>Merge Reports (full).split_indicators</inputproperty>
       <inputproperty>Merge Reports (simple).contains_header</inputproperty>
       <inputproperty>Merge Reports (simple).label</inputproperty>
       <inputproperty>Merge Reports (simple).sort_columns</inputproperty>
-      <inputproperty>Merge Reports (simple).split_indicators</inputproperty>
       <inputproperty>Variant Reporting (indels).Generate Report (acmg).label</inputproperty>
       <inputproperty>Variant Reporting (indels).Generate Report (acmg).report_name</inputproperty>
       <inputproperty>Variant Reporting (indels).Generate Report (bed).label</inputproperty>
@@ -2348,7 +2325,6 @@
     <link fromOperation="input connector" fromProperty="Merge Reports (acmg).contains_header" toOperation="Merge Reports (acmg)" toProperty="contains_header"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (acmg).label" toOperation="Merge Reports (acmg)" toProperty="label"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (acmg).sort_columns" toOperation="Merge Reports (acmg)" toProperty="sort_columns"/>
-    <link fromOperation="input connector" fromProperty="Merge Reports (acmg).split_indicators" toOperation="Merge Reports (acmg)" toProperty="split_indicators"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (acmg)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (bed).contains_header" toOperation="Merge Reports (bed)" toProperty="contains_header"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (bed).label" toOperation="Merge Reports (bed)" toProperty="label"/>
@@ -2357,12 +2333,10 @@
     <link fromOperation="input connector" fromProperty="Merge Reports (full).contains_header" toOperation="Merge Reports (full)" toProperty="contains_header"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (full).label" toOperation="Merge Reports (full)" toProperty="label"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (full).sort_columns" toOperation="Merge Reports (full)" toProperty="sort_columns"/>
-    <link fromOperation="input connector" fromProperty="Merge Reports (full).split_indicators" toOperation="Merge Reports (full)" toProperty="split_indicators"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (full)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (simple).contains_header" toOperation="Merge Reports (simple)" toProperty="contains_header"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (simple).label" toOperation="Merge Reports (simple)" toProperty="label"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (simple).sort_columns" toOperation="Merge Reports (simple)" toProperty="sort_columns"/>
-    <link fromOperation="input connector" fromProperty="Merge Reports (simple).split_indicators" toOperation="Merge Reports (simple)" toProperty="split_indicators"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (simple)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (acmg).label" toOperation="Variant Reporting (indels)" toProperty="Generate Report (acmg).label"/>
     <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (acmg).report_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (acmg).report_name"/>
@@ -2401,11 +2375,9 @@
       <inputproperty>Merge Reports (full).contains_header</inputproperty>
       <inputproperty>Merge Reports (full).label</inputproperty>
       <inputproperty>Merge Reports (full).sort_columns</inputproperty>
-      <inputproperty>Merge Reports (full).split_indicators</inputproperty>
       <inputproperty>Merge Reports (simple).contains_header</inputproperty>
       <inputproperty>Merge Reports (simple).label</inputproperty>
       <inputproperty>Merge Reports (simple).sort_columns</inputproperty>
-      <inputproperty>Merge Reports (simple).split_indicators</inputproperty>
       <inputproperty>Variant Reporting (indels).Generate Report (bed).label</inputproperty>
       <inputproperty>Variant Reporting (indels).Generate Report (bed).report_name</inputproperty>
       <inputproperty>Variant Reporting (indels).Generate Report (full).label</inputproperty>
@@ -3098,12 +3070,10 @@
     <link fromOperation="input connector" fromProperty="Merge Reports (full).contains_header" toOperation="Merge Reports (full)" toProperty="contains_header"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (full).label" toOperation="Merge Reports (full)" toProperty="label"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (full).sort_columns" toOperation="Merge Reports (full)" toProperty="sort_columns"/>
-    <link fromOperation="input connector" fromProperty="Merge Reports (full).split_indicators" toOperation="Merge Reports (full)" toProperty="split_indicators"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (full)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (simple).contains_header" toOperation="Merge Reports (simple)" toProperty="contains_header"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (simple).label" toOperation="Merge Reports (simple)" toProperty="label"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (simple).sort_columns" toOperation="Merge Reports (simple)" toProperty="sort_columns"/>
-    <link fromOperation="input connector" fromProperty="Merge Reports (simple).split_indicators" toOperation="Merge Reports (simple)" toProperty="split_indicators"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (simple)" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (bed).label" toOperation="Variant Reporting (indels)" toProperty="Generate Report (bed).label"/>
     <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (bed).report_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (bed).report_name"/>
@@ -3202,18 +3172,15 @@
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (acmg).contains_header" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (acmg).contains_header"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (acmg).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (acmg).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (acmg).sort_columns" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (acmg).sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (acmg).split_indicators" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (acmg).split_indicators"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (bed).contains_header" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (bed).contains_header"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (bed).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (bed).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (bed).sort_columns" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (bed).sort_columns"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (full).contains_header" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (full).contains_header"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (full).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (full).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (full).sort_columns" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (full).sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (full).split_indicators" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (full).split_indicators"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (simple).contains_header" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (simple).contains_header"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (simple).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (simple).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (simple).sort_columns" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (simple).sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Merge Reports (simple).split_indicators" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Merge Reports (simple).split_indicators"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Variant Reporting (indels).Generate Report (acmg).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Variant Reporting (indels).Generate Report (acmg).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Variant Reporting (indels).Generate Report (acmg).report_name" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Variant Reporting (indels).Generate Report (acmg).report_name"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-discovery).Variant Reporting (indels).Generate Report (bed).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" toProperty="Variant Reporting (indels).Generate Report (bed).label"/>
@@ -3247,7 +3214,6 @@
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-docm).Merge Reports (docm).contains_header" toOperation="Create Snvs, Indels, and Merged Reports (test roi-docm)" toProperty="Merge Reports (docm).contains_header"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-docm).Merge Reports (docm).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-docm)" toProperty="Merge Reports (docm).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-docm).Merge Reports (docm).sort_columns" toOperation="Create Snvs, Indels, and Merged Reports (test roi-docm)" toProperty="Merge Reports (docm).sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-docm).Merge Reports (docm).split_indicators" toOperation="Create Snvs, Indels, and Merged Reports (test roi-docm)" toProperty="Merge Reports (docm).split_indicators"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-docm).Variant Reporting (indels).Generate Report (bed).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-docm)" toProperty="Variant Reporting (indels).Generate Report (bed).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-docm).Variant Reporting (indels).Generate Report (bed).report_name" toOperation="Create Snvs, Indels, and Merged Reports (test roi-docm)" toProperty="Variant Reporting (indels).Generate Report (bed).report_name"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-docm).Variant Reporting (indels).Generate Report (docm).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-docm)" toProperty="Variant Reporting (indels).Generate Report (docm).label"/>
@@ -3266,18 +3232,15 @@
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (acmg).contains_header" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (acmg).contains_header"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (acmg).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (acmg).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (acmg).sort_columns" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (acmg).sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (acmg).split_indicators" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (acmg).split_indicators"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (bed).contains_header" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (bed).contains_header"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (bed).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (bed).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (bed).sort_columns" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (bed).sort_columns"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (full).contains_header" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (full).contains_header"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (full).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (full).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (full).sort_columns" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (full).sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (full).split_indicators" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (full).split_indicators"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (simple).contains_header" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (simple).contains_header"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (simple).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (simple).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (simple).sort_columns" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (simple).sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Merge Reports (simple).split_indicators" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Merge Reports (simple).split_indicators"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Variant Reporting (indels).Generate Report (acmg).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Variant Reporting (indels).Generate Report (acmg).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Variant Reporting (indels).Generate Report (acmg).report_name" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Variant Reporting (indels).Generate Report (acmg).report_name"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-followup).Variant Reporting (indels).Generate Report (bed).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" toProperty="Variant Reporting (indels).Generate Report (bed).label"/>
@@ -3311,11 +3274,9 @@
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (full).contains_header" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="Merge Reports (full).contains_header"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (full).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="Merge Reports (full).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (full).sort_columns" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="Merge Reports (full).sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (full).split_indicators" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="Merge Reports (full).split_indicators"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (simple).contains_header" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="Merge Reports (simple).contains_header"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (simple).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="Merge Reports (simple).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (simple).sort_columns" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="Merge Reports (simple).sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-germline).Merge Reports (simple).split_indicators" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="Merge Reports (simple).split_indicators"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-germline).Variant Reporting (indels).Generate Report (bed).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="Variant Reporting (indels).Generate Report (bed).label"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-germline).Variant Reporting (indels).Generate Report (bed).report_name" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="Variant Reporting (indels).Generate Report (bed).report_name"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-germline).Variant Reporting (indels).Generate Report (full).label" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="Variant Reporting (indels).Generate Report (full).label"/>
@@ -3342,7 +3303,6 @@
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (acmg).contains_header" toOperation="Merge Discovery and Followup Reports (acmg)" toProperty="contains_header"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (acmg).label" toOperation="Merge Discovery and Followup Reports (acmg)" toProperty="label"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (acmg).sort_columns" toOperation="Merge Discovery and Followup Reports (acmg)" toProperty="sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (acmg).split_indicators" toOperation="Merge Discovery and Followup Reports (acmg)" toProperty="split_indicators"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Discovery and Followup Reports (acmg)" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (bed).contains_header" toOperation="Merge Discovery and Followup Reports (bed)" toProperty="contains_header"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (bed).label" toOperation="Merge Discovery and Followup Reports (bed)" toProperty="label"/>
@@ -3351,11 +3311,9 @@
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (full).contains_header" toOperation="Merge Discovery and Followup Reports (full)" toProperty="contains_header"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (full).label" toOperation="Merge Discovery and Followup Reports (full)" toProperty="label"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (full).sort_columns" toOperation="Merge Discovery and Followup Reports (full)" toProperty="sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (full).split_indicators" toOperation="Merge Discovery and Followup Reports (full)" toProperty="split_indicators"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Discovery and Followup Reports (full)" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (simple).contains_header" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="contains_header"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (simple).label" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="label"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (simple).sort_columns" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="sort_columns"/>
-  <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (simple).split_indicators" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="split_indicators"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="process_id"/>
 </operation>

@@ -40,7 +40,6 @@ sub merge_parameters {
     return {
         sort_columns => [qw(chromosome_name start stop reference variant)],
         contains_header => 1,
-        split_indicators => [qw(per_library)],
     };
 }
 

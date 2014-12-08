@@ -9,6 +9,7 @@ use File::Basename qw(dirname);
 use File::Spec;
 use Genome::File::Tsv;
 use YAML qw();
+use List::MoreUtils qw(uniq);
 
 class Genome::VariantReporting::Command::Wrappers::ModelPair {
     has => {
@@ -167,12 +168,27 @@ sub generate_sample_legend_file {
     }
 }
 
+sub get_library_names {
+    my $self = shift;
+
+    my @names;
+    my @instrument_data = $self->discovery->instrument_data;
+    if (defined $self->followup) {
+        push @instrument_data, $self->followup->instrument_data;
+    }
+    for my $instrument_data (@instrument_data) {
+        push @names, $instrument_data->library->name;
+    }
+    return [uniq @names];
+}
+
 sub generate_translations_file {
     my $self = shift;
 
     my $translations = $self->get_translations;
 
     $translations->{aligned_bam_result_id} = $self->get_aligned_bams;
+    $translations->{library_names} = $self->get_library_names;
 
     my %feature_list_ids;
     my $on_target_feature_list = Genome::FeatureList->get(name => $self->discovery->region_of_interest_set->name);

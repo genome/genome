@@ -82,10 +82,10 @@ sub single_vaf_headers {
 }
 
 sub per_library_vaf_headers {
-    my $sample_names = shift;
-    return Genome::VariantReporting::Framework::Component::WithManySampleNames->create_sample_specific_field_names(
+    my $library_names = shift;
+    return Genome::VariantReporting::Framework::Component::WithManyLibraryNames->create_library_specific_field_names(
         [per_library_vaf_fields()],
-        $sample_names
+        $library_names
     );
 }
 

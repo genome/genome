@@ -64,6 +64,7 @@ reports:
         params:
             sample_names:
                 - normal
+            library_names: [library_names]
     'simple':
         filters:
             'allele-in-genotype':
