@@ -174,8 +174,8 @@ sub get_library_names {
     if (defined $self->followup) {
         push @instrument_data, $self->followup->instrument_data;
     }
-    my @libraries = Genome::Library->get([map $_->library_id, @instrument_data]);
-    return map $_->name, @libraries;
+    my @libraries = map {$_->library} @instrument_data;
+    return [map {$_->name} @libraries];
 }
 
 sub generate_translations_file {
