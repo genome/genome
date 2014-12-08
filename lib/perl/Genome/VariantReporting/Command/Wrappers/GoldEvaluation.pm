@@ -39,6 +39,7 @@ sub execute {
             discovery => $model->last_succeeded_build,
             plan_file_basename => 'gold_germline_report_TYPE.yaml',
             gold_sample_name => $self->gold_sample_name,
+            label => 'gold_germline',
         );
     } else {
         #Somatic
@@ -46,6 +47,7 @@ sub execute {
             discovery => $model->last_succeeded_build,
             plan_file_basename => 'gold_somatic_report_TYPE.yaml',
             gold_sample_name => $self->gold_sample_name,
+            label => 'gold_somatic',
         );
     }
     for my $variant_type (qw(snvs indels)) {
