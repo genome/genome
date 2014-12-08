@@ -26,7 +26,6 @@ sub execute {
         # Germline
         $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
             discovery => $model->last_succeeded_build,
-            plan_file_basename => 'germline_report_TYPE.yaml',
             label => 'germline',
         );
     } else {
