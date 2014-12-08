@@ -111,4 +111,30 @@ sub symlink_results {
     return 1;
 }
 
+sub is_cle_verified {
+    my $self = shift;
+
+    return 0 unless $self->SUPER::is_cle_verified(@_);
+
+    for my $result ($self->get_cle_input_results) {
+        unless($self->result_is_on_cle_disk_group($result)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+sub get_cle_input_results {
+    my $self = shift;
+
+    my @results;
+    for my $build ($self->builds, $self->coverage_builds) {
+        push @results, $build->get_detailed_vcf_result('snvs');
+        push @results, $build->get_detailed_vcf_result('indels');
+        push @results, $build->merged_alignment_result;
+        push @results, $build->control_merged_alignment_result;
+    }
+    return @results;
+}
+
 1;

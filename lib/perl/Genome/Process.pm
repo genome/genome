@@ -10,6 +10,7 @@ use Scalar::Util qw();
 use Try::Tiny qw(try catch);
 use JSON qw(to_json);
 use List::MoreUtils qw(uniq);
+use Genome::Disk::Group::Validate::GenomeDiskGroups;
 
 class Genome::Process {
     is => [
@@ -606,6 +607,27 @@ sub result_with_label {
     } else {
         return $results[0];
     }
+}
+
+sub is_cle_verified {
+    my $self = shift;
+
+    for my $result ($self->unique_results) {
+        unless ($self->result_is_on_cle_disk_group($result)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+sub result_is_on_cle_disk_group {
+    my $self = shift;
+    my $result = shift;
+
+    my $allocation = $result->disk_allocation;
+    my $disk_group_name = $allocation->disk_group_name;
+
+    return Genome::Disk::Group::Validate::GenomeDiskGroups::is_cle_disk_group_name($disk_group_name);
 }
 
 
