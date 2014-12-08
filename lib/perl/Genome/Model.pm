@@ -676,7 +676,6 @@ sub _lock {
     my $self = shift;
     my $model_id = $self->id;
     if (!($ENV{UR_DBI_NO_COMMIT}) and !($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME})) {
-        # my $lock_var = $ENV{GENOME_LOCK_DIR} . '/genome_config_command_configure-queued-instrument-data/lock';
         my $lock_var = $ENV{GENOME_LOCK_DIR} . '/build_requested/' . $model_id;
         my $lock = Genome::Sys->lock_resource(resource_lock => $lock_var, max_try => 3);
 
