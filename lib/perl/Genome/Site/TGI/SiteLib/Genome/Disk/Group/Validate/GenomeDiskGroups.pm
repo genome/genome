@@ -38,7 +38,6 @@ sub is_cle_disk_group_name {
 
 sub cle_disk_group_names {
     return (
-        'cle_solexa_sequence',
         'cle_alignments',
         'cle_genome_models',
     );
