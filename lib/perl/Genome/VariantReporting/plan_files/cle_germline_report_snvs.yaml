@@ -21,7 +21,7 @@ experts:
         plugins_version: 1
         joinx_version: 1.9
     dbsnp:
-        joinx_version: 1.9
+        joinx_version: 1.10
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
         vcf: dbsnp_vcf
 reports:
