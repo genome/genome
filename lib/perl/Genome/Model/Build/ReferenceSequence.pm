@@ -887,7 +887,7 @@ sub contains {
 
     return 1 if $self eq $other_refbuild;
 
-    if(($self->coordinates_from // '') eq $other_refbuild or $self->is_derived_from($other_refbuild)) {
+    if(($self->coordinates_from || '') eq $other_refbuild or $self->is_derived_from($other_refbuild)) {
         return $self->is_superset_of($other_refbuild);
     }
 
