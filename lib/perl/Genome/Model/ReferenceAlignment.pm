@@ -557,4 +557,19 @@ sub default_model_name {
     }
 }
 
+sub experimental_subject {
+    my $self = shift;
+
+    my $subject = $self->subject;
+
+    return $subject if $subject->isa('Genome::Sample');
+    return;
+}
+
+sub control_subject {
+    my $self = shift;
+
+    return; #reference alignment has no control subject
+}
+
 1;
