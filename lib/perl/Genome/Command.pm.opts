@@ -37056,8 +37056,6 @@ $Genome::Command::OPTS_SPEC = [
       [
         'model=s',
         undef,
-        'output-directory=s',
-        undef,
         'help!',
         undef
       ],
@@ -37123,8 +37121,6 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'model=s',
         undef,
-        'output-directory=s',
-        undef,
         'snvs-input-vcf=s',
         undef,
         'help!',
@@ -37148,6 +37144,61 @@ $Genome::Command::OPTS_SPEC = [
       ],
       'component-name=s',
       'files',
+      'help!',
+      undef
+    ],
+    '>list',
+    [
+      '>create-report',
+      [
+        'show=s',
+        'files',
+        'style=s',
+        [
+          'text',
+          'csv',
+          'tsv',
+          'pretty',
+          'html',
+          'xml',
+          'newtext'
+        ],
+        'csv-delimiter=s',
+        'files',
+        'noheaders!',
+        undef,
+        'order-by=s',
+        'files',
+        'filter=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>trio',
+      [
+        'show=s',
+        'files',
+        'style=s',
+        [
+          'text',
+          'csv',
+          'tsv',
+          'pretty',
+          'html',
+          'xml',
+          'newtext'
+        ],
+        'csv-delimiter=s',
+        'files',
+        'noheaders!',
+        undef,
+        'order-by=s',
+        'files',
+        'filter=s',
+        'files',
+        'help!',
+        undef
+      ],
       'help!',
       undef
     ],
@@ -37201,11 +37252,43 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>verify-for-cle',
+    [
+      'process=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>symlink-results',
     [
       'process=s',
       undef,
       'destination=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>list-recent',
+    [
+      'style=s',
+      [
+        'text',
+        'csv',
+        'tsv',
+        'pretty',
+        'html',
+        'xml',
+        'newtext'
+      ],
+      'csv-delimiter=s',
+      'files',
+      'noheaders!',
+      undef,
+      'order-by=s',
+      'files',
+      'user=s',
+      undef,
+      'days=s',
       undef,
       'help!',
       undef
