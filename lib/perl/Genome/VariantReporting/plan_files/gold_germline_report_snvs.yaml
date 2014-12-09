@@ -114,7 +114,7 @@ reports:
                 max_maf: 0.5
                 population_code: All
             'max-af':
-                max_af: 0.5
+                max_af: 0.005
             'min-coverage':
                 min_coverage: 20
                 sample_name: normal
