@@ -6,6 +6,7 @@ use Carp qw/confess/;
 use Data::Dumper;
 use File::Basename;
 use File::Copy qw/move/;
+use Path::Class;
 use Genome;
 use Getopt::Long;
 
@@ -180,9 +181,30 @@ sub _run_aligner {
             "run of bwa mem in the aligner log.");
     }
 
+    # clean up the FASTQs in /tmp
+    $self->debug_message("bwa mem command finished");
+    $self->debug_message("Removing input FASTQs in tmp scratch space");
+    $self->_remove_input_fastqs(@input_paths);
+
     # Sort all_sequences.sam.
     $self->debug_message("Resorting all_sequences.sam by coordinate.");
     $self->_sort_sam($out_sam);
+
+    return 1;
+}
+
+sub _remove_input_fastqs {
+    my $self = shift;
+    my @input_fastqs = @_;
+    my @files = map { Path::Class::File->new($_) } @input_fastqs;
+    my @dirs = map { $_->dir } @files;
+    my @uniq_dirs = values %{ { map{ $_->stringify => $_  } @dirs } };
+
+    for my $d (@uniq_dirs) {
+        $self->debug_message("Removing FASTQ dir: $d");
+        print("Removing FASTQ dir: $d", "\n");
+        $d->rmtree();
+    }
 
     return 1;
 }
