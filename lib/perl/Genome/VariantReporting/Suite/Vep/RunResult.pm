@@ -214,6 +214,7 @@ sub _merge_annotations {
     Genome::Model::Tools::Joinx::VcfMerge->execute(
         input_files => [$self->sorted_input_vcf, $self->sorted_vep_output],
         output_file => $self->final_vcf_file,
+        use_version => $self->joinx_version,
         merge_strategy_file => $self->joinx_merge_strategy_file,
         exact_pos => 1,
     );
