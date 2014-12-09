@@ -66,7 +66,15 @@ sub params_for_result {
 
     unless ($self->_alignment_result) {
         my $instrument_data_input = $self->instrument_data_input;
-        my ($align_result) = $build->alignment_results_for_instrument_data($instrument_data_input->value);
+
+        my %segment_info;
+        if(defined $self->instrument_data_segment_id) {
+            for my $key (qw(instrument_data_segment_id instrument_data_segment_type)) {
+                $segment_info{$key} = $self->$key;
+            }
+        }
+
+        my ($align_result) = $pp->results_for_instrument_data_input($instrument_data_input, %segment_info);
 
         unless ($align_result) {
             die $self->error_message('No alignment result found for build: '. $build->id);
