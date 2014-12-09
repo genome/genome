@@ -39,6 +39,11 @@ class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
             default_value => 0,
             doc => "Create the final tar.gz and md5 files",
         },
+        bgzip_vcfs => {
+            is => "Boolean",
+            default_value => 1,
+            doc => "Gzip vcf files. This happens before archiving if create_archive is also set.",
+        },
         cghub_id_file => {
             is => "Text",
             doc => "A tab-delimited file that maps bam files (column header: BAM_path) to CGHub ids (column header: CGHub_ID).",
@@ -137,9 +142,11 @@ sub execute {
             }
         }
 
-        for my $vcf(File::Spec->join($vcf_archive_dir, $snvs_vcf), File::Spec->join($vcf_archive_dir, $indels_vcf)) {
-            Genome::Sys->gzip_file($vcf, "$vcf.gz");
-            unlink $vcf;
+        if ($self->bgzip_vcfs) {
+            for my $vcf(File::Spec->join($vcf_archive_dir, $snvs_vcf), File::Spec->join($vcf_archive_dir, $indels_vcf)) {
+                Genome::Sys->gzip_file($vcf, "$vcf.gz");
+                unlink $vcf;
+            }
         }
     }
 
