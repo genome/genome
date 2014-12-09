@@ -25,7 +25,7 @@ sub help_synopsis {
 }
 
 sub help_detail {
-    q(This tool appends allele frequency information from the Exome Variant Server to the end of an annotation file as three extra columns. Missing or undefined values are denoted by '-'.);
+    q(This tool appends allele frequency information from the Exome Variant Server to the end of an annotation file as three extra columns. (EA_MAF = frequency in European American population, AA_MAF = frequency in African-American population, All_MAF = frequency in all individuals).  Missing or undefined values are denoted by '-'.);
 }
 
 sub execute {
