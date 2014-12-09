@@ -50,7 +50,7 @@ my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
 );
 ok($cmd, "Command created");
 ok($cmd->execute, "Command executed");
-for my $outfile (qw(test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.snv.1.vcf test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.indel.1.vcf test_archive.Level_2.1.0.0/MANIFEST.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.idf.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.sdrf.txt)) {
+for my $outfile (qw(test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.snv.1.vcf.gz test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.indel.1.vcf.gz test_archive.Level_2.1.0.0/MANIFEST.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.idf.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.sdrf.txt)) {
     compare_ok("$archive_output_dir/$outfile", "$base_dir/archive_test/$outfile", replace => [['PP_ID' => $test_somatic_build->processing_profile->id], ['PP_REFALIGN_ID' => $test_somatic_build->normal_build->processing_profile->id]],name => "file $outfile diffed correctly");
 }
 
