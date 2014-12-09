@@ -16,6 +16,7 @@ use Data::Dumper;
 require Digest::MD5;
 require Genome::Utility::Test;
 use Test::More;
+use Test::Exception;
 
 use_ok('Genome::InstrumentData::Command::Import::Manager') or die;
 
@@ -169,8 +170,7 @@ $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $test_dir.'/invalid-format.tsv',
 );
 ok($manager, 'create manager');
-ok(!$manager->execute, 'execute failed for invalid format file');
-like($manager->error_message, qr/Property 'source_files_tsv': Expected 3 values, got 4 on line 3 in/, 'correct error');
+throws_ok(sub {$manager->execute}, qr/Expected 3 values, got 4 on line 3 in/, 'execute failed for invalid format');
 
 # fail - source file does not exist
 $manager = Genome::InstrumentData::Command::Import::Manager->create(
