@@ -125,7 +125,9 @@ sub validate_bed_content_line {
         my $reference = $self->reference;
 
         my $chromosome_list = $reference->chromosome_array_ref;
-        $self->{_chromosome_hash} = +{ map {; $_ => 1 } @$chromosome_list };
+        for my $chr (@$chromosome_list) {
+            $self->{_chromosome_hash}{$chr} = 1;
+        }
     }
     my $chromosomes = $self->{_chromosome_hash};
 
