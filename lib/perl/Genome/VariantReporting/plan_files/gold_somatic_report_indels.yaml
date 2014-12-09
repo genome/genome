@@ -29,10 +29,6 @@ experts:
         max_length: 2
         info_string: 'HOMP_FILTER'
         homopolymer_list_id: homopolymer_list_id
-    nhlbi:
-        joinx_version: 1.10
-        info_string: 'AAC:PP:CDP:PH:EA_GTC:AA_GTC:MAF'
-        vcf: nhlbi_vcf
 reports:
     'full':
         filters:
@@ -76,62 +72,6 @@ reports:
             sample_names:
                 - discovery_tumor
                 - normal
-    'acmg':
-        filters:
-            'allele-in-genotype':
-                sample_name: gold
-            'contains-tag':
-                info_tag: ON_TARGET
-            homopolymer:
-                info_tag: HOMP_FILTER
-            gene:
-                gene_set: acmg
-            'annotation-category':
-                category_list:
-                    - splice_site
-                    - non_synonymous
-            'max-maf':
-                max_maf: 0.5
-                population_code: All
-            'max-af':
-                max_af: 0.5
-            'min-coverage.tumor':
-                min_coverage: 20
-                sample_name: discovery_tumor
-            'min-coverage.normal':
-                min_coverage: 20
-                sample_name: normal
-        interpreters:
-            position: {}
-            'variant-type': {}
-            vep: {}
-            'info-tags': {}
-            rsid: {}
-            caf: {}
-            nhlbi: {}
-            'min-coverage':
-                min_coverage: 10
-                sample_name: discovery_tumor
-            'min-coverage-observed':
-                sample_names:
-                    - discovery_tumor
-                    - normal
-            'max-vaf-observed':
-                tumor_sample_names:
-                    - discovery_tumor
-                normal_sample_names:
-                    - normal
-            'variant-callers':
-                sample_name: discovery_tumor
-            'many-samples-vaf':
-                sample_names:
-                    - discovery_tumor
-                    - normal
-        params:
-            sample_names:
-                - discovery_tumor
-                - normal
-            library_names: [library_names]
     'simple':
         filters:
             'allele-in-genotype':
