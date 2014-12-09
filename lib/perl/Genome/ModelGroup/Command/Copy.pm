@@ -132,7 +132,7 @@ $DB::single = 1;
     my @model_changes;
     my @param_changes;
     my @input_changes;
-    my $rx = UR::BoolExpr->_old_filter_regex_for_string();
+    my $rx = '^\s*([\w\.\-]+)\s*(\@|\=|!=|=|\>|\<|~|!~|!\:|\:|\blike\b|\bbetween\b|\bin\b)\s*[\'"]?([^\'"]*)[\'"]?\s*$';
     my $meta = $from_models[0]->__meta__;
     my $changes_pp = 0;
     for my $change (@changes) {
