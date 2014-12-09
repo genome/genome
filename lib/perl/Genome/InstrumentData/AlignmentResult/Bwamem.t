@@ -24,25 +24,12 @@ sub test_input_fastq_removal {
     diag("Creating test file system in : $tmpdir");
     my ($root, @files) = create_test_file_system($tmpdir);
 
-    my $rv = check_file_system_existence($root);
-    is($rv, 1, "'$root' exists on file system");
+    is(-d "$root", 1, "'$root' exists on file system");
 
     my $class = 'Genome::InstrumentData::AlignmentResult::Bwamem';
     ok($class->_remove_input_fastqs(@files), "removing fastqs");
 
-    $rv = check_file_system_existence($root);
-    is($rv, 0, "'$root' no longer exists on file system");
-}
-
-sub check_file_system_existence {
-    my ($dir) = @_;
-
-    unless (-e $dir) {
-        diag("'$dir' path is missing");
-        return 0;
-    }
-
-    return 1;
+    is(-d "$root", undef, "'$root' no longer exists on file system");
 }
 
 sub create_test_file_system {
