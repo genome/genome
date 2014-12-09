@@ -6,13 +6,8 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject::Command::AddConfigFile {
-    is => 'Command::V2',
+    is => 'Genome::Config::AnalysisProject::Command::Base',
     has_input => [
-       analysis_project  => {
-            is                  => 'Genome::Config::AnalysisProject',
-            doc                 => 'the analysis project to add the config file to',
-            shell_args_position => 1,
-        },
        config_file  => {
             is                  => 'Path',
             doc                 => 'path to the config file',
@@ -27,6 +22,11 @@ class Genome::Config::AnalysisProject::Command::AddConfigFile {
             is => 'Boolean',
             default_value => 0,
             doc => 'Reprocess any existing instrument data with the new config',
+        },
+    ],
+    has_transient => [
+        valid_statuses => {
+            value => ["Pending", "Hold", "In Progress", "Template"],
         },
     ],
 };
@@ -69,20 +69,6 @@ sub _mark_instrument_data_bridges {
         $bridge->status('new');
     }
     return 1;
-}
-
-sub __errors__ {
-    my $self = shift;
-    my @errors = $self->SUPER::__errors__(@_);
-    my $status = $self->analysis_project->status;
-    unless(grep{$_ eq $status} ("Pending", "Hold", "In Progress", "Template")){
-        push @errors, UR::Object::Tag->create(
-            type => 'error',
-            properties => ['analysis_project'],
-            desc => "Can't add config file to analysis project with status: $status"
-        );
-    }
-    return @errors;
 }
 
 1;

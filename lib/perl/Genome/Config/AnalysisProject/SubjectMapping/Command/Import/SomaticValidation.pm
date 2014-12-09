@@ -6,18 +6,18 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject::SubjectMapping::Command::Import::SomaticValidation {
-    is => 'Command::V2',
+    is => 'Genome::Config::AnalysisProject::Command::Base',
     has_input => [
-        analysis_project =>  {
-            is => 'Genome::Config::AnalysisProject',
-            shell_args_position => 1,
-            doc => 'The AnalysisProject to associate these experimental pairings with',
-        },
         file_path => {
             is => 'Text',
             shell_args_position => 2,
             doc => 'path to a newline-delimited, tab-separated list of samples, variant lists, and tags (See description section of --help for details.)'
         }
+    ],
+    has_transient => [
+        valid_statuses => {
+            value => ["Pending", "Hold", "In Progress"],
+        },
     ],
 };
 
@@ -127,20 +127,6 @@ sub _link_to_tag {
     die($self->error_message("Unable to find a tag from identifier: %s", $tag_string)) unless $tag;
 
     $tag->add_subject_mapping($mapping);
-}
-
-sub __errors__ {
-    my $self = shift;
-    my @errors = $self->SUPER::__errors__(@_);
-    my $status = $self->analysis_project->status;
-    unless(grep{$_ eq $status} ("Pending", "Hold", "In Progress")){
-        push @errors, UR::Object::Tag->create(
-            type => 'error',
-            properties => ['analysis_project'],
-            desc => "Can't assign subject mappings to analysis project with status: $status"
-        );
-    }
-    return @errors;
 }
 
 1;
