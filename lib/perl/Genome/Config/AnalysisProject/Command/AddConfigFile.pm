@@ -79,7 +79,7 @@ sub __errors__ {
         push @errors, UR::Object::Tag->create(
             type => 'error',
             properties => ['analysis_project'],
-            desc => "Can't add config file to analysis project with status: $status" 
+            desc => "Can't add config file to analysis project with status: $status"
         );
     }
     return @errors;

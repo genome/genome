@@ -69,7 +69,7 @@ sub __errors__ {
         push @errors, UR::Object::Tag->create(
             type => 'error',
             properties => ['analysis_project'],
-            desc => "Can't assign to analysis project with status: $status" 
+            desc => "Can't assign to analysis project with status: $status"
         );
     }
     return @errors;
