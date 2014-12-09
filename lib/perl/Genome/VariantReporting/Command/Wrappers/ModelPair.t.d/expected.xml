@@ -1,9 +1,6 @@
 <?xml version="1.0"?>
 <operation name="Create Snvs, Indels, and Merged Reports (test_roi-test)">
   <operationtype typeClass="Workflow::OperationType::Model">
-    <inputproperty>Merge Reports (acmg).contains_header</inputproperty>
-    <inputproperty>Merge Reports (acmg).label</inputproperty>
-    <inputproperty>Merge Reports (acmg).sort_columns</inputproperty>
     <inputproperty>Merge Reports (bed).contains_header</inputproperty>
     <inputproperty>Merge Reports (bed).label</inputproperty>
     <inputproperty>Merge Reports (bed).sort_columns</inputproperty>
@@ -13,8 +10,6 @@
     <inputproperty>Merge Reports (simple).contains_header</inputproperty>
     <inputproperty>Merge Reports (simple).label</inputproperty>
     <inputproperty>Merge Reports (simple).sort_columns</inputproperty>
-    <inputproperty>Variant Reporting (indels).Generate Report (acmg).label</inputproperty>
-    <inputproperty>Variant Reporting (indels).Generate Report (acmg).report_name</inputproperty>
     <inputproperty>Variant Reporting (indels).Generate Report (bed).label</inputproperty>
     <inputproperty>Variant Reporting (indels).Generate Report (bed).report_name</inputproperty>
     <inputproperty>Variant Reporting (indels).Generate Report (full).label</inputproperty>
@@ -26,8 +21,6 @@
     <inputproperty>Variant Reporting (indels).input_vcf</inputproperty>
     <inputproperty>Variant Reporting (indels).plan_json</inputproperty>
     <inputproperty>Variant Reporting (indels).variant_type</inputproperty>
-    <inputproperty>Variant Reporting (snvs).Generate Report (acmg).label</inputproperty>
-    <inputproperty>Variant Reporting (snvs).Generate Report (acmg).report_name</inputproperty>
     <inputproperty>Variant Reporting (snvs).Generate Report (bed).label</inputproperty>
     <inputproperty>Variant Reporting (snvs).Generate Report (bed).report_name</inputproperty>
     <inputproperty>Variant Reporting (snvs).Generate Report (full).label</inputproperty>
@@ -40,28 +33,18 @@
     <inputproperty>Variant Reporting (snvs).plan_json</inputproperty>
     <inputproperty>Variant Reporting (snvs).variant_type</inputproperty>
     <inputproperty>process_id</inputproperty>
-    <outputproperty>indels_result (acmg)</outputproperty>
     <outputproperty>indels_result (bed)</outputproperty>
     <outputproperty>indels_result (full)</outputproperty>
     <outputproperty>indels_result (simple)</outputproperty>
     <outputproperty>indels_result (vcf)</outputproperty>
-    <outputproperty>merged_result (acmg)</outputproperty>
     <outputproperty>merged_result (bed)</outputproperty>
     <outputproperty>merged_result (full)</outputproperty>
     <outputproperty>merged_result (simple)</outputproperty>
-    <outputproperty>snvs_result (acmg)</outputproperty>
     <outputproperty>snvs_result (bed)</outputproperty>
     <outputproperty>snvs_result (full)</outputproperty>
     <outputproperty>snvs_result (simple)</outputproperty>
     <outputproperty>snvs_result (vcf)</outputproperty>
   </operationtype>
-  <operation name="Converge (output_result (acmg))">
-    <operationtype typeClass="Workflow::OperationType::Converge">
-      <inputproperty>snvs_report_result</inputproperty>
-      <inputproperty>indels_report_result</inputproperty>
-      <outputproperty>report_results</outputproperty>
-    </operationtype>
-  </operation>
   <operation name="Converge (output_result (bed))">
     <operationtype typeClass="Workflow::OperationType::Converge">
       <inputproperty>snvs_report_result</inputproperty>
@@ -81,14 +64,6 @@
       <inputproperty>snvs_report_result</inputproperty>
       <inputproperty>indels_report_result</inputproperty>
       <outputproperty>report_results</outputproperty>
-    </operationtype>
-  </operation>
-  <operation name="Merge Reports (acmg)">
-    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Framework::MergeReports">
-      <inputproperty>contains_header</inputproperty>
-      <inputproperty>report_results</inputproperty>
-      <outputproperty>output_result</outputproperty>
-      <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
   <operation name="Merge Reports (bed)">
@@ -117,8 +92,6 @@
   </operation>
   <operation name="Variant Reporting (indels)">
     <operationtype typeClass="Workflow::OperationType::Model">
-      <inputproperty>Generate Report (acmg).label</inputproperty>
-      <inputproperty>Generate Report (acmg).report_name</inputproperty>
       <inputproperty>Generate Report (bed).label</inputproperty>
       <inputproperty>Generate Report (bed).report_name</inputproperty>
       <inputproperty>Generate Report (full).label</inputproperty>
@@ -131,7 +104,6 @@
       <inputproperty>plan_json</inputproperty>
       <inputproperty>process_id</inputproperty>
       <inputproperty>variant_type</inputproperty>
-      <outputproperty>output_result (acmg)</outputproperty>
       <outputproperty>output_result (bed)</outputproperty>
       <outputproperty>output_result (full)</outputproperty>
       <outputproperty>output_result (simple)</outputproperty>
@@ -203,16 +175,6 @@
       <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
       <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run bam-readcount" toProperty="input_vcf"/>
       <link fromOperation="input connector" fromProperty="process_id" toOperation="Run bam-readcount" toProperty="process_id"/>
-    </operation>
-    <operation name="Generate Report (acmg)">
-      <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
-        <inputproperty>input_vcf</inputproperty>
-        <inputproperty>plan_json</inputproperty>
-        <inputproperty>report_name</inputproperty>
-        <inputproperty>variant_type</inputproperty>
-        <outputproperty>output_result</outputproperty>
-        <outputproperty>result</outputproperty>
-      </operationtype>
     </operation>
     <operation name="Generate Report (bed)">
       <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -343,49 +305,6 @@
       <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run homopolymer" toProperty="input_vcf"/>
       <link fromOperation="input connector" fromProperty="process_id" toOperation="Run homopolymer" toProperty="process_id"/>
     </operation>
-    <operation name="nhlbi">
-      <operationtype typeClass="Workflow::OperationType::Model">
-        <inputproperty>input_vcf</inputproperty>
-        <inputproperty>plan_json</inputproperty>
-        <inputproperty>process_id</inputproperty>
-        <inputproperty>variant_type</inputproperty>
-        <outputproperty>output_result</outputproperty>
-        <outputproperty>output_vcf</outputproperty>
-      </operationtype>
-      <operation name="Get inputs from plan">
-        <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Nhlbi::Adaptor">
-          <inputproperty>plan_json</inputproperty>
-          <inputproperty>variant_type</inputproperty>
-          <outputproperty>info_string</outputproperty>
-          <outputproperty>joinx_version</outputproperty>
-          <outputproperty>result</outputproperty>
-          <outputproperty>variant_type</outputproperty>
-          <outputproperty>vcf</outputproperty>
-        </operationtype>
-      </operation>
-      <operation name="Run nhlbi">
-        <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Run">
-          <inputproperty>info_string</inputproperty>
-          <inputproperty>input_vcf</inputproperty>
-          <inputproperty>joinx_version</inputproperty>
-          <inputproperty>variant_type</inputproperty>
-          <inputproperty>vcf</inputproperty>
-          <outputproperty>output_result</outputproperty>
-          <outputproperty>output_vcf</outputproperty>
-          <outputproperty>result</outputproperty>
-        </operationtype>
-      </operation>
-      <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run nhlbi" toProperty="info_string"/>
-      <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run nhlbi" toProperty="joinx_version"/>
-      <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run nhlbi" toProperty="variant_type"/>
-      <link fromOperation="Get inputs from plan" fromProperty="vcf" toOperation="Run nhlbi" toProperty="vcf"/>
-      <link fromOperation="Run nhlbi" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
-      <link fromOperation="Run nhlbi" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-      <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-      <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
-      <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run nhlbi" toProperty="input_vcf"/>
-      <link fromOperation="input connector" fromProperty="process_id" toOperation="Run nhlbi" toProperty="process_id"/>
-    </operation>
     <operation name="vep">
       <operationtype typeClass="Workflow::OperationType::Model">
         <inputproperty>input_vcf</inputproperty>
@@ -443,21 +362,18 @@
       <link fromOperation="input connector" fromProperty="process_id" toOperation="Run vep" toProperty="process_id"/>
     </operation>
     <link fromOperation="BamReadcount" fromProperty="output_vcf" toOperation="dbsnp" toProperty="input_vcf"/>
-    <link fromOperation="Generate Report (acmg)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (acmg)"/>
     <link fromOperation="Generate Report (bed)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (bed)"/>
     <link fromOperation="Generate Report (full)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (full)"/>
     <link fromOperation="Generate Report (simple)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (simple)"/>
     <link fromOperation="Generate Report (vcf)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (vcf)"/>
     <link fromOperation="dbsnp" fromProperty="output_vcf" toOperation="homopolymer" toProperty="input_vcf"/>
-    <link fromOperation="homopolymer" fromProperty="output_vcf" toOperation="nhlbi" toProperty="input_vcf"/>
+    <link fromOperation="homopolymer" fromProperty="output_vcf" toOperation="Generate Report (bed)" toProperty="input_vcf"/>
+    <link fromOperation="homopolymer" fromProperty="output_vcf" toOperation="Generate Report (full)" toProperty="input_vcf"/>
+    <link fromOperation="homopolymer" fromProperty="output_vcf" toOperation="Generate Report (simple)" toProperty="input_vcf"/>
+    <link fromOperation="homopolymer" fromProperty="output_vcf" toOperation="Generate Report (vcf)" toProperty="input_vcf"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="BamReadcount" toProperty="plan_json"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="BamReadcount" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="BamReadcount" toProperty="variant_type"/>
-    <link fromOperation="input connector" fromProperty="Generate Report (acmg).label" toOperation="Generate Report (acmg)" toProperty="label"/>
-    <link fromOperation="input connector" fromProperty="Generate Report (acmg).report_name" toOperation="Generate Report (acmg)" toProperty="report_name"/>
-    <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (acmg)" toProperty="plan_json"/>
-    <link fromOperation="input connector" fromProperty="process_id" toOperation="Generate Report (acmg)" toProperty="process_id"/>
-    <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Report (acmg)" toProperty="variant_type"/>
     <link fromOperation="input connector" fromProperty="Generate Report (bed).label" toOperation="Generate Report (bed)" toProperty="label"/>
     <link fromOperation="input connector" fromProperty="Generate Report (bed).report_name" toOperation="Generate Report (bed)" toProperty="report_name"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (bed)" toProperty="plan_json"/>
@@ -484,24 +400,14 @@
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="homopolymer" toProperty="plan_json"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="homopolymer" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="homopolymer" toProperty="variant_type"/>
-    <link fromOperation="input connector" fromProperty="plan_json" toOperation="nhlbi" toProperty="plan_json"/>
-    <link fromOperation="input connector" fromProperty="process_id" toOperation="nhlbi" toProperty="process_id"/>
-    <link fromOperation="input connector" fromProperty="variant_type" toOperation="nhlbi" toProperty="variant_type"/>
     <link fromOperation="input connector" fromProperty="input_vcf" toOperation="vep" toProperty="input_vcf"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="vep" toProperty="plan_json"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="vep" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="vep" toProperty="variant_type"/>
-    <link fromOperation="nhlbi" fromProperty="output_vcf" toOperation="Generate Report (acmg)" toProperty="input_vcf"/>
-    <link fromOperation="nhlbi" fromProperty="output_vcf" toOperation="Generate Report (bed)" toProperty="input_vcf"/>
-    <link fromOperation="nhlbi" fromProperty="output_vcf" toOperation="Generate Report (full)" toProperty="input_vcf"/>
-    <link fromOperation="nhlbi" fromProperty="output_vcf" toOperation="Generate Report (simple)" toProperty="input_vcf"/>
-    <link fromOperation="nhlbi" fromProperty="output_vcf" toOperation="Generate Report (vcf)" toProperty="input_vcf"/>
     <link fromOperation="vep" fromProperty="output_vcf" toOperation="BamReadcount" toProperty="input_vcf"/>
   </operation>
   <operation name="Variant Reporting (snvs)">
     <operationtype typeClass="Workflow::OperationType::Model">
-      <inputproperty>Generate Report (acmg).label</inputproperty>
-      <inputproperty>Generate Report (acmg).report_name</inputproperty>
       <inputproperty>Generate Report (bed).label</inputproperty>
       <inputproperty>Generate Report (bed).report_name</inputproperty>
       <inputproperty>Generate Report (full).label</inputproperty>
@@ -514,7 +420,6 @@
       <inputproperty>plan_json</inputproperty>
       <inputproperty>process_id</inputproperty>
       <inputproperty>variant_type</inputproperty>
-      <outputproperty>output_result (acmg)</outputproperty>
       <outputproperty>output_result (bed)</outputproperty>
       <outputproperty>output_result (full)</outputproperty>
       <outputproperty>output_result (simple)</outputproperty>
@@ -586,16 +491,6 @@
       <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
       <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run bam-readcount" toProperty="input_vcf"/>
       <link fromOperation="input connector" fromProperty="process_id" toOperation="Run bam-readcount" toProperty="process_id"/>
-    </operation>
-    <operation name="Generate Report (acmg)">
-      <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
-        <inputproperty>input_vcf</inputproperty>
-        <inputproperty>plan_json</inputproperty>
-        <inputproperty>report_name</inputproperty>
-        <inputproperty>variant_type</inputproperty>
-        <outputproperty>output_result</outputproperty>
-        <outputproperty>result</outputproperty>
-      </operationtype>
     </operation>
     <operation name="Generate Report (bed)">
       <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -680,49 +575,6 @@
       <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run dbsnp" toProperty="input_vcf"/>
       <link fromOperation="input connector" fromProperty="process_id" toOperation="Run dbsnp" toProperty="process_id"/>
     </operation>
-    <operation name="nhlbi">
-      <operationtype typeClass="Workflow::OperationType::Model">
-        <inputproperty>input_vcf</inputproperty>
-        <inputproperty>plan_json</inputproperty>
-        <inputproperty>process_id</inputproperty>
-        <inputproperty>variant_type</inputproperty>
-        <outputproperty>output_result</outputproperty>
-        <outputproperty>output_vcf</outputproperty>
-      </operationtype>
-      <operation name="Get inputs from plan">
-        <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Nhlbi::Adaptor">
-          <inputproperty>plan_json</inputproperty>
-          <inputproperty>variant_type</inputproperty>
-          <outputproperty>info_string</outputproperty>
-          <outputproperty>joinx_version</outputproperty>
-          <outputproperty>result</outputproperty>
-          <outputproperty>variant_type</outputproperty>
-          <outputproperty>vcf</outputproperty>
-        </operationtype>
-      </operation>
-      <operation name="Run nhlbi">
-        <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Run">
-          <inputproperty>info_string</inputproperty>
-          <inputproperty>input_vcf</inputproperty>
-          <inputproperty>joinx_version</inputproperty>
-          <inputproperty>variant_type</inputproperty>
-          <inputproperty>vcf</inputproperty>
-          <outputproperty>output_result</outputproperty>
-          <outputproperty>output_vcf</outputproperty>
-          <outputproperty>result</outputproperty>
-        </operationtype>
-      </operation>
-      <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run nhlbi" toProperty="info_string"/>
-      <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run nhlbi" toProperty="joinx_version"/>
-      <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run nhlbi" toProperty="variant_type"/>
-      <link fromOperation="Get inputs from plan" fromProperty="vcf" toOperation="Run nhlbi" toProperty="vcf"/>
-      <link fromOperation="Run nhlbi" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
-      <link fromOperation="Run nhlbi" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-      <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-      <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
-      <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run nhlbi" toProperty="input_vcf"/>
-      <link fromOperation="input connector" fromProperty="process_id" toOperation="Run nhlbi" toProperty="process_id"/>
-    </operation>
     <operation name="vep">
       <operationtype typeClass="Workflow::OperationType::Model">
         <inputproperty>input_vcf</inputproperty>
@@ -780,20 +632,17 @@
       <link fromOperation="input connector" fromProperty="process_id" toOperation="Run vep" toProperty="process_id"/>
     </operation>
     <link fromOperation="BamReadcount" fromProperty="output_vcf" toOperation="dbsnp" toProperty="input_vcf"/>
-    <link fromOperation="Generate Report (acmg)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (acmg)"/>
     <link fromOperation="Generate Report (bed)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (bed)"/>
     <link fromOperation="Generate Report (full)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (full)"/>
     <link fromOperation="Generate Report (simple)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (simple)"/>
     <link fromOperation="Generate Report (vcf)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (vcf)"/>
-    <link fromOperation="dbsnp" fromProperty="output_vcf" toOperation="nhlbi" toProperty="input_vcf"/>
+    <link fromOperation="dbsnp" fromProperty="output_vcf" toOperation="Generate Report (bed)" toProperty="input_vcf"/>
+    <link fromOperation="dbsnp" fromProperty="output_vcf" toOperation="Generate Report (full)" toProperty="input_vcf"/>
+    <link fromOperation="dbsnp" fromProperty="output_vcf" toOperation="Generate Report (simple)" toProperty="input_vcf"/>
+    <link fromOperation="dbsnp" fromProperty="output_vcf" toOperation="Generate Report (vcf)" toProperty="input_vcf"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="BamReadcount" toProperty="plan_json"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="BamReadcount" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="BamReadcount" toProperty="variant_type"/>
-    <link fromOperation="input connector" fromProperty="Generate Report (acmg).label" toOperation="Generate Report (acmg)" toProperty="label"/>
-    <link fromOperation="input connector" fromProperty="Generate Report (acmg).report_name" toOperation="Generate Report (acmg)" toProperty="report_name"/>
-    <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (acmg)" toProperty="plan_json"/>
-    <link fromOperation="input connector" fromProperty="process_id" toOperation="Generate Report (acmg)" toProperty="process_id"/>
-    <link fromOperation="input connector" fromProperty="variant_type" toOperation="Generate Report (acmg)" toProperty="variant_type"/>
     <link fromOperation="input connector" fromProperty="Generate Report (bed).label" toOperation="Generate Report (bed)" toProperty="label"/>
     <link fromOperation="input connector" fromProperty="Generate Report (bed).report_name" toOperation="Generate Report (bed)" toProperty="report_name"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="Generate Report (bed)" toProperty="plan_json"/>
@@ -817,54 +666,35 @@
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="dbsnp" toProperty="plan_json"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="dbsnp" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="dbsnp" toProperty="variant_type"/>
-    <link fromOperation="input connector" fromProperty="plan_json" toOperation="nhlbi" toProperty="plan_json"/>
-    <link fromOperation="input connector" fromProperty="process_id" toOperation="nhlbi" toProperty="process_id"/>
-    <link fromOperation="input connector" fromProperty="variant_type" toOperation="nhlbi" toProperty="variant_type"/>
     <link fromOperation="input connector" fromProperty="input_vcf" toOperation="vep" toProperty="input_vcf"/>
     <link fromOperation="input connector" fromProperty="plan_json" toOperation="vep" toProperty="plan_json"/>
     <link fromOperation="input connector" fromProperty="process_id" toOperation="vep" toProperty="process_id"/>
     <link fromOperation="input connector" fromProperty="variant_type" toOperation="vep" toProperty="variant_type"/>
-    <link fromOperation="nhlbi" fromProperty="output_vcf" toOperation="Generate Report (acmg)" toProperty="input_vcf"/>
-    <link fromOperation="nhlbi" fromProperty="output_vcf" toOperation="Generate Report (bed)" toProperty="input_vcf"/>
-    <link fromOperation="nhlbi" fromProperty="output_vcf" toOperation="Generate Report (full)" toProperty="input_vcf"/>
-    <link fromOperation="nhlbi" fromProperty="output_vcf" toOperation="Generate Report (simple)" toProperty="input_vcf"/>
-    <link fromOperation="nhlbi" fromProperty="output_vcf" toOperation="Generate Report (vcf)" toProperty="input_vcf"/>
     <link fromOperation="vep" fromProperty="output_vcf" toOperation="BamReadcount" toProperty="input_vcf"/>
   </operation>
-  <link fromOperation="Converge (output_result (acmg))" fromProperty="report_results" toOperation="Merge Reports (acmg)" toProperty="report_results"/>
   <link fromOperation="Converge (output_result (bed))" fromProperty="report_results" toOperation="Merge Reports (bed)" toProperty="report_results"/>
   <link fromOperation="Converge (output_result (full))" fromProperty="report_results" toOperation="Merge Reports (full)" toProperty="report_results"/>
   <link fromOperation="Converge (output_result (simple))" fromProperty="report_results" toOperation="Merge Reports (simple)" toProperty="report_results"/>
-  <link fromOperation="Merge Reports (acmg)" fromProperty="output_result" toOperation="output connector" toProperty="merged_result (acmg)"/>
   <link fromOperation="Merge Reports (bed)" fromProperty="output_result" toOperation="output connector" toProperty="merged_result (bed)"/>
   <link fromOperation="Merge Reports (full)" fromProperty="output_result" toOperation="output connector" toProperty="merged_result (full)"/>
   <link fromOperation="Merge Reports (simple)" fromProperty="output_result" toOperation="output connector" toProperty="merged_result (simple)"/>
-  <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (acmg)" toOperation="Converge (output_result (acmg))" toProperty="indels_report_result"/>
   <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (bed)" toOperation="Converge (output_result (bed))" toProperty="indels_report_result"/>
   <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (full)" toOperation="Converge (output_result (full))" toProperty="indels_report_result"/>
   <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (simple)" toOperation="Converge (output_result (simple))" toProperty="indels_report_result"/>
-  <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (acmg)" toOperation="output connector" toProperty="indels_result (acmg)"/>
   <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (bed)" toOperation="output connector" toProperty="indels_result (bed)"/>
   <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (full)" toOperation="output connector" toProperty="indels_result (full)"/>
   <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (simple)" toOperation="output connector" toProperty="indels_result (simple)"/>
   <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (vcf)" toOperation="output connector" toProperty="indels_result (vcf)"/>
-  <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (acmg)" toOperation="Converge (output_result (acmg))" toProperty="snvs_report_result"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Converge (output_result (bed))" toProperty="snvs_report_result"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="Converge (output_result (full))" toProperty="snvs_report_result"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="Converge (output_result (simple))" toProperty="snvs_report_result"/>
-  <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (acmg)" toOperation="Merge Reports (acmg)" toProperty="use_header_from"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="use_header_from"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="Merge Reports (full)" toProperty="use_header_from"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="Merge Reports (simple)" toProperty="use_header_from"/>
-  <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (acmg)" toOperation="output connector" toProperty="snvs_result (acmg)"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="output connector" toProperty="snvs_result (bed)"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="output connector" toProperty="snvs_result (full)"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="output connector" toProperty="snvs_result (simple)"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (vcf)" toOperation="output connector" toProperty="snvs_result (vcf)"/>
-  <link fromOperation="input connector" fromProperty="Merge Reports (acmg).contains_header" toOperation="Merge Reports (acmg)" toProperty="contains_header"/>
-  <link fromOperation="input connector" fromProperty="Merge Reports (acmg).label" toOperation="Merge Reports (acmg)" toProperty="label"/>
-  <link fromOperation="input connector" fromProperty="Merge Reports (acmg).sort_columns" toOperation="Merge Reports (acmg)" toProperty="sort_columns"/>
-  <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (acmg)" toProperty="process_id"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (bed).contains_header" toOperation="Merge Reports (bed)" toProperty="contains_header"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (bed).label" toOperation="Merge Reports (bed)" toProperty="label"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (bed).sort_columns" toOperation="Merge Reports (bed)" toProperty="sort_columns"/>
@@ -877,8 +707,6 @@
   <link fromOperation="input connector" fromProperty="Merge Reports (simple).label" toOperation="Merge Reports (simple)" toProperty="label"/>
   <link fromOperation="input connector" fromProperty="Merge Reports (simple).sort_columns" toOperation="Merge Reports (simple)" toProperty="sort_columns"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Reports (simple)" toProperty="process_id"/>
-  <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (acmg).label" toOperation="Variant Reporting (indels)" toProperty="Generate Report (acmg).label"/>
-  <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (acmg).report_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (acmg).report_name"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (bed).label" toOperation="Variant Reporting (indels)" toProperty="Generate Report (bed).label"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (bed).report_name" toOperation="Variant Reporting (indels)" toProperty="Generate Report (bed).report_name"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).Generate Report (full).label" toOperation="Variant Reporting (indels)" toProperty="Generate Report (full).label"/>
@@ -891,8 +719,6 @@
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).plan_json" toOperation="Variant Reporting (indels)" toProperty="plan_json"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (indels).variant_type" toOperation="Variant Reporting (indels)" toProperty="variant_type"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Variant Reporting (indels)" toProperty="process_id"/>
-  <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (acmg).label" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (acmg).label"/>
-  <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (acmg).report_name" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (acmg).report_name"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (bed).label" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (bed).label"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (bed).report_name" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (bed).report_name"/>
   <link fromOperation="input connector" fromProperty="Variant Reporting (snvs).Generate Report (full).label" toOperation="Variant Reporting (snvs)" toProperty="Generate Report (full).label"/>
