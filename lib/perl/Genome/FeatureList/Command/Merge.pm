@@ -186,7 +186,7 @@ sub _find_convertible_reference {
     }
 
     my @convertible_references = grep {
-        my $target = $_; all { $class->_reference_contains($target, $_) || $available_conversions{$_->id}{$target->id} } @references;
+        my $target = $_; all { $target->contains($_) || $available_conversions{$_->id}{$target->id} } @references;
     } @target_references;
 
     if (scalar(@convertible_references) > 1) {
@@ -197,20 +197,6 @@ sub _find_convertible_reference {
     }
 
     return $convertible_references[0];
-}
-
-sub _reference_contains {
-    my $class = shift;
-    my $reference = shift;
-    my $other = shift;
-
-    return 1 if $reference eq $other;
-
-    if(($reference->coordinates_from // '') eq $other or $reference->is_derived_from($other)) {
-        return $reference->is_superset_of($other);
-    }
-
-    return 0;
 }
 
 sub _die_with_multiple_candidate_references {
@@ -314,7 +300,7 @@ sub _bed_file_for_list_and_reference {
     my $target_reference = shift;
 
     my $list_reference = $feature_list->reference;
-    if($class->_reference_contains($target_reference, $list_reference)) {
+    if($target_reference->contains($list_reference)) {
         return $feature_list->file_path;
     }
 

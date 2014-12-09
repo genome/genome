@@ -882,6 +882,18 @@ sub is_superset_of {
     return $my_chromosomes >= $other_chromosomes;
 }
 
+sub contains {
+    my ($self, $other_refbuild) = @_;
+
+    return 1 if $self eq $other_refbuild;
+
+    if(($self->coordinates_from // '') eq $other_refbuild or $self->is_derived_from($other_refbuild)) {
+        return $self->is_superset_of($other_refbuild);
+    }
+
+    return 0;
+}
+
 # Given a feature list accessor, try to get it from myself or my ancestors
 sub get_feature_list {
     my ($self, $feature_list_accessor, @ancestry_stack) = @_;
