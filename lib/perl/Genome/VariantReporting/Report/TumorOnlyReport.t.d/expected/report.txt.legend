@@ -16,7 +16,7 @@ canonical	Is this transcript canonical
 sift	The SIFT prediction and/or score, with both given as prediction(score)
 polyphen	The PolyPhen prediction and/or score
 condel	The Consensus Deleteriousness (Condel) score
-caf	Allele frequency at this position based on 1000Genomes
+caf	Allele frequency at this position based on dbsnp
 All_MAF	Overall minor allele frequency from NHLBI
 AA_MAF	African American minor allele frequency from NHLBI
 EU_MAF	European minor allele frequency from NHLBI
