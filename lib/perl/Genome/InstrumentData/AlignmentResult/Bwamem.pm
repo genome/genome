@@ -202,7 +202,6 @@ sub _remove_input_fastqs {
 
     for my $d (@uniq_dirs) {
         $self->debug_message("Removing FASTQ dir: $d");
-        print("Removing FASTQ dir: $d", "\n");
         $d->rmtree();
     }
 
