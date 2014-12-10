@@ -40,7 +40,7 @@ sub _run {
 
     my %sample_roi_to_pp;
     for my $build ($self->builds) {
-        my $roi_name = $build->region_of_interest_set_name;
+        my $roi_name = $build->region_of_interest_set->name;
 
         my %sample_name_to_coverage_stats_method = (
             $build->tumor_sample->name => 'coverage_stats_result',

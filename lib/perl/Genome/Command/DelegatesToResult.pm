@@ -38,6 +38,14 @@ sub input_hash {
     die "Abstract method 'input_hash' must be defined in class $class";
 }
 
+sub _input_hash {
+    my $self = shift;
+    return (
+        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
+        $self->input_hash,
+    );
+}
+
 # Do whatever you want to after a result was created or looked up.
 # Return undef on failure.
 sub post_get_or_create {
@@ -81,8 +89,8 @@ sub _fetch_result {
         {type => SCALAR}, {type => SCALAR});
 
     $self->debug_message("Attempting to %s a %s with arguments %s",
-        $method, $self->result_class, pp({$self->input_hash}));
-    my $result = $self->result_class->$method($self->input_hash);
+        $method, $self->result_class, pp({$self->_input_hash}));
+    my $result = $self->result_class->$method($self->_input_hash);
 
     if ($result) {
         $self->debug_message("%s returned result (%s)", $method, $result->id);
