@@ -29710,6 +29710,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'protected-maf-file=s',
         'files',
+        'vcf-suffix=s',
+        'files',
         'help!',
         undef
       ],
