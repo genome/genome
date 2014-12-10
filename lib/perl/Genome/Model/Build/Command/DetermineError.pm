@@ -8,6 +8,11 @@ use File::Slurp 'read_file';
 use IPC::System::Simple qw(capture);
 use Try::Tiny;
 
+use constant WF_DATE_REGEX => '(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})-\d{4}';
+use constant WF_HOST_REGEX => '([^\:]+)\:';
+
+use constant PTERO_DATE_REGEX => '\[(\d{4}/\d{2}/\d{2}\s\d{2}\:\d{2}\:\d{2}).\d+\]';
+
 class Genome::Model::Build::Command::DetermineError {
     is => 'Genome::Command::WithColor',
     has => [
@@ -175,6 +180,9 @@ sub set_status_from_log_file {
             ($error_source_file, $error_source_line, $error_host, $error_date, $error_text) = parse_output_log($output_log);
             if($error_text) {
                 $error_log = $output_log; #only prefer .out files if we got a result
+            } else {
+                #if we still don't know, try to find the last message printed by die() or warn()
+                ($error_source_file, $error_source_line, $error_host, $error_date, $error_text) = find_die_or_warn_in_log($error_log);
             }
         }
     }
@@ -238,11 +246,44 @@ sub parse_output_log {
     return ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
 }
 
+sub find_die_or_warn_in_log {
+    my $filename = shift;
+
+    my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
+    my @file_text = Genome::Sys->read_file($filename);
+
+    LINE: for my $i (reverse 0..$#file_text) {
+        my $line = $file_text[$i];
+        if($line =~ /(.*)(?<!called) at (.*\.pm) line (\d+)$/) {
+            my $message = $1;
+            $error_source_file = $2;
+            $error_source_line = $3;
+
+            my $wf_regex = sprintf('%s\s%s\s+(.+)', WF_DATE_REGEX, WF_HOST_REGEX);
+            my $ptero_regex = sprintf('%s\s+(.+)', PTERO_DATE_REGEX);
+
+            if($message =~ /$wf_regex/) {
+                $error_date = $1;
+                $error_host = $2;
+                $error_text = $3;
+            } elsif ($message =~ /$ptero_regex/) {
+                $error_date = $1;
+                $error_text = $2;
+                $error_host = _find_host_from_ptero_lines(@file_text[0..$i]);
+            }
+
+            last if $error_text;
+        }
+    }
+
+    return ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
+}
+
 sub get_error_date {
     my $file_text = shift;
 
-    my $date = '(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})-\d{4}';
-    my $host = '([^\:]+)\:';
+    my $date = WF_DATE_REGEX;
+    my $host = WF_HOST_REGEX;
 
     my ($error_date, $error_host, $formatted_text);
     if ($file_text =~ m/$date\s$host\s+ERROR/) {
@@ -261,7 +302,7 @@ sub get_error_date_from_ptero_log {
 
     my ($error_date, $error_host, $formatted_text);
 
-    my $date = '\[(\d{4}/\d{2}/\d{2}\s\d{2}\:\d{2}\:\d{2}).\d+\]';
+    my $date = PTERO_DATE_REGEX;
     if ($file_text =~ m/$date\s+ERROR/) {
         $error_date = $1;
 
@@ -270,17 +311,22 @@ sub get_error_date_from_ptero_log {
         (my $error_truncated_text = $file_text) =~ s/ERROR.*//s;
 
         my @lines = split(/\n/, $error_truncated_text);
-        for my $line (reverse @lines) {
-            if ($line =~ m/Starting log annotation on host:\s(.*)/) {
-                $error_host = $1;
-                last;
-            }
-        }
+        $error_host = _find_host_from_ptero_lines(@lines);
 
         ($formatted_text = $file_text) =~ s/$date\s//g;
     }
 
     return $error_date, $error_host, $formatted_text;
+}
+
+sub _find_host_from_ptero_lines {
+    for my $line (reverse @_) {
+        if ($line =~ m/Starting log annotation on host:\s(.*)/) {
+            return $1;
+        }
+    }
+
+    return;
 }
 
 sub failed_workflow_steps {
