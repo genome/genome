@@ -41,8 +41,8 @@ sub input_hash {
 sub _input_hash {
     my $self = shift;
     return (
-        $self->input_hash,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
+        $self->input_hash,
     );
 }
 
