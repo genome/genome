@@ -63,7 +63,6 @@ ok($qc_result, 'define qc result for alienment result');
 ok($alignment_result->add_user(user => $qc_result, label => 'uses'), 'add qc result as user of alignment result');
 
 subtest 'Temporary Input Files Queue Usage' => sub {
-    $DB::single = 1;
     my $ar = $alignment_result;
     my $tmpdir = Path::Class::Dir->new($ar->temp_scratch_directory);
 
