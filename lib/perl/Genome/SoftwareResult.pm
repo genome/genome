@@ -145,7 +145,11 @@ sub get {
 sub _is_id_only_query {
     my $class = shift;
 
-    return if (@_ > 1);
+    if (@_ > 1) {
+        my ($bx, @extra) = $class->define_boolexpr(@_);
+        return if @extra;
+        return $bx->is_id_only;
+    }
 
     if (@_ == 1) {
         if (Scalar::Util::blessed($_[0])) {
