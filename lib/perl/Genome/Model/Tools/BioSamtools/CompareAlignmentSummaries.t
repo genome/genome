@@ -23,7 +23,7 @@ my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-BioSamtools/Align
 my $input_file_1 = $data_dir .'/alignment_summary.tsv';
 my $input_file_2 = $data_dir .'/alignment_summary_2.tsv';
 my $output_file = $tmp_dir .'/merged_alignment_summary.tsv';
-my $expected_output_file = $data_dir .'/merged_alignment_summary-3.tsv';
+my $expected_output_file = $data_dir .'/merged_alignment_summary-4.tsv';
 
 my $mas = Genome::Model::Tools::BioSamtools::CompareAlignmentSummaries->create(
     output_file => $output_file,

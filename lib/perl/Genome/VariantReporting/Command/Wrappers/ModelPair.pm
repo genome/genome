@@ -9,6 +9,7 @@ use File::Basename qw(dirname);
 use File::Spec;
 use Genome::File::Tsv;
 use YAML qw();
+use List::MoreUtils qw(uniq);
 
 class Genome::VariantReporting::Command::Wrappers::ModelPair {
     has => {
@@ -174,7 +175,7 @@ sub get_library_names {
     if (defined $self->followup) {
         push @instrument_data, $self->followup->instrument_data;
     }
-    my @libraries = map {$_->library} @instrument_data;
+    my @libraries = uniq map {$_->library} @instrument_data;
     return [map {$_->name} @libraries];
 }
 
