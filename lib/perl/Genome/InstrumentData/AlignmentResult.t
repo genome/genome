@@ -16,10 +16,7 @@ use Test::More;
 my $bam_path = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam';
 
 use_ok('Genome::InstrumentData::AlignmentResult');
-# Test Intermediate AR Class
-class Genome::InstrumentData::IntermediateAlignmentResult::Tester {
-    is=>['Genome::InstrumentData::IntermediateAlignmentResult'],
-};
+
 # Test AR Class
 class Genome::InstrumentData::AlignmentResult::Tester {
     is => 'Genome::InstrumentData::AlignmentResult',
