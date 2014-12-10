@@ -38,7 +38,7 @@ experts:
     plugins:
       - Condel@PLUGIN_DIR@b@2
     plugins_version: 1
-    reference_fasta: /gscmnt/gc13003/info/test_suite_data/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/reference.fasta
+    reference_fasta: $GENOME_TEST_INPUTS/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/reference.fasta
     species: homo-sapiens
 needs_translation: 0
 reports:
