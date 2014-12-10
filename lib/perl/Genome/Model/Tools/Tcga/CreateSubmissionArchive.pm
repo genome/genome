@@ -127,7 +127,11 @@ sub execute {
             my $sample_info = $self->get_info_for_sample($build->subject->extraction_label, $vcf_sample_info);
 
             for my $vcf($snvs_vcf, $indels_vcf) {
-                push @sdrf_rows, $sdrf->create_vcf_row($build, $somatic_build, $vcf, $sample_info);
+                if ($self->bgzip_vcfs) {
+                    push @sdrf_rows, $sdrf->create_vcf_row($build, $somatic_build, "$vcf.gz", $sample_info);
+                } else {
+                    push @sdrf_rows, $sdrf->create_vcf_row($build, $somatic_build, $vcf, $sample_info);
+                }
             }
 
             for my $maf_type (qw(somatic protected)) {
