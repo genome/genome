@@ -88,7 +88,7 @@ my %fails = (
     'different headers' => { different => 'headers' },
 );
 for my $desc ( keys %fails ) {
-    ok(!$writer->write_one($fails{$desc}), "Failed as expected, tried to 'write one' w/ $desc");
+    dies_ok(sub {$writer->write_one($fails{$desc})}, "Failed as expected, tried to 'write one' w/ $desc");
 }
 
 # READER FAILS
