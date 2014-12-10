@@ -145,23 +145,9 @@ sub get {
 sub _is_id_only_query {
     my $class = shift;
 
-    if (@_ > 1) {
-        my ($bx, @extra) = $class->define_boolexpr(@_);
-        return if @extra;
-        return $bx->is_id_only;
-    }
-
-    if (@_ == 1) {
-        if (Scalar::Util::blessed($_[0])) {
-            if ($_[0]->isa('UR::BoolExpr') && $_[0]->is_id_only) {
-                return 1;
-            }
-            return;
-        }
-
-        return 1;
-    }
-    return;
+    my ($bx, @extra) = $class->define_boolexpr(@_);
+    return if @extra;
+    return $bx->is_id_only;
 }
 
 # You must specify enough parameters to uniquely identify an object to get a result.
