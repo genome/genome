@@ -265,7 +265,7 @@ class Genome::InstrumentData::AlignmentResult {
         _is_inferred_paired_end => { is => 'Boolean', is_optional=>1},
         _extracted_bam_path    => { is => 'String', is_optional=>1},
         _flagstat_file         => { is => 'Text', is_optional=>1},
-        _temporary_input_files => { is => 'ARRAY', is_optional => 1},
+        _temporary_input_files => { is => 'ARRAY', is_optional => 1, default_value => []},
     ],
 };
 
@@ -1698,23 +1698,12 @@ sub clear_temporary_input_files_queue {
 sub temporary_input_files_queue {
     my ($self, @args) = @_;
     my $items = $self->_temporary_input_files;
-    $self->_init_temporary_input_files_queue if (not defined $items);
     $self->_add_to_temporary_input_files_queue(@args) if @args;
     return @{$self->_temporary_input_files}
 }
 
-sub _init_temporary_input_files_queue {
-    my $self = shift;
-    return $self->_temporary_input_files([]);
-}
-
 sub _add_to_temporary_input_files_queue {
     my ($self, @input_paths) = @_;
-
-    my $arrayref = $self->_temporary_input_files;
-    unless ($arrayref) {
-        $self->_init_temporary_input_files_queue;
-    }
 
     for my $path (@input_paths) {
         my $p;
