@@ -63,7 +63,8 @@ sub increment {
 
 
 sub timer {
-    my ($name, $code) = @_;
+    my $code = pop @_;
+    my @names = @_;
 
     my $start_time = Time::HiRes::time();
 
@@ -73,17 +74,16 @@ sub timer {
     if ($@) {
         my $error = $@;
         my $stop_time = Time::HiRes::time();
-        eval {
-            my $error_name = "$name\_error";
-            Net::Statsd::timing($error_name, 1000 * ($stop_time - $start_time));
-        };
+        for (@names) {
+            timing("$_\_error", 1000 * ($stop_time - $start_time));
+        }
         die $error;
     }
 
     my $stop_time = Time::HiRes::time();
-    eval {
-        Net::Statsd::timing($name, 1000 * ($stop_time - $start_time));
-    };
+    for(@names) {
+        timing($_, 1000 * ($stop_time - $start_time));
+    }
 }
 
 sub timing {
