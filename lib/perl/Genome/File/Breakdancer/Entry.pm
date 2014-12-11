@@ -27,8 +27,9 @@ sub new {
 
 sub _parse_orientation {
     my $ori = shift;
-    my ($plus, $minus) = $ori =~ /([0-9]+)\+([0-9]+)-/;
-    return {fwd => $plus, rev => $minus};
+    my ($pos) = $ori =~ /([0-9]+)\+/;
+    my ($neg) = $ori =~ /([0-9]+)\-/;
+    return {fwd => $pos || 0, rev => $neg || 0};
 }
 
 sub _parse_lib_counts_cn {
