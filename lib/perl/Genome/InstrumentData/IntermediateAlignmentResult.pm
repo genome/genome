@@ -308,14 +308,8 @@ sub _gather_params_for_get_or_create {
 
     }
 
-    #my $inputs_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($subclass, %is_input);
-    #my $params_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($subclass, %is_param);
+    my %software_result_params = ( subclass_name => $subclass );
 
-    my %software_result_params = (#software_version=>$params_bx->value_for('aligner_version'),
-        #params_id=>$params_bx->id,
-        #inputs_id=>$inputs_bx->id,
-                                  subclass_name=>$subclass);
-    
     return {
         software_result_params => \%software_result_params,
         subclass => $subclass,
