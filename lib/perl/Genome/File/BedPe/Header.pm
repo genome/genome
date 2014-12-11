@@ -43,6 +43,13 @@ sub new {
     return $self;
 }
 
+sub make_header_line {
+    my $self = shift;
+    die "make_header_line called on header that already has data!" if @{$self->{lines}};
+    push @{$self->{lines}},
+        join("\t", @ALL_FIELDS, @{$self->{custom_fields}});
+}
+
 sub _build_custom_field_idx {
     my $self = shift;
     $self->{_custom_field_idx} = {
