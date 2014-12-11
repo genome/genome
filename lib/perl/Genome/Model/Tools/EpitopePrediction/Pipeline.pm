@@ -328,11 +328,23 @@ sub _validate_inputs {
             die $self->error_message("Custom tsv file cannot be used in combination with somatic variation build");
         }
         else {
-            my $tsv_file = File::Spec->join(
+            my $top_file = File::Spec->join(
                 $self->somatic_variation_build->data_directory,
                 'effects',
-                'snvs.hq.tier1.v1.annotated.top.header'
+                'snvs.hq.tier1.v1.annotated.top'
             );
+            my $top_header_file = "$top_file.header";
+
+            my $tsv_file;
+            if (-f $top_header_file) {
+                $tsv_file = $top_header_file;
+            }
+            elsif (-f $top_file) {
+                $tsv_file = $top_file;
+            }
+            else {
+                die $self->error_message("Somatic variation tsv files ($top_header_file) and ($top_file) don't exist.");
+            }
             $self->status_message("Somatic variation build given. Setting input_tsv_file to $tsv_file");
             $self->input_tsv_file($tsv_file);
         }
