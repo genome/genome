@@ -20,6 +20,10 @@ sub merge_parameters {
     };
 }
 
+sub file_name {
+    return 'report.bed';
+}
+
 sub name {
     return 'bed';
 }
