@@ -1468,6 +1468,7 @@ sub _extract_input_fastq_filenames {
             unlink($report_file);
         }
         $self->_input_fastq_pathnames(\@input_fastq_pathnames);
+        $self->temporary_input_files_queue(@input_fastq_pathnames);
     }
     return @input_fastq_pathnames;
 }

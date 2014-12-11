@@ -184,7 +184,6 @@ sub _run_aligner {
     # clean up the FASTQs in /tmp
     $self->debug_message("bwa mem command finished");
     $self->debug_message("Removing input FASTQs in tmp scratch space");
-    $self->temporary_input_files_queue(@input_paths);
     $self->show_temporary_input_files_queue();
     $self->clear_temporary_input_files_queue();
 
