@@ -1658,6 +1658,11 @@ sub show_temporary_input_files_queue {
 
     my @paths = $self->temporary_input_files_queue;
 
+    unless(@paths) {
+        $self->debug_message("Paths in Temporary Storage Queue: None");
+        return 1;
+    }
+
     my $i = 0;
     $self->debug_message("Paths in Temporary Storage Queue:");
     for my $path (@paths) {
