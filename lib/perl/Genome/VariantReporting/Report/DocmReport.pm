@@ -28,7 +28,7 @@ sub headers {
         reference
         variant
     /;
-    push @headers, many_samples_available_fields([$self->sample_names]);
+    push @headers, many_samples_available_fields($self);
 
     return @headers;
 }

@@ -50,20 +50,20 @@ sub basic_field_descriptions {
 }
 
 sub many_samples_available_fields {
-    my $sample_names = shift;
+    my $component = shift;
 
-    my %available_fields = many_samples_field_descriptions($sample_names);
+    my %available_fields = many_samples_field_descriptions($component);
     return keys %available_fields;
 }
 
 sub many_samples_field_descriptions {
-    my $sample_names = shift;
+    my $component = shift;
 
     my %field_descriptions;
-    for my $sample_name (@$sample_names) {
+    for my $sample_name ($component->sample_names) {
         my %field_descriptions_for_sample = basic_field_descriptions($sample_name);
         for my $field (basic_available_fields()) {
-            my $sample_specific_field = Genome::VariantReporting::Framework::Component::WithManySampleNames->create_sample_specific_field_name(
+            my $sample_specific_field = $component->create_sample_specific_field_name(
                 $field,
                 $sample_name
             );
@@ -74,18 +74,16 @@ sub many_samples_field_descriptions {
 }
 
 sub single_vaf_headers {
-    my $sample_names = shift;
-    return Genome::VariantReporting::Framework::Component::WithManySampleNames->create_sample_specific_field_names(
+    my $component = shift;
+    return $component->create_sample_specific_field_names(
         [single_vaf_fields()],
-        $sample_names
     );
 }
 
 sub per_library_vaf_headers {
-    my $library_names = shift;
-    return Genome::VariantReporting::Framework::Component::WithManyLibraryNames->create_library_specific_field_names(
+    my $component = shift;
+    return $component->create_library_specific_field_names(
         [per_library_vaf_fields()],
-        $library_names
     );
 }
 

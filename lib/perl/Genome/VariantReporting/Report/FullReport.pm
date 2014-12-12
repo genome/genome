@@ -43,7 +43,7 @@ sub headers {
         MeetsMinDepthCutoff
     /;
 
-    push @headers, single_vaf_headers([$self->sample_names]);
+    push @headers, single_vaf_headers($self);
 
     push @headers, qw/
         min_coverage_observed
@@ -53,7 +53,7 @@ sub headers {
         variant_caller_count
     /;
 
-    push @headers, per_library_vaf_headers([$self->library_names]);
+    push @headers, per_library_vaf_headers($self);
 
     return @headers;
 }
@@ -124,7 +124,7 @@ sub available_fields_dict {
         };
     }
 
-    for my $per_library_field (per_library_vaf_headers([$self->library_names])) {
+    for my $per_library_field (per_library_vaf_headers($self)) {
         my ($library_name, $generic_field_name) = $per_library_field =~ m/(.*)_(per_library.*)/;
         my $library = Genome::Library->get(name => $library_name);
         $available_fields{$per_library_field} = {

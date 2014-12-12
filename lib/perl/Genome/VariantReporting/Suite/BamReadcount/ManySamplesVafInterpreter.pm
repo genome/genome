@@ -22,7 +22,7 @@ sub requires_annotations {
 
 sub field_descriptions {
     my $self = shift;
-    return many_samples_field_descriptions([$self->sample_names]);
+    return many_samples_field_descriptions($self);
 }
 
 sub _interpret_entry {
