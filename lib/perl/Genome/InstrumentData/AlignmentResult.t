@@ -74,7 +74,7 @@ subtest 'Temporary Input Files Queue Usage' => sub {
     my @items = $ar->temporary_input_files_queue();
     ok(@items == 0, "queue is empty");
 
-    ok($ar->temporary_input_files_queue(@files, $root), "adding temp files to queue");
+    ok($ar->add_to_temporary_input_files_queue(@files, $root), "adding temp files to queue");
     @items = $ar->temporary_input_files_queue();
     ok(@items == 3, "there are 3 items in the queue");
 

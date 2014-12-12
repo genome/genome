@@ -1468,7 +1468,7 @@ sub _extract_input_fastq_filenames {
             unlink($report_file);
         }
         $self->_input_fastq_pathnames(\@input_fastq_pathnames);
-        $self->temporary_input_files_queue(@input_fastq_pathnames);
+        $self->add_to_temporary_input_files_queue(@input_fastq_pathnames);
     }
     return @input_fastq_pathnames;
 }
@@ -1698,12 +1698,10 @@ sub clear_temporary_input_files_queue {
 
 sub temporary_input_files_queue {
     my ($self, @args) = @_;
-    my $items = $self->_temporary_input_files;
-    $self->_add_to_temporary_input_files_queue(@args) if @args;
     return @{$self->_temporary_input_files}
 }
 
-sub _add_to_temporary_input_files_queue {
+sub add_to_temporary_input_files_queue {
     my ($self, @input_paths) = @_;
 
     for my $path (@input_paths) {
