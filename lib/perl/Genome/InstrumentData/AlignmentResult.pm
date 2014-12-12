@@ -1663,16 +1663,13 @@ sub show_temporary_input_files_queue {
         return 1;
     }
 
-    my $i = 0;
     $self->debug_message("Paths in Temporary Storage Queue:");
-    for my $path (@paths) {
-        if ($path->is_dir) {
-            $self->debug_message("---> [$i] (Directory) $path");
+    for (my $i = 0; $i < @paths; $i++) {
+        if ($paths[$i]->is_dir) {
+            $self->debug_message('---> [%d] (Directory) %s', $i, $paths[$i]->stringify);
+        } else {
+            $self->debug_message('---> [%d] (File) %s', $i, $paths[$i]->stringify);
         }
-        else {
-            $self->debug_message("---> [$i] (File) $path");
-        }
-        $i++;
     }
 
     return 1;
