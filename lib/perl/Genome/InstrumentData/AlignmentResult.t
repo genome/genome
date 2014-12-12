@@ -88,8 +88,6 @@ subtest 'Temporary Input Files Queue Usage' => sub {
     done_testing();
 };
 
-pass("Temporary Input Files Queue Usage Tests");
-
 # delete
 ok($alignment_result->delete, 'delete');
 ok(ref($qc_result) eq 'UR::DeletedRef', 'deleted qc result');
