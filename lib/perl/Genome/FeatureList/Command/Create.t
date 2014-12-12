@@ -12,7 +12,8 @@ use Test::More tests => 7;
 
 use above 'Genome';
 
-use_ok('Genome::FeatureList::Command::Create');
+my $cmd_class = 'Genome::FeatureList::Command::Create';
+use_ok($cmd_class);
 
 my $test_bed_file = __FILE__ . '.bed';
 ok(-e $test_bed_file, 'test file ' . $test_bed_file . ' exists');
@@ -25,9 +26,9 @@ my %params = (
     file_path           => $test_bed_file,
 );
 
-my $create_command = Genome::FeatureList::Command::Create->create(%params);
+my $create_command = $cmd_class->create(%params);
 ok($create_command, 'constructed create command');
-isa_ok($create_command, 'Genome::FeatureList::Command::Create');
+isa_ok($create_command, $cmd_class);
 my $feature_list;
 {
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 0;
@@ -37,5 +38,5 @@ ok($feature_list, 'command executed successfully');
 isa_ok($feature_list, 'Genome::FeatureList', 'command returned a Genome::FeatureList');
 
 delete $params{content_type};
-$create_command = Genome::FeatureList::Command::Create->create(%params);
+$create_command = $cmd_class->create(%params);
 ok(!$create_command->execute(), 'must have content_type.');
