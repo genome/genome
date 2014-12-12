@@ -18699,6 +18699,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'create-archive!',
       undef,
+      'bgzip-vcfs!',
+      undef,
       'cghub-id-file=s',
       'files',
       'somatic-maf-file=s',
