@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use File::Slurp qw(read_file write_file);
+use List::AllUtils qw(any);
 
 class Genome::Model::Tools::Bwa::RunMem {
     is => "Command::V2",
@@ -192,13 +193,24 @@ sub _calmd_cmdline {
     return "$samtools_exe_path calmd -b - $fasta";
 }
 
-sub _bash_wrapper {
+sub _make_pipeline {
     my @cmds = @_;
     return join(" \\\n    | ", @cmds);
 }
 
-sub _script_text {
+sub _pipeline_commands {
     my $self = shift;
+    return (
+        $self->_aligner_command,
+        $self->_sam_replace_header_cmdline,
+        $self->_sam_to_uncompressed_bam_cmdline,
+        $self->_sort_cmdline,
+        $self->_calmd_cmdline
+        );
+}
+
+sub _script_text {
+    my ($self, $pipestatus_path) = @_;
 
     my @pipeline = (
         $self->_aligner_command,
@@ -208,17 +220,59 @@ sub _script_text {
         $self->_calmd_cmdline
         );
 
-    my $cmd = sprintf("%s > %s", _bash_wrapper(@pipeline), $self->output_file);
+    my $cmd = sprintf("%s > %s", _make_pipeline(@pipeline), $self->output_file);
     return <<EOS
 #!/bin/bash
 
 set -o pipefail
+RV=0
 $cmd
-RV=\$?
-echo "Pipeline return code: \$RV"
-exit \$RV
+PSTAT=\${PIPESTATUS[@]}
+echo "Pipe status: \$PSTAT"
+
+echo \$PSTAT > $pipestatus_path
+
+for x in \$PSTAT
+do
+    if [ "\$x" != "0" ]
+    then
+        exit 1
+    fi
+done
+
 EOS
 ;
+}
+
+# This sub tries to parse a file containing a single line containing the
+# result of ${PIPESTATUS[@]} from bash after executing the relevant pipeline.
+# It should not be called unless an error is actually detected.
+sub _parse_pipestatus {
+    my ($self, $path) = @_;
+
+    my $unknown = "unable to determine failure";
+    return $unknown unless -s $path;
+
+    my @lines = read_file($path);
+    chomp @lines;
+
+    # there should only be one line in the file
+    return $unknown if scalar @lines != 1;
+
+    my @status = split(/\s/, $lines[0]);
+    return "no failures" unless any { $_ != 0 } @status;
+
+    my @commands = $self->_pipeline_commands;
+    # the number of commands we intended to execute should be equal
+    # to the number of exit codes we received.
+    return $unknown unless scalar @status == scalar @commands;
+
+    # who dun goofed?
+    my @failures = grep {$status[$_] != 0} 0..$#status;
+    return sprintf "The following commands crashed:\n  %s",
+        join("\n  ",
+            map {sprintf "%s: %s", $_, $commands[$_]} @failures
+            );
 }
 
 sub execute {
@@ -238,7 +292,8 @@ sub execute {
     $self->status_message(sprintf("Temp directory is: %s", $self->temp_dir));
 
     my $script_path = sprintf("%s/run.sh", $self->temp_dir);
-    write_file($script_path, $self->_script_text);
+    my $pipestatus_path = sprintf("%s/pipestatus.txt", $self->temp_dir);
+    write_file($script_path, $self->_script_text($pipestatus_path));
 
     $self->status_message(
         sprintf
@@ -254,7 +309,19 @@ sub execute {
         "(it can't seek to check for the bam EOF marker)."
         );
 
-    return Genome::Sys->shellcmd(cmd => "bash -e $script_path");
+    eval {
+        Genome::Sys->shellcmd(cmd => "bash $script_path");
+    };
+
+    if ($@) {
+        my $msg = sprintf "Pipeline failed: %s",
+            $self->_parse_pipestatus($pipestatus_path);
+
+        die $self->status_message($msg);
+    }
+
+
+    return 1;
 }
 
 1;
