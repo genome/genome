@@ -100,24 +100,22 @@ sub __display_name__ {
 
 sub _faster_get {
     my $class = shift;
+    my @args = @_;
 
-    my $statsd_prefix = "software_result_get.";
+    my $statsd_prefix = "software_result_get.full_time.";
     my $statsd_class_suffix = "$class";
     $statsd_class_suffix =~ s/::/_/g;
+    my @objects;
 
-    my $start_time = Time::HiRes::time();
-
-    my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@_);
-
-    # NOTE we do this so that get can be noisy when called directly.
-    my @objects = $class->SUPER::get(lookup_hash => $lookup_hash);
-
-    my $final_time = Time::HiRes::time();
-    my $full_time = 1000 * ($final_time - $start_time);
-    Genome::Utility::Instrumentation::timing($statsd_prefix . "full_time.total",
-            $full_time);
-    Genome::Utility::Instrumentation::timing(
-        $statsd_prefix . "full_time." . $statsd_class_suffix, $full_time);
+    Genome::Utility::Instrumentation::timer(
+        $statsd_prefix . 'total',
+        $statsd_prefix . $statsd_class_suffix,
+        sub {
+            my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@args);
+            # NOTE we do this so that get can be noisy when called directly.
+            @objects = $class->SUPER::get(lookup_hash => $lookup_hash);
+        }
+    );
 
     return @objects;
 }
