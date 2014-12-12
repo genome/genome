@@ -82,7 +82,7 @@ sub help_brief {
 
 sub help_synopsis {
 <<EOS
-PARIED END ALIGNMENT
+PAIRED END ALIGNMENT
     gmt bwa run-mem \\
         --bwa-version 0.7.10 \\
         --aligner-log-path bwa.log \\
