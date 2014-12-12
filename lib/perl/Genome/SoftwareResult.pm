@@ -568,7 +568,7 @@ sub _process_params_for_lookup_hash {
 }
 
 sub _modify_params_for_lookup_hash {
-    # overridden in some subclasses 
+    # overridden in some subclasses
 }
 
 sub _resolve_object_id {
@@ -621,7 +621,7 @@ sub _prepare_output_directory {
     unless ( $subdir ) {
         die $self->error_message("failed to resolve subdirectory for output data.  cannot proceed.");
     }
-    
+
     my %allocation_create_parameters = (
         disk_group_name => $self->resolve_allocation_disk_group_name,
         allocation_path => $subdir,
@@ -638,7 +638,7 @@ sub _prepare_output_directory {
     unless (-d $output_dir) {
         die $self->error_message("Allocation path $output_dir doesn't exist!");
     }
-    
+
     $self->output_dir($output_dir);
     return $output_dir;
 }
@@ -1056,7 +1056,7 @@ sub best_guess_date {
 }
 
 sub best_guess_date_numeric {
-    return UnixDate(shift->best_guess_date, "%s"); 
+    return UnixDate(shift->best_guess_date, "%s");
 }
 
 sub creation_grid_job {
