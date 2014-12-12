@@ -13,7 +13,8 @@ use Test::More tests => 11;
 use above 'Genome';
 use Genome::Utility::Test qw(command_execute_ok);
 
-use_ok('Genome::FeatureList::Command::Update');
+my $cmd_class = 'Genome::FeatureList::Command::Update';
+use_ok($cmd_class);
 
 my $test_bed_file = __FILE__ . '.bed';
 ok(-e $test_bed_file, 'test file ' . $test_bed_file . ' exists');
@@ -36,7 +37,7 @@ my $feature_list;
 ok($feature_list, 'created a feature list');
 isa_ok($feature_list, 'Genome::FeatureList');
 
-my $update_cmd = Genome::FeatureList::Command::Update->create(
+my $update_cmd = $cmd_class->create(
     feature_list => [$feature_list],
     format => 'unknown', 
 );
@@ -46,7 +47,7 @@ command_execute_ok($update_cmd,
 
 is($feature_list->format, 'unknown', 'Successfully updated format');
 
-$update_cmd = Genome::FeatureList::Command::Update->create(
+$update_cmd = $cmd_class->create(
     feature_list => [$feature_list],
     format => 'true-BED', 
     source => 'test-data-makers',
