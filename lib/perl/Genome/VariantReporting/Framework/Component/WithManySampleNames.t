@@ -27,4 +27,18 @@ my @expected_available_fields = qw(S1_info S2_info);
 is_deeply([$interpreter->available_fields($interpreter->sample_names)], \@expected_available_fields, "Available fields as expected");
 is($interpreter->create_sample_specific_field_name('info', 'S1'), 'S1_info', "Sample specific field name as expected");
 is_deeply([$interpreter->create_sample_specific_field_names(['info'])], ['S1_info', 'S2_info'], "Sample specific field names as expected");
+
+subtest "With Label" => sub {
+    my $interpreter = $pkg->create(
+        sample_names => ['S1', 'S2'],
+        sample_name_labels => {
+            S1 => 'S1_is_a_great_sample',
+        },
+    );
+    ok($interpreter, "Interpreter created successfully");
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates successfully");
+
+    is_deeply([$interpreter->create_sample_specific_field_names(['info'])], ['S1_is_a_great_sample_info', 'S2_info'], "Sample specific field names as expected");
+};
+
 done_testing;

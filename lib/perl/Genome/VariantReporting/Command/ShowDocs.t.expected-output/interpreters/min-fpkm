@@ -6,6 +6,8 @@ Filter variants that don't meet minimum FPKM value
     The minimum FPKM value to pass
   [1msample_name[0m   Text
     This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
 
 [4mREQUIRED EXPERTS[0m
 fpkm

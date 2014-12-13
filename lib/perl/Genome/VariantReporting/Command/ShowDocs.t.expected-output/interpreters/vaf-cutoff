@@ -8,6 +8,8 @@ Filter variants that don't match vaf cutoffs
     The inclusive lower bound for VAF values that will pass the filter (will be kept)
   [1msample_name[0m   Text
     This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
 
 [4mREQUIRED EXPERTS[0m
 bam-readcount

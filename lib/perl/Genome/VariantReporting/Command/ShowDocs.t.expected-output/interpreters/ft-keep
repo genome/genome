@@ -7,6 +7,8 @@ Filter out variants that don't contain the specified FT values
     Default value ["PASS"] if not specified
   [1msample_name[0m   Text
     This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
 
 [4mAVAILABLE FIELDS[0m
   [1mfilter_status[0m

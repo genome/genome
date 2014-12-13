@@ -12,6 +12,8 @@ Filter variants based on the sample genotype and matching vaf values
     Minimum VAF value if the genotype if homozygous. Expressed as a whole percentage.
   [1msample_name[0m   Text
     This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
 
 [4mREQUIRED EXPERTS[0m
 bam-readcount
