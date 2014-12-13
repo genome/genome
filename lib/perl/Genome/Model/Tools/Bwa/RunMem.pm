@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 use File::Slurp qw(read_file write_file);
 use List::AllUtils qw(any);
+use Text::ParseWords qw(shellwords);
 
 class Genome::Model::Tools::Bwa::RunMem {
     is => "Command::V2",
@@ -35,14 +36,14 @@ class Genome::Model::Tools::Bwa::RunMem {
         aligner_params => {
             is => "String",
             doc => "Additional params for bwa mem",
-            default_value => ""
+            default_value => "",
         },
 
         aligner_log_path => {
             is_output => 1,
             is => "String",
             doc => "Path where aligner log (bwa mem stderr) will be written. " .
-                "All other commands log to stderr."
+                "All other commands log to stderr.",
         },
 
         # Note: seems like our bwa mem aligner index files are not
@@ -135,14 +136,21 @@ sub _param_join {
     return join(" \\\n        ", @_);
 }
 
-sub _scrubbed_aligner_params {
+sub _validate_params {
     my $self = shift;
-    # remove any -t value specified on the command line and replace with
-    # our own 'num_threads'
 
-    my $params = $self->aligner_params;
-    $params =~ s/-t\s*\S*//g;
-    return sprintf "%s -t %d", $params, $self->num_threads;
+    my @params = shellwords($self->aligner_params);
+    # Check for -t or -t#
+    my @thread_params = grep {
+        my $x = $_;
+        $x =~ s/['"]//g;
+        $x =~ /^-t[0-9]*/
+    } @params;
+
+    if (@thread_params) {
+        die "This module does not support '-t <n>' as part of the " .
+            "--aligner-params. Use --num-threads instead."
+    }
 }
 
 sub _aligner_command {
@@ -153,7 +161,8 @@ sub _aligner_command {
     }
     my $bwa = Genome::Model::Tools::Bwa->path_for_bwa_version($ver);
     my $log = $self->aligner_log_path;
-    my @extra_params = $self->_scrubbed_aligner_params;
+    my @extra_params = $self->aligner_params, "-t", $self->num_threads;
+
     my @in = $self->input_fastqs;
     my $fa = $self->aligner_index_fasta;
     return _param_join("$bwa mem", @extra_params, $fa, @in, "2> $log");
@@ -277,6 +286,7 @@ sub _parse_pipestatus {
 
 sub execute {
     my $self = shift;
+    $self->_validate_params;
 
     my @input_fastqs = $self->input_fastqs;
     my $n_inputs = scalar @input_fastqs;
@@ -319,7 +329,6 @@ sub execute {
 
         die $self->status_message($msg);
     }
-
 
     return 1;
 }

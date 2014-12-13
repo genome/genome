@@ -43,6 +43,33 @@ my %common_params = (
     num_threads => 1,
     );
 
+subtest "specifying threads with -t is an error" => sub {
+    my $obj = $pkg->create(
+            bwa_version => "0.5.9",
+            input_fastqs => \@input_fastqs,
+            output_file => "/dev/null",
+            aligner_log_path => "/dev/null",
+            %common_params
+        );
+
+    ok($obj, "created command");
+
+    my @invalid = ("-t 4", "-t4", "-S -t4", "-S -t 4 -e",
+        "-t '4'", '-t "4"', '-t " 4"', "-t ' 4  '");
+    my @valid = ("-R '\@RG\tID:rg-test'");
+    for my $params (@invalid) {
+        $obj->aligner_params($params);
+        eval { $obj->_validate_params; };
+        ok($@, "aligner params == [$params] is an error");
+    }
+
+    for my $params (@valid) {
+        $obj->aligner_params($params);
+        eval { $obj->_validate_params; };
+        ok(!$@, "aligner params == [$params] is not an error");
+    }
+};
+
 subtest "bwa versions without mem" => sub {
     my $obj = $pkg->create(
             bwa_version => "0.5.9",
