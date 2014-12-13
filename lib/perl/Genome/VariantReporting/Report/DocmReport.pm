@@ -33,8 +33,8 @@ sub headers {
         reference
         variant
     /;
-    push @headers, per_sample_vaf_headers($self);
-    push @headers, per_library_vaf_headers($self);
+    push @headers, sort(per_sample_vaf_headers($self));
+    push @headers, sort(per_library_vaf_headers($self));
 
     return @headers;
 }

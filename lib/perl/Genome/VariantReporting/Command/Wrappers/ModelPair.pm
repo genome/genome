@@ -37,7 +37,11 @@ class Genome::VariantReporting::Command::Wrappers::ModelPair {
     has_transient_optional => {
         dag => {
             is => 'Genome::WorkflowBuilder::DAG',
-        }
+        },
+        common_translations => {
+            is => 'HASH',
+            default => {},
+        },
     }
 };
 
@@ -135,7 +139,7 @@ sub get_sample_and_bam_map {
 
 sub get_translations {
     my $self = shift;
-    my %translations;
+    my %translations = %{$self->common_translations};
     $translations{discovery_tumor} = $self->discovery->tumor_sample->name;
     $translations{normal} = $self->discovery->normal_sample->name;
     if ($self->followup) {

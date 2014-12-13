@@ -56,6 +56,7 @@ sub get_model_pairs {
         for my $model (@{$model_list}) {
             if ($self->is_single_bam($model)) {
                 push @model_pairs, Genome::VariantReporting::Command::Wrappers::SingleModel->create(
+                    common_translations => $self->get_common_translations(),
                     discovery => $model->last_succeeded_build,
                     label => 'germline',
                 );
@@ -95,12 +96,14 @@ sub get_model_pairs {
         }
 
         push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
+            common_translations => $self->get_common_translations(),
             discovery => $discovery_build,
             followup => $validation_build,
             label => "discovery",
         );
 
         push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPair->create(
+            common_translations => $self->get_common_translations(),
             discovery => $validation_build,
             followup => $discovery_build,
             label => "followup",
@@ -108,6 +111,7 @@ sub get_model_pairs {
 
         for my $other_input_vcf_pair (keys %{$self->other_input_vcf_pairs}) {
             push @model_pairs, Genome::VariantReporting::Command::Wrappers::ModelPairWithInput->create(
+                common_translations => $self->get_common_translations(),
                 discovery => $discovery_build,
                 followup => $validation_build,
                 plan_file_basename => "cle_docm_report_TYPE.yaml",
@@ -119,6 +123,44 @@ sub get_model_pairs {
     }
 
     return \@model_pairs;
+}
+
+sub get_common_translations {
+    my $self = shift;
+
+    return {
+        sample_name_labels => {
+            $self->discovery_sample->name =>
+                sprintf('Discovery(%s)', $self->discovery_sample->name),
+            $self->followup_sample->name =>
+                sprintf('Followup(%s)', $self->followup_sample->name),
+            $self->normal_sample->name =>
+                sprintf('Normal(%s)', $self->normal_sample->name),
+        },
+        library_name_labels => {
+            $self->get_library_name_labels('discovery'),
+            $self->get_library_name_labels('followup'),
+            $self->get_library_name_labels('normal'),
+        },
+    };
+}
+
+my %counters;
+sub get_library_name_labels {
+    my ($self, $category) = @_;
+
+    my %labels;
+    $counters{$category} = 1;
+
+    my $accessor = sprintf('%s_sample', $category);
+    for my $library ($self->$accessor->libraries) {
+        $labels{$library->name} = sprintf('%s-Library%d(%s)',
+            ucfirst($category),
+            $counters{$category}++,
+            $library->name,
+        );
+    }
+    return %labels;
 }
 
 sub is_model_discovery {
