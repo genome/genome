@@ -41,7 +41,32 @@ my %common_params = (
     sam_header_path => $header_file,
     max_sort_memory => "200M",
     num_threads => 1,
+    samtools_version => '0.1.19',
     );
+
+subtest "invalid samtools versions" => sub {
+    my $obj = $pkg->create(
+            bwa_version => "0.5.9",
+            input_fastqs => \@input_fastqs,
+            output_file => "/dev/null",
+            aligner_log_path => "/dev/null",
+            %common_params
+        );
+
+    ok($obj, "created command");
+
+    my @invalid = ("r123", "0.1.18", "1.0");
+
+    for my $ver (@invalid) {
+        $obj->samtools_version($ver);
+        eval { $obj->_validate_params; };
+        ok($@, "samtools_version = [$ver] is an error");
+    }
+
+    $obj->samtools_version("0.1.19");
+    eval { $obj->_validate_params; };
+    ok(!$@, "samtools version 0.1.19 is ok");
+};
 
 subtest "specifying threads with -t is an error" => sub {
     my $obj = $pkg->create(

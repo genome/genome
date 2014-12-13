@@ -7,9 +7,19 @@ use File::Slurp qw(read_file write_file);
 use List::AllUtils qw(any);
 use Text::ParseWords qw(shellwords);
 
+my $REQUIRED_SAMTOOLS_VERSION = '0.1.19';
+my %VALID_SAMTOOLS_VERSIONS = ($REQUIRED_SAMTOOLS_VERSION => 1);
+
 class Genome::Model::Tools::Bwa::RunMem {
     is => "Command::V2",
     has_input => [
+        samtools_version => {
+            is => "String",
+            doc => "The version of samtools to use for sorting and calmd",
+            valid_values => [sort keys %VALID_SAMTOOLS_VERSIONS],
+            default_value => $REQUIRED_SAMTOOLS_VERSION,
+        },
+
         temp_dir => {
             is => "String",
             doc => "Temp directory to use (one is generated if omitted)",
@@ -150,6 +160,13 @@ sub _validate_params {
     if (@thread_params) {
         die "This module does not support '-t <n>' as part of the " .
             "--aligner-params. Use --num-threads instead."
+    }
+
+    # samtools 0.1.19 is required for this module to work properly
+    if (!exists $VALID_SAMTOOLS_VERSIONS{$self->samtools_version}) {
+        die sprintf "Samtools version %s is invalid, supported versions: ",
+            $self->samtools_version,
+            join(", ", sort keys %VALID_SAMTOOLS_VERSIONS);
     }
 }
 
