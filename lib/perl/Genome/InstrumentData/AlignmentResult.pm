@@ -1346,7 +1346,7 @@ sub _prepare_working_and_staging_directories {
     my $hostname = hostname;
     my $user = $ENV{'USER'};
 
-    my $scratch_basedir = sprintf("scratch-%s-%s-%s", $hostname, $user, $$);
+    my $scratch_basedir = sprintf("scratch-%s-%s-%s-%s", $hostname, $user, $$, $self->id);
     my $scratch_tempdir =  Genome::Sys->create_temp_directory($scratch_basedir);
     $self->temp_scratch_directory($scratch_tempdir);
     unless($scratch_tempdir) {
@@ -1508,48 +1508,79 @@ sub get_or_create_sequence_dictionary {
     return $seq_dict;
 }
 
+sub _sam_header_extra {
+    my $self = shift;
+
+    my $instr_data = $self->instrument_data;
+
+    my $insert_size_for_header = 0;
+    if ($instr_data->can('resolve_median_insert_size') &&
+            $instr_data->resolve_median_insert_size)
+    {
+        $insert_size_for_header = $instr_data->resolve_median_insert_size;
+    }
+
+    my $seems_paired = $self->_is_inferred_paired_end;
+    my $paired = defined $seems_paired ? $seems_paired : $instr_data->is_paired_end;
+    my $description_for_header = $paired ? "paired end" : "fragment";
+    my $aligner_command_line = $self->aligner_params_for_sam_header;
+
+    my $id_tag = $self->read_and_platform_group_tag_id;
+    my $pu_tag = sprintf("%s.%s", $instr_data->run_identifier, $instr_data->subset_name);
+    my $lib_tag = $instr_data->library_name;
+    my $date_run_tag = $instr_data->run_start_date_formatted;
+    my $sample_tag = $instr_data->sample_name;
+    my $aligner_version_tag = $self->aligner_version;
+    my $aligner_cmd  =  $aligner_command_line;
+    my $platform = $instr_data->sequencing_platform;
+    $platform = ($platform eq 'solexa' ? 'illumina' : $platform);
+
+    my @rg_data = (
+        "\@RG",
+        "ID:$id_tag",
+        "PL:$platform",
+        "PU:$pu_tag",
+        "LB:$lib_tag",
+        "PI:$insert_size_for_header",
+        "DS:$description_for_header",
+        "DT:$date_run_tag",
+        "SM:$sample_tag",
+        "CN:WUGSC",
+        );
+
+    my @pg_data = (
+        "\@PG",
+        "ID:$id_tag",
+        "VN:$aligner_version_tag",
+        "CL:$aligner_cmd",
+        );
+
+    return {
+        RG => join("\t", @rg_data),
+        PG => join("\t", @pg_data),
+        };
+}
+
 sub construct_groups_file {
     my $self = shift;
     my $output_file = shift || $self->temp_scratch_directory . "/groups.sam";
 
-    my $aligner_command_line = $self->aligner_params_for_sam_header;
-    my $instr_data = $self->instrument_data;
+    my $extra = $self->_sam_header_extra;
 
-    my $insert_size_for_header;
-    if ($instr_data->can('resolve_median_insert_size') && $instr_data->resolve_median_insert_size) {
-        $insert_size_for_header= $instr_data->resolve_median_insert_size;
-    }
-    else {
-        $insert_size_for_header = 0;
-    }
-
-    my $paired = defined $self->_is_inferred_paired_end ? $self->_is_inferred_paired_end : $instr_data->is_paired_end;
-    my $description_for_header = $paired ? "paired end" : "fragment";
-
-    # build the header
-    my $id_tag       = $self->read_and_platform_group_tag_id;
-    my $pu_tag       = sprintf("%s.%s", $instr_data->run_identifier, $instr_data->subset_name);
-    my $lib_tag      = $instr_data->library_name;
-    my $date_run_tag = $instr_data->run_start_date_formatted;
-    my $sample_tag   = $instr_data->sample_name;
-    my $aligner_version_tag = $self->aligner_version;
-    my $aligner_cmd  =  $aligner_command_line;
-
-    my $platform = $instr_data->sequencing_platform;
-    $platform = ($platform eq 'solexa' ? 'illumina' : $platform);
-
-    #@RG     ID:2723755796   PL:illumina     PU:30945.1      LB:H_GP-0124n-lib1      PI:0    DS:paired end   DT:2008-10-03   SM:H_GP-0124n   CN:WUGSC
-    #@PG     ID:0    VN:0.4.9        CL:bwa aln -t4
-    my $rg_tag = "\@RG\tID:$id_tag\tPL:$platform\tPU:$pu_tag\tLB:$lib_tag\tPI:$insert_size_for_header\tDS:$description_for_header\tDT:$date_run_tag\tSM:$sample_tag\tCN:WUGSC\n";
-    my $pg_tag = "\@PG\tID:$id_tag\tVN:$aligner_version_tag\tCL:$aligner_cmd\n";
+    my $rg_tag = $extra->{RG};
+    my $pg_tag = $extra->{PG};
+    die "Failed to generate \@RG line for sam header" unless $rg_tag;
+    die "Failed to generate \@PG line for sam header" unless $pg_tag;
 
     $self->debug_message("RG: $rg_tag");
     $self->debug_message("PG: $pg_tag");
 
-    my $header_groups_fh = IO::File->new(">>".$output_file) || die "failed opening groups file for writing";
-    print $header_groups_fh $rg_tag;
-    print $header_groups_fh $pg_tag;
-    $header_groups_fh->close;
+    my $fh = IO::File->new($output_file, "a")
+        || die "failed opening groups file for writing";
+
+    $fh->printf("%s\n", $rg_tag);
+    $fh->printf("%s\n", $pg_tag);
+    $fh->close;
 
     unless (-s $output_file) {
         $self->error_message("Failed to create groups file");
