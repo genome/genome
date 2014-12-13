@@ -3,6 +3,7 @@ package Genome::VariantReporting::Framework::Component::Base;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use Data::Dump qw(pp);
 
 class Genome::VariantReporting::Framework::Component::Base {
     is_abstract => 1,
@@ -199,16 +200,8 @@ sub get_default_value_lines {
         if (get_param_type_string($property_meta) eq 'Boolean') {
             $default_value = $default_value ? "'true'" : "'false'";
         }
-        elsif ($property_meta->is_many && ref($default_value) eq 'ARRAY') {
-            if (@$default_value) {
-                $default_value = "('".join("','",@$default_value)."')";
-            }
-            else {
-                $default_value = "()";
-            }
-        }
         else {
-            $default_value = "'$default_value'";
+            $default_value = pp($default_value);
         }
         push @lines, "Default value $default_value if not specified";
     }
