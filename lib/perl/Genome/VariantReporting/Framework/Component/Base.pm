@@ -32,8 +32,8 @@ sub print_errors {
     for my $error (@errors) {
         my @properties = $error->properties;
         $self->error_message("Property " .
-            join(',', map { "'$_'" } @properties) .
-            ': ' . $error->desc);
+            pp(\@properties) .
+            ': ' . $error->desc || 'unknown description');
     }
     return;
 }
