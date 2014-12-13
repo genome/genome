@@ -21,7 +21,8 @@ sub category {
 
 sub needed_translations {
     my $self = shift;
-    return Set::Scalar->new(map {$self->adaptor_params->{$_}} $self->get_class->adaptor_class->translated_input_names);
+    return Set::Scalar->new(map {$self->adaptor_params->{$_}}
+        $self->get_class->adaptor_class->required_translated_input_names);
 }
 
 sub translate {
