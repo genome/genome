@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/env genome-perl
 
 use strict;
 use warnings;
