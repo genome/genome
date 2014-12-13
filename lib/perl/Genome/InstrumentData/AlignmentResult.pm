@@ -287,8 +287,8 @@ sub __display_name__ {
         $name = '';
     }
 
-    $name .= $self->aligner_name 
-        . ' ' . $self->aligner_version 
+    $name .= $self->aligner_name
+        . ' ' . $self->aligner_version
         . ' [' . $self->aligner_params . ']'
         . ' on ' . $instrument_data->__display_name__
         . (defined $instrument_data_segment_id ? " ($instrument_data_segment_id)" : '')
@@ -296,7 +296,7 @@ sub __display_name__ {
         . ($annotation_build ? ' annotated by ' . $annotation_build->__display_name__ : '')
         . " (" . $self->id . ")";
 
-    return $name; 
+    return $name;
 }
 
 sub required_arch_os {
@@ -627,12 +627,12 @@ sub requires_fastqs_to_align {
 sub _extract_input_read_group_bam {
     my $self = shift;
     my $file = sprintf("%s/%s.rg_extracted_%s.bam", $self->temp_scratch_directory,  $self->instrument_data_id, $self->instrument_data_segment_id);
-    
+
     my $cmd = Genome::Model::Tools::Sam::ExtractReadGroup->create(
         input         => $self->instrument_data->bam_path,
         output        => $file,
         name_sort     => 1,
-        use_version   => $self->samtools_version, 
+        use_version   => $self->samtools_version,
         read_group_id => $self->instrument_data_segment_id,
     );
 
@@ -640,8 +640,8 @@ sub _extract_input_read_group_bam {
         $self->error_message($cmd->error_message);
         return;
     }
-     
-    $self->_extracted_bam_path($file);         
+
+    $self->_extracted_bam_path($file);
     return $file;
 }
 
@@ -653,7 +653,7 @@ sub collect_inputs {
     if ($self->requires_fastqs_to_align) {
         $self->debug_message('Requires fastqs to align');
         return $self->_extract_input_fastq_filenames;
-    } 
+    }
 
     # snag the bam from the instrument data
     my $instr_data = $self->instrument_data;
@@ -695,7 +695,7 @@ sub collect_inputs {
 
         # Boundaries were arbitrarily chosen, feel free to adjust as a matter
         # of policy.
-        
+
         if ($percent_paired >= 0.9) {
             die $self->error_message('flagstat on input bam: '. $bam_file.' infers paired_end on instrument_data: '.$instr_data->id);
         }
@@ -716,7 +716,7 @@ sub run_aligner {
     }
 
     # Perform N-removal if requested
-    
+
     if ($self->n_remove_threshold) {
         $self->debug_message("Running N-remove.  Threshold is " . $self->n_remove_threshold);
 
@@ -811,7 +811,7 @@ sub run_aligner {
                 $fastq_rd_ct += $wc_ct/4;
             }
         }
-    } 
+    }
     else {
         $fastq_rd_ct = $self->determine_input_read_count_from_bam;
     }
@@ -1425,7 +1425,7 @@ sub _extract_input_fastq_filenames {
                 die($self->error_message);
             }
         }
-    } 
+    }
     else {
         # FIXME - getting a warning about undefined string with 'eq'
         if (! defined($self->filter_name)) {
@@ -1667,12 +1667,12 @@ sub _derive_insert_size_bounds {
     my $stddev = $self->instrument_data->resolve_sd_insert_size;
 
     my ($upper, $lower);
-    
+
     if (defined $median && defined $stddev) {
         $upper = $median + $stddev*5;
         $lower = $median - $stddev*5;
     }
-    
+
     if (!defined $upper || $upper <= 0) {
         $self->debug_message("Calculated upper bound on insert size is undef or less than 0, defaulting to $up_default");
         $upper = $up_default;
