@@ -34,11 +34,6 @@ class Genome::VariantReporting::Command::Wrappers::ModelPair {
             is => 'Path',
         }
     ],
-    has_constant => {
-        sample_legend => {
-            calculate => q( Genome::Sys->create_temp_file_path; ),
-        }
-    },
     has_transient_optional => {
         dag => {
             is => 'Genome::WorkflowBuilder::DAG',
@@ -108,7 +103,6 @@ sub report_names {
 sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
-    $self->generate_sample_legend_file;
 
     my $translations_file = $self->generate_translations_file;
     $self->translations_file($translations_file);
@@ -151,21 +145,6 @@ sub get_translations {
         $translations{gold} = $self->gold_sample_name;
     }
     return \%translations;
-}
-
-sub generate_sample_legend_file {
-    my $self = shift;
-
-    my $translations = $self->get_translations;
-    my $legend_file = Genome::File::Tsv->create($self->sample_legend);
-    my @headers = ('sample label', 'sample name');
-    my $writer = $legend_file->create_writer(headers => \@headers);
-    while ( my ($sample_label, $sample_name) = each %$translations ) {
-        $writer->write_one({
-            'sample label' => $sample_label,
-            'sample name' => $sample_name,
-         });
-    }
 }
 
 sub get_library_names {
