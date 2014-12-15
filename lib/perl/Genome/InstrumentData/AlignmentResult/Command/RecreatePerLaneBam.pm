@@ -20,7 +20,7 @@ class Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam {
         },
         read_group_id => {
             is  => 'String',
-            doc => 'The read group id to create per read group bam, like a instrument data id',
+            doc => 'The read group id to create per read group bam, like an instrument data id',
         },
         samtools_version => {
             is  => 'Version',
@@ -43,12 +43,12 @@ class Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam {
 
 
 sub help_brief {
-    'Tool to create a per lane bam from a source bam.';
+    'Command to recreate a per lane bam from a merged bam.';
 }
 
 sub help_detail {
     return <<EOS
-    Tool to create a per lane bam from a source bam. The new bam need be reheadered and compare flagstat with original per lane bam. The new bam also need to revert markdup flag.
+    This command will recreate a per lane bam from the merged bam if this per lane bam is needed again for new bam merge. When removing per lane bam, we mean to remove all_sequences.bam along with the .bai and .md5 files, but keep .flagstat and make all_sequences.bam.header in the directory. When recreating the per lane bam, we run flagstat on the temp extract read-group bam (made from merged bam) and compare this flagstat with the original all_sequences.bam.flagstat to make sure they are exactly same. Then we revert markdup tag in this bam and reheader this bam using all_sequences.bam.header created previously in order to make this bam resembling the original per lane bam as much as possible. 
 EOS
 }
 
@@ -207,9 +207,7 @@ sub _create_bam_md5 {
     my $basename    = basename $out_bam;
     $md5_content   .= "\t$basename\n";
 
-    my $fh = Genome::Sys->open_file_for_writing($out_bam.'.md5');
-    $fh->print($md5_content);
-    $fh->close;
+    Genome::Sys->write_file($out_bam.'.md5', $md5_content);
 }
 
 
@@ -220,7 +218,7 @@ sub _move_outputs {
 
     for my $type ('', '.bai', '.md5') {
         my $tmp_file = $tmp_out . $type;
-        my $out_file = $out_dir . '/' . basename($tmp_file);
+        my $out_file = File::Spec->join($out_dir, basename $tmp_file);
         Genome::Sys->move_file($tmp_file, $out_file);
     }
 }
