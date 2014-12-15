@@ -211,7 +211,7 @@ sub _sort_cmdline {
     my $comp_level = 0;
     my $threads = $self->num_threads;
     my $max_mem = $self->max_sort_memory;
-    my $tmp_path = sprintf("%s/samtools-sort", $self->temp_dir);
+    my $tmp_path = File::Spec->catfile($self->temp_dir, "samtools-sort");
 
     return "$samtools_exe_path sort -l $comp_level -\@ $threads -m $max_mem -o -f - $tmp_path";
 }
@@ -319,8 +319,9 @@ sub execute {
 
     $self->status_message(sprintf("Temp directory is: %s", $self->temp_dir));
 
-    my $script_path = sprintf("%s/run.sh", $self->temp_dir);
-    my $pipestatus_path = sprintf("%s/pipestatus.txt", $self->temp_dir);
+    my $script_path = File::Spec->catfile($self->temp_dir, "run.sh");
+    my $pipestatus_path = File::Spec->catfile($self->temp_dir, "pipestatus.txt");
+
     write_file($script_path, $self->_script_text($pipestatus_path));
 
     $self->debug_message(
