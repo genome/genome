@@ -65,7 +65,7 @@ sub execute {
     my $build = $self->build;
 
     return 1 if $self->should_skip_run;
-    unless($self->filtered_variation_file) {
+    unless($self->filtered_validation_file) {
         die $self->error_message('Filtered Variation File is required when not skipping this step!');
     }
 
