@@ -6,13 +6,17 @@ use Genome;
 use List::Util 'sum';
 
 sub calculate_vaf_for_all_alts {
-    my $per_lib_vafs = calculate_per_library_vaf_for_all_alts(@_);
+    my ($entry, $readcount_entry) = @_;
 
-    my $vafs;
-    while (my ($allele, $allele_vafs) = each %$per_lib_vafs) {
-        $vafs->{$allele} = sum(values %{$allele_vafs});
+    my $alt_alleles = $entry->{alternate_alleles};
+    my $ref = $entry->{reference_allele};
+
+    my %vafs;
+    for my $allele (@$alt_alleles) {
+        my $vaf = calculate_vaf($readcount_entry, $allele, $entry->{reference_allele});
+        $vafs{$allele} = $vaf;
     }
-    return %$vafs;
+    return %vafs;
 }
 
 sub calculate_per_library_vaf_for_all_alts {
@@ -45,8 +49,14 @@ sub is_deletion {
 }
 
 sub calculate_vaf {
-    my $vafs = calculate_per_library_vaf(@_);
-    return sum(values %$vafs);
+    my ($bam_readcount_entry, $alt_allele, $ref) = @_;
+    my $coverage = calculate_coverage_for_allele($bam_readcount_entry, $alt_allele, $ref);
+    my $depth = $bam_readcount_entry->depth;
+    if ($depth == 0) {
+        return 0;
+    } else {
+        return $coverage / $depth * 100;
+    }
 }
 
 sub calculate_per_library_vaf {
@@ -54,14 +64,26 @@ sub calculate_per_library_vaf {
     my $coverage = calculate_per_library_coverage_for_allele(@_);
     my $vaf;
     while ( my ($library, $readcount) = each %$coverage ) {
-        if ($bam_readcount_entry->depth == 0) {
+        my $library_depth = depth_for_library_name($bam_readcount_entry, $library);
+        if ($library_depth == 0) {
             $vaf->{$library} = 0;
         }
         else {
-            $vaf->{$library} = $readcount / $bam_readcount_entry->depth * 100;
+            $vaf->{$library} = $readcount / $library_depth * 100;
         }
     }
     return $vaf;
+}
+
+sub depth_for_library_name {
+    my ($bam_readcount_entry, $library_name) = @_;
+
+    for my $library ($bam_readcount_entry->libraries) {
+        if ($library->name eq $library_name) {
+            return $library->depth;
+        }
+    }
+    die sprintf("No library information for library named (%s)", $library_name);
 }
 
 sub calculate_coverage_for_allele {

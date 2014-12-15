@@ -31,7 +31,7 @@ subtest "one alt allele" => sub {
             var_count => 341,
             per_library_var_count => 'Solexa-135852:155,Solexa-135853:186',
             per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
-            per_library_vaf => 'Solexa-135852:45.0581395348837,Solexa-135853:54.0697674418605',
+            per_library_vaf => 'Solexa-135852:87.0786516853933,Solexa-135853:99.4652406417112',
         }
     );
 
@@ -56,7 +56,7 @@ subtest "insertion" => sub {
             var_count => 20,
             per_library_var_count => 'Solexa-135852:20,Solexa-135853:0',
             per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
-            per_library_vaf => 'Solexa-135852:5.81395348837209,Solexa-135853:0',
+            per_library_vaf => 'Solexa-135852:11.2359550561798,Solexa-135853:0',
         }
     );
 
@@ -81,7 +81,7 @@ subtest "deletion" => sub {
             var_count => 20,
             per_library_var_count => 'Solexa-135852:20,Solexa-135853:0',
             per_library_ref_count => 'Solexa-135852:3,Solexa-135853:2',
-            per_library_vaf => 'Solexa-135852:5.81395348837209,Solexa-135853:0',
+            per_library_vaf => 'Solexa-135852:11.0497237569061,Solexa-135853:0',
         }
     );
 
