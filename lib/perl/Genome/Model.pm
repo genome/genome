@@ -676,7 +676,7 @@ sub _lock {
     my $self = shift;
     my $model_id = $self->id;
     unless ($ENV{UR_DBI_NO_COMMIT}) {
-        my $lock_var = $ENV{GENOME_LOCK_DIR} . '/build_requested/' . $model_id;
+        my $lock_var = File::Spec->join($ENV{GENOME_LOCK_DIR}, 'build_requested', $model_id);
         my $lock = Genome::Sys->lock_resource(resource_lock => $lock_var, max_try => 30, block_sleep => 30);
 
         die("Unable to acquire the lock to request $model_id. Is something already running or did it exit uncleanly?")
