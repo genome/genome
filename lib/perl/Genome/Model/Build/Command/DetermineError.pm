@@ -4,7 +4,6 @@ use warnings;
 use strict;
 
 use Genome;
-use File::Slurp 'read_file';
 use IPC::System::Simple qw(capture);
 use Try::Tiny;
 
@@ -202,7 +201,7 @@ sub parse_error_log {
 
     my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
 
-    my $file_text = read_file($filename);
+    my $file_text = Genome::Sys->read_file($filename);
 
     ($error_date, $error_host, my $date_removed_text) = get_error_date($file_text);
     if ($error_date) {
