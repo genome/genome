@@ -43,7 +43,6 @@ sub required_rusage {
     my $mem_kb = $mem_mb*1024;
     my $tmp_gb = $tmp_mb/1024;
 
-    my $user = getpwuid($<);
     my $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
     $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD} if (Genome::Config->should_use_alignment_pd);
 
@@ -396,7 +395,7 @@ sub aligner_params_for_sam_header {
 # Helper for decomposed_aligner_params. Takes a param string (from the
 # processing profile) and generates a param hash.
 sub _param_string_to_hash {
-    my $self = shift;
+    my $class = shift;
     my $param_string = shift;
 
     Getopt::Long::Configure("bundling");
@@ -426,7 +425,7 @@ sub _param_string_to_hash {
         'v=i' => \$param_hash{v},
     );
 
-    die $self->error_message("Failed to parse parameter string: $param_string") unless $rv;
+    die $class->error_message("Failed to parse parameter string: $param_string") unless $rv;
 
     my @switches = qw(a C H M p P);
 
