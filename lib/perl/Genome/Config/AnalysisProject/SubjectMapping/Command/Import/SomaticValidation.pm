@@ -14,11 +14,6 @@ class Genome::Config::AnalysisProject::SubjectMapping::Command::Import::SomaticV
             doc => 'path to a newline-delimited, tab-separated list of samples, variant lists, and tags (See description section of --help for details.)'
         }
     ],
-    has_transient => [
-        valid_statuses => {
-            value => ["Pending", "Hold", "In Progress"],
-        },
-    ],
 };
 
 sub help_brief {
@@ -42,6 +37,10 @@ A header is optional and should be preceded with a '#' if present.
 Both tumor and normal subject can be specified by either ID or Name.
 Tags may also be specified by either ID or Name.
 EOS
+}
+
+sub valid_statuses {
+    return ("Pending", "Hold", "In Progress");
 }
 
 my @subjects = ('tumor_sample', 'normal_sample');

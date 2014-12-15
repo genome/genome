@@ -21,11 +21,6 @@ class Genome::Config::AnalysisProject::Command::AddMenuItem {
             doc => 'Reprocess any existing instrument data with the new config',
         },
     ],
-    has_transient => [
-        valid_statuses => {
-            value => ["Pending", "Hold", "In Progress", "Template"],
-        },
-    ],
 };
 
 sub help_brief {
@@ -40,6 +35,10 @@ sub help_detail {
     return <<"EOS"
 Given an analysis project and a config file, this will associate the two
 EOS
+}
+
+sub valid_statuses {
+    return ("Pending", "Hold", "In Progress", "Template");
 }
 
 sub execute {

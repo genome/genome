@@ -9,29 +9,25 @@ class Genome::Config::AnalysisProject::Command::Base {
     is => 'Command::V2',
     is_abstract => 1,
     #has => [ analysis_project... ], #added in preprocessor
-    has_transient => [
-        valid_statuses => {
-            is => 'ARRAY',
-            doc => 'List of analysis project statuses valid for running this command',
-            default_value => [],
-        },
-    ],
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
 };
+
+sub valid_statuses {
+    my $class = shift;
+    $class = ref $class || $class;
+
+    die sprintf('Class %s must define a "valid_statuses" method indicating those statuses an analysis project can be in to be used by the command.', $class);
+}
 
 sub _preprocess_subclass_description {
     my ($class, $desc) = @_;
 
-    unless (exists $desc->{has}{valid_statuses} and $desc->{has}{valid_statuses}{default_value}) {
-        die 'Bad class definition for ' . $class . '.  Commands inheriting from Genome::Config::AnalysisProject::Command::Base must define a "valid_statuses" attribute.';
-    }
-
-    my $statuses = $desc->{has}{valid_statuses}{default_value};
+    my @statuses = $desc->{class_name}->valid_statuses;
 
     $desc->{has}{analysis_project} = {
         is => 'Genome::Config::AnalysisProject',
         shell_args_position => 1,
-        doc => 'the analysis project on which to operate--must be in one of the following statuses: ' . join(', ', @$statuses),
+        doc => 'the analysis project on which to operate--must be in one of the following statuses: ' . join(', ', @statuses),
     };
 
     return $desc;
@@ -43,7 +39,7 @@ sub __errors__ {
     my @errors = $self->SUPER::__errors__(@_);
 
     my $status = $self->analysis_project->status;
-    unless(grep{$_ eq $status} @{$self->valid_statuses}){
+    unless(grep{$_ eq $status} $self->valid_statuses){
         my $name = $self->command_name;
         $name = (split(' ', $name))[-1];
         $name =~ s/-/ /g;

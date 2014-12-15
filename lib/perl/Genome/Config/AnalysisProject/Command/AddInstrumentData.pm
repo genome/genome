@@ -16,11 +16,6 @@ class Genome::Config::AnalysisProject::Command::AddInstrumentData {
             shell_args_position => 2,
        },
     ],
-    has_transient => [
-        valid_statuses => {
-            value => ["Pending", "Hold", "In Progress"],
-        },
-    ],
 };
 
 sub help_brief {
@@ -36,6 +31,10 @@ sub help_detail {
 This will associate instrument data with an analysis project. It is limited to working on imported data only
 as data produced in-house will have this information set up in LIMS
 EOS
+}
+
+sub valid_statuses {
+    return ("Pending", "Hold", "In Progress");
 }
 
 sub execute {
