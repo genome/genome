@@ -158,15 +158,19 @@ sub _validate_params {
     } @params;
 
     if (@thread_params) {
-        die "This module does not support '-t <n>' as part of the " .
+        die $self->error_message(
+            "This module does not support '-t <n>' as part of the " .
             "--aligner-params. Use --num-threads instead."
+            );
     }
 
     # samtools 0.1.19 is required for this module to work properly
     if (!exists $VALID_SAMTOOLS_VERSIONS{$self->samtools_version}) {
-        die sprintf "Samtools version %s is invalid, supported versions: ",
+        die $self->error_message(
+            sprintf "Samtools version %s is invalid, supported versions: ",
             $self->samtools_version,
-            join(", ", sort keys %VALID_SAMTOOLS_VERSIONS);
+            join(", ", sort keys %VALID_SAMTOOLS_VERSIONS)
+            );
     }
 }
 
@@ -174,7 +178,7 @@ sub _aligner_command {
     my $self = shift;
     my $ver = $self->bwa_version;
     if (!Genome::Model::Tools::Bwa->supports_mem($ver)) {
-        die "Bwa version '$ver' does not support bwa mem";
+        die $self->error_message("Bwa version '$ver' does not support bwa mem");
     }
     my $bwa = Genome::Model::Tools::Bwa->path_for_bwa_version($ver);
     my $log = $self->aligner_log_path;
@@ -303,8 +307,10 @@ sub execute {
     my @input_fastqs = $self->input_fastqs;
     my $n_inputs = scalar @input_fastqs;
     if ($n_inputs < 1 || $n_inputs > 2) {
-        die "Don't know what to do with $n_inputs input files! " .
-            "Give one for single or two for paired end alignment.";
+        die $self->error_message(
+            "Don't know what to do with $n_inputs input files! " .
+            "Give one for single or two for paired end alignment."
+            );
     }
 
     if (!defined $self->temp_dir) {
@@ -317,7 +323,7 @@ sub execute {
     my $pipestatus_path = sprintf("%s/pipestatus.txt", $self->temp_dir);
     write_file($script_path, $self->_script_text($pipestatus_path));
 
-    $self->status_message(
+    $self->debug_message(
         sprintf
             "Executing script:\n\n" .
             "-------- BEGIN SCRIPT --------\n%s" .
@@ -339,7 +345,7 @@ sub execute {
         my $msg = sprintf "Pipeline failed: %s",
             $self->_parse_pipestatus($pipestatus_path);
 
-        die $self->status_message($msg);
+        die $self->error_message($msg);
     }
 
     return 1;
