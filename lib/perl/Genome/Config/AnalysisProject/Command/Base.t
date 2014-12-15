@@ -8,7 +8,7 @@ BEGIN {
 };
 
 use above 'Genome';
-use Test::More tests => 5;
+use Test::More tests => 6;
 
 my $TEST_STATUS = 'unique-test-status';
 
@@ -40,6 +40,7 @@ isa_ok($cmd, 'Genome::Config::AnalysisProject::Command::Base', 'test command');
 
 my @errors = $cmd->__errors__;
 is(scalar(@errors), 1, 'got error about invalid status');
+is($errors[0]->desc, qq(Can't test using analysis project with status: Hold), 'error text is identically what we thought it would be');
 
 $anp->status($TEST_STATUS);
 
