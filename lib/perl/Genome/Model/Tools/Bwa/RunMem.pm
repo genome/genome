@@ -270,22 +270,23 @@ EOS
 sub _parse_pipestatus {
     my ($self, $path) = @_;
 
-    my $unknown = "unable to determine failure";
-    return $unknown unless -s $path;
+    return "PIPESTATUS error file does not exist" unless -s $path;
 
     my @lines = read_file($path);
     chomp @lines;
 
     # there should only be one line in the file
-    return $unknown if scalar @lines != 1;
+    return "Too many lines in PIPESTATUS error file" unless scalar @lines == 1;
 
     my @status = split(/\s/, $lines[0]);
-    return "no failures" unless any { $_ != 0 } @status;
 
     my @commands = $self->_pipeline_commands;
     # the number of commands we intended to execute should be equal
     # to the number of exit codes we received.
-    return $unknown unless scalar @status == scalar @commands;
+    return "Wrong number of status codes in PIPESTATUS error file"
+        unless scalar @status == scalar @commands;
+
+    return "no failures" unless any { $_ != 0 } @status;
 
     # who dun goofed?
     my @failures = grep {$status[$_] != 0} 0..$#status;
