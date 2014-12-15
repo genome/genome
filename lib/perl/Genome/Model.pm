@@ -657,6 +657,7 @@ sub builds_with_status {
 # Overriding build_requested to add a note to the model with information about who requested a build
 sub build_requested {
     my ($self, $value, $reason) = @_;
+    $self->_lock();
     # Writing the if like this allows someone to do build_requested(undef)
     if (@_ > 1) {
         my ($calling_package, $calling_subroutine) = (caller(1))[0,3];
@@ -669,6 +670,27 @@ sub build_requested {
         return $self->__build_requested($value);
     }
     return $self->__build_requested;
+}
+
+sub _lock {
+    my $self = shift;
+    my $model_id = $self->id;
+    unless ($ENV{UR_DBI_NO_COMMIT}) {
+        my $lock_var = File::Spec->join($ENV{GENOME_LOCK_DIR}, 'build_requested', $model_id);
+        my $lock = Genome::Sys->lock_resource(resource_lock => $lock_var, max_try => 30, block_sleep => 30);
+
+        die("Unable to acquire the lock to request $model_id. Is something already running or did it exit uncleanly?")
+            unless $lock;
+
+        my $commit_observer;
+        $commit_observer = UR::Context->process->add_observer(
+                               aspect => 'commit',
+                               callback => sub {
+                                   Genome::Sys->unlock_resource(resource_lock => $lock);
+                                   $commit_observer->delete;
+                               }
+                           );
+    }
 }
 
 # Returns the latest non-abandoned build that has inputs that match the current state of the model
