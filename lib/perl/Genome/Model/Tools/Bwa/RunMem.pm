@@ -178,7 +178,7 @@ sub _aligner_command {
     }
     my $bwa = Genome::Model::Tools::Bwa->path_for_bwa_version($ver);
     my $log = $self->aligner_log_path;
-    my @extra_params = $self->aligner_params, "-t", $self->num_threads;
+    my @extra_params = ($self->aligner_params, "-t", $self->num_threads);
 
     my @in = $self->input_fastqs;
     my $fa = $self->aligner_index_fasta;
