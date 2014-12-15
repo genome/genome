@@ -8,7 +8,7 @@ BEGIN {
 };
 
 use above 'Genome';
-use Test::More tests => 3;
+use Test::More tests => 5;
 
 my $TEST_STATUS = 'unique-test-status';
 
@@ -25,9 +25,23 @@ my $TEST_STATUS = 'unique-test-status';
 
 my $test_class = 'Genome::Config::AnalysisProject::Command::Test';
 
-isa_ok($test_class, 'Genome::Config::AnalysisProject::Command::Base', 'test command');
 
 my $help_text = $test_class->help_usage_complete_text;
 ok($help_text, 'can generate help text');
 like($help_text, qr/\Q$TEST_STATUS\E/, 'found test status in documentation');
 
+my $anp = Genome::Config::AnalysisProject->__define__(
+    name => 'test anp for base command test',
+    status => 'Hold',
+);
+
+my $cmd = $test_class->create(analysis_project => $anp);
+isa_ok($cmd, 'Genome::Config::AnalysisProject::Command::Base', 'test command');
+
+my @errors = $cmd->__errors__;
+is(scalar(@errors), 1, 'got error about invalid status');
+
+$anp->status($TEST_STATUS);
+
+@errors = $cmd->__errors__;
+is(scalar(@errors), 0, 'no error with expected status');
