@@ -12,15 +12,6 @@ class Genome::Config::AnalysisProject {
         id => { is => 'Text', len => 64 },
     ],
     has => [
-        _model_group_id => {
-            is => 'Text',
-            len => 64,
-            column_name => 'model_group_id',
-        },
-        model_group => {
-            is => 'Genome::ModelGroup',
-            id_by => '_model_group_id',
-        },
         name => { is => 'Text' },
         status => {
             is => 'Text',
@@ -93,25 +84,9 @@ sub __display_name__ {
     return sprintf('%s (%s)', $self->name, $self->id);
 }
 
-sub create {
-    my $class = shift;
-    my $self = $class->SUPER::create(@_);
-    eval {
-        $self->_create_model_group();
-    };
-    if(my $error = $@) {
-        $self->delete();
-        die($error);
-    }
-    return $self;
-}
-
 sub delete {
     my $self = shift;
     eval {
-        if ($self->model_group) {
-            $self->model_group->delete();
-        }
         for ($self->config_items) {
             $_->delete();
         }
@@ -141,13 +116,6 @@ sub get_configuration_profile {
     }
 
     return $self->configuration_profile;
-}
-
-sub _create_model_group {
-    my $self = shift;
-    my $mg_name = sprintf("%s - %s - Analysis Project", $self->name, $self->id);
-    my $mg = Genome::ModelGroup->create(name => $mg_name);
-    $self->model_group($mg);
 }
 
 sub _is_updated {

@@ -345,7 +345,7 @@ sub _assign_model_to_analysis_project {
     die('Must specify an analysis project and a model!') unless $analysis_project && $model && $config_profile_item;
 
     $analysis_project->add_model_bridge(model => $model, config_profile_item => $config_profile_item) if $created_new;
-    return $analysis_project->model_group->assign_models($model);
+    return 1;
 }
 
 sub _update_models_for_associated_projects {
