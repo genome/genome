@@ -8,7 +8,6 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw(
     basic_available_fields
-    basic_field_descriptions
     many_samples_available_fields
     many_samples_field_descriptions
     single_vaf_fields
@@ -37,7 +36,7 @@ sub per_library_vaf_fields {
     );
 }
 
-sub basic_field_descriptions {
+sub per_sample_field_descriptions {
     my $sample_name = shift;
     return (
         vaf => "Variant allele frequency for sample $sample_name",
@@ -61,7 +60,7 @@ sub many_samples_field_descriptions {
 
     my %field_descriptions;
     for my $sample_name ($component->sample_names) {
-        my %field_descriptions_for_sample = basic_field_descriptions($sample_name);
+        my %field_descriptions_for_sample = per_sample_field_descriptions($sample_name);
         for my $field (basic_available_fields()) {
             my $sample_specific_field = $component->create_sample_specific_field_name(
                 $field,
