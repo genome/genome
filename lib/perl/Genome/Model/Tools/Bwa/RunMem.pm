@@ -238,13 +238,7 @@ sub _pipeline_commands {
 sub _script_text {
     my ($self, $pipestatus_path) = @_;
 
-    my @pipeline = (
-        $self->_aligner_command,
-        $self->_sam_replace_header_cmdline,
-        $self->_sam_to_uncompressed_bam_cmdline,
-        $self->_sort_cmdline,
-        $self->_calmd_cmdline
-        );
+    my @pipeline = $self->_pipeline_commands;
 
     my $cmd = sprintf("%s > %s", _make_pipeline(@pipeline), $self->output_file);
     return <<EOS
