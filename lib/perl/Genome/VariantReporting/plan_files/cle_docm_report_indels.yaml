@@ -17,6 +17,7 @@ reports:
                     - discovery_tumor
                     - followup_tumor
                     - normal
+                library_names: [library_names]
         params:
             sample_names:
                 - discovery_tumor

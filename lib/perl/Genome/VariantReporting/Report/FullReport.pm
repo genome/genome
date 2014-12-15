@@ -85,19 +85,6 @@ sub report {
                 my @variant_callers = @{$interpretations->{$interpreter}->{$allele}->{$field}};
                 push @line_fields, $self->_format(join(", ", @variant_callers));
             }
-            elsif ($header =~ /per_library/) {
-                my @libraries = split ",", $interpretations->{$interpreter}->{$allele}->{$field};
-                my $value_for_header;
-                for my $library (@libraries) {
-                    my ($name, $value) = split ":", $library;
-                    my $pattern = $name."_per_library";
-                    if ($header =~ /^$pattern/) {
-                        $value_for_header = $value;
-                        last;
-                    }
-                }
-                push @line_fields, $self->_format($value_for_header);
-            }
             # If we don't have an interpreter that provides this field, handle it cleanly if the field is known unavailable
             elsif ($self->header_is_unavailable($header)) {
                 push @line_fields, $self->_format();
@@ -121,15 +108,6 @@ sub available_fields_dict {
         $available_fields{$info_tag_field} = {
             interpreter => 'info-tags',
             field => 'info_tags',
-        };
-    }
-
-    for my $per_library_field (per_library_vaf_headers($self)) {
-        my ($library_name, $generic_field_name) = $per_library_field =~ m/(.*)_(per_library.*)/;
-        my $library = Genome::Library->get(name => $library_name);
-        $available_fields{$per_library_field} = {
-            interpreter => 'many-samples-vaf',
-            field => $self->create_sample_specific_field_name($generic_field_name, $library->sample_name),
         };
     }
 
