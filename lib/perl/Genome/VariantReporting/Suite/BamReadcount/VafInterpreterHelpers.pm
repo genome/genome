@@ -7,11 +7,8 @@ use Genome;
 use Exporter 'import';
 
 our @EXPORT_OK = qw(
-    basic_available_fields
     many_samples_available_fields
     many_samples_field_descriptions
-    single_vaf_fields
-    per_library_vaf_fields
     per_sample_vaf_headers
     per_library_vaf_headers
 );
