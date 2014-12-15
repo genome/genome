@@ -682,12 +682,14 @@ sub _lock {
         die("Unable to acquire the lock to request $model_id. Is something already running or did it exit uncleanly?")
             unless $lock;
 
-        UR::Context->current->add_observer(
-            aspect => 'commit',
-            callback => sub {
-                Genome::Sys->unlock_resource(resource_lock => $lock);
-            }
-        );
+        my $commit_observer;
+        $commit_observer = UR::Context->process->add_observer(
+                               aspect => 'commit',
+                               callback => sub {
+                                   Genome::Sys->unlock_resource(resource_lock => $lock);
+                                   $commit_observer->delete;
+                               }
+                           );
     }
 }
 
