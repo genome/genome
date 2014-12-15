@@ -87,17 +87,15 @@ sub symlink_results {
         }
     }
 
-    my ($alignment_stats_summary_result) = grep {
-        $_->subclass_name eq 'Genome::Model::SomaticValidation::Command::AlignmentStatsSummary'
-    } $self->unique_results;
+    my $alignment_stats_summary_result = $self->results(
+        'subclass_name' => 'Genome::Model::SomaticValidation::Command::AlignmentStatsSummary');
     my $alignment_stats_dir = Genome::Sys->create_directory(
         File::Spec->join($destination, 'alignment_stats_summary'));
     Genome::Sys->symlink_directory($alignment_stats_summary_result->output_dir,
         $alignment_stats_dir);
 
-    my ($coverage_stats_summary_result) = grep {
-        $_->subclass_name eq 'Genome::Model::SomaticValidation::Command::CoverageStatsSummary'
-    } $self->unique_results;
+    my $coverage_stats_summary_result = $self->results(
+        'subclass_name' => 'Genome::Model::SomaticValidation::Command::CoverageStatsSummary');
     my $coverage_stats_dir = Genome::Sys->create_directory(
         File::Spec->join($destination, 'coverage_stats_summary'));
     Genome::Sys->symlink_directory($coverage_stats_summary_result->output_dir,
