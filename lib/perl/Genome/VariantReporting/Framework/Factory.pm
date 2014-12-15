@@ -79,6 +79,7 @@ sub get_object {
 
 {
     package Genome::VariantReporting::Framework::Factory::Dummy;
+    require Carp;
 
     sub AUTOLOAD {
         my $self = shift;
@@ -90,7 +91,7 @@ sub get_object {
         } else {
             my $pkg = $self->{class};
             my $sub = $pkg->can($target_sub);
-            die "Subroutine $target_sub not found on package $pkg" unless $sub;
+            Carp::croak "Subroutine $target_sub not found on package $pkg" unless $sub;
 
             $sub->($self, @_);
         }
