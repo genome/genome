@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use List::Util qw( min );
-use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(single_vaf_headers per_library_vaf_headers);
+use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(per_sample_vaf_headers per_library_vaf_headers);
 
 class Genome::VariantReporting::Report::FullReport {
     is => [ 'Genome::VariantReporting::Report::WithHeader', 'Genome::VariantReporting::Framework::Component::WithManySampleNames', 'Genome::VariantReporting::Framework::Component::WithManyLibraryNames'],
@@ -43,7 +43,7 @@ sub headers {
         MeetsMinDepthCutoff
     /;
 
-    push @headers, single_vaf_headers($self);
+    push @headers, per_sample_vaf_headers($self);
 
     push @headers, qw/
         min_coverage_observed

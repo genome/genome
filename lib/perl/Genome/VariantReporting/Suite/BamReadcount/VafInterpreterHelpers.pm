@@ -13,7 +13,7 @@ our @EXPORT_OK = qw(
     many_samples_field_descriptions
     single_vaf_fields
     per_library_vaf_fields
-    single_vaf_headers
+    per_sample_vaf_headers
     per_library_vaf_headers
 );
 
@@ -73,7 +73,7 @@ sub many_samples_field_descriptions {
     return %field_descriptions;
 }
 
-sub single_vaf_headers {
+sub per_sample_vaf_headers {
     my $component = shift;
     return $component->create_sample_specific_field_names(
         [single_vaf_fields()],
