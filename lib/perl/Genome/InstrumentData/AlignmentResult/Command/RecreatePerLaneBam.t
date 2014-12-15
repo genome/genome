@@ -20,32 +20,47 @@ use_ok($pkg) or die;
 
 my $test_dir = Genome::Utility::Test->data_dir_ok($pkg, 'v2');
 my $rg_id    = 2894005341;
+my $out_base = 'all_sequences.bam';
+my $out_dir  = Genome::Sys->create_temp_directory();
+my $out_bam  = $out_dir .'/' .$out_base;
 
+my %params = (
+    source_bam       => File::Spec->join($test_dir, 'test.bam'),
+    read_group_id    => $rg_id,
+    output_bam       => $out_bam,
+    samtools_version => 'r982',
+    picard_version   => '1.82',
+);
 
 subtest 'testing command failure with invalid input' => sub {
     my $cmd = $pkg->create(
-        source_bam    => 'no.bam',
-        output_bam    => 'Fake.bam',
-        read_group_id => $rg_id,
+        source_bam       => 'no.bam',
+        output_bam       => 'Fake.bam',
+        read_group_id    => $rg_id,
+        samtools_version => 'r982',
+        picard_version   => '1.82',
     );
     dies_ok(sub {$cmd->execute}, 'Invalid input bam');
 };
 
+subtest 'testing command failure with invalid samtools version' => sub {
+    my %test_params = %params;
+    $test_params{samtools_version} = 'r9888';
+    my $cmd = $pkg->create(%test_params);
+    ok(!$cmd->execute, 'Invalid samtools version');
+};
+
+subtest 'testing command failure with invalid picard version' => sub {
+    my %test_params = %params;
+    $test_params{picard_version} = '1.121111';
+    my $cmd = $pkg->create(%test_params);
+    ok(!$cmd->execute, 'Invalid picard version');
+};
 
 subtest 'testing command' => sub {
-    my $out_base = 'all_sequences.bam';
-    my $out_dir  = Genome::Sys->create_temp_directory();
-    my $out_bam  = $out_dir .'/' .$out_base;
-    
     map{ok(copy($test_dir."/$out_base.$_", $out_dir),"$_ copied")}qw(header flagstat);
 
-    my $cmd = $pkg->create(
-        source_bam       => File::Spec->join($test_dir, 'test.bam'),
-        read_group_id    => $rg_id,
-        output_bam       => $out_bam,
-        samtools_version => 'r982',
-        picard_version   => '1.82',
-    );
+    my $cmd = $pkg->create(%params);
     ok($cmd->execute, "Executed $pkg");
 
     for my $type ('', 'bai', 'md5') {

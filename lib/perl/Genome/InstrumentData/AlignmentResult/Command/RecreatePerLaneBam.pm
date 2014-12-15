@@ -25,14 +25,12 @@ class Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam {
         samtools_version => {
             is  => 'Version',
             doc => 'samtools version to use',
-            is_optional => 1,
-            default_value => Genome::Model::Tools::Sam->default_samtools_version,
+            valid_values => [Genome::Model::Tools::Sam->available_samtools_versions],
         },
         picard_version => {
             is  => 'Version',
             doc => 'Picard version to replace bam header',
-            is_optional => 1,
-            default_value => Genome::Model::Tools::Picard->default_picard_version,
+            valid_values => [Genome::Model::Tools::Picard->available_picard_versions],
         },
     ],
     has_transient_optional => [
