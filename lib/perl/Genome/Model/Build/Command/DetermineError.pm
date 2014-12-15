@@ -5,6 +5,7 @@ use strict;
 
 use Genome;
 use IPC::System::Simple qw(capture);
+use File::ReadBackwards;
 use Try::Tiny;
 
 use constant WF_DATE_REGEX => '(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})-\d{4}';
@@ -249,10 +250,10 @@ sub find_die_or_warn_in_log {
     my $filename = shift;
 
     my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
-    my @file_text = Genome::Sys->read_file($filename);
 
-    LINE: for my $i (reverse 0..$#file_text) {
-        my $line = $file_text[$i];
+    my $backwards_fh = File::ReadBackwards->new($filename);
+
+    LINE: while(my $line = $backwards_fh->getline) {
         if($line =~ /(.*)(?<!called) at (.*\.pm) line (\d+)$/) {
             my $message = $1;
             $error_source_file = $2;
@@ -268,12 +269,17 @@ sub find_die_or_warn_in_log {
             } elsif ($message =~ /$ptero_regex/) {
                 $error_date = $1;
                 $error_text = $2;
-                $error_host = _find_host_from_ptero_lines(@file_text[0..$i]);
+                HOST: while(my $line = $backwards_fh->getline) {
+                    $error_host = _find_host_from_ptero_lines($line);
+                    last HOST if $error_host;
+                }
             }
 
-            last if $error_text;
+            last LINE if $error_text;
         }
     }
+
+    $backwards_fh->close;
 
     return ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
 }
