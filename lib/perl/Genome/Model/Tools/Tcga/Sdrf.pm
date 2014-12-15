@@ -257,6 +257,9 @@ sub resolve_capture_reagent {
     my $self = shift;
     my $build = shift;
 
+    if ($build->has_imported_instrument_data) {
+        return (undef, undef, undef, undef, undef, undef);
+    }
     unless ($build->model->target_region_set_name) {#WGS
         return (undef, undef, undef, "NA", "NA", "NA");
     }
