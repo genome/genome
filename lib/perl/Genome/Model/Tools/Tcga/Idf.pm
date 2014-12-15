@@ -131,7 +131,7 @@ sub resolve_sequencing_protocol {
     my $self = shift;
     my $build = shift;
 
-    if (build_is_imported($build)) {
+    if ($build->has_imported_instrument_data) {
         return $self->_resolve_hard_coded_protocol("imported nucleic acid sequencing");
     }
     else {
@@ -178,18 +178,12 @@ sub resolve_library_protocol {
     my $self = shift;
     my $build = shift;
 
-    if (build_is_imported($build)) {
+    if ($build->has_imported_instrument_data) {
         return $self->_resolve_hard_coded_protocol("imported library preparation");
     }
     else {
         return $self->_resolve_hard_coded_protocol("library preparation");
     }
-}
-
-sub build_is_imported {
-    my $build = shift;
-    my @instrument_data = $build->instrument_data('subclass_name isa' => 'Genome::InstrumentData::Imported');
-    return scalar(@instrument_data)? 1 : 0;
 }
 
 sub resolve_variants_protocol {
