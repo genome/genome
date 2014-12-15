@@ -10,6 +10,7 @@ use warnings;
 use above 'Genome';
 
 use Genome::InstrumentData::InstrumentDataTestObjGenerator;
+use Path::Class;
 use Test::More;
 
 my $bam_path = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam';
@@ -61,8 +62,51 @@ my $qc_result = Genome::InstrumentData::AlignmentResult::Merged::BamQc->__define
 ok($qc_result, 'define qc result for alienment result');
 ok($alignment_result->add_user(user => $qc_result, label => 'uses'), 'add qc result as user of alignment result');
 
+subtest 'Temporary Input Files Queue Usage' => sub {
+    my $ar = $alignment_result;
+    my $tmpdir = Path::Class::Dir->new($ar->temp_scratch_directory);
+
+    diag("Creating test file system in : $tmpdir");
+    my ($root, @files) = create_test_file_system($tmpdir);
+
+    is(-d "$root", 1, "'$root' exists on file system");
+
+    my @items = $ar->temporary_input_files_queue();
+    ok(@items == 0, "queue is empty");
+
+    ok($ar->add_to_temporary_input_files_queue(@files, $root), "adding temp files to queue");
+    @items = $ar->temporary_input_files_queue();
+    ok(@items == 3, "there are 3 items in the queue");
+
+    ok($ar->show_temporary_input_files_queue(), "showing temp files in queue");
+
+    ok($ar->clear_temporary_input_files_queue(), "clearing out temp files in queue");
+    @items = $ar->temporary_input_files_queue();
+    ok(@items == 0, "the queue is again empty");
+
+    is(-d "$root", undef, "'$root' no longer exists on file system");
+    done_testing();
+};
+
 # delete
 ok($alignment_result->delete, 'delete');
 ok(ref($qc_result) eq 'UR::DeletedRef', 'deleted qc result');
 
 done_testing();
+
+sub create_test_file_system {
+    my $tmp = shift;
+
+    my $root = $tmp->subdir('anonymous0');
+    ok($root->mkpath, "Created root path: $root");
+
+    my @files = ();
+    for my $i (1..2) {
+        my $name = join('_', 's', 'unknown', $i, 'sequence') . '.txt';
+        my $f = $root->file($name);
+        ok($f->touch, "Creating file: $f");
+        push(@files, $f);
+    }
+
+    return $root, @files;
+}

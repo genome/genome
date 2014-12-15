@@ -4,6 +4,7 @@ use Genome;
 use Sys::Hostname;
 use IO::File;
 use File::Path;
+use Path::Class;
 use YAML;
 use Time::HiRes;
 use POSIX qw(ceil);
@@ -264,6 +265,7 @@ class Genome::InstrumentData::AlignmentResult {
         _is_inferred_paired_end => { is => 'Boolean', is_optional=>1},
         _extracted_bam_path    => { is => 'String', is_optional=>1},
         _flagstat_file         => { is => 'Text', is_optional=>1},
+        _temporary_input_files => { is => 'ARRAY', is_optional => 1, default_value => []},
     ],
 };
 
@@ -1466,6 +1468,7 @@ sub _extract_input_fastq_filenames {
             unlink($report_file);
         }
         $self->_input_fastq_pathnames(\@input_fastq_pathnames);
+        $self->add_to_temporary_input_files_queue(@input_fastq_pathnames);
     }
     return @input_fastq_pathnames;
 }
@@ -1648,6 +1651,81 @@ sub _derive_insert_size_bounds {
         $lower = $low_default;
     }
     return ($lower, $upper);
+}
+
+sub show_temporary_input_files_queue {
+    my $self = shift;
+
+    my @paths = $self->temporary_input_files_queue;
+
+    unless(@paths) {
+        $self->debug_message("Paths in Temporary Storage Queue: None");
+        return 1;
+    }
+
+    $self->debug_message("Paths in Temporary Storage Queue:");
+    for (my $i = 0; $i < @paths; $i++) {
+        if ($paths[$i]->is_dir) {
+            $self->debug_message('---> [%d] (Directory) %s', $i, $paths[$i]->stringify);
+        } else {
+            $self->debug_message('---> [%d] (File) %s', $i, $paths[$i]->stringify);
+        }
+    }
+
+    return 1;
+}
+
+sub clear_temporary_input_files_queue {
+    my $self = shift;
+
+    while (my $path = shift @{$self->_temporary_input_files}) {
+        if ($path->is_dir) {
+            $self->debug_message(
+                "[delete] Temprorary Storage Queue:  "
+                . "(Directory) - '$path'"
+            );
+            $path->rmtree;
+        }
+        else {
+            $self->debug_message(
+                "[delete] Temprorary Storage Queue:  "
+                . "(File) - '$path'"
+            );
+            $path->remove;
+        }
+    }
+
+    return 1;
+}
+
+sub temporary_input_files_queue {
+    my ($self, @args) = @_;
+    return @{$self->_temporary_input_files}
+}
+
+sub add_to_temporary_input_files_queue {
+    my ($self, @input_paths) = @_;
+
+    for my $path (@input_paths) {
+        my $p;
+        if (-d $path) {
+            $self->debug_message(
+                "[push] Temprorary Storage Queue:  "
+                . "(Directory) - '$path'"
+            );
+            $p = Path::Class::Dir->new("$path");
+        }
+        else {
+            $self->debug_message(
+                "[push] Temprorary Storage Queue:  "
+                . "(File) - '$path'"
+            );
+            $p = Path::Class::File->new("$path");
+        }
+        push(@{$self->_temporary_input_files}, $p);
+    }
+
+    return 1;
 }
 
 1;

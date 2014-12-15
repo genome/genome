@@ -6,6 +6,7 @@ use Carp qw/confess/;
 use Data::Dumper;
 use File::Basename;
 use File::Copy qw/move/;
+use Path::Class;
 use Genome;
 use Getopt::Long;
 
@@ -179,6 +180,12 @@ sub _run_aligner {
             "Error running bwa mem. Unable to verify a successful " .
             "run of bwa mem in the aligner log.");
     }
+
+    # clean up the FASTQs in /tmp
+    $self->debug_message("bwa mem command finished");
+    $self->debug_message("Removing input FASTQs in tmp scratch space");
+    $self->show_temporary_input_files_queue();
+    $self->clear_temporary_input_files_queue();
 
     # Sort all_sequences.sam.
     $self->debug_message("Resorting all_sequences.sam by coordinate.");
