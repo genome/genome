@@ -14,10 +14,10 @@ our @EXPORT_OK = qw(
 );
 
 sub basic_available_fields {
-    return single_vaf_fields(), per_library_vaf_fields();
+    return vaf_fields(), per_library_vaf_fields();
 }
 
-sub single_vaf_fields {
+sub vaf_fields {
     return qw(
         vaf
         ref_count
@@ -72,7 +72,7 @@ sub many_samples_field_descriptions {
 sub per_sample_vaf_headers {
     my $component = shift;
     return $component->create_sample_specific_field_names(
-        [single_vaf_fields()],
+        [vaf_fields()],
     );
 }
 
