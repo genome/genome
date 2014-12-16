@@ -95,7 +95,7 @@ for my $instrument_data ( @instrument_data ) {
     is($instrument_data->read_length, $read_length, 'read_length correctly set');
     is($instrument_data->attributes(attribute_label => 'index_sequence')->attribute_value, 'ATGCTA', 'index_sequence correctly set');
     is($instrument_data->attributes(attribute_label => 'segment_id')->attribute_value, $read_group, 'segment_id correctly set');
-    is($instrument_data->analysis_projects, $analysis_project, 'set ana;yis project');
+    is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');
 
     my $bam_path = $instrument_data->bam_path;
     ok(-s $bam_path, 'bam path exists');
