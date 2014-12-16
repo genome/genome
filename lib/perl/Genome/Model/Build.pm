@@ -2897,4 +2897,10 @@ sub is_current {
     return 1;
 }
 
+sub has_imported_instrument_data {
+    my $self = shift;
+    my @instrument_data = $self->instrument_data('subclass_name isa' => 'Genome::InstrumentData::Imported');
+    return scalar(@instrument_data)? 1 : 0;
+}
+
 1;

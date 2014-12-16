@@ -47,7 +47,7 @@ my @HARD_CODED_ROW_HEADERS_BEFORE_PROTOCOL = (
     "Experimental Factor Type",
     "Person Last Name\tMcLellan",
     "Person First Name\tMichael",
-    "Person Middle Initials\tD",
+    "Person Mid Initials\tD",
     "Person Email\ttcga-help\@genome.wustl.edu",
     "Person Address\tWashington University School of Medicine,Campus Box 8501,4444 Forest Park Ave,St Louis,MO 63108",
     "Person Affiliation\tThe Genome Institute, Washington University School of Medicine",
@@ -131,7 +131,7 @@ sub resolve_sequencing_protocol {
     my $self = shift;
     my $build = shift;
 
-    if (build_is_imported($build)) {
+    if ($build->has_imported_instrument_data) {
         return $self->_resolve_hard_coded_protocol("imported nucleic acid sequencing");
     }
     else {
@@ -178,18 +178,12 @@ sub resolve_library_protocol {
     my $self = shift;
     my $build = shift;
 
-    if (build_is_imported($build)) {
+    if ($build->has_imported_instrument_data) {
         return $self->_resolve_hard_coded_protocol("imported library preparation");
     }
     else {
         return $self->_resolve_hard_coded_protocol("library preparation");
     }
-}
-
-sub build_is_imported {
-    my $build = shift;
-    my @instrument_data = $build->instrument_data('subclass_name isa' => 'Genome::InstrumentData::Imported');
-    return scalar(@instrument_data)? 1 : 0;
 }
 
 sub resolve_variants_protocol {
@@ -227,7 +221,7 @@ sub print_idf {
     $out->print(join("\t", "Protocol Description", @protocol_descriptions)."\n");
     $out->print(join("\t", "Protocol Parameters", map {if (defined $_){join(";", @{$_})}else {""}} @protocol_parameters)."\n");
     $out->print("Protocol Term Source REF\n");
-    $out->print(join("\t", "SDRF File", $self->sdrf_file)."\n");
+    $out->print(join("\t", "SDRF Files", $self->sdrf_file)."\n");
     for my $row_header (@HARD_CODED_ROW_HEADERS_AFTER_PROTOCOL) {
         $out->print("$row_header\n");
     }
