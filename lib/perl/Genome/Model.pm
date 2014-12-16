@@ -657,9 +657,9 @@ sub builds_with_status {
 # Overriding build_requested to add a note to the model with information about who requested a build
 sub build_requested {
     my ($self, $value, $reason) = @_;
-    $self->_lock();
     # Writing the if like this allows someone to do build_requested(undef)
     if (@_ > 1) {
+        $self->_lock();
         my ($calling_package, $calling_subroutine) = (caller(1))[0,3];
         my $default_reason = 'no reason given';
         $default_reason .= ' called by ' . $calling_package . '::' . $calling_subroutine if $calling_package;
