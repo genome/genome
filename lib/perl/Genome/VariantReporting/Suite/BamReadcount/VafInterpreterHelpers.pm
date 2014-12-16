@@ -7,7 +7,6 @@ use Genome;
 use Exporter 'import';
 
 our @EXPORT_OK = qw(
-    many_samples_available_fields
     many_samples_field_descriptions
     per_sample_vaf_headers
     per_library_vaf_headers
@@ -38,13 +37,6 @@ sub per_library_field_descriptions {
         ref_count => "Number of reads supporting the reference for library $library_name",
         vaf => "Variant allele frequency for library $library_name",
     );
-}
-
-sub many_samples_available_fields {
-    my $component = shift;
-
-    my %available_fields = many_samples_field_descriptions($component);
-    return keys %available_fields;
 }
 
 sub many_libraries_field_descriptions {
