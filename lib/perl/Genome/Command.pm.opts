@@ -12473,6 +12473,37 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>run-mem',
+      [
+        'samtools-version=s',
+        [
+          '0.1.19'
+        ],
+        'max-sort-memory=s',
+        'files',
+        'num-threads=s',
+        undef,
+        'bwa-version=s',
+        'files',
+        'input-fastqs=s@',
+        'files',
+        'output-file=s',
+        'files',
+        'aligner-params=s',
+        'files',
+        'aligner-log-path=s',
+        'files',
+        'indexed-fasta=s',
+        'files',
+        'aligner-index-fasta=s',
+        'files',
+        'sam-header-path=s',
+        'files',
+        'temp-dir=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>unaligned-data-to-fastq',
       [
         'debug!',
