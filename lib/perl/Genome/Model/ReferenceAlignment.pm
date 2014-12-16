@@ -348,7 +348,7 @@ sub default_genotype_model {
     my @genotype_models = sort { $a->creation_date cmp $b->creation_date } $sample->default_genotype_models;
     return unless @genotype_models;
 
-    @genotype_models = grep { $_->reference_sequence_build->is_compatible_with($self->reference_sequence_build) } @genotype_models;
+    @genotype_models = grep { $_->reference_sequence_build && $_->reference_sequence_build->is_compatible_with($self->reference_sequence_build) } @genotype_models;
     return unless @genotype_models;
 
 
