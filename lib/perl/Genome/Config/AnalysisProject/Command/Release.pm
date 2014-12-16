@@ -50,7 +50,7 @@ sub __errors__ {
             push @errors, UR::Object::Tag->create(
                 type => 'error',
                 properties => ['analysis_projects'],
-                desc => "Can't release analysis project with status: $status" 
+                desc => "Can't release analysis project with status: $status"
             );
         }
     }
