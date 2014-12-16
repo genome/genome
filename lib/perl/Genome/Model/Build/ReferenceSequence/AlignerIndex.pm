@@ -262,11 +262,6 @@ sub _gather_params_for_get_or_create {
         $p->{params}{aligner_params} = undef;
     }
 
-    #my $inputs_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %{ $p->{inputs} });
-    #my $params_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %{ $p->{params} });
-    #$p->{software_result_params}{params_id} = $params_bx->id;
-    #$p->{software_result_params}{inputs_id} = $inputs_bx->id;
-
     return $p;
 }
 

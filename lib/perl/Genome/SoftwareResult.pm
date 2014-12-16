@@ -36,10 +36,6 @@ class Genome::SoftwareResult {
         module_version      => { is => 'Text', len => 64, column_name => 'VERSION', is_optional => 1 },
         subclass_name       => { is => 'Text', len => 255, column_name => 'CLASS_NAME' },
         lookup_hash         => { is => 'Text', len => 32, column_name => 'LOOKUP_HASH', is_optional => 1 },
-        #inputs_bx           => { is => 'UR::BoolExpr', id_by => 'inputs_id', is_optional => 1 },
-        inputs_id           => { is => 'Text', len => 4000, column_name => 'INPUTS_ID', implied_by => 'inputs_bx', is_optional => 1 },
-        #params_bx           => { is => 'UR::BoolExpr', id_by => 'params_id', is_optional => 1 },
-        params_id           => { is => 'Text', len => 4000, column_name => 'PARAMS_ID', implied_by => 'params_bx', is_optional => 1 },
         output_dir          => { is => 'Text', len => 1000, column_name => 'OUTPUTS_PATH', is_optional => 1 },
         test_name           => { is_param => 1, is_delegated => 1, is_mutable => 1, via => 'params', to => 'value_id', where => ['name' => 'test_name'], is => 'Text', doc => 'Assigns a testing tag to the result.  These will not be used in default processing', is_optional => 1 },
         _lock_name          => { is_optional => 1, is_transient => 1 },
@@ -376,14 +372,7 @@ sub _gather_params_for_get_or_create {
 
     }
 
-    #my $inputs_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %is_input);
-    #my $params_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %is_param);
-
-    my %software_result_params = (#software_version=>$params_bx->value_for('aligner_version'),
-        #params_id=>$params_bx->id,
-        #inputs_id=>$inputs_bx->id,
-        subclass_name=>$class
-    );
+    my %software_result_params = (subclass_name=>$class);
 
     return {
         software_result_params => \%software_result_params,
