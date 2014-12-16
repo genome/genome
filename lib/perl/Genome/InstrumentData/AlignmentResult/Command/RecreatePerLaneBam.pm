@@ -10,17 +10,17 @@ use File::Basename;
 class Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam {
     is  => 'Command::V2',
     has => [
-        source_bam => {
+        merged_bam => {
             is  => 'FilePath',
-            doc => 'The bam file to create per read group bam, like a merged bam',
+            doc => 'The merged bam to be used to create per lane bam',
         },
-        output_bam => {
+        per_lane_bam => {
             is  => 'FilePath',
-            doc => 'The output bam file created from source bam, like recreating a per lane bam',
+            doc => 'The output per lane bam',
         },
-        read_group_id => {
+        instrument_data_id => {
             is  => 'String',
-            doc => 'The read group id to create per read group bam, like an instrument data id',
+            doc => 'The per lane instrument data id used as read group id in merged bam',
         },
         samtools_version => {
             is  => 'Version',
@@ -37,6 +37,10 @@ class Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam {
         _temp_out_bam => {
             is  => 'FilePath',
             doc => 'temp output bam path',
+        },
+        _output_dir => {
+            is  => 'Text',
+            doc => 'the directory of per lane bam',
         },
     ],
 };
@@ -55,18 +59,20 @@ EOS
 sub execute {
     my $self = shift;
 
-    my $source_bam = $self->source_bam;
-    my $out_bam    = $self->output_bam;
+    my $merged_bam   = $self->merged_bam;
+    my $per_lane_bam = $self->per_lane_bam;
     
-    unless (-s $source_bam) {
-        die $self->error_message("source_bam $source_bam is not valid");
+    unless (-s $merged_bam) {
+        die $self->error_message("merged_bam $merged_bam is not valid");
     }
 
-    unless (Genome::Sys->validate_file_for_writing($out_bam)) {
-        die $self->error_message("output_bam $out_bam is not writable");
+    unless (Genome::Sys->validate_file_for_writing($per_lane_bam)) {
+        die $self->error_message("per_lane_bam $per_lane_bam is not writable");
     }
     
-    $self->_temp_out_bam(Genome::Sys->create_temp_file_path(basename $out_bam));
+    $self->_temp_out_bam(Genome::Sys->create_temp_file_path(basename $per_lane_bam));
+    $self->_output_dir(dirname $self->per_lane_bam);
+
     my ($temp_bam, $no_markdup_bam) = map{Genome::Sys->create_temp_file_path .".$_"}qw(bam no_markdup.bam);
 
     $self->debug_message('Extract read group bam');
@@ -98,9 +104,9 @@ sub _extract_readgroup_bam {
     my ($self, $temp_bam) = @_;
 
     my $extract = Genome::Model::Tools::Sam::ExtractReadGroup->create(
-        input         => $self->source_bam,
+        input         => $self->merged_bam,
         output        => $temp_bam,
-        read_group_id => $self->read_group_id,
+        read_group_id => $self->instrument_data_id,
         use_version   => $self->samtools_version,
     );
     
@@ -112,10 +118,9 @@ sub _extract_readgroup_bam {
 
 sub _compare_flagstat {
     my ($self, $temp_bam) = @_;
+    my $out_dir = dirname $self->per_lane_bam;
 
-    my $out_dir = dirname $self->output_bam;
-
-    my @flagstats = glob("$out_dir/*.flagstat");
+    my @flagstats = glob($self->_output_dir ."/*.flagstat");
     unless (@flagstats and @flagstats == 1) {
         die $self->error_message("Failed to get 1 flagstat file from original per lane bam location");
     }
@@ -155,9 +160,7 @@ sub _revert_markdup {
 sub _reheader_bam {
     my ($self, $temp_bam) = @_;
 
-    my $out_dir = dirname $self->output_bam;
-    my @header_files = glob("$out_dir/*.header");
-
+    my @header_files = glob($self->_output_dir ."/*.header");
     unless (@header_files and @header_files == 1) {
         die $self->error_message("Failed to get 1 header file from original per lane bam location");
     }
@@ -214,11 +217,10 @@ sub _create_bam_md5 {
 sub _move_outputs {
     my $self = shift;
     my $tmp_out = $self->_temp_out_bam;
-    my $out_dir = dirname $self->output_bam;
 
     for my $type ('', '.bai', '.md5') {
         my $tmp_file = $tmp_out . $type;
-        my $out_file = File::Spec->join($out_dir, basename $tmp_file);
+        my $out_file = File::Spec->join($self->_output_dir, basename $tmp_file);
         Genome::Sys->move_file($tmp_file, $out_file);
     }
 }
