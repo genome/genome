@@ -552,7 +552,12 @@ sub delete {
 
 sub scratch_sam_file_path {
     my $self = shift;
-    return File::Spec->catfile($self->temp_scratch_directory, "/all_sequences.sam");
+    return File::Spec->catfile($self->temp_scratch_directory, "all_sequences.sam");
+}
+
+sub final_staged_bam_path {
+    my $self = shift;
+    return File::Spec->catfile($self->temp_staging_directory, "all_sequences.bam");
 }
 
 sub prepare_scratch_sam_file {
@@ -902,7 +907,8 @@ sub close_out_streamed_bam_file {
     if ($self->requires_fixmate) {
         $self->debug_message("Sorting by name to do fixmate...");
         my $bam_file = $self->temp_scratch_directory . "/raw_all_sequences.bam";
-        my $final_bam_file = $self->temp_staging_directory . "/all_sequences.bam";
+        my $final_bam_file = $self->final_staged_bam_path;
+
         my $samtools = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 
         my $tmp_file = $bam_file.'.sort';
@@ -934,7 +940,7 @@ sub close_out_streamed_bam_file {
         # TODO: run htseq here
         # We need a way to have down-stream steps run before their predecessor cleans-up.
 
-        my $final_bam_file = $self->temp_staging_directory . "/all_sequences.bam";
+        my $final_bam_file = $self->final_staged_bam_path;
         move $bam_file, $final_bam_file;
     }
     return 1;
@@ -954,7 +960,7 @@ sub create_BAM_in_staging_directory {
 sub postprocess_bam_file {
     my $self = shift;
 
-    my $bam_file    = $self->temp_staging_directory . '/all_sequences.bam';
+    my $bam_file    = $self->final_staged_bam_path;
     my $output_file = $bam_file . '.flagstat';
 
     #STEPS 8:  CREATE BAM.FLAGSTAT
@@ -987,7 +993,7 @@ sub _use_alignment_summary_cpp { return 1; };
 
 sub _compute_alignment_metrics {
     my $self = shift;
-    my $bam = $self->temp_staging_directory . "/all_sequences.bam";
+    my $bam = $self->final_staged_bam_path;
 
     if ($self->_use_alignment_summary_cpp){
         my $out = `bash -c "LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/gsc/scripts/opt/genome_legacy_code/lib:/gsc/pkg/boost/boost_1_42_0/lib /gsc/scripts/opt/genome_legacy_code/bin/alignment-summary-v1.2.6 --bam=\"$bam\" --ignore-cigar-md-errors"`;
@@ -1038,7 +1044,7 @@ sub _compute_alignment_metrics {
 
 sub _create_bam_index {
     my $self = shift;
-    my $bam_file    = $self->temp_staging_directory . '/all_sequences.bam';
+    my $bam_file    = $self->final_staged_bam_path;
 
     unless (-s $bam_file) {
         $self->error_message('BAM file ' . $bam_file . ' does not exist or is empty');
@@ -1089,7 +1095,7 @@ sub _create_bam_flagstat {
 sub _verify_bam {
     my $self = shift;
 
-    my $bam_file  = $self->temp_staging_directory . '/all_sequences.bam';
+    my $bam_file  = $self->final_staged_bam_path;
     my $flag_file = $bam_file . '.flagstat';
     my $flag_stat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flag_file);
 
@@ -1142,7 +1148,7 @@ sub _check_read_count {
 sub _create_bam_md5 {
     my $self = shift;
 
-    my $bam_file = $self->temp_staging_directory . '/all_sequences.bam';
+    my $bam_file = $self->final_staged_bam_path;
     my $md5_file = $bam_file . '.md5';
     my $cmd      = "md5sum $bam_file > $md5_file";
 
@@ -1198,7 +1204,7 @@ sub _process_sam_files {
     my $groups_input_file;
 
     # if a bam file is already staged at the end of _run_aligner, trust it to be correct.
-    if (-e $self->temp_staging_directory . "/all_sequences.bam") {
+    if (-e $self->final_staged_bam_path) {
         return 1;
     }
 
@@ -1277,7 +1283,7 @@ sub _process_sam_files {
         return;
     }
 
-    my $per_lane_bam_file = $self->temp_staging_directory . "/all_sequences.bam";
+    my $per_lane_bam_file = $self->final_staged_bam_path;
     my %params = (
         bam_file => $per_lane_bam_file,
         sam_file => $final_sam_file,
