@@ -23,7 +23,7 @@ class Genome::Disk::Command::Allocation::Purge {
 };
 
 sub help_detail {
-    return 'purges the given allocations, permanently deleting them';
+    return 'purges the given allocations, moving its files to a trash folder';
 }
 
 sub help_brief {
