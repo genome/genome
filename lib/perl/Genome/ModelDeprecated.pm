@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Genome;
 use Regexp::Common;
-use YAML;
 use File::Path;
 
 class Genome::ModelDeprecated {
@@ -353,16 +352,6 @@ sub latest_build_directory {
     } else {
        return;
     }
-}
-
-sub yaml_string {
-    my $self = shift;
-    my $string = YAML::Dump($self);
-    my @objects = $self->get_all_objects;
-    for my $object (@objects) {
-        $string .= $object->yaml_string;
-    }
-    return $string;
 }
 
 # TODO Will be removed when model links are phased out
