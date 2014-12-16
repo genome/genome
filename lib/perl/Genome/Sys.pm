@@ -1826,4 +1826,49 @@ The default value is /var/lib/genome/db/.
 
     my $dir1 = Genome::Sys->db_path('cosmic', 'latest');
 
+=head2 Genome::Sys->open_file_for_reading($filename);
+
+Opens the given filename for reading and returns a filehandle for it.
+open_file_for_reading() throws an exception for several conditions:
+
+=over 2
+
+=item * The given filename does not exist
+
+=item * The given filename is not readable
+
+=item * The given filename is not a plain file (for example, a directory)
+
+=back
+
+=head2 Genome::Sys->read_file($filename);
+
+Read in the given filename and return the contents.  If $filename is C<->,
+then it reads from STDIN.
+
+If called in list context, it returns a list with one line per list element.
+If called in scalar context, it returns a single string with the entire file
+contents.
+
+=head2 Genome::Sys->open_file_for_writing($filename);
+
+Opens the given filename for writing and returns a filehandle for it.
+open_file_for_writing() throws an exception for several conditions:
+
+=over 2
+
+=item * $filename exists _and_ the file has non-zero size
+
+=item * The directory containing $filename does not exist
+
+=item * The directory containing $filename is not writable
+
+=back
+
+=head2 Genome::Sys->write_file($filename, @lines);
+
+Creates a file with the given name and writes the contents of @lines to it.
+If $filename is C<->, then it writes to STDOUT.
+write_file() throws the same exceptions as open_file_for_writing().
+
 =cut
