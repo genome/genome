@@ -202,23 +202,39 @@ sub parse_error_log {
 
     my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
 
-    my $file_text = Genome::Sys->read_file($filename);
+    my $fh = Genome::Sys->open_file_for_reading($filename);
 
-    ($error_date, $error_host, my $date_removed_text) = get_error_date($file_text);
-    if ($error_date) {
-        my $text = '(ERROR[\s\:]+.{1,400}?)';
-        my $file = 'at\s([^\s]*?\.pm)';
-        my $line = 'line\s(\d+)';
-        my $query = join('\s+', $text, $file, $line);
-        if ($date_removed_text =~ m/$query/s) {
-            $error_text = $1;
-            $error_source_file = $2;
-            $error_source_line = $3;
-        } elsif ($date_removed_text =~ m/(ERROR.*)/) {
-            $error_text = $1;
+    LINE: while(my $line = $fh->getline) {
+        my $found_host = _find_host_from_ptero_line($line);
+        $error_host = $found_host if $found_host; #most recently found host is the "correct" one
+
+        ($error_date, $found_host, my $date_removed_text) = get_error_date($line);
+        if ($error_date) {
+            my $text = '(ERROR[\s\:]+.+?)';
+            my $file = 'at\s([^\s]*?\.pm)';
+            my $line = 'line\s(\d+)';
+            my $query = join('\s+', $text, $file, $line);
+            if ($date_removed_text =~ m/$query/) {
+                $error_text = $1;
+                $error_source_file = $2;
+                $error_source_line = $3;
+            } elsif ($date_removed_text =~ m/(ERROR.*)/) {
+                $error_text = $1;
+                my $next_line = $fh->getline; #sometimes we die immediately after the error
+                if($next_line and $next_line =~ m/$file\s+$line/) {
+                    $error_source_file = $1;
+                    $error_source_line = $2;
+                }
+            }
+
+            $error_host = $found_host if $found_host;
+            last LINE;
         }
     }
 
+    $fh->close;
+
+    return unless $error_date;
     return ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
 }
 
@@ -232,14 +248,14 @@ sub parse_output_log {
     $error_source_file = 'n/a';
     $error_source_line = 'n/a';
 
-    while (my $line = $fh->getline) {
+    LINE: while (my $line = $fh->getline) {
         if ($line =~ /Results reported at (.*)$/) {
             $error_date = $1;
         } elsif ($line =~ /Job was executed on host\(s\) <([^>]+)>/) {
             $error_host = $1;
         } elsif ($line =~ /(TERM_\w+:.+$)/) {
             $error_text = $1;
-            last; #This appears third in the LSF output, so we've located all three fields.
+            last LINE; #This appears third in the LSF output, so we've located all three fields.
         }
     }
 
@@ -273,7 +289,7 @@ sub find_die_or_warn_in_log {
                 $error_date = $1;
                 $error_text = $2;
                 HOST: while(my $line = $backwards_fh->getline) {
-                    $error_host = _find_host_from_ptero_lines($line);
+                    $error_host = _find_host_from_ptero_line($line);
                     last HOST if $error_host;
                 }
             }
@@ -288,50 +304,42 @@ sub find_die_or_warn_in_log {
 }
 
 sub get_error_date {
-    my $file_text = shift;
+    my $line = shift;
 
     my $date = WF_DATE_REGEX;
     my $host = WF_HOST_REGEX;
 
     my ($error_date, $error_host, $formatted_text);
-    if ($file_text =~ m/$date\s$host\s+ERROR/) {
+    if ($line =~ m/$date\s$host\s+ERROR/) {
         $error_date = $1;
         $error_host = $2;
-        ($formatted_text = $file_text) =~ s/$date\s+$host\s//g;
+        ($formatted_text = $line) =~ s/$date\s+$host\s//g;
     } else {
-        ($error_date, $error_host, $formatted_text) = get_error_date_from_ptero_log($file_text);
+        ($error_date, $formatted_text) = get_error_date_from_ptero_log($line);
     }
 
     return $error_date, $error_host, $formatted_text;
 }
 
 sub get_error_date_from_ptero_log {
-    my $file_text = shift;
+    my $line = shift;
 
     my ($error_date, $error_host, $formatted_text);
 
     my $date = PTERO_DATE_REGEX;
-    if ($file_text =~ m/$date\s+ERROR/) {
+    if ($line =~ m/$date\s+ERROR/) {
         $error_date = $1;
 
-        # remove everything after the error and search backwards through the file
-        # for the host
-        (my $error_truncated_text = $file_text) =~ s/ERROR.*//s;
-
-        my @lines = split(/\n/, $error_truncated_text);
-        $error_host = _find_host_from_ptero_lines(@lines);
-
-        ($formatted_text = $file_text) =~ s/$date\s//g;
+        ($formatted_text = $line) =~ s/$date\s//g;
     }
 
-    return $error_date, $error_host, $formatted_text;
+    return $error_date, $formatted_text;
 }
 
-sub _find_host_from_ptero_lines {
-    for my $line (reverse @_) {
-        if ($line =~ m/Starting log annotation on host:\s(.*)/) {
-            return $1;
-        }
+sub _find_host_from_ptero_line {
+    my $line = shift;
+    if ($line =~ m/Starting log annotation on host:\s(.*)/) {
+        return $1;
     }
 
     return;
