@@ -450,22 +450,6 @@ sub _resolve_type_name_for_subclass_name {
     return $type_name;
 }
 
-# TODO: please rename this -ss
-sub get_all_objects {
-    my $self = shift;
-    my $sorter = sub { # not sure why we sort, but I put it in a anon sub for convenience
-        return unless @_;
-        if ( $_[0]->id =~ /^\-/) {
-            return sort {$b->id cmp $a->id} @_;
-        }
-        else {
-            return sort {$a->id cmp $b->id} @_;
-        }
-    };
-
-    return map { $sorter->( $self->$_ ) } (qw{ inputs builds to_model_links from_model_links });
-}
-
 sub create_rule_limiting_instrument_data {
     my ($self, @instrument_data) = @_;
     @instrument_data = $self->instrument_data unless @instrument_data;
