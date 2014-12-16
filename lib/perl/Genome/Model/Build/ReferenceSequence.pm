@@ -86,8 +86,32 @@ class Genome::Model::Build::ReferenceSequence {
             doc => 'If specified, merges several other references into one.', 
         },
     ],
+    has_many_optional => [
+        convertible_to_bridges => {
+            is => 'Genome::Model::Build::ReferenceSequence::Converter',
+            reverse_as => 'source_reference_build',
+            doc => 'converters which convert this reference to other references',
+        },
+        convertible_to => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            via => 'convertible_to_bridges',
+            to => 'destination_reference_build',
+            doc => 'other references to which this reference can be converted',
+        },
+        convertible_from_bridges => {
+            is => 'Genome::Model::Build::ReferenceSequence::Converter',
+            reverse_as => 'destination_reference_build',
+            doc => 'converters which convert other references to this reference',
+        },
+        convertible_from => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            via => 'converters_from_bridges',
+            to => 'source_reference_build',
+            doc => 'other references that can be converted to this reference',
+        },
+    ],
 
-    doc => 'a specific version of a reference sequence, with cordinates suitable for annotation',
+    doc => 'a specific version of a reference sequence',
 };
 
 
@@ -352,7 +376,7 @@ sub full_consensus_path {
 }
 
 #This is for samtools faidx output that can be used as ref_list for
-#SamToBam convertion
+#SamToBam conversion
 sub full_consensus_sam_index_path {
     my $self        = shift;
     my $sam_version = shift;
@@ -858,6 +882,18 @@ sub is_superset_of {
     return $my_chromosomes >= $other_chromosomes;
 }
 
+sub contains {
+    my ($self, $other_refbuild) = @_;
+
+    return 1 if $self eq $other_refbuild;
+
+    if(($self->coordinates_from || '') eq $other_refbuild or $self->is_derived_from($other_refbuild)) {
+        return $self->is_superset_of($other_refbuild);
+    }
+
+    return 0;
+}
+
 # Given a feature list accessor, try to get it from myself or my ancestors
 sub get_feature_list {
     my ($self, $feature_list_accessor, @ancestry_stack) = @_;
@@ -885,6 +921,21 @@ sub get_feature_list {
     } else {
         return $feature_list
     }
+}
+
+sub combined_references {
+    my $class = shift;
+    my @references = @_;
+
+    my $reference_set = Set::Scalar->new(map $_->id, @references);
+
+    my @combined_reference_inputs = Genome::Model::Build::Input->get(name => 'combines', value_id => [$reference_set->members]);
+    my @combined_references = Genome::Model::Build->get([map $_->build_id, @combined_reference_inputs]);
+
+    #filter to only those that combine exactly all our references
+    my @exact_combined_references = grep { $reference_set == Set::Scalar->new(map $_->id, $_->combines) } @combined_references;
+
+    return @exact_combined_references;
 }
 
 1;
