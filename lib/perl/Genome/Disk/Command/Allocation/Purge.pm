@@ -36,17 +36,18 @@ sub execute {
 
     for my $allocation ($self->allocations) {
         if ($allocation->status eq 'purged') {
-            $self->status_message("Skipping allocation " . $allocation->id .
-                ", status already 'purged'");
+            $self->status_message("Skipping allocation %s, "
+                . "status already 'purged'", $allocation->id);
             next;
         }
-        $self->status_message("Purging allocation " . $allocation->id);
+        $self->status_message("Purging allocation %s...", $allocation->id);
 
         my $rv = $allocation->purge(reason => $self->reason);
         unless ($rv) {
             Carp::confess "Could not purge allocation " . $allocation->id;
         }
-        $self->status_message("Finished purging allocation " . $allocation->id);
+        $self->status_message("Finished purging allocation %s.",
+            $allocation->id);
     }
 
     $self->status_message("Done purging, exiting...");
