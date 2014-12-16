@@ -102,6 +102,13 @@ subtest "required rusage" => sub {
 subtest "align" => sub {
     my $ar = make_alignment_result("-t 2 -M");
     ok($ar, "Created alignment result");
+
+    is($ar->_faidx_indexed_fasta, $reference_build->full_consensus_path("fa"),
+        "faidx indexed reference points to the reference build directly");
+
+    is($ar->_aligner_index_fasta, $alnidx->full_consensus_path("fa"),
+        "aligner index fasta points to the expected location");
+
     my $dir = $ar->disk_allocations->absolute_path;
     ok(-d $dir, "Output directory exists");
     my @expected_files = qw(

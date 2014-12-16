@@ -131,6 +131,16 @@ sub _check_read_count {
     return $self->SUPER::_check_read_count($filtered_bam_rd_ct);
 }
 
+sub _aligner_index_fasta {
+    my $self = shift;
+    return $self->get_reference_sequence_index->full_consensus_path('fa');
+}
+
+sub _faidx_indexed_fasta {
+    my $self = shift;
+    return $self->reference_build->full_consensus_path('fa');
+}
+
 sub _run_aligner {
     my $self = shift;
     my @input_paths = @_;
@@ -140,7 +150,7 @@ sub _run_aligner {
         $self->error_message(
             "Expected 1 or 2 input path names. Got: " . Dumper(\@input_paths));
     }
-    my $reference_fasta_path = $self->get_reference_sequence_index->full_consensus_path('fa');
+    my $reference_fasta_path = $self->_aligner_index_fasta;
 
     # get temp dir
     my $tmp_dir  = $self->temp_scratch_directory;
