@@ -226,23 +226,26 @@ sub parse_output_log {
     my $filename = shift;
 
     my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
-    my $file_text = Genome::Sys->read_file($filename);
 
-    if($file_text =~ /(TERM_\w+:.+$)/m) {
-        $error_text = $1;
+    my $fh = Genome::Sys->open_file_for_reading($filename);
 
-        if($file_text =~ /Results reported at (.*)$/m) {
+    $error_source_file = 'n/a';
+    $error_source_line = 'n/a';
+
+    while (my $line = $fh->getline) {
+        if ($line =~ /Results reported at (.*)$/) {
             $error_date = $1;
-        }
-
-        if($file_text =~ /Job was executed on host\(s\) <([^>]+)>/) {
+        } elsif ($line =~ /Job was executed on host\(s\) <([^>]+)>/) {
             $error_host = $1;
+        } elsif ($line =~ /(TERM_\w+:.+$)/) {
+            $error_text = $1;
+            last; #This appears third in the LSF output, so we've located all three fields.
         }
-
-        $error_source_file = 'n/a';
-        $error_source_line = 'n/a';
     }
 
+    $fh->close;
+
+    return unless $error_text;
     return ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
 }
 
