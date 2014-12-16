@@ -145,7 +145,7 @@ sub _run_aligner {
     # get temp dir
     my $tmp_dir  = $self->temp_scratch_directory;
     my $log_path = $tmp_dir . '/aligner.log';
-    my $out_sam  = $tmp_dir . '/all_sequences.sam';
+    my $out_sam  = $self->scratch_sam_file_path;
 
     # Verify the aligner and get params.
     my $aligner_version = $self->aligner_version;

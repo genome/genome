@@ -550,10 +550,15 @@ sub delete {
     return $self->SUPER::delete(@_);
 }
 
+sub scratch_sam_file_path {
+    my $self = shift;
+    return File::Spec->catfile($self->temp_scratch_directory, "/all_sequences.sam");
+}
+
 sub prepare_scratch_sam_file {
     my $self = shift;
 
-    my $scratch_sam_file = $self->temp_scratch_directory . "/all_sequences.sam";
+    my $scratch_sam_file = $self->scratch_sam_file_path;
 
     unless($self->construct_groups_file) {
         $self->error_message("failed to create groups file");
@@ -1197,7 +1202,7 @@ sub _process_sam_files {
         return 1;
     }
 
-    my $sam_input_file = $self->temp_scratch_directory . "/all_sequences.sam";
+    my $sam_input_file = $self->scratch_sam_file_path;
 
     unless (-e $sam_input_file) {
         $self->error_message("$sam_input_file is nonexistent.  Can't convert!");

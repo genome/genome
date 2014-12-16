@@ -3,15 +3,66 @@
 use strict;
 use warnings;
 
+BEGIN {
+    $ENV{UR_DBI_NO_COMMIT} = 1;
+}
+
 use above 'Genome';
 use Test::More;
+use Genome::InstrumentData::InstrumentDataTestObjGenerator;
+
+my $TEST_BWA_VERSION = '0.7.10';
+my $TEST_SAMTOOLS_VERSION = '0.1.19';
+my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($TEST_SAMTOOLS_VERSION);
 
 my $pkg = 'Genome::InstrumentData::AlignmentResult::Bwamem';
 use_ok($pkg);
 
+my $bam_path = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam';
+my $inst_data = Genome::InstrumentData::InstrumentDataTestObjGenerator::create_solexa_instrument_data(
+    $bam_path
+    );
+
+ok($inst_data, 'create inst data');
+my $reference_model = Genome::Model::ImportedReferenceSequence->get(name => 'TEST-human');
+ok($reference_model, "got reference model");
+my $reference_build = $reference_model->build_by_version('1');
+ok($reference_build, "got reference build");
+
+my $alnidx = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(
+    aligner_name => "bwamem",
+    reference_build_id => $reference_build->id,
+    aligner_version => '0.7.10'
+    );
+
+ok($alnidx, "got aligner index");
+
+my $next_id = -1;
+sub make_alignment_result {
+    my $bwa_params = shift || '';
+
+    my $alignment_result = Genome::InstrumentData::AlignmentResult::Bwamem->create(
+        id => $next_id,
+        instrument_data_id => $inst_data->id,
+        reference_build => $reference_build,
+        aligner_name => 'bwamem',
+        aligner_version => $TEST_BWA_VERSION,
+        samtools_version => $TEST_SAMTOOLS_VERSION,
+        aligner_params => $bwa_params,
+    );
+
+    ok($alignment_result, 'defined alignment result');
+    isa_ok($alignment_result, 'Genome::InstrumentData::AlignmentResult::Bwamem');
+    --$next_id;
+
+    return $alignment_result;
+}
+
+
 subtest "parse params" => sub {
     my @invalid_strings = (
-        '-o -m -g', 'banana',
+        '-o -m -g',
+        'banana',
         '-c should_be_int',
         '-t should_be_int',
         '-r should_be_float',
@@ -49,8 +100,44 @@ subtest "required rusage" => sub {
 };
 
 subtest "align" => sub {
-    my $ar = make_alignment_result("-t 2");
+    my $ar = make_alignment_result("-t 2 -M");
     ok($ar, "Created alignment result");
+    my $dir = $ar->disk_allocations->absolute_path;
+    ok(-d $dir, "Output directory exists");
+    my @expected_files = qw(
+        all_sequences.bam
+        all_sequences.bam.bai
+        all_sequences.bam.flagstat
+        all_sequences.bam.md5
+        );
+
+    for my $f (@expected_files) {
+        my $path = File::Spec->catfile($dir, $f);
+        ok(-s $path, "File $f exists");
+    }
+
+    subtest "validate header" => sub {
+        my $bam = File::Spec->catfile($dir, "all_sequences.bam");
+        my @header = qx{$samtools_path view -H $bam};
+        chomp @header;
+        my @pg_line = grep {/^\@PG\t/} @header;
+        is(scalar @pg_line, 1, "Found exactly one PG line");
+        ok($pg_line[0] =~ /bwa mem/, "PG line contains 'bwa mem'");
+        ok($pg_line[0] !~ /bwa mem.* -t/, "PG line does not contain '-t' parameter'");
+        ok($pg_line[0] =~ /bwa mem.* -M/, "PG line does contain '-M' parameter'");
+
+        my @rg_line = grep {/^\@RG\t/} @header;
+        is(scalar @rg_line, 1, "Found exactly one RG line");
+        my @rg_fields = split("\t", $rg_line[0]);
+        shift @rg_fields;
+        my %rg_data = map {split(":", $_, 2)} @rg_fields;
+        my $expected_rg = $ar->read_and_platform_group_tag_id;
+        my $expected_lb = $inst_data->library_name;
+        my $expected_sm = $inst_data->sample_name;
+        is($rg_data{ID}, $expected_rg, "Read group is correct");
+        is($rg_data{LB}, $expected_lb, "Library is correct");
+        is($rg_data{SM}, $expected_sm, "Sample is correct");
+    };
 };
 
 done_testing();
