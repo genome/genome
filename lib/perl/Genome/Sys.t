@@ -45,16 +45,9 @@ ok(! -d $tmp1 . '/db1/2.1', "removed the first database dir $tmp1/db1/2.1") or d
 $ret = Genome::Sys->dbpath('db1','2.1');
 is($ret, $tmp2 . '/db1/2.1', "path is the second db because the new db was removed") or diag $ret;
 
-change_rollback_removes_symlink_for_create_symlink_and_log_change();
+subtest change_rollback_removes_symlink_for_create_symlink_and_log_change => sub {
+    plan tests => 6;
 
-test_sudo_username();
-
-test_file_operations();
-
-done_testing();
-
-
-sub change_rollback_removes_symlink_for_create_symlink_and_log_change {
     my $transaction = UR::Context::Transaction->begin();
     isa_ok($transaction, 'UR::Context::Transaction', 'transaction');
 
@@ -78,9 +71,11 @@ sub change_rollback_removes_symlink_for_create_symlink_and_log_change {
     ok(! -e $destination, "symlink destroyed in rollback");
 
     return 1;
-}
+};
 
-sub test_sudo_username {
+subtest test_sudo_username => sub {
+    plan tests => 4;
+
     no warnings qw(redefine);
     #Genome::Sys autoloaded here so it can be overridden
     my $username = Genome::Sys->username;
@@ -108,11 +103,11 @@ sub test_sudo_username {
         *Genome::Sys::username = sub { return 'not-user-name' };
         is(Genome::Sys->_sudo_username, "$username", 'sudo_username detects based on who -m');
     }
+};
 
-    use warnings qw(redefine);
-}
+subtest test_file_operations => sub {
+    plan tests => 13;
 
-sub test_file_operations {
     my $gzip_path = Genome::Sys->create_temp_file_path;
     ok ($gzip_path, "Got a tmp path");
     my $unzipped_path = Genome::Sys->create_temp_file_path;
@@ -148,5 +143,6 @@ sub test_file_operations {
 
     my $second_symlink_type = Genome::Sys->file_type($second_symlink_path);
     is($second_symlink_type, "gzip", "The second level symlink type is gzip");
-}
+};
 
+done_testing();
