@@ -149,8 +149,7 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
 
       bam_readcount_version => {
           is => 'Text',
-          doc => "the version of bam-readcount to use if generating counts",
-          default => "0.7",
+          doc => "the version of bam-readcount to use if generating counts. If not specified, the default version in G::M::T::Sam::Readcount will be used.",
       },
 
       ],
@@ -567,25 +566,29 @@ sub addTiering{
 }
 
 sub getReadcounts{
-    my ($file, $ref_seq_fasta, @bams) = @_;
+    my ($file, $ref_seq_fasta, $bams, $rc_version) = @_;
     #todo - should check if input is bed and do coversion if necessary
 
     if( -s "$file" ){
-        my $bamfiles = join(",",@bams);
+        my $bamfiles = join(",",@$bams);
         my $header = "Tumor";
-        if(@bams == 2){
+        if(scalar(@$bams) == 2){
             $header = "Normal,Tumor";
         }
         #get readcounts from the tumor bam only
-        my $rc_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
+        my %params = (
             bam_files => $bamfiles,
             output_file => "$file.rcnt",
             variant_file => "$file",
             genome_build => $ref_seq_fasta,
             header_prefixes => $header,
             indel_size_limit => 4,
-            bam_readcount_version => $self->bam_readcount_version,
             );
+        if($rc_version) {
+            $params{bam_readcount_version} = $rc_version;
+        }
+        my $rc_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(%params);
+
         unless ($rc_cmd->execute) {
             die "Failed to obtain readcounts for file $file.\n";
         }
@@ -913,10 +916,10 @@ sub execute {
   if($self->get_readcounts){
       print STDERR "Getting readcounts...\n";
       if( -s "$snv_file" ){
-          $snv_file = getReadcounts($snv_file, $ref_seq_fasta, $normal_bam, $tumor_bam);
+          $snv_file = getReadcounts($snv_file, $ref_seq_fasta, [$normal_bam, $tumor_bam], $self->bam_readcount_version);
       }
       if( -s "$indel_file" ){
-          $indel_file = getReadcounts($indel_file, $ref_seq_fasta, $normal_bam, $tumor_bam);
+          $indel_file = getReadcounts($indel_file, $ref_seq_fasta, [$normal_bam, $tumor_bam], $self->bam_readcount_version);
       }
   }
 
