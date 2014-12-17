@@ -11,8 +11,7 @@ BEGIN {
 use above 'Genome';
 use Test::Exception;
 use Test::More;
-use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(bam_readcount_line create_entry
-    bam_readcount_line_deletion create_deletion_entry);
+use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(bam_readcount_line create_entry);
 
 my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::CoverageInterpreter';
 use_ok($pkg);

@@ -1,6 +1,6 @@
 package Genome::VariantReporting::Suite::BamReadcount::TestHelper;
 use Exporter 'import';
-@EXPORT_OK = qw(bam_readcount_line create_entry create_deletion_entry bam_readcount_line_deletion);
+@EXPORT_OK = qw(bam_readcount_line create_entry create_deletion_entry);
 
 use Genome::File::Vcf::Entry;
 use Genome::File::Vcf::BamReadcountParser;
@@ -24,7 +24,7 @@ EOS
 }
 
 sub create_deletion_entry {
-    my $brct_value = shift;
+    my $brct_value = bam_readcount_line_deletion();
     my $brct_string = create_bam_readcount_string($brct_value);
 
     my @fields = (

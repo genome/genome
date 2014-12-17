@@ -12,7 +12,7 @@ use above 'Genome';
 use Test::Exception;
 use Test::More;
 use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(bam_readcount_line create_entry
-    bam_readcount_line_deletion create_deletion_entry);
+     create_deletion_entry);
 
 my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::MinCoverageFilter';
 use_ok($pkg);
@@ -72,7 +72,7 @@ subtest "deletion" => sub {
     };
     my $filter = $pkg->create(min_coverage => $min_coverage, sample_name => "S1");
     lives_ok(sub {$filter->validate}, "Filter validates");
-    my $entry = create_deletion_entry(bam_readcount_line_deletion);
+    my $entry = create_deletion_entry();
     is_deeply({$filter->filter_entry($entry)}, $pass, "Entry passes filter with min_coverage $min_coverage");
 };
 

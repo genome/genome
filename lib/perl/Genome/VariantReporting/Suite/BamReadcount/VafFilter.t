@@ -12,7 +12,7 @@ use above "Genome";
 use Test::Exception;
 use Test::More;
 use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(bam_readcount_line
-    create_entry create_deletion_entry bam_readcount_line_deletion);
+    create_entry create_deletion_entry );
 
 my $pkg = "Genome::VariantReporting::Suite::BamReadcount::VafFilter";
 use_ok($pkg);
@@ -69,7 +69,7 @@ subtest "min vaf for deletion" => sub {
     my %expected_return_values = (
         A => 1,
     );
-    my $entry = create_deletion_entry(bam_readcount_line_deletion);
+    my $entry = create_deletion_entry();
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
 };
 

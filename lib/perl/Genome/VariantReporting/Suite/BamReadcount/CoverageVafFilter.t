@@ -9,7 +9,7 @@ BEGIN {
 }
 
 use above 'Genome';
-use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(create_entry bam_readcount_line_deletion create_deletion_entry);
+use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(create_entry  create_deletion_entry);
 use Genome::File::Vcf::Entry;
 use Test::More;
 use Test::Exception;
@@ -97,7 +97,7 @@ subtest "insertion" => sub {
 
 subtest "deletion" => sub {
 
-    my $deletion_entry = create_deletion_entry(bam_readcount_line_deletion);
+    my $deletion_entry = create_deletion_entry();
     my $filter = $pkg->create(
         sample_name => 'S1',
         coverages_and_vafs => {
