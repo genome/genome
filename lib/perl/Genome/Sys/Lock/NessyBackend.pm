@@ -16,8 +16,15 @@ has 'url' => (is => 'ro', isa => 'Str');
 has 'client' => (is => 'ro', isa => 'Nessy::Client', lazy_build => 1);
 has 'claims' => (is => 'rw', isa => 'ArrayRef', auto_deref => 1);
 
+
 # TTL is specified in seconds.
-my $DEFAULT_TTL = 2 * 60 * 60;
+sub get_ttl {
+    if (defined($ENV{GENOME_NESSY_TTL})) {
+        return $ENV{GENOME_NESSY_TTL};
+    } else {
+        return 2 * 60 * 60;
+    }
+}
 
 
 sub lock {
@@ -67,7 +74,7 @@ sub lock {
         },
     );
     my $claim = $self->client->claim($resource, timeout => $timeout,
-        ttl => $DEFAULT_TTL, user_data => \%user_data);
+        ttl => get_ttl(), user_data => \%user_data);
     undef $wait_announce_timer;
     if ($claim) {
         $self->add_claim($resource => $claim);
