@@ -526,7 +526,7 @@ sub getReadcountsOld{
 
 
 sub getReadcounts{
-    my ($self, $file, $ref_seq_fasta, $bams, $labels) = @_;
+    my ($file, $ref_seq_fasta, $bams, $labels, $bam_readcount_version) = @_;
     #todo - should check if input is bed and do coversion if necessary
 
     my $output_file = "$file.rcnt";
@@ -542,7 +542,7 @@ sub getReadcounts{
             genome_build => $ref_seq_fasta,
             header_prefixes => $header,
             indel_size_limit => 4,
-            bam_readcount_version => $self->bam_readcount_version,
+            bam_readcount_version => $bam_readcount_version,
             );
         unless ($rc_cmd->execute) {
             die "Failed to obtain readcounts for file $file.\n";
@@ -954,7 +954,7 @@ sub execute {
 		  push(@bamfiles,($normal_bam,$tumor_bam));
 		  push(@labels,('val_Normal','val_Tumor'));
               }
-	      $snv_files[$i] = getReadcounts($self, $snv_files[$i], $ref_seq_fasta, \@bamfiles, \@labels);
+	      $snv_files[$i] = getReadcounts($snv_files[$i], $ref_seq_fasta, \@bamfiles, \@labels, $self->bam_readcount_version)
 	      
           }
 
@@ -964,7 +964,7 @@ sub execute {
 	      my @labels=();
 	      push(@bamfiles, @$som_var_bam_files);
 	      push(@labels,('somvar_Normal','somvar_Tumor')); #manually label the header #default is more suited for IGV xml crap
-	      $indel_file = getReadcounts($self, $indel_file, $ref_seq_fasta, \@bamfiles,\@labels );
+	      $indel_file = getReadcounts($indel_file, $ref_seq_fasta, \@bamfiles,\@labels, $self->bam_readcount_version);
 
 
 	  }
@@ -1076,7 +1076,7 @@ sub execute {
 		  push(@bamfiles,($normal_bam,$tumor_bam));
 		  push(@labels,('val_Normal','val_Tumor'));
               }
-	      $indel_file = getReadcounts($self, $indel_file, $ref_seq_fasta, \@bamfiles,\@labels );
+	      $indel_file = getReadcounts($self, $indel_file, $ref_seq_fasta, \@bamfiles, \@labels, $self->bam_readcount_version);
 
           }
       }
