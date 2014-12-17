@@ -7,7 +7,7 @@ use above 'Genome';
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
 
-my $class = 'Genome::Model::Tools::EpitopePrediction::RemoveUnknownSequences';
+my $class = 'Genome::Model::Tools::EpitopePrediction::FilterSequences';
 my $TEST_DATA_VERSION= 3;
 use_ok($class);
 

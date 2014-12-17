@@ -1,4 +1,4 @@
-package Genome::Model::Tools::EpitopePrediction::RemoveUnknownSequences;
+package Genome::Model::Tools::EpitopePrediction::FilterSequences;
 
 use strict;
 use warnings;
@@ -6,9 +6,9 @@ use Bio::SeqIO;
 use Genome::Info::CodonToAminoAcid;
 use feature "state";
 
-class Genome::Model::Tools::EpitopePrediction::RemoveUnknownSequences {
+class Genome::Model::Tools::EpitopePrediction::FilterSequences {
     is => 'Genome::Model::Tools::EpitopePrediction::Base',
-    doc => "Outputs a FASTA file after removing unknown sequences from the input Fasta sequence",
+    doc => "Outputs a FASTA file after removing unknown sequences as well as duplicate sequences from the input Fasta sequence",
     has_input => [
         input_file => {
             is => 'Text',
