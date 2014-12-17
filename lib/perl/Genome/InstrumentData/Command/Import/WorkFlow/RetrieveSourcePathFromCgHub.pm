@@ -114,17 +114,17 @@ sub _retrieve_source_md5_path {
     my $checksum_type = $metadata->checksum_type_for_file_name($bam_file_name);
     $self->debug_message("Checksum type: $checksum_type");
     if ( not $checksum_type or lc($checksum_type) ne 'md5' ) {
-        $self->debug_message('Check sum from metadata is not MD5, skipping storing it.');
+        $self->debug_message('Checksum from metadata is not MD5, skipping storing it.');
         return;
     }
 
     my $checksum_content = $metadata->checksum_content_for_file_name($bam_file_name);
     $self->debug_message("MD5 from metadata: $checksum_content");
     my $fh = Genome::Sys->open_file_for_writing($self->destination_md5_path);
-    $fh->print( join("  ", $checksum_content, $bam_file_name)."\n" );
+    $fh->say( join("  ", $checksum_content, $bam_file_name) );
     $fh->close;
 
-    $self->debug_message('Retrieve source md5 pathfrom CG Hub...done');
+    $self->debug_message('Retrieve source md5 path from CG Hub...done');
     return 1;
 }
 

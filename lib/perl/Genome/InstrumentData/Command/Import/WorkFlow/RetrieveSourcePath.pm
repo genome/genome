@@ -30,7 +30,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath {
         destination_md5_path => {
             calculate_from => [qw/ destination_path /],
             calculate => q| return Genome::InstrumentData::Command::Import::WorkFlow::Helpers->original_md5_path_for($destination_path); |,
-            doc => 'Final destination path.',
+            doc => 'Final destination MD5 path.',
         }, 
     },
     has_constant_calculated => {
