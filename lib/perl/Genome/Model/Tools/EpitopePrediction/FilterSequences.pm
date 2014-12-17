@@ -53,8 +53,13 @@ sub execute {
             $self->warning_message("Sequence for id (%s) is undefined", $seq->primary_id);
         }
         elsif ( is_valid_sequence($seq_string) ) {
-            if (defined($sequences{$seq->primary_id}) && $sequences{$seq->primary_id} eq $seq_string) {
-                $self->warning_message("Sequence (%s) with id (%s) is a duplicate. Skipping.", $seq_string, $seq->primary_id);
+            if (defined($sequences{$seq->primary_id})) {
+                if ($sequences{$seq->primary_id} eq $seq_string) {
+                    $self->warning_message("Sequence (%s) with id (%s) is a duplicate. Skipping.", $seq_string, $seq->primary_id);
+                }
+                else {
+                    die $self->error_message("Found duplicate entries with id (%s) but different sequences: (%s) and (%s).", $seq->primary_id, $sequences{$seq->primary_id}, $seq_string);
+                }
             }
             else  {
                 $out->write_seq($seq);
