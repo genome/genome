@@ -145,4 +145,52 @@ subtest test_file_operations => sub {
     is($second_symlink_type, "gzip", "The second level symlink type is gzip");
 };
 
+subtest iterate_file_lines => sub {
+    plan tests => 2;
+
+    my @expected_lines = ("This is line 1\n", "This is line 2\n", "This line will not match the regex\n");
+    my $source_file = File::Temp->new();
+    $source_file->print(@expected_lines);
+    $source_file->close();
+
+    my $the_test = sub {
+        my $first_arg_to_iterate = shift;
+
+        my @lines_read;
+        my $preprocessor = sub {
+            push @lines_read, $_[0];
+            return (1,2,3);
+        };
+
+        my(@line_cb_args, @re_cb_args);
+        my $rv = Genome::Sys->iterate_file_lines($first_arg_to_iterate,
+                                                 line_preprocessor => $preprocessor,
+                                                 sub { push @line_cb_args, \@_ },
+                                                 qr(This is line (\d+)), sub { push @re_cb_args, \@_ });
+
+        is($rv, scalar(@expected_lines), 'iterate_file_lines returnes number of lines read');
+        is_deeply(\@lines_read, \@expected_lines, 'line_preprocessor given each line as arg');
+        is_deeply(\@line_cb_args,
+                  [ [ $expected_lines[0], 1, 2, 3 ],
+                    [ $expected_lines[1], 1, 2, 3 ],
+                    [ $expected_lines[2], 1, 2, 3 ] ],
+                  'line callback given expected args');
+
+        is_deeply(\@re_cb_args,
+                [ [ $expected_lines[0], 1, 2, 3 ],
+                  [ $expected_lines[1], 1, 2, 3 ] ],
+                'regex callback given expected args');
+    };
+
+    subtest 'iterate filename' => sub {
+        plan tests => 4;
+        $the_test->($source_file->filename);
+    };
+
+    subtest 'iterate file handle' => sub {
+        plan tests => 4;
+        $the_test->(IO::File->new($source_file));
+    };
+};
+
 done_testing();
