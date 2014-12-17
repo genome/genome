@@ -214,7 +214,7 @@ sub _build_workflow {
     );
     $self->_workflow($workflow);
 
-    my $retrieve_source_path_op = $self->_add_retrieve_source_path_op_to_workflow;
+    my $retrieve_source_path_op = $self->_add_retrieve_source_path_op_to_workflow($workflow->get_input_connector);
     return if not $retrieve_source_path_op;
 
     my $verify_not_imported_op = $self->_add_verify_not_imported_op_to_workflow($retrieve_source_path_op);
@@ -282,10 +282,12 @@ sub _steps_to_build_workflow_for_sra {
 }
 
 sub _add_retrieve_source_path_op_to_workflow {
-    my $self = shift;
+    my ($self, $previous_op) = @_;
 
+    my @op_name_parts = (qw/ retrieve source path from /);
+    push @op_name_parts, $self->helpers->source_files_retrieval_method($self->source_files); # confesses on error
     my $workflow = $self->_workflow;
-    my $retrieve_source_path_op = $self->helpers->add_operation_to_workflow_by_name($workflow, 'retrieve source path');
+    my $retrieve_source_path_op = $self->helpers->add_operation_to_workflow_by_name($workflow, join(' ', @op_name_parts));
     $workflow->add_link(
         left_operation => $workflow->get_input_connector,
         left_property => 'working_directory',
@@ -293,7 +295,7 @@ sub _add_retrieve_source_path_op_to_workflow {
         right_property => 'working_directory',
     );
     $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
+        left_operation => $previous_op,
         left_property => 'source_paths',
         right_operation => $retrieve_source_path_op,
         right_property => 'source_path',

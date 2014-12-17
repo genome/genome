@@ -41,7 +41,40 @@ sub move_path {
 }
 #<>#
 
-#<FILE SIZE>#
+#<FILES>#
+sub source_file_retrieval_method {
+    my ($self, $file) = @_;
+
+    Carp::confess('No source file to get retrieval method!') if not $file;
+
+    if ( $file =~ m#^https://cghub.ucsc.edu# ) {
+        return 'cg hub';
+    }
+    elsif ( $file =~ m#^http\://# ) {
+        return 'remote url';
+    }
+    else {
+        return 'local disk';
+    }
+}
+sub source_files_retrieval_method {
+    my ($self, @files) = @_;
+
+    Carp::confess('No source files to get retrieval method!') if not @files;
+
+    my %source_file_retrieval_methods;
+    for my $file ( @files ) {
+        push @{$source_file_retrieval_methods{ $self->source_file_retrieval_method($file)}}, $file;
+    }
+
+    my @source_file_retrieval_methods = List::MoreUtils::uniq(keys %source_file_retrieval_methods);
+    if ( @source_file_retrieval_methods > 1 ) {
+        Carp::confess('Mixed file retrieval methods for source files! '.Data::Dumper::Dumper(\%source_file_retrieval_methods));
+    }
+
+    return $source_file_retrieval_methods[0];
+}
+
 sub kilobytes_required_for_processing_of_source_files {
     my ($self, @source_files) = @_;
 
