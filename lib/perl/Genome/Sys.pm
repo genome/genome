@@ -1009,8 +1009,7 @@ sub read_file {
         return @lines;
     }
     else {
-        my $text = do { local( $/ ) ; <$fh> } ;  # slurp mode
-        return $text;
+        return( do { local( $/ ) ; <$fh> });  # slurp mode
     }
 }
 
