@@ -8,11 +8,11 @@ use feature "state";
 
 class Genome::Model::Tools::EpitopePrediction::FilterSequences {
     is => 'Genome::Model::Tools::EpitopePrediction::Base',
-    doc => "Outputs a FASTA file after removing unknown sequences as well as duplicate sequences from the input Fasta sequence",
+    doc => "Outputs a FASTA file after removing unknown sequences as well as duplicate sequences from the input FASTA sequence",
     has_input => [
         input_file => {
             is => 'Text',
-            doc => 'Input Fasta format file',
+            doc => 'Input FASTA format file',
         },
         output_directory => {
             is => 'Text',
