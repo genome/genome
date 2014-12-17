@@ -15,16 +15,7 @@ with qw(Genome::Sys::Lock::Backend);
 has 'url' => (is => 'ro', isa => 'Str');
 has 'client' => (is => 'ro', isa => 'Nessy::Client', lazy_build => 1);
 has 'claims' => (is => 'rw', isa => 'ArrayRef', auto_deref => 1);
-
-
-# TTL is specified in seconds.
-sub get_ttl {
-    if (defined($ENV{GENOME_NESSY_TTL})) {
-        return $ENV{GENOME_NESSY_TTL};
-    } else {
-        return 2 * 60 * 60;
-    }
-}
+has 'ttl' => (is => 'ro', isa => 'Num', lazy_build => 1);
 
 
 sub lock {
@@ -74,7 +65,7 @@ sub lock {
         },
     );
     my $claim = $self->client->claim($resource, timeout => $timeout,
-        ttl => get_ttl(), user_data => \%user_data);
+        ttl => $self->ttl, user_data => \%user_data);
     undef $wait_announce_timer;
     if ($claim) {
         $self->add_claim($resource => $claim);
@@ -151,6 +142,17 @@ sub _build_client {
     }
 
     return;
+}
+
+sub _build_ttl {
+    my $self = shift;
+
+    if (defined($ENV{GENOME_NESSY_TTL})) {
+        return $ENV{GENOME_NESSY_TTL};
+
+    } else {
+        return 2 * 60 * 60;
+    }
 }
 
 sub add_claim {
