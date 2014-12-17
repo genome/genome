@@ -23,11 +23,13 @@ class Genome::Disk::Command::Allocation::Purge {
 };
 
 sub help_detail {
-    return 'purges the given allocations, moving its files to a trash folder';
+    return "PERMANENTLY DELETES the allocation's files. The files are "
+        . 'temporarily stored in a trash folder for short-term recovery. '
+        . 'Database records of this allocation will be kept.';
 }
 
 sub help_brief {
-    return 'purges the given allocations';
+    return 'PERMANENTLY DELETES files';
 }
 
 sub execute {
