@@ -15,7 +15,6 @@ use File::Basename qw/ dirname fileparse /;
 use List::MoreUtils qw(uniq);
 use Regexp::Common;
 use Workflow;
-use YAML;
 use Date::Manip;
 
 use Genome::Sys::LSF::bsub qw();
@@ -1944,15 +1943,6 @@ sub get_all_objects {
     };
 
     return map { $sorter->( $self->$_ ) } (qw(events inputs metrics from_build_links to_build_links));
-}
-
-sub yaml_string {
-    my $self = shift;
-    my $string = YAML::Dump($self);
-    for my $object ($self->get_all_objects) {
-        $string .= YAML::Dump($object);
-    }
-    return $string;
 }
 
 sub add_to_build{
