@@ -3,7 +3,7 @@ use Exporter 'import';
 @EXPORT_OK = qw(bam_readcount_line create_entry create_deletion_entry bam_readcount_line_deletion);
 
 use Genome::File::Vcf::Entry;
-use Genome::File::BamReadcount::Entry;
+use Genome::File::Vcf::BamReadcountParser;
 
 sub create_vcf_header {
     my $header_txt = <<EOS;
@@ -80,7 +80,7 @@ sub bam_readcount_line_deletion {
 sub create_bam_readcount_string {
     my $readcount_line = shift;
     return "" unless ($readcount_line);
-    return Genome::File::BamReadcount::Entry::encode($readcount_line);
+    return Genome::File::Vcf::BamReadcountParser::encode($readcount_line);
 }
 1;
 

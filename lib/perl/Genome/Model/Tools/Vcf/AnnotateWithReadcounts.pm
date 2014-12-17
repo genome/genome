@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::File::BamReadcount::Reader;
+use Genome::File::Vcf::BamReadcountParser;
 use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Writer;
 
@@ -126,7 +127,7 @@ sub entries_match {
 sub add_readcount_to_vcf_entry {
     my ($readcount_entry, $vcf_entry, $sample_idx) = @_;
 
-    my $readcount_line = Genome::File::BamReadcount::Entry::encode($readcount_entry->to_string);
+    my $readcount_line = Genome::File::Vcf::BamReadcountParser::encode($readcount_entry->to_string);
     $vcf_entry->set_sample_field($sample_idx, $RC_TAG, $readcount_line);
     return;
 }
