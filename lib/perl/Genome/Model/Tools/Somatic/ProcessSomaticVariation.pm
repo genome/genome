@@ -147,6 +147,12 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
           doc => "use this reference transcript build instead of the one specified in the model (e.g. NCBI-mouse.ensembl/67_37)",
       },
 
+      bam_readcount_version => {
+          is => 'Text',
+          doc => "the version of bam-readcount to use if generating counts",
+          default => "0.7",
+      },
+
       ],
 };
 
@@ -578,6 +584,7 @@ sub getReadcounts{
             genome_build => $ref_seq_fasta,
             header_prefixes => $header,
             indel_size_limit => 4,
+            bam_readcount_version => $self->bam_readcount_version,
             );
         unless ($rc_cmd->execute) {
             die "Failed to obtain readcounts for file $file.\n";
