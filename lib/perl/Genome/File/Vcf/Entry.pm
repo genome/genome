@@ -275,11 +275,22 @@ sub has_indel {
 sub has_deletion {
     my $self = shift;
     for my $alt (@{$self->{alternate_alleles}}) {
-        if (length($alt) < length($self->{reference_allele})) {
+        if ($self->is_deletion($alt)) {
             return 1;
         }
     }
     return 0;
+}
+
+sub is_deletion {
+    my ($self, $alt) = @_;
+
+    if (length($alt) < length($self->{reference_allele})) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
 }
 
 sub has_insertion {
