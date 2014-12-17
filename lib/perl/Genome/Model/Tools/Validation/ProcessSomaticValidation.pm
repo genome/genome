@@ -534,12 +534,8 @@ sub execute {
   my $self = shift;
   my $model;
   my $build;
-
-  my $bam_readcount_version = 0;
-  if(defined($self->bam_readcount_version)){
-      $bam_readcount_version = $self->bam_readcount_version;
-  }
-
+  my $bam_readcount_version = $self->bam_readcount_version;
+  
 
   #validate that the inputs are valid
 
