@@ -50,7 +50,7 @@ sub source_file_retrieval_method {
     if ( $file =~ m#^https://cghub.ucsc.edu# ) {
         return 'cg hub';
     }
-    elsif ( $file =~ m#^http\://# ) {
+    elsif ( $file =~ m#^(http|file)\://# ) {
         return 'remote url';
     }
     else {
@@ -62,14 +62,14 @@ sub source_files_retrieval_method {
 
     Carp::confess('No source files to get retrieval method!') if not @files;
 
-    my %source_file_retrieval_methods;
+    my @source_file_retrieval_methods;
     for my $file ( @files ) {
-        push @{$source_file_retrieval_methods{ $self->source_file_retrieval_method($file)}}, $file;
+        push @source_file_retrieval_methods, $self->source_file_retrieval_method($file);
     }
 
-    my @source_file_retrieval_methods = List::MoreUtils::uniq(keys %source_file_retrieval_methods);
+    @source_file_retrieval_methods = List::MoreUtils::uniq(@source_file_retrieval_methods);
     if ( @source_file_retrieval_methods > 1 ) {
-        Carp::confess('Mixed file retrieval methods for source files! '.Data::Dumper::Dumper(\%source_file_retrieval_methods));
+        Carp::confess('Mixed file retrieval methods for source files! '. join(' ', sort @source_file_retrieval_methods));
     }
 
     return $source_file_retrieval_methods[0];
