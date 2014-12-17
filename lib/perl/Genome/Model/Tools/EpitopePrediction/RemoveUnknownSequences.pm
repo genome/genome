@@ -46,16 +46,23 @@ sub execute {
         -format => 'Fasta'
     );
 
+    my %sequences;
     while ( my $seq = $in->next_seq() ) {
         my $seq_string = $seq->seq;
         if (!defined($seq_string)) {
             $self->warning_message("Sequence for id (%s) is undefined", $seq->primary_id);
         }
         elsif ( is_valid_sequence($seq_string) ) {
-            $out->write_seq($seq);
+            if (defined($sequences{$seq->primary_id}) && $sequences{$seq->primary_id} eq $seq_string) {
+                $self->warning_message("Sequence (%s) with id (%s) is a duplicate. Skipping.", $seq_string, $seq->primary_id);
+            }
+            else  {
+                $out->write_seq($seq);
+            }
+            $sequences{$seq->primary_id} = $seq_string;
         }
         else {
-            $self->warning_message("Sequence for id (%s) contains unknown amino acids: (%s)", $seq->primary_id, $seq_string);
+            $self->warning_message("Sequence for id (%s) contains unknown amino acids: (%s). Skipping.", $seq->primary_id, $seq_string);
         }
     }
 
