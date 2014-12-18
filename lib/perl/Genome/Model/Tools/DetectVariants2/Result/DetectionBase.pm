@@ -215,6 +215,10 @@ sub _validate_found_allocation {
             . "Removing symlink.", $allocation->status, $allocation->id);
         unlink $instance_output;
         Genome::Utility::Instrumentation::increment('dv2.result.removed_symlink')
+    } elsif ($allocation->is_archived) {
+        Genome::Utility::Instrumentation::increment('dv2.result.noticed_archived_allocation');
+        die $class->error_message("Allocation linked from %s (%s) is archived.",
+            $instance_output, $allocation->id);
     } elsif ($result) {
         # Finding a result and an allocation means either:
         # 1) This work was already done, but for whatever reason we didn't find the software result before we decided to do the work.
