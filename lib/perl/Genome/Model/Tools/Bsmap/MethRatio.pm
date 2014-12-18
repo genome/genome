@@ -56,6 +56,11 @@ class Genome::Model::Tools::Bsmap::MethRatio {
             doc => 'report loci with zero methylation ratios',
             default => 1,
         },
+        no_header => {
+            is => 'Boolean',
+            doc => 'do not put a header on the file',
+            default => 0,
+        },
 
 # other options not exposed:
 #   -u, --unique          process only unique mappings/pairs.
@@ -100,6 +105,9 @@ sub execute {
     }
     if($self->chromosome){
         $cmd .= " -c" . $self->chromosome;
+    }
+    if($self->no_header){
+        $cmd .= " -n";
     }
     $cmd .= " " . $self->bam_file;
     
