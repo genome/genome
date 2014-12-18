@@ -110,16 +110,11 @@ sub execute {
         $cmd .= " -n";
     }
     $cmd .= " " . $self->bam_file;
-    
-    $self->debug_message("Running command: $cmd");
 
-    my $return = Genome::Sys->shellcmd(
-        cmd => "$cmd",
-        );
+    my $return = Genome::Sys->shellcmd( cmd => $cmd );
     unless($return) {
-        $self->error_message("Failed to execute: Returned $return");
-        die $self->error_message;
-    }    
+        die $self->error_message("Failed to execute: Returned $return");
+    }
 
     return 1;
 }
