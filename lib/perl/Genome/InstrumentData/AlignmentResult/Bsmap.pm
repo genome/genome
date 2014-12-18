@@ -125,7 +125,7 @@ sub _run_aligner {
             $sd_above_insert_size = $instrument_data->resolve_sd_insert_size();
         }
         if(defined($instrument_data->sd_below_insert_size)){
-            my $sd_below_insert_size = $instrument_data->sd_below_insert_size();
+            $sd_below_insert_size = $instrument_data->sd_below_insert_size();
         }
 
         #handle max and min separately, because one could be defined by user and not the other
@@ -138,6 +138,9 @@ sub _run_aligner {
                 $self->error_message("Unable to get min insert size info from instrument data, using bsmap default of 28");
                 $min_insert_size = 28;
             }
+            if($min_insert_size < 0){
+                $min_insert_size = 1;
+            }
         }
 
         unless($aligner_params =~ /-x\s+\d+/){ #user specified max param
@@ -149,10 +152,6 @@ sub _run_aligner {
             }
         }
 
-        #could be undefined at this point (meaning use the user-input params)
-        if($min_insert_size && $min_insert_size < 0){
-            $min_insert_size = 1;
-        }
 
     } else {
         die $self->error_message("_run_aligner called with " . scalar @input_pathnames . " files.  It should only get 1 or 2!");
