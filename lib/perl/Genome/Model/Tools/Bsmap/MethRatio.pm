@@ -85,6 +85,32 @@ sub available_methratio_versions {
     return keys %METHRATIO_VERSIONS;
 }
 
+sub _generate_command_line {
+    my ($self) = @_;
+
+    my @cmd = (
+        'python', $METHRATIO_VERSIONS{$self->version},
+        '-o', File::Spec->join($self->output_directory, $self->output_file),
+        '-d', $self->reference
+    );
+
+    if ($self->output_zeros) {
+        push @cmd, '-z';
+    }
+
+    if ($self->chromosome) {
+        push @cmd, '-c', Genome::Sys->quote_for_shell($self->chromosome);
+    }
+
+    if ($self->no_header) {
+        push @cmd, '-h';
+    }
+
+    push @cmd, $self->bam_file;
+
+    return join ' ', @cmd;
+}
+
 sub execute {
     my $self = shift;
     my $fasta;
@@ -117,21 +143,7 @@ sub execute {
         return 0;
     }
 
-    my $cmd = "python " . $METHRATIO_VERSIONS{$self->version};
-    $cmd .= " -o ". File::Spec->join($self->output_directory, $self->output_file);
-    $cmd .= " -d " . $fasta;
-    if($self->output_zeros){
-        $cmd .= " -z";
-    }
-    if($self->chromosome){
-        $cmd .= " -c " . Genome::Sys->quote_for_shell($self->chromosome);
-    }
-    if($self->no_header){
-        $cmd .= " -n";
-    }
-    $cmd .= " " . $self->bam_file;
-
-    my $return = Genome::Sys->shellcmd( cmd => $cmd );
+    my $return = Genome::Sys->shellcmd( cmd => $self->_generate_command_line );
     unless($return) {
         die $self->error_message("Failed to execute: Returned $return");
     }
