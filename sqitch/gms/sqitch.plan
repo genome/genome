@@ -356,3 +356,5 @@ remove_model_groups_from_analysis_project [make_model_group_id_nullable] 2014-12
 @1419271481 2014-12-22T18:04:41Z Adam Coffman <acoffman@genome.wustl.edu># remove model group ids from AnPs
 remove_params_and_inputs_from_software_results [result_software_result] 2014-12-11T21:30:31Z Adam Coffman <acoffman@genome.wustl.edu> # these columns are not used
 @1419271745 2014-12-22T18:09:06Z Adam Coffman <acoffman@genome.wustl.edu># remove unused columns in software result table
+
+drop_featurelist_file_id [model_feature_list] 2014-12-18T15:26:31Z Thomas B. Mooney <tmooney@genome.wustl.edu> # drop obsolete column
