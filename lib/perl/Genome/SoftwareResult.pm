@@ -230,37 +230,38 @@ sub get_with_lock {
 sub get_or_create {
     my $class = shift;
 
+    return Genome::SoftwareResult::User->with_registered_users(
+        @_,
+        callback => sub {
+            my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
 
-    my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
+            my %is_input = %{$params_processed->{inputs}};
+            my %is_param = %{$params_processed->{params}};
 
-    my %is_input = %{$params_processed->{inputs}};
-    my %is_param = %{$params_processed->{params}};
+            my $result = $class->_faster_get(@_);
+            my $newly_created = 0;
 
-    my @objects = $class->_faster_get(@_);
-
-    unless (@objects) {
-        @objects = $class->create(@_);
-        unless (@objects) {
-            # see if the reason we failed was b/c the objects were created while we were locking...
-            @objects = $class->_faster_get(@_);
-            unless (@objects) {
-                $class->error_message("Could not create a $class for params " . Data::Dumper::Dumper(\@_) . " even after trying!");
-                confess $class->error_message();
+            unless ($result) {
+                $result = $class->create(@_);
+                if ($result) {
+                    $newly_created = 1;
+                } else {
+                    # see if the reason we failed was b/c the objects were created while we were locking...
+                    $result = $class->_faster_get(@_);
+                }
             }
-        }
-    }
 
-    if (@objects > 1) {
-        if(wantarray) {
-            map $_->_auto_unarchive, @objects;
-            return @objects;
-        }
-        my @ids = map { $_->id } @objects;
-        die "Multiple matches for $class but get or create was called in scalar context!  Found ids: @ids";
-    } else {
-        $objects[0]->_auto_unarchive if $objects[0];
-        return $objects[0];
-    }
+            unless ($result) {
+                die $class->error_message(
+                    'Could not create a %s for params %s even after trying!'
+                    $class,
+                    Data::Dumper::Dumper(\@_),
+                );
+            }
+
+            $result->_auto_unarchive();
+            return $result;
+        });
 }
 
 sub create {
