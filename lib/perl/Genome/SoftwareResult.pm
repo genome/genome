@@ -116,6 +116,18 @@ sub _faster_get {
                     $lookup_hash
                 );
             }
+
+            if (@objects) {
+                my $calculated_lookup_hash = $objects[0]->calculate_lookup_hash();
+                my $lookup_hash_property = $objects[0]->lookup_hash;
+                if ($calculated_lookup_hash ne $lookup_hash_property) {
+                    die $class->error_message(
+                        "SoftwareResult lookup_hash (%s) does not match it's calculated lookup_hash (%s).  Cannot trust that the correct SoftwareResult was retrieved.",
+                        $lookup_hash_property,
+                        $calculated_lookup_hash
+                    );
+                }
+            }
         }
     );
 
@@ -200,15 +212,6 @@ sub get_with_lock {
 
     my $result = $objects[0];
 
-    if ($result) {
-        my $calculated_lookup_hash = $result->calculate_lookup_hash();
-        my $lookup_hash = $result->lookup_hash;
-        if ($calculated_lookup_hash ne $lookup_hash) {
-            my $m = sprintf(q{SoftwareResult lookup_hash (%s) does not match it's calculated lookup_hash (%s).  Cannot trust that the correct SoftwareResult was retrieved.}, $lookup_hash, $calculated_lookup_hash);
-            # Really we would just call get(%$params) but that might undermine the whole lookup_hash optimization.
-            die $class->error_message($m);
-        }
-    }
 
     if ($result && $lock) {
         $result->_lock_name($lock);
