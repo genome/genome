@@ -85,13 +85,33 @@ sub available_methratio_versions {
     return keys %METHRATIO_VERSIONS;
 }
 
+sub _reference_fasta {
+    my ($self) = @_;
+
+    my %mapping = (
+        36 => 'NCBI-human-build36',
+        37 => 'GRCh37-lite-build37',
+    );
+
+    my $reference = $self->reference;
+
+    if (exists $mapping{$reference}) {
+        my $reference_build = Genome::Model::Build::ReferenceSequence->get(
+            name => $mapping{$reference}
+        );
+        $reference = $reference_build->cached_full_consensus_path('fa');
+    }
+
+    return $reference;
+}
+
 sub _generate_command_line {
     my ($self) = @_;
 
     my @cmd = (
         'python', $METHRATIO_VERSIONS{$self->version},
         '-o', File::Spec->join($self->output_directory, $self->output_file),
-        '-d', $self->reference
+        '-d', $self->_reference_fasta
     );
 
     if ($self->output_zeros) {
@@ -113,23 +133,6 @@ sub _generate_command_line {
 
 sub execute {
     my $self = shift;
-    my $fasta;
-
-    if ($self->reference eq "36") {
-        my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "NCBI-human-build36");
-        $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
-    }
-    elsif ($self->reference eq "37") {
-        my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "GRCh37-lite-build37");
-        $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
-    } else { #path to fasta
-        if( -s $self->reference){
-            $fasta = $self->reference;
-        } else {
-            $self->error_message('reference must be either "36", "37", or the path to a valid reference file');
-            return 0;
-        }
-    }
 
     if ($self->chromosome) {
         my $sanitized_chromosome = sanitize_string_for_filesystem($self->chromosome);
