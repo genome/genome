@@ -168,54 +168,60 @@ sub _is_id_only_query {
 sub get_with_lock {
     my $class = shift;
 
-    my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
+    return Genome::SoftwareResult::User->with_registered_users(
+        @_,
+        callback => sub {
+            my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
 
-    my %is_input = %{$params_processed->{inputs}};
-    my %is_param = %{$params_processed->{params}};
+            my %is_input = %{$params_processed->{inputs}};
+            my %is_param = %{$params_processed->{params}};
 
-    # Only try with lock if object does not exist since locking causes
-    # a performance hit. It is assumed that if an object is found it is
-    # complete. If this is a bad assumption then we need to add a
-    # status to SoftwareResults.
-    my $lock;
-    my $result = $class->_faster_get(@_);
-    unless ($result) {
-        my $subclass = $params_processed->{subclass};
-        my $lookup_hash = $subclass->calculate_lookup_hash_from_arguments(@_);
+            # Only try with lock if object does not exist since locking causes
+            # a performance hit. It is assumed that if an object is found it is
+            # complete. If this is a bad assumption then we need to add a
+            # status to SoftwareResults.
+            my $lock;
+            my $result = $class->_faster_get(@_);
+            unless ($result) {
+                my $subclass = $params_processed->{subclass};
+                my $lookup_hash = $subclass->calculate_lookup_hash_from_arguments(@_);
 
-        unless ($lock = $subclass->_lock($lookup_hash)) {
-            die "Failed to get a lock for " . Dumper(@_);
+                unless ($lock = $subclass->_lock($lookup_hash)) {
+                    die "Failed to get a lock for " . Dumper(@_);
+                }
+
+                UR::Context->current->reload($subclass, lookup_hash => $lookup_hash);
+
+                eval {
+                    $result = $subclass->_faster_get(@_);
+                };
+                my $error = $@;
+
+                if ($error) {
+                    $subclass->_release_lock_or_die($lock, "Failed to unlock during get_with_lock.");
+                    die $subclass->error_message('Failed in get! %s', $error);
+                }
+            }
+
+
+            if ($result && $lock) {
+                $result->_lock_name($lock);
+
+                $result->debug_message("Cleaning up lock $lock...");
+                unless ($result->_unlock) {
+                    $result->error_message("Failed to unlock after getting software result");
+                    die "Failed to unlock after getting software result";
+                }
+                $result->debug_message("Cleanup completed for lock $lock.");
+            } elsif ($lock) {
+                $class->_release_lock_or_die($lock, "Failed to unlock after not finding software result.");
+            }
+
+            $result->_auto_unarchive if $result;
+            return ($result, 1);
         }
+    );
 
-        UR::Context->current->reload($subclass, lookup_hash => $lookup_hash);
-
-        eval {
-            $result = $subclass->_faster_get(@_);
-        };
-        my $error = $@;
-
-        if ($error) {
-            $subclass->_release_lock_or_die($lock, "Failed to unlock during get_with_lock.");
-            die $subclass->error_message('Failed in get! %s', $error);
-        }
-    }
-
-
-    if ($result && $lock) {
-        $result->_lock_name($lock);
-
-        $result->debug_message("Cleaning up lock $lock...");
-        unless ($result->_unlock) {
-            $result->error_message("Failed to unlock after getting software result");
-            die "Failed to unlock after getting software result";
-        }
-        $result->debug_message("Cleanup completed for lock $lock.");
-    } elsif ($lock) {
-        $class->_release_lock_or_die($lock, "Failed to unlock after not finding software result.");
-    }
-
-    $result->_auto_unarchive if $result;
-    return $result;
 }
 
 sub get_or_create {
