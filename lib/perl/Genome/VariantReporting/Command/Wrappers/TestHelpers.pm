@@ -109,6 +109,8 @@ sub get_build {
 
     my $alignment_result =  _get_alignment_result();
     my $third_alignment_result = _get_third_alignment_result();
+    my $control_alignment_result = _get_control_alignment_result();
+
     reinstall_sub( {
             into => "Genome::Model::Build::SomaticValidation",
             as => "merged_alignment_result",
@@ -117,13 +119,14 @@ sub get_build {
                 if ($self->tumor_sample->name eq "TEST-patient1-somval_tumor1") {
                     return $alignment_result;
                 }
+                elsif ($self->tumor_sample->name eq "TEST-patient1-somval_normal1") {
+                    return $control_alignment_result;
+                }
                 else {
                     return $third_alignment_result;
                 }
             },
         });
-
-    my $control_alignment_result = _get_control_alignment_result();
 
     reinstall_sub( {
             into => "Genome::Model::Build::SomaticValidation",
