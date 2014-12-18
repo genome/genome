@@ -185,50 +185,48 @@ sub _validate_allocation_and_software_result {
     my ($class, $instance_output) = @_;
     $class = ref $class if ref $class;
 
-    if (-l $instance_output or -e $instance_output) {
-        unless (not -l $instance_output and -d $instance_output) {
-            $class->warning_message('Instance output directory (' . $instance_output . ') already exists!');
-            my $allocation_dir = readlink $instance_output;
-            my $allocation_owner_id = $class->_extract_allocation_owner_id(
-                $allocation_dir);
-            my $result = Genome::SoftwareResult->get($allocation_owner_id);
-            my $allocation = Genome::Disk::Allocation->get(owner_id => $allocation_owner_id);
+    if (-l $instance_output) {
+        $class->warning_message('Instance output directory (' . $instance_output . ') already exists!');
+        my $allocation_dir = readlink $instance_output;
+        my $allocation_owner_id = $class->_extract_allocation_owner_id(
+            $allocation_dir);
+        my $result = Genome::SoftwareResult->get($allocation_owner_id);
+        my $allocation = Genome::Disk::Allocation->get(owner_id => $allocation_owner_id);
 
-            if ($allocation) {
-                if ($result) {
-                    # Finding a result and an allocation means either:
-                    # 1) This work was already done, but for whatever reason we didn't find the software result before we decided to do the work.
-                    # 2) We're doing different work but pointing it at a place where work has already been done for something else. Can't replace it.
-                    Genome::Utility::Instrumentation::increment('dv2.result.found_duplicate');
-                    die $class->error_message("Found allocation and software result for path $instance_output, cannot create new result!");
+        if ($allocation) {
+            if ($result) {
+                # Finding a result and an allocation means either:
+                # 1) This work was already done, but for whatever reason we didn't find the software result before we decided to do the work.
+                # 2) We're doing different work but pointing it at a place where work has already been done for something else. Can't replace it.
+                Genome::Utility::Instrumentation::increment('dv2.result.found_duplicate');
+                die $class->error_message("Found allocation and software result for path $instance_output, cannot create new result!");
+            } else {
+                # Allocation exists without a result the whole time the result is being created. Ideally locks
+                # would prevent us from getting here during that window but our locks are not 100% reliable.
+                my @error_message = (
+                    "Found allocation at ($allocation_dir) but no software result for it's owner ID ($allocation_owner_id).",
+                    "This is either because the software result is currently being generated or because the allocation has been orphaned.",
+                    "If it is determined that the allocation has been orphaned then the allocation will need to be removed.",
+                );
+                Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_allocation');
+                die $class->error_message(join(' ', @error_message));
+            }
+        } else {
+            if ($result) {
+                if (defined $result->test_name and -l $instance_output) {
+                    # If a test name is set, we can remove the symlink and proceed
+                    $class->warning_message("The software result for the existing symlink has a test name set; removing symlink.");
+                    unlink $instance_output;
                 } else {
-                    # Allocation exists without a result the whole time the result is being created. Ideally locks
-                    # would prevent us from getting here during that window but our locks are not 100% reliable.
-                    my @error_message = (
-                        "Found allocation at ($allocation_dir) but no software result for it's owner ID ($allocation_owner_id).",
-                        "This is either because the software result is currently being generated or because the allocation has been orphaned.",
-                        "If it is determined that the allocation has been orphaned then the allocation will need to be removed.",
-                    );
-                    Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_allocation');
-                    die $class->error_message(join(' ', @error_message));
+                    # A result without an allocation... this really shouldn't ever happen, unless someone deleted the allocation row from the database?
+                    Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_result');
+                    die $class->error_message("Found a software result (" . $result->__display_name__ . ") that has output directory " .
+                        "($instance_output) but no allocation.");
                 }
             } else {
-                if ($result) {
-                    if (defined $result->test_name and -l $instance_output) {
-                        # If a test name is set, we can remove the symlink and proceed
-                        $class->warning_message("The software result for the existing symlink has a test name set; removing symlink.");
-                        unlink $instance_output;
-                    } else {
-                        # A result without an allocation... this really shouldn't ever happen, unless someone deleted the allocation row from the database?
-                        Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_result');
-                        die $class->error_message("Found a software result (" . $result->__display_name__ . ") that has output directory " .
-                            "($instance_output) but no allocation.");
-                    }
-                } else {
-                    if (-l $instance_output && ! -e $allocation_dir) {
-                        $class->warning_message("No allocation or software result and symlink ($instance_output) target ($allocation_dir) does not exist; removing symlink.");
-                        unlink $instance_output;
-                    }
+                if (-l $instance_output && ! -e $allocation_dir) {
+                    $class->warning_message("No allocation or software result and symlink ($instance_output) target ($allocation_dir) does not exist; removing symlink.");
+                    unlink $instance_output;
                 }
             }
         }
