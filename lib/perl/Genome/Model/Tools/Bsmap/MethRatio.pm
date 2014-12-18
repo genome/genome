@@ -97,6 +97,11 @@ sub execute {
         }
     }
 
+    if(!(defined($self->version))){
+        $self->error_message('methratio version %s not found.', $self->version);
+        return 0;
+    }
+
     my $cmd = "python " . $METHRATIO_VERSIONS{$self->version};
     $cmd .= " -o ". $self->output_file;
     $cmd .= " -d " . $fasta;
