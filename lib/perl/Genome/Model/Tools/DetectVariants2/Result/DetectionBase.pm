@@ -191,8 +191,8 @@ sub _validate_allocation_and_software_result {
         unless (not -l $instance_output and -d $instance_output) {
             $class->warning_message('Instance output directory (' . $instance_output . ') already exists!');
             my $allocation_dir = readlink $instance_output;
-            my @parts = split "-", $allocation_dir;
-            my $allocation_owner_id = $parts[-1];
+            my $allocation_owner_id = $class->_extract_allocation_owner_id(
+                $allocation_dir);
             my $result = Genome::SoftwareResult->get($allocation_owner_id);
             my $allocation = Genome::Disk::Allocation->get(owner_id => $allocation_owner_id);
 
@@ -234,6 +234,12 @@ sub _validate_allocation_and_software_result {
             }
         }
     }
+}
+
+sub _extract_allocation_owner_id {
+    my ($class, $allocation_dir) = @_;
+    my @parts = split "-", $allocation_dir;
+    return $parts[-1];
 }
 
 
