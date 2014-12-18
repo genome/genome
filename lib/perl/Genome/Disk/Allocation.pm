@@ -551,8 +551,7 @@ sub _execute_system_command {
         $allocation = $class->$method(%params);
     }
     else {
-        # remove the parens if you DARE
-        my @includes = map { ( '-I' => $_ ) } UR::Util::used_libs;
+        my @includes = map { -I => $_ } UR::Util::used_libs;
 
         my $param_string = Genome::Utility::Text::hash_to_string(\%params, 'q');
         my @statements = (
