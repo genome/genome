@@ -178,39 +178,27 @@ sub get_with_lock {
     # complete. If this is a bad assumption then we need to add a
     # status to SoftwareResults.
     my $lock;
-    my @objects = $class->_faster_get(@_);
-    unless (@objects) {
+    my $result = $class->_faster_get(@_);
+    unless ($result) {
         my $subclass = $params_processed->{subclass};
-
         my $lookup_hash = $subclass->calculate_lookup_hash_from_arguments(@_);
+
         unless ($lock = $subclass->_lock($lookup_hash)) {
             die "Failed to get a lock for " . Dumper(@_);
         }
 
-        UR::Context->current->reload($class,
-            lookup_hash => $class->calculate_lookup_hash_from_arguments(@_));
+        UR::Context->current->reload($subclass, lookup_hash => $lookup_hash);
 
         eval {
-            @objects = $class->_faster_get(@_);
+            $result = $subclass->_faster_get(@_);
         };
         my $error = $@;
 
         if ($error) {
-            $class->error_message('Failed in get! ' . $error);
-            $class->_release_lock_or_die($lock, "Failed to unlock during get_with_lock.");
-            die $class->error_message;
+            $subclass->_release_lock_or_die($lock, "Failed to unlock during get_with_lock.");
+            die $subclass->error_message('Failed in get! %s', $error);
         }
     }
-
-    if (@objects > 1) {
-        $class->error_message("Multiple results returned for SoftwareResult ${class}::get_with_lock.  To avoid this, call get_with_lock with enough parameters to uniquely identify a SoftwareResult.");
-        $class->error_message("Parameters used for the get: " . Data::Dumper::Dumper %is_input . Data::Dumper::Dumper %is_param);
-        $class->error_message("Objects gotten: " . Data::Dumper::Dumper @objects);
-        $class->_release_lock_or_die($lock, "Failed to unlock during get_with_lock with multiple results.") if $lock;
-        die $class->error_message;
-    }
-
-    my $result = $objects[0];
 
 
     if ($result && $lock) {
@@ -256,7 +244,7 @@ sub get_or_create {
 
             unless ($result) {
                 die $class->error_message(
-                    'Could not create a %s for params %s even after trying!'
+                    'Could not create a %s for params %s even after trying!',
                     $class,
                     Data::Dumper::Dumper(\@_),
                 );
