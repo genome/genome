@@ -92,7 +92,6 @@ sub execute {
         $merged_list = $cmd->new_feature_list;
     }
 
-    say $merged_list->id;
     return 1;
 }
 
