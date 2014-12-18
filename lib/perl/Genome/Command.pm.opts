@@ -37085,6 +37085,13 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>backfill-trio-legend-files',
+    [
+      'trio-process=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>wrappers',
     [
       '>model-report',
