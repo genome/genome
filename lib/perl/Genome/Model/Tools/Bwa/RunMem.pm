@@ -213,7 +213,7 @@ sub _sort_cmdline {
     my $max_mem = $self->max_sort_memory;
     my $tmp_path = File::Spec->catfile($self->temp_dir, "samtools-sort");
 
-    return "$samtools_exe_path sort -l $comp_level -\@ $threads -m $max_mem -o -f - $tmp_path";
+    return "$samtools_exe_path sort -l $comp_level -\@ $threads -m $max_mem -o - $tmp_path";
 }
 
 sub _calmd_cmdline {
