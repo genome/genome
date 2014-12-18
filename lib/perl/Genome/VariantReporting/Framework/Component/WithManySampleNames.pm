@@ -23,10 +23,10 @@ sub create_sample_specific_field_name {
 }
 
 sub create_sample_specific_field_names {
-    my ($self, $fields, $sample_names) = @_;
+    my ($self, $fields) = @_;
 
     my @field_names;
-    for my $sample_name (@$sample_names) {
+    for my $sample_name ($self->sample_names) {
         for my $field (@$fields) {
             push @field_names, $self->create_sample_specific_field_name($field, $sample_name);
         }

@@ -26,5 +26,5 @@ my @expected_available_fields = qw(S1_info S2_info);
 
 is_deeply([$interpreter->available_fields($interpreter->sample_names)], \@expected_available_fields, "Available fields as expected");
 is($interpreter->create_sample_specific_field_name('info', 'S1'), 'S1_info', "Sample specific field name as expected");
-is_deeply([$interpreter->create_sample_specific_field_names(['info'], ['S1', 'S2'])], ['S1_info', 'S2_info'], "Sample specific field names as expected");
+is_deeply([$interpreter->create_sample_specific_field_names(['info'])], ['S1_info', 'S2_info'], "Sample specific field names as expected");
 done_testing;

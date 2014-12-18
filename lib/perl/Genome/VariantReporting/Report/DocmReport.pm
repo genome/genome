@@ -4,10 +4,15 @@ use strict;
 use warnings;
 use Genome;
 use Genome::VariantReporting::Suite::BamReadcount::VafInterpreter;
-use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(many_samples_available_fields);
+use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(
+    per_sample_vaf_headers
+    per_library_vaf_headers
+    );
 
 class Genome::VariantReporting::Report::DocmReport {
-    is => [ 'Genome::VariantReporting::Report::WithHeader', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
+    is => [ 'Genome::VariantReporting::Report::WithHeader',
+        'Genome::VariantReporting::Framework::Component::WithManyLibraryNames',
+        'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
     doc => 'Output readcount information from bam readcount',
 };
 
@@ -28,7 +33,8 @@ sub headers {
         reference
         variant
     /;
-    push @headers, many_samples_available_fields([$self->sample_names]);
+    push @headers, per_sample_vaf_headers($self);
+    push @headers, per_library_vaf_headers($self);
 
     return @headers;
 }

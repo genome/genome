@@ -74,6 +74,7 @@ reports:
                 sample_names:
                     - discovery_tumor
                     - normal
+                library_names: [library_names]
         params:
             sample_names:
                 - discovery_tumor

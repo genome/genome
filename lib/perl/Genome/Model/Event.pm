@@ -3,7 +3,6 @@ package Genome::Model::Event;
 use strict;
 use warnings;
 use File::Path;
-use YAML;
 
 use Genome;
 class Genome::Model::Event {
@@ -200,15 +199,6 @@ sub get_all_objects {
     my @outputs = $self->outputs;
     my @metrics = $self->metrics;
     return sort {$a->id cmp $b->id} (@inputs, @outputs, @metrics);
-}
-
-sub yaml_string {
-    my $self = shift;
-    my $string = YAML::Dump($self);
-    for my $object ($self->get_all_objects) {
-        $string .= YAML::Dump($object);
-    }
-    return $string;
 }
 
 sub delete {
