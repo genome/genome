@@ -15,21 +15,21 @@ use Genome::Utility::Test qw(compare_ok);
 use Genome::Test::Factory::Model::SomaticVariation;
 use Genome::Test::Factory::Build;
 
-my $TEST_DATA_VERSION = 1;
+my $TEST_DATA_VERSION = 2;
 my $class = 'Genome::Model::Tools::EpitopePrediction::Pipeline';
 use_ok($class);
 
 my $test_dir = Genome::Utility::Test->data_dir_ok($class, $TEST_DATA_VERSION);
-my $expected_output = File::Spec->join($test_dir, "parsed_file.all");
 
 subtest "with tsv file" => sub {
     my $input_file = File::Spec->join($test_dir, "input.tsv");
     my $output_dir = Genome::Sys->create_temp_directory;
+    my $expected_output = File::Spec->join($test_dir, 'parsed_file.HLA-A02:01.all');
 
     my $cmd = $class->create(
         input_tsv_file => $input_file,
         output_directory => $output_dir,
-        allele =>'HLA-A02:01',
+        alleles =>'HLA-A02:01',
         epitope_length => 9,
         output_filter => 'all',
         anno_db => 'NCBI-human.ensembl',
@@ -41,11 +41,13 @@ subtest "with tsv file" => sub {
 
     ok($cmd->execute, "Command executed");
 
-    compare_ok($cmd->final_output_file, $expected_output, "Output file is as expected");
+    compare_ok($cmd->final_output_file('HLA-A02:01'), $expected_output, "Output file is as expected");
 };
 
 subtest "with somatic variation build" => sub {
     my $output_dir = Genome::Sys->create_temp_directory;
+    my $expected_output = File::Spec->join($test_dir, 'parsed_file.HLA-A02:01.all');
+
     my $normal_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
     ok($normal_model->isa("Genome::Model::ReferenceAlignment"), "Generated a reference alignment model for normal");
 
@@ -83,7 +85,7 @@ subtest "with somatic variation build" => sub {
     my $cmd = $class->create(
         somatic_variation_build => $somatic_variation_build,
         output_directory => $output_dir,
-        allele =>'HLA-A02:01',
+        alleles =>'HLA-A02:01',
         epitope_length => 9,
         output_filter => 'all',
     );
@@ -96,18 +98,44 @@ subtest "with somatic variation build" => sub {
     is($cmd->anno_db, 'NCBI-human.ensembl', "Annotation database name set correctly");
     is($cmd->anno_db_version, '67_37l_v2', "Annotation database version set correctly");
 
-    compare_ok($cmd->final_output_file, $expected_output, "Output file is as expected");
+    compare_ok($cmd->final_output_file('HLA-A02:01'), $expected_output, "Output file is as expected");
+};
+
+subtest "with tsv file and multiple alleles" => sub {
+    my $input_file = File::Spec->join($test_dir, "input.tsv");
+    my $output_dir = Genome::Sys->create_temp_directory;
+    my @alleles = qw(HLA-A02:01 HLA-A02:02);
+
+    my $cmd = $class->create(
+        input_tsv_file => $input_file,
+        output_directory => $output_dir,
+        alleles => \@alleles,
+        epitope_length => 9,
+        output_filter => 'all',
+        anno_db => 'NCBI-human.ensembl',
+        anno_db_version => '67_37l_v2',
+        sample_name => 'test',
+    );
+
+    ok($cmd, "Created a command");
+
+    ok($cmd->execute, "Command executed");
+
+    for my $allele (@alleles) {
+        my $expected_output = File::Spec->join($test_dir, "parsed_file.$allele.all");
+        compare_ok($cmd->final_output_file($allele), $expected_output, "Output file for allele ($allele) is as expected");
+    }
 };
 
 subtest "with NetMHC version 3.0" => sub {
     my $input_file = File::Spec->join($test_dir, "input.tsv");
     my $output_dir = Genome::Sys->create_temp_directory;
-    $expected_output = File::Spec->join($test_dir, "parsed_file.3.0.all");
+    my $expected_output = File::Spec->join($test_dir, "parsed_file.3.0.all");
 
     my $cmd = $class->create(
         input_tsv_file => $input_file,
         output_directory => $output_dir,
-        allele =>'A0201',
+        alleles =>'A0201',
         epitope_length => 9,
         output_filter => 'all',
         anno_db => 'NCBI-human.ensembl',
@@ -120,6 +148,7 @@ subtest "with NetMHC version 3.0" => sub {
 
     ok($cmd->execute, "Command executed");
 
-    compare_ok($cmd->final_output_file, $expected_output, "Output file is as expected");
+    compare_ok($cmd->final_output_file('A0201'), $expected_output, "Output file is as expected");
 };
+
 done_testing();
