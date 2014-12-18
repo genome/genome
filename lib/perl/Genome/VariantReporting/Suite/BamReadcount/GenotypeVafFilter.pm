@@ -71,14 +71,11 @@ sub filter_entry {
     }
 
     #Keep positions without readcount information
-    my $readcount_entry = $self->get_readcount_entry($entry);
-    unless (defined($readcount_entry)) {
-        return $self->pass_all_sample_alts($entry);
-    }
+    my $readcount_entries = $self->get_readcount_entries($entry);
 
     my %vafs = Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
         $entry,
-        $readcount_entry,
+        $readcount_entries,
     );
     my $gt = $entry->genotype_for_sample($self->sample_index($entry->{header}));
     unless ($gt and %vafs) {

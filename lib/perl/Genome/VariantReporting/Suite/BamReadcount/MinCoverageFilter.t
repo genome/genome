@@ -46,7 +46,7 @@ subtest "pass" => sub {
     is_deeply({$filter->filter_entry($entry)}, \%pass, "Entry passes filter with min_coverage $min_coverage");
 
     $entry = create_no_readcount_entry();
-    is_deeply({$filter->filter_entry($entry)}, \%autopass_s1, "Entry without coverage automatically passes filter within the sample genotype with min_coverage $min_coverage");
+    is_deeply({$filter->filter_entry($entry)}, \%pass, "Entry without coverage automatically passes filter within the sample genotype with min_coverage $min_coverage");
 };
 
 subtest "fail" => sub {

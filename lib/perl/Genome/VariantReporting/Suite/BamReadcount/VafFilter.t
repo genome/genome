@@ -156,9 +156,9 @@ subtest "fail heterozygous non-reference sample" => sub {
     my $entry = create_default_entry();
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry fails filter with min_vaf $min_vaf");
     cmp_ok(Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_vaf(
-        $filter->get_readcount_entry($entry), 'C', 'A'), '<', 0.3, "VAF is very low");
+        $filter->get_readcount_entries($entry)->{C}, 'C', 'A'), '<', 0.3, "VAF is very low");
     cmp_ok(Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_vaf(
-        $filter->get_readcount_entry($entry), 'G', 'A'), '>', 90, "VAF is high");
+        $filter->get_readcount_entries($entry)->{G}, 'G', 'A'), '>', 90, "VAF is high");
 };
 
 subtest "pass heterozygous non-reference sample" => sub {

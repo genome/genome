@@ -6,15 +6,19 @@ use Genome;
 use List::Util 'sum';
 
 sub calculate_vaf_for_all_alts {
-    my ($entry, $readcount_entry) = @_;
+    my ($entry, $readcount_entries) = @_;
 
     my $alt_alleles = $entry->{alternate_alleles};
     my $ref = $entry->{reference_allele};
 
     my %vafs;
     for my $allele (@$alt_alleles) {
-        my $vaf = calculate_vaf($readcount_entry, $allele, $entry->{reference_allele});
-        $vafs{$allele} = $vaf;
+        if (defined $readcount_entries->{$allele}) {
+            $vafs{$allele} = calculate_vaf($readcount_entries->{$allele}, $allele, $entry->{reference_allele});
+        }
+        else {
+            $vafs{$allele} = undef;
+        }
     }
     return %vafs;
 }
