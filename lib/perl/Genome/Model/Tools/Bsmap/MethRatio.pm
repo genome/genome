@@ -20,7 +20,7 @@ class Genome::Model::Tools::Bsmap::MethRatio {
     has => [
         bam_file => {
             is => 'Text',
-            doc => 'The bam file to do the counting on (must be a product of bsmap alignment',
+            doc => 'The bam file to do the counting on (must be a product of bsmap alignment)',
             is_input => 1,
         },
         output_file => {
@@ -132,16 +132,18 @@ sub _generate_command_line {
 }
 
 sub execute {
-    my $self = shift;
+    my ($self) = @_;
 
     if ($self->chromosome) {
-        my $sanitized_chromosome = sanitize_string_for_filesystem($self->chromosome);
-        my $chromosome_output_dir = File::Spec->join($self->output_directory, $sanitized_chromosome);
+        my $sanitized_chromosome = sanitize_string_for_filesystem(
+            $self->chromosome);
+        my $chromosome_output_dir = File::Spec->join(
+            $self->output_directory, $sanitized_chromosome);
         Genome::Sys->create_directory($chromosome_output_dir);
         $self->output_directory($chromosome_output_dir);
     }
 
-    if(!(defined($self->version))){
+    unless (defined $self->version) {
         $self->error_message('methratio version %s not found.', $self->version);
         return 0;
     }
