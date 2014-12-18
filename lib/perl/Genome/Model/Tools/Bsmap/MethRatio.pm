@@ -11,8 +11,8 @@ my $DEFAULT_VERSION = '2.74';
 my $METHRATIO_COMMAND = 'methratio.py';
 
 my %METHRATIO_VERSIONS = (
-    '2.6' => '/gscuser/cmiller/usr/src/bsmap-2.6/' . $METHRATIO_COMMAND,
-    '2.74' => '/gsc/pkg/bio/bsmap/bsmap-2.74/' . $METHRATIO_COMMAND,
+    2.6 => File::Spec->join('/gscuser/cmiller/usr/src/bsmap-2.6', $METHRATIO_COMMAND),
+    2.74 => File::Spec->join('/gsc/pkg/bio/bsmap/bsmap-2.74', $METHRATIO_COMMAND),
 );
 
 class Genome::Model::Tools::Bsmap::MethRatio {
@@ -81,6 +81,10 @@ class Genome::Model::Tools::Bsmap::MethRatio {
     ],
 };
 
+sub available_methratio_versions {
+    return keys %METHRATIO_VERSIONS;
+}
+
 sub execute {
     my $self = shift;
     my $fasta;
@@ -133,11 +137,6 @@ sub execute {
     }
 
     return 1;
-}
-
-sub available_methratio_versions {
-    my $self = shift;
-    return keys %METHRATIO_VERSIONS;
 }
 
 1;
