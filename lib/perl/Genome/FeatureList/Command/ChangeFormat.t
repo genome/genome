@@ -13,9 +13,13 @@ use Test::More tests => 9;
 use above 'Genome';
 use Genome::Utility::Test qw(command_execute_fail_ok);
 
+use File::Spec qw();
+
 use_ok('Genome::FeatureList');
 
-my $test_bed_file = __FILE__ . '.bed';
+my $cmd_class = 'Genome::FeatureList::Command::ChangeFormat';
+my $data_dir = Genome::Utility::Test->data_dir($cmd_class, 'v0');
+my $test_bed_file = File::Spec->join($data_dir, 'input.bed');
 ok(-e $test_bed_file, 'test file ' . $test_bed_file . ' exists');
 
 my $test_bed_file_md5 = Genome::Sys->md5sum($test_bed_file);
@@ -36,7 +40,7 @@ ok($feature_list, 'created a feature list');
 isa_ok($feature_list, 'Genome::FeatureList');
 
 eval {
-    my $change_format_cmd = Genome::FeatureList::Command::ChangeFormat->create(
+    my $change_format_cmd = $cmd_class->create(
         feature_list => $feature_list,
         format              => '1-based',
     );
@@ -44,7 +48,7 @@ eval {
         {
         error_messages => [q(feature-list GFL test feature-list does not have format set to 'unknown')],
         },
-        'execute Genome::FeatureList::Command::ChangeFormat');
+        "execute $cmd_class");
 };
 
 ok($feature_list->format ne 'unknown', 'failed to change format when format != "unknown"');
@@ -67,7 +71,7 @@ isa_ok($feature_list_2, 'Genome::FeatureList');
 
 my $fail_change_format_2;
 eval {
-    $fail_change_format_2 = Genome::FeatureList::Command::ChangeFormat->execute(
+    $fail_change_format_2 = $cmd_class->execute(
         feature_list => $feature_list_2,
         format              => '1-based',
     );

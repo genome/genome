@@ -13,9 +13,13 @@ use Test::More tests => 11;
 use above 'Genome';
 use Genome::Utility::Test qw(command_execute_ok);
 
-use_ok('Genome::FeatureList::Command::Update');
+use File::Spec qw();
 
-my $test_bed_file = __FILE__ . '.bed';
+my $cmd_class = 'Genome::FeatureList::Command::Update';
+use_ok($cmd_class);
+
+my $data_dir = Genome::Utility::Test->data_dir($cmd_class, 'v0');
+my $test_bed_file = File::Spec->join($data_dir, 'input.bed');
 ok(-e $test_bed_file, 'test file ' . $test_bed_file . ' exists');
 
 my $test_bed_file_md5 = Genome::Sys->md5sum($test_bed_file);
@@ -36,7 +40,7 @@ my $feature_list;
 ok($feature_list, 'created a feature list');
 isa_ok($feature_list, 'Genome::FeatureList');
 
-my $update_cmd = Genome::FeatureList::Command::Update->create(
+my $update_cmd = $cmd_class->create(
     feature_list => [$feature_list],
     format => 'unknown', 
 );
@@ -46,7 +50,7 @@ command_execute_ok($update_cmd,
 
 is($feature_list->format, 'unknown', 'Successfully updated format');
 
-$update_cmd = Genome::FeatureList::Command::Update->create(
+$update_cmd = $cmd_class->create(
     feature_list => [$feature_list],
     format => 'true-BED', 
     source => 'test-data-makers',

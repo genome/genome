@@ -11,11 +11,16 @@ BEGIN {
 use Test::More tests => 7;
 
 use above 'Genome';
+use Genome::Utility::Test qw();
 
-use_ok('Genome::FeatureList::Command::DumpMergedList');
+use File::Spec qw();
+
+my $cmd_class = 'Genome::FeatureList::Command::DumpMergedList';
+use_ok($cmd_class);
 
 
-my $test_bed_file = __FILE__ . '.bed';
+my $data_dir = Genome::Utility::Test->data_dir($cmd_class, 'v0');
+my $test_bed_file = File::Spec->join($data_dir, 'input.bed');
 ok(-e $test_bed_file, 'test file ' . $test_bed_file . ' exists');
 my $test_bed_file_md5 = Genome::Sys->md5sum($test_bed_file);
 
@@ -35,12 +40,12 @@ ok($feature_list, 'got a feature list');
 my $test_output_path = Genome::Sys->create_temp_file_path;
 
 Genome::Sys->dump_status_messages(0);
-my $command = Genome::FeatureList::Command::DumpMergedList->create(
+my $command = $cmd_class->create(
     feature_list => $feature_list,
     output_path => $test_output_path,
 );
 
 ok($command, 'created command');
-isa_ok($command, 'Genome::FeatureList::Command::DumpMergedList');
+isa_ok($command, $cmd_class);
 ok($command->execute, 'executed command');
 ok(-s $test_output_path, 'command produced a file');
