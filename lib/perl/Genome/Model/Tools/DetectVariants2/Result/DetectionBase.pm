@@ -163,21 +163,19 @@ sub _cleanup_non_software_result_legacy_data {
     my ($class, $instance_output) = @_;
     $class = ref $class if ref $class;
 
-    if (-l $instance_output or -e $instance_output) {
+    if (-d $instance_output) {
         # If the detector output is not a symlink, it was generated before these were software results.
         # Archive the existing stuff and regenerate so we get a nifty software result.
-        if (not -l $instance_output and -d $instance_output) {
-            my ($parent_dir, $sub_dir) = $instance_output =~ /(.+)\/(.+)/;
-            die $class->error_message("Unable to determine parent directory from $instance_output.") unless $parent_dir;
-            die $class->error_message("Unable to determine sub-directory from $instance_output.") unless $sub_dir;
-            die $class->error_message("Parse error when determining parent directory and sub-directory from $instance_output.") unless ($instance_output eq "$parent_dir/$sub_dir");
+        my ($parent_dir, $sub_dir) = $instance_output =~ /(.+)\/(.+)/;
+        die $class->error_message("Unable to determine parent directory from $instance_output.") unless $parent_dir;
+        die $class->error_message("Unable to determine sub-directory from $instance_output.") unless $sub_dir;
+        die $class->error_message("Parse error when determining parent directory and sub-directory from $instance_output.") unless ($instance_output eq "$parent_dir/$sub_dir");
 
-            my $archive_name = "old_$sub_dir.tar.gz";
-            die $class->error_message("Archive already exists, $parent_dir/$archive_name.") if (-e "$parent_dir/$archive_name");
+        my $archive_name = "old_$sub_dir.tar.gz";
+        die $class->error_message("Archive already exists, $parent_dir/$archive_name.") if (-e "$parent_dir/$archive_name");
 
-            $class->debug_message('Archiving old non-software-result ' . $instance_output . " to $archive_name.");
-            system("cd $parent_dir && tar -zcvf $archive_name $sub_dir && rm -rf $sub_dir");
-        }
+        $class->debug_message('Archiving old non-software-result ' . $instance_output . " to $archive_name.");
+        system("cd $parent_dir && tar -zcvf $archive_name $sub_dir && rm -rf $sub_dir");
     }
 
     return 1;
