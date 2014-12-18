@@ -4,6 +4,9 @@ use strict;
 use warnings;
 use Genome;
 
+use Genome::Utility::Text qw(sanitize_string_for_filesystem);
+use File::Spec;
+
 my $DEFAULT_VERSION = '2.74';
 my $METHRATIO_COMMAND = 'methratio.py';
 
@@ -22,9 +25,10 @@ class Genome::Model::Tools::Bsmap::MethRatio {
         },
         output_file => {
             is => 'Text',
-            doc => 'Where to output the methyl counts',
+            doc => 'File name for methyl counts',
             is_output => 1,
             is_input => 1,
+            default_value => 'snvs.hq',
         },
         output_directory => {
             is => 'Text',
@@ -97,19 +101,26 @@ sub execute {
         }
     }
 
+    if ($self->chromosome) {
+        my $sanitized_chromosome = sanitize_string_for_filesystem($self->chromosome);
+        my $chromosome_output_dir = File::Spec->join($self->output_directory, $sanitized_chromosome);
+        Genome::Sys->create_directory($chromosome_output_dir);
+        $self->output_directory($chromosome_output_dir);
+    }
+
     if(!(defined($self->version))){
         $self->error_message('methratio version %s not found.', $self->version);
         return 0;
     }
 
     my $cmd = "python " . $METHRATIO_VERSIONS{$self->version};
-    $cmd .= " -o ". $self->output_file;
+    $cmd .= " -o ". File::Spec->join($self->output_directory, $self->output_file);
     $cmd .= " -d " . $fasta;
     if($self->output_zeros){
         $cmd .= " -z";
     }
     if($self->chromosome){
-        $cmd .= " -c" . $self->chromosome;
+        $cmd .= " -c " . Genome::Sys->quote_for_shell($self->chromosome);
     }
     if($self->no_header){
         $cmd .= " -n";
