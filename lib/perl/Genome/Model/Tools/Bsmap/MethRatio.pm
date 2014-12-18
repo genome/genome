@@ -146,9 +146,13 @@ sub execute {
         return 0;
     }
 
-    my $return = Genome::Sys->shellcmd( cmd => $self->_generate_command_line );
-    unless($return) {
-        die $self->error_message("Failed to execute: Returned $return");
+    my $return = Genome::Sys->shellcmd(
+        cmd => $self->_generate_command_line,
+        input_files => [$self->bam_file, $self->reference],
+    );
+
+    unless ($return) {
+        die $self->error_message('Failed to execute: returned %s', $return);
     }
 
     return 1;
