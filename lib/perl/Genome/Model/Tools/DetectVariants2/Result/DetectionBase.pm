@@ -194,23 +194,7 @@ sub _validate_allocation_and_software_result {
         my $allocation = Genome::Disk::Allocation->get(owner_id => $allocation_owner_id);
 
         if ($allocation) {
-            if ($result) {
-                # Finding a result and an allocation means either:
-                # 1) This work was already done, but for whatever reason we didn't find the software result before we decided to do the work.
-                # 2) We're doing different work but pointing it at a place where work has already been done for something else. Can't replace it.
-                Genome::Utility::Instrumentation::increment('dv2.result.found_duplicate');
-                die $class->error_message("Found allocation and software result for path $instance_output, cannot create new result!");
-            } else {
-                # Allocation exists without a result the whole time the result is being created. Ideally locks
-                # would prevent us from getting here during that window but our locks are not 100% reliable.
-                my @error_message = (
-                    "Found allocation at ($allocation_dir) but no software result for it's owner ID ($allocation_owner_id).",
-                    "This is either because the software result is currently being generated or because the allocation has been orphaned.",
-                    "If it is determined that the allocation has been orphaned then the allocation will need to be removed.",
-                );
-                Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_allocation');
-                die $class->error_message(join(' ', @error_message));
-            }
+            $class->_validate_found_allocation($allocation, $result, $instance_output);
         } else {
             if ($result) {
                 if (defined $result->test_name and -l $instance_output) {
@@ -237,6 +221,29 @@ sub _extract_allocation_owner_id {
     my ($class, $allocation_dir) = @_;
     my @parts = split "-", $allocation_dir;
     return $parts[-1];
+}
+
+sub _validate_found_allocation {
+    my ($class, $allocation, $result, $instance_output) = @_;
+
+    if ($result) {
+        # Finding a result and an allocation means either:
+        # 1) This work was already done, but for whatever reason we didn't find the software result before we decided to do the work.
+        # 2) We're doing different work but pointing it at a place where work has already been done for something else. Can't replace it.
+        Genome::Utility::Instrumentation::increment('dv2.result.found_duplicate');
+        die $class->error_message("Found allocation and software result for path $instance_output, cannot create new result!");
+    } else {
+        # Allocation exists without a result the whole time the result is being created. Ideally locks
+        # would prevent us from getting here during that window but our locks are not 100% reliable.
+        my @error_message = (
+            sprintf("Found allocation at (%s) but no software result for it's owner ID (%s).",
+                $allocation->absolute_path, $allocation->id),
+            "This is either because the software result is currently being generated or because the allocation has been orphaned.",
+            "If it is determined that the allocation has been orphaned then the allocation will need to be removed.",
+        );
+        Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_allocation');
+        die $class->error_message(join(' ', @error_message));
+    }
 }
 
 
