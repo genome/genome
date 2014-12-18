@@ -73,24 +73,21 @@ sub execute {
     my $new_bed_content = $self->combine_bed_content($self->reference, @inputs);
     my $new_bed_md5 = Genome::Sys->md5sum_data($new_bed_content);
 
-    my $merged_list = $self->find_existing_list($new_bed_md5, $self->name);
-    unless($merged_list) {
-        my $temp_file = Genome::Sys->create_temp_file_path;
-        Genome::Sys->write_file($temp_file, $new_bed_content);
+    my $temp_file = Genome::Sys->create_temp_file_path;
+    Genome::Sys->write_file($temp_file, $new_bed_content);
 
-        my $cmd = Genome::FeatureList::Command::Import->create(
-            name => $self->name,
-            reference => $self->reference,
-            file_path => $temp_file,
-            content_type => 'targeted',
-            is_1_based => $is_1_based,
-            description => 'generated with `genome feature-list merge`',
-        );
-        unless($cmd->execute && $cmd->new_feature_list) {
-            die $self->error_message('Failed to create FeatureList');
-        }
-        $merged_list = $cmd->new_feature_list;
+    my $cmd = Genome::FeatureList::Command::Import->create(
+        name => $self->name,
+        reference => $self->reference,
+        file_path => $temp_file,
+        content_type => 'targeted',
+        is_1_based => $is_1_based,
+        description => 'generated with `genome feature-list merge`',
+    );
+    unless($cmd->execute && $cmd->new_feature_list) {
+        die $self->error_message('Failed to create FeatureList');
     }
+    my $merged_list = $cmd->new_feature_list;
 
     return 1;
 }
@@ -260,37 +257,6 @@ sub validate_consistent_multitrackedness {
     }
 
     return $is_multitracked;
-}
-
-sub find_existing_list {
-    my $class = shift;
-    my ($bed_md5, $name) = @_;
-
-
-    my @existing_lists = Genome::FeatureList->get(file_content_hash => $bed_md5);
-    return unless @existing_lists;
-
-    my $list_to_use;
-
-    if(@existing_lists == 1) {
-        $list_to_use = $existing_lists[0];
-    } else {
-        my @matches = grep { $_->name eq $name } @existing_lists;
-        if(@matches == 1) {
-            $list_to_use = $matches[0];
-        }
-    }
-
-    unless($list_to_use) {
-        $class->error_message(
-            'Multiple matching existing FeatureLists found: %s',
-            join(' ', map $_->id, @existing_lists)
-        );
-        die $class->error_message('To proceed make sure the --name parameter matches one of the existing lists.');
-    }
-
-    $class->status_message('Found existing list: %s', $list_to_use->__display_name__);
-    return $list_to_use;
 }
 
 sub _bed_file_for_list_and_reference {
