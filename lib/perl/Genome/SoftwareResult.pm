@@ -110,10 +110,16 @@ sub _faster_get {
             my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@args);
             # NOTE we do this so that get can be noisy when called directly.
             @objects = $class->SUPER::get(lookup_hash => $lookup_hash);
+            if (@objects > 1) {
+                die $class->error_message(
+                    'Multiple results found for lookup hash %s!',
+                    $lookup_hash
+                );
+            }
         }
     );
 
-    return @objects;
+    return $objects[0];
 }
 
 # Override get to be noisy.  This should generally not be called.
@@ -270,9 +276,9 @@ sub create {
     my %is_input = %{$params_processed->{inputs}};
     my %is_param = %{$params_processed->{params}};
 
-    my @previously_existing = $class->_faster_get(@_);
+    my $previously_existing = $class->_faster_get(@_);
 
-    if (@previously_existing > 0) {
+    if (defined($previously_existing)) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
         return;
     }
@@ -286,10 +292,10 @@ sub create {
     # we might have had to wait on the lock, in which case someone else was probably creating that entity
     # do a "reload" here to force another trip back to the database to see if a software result was created
     # while we were waiting on the lock.
-    (@previously_existing) = UR::Context->current->reload($class,
+    ($previously_existing) = UR::Context->current->reload($class,
         lookup_hash => $class->calculate_lookup_hash_from_arguments(@_));
 
-    if (@previously_existing > 0) {
+    if (defined($previously_existing)) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
         $class->_release_lock_or_die($lock, "Failed to release lock in create before committing SoftwareResult.");
         return;
