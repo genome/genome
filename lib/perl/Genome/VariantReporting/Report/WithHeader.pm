@@ -72,6 +72,17 @@ sub legend_file_name {
     return $self->file_name . ".legend";
 }
 
+sub legend_path {
+    my $self = shift;
+    my $path = File::Spec->join($self->output_dir, $self->legend_file_name);
+
+    if (-f $path) {
+        return $path;
+    } else {
+        return;
+    }
+}
+
 sub initialize {
     my $self = shift;
 
