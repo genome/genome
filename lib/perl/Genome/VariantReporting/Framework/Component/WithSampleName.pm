@@ -45,5 +45,15 @@ sub get_callers {
     return @callers;
 }
 
+sub create_sample_specific_field_name {
+    my ($self, $field) = @_;
+
+    return join("_", $self->sample_name, $field);
+}
+
+sub sample_names {
+    my $self = shift;
+    return ($self->sample_name);
+}
 1;
 

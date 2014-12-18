@@ -54,4 +54,17 @@ sub headers {
     /;
 }
 
+sub available_fields_dict {
+    my $self = shift;
+    my %dict = $self->SUPER::available_fields_dict;
+    my $interpreter = $self->interpreters->{'vaf'};
+    for my $field (qw(vaf ref_count var_count)) {
+        $dict{$field} = {
+            interpreter => 'vaf',
+            field => $interpreter->create_sample_specific_field_name($field),
+        };
+    }
+    return %dict;
+}
+
 1;

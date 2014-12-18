@@ -57,7 +57,8 @@ sub _interpret_entry {
             my $interpreter = Genome::VariantReporting::Suite::BamReadcount::VafInterpreter->create(sample_name => $sample_name);
             my %result = $interpreter->interpret_entry($entry, $passed_alt_alleles);
             for my $alt_allele (@$passed_alt_alleles) {
-                $vaf_hash_ref->{$alt_allele}->{$sample_name} = $result{$alt_allele}->{vaf};
+                my $vaf = $result{$alt_allele}->{$interpreter->create_sample_specific_field_name('vaf')};
+                $vaf_hash_ref->{$alt_allele}->{$sample_name} = $vaf;
             }
         }
     }

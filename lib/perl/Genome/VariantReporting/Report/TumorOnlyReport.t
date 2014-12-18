@@ -95,14 +95,14 @@ my $interpretations = {
     },
     'vaf' => {
         T => {
-            vaf => "30",
-            ref_count => 0,
-            var_count => 200,
+            sample_name_vaf => "30",
+            sample_name_ref_count => 0,
+            sample_name_var_count => 200,
         },
         G => {
-            vaf => "70",
-            ref_count => 0,
-            var_count => 1000,
+            sample_name_vaf => "70",
+            sample_name_ref_count => 0,
+            sample_name_var_count => 1000,
         },
     },
 };
@@ -112,5 +112,4 @@ test_report_result(
     pkg => $pkg,
     interpretations => $interpretations,
 );
-
 done_testing;
