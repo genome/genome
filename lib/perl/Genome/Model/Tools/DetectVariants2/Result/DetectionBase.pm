@@ -196,23 +196,7 @@ sub _validate_allocation_and_software_result {
         if ($allocation) {
             $class->_validate_found_allocation($allocation, $result, $instance_output);
         } else {
-            if ($result) {
-                if (defined $result->test_name and -l $instance_output) {
-                    # If a test name is set, we can remove the symlink and proceed
-                    $class->warning_message("The software result for the existing symlink has a test name set; removing symlink.");
-                    unlink $instance_output;
-                } else {
-                    # A result without an allocation... this really shouldn't ever happen, unless someone deleted the allocation row from the database?
-                    Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_result');
-                    die $class->error_message("Found a software result (" . $result->__display_name__ . ") that has output directory " .
-                        "($instance_output) but no allocation.");
-                }
-            } else {
-                if (-l $instance_output && ! -e $allocation_dir) {
-                    $class->warning_message("No allocation or software result and symlink ($instance_output) target ($allocation_dir) does not exist; removing symlink.");
-                    unlink $instance_output;
-                }
-            }
+            $class->_validate_missing_allocation($allocation_dir, $result, $instance_output);
         }
     }
 }
@@ -243,6 +227,28 @@ sub _validate_found_allocation {
         );
         Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_allocation');
         die $class->error_message(join(' ', @error_message));
+    }
+}
+
+sub _validate_missing_allocation {
+    my ($class, $allocation_dir, $result, $instance_output) = @_;
+
+    if ($result) {
+        if (defined $result->test_name and -l $instance_output) {
+            # If a test name is set, we can remove the symlink and proceed
+            $class->warning_message("The software result for the existing symlink has a test name set; removing symlink.");
+            unlink $instance_output;
+        } else {
+            # A result without an allocation... this really shouldn't ever happen, unless someone deleted the allocation row from the database?
+            Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_result');
+            die $class->error_message("Found a software result (" . $result->__display_name__ . ") that has output directory " .
+                "($instance_output) but no allocation.");
+        }
+    } else {
+        if (-l $instance_output && ! -e $allocation_dir) {
+            $class->warning_message("No allocation or software result and symlink ($instance_output) target ($allocation_dir) does not exist; removing symlink.");
+            unlink $instance_output;
+        }
     }
 }
 
