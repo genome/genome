@@ -151,6 +151,15 @@ sub create {
 }
 
 sub _check_instance_output {
+    my $class = shift;
+
+    $class->_cleanup_non_software_result_legacy_data(@_);
+    $class->_validate_allocation_and_software_result(@_);
+
+    return 1;
+}
+
+sub _cleanup_non_software_result_legacy_data {
     my ($class, $instance_output) = @_;
     $class = ref $class if ref $class;
 
@@ -169,8 +178,17 @@ sub _check_instance_output {
             $class->debug_message('Archiving old non-software-result ' . $instance_output . " to $archive_name.");
             system("cd $parent_dir && tar -zcvf $archive_name $sub_dir && rm -rf $sub_dir");
         }
-        # In this case, a symlink exists...
-        else {
+    }
+
+    return 1;
+}
+
+sub _validate_allocation_and_software_result {
+    my ($class, $instance_output) = @_;
+    $class = ref $class if ref $class;
+
+    if (-l $instance_output or -e $instance_output) {
+        unless (not -l $instance_output and -d $instance_output) {
             $class->warning_message('Instance output directory (' . $instance_output . ') already exists!');
             my $allocation_dir = readlink $instance_output;
             my @parts = split "-", $allocation_dir;
@@ -216,9 +234,8 @@ sub _check_instance_output {
             }
         }
     }
-
-    return 1;
 }
+
 
 sub _gather_params_for_get_or_create {
     my $class = shift;
