@@ -210,7 +210,12 @@ sub _extract_allocation_owner_id {
 sub _validate_found_allocation {
     my ($class, $allocation, $result, $instance_output) = @_;
 
-    if ($result) {
+    if ($allocation->status ~~ ['purged', 'invalid']) {
+        $class->warning_message("Found link to %s allocation (%s).  "
+            . "Removing symlink.", $allocation->status, $allocation->id);
+        unlink $instance_output;
+        Genome::Utility::Instrumentation::increment('dv2.result.removed_symlink')
+    } elsif ($result) {
         # Finding a result and an allocation means either:
         # 1) This work was already done, but for whatever reason we didn't find the software result before we decided to do the work.
         # 2) We're doing different work but pointing it at a place where work has already been done for something else. Can't replace it.
