@@ -42,7 +42,7 @@ class Genome::Model::Tools::Bsmap::MethRatio {
             is_optional => 1,
             is_input => 1,
             default_value => $DEFAULT_VERSION,
-            doc => "Version of methratio to use",
+            doc => 'Version of methratio to use',
         },
     ],
     has_optional => [
@@ -119,9 +119,9 @@ sub execute {
     return 1;
 }
 
-1;
-
 sub available_methratio_versions {
     my $self = shift;
     return keys %METHRATIO_VERSIONS;
 }
+
+1;
