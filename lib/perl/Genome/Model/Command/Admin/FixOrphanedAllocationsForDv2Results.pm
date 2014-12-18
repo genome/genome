@@ -67,7 +67,7 @@ sub execute {
         my $owner_class_name = $a->owner_class_name;
         print join(' ', $a->id, $owner_class_name, $a->owner_id, $a->owner ? 'T' : 'F', $lookup_hash), "\n";
         print "Unlinking $s\n";
-        print 'Deleting ' . $a->absolute_path . "\n";
+        print 'Purging ' . $a->absolute_path . "\n";
         unless ($self->dry_run) {
             unlink $s;
             $a->purge(reason => $self->reason);
