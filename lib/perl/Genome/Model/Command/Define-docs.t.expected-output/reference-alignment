@@ -20,8 +20,8 @@
     Processing profile to be used by model, can provide either a name or an ID 
   [1mreference-sequence-build[0m
     ID or name of the reference sequence to align against
-    example:
-    101947881 
+    examples:
+    101947881, GRCh37-lite-build37 
 
 [4mREQUIRED PARAMS[0m
   [1mprocessing-profile-name[0m
