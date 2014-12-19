@@ -1206,8 +1206,8 @@ sub _resolve_workflow_for_build {
         $add_link->($input_connector, 'sireport_min_tumor_vaf', $converge_snv_indel_report_op1, 'min_tumor_vaf');
         $add_link->($input_connector, 'sireport_max_normal_vaf', $converge_snv_indel_report_op1, 'max_normal_vaf');
         $add_link->($input_connector, 'sireport_min_coverage', $converge_snv_indel_report_op1, 'min_coverage');
-        $add_link->($input_connector, 'sireport_min_bq' . $i, $converge_snv_indel_report_op1, 'min_base_quality');
-        $add_link->($input_connector, 'sireport_min_mq' . $i, $converge_snv_indel_report_op1, 'min_quality_score');
+        $add_link->($input_connector, 'sireport_min_bq' . $i, $converge_snv_indel_report_op1, 'bq');
+        $add_link->($input_connector, 'sireport_min_mq' . $i, $converge_snv_indel_report_op1, 'mq');
         if ($build->wgs_build){
             $add_link->($wgs_variant_sources_op, 'snv_variant_sources_file', $converge_snv_indel_report_op1, '_wgs_snv_variant_sources_file');
             $add_link->($wgs_variant_sources_op, 'indel_variant_sources_file', $converge_snv_indel_report_op1, '_wgs_indel_variant_sources_file');

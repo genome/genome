@@ -25,6 +25,8 @@ my $cmd = Genome::Model::ClinSeq::Command::Converge::SnvIndelReport->create(
     chromosome => '1',
     tiers => 'tier3',
     bam_readcount_version => 0.6,
+    bq => 0,
+    mq => 1,
 );
 $cmd->queue_status_messages(1);
 my $r1 = $cmd->execute();
