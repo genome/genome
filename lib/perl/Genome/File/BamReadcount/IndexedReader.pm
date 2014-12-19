@@ -10,12 +10,12 @@ sub new {
 
     my $self = {
         _reader => $reader,
-        _previous_entry => undef,
-        _current_entry => undef,
-        _previous_position => -1,
-        _current_position => -1,
-        _current_chromosome => 1,
-        _chromosomes_seen => Set::Scalar->new,
+        _prev_entry => undef,
+        _cur_entry => undef,
+        _prev_pos => -1,
+        _cur_pos => -1,
+        _cur_chrom => 1,
+        _cur_chroms_seen => Set::Scalar->new,
     };
 
     bless $self, $class;
@@ -25,22 +25,22 @@ sub new {
 sub get_entry {
     my ($self, $chrom, $pos) = @_;
 
-    if ($chrom ne $self->{_current_chromosome} and $self->{_chromosomes_seen}->contains($chrom)) {
+    if ($chrom ne $self->{_cur_chrom} and $self->{_cur_chroms_seen}->contains($chrom)) {
         die sprintf("Chromosome %s has already been passed by", $chrom);
     }
 
-    while ($pos > $self->{_current_position} or $chrom ne $self->{_current_chromosome}) {
+    while ($pos > $self->{_cur_pos} or $chrom ne $self->{_cur_chrom}) {
         $self->read_line;
-        return unless defined $self->{_current_entry};
+        return unless defined $self->{_cur_entry};
     }
 
-    if ($pos == $self->{_previous_position}) {
-        return $self->{_previous_entry};
+    if ($pos == $self->{_prev_pos}) {
+        return $self->{_prev_entry};
     }
-    elsif ($pos == $self->{_current_position}) {
-        return $self->{_current_entry};
+    elsif ($pos == $self->{_cur_pos}) {
+        return $self->{_cur_entry};
     }
-    elsif ($pos < $self->{_previous_position}) {
+    elsif ($pos < $self->{_prev_pos}) {
         die sprintf("Position %s has already been passed by", $pos);
     }
     else {
@@ -50,21 +50,21 @@ sub get_entry {
 
 sub read_line {
     my $self = shift;
-    $self->{_previous_entry} = $self->{_current_entry};
-    $self->{_previous_position} = $self->{_current_position};
+    $self->{_prev_entry} = $self->{_cur_entry};
+    $self->{_prev_pos} = $self->{_cur_pos};
 
-    $self->{_current_entry} = $self->{_reader}->next;
-    if (defined $self->{_current_entry}) {
-        if ($self->{_current_position} == $self->{_current_entry}->{_position} and
-            $self->{_current_chromosome} eq $self->{_current_entry}->{_chromosome} ) {
-            die sprintf("Duplicate entries detected at chromosme (%s) position (%s).
+    $self->{_cur_entry} = $self->{_reader}->next;
+    if (defined $self->{_cur_entry}) {
+        if ($self->{_cur_pos} == $self->{_cur_entry}->{_position} and
+            $self->{_cur_chrom} eq $self->{_cur_entry}->{_chromosome} ) {
+            die sprintf("Duplicate entries detected at chromosome (%s) position (%s).
                 Bam readcount file must be deduplicated",
-                $self->{_current_chromosome},
-                $self->{_current_position});
+                $self->{_cur_chrom},
+                $self->{_cur_pos});
         }
-        $self->{_current_chromosome} = $self->{_current_entry}->{_chromosome};
-        $self->{_chromosomes_seen}->insert($self->{_current_chromosome});
-        $self->{_current_position} = $self->{_current_entry}->{_position};
+        $self->{_cur_chrom} = $self->{_cur_entry}->{_chromosome};
+        $self->{_cur_chroms_seen}->insert($self->{_cur_chrom});
+        $self->{_cur_pos} = $self->{_cur_entry}->{_position};
     }
     return;
 }
