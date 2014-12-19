@@ -150,7 +150,7 @@ sub execute {
 
     my $return = Genome::Sys->shellcmd(
         cmd => $self->_generate_command_line,
-        input_files => [$self->bam_file, $self->reference],
+        input_files => [$self->bam_file, $self->_reference_fasta],
     );
 
     unless ($return) {
