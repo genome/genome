@@ -102,5 +102,27 @@ subtest 'Get the correct entry across chromosome boundary' => sub {
     is($entry2->{_position}, 2, "Entry 1 position is correct");
     is($entry2->{_chromosome}, 22, "Entry 1 chromosome is correct");
 };
+
+subtest 'Get the correct entry across chromosome boundary part 2' => sub {
+    my $input_file = File::Spec->join($test_dir, "in2.brct");
+    my $reader = $pkg->new($input_file);
+    my $entry1 = $reader->get_entry(21, 1);
+    is($entry1->{_position}, 1, "Entry 1 position is correct");
+    is($entry1->{_chromosome}, 21, "Entry 1 chromosome is correct");
+    my $entry2 = $reader->get_entry(21, 3);
+    is($entry2, undef, "Entry 2 is not present");
+    lives_ok(sub {my $entry3 = $reader->get_entry(21, 4)}, "Got an entry even when reader crossed chrom boundary");
+};
+
+subtest "Can't go backwards even across chrom boundaries" => sub {
+    my $input_file = File::Spec->join($test_dir, "in2.brct");
+    my $reader = $pkg->new($input_file);
+    my $entry1 = $reader->get_entry(21, 1);
+    is($entry1->{_position}, 1, "Entry 1 position is correct");
+    is($entry1->{_chromosome}, 21, "Entry 1 chromosome is correct");
+    my $entry2 = $reader->get_entry(21, 3);
+    is($entry2, undef, "Entry 2 is not present");
+    dies_ok(sub {$reader->get_entry(21, 1)}, "Failed when we tried to go backwards");
+};
 done_testing;
 

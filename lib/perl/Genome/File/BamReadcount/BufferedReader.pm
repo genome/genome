@@ -28,10 +28,6 @@ sub new {
 sub get_entry {
     my ($self, $chrom, $pos) = @_;
 
-    if ($chrom ne $self->{_cur_chrom} and $self->{_cur_chroms_seen}->contains($chrom)) {
-        die sprintf("Chromosome %s has already been passed by", $chrom);
-    }
-
     while (
         ($chrom eq $self->{_cur_chrom} and $pos > $self->{_cur_pos}) or
         !$self->{_cur_chroms_seen}->contains($chrom)
@@ -39,7 +35,6 @@ sub get_entry {
         $self->read_line;
         return unless defined $self->{_cur_entry};
     }
-
     if ($pos == $self->{_prev_pos} and $chrom eq $self->{_prev_chrom}) {
         return $self->{_prev_entry};
     }
@@ -50,11 +45,25 @@ sub get_entry {
         ($chrom eq $self->{_prev_chrom} and $pos < $self->{_prev_pos}) or
         ($chrom ne $self->{_prev_chrom} and $self->{_prev_chroms_seen}->contains($chrom))
     ) {
-        die sprintf("Position %s has already been passed by", $pos);
+        die sprintf("Position %s on chromosme %s has already been passed by.  Current state: %s",
+            $pos,
+            $chrom,
+            $self->to_string);
     }
     else {
         return;
     }
+}
+
+sub to_string {
+    my $self = shift;
+    my %params = %$self;
+    delete $params{_cur_entry};
+    delete $params{_prev_entry};
+    delete $params{_reader};
+    $params{_cur_chroms_seen} = [$params{_cur_chroms_seen}->members];
+    $params{_prev_chroms_seen} = [$params{_prev_chroms_seen}->members];
+    Data::Dumper::Dumper(\%params);
 }
 
 sub read_line {
