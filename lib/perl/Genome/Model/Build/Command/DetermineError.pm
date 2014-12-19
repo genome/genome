@@ -293,30 +293,40 @@ sub find_die_or_warn_in_log {
 
     my $backwards_fh = File::ReadBackwards->new($filename);
 
-    LINE: while(my $line = $backwards_fh->getline) {
-        if($line =~ /(.*)(?<!called) at (.*\.pm) line (\d+)$/) {
-            my $message = $1;
-            $error_source_file = $2;
-            $error_source_line = $3;
+    no warnings 'exiting';
+    SCAN_FILE:
+    for(1) {
+        Genome::Sys->iterate_file_lines(
+            $backwards_fh,
+            qr{Starting log annotation on host:\s(.*)},
+                sub {
+                    $error_host = $1;
+                    last SCAN_FILE if $error_text;
+                },
 
-            my $wf_regex = sprintf('%s\s%s\s+(.+)', WF_DATE_REGEX, WF_HOST_REGEX);
-            my $ptero_regex = sprintf('%s\s+(.+)', PTERO_DATE_REGEX);
+            qr{(?:
+                    (?:
+                        (?<date>\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})-\d{4}  # workflow date
+                        \s                                                   # and
+                        (?<host>[^\:]+)\:                                    # host
+                    )
+                    |                                                        # or
+                    \[(?<date>\d{4}/\d{2}/\d{2}\s\d{2}\:\d{2}\:\d{2}).\d+\]  # ptero date
+                )
+                \s
+                (?:
+                    (?:(?<error_text>ERROR:? .*?) \s at \s (?<error_source_file>\S+\.pm) \s line \s (?<error_source_line>\d+))
+                    |
+                    (?<error_text>ERROR:? .*)
+                )
+            }x,
+                sub {
+                    ($error_date, $error_text, $error_source_file, $error_source_line, $error_host)
+                        = @+{'date','error_text','error_source_file','error_source_line','host'};
 
-            if($message =~ /$wf_regex/) {
-                $error_date = $1;
-                $error_host = $2;
-                $error_text = $3;
-            } elsif ($message =~ /$ptero_regex/) {
-                $error_date = $1;
-                $error_text = $2;
-                HOST: while(my $line = $backwards_fh->getline) {
-                    $error_host = _find_host_from_ptero_line($line);
-                    last HOST if $error_host;
-                }
-            }
-
-            last LINE if $error_text;
-        }
+                    last SCAN_FILE if ($error_host);
+                },
+        );
     }
 
     $backwards_fh->close;

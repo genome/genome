@@ -3,7 +3,7 @@ use warnings;
 
 use Genome::Model::Build::Command::DetermineError;
 
-use Test::More tests => 3;
+use Test::More tests => 5;
 use File::Temp;
 
 # constants defined at the bottom
@@ -63,6 +63,34 @@ subtest 'parse output log' => sub {
     is($output_text, 'TERM_MEMLIMIT: job killed after reaching LSF memory usage limit.', 'output_text');
 };
 
+subtest 'find ptero die or warn in log' => sub {
+    plan tests => 5;
+
+    my $log = _write_to_temp_file(PTERO_ERROR_LOG);
+
+    my($error_source_file, $error_source_line, $error_host, $error_date, $error_text)
+        = Genome::Model::Build::Command::DetermineError::find_die_or_warn_in_log($log->filename);
+
+    is($error_source_file, '/path/to/ptero/error.pm', 'error source file');
+    is($error_source_line, 1027, 'error source line');
+    is($error_host, 'blade1-2-3.example.com', 'error host');
+    is($error_date, '2014/12/04 12:25:42', 'error date');
+    is($error_text, 'ERROR: This is a fake error', 'error');
+};
+
+subtest 'find workflow die or warn in log' => sub {
+    plan tests => 5;
+
+    my $error_log = _write_to_temp_file(WORKFLOW_ERROR_LOG);
+    my($error_source_file, $error_source_line, $error_host, $error_date, $error_text)
+        = Genome::Model::Build::Command::DetermineError::find_die_or_warn_in_log($error_log->filename);
+
+    is($error_source_file, '/path/to/other/workflow/error.pm', 'error source file');
+    is($error_source_line, 255, 'error source line');
+    is($error_host, 'blade14-2-13', 'error host');
+    is($error_date, '2014-12-12 20:28:14', 'error date');
+    is($error_text, 'ERROR: Workflow did not return correctly.', 'error text');
+};
 
 use constant PTERO_ERROR_LOG => <<'PTERO_ERROR';
 2014-12-04 11:11:49,483 INFO flow.main naked_main 57: Loading command (workflow-wrapper)
@@ -670,7 +698,7 @@ use constant WORKFLOW_ERROR_LOG => <<'WORKFLOW_ERROR';
 2014-12-12 20:28:14-0600 blade14-2-13: 	Genome::Model::Event::Build::ReferenceAlignment::DetectVariants::execute('Genome::Model::Event::Build::ReferenceAlignment::DetectVarian...') called at /gsc/scripts/opt/genome/snapshots/genome-3551/lib/perl/Command/V1.pm line 135
 2014-12-12 20:28:14-0600 blade14-2-13: 	eval {...} called at /gsc/scripts/opt/genome/snapshots/genome-3551/lib/perl/Command/V1.pm line 135
 2014-12-12 20:28:14-0600 blade14-2-13: 	Command::V1::execute('Genome::Model::Ev
-2014-12-12 20:28:14-0600 blade14-2-13: ERROR: Workflow did not return correctly. at /gsc/scripts/opt/genome/snapshots/genome-3551/lib/perl/Genome/Model/Tools/DetectVariants2/Dispatcher.pm line 255.
+2014-12-12 20:28:14-0600 blade14-2-13: ERROR: Workflow did not return correctly. at /path/to/other/workflow/error.pm line 255.
 2014-12-12 20:28:14-0600 blade14-2-13: 	Genome::Model::Tools::DetectVariants2::Dispatcher::_detect_variants('Genome::Model::Tools::DetectVariants2::Dispatcher=HASH(0x8829...') called at /gsc/scripts/opt/genome/snapshots/genome-3551/lib/perl/Genome/Model/Tools/DetectVariants2/Base.pm line 125
 2014-12-12 20:28:14-0600 blade14-2-13: 	Genome::Model::Tools::DetectVariants2::Base::execute('Genome::Model::Tools::DetectVariants2::Dispatcher=HASH(0x8829...') called at /gsc/scripts/opt/genome/snapshots/genome-3551/lib/perl/Command/V2.pm line 214
 2014-12-12 20:28:14-0600 blade14-2-13: 	Command::V2::execute('Genome::Model::Tools::DetectVariants2::Dispatcher=HASH(0x8829...') called at /gsc/scripts/opt/genome/snapshots/genome-3551/lib/perl/Genome/Model/Event/Build/ReferenceAlignment/DetectVariants.pm line 54
