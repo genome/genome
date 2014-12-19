@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use List::Util qw( min );
-use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(single_vaf_headers per_library_vaf_headers);
+use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(per_sample_vaf_headers per_library_vaf_headers);
 
 class Genome::VariantReporting::Report::FullReport {
     is => [ 'Genome::VariantReporting::Report::WithHeader', 'Genome::VariantReporting::Framework::Component::WithManySampleNames', 'Genome::VariantReporting::Framework::Component::WithManyLibraryNames'],
@@ -43,7 +43,7 @@ sub headers {
         MeetsMinDepthCutoff
     /;
 
-    push @headers, single_vaf_headers([$self->sample_names]);
+    push @headers, per_sample_vaf_headers($self);
 
     push @headers, qw/
         min_coverage_observed
@@ -53,7 +53,7 @@ sub headers {
         variant_caller_count
     /;
 
-    push @headers, per_library_vaf_headers([$self->library_names]);
+    push @headers, per_library_vaf_headers($self);
 
     return @headers;
 }
@@ -85,19 +85,6 @@ sub report {
                 my @variant_callers = @{$interpretations->{$interpreter}->{$allele}->{$field}};
                 push @line_fields, $self->_format(join(", ", @variant_callers));
             }
-            elsif ($header =~ /per_library/) {
-                my @libraries = split ",", $interpretations->{$interpreter}->{$allele}->{$field};
-                my $value_for_header;
-                for my $library (@libraries) {
-                    my ($name, $value) = split ":", $library;
-                    my $pattern = $name."_per_library";
-                    if ($header =~ /^$pattern/) {
-                        $value_for_header = $value;
-                        last;
-                    }
-                }
-                push @line_fields, $self->_format($value_for_header);
-            }
             # If we don't have an interpreter that provides this field, handle it cleanly if the field is known unavailable
             elsif ($self->header_is_unavailable($header)) {
                 push @line_fields, $self->_format();
@@ -121,15 +108,6 @@ sub available_fields_dict {
         $available_fields{$info_tag_field} = {
             interpreter => 'info-tags',
             field => 'info_tags',
-        };
-    }
-
-    for my $per_library_field (per_library_vaf_headers([$self->library_names])) {
-        my ($library_name, $generic_field_name) = $per_library_field =~ m/(.*)_(per_library.*)/;
-        my $library = Genome::Library->get(name => $library_name);
-        $available_fields{$per_library_field} = {
-            interpreter => 'many-samples-vaf',
-            field => $self->create_sample_specific_field_name($generic_field_name, $library->sample_name),
         };
     }
 

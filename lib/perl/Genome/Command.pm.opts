@@ -334,6 +334,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>purge',
+      [
+        'reason=s',
+        'files',
+        'allocations=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>delay-archiving',
       [
         'allocations=s@',
@@ -17958,6 +17967,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>filter-sequences',
+      [
+        'input-file=s',
+        'files',
+        'output-directory=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>run-netmhc',
       [
         'allele=s',
@@ -17975,15 +17993,6 @@ $Genome::Command::OPTS_SPEC = [
           '3.0',
           '3.4'
         ],
-        'help!',
-        undef
-      ],
-      '>remove-unknown-sequences',
-      [
-        'input-file=s',
-        'files',
-        'output-directory=s',
-        'files',
         'help!',
         undef
       ],
@@ -37082,6 +37091,13 @@ $Genome::Command::OPTS_SPEC = [
         'snvs',
         'indels'
       ],
+      'help!',
+      undef
+    ],
+    '>backfill-trio-legend-files',
+    [
+      'trio-process=s',
+      undef,
       'help!',
       undef
     ],
