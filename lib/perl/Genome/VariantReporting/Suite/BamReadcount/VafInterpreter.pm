@@ -51,12 +51,7 @@ sub _interpret_entry {
         else {
             my $translated_reference_allele = $self->translate_ref_allele($entry->{reference_allele}, $allele);
             my $vaf;
-            if (defined $vafs{$allele}) {
-                $vaf = $vafs{$allele};
-            }
-            else {
-                $vaf = undef;
-            }
+            $vaf = $vafs{$allele};
 
             $return_values{$allele} = {
                 $self->create_sample_specific_field_name("vaf") => $vaf,
