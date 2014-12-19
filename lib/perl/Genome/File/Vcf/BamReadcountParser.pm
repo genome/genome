@@ -13,8 +13,7 @@ sub get_bam_readcount_entries {
 
     my $string = $vcf_entry->sample_field($sample_idx, 'BRCT');
     unless ($string) {
-        $DB::single=1;
-        die sprintf("No BRCT entry for sample $sample_idx in entry %s", $vcf_entry->to_string);
+        return {};
     }
     my $per_allele_hash = from_json(decode($string));
 
@@ -43,6 +42,9 @@ sub get_bam_readcount_entries {
 sub add_bam_readcount_entries {
     my ($vcf_entry, $reader_hash, $readcount_tag) = @_;
 
+    unless (@{$vcf_entry->{alternate_alleles}}) {
+        return;
+    }
     $vcf_entry->add_format_field($readcount_tag);
     my $allele_offsets = get_allele_offsets($vcf_entry);
     for my $sample_idx (keys %$reader_hash) {
