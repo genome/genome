@@ -167,7 +167,7 @@ sub _should_skip_bam_qc {
     if ($pp->can('read_aligner_name')) {
         my $aligner = $pp->read_aligner_name;
         if ($self->_aligner_blacklist->has($aligner)) {
-            $self->warning_message("Skipping BamQc because aligner is '$_'");
+            $self->warning_message("Skipping BamQc because aligner is '$aligner'");
             return 1;
         }
     }

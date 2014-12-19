@@ -6,7 +6,7 @@ use warnings;
 use version 0.77;
 use above 'Genome';
 use Genome::Test::Factory::ProcessingProfile::ReferenceAlignment;
-use Test::More tests => 11;
+use Test::More tests => 12;
 
 my $bamqc_class = 'Genome::Model::Event::Build::ReferenceAlignment::BamQc';
 
@@ -63,15 +63,22 @@ is($bamqc_class->_select_error_rate_version_for_pp($test_pp),
     'New ErrorRate version chosen correctly'
 );
 
-is($bamqc_class->_should_run_error_rate_for_pp($test_pp),
-    1,
-    'ErrorRate correctly chosen to run'
+is($bamqc_class->_should_skip_bam_qc($test_pp),
+    0,
+    'BamQc correctly chosen to run'
 );
 
 $test_pp->read_aligner_version();
 $test_pp->read_aligner_name('bsmap');
 
-is($bamqc_class->_should_run_error_rate_for_pp($test_pp),
-    0,
-    'ErrorRate correctly skipped for bsmap'
+is($bamqc_class->_should_skip_bam_qc($test_pp),
+    1,
+    'BamQc correctly skipped for bsmap'
+);
+
+$test_pp->read_aligner_name('imported');
+
+is($bamqc_class->_should_skip_bam_qc($test_pp),
+    1,
+    'BamQc correctly skipped for imported'
 );
