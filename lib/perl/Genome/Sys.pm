@@ -25,6 +25,8 @@ use POSIX qw(EEXIST);
 use Set::Scalar;
 use Scalar::Util qw(blessed reftype);
 
+our @CARP_NOT = qw(Genome::Model::Build::Command::DetermineError);
+
 # these are optional but should load immediately when present
 # until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
 for my $opt (qw/Genome::Sys::Lock Genome::Sys::Log/) {

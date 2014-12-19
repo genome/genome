@@ -243,23 +243,24 @@ sub parse_output_log {
 
     my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
 
-    my $fh = Genome::Sys->open_file_for_reading($filename);
-
     $error_source_file = 'n/a';
     $error_source_line = 'n/a';
 
-    LINE: while (my $line = $fh->getline) {
-        if ($line =~ /Results reported at (.*)$/) {
-            $error_date = $1;
-        } elsif ($line =~ /Job was executed on host\(s\) <([^>]+)>/) {
-            $error_host = $1;
-        } elsif ($line =~ /(TERM_\w+:.+$)/) {
-            $error_text = $1;
-            last LINE; #This appears third in the LSF output, so we've located all three fields.
-        }
-    }
+    no warnings 'exiting';
+    SCAN_FILE:
+    for (1) {
+        Genome::Sys->iterate_file_lines(
+                $filename,
+                qr{Results reported at (.*)$/},
+                    sub { $error_date = $1 },
 
-    $fh->close;
+                qr{Job was executed on host\(s\) <([^>]+)>},
+                    sub { $error_host = $1 },
+
+                qr{(TERM_\w+:.+$)},
+                    sub { $error_text = $1; last SCAN_FILE }, # This appears third in the LSF output, so we've located all three fields.
+        );
+    }
 
     return unless $error_text;
     return ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
