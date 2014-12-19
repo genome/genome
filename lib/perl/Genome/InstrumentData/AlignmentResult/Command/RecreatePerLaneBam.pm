@@ -147,7 +147,7 @@ sub _revert_markdup {
     my ($self, $temp_bam, $no_markdup_bam) = @_;
     
     Genome::Sys->shellcmd(
-        cmd => "/usr/bin/seq-grind0.1 revert picard-mark-dup -i $temp_bam -o $no_markdup_bam",
+        cmd => "/usr/bin/seq-grind revert picard-mark-dup -i $temp_bam -o $no_markdup_bam",
         input_files  => [$temp_bam],
         output_files => [$no_markdup_bam],
         skip_if_output_is_present => 0,
