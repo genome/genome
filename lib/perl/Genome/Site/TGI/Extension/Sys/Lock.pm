@@ -16,7 +16,7 @@ if ($ENV{GENOME_NESSY_SERVER}) {
         url => 'http://nessy.gsc.wustl.edu/',
         is_mandatory => $is_mandatory,
     );
-    push @Genome::Sys::Lock::backends, $nessylock;
+    Genome::Sys::Lock->add_backend($nessylock);
 
     UR::Context->process->add_observer(
         aspect => 'sync_databases',
