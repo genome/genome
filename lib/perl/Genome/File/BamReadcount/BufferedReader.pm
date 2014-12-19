@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome::File::BamReadcount::Reader;
 use Set::Scalar;
+use Sort::strverscmp;
 
 sub new {
     my ($class, @args) = @_;
@@ -17,8 +18,6 @@ sub new {
         _prev_chrom => -1,
         _cur_pos => -1,
         _cur_chrom => 1,
-        _cur_chroms_seen => Set::Scalar->new,
-        _prev_chroms_seen => Set::Scalar->new,
     };
 
     bless $self, $class;
@@ -30,7 +29,7 @@ sub get_entry {
 
     while (
         ($chrom eq $self->{_cur_chrom} and $pos > $self->{_cur_pos}) or
-        !$self->{_cur_chroms_seen}->contains($chrom)
+        strverscmp($chrom, $self->{_cur_chrom}) == 1
     ) {
         $self->read_line;
         return unless defined $self->{_cur_entry};
@@ -43,7 +42,7 @@ sub get_entry {
     }
     elsif (
         ($chrom eq $self->{_prev_chrom} and $pos < $self->{_prev_pos}) or
-        ($chrom ne $self->{_prev_chrom} and $self->{_prev_chroms_seen}->contains($chrom))
+        strverscmp($chrom, $self->{_prev_chrom}) == -1
     ) {
         die sprintf("Position %s on chromosome %s has already been passed by.  Current state: %s",
             $pos,
@@ -61,8 +60,6 @@ sub to_string {
     delete $params{_cur_entry};
     delete $params{_prev_entry};
     delete $params{_reader};
-    $params{_cur_chroms_seen} = [$params{_cur_chroms_seen}->members];
-    $params{_prev_chroms_seen} = [$params{_prev_chroms_seen}->members];
     $params{file_name} = $self->{_reader}->{name};
     Data::Dumper::Dumper(\%params);
 }
@@ -72,7 +69,6 @@ sub read_line {
     $self->{_prev_entry} = $self->{_cur_entry};
     $self->{_prev_pos} = $self->{_cur_pos};
     $self->{_prev_chrom} = $self->{_cur_chrom};
-    $self->{_prev_chroms_seen}->insert($self->{_cur_chrom});
 
     $self->{_cur_entry} = $self->{_reader}->next;
     if (defined $self->{_cur_entry}) {
@@ -84,7 +80,6 @@ sub read_line {
                 $self->{_cur_pos});
         }
         $self->{_cur_chrom} = $self->{_cur_entry}->{_chromosome};
-        $self->{_cur_chroms_seen}->insert($self->{_cur_chrom});
         $self->{_cur_pos} = $self->{_cur_entry}->{_position};
     }
     return;
