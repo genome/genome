@@ -12,10 +12,10 @@ class Genome::Model::ClinSeq::Command::Converge::Stats {
     stats => {
       is => 'Text',
       doc => 'Stats file to summarize' .
-              'Possible values = all, wgs_snv_summary, exome_snv_summary ' .
+              'Possible values = all, wgs_snv_summary, exome_snv_summary, ' .
               'wgs_exome_snv_summary, rnaseq_tumor_cufflinks_isoforms, ' .
-              'rnaseq_tumor_cufflinks_isforms_merged ' . 
-              'rnaseq_tumor_cufflinks_genes',
+              'rnaseq_tumor_cufflinks_isforms_merged, snv_indel_report_stats, ' .
+              'rnaseq_tumor_cufflinks_genes' ,
       default => 'all',
     },
     plot => {
@@ -77,6 +77,7 @@ sub resolve_which_stats_tsv {
     push @stats_files, $b->sv_stats_file;
     push @stats_files, $b->variant_sc_wgs_stats_file;
     push @stats_files, $b->variant_sc_exome_stats_file;
+    $self->add_snv_indel_report_stats_file($b, \@stats_files);
   }
   if($stats_file_type =~ m/wgs_snv_summary/i) {
     push @stats_files, $b->wgs_snv_summary_stats_file;
@@ -111,6 +112,9 @@ sub resolve_which_stats_tsv {
   if($stats_file_type =~ m/variant_sc_summary/i) {
     push @stats_files, $b->variant_sc_exome_stats_file;
     push @stats_files, $b->variant_sc_wgs_stats_file;
+  }
+  if($stats_file_type =~ m/snv_indel_report_stats/i) {
+    $self->add_snv_indel_report_stats_file($b, \@stats_files);
   }
   return @stats_files;
 }
@@ -328,6 +332,29 @@ sub parse_metrics{
   $results{metric_list} = \%metric_list;
 
   return(\%results);
+}
+
+sub get_bq_mq {
+  my $self = shift;
+  my $bq = $self->bq || die $self->error_message("please enter base quality as a parameter");
+  my $mq = $self->mq || die $self->error_message("please enter mapping quality as a parameter");
+  return ($bq, $mq);
+}
+
+sub add_snv_indel_report_stats_file{
+  my $self = shift;
+  my $build = shift;
+  my $stats_files = shift;
+  my $snv_indel_report_stats_file = undef;
+  my ($bq, $mq) = $self->get_bq_mq;
+  if($bq and $mq) {
+    $snv_indel_report_stats_file = $build->snv_indel_report_stats_file($bq, $mq);
+  }
+  if($snv_indel_report_stats_file) {
+    push @$stats_files, $snv_indel_report_stats_file;
+  } else {
+    $self->warning_message("Unable to add snv_indel_report_stats_file");
+  }
 }
 
 sub write_output {
