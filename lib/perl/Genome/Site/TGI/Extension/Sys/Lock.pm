@@ -13,7 +13,7 @@ if ($ENV{GENOME_NESSY_SERVER}) {
     require Genome::Sys::Lock::NessyBackend;
     my $is_mandatory = $ENV{GENOME_NESSY_MANDATORY} ? 1 : 0;
     my $nessylock = Genome::Sys::Lock::NessyBackend->new(
-        url => 'http://nessy.gsc.wustl.edu/',
+        url => $ENV{GENOME_NESSY_SERVER},
         is_mandatory => $is_mandatory,
     );
     Genome::Sys::Lock->add_backend($nessylock);
