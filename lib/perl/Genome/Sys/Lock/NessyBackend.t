@@ -1,6 +1,8 @@
 use strict;
 use warnings;
 
+use above 'Genome';
+
 use Genome::Sys::Lock::NessyBackend;
 use Test::More tests => 2;
 

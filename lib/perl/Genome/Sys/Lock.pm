@@ -6,6 +6,7 @@ use warnings;
 use Carp qw(carp croak);
 use Genome::Sys::FileLock;
 use List::MoreUtils qw(all);
+use Memoize qw();
 
 =item lock_resource()
 
@@ -156,26 +157,24 @@ sub with_default_lock_resource_args {
     return %args;
 }
 
-my @backends = ('Genome::Sys::FileLock');
-
 sub is_mandatory {
     my $backend = shift;
     return $backend->is_mandatory();
 }
 
 sub backends {
-    return @backends;
+    my @result = ('Genome::Sys::FileLock');
+    if (defined($ENV{GENOME_NESSY_URL})) {
+        require Genome::Sys::Lock::NessyBackend;
+        push @result, Genome::Sys::Lock::NessyBackend->new(
+            url => $ENV{GENOME_NESSY_URL},
+            is_mandatory => 0,
+        );
+    }
+    return @result;
 }
 
-sub add_backend {
-    my ($class, $backend) = @_;
-    push @backends, $backend;
-}
-
-sub remove_backend {
-    my ($class, $backend) = @_;
-    @backends = grep { $_ ne $backend } @backends;
-}
+Memoize::memoize('backends');
 
 my $_cleanup_handler_installed;
 sub _cleanup_handler_check {
