@@ -629,6 +629,21 @@ sub sv_stats_file {
   }
 }
 
+sub snv_indel_report_stats_file {
+  my $self = shift;
+  my $bq = shift;
+  my $mq = shift;
+  my $sireport_stats_file = $self->snv_indel_report_dir($bq, $mq) .
+      "/Stats.tsv";
+  if(-e $sireport_stats_file) {
+    return $sireport_stats_file;
+  } else {
+    $self->warning_message("unable to find " .
+        $sireport_stats_file);
+    return;
+  }
+}
+
 sub mutation_spectrum_wgs_summary_file {
   my $self = shift;
   my $bq = shift;
