@@ -285,12 +285,7 @@ sub has_deletion {
 sub is_deletion {
     my ($self, $alt) = @_;
 
-    if (length($alt) < length($self->{reference_allele})) {
-        return 1;
-    }
-    else {
-        return 0;
-    }
+    return length($alt) < length($self->{reference_allele});
 }
 
 sub has_insertion {
