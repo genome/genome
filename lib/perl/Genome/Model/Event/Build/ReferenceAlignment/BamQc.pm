@@ -152,7 +152,7 @@ sub _select_error_rate_version_for_pp {
         and $pp->can('read_aligner_version')
         and defined $pp->read_aligner_name
         and defined $pp->read_aligner_version
-        and ($pp->read_aligner_name eq 'bwamem')
+        and ($pp->read_aligner_name =~ /^bwamem/)
     ) {
         my $mem_version = $self->_bwa_mem_version_object($pp->read_aligner_version);
         if($mem_version > $self->_bwa_mem_version_object("0.7.5")) {

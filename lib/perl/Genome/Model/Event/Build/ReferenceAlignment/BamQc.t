@@ -6,7 +6,7 @@ use warnings;
 use version 0.77;
 use above 'Genome';
 use Genome::Test::Factory::ProcessingProfile::ReferenceAlignment;
-use Test::More tests => 11;
+use Test::More;
 
 my $bamqc_class = 'Genome::Model::Event::Build::ReferenceAlignment::BamQc';
 
@@ -47,26 +47,30 @@ ok(
 );
 
 my $test_pp = Genome::Test::Factory::ProcessingProfile::ReferenceAlignment->setup_object(
-    read_aligner_name => 'bwamem'
 );
 
-is(
-    $bamqc_class->_select_error_rate_version_for_pp($test_pp),
-    Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version(),
-    'Default ErrorRate version chosen correctly'
-);
+for my $aligner (qw(bwamem bwamem-stream)) {
+    $test_pp->read_aligner_name($aligner);
+    $test_pp->read_aligner_version('0.7.5');
 
-$test_pp->read_aligner_version('0.7.6');
+    is(
+        $bamqc_class->_select_error_rate_version_for_pp($test_pp),
+        Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version(),
+        "Default ErrorRate version chosen correctly for aligner $aligner"
+    );
 
-is($bamqc_class->_select_error_rate_version_for_pp($test_pp),
-    '1.0a2',
-    'New ErrorRate version chosen correctly'
-);
+    $test_pp->read_aligner_version('0.7.6');
 
-is($bamqc_class->_should_run_error_rate_for_pp($test_pp),
-    1,
-    'ErrorRate correctly chosen to run'
-);
+    is($bamqc_class->_select_error_rate_version_for_pp($test_pp),
+        '1.0a2',
+        'New ErrorRate version chosen correctly'
+    );
+
+    is($bamqc_class->_should_run_error_rate_for_pp($test_pp),
+        1,
+        'ErrorRate correctly chosen to run'
+    );
+}
 
 $test_pp->read_aligner_version();
 $test_pp->read_aligner_name('bsmap');
@@ -75,3 +79,5 @@ is($bamqc_class->_should_run_error_rate_for_pp($test_pp),
     0,
     'ErrorRate correctly skipped for bsmap'
 );
+
+done_testing();
