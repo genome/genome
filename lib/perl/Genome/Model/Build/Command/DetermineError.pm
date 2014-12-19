@@ -33,10 +33,6 @@ use constant ERROR_FINDING_REGEX =>
                     (?<error_text>ERROR:? .*)
                 )
             }x;
-use constant WF_DATE_REGEX => '(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})-\d{4}';
-use constant WF_HOST_REGEX => '([^\:]+)\:';
-
-use constant PTERO_DATE_REGEX => '\[(\d{4}/\d{2}/\d{2}\s\d{2}\:\d{2}\:\d{2}).\d+\]';
 
 class Genome::Model::Build::Command::DetermineError {
     is => 'Genome::Command::WithColor',
@@ -319,48 +315,6 @@ sub find_die_or_warn_in_log {
     $backwards_fh->close;
 
     return ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
-}
-
-sub get_error_date {
-    my $line = shift;
-
-    my $date = WF_DATE_REGEX;
-    my $host = WF_HOST_REGEX;
-
-    my ($error_date, $error_host, $formatted_text);
-    if ($line =~ m/$date\s$host\s+ERROR/) {
-        $error_date = $1;
-        $error_host = $2;
-        ($formatted_text = $line) =~ s/$date\s+$host\s//g;
-    } else {
-        ($error_date, $formatted_text) = get_error_date_from_ptero_log($line);
-    }
-
-    return $error_date, $error_host, $formatted_text;
-}
-
-sub get_error_date_from_ptero_log {
-    my $line = shift;
-
-    my ($error_date, $error_host, $formatted_text);
-
-    my $date = PTERO_DATE_REGEX;
-    if ($line =~ m/$date\s+ERROR/) {
-        $error_date = $1;
-
-        ($formatted_text = $line) =~ s/$date\s//g;
-    }
-
-    return $error_date, $formatted_text;
-}
-
-sub _find_host_from_ptero_line {
-    my $line = shift;
-    if ($line =~ m/Starting log annotation on host:\s(.*)/) {
-        return $1;
-    }
-
-    return;
 }
 
 sub failed_workflow_steps {
