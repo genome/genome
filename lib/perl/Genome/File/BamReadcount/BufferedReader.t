@@ -12,7 +12,7 @@ use above 'Genome';
 use Test::Exception;
 use Test::More;
 
-my $pkg = 'Genome::File::BamReadcount::IndexedReader';
+my $pkg = 'Genome::File::BamReadcount::BufferedReader';
 use_ok($pkg);
 
 my $test_dir = __FILE__.".d";

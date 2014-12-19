@@ -3,7 +3,7 @@ package Genome::Model::Tools::Vcf::AnnotateWithReadcounts;
 use strict;
 use warnings;
 use Genome;
-use Genome::File::BamReadcount::IndexedReader;
+use Genome::File::BamReadcount::BufferedReader;
 use Genome::File::Vcf::BamReadcountParser;
 use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Writer;
@@ -71,7 +71,7 @@ sub get_file_objects {
                 die $@;
             }
         }
-        $readcount_readers{$sample_idx} = Genome::File::BamReadcount::IndexedReader->new(
+        $readcount_readers{$sample_idx} = Genome::File::BamReadcount::BufferedReader->new(
             $self->readcount_filenames->{$sample_name});
     }
     my $vcf_writer = Genome::File::Vcf::Writer->new($self->output_file, $header);

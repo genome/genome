@@ -1,4 +1,4 @@
-package Genome::File::BamReadcount::IndexedReader;
+package Genome::File::BamReadcount::BufferedReader;
 
 use strict;
 use warnings;
