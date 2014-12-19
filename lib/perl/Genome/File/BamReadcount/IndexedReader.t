@@ -72,5 +72,35 @@ subtest 'Detect duplicate entries' => sub {
     my $entry1 = $reader->get_entry(21, 1);
     dies_ok(sub {$reader->get_entry(21, 2)}, "Tried to read in a duplicate entry");
 };
+
+subtest 'Get the correct entry across chromosome boundary' => sub {
+    my $input_file = File::Spec->join($test_dir, "in2.brct");
+    my $reader = $pkg->new($input_file);
+    my $entry1 = $reader->get_entry(21, 1);
+    is($entry1->{_position}, 1, "Entry 1 position is correct");
+    is($entry1->{_chromosome}, 21, "Entry 1 chromosome is correct");
+    my $entry2 = $reader->get_entry(22, 2);
+    is($entry2->{_position}, 2, "Entry 2 position is correct");
+    is($entry2->{_chromosome}, 22, "Entry 2 chromosome is correct");
+};
+
+subtest 'Get first item in chromosome after missing last item in previous chromosome' => sub {
+    my $reader = $pkg->new($input_file);
+    my $entry1 = $reader->get_entry(21, 4);
+    is($entry1, undef, "Can't get something not in the file");
+    my $entry2 = $reader->get_entry(22, 2);
+    is($entry2->{_position}, 2, "Entry 2 is correct");
+};
+
+subtest 'Get the correct entry across chromosome boundary' => sub {
+    my $input_file = File::Spec->join($test_dir, "in2.brct");
+    my $reader = $pkg->new($input_file);
+    my $entry1 = $reader->get_entry(21, 1);
+    is($entry1->{_position}, 1, "Entry 1 position is correct");
+    is($entry1->{_chromosome}, 21, "Entry 1 chromosome is correct");
+    my $entry2 = $reader->get_entry(22, 2);
+    is($entry2->{_position}, 2, "Entry 1 position is correct");
+    is($entry2->{_chromosome}, 22, "Entry 1 chromosome is correct");
+};
 done_testing;
 
