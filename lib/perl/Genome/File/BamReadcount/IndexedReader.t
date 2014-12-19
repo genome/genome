@@ -66,5 +66,11 @@ subtest 'read positions out of order beyond buffer' => sub {
     dies_ok(sub {$reader->get_entry(21, 1)}, "Can't read back more than one");
 };
 
+subtest 'Detect duplicate entries' => sub {
+    my $input_file_with_duplicates = File::Spec->join($test_dir, "duplicates.brct");
+    my $reader = $pkg->new($input_file_with_duplicates);
+    my $entry1 = $reader->get_entry(21, 1);
+    dies_ok(sub {$reader->get_entry(21, 2)}, "Tried to read in a duplicate entry");
+};
 done_testing;
 

@@ -55,6 +55,13 @@ sub read_line {
 
     $self->{_current_entry} = $self->{_reader}->next;
     if (defined $self->{_current_entry}) {
+        if ($self->{_current_position} == $self->{_current_entry}->{_position} and
+            $self->{_current_chromosome} eq $self->{_current_entry}->{_chromosome} ) {
+            die sprintf("Duplicate entries detected at chromosme (%s) position (%s).
+                Bam readcount file must be deduplicated",
+                $self->{_current_chromosome},
+                $self->{_current_position});
+        }
         $self->{_current_chromosome} = $self->{_current_entry}->{_chromosome};
         $self->{_chromosomes_seen}->insert($self->{_current_chromosome});
         $self->{_current_position} = $self->{_current_entry}->{_position};
