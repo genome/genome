@@ -3,6 +3,7 @@ package Genome::File::BamReadcount::IndexedReader;
 use strict;
 use warnings;
 use Genome::File::BamReadcount::Reader;
+use Set::Scalar;
 
 sub new {
     my ($class, @args) = @_;
