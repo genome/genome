@@ -63,6 +63,7 @@ sub to_string {
     delete $params{_reader};
     $params{_cur_chroms_seen} = [$params{_cur_chroms_seen}->members];
     $params{_prev_chroms_seen} = [$params{_prev_chroms_seen}->members];
+    $params{file_name} = $self->{_reader}->{name};
     Data::Dumper::Dumper(\%params);
 }
 
