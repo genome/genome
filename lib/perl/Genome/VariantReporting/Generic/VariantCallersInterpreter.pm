@@ -8,6 +8,14 @@ use List::MoreUtils qw/uniq/;
 class Genome::VariantReporting::Generic::VariantCallersInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::WithSampleName'],
     doc => 'Output a list of variant callers that called this position for the specified sample, as well as the number of callers',
+    has => [
+        valid_callers => {
+            is => 'String',
+            is_many => 1,
+            default_value => [qw(VarscanSomatic Sniper Strelka)],
+            doc => 'List of variant callers to include in determination for filtering',
+        },
+    ],
 };
 
 sub name {
@@ -38,9 +46,13 @@ sub _interpret_entry {
         $callers{$alt_allele} = [];
     }
 
-    for my $caller_name ($self->get_callers($entry->{header})) {
+    for my $caller_name ($self->valid_callers) {
         my $sample_name = $self->sample_name_with_suffix($caller_name);
         my $sample_index = eval{ $entry->{header}->index_for_sample_name($sample_name) };
+        my $error = $@;
+        if ($error =~ /^\QSample name $sample_name not found in header\E/) {
+            next;
+        }
         my @sample_alt_alleles = $entry->alt_bases_for_sample($sample_index);
         for my $sample_alt_allele (uniq @sample_alt_alleles) {
             push(@{$callers{$sample_alt_allele}}, $caller_name);
