@@ -45,7 +45,7 @@ sub get_entry {
         ($chrom eq $self->{_prev_chrom} and $pos < $self->{_prev_pos}) or
         ($chrom ne $self->{_prev_chrom} and $self->{_prev_chroms_seen}->contains($chrom))
     ) {
-        die sprintf("Position %s on chromosme %s has already been passed by.  Current state: %s",
+        die sprintf("Position %s on chromosome %s has already been passed by.  Current state: %s",
             $pos,
             $chrom,
             $self->to_string);
