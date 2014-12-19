@@ -210,9 +210,6 @@ sub get_column_names {
   return $id_choice;
 }
 
-#######################################################################################################################
-#Get the desired files from each model                                                                                #
-#######################################################################################################################
 sub aggregate_stats {
   my $self = shift;
   my %args = @_;
@@ -236,10 +233,6 @@ sub aggregate_stats {
   return(\%files);
 }
 
-
-##############################################################################
-#Build a hash of metrics across the input builds and their stats files
-##############################################################################
 sub parse_metrics{
   my $self = shift;
   my %args = @_;
