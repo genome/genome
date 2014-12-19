@@ -127,36 +127,64 @@ sub _construct_workflow {
         destination => $generate_fasta_key_command,
         destination_property => 'input_file',
     );
-    for my $allele ($self->alleles) {
-        my $run_netmhc_command = $self->_attach_run_netmhc_command($workflow, $allele);
-        my $parse_netmhc_command = $self->_attach_parse_netmhc_command($workflow, $allele);
-        $workflow->create_link(
-            source => $filter_sequences_command,
-            source_property => 'output_file',
-            destination => $run_netmhc_command,
-            destination_property => 'fasta_file',
-        );
-        $workflow->create_link(
-            source => $run_netmhc_command,
-            source_property => 'output_file',
-            destination => $parse_netmhc_command,
-            destination_property => 'netmhc_file',
-        );
-        $workflow->create_link(
-            source => $generate_fasta_key_command,
-            source_property => 'output_file',
-            destination => $parse_netmhc_command,
-            destination_property => 'key_file',
-        );
 
-        $workflow->connect_output(
-            output_property => "output_file.$allele",
-            source => $parse_netmhc_command,
-            source_property => 'parsed_file',
+    my $netmhc_workflow = $self->create_netmhc_workflow;
+    $workflow->add_operation($netmhc_workflow);
+    for my $property (qw/allele epitope_length netmhc_version sample_name output_directory output_filter/) {
+        $workflow->connect_input(
+            input_property => $property,
+            destination => $netmhc_workflow,
+            destination_property => $property,
         );
     }
 
+    $workflow->create_link(
+        source => $filter_sequences_command,
+        source_property => 'output_file',
+        destination => $netmhc_workflow,
+        destination_property => 'fasta_file',
+    );
+    $workflow->create_link(
+        source => $generate_fasta_key_command,
+        source_property => 'output_file',
+        destination => $netmhc_workflow,
+        destination_property => 'key_file',
+    );
+
+    $workflow->connect_output(
+        output_property => "output_file",
+        source => $netmhc_workflow,
+        source_property => 'output_file',
+    );
+
     return $workflow;
+}
+
+sub create_netmhc_workflow {
+    my $self = shift;
+
+    my $netmhc_workflow = Genome::WorkflowBuilder::DAG->create(
+        name => 'NetmhcWorkflow',
+        log_dir => $self->output_directory,
+        parallel_by => 'allele',
+    );
+    my $run_netmhc_command = $self->_attach_run_netmhc_command($netmhc_workflow);
+    my $parse_netmhc_command = $self->_attach_parse_netmhc_command($netmhc_workflow);
+
+    $netmhc_workflow->create_link(
+        source => $run_netmhc_command,
+        source_property => 'output_file',
+        destination => $parse_netmhc_command,
+        destination_property => 'netmhc_file',
+    );
+
+    $netmhc_workflow->connect_output(
+        output_property => "output_file",
+        source => $parse_netmhc_command,
+        source_property => 'parsed_file',
+    );
+
+    return $netmhc_workflow;
 }
 
 sub _attach_get_wildtype_command {
@@ -228,26 +256,19 @@ sub _attach_generate_fasta_key_command {
 sub _attach_run_netmhc_command {
     my $self = shift;
     my $workflow = shift;
-    my $allele = shift;
 
     my $run_netmhc_command = Genome::WorkflowBuilder::Command->create(
-        name => "RunNetMHCCommand.$allele",
+        name => "RunNetMHCCommand",
         command => $self->run_netmhc_command_name,
     );
     $workflow->add_operation($run_netmhc_command);
-    $self->_add_common_inputs($workflow, $run_netmhc_command);
-    for my $property (qw/epitope_length netmhc_version sample_name/) {
+    for my $property (qw/allele epitope_length netmhc_version sample_name fasta_file output_directory/) {
         $workflow->connect_input(
             input_property => $property,
             destination => $run_netmhc_command,
             destination_property => $property,
         );
     }
-    $workflow->connect_input(
-        input_property => $allele,
-        destination => $run_netmhc_command,
-        destination_property => 'allele',
-    );
 
     return $run_netmhc_command;
 }
@@ -255,15 +276,13 @@ sub _attach_run_netmhc_command {
 sub _attach_parse_netmhc_command{
     my $self = shift;
     my $workflow = shift;
-    my $allele = shift;
 
     my $parse_netmhc_command = Genome::WorkflowBuilder::Command->create(
-        name => "ParseNetMHCCommand.$allele",
+        name => "ParseNetMHCCommand",
         command => $self->parse_netmhc_command_name,
     );
     $workflow->add_operation($parse_netmhc_command);
-    $self->_add_common_inputs($workflow, $parse_netmhc_command);
-    for my $property (qw/output_filter netmhc_version/) {
+    for my $property (qw/output_filter netmhc_version key_file output_directory/) {
         $workflow->connect_input(
             input_property => $property,
             destination => $parse_netmhc_command,
@@ -426,10 +445,8 @@ sub _get_workflow_inputs {
         netmhc_version => $self->netmhc_version,
         output_filter => $self->output_filter,
         sample_name => $self->sample_name,
+        allele => [$self->alleles],
     );
-    for my $allele ($self->alleles) {
-        $inputs{$allele} = $allele;
-    }
 
     return \%inputs;
 }
