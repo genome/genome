@@ -15,6 +15,10 @@ my %METHRATIO_VERSIONS = (
     2.74 => File::Spec->join('/gsc/pkg/bio/bsmap/bsmap-2.74', $METHRATIO_COMMAND),
 );
 
+sub available_methratio_versions {
+    return keys %METHRATIO_VERSIONS;
+}
+
 class Genome::Model::Tools::Bsmap::MethRatio {
     is => 'Command',
     has => [
@@ -43,9 +47,8 @@ class Genome::Model::Tools::Bsmap::MethRatio {
         },
         version => {
             is => 'Version',
-            is_optional => 1,
             is_input => 1,
-            default_value => $DEFAULT_VERSION,
+            valid_values => [available_methratio_versions()],
             doc => 'Version of methratio to use',
         },
     ],
@@ -80,10 +83,6 @@ class Genome::Model::Tools::Bsmap::MethRatio {
 
     ],
 };
-
-sub available_methratio_versions {
-    return keys %METHRATIO_VERSIONS;
-}
 
 sub _reference_fasta {
     my ($self) = @_;
@@ -141,11 +140,6 @@ sub execute {
             $self->output_directory, $sanitized_chromosome);
         Genome::Sys->create_directory($chromosome_output_dir);
         $self->output_directory($chromosome_output_dir);
-    }
-
-    unless (defined $self->version) {
-        $self->error_message('methratio version %s not found.', $self->version);
-        return 0;
     }
 
     my $return = Genome::Sys->shellcmd(
