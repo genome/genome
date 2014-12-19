@@ -8,6 +8,14 @@ use IPC::System::Simple qw(capture);
 use File::ReadBackwards;
 use Try::Tiny;
 
+# This is normally loaded automagically when Perl sees you're using %+.
+# but due to some interaction with Class::Autouse (when it installs its
+# UNIVERSAL::AUTOLOAD handler), this magic stops working.  Using the
+# module explicitly fixes the problem in perl 5.10.1.  The bug seems to
+# be fixed by 5.18
+use Tie::Hash::NamedCapture;
+
+
 use constant WF_DATE_REGEX => '(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})-\d{4}';
 use constant WF_HOST_REGEX => '([^\:]+)\:';
 
@@ -202,37 +210,49 @@ sub parse_error_log {
 
     my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
 
-    my $fh = Genome::Sys->open_file_for_reading($filename);
+    my($get_one_more_line, $found_host);
+    no warnings 'exiting';
+    SCAN_FILE:
+    for(1) {
+        Genome::Sys->iterate_file_lines(
+            $filename,
+            qr{Starting log annotation on host:\s(.*)},
+                sub { $found_host = $1 },
 
-    LINE: while(my $line = $fh->getline) {
-        my $found_host = _find_host_from_ptero_line($line);
-        $error_host = $found_host if $found_host; #most recently found host is the "correct" one
+            qr{(?:
+                    (?:
+                        (?<date>\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})-\d{4}  # workflow date
+                        \s                                                   # and
+                        (?<host>[^\:]+)\:                                    # host
+                    )
+                    |                                                        # or
+                    \[(?<date>\d{4}/\d{2}/\d{2}\s\d{2}\:\d{2}\:\d{2}).\d+\]  # ptero date
+                )
+                \s
+                (?:
+                    (?:(?<error_text>ERROR:? .*?) \s at \s (?<error_source_file>\S+\.pm) \s line \s (?<error_source_line>\d+))
+                    |
+                    (?<error_text>ERROR:? .*)
+                )
+            }x,
+                sub {
+                    ($error_date, $error_text, $error_source_file, $error_source_line)
+                        = @+{'date','error_text','error_source_file','error_source_line'};
+                    $error_host = $found_host || $+{'host'};
 
-        ($error_date, $found_host, my $date_removed_text) = get_error_date($line);
-        if ($error_date) {
-            my $text = '(ERROR[\s\:]+.+?)';
-            my $file = 'at\s([^\s]*?\.pm)';
-            my $line = 'line\s(\d+)';
-            my $query = join('\s+', $text, $file, $line);
-            if ($date_removed_text =~ m/$query/) {
-                $error_text = $1;
-                $error_source_file = $2;
-                $error_source_line = $3;
-            } elsif ($date_removed_text =~ m/(ERROR.*)/) {
-                $error_text = $1;
-                my $next_line = $fh->getline; #sometimes we die immediately after the error
-                if($next_line and $next_line =~ m/$file\s+$line/) {
-                    $error_source_file = $1;
-                    $error_source_line = $2;
+                    last SCAN_FILE if ($error_source_file);
+                    $get_one_more_line = 1;
+                },
+
+            sub {
+                if ($get_one_more_line) {
+                    # sometimes we die immediately after the error
+                    ($error_source_file, $error_source_line) = shift =~ m/at (\S+\.pm) line (\d+)/;
+                    last SCAN_FILE;
                 }
             }
-
-            $error_host = $found_host if $found_host;
-            last LINE;
-        }
+        );
     }
-
-    $fh->close;
 
     return unless $error_date;
     return ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
