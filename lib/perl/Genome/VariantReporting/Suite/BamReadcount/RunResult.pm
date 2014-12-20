@@ -67,7 +67,7 @@ sub make_region_file {
     my ($out_fh, $region_list) = Genome::Sys->create_temp_file();
     my $reader = Genome::File::Vcf::Reader->new($vcf_file);
 
-    my $positions;
+    my $positions = {};
     my $current_chrom;
 
     while (my $entry = $reader->next) {
@@ -76,7 +76,7 @@ sub make_region_file {
             $positions = {};
         }
         $current_chrom = $entry->{chrom};
-        $positions = fill_in_positions($entry, $positions);
+        fill_in_positions($entry, $positions);
     }
     print_for_chrom($current_chrom, $positions, $out_fh);
 
@@ -95,7 +95,7 @@ sub fill_in_positions {
     if ($entry->has_deletion) {
         $positions->{$pos+1}++;
     }
-    return $positions;
+    return;
 }
 
 sub print_for_chrom {
