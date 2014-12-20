@@ -23,8 +23,8 @@ class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath {
     },
     has_output => {
         destination_path => {
-            calculate_from => [qw/ working_directory source_path /],
-            calculate => q| return $self->working_directory.'/'.File::Basename::basename($source_path); |,
+            calculate_from => [qw/ working_directory source_path_basename /],
+            calculate => q| return File::Spec->join($working_directory, $source_path_basename); |,
             doc => 'Final destination path.',
         }, 
         destination_md5_path => {
@@ -32,6 +32,12 @@ class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath {
             calculate => q| return Genome::InstrumentData::Command::Import::WorkFlow::Helpers->original_md5_path_for($destination_path); |,
             doc => 'Final destination MD5 path.',
         }, 
+    },
+    has_calculated => {
+        source_path_basename => {
+            calculate_from => [qw/ source_path /],
+            calculate => q| return File::Basename::basename($source_path); |,
+        },
     },
     has_constant_calculated => {
         helpers => {
@@ -43,37 +49,69 @@ class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath {
 sub execute {
     my $self = shift;
 
-    my $retrieve_source_path = $self->_retrieve_source_path;
+    my $retrieve_source_path = $self->retrieve_source_path;
     return if not $retrieve_source_path;
 
-    my $retrieve_source_md5 = $self->_retrieve_source_md5_path;
+    my $retrieve_source_md5 = $self->retrieve_source_md5;
     return if not $retrieve_source_md5;
 
     return 1;
 }
 
-sub _retrieve_source_path {
+sub retrieve_source_path {
     my $self = shift;
-    return $self->_retrieve_path($self->source_path, $self->destination_path);
+    $self->debug_message('Retrieve source path...');
+
+    my $source_path = $self->source_path;
+    $self->debug_message("Source path: $source_path");
+    my $source_path_sz = $self->_source_path_size;
+    $self->debug_message("Source path size: ".(defined $source_path_sz ? $source_path_sz : 'NA'));
+    if ( not defined $source_path_sz or $source_path_sz == 0 ) { # error that the file does not exist
+        $self->error_message('Source file does not have any size!');
+        return;
+    }
+
+    my $destination_path = $self->destination_path;
+    $self->debug_message("Destination path: $destination_path");
+
+    my $retrieve_ok = $self->_retrieve_source_path;
+    return if not $retrieve_ok;
+
+    my $destination_path_sz = -s $destination_path;
+    $self->debug_message("Destination path size: $destination_path_sz");
+    if ( not $source_path_sz or $source_path_sz != $destination_path_sz ) {
+        $self->error_message("Retrieve succeeded, but source path size is different from detination path! $source_path_sz <=> $destination_path_sz");
+        return;
+    }
+
+    $self->debug_message('Retrieve source path...done');
+    return 1;
 }
 
-sub _retrieve_source_md5_path {
+sub retrieve_source_md5 {
     my $self = shift;
+    $self->debug_message('Create destination MD5 path...');
 
-    my $md5_path = $self->helpers->md5_path_for($self->source_path);
-    my $md5_size = $self->helpers->file_size($md5_path);
-    if ( not $md5_size ) {
-        $self->debug_message('Source MD5 path does not exist...skip');
+    my $source_md5 = $self->source_md5;
+    if ( not $source_md5) {
+        $self->debug_message('Source MD5 is not available! It will not be saved.');
         return 1;
     }
 
-    $self->debug_message('Retrieve source MD5 path...');
+    $self->debug_message("Source MD5: $source_md5");
+    if ( $source_md5 !~ /^[0-9a-f]{32}$/i ) {
+        $self->debug_message('Invalid source MD5! It will not be saved.');
+        return 1;
+    }
 
-    my $original_md5_path = $self->helpers->original_md5_path_for($self->destination_path);
-    my $retrieve_ok = $self->_retrieve_path($md5_path, $original_md5_path);
-    return if not $retrieve_ok;
+    my $destination_md5_path = $self->destination_md5_path;
+    $self->debug_message("Destination MD5 path: $destination_md5_path");
 
-    $self->debug_message('Retrieve source MD5 path...done');
+    my $fh = Genome::Sys->open_file_for_writing($destination_md5_path);
+    $fh->say( join('  ', $source_md5, $self->destination_path) );
+    $fh->close;
+
+    $self->debug_message('Create destination MD5 path...done');
     return 1;
 }
 

@@ -5,36 +5,40 @@ use warnings;
 
 use Genome;
 
-require File::Basename;
+require File::Copy;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePathFromLocalDisk {
     is => 'Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath',
 };
 
-sub _retrieve_path {
-    my ($self, $from, $to) = @_;
-    $self->debug_message('Retrieve path via copy...');
+sub _path_size {
+    return -s $_[0];
+}
 
-    $self->debug_message("From: $from");
-    $self->debug_message("To: $to");
+sub _source_path_size {
+    return _path_size($_[0]->source_path);
+}
 
-    my $move_ok = File::Copy::copy($from, $to);
-    if ( not $move_ok ) {
-        $self->error_message('Copy failed!');
+sub _retrieve_source_path {
+    my $self = shift;
+
+    my $copy_ok = File::Copy::copy($self->source_path, $self->destination_path);
+    if ( not $copy_ok ) {
+        $self->error_message('Copy from %s to %s failed!', $self->source_path, $self->destination_path);
         return;
     }
 
-    my $from_sz = -s $from;
-    $self->debug_message("From size: $from_sz");
-    my $to_sz = -s $to;
-    $self->debug_message("To size: $to_sz");
-    if ( not $to_sz or $to_sz != $from_sz ) {
-        $self->error_message("Copy succeeded, but destination size is different from original! $to_sz vs $from_sz");
-        return;
-    }
-
-    $self->debug_message('Retrieve path via copy...done');
     return 1;
+}
+
+sub source_md5 {
+    my $self = shift;
+
+    my $md5_path = $self->helpers->md5_path_for($self->source_path);
+    my $md5_path_exists = _path_size($md5_path);
+    return if not $md5_path_exists;
+
+    return $self->helpers->load_md5($md5_path);
 }
 
 1;

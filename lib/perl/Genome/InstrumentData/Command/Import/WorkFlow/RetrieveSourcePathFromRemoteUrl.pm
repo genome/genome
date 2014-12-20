@@ -11,32 +11,41 @@ class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePathFromR
     is => 'Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath',
 };
 
-sub _retrieve_path {
-    my ($self, $from, $to) = @_;
-    $self->debug_message('Retrieve source path via http...');
+sub _path_size {
+    return $_[0]->helpers->remote_file_size($_[1]);
+}
 
-    $self->debug_message("From: $from");
-    $self->debug_message("To: $to");
+sub _source_path_size {
+    return $_[0]->_path_size($_[0]->source_path);
+}
+
+sub _retrieve_source_path {
+    my $self = shift;
 
     my $agent = LWP::UserAgent->new;
-    my $response = $agent->get($from, ':content_file' => $to);
+    my $response = $agent->get($self->source_path, ':content_file' => $self->destination_path);
     if ( not $response->is_success ) {
         $self->error_message($response->message) if $response->message;
-        $self->error_message('GET failed for remote path!');
-        return
-    }
-
-    my $from_sz = $response->headers->content_length;
-    $self->debug_message("From size: $from_sz");
-    my $to_sz = -s $to;
-    $self->debug_message("To size: $to_sz");
-    if ( not $to_sz or $to_sz != $from_sz ) {
-        $self->error_message("GET remote path succeeded, but destination size is different from original! $from_sz vs $to_sz");
+        $self->error_message('Remote GET from %s to %sto failed!', $self->source_path, $self->destination_path);
         return;
     }
 
-    $self->debug_message('Retrieve source path from remote url...done');
     return 1;
 }
+
+sub source_md5 {
+    my $self = shift;
+
+    my $md5_path = $self->helpers->md5_path_for($self->source_path);
+    my $agent = LWP::UserAgent->new;
+    my $response = $agent->get($md5_path);
+    if ( not $response->is_success ) {
+        return;
+    }
+
+    my ($md5) = split(/\s+/, $response->decoded_content);
+    return $md5;
+}
+
 1;
 
