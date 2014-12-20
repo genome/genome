@@ -50,7 +50,7 @@ sub source_file_retrieval_method {
     if ( $file =~ m#^https://cghub.ucsc.edu# ) {
         return 'cg hub';
     }
-    elsif ( $file =~ m#^(http|file)\://# ) {
+    elsif ( $file =~ m#^(http|https|file)\://# ) {
         return 'remote url';
     }
     else {
