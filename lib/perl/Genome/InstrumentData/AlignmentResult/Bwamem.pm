@@ -2,9 +2,6 @@ package Genome::InstrumentData::AlignmentResult::Bwamem;
 
 use strict;
 use warnings;
-use Carp qw/confess/;
-use Data::Dumper;
-use File::Basename;
 use File::Copy qw/move/;
 use Path::Class;
 use Genome;
