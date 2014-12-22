@@ -151,74 +151,118 @@ sub create {
 }
 
 sub _check_instance_output {
+    my $class = shift;
+
+    $class->_cleanup_non_software_result_legacy_data(@_);
+    $class->_validate_allocation_and_software_result(@_);
+
+    return 1;
+}
+
+sub _cleanup_non_software_result_legacy_data {
     my ($class, $instance_output) = @_;
     $class = ref $class if ref $class;
 
-    if (-l $instance_output or -e $instance_output) {
+    if (not -l $instance_output and -d $instance_output) {
         # If the detector output is not a symlink, it was generated before these were software results.
         # Archive the existing stuff and regenerate so we get a nifty software result.
-        if (not -l $instance_output and -d $instance_output) {
-            my ($parent_dir, $sub_dir) = $instance_output =~ /(.+)\/(.+)/;
-            die $class->error_message("Unable to determine parent directory from $instance_output.") unless $parent_dir;
-            die $class->error_message("Unable to determine sub-directory from $instance_output.") unless $sub_dir;
-            die $class->error_message("Parse error when determining parent directory and sub-directory from $instance_output.") unless ($instance_output eq "$parent_dir/$sub_dir");
+        my ($parent_dir, $sub_dir) = $instance_output =~ /(.+)\/(.+)/;
+        die $class->error_message("Unable to determine parent directory from $instance_output.") unless $parent_dir;
+        die $class->error_message("Unable to determine sub-directory from $instance_output.") unless $sub_dir;
+        die $class->error_message("Parse error when determining parent directory and sub-directory from $instance_output.") unless ($instance_output eq "$parent_dir/$sub_dir");
 
-            my $archive_name = "old_$sub_dir.tar.gz";
-            die $class->error_message("Archive already exists, $parent_dir/$archive_name.") if (-e "$parent_dir/$archive_name");
+        my $archive_name = "old_$sub_dir.tar.gz";
+        die $class->error_message("Archive already exists, $parent_dir/$archive_name.") if (-e "$parent_dir/$archive_name");
 
-            $class->debug_message('Archiving old non-software-result ' . $instance_output . " to $archive_name.");
-            system("cd $parent_dir && tar -zcvf $archive_name $sub_dir && rm -rf $sub_dir");
-        }
-        # In this case, a symlink exists...
-        else {
-            $class->warning_message('Instance output directory (' . $instance_output . ') already exists!');
-            my $allocation_dir = readlink $instance_output;
-            my @parts = split "-", $allocation_dir;
-            my $allocation_owner_id = $parts[-1];
-            my $result = Genome::SoftwareResult->get($allocation_owner_id);
-            my $allocation = Genome::Disk::Allocation->get(owner_id => $allocation_owner_id);
-
-            if ($allocation and not $result) {
-                # Allocation exists without a result the whole time the result is being created. Ideally locks
-                # would prevent us from getting here during that window but our locks are not 100% reliable.
-                my @error_message = (
-                    "Found allocation at ($allocation_dir) but no software result for it's owner ID ($allocation_owner_id).",
-                    "This is either because the software result is currently being generated or because the allocation has been orphaned.",
-                    "If it is determined that the allocation has been orphaned then the allocation will need to be removed.",
-                );
-                Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_allocation');
-                die $class->error_message(join(' ', @error_message));
-            }
-            # If a test name is set, we can remove the symlink and proceed
-            elsif ($result and defined $result->test_name and -l $instance_output) {
-                $class->warning_message("The software result for the existing symlink has a test name set; removing symlink.");
-                unlink $instance_output;
-            }
-            elsif ($result and not $allocation) {
-                # A result without an allocation... this really shouldn't ever happen, unless someone deleted the allocation row from the database?
-                Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_result');
-                die $class->error_message("Found a software result (" . $result->__display_name__ . ") that has output directory " .
-                    "($instance_output) but no allocation.");
-            }
-            elsif ($result and $allocation) {
-                # Finding a result and an allocation means either:
-                # 1) This work was already done, but for whatever reason we didn't find the software result before we decided to do the work.
-                # 2) We're doing different work but pointing it at a place where work has already been done for something else. Can't replace it.
-                Genome::Utility::Instrumentation::increment('dv2.result.found_duplicate');
-                die $class->error_message("Found allocation and software result for path $instance_output, cannot create new result!");
-            }
-            elsif (!$result && !$allocation && -l $instance_output && ! -e $allocation_dir) {
-                $class->warning_message("No allocation or software result and symlink ($instance_output) target ($allocation_dir) does not exist; removing symlink.");
-                unlink $instance_output;
-            }
-            else {
-                die $class->error_message("Unexpected condition in " . __PACKAGE__ . "::_check_instance_output");
-            }
-        }
+        $class->debug_message('Archiving old non-software-result ' . $instance_output . " to $archive_name.");
+        system("cd $parent_dir && tar -zcvf $archive_name $sub_dir && rm -rf $sub_dir");
     }
 
     return 1;
 }
+
+sub _validate_allocation_and_software_result {
+    my ($class, $instance_output) = @_;
+    $class = ref $class if ref $class;
+
+    if (-l $instance_output) {
+        $class->warning_message('Instance output directory (' . $instance_output . ') already exists!');
+        my $allocation_dir = readlink $instance_output;
+        my $allocation_owner_id = $class->_extract_allocation_owner_id(
+            $allocation_dir);
+        my $result = Genome::SoftwareResult->get($allocation_owner_id);
+        my $allocation = Genome::Disk::Allocation->get(owner_id => $allocation_owner_id);
+
+        if ($allocation) {
+            $class->_validate_found_allocation($allocation, $result, $instance_output);
+        } else {
+            $class->_validate_missing_allocation($allocation_dir, $result, $instance_output);
+        }
+    }
+}
+
+sub _extract_allocation_owner_id {
+    my ($class, $allocation_dir) = @_;
+    my @parts = split "-", $allocation_dir;
+    return $parts[-1];
+}
+
+sub _validate_found_allocation {
+    my ($class, $allocation, $result, $instance_output) = @_;
+
+    if (grep {$_ eq $allocation->status} ('purged', 'invalid')) {
+        $class->warning_message("Found link to %s allocation (%s).  "
+            . "Removing symlink.", $allocation->status, $allocation->id);
+        unlink $instance_output;
+        Genome::Utility::Instrumentation::increment('dv2.result.removed_symlink')
+    } elsif ($allocation->is_archived) {
+        Genome::Utility::Instrumentation::increment('dv2.result.noticed_archived_allocation');
+        die $class->error_message("Allocation linked from %s (%s) is archived.",
+            $instance_output, $allocation->id);
+    } elsif ($result) {
+        # Finding a result and an allocation means either:
+        # 1) This work was already done, but for whatever reason we didn't find the software result before we decided to do the work.
+        # 2) We're doing different work but pointing it at a place where work has already been done for something else. Can't replace it.
+        Genome::Utility::Instrumentation::increment('dv2.result.found_duplicate');
+        die $class->error_message("Found allocation and software result for path $instance_output, cannot create new result!");
+    } else {
+        # Allocation exists without a result the whole time the result is being created. Ideally locks
+        # would prevent us from getting here during that window but our locks are not 100% reliable.
+        my @error_message = (
+            sprintf("Found allocation at (%s) but no software result for it's owner ID (%s).",
+                $allocation->absolute_path, $allocation->id),
+            "This is either because the software result is currently being generated or because the allocation has been orphaned.",
+            "If it is determined that the allocation has been orphaned then the allocation will need to be removed.",
+        );
+        Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_allocation');
+        die $class->error_message(join(' ', @error_message));
+    }
+}
+
+sub _validate_missing_allocation {
+    my ($class, $allocation_dir, $result, $instance_output) = @_;
+
+    if ($result) {
+        if (defined $result->test_name) {
+            # If a test name is set, we can remove the symlink and proceed
+            $class->warning_message("The software result for the existing symlink has a test name set; removing symlink.");
+            unlink $instance_output;
+            Genome::Utility::Instrumentation::increment('dv2.result.removed_symlink')
+        } else {
+            # A result without an allocation... this really shouldn't ever happen, unless someone deleted the allocation row from the database?
+            Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_result');
+            die $class->error_message("Found a software result (" . $result->__display_name__ . ") that has output directory " .
+                "($instance_output) but no allocation.");
+        }
+    } else {
+        if (! -e $allocation_dir) {
+            $class->warning_message("No allocation or software result and symlink ($instance_output) target ($allocation_dir) does not exist; removing symlink.");
+            unlink $instance_output;
+            Genome::Utility::Instrumentation::increment('dv2.result.removed_symlink')
+        }
+    }
+}
+
 
 sub _gather_params_for_get_or_create {
     my $class = shift;
