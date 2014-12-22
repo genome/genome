@@ -60,10 +60,10 @@ class Genome::Model::Tools::Bsmap::MethRatio {
             doc => 'report loci with zero methylation ratios',
             default => 1,
         },
-        no_header => {
+        header => {
             is => 'Boolean',
-            doc => 'do not put a header on the file',
-            default => 0,
+            doc => 'put a header on the file',
+            default => 1,
         },
 
 # other options not exposed:
@@ -122,7 +122,7 @@ sub _generate_command_line {
         push @cmd, '-c', Genome::Sys->quote_for_shell($self->chromosome);
     }
 
-    if ($self->no_header) {
+    unless ($self->header) {
         push @cmd, '-n';
     }
 
