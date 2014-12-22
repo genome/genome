@@ -351,3 +351,5 @@ make_model_group_id_nullable [config_analysis_project] 2014-12-03T19:07:30Z Adam
 
 remove_width_constraint_for_result_users [result_user] 2014-12-05T17:40:15Z Adam Coffman <acoffman@genome.wustl.edu> # convert from a constrained varchar to text
 @1417807321 2014-12-05T19:22:02Z Adam Coffman <acoffman@genome.wustl.edu># Remove width of label column
+remove_model_groups_from_analysis_project [make_model_group_id_nullable] 2014-12-04T19:05:22Z Adam Coffman <acoffman@genome.wustl.edu> # removing model groups from analysis projects
+@1419271481 2014-12-22T18:04:41Z Adam Coffman <acoffman@genome.wustl.edu># remove model group ids from AnPs
