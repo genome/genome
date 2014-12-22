@@ -89,6 +89,10 @@ class Genome::ProcessingProfile::ReferenceAlignment {
             doc => 'samtools version for SamToBam, samtools merge, etc...',
             is_optional => 1,
         },
+        bedtools_version => {
+            doc => 'bedtools version for bedtools bamtofastq',
+            is_optional => 1,
+        },
         merger_name => {
             doc => 'name of bam merger, picard, samtools (this will be replaced by alignment_strategy)',
             is_optional => 1,

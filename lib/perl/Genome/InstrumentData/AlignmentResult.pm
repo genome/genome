@@ -130,6 +130,11 @@ class Genome::InstrumentData::AlignmentResult {
                                     is_optional=>1,
                                     doc=>'Version of samtools to use when creating BAM files',
                                 },
+        bedtools_version        => {
+                                    is => 'Text',
+                                    is_optional => 1,
+                                    doc => "Version of bedtools to use for BAM > fastq conversion",
+                                },
         picard_version          => {
                                     is=>'Text',
                                     is_optional=>1,

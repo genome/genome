@@ -189,8 +189,12 @@ sub _run_aligner {
         $params{limit_to_read_group} = $self->instrument_data_segment_id;
     }
 
-    if (defined $self->samtools_version) {
-        $params{samtools_version} = $self->samtools_version
+    my @opts = qw(samtools_version bedtools_version);
+    for my $opt (@opts) {
+        if (defined $self->$opt) {
+            $self->debug_message(sprintf("Using explicit %s: %s", $opt, $self->$opt));
+            $params{$opt} = $self->$opt;
+        }
     }
 
     my $cmd = Genome::Model::Tools::Bwa::RunMem->create(%params);
