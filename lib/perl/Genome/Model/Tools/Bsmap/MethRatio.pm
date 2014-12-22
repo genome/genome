@@ -123,7 +123,7 @@ sub _generate_command_line {
     }
 
     if ($self->no_header) {
-        push @cmd, '-h';
+        push @cmd, '-n';
     }
 
     push @cmd, $self->bam_file;
