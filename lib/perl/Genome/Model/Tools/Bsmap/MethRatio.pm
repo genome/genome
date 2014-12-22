@@ -15,10 +15,6 @@ my %METHRATIO_VERSIONS = (
     2.74 => File::Spec->join('/gsc/pkg/bio/bsmap/bsmap-2.74', $METHRATIO_COMMAND),
 );
 
-sub available_methratio_versions {
-    return keys %METHRATIO_VERSIONS;
-}
-
 class Genome::Model::Tools::Bsmap::MethRatio {
     is => 'Command',
     has => [
@@ -83,6 +79,10 @@ class Genome::Model::Tools::Bsmap::MethRatio {
 
     ],
 };
+
+sub available_methratio_versions {
+    return keys %METHRATIO_VERSIONS;
+}
 
 sub _reference_fasta {
     my ($self) = @_;
