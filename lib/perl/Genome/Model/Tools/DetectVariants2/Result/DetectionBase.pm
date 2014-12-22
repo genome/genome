@@ -163,7 +163,7 @@ sub _cleanup_non_software_result_legacy_data {
     my ($class, $instance_output) = @_;
     $class = ref $class if ref $class;
 
-    if (-d $instance_output) {
+    if (not -l $instance_output and -d $instance_output) {
         # If the detector output is not a symlink, it was generated before these were software results.
         # Archive the existing stuff and regenerate so we get a nifty software result.
         my ($parent_dir, $sub_dir) = $instance_output =~ /(.+)\/(.+)/;
