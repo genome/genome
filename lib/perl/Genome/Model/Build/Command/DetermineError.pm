@@ -34,6 +34,8 @@ use constant ERROR_FINDING_REGEX =>
                 )
             }x;
 
+use constant PTERO_HOST_FINDING_REGEX => qr{Starting log annotation on host:\s(.*)};
+
 class Genome::Model::Build::Command::DetermineError {
     is => 'Genome::Command::WithColor',
     has => [
@@ -229,7 +231,7 @@ sub parse_error_log {
     for(1) {
         Genome::Sys->iterate_file_lines(
             $filename,
-            qr{Starting log annotation on host:\s(.*)},
+            PTERO_HOST_FINDING_REGEX,
                 sub { $found_host = $1 },
 
             ERROR_FINDING_REGEX,
@@ -296,7 +298,7 @@ sub find_die_or_warn_in_log {
     for(1) {
         Genome::Sys->iterate_file_lines(
             $backwards_fh,
-            qr{Starting log annotation on host:\s(.*)},
+            PTERO_HOST_FINDING_REGEX,
                 sub {
                     $error_host = $1;
                     last SCAN_FILE if $error_text;
