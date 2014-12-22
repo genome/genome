@@ -6,6 +6,7 @@ use Genome;
 
 use Genome::Utility::Text qw(sanitize_string_for_filesystem);
 use File::Spec;
+use Sort::strverscmp qw(strverssort);
 
 my $DEFAULT_VERSION = '2.74';
 my $METHRATIO_COMMAND = 'methratio.py';
@@ -81,7 +82,7 @@ class Genome::Model::Tools::Bsmap::MethRatio {
 };
 
 sub available_methratio_versions {
-    return keys %METHRATIO_VERSIONS;
+    return strverssort(keys %METHRATIO_VERSIONS);
 }
 
 sub _reference_fasta {
