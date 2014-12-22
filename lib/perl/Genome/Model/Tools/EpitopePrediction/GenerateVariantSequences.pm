@@ -115,7 +115,7 @@ sub get_wildtype_subsequence_for_printing {
 
     my $peptide_sequence_length = $self->peptide_sequence_length;
     #If the wildtype sequence is shorter than the desired peptide sequence
-    #lenght we use the wildtype sequence length instead so that the extraction
+    #length we use the wildtype sequence length instead so that the extraction
     #algorithm below works correctly
     if (scalar(@arr_wildtype_sequence) < $peptide_sequence_length) {
         $peptide_sequence_length = scalar(@arr_wildtype_sequence);
@@ -129,8 +129,8 @@ sub get_wildtype_subsequence_for_printing {
     }
 
     # We want to extract a subset from @arr_wildtype_sequence that is
-    # $self->peptide_sequence_length long so that the $position ends
-    # up in the middle of the subsequence.
+    # $peptide_sequence_length long so that the $position ends
+    # up in the middle of the extracted sequence.
     # If the $position is too far toward the beginning or end of
     # @arr_wildtype_sequence there aren't enough amino acids on one side
     # to achieve this.
