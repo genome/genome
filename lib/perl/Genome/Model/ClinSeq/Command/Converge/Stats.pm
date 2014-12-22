@@ -11,11 +11,11 @@ class Genome::Model::ClinSeq::Command::Converge::Stats {
   has_input => [  
     stats => {
       is => 'Text',
-      doc => 'Stats file to summarize' .
-              'Possible values = all, wgs_snv_summary, exome_snv_summary, ' .
-              'wgs_exome_snv_summary, rnaseq_tumor_cufflinks_isoforms, ' .
-              'rnaseq_tumor_cufflinks_isforms_merged, snv_indel_report_stats, ' .
-              'rnaseq_tumor_cufflinks_genes' ,
+      doc => 'Stats file to summarize',
+      valid_values => [qw(all wgs_snv_summary exome_snv_summary
+              wgs_exome_snv_summary rnaseq_tumor_cufflinks_isoforms
+              rnaseq_tumor_cufflinks_isforms_merged snv_indel_report_stats
+              rnaseq_tumor_cufflinks_genes)],
       default => 'all',
     },
     plot => {
