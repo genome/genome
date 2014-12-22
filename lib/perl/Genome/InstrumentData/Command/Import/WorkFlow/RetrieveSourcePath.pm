@@ -80,7 +80,7 @@ sub retrieve_source_path {
     my $destination_path_sz = -s $destination_path;
     $self->debug_message("Destination path size: $destination_path_sz");
     if ( not $source_path_sz or $source_path_sz != $destination_path_sz ) {
-        $self->error_message("Retrieve succeeded, but source path size is different from detination path! $source_path_sz <=> $destination_path_sz");
+        $self->error_message("Retrieve succeeded, but source path size is different from destination path! $source_path_sz <=> $destination_path_sz");
         return;
     }
 

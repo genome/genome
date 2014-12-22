@@ -26,7 +26,7 @@ sub _retrieve_source_path {
     my $response = $agent->get($self->source_path, ':content_file' => $self->destination_path);
     if ( not $response->is_success ) {
         $self->error_message($response->message) if $response->message;
-        $self->error_message('Remote GET from %s to %sto failed!', $self->source_path, $self->destination_path);
+        $self->error_message('Remote GET from %s to %s to failed!', $self->source_path, $self->destination_path);
         return;
     }
 
