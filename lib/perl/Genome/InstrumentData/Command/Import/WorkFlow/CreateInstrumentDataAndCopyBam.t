@@ -75,16 +75,17 @@ my @instrument_data_attributes = Genome::InstrumentDataAttribute->get(
     attribute_label => 'original_data_path_md5',
     attribute_value => $md5,
 );
-my @instrument_data = Genome::InstrumentData::Imported->get(
-    id => [ map { $_->instrument_data_id } @instrument_data_attributes ],
-    '-order_by' => 'import_date',
-);
-@instrument_data = sort { $a->attributes(attribute_label => 'segment_id')->attribute_value cmp $b->attributes(attribute_label => 'segment_id')->attribute_value } @instrument_data;
-is(@instrument_data, 2, "got instrument data for md5 $md5");
+my @instrument_data_ids = map { $_->instrument_data_id } @instrument_data_attributes;
+is(@instrument_data_ids, 2, "found instrument data for md5 $md5");
 my $read_group = 2883581797;
-my $cnt = 0;
-for my $instrument_data ( @instrument_data ) {
-    my ($bam_base_name, $is_paired_end, $read_count, $read_length) = @{$bams[$cnt]};
+
+for my $bam_data (@bams) {
+    my ($bam_base_name, $is_paired_end, $read_count, $read_length) = @$bam_data;
+    my $instrument_data = Genome::InstrumentData::Imported->get(
+        id => \@instrument_data_ids,
+        is_paired_end => $is_paired_end,
+    );
+    ok($instrument_data, "found instrument data for is_paired_end $is_paired_end") or die 'cannot continue without instrument data';
     is($instrument_data->subset_name, 'unknown', 'subset_name correctly set');
     is($instrument_data->sequencing_platform, 'solexa', 'sequencing_platform correctly set');
 
@@ -107,8 +108,6 @@ for my $instrument_data ( @instrument_data ) {
     my $allocation = $instrument_data->disk_allocation;
     ok($allocation, 'got allocation');
     ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
-
-    $cnt++;
 }
 
 # recreate
