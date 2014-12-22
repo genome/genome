@@ -36,7 +36,6 @@ class Genome::FeatureList {
             calculate_from => 'format',
             calculate => q( return scalar ($format =~ /1-based/); ),
         },
-        #file_id => { is => 'Integer', len => 8, is_optional => 1 },
     ],
     has_optional => [
         source => {

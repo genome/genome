@@ -213,7 +213,7 @@ sub create {
 
     # If no commit is on, make a dummy volume to allocate to
     if ($ENV{UR_DBI_NO_COMMIT}) {
-        if ($CREATE_DUMMY_VOLUMES_FOR_TESTING) { # && !$params{mount_path}) {
+        if ($CREATE_DUMMY_VOLUMES_FOR_TESTING) {
             my $tmp_volume = Genome::Disk::Volume->create_dummy_volume(
                 mount_path => $params{mount_path},
                 disk_group_name => $params{disk_group_name},
@@ -551,8 +551,7 @@ sub _execute_system_command {
         $allocation = $class->$method(%params);
     }
     else {
-        # remove the parens if you DARE
-        my @includes = map { ( '-I' => $_ ) } UR::Util::used_libs;
+        my @includes = map { -I => $_ } UR::Util::used_libs;
 
         my $param_string = Genome::Utility::Text::hash_to_string(\%params, 'q');
         my @statements = (

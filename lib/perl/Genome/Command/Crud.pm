@@ -114,8 +114,6 @@ sub init_sub_commands {
 
         # skip existing sub commands, except update
         if ( $command_name ne 'update' and grep { $command_name eq $_ } @namespace_sub_command_names ) {
-            next if not %command_config;
-            #Carp::confess("Subcommand '$sub_command' for namespace '$config{namespace}' already exists, but there is CRUD config for it. Please correct.");
             next;
         }
 
@@ -458,7 +456,6 @@ sub _build_add_remove_property_sub_commands {
                     doc => $property->{doc},
                 },
             ],
-            #doc => $function.' '.$property->{name_pl}.' to '.$config{target_name_pl},
             doc => $config{target_name_pl}.' '.$function.' '.$property->{name_pl},
         );
         no strict;
