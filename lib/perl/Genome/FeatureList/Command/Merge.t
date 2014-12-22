@@ -8,7 +8,6 @@ BEGIN {
 };
 
 use above "Genome";
-use Genome::Test::Factory::Model::ReferenceSequence;
 
 use Test::More tests => 52;
 
@@ -16,7 +15,7 @@ use_ok('Genome::FeatureList::Command::Merge');
 
 my $test_bed_dir = join('.', __FILE__, 'd');
 
-my $test_refseq = Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build;
+my $test_refseq = Genome::Model::Build::ReferenceSequence->get(name => 'NCBI-human-build36');
 
 my @input_feature_lists = (undef); #fill 0th position
 for (1..6) {

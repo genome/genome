@@ -23,10 +23,10 @@ sub create_library_specific_field_name {
 }
 
 sub create_library_specific_field_names {
-    my ($self, $fields, $library_names) = @_;
+    my ($self, $fields) = @_;
 
     my @field_names;
-    for my $library_name (@$library_names) {
+    for my $library_name ($self->library_names) {
         for my $field (@$fields) {
             push @field_names, $self->create_library_specific_field_name($field, $library_name);
         }

@@ -72,6 +72,7 @@ reports:
             'many-samples-vaf':
                 sample_names:
                     - normal
+                library_names: [library_names]
         params:
             sample_names:
                 - normal
@@ -182,6 +183,7 @@ reports:
             'many-samples-vaf':
                 sample_names:
                     - normal
+                library_names: [library_names]
         params:
             sample_names:
                 - normal

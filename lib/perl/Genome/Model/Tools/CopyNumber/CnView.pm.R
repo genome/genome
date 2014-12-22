@@ -425,8 +425,8 @@ openImageFile = function(name, type, image_width, image_height){
 cnvs=read.table(cnv_file, comment.char="#", header=TRUE)
 segments=read.table(segments_file, sep="\t", as.is=c(1,11), header=TRUE)
 
-if (nrow(cnvs) == 0 || nrow(segments) == 0){
-  print("CNV file or CNV-segments file empty. Skipping CnView.")
+if (nrow(cnvs) == 0){
+  print("CNV file empty. Skipping CnView.")
   q();
 }
 

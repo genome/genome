@@ -17,7 +17,7 @@ my $TEST_BWA_VERSION = "0.7.10";
 
 ## Test data setup
 my $temp_dir = Genome::Sys->create_temp_directory;
-my $data_dir = Genome::Utility::Test->data_dir($pkg, "v1");
+my $data_dir = Genome::Utility::Test->data_dir($pkg, "v2");
 my @input_fastqs = glob("$data_dir/*.fq");
 is(scalar @input_fastqs, 2, "Found 2 input files");
 my $header_file = sprintf("%s/header.sam", $data_dir);

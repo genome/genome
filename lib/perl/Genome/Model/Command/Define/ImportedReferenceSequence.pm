@@ -310,8 +310,10 @@ sub _get_or_create_model {
             'processing_profile_id' => $irs_pp->id,
             'name' => $self->model_name,
             'is_rederivable' => $self->is_rederivable,
-            'analysis_projects' => [$self->analysis_projects],
         );
+        if($self->analysis_projects) {
+            $model->add_analysis_project_bridge(analysis_project => $self->analysis_projects);
+        }
 
         if($model) {
             if(my @problems = $model->__errors__){

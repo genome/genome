@@ -9,6 +9,7 @@ use strict;
 use warnings;
 
 use above "Genome";
+use Test::Deep qw(cmp_bag);
 use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
@@ -22,7 +23,8 @@ isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
 
 subtest "one alt allele" => sub {
     my $interpreter = $pkg->create(
-        sample_names => ["S1", "S2", "S3"]
+        sample_names => ["S1", "S2", "S3"],
+        library_names => ["Solexa-135852", "Solexa-135853"],
     );
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
@@ -31,21 +33,18 @@ subtest "one alt allele" => sub {
             S1_vaf => 99.1279069767442,
             S1_ref_count => 3,
             S1_var_count => 341,
-            S1_per_library_var_count => 'Solexa-135852:155,Solexa-135853:186',
-            S1_per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
-            S1_per_library_vaf => 'Solexa-135852:87.0786516853933,Solexa-135853:99.4652406417112',
+            'Solexa-135852_var_count' => '155',
+            'Solexa-135853_var_count' => '186',
+            'Solexa-135852_ref_count' => '2',
+            'Solexa-135853_ref_count' => '1',
+            'Solexa-135852_vaf' => '87.0786516853933',
+            'Solexa-135853_vaf' => '99.4652406417112',
             S2_vaf => 99.1279069767442,
             S2_ref_count => 3,
             S2_var_count => 341,
-            S2_per_library_var_count => 'Solexa-135852:155,Solexa-135853:186',
-            S2_per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
-            S2_per_library_vaf => 'Solexa-135852:87.0786516853933,Solexa-135853:99.4652406417112',
             S3_vaf => 99.1279069767442,
             S3_ref_count => 3,
             S3_var_count => 341,
-            S3_per_library_var_count => 'Solexa-135852:155,Solexa-135853:186',
-            S3_per_library_ref_count => 'Solexa-135852:2,Solexa-135853:1',
-            S3_per_library_vaf => 'Solexa-135852:87.0786516853933,Solexa-135853:99.4652406417112',
         }
     );
 
@@ -55,7 +54,7 @@ subtest "one alt allele" => sub {
     is_deeply(\%result, \%expected, "Values are as expected");
     cmp_ok($result{G}->{S1_vaf}, ">", 99, 'vaf is in the desired range');
     cmp_ok($result{G}->{S1_vaf},  "<", 100, 'vaf is in the desired range');
-    is($interpreter->available_fields, keys %{$expected{G}}, 'Available fields as expected');
+    cmp_bag([$interpreter->available_fields], [keys %{$expected{G}}], 'Available fields as expected');
 };
 
 done_testing;

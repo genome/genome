@@ -2,7 +2,13 @@ use strict;
 use warnings;
 
 use Genome::Sys::Lock::NessyBackend;
-use Test::More tests => 2;
+use Test::More;
+
+if ($ENV{GENOME_NESSY_SERVER}) {
+    plan tests => 2;
+} else {
+    plan skip_all => 'No Nessy URL specified for testing.';
+}
 
 use List::Util qw(shuffle);
 
@@ -13,7 +19,7 @@ subtest 'basic test' => sub {
     diag 'resource = ' . $resource_name;
 
     my $n = Genome::Sys::Lock::NessyBackend->new(
-        url => 'http://nessy.gsc.wustl.edu/',
+        url => $ENV{GENOME_NESSY_SERVER},
         is_mandatory => 1,
     );
 
@@ -35,7 +41,7 @@ subtest 'instance validation' => sub {
     for (1..2) {
         push @r, 'NessLock.t/' . random_string();
         push @n, Genome::Sys::Lock::NessyBackend->new(
-            url => 'http://nessy.gsc.wustl.edu/',
+            url => $ENV{GENOME_NESSY_SERVER},
             is_mandatory => 1,
         );
         $n[-1]->lock(

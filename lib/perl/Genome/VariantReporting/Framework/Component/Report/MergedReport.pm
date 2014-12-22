@@ -67,6 +67,8 @@ sub _run {
 
     $self->validate(@reports_with_size);
 
+    $self->merge_legend_files();
+
     my $merged_file = $self->merge_files(@reports_with_size);
 
     my $sorted_file = $self->sort_file($merged_file);
@@ -107,6 +109,97 @@ sub move_file_to_output {
     Genome::Sys->move_file(
         $file, $self->_temp_output_file
     );
+}
+
+sub merge_legend_files {
+    my $self = shift;
+
+    my @legend_paths = $self->_get_input_report_legend_paths();
+    return unless(@legend_paths);
+
+    my $headers;
+    my $all_filters = Set::Scalar->new();
+    for my $legend_path (@legend_paths) {
+        ($headers, my $filters) = _get_headers_and_filters($legend_path);
+        $all_filters = $all_filters + $filters;
+    }
+
+    my @lines = (
+        'Headers',
+        @$headers,
+        'Filters',
+        sort $all_filters->members(),
+    );
+
+    my $output_path = File::Spec->join($self->temp_staging_directory,
+            $self->legend_file_name);
+    my $fh = Genome::Sys->open_file_for_writing($output_path);
+    $fh->write(join("\n", @lines));
+    $fh->close();
+    return $output_path;
+}
+
+sub _get_input_report_legend_paths {
+    my $self = shift;
+
+    my @legends;
+    for my $result ($self->report_results) {
+        if ($result->can('legend_path') &&
+            defined($result->legend_path) &&
+            -f $result->legend_path) {
+            push @legends, $result->legend_path;
+        }
+    }
+    return @legends;
+}
+
+sub _get_headers_and_filters {
+    my $legend_path = shift;
+
+    my $fh = Genome::Sys->open_file_for_reading($legend_path);
+    my $first_line = $fh->getline();
+    unless ($first_line =~ /^Headers/) {
+        die sprintf("Legend file (%s) appears to be malformed", $legend_path);
+    }
+
+    my @headers;
+    my $filters = Set::Scalar->new();
+    my $mode = 'headers';
+    while (my $line = $fh->getline()) {
+        chomp($line);
+        if ($line =~ /^Filters/) {
+            $mode = 'filters';
+            next;
+        }
+
+        if ($mode eq 'headers') {
+            push @headers, $line;
+        } elsif ($mode eq 'filters') {
+            $filters->insert($line);
+        }
+    }
+    return \@headers, $filters;
+}
+
+sub legend_file_name {
+    my $self = shift;
+    my @report_results = $self->report_results;
+    my $first_result = $report_results[0];
+    if ($first_result->can('legend_file_name')) {
+        return $first_result->legend_file_name;
+    } else {
+        return;
+    }
+}
+
+sub legend_path {
+    my $self = shift;
+
+    if (defined($self->legend_file_name)) {
+        return File::Spec->join($self->output_dir, $self->legend_file_name);
+    } else {
+        return;
+    }
 }
 
 sub merge_files {

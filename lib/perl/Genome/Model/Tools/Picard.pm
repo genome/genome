@@ -8,6 +8,7 @@ use File::Basename;
 use Sys::Hostname;
 use Genome::Utility::AsyncFileSystem qw(on_each_line);
 use Genome::Utility::Email;
+use List::MoreUtils 'uniq';
 
 my $PICARD_DEFAULT = '1.46';
 my $DEFAULT_MEMORY = 4;
@@ -144,6 +145,10 @@ my @PICARD_VERSIONS = (
 my %PICARD_VERSIONS = @PICARD_VERSIONS;
 
 sub latest_version { ($_[0]->installed_picard_versions)[0] }
+
+sub available_picard_versions {
+    return uniq(installed_picard_versions(), sort {$b cmp $a} keys %PICARD_VERSIONS);
+}
 
 sub path_for_picard_version {
     my ($class, $version) = @_;
