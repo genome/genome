@@ -615,6 +615,10 @@ sub prepare_scratch_sam_file {
     return 1;
 }
 
+# Override and return 1 if the aligner module can handle the read group
+# extraction more efficiently than copying the whole bam (e.g., by piping).
+sub can_extract_read_groups { 0 }
+
 sub requires_fastqs_to_align {
     my $self = shift;
     # disqualify if the aligner can't take a bam
@@ -678,7 +682,7 @@ sub collect_inputs {
     }
 
     # maybe we want to extract a read group from that bam and deal with that instead...
-    if (defined $self->instrument_data_segment_id) {
+    if (defined $self->instrument_data_segment_id && !$self->can_extract_read_groups) {
         $self->debug_message('Extract input read group bam');
         $bam_file = $self->_extract_input_read_group_bam;
         unless ($bam_file) {

@@ -18,13 +18,11 @@ class Genome::InstrumentData::AlignmentResult::BwamemStream {
 };
 
 
-sub required_memory_gb {
-    return 42;
-}
+sub can_extract_read_groups { 1 }
+sub required_memory_gb { 36 }
+sub fillmd_for_sam { 0 }
+sub accepts_bam_input { 1 }
 
-sub fillmd_for_sam {
-    return 0;
-}
 
 sub required_rusage {
     my $class = shift;
@@ -46,7 +44,6 @@ sub required_rusage {
 
     my $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
     $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD} if (Genome::Config->should_use_alignment_pd);
-    #$queue = "alignment-pd";
 
     my $host_groups;
     $host_groups = qx(bqueues -l $queue | grep ^HOSTS:);
@@ -83,7 +80,7 @@ sub tmp_megabytes_estimated {
     } elsif ($instrument_data->bam_path) {
         my $bam_path = $instrument_data->bam_path;
 
-        my $scale_factor = 6.0;
+        my $scale_factor = 8.0;
 
         my $bam_bytes = -s $bam_path;
         unless ($bam_bytes) {
@@ -113,11 +110,27 @@ sub _faidx_indexed_fasta {
     return $self->reference_build->full_consensus_path('fa');
 }
 
+sub _process_input_params {
+    my @inputs = @_;
+
+    my @bams =
+        map {my $x = $_; $x =~ s/\.bam:[01]$/.bam/; $x}
+        grep { /\.bam:[01]$/ } @inputs
+        ;
+
+    return (is_bam => 1, input_files => \@bams) if @bams;
+    return (is_bam => 0, input_files => \@inputs);
+}
+
 sub _run_aligner {
     my $self = shift;
-    my @input_paths = @_;
+    my @raw_input_paths = @_;
 
-    $self->_verify_params_and_inputs(@input_paths);
+    my $is_paired = scalar @raw_input_paths == 2;
+
+    my %input_params = _process_input_params(@raw_input_paths);
+
+    $self->_verify_params_and_inputs(@{$input_params{input_files}});
 
     # Verify the aligner and get params.
 
@@ -129,12 +142,21 @@ sub _run_aligner {
     my $param_hash = $self->decomposed_aligner_params;
     my $num_threads = delete $param_hash->{t} || 1;
     my $header_extra = $self->_sam_header_extra;
+
+    # We need to say -p to bwa mem if we are trying to align paired end reads.
+    if ($input_params{is_bam} && $is_paired) {
+        $param_hash->{p} = undef;
+    }
+
     if (exists $header_extra->{RG}) {
         my $rg_str = $header_extra->{RG};
         $rg_str =~ s/\t/\\t/g;
-        $param_hash->{R} = $rg_str;
+        $param_hash->{R} = sprintf("'%s'", $rg_str);
+        $self->debug_message("read group line: " . $param_hash->{R});
     }
-    delete $param_hash->{R};
+    else {
+        $self->debug_message("No read group information being added.");
+    }
 
     my $param_string = $self->_param_hash_to_string($param_hash);
 
@@ -143,19 +165,33 @@ sub _run_aligner {
 
     my $bam_output_path = $self->temp_staging_directory . "/all_sequences.bam";
 
+    my $max_mem_gb = $self->required_memory_gb;
+    # Leave 16GB for bwa mem + other misc tools, use the rest for
+    # samtools sort.
+    my $max_sort_mem_mb = ($max_mem_gb - 16) * 1024;
+
+    $self->debug_message("Max memory for sorting thread: ${max_sort_mem_mb}MB");
+
     my %params =  (
+        %input_params,
         sam_header_path => $self->scratch_sam_file_path,
         aligner_log_path => $log_path,
         num_threads => $num_threads,
         bwa_version => $self->aligner_version,
-        input_fastqs => \@input_paths,
         output_file => $bam_output_path,
         indexed_fasta => $self->_faidx_indexed_fasta,
         aligner_index_fasta => $self->_aligner_index_fasta,
         aligner_params => $param_string,
+        max_sort_memory_mb => $max_sort_mem_mb,
         );
 
-    $params{samtools_version} = $self->samtools_version if defined $self->samtools_version;
+    if ($self->instrument_data_segment_id) {
+        $params{limit_to_read_group} = $self->instrument_data_segment_id;
+    }
+
+    if (defined $self->samtools_version) {
+        $params{samtools_version} = $self->samtools_version
+    }
 
     my $cmd = Genome::Model::Tools::Bwa::RunMem->create(%params);
 
