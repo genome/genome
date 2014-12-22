@@ -210,7 +210,7 @@ sub _extract_allocation_owner_id {
 sub _validate_found_allocation {
     my ($class, $allocation, $result, $instance_output) = @_;
 
-    if (grep {$allocation->status} ('purged', 'invalid')) {
+    if (grep {$_ eq $allocation->status} ('purged', 'invalid')) {
         $class->warning_message("Found link to %s allocation (%s).  "
             . "Removing symlink.", $allocation->status, $allocation->id);
         unlink $instance_output;
