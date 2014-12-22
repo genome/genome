@@ -1,4 +1,4 @@
-#! /gsc/bin/perl
+#!/usr/bin/env genome-perl
 
 BEGIN {
     $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
@@ -26,6 +26,40 @@ ok($helpers, 'get helpers');
 my @source_files = (
     $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-Import-Basic/fastq-1.fq.gz',
     $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-Import-Basic/fastq-2.fastq',
+);
+
+# source file retrieval
+throws_ok(sub{ $helpers->source_file_retrieval_method(); }, qr/No source file to get retrieval method!/, 'source_file_retrieval_method fails w/o source file');
+my %source_files_and_retrieval_methods = (
+    'https://cghub.ucsc.edu/UUID' => 'cg hub',
+    'file://some/url.edu/file' => 'remote url',
+    'http://some.url.edu/file' => 'remote url',
+    '/some/local/file' => 'local disk',
+);
+for my $sf ( keys %source_files_and_retrieval_methods ) {
+    is(
+        $helpers->source_file_retrieval_method($sf),
+        $source_files_and_retrieval_methods{$sf},
+        "source file $sf retrieval method is '$source_files_and_retrieval_methods{$sf}'",
+    );
+}
+
+throws_ok(
+    sub{ $helpers->source_files_retrieval_method(); },
+    qr/No source files to get retrieval method!/,
+    'source_file_retrieval_methods fails w/o source file',
+);
+throws_ok(
+    sub{ $helpers->source_files_retrieval_method(keys %source_files_and_retrieval_methods); },
+    qr/Mixed file retrieval methods for source files! /,
+    'source_files_retrieval_method fails w/ many retrieval methods',
+);
+my @source_files_from_remote_url = grep { $source_files_and_retrieval_methods{$_} eq 'remote url' } keys %source_files_and_retrieval_methods;
+is(@source_files_from_remote_url, 2, '2 files from reote url');
+is(
+    $helpers->source_files_retrieval_method(@source_files_from_remote_url),
+    'remote url',
+    "source_file_retrieval_methods is 'remote url'",
 );
 
 # source file format
