@@ -358,3 +358,4 @@ remove_params_and_inputs_from_software_results [result_software_result] 2014-12-
 @1419271745 2014-12-22T18:09:06Z Adam Coffman <acoffman@genome.wustl.edu># remove unused columns in software result table
 
 drop_featurelist_file_id [model_feature_list] 2014-12-18T15:26:31Z Thomas B. Mooney <tmooney@genome.wustl.edu> # drop obsolete column
+@1419272844 2014-12-22T18:27:24Z Thomas B. Mooney <tmooney@genome.wustl.edu># dropped file_id column from feature lists
