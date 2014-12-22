@@ -40,9 +40,10 @@ class Genome::Model::Tools::EpitopePrediction::Pipeline {
             valid_values => [17, 21, 31],
             default_value => 21,
         },
-        allele => {
+        alleles => {
             is => 'Text',
-            doc => 'Allele name to be used for epitope prediction with NetMHC',
+            doc => 'A list of allele names to be used for epitope prediction with NetMHC',
+            is_many => 1,
         },
         epitope_length => {
             is => 'Text',
@@ -107,8 +108,6 @@ sub _construct_workflow {
     my $generate_variant_sequences_command = $self->_attach_generate_variant_sequences_command($workflow);
     my $filter_sequences_command = $self->_attach_filter_sequences_command($workflow);
     my $generate_fasta_key_command = $self->_attach_generate_fasta_key_command($workflow);
-    my $run_netmhc_command = $self->_attach_run_netmhc_command($workflow);
-    my $parse_netmhc_command = $self->_attach_parse_netmhc_command($workflow);
 
     $workflow->create_link(
         source => $get_wildtype_command,
@@ -128,32 +127,64 @@ sub _construct_workflow {
         destination => $generate_fasta_key_command,
         destination_property => 'input_file',
     );
+
+    my $netmhc_workflow = $self->create_netmhc_workflow;
+    $workflow->add_operation($netmhc_workflow);
+    for my $property (qw/allele epitope_length netmhc_version sample_name output_directory output_filter/) {
+        $workflow->connect_input(
+            input_property => $property,
+            destination => $netmhc_workflow,
+            destination_property => $property,
+        );
+    }
+
     $workflow->create_link(
         source => $filter_sequences_command,
         source_property => 'output_file',
-        destination => $run_netmhc_command,
+        destination => $netmhc_workflow,
         destination_property => 'fasta_file',
     );
     $workflow->create_link(
+        source => $generate_fasta_key_command,
+        source_property => 'output_file',
+        destination => $netmhc_workflow,
+        destination_property => 'key_file',
+    );
+
+    $workflow->connect_output(
+        output_property => "output_file",
+        source => $netmhc_workflow,
+        source_property => 'output_file',
+    );
+
+    return $workflow;
+}
+
+sub create_netmhc_workflow {
+    my $self = shift;
+
+    my $netmhc_workflow = Genome::WorkflowBuilder::DAG->create(
+        name => 'NetmhcWorkflow',
+        log_dir => $self->output_directory,
+        parallel_by => 'allele',
+    );
+    my $run_netmhc_command = $self->_attach_run_netmhc_command($netmhc_workflow);
+    my $parse_netmhc_command = $self->_attach_parse_netmhc_command($netmhc_workflow);
+
+    $netmhc_workflow->create_link(
         source => $run_netmhc_command,
         source_property => 'output_file',
         destination => $parse_netmhc_command,
         destination_property => 'netmhc_file',
     );
-    $workflow->create_link(
-        source => $generate_fasta_key_command,
-        source_property => 'output_file',
-        destination => $parse_netmhc_command,
-        destination_property => 'key_file',
-    );
 
-    $workflow->connect_output(
-        output_property => 'output_file',
+    $netmhc_workflow->connect_output(
+        output_property => "output_file",
         source => $parse_netmhc_command,
         source_property => 'parsed_file',
     );
 
-    return $workflow;
+    return $netmhc_workflow;
 }
 
 sub _attach_get_wildtype_command {
@@ -227,18 +258,18 @@ sub _attach_run_netmhc_command {
     my $workflow = shift;
 
     my $run_netmhc_command = Genome::WorkflowBuilder::Command->create(
-        name => 'RunNetMHCCommand',
+        name => "RunNetMHCCommand",
         command => $self->run_netmhc_command_name,
     );
     $workflow->add_operation($run_netmhc_command);
-    $self->_add_common_inputs($workflow, $run_netmhc_command);
-    for my $property (qw/allele epitope_length netmhc_version sample_name/) {
+    for my $property (qw/allele epitope_length netmhc_version sample_name fasta_file output_directory/) {
         $workflow->connect_input(
             input_property => $property,
             destination => $run_netmhc_command,
             destination_property => $property,
         );
     }
+
     return $run_netmhc_command;
 }
 
@@ -247,12 +278,11 @@ sub _attach_parse_netmhc_command{
     my $workflow = shift;
 
     my $parse_netmhc_command = Genome::WorkflowBuilder::Command->create(
-        name => 'ParseNetMHCCommand',
+        name => "ParseNetMHCCommand",
         command => $self->parse_netmhc_command_name,
     );
     $workflow->add_operation($parse_netmhc_command);
-    $self->_add_common_inputs($workflow, $parse_netmhc_command);
-    for my $property (qw/output_filter netmhc_version/) {
+    for my $property (qw/output_filter netmhc_version key_file output_directory/) {
         $workflow->connect_input(
             input_property => $property,
             destination => $parse_netmhc_command,
@@ -393,8 +423,10 @@ sub _validate_inputs {
         die $self->error_message("Anno DB version invalid: " . $self->anno_db_version);
     }
 
-    unless (Genome::Model::Tools::EpitopePrediction::RunNetmhc->is_valid_allele_for_netmhc_version($self->allele, $self->netmhc_version)) {
-        die $self->error_message("Allele %s not valid for NetMHC version %s", $self->allele, $self->netmhc_version);
+    for my $allele ($self->alleles) {
+        unless (Genome::Model::Tools::EpitopePrediction::RunNetmhc->is_valid_allele_for_netmhc_version($allele, $self->netmhc_version)) {
+            die $self->error_message("Allele %s not valid for NetMHC version %s", $allele, $self->netmhc_version);
+        }
     }
 
     return 1;
@@ -409,11 +441,11 @@ sub _get_workflow_inputs {
         anno_db => $self->anno_db,
         anno_db_version => $self->anno_db_version,
         peptide_sequence_length => $self->peptide_sequence_length,
-        allele => $self->allele,
         epitope_length => $self->epitope_length,
         netmhc_version => $self->netmhc_version,
         output_filter => $self->output_filter,
         sample_name => $self->sample_name,
+        allele => [$self->alleles],
     );
 
     return \%inputs;
@@ -421,8 +453,9 @@ sub _get_workflow_inputs {
 
 sub final_output_file {
     my $self = shift;
+    my $allele = shift;
 
-    my $file_name = join ('.', $self->sample_name, $self->allele, $self->epitope_length, 'netmhc', 'parsed', $self->output_filter);
+    my $file_name = join ('.', $self->sample_name, $allele, $self->epitope_length, 'netmhc', 'parsed', $self->output_filter);
     return File::Spec->join($self->output_directory, $file_name);
 }
 
