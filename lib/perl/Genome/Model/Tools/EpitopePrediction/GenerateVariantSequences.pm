@@ -152,7 +152,13 @@ sub get_wildtype_subsequence_for_printing {
         $mutation_position = ($peptide_sequence_length - 1) / 2;
     }
     else {
-        $self->warning_message("Length of wildtype sequence is shorter than desired peptide length of output. Skipping position $position");
+        die $self->error_message(
+            'Something went wrong during the retrieval of the wildtype sequence at position (%s, %s, %s, %s)',
+            $protein_arr->[0],
+            $protein_arr->[1],
+            $protein_arr->[2],
+            join('', @arr_wildtype_sequence)
+        );
     }
 
     return $mutation_position, @wildtype_arr;
