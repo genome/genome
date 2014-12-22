@@ -258,7 +258,6 @@ sub _script_pre_lines {
 
     return <<EOS;
 exec 3>&1 # Save stdout to fd3 (for bedtools)
-exec 4>&2 # Save stderr to fd4 (for bedtools)
 EOS
 }
 
@@ -267,7 +266,6 @@ sub _script_post_lines {
 
     return <<EOS;
 exec 3>&- # Close fd3
-exec 4>&- # Close fd4
 EOS
 }
 
@@ -320,14 +318,19 @@ sub _bam_to_fastq_commands {
 
     return <<EOS;
 {
-    $path bamtofastq -i /dev/stdin -fq /dev/stdout -fq2 /dev/stdout 2>&1 1>&3 3>&- \\
-        | if grep -q 'WARNING: Query'
-        then
-            echo '$bad_sort_msg' 1>&4
-            exit 1
-        fi 3>&- \\
+    $path bamtofastq -i /dev/stdin -fq /dev/stdout -fq2 /dev/stdout 3>&1 1>&2 2>&3 \\
+        | {
+            tee >(
+                if grep -q 'WARNING: Query'
+                then
+                    echo '$bad_sort_msg'
+                    exit 1
+                fi
+                ) \\
+            ;
+        } 2>&1\\
     ; # redirect fd3 -> stdout, fd4 -> stderr
-} 3>&1 4>&2 \\
+} 3>&1 1>&2 2>&3 \\
 EOS
 }
 
