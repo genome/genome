@@ -232,64 +232,11 @@ sub load_cghub_info {
     return \%id_hash;
 }
 
-sub resolve_capture_reagent {
-    my $self = shift;
-    my $build = shift;
-
-    my %CAPTURE_REAGENTS = (
-        "SeqCap EZ Human Exome v2.0" => {
-            vendor => "Nimblegen",
-            name => "Nimblegen SeqCap EZ Human Exome Library v2.0",
-            number => "05860504001",
-            url => "Proprietary",
-        },
-        "11111001 capture chip set" => {
-            vendor => "Nimblegen",
-            name => "Nimblegen EZ Exome v3.0",
-            number => "06465692001",
-            url => "Proprietary",
-        },
-        "SeqCap EZ Human Exome v3.0" => {
-            vendor => "Nimblegen",
-            name => "Nimblegen SeqCap EZ Human Exome Library v3.0",
-            number => "06465692001",
-            url => "Proprietary",
-        },
-        "SeqCap EZ Human Exome v3.0 + HBV_IDT_probes pooled probes + HPV IDT all pooled probes" => {
-            vendor => "IDT,IDT,Nimblegen",
-            name => "HBV_IDT_probes pooled probes,HPV IDT all pooled probes,Nimblegen SeqCap EZ Human Exome Library v3.0",
-            number => "NA,NA,06465692001",
-            url => "ftp://genome.wustl.edu/pub/custom_capture/HBV_IDT_probes_pooled_probes/40774c8461274a81b4d223161dc84936.bed,ftp://genome.wustl.edu/pub/custom_capture/HPV_IDT_all_pooled_probes/37b1fc41fd114b64b94336ff9b4d97ae.bed,Proprietary",
-        },
-        "Nimblegen_V3_Exome_HPV_Probes_HG19 capture oligo tube" => {
-            vendor => "IDT,Nimblegen",
-            name => "HPV_IDT_probes capture chip set,Nimblegen SeqCap EZ Human Exome Library v3.0",
-            number => "NA,06465692001",
-            url => "ftp://genome.wustl.edu/pub/custom_capture/HPV_IDT_probes_capture_chip_set/AC6217418DAB11E1BD99FC55D6BB89D5.bed,Proprietary",
-        },
-        "HPV IDT all pooled probes + SeqCap EZ Human Exome v3.0" => {
-            vendor => "IDT,Nimblegen",
-            name => "HPV IDT all pooled probes,SeqCap EZ Human Exome v3.0",
-            number => "NA,06465692001",
-            url => "ftp://genome.wustl.edu/pub/custom_capture/HPV_IDT_all_pooled_probes/37b1fc41fd114b64b94336ff9b4d97ae.bed,Proprietary",
-        },
-    );
-    unless ($build->model->target_region_set_name) {#WGS
-        return (undef, undef, undef, "NA", "NA", "NA");
-    }
-
-    my $reagent_info = $CAPTURE_REAGENTS{$build->model->target_region_set_name};
-    unless (defined $reagent_info) {
-        die "No reagent info for capture set name: ".$build->target_region_set_name;
-    }
-    return ($reagent_info->{vendor}, $reagent_info->{name}, $reagent_info->{number}, $reagent_info->{url}, "BED", "http://genome.ucsc.edu/FAQ/FAQformat.html#format1");
-}
-
 sub create_maf_row {
     my $self = shift;
     my $build = shift;
     my $somatic_build = shift;
-    my $maf_file =shift;
+    my $maf_file = shift;
     my $sample_info = shift;
 
     my $row = $self->fill_in_common_fields($build, $somatic_build, $sample_info);
@@ -306,5 +253,419 @@ sub create_maf_row {
     return $row;
 }
 
-1;
+sub resolve_capture_reagent {
+    my $self = shift;
+    my $build = shift;
 
+    if ($build->has_imported_instrument_data) {
+        return (undef, undef, undef, undef, undef, undef);
+    }
+    unless ($build->model->target_region_set_name) {#WGS
+        return (undef, undef, undef, "NA", "NA", "NA");
+    }
+
+    my %CAPTURE_REAGENTS = $self->capture_reagents;
+
+    # Initialize to common hardcoded values
+    my $total_reagent_info = {
+        target_file_format => "BED",
+        target_file_version => "http://genome.ucsc.edu/FAQ/FAQformat.html#format1",
+    };
+
+    # In the target_region_set_name, reagents will appear as 'reagent1 + reagent2 + reagentN'
+    my @target_region_components = split /\+/, $build->model->target_region_set_name;
+
+    for my $component (@target_region_components) {
+        $component =~ s/^\s+|\s+$//g;
+        my $reagent_infos = $CAPTURE_REAGENTS{$component};
+        unless (defined $reagent_infos) {
+            die $self->error_message("No reagent info for sub-component (%s) of capture set name (%s) from build (%s).", $component, $build->target_region_set_name, $build->id);
+        }
+
+        # Each target region component has (possibly) multiple reagents
+        for my $reagent_info (@$reagent_infos) {
+            for my $key ($self->mutable_capture_reagent_keys) {
+                if (defined $total_reagent_info->{$key}) {
+                    $total_reagent_info->{$key} = join(",", $total_reagent_info->{$key}, $reagent_info->{$key});
+                } else {
+                    $total_reagent_info->{$key} = $reagent_info->{$key};
+                }
+            }
+        }
+    }
+
+    return (map { $total_reagent_info->{$_} } $self->capture_reagent_keys);
+}
+
+# The order here matters due to the way resolve_capture_reagent returns
+sub capture_reagent_keys {
+    my $self = shift;
+    my @keys = $self->mutable_capture_reagent_keys;
+    push @keys, qw(target_file_format target_file_version);
+    return @keys;
+}
+
+sub mutable_capture_reagent_keys {
+    return qw(reagent_vendor reagent_name catalog_number target_file);
+}
+
+# The following hash was pulled from /gsc/scripts/opt/lims/snapshots/current/lib/perl5/CGHub.pm
+sub capture_reagents {
+    return (
+        '11111001 capture chip set' => [
+            {
+                reagent_vendor => 'Nimblegen',
+                reagent_name   => 'Nimblegen EZ Exome v3.0',
+                catalog_number => '06465692001',
+                target_file    => 'http://www.nimblegen.com/downloads/annotation/ez_exome_v3/SeqCapEZ_Exome_v3.0_Design_Annotation_files.zip#SeqCap_EZ_Exome_v3_capture.bed',
+            },
+        ],
+        '120613_HG19_EC_HPV_39235 capture oligo tube' => [
+            # This is the 11111001 capture chip set Nimblegen reagent combined
+            # with custom HPV IDT probes
+            {
+                reagent_vendor => 'Nimblegen',
+                reagent_name   => 'Nimblegen EZ Exome v3.0',
+                catalog_number => '06465692001',
+                target_file    => 'http://www.nimblegen.com/downloads/annotation/ez_exome_v3/SeqCapEZ_Exome_v3.0_Design_Annotation_files.zip#SeqCap_EZ_Exome_v3_capture.bed',
+            },
+            {
+                reagent_vendor => 'IDT',
+                reagent_name   => '120613_HG19_EC_HPV_39235 capture oligo tube',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/120613_HG19_EC_HPV_39235_capture_oligo_tube/6D44F569CD1711E1AFBE5C7646F0A7A3.bed',
+            },
+        ],
+        '37543 capture oligo tube' => [
+            {
+                # Custom through Nimblegen
+                reagent_vendor => 'Nimblegen',
+                reagent_name   => '37543 capture oligo tube',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/37543_capture_oligo_tube/7FA367D2572211E18F4237793494AFD5.bed',
+            },
+        ],
+        '37810 capture oligo tube' => [
+            {
+                # Custom through Nimblegen
+                reagent_vendor => 'Nimblegen',
+                reagent_name   => '37810 capture oligo tube',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/37810_capture_oligo_tube/9E6401595C3211E1B2416043993C62A0.bed',
+            },
+        ],
+        'AML_KP - OID36117 capture chip set' => [
+            {
+                # Custom through Nimblegen
+                reagent_vendor => 'Nimblegen',
+                reagent_name   => 'AML_KP - OID36117 capture chip set',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/AML_KP_OID36117_capture_chip_set/D64EFD6F04F011E18AB3DB401536219E.bed',
+            },
+        ],
+        'HPV IDT all pooled probes' => [
+            {
+                reagent_vendor => 'IDT',
+                reagent_name   => 'HPV IDT all pooled probes',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/HPV_IDT_all_pooled_probes/37b1fc41fd114b64b94336ff9b4d97ae.bed',
+            },
+        ],
+        'Nimblegen_V3_Exome_HPV_Probes_HG19 capture oligo tube' => [
+            {
+                reagent_vendor => 'IDT',
+                reagent_name   => 'HPV_IDT_probes capture chip set',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/HPV_IDT_probes_capture_chip_set/AC6217418DAB11E1BD99FC55D6BB89D5.bed',
+            },
+            {
+                reagent_vendor => 'Nimblegen',
+                reagent_name   => 'Nimblegen SeqCap EZ Human Exome Library v3.0',
+                catalog_number => '06465692001',
+                target_file    => 'http://www.nimblegen.com/downloads/annotation/ez_exome_v3/SeqCapEZ_Exome_v3.0_Design_Annotation_files.zip#SeqCap_EZ_Exome_v3_capture.bed',
+            },
+        ],
+        'RT42434_combined_capture_pool' => [
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'RT42434_pool_1',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/RT42434_pool_1/RT42434_pool_1.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'RT42434_pool_2',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/RT42434_pool_2/RT42434_pool_2.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'RT42434_pool_3',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/RT42434_pool_3/RT42434_pool_3.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'RT42434_pool_1b',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/RT42434_pool_1b/RT42434_pool_1b.bed',
+            },
+        ],
+        'RT42434_pool_1' => [
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'RT42434_pool_1',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/RT42434_pool_1/RT42434_pool_1.bed',
+            },
+        ],
+        'RT45860 combined pool 55k (a/b) and 27k (1/2)' => [
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'RT42434_pool_1',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/RT42434_pool_1/RT42434_pool_1.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'RT42434_pool_2',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/RT42434_pool_2/RT42434_pool_2.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'RT42434_pool_3',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/RT42434_pool_3/RT42434_pool_3.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'RT42434_pool_1b',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/RT42434_pool_1b/RT42434_pool_1b.bed',
+            },
+        ],
+        'RT47454 TCGA OV Reorder combined pool' => [
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'TCGA OV Reorder high',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/TCGA_OV_Reorder_high/TCGA_OV_Reorder_high.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'TCGA OV Reorder highest',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/TCGA_OV_Reorder_highest/TCGA_OV_Reorder_highest.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'TCGA OV Reorder low',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/TCGA_OV_Reorder_low/TCGA_OV_Reorder_low.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'TCGA OV Reorder lowest',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/TCGA_OV_Reorder_lowest/TCGA_OV_Reorder_lowest.bed',
+            },
+        ],
+        'SeqCap EZ Human Exome v2.0' => [
+            {
+                reagent_vendor => 'Nimblegen',
+                reagent_name   => 'Nimblegen SeqCap EZ Human Exome Library v2.0',
+                catalog_number => '05860504001',
+                target_file    => 'http://www.nimblegen.com/downloads/annotation/ez_exome_v2/SeqCapEZ_Exome_v2.0_Design_Annotation_files.zip#Design_Annotation_files/Target_Regions/SeqCap_EZ_Exome_v2.bed',
+            },
+        ],
+        'SeqCap EZ Human Exome v3.0' => [
+            {
+                reagent_vendor => 'Nimblegen',
+                reagent_name   => 'Nimblegen SeqCap EZ Human Exome Library v3.0',
+                catalog_number => '06465692001',
+                target_file    => 'http://www.nimblegen.com/downloads/annotation/ez_exome_v3/SeqCapEZ_Exome_v3.0_Design_Annotation_files.zip#SeqCap_EZ_Exome_v3_capture.bed',
+            },
+        ],
+        'TCGA OV Massive Pool for RT48966' => [
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'RT42434_pool_1',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/RT42434_pool_1/RT42434_pool_1.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'RT42434_pool_2',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/RT42434_pool_2/RT42434_pool_2.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'RT42434_pool_3',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/RT42434_pool_3/RT42434_pool_3.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'RT42434_pool_1b',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/RT42434_pool_1b/RT42434_pool_1b.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'TCGA OV Reorder high',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/TCGA_OV_Reorder_high/TCGA_OV_Reorder_high.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'TCGA OV Reorder highest',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/TCGA_OV_Reorder_highest/TCGA_OV_Reorder_highest.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'TCGA OV Reorder low',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/TCGA_OV_Reorder_low/TCGA_OV_Reorder_low.bed',
+            },
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'TCGA OV Reorder lowest',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/TCGA_OV_Reorder_lowest/TCGA_OV_Reorder_lowest.bed',
+            },
+        ],
+        'TCGA OV Reorder high' => [
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'TCGA OV Reorder high',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/TCGA_OV_Reorder_high/TCGA_OV_Reorder_high.bed',
+            },
+        ],
+        'TCGA OV Reorder highest' => [
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'TCGA OV Reorder highest',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/TCGA_OV_Reorder_highest/TCGA_OV_Reorder_highest.bed',
+            },
+        ],
+        'TCGA OV Reorder low' => [
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'TCGA OV Reorder low',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/TCGA_OV_Reorder_low/TCGA_OV_Reorder_low.bed',
+            },
+        ],
+        'TCGA OV Reorder lowest' => [
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'TCGA OV Reorder lowest',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/TCGA_OV_Reorder_lowest/TCGA_OV_Reorder_lowest.bed',
+            },
+        ],
+        'WO2736953 pooled probes' => [
+            {
+                reagent_vendor => 'IDT',
+                reagent_name   => 'WO2736953 pooled probes',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/WO2736953_pooled_probes/784c240d7e6942afb8514ebdb6a950d9.bed',
+            },
+        ],
+        'WO2768646 pooled probes' => [
+            {
+                reagent_vendor => 'IDT',
+                reagent_name   => 'WO2768646 pooled probes',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/WO2768646_pooled_probes/562e962c09834121a17bf931182c90e7.bed',
+            },
+        ],
+        'WO2790654 pooled probes' => [
+            {
+                reagent_vendor => 'IDT',
+                reagent_name   => 'WO2790654 pooled probes',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/WO2790654_pooled_probes/1d60152280514553b6a01cd20d2b12e8.bed',
+            },
+        ],
+        'WO2791991 pooled probes' => [
+            {
+                reagent_vendor => 'IDT',
+                reagent_name   => 'WO2791991 pooled probes',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/WO2791991_pooled_probes/ce2c7958845b4895b878a6eda8a9c521.bed',
+            },
+        ],
+        'WO2793950 pooled probes' => [
+            {
+                reagent_vendor => 'IDT',
+                reagent_name   => 'WO2793950 pooled probes',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/WO2793950_pooled_probes/0383d24d42694f7a98b17df4f5104b4d.bed',
+            },
+        ],
+        'WO2830729 pooled probes' => [
+            {
+                reagent_vendor => 'IDT',
+                reagent_name   => 'WO2830729 pooled probes',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/WO2830729_pooled_probes/fe74a5ca10fc4f378a733cdfd308b130.bed',
+            },
+        ],
+        'WO2831284 pooled probes' => [
+            {
+                reagent_vendor => 'IDT',
+                reagent_name   => 'WO2831284 pooled probes',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/WO2831284_pooled_probes/b431049e36034157903ae2c75302af2d.bed',
+            },
+        ],
+        'agilent sureselect exome version 1' => [
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'SureSelect Human All Exon 50Mb Kit',
+                catalog_number => 'S02972011',
+                target_file    => 'https://earray.chem.agilent.com/earray/',
+            },
+        ],
+        'agilent sureselect exome version 2 broad' => [
+            {
+                reagent_vendor => 'Agilent',
+                reagent_name   => 'SureSelect Human All Exon 38 Mb v2',
+                catalog_number => 'S0293689',
+                target_file    => 'https://earray.chem.agilent.com/earray/',
+            },
+        ],
+        'hg18 nimblegen exome version 2' => [
+            {
+                reagent_vendor => 'Nimblegen',
+                reagent_name   => 'hg18 nimblegen exome version 2',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/hg18_nimblegen_exome_version_2/hg18_nimblegen_exome_version_2.bed',
+            },
+        ],
+        'nimblegen exome version 1' => [
+            {
+                reagent_vendor => 'Nimblegen',
+                reagent_name   => 'NimbleGen Sequence Capture 2.1M Human Exome Array',
+                catalog_number => 'Obsolete',
+                target_file    => 'http://www.nimblegen.com/downloads/annotation/seqcap_exome/2.1M_Human_Exome_Annotation.zip#2.1M_Human_Exome.bed',
+            },
+        ],
+        'HBV_IDT_probes pooled probes' => [
+            {
+                reagent_vendor => 'IDT',
+                reagent_name   => 'HBV_IDT_probes pooled probes',
+                catalog_number => 'NA',
+                target_file    => 'ftp://genome.wustl.edu/pub/custom_capture/HBV_IDT_probes_pooled_probes/40774c8461274a81b4d223161dc84936.bed',
+            }
+        ],
+    );
+}
+
+1;

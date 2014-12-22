@@ -1,0 +1,35 @@
+---
+experts:
+  bam-readcount:
+    aligned_bam_result_id:
+      - -b52e1b52f81e4541af7f71ce14ca96f6
+      - -533e0bb1a99f4fbe9e31cf6e19907133
+      - -ghij4i5j230509ug345
+    insertion_centric: 0
+    max_count: 10000000
+    minimum_base_quality: 0
+    minimum_mapping_quality: 0
+    per_library: 1
+    version: 0.6
+needs_translation: 0
+reports:
+  bed:
+    filters: {}
+    interpreters:
+      bed-entry: {}
+    params:
+      generate_legend_file: 0
+  docm:
+    filters: {}
+    interpreters:
+      many-samples-vaf:
+        sample_names:
+          - TEST-patient1-somval_tumor1
+          - TEST-patient1-somval_tumor2
+          - TEST-patient1-somval_normal1
+      position: {}
+    params:
+      sample_names:
+        - TEST-patient1-somval_tumor1
+        - TEST-patient1-somval_tumor2
+        - TEST-patient1-somval_normal1

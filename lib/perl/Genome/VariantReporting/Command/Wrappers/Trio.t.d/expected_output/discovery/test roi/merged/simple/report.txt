@@ -1,0 +1,1 @@
+chromosome_name	start	stop	reference	variant	variant_type	transcript_name	trv_type	amino_acid_change	default_gene_name	ensembl_gene_id

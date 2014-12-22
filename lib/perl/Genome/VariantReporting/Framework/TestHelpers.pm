@@ -31,6 +31,7 @@ our @EXPORT_OK = qw(
     get_reference_build
     get_translation_provider_with_vep
     test_dag_xml
+    test_xml
     test_dag_execute
     test_expert_is_registered
 );
@@ -136,16 +137,22 @@ sub get_sample_name {
 
 sub test_dag_xml {
     my ($dag, $test_file) = @_;
-
-    my $expected_xml_path = File::Spec->join($test_file . '.d', 'expected.xml');
-
     my $xml_path = Genome::Sys->create_temp_file_path;
     write_file($xml_path, $dag->get_xml);
+
+    return test_xml($xml_path, $test_file);
+}
+
+sub test_xml {
+    my ($xml_path, $test_file) = @_;
+
+    my $expected_xml_path = File::Spec->join($test_file . '.d', 'expected.xml');
 
     if ($ENV{GENERATE_TEST_DATA}) {
         File::Copy::copy($xml_path, $expected_xml_path);
     }
     compare_ok($expected_xml_path, $xml_path, "Xml looks as expected");
+    return;
 }
 
 sub test_dag_execute {

@@ -29,7 +29,17 @@ my %modes = (
     '00010' => 00010, '00020' => 00020, '00040' => 00040,
     '00001' => 00001, '00002' => 00002, '00004' => 00004,
 );
-plan tests => scalar(keys %modes) + scalar(keys %bit);
+
+my %multimodes = (
+    (S_IRWXO) => {
+        pass => [00007, 00057, 00077],
+        fail => [00005, 00075],
+    }
+);
+
+plan tests => scalar(keys %modes)
+    + scalar(keys %bit)
+    + scalar(map { @$_ } map { values %$_ } values %multimodes);
 
 do {
     my $file = File::Temp->new();
@@ -51,6 +61,28 @@ do {
                 }
             }
         };
+    }
+};
+
+do {
+    my $file = File::Temp->new();
+    my $filename = $file->filename;
+
+    for my $bitmask (sort keys %multimodes) {
+        for my $mode (@{$multimodes{$bitmask}{pass}}) {
+            chmod $mode, $filename;
+
+            my $got = mode($filename);
+            ok($got->has_bit($bitmask),
+                sprintf("Bitmask '0%04o' passes for mode '0%04o'", $bitmask, $mode));
+        }
+        for my $mode (@{$multimodes{$bitmask}{fail}}) {
+            chmod $mode, $filename;
+
+            my $got = mode($filename);
+            ok(!$got->has_bit($bitmask),
+                sprintf("Bitmask '0%04o' fails for mode '0%04o'", $bitmask, $mode));
+        }
     }
 };
 

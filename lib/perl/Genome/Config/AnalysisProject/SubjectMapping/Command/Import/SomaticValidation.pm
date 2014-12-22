@@ -6,13 +6,8 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject::SubjectMapping::Command::Import::SomaticValidation {
-    is => 'Command::V2',
+    is => 'Genome::Config::AnalysisProject::Command::Base',
     has_input => [
-        analysis_project =>  {
-            is => 'Genome::Config::AnalysisProject',
-            shell_args_position => 1,
-            doc => 'The AnalysisProject to associate these experimental pairings with',
-        },
         file_path => {
             is => 'Text',
             shell_args_position => 2,
@@ -42,6 +37,10 @@ A header is optional and should be preceded with a '#' if present.
 Both tumor and normal subject can be specified by either ID or Name.
 Tags may also be specified by either ID or Name.
 EOS
+}
+
+sub valid_statuses {
+    return ("Pending", "Hold", "In Progress");
 }
 
 my @subjects = ('tumor_sample', 'normal_sample');
@@ -127,20 +126,6 @@ sub _link_to_tag {
     die($self->error_message("Unable to find a tag from identifier: %s", $tag_string)) unless $tag;
 
     $tag->add_subject_mapping($mapping);
-}
-
-sub __errors__ {
-    my $self = shift;
-    my @errors = $self->SUPER::__errors__(@_);
-    my $status = $self->analysis_project->status;
-    unless(grep{$_ eq $status} ("Pending", "Hold", "In Progress")){
-        push @errors, UR::Object::Tag->create(
-            type => 'error',
-            properties => ['analysis_project'],
-            desc => "Can't assign subject mappings to analysis project with status: $status" 
-        );
-    }
-    return @errors;
 }
 
 1;

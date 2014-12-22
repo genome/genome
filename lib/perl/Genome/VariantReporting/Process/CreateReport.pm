@@ -15,7 +15,7 @@ class Genome::VariantReporting::Process::CreateReport {
         variant_type => {
             is => 'Text',
         },
-        reporter_names => {
+        report_names => {
             is => 'Text',
             is_many => 1,
         }
@@ -35,10 +35,10 @@ sub symlink_results {
     my $destination = shift;
 
     Genome::Sys->create_directory($destination);
-    for my $reporter_name ($self->reporter_names) {
-        my $specific_destination = File::Spec->join($destination, $reporter_name);
+    for my $report_name ($self->report_names) {
+        my $specific_destination = File::Spec->join($destination, $report_name);
         Genome::Sys->create_directory($specific_destination);
-        Genome::Sys->symlink_directory($self->output_directory($reporter_name),
+        Genome::Sys->symlink_directory($self->output_directory($report_name),
             $specific_destination);
     }
 
@@ -46,9 +46,9 @@ sub symlink_results {
 }
 
 sub output_directory {
-    my ($self, $reporter_name) = validate_pos(@_, 1, 1);
+    my ($self, $report_name) = validate_pos(@_, 1, 1);
 
-    my $result = $self->result_with_label($reporter_name);
+    my $result = $self->result_with_label($report_name);
     return $result->output_dir;
 }
 

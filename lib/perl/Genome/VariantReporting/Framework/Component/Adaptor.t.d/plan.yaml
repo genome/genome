@@ -2,7 +2,7 @@ experts:
     __test__:
         __planned__: foo
         __input__: __input__
-reporters:
+reports:
     __test__:
         interpreters:
             __test__: {}

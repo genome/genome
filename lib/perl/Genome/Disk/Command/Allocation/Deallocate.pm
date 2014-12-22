@@ -18,8 +18,10 @@ class Genome::Disk::Command::Allocation::Deallocate {
     doc => 'removes target allocation and deletes its directories',
 };
 
+sub _is_hidden_in_docs { !Genome::Sys->current_user_is_admin }
+
 sub help_brief {
-    return 'removes the target allocation and deletes its directories';
+    return 'PERMANENTLY DELETES files and database records';
 }
 
 sub help_synopsis {
@@ -27,7 +29,8 @@ sub help_synopsis {
 }
 
 sub help_detail {
-    return 'removes the target allocation and deletes its directories';
+    return "PERMANENTLY DELETES the allocation's files and removes its "
+        . 'database records. The files and records are unrecoverable.';
 }
 
 sub execute { 

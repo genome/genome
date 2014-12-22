@@ -35,12 +35,12 @@ $plan->validate();
 $plan->validate_translation_provider($provider);
 $plan->translate($provider->translations);
 
-for my $reporter_name (qw(reporter_alpha reporter_gamma)) {
-    subtest "reporter_name = $reporter_name" => sub {
+for my $report_name (qw(report_alpha report_gamma)) {
+    subtest "report_name = $report_name" => sub {
         my $generator = $pkg->create(
             input_vcf => $vcf_file,
             plan_json => $plan->as_json,
-            reporter_name => 'reporter_alpha',
+            report_name => 'report_alpha',
             variant_type => "snvs",
         );
         ok($generator->isa($pkg), "Generator created ok");
@@ -48,7 +48,7 @@ for my $reporter_name (qw(reporter_alpha reporter_gamma)) {
 
         my $result = $generator->output_result;
         my $expected_directory = File::Spec->join($data_dir,
-            'expected', $reporter_name);
+            'expected', $report_name);
 
         if ($ENV{GENERATE_TEST_DATA}) {
             local $File::Copy::Recursive::RMTrgDir = 1;

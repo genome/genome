@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use version 0.77;
 use Carp qw/confess/;
 use Sys::Hostname;
 
@@ -78,6 +79,14 @@ sub is_gzip_compatible {
 sub use_zcat {
     my $self = shift;
     return ($self->use_bgzip and not $self->is_gzip_compatible);
+}
+
+sub check_minimum_version {
+    my ($self, $min_version) = @_;
+    if(version->parse("v".$self->use_version) < version->parse("v$min_version")) {
+        die $self->error_message("This module requires joinx version $min_version or higher to function correctly.");
+    }
+    return 1;
 }
 
 1;

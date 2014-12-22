@@ -7,13 +7,8 @@ use Genome;
 use Set::Scalar;
 
 class Genome::Config::AnalysisProject::Command::AddInstrumentData {
-    is => 'Command::V2',
+    is => 'Genome::Config::AnalysisProject::Command::Base',
     has_input => [
-       analysis_project => {
-            is                  => 'Genome::Config::AnalysisProject',
-            doc                 => 'the analysis project to which to add the instrument data',
-            shell_args_position => 1,
-       },
        instrument_data  => {
             is                  => 'Genome::InstrumentData::Imported',
             doc                 => 'imported instrument data to add to this analysis project',
@@ -38,6 +33,10 @@ as data produced in-house will have this information set up in LIMS
 EOS
 }
 
+sub valid_statuses {
+    return ("Pending", "Hold", "In Progress");
+}
+
 sub execute {
     my $self = shift;
 
@@ -59,20 +58,6 @@ sub execute {
     }
 
     return 1;
-}
-
-sub __errors__ {
-    my $self = shift;
-    my @errors = $self->SUPER::__errors__(@_);
-    my $status = $self->analysis_project->status;
-    unless(grep{$_ eq $status} ("Pending", "Hold", "In Progress")){
-        push @errors, UR::Object::Tag->create(
-            type => 'error',
-            properties => ['analysis_project'],
-            desc => "Can't assign to analysis project with status: $status" 
-        );
-    }
-    return @errors;
 }
 
 1;

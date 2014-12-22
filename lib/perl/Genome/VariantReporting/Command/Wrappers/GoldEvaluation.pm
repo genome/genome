@@ -18,10 +18,6 @@ class Genome::VariantReporting::Command::Wrappers::GoldEvaluation {
             is => 'Text',
             doc => 'The name of the sample in the VCF used to retrieve genotypes.',
         },
-        output_directory => {
-            is => 'Path',
-            is_output => 1,
-        },
         snvs_input_vcf => {
             is => 'Path',
         },
@@ -41,17 +37,17 @@ sub execute {
         # Germline
         $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
             discovery => $model->last_succeeded_build,
-            base_output_dir => $self->output_directory,
             plan_file_basename => 'gold_germline_report_TYPE.yaml',
             gold_sample_name => $self->gold_sample_name,
+            label => 'gold_germline',
         );
     } else {
         #Somatic
         $model_pair = Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $model->last_succeeded_build,
-            base_output_dir => $self->output_directory,
             plan_file_basename => 'gold_somatic_report_TYPE.yaml',
             gold_sample_name => $self->gold_sample_name,
+            label => 'gold_somatic',
         );
     }
     for my $variant_type (qw(snvs indels)) {
@@ -59,10 +55,8 @@ sub execute {
         my %params = (
             input_vcf => $self->$vcf_method,
             variant_type => $variant_type,
-            output_directory => $model_pair->reports_directory($variant_type),
             plan_file => $model_pair->plan_file($variant_type),
             translations_file => $model_pair->translations_file,
-            log_directory => $model_pair->logs_directory($variant_type),
         );
         Genome::VariantReporting::Command::CreateReport->execute(%params);
     }

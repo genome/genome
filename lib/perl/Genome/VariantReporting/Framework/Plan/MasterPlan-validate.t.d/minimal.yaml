@@ -2,8 +2,8 @@ experts:
     expert_one:
         e1_p1: something
         e1_p2: something else
-reporters:
-    reporter_alpha:
+reports:
+    report_alpha:
         interpreters:
             interpreter_x:
                 ix_p1: something

@@ -18,7 +18,7 @@ use Genome::Test::Factory::Build;
 my $class = "Genome::Model::Tools::Tcga::CreateSubmissionArchive";
 use_ok($class);
 
-my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v9");
+my $base_dir = Genome::Utility::Test->data_dir_ok($class, "v12");
 
 
 my $test_somatic_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
@@ -46,10 +46,11 @@ my $cmd = Genome::Model::Tools::Tcga::CreateSubmissionArchive->create(
     archive_version => "1.0.0",
     cghub_id_file => $cghub_ids,
     create_archive => 1,
+    vcf_suffix => "1", # arbitrary, just for backwards compatibility for file names
 );
 ok($cmd, "Command created");
 ok($cmd->execute, "Command executed");
-for my $outfile (qw(test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.snv.1.vcf test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.indel.1.vcf test_archive.Level_2.1.0.0/MANIFEST.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.idf.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.sdrf.txt)) {
+for my $outfile (qw(test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.snv.1.vcf.gz test_archive.Level_2.1.0.0/genome.wustl.edu.TCGA-UPN-A.indel.1.vcf.gz test_archive.Level_2.1.0.0/MANIFEST.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.idf.txt test_archive.mage-tab.1.0.0/test_archive.1.0.0.sdrf.txt)) {
     compare_ok("$archive_output_dir/$outfile", "$base_dir/archive_test/$outfile", replace => [['PP_ID' => $test_somatic_build->processing_profile->id], ['PP_REFALIGN_ID' => $test_somatic_build->normal_build->processing_profile->id]],name => "file $outfile diffed correctly");
 }
 

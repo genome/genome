@@ -1,0 +1,51 @@
+---
+experts:
+  expert_one:
+    e1_p1: something
+    e1_p2: something else
+    e1_translated1: translated
+    e1_translated2: translated
+  expert_two:
+    e2_p1: something
+    e2_p2: something else
+    e2_translated1: translated
+    e2_translated2: translated
+needs_translation: 0
+reports:
+  report_alpha:
+    filters:
+      filter_one:
+        f1_p1: 2
+        f1_p2: something else
+      filter_two:
+        f2_p1: something
+        f2_p2: something else
+    interpreters:
+      interpreter_x:
+        ix_p1: something
+        ix_p2: something else
+      interpreter_y:
+        iy_p1: something
+        iy_p2: something else
+    params:
+      ra_p1: something
+      ra_p2: something else
+  report_epsilon:
+    filters: {}
+    interpreters:
+      interpreter_z:
+        iz_p1: translated
+        iz_p2: something else
+  report_gamma:
+    filters: {}
+    interpreters:
+      interpreter_x:
+        ix_p1: something
+        ix_p2: something else
+      interpreter_y:
+        iy_p1: something
+        iy_p2: something else
+    params:
+      delimiter: ' '
+      rc_p1: something
+      rc_p2: something else

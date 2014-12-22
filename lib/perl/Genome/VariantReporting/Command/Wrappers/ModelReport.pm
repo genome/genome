@@ -14,10 +14,6 @@ class Genome::VariantReporting::Command::Wrappers::ModelReport {
         model => {
             is => 'Genome::Model::SomaticValidation',
         },
-        output_directory => {
-            is => 'Path',
-            is_output => 1,
-        },
     },
 };
 
@@ -30,25 +26,22 @@ sub execute {
         # Germline
         $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
             discovery => $model->last_succeeded_build,
-            base_output_dir => $self->output_directory,
-            plan_file_basename => 'germline_report_TYPE.yaml',
+            label => 'germline',
         );
     } else {
         #Somatic
         $model_pair = Genome::VariantReporting::Command::Wrappers::ModelPair->create(
             discovery => $model->last_succeeded_build,
-            base_output_dir => $self->output_directory,
             plan_file_basename => 'somatic_TYPE_report.yaml',
+            label => 'somatic',
         );
     }
     for my $variant_type(qw(snvs indels)) {
         my %params = (
             input_vcf => $model_pair->input_vcf($variant_type),
             variant_type => $variant_type,
-            output_directory => $model_pair->reports_directory($variant_type),
             plan_file => $model_pair->plan_file($variant_type),
             translations_file => $model_pair->translations_file,
-            log_directory => $model_pair->logs_directory($variant_type),
         );
         Genome::VariantReporting::Command::CreateReport->execute(%params);
     }

@@ -7,6 +7,7 @@ use Cwd qw(abs_path);
 use DBI qw();
 use File::Basename qw(basename);
 use Sys::Hostname qw(hostname);
+use Carp;
 
 use Genome::Utility::Instrumentation qw();
 
@@ -45,12 +46,17 @@ sub record_usage {
     my %values = @_;
 
     my $dbh = log_dbi('DBI', 'connect', dsn(), db_username(), db_password(), db_opts());
+    if (! $dbh) {
+        my $connect_error = $DBI::errstr;
+        eval qq( END { print STDERR "Warning: Failed to connect to logging DB when starting up: $connect_error\n" } );
 
-    my @columns = qw(recorded_at hostname username perl_path genome_path git_revision command perl5lib);
-    my $sth = log_dbi($dbh, 'prepare', q{INSERT INTO usage_log (} . join(', ', @columns) . q{) VALUES (} . join(', ', map { '?' } @columns) . q{)});
-    log_dbi($sth, 'execute', map { $values{$_} } @columns);
+    } else {
+        my @columns = qw(recorded_at hostname username perl_path genome_path git_revision command perl5lib);
+        my $sth = log_dbi($dbh, 'prepare', q{INSERT INTO usage_log (} . join(', ', @columns) . q{) VALUES (} . join(', ', map { '?' } @columns) . q{)});
+        log_dbi($sth, 'execute', map { $values{$_} } @columns);
 
-    log_dbi($dbh, 'disconnect');
+        log_dbi($dbh, 'disconnect');
+    }
 }
 
 sub dsn { 'dbi:Pg:dbname=genome_usage;host=gms-postgres.gsc.wustl.edu' }

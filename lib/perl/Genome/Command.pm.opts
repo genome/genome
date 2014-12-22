@@ -204,13 +204,7 @@ $Genome::Command::OPTS_SPEC = [
       '>create',
       [
         'disk-group-name=s',
-        [
-          'info_apipe',
-          'info_apipe_ref',
-          'info_alignments',
-          'info_genome_models',
-          'research'
-        ],
+        'files',
         'allocation-path=s',
         'files',
         'kilobytes-requested=s',
@@ -337,6 +331,15 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'absolute-paths=s@',
         'directories',
+        'help!',
+        undef
+      ],
+      '>purge',
+      [
+        'reason=s',
+        'files',
+        'allocations=s@',
+        undef,
         'help!',
         undef
       ],
@@ -7049,19 +7052,6 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>somatic-validation',
     [
-      '>alignment-stats-summary',
-      [
-        'output-tsv-file=s',
-        'files',
-        'haploid-coverage!',
-        undef,
-        'targeted-insert-length!',
-        undef,
-        'models=s@',
-        undef,
-        'help!',
-        undef
-      ],
       '>align-reads',
       [
         'build=s',
@@ -7097,15 +7087,6 @@ $Genome::Command::OPTS_SPEC = [
           'tumor',
           'normal'
         ],
-        'help!',
-        undef
-      ],
-      '>coverage-stats-summary',
-      [
-        'output-tsv-file=s',
-        'files',
-        'models=s@',
-        undef,
         'help!',
         undef
       ],
@@ -7365,6 +7346,36 @@ $Genome::Command::OPTS_SPEC = [
         'tier1-only!',
         undef,
         'recover-non-validated-calls!',
+        undef,
+        'help!',
+        undef
+      ],
+      '>run-alignment-stats-summary',
+      [
+        'output-result=s',
+        undef,
+        'haploid-coverage!',
+        undef,
+        'label=s',
+        'files',
+        'targeted-insert-length!',
+        undef,
+        'user=s',
+        undef,
+        'models=s@',
+        undef,
+        'help!',
+        undef
+      ],
+      '>run-coverage-stats-summary',
+      [
+        'output-result=s',
+        undef,
+        'label=s',
+        'files',
+        'user=s',
+        undef,
+        'models=s@',
         undef,
         'help!',
         undef
@@ -9369,6 +9380,8 @@ $Genome::Command::OPTS_SPEC = [
       [
         'show-event-info!',
         undef,
+        'color!',
+        undef,
         'hide-statuses=s@',
         'files',
         'builds=s@',
@@ -11297,6 +11310,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'add-tiers!',
         undef,
+        'bam-readcount-version=s',
+        'files',
         'create-archive!',
         undef,
         'create-review-files!',
@@ -12466,6 +12481,37 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'use-version=s',
         undef,
+        'help!',
+        undef
+      ],
+      '>run-mem',
+      [
+        'samtools-version=s',
+        [
+          '0.1.19'
+        ],
+        'max-sort-memory=s',
+        'files',
+        'num-threads=s',
+        undef,
+        'bwa-version=s',
+        'files',
+        'input-fastqs=s@',
+        'files',
+        'output-file=s',
+        'files',
+        'aligner-params=s',
+        'files',
+        'aligner-log-path=s',
+        'files',
+        'indexed-fasta=s',
+        'files',
+        'aligner-index-fasta=s',
+        'files',
+        'sam-header-path=s',
+        'files',
+        'temp-dir=s',
+        'files',
         'help!',
         undef
       ],
@@ -17923,6 +17969,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>filter-sequences',
+      [
+        'input-file=s',
+        'files',
+        'output-directory=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>run-netmhc',
       [
         'allele=s',
@@ -17940,15 +17995,6 @@ $Genome::Command::OPTS_SPEC = [
           '3.0',
           '3.4'
         ],
-        'help!',
-        undef
-      ],
-      '>remove-unknown-sequences',
-      [
-        'input-file=s',
-        'files',
-        'output-directory=s',
-        'files',
         'help!',
         undef
       ],
@@ -26246,6 +26292,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'add-tiers!',
         undef,
+        'bam-readcount-version=s',
+        'files',
         'create-archive!',
         undef,
         'create-review-files!',
@@ -29700,11 +29748,15 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'create-archive!',
         undef,
+        'bgzip-vcfs!',
+        undef,
         'cghub-id-file=s',
         'files',
         'somatic-maf-file=s',
         'files',
         'protected-maf-file=s',
+        'files',
+        'vcf-suffix=s',
         'files',
         'help!',
         undef
@@ -37006,27 +37058,6 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>variant-reporting',
   [
-    '>combine-reports',
-    [
-      'contains-header!',
-      undef,
-      'output-file=s',
-      undef,
-      'reports=s@',
-      undef,
-      'separator=s',
-      'files',
-      'debug!',
-      undef,
-      'entry-sources=s',
-      undef,
-      'sort-columns=s@',
-      'files',
-      'split-indicators=s@',
-      'files',
-      'help!',
-      undef
-    ],
     '>create-report',
     [
       'input-vcf=s',
@@ -37043,12 +37074,34 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>combine-snv-indel-reports',
+    '>create-merged-reports',
     [
-      'input-directories=s@',
+      'label-fields=s',
       undef,
-      'file-name=s',
-      'files',
+      'snvs-input-vcf=s',
+      undef,
+      'snvs-plan-file=s',
+      undef,
+      'snvs-translations-file=s',
+      undef,
+      'indels-input-vcf=s',
+      undef,
+      'indels-plan-file=s',
+      undef,
+      'indels-translations-file=s',
+      undef,
+      'use-header-from=s',
+      [
+        'snvs',
+        'indels'
+      ],
+      'help!',
+      undef
+    ],
+    '>backfill-trio-legend-files',
+    [
+      'trio-process=s',
+      undef,
       'help!',
       undef
     ],
@@ -37057,8 +37110,6 @@ $Genome::Command::OPTS_SPEC = [
       '>model-report',
       [
         'model=s',
-        undef,
-        'output-directory=s',
         undef,
         'help!',
         undef
@@ -37087,8 +37138,6 @@ $Genome::Command::OPTS_SPEC = [
       [
         'models=s@',
         undef,
-        'output-directory=s',
-        undef,
         'tumor-sample=s',
         undef,
         'followup-sample=s',
@@ -37100,6 +37149,25 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>create-igv-session',
+      [
+        'bam-hash-json=s',
+        'files',
+        'output-result=s',
+        undef,
+        'genome-name=s',
+        'files',
+        'merged-bed-reports=s@',
+        undef,
+        'reference-name=s',
+        'files',
+        'label=s',
+        'files',
+        'user=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>gold-evaluation',
       [
         'gold-sample-name=s',
@@ -37107,8 +37175,6 @@ $Genome::Command::OPTS_SPEC = [
         'indels-input-vcf=s',
         undef,
         'model=s',
-        undef,
-        'output-directory=s',
         undef,
         'snvs-input-vcf=s',
         undef,
@@ -37128,11 +37194,66 @@ $Genome::Command::OPTS_SPEC = [
         'filters',
         'interpreter',
         'interpreters',
-        'reporter',
-        'reporters'
+        'report',
+        'reports'
       ],
       'component-name=s',
       'files',
+      'help!',
+      undef
+    ],
+    '>list',
+    [
+      '>create-report',
+      [
+        'show=s',
+        'files',
+        'style=s',
+        [
+          'text',
+          'csv',
+          'tsv',
+          'pretty',
+          'html',
+          'xml',
+          'newtext'
+        ],
+        'csv-delimiter=s',
+        'files',
+        'noheaders!',
+        undef,
+        'order-by=s',
+        'files',
+        'filter=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>trio',
+      [
+        'show=s',
+        'files',
+        'style=s',
+        [
+          'text',
+          'csv',
+          'tsv',
+          'pretty',
+          'html',
+          'xml',
+          'newtext'
+        ],
+        'csv-delimiter=s',
+        'files',
+        'noheaders!',
+        undef,
+        'order-by=s',
+        'files',
+        'filter=s',
+        'files',
+        'help!',
+        undef
+      ],
       'help!',
       undef
     ],
@@ -37186,11 +37307,43 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>verify-for-cle',
+    [
+      'process=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>symlink-results',
     [
       'process=s',
       undef,
       'destination=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>list-recent',
+    [
+      'style=s',
+      [
+        'text',
+        'csv',
+        'tsv',
+        'pretty',
+        'html',
+        'xml',
+        'newtext'
+      ],
+      'csv-delimiter=s',
+      'files',
+      'noheaders!',
+      undef,
+      'order-by=s',
+      'files',
+      'user=s',
+      undef,
+      'days=s',
       undef,
       'help!',
       undef

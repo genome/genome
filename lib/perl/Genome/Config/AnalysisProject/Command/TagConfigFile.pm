@@ -66,7 +66,7 @@ sub __errors__ {
             push @errors, UR::Object::Tag->create(
                 type => 'error',
                 properties => ['profile_items'],
-                desc => "Can't tag config file to analysis project with status: $status" 
+                desc => "Can't tag config file to analysis project with status: $status"
             );
         }
     }

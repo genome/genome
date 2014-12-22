@@ -10,30 +10,44 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use File::Slurp qw(read_file);
 use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build compare_directories);
+use Genome::VariantReporting::Framework::TestHelpers qw(test_dag_xml);
+use Genome::Utility::Test qw(compare_ok);
 
 my $pkg = "Genome::VariantReporting::Command::Wrappers::ModelPair";
 
 use_ok($pkg);
 
-my $test_dir = __FILE__.".d";
-my $expected_dir = File::Spec->join($test_dir, "expected");
-my $output_dir = Genome::Sys->create_temp_directory;
-
 my $roi_name = "test_roi";
-my $tumor_sample = Genome::Test::Factory::Sample->setup_object();
-my $normal_sample = Genome::Test::Factory::Sample->setup_object(source_id => $tumor_sample->source_id);
+my $tumor_sample = Genome::Test::Factory::Sample->setup_object(name => "TEST-patient1-somval_tumor1");
+my $normal_sample = Genome::Test::Factory::Sample->setup_object(
+    source_id => $tumor_sample->source_id,
+    name => "TEST-patient1-somval_normal1",
+);
 my $discovery_build = get_build($roi_name, $tumor_sample, $normal_sample);
 
 is($discovery_build->class, "Genome::Model::Build::SomaticValidation");
 
-my $model_pair = $pkg->create(discovery => $discovery_build,
+my $model_pair = $pkg->create(
+    discovery => $discovery_build,
     followup => $discovery_build,
-    #base_output_dir => $expected_dir,
-    base_output_dir => $output_dir,
+    label => "test",
 );
-is($model_pair->class, "Genome::VariantReporting::Command::Wrappers::ModelPair");
-compare_directories($expected_dir, $output_dir);
+is($model_pair->class, $pkg, "Model pair created correctly");
+test_dag_xml($model_pair->dag, __FILE__);
+
+my $expected_params = {
+    snvs_input_vcf => "/gscuser/aregier/git/genome/fix/lib/perl/Genome/VariantReporting/Command/Wrappers/TestHelpers.pm.d/TEST-patient1-somval_tumor1.snvs.vcf.gz",
+    snvs_plan_file => "/gscuser/aregier/git/genome/fix/lib/perl/Genome/VariantReporting/plan_files/cle_snvs_report.yaml",
+    snvs_translations_file => "/tmp/gm-genome_sys-2014-12-03_17_46_01--dy8W/anonymous6",
+    indels_input_vcf => "/gscuser/aregier/git/genome/fix/lib/perl/Genome/VariantReporting/Command/Wrappers/TestHelpers.pm.d/TEST-patient1-somval_tumor1.snvs.vcf.gz",
+    indels_plan_file => "/gscuser/aregier/git/genome/fix/lib/perl/Genome/VariantReporting/plan_files/cle_indels_report.yaml",
+    indels_translations_file => "/tmp/gm-genome_sys-2014-12-03_17_46_01--dy8W/anonymous6",
+    use_header_from => "snvs",
+};
+#TODO compare these in a sensible way
+#is_deeply($expected_params, $model_pair->params_for_dag, "params were created correctly");
 done_testing;
 
 

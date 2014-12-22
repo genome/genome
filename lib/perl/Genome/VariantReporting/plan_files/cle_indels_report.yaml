@@ -1,6 +1,6 @@
 experts:
     'bam-readcount':
-        aligned_bam_result_id: aligned_bam_result_id
+        aligned_bam_result_id: [aligned_bam_result_id]
         version: 0.5
         minimum_mapping_quality: 0
         minimum_base_quality: 0
@@ -21,7 +21,7 @@ experts:
         plugins_version: 1
         joinx_version: 1.9
     dbsnp:
-        joinx_version: 1.9
+        joinx_version: 1.10
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
         vcf: dbsnp_vcf
     homopolymer:
@@ -29,11 +29,7 @@ experts:
         max_length: 2
         info_string: 'HOMP_FILTER'
         homopolymer_list_id: homopolymer_list_id
-    nhlbi:
-        joinx_version: 1.9
-        info_string: 'AAC:PP:CDP:PH:EA_GTC:AA_GTC:MAF'
-        vcf: nhlbi_vcf
-reporters:
+reports:
     'full':
         filters:
             'allele-in-genotype':
@@ -47,6 +43,12 @@ reporters:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             'variant-type': {}
@@ -75,69 +77,13 @@ reporters:
                     - discovery_tumor
                     - followup_tumor
                     - normal
+                library_names: [library_names]
         params:
             sample_names:
                 - discovery_tumor
                 - followup_tumor
                 - normal
-    'acmg':
-        filters:
-            'allele-in-genotype':
-                sample_name: discovery_tumor
-            'ft-keep':
-                keep_filter_values:
-                    - PASS
-                    - .
-                sample_name: discovery_tumor
-            'contains-tag':
-                info_tag: ON_TARGET
-            homopolymer:
-                info_tag: HOMP_FILTER
-            gene:
-                gene_set: acmg
-            'annotation-category':
-                category_list:
-                    - splice_site
-                    - non_synonymous
-            'max-maf':
-                max_maf: 0.5
-                population_code: All
-            'max-af':
-                max_af: 0.5
-        interpreters:
-            position: {}
-            'variant-type': {}
-            vep: {}
-            'info-tags': {}
-            rsid: {}
-            caf: {}
-            nhlbi: {}
-            'min-coverage':
-                min_coverage: 10
-                sample_name: discovery_tumor
-            'min-coverage-observed':
-                sample_names:
-                    - discovery_tumor
-                    - followup_tumor
-                    - normal
-            'max-vaf-observed':
-                tumor_sample_names:
-                    - discovery_tumor
-                    - followup_tumor
-                normal_sample_names:
-                    - normal
-            'variant-callers':
-                sample_name: discovery_tumor
-            'many-samples-vaf':
-                sample_names:
-                    - discovery_tumor
-                    - followup_tumor
-                    - normal
-        params:
-            sample_names:
-                - discovery_tumor
-                - followup_tumor
-                - normal
+            library_names: [library_names]
     'simple':
         filters:
             'allele-in-genotype':
@@ -151,6 +97,12 @@ reporters:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             vep: {}
@@ -168,6 +120,12 @@ reporters:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER  
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
     'bed':
         filters:
             'allele-in-genotype':
@@ -181,6 +139,12 @@ reporters:
                 info_tag: ON_TARGET
             homopolymer:
                 info_tag: HOMP_FILTER
+            'min-coverage.tumor':
+                min_coverage: 20
+                sample_name: discovery_tumor
+            'min-coverage.normal':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             'bed-entry': {}
         params:

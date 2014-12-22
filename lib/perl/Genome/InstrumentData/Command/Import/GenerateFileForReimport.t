@@ -17,9 +17,14 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::GenerateFileForReimport') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::GenerateFileForReimport', 'v2');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::GenerateFileForReimport', 'v3');
 my $expected_source_files_tsv = $test_dir.'/source_files.tsv';
 my $expected_source_files_with_new_source_files_tsv = $test_dir.'/source_files.with_new_source_files.tsv';
+my %compare_args = (
+    replace => [
+        [ qr(\Q$test_dir\E) => 'TEST_INPUTS_DIR' ],
+    ],
+);
 
 my $library = Genome::Library->__define__(name => '__TEST_LIBRARY__');
 my @instrument_data;
@@ -64,7 +69,7 @@ my $generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport-
 );
 ok($generate, 'create generate file for reimport');
 ok($generate->execute, 'execute');
-compare_ok($file, $expected_source_files_tsv, 'file matches');
+compare_ok($file, $expected_source_files_tsv, 'file matches', %compare_args);
 #print "$file\n"; <STDIN>;
 
 # With new source files...
@@ -103,8 +108,7 @@ $generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->cr
 );
 ok($generate, 'create generate file for reimport w/ new source files');
 ok($generate->execute, 'execute');
-compare_ok($file, $expected_source_files_with_new_source_files_tsv, 'file matches');
-#print "$file\n"; <STDIN>;
+compare_ok($file, $expected_source_files_with_new_source_files_tsv, 'file matches', %compare_args);
 
 # success w/ downsample ratios
 unlink $file;
@@ -115,7 +119,6 @@ $generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->cr
 );
 ok($generate, 'create generate file for reimport w/ downsample ratios');
 ok($generate->execute, 'execute');
-compare_ok($file, $test_dir.'/source_files.with_downsample_ratios.tsv', 'file matches');
-#print "$file\n"; <STDIN>;
+compare_ok($file, $test_dir.'/source_files.with_downsample_ratios.tsv', 'file matches', %compare_args);
 
 done_testing();

@@ -31,7 +31,7 @@ sub _run {
 
 sub resolve_allocation_subdirectory {
     my $self = shift;
-    return File::Spec->join('/', 'model_data', 'software-result', $self->id);
+    return File::Spec->join('model_data', 'software-result', $self->id);
 }
 
 sub resolve_allocation_disk_group_name {

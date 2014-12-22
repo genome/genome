@@ -6,7 +6,7 @@ dbsnp
 
 [4mAVAILABLE FIELDS[0m
   [1mcaf[0m
-    Allele frequency at this position based on 1000Genomes
+    Allele frequency at this position based on dbsnp
   [1mmax_alt_af[0m
     The highest allele frequency at this position
 

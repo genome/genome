@@ -20,7 +20,7 @@ sub requires_annotations {
 sub available_fields {
     my $self = shift;
     my %field_descriptions = $self->field_descriptions;
-    return $self->create_sample_specific_field_names([keys %field_descriptions], [$self->sample_names]);
+    return $self->create_sample_specific_field_names([keys %field_descriptions]);
 }
 
 sub field_descriptions {

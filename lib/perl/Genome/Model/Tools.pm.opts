@@ -296,6 +296,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'add-tiers!',
       undef,
+      'bam-readcount-version=s',
+      'files',
       'create-archive!',
       undef,
       'create-review-files!',
@@ -1465,6 +1467,37 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'use-version=s',
       undef,
+      'help!',
+      undef
+    ],
+    '>run-mem',
+    [
+      'samtools-version=s',
+      [
+        '0.1.19'
+      ],
+      'max-sort-memory=s',
+      'files',
+      'num-threads=s',
+      undef,
+      'bwa-version=s',
+      'files',
+      'input-fastqs=s@',
+      'files',
+      'output-file=s',
+      'files',
+      'aligner-params=s',
+      'files',
+      'aligner-log-path=s',
+      'files',
+      'indexed-fasta=s',
+      'files',
+      'aligner-index-fasta=s',
+      'files',
+      'sam-header-path=s',
+      'files',
+      'temp-dir=s',
+      'files',
       'help!',
       undef
     ],
@@ -6922,6 +6955,15 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>filter-sequences',
+    [
+      'input-file=s',
+      'files',
+      'output-directory=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>run-netmhc',
     [
       'allele=s',
@@ -6939,15 +6981,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
         '3.0',
         '3.4'
       ],
-      'help!',
-      undef
-    ],
-    '>remove-unknown-sequences',
-    [
-      'input-file=s',
-      'files',
-      'output-directory=s',
-      'files',
       'help!',
       undef
     ],
@@ -15245,6 +15278,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'add-tiers!',
       undef,
+      'bam-readcount-version=s',
+      'files',
       'create-archive!',
       undef,
       'create-review-files!',
@@ -18699,11 +18734,15 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'create-archive!',
       undef,
+      'bgzip-vcfs!',
+      undef,
       'cghub-id-file=s',
       'files',
       'somatic-maf-file=s',
       'files',
       'protected-maf-file=s',
+      'files',
+      'vcf-suffix=s',
       'files',
       'help!',
       undef

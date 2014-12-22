@@ -16,10 +16,15 @@ class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
             doc => "Models to include in the archive",
             is => 'Genome::Model::SomaticVariation',
             is_many => 1,
-        },       
+        },
         output_dir => {
             is => "Text",
             doc => "Directory where the archives should be written",
+        },
+        vcf_suffix => {
+            is => "Text",
+            is_optional => 1,
+            doc => 'Suffix to identify the vcf files. If not provided, the build id will be used',
         },
         archive_name => {
             is => "Text",
@@ -33,6 +38,11 @@ class Genome::Model::Tools::Tcga::CreateSubmissionArchive {
             is => "Boolean",
             default_value => 0,
             doc => "Create the final tar.gz and md5 files",
+        },
+        bgzip_vcfs => {
+            is => "Boolean",
+            default_value => 1,
+            doc => "Gzip vcf files. This happens before archiving if create_archive is also set.",
         },
         cghub_id_file => {
             is => "Text",
@@ -55,7 +65,7 @@ sub execute {
     my $self = shift;
     my @sdrf_rows;
     my $idf = Genome::Model::Tools::Tcga::Idf->create;
-    
+
     for my $somatic_model ($self->models) {
         $idf->add_somatic_pp_protocols($somatic_model->last_succeeded_build->processing_profile);
         $idf->add_refalign_pp_protocols($somatic_model->last_succeeded_build->normal_build->processing_profile);
@@ -71,7 +81,6 @@ sub execute {
     my $magetab_archive_dir = $self->output_dir."/".$self->complete_archive_name("mage-tab");
     Genome::Sys->create_directory($magetab_archive_dir);
 
-    my %patient_ids;
     for my $somatic_model ($self->models) {
         my $somatic_build = $somatic_model->last_succeeded_build;
         unless($somatic_build) {
@@ -82,15 +91,17 @@ sub execute {
         my $tumor_build = $somatic_build->tumor_build;
 
         my $patient_id = $self->resolve_patient_id($somatic_build);
-        my $patient_id_counter = ++$patient_ids{$patient_id};
-        
-        my $snvs_vcf = $self->construct_vcf_name("snv", $patient_id, $patient_id_counter);
-        my $indels_vcf = $self->construct_vcf_name("indel", $patient_id, $patient_id_counter);
 
+        # Default to the somatic build id if no suffix was provided
+        my $vcf_suffix = $self->vcf_suffix // $somatic_build->id;
+        my $snvs_vcf = $self->construct_vcf_name("snv", $patient_id, $vcf_suffix);
+        my $indels_vcf = $self->construct_vcf_name("indel", $patient_id, $vcf_suffix);
+
+        # Grab the TCGA vcfs from the build dir and sanitize them
         for my $variant_type (qw(snv indel)) {
             my $local_file = $somatic_build->data_directory."/variants/".$variant_type."s_tcga/".$variant_type."s_tcga.vcf";
             die "Tcga compliant $variant_type vcf not found for build ".$somatic_build->id unless(-s $local_file);
-            my $tcga_vcf_file = "$vcf_archive_dir/".$self->construct_vcf_name($variant_type, $patient_id, $patient_id_counter);
+            my $tcga_vcf_file = "$vcf_archive_dir/".$self->construct_vcf_name($variant_type, $patient_id, $vcf_suffix);
 
             #Some snv vcf lines have null ALT column as '.', it should be 'N' to pass the validator
             if ($variant_type eq 'indel') {
@@ -114,9 +125,13 @@ sub execute {
 
         for my $build(($normal_build, $tumor_build)) {
             my $sample_info = $self->get_info_for_sample($build->subject->extraction_label, $vcf_sample_info);
-            
+
             for my $vcf($snvs_vcf, $indels_vcf) {
-                push @sdrf_rows, $sdrf->create_vcf_row($build, $somatic_build, $vcf, $sample_info);
+                if ($self->bgzip_vcfs) {
+                    push @sdrf_rows, $sdrf->create_vcf_row($build, $somatic_build, "$vcf.gz", $sample_info);
+                } else {
+                    push @sdrf_rows, $sdrf->create_vcf_row($build, $somatic_build, $vcf, $sample_info);
+                }
             }
 
             for my $maf_type (qw(somatic protected)) {
@@ -128,6 +143,13 @@ sub execute {
                     }
                     push @sdrf_rows, $sdrf->create_maf_row($build, $somatic_build, $maf_name, $sample_info);
                 }
+            }
+        }
+
+        if ($self->bgzip_vcfs) {
+            for my $vcf(File::Spec->join($vcf_archive_dir, $snvs_vcf), File::Spec->join($vcf_archive_dir, $indels_vcf)) {
+                Genome::Sys->gzip_file($vcf, "$vcf.gz");
+                unlink $vcf;
             }
         }
     }
@@ -161,11 +183,8 @@ sub complete_archive_name {
 }
 
 sub construct_vcf_name {
-    my $self = shift;
-    my $variant_type = shift;
-    my $patient_id = shift;
-    my $patient_id_counter = shift;
-    my $snvs_vcf = "genome.wustl.edu.$patient_id.$variant_type.".$patient_id_counter.".vcf";
+    my ($self, $variant_type, $patient_id, $vcf_suffix) = @_;
+    return "genome.wustl.edu.$patient_id.$variant_type.$vcf_suffix.vcf";
 }
 
 sub print_manifest {
@@ -215,8 +234,4 @@ sub resolve_patient_id {
     return $patient_id;
 }
 
-
-
-
 1;
-

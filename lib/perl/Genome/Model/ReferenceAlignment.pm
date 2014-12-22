@@ -348,7 +348,7 @@ sub default_genotype_model {
     my @genotype_models = sort { $a->creation_date cmp $b->creation_date } $sample->default_genotype_models;
     return unless @genotype_models;
 
-    @genotype_models = grep { $_->reference_sequence_build->is_compatible_with($self->reference_sequence_build) } @genotype_models;
+    @genotype_models = grep { $_->reference_sequence_build && $_->reference_sequence_build->is_compatible_with($self->reference_sequence_build) } @genotype_models;
     return unless @genotype_models;
 
 
@@ -443,29 +443,6 @@ sub default_lane_qc_model_for_instrument_data {
     return @lane_qc_models;
 }
 
-sub qc_processing_profile_id_hashref {
-    return { # Map alignment processing profile to lane QC version
-        'wgs' => {
-            2635769 => '2653572', # Nov 2011 Default Reference Alignment
-            2644306 => '2653579', # Nov 2011 Default Reference Alignment (PCGP)
-            2574937 => '2597031', # bwa 0.5.5 untrimmed and samtools r453 and picard_align 1.17 and picard_dedup 1.29
-            2580856 => '2581081', # Feb 2011 Default Reference Alignment
-            2582616 => '2589389', # old february 2011 default genome and exome with build37 annotation
-            2580859 => '2589388', # Feb 2011 Default Reference Alignment (PCGP)
-            2586039 => '2589390', # Mar 2011 Default Reference Alignment (PCGP Untrimmed)
-        },
-        'capture' => {
-            2635769 => '2684691', # Nov 2011 Default Reference Alignment
-            2644306 => '2684692', # Nov 2011 Default Reference Alignment (PCGP)
-            2574937 => '2684716', # bwa 0.5.5 untrimmed and samtools r453 and picard_align 1.17 and picard_dedup 1.29
-            2580856 => '2684689', # Feb 2011 Default Reference Alignment
-            2582616 => '2684689', # old february 2011 default genome and exome with build37 annotation
-            2580859 => '2684690', # Feb 2011 Default Reference Alignment (PCGP)
-            2586039 => '2684690', # Mar 2011 Default Reference Alignment (PCGP Untrimmed)
-        },
-    };
-}
-
 sub qc_type_for_target_region_set_name {
     my $class = shift;
     my $target_region_set_name = shift;
@@ -555,6 +532,21 @@ sub default_model_name {
     } else {
         return $self->SUPER::default_model_name();
     }
+}
+
+sub experimental_subject {
+    my $self = shift;
+
+    my $subject = $self->subject;
+
+    return $subject if $subject->isa('Genome::Sample');
+    return;
+}
+
+sub control_subject {
+    my $self = shift;
+
+    return; #reference alignment has no control subject
 }
 
 1;

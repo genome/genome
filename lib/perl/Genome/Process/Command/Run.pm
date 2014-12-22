@@ -47,7 +47,31 @@ sub get_workflow_inputs {
     my $self = shift;
 
     my $json = Genome::Sys->read_file($self->process->inputs_file);
-    return from_json($json);
+    my $inputs = from_json($json);
+
+    my %inputs = %$inputs;
+    while (my ($name, $value) = each %inputs) {
+        if (ref($value) eq 'HASH') {
+            $inputs->{$name} = convert_hash_to_obj($value);
+        } elsif (ref($value) eq 'ARRAY' &&
+                 scalar(@{$value}) &&
+                 ref($value->[0]) eq 'HASH') {
+            $inputs->{$name} = [map {convert_hash_to_obj($_)} @{$value}];
+        }
+    }
+
+    return $inputs
+}
+
+sub convert_hash_to_obj {
+    my $hash = shift;
+
+    my $class = $hash->{'class'};
+    my $obj = $class->get($hash->{'id'});
+    unless (defined($obj)) {
+        die sprintf("Couldn't convert hash to class: %s", pp($hash));
+    }
+    return $obj;
 }
 
 sub execute {

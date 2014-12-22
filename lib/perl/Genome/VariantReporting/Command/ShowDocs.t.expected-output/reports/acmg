@@ -1,0 +1,40 @@
+[4mOVERVIEW[0m
+Full report with additional population allele frequencies from NHLBI
+
+[4mPROPERTIES[0m
+  [1mdelimiter[0m   Text
+    Character to be used to separate columns
+    Default value ' ' if not specified
+  [1mgenerate_legend_file[0m   Boolean
+    Boolean flag to control whether or not a legend file will be created
+    Default value 'true' if not specified
+  [1mlibrary_names[0m   Text
+    List of library names to be used in the report
+    This is a translated property.
+  [1mnull_character[0m   Text
+    Character to be used for undefined values in the report
+    Default value '-' if not specified
+  [1msample_names[0m   Text
+    List of sample names to be used in the report
+    This is a translated property.
+
+[4mREQUIRED EXPERTS[0m
+vep
+bam-readcount
+dbsnp
+nhlbi
+
+[4mREQUIRED INTERPRETERS[0m
+position
+vep
+info-tags
+variant-type
+min-coverage
+min-coverage-observed
+max-vaf-observed
+variant-callers
+many-samples-vaf
+rsid
+caf
+nhlbi
+

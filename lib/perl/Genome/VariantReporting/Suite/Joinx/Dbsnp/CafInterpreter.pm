@@ -23,7 +23,7 @@ sub requires_annotations {
 
 sub field_descriptions {
     return (
-        caf => 'Allele frequency at this position based on 1000Genomes',
+        caf => 'Allele frequency at this position based on dbsnp',
         max_alt_af => 'The highest allele frequency at this position'
     );
 }

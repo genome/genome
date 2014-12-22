@@ -1,5 +1,5 @@
 experts:
     expert_one:
-reporters:
-    reporter_alpha:
+reports:
+    report_alpha:
         interpreter_x:

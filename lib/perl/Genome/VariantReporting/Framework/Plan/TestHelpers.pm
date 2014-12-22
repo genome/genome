@@ -166,14 +166,14 @@ sub set_what_interpreter_x_requires {
 
 
 {
-    package Genome::VariantReporting::TestReporter;
+    package Genome::VariantReporting::TestReport;
 
     use strict;
     use warnings FATAL => 'all';
     use Genome;
 
-    class Genome::VariantReporting::TestReporter {
-        is => 'Genome::VariantReporting::Reporter::WithHeader',
+    class Genome::VariantReporting::TestReport {
+        is => 'Genome::VariantReporting::Report::WithHeader',
         has_param => [
             ra_p1 => {},
             ra_p2 => {},
@@ -181,7 +181,7 @@ sub set_what_interpreter_x_requires {
     };
 
     sub name {
-        "reporter_alpha";
+        "report_alpha";
     }
 
     sub required_interpreters {
@@ -214,14 +214,14 @@ sub set_what_interpreter_x_requires {
 }
 
 {
-    package Genome::VariantReporting::AnotherTestReporter;
+    package Genome::VariantReporting::AnotherTestReport;
 
     use strict;
     use warnings FATAL => 'all';
     use Genome;
 
-    class Genome::VariantReporting::AnotherTestReporter {
-        is => 'Genome::VariantReporting::Framework::Component::Reporter::SingleFile',
+    class Genome::VariantReporting::AnotherTestReport {
+        is => 'Genome::VariantReporting::Framework::Component::Report::SingleFile',
         has_param => [
             rb_p1 => {},
             rb_p2 => {},
@@ -229,7 +229,7 @@ sub set_what_interpreter_x_requires {
     };
 
     sub name {
-        "reporter_beta";
+        "report_beta";
     }
 
     sub required_interpreters {
@@ -240,14 +240,14 @@ sub set_what_interpreter_x_requires {
 }
 
 {
-    package Genome::VariantReporting::YetAnotherTestReporter;
+    package Genome::VariantReporting::YetAnotherTestReport;
 
     use strict;
     use warnings FATAL => 'all';
     use Genome;
 
-    class Genome::VariantReporting::YetAnotherTestReporter {
-        is => 'Genome::VariantReporting::Reporter::WithHeader',
+    class Genome::VariantReporting::YetAnotherTestReport {
+        is => 'Genome::VariantReporting::Report::WithHeader',
         has_param => [
             rc_p1 => {},
             rc_p2 => {},
@@ -256,7 +256,7 @@ sub set_what_interpreter_x_requires {
     };
 
     sub name {
-        "reporter_gamma";
+        "report_gamma";
     }
 
     sub required_interpreters {
@@ -292,21 +292,21 @@ sub set_what_interpreter_x_requires {
 }
 
 {
-    package Genome::VariantReporting::TestDeltaReporter;
+    package Genome::VariantReporting::TestDeltaReport;
 
     use strict;
     use warnings FATAL => 'all';
     use Genome;
 
-    class Genome::VariantReporting::TestDeltaReporter {
-        is => 'Genome::VariantReporting::Framework::Component::Reporter',
+    class Genome::VariantReporting::TestDeltaReport {
+        is => 'Genome::VariantReporting::Framework::Component::Report',
         has_param => [
             p1 => {},
         ],
     };
 
     sub name {
-        "reporter_delta";
+        "report_delta";
     }
 
     sub required_interpreters {
@@ -321,18 +321,18 @@ sub set_what_interpreter_x_requires {
 }
 
 {
-    package Genome::VariantReporting::TestEpsilonReporter;
+    package Genome::VariantReporting::TestEpsilonReport;
 
     use strict;
     use warnings FATAL => 'all';
     use Genome;
 
-    class Genome::VariantReporting::TestEpsilonReporter {
-        is => 'Genome::VariantReporting::Framework::Component::Reporter',
+    class Genome::VariantReporting::TestEpsilonReport {
+        is => 'Genome::VariantReporting::Framework::Component::Report',
     };
 
     sub name {
-        "reporter_epsilon";
+        "report_epsilon";
     }
 
     sub required_interpreters {

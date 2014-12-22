@@ -47,6 +47,32 @@ sub make_custom_fields_test_case {
     };
 }
 
+subtest "make_header_line default" => sub {
+    my $hdr = new Genome::File::BedPe::Header([]);
+    is($hdr->to_string, "");
+    $hdr->make_header_line();
+    my $expected = join("\t",
+        qw(chrom1 start1 end1 chrom2 start2 end2 name score strand1 strand2));
+    is($expected, $hdr->to_string);
+
+    eval { $hdr->make_header_line(); };
+    ok($@, "Trying to make a header line in a header with data is an error");
+};
+
+subtest "make_header_line with custom fields" => sub {
+    my $hdr = new Genome::File::BedPe::Header([]);
+    is($hdr->to_string, "");
+
+    $hdr->set_custom_fields(qw(a b c));
+    $hdr->make_header_line();
+    my $expected = join("\t",
+        qw(chrom1 start1 end1 chrom2 start2 end2 name score strand1 strand2 a b c));
+    is($expected, $hdr->to_string);
+
+    eval { $hdr->make_header_line(); };
+    ok($@, "Trying to make a header line in a header with data is an error");
+};
+
 subtest "Empty header" => sub {
     my $hdr = new Genome::File::BedPe::Header([]);
     ok($hdr, "Created empty header");

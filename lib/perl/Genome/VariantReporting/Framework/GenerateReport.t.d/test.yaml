@@ -9,8 +9,8 @@ experts:
         e2_p2: something else
         e2_translated1: untranslated
         e2_translated2: untranslated
-reporters:
-    reporter_alpha:
+reports:
+    report_alpha:
         filters:
             filter_one:
                 f1_p1: 2
@@ -28,7 +28,7 @@ reporters:
         params:
             ra_p1: something
             ra_p2: something else
-    reporter_gamma:
+    report_gamma:
         interpreters:
             interpreter_x:
                 ix_p1: something
@@ -40,7 +40,7 @@ reporters:
             rc_p1: something
             rc_p2: something else
             delimiter: " "
-    reporter_epsilon:
+    report_epsilon:
         interpreters:
             interpreter_z:
                 iz_p1: untranslated

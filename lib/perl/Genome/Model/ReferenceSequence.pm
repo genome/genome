@@ -96,7 +96,7 @@ class Genome::Model::ReferenceSequence {
             id_by => 'processing_profile_id',
         },
     ],
-    doc => 'a versioned reference sequence, with cordinates suitable for annotation',
+    doc => 'a versioned reference sequence',
 };
 
 sub _has_legacy_input_types { 1 };

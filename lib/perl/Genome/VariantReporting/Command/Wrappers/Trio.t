@@ -10,14 +10,14 @@ use strict;
 use warnings;
 
 use above "Genome";
-use Test::More skip_all => 'disabled until Genome::Process integration is completed';
+use Test::More;
 use Sub::Install qw(reinstall_sub);
 use File::Basename qw(basename);
 use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build succeed_build compare_directories);
+use Genome::VariantReporting::Framework::TestHelpers qw(test_xml);
 
 my $pkg = "Genome::VariantReporting::Command::Wrappers::Trio";
 use_ok($pkg);
-my $test_dir = __FILE__.".d";
 
 my $roi_name = "test roi";
 my $tumor_sample1 = Genome::Test::Factory::Sample->setup_object(name => "TEST-patient1-somval_tumor1");
@@ -33,8 +33,11 @@ succeed_build($normal_build);
 use Genome::Model::SomaticValidation::Command::AlignmentStatsSummary;
 reinstall_sub( {
         into => "Genome::Model::SomaticValidation::Command::AlignmentStatsSummary",
-        as => "_execute_body",
+        as => "_run",
         code => sub {
+            my $self = shift;
+            my $file = $self->_temp_file_path;
+            system("touch $file");
             return 1;
         },
     }
@@ -42,26 +45,33 @@ reinstall_sub( {
 use Genome::Model::SomaticValidation::Command::CoverageStatsSummary;
 reinstall_sub( {
         into => "Genome::Model::SomaticValidation::Command::CoverageStatsSummary",
-        as => "_execute_body",
+        as => "_run",
         code => sub {
+            my $self = shift;
+            my $file = $self->_temp_file_path;
+            system("touch $file");
             return 1;
         },
     }
 );
 
-my $output_dir = Genome::Sys->create_temp_directory;
 my $cmd = $pkg->create(
     models => [$discovery_build->model, $followup_build->model, $normal_build->model],
     coverage_models => [$discovery_build->model, $followup_build->model, $normal_build->model],
-    output_directory => $output_dir,
     tumor_sample => $tumor_sample1,
     followup_sample => $tumor_sample2,
     normal_sample => $normal_sample1,
 );
 
+my $p = $cmd->execute();
+isa_ok($p, 'Genome::VariantReporting::Process::Trio');
 
-is($cmd->class, $pkg);
-ok($cmd->execute);
-compare_directories($test_dir, $output_dir);
+test_xml($p->workflow_file, __FILE__);
+
+my $output_dir = Genome::Sys->create_temp_directory();
+$p->symlink_results($output_dir);
+
+my $test_dir = File::Spec->join(__FILE__.".d", 'expected_output');
+compare_directories($output_dir, $test_dir);
+
 done_testing;
-

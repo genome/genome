@@ -130,7 +130,7 @@ sub next {
         # If we dont care about extra columns, all is well... unless we dont at least have the minimum required
         if (!($self->allow_extra_columns)||(@{$self->headers} > @values)) {
             #  Bomb out if we dont want extra columns
-            $self->error_message(
+            die $self->error_message(
                sprintf(
                     'Expected %d values, got %d on line %d in %s',
                     scalar @{$self->headers},
@@ -139,7 +139,6 @@ sub next {
                     ( $self->get_original_input || ref $self->io ),
                 )
             );
-            return;
         } else {
             @extra_columns = splice @values, scalar(@{$self->headers});
         }

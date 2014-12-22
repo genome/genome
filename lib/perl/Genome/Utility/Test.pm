@@ -7,14 +7,18 @@ use base 'Test::Builder::Module';
 use Exporter 'import';
 
 our @EXPORT_OK = qw(compare_ok run_ok capture_ok abort strip_ansi
-    command_execute_ok command_execute_fail_ok is_equal_set);
+    command_execute_ok command_execute_fail_ok is_equal_set compare_dirs);
+
+use Test::More;
 
 use Carp qw(croak);
-use IPC::System::Simple qw(capture);
-use Sub::Install;
-use Test::More;
+use Cwd qw(realpath);
+use File::Find::Rule qw();
 use File::Spec qw();
+use IPC::System::Simple qw(capture);
+use List::MoreUtils qw(uniq);
 use Set::Scalar;
+use Sub::Install;
 
 
 my %ERRORS = (
@@ -212,6 +216,39 @@ sub compare_ok {
     }
 
     return $tb->ok($result, $o{name});
+}
+
+sub compare_dirs {
+    my ($got_dir, $expected_dir, $test_name, %compare_args) = @_;
+
+    ($got_dir, $expected_dir) = map { realpath $_ } ($got_dir, $expected_dir);
+
+    my @subpaths = uniq map {
+        my $dir = $_;
+        map { ($_ =~ /\Q$dir\E\/(.*)/)[0] } File::Find::Rule->file()->in($dir)
+    } ($got_dir, $expected_dir);
+
+    my $tb = __PACKAGE__->builder;
+    my $subtest = sub {
+        plan tests => scalar(@subpaths);
+        for my $subpath (@subpaths) {
+            my $got_file = File::Spec->join($got_dir, $subpath);
+            my $expected_file = File::Spec->join($expected_dir, $subpath);
+            my $test_name = sprintf('files matched: %s', $subpath);
+            if (-f $got_file && -f $expected_file) {
+                compare_ok($got_file, $expected_file, $test_name, %compare_args);
+            }
+            elsif (-f $expected_file) {
+                my $diag = sprintf('missing expected file: %s', $subpath);
+                ok(0, $test_name) or diag $diag;
+            }
+            else {
+                my $diag = sprintf('got extra file: %s', $subpath);
+                ok(0, $test_name) or diag $diag;
+            }
+        }
+    };
+    $tb->subtest($test_name, $subtest);
 }
 
 sub capture_ok {

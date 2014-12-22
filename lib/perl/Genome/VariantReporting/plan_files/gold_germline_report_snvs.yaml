@@ -1,6 +1,6 @@
 experts:
     'bam-readcount':
-        aligned_bam_result_id: aligned_bam_result_id
+        aligned_bam_result_id: [aligned_bam_result_id]
         version: 0.5
         minimum_mapping_quality: 0
         minimum_base_quality: 0
@@ -21,16 +21,23 @@ experts:
         plugins_version: 1
         joinx_version: 1.9
     dbsnp:
-        joinx_version: 1.9
+        joinx_version: 1.10
         info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
         vcf: dbsnp_vcf
-reporters:
+    nhlbi:
+        joinx_version: 1.10
+        info_string: 'AAC:PP:CDP:PH:EA_GTC:AA_GTC:MAF'
+        vcf: nhlbi_vcf
+reports:
     'full':
         filters:
             'allele-in-genotype':
                 sample_name: gold
             'contains-tag':
                 info_tag: ON_TARGET
+            'min-coverage':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             'variant-type': {}
@@ -53,6 +60,7 @@ reporters:
             'many-samples-vaf':
                 sample_names:
                     - normal
+                library_names: [library_names]
         params:
             sample_names:
                 - normal
@@ -62,6 +70,9 @@ reporters:
                 sample_name: gold
             'contains-tag':
                 info_tag: ON_TARGET
+            'min-coverage':
+                min_coverage: 20
+                sample_name: normal
         interpreters:
             position: {}
             vep: {}
@@ -72,3 +83,67 @@ reporters:
             'vcf-entry': {}
             'contains-tag':
                 info_tag: ON_TARGET
+            'min-coverage':
+                min_coverage: 20
+                sample_name: normal
+    'bed':
+        filters:
+            'allele-in-genotype':
+                sample_name: gold
+            'contains-tag':
+                info_tag: ON_TARGET
+            'min-coverage':
+                min_coverage: 20
+                sample_name: normal
+        interpreters:
+            'bed-entry': {}
+        params:
+            generate_legend_file: 0
+    'acmg':
+        filters:
+            'allele-in-genotype':
+                sample_name: gold
+            'contains-tag':
+                info_tag: ON_TARGET
+            gene:
+                gene_set: acmg
+            'annotation-category':
+                category_list:
+                    - splice_site
+                    - non_synonymous
+            'max-maf':
+                max_maf: 0.5
+                population_code: All
+            'max-af':
+                max_af: 0.005
+            'min-coverage':
+                min_coverage: 20
+                sample_name: normal
+        interpreters:
+            position: {}
+            'variant-type': {}
+            vep: {}
+            'info-tags': {}
+            rsid: {}
+            caf: {}
+            nhlbi: {}
+            'min-coverage':
+                min_coverage: 10
+                sample_name: normal
+            'min-coverage-observed':
+                sample_names:
+                    - normal
+            'max-vaf-observed':
+                tumor_sample_names: []
+                normal_sample_names:
+                    - normal
+            'variant-callers':
+                sample_name: normal
+            'many-samples-vaf':
+                sample_names:
+                    - normal
+                library_names: [library_names]
+        params:
+            sample_names:
+                - normal
+            library_names: [library_names]

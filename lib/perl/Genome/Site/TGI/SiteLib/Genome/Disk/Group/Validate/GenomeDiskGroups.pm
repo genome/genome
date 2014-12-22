@@ -29,15 +29,30 @@ sub is_genome_disk_group {
     return any { $_ eq $name } genome_disk_group_names();
 }
 
+sub is_cle_disk_group_name {
+    my $name = shift;
+
+    return 1 if $ENV{UR_DBI_NO_COMMIT};
+    return any { $_ eq $name } cle_disk_group_names();
+}
+
+sub cle_disk_group_names {
+    return (
+        'cle_alignments',
+        'cle_genome_models',
+    );
+}
+
+
 sub genome_disk_group_names {
-    return uniq (
+    return uniq cle_disk_group_names(), (
         # hard-coded for now because config is in a mess
         'cle_research_alignments',
         'cle_research_genome_models',
-        'cle_alignments',
-        'cle_genome_models',
+        'cle_research_analysis',
         'info_genome_models',
         'info_alignments',
+        'apipe_ci',
         $ENV{GENOME_DISK_GROUP_DEV},
         $ENV{GENOME_DISK_GROUP_REFERENCES},
         $ENV{GENOME_DISK_GROUP_ALIGNMENTS},

@@ -4,8 +4,8 @@ experts:
         e2_p2: something else
         e2_translated1: e2_translated
         e2_translated2: e2_translated
-reporters:
-    reporter_alpha:
+reports:
+    report_alpha:
         interpreters:
             interpreter_x:
                 ix_p1: something

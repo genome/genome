@@ -1,0 +1,12 @@
+---
+experts: {}
+needs_translation: 1
+reports:
+  vcf:
+    filters: {}
+    interpreters:
+      contains-tag:
+        info_tag: ON_TARGET
+      ft-keep:
+        sample_name: S1
+      vcf-entry: {}

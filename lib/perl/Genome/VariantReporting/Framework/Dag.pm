@@ -22,7 +22,7 @@ sub generate_dag {
     );
 
     my $last_expert_op = connect_experts($dag, $plan);
-    connect_reporters($dag, $last_expert_op, $plan);
+    connect_reports($dag, $last_expert_op, $plan);
 
     return $dag;
 }
@@ -101,32 +101,32 @@ sub experts {
     } @unsorted_experts;
 }
 
-sub connect_reporters {
+sub connect_reports {
     my ($dag, $last_expert_op, $plan) = validate_pos(@_, 1, 1, 1);
 
-    for my $reporter_plan ($plan->reporter_plans) {
-        my $name = $reporter_plan->name;
-        my $reporter_op = Genome::WorkflowBuilder::Command->create(
+    for my $report_plan ($plan->report_plans) {
+        my $name = $report_plan->name;
+        my $report_op = Genome::WorkflowBuilder::Command->create(
             name => sprintf('Generate Report (%s)', $name),
             command => 'Genome::VariantReporting::Framework::GenerateReport',
         );
-        $reporter_op->declare_constant(
-            reporter_name => $name,
+        $report_op->declare_constant(
+            report_name => $name,
             label => $name,
         );
         connect_to_previous(
             dag => $dag,
             previous => $last_expert_op,
-            target => $reporter_op,
+            target => $report_op,
         );
         connect_to_dag(
             dag => $dag,
-            target => $reporter_op,
+            target => $report_op,
         );
 
         $dag->connect_output(
             output_property => sprintf('output_result (%s)', $name),
-            source => $reporter_op,
+            source => $report_op,
             source_property => 'output_result',
         );
     }

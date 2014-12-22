@@ -38,6 +38,14 @@ sub input_hash {
     die "Abstract method 'input_hash' must be defined in class $class";
 }
 
+sub _input_hash {
+    my $self = shift;
+    return (
+        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
+        $self->input_hash,
+    );
+}
+
 # Do whatever you want to after a result was created or looked up.
 # Return undef on failure.
 sub post_get_or_create {
@@ -81,11 +89,12 @@ sub _fetch_result {
         {type => SCALAR}, {type => SCALAR});
 
     $self->debug_message("Attempting to %s a %s with arguments %s",
-        $method, $self->result_class, pp({$self->input_hash}));
-    my $result = $self->result_class->$method($self->input_hash);
+        $method, $self->result_class, pp({$self->_input_hash}));
+    my $result = $self->result_class->$method($self->_input_hash);
 
     if ($result) {
         $self->debug_message("%s returned result (%s)", $method, $result->id);
+        $self->delete_transients($result);
         $self->output_result($result);
         $self->create_software_result_user($user_label);
         if (defined $self->label) {
@@ -97,6 +106,22 @@ sub _fetch_result {
         return 0;
     }
 
+}
+
+sub delete_transients {
+    my ($self, $result) = @_;
+    for my $transient_property ($result->__meta__->properties(is_transient => 1)) {
+        next if $transient_property->property_name eq '_lock_name';
+
+        my $value = undef;
+        if (defined($transient_property->default_value)) {
+            $value = $transient_property->default_value;
+        }
+
+        my $name = $transient_property->property_name;
+        $result->$name($value);
+    }
+    return;
 }
 
 sub create_software_result_user {
