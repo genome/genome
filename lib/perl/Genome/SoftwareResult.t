@@ -4,6 +4,8 @@ use warnings;
 use Test::More tests => 44;
 
 use above 'Genome';
+use Genome::Test::Factory::Build;
+use Genome::Test::Factory::Model::ReferenceAlignment;
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -48,6 +50,19 @@ sub Genome::Foo::resolve_module_version {
     shift->Genome::SoftwareResult::resolve_module_version(@_)
 }
 
+my $requestor_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
+my $requestor_build = Genome::Test::Factory::Build->setup_object(model_id => $requestor_model->id);
+my $sponsor_user = Genome::Sys->current_user();
+
+sub sr_users_hash {
+    return (
+        users => {
+            requestor => $requestor_build,
+            sponsor => $sponsor_user,
+        },
+    );
+}
+
 ###
 
 use_ok('Genome::SoftwareResult');
@@ -87,6 +102,7 @@ my %params = (
 my $f = Genome::Foo->get_or_create(
     %params,
     output_dir => $tmp_dir,
+    sr_users_hash(),
 );
 ok($f, "made a software result");
 
@@ -131,6 +147,7 @@ for ($f->params, $f->inputs, $f) {
 my $f2 = Genome::Foo->get_or_create(
     %params,
     output_dir => $tmp_dir,
+    sr_users_hash(),
 );
 
 ok($f2, "got a software result on the second call");
@@ -168,7 +185,7 @@ for my $p (grep { /^[ip]/ } sort keys %params) {
 
     my $new_printable = (ref($new) eq 'ARRAY' ? join(",",@$new) : $new);
 
-    my $alt_obj = Genome::Foo->get_or_create(%new_params);
+    my $alt_obj = Genome::Foo->get_or_create(%new_params, sr_users_hash());
     ok($alt_obj, "got object for params with altered $p of $new_printable");
 
     my $new_id = $alt_obj->id;
