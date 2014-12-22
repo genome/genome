@@ -1937,7 +1937,7 @@ specified, its coderef is called in list context with the line as its only
 argument.  Each callback is then called.  Callback arguments are the line from
 the file followed by the return values from the line_preprocessor.
 
-Callbacks preceeded by a regex (created by qr) are only called if the regex
+Callbacks preceded by a regex (created by qr) are only called if the regex
 matches the line.  Captured groups are available inside these callbacks using
 the normal variables $1, $2, etc.
 
