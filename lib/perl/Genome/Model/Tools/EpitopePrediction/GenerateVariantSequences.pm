@@ -111,7 +111,7 @@ sub print_to_output {
 
 sub get_wildtype_subsequence_for_printing {
     my ($self, $position, $arr_wildtype_sequence_ref, $protein_arr) = @_;
-    my @arr_wildtype_sequence = @{$arr_wildtype_sequence_ref};
+    my @arr_wildtype_sequence = @$arr_wildtype_sequence_ref;
 
     my $peptide_sequence_length = $self->peptide_sequence_length;
     #If the wildtype sequence is shorter than the desired peptide sequence
