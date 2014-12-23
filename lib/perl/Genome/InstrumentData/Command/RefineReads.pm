@@ -108,7 +108,9 @@ sub _params {
     my $self = shift;
 
     my @known_sites_ids = $self->refiner_known_sites_ids;
-    my @known_sites = Genome::Model::Build::ImportedVariationList->get(id => \@known_sites_ids);
+    my @known_sites;
+    @known_sites = Genome::Model::Build::ImportedVariationList->get(id => \@known_sites_ids)
+        if @known_sites_ids;
 
     return  (
         version => $self->refiner_version,
