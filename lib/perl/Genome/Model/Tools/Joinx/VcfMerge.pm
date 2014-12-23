@@ -169,7 +169,7 @@ sub _resolve_flags {
         $flags .= " -s";
     }
     if ($self->exact_pos) {
-        if ( version->parse($self->use_version) < version->parse('1.7') ) {
+        if ( version->parse('v'.$self->use_version) < version->parse("v1.7") ) {
             die $self->error_message("Invalid option (--exact-pos) for joinx version (". $self->use_version .")");
         }
         $flags .= " -e";
