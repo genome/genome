@@ -65,6 +65,7 @@ sub with_registered_users {
     my $sr_callback = delete $params{callback};
 
     my ($software_result, $newly_created) = $sr_callback->(%params);
+    return unless $software_result;
 
     $class->_register_users($software_result, $user_hash, $newly_created);
 
