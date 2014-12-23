@@ -218,7 +218,7 @@ sub get_with_lock {
             }
 
             $result->_auto_unarchive if $result;
-            return ($result, 1);
+            return ($result, 0);
         }
     );
 
@@ -257,7 +257,7 @@ sub get_or_create {
             }
 
             $result->_auto_unarchive();
-            return $result;
+            return ($result, $newly_created);
         });
 }
 
