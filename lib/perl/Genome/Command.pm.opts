@@ -18085,7 +18085,7 @@ $Genome::Command::OPTS_SPEC = [
           21,
           31
         ],
-        'allele=s',
+        'alleles=s@',
         'files',
         'epitope-length=s',
         'files',
