@@ -20,6 +20,7 @@ class Genome::Config::AnalysisProject::Command::ConfigForInstrumentData {
             doc => 'Display report in color.'
         },
     ],
+    doc => 'compare instdata to AnP configs to show matches, models and mismatches',
 };
 
 sub execute {
