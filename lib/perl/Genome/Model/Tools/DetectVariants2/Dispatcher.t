@@ -15,6 +15,7 @@ use Test::More;
 use above 'Genome';
 use Genome::SoftwareResult;
 use Genome::Test::Factory::Sample;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -30,14 +31,18 @@ my $det_class_base = 'Genome::Model::Tools::DetectVariants2';
 my $dispatcher_class = "${det_class_base}::Dispatcher";
 use_ok($dispatcher_class);
 
-# hash of strings => expected output hash
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
 
 my $obj = $dispatcher_class->create(
     snv_detection_strategy => 'samtools r599 [-p 1] intersect samtools r613 [-p 2]',
     indel_detection_strategy => 'samtools r599 [-p 1]',
     sv_detection_strategy => 'breakdancer 2010_06_24 [-p 3]',
-    );
+    result_users => $result_users,
+);
 
+# hash of strings => expected output hash
 my $expected_plan = {
     'breakdancer' => {
         '2010_06_24' => {
@@ -103,6 +108,7 @@ my $combine_test = $dispatcher_class->create(
     aligned_reads_input => $tumor_bam,
     control_aligned_reads_input => $normal_bam,
     aligned_reads_sample => $test_name,
+    result_users => $result_users,
 );
 Genome::Test::Factory::Sample->setup_object(name => $test_name);
 $combine_test->dump_status_messages(1);

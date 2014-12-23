@@ -753,6 +753,7 @@ sub params_for_filter_result {
         region_of_interest_id => $previous_result->region_of_interest_id,
         test_name => $previous_result->test_name,
         chromosome_list => $previous_result->chromosome_list,
+        users => $self->result_users,
     );
 
     return \%params;
@@ -781,6 +782,7 @@ sub params_for_vcf_result {
         filter_description => $self->filter_description,
         vcf_version => $vcf_version,
         previous_filter_strategy => $self->_previous_filter_strategy,
+        users => $self->result_users,
 
     );
     $params{control_aligned_reads_sample} = $self->control_aligned_reads_sample if defined $self->control_aligned_reads_sample;
@@ -808,6 +810,7 @@ sub detector_directory {
             region_of_interest_id => $previous_result->region_of_interest_id,
             test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
             chromosome_list => $previous_result->chromosome_list,
+            users => $self->result_users,
         );
 
         unless($detector_result) {
