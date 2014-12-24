@@ -178,6 +178,7 @@ sub _filter_variants {
         aligner_version    => $self->novoalign_version,
         aligner_name       => 'novocraft',
         aligner_params     => '-k 14 -s 3',
+        users              => $self->result_users,
     );
     unless (defined $novo_idx_obj) {
         die "Could not retrieve novocraft index for reference build $build_id and aligner version " . $self->novoalign_version;

@@ -114,6 +114,7 @@ sub _generate_control_file {
         aligned_reads_input => $self->control_aligned_reads_input,
         reference_build_id => $self->reference_build_id,
         aligned_reads_sample => 'TEST',
+        result_users => $self->result_users,
     );
 
     unless($detector_command->execute) {
@@ -125,6 +126,7 @@ sub _generate_control_file {
         previous_result_id => $detector_command->_result_id,
         output_directory => $filter_output,
         aligned_reads_sample => 'TEST',
+        result_users => $self->result_users,
     );
 
     unless($filter_command->execute) {
