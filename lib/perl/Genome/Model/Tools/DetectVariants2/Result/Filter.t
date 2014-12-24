@@ -10,6 +10,7 @@ BEGIN{
 
 use above "Genome";
 use Test::More;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -28,6 +29,10 @@ my $bam_input = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 
 my $refbuild_id = 101947881;
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build_id => $refbuild_id,
+);
+
 my $version = 'r613';
 
 my $detector_parameters = '';
@@ -39,6 +44,7 @@ my %command_params = (
     params => $detector_parameters,
     output_directory => $test_working_dir . '/test',
     aligned_reads_sample => 'TEST',
+    result_users => $result_users,
 );
 
 my $command = Genome::Model::Tools::DetectVariants2::Samtools->create(%command_params);
@@ -54,6 +60,7 @@ my %filter_params = (
     version => 'v1',
     output_directory => $test_working_dir . '/test/filter1',
     aligned_reads_sample => 'TEST',
+    result_users => $result_users,
 );
 
 my $filter_command = Genome::Model::Tools::DetectVariants2::Filter::SnpFilter->create(%filter_params);
@@ -108,12 +115,12 @@ is($filter_result4->previous_filter_strategy, 'Genome::Model::Tools::DetectVaria
 my $delete_ok3 = eval { $filter_result3->delete };
 ok(!$delete_ok3, 'prevented from deleting a filter result that is used by another result');
 
-#Remove the filter_vcf_result from this filter_result so it can be removed
+#Remove the results from this filter_result so it can be removed
 my @users = $filter_result4->users;
-$users[0]->delete;
+map { $_->delete } @users;
 my $delete_ok4 = eval { $filter_result4->delete };
 my $error = $@;
-ok($delete_ok4, 'can delete a filter result not subsequently used') or diag('error: ' . $error);
+ok($delete_ok4, 'can delete a filter result not otherwise used') or diag('error: ' . $error);
 
 my %result_params = (
         detector_name => $filter_result->detector_name,
@@ -129,6 +136,7 @@ my %result_params = (
         region_of_interest_id => $filter_result->region_of_interest_id,
         test_name => $filter_result->test_name,
         chromosome_list => $filter_result->chromosome_list,
+        users => $result_users,
 );
 
 my $filter_result_get = Genome::Model::Tools::DetectVariants2::Result::Filter->get_with_lock(%result_params);
