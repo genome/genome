@@ -14,6 +14,7 @@ use Test::More tests => 18;
 use File::Spec;
 use Genome::Utility::Test;
 use File::Compare;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $class = 'Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow';
 use_ok($class);
@@ -26,6 +27,10 @@ my $annotation_version = 0;
 my $params = "[--bamwindow-version 0.4 --bamwindow-params {-w 10000 -r -l -s -q 1} --copycat-params {--per-read-length --per-library} --samtools-strategy {samtools r599} --annotation-version $annotation_version ]";
 my $refbuild_id = 106942997;
 my $output_directory = Genome::Sys->create_temp_directory();
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build_id => $refbuild_id,
+);
 
 my $tumor_bam_file = File::Spec->join($test_dir, 'tumor.bam');
 ok(-s $tumor_bam_file, "tumor bam exists");
@@ -94,6 +99,7 @@ my $cmd = Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow->cr
     annotation_version => $version,
     aligned_reads_sample => $tumor_sample,
     control_aligned_reads_sample => $normal_sample,
+    result_users => $result_users,
 );
 
 ok($cmd, 'created CopyCatSomaticWithBamWindow object');

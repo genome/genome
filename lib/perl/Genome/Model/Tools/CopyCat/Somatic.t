@@ -32,7 +32,7 @@ ok(-s $normal_samtools_file, 'normal samtools file exists');
 my $reference_build_id = '106942997';
 
 my $output_directory = Genome::Sys->create_temp_directory();
-my $version = _create_test_annotation_data($reference_build_id, File::Spec->join($test_dir, 'annotation_data'));
+my $annotation_data_id = _create_test_annotation_data($reference_build_id, File::Spec->join($test_dir, 'annotation_data'));
 
 my %params = (
     normal_window_file => $normal_window_file,
@@ -43,8 +43,7 @@ my %params = (
     normal_samtools_file => $normal_samtools_file,
     tumor_samtools_file => $tumor_samtools_file,
     samtools_file_format => "unknown",
-    reference_build_id => $reference_build_id,
-    annotation_version => $version,
+    annotation_data_id => $annotation_data_id,
 );
 
 my $cmd = Genome::Model::Tools::CopyCat::Somatic->create( %params );
@@ -93,8 +92,9 @@ sub _create_test_annotation_data{
         reference_sequence => $reference_build,
     );
     ok($cmd, "Annotation data creation command exists");
-    ok($cmd->execute, 'Successfully created annotation data set');
-    return $version;
+    my $result_id = $cmd->execute;
+    ok($result_id, 'Successfully created annotation data set');
+    return $result_id;
 }
 
 1;
