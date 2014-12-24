@@ -48,6 +48,7 @@ sub vcf_result_params {
     my $self = shift;
     my $aligned_reads_sample = shift;
     my $control_aligned_reads_sample = shift;
+    my $users = shift;
 
     return (
         filter_name => $self->filter_name,
@@ -60,6 +61,7 @@ sub vcf_result_params {
         vcf_version => Genome::Model::Tools::Vcf->get_vcf_version,
         aligned_reads_sample => $aligned_reads_sample,
         ($control_aligned_reads_sample? (control_aligned_reads_sample => $control_aligned_reads_sample) : ()),
+        #users => $users, #Needed if get() inside get_vcf_result becomes get_with_lock()
     );
 }
 
