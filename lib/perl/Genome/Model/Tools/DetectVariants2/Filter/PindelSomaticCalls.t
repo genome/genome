@@ -13,6 +13,7 @@ use File::Temp;
 use Test::More;
 use Data::Dumper;
 use File::Compare;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -22,6 +23,11 @@ use_ok( 'Genome::Model::Tools::DetectVariants2::Filter::PindelSomaticCalls');
 
 my $refbuild_id = 101947881;
 my $input_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Filter-PindelSomaticCalls";
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build_id => $refbuild_id,
+);
+
 my $detector_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Filter-PindelSomaticCalls/pindel-0.5-";
 
 # Updated to .v2 for correcting an error with newlines
@@ -51,6 +57,7 @@ $detector_result->lookup_hash($detector_result->calculate_lookup_hash());
 my $pindel_somatic_calls = Genome::Model::Tools::DetectVariants2::Filter::PindelSomaticCalls->create(
     previous_result_id => $detector_result->id,
     output_directory => $test_output_dir,
+    result_users => $result_users,
 );
 ok($pindel_somatic_calls, "created PindelSomaticCalls object");
 ok($pindel_somatic_calls->execute(), "executed PindelSomaticCalls");

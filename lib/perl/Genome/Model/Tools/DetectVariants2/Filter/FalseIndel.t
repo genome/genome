@@ -12,6 +12,7 @@ use above 'Genome';
 
 use Test::More;
 use File::Compare;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -34,6 +35,10 @@ my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
 my $reference = Genome::Model::Build::ImportedReferenceSequence->get_by_name('NCBI-human-build36');
 isa_ok($reference, 'Genome::Model::Build::ImportedReferenceSequence', 'loaded reference sequence');
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference,
+);
+
 my $detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
     output_dir => $test_data_dir,
     detector_name => 'Genome::Model::Tools::DetectVariants2::VarscanSomatic',
@@ -54,17 +59,17 @@ $detector_vcf_result->lookup_hash($detector_vcf_result->calculate_lookup_hash())
 $detector_result->add_user(user => $detector_vcf_result, label => 'uses');
 
 my $param_str = '--bam-readcount-version 0.3';
-run_test('default_params', $param_str);
+run_test('default_params', $param_str, $result_users);
 
 #TODO the test input indel list is too short, need longer one
 $param_str .= ' --max-mm-qualsum-diff 100 --min-var-freq 0.2 --min-homopolymer 10 --min-var-count 10';
-run_test('non_default_params', $param_str);
+run_test('non_default_params', $param_str, $result_users);
 
 done_testing();
 
 
 sub run_test {
-    my ($type, $params) = @_;
+    my ($type, $params, $result_users) = @_;
     my $output_dir = $test_output_dir."/$type";
     my $expect_dir = $expected_dir."/$type";
 
@@ -73,6 +78,7 @@ sub run_test {
         output_directory   => $output_dir,
         params => $params,
         aligned_reads_sample => "TEST",
+        result_users => $result_users,
     );
 
     my $filter_command = Genome::Model::Tools::DetectVariants2::Filter::FalseIndel->create(%params);

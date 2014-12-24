@@ -11,6 +11,7 @@ use warnings;
 
 use above 'Genome';
 use Genome::Utility::Vcf ('parse_vcf_line', 'deparse_vcf_line', 'get_samples_from_header');
+use Genome::Test::Factory::SoftwareResult::User;
 
 use Test::More;
 
@@ -81,6 +82,7 @@ my $filter_command = Genome::Model::Tools::DetectVariants2::Filter::FalsePositiv
     previous_result_id => $detector_result->id,
     output_directory => $output_dir,
     bam_readcount_version => 0.3,
+    result_users => Genome::Test::Factory::SoftwareResult::User->setup_user_hash(),
 );
 $filter_command->dump_status_messages(1);
 isa_ok($filter_command, 'Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfDenovo', 'created filter command');

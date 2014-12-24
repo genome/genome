@@ -14,6 +14,7 @@ use Test::More;
 use Data::Dumper;
 use File::Compare;
 use File::Slurp;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -58,6 +59,10 @@ sub compare_files {
 my $refbuild_id = 101947881;
 my $input_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Filter-PindelReadSupport";
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build_id => $refbuild_id,
+);
+
 # Updated to v2 to allow for new columns
 my $expected_dir = $input_directory . "/expected_v5/";
 my $tumor_bam_file  = $input_directory. '/true_positive_tumor_validation.bam';
@@ -89,6 +94,7 @@ my $pindel_read_support = Genome::Model::Tools::DetectVariants2::Filter::PindelR
     previous_result_id => $detector_result->id,
     output_directory => $test_output_dir,
     capture_data => 1,
+    result_users => $result_users,
 );
 
 ok($pindel_read_support, "created PindelReadSupport object");

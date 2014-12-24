@@ -12,6 +12,7 @@ use Test::More tests => 23;
 
 use above 'Genome';
 use File::Compare;
+use Genome::Test::Factory::SoftwareResult::User;
 
 use_ok('Genome::Model::Tools::DetectVariants2::Filter::VarscanPValue') || die;
 
@@ -22,6 +23,10 @@ my $bam_file = join('/', $test_data_dir, 'tumor.tiny.bam');
 
 my $reference = Genome::Model::Build::ImportedReferenceSequence->get_by_name('NCBI-human-build36');
 ok($reference, 'found the reference sequence');
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference,
+);
 
 my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
 
@@ -57,6 +62,7 @@ my %variant_p_value_only = (
     params => '--variant-p-value 0.5',
     aligned_reads_sample => "TEST",
     control_aligned_reads_sample => "TEST-normal",
+    result_users => $result_users,
 );
 
 my %somatic_p_value_only = (
@@ -65,6 +71,7 @@ my %somatic_p_value_only = (
     params => '--somatic-p-value 0.5',
     aligned_reads_sample => "TEST",
     control_aligned_reads_sample => "TEST-normal",
+    result_users => $result_users,
 );
 
 my %combined_params = (
@@ -73,6 +80,7 @@ my %combined_params = (
     params => '--variant-p-value 0.5 --somatic-p-value 0.5',
     aligned_reads_sample => "TEST",
     control_aligned_reads_sample => "TEST-normal",
+    result_users => $result_users,
 );
 
 my @expected_output_files = qw| 
