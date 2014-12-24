@@ -14,6 +14,7 @@ use File::Compare;
 use Test::More;
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -36,12 +37,17 @@ my $tumor =  $test_data."/flank_tumor_sorted.13_only.bam";
 my $tmpbase = File::Temp::tempdir('GatkGermlineSnvXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $tmpdir = "$tmpbase/output";
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
+
 my $gatk_somatic_indel = Genome::Model::Tools::DetectVariants2::GatkGermlineSnv->create(
         aligned_reads_input=>$tumor, 
         reference_build_id => $refbuild_id,
         output_directory => $tmpdir, 
         mb_of_ram => 3000,
         version => 5336,
+        result_users => $result_users,
 );
 
 ok($gatk_somatic_indel, 'gatk_germline_snv command created');

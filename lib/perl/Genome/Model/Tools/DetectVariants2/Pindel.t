@@ -14,6 +14,7 @@ use File::Temp;
 use Test::More;
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -32,6 +33,10 @@ my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Pin
 my $tmpbase = File::Temp::tempdir('PindelXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $tmpdir = "$tmpbase/output";
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
+
 my $pindel = Genome::Model::Tools::DetectVariants2::Pindel->create(
     chromosome_list => [22],
     aligned_reads_input=>$tumor, 
@@ -41,6 +46,7 @@ my $pindel = Genome::Model::Tools::DetectVariants2::Pindel->create(
     control_aligned_reads_sample => "TEST_NORMAL",
     aligned_reads_sample => "TEST",
     version => '0.5',
+    result_users => $result_users,
 );
 ok($pindel, 'pindel command created');
 

@@ -14,6 +14,7 @@ use File::Temp;
 use Test::More;
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -41,6 +42,10 @@ my $reduced_ref_seq_build = Genome::Model::Build::ReferenceSequence->create(
 );
 ok($reduced_ref_seq_build, "Created a reduced reference sequence build for testing") or die;
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reduced_ref_seq_build,
+);
+
 my $test_base_dir = File::Temp::tempdir('MutectXXXXX', CLEANUP => 1, TMPDIR => 1);
 
 my $mutect = Genome::Model::Tools::DetectVariants2::Mutect->create(aligned_reads_input=>$tumor, 
@@ -50,6 +55,7 @@ my $mutect = Genome::Model::Tools::DetectVariants2::Mutect->create(aligned_reads
                                                                    version => '1.1.4',
                                                                    params => '--number-of-chunks 5;',
                                                                    aligned_reads_sample => 'test',
+                                                                   result_users => $result_users,
                                                                    );
 ok($mutect, 'mutect command created');
 $mutect->dump_status_messages(1);

@@ -14,6 +14,7 @@ use File::Temp;
 use Test::More;
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -32,6 +33,10 @@ my $testbam =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-M
 my $tmpbase = File::Temp::tempdir('MethRatioXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $tmpdir = "$tmpbase/output";
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
+
 my $methratio = Genome::Model::Tools::DetectVariants2::MethRatio->create(
     chromosome_list => \@chromosomes_to_test,
     aligned_reads_input=>$testbam, 
@@ -39,6 +44,7 @@ my $methratio = Genome::Model::Tools::DetectVariants2::MethRatio->create(
     output_directory => $tmpdir, 
     aligned_reads_sample => "TEST",                            
     version => '2.6',
+    result_users => $result_users,
 );
 
 ok($methratio, 'methratio command created');
