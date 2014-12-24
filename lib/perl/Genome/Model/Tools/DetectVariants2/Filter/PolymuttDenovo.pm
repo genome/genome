@@ -63,7 +63,7 @@ sub _filter_variants {
     }
     unless(-s $sites_file) {
         $self->debug_message("No denovo sites found to filter. this filter is a no-op, copying file over.");
-        `cp $vcf $output_file`;
+        Genome::Sys->copy_file($vcf, $output_file);
         return 1;
     }
 
