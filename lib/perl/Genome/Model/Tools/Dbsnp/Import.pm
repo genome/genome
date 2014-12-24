@@ -74,7 +74,7 @@ sub execute {
 
     my $output_file = join("/", $temp_dir, "/unsorted.bed");
 
-    $self->debug_message("Using reference coordinates ".$self->reference_coordinates) if $self->reference_coordinates;
+    $self->debug_message("Using reference coordinates ".$self->reference_coordinates) if defined $self->reference_coordinates;
 
     for my $chromosome ($self->chromosome_names){
         my $flatfile = $self->filename_pattern;
