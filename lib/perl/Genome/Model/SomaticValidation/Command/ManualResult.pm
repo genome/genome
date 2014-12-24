@@ -37,6 +37,10 @@ class Genome::Model::SomaticValidation::Command::ManualResult {
             doc => 'The format of the variant list (e.g. "bed", "samtools", "breakdancer")',
             default_value => 'bed',
         },
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'The Analysis Project for which the manual result is needed',
+        },
     ],
     has_transient_optional_output => [
         manual_result => {
@@ -76,6 +80,11 @@ sub execute {
     if ($source_build->model->control_subject) {
         $params{control_sample_id} = $source_build->model->control_subject->id;
     }
+
+    $params{users} = {
+        requestor => $source_build,
+        sponsor   => ($self->analysis_project // Genome::Sys->current_user),
+    };
 
     my $manual_result = Genome::Model::Tools::DetectVariants2::Result::Manual->get_or_create(%params);
 

@@ -9,6 +9,8 @@ BEGIN {
 };
 
 use above "Genome";
+use Genome::Test::Factory::SoftwareResult::User;
+
 use Test::More tests => 13;
 
 use_ok('Genome::Model::Tools::DetectVariants2::Result::Manual');
@@ -73,8 +75,13 @@ ok(!$diff, 'hq.bed file is appropriately converted from samtools file') or diag(
 
 is($samtools_result->file_content_hash, Genome::Sys->md5sum($test_samtools_file), 'created hash correctly');
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference,
+);
+
 my $get_test = Genome::Model::Tools::DetectVariants2::Result::Manual->get_or_create(
-    %params
+    %params,
+    users => $result_users,
 );
 is($get_test, $samtools_result, 'got same result on subsequent get_or_create call');
 
