@@ -318,6 +318,7 @@ sub _bam_to_fastq_commands {
 
     return <<EOS;
 {
+    # swap stdin and stderr
     $path bamtofastq -i /dev/stdin -fq /dev/stdout -fq2 /dev/stdout 3>&1 1>&2 2>&3 \\
         | {
             tee >(
@@ -328,8 +329,9 @@ sub _bam_to_fastq_commands {
                 fi
                 ) \\
             ;
-        } 2>&1\\
-    ; # redirect fd3 -> stdout, fd4 -> stderr
+        } 2>&1 \\
+    ;
+# swap stdin and stderr again (back to their original configuration)
 } 3>&1 1>&2 2>&3 \\
 EOS
 }
