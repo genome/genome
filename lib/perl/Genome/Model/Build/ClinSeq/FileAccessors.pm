@@ -39,7 +39,7 @@ sub snv_indel_report_dir {
   my $mq = shift;
   my $snv_indel_report_dir = File::Spec->catdir(
     $self->case_dir,
-    "snv_indel_report/b" . $bq . "_q" . $mq);
+    ("snv_indel_report", "b${bq}_q${mq}"));
   return $snv_indel_report_dir;
 }
 
@@ -89,7 +89,7 @@ sub mutation_spectrum_dir {
   my $mq = shift;
   my $mutation_spectrum_dir = File::Spec->catdir(
     $self->case_dir,
-    "mutation-spectrum/b" . $bq . "_q" . $mq);
+    ("mutation-spectrum", "b${bq}_q${mq}"));
   return $mutation_spectrum_dir;
 }
 
@@ -266,7 +266,7 @@ sub wgs_cnv_cnview_dir {
   my $self = shift;
   my $wgs_cnv_cnview_dir = File::Spec->catdir(
     $self->wgs_cnv_dir,
-    "cnview/CNView_All");
+    qw(cnview CNView_All));
   return $wgs_cnv_cnview_dir;
 }
 
@@ -426,7 +426,7 @@ sub microarray_cnv_wg_plot {
   my $self = shift;
   my $microarray_cnv_wg_plot = File::Spec->catfile(
     $self->microarray_cnv_dir,
-    "CNView_All/Gains_AllChrs.jpeg");
+    qw(CNView_All Gains_AllChrs.jpeg));
   if(-e $microarray_cnv_wg_plot) {
     return $microarray_cnv_wg_plot
   } else {
@@ -767,7 +767,7 @@ sub mutation_spectrum_wgs_summary_file {
   my $mq = shift;
   my $mutation_spectrum_wgs_summary_file = File::Spec->catfile(
     $self->mutation_spectrum_dir($bq, $mq),
-    "wgs/summarize_mutation_spectrum/mutation_spectrum.tsv");
+    qw(wgs summarize_mutation_spectrum mutation_spectrum.tsv));
   if(-e $mutation_spectrum_wgs_summary_file ){
     return $mutation_spectrum_wgs_summary_file ;
   } else {
@@ -783,7 +783,7 @@ sub mutation_spectrum_exome_summary_file {
   my $mq = shift;
   my $mutation_spectrum_exome_summary_file = File::Spec->catfile(
     $self->mutation_spectrum_dir($bq, $mq),
-    "exome/summarize_mutation_spectrum/mutation_spectrum.tsv");
+    qw(exome summarize_mutation_spectrum mutation_spectrum.tsv));
   if(-e $mutation_spectrum_exome_summary_file ){
     return $mutation_spectrum_exome_summary_file ;
   } else {
