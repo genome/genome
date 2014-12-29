@@ -114,5 +114,15 @@ use constant VALID_TYPES => {
 
 sub _valid_types { return @{VALID_TYPES->{shift()}} }
 
+sub user_hash_for_build {
+    my $class = shift;
+    my $build = shift;
+
+    return {
+        requestor => $build,
+        sponsor   => $build->model->analysis_projects // Genome::Sys::User->get(username => $build->model->run_as),
+    };
+}
+
 1;
 

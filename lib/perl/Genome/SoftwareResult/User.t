@@ -32,7 +32,8 @@ sub _shortcut_callback {
 my $class = 'Genome::SoftwareResult::User';
 use_ok($class);
 
-my $requestor_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
+my $run_as = 'apipe-builder';
+my $requestor_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object(run_as => $run_as);
 my $requestor_build = Genome::Test::Factory::Build->setup_object(model_id => $requestor_model->id);
 my $sponsor_user = Genome::Sys->current_user();
 
@@ -113,5 +114,19 @@ is(
     scalar(@users_after_additional_call),
     'it will not staple on duplicate users',
 );
+
+subtest 'user_hash_for_build produces expected results' => sub {
+    plan tests => 4;
+
+    my $user_hash1 = Genome::SoftwareResult::User->user_hash_for_build($requestor_build);
+    is($user_hash1->{requestor}, $requestor_build, 'set requestor for build without an analysis project');
+    is($user_hash1->{sponsor}->username, $run_as, 'set sponsor for build without an analysis project');
+
+    my $test_anp = Genome::Config::AnalysisProject->__define__(name => 'test project for G:SR:User test');
+    Genome::Config::AnalysisProject::ModelBridge->create(analysis_project => $test_anp, model => $requestor_model);
+    my $user_hash2 = Genome::SoftwareResult::User->user_hash_for_build($requestor_build);
+    is($user_hash2->{requestor}, $requestor_build, 'set requestor for build with an analysis project');
+    is($user_hash2->{sponsor}, $test_anp, 'set sponsor for build with an analysis project');
+};
 
 done_testing();
