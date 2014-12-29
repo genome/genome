@@ -50,52 +50,54 @@ use_ok($pkg) || die;
     };
 }
 {
-    package TestUser;
+    package TestProcess;
 
     use strict;
     use warnings FATAL => 'all';
     use Genome;
 
-    class TestUser {
-        is => 'UR::Object',
+    class TestProcess {
+        is => 'Genome::Process',
         has => [
             name => {},
         ],
     };
 }
 
-my $USER1 = TestUser->create(name => 'USER1');
+my $PROCESS1 = TestProcess->create(name => 'PROCESS1');
 
-my $cmd = TestCommand->create(user => $USER1, test_name => 'foo');
+my $cmd = TestCommand->create(requestor => $PROCESS1, test_name => 'foo');
 is($cmd->shortcut(), 0, 'Shortcut returns 0 when no result exists') or die;
 is($cmd->execute(), 1, 'Execute returns 1 when successful') or die;
 
 my $sr = $cmd->output_result;
 ok($sr, 'Found a TestResult was created') or die;
 
-check_sr_user($sr, $USER1, 'created');
+check_sr_user($sr, $PROCESS1, 'created');
 
 
-my $USER2 = TestUser->create(name => 'USER2');
-$cmd = TestCommand->create(user => $USER2, test_name => 'foo');
+my $PROCESS2 = TestProcess->create(name => 'PROCESS2');
+$cmd = TestCommand->create(requestor => $PROCESS2, test_name => 'foo');
 is($cmd->shortcut(), 1, 'Shortcut returns 1 when result exists') or die;
 
 my $shortcut_sr = $cmd->output_result;
 is($shortcut_sr, $sr, 'Found the same TestResult when shortcutting') or die;
 
-check_sr_user($sr, $USER2, 'shortcut');
+check_sr_user($sr, $PROCESS2, 'shortcut');
 
-$cmd = TestCommand->create(user => $USER2, label => "label2", test_name => 'baz');
+$cmd = TestCommand->create(requestor => $PROCESS2, user => $PROCESS2, label => "label2", test_name => 'baz');
 $cmd->execute();
-check_sr_user($cmd->output_result, $USER2, 'label2');
-check_sr_user($cmd->output_result, $USER2, 'created');
+check_sr_user($cmd->output_result, $PROCESS2, 'label2');
+check_sr_user($cmd->output_result, $PROCESS2, 'created');
 
-$cmd = TestCommand->create(test_name => 'bar');
-$cmd->execute();
-is_deeply([$cmd->output_result->users], [], "No users created when 'user' is not passed as an input");
+$cmd = TestCommand->create(requestor => $PROCESS2, label => "label_without_user", test_name => 'baz');
+ok(!$cmd->execute(), 'failed to execute with a label but no user');
+
+$cmd = TestCommand->create(requestor => $PROCESS2, user => $PROCESS2, test_name => 'baz');
+ok(!$cmd->execute(), 'failed to execute with a user but no label');
 
 subtest 'exception_safety' => sub {
-    my $cmd = TestCommand->create(test_name => 'exception_safe');
+    my $cmd = TestCommand->create(requestor => $PROCESS2, test_name => 'exception_safe');
     my $override = Sub::Override->new(
         'Genome::Command::DelegatesToResult::_fetch_result' => sub {die 'test'});
 

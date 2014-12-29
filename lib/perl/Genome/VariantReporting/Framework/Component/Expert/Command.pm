@@ -25,13 +25,14 @@ class Genome::VariantReporting::Framework::Component::Expert::Command {
             valid_values => ['snvs', 'indels'],
             doc => "The type of variant the input_result represents",
         },
-        user => {
-            is => 'Genome::Process',
-            is_optional => 1,
-            id_by => 'process_id',
-        },
         process_id => {
             is => 'Text',
+        },
+    ],
+    has_transient_optional => [
+        requestor => {
+            is => 'Genome::Process',
+            id_by => 'process_id',
         },
     ],
     has_optional_output => [
@@ -99,9 +100,10 @@ sub input_hash {
     }
 
     $hash{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
-    delete $hash{user};
-    delete $hash{process_id};
-    delete $hash{label};
+
+    for my $key (qw(requestor user sponsor process_id label)) {
+        delete $hash{$key};
+    }
     return %hash;
 }
 
