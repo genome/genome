@@ -157,6 +157,14 @@ ok($allocation->volume->mount_path ne $current_volume->mount_path, "allocation m
 ok(-e $allocation->absolute_path . "/test_file", "touched file correctly moved to new allocation directory");
 ok(!Genome::Disk::Allocation->get(mount_path => $current_volume->mount_path, allocation_path => $allocation->allocation_path), 'no redundant allocation on old volume');
 
+# try generating summaries
+is(1, $allocation->_create_file_summaries(), 'successfully called _create_file_summaries');
+is(scalar(@{[$allocation->file_summaries]}), 1, 'summary generated for file in allocation');
+
+Genome::Sys->remove_directory_tree($allocation->absolute_path);
+isnt(1, $allocation->_create_file_summaries(), '_create_file_summaries fails when dir not found');
+like($allocation->warning_message, qr(Skipping file summaries), 'expected warning thrown');
+
 # Now delete the allocation
 Genome::Disk::Allocation->delete(id => $allocation->id);
 isa_ok($allocation, 'UR::DeletedRef', 'other allocation removed successfully');
