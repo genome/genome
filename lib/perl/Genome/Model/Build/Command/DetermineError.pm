@@ -27,8 +27,8 @@ our $ERROR_LOCATION = qr{
         at \s (?<error_source_file>\S+\.pm) \s line \s (?<error_source_line>\d+)
     }x;
 
-our $ERROR_FINDING_REGEX =
-            qr{(?:
+our $ERROR_FINDING_REGEX = qr{
+                (?:
                     $WORKFLOW_DATE_AND_HOST
                     |
                     $PTERO_DATE
@@ -40,6 +40,16 @@ our $ERROR_FINDING_REGEX =
                     (?<error_text>ERROR:? .*)
                 )
             }x;
+
+our $EXCEPTION_FINDING_REGEX = qr{
+                (?:
+                    $WORKFLOW_DATE_AND_HOST
+                    |
+                    $PTERO_DATE
+                )
+                \s
+                (?<error_text>.*) \s (?<!called\s) $ERROR_LOCATION
+        }x;
 
 our $PTERO_HOST_FINDING_REGEX = qr{Starting log annotation on host:\s(.*)};
 
@@ -311,7 +321,7 @@ sub find_die_or_warn_in_log {
                     last SCAN_FILE if $error_text;
                 },
 
-            $ERROR_FINDING_REGEX,
+            $EXCEPTION_FINDING_REGEX,
                 sub {
                     ($error_date, $error_text, $error_source_file, $error_source_line, $error_host)
                         = @+{'date','error_text','error_source_file','error_source_line','host'};

@@ -85,11 +85,11 @@ subtest 'find workflow die or warn in log' => sub {
     my($error_source_file, $error_source_line, $error_host, $error_date, $error_text)
         = Genome::Model::Build::Command::DetermineError::find_die_or_warn_in_log($error_log->filename);
 
-    is($error_source_file, '/path/to/other/workflow/error.pm', 'error source file');
+    is($error_source_file, '/path/to/the/workflow/exception.pm', 'error source file');
     is($error_source_line, 255, 'error source line');
     is($error_host, 'blade14-2-13', 'error host');
-    is($error_date, '2014-12-12 20:28:14', 'error date');
-    is($error_text, 'ERROR: Workflow did not return correctly.', 'error text');
+    is($error_date, '2014-12-12 20:28:21', 'error date');
+    is($error_text, 'Workflow did not return correctly.', 'error text');
 };
 
 use constant PTERO_ERROR_LOG => <<'PTERO_ERROR';
@@ -777,7 +777,7 @@ use constant WORKFLOW_ERROR_LOG => <<'WORKFLOW_ERROR';
 2014-12-12 20:28:21-0600 blade14-2-13: DEBUG: config key datetime exists
 2014-12-12 20:28:21-0600 blade14-2-13: DEBUG: got datetime format %Y-%m-%d %H:%M:%S
 2014-12-12 20:28:21-0600 blade14-2-13: Command module died or returned undef.
-2014-12-12 20:28:21-0600 blade14-2-13: Workflow did not return correctly. at /gsc/scripts/opt/genome/snapshots/genome-3551/lib/perl/Genome/Model/Tools/DetectVariants2/Dispatcher.pm line 255.
+2014-12-12 20:28:21-0600 blade14-2-13: Workflow did not return correctly. at /path/to/the/workflow/exception.pm line 255.
 2014-12-12 20:28:21-0600 blade14-2-13: 	Genome::Model::Tools::DetectVariants2::Dispatcher::_detect_variants('Genome::Model::Tools::DetectVariants2::Dispatcher=HASH(0x8829...') called at /gsc/scripts/opt/genome/snapshots/genome-3551/lib/perl/Genome/Model/Tools/DetectVariants2/Base.pm line 125
 2014-12-12 20:28:21-0600 blade14-2-13: 	Genome::Model::Tools::DetectVariants2::Base::execute('Genome::Model::Tools::DetectVariants2::Dispatcher=HASH(0x8829...') called at /gsc/scripts/opt/genome/snapshots/genome-3551/lib/perl/Command/V2.pm line 214
 2014-12-12 20:28:21-0600 blade14-2-13: 	Command::V2::execute('Genome::Model::Tools::DetectVariants2::Dispatcher=HASH(0x8829...') called at /gsc/scripts/opt/genome/snapshots/genome-3551/lib/perl/Genome/Model/Event/Build/ReferenceAlignment/DetectVariants.pm line 54
