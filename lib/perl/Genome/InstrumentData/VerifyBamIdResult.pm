@@ -12,7 +12,7 @@ use Memoize qw();
 use constant AF_HEADER => '<ID=AF,Number=A,Type=Float,Description="Allele frequence for non-reference alleles">';
 
 class Genome::InstrumentData::VerifyBamIdResult {
-    is => 'Genome::SoftwareResult::Stageable',
+    is => ['Genome::SoftwareResult::Stageable', 'Genome::SoftwareResult::WithNestedResults'],
     has_input => [
         aligned_bam_result => {
             is => 'Genome::InstrumentData::AlignedBamResult',
@@ -138,17 +138,20 @@ sub _resolve_vcf_file {
 sub _resolve_genotype_vcf_result {
     my $self = shift;
 
+    my $users = $self->_user_data_for_nested_results;
+    $users->{uses} = $self;
+
     my %params = (
         sample => $self->sample,
         known_sites_build => $self->known_sites_build,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
+        users => $users,
     );
     if ($self->genotype_filters) {
         $params{filters} = [$self->genotype_filters];
     }
     my $result = Genome::InstrumentData::Microarray::Result::Vcf->get_or_create(%params);
     $self->_error("Could not get or create genotype vcf result") unless $result;
-    $result->add_user(user => $self, label => "uses");
     return $result;
 }
 
