@@ -4,6 +4,7 @@ use warnings;
 use Test::More tests => 43; 
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 
 
 BEGIN {
@@ -135,6 +136,8 @@ my %params = (
     #m3 => $b[2],
     #i4 => [1031,1032,1033],
     #i5 => \@b,
+
+    users => Genome::Test::Factory::SoftwareResult::User->setup_user_hash(),
 );
 my $f = Genome::Foo->get_or_create(
     %params,  

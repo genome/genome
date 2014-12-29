@@ -8,6 +8,8 @@ BEGIN {
 
 use above "Genome";
 use Genome::Disk::Allocation;
+use Genome::Test::Factory::SoftwareResult::User;
+
 use Test::More tests => 8;
 
 class Genome::Test_SR {
@@ -35,16 +37,18 @@ use warnings;
 
 ok($disk_allocation->is_archived, 'setup an archived allocation for the test software result');
 
-my $sr_again = Genome::Test_SR->get_with_lock(p => 'test', i => 'test');
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash;
+
+my $sr_again = Genome::Test_SR->get_with_lock(p => 'test', i => 'test', users => $result_users);
 is($sr_again, $sr, 'got the same result again');
 is($call_count, 1, 'the allocation was unarchived in get_with_lock');
 
-my $sr_third = Genome::Test_SR->get_or_create(p => 'test', i => 'test');
+my $sr_third = Genome::Test_SR->get_or_create(p => 'test', i => 'test', users => $result_users);
 is($sr_third, $sr, 'got the same result a third time');
 is($call_count, 2, 'the allocation was unarchived in get_or_create');
 
 $simulate_is_archived = 0;
-my $sr_fourth = Genome::Test_SR->get_with_lock(p => 'test', i => 'test');
+my $sr_fourth = Genome::Test_SR->get_with_lock(p => 'test', i => 'test', users => $result_users);
 is($sr_fourth, $sr, 'got the same result a fourth time');
 is($call_count, 2, 'the allocation was not unarchived in get_with_lock when not archived');
 
