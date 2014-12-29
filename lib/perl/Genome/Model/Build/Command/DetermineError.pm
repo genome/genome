@@ -15,26 +15,33 @@ use Try::Tiny;
 # be fixed by 5.18
 use Tie::Hash::NamedCapture;
 
+our $WORKFLOW_DATE_AND_HOST = qr{
+        (?<date>\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})-\d{4}  # workflow date
+        \s                                                   # and
+        (?<host>[^\:]+)\:                                    # host
+    }x;
+our $PTERO_DATE = qr{
+        \[(?<date>\d{4}/\d{2}/\d{2}\s\d{2}\:\d{2}\:\d{2}).\d+\]
+    }x;
+our $ERROR_LOCATION = qr{
+        at \s (?<error_source_file>\S+\.pm) \s line \s (?<error_source_line>\d+)
+    }x;
 
-use constant ERROR_FINDING_REGEX =>
+our $ERROR_FINDING_REGEX =
             qr{(?:
-                    (?:
-                        (?<date>\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})-\d{4}  # workflow date
-                        \s                                                   # and
-                        (?<host>[^\:]+)\:                                    # host
-                    )
-                    |                                                        # or
-                    \[(?<date>\d{4}/\d{2}/\d{2}\s\d{2}\:\d{2}\:\d{2}).\d+\]  # ptero date
+                    $WORKFLOW_DATE_AND_HOST
+                    |
+                    $PTERO_DATE
                 )
                 \s
                 (?:
-                    (?:(?<error_text>ERROR:? .*?) \s at \s (?<error_source_file>\S+\.pm) \s line \s (?<error_source_line>\d+))
+                    (?:(?<error_text>ERROR:? .*?) \s $ERROR_LOCATION)
                     |
                     (?<error_text>ERROR:? .*)
                 )
             }x;
 
-use constant PTERO_HOST_FINDING_REGEX => qr{Starting log annotation on host:\s(.*)};
+our $PTERO_HOST_FINDING_REGEX = qr{Starting log annotation on host:\s(.*)};
 
 class Genome::Model::Build::Command::DetermineError {
     is => 'Genome::Command::WithColor',
@@ -231,10 +238,10 @@ sub parse_error_log {
     for(1) {
         Genome::Sys->iterate_file_lines(
             $filename,
-            PTERO_HOST_FINDING_REGEX,
+            $PTERO_HOST_FINDING_REGEX,
                 sub { $found_host = $1 },
 
-            ERROR_FINDING_REGEX,
+            $ERROR_FINDING_REGEX,
                 sub {
                     ($error_date, $error_text, $error_source_file, $error_source_line)
                         = @+{'date','error_text','error_source_file','error_source_line'};
@@ -298,13 +305,13 @@ sub find_die_or_warn_in_log {
     for(1) {
         Genome::Sys->iterate_file_lines(
             $backwards_fh,
-            PTERO_HOST_FINDING_REGEX,
+            $PTERO_HOST_FINDING_REGEX,
                 sub {
                     $error_host = $1;
                     last SCAN_FILE if $error_text;
                 },
 
-            ERROR_FINDING_REGEX,
+            $ERROR_FINDING_REGEX,
                 sub {
                     ($error_date, $error_text, $error_source_file, $error_source_line, $error_host)
                         = @+{'date','error_text','error_source_file','error_source_line','host'};
