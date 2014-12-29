@@ -169,7 +169,7 @@ sub get_with_lock {
     my $class = shift;
 
     return Genome::SoftwareResult::User->with_registered_users(
-        @_,
+        $class->_preprocess_params_for_callback(@_),
         callback => sub {
             my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
 
@@ -228,7 +228,7 @@ sub get_or_create {
     my $class = shift;
 
     return Genome::SoftwareResult::User->with_registered_users(
-        @_,
+        $class->_preprocess_params_for_callback(@_),
         callback => sub {
             my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
 
@@ -259,6 +259,13 @@ sub get_or_create {
             $result->_auto_unarchive();
             return ($result, $newly_created);
         });
+}
+
+#hook for subclasses
+sub _preprocess_params_for_callback {
+    my $class = shift;
+
+    return @_;
 }
 
 sub create {
