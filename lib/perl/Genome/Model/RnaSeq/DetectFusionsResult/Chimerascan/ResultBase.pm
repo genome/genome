@@ -9,7 +9,7 @@ use File::Path qw();
 use File::Spec;
 
 class Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::ResultBase {
-    is => "Genome::Model::RnaSeq::DetectFusionsResult",
+    is => ["Genome::Model::RnaSeq::DetectFusionsResult","Genome::SoftwareResult::WithNestedResults"],
     has_input => [
         original_bam_paths => {
             is => "Text",
@@ -463,6 +463,7 @@ sub _get_index {
         reference_build => $self->alignment_result->reference_build,
         annotation_build => $self->annotation_build,
         picard_version => $self->picard_version,
+        users => $self->_user_data_for_nested_results,
     );
 
     my $index;

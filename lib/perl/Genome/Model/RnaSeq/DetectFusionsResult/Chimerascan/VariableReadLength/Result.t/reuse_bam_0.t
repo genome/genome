@@ -16,7 +16,7 @@ use_ok($chimerascan_result_class);
 
 my $chimerascan_version = '0.4.6';
 my $picard_version = 1.82;
-my ($alignment_result, $annotation_build, @bam_files) = setup(test_data_version => 3,
+my ($alignment_result, $annotation_build, $result_users, @bam_files) = setup(test_data_version => 3,
         picard_version => $picard_version,
         chimerascan_result_class => $chimerascan_result_class,
         chimerascan_version => $chimerascan_version);
@@ -31,6 +31,7 @@ my $r = $chimerascan_result_class->get_or_create(
     annotation_build => $annotation_build,
     picard_version => $picard_version,
     original_bam_paths => \@bam_files,
+    users => $result_users,
 );
 isa_ok($r, $chimerascan_result_class);
 

@@ -5,6 +5,7 @@ use warnings;
 
 use above 'Genome';
 use Test::More;
+use Genome::Test::Factory::SoftwareResult::User;
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -120,6 +121,10 @@ sub setup {
         version         => '37',
     );
 
+    my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+        reference_sequence_build => $reference_build,
+    );
+
     my $annotation_model = Genome::Model::ImportedAnnotation->create(
         name => '1 chr test annotation',
         subject => $ref_model->subject,
@@ -166,7 +171,7 @@ sub setup {
         code => sub { return $index_dir },
     });
 
-    return $alignment_result, $annotation_build, @bam_files;
+    return $alignment_result, $annotation_build, $result_users, @bam_files;
 }
 
 1;
