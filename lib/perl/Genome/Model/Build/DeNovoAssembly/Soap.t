@@ -145,7 +145,8 @@ ok($library_id, 'library id for inst data');
 my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(processor => $pp->read_processor);
 $sx_processor->determine_processing($instrument_data);
 my $sx_result_params = $sx_processor->sx_result_params_for_instrument_data($instrument_data);
-my $sx_result = Genome::InstrumentData::SxResult->get_with_lock(%$sx_result_params);
+my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+my $sx_result = Genome::InstrumentData::SxResult->get_with_lock(%$sx_result_params, users => $result_users);
 for my $file_name ( $sx_result->read_processor_output_files ) {
     my $file = $build->data_directory.'/'.$file_name;
     ok(-l $build->data_directory.'/'.$file_name, 'processed file exists: '.$file);

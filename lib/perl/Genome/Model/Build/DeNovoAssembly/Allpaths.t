@@ -187,8 +187,10 @@ my %frag_read_processor_params = $build->read_processor_params_for_instrument_da
 my %jump_read_processor_params = $build->read_processor_params_for_instrument_data(
     $jump_inst_data);
 
-my $frag_result = Genome::InstrumentData::SxResult->get_with_lock(%frag_read_processor_params);
-my $jump_result = Genome::InstrumentData::SxResult->get_with_lock(%jump_read_processor_params);
+my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+
+my $frag_result = Genome::InstrumentData::SxResult->get_with_lock(%frag_read_processor_params, users => $result_users);
+my $jump_result = Genome::InstrumentData::SxResult->get_with_lock(%jump_read_processor_params, users => $result_users);
 
 my @frag_read_processor_output_files = $frag_result->read_processor_output_files;
 my @jump_read_processor_output_files = $jump_result->read_processor_output_files;

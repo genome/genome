@@ -60,9 +60,12 @@ sub execute {
     my @final_sx_result_params = $sx_processor->final_sx_result_params;
     return if not @final_sx_result_params;
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($self->build);
+
     my @sx_results;
     for my $sx_result_params ( @final_sx_result_params ) {
         $self->debug_message('Sx result params: '.Dumper($sx_result_params));
+        local $sx_result_params->{users} = $result_users;
         my $sx_result;
         if ( $sx_result_params->{coverage} ) { # merged: get, then get_or_create
             $sx_result = Genome::InstrumentData::MergedSxResult->get_with_lock(%$sx_result_params);
