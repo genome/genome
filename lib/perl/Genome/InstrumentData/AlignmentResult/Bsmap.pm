@@ -355,6 +355,10 @@ sub requires_read_group_addition {
     return 1;
 }
 
+sub _use_alignment_summary_cpp {
+    return 0;
+}
+
 # only accept bam input if we're not running in force fragment mode
 sub accepts_bam_input {
     my $self = shift;
