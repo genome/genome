@@ -187,6 +187,7 @@ sub _get_reference_fasta {
         aligner_version => $annotation_index->aligner_version,
         aligner_params => $annotation_index->aligner_params,
         reference_build => $annotation_index->reference_build,
+        users => $annotation_index->_user_data_for_nested_results,
     );
     unless ($reference_index) {
         $class->error_message('Failed to find the reference index to retrieve the reference FASTA file!  '.
@@ -370,6 +371,7 @@ sub prepare_reference_sequence_index {
         aligner_name => 'bowtie',
         aligner_version => $bowtie_version,
         test_name => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME},
+        users => $refindex->_user_data_for_nested_results,
     );
 
     for my $filepath (glob($bowtie_index->output_dir . "/*")){
@@ -432,6 +434,7 @@ sub get_annotation_index {
         aligner_params => $self->aligner_params,
         reference_build => $self->reference_build,
         annotation_build => $annotation_build,
+        users => $self->_user_data_for_nested_results,
     );
 
     if (!$index) {

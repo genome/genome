@@ -7,6 +7,7 @@ use Sys::Hostname;
 use File::Basename;
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 
 BEGIN {
     if (`uname -a` =~ /x86_64/) {
@@ -35,7 +36,11 @@ ok($reference_model, "got reference model");
 my $reference_build = $reference_model->build_by_version('1');
 ok($reference_build, "got reference build");
 
-my $aligner_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(reference_build=>$reference_build, aligner_version=>$aligner_version, aligner_name=>$aligner_name, aligner_params=>'');
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
+
+my $aligner_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(reference_build=>$reference_build, aligner_version=>$aligner_version, aligner_name=>$aligner_name, aligner_params=>'',users => $result_users);
 ok($aligner_index, "prepared temporary reference index");
 
 my $instrument_data = generate_fake_instrument_data();
@@ -77,7 +82,7 @@ my $md5_1 = $result->md5sum;
 # Check that making a duplicate fails, but get_or_create works
 my $duplicate = $result_class->create(%params);
 ok(!$duplicate, "creating duplicate result fails as expected");
-my $fetched = $result_class->get_or_create(%params);
+my $fetched = $result_class->get_or_create(%params, users => $result_users);
 ok($fetched, "fetched object with get_or_create");
 is($result->id, $fetched->id, "get_or_create returned the right object");
 
@@ -100,14 +105,20 @@ ok(-s $result->log_file, "log file exists");
 my $md5_2 = $result->md5sum;
 
 ok($md5_1 ne $md5_2, "md5sums differ as expected");
-$fetched = $result_class->get_or_create(%params);
+$fetched = $result_class->get_or_create(%params, users => $result_users);
 eval { $fetched->delete; };
 ok(($@ and $fetched->id), "direct deletion of non-orphaned IntermediateAlignmentResult forbidden");
+
+map { $_->active(0) } Genome::SoftwareResult::User->get(
+    software_result_id => \@result_ids,
+    label => ['sponsor', 'created', 'shortcut'],
+);
 
 $parent_result->delete();
 
 my @objs = $result_class->get(\@result_ids);
-ok(!@objs, "deleting parent result deleted children as well");
+$DB::single = 1;
+ok(!@objs, "deleting parent result deleted children as well when no other users");
 
 done_testing();
 

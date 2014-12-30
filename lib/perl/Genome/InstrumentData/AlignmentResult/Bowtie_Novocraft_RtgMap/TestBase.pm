@@ -1,6 +1,7 @@
 package Genome::InstrumentData::AlignmentResult::Bowtie_Novocraft_RtgMap::TestBase;
 
 use Test::More;
+use Genome::Test::Factory::SoftwareResult::User;
 
 # Common code used in Bowtie.t Novocraft.t and RtgMap.t in the parent directory
 
@@ -36,6 +37,16 @@ sub reference_build {
         my $reference_build = $reference_model->build_by_version('1');
         ok($reference_build, "got reference build");
         $reference_build;
+    }
+}
+
+sub result_users {
+    my $self = shift;
+
+    $self->{result_users} ||= do {
+        Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+            reference_sequence_build => $self->reference_build(),
+        );
     }
 }
 
@@ -95,6 +106,7 @@ sub test_alignment {
                                                        aligner_version => $self->aligner_version(),
                                                        aligner_name => $self->aligner_name(),
                                                        reference_build => $self->reference_build(),
+                                                       _user_data_for_nested_results => $self->result_users(),
                                                        %p,
                                                    );
 
@@ -165,6 +177,7 @@ sub test_shortcutting {
                                                               samtools_version => $self->samtools_version(),
                                                               picard_version => $self->picard_version(),
                                                               reference_build => $self->reference_build(),
+                                                              _user_data_for_nested_results => $self->result_users(),
                                                           );
     ok(!$bad_alignment, "this should have returned undef, for attempting to create an alignment that is already created!");
     ok($alignment_result_class_name->error_message =~ m/already have one/, "the exception is what we expect to see");
@@ -182,6 +195,7 @@ sub test_shortcutting {
                                                               samtools_version => $self->samtools_version(),
                                                               picard_version => $self->picard_version(),
                                                               reference_build => $self->reference_build(),
+                                                              users => $self->result_users(),
                                                               );
     ok($alignment, "got an alignment object");
 

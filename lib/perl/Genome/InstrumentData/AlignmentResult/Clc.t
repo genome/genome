@@ -13,6 +13,7 @@ use Sys::Hostname;
 
 use above "Genome";
 use Test::More;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -66,6 +67,10 @@ ok($reference_model, "got reference model");
 
 my $reference_build = $reference_model->build_by_version('1');
 ok($reference_build, "got reference build");
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
 
 #test_alignment(generate_shortcut_data => 1);
 test_shortcutting();
@@ -168,6 +173,7 @@ sub test_shortcutting {
                                                               samtools_version => $samtools_version,
                                                               picard_version => $picard_version,
                                                               reference_build => $reference_build,
+                                                              users => $result_users,
                                                               );
     ok($alignment, "got an alignment object");
 

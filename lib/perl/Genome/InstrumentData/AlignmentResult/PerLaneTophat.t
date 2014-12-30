@@ -9,6 +9,7 @@ BEGIN {
 use Test::More;
 use above "Genome";
 use Genome::Utility::Test qw(compare_ok);
+use Genome::Test::Factory::SoftwareResult::User;
 use File::Basename;
 
 my $TOPHAT_VERSION = '2.0.8';
@@ -118,6 +119,10 @@ sub _create_entities {
     ok($reference_build, 'Created reference build');
     *Genome::Model::ImportedReferenceSequence::last_complete_build = sub {return $reference_build};
 
+    my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+        reference_sequence_build => $reference_build,
+    );
+
     # create the annotation model and build.
     my $annotation_pp = Genome::ProcessingProfile::ImportedAnnotation->create(
         name              => 'test_annotation_pp',
@@ -146,6 +151,7 @@ sub _create_entities {
         aligner_name => 'PerLaneTophat',
         aligner_version => $TOPHAT_VERSION,
         aligner_params => $starting_aligner_params,
+        _user_data_for_nested_results => $result_users,
     );
     ok($aligner_index, 'created aligner_index');
 
@@ -155,6 +161,7 @@ sub _create_entities {
         aligner_name => 'PerLaneTophat',
         aligner_params => $aligner_params,
         aligner_version => $TOPHAT_VERSION,
+        _user_data_for_nested_results => $result_users,
     );
     ok($annotation_index, 'Defined an annotation index');
 

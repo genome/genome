@@ -4,6 +4,7 @@ use warnings;
 use Test::More;
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 
 BEGIN {
     if (`uname -a` =~ /x86_64/) {
@@ -25,6 +26,10 @@ ok($reference_model, "got reference model");
 my $reference_build = $reference_model->build_by_version('4');
 ok($reference_build, "got reference build");
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
+
 my $dependency = $reference_build->append_to;
 ok($dependency, "found reference build dependency");
 
@@ -37,15 +42,16 @@ my %params = (
 
 my %dep_params = %params;
 $dep_params{reference_build} = $dependency;
+$dep_params{users} = $result_users;
 my $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(%dep_params);
 ok(!$index, "index does not yet exist for dependency");
 
-$index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(%params);
+$index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(%params, _user_data_for_nested_results => $result_users);
 ok($index, "created index");
 my $path = readlink($index->full_consensus_path("fa"));
 like($path, qr/appended_sequences.fa/, "multi reference uses appended_sequences.fa");
 
-$index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(%params);
+$index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(%params, users => $result_users);
 ok($index, "got index");
 
 $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(%dep_params);
@@ -53,7 +59,7 @@ ok($index, "got index of dependency");
 
 # now test single reference version of bwa
 $params{aligner_version} = '0.5.9';
-$index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(%params);
+$index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(%params, _user_data_for_nested_results => $result_users);
 ok($index, "got single reference aligner index");
 $path = readlink($index->full_consensus_path("fa"));
 like($path, qr/all_sequences.fa/, "single reference uses all_sequences.fa");

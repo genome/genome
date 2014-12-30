@@ -11,6 +11,7 @@ BEGIN {
 };
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 use_ok('Genome::InstrumentData::AlignmentResult::Star');
 
 my $aligner_name  = "star";
@@ -32,6 +33,10 @@ ok($reference_model, "got reference model");
 my $reference_build = $reference_model->build_by_version('1');
 ok($reference_build, "got reference build");
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
+
 my $temp_reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(
     reference_build => $reference_build, 
     aligner_version => $aligner_version, 
@@ -51,7 +56,10 @@ my @params = (
      test_name        => 'star_unit_test',
 );
 
-my $alignment_result = Genome::InstrumentData::AlignmentResult::Star->create(@params);
+my $alignment_result = Genome::InstrumentData::AlignmentResult::Star->create(
+    @params,
+    _user_data_for_nested_results => $result_users,
+);
 
 isa_ok($alignment_result, $ar_base_class.'::Star', 'produced alignment result');
 
@@ -71,7 +79,10 @@ for my $file (map{'all_sequences.'.$_}qw(bam.bai bam.flagstat sam)) {
     ok(!$diff, $file . ' matches expected result') or diag("diff:\n". $diff);
 }
 
-my $existing_alignment_result = Genome::InstrumentData::AlignmentResult::Star->get_or_create(@params);
+my $existing_alignment_result = Genome::InstrumentData::AlignmentResult::Star->get_or_create(
+    @params,
+    users => $result_users
+);
 is($existing_alignment_result, $alignment_result, 'got back the previously created result');
 
 unlink 'Log.out' if -e 'Log.out';

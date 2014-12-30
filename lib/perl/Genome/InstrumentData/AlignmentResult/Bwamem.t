@@ -12,6 +12,7 @@ BEGIN {
 use above 'Genome';
 use Test::More;
 use Genome::InstrumentData::InstrumentDataTestObjGenerator;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $TEST_BWA_VERSION = '0.7.10';
 my $TEST_SAMTOOLS_VERSION = '0.1.19';
@@ -28,10 +29,15 @@ ok($reference_model, "got reference model");
 my $reference_build = $reference_model->build_by_version('1');
 ok($reference_build, "got reference build");
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
+
 my $alnidx = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(
     aligner_name => "bwa",
     reference_build_id => $reference_build->id,
-    aligner_version => '0.7.10'
+    aligner_version => '0.7.10',
+    users => $result_users,
     );
 
 ok($alnidx, "got aligner index");
@@ -149,6 +155,7 @@ sub make_alignment_result {
         aligner_version => $TEST_BWA_VERSION,
         samtools_version => $TEST_SAMTOOLS_VERSION,
         aligner_params => $bwa_params,
+        _user_data_for_nested_results => $result_users,
     );
 
     ok($alignment_result, 'defined alignment result');
