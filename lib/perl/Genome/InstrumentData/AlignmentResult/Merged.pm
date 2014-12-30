@@ -13,7 +13,7 @@ use Genome;
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
 
 class Genome::InstrumentData::AlignmentResult::Merged {
-    is => 'Genome::InstrumentData::AlignedBamResult',
+    is => ['Genome::InstrumentData::AlignedBamResult', 'Genome::SoftwareResult::WithNestedResults'],
     has => [
         instrument_data => {
             is => 'Genome::InstrumentData',
@@ -305,6 +305,7 @@ sub collect_individual_alignments {
                 instrument_data_id => $i->id,
                 filter_name => ($filters->{$i->id} || undef),
                 test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+                users => $self->_user_data_for_nested_results,
                 %$segment_param,
             );
             $self->debug_message("Looking for alignment result with params: %s",
