@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::InstrumentData::MergedSxResult {
-    is => 'Genome::InstrumentData::SxResult',
+    is => ['Genome::InstrumentData::SxResult', 'Genome::SoftwareResult::WithNestedResults'],
     has_input => [
         instrument_data_id => {
             is => 'Text',
@@ -40,11 +40,14 @@ sub _construct_sx_command_parts {
     }
     my $total_incoming_bases = 0;
     my @instrument_data = $self->instrument_data;
+    my $result_users = $self->_user_data_for_nested_results;
+    $result_users->{uses} = $self;
     for my $id (@instrument_data) {
         my %params = (
             instrument_data_id => $id->id,
             read_processor => $self->read_processor,
             test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+            users => $result_users,
         );
         my @output_file_config = $self->output_file_config;
         if (scalar @output_file_config > 0) {
