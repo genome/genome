@@ -510,6 +510,10 @@ sub execute {
     my $self = shift;
     $self->_validate_params;
 
+    $self->debug_message(sprintf("bwa version: %s", $self->bwa_version));
+    $self->debug_message(sprintf("samtools version: %s", $self->samtools_version));
+    $self->debug_message(sprintf("bedtools version: %s", $self->bedtools_version));
+
     my @input_files = $self->input_files;
     my $n_inputs = scalar @input_files;
     if ($n_inputs < 1 || $n_inputs > 2) {
