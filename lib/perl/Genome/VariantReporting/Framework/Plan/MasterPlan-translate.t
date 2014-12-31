@@ -59,6 +59,28 @@ subtest 'translate is many input' => sub {
     is_deeply($translated_value, $new_value, "Individual values are correctly inserted in the array");
 };
 
+subtest 'translate HASH input' => sub {
+    my $plan_file = yaml_file("plan_with_hash_translations_needed.yaml");
+    my $plan = $pkg->create_from_file($plan_file);
+    ok($plan, "Made a plan from file ($plan_file).");
+
+    my $translations = {
+        foo => 'translated from foo',
+        bar => 'baz',
+        sample_name_labels => {
+            baz => 'qux',
+        },
+    };
+    $plan->translate($translations);
+    my ($interpreter_plan) = $plan->get_plan('report', '__test__')->interpreter_plans;
+    my $interpreter = $interpreter_plan->object();
+    is_deeply(
+        [$interpreter->create_sample_specific_field_names(['field_name'])],
+        ['translated from foo_field_name', 'qux_field_name'],
+        'Translated HASH values working'
+    );
+};
+
 done_testing();
 
 

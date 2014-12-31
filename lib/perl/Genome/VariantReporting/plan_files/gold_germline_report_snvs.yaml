@@ -60,10 +60,14 @@ reports:
             'many-samples-vaf':
                 sample_names:
                     - normal
+                library_name_labels: library_name_labels
                 library_names: [library_names]
         params:
+            sample_name_labels: sample_name_labels
             sample_names:
                 - normal
+            library_name_labels: library_name_labels
+            library_names: [library_names]
     'simple':
         filters:
             'allele-in-genotype':
@@ -131,6 +135,7 @@ reports:
                 min_coverage: 10
                 sample_name: normal
             'min-coverage-observed':
+                sample_name_labels: sample_name_labels
                 sample_names:
                     - normal
             'max-vaf-observed':
@@ -140,10 +145,14 @@ reports:
             'variant-callers':
                 sample_name: normal
             'many-samples-vaf':
+                sample_name_labels: sample_name_labels
                 sample_names:
                     - normal
+                library_name_labels: library_name_labels
                 library_names: [library_names]
         params:
+            sample_name_labels: sample_name_labels
             sample_names:
                 - normal
+            library_name_labels: library_name_labels
             library_names: [library_names]

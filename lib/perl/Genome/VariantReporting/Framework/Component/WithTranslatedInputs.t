@@ -17,10 +17,10 @@ use_ok($pkg);
 
 my $class = 'Genome::VariantReporting::Framework::Test::WithTranslationsInterpreter';
 
-is_deeply([$class->translated_input_names], ['translated1'],
+is_deeply([$class->required_translated_input_names], ['translated1'],
     'found translated input names');
 
-cmp_bag([$class->translated_is_many_input_names], ['translated2', 'translated3'],
+cmp_bag([$class->required_translated_is_many_input_names], ['translated2', 'translated3'],
     'found is_many translated input names');
 
 done_testing;

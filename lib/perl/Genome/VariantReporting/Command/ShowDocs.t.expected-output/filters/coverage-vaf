@@ -6,6 +6,8 @@ Filter variants based on coverage and matching vaf values
     A mapping of coverages and the minimum vafs.
   [1msample_name[0m   Text
     This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
 
 [4mREQUIRED EXPERTS[0m
 bam-readcount

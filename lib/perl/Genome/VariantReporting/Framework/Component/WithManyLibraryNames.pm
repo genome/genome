@@ -13,13 +13,25 @@ class Genome::VariantReporting::Framework::Component::WithManyLibraryNames {
             is_translated => 1,
             doc => 'List of library names to be used in the report',
         },
+        library_name_labels => {
+            is => 'HASH',
+            is_translated => 1,
+            default => {},
+            doc => 'Hash of library_name to label',
+        }
     ],
 };
 
 sub create_library_specific_field_name {
     my ($self, $field, $library_name) = @_;
 
-    return join("_", $library_name, $field);
+    return join("_", $self->get_library_label($library_name), $field);
+}
+
+sub get_library_label {
+    my ($self, $library_name) = @_;
+
+    return $self->library_name_labels->{$library_name} || $library_name;
 }
 
 sub create_library_specific_field_names {
