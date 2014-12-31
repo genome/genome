@@ -276,6 +276,7 @@ sub sx_result_params_for_instrument_data {
         instrument_data_id => $instrument_data->id,
         read_processor => join(' | ', @read_processor),
         output_file_config => \@output_file_configs,
+        users => Genome::SoftwareResult::User->user_hash_for_build($self),
     );
 }
 
