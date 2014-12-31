@@ -29,6 +29,7 @@ my %calc_covg_params = (
     tumor_min_depth => 8,
     min_mapq => 20,
     test_name => "testing",
+    users => Genome::SoftwareResult::User->user_hash_for_build($build),
 );
 
 $DB::single = 1;
