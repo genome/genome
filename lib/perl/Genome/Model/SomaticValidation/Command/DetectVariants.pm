@@ -101,6 +101,8 @@ sub execute{
         $params{control_aligned_reads_sample} = $control_aligned_reads_sample;
     }
 
+    $params{result_users} = Genome::SoftwareResult::User->user_hash_for_build($build);
+
     my $command = Genome::Model::Tools::DetectVariants2::Dispatcher->create(%params);
     unless ($command){
         die $self->error_message("Couldn't create detect variants dispatcher from params:\n".Data::Dumper::Dumper \%params);

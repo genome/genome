@@ -600,6 +600,8 @@ sub _find_or_generate_multisample_vcf {
     $params{roi_list} = $build->roi_list;
     $params{roi_wingspan} = $self->roi_wingspan;
 
+    $params{result_users} = Genome::SoftwareResult::User->user_hash_for_build($build);
+
     my $command = Genome::Model::Tools::DetectVariants2::Dispatcher->create(%params);
     unless ($command){
         die $self->error_message("Couldn't create detect variants dispatcher from params:\n".Data::Dumper::Dumper \%params);
