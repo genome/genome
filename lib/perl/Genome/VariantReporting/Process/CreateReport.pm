@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 use Genome;
 use Params::Validate qw(validate_pos);
+use File::DirCompare qw(compare);
 
 class Genome::VariantReporting::Process::CreateReport {
     is => ['Genome::Process'],
@@ -83,6 +84,29 @@ sub create_disk_allocation {
     return $rv;
 }
 
+sub _compare_output_files {
+    my ($self, $other_process) = @_;
 
+    my %diffs;
+    for my $report ($self->report_names) {
+        my $output_dir = $self->output_directory($report);
+        my $other_output_dir = $other_process->output_directory($report);
+        my $comparison = File::DirCompare->compare(
+            $other_output_dir,
+            $output_dir,
+            sub {
+                my ($a, $b) = @_;
+                if (! $b) {
+                    $diffs{$a} = sprintf('no file %s from process %s', $a, $other_process->id);
+                } elsif (! $a) {
+                    $diffs{$b} = sprintf('no file %s from process %s', $b, $self->id);
+                } else {
+                    $diffs{$a} = sprintf('files are not the same (diff -u {%s,%s}/%s)', $output_dir, $other_output_dir, File::Spec->abs2rel($a, $other_output_dir));
+                }
+            },
+        );
+    }
+    return %diffs;
+}
 
 1;
