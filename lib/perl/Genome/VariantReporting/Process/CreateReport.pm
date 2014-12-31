@@ -95,13 +95,13 @@ sub _compare_output_files {
             $other_output_dir,
             $output_dir,
             sub {
-                my ($a, $b) = @_;
-                if (! $b) {
-                    $diffs{$a} = sprintf('no file %s from process %s', $a, $other_process->id);
-                } elsif (! $a) {
-                    $diffs{$b} = sprintf('no file %s from process %s', $b, $self->id);
+                my ($other_file, $file) = @_;
+                if (! $file) {
+                    $diffs{$other_file} = sprintf('no file %s from process %s', $other_file, $other_process->id);
+                } elsif (! $other_file) {
+                    $diffs{$file} = sprintf('no file %s from process %s', $file, $self->id);
                 } else {
-                    $diffs{$a} = sprintf('files are not the same (diff -u {%s,%s}/%s)', $output_dir, $other_output_dir, File::Spec->abs2rel($a, $other_output_dir));
+                    $diffs{$other_file} = sprintf('files are not the same (diff -u {%s,%s}/%s)', $output_dir, $other_output_dir, File::Spec->abs2rel($other_file, $other_output_dir));
                 }
             },
         );
