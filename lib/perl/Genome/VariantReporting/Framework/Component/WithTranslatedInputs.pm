@@ -31,18 +31,14 @@ sub all_translated_is_many_input_names {
 
 sub required_translated_input_names {
     my $class = shift;
-    return map {$_->property_name} grep {!$_->is_optional} $class->__meta__->properties(
-        is_translated => 1,
-        is_many => 0,
-    );
+    return map {$_->property_name} grep {!$_->is_optional}
+        $class->all_translated_input_names;
 }
 
 sub required_translated_is_many_input_names {
     my $class = shift;
-    return map {$_->property_name} grep {!$_->is_optional} $class->__meta__->properties(
-        is_translated => 1,
-        is_many => 1,
-    );
+    return map {$_->property_name} grep {!$_->is_optional}
+        $class->all_translated_is_many_input_names;
 }
 
 1;
