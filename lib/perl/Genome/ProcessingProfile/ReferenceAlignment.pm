@@ -264,24 +264,6 @@ sub _fetch_alignment_sets {
     return @alignments;
 }
 
-sub processing_profile_params_for_alignment {
-    my $self = shift;
-
-    my %params = (
-                read_aligner_name => $self->read_aligner_name,
-                read_aligner_version => $self->read_aligner_version,
-                read_aligner_params => $self->read_aligner_params,
-                force_fragment => $self->force_fragment,
-                read_trimmer_name => $self->read_trimmer_name,
-                read_trimmer_version => $self->read_trimmer_version,
-                read_trimmer_params => $self->read_trimmer_params,
-                picard_version => $self->picard_version,
-                samtools_version => $self->samtools_version,
-            );
-
-    return \%params;
-}
-
 sub params_for_alignment {
     my $self = shift;
     my $input = shift;
