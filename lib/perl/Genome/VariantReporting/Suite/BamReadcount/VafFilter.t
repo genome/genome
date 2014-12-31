@@ -11,8 +11,10 @@ use warnings;
 use above "Genome";
 use Test::Exception;
 use Test::More;
-use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(bam_readcount_line
-    create_entry create_deletion_entry bam_readcount_line_deletion);
+use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(
+    create_default_entry
+    create_no_readcount_entry
+    create_deletion_entry );
 
 my $pkg = "Genome::VariantReporting::Suite::BamReadcount::VafFilter";
 use_ok($pkg);
@@ -43,7 +45,7 @@ subtest "pass min vaf" => sub {
         C => 0,
         AA => 0,
     );
-    my $entry = create_entry(bam_readcount_line);
+    my $entry = create_default_entry();
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
 };
 
@@ -57,7 +59,7 @@ subtest "min vaf for insertion" => sub {
         C => 0,
         AA => 1,
     );
-    my $entry = create_entry(bam_readcount_line);
+    my $entry = create_default_entry();
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
 };
 
@@ -69,7 +71,7 @@ subtest "min vaf for deletion" => sub {
     my %expected_return_values = (
         A => 1,
     );
-    my $entry = create_deletion_entry(bam_readcount_line_deletion);
+    my $entry = create_deletion_entry();
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
 };
 
@@ -83,7 +85,7 @@ subtest "pass max vaf" => sub {
         C => 1,
         AA => 0,
     );
-    my $entry = create_entry(bam_readcount_line);
+    my $entry = create_default_entry();
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with max_vaf $max_vaf");
 };
 
@@ -94,7 +96,7 @@ subtest "Bamreadcount entry is a ." => sub {
         C => 1,
         AA => 0,
     );
-    my $entry = create_entry(".");
+    my $entry = create_no_readcount_entry();
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter when bam-readcount not available");
 };
 
@@ -109,7 +111,7 @@ subtest "pass min and max vaf" => sub {
         C => 0,
         AA => 0,
     );
-    my $entry = create_entry(bam_readcount_line);
+    my $entry = create_default_entry();
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf and max_vaf $max_vaf");
 };
 
@@ -123,7 +125,7 @@ subtest "fail min vaf" => sub {
         C => 0,
         AA => 0,
     );
-    my $entry = create_entry(bam_readcount_line);
+    my $entry = create_default_entry();
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry fails filter with min_vaf $min_vaf");
 };
 
@@ -137,7 +139,7 @@ subtest "fail max vaf" => sub {
         C => 1,
         AA => 0,
     );
-    my $entry = create_entry(bam_readcount_line);
+    my $entry = create_default_entry();
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry fails filter with max_vaf $max_vaf");
 };
 
@@ -151,12 +153,12 @@ subtest "fail heterozygous non-reference sample" => sub {
         C => 0,
         AA => 0,
     );
-    my $entry = create_entry(bam_readcount_line);
+    my $entry = create_default_entry();
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry fails filter with min_vaf $min_vaf");
     cmp_ok(Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_vaf(
-        $filter->get_readcount_entry($entry), 'C', 'A'), '<', 0.3, "VAF is very low");
+        $filter->get_readcount_entries($entry)->{C}, 'C', 'A'), '<', 0.3, "VAF is very low");
     cmp_ok(Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_vaf(
-        $filter->get_readcount_entry($entry), 'G', 'A'), '>', 90, "VAF is high");
+        $filter->get_readcount_entries($entry)->{G}, 'G', 'A'), '>', 90, "VAF is high");
 };
 
 subtest "pass heterozygous non-reference sample" => sub {
@@ -169,12 +171,12 @@ subtest "pass heterozygous non-reference sample" => sub {
         C => 1,
         AA => 0,
     );
-    my $entry = create_entry(bam_readcount_line);
+    my $entry = create_default_entry();
     is_deeply({$filter->filter_entry($entry)}, \%expected_return_values, "Entry passes filter with min_vaf $min_vaf");
 };
 
 subtest "no bam readcount entry" => sub {
-    my $no_readcount_entry = create_entry();
+    my $no_readcount_entry = create_no_readcount_entry();
     my $filter = $pkg->create(
         sample_name => 'S1',
         min_vaf => 5,

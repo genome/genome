@@ -128,20 +128,5 @@ sub to_string {
     return $self->{_source_string};
 }
 
-sub encode {
-    my $line = shift;
-
-    $line =~ s/([\t])/?/g;
-    $line =~ s/([:])/;/g;
-    return $line;
-}
-
-sub decode {
-    my $line = shift;
-
-    $line =~ s/([?])/\t/g;
-    $line =~ s/([;])/:/g;
-    return $line;
-}
 
 1;

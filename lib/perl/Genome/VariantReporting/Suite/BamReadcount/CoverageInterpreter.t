@@ -11,8 +11,7 @@ BEGIN {
 use above 'Genome';
 use Test::Exception;
 use Test::More;
-use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(bam_readcount_line create_entry
-    bam_readcount_line_deletion create_deletion_entry);
+use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(create_default_entry);
 
 my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::CoverageInterpreter';
 use_ok($pkg);
@@ -21,7 +20,7 @@ isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
 
 my $interpreter = $pkg->create(sample_name => "S1");
 lives_ok(sub {$interpreter->validate}, "Filter validates");
-my $entry = create_entry(bam_readcount_line);
+my $entry = create_default_entry;
 
 subtest 'all alt alleles' => sub {
     my %expected_return_values = (
