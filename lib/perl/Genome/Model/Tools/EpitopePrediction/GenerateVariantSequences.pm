@@ -72,7 +72,7 @@ sub execute {
                 next;
             }
             else {
-                my ($mutation_position, @wildtype_arr) = $self->get_wildtype_subsequence_for_printing($position, @arr_wildtype_sequence);
+                my ($mutation_position, @wildtype_arr) = $self->get_wildtype_subsequence_for_printing($position, \@arr_wildtype_sequence, \@protein_arr);
                 my @mutant_arr = @wildtype_arr;
                 $mutant_arr[$mutation_position] = $mutant_amino_acid;
                 $self->print_to_output(\@wildtype_arr, \@mutant_arr, \@protein_arr, $position);
@@ -110,36 +110,55 @@ sub print_to_output {
 }
 
 sub get_wildtype_subsequence_for_printing {
-    my $self = shift;
-    my $position = shift;
-    my @arr_wildtype_sequence = @_;
+    my ($self, $position, $arr_wildtype_sequence_ref, $protein_arr) = @_;
+    my @arr_wildtype_sequence = @$arr_wildtype_sequence_ref;
+
+    my $peptide_sequence_length = $self->peptide_sequence_length;
+    #If the wildtype sequence is shorter than the desired peptide sequence
+    #length we use the wildtype sequence length instead so that the extraction
+    #algorithm below works correctly
+    if (scalar(@arr_wildtype_sequence) < $peptide_sequence_length) {
+        $peptide_sequence_length = scalar(@arr_wildtype_sequence);
+        $self->status_message(
+            'Wildtype sequence length is shorter than desired peptide sequence length at position (%s, %s, %s). Using wildtype sequence length (%s) instead.',
+            $protein_arr->[0],
+            $protein_arr->[1],
+            $protein_arr->[2],
+            $peptide_sequence_length
+        );
+    }
 
     # We want to extract a subset from @arr_wildtype_sequence that is
-    # $self->peptide_sequence_length long so that the $position ends
-    # up in the middle of the subsequence.
+    # $peptide_sequence_length long so that the $position ends
+    # up in the middle of the extracted sequence.
     # If the $position is too far toward the beginning or end of
     # @arr_wildtype_sequence there aren't enough amino acids on one side
     # to achieve this.
-
     my (@wildtype_arr, $mutation_position);
-    my $one_flanking_sequence_length = ($self->peptide_sequence_length - 1) / 2;
+    my $one_flanking_sequence_length = ($peptide_sequence_length - 1) / 2;
     if (distance_from_start($position, @arr_wildtype_sequence) < $one_flanking_sequence_length) {
-        @wildtype_arr = @arr_wildtype_sequence[ 0 ... ($self->peptide_sequence_length - 1) ];
+        @wildtype_arr = @arr_wildtype_sequence[ 0 ... ($peptide_sequence_length - 1) ];
         $mutation_position = $position;
     }
     elsif (distance_from_end($position, @arr_wildtype_sequence) < $one_flanking_sequence_length) {
-        @wildtype_arr = @arr_wildtype_sequence[ ($#arr_wildtype_sequence - $self->peptide_sequence_length + 1) ... $#arr_wildtype_sequence];
-        $mutation_position = $self->peptide_sequence_length - distance_from_end($position, @arr_wildtype_sequence) - 1;
+        @wildtype_arr = @arr_wildtype_sequence[ ($#arr_wildtype_sequence - $peptide_sequence_length + 1) ... $#arr_wildtype_sequence];
+        $mutation_position = $peptide_sequence_length - distance_from_end($position, @arr_wildtype_sequence) - 1;
     }
     elsif (
         (distance_from_start($position, @arr_wildtype_sequence) >= $one_flanking_sequence_length) &&
         (distance_from_end($position, @arr_wildtype_sequence) >= $one_flanking_sequence_length)
     ) {
         @wildtype_arr = @arr_wildtype_sequence[ ($position - $one_flanking_sequence_length) ... ($position + $one_flanking_sequence_length) ];
-        $mutation_position = ($self->peptide_sequence_length - 1) / 2;
+        $mutation_position = ($peptide_sequence_length - 1) / 2;
     }
     else {
-        $self->warning_message("Length of wildtype sequence is shorter than desired peptide length of output. Skipping position $position");
+        die $self->error_message(
+            'Something went wrong during the retrieval of the wildtype sequence at position (%s, %s, %s, %s)',
+            $protein_arr->[0],
+            $protein_arr->[1],
+            $protein_arr->[2],
+            join('', @arr_wildtype_sequence)
+        );
     }
 
     return $mutation_position, @wildtype_arr;

@@ -67,15 +67,21 @@ sub execute {
         my $owner_class_name = $a->owner_class_name;
         print join(' ', $a->id, $owner_class_name, $a->owner_id, $a->owner ? 'T' : 'F', $lookup_hash), "\n";
         print "Unlinking $s\n";
-        print 'Deleting ' . $a->absolute_path . "\n";
+        print 'Purging ' . $a->absolute_path . "\n";
         unless ($self->dry_run) {
             unlink $s;
-            $a->delete;
+            $a->purge(reason => $self->reason);
         }
         $owner_class_name->_unlock_resource($owner_lock);
     }
 
     return 1;
+}
+
+sub reason {
+    my $self = shift;
+    return sprintf("Removing orphaned allocations for build %s",
+        $self->build->id);
 }
 
 1;

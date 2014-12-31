@@ -172,8 +172,8 @@ sub _test_metadata {
             "checksum_type_for_file_name for $file_name",
         );
         is(
-            $metadata->filesize_in_kb_for_file_name($file_name),
-            sprintf('%d', ($file->{file_size}/1024)),
+            $metadata->file_size_for_file_name($file_name),
+            $file->{file_size},
             "checksum_type_for_file_name for $file_name",
         );
     }

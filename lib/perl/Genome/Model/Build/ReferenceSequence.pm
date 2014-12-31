@@ -491,7 +491,6 @@ sub get_sequence_dictionary {
             return;
         }
     } else {
-        #my $picard_path = "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.04/";
         my $uri = $self->sequence_uri;
         if (!$uri) {
             $self->warning_message("No sequence URI defined on this model!  Using generated default: " . $self->external_url);

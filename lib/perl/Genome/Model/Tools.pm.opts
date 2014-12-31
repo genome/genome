@@ -296,6 +296,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'add-tiers!',
       undef,
+      'bam-readcount-version=s',
+      'files',
       'create-archive!',
       undef,
       'create-review-files!',
@@ -6953,6 +6955,15 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>filter-sequences',
+    [
+      'input-file=s',
+      'files',
+      'output-directory=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>run-netmhc',
     [
       'allele=s',
@@ -6970,15 +6981,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
         '3.0',
         '3.4'
       ],
-      'help!',
-      undef
-    ],
-    '>remove-unknown-sequences',
-    [
-      'input-file=s',
-      'files',
-      'output-directory=s',
-      'files',
       'help!',
       undef
     ],
@@ -7069,7 +7071,7 @@ $Genome::Model::Tools::OPTS_SPEC = [
         21,
         31
       ],
-      'allele=s',
+      'alleles=s@',
       'files',
       'epitope-length=s',
       'files',
@@ -15276,6 +15278,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
       undef,
       'add-tiers!',
       undef,
+      'bam-readcount-version=s',
+      'files',
       'create-archive!',
       undef,
       'create-review-files!',

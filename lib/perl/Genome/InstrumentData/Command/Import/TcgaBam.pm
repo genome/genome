@@ -216,7 +216,8 @@ sub _import_from_uuids {
         return if not $metadata;
 
         my $bam_file_name = $metadata->bam_file_names;
-        my $kb_usage = $metadata->filesize_in_kb_for_file_name($bam_file_name);
+        my $file_size = $metadata->file_size_for_file_name($bam_file_name);
+        my $kb_usage = sprintf('%d', $file_size / 1024);
         $self->status_message('Target BAM file has KB size of: ' . $kb_usage);
 
         my $alloc_path = 'build_merged_alignments/tcga_import_bams/' . $self->uuid;

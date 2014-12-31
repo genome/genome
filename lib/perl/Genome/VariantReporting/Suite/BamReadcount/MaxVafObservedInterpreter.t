@@ -11,8 +11,8 @@ BEGIN {
 use above 'Genome';
 use Test::Exception;
 use Test::More;
-use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(bam_readcount_line create_entry
-    bam_readcount_line_deletion create_deletion_entry);
+use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw( create_default_entry
+     create_deletion_entry);
 
 my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::MaxVafObservedInterpreter';
 use_ok($pkg);
@@ -21,7 +21,7 @@ isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
 
 my $interpreter = $pkg->create(normal_sample_names => ["S1"], tumor_sample_names => ["S2", "S3"]);
 lives_ok(sub {$interpreter->validate}, "Filter validates");
-my $entry = create_entry(bam_readcount_line);
+my $entry = create_default_entry();
 
 subtest 'no tumor_sample_names' => sub {
     my $no_tumor = $pkg->create(normal_sample_names => ["S1"]);

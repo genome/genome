@@ -31,8 +31,6 @@ class Genome::Model::Tools::DetectVariants2::Result::Filter {
     ],
 };
 
-#Most filter-specific logic is in Detector.pm
-
 sub previous_result {
     my $self = shift;
 

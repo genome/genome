@@ -479,18 +479,9 @@ sub _get_modified_tophat_params {
     my $estimated_library_size = 350;
     my $estimated_sd = 50;
     
-    #my $median_inner_insert_size = 300;
-    #if ($instrument_data->resolve_median_insert_size) {
-    #    $median_inner_insert_size  = ($instrument_data->resolve_median_insert_size - ($instrument_data->read_length * 2) );
-    #}
-    
     my $median_inner_insert_size = ($estimated_library_size - ($instrument_data->read_length * 2) );
     
-    #my $sd_insert_size = 20;
     my $sd_insert_size = $estimated_sd;
-    #if ($instrument_data->resolve_sd_insert_size) {
-    #    $sd_insert_size = $instrument_data->resolve_sd_insert_size;
-    #}
     $params .= ' --mate-inner-dist '. $median_inner_insert_size;
     $params .= ' --mate-std-dev '. $sd_insert_size;
     return $params;

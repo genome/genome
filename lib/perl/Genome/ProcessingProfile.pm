@@ -153,10 +153,6 @@ sub create {
     $subclass->_validate_no_existing_processing_profiles_with_identical_params(%params)
         or return;
 
-    #unless ($params{'subclass_name'}) {
-    #    $params{'subclass_name'} = $class;
-    #}
-
     # Create
     my $obj = $class->SUPER::create(%params)
        or return;
@@ -382,7 +378,6 @@ sub _expand_param_properties {
             $prop_desc->{'is_delegated'} = 1;
             $prop_desc->{'where'} = [
                 'name' => $prop_name,
-                #'value_class_name' => $prop_class,
             ];
             $prop_desc->{'via'} = 'params';
             $prop_desc->{'is_mutable'} = 1;

@@ -6,10 +6,12 @@ use warnings;
 use Genome;
 
 require File::Basename;
+require File::Spec;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath { 
     is => 'Command::V2',
-    has_input => [
+    is_abstract => 1,
+    has_input => {
         source_path => {
             is => 'Text',
             doc => 'Source path of sequences to get.',
@@ -18,128 +20,100 @@ class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath {
             is => 'Text',
             doc => 'Detination directory for source path.',
         },
-    ],
-    has_output => [
+    },
+    has_output => {
         destination_path => {
-            calculate_from => [qw/ working_directory source_path /],
-            calculate => q| return $self->working_directory.'/'.File::Basename::basename($source_path); |,
+            calculate_from => [qw/ working_directory source_path_basename /],
+            calculate => q| return File::Spec->join($working_directory, $source_path_basename); |,
             doc => 'Final destination path.',
         }, 
-    ],
-    has_constant_calculated => [
+        destination_md5_path => {
+            calculate_from => [qw/ destination_path /],
+            calculate => q| return Genome::InstrumentData::Command::Import::WorkFlow::Helpers->original_md5_path_for($destination_path); |,
+            doc => 'Final destination MD5 path.',
+        }, 
+    },
+    has_calculated => {
+        source_path_basename => {
+            calculate_from => [qw/ source_path /],
+            calculate => q| return File::Basename::basename($source_path); |,
+        },
+    },
+    has_constant_calculated => {
         helpers => {
             calculate => q( Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get; ),
         },
-    ],
+    },
 };
 
 sub execute {
     my $self = shift;
 
-    my $retrieve_source_path = $self->_retrieve_source_path;
+    my $retrieve_source_path = $self->retrieve_source_path;
     return if not $retrieve_source_path;
 
-    my $retrieve_source_md5 = $self->_retrieve_source_md5;
+    my $retrieve_source_md5 = $self->retrieve_source_md5;
     return if not $retrieve_source_md5;
 
     return 1;
 }
 
-sub _retrieve_source_path {
+sub retrieve_source_path {
     my $self = shift;
     $self->debug_message('Retrieve source path...');
 
-    my $retrieve_ok = $self->retrieve_path($self->source_path, $self->destination_path);
+    my $source_path = $self->source_path;
+    $self->debug_message("Source path: $source_path");
+    my $source_path_sz = $self->_source_path_size;
+    $self->debug_message("Source path size: ".(defined $source_path_sz ? $source_path_sz : 'NA'));
+    if ( not defined $source_path_sz or $source_path_sz == 0 ) { # error that the file does not exist
+        $self->error_message('Source file does not have any size!');
+        return;
+    }
+
+    my $destination_path = $self->destination_path;
+    $self->debug_message("Destination path: $destination_path");
+
+    my $retrieve_ok = $self->_retrieve_source_path;
     return if not $retrieve_ok;
-    
+
+    my $destination_path_sz = -s $destination_path;
+    $self->debug_message("Destination path size: $destination_path_sz");
+    if ( not $source_path_sz or $source_path_sz != $destination_path_sz ) {
+        $self->error_message("Retrieve succeeded, but source path size is different from destination path! $source_path_sz <=> $destination_path_sz");
+        return;
+    }
+
     $self->debug_message('Retrieve source path...done');
     return 1;
 }
 
-sub _retrieve_source_md5 {
+sub retrieve_source_md5 {
     my $self = shift;
-    $self->debug_message('Retrieve source MD5 path...');
+    $self->debug_message('Create destination MD5 path...');
 
-    my $md5_path = $self->helpers->md5_path_for($self->source_path);
-    my $md5_size = $self->helpers->file_size($md5_path);
-    if ( not $md5_size ) {
-        $self->debug_message('Source MD5 path does not exist...skip');
+    my $source_md5 = $self->source_md5;
+    if ( not $source_md5) {
+        $self->debug_message('Source MD5 is not available! It will not be saved.');
         return 1;
     }
 
-    my $original_md5_path = $self->helpers->original_md5_path_for($self->destination_path);
-    my $retrieve_ok = $self->retrieve_path($md5_path, $original_md5_path);
-    return if not $retrieve_ok;
+    $self->debug_message("Source MD5: $source_md5");
+    if ( $source_md5 !~ /^[0-9a-f]{32}$/i ) {
+        $self->debug_message('Invalid source MD5! It will not be saved.');
+        return 1;
+    }
 
-    $self->debug_message('Retrieve source MD5 path...done');
+    my $destination_md5_path = $self->destination_md5_path;
+    $self->debug_message("Destination MD5 path: $destination_md5_path");
+
+    my $fh = Genome::Sys->open_file_for_writing($destination_md5_path);
+    $fh->say( join('  ', $source_md5, $self->destination_path) );
+    $fh->close;
+
+    $self->debug_message('Create destination MD5 path...done');
     return 1;
 }
 
-sub retrieve_path {
-    my ($self, $from, $to) = @_;
-
-    Carp::confess('No from path to retrieve file!') if not $from;
-    Carp::confess('No to path to retrieve file!') if not $to;
-
-    if ( $from =~ /^http/ ) {
-        return $self->_retrieve_remote_path($from, $to);
-    }
-    else {
-        return $self->_retrieve_local_path($from, $to);
-    }
-}
-
-sub _retrieve_local_path {
-    my ($self, $from, $to) = @_;
-    $self->debug_message('Retrieve local path...');
-
-    $self->debug_message("From: $from");
-    $self->debug_message("To: $to");
-    my $move_ok = File::Copy::copy($from, $to);
-    if ( not $move_ok ) {
-        $self->error_message('Copy failed!');
-        return;
-    }
-
-    my $from_sz = -s $from;
-    $self->debug_message("From size: $from_sz");
-    my $to_sz = -s $to;
-    $self->debug_message("To size: $to_sz");
-    if ( not $to_sz or $to_sz != $from_sz ) {
-        $self->error_message("Copy succeeded, but destination size is diffeerent from original! $to_sz vs $from_sz");
-        return;
-    }
-
-    $self->debug_message('Retrieve local path...done');
-    return 1;
-}
-
-sub _retrieve_remote_path {
-    my ($self, $from, $to) = @_;
-    $self->debug_message('Retrieve remote path...');
-
-    $self->debug_message("From: $from");
-    $self->debug_message("To: $to");
-
-    my $agent = LWP::UserAgent->new;
-    my $response = $agent->get($from, ':content_file' => $to);
-    if ( not $response->is_success ) {
-        $self->error_message($response->message) if $response->message;
-        $self->error_message('GET failed for remote path!');
-        return
-    }
-
-    my $from_sz = $response->headers->content_length;
-    $self->debug_message("From size: $from_sz");
-    my $to_sz = -s $to;
-    $self->debug_message("To size: $to_sz");
-    if ( not $to_sz or $to_sz != $from_sz ) {
-        $self->error_message("GET remote path succeeded, but destination size is different from original! $to_sz vs $from_sz");
-        return;
-    }
-
-    $self->debug_message('Retrieve remote path...done');
-    return 1;
-}
 1;
 

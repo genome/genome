@@ -3,7 +3,7 @@ package Genome::VariantReporting::Suite::BamReadcount::ComponentBase;
 use strict;
 use warnings;
 use Genome;
-use Genome::File::BamReadcount::Entry;
+use Genome::File::Vcf::BamReadcountParser;
 
 class Genome::VariantReporting::Suite::BamReadcount::ComponentBase {
     is => ['Genome::VariantReporting::Framework::Component::WithSampleName'],
@@ -11,14 +11,14 @@ class Genome::VariantReporting::Suite::BamReadcount::ComponentBase {
     ],
 };
 
-sub get_readcount_entry {
+sub get_readcount_entries {
     my $self = shift;
     my $entry = shift;
 
-    my $bam_readcount_string = $entry->sample_field($self->sample_index($entry->{header}), 'BRCT');
-    return unless $bam_readcount_string and $bam_readcount_string ne '.';
-    return Genome::File::BamReadcount::Entry->new(
-        Genome::File::BamReadcount::Entry::decode($bam_readcount_string));
+    return Genome::File::Vcf::BamReadcountParser::get_bam_readcount_entries(
+        $entry,
+        $self->sample_index($entry->{header}),
+    );
 }
 
 1;

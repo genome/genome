@@ -1932,17 +1932,7 @@ sub _resolve_type_name_for_class {
 sub get_all_objects {
     my $self = shift;
 
-    my $sorter = sub { # not sure why we sort, but I put it in a anon sub for convenience
-        return unless @_;
-        #if ( $_[0]->id =~ /^\-/) {
-            return sort {$b->id cmp $a->id} @_;
-            #}
-            #else {
-            #return sort {$a->id cmp $b->id} @_;
-            #}
-    };
-
-    return map { $sorter->( $self->$_ ) } (qw(events inputs metrics from_build_links to_build_links));
+    return map { $self->$_ } qw(events inputs metrics from_build_links to_build_links);
 }
 
 sub add_to_build{
