@@ -97,11 +97,20 @@ sub _compare_output_files {
             sub {
                 my ($other_file, $file) = @_;
                 if (! $file) {
-                    $diffs{$other_file} = sprintf('no file %s from process %s', $other_file, $self->id);
+                    $diffs{$other_file} = sprintf(
+                        'no file %s found for process %s and report %s with output directory %s',
+                        File::Spec->abs2rel($other_file, $other_output_dir), $self->id, $report, $output_dir
+                    );
                 } elsif (! $other_file) {
-                    $diffs{$file} = sprintf('no file %s from process %s', $file, $other_process->id);
+                    $diffs{$file} = sprintf(
+                        'no file %s found for process %s and report %s with output_directory %s',
+                        File::Spec->abs2rel($file, $output_dir), $other_process->id, $report, $output_dir
+                    );
                 } else {
-                    $diffs{$other_file} = sprintf('files are not the same (diff -u {%s,%s}/%s)', $output_dir, $other_output_dir, File::Spec->abs2rel($other_file, $other_output_dir));
+                    $diffs{$other_file} = sprintf(
+                        'files are not the same for report %s (diff -u {%s,%s}/%s)',
+                        $report, $output_dir, $other_output_dir, File::Spec->abs2rel($other_file, $other_output_dir)
+                    );
                 }
             },
         );
