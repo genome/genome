@@ -149,7 +149,7 @@ my %VERSIONS = (
     },
     'v6' => {
         picard_version => '1.113',
-        samtools_version => 'r982',
+        samtools_version => '0.1.19',
         bedtools_version => '2.17.0',
     },
 );
