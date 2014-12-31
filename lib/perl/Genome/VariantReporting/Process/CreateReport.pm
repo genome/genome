@@ -97,9 +97,9 @@ sub _compare_output_files {
             sub {
                 my ($other_file, $file) = @_;
                 if (! $file) {
-                    $diffs{$other_file} = sprintf('no file %s from process %s', $other_file, $other_process->id);
+                    $diffs{$other_file} = sprintf('no file %s from process %s', $other_file, $self->id);
                 } elsif (! $other_file) {
-                    $diffs{$file} = sprintf('no file %s from process %s', $file, $self->id);
+                    $diffs{$file} = sprintf('no file %s from process %s', $file, $other_process->id);
                 } else {
                     $diffs{$other_file} = sprintf('files are not the same (diff -u {%s,%s}/%s)', $output_dir, $other_output_dir, File::Spec->abs2rel($other_file, $other_output_dir));
                 }
