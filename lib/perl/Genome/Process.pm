@@ -600,7 +600,7 @@ sub unique_results {
 sub result_with_label {
     my ($self, $label) = validate_pos(@_, 1, 1);
 
-    my @results = grep {$_->users(label => $label)} $self->unique_results;
+    my @results = grep {my @users = $_->users(label => $label); scalar(@users) > 0} $self->unique_results;
     if (scalar(@results) != 1) {
         die sprintf("Found (%d) results with label (%s), but expected only one, they are: %s",
             scalar(@results), $label, pp(map {$_->id} @results));
