@@ -39,6 +39,10 @@ class Genome::InstrumentData::Command::AlignReads {
         },
     ],
     has_optional_input => [
+        bedtools_version => {
+            is => 'Text',
+            doc => 'The version of Bedtools to use when needed by aligners/filters',
+        },
         annotation_build_id => {
             is => 'Number',
             doc => 'Id of the annotation build to use when aligning',
@@ -176,6 +180,7 @@ sub params_for_alignment {
         force_fragment => $self->force_fragment || undef,
         picard_version => $self->picard_version || undef,
         samtools_version => $self->samtools_version || undef,
+        bedtools_version => $self->bedtools_version || undef,
 
         trimmer_name => $self->trimmer_name || undef,
         trimmer_version => $self->trimmer_version || undef,
