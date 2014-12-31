@@ -43,7 +43,7 @@ sub bsub_rusage {
     my $delegate = $self->results_class;
     my $rusage = $delegate->required_rusage(
         instrument_data => $self->instrument_data,
-        reference_build => $self->model->reference_sequence_build,
+        reference_build => $self->build->reference_sequence_build,
         aligner_params  => $self->model->processing_profile->read_aligner_params,
         queue           => $self->lsf_queue,
     );
