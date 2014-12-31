@@ -88,7 +88,23 @@ subtest 'working_command' => sub {
         );
         my $other_p = $other_cmd->execute();
         my %diffs = $p->compare_output($other_p->id);
-        is_deeply([keys %diffs], [File::Spec->join($other_p->output_directory('__test__'), 'report.txt')], 'Two process executions with different input files produce different reports');
+        my $report_file = File::Spec->join($p->output_directory('__test__'), 'report.txt');
+        my $other_report_file = File::Spec->join($other_p->output_directory('__test__'), 'report.txt');
+        is_deeply([keys %diffs], [$other_report_file], 'Two process executions with different input files produce different reports');
+
+        subtest 'test compare_output subroutine - missing file in other report directory' => sub {
+            unlink $other_report_file;
+            %diffs = $p->compare_output($other_p->id);
+            my $other_process_id = $other_p->id;
+            like($diffs{$report_file}, qr/report\.txt.*$other_process_id/, 'Missing files in other report output directory gets detected');
+        };
+        subtest 'test compare_output subroutine - missing file in report directory' => sub {
+            Genome::Sys->move_file($report_file, $other_report_file);
+            %diffs = $p->compare_output($other_p->id);
+            my $process_id = $p->id;
+            like($diffs{$other_report_file}, qr/report\.txt.*$process_id/, 'Mising files in report output directory gets detected');
+        }
+
     };
 };
 
