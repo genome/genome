@@ -19,5 +19,5 @@ sub name {
 }
 
 sub result_class {
-    'Genome::VariantReporting::Framework::Test::RunResult';
+    'Genome::VariantReporting::Framework::Test::WithTranslationsRunResult';
 }
