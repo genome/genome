@@ -37,33 +37,33 @@ sub _interpret_entry {
 
     my %return_values;
 
-    my $readcount_entry = $self->get_readcount_entry($entry);
-    return $self->null_interpretation($passed_alt_alleles) unless defined($readcount_entry);
+    my $readcount_entries = $self->get_readcount_entries($entry);
+    return $self->null_interpretation($passed_alt_alleles) unless defined($readcount_entries);
 
     my %vafs = Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
-        $entry, $readcount_entry);
+        $entry, $readcount_entries);
 
     for my $allele (@$passed_alt_alleles) {
-        my $translated_reference_allele = $self->translate_ref_allele($entry->{reference_allele}, $allele);
-        my $vaf;
-        if (defined $vafs{$allele}) {
-            $vaf = $vafs{$allele};
+        my $readcount_entry = $readcount_entries->{$allele};
+        if (!defined $readcount_entry) {
+            $return_values{$allele} = {map {$_ => $self->interpretation_null_character} $self->available_fields};
         }
         else {
-            $vaf = undef;
-        }
+            my $translated_reference_allele = $self->translate_ref_allele($entry->{reference_allele}, $allele);
+            my $vaf = $vafs{$allele};
 
-        $return_values{$allele} = {
-            $self->create_sample_specific_field_name("vaf") => $vaf,
-            $self->create_sample_specific_field_name("var_count") =>
+            $return_values{$allele} = {
+                $self->create_sample_specific_field_name("vaf") => $vaf,
+                $self->create_sample_specific_field_name("var_count") =>
                 Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_coverage_for_allele(
                     $readcount_entry, $allele, $entry->{reference_allele}),
-            $self->create_sample_specific_field_name("ref_count") =>
+                $self->create_sample_specific_field_name("ref_count") =>
                 Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_coverage_for_allele(
                     $readcount_entry, $translated_reference_allele, 'A'),
-            $self->flatten_hash($self->per_library_vaf($entry, $readcount_entry, $allele), "vaf"),
-            $self->flatten_hash($self->per_library_coverage($readcount_entry, $allele, $entry->{reference_allele}), "var_count"),
-            $self->flatten_hash($self->per_library_coverage($readcount_entry, $translated_reference_allele, 'A'), "ref_count"),
+                $self->flatten_hash($self->per_library_vaf($entry, $readcount_entry, $allele), "vaf"),
+                $self->flatten_hash($self->per_library_coverage($readcount_entry, $allele, $entry->{reference_allele}), "var_count"),
+                $self->flatten_hash($self->per_library_coverage($readcount_entry, $translated_reference_allele, 'A'), "ref_count"),
+            }
         }
     }
 

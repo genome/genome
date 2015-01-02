@@ -13,8 +13,9 @@ sub get_missing_errors {
             push @errors, UR::Object::Tag->create(
                 type => 'error',
                 properties => [$still_needed->members],
-                desc => sprintf("$type_of_thing required by $thing_that_needs (%s) but not provided: (%s)", 
-                    $name, join(",", $still_needed->members)),
+                desc => sprintf("%s required by %s (%s) but not provided: (%s)", 
+                    $type_of_thing || 'unknown type of thing', $thing_that_needs || 'unknown thing that needs',
+                    $name || 'unknown name' , join(",", $still_needed->members || 'none')),
             );
         }
     }

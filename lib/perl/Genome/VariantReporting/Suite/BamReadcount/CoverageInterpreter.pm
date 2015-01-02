@@ -27,13 +27,19 @@ sub field_descriptions {
 sub _interpret_entry {
     my ($self, $entry, $passed_alt_alleles) = @_;
 
-    my $readcount_entry = $self->get_readcount_entry($entry);
-    if ($readcount_entry) {
+    my $readcount_entries = $self->get_readcount_entries($entry);
+    if ($readcount_entries) {
         my %return_hash;
         for my $alt (@$passed_alt_alleles) {
-            $return_hash{$alt} = {
-                coverage => $readcount_entry->depth,
-            };
+            my $readcount_entry = $readcount_entries->{$alt};
+            if (defined $readcount_entry) {
+                $return_hash{$alt} = {
+                    coverage => $readcount_entry->depth,
+                };
+            }
+            else {
+                $return_hash{$alt} = { map { $_ => $self->interpretation_null_character } $self->available_fields };
+            }
         }
         return %return_hash;
     } else {

@@ -1,0 +1,10 @@
+experts:
+    __test__: {}
+reports:
+    __test__:
+        interpreters:
+            __with_many_sample_names__:
+                sample_names:
+                    - foo
+                    - bar
+                sample_name_labels: sample_name_labels

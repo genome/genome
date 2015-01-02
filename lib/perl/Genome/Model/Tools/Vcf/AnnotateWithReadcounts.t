@@ -16,12 +16,22 @@ use Genome::File::Vcf::Differ;
 my $pkg = 'Genome::Model::Tools::Vcf::AnnotateWithReadcounts';
 
 use_ok($pkg);
-my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "v3");
+my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "v4");
 
 subtest "output vcf" => sub {
     my $out = Genome::Sys->create_temp_file_path;
     run($out);
     my $expected_out = File::Spec->join($data_dir, "expected.vcf");
+    my $differ = Genome::File::Vcf::Differ->new($out, $expected_out);
+    my $diff = $differ->diff;
+    is($diff, undef, "Found No differences between $out and (expected) $expected_out") ||
+       diag $diff->to_string;
+};
+
+subtest "duplicate vcf entries" => sub {
+    my $out = Genome::Sys->create_temp_file_path;
+    my $expected_out = File::Spec->join($data_dir, "duplicateVariants.expected.vcf");
+    run($out, "duplicateVariants.vcf");
     my $differ = Genome::File::Vcf::Differ->new($out, $expected_out);
     my $diff = $differ->diff;
     is($diff, undef, "Found No differences between $out and (expected) $expected_out") ||
@@ -117,9 +127,13 @@ sub run_indel2 {
 
 sub run {
     my $out = shift;
+    my $in = shift;
+    unless (defined $in) {
+        $in = "1.vcf.gz";
+    }
 
     my $cmd = $pkg->create(
-        vcf_file => File::Spec->join($data_dir, "1.vcf.gz"),
+        vcf_file => File::Spec->join($data_dir, $in),
         readcount_file_and_sample_name => [
             sprintf("%s:TEST-patient1-somval_tumor1", File::Spec->join($data_dir, 'test1.rc.tsv')),
             sprintf("%s:TEST-patient1-somval_normal1", File::Spec->join($data_dir, 'test2.rc.tsv')),

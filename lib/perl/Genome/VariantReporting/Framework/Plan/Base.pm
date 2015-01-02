@@ -123,7 +123,7 @@ sub __translation_errors__ {
 
 sub needed_translations {
     my $self = shift;
-    return Set::Scalar->new(map {$self->params->{$_}} $self->get_class->translated_input_names);
+    return Set::Scalar->new(map {$self->params->{$_}} $self->get_class->required_translated_input_names);
 }
 
 
@@ -179,13 +179,15 @@ sub translate {
 sub _translate {
     my ($self, $translations, $params_accessor, $object_class) = @_;
 
-    for my $name ($object_class->translated_input_names) {
+    for my $name ($object_class->all_translated_input_names) {
         my $old_value = $self->$params_accessor->{$name};
+        next unless defined($old_value);
         $self->$params_accessor->{$name} = $self->_translate_single($old_value, $translations, $name);
     }
 
-    for my $name ($object_class->translated_is_many_input_names) {
+    for my $name ($object_class->all_translated_is_many_input_names) {
         my @old_values = @{$self->$params_accessor->{$name}};
+        next unless scalar(@old_values);
         my $data_type = $object_class->__meta__->property_meta_for_name($name)->data_type;
         if (defined($data_type) && $data_type eq 'ARRAY') {
             $self->$params_accessor->{$name} = [map {$self->_translate_single($_, $translations, $name)} @old_values];

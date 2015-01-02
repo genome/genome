@@ -12,6 +12,11 @@ class Genome::VariantReporting::Framework::Component::WithSampleName {
             is => 'Text',
             is_translated => 1,
         },
+        sample_name_label => {
+            is_optional => 1,
+            is => 'Text',
+            is_translated => 1,
+        },
     ],
 };
 
@@ -48,7 +53,17 @@ sub get_callers {
 sub create_sample_specific_field_name {
     my ($self, $field) = @_;
 
-    return join("_", $self->sample_name, $field);
+    return join("_", $self->get_sample_label, $field);
+}
+
+sub get_sample_label {
+    my $self = shift;
+
+    if (defined($self->sample_name_label)) {
+        return $self->sample_name_label;
+    } else {
+        return $self->sample_name;
+    }
 }
 
 sub sample_names {

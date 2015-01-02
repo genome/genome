@@ -537,7 +537,7 @@ sub delete {
 
     # find child objects for which there are no more users.
     for my $child (@child_objects) {
-        my @users = Genome::SoftwareResult::User->get(software_result => $child);
+        my @users = Genome::SoftwareResult::User->get(software_result => $child, active => 1);
         $child->delete if !@users;
     }
 

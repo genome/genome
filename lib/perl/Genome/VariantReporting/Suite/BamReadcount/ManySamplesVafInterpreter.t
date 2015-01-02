@@ -14,7 +14,7 @@ use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
 use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(
-    bam_readcount_line create_entry bam_readcount_line_deletion create_deletion_entry);
+     create_default_entry  create_deletion_entry);
 
 my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter';
 use_ok($pkg);
@@ -48,7 +48,7 @@ subtest "one alt allele" => sub {
         }
     );
 
-    my $entry = create_entry(bam_readcount_line);
+    my $entry = create_default_entry;
     my %result = $interpreter->interpret_entry($entry, ['G']);
     is(keys %result, keys %expected, "First level keys as expected");
     is_deeply(\%result, \%expected, "Values are as expected");

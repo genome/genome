@@ -43,7 +43,7 @@ sub headers {
         MeetsMinDepthCutoff
     /;
 
-    push @headers, per_sample_vaf_headers($self);
+    push @headers, sort(per_sample_vaf_headers($self));
 
     push @headers, qw/
         min_coverage_observed
@@ -53,7 +53,7 @@ sub headers {
         variant_caller_count
     /;
 
-    push @headers, per_library_vaf_headers($self);
+    push @headers, sort(per_library_vaf_headers($self));
 
     return @headers;
 }
