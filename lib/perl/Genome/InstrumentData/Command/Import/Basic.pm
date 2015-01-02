@@ -166,12 +166,14 @@ sub _resolve_instrument_data_properties {
         $class .= 'FromCgHub';
     }
 
+    my @instrument_data_properties = $self->instrument_data_properties;
+    push @instrument_data_properties, 'downsample_ratio='.$self->downsample_ratio if defined $self->downsample_ratio;
     my $insdata_props_processor = $class->execute(
-        instrument_data_properties => [ $self->instrument_data_properties ],
+        instrument_data_properties => \@instrument_data_properties,
         sources => [ $self->source_files ],
     );
     if ( not $insdata_props_processor->result ) {
-        $self->error_message('Failed to process instruemtn data properties!');
+        $self->error_message('Failed to process instrument data properties!');
         return;
     }
 
