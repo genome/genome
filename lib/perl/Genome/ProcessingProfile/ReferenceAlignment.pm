@@ -353,6 +353,7 @@ sub params_for_merged_alignment {
         trimmer_params => $self->read_trimmer_params || undef,
         picard_version => $self->picard_version || undef,
         samtools_version => $self->samtools_version || undef,
+        bedtools_version => $self->bedtools_version || undef,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );
     if(scalar @$filters) {
