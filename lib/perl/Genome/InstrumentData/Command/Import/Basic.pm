@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+require File::Temp;
 require List::MoreUtils;
 use Workflow::Simple;
 
@@ -160,26 +161,21 @@ sub _resolve_original_format {
 sub _resolve_instrument_data_properties {
     my $self = shift;
 
-    my $properties = {};
-    if ( $self->instrument_data_properties ) {
-        my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-        $properties = $helpers->key_value_pairs_to_hash( $self->instrument_data_properties );
-        return if not $properties;
+    my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties';
+    if ( $self->import_source_name =~ /^CgHub$/i ) {
+        $class .= 'FromCgHub';
     }
 
-    for my $name (qw/ import_source_name description downsample_ratio /) {
-        my $value = $self->$name;
-        next if not defined $value;
-        if ( defined $properties->{$name} and $properties->{$name} ne $value ) {
-            $self->error_message("Conflicting values given for command and instrument data properties $name: '$value' <=> '$properties->{$name}'");
-            return;
-        }
-        $properties->{$name} = $value;
+    my $insdata_props_processor = $class->execute(
+        instrument_data_properties => [ $self->instrument_data_properties ],
+        sources => [ $self->source_files ],
+    );
+    if ( not $insdata_props_processor->result ) {
+        $self->error_message('Failed to process instruemtn data properties!');
+        return;
     }
 
-    $properties->{original_data_path} = join(',', $self->source_files);
-
-    return $self->_instrument_data_properties($properties);
+    return $self->_instrument_data_properties( $insdata_props_processor->resolved_instrument_data_properties );
 }
 
 sub _resolve_working_directory {
