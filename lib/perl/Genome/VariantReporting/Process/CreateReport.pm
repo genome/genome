@@ -103,7 +103,7 @@ sub _compare_output_files {
                     );
                 } elsif (! $other_file) {
                     $diffs{$file} = sprintf(
-                        'no file %s found for process %s and report %s with output_directory %s',
+                        'no file %s found for process %s and report %s with output directory %s',
                         File::Spec->abs2rel($file, $output_dir), $other_process->id, $report, $other_output_dir
                     );
                 } else {
