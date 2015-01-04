@@ -24,17 +24,17 @@ class Genome::Model::ClinSeq::Command::Converge::Base {
             is => 'FilesystemPath',
             doc => 'Directory where output files will be written',
         },
-        min_quality_score => {
+        mq => {
               is => 'Integer',
               is_optional => 1,
               doc => 'minimum mapping quality of reads to be considered',
-              default => '1',
+              default => '30',
         },
-        min_base_quality => {
+        bq => {
               is => 'Integer',
               is_optional => 1,
               doc => 'minimum base quality of bases in reads to be considered',
-              default => '0',
+              default => '20',
         },
     ],
     doc => 'converge various data types across clinseq inputs'
@@ -673,8 +673,8 @@ sub add_read_counts{
   my $grand_anno_file = $args{'-anno_file'};
   my $indel_size_limit = 25; #max size of indels to report counts for.
   my ($b_quality, $m_quality);
-  $m_quality = $self->min_quality_score;
-  $b_quality = $self->min_base_quality;
+  $m_quality = $self->mq;
+  $b_quality = $self->bq;
   my (@prefixes, @bam_files);
   foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys %{$align_builds}){
     push(@prefixes, $align_builds->{$name}->{prefix});

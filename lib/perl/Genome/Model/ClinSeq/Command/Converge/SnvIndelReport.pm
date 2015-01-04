@@ -349,8 +349,8 @@ sub execute {
   if($self->summarize) {
     my $summarize = Genome::Model::ClinSeq::Command::Converge::SummarizeSnvIndelReport->create(
       outdir => $original_outdir,
-      min_mq => $self->min_quality_score,
-      min_bq => $self->min_base_quality,
+      min_mq => $self->mq,
+      min_bq => $self->bq,
       filtered_report => $result_files->{final_filtered_clean_tsv},
       unfiltered_report => $result_files->{final_unfiltered_clean_tsv},
     );
