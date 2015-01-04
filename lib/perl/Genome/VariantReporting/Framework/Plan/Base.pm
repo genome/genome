@@ -205,7 +205,14 @@ sub _translate {
                     push @translated, $translated_value;
                 }
             }
-            $self->$params_accessor->{$name} = \@translated;
+            my $is_optional = $object_class->__meta__->property_meta_for_name($name)->is_optional;
+            if (scalar(@translated) or $is_optional) {
+                $self->$params_accessor->{$name} = \@translated;
+            } else {
+                die sprintf("No translations for input (%s) for plan (%s) which is a (%s):\n%s\nTranslations:\n%s\n",
+                    $name, $self->name, $self->category, pp($self->as_hashref), pp($translations));
+
+            }
         }
     }
     return;
