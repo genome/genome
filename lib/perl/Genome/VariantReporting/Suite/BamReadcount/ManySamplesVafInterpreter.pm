@@ -40,6 +40,7 @@ sub _interpret_entry {
         my $interpreter = Genome::VariantReporting::Suite::BamReadcount::VafInterpreter->create(
             sample_name => $sample_name,
             sample_name_label => $self->sample_name_labels->{$sample_name},
+            library_names => [$self->library_names],
             library_name_labels => $self->library_name_labels,
         );
         my %result = $interpreter->interpret_entry($entry, $passed_alt_alleles);

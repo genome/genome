@@ -13,6 +13,34 @@ class Genome::VariantReporting::Report::DocmReport {
     is => [ 'Genome::VariantReporting::Report::WithHeader',
         'Genome::VariantReporting::Framework::Component::WithManyLibraryNames',
         'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
+    has_input => [
+        sample_names => {
+            is => 'Text',
+            is_many => 1,
+            is_translated => 1,
+            doc => 'List of sample names to be used in the report',
+        },
+        sample_name_labels => {
+            is => 'HASH',
+            is_translated => 1,
+            is_optional => 1,
+            default => {},
+            doc => 'Hash of sample_name to label',
+        },
+        library_names => {
+            is => 'Text',
+            is_many => 1,
+            is_translated => 1,
+            doc => 'List of library names to be used in the report',
+        },
+        library_name_labels => {
+            is => 'HASH',
+            is_translated => 1,
+            is_optional => 1,
+            default => {},
+            doc => 'Hash of library_name to label',
+        }
+    ],
     doc => 'Output readcount information from bam readcount',
 };
 
