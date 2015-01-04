@@ -186,8 +186,10 @@ sub _translate {
     }
 
     for my $name ($object_class->all_translated_is_many_input_names) {
-        my @old_values = @{$self->$params_accessor->{$name}};
-        next unless scalar(@old_values);
+        my $planned_value = $self->$params_accessor->{$name};
+        next unless defined($planned_value);
+
+        my @old_values = @{$planned_value};
         my $data_type = $object_class->__meta__->property_meta_for_name($name)->data_type;
         if (defined($data_type) && $data_type eq 'ARRAY') {
             $self->$params_accessor->{$name} = [map {$self->_translate_single($_, $translations, $name)} @old_values];
