@@ -1,6 +1,6 @@
 experts:
     'bam-readcount':
-        version: 0.5
+        version: 0.7
         aligned_bam_result_id: [aligned_bam_result_id]
         minimum_mapping_quality: 0
         minimum_base_quality: 0
