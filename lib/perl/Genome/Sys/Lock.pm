@@ -171,9 +171,17 @@ sub add_backend {
     push @backends, $backend;
 }
 
-sub remove_backend {
-    my ($class, $backend) = @_;
-    @backends = grep { $_ ne $backend } @backends;
+sub clear_backends {
+    @backends = ();
+}
+
+sub set_backends {
+    my $class = shift;
+
+    $class->clear_backends();
+    for my $backend (@_) {
+        $class->add_backend($backend);
+    }
 }
 
 my $_cleanup_handler_installed;
