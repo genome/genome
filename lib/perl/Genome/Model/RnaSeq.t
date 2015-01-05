@@ -37,8 +37,8 @@ my $expected_inputs = {
     'digital_expression_app_version' => '0.5.4p1',
     'digital_expression_result_version' => '1',
     'digital_expression_blacklist_alignments_flags' => '0x0104',
-    'digital_expression_wrapper_build' => $rnaseq_build,
-    'digital_expression_wrapper_build_label' => 'digital_expression_result',
+    'digital_expression_user' => $rnaseq_build,
+    'digital_expression_label' => 'digital_expression_result',
 };
 is_deeply(\%inputs, $expected_inputs, "inputs match") or do { print Data::Dumper::Dumper($expected_inputs,\%inputs) };
 
@@ -46,7 +46,7 @@ my $workflow = $rnaseq_model->_resolve_workflow_for_build($rnaseq_build);
 ok($workflow, "Got a workflow");
 
 # Test expected workflow xml
-my $test_dir = Genome::Utility::Test->data_dir('Genome::Model::RnaSeq', '2014-10-15');
+my $test_dir = Genome::Utility::Test->data_dir('Genome::Model::RnaSeq', '2014-12-31');
 my $xml_file = Genome::Sys->create_temp_file_path;
 my $expected_xml_file = "$test_dir/workflow.xml";
 $workflow->save_to_xml(OutputFile => $xml_file);

@@ -30,7 +30,7 @@ my $cmd = Genome::Model::Tools::Htseq::Count->execute(
     result_version => 1,
 );
 ok($cmd, "executed command with two inputs");
-my $result = $cmd->result();
+my $result = $cmd->output_result();
 ok($result, "got result");
 
 ok(-d $result->output_dir . '/underlying_results', "found dir of underlying results");
