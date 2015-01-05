@@ -130,6 +130,11 @@ class Genome::InstrumentData::AlignmentResult {
                                     is_optional=>1,
                                     doc=>'Version of samtools to use when creating BAM files',
                                 },
+        bedtools_version        => {
+                                    is => 'Text',
+                                    is_optional => 1,
+                                    doc => "Version of bedtools to use for BAM > fastq conversion",
+                                },
         picard_version          => {
                                     is=>'Text',
                                     is_optional=>1,
@@ -615,6 +620,10 @@ sub prepare_scratch_sam_file {
     return 1;
 }
 
+# Override and return 1 if the aligner module can handle the read group
+# extraction more efficiently than copying the whole bam (e.g., by piping).
+sub can_extract_read_groups { 0 }
+
 sub requires_fastqs_to_align {
     my $self = shift;
     # disqualify if the aligner can't take a bam
@@ -678,7 +687,7 @@ sub collect_inputs {
     }
 
     # maybe we want to extract a read group from that bam and deal with that instead...
-    if (defined $self->instrument_data_segment_id) {
+    if (defined $self->instrument_data_segment_id && !$self->can_extract_read_groups) {
         $self->debug_message('Extract input read group bam');
         $bam_file = $self->_extract_input_read_group_bam;
         unless ($bam_file) {
@@ -1645,11 +1654,22 @@ sub aligner_params_required_for_index {
     0;
 }
 
+sub aligner_name_for_aligner_index {
+    my $self = shift;
+    return $self->aligner_name;
+}
+
 sub get_reference_sequence_index {
     my $self = shift;
     my $build = shift || $self->reference_build;
     my @overrides = @_;
-    my $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(aligner_name=>$self->aligner_name, aligner_version=>$self->aligner_version, aligner_params=>$self->aligner_params, reference_build=>$build, @overrides);
+    my $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(
+        aligner_name => $self->aligner_name_for_aligner_index,
+        aligner_version => $self->aligner_version,
+        aligner_params => $self->aligner_params,
+        reference_build => $build,
+        @overrides
+        );
 
     if (!$index) {
         die $self->error_message(sprintf("No reference index prepared for %s with params %s and reference build %s", $self->aligner_name, $self->aligner_params, $self->reference_build->id));

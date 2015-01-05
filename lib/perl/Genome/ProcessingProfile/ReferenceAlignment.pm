@@ -89,6 +89,10 @@ class Genome::ProcessingProfile::ReferenceAlignment {
             doc => 'samtools version for SamToBam, samtools merge, etc...',
             is_optional => 1,
         },
+        bedtools_version => {
+            doc => 'bedtools version for bedtools bamtofastq',
+            is_optional => 1,
+        },
         merger_name => {
             doc => 'name of bam merger, picard, samtools (this will be replaced by alignment_strategy)',
             is_optional => 1,
@@ -260,24 +264,6 @@ sub _fetch_alignment_sets {
     return @alignments;
 }
 
-sub processing_profile_params_for_alignment {
-    my $self = shift;
-
-    my %params = (
-                read_aligner_name => $self->read_aligner_name,
-                read_aligner_version => $self->read_aligner_version,
-                read_aligner_params => $self->read_aligner_params,
-                force_fragment => $self->force_fragment,
-                read_trimmer_name => $self->read_trimmer_name,
-                read_trimmer_version => $self->read_trimmer_version,
-                read_trimmer_params => $self->read_trimmer_params,
-                picard_version => $self->picard_version,
-                samtools_version => $self->samtools_version,
-            );
-
-    return \%params;
-}
-
 sub params_for_alignment {
     my $self = shift;
     my $input = shift;
@@ -303,6 +289,7 @@ sub params_for_alignment {
                     trimmer_params => $self->read_trimmer_params || undef,
                     picard_version => $self->picard_version || undef,
                     samtools_version => $self->samtools_version || undef,
+                    bedtools_version => $self->bedtools_version || undef,
                     filter_name => $input->filter_desc || undef,
                     test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
                     instrument_data_segment_type => undef,
@@ -366,6 +353,7 @@ sub params_for_merged_alignment {
         trimmer_params => $self->read_trimmer_params || undef,
         picard_version => $self->picard_version || undef,
         samtools_version => $self->samtools_version || undef,
+        bedtools_version => $self->bedtools_version || undef,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );
     if(scalar @$filters) {

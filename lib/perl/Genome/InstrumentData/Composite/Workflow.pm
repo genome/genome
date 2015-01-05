@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+use Sort::Naturally qw(nsort);
 use Workflow;
 use Workflow::Simple qw(run_workflow_lsf);
 
@@ -147,7 +148,16 @@ my %VERSIONS = (
         picard_version => '1.113',
         samtools_version => 'r982',
     },
+    'v6' => {
+        picard_version => '1.113',
+        samtools_version => '0.1.19',
+        bedtools_version => '2.17.0',
+    },
 );
+
+sub available_api_versions {
+    return nsort keys %VERSIONS;
+}
 
 sub inputs_for_api_version {
     my $self = shift;
@@ -534,13 +544,29 @@ sub _instrument_data_workflow_input_properties {
 sub _general_workflow_input_properties {
     my $self = shift;
 
-    return qw(picard_version samtools_version force_fragment trimmer_name trimmer_version trimmer_params);
+    return qw(
+        picard_version
+        samtools_version
+        bedtools_version
+        force_fragment
+        trimmer_name
+        trimmer_version
+        trimmer_params
+        );
 }
 
 sub _merge_workflow_input_properties {
     my $self = shift;
 
-    return qw(merger_name merger_version merger_params duplication_handler_name duplication_handler_version duplication_handler_params samtools_version);
+    return qw(
+        merger_name
+        merger_version
+        merger_params
+        duplication_handler_name
+        duplication_handler_version
+        duplication_handler_params
+        samtools_version
+        );
 }
 
 my $REFINEMENT_INPUT_PROPERTY_SEPARATOR = ':';
