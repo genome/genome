@@ -43,8 +43,7 @@ sub execute {
     my $build = $self->build;
     my $pp    = $build->processing_profile;
 
-    if ($pp->read_aligner_name eq 'imported') {
-        $self->warning_message('Skip BamQc step for imported alignment bam');
+    if ($self->_should_skip_bam_qc($pp)) {
         return 1;
     }
 
@@ -90,7 +89,6 @@ sub params_for_result {
     my $read_length = $instr_data->sequencing_platform =~ /^solexa$/i ? 0 : 1;
 
     my $error_rate_version = $self->_select_error_rate_version_for_pp($pp);
-    my $should_run_error_rate = $self->_should_run_error_rate_for_pp($pp);
 
     return (
         alignment_result_id => $self->_alignment_result->id,
@@ -99,7 +97,7 @@ sub params_for_result {
         fastqc_version      => Genome::Model::Tools::Fastqc->default_fastqc_version,
         samstat_version     => Genome::Model::Tools::SamStat::Base->default_samstat_version,
         error_rate_version  => $error_rate_version,
-        error_rate          => $should_run_error_rate,
+        error_rate          => 1,
         read_length         => $read_length,
         test_name           => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );
@@ -163,17 +161,21 @@ sub _select_error_rate_version_for_pp {
     return $error_rate_version;
 }
 
-sub _should_run_error_rate_for_pp {
+sub _should_skip_bam_qc {
     my ($self, $pp) = @_;
 
-    my $aligner_black_listed = ($pp->can('read_aligner_name')
-        and $self->_aligner_blacklist->has($pp->read_aligner_name));
-
-    return $aligner_black_listed ? 0 : 1;
+    if ($pp->can('read_aligner_name')) {
+        my $aligner = $pp->read_aligner_name;
+        if ($self->_aligner_blacklist->has($aligner)) {
+            $self->warning_message("Skipping BamQc because aligner is '$aligner'");
+            return 1;
+        }
+    }
+    return 0;
 }
 
 sub _aligner_blacklist {
-    return Set::Scalar->new(qw(bsmap));
+    return Set::Scalar->new(qw(imported bsmap));
 }
 
 sub _bwa_mem_version_object {

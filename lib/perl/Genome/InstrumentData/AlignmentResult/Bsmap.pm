@@ -371,11 +371,15 @@ sub prepare_reference_sequence_index {
 }
 
 sub fillmd_for_sam {
-    return 1;
+    return 0;
 }
 
 sub requires_read_group_addition {
     return 1;
+}
+
+sub _use_alignment_summary_cpp {
+    return 0;
 }
 
 # only accept bam input if we're not running in force fragment mode
