@@ -14,9 +14,9 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties') or die;
 
-my @sources = (qw/ file1 file2 /);
+my $source = join(',', (qw/ file1 file2 /));
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties->execute(
-    sources => \@sources,
+    source => $source,
     instrument_data_properties => [qw/ 
         description=imported
         downsample_ratio=0.7
@@ -31,7 +31,7 @@ is_deeply(
         downsample_ratio => 0.7,
         description => 'imported',
         import_source_name => 'TGI',
-        original_data_path => join(',', @sources),
+        original_data_path => $source,
         this => 'that', 
     },
     'resolved_instrument_data_properties',
@@ -39,7 +39,7 @@ is_deeply(
 
 # ERRORS
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties->execute(
-    sources => \@sources,
+    source => $source,
     instrument_data_properties => [qw/ 
         description=imported
         description=inported
@@ -49,7 +49,7 @@ ok(!$cmd->result,"execute failed w/ duplicate key, diff value");
 is($cmd->error_message, 'Multiple values for instrument data property! description => imported, inported', 'correct error');
 
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties->execute(
-    sources => \@sources,
+    source => $source,
     instrument_data_properties => [qw/ 
         description=
     /],

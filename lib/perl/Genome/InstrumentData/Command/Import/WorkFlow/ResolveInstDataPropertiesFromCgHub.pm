@@ -37,8 +37,8 @@ sub _resolve_metadata_file {
     $self->debug_message('Resolve metadata file...');
 
     # check if DL'd
-    my @sources = $self->sources;
-    my $source_dir = Path::Class::file( $sources[0] )->dir;
+    my $source = $self->source;
+    my $source_dir = Path::Class::file($source)->dir;
     my $metadata_file_basename = 'metadata.xml';
     my $metadata_file = File::Spec->join($source_dir, $metadata_file_basename);
     return $self->metadata_file($metadata_file) if -s $metadata_file;

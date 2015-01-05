@@ -28,7 +28,7 @@ sub Genome::Model::Tools::CgHub::Query::execute {
 }
 
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataPropertiesFromCgHub->create(
-    sources => [$source_bam],
+    source => $source_bam,
     instrument_data_properties => [qw/ 
         description=imported
         downsample_ratio=0.7

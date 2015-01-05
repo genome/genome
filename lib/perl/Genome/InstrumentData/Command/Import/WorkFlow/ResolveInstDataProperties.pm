@@ -8,10 +8,9 @@ use Genome;
 class Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties { 
     is => 'Command::V2',
     has_input => {
-        sources => {
+        source => {
             is => 'Text',
-            is_many => 1,
-            doc => 'Sources to import.',
+            doc => 'Source to import.',
         },
     },
     has_optional_input => {
@@ -55,8 +54,7 @@ sub _resolve_instrument_data_properties {
     
     }
 
-    my @sources = $self->sources;
-    $properties{original_data_path} = join(',', @sources);
+    $properties{original_data_path} = $self->source;
 
     return $self->resolved_instrument_data_properties(\%properties);
 }
