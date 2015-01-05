@@ -765,6 +765,7 @@ sub verify_or_create_local_cache {
     my $lock_name = $self->local_cache_lock;
     $self->status_message('Lock name: '.$lock_name);
     my $lock = Genome::Sys->lock_resource(
+        scope => 'host',
         resource_lock => $lock_name,
         max_try => 20, # 20 x 180 sec each = 1hr
         block_sleep => 180,
