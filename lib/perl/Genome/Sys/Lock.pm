@@ -212,6 +212,9 @@ sub set_backends {
 
 sub add_backend {
     my ($class, $scope, $backend) = @_;
+    if ($scope eq 'any') {
+        Carp::confess($class->error_message("Illegal scope name 'any'."));
+    }
     push @{$backends->{$scope}}, $backend;
 }
 
