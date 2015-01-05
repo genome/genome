@@ -1011,32 +1011,6 @@ sub eviscerate {
     }
 }
 
-sub _X_resolve_subclass_name { # only temporary, subclass will soon be stored
-    my $class = shift;
-    return __PACKAGE__->_resolve_subclass_name_by_sequencing_platform(@_);
-}
-
-
-sub _resolve_subclass_name_for_sequencing_platform {
-    my ($class,$sequencing_platform) = @_;
-    my @type_parts = split(' ',$sequencing_platform);
-
-    my @sub_parts = map { ucfirst } @type_parts;
-    my $subclass = join('',@sub_parts);
-
-    my $class_name = join('::', 'Genome::Model::Build::ReferenceAlignment' , $subclass);
-    return $class_name;
-}
-
-sub _resolve_sequencing_platform_for_subclass_name {
-    my ($class,$subclass_name) = @_;
-    my ($ext) = ($subclass_name =~ /Genome::Model::Build::ReferenceAlignment::(.*)/);
-    return unless ($ext);
-    my @words = $ext =~ /[a-z]+|[A-Z](?:[A-Z]+|[a-z]*)(?=$|[A-Z])/g;
-    my $sequencing_platform = lc(join(" ", @words));
-    return $sequencing_platform;
-}
-
 #This directory is used by both cDNA and now Capture models as well
 sub reference_coverage_directory {
     my $self = shift;
