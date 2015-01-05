@@ -31,7 +31,7 @@ sub execute {
         delete $REPORT_TYPES{InputBaseCounts};
     }
 
-    unless (defined $model->dbsnp_build) {
+    unless (defined $build->dbsnp_build) {
         $self->debug_message("No dbsnp_build defined for model, skipping dbsnp concordance report.");
         delete $REPORT_TYPES{DbSnpConcordance};
     } 
@@ -41,7 +41,7 @@ sub execute {
         delete $REPORT_TYPES{GoldSnpConcordance};
     }
     
-    unless ( ($model->dna_type eq 'cdna' || $model->dna_type eq 'rna') && $model->reference_sequence_name =~ /^XStrans_adapt_smallRNA_ribo/ ) {
+    unless ( ($model->dna_type eq 'cdna' || $model->dna_type eq 'rna') && $build->reference_sequence_name =~ /^XStrans_adapt_smallRNA_ribo/ ) {
         delete $REPORT_TYPES{ReferenceCoverage};
     }
     
@@ -139,7 +139,7 @@ sub verify_successful_completion {
 
     delete $REPORT_TYPES{InputBaseCounts} if $model->read_aligner_name =~ /^Imported$/i;
 
-    unless ( ($model->dna_type eq 'cdna' || $model->dna_type eq 'rna') && $model->reference_sequence_name =~ /^XStrans_adapt_smallRNA_ribo/ ) {
+    unless ( ($model->dna_type eq 'cdna' || $model->dna_type eq 'rna') && $build->reference_sequence_name =~ /^XStrans_adapt_smallRNA_ribo/ ) {
         delete $REPORT_TYPES{ReferenceCoverage};
     }
         

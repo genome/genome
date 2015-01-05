@@ -34,7 +34,7 @@ sub lsf_queue {
 sub bsub_rusage {
     my $self = shift;
     my $delegate = $self->alignment_result_class;
-    my $rusage = $delegate->required_rusage_for_building_index(reference_build=>$self->model->reference_sequence_build);
+    my $rusage = $delegate->required_rusage_for_building_index(reference_build=>$self->build->reference_sequence_build);
     return $rusage;
 }
 
