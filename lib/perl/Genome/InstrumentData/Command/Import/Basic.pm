@@ -14,7 +14,7 @@ class Genome::InstrumentData::Command::Import::Basic {
     has_input => [
         import_source_name => {
             is => 'Text',
-            doc => 'Organiztion name or abbreviation from where the source file(s) were generated or downloaded.',
+            doc => "Organization or site name/abbreviation from where the source was generated or downloaded. Use 'CGHub' for TCGA downloaded data.",
         },
         library => {
             is => 'Genome::Library',
@@ -162,7 +162,8 @@ sub _resolve_instrument_data_properties {
     my $self = shift;
 
     my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties';
-    if ( $self->import_source_name =~ /^CgHub$/i ) {
+    if ( $self->import_source_name =~ /^cghub$/i ) {
+        $self->import_source_name('CGHub');
         $class .= 'FromCgHub';
     }
 

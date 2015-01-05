@@ -32,7 +32,7 @@ ok($library, 'created library') or die;
 # Local Bam
 my $cmd = Genome::InstrumentData::Command::Import::Basic->execute(
     library => $library,
-    import_source_name  => 'CgHub',
+    import_source_name  => 'CGHub',
     source_files => [$source_bam],
     instrument_data_properties => [qw/ target_region_set_name=none tcga_name=TCGA-AB-2804-03B-01W-0728-08 /],
 );
