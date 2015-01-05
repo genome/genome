@@ -996,11 +996,14 @@ sub _create_file_summaries {
     my $self = shift;
 
     my $old_cwd = getcwd;
-    chdir($self->absolute_path);
+    chdir($self->absolute_path)
+        or return $self->warning_message('Failed to chdir to %s. Skipping file summaries.', $self->absolute_path);
+
     my @files;
     #why is File::Find this stupid? who knows...
     File::Find::find(sub { push(@files, $File::Find::name) unless (-d $_) }, '.');
-    chdir($old_cwd);
+    chdir($old_cwd)
+        or die $self->error_message('Failed to chdir back to %s.', $old_cwd);
 
     for my $file (@files) {
         Genome::Disk::Allocation::FileSummary->create_or_update(
@@ -1008,6 +1011,8 @@ sub _create_file_summaries {
             file => $file
         );
     }
+
+    return 1;
 }
 
 sub _symlink_new_path_from_old {
