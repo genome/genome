@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Carp qw(carp croak);
-use Genome::Sys::FileLock;
+use Genome::Sys::Lock::FileBackend;
 use List::MoreUtils qw(all);
 
 =item lock_resource()
@@ -156,7 +156,7 @@ sub with_default_lock_resource_args {
     return %args;
 }
 
-my @backends = ('Genome::Sys::FileLock');
+my @backends = ('Genome::Sys::Lock::FileBackend');
 
 sub is_mandatory {
     my $backend = shift;

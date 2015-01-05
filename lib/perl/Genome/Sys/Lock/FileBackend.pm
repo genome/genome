@@ -1,4 +1,4 @@
-package Genome::Sys::FileLock;
+package Genome::Sys::Lock::FileBackend;
 
 use strict;
 use warnings;

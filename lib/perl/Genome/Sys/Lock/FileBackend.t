@@ -24,7 +24,7 @@ use Socket qw(AF_UNIX SOCK_STREAM PF_UNSPEC);
 use Test::More;
 use Time::HiRes qw(gettimeofday);
 
-require_ok('Genome::Sys::FileLock');
+require_ok('Genome::Sys::Lock::FileBackend');
 
 my $tmp_dir = File::Temp::tempdir('Genome-Utility-FileSystem-writetest-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
@@ -51,7 +51,7 @@ test_locking_forked(successful => 0,
     max_try => 1,
     block_sleep => 3,);
 
-ok(Genome::Sys::FileLock->unlock(
+ok(Genome::Sys::Lock::FileBackend->unlock(
         lock_directory => $tmp_dir,
         resource_id => $bogus_id,
     ), 'unlock resource_id '. $bogus_id);
@@ -59,11 +59,11 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
 {
     local $ENV{'LSB_JOBID'};
     $ENV{'LSB_JOBID'} = 1;
-    my ($resource_lock, $parent_dir) = Genome::Sys::FileLock::_resolve_resource_lock_and_parent_dir_for_lock_resource(
+    my ($resource_lock, $parent_dir) = Genome::Sys::Lock::FileBackend::_resolve_resource_lock_and_parent_dir_for_lock_resource(
         lock_directory => $tmp_dir,
         resource_id => $bogus_id,
     );
-    my $lock = Genome::Sys::FileLock->lock(
+    my $lock = Genome::Sys::Lock::FileBackend->lock(
         resource_lock => $resource_lock,
         parent_dir => $parent_dir,
         wait_announce_interval => 10,
@@ -73,8 +73,8 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
     ok($lock, 'lock resource with bogus lsf_job_id');
 
     $lock = fork_to_lock(
-        sub { Genome::Sys::FileLock->lock(@_) },
-        sub { Genome::Sys::FileLock->unlock(@_) },
+        sub { Genome::Sys::Lock::FileBackend->lock(@_) },
+        sub { Genome::Sys::Lock::FileBackend->unlock(@_) },
         resource_lock => $resource_lock,
         parent_dir => $parent_dir,
         wait_announce_interval => 10,
@@ -90,7 +90,7 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
         skip 'only test the state of the lsf job if we are running on a blade with a job id',
         3 unless ($init_lsf_job_id);
         $ENV{'LSB_JOBID'} = $init_lsf_job_id;
-        ok(Genome::Sys::FileLock->lock(
+        ok(Genome::Sys::Lock::FileBackend->lock(
                 lock_directory => $tmp_dir,
                 resource_id => $bogus_id,
                 wait_announce_interval => 10,
@@ -106,7 +106,7 @@ my $init_lsf_job_id = $ENV{'LSB_JOBID'};
                 block_sleep => 3,
             ),'failed lock resource with real lsf_job_id blocking');
 
-        ok(Genome::Sys::FileLock->unlock(
+        ok(Genome::Sys::Lock::FileBackend->unlock(
                 lock_directory => $tmp_dir,
                 resource_id => $bogus_id,
             ), 'unlock resource_id '. $bogus_id);
@@ -131,7 +131,7 @@ for my $child (1...$children) {
     if ($pid = UR::Context::Process->fork()) {
         push @pids, $pid;
     } else {
-        Genome::Sys::FileLock->clear_state();
+        Genome::Sys::Lock::FileBackend->clear_state();
 
         my $output_offset = $child;
         my $tempdir = $base_dir;
@@ -143,7 +143,7 @@ for my $child (1...$children) {
         my $block_sleep = 1;
         my $max_try = 2 * int($lock_hold_time / $block_sleep + 1) * $children;
         my $wait_announce_interval = 2* $children * $lock_hold_time;
-        my $lock = Genome::Sys::FileLock->lock(
+        my $lock = Genome::Sys::Lock::FileBackend->lock(
             resource_lock => $resource,
             block_sleep   => $block_sleep,
             max_try       => $max_try,
@@ -162,7 +162,7 @@ for my $child (1...$children) {
         print_event($fh, "LOCK_SUCCESS", "Successfully got a lock" );
         sleep $lock_hold_time;
 
-        unless (Genome::Sys::FileLock->unlock(resource_lock => $resource)) {
+        unless (Genome::Sys::Lock::FileBackend->unlock(resource_lock => $resource)) {
             print_event($fh, "UNLOCK_FAIL", "Failed to release a lock" );
             $fh->close;
             exit(1);
@@ -219,7 +219,7 @@ sub test_locking {
     my $message = delete $params{message};
     die unless defined($message);
 
-    my $lock = Genome::Sys::FileLock->lock(%params);
+    my $lock = Genome::Sys::Lock::FileBackend->lock(%params);
     if ($successful) {
         ok($lock,$message);
         if ($lock) { return $lock; }
@@ -262,8 +262,8 @@ sub test_locking_forked {
 }
 
 sub fork_lock_resource {
-    my $sub = sub { Genome::Sys::FileLock->lock(@_) };
-    my $undo = sub { Genome::Sys::FileLock->unlock(@_) };
+    my $sub = sub { Genome::Sys::Lock::FileBackend->lock(@_) };
+    my $undo = sub { Genome::Sys::Lock::FileBackend->unlock(@_) };
     return fork_to_lock($sub, $undo, @_);
 }
 
@@ -298,7 +298,7 @@ sub fork_to_lock {
         return $lock;
     } else {
         close $CHILD;
-        Genome::Sys::FileLock->clear_state();
+        Genome::Sys::Lock::FileBackend->clear_state();
         $PARENT->say('READY');
 
         waitfor($PARENT, 'LOCK');
