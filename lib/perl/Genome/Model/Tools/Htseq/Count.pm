@@ -76,26 +76,6 @@ sub result_class {
     return __PACKAGE__ . '::Result';
 }
 
-sub input_hash {
-    my $self = shift;
-
-    my %inputs = ();
-    for my $property ($self->result_class->__meta__->properties()) {
-        next unless $property->{is_param} or $property->{is_input};
-
-        my $name = $property->property_name;
-        next unless $self->can($name);
-
-        if($property->is_many) {
-            $inputs{$name} = [$self->$name];
-        } else {
-            $inputs{$name} = $self->$name;
-        }
-    }
-
-    return %inputs;
-}
-
 sub help_synopsis {
     return <<EOS
 
