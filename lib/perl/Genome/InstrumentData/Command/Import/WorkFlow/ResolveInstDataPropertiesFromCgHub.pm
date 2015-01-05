@@ -106,7 +106,7 @@ sub _add_properties_from_metadata {
             next;
         }
         if ( $args{$arg_name} ) { # required
-            die $self->error_message("Required argument ($arg_name) was not found in metadata file and was not passed in via instruemn_data_properties.");
+            die $self->error_message("Required argument ($arg_name) was not found in metadata file and was not passed in via instrument data properties.");
         }
     }
 
