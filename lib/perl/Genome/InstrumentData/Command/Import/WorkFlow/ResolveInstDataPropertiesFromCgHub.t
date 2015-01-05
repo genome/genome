@@ -19,11 +19,13 @@ use_ok('Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProper
 my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', File::Spec->catfile('cghub', 'v2')) or die;
 my $metadata_file = File::Spec->join($data_dir, 'metadata.xml');
 my $tempdir = File::Temp::tempdir(CLEANUP => 1);
-my $metadata_link = File::Spec->join($tempdir, 'metadata.xml');
 my $source_bam = File::Spec->join($tempdir, 'test.bam'); # no need to link
 
 use_ok('Genome::Model::Tools::CgHub::Query') or die;
-sub Genome::Model::Tools::CgHub::Query::execute { return Genome::Sys->create_symlink($metadata_file, $metadata_link); }
+sub Genome::Model::Tools::CgHub::Query::execute { 
+    my $self = shift;
+    return Genome::Sys->create_symlink($metadata_file, $self->xml_file);
+}
 
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataPropertiesFromCgHub->create(
     sources => [$source_bam],

@@ -12,22 +12,10 @@ use Path::Class;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataPropertiesFromCgHub { 
     is => 'Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties',
+    has_optional_transient => {
+        metadata_file => { is => 'Text', },
+    },
 };
-
-sub metadata_file {
-    my $self = shift;
-    my @sources = $self->sources;
-    my $source_dir = Path::Class::file( $sources[0] )->dir;
-    my $metadata_file_basename = 'metadata.xml';
-    my $metadata_file = File::Spec->join($source_dir, $metadata_file_basename);
-    return $metadata_file if -s $metadata_file;
-    my $tempdir = File::Temp::tempdir(CLEANUP => 1);
-    if ( not $tempdir ) {
-        $self->error_message('Failed to create tmp dir!');
-        return;
-    }
-    return File::Spec->join($tempdir, $metadata_file_basename);
-}
 
 sub execute {
     my $self = shift;
@@ -48,15 +36,28 @@ sub _resolve_metadata_file {
     my $self = shift;
     $self->debug_message('Resolve metadata file...');
 
+    # check if DL'd
+    my @sources = $self->sources;
+    my $source_dir = Path::Class::file( $sources[0] )->dir;
+    my $metadata_file_basename = 'metadata.xml';
+    my $metadata_file = File::Spec->join($source_dir, $metadata_file_basename);
+    return $self->metadata_file($metadata_file) if -s $metadata_file;
+
+    # DL to tmpdir
+    # Need UUID to DL
     my $uuid = delete $self->resolved_instrument_data_properties->{uuid};
-
-    my $metadata_file = $self->metadata_file;
-    return 1 if -s $metadata_file;
-
     if ( not defined $uuid ) {
-        $self->error_message('No uuid found in instrument data properties! It is required to download the metadata file.');
+        $self->warning_message('No uuid found in instrument data properties! It is required to download the metadata file.');
+        return 1; # ok for now
+    }
+
+    # to tmpdir
+    my $tempdir = File::Temp::tempdir(CLEANUP => 1);
+    if ( not $tempdir ) {
+        $self->error_message('Failed to create tmp dir!');
         return;
     }
+    $metadata_file = File::Spec->join($tempdir, $metadata_file_basename);
 
     my $query = Genome::Model::Tools::CgHub::Query->execute(
         uuid => $uuid,
@@ -66,6 +67,7 @@ sub _resolve_metadata_file {
         $self->error_message('Failed to execute cg hub query!');
         return;
     }
+    $self->metadata_file($metadata_file);
     $self->debug_message("Metadata file: $metadata_file");
 
     $self->debug_message('Resolve metadata file...done');
@@ -94,12 +96,12 @@ sub _add_properties_from_metadata {
     my $properties = $self->resolved_instrument_data_properties;
     for my $arg_name (keys %args){
         if(defined $properties->{$arg_name}){
-            $self->status_message(sprintf('Argument (%s) was passed in as (%s)', $arg_name, $properties->{$arg_name}));
+            $self->status_message('Argument (%s) was passed in as (%s)', $arg_name, $properties->{$arg_name});
             next;
         }
         my $meta_value = ( $metadata ? $metadata->get_attribute_value($arg_name) : undef );
         if ( defined $meta_value ) {
-            $self->status_message(sprintf('Argument (%s) was found in the metadata file in as (%s)', $arg_name, $meta_value));
+            $self->status_message('Argument (%s) was found in the metadata file in as (%s)', $arg_name, $meta_value);
             $properties->{$arg_name} = $meta_value;
             next;
         }
