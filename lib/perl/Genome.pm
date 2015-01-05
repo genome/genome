@@ -90,10 +90,6 @@ $DB::stopper = 1;
 # They probably needs a better home than the base module.
 
 our %NAMESPACE_EXTENSIONS = (
-    Result => {
-        base_class => 'Genome::SoftwareResult::Default',
-        doc => 'results for CLASS',
-    },
     BuildStepWrapper => {
         base_class => 'Genome::Command::BuildStepWrapper',
         doc => 'wrap CLASS as a step in a build workflow',
