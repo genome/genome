@@ -361,7 +361,7 @@ sub _resolve_workflow_for_build {
         $digital_expression_detection_operation = $workflow->add_operation(
             name => 'RnaSeq Digital Expression Detection',
             operation_type => Workflow::OperationType::Command->create(
-                command_class_name => $class . '::BuildStepWrapper',
+                command_class_name => $class,
             )
         );
 
