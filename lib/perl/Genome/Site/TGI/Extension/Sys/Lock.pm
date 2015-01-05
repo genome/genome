@@ -11,7 +11,7 @@ BEGIN {
 
 
 require Genome::Sys::Lock::FileBackend;
-Genome::Sys::Lock->add_backend('Genome::Sys::Lock::FileBackend');
+Genome::Sys::Lock->add_backend('site', 'Genome::Sys::Lock::FileBackend');
 
 
 if ($ENV{GENOME_NESSY_SERVER}) {
@@ -21,7 +21,7 @@ if ($ENV{GENOME_NESSY_SERVER}) {
         url => $ENV{GENOME_NESSY_SERVER},
         is_mandatory => $is_mandatory,
     );
-    Genome::Sys::Lock->add_backend($nessylock);
+    Genome::Sys::Lock->add_backend('site', $nessylock);
 
     UR::Context->process->add_observer(
         aspect => 'sync_databases',

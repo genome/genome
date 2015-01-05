@@ -62,6 +62,7 @@ then C<lock()> will C<croak()>.
 
 =cut
 
+my %RESOURCE_LOCK_SCOPE;
 sub lock_resource {
     my $class = shift;
     my %args = with_default_lock_resource_args(@_);
@@ -75,7 +76,7 @@ sub lock_resource {
         }
     };
 
-    for my $backend (backends()) {
+    for my $backend (backends($args{scope})) {
         my @lock_args = $backend->translate_lock_args(%args);
         my $lock = $backend->lock(@lock_args);
         if ($lock) {
@@ -88,13 +89,15 @@ sub lock_resource {
         }
     }
 
-    if (all { $_->has_lock($args{resource_lock}) } backends()) {
+    if (all { $_->has_lock($args{resource_lock}) } backends($args{scope})) {
         Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.consistent');
     } else {
         Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.inconsistent');
     }
 
     $class->_cleanup_handler_check();
+
+    $RESOURCE_LOCK_SCOPE{$args{resource_lock}} = $args{scope};
 
     return $args{resource_lock};
 
@@ -119,12 +122,16 @@ sub unlock_resource {
     my $class = shift;
     my %args = @_;
 
+    my $scope = $RESOURCE_LOCK_SCOPE{$args{resource_lock}};
+
     my $rv = 1;
-    for my $backend (backends()) {
-        my @unlock_args = $backend->translate_unlock_args(%args);
-        my $unlocked = $backend->unlock(@unlock_args);
-        if (is_mandatory($backend)) {
-            $rv = $rv && $unlocked;
+    for my $backend (backends($scope)) {
+        if ($backend->has_lock($args{resource_lock})) {
+            my @unlock_args = $backend->translate_unlock_args(%args);
+            my $unlocked = $backend->unlock(@unlock_args);
+            if (is_mandatory($backend)) {
+                $rv = $rv && $unlocked;
+            }
         }
     }
 
@@ -140,8 +147,10 @@ individually.
 =cut
 
 sub release_all {
-    for my $backend (backends()) {
-        $backend->release_all();
+    for my $scope (scopes()) {
+        for my $backend(backends($scope)) {
+            $backend->release_all();
+        }
     }
 }
 
@@ -161,27 +170,49 @@ sub is_mandatory {
     return $backend->is_mandatory();
 }
 
-my @backends;
+my $backends = {};
 sub backends {
-    return @backends;
+    my $scope = shift;
+
+    if (!defined($scope)) {
+        return %$backends;
+
+    } elsif ($scope eq 'any') {
+        return map {backends($_)} scopes();
+
+    } elsif (exists $backends->{$scope}) {
+        return @{$backends->{$scope}};
+
+    } else {
+        Carp::confess(sprintf(
+                'Unknown locking scope (%s) -- expected something in [%s].',
+                $scope, join(' ', scopes())));
+    }
 }
 
-sub add_backend {
-    my ($class, $backend) = @_;
-    push @backends, $backend;
+sub scopes {
+    return keys %$backends;
 }
 
 sub clear_backends {
-    @backends = ();
+    $backends = {};
 }
 
 sub set_backends {
     my $class = shift;
+    my %new_backends = @_;
 
     $class->clear_backends();
-    for my $backend (@_) {
-        $class->add_backend($backend);
+    for my $scope (keys %new_backends) {
+        for my $backend (@{$new_backends{$scope}}) {
+            $class->add_backend($scope, $backend);
+        }
     }
+}
+
+sub add_backend {
+    my ($class, $scope, $backend) = @_;
+    push @{$backends->{$scope}}, $backend;
 }
 
 my $_cleanup_handler_installed;

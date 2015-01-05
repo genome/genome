@@ -21,7 +21,7 @@ subtest 'shared mandatory both lock' => sub {
             Genome::Sys::Lock::MockBackend->new(),
             Genome::Sys::Lock::MockBackend->new(),
         );
-        Genome::Sys::Lock->set_backends(@backends);
+        Genome::Sys::Lock->set_backends(site => \@backends);
 
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
@@ -44,7 +44,7 @@ subtest 'shared mandatory fails to lock' => sub {
             Genome::Sys::Lock::MockBackend->new()
                 ->locks($locks),
         );
-        Genome::Sys::Lock->set_backends(@backends);
+        Genome::Sys::Lock->set_backends(site => \@backends);
 
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
@@ -67,7 +67,7 @@ subtest 'first optional fails to lock' => sub {
             Genome::Sys::Lock::MockBackend->new(),
         );
 
-        Genome::Sys::Lock->set_backends(@backends);
+        Genome::Sys::Lock->set_backends(site => \@backends);
 
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
@@ -89,7 +89,7 @@ subtest 'second optional fails to lock' => sub {
                 ->set_always('lock', undef)
                 ->set_always('is_mandatory', 0),
         );
-        Genome::Sys::Lock->set_backends(@backends);
+        Genome::Sys::Lock->set_backends(site => \@backends);
 
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
@@ -117,7 +117,7 @@ subtest 'first optional fails to lock, then unlock' => sub {
                 ->set_always('lock', undef)
                 ->set_always('is_mandatory', 0),
         );
-        Genome::Sys::Lock->set_backends(@backends);
+        Genome::Sys::Lock->set_backends(site => \@backends);
 
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
@@ -143,7 +143,7 @@ subtest 'second optional fails to lock, then unlock' => sub {
                 ->set_always('is_mandatory', 0),
             Genome::Sys::Lock::MockBackend->new(),
         );
-        Genome::Sys::Lock->set_backends(@backends);
+        Genome::Sys::Lock->set_backends(site => \@backends);
 
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
@@ -170,7 +170,7 @@ subtest 'with both locked, first optional fails to unlock' => sub {
                 ->set_always('is_mandatory', 0),
             Genome::Sys::Lock::MockBackend->new(),
         );
-        Genome::Sys::Lock->set_backends(@backends);
+        Genome::Sys::Lock->set_backends(site => \@backends);
 
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
@@ -197,7 +197,7 @@ subtest 'with both locked, second optional fails to unlock' => sub {
                 ->set_always('unlock', undef)
                 ->set_always('is_mandatory', 0),
         );
-        Genome::Sys::Lock->set_backends(@backends);
+        Genome::Sys::Lock->set_backends(site => \@backends);
 
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
@@ -223,7 +223,7 @@ subtest 'with both locked, first mandatory fails to unlock' => sub {
                 ->set_always('unlock', undef),
             Genome::Sys::Lock::MockBackend->new(),
         );
-        Genome::Sys::Lock->set_backends(@backends);
+        Genome::Sys::Lock->set_backends(site => \@backends);
 
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
@@ -247,7 +247,7 @@ subtest 'with both locked, second mandatory fails to unlock' => sub {
             Genome::Sys::Lock::MockBackend->new()
                 ->set_always('unlock', undef),
         );
-        Genome::Sys::Lock->set_backends(@backends);
+        Genome::Sys::Lock->set_backends(site => \@backends);
 
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
@@ -269,9 +269,9 @@ sub random_string {
 
 sub localize_backend_changes {
     my $sub = shift;
-    my @old_backends = Genome::Sys::Lock::backends();
+    my %old_backends = Genome::Sys::Lock::backends();
 
     $sub->();
 
-    Genome::Sys::Lock->set_backends(@old_backends);
+    Genome::Sys::Lock->set_backends(%old_backends);
 }
