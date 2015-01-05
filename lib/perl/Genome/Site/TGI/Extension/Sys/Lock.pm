@@ -9,6 +9,11 @@ BEGIN {
     }
 };
 
+
+require Genome::Sys::Lock::FileBackend;
+Genome::Sys::Lock->add_backend('Genome::Sys::Lock::FileBackend');
+
+
 if ($ENV{GENOME_NESSY_SERVER}) {
     require Genome::Sys::Lock::NessyBackend;
     my $is_mandatory = $ENV{GENOME_NESSY_MANDATORY} ? 1 : 0;

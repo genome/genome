@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Carp qw(carp croak);
-use Genome::Sys::Lock::FileBackend;
 use List::MoreUtils qw(all);
 
 =item lock_resource()
@@ -151,18 +150,18 @@ sub with_default_lock_resource_args {
 
     $args{block_sleep} = 60 unless defined $args{block_sleep};
     $args{max_try} = 7200 unless defined $args{max_try};
+    $args{scope} = 'site' unless defined $args{scope};
     $args{wait_announce_interval} = 0 unless defined $args{wait_announce_interval};
 
     return %args;
 }
-
-my @backends = ('Genome::Sys::Lock::FileBackend');
 
 sub is_mandatory {
     my $backend = shift;
     return $backend->is_mandatory();
 }
 
+my @backends;
 sub backends {
     return @backends;
 }
