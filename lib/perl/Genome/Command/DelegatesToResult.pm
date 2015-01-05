@@ -34,8 +34,22 @@ sub result_class {
 
 sub input_hash {
     my $self = shift;
-    my $class = $self->class;
-    die "Abstract method 'input_hash' must be defined in class $class";
+
+    my %inputs = ();
+    for my $property ($self->result_class->__meta__->properties()) {
+        next unless $property->{is_param} or $property->{is_input};
+
+        my $name = $property->property_name;
+        next unless $self->can($name);
+
+        if($property->is_many) {
+            $inputs{$name} = [$self->$name];
+        } else {
+            $inputs{$name} = $self->$name;
+        }
+    }
+
+    return %inputs;
 }
 
 sub _input_hash {
