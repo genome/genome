@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use version;
 use Genome::Utility::Text;
+use File::Spec;
 
 class Genome::Model::RnaSeq {
     is => 'Genome::ModelDeprecated',
@@ -242,6 +243,7 @@ sub map_workflow_inputs {
             my ($class,$params) = $self->$strategy_parser_method($strategy, $build);
             $params->{user} = $build;
             $params->{label} = $strategy_name . '_result';
+            $params->{output_dir} = File::Spec->join($build->data_directory, 'results', $strategy_name . '_result');
             for my $key (keys %$params) {
                 my $input_name = $strategy_name . '_' . $key;
                 my $value = $params->{$key};
@@ -368,7 +370,7 @@ sub _resolve_workflow_for_build {
         $digital_expression_detection_operation->operation_type->lsf_queue($lsf_queue);
         $digital_expression_detection_operation->operation_type->lsf_project($lsf_project);
 
-        for my $key (keys %$params, qw/user label/) {
+        for my $key (keys %$params, qw/user label output_dir/) {
             my $link = $workflow->add_link(
                 left_operation => $input_connector,
                 left_property => 'digital_expression_' . $key,

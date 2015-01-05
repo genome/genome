@@ -4,6 +4,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Genome::Utility::Test 'compare_ok';
+use File::Spec;
 
 my ($class,$params) = Genome::Model::RnaSeq->_parse_strategy("htseq-count 0.5.4p1 [--mode intersect-strict --minaqual 1 --blacklist-alignments-flags 0x0104 --results-version 1]");
 is($class, 'Genome::Model::Tools::Htseq::Count', 'got expected tool class');
@@ -39,6 +40,7 @@ my $expected_inputs = {
     'digital_expression_blacklist_alignments_flags' => '0x0104',
     'digital_expression_user' => $rnaseq_build,
     'digital_expression_label' => 'digital_expression_result',
+    'digital_expression_output_dir' => File::Spec->join($rnaseq_build->data_directory, 'results', 'digital_expression_result'),
 };
 is_deeply(\%inputs, $expected_inputs, "inputs match") or do { print Data::Dumper::Dumper($expected_inputs,\%inputs) };
 
