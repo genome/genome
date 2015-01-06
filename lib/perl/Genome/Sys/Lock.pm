@@ -159,7 +159,7 @@ sub with_default_lock_resource_args {
 
     $args{block_sleep} = 60 unless defined $args{block_sleep};
     $args{max_try} = 7200 unless defined $args{max_try};
-    $args{scope} = 'site' unless defined $args{scope};
+    $args{scope} = $ENV{GENOME_SYS_LOCK_DEFAULT_SCOPE} unless defined $args{scope};
     $args{wait_announce_interval} = 0 unless defined $args{wait_announce_interval};
 
     return %args;
