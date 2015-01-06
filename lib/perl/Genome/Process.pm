@@ -11,6 +11,9 @@ use Try::Tiny qw(try catch);
 use JSON qw(to_json);
 use List::MoreUtils qw(uniq);
 use Genome::Disk::Group::Validate::GenomeDiskGroups;
+use Cwd qw(abs_path);
+use File::DirCompare;
+use File::Compare;
 
 class Genome::Process {
     is => [
@@ -654,7 +657,73 @@ sub compare_output {
 sub _compare_output_files {
     my ($self, $other_process) = @_;
 
-    die $self->error_message('Abstract method (_compare_output_files) must be defined in subclass (%s)', $self->class);
+    my $output_dir = Genome::Sys->create_temp_file_path();
+    my $other_output_dir = Genome::Sys->create_temp_file_path();
+
+    $self->symlink_results($output_dir);
+    $other_process->symlink_results($other_output_dir);
+
+    return $self->_compare_output_directories($output_dir, $other_output_dir, $other_process);
+}
+
+sub _compare_output_directories {
+    my ($self, $output_dir, $other_output_dir, $other_process) = @_;
+
+    my %diffs;
+    File::DirCompare->compare(
+        $other_output_dir,
+        $output_dir,
+        sub {
+            my ($other_file, $file) = @_;
+            if (! $file) {
+                if (-f $other_file) {
+                    $diffs{abs_path($other_file)} = sprintf(
+                        'no file %s found for process %s',
+                        File::Spec->abs2rel($other_file, $other_output_dir), $self->id
+                    );
+                }
+                elsif (-d $other_file) {
+                    $diffs{File::Spec->abs2rel($other_file, $other_output_dir)} = sprintf(
+                        'no directory %s found for process %s',
+                        File::Spec->abs2rel($other_file, $other_output_dir), $self->id
+                    );
+                }
+            } elsif (! $other_file) {
+                if (-f $file) {
+                    $diffs{abs_path($file)} = sprintf(
+                        'no file %s found for process %s',
+                        File::Spec->abs2rel($file, $output_dir), $other_process->id
+                    );
+                }
+                elsif (-d $file) {
+                    $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
+                        'no directory %s found for process %s',
+                        File::Spec->abs2rel($other_file, $other_output_dir), $self->id
+                    );
+                }
+            } else {
+                #Resolve possible symlinks
+                my $other_target = abs_path($other_file);
+                my $target = abs_path($file);
+                if (-l $file || -l $other_file) {
+                    if (-d $target && -d $other_target) {
+                        my %additional_diffs = $self->_compare_output_directories($target, $other_target, $other_process);
+                        %diffs = (%diffs, %additional_diffs);
+                        return;
+                    }
+                    elsif (-f $target && -f $other_target && !compare($target, $other_target)) {
+                        #Files are in fact the same - do nothing
+                        return;
+                    }
+                }
+                $diffs{$other_target} = sprintf(
+                    'files are not the same (diff -u %s %s)',
+                    $target, $other_target
+                );
+            }
+        },
+    );
+    return %diffs;
 }
 
 1;
