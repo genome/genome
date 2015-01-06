@@ -146,10 +146,8 @@ sub _compare_flagstat {
 sub _revert_markdup {
     my ($self, $temp_bam, $no_markdup_bam) = @_;
     
-    #Temporarily place seq-grind0.1 here, it will be immediately
-    #updated once it is deployed
     Genome::Sys->shellcmd(
-        cmd => "/gscuser/fdu/bin/seq-grind0.1 revert picard-mark-dup -i $temp_bam -o $no_markdup_bam",
+        cmd => "/usr/bin/seq-grind revert picard-mark-dup -i $temp_bam -o $no_markdup_bam",
         input_files  => [$temp_bam],
         output_files => [$no_markdup_bam],
         skip_if_output_is_present => 0,

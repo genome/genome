@@ -51,7 +51,7 @@ sub lock {
         host => hostname,
         pid => $$,
         lsf_id => ($ENV{LSB_JOBID} || 'NONE'),
-        user => getpwuid($<),
+        user => scalar(getpwuid($<)),
         genome_build_id => ($ENV{GENOME_BUILD_ID} || 'NONE'),
         lsf_project => ($ENV{WF_LSF_PROJECT} || 'NONE'),
         requested_at => strftime('%a, %d %b %Y %T %z', localtime($initial_time)),

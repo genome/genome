@@ -78,7 +78,7 @@ my $command = Genome::Model::Tools::Htseq::Count->execute(
 ok($command, "got command");
 #UR::Context->commit;
 
-my $new_result = $command->result;
+my $new_result = $command->output_result;
 ok($new_result and $new_result->isa("Genome::SoftwareResult"), "got a result");
 
 # diff results

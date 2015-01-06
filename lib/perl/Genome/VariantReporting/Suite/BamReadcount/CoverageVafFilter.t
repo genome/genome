@@ -9,7 +9,7 @@ BEGIN {
 }
 
 use above 'Genome';
-use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(create_entry bam_readcount_line_deletion create_deletion_entry);
+use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(create_default_entry create_no_readcount_entry create_deletion_entry);
 use Genome::File::Vcf::Entry;
 use Test::More;
 use Test::Exception;
@@ -19,9 +19,7 @@ use_ok($pkg) or die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('filters', $pkg->name), $pkg);
 
-my $entry = Genome::VariantReporting::Suite::BamReadcount::TestHelper::create_entry(
-    Genome::VariantReporting::Suite::BamReadcount::TestHelper::bam_readcount_line(),
-);
+my $entry = create_default_entry();
 
 subtest "test pass" => sub { #FIXME
 
@@ -97,7 +95,7 @@ subtest "insertion" => sub {
 
 subtest "deletion" => sub {
 
-    my $deletion_entry = create_deletion_entry(bam_readcount_line_deletion);
+    my $deletion_entry = create_deletion_entry();
     my $filter = $pkg->create(
         sample_name => 'S1',
         coverages_and_vafs => {
@@ -135,7 +133,7 @@ subtest "test filter fail" => sub { #FIXME
 };
 
 subtest "no bam readcount entry" => sub {
-    my $no_readcount_entry = create_entry();
+    my $no_readcount_entry = create_no_readcount_entry();
     my $filter = $pkg->create(
         sample_name => 'S1',
         coverages_and_vafs => {

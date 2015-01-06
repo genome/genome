@@ -53,6 +53,7 @@ reports:
                 min_coverage: 10
                 sample_name: discovery_tumor
             'min-coverage-observed':
+                sample_name_labels: sample_name_labels
                 sample_names:
                     - discovery_tumor
                     - followup_tumor
@@ -66,16 +67,20 @@ reports:
             'variant-callers':
                 sample_name: discovery_tumor
             'many-samples-vaf':
+                sample_name_labels: sample_name_labels
                 sample_names:
                     - discovery_tumor
                     - followup_tumor
                     - normal
+                library_name_labels: library_name_labels
                 library_names: [library_names]
         params:
+            sample_name_labels: sample_name_labels
             sample_names:
                 - discovery_tumor
                 - followup_tumor
                 - normal
+            library_name_labels: library_name_labels
             library_names: [library_names]
     'simple':
         filters:

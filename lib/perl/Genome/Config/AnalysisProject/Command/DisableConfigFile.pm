@@ -14,6 +14,7 @@ class Genome::Config::AnalysisProject::Command::DisableConfigFile {
             shell_args_position => 1,
         }
     ],
+    doc => "set the status of a profile item to 'disabled'"
 };
 
 sub execute {

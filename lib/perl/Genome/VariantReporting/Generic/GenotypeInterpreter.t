@@ -9,7 +9,7 @@ BEGIN {
 }
 
 use above 'Genome';
-use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(create_deletion_entry bam_readcount_line_deletion);
+use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(create_no_readcount_entry);
 use Genome::File::Vcf::Entry;
 use Test::More;
 use Test::Exception;
@@ -19,9 +19,7 @@ use_ok($pkg) or die;
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
 
-my $entry = Genome::VariantReporting::Suite::BamReadcount::TestHelper::create_entry(
-    Genome::VariantReporting::Suite::BamReadcount::TestHelper::bam_readcount_line(),
-);
+my $entry = create_no_readcount_entry();
 
 subtest "sample 1" => sub {
     my $interpreter = $pkg->create( sample_name => 'S1' );

@@ -89,6 +89,10 @@ class Genome::ProcessingProfile::ReferenceAlignment {
             doc => 'samtools version for SamToBam, samtools merge, etc...',
             is_optional => 1,
         },
+        bedtools_version => {
+            doc => 'bedtools version for bedtools bamtofastq',
+            is_optional => 1,
+        },
         merger_name => {
             doc => 'name of bam merger, picard, samtools (this will be replaced by alignment_strategy)',
             is_optional => 1,
@@ -260,24 +264,6 @@ sub _fetch_alignment_sets {
     return @alignments;
 }
 
-sub processing_profile_params_for_alignment {
-    my $self = shift;
-
-    my %params = (
-                read_aligner_name => $self->read_aligner_name,
-                read_aligner_version => $self->read_aligner_version,
-                read_aligner_params => $self->read_aligner_params,
-                force_fragment => $self->force_fragment,
-                read_trimmer_name => $self->read_trimmer_name,
-                read_trimmer_version => $self->read_trimmer_version,
-                read_trimmer_params => $self->read_trimmer_params,
-                picard_version => $self->picard_version,
-                samtools_version => $self->samtools_version,
-            );
-
-    return \%params;
-}
-
 sub params_for_alignment {
     my $self = shift;
     my $input = shift;
@@ -303,6 +289,7 @@ sub params_for_alignment {
                     trimmer_params => $self->read_trimmer_params || undef,
                     picard_version => $self->picard_version || undef,
                     samtools_version => $self->samtools_version || undef,
+                    bedtools_version => $self->bedtools_version || undef,
                     filter_name => $input->filter_desc || undef,
                     test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
                     instrument_data_segment_type => undef,
@@ -366,6 +353,7 @@ sub params_for_merged_alignment {
         trimmer_params => $self->read_trimmer_params || undef,
         picard_version => $self->picard_version || undef,
         samtools_version => $self->samtools_version || undef,
+        bedtools_version => $self->bedtools_version || undef,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
     );
     if(scalar @$filters) {
@@ -400,60 +388,6 @@ sub filter_ruleset_params {
     ''
 }
 
-
-#< SUBCLASSING >#
-#
-# This is called by the infrastructure to appropriately classify abstract processing profiles
-# according to their type name because of the "sub_classification_method_name" setting
-# in the class definiton...
-sub _X_resolve_subclass_name {
-    my $class = shift;
-
-    my $sequencing_platform;
-    if ( ref($_[0]) and $_[0]->can('params') ) {
-        my @params = $_[0]->params;
-        my @seq_plat_param = grep { $_->name eq 'sequencing_platform' } @params;
-        if (scalar(@seq_plat_param) == 1) {
-            $sequencing_platform = $seq_plat_param[0]->value;
-        }
-
-    }  else {
-        my %params = @_;
-        $sequencing_platform = $params{sequencing_platform};
-    }
-
-    unless ( $sequencing_platform ) {
-        my $rule = $class->define_boolexpr(@_);
-        $sequencing_platform = $rule->value_for('sequencing_platform');
-    }
-
-    return ( defined $sequencing_platform )
-    ? $class->_resolve_subclass_name_for_sequencing_platform($sequencing_platform)
-    : undef;
-}
-
-sub _resolve_subclass_name_for_sequencing_platform {
-    my ($class,$sequencing_platform) = @_;
-    my @type_parts = split(' ',$sequencing_platform);
-
-    my @sub_parts = map { ucfirst } @type_parts;
-    my $subclass = join('',@sub_parts);
-
-    my $class_name = join('::', 'Genome::ProcessingProfile::ReferenceAlignment' , $subclass);
-    return $class_name;
-}
-
-sub _resolve_sequencing_platform_for_class {
-    my $class = shift;
-
-    my ($subclass) = $class =~ /^Genome::ProcessingProfile::ReferenceAlignment::([\w\d]+)$/;
-    return unless $subclass;
-
-    return lc join(" ", ($subclass =~ /[a-z\d]+|[A-Z\d](?:[A-Z\d]+|[a-z]*)(?=$|[A-Z\d])/gx));
-
-    my @words = $subclass =~ /[a-z\d]+|[A-Z\d](?:[A-Z\d]+|[a-z]*)(?=$|[A-Z\d])/gx;
-    return lc(join(" ", @words));
-}
 
 #### IMPLEMENTATION #####
 

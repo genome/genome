@@ -91,34 +91,41 @@ sub coverages {
 sub filter_entry {
     my ($self, $entry) = @_;
 
-    my %return_values = map { $_ => 0 } @{$entry->{alternate_alleles}};
     my @sample_alt_alleles = $entry->alt_bases_for_sample($self->sample_index($entry->{header}));
     unless (@sample_alt_alleles) {
         return $self->pass_all_sample_alts($entry);
     }
 
     #Keep positions without readcount information
-    my $readcount_entry = $self->get_readcount_entry($entry);
-    unless (defined($readcount_entry)) {
-        return $self->pass_all_sample_alts($entry);
+    my $readcount_entries = $self->get_readcount_entries($entry);
+    unless (defined($readcount_entries)) {
+        die sprintf("Couldn't get readcount entries from vcf entry %s", $entry->to_string);
     }
 
     my %vafs = Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
         $entry,
-        $readcount_entry,
+        $readcount_entries,
     );
-    my $vaf_for_coverage = $self->_vaf_for_coverage( $readcount_entry->depth );
-    unless (defined $vaf_for_coverage) {
-        return $self->pass_all_sample_alts($entry);
-    }
 
+    my %return_values = map { $_ => 0 } @{$entry->{alternate_alleles}};
     for my $alt_allele ( @sample_alt_alleles ) {
-        #Keep positions with readcount and coverage of 0
-        if ($vafs{$alt_allele} == 0) {
+        my $readcount_entry = $readcount_entries->{$alt_allele};
+
+        if (!defined $readcount_entry) {
             $return_values{$alt_allele} = 1;
         }
-        elsif ( $vafs{$alt_allele} >= $vaf_for_coverage ) {
-            $return_values{$alt_allele} = 1;
+        else {
+            my $vaf_for_coverage = $self->_vaf_for_coverage( $readcount_entry->depth );
+            if (!defined $vaf_for_coverage) {
+                $return_values{$alt_allele} = 1;
+            }
+            #Keep positions with readcount and coverage of 0
+            elsif (!defined $vafs{$alt_allele}) {
+                $return_values{$alt_allele} = 1;
+            }
+            elsif ( $vafs{$alt_allele} >= $vaf_for_coverage ) {
+                $return_values{$alt_allele} = 1;
+            }
         }
     }
 

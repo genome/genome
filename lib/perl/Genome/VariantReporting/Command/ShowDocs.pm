@@ -46,7 +46,6 @@ sub execute {
         for my $section ($component->vr_doc_sections) {
             _print_section($section);
         }
-        $component->delete;
     }
     else {
         _print_section (

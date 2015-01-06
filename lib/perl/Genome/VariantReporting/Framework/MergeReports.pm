@@ -60,18 +60,4 @@ sub result_class {
     return "Genome::VariantReporting::Framework::Component::Report::MergedReport";
 }
 
-sub input_hash {
-    my $self = shift;
-
-    return (
-        report_results => [$self->report_results],
-        sort_columns => [$self->sort_columns],
-        contains_header => $self->contains_header,
-        use_header_from => $self->use_header_from,
-        separator => $self->separator,
-        split_indicators => [$self->split_indicators],
-        entry_sources => [$self->entry_sources],
-    );
-}
-
 1;

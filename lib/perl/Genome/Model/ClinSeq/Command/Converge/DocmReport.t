@@ -40,6 +40,8 @@ my $cmd = Genome::Model::ClinSeq::Command::Converge::DocmReport->create(
     chromosome => '1',
     docm_variants_file => $docm_variants_file,
     bam_readcount_version => 0.6,
+    bq => 0,
+    mq => 1,
 );
 $cmd->queue_status_messages(1);
 my $r1 = $cmd->execute();

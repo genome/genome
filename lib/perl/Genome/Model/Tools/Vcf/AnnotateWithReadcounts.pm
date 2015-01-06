@@ -3,7 +3,8 @@ package Genome::Model::Tools::Vcf::AnnotateWithReadcounts;
 use strict;
 use warnings;
 use Genome;
-use Genome::File::BamReadcount::Reader;
+use Genome::File::BamReadcount::BufferedReader;
+use Genome::File::Vcf::BamReadcountParser;
 use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Writer;
 
@@ -20,7 +21,8 @@ class Genome::Model::Tools::Vcf::AnnotateWithReadcounts {
         readcount_file_and_sample_name => {
             is => 'File',
             is_many => 1,
-            doc => 'The readcount file and the name of the sample-column it should be annotated into.  <filename>:<sample_name>',
+            doc => 'The readcount file and the name of the sample-column it should be annotated into.  <filename>:<sample_name>
+                    This readcount file must be sorted in the same chromosome order as the vcf and not contain any duplicate entries',
         },
         output_file => {
             is_output => 1,
@@ -34,32 +36,18 @@ sub execute {
 
     my ($vcf_reader, $vcf_writer, $readcount_readers) = $self->get_file_objects();
 
-    my %readcount_entries;
-    my @sample_idxs = keys %{$readcount_readers};
-    for my $sample_idx (@sample_idxs) {
-        $readcount_entries{$sample_idx} = $readcount_readers->{$sample_idx}->next;
-    }
-
     while (my $vcf_entry = $vcf_reader->next) {
-        $vcf_entry->add_format_field($RC_TAG);
-        for my $sample_idx (@sample_idxs) {
-            my $match_count = 0;
-            while (entries_match($readcount_entries{$sample_idx}, $vcf_entry)) {
-                if ($match_count > 0) {
-                    remove_readcount_from_vcf_entry($vcf_entry, $sample_idx);
-                }
-                else {
-                    add_readcount_to_vcf_entry($readcount_entries{$sample_idx}, $vcf_entry, $sample_idx);
-                }
-                $match_count++;
-                $readcount_entries{$sample_idx} = $readcount_readers->{$sample_idx}->next;
-            }
-        }
+        Genome::File::Vcf::BamReadcountParser::add_bam_readcount_entries(
+            $vcf_entry,
+            $readcount_readers,
+            $RC_TAG
+        );
         $vcf_writer->write($vcf_entry);
     }
 
     return 1;
 }
+
 
 sub get_file_objects {
     my $self = shift;
@@ -83,7 +71,7 @@ sub get_file_objects {
                 die $@;
             }
         }
-        $readcount_readers{$sample_idx} = Genome::File::BamReadcount::Reader->new(
+        $readcount_readers{$sample_idx} = Genome::File::BamReadcount::BufferedReader->new(
             $self->readcount_filenames->{$sample_name});
     }
     my $vcf_writer = Genome::File::Vcf::Writer->new($self->output_file, $header);
@@ -119,22 +107,8 @@ sub entries_match {
                 return 1 if $rc_pos == $vcf_pos;
             }
         }
-    } 
+    }
     return 0;
-}
-
-sub add_readcount_to_vcf_entry {
-    my ($readcount_entry, $vcf_entry, $sample_idx) = @_;
-
-    my $readcount_line = Genome::File::BamReadcount::Entry::encode($readcount_entry->to_string);
-    $vcf_entry->set_sample_field($sample_idx, $RC_TAG, $readcount_line);
-    return;
-}
-
-sub remove_readcount_from_vcf_entry {
-    my ($vcf_entry, $sample_idx) = @_;
-    $vcf_entry->set_sample_field($sample_idx, $RC_TAG, undef);
-    return;
 }
 
 1;

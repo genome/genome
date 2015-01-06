@@ -238,7 +238,9 @@ sub _create_build {
 
     my $build = Genome::Model::Build::ImportedVariationList->create(%build_parameters);
     if($build) {
-        $self->status_message('Created build of id ' . $build->build_id . ' with data directory "' . $build->data_directory . '".');
+        my $msg = 'Created build of id ' .$build->build_id;
+        $msg .= ' with data directory "' .$build->data_directory .'".' if $build->data_directory;
+        $self->status_message($msg);
         $self->build($build);
     } else {
         $self->error_message("Failed to create build for model " . $model->genome_model_id . ".");

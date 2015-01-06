@@ -23,6 +23,9 @@ use LWP::Simple qw(getstore RC_OK);
 use Params::Validate qw(:types validate_pos);
 use POSIX qw(EEXIST);
 use Set::Scalar;
+use Scalar::Util qw(blessed reftype);
+
+our @CARP_NOT = qw(Genome::Model::Build::Command::DetermineError);
 
 # these are optional but should load immediately when present
 # until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
@@ -1008,8 +1011,7 @@ sub read_file {
         return @lines;
     }
     else {
-        my $text = do { local( $/ ) ; <$fh> } ;  # slurp mode
-        return $text;
+        return( do { local( $/ ) ; <$fh> });  # slurp mode
     }
 }
 
@@ -1240,6 +1242,57 @@ sub get_file_extension_for_path {
     my $path = shift;
     my ($extension) = $path =~ /(\.[^.]+)$/;
     return $extension;
+}
+
+sub iterate_file_lines {
+    my $class = shift;
+    my $fh = shift;
+
+    Carp::croak('File handle or name required as the first param of iterate_file_lines')
+        unless ($fh);
+
+    if (!ref($fh) or ! $fh->can('getline')) {
+        $fh = $class->open_file_for_reading($fh);
+    }
+
+    my @line_cb;
+    my $line_preprocessor = sub {};
+    while( my $arg = shift ) {
+        if ($arg eq 'line_preprocessor') {
+            $line_preprocessor = shift;
+            Carp::croak('The line_preprocessor must be a CODE ref') unless reftype($line_preprocessor) eq 'CODE';
+
+        } elsif (blessed($arg) and blessed($arg) eq 'Regexp') {  # reftype() returns SCALAR for regexes on perl5.10
+            my $re = $arg;
+            my $cb = shift;
+            Carp::croak("Expected CODE ref after regex $re, but got " . ref($cb))
+                unless (reftype($cb) eq 'CODE');
+            my $wrapped_cb = sub {
+                if ($_[0] =~ $re) {
+                    $cb->(@_);
+                }
+            };
+            push @line_cb, $wrapped_cb;
+
+        } elsif (reftype($arg) eq 'CODE') {
+            push @line_cb, $arg;
+
+        } else {
+            Carp::croak("Unexpected argument to iterate_file_lines: $arg");
+        }
+    }
+
+    my $lines_read = 0;
+
+    while(my $line = $fh->getline) {
+        $lines_read++;
+        my @preprocessed = $line_preprocessor->($line);
+        foreach my $cb (@line_cb) {
+            $cb->($line, @preprocessed);
+        }
+    }
+
+    return($lines_read || '0 but true');
 }
 
 #####
@@ -1825,5 +1878,67 @@ The default value is /var/lib/genome/db/.
 =head3 ex:
 
     my $dir1 = Genome::Sys->db_path('cosmic', 'latest');
+
+=head2 Genome::Sys->open_file_for_reading($filename);
+
+Opens the given filename for reading and returns a filehandle for it.
+open_file_for_reading() throws an exception for several conditions:
+
+=over 2
+
+=item * The given filename does not exist
+
+=item * The given filename is not readable
+
+=item * The given filename is not a plain file (for example, a directory)
+
+=back
+
+=head2 Genome::Sys->read_file($filename);
+
+Read in the given filename and return the contents.  If $filename is C<->,
+then it reads from STDIN.
+
+If called in list context, it returns a list with one line per list element.
+If called in scalar context, it returns a single string with the entire file
+contents.
+
+=head2 Genome::Sys->open_file_for_writing($filename);
+
+Opens the given filename for writing and returns a filehandle for it.
+open_file_for_writing() throws an exception for several conditions:
+
+=over 2
+
+=item * $filename exists _and_ the file has non-zero size
+
+=item * The directory containing $filename does not exist
+
+=item * The directory containing $filename is not writable
+
+=back
+
+=head2 Genome::Sys->write_file($filename, @lines);
+
+Creates a file with the given name and writes the contents of @lines to it.
+If $filename is C<->, then it writes to STDOUT.
+write_file() throws the same exceptions as open_file_for_writing().
+
+=head2 Genome::Sys->iterate_file_lines($filename_or_handle,
+                                       line_preprocessor => $preprocessor_code,
+                                       $line_callback1, $line_callback2, ...,
+                                       $regex1, $regex_callback1, $regex2, $regex_callback2, ...);
+
+If given a file name as the first argument, calls Genome::Sys->open_file_for_writing()
+first.  The first file/handle argument is required, all others are optional.
+
+Reads the given file/filehandle one line at a time.  If a line_preprocessor was
+specified, its coderef is called in list context with the line as its only
+argument.  Each callback is then called.  Callback arguments are the line from
+the file followed by the return values from the line_preprocessor.
+
+Callbacks preceded by a regex (created by qr) are only called if the regex
+matches the line.  Captured groups are available inside these callbacks using
+the normal variables $1, $2, etc.
 
 =cut

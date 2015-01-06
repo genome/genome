@@ -58,12 +58,12 @@ sub _filter_variants {
     my $sites_cmd = qq/ $cat_cmd $vcf | grep -v "^#" | grep "DA" | awk '{OFS="\t"}{print \$1, \$2, \$2}' > $sites_file/;
 
     unless(-s $sites_file) {
-        print STDERR "running $sites_cmd\n";
+        $self->status_message("running `$sites_cmd`");
         `$sites_cmd`;
     }
     unless(-s $sites_file) {
         $self->debug_message("No denovo sites found to filter. this filter is a no-op, copying file over.");
-        `cp $vcf $output_file`;
+        Genome::Sys->copy_file($vcf, $output_file);
         return 1;
     }
 
@@ -239,7 +239,7 @@ sub prepare_readcount_files {
 
         #my $readcount_cmd = "bam-readcount -q $qual -f $ref_fasta -l $sites_file $bam > $readcount_out";
         unless(-s $readcount_out) {
-            print STDERR "running bam-readcount";
+            $self->status_message("running bam-readcount");
             my $readcount_cmd = Genome::Model::Tools::Sam::Readcount->execute(
                 bam_file => $bam,
                 minimum_mapping_quality => $qual,

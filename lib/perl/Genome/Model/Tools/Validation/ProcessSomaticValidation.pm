@@ -187,6 +187,12 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           doc => "use this reference transcript build instead of the one specified in the model (e.g. NCBI-mouse.ensembl/67_37)",
       },
 
+      bam_readcount_version => {
+          is => 'Text',
+          doc => "the version of bam-readcount to use if generating counts",
+          is_optional => 1,
+      },
+
       # include_vcfs_in_archive => {
       #     is => 'Boolean',
       #     is_optional => 1,
@@ -506,9 +512,8 @@ sub addTiering{
 }
 
 
-
 sub getReadcounts{
-    my ($file, $ref_seq_fasta, $bams, $labels,$indel_size) = @_;
+    my ($file, $ref_seq_fasta, $bams, $labels, $bam_readcount_version,$indel_size) = @_;
     #todo - should check if input is bed and do coversion if necessary
 
     my $output_file = "$file.rcnt";
@@ -517,7 +522,7 @@ sub getReadcounts{
 	my $header = join(",",@$labels);
 
         #get readcounts from the tumor bam only
-        my $rc_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
+        my %params = (
             bam_files => $bamfiles,
             output_file => $output_file,
             variant_file => $file,
@@ -525,6 +530,10 @@ sub getReadcounts{
             header_prefixes => $header,
             indel_size_limit => $indel_size,
             );
+        if($bam_readcount_version){
+            $params{bam_readcount_version} = $bam_readcount_version;
+        }
+        my $rc_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(%params);
         unless ($rc_cmd->execute) {
             die "Failed to obtain readcounts for file $file.\n";
         }
@@ -541,7 +550,8 @@ sub execute {
   my $self = shift;
   my $model;
   my $build;
-
+  my $bam_readcount_version = $self->bam_readcount_version;
+  
 
   #validate that the inputs are valid
 
@@ -941,7 +951,8 @@ sub execute {
 		  push(@bamfiles,($normal_bam,$tumor_bam));
 		  push(@labels,('val_Normal','val_Tumor'));
               }
-	      $snv_files[$i] = getReadcounts($snv_files[$i], $ref_seq_fasta, \@bamfiles, \@labels, $indel_size);
+
+	      $snv_files[$i] = getReadcounts($snv_files[$i], $ref_seq_fasta, \@bamfiles, \@labels, $bam_readcount_version,$indel_size)
 	      
           }
 
@@ -951,8 +962,7 @@ sub execute {
 	      my @labels=();
 	      push(@bamfiles, @$som_var_bam_files);
 	      push(@labels,('somvar_Normal','somvar_Tumor')); #manually label the header #default is more suited for IGV xml crap
-	      $indel_file = getReadcounts($indel_file, $ref_seq_fasta, \@bamfiles,\@labels,$indel_size );
-
+	      $indel_file = getReadcounts($indel_file, $ref_seq_fasta, \@bamfiles,\@labels, $bam_readcount_version,$indel_size);
 
 	  }
 
@@ -1063,8 +1073,7 @@ sub execute {
 		  push(@bamfiles,($normal_bam,$tumor_bam));
 		  push(@labels,('val_Normal','val_Tumor'));
               }
-	      $indel_file = getReadcounts($indel_file, $ref_seq_fasta, \@bamfiles,\@labels,$indel_size );
-
+	      $indel_file = getReadcounts($indel_file, $ref_seq_fasta, \@bamfiles, \@labels, $bam_readcount_version, $indel_size);
           }
       }
   }

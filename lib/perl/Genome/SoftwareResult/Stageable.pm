@@ -76,7 +76,6 @@ sub _needs_symlinks_followed_when_syncing {
 sub _promote_data {
     my $self = shift;
 
-    #my $container_dir = File::Basename::dirname($self->output_dir);
     my $staging_dir = $self->temp_staging_directory;
     my $output_dir  = $self->output_dir;
 

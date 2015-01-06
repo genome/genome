@@ -67,30 +67,42 @@ sub make_region_file {
     my ($out_fh, $region_list) = Genome::Sys->create_temp_file();
     my $reader = Genome::File::Vcf::Reader->new($vcf_file);
 
+    my $positions = {};
+    my $current_chrom;
+
     while (my $entry = $reader->next) {
-        my %hash = sort_hash($entry);
-        
-        for my $p (sort{$a <=> $b} keys %hash) {
-            $out_fh->print(join "\t", $entry->{chrom}, $p, $p."\n");
+        if (defined $current_chrom and $current_chrom ne $entry->{chrom}) {
+            print_for_chrom($current_chrom, $positions, $out_fh);
+            $positions = {};
         }
+        $current_chrom = $entry->{chrom};
+        fill_in_positions($entry, $positions);
     }
+    print_for_chrom($current_chrom, $positions, $out_fh);
 
     $out_fh->close;
     return $region_list;
 }
 
-sub sort_hash {
+sub fill_in_positions {
     my $entry = shift;
-    my %hash;
+    my $positions = shift;
     my $pos = $entry->{position};
 
     if ($entry->has_insertion or $entry->has_substitution) {
-        $hash{$pos}++;
+        $positions->{$pos}++;
     }
     if ($entry->has_deletion) {
-        $hash{$pos+1}++;
+        $positions->{$pos+1}++;
     }
-    return %hash;
+    return;
+}
+
+sub print_for_chrom {
+    my ($chrom, $positions, $out_fh) = @_;
+    for my $pos (sort{$a <=> $b} keys %$positions) {
+        $out_fh->print(join "\t", $chrom, $pos, $pos."\n");
+    }
 }
 
 

@@ -8,17 +8,17 @@ use Test::More;
 
 use_ok('Genome::Model::Build::ClinSeq::FileAccessors');
 
-my $b = Genome::Model::Build->get("82170f976b4c465aba1e34090bcc8540");
+my $b = Genome::Model::Build->get("b0ad9122bde044da9559df5b5af88a76");
 ok($b, 'got a succesful build for apipe-test-clinseq-wer');
 
 my $case_dir = $b->data_directory . "/" . $b->common_name;
 is($b->case_dir, $case_dir, 'found case_dir');
 
 is($b->snv_dir, $case_dir . "/snv", "found snv_dir");
-is($b->snv_indel_report_dir(30, 20), $case_dir . "/snv_indel_report/b30_q20",
+is($b->snv_indel_report_dir(20, 30), $case_dir . "/snv_indel_report/b20_q30",
   "found snv_indel_report dir");
 is($b->sv_dir, $case_dir . "/sv", "found sv_dir");
-is($b->mutation_spectrum_dir(30, 20), $case_dir . "/mutation-spectrum/b30_q20", "found mutation_spectrum_dir");
+is($b->mutation_spectrum_dir(20, 30), $case_dir . "/mutation-spectrum/b20_q30", "found mutation_spectrum_dir");
 is($b->variant_sc_dir, $case_dir . "/variant_source_callers", "found variant_sc_dir");
 is($b->variant_sc_wgs_dir, $case_dir . "/variant_source_callers/wgs", "found variant_sc_wgs_dir");
 is($b->variant_sc_exome_dir, $case_dir . "/variant_source_callers/exome", "found variant_sc_exome_dir");
@@ -52,10 +52,10 @@ is($b->wgs_cnv_dir, $case_dir . "/cnv/wgs_cnv", "found wgs_cnv_dir");
 is($b->wgs_cnv_summary_dir, $case_dir . "/cnv/wgs_cnv/summary", "found wgs_cnv_summary_dir");
 is($b->wgs_cnv_cnview_dir, $case_dir . "/cnv/wgs_cnv/cnview/CNView_All", "found wgs_cnv_cnview_dir");
 is($b->wgs_exome_snv_dir, $case_dir . "/snv/wgs_exome", "found wgs_exome_snv_dir");
-is($b->snv_indel_report_clean_unfiltered_file(30, 20), $case_dir . "/snv_indel_report/b30_q20/" .
+is($b->snv_indel_report_clean_unfiltered_file(20, 30), $case_dir . "/snv_indel_report/b20_q30/" .
    $b->common_name . "_final_unfiltered_clean.tsv",
    "found snv_indel_report_clean_unfiltered_file");
-is($b->snv_indel_report_clean_filtered_file(30, 20), $case_dir . "/snv_indel_report/b30_q20/" .
+is($b->snv_indel_report_clean_filtered_file(20, 30), $case_dir . "/snv_indel_report/b20_q30/" .
    $b->common_name . "_final_filtered_clean.tsv",
    "found snv_indel_report_clean_filtered_file");
 is($b->wgs_cnvhmm_file, $case_dir . "/cnv/wgs_cnv/cnview/CNView_All/cnaseq.cnvhmm.tsv", "found wgs_cnvhmm_file");
@@ -93,9 +93,10 @@ is($b->rnaseq_tumor_tophat_junctions_absolute_stats_file, $case_dir .
 is($b->sv_stats_file, $case_dir . "/sv/Stats.tsv", "found sv_stats_file");
 is($b->variant_sc_wgs_stats_file, $case_dir . "/variant_source_callers/wgs/Stats.tsv", "found variant_sc_wgs_stats_file");
 is($b->variant_sc_exome_stats_file, $case_dir . "/variant_source_callers/exome/Stats.tsv", "found variant_sc_exome_stats_file");
-is($b->mutation_spectrum_wgs_summary_file(30, 20), $case_dir . "/mutation-spectrum/b30_q20/wgs/summarize_mutation_spectrum/mutation_spectrum.tsv",
+is($b->snv_indel_report_stats_file(20, 20), $case_dir . "/snv_indel_report/b20_q20/Stats.tsv", "found snv_indel_report_stats_file");
+is($b->mutation_spectrum_wgs_summary_file(20, 30), $case_dir . "/mutation-spectrum/b20_q30/wgs/summarize_mutation_spectrum/mutation_spectrum.tsv",
     "found wgs mut-spec summary file");
-is($b->mutation_spectrum_exome_summary_file(30, 20), $case_dir . "/mutation-spectrum/b30_q20/exome/summarize_mutation_spectrum/mutation_spectrum.tsv",
+is($b->mutation_spectrum_exome_summary_file(20, 30), $case_dir . "/mutation-spectrum/b20_q30/exome/summarize_mutation_spectrum/mutation_spectrum.tsv",
     "found exome mut-spec summary file");
 
 done_testing()

@@ -396,6 +396,7 @@ sub construct_alignment_results {
             'aligner_version' => '0.5.9',
             'picard_version' => '1.29',
             'instrument_data_id' => $instrument_data_id,
+            output_dir => '/tmp/fake',
         );
         $alignment_result->lookup_hash($alignment_result->calculate_lookup_hash());
         push @alignment_results, $alignment_result;
@@ -435,6 +436,7 @@ sub construct_merge_result {
         merger_version => '1.29',
         duplication_handler_name => 'picard',
         duplication_handler_version => '1.29',
+        output_dir => '/tmp/fake',
     );
     for my $i (0..$#id) {
         $merge_result->add_input(
@@ -473,6 +475,7 @@ sub construct_gatk_results {
         reference_build => $reference,
         bam_source => $previous_result,
         version => 2.4,
+        output_dir => '/tmp/fake',
     );
     $realigner_result->add_input(
         name => 'known_sites-1',
@@ -484,6 +487,7 @@ sub construct_gatk_results {
         reference_build => $reference,
         bam_source => $realigner_result,
         version => 2.4,
+        output_dir => '/tmp/fake',
     );
     $recalibrator_result->add_input(
         name => 'known_sites-1',
@@ -502,6 +506,7 @@ sub construct_clip_overlap_result {
         reference_build => $reference,
         bam_source => $previous_result,
         version => '1.0.11',
+        output_dir => '/tmp/fake',
     );
     $clip_overlap_result->lookup_hash($clip_overlap_result->calculate_lookup_hash());
 

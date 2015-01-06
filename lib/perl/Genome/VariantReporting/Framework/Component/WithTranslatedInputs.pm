@@ -13,20 +13,42 @@ class Genome::VariantReporting::Framework::Component::WithTranslatedInputs {
     ],
 };
 
-sub translated_input_names {
+sub all_translated_inputs {
     my $class = shift;
-    return map {$_->property_name} $class->__meta__->properties(
+    return $class->__meta__->properties(
         is_translated => 1,
         is_many => 0,
     );
 }
 
-sub translated_is_many_input_names {
-    my $self = shift;
-    return map {$_->property_name} $self->__meta__->properties(
+sub all_translated_is_many_inputs {
+    my $class = shift;
+    return $class->__meta__->properties(
         is_translated => 1,
         is_many => 1,
     );
+}
+
+sub all_translated_input_names {
+    my $class = shift;
+    return map {$_->property_name} $class->all_translated_inputs;
+}
+
+sub all_translated_is_many_input_names {
+    my $class = shift;
+    return map {$_->property_name} $class->all_translated_is_many_inputs;
+}
+
+sub required_translated_input_names {
+    my $class = shift;
+    return map {$_->property_name} grep {!$_->is_optional}
+        $class->all_translated_inputs;
+}
+
+sub required_translated_is_many_input_names {
+    my $class = shift;
+    return map {$_->property_name} grep {!$_->is_optional}
+        $class->all_translated_is_many_inputs;
 }
 
 1;

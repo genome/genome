@@ -99,9 +99,8 @@ sub _run_aligner {
     # you should die.
     my $paired_end = 0;
 
-    my $min_insert_size = -1;
-    my $max_insert_size = -1;
-
+    my $min_insert_size;
+    my $max_insert_size;
 
     # seems dubious
     for (@input_pathnames) {
@@ -117,27 +116,42 @@ sub _run_aligner {
         # get the instrument-data so we can calculate the minimum and maximum insert size
         my $instrument_data = $self->instrument_data();
 
+        my $median_insert_size;
+        my $sd_above_insert_size;
+        my $sd_below_insert_size;
+
         if (defined($instrument_data->median_insert_size) && defined($instrument_data->sd_above_insert_size)){
-            my $median_insert_size = $instrument_data->resolve_median_insert_size();
-            my $sd_above_insert_size = $instrument_data->resolve_sd_insert_size();
+            $median_insert_size = $instrument_data->resolve_median_insert_size();
+            $sd_above_insert_size = $instrument_data->resolve_sd_insert_size();
+        }
+        if(defined($instrument_data->sd_below_insert_size)){
+            $sd_below_insert_size = $instrument_data->sd_below_insert_size();
+        }
 
-            # TODO this may be an area for improvement
-            if(defined($instrument_data->sd_below_insert_size)){
-                my $sd_below_insert_size = $instrument_data->sd_below_insert_size();
-                $min_insert_size = $median_insert_size - (3*$sd_below_insert_size);
-            } else {
+        #handle max and min separately, because one could be defined by user and not the other
+        unless($aligner_params =~ /-m\s+\d+/){ #user specified min param
+            if($median_insert_size && $sd_below_insert_size){
+                $min_insert_size = $median_insert_size - (3*$sd_below_insert_size); 
+            } elsif($median_insert_size && $sd_above_insert_size){
                 $min_insert_size = $median_insert_size - (3*$sd_above_insert_size);
+            } else {
+                $self->error_message("Unable to get min insert size info from instrument data, using bsmap default of 28");
+                $min_insert_size = 28;
             }
-            $max_insert_size = $median_insert_size + (3*$sd_above_insert_size);
-        } else { #use defaults from bsmap
-            $self->error_message("Unable to get insert size info from instrument data, using bsmap defaults: 28/500");
-            $max_insert_size = 500;
-            $min_insert_size = 28;
+            if($min_insert_size < 0){
+                $min_insert_size = 1;
+            }
         }
 
-        if($min_insert_size < 0){
-            $min_insert_size = 1;
+        unless($aligner_params =~ /-x\s+\d+/){ #user specified max param
+            if($median_insert_size && $sd_above_insert_size){
+                $max_insert_size = $median_insert_size + (3*$sd_above_insert_size); 
+            } else {
+                $self->error_message("Unable to get max insert size info from instrument data, using bsmap default of 500");
+                $max_insert_size = 500;
+            }
         }
+
 
     } else {
         die $self->error_message("_run_aligner called with " . scalar @input_pathnames . " files.  It should only get 1 or 2!");
@@ -156,11 +170,20 @@ sub _run_aligner {
         }
     }
 
+    my $param_string = "-a $input_pathnames[0]";
+    if($paired_end){
+        $param_string .= " -b $input_pathnames[1]";
+    }
+    if($min_insert_size){
+        $param_string .= " -m $min_insert_size";
+    }
+    if($max_insert_size){
+        $param_string .= " -x $max_insert_size";
+    }
+
     my $align_cmd = sprintf("%s %s -d %s %s -o %s",
         $bsmap_cmd_path,
-        $paired_end
-            ? "-a $input_pathnames[0] -b $input_pathnames[1] -m $min_insert_size -x $max_insert_size"
-            : "-a $input_pathnames[0]",
+        $param_string,
         $reference_fasta_path,
         $aligner_params, # example: -p 4 (4 cores) -z 33 (initial qual char) -v 4 (max mismatches) -q 20 (qual trimming)
         $temp_sam_output
@@ -348,11 +371,15 @@ sub prepare_reference_sequence_index {
 }
 
 sub fillmd_for_sam {
-    return 1;
+    return 0;
 }
 
 sub requires_read_group_addition {
     return 1;
+}
+
+sub _use_alignment_summary_cpp {
+    return 0;
 }
 
 # only accept bam input if we're not running in force fragment mode

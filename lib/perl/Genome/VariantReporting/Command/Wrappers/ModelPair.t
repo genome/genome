@@ -30,6 +30,14 @@ my $discovery_build = get_build($roi_name, $tumor_sample, $normal_sample);
 is($discovery_build->class, "Genome::Model::Build::SomaticValidation");
 
 my $model_pair = $pkg->create(
+    common_translations => {
+        library_name_labels => {
+            foo => 'bar',
+        },
+        sample_name_labels => {
+            baz => 'qux',
+        },
+    },
     discovery => $discovery_build,
     followup => $discovery_build,
     label => "test",

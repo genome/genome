@@ -13,16 +13,20 @@ reports:
         interpreters:
             position: {}
             'many-samples-vaf':
+                sample_name_labels: sample_name_labels
                 sample_names:
                     - discovery_tumor
                     - followup_tumor
                     - normal
+                library_name_labels: library_name_labels
                 library_names: [library_names]
         params:
+            sample_name_labels: sample_name_labels
             sample_names:
                 - discovery_tumor
                 - followup_tumor
                 - normal
+            library_name_labels: library_name_labels
             library_names: [library_names]
     'bed':
         filters: {}

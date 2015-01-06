@@ -403,6 +403,8 @@ sub map_workflow_inputs {
       push @dirs, $docm_report_dir;
       push @inputs, docm_report_dir => $docm_report_dir;
       push @inputs, docm_variants_file => $docm_variants_file;
+      push @inputs, docmreport_min_bq => 0;
+      push @inputs, docmreport_min_mq => 1;
     }
 
     #SummarizeSvs
@@ -966,8 +968,10 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'build', $docm_report_op, 'builds');
     $add_link->($input_connector, 'docm_variants_file', $docm_report_op, 'docm_variants_file');
     $add_link->($input_connector, 'bam_readcount_version', $docm_report_op, 'bam_readcount_version');
+    $add_link->($input_connector, 'docmreport_min_bq', $docm_report_op, 'bq');
+    $add_link->($input_connector, 'docmreport_min_mq', $docm_report_op, 'mq');
     $add_link->($docm_report_op, 'result', $output_connector, 'docm_report_result');
-  }
+}
 
   #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
   #This step relies on the generate-clonality-plots step already having been run
@@ -1206,8 +1210,8 @@ sub _resolve_workflow_for_build {
         $add_link->($input_connector, 'sireport_min_tumor_vaf', $converge_snv_indel_report_op1, 'min_tumor_vaf');
         $add_link->($input_connector, 'sireport_max_normal_vaf', $converge_snv_indel_report_op1, 'max_normal_vaf');
         $add_link->($input_connector, 'sireport_min_coverage', $converge_snv_indel_report_op1, 'min_coverage');
-        $add_link->($input_connector, 'sireport_min_bq' . $i, $converge_snv_indel_report_op1, 'min_base_quality');
-        $add_link->($input_connector, 'sireport_min_mq' . $i, $converge_snv_indel_report_op1, 'min_quality_score');
+        $add_link->($input_connector, 'sireport_min_bq' . $i, $converge_snv_indel_report_op1, 'bq');
+        $add_link->($input_connector, 'sireport_min_mq' . $i, $converge_snv_indel_report_op1, 'mq');
         if ($build->wgs_build){
             $add_link->($wgs_variant_sources_op, 'snv_variant_sources_file', $converge_snv_indel_report_op1, '_wgs_snv_variant_sources_file');
             $add_link->($wgs_variant_sources_op, 'indel_variant_sources_file', $converge_snv_indel_report_op1, '_wgs_indel_variant_sources_file');
