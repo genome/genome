@@ -26,7 +26,7 @@ class Genome::Config::AnalysisProject::Command::AddConfigFile {
     ],
     has_optional_input => [
         tag => {
-            is => 'Text',
+            is => 'Genome::Config::Tag',
             is_many => 1,
             doc => 'Optional tags to add',
         }
@@ -81,9 +81,7 @@ sub _mark_instrument_data_bridges {
 
 sub _apply_tags {
     my ($self, $profile_item) = @_;
-    return unless $self->tag;
-    for my $tag_name ($self->tag){
-        my $tag = Genome::Config::Tag->create(name => $tag_name);
+    for my $tag ($self->tag){
         $profile_item->add_tag($tag);
     }
     return 1;
