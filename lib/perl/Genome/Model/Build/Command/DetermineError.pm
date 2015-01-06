@@ -323,10 +323,11 @@ sub find_die_or_warn_in_log {
 
             $EXCEPTION_FINDING_REGEX,
                 sub {
-                    ($error_date, $error_text, $error_source_file, $error_source_line, $error_host)
-                        = @+{'date','error_text','error_source_file','error_source_line','host'};
-
-                    last SCAN_FILE if ($error_host);
+                    unless($error_text) {
+                        ($error_date, $error_text, $error_source_file, $error_source_line, $error_host)
+                            = @+{'date','error_text','error_source_file','error_source_line','host'};
+                        last SCAN_FILE if ($error_host);
+                    }
                 },
         );
     }
