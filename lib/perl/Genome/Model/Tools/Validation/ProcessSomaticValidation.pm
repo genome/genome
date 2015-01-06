@@ -154,6 +154,13 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           default => "1,2,3,4",
       },
 
+      max_indel_size => {
+          is => 'Integer',
+          is_optional => 1,
+          doc => "set max indel size to extract readcounts",
+          default => "4",
+      },
+
       statuses_to_review => {
           is => 'String',
           is_optional => 1,
@@ -172,6 +179,12 @@ class Genome::Model::Tools::Validation::ProcessSomaticValidation {
           is => 'Text',
           is_optional => 1,
           doc => "override the sample name on the build and use this name instead",
+      },
+
+      reference_transcripts => {
+          is => 'Text',
+          is_optional => 1,
+          doc => "use this reference transcript build instead of the one specified in the model (e.g. NCBI-mouse.ensembl/67_37)",
       },
 
       # include_vcfs_in_archive => {
@@ -492,37 +505,10 @@ sub addTiering{
     return($newfile);
 }
 
-sub getReadcountsOld{
-    my ($file, $ref_seq_fasta, @bams) = @_;
-    #todo - should check if input is bed and do coversion if necessary
-
-    if( -s "$file" ){
-        my $bamfiles = join(",",@bams);
-        my $header = "Tumor";
-        if(@bams == 2){
-            $header = "Normal,Tumor";
-        }
-        #get readcounts from the tumor bam only
-        my $rc_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
-            bam_files => $bamfiles,
-            output_file => "$file.rcnt",
-            variant_file => "$file",
-            genome_build => $ref_seq_fasta,
-            header_prefixes => $header,
-            indel_size_limit => 4,
-            );
-        unless ($rc_cmd->execute) {
-            die "Failed to obtain readcounts for file $file.\n";
-        }
-    } else {
-        `touch $file.rcnt`;
-    }
-    return("$file.rcnt");
-}
 
 
 sub getReadcounts{
-    my ($file, $ref_seq_fasta, $bams, $labels) = @_;
+    my ($file, $ref_seq_fasta, $bams, $labels,$indel_size) = @_;
     #todo - should check if input is bed and do coversion if necessary
 
     my $output_file = "$file.rcnt";
@@ -537,7 +523,7 @@ sub getReadcounts{
             variant_file => $file,
             genome_build => $ref_seq_fasta,
             header_prefixes => $header,
-            indel_size_limit => 4,
+            indel_size_limit => $indel_size,
             );
         unless ($rc_cmd->execute) {
             die "Failed to obtain readcounts for file $file.\n";
@@ -639,6 +625,11 @@ sub execute {
   my $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
   my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
   my $annotation_build_name = $model->annotation_build->name;
+  if(defined $self->reference_transcripts){
+      print STDERR "Model's annotation build overriden. Using " . $self->reference_transcripts . "\n";
+      $annotation_build_name = $self->reference_transcripts;
+  }
+
   my $tiering_files = $model->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
   my $sample_name;
   if(!defined($self->sample_name)){
@@ -927,6 +918,7 @@ sub execute {
 
   #-------------------------------------------------------
   #get readcounts
+  my $indel_size=$self->max_indel_size;
   if($self->get_readcounts){
       print STDERR "Getting readcounts...\n";
       if(!(defined($tumor_bam)) || !(-s $tumor_bam)){
@@ -949,7 +941,7 @@ sub execute {
 		  push(@bamfiles,($normal_bam,$tumor_bam));
 		  push(@labels,('val_Normal','val_Tumor'));
               }
-	      $snv_files[$i] = getReadcounts($snv_files[$i], $ref_seq_fasta, \@bamfiles, \@labels);
+	      $snv_files[$i] = getReadcounts($snv_files[$i], $ref_seq_fasta, \@bamfiles, \@labels, $indel_size);
 	      
           }
 
@@ -959,7 +951,7 @@ sub execute {
 	      my @labels=();
 	      push(@bamfiles, @$som_var_bam_files);
 	      push(@labels,('somvar_Normal','somvar_Tumor')); #manually label the header #default is more suited for IGV xml crap
-	      $indel_file = getReadcounts($indel_file, $ref_seq_fasta, \@bamfiles,\@labels );
+	      $indel_file = getReadcounts($indel_file, $ref_seq_fasta, \@bamfiles,\@labels,$indel_size );
 
 
 	  }
@@ -1071,7 +1063,7 @@ sub execute {
 		  push(@bamfiles,($normal_bam,$tumor_bam));
 		  push(@labels,('val_Normal','val_Tumor'));
               }
-	      $indel_file = getReadcounts($indel_file, $ref_seq_fasta, \@bamfiles,\@labels );
+	      $indel_file = getReadcounts($indel_file, $ref_seq_fasta, \@bamfiles,\@labels,$indel_size );
 
           }
       }
