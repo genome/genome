@@ -240,6 +240,48 @@ sub create {
         }
     }
 
+    #purge per lane alignment along with its .bai and md5 files, but
+    #create header files and keep flagstat files for the future use
+    for my $alignment ($self->collect_individual_alignments) {
+        for my $bam_path ($alignment->alignment_bam_file_paths) {
+            my $header = $bam_path . '.header';
+            unless (-s $header) {
+                my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version); 
+                my $cmd = "$sam_path view -H $bam_path > $header";
+                Genome::Sys->shellcmd(
+                    cmd => $cmd,
+                    input_files  => [$bam_path],
+                    output_files => [$header],
+                );
+            }
+            my $flagstat = $bam_path . '.flagstat';
+            unless (-s $flagstat) {
+                my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
+                    bam_file    => $bam_path,
+                    output_file => $flagstat, 
+                    use_version => $self->samtools_version,  
+                );
+
+                unless ($cmd->execute) {
+                    die $self->error_message("Fail to run flagstat on $bam_path");
+                }
+            }
+            $self->debug_message("Now removing the per lane bam");
+            for my $type ('', '.bai', '.md5') {
+                my $file = $bam_path . $type;
+                unlink $file;
+                if (-s $file and !$type) {  #only bam matters
+                    die $self->error_message("Failed to cleanup $file");
+                }
+            }
+        }
+        if ($alignment->_disk_allocation) {
+            unless ($alignment->_disk_allocation->reallocate) {
+                $self->warning_message("Failed to reallocate per lane disk allocation: " . $alignment->_disk_allocation->id);
+            }
+        }
+    }
+
     $self->debug_message('All processes completed.');
 
     return $self;
