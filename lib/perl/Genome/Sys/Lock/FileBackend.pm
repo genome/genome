@@ -10,8 +10,7 @@ use MIME::Lite;
 use Sys::Hostname qw(hostname);
 use Time::HiRes;
 
-use Genome;
-use base 'UR::ModuleBase';   # *_message methods, but no constructor
+use Genome::Logger;
 use Genome::Utility::Instrumentation;
 
 my %SYMLINKS_TO_REMOVE;
@@ -86,8 +85,7 @@ sub lock {
         # If any other error comes through, we end up in bigger trouble.
         use Errno qw(EEXIST ENOENT :POSIX);
         if ($! != EEXIST) {
-            $class->error_message("Can't create symlink from $tempdir to lock resource $resource_lock because: $!");
-            Carp::croak($class->error_message());
+            Genome::Logger->fatal("Can't create symlink from $tempdir to lock resource $resource_lock because: $!");
         }
         my $symlink_error = $!;
         chomp $symlink_error;
@@ -110,13 +108,11 @@ sub lock {
         if (!$target_exists) {
             # TONY: This means the lock symlink points to something that's been deleted
             # That's _really_ bad news and should probably get an email like below.
-            $class->error_message("Lock ($resource_lock) exists but target ($target) does not exist.");
-            Carp::croak($class->error_message);
+            Genome::Logger->fatal("Lock ($resource_lock) exists but target ($target) does not exist.");
         }
 
         if ($class->is_my_lock_target($target)) {
-            $class->error_message("Tried to lock resource more than once: $resource_lock");
-            Carp::croak($class->error_message);
+            Genome::Logger->fatal("Tried to lock resource more than once: $resource_lock");
         }
 
         my $target_basename = File::Basename::basename($target);
@@ -129,14 +125,14 @@ sub lock {
         if ($elapsed_time >= $wait_announce_interval) {
             $last_wait_announce_time = $time;
             my $total_elapsed_time = $time - $initial_time;
-            $class->status_message("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource_lock': $symlink_error. lock_info is:\n$info_content");
+            Genome::Logger->notice("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource_lock': $symlink_error. lock_info is:\n$info_content");
         }
 
         if ($lsf_id ne "NONE") {
             my ($job_info,$events) = Genome::Model::Event->lsf_state($lsf_id);
             unless ($job_info) {
                 Genome::Utility::Instrumentation::increment('sys.lock.lock.found_orphan');
-                $class->warning_message("Invalid lock for resource $resource_lock\n"
+                Genome::Logger->warning("Invalid lock for resource $resource_lock\n"
                     ." lock info was:\n". $info_content ."\n"
                     ."Removing old resource lock $resource_lock\n");
                 $class->unlock(resource_lock => $resource_lock, force => 1);
@@ -182,15 +178,13 @@ sub unlock {
     if (!$target) {
         if ($! == ENOENT) {
             Genome::Utility::Instrumentation::increment('sys.lock.unlock.stolen_from_me');
-            $class->error_message("Tried to unlock something that's not locked -- $resource_lock.");
-            Carp::croak($class->error_message);
+            Genome::Logger->fatal("Tried to unlock something that's not locked -- $resource_lock.");
         } else {
-            $class->error_message("Couldn't readlink $resource_lock: $!");
+            Genome::Logger->error("Couldn't readlink $resource_lock: $!");
         }
     }
     unless (-d $target) {
-        $class->error_message("Lock symlink '$resource_lock' points to something that's not a directory - $target. ");
-        Carp::croak($class->error_message);
+        Genome::Logger->fatal("Lock symlink '$resource_lock' points to something that's not a directory - $target. ");
     }
 
     unless ($force) {
@@ -198,24 +192,21 @@ sub unlock {
              my $basename = File::Basename::basename($target);
              my $expected_details = $class->_resolve_lock_owner_details;
              Genome::Utility::Instrumentation::increment('sys.lock.unlock.stolen_from_me');
-             $class->error_message("This lock does not look like it belongs to me.  $basename does not match $expected_details.");
              delete $SYMLINKS_TO_REMOVE{$resource_lock}; # otherwise the lock would be forcefully cleaned up when process exits
-             Carp::croak($class->error_message);
+             Genome::Logger->fatal("This lock does not look like it belongs to me.  $basename does not match $expected_details.");
         }
     }
 
     my $unlink_rv = unlink($resource_lock);
     if (!$unlink_rv) {
         Genome::Utility::Instrumentation::increment('sys.lock.unlock.unlink_failed');
-        $class->error_message("Failed to remove lock symlink '$resource_lock':  $!");
-        Carp::croak($class->error_message);
+        Genome::Logger->fatal("Failed to remove lock symlink '$resource_lock':  $!");
     }
 
     my $rmdir_rv = File::Path::rmtree($target);
     if (!$rmdir_rv) {
         Genome::Utility::Instrumentation::increment('sys.lock.unlock.rmtree_failed');
-        $class->error_message("Failed to remove lock symlink target '$target', but we successfully unlocked.");
-        Carp::croak($class->error_message);
+        Genome::Logger->fatal("Failed to remove lock symlink target '$target', but we successfully unlocked.");
     }
 
     delete $SYMLINKS_TO_REMOVE{$resource_lock};
@@ -278,18 +269,20 @@ sub release_all {
                 $errors{$sym_to_remove} = $@ if $@;
             }
         } else {
-            $class->warning_message("Not cleaning up lock named (%s) because ".
+            Genome::Logger->warning(sprintf(
+                "Not cleaning up lock named (%s) because ".
                 "the pid that created it (%s) is not my pid (%s).",
                 $sym_to_remove,
                 $SYMLINKS_TO_REMOVE{$sym_to_remove},
                 $$,
-            );
+            ));
         }
     }
     if (keys %errors) {
-        $class->error_message("Cleaning up the following locks failed: %s",
+        Genome::Logger->error(sprintf(
+            "Cleaning up the following locks failed: %s",
             join(", ", keys %errors),
-        );
+        ));
         Carp::croak(join("\n", values %errors));
     }
 }
