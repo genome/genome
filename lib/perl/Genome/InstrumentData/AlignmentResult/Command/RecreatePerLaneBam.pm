@@ -32,6 +32,11 @@ class Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam {
             doc => 'Picard version to replace bam header',
             valid_values => [Genome::Model::Tools::Picard->available_picard_versions],
         },
+        bam_header => {
+            is  => 'FilePath',
+            doc => 'The path of bam header used to reheader per lane bam',
+            is_optional => 1,
+        },
     ],
     has_transient_optional => [
         _temp_out_bam => {
@@ -59,9 +64,16 @@ EOS
 sub execute {
     my $self = shift;
 
+    my $bam_header   = $self->bam_header;
     my $merged_bam   = $self->merged_bam;
     my $per_lane_bam = $self->per_lane_bam;
-    
+   
+    if ($bam_header) {
+        unless (-s $bam_header) {
+            die $self->error_message("bam_header $bam_header is not valid");
+        }
+    }
+
     unless (-s $merged_bam) {
         die $self->error_message("merged_bam $merged_bam is not valid");
     }
@@ -85,7 +97,7 @@ sub execute {
     $self->_revert_markdup($temp_bam, $no_markdup_bam);
     
     $self->debug_message('Reheader bam');
-    $self->_reheader_bam($no_markdup_bam);
+    $self->_reheader_bam($no_markdup_bam, $bam_header);
     
     $self->debug_message('Create Bam index');
     $self->_create_bam_index;
@@ -156,14 +168,17 @@ sub _revert_markdup {
 
 
 sub _reheader_bam {
-    my ($self, $temp_bam) = @_;
+    my ($self, $temp_bam, $bam_header) = @_;
 
-    my @header_files = glob($self->_output_dir ."/*.header");
-    unless (@header_files and @header_files == 1) {
-        die $self->error_message("Failed to get 1 header file from original per lane bam location");
+    unless ($bam_header) { #find bam header from planned places
+        my @header_files = glob($self->_output_dir ."/*.header");
+        unless (@header_files and @header_files == 1) {
+            die $self->error_message("Failed to get 1 header file from original per lane bam location");
+        }
+        $bam_header = $header_files[0];
     }
 
-    my $header_content = Genome::Sys->read_file($header_files[0]);
+    my $header_content = Genome::Sys->read_file($bam_header);
     if ($header_content =~ /(SO:unsorted)/) {
         $header_content =~ s/$1/SO:coordinate/;
     }
