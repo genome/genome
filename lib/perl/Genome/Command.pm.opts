@@ -21535,6 +21535,8 @@ $Genome::Command::OPTS_SPEC = [
         ],
         'minaqual=s',
         undef,
+        'output-dir=s',
+        'files',
         'whitelist-alignments-flags=s',
         'files',
         'blacklist-alignments-flags=s',
