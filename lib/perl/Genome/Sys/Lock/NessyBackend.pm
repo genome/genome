@@ -4,8 +4,6 @@ use strict;
 use warnings;
 
 use Carp qw(carp croak);
-use File::Spec qw();
-use List::MoreUtils qw();
 use POSIX qw(strftime);
 use Sys::Hostname qw(hostname);
 
@@ -123,14 +121,13 @@ sub translate_lock_args {
     );
 
     $args{resource} = delete $args{resource_lock};
-    $args{resource} = $self->_translate_resource($args{resource});
 
     return %args;
 }
 
 sub translate_unlock_args {
     my ($self, %args) = @_;
-    return $self->_translate_resource(delete $args{resource_lock});
+    return delete $args{resource_lock};
 }
 
 sub is_enabled {
@@ -179,32 +176,6 @@ sub _is_holding_nessy_lock {
 
 sub min_timeout {
     return 5;
-}
-
-sub _translate_resource {
-    my ($self, $resource) = @_;
-
-    my @subpath_parts;
-    my $resource_is_subpath = 1;
-
-    my @base_parts = File::Spec->splitdir($ENV{GENOME_LOCK_DIR});
-    my @resource_parts = File::Spec->splitdir($resource);
-    my $zip_iter = List::MoreUtils::each_array(@base_parts, @resource_parts);
-    while (my ($base_part, $resource_part) = $zip_iter->()) {
-        if (defined($base_part)) {
-            if ($base_part ne $resource_part) {
-                $resource_is_subpath = 0;
-            }
-        } else {
-            push @subpath_parts, $resource_part;
-        }
-    }
-
-    if ($resource_is_subpath) {
-        return File::Spec->join(@subpath_parts);
-    } else {
-        return $resource;
-    }
 }
 
 sub _new_style_lock_timeout_from_args {
