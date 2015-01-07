@@ -52,6 +52,60 @@ subtest 'working_command' => sub {
     my $expected_process_dir = File::Spec->join($test_dir, "expected_in_process");
     compare_dir_ok($p->metadata_directory, $expected_process_dir,
         'All metadata files are as expected');
+
+    subtest 'test compare_output subroutine - same inputs' => sub {
+        my $other_test_dir = Genome::Sys->create_temp_directory;
+        Genome::Sys->rsync_directory(
+            source_directory => $code_test_dir,
+            target_directory => $other_test_dir
+        );
+        my $other_input_vcf = File::Spec->join($other_test_dir, 'input.vcf');
+
+        my $other_cmd = $pkg->create(
+            input_vcf => $other_input_vcf,
+            variant_type => 'snvs',
+            plan_file => File::Spec->join($other_test_dir, 'plan.yaml'),
+            translations_file => get_translations_file($other_input_vcf),
+        );
+        my $other_p = $other_cmd->execute();
+        is($p->output_directory('__test__'), $other_p->output_directory('__test__'), 'Output directory is the same');
+        is_deeply({$p->compare_output($other_p->id)}, {}, 'Two identical process executions produce the same output');
+    };
+
+    subtest 'test compare_output subroutine - different inputs' => sub {
+        my $other_test_dir = Genome::Sys->create_temp_directory;
+        Genome::Sys->rsync_directory(
+            source_directory => $code_test_dir,
+            target_directory => $other_test_dir
+        );
+        my $other_input_vcf = File::Spec->join($other_test_dir, 'other_input.vcf');
+
+        my $other_cmd = $pkg->create(
+            input_vcf => $other_input_vcf,
+            variant_type => 'snvs',
+            plan_file => File::Spec->join($other_test_dir, 'plan.yaml'),
+            translations_file => get_translations_file($other_input_vcf),
+        );
+        my $other_p = $other_cmd->execute();
+        my %diffs = $p->compare_output($other_p->id);
+        my $report_file = File::Spec->join($p->output_directory('__test__'), 'report.txt');
+        my $other_report_file = File::Spec->join($other_p->output_directory('__test__'), 'report.txt');
+        is_deeply([keys %diffs], [$other_report_file], 'Two process executions with different input files produce different reports');
+
+        subtest 'test compare_output subroutine - missing file in other report directory' => sub {
+            unlink $other_report_file;
+            %diffs = $p->compare_output($other_p->id);
+            my $other_process_id = $other_p->id;
+            like($diffs{$report_file}, qr/report\.txt.*$other_process_id/, 'Missing files in other report output directory gets detected');
+        };
+        subtest 'test compare_output subroutine - missing file in report directory' => sub {
+            Genome::Sys->move_file($report_file, $other_report_file);
+            %diffs = $p->compare_output($other_p->id);
+            my $process_id = $p->id;
+            like($diffs{$other_report_file}, qr/report\.txt.*$process_id/, 'Mising files in report output directory gets detected');
+        }
+
+    };
 };
 
 subtest 'no_translations_file' => sub {

@@ -600,7 +600,7 @@ sub unique_results {
 sub result_with_label {
     my ($self, $label) = validate_pos(@_, 1, 1);
 
-    my @results = grep {$_->users(label => $label)} $self->unique_results;
+    my @results = grep {my @users = $_->users(label => $label); scalar(@users) > 0} $self->unique_results;
     if (scalar(@results) != 1) {
         die sprintf("Found (%d) results with label (%s), but expected only one, they are: %s",
             scalar(@results), $label, pp(map {$_->id} @results));
@@ -630,5 +630,31 @@ sub result_is_on_cle_disk_group {
     return Genome::Disk::Group::Validate::GenomeDiskGroups::is_cle_disk_group_name($disk_group_name);
 }
 
+sub compare_output {
+    my ($self, $other_process_id) = @_;
+    my $process_id = $self->id;
+
+    unless (defined ($other_process_id)) {
+        die $self->error_message('Require process ID argument!');
+    }
+    my $other_process = Genome::Process->get($other_process_id);
+    unless ($other_process) {
+        die $self->error_message('Could not get process for ID (%s)', $other_process_id);
+    }
+
+    unless ($self->class eq $other_process->class) {
+        die $self->error_message('Processes (%s) annd (%s) are not of the same type', $process_id, $other_process_id);
+    }
+
+    my %diffs = $self->_compare_output_files($other_process);
+
+    return %diffs;
+}
+
+sub _compare_output_files {
+    my ($self, $other_process) = @_;
+
+    die $self->error_message('Abstract method (_compare_output_files) must be defined in subclass (%s)', $self->class);
+}
 
 1;
