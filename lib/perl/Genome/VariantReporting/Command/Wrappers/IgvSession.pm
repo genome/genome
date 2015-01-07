@@ -72,8 +72,7 @@ sub bams {
 
 sub bam_paths {
     my $self = shift;
-    #return join(',', map {File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $_)} values %{$self->bams});
-    return join(',', values %{$self->bams});
+    return join(',', map {File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $_)} values %{$self->bams});
 }
 
 sub bam_labels {
