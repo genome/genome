@@ -6,7 +6,7 @@ use warnings;
 use above 'Genome';
 use File::Slurp;
 use List::AllUtils qw(max);
-use Test::More tests => 7;
+use Test::More tests => 3;
 
 my $class = 'Genome::Model::Tools::Bsmap::MethRatio';
 use_ok($class);
@@ -51,7 +51,9 @@ sub diff_paths {
     return $diffs;
 }
 
-{
+subtest 'Dereference reference sequence' => sub {
+    plan tests => 2;
+
     my $test_obj = create_test_object();
 
     my %mapping = (
@@ -68,9 +70,11 @@ sub diff_paths {
 
         is($test_obj->_reference_fasta, $fasta, 'Got correct fasta object');
     }
-}
+};
 
-{
+subtest 'Execute' => sub {
+    plan tests => 4;
+
     my $test_obj = create_test_object();
     my $test_output_name = 'test.snvs.hq';
 
@@ -90,4 +94,4 @@ sub diff_paths {
 
     is(diff_paths($expected_path, $actual_path), 0,
         'Found no diffs between expected and actual test.snvs.hq');
-}
+};
