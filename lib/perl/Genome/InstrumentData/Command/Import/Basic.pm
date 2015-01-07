@@ -209,7 +209,7 @@ sub _build_workflow {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Instrument Data',
-        input_properties => [qw/ analysis_project instrument_data_properties downsample_ratio library source_paths working_directory /],
+        input_properties => [qw/ analysis_project instrument_data_properties downsample_ratio library library_name sample_name source_paths working_directory /],
         output_properties => [qw/ instrument_data /],
     );
     $self->_workflow($workflow);
@@ -345,9 +345,15 @@ sub _add_sra_to_bam_op_to_workflow {
     }
     $workflow->add_link(
         left_operation => $workflow->get_input_connector,
-        left_property => 'library',
+        left_property => 'library_name',
         right_operation => $sra_to_bam_op,
-        right_property => 'library',
+        right_property => 'library_name',
+    );
+    $workflow->add_link(
+        left_operation => $workflow->get_input_connector,
+        left_property => 'sample_name',
+        right_operation => $sra_to_bam_op,
+        right_property => 'sample_name',
     );
 
     return $sra_to_bam_op;
@@ -382,7 +388,7 @@ sub _add_fastqs_to_bam_op_to_workflow {
     my $fastqs_to_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'fastqs to bam');
     return if not $fastqs_to_bam_op;
 
-    for my $property (qw/ working_directory library /) {
+    for my $property (qw/ working_directory library_name sample_name /) {
         $self->_workflow->add_link(
             left_operation => $self->_workflow->get_input_connector,
             left_property => $property,
@@ -528,6 +534,8 @@ sub _gather_inputs_for_workflow {
         downsample_ratio => $self->downsample_ratio,
         instrument_data_properties => $self->_instrument_data_properties,
         library => $self->library,
+        library_name => $self->library->name,
+        sample_name => $self->library->sample->name,
         source_paths => [ $self->source_files ],
         working_directory => $self->_working_directory,
     };

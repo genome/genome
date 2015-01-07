@@ -21,9 +21,13 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
             is_many => 1,
             doc => 'Paths of the fastq[s] to convert to a bam.',
         },
-        library => {
-            is => 'Genome::Library',
-            doc => 'The library name to use and then derive the read group name.',
+        sample_name => {
+            is => 'Text',
+            doc => 'The sample name to use in the RG header.',
+        },
+        library_name => {
+            is => 'Text',
+            doc => 'The library name to use as the IDs in the SAM RG and LB headers.',
         },
     ],
     has_output => [ 
@@ -34,12 +38,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
             doc => 'The path of the bam.',
         },
     ],
-    has_calculated => {
-        sample_name => {
-            calculate_from => [qw/ library /],
-            calculate => q( return $library->sample->name ),
-        },
-    },
 };
 
 sub execute {
@@ -63,8 +61,6 @@ sub _fastqs_to_bam {
     my $self = shift;
     $self->debug_message('Run picard fastq to sam...');
 
-    my $sample_name = $self->sample_name;
-    my $read_group_name = $self->library->name;
     my @fastqs = $self->fastq_paths;
     $self->debug_message("Fastq 1: $fastqs[0]");
     my $output_bam_path = $self->output_bam_path;
@@ -72,8 +68,9 @@ sub _fastqs_to_bam {
         fastq => $fastqs[0],
         output => $output_bam_path,
         quality_format => 'Standard',
-        sample_name => $sample_name,
-        read_group_name => $read_group_name,
+        sample_name => $self->sample_name,
+        library_name => $self->library_name,
+        read_group_name => $self->library_name,
     );
     if ( $fastqs[1] ) {
         $self->debug_message("Fastq 2: $fastqs[1]");
