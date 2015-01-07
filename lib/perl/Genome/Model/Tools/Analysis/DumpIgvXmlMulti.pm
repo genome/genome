@@ -7,6 +7,7 @@ use Genome;
 use Command;
 use IO::File;
 use Cwd qw(abs_path);
+use URI::URL;
 
 class Genome::Model::Tools::Analysis::DumpIgvXmlMulti {
     is => 'Command',
@@ -97,7 +98,8 @@ XML
 
     my $i=0;    
     for($i=0;$i<@bams;$i++){
-        my $path = abs_path($bams[$i]);
+        my $uri = URI->new($bams[$i]);
+        my $path = $uri->scheme ? $bams[$i] : abs_path($bams[$i]);
         $header .= <<"XML";
      <Resource path="$path" relativePath="false"/>
 XML
