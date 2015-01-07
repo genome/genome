@@ -67,6 +67,16 @@ sub lock_resource {
     my $class = shift;
     my %args = with_default_lock_resource_args(@_);
 
+    if (exists $RESOURCE_LOCK_SCOPE{$args{resource_lock}}
+        && $RESOURCE_LOCK_SCOPE{$args{resource_lock}} ne $args{scope}) {
+        Carp::confess(sprintf("Attempted to lock the resource (%s) in "
+                . "scope (%s) while it has an existing lock in scope (%s).  "
+                . "Locking in multiple scopes is not currently supported.",
+                $args{resource_lock},
+                $RESOURCE_LOCK_SCOPE{$args{resource_lock}},
+                $args{scope}));
+    }
+
     my @locks;
     my $unwind = sub {
         for my $pair (@locks) {
