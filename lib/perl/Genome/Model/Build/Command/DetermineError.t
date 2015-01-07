@@ -1,6 +1,8 @@
 use strict;
 use warnings;
 
+use above 'Genome';
+
 use Genome::Model::Build::Command::DetermineError;
 
 use Test::More tests => 5;
