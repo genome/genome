@@ -124,7 +124,8 @@ sub get_ROI_bed{
   if($self->roi_bed) {
     return $self->roi_bed;
   } elsif($refalign->last_succeeded_build->region_of_interest_set_bed_file) {
-    return $refalign->last_succeeded_build->region_of_interest_set_bed_file;
+    my $bed_path = Genome::Sys->create_temp_file_path();
+    return $refalign->last_succeeded_build->region_of_interest_set_bed_file($bed_path);
   } else {
     die $self->error_message("Unable to find ROI_set_bed file for " . $refalign->name);
   }
