@@ -75,15 +75,20 @@ sub convert_bed {
     if($self->is_per_position_algorithm) {
         my $source_fh = Genome::Sys->open_file_for_reading($source_bed);
         my $destination_fh = Genome::Sys->open_file_for_writing($destination_bed);
-    
+
         while(my $line = <$source_fh>) {
             chomp $line;
             my ($chrom, $start, $stop, @extra) = split("\t", $line);
+            unless($chrom && $start && $stop) {
+                $self->debug_message('Not converting non-entry line %s', $line);
+                $destination_fh->say($line);
+                next;
+            }
             my ($new_chrom, $new_start, $new_stop) = $self->convert_position($chrom, $start, $stop);
             my $new_line = join("\t", $new_chrom, $new_start, $new_stop, @extra) . "\n";
             print $destination_fh $new_line;
         }
-    
+
        $source_fh->close;
        $destination_fh->close;
     } else {
