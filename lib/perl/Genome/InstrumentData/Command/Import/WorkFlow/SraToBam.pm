@@ -21,9 +21,13 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SraToBam {
             is => 'Text',
             doc => 'Path of the SRA.',
         },
-        library => {
-            is => 'Genome::Library',
-            doc => 'The library name to use and then derive the read group name.',
+        sample_name => {
+            is => 'Text',
+            doc => 'The sample name to use in the RG header.',
+        },
+        library_name => {
+            is => 'Text',
+            doc => 'The library name to use as the IDs in the SAM RG and LB headers.',
         },
     ],
     has_output => [
@@ -288,7 +292,9 @@ sub convert_fastq_to_bam {
         my $fastq_to_sam = Genome::Model::Tools::Picard::FastqToSam->create(
             fastq           => "$unaligned_fastq",
             output          => "$unaligned_bam",
-            sample_name     => "$sample_name",
+            sample_name => $self->sample_name,
+            library_name => $self->library_name,
+            read_group_name => $self->library_name,
             quality_format  => 'Standard');
         return $fastq_to_sam->execute;
     }
