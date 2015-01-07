@@ -1306,7 +1306,7 @@ sub region_of_interest_set_bed_file {
         $bed_file_path = $self->reference_coverage_directory .'/'. $roi_set->id .'.bed';
     }
 
-    unless (-e $bed_file_path) {
+    unless (-s $bed_file_path) {
         my %dump_params = (
             feature_list => $roi_set,
             output_path => $bed_file_path,
