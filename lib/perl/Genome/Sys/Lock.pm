@@ -177,9 +177,6 @@ sub backends {
     if (!defined($scope)) {
         return %$backends;
 
-    } elsif ($scope eq 'any') {
-        return map {backends($_)} scopes();
-
     } elsif (exists $backends->{$scope}) {
         return @{$backends->{$scope}};
 
@@ -212,9 +209,6 @@ sub set_backends {
 
 sub add_backend {
     my ($class, $scope, $backend) = @_;
-    if ($scope eq 'any') {
-        Carp::confess($class->error_message("Illegal scope name 'any'."));
-    }
     push @{$backends->{$scope}}, $backend;
 }
 
