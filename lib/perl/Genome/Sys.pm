@@ -669,6 +669,9 @@ sub copy_file {
     #  the files can never be exactly the same.
 
     unless ( File::Copy::copy($file, $dest) ) {
+        # It is unclear whether File::Copy::copy intends to remove $dest but we
+        # definitely have cases where it's not.
+        unlink $dest;
         Carp::croak("Can't copy $file to $dest: $!");
     }
 
