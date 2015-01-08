@@ -15,7 +15,7 @@ Add bam readcount information to a vcf
   [1mminimum_mapping_quality[0m   Integer
     filter reads with mapping quality less than this. This is the -q parameter.
   [1mper_library[0m   Boolean
-    report results per library. This is the -p parameter
+    report results per library. This is the -p parameter.
   [1mversion[0m   Version
     bam-readcount version to be used.
 

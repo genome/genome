@@ -34,7 +34,7 @@ class Genome::VariantReporting::Suite::BamReadcount::Adaptor {
         },
         per_library => {
             is  => 'Boolean',
-            doc => "report results per library. This is the -p parameter",
+            doc => "report results per library. This is the -p parameter.",
         },
         insertion_centric => {
             is  => 'Boolean',
@@ -56,7 +56,7 @@ sub __planned_output_errors__ {
             type => 'error',
             properties => ['version'],
             desc => sprintf("The BamReadcount expert requires version (%s) ".
-                    "or higher, you supplied version (%s).",
+                    "or higher, but you supplied version (%s).",
                     $MIN_VERSION, $params->{version} || 'undef'),
         );
     }
