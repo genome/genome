@@ -3,6 +3,7 @@ package Genome::VariantReporting::Command::Wrappers::IgvSession;
 use strict;
 use warnings;
 use Genome;
+use URI;
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 
@@ -72,7 +73,10 @@ sub bams {
 
 sub bam_paths {
     my $self = shift;
-    return join(',', map {File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $_)} values %{$self->bams});
+    return join(',', map {
+        my $u = URI->new($_, $ENV{GENOME_SYS_SERVICES_FILES_URL});
+        $u->abs($ENV{GENOME_SYS_SERVICES_FILES_URL})->as_string;
+    } values %{$self->bams});
 }
 
 sub bam_labels {
