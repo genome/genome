@@ -10,6 +10,9 @@ class Genome::Model::Tools::CopyCat::List {
             is_constant => 1,
             value => 'Genome::Model::Tools::CopyCat::AnnotationData',
         },
+        show => {
+            value => 'id,reference_sequence,version,output_dir',
+        }
     ],
     doc => 'List CopyCat annotation data sets',
 };
