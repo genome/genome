@@ -1277,6 +1277,7 @@ sub coverage_stats_summary_hash_ref {
 
 sub region_of_interest_set_bed_file {
     my $self = shift;
+    my $bed_file_path = shift; # optional
 
     my $roi_set = $self->model->region_of_interest_set;
     return unless $roi_set;
@@ -1300,8 +1301,12 @@ sub region_of_interest_set_bed_file {
         # This is to retain backward compatibility, previously all BED files had short roi names(like r###)
         $use_short_names = 1;
     }
-    my $bed_file_path = $self->reference_coverage_directory .'/'. $roi_set->id .'.bed';
-    unless (-e $bed_file_path) {
+
+    unless ($bed_file_path) {
+        $bed_file_path = $self->reference_coverage_directory .'/'. $roi_set->id .'.bed';
+    }
+
+    unless (-s $bed_file_path) {
         my %dump_params = (
             feature_list => $roi_set,
             output_path => $bed_file_path,
@@ -1317,6 +1322,7 @@ sub region_of_interest_set_bed_file {
             die('Failed to print bed file to path '. $bed_file_path);
         }
     }
+
     return $bed_file_path;
 }
 
