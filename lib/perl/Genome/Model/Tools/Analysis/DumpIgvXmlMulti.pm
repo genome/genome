@@ -75,7 +75,7 @@ sub execute {
     my @review_bed_files = map { abs_path($_) }$self->review_bed_files;
     my $reference_name = $self->reference_name;
 
-    my @bams = split(/\,/,$self->bams);
+    my @bams = map { resolve_bam_path ($_) } split(/\,/, $self->bams);
     my @labels = split(/\,/,$self->labels);
 
     unless (@bams == @labels){
@@ -98,7 +98,7 @@ XML
 
     my $i=0;    
     for($i=0;$i<@bams;$i++){
-        my $path = resolve_bam_path($bams[$i]);
+        my $path = $bams[$i];
         $header .= <<"XML";
      <Resource path="$path" relativePath="false"/>
 XML
@@ -124,7 +124,7 @@ XML
     my $panels;
 
     for($i=0;$i<@bams;$i++){
-        my $path = resolve_bam_path($bams[$i]);
+        my $path = $bams[$i];
         my $label = $labels[$i];
         my $cov = $path . "_coverage";
 

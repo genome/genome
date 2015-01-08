@@ -73,10 +73,7 @@ sub bams {
 
 sub bam_paths {
     my $self = shift;
-    return join(',', map {
-        my $u = URI->new($_, $ENV{GENOME_SYS_SERVICES_FILES_URL});
-        $u->abs($ENV{GENOME_SYS_SERVICES_FILES_URL})->as_string;
-    } values %{$self->bams});
+    return join(',', map {URI->new_abs($_, $ENV{GENOME_SYS_SERVICES_FILES_URL})->as_string} values %{$self->bams});
 }
 
 sub bam_labels {
