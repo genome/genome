@@ -14,4 +14,8 @@ class Genome::Model::Tools::CopyCat::List {
     doc => 'List CopyCat annotation data sets',
 };
 
+sub _hint_string {
+    return '';
+}
+
 1;
