@@ -54,6 +54,10 @@ class Genome::VariantReporting::Framework::MergeReports {
             is => 'Genome::Process',
             id_by => 'process_id',
         },
+        user => {
+            is => 'Genome::Process',
+            id_by => 'process_id',
+        },
     ],
 };
 

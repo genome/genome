@@ -37,6 +37,10 @@ class Genome::VariantReporting::Command::Wrappers::CreateIgvSession {
             is => 'Genome::Process',
             id_by => 'process_id',
         },
+        user => {
+            is => 'Genome::Process',
+            id_by => 'process_id',
+        },
     ],
 };
 

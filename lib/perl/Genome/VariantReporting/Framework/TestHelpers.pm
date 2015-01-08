@@ -16,6 +16,7 @@ use Params::Validate qw(validate validate_pos :types);
 use Genome::Test::Factory::Model::SomaticVariation;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
+use Genome::Test::Factory::Process;
 use Genome::File::Vcf::Differ;
 use Genome::Utility::Test;
 use File::Slurp qw(write_file);
@@ -158,6 +159,8 @@ sub test_xml {
 sub test_dag_execute {
     my ($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $test_file) = @_;
 
+    my $process = Genome::Test::Factory::Process->setup_object();
+
     my $plan_file = File::Spec->join($test_file . '.d', 'plan.yaml');
     my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->
         create_from_file($plan_file);
@@ -172,6 +175,7 @@ sub test_dag_execute {
         input_vcf => $input_vcf,
         variant_type => $variant_type,
         plan_json => $plan->as_json,
+        process_id => $process->id,
     );
     my $vcf_path = $output->{output_vcf};
     my $differ = Genome::File::Vcf::Differ->new($vcf_path, $expected_vcf);

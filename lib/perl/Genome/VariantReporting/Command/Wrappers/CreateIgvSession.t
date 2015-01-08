@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
+use Genome::Test::Factory::Process;
 use Sub::Install qw(reinstall_sub);
 
 use Genome::VariantReporting::Framework::FileLookup;
@@ -54,11 +55,15 @@ my $_JSON_CODEC = new JSON->allow_nonref;
 my $merged_report = Genome::VariantReporting::Framework::Component::Report::MergedReport->__define__(
 );
 
+my $process = Genome::Test::Factory::Process->setup_object();
+
 my $cmd = $pkg->create(
     bam_hash_json => $_JSON_CODEC->canonical->encode($bams),
     genome_name => "TEST",
     reference_name => "GRCh37-lite-build37",
     merged_bed_reports => [$merged_report],
+    process_id => $process->id,
+    label => 'igv_session',
 );
 
 ok($cmd->execute, "Command executed ok");
