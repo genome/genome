@@ -98,8 +98,7 @@ XML
 
     my $i=0;    
     for($i=0;$i<@bams;$i++){
-        my $uri = URI->new($bams[$i]);
-        my $path = $uri->scheme ? $bams[$i] : abs_path($bams[$i]);
+        my $path = resolve_bam_path($bams[$i]);
         $header .= <<"XML";
      <Resource path="$path" relativePath="false"/>
 XML
@@ -125,7 +124,7 @@ XML
     my $panels;
 
     for($i=0;$i<@bams;$i++){
-        my $path = abs_path($bams[$i]);
+        my $path = resolve_bam_path($bams[$i]);
         my $label = $labels[$i];
         my $cov = $path . "_coverage";
 
@@ -173,6 +172,24 @@ XML
     
 return 1;
     
+}
+
+sub resolve_bam_path {
+    my $bam = shift;
+    my $uri = URI->new($bam);
+    my $path;
+    if (defined($uri->scheme)) {
+        if ($uri->scheme eq 'file') {
+            $path = abs_path($uri->path);
+        }
+        else {
+            $path = $uri->as_string;
+        }
+    }
+    else {
+        $path = abs_path($bam);
+    }
+    return $path;
 }
 
 
