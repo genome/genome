@@ -84,6 +84,7 @@ class Genome::Model::Build::ReferenceSequence {
         combines => {
             is => 'Genome::Model::Build::ReferenceSequence',
             doc => 'If specified, merges several other references into one.', 
+            is_many => 1,
         },
     ],
     has_many_optional => [

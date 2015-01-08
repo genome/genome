@@ -24,6 +24,13 @@ class Genome::Config::AnalysisProject::Command::AddConfigFile {
             doc => 'Reprocess any existing instrument data with the new config',
         },
     ],
+    has_optional_input => [
+        tag => {
+            is => 'Genome::Config::Tag',
+            is_many => 1,
+            doc => 'Optional tags to add',
+        }
+    ]
 };
 
 sub help_brief {
@@ -54,6 +61,8 @@ sub execute {
         status => $status,
     );
 
+    $self->_apply_tags($result);
+
     if($self->reprocess_existing){
         $self->_mark_instrument_data_bridges;
     }
@@ -66,6 +75,14 @@ sub _mark_instrument_data_bridges {
     my $analysis_project = $self->analysis_project;
     for my $bridge ($analysis_project->analysis_project_bridges){
         $bridge->status('new');
+    }
+    return 1;
+}
+
+sub _apply_tags {
+    my ($self, $profile_item) = @_;
+    for my $tag ($self->tag){
+        $profile_item->add_tag($tag);
     }
     return 1;
 }

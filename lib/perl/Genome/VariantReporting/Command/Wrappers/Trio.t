@@ -55,6 +55,17 @@ reinstall_sub( {
     }
 );
 
+use Genome::VariantReporting::Command::Wrappers::ModelPair;
+reinstall_sub({
+    into => "Genome::VariantReporting::Command::Wrappers::ModelPair",
+    as => "get_library_names",
+    code => sub {return [qw(
+        TEST-patient1-somval_tumor1-extlib
+        TEST-patient1-somval_tumor2-extlib
+        TEST-patient1-somval_normal1-extlib
+    )]},
+});
+
 my $cmd = $pkg->create(
     models => [$discovery_build->model, $followup_build->model, $normal_build->model],
     coverage_models => [$discovery_build->model, $followup_build->model, $normal_build->model],

@@ -66,7 +66,7 @@ sub _sort_detector_output {
 }
 
 sub versions {
-    return Genome::Model::Tools::Bsmap::MethRatioWorkflow->available_methratio_versions;
+    return Genome::Model::Tools::Bsmap::MethRatio->available_methratio_versions;
 }
 
 sub default_chromosome_list {
@@ -115,7 +115,7 @@ __DATA__
   <link fromOperation="MethRatio" fromProperty="output_directory" toOperation="output connector" toProperty="output" />
 
   <operation name="MethRatio" parallelBy="chromosome">
-    <operationtype commandClass="Genome::Model::Tools::Bsmap::MethRatioWorkflow" typeClass="Workflow::OperationType::Command" />
+    <operationtype commandClass="Genome::Model::Tools::Bsmap::MethRatio" typeClass="Workflow::OperationType::Command" />
   </operation>
 
   <operationtype typeClass="Workflow::OperationType::Model">

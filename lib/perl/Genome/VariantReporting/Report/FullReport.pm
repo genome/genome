@@ -7,7 +7,39 @@ use List::Util qw( min );
 use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(per_sample_vaf_headers per_library_vaf_headers);
 
 class Genome::VariantReporting::Report::FullReport {
-    is => [ 'Genome::VariantReporting::Report::WithHeader', 'Genome::VariantReporting::Framework::Component::WithManySampleNames', 'Genome::VariantReporting::Framework::Component::WithManyLibraryNames'],
+    is => [
+        'Genome::VariantReporting::Report::WithHeader',
+        'Genome::VariantReporting::Framework::Component::WithManySampleNames',
+        'Genome::VariantReporting::Framework::Component::WithManyLibraryNames'
+    ],
+    has_input => [
+        sample_names => {
+            is => 'Text',
+            is_many => 1,
+            is_translated => 1,
+            doc => 'List of sample names to be used in the report',
+        },
+        sample_name_labels => {
+            is => 'HASH',
+            is_translated => 1,
+            is_optional => 1,
+            default => {},
+            doc => 'Hash of sample_name to label',
+        },
+        library_names => {
+            is => 'Text',
+            is_many => 1,
+            is_translated => 1,
+            doc => 'List of library names to be used in the report',
+        },
+        library_name_labels => {
+            is => 'HASH',
+            is_translated => 1,
+            is_optional => 1,
+            default => {},
+            doc => 'Hash of library_name to label',
+        }
+    ],
     doc => "Extensive tab-delimited report covering a set of one or more samples",
 };
 

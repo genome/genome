@@ -121,13 +121,18 @@ sub get_refalign_bam {
 sub get_ROI_bed{
   my $self = shift;
   my $refalign = shift;
+
   if($self->roi_bed) {
     return $self->roi_bed;
-  } elsif($refalign->last_succeeded_build->region_of_interest_set_bed_file) {
-    return $refalign->last_succeeded_build->region_of_interest_set_bed_file;
-  } else {
-    die $self->error_message("Unable to find ROI_set_bed file for " . $refalign->name);
   }
+
+  my $bed_path = Genome::Sys->create_temp_file_path();
+  my $roi_bed_file = $refalign->last_succeeded_build->region_of_interest_set_bed_file($bed_path);
+  if ($roi_bed_file) {
+    return $roi_bed_file;
+  }
+
+  die $self->error_message("Unable to find ROI_set_bed file for " . $refalign->name);
 }
 
 sub call_cnmops {

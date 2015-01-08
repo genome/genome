@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Framework::Component::WithManyLibraryNames {
     is => ['Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
-    has_transient_optional => [
+    has => [
         library_names => {
             is => 'Text',
             is_many => 1,
@@ -16,6 +16,7 @@ class Genome::VariantReporting::Framework::Component::WithManyLibraryNames {
         library_name_labels => {
             is => 'HASH',
             is_translated => 1,
+            is_optional => 1,
             default => {},
             doc => 'Hash of library_name to label',
         }
