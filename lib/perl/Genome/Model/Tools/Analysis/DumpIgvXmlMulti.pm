@@ -7,7 +7,7 @@ use Genome;
 use Command;
 use IO::File;
 use Cwd qw(abs_path);
-use URI::URL;
+use URI;
 
 class Genome::Model::Tools::Analysis::DumpIgvXmlMulti {
     is => 'Command',
