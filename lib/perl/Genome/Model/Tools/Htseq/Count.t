@@ -4,6 +4,7 @@ use warnings;
 use above "Genome";
 use Test::More tests => 20;
 use Genome::Model::Tools::Htseq::Count;
+use Genome::Test::Factory::SoftwareResult::User;
 
 $ENV{UR_DBI_NO_COMMIT} = 1;
 
@@ -27,6 +28,7 @@ else {
     ok(-d $test_outdir, "created test output directory");
 }
 
+
 # find the test alignment result
 
 #my $b = Genome::Model::Build->get(133351985);
@@ -35,6 +37,15 @@ else {
 my $a = Genome::InstrumentData::AlignmentResult->get(135770173);
 ok($a, "got alignment result " . $a->__display_name__);
 is($a->instrument_data->library->transcript_strand('unstranded'), 'unstranded', 'set transcript_strand on library');
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $a->reference_build,
+);
+
+my @result_user_params = (
+    requestor => $result_users->{requestor},
+    sponsor => $result_users->{sponsor},
+);
 
 # The tool works with the alignment result output_dir by default
 # but will take a shortcut and use the scratch sorted BAM if it exists.
@@ -74,6 +85,7 @@ my $command = Genome::Model::Tools::Htseq::Count->execute(
     app_version => '0.5.4p1',
     result_version => 1,
     limit => 2000,
+    @result_user_params,
 );
 ok($command, "got command");
 #UR::Context->commit;
@@ -110,6 +122,7 @@ is($found_result_after, $new_result, "it matches the result returned from the to
 
 # remove the new result to make sure removal works
 # because we have no-commit turned on it will be removed at test exit regardless.
+map { $_->active(0) } $found_result_after->users;
 $found_result_after->delete;
 ok($found_result_after->isa("UR::DeletedRef"), "deletion worked");
 
