@@ -19,9 +19,11 @@ my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::VafInterpreter';
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
+my $library_names = [qw(Solexa-135853 Solexa-135852)];
 
 subtest "one alt allele" => sub {
-    my $interpreter = $pkg->create(sample_name => "S1");
+    my $interpreter = $pkg->create(sample_name => "S1",
+        library_names => $library_names);
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
     my %expected = (
@@ -44,7 +46,8 @@ subtest "one alt allele" => sub {
 };
 
 subtest "insertion" => sub {
-    my $interpreter = $pkg->create(sample_name => "S4");
+    my $interpreter = $pkg->create(sample_name => "S4",
+        library_names => $library_names);
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
     my %expected = (
@@ -67,7 +70,8 @@ subtest "insertion" => sub {
 };
 
 subtest "deletion" => sub {
-    my $interpreter = $pkg->create(sample_name => "S1");
+    my $interpreter = $pkg->create(sample_name => "S1",
+        library_names => $library_names);
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
     my %expected = (
