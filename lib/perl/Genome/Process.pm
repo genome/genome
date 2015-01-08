@@ -227,6 +227,11 @@ sub _schedule_process {
 
 sub create {
     my $class = shift;
+
+    if ($class->__meta__->is_abstract) {
+        return $class->SUPER::create(@_); #UR will re-call with the concrete class.
+    }
+
     # we do not support creating from a boolexpr because the boolexpr logic
     # will silently filter out some invalid param-values.
     my %params = @_;
