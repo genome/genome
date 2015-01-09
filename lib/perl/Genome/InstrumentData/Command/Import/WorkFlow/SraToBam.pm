@@ -187,7 +187,7 @@ sub merge_unaligned_fastq_into_bam {
     my $unaligned_bam = $unaligned_fastq.'.bam';
 
     my $conversion_ok = $self->convert_fastq_to_bam(
-        $self->library->sample->name,
+        $self->sample_name,
         $unaligned_fastq, $unaligned_bam);
     if ($conversion_ok) {
         $self->debug_message('Convert unaligned fastq to bam...done');
