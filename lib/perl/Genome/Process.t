@@ -128,33 +128,3 @@ while (my ($subdir, $test_info) = each %tests) {
 }
 
 done_testing();
-
-sub compare {
-    my ($original_dir, $other_dir) = @_;
-
-    my @diffs;
-    Genome::Utility::File::DirCompare->compare(
-        $original_dir,
-        $other_dir,
-        sub {
-            my ($original_file, $other_file) = @_;
-            if (! $original_file) {
-                push @diffs, sprintf(
-                    'Additional file %s in directory %s',
-                    File::Spec->abs2rel($other_file, $other_dir), $other_dir
-                );
-            } elsif (! $other_file) {
-                push @diffs, sprintf(
-                    'Missing file %s in directory %s',
-                    File::Spec->abs2rel($original_file, $original_dir), $other_dir
-                );
-            } else {
-                push @diffs, sprintf(
-                    'File content changed for file %s (diff -u %s %s)',
-                    File::Spec->abs2rel($original_file, $original_dir), $original_file, $other_file
-                );
-            }
-        },
-    );
-    return @diffs;
-}
