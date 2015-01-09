@@ -676,51 +676,48 @@ sub _compare_output_directories {
         sub {
             my ($other_file, $file) = @_;
             my $template = 'no %s %s found for process %s';
-            if (! $file) {
-                if (-f $other_file) {
-                    $diffs{abs_path($other_file)} = sprintf(
+            my $other_target = defined($other_file)? abs_path($other_file) : undef;
+            my $target = defined($file) ? abs_path($file) : undef;
+            if (! $target) {
+                if (-f $other_target) {
+                    $diffs{$other_target} = sprintf(
                         $template,
                         'file', File::Spec->abs2rel($other_file, $other_output_dir), $self->id
                     );
                 }
-                elsif (-d $other_file) {
+                elsif (-d $other_target) {
                     $diffs{File::Spec->abs2rel($other_file, $other_output_dir)} = sprintf(
                         $template,
                         'directory', File::Spec->abs2rel($other_file, $other_output_dir), $self->id
                     );
                 }
-            } elsif (! $other_file) {
-                if (-f $file) {
-                    $diffs{abs_path($file)} = sprintf(
+            } elsif (! $other_target) {
+                if (-f $target) {
+                    $diffs{$target} = sprintf(
                         $template,
                         'file', File::Spec->abs2rel($file, $output_dir), $other_process->id
                     );
                 }
-                elsif (-d $file) {
+                elsif (-d $target) {
                     $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
                         $template,
                         'directory', File::Spec->abs2rel($other_file, $other_output_dir), $self->id
                     );
                 }
             } else {
-                #Resolve possible symlinks
-                my $other_target = abs_path($other_file);
-                my $target = abs_path($file);
-                if (-l $file || -l $other_file) {
-                    if (-d $target && -d $other_target) {
-                        my %additional_diffs = $self->_compare_output_directories($target, $other_target, $other_process);
-                        %diffs = (%diffs, %additional_diffs);
-                        return;
-                    }
-                    elsif (-f $target && -f $other_target && !compare($target, $other_target)) {
-                        #Files are in fact the same - do nothing
-                        return;
-                    }
+                if (-d $target && -d $other_target) {
+                    my %additional_diffs = $self->_compare_output_directories($target, $other_target, $other_process);
+                    %diffs = (%diffs, %additional_diffs);
                 }
-                $diffs{$other_target} = sprintf(
-                    'files are not the same (diff -u %s %s)',
-                    $target, $other_target
-                );
+                elsif (-f $target && -f $other_target && !compare($target, $other_target)) {
+                    #Files are in fact the same - do nothing
+                }
+                else {
+                    $diffs{$other_target} = sprintf(
+                        'files are not the same (diff -u %s %s)',
+                        $target, $other_target
+                    );
+                }
             }
         },
     );
