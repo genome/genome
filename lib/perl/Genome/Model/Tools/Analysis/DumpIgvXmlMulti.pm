@@ -7,6 +7,7 @@ use Genome;
 use Command;
 use IO::File;
 use Cwd qw(abs_path);
+use URI;
 
 class Genome::Model::Tools::Analysis::DumpIgvXmlMulti {
     is => 'Command',
@@ -74,7 +75,7 @@ sub execute {
     my @review_bed_files = map { abs_path($_) }$self->review_bed_files;
     my $reference_name = $self->reference_name;
 
-    my @bams = split(/\,/,$self->bams);
+    my @bams = map { resolve_bam_path ($_) } split(/\,/, $self->bams);
     my @labels = split(/\,/,$self->labels);
 
     unless (@bams == @labels){
@@ -97,7 +98,7 @@ XML
 
     my $i=0;    
     for($i=0;$i<@bams;$i++){
-        my $path = abs_path($bams[$i]);
+        my $path = $bams[$i];
         $header .= <<"XML";
      <Resource path="$path" relativePath="false"/>
 XML
@@ -123,7 +124,7 @@ XML
     my $panels;
 
     for($i=0;$i<@bams;$i++){
-        my $path = abs_path($bams[$i]);
+        my $path = $bams[$i];
         my $label = $labels[$i];
         my $cov = $path . "_coverage";
 
@@ -171,6 +172,24 @@ XML
     
 return 1;
     
+}
+
+sub resolve_bam_path {
+    my $bam = shift;
+    my $uri = URI->new($bam);
+    my $path;
+    if (defined($uri->scheme)) {
+        if ($uri->scheme eq 'file') {
+            $path = abs_path($uri->path);
+        }
+        else {
+            $path = $uri->as_string;
+        }
+    }
+    else {
+        $path = abs_path($bam);
+    }
+    return $path;
 }
 
 
