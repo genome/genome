@@ -679,31 +679,13 @@ sub _compare_output_directories {
             my $other_target = defined($other_file)? abs_path($other_file) : undef;
             my $target = defined($file) ? abs_path($file) : undef;
             if (! $target) {
-                if (-f $other_target) {
-                    $diffs{$other_target} = sprintf(
-                        $template,
-                        'file', File::Spec->abs2rel($other_file, $other_output_dir), $self->id
-                    );
-                }
-                elsif (-d $other_target) {
-                    $diffs{File::Spec->abs2rel($other_file, $other_output_dir)} = sprintf(
-                        $template,
-                        'directory', File::Spec->abs2rel($other_file, $other_output_dir), $self->id
-                    );
-                }
+                my $type = ( -f $other_target ? 'file' : 'directory' );
+                my $rel_path = File::Spec->abs2rel($other_file, $other_output_dir);
+                $diffs{$rel_path} = sprintf($template, $type, $rel_path, $self->id);
             } elsif (! $other_target) {
-                if (-f $target) {
-                    $diffs{$target} = sprintf(
-                        $template,
-                        'file', File::Spec->abs2rel($file, $output_dir), $other_process->id
-                    );
-                }
-                elsif (-d $target) {
-                    $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
-                        $template,
-                        'directory', File::Spec->abs2rel($other_file, $other_output_dir), $self->id
-                    );
-                }
+                my $type = ( -f $target ? 'file' : 'directory' );
+                my $rel_path = File::Spec->abs2rel($file, $output_dir);
+                $diffs{$rel_path} = sprintf($template, $type, $rel_path, $other_process->id);
             } else {
                 if (-d $target && -d $other_target) {
                     my %additional_diffs = $self->_compare_output_directories($target, $other_target, $other_process);
@@ -713,7 +695,7 @@ sub _compare_output_directories {
                     #Files are in fact the same - do nothing
                 }
                 else {
-                    $diffs{$other_target} = sprintf(
+                    $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
                         'files are not the same (diff -u %s %s)',
                         $target, $other_target
                     );
