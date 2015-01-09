@@ -172,7 +172,7 @@ sub create {
             for my $alignment (@alignments) {
                 my $library = $alignment->instrument_data->library;
 
-                push @{ $bams_per_library->{$library->id} }, $alignment->alignment_bam_file_paths;
+                push @{ $bams_per_library->{$library->id} }, $alignment->recreated_alignment_bam_file_paths;
                 $libraries->{$library->id} = $library;
             }
 
@@ -191,7 +191,7 @@ sub create {
         } else {
             #just collect the BAMs for a merge
             for my $alignment (@alignments) {
-                push @bams_for_final_merge, $alignment->alignment_bam_file_paths;
+                push @bams_for_final_merge, $alignment->recreated_alignment_bam_file_paths;
             }
         }
 

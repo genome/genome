@@ -1629,9 +1629,112 @@ sub verify_alignment_data {
 }
 
 sub alignment_bam_file_paths {
+    return glob(shift->output_dir . "/*.bam");
+}
+
+sub recreated_alignment_bam_file_paths {
     my $self = shift;
 
-    return glob($self->output_dir . "/*.bam");
+    my @bams = glob($self->output_dir . "/*.bam");
+    if (@bams) {
+        return @bams;
+    }
+
+    my $recreated_bam = File::Spec->join($self->output_dir, 'all_sequences.bam');
+    my $merged_bam    = $self->get_merged_bam_to_revivify_per_lane_bam;
+
+    unless ($merged_bam and -s $merged_bam) {
+        die $self->error_message('Failed to get valid merged bam to recreate per lane bam.');
+    }
+
+    my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
+        merged_bam          => $merged_bam,
+        per_lane_bam        => $recreated_bam,
+        instrument_data_id  => $self->instrument_data_id,
+        samtools_version    => $self->samtools_version,
+        picard_version      => $self->picard_version,
+        bam_header          => $self->bam_header_path,
+        comparison_flagstat => $self->flagstat_path,
+    );
+
+    unless ($cmd->execute) {
+        die $self->error_message('Failed to execute RecreatePerLaneBam');
+    }
+
+    if (-s $recreated_bam) {
+        return ($recreated_bam);
+    }
+    else {
+        die $self->error_message("After running RecreatePerLaneBam, no per-lane bam (%s) exists still!", $recreated_bam);
+    }
+}
+
+
+sub bam_header_path {
+    return File::Spec->join(shift->output_dir, 'all_sequences.bam.header');
+}
+
+
+sub flagstat_path {
+    return File::Spec->join(shift->output_dir, 'all_sequences.bam.flagstat');
+}
+
+
+sub get_merged_bam_to_revivify_per_lane_bam {
+    my $self = shift;
+    my $merged_result = $self->get_smallest_merged_alignment_result($self->get_unarchived_merged_alignment_results);
+
+    unless ($merged_result) {
+        $merged_result = $self->get_smallest_merged_alignment_result($self->get_merged_alignment_results);
+        $merged_result->_auto_unarchive;
+    }
+
+    my $merged_bam = $merged_result->merged_alignment_bam_path;
+    unless (-s $merged_bam) {
+        die $self->error_message("Merged bam (%s) does not exist for merged result id (%s)", $merged_bam, $merged_result->id);
+    }
+    return $merged_bam;
+}
+
+sub get_merged_alignment_results {
+    my $self = shift;
+    my @inputs = Genome::SoftwareResult::Input->get(value_id => $self->instrument_data_id);
+    my @software_results = map $_->software_result, @inputs;
+    my @merged = grep { $_->isa('Genome::InstrumentData::AlignmentResult::Merged') } @software_results;
+    if (defined $self->test_name) {
+        return grep { defined $_->test_name && ($_->test_name eq $self->test_name) } @merged; # return only merged alignment results in our same test name 'namespace'
+    }
+    else {
+        return grep {! defined $_->test_name}@merged;
+    }
+}
+
+sub get_unarchived_merged_alignment_results {
+    my $self = shift;
+    my @merged = $self->get_merged_alignment_results;
+    my @unarchived;
+    for my $merged (@merged) {
+        unless ( grep { $_->is_archived } $merged->disk_allocations ) {
+            push @unarchived, $merged;
+        }
+    }
+    return @unarchived;
+}
+
+sub get_smallest_merged_alignment_result {
+    my ($self, @results) = @_;
+    return unless @results;
+    my $smallest = $results[0];
+
+    for my $result (@results) {
+        my @current_id = $result->instrument_data;
+        my @smallest_id = $smallest->instrument_data;
+        if ( scalar(@current_id) < scalar(@smallest_id) ) {
+            $smallest = $result;
+        }
+    }
+
+    return $smallest;
 }
 
 sub requires_read_group_addition {
