@@ -675,30 +675,31 @@ sub _compare_output_directories {
         $output_dir,
         sub {
             my ($other_file, $file) = @_;
+            my $template = 'no %s %s found for process %s';
             if (! $file) {
                 if (-f $other_file) {
                     $diffs{abs_path($other_file)} = sprintf(
-                        'no file %s found for process %s',
-                        File::Spec->abs2rel($other_file, $other_output_dir), $self->id
+                        $template,
+                        'file', File::Spec->abs2rel($other_file, $other_output_dir), $self->id
                     );
                 }
                 elsif (-d $other_file) {
                     $diffs{File::Spec->abs2rel($other_file, $other_output_dir)} = sprintf(
-                        'no directory %s found for process %s',
-                        File::Spec->abs2rel($other_file, $other_output_dir), $self->id
+                        $template,
+                        'directory', File::Spec->abs2rel($other_file, $other_output_dir), $self->id
                     );
                 }
             } elsif (! $other_file) {
                 if (-f $file) {
                     $diffs{abs_path($file)} = sprintf(
-                        'no file %s found for process %s',
-                        File::Spec->abs2rel($file, $output_dir), $other_process->id
+                        $template,
+                        'file', File::Spec->abs2rel($file, $output_dir), $other_process->id
                     );
                 }
                 elsif (-d $file) {
                     $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
-                        'no directory %s found for process %s',
-                        File::Spec->abs2rel($other_file, $other_output_dir), $self->id
+                        $template,
+                        'directory', File::Spec->abs2rel($other_file, $other_output_dir), $self->id
                     );
                 }
             } else {
