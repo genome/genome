@@ -97,12 +97,15 @@ sub execute {
     $self->debug_message('Extract read group bam');
     $self->_extract_readgroup_bam($temp_bam);
 
-    $self->debug_message('Compare flagstat');
-    $self->_compare_flagstat($temp_bam, $flagstat);
+    $self->debug_message('Compare flagstat first time expect one diff');
+    $self->_compare_flagstat($temp_bam, $flagstat, 'diff');
 
     $self->debug_message('Revert bam Markdup tag');
     $self->_revert_markdup($temp_bam, $no_markdup_bam);
     
+    $self->debug_message('Compare flagstat second time expect no diff');
+    $self->_compare_flagstat($no_markdup_bam, $flagstat);
+
     $self->debug_message('Reheader bam');
     $self->_reheader_bam($no_markdup_bam, $bam_header);
     
@@ -136,7 +139,7 @@ sub _extract_readgroup_bam {
 
 
 sub _compare_flagstat {
-    my ($self, $temp_bam, $flagstat) = @_;
+    my ($self, $temp_bam, $flagstat, $diff) = @_;
 
     my $temp_flagstat = Genome::Sys->create_temp_file_path;
 
@@ -150,8 +153,17 @@ sub _compare_flagstat {
         die $self->error_message("Fail to run flagstat on $temp_bam");
     }
     
-    unless (compare($temp_flagstat, $flagstat) == 0) {
-        die $self->error_message("The bam flagstat from the extracting is different from the comparison flagstat $flagstat");
+    if ($diff) { #expect only one line diff on duplicates
+        my $diff_text = Genome::Sys->diff_file_vs_file($temp_flagstat, $flagstat);
+        my $diff_ct   = $diff_text =~ tr/\|//;
+        unless ($diff_ct == 1 and $diff_text =~ /\sduplicates/) {
+            die $self->error_message("The diff between extracting bam flagstat and the comparison flagstat $flagstat is not expected");
+        }
+    }
+    else {
+        unless (compare($temp_flagstat, $flagstat) == 0) {
+            die $self->error_message("The bam flagstat after reverting markdup is unexpectedly different from the comparison flagstat $flagstat");
+        }
     }
 }
 
