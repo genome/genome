@@ -12,6 +12,7 @@ use above "Genome";
 use Test::More;
 use Sub::Install;
 use Genome::Utility::Test qw(compare_ok);
+use Genome::Test::Factory::SoftwareResult::User;
 use File::Slurp qw(write_file);
 my $class = 'Genome::Model::Build::ReferenceSequence::ConvertedBedResult';
 
@@ -29,11 +30,16 @@ my $bed_path = Genome::Sys->create_temp_file_path;
 write_file($bed_path, "Some content!\n");
 note("Wrote some content to bed at ($bed_path)");
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
+
 my $result = $class->get_or_create(
     source_reference => $reference_build,
     target_reference => $reference_build,
     source_bed => $bed_path,
     source_md5 => Genome::Sys->md5sum($bed_path),
+    users => $result_users,
 );
 
 ok($result, "Got a software result");

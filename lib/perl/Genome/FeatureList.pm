@@ -421,11 +421,17 @@ sub generate_converted_bed_file {
     }
     my $original_md5 = Genome::Sys->md5sum($original_file_path);
 
+    my $result_users = delete($args{result_users});
+    $result_users->{'feature-list'} = $self;
+    $result_users->{requestor}    ||= $reference;
+    $result_users->{sponsor}      ||= Genome::Sys->current_user;
+
     my $sr = Genome::Model::Build::ReferenceSequence::ConvertedBedResult->get_or_create(
         source_reference => $self->reference,
         target_reference => $reference,
         source_bed => $original_file_path,
         source_md5 => $original_md5,
+        users => $result_users,
     );
 
     my $converted_file_path = delete($args{file_path});

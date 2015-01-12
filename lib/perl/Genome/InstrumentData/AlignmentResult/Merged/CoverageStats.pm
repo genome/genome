@@ -8,7 +8,7 @@ use Sys::Hostname;
 use File::Path;
 
 class Genome::InstrumentData::AlignmentResult::Merged::CoverageStats {
-    is => ['Genome::SoftwareResult::Stageable'],
+    is => ['Genome::SoftwareResult::Stageable', 'Genome::SoftwareResult::WithNestedResults'],
     has_input => [
         alignment_result_id => {
             is => 'Number',
@@ -204,6 +204,7 @@ sub _dump_bed_file {
             alternate_reference => $alt_reference,
             merge => $merge_status,
             short_name => $use_short_names,
+            result_users => $self->_user_data_for_nested_results,
         );
         if ($self->roi_track_name) {
             $dump_params{track_name} = $self->roi_track_name;
