@@ -210,7 +210,7 @@ sub _validate_parallel_by_destination {
     if (defined($self->source) && defined($self->destination)) {
         if (defined($self->destination->parallel_by) &&
             $self->destination->parallel_by eq $self->destination_property) {
-            unless ($self->source->is_many_property($self->source_property)) {
+            unless ($self->source->is_many_property($self->source_property) or $self->source->parallel_by eq $self->source_property) {
                 die $self->error_message(sprintf(
                     "Source property '%s' (%s) is not is_many for parallel_by "
                     . "destination property '%s' (%s)",
