@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result;
+package Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase::Result;
 
 use Genome;
 use strict;
