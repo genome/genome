@@ -247,7 +247,7 @@ sub _resolve_lock_owner_details {
 
 sub has_lock {
     my ($self, $resource_lock) = @_;
-    return $$self->owned_resources->{$resource_lock};
+    return exists $self->owned_resources->{$resource_lock};
 }
 
 sub is_my_lock_target {
