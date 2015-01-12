@@ -13,6 +13,7 @@ use Test::More;
 use above 'Genome';
 
 use Genome::Utility::Test qw(compare_ok);
+use Genome::Test::Factory::SoftwareResult::User;
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -44,12 +45,17 @@ my $vcf_file = "$test_data_dir/multisample.vcf.gz";
 my $ensembl_annotation_build_id = $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD};
 my $annotation_build = Genome::Model::Build->get($ensembl_annotation_build_id);
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $annotation_build->reference_sequence,
+);
+
 my $parallel_cmd = $pkg->create(
         input_vcf => $vcf_file,
         ensembl_annotation_build => $annotation_build,
         log_dir => $logdir,
         work_dir => $workdir,
         output_file => $parallel_output_file,
+        analysis_build => $result_users->{requestor},
     );
 ok($parallel_cmd, "Created command object");
 ok($parallel_cmd->execute, "Executed command");
@@ -64,6 +70,7 @@ my $orig_cmd = Genome::Db::Ensembl::Command::Vep->create(
     polyphen => "b",
     sift => "b",
     quiet => 1,
+    analysis_build => $result_users->{requestor},
 );
 
 my $orig_result = $orig_cmd->execute();

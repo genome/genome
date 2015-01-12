@@ -297,7 +297,8 @@ sub _create_workflow {
                 work_dir => $vep_work_directory,
                 ensembl_annotation_build => $ensembl_annotation_build,
                 log_dir => $log_dir,
-
+                analysis_build => $self->build,
+                analysis_project => $self->build->model->analysis_projects,
                 #input_file => $multisample_vcf,
                 #output_file => $vep_annotation_file_path,
                 #format => "vcf",

@@ -33,6 +33,7 @@ class Genome::Model::PhenotypeCorrelation::Command::VepWrapper {
             doc => "The final merged output file",
         },
     ],
+    has_optional_input => Genome::Db::Ensembl::Command::Run::Base->result_user_inputs(),
 };
 
 sub help_synopsis {
@@ -67,6 +68,7 @@ sub execute {
         polyphen => "b",
         sift => "b",
         quiet => 1,
+        map { ($_, $self->$_) } keys %{ Genome::Db::Ensembl::Command::Run::Base->result_user_inputs() },
     );
 
     return $vep_command->execute;
