@@ -214,7 +214,21 @@ class Genome::Db::Ensembl::Command::Run::Base {
             doc => 'Pick one best transcript',
         },
     ],
-    has_optional => {
+    has_optional => __PACKAGE__->result_user_inputs(),
+    has_transient_optional => [
+        _workspace => {
+            is => 'Text',
+            doc => "temporary to put cache and config files expected by vep",
+        },
+        _plugins_workspace => {
+            is => 'Text',
+            doc => "path to plugins config directory in workspace",
+        },
+    ],
+};
+
+sub result_user_inputs {
+    return {
         analysis_project => {
             is => 'Genome::Config::AnalysisProject',
             doc => "The analysis project for the present query",
@@ -227,18 +241,8 @@ class Genome::Db::Ensembl::Command::Run::Base {
             is => 'Genome::Process',
             doc => 'The process (if any) running this analysis',
         },
-    },
-    has_transient_optional => [
-        _workspace => {
-            is => 'Text',
-            doc => "temporary to put cache and config files expected by vep",
-        },
-        _plugins_workspace => {
-            is => 'Text',
-            doc => "path to plugins config directory in workspace",
-        },
-    ],
-};
+    };
+}
 
 sub help_brief {
     'Tool to run Ensembl VEP (Variant Effect Predictor)';
