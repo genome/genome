@@ -140,6 +140,8 @@ sub params_for_result {
         $merge_regions = $merge_regions_input->value_id;
     }
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+
     return (
         alignment_result_id => $alignment_result->id,
         region_of_interest_set_id => $fl->id,
@@ -151,6 +153,7 @@ sub params_for_result {
         merge_contiguous_regions => $pp->refcov_merge_roi_regions,
         roi_track_name => ($pp->refcov_roi_track_name || undef),
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        users => $result_users,
     );
 }
 

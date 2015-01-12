@@ -115,6 +115,10 @@ sub params_for_result {
     if ($roi_track_name_input) {
         $roi_track_name = $roi_track_name_input->value_id;
     }
+
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{uses} = $build;
+
     return (
         alignment_result_id => $build->merged_alignment_result->id,
         region_of_interest_set_id => $fl->id,
@@ -126,6 +130,7 @@ sub params_for_result {
         merge_contiguous_regions => $merge_regions,
         roi_track_name => ($roi_track_name || undef),
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        users => $result_users,
     );
 }
 
@@ -135,7 +140,6 @@ sub link_result_to_build {
     my $build = $self->build;
 
     Genome::Sys->create_symlink($result->output_dir, $build->reference_coverage_directory);
-    $result->add_user(label => 'uses', user => $build);
 
     return 1;
 }
