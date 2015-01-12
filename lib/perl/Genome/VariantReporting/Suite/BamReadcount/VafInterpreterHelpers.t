@@ -21,12 +21,11 @@ subtest 'custom_vaf_sort - one sample' => sub {
         headers => [shuffle(@headers)],
         sample_names => ['sample'],
     );
-     is_deeply(
+    is_deeply(
         [@sorted_headers],
         [@headers],
         'Sample vaf headers sorted as expected'
     );
-     is_deeply([@sorted_headers], [@headers], 'Sample vaf headers sorted as expected');
 };
 
 subtest 'custom_vaf_sort - multiple samples' => sub {
