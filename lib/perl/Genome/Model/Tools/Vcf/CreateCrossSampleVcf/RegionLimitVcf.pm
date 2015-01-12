@@ -13,13 +13,6 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::RegionLimitVcf {
             doc => 'This is currently only used as a pass-through in one of the workflows.',
             is_output => 1,
         },
-        build => {
-            is => 'Genome::Model::Build',
-            id_by => 'build_id',
-        },
-        build_id => {
-            via => 'build_clump',
-        },
         variant_type => {
             is => 'Text',
             default => 'snvs',
@@ -47,6 +40,15 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::RegionLimitVcf {
     has_optional_output => [
         output_vcf => {
             is => 'Path',
+        },
+    ],
+    has => [
+        build => {
+            is => 'Genome::Model::Build',
+            id_by => 'build_id',
+        },
+        build_id => {
+            via => 'build_clump',
         },
     ],
 };
