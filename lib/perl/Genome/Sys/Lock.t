@@ -269,7 +269,7 @@ sub random_string {
 
 sub localize_backend_changes {
     my $sub = shift;
-    my %old_backends = Genome::Sys::Lock::backends();
+    my %old_backends = Genome::Sys::Lock::all_backends();
 
     $sub->();
 

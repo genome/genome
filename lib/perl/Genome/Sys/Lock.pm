@@ -66,6 +66,7 @@ my %RESOURCE_LOCK_SCOPE;
 sub lock_resource {
     my $class = shift;
     my %args = with_default_lock_resource_args(@_);
+    validate_scope($args{scope});
 
     if (exists $RESOURCE_LOCK_SCOPE{$args{resource_lock}}
         && $RESOURCE_LOCK_SCOPE{$args{resource_lock}} ne $args{scope}) {
@@ -184,21 +185,22 @@ my $backends = {};
 sub backends {
     my $scope = shift;
 
-    if (!defined($scope)) {
-        return %$backends;
+    validate_scope($scope);
 
-    } elsif (exists $backends->{$scope}) {
+    if (exists $backends->{$scope}) {
         return @{$backends->{$scope}};
-
     } else {
-        Carp::confess(sprintf(
-                'Unknown locking scope (%s) -- expected something in [%s].',
-                $scope, join(' ', scopes())));
+        Carp::confess(sprintf("No backends registered for scope '%s'",
+                $scope));
     }
 }
 
+sub all_backends {
+    return %$backends;
+}
+
 sub scopes {
-    return keys %$backends;
+    return ('site', 'tgisan', 'unknown');
 }
 
 sub clear_backends {
@@ -219,7 +221,17 @@ sub set_backends {
 
 sub add_backend {
     my ($class, $scope, $backend) = @_;
+    validate_scope($scope);
+
     push @{$backends->{$scope}}, $backend;
+}
+
+sub validate_scope {
+    my $scope = shift;
+    unless (grep {$scope eq $_} scopes()) {
+        Carp::confess(sprintf("Invalid scope '%s'.  Valid scopes are [%s].",
+                    $scope, join(', ', scopes())));
+    }
 }
 
 my $_cleanup_handler_installed;
