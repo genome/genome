@@ -3,6 +3,8 @@ package Genome::VariantReporting::Suite::BamReadcount::Adaptor;
 use strict;
 use warnings FATAL => 'all';
 use Genome;
+use version 0.77;
+use Params::Validate qw(validate_pos);
 
 class Genome::VariantReporting::Suite::BamReadcount::Adaptor {
     is => 'Genome::VariantReporting::Framework::Component::Adaptor',
@@ -24,23 +26,42 @@ class Genome::VariantReporting::Suite::BamReadcount::Adaptor {
         },
         minimum_base_quality => {
             is => 'Integer',
-            doc => "don't include reads where the base quality is less than this. This is the -b parameter. This is only available in versions 0.3 and later.",
+            doc => "don't include reads where the base quality is less than this. This is the -b parameter.",
         },
         max_count => {
             is  => 'Integer',
-            doc => "max depth to avoid excessive memory. This is the -d parameter in version 0.5.",
+            doc => "max depth to avoid excessive memory. This is the -d parameter.",
         },
         per_library => {
             is  => 'Boolean',
-            doc => "report results per library. This is the -p parameter in version 0.5.",
+            doc => "report results per library. This is the -p parameter.",
         },
         insertion_centric => {
             is  => 'Boolean',
-            doc => "do not include reads containing insertions after the current position in per-base counts. This is the -i parameter in version 0.5.",
+            doc => "do not include reads containing insertions after the current position in per-base counts. This is the -i parameter.",
         },
     ],
     doc => 'Add bam readcount information to a vcf',
 };
+
+my $MIN_VERSION = '0.7';
+
+sub __planned_output_errors__ {
+    my ($self, $params) = validate_pos(@_, 1, 1);
+
+    my @errors = $self->SUPER::__planned_output_errors__($params);
+
+    if (version->parse("v".$params->{version}) < version->parse("v$MIN_VERSION")) {
+        push @errors, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['version'],
+            desc => sprintf("The BamReadcount expert requires version (%s) ".
+                    "or higher, but you supplied version (%s).",
+                    $MIN_VERSION, $params->{version} || 'undef'),
+        );
+    }
+    return @errors;
+}
 
 sub name {
     "bam-readcount";

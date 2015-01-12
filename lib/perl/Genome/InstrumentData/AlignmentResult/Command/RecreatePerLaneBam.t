@@ -24,22 +24,23 @@ my $out_base = 'all_sequences.bam';
 my $out_dir  = Genome::Sys->create_temp_directory();
 my $out_bam  = File::Spec->join($out_dir, $out_base);
 
+map{ok(copy($test_dir."/$out_base.$_", $out_dir),"$_ copied")}qw(header flagstat);
+
 my %params = (
-    merged_bam         => File::Spec->join($test_dir, 'test.bam'),
-    instrument_data_id => $id,
-    per_lane_bam       => $out_bam,
-    samtools_version   => 'r982',
-    picard_version     => '1.82',
+    merged_bam          => File::Spec->join($test_dir, 'test.bam'),
+    instrument_data_id  => $id,
+    per_lane_bam        => $out_bam,
+    samtools_version    => 'r982',
+    picard_version      => '1.82',
+    bam_header          => File::Spec->join($out_dir, $out_base.'.header'),
+    comparison_flagstat => File::Spec->join($out_dir, $out_base.'.flagstat'),
 );
 
 subtest 'testing command failure with invalid input' => sub {
-    my $cmd = $pkg->create(
-        merged_bam         => 'no.bam',
-        per_lane_bam       => 'Fake.bam',
-        instrument_data_id => $id,
-        samtools_version   => 'r982',
-        picard_version     => '1.82',
-    );
+    my %test_params = %params;
+    $test_params{merged_bam}   = 'NO.BAM';
+    $test_params{per_lane_bam} = 'FAKE.BAM';
+    my $cmd = $pkg->create(%test_params);
     dies_ok(sub {$cmd->execute}, 'Invalid input bam');
 };
 
@@ -57,9 +58,21 @@ subtest 'testing command failure with invalid picard version' => sub {
     ok(!$cmd->execute, 'Invalid picard version');
 };
 
-subtest 'testing command' => sub {
-    map{ok(copy($test_dir."/$out_base.$_", $out_dir),"$_ copied")}qw(header flagstat);
+subtest 'testing command failure with invalid bam_header' => sub {
+    my %test_params = %params;
+    $test_params{bam_header} = 'NO_BAM_HEADER';
+    my $cmd = $pkg->create(%test_params);
+    dies_ok(sub {$cmd->execute}, 'Invalid bam_header');
+};
 
+subtest 'testing command failure with invalid bam_header' => sub {
+    my %test_params = %params;
+    $test_params{comparison_flagstat} = 'NO_COMPARISON_FLAGSTAT';
+    my $cmd = $pkg->create(%test_params);
+    dies_ok(sub {$cmd->execute}, 'Invalid comparison_flagstat');
+};
+
+subtest 'testing command' => sub {
     my $cmd = $pkg->create(%params);
     ok($cmd->execute, "Executed $pkg");
 

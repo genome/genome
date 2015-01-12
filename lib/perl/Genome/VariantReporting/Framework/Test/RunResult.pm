@@ -49,10 +49,7 @@ sub _run {
         $self->__planned__,
     );
     while (my $entry = $reader->next) {
-        $entry->{info_fields} = {
-            hash => {TST => $some_info},
-            order => ['TST'],
-        },
+        $entry->set_info_field('TST', $some_info);
         $writer->write($entry);
     }
     $writer->close();
