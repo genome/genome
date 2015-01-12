@@ -9,7 +9,7 @@ use Workflow;
 use Workflow::Simple;
 
 class Genome::Model::PhenotypeCorrelation::Command::CaseControl::Unrelated {
-    is  => 'Command',
+    is  => 'Genome::Model::PhenotypeCorrelation::Command::Base',
     has_input => [
         multisample_vcf => {
             is => "String",

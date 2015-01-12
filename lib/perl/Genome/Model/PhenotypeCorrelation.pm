@@ -408,6 +408,7 @@ sub _execute_build {
 
     ##For now, simply pass the required items to the delegate class
     my %inputs = $self->_map_properties_to_delegate_inputs($delegate_class);
+    $inputs{build} = $build;
     my $delegate_obj = $delegate_class->create(%inputs);
     if($delegate_obj) {
         return $delegate_obj->execute;

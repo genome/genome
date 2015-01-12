@@ -7,7 +7,7 @@ use Carp 'confess';
 use Workflow::Simple;
 use Cwd;
 class Genome::Model::PhenotypeCorrelation::Command::Mendelian::FamilyBased {
-    is  => 'Command',
+    is  => 'Genome::Model::PhenotypeCorrelation::Command::Base',
     has_optional_input => [
     multisample_vcf => {
         is=>'Text',

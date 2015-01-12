@@ -9,6 +9,9 @@ use File::Slurp qw/read_file/;
 use Test::More;
 use above 'Genome';
 
+use Genome::Test::Factory::Model::PhenotypeCorrelation;
+use Genome::Test::Factory::Build;
+
 use warnings;
 use strict;
 BEGIN {
@@ -38,6 +41,12 @@ mkdir($new_dir);
 
 my $ensembl_annotation_build_id = $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD};
 my $annotation_build = Genome::Model::Build->get($ensembl_annotation_build_id);
+
+my $model = Genome::Test::Factory::Model::PhenotypeCorrelation->setup_object(
+    ensembl_annotation_build => $annotation_build,
+    reference_sequence_build => $annotation_build->reference_sequence,
+);
+my $build = Genome::Test::Factory::Build->setup_object(model_id => $model->id);
 
 test_with_clinical_data($old_dir, $old_clinical_data_file,
     case_label => "Invasive (high)",
@@ -82,6 +91,7 @@ sub test_with_clinical_data {
             identify_cases_by => $params{case_label},
             identify_controls_by =>  $params{control_label},
             per_site_report_file => $per_site_report,
+            build => $build,
         );
     ok($cmd, "Created command object");
     $cmd->dump_status_messages(1);

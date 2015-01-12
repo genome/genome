@@ -6,7 +6,7 @@ use warnings;
 use Carp 'confess';
 
 class Genome::Model::PhenotypeCorrelation::Command::Quantitative::Unrelated {
-    is  => 'Command',
+    is  => 'Genome::Model::PhenotypeCorrelation::Command::Base',
 };
 
 sub help_synopsis {
