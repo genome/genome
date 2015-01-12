@@ -74,6 +74,8 @@ reports:
                     - VarscanSomatic
                     - Sniper
                     - Strelka
+                    - Pindel
+                    - GatkSomaticIndel
                 sample_name: discovery_tumor
             'many-samples-vaf':
                 sample_name_labels: sample_name_labels
