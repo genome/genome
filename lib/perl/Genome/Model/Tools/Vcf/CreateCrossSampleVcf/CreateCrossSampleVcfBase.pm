@@ -89,8 +89,20 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase 
         output_vcf => {
             is_optional => 1,
             is => 'File',
-            calculate => q| File::Spec->join($output_directory, "$variant_type.merged.vcf.gz") |,
-            calculate_from => [qw(output_directory variant_type)],
+            calculate => q| File::Spec->join($output_directory, $output_vcf_filename) |,
+            calculate_from => [qw(output_directory output_vcf_filename)],
+        },
+        output_vcf_filename => {
+            is_optional => 1,
+            is => 'Text',
+            calculate => q| "$variant_type.merged.vcf.gz" |,
+            calculate_from => [qw(variant_type)],
+        },
+    ],
+    has_transient_optional => [
+        process => {
+            is => 'Genome::Process',
+            doc => 'The process for running the workflow',
         },
     ],
     doc => 'Base class used to create a combined vcf file for a model-group',
@@ -106,30 +118,54 @@ These 'back-filled' vcfs are then combined into a single multi-sample vcf.
 EOS
 }
 
-sub generate_result {
+sub _create_process {
     my ($self) = @_;
 
     $self->_resolve_joinx_version;
 
-    $self->debug_message("Resolving Builds...");
-    my $builds = $self->_resolve_builds;
+    my $builds = [$self->builds];
 
     $self->debug_message("Validating Inputs...");
     $self->_validate_inputs($builds);
 
+    $self->debug_message("Creating Process...");
+    my $process = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Process->create(
+        builds => $builds,
+        roi_list => $self->roi_list,
+        wingspan => $self->wingspan,
+        joinx_version => $self->joinx_version
+    );
+
+    $self->process($process);
+}
+
+sub generate_result {
+    my ($self, $staging_directory) = @_;
+
     $self->debug_message("Constructing Workflow...");
-    my ($workflow, $variant_type_specific_inputs, $region_limiting_specific_inputs) = $self->_construct_workflow;
+    my ($workflow_xml, $variant_type_specific_inputs, $region_limiting_specific_inputs) = $self->_construct_workflow;
+
+    my $process = $self->process;
 
     $self->debug_message("Getting Workflow Inputs...");
-    my $inputs = $self->_get_workflow_inputs($builds, $variant_type_specific_inputs, $region_limiting_specific_inputs);
+    my $inputs = $self->_get_workflow_inputs([$process->builds], $variant_type_specific_inputs, $region_limiting_specific_inputs, $staging_directory);
 
     $self->debug_message("Running Workflow...");
-    my $result = Workflow::Simple::run_workflow_lsf($workflow, %$inputs);
+    my $transaction = UR::Context::Transaction->begin();
+    $process->create_disk_allocation();
+    my $xml = Genome::Sys->read_file($workflow_xml);
+    $process->_write_workflow_file($xml);
+    $process->_write_inputs_file($inputs);
+    my $executor = Genome::Process::Command::Run->create(
+        process => $process,
+        update_with_commit => 0,
+    );
 
-    unless($result){
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
+    unless($executor->execute){
+        $transaction->rollback();
         die $self->error_message("Workflow did not return correctly.");
     }
+    $transaction->commit();
 
     return 1;
 }
@@ -169,10 +205,8 @@ sub _construct_workflow {
     my (undef, $base_dir) = fileparse(__FILE__);
     my $xml = File::Spec->join($base_dir, $xml_file);
 
-    my $workflow = Workflow::Operation->create_from_xml($xml);
-    $workflow->log_dir($self->output_directory);
 
-    return $workflow, $variant_type_specific_inputs, $region_limiting_specific_inputs;
+    return $xml, $variant_type_specific_inputs, $region_limiting_specific_inputs;
 }
 
 sub _get_workflow_xml {
@@ -290,7 +324,7 @@ sub get_vcf_accessor {
 }
 
 sub _get_workflow_inputs {
-    my ($self, $builds, $variant_type_specific_inputs, $region_limiting_specific_inputs) = @_;
+    my ($self, $builds, $variant_type_specific_inputs, $region_limiting_specific_inputs, $staging_directory) = @_;
 
     my $reference_sequence_build = $builds->[0]->reference_sequence_build;
     my $ref_fasta = $reference_sequence_build->full_consensus_path('fa');
@@ -315,7 +349,7 @@ sub _get_workflow_inputs {
 
         # FinalVcfMerge
         final_vcf_merge_working_directory => $self->final_vcf_merge_working_directory,
-        output_vcf => $self->output_vcf,
+        output_vcf => File::Spec->join($staging_directory, $self->output_vcf_filename),
     );
 
     return \%inputs;

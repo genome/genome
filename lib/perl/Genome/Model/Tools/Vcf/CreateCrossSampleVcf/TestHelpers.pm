@@ -11,6 +11,7 @@ use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Differ;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Model::ImportedVariationList;
+use Genome::Test::Factory::SoftwareResult::User;
 
 use Exporter 'import';
 
@@ -233,6 +234,7 @@ sub test_cmd {
     ok(-s $result, "result of CreateCrossSampleVcf: $result exists");
 
     delete $sr_params{'output_directory'};
+    $sr_params{users} = Genome::Test::Factory::SoftwareResult::User->setup_user_hash();
     my $sr = $sr_class->get_with_lock(%sr_params);
     ok($sr, "found software result for test1");
     is($sr, $cmd->software_result, "found software result via cmd for test1");
