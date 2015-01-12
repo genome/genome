@@ -26,6 +26,7 @@ subtest 'shared mandatory both lock' => sub {
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         is($lock, $resource_lock, 'got the lock');
         ok((all { $_->has_lock($resource_lock) } @backends),
@@ -49,6 +50,7 @@ subtest 'shared mandatory fails to lock' => sub {
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         is($lock, undef, 'failed to get lock');
         ok(!(grep { $_->has_lock($resource_lock) } @backends),
@@ -72,6 +74,7 @@ subtest 'first optional fails to lock' => sub {
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         is($lock, $resource_lock, 'got the lock');
         ok(!(all { $_->has_lock($resource_lock) } @backends), 'both backends did not lock the resource');
@@ -94,6 +97,7 @@ subtest 'second optional fails to lock' => sub {
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         is($lock, $resource_lock, 'got the lock');
         ok(!(all { $_->has_lock($resource_lock) } @backends),
@@ -122,6 +126,7 @@ subtest 'first optional fails to lock, then unlock' => sub {
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         is($lock, $resource_lock, 'got the lock');
 
@@ -148,6 +153,7 @@ subtest 'second optional fails to lock, then unlock' => sub {
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         is($lock, $resource_lock, 'got the lock');
 
@@ -175,6 +181,7 @@ subtest 'with both locked, first optional fails to unlock' => sub {
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         is($lock, $resource_lock, 'got the lock');
 
@@ -202,6 +209,7 @@ subtest 'with both locked, second optional fails to unlock' => sub {
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         is($lock, $resource_lock, 'got the lock');
 
@@ -228,6 +236,7 @@ subtest 'with both locked, first mandatory fails to unlock' => sub {
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         is($lock, $resource_lock, 'got the lock');
 
@@ -252,6 +261,7 @@ subtest 'with both locked, second mandatory fails to unlock' => sub {
         my $resource_lock = 'Lock.t/' . random_string();
         my $lock = Genome::Sys::Lock->lock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         is($lock, $resource_lock, 'got the lock');
 
