@@ -52,6 +52,80 @@ subtest 'working_command' => sub {
     my $expected_process_dir = File::Spec->join($test_dir, "expected_in_process");
     compare_dir_ok($p->metadata_directory, $expected_process_dir,
         'All metadata files are as expected');
+
+    subtest 'test compare_output subroutine - same inputs' => sub {
+        my $other_test_dir = Genome::Sys->create_temp_directory;
+        Genome::Sys->rsync_directory(
+            source_directory => $code_test_dir,
+            target_directory => $other_test_dir
+        );
+        my $other_input_vcf = File::Spec->join($other_test_dir, 'input.vcf');
+        my $other_cmd = $pkg->create(
+            input_vcf => $other_input_vcf,
+            variant_type => 'snvs',
+            plan_file => File::Spec->join($other_test_dir, 'plan.yaml'),
+            translations_file => get_translations_file($other_input_vcf),
+        );
+        my $other_p = $other_cmd->execute();
+        is_deeply({$p->compare_output($other_p->id)}, {}, 'Two identical process executions produce the same output');
+    };
+
+    subtest 'test compare_output subroutine - different inputs' => sub {
+        my $other_test_dir = Genome::Sys->create_temp_directory;
+        Genome::Sys->rsync_directory(
+            source_directory => $code_test_dir,
+            target_directory => $other_test_dir
+        );
+        my $other_input_vcf = File::Spec->join($other_test_dir, 'other_input.vcf');
+
+        my $other_cmd = $pkg->create(
+            input_vcf => $other_input_vcf,
+            variant_type => 'snvs',
+            plan_file => File::Spec->join($other_test_dir, 'plan.yaml'),
+            translations_file => get_translations_file($other_input_vcf),
+        );
+        my $other_p = $other_cmd->execute();
+        my %diffs = $p->compare_output($other_p->id);
+        my $report_file = File::Spec->join($p->output_directory('__test__'), 'report.txt');
+        my $other_report_file = File::Spec->join($other_p->output_directory('__test__'), 'report.txt');
+        my $diff_key = File::Spec->join('__test__', 'report.txt');
+        is_deeply([keys %diffs], [$diff_key], 'Two process executions with different input files produce different reports');
+
+        subtest 'test compare_output subroutine - missing file in other report directory' => sub {
+            unlink $other_report_file;
+            %diffs = $p->compare_output($other_p->id);
+            my $other_process_id = $other_p->id;
+            like($diffs{$diff_key}, qr/__test__\/report\.txt.*$other_process_id/, 'Missing files in other report output directory gets detected');
+            Genome::Sys->copy_file($report_file, $other_report_file);
+        };
+        subtest 'test compare_output subroutine - missing file in report directory' => sub {
+            unlink $report_file;
+            %diffs = $p->compare_output($other_p->id);
+            my $process_id = $p->id;
+            like($diffs{$diff_key}, qr/__test__\/report\.txt.*$process_id/, 'Missing files in report output directory gets detected');
+            Genome::Sys->copy_file($other_report_file, $report_file);
+        };
+    };
+
+    subtest 'test compare_output subroutine - different plan files with additional report' => sub {
+        my $other_test_dir = Genome::Sys->create_temp_directory;
+        Genome::Sys->rsync_directory(
+            source_directory => $code_test_dir,
+            target_directory => $other_test_dir
+        );
+        my $other_input_vcf = File::Spec->join($other_test_dir, 'input.vcf');
+
+        my $other_cmd = $pkg->create(
+           input_vcf => $other_input_vcf,
+           variant_type => 'snvs',
+           plan_file => File::Spec->join($other_test_dir, 'plan2.yaml'),
+           translations_file => get_translations_file_for_plan2($other_input_vcf),
+        );
+        my $other_p = $other_cmd->execute();
+        my %diffs = $p->compare_output($other_p->id);
+        like($diffs{'__translated_test__'}, qr/no directory __translated_test__ found/, 'Additional report gets detected');
+        like($diffs{File::Spec->join('__test__', 'plan.yaml')}, qr/files are not the same/, 'Plan file difference gets detected');
+    };
 };
 
 subtest 'no_translations_file' => sub {
@@ -120,6 +194,25 @@ sub get_translations_file {
     my $input_vcf = shift;
 
     my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create();
+    my $tmp_dir = Genome::Sys->create_temp_directory;
+    my $translations_file = File::Spec->join($tmp_dir, 'resources.yaml');
+    $provider->write_to_file($translations_file);
+    return $translations_file;
+}
+
+sub get_translations_file_for_plan2 {
+    my $input_vcf = shift;
+
+    my $provider = Genome::VariantReporting::Framework::Component::RuntimeTranslations->create(
+        translations => {
+            __input__ => 'test',
+            tumor => 'test sample',
+            old_value => 'new value',
+            old_value1 => 'new value 1',
+            old_value2 => 'new value 2',
+            to_translate1 => 'test',
+        }
+    );
     my $tmp_dir = Genome::Sys->create_temp_directory;
     my $translations_file = File::Spec->join($tmp_dir, 'resources.yaml');
     $provider->write_to_file($translations_file);

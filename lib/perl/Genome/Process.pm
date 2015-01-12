@@ -11,6 +11,9 @@ use Try::Tiny qw(try catch);
 use JSON qw(to_json);
 use List::MoreUtils qw(uniq);
 use Genome::Disk::Group::Validate::GenomeDiskGroups;
+use Cwd qw(abs_path);
+use File::DirCompare;
+use File::Compare;
 
 class Genome::Process {
     is => [
@@ -605,7 +608,7 @@ sub unique_results {
 sub result_with_label {
     my ($self, $label) = validate_pos(@_, 1, 1);
 
-    my @results = grep {$_->users(label => $label)} $self->unique_results;
+    my @results = grep {() = $_->users(label => $label)} $self->unique_results;
     if (scalar(@results) != 1) {
         die sprintf("Found (%d) results with label (%s), but expected only one, they are: %s",
             scalar(@results), $label, pp(map {$_->id} @results));
@@ -635,5 +638,77 @@ sub result_is_on_cle_disk_group {
     return Genome::Disk::Group::Validate::GenomeDiskGroups::is_cle_disk_group_name($disk_group_name);
 }
 
+sub compare_output {
+    my ($self, $other_process_id) = @_;
+    my $process_id = $self->id;
+
+    unless (defined ($other_process_id)) {
+        die $self->error_message('Require process ID argument!');
+    }
+    my $other_process = Genome::Process->get($other_process_id);
+    unless ($other_process) {
+        die $self->error_message('Could not get process for ID (%s)', $other_process_id);
+    }
+
+    unless ($self->class eq $other_process->class) {
+        die $self->error_message('Processes (%s) and (%s) are not of the same type', $process_id, $other_process_id);
+    }
+
+    my %diffs = $self->_compare_output_files($other_process);
+
+    return %diffs;
+}
+
+sub _compare_output_files {
+    my ($self, $other_process) = @_;
+
+    my $output_dir = Genome::Sys->create_temp_file_path();
+    my $other_output_dir = Genome::Sys->create_temp_file_path();
+
+    $self->symlink_results($output_dir);
+    $other_process->symlink_results($other_output_dir);
+
+    return $self->_compare_output_directories($output_dir, $other_output_dir, $other_process);
+}
+
+sub _compare_output_directories {
+    my ($self, $output_dir, $other_output_dir, $other_process) = @_;
+
+    my %diffs;
+    File::DirCompare->compare(
+        $other_output_dir,
+        $output_dir,
+        sub {
+            my ($other_file, $file) = @_;
+            my $template = 'no %s %s found for process %s';
+            my $other_target = defined($other_file)? abs_path($other_file) : undef;
+            my $target = defined($file) ? abs_path($file) : undef;
+            if (! $target) {
+                my $type = ( -f $other_target ? 'file' : 'directory' );
+                my $rel_path = File::Spec->abs2rel($other_file, $other_output_dir);
+                $diffs{$rel_path} = sprintf($template, $type, $rel_path, $self->id);
+            } elsif (! $other_target) {
+                my $type = ( -f $target ? 'file' : 'directory' );
+                my $rel_path = File::Spec->abs2rel($file, $output_dir);
+                $diffs{$rel_path} = sprintf($template, $type, $rel_path, $other_process->id);
+            } else {
+                if (-d $target && -d $other_target) {
+                    my %additional_diffs = $self->_compare_output_directories($target, $other_target, $other_process);
+                    %diffs = (%diffs, %additional_diffs);
+                }
+                elsif (-f $target && -f $other_target && !compare($target, $other_target)) {
+                    #Files are in fact the same - do nothing
+                }
+                else {
+                    $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
+                        'files are not the same (diff -u %s %s)',
+                        $file, $other_file
+                    );
+                }
+            }
+        },
+    );
+    return %diffs;
+}
 
 1;

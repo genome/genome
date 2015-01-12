@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => 'all';
 
 use Test::More;
+use Test::Exception;
 use above 'Genome';
 
 BEGIN {
@@ -77,5 +78,53 @@ is_deeply([$p->results], [$result],
 $result->add_user(user => $p, label => 'test');
 is_deeply([$p->results], [$result, $result],
     'Found two TestResults via SoftwareResult::User relationship');
+my $code_test_dir = __FILE__ . '.d';
+
+my %tests = (
+    identical  => {
+        test_name  => 'Identical directories',
+        diff_count => 0,
+    },
+    missing    => {
+        test_name  => 'Missing file',
+        diff_count => 1,
+        diff_message => 'no file',
+    },
+    additional => {
+        test_name  => 'Additional file',
+        diff_count => 1,
+        diff_message => 'no file',
+    },
+    changed    => {
+        test_name  => 'File content changed',
+        diff_count => 1,
+        diff_message => 'files are not the same',
+    },
+    symlink    => {
+        test_name  => 'One-level symlink',
+        diff_count => 0,
+    },
+    deep_symlink => {
+        test_name  => 'Two-level deep symlink',
+        diff_count => 0,
+    },
+    circular_symlink => {
+        test_name  => 'Circular symlink',
+        diff_count => 1,
+        diff_message => 'no file',
+  },
+);
+
+while (my ($subdir, $test_info) = each %tests) {
+    subtest $test_info->{test_name} => sub {
+        my $original_dir = File::Spec->join($code_test_dir, 'original');
+        my $other_dir    = File::Spec->join($code_test_dir, $subdir);
+        my %diffs = $p->_compare_output_directories($original_dir, $other_dir, $p);
+        is(scalar(keys %diffs), $test_info->{diff_count}, 'Number of differences as expected');
+        if (scalar(keys %diffs) > 0) {
+            like((values %diffs)[0], qr/$test_info->{diff_message}/, 'Diff message as expected');
+        }
+    };
+}
 
 done_testing();
