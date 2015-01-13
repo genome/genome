@@ -9,7 +9,8 @@ use List::AllUtils qw(any);
 use File::Slurp qw(read_file write_file);
 
 class Genome::Model::Tools::ShellPipeline {
-    is => "Command::V2",
+    is => "UR::Object",
+    attributes_have => [qw(is_input is_output is_optional)],
     has_input => {
         pre_commands => {
             is => "ARRAY",
