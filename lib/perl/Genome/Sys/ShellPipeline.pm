@@ -102,15 +102,18 @@ sub execute {
 
     chmod oct(755), $script_path;
 
+    my @errors;
+
     try {
         Genome::Sys->shellcmd(cmd => $script_path);
     }
     catch {
-        croak $self->error_message($_);
-    }
-    finally {
-        $self->_check_pipestatus($pipestatus_path);
+        push @errors, $_;
     };
+
+    push @errors, $self->_check_pipestatus($pipestatus_path);
+    $self->error_message($_) for @errors;
+    croak $self->error_message() if @errors;
 
     return 1;
 }
@@ -162,13 +165,13 @@ EOS
 sub _check_pipestatus {
     my ($self, $path) = @_;
 
-    croak $self->error_message("PIPESTATUS error file does not exist") unless -s $path;
+    return "PIPESTATUS error file does not exist" unless -s $path;
 
     my @lines = read_file $path;
     chomp @lines;
 
     # there should only be one line in the file
-    croak $self->error_message("Too many lines in PIPESTATUS error file") unless scalar @lines == 1;
+    return "Too many lines in PIPESTATUS error file" unless scalar @lines == 1;
 
     my @status = split(/\s/, $lines[0]);
     $self->return_codes(\@status);
@@ -176,15 +179,15 @@ sub _check_pipestatus {
     my @commands = @{$self->pipe_commands};
     # the number of commands we intended to execute should be equal
     # to the number of exit codes we received.
-    croak $self->error_message("Wrong number of status codes in PIPESTATUS error file")
+    return "Wrong number of status codes in PIPESTATUS error file"
         unless scalar @status == scalar @commands;
 
     return unless any { $_ != 0 } @status;
 
     # which command failed?
     my @failures = grep {$status[$_] != 0} 0..$#status;
-    croak $self->error_message(sprintf "The following commands crashed:\n  %s",
+    return sprintf "The following commands crashed:\n  %s",
         join("\n  ",
             map {sprintf "%s: %s", $_, $commands[$_]} @failures
-            ));
+            );
 }
