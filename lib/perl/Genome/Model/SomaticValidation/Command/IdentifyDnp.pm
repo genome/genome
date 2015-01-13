@@ -74,6 +74,7 @@ sub params_for_result {
         tumor_aligment_result_id => $tumor_aligment_result_id,
         dv2_result_id => $dv2_result_id,
         test_name => $test_name,
+        users => Genome::SoftwareResult::User->user_hash_for_build($build),
     };
 
     return $params;

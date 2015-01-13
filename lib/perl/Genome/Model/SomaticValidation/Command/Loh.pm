@@ -122,6 +122,7 @@ sub _fetch_control_snv_result {
         aligned_reads_sample => $build->normal_sample->name,
         reference_build_id => $build->reference_sequence_build->id,
         output_directory => $dir,
+        result_users => Genome::SoftwareResult::User->user_hash_for_build($build),
     );
 
     my $command = Genome::Model::Tools::DetectVariants2::Dispatcher->create(%params);
@@ -151,11 +152,15 @@ sub _params_for_result {
 
     return unless $prior_result and $control_result;
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{loh} = $build;
+
     return (
         prior_result_id => $prior_result->id,
         control_result_id => $control_result->id,
         classifier_version => $loh_version,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        users => $result_users,
     );
 }
 
@@ -164,7 +169,6 @@ sub link_result_to_build {
     my $result = shift;
     my $build = $self->build;
 
-    $result->add_user(user => $build, label => 'loh');
     Genome::Sys->create_symlink($result->output_dir, join('/', $build->data_directory, 'loh'));
 
     return 1;
