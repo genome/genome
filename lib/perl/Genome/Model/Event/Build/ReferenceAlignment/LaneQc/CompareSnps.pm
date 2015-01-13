@@ -51,11 +51,15 @@ sub execute {
     }
     $variant_file = Cwd::abs_path($variant_file);
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{uses} = $build;
+
     my %compare_snps_result_params = (
         genotype_file => $geno_path,
         variant_file => $variant_file,
         sample_name => $model->subject->name,
         reference_build => $build->reference_sequence_build->version,
+        users => $result_users,
     );
     if ($build->region_of_interest_set_name) {
         $compare_snps_result_params{bam_file} = $build->whole_rmdup_bam_file;
@@ -65,8 +69,6 @@ sub execute {
     unless ($result) {
         die $self->error_message("Failed to create Genome::Model::Tools::Analysis::LaneQc::CompareSnpsResult command.");
     }
-
-    $result->add_user( user_id => $build->id, user_class_name => $build->class, label => 'uses' );
 
     die 'Missing args for creating symlink' unless $result->output_file and $build->compare_snps_file;
     Genome::Sys->create_symlink_and_log_change($self, $result->output_file, $build->compare_snps_file);

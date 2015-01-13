@@ -74,6 +74,8 @@ sub _process {
     my $model = $build->model;
     my $processing_profile = $model->processing_profile;
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{uses} = $build;
 
     my @errors;
 
@@ -82,6 +84,7 @@ sub _process {
         aligner_params=>$processing_profile->read_aligner_params,
         aligner_version=>$processing_profile->read_aligner_version,
         reference_build=>$model->reference_sequence_build,
+        users => $result_users,
     );
 
     # This logic should go away when the alignment result software result creation
@@ -125,19 +128,6 @@ sub _process {
         } else {
             die $self->error_message;
         }
-    }
-
-    my $link = $reference_sequence_index->add_user(user => $build, label => 'uses');
-    if ($link) {
-        $self->debug_message("Linked reference sequence index " . $reference_sequence_index->id . " to the build");
-    }
-    else {
-        $self->error_message(
-            "Failed to link the build to the reference_sequence_index "
-            . $reference_sequence_index->__display_name__
-            . "!"
-        );
-        # TODO: die, but not for now
     }
 
     $self->debug_message("Verifying...");

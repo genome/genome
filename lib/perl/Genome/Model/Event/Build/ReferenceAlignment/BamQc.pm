@@ -63,6 +63,8 @@ sub params_for_result {
     my $build = $self->build;
     my $pp    = $build->processing_profile;
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+
     unless ($self->_alignment_result) {
         my $instrument_data_input = $self->instrument_data_input;
 
@@ -73,7 +75,7 @@ sub params_for_result {
             }
         }
 
-        my ($align_result) = $pp->results_for_instrument_data_input($instrument_data_input, %segment_info);
+        my ($align_result) = $pp->results_for_instrument_data_input($instrument_data_input, $result_users, %segment_info);
 
         unless ($align_result) {
             die $self->error_message('No alignment result found for build: '. $build->id);
@@ -90,6 +92,8 @@ sub params_for_result {
 
     my $error_rate_version = $self->_select_error_rate_version_for_pp($pp);
 
+    $result_users->{uses} = $build;
+
     return (
         alignment_result_id => $self->_alignment_result->id,
         picard_version      => $picard_version,
@@ -100,6 +104,7 @@ sub params_for_result {
         error_rate          => 1,
         read_length         => $read_length,
         test_name           => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        users               => $result_users,
     );
 }
 
@@ -118,11 +123,6 @@ sub link_result {
     else {
         Genome::Sys->create_symlink($result->output_dir, $link);
         $align_result->_reallocate_disk_allocation;
-    }
-
-    my @users = $align_result->users;
-    unless (grep{$_->user eq $result}@users) {
-        $align_result->add_user(label => 'uses', user => $result);
     }
 
     return 1;
