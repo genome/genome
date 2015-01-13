@@ -43,8 +43,9 @@ sub _interpret_entry {
     my $caf = $parser->process_entry($entry);
     my %return_values;
 
+    my $has_tag = $entry->info($parser->TAG);
     for my $variant_allele (@$passed_alt_alleles) {
-        if (defined($entry->info('CAF')) && !defined($caf->{$variant_allele})) {
+        if ($has_tag && !defined($caf->{$variant_allele})) {
             # This may be fine, but I want to hear about it.  I think it can
             # happen in two ways:
             #
