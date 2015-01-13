@@ -484,6 +484,7 @@ sub _find_or_generate_multisample_vcf {
             },
             strategy => $self->alignment_strategy,
             log_directory => $build->log_directory,
+            result_users => Genome::SoftwareResult::User->user_hash_for_build($build),
         );
 
         # used by the updated DV2 API
@@ -570,6 +571,10 @@ sub _find_or_generate_multisample_vcf {
         }
         my $ref_fasta = $reference_build->full_consensus_path("fa");
         my $ped_file = $build->pedigree_file_path->path;
+
+        my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+        $result_users->{uses} = $build;
+
         $self->debug_message("About to run Sequencing QC (IBD)");
         $self->debug_message("Parameters:");
         $self->debug_message("Bams: @bams");
@@ -583,9 +588,9 @@ sub _find_or_generate_multisample_vcf {
             reference_fasta=>$reference_build->full_consensus_path("fa"),
             snp_files=>\@snp_files,
             output_dir=>"$output_dir/IBD_QC",
+            result_users => $result_users,
         );
         my $IBD_STATUS = $sqc_obj->execute();
-        $sqc_obj->software_result->add_user(label => 'uses', user => $build);
         if($IBD_STATUS eq 'Fail') {
             $self->error_message("Sequencing QC module returned fail code, this ped/model-group has a relationship problem");
             $self->error_message("Continuing with analysis despite QC failure...");
