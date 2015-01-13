@@ -424,11 +424,6 @@ sub _final_bam_conversion_commands {
     return "$samtools_path view -b -\@ $num_threads -";
 }
 
-sub _make_pipeline {
-    my @cmds = @_;
-    return join(" \\\n    | ", @cmds);
-}
-
 sub _pipeline_commands {
     my $self = shift;
     return (
@@ -439,71 +434,6 @@ sub _pipeline_commands {
         $self->_calmd_commands,
         $self->_final_bam_conversion_commands,
         );
-}
-
-sub _script_text {
-    my ($self, $pipestatus_path) = @_;
-
-    my @pipeline = $self->_pipeline_commands;
-
-    my $pre = join("\n", $self->_script_pre_lines);
-    my $post = join("\n", $self->_script_post_lines);
-
-    my $cmd = sprintf("%s > %s", _make_pipeline(@pipeline), $self->output_file);
-    return <<EOS;
-#!/bin/bash
-
-$pre
-
-set -o pipefail
-$cmd
-PSTAT=\${PIPESTATUS[@]}
-echo "Pipe status: \$PSTAT"
-
-echo \$PSTAT > $pipestatus_path
-
-for x in \$PSTAT
-do
-    if [ "\$x" != "0" ]
-    then
-        exit 1
-    fi
-done
-
-$post
-EOS
-}
-
-# This sub tries to parse a file containing a single line containing the
-# result of ${PIPESTATUS[@]} from bash after executing the relevant pipeline.
-# It should not be called unless an error is actually detected.
-sub _parse_pipestatus {
-    my ($self, $path) = @_;
-
-    return "PIPESTATUS error file does not exist" unless -s $path;
-
-    my @lines = read_file($path);
-    chomp @lines;
-
-    # there should only be one line in the file
-    return "Too many lines in PIPESTATUS error file" unless scalar @lines == 1;
-
-    my @status = split(/\s/, $lines[0]);
-
-    my @commands = $self->_pipeline_commands;
-    # the number of commands we intended to execute should be equal
-    # to the number of exit codes we received.
-    return "Wrong number of status codes in PIPESTATUS error file"
-        unless scalar @status == scalar @commands;
-
-    return "no failures" unless any { $_ != 0 } @status;
-
-    # who dun goofed?
-    my @failures = grep {$status[$_] != 0} 0..$#status;
-    return sprintf "The following commands crashed:\n  %s",
-        join("\n  ",
-            map {sprintf "%s: %s", $_, $commands[$_]} @failures
-            );
 }
 
 sub execute {
@@ -523,43 +453,22 @@ sub execute {
             );
     }
 
-    if (!defined $self->temp_dir) {
-        $self->temp_dir(Genome::Sys->create_temp_directory);
-    }
-
-    $self->status_message(sprintf("Temp directory is: %s", $self->temp_dir));
-
-    my $script_path = File::Spec->catfile($self->temp_dir, "run.sh");
-    my $pipestatus_path = File::Spec->catfile($self->temp_dir, "pipestatus.txt");
-
-    write_file($script_path, $self->_script_text($pipestatus_path));
-
-    $self->debug_message(
-        sprintf
-            "Executing script:\n\n" .
-            "-------- BEGIN SCRIPT --------\n%s" .
-            "--------- END SCRIPT ---------\n",
-            join("", read_file($script_path))
-        );
-
     $self->status_message(
         "Warnings below from samtools sort/calmd about truncated bam files " .
         "may be safely ignored. They are caused by piping data to samtools " .
         "(it can't seek to check for the bam EOF marker)."
         );
 
-    eval {
-        Genome::Sys->shellcmd(cmd => "/usr/bin/time /bin/bash $script_path");
-    };
+    my %params = (
+        interpreter => "/bin/bash",
+        pre_commands => [$self->_script_pre_lines],
+        post_commands => [$self->_script_post_lines],
+        pipe_commands => [$self->_pipeline_commands],
+        redirects => sprintf("> %s", $self->output_file),
+        );
 
-    if ($@) {
-        my $msg = sprintf "Pipeline failed: %s",
-            $self->_parse_pipestatus($pipestatus_path);
-
-        die $self->error_message($msg);
-    }
-
-    return 1;
+    my $pipe = Genome::Model::Tools::ShellPipeline->create(%params);
+    return $pipe->execute;
 }
 
 1;
