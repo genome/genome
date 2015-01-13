@@ -123,6 +123,8 @@ sub annotate_headers {
             header => $header,
             library => 0,
             label_priority => 0,
+            sample => 0,
+            vaf_priority => 0,
         );
         while (my ($regex, $sort_priority) = each %VAF_CONVERSIONS) {
             if ($header =~ m/$regex/) {
