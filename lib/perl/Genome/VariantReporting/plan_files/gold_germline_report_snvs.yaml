@@ -56,6 +56,10 @@ reports:
                 normal_sample_names:
                     - normal
             'variant-callers':
+                valid_callers:
+                    - VarscanSomatic
+                    - Sniper
+                    - Strelka
                 sample_name: normal
             'many-samples-vaf':
                 sample_names:
@@ -143,6 +147,10 @@ reports:
                 normal_sample_names:
                     - normal
             'variant-callers':
+                valid_callers:
+                    - VarscanSomatic
+                    - Sniper
+                    - Strelka
                 sample_name: normal
             'many-samples-vaf':
                 sample_name_labels: sample_name_labels
