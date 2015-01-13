@@ -13,7 +13,7 @@ use Test::More;
 use Test::Exception;
 use Genome::File::Vcf::Entry;
 use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(
-     create_default_entry  create_deletion_entry);
+     create_default_entry create_long_deletion_entry create_deletion_entry);
 
 my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::VafInterpreter';
 use_ok($pkg);
@@ -90,6 +90,30 @@ subtest "deletion" => sub {
 
     my $entry = create_deletion_entry();
     my %result = $interpreter->interpret_entry($entry, ['A']);
+    is_deeply(\%result, \%expected, "Values are as expected");
+};
+
+subtest "long indel" => sub {
+    my $interpreter = $pkg->create(sample_name => "H_KA-174556-1309245",
+        library_names => [qw(H_KA-174556-1309245-lg3-lib1 H_KA-174556-1309245-lg5-lib1)]);
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected = (
+        'GTATA' => {
+           'H_KA-174556-1309245-lg3-lib1_ref_count' => 29,
+           'H_KA-174556-1309245-lg3-lib1_vaf' => 6.25,
+           'H_KA-174556-1309245-lg3-lib1_var_count' => 2,
+           'H_KA-174556-1309245-lg5-lib1_ref_count' => 18,
+           'H_KA-174556-1309245-lg5-lib1_vaf' => 9.52380952380952,
+           'H_KA-174556-1309245-lg5-lib1_var_count' => 2,
+           'H_KA-174556-1309245_ref_count' => 47,
+           'H_KA-174556-1309245_vaf' => 7.54716981132075,
+           'H_KA-174556-1309245_var_count' => 4,
+        }
+    );
+
+    my $entry = create_long_deletion_entry();
+    my %result = $interpreter->interpret_entry($entry, ['GTATA']);
     is_deeply(\%result, \%expected, "Values are as expected");
 };
 done_testing;
