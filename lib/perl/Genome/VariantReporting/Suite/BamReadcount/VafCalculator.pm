@@ -122,17 +122,47 @@ sub calculate_coverage_for_allele_and_library {
 
 sub translated_allele {
     my ($allele, $ref) = @_;
+
     my $translated_allele;
     if (is_insertion($ref, $allele)) {
-        $translated_allele = "+".substr($allele, length($ref));
+        $translated_allele = "+".translate_pure_indels($allele, $ref);
     }
     elsif (is_deletion($ref, $allele)) {
-        $translated_allele = "-".substr($ref, length($allele));
+        $translated_allele = "-".translate_pure_indels($ref, $allele);
     }
     else {
         $translated_allele = $allele;
     }
     return $translated_allele;
+}
+
+sub translate_pure_indels {
+    my ($long, $short) = @_;
+    my @long = split('', $long);
+    my @short = split('', $short);
+
+    my $end = $#long;
+    for my $i (reverse 0..$#long) {
+        if ($long[$i] eq $short[$#short]) {
+            $end = $i - 1;
+            pop @short;
+            last if (scalar(@short) == 0);
+        }
+        else {
+            last;
+        }
+    }
+
+    my $start = 0;
+    for my $i (0..$#short) {
+        if ($long[$i] eq $short[$i]) {
+            $start = $i + 1;
+        }
+        else {
+            last;
+        }
+    }
+    return substr($long, $start, $end - $start + 1);
 }
 
 1;
