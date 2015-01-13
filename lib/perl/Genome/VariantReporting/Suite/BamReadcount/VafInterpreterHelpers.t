@@ -89,12 +89,8 @@ my %test_setup = (
 while (my ($test_name, $test_data) = each %test_setup) {
     subtest $test_name => sub {
         my @headers = @{$test_data->{headers}};
-        my @shuffled_headers = shuffle(@headers);
-        while(eq_deeply(\@headers, \@shuffled_headers)) {
-            @shuffled_headers = shuffle(@headers);
-        }
         my @sorted_headers = Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers::sort_vaf_headers(
-            headers => [@shuffled_headers],
+            headers => [unsort(@headers)],
             sample_names => $test_data->{sample_names},
             library_names => $test_data->{library_names},
         );
@@ -103,3 +99,10 @@ while (my ($test_name, $test_data) = each %test_setup) {
 }
 
 done_testing;
+
+sub unsort {
+    my @header = @_;
+    my $middle = int(@header / 2);
+    my @left = splice(@header, 0, $middle);
+    return shuffle(@header), shuffle(@left);
+}
