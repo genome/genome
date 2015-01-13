@@ -301,6 +301,9 @@ sub params_for_result {
         $skip = 0;
     }
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{uses} = $build;
+
     return (
         prior_result_id => $prior_result->id,
         previously_discovered_result_id => $previously_discovered_result->id,
@@ -308,6 +311,7 @@ sub params_for_result {
         variant_type => $variant_type,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         skip_filtering => $skip,
+        users => $result_users,
     );
 }
 
@@ -317,7 +321,6 @@ sub link_result_to_build {
     my $build = $self->build;
 
     $self->debug_message('Linking result ' . $result->id . ' to build.');
-    $result->add_user(user => $build, label => 'uses');
     Genome::Sys->create_directory($build->data_directory."/novel");
 
     my $type = $result->variant_type;

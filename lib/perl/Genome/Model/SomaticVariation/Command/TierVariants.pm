@@ -203,12 +203,16 @@ sub params_for_result {
         die $self->error_message('Multiple results unexpected for ' . $qual . ' ' . $variant_type);
     }
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{uses} = $build;
+
     return (
         variant_type => $variant_type,
         prior_result_id => $result->id,
         annotation_build_id => $build->annotation_build->id,
         classifier_version => $build->tiering_version,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        users => $result_users,
     );
 }
 
@@ -217,7 +221,6 @@ sub link_result_to_build {
     my $result = shift;
     my $build = $self->build;
 
-    $result->add_user(label => 'uses', user => $build);
 
     my $effects_dir = $build->data_directory."/effects";
     unless(-d $effects_dir){
