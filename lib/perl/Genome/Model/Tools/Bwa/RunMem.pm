@@ -467,7 +467,7 @@ sub execute {
         redirects => sprintf("> %s", $self->output_file),
         );
 
-    my $pipe = Genome::Model::Tools::ShellPipeline->create(%params);
+    my $pipe = Genome::Sys::ShellPipeline->create(%params);
     return $pipe->execute;
 }
 

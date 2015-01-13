@@ -1,4 +1,4 @@
-package Genome::Model::Tools::ShellPipeline;
+package Genome::Sys::ShellPipeline;
 
 use strict;
 use warnings;
@@ -10,7 +10,7 @@ use File::Spec qw();
 use List::AllUtils qw(any);
 use File::Slurp qw(read_file write_file);
 
-class Genome::Model::Tools::ShellPipeline {
+class Genome::Sys::ShellPipeline {
     is => "UR::Object",
     attributes_have => [qw(is_input is_output is_optional)],
     has_input => {

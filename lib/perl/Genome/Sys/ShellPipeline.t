@@ -8,7 +8,7 @@ use Test::Exception;
 use File::Slurp qw(read_file);
 use above 'Genome';
 
-my $pkg = 'Genome::Model::Tools::ShellPipeline';
+my $pkg = 'Genome::Sys::ShellPipeline';
 use_ok($pkg);
 
 my $tmpdir = Genome::Sys->create_temp_directory;
