@@ -25555,6 +25555,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>list',
       [
+        'show=s',
+        'files',
         'style=s',
         [
           'text',
@@ -25569,8 +25571,6 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'noheaders!',
         undef,
-        'show=s',
-        'files',
         'order-by=s',
         'files',
         'filter=s',

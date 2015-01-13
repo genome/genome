@@ -14532,6 +14532,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
     ],
     '>list',
     [
+      'show=s',
+      'files',
       'style=s',
       [
         'text',
@@ -14546,8 +14548,6 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'files',
       'noheaders!',
       undef,
-      'show=s',
-      'files',
       'order-by=s',
       'files',
       'filter=s',

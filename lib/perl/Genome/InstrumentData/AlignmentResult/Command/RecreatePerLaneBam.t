@@ -18,7 +18,7 @@ use Genome::Utility::Test qw(compare_ok);
 my $pkg = 'Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam';
 use_ok($pkg) or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok($pkg, 'v2');
+my $test_dir = Genome::Utility::Test->data_dir_ok($pkg, 'v3');
 my $id       = 2894005341;
 my $out_base = 'all_sequences.bam';
 my $out_dir  = Genome::Sys->create_temp_directory();
