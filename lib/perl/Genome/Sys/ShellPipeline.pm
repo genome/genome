@@ -143,7 +143,6 @@ $pre
 set -o pipefail
 $cmd
 PSTAT=\${PIPESTATUS[@]}
-echo "Pipe status: \$PSTAT"
 
 echo \$PSTAT > $pipestatus_path
 
