@@ -92,10 +92,10 @@ sub per_library_vaf_headers {
 sub sort_vaf_headers {
     my %params = @_;
     return map { $_->{header} } sort {
-        $a->{label_priority} cmp $b->{label_priority} ||
+        $a->{label_priority} <=> $b->{label_priority} ||
         $a->{sample} cmp $b->{sample} ||
         $a->{library} cmp $b->{library} ||
-        $a->{vaf_priority} cmp $b->{vaf_priority}
+        $a->{vaf_priority} <=> $b->{vaf_priority}
     } annotate_headers(%params);
 }
 
