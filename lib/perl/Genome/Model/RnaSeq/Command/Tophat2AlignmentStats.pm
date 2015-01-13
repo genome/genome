@@ -80,9 +80,13 @@ sub params_for_result {
         die $self->error_message('No alignment result found for build: '. $build->id);
     }
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{'tophat2-alignment-stats'} = $build;
+
     return (
         alignment_result_id => $alignment_result->id,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        users => $result_users,
     );
 }
 
@@ -91,9 +95,7 @@ sub link_result_to_build {
     my $result = shift;
     
     my $build = $self->build;
-    my $label = join('_', 'tophat2-alignment-stats');
     Genome::Sys->create_symlink($result->output_dir, $build->alignment_stats_directory);
-    $result->add_user(label => $label, user => $build);
     
     $self->tophat2_alignment_stats_result($result);
 

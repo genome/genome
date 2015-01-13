@@ -110,10 +110,15 @@ sub params_for_result {
     unless ($alignment_result) {
         die $self->error_message('No alignment result found for build: '. $build->id);
     }
+
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{picard_rna_seq_metrics} = $build;
+
     my %params = (
         alignment_result_id => $alignment_result->id,
         picard_version => $self->picard_version,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        users => $result_users,
     );
     if ($self->picard_strand_specificity) {
         $params{picard_strand_specificity} = $self->picard_strand_specificity;
@@ -128,9 +133,7 @@ sub link_result_to_build {
     my $result = shift;
 
     my $build = $self->build;
-    my $label = join('_', 'picard_rna_seq_metrics');
     Genome::Sys->create_symlink($result->output_dir, $build->metrics_directory);
-    $result->add_user(label => $label, user => $build);
 
     $self->picard_rna_seq_metrics_result($result);
 
