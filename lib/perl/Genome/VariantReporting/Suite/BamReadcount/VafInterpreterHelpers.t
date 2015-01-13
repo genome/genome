@@ -11,6 +11,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 use List::Util qw(shuffle);
+use Test::Deep;
 
 my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers';
 use_ok($pkg);
@@ -88,8 +89,12 @@ my %test_setup = (
 while (my ($test_name, $test_data) = each %test_setup) {
     subtest $test_name => sub {
         my @headers = @{$test_data->{headers}};
+        my @shuffled_headers = shuffle(@headers);
+        while(eq_deeply(\@headers, \@shuffled_headers)) {
+            @shuffled_headers = shuffle(@headers);
+        }
         my @sorted_headers = Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers::sort_vaf_headers(
-            headers => [shuffle(@headers)],
+            headers => [@shuffled_headers],
             sample_names => $test_data->{sample_names},
             library_names => $test_data->{library_names},
         );
