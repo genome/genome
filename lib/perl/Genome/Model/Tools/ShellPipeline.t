@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use Test::Exception;
 use File::Slurp qw(read_file);
 use above 'Genome';
 
@@ -135,8 +136,7 @@ make_subtest "pre failure can be caught with bash" => sub {
         );
 
     ok($obj, "created command");
-    eval {ok($obj->execute, "executed pipeline")};
-    ok($@, "command failed");
+    dies_ok {$obj->execute} "command failed as expected";
 };
 
 make_subtest "failure detection" => sub {
@@ -161,19 +161,18 @@ make_subtest "failure detection" => sub {
         ok($cmd, "created command");
 
         unlink $tmp_post;
-        eval { $cmd->execute; };
-
-        ok(-f $tmp_pre, "pre commands was executed");
 
         if ($i != 0) {
-            ok($@, "command crashed as expected");
+            throws_ok {$cmd->execute} qr/The following commands crashed:/, "command crashed as expected";
             ok(!-e $tmp_post, "post command was not executed");
         }
         else {
+            ok($cmd->execute, "executed command");
             ok(!$@, "command succeeded as expected");
             ok(-e $tmp_post, "post command was executed");
         }
 
+        ok(-f $tmp_pre, "pre commands were executed");
         is_deeply($cmd->return_codes, \@rvs, "return codes match");
     }
 };

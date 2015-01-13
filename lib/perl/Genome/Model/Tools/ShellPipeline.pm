@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Genome;
+use Try::Tiny qw(try catch finally);
+use Carp qw(croak);
 use File::Spec qw();
 use List::AllUtils qw(any);
 use File::Slurp qw(read_file write_file);
@@ -62,13 +64,13 @@ sub _validate_params {
     my $self = shift;
 
     my $commands = $self->pipe_commands;
-    die "pipe_commands argument must be a nonempty arrayref"
+    croak $self->error_message("pipe_commands argument must be a nonempty arrayref")
         unless (ref $commands eq "ARRAY" && scalar @$commands > 0);
 
     for my $x (qw(pre post)) {
         my $var = sprintf "%s_commands", $x;
         my $value = $self->$var;
-        die "$var argument must be undef or an arrayref"
+        croak $self->error_message("$var argument must be undef or an arrayref")
             unless !defined $value || ref $value eq "ARRAY";
     }
 
@@ -100,18 +102,15 @@ sub execute {
 
     chmod oct(755), $script_path;
 
-    eval {
+    try {
         Genome::Sys->shellcmd(cmd => $script_path);
-    };
-
-    my $exception = $@;
-    my $pipefail = $self->_parse_pipestatus($pipestatus_path);
-
-    if ($exception) {
-        $self->error_message("Command failed: $exception");
-        my $msg = sprintf "Pipe failed: %s", $pipefail;
-        die $self->error_message($msg);
     }
+    catch {
+        croak $self->error_message($_);
+    }
+    finally {
+        $self->_check_pipestatus($pipestatus_path);
+    };
 
     return 1;
 }
@@ -132,7 +131,7 @@ sub script_text {
     $cmd .= " " . $self->redirects if $self->redirects;
 
     my $interp = $self->interpreter;
-    die "Script interpreter $interp is not executable!" unless -x $interp;
+    croak $self->error_message("Script interpreter $interp is not executable!") unless -x $interp;
     return <<EOS;
 #!$interp
 
@@ -160,16 +159,16 @@ EOS
 # This sub tries to parse a file containing a single line containing the
 # result of ${PIPESTATUS[@]} (a space delimited list of exit codes from
 # each command in the pipe expression.
-sub _parse_pipestatus {
+sub _check_pipestatus {
     my ($self, $path) = @_;
 
-    return "PIPESTATUS error file does not exist" unless -s $path;
+    croak $self->error_message("PIPESTATUS error file does not exist") unless -s $path;
 
     my @lines = read_file $path;
     chomp @lines;
 
     # there should only be one line in the file
-    return "Too many lines in PIPESTATUS error file" unless scalar @lines == 1;
+    croak $self->error_message("Too many lines in PIPESTATUS error file") unless scalar @lines == 1;
 
     my @status = split(/\s/, $lines[0]);
     $self->return_codes(\@status);
@@ -177,15 +176,15 @@ sub _parse_pipestatus {
     my @commands = @{$self->pipe_commands};
     # the number of commands we intended to execute should be equal
     # to the number of exit codes we received.
-    return "Wrong number of status codes in PIPESTATUS error file"
+    croak $self->error_message("Wrong number of status codes in PIPESTATUS error file")
         unless scalar @status == scalar @commands;
 
-    return "no failures" unless any { $_ != 0 } @status;
+    return unless any { $_ != 0 } @status;
 
     # which command failed?
     my @failures = grep {$status[$_] != 0} 0..$#status;
-    return sprintf "The following commands crashed:\n  %s",
+    croak $self->error_message(sprintf "The following commands crashed:\n  %s",
         join("\n  ",
             map {sprintf "%s: %s", $_, $commands[$_]} @failures
-            );
+            ));
 }
