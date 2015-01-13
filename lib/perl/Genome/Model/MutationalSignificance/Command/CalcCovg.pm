@@ -109,11 +109,15 @@ sub execute {
 sub _collect_params {
     my $self = shift;
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($self->music_build);
+    $result_users->{calc_covg} = $self->music_build;
+
     my %params = (
         roi_file => $self->roi_file,
         reference_sequence => $self->reference_sequence,
         somatic_variation_build => $self->somatic_variation_build,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        users => $result_users,
     );
 
     $params{normal_min_depth} = $self->normal_min_depth;
@@ -138,7 +142,6 @@ sub _link_result_to_build {
     $self->output_file($output_file);
 
     Genome::Sys->create_symlink(join('/', $result->output_dir, $result->output_file), $output_file);
-    $result->add_user(label => 'calc_covg', user => $self->music_build);
     return 1;
 }
 
