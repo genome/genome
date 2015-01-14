@@ -10,6 +10,7 @@ use Time::HiRes;
 use POSIX qw(ceil);
 use File::Copy;
 use Carp qw(confess);
+use File::Basename;
 
 use Genome::Utility::Instrumentation;
 
@@ -514,6 +515,15 @@ sub create {
 
     # STEP 14: RESIZE THE DISK
     # TODO: move this into the actual original allocation so we don't need to do this
+    $self->resize_disk_allocation;
+
+    $self->status_message("Alignment complete.");
+    return $self;
+}
+
+sub resize_disk_allocation {
+    my $self = shift;
+
     $self->debug_message("Resizing the disk allocation...");
     if ($self->_disk_allocation) {
         my %params;
@@ -524,9 +534,7 @@ sub create {
         }
         $self->output_dir($self->_disk_allocation->absolute_path); #update if was moved
     }
-
-    $self->status_message("Alignment complete.");
-    return $self;
+    return 1;
 }
 
 sub delete {
@@ -1647,6 +1655,10 @@ sub recreated_alignment_bam_file_paths {
         die $self->error_message('Failed to get valid merged bam to recreate per lane bam.');
     }
 
+    # Reallocate to an upper limit of the amount of space we might need
+    $self->_disk_allocation->kilobytes_requested( Genome::Sys->disk_usage_for_path( dirname($merged_bam) ) );
+    $self->resize_disk_allocation;
+
     my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
         merged_bam          => $merged_bam,
         per_lane_bam        => $recreated_bam,
@@ -1662,6 +1674,7 @@ sub recreated_alignment_bam_file_paths {
     }
 
     if (-s $recreated_bam) {
+        $self->resize_disk_allocation;
         return ($recreated_bam);
     }
     else {
