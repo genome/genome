@@ -40,6 +40,18 @@ class Genome::VariantReporting::Report::FullReport {
             doc => 'Hash of library_name to label',
         }
     ],
+    has_transient_optional_translated => [
+        sample_name_labels => {
+            is => 'HASH',
+            default => {},
+            doc => 'Hash of sample_name to label',
+        },
+        library_name_labels => {
+            is => 'HASH',
+            default => {},
+            doc => 'Hash of library_name to label',
+        },
+    ],
     doc => "Extensive tab-delimited report covering a set of one or more samples",
 };
 
