@@ -30,13 +30,17 @@ sub execute {
 
     my ($self) = @_;
 
-    my $resource_lock = $ENV{GENOME_LOCK_DIR} . '/gcsearch/wiki_loader';
+    my $resource_lock = 'gcsearch/wiki_loader';
 
     if (Genome::Config->dev_mode()) {
         $resource_lock .= '_dev';
     }
 
-    my $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock, max_try => 1);
+    my $lock = Genome::Sys->lock_resource(
+        resource_lock => $resource_lock,
+        scope => 'site',
+        max_try => 1,
+    );
     die 'someone else has the wiki_loader lock' if !$lock;
 
     my $cache = Genome::Memcache->server() || die 'cant get memcache server';

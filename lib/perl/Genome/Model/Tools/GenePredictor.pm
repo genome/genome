@@ -129,10 +129,11 @@ sub lock_files_for_predictions {
         
         my $lock_name = $file;
         $lock_name =~ s/\//_/g;
-        my $resource_lock = $ENV{GENOME_LOCK_DIR} . "/gene_prediction/eukaryotic/$lock_name";
+        my $resource_lock = "gene_prediction/eukaryotic/$lock_name";
 
         my $lock = Genome::Sys->lock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
             block_sleep => 60,
             max_try => 10,
         );

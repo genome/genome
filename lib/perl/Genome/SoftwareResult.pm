@@ -790,10 +790,12 @@ sub _lock {
     $LOCKS{$resource_lock_name} += 1;
     return $resource_lock_name if ($LOCKS{$resource_lock_name} > 1);
 
-    my $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name, max_try => 2);
+    my $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name,
+        scope => 'site', max_try => 2);
     if (!$lock && $wait) {
         $class->debug_message("This data set is still being processed by its creator.  Waiting for existing data lock...");
-        $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name, wait_announce_interval => 600);
+        $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name,
+            scope => 'site', wait_announce_interval => 600);
         unless ($lock) {
             $class->error_message("Failed to get existing data lock!");
             die($class->error_message);
@@ -839,7 +841,7 @@ sub _resolve_lock_name {
     my $lookup_hash = _validate_lookup_hash(shift);
 
     my $class_string = $class->class;
-    return $ENV{GENOME_LOCK_DIR} . "/genome/$class_string/" .  $lookup_hash;
+    return "genome/$class_string/" .  $lookup_hash;
 }
 
 sub _validate_lookup_hash {
