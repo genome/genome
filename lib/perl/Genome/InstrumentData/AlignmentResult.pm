@@ -1635,7 +1635,7 @@ sub alignment_bam_file_paths {
 sub recreated_alignment_bam_file_paths {
     my $self = shift;
 
-    my @bams = glob($self->output_dir . "/*.bam");
+    my @bams = $self->alignment_bam_file_paths;
     if (@bams) {
         return @bams;
     }
