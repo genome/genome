@@ -720,6 +720,7 @@ sub _fetch_merged_alignment_result {
     my ($params) = $self->processing_profile->params_for_merged_alignment($self, @instrument_data_inputs);
     my $alignment = Genome::InstrumentData::AlignmentResult::Merged->$mode(
         %$params,
+        users => Genome::SoftwareResult::User->user_hash_for_build($self),
     );
 
     return $alignment;
