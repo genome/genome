@@ -1698,15 +1698,10 @@ sub get_merged_bam_to_revivify_per_lane_bam {
 
 sub get_merged_alignment_results {
     my $self = shift;
-    my @inputs = Genome::SoftwareResult::Input->get(value_id => $self->instrument_data_id);
-    my @software_results = map $_->software_result, @inputs;
-    my @merged = grep { $_->isa('Genome::InstrumentData::AlignmentResult::Merged') } @software_results;
-    if (defined $self->test_name) {
-        return grep { defined $_->test_name && ($_->test_name eq $self->test_name) } @merged; # return only merged alignment results in our same test name 'namespace'
-    }
-    else {
-        return grep {! defined $_->test_name}@merged;
-    }
+    return Genome::InstrumentData::AlignmentResult::Merged->get(
+        'inputs.value_id' => $self->instrument_data_id,
+        test_name => $self->test_name,
+    );
 }
 
 sub get_unarchived_merged_alignment_results {
