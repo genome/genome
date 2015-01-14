@@ -57,6 +57,15 @@ sub __errors__ {
     return @errors;
 }
 
+sub exists_for_references {
+    my $class = shift;
+    my $source_reference = shift;
+    my $destination_reference = shift;
+
+    my @ref = $class->_faster_get(source_reference_build => $source_reference, destination_reference_build => $destination_reference);
+    return @ref;
+}
+
 sub convert_bed {
     my $class = shift;
     my ($source_bed, $source_reference, $destination_bed, $destination_reference) = @_;
