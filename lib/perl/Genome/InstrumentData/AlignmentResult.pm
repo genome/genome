@@ -1629,7 +1629,7 @@ sub verify_alignment_data {
 }
 
 sub alignment_bam_file_paths {
-    return glob(shift->output_dir . "/*.bam");
+    return glob(File::Spec->join(shift->output_dir, "*.bam"));
 }
 
 sub recreated_alignment_bam_file_paths {
