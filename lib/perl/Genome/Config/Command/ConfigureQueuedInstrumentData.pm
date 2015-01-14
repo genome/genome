@@ -370,8 +370,9 @@ sub _update_models_for_associated_projects {
 
 sub _lock {
     unless ($ENV{UR_DBI_NO_COMMIT}) {
-        my $lock_var = $ENV{GENOME_LOCK_DIR} . '/genome_config_command_configure-queued-instrument-data/lock';
-        my $lock = Genome::Sys->lock_resource(resource_lock => $lock_var, max_try => 1);
+        my $lock_var = 'genome_config_command_configure-queued-instrument-data/lock';
+        my $lock = Genome::Sys->lock_resource(resource_lock => $lock_var,
+            scope => 'site', max_try => 1);
 
         die('Unable to acquire the lock! Is ConfigureQueuedInstrumentData already running or did it exit uncleanly?')
             unless $lock;

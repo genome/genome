@@ -1,4 +1,4 @@
-package Genome::Sys::FileLock;
+package Genome::Sys::Lock::FileBackend;
 
 use strict;
 use warnings;
@@ -9,30 +9,27 @@ use File::Temp;
 use MIME::Lite;
 use Sys::Hostname qw(hostname);
 use Time::HiRes;
+use Path::Class qw();
 
-use Genome;
-use base 'UR::ModuleBase';   # *_message methods, but no constructor
+use Genome::Logger;
 use Genome::Utility::Instrumentation;
 
-my %SYMLINKS_TO_REMOVE;
+use Mouse;
+with qw(Genome::Sys::Lock::Backend);
+
+has 'parent_dir' => (is => 'ro', isa => 'Str', required => 1);
+has 'owned_resources' => (is => 'rw', isa => 'HashRef', lazy_build => 1);
+
 
 sub lock {
-    my($class, %args) = @_;
-
-    @args{'resource_lock', 'parent_dir'} = _resolve_resource_lock_and_parent_dir_for_lock_resource(%args);
+    my($self, %args) = @_;
 
     my $total_lock_start_time = Time::HiRes::time();
 
-    my($resource_lock, $parent_dir)
-        = delete @args{'resource_lock','parent_dir'};
+    my $resource_lock = delete $args{'resource_lock'};
     unless ($resource_lock) {
         croak('resource_lock not set');
     }
-    unless ($parent_dir) {
-        croak('parent_dir not set');
-    }
-
-    my $basename = File::Basename::basename($resource_lock);
 
     my $block_sleep = delete $args{block_sleep};
     unless (defined $block_sleep) {
@@ -49,9 +46,15 @@ sub lock {
         croak('wait_announce_interval not defined');
     }
 
-    my $owner_details = $class->_resolve_lock_owner_details;
+    my $symlink_obj = Path::Class::file($self->parent_dir, $resource_lock);
+    my $symlink_path = $symlink_obj->stringify;
+    $symlink_obj->parent->mkpath(0, 0777);
+    my $basename = File::Basename::basename($resource_lock);
+
+    my $owner_details = $self->_resolve_lock_owner_details;
     my $lock_dir_template = sprintf("lock-%s--%s_XXXX",$basename,$owner_details);
-    my $tempdir =  File::Temp::tempdir($lock_dir_template, DIR=>$parent_dir, CLEANUP=>1);
+    my $tempdir =  File::Temp::tempdir($lock_dir_template,
+        DIR => $symlink_obj->parent->stringify, CLEANUP => 1);
 
     unless (-d $tempdir) {
         Carp::croak("Failed to create temp lock directory ($tempdir)");
@@ -81,19 +84,18 @@ sub lock {
 
     my $lock_attempts = 1;
     my $ret;
-    while(!($ret = symlink($tempdir,$resource_lock))) {
+    while(!($ret = symlink($tempdir,$symlink_path))) {
         # TONY: The only allowable failure is EEXIST, right?
         # If any other error comes through, we end up in bigger trouble.
         use Errno qw(EEXIST ENOENT :POSIX);
         if ($! != EEXIST) {
-            $class->error_message("Can't create symlink from $tempdir to lock resource $resource_lock because: $!");
-            Carp::croak($class->error_message());
+            Genome::Logger->fatal("Can't create symlink from $tempdir to lock resource $symlink_path because: $!\n");
         }
         my $symlink_error = $!;
         chomp $symlink_error;
         return undef unless $max_try--;
 
-        my $target = readlink($resource_lock);
+        my $target = readlink($symlink_path);
 
         #If symlink no longer exists
         if ($! == ENOENT || !$target) {
@@ -103,20 +105,18 @@ sub lock {
 
         #symlink could have disappeared between the top of the while loop and now, so we check to see if it's changed
         my $target_exists = (-e $target);
-        unless($target eq readlink($resource_lock)){
+        unless($target eq readlink($symlink_path)){
             next;
         }
 
         if (!$target_exists) {
             # TONY: This means the lock symlink points to something that's been deleted
             # That's _really_ bad news and should probably get an email like below.
-            $class->error_message("Lock ($resource_lock) exists but target ($target) does not exist.");
-            Carp::croak($class->error_message);
+            Genome::Logger->fatal("Lock ($resource_lock) exists but target ($target) does not exist.\n");
         }
 
-        if ($class->is_my_lock_target($target)) {
-            $class->error_message("Tried to lock resource more than once: $resource_lock");
-            Carp::croak($class->error_message);
+        if ($self->is_my_lock_target($target)) {
+            Genome::Logger->fatal("Tried to lock resource more than once: $resource_lock\n");
         }
 
         my $target_basename = File::Basename::basename($target);
@@ -129,23 +129,23 @@ sub lock {
         if ($elapsed_time >= $wait_announce_interval) {
             $last_wait_announce_time = $time;
             my $total_elapsed_time = $time - $initial_time;
-            $class->status_message("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource_lock': $symlink_error. lock_info is:\n$info_content");
+            Genome::Logger->notice("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource_lock': $symlink_error. lock_info is:\n$info_content\n");
         }
 
         if ($lsf_id ne "NONE") {
             my ($job_info,$events) = Genome::Model::Event->lsf_state($lsf_id);
             unless ($job_info) {
                 Genome::Utility::Instrumentation::increment('sys.lock.lock.found_orphan');
-                $class->warning_message("Invalid lock for resource $resource_lock\n"
+                Genome::Logger->warning("Invalid lock for resource $resource_lock\n"
                     ." lock info was:\n". $info_content ."\n"
                     ."Removing old resource lock $resource_lock\n");
-                $class->unlock(resource_lock => $resource_lock, force => 1);
+                $self->unlock(resource_lock => $resource_lock, force => 1);
             }
         }
         sleep $block_sleep;
         $lock_attempts += 1;
     }
-    $SYMLINKS_TO_REMOVE{$resource_lock} = $$;
+    $self->owned_resources->{$resource_lock} = $$;
 
     my $total_lock_stop_time = Time::HiRes::time();
     my $lock_time_miliseconds = 1000 * ($total_lock_stop_time - $total_lock_start_time);
@@ -164,13 +164,12 @@ sub lock {
     if ($resource_lock) {
         Genome::Utility::Instrumentation::increment('sys.lock.lock.success');
     }
+
     return $resource_lock;
 }
 
 sub unlock {
-    my($class, %args) = @_;
-
-    $args{resource_lock} = $class->_resolve_resource_lock_for_unlock_resource(%args);
+    my($self, %args) = @_;
 
     my $resource_lock = delete $args{resource_lock};
     unless ($resource_lock) {
@@ -178,54 +177,53 @@ sub unlock {
     }
     my $force = delete $args{force};
 
-    my $target = readlink($resource_lock);
+    my $symlink_path = Path::Class::file($self->parent_dir,
+        $resource_lock)->stringify;
+
+    my $target = readlink($symlink_path);
     if (!$target) {
         if ($! == ENOENT) {
             Genome::Utility::Instrumentation::increment('sys.lock.unlock.stolen_from_me');
-            $class->error_message("Tried to unlock something that's not locked -- $resource_lock.");
-            Carp::croak($class->error_message);
+            Genome::Logger->fatal("Tried to unlock something that's not locked -- $resource_lock.\n");
         } else {
-            $class->error_message("Couldn't readlink $resource_lock: $!");
+            Genome::Logger->error("Couldn't readlink $symlink_path: $!\n");
         }
     }
     unless (-d $target) {
-        $class->error_message("Lock symlink '$resource_lock' points to something that's not a directory - $target. ");
-        Carp::croak($class->error_message);
+        Genome::Logger->fatal("Lock symlink '$symlink_path' points to something that's not a directory - $target. \n");
     }
 
     unless ($force) {
-        unless ($class->is_my_lock_target($target)) {
+        unless ($self->is_my_lock_target($target)) {
              my $basename = File::Basename::basename($target);
-             my $expected_details = $class->_resolve_lock_owner_details;
+             my $expected_details = $self->_resolve_lock_owner_details;
              Genome::Utility::Instrumentation::increment('sys.lock.unlock.stolen_from_me');
-             $class->error_message("This lock does not look like it belongs to me.  $basename does not match $expected_details.");
-             delete $SYMLINKS_TO_REMOVE{$resource_lock}; # otherwise the lock would be forcefully cleaned up when process exits
-             Carp::croak($class->error_message);
+             delete $self->owned_resources->{$resource_lock}; # otherwise the lock would be forcefully cleaned up when process exits
+             Genome::Logger->fatal("This lock does not look like it belongs to me.  $basename does not match $expected_details.\n");
         }
     }
 
-    my $unlink_rv = unlink($resource_lock);
+    my $unlink_rv = unlink($symlink_path);
     if (!$unlink_rv) {
         Genome::Utility::Instrumentation::increment('sys.lock.unlock.unlink_failed');
-        $class->error_message("Failed to remove lock symlink '$resource_lock':  $!");
-        Carp::croak($class->error_message);
+        Genome::Logger->fatal("Failed to remove lock symlink '$symlink_path':  $!\n");
     }
 
     my $rmdir_rv = File::Path::rmtree($target);
     if (!$rmdir_rv) {
         Genome::Utility::Instrumentation::increment('sys.lock.unlock.rmtree_failed');
-        $class->error_message("Failed to remove lock symlink target '$target', but we successfully unlocked.");
-        Carp::croak($class->error_message);
+        Genome::Logger->fatal("Failed to remove lock symlink target '$target', but we successfully unlocked.\n");
     }
 
-    delete $SYMLINKS_TO_REMOVE{$resource_lock};
+    delete $self->owned_resources->{$resource_lock};
 
     Genome::Utility::Instrumentation::increment('sys.lock.unlock.success');
     return 1;
 }
 
 sub clear_state {
-    %SYMLINKS_TO_REMOVE = ();
+    my $self = shift;
+    $self->owned_resources = {};
 }
 
 sub translate_lock_args { shift; return @_ }
@@ -239,7 +237,7 @@ sub _resolve_caller_name {
 
 #build the string for locks generated by this process
 sub _resolve_lock_owner_details {
-    my $class = shift;
+    my $self = shift;
     my ($my_host, $my_pid, $my_lsf_id, $my_user) = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
     my $job_id = (defined $ENV{'LSB_JOBID'} ? $ENV{'LSB_JOBID'} : "NONE");
     my $lock_details = join('_',$my_host,$ENV{'USER'},$$,$job_id);
@@ -247,87 +245,56 @@ sub _resolve_lock_owner_details {
     return $lock_details;
 }
 
-sub is_mandatory { 1 }
-
 sub has_lock {
-    my ($class, $resource_lock) = @_;
-    return $SYMLINKS_TO_REMOVE{$resource_lock};
+    my ($self, $resource_lock) = @_;
+    return exists $self->owned_resources->{$resource_lock};
 }
 
 sub is_my_lock_target {
-    my $class = shift;
+    my $self = shift;
     my $target = shift;
 
      my $basename = File::Basename::basename($target);
     $basename =~ s/_.{4}$//; #remove random chars tmpdir adds to end
-    my $expected_details = $class->_resolve_lock_owner_details;
+    my $expected_details = $self->_resolve_lock_owner_details;
     my $length = length($expected_details);
 
     return (substr($basename, (0-$length)) eq $expected_details);
 }
 
 sub release_all {
-    my $class = shift;
+    my $self = shift;
 
     my %errors;
-    for my $sym_to_remove (keys %SYMLINKS_TO_REMOVE) {
-        if ($SYMLINKS_TO_REMOVE{$sym_to_remove} == $$) {
-            if (-l $sym_to_remove) {
-                warn("Removing remaining resource lock: '$sym_to_remove'") unless $ENV{'HARNESS_ACTIVE'};
-                eval {$class->unlock(resource_lock => $sym_to_remove)};
-                $errors{$sym_to_remove} = $@ if $@;
+    for my $owned_resource (keys %{$self->owned_resources}) {
+        if ($self->owned_resources->{$owned_resource} == $$) {
+            if (-l $owned_resource) {
+                warn("Removing remaining resource lock: '$owned_resource'") unless $ENV{'HARNESS_ACTIVE'};
+                eval {$self->unlock(resource_lock => $owned_resource)};
+                $errors{$owned_resource} = $@ if $@;
             }
         } else {
-            $class->warning_message("Not cleaning up lock named (%s) because ".
-                "the pid that created it (%s) is not my pid (%s).",
-                $sym_to_remove,
-                $SYMLINKS_TO_REMOVE{$sym_to_remove},
+            Genome::Logger->warning(sprintf(
+                "Not cleaning up lock named (%s) because ".
+                "the pid that created it (%s) is not my pid (%s).\n",
+                $owned_resource,
+                $self->owned_resources->{$owned_resource},
                 $$,
-            );
+            ));
         }
     }
     if (keys %errors) {
-        $class->error_message("Cleaning up the following locks failed: %s",
+        Genome::Logger->error(sprintf(
+            "Cleaning up the following locks failed: %s\n",
             join(", ", keys %errors),
-        );
+        ));
         Carp::croak(join("\n", values %errors));
     }
 }
 
-sub _resolve_resource_lock_and_parent_dir_for_lock_resource {
-    my %args = @_;
-
-    my $resource_lock = delete $args{resource_lock};
-    my ($lock_directory,$resource_id,$parent_dir);
-    if ($resource_lock) {
-        $parent_dir = File::Basename::dirname($resource_lock);
-        Genome::Sys->create_directory($parent_dir);
-        unless (-d $parent_dir) {
-            Carp::croak("failed to make parent directory $parent_dir for lock $resource_lock!: $!");
-        }
-    }
-    else {
-        $lock_directory =  delete $args{lock_directory} || Carp::croak('Must supply lock_directory to lock resource');
-        Genome::Sys->create_directory($lock_directory);
-        $resource_id = $args{'resource_id'} || Carp::croak('Must supply resource_id to lock resource');
-        $resource_lock = $lock_directory . '/' . $resource_id . ".lock";
-        $parent_dir = $lock_directory
-    }
-
-    return ($resource_lock, $parent_dir);
+sub _build_owned_resources {
+    my $self = shift;
+    return {};
 }
 
-sub _resolve_resource_lock_for_unlock_resource {
-    my($class, %args) = @_;
-
-    my $resource_lock = $args{resource_lock};
-    unless ($resource_lock) {
-        my ($lock_directory,$resource_id);
-        $lock_directory =  delete $args{lock_directory} || Carp::croak('Must supply lock_directory to unlock resource');
-        $resource_id = $args{'resource_id'} || Carp::croak('Must supply resource_id to lock resource');
-        $resource_lock = $lock_directory . '/' . $resource_id . ".lock";
-    }
-    return $resource_lock;
-}
-
-1;
+__PACKAGE__->meta->make_immutable();

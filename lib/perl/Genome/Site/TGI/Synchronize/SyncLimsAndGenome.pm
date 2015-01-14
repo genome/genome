@@ -66,7 +66,8 @@ sub _lock_me {
     return 1 if $ENV{UR_DBI_NO_COMMIT};
     $self->status_message('Lock...');
     my $lock = Genome::Sys->lock_resource(
-        resource_lock => $ENV{GENOME_LOCK_DIR} . '/synchronize-genome-from-lims',
+        resource_lock => 'synchronize-genome-from-lims',
+        scope => 'site',
         max_try => 1,
     );
     if ( not $lock ) {

@@ -192,7 +192,8 @@ sub get_lock {
     my $modified_mount = $mount_path;
     $modified_mount =~ s/\//_/g;
     my $volume_lock = Genome::Sys->lock_resource(
-        resource_lock => $ENV{GENOME_LOCK_DIR} . '/allocation/volume' . $modified_mount,
+        resource_lock => 'allocation/volume' . $modified_mount,
+        scope => 'site',
         max_try => $tries,
         block_sleep => 1,
         wait_announce_interval => 10,

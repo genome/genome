@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Carp qw(carp croak);
-use Genome::Sys::FileLock;
 use List::MoreUtils qw(all);
 
 =item lock_resource()
@@ -63,9 +62,21 @@ then C<lock()> will C<croak()>.
 
 =cut
 
+my %RESOURCE_LOCK_SCOPE;
 sub lock_resource {
     my $class = shift;
     my %args = with_default_lock_resource_args(@_);
+    validate_scope($args{scope});
+
+    if (exists $RESOURCE_LOCK_SCOPE{$args{resource_lock}}
+        && $RESOURCE_LOCK_SCOPE{$args{resource_lock}} ne $args{scope}) {
+        Carp::confess(sprintf("Attempted to lock the resource (%s) in "
+                . "scope (%s) while it has an existing lock in scope (%s).  "
+                . "Locking in multiple scopes is not currently supported.",
+                $args{resource_lock},
+                $RESOURCE_LOCK_SCOPE{$args{resource_lock}},
+                $args{scope}));
+    }
 
     my @locks;
     my $unwind = sub {
@@ -76,7 +87,7 @@ sub lock_resource {
         }
     };
 
-    for my $backend (backends()) {
+    for my $backend (backends($args{scope})) {
         my @lock_args = $backend->translate_lock_args(%args);
         my $lock = $backend->lock(@lock_args);
         if ($lock) {
@@ -89,13 +100,15 @@ sub lock_resource {
         }
     }
 
-    if (all { $_->has_lock($args{resource_lock}) } backends()) {
+    if (all { $_->has_lock($args{resource_lock}) } backends($args{scope})) {
         Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.consistent');
     } else {
         Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.inconsistent');
     }
 
     $class->_cleanup_handler_check();
+
+    $RESOURCE_LOCK_SCOPE{$args{resource_lock}} = $args{scope};
 
     return $args{resource_lock};
 
@@ -120,12 +133,16 @@ sub unlock_resource {
     my $class = shift;
     my %args = @_;
 
+    my $scope = $RESOURCE_LOCK_SCOPE{$args{resource_lock}};
+
     my $rv = 1;
-    for my $backend (backends()) {
-        my @unlock_args = $backend->translate_unlock_args(%args);
-        my $unlocked = $backend->unlock(@unlock_args);
-        if (is_mandatory($backend)) {
-            $rv = $rv && $unlocked;
+    for my $backend (backends($scope)) {
+        if ($backend->has_lock($args{resource_lock})) {
+            my @unlock_args = $backend->translate_unlock_args(%args);
+            my $unlocked = $backend->unlock(@unlock_args);
+            if (is_mandatory($backend)) {
+                $rv = $rv && $unlocked;
+            }
         }
     }
 
@@ -141,8 +158,10 @@ individually.
 =cut
 
 sub release_all {
-    for my $backend (backends()) {
-        $backend->release_all();
+    for my $scope (scopes()) {
+        for my $backend(backends($scope)) {
+            $backend->release_all();
+        }
     }
 }
 
@@ -156,25 +175,62 @@ sub with_default_lock_resource_args {
     return %args;
 }
 
-my @backends = ('Genome::Sys::FileLock');
-
 sub is_mandatory {
     my $backend = shift;
     return $backend->is_mandatory();
 }
 
+my $backends = {};
 sub backends {
-    return @backends;
+    my $scope = shift;
+
+    validate_scope($scope);
+
+    if (exists $backends->{$scope}) {
+        return @{$backends->{$scope}};
+    } else {
+        Carp::confess(sprintf("No backends registered for scope '%s'",
+                $scope));
+    }
+}
+
+sub all_backends {
+    return %$backends;
+}
+
+sub scopes {
+    return ('site', 'tgisan', 'unknown');
+}
+
+sub clear_backends {
+    $backends = {};
+}
+
+sub set_backends {
+    my $class = shift;
+    my %new_backends = @_;
+
+    $class->clear_backends();
+    for my $scope (keys %new_backends) {
+        for my $backend (@{$new_backends{$scope}}) {
+            $class->add_backend($scope, $backend);
+        }
+    }
 }
 
 sub add_backend {
-    my ($class, $backend) = @_;
-    push @backends, $backend;
+    my ($class, $scope, $backend) = @_;
+    validate_scope($scope);
+
+    push @{$backends->{$scope}}, $backend;
 }
 
-sub remove_backend {
-    my ($class, $backend) = @_;
-    @backends = grep { $_ ne $backend } @backends;
+sub validate_scope {
+    my $scope = shift;
+    unless (grep {$scope eq $_} scopes()) {
+        Carp::confess(sprintf("Invalid scope '%s'.  Valid scopes are [%s].",
+                    $scope, join(', ', scopes())));
+    }
 }
 
 my $_cleanup_handler_installed;

@@ -3,11 +3,6 @@
 use strict;
 use warnings;
 
-BEGIN {
-    $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
-    $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
-}
-
 use above 'Genome';
 use Test::More;
 use Genome::Utility::Test qw();
