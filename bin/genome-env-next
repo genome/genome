@@ -1,0 +1,432 @@
+#!/bin/bash
+
+# if this was found via PATH as opposed to a path to executable
+THIS="$(basename "$0")"
+if test "$THIS" == "$0"
+then
+    # delegate to local version if it is found
+    if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
+    then
+        WORK_TREE="$(git rev-parse --show-toplevel)"
+        NEW_THIS="${WORK_TREE}/bin/${THIS}"
+        if test -x "$NEW_THIS"
+        then
+            echo "delegating to $NEW_THIS" 1>&2
+            exec "$NEW_THIS" "$@"
+        fi
+    fi
+fi
+
+function usage {
+    sed 's/^\ \{4\}//' <<EOS
+    usage: $THIS [-hsuw] [command args]
+        See \`$THIS -h' for detailed help.
+EOS
+}
+
+function help {
+    sed 's/^\ \{4\}//' <<EOS
+    NAME - $THIS
+
+    DESCRIPTION
+    ===========
+
+    \`$THIS' is used as a wrapper command to setup an environment for \`genome'.  For most use cases no options need to be specified.  For example,
+
+        $THIS genome --help
+
+    If you know you will need to run several commands in succession you can start a new shell by doing,
+
+        $THIS \$SHELL
+
+    OPTIONS
+    =======
+
+    -h    Display this detailed help.
+
+    -M    Disable migration of database.
+
+    -S    Disable configuration of database.
+
+    -s db_snapshot_name
+          The name of the database snapshot to use instead of the default.
+
+    -U    Disable configuration of UR.
+
+    -u ur_repo
+          The path to a UR repo to use instead of the default.
+
+    -v    Enable verbose status messages.
+
+    -W    Disable configuration of Workflow.
+
+    -w workflow_repo
+          The path to a Workflow repo to use instead of the default.
+EOS
+}
+
+function main {
+    local TESTDBSERVER_DB_NAME TESTDBSERVER_DB_HOST TESTDBSERVER_DB_PORT \
+        TESTDBSERVER_DB_USER="genome" \
+        TESTDBSERVER_DB_PASS="mypassword"
+
+    local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF
+    local SNAPSHOT_NAME TOP UR_REPO VERBOSE WF_REPO
+
+    if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
+    then
+        TOP="$(git rev-parse --show-toplevel)"
+    else
+        TOP="$PWD"
+    fi
+
+    export TESTDBSERVER_URL="https://apipe-test-db.gsc.wustl.edu"
+
+    parse_opts "$@"
+    shift $((OPTIND-1))
+
+    rebuild_meta_db
+    setup_test_db "$TOP"
+    setup_env "$TOP"
+
+    stderr ''
+    stderr "Genome Perl: $(genome-perl -e 'printf(qq(%vd\n), $^V)')"
+    stderr "Genome Prove: $(genome-prove --version)"
+    stderr "UR: $(wtf UR | head -n 1)"
+    stderr "Workflow: $(wtf Workflow | head -n 1)"
+    stderr "Genome: $(wtf Genome | head -n 1)"
+    stderr "Test DB Snapshot: $SNAPSHOT_NAME"
+    stderr "Test DB Name: $TESTDBSERVER_DB_NAME"
+    stderr ''
+
+    if [ $# -gt 0 ]; then
+        echo "$@"... 1>&2
+        exec "$@"
+    else
+        if [ -n "$BASH" ]; then
+            echo 'Press <Ctrl>-D or type `logout` to return to normal environment.'
+            echo ''
+            if test -z "$GE_ENV_NAME"
+            then
+                GE_ENV_NAME="genome-env"
+            fi
+            unset PROMPT_COMMAND
+            export PS1="(${GE_ENV_NAME}) \w $ "
+            exec bash --norc --noprofile
+        else
+            echo 'Only `bash` shells are supported at this time.'
+            exit 128
+        fi
+    fi
+}
+
+function err {
+    echo "$THIS: $@" >&2
+}
+
+function parse_opts {
+    local opts
+    while getopts :hMSs:Uu:vWw: opts "$@"
+    do
+        case $opts in
+            h)
+                help
+                exit 0
+                ;;
+            M)
+                DISABLE_MIGRATIONS="TRUE"
+                ;;
+            S)
+                DISABLE_DB="TRUE"
+                ;;
+            s)
+                SNAPSHOT_NAME="$OPTARG"
+                ;;
+            U)
+                DISABLE_UR="TRUE"
+                ;;
+            u)
+                UR_REPO="$OPTARG"
+                ;;
+            v)
+                VERBOSE="TRUE"
+                ;;
+            W)
+                DISABLE_WF="TRUE"
+                ;;
+            w)
+                WF_REPO="$OPTARG"
+                ;;
+            :)
+                err "option -$OPTARG requires an argument"
+                exit 1
+                ;;
+            \?)
+                err "illegal option -- $OPTARG"
+                usage
+                exit 1
+                ;;
+        esac
+    done
+
+    validate_opts
+    set_defaults
+}
+
+function validate_opts {
+    if test -n "$DISABLE_DB" -a -n "$DISABLE_MIGRATIONS"
+    then
+        err "cannot use -S and -M options together"
+        exit 2
+    fi
+
+    if test -n "$DISABLE_DB" -a -n "$SNAPSHOT_NAME"
+    then
+        err "cannot use -S and -s options together"
+        exit 2
+    fi
+
+    if test -n "$DISABLE_UR" -a -n "$UR_REPO"
+    then
+        err "cannot use -U and -u options together"
+        exit 2
+    fi
+
+    if test -n "$DISABLE_WF" -a -n "$WF_REPO"
+    then
+        err "cannot use -W and -w options together"
+        exit 2
+    fi
+
+    if test -n "$SNAPSHOT_NAME"
+    then
+        if ! test-db template list | cut -f 1 | grep -q "^${SNAPSHOT_NAME}$"
+        then
+            err "invalid snapshot name -- $SNAPSHOT_NAME"
+            exit 2
+        fi
+    fi
+
+    if test -n "$UR_REPO"
+    then
+        assert_dir "-u" "$UR_REPO"
+    fi
+
+    if test -n "$WF_REPO"
+    then
+        assert_dir "-w" "$WF_REPO"
+    fi
+}
+
+function assert_dir {
+    if ! test -d "$2"
+    then
+        err "$1 value must be a directory -- $2"
+        exit 2
+    fi
+}
+
+function set_defaults {
+    local TOP="$(git rev-parse --show-toplevel 2> /dev/null)"
+    local SUBMODULES
+
+    SUBMODULES=(gms-config configuration-manager)
+
+    if test -z "$SNAPSHOT_NAME"
+    then
+        SNAPSHOT_NAME="82f3e4d"
+    fi
+
+    if test -z "$UR_REPO"
+    then
+        if test -z "$TOP" -o ! -d "$TOP/ur"
+        then
+            err "-u must be specified if not in a Genome repo"
+            exit 2
+        fi
+        SUBMODULES=("${SUBMODULES[@]}" ur)
+        UR_REPO="$TOP/ur"
+    fi
+
+    if test -z "$WF_REPO"
+    then
+        if test -z "$TOP" -o ! -d "$TOP/workflow"
+        then
+            err "-w must be specified if not in a Genome repo"
+            exit 2
+        fi
+        SUBMODULES=("${SUBMODULES[@]}" workflow)
+        WF_REPO="$TOP/workflow"
+    fi
+
+    if test -n "$SUBMODULES"
+    then
+        prepare_submodules "${SUBMODULES[@]}"
+    fi
+}
+
+function __quiet_git {
+    (
+        set +o errexit
+        OUT="$(git "$@" 2>&1)"
+        GIT_EXIT=$?
+        if test $GIT_EXIT -ne 0
+        then
+            echo -e "$OUT" 1>&2
+            exit $GIT_EXIT
+        fi
+    )
+}
+
+function stderr {
+    echo "$@" 1>&2
+}
+
+function prepare_submodules {
+    (
+        stderr -e "\n=> Preparing Submodules..."
+        cd "$(git rev-parse --show-cdup)"
+
+        __quiet_git submodule sync "$@"
+
+        for submodule in "$@"; do
+            stderr -n "   $submodule: "
+            if git submodule status $submodule | grep -q ^-
+            then
+                __quiet_git submodule update --init $submodule
+                stderr "OK"
+            else
+                (
+                    EXPECTED_HEAD=$(git ls-tree HEAD $submodule | awk '{print $3}')
+                    cd $submodule
+                    HEAD=$(git rev-parse HEAD)
+
+                    if ! git cat-file -e $EXPECTED_HEAD
+                    then
+                        __quiet_git fetch --all
+                    fi
+
+                    if ! git status --porcelain | grep -q . \
+                        && git merge-base --is-ancestor $HEAD $EXPECTED_HEAD
+                    then
+                        cd - 1> /dev/null
+                        __quiet_git submodule update --init $submodule
+                        stderr "OK"
+                    else
+                        stderr "ERROR: Not updating '$submodule' submodule because it has local changes!"
+                        exit 1;
+                    fi
+                )
+            fi
+        done
+    )
+}
+
+function regen_db {
+    local DB_TXT="$1"
+    echo -n '.' 1>&2
+    DB_BIN=${DB_TXT/-dump/}
+    if [[ "$DB_BIN" -ot "$DB_TXT" ]]; then
+        rm -f "$DB_BIN"
+        sqlite3 "$DB_BIN" < "$DB_TXT"
+    fi
+}
+
+function rebuild_meta_db {
+    echo -en "\n=> Rebuilding Meta DB..." 1>&2
+
+    if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
+    then
+        # ls-files is fast but then we have to also query submodules
+        # foreach defines $name which serves to prefix the submodule path
+        ( git ls-files \
+            && git submodule foreach "git ls-files | sed \"s|^|\$name/|\"" ) \
+        | grep -P '\.sqlite3n?-dump$' \
+        | while read DB_TXT
+        do
+            regen_db "$DB_TXT"
+        done
+    else
+        find "$PWD" -iname '*sqlite3-dump' -or -iname '*sqlite3n-dump' | while read DB_TXT; do
+            regen_db "$DB_TXT"
+        done
+    fi
+
+    echo ' done' 1>&2
+}
+
+function setup_test_db {
+    local BASE_DIR="$1"
+    echo "=> Creating test database..."
+    eval "$(test-db database create --bash --owner $TESTDBSERVER_DB_USER --based-on $SNAPSHOT_NAME)"
+    if test -z "$TESTDBSERVER_DB_NAME"
+    then
+        stderr "Failed to create test database."
+        exit 1
+    fi
+
+    if test -z "$DISABLE_MIGRATIONS"
+    then
+        echo "=> Migrating test database..."
+        (
+            set -o errexit
+            set -o nounset
+            cd "$BASE_DIR/sqitch/gms"
+            sqitch config core.pg.host     $TESTDBSERVER_DB_HOST
+            sqitch config core.pg.username $TESTDBSERVER_DB_USER
+            sqitch config core.pg.password $TESTDBSERVER_DB_PASS
+            sqitch config core.pg.db_name  $TESTDBSERVER_DB_NAME
+            if ! sqitch status | /bin/grep -q 'Nothing to deploy'
+            then
+                sqitch deploy
+            fi
+        )
+    fi
+}
+
+function setup_env {
+    echo -e "\n=> Setting Up Test Environment..." 1>&2
+
+    local BIN MODULE \
+        BASE_DIR="$1" \
+        SNAPSHOT_LIB="/gsc/scripts/opt/genome/current/user/lib/perl" \
+        SNAPSHOT_BIN="/gsc/scripts/opt/genome/current/user/bin"
+
+    # remove /gsc/scripts/opt/genome/current/user/*
+    PERL5LIB="$(echo $PERL5LIB | tr : "\n" | grep -v "$SNAPSHOT_LIB" | tr '\n' : | sed 's/:$//')"
+    PATH="$(echo $PATH | tr : "\n" | grep -v "$SNAPSHOT_BIN" | tr '\n' : | sed 's/:$//')"
+
+    PERL5LIB=$UR_REPO/lib:$PERL5LIB
+    PATH=$UR_REPO/bin:$PATH
+
+    PERL5LIB=$BASE_DIR/configuration-manager/lib:$PERL5LIB
+
+    GENOME_CONFIG_PATH=$BASE_DIR/gms-confg/etc/gms
+
+    PERL5LIB=$WF_REPO/lib:$PERL5LIB
+    PATH=$WF_REPO/bin:$PATH
+
+    PERL5LIB=$BASE_DIR/lib/perl:$PERL5LIB
+    PATH=$BASE_DIR/bin:$PATH
+
+    export PERL5LIB
+    export PATH
+
+    set +o nounset
+
+    for MODULE in UR Workflow Genome; do
+        if wtf $MODULE | grep -q "$SNAPSHOT_LIB"; then echo "$MODULE found in $SNAPSHOT_LIB! Aborting!" 1>&2 && exit 1; fi
+    done
+
+    for BIN in ur workflow genome; do
+        if which $BIN | grep -q "$SNAPSHOT_BIN"; then echo "$BIN found in $SNAPSHOT_BIN! Aborting!" 1>&2 && exit 1; fi
+    done
+
+    export GENOME_DS_GMSCHEMA_SERVER="dbname=${TESTDBSERVER_DB_NAME};host=${TESTDBSERVER_DB_HOST};port=${TESTDBSERVER_DB_PORT}"
+    export GENOME_DS_GMSCHEMA_LOGIN=$TESTDBSERVER_DB_USER
+    export GENOME_DS_GMSCHEMA_AUTH=$TESTDBSERVER_DB_PASS
+
+    hash -r
+}
+
+main "$@"
