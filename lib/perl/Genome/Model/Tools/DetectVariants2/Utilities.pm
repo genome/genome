@@ -7,6 +7,7 @@ use Genome;
 use Cwd qw(abs_path);
 use File::Spec;
 use List::Util qw(first);
+use List::MoreUtils qw(any uniq);
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -18,21 +19,25 @@ our @EXPORT_OK = qw(
 sub final_result_for_variant_type {
     my ($results, $variant_type) = @_;
 
-    my @dv2_results = grep($_->class =~ /Genome::Model::Tools::DetectVariants2::Result/, @$results);
+    my @dv2_results = grep($_->class =~ /Genome::Model::Tools::DetectVariants2::Result/, uniq @$results);
     @dv2_results = grep($_->class !~ /::(?:Vcf|LqUnion|Manual)/, @dv2_results);
 
     my @relevant_results = grep(scalar( @{[ glob($_->output_dir . '/' . $variant_type .'*') ]} ), @dv2_results);
 
-    if(!@relevant_results) {
+    my %results;
+    $results{$_->id} = 1 for @relevant_results;
+    my @final_results = grep { !any { $results{$_->id} } $_->descendents } @relevant_results;
+
+    if(!@final_results) {
         return;
     }
-    if(@relevant_results > 1) {
+    if(@final_results > 1) {
         my $error_string = sprintf('Found multiple results for variant type (%s), Found the following SoftwareResults: %s',
-            $variant_type, join(", ", map {$_->id} @relevant_results));
+            $variant_type, join(", ", map {$_->id} @final_results));
         Carp::confess($error_string);
     }
 
-    return $relevant_results[0];
+    return $final_results[0];
 }
 
 sub final_result_for_variants_directory {
