@@ -48,22 +48,7 @@ sub lock {
 
     my $symlink_path = $self->path_for_resource($resource_lock);
 
-    my $lock_dir = $self->lock_dir_for_resource($resource_lock);
-    $self->make_dir_path($lock_dir);
-
-    my $basename = File::Basename::basename($resource_lock);
-
-    my $owner_details = $self->_resolve_lock_owner_details;
-    my $lock_dir_template = sprintf("lock-%s--%s_XXXX",$basename,$owner_details);
-    my $tempdir =  File::Temp::tempdir($lock_dir_template,
-        DIR => $lock_dir, CLEANUP => 1);
-
-    unless (-d $tempdir) {
-        Carp::croak("Failed to create temp lock directory ($tempdir)");
-    }
-
-    # make this readable for everyone
-    chmod(0770, $tempdir) or Carp::croak("Can't chmod 0770 path ($tempdir): $!");
+    my $tempdir = $self->tempdir_for_resource($resource_lock);
 
     # drop an info file into here for compatibility's sake with old stuff.
     # put a "NOKILL" here on LSF_JOB_ID so an old process doesn't try to snap off the job ID and kill me.
@@ -309,6 +294,30 @@ sub make_dir_path {
     my ($self, $dir_path) = @_;
     my $obj = Path::Class::dir($dir_path);
     $obj->mkpath(0, 0777);
+}
+
+sub tempdir_for_resource {
+    my ($self, $resource_lock) = @_;
+
+    my $lock_dir = $self->lock_dir_for_resource($resource_lock);
+    $self->make_dir_path($lock_dir);
+
+    my $basename = File::Basename::basename($resource_lock);
+
+    my $owner_details = $self->_resolve_lock_owner_details;
+    my $lock_dir_template = sprintf("lock-%s--%s_XXXX", $basename,
+        $owner_details);
+    my $tempdir =  File::Temp::tempdir($lock_dir_template,
+        DIR => $lock_dir, CLEANUP => 1);
+
+    unless (-d $tempdir) {
+        Carp::croak("Failed to create temp lock directory ($tempdir)");
+    }
+
+    # make this readable for everyone
+    chmod(0770, $tempdir) or Carp::croak("Can't chmod 0770 path ($tempdir): $!");
+
+    return $tempdir;
 }
 
 sub _build_owned_resources {
