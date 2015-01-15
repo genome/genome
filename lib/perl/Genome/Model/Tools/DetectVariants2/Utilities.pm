@@ -28,6 +28,11 @@ sub final_result_for_variant_type {
     $results{$_->id} = 1 for @relevant_results;
     my @final_results = grep { !any { $results{$_->id} } $_->descendents } @relevant_results;
 
+    if(@final_results > 1) {
+        my @combine_results = grep { $_->class =~ /::Combine/ } @final_results;
+        @final_results = @combine_results if @combine_results;
+    }
+
     if(!@final_results) {
         return;
     }
