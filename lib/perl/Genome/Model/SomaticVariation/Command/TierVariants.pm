@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use Genome;
 
+use List::MoreUtils qw();
+
 class Genome::Model::SomaticVariation::Command::TierVariants{
     is => 'Command::V2',
     has =>[
@@ -187,7 +189,7 @@ sub params_for_result {
     my $variant_type = shift;
     my $build = $self->build;
 
-    my @results = $build->results;
+    my @results = List::MoreUtils::uniq $build->results;
     my $target_class;
     if($qual eq 'hq') {
         $target_class = 'Genome::Model::Tools::DetectVariants2::Classify::PreviouslyDiscovered';
