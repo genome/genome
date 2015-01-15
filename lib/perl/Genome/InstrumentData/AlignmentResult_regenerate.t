@@ -88,8 +88,10 @@ subtest 'test per lane bam removal and recreation' => sub {
         ok(!-s $file, "File $base removed ok as expected");
     }
 
+    is($ar2->_disk_allocation->kilobytes_requested, 2000, 'AR2 disk allocation pre-resizing');
     my @recreated_bams = $ar2->recreated_alignment_bam_file_paths;
     is_deeply(\@recreated_bams, [File::Spec->join($ar2->output_dir, $per_lane_bam)], 'AR2 recreated_alignment_bam_file_paths recreated as per lane bam ok');
+    is($ar2->_disk_allocation->kilobytes_requested, 35892, 'AR2 disk allocation was resized succesfully');
 
     my $new_flagstat_file = Genome::Sys->create_temp_file_path;
     `samtools flagstat $recreated_bams[0] > $new_flagstat_file`;
