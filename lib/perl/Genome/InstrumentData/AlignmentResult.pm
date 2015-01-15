@@ -1711,10 +1711,23 @@ sub get_merged_bam_to_revivify_per_lane_bam {
 
 sub get_merged_alignment_results {
     my $self = shift;
-    return Genome::InstrumentData::AlignmentResult::Merged->get(
+    my @results = Genome::InstrumentData::AlignmentResult::Merged->get(
         'inputs.value_id' => $self->instrument_data_id,
         test_name => $self->test_name,
     );
+    return $self->filter_out_non_database_objects(@results);
+}
+
+# This was refactored out to override in the test - mock objects break this logic
+sub filter_out_non_database_objects {
+    my ($self, @results) = @_;
+    my @db_results;
+    for my $result (@results) {
+        if (UR::Context->current->object_exists_in_underlying_context($result)) {
+            push @db_results, $result;
+        }
+    }
+    return @db_results;
 }
 
 sub get_unarchived_merged_alignment_results {

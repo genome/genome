@@ -39,6 +39,9 @@ my $ar_class         = 'Genome::Test::Factory::InstrumentData::AlignmentResult';
 my $merge_class      = 'Genome::Test::Factory::InstrumentData::MergedAlignmentResult';
 my $allocation_class = 'Genome::Test::Factory::DiskAllocation';
 
+# We need to override this because get_merged_alignment_results only returns objects in the database... and these are mock objects
+Sub::Install::install_sub({code => sub { my $self = shift; return @_; }, into => 'Genome::InstrumentData::AlignmentResult', as => 'filter_out_non_database_objects'});
+
 my ($ar1, $ar2, $merged_result, $smaller_merged_result) = get_test_alignment_results();
 
 subtest 'get_merged_alignment_results' => sub {
