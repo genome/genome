@@ -7,6 +7,7 @@ use Genome::VariantReporting::Suite::BamReadcount::VafCalculator;
 use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(
     many_libraries_field_descriptions
     many_samples_field_descriptions
+    translate_ref_allele
 );
 
 class Genome::VariantReporting::Suite::BamReadcount::VafInterpreter {
@@ -57,7 +58,7 @@ sub _interpret_entry {
             $return_values{$allele} = {map {$_ => $self->interpretation_null_character} $self->available_fields};
         }
         else {
-            my $translated_reference_allele = $self->translate_ref_allele($entry->{reference_allele}, $allele);
+            my $translated_reference_allele = translate_ref_allele($entry->{reference_allele}, $allele);
             my $vaf = $vafs{$allele};
 
             $return_values{$allele} = {
@@ -100,16 +101,6 @@ sub flatten_hash {
         $flattened_hash{$self->create_library_specific_field_name($field_name, $library_name)} = $per_library_hash->{$library_name};
     }
     return %flattened_hash;
-}
-
-sub translate_ref_allele {
-    my ($self, $ref, $alt) = @_;
-    if (Genome::VariantReporting::Suite::BamReadcount::VafCalculator::is_deletion($ref, $alt)) {
-        return substr($ref, 1, 1);
-    }
-    else {
-        return substr($ref, 0, 1);
-    }
 }
 
 1;
