@@ -38,6 +38,9 @@ ok(-d $sub_dir,$sub_dir .' is a directory');
 
 my $BACKEND = Genome::Sys::Lock::FileBackend->new(
         is_mandatory => 1, parent_dir => $TEST_LOCK_DIR);
+
+
+# Test basic contention
 test_locking($BACKEND,
     successful => 1,
     message => 'lock resource_lock '. $bogus_id,
@@ -45,6 +48,8 @@ test_locking($BACKEND,
     wait_announce_interval => 10,
     max_try => 1,
     block_sleep => 3,);
+
+ok(-l $TEST_LOCK_DIR . '/' . $bogus_id, 'Symlink created');
 
 test_locking_forked(Genome::Sys::Lock::FileBackend->new(
         is_mandatory => 1, parent_dir => $TEST_LOCK_DIR),
@@ -59,6 +64,24 @@ ok($BACKEND->unlock(
         resource_lock => $bogus_id,
     ), 'unlock resource_lock '. $bogus_id);
 
+ok(!-l $TEST_LOCK_DIR . '/' . $bogus_id, 'Symlink removed');
+
+
+
+# Test release_all
+test_locking($BACKEND,
+    successful => 1,
+    message => 'lock resource_lock '. $bogus_id,
+    resource_lock => $bogus_id,
+    wait_announce_interval => 10,
+    max_try => 1,
+    block_sleep => 3,);
+
+ok(-l $TEST_LOCK_DIR . '/' . $bogus_id, 'Symlink created');
+
+$BACKEND->release_all();
+
+ok(!-l $TEST_LOCK_DIR . '/' . $bogus_id, 'Symlink removed by release_all');
 
 my $init_lsf_job_id = $ENV{'LSB_JOBID'};
 

@@ -46,38 +46,11 @@ sub lock {
         croak('wait_announce_interval not defined');
     }
 
-    my $symlink_obj = Path::Class::file($self->parent_dir, $resource_lock);
-    my $symlink_path = $symlink_obj->stringify;
-    $symlink_obj->parent->mkpath(0, 0777);
-    my $basename = File::Basename::basename($resource_lock);
+    my $symlink_path = $self->path_for_resource($resource_lock);
 
-    my $owner_details = $self->_resolve_lock_owner_details;
-    my $lock_dir_template = sprintf("lock-%s--%s_XXXX",$basename,$owner_details);
-    my $tempdir =  File::Temp::tempdir($lock_dir_template,
-        DIR => $symlink_obj->parent->stringify, CLEANUP => 1);
+    my $tempdir = $self->tempdir_for_resource($resource_lock);
 
-    unless (-d $tempdir) {
-        Carp::croak("Failed to create temp lock directory ($tempdir)");
-    }
-
-    # make this readable for everyone
-    chmod(0770, $tempdir) or Carp::croak("Can't chmod 0770 path ($tempdir): $!");
-
-    # drop an info file into here for compatibility's sake with old stuff.
-    # put a "NOKILL" here on LSF_JOB_ID so an old process doesn't try to snap off the job ID and kill me.
-    my $lock_info = IO::File->new("$tempdir/info", ">");
-    unless ($lock_info) {
-        Carp::croak("Can't create info file $tempdir/info: $!");
-    }
-
-    my ($my_host, $my_pid, $my_lsf_id, $my_user) = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
-    my $job_id = (defined $ENV{'LSB_JOBID'} ? $ENV{'LSB_JOBID'} : "NONE");
-    $lock_info->printf("HOST %s\nPID $$\nLSF_JOB_ID_NOKILL %s\nUSER %s\n",
-                       $my_host,
-                       $ENV{'LSB_JOBID'},
-                       $ENV{'USER'},
-                     );
-    $lock_info->close();
+    $self->write_lock_info($tempdir);
 
     my $initial_time = time;
     my $last_wait_announce_time = $initial_time;
@@ -177,8 +150,7 @@ sub unlock {
     }
     my $force = delete $args{force};
 
-    my $symlink_path = Path::Class::file($self->parent_dir,
-        $resource_lock)->stringify;
+    my $symlink_path = $self->path_for_resource($resource_lock);
 
     my $target = readlink($symlink_path);
     if (!$target) {
@@ -268,7 +240,7 @@ sub release_all {
     my %errors;
     for my $owned_resource (keys %{$self->owned_resources}) {
         if ($self->owned_resources->{$owned_resource} == $$) {
-            if (-l $owned_resource) {
+            if (-l $self->path_for_resource($owned_resource)) {
                 warn("Removing remaining resource lock: '$owned_resource'") unless $ENV{'HARNESS_ACTIVE'};
                 eval {$self->unlock(resource_lock => $owned_resource)};
                 $errors{$owned_resource} = $@ if $@;
@@ -290,6 +262,67 @@ sub release_all {
         ));
         Carp::croak(join("\n", values %errors));
     }
+}
+
+sub path_for_resource {
+    my ($self, $resource_lock) = @_;
+
+    return Path::Class::file($self->parent_dir, $resource_lock)->stringify;
+}
+
+sub lock_dir_for_resource {
+    my ($self, $resource_lock) = @_;
+
+    return Path::Class::file($self->parent_dir, $resource_lock)->parent->stringify;
+}
+
+sub make_dir_path {
+    my ($self, $dir_path) = @_;
+    my $obj = Path::Class::dir($dir_path);
+    $obj->mkpath(0, 0777);
+}
+
+sub tempdir_for_resource {
+    my ($self, $resource_lock) = @_;
+
+    my $lock_dir = $self->lock_dir_for_resource($resource_lock);
+    $self->make_dir_path($lock_dir);
+
+    my $basename = File::Basename::basename($resource_lock);
+
+    my $owner_details = $self->_resolve_lock_owner_details;
+    my $lock_dir_template = sprintf("lock-%s--%s_XXXX", $basename,
+        $owner_details);
+    my $tempdir =  File::Temp::tempdir($lock_dir_template,
+        DIR => $lock_dir, CLEANUP => 1);
+
+    unless (-d $tempdir) {
+        Carp::croak("Failed to create temp lock directory ($tempdir)");
+    }
+
+    # make this readable for everyone
+    chmod(0770, $tempdir) or Carp::croak("Can't chmod 0770 path ($tempdir): $!");
+
+    return $tempdir;
+}
+
+sub write_lock_info {
+    my ($self, $tempdir) = @_;
+
+    # drop an info file into here for compatibility's sake with old stuff.
+    # put a "NOKILL" here on LSF_JOB_ID so an old process doesn't try to snap off the job ID and kill me.
+    my $lock_info = IO::File->new("$tempdir/info", ">");
+    unless ($lock_info) {
+        Carp::croak("Can't create info file $tempdir/info: $!");
+    }
+
+    my ($my_host, $my_pid, $my_lsf_id, $my_user) = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
+    $lock_info->printf("HOST %s\nPID $$\nLSF_JOB_ID_NOKILL %s\nUSER %s\n",
+                       $my_host,
+                       $ENV{'LSB_JOBID'},
+                       $ENV{'USER'},
+                     );
+    $lock_info->close();
 }
 
 sub _build_owned_resources {
