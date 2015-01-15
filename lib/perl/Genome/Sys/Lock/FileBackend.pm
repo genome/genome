@@ -50,21 +50,7 @@ sub lock {
 
     my $tempdir = $self->tempdir_for_resource($resource_lock);
 
-    # drop an info file into here for compatibility's sake with old stuff.
-    # put a "NOKILL" here on LSF_JOB_ID so an old process doesn't try to snap off the job ID and kill me.
-    my $lock_info = IO::File->new("$tempdir/info", ">");
-    unless ($lock_info) {
-        Carp::croak("Can't create info file $tempdir/info: $!");
-    }
-
-    my ($my_host, $my_pid, $my_lsf_id, $my_user) = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
-    my $job_id = (defined $ENV{'LSB_JOBID'} ? $ENV{'LSB_JOBID'} : "NONE");
-    $lock_info->printf("HOST %s\nPID $$\nLSF_JOB_ID_NOKILL %s\nUSER %s\n",
-                       $my_host,
-                       $ENV{'LSB_JOBID'},
-                       $ENV{'USER'},
-                     );
-    $lock_info->close();
+    $self->write_lock_info($tempdir);
 
     my $initial_time = time;
     my $last_wait_announce_time = $initial_time;
@@ -318,6 +304,26 @@ sub tempdir_for_resource {
     chmod(0770, $tempdir) or Carp::croak("Can't chmod 0770 path ($tempdir): $!");
 
     return $tempdir;
+}
+
+sub write_lock_info {
+    my ($self, $tempdir) = @_;
+
+    # drop an info file into here for compatibility's sake with old stuff.
+    # put a "NOKILL" here on LSF_JOB_ID so an old process doesn't try to snap off the job ID and kill me.
+    my $lock_info = IO::File->new("$tempdir/info", ">");
+    unless ($lock_info) {
+        Carp::croak("Can't create info file $tempdir/info: $!");
+    }
+
+    my ($my_host, $my_pid, $my_lsf_id, $my_user) = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
+    my $job_id = (defined $ENV{'LSB_JOBID'} ? $ENV{'LSB_JOBID'} : "NONE");
+    $lock_info->printf("HOST %s\nPID $$\nLSF_JOB_ID_NOKILL %s\nUSER %s\n",
+                       $my_host,
+                       $ENV{'LSB_JOBID'},
+                       $ENV{'USER'},
+                     );
+    $lock_info->close();
 }
 
 sub _build_owned_resources {
