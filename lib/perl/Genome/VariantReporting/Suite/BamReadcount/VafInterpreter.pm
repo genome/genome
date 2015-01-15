@@ -13,6 +13,14 @@ class Genome::VariantReporting::Suite::BamReadcount::VafInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter',
         'Genome::VariantReporting::Suite::BamReadcount::ComponentBase',
         'Genome::VariantReporting::Framework::Component::WithManyLibraryNames',],
+    has_optional => [
+        library_names => {
+            is => 'Text',
+            is_many => 1,
+            is_translated => 1,
+            doc => 'List of library names to be used in the report',
+        },
+    ],
     doc => 'Calculate the variant allele frequency, number of reads supporting the reference, and number of reads supporting variant for a sample and its libraries',
 };
 
