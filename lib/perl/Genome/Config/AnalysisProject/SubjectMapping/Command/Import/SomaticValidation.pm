@@ -43,7 +43,7 @@ sub valid_statuses {
     return ("Pending", "Hold", "In Progress");
 }
 
-my @subjects = ('tumor_sample', 'normal_sample');
+my @subject_labels = ('tumor_sample', 'normal_sample');
 my @inputs = ('snv_variant_list_id', 'indel_variant_list_id', 'sv_variant_list_id');
 
 sub execute {
@@ -53,7 +53,7 @@ sub execute {
         input                      => $self->file_path,
         separator                  => "\t",
         ignore_lines_starting_with => '#',
-        headers                    => [@subjects, @inputs],
+        headers                    => [@subject_labels, @inputs],
         allow_extra_columns        => 1,
     );
 
@@ -61,11 +61,7 @@ sub execute {
     while (my $line = $reader->next()) {
         my $mapping = Genome::Config::AnalysisProject::SubjectMapping->create(analysis_project => $self->analysis_project);
 
-        for(@subjects) {
-            my $subject_identifier = $line->{$_};
-            next unless $subject_identifier;
-            $self->_create_subject($mapping, $_, $subject_identifier);
-        }
+        $self->_add_subject_bridges($mapping, $line);
 
         for(@inputs) {
             my $value = $line->{$_};
@@ -86,6 +82,24 @@ sub execute {
     return $count;
 }
 
+sub _add_subject_bridges {
+    my ($self, $mapping, $line) =@_;
+
+    if ( $line->{normal_sample} eq $line->{tumor_sample} ) {
+        die $self->error_message('Same sample given for normal/tumor: %s', $line->{normal_sample});
+    }
+
+    my %subject_common_names_seen;
+    for my $subject_label (@subject_labels) {
+        my $subject_identifier = $line->{$subject_label};
+        next unless $subject_identifier;
+        my $subject_common_name = $self->_create_subject($mapping, $subject_label, $subject_identifier);
+        $subject_common_names_seen{$subject_common_name.'_sample'}++;
+    }
+
+    return 1;
+}
+
 sub _create_subject {
     my $self = shift;
     my $mapping = shift;
@@ -94,11 +108,38 @@ sub _create_subject {
 
     my $subject = Genome::Subject->get($subject_identifier) || Genome::Subject->get(name => $subject_identifier);
     die($self->error_message("Unable to find a subject from identifier: %s", $subject_identifier)) unless $subject;
-    Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
+
+    my $subject_common_name = $self->determine_if_subject_is_norml_or_tumor($subject);
+    if ( $subject_common_name eq 'normal' ) { # only checking if normal sample is labeled tumor
+        my $expected_label = $subject_common_name.'_sample';
+        if ( $label ne $expected_label ) {
+            die $self->error_message('Incompatible label (%s) for subject %s!', $label, $subject->__display_name__);
+        }
+    }
+
+    my $subject_bridge = Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
         subject_mapping => $mapping,
         subject_id => $subject,
         label => $_,
     );
+    die $self->error_message('Failed to create %s subject bridge for subject (%s)!', $label, $subject->__display_name__) if not $subject_bridge;
+
+    return $subject_common_name;
+}
+
+sub determine_if_subject_is_norml_or_tumor {
+    my ($self, $subject) = @_;
+
+    die 'No subject given!' if not $subject;
+
+    my $common_name = $subject->common_name;
+    return 'unknown' if not defined $common_name;
+    return 'normal' if $common_name =~ /normal/i;
+    for my $possible_tumor_common_name (qw/ tumor xenograft sarcoma relapse /) {
+        return 'tumor' if $common_name =~ /$possible_tumor_common_name/i;
+    }
+
+    return 'unknown';
 }
 
 sub _create_input {
