@@ -523,10 +523,10 @@ sub create {
 
 sub resize_disk_allocation {
     my $self = shift;
+    my %params = @_;
 
     $self->debug_message("Resizing the disk allocation...");
     if ($self->_disk_allocation) {
-        my %params;
         $params{allow_reallocate_with_move} = 0;
         $params{allow_reallocate_with_move} = 1 if $self->_disk_allocation->kilobytes_requested < 10_485_760; # 10GB
         unless (eval { $self->_disk_allocation->reallocate(%params) }) {
@@ -1656,8 +1656,7 @@ sub recreated_alignment_bam_file_paths {
     }
 
     # Reallocate to an upper limit of the amount of space we might need
-    $self->_disk_allocation->kilobytes_requested( Genome::Sys->disk_usage_for_path( dirname($merged_bam) ) );
-    $self->resize_disk_allocation;
+    $self->resize_disk_allocation( kilobytes_requested => Genome::Sys->disk_usage_for_path( dirname($merged_bam) ) );
 
     my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
         merged_bam          => $merged_bam,
