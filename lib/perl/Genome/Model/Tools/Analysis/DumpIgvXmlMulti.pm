@@ -72,10 +72,10 @@ sub execute {
     my $tumor_common_name = $self->genome_name;   
     my $output_file = $self->output_file;
     my $genome_name = $self->genome_name;
-    my @review_bed_files = map { abs_path($_) }$self->review_bed_files;
+    my @review_bed_files = map { resolve_file_path($_) } $self->review_bed_files;
     my $reference_name = $self->reference_name;
 
-    my @bams = map { resolve_bam_path ($_) } split(/\,/, $self->bams);
+    my @bams = map { resolve_file_path($_) } split(/\,/, $self->bams);
     my @labels = split(/\,/,$self->labels);
 
     unless (@bams == @labels){
@@ -174,9 +174,9 @@ return 1;
     
 }
 
-sub resolve_bam_path {
-    my $bam = shift;
-    my $uri = URI->new($bam);
+sub resolve_file_path {
+    my $file = shift;
+    my $uri = URI->new($file);
     my $path;
     if (defined($uri->scheme)) {
         if ($uri->scheme eq 'file') {
@@ -187,7 +187,7 @@ sub resolve_bam_path {
         }
     }
     else {
-        $path = abs_path($bam);
+        $path = abs_path($file);
     }
     return $path;
 }
