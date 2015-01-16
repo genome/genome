@@ -277,7 +277,7 @@ sub load_flagstat_for_bam_path {
 }
 
 sub is_bam_paired_end {
-    # Assumes bam is sorted with secondary alignemnts and duplicate reads removed!
+    # Assumes bam is sorted with secondary alignments and duplicate reads removed!
     # Only checks first 10K reads
     my ($self, $bam_path, $flagstat) = @_;
 
