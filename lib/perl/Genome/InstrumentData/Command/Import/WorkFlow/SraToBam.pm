@@ -186,9 +186,7 @@ sub merge_unaligned_fastq_into_bam {
     $self->debug_message('Convert unaligned fastq to bam...');
     my $unaligned_bam = $unaligned_fastq.'.bam';
 
-    my $conversion_ok = $self->convert_fastq_to_bam(
-        $self->library->sample->name,
-        $unaligned_fastq, $unaligned_bam);
+    my $conversion_ok = $self->convert_fastq_to_bam($unaligned_fastq, $unaligned_bam);
     if ($conversion_ok) {
         $self->debug_message('Convert unaligned fastq to bam...done');
     }
@@ -286,7 +284,7 @@ sub dump_unaligned_fastq {
 
 sub convert_fastq_to_bam {
     my $self = shift;
-    my ($sample_name, $unaligned_fastq, $unaligned_bam) = @_;
+    my ($unaligned_fastq, $unaligned_bam) = @_;
 
     return try {
         my $fastq_to_sam = Genome::Model::Tools::Picard::FastqToSam->create(
