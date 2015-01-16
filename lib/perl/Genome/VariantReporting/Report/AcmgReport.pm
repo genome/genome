@@ -18,7 +18,9 @@ sub required_interpreters {
 }
 
 sub headers {
-    return (shift->SUPER::headers, 'All_MAF', 'AA_MAF', 'EU_MAF');
+    my @headers = grep {$_ ne 'caf' && $_ ne 'max_alt_af'} shift->SUPER::headers;
+    push @headers, ('caf', 'max_alt_af', 'All_MAF', 'AA_MAF', 'EU_MAF');
+    return @headers;
 }
 
 1;
