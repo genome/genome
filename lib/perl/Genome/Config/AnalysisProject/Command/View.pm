@@ -478,6 +478,7 @@ sub _get_config_item_lines {
                 $config_item->status)],
         ['Created', $config_item->created_at,
             'Updated', $config_item->updated_at],
+        ['Tags', join(',', $config_item->tag_names)],
     );
 }
 

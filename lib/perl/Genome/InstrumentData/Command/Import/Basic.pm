@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+require File::Temp;
 require List::MoreUtils;
 use Workflow::Simple;
 
@@ -13,7 +14,7 @@ class Genome::InstrumentData::Command::Import::Basic {
     has_input => [
         import_source_name => {
             is => 'Text',
-            doc => 'Organiztion name or abbreviation from where the source file(s) were generated or downloaded.',
+            doc => "Organization or site name/abbreviation from where the source was generated or downloaded. Use 'CGHub' for TCGA downloaded data.",
         },
         library => {
             is => 'Genome::Library',
@@ -160,26 +161,24 @@ sub _resolve_original_format {
 sub _resolve_instrument_data_properties {
     my $self = shift;
 
-    my $properties = {};
-    if ( $self->instrument_data_properties ) {
-        my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-        $properties = $helpers->key_value_pairs_to_hash( $self->instrument_data_properties );
-        return if not $properties;
+    my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties';
+    if ( $self->import_source_name =~ /^cghub$/i ) {
+        $self->import_source_name('CGHub');
+        $class .= 'FromCgHub';
     }
 
-    for my $name (qw/ import_source_name description downsample_ratio /) {
-        my $value = $self->$name;
-        next if not defined $value;
-        if ( defined $properties->{$name} and $properties->{$name} ne $value ) {
-            $self->error_message("Conflicting values given for command and instrument data properties $name: '$value' <=> '$properties->{$name}'");
-            return;
-        }
-        $properties->{$name} = $value;
+    my @instrument_data_properties = $self->instrument_data_properties;
+    push @instrument_data_properties, 'downsample_ratio='.$self->downsample_ratio if defined $self->downsample_ratio;
+    my $insdata_props_processor = $class->execute(
+        instrument_data_properties => \@instrument_data_properties,
+        source => join(',', $self->source_files),
+    );
+    if ( not $insdata_props_processor->result ) {
+        $self->error_message('Failed to process instrument data properties!');
+        return;
     }
 
-    $properties->{original_data_path} = join(',', $self->source_files);
-
-    return $self->_instrument_data_properties($properties);
+    return $self->_instrument_data_properties( $insdata_props_processor->resolved_instrument_data_properties );
 }
 
 sub _resolve_working_directory {

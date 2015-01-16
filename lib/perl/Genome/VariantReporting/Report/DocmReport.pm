@@ -20,26 +20,24 @@ class Genome::VariantReporting::Report::DocmReport {
             is_translated => 1,
             doc => 'List of sample names to be used in the report',
         },
-        sample_name_labels => {
-            is => 'HASH',
-            is_translated => 1,
-            is_optional => 1,
-            default => {},
-            doc => 'Hash of sample_name to label',
-        },
         library_names => {
             is => 'Text',
             is_many => 1,
             is_translated => 1,
             doc => 'List of library names to be used in the report',
         },
+    ],
+    has_transient_optional_translated => [
+        sample_name_labels => {
+            is => 'HASH',
+            default => {},
+            doc => 'Hash of sample_name to label',
+        },
         library_name_labels => {
             is => 'HASH',
-            is_translated => 1,
-            is_optional => 1,
             default => {},
             doc => 'Hash of library_name to label',
-        }
+        },
     ],
     doc => 'Output readcount information from bam readcount',
 };

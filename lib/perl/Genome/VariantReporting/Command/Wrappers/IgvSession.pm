@@ -83,7 +83,7 @@ sub bam_labels {
 
 sub bed_files {
     my $self = shift;
-    return [map {$_->report_path} $self->merged_bed_reports];
+    return [map {URI->new_abs($_->report_path, $ENV{GENOME_SYS_SERVICES_FILES_URL})->as_string} $self->merged_bed_reports];
 }
 
 sub igv_reference_name {

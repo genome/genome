@@ -58,7 +58,7 @@ sub vcf_description {
 
 sub vcf_id {
     my $self = shift;
-    return "MINCOV" . $self->min_coverage;
+    return "MINCOV" . $self->min_coverage . '_' . $self->sample_name;
 }
 
 1;

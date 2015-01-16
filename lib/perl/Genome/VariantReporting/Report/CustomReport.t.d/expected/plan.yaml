@@ -1,0 +1,11 @@
+---
+experts: {}
+needs_translation: 1
+reports:
+  custom:
+    filters: {}
+    interpreters:
+      position: {}
+      vep: {}
+    params:
+      header_labels: 'chromosome_name,start,stop,reference,variant,ensembl_gene_id'
