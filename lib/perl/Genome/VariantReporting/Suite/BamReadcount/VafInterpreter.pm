@@ -9,6 +9,8 @@ use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(
     many_samples_field_descriptions
     translate_ref_allele
 );
+use List::MoreUtils qw(uniq);
+use Set::Scalar;
 
 class Genome::VariantReporting::Suite::BamReadcount::VafInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter',
@@ -48,6 +50,17 @@ sub _interpret_entry {
 
     my $readcount_entries = $self->get_readcount_entries($entry);
     return $self->null_interpretation($passed_alt_alleles) unless defined($readcount_entries);
+
+    if ($self->library_names) {
+        my $available_libraries = Set::Scalar->new(available_libraries($readcount_entries));
+        my $expected_libraries  = Set::Scalar->new($self->library_names);
+        unless ($available_libraries->is_equal($expected_libraries)) {
+            die $self->error_message(
+                "Available libraries (%s) are not identical to planned libraries (%s)",
+                join(', ', $available_libraries->members), join(', ', $expected_libraries->members)
+            );
+        }
+    }
 
     my %vafs = Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
         $entry, $readcount_entries);
@@ -101,6 +114,12 @@ sub flatten_hash {
         $flattened_hash{$self->create_library_specific_field_name($field_name, $library_name)} = $per_library_hash->{$library_name};
     }
     return %flattened_hash;
+}
+
+sub available_libraries {
+    my $readcount_entries = shift;
+
+    return uniq map {$_->name} map {$_->libraries} grep {defined($_)} values %$readcount_entries;
 }
 
 1;

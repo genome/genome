@@ -66,6 +66,17 @@ reinstall_sub({
     )]},
 });
 
+use Genome::VariantReporting::Suite::BamReadcount::VafInterpreter;
+reinstall_sub({
+    into => 'Genome::VariantReporting::Suite::BamReadcount::VafInterpreter',
+    as => 'available_libraries',
+    code => sub {return qw(
+        TEST-patient1-somval_tumor1-extlib
+        TEST-patient1-somval_tumor2-extlib
+        TEST-patient1-somval_normal1-extlib
+    )},
+});
+
 my $cmd = $pkg->create(
     models => [$discovery_build->model, $followup_build->model, $normal_build->model],
     coverage_models => [$discovery_build->model, $followup_build->model, $normal_build->model],

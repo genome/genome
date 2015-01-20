@@ -116,5 +116,18 @@ subtest "long indel" => sub {
     my %result = $interpreter->interpret_entry($entry, ['GTATA']);
     is_deeply(\%result, \%expected, "Values are as expected");
 };
+
+subtest "libraries don't match" => sub {
+    for my $library_names ([qw(Solexa-135853)], [qw(Solexa-135854 Solexa-135853 Solexa-135852)], [qw(nonexistent_library)]) {
+        my $interpreter = $pkg->create(
+            sample_name => "S1",
+            library_names => $library_names,
+        );
+        lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+        my $entry = create_default_entry();
+        dies_ok(sub{$interpreter->interpret_entry($entry, ['G'])}, "Libraries don't match fails ok");
+    }
+};
+
 done_testing;
 
