@@ -6,9 +6,10 @@ use Genome;
 use Genome::Model::Tools::Bsmap::MethCalcConversionRate;
 
 class Genome::Model::ReferenceAlignment::Command::BsmapMethCalcConversionRate {
-    is => 'Command',
+    is => 'Command::V2',
     has => [
-        model_id => { is => 'String',
+        model => {
+			is => 'Genome::Model::ReferenceAlignment',
             doc => 'Use genome model ID to calculate methylation conversion',
         },
         output_file => {
@@ -30,10 +31,8 @@ sub execute {
 		$cfile = \*STDOUT;
 	}
 
-	# get model IDs
-	my $model = Genome::Model->get($self->model_id);
 	# get the bam paths of the last succeeded build
-	my $dir = $model->last_succeeded_build->data_directory;
+	my $dir = $self->model->last_succeeded_build->data_directory;
 	# flagstat 
 	my @flagstat = glob("$dir/alignments/*flagstat");
 	my (@field, $total, $duplicates, $mapped, $properly);
