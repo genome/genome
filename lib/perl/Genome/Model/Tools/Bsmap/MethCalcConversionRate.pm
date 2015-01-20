@@ -136,77 +136,49 @@ sub execute {
                     open($cfile, ">$output_file") || die "Can't open output file for writing.\n";
                     print $cfile "\nMethylation alignment status:\n";
                     print $cfile $flagstat, "\n";
-                    open (my $fh, '<', $flagstat) or die("Could not open flagstat file.");
-                    while (my $line = <$fh>) {
-                        if($line =~  m/total/i){
-                            @field = split(/ /,$line);
-                            $total = $field[0];
-                            print $cfile "Total read\t=\t", $total, "\n";
-                        }
-                        if($line =~  m/duplicates/i){
-                            @field = split(/ /,$line);
-                            $duplicates = $field[0];
-                            print $cfile "Duplicates\t=\t", $duplicates, "\n";
-                            if ($total != 0) {
-                                print $cfile "Duplicates rate (%)\t=\t", $duplicates/$total*100, "\n";
-                            }
-                        }
-                        if($line =~  m/mapped \(/i){
-                            @field = split(/ /,$line);
-                            $mapped = $field[0];
-                            print $cfile "Mapped read\t=\t", $mapped, "\n";
-                            if ($total != 0) {
-                                print $cfile "Mapped rate (%)\t=\t", $mapped/$total*100, "\n";
-                            }
-                        }
-                        if($line =~  m/properly/i){
-                            @field = split(/ /,$line);
-                            $properly = $field[0];
-                            print $cfile "Properly paired\t=\t", $properly, "\n";
-                            if ($total != 0) {
-                                print $cfile "Properly paired rate (%)\t=\t", $properly/$total*100, "\n";
-                            }
-                        }
-                    }
-                    close($flagstat);
+
+					my $flagstat_data = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat);
+					print $cfile "Total read\t=\t", $flagstat_data->{total_reads}, "\n";
+
+					print $cfile "Duplicates\t=\t", $flagstat_data->{reads_marked_duplicates}, "\n";
+					if ($flagstat_data->{total_reads} != 0) {
+						my $dupe_rate = $flagstat_data->{reads_marked_duplicates} / $flagstat_data->{total_reads} * 100;
+						print $cfile "Duplicates rate (%)\t=\t", $dupe_rate, "\n";
+					}
+
+					print $cfile "Mapped read\t=\t", $flagstat_data->{reads_mapped}, "\n";
+					if ($flagstat_data->{total_reads} != 0) {
+						print $cfile "Mapped rate (%)\t=\t", $flagstat_data->{reads_mapped_percentage}, "\n";
+					}
+
+					print $cfile "Properly paired\t=\t", $flagstat_data->{reads_mapped_in_proper_pairs}, "\n";
+					if ($flagstat_data->{total_reads} != 0) {
+						print $cfile "Properly paired rate (%)\t=\t", $flagstat_data->{reads_mapped_in_proper_pairs_percentage}, "\n";
+					}
+
                     close $cfile;
                 }
                 else {
                     print "\nMethylation alignment status:\n";
-#                    print $flagstat, "\n";
-                    open (my $fh, '<', $flagstat) or die("Could not open flagstat file.");
-                    while (my $line = <$fh>) {
-                        if($line =~  m/total/i){
-                            @field = split(/ /,$line);
-                            $total = $field[0];
-                            print "Total read\t=\t", $total, "\n";
-                        }
-                        if($line =~  m/duplicates/i){
-                            @field = split(/ /,$line);
-                            $duplicates = $field[0];
-                            print "Duplicates\t=\t", $duplicates, "\n";
-                            if ($total != 0) {
-                                print "Duplicates rate (%)\t=\t", $duplicates/$total*100, "\n";
-                            }
-                        }
-                        if($line =~  m/mapped \(/i){
-                            @field = split(/ /,$line);
-                            $mapped = $field[0];
-                            print "Mapped read\t=\t", $mapped, "\n";
-                            if ($total != 0) {
-                                print "Mapped rate (%)\t=\t", $mapped/$total*100, "\n";
-                            }
-                        }
-                        if($line =~  m/properly/i){
-                            @field = split(/ /,$line);
-                            $properly = $field[0];
-                            print "Properly paired\t=\t", $properly, "\n";
-                            if ($total != 0) {
-                                print "Properly paired rate (%)\t=\t", $properly/$total*100, "\n";
-                            }
-                        }
-                    }
-                    close($flagstat);
+
+					my $flagstat_data = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat);
+					print "Total read\t=\t", $flagstat_data->{total_reads}, "\n";
+
+					print "Duplicates\t=\t", $flagstat_data->{reads_marked_duplicates}, "\n";
+					if ($flagstat_data->{total_reads} != 0) {
+						my $dupe_rate = $flagstat_data->{reads_marked_duplicates} / $flagstat_data->{total_reads} * 100;
+						print "Duplicates rate (%)\t=\t", $dupe_rate, "\n";
+					}
+
+					print "Mapped read\t=\t", $flagstat_data->{reads_mapped}, "\n";
+					if ($flagstat_data->{total_reads} != 0) {
+						print "Mapped rate (%)\t=\t", $flagstat_data->{reads_mapped_percentage}, "\n";
+					}
+
+					print "Properly paired\t=\t", $flagstat_data->{reads_mapped_in_proper_pairs}, "\n";
+					if ($flagstat_data->{total_reads} != 0) {
+						print "Properly paired rate (%)\t=\t", $flagstat_data->{reads_mapped_in_proper_pairs_percentage}, "\n";
+					}
                 }
             }
             else {
@@ -241,5 +213,5 @@ sub execute {
 	return 1;
 
 }
-1;
 
+1;
