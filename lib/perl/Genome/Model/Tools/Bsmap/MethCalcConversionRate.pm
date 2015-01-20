@@ -246,7 +246,7 @@ sub execute {
             }
         }
     }
-1;
+	return 1;
 
 }
 1;
