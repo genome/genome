@@ -24,7 +24,7 @@ subtest "one alt allele" => sub {
 
     my %expected_return_values = (
         C => {
-            gmaf => 0.3,
+            dbSNP_gmaf => 0.3,
         }
     );
     my $entry = create_entry(0.3);
@@ -37,7 +37,7 @@ subtest "no gmaf" => sub {
 
     my %expected_return_values = (
         C => {
-            gmaf => undef,
+            dbSNP_gmaf => undef,
         }
     );
     my $entry = create_entry();
@@ -50,10 +50,10 @@ subtest "two alt allele" => sub {
 
     my %expected_return_values = (
         C => {
-            gmaf => 0.3,
+            dbSNP_gmaf => 0.3,
         },
         G => {
-            gmaf => 0.3,
+            dbSNP_gmaf => 0.3,
         },
     );
     my $entry = create_entry(0.3);
