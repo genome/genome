@@ -67,10 +67,10 @@ my $interpretations = {
     },
     'caf' => {
         T => {
-            caf => ".1",
+            dbSNP_caf => ".1",
         },
         G => {
-            caf => ".1",
+            dbSNP_caf => ".1",
         },
     },
     'nhlbi' => {

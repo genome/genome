@@ -43,7 +43,7 @@ sub headers {
         sift
         polyphen
         condel
-        caf
+        dbSNP_caf
         All_MAF
         AA_MAF
         EU_MAF
