@@ -43,17 +43,20 @@ sub _interpret_entry {
     my $caf = $parser->process_entry($entry);
     my %return_values;
 
+    my $has_tag = $entry->info($parser->TAG);
     for my $variant_allele (@$passed_alt_alleles) {
-        if (!defined $caf) {
-            $return_values{$variant_allele}->{allele_frequency} = undef;
+        if ($has_tag && !defined($caf->{$variant_allele})) {
+            # This may be fine, but I want to hear about it.  I think it can
+            # happen in two ways:
+            #
+            # 1) the dbsnp vcf has a '.' as the vaf for this allele
+            # 2) the dbsnp vcf doesn't have this allele at all.  This entry
+            #    can still have the CAF field, but only if there is another
+            #    allele that IS in the dbsnp vcf.
+            $self->debug_message("No allele frequency for allele (%s) in entry: %s",
+                $variant_allele, $entry->to_string);
         }
-        elsif (defined $caf->{$variant_allele}) {
-            $return_values{$variant_allele}->{allele_frequency} = $caf->{$variant_allele};
-        }
-        else {
-            die sprintf("No allele frequency for allele ($variant_allele) given in caf: %s",
-                Data::Dumper::Dumper($caf));
-        }
+        $return_values{$variant_allele}->{allele_frequency} = $caf->{$variant_allele};
     }
 
     return %return_values;
