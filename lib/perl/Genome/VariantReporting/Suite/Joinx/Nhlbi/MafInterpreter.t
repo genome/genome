@@ -24,9 +24,9 @@ subtest "entry has maf" => sub {
 
     my %expected_return_values = (
         C => {
-            EU_MAF => 0.1,
-            AA_MAF => 0.3,
-            All_MAF => 0.2,
+            NHLBI_EU_MAF => 0.1,
+            NHLBI_AA_MAF => 0.3,
+            NHLBI_All_MAF => 0.2,
         }
     );
     my $entry = create_entry('0.1,0.3,0.2');
@@ -39,9 +39,9 @@ subtest "no maf" => sub {
 
     my %expected_return_values = (
         C => {
-            EU_MAF => undef,
-            AA_MAF => undef,
-            All_MAF => undef,
+            NHLBI_EU_MAF => undef,
+            NHLBI_AA_MAF => undef,
+            NHLBI_All_MAF => undef,
         }
     );
     my $entry = create_entry();
@@ -54,14 +54,14 @@ subtest "two alt allele" => sub {
 
     my %expected_return_values = (
         C => {
-            EU_MAF => 0.1,
-            AA_MAF => 0.3,
-            All_MAF => 0.2,
+            NHLBI_EU_MAF => 0.1,
+            NHLBI_AA_MAF => 0.3,
+            NHLBI_All_MAF => 0.2,
         },
         G => {
-            EU_MAF => 0.1,
-            AA_MAF => 0.3,
-            All_MAF => 0.2,
+            NHLBI_EU_MAF => 0.1,
+            NHLBI_AA_MAF => 0.3,
+            NHLBI_All_MAF => 0.2,
         },
     );
     my $entry = create_entry('0.1,0.3,0.2');

@@ -44,9 +44,9 @@ sub headers {
         polyphen
         condel
         dbSNP_caf
-        All_MAF
-        AA_MAF
-        EU_MAF
+        NHLBI_All_MAF
+        NHLBI_AA_MAF
+        NHLBI_EU_MAF
         1kg-af
         vaf
         ref_count

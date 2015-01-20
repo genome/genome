@@ -17,9 +17,9 @@ sift	The SIFT prediction and/or score, with both given as prediction(score)
 polyphen	The PolyPhen prediction and/or score
 condel	The Consensus Deleteriousness (Condel) score
 dbSNP_caf	Allele frequency at this position based on dbSNP
-All_MAF	Overall minor allele frequency from NHLBI
-AA_MAF	African American minor allele frequency from NHLBI
-EU_MAF	European minor allele frequency from NHLBI
+NHLBI_All_MAF	Overall minor allele frequency from NHLBI
+NHLBI_AA_MAF	African American minor allele frequency from NHLBI
+NHLBI_EU_MAF	European minor allele frequency from NHLBI
 1kg-af	Allele frequency based on thousand genomes project
 vaf	Variant allele frequency for sample sample_name
 ref_count	Number of reads supporting the reference for sample sample_name
