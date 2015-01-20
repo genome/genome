@@ -213,38 +213,30 @@ sub execute {
                 $self->error_message("can't find flagstat file");
             }
         }
-        # mt snvs.hq
-        my @mt_hq = glob("$dir/variants/snv/meth-ratio-*/MT/snvs.hq");
-        for my $mt_hq (@mt_hq) {
-            if (-s "$mt_hq"){
-                if (defined($output_file)){
-                    bs_rate($mt_hq, "MT", $output_file);
-                }
-                else {
-                    print "\nMethylation conversion based on mtDNA:\n";
-                    bs_rate($mt_hq, "MT");
-                }
-            }
-            else {
-                $self->error_message("can't find mtDNA snvs file");
-            }
-        }
-        # lambda snvs.hq
-        my @lambda_hq = glob("$dir/variants/snv/meth-ratio-*/gi_9626243_ref_NC_001416.1_/snvs.hq");
-        for my $lambda_hq (@lambda_hq) {
-            if (-s "$lambda_hq"){
-                if (defined($output_file)){
-                    bs_rate($lambda_hq, "lambda", $output_file);
-                }
-                else {
-                    print "Methylation conversion based on lambda:\n";
-                    bs_rate($lambda_hq, "lambda");
-                }
-            }
-            else {
-                $self->error_message("can't find lambda snvs file");
-            }
-        }
+
+		my %cases = (
+			MT => { glob => "$dir/variants/snv/meth-ratio-*/MT/snvs.hq", name => "mtDNA" },
+			lambda => { glob => "$dir/variants/snv/meth-ratio-*/gi_9626243_ref_NC_001416.1_/snvs.hq", name => "lambda" },
+		);
+		for my $chrom (keys %cases) {
+			my ($glob, $name) = ($cases{$chrom}{glob}, $cases{$chrom}{name});
+
+			my @file = glob($glob);
+			for my $file (@file) {
+				if (-s "$file"){
+					if (defined($output_file)){
+						bs_rate($file, $chrom, $output_file);
+					}
+					else {
+						print "\nMethylation conversion based on $name:\n";
+						bs_rate($file, $chrom);
+					}
+				}
+				else {
+					$self->error_message("can't find $name snvs file");
+				}
+			}
+		}
     }
 	return 1;
 
