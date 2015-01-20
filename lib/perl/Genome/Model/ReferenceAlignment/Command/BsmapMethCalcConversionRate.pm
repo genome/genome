@@ -11,14 +11,30 @@ class Genome::Model::ReferenceAlignment::Command::BsmapMethCalcConversionRate {
         model => {
 			is => 'Genome::Model::ReferenceAlignment',
             doc => 'Use genome model ID to calculate methylation conversion',
+			shell_args_position => 1,
         },
         output_file => {
             is => 'String',
             is_optional => 1,
             doc => 'Output methylation conversion',
+			shell_args_position => 2,
         },
     ],
 };
+
+sub help_synopsis {
+  return <<EOS
+    genome model reference-alignment bsmap-meth-calc-conversion-rate --model-id=394d6228a7b5487a9cb0ad0c448b5a44
+EOS
+}
+
+sub help_brief {
+    "calculate methylation conversion using Mitochondrial DNA or spiked lambda"
+}
+
+sub help_detail {
+    "calculate methylation conversion using Mitochondrial DNA or spiked lambda"
+}
 
 sub execute {
     my $self = shift;

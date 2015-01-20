@@ -10,19 +10,19 @@ class Genome::Model::Tools::Bsmap::MethCalcConversionRate {
         snvs_file => {
             is => 'String',
             doc => 'Use snvs.hq file to calculate methylation conversion',
+			shell_args_position => 1,
         },
         output_file => {
             is => 'String',
             is_optional => 1,
             doc => 'Output methylation conversion',
+			shell_args_position => 2,
         },
     ],
 };
 
 sub help_synopsis {
   return <<EOS
-    gmt bsmap meth-calc-conversion-rate --model-id=394d6228a7b5487a9cb0ad0c448b5a44
-
     gmt bsmap meth-calc-conversion-rate --snvs-file=/gscmnt/gc9016/info/model_data/394d6228a7b5487a9cb0ad0c448b5a44/buildf92b6057072948c2a6056a3ee412d596/variants/snv/meth-ratio-2.74-d41d8cd98f00b204e9800998ecf8427e/MT/snvs.hq
 
 EOS
