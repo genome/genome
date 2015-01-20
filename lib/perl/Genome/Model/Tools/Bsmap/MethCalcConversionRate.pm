@@ -43,11 +43,15 @@ sub help_detail {
 }
 
 sub bs_rate {
+    my $filename = shift;
+    my $chrom = shift;
+	my $output_file = shift;
+
     my $count = 0;
     my $totalreads = 0;
     my $methreads = 0;
 
-    open (my $fh, '<', $_[0]) or die("Could not open snvs file.");
+    open (my $fh, '<', $filename) or die("Could not open snvs file.");
     while (my $line = <$fh>) {
         if ( $count == 0 ) {
             $count = 1;
@@ -60,13 +64,13 @@ sub bs_rate {
             $methreads = $methreads + $F[6];
         }
     }
-    close($_[0]);
+    close($fh);
 
-    my $cfile = $_[2];
-    if($_[1] eq "MT"){
+    my $cfile = $output_file;
+    if($chrom eq "MT"){
         print $cfile "\nMethylation conversion based on mtDNA:\n";
     }
-    if($_[1] eq "lambda"){
+    if($chrom eq "lambda"){
         print $cfile "\nMethylation conversion based on lambda:\n";
     }
     print $cfile "Meth reads\t=\t", $methreads, "\n";
