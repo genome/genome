@@ -251,13 +251,3 @@ sub execute {
 }
 1;
 
-# methratio 2.74
-#   gmt bsmap meth-calc-conversion-rate --model-id=394d6228a7b5487a9cb0ad0c448b5a44
-
-#   gmt bsmap meth-calc-conversion-rate --snvs-file=/gscmnt/gc9016/info/model_data/394d6228a7b5487a9cb0ad0c448b5a44/buildf92b6057072948c2a6056a3ee412d596/variants/snv/meth-ratio-2.74-d41d8cd98f00b204e9800998ecf8427e/MT/snvs.hq
-
-# methratio 2.6
-#   gmt bsmap meth-calc-conversion-rate --model-id=e7a8420023724b12a5c12bb7bd66c031
-#   gmt bsmap meth-calc-conversion-rate --snvs-file=/gscmnt/ams1127/info/model_data/e7a8420023724b12a5c12bb7bd66c031/build5bea619cb45b4da287f5c28974f7cee1/variants/snv/meth-ratio-2.6-d41d8cd98f00b204e9800998ecf8427e/gi_9626243_ref_NC_001416.1_/snvs.hq
-#   gmt bsmap meth-calc-conversion-rate --snvs-file=/gscmnt/ams1127/info/model_data/e7a8420023724b12a5c12bb7bd66c031/build5bea619cb45b4da287f5c28974f7cee1/variants/snv/meth-ratio-2.6-d41d8cd98f00b204e9800998ecf8427e/MT/snvs.hq
-
