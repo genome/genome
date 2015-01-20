@@ -93,8 +93,8 @@ sub execute {
     }
 
 	my $cfile;
-	if ($output) {
-		open($cfile, '>', $output) or die;
+	if ($output_file) {
+		open($cfile, '>', $output_file) or die;
 	} else {
 		$cfile = \*STDOUT;
 	}
