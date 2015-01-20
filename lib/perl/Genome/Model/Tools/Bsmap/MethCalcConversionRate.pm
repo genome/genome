@@ -51,20 +51,18 @@ sub bs_rate {
     my $totalreads = 0;
     my $methreads = 0;
 
-    open (my $fh, '<', $filename) or die("Could not open snvs file.");
-    while (my $line = <$fh>) {
-        if ( $count == 0 ) {
-            $count = 1;
-            next;
+	my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+		headers => [qw(chr pos strand context ratio eff_CT_count C_count CT_count rev_G_count rev_GA_count CI_lower CI_upper)],
+		separator => "\t",
+		input => $filename,
+	);
+	while (my $data = $reader->next()) {
+        if(($data->{strand} eq "-" && $data->{context} =~ /.CG../ ) || ($data->{strand} eq "+" && $data->{context} =~ /..CG./)){
+            $totalreads = $totalreads + $data->{eff_CT_count};
+            $methreads = $methreads + $data->{C_count};
         }
-        chomp($line);
-        my @F = split("\t",$line);
-        if(($F[2] eq "-" && $F[3] =~ /.CG../ ) || ($F[2] eq "+" && $F[3] =~ /..CG./)){
-            $totalreads = $totalreads + $F[5];
-            $methreads = $methreads + $F[6];
-        }
-    }
-    close($fh);
+	}
+	$reader->input->close();
 
     my $cfile = $output_file;
     if($chrom eq "MT"){
