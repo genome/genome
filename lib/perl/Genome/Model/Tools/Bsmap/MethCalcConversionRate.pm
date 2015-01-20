@@ -1,4 +1,3 @@
-# % Last Change: Thu Jan 15 01:21:18 PM 2015 CST
 package Genome::Model::Tools::Bsmap::MethCalcConversionRate;
 
 use strict;
@@ -63,29 +62,17 @@ sub bs_rate {
     }
     close($_[0]);
 
-    my $cfile;
-
-    if (defined($_[2])){
-        open($cfile, ">>$_[2]") || die "Can't open output file for writing.\n";
-        if($_[1] eq "MT"){
-            print $cfile "\nMethylation conversion based on mtDNA:\n";
-        }
-        if($_[1] eq "lambda"){
-            print $cfile "\nMethylation conversion based on lambda:\n";
-        }
-        print $cfile "Meth reads\t=\t", $methreads, "\n";
-        print $cfile "Total reads\t=\t", $totalreads, "\n";
-        if ($totalreads != 0) {
-            print $cfile "Bisulfite conversion (%)\t=\t", 100-($methreads/$totalreads*100), "\n\n";
-        }
-        close $cfile;
+    my $cfile = $_[2];
+    if($_[1] eq "MT"){
+        print $cfile "\nMethylation conversion based on mtDNA:\n";
     }
-    else {
-        print "Meth reads\t=\t", $methreads, "\n";
-        print "Total reads\t=\t", $totalreads, "\n";
-        if ($totalreads != 0) {
-            print "Bisulfite conversion (%)\t=\t", 100-($methreads/$totalreads*100), "\n\n";
-        }
+    if($_[1] eq "lambda"){
+        print $cfile "\nMethylation conversion based on lambda:\n";
+    }
+    print $cfile "Meth reads\t=\t", $methreads, "\n";
+    print $cfile "Total reads\t=\t", $totalreads, "\n";
+    if ($totalreads != 0) {
+        print $cfile "Bisulfite conversion (%)\t=\t", 100-($methreads/$totalreads*100), "\n\n";
     }
 }
 
@@ -103,19 +90,18 @@ sub execute {
         die("Must provide snvs file OR model ID.\n");
     }
 
-    my $cfile;
+	my $cfile;
+	if ($output) {
+		open($cfile, '>', $output) or die;
+	} else {
+		$cfile = \*STDOUT;
+	}
+
 
     if (defined($snvs_file)){
         # snvs
         if (-s "$snvs_file"){
-            if (defined($output_file)){
-                open($cfile, ">$output_file") || die "Can't open output file for writing.\n";
-                close($cfile);
-                bs_rate($snvs_file, "MT", $output_file);
-            }
-            else {
-                bs_rate($snvs_file, "MT");
-            }
+            bs_rate($snvs_file, "MT", $cfile);
         }
         else {
             $self->error_message("can't find the snvs file");
@@ -132,54 +118,27 @@ sub execute {
         my (@field, $total, $duplicates, $mapped, $properly);
         for my $flagstat (@flagstat) {
             if (-s "$flagstat"){
-                if (defined($output_file)){
-                    open($cfile, ">$output_file") || die "Can't open output file for writing.\n";
-                    print $cfile "\nMethylation alignment status:\n";
-                    print $cfile $flagstat, "\n";
+                print $cfile "\nMethylation alignment status:\n";
+                print $cfile $flagstat, "\n";
 
-					my $flagstat_data = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat);
-					print $cfile "Total read\t=\t", $flagstat_data->{total_reads}, "\n";
+				my $flagstat_data = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat);
+				print $cfile "Total read\t=\t", $flagstat_data->{total_reads}, "\n";
 
-					print $cfile "Duplicates\t=\t", $flagstat_data->{reads_marked_duplicates}, "\n";
-					if ($flagstat_data->{total_reads} != 0) {
-						my $dupe_rate = $flagstat_data->{reads_marked_duplicates} / $flagstat_data->{total_reads} * 100;
-						print $cfile "Duplicates rate (%)\t=\t", $dupe_rate, "\n";
-					}
+				print $cfile "Duplicates\t=\t", $flagstat_data->{reads_marked_duplicates}, "\n";
+				if ($flagstat_data->{total_reads} != 0) {
+					my $dupe_rate = $flagstat_data->{reads_marked_duplicates} / $flagstat_data->{total_reads} * 100;
+					print $cfile "Duplicates rate (%)\t=\t", $dupe_rate, "\n";
+				}
 
-					print $cfile "Mapped read\t=\t", $flagstat_data->{reads_mapped}, "\n";
-					if ($flagstat_data->{total_reads} != 0) {
-						print $cfile "Mapped rate (%)\t=\t", $flagstat_data->{reads_mapped_percentage}, "\n";
-					}
+				print $cfile "Mapped read\t=\t", $flagstat_data->{reads_mapped}, "\n";
+				if ($flagstat_data->{total_reads} != 0) {
+					print $cfile "Mapped rate (%)\t=\t", $flagstat_data->{reads_mapped_percentage}, "\n";
+				}
 
-					print $cfile "Properly paired\t=\t", $flagstat_data->{reads_mapped_in_proper_pairs}, "\n";
-					if ($flagstat_data->{total_reads} != 0) {
-						print $cfile "Properly paired rate (%)\t=\t", $flagstat_data->{reads_mapped_in_proper_pairs_percentage}, "\n";
-					}
-
-                    close $cfile;
-                }
-                else {
-                    print "\nMethylation alignment status:\n";
-
-					my $flagstat_data = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat);
-					print "Total read\t=\t", $flagstat_data->{total_reads}, "\n";
-
-					print "Duplicates\t=\t", $flagstat_data->{reads_marked_duplicates}, "\n";
-					if ($flagstat_data->{total_reads} != 0) {
-						my $dupe_rate = $flagstat_data->{reads_marked_duplicates} / $flagstat_data->{total_reads} * 100;
-						print "Duplicates rate (%)\t=\t", $dupe_rate, "\n";
-					}
-
-					print "Mapped read\t=\t", $flagstat_data->{reads_mapped}, "\n";
-					if ($flagstat_data->{total_reads} != 0) {
-						print "Mapped rate (%)\t=\t", $flagstat_data->{reads_mapped_percentage}, "\n";
-					}
-
-					print "Properly paired\t=\t", $flagstat_data->{reads_mapped_in_proper_pairs}, "\n";
-					if ($flagstat_data->{total_reads} != 0) {
-						print "Properly paired rate (%)\t=\t", $flagstat_data->{reads_mapped_in_proper_pairs_percentage}, "\n";
-					}
-                }
+				print $cfile "Properly paired\t=\t", $flagstat_data->{reads_mapped_in_proper_pairs}, "\n";
+				if ($flagstat_data->{total_reads} != 0) {
+					print $cfile "Properly paired rate (%)\t=\t", $flagstat_data->{reads_mapped_in_proper_pairs_percentage}, "\n";
+				}
             }
             else {
                 $self->error_message("can't find flagstat file");
@@ -196,13 +155,7 @@ sub execute {
 			my @file = glob($glob);
 			for my $file (@file) {
 				if (-s "$file"){
-					if (defined($output_file)){
-						bs_rate($file, $chrom, $output_file);
-					}
-					else {
-						print "\nMethylation conversion based on $name:\n";
-						bs_rate($file, $chrom);
-					}
+					bs_rate($file, $chrom, $cfile);
 				}
 				else {
 					$self->error_message("can't find $name snvs file");
