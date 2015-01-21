@@ -67,8 +67,8 @@ sub headers {
         inSegDup
         AML_RMG
         rsid
-        caf
-        max_alt_af
+        dbSNP_caf
+        dbSNP_max_alt_af
         onTarget
         MeetsMinDepthCutoff
     /;

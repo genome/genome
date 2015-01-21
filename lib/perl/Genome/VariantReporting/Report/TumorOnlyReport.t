@@ -67,22 +67,22 @@ my $interpretations = {
     },
     'caf' => {
         T => {
-            caf => ".1",
+            dbSNP_caf => ".1",
         },
         G => {
-            caf => ".1",
+            dbSNP_caf => ".1",
         },
     },
     'nhlbi' => {
         T => {
-            All_MAF => "0.1",
-            EU_MAF => "0.1",
-            AA_MAF => "0.3",
+            NHLBI_All_MAF => "0.1",
+            NHLBI_EU_MAF => "0.1",
+            NHLBI_AA_MAF => "0.3",
         },
         G => {
-            All_MAF => "0.1",
-            EU_MAF => "0.1",
-            AA_MAF => "0.3",
+            NHLBI_All_MAF => "0.1",
+            NHLBI_EU_MAF => "0.1",
+            NHLBI_AA_MAF => "0.3",
         },
     },
     '1kg' => {
