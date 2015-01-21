@@ -183,6 +183,7 @@ sub _run_aligner {
         aligner_index_fasta => $self->_aligner_index_fasta,
         aligner_params => $param_string,
         max_sort_memory_mb => $max_sort_mem_mb,
+        temp_dir => $tmp_dir,
         );
 
     if ($self->instrument_data_segment_id) {
