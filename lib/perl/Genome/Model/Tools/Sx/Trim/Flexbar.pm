@@ -18,7 +18,7 @@ class Genome::Model::Tools::Sx::Trim::Flexbar {
             is => 'Boolean',
             is_optional => 1,
             default => 0,
-            doc => 'Remove the reverse compl;ement of the single adapter.',
+            doc => 'Remove the reverse complement of the single adapter.',
         },
         no_length_dist => {
             is => 'Boolean',
@@ -66,12 +66,12 @@ sub _cmd_properties {
         adapter_min_overlap => {
             is => 'Text',
             is_optional => 1,
-            doc => ' Minimum overlap of adapter and read in base pairs.',
+            doc => 'Minimum overlap of adapter and read in base pairs.',
         },
         adapter_threshold  => {
             is => 'Number',
             is_optional => 1,
-            doc => 'Allowed mismatches and indels per 10 bases for adapter',
+            doc => 'Allowed mismatches and indels per 10 bases for adapter.',
         },
         adapter_trim_end => {
             is => 'Text',
@@ -81,7 +81,7 @@ sub _cmd_properties {
         adapter_tail_length => {
             is => 'Number',
             is_optional => 1,
-            doc => ' Number of bases for tail trim-end types, default: adapter length',
+            doc => 'Number of bases for tail trim-end types, default: adapter length',
         },
         adapter_no_adapt => {
             is => 'Boolean',
