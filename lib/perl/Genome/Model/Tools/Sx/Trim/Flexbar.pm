@@ -220,7 +220,7 @@ sub _input_data_param_name {
     my $self = shift;
 
     my $name = 'source';
-    if( $self->version eq '230' ) {
+    if( $self->version >= 230 ) {
         $name = 'reads';
     }
     return $name;
@@ -230,7 +230,7 @@ sub _input_data_format {
     my $self = shift;
 
     my $format = 'fastq-sanger';
-    if( $self->version eq '230' ) {
+    if( $self->version >= 230 ) {
         $format = 'sanger';
     }
     return $format;
