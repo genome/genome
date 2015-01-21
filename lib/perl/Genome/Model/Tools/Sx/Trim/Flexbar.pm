@@ -247,6 +247,18 @@ sub _env_var_for_version {
     return $env_var;
 }
 
+sub _resolve_length_dist_parameter {
+    my $self = shift;
+
+    my $no_length_dist = $self->no_length_dist;
+
+    if ( $self->version >= 230 ) {
+        return $no_length_dist? '' : ' --length-dist';
+    } else {
+        return $no_length_dist? ' --no-length-dist' : '';
+    }
+}
+
 sub _resolve_adapters {
     my $self = shift;
 
@@ -280,18 +292,6 @@ sub _resolve_adapters {
     }
 
     return 1;
-}
-
-sub _resolve_length_dist_parameter {
-    my $self = shift;
-
-    my $no_length_dist = $self->no_length_dist;
-
-    if ( $self->version >= 230 ) {
-        return $no_length_dist? '' : ' --length-dist';
-    } else {
-        return $no_length_dist? ' --no-length-dist' : '';
-    }
 }
 
 sub _required_type_and_counts_for_inputs {
