@@ -68,123 +68,123 @@ sub _cmd_properties {
             is_optional => 1,
             doc => ' Minimum overlap of adapter and read in base pairs.',
         },
-         adapter_threshold  => {
-             is => 'Number',
-             is_optional => 1,
-             doc => 'Allowed mismatches and indels per 10 bases for adapter',
-         },
-         adapter_trim_end => {
-             is => 'Text',
-             valid_values => [qw/ ANY RIGHT LEFT RIGHT_TAIL LEFT_TAIL  /],
-             doc => 'Decides on which end adapter removal is performed.',
-         },
-         adapter_tail_length => {
-             is => 'Number',
-             is_optional => 1,
-             doc => ' Number of bases for tail trim-end types, default: adapter length',
-         },
-         adapter_no_adapt => {
-             is => 'Boolean',
-             is_optional => 1,
-             doc => 'Do not adapt min-overlap to overlap length at ends.',
-         },
-         adapter_match => {
-             is => 'Number',
-             is_optional => 1,
-             doc => 'Match score.',
-         },
-         adapter_mismatch => {
-             is => 'Number',
-             is_optional => 1,
-             doc => 'Mismatch score.',
-         },
-         adapter_gap_cost => {
-             is => 'Number',
-             is_optional => 1,
-             doc => 'Gap score.',
-         },
-         min_readlength => {
-             is => 'Text',
-             is_optional => 1,
-             doc => 'Minimum readlength in basepairs after adapter removal or read will be discarded.',
-         },
+        adapter_threshold  => {
+            is => 'Number',
+            is_optional => 1,
+            doc => 'Allowed mismatches and indels per 10 bases for adapter',
+        },
+        adapter_trim_end => {
+            is => 'Text',
+            valid_values => [qw/ ANY RIGHT LEFT RIGHT_TAIL LEFT_TAIL  /],
+            doc => 'Decides on which end adapter removal is performed.',
+        },
+        adapter_tail_length => {
+            is => 'Number',
+            is_optional => 1,
+            doc => ' Number of bases for tail trim-end types, default: adapter length',
+        },
+        adapter_no_adapt => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => 'Do not adapt min-overlap to overlap length at ends.',
+        },
+        adapter_match => {
+            is => 'Number',
+            is_optional => 1,
+            doc => 'Match score.',
+        },
+        adapter_mismatch => {
+            is => 'Number',
+            is_optional => 1,
+            doc => 'Mismatch score.',
+        },
+        adapter_gap_cost => {
+            is => 'Number',
+            is_optional => 1,
+            doc => 'Gap score.',
+        },
+        min_readlength => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'Minimum readlength in basepairs after adapter removal or read will be discarded.',
+        },
         min_read_length => {
-             is => 'Text',
-             is_optional => 1,
-             doc => 'Minimum readlength in basepairs after adapter removal or read will be discarded, use in version 230 only',
-         },
-         max_uncalled => {
-             is => 'Text',
-             is_optional => 1,
-             doc => 'Number of allowed uncalled bases in a read.',
-         },
-	post_trim_length =>  {
-	    is => 'Number',
-	    is_optional => 1,
-	    doc => 'Trim to specified read length from 3\' end after removal, v230 only',
-	},
-	pre_trim_left => {
-	    is => 'Number',
-	    is_optional => 1,
-	    doc => 'Trim given number of bases on 5\' read end before detection, v230 only.',
-	},
-	pre_trim_right => {
-	    is => 'Number',
-	    is_optional => 1,
-	    doc => 'Trim specified number of bases on 3\' end prior to detection, v230 only.',
-	},
-	pre_trim_phred => {
-	    is => 'Number',
-	    is_optional => 1,
-	    doc => 'Trim 3\' end until specified or higher quality reached, v230 only',
-	},
-         removal_tag => {
-             is => 'Boolean',
-             is_optional => 1,
-             doc => 'Tag reads for which adapter or barcode is removed.',
-         },
-         threads => {
-             is => 'Text',
-             is_optional => 1,
-             default_value => 1,
-             doc => 'Number of threads to use.',
-         },
-     );
- }
+            is => 'Text',
+            is_optional => 1,
+            doc => 'Minimum readlength in basepairs after adapter removal or read will be discarded, use in version 230 only',
+        },
+        max_uncalled => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'Number of allowed uncalled bases in a read.',
+        },
+        post_trim_length =>  {
+            is => 'Number',
+            is_optional => 1,
+            doc => 'Trim to specified read length from 3\' end after removal, v230 only',
+        },
+        pre_trim_left => {
+            is => 'Number',
+            is_optional => 1,
+            doc => 'Trim given number of bases on 5\' read end before detection, v230 only.',
+        },
+        pre_trim_right => {
+            is => 'Number',
+            is_optional => 1,
+            doc => 'Trim specified number of bases on 3\' end prior to detection, v230 only.',
+        },
+        pre_trim_phred => {
+            is => 'Number',
+            is_optional => 1,
+            doc => 'Trim 3\' end until specified or higher quality reached, v230 only',
+        },
+        removal_tag => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => 'Tag reads for which adapter or barcode is removed.',
+        },
+        threads => {
+            is => 'Text',
+            is_optional => 1,
+            default_value => 1,
+            doc => 'Number of threads to use.',
+        },
+    );
+}
 
- sub execute {
-     my $self = shift;
+sub execute {
+    my $self = shift;
 
-     my $resolve_adapters = $self->_resolve_adapters;
-     return if not $resolve_adapters;
+    my $resolve_adapters = $self->_resolve_adapters;
+    return if not $resolve_adapters;
 
-     my @input_params = $self->_resolve_input_params;
-     return if not @input_params;
+    my @input_params = $self->_resolve_input_params;
+    return if not @input_params;
 
-     my $output = $self->_init_ouptut;
-     return if not $output;
+    my $output = $self->_init_ouptut;
+    return if not $output;
 
-     $self->debug_message('Run flexbar...');
+    $self->debug_message('Run flexbar...');
 
-     my $cmd = $self->build_command;
+    my $cmd = $self->build_command;
 
-     $cmd .= $self->_resolve_length_dist_parameter;
+    $cmd .= $self->_resolve_length_dist_parameter;
 
-     # set input param name .. either reads or source
-     my $input_param_name = $self->_input_data_param_name();
-     $cmd .= ' --'.$input_param_name.' '.$input_params[0]->{file};
-     $cmd .= ' --'.$input_param_name.'2 '.$input_params[1]->{file} if $input_params[1];
+    # set input param name .. either reads or source
+    my $input_param_name = $self->_input_data_param_name();
+    $cmd .= ' --'.$input_param_name.' '.$input_params[0]->{file};
+    $cmd .= ' --'.$input_param_name.'2 '.$input_params[1]->{file} if $input_params[1];
 
-     # set input format ..sanger or sanger-fastq
-     my $input_format = $self->_input_data_format();
-     $cmd .= ' --format '.$input_format;
+    # set input format ..sanger or sanger-fastq
+    my $input_format = $self->_input_data_format();
+    $cmd .= ' --format '.$input_format;
 
-     # set output file name
-     $cmd .= ' --target '.$self->_tmpdir.'/output.fastq',
+    # set output file name
+    $cmd .= ' --target '.$self->_tmpdir.'/output.fastq',
 
-     # set versions env variable
-     my $env_var = $self->_env_var_for_version();
-     $cmd = $env_var.' '.$cmd if $env_var;
+    # set versions env variable
+    my $env_var = $self->_env_var_for_version();
+    $cmd = $env_var.' '.$cmd if $env_var;
 
     my $rv = $self->_run_command($cmd);
     return if not $rv;
@@ -197,7 +197,7 @@ sub _cmd_properties {
         return;
     }
     $self->debug_message('Output: '.join(' ', @outputs));
-    
+
     my $output_reader = Genome::Model::Tools::Sx::Reader->create(
         config => [ map { $_.':type=sanger' } @outputs ],
     );
@@ -221,8 +221,8 @@ sub _input_data_param_name {
 
     my $name = 'source';
     if( $self->version eq '230' ) {
-	$name = 'reads';
-    }   
+        $name = 'reads';
+    }
     return $name;
 }
 
@@ -231,7 +231,7 @@ sub _input_data_format {
 
     my $format = 'fastq-sanger';
     if( $self->version eq '230' ) {
-	$format = 'sanger';
+        $format = 'sanger';
     }
     return $format;
 }
@@ -241,8 +241,8 @@ sub _env_var_for_version {
 
     my $env_var;
     if( $self->version eq '230' ) {
-	$env_var = 'LD_LIBRARY_PATH=/gscmnt/gc3001/assembly/Downloads/Flexbar_2.4/flexbar_v2.4_linux64';
-	# this is needed to use multiple nodes for v230
+        $env_var = 'LD_LIBRARY_PATH=/gscmnt/gc3001/assembly/Downloads/Flexbar_2.4/flexbar_v2.4_linux64';
+        # this is needed to use multiple nodes for v230
     }
     return $env_var;
 }
