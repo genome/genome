@@ -405,11 +405,8 @@ sub _sort_commands {
     my $per_thread_mem = $self->_sort_memory_per_thread_mb;
     my $tmp_path = $self->temp_dir;
 
-    if (!$tmp_path) {
-        $tmp_path = Genome::Sys->create_temp_file_path;
-    }
-
-    my $tmp_path = File::Spec->catfile($tmp_path, "samtools-sort");
+    $tmp_path = Genome::Sys->create_temp_file_path unless $tmp_path;
+    $tmp_path = File::Spec->catfile($tmp_path, "samtools-sort");
 
     $self->debug_message("max per-thread sorting memory is ${per_thread_mem}MB");
 
