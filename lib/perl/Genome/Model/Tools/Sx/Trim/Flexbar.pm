@@ -20,6 +20,11 @@ class Genome::Model::Tools::Sx::Trim::Flexbar {
             default => 0,
             doc => 'Remove the reverse compl;ement of the single adapter.',
         },
+        no_length_dist => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => 'Prevent writing length distributions for read output files.',
+        },
         version => {
             is => 'Text',
             valid_values => [ __PACKAGE__->cmd_versions ],
@@ -113,12 +118,6 @@ sub _cmd_properties {
              is_optional => 1,
              doc => 'Number of allowed uncalled bases in a read.',
          },
-         no_length_dist => {
-             is => 'Boolean',
-             is_optional => 1,
-#            default_value => '1',
-             doc => 'Prevent writing length distributions for read output files.',
-         },
 	post_trim_length =>  {
 	    is => 'Number',
 	    is_optional => 1,
@@ -168,6 +167,8 @@ sub _cmd_properties {
      $self->debug_message('Run flexbar...');
 
      my $cmd = $self->build_command;
+
+     $cmd .= $self->_resolve_length_dist_parameter;
 
      # set input param name .. either reads or source
      my $input_param_name = $self->_input_data_param_name();
@@ -279,6 +280,18 @@ sub _resolve_adapters {
     }
 
     return 1;
+}
+
+sub _resolve_length_dist_parameter {
+    my $self = shift;
+
+    my $no_length_dist = $self->no_length_dist;
+
+    if ( $self->version >= 230 ) {
+        return $no_length_dist? '' : ' --length-dist';
+    } else {
+        return $no_length_dist? ' --no-length-dist' : '';
+    }
 }
 
 sub _required_type_and_counts_for_inputs {
