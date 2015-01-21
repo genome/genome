@@ -62,7 +62,7 @@ sub _run {
     }
 }
 
-sub _paralellize {
+sub _parallelize {
     my $self = shift;
     my @alignment_results = @_;
 
