@@ -95,14 +95,9 @@ sub delete {
         die $self->error_message($msg, $self->__display_name__, 'instrument data');
     }
 
-    eval {
-        my @events = Genome::Timeline::Event::AnalysisProject->get(analysis_project => $self);
-        for ($self->config_items, $self->subject_mappings, @events) {
-            $_->delete();
-        }
-    };
-    if(my $error = $@) {
-        die($error);
+    my @events = Genome::Timeline::Event::AnalysisProject->get(analysis_project => $self);
+    for ($self->config_items, $self->subject_mappings, @events) {
+        $_->delete();
     }
 
     return $self->SUPER::delete();
