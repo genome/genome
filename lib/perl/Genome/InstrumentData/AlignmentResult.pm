@@ -1714,11 +1714,11 @@ sub get_merged_alignment_results {
         'inputs.value_id' => $self->instrument_data_id,
         test_name => $self->test_name,
     );
-    return $self->filter_out_non_database_objects(@results);
+    return $self->filter_non_database_objects(@results);
 }
 
 # This was refactored out to override in the test - mock objects break this logic
-sub filter_out_non_database_objects {
+sub filter_non_database_objects {
     my ($self, @results) = @_;
     my @db_results;
     for my $result (@results) {
