@@ -5,9 +5,6 @@ use warnings;
 
 use Genome;
 
-use Archive::Extract;
-$Archive::Extract::PREFER_BIN = 1;
-$Archive::Extract::DEBUG = 1;
 use Data::Dumper 'Dumper';
 require File::Basename;
 require List::Util;
@@ -78,15 +75,10 @@ sub _unarchive_fastqs_if_necessary {
         $unarchived_fastq_path =~ s/\.gz$//;
         $self->debug_message('Unarchiving: '.$fastq_path);
         my $rv = eval{ Genome::Sys->shellcmd(cmd => "gunzip $fastq_path"); };
-        #my $extract_ok = $extractor->extract(to => $unarchived_fastq);
         if ( not $rv or not -s $unarchived_fastq_path ) {
-            #my $error_message = $extractor->error;
-            #$self->error_message($error_message) if defined $error_message;
-            #$self->error_message($error_message) if defined $error_message;
             $self->error_message('Failed to unarchive!');
             return;
         }
-        #my $unarchived_files = $extractor->files;
         $self->debug_message("Unarchived fastq: $unarchived_fastq_path");
         push @new_fastq_paths, $unarchived_fastq_path;
         unlink $fastq_path;
