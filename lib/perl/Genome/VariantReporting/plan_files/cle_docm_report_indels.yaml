@@ -7,6 +7,19 @@ experts:
         max_count: 10000000
         per_library: 1
         insertion_centric: 1
+    vep:
+        ensembl_version: 75
+        custom_annotation_tags:
+            - ON_TARGET
+            - SEG_DUP
+            - AML_RMG
+        feature_list_ids: feature_list_ids
+        reference_fasta: reference_fasta
+        species: 'homo-sapiens'
+        plugins:
+            - Condel@PLUGIN_DIR@b@2
+        plugins_version: 1
+        joinx_version: 1.10
 reports:
     'docm':
         filters: {}
@@ -26,6 +39,7 @@ reports:
                     - normal
                 library_name_labels: library_name_labels
                 library_names: [library_names]
+            vep: {}
         params:
             sample_name_labels: sample_name_labels
             sample_names:

@@ -27,10 +27,12 @@ Output readcount information from bam readcount
     This is a translated property.
 
 [4mREQUIRED EXPERTS[0m
+vep
 bam-readcount
 
 [4mREQUIRED INTERPRETERS[0m
 position
+vep
 vaf
 per-library-vaf
 
