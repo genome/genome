@@ -73,7 +73,8 @@ sub _unarchive_fastqs_if_necessary {
             next;
         }
         $self->debug_message('Unarchiving: '.$fastq_path);
-        try {
+        
+        my $success = try {
             Genome::Sys->shellcmd(cmd => "gunzip $fastq_path");
         }
         catch {
@@ -81,6 +82,8 @@ sub _unarchive_fastqs_if_necessary {
             $self->error_message('Failed to gunzip fastq!');
             return;
         };
+        return if not $success;
+
         my $unarchived_fastq_path = $fastq_path;
         $unarchived_fastq_path =~ s/\.gz$//;
         $self->debug_message("Unarchived fastq: $unarchived_fastq_path");
@@ -124,7 +127,7 @@ sub _fastqs_to_bam {
         $self->error_message('Failed to create sam to fastq command!');
         return;
     }
-    try {
+    my $success = try {
         $cmd->execute;
     }
     catch {
@@ -132,6 +135,7 @@ sub _fastqs_to_bam {
         $self->error_message('Failed to run picard fastq to sam!');
         return;
     };
+    return if not $success;
 
     if ( not -s $output_bam_path ) {
         $self->error_message('Ran picard fastq to sam, but bam path does not exist!');
