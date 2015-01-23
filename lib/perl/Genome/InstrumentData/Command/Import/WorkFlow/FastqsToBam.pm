@@ -8,6 +8,7 @@ use Genome;
 use Data::Dumper 'Dumper';
 require File::Basename;
 require List::Util;
+use Try::Tiny;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam { 
     is => 'Command::V2',
@@ -71,15 +72,22 @@ sub _unarchive_fastqs_if_necessary {
             push @new_fastq_paths, $fastq_path;
             next;
         }
+        $self->debug_message('Unarchiving: '.$fastq_path);
+        try {
+            Genome::Sys->shellcmd(cmd => "gunzip $fastq_path");
+        }
+        catch {
+            $self->error_message($_) if $_;
+            $self->error_message('Failed to gunzip fastq!');
+            return;
+        };
         my $unarchived_fastq_path = $fastq_path;
         $unarchived_fastq_path =~ s/\.gz$//;
-        $self->debug_message('Unarchiving: '.$fastq_path);
-        my $rv = eval{ Genome::Sys->shellcmd(cmd => "gunzip $fastq_path"); };
-        if ( not $rv or not -s $unarchived_fastq_path ) {
-            $self->error_message('Failed to unarchive!');
+        $self->debug_message("Unarchived fastq: $unarchived_fastq_path");
+        if ( not -s $unarchived_fastq_path ) {
+            $self->error_message('Unarchived fastq does not exist!');
             return;
         }
-        $self->debug_message("Unarchived fastq: $unarchived_fastq_path");
         push @new_fastq_paths, $unarchived_fastq_path;
         unlink $fastq_path;
     }
@@ -116,10 +124,17 @@ sub _fastqs_to_bam {
         $self->error_message('Failed to create sam to fastq command!');
         return;
     }
-    my $execute_ok = eval{ $cmd->execute; };
-    if ( not $execute_ok or not -s $output_bam_path ) {
-        $self->error_message($@) if $@;
+    try {
+        $cmd->execute;
+    }
+    catch {
+        $self->error_message($_) if $_;
         $self->error_message('Failed to run picard fastq to sam!');
+        return;
+    };
+
+    if ( not -s $output_bam_path ) {
+        $self->error_message('Ran picard fastq to sam, but bam path does not exist!');
         return;
     }
 
