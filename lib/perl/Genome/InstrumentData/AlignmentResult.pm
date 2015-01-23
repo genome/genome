@@ -530,7 +530,7 @@ sub resize_disk_allocation {
         $params{allow_reallocate_with_move} = 0;
         $params{allow_reallocate_with_move} = 1 if $self->_disk_allocation->kilobytes_requested < 10_485_760; # 10GB
         unless (eval { $self->_disk_allocation->reallocate(%params) }) {
-            $self->warning_message("Failed to reallocate my disk allocation: " . $self->_disk_allocation->id);
+            $self->warning_message("Failed to reallocate my disk allocation with id (%s). Eval returned (%s) ", $self->_disk_allocation->id, $@);
         }
         $self->output_dir($self->_disk_allocation->absolute_path); #update if was moved
     }
