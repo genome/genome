@@ -18,7 +18,7 @@ use Test::More;
 use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v2');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v3');
 my $source_file = $test_dir.'/input.fastq.tgz';
 ok($source_file, 'source archive exists');
 
