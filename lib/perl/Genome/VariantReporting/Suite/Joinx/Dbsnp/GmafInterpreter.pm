@@ -21,7 +21,7 @@ sub requires_annotations {
 
 sub field_descriptions {
     return (
-        gmaf => 'Global minor allele frequency from dbsnp',
+        dbSNP_gmaf => 'Global minor allele frequency from dbSNP',
     );
 }
 
@@ -34,10 +34,10 @@ sub _interpret_entry {
 
     for my $variant_allele (@$passed_alt_alleles) {
         if (!defined $entry->info("GMAF")) {
-            $return_values{$variant_allele}->{gmaf} = undef;
+            $return_values{$variant_allele}->{dbSNP_gmaf} = undef;
         }
         else {
-            $return_values{$variant_allele}->{gmaf} = $entry->info("GMAF");
+            $return_values{$variant_allele}->{dbSNP_gmaf} = $entry->info("GMAF");
         }
     }
 

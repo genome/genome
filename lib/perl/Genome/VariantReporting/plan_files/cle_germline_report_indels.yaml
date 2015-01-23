@@ -70,11 +70,9 @@ reports:
                     - normal
             'variant-callers':
                 valid_callers:
-                    - VarscanSomatic
-                    - Sniper
-                    - Strelka
+                    - Varscan
+                    - Samtools
                     - Pindel
-                    - GatkSomaticIndel
                 sample_name: normal
             'many-samples-vaf':
                 sample_name_labels: sample_name_labels
@@ -192,11 +190,9 @@ reports:
                     - normal
             'variant-callers':
                 valid_callers:
-                    - VarscanSomatic
-                    - Sniper
-                    - Strelka
+                    - Varscan
+                    - Samtools
                     - Pindel
-                    - GATKSomaticIndel
                 sample_name: normal
             'many-samples-vaf':
                 sample_name_labels: sample_name_labels
