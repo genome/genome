@@ -25,6 +25,7 @@ sub execute {
     if ($self->is_single_bam($model)) {
         # Germline
         $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
+            common_translations => $self->get_common_translations(),
             discovery => $model->last_succeeded_build,
             label => 'germline',
         );
@@ -43,10 +44,52 @@ sub execute {
             plan_file => $model_pair->plan_file($variant_type),
             translations_file => $model_pair->translations_file,
         );
-        Genome::VariantReporting::Command::CreateReport->execute(%params);
+        my $cmd = Genome::VariantReporting::Command::CreateReport->create(%params);
+
+        my $process = $cmd->execute();
+        $process->add_note(
+            header_text => 'creation metadata',
+            body_text => sprintf('%s report created by "genome variant-reporting wrappers model-report --model=%s"',
+                $variant_type, $self->model->id),
+        );
     }
     return 1;
 };
+
+sub get_common_translations {
+    my $self = shift;
+
+    return {
+        sample_name_labels => {
+            $self->get_sample_name_labels,
+        },
+        library_name_labels => {
+            $self->get_library_name_labels,
+        },
+    };
+}
+
+sub get_sample_name_labels {
+    my $self = shift;
+
+    return ($self->model->tumor_sample->name =>
+        sprintf('Tumor(%s)', $self->model->tumor_sample->name));
+}
+
+sub get_library_name_labels {
+    my $self = shift;
+
+    my %labels;
+    my $counter = 1;
+
+    for my $library ($self->model->tumor_sample->libraries) {
+        $labels{$library->name} = sprintf('Tumor-Library%d(%s)',
+            $counter++,
+            $library->name,
+        );
+    }
+    return %labels;
+}
 
 sub is_valid {
     my $self = shift;

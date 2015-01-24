@@ -96,6 +96,7 @@ class Genome::Process {
             is_optional => 1,
             reverse_as => 'process',
         }
+
     ],
     doc => 'A base class to manage meta-data related to running a process (workflow)',
 };
