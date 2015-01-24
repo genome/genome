@@ -53,13 +53,10 @@ sub _temp_file_path {
 sub _run {
     my $self = shift;
 
-    my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-        bams             => $self->bam_paths,
-        labels           => $self->bam_labels,
-        output_file      => $self->_temp_file_path,
-        genome_name      => $self->genome_name,
-        review_bed_files => $self->bed_files,
-        reference_name   => $self->igv_reference_name,
+    my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlBasic->create(
+        output_file    => $self->_temp_file_path,
+        resource_files => $self->resource_files,
+        reference_name => $self->igv_reference_name,
     );
     unless ($dumpXML->execute) {
         confess $self->error_message("Failed to create IGV xml file");
@@ -71,19 +68,22 @@ sub bams {
     return $_JSON_CODEC->decode($self->bam_hash_json);
 }
 
-sub bam_paths {
-    my $self = shift;
-    return join(',', map {URI->new_abs($_, $ENV{GENOME_SYS_SERVICES_FILES_URL})->as_string} values %{$self->bams});
+sub uri {
+    my $file = shift;
+    return URI->new_abs($file, $ENV{GENOME_SYS_SERVICES_FILES_URL})->as_string;
 }
 
-sub bam_labels {
+sub resource_files {
     my $self = shift;
-    return join(',', keys %{$self->bams});
-}
 
-sub bed_files {
-    my $self = shift;
-    return [map {URI->new_abs($_->report_path, $ENV{GENOME_SYS_SERVICES_FILES_URL})->as_string} $self->merged_bed_reports];
+    my %bams = %{$self->bams};
+    my %reference_files = map { uri($bams{$_}) => $_ } keys %bams;
+
+    for my $bed_report ($self->merged_bed_reports) {
+        $reference_files{uri($bed_report->report_path)} = $bed_report->report_path;
+    }
+
+    return \%reference_files;
 }
 
 sub igv_reference_name {
