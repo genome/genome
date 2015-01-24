@@ -17,6 +17,7 @@ use File::Compare;
 
 class Genome::Process {
     is => [
+        "Genome::Notable",
         "Genome::Utility::ObjectWithCreatedBy",
     ],
     is_abstract => 1,
