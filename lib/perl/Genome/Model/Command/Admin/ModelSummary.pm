@@ -60,16 +60,17 @@ sub execute {
     $self->print_message(join("\t", qw(-------- ------ ------------------- ------------------ ---------------- ---------- ------- ----------)));
 
     my %classes_to_unload;
-    my $tx; # UR::Context::Transaction->begin
     my $build_requested_count = 0;
     my %cleanup_rv;
     my $change_count = 0;
+
+    my $auto_batch_size_txn = UR::Context::Transaction->begin;
     my $commit = sub {
-        unless ($tx && $tx->isa('UR::Context::Transaction')) {
+        unless ($auto_batch_size_txn && $auto_batch_size_txn->isa('UR::Context::Transaction')) {
             die "Not in a transaction! Something went wrong.";
         }
 
-        if($tx->commit) {
+        if($auto_batch_size_txn->commit) {
             $self->debug_message('Committing...');
             unless (UR::Context->commit) {
                 die "Commit failed! Bailing out.";
@@ -82,13 +83,12 @@ sub execute {
             }
 
             $change_count = 0;
-            $tx = UR::Context::Transaction->begin;
+            $auto_batch_size_txn = UR::Context::Transaction->begin;
         } else {
-            $tx->rollback;
+            $auto_batch_size_txn->rollback;
         }
     };
 
-    $tx = UR::Context::Transaction->begin;
     for my $model (@models) {
         my $per_model_txn = UR::Context::Transaction->begin();
 
@@ -117,7 +117,6 @@ sub execute {
 
         my $track_change = sub {
             $change_count++;
-#            $classes_to_unload{$model->class}++;
             $classes_to_unload{$latest_build->class}++ if $latest_build;
         };
 
