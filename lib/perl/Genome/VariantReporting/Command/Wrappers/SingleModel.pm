@@ -29,7 +29,7 @@ sub get_sample_and_bam_map {
     my $self = shift;
 
     return (
-        $self->discovery->tumor_sample->name  => $self->discovery->tumor_bam,
+        sprintf('Normal(%s)', $self->discovery->tumor_sample->name)  => $self->discovery->tumor_bam,
     );
 }
 
