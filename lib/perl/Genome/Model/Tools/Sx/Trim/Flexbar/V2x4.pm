@@ -119,6 +119,11 @@ sub _cmd_properties {
             is_optional => 1,
             doc => 'Print valid optimal read alignment. One of ALL, MOD, and TAB.',
         },
+        length_dist => {
+            is => 'Boolean',
+            is_optional => 1,
+            doc => 'Generate length distribution for read output files.',
+        },
         removal_tags => {
             is => 'Boolean',
             is_optional => 1,
