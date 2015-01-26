@@ -90,6 +90,8 @@ sub execute {
 
     $tx = UR::Context::Transaction->begin;
     for my $model (@models) {
+        my $per_model_txn = UR::Context::Transaction->begin();
+
         my $build_iterator = $model->build_iterator(
             'status not like' => 'Abandoned',
             '-order_by' => '-created_at',
@@ -174,6 +176,11 @@ sub execute {
         my $should_hide_none = $self->hide_no_action_needed && $action eq 'none';
         unless ($has_hidden_status || $should_hide_none) {
             $self->print_message(join "\t", $model_id, $action, $latest_build_status, $first_nondone_step, $latest_build_revision, $model_name, $pp_name, $fail_count);
+        }
+
+        # help avoid bad state in the larger auto_batch_size transaction
+        unless ($per_model_txn->commit) {
+            $per_model_txn->rollback;
         }
 
         if ($change_count > $self->auto_batch_size) {
