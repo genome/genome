@@ -11,6 +11,13 @@ class Genome::Model::SomaticValidation::Command::VerifyBam {
             is => 'Genome::InstrumentData::VerifyBamIdResult',
         },
     ],
+    has_param => [
+        lsf_resource => {
+            default_value => "-R 'select[mem>12000] rusage[mem=12000]' -M 12000000",
+            is_optional => 1,
+            doc => 'default LSF resource expectations',
+        },
+    ],
 };
 
 sub shortcut {
