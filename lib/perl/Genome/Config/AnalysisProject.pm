@@ -86,23 +86,20 @@ sub __display_name__ {
 
 sub delete {
     my $self = shift;
-    eval {
-        for ($self->config_items) {
-            $_->delete();
-        }
-        for ($self->model_bridges) {
-            $_->delete();
-        }
-        for ($self->analysis_project_bridges) {
-            $_->delete();
-        }
-        for ($self->subject_mappings) {
-            $_->delete();
-        }
-    };
-    if(my $error = $@) {
-        die($error);
+
+    my $msg = 'Cannot delete analysis project %s because it has %s.';
+    if ($self->model_bridge_set->count) {
+        die $self->error_message($msg, $self->__display_name__, 'models');
     }
+    if ($self->analysis_project_bridge_set->count) {
+        die $self->error_message($msg, $self->__display_name__, 'instrument data');
+    }
+
+    my @events = Genome::Timeline::Event::AnalysisProject->get(analysis_project => $self);
+    for ($self->config_items, $self->subject_mappings, @events) {
+        $_->delete();
+    }
+
     return $self->SUPER::delete();
 }
 
