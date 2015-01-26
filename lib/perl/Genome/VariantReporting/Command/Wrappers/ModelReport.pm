@@ -32,6 +32,7 @@ sub execute {
     } else {
         #Somatic
         $model_pair = Genome::VariantReporting::Command::Wrappers::ModelPair->create(
+            common_translations => $self->get_common_translations(),
             discovery => $model->last_succeeded_build,
             plan_file_basename => 'somatic_TYPE_report.yaml',
             label => 'somatic',
@@ -64,7 +65,8 @@ sub get_common_translations {
             $self->get_sample_name_labels,
         },
         library_name_labels => {
-            $self->get_library_name_labels,
+            $self->get_library_name_labels('tumor'),
+            $self->get_library_name_labels('normal'),
         },
     };
 }
@@ -72,18 +74,22 @@ sub get_common_translations {
 sub get_sample_name_labels {
     my $self = shift;
 
-    return ($self->model->tumor_sample->name =>
-        sprintf('Tumor(%s)', $self->model->tumor_sample->name));
+    return (
+        $self->model->tumor_sample->name  => sprintf('Tumor(%s)', $self->model->tumor_sample->name),
+        $self->model->normal_sample->name => sprintf('Normal(%s)', $self->model->normal_sample->name),
+    );
 }
 
 sub get_library_name_labels {
-    my $self = shift;
+    my ($self, $category) = @_;
 
     my %labels;
     my $counter = 1;
 
-    for my $library ($self->model->tumor_sample->libraries) {
-        $labels{$library->name} = sprintf('Tumor-Library%d(%s)',
+    my $accessor = sprintf('%s_sample', $category);
+    for my $library ($self->model->$accessor->libraries) {
+        $labels{$library->name} = sprintf('%s-Library%d(%s)',
+            ucfirst($category),
             $counter++,
             $library->name,
         );
