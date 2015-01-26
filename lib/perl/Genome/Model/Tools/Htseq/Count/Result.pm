@@ -71,7 +71,7 @@ sub _parallelize {
         my $name = $param->name;
         next if $name =~ /^alignment_results/; #derived params
 
-        $param{$name} = $self->$name;
+        $params->{$name} = $self->$name;
     }
 
     # TODO: compose a workflow here instead of a linear run
@@ -83,7 +83,8 @@ sub _parallelize {
 
     my @intermediate_results;
     for my $alignment_result (@alignment_results) {
-        my $intermediate_result = $self->get_or_create(%$params, alignment_results => $alignment_result);
+        my $class = ref $self;
+        my $intermediate_result = $class->get_or_create(%$params, alignment_results => [$alignment_result]);
         unless ($intermediate_result) {
             die "failed to create partial for " . $alignment_result->__display_name__;
         }
