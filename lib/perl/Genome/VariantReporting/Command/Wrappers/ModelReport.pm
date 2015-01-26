@@ -25,14 +25,14 @@ sub execute {
     if ($self->is_single_bam($model)) {
         # Germline
         $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
-            common_translations => $self->get_common_translations(),
+            common_translations => $self->get_common_translations('germline'),
             discovery => $model->last_succeeded_build,
             label => 'germline',
         );
     } else {
         #Somatic
         $model_pair = Genome::VariantReporting::Command::Wrappers::ModelPair->create(
-            common_translations => $self->get_common_translations(),
+            common_translations => $self->get_common_translations('somatic'),
             discovery => $model->last_succeeded_build,
             plan_file_basename => 'somatic_TYPE_report.yaml',
             label => 'somatic',
@@ -58,25 +58,38 @@ sub execute {
 };
 
 sub get_common_translations {
-    my $self = shift;
+    my ($self, $model_type) = @_;
 
-    return {
-        sample_name_labels => {
-            $self->get_sample_name_labels,
-        },
-        library_name_labels => {
-            $self->get_library_name_labels('tumor'),
-            $self->get_library_name_labels('normal'),
-        },
-    };
+    if ($model_type eq 'germline') {
+        return {
+            sample_name_labels => {
+                $self->get_sample_name_labels('tumor'),
+            },
+            library_name_labels => {
+                $self->get_library_name_labels('tumor'),
+            },
+        };
+    }
+    elsif ($model_type eq 'somatic') {
+        return {
+            sample_name_labels => {
+                $self->get_sample_name_labels('tumor'),
+                $self->get_sample_name_labels('normal'),
+            },
+            library_name_labels => {
+                $self->get_library_name_labels('tumor'),
+                $self->get_library_name_labels('normal'),
+            },
+        };
+    }
 }
 
 sub get_sample_name_labels {
-    my $self = shift;
+    my ($self, $category) = @_;
 
+    my $accessor = sprintf('%s_sample', $category);
     return (
-        $self->model->tumor_sample->name  => sprintf('Tumor(%s)', $self->model->tumor_sample->name),
-        $self->model->normal_sample->name => sprintf('Normal(%s)', $self->model->normal_sample->name),
+        $self->model->$accessor->name  => sprintf('%s(%s)', ucfirst($category), $self->model->$accessor->name),
     );
 }
 
