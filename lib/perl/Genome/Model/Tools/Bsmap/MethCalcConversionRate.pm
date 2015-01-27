@@ -10,13 +10,13 @@ class Genome::Model::Tools::Bsmap::MethCalcConversionRate {
         snvs_file => {
             is => 'String',
             doc => 'Use snvs.hq file to calculate methylation conversion',
-			shell_args_position => 1,
+            shell_args_position => 1,
         },
         output_file => {
             is => 'String',
             is_optional => 1,
             doc => 'Output methylation conversion',
-			shell_args_position => 2,
+            shell_args_position => 2,
         },
     ],
 };
@@ -39,24 +39,24 @@ sub help_detail {
 sub bs_rate {
     my $filename = shift;
     my $chrom = shift;
-	my $output_file = shift;
+    my $output_file = shift;
 
     my $count = 0;
     my $totalreads = 0;
     my $methreads = 0;
 
-	my $reader = Genome::Utility::IO::SeparatedValueReader->create(
-		headers => [qw(chr pos strand context ratio eff_CT_count C_count CT_count rev_G_count rev_GA_count CI_lower CI_upper)],
-		separator => "\t",
-		input => $filename,
-	);
-	while (my $data = $reader->next()) {
+    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+        headers => [qw(chr pos strand context ratio eff_CT_count C_count CT_count rev_G_count rev_GA_count CI_lower CI_upper)],
+        separator => "\t",
+        input => $filename,
+    );
+    while (my $data = $reader->next()) {
         if(($data->{strand} eq "-" && $data->{context} =~ /.CG../ ) || ($data->{strand} eq "+" && $data->{context} =~ /..CG./)){
             $totalreads = $totalreads + $data->{eff_CT_count};
             $methreads = $methreads + $data->{C_count};
         }
-	}
-	$reader->input->close();
+    }
+    $reader->input->close();
 
     my $cfile = $output_file;
     if($chrom eq "MT"){
@@ -77,22 +77,22 @@ sub execute {
     my $snvs_file = $self->snvs_file;
     my $output_file = $self->output_file;
 
-	my $cfile;
-	if ($output_file) {
-		open($cfile, '>', $output_file) or die;
-	} else {
-		$cfile = \*STDOUT;
-	}
+    my $cfile;
+    if ($output_file) {
+        open($cfile, '>', $output_file) or die;
+    } else {
+        $cfile = \*STDOUT;
+    }
 
-	# snvs
-	if (-s "$snvs_file"){
-		bs_rate($snvs_file, "MT", $cfile);
-	}
-	else {
-		die $self->error_message("can't find the snvs file");
-	}
+    # snvs
+    if (-s "$snvs_file"){
+        bs_rate($snvs_file, "MT", $cfile);
+    }
+    else {
+        die $self->error_message("can't find the snvs file");
+    }
 
-	return 1;
+    return 1;
 }
 
 1;
