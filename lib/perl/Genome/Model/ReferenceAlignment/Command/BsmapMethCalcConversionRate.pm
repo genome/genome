@@ -8,9 +8,9 @@ use Genome::Model::Tools::Bsmap::MethCalcConversionRate;
 class Genome::Model::ReferenceAlignment::Command::BsmapMethCalcConversionRate {
     is => 'Command::V2',
     has => [
-        model => {
-            is => 'Genome::Model::ReferenceAlignment',
-            doc => 'Use genome model ID to calculate methylation conversion',
+        build => {
+            is => 'Genome::Model::Build::ReferenceAlignment',
+            doc => 'Use genome build ID to calculate methylation conversion',
             shell_args_position => 1,
         },
         output_file => {
@@ -24,7 +24,7 @@ class Genome::Model::ReferenceAlignment::Command::BsmapMethCalcConversionRate {
 
 sub help_synopsis {
   return <<EOS
-    genome model reference-alignment bsmap-meth-calc-conversion-rate --model-id=394d6228a7b5487a9cb0ad0c448b5a44
+    genome model reference-alignment bsmap-meth-calc-conversion-rate 394d6228a7b5487a9cb0ad0c448b5a44
 EOS
 }
 
@@ -47,7 +47,7 @@ sub execute {
         $cfile = \*STDOUT;
     }
 
-    my $build = $self->model->last_succeeded_build;
+    my $build = $self->build;
     my $flagstat = $build->whole_rmdup_bam_flagstat_file;
     my (@field, $total, $duplicates, $mapped, $properly);
     if (-s "$flagstat"){
