@@ -75,14 +75,9 @@ sub bs_rate {
 sub execute {
     my $self = shift;
     my $snvs_file = $self->snvs_file;
-    my $output_file = $self->output_file;
+    my $output_file = $self->output_file || '-';
 
-    my $cfile;
-    if ($output_file) {
-        open($cfile, '>', $output_file) or die;
-    } else {
-        $cfile = \*STDOUT;
-    }
+    my $cfile = Genome::Sys->open_file_for_writing($output_file);
 
     # snvs
     if (-s "$snvs_file"){
