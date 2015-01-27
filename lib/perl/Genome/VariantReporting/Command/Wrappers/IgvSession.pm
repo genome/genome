@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use URI;
+use JSON qw(from_json);
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 
@@ -79,11 +80,43 @@ sub resource_files {
     my %bams = %{$self->bams};
     my %reference_files = map { uri($bams{$_}) => $_ } keys %bams;
 
+
     for my $bed_report ($self->merged_bed_reports) {
-        $reference_files{uri($bed_report->report_path)} = $bed_report->report_path;
+        my @report_users = map { $_->users('label like' => 'report:%') } $bed_report->report_results;
+        my $category;
+        for my $user (@report_users) {
+            my $m;
+            if ($user->label =~ /report:(.*)/) {
+                my $metadata_json = $1;
+                $m = from_json($metadata_json);
+                if (!defined($category)) {
+                    $category = $m->{category};
+                }
+                elsif ($category ne $m->{category}) {
+                    die $self->error_message("Categories of unmerged reports (%s) are not the same: (%s), (%s)", join(', ', map { $_->id } @report_users), $category, $m->{category});
+                }
+            }
+        }
+        my ($process) = grep { $_->isa('Genome::VariantReporting::Process::Trio') } $bed_report->children;
+        $reference_files{uri($bed_report->report_path)} = bed_file_label($category, $process) || $bed_report->report_path;
     }
 
     return \%reference_files;
+}
+
+sub bed_file_label {
+    my ($category, $process) = @_;
+
+    return unless defined($process);
+
+    my %labels = (
+        docm      => 'Recurrent AML Variants',
+        followup  => sprintf('Followup(%s) Variants', $process->followup_sample->name),
+        discovery => sprintf('Discovery(%s) Variants', $process->tumor_sample->name),
+        germline  => sprintf('Germline(%s) Variants', $process->normal_sample->name)
+    );
+
+    return $labels{$category};
 }
 
 sub igv_reference_name {
