@@ -11,6 +11,7 @@ use POSIX qw(ceil);
 use File::Copy;
 use Carp qw(confess);
 use File::Basename;
+use Scalar::Util qw(refaddr);
 
 use Genome::Utility::Instrumentation;
 
@@ -1714,7 +1715,8 @@ sub get_merged_alignment_results {
         'inputs.value_id' => $self->instrument_data_id,
         test_name => $self->test_name,
     );
-    return $self->filter_non_database_objects(@results);
+    my @filtered_results = $self->filter_non_database_objects(@results);
+    return $self->filter_non_matching_results(@filtered_results);
 }
 
 # This was refactored out to override in the test - mock objects break this logic
@@ -1727,6 +1729,22 @@ sub filter_non_database_objects {
         }
     }
     return @db_results;
+}
+
+# This uses a sort of 'backwards lookup' from merged alignment results going back to per-lane alignment results.
+# This is nice because it allows us to keep the logic in one place rather than mirroring it here.
+sub filter_non_matching_results {
+    my ($self, @merged_results) = @_;
+
+    my @matching_results;
+    for my $merged_result (@merged_results) {
+        my @individual_results = $merged_result->collect_individual_alignments;
+        if (@individual_results) {
+            push @matching_results, $merged_result if grep{refaddr($_) == refaddr($self)}@individual_results;
+        }
+    }
+
+    return @matching_results;
 }
 
 sub get_unarchived_merged_alignment_results {

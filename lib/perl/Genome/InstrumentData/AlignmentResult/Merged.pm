@@ -331,6 +331,15 @@ sub collect_individual_alignments {
             };
         }
 
+        my $test_name;
+        if ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME}) {
+            $test_name = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
+        } elsif ($self->test_name) {
+            $test_name = $self->test_name;
+        } else {
+            $test_name = undef;
+        }
+
         for my $segment_param (@segment_params) {
             my %all_params = (
                 %params,
@@ -338,8 +347,8 @@ sub collect_individual_alignments {
                 annotation_build_id => ($self->annotation_build_id || undef),
                 instrument_data_id => $i->id,
                 filter_name => ($filters->{$i->id} || undef),
-                test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
                 users => $result_users,
+                test_name => $test_name,
                 %$segment_param,
             );
             $self->debug_message("Looking for alignment result with params: %s",
