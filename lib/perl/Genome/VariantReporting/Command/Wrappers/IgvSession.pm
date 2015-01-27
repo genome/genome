@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Genome;
 use URI;
-use JSON qw(from_json);
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 
@@ -83,22 +82,8 @@ sub resource_files {
 
     for my $bed_report ($self->merged_bed_reports) {
         my @report_users = map { $_->users('label like' => 'report:%') } $bed_report->report_results;
-        my $category;
-        for my $user (@report_users) {
-            my $m;
-            if ($user->label =~ /report:(.*)/) {
-                my $metadata_json = $1;
-                $m = from_json($metadata_json);
-                if (!defined($category)) {
-                    $category = $m->{category};
-                }
-                elsif ($category ne $m->{category}) {
-                    die $self->error_message("Categories of unmerged reports (%s) are not the same: (%s), (%s)", join(', ', map { $_->id } @report_users), $category, $m->{category});
-                }
-            }
-        }
         my ($process) = grep { $_->isa('Genome::VariantReporting::Process::Trio') } $bed_report->children;
-        $reference_files{uri($bed_report->report_path)} = bed_file_label($category, $process) || $bed_report->report_path;
+        $reference_files{uri($bed_report->report_path)} = bed_file_label($bed_report->category, $process) || $bed_report->report_path;
     }
 
     return \%reference_files;
