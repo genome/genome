@@ -32527,6 +32527,8 @@ $Genome::Command::OPTS_SPEC = [
             'files',
             'input-metrics=s',
             'files',
+            'length-dist!',
+            undef,
             'log-level=s',
             'files',
             'max-uncalled=s',
