@@ -411,7 +411,7 @@ sub execute {
     } #### CLOSING COVERAGE FILE
 
     if ( -s $sub_output ) {
-        my $cmd = Genome::Model::Tools::BedTools::Intersect->execute(
+        my $cmd = Genome::Model::Tools::BedTools::Intersect->create(
             input_file_b        => $output_cluster_bed,
             input_file_a_format => 'bed',
             input_file_a        => $sub_output,
