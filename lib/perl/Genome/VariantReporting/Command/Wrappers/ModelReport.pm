@@ -25,12 +25,14 @@ sub execute {
     if ($self->is_single_bam($model)) {
         # Germline
         $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
+            common_translations => $self->get_germline_translations,
             discovery => $model->last_succeeded_build,
             label => 'germline',
         );
     } else {
         #Somatic
         $model_pair = Genome::VariantReporting::Command::Wrappers::ModelPair->create(
+            common_translations => $self->get_somatic_translations,
             discovery => $model->last_succeeded_build,
             plan_file_basename => 'somatic_TYPE_report.yaml',
             label => 'somatic',
@@ -43,10 +45,71 @@ sub execute {
             plan_file => $model_pair->plan_file($variant_type),
             translations_file => $model_pair->translations_file,
         );
-        Genome::VariantReporting::Command::CreateReport->execute(%params);
+        my $cmd = Genome::VariantReporting::Command::CreateReport->create(%params);
+
+        my $process = $cmd->execute();
+        $process->add_note(
+            header_text => 'creation metadata',
+            body_text => sprintf('%s report created by "genome variant-reporting wrappers model-report --model=%s"',
+                $variant_type, $self->model->id),
+        );
     }
     return 1;
 };
+
+sub get_germline_translations {
+    my $self = shift;
+
+    return {
+        sample_name_labels => {
+            $self->get_sample_name_labels('tumor'),
+        },
+        library_name_labels => {
+            $self->get_library_name_labels('tumor'),
+        },
+    };
+}
+
+sub get_somatic_translations {
+    my $self = shift;
+
+    return {
+        sample_name_labels => {
+            $self->get_sample_name_labels('tumor'),
+            $self->get_sample_name_labels('normal'),
+        },
+        library_name_labels => {
+            $self->get_library_name_labels('tumor'),
+            $self->get_library_name_labels('normal'),
+        },
+    };
+}
+
+sub get_sample_name_labels {
+    my ($self, $category) = @_;
+
+    my $accessor = sprintf('%s_sample', $category);
+    return (
+        $self->model->$accessor->name  => sprintf('%s(%s)', ucfirst($category), $self->model->$accessor->name),
+    );
+}
+
+sub get_library_name_labels {
+    my ($self, $category) = @_;
+
+    my %labels;
+    my $counter = 1;
+
+    my $accessor = sprintf('%s_sample', $category);
+    for my $library ($self->model->$accessor->libraries) {
+        $labels{$library->name} = sprintf('%s-Library%d(%s)',
+            ucfirst($category),
+            $counter++,
+            $library->name,
+        );
+    }
+    return %labels;
+}
 
 sub is_valid {
     my $self = shift;
