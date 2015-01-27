@@ -25,14 +25,14 @@ sub execute {
     if ($self->is_single_bam($model)) {
         # Germline
         $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
-            common_translations => $self->get_common_translations('germline'),
+            common_translations => $self->get_germline_translations,
             discovery => $model->last_succeeded_build,
             label => 'germline',
         );
     } else {
         #Somatic
         $model_pair = Genome::VariantReporting::Command::Wrappers::ModelPair->create(
-            common_translations => $self->get_common_translations('somatic'),
+            common_translations => $self->get_somatic_translations,
             discovery => $model->last_succeeded_build,
             plan_file_basename => 'somatic_TYPE_report.yaml',
             label => 'somatic',
@@ -57,31 +57,32 @@ sub execute {
     return 1;
 };
 
-sub get_common_translations {
-    my ($self, $model_type) = @_;
+sub get_germline_translations {
+    my $self = shift;
 
-    if ($model_type eq 'germline') {
-        return {
-            sample_name_labels => {
-                $self->get_sample_name_labels('tumor'),
-            },
-            library_name_labels => {
-                $self->get_library_name_labels('tumor'),
-            },
-        };
-    }
-    elsif ($model_type eq 'somatic') {
-        return {
-            sample_name_labels => {
-                $self->get_sample_name_labels('tumor'),
-                $self->get_sample_name_labels('normal'),
-            },
-            library_name_labels => {
-                $self->get_library_name_labels('tumor'),
-                $self->get_library_name_labels('normal'),
-            },
-        };
-    }
+    return {
+        sample_name_labels => {
+            $self->get_sample_name_labels('tumor'),
+        },
+        library_name_labels => {
+            $self->get_library_name_labels('tumor'),
+        },
+    };
+}
+
+sub get_somatic_translations {
+    my $self = shift;
+
+    return {
+        sample_name_labels => {
+            $self->get_sample_name_labels('tumor'),
+            $self->get_sample_name_labels('normal'),
+        },
+        library_name_labels => {
+            $self->get_library_name_labels('tumor'),
+            $self->get_library_name_labels('normal'),
+        },
+    };
 }
 
 sub get_sample_name_labels {
