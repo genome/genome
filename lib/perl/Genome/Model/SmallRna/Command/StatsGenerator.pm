@@ -1,7 +1,7 @@
 package Genome::Model::SmallRna::Command::StatsGenerator;
 #based on input from ClusterCoverage(JW) instead of ClusterGenerator(JH)#
 #also merged sub-clustering
-#Additional parameter added to take in minimum % map score for subclustering 
+#Additional parameter added to take in minimum % map score for subclustering
 # FUNCTIONALITY FOR NORMALIZATION USING FLAGSTAT FILES
 	#a) added new parameter for taking in flagstat from 17-70 bp bam
 	#b) Other flagstat for the respective size-fraction will be intuitively determined
@@ -28,13 +28,13 @@ class Genome::Model::SmallRna::Command::StatsGenerator {
 			is  => 'Text',
 			doc => 'Input stats file from ClusterCoverage',
 		},
-  
+
 		bam_file => {
 			is  => 'Text',
 			doc => 'Input BAM file of alignments',
 			is_output=>1
 		},
-		
+
 		flagstat_17_70_file => {
 			is  => 'Text',
 			doc => 'Input flagstat file of the normalization bin',
@@ -51,7 +51,7 @@ class Genome::Model::SmallRna::Command::StatsGenerator {
 			is_output=> 1,
 			doc =>'Output BED file containing coordinates of clusters in BED format (sorted by depth) ',
 
-		},   
+		},
 	   output_subclusters_file => {
 			is        => 'Text',
 			is_output => 1,
@@ -64,7 +64,7 @@ class Genome::Model::SmallRna::Command::StatsGenerator {
 			doc       =>'Output TSV file of Subclusters that mapped with existing clusters',
 
 		},
-		
+
 		subcluster_min_mapzero => {
 			is        => 'Text',
 			is_output => 1,
@@ -73,9 +73,9 @@ class Genome::Model::SmallRna::Command::StatsGenerator {
 
 		},
 	],
-	
-	
-	
+
+
+
 	has_optional_param => [
         lsf_queue => {
             default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW},
@@ -136,7 +136,7 @@ sub execute {
         return 1;
     }
 
-    my $check = `wc -l $coverage`; 
+    my $check = `wc -l $coverage`;
     my ($line_ct) = split /\s/, $check;
 
     unless ($line_ct and $line_ct > 1) {
@@ -425,7 +425,7 @@ sub execute {
 
     return 1;
 }
- 
+
 1;
 
 __END__
