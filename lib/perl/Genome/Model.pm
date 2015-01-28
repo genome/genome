@@ -179,10 +179,16 @@ class Genome::Model {
             is_many => 1,
         },
         analysis_projects => {
+            via => '__self__',
+            to => 'analysis_project',
+            is_deprecated => 1,
+            doc => 'use analysis_project instead',
+        },
+        analysis_project => {
             is => 'Genome::Config::AnalysisProject',
             via => 'analysis_project_bridges',
             to => 'analysis_project',
-            is_many => 1,
+            is_many => 0,
         },
         config_profile_items => {
             is => 'Genome::Config::Profile::Item',
