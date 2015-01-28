@@ -25,18 +25,19 @@ class Genome::Model::Tools::Analysis::DumpIgvXmlBasic {
         reference_name => {
             type => 'String',
             is_optional => 0,
-            doc => 'the name of the reference (in IGV) that the bams are aligned to. E.g. "b37" for build 37 or "reference"for our internal build36',
+            doc => 'The name of the reference (in IGV) that the bams are aligned to.',
+            example_values => ['b37', 'reference']
         },
     ]
 };
 
 sub help_brief {
-    "Makes an IGV session for review. Supports as many tracks as you want. Panels and track layout are not explicitly specified."
+    "This helps create IGV session files for manual reviewers."
 }
 
 sub help_detail {
     <<'HELP';
-This helps create IGV session files for manual reviewers
+Makes an IGV session for review. Supports as many tracks as you want. Panels and track layout are not explicitly specified.
 HELP
 }
 
