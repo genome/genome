@@ -63,7 +63,7 @@ sub exists_for_references {
     my $destination_reference = shift;
 
     my @ref = $class->_faster_get(source_reference_build => $source_reference, destination_reference_build => $destination_reference);
-    return @ref;
+    return (scalar(@ref) > 0);
 }
 
 sub convert_bed {
