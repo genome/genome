@@ -11,7 +11,7 @@ use URI;
 use XML::Writer;
 
 class Genome::Model::Tools::Analysis::DumpIgvXmlBasic {
-    is => 'Command',
+    is => 'Command::V2',
     has => [
         resource_files => {
             type => 'HASH',
