@@ -1,10 +1,10 @@
 package Genome::Model::SmallRna::Command::StatsGenerator;
 #based on input from ClusterCoverage(JW) instead of ClusterGenerator(JH)#
 #also merged sub-clustering
-#Additional parameter added to take in minimum % map score for subclustering 
+#Additional parameter added to take in minimum % map score for subclustering
 # FUNCTIONALITY FOR NORMALIZATION USING FLAGSTAT FILES
-	#a) added new parameter for taking in flagstat from 17-70 bp bam
-	#b) Other flagstat for the respective size-fraction will be intuitively determined
+    #a) added new parameter for taking in flagstat from 17-70 bp bam
+    #b) Other flagstat for the respective size-fraction will be intuitively determined
 # 2012-01-06 Tracking strandedness, changing headers
 # 2012-01-13 Make Normalization log transformed
 # 2012-01-13 Also added LSF params from the current version of StatsGen
@@ -21,62 +21,56 @@ use Genome;
 my $DEFAULT_CUTOFF = '2';
 
 class Genome::Model::SmallRna::Command::StatsGenerator {
-	is        => ['Genome::Model::SmallRna::Command::Base'],
-	has_input => [
-		coverage_stats_file => {
-			is_output=> 1,
-			is  => 'Text',
-			doc => 'Input stats file from ClusterCoverage',
-		},
-  
-		bam_file => {
-			is  => 'Text',
-			doc => 'Input BAM file of alignments',
-			is_output=>1
-		},
-		
-		flagstat_17_70_file => {
-			is  => 'Text',
-			doc => 'Input flagstat file of the normalization bin',
-			is_output=>1
-		},
-		output_stats_file => {
-			is => 'Text',
-			is_output=> 1,
-			doc =>'Output STATS file containing statistics for the clusters ',
+    is        => ['Genome::Model::SmallRna::Command::Base'],
+    has_input => [
+        coverage_stats_file => {
+            is_output=> 1,
+            is  => 'Text',
+            doc => 'Input stats file from ClusterCoverage',
+        },
+        bam_file => {
+            is  => 'Text',
+            doc => 'Input BAM file of alignments',
+            is_output=>1
+        },
+        flagstat_17_70_file => {
+            is  => 'Text',
+            doc => 'Input flagstat file of the normalization bin',
+            is_output=>1
+        },
+        output_stats_file => {
+            is => 'Text',
+            is_output=> 1,
+            doc =>'Output STATS file containing statistics for the clusters ',
 
-		},
-		output_clusters_file => {
-			is => 'Text',
-			is_output=> 1,
-			doc =>'Output BED file containing coordinates of clusters in BED format (sorted by depth) ',
+        },
+        output_clusters_file => {
+            is => 'Text',
+            is_output=> 1,
+            doc =>'Output BED file containing coordinates of clusters in BED format (sorted by depth) ',
 
-		},   
-	   output_subclusters_file => {
-			is        => 'Text',
-			is_output => 1,
-			doc 	  =>'Output BED file of Subclusters for each cluster in the input BED file',
+        },
+        output_subclusters_file => {
+            is        => 'Text',
+            is_output => 1,
+            doc       =>'Output BED file of Subclusters for each cluster in the input BED file',
 
-		},
-		output_subcluster_intersect_file => {
-			is        => 'Text',
-			is_output => 1,
-			doc       =>'Output TSV file of Subclusters that mapped with existing clusters',
+        },
+        output_subcluster_intersect_file => {
+            is        => 'Text',
+            is_output => 1,
+            doc       =>'Output TSV file of Subclusters that mapped with existing clusters',
 
-		},
-		
-		subcluster_min_mapzero => {
-			is        => 'Text',
-			is_output => 1,
-			doc       =>'Minimum %MapZero Alignments to call subclusters',
-			default_value => $DEFAULT_CUTOFF,
+        },
+        subcluster_min_mapzero => {
+            is        => 'Text',
+            is_output => 1,
+            doc       =>'Minimum %MapZero Alignments to call subclusters',
+            default_value => $DEFAULT_CUTOFF,
 
-		},
-	],
-	
-	
-	
-	has_optional_param => [
+        },
+    ],
+    has_optional_param => [
         lsf_queue => {
             default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW},
         },
@@ -119,14 +113,14 @@ sub resolve_bam_file { return shift->bam_file }
 sub resolve_input_flagstat_file { return shift->flagstat_17_70_file }
 
 sub execute {
-    my $self     = 	shift;
-    my $bamfile  = 	$self->resolve_bam_file;
-    my $coverage = 	$self->coverage_stats_file;
-    my $output 	 	=  $self->output_stats_file;
-    my $cutoff 		= $self->subcluster_min_mapzero;
-    my $sub_output  = $self->output_subclusters_file;
+    my $self           = shift;
+    my $bamfile        = $self->resolve_bam_file;
+    my $coverage       = $self->coverage_stats_file;
+    my $output         = $self->output_stats_file;
+    my $cutoff         = $self->subcluster_min_mapzero;
+    my $sub_output     = $self->output_subclusters_file;
     my $flagstat_input = $self->resolve_input_flagstat_file;
-    my $flagstat_file= $bamfile.'.flagstat';
+    my $flagstat_file  = $bamfile.'.flagstat';
 
     ### check input coverage_stats_file, sometimes cluster_coverage outputs empty files due to failed parameter cutoff
     my $message = "The input coverage_stats_file: $coverage is not valid";
@@ -136,7 +130,7 @@ sub execute {
         return 1;
     }
 
-    my $check = `wc -l $coverage`; 
+    my $check = `wc -l $coverage`;
     my ($line_ct) = split /\s/, $check;
 
     unless ($line_ct and $line_ct > 1) {
@@ -242,11 +236,11 @@ sub execute {
                         $CountZeroMapQ++;
                         my $query_stop = 0;
                     }
-                    my @base_quals 	= $alignment->qscore;
+                    my @base_quals = $alignment->qscore;
                     $cluster_stats{base_quality}->add_data(@base_quals);
 
                     my $mm_position = $alignment->aux_get("MD");
-                    my $strand 		= $alignment -> strand;
+                    my $strand      = $alignment -> strand;
                     if ($strand eq '1') {
                         $positive_strand++;
                     }
@@ -284,10 +278,10 @@ sub execute {
             my $min_mismatch     = $cluster_stats{mismatches}->min();
             my $max_mismatch     = $cluster_stats{mismatches}->max();
 
-            my $normalization_input 	= ($zenith_depth/$flagstat_mapped_input) * 1000000;
-            my $normalization_bin 		= ($zenith_depth/$flagstat_mapped) * 1000000;
+            my $normalization_input     = ($zenith_depth/$flagstat_mapped_input) * 1000000;
+            my $normalization_bin       = ($zenith_depth/$flagstat_mapped) * 1000000;
             my $log_normalization_input = log_base(2,$normalization_input);
-            my $log_normalization_bin 	= log_base(2,$normalization_bin );
+            my $log_normalization_bin   = log_base(2,$normalization_bin );
 
             #print $name."\t"."Positive=".$positive_strand."\t"."Negative=".$negative_strand."\n";
             print $output_fh
@@ -411,7 +405,7 @@ sub execute {
     } #### CLOSING COVERAGE FILE
 
     if ( -s $sub_output ) {
-        my $cmd = Genome::Model::Tools::BedTools::Intersect->execute(
+        my $cmd = Genome::Model::Tools::BedTools::Intersect->create(
             input_file_b        => $output_cluster_bed,
             input_file_a_format => 'bed',
             input_file_a        => $sub_output,
@@ -425,7 +419,7 @@ sub execute {
 
     return 1;
 }
- 
+
 1;
 
 __END__
