@@ -405,8 +405,6 @@ sub vcf_result_params {
 
         aligned_reads_sample => $aligned_reads_sample,
         ($control_aligned_reads_sample? (control_aligned_reads_sample => $control_aligned_reads_sample) : ()),
-
-        #users => $users, #Needed if get() inside get_vcf_result becomes get_with_lock()
     );
 }
 
