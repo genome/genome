@@ -102,9 +102,8 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
             is => 'Text',
             doc => 'newly created build ID of reference sequence model',
         },
-        analysis_projects => {
+        analysis_project => {
             is => 'Genome::Config::AnalysisProject',
-            is_many => 1,
             doc => 'Analysis Project to which to associate the new model (if any)',
         },
     ],
@@ -311,8 +310,8 @@ sub _get_or_create_model {
             'name' => $self->model_name,
             'is_rederivable' => $self->is_rederivable,
         );
-        if($self->analysis_projects) {
-            $model->add_analysis_project_bridge(analysis_project => $self->analysis_projects);
+        if($self->analysis_project) {
+            $model->add_analysis_project_bridge(analysis_project => $self->analysis_project);
         }
 
         if($model) {
