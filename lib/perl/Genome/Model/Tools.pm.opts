@@ -21581,6 +21581,17 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>bsmap',
   [
+    '>meth-calc-conversion-rate',
+    [
+      'debug!',
+      undef,
+      'snvs-file=s',
+      'files',
+      'output-file=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>meth-ratio',
     [
       'bam-file=s',
