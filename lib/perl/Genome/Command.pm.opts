@@ -4488,6 +4488,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>bsmap-meth-calc-conversion-rate',
+      [
+        'build=s',
+        undef,
+        'output-file=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>capture-qc',
       [
         'qc-directory=s',
@@ -7523,6 +7532,8 @@ $Genome::Command::OPTS_SPEC = [
       [
         'build=s',
         undef,
+        'lsf-resource=s',
+        'files',
         'mode=s',
         [
           'tumor',
@@ -32604,6 +32615,17 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>bsmap',
     [
+      '>meth-calc-conversion-rate',
+      [
+        'debug!',
+        undef,
+        'snvs-file=s',
+        'files',
+        'output-file=s',
+        'files',
+        'help!',
+        undef
+      ],
       '>meth-ratio',
       [
         'bam-file=s',
