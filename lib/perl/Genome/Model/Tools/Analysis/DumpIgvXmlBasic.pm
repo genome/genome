@@ -93,5 +93,8 @@ sub resolve_file_path {
     return $path;
 }
 
+sub _is_hidden_in_docs {
+    return 1;
+}
 
 1;
