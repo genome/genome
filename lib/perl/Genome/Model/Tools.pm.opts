@@ -21504,6 +21504,8 @@ $Genome::Model::Tools::OPTS_SPEC = [
           'files',
           'input-metrics=s',
           'files',
+          'length-dist!',
+          undef,
           'log-level=s',
           'files',
           'max-uncalled=s',
@@ -21579,6 +21581,17 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>bsmap',
   [
+    '>meth-calc-conversion-rate',
+    [
+      'debug!',
+      undef,
+      'snvs-file=s',
+      'files',
+      'output-file=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>meth-ratio',
     [
       'bam-file=s',
