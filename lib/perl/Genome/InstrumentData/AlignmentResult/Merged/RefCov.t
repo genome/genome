@@ -12,6 +12,7 @@ BEGIN {
 use Test::More;
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 
 if ($] < 5.010) {
     plan skip_all => "this test is only runnable on perl 5.10+"
@@ -27,6 +28,10 @@ my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResul
 
 my ($merged_result, $feature_list) = &setup_data();
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $merged_result->reference_build,
+);
+
 my %refcov_stats_params = (
     alignment_result_id => $merged_result->id,
     region_of_interest_set_id => $feature_list->id,
@@ -37,6 +42,7 @@ my %refcov_stats_params = (
     embed_bed =>1,
     use_short_roi_names => 0,
     roi_track_name => '',
+    users => $result_users,
 );
 
 my $refcov_result = Genome::InstrumentData::AlignmentResult::Merged::RefCov->get_or_create(%refcov_stats_params);

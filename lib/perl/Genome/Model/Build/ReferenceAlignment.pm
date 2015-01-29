@@ -270,6 +270,8 @@ sub alignment_results_for_instrument_data {
     my $processing_profile = $model->processing_profile;
     my $input = $model->input_for_instrument_data($instrument_data);
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($self);
+
     if ($processing_profile->can('results_for_instrument_data_input')) {
         my @results;
         # TODO There's gotta be a better way to get segment info
@@ -285,11 +287,11 @@ sub alignment_results_for_instrument_data {
                     $segment_info{instrument_data_segment_type} = $align_reads_event->instrument_data_segment_type;
                     $segment_info{instrument_data_segment_id} = $align_reads_event->instrument_data_segment_id;
                 };
-                push @results, $processing_profile->results_for_instrument_data_input($input, %segment_info);
+                push @results, $processing_profile->results_for_instrument_data_input($input, $result_users, %segment_info);
             }
             return @results;
         } else {
-            return $processing_profile->results_for_instrument_data_input($input);
+            return $processing_profile->results_for_instrument_data_input($input, $result_users);
         }
     }
 
@@ -718,6 +720,7 @@ sub _fetch_merged_alignment_result {
     my ($params) = $self->processing_profile->params_for_merged_alignment($self, @instrument_data_inputs);
     my $alignment = Genome::InstrumentData::AlignmentResult::Merged->$mode(
         %$params,
+        users => Genome::SoftwareResult::User->user_hash_for_build($self),
     );
 
     return $alignment;

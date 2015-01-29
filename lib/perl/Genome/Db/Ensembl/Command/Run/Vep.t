@@ -10,6 +10,7 @@ use warnings;
 
 use above "Genome";
 use Genome::Utility::Test qw(command_execute_ok compare_ok);
+use Genome::Test::Factory::SoftwareResult::User;
 use Test::More;
 
 my $pkg = "Genome::Db::Ensembl::Command::Run::Vep";
@@ -31,6 +32,8 @@ for my $file_type ('ensembl', 'vcf', 'vcf.gz') {
         $format = $file_type;
     }
 
+    my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash();
+
     my %params = (
         input_file => $input_file,
         format => $format,
@@ -43,6 +46,7 @@ for my $file_type ('ensembl', 'vcf', 'vcf.gz') {
         hgnc => 1,
         hgvs => 1,
         fasta => "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa",
+        analysis_build => $result_users->{requestor},
     );
 
     if ($file_type eq 'vcf' || $file_type eq 'vcf.gz') {

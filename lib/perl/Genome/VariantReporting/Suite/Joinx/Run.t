@@ -12,6 +12,7 @@ use above "Genome";
 use Sub::Install;
 use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Build;
+use Genome::Test::Factory::Process;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Sam::Readcount;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
@@ -45,12 +46,15 @@ sub generate_test_cmd {
         code => sub {my $self = shift; my $file = $self->output_file; `touch $file`; return 1;},
     });
 
+    my $process = Genome::Test::Factory::Process->setup_object();
+
     my %params = (
         input_vcf => __FILE__,
         vcf => __FILE__,
         variant_type     => 'snvs',
         info_string      => 'test',
         joinx_version          => '1.9',
+        process_id             => $process->id,
     );
 
     my $cmd = $cmd_class->create(%params);

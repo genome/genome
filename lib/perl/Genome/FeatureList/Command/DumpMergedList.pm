@@ -44,7 +44,13 @@ class Genome::FeatureList::Command::DumpMergedList {
             default_value => 'target_region',
             is_optional => 1,
         },
-    ]
+    ],
+    has_transient_optional => {
+        result_users => {
+            is => 'HASH',
+            doc => 'Mapping of labels to user objects to be added to converted BED result',
+        },
+    },
 };
 
 sub help_brief {
@@ -78,6 +84,7 @@ sub execute {
             short_name => $self->short_name,
             merge => $self->merge,
             track_name => $self->track_name,
+            result_users => $self->result_users,
         );
     } elsif ($self->merge) {
         $bed = $feature_list->merged_bed_file(

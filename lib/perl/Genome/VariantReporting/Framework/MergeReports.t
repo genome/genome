@@ -11,10 +11,13 @@ BEGIN {
 use above "Genome";
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
+use Genome::Test::Factory::Process;
 
 my $pkg = 'Genome::VariantReporting::Framework::MergeReports';
 use_ok($pkg) or die;
 my $data_dir = __FILE__.".d";
+
+my $process = Genome::Test::Factory::Process->setup_object();
 
 sub get_data {
     return File::Spec->join($data_dir, @_);
@@ -38,6 +41,8 @@ subtest "test with headers" => sub {
         report_results => [$result_a, $result_b],
         sort_columns => ['chr', 'pos'],
         contains_header => 1,
+        process_id => $process->id,
+        label => 'results',
     );
     isa_ok($cmd, $pkg);
 
@@ -54,6 +59,8 @@ subtest "merged test with headers" => sub {
         report_results => [$result_a, $result_b],
         sort_columns => ['chr', 'pos'],
         contains_header => 1,
+        process_id => $process->id,
+        label => 'results',
     );
     isa_ok($cmd, $pkg);
 
@@ -66,6 +73,8 @@ subtest "merged test with headers" => sub {
         report_results => [$cmd->output_result, $result_d],
         sort_columns => ['chr', 'pos'],
         contains_header => 1,
+        process_id => $process->id,
+        label => 'results',
     );
     isa_ok($second_cmd, $pkg);
 
@@ -86,6 +95,8 @@ subtest "test with headers with source" => sub {
             sprintf("%s|%s", $result_a->id, 'report_a'),
             sprintf("%s|%s", $result_b->id, 'report_b'),
         ],
+        process_id => $process->id,
+        label => 'results',
     );
     isa_ok($cmd, $pkg);
 
@@ -102,6 +113,8 @@ subtest "test with different orders of headers" => sub {
         sort_columns => ['chr', 'pos'],
         use_header_from => $result_a,
         contains_header => 1,
+        process_id => $process->id,
+        label => 'results',
     );
     isa_ok($cmd, $pkg);
 
@@ -118,6 +131,8 @@ subtest "test without headers" => sub {
         report_results => [$result_a, $result_b],
         sort_columns => ['1', '2'],
         contains_header => 0,
+        process_id => $process->id,
+        label => 'results',
     );
     isa_ok($cmd, $pkg);
 
@@ -138,6 +153,8 @@ subtest "test without headers with source" => sub {
             sprintf("%s|%s", $result_a->id, 'report_a'),
             sprintf("%s|%s", $result_b->id, 'report_b'),
         ],
+        process_id => $process->id,
+        label => 'results',
     );
     isa_ok($cmd, $pkg);
 
@@ -157,6 +174,8 @@ subtest "Source tags must be defined" => sub {
         entry_sources => [
             sprintf("%s|%s", $result_b->id, 'report_b'),
         ],
+        process_id => $process->id,
+        label => 'results',
     );
     ok(!$cmd->execute, "Execute returns false value");
     ok($cmd->error_message =~ qr/No entry source for report/,
@@ -172,7 +191,9 @@ subtest "columns to split only works with headers" => sub {
         report_results => [$result_a, $result_b],
         sort_columns => ['1', '2'],
         contains_header => 0,
-        split_indicators => ["split"]
+        split_indicators => ["split"],
+        process_id => $process->id,
+        label => 'results',
     );
     isa_ok($cmd, $pkg);
 
@@ -189,7 +210,9 @@ subtest "with split" => sub {
         report_results => [$result_c],
         sort_columns => ['chr', 'pos'],
         contains_header => 1,
-        split_indicators => ["split"]
+        split_indicators => ["split"],
+        process_id => $process->id,
+        label => 'results',
     );
     isa_ok($cmd, $pkg);
 
@@ -206,6 +229,8 @@ subtest "test one empty file" => sub {
         report_results => [$result_a, $result_b],
         sort_columns => ['1', '2'],
         contains_header => 0,
+        process_id => $process->id,
+        label => 'results',
     );
     isa_ok($cmd, $pkg);
 
@@ -222,6 +247,8 @@ subtest "test all empty files" => sub {
         report_results => [$result_a, $result_b],
         sort_columns => ['1', '2'],
         contains_header => 0,
+        process_id => $process->id,
+        label => 'results',
     );
     isa_ok($cmd, $pkg);
 

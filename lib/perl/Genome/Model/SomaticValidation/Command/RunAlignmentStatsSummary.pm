@@ -15,13 +15,14 @@ class Genome::Model::SomaticValidation::Command::RunAlignmentStatsSummary {
             shell_args_position => 1,
             doc => 'The Somatic Validation models or an expression to resolve the Somatic Validation models.',
         },
-        user => {
-            is => 'Genome::Process',
-            is_optional => 1,
-            id_by => 'process_id',
-        },
         process_id => {
             is => 'Text',
+        },
+    ],
+    has_transient_optional => [
+        requestor => {
+            is => 'Genome::Process',
+            id_by => 'process_id',
         },
     ],
     has_optional_input => [

@@ -9,6 +9,7 @@ use strict;
 use warnings;
 
 use above "Genome";
+use Genome::Test::Factory::SoftwareResult::User;
 use Test::More;
 
 use_ok('Genome::InstrumentData::MergedSxResult');
@@ -28,6 +29,7 @@ my %sx_result_params = (
     output_file_count => $output_file_count,
     output_file_type => $output_file_type,
     test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    users => Genome::Test::Factory::SoftwareResult::User->setup_user_hash,
 );
 
 my $sx_result = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);
@@ -44,6 +46,7 @@ ok(Genome::InstrumentData::MergedSxResult->create(
     output_file_type => $output_file_type,
     test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
     coverage => undef,
+    _user_data_for_nested_results => Genome::Test::Factory::SoftwareResult::User->setup_user_hash,
     ),
    'Created sx result with multiple instrument data'
 );
@@ -57,6 +60,7 @@ ok(Genome::InstrumentData::MergedSxResult->create(
     output_file_type => $output_file_type,
     test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
     coverage => 10,
+    _user_data_for_nested_results => Genome::Test::Factory::SoftwareResult::User->setup_user_hash,
     ),
    'Created merged sx result with coverage'
 );

@@ -447,6 +447,8 @@ sub _process_and_link_alignments_to_build {
     my @alignments;
     my @errors;
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+
     my %segment_info;
     if (defined $self->instrument_data_segment_id) {
         $segment_info{instrument_data_segment_id} = $self->instrument_data_segment_id;
@@ -454,13 +456,13 @@ sub _process_and_link_alignments_to_build {
     }
     
     if ($mode eq 'get_or_create') {
-        @alignments = $processing_profile->generate_results_for_instrument_data_input($instrument_data_input, %segment_info); 
+        @alignments = $processing_profile->generate_results_for_instrument_data_input($instrument_data_input, $result_users, %segment_info); 
         unless (@alignments) {
             $self->error_message("Error finding or generating alignments!:\n" .  join("\n",$instrument_data_input->error_message));
             push @errors, $self->error_message;
         }
     } elsif ($mode eq 'get') {
-        @alignments = $processing_profile->results_for_instrument_data_input_with_lock($instrument_data_input, %segment_info);
+        @alignments = $processing_profile->results_for_instrument_data_input_with_lock($instrument_data_input, $result_users, %segment_info);
         unless (@alignments) {
             return undef; 
         }
@@ -510,13 +512,15 @@ sub verify_successful_completion {
         return 0;
     }
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($self->build);
+
     my $instrument_data_input = $self->instrument_data_input;
     my %segment_info;
     if (defined $self->instrument_data_segment_id) {
         $segment_info{instrument_data_segment_id} = $self->instrument_data_segment_id;
         $segment_info{instrument_data_segment_type} = $self->instrument_data_segment_type;
     }
-    my @alignments = $self->model->processing_profile->results_for_instrument_data_input($instrument_data_input,%segment_info);
+    my @alignments = $self->model->processing_profile->results_for_instrument_data_input($instrument_data_input,$result_users,%segment_info);
     
     my @errors;
     for my $alignment (@alignments) {

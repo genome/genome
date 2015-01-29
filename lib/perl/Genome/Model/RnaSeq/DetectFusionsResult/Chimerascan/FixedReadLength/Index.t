@@ -8,6 +8,7 @@ BEGIN {
 };
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 use Test::More;
 
 my $class = "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Index";
@@ -26,6 +27,10 @@ my $reference_build = Genome::Model::Build::ImportedReferenceSequence->create(
     fasta_file => $data_dir . "/all_sequences.fa",
     data_directory => $data_dir,
     version => '37'
+);
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
 );
 
 my $annotation_model = Genome::Model::ImportedAnnotation->create(
@@ -59,6 +64,7 @@ my $result = $class->get_or_create(
     reference_build => $reference_build,
     annotation_build => $annotation_build,
     picard_version => 1.82,
+    users => $result_users,
 );
 
 isa_ok($result, $class);

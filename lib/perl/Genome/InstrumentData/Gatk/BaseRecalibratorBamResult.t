@@ -11,6 +11,7 @@ use warnings;
 
 use above 'Genome';
 
+use Genome::Test::Factory::SoftwareResult::User;
 require Genome::Utility::Test;
 use Test::More;
 
@@ -24,12 +25,16 @@ use_ok('Genome::InstrumentData::Gatk::Test') or die;
 my $gatk_test = Genome::InstrumentData::Gatk::Test->get;
 my $bam_source = $gatk_test->bam_source;
 my $reference_build = $gatk_test->reference_build;
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
 my $version = '2.4';
 my %params = (
     version => $version,
     bam_source => $bam_source,
     reference_build => $reference_build,
     known_sites => [ $gatk_test->known_site ],
+    users => $result_users,
 );
 
 # Get [fails as expected]
@@ -64,14 +69,13 @@ Genome::Utility::Test::compare_ok(
 # Users
 my @bam_source_users = $bam_source->users;
 ok(@bam_source_users, 'add users to bam source');
-is_deeply([map { $_->label } @bam_source_users], ['bam source', 'bam source'], 'bam source users haver correct label');
+is_deeply([map { $_->label } @bam_source_users], ['bam source', 'bam source'], 'bam source users have correct label');
 my @users = sort { $a->id cmp $b->id } map { $_->user } @bam_source_users;
 my @expected_users = sort { $a->id cmp $b->id } ($base_recalibrator_result, $base_recalibrator_bam_result);
 is_deeply(\@users, \@expected_users, 'bam source is used by base recal and base recal bam results');
 
-my $sr_user = $base_recalibrator_result->users;
-ok($sr_user, 'add user to base recalibrator result');
-is($sr_user->label, 'recalibration table', 'sr user has correct label');
+my $sr_user = $base_recalibrator_result->users(label => 'recalibration table');
+ok($sr_user, 'add user to base recalibrator result with correct label');
 my $user = $sr_user->user;
 is($user, $base_recalibrator_bam_result, 'base recalibrator is used by base recalibrator bam result');
 

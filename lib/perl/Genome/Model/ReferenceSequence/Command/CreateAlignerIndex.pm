@@ -24,6 +24,9 @@ class Genome::Model::ReferenceSequence::Command::CreateAlignerIndex {
            is => 'Text',
            is_optional => 1,
        },
+       result_users => {
+            is => 'HASH',
+       },
     ],
     has => [
        reference_sequence_build => {
@@ -83,6 +86,7 @@ sub _process {
         aligner_params  => $self->aligner_params,
         aligner_version => $self->aligner_version,
         reference_build => $self->reference_sequence_build,
+        users           => $self->result_users,
     );
 
     $self->debug_message(sprintf("Finding or generating reference build index for aligner %s version %s params %s refbuild %s ",

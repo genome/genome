@@ -214,6 +214,7 @@ class Genome::Db::Ensembl::Command::Run::Base {
             doc => 'Pick one best transcript',
         },
     ],
+    has_optional => __PACKAGE__->result_user_inputs(),
     has_transient_optional => [
         _workspace => {
             is => 'Text',
@@ -225,6 +226,23 @@ class Genome::Db::Ensembl::Command::Run::Base {
         },
     ],
 };
+
+sub result_user_inputs {
+    return {
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => "The analysis project for the present query",
+        },
+        analysis_build => {
+            is => 'Genome::Model::Build',
+            doc => 'The build running this analysis or from which the variants came for the present query',
+        },
+        analysis_process => {
+            is => 'Genome::Process',
+            doc => 'The process (if any) running this analysis',
+        },
+    };
+}
 
 sub help_brief {
     'Tool to run Ensembl VEP (Variant Effect Predictor)';
@@ -291,8 +309,11 @@ sub run_command {
 
 sub api {
     my $self = shift;
-    return Genome::Db::Ensembl::Api->get_or_create(version => $self->ensembl_version,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME});
+    return Genome::Db::Ensembl::Api->get_or_create(
+        version => $self->ensembl_version,
+        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
+        users => $self->_result_users,
+    );
 }
 
 sub command {
@@ -496,7 +517,7 @@ sub _resolve_vep_script_path {
     my $self = shift;
     my $version = shift;
 
-    my $api = Genome::Db::Ensembl::Api->get_or_create(version => $version);
+    my $api = Genome::Db::Ensembl::Api->get_or_create(version => $version, users => $self->_result_users);
     if (defined $api) {
         my $script_path = $api->vep_script("variant_effect_predictor.pl");
         if (-s $script_path) {
@@ -649,6 +670,7 @@ sub cache {
         if (defined $self->gtf_file) {
             $cache_result_params{gtf_file_path} = $self->gtf_file;
             $cache_result_params{vep_version} = $self->version;
+            $cache_result_params{users} = $self->_result_users;
             $cache_result = Genome::Db::Ensembl::GtfCache->get_or_create(%cache_result_params);
         }
         else {
@@ -662,11 +684,24 @@ sub cache {
         else {
             $cache_result_params{sift} = 0;
         }
+        $cache_result_params{users} = $self->_result_users;
         eval {$cache_result = Genome::Db::Ensembl::VepCache->get_or_create(%cache_result_params);
         };
     }
 
     return $cache_result;
+}
+
+sub _result_users {
+    my $self = shift;
+
+    my $analysis_build_anp = $self->analysis_build?
+        $self->analysis_build->model->analysis_projects : undef;
+
+    return {
+        requestor => ($self->analysis_build // $self->analysis_process),
+        sponsor => ($self->analysis_project // $analysis_build_anp // Genome::Sys->current_user),
+    };
 }
 
 1;

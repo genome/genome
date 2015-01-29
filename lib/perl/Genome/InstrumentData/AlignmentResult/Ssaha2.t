@@ -6,6 +6,7 @@ use Test::More;
 use Sys::Hostname;
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 
 BEGIN {
     if (`uname -a` =~ /x86_64/) {
@@ -69,6 +70,10 @@ ok($reference_model, "got reference model");
 my $reference_build = $reference_model->build_by_version('1');
 ok($reference_build, "got reference build");
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
+
 my $temp_reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(reference_build=>$reference_build, aligner_version=>$aligner_version, aligner_name=>$aligner_name, aligner_params=>$aligner_params);
 
 
@@ -96,6 +101,7 @@ sub test_alignment {
                                                        aligner_name => $aligner_name,
                                                        reference_build => $reference_build, 
                                                        aligner_params => $aligner_params,
+                                                       _user_data_for_nested_results => $result_users,
                                                        %p,
                                                    );
 
@@ -168,6 +174,7 @@ sub test_shortcutting {
                                                               samtools_version => $samtools_version,
                                                               picard_version => $picard_version,
                                                               reference_build => $reference_build, 
+                                                              _user_data_for_nested_results => $result_users,
                                                           );
     ok(!$bad_alignment, "this should have returned undef, for attempting to create an alignment that is already created!");
     ok($alignment_result_class_name->error_message =~ m/already have one/, "the exception is what we expect to see");
@@ -185,6 +192,7 @@ sub test_shortcutting {
                                                               samtools_version => $samtools_version,
                                                               picard_version => $picard_version,
                                                               reference_build => $reference_build, 
+                                                              users => $result_users,
                                                               );
     ok($alignment, "got an alignment object");
 

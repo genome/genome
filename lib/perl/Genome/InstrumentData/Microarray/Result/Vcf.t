@@ -16,6 +16,7 @@ use Genome::Test::Factory::Library;
 use Genome::Test::Factory::InstrumentData::Imported;
 use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Build;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $package = 'Genome::InstrumentData::Microarray::Result::Vcf';
 
@@ -28,6 +29,7 @@ my $result = Genome::InstrumentData::Microarray::Result::Vcf->get_or_create(
                                 sample => $sample,
                                 known_sites_build => $dbsnp_build,
                                 filters => ["chromosome:exclude=X,Y,MT"],
+                                users => Genome::Test::Factory::SoftwareResult::User->setup_user_hash(),
                             );
 ok($result->isa("Genome::InstrumentData::Microarray::Result::Vcf"), "Vcf result was created");
 ok(-s $result->vcf_path, "Vcf in result has size");

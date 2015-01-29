@@ -12,6 +12,7 @@ BEGIN {
 use above "Genome";
 use File::Temp;
 use Test::More;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -51,7 +52,9 @@ my %test_params = (
     reference_fasta => $reference_fasta,
 );
 
-my $cmd = $cmd_class->create(%test_params);
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash();
+
+my $cmd = $cmd_class->create(%test_params, result_users => $result_users);
 
 my $output_file = $test_output_base."/strong_relationships.tsv";
 my $expected_file = $expected_directory."strong_relationships.tsv";
@@ -60,7 +63,7 @@ ok($cmd, "created SequencingQc object");
 ok($cmd->execute(), "executed SequencingQc");
 
 delete $test_params{'output_dir'};
-my $software_result = $sr_class->get_with_lock(%test_params);
+my $software_result = $sr_class->get_with_lock(%test_params, users => $result_users);
 ok($software_result, "Found software result via get_with_lock");
 ok($cmd->software_result, "Got software result from the command");
 is($software_result, $cmd->software_result, 'Software results match as expected');
@@ -70,7 +73,7 @@ my @missorted_bams = ($bams[1], $bams[0], $bams[2]);
 $test_params{bams} = \@missorted_bams;
 my @missorted_snp_files = ($snp_files[2], $snp_files[0], $snp_files[1]);
 $test_params{snp_files} = \@missorted_snp_files;
-my $software_result2 = $sr_class->get_with_lock(%test_params);
+my $software_result2 = $sr_class->get_with_lock(%test_params, users => $result_users);
 ok($software_result2, "Found software result via get_with_lock, despite mis-ordered params");
 is($software_result2, $cmd->software_result, 'Software results match as expected');
 
@@ -79,7 +82,7 @@ pop(@missorted_bams);
 pop(@missorted_snp_files);
 $test_params{bams} = \@missorted_bams;
 $test_params{snp_files} = \@missorted_snp_files;
-my $software_result3 = $sr_class->get_with_lock(%test_params);
+my $software_result3 = $sr_class->get_with_lock(%test_params, users => $result_users);
 ok(!$software_result3, "Failed to find software result, as expected");
 
 ok(-s $output_file, "output of SequencingQc exists");

@@ -12,7 +12,7 @@ use Memoize qw();
 my $_JSON_CODEC = new JSON->allow_nonref;
 
 class Genome::VariantReporting::Suite::Vep::RunResult {
-    is => 'Genome::VariantReporting::Framework::Component::Expert::Result',
+    is => ['Genome::VariantReporting::Framework::Component::Expert::Result', 'Genome::SoftwareResult::WithNestedResults'],
     has_input => [
         ensembl_version => {
             is => 'String',
@@ -130,8 +130,28 @@ sub _annotate {
         input_file => $self->split_vcf,
         output_file => $self->vep_output_file,
         $self->vep_params,
+        $self->_user_params,
     )->result;
     unlink $self->split_vcf;
+}
+
+sub _user_params {
+    my $self = shift;
+
+    my @params;
+    my $user_hash = $self->_user_data_for_nested_results;
+
+    if($user_hash->{requestor}->isa('Genome::Process')) {
+        push @params, analysis_process => $user_hash->{requestor};
+    }
+    if($user_hash->{requestor}->isa('Genome::Model::Build')) {
+        push @params, analysis_build => $user_hash->{requestor};
+    }
+    if($user_hash->{sponsor}->isa('Genome::Config::AnalysisProject')) {
+        push @params, analysis_project => $user_hash->{sponsor};
+    }
+
+    return @params;
 }
 
 sub _get_file_path_for_feature_list {

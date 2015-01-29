@@ -57,11 +57,20 @@ sub __errors__ {
     return @errors;
 }
 
+sub exists_for_references {
+    my $class = shift;
+    my $source_reference = shift;
+    my $destination_reference = shift;
+
+    my @ref = $class->_faster_get(source_reference_build => $source_reference, destination_reference_build => $destination_reference);
+    return (scalar(@ref) > 0);
+}
+
 sub convert_bed {
     my $class = shift;
     my ($source_bed, $source_reference, $destination_bed, $destination_reference) = @_;
 
-    my $self = $class->get_with_lock(source_reference_build => $source_reference, destination_reference_build => $destination_reference);
+    my $self = $class->_faster_get(source_reference_build => $source_reference, destination_reference_build => $destination_reference);
     unless($self) {
         $class->error_message('Could not find converter from ' . $source_reference->__display_name__ . ' to ' . $destination_reference->__display_name__  . '. (See `genome model reference-sequence converter list` for available conversions.)');
         return;

@@ -10,6 +10,7 @@ BEGIN{
 
 use above "Genome";
 use Test::More;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -29,6 +30,10 @@ my $bam_input = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 
 my $refbuild_id = 101947881;
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build_id => $refbuild_id,
+);
+
 my $version = 'r613';
 
 my $detector_parameters = '';
@@ -40,6 +45,7 @@ my %command_params = (
     params => $detector_parameters,
     output_directory => $test_working_dir . '/test',
     aligned_reads_sample => 'TEST',
+    result_users => $result_users,
 );
 
 my $command = Genome::Model::Tools::DetectVariants2::Samtools->create(%command_params);
@@ -55,6 +61,7 @@ my %filter_params = (
     version => 'v1',
     output_directory => $test_working_dir . '/test/filter1',
     aligned_reads_sample => 'TEST',
+    result_users => $result_users,
 );
 
 my $filter_command = Genome::Model::Tools::DetectVariants2::Filter::SnpFilter->create(%filter_params);

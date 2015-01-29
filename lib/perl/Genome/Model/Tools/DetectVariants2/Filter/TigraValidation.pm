@@ -409,6 +409,7 @@ sub _filter_variants {
             output_directory   => $self->_temp_staging_directory,
             specify_chr        => \@use_chr_list,
             _run_by_workflow   => 1,
+            result_users       => $self->result_users,
         );
 
         $options{skip_libraries} = $skip_libs if $skip_libs;

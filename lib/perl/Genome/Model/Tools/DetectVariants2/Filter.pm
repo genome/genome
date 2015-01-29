@@ -753,6 +753,7 @@ sub params_for_filter_result {
         region_of_interest_id => $previous_result->region_of_interest_id,
         test_name => $previous_result->test_name,
         chromosome_list => $previous_result->chromosome_list,
+        users => $self->result_users,
     );
 
     return \%params;
@@ -761,7 +762,7 @@ sub params_for_filter_result {
 sub params_for_vcf_result {
     my $self = shift;
 
-    my $prev_vcf_result = $self->previous_result->get_vcf_result($self->aligned_reads_sample, $self->control_aligned_reads_sample);
+    my $prev_vcf_result = $self->previous_result->get_vcf_result($self->aligned_reads_sample, $self->control_aligned_reads_sample, $self->result_users);
     my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
     unless($prev_vcf_result){
         die $self->error_message("Could not locate a vcf result to use as a previous vcf-result!");
@@ -781,6 +782,7 @@ sub params_for_vcf_result {
         filter_description => $self->filter_description,
         vcf_version => $vcf_version,
         previous_filter_strategy => $self->_previous_filter_strategy,
+        users => $self->result_users,
 
     );
     $params{control_aligned_reads_sample} = $self->control_aligned_reads_sample if defined $self->control_aligned_reads_sample;
@@ -808,6 +810,7 @@ sub detector_directory {
             region_of_interest_id => $previous_result->region_of_interest_id,
             test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
             chromosome_list => $previous_result->chromosome_list,
+            users => $self->result_users,
         );
 
         unless($detector_result) {

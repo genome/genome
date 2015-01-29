@@ -45,17 +45,11 @@ class Genome::Model::Tools::CopyCat::Somatic{
             default => 1,
             doc =>'do normalization on a per-read-length basis',
         },
-        reference_build_id => {
+        annotation_data_id => {
             is => 'String',
             is_optional => 0,
             is_input => 1,
-            doc => 'Reference build of annotation set to use',
-        },
-        annotation_version => {
-            is => 'String',
-            is_optional => 0,
-            is_input => 1,
-            doc =>'annotation version to use. (i.e. "1") Run "gmt copy-cat list" to see available versions (and be aware that the list command takes like 3 minutes to complete).'
+            doc => 'Run "gmt copy-cat list" to see available versions (and be aware that the list command takes like 3 minutes to complete',
         },
         tumor_samtools_file => {
             is => 'String',
@@ -111,7 +105,7 @@ class Genome::Model::Tools::CopyCat::Somatic{
             is_optional => 1,
             default => 1,
             doc => "the estimated fraction of the tumor sample composed of tumor cells (as opposed to normal admixture)",
-        }
+        },
     ],
     has_param => [
         lsf_resource => {
@@ -136,8 +130,6 @@ sub execute {
     my $output_directory = $self->output_directory;
     my $per_lib = $self->per_library;
     my $per_read_length = $self->per_read_length;
-    my $annotation_version = $self->annotation_version;
-    my $reference_build_id = $self->reference_build_id;
     my $tumor_samtools_file = $self->tumor_samtools_file;
     my $normal_samtools_file = $self->normal_samtools_file;
     my $processors = $self->processors;
@@ -148,9 +140,9 @@ sub execute {
 
 
     #get annotation directory
-    my $annotation_sr = Genome::Model::Tools::CopyCat::AnnotationData->get_with_lock(reference_sequence => $reference_build_id, version => $annotation_version);
-    unless ($annotation_sr){
-        $self->error_message("Couldn't find an annotation data set for reference_build: $reference_build_id version: $annotation_version");
+    my $annotation_sr = Genome::Model::Tools::CopyCat::AnnotationData->get($self->annotation_data_id);
+    unless ($annotation_sr) {
+        die $self->error_message("Couldn't find an annotation data set for ID %s", $self->annotation_data_id);
     }
     my $annotation_directory = $annotation_sr->annotation_data_path;
 

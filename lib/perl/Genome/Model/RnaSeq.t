@@ -38,6 +38,8 @@ my $expected_inputs = {
     'digital_expression_app_version' => '0.5.4p1',
     'digital_expression_result_version' => '1',
     'digital_expression_blacklist_alignments_flags' => '0x0104',
+    'digital_expression_sponsor' => Genome::SoftwareResult::User->user_hash_for_build($rnaseq_build)->{sponsor},
+    'digital_expression_requestor' => $rnaseq_build,
     'digital_expression_user' => $rnaseq_build,
     'digital_expression_label' => 'digital_expression_result',
     'digital_expression_output_dir' => File::Spec->join($rnaseq_build->data_directory, 'results', 'digital_expression_result'),
@@ -48,7 +50,7 @@ my $workflow = $rnaseq_model->_resolve_workflow_for_build($rnaseq_build);
 ok($workflow, "Got a workflow");
 
 # Test expected workflow xml
-my $test_dir = Genome::Utility::Test->data_dir('Genome::Model::RnaSeq', '2015-01-05');
+my $test_dir = Genome::Utility::Test->data_dir('Genome::Model::RnaSeq', '2015-01-22');
 my $xml_file = Genome::Sys->create_temp_file_path;
 my $expected_xml_file = "$test_dir/workflow.xml";
 $workflow->save_to_xml(OutputFile => $xml_file);

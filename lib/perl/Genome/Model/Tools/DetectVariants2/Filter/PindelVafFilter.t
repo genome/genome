@@ -11,6 +11,7 @@ BEGIN {
 use above "Genome";
 use Test::More;
 use File::Compare;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -20,6 +21,10 @@ use_ok( 'Genome::Model::Tools::DetectVariants2::Filter::PindelVafFilter');
 
 my $refbuild_id = 101947881;
 my $input_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Filter-PindelVafFilter";
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build_id => $refbuild_id,
+);
 
 # Updated to v2 to allow for new columns
 my $expected_dir       = $input_directory . "/expected_1/";
@@ -40,22 +45,23 @@ my $detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
 $detector_result->lookup_hash($detector_result->calculate_lookup_hash());
 
 my $param_str;
-run_test('default_params', $param_str);
+run_test('default_params', $param_str, $result_users);
 
 $param_str = '--variant-freq-cutoff 0.08';
-run_test('non_default_params', $param_str);
+run_test('non_default_params', $param_str, $result_users);
 
 done_testing();
 
 
 sub run_test {
-    my ($type, $params) = @_;
+    my ($type, $params, $result_users) = @_;
     my $output_dir = $test_output_dir."/$type";
     my $expect_dir = $expected_dir."/$type";
 
     my %params = (
         previous_result_id  => $detector_result->id,
         output_directory    => $output_dir,
+        result_users        => $result_users,
     );
 
     $params{params} = $params if $params;

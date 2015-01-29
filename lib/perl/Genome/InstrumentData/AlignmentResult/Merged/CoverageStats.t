@@ -12,6 +12,7 @@ BEGIN {
 use Test::More;
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 
 if ($] < 5.010) {
     plan skip_all => "this test is only runnable on perl 5.10+"
@@ -27,6 +28,10 @@ my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResul
 
 my ($merged_result, $feature_list) = &setup_data();
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $merged_result->reference_build,
+);
+
 my %coverage_stats_params = (
     alignment_result_id => $merged_result->id,
     region_of_interest_set_id => $feature_list->id,
@@ -37,6 +42,8 @@ my %coverage_stats_params = (
     minimum_mapping_quality => 1,
     use_short_roi_names => 1,
     merge_contiguous_regions => 1,
+
+    users => $result_users,
 );
 
 my $coverage_result = Genome::InstrumentData::AlignmentResult::Merged::CoverageStats->get_or_create(%coverage_stats_params);

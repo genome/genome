@@ -14,6 +14,7 @@ use File::Compare;
 use Test::More;
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -34,6 +35,10 @@ my $normal = $test_data.'/true_positive_normal_validation.bam';
 my $tmpbase = File::Temp::tempdir('GatkSomaticIndelXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $tmpdir = "$tmpbase/output";
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
+
 my $gatk_somatic_indel = Genome::Model::Tools::DetectVariants2::GatkSomaticIndel->create(
         aligned_reads_input=>$tumor, 
         control_aligned_reads_input=>$normal,
@@ -43,6 +48,7 @@ my $gatk_somatic_indel = Genome::Model::Tools::DetectVariants2::GatkSomaticIndel
         version => 5336,
         aligned_reads_sample => 'TEST_tumor',
         control_aligned_reads_sample => 'TEST_normal',
+        result_users => $result_users,
 );
 
 ok($gatk_somatic_indel, 'gatk_somatic_indel command created');

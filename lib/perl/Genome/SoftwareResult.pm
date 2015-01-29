@@ -110,10 +110,28 @@ sub _faster_get {
             my $lookup_hash = $class->calculate_lookup_hash_from_arguments(@args);
             # NOTE we do this so that get can be noisy when called directly.
             @objects = $class->SUPER::get(lookup_hash => $lookup_hash);
+            if (@objects > 1) {
+                die $class->error_message(
+                    'Multiple results found for lookup hash %s!',
+                    $lookup_hash
+                );
+            }
+
+            if (@objects) {
+                my $calculated_lookup_hash = $objects[0]->calculate_lookup_hash();
+                my $lookup_hash_property = $objects[0]->lookup_hash;
+                if ($calculated_lookup_hash ne $lookup_hash_property) {
+                    die $class->error_message(
+                        "SoftwareResult lookup_hash (%s) does not match it's calculated lookup_hash (%s).  Cannot trust that the correct SoftwareResult was retrieved.",
+                        $lookup_hash_property,
+                        $calculated_lookup_hash
+                    );
+                }
+            }
         }
     );
 
-    return @objects;
+    return $objects[0];
 }
 
 # Override get to be noisy.  This should generally not be called.
@@ -150,111 +168,104 @@ sub _is_id_only_query {
 sub get_with_lock {
     my $class = shift;
 
-    my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
+    return Genome::SoftwareResult::User->with_registered_users(
+        $class->_preprocess_params_for_callback(@_),
+        callback => sub {
+            my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
 
-    my %is_input = %{$params_processed->{inputs}};
-    my %is_param = %{$params_processed->{params}};
+            my %is_input = %{$params_processed->{inputs}};
+            my %is_param = %{$params_processed->{params}};
 
-    # Only try with lock if object does not exist since locking causes
-    # a performance hit. It is assumed that if an object is found it is
-    # complete. If this is a bad assumption then we need to add a
-    # status to SoftwareResults.
-    my $lock;
-    my @objects = $class->_faster_get(@_);
-    unless (@objects) {
-        my $subclass = $params_processed->{subclass};
+            # Only try with lock if object does not exist since locking causes
+            # a performance hit. It is assumed that if an object is found it is
+            # complete. If this is a bad assumption then we need to add a
+            # status to SoftwareResults.
+            my $lock;
+            my $result = $class->_faster_get(@_);
+            unless ($result) {
+                my $subclass = $params_processed->{subclass};
+                my $lookup_hash = $subclass->calculate_lookup_hash_from_arguments(@_);
 
-        my $lookup_hash = $subclass->calculate_lookup_hash_from_arguments(@_);
-        unless ($lock = $subclass->_lock($lookup_hash)) {
-            die "Failed to get a lock for " . Dumper(@_);
+                unless ($lock = $subclass->_lock($lookup_hash)) {
+                    die "Failed to get a lock for " . Dumper(@_);
+                }
+
+                UR::Context->current->reload($subclass, lookup_hash => $lookup_hash);
+
+                eval {
+                    $result = $subclass->_faster_get(@_);
+                };
+                my $error = $@;
+
+                if ($error) {
+                    $subclass->_release_lock_or_die($lock, "Failed to unlock during get_with_lock.");
+                    die $subclass->error_message('Failed in get! %s', $error);
+                }
+            }
+
+
+            if ($result && $lock) {
+                $result->_lock_name($lock);
+
+                $result->debug_message("Cleaning up lock $lock...");
+                unless ($result->_unlock) {
+                    $result->error_message("Failed to unlock after getting software result");
+                    die "Failed to unlock after getting software result";
+                }
+                $result->debug_message("Cleanup completed for lock $lock.");
+            } elsif ($lock) {
+                $class->_release_lock_or_die($lock, "Failed to unlock after not finding software result.");
+            }
+
+            $result->_auto_unarchive if $result;
+            return ($result, 0);
         }
+    );
 
-        UR::Context->current->reload($class,
-            lookup_hash => $class->calculate_lookup_hash_from_arguments(@_));
-
-        eval {
-            @objects = $class->_faster_get(@_);
-        };
-        my $error = $@;
-
-        if ($error) {
-            $class->error_message('Failed in get! ' . $error);
-            $class->_release_lock_or_die($lock, "Failed to unlock during get_with_lock.");
-            die $class->error_message;
-        }
-    }
-
-    if (@objects > 1) {
-        $class->error_message("Multiple results returned for SoftwareResult ${class}::get_with_lock.  To avoid this, call get_with_lock with enough parameters to uniquely identify a SoftwareResult.");
-        $class->error_message("Parameters used for the get: " . Data::Dumper::Dumper %is_input . Data::Dumper::Dumper %is_param);
-        $class->error_message("Objects gotten: " . Data::Dumper::Dumper @objects);
-        $class->_release_lock_or_die($lock, "Failed to unlock during get_with_lock with multiple results.") if $lock;
-        die $class->error_message;
-    }
-
-    my $result = $objects[0];
-
-    if ($result) {
-        my $calculated_lookup_hash = $result->calculate_lookup_hash();
-        my $lookup_hash = $result->lookup_hash;
-        if ($calculated_lookup_hash ne $lookup_hash) {
-            my $m = sprintf(q{SoftwareResult lookup_hash (%s) does not match it's calculated lookup_hash (%s).  Cannot trust that the correct SoftwareResult was retrieved.}, $lookup_hash, $calculated_lookup_hash);
-            # Really we would just call get(%$params) but that might undermine the whole lookup_hash optimization.
-            die $class->error_message($m);
-        }
-    }
-
-    if ($result && $lock) {
-        $result->_lock_name($lock);
-
-        $result->debug_message("Cleaning up lock $lock...");
-        unless ($result->_unlock) {
-            $result->error_message("Failed to unlock after getting software result");
-            die "Failed to unlock after getting software result";
-        }
-        $result->debug_message("Cleanup completed for lock $lock.");
-    } elsif ($lock) {
-        $class->_release_lock_or_die($lock, "Failed to unlock after not finding software result.");
-    }
-
-    $result->_auto_unarchive if $result;
-    return $result;
 }
 
 sub get_or_create {
     my $class = shift;
 
+    return Genome::SoftwareResult::User->with_registered_users(
+        $class->_preprocess_params_for_callback(@_),
+        callback => sub {
+            my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
 
-    my $params_processed = $class->_gather_params_for_get_or_create($class->_preprocess_params_for_get_or_create(@_));
+            my %is_input = %{$params_processed->{inputs}};
+            my %is_param = %{$params_processed->{params}};
 
-    my %is_input = %{$params_processed->{inputs}};
-    my %is_param = %{$params_processed->{params}};
+            my $result = $class->_faster_get(@_);
+            my $newly_created = 0;
 
-    my @objects = $class->_faster_get(@_);
-
-    unless (@objects) {
-        @objects = $class->create(@_);
-        unless (@objects) {
-            # see if the reason we failed was b/c the objects were created while we were locking...
-            @objects = $class->_faster_get(@_);
-            unless (@objects) {
-                $class->error_message("Could not create a $class for params " . Data::Dumper::Dumper(\@_) . " even after trying!");
-                confess $class->error_message();
+            unless ($result) {
+                $result = $class->create(@_);
+                if ($result) {
+                    $newly_created = 1;
+                } else {
+                    # see if the reason we failed was b/c the objects were created while we were locking...
+                    $result = $class->_faster_get(@_);
+                }
             }
-        }
-    }
 
-    if (@objects > 1) {
-        if(wantarray) {
-            map $_->_auto_unarchive, @objects;
-            return @objects;
-        }
-        my @ids = map { $_->id } @objects;
-        die "Multiple matches for $class but get or create was called in scalar context!  Found ids: @ids";
-    } else {
-        $objects[0]->_auto_unarchive if $objects[0];
-        return $objects[0];
-    }
+            unless ($result) {
+                die $class->error_message(
+                    'Could not create a %s for params %s even after trying!',
+                    $class,
+                    Data::Dumper::Dumper(\@_),
+                );
+            }
+
+            $result->_auto_unarchive();
+            return ($result, $newly_created);
+        });
+}
+
+#hook for subclasses
+sub _preprocess_params_for_callback {
+    my $class = shift;
+
+    return @_;
 }
 
 sub create {
@@ -270,9 +281,9 @@ sub create {
     my %is_input = %{$params_processed->{inputs}};
     my %is_param = %{$params_processed->{params}};
 
-    my @previously_existing = $class->_faster_get(@_);
+    my $previously_existing = $class->_faster_get(@_);
 
-    if (@previously_existing > 0) {
+    if (defined($previously_existing)) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
         return;
     }
@@ -286,10 +297,10 @@ sub create {
     # we might have had to wait on the lock, in which case someone else was probably creating that entity
     # do a "reload" here to force another trip back to the database to see if a software result was created
     # while we were waiting on the lock.
-    (@previously_existing) = UR::Context->current->reload($class,
+    ($previously_existing) = UR::Context->current->reload($class,
         lookup_hash => $class->calculate_lookup_hash_from_arguments(@_));
 
-    if (@previously_existing > 0) {
+    if (defined($previously_existing)) {
         $class->error_message("Attempt to create an $class but it looks like we already have one with those params " . Dumper(\@_));
         $class->_release_lock_or_die($lock, "Failed to release lock in create before committing SoftwareResult.");
         return;

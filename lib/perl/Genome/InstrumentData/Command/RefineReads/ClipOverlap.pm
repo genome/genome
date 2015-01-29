@@ -12,6 +12,7 @@ class Genome::InstrumentData::Command::RefineReads::ClipOverlap {
     has => [
         version => { is => 'Text', },
         bam_source => { is => 'Genome::InstrumentData::AlignedBamResult', },
+        result_users => { is => 'HASH' },
     ],
     has_optional => [
         params => { is => 'Text', },
@@ -81,6 +82,7 @@ sub _params_for_result {
         version => $self->version,
         bam_source => $self->bam_source,
         reference_build => $self->bam_source->reference_build,
+        users => $self->result_users,
         # FIXME more needed here probably, params?
     );
 

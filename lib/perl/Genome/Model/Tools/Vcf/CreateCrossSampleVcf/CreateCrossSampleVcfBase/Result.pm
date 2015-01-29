@@ -1,4 +1,4 @@
-package Genome::Model::Tools::Vcf::CreateCrossSampleVcf::Result;
+package Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase::Result;
 
 use Genome;
 use strict;
@@ -23,25 +23,21 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase:
         allow_multiple_processing_profiles => { is => 'Boolean' },
         joinx_version => { is => 'Text' },
     ],
+    has_transient => [
+        command => {
+            is => 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfBase',
+            doc => 'The command for constructing this result',
+        },
+    ],
 };
 
 sub _generate_result {
-#define in subclasses
     my ($self, $staging_directory) = @_;
     my @builds = $self->builds;
-    # FIXME pass command in, as non-input and non-param but required.
-    my $cmd = Genome::Model::Tools::Vcf::CreateCrossSampleVcf->create(
-            forced_variations_build_id => $self->forced_variations_build_id,
-            builds => \@builds,
-            output_directory => $staging_directory,
-            max_files_per_merge => $self->max_files_per_merge,
-            variant_type => $self->variant_type,
-            roi_list => $self->roi_list,
-            wingspan => $self->wingspan,
-            allow_multiple_processing_profiles => $self->allow_multiple_processing_profiles,
-            joinx_version => $self->joinx_version,
-    );
-    my $return_value = $cmd->generate_result();
+
+    my $cmd = $self->command or die ('No command');
+
+    my $return_value = $cmd->generate_result($staging_directory);
     Carp::croak($self->error_message('Command failed')) unless $return_value;
 }
 

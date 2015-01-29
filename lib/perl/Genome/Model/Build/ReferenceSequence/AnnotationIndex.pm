@@ -6,7 +6,7 @@ use strict;
 
 
 class Genome::Model::Build::ReferenceSequence::AnnotationIndex {
-    is => ['Genome::SoftwareResult::Stageable'],
+    is => ['Genome::SoftwareResult::Stageable', 'Genome::SoftwareResult::WithNestedResults'],
 
     has => [
 

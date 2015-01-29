@@ -28,13 +28,18 @@ class Genome::VariantReporting::Command::Wrappers::CreateIgvSession {
             is => 'String',
             doc => 'name of the reference sequence build',
         },
-        user => {
-            is => 'Genome::Process',
-            is_optional => 1,
-            id_by => 'process_id',
-        },
         process_id => {
             is => 'Text',
+        },
+    ],
+    has_transient_optional => [
+        requestor => {
+            is => 'Genome::Process',
+            id_by => 'process_id',
+        },
+        user => {
+            is => 'Genome::Process',
+            id_by => 'process_id',
         },
     ],
 };

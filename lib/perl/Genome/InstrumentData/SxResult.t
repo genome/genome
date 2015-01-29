@@ -14,6 +14,7 @@ require File::Compare;
 use Test::More;
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 
 use_ok('Genome::InstrumentData::SxResult');
 use_ok('Genome::InstrumentData::InstrumentDataTestObjGenerator');
@@ -31,11 +32,12 @@ my %sx_result_params = (
     output_file_count => $output_file_count,
     output_file_type => $output_file_type,
     test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    users => Genome::Test::Factory::SoftwareResult::User->setup_user_hash,
 );
 
 my $sx_result = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);
 isa_ok($sx_result, 'Genome::InstrumentData::SxResult', 'successful run');
-my $get_sx_result = Genome::InstrumentData::SxResult->get(%sx_result_params);
+my $get_sx_result = Genome::InstrumentData::SxResult->get_with_lock(%sx_result_params);
 is_deeply($get_sx_result, $sx_result, 'Re-got sx result');
 
 my @read_processor_output_files = $sx_result->read_processor_output_files;
@@ -94,11 +96,12 @@ my %sx_result_params_with_config = (
         'basename='.$instrument_data->id.'.1.fastq:type=sanger:name=fwd', 'basename='.$instrument_data->id.'.2.fastq:type=sanger:name=rev',
     ],
     test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    users => Genome::Test::Factory::SoftwareResult::User->setup_user_hash,
 );
 
 my $sx_result_with_config = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params_with_config);
 isa_ok($sx_result_with_config, 'Genome::InstrumentData::SxResult', 'successful run w/ config');
-my $get_sx_result_with_config = Genome::InstrumentData::SxResult->get(%sx_result_params_with_config);
+my $get_sx_result_with_config = Genome::InstrumentData::SxResult->get_with_lock(%sx_result_params_with_config);
 is_deeply($get_sx_result_with_config, $sx_result_with_config, 'Re-got sx result w/ config');
 isnt($get_sx_result_with_config->output_dir, $sx_result->output_dir, 'Output dirs do not match b/c we reran SX');
 my @output_files = $sx_result->read_processor_output_files;
@@ -116,7 +119,7 @@ for ( my $i = 0; $i < @read_processor_output_files; $i++ ) {
 $sx_result_params{read_processor} = 'filter by-min-length --length 2000';
 my $sx_result_all_reads_filtered = Genome::InstrumentData::SxResult->get_or_create(%sx_result_params);
 isa_ok($sx_result_all_reads_filtered, 'Genome::InstrumentData::SxResult', 'get_or_create sx result w/ all reads filtered');
-my $get_sx_result_all_reads_filtered = Genome::InstrumentData::SxResult->get(%sx_result_params);
+my $get_sx_result_all_reads_filtered = Genome::InstrumentData::SxResult->get_with_lock(%sx_result_params);
 is_deeply($get_sx_result_all_reads_filtered, $sx_result_all_reads_filtered, 'Re-get sx result w/ result w/ all reads filtered');
 @output_files = $sx_result_all_reads_filtered->read_processor_output_files;
 ok(@output_files, 'produced read processor output files w/ config');

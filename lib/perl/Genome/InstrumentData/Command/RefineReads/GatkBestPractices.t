@@ -11,6 +11,7 @@ use warnings;
 
 use above 'Genome';
 
+use Genome::Test::Factory::SoftwareResult::User;
 require Genome::Utility::Test;
 use Test::More;
 
@@ -22,10 +23,14 @@ use_ok('Genome::InstrumentData::Gatk::Test') or die;
 my $gatk_test = Genome::InstrumentData::Gatk::Test->get;
 my $bam_source = $gatk_test->bam_source;
 my $reference_build = $gatk_test->reference_build;
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
 my %params = (
     version => 2.4,
     bam_source => $bam_source,
     known_sites => [$gatk_test->known_site],
+    result_users => $result_users,
 );
 
 # Shortcut [fails as expected]
@@ -50,19 +55,21 @@ is_deeply([map { $_->label } @sr_users], ['bam source'], 'bam source users haver
 is_deeply([map { $_->user } @sr_users], [$indel_realigner_result], 'bam source is used by indel realigner result');
 
 @sr_users = $indel_realigner_result->users;
-is(@sr_users, 2, 'add users to indel realigner');
-is_deeply([map { $_->label } @sr_users], ['bam source', 'bam source'], 'indel realigner users haver correct label');
-my @users = sort { $a->id cmp $b->id } map { $_->user } @sr_users;
+is(@sr_users, 4, 'add users to indel realigner');
+my @bam_source_users = grep { $_->label eq 'bam source' } @sr_users;
+is(@bam_source_users, 2, 'indel realigner users have correct label');
+my @users = sort { $a->id cmp $b->id } map { $_->user } @bam_source_users;
 my @expected_users = sort { $a->id cmp $b->id } ($base_recalibrator_result, $base_recalibrator_bam_result);
 is_deeply(\@users, \@expected_users, 'indel realigner is used by base recal and base recal bam results');
 
 @sr_users = $base_recalibrator_result->users;
-is(@sr_users, 1, 'add user to base recal result');
-is_deeply([map { $_->label } @sr_users], ['recalibration table'], 'base recal result users haver correct label');
-is_deeply([map { $_->user } @sr_users], [$base_recalibrator_bam_result], 'base recal is used by base recal bam result');
+is(@sr_users, 3, 'add user to base recal result');
+my @recal_users = grep { $_->label eq 'recalibration table' } @sr_users;
+is(@recal_users, 1, 'base recal result user has correct label');
+is_deeply([map { $_->user } @recal_users], [$base_recalibrator_bam_result], 'base recal is used by base recal bam result');
 
 @sr_users = $base_recalibrator_bam_result->users;
-ok(!@sr_users, 'no users for base recal bam result');
+is(@sr_users, 2, 'only the standard SR users for base recal bam result');
 
 # Shortcut, again
 my $gatk_best_practices_shortcut = Genome::InstrumentData::Command::RefineReads::GatkBestPractices->create(%params);
