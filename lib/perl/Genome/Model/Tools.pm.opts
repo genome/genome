@@ -4604,6 +4604,17 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>dump-igv-xml-basic',
+    [
+      'resource-files=s',
+      undef,
+      'output-file=s',
+      'files',
+      'reference-name=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>dump-igv-xml-multi',
     [
       'bams=s',
