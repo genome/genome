@@ -6,8 +6,6 @@ use Genome;
 use List::MoreUtils qw(any);
 use Params::Validate qw(:types);
 
-Params::Validate::validation_options(allow_extra => 1);
-
 class Genome::SoftwareResult::User {
     table_name => 'result.user',
     id_by => [
@@ -45,8 +43,9 @@ class Genome::SoftwareResult::User {
 
 sub with_registered_users {
     my $class = shift;
-    my %params = Params::Validate::validate(
-        @_, {
+    my %params = Params::Validate::validate_with(
+        params => \@_,
+        spec   => {
             users => {
                 type      => HASHREF,
                 optional  => 0,
@@ -58,7 +57,8 @@ sub with_registered_users {
                 type     => CODEREF,
                 optional => 0,
             }
-        }
+        },
+        allow_extra => 1,
     );
 
     my $user_hash = delete $params{users};
