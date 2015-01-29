@@ -19,6 +19,13 @@ class Genome::Config::AnalysisProject::Command::CopyConfig {
             shell_args_position => 2
         },
     ],
+    has_optional_input => [
+        tags => {
+            is                  => 'Boolean',
+            doc                 => 'copy tags (if any) that are attached to the configs',
+            default_value       => 0,
+        },
+    ],
 };
 
 sub help_brief {
@@ -55,18 +62,30 @@ sub _copy_config_profile_items_to_project {
     my @config_profile_items = @_;
 
     for my $original_config_item (@config_profile_items) {
+        my $new_item;
         if ($original_config_item->analysis_menu_item) {
-            Genome::Config::Profile::Item->create(
+            $new_item = Genome::Config::Profile::Item->create(
                 analysis_project => $analysis_project,
                 analysis_menu_item => $original_config_item->analysis_menu_item,
                 status => $original_config_item->status,
             );
         } else {
-            Genome::Config::Profile::Item->create_from_file_path(
+            $new_item = Genome::Config::Profile::Item->create_from_file_path(
                 analysis_project => $analysis_project,
                 file_path => $original_config_item->file_path,
                 status => $original_config_item->status,
             );
+        }
+
+        if($self->tags) {
+            my @tags_to_copy = $original_config_item->tags;
+            for my $tag (@tags_to_copy) {
+                my $cmd = Genome::Config::AnalysisProject::Command::TagConfigFile->create(
+                    tag => $tag,
+                    profile_items => [$new_item],
+                );
+                $cmd->execute or die 'Failed to assign tag to new copied configuration.';
+            }
         }
     }
 

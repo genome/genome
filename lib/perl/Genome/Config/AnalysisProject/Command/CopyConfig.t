@@ -38,11 +38,14 @@ Genome::Config::Profile::Item->create(
     analysis_project => $source_project,
 );
 
-Genome::Config::Profile::Item->create_from_file_path(
+my $item = Genome::Config::Profile::Item->create_from_file_path(
     file_path => $existing_config_file,
     analysis_project => $source_project,
 );
-
+Genome::Config::Tag::Profile::Item->create(
+    profile_item => $item,
+    tag => Genome::Config::Tag->create(name => 'test tag for CopyConfig.t'),
+);
 
 my $target_project = Genome::Config::AnalysisProject->create(
     name => 'Test Target Project'
@@ -51,6 +54,7 @@ my $target_project = Genome::Config::AnalysisProject->create(
 my $cmd = $class->create(
     to_project => $target_project,
     from_project => $source_project,
+    tags => 1,
 );
 
 ok($cmd->execute(), 'command executed successfully');
@@ -61,5 +65,6 @@ is((grep { $_->is_concrete } @newly_created_profile_items), 1,
     'one of the items should be concrete');
 is((grep { $_->analysis_menu_item } @newly_created_profile_items), 1,
     'one of the items should be an analysis menu item');
-
+is((grep { $_->tags } @newly_created_profile_items), 1,
+    'the one tag was copied');
 done_testing();
