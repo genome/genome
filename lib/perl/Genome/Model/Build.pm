@@ -21,7 +21,14 @@ use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
 
 class Genome::Model::Build {
-    is => [ "Genome::Notable", "Genome::Searchable", "Genome::Utility::ObjectWithAllocations", "Genome::Utility::ObjectWithCreatedBy", "Genome::Utility::ObjectWithTimestamps" ],
+    is => [
+        "Genome::Notable",
+        "Genome::Searchable",
+        "Genome::Utility::ObjectWithAllocations",
+        "Genome::Utility::ObjectWithCreatedBy",
+        "Genome::Utility::ObjectWithTimestamps",
+        "Genome::SoftwareResult::Requestor",
+    ],
     table_name => 'model.build',
     is_abstract => 1,
     attributes_have => [

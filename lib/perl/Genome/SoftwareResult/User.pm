@@ -78,7 +78,7 @@ sub _validate_user_hash {
     for my $type (qw( sponsor requestor )) {
         my $obj = $user_hash->{$type};
         return 0 unless($obj);
-        return 0 unless(any { UNIVERSAL::isa($obj, $_) } _valid_types($type));
+        return 0 unless(UNIVERSAL::isa($obj, _role_for_type($type)));
     }
 
     return 1;
@@ -106,13 +106,12 @@ sub _register_users {
     }
 }
 
-
-use constant VALID_TYPES => {
-    requestor => ['Genome::Process', 'Genome::Model::Build'],
-    sponsor   => ['Genome::Sys::User', 'Genome::Config::AnalysisProject'],
-};
-
-sub _valid_types { return @{VALID_TYPES->{shift()}} }
+sub _role_for_type {
+    return sprintf(
+        'Genome::SoftwareResult::%s',
+        ucfirst(shift)
+    );
+}
 
 sub user_hash_for_build {
     my $class = shift;
