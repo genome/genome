@@ -21,6 +21,10 @@ use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', File::Spec->catfile('cghub', 'v2')) or die;
 my $source_bam = File::Spec->catfile($data_dir, '387c3f70-46e9-4669-80e3-694d450f2919.bam');
 
+# AnP
+my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
+ok($analysis_project, 'create analysis project');
+
 # Create library
 use_ok('Genome::Sample::Command::Import') or die;
 my $sample_importer = Genome::Sample::Command::Import::Tcga->execute(
@@ -31,6 +35,7 @@ ok($library, 'created library') or die;
 
 # Local Bam
 my $cmd = Genome::InstrumentData::Command::Import::Basic->execute(
+    analysis_project => $analysis_project,
     library => $library,
     import_source_name  => 'CGHub',
     source_files => [$source_bam],
