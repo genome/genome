@@ -13,6 +13,7 @@ use File::Temp;
 use Test::More;
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -31,13 +32,18 @@ my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants-Soma
 my $test_base_dir = File::Temp::tempdir('SomaticSniperXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $test_working_dir = "$test_base_dir/output";
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
+
 my $sniper = Genome::Model::Tools::DetectVariants2::Sniper->create(aligned_reads_input=>$tumor, 
                                                                    control_aligned_reads_input=>$normal,
                                                                    reference_build_id => $refbuild_id,
                                                                    output_directory => $test_working_dir,
                                                                    version => '0.7.2',
                                                                    params => '-q 1 -Q 15',
-                                                                   aligned_reads_sample => 'TEST',);
+                                                                   aligned_reads_sample => 'TEST',
+                                                                   result_users => $result_users,);
 ok($sniper, 'sniper command created');
 $sniper->dump_status_messages(1);
 my $rv = $sniper->execute;
@@ -57,7 +63,8 @@ my $sniper_v1 = Genome::Model::Tools::DetectVariants2::Sniper->create(aligned_re
                                                                       output_directory => $v1_test_working_dir,
                                                                       version => '1.0.2',
                                                                       params => '-F vcf -q 1 -Q 15',
-                                                                      aligned_reads_sample => 'TEST',);
+                                                                      aligned_reads_sample => 'TEST',
+                                                                      result_users => $result_users,);
 ok($sniper_v1, 'sniper 1.0.2 command created');
 $sniper_v1->dump_status_messages(1);
 my $rv1= $sniper_v1->execute;

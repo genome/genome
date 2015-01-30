@@ -159,12 +159,17 @@ sub params_for_result {
     if ($pp->transcriptome_coverage_mask_reference_transcripts) {
         $mask_reference_transcripts = $pp->transcriptome_coverage_mask_reference_transcripts;
     }
+
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{transcriptome_coverage} = $build;
+
     return (
         alignment_result_id => $alignment_result->id,
         annotation_file_basenames => $annotation_file_basenames,
         merge_annotation_features => $merge_annotation_features,
         mask_reference_transcripts => $mask_reference_transcripts,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        users => $result_users,
     );
 }
 
@@ -173,9 +178,7 @@ sub link_result_to_build {
     my $result = shift;
 
     my $build = $self->build;
-    my $label = join('_', 'transcriptome_coverage');
     Genome::Sys->create_symlink($result->output_dir, $build->coverage_directory);
-    $result->add_user(label => $label, user => $build);
 
     $self->transcriptome_coverage_result($result);
 

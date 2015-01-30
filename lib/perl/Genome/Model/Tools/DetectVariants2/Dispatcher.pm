@@ -240,6 +240,7 @@ sub _detect_variants {
     $input->{alignment_results} = \@alignment_results;
     $input->{control_alignment_results} = \@control_alignment_results;
     $input->{pedigree_file_path} = $self->pedigree_file_path;
+    $input->{result_users} = $self->result_users;
 
     $self->_dump_workflow($workflow);
     $self->_dump_dv_cmd;
@@ -469,6 +470,7 @@ sub generate_workflow {
             'control_aligned_reads_sample',
             'output_directory',
             'pedigree_file_path',
+            'result_users',
         ],
         output_properties => [
             @output_properties
@@ -673,12 +675,12 @@ sub create_combine_operation {
     $workflow_links->{$unique_combine_name."_output_directory"}->{right_operation} = $combine_operation;
     $workflow_links->{$unique_combine_name."_output_directory"}->{last_operation} = $unique_combine_name;
 
-    for my $sample_type ('aligned_reads_sample', 'control_aligned_reads_sample') {
+    for my $input_key ('aligned_reads_sample', 'control_aligned_reads_sample', 'result_users') {
         $workflow_model->add_link(
             left_operation => $workflow_model->get_input_connector,
-            left_property => $sample_type,
+            left_property => $input_key,
             right_operation => $combine_operation,
-            right_property => $sample_type,
+            right_property => $input_key,
         );
     }
 
@@ -794,6 +796,7 @@ sub add_detectors_and_filters {
                     'pedigree_file_path',
                     'aligned_reads_sample',
                     'control_aligned_reads_sample',
+                    'result_users',
                 );
 
                 # A superset of the above
@@ -1145,6 +1148,7 @@ sub _generate_standard_files {
                 result_ids => [keys %results],
                 variant_type => $variant_type,
                 test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+                users => $self->result_users,
             );
 
             unless($lq_result) {

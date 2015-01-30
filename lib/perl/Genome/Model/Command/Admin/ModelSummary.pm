@@ -60,16 +60,17 @@ sub execute {
     $self->print_message(join("\t", qw(-------- ------ ------------------- ------------------ ---------------- ---------- ------- ----------)));
 
     my %classes_to_unload;
-    my $tx; # UR::Context::Transaction->begin
     my $build_requested_count = 0;
     my %cleanup_rv;
     my $change_count = 0;
+
+    my $auto_batch_size_txn = UR::Context::Transaction->begin;
     my $commit = sub {
-        unless ($tx && $tx->isa('UR::Context::Transaction')) {
+        unless ($auto_batch_size_txn && $auto_batch_size_txn->isa('UR::Context::Transaction')) {
             die "Not in a transaction! Something went wrong.";
         }
 
-        if($tx->commit) {
+        if($auto_batch_size_txn->commit) {
             $self->debug_message('Committing...');
             unless (UR::Context->commit) {
                 die "Commit failed! Bailing out.";
@@ -82,14 +83,15 @@ sub execute {
             }
 
             $change_count = 0;
-            $tx = UR::Context::Transaction->begin;
+            $auto_batch_size_txn = UR::Context::Transaction->begin;
         } else {
-            $tx->rollback;
+            $auto_batch_size_txn->rollback;
         }
     };
 
-    $tx = UR::Context::Transaction->begin;
     for my $model (@models) {
+        my $per_model_txn = UR::Context::Transaction->begin();
+
         my $build_iterator = $model->build_iterator(
             'status not like' => 'Abandoned',
             '-order_by' => '-created_at',
@@ -115,7 +117,6 @@ sub execute {
 
         my $track_change = sub {
             $change_count++;
-#            $classes_to_unload{$model->class}++;
             $classes_to_unload{$latest_build->class}++ if $latest_build;
         };
 
@@ -174,6 +175,11 @@ sub execute {
         my $should_hide_none = $self->hide_no_action_needed && $action eq 'none';
         unless ($has_hidden_status || $should_hide_none) {
             $self->print_message(join "\t", $model_id, $action, $latest_build_status, $first_nondone_step, $latest_build_revision, $model_name, $pp_name, $fail_count);
+        }
+
+        # help avoid bad state in the larger auto_batch_size transaction
+        unless ($per_model_txn->commit) {
+            $per_model_txn->rollback;
         }
 
         if ($change_count > $self->auto_batch_size) {

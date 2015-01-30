@@ -14,6 +14,7 @@ use Sub::Install;
 
 use above "Genome";
 use Genome::Test::Factory::InstrumentData::Solexa;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $pkg = 'Genome::Model::Tools::Htseq::Count::Result';
 
@@ -47,6 +48,7 @@ my @params = (
     limit => 2000,
     minaqual => 1,
     mode => 'intersection-strict',
+    users => Genome::Test::Factory::SoftwareResult::User->setup_user_hash(),
 );
 
 my $result = $pkg->get_or_create(@params);

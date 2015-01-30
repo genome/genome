@@ -18,7 +18,7 @@ use strict;
 
 class Genome::InstrumentData::AlignmentResult {
     is_abstract => 1,
-    is => 'Genome::SoftwareResult::Stageable',
+    is => ['Genome::SoftwareResult::Stageable', 'Genome::SoftwareResult::WithNestedResults'],
     sub_classification_method_name => '_resolve_subclass_name',
     has => [
         instrument_data         => {
@@ -1663,11 +1663,13 @@ sub get_reference_sequence_index {
     my $self = shift;
     my $build = shift || $self->reference_build;
     my @overrides = @_;
+
     my $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(
         aligner_name => $self->aligner_name_for_aligner_index,
         aligner_version => $self->aligner_version,
         aligner_params => $self->aligner_params,
         reference_build => $build,
+        users => $self->_user_data_for_nested_results,
         @overrides
         );
 

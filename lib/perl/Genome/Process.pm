@@ -19,6 +19,7 @@ class Genome::Process {
     is => [
         "Genome::Notable",
         "Genome::Utility::ObjectWithCreatedBy",
+        "Genome::SoftwareResult::Requestor",
     ],
     is_abstract => 1,
     table_name => 'process.process',

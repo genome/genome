@@ -10,6 +10,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 
 use Test::More;
 
@@ -28,10 +29,15 @@ use_ok('Genome::InstrumentData::Gatk::Test') or die;
 my $gatk_test = Genome::InstrumentData::Gatk::Test->get;
 my $bam_source = $gatk_test->bam_source;
 my $reference_build = $gatk_test->reference_build;
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
+
 my %params = (
     version => 2.5,
     bam_source => $bam_source,
     reference_build => $reference_build,
+    users => $result_users,
 );
 
 # Create w/o known sites

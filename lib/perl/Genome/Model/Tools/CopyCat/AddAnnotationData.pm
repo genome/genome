@@ -40,7 +40,7 @@ sub execute {
     $self->status_message(
         "Successfully created CopyCat AnnotationData SoftwareResult");
 
-    return 1;
+    return $sr->id;
 }
 
 

@@ -42,6 +42,10 @@ class Genome::Model::Tools::DetectVariants2::Base {
             is_input => 1,
             is_output => 1,
         },        
+        result_users => {
+            is => 'HASH',
+            doc => 'mapping of labels to user objects. Will be added to any generated results',
+        },
     ],
     has_optional_input => [
         alignment_results => {

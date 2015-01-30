@@ -23,17 +23,22 @@ class Genome::VariantReporting::Framework::GenerateReport {
             is => 'Text',
             valid_values => ['snvs', 'indels'],
         },
-        user => {
-            is => 'Genome::Process',
-            is_optional => 1,
-            id_by => 'process_id',
-        },
         process_id => {
             is => 'Text',
         },
         report_name => {
             is => 'Text',
             doc => 'The name of the report to use',
+        },
+    ],
+    has_transient_optional => [
+        requestor => {
+            is => 'Genome::Process',
+            id_by => 'process_id',
+        },
+        user => {
+            is => 'Genome::Process',
+            id_by => 'process_id',
         },
     ],
     has_param => [

@@ -12,6 +12,7 @@ BEGIN {
 use above 'Genome';
 use Genome::SoftwareResult;
 use Genome::Utility::Test qw(compare_ok);
+use Genome::Test::Factory::SoftwareResult::User;
 
 use Test::More;
 use File::Compare;
@@ -42,6 +43,10 @@ my $test_out   = $test_working_dir . '/svs.hq';
 my $version = '0.1';
 note("use squaredancer version: $version");
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
+
 my $command = Genome::Model::Tools::DetectVariants2::Squaredancer->create(
     reference_build_id => $refbuild_id,
     aligned_reads_input => $tumor_bam,
@@ -49,7 +54,9 @@ my $command = Genome::Model::Tools::DetectVariants2::Squaredancer->create(
     version => $version,
     config_file => $bd_cfg,
     output_directory => $test_working_dir,
+    result_users => $result_users,
 );
+
 ok($command, 'Created `gmt detect-variants2 squaredancer` command');
 $command->dump_status_messages(1);
 ok($command->execute, 'Executed `gmt detect-variants2 squaredancer` command');

@@ -255,6 +255,7 @@ sub read_processor_params_for_instrument_data {
         output_file_count => $output_file_count,
         output_file_type => 'sanger',
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        users => Genome::SoftwareResult::User->user_hash_for_build($self),
     );
 }
 

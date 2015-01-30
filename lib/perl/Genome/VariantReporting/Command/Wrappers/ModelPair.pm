@@ -128,11 +128,11 @@ sub get_sample_and_bam_map {
     my $self = shift;
 
     my %bams = (
-        $self->discovery->tumor_sample->name  => $self->discovery->tumor_bam,
-        $self->discovery->normal_sample->name => $self->discovery->normal_bam,
+        sprintf('Discovery(%s)', $self->discovery->tumor_sample->name)  => $self->discovery->tumor_bam,
+        sprintf('Normal(%s)', $self->discovery->normal_sample->name) => $self->discovery->normal_bam,
     );
     if ($self->followup) {
-        $bams{$self->followup->tumor_sample->name} = $self->followup->tumor_bam,
+        $bams{sprintf('Followup(%s)', $self->followup->tumor_sample->name)} = $self->followup->tumor_bam,
     }
     return %bams;
 }

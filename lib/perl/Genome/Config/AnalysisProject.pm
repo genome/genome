@@ -6,7 +6,12 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject {
-    is => [ "Genome::Utility::ObjectWithTimestamps", "Genome::Utility::ObjectWithCreatedBy", "Genome::Searchable" ],
+    is => [
+        "Genome::Utility::ObjectWithTimestamps",
+        "Genome::Utility::ObjectWithCreatedBy",
+        "Genome::Searchable",
+        "Genome::SoftwareResult::Sponsor",
+    ],
     table_name => 'config.analysis_project',
     id_by => [
         id => { is => 'Text', len => 64 },

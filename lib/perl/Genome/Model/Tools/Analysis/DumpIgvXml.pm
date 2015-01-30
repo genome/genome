@@ -51,7 +51,8 @@ class Genome::Model::Tools::Analysis::DumpIgvXml {
         type => 'String',
         is_optional => 0,
         default => 'reference',
-        doc => 'the name of the reference (in IGV) that the bams are aligned to. E.g. b37 for build 37 or reference for our internal build36',
+        doc => 'The name of the reference (in IGV) that the bams are aligned to.',
+        example_values => ['b37', 'hg18', 'mm9'],
     },
     ]
 };

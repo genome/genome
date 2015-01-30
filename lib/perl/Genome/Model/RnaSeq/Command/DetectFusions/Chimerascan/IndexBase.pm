@@ -73,6 +73,7 @@ sub _fetch_result {
             reference_build => $self->build->reference_sequence_build,
             annotation_build => $self->build->annotation_build,
             picard_version => $self->build->processing_profile->picard_version,
+            users => Genome::SoftwareResult::User->user_hash_for_build($self->build),
     );
 
     if ($result){

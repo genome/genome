@@ -213,28 +213,32 @@ sub _initialize_build {
 sub results_for_instrument_data_input {
     my $self = shift;
     my $input = shift;
+    my $result_users = shift;
     my %segment_info = @_;
-    return $self->_fetch_alignment_sets($input,\%segment_info,'get_with_lock');
+    return $self->_fetch_alignment_sets($input,$result_users,\%segment_info,'get_with_lock');
 }
 
 sub results_for_instrument_data_input_with_lock {
     my $self = shift;
     my $input = shift;
+    my $result_users = shift;
     my %segment_info = @_;
-    return $self->_fetch_alignment_sets($input,\%segment_info,'get_with_lock');
+    return $self->_fetch_alignment_sets($input,$result_users,\%segment_info,'get_with_lock');
 }
 
 # create alignments (called by Genome::Model::Event::Build::ReferenceAlignment::AlignReads for now...)
 sub generate_results_for_instrument_data_input {
     my $self = shift;
     my $input = shift;
+    my $result_users = shift;
     my %segment_info = @_;
-    return $self->_fetch_alignment_sets($input,\%segment_info, 'get_or_create');
+    return $self->_fetch_alignment_sets($input,$result_users,\%segment_info, 'get_or_create');
 }
 
 sub _fetch_alignment_sets {
     my $self = shift;
     my $input = shift;
+    my $result_users = shift;
     my $segment_info = shift;
     my $mode = shift;
 
@@ -248,6 +252,7 @@ sub _fetch_alignment_sets {
     my @alignments;
     for (@param_sets)  {
         my %params = %$_;
+        $params{users} = $result_users;
 
         # override segments if requested
         if (exists $segment_info->{instrument_data_segment_id}) {

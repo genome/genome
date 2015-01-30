@@ -37,6 +37,7 @@ class Genome::Model::PhenotypeCorrelation::Command::ParallelVep {
             doc => "The final merged output file",
         },
     ],
+    has_optional_input => Genome::Db::Ensembl::Command::Run::Base->result_user_inputs(),
 };
 
 sub help_synopsis {
@@ -72,7 +73,9 @@ sub execute {
     my %inputs = (
         input_vcf => $vcf,
         ensembl_annotation_build_id => $self->ensembl_annotation_build->id,
+        map { ($_, $self->$_) } keys %{ Genome::Db::Ensembl::Command::Run::Base->result_user_inputs() },
     );
+    my @fixed_input_keys = keys %inputs;
 
     my @outputs = map {"job_${_}_result"} 0..$#chromosomes;
 
@@ -103,18 +106,14 @@ sub execute {
                 'Genome::Model::PhenotypeCorrelation::Command::VepWrapper'
             ),
         );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => "input_vcf",
-            right_operation => $op,
-            right_property => "input_vcf",
-        );
-        $workflow->add_link(
-            left_operation => $workflow->get_input_connector,
-            left_property => "ensembl_annotation_build_id",
-            right_operation => $op,
-            right_property => "ensembl_annotation_build_id",
-        );
+        for my $property (@fixed_input_keys) {
+            $workflow->add_link(
+                left_operation => $workflow->get_input_connector,
+                left_property => $property,
+                right_operation => $op,
+                right_property => $property,
+            );
+        }
         $workflow->add_link(
             left_operation => $workflow->get_input_connector,
             left_property => $output_file_var,

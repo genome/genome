@@ -6,6 +6,7 @@ use Test::More;
 use Sys::Hostname;
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 
 BEGIN {
     if (`uname -a` =~ /x86_64/) {
@@ -69,6 +70,10 @@ ok($reference_model, "got reference model");
 my $reference_build = $reference_model->build_by_version('1');
 #$reference_build = Genome::Model::Build->get(101947881); # XXX temporary reference override to full reference
 ok($reference_build, "got reference build");
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
 
 my $temp_reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(reference_build=>$reference_build, aligner_version=>$aligner_version, aligner_name=>'bsmap', aligner_params=>'');
 
@@ -197,6 +202,7 @@ sub test_shortcutting {
                                                               samtools_version => $samtools_version,
                                                               picard_version => $picard_version,
                                                               reference_build => $reference_build,
+                                                              users => $result_users,
                                                               );
     ok($alignment, "got an alignment object");
 

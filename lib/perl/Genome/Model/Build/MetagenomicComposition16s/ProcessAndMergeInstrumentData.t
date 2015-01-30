@@ -13,6 +13,7 @@ use above 'Genome';
 
 require File::Compare;
 use Test::More;
+use List::MoreUtils qw(any);
 
 use_ok('Genome::Model::Build::MetagenomicComposition16s::ProcessInstrumentData') or die;
 use_ok('Genome::Model::Build::MetagenomicComposition16s::MergeProcessedInstrumentData') or die;
@@ -36,10 +37,10 @@ ok($process->execute, 'execute process inst data cmd');
 
 my %sx_result_params = $build->sx_result_params_for_instrument_data($instrument_data);
 ok(%sx_result_params, 'Got sx result params for build inst data');
-my @sx_results = Genome::InstrumentData::SxResult->get(%sx_result_params);
+my @sx_results = Genome::InstrumentData::SxResult->get_with_lock(%sx_result_params);
 is(@sx_results, 1, 'Got an SX result for inst data');
 my @users = map { $_->user } map { $_->users } @sx_results;
-is_deeply(\@users, [$build], 'Build is registered as user for SX result');
+ok(any(sub { $_ eq $build}, @users), 'Build is registered as user for SX result');
 
 for ( my $i = 0; $i < @amplicon_sets; $i++ ) { 
     my $set_name = $amplicon_sets[$i]->name;

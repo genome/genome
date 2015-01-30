@@ -82,6 +82,9 @@ sub should_run {
 
 sub params_for_result {
     my $self = shift;
+
+    my $user_data = Genome::SoftwareResult::User->user_hash_for_build($self->build);
+
     my %params = (
         sample => $self->sample_for_mode,
         known_sites_build => $self->build->previously_discovered_variations_build,
@@ -92,6 +95,7 @@ sub params_for_result {
         version => $self->build->model->verify_bam_id_version,
         result_version => 2,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
+        users => $user_data,
     );
     if (defined $self->build->target_region_set) {
         $params{on_target_list} = $self->build->target_region_set;

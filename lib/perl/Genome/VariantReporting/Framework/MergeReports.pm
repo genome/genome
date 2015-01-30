@@ -45,13 +45,18 @@ class Genome::VariantReporting::Framework::MergeReports {
             is_optional => 1,
             doc => "An array of strings of the format <Report ID>|<TAG>",
         },
-        user => {
-            is => 'Genome::Process',
-            is_optional => 1,
-            id_by => 'process_id',
-        },
         process_id => {
             is => 'Text',
+        },
+    ],
+    has_transient_optional => [
+        requestor => {
+            is => 'Genome::Process',
+            id_by => 'process_id',
+        },
+        user => {
+            is => 'Genome::Process',
+            id_by => 'process_id',
         },
     ],
 };

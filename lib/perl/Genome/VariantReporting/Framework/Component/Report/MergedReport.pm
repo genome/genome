@@ -8,6 +8,7 @@ use List::MoreUtils qw(firstidx);
 use Set::Scalar;
 use Memoize;
 use Params::Validate qw(validate_pos :types);
+use JSON qw(from_json);
 
 our $REPORT_PKG = 'Genome::VariantReporting::Framework::Component::Report::SingleFile';
 
@@ -540,5 +541,25 @@ sub get_entry_source {
     die sprintf("No entry source for report (%s)", $report);
 }
 
+sub category {
+    my $self = shift;
+
+    my @report_users = map { $_->users('label like' => 'report:%') } $self->report_results;
+    my $category;
+    for my $user (@report_users) {
+        if ($user->label =~ /report:(.*)/) {
+            my $metadata_json = $1;
+            my $m = from_json($metadata_json);
+            if (!defined($category)) {
+                $category = $m->{category};
+            }
+            elsif ($category ne $m->{category}) {
+                die $self->error_message("Categories of unmerged reports (%s) are not the same: (%s), (%s)", join(', ', map { $_->id } @report_users), $category, $m->{category});
+            }
+        }
+    }
+
+    return $category;
+}
 
 1;

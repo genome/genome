@@ -47,7 +47,8 @@ class Genome::Model::Tools::Analysis::DumpIgvXmlMulti {
     reference_name => {
         type => 'String',
         is_optional => 0,
-        doc => 'the name of the reference (in IGV) that the bams are aligned to. E.g. "b37" for build 37 or "reference"for our internal build36',
+        doc => 'The name of the reference (in IGV) that the bams are aligned to.',
+        example_values => ['b37', 'hg18', 'mm9'],
     },
     roi => {
         is => 'Text',

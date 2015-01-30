@@ -11,6 +11,7 @@ use warnings;
 
 use above 'Genome';
 
+use Genome::Test::Factory::SoftwareResult::User;
 require Genome::Utility::Test;
 use Sub::Install;
 use Test::More;
@@ -24,11 +25,15 @@ use_ok('Genome::InstrumentData::Gatk::Test') or die;
 my $gatk_test = Genome::InstrumentData::Gatk::Test->get;
 my $bam_source = $gatk_test->bam_source;
 my $reference_build = $gatk_test->reference_build;
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
 my %params = (
     version => 2.4,
     bam_source => $bam_source,
     reference_build => $reference_build,
     known_sites => [ $gatk_test->known_site ],
+    users => $result_users,
 );
 
 # Get [fails as expected]
@@ -53,7 +58,7 @@ ok(-s $indel_realigner->bam_md5_path, 'bam md5 path exists');
 # Users
 my @bam_source_users = $bam_source->users;
 ok(@bam_source_users, 'add users to bam source');
-is_deeply([map { $_->label } @bam_source_users], ['bam source'], 'bam source user haver correct label');
+is_deeply([map { $_->label } @bam_source_users], ['bam source'], 'bam source user has correct label');
 my @users = sort { $a->id <=> $b->id } map { $_->user } @bam_source_users;
 is_deeply(\@users, [$indel_realigner], 'bam source is used by indel realigner result');
 
