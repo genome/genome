@@ -1203,6 +1203,7 @@ sub get_ref_align_builds{
   foreach my $somatic_build_id (keys %{$somatic_builds}){
     my $build_type = $somatic_builds->{$somatic_build_id}->{type};
     my $somatic_build = $somatic_builds->{$somatic_build_id}->{build};
+    my $subject_icn = $somatic_build->model->subject->individual_common_name;
     my @builds = ($somatic_build->normal_build, $somatic_build->tumor_build);
     foreach my $build (@builds){
       my $subject_name = $build->subject->name;
@@ -1226,7 +1227,8 @@ sub get_ref_align_builds{
 
       $ref_builds{$refalign_name}{type} = $build_type;
       $ref_builds{$refalign_name}{sample_name} = $subject_name;
-      $ref_builds{$refalign_name}{sample_name_build_type} = $subject_name . "_" . $build_type;
+      $ref_builds{$refalign_name}{sample_name_build_type} =
+        $subject_name . "_" . $subject_icn . "_" . $subject_common_name . "_" . $build_type;
       $ref_builds{$refalign_name}{sample_common_name} = $subject_common_name;
       $ref_builds{$refalign_name}{bam_path} = $bam_path;
       $ref_builds{$refalign_name}{time_point} = $subject_common_name . "_" .  $build_type . "_" . $time_point;
@@ -1329,6 +1331,7 @@ sub add_rnaseq_ref_builds {
     my $rnaseq_build = $rnaseq_builds->{$rnaseq_build_id}->{build};
     my $subject_name = $rnaseq_build->subject->name;
     my $subject_common_name = $rnaseq_build->subject->common_name;
+    my $subject_icn = $rnaseq_build->subject->individual_common_name;
     $subject_common_name =~ s/\,//g;
     $subject_common_name =~ s/\s+/\_/g;
     my $bam_path = $rnaseq_build->alignment_result->bam_file;
@@ -1348,7 +1351,8 @@ sub add_rnaseq_ref_builds {
       $subject_common_name . "_$time_point";
     $ref_builds->{$rnaseq_name}{type} = $build_type;
     $ref_builds->{$rnaseq_name}{sample_name} = $subject_name;
-    $ref_builds->{$rnaseq_name}{sample_name_build_type} = $subject_name . "_" . $build_type;
+    $ref_builds->{$rnaseq_name}{sample_name_build_type} =
+      $subject_name . "_" . $subject_icn . "_" . $subject_common_name . "_" . $build_type;
     $ref_builds->{$rnaseq_name}{sample_common_name} = $subject_common_name;
     $ref_builds->{$rnaseq_name}{bam_path} = $bam_path;
     $ref_builds->{$rnaseq_name}{time_point} = $subject_common_name . "_" . $build_type . "_" . $time_point;
