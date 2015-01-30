@@ -559,7 +559,8 @@ sub execute {
   my @statuses = split(",",$self->statuses_to_review);
   foreach my $i (@statuses){
       unless($i =~ /^newcall$|^validated$|^nonvalidated$/){
-          print STDERR "ERROR: status $i is not a valid status to review. Status must be one of [validated,nonvalidated,newcall]";
+	  $self->status_message("ERROR: status $i is not a valid status to review. Status must be one of [validated,nonvalidated,newcall]");
+          #print STDERR "ERROR: status $i is not a valid status to review. Status must be one of [validated,nonvalidated,newcall]";
           die();
       }
   }
@@ -573,20 +574,23 @@ sub execute {
   if(defined($self->somatic_validation_model_id)){
       $model = Genome::Model->get( $self->somatic_validation_model_id );
       unless( defined $model ){
-          print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n";
+	  $self->status_message("ERROR: Could not find a model with ID: %s", $self->somatic_validation_model_id);
+          #print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n";
           return undef;
       }
       
       $build = $model->last_succeeded_build;
       unless( defined($build) ){
-          print STDERR "WARNING: Model ", $model->id, "has no succeeded builds\n";
+	  $self->status_message("WARNING: Model %s has no succeeded builds", $model->id);
+          #print STDERR "WARNING: Model ", $model->id, "has no succeeded builds\n";
           return undef;
       }
 
   } elsif(defined($self->somatic_validation_build_id)){
       $build = Genome::Model::Build->get( $self->somatic_validation_build_id );
       unless( defined $build ){
-          print STDERR "ERROR: Could not find a build with ID: " . $self->somatic_validation_build_id . "\n";
+	  $self->status_message("ERROR: Could not find a build with ID: %s", $self->somatic_validation_build_id);
+          #print STDERR "ERROR: Could not find a build with ID: " . $self->somatic_validation_build_id . "\n";
           return undef;
       }
       $model = $build->model;      
@@ -608,10 +612,7 @@ sub execute {
   if(!-d $output_dir){
       make_path($output_dir);
   }
-  unless( -d $output_dir ){
-      print STDERR "ERROR: Output directory not found: $output_dir\n";
-      return undef;
-  }
+
 
 
   #make sure specified tiers are valid and that if anything other than
@@ -620,13 +621,15 @@ sub execute {
   my $tstring = "";  
   foreach my $t (sort(@tiers)){
       unless ($t =~/^[1234]$/){
-          print STDERR "ERROR: $t is not a valid tier to review. tiers-to-review should be a comma-separated list containing only [1,2,3,4]";
-          die();          
+          #print STDERR "ERROR: $t is not a valid tier to review. tiers-to-review should be a comma-separated list containing only [1,2,3,4]";
+	  die $self->error_message("ERROR: $t is not a valid tier to review. tiers-to-review should be a comma-separated list containing only [1,2,3,4]");
+                    
       }
       $tstring .= $t
   }
   if(($tstring ne "1234") && !($self->add_tiers)){
-      print STDERR "ERROR: if a combination of tiers-to-review other than 1,2,3,4 is specified, --add-tiers must be specified. (otherwise I don't know how to grab the tiers you want for review!";
+      $self->warning_message("ERROR: if a combination of tiers-to-review other than 1,2,3,4 is specified, --add-tiers must be specified. (otherwise I don't know how to grab the tiers you want for review!");
+      #print STDERR "ERROR: if a combination of tiers-to-review other than 1,2,3,4 is specified, --add-tiers must be specified. (otherwise I don't know how to grab the tiers you want for review!";
       die();          
   }
 
@@ -636,7 +639,8 @@ sub execute {
   my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
   my $annotation_build_name = $model->annotation_build->name;
   if(defined $self->reference_transcripts){
-      print STDERR "Model's annotation build overriden. Using " . $self->reference_transcripts . "\n";
+      $self->status_message("Model's annotation build overridden. Using %s", $self->reference_transcripts);
+      #print STDERR "Model's annotation build overridden. Using " . $self->reference_transcripts . "\n";
       $annotation_build_name = $self->reference_transcripts;
   }
 
@@ -649,7 +653,8 @@ sub execute {
   }
 
   
-  print STDERR "processing model with sample_name: " . $sample_name . "\n";
+  #print STDERR "processing model with sample_name: " . $sample_name . "\n";
+  $self->status_message("processing model with sample_name: $sample_name\n");
   #retrieve validation BAMs
   my $tumor_bam = $build->tumor_bam;
   my $normal_bam;

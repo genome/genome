@@ -152,6 +152,14 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
           doc => "the version of bam-readcount to use if generating counts. If not specified, the default version in G::M::T::Sam::Readcount will be used.",
       },
 
+      max_indel_size => {
+          is => 'Integer',
+          is_optional => 1,
+          doc => "set max indel size to extract readcounts",
+          default => "4",
+      },
+
+
       ],
 };
 
@@ -566,7 +574,7 @@ sub addTiering{
 }
 
 sub getReadcounts{
-    my ($file, $ref_seq_fasta, $bams, $rc_version) = @_;
+    my ($file, $ref_seq_fasta, $bams, $max_indel_size,$rc_version) = @_;
     #todo - should check if input is bed and do coversion if necessary
 
     if( -s "$file" ){
@@ -582,7 +590,7 @@ sub getReadcounts{
             variant_file => "$file",
             genome_build => $ref_seq_fasta,
             header_prefixes => $header,
-            indel_size_limit => 4,
+            indel_size_limit => $max_indel_size,
             );
         if($rc_version) {
             $params{bam_readcount_version} = $rc_version;
@@ -913,13 +921,14 @@ sub execute {
 
   #-------------------------------------------------------
   #get readcounts
+  my $indel_size=$self->max_indel_size;
   if($self->get_readcounts){
       print STDERR "Getting readcounts...\n";
       if( -s "$snv_file" ){
-          $snv_file = getReadcounts($snv_file, $ref_seq_fasta, [$normal_bam, $tumor_bam], $self->bam_readcount_version);
+          $snv_file = getReadcounts($snv_file, $ref_seq_fasta, [$normal_bam, $tumor_bam], $indel_size, $self->bam_readcount_version);
       }
       if( -s "$indel_file" ){
-          $indel_file = getReadcounts($indel_file, $ref_seq_fasta, [$normal_bam, $tumor_bam], $self->bam_readcount_version);
+          $indel_file = getReadcounts($indel_file, $ref_seq_fasta, [$normal_bam, $tumor_bam], $indel_size, $self->bam_readcount_version);
       }
   }
 
