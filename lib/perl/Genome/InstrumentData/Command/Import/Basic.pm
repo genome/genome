@@ -12,6 +12,10 @@ use Workflow::Simple;
 class Genome::InstrumentData::Command::Import::Basic { 
     is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithDownsampleRatio /],
     has_input => [
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'Analysis project to assign to the created instrument data.',
+        },
         import_source_name => {
             is => 'Text',
             doc => "Organization or site name/abbreviation from where the source was generated or downloaded. Use 'CGHub' for TCGA downloaded data.",
@@ -27,10 +31,6 @@ class Genome::InstrumentData::Command::Import::Basic {
         },
     ],
     has_optional_input => [
-        analysis_project => {
-            is => 'Genome::Config::AnalysisProject',
-            doc => 'Analysis project to assign to the created instrument data.',
-        },
         description  => {
             is => 'Text',
             doc => 'Description of the data.',
