@@ -306,7 +306,7 @@ sub _get_model_summary {
 
     my $summary = {};
     my $model_iterator = Genome::Model->create_iterator(
-        'analysis_projects.id' => $self->analysis_project->id,
+        'analysis_project.id' => $self->analysis_project->id,
     );
     while (my $model = $model_iterator->next) {
         $summary->{$model->class}->{$model->status}++;

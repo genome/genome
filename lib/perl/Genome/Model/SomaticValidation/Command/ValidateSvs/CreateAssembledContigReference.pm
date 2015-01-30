@@ -111,7 +111,7 @@ sub execute {
         prefix => $prefix,
         server_dispatch => 'inline',
         is_rederivable => 1,
-        analysis_projects => [$build->model->analysis_projects],
+        analysis_project => $build->model->analysis_project,
     );
     unless ($new_ref_cmd->execute) {
         $self->error_message('Failed to execute the definition of the new reference sequence with added contigs.');
