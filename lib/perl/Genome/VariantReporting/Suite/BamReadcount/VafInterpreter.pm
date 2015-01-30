@@ -5,26 +5,16 @@ use warnings;
 use Genome;
 use Genome::VariantReporting::Suite::BamReadcount::VafCalculator;
 use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(
-    many_libraries_field_descriptions
     many_samples_field_descriptions
     translate_ref_allele
 );
-use List::MoreUtils qw(uniq);
-use Set::Scalar;
 
 class Genome::VariantReporting::Suite::BamReadcount::VafInterpreter {
-    is => ['Genome::VariantReporting::Framework::Component::Interpreter',
+    is => [
+        'Genome::VariantReporting::Framework::Component::Interpreter',
         'Genome::VariantReporting::Suite::BamReadcount::ComponentBase',
-        'Genome::VariantReporting::Framework::Component::WithManyLibraryNames',],
-    has_optional => [
-        library_names => {
-            is => 'Text',
-            is_many => 1,
-            is_translated => 1,
-            doc => 'List of library names to be used in the report',
-        },
     ],
-    doc => 'Calculate the variant allele frequency, number of reads supporting the reference, and number of reads supporting variant for a sample and its libraries',
+    doc => 'Calculate the variant allele frequency, number of reads supporting the reference, and number of reads supporting variant for a sample',
 };
 
 sub name {
@@ -37,8 +27,7 @@ sub requires_annotations {
 
 sub field_descriptions {
     my $self = shift;
-    return (many_samples_field_descriptions($self),
-    many_libraries_field_descriptions($self));
+    return many_samples_field_descriptions($self);
 }
 
 sub _interpret_entry {
@@ -50,17 +39,6 @@ sub _interpret_entry {
 
     my $readcount_entries = $self->get_readcount_entries($entry);
     return $self->null_interpretation($passed_alt_alleles) unless defined($readcount_entries);
-
-    if ($self->library_names) {
-        my $available_libraries = Set::Scalar->new(available_libraries($readcount_entries));
-        my $expected_libraries  = Set::Scalar->new($self->library_names);
-        unless ($available_libraries->is_equal($expected_libraries)) {
-            die $self->error_message(
-                "Available libraries (%s) are not identical to planned libraries (%s)",
-                join(', ', $available_libraries->members), join(', ', $expected_libraries->members)
-            );
-        }
-    }
 
     my %vafs = Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
         $entry, $readcount_entries);
@@ -82,44 +60,11 @@ sub _interpret_entry {
                 $self->create_sample_specific_field_name("ref_count") =>
                 Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_coverage_for_allele(
                     $readcount_entry, $translated_reference_allele, 'A'),
-                $self->flatten_hash($self->per_library_vaf($entry, $readcount_entry, $allele), "vaf"),
-                $self->flatten_hash($self->per_library_coverage($readcount_entry, $allele, $entry->{reference_allele}), "var_count"),
-                $self->flatten_hash($self->per_library_coverage($readcount_entry, $translated_reference_allele, 'A'), "ref_count"),
             }
         }
     }
 
     return %return_values;
-}
-
-sub per_library_vaf {
-    my ($self, $entry, $readcount_entry, $allele) = @_;
-
-    return Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_per_library_vaf_for_all_alts($entry, $readcount_entry)->{$allele};
-}
-
-
-# When checking for variant coverage: The $reference_allele must be untranslated
-# When checking for reference coverage: The $reference_allele and $allele must both be the TRANSLATED reference
-## This is because otherwise we will misinterpret the query as asking for insertion or deletion support inside the VafCalculator
-sub per_library_coverage {
-    my ($self, $readcount_entry, $allele, $reference_allele) = @_;
-    return Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_per_library_coverage_for_allele($readcount_entry, $allele, $reference_allele);
-}
-
-sub flatten_hash {
-    my ($self, $per_library_hash, $field_name) = @_;
-    my %flattened_hash;
-    for my $library_name (keys %$per_library_hash) {
-        $flattened_hash{$self->create_library_specific_field_name($field_name, $library_name)} = $per_library_hash->{$library_name};
-    }
-    return %flattened_hash;
-}
-
-sub available_libraries {
-    my $readcount_entries = shift;
-
-    return uniq map {$_->name} map {$_->libraries} grep {defined($_)} values %$readcount_entries;
 }
 
 1;

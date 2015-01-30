@@ -63,6 +63,9 @@ reports:
             'many-samples-vaf':
                 sample_names:
                     - normal
+            'many-samples-per-library-vaf':
+                sample_names:
+                    - normal
                 library_name_labels: library_name_labels
                 library_names: [library_names]
         params:
@@ -151,6 +154,10 @@ reports:
                     - Samtools
                 sample_name: normal
             'many-samples-vaf':
+                sample_name_labels: sample_name_labels
+                sample_names:
+                    - normal
+            'many-samples-per-library-vaf':
                 sample_name_labels: sample_name_labels
                 sample_names:
                     - normal

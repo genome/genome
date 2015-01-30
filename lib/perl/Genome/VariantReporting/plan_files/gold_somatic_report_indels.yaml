@@ -77,6 +77,11 @@ reports:
                 sample_names:
                     - discovery_tumor
                     - normal
+            'many-samples-per-library-vaf':
+                sample_name_labels: sample_name_labels
+                sample_names:
+                    - discovery_tumor
+                    - normal
                 library_name_labels: library_name_labels
                 library_names: [library_names]
         params:

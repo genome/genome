@@ -19,11 +19,9 @@ my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::VafInterpreter';
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
-my $library_names = [qw(Solexa-135853 Solexa-135852)];
 
 subtest "one alt allele" => sub {
-    my $interpreter = $pkg->create(sample_name => "S1",
-        library_names => $library_names);
+    my $interpreter = $pkg->create(sample_name => "S1");
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
     my %expected = (
@@ -31,12 +29,6 @@ subtest "one alt allele" => sub {
             S1_vaf => 99.1279069767442,
             S1_ref_count => 3,
             S1_var_count => 341,
-            'Solexa-135852_var_count' => '155',
-            'Solexa-135853_var_count' => '186',
-            'Solexa-135852_ref_count' => '2',
-            'Solexa-135853_ref_count' => '1',
-            'Solexa-135852_vaf' => '87.0786516853933',
-            'Solexa-135853_vaf' => '99.4652406417112',
         }
     );
 
@@ -46,8 +38,7 @@ subtest "one alt allele" => sub {
 };
 
 subtest "insertion" => sub {
-    my $interpreter = $pkg->create(sample_name => "S4",
-        library_names => $library_names);
+    my $interpreter = $pkg->create(sample_name => "S4");
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
     my %expected = (
@@ -55,12 +46,6 @@ subtest "insertion" => sub {
             S4_vaf => 5.81395348837209,
             S4_ref_count => 3,
             S4_var_count => 20,
-            'Solexa-135852_var_count' => '20',
-            'Solexa-135853_var_count' => '0',
-            'Solexa-135852_ref_count' => '2',
-            'Solexa-135853_ref_count' => '1',
-            'Solexa-135852_vaf' => '11.2359550561798',
-            'Solexa-135853_vaf' => '0',
         }
     );
 
@@ -70,8 +55,7 @@ subtest "insertion" => sub {
 };
 
 subtest "deletion" => sub {
-    my $interpreter = $pkg->create(sample_name => "S1",
-        library_names => $library_names);
+    my $interpreter = $pkg->create(sample_name => "S1");
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
     my %expected = (
@@ -79,54 +63,12 @@ subtest "deletion" => sub {
             S1_vaf => 5.81395348837209,
             S1_ref_count => 5,
             S1_var_count => 20,
-            'Solexa-135852_var_count' => '20',
-            'Solexa-135853_var_count' => '0',
-            'Solexa-135852_ref_count' => '3',
-            'Solexa-135853_ref_count' => '2',
-            'Solexa-135852_vaf' => '11.0497237569061',
-            'Solexa-135853_vaf' => '0',
         }
     );
 
     my $entry = create_deletion_entry();
     my %result = $interpreter->interpret_entry($entry, ['A']);
     is_deeply(\%result, \%expected, "Values are as expected");
-};
-
-subtest "long indel" => sub {
-    my $interpreter = $pkg->create(sample_name => "H_KA-174556-1309245",
-        library_names => [qw(H_KA-174556-1309245-lg3-lib1 H_KA-174556-1309245-lg5-lib1)]);
-    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
-
-    my %expected = (
-        'GTATA' => {
-           'H_KA-174556-1309245-lg3-lib1_ref_count' => 29,
-           'H_KA-174556-1309245-lg3-lib1_vaf' => 6.25,
-           'H_KA-174556-1309245-lg3-lib1_var_count' => 2,
-           'H_KA-174556-1309245-lg5-lib1_ref_count' => 18,
-           'H_KA-174556-1309245-lg5-lib1_vaf' => 9.52380952380952,
-           'H_KA-174556-1309245-lg5-lib1_var_count' => 2,
-           'H_KA-174556-1309245_ref_count' => 47,
-           'H_KA-174556-1309245_vaf' => 7.54716981132075,
-           'H_KA-174556-1309245_var_count' => 4,
-        }
-    );
-
-    my $entry = create_long_deletion_entry();
-    my %result = $interpreter->interpret_entry($entry, ['GTATA']);
-    is_deeply(\%result, \%expected, "Values are as expected");
-};
-
-subtest "libraries don't match" => sub {
-    for my $library_names ([qw(Solexa-135853)], [qw(Solexa-135854 Solexa-135853 Solexa-135852)], [qw(nonexistent_library)]) {
-        my $interpreter = $pkg->create(
-            sample_name => "S1",
-            library_names => $library_names,
-        );
-        lives_ok(sub {$interpreter->validate}, "Interpreter validates");
-        my $entry = create_default_entry();
-        dies_ok(sub{$interpreter->interpret_entry($entry, ['G'])}, "Libraries don't match fails ok");
-    }
 };
 
 done_testing;
