@@ -304,6 +304,7 @@ sub parse_read_counts{
     foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
       my $prefix = $align_builds->{$name}->{prefix};
       my $sample_common_name = $align_builds->{$name}->{sample_common_name};
+      my $build_type = $align_builds->{$name}->{type};
       my $ref_count_colname = $prefix . "_ref_count";
       my $var_count_colname = $prefix . "_var_count";
       my $vaf_colname = $prefix . "_VAF";
@@ -327,7 +328,7 @@ sub parse_read_counts{
       }
       my $coverage = $line[$columns{$ref_count_colname}{c}] + $line[$columns{$var_count_colname}{c}];
       push(@covs, $coverage);
-      $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed);
+      $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed and $build_type !~ /rnaseq/);
     }
 
     if ($na_found){

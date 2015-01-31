@@ -822,6 +822,7 @@ sub parse_read_counts{
       my $prefix = $align_builds->{$name}->{prefix};
       my $sample_name = $align_builds->{$name}->{sample_name};
       my $sample_common_name = $align_builds->{$name}->{sample_common_name};
+      my $build_type = $align_builds->{$name}->{type};
       my $ref_count_colname = $prefix . "_ref_count";
       my $var_count_colname = $prefix . "_var_count";
       my $vaf_colname = $prefix . "_VAF";
@@ -857,7 +858,7 @@ sub parse_read_counts{
       my $prefix = $samples{$sample_name}{prefix};
       my $coverage = $samples{$sample_name}{coverage};
       #don't apply min_coverage on rnaseq, the transcript might not be expressed.
-      $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed and $prefix !~ /rnaseq/);
+      $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed and $build_type !~ /rnaseq/);
     }
 
     if ($na_found){
