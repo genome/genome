@@ -15,7 +15,7 @@ my %INSTRUMENT_DATA_PROPERTIES = (
       id => "id"
     , flow_cell_id => "flow_cell_id"
     , lane => "lane"
-    , clusters => "clusters"
+    , read_count => "read_count"
     );
 
 class Genome::Model::Tools::BamQc::SummarizeInstrumentData {
@@ -135,9 +135,9 @@ sub execute {
 
         my $dup_rate = _get_duplication_rate($bqc);
         my %properties = (
-              (map {$LIBRARY_PROPERTIES{$_} => $library->$_} keys %LIBRARY_PROPERTIES)
-            , (map {$SAMPLE_PROPERTIES{$_} => $sample->$_} keys %SAMPLE_PROPERTIES)
-            , (map {$INSTRUMENT_DATA_PROPERTIES{$_} => $id->$_} keys %INSTRUMENT_DATA_PROPERTIES)
+              (map {$LIBRARY_PROPERTIES{$_} => ($library->$_ // "NA")} keys %LIBRARY_PROPERTIES)
+            , (map {$SAMPLE_PROPERTIES{$_} => ($sample->$_ // "NA")} keys %SAMPLE_PROPERTIES)
+            , (map {$INSTRUMENT_DATA_PROPERTIES{$_} => ($id->$_ // "NA")} keys %INSTRUMENT_DATA_PROPERTIES)
             , duplicate_percent => $dup_rate
             , bamqc_path => $bqc->{path}
             );

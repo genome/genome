@@ -40,7 +40,7 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByCategory {
 sub help_synopsis {
     return <<EOS
 
-genome model clin-seq annotate-genes-by-category --infile=/gscmnt/ams1108/info/model_data/2888708572/build134369422/AML103/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv --cancer_annotation_db='tgi/cancer-annotation/human/build37-20130711.1'  --gene-name-column='mapped_gene_name'
+genome model clin-seq annotate-genes-by-category --infile=/gscmnt/ams1108/info/model_data/2888708572/build134369422/AML103/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1'  --gene-name-column='mapped_gene_name'
 
 EOS
 }
