@@ -274,20 +274,7 @@ sub _bed_file_for_list_and_reference {
     }
 
     if(grep { $_->id eq $target_reference->id } $list_reference->convertible_to) {
-        my $converted_bed_result = Genome::Model::Build::ReferenceSequence::ConvertedBedResult->get_or_create(
-            source_reference => $list_reference,
-            target_reference => $target_reference,
-            source_bed => $feature_list->file_path,
-            source_md5 => Genome::Sys->md5sum($feature_list->file_path),
-        );
-        unless ($converted_bed_result) {
-            die $class->error_message(
-                'Failure converting feature-list %s to reference %s.',
-                $feature_list->__display_name__,
-                $target_reference->__display_name__,
-            );
-        }
-        return $converted_bed_result->target_bed;
+        return $class->_converted_bed_path($feature_list, $target_reference);
     }
 
     $class->error_message(
@@ -298,6 +285,29 @@ sub _bed_file_for_list_and_reference {
     );
     die 'Please create or specify a compatible reference for the merged feature-list.';
 }
+
+sub _converted_bed_path {
+    my $class = shift;
+    my $feature_list = shift;
+    my $target_reference = shift;
+
+    my $converted_bed_result = Genome::Model::Build::ReferenceSequence::ConvertedBedResult->get_or_create(
+        source_reference => $feature_list->reference,
+        target_reference => $target_reference,
+        source_bed       => $feature_list->file_path,
+        source_md5       => Genome::Sys->md5sum($feature_list->file_path),
+    );
+    unless ($converted_bed_result) {
+        die $class->error_message(
+            'Failure converting feature-list %s to reference %s.',
+            $feature_list->__display_name__,
+            $target_reference->__display_name__,
+        );
+    }
+
+    return $converted_bed_result->target_bed;
+}
+
 
 #### Based on GSC::BEDFile ####
 
