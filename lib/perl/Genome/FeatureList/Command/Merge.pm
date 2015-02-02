@@ -277,6 +277,12 @@ sub _bed_file_for_list_and_reference {
         return $class->_converted_bed_path($feature_list, $target_reference);
     }
 
+    for my $convertible_reference ($list_reference->convertible_to) {
+        if(grep { $_->id eq $convertible_reference->id } $target_reference->combines) {
+            return $class->_converted_bed_path($feature_list, $convertible_reference);
+        }
+    }
+
     $class->error_message(
         'Could not convert reference %s for feature-list %s to the selected combined reference, %s.',
         $list_reference->__display_name__,
