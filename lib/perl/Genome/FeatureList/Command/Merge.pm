@@ -302,6 +302,10 @@ sub _converted_bed_path {
         target_reference => $target_reference,
         source_bed       => $feature_list->file_path,
         source_md5       => Genome::Sys->md5sum($feature_list->file_path),
+        users => {
+            requestor => $target_reference,
+            sponsor   => Genome::Sys->current_user(),
+        },
     );
     unless ($converted_bed_result) {
         die $class->error_message(
