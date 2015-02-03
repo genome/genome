@@ -147,7 +147,7 @@ sub find_common_reference {
     my $combined_reference_with_conversions = $class->_find_combined_reference_with_conversions(@all_references);
     return $combined_reference_with_conversions if $combined_reference_with_conversions;
 
-    die 'No compatible common reference for the input feature-lists was found.  Define one with `genome model define imported-reference-sequence`.';
+    die 'No compatible common reference for the input feature-lists was found.  Please specify one directly, or, if needed, define a new one with `genome model define imported-reference-sequence`.';
 }
 
 sub _find_combined_reference {
