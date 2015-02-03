@@ -224,7 +224,6 @@ function assert_dir {
 }
 
 function set_defaults {
-    local TOP="$(git rev-parse --show-toplevel 2> /dev/null)"
     local SUBMODULES
 
     SUBMODULES=(gms-config configuration-manager)
