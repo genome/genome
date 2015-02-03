@@ -144,6 +144,9 @@ sub find_common_reference {
     my $convertible_reference = $class->_find_convertible_reference(@all_references);
     return $convertible_reference if $convertible_reference;
 
+    my $combined_reference_with_conversions = $class->_find_combined_reference_with_conversions(@all_references);
+    return $combined_reference_with_conversions if $combined_reference_with_conversions;
+
     die 'No compatible common reference for the input feature-lists was found.  Define one with `genome model define imported-reference-sequence`.';
 }
 
@@ -193,6 +196,31 @@ sub _find_convertible_reference {
     }
 
     return $convertible_references[0];
+}
+
+sub _find_combined_reference_with_conversions {
+    my $class = shift;
+    my @references = @_;
+
+    return unless scalar(@references) == 2;
+
+    #optimistically apply conversion if we find one.
+    my @possible_references;
+    for my $i (0,1) {
+        for my $conversion ($references[$i]->convertible_to) {
+            my $combined_reference = $class->_find_combined_reference($conversion, $references[$i-1]);
+            push @possible_references, $combined_reference if $combined_reference;
+        }
+    }
+
+    if(scalar(@possible_references) > 1) {
+        $class->_die_with_multiple_candidate_references(
+            'There are multiple ways these feature-lists can be combined.  Candidate references:',
+            @possible_references,
+        );
+    }
+
+    return $possible_references[0];
 }
 
 sub _die_with_multiple_candidate_references {
