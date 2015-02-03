@@ -187,7 +187,7 @@ function validate_opts {
 
     if test -n "$SNAPSHOT_NAME"
     then
-        if ! test-db template list | cut -f 1 | grep -q "^${SNAPSHOT_NAME}$"
+        if ! test-db template list | cut -f 1 | $GREP -q "^${SNAPSHOT_NAME}$"
         then
             log.error "invalid snapshot name -- $SNAPSHOT_NAME"
             exit 2
@@ -280,7 +280,7 @@ function prepare_submodules {
         for submodule in "$@"
         do
             log.info -n "   $submodule: "
-            if $GIT submodule status $submodule | grep -q ^-
+            if $GIT submodule status $submodule | $GREP -q ^-
             then
                 __quiet_git submodule update --init $submodule
                 log.info "OK"
@@ -295,7 +295,7 @@ function prepare_submodules {
                         __quiet_git fetch --all
                     fi
 
-                    if ! $GIT status --porcelain | grep -q . \
+                    if ! $GIT status --porcelain | $GREP -q . \
                         && $GIT merge-base --is-ancestor $HEAD $EXPECTED_HEAD
                     then
                         cd - 1> /dev/null
@@ -331,7 +331,7 @@ function rebuild_meta_db {
         # foreach defines $name which serves to prefix the submodule path
         ( $GIT ls-files \
             && $GIT submodule foreach "$GIT ls-files | sed \"s|^|\$name/|\"" ) \
-        | grep -P '\.sqlite3n?-dump$' \
+        | $GREP -P '\.sqlite3n?-dump$' \
         | while read DB_TXT
         do
             regen_db "$DB_TXT"
@@ -364,7 +364,7 @@ function setup_test_db {
             $SQITCH config core.pg.username $TESTDBSERVER_DB_USER
             $SQITCH config core.pg.password $TESTDBSERVER_DB_PASS
             $SQITCH config core.pg.db_name  $TESTDBSERVER_DB_NAME
-            if ! $SQITCH status | /bin/grep -q 'Nothing to deploy'
+            if ! $SQITCH status | grep -q 'Nothing to deploy'
             then
                 $SQITCH deploy
             fi
@@ -381,14 +381,14 @@ function setup_env {
         SNAPSHOT_BIN="/gsc/scripts/opt/genome/current/user/bin"
 
     # remove deployed bin directory from PATH
-    PATH="$(echo $PATH | tr : "\n" | grep -v "$SNAPSHOT_BIN" | tr '\n' : | sed 's/:$//')"
+    PATH="$(echo $PATH | tr : "\n" | $GREP -v "$SNAPSHOT_BIN" | tr '\n' : | sed 's/:$//')"
     PATH=$UR_REPO/bin:$PATH
     PATH=$WF_REPO/bin:$PATH
     PATH=$BASE_DIR/bin:$PATH
     export PATH
 
     # remove deployed lib/perl directory from PATH
-    PERL5LIB="$(echo $PERL5LIB | tr : "\n" | grep -v "$SNAPSHOT_LIB" | tr '\n' : | sed 's/:$//')"
+    PERL5LIB="$(echo $PERL5LIB | tr : "\n" | $GREP -v "$SNAPSHOT_LIB" | tr '\n' : | sed 's/:$//')"
 
     for MODULE in UR Workflow Genome
     do
@@ -418,7 +418,7 @@ function setup_env {
 
     for BIN in ur workflow genome
     do
-        if which $BIN | grep -q "$SNAPSHOT_BIN"
+        if which $BIN | $GREP -q "$SNAPSHOT_BIN"
         then
             log.info "$BIN found in $SNAPSHOT_BIN! Aborting!"
             exit 1
@@ -437,6 +437,7 @@ THIS="$(basename "$0")"
 GIT="$(type -p git)" || ( log.error "git is required" && exit 1 )
 SQITCH="$(type -p sqitch)" || ( log.error "sqitch is required" && exit 1 )
 SQLITE3="$(type -p sqlite3)" || ( log.error "sqlite3 is required" && exit 1 )
+GREP="$(type -p grep)" || ( log.error "grep is required" && exit 1 )
 
 if test -z "$STOP_GENOME_ENV_REDIRECT"
 then
