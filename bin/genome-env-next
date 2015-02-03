@@ -103,7 +103,7 @@ function main {
             export PS1="(${GE_ENV_NAME}) \w $ "
             exec bash --norc --noprofile
         else
-            fatal 128 'Only `bash` shells are supported at this time.'
+            fatal 128 'only `bash` shells are supported at this time'
         fi
     fi
 }
@@ -345,7 +345,7 @@ function setup_test_db {
     eval "$($TESTDB database create --bash --owner $TESTDBSERVER_DB_USER --based-on $SNAPSHOT_NAME)"
     if test -z "$TESTDBSERVER_DB_NAME"
     then
-        fatal 1 "Failed to create test database."
+        fatal 1 "failed to create test database"
     fi
 
     if test -z "$DISABLE_MIGRATIONS"
@@ -411,7 +411,7 @@ function setup_env {
     do
         if which $BIN | $GREP -q "$SNAPSHOT_BIN"
         then
-            fatal 1 "$BIN found in $SNAPSHOT_BIN! Aborting!"
+            fatal 1 "$BIN found in $SNAPSHOT_BIN"
         fi
     done
 
