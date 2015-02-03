@@ -224,9 +224,7 @@ function assert_dir {
 }
 
 function set_defaults {
-    local SUBMODULES
-
-    SUBMODULES=(gms-config configuration-manager)
+    local SUBMODULES=(gms-config configuration-manager)
 
     if test -z "$SNAPSHOT_NAME"
     then
@@ -255,10 +253,7 @@ function set_defaults {
         WF_REPO="$TOP/workflow"
     fi
 
-    if test -n "$SUBMODULES"
-    then
-        prepare_submodules "${SUBMODULES[@]}"
-    fi
+    prepare_submodules "${SUBMODULES[@]}"
 }
 
 function __quiet_git {
