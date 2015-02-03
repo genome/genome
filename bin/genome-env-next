@@ -92,9 +92,10 @@ function main {
     log.info ''
     log.info "Genome Perl: $(genome-perl -e 'printf(qq(%vd\n), $^V)')"
     log.info "Genome Prove: $(genome-prove --version)"
-    log.info "UR: $(wtf UR | head -n 1)"
-    log.info "Workflow: $(wtf Workflow | head -n 1)"
-    log.info "Genome: $(wtf Genome | head -n 1)"
+    for MODULE in UR Workflow Genome
+    do
+        log.info "${MODULE}: $(genome-perl -M$MODULE -e "print \$INC{q(${MODULE}.pm)}, qq(\n)")"
+    done
     log.info "Test DB Snapshot: $SNAPSHOT_NAME"
     log.info "Test DB Name: $TESTDBSERVER_DB_NAME"
     log.info ''
@@ -392,30 +393,42 @@ function setup_env {
         SNAPSHOT_LIB="/gsc/scripts/opt/genome/current/user/lib/perl" \
         SNAPSHOT_BIN="/gsc/scripts/opt/genome/current/user/bin"
 
-    # remove /gsc/scripts/opt/genome/current/user/*
-    PERL5LIB="$(echo $PERL5LIB | tr : "\n" | grep -v "$SNAPSHOT_LIB" | tr '\n' : | sed 's/:$//')"
+    # remove deployed bin directory from PATH
     PATH="$(echo $PATH | tr : "\n" | grep -v "$SNAPSHOT_BIN" | tr '\n' : | sed 's/:$//')"
+    PATH=$UR_REPO/bin:$PATH
+    PATH=$WF_REPO/bin:$PATH
+    PATH=$BASE_DIR/bin:$PATH
+    export PATH
+
+    # remove deployed lib/perl directory from PATH
+    PERL5LIB="$(echo $PERL5LIB | tr : "\n" | grep -v "$SNAPSHOT_LIB" | tr '\n' : | sed 's/:$//')"
+
+    for MODULE in UR Workflow Genome
+    do
+        if genome-perl -M$MODULE -e 1 2> /dev/null
+        then
+            log.error "still found $MODULE after removing deployed snapshot"
+            exit 1
+        fi
+    done
 
     PERL5LIB=$UR_REPO/lib:$PERL5LIB
-    PATH=$UR_REPO/bin:$PATH
-
     PERL5LIB=$BASE_DIR/configuration-manager/lib:$PERL5LIB
+    PERL5LIB=$WF_REPO/lib:$PERL5LIB
+    PERL5LIB=$BASE_DIR/lib/perl:$PERL5LIB
+    export PERL5LIB
 
     GENOME_CONFIG_PATH=$BASE_DIR/gms-confg/etc/gms
 
-    PERL5LIB=$WF_REPO/lib:$PERL5LIB
-    PATH=$WF_REPO/bin:$PATH
-
-    PERL5LIB=$BASE_DIR/lib/perl:$PERL5LIB
-    PATH=$BASE_DIR/bin:$PATH
-
-    export PERL5LIB
-    export PATH
-
     set +o nounset
 
-    for MODULE in UR Workflow Genome; do
-        if wtf $MODULE | grep -q "$SNAPSHOT_LIB"; then log.info "$MODULE found in $SNAPSHOT_LIB! Aborting!" && exit 1; fi
+    for MODULE in UR Workflow Genome
+    do
+        if ! genome-perl -M$MODULE -e 1 2> /dev/null
+        then
+            log.error "failed to load $MODULE"
+            exit 1
+        fi
     done
 
     for BIN in ur workflow genome; do
