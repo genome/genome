@@ -100,7 +100,7 @@ function main {
     stderr ''
 
     if [ $# -gt 0 ]; then
-        echo "$@"... 1>&2
+        stderr "$@"...
         exec "$@"
     else
         if [ -n "$BASH" ]; then
@@ -272,7 +272,7 @@ function __quiet_git {
         GIT_EXIT=$?
         if test $GIT_EXIT -ne 0
         then
-            echo -e "$OUT" 1>&2
+            stderr -e "$OUT"
             exit $GIT_EXIT
         fi
     )
@@ -324,7 +324,7 @@ function prepare_submodules {
 
 function regen_db {
     local DB_TXT="$1"
-    echo -n '.' 1>&2
+    stderr -n '.'
     DB_BIN=${DB_TXT/-dump/}
     if [[ "$DB_BIN" -ot "$DB_TXT" ]]; then
         rm -f "$DB_BIN"
@@ -333,7 +333,7 @@ function regen_db {
 }
 
 function rebuild_meta_db {
-    echo -en "\n=> Rebuilding Meta DB..." 1>&2
+    stderr -en "\n=> Rebuilding Meta DB..."
 
     if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
     then
@@ -352,7 +352,7 @@ function rebuild_meta_db {
         done
     fi
 
-    echo ' done' 1>&2
+    stderr ' done'
 }
 
 function setup_test_db {
@@ -385,7 +385,7 @@ function setup_test_db {
 }
 
 function setup_env {
-    echo -e "\n=> Setting Up Test Environment..." 1>&2
+    stderr -e "\n=> Setting Up Test Environment..."
 
     local BIN MODULE \
         BASE_DIR="$1" \
@@ -415,11 +415,11 @@ function setup_env {
     set +o nounset
 
     for MODULE in UR Workflow Genome; do
-        if wtf $MODULE | grep -q "$SNAPSHOT_LIB"; then echo "$MODULE found in $SNAPSHOT_LIB! Aborting!" 1>&2 && exit 1; fi
+        if wtf $MODULE | grep -q "$SNAPSHOT_LIB"; then stderr "$MODULE found in $SNAPSHOT_LIB! Aborting!" && exit 1; fi
     done
 
     for BIN in ur workflow genome; do
-        if which $BIN | grep -q "$SNAPSHOT_BIN"; then echo "$BIN found in $SNAPSHOT_BIN! Aborting!" 1>&2 && exit 1; fi
+        if which $BIN | grep -q "$SNAPSHOT_BIN"; then stderr "$BIN found in $SNAPSHOT_BIN! Aborting!" && exit 1; fi
     done
 
     export GENOME_DS_GMSCHEMA_SERVER="dbname=${TESTDBSERVER_DB_NAME};host=${TESTDBSERVER_DB_HOST};port=${TESTDBSERVER_DB_PORT}"
