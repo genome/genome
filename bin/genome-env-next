@@ -360,13 +360,13 @@ function setup_test_db {
         echo "=> Migrating test database..."
         (
             cd "$BASE_DIR/sqitch/gms"
-            sqitch config core.pg.host     $TESTDBSERVER_DB_HOST
-            sqitch config core.pg.username $TESTDBSERVER_DB_USER
-            sqitch config core.pg.password $TESTDBSERVER_DB_PASS
-            sqitch config core.pg.db_name  $TESTDBSERVER_DB_NAME
-            if ! sqitch status | /bin/grep -q 'Nothing to deploy'
+            $SQITCH config core.pg.host     $TESTDBSERVER_DB_HOST
+            $SQITCH config core.pg.username $TESTDBSERVER_DB_USER
+            $SQITCH config core.pg.password $TESTDBSERVER_DB_PASS
+            $SQITCH config core.pg.db_name  $TESTDBSERVER_DB_NAME
+            if ! $SQITCH status | /bin/grep -q 'Nothing to deploy'
             then
-                sqitch deploy
+                $SQITCH deploy
             fi
         )
     fi
@@ -435,6 +435,7 @@ function setup_env {
 THIS="$(basename "$0")"
 
 GIT="$(type -p git)" || ( log.error "git is required" && exit 1 )
+SQITCH="$(type -p sqitch)" || ( log.error "sqitch is required" && exit 1 )
 
 if test -z "$STOP_GENOME_ENV_REDIRECT"
 then
