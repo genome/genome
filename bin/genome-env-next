@@ -179,7 +179,7 @@ function validate_opts {
 
     if test -n "$SNAPSHOT_NAME"
     then
-        if ! test-db template list | cut -f 1 | $GREP -q "^${SNAPSHOT_NAME}$"
+        if ! $TESTDB template list | cut -f 1 | $GREP -q "^${SNAPSHOT_NAME}$"
         then
             fatal 2 log.error "invalid snapshot name -- $SNAPSHOT_NAME"
         fi
@@ -342,7 +342,7 @@ function rebuild_meta_db {
 function setup_test_db {
     local BASE_DIR="$1"
     echo "=> Creating test database..."
-    eval "$(test-db database create --bash --owner $TESTDBSERVER_DB_USER --based-on $SNAPSHOT_NAME)"
+    eval "$($TESTDB database create --bash --owner $TESTDBSERVER_DB_USER --based-on $SNAPSHOT_NAME)"
     if test -z "$TESTDBSERVER_DB_NAME"
     then
         fatal 1 "Failed to create test database."
@@ -428,6 +428,7 @@ GIT="$(type -p git)" || fatal 1 "git is required"
 SQITCH="$(type -p sqitch)" || fatal 1 "sqitch is required"
 SQLITE3="$(type -p sqlite3)" || fatal 1 "sqlite3 is required"
 GREP="$(type -p grep)" || fatal 1 "grep is required"
+TESTDB="$(type -p test-db)" || fatal 1 "test-db is required"
 
 if test -z "$STOP_GENOME_ENV_REDIRECT"
 then
