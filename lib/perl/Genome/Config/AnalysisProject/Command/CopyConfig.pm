@@ -68,6 +68,9 @@ sub _copy_config_profile_items_to_project {
             analysis_project => $analysis_project,
             status => $original_config_item->status,
         );
+        if($self->tags) {
+            push @params, tags => [$original_config_item->tags];
+        }
 
         if ($original_config_item->analysis_menu_item) {
             $new_item = Genome::Config::Profile::Item->create(
@@ -79,17 +82,6 @@ sub _copy_config_profile_items_to_project {
                 file_path => $original_config_item->file_path,
                 @params,
             );
-        }
-
-        if($self->tags) {
-            my @tags_to_copy = $original_config_item->tags;
-            for my $tag (@tags_to_copy) {
-                my $cmd = Genome::Config::AnalysisProject::Command::TagConfigFile->create(
-                    tag => $tag,
-                    profile_items => [$new_item],
-                );
-                $cmd->execute or die 'Failed to assign tag to new copied configuration.';
-            }
         }
     }
 
