@@ -231,7 +231,7 @@ function assert_dir {
 }
 
 function set_defaults {
-    local SUBMODULES=(gms-config configuration-manager)
+    local SUBMODULES=()
 
     if test -z "$SNAPSHOT_NAME"
     then
@@ -245,7 +245,7 @@ function set_defaults {
             log.error "-u must be specified if not in a Genome repo"
             exit 2
         fi
-        SUBMODULES=("${SUBMODULES[@]}" ur)
+        SUBMODULES=(ur)
         UR_REPO="$TOP/ur"
     fi
 
@@ -260,7 +260,10 @@ function set_defaults {
         WF_REPO="$TOP/workflow"
     fi
 
-    prepare_submodules "${SUBMODULES[@]}"
+    if test "${#SUBMODULES}" -gt 0
+    then
+        prepare_submodules "${SUBMODULES[@]}"
+    fi
 }
 
 function __quiet_git {
