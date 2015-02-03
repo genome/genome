@@ -946,7 +946,7 @@ sub combined_references {
         #see if one of the provided references is a combination of the others.
         for my $reference (@references) {
             my $remaining_reference_set = $reference_set - $reference->id;
-            if($remaining_reference_set == Set::Scalar->new(map $_->id, $reference->combines)) {
+            if($remaining_reference_set <= Set::Scalar->new(map $_->id, $reference->combines)) {
                 push @exact_combined_references, $reference;
             }
         }
