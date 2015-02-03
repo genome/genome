@@ -103,7 +103,7 @@ function main {
             export PS1="(${GE_ENV_NAME}) \w $ "
             exec bash --norc --noprofile
         else
-            fatal 128 'only `bash` shells are supported at this time'
+            fatal $DEP_ERR 'only `bash` shells are supported at this time'
         fi
     fi
 }
@@ -144,10 +144,10 @@ function parse_opts {
                 WF_REPO="$OPTARG"
                 ;;
             :)
-                fatal 1 "option -$OPTARG requires an argument"
+                fatal $OPT_ERR "option -$OPTARG requires an argument"
                 ;;
             \?)
-                fatal 1 "illegal option -- $OPTARG"
+                fatal $OPT_ERR "illegal option -- $OPTARG"
                 ;;
         esac
     done
@@ -159,29 +159,29 @@ function parse_opts {
 function validate_opts {
     if test -n "$DISABLE_DB" -a -n "$DISABLE_MIGRATIONS"
     then
-        fatal 2 "cannot use -S and -M options together"
+        fatal $OPT_ERR "cannot use -S and -M options together"
     fi
 
     if test -n "$DISABLE_DB" -a -n "$SNAPSHOT_NAME"
     then
-        fatal 2 "cannot use -S and -s options together"
+        fatal $OPT_ERR "cannot use -S and -s options together"
     fi
 
     if test -n "$DISABLE_UR" -a -n "$UR_REPO"
     then
-        fatal 2 "cannot use -U and -u options together"
+        fatal $OPT_ERR "cannot use -U and -u options together"
     fi
 
     if test -n "$DISABLE_WF" -a -n "$WF_REPO"
     then
-        fatal 2 "cannot use -W and -w options together"
+        fatal $OPT_ERR "cannot use -W and -w options together"
     fi
 
     if test -n "$SNAPSHOT_NAME"
     then
         if ! $TESTDB template list | cut -f 1 | $GREP -q "^${SNAPSHOT_NAME}$"
         then
-            fatal 2 log.error "invalid snapshot name -- $SNAPSHOT_NAME"
+            fatal $OPT_ERR "invalid snapshot name -- $SNAPSHOT_NAME"
         fi
     fi
 
@@ -199,7 +199,7 @@ function validate_opts {
 function assert_dir {
     if ! test -d "$2"
     then
-        fatal 2 "$1 value must be a directory -- $2"
+        fatal $OPT_ERR "$1 value must be a directory -- $2"
     fi
 }
 
@@ -215,7 +215,7 @@ function set_defaults {
     then
         if test -z "$TOP" -o ! -d "$TOP/ur"
         then
-            fatal 2 "-u must be specified if not in a Genome repo"
+            fatal $OPT_ERR "-u must be specified if not in a Genome repo"
         fi
         SUBMODULES=(ur)
         UR_REPO="$TOP/ur"
@@ -225,7 +225,7 @@ function set_defaults {
     then
         if test -z "$TOP" -o ! -d "$TOP/workflow"
         then
-            fatal 2 "-w must be specified if not in a Genome repo"
+            fatal $OPT_ERR "-w must be specified if not in a Genome repo"
         fi
         SUBMODULES=("${SUBMODULES[@]}" workflow)
         WF_REPO="$TOP/workflow"
@@ -244,12 +244,14 @@ function __quiet_git {
         GIT_EXIT=$?
         if test $GIT_EXIT -ne 0
         then
-            log.info -e "$OUT"
-            exit $GIT_EXIT
+            fatal $BUILD_ERR -e "$OUT"
         fi
     )
 }
 
+DEP_ERR=1 # 1 = dependency error
+OPT_ERR=2 # 2 = option error
+BUILD_ERR=3 # 3 = build error
 function fatal {
     EXIT="$1"
     shift
@@ -297,7 +299,7 @@ function prepare_submodules {
                         __quiet_git submodule update --init $submodule
                         log.info "OK"
                     else
-                        fatal 1 "submodule has local changes"
+                        fatal $BUILD_ERR "submodule has local changes"
                     fi
                 )
             fi
@@ -345,7 +347,7 @@ function setup_test_db {
     eval "$($TESTDB database create --bash --owner $TESTDBSERVER_DB_USER --based-on $SNAPSHOT_NAME)"
     if test -z "$TESTDBSERVER_DB_NAME"
     then
-        fatal 1 "failed to create test database"
+        fatal $BUILD_ERR "failed to create test database"
     fi
 
     if test -z "$DISABLE_MIGRATIONS"
@@ -387,7 +389,7 @@ function setup_env {
     do
         if genome-perl -M$MODULE -e 1 2> /dev/null
         then
-            fatal "still found $MODULE after removing deployed snapshot"
+            fatal $BUILD_ERR "still found $MODULE after removing deployed snapshot"
         fi
     done
 
@@ -403,7 +405,7 @@ function setup_env {
     do
         if ! genome-perl -M$MODULE -e 1 2> /dev/null
         then
-            fatal 1 "failed to load $MODULE"
+            fatal $BUILD_ERR "failed to load $MODULE"
         fi
     done
 
@@ -411,7 +413,7 @@ function setup_env {
     do
         if which $BIN | $GREP -q "$SNAPSHOT_BIN"
         then
-            fatal 1 "$BIN found in $SNAPSHOT_BIN"
+            fatal $BUILD_ERR "$BIN found in $SNAPSHOT_BIN"
         fi
     done
 
@@ -424,11 +426,11 @@ function setup_env {
 
 THIS="$(basename "$0")"
 
-GIT="$(type -p git)" || fatal 1 "git is required"
-SQITCH="$(type -p sqitch)" || fatal 1 "sqitch is required"
-SQLITE3="$(type -p sqlite3)" || fatal 1 "sqlite3 is required"
-GREP="$(type -p grep)" || fatal 1 "grep is required"
-TESTDB="$(type -p test-db)" || fatal 1 "test-db is required"
+GIT="$(type -p git)" || fatal $DEP_ERR "git is required"
+SQITCH="$(type -p sqitch)" || fatal $DEP_ERR "sqitch is required"
+SQLITE3="$(type -p sqlite3)" || fatal $DEP_ERR "sqlite3 is required"
+GREP="$(type -p grep)" || fatal $DEP_ERR "grep is required"
+TESTDB="$(type -p test-db)" || fatal $DEP_ERR "test-db is required"
 
 if test -z "$STOP_GENOME_ENV_REDIRECT"
 then
