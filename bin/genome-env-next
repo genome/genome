@@ -120,10 +120,6 @@ function main {
     fi
 }
 
-function err {
-    echo "$THIS: $@" >&2
-}
-
 function parse_opts {
     local opts
     while getopts :hMSs:Uu:vWw: opts "$@"
@@ -158,11 +154,11 @@ function parse_opts {
                 WF_REPO="$OPTARG"
                 ;;
             :)
-                err "option -$OPTARG requires an argument"
+                log.error "option -$OPTARG requires an argument"
                 exit 1
                 ;;
             \?)
-                err "illegal option -- $OPTARG"
+                log.error "illegal option -- $OPTARG"
                 usage
                 exit 1
                 ;;
@@ -176,25 +172,25 @@ function parse_opts {
 function validate_opts {
     if test -n "$DISABLE_DB" -a -n "$DISABLE_MIGRATIONS"
     then
-        err "cannot use -S and -M options together"
+        log.error "cannot use -S and -M options together"
         exit 2
     fi
 
     if test -n "$DISABLE_DB" -a -n "$SNAPSHOT_NAME"
     then
-        err "cannot use -S and -s options together"
+        log.error "cannot use -S and -s options together"
         exit 2
     fi
 
     if test -n "$DISABLE_UR" -a -n "$UR_REPO"
     then
-        err "cannot use -U and -u options together"
+        log.error "cannot use -U and -u options together"
         exit 2
     fi
 
     if test -n "$DISABLE_WF" -a -n "$WF_REPO"
     then
-        err "cannot use -W and -w options together"
+        log.error "cannot use -W and -w options together"
         exit 2
     fi
 
@@ -202,7 +198,7 @@ function validate_opts {
     then
         if ! test-db template list | cut -f 1 | grep -q "^${SNAPSHOT_NAME}$"
         then
-            err "invalid snapshot name -- $SNAPSHOT_NAME"
+            log.error "invalid snapshot name -- $SNAPSHOT_NAME"
             exit 2
         fi
     fi
@@ -221,7 +217,7 @@ function validate_opts {
 function assert_dir {
     if ! test -d "$2"
     then
-        err "$1 value must be a directory -- $2"
+        log.error "$1 value must be a directory -- $2"
         exit 2
     fi
 }
@@ -241,7 +237,7 @@ function set_defaults {
     then
         if test -z "$TOP" -o ! -d "$TOP/ur"
         then
-            err "-u must be specified if not in a Genome repo"
+            log.error "-u must be specified if not in a Genome repo"
             exit 2
         fi
         SUBMODULES=("${SUBMODULES[@]}" ur)
@@ -252,7 +248,7 @@ function set_defaults {
     then
         if test -z "$TOP" -o ! -d "$TOP/workflow"
         then
-            err "-w must be specified if not in a Genome repo"
+            log.error "-w must be specified if not in a Genome repo"
             exit 2
         fi
         SUBMODULES=("${SUBMODULES[@]}" workflow)
@@ -276,6 +272,10 @@ function __quiet_git {
             exit $GIT_EXIT
         fi
     )
+}
+
+function log.error {
+    echo "$THIS: $@" >&2
 }
 
 function log.info {
