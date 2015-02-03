@@ -3,25 +3,6 @@
 set -o errexit
 set -o pipefail
 
-THIS="$(basename "$0")"
-
-if test -z "$STOP_GENOME_ENV_REDIRECT"
-then
-    # delegate to local version if it is found
-    if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
-    then
-        WORK_TREE="$(git rev-parse --show-toplevel)"
-        NEW_THIS="${WORK_TREE}/bin/${THIS}"
-        if test -x "$NEW_THIS"
-        then
-            export STOP_GENOME_ENV_REDIRECT=1
-            exec "$NEW_THIS" "$@"
-        fi
-    fi
-fi
-
-set -o nounset
-
 function usage {
     sed 's/^\ \{4\}//' <<EOS
     usage: $THIS [-hsuw] [command args]
@@ -450,5 +431,24 @@ function setup_env {
 
     hash -r
 }
+
+THIS="$(basename "$0")"
+
+if test -z "$STOP_GENOME_ENV_REDIRECT"
+then
+    # delegate to local version if it is found
+    if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
+    then
+        WORK_TREE="$(git rev-parse --show-toplevel)"
+        NEW_THIS="${WORK_TREE}/bin/${THIS}"
+        if test -x "$NEW_THIS"
+        then
+            export STOP_GENOME_ENV_REDIRECT=1
+            exec "$NEW_THIS" "$@"
+        fi
+    fi
+fi
+
+set -o nounset
 
 main "$@"
