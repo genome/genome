@@ -89,18 +89,18 @@ function main {
     setup_test_db "$TOP"
     setup_env "$TOP"
 
-    stderr ''
-    stderr "Genome Perl: $(genome-perl -e 'printf(qq(%vd\n), $^V)')"
-    stderr "Genome Prove: $(genome-prove --version)"
-    stderr "UR: $(wtf UR | head -n 1)"
-    stderr "Workflow: $(wtf Workflow | head -n 1)"
-    stderr "Genome: $(wtf Genome | head -n 1)"
-    stderr "Test DB Snapshot: $SNAPSHOT_NAME"
-    stderr "Test DB Name: $TESTDBSERVER_DB_NAME"
-    stderr ''
+    log.info ''
+    log.info "Genome Perl: $(genome-perl -e 'printf(qq(%vd\n), $^V)')"
+    log.info "Genome Prove: $(genome-prove --version)"
+    log.info "UR: $(wtf UR | head -n 1)"
+    log.info "Workflow: $(wtf Workflow | head -n 1)"
+    log.info "Genome: $(wtf Genome | head -n 1)"
+    log.info "Test DB Snapshot: $SNAPSHOT_NAME"
+    log.info "Test DB Name: $TESTDBSERVER_DB_NAME"
+    log.info ''
 
     if [ $# -gt 0 ]; then
-        stderr "$@"...
+        log.info "$@"...
         exec "$@"
     else
         if [ -n "$BASH" ]; then
@@ -272,29 +272,29 @@ function __quiet_git {
         GIT_EXIT=$?
         if test $GIT_EXIT -ne 0
         then
-            stderr -e "$OUT"
+            log.info -e "$OUT"
             exit $GIT_EXIT
         fi
     )
 }
 
-function stderr {
+function log.info {
     echo "$@" 1>&2
 }
 
 function prepare_submodules {
     (
-        stderr -e "\n=> Preparing Submodules..."
+        log.info -e "\n=> Preparing Submodules..."
         cd "$(git rev-parse --show-cdup)"
 
         __quiet_git submodule sync "$@"
 
         for submodule in "$@"; do
-            stderr -n "   $submodule: "
+            log.info -n "   $submodule: "
             if git submodule status $submodule | grep -q ^-
             then
                 __quiet_git submodule update --init $submodule
-                stderr "OK"
+                log.info "OK"
             else
                 (
                     EXPECTED_HEAD=$(git ls-tree HEAD $submodule | awk '{print $3}')
@@ -311,9 +311,9 @@ function prepare_submodules {
                     then
                         cd - 1> /dev/null
                         __quiet_git submodule update --init $submodule
-                        stderr "OK"
+                        log.info "OK"
                     else
-                        stderr "ERROR: Not updating '$submodule' submodule because it has local changes!"
+                        log.info "ERROR: Not updating '$submodule' submodule because it has local changes!"
                         exit 1;
                     fi
                 )
@@ -324,7 +324,7 @@ function prepare_submodules {
 
 function regen_db {
     local DB_TXT="$1"
-    stderr -n '.'
+    log.info -n '.'
     DB_BIN=${DB_TXT/-dump/}
     if [[ "$DB_BIN" -ot "$DB_TXT" ]]; then
         rm -f "$DB_BIN"
@@ -333,7 +333,7 @@ function regen_db {
 }
 
 function rebuild_meta_db {
-    stderr -en "\n=> Rebuilding Meta DB..."
+    log.info -en "\n=> Rebuilding Meta DB..."
 
     if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
     then
@@ -352,7 +352,7 @@ function rebuild_meta_db {
         done
     fi
 
-    stderr ' done'
+    log.info ' done'
 }
 
 function setup_test_db {
@@ -361,7 +361,7 @@ function setup_test_db {
     eval "$(test-db database create --bash --owner $TESTDBSERVER_DB_USER --based-on $SNAPSHOT_NAME)"
     if test -z "$TESTDBSERVER_DB_NAME"
     then
-        stderr "Failed to create test database."
+        log.info "Failed to create test database."
         exit 1
     fi
 
@@ -385,7 +385,7 @@ function setup_test_db {
 }
 
 function setup_env {
-    stderr -e "\n=> Setting Up Test Environment..."
+    log.info -e "\n=> Setting Up Test Environment..."
 
     local BIN MODULE \
         BASE_DIR="$1" \
@@ -415,11 +415,11 @@ function setup_env {
     set +o nounset
 
     for MODULE in UR Workflow Genome; do
-        if wtf $MODULE | grep -q "$SNAPSHOT_LIB"; then stderr "$MODULE found in $SNAPSHOT_LIB! Aborting!" && exit 1; fi
+        if wtf $MODULE | grep -q "$SNAPSHOT_LIB"; then log.info "$MODULE found in $SNAPSHOT_LIB! Aborting!" && exit 1; fi
     done
 
     for BIN in ur workflow genome; do
-        if which $BIN | grep -q "$SNAPSHOT_BIN"; then stderr "$BIN found in $SNAPSHOT_BIN! Aborting!" && exit 1; fi
+        if which $BIN | grep -q "$SNAPSHOT_BIN"; then log.info "$BIN found in $SNAPSHOT_BIN! Aborting!" && exit 1; fi
     done
 
     export GENOME_DS_GMSCHEMA_SERVER="dbname=${TESTDBSERVER_DB_NAME};host=${TESTDBSERVER_DB_HOST};port=${TESTDBSERVER_DB_PORT}"
