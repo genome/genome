@@ -63,17 +63,21 @@ sub _copy_config_profile_items_to_project {
 
     for my $original_config_item (@config_profile_items) {
         my $new_item;
+
+        my @params = (
+            analysis_project => $analysis_project,
+            status => $original_config_item->status,
+        );
+
         if ($original_config_item->analysis_menu_item) {
             $new_item = Genome::Config::Profile::Item->create(
-                analysis_project => $analysis_project,
                 analysis_menu_item => $original_config_item->analysis_menu_item,
-                status => $original_config_item->status,
+                @params,
             );
         } else {
             $new_item = Genome::Config::Profile::Item->create_from_file_path(
-                analysis_project => $analysis_project,
                 file_path => $original_config_item->file_path,
-                status => $original_config_item->status,
+                @params,
             );
         }
 
