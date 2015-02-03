@@ -113,7 +113,6 @@ sub _write_subject_body {
 sub _get_subject_lines {
     my ($self, $subject) = @_;
     return (
-        ['ID', $subject->id, ],
         ['Subject', $subject->subject->id ],
         ['Label', $subject->label],
         ['Created By', $subject->created_by], 
