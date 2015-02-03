@@ -318,7 +318,7 @@ function regen_db {
     if test "$DB_BIN" -ot "$DB_TXT"
     then
         rm -f "$DB_BIN"
-        sqlite3 "$DB_BIN" < "$DB_TXT"
+        $SQLITE3 "$DB_BIN" < "$DB_TXT"
     fi
 }
 
@@ -436,6 +436,7 @@ THIS="$(basename "$0")"
 
 GIT="$(type -p git)" || ( log.error "git is required" && exit 1 )
 SQITCH="$(type -p sqitch)" || ( log.error "sqitch is required" && exit 1 )
+SQLITE3="$(type -p sqlite3)" || ( log.error "sqlite3 is required" && exit 1 )
 
 if test -z "$STOP_GENOME_ENV_REDIRECT"
 then
