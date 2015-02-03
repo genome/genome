@@ -8,6 +8,7 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw(
     many_samples_field_descriptions
+    per_sample_field_descriptions
     per_sample_vaf_headers
     per_library_vaf_headers
     many_libraries_field_descriptions

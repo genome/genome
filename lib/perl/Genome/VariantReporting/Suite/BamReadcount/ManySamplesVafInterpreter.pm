@@ -3,9 +3,10 @@ package Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter
 use strict;
 use warnings;
 use Genome;
-use Genome::VariantReporting::Suite::BamReadcount::VafInterpreter;
 use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(
     many_samples_field_descriptions
+    per_sample_field_descriptions
+    translate_ref_allele
 );
 
 class Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter {
@@ -37,18 +38,57 @@ sub _interpret_entry {
 
     my %return_values;
     for my $sample_name ($self->sample_names) {
-        my $interpreter = Genome::VariantReporting::Suite::BamReadcount::VafInterpreter->create(
-            sample_name => $sample_name,
-            sample_name_label => $self->sample_name_labels->{$sample_name},
+        my $readcount_entries = $self->get_readcount_entries($entry, $sample_name);
+        unless (defined($readcount_entries)) {
+            for my $alt_allele (@$passed_alt_alleles) {
+                $return_values{$alt_allele} = {map {$_ => $self->interpretation_null_character} per_sample_field_descriptions($sample_name)};
+            }
+        }
+
+        my %vafs = Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_vaf_for_all_alts(
+            $entry, $readcount_entries
         );
-        my %result = $interpreter->interpret_entry($entry, $passed_alt_alleles);
+
         for my $alt_allele (@$passed_alt_alleles) {
-            for my $field_name (keys %{$result{$alt_allele}}) {
-                $return_values{$alt_allele}->{$field_name} = $result{$alt_allele}->{$field_name};
+            my $readcount_entry = $readcount_entries->{$alt_allele};
+            if (!defined $readcount_entry) {
+                $return_values{$alt_allele} = {map {$_ => $self->interpretation_null_character} per_sample_field_descriptions($sample_name)};
+            }
+            else {
+                my $translated_reference_allele = translate_ref_allele($entry->{reference_allele}, $alt_allele);
+                my %results = $self->vaf_results($alt_allele, $sample_name, $readcount_entry, $entry, \%vafs, $translated_reference_allele);
+                for my $field_name (keys %results) {
+                    $return_values{$alt_allele}->{$field_name} = $results{$field_name};
+                }
             }
         }
     }
     return %return_values;
+}
+
+sub vaf_results {
+    my ($self, $allele, $sample_name, $readcount_entry, $entry, $vafs, $translated_reference_allele) = @_;
+
+    return (
+        $self->create_sample_specific_field_name('vaf', $sample_name) => $vafs->{$allele},
+        $self->create_sample_specific_field_name('var_count', $sample_name) =>
+            Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_coverage_for_allele(
+                $readcount_entry, $allele, $entry->{reference_allele}
+            ),
+        $self->create_sample_specific_field_name('ref_count', $sample_name) =>
+            Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_coverage_for_allele(
+                $readcount_entry, $translated_reference_allele, 'A'
+            ),
+    )
+}
+
+sub get_readcount_entries {
+    my ($self, $entry, $sample_name) = @_;
+
+    return Genome::File::Vcf::BamReadcountParser::get_bam_readcount_entries(
+        $entry,
+        $entry->{header}->index_for_sample_name($sample_name),
+    );
 }
 
 1;
