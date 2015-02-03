@@ -59,9 +59,9 @@ function main {
     local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF
     local SNAPSHOT_NAME TOP UR_REPO VERBOSE WF_REPO
 
-    if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
+    if $GIT rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
     then
-        TOP="$(git rev-parse --show-toplevel)"
+        TOP="$($GIT rev-parse --show-toplevel)"
     else
         TOP="$PWD"
     fi
@@ -252,7 +252,7 @@ function set_defaults {
 function __quiet_git {
     (
         set +o errexit
-        OUT="$(git "$@" 2>&1)"
+        OUT="$($GIT "$@" 2>&1)"
         GIT_EXIT=$?
         if test $GIT_EXIT -ne 0
         then
@@ -273,30 +273,30 @@ function log.info {
 function prepare_submodules {
     (
         log.info -e "\n=> Preparing Submodules..."
-        cd "$(git rev-parse --show-cdup)"
+        cd "$($GIT rev-parse --show-cdup)"
 
         __quiet_git submodule sync "$@"
 
         for submodule in "$@"
         do
             log.info -n "   $submodule: "
-            if git submodule status $submodule | grep -q ^-
+            if $GIT submodule status $submodule | grep -q ^-
             then
                 __quiet_git submodule update --init $submodule
                 log.info "OK"
             else
                 (
-                    EXPECTED_HEAD=$(git ls-tree HEAD $submodule | awk '{print $3}')
+                    EXPECTED_HEAD=$($GIT ls-tree HEAD $submodule | awk '{print $3}')
                     cd $submodule
-                    HEAD=$(git rev-parse HEAD)
+                    HEAD=$($GIT rev-parse HEAD)
 
-                    if ! git cat-file -e $EXPECTED_HEAD
+                    if ! $GIT cat-file -e $EXPECTED_HEAD
                     then
                         __quiet_git fetch --all
                     fi
 
-                    if ! git status --porcelain | grep -q . \
-                        && git merge-base --is-ancestor $HEAD $EXPECTED_HEAD
+                    if ! $GIT status --porcelain | grep -q . \
+                        && $GIT merge-base --is-ancestor $HEAD $EXPECTED_HEAD
                     then
                         cd - 1> /dev/null
                         __quiet_git submodule update --init $submodule
@@ -325,12 +325,12 @@ function regen_db {
 function rebuild_meta_db {
     log.info -en "\n=> Rebuilding Meta DB..."
 
-    if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
+    if $GIT rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
     then
         # ls-files is fast but then we have to also query submodules
         # foreach defines $name which serves to prefix the submodule path
-        ( git ls-files \
-            && git submodule foreach "git ls-files | sed \"s|^|\$name/|\"" ) \
+        ( $GIT ls-files \
+            && $GIT submodule foreach "$GIT ls-files | sed \"s|^|\$name/|\"" ) \
         | grep -P '\.sqlite3n?-dump$' \
         | while read DB_TXT
         do
@@ -434,12 +434,14 @@ function setup_env {
 
 THIS="$(basename "$0")"
 
+GIT="$(type -p git)" || ( log.error "git is required" && exit 1 )
+
 if test -z "$STOP_GENOME_ENV_REDIRECT"
 then
     # delegate to local version if it is found
-    if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
+    if $GIT rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
     then
-        WORK_TREE="$(git rev-parse --show-toplevel)"
+        WORK_TREE="$($GIT rev-parse --show-toplevel)"
         NEW_THIS="${WORK_TREE}/bin/${THIS}"
         if test -x "$NEW_THIS"
         then
