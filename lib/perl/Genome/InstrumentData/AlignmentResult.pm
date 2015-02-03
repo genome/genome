@@ -1637,27 +1637,29 @@ sub verify_alignment_data {
     return 1;
 }
 
+# This will generally only return something until the first merge has deleted the original per-lane bam file
 sub alignment_bam_file_paths {
     return glob(File::Spec->join(shift->output_dir, "*.bam"));
 }
 
+# This method will recreate the per-lane bam file and return the path.
+# This must be provided an allocation into which the bam will go (so that it can be cleaned up in the parent process once it is done).
+# The calling process is responsible for cleaning up the allocation after we are done with it.
 sub recreated_alignment_bam_file_paths {
     my $self = shift;
+    my %p = Params::Validate::validate(@_, {disk_allocation => { isa => 'Genome::Disk::Allocation'}});
 
     my @bams = $self->alignment_bam_file_paths;
     if (@bams) {
         return @bams;
     }
 
-    my $recreated_bam = File::Spec->join($self->output_dir, 'all_sequences.bam');
+    my $recreated_bam = File::Spec->join($p{disk_allocation}->absolute_path, 'all_sequences.bam');
     my $merged_bam    = $self->get_merged_bam_to_revivify_per_lane_bam;
 
     unless ($merged_bam and -s $merged_bam) {
         die $self->error_message('Failed to get valid merged bam to recreate per lane bam.');
     }
-
-    # Reallocate to an upper limit of the amount of space we might need
-    $self->resize_disk_allocation( kilobytes_requested => Genome::Sys->disk_usage_for_path( dirname($merged_bam) ) );
 
     my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
         merged_bam          => $merged_bam,
@@ -1674,7 +1676,6 @@ sub recreated_alignment_bam_file_paths {
     }
 
     if (-s $recreated_bam) {
-        $self->resize_disk_allocation;
         return ($recreated_bam);
     }
     else {

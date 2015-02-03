@@ -153,8 +153,8 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return unless ($self);
 
+    my @temp_allocations = ();
     my $rv = eval {
-
         #TODO In a future version collect relevant alignments from other merged alignment results when available
         $self->debug_message('Collecting alignments for merger...');
         my @alignments = $self->collect_individual_alignments;
@@ -171,9 +171,10 @@ sub create {
             #handle duplicates on a per-library basis
             for my $alignment (@alignments) {
                 my $library = $alignment->instrument_data->library;
-
-                push @{ $bams_per_library->{$library->id} }, $alignment->recreated_alignment_bam_file_paths;
+                my $temp_allocation = $self->_get_temp_allocation($alignment);
+                push @{ $bams_per_library->{$library->id} }, $alignment->recreated_alignment_bam_file_paths(disk_allocation => $temp_allocation);
                 $libraries->{$library->id} = $library;
+                push @temp_allocations, $temp_allocation;
             }
 
             for my $library_id (keys %$bams_per_library) {
@@ -191,7 +192,9 @@ sub create {
         } else {
             #just collect the BAMs for a merge
             for my $alignment (@alignments) {
-                push @bams_for_final_merge, $alignment->recreated_alignment_bam_file_paths;
+                my $temp_allocation = $self->_get_temp_allocation($alignment);
+                push @bams_for_final_merge, $alignment->recreated_alignment_bam_file_paths(disk_allocation => $temp_allocation);
+                push @temp_allocations, $temp_allocation;
             }
         }
 
@@ -222,6 +225,9 @@ sub create {
 
         return 1;
     };
+
+    map{$_->delete}@temp_allocations;
+
     if (my $error = $@) {
         $tx->rollback();
         die $error;
@@ -277,6 +283,19 @@ sub create {
 
     return $self;
 }
+
+
+sub _get_temp_allocation {
+    my ($self, $alignment) = @_;
+    return Genome::Disk::Allocation->create(
+        disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
+        allocation_path     => 'merged/recreated_per_lane_bam/'.$alignment->id,
+        kilobytes_requested => Genome::Sys->disk_usage_for_path($self->output_dir),
+        owner_class_name    => 'Genome::Sys::User',
+        owner_id            => Genome::Sys->username,
+    );
+}
+
 
 sub collect_individual_alignments {
     my $self = shift;
