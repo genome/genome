@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -o errexit
+set -o pipefail
+
 THIS="$(basename "$0")"
 
 if test -z "$STOP_GENOME_ENV_REDIRECT"
@@ -16,6 +19,8 @@ then
         fi
     fi
 fi
+
+set -o nounset
 
 function usage {
     sed 's/^\ \{4\}//' <<EOS
@@ -122,6 +127,8 @@ function main {
 }
 
 function parse_opts {
+    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" SNAPSHOT_NAME="" UR_REPO="" WF_REPO=""
+
     local opts
     while getopts :hMSs:Uu:vWw: opts "$@"
     do
@@ -364,8 +371,6 @@ function setup_test_db {
     then
         echo "=> Migrating test database..."
         (
-            set -o errexit
-            set -o nounset
             cd "$BASE_DIR/sqitch/gms"
             sqitch config core.pg.host     $TESTDBSERVER_DB_HOST
             sqitch config core.pg.username $TESTDBSERVER_DB_USER
@@ -413,8 +418,6 @@ function setup_env {
     export PERL5LIB
 
     GENOME_CONFIG_PATH=$BASE_DIR/gms-confg/etc/gms
-
-    set +o nounset
 
     for MODULE in UR Workflow Genome
     do
