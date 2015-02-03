@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# if this was found via PATH as opposed to a path to executable
 THIS="$(basename "$0")"
-if test "$THIS" == "$0"
+
+if test -z "$STOP_GENOME_ENV_REDIRECT"
 then
     # delegate to local version if it is found
     if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
@@ -12,6 +12,7 @@ then
         if test -x "$NEW_THIS"
         then
             echo "delegating to $NEW_THIS" 1>&2
+            export STOP_GENOME_ENV_REDIRECT=1
             exec "$NEW_THIS" "$@"
         fi
     fi
