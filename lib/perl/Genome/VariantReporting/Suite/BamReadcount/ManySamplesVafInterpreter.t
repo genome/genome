@@ -21,7 +21,7 @@ use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
 
-subtest "one alt allele" => sub {
+subtest "one alt allele  - multiple samples" => sub {
     my $interpreter = $pkg->create(
         sample_names => ["S1", "S2", "S3"],
     );
@@ -48,6 +48,57 @@ subtest "one alt allele" => sub {
     cmp_ok($result{G}->{S1_vaf}, ">", 99, 'vaf is in the desired range');
     cmp_ok($result{G}->{S1_vaf},  "<", 100, 'vaf is in the desired range');
     cmp_bag([$interpreter->available_fields], [keys %{$expected{G}}], 'Available fields as expected');
+};
+
+subtest "one alt allele" => sub {
+    my $interpreter = $pkg->create(sample_names => ["S1"]);
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected = (
+        G => {
+            S1_vaf => 99.1279069767442,
+            S1_ref_count => 3,
+            S1_var_count => 341,
+        }
+    );
+
+    my $entry = create_default_entry();
+    my %result = $interpreter->interpret_entry($entry, ['G']);
+    is_deeply(\%result, \%expected, "Values are as expected");
+};
+
+subtest "insertion" => sub {
+    my $interpreter = $pkg->create(sample_names => ["S4"]);
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected = (
+        AA => {
+            S4_vaf => 5.81395348837209,
+            S4_ref_count => 3,
+            S4_var_count => 20,
+        }
+    );
+
+    my $entry = create_default_entry();
+    my %result = $interpreter->interpret_entry($entry, ['AA']);
+    is_deeply(\%result, \%expected, "Values are as expected");
+};
+
+subtest "deletion" => sub {
+    my $interpreter = $pkg->create(sample_names => ["S1"]);
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected = (
+        A => {
+            S1_vaf => 5.81395348837209,
+            S1_ref_count => 5,
+            S1_var_count => 20,
+        }
+    );
+
+    my $entry = create_deletion_entry();
+    my %result = $interpreter->interpret_entry($entry, ['A']);
+    is_deeply(\%result, \%expected, "Values are as expected");
 };
 
 done_testing;
