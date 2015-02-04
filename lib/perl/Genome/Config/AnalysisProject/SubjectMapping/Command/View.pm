@@ -98,7 +98,7 @@ sub _write_subjects {
 sub _write_subject_heading {
     my ($self, $handle, $subject) = @_;
     print $handle '    ';
-    print $handle 'Subject: ', $subject->id, "\n";
+    print $handle 'Subject: ', $subject->subject->name, "\n";
 }
 
 sub _write_subject_body {
