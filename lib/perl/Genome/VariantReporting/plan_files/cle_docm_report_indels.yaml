@@ -18,7 +18,7 @@ reports:
                     - discovery_tumor
                     - followup_tumor
                     - normal
-            'many-samples-per-library-vaf':
+            'per-library-vaf':
                 sample_name_labels: sample_name_labels
                 sample_names:
                     - discovery_tumor

@@ -19,7 +19,7 @@ use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(
     create_long_deletion_entry
 );
 
-my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::ManySamplesPerLibraryVafInterpreter';
+my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::PerLibraryVafInterpreter';
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);

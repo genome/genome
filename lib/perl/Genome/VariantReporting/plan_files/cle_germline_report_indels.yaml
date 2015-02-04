@@ -78,7 +78,7 @@ reports:
                 sample_name_labels: sample_name_labels
                 sample_names:
                     - normal
-            'many-samples-per-library-vaf':
+            'per-library-vaf':
                 sample_name_labels: sample_name_labels
                 sample_names:
                     - normal
@@ -202,7 +202,7 @@ reports:
                 sample_name_labels: sample_name_labels
                 sample_names:
                     - normal
-            'many-samples-per-library-vaf':
+            'per-library-vaf':
                 sample_name_labels: sample_name_labels
                 sample_names:
                     - normal

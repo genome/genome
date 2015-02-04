@@ -1,9 +1,8 @@
-package Genome::VariantReporting::Suite::BamReadcount::ManySamplesPerLibraryVafInterpreter;
+package Genome::VariantReporting::Suite::BamReadcount::PerLibraryVafInterpreter;
 
 use strict;
 use warnings;
 use Genome;
-use Genome::VariantReporting::Suite::BamReadcount::VafInterpreter;
 use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(
     many_libraries_field_descriptions
     per_sample_field_descriptions
@@ -12,7 +11,7 @@ use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(
 use Set::Scalar;
 use List::MoreUtils qw(uniq);
 
-class Genome::VariantReporting::Suite::BamReadcount::ManySamplesPerLibraryVafInterpreter {
+class Genome::VariantReporting::Suite::BamReadcount::PerLibraryVafInterpreter {
     is => [
         'Genome::VariantReporting::Framework::Component::Interpreter',
         'Genome::VariantReporting::Framework::Component::WithManySampleNames',
@@ -23,7 +22,7 @@ class Genome::VariantReporting::Suite::BamReadcount::ManySamplesPerLibraryVafInt
 };
 
 sub name {
-    return 'many-samples-per-library-vaf';
+    return 'per-library-vaf';
 }
 
 sub requires_annotations {

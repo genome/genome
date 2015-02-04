@@ -46,7 +46,7 @@ sub name {
 }
 
 sub required_interpreters {
-    return qw(position vaf);
+    return qw(position vaf per-library-vaf);
 }
 
 sub headers {
