@@ -107,13 +107,11 @@ sub execute {
         my $model_name   = ($model ? $model->name                     : '-');
         my $pp_name      = ($model ? $model->processing_profile->name : '-');
 
-        my $first_nondone_step = '-';
-        eval {
-            if ($latest_build) {
-                my $parent_workflow_instance = $latest_build->newest_workflow_instance;
-                $first_nondone_step = find_first_nondone_step($parent_workflow_instance) || '-';
-            }
-        };
+        my $first_nondone_step;
+        if ($latest_build) {
+           $first_nondone_step = find_first_nondone_step($latest_build);
+        }
+        $first_nondone_step ||= '-';
 
         my $track_change = sub {
             $change_count++;
@@ -324,12 +322,24 @@ sub status_compare { # http://stackoverflow.com/q/540229
 
 
 sub find_first_nondone_step {
+    my $build = shift;
+
+    my $first_nondone_step = eval {
+        my $wf = $build->newest_workflow_instance;
+        return _find_first_nondone_step_impl($wf);
+    };
+
+    return $first_nondone_step;
+}
+
+
+sub _find_first_nondone_step_impl {
     my $parent_workflow_instance = shift;
     my @child_workflow_instances = $parent_workflow_instance->related_instances;
 
     my $failed_step;
     for my $child_workflow_instance (@child_workflow_instances) {
-        $failed_step = find_first_nondone_step($child_workflow_instance);
+        $failed_step = _find_first_nondone_step_impl($child_workflow_instance);
         last if $failed_step;
     }
     # detect-variants is skipped because of the way the DV2 dispatcher works, not sure if this will work in general though
