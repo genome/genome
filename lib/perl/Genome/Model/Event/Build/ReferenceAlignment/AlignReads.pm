@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Utility::Text;
 
 class Genome::Model::Event::Build::ReferenceAlignment::AlignReads {
     is => ['Genome::Model::Event'],
@@ -47,7 +48,17 @@ sub bsub_rusage {
         aligner_params  => $self->model->processing_profile->read_aligner_params,
         queue           => $self->lsf_queue,
     );
-    return $rusage;
+
+    my $group = $self->_resolve_job_group;
+
+    return join(' ', $rusage, $group);
+}
+
+sub _resolve_job_group {
+    my $self = shift;
+
+    my $group_name = Genome::Utility::Text::sanitize_string_for_filesystem($self->results_class->__meta__->property(property_name => 'aligner_name')->default_value);
+    return sprintf('-g /align/%s', $group_name);
 }
 
 sub metrics_for_class {
