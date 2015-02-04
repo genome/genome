@@ -55,7 +55,7 @@ class Genome::Model::Tools::Picard::MarkDuplicates {
         },
         read_name_regex => {
             is => 'Text',
-            doc => 'Set to null to turn off optical duplicate detection',
+            doc => "Set to 'null' to turn off optical duplicate detection",
             is_optional => 1,
         },
     ],
