@@ -98,7 +98,7 @@ sub _write_subjects {
 sub _write_subject_heading {
     my ($self, $handle, $subject) = @_;
     print $handle '    ';
-    print $handle 'Subject: ', $subject->subject->name, "\n";
+    print $handle 'Subject: ', $subject->subject->__display_name__, "\n";
 }
 
 sub _write_subject_body {
@@ -113,7 +113,6 @@ sub _write_subject_body {
 sub _get_subject_lines {
     my ($self, $subject) = @_;
     return (
-        ['Subject', $subject->subject->id ],
         ['Label', $subject->label],
         ['Created By', $subject->created_by], 
         ['Created At', $subject->created_at], 
