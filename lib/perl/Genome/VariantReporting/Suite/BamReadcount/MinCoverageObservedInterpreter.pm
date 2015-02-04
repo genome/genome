@@ -34,13 +34,13 @@ sub _interpret_entry {
     my %coverages;
     for my $sample_name ($self->sample_names) {
         my $interpreter = Genome::VariantReporting::Suite::BamReadcount::VafInterpreter->create(
-            sample_name => $sample_name,
-            sample_name_label => $self->sample_name_labels->{$sample_name},
+            sample_names => [$sample_name],
+            sample_name_labels => $self->sample_name_labels,
         );
         my %result = $interpreter->interpret_entry($entry, $passed_alt_alleles);
         for my $alt_allele (@$passed_alt_alleles) {
-            my $ref_count = $result{$alt_allele}->{$interpreter->create_sample_specific_field_name('ref_count')};
-            my $var_count = $result{$alt_allele}->{$interpreter->create_sample_specific_field_name('var_count')};
+            my $ref_count = $result{$alt_allele}->{$interpreter->create_sample_specific_field_name('ref_count', $sample_name)};
+            my $var_count = $result{$alt_allele}->{$interpreter->create_sample_specific_field_name('var_count', $sample_name)};
             $coverages{$alt_allele}->{coverage}->{$sample_name} = $ref_count + $var_count;
         }
     }

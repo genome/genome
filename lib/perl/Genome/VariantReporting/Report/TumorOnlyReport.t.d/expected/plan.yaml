@@ -11,5 +11,6 @@ reports:
       position: {}
       rsid: {}
       vaf:
-        sample_name: sample_name
+        sample_names:
+          - sample_name
       vep: {}

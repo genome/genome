@@ -16,7 +16,7 @@ use Genome::File::Vcf::Entry;
 use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(
      create_default_entry  create_deletion_entry);
 
-my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter';
+my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::VafInterpreter';
 use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);

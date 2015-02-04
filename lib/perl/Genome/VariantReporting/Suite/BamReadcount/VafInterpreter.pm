@@ -1,4 +1,4 @@
-package Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter;
+package Genome::VariantReporting::Suite::BamReadcount::VafInterpreter;
 
 use strict;
 use warnings;
@@ -9,7 +9,7 @@ use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(
     translate_ref_allele
 );
 
-class Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter {
+class Genome::VariantReporting::Suite::BamReadcount::VafInterpreter {
     is => [
         'Genome::VariantReporting::Framework::Component::Interpreter',
         'Genome::VariantReporting::Framework::Component::WithManySampleNames',
@@ -19,7 +19,7 @@ class Genome::VariantReporting::Suite::BamReadcount::ManySamplesVafInterpreter {
 };
 
 sub name {
-    return 'many-samples-vaf';
+    return 'vaf';
 }
 
 sub requires_annotations {

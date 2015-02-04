@@ -70,7 +70,7 @@ reports:
                     - Sniper
                     - Strelka
                 sample_name: discovery_tumor
-            'many-samples-vaf':
+            vaf:
                 sample_name_labels: sample_name_labels
                 sample_names:
                     - discovery_tumor

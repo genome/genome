@@ -69,7 +69,7 @@ reports:
                     - Samtools
                     - Pindel
                 sample_name: normal
-            'many-samples-vaf':
+            vaf:
                 sample_name_labels: sample_name_labels
                 sample_names:
                     - normal
@@ -173,7 +173,7 @@ reports:
                     - Samtools
                     - Pindel
                 sample_name: normal
-            'many-samples-vaf':
+            vaf:
                 sample_name_labels: sample_name_labels
                 sample_names:
                     - normal

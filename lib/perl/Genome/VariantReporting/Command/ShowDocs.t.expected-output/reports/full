@@ -40,7 +40,7 @@ min-coverage
 min-coverage-observed
 max-vaf-observed
 variant-callers
-many-samples-vaf
+vaf
 rsid
 caf
 
