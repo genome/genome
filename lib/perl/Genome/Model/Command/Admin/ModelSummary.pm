@@ -1,5 +1,12 @@
 package Genome::Model::Command::Admin::ModelSummary;
 
+use strict;
+use warnings;
+
+use Genome;
+
+use Try::Tiny qw(try catch);
+
 class Genome::Model::Command::Admin::ModelSummary {
     is => 'Command::V2',
     doc => 'Tool for the Cron Tzar to review builds, e.g. missing builds, failed builds, etc.',
@@ -34,9 +41,6 @@ class Genome::Model::Command::Admin::ModelSummary {
     ],
 };
 
-use strict;
-use warnings;
-use Genome;
 
 sub execute {
     my $self = shift;
@@ -324,9 +328,17 @@ sub status_compare { # http://stackoverflow.com/q/540229
 sub find_first_nondone_step {
     my $build = shift;
 
-    my $first_nondone_step = eval {
+    # The following is wrapped in a transaction and try to protect against
+    # "corrupt" Workflow::Models.
+    my $tx = UR::Context::Transaction->begin();
+    my $first_nondone_step = try {
         my $wf = $build->newest_workflow_instance;
-        return _find_first_nondone_step_impl($wf);
+        my $step =  _find_first_nondone_step_impl($wf);
+        $tx->commit();
+        return $step;
+    } catch {
+        $tx->rollback();
+        return;
     };
 
     return $first_nondone_step;
