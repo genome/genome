@@ -77,7 +77,7 @@ sub _write_subject_mappings {
 sub _write_subject_mapping_heading {
     my ($self, $handle, $subject_mapping) = @_;
     print $handle 'Subject Mapping: ', $subject_mapping->id, "\n";
-
+    print $handle 'Tags: ', join(',', map{$_->name} $subject_mapping->tags), "\n";
 }
 
 sub _write_subject_mapping_body {
@@ -118,7 +118,6 @@ sub _get_subject_lines {
         ['Created By', $subject->created_by], 
         ['Created At', $subject->created_at], 
         ['Updated At', $subject->updated_at], 
-        ['Tags', join(',', map{$_->name} $subject->subject_mapping->tags)],
     );
 }
 
