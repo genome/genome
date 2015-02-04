@@ -283,7 +283,7 @@ sub unarchive {
 
 sub is_archived {
     my $self = shift;
-    return $self->volume->is_archive;
+    return $self->status eq 'archived';
 }
 
 sub tar_path {
