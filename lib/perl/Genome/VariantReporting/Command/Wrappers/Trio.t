@@ -66,9 +66,9 @@ reinstall_sub({
     )]},
 });
 
-use Genome::VariantReporting::Suite::BamReadcount::PerLibraryVafInterpreter;
+use Genome::VariantReporting::Suite::BamReadcount::ManySamplesPerLibraryVafInterpreter;
 reinstall_sub({
-    into => 'Genome::VariantReporting::Suite::BamReadcount::PerLibraryVafInterpreter',
+    into => 'Genome::VariantReporting::Suite::BamReadcount::ManySamplesPerLibraryVafInterpreter',
     as => 'available_libraries',
     code => sub {return qw(
         TEST-patient1-somval_tumor1-extlib
