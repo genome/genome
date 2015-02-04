@@ -80,5 +80,5 @@ sub _run_command {
         'one of the items should be an analysis menu item');
 
     is((grep { $_->tags } @newly_created_profile_items), $expected_tag_count,
-        'no tags copied (there are none)');
+        'Found expected number of tags set');
 }
