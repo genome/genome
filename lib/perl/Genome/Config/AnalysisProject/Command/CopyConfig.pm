@@ -19,6 +19,13 @@ class Genome::Config::AnalysisProject::Command::CopyConfig {
             shell_args_position => 2
         },
     ],
+    has_optional_input => [
+        tags => {
+            is                  => 'Boolean',
+            doc                 => 'copy tags (if any) that are attached to the configs',
+            default_value       => 0,
+        },
+    ],
 };
 
 sub help_brief {
@@ -55,17 +62,25 @@ sub _copy_config_profile_items_to_project {
     my @config_profile_items = @_;
 
     for my $original_config_item (@config_profile_items) {
+        my $new_item;
+
+        my @params = (
+            analysis_project => $analysis_project,
+            status => $original_config_item->status,
+        );
+        if($self->tags) {
+            push @params, tags => [$original_config_item->tags];
+        }
+
         if ($original_config_item->analysis_menu_item) {
-            Genome::Config::Profile::Item->create(
-                analysis_project => $analysis_project,
+            $new_item = Genome::Config::Profile::Item->create(
                 analysis_menu_item => $original_config_item->analysis_menu_item,
-                status => $original_config_item->status,
+                @params,
             );
         } else {
-            Genome::Config::Profile::Item->create_from_file_path(
-                analysis_project => $analysis_project,
+            $new_item = Genome::Config::Profile::Item->create_from_file_path(
                 file_path => $original_config_item->file_path,
-                status => $original_config_item->status,
+                @params,
             );
         }
     }
