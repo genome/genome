@@ -76,8 +76,8 @@ sub _write_subject_mappings {
 
 sub _write_subject_mapping_heading {
     my ($self, $handle, $subject_mapping) = @_;
-    print $handle 'Subject Mapping: ', $subject_mapping->id, "\n";
-    print $handle 'Tags: ', join(',', map{$_->name} $subject_mapping->tags), "\n";
+    print $handle $self->_color_heading('Subject Mapping ' . $self->_color_dim('(' . $subject_mapping->id . ')') . ':'), "\n";
+    print $handle '    ', $self->_color_pair('Tags', join(',', map{$_->name} $subject_mapping->tags)), "\n";
 }
 
 sub _write_subject_mapping_body {
@@ -98,7 +98,7 @@ sub _write_subjects {
 sub _write_subject_heading {
     my ($self, $handle, $subject) = @_;
     print $handle '    ';
-    print $handle 'Subject: ', $subject->subject->__display_name__, "\n";
+    print $handle $self->_color_pair('Subject', $subject->subject->__display_name__), "\n";
 }
 
 sub _write_subject_body {
@@ -115,8 +115,7 @@ sub _get_subject_lines {
     return (
         ['Label', $subject->label],
         ['Created By', $subject->created_by], 
-        ['Created At', $subject->created_at], 
-        ['Updated At', $subject->updated_at], 
+        ['Created', $subject->created_at, 'Updated', $subject->updated_at],
     );
 }
 
@@ -125,10 +124,8 @@ sub _get_analysis_project_lines {
     return (
         ['Name', $analysis_project->name],
         ['Status', $analysis_project->status],
-        ['Run as', $analysis_project->run_as],
-        ['Created At', $analysis_project->created_at],
-        ['Updated', $analysis_project->updated_at],
-        ['Created By', $analysis_project->created_by],
+        ['Run as', $analysis_project->run_as, 'Created By', $analysis_project->created_by],
+        ['Created', $analysis_project->created_at, 'Updated', $analysis_project->updated_at],
     );
 }
 
