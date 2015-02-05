@@ -252,6 +252,8 @@ function log.info {
     echo "$@" 1>&2
 }
 
+# __quiet_git only show Git output if there Git exits non-zero so that we can
+# provide "pretty" output around the Git commands.
 function __quiet_git {
     (
         set +o errexit
@@ -264,6 +266,8 @@ function __quiet_git {
     )
 }
 
+# prepare_submodules tries to (essentially) do a fast-forward update on
+# submodules when the submodules are used as the default repo.
 function prepare_submodules {
     (
         log.info -e "\n=> Preparing Submodules..."
@@ -289,6 +293,9 @@ function prepare_submodules {
                         __quiet_git fetch --all
                     fi
 
+                    # Essentialy trying to do a fast-forward only update but
+                    # since submodules are not branch-based we can't just do
+                    # a `git pull --ff-only`.
                     if ! $GIT status --porcelain | $GREP -q . \
                         && $GIT merge-base --is-ancestor $HEAD $EXPECTED_HEAD
                     then
@@ -304,6 +311,8 @@ function prepare_submodules {
     )
 }
 
+# regen_db creates/updates SQLite (binary) database files from ASCII dump files
+# that are in source control.
 function regen_db {
     local DB_TXT="$1"
     log.info -n '.'
@@ -315,6 +324,8 @@ function regen_db {
     fi
 }
 
+# rebuild_meta_db scans for SQLite ASCII dump files that are (usually) in
+# source control and calls regen_db on them.
 function rebuild_meta_db {
     log.info -en "\n=> Rebuilding Meta DB..."
 
@@ -338,6 +349,8 @@ function rebuild_meta_db {
     log.info ' done'
 }
 
+# setup_test_db creates an ephemeral test database, runs the latest migrations
+# on it, and provides shell variables used to configure GMSchema later.
 function setup_test_db {
     local BASE_DIR="$1"
     echo "=> Creating test database..."
@@ -368,6 +381,8 @@ function setup_test_db {
     fi
 }
 
+# setup_env tries to clean the current environment and then updates the
+# environment to run tests.
 function setup_env {
     log.info -e "\n=> Setting Up Test Environment..."
 
