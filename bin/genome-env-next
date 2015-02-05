@@ -428,6 +428,13 @@ function setup_env {
     hash -r
 }
 
+function default_value {
+    if test -z $(eval "echo \$$1")
+    then
+        eval "$1=\"$2\""
+    fi
+}
+
 THIS="$(basename "$0")"
 
 GIT="$(type -p git)" || fatal $DEP_ERR "git is required"
@@ -436,10 +443,7 @@ SQLITE3="$(type -p sqlite3)" || fatal $DEP_ERR "sqlite3 is required"
 GREP="$(type -p grep)" || fatal $DEP_ERR "grep is required"
 TESTDB="$(type -p test-db)" || fatal $DEP_ERR "test-db is required"
 
-if test -z "$GE_ENV_NAME"
-then
-    GE_ENV_NAME="genome-env"
-fi
+default_value GE_ENV_NAME "genome-env"
 
 if test -z "$GE_NO_REDIRECT"
 then
