@@ -848,9 +848,11 @@ sub parse_read_counts{
       push(@covs, $coverage);
       if (defined($samples{$sample_name})){
         $samples{$sample_name}{coverage} = $coverage if ($coverage > $samples{$sample_name}{coverage});
+        $samples{$sample_name}{build_type} = $build_type;
       }else{
         $samples{$sample_name}{prefix} = $prefix;
         $samples{$sample_name}{coverage} = $coverage;
+        $samples{$sample_name}{build_type} = $build_type;
       }
     }
     my $min_coverage_observed = 'inf';
@@ -858,7 +860,8 @@ sub parse_read_counts{
       my $prefix = $samples{$sample_name}{prefix};
       my $coverage = $samples{$sample_name}{coverage};
       #don't apply min_coverage on rnaseq, the transcript might not be expressed.
-      $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed and $build_type !~ /rnaseq/);
+      $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed and
+        $samples{$sample_name}{build_type} !~ /rnaseq/);
     }
 
     if ($na_found){
