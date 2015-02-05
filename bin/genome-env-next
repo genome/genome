@@ -32,9 +32,9 @@ function help {
 
     -M    Disable migration of database.
 
-    -S    Disable configuration of database.
+    -D    Disable configuration of database.
 
-    -s db_snapshot_name
+    -d db_snapshot_name
           The name of the database snapshot to use instead of the default.
 
     -U    Disable configuration of UR.
@@ -57,7 +57,7 @@ function main {
         TESTDBSERVER_DB_PASS="mypassword"
 
     local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF
-    local SNAPSHOT_NAME TOP UR_REPO VERBOSE WF_REPO
+    local DB_SNAPSHOT_NAME TOP UR_REPO VERBOSE WF_REPO
 
     if $GIT rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
     then
@@ -84,7 +84,7 @@ function main {
     do
         log.info "${MODULE}: $(genome-perl -M$MODULE -e "print \$INC{q(${MODULE}.pm)}, qq(\n)")"
     done
-    log.info "Test DB Snapshot: $SNAPSHOT_NAME"
+    log.info "Test DB Snapshot: $DB_SNAPSHOT_NAME"
     log.info "Test DB Name: $TESTDBSERVER_DB_NAME"
     log.info ''
 
@@ -109,7 +109,7 @@ function validate_bash {
 }
 
 function parse_opts {
-    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" SNAPSHOT_NAME="" UR_REPO="" WF_REPO=""
+    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" UR_REPO="" WF_REPO=""
 
     local opts
     while getopts :hMSs:Uu:vWw: opts "$@"
@@ -122,11 +122,11 @@ function parse_opts {
             M)
                 DISABLE_MIGRATIONS="TRUE"
                 ;;
-            S)
+            D)
                 DISABLE_DB="TRUE"
                 ;;
-            s)
-                SNAPSHOT_NAME="$OPTARG"
+            d)
+                DB_SNAPSHOT_NAME="$OPTARG"
                 ;;
             U)
                 DISABLE_UR="TRUE"
@@ -162,7 +162,7 @@ function validate_opts {
         fatal $OPT_ERR "cannot use -S and -M options together"
     fi
 
-    if test -n "$DISABLE_DB" -a -n "$SNAPSHOT_NAME"
+    if test -n "$DISABLE_DB" -a -n "$DB_SNAPSHOT_NAME"
     then
         fatal $OPT_ERR "cannot use -S and -s options together"
     fi
@@ -177,11 +177,11 @@ function validate_opts {
         fatal $OPT_ERR "cannot use -W and -w options together"
     fi
 
-    if test -n "$SNAPSHOT_NAME"
+    if test -n "$DB_SNAPSHOT_NAME"
     then
-        if ! $TESTDB template list | cut -f 1 | $GREP -q "^${SNAPSHOT_NAME}$"
+        if ! $TESTDB template list | cut -f 1 | $GREP -q "^${DB_SNAPSHOT_NAME}$"
         then
-            fatal $OPT_ERR "invalid snapshot name -- $SNAPSHOT_NAME"
+            fatal $OPT_ERR "invalid snapshot name -- $DB_SNAPSHOT_NAME"
         fi
     fi
 
@@ -206,9 +206,9 @@ function assert_dir {
 function set_defaults {
     local SUBMODULES=()
 
-    if test -z "$SNAPSHOT_NAME"
+    if test -z "$DB_SNAPSHOT_NAME"
     then
-        SNAPSHOT_NAME="82f3e4d"
+        DB_SNAPSHOT_NAME="82f3e4d"
     fi
 
     if test -z "$UR_REPO"
@@ -344,7 +344,7 @@ function rebuild_meta_db {
 function setup_test_db {
     local BASE_DIR="$1"
     echo "=> Creating test database..."
-    eval "$($TESTDB database create --bash --owner $TESTDBSERVER_DB_USER --based-on $SNAPSHOT_NAME)"
+    eval "$($TESTDB database create --bash --owner $TESTDBSERVER_DB_USER --based-on $DB_SNAPSHOT_NAME)"
     if test -z "$TESTDBSERVER_DB_NAME"
     then
         fatal $BUILD_ERR "failed to create test database"
