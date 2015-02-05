@@ -1,5 +1,12 @@
 package Genome::Model::Command::Admin::ModelSummary;
 
+use strict;
+use warnings;
+
+use Genome;
+
+use Try::Tiny qw(try catch);
+
 class Genome::Model::Command::Admin::ModelSummary {
     is => 'Command::V2',
     doc => 'Tool for the Cron Tzar to review builds, e.g. missing builds, failed builds, etc.',
@@ -34,9 +41,6 @@ class Genome::Model::Command::Admin::ModelSummary {
     ],
 };
 
-use strict;
-use warnings;
-use Genome;
 
 sub execute {
     my $self = shift;
@@ -107,13 +111,11 @@ sub execute {
         my $model_name   = ($model ? $model->name                     : '-');
         my $pp_name      = ($model ? $model->processing_profile->name : '-');
 
-        my $first_nondone_step = '-';
-        eval {
-            if ($latest_build) {
-                my $parent_workflow_instance = $latest_build->newest_workflow_instance;
-                $first_nondone_step = find_first_nondone_step($parent_workflow_instance) || '-';
-            }
-        };
+        my $first_nondone_step;
+        if ($latest_build) {
+           $first_nondone_step = find_first_nondone_step($latest_build);
+        }
+        $first_nondone_step ||= '-';
 
         my $track_change = sub {
             $change_count++;
@@ -294,16 +296,23 @@ sub previous_build {
 sub workflow_status {
     my $build = shift;
 
-    my %status = eval {
+    # The following is wrapped in a transaction and try to protect against
+    # "corrupt" Workflow::Models.
+    my $tx = UR::Context::Transaction->begin();
+    my %status = try {
         my $build_instance = $build->newest_workflow_instance;
-        my @child_instances = $build_instance->sorted_child_instances if $build_instance;
+        my @child_instances = $build_instance ? $build_instance->sorted_child_instances : ();
 
         my %status;
         for my $child_instance (@child_instances) {
             (my $name = $child_instance->name) =~ s/^[0-9]+\s+//;
             $status{$name} = $child_instance->status;
         }
+        $tx->commit();
         return %status;
+    } catch {
+        $tx->rollback();
+        return;
     };
 
     return %status;
@@ -324,12 +333,32 @@ sub status_compare { # http://stackoverflow.com/q/540229
 
 
 sub find_first_nondone_step {
+    my $build = shift;
+
+    # The following is wrapped in a transaction and try to protect against
+    # "corrupt" Workflow::Models.
+    my $tx = UR::Context::Transaction->begin();
+    my $first_nondone_step = try {
+        my $wf = $build->newest_workflow_instance;
+        my $step =  _find_first_nondone_step_impl($wf);
+        $tx->commit();
+        return $step;
+    } catch {
+        $tx->rollback();
+        return;
+    };
+
+    return $first_nondone_step;
+}
+
+
+sub _find_first_nondone_step_impl {
     my $parent_workflow_instance = shift;
     my @child_workflow_instances = $parent_workflow_instance->related_instances;
 
     my $failed_step;
     for my $child_workflow_instance (@child_workflow_instances) {
-        $failed_step = find_first_nondone_step($child_workflow_instance);
+        $failed_step = _find_first_nondone_step_impl($child_workflow_instance);
         last if $failed_step;
     }
     # detect-variants is skipped because of the way the DV2 dispatcher works, not sure if this will work in general though
