@@ -94,8 +94,7 @@ sub _color_dim {
 }
 
 sub _column_width {
-    my $self = shift;
-    return $self->get_terminal_width / 2;
+    return Genome::Command::Viewer->get_terminal_width / 2;
 }
 
 sub _write_pairs_line {
