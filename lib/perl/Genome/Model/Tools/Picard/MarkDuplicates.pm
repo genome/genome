@@ -53,6 +53,11 @@ class Genome::Model::Tools::Picard::MarkDuplicates {
             doc => 'comment to include as a @CO in the BAM header',
             is_optional => 1,
         },
+        read_name_regex => {
+            is => 'Text',
+            doc => "Set to 'null' to turn off optical duplicate detection",
+            is_optional => 1,
+        },
     ],
 };
 
@@ -103,6 +108,9 @@ sub execute {
     }
     if ($self->include_comment and not ($self->use_version =~ /1\.([0-9]+)/ and int($1) < 77)) {
         $dedup_cmd .= " COMMENT='" . $self->include_comment . "'";
+    }
+    if (defined $self->read_name_regex) {
+        $dedup_cmd .= sprintf(" READ_NAME_REGEX='%s'", $self->read_name_regex);
     }
     my $version = $self->use_version;
     if ($self->max_records_in_ram) {
