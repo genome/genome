@@ -10,7 +10,7 @@ BEGIN {
 use above "Genome";
 use Genome::Test::Factory::Model::ReferenceSequence;
 
-use Test::More tests => 9;
+use Test::More tests => 12;
 use Test::Exception;
 
 #test refseq checking
@@ -70,6 +70,31 @@ lives_and(sub {
     is($common_reference, $converter->destination_reference_build);
 }, 'found convertible reference');
 
+my ($source_reference, $intermediate_reference, $other_reference, $combined_reference) = map { Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build } (1..4);
+write_seqdict_file($combined_reference, 1,2);
+write_seqdict_file($other_reference, 2);
+write_seqdict_file($source_reference, 'chr1');
+write_seqdict_file($intermediate_reference, 1);
+
+for my $ref ($intermediate_reference, $other_reference) {
+    $combined_reference->add_input(name => 'combines', value => $ref);
+}
+
+dies_ok(sub {
+    my $found_reference = Genome::FeatureList::Command::Merge->find_common_reference($source_reference, $combined_reference);
+}, 'no common reference known');
+
+my $intermediate_converter = Genome::Model::Build::ReferenceSequence::Converter->create(
+    source_reference_build => $source_reference,
+    destination_reference_build => $intermediate_reference,
+    algorithm => 'chop_chr',
+);
+isa_ok($converter, 'Genome::Model::Build::ReferenceSequence::Converter', 'defined another converter between references');
+
+lives_and(sub {
+    my $found_reference = Genome::FeatureList::Command::Merge->find_common_reference($source_reference, $combined_reference);
+    is($found_reference, $combined_reference, 'found combination through conversion');
+}, 'found combined reference');
 
 sub write_seqdict_file {
     my $reference = shift;
