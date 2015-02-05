@@ -716,8 +716,247 @@ sub add_read_counts{
   return ($output_file);
 }
 
+#Parse known druggable files
+sub parseKnownDruggableFiles{
+  my $self = shift;
+  my %args = @_;
+  my $files = $args{'-files'};
+  my @event_types = @{$args{'-event_types'}};
+  $self->status_message("\n\nParsing files containing known drug-gene interaction data");
 
+  #Store all results organized by gene and separately by drug-gene interaction and separately by patient
+  my %result;
+  my %genes;
+  my %interactions;
+  my %patients;
+  my %data_type_sum;
 
+  #Note that the druggable files are already filtered down to only the variant affected genes with a drug interaction
+  #To get a sense of the total number of events will have to wait until the annotation files are being proccessed
+
+  foreach my $patient (keys %{$files}){
+    $self->status_message("\n\t$patient");
+    foreach my $event_type (@event_types){
+      foreach my $data_type (sort keys %{$files->{$patient}->{$event_type}}){
+        my $drug_file_path = $files->{$patient}->{$event_type}->{$data_type}->{drug_file_path};
+        $self->status_message("\n\t\t$drug_file_path");
+        open (IN, "$drug_file_path") || die "\n\nCould not open gene-drug interaction file: $drug_file_path\n\n";
+        my $header = 1;
+        my %columns;
+        while(<IN>){
+          chomp($_);
+          my @line = split("\t", $_);
+          if ($header){
+            my $p = 0;
+            foreach my $column (@line){
+              $columns{$column}{position} = $p;
+              $p++;
+            }
+            $header = 0;
+            next();
+          }
+          my $gene_name = $line[$columns{'gene_name'}{position}];
+          my $drug_name = $line[$columns{'drug_name'}{position}];
+          my $interaction = "$gene_name"."_"."$drug_name";
+          $interactions{$interaction}{gene_name} = $gene_name;
+          $interactions{$interaction}{drug_name} = $drug_name;
+          my $drug_class = "unknown";
+          if (defined($columns{'drug_class'})){
+            $drug_class = $line[$columns{'drug_class'}{position}];
+          }
+
+          #Store drug class list from santa monica db
+          if (defined($genes{$gene_name}{drug_class})){
+            my $classes = $genes{$gene_name}{drug_class};
+            $classes->{$drug_class} = 1;
+          }else{
+            my %classes;
+            $classes{$drug_class} = 1;
+            $genes{$gene_name}{drug_class} = \%classes;
+          }
+
+          #If the gene has any events it will be associated with all drugs that interact with that gene
+          if (defined($genes{$gene_name}{drug_list})){
+            my $drugs = $genes{$gene_name}{drug_list};
+            $drugs->{$drug_name} = 1;
+          }else{
+            my %drugs;
+            $drugs{$drug_name} = 1;
+            $genes{$gene_name}{drug_list} = \%drugs;
+          }
+
+          #Store unique combinations of patient, event type, data type and gene (e.g., PNC4  snv  wgs  KRAS)
+          $data_type_sum{$patient}{$event_type}{$data_type}{$gene_name} = 1;
+
+          #Add patient lists specific to this event type
+          if (defined($genes{$gene_name}{$event_type})){
+            my $patients = $genes{$gene_name}{$event_type}{patient_list};
+            $patients->{$patient} = 1;
+          }else{
+            my %patients;
+            $patients{$patient} = 1;
+            $genes{$gene_name}{$event_type}{patient_list} = \%patients;
+          }
+
+          if (defined($interactions{$interaction}{$event_type})){
+            my $patients = $interactions{$interaction}{$event_type}{patient_list};
+            $patients->{$patient} = 1;
+          }else{
+            my %patients;
+            $patients{$patient} = 1;
+            $interactions{$interaction}{$event_type}{patient_list} = \%patients;
+          }
+
+          #Create or update the grand list of patients with ANY events hitting this gene
+          if (defined($genes{$gene_name}{grand_list})){
+            my $patients = $genes{$gene_name}{grand_list};
+            $patients->{$patient} = 1;
+          }else{
+            my %patients;
+            $patients{$patient} = 1;
+            $genes{$gene_name}{grand_list} = \%patients;
+          }
+
+          if (defined($interactions{$interaction}{grand_list})){
+            my $patients = $interactions{$interaction}{grand_list};
+            $patients->{$patient} = 1;
+          }else{
+            my %patients;
+            $patients{$patient} = 1;
+            $interactions{$interaction}{grand_list} = \%patients;
+          }
+        }
+        close(IN);
+      }
+    }
+  }
+  $result{genes} = \%genes;
+  $result{interactions} = \%interactions;
+  $result{data_type_sum} = \%data_type_sum;
+  return(\%result);
+}
+
+sub get_somatic_subject_common_name {
+  my $self = shift;
+  my $b = shift;
+  my $subject_common_name = "null";
+  if($b->model->wgs_model) {
+    $subject_common_name = $b->model->wgs_model->last_succeeded_build->subject->common_name;
+  } elsif($b->model->exome_model) {
+    my $subject_common_name = $b->model->exome_model->last_succeeded_build->subject->common_name;
+  }
+  return $subject_common_name;
+}
+
+#Get input files to be parsed
+sub getFiles{
+  my $self = shift;
+  my %args = @_;
+  my $builds = $args{'-builds'};
+  my %files;
+
+  $self->status_message("\n\nGet annotation files and drug-gene interaction files from these builds");
+  foreach my $b (@$builds){
+    my $build_directory = $b->data_directory;
+    my $subject_common_name = $b->subject->common_name;
+    my $subject_name = $self->get_somatic_subject_common_name($b);
+    $subject_name =~ s/[\s-]/_/g;
+    my $build_id = $b->id;
+
+    #If the subject name is not defined, die
+    unless ($subject_name){
+      die $self->error_message("\n\nCould not determine subject name for build: $build_id\n\n");
+    }
+
+    my $final_name = "Unknown";
+    if ($subject_name){$final_name = $subject_name;}
+    if ($subject_common_name){
+      $final_name = $subject_common_name . "_" . $subject_name;
+    }
+    $self->status_message("\n\t$final_name\t$build_id\t$build_directory");
+
+    #Some event types could have come from exome, wgs, or wgs_exome... depending on the event type allow these options and check in order
+    #1.) Look for SNV files
+    my $exome_snv_dgidb = $b->exome_snv_dgidb_file;
+    my $wgs_snv_dgidb = $b->wgs_snv_dgidb_file;
+    my $exome_snv_annot = $b->exome_snv_tier1_annotated_compact_catanno_file;
+    my $wgs_snv_annot = $b->wgs_snv_tier1_annotated_compact_catanno_file;
+    if (-e $wgs_snv_dgidb and -e $wgs_snv_annot) {
+      $files{$final_name}{snv}{wgs}{drug_file_path} =
+        $wgs_snv_dgidb;
+      $files{$final_name}{snv}{wgs}{annot_file_path} =
+        $wgs_snv_annot;
+    }
+    if (-e $exome_snv_dgidb and -e $exome_snv_annot){
+      $files{$final_name}{snv}{exome}{drug_file_path} =
+        $exome_snv_dgidb;
+      $files{$final_name}{snv}{exome}{annot_file_path} =
+        $exome_snv_annot;
+    } elsif (not (-e $exome_snv_dgidb and -e $wgs_snv_dgidb)) {
+      $self->warning_message("\n\nCould not find snv drug-gene file.");
+    }
+
+    #2.) Look for InDel files
+    my $exome_indel_dgidb = $b->exome_indel_dgidb_file;
+    my $wgs_indel_dgidb = $b->wgs_indel_dgidb_file;
+    my $exome_indel_annot = $b->exome_indel_tier1_annotated_compact_catanno_file;
+    my $wgs_indel_annot = $b->wgs_indel_tier1_annotated_compact_catanno_file;
+    if (-e $exome_indel_dgidb and -e $exome_indel_annot){
+      $files{$final_name}{indel}{exome}{drug_file_path} =
+        $exome_indel_dgidb;
+      $files{$final_name}{indel}{exome}{annot_file_path} =
+        $exome_indel_annot;
+    }
+    if (-e $wgs_indel_dgidb and -e $wgs_indel_annot) {
+      $files{$final_name}{indel}{wgs}{drug_file_path} =
+        $wgs_indel_dgidb;
+      $files{$final_name}{indel}{wgs}{annot_file_path} =
+        $wgs_indel_annot;
+    } elsif (not (-e $exome_indel_dgidb and -e $wgs_indel_dgidb)) {
+      $self->warning_message("\n\ncould not find indel drug-gene file.");
+    }
+
+    #3.) Look for CNV gain files
+    my $wgs_cnv_dgidb = $b->wgs_cnv_dgidb_file;
+    my $wgs_cnv_annot = $b->wgs_cnv_annot_file;
+    if (-e $wgs_cnv_annot and -e $wgs_cnv_dgidb){
+      $files{$final_name}{cnv_gain}{wgs}{drug_file_path} =
+        $wgs_cnv_dgidb;
+      $files{$final_name}{cnv_gain}{wgs}{annot_file_path} =
+        $wgs_cnv_annot;
+    } else{
+      $self->warning_message("\n\nCould not find CNV drug-gene file for "
+        . "$final_name ($subject_name - $subject_common_name) in:" .
+        "\n\t$build_directory\n\n");
+    }
+
+    #4.) Look for Cufflinks RNAseq outlier expression files
+    my $rna_cufflinks_dgidb = $b->rnaseq_tumor_cufflinks_dgidb_file;
+    my $rna_cufflinks_annot = $b->rnaseq_tumor_cufflinks_annot_file;
+    if (-e $rna_cufflinks_annot and -e $rna_cufflinks_dgidb){
+      $files{$final_name}{rna_cufflinks_absolute}{rnaseq}{annot_file_path} =
+        $rna_cufflinks_annot;
+      $files{$final_name}{rna_cufflinks_absolute}{rnaseq}{drug_file_path} =
+        $rna_cufflinks_dgidb;
+    }else{
+      $self->warning_message("\n\nCould not find Cufflinks drug-gene file");
+    }
+
+    #5.) Look for Tophat junction RNAseq outlier expression files
+    my $rna_tophat_dgidb = $b->rnaseq_tumor_tophat_dgidb_file;
+    my $rna_tophat_annot = $b->rnaseq_tumor_tophat_annot_file;
+    if (-e $rna_tophat_dgidb and $rna_tophat_annot) {
+      $files{$final_name}{rna_tophat_absolute}{rnaseq}{drug_file_path} =
+        $rna_tophat_dgidb;
+      $files{$final_name}{rna_tophat_absolute}{rnaseq}{annot_file_path} =
+        $rna_tophat_annot;
+    }else{
+      $self->warning_message("\n\nCould not find Tophat drug-gene file");
+    }
+  }
+
+  return(\%files);
+}
 
 1;
 
