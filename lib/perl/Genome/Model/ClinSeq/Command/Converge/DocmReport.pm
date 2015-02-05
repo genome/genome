@@ -53,6 +53,10 @@ class Genome::Model::ClinSeq::Command::Converge::DocmReport {
               is => 'Text',
               doc => 'Limit analysis to variants on this chromosome only',
         },
+        case_name => {
+              is => 'Text',
+              doc => 'Case name to be used for output report prefix.',
+        },
     ],
 };
 
@@ -123,7 +127,7 @@ sub execute {
   my $subject_labels = $self->resolve_clinseq_subject_labels;
 
   #Get the case name for this set of builds, if more than one are found, warn the user
-  my $case_name = $self->get_case_name;
+  my $case_name = $self->case_name or $self->get_case_name;
   $self->status_message("Producing report for individual: $case_name");
 
   #Get somatic builds associated with the clin-seq builds
