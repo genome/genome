@@ -52,10 +52,6 @@ EOS
 }
 
 function main {
-    local TESTDBSERVER_DB_NAME TESTDBSERVER_DB_HOST TESTDBSERVER_DB_PORT \
-        TESTDBSERVER_DB_USER="genome" \
-        TESTDBSERVER_DB_PASS="mypassword"
-
     local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF
     local DB_SNAPSHOT_NAME TOP UR_REPO VERBOSE WF_REPO
 
@@ -66,15 +62,16 @@ function main {
         TOP="$PWD"
     fi
 
-    export TESTDBSERVER_URL="https://apipe-test-db.gsc.wustl.edu"
-
     parse_opts "$@"
     shift $((OPTIND-1))
 
     validate_bash
 
     rebuild_meta_db
+
+    local TESTDBSERVER_DB_NAME TESTDBSERVER_DB_HOST TESTDBSERVER_DB_PORT
     setup_test_db "$TOP"
+
     setup_env "$TOP"
 
     log.info ''
@@ -443,7 +440,12 @@ SQLITE3="$(type -p sqlite3)" || fatal $DEP_ERR "sqlite3 is required"
 GREP="$(type -p grep)" || fatal $DEP_ERR "grep is required"
 TESTDB="$(type -p test-db)" || fatal $DEP_ERR "test-db is required"
 
+default_value TESTDBSERVER_DB_USER "genome"
+default_value TESTDBSERVER_DB_PASS "mypassword"
+default_value TESTDBSERVER_URL "https://apipe-test-db.gsc.wustl.edu"
 default_value GE_ENV_NAME "genome-env"
+
+export TESTDBSERVER_URL
 
 if test -z "$GE_NO_REDIRECT"
 then
