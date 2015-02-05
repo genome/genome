@@ -296,16 +296,23 @@ sub previous_build {
 sub workflow_status {
     my $build = shift;
 
-    my %status = eval {
+    # The following is wrapped in a transaction and try to protect against
+    # "corrupt" Workflow::Models.
+    my $tx = UR::Context::Transaction->begin();
+    my %status = try {
         my $build_instance = $build->newest_workflow_instance;
-        my @child_instances = $build_instance->sorted_child_instances if $build_instance;
+        my @child_instances = $build_instance ? $build_instance->sorted_child_instances : ();
 
         my %status;
         for my $child_instance (@child_instances) {
             (my $name = $child_instance->name) =~ s/^[0-9]+\s+//;
             $status{$name} = $child_instance->status;
         }
+        $tx->commit();
         return %status;
+    } catch {
+        $tx->rollback();
+        return;
     };
 
     return %status;
