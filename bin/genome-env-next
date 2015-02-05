@@ -354,7 +354,11 @@ function setup_test_db {
     then
         echo "=> Migrating test database..."
         (
-            cd "$BASE_DIR/sqitch/gms"
+            SQITCH_TMP="$(mktemp -d)"
+            trap "rm -rf \"$SQITCH_TMP\"" EXIT
+
+            cp -a "$BASE_DIR/sqitch/gms" "$SQITCH_TMP"
+            cd "$SQITCH_TMP/gms"
             $SQITCH config core.pg.host     $TESTDBSERVER_DB_HOST
             $SQITCH config core.pg.username $TESTDBSERVER_DB_USER
             $SQITCH config core.pg.password $TESTDBSERVER_DB_PASS
