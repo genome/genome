@@ -5,15 +5,15 @@ use above "Genome";
 use Test::More tests => 9; 
 
 #Define the expected result
-my $expected_out = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-ClinSeq-Command-Converge-DocmReport/2014-10-16/';
+my $expected_out = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-ClinSeq-Command-Converge-DocmReport/2015-02-05/';
 ok(-d $expected_out, "directory of expected output exists: $expected_out") or die;
 
 #Obtain two clin-seq build objects
-my $clinseq_build_id1 = '4b7539bb10cc4b9c97577cf11f4c79a2';
+my $clinseq_build_id1 = 'f3eb642682c745528a14c19cf19c4c5a';
 my $clinseq_build1 = Genome::Model::Build->get($clinseq_build_id1);
 ok($clinseq_build1, "Got clinseq build from id1: $clinseq_build_id1") or die;
 
-my $clinseq_build_id2 = 'cdca0edf526c4fe193d3054627a5871b';
+my $clinseq_build_id2 = 'd07c5260cce146fdb96b429b78a11d8c';
 my $clinseq_build2 = Genome::Model::Build->get($clinseq_build_id2);
 ok($clinseq_build2, "Got clinseq build from id2: $clinseq_build_id2") or die;
 
@@ -42,6 +42,7 @@ my $cmd = Genome::Model::ClinSeq::Command::Converge::DocmReport->create(
     bam_readcount_version => 0.6,
     bq => 0,
     mq => 1,
+    case_name => 'test',
 );
 $cmd->queue_status_messages(1);
 my $r1 = $cmd->execute();
