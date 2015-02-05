@@ -234,18 +234,6 @@ function set_defaults {
     fi
 }
 
-function __quiet_git {
-    (
-        set +o errexit
-        OUT="$($GIT "$@" 2>&1)"
-        GIT_EXIT=$?
-        if test $GIT_EXIT -ne 0
-        then
-            fatal $BUILD_ERR -e "$OUT"
-        fi
-    )
-}
-
 DEP_ERR=1 # 1 = dependency error
 OPT_ERR=2 # 2 = option error
 BUILD_ERR=3 # 3 = build error
@@ -262,6 +250,18 @@ function log.error {
 
 function log.info {
     echo "$@" 1>&2
+}
+
+function __quiet_git {
+    (
+        set +o errexit
+        OUT="$($GIT "$@" 2>&1)"
+        GIT_EXIT=$?
+        if test $GIT_EXIT -ne 0
+        then
+            fatal $BUILD_ERR -e "$OUT"
+        fi
+    )
 }
 
 function prepare_submodules {
