@@ -18,14 +18,6 @@ class Genome::Config::AnalysisProject::SubjectMapping::Command::View {
             shell_args_position => 1,
         },
     ],
-    
-    has_optional_input => [
-        COLUMN_WIDTH => {
-            is => 'Number',
-            default_value => 40,
-        },
-
-    ],
 };
 
 sub write_report {
@@ -127,18 +119,6 @@ sub _get_analysis_project_lines {
         ['Run as', $analysis_project->run_as, 'Created By', $analysis_project->created_by],
         ['Created', $analysis_project->created_at, 'Updated', $analysis_project->updated_at],
     );
-}
-
-sub _write_pairs_line {
-    my ($self, $handle, $l_label, $l_value, $r_label, $r_value) = @_;
-
-    if ($r_label and $r_value) {
-        print $handle justify($self->_color_pair($l_label, $l_value), 'left',
-            $self->COLUMN_WIDTH), " ", $self->_color_pair($r_label, $r_value), "\n";
-
-    } else {
-        print $handle $self->_color_pair($l_label, $l_value), "\n";
-    }
 }
 
 1;
