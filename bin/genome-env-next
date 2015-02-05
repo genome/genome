@@ -95,10 +95,6 @@ function main {
         then
             echo 'Press <Ctrl>-D or type `logout` to return to normal environment.'
             echo ''
-            if test -z "$GE_ENV_NAME"
-            then
-                GE_ENV_NAME="genome-env"
-            fi
             unset PROMPT_COMMAND
             export PS1="(${GE_ENV_NAME}) \w $ "
             exec bash --norc --noprofile
@@ -431,6 +427,11 @@ SQITCH="$(type -p sqitch)" || fatal $DEP_ERR "sqitch is required"
 SQLITE3="$(type -p sqlite3)" || fatal $DEP_ERR "sqlite3 is required"
 GREP="$(type -p grep)" || fatal $DEP_ERR "grep is required"
 TESTDB="$(type -p test-db)" || fatal $DEP_ERR "test-db is required"
+
+if test -z "$GE_ENV_NAME"
+then
+    GE_ENV_NAME="genome-env"
+fi
 
 if test -z "$STOP_GENOME_ENV_REDIRECT"
 then
