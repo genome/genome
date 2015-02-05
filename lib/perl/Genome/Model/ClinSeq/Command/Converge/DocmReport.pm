@@ -312,13 +312,16 @@ sub parse_read_counts{
       my $ref_count_colname = $prefix . "_ref_count";
       my $var_count_colname = $prefix . "_var_count";
       my $vaf_colname = $prefix . "_VAF";
-
       my $vaf = "NA";
       $vaf = $line[$columns{$vaf_colname}{c}] if (defined($line[$columns{$vaf_colname}{c}]));
-
       if ($vaf eq "NA"){
         $na_found = 1;
         push(@covs, "NA");
+        next;
+      }
+      my $coverage = $line[$columns{$ref_count_colname}{c}] + $line[$columns{$var_count_colname}{c}];
+      push(@covs, $coverage);
+      if($build_type =~ /rnaseq/) {
         next;
       }
       if ($sample_common_name =~ /normal/){
@@ -330,9 +333,7 @@ sub parse_read_counts{
         my $tumor_var_count = $line[$columns{$var_count_colname}{c}];
         $max_tumor_var_count_observed = $tumor_var_count if ($tumor_var_count > $max_tumor_var_count_observed);
       }
-      my $coverage = $line[$columns{$ref_count_colname}{c}] + $line[$columns{$var_count_colname}{c}];
-      push(@covs, $coverage);
-      $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed and $build_type !~ /rnaseq/);
+      $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed);
     }
 
     if ($na_found){
