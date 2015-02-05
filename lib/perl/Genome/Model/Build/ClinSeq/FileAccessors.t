@@ -78,6 +78,12 @@ is($b->exome_snv_summary_dir, $case_dir . "/snv/exome/summary", "found exome_snv
 is($b->wgs_snv_summary_dir, $case_dir . "/snv/wgs/summary", "found wgs_snv_summary_dir");
 is($b->wgs_exome_snv_summary_dir, $case_dir . "/snv/wgs_exome/summary", "found wgs_exome_snv_summary_dir");
 is($b->exome_snv_summary_stats_file, $case_dir . "/snv/exome/summary/Stats.tsv", "found exome_snv_summary_stats_file");
+is($b->exome_snv_dgidb_file, $case_dir . "/snv/exome/snvs.hq.tier1.v1.annotated.compact.tsv.dgidb/expert_antineoplastic.tsv", "found exome_snv_dgidb_file");
+is($b->exome_indel_dgidb_file, $case_dir . "/indel/exome/indels.hq.tier1.v1.annotated.compact.tsv.dgidb/expert_antineoplastic.tsv", "found exome_indel_dgidb_file");
+is($b->wgs_snv_dgidb_file, $case_dir . "/snv/wgs/snvs.hq.tier1.v1.annotated.compact.tsv.dgidb/expert_antineoplastic.tsv", "found wgs_snv_dgidb_file");
+is($b->wgs_indel_dgidb_file, $case_dir . "/indel/wgs/indels.hq.tier1.v1.annotated.compact.tsv.dgidb/expert_antineoplastic.tsv", "found wgs_indel_dgidb_file");
+is($b->wgs_cnv_dgidb_file, $case_dir . "/cnv/wgs_cnv/cnview/cnv.All_genes.amp.tsv.dgidb/expert_antineoplastic.tsv", "found wgs_cnv_dgidb_file");
+is($b->wgs_cnv_annot_file, $case_dir . "/cnv/wgs_cnv/cnview/cnv.All_genes.amp.tsv", "found wgs_cnv_annot_file");
 is($b->wgs_snv_summary_stats_file, $case_dir . "/snv/wgs/summary/Stats.tsv", "found wgs_snv_summary_stats_file");
 is($b->wgs_exome_snv_summary_stats_file, $case_dir . "/snv/wgs_exome/summary/Stats.tsv", "found wgs_exome_snv_summary_stats_file");
 is($b->input_summary_stats_file, $case_dir . "/input/summary/Stats.tsv", "found input_summary_stats_file");
@@ -90,6 +96,20 @@ is($b->rnaseq_tumor_cufflinks_isoforms_merged_stats_file, $case_dir .
       "/rnaseq/tumor/cufflinks_expression_absolute/isoforms_merged/summary/Stats.tsv", "found rnaseq_cufflinks_isoforms-merged_summary_stats_file");
 is($b->rnaseq_tumor_tophat_junctions_absolute_stats_file, $case_dir .
       "/rnaseq/tumor/tophat_junctions_absolute/summary/Stats.tsv", "found rnaseq_tophat_junctions_absolute_summary_stats_file");
+is($b->rnaseq_tumor_tophat_dgidb_dir,
+  $case_dir . "/rnaseq/tumor/tophat_junctions_absolute/Junction.GeneExpression.topnpercent.tsv.dgidb", "found rnaseq tophat dgidb dir");
+is($b->rnaseq_tumor_cufflinks_dgidb_dir,
+  $case_dir . "/rnaseq/tumor/cufflinks_expression_absolute/isoforms_merged/isoforms.merged.fpkm.expsort.top1percent.tsv.dgidb",
+  "found cufflinks dgidb dir");
+is($b->rnaseq_tumor_tophat_annot_file,
+  $case_dir . "/rnaseq/tumor/tophat_junctions_absolute/Junction.GeneExpression.topnpercent.tsv", "found rnaseq tophat annot file");
+is($b->rnaseq_tumor_cufflinks_annot_file,
+  $case_dir . "/rnaseq/tumor/cufflinks_expression_absolute/isoforms_merged/isoforms.merged.fpkm.expsort.top1percent.tsv",
+  "found cufflinks annot file");
+is($b->rnaseq_tumor_tophat_dgidb_file,
+  $case_dir . "/rnaseq/tumor/tophat_junctions_absolute/Junction.GeneExpression.topnpercent.tsv.dgidb/expert_antineoplastic.tsv", "found tophat dgidb file");
+is($b->rnaseq_tumor_cufflinks_dgidb_file,
+  $case_dir . "/rnaseq/tumor/cufflinks_expression_absolute/isoforms_merged/isoforms.merged.fpkm.expsort.top1percent.tsv.dgidb/expert_antineoplastic.tsv", "found cufflinks dgidb file");
 is($b->sv_stats_file, $case_dir . "/sv/Stats.tsv", "found sv_stats_file");
 is($b->variant_sc_wgs_stats_file, $case_dir . "/variant_source_callers/wgs/Stats.tsv", "found variant_sc_wgs_stats_file");
 is($b->variant_sc_exome_stats_file, $case_dir . "/variant_source_callers/exome/Stats.tsv", "found variant_sc_exome_stats_file");
