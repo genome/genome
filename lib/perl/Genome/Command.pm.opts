@@ -1252,6 +1252,8 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>copy-config',
     [
+      'tags!',
+      undef,
       'from-project=s',
       undef,
       'to-project=s',
@@ -37789,6 +37791,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>copy-config',
       [
+        'tags!',
+        undef,
         'from-project=s',
         undef,
         'to-project=s',
