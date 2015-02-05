@@ -53,7 +53,7 @@ sub _interpret_entry {
     my @vaf_hash_names        = (\%normal_vafs,        \%tumor_vafs);
     my $it                    = each_array(@sample_name_accessors, @vaf_hash_names);
     while ( my ($sample_name_accessor, $vaf_hash_ref) = $it->() ) {
-        if (defined($self->$sample_name_accessor)) {
+        if ($self->$sample_name_accessor) {
             my $interpreter = Genome::VariantReporting::Suite::BamReadcount::VafInterpreter->create(
                 sample_names => [$self->$sample_name_accessor],
             );
