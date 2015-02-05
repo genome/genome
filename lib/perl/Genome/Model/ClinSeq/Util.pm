@@ -1228,7 +1228,7 @@ sub get_ref_align_builds{
       $ref_builds{$refalign_name}{type} = $build_type;
       $ref_builds{$refalign_name}{sample_name} = $subject_name;
       $ref_builds{$refalign_name}{sample_name_build_type} =
-        $subject_name . "_" . $subject_icn . "_" . $subject_common_name . "_" . $build_type;
+        $subject_name . "_" . $subject_common_name . "_" . $subject_icn . "_" . $build_type;
       $ref_builds{$refalign_name}{sample_common_name} = $subject_common_name;
       $ref_builds{$refalign_name}{bam_path} = $bam_path;
       $ref_builds{$refalign_name}{time_point} = $subject_common_name . "_" .  $build_type . "_" . $time_point;
@@ -1352,7 +1352,7 @@ sub add_rnaseq_ref_builds {
     $ref_builds->{$rnaseq_name}{type} = $build_type;
     $ref_builds->{$rnaseq_name}{sample_name} = $subject_name;
     $ref_builds->{$rnaseq_name}{sample_name_build_type} =
-      $subject_name . "_" . $subject_icn . "_" . $subject_common_name . "_" . $build_type;
+      $subject_name . "_" . $subject_common_name . "_" . $subject_icn . "_". $build_type;
     $ref_builds->{$rnaseq_name}{sample_common_name} = $subject_common_name;
     $ref_builds->{$rnaseq_name}{bam_path} = $bam_path;
     $ref_builds->{$rnaseq_name}{time_point} = $subject_common_name . "_" . $build_type . "_" . $time_point;
