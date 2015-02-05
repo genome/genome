@@ -52,9 +52,7 @@ EOS
 }
 
 function main {
-    local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF
-    local DB_SNAPSHOT_NAME TOP UR_REPO VERBOSE WF_REPO
-
+    local TOP
     if $GIT rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
     then
         TOP="$($GIT rev-parse --show-toplevel)"
@@ -62,6 +60,8 @@ function main {
         TOP="$PWD"
     fi
 
+    local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF \
+        DB_SNAPSHOT_NAME UR_REPO VERBOSE WF_REPO
     parse_opts "$@"
     shift $((OPTIND-1))
 
