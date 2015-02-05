@@ -400,8 +400,6 @@ function setup_env {
     PERL5LIB=$BASE_DIR/lib/perl:$PERL5LIB
     export PERL5LIB
 
-    GENOME_CONFIG_PATH=$BASE_DIR/gms-confg/etc/gms
-
     for MODULE in UR Workflow Genome
     do
         if ! genome-perl -M$MODULE -e 1 2> /dev/null
