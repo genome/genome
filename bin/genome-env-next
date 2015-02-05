@@ -97,7 +97,7 @@ function main {
             echo ''
             unset PROMPT_COMMAND
             export PS1="(${GE_ENV_NAME}) \w $ "
-            exec bash --norc --noprofile
+            exec "$BASH" --norc --noprofile
         else
             fatal $DEP_ERR 'only `bash` shells are supported at this time'
         fi

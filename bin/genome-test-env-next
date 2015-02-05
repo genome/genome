@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # delegate to local version if it is found
 if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
