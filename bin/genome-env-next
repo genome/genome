@@ -433,7 +433,7 @@ then
     GE_ENV_NAME="genome-env"
 fi
 
-if test -z "$STOP_GENOME_ENV_REDIRECT"
+if test -z "$GE_NO_REDIRECT"
 then
     # delegate to local version if it is found
     if $GIT rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
@@ -442,7 +442,7 @@ then
         NEW_THIS="${WORK_TREE}/bin/${THIS}"
         if test -x "$NEW_THIS"
         then
-            export STOP_GENOME_ENV_REDIRECT=1
+            export GE_NO_REDIRECT=1
             exec "$NEW_THIS" "$@"
         fi
     fi
