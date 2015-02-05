@@ -116,7 +116,6 @@ sub available_libraries {
     for my $sample_name ($self->sample_names) {
         %readcount_entries = (%readcount_entries, %{$self->get_readcount_entries($entry, $sample_name)});
     }
-    $DB::single=1;
     return uniq map {$_->name} map {$_->libraries} grep {defined($_)} values %readcount_entries;
 }
 
