@@ -71,6 +71,8 @@ function main {
     parse_opts "$@"
     shift $((OPTIND-1))
 
+    validate_bash
+
     rebuild_meta_db
     setup_test_db "$TOP"
     setup_env "$TOP"
@@ -91,16 +93,18 @@ function main {
         log.info "$@"...
         exec "$@"
     else
-        if test -n "$BASH"
-        then
-            echo 'Press <Ctrl>-D or type `logout` to return to normal environment.'
-            echo ''
-            unset PROMPT_COMMAND
-            export PS1="(${GE_ENV_NAME}) \w $ "
-            exec "$BASH" --norc --noprofile
-        else
-            fatal $DEP_ERR 'only `bash` shells are supported at this time'
-        fi
+        echo 'Press <Ctrl>-D or type `logout` to return to normal environment.'
+        echo ''
+        unset PROMPT_COMMAND
+        export PS1="(${GE_ENV_NAME}) \w $ "
+        exec "$BASH" --norc --noprofile
+    fi
+}
+
+function validate_bash {
+    if test "$#" -eq 0 -a -z "$BASH"
+    then
+        fatal $DEP_ERR 'only `bash` shells are supported at this time'
     fi
 }
 
