@@ -1530,7 +1530,10 @@ sub shellcmd {
                     local $SIG{PIPE} = 'DEFAULT';
                     my @cmdline = ('bash', '-c', "$shellopts_part $cmd");
                     exec(@cmdline)
-                        or die "Can't exec: $!\nCommand line was: ",join(' ', @cmdline),"\n";
+                        or do {
+                            print STDERR "Can't exec: $!\nCommand line was: ",join(' ', @cmdline),"\n";
+                            exit(127);
+                        };
                 }
             }
 
