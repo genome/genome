@@ -109,7 +109,7 @@ function parse_opts {
     DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" UR_REPO="" WF_REPO=""
 
     local opts
-    while getopts :hMSs:Uu:vWw: opts "$@"
+    while getopts :hMDd:Uu:vWw: opts "$@"
     do
         case $opts in
             h)
