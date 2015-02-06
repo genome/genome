@@ -12,7 +12,6 @@ use above "Genome";
 use Test::Deep qw(cmp_bag);
 use Test::More;
 use Test::Exception;
-use Genome::File::Vcf::Entry;
 use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(
      create_default_entry  create_deletion_entry);
 
