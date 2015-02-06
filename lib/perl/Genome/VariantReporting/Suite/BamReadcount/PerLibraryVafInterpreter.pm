@@ -9,7 +9,6 @@ use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(
     translate_ref_allele
 );
 use Set::Scalar;
-use List::MoreUtils qw(uniq);
 
 class Genome::VariantReporting::Suite::BamReadcount::PerLibraryVafInterpreter {
     is => [
@@ -40,7 +39,7 @@ sub _interpret_entry {
     my $passed_alt_alleles = shift;
 
     if ($self->library_names) {
-        my $available_libraries = Set::Scalar->new($self->available_libraries($entry));
+        my $available_libraries = $self->available_libraries($entry);
         my $expected_libraries  = Set::Scalar->new($self->library_names);
         unless ($available_libraries->is_equal($expected_libraries)) {
             die $self->error_message(
@@ -110,7 +109,7 @@ sub available_libraries {
     for my $sample_name ($self->sample_names) {
         %readcount_entries = (%readcount_entries, %{$self->get_readcount_entries($entry, $sample_name)});
     }
-    return uniq map {$_->name} map {$_->libraries} grep {defined($_)} values %readcount_entries;
+    return Set::Scalar->new(map {$_->name} map {$_->libraries} grep {defined($_)} values %readcount_entries);
 }
 
 sub get_readcount_entries {

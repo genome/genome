@@ -15,6 +15,7 @@ use Sub::Install qw(reinstall_sub);
 use File::Basename qw(basename);
 use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build succeed_build compare_directories);
 use Genome::VariantReporting::Framework::TestHelpers qw(test_xml);
+use Set::Scalar;
 
 my $pkg = "Genome::VariantReporting::Command::Wrappers::Trio";
 use_ok($pkg);
@@ -70,11 +71,11 @@ use Genome::VariantReporting::Suite::BamReadcount::PerLibraryVafInterpreter;
 reinstall_sub({
     into => 'Genome::VariantReporting::Suite::BamReadcount::PerLibraryVafInterpreter',
     as => 'available_libraries',
-    code => sub {return qw(
+    code => sub {return Set::Scalar->new(qw(
         TEST-patient1-somval_tumor1-extlib
         TEST-patient1-somval_tumor2-extlib
         TEST-patient1-somval_normal1-extlib
-    )},
+    ))},
 });
 
 my $cmd = $pkg->create(
