@@ -125,9 +125,14 @@ sub execute {
 
   #Get human readable names hash, keyed on build id
   my $subject_labels = $self->resolve_clinseq_subject_labels;
+  my $case_name;
 
   #Get the case name for this set of builds, if more than one are found, warn the user
-  my $case_name = $self->case_name or $self->get_case_name;
+  if($self->case_name) {
+    $case_name = $self->case_name;
+  } else {
+    $case_name = $self->get_case_name;
+  }
   $self->status_message("Producing report for individual: $case_name");
 
   #Get somatic builds associated with the clin-seq builds
