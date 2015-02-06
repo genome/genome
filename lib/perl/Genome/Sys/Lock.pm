@@ -17,6 +17,10 @@ Keyword Arguments:
 C<resource_lock> is the path to the file representing the lock for some
 resource.
 
+=item scope
+
+C<scope> is the scope to which the lock is bound.  See C<scope()> for valid scopes.
+
 =item block_sleep
 
 C<block_sleep> specifies the the number of seconds to sleep between attempts to
@@ -124,6 +128,10 @@ Keyword Arguments:
 
 C<resource_lock> is the path to the file representing the lock for some
 resource.
+
+=item scope
+
+C<scope> is the scope to which the lock is bound.  See C<scope()> for valid scopes.
 
 =back
 
