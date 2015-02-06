@@ -1504,7 +1504,7 @@ sub shellcmd {
                 # parent
                 waitpid($pid, 0);
                 $system_retval = $?;
-                print STDOUT "\n"; # add a new line so that bad programs don't break TAP, etc.
+                print STDOUT "\n" unless $redirect_stdout; # add a new line so that bad programs don't break TAP, etc.
 
             } else {
                 # child
