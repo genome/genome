@@ -56,7 +56,17 @@ sub _interpret_entry {
             }
             else {
                 my $translated_reference_allele = translate_ref_allele($entry->{reference_allele}, $alt_allele);
-                my %results = $self->vaf_results($alt_allele, $sample_name, $readcount_entry, $entry, \%vafs, $translated_reference_allele);
+                my %results = (
+                    $self->create_sample_specific_field_name('vaf', $sample_name) => $vafs{$alt_allele},
+                    $self->create_sample_specific_field_name('var_count', $sample_name) =>
+                        Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_coverage_for_allele(
+                            $readcount_entry, $alt_allele, $entry->{reference_allele}
+                        ),
+                    $self->create_sample_specific_field_name('ref_count', $sample_name) =>
+                        Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_coverage_for_allele(
+                            $readcount_entry, $translated_reference_allele, 'A'
+                        ),
+                );
                 for my $field_name (keys %results) {
                     $return_values{$alt_allele}->{$field_name} = $results{$field_name};
                 }
@@ -64,22 +74,6 @@ sub _interpret_entry {
         }
     }
     return %return_values;
-}
-
-sub vaf_results {
-    my ($self, $allele, $sample_name, $readcount_entry, $entry, $vafs, $translated_reference_allele) = @_;
-
-    return (
-        $self->create_sample_specific_field_name('vaf', $sample_name) => $vafs->{$allele},
-        $self->create_sample_specific_field_name('var_count', $sample_name) =>
-            Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_coverage_for_allele(
-                $readcount_entry, $allele, $entry->{reference_allele}
-            ),
-        $self->create_sample_specific_field_name('ref_count', $sample_name) =>
-            Genome::VariantReporting::Suite::BamReadcount::VafCalculator::calculate_coverage_for_allele(
-                $readcount_entry, $translated_reference_allele, 'A'
-            ),
-    )
 }
 
 sub get_readcount_entries {

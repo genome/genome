@@ -66,7 +66,11 @@ sub _interpret_entry {
             }
             else {
                 my $translated_reference_allele = translate_ref_allele($entry->{reference_allele}, $alt_allele);
-                my %results = $self->vaf_results($alt_allele, $readcount_entry, $entry, $translated_reference_allele);
+                my %results = (
+                    $self->flatten_hash($self->per_library_vaf($entry, $readcount_entry, $alt_allele), "vaf"),
+                    $self->flatten_hash($self->per_library_coverage($readcount_entry, $alt_allele, $entry->{reference_allele}), "var_count"),
+                    $self->flatten_hash($self->per_library_coverage($readcount_entry, $translated_reference_allele, 'A'), "ref_count"),
+                );
                 for my $field_name (keys %results) {
                     $return_values{$alt_allele}->{$field_name} = $results{$field_name};
                 }
@@ -74,16 +78,6 @@ sub _interpret_entry {
         }
     }
     return %return_values;
-}
-
-sub vaf_results {
-    my ($self, $allele, $readcount_entry, $entry, $translated_reference_allele) = @_;
-
-    return (
-        $self->flatten_hash($self->per_library_vaf($entry, $readcount_entry, $allele), "vaf"),
-        $self->flatten_hash($self->per_library_coverage($readcount_entry, $allele, $entry->{reference_allele}), "var_count"),
-        $self->flatten_hash($self->per_library_coverage($readcount_entry, $translated_reference_allele, 'A'), "ref_count"),
-    )
 }
 
 sub per_library_vaf {
