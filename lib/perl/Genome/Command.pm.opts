@@ -1272,8 +1272,6 @@ $Genome::Command::OPTS_SPEC = [
     [
       'color!',
       undef,
-      'COLUMN-WIDTH=s',
-      undef,
       'config=s',
       [
         'parsed',
@@ -1334,6 +1332,15 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>subject-mapping',
     [
+      '>view',
+      [
+        'color!',
+        undef,
+        'analysis-project=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>import',
       [
         '>somatic-validation',
@@ -24207,6 +24214,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'maximum-permgen-memory=s',
         undef,
+        'read-name-regex=s',
+        'files',
         'remove-duplicates=s',
         [
           1,
@@ -37811,8 +37820,6 @@ $Genome::Command::OPTS_SPEC = [
       [
         'color!',
         undef,
-        'COLUMN-WIDTH=s',
-        undef,
         'config=s',
         [
           'parsed',
@@ -37873,6 +37880,15 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>subject-mapping',
       [
+        '>view',
+        [
+          'color!',
+          undef,
+          'analysis-project=s',
+          undef,
+          'help!',
+          undef
+        ],
         '>import',
         [
           '>somatic-validation',
