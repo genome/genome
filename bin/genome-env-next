@@ -209,6 +209,12 @@ function append_submodule {
 }
 
 function set_defaults {
+    if test -z "$DISABLE_MIGRATIONS"
+    then
+        SQITCH_GENOME='sqitch/genome'
+        append_submodule $SQITCH_GENOME
+    fi
+
     if test -z "$DB_SNAPSHOT_NAME"
     then
         DB_SNAPSHOT_NAME="77c3c2a"
@@ -378,8 +384,8 @@ function setup_test_db {
             SQITCH_TMP="$(mktemp -d -t genome-env-sqitch-XXXXX)"
             trap "rm -rf \"$SQITCH_TMP\"" EXIT
 
-            cp -a "$BASE_DIR/sqitch/gms" "$SQITCH_TMP"
-            cd "$SQITCH_TMP/gms"
+            cp -aT "$BASE_DIR/$SQITCH_GENOME" "$SQITCH_TMP"
+            cd "$SQITCH_TMP"
             $SQITCH config core.pg.host     $TESTDBSERVER_DB_HOST
             $SQITCH config core.pg.username $TESTDBSERVER_DB_USER
             $SQITCH config core.pg.password $TESTDBSERVER_DB_PASS
