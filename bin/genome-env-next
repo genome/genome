@@ -359,6 +359,11 @@ function rebuild_meta_db {
 # on it, and provides shell variables used to configure GMSchema later.
 function setup_test_db {
     local BASE_DIR="$1"
+    if test -n "$DISABLE_DB"
+    then
+        return
+    fi
+
     echo "=> Creating test database..."
     eval "$($TESTDB database create --bash --owner $TESTDBSERVER_DB_USER --based-on $DB_SNAPSHOT_NAME)"
     if test -z "$TESTDBSERVER_DB_NAME"
