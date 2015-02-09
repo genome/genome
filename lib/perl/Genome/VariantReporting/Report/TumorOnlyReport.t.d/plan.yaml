@@ -8,4 +8,5 @@ reports:
             nhlbi: {}
             "1kg": {}
             vaf:
-                sample_name: sample_name
+                sample_names:
+                    - sample_name

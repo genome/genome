@@ -46,7 +46,7 @@ sub name {
 }
 
 sub required_interpreters {
-    return qw(position vep info-tags variant-type min-coverage min-coverage-observed max-vaf-observed variant-callers many-samples-vaf rsid caf);
+    return qw(position vep info-tags variant-type min-coverage min-coverage-observed max-vaf-observed variant-callers vaf per-library-vaf rsid caf);
 }
 
 sub headers {
