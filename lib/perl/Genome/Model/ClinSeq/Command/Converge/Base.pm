@@ -470,8 +470,8 @@ sub getModelsBuilds{
   if (defined($builds_ref)){$opt_count++;}
   if (defined($models_ref)){$opt_count++;}
   if (defined($model_group_id)){$opt_count++;}
-  if ($opt_count == 0){die Genome::Model->error_message("\n\nYou must specify at least one option for &getModels (Coverge.pm)\n\n"); }
-  if ($opt_count > 1){die Genome::Model->error_message("\n\nYou must specify only one option for &getModels (Coverge.pm)\n\n"); }
+  if ($opt_count == 0){die $self->error_message("You must specify at least one option for &getModels (Coverge.pm)"); }
+  if ($opt_count > 1){die $self->error_message("You must specify only one option for &getModels (Coverge.pm)"); }
 
   #Determine the target number of models/builds
   my $target_count = 0;
@@ -483,7 +483,7 @@ sub getModelsBuilds{
     my @models = $mg->models;
     $target_count = scalar(@models);
   }
-  if ($verbose){Genome::Model->debug_message("\nSearching for $target_count models/builds");}
+  if ($verbose){$self->debug_message("\nSearching for $target_count models/builds");}
 
   #Always returns model AND build objects for convenience
   #If a model-group ID or array of model IDs is provided, get the last successful build for each and return that
@@ -504,7 +504,7 @@ sub getModelsBuilds{
         push(@builds, $b);
         push(@models, $m);
       }else{
-        Genome::Model->debug_message("\n\tWarning - build $build_id has a status of $status");
+        $self->debug_message("\n\tWarning - build $build_id has a status of $status");
       }
     }
   }
@@ -520,10 +520,10 @@ sub getModelsBuilds{
           push(@builds, $b);
           push(@models, $m);
         }else{
-          Genome::Model->warning_message("\n\tWarning - build $build_id has a status of $status");
+          $self->warning_message("\n\tWarning - build $build_id has a status of $status");
         }
       }else{
-        Genome::Model->warning_message("\n\tWarning - model $model_id has no complete builds");
+        $self->warning_message("\n\tWarning - model $model_id has no complete builds");
       }
     }
   }
@@ -539,10 +539,10 @@ sub getModelsBuilds{
         if ($status eq "Succeeded"){
           push(@builds, $b);
         }else{
-          Genome::Model->warning_message("\n\tWarning - build $build_id has a status of $status");
+          $self->warning_message("\n\tWarning - build $build_id has a status of $status");
         }
       }else{
-        Genome::Model->warning_message("\n\tWarning - model $model_id has no complete builds");
+        $self->warning_message("\n\tWarning - model $model_id has no complete builds");
       }
     }
   }
@@ -557,7 +557,7 @@ sub getModelsBuilds{
   if ($pp_count > 1){
     my @pp = keys %pp_list;
     my $pp_list = join(",", @pp);
-    Genome::Model->warning_message("\n\nWarning - more than one processing-profile is being used by this group of models. PP list: $pp_list");
+    $self->warning_message("Warning - more than one processing-profile is being used by this group of models. PP list: $pp_list");
   }
 
   #Summarize builds found
@@ -567,10 +567,10 @@ sub getModelsBuilds{
   #Allow the user to return an incomplete list, but only if they specify this option...
   unless ($partial){
     unless ($b_count == $target_count && $m_count == $target_count){
-      die Genome::Model->error_message("\n\tDid not find the correct number of successful models/builds");
+      die $self->error_message("Did not find the correct number of successful models/builds");
     }
   }
-  if ($verbose){Genome::Model->debug_message("\n\tFound $b_count builds and $m_count models");}
+  if ($verbose){$self->debug_message("\n\tFound $b_count builds and $m_count models");}
 
   #Build a hash that groups each model/build pair together
   my %mb;
@@ -722,7 +722,7 @@ sub parseKnownDruggableFiles{
   my %args = @_;
   my $files = $args{'-files'};
   my @event_types = @{$args{'-event_types'}};
-  $self->status_message("\n\nParsing files containing known drug-gene interaction data");
+  $self->status_message("Parsing files containing known drug-gene interaction data");
 
   #Store all results organized by gene and separately by drug-gene interaction and separately by patient
   my %result;
@@ -740,7 +740,7 @@ sub parseKnownDruggableFiles{
       foreach my $data_type (sort keys %{$files->{$patient}->{$event_type}}){
         my $drug_file_path = $files->{$patient}->{$event_type}->{$data_type}->{drug_file_path};
         $self->status_message("\n\t\t$drug_file_path");
-        open (IN, "$drug_file_path") || die "\n\nCould not open gene-drug interaction file: $drug_file_path\n\n";
+        open (IN, "$drug_file_path") || die "Could not open gene-drug interaction file: $drug_file_path";
         my $header = 1;
         my %columns;
         while(<IN>){
@@ -855,7 +855,7 @@ sub getFiles{
   my $builds = $args{'-builds'};
   my %files;
 
-  $self->status_message("\n\nGet annotation files and drug-gene interaction files from these builds");
+  $self->status_message("Get annotation files and drug-gene interaction files from these builds");
   foreach my $b (@$builds){
     my $build_directory = $b->data_directory;
     my $subject_common_name = $b->subject->common_name;
@@ -865,7 +865,7 @@ sub getFiles{
 
     #If the subject name is not defined, die
     unless ($subject_name){
-      die $self->error_message("\n\nCould not determine subject name for build: $build_id\n\n");
+      die $self->error_message("Could not determine subject name for build: $build_id");
     }
 
     my $final_name = "Unknown";
@@ -893,7 +893,7 @@ sub getFiles{
       $files{$final_name}{snv}{exome}{annot_file_path} =
         $exome_snv_annot;
     } elsif (not (-e $exome_snv_dgidb and -e $wgs_snv_dgidb)) {
-      $self->warning_message("\n\nCould not find snv drug-gene file.");
+      $self->warning_message("Could not find snv drug-gene file.");
     }
 
     #2.) Look for InDel files
@@ -913,7 +913,7 @@ sub getFiles{
       $files{$final_name}{indel}{wgs}{annot_file_path} =
         $wgs_indel_annot;
     } elsif (not (-e $exome_indel_dgidb and -e $wgs_indel_dgidb)) {
-      $self->warning_message("\n\ncould not find indel drug-gene file.");
+      $self->warning_message("could not find indel drug-gene file.");
     }
 
     #3.) Look for CNV gain files
@@ -925,9 +925,9 @@ sub getFiles{
       $files{$final_name}{cnv_gain}{wgs}{annot_file_path} =
         $wgs_cnv_annot;
     } else{
-      $self->warning_message("\n\nCould not find CNV drug-gene file for "
+      $self->warning_message("Could not find CNV drug-gene file for "
         . "$final_name ($subject_name - $subject_common_name) in:" .
-        "\n\t$build_directory\n\n");
+        "\n\t$build_directory");
     }
 
     #4.) Look for Cufflinks RNAseq outlier expression files
@@ -939,7 +939,7 @@ sub getFiles{
       $files{$final_name}{rna_cufflinks_absolute}{rnaseq}{drug_file_path} =
         $rna_cufflinks_dgidb;
     }else{
-      $self->warning_message("\n\nCould not find Cufflinks drug-gene file");
+      $self->warning_message("Could not find Cufflinks drug-gene file");
     }
 
     #5.) Look for Tophat junction RNAseq outlier expression files
@@ -951,7 +951,7 @@ sub getFiles{
       $files{$final_name}{rna_tophat_absolute}{rnaseq}{annot_file_path} =
         $rna_tophat_annot;
     }else{
-      $self->warning_message("\n\nCould not find Tophat drug-gene file");
+      $self->warning_message("Could not find Tophat drug-gene file");
     }
   }
 

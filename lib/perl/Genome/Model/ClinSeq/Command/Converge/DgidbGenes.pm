@@ -103,8 +103,8 @@ sub generate_genefamily_patient_events {
   }
   my $et_header_s = join("\t", @et_header);
   my $gene_family_table = $outdir . "/GeneFamilyTable.tsv";
-  $self->status_message("\n\nWriting (gene family -> patient events <- gene family member) table to: $gene_family_table");
-  open (OUT, ">$gene_family_table") || die "\n\nCould not open output file: $gene_family_table\n\n";
+  $self->status_message("Writing (gene family -> patient events <- gene family member) table to: $gene_family_table");
+  open (OUT, ">$gene_family_table") || die "\nCould not open output file: $gene_family_table";
   print OUT "gene_group\tgene_group_size\tgrand_patient_count\tgrand_patient_list\tgrand_gene_count\tgrand_gene_list\tgrand_hit_count\t$et_header_s\n";
   my $sublists = $symbol_list_names->{sublists};
   my $target_groups = $sublists->{$gene_groups}->{groups};
@@ -184,8 +184,8 @@ sub generate_interaction_patient_events {
   my $et_header_s = join("\t", @et_header);
 
   #B.) Generate Interaction -> patient events <- known drug table (only the one drug of the interaction)
-  $self->status_message("\n\nWriting (interaction -> patient events <- known drug) table to: $known_interaction_table");
-  open (OUT, ">$known_interaction_table") || die "\n\nCould not open output file: $known_interaction_table\n\n";
+  $self->status_message("Writing (interaction -> patient events <- known drug) table to: $known_interaction_table");
+  open (OUT, ">$known_interaction_table") || die "\nCould not open output file: $known_interaction_table";
   print OUT "gene\tgrand_patient_count\tgrand_patient_list\tdrug_count\tdrug_list\t$et_header_s\n";
   foreach my $interaction (sort keys %{$k_i}){
     my $mapped_gene_name = $k_i->{$interaction}->{gene_name};
@@ -233,8 +233,8 @@ sub generate_gene_individual_patients_events {
   }
   my $pt_header_s = join("\t", @pt_header);
   my $known_gene_drug_table2 = $outdir . "/KnownGeneDrugTable_IndividualPatients.tsv";
-  $self->status_message("\n\nWriting (gene -> patient events <- known drugs) table to: $known_gene_drug_table2");
-  open (OUT, ">$known_gene_drug_table2") || die "\n\nCould not open output file: $known_gene_drug_table2\n\n";
+  $self->status_message("Writing (gene -> patient events <- known drugs) table to: $known_gene_drug_table2");
+  open (OUT, ">$known_gene_drug_table2") || die "\nCould not open output file: $known_gene_drug_table2";
   print OUT "gene\tgrand_patient_count\tgrand_patient_list\tdrug_count\tdrug_list\tdrug_list_abr\tdrug_classes\t$pt_header_s\tsnv_aa_changes\tdb_source\tdb_filter\n";
   foreach my $gene (sort keys %{$k_g}){
     my $grand_patient_list = $k_g->{$gene}->{grand_list};
@@ -308,8 +308,8 @@ sub generate_gene_patient_events {
   }
   my $et_header_s = join("\t", @et_header);
   my $known_gene_drug_table1 = $outdir . "/KnownGeneDrugTable_PatientCounts.tsv";
-  $self->status_message("\n\nWriting (gene -> patient events <- known drugs) table to: $known_gene_drug_table1");
-  open (OUT, ">$known_gene_drug_table1") || die "\n\nCould not open output file: $known_gene_drug_table1\n\n";
+  $self->status_message("Writing (gene -> patient events <- known drugs) table to: $known_gene_drug_table1");
+  open (OUT, ">$known_gene_drug_table1") || die "\nCould not open output file: $known_gene_drug_table1";
   print OUT "gene\tgrand_patient_count\tgrand_patient_list\tdrug_count\tdrug_list\tdrug_list_abr\tdrug_classes\t$et_header_s\tsnv_aa_changes\tdb_source\tdb_filter\n";
   foreach my $gene (sort keys %{$k_g}){
     my $grand_patient_list = $k_g->{$gene}->{grand_list};
@@ -387,10 +387,10 @@ sub parsePotentiallyDruggableFiles{
   my $master_group_list = $symbol_list_names->{master_group_list};
   my $sublists = $symbol_list_names->{sublists};
   unless (defined($sublists->{$gene_groups})){
-    die $self->error_message("\n\nCould not find a gene sublist with the name: $gene_groups\n\n");
+    die $self->error_message("Could not find a gene sublist with the name: $gene_groups");
   }
   my $target_groups = $sublists->{$gene_groups}->{groups};
-  $self->status_message("\n\nParsing files containing potentially druggable genes data");
+  $self->status_message("Parsing files containing potentially druggable genes data");
 
   #Store all results organized by gene and separately by gene family (e.g. kinases, ion channels etc.)
   my %result;
@@ -413,7 +413,7 @@ sub parsePotentiallyDruggableFiles{
         next;
       }
       $self->status_message("\n$patient\t$event_type\t\t$annot_file_path");
-      open (IN, "$annot_file_path") || die "\n\nCould not open annotation file: $annot_file_path\n\n";
+      open (IN, "$annot_file_path") || die "\nCould not open annotation file: $annot_file_path";
       my $header = 1;
       my %columns;
       while(<IN>){
