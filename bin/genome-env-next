@@ -65,6 +65,8 @@ function main {
     parse_opts "$@"
     shift $((OPTIND-1))
 
+    prepare_submodules
+
     validate_bash
 
     rebuild_meta_db
@@ -196,9 +198,17 @@ function assert_dir {
     fi
 }
 
-function set_defaults {
-    local SUBMODULES=()
+declare -a SUBMODULES
+function append_submodule {
+    if test "${#SUBMODULES}" -gt 0
+    then
+        SUBMODULES=("${SUBMODULES[@]}" "$@")
+    else
+        SUBMODULES=("$@")
+    fi
+}
 
+function set_defaults {
     if test -z "$DB_SNAPSHOT_NAME"
     then
         DB_SNAPSHOT_NAME="77c3c2a"
@@ -210,7 +220,7 @@ function set_defaults {
         then
             fatal $OPT_ERR "-u must be specified if not in a Genome repo"
         fi
-        SUBMODULES=(ur)
+        append_submodule ur
         UR_REPO="$TOP/ur"
     fi
 
@@ -220,13 +230,8 @@ function set_defaults {
         then
             fatal $OPT_ERR "-w must be specified if not in a Genome repo"
         fi
-        SUBMODULES=("${SUBMODULES[@]}" workflow)
+        append_submodule workflow
         WF_REPO="$TOP/workflow"
-    fi
-
-    if test "${#SUBMODULES}" -gt 0
-    then
-        prepare_submodules "${SUBMODULES[@]}"
     fi
 }
 
@@ -265,13 +270,18 @@ function __quiet_git {
 # prepare_submodules tries to (essentially) do a fast-forward update on
 # submodules when the submodules are used as the default repo.
 function prepare_submodules {
+    if test "${#SUBMODULES}" -eq 0
+    then
+        return
+    fi
+
     (
         log.info -e "\n=> Preparing Submodules..."
         cd "$($GIT rev-parse --show-cdup)"
 
-        __quiet_git submodule sync "$@"
+        __quiet_git submodule sync "${SUBMODULES[@]}"
 
-        for submodule in "$@"
+        for submodule in "${SUBMODULES[@]}"
         do
             log.info -n "   $submodule: "
             if $GIT submodule status $submodule | $GREP -q ^-
