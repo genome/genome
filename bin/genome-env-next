@@ -379,7 +379,7 @@ function setup_test_db {
 
     if test -z "$DISABLE_MIGRATIONS"
     then
-        echo "=> Migrating test database..."
+        echo -n "=> Migrating test database..."
         (
             SQITCH_TMP="$(mktemp -d -t genome-env-sqitch-XXXXX)"
             trap "rm -rf \"$SQITCH_TMP\"" EXIT
@@ -390,8 +390,11 @@ function setup_test_db {
             $SQITCH config core.pg.username $TESTDBSERVER_DB_USER
             $SQITCH config core.pg.password $TESTDBSERVER_DB_PASS
             $SQITCH config core.pg.db_name  $TESTDBSERVER_DB_NAME
-            if ! $SQITCH status | grep -q 'Nothing to deploy'
+            if $SQITCH status | grep -q 'Nothing to deploy'
             then
+                echo " nothing to deploy"
+            else
+                echo ""
                 $SQITCH deploy
             fi
         )
