@@ -869,8 +869,10 @@ sub getFiles{
     }
 
     my $final_name = "Unknown";
-    if ($subject_name){$final_name = $subject_name;}
-    if ($subject_common_name){
+    if ($subject_name) {
+      $final_name = $subject_name;
+    }
+    if ($subject_common_name and $subject_name) {
       $final_name = $subject_common_name . "_" . $subject_name;
     }
     $self->status_message("\n\t$final_name\t$build_id\t$build_directory");
