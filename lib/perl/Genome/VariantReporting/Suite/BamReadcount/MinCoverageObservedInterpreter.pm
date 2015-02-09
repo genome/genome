@@ -8,7 +8,12 @@ use Scalar::Util qw( looks_like_number );
 
 class Genome::VariantReporting::Suite::BamReadcount::MinCoverageObservedInterpreter {
     is => ['Genome::VariantReporting::Framework::Component::Interpreter', 'Genome::VariantReporting::Framework::Component::WithManySampleNames'],
-    has => [],
+    has_transient_optional => [
+        vaf_interpreter => {
+            is => 'Genome::VariantReporting::Suite::BamReadcount::VafInterpreter',
+            is_structural => 1,
+        },
+    ],
     doc => 'Calculate the minimum coverage (ref_count+var_count) between all the samples specified',
 };
 
@@ -31,10 +36,7 @@ sub _interpret_entry {
     my $entry = shift;
     my $passed_alt_alleles = shift;
 
-    my $interpreter = Genome::VariantReporting::Suite::BamReadcount::VafInterpreter->create(
-        sample_names => [$self->sample_names],
-        sample_name_labels => $self->sample_name_labels,
-    );
+    my $interpreter = $self->vaf_interpreter;
     my %result = $interpreter->interpret_entry($entry, $passed_alt_alleles);
 
     my %coverages;
@@ -56,6 +58,19 @@ sub _interpret_entry {
         }
     }
     return %return_values;
+}
+
+sub vaf_interpreter {
+    my $self = shift;
+
+    unless (defined($self->__vaf_interpreter)) {
+        my $vaf_interpreter = Genome::VariantReporting::Suite::BamReadcount::VafInterpreter->create(
+            sample_names => [$self->sample_names],
+            sample_name_labels => $self->sample_name_labels,
+        );
+        $self->__vaf_interpreter($vaf_interpreter);
+    }
+    return $self->__vaf_interpreter;
 }
 
 1;
