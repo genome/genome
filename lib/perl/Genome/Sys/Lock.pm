@@ -19,7 +19,7 @@ resource.
 
 =item scope
 
-C<scope> is the scope to which the lock is bound.  See C<scope()> for valid scopes.
+C<scope> is the scope to which the lock is bound.  See C<scopes()> for valid scopes.
 
 =item block_sleep
 
@@ -131,7 +131,7 @@ resource.
 
 =item scope
 
-C<scope> is the scope to which the lock is bound.  See C<scope()> for valid scopes.
+C<scope> is the scope to which the lock is bound.  See C<scopes()> for valid scopes.
 
 =back
 
