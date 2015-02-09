@@ -364,7 +364,7 @@ function setup_test_db {
     then
         echo "=> Migrating test database..."
         (
-            SQITCH_TMP="$(mktemp -d)"
+            SQITCH_TMP="$(mktemp -d -t genome-env-sqitch-XXXXX)"
             trap "rm -rf \"$SQITCH_TMP\"" EXIT
 
             cp -a "$BASE_DIR/sqitch/gms" "$SQITCH_TMP"
