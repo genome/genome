@@ -60,7 +60,7 @@ sub execute {
   my $k_i = $k_result->{'interactions'}; #Known druggable gene interactions
   my $data_type_sum = $k_result->{'data_type_sum'};
   my (%totals, %data_type_sum_collapsed);
-  $self->write_summary1(\%totals, $data_type_sum, \%data_type_sum_collapsed, $k_g);
+  $self->write_summary(\%totals, $data_type_sum, \%data_type_sum_collapsed, $k_g);
   $self->write_totals_genes(\%totals);
   return 1;
 }
@@ -93,7 +93,7 @@ sub write_totals_genes {
 }
 
 #Print summary of druggable genes broken down by event and data type
-sub write_summary1 {
+sub write_summary {
   my $self = shift;
   my $totals = shift;
   my $data_type_sum = shift;
