@@ -32,6 +32,9 @@ function help {
 
     -M    Disable migration of database.
 
+    -m sqitch_repo
+          The path to a genome-sqitch repo to use instead of the default.
+
     -D    Disable configuration of database.
 
     -d db_snapshot_name
@@ -61,7 +64,7 @@ function main {
     fi
 
     local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF \
-        DB_SNAPSHOT_NAME UR_REPO VERBOSE WF_REPO
+        DB_SNAPSHOT_NAME SQITCH_REPO UR_REPO VERBOSE WF_REPO
     parse_opts "$@"
     shift $((OPTIND-1))
 
@@ -108,7 +111,7 @@ function validate_bash {
 }
 
 function parse_opts {
-    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" UR_REPO="" WF_REPO=""
+    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" SQITCH_REPO="" UR_REPO="" WF_REPO=""
 
     local opts
     while getopts :hMDd:Uu:vWw: opts "$@"
@@ -120,6 +123,9 @@ function parse_opts {
                 ;;
             M)
                 DISABLE_MIGRATIONS="TRUE"
+                ;;
+            m)
+                SQITCH_REPO="$OPTARG"
                 ;;
             D)
                 DISABLE_DB="TRUE"
@@ -167,6 +173,11 @@ function validate_opts {
         fatal $OPT_ERR "cannot use -U and -u options together"
     fi
 
+    if test -n "$DISABLE_MIGRATIONS" -a -n "$SQITCH_REPO"
+    then
+        fatal $OPT_ERR "cannot use -M and -m options together"
+    fi
+
     if test -n "$DISABLE_WF" -a -n "$WF_REPO"
     then
         fatal $OPT_ERR "cannot use -W and -w options together"
@@ -178,6 +189,11 @@ function validate_opts {
         then
             fatal $OPT_ERR "invalid snapshot name -- $DB_SNAPSHOT_NAME"
         fi
+    fi
+
+    if test -n "$SQITCH_REPO"
+    then
+        assert_dir "-m" "$SQITCH_REPO"
     fi
 
     if test -n "$UR_REPO"
@@ -209,10 +225,11 @@ function append_submodule {
 }
 
 function set_defaults {
-    if test -z "$DISABLE_MIGRATIONS"
+    if test -z "$DISABLE_MIGRATIONS" -a -z "$SQITCH_REPO"
     then
         SQITCH_GENOME='sqitch/genome'
         append_submodule $SQITCH_GENOME
+        SQITCH_REPO="$TOP/$SQITCH_GENOME"
     fi
 
     if test -z "$DB_SNAPSHOT_NAME"
@@ -384,7 +401,7 @@ function setup_test_db {
             SQITCH_TMP="$(mktemp -d -t genome-env-sqitch-XXXXX)"
             trap "rm -rf \"$SQITCH_TMP\"" EXIT
 
-            cp -aT "$BASE_DIR/$SQITCH_GENOME" "$SQITCH_TMP"
+            cp -aT "$SQITCH_REPO" "$SQITCH_TMP"
             cd "$SQITCH_TMP"
             $SQITCH config core.pg.host     $TESTDBSERVER_DB_HOST
             $SQITCH config core.pg.username $TESTDBSERVER_DB_USER
