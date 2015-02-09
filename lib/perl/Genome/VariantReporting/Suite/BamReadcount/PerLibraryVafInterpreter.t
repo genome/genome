@@ -142,16 +142,4 @@ subtest "long indel" => sub {
     is_deeply(\%result, \%expected, "Values are as expected");
 };
 
-subtest "libraries don't match" => sub {
-    for my $incorrect_library_names ([qw(Solexa-135853)], [qw(Solexa-135854 Solexa-135853 Solexa-135852)], [qw(nonexistent_library)]) {
-        my $interpreter = $pkg->create(
-            sample_names => ["S1"],
-            library_names => $incorrect_library_names,
-        );
-        lives_ok(sub {$interpreter->validate}, "Interpreter validates");
-        my $entry = create_default_entry();
-        dies_ok(sub{$interpreter->interpret_entry($entry, ['G'])}, "Libraries don't match fails ok");
-    }
-};
-
 done_testing;
