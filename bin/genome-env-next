@@ -156,12 +156,12 @@ function parse_opts {
 function validate_opts {
     if test -n "$DISABLE_DB" -a -n "$DISABLE_MIGRATIONS"
     then
-        fatal $OPT_ERR "cannot use -S and -M options together"
+        fatal $OPT_ERR "cannot use -D and -M options together"
     fi
 
     if test -n "$DISABLE_DB" -a -n "$DB_SNAPSHOT_NAME"
     then
-        fatal $OPT_ERR "cannot use -S and -s options together"
+        fatal $OPT_ERR "cannot use -D and -d options together"
     fi
 
     if test -n "$DISABLE_UR" -a -n "$UR_REPO"
