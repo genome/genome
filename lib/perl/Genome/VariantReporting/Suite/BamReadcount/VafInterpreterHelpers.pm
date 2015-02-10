@@ -8,9 +8,11 @@ use Exporter 'import';
 
 our @EXPORT_OK = qw(
     many_samples_field_descriptions
+    per_sample_field_descriptions
     per_sample_vaf_headers
     per_library_vaf_headers
     many_libraries_field_descriptions
+    translate_ref_allele
 );
 
 sub vaf_fields {
@@ -149,6 +151,16 @@ sub annotate_headers {
         push @annotated_headers, \%annotated_header;
     }
     return @annotated_headers;
+}
+
+sub translate_ref_allele {
+    my ($ref, $alt) = @_;
+    if (Genome::VariantReporting::Suite::BamReadcount::VafCalculator::is_deletion($ref, $alt)) {
+        return substr($ref, 1, 1);
+    }
+    else {
+        return substr($ref, 0, 1);
+    }
 }
 
 1;

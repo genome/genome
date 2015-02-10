@@ -34,5 +34,6 @@ reports:
             position: {}
             'flanking-regions': {}
             vaf:
-                sample_name: tumor
+                sample_names:
+                    - tumor
             vep: {}

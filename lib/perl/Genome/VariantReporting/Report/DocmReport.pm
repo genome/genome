@@ -3,7 +3,6 @@ package Genome::VariantReporting::Report::DocmReport;
 use strict;
 use warnings;
 use Genome;
-use Genome::VariantReporting::Suite::BamReadcount::VafInterpreter;
 use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(
     per_sample_vaf_headers
     per_library_vaf_headers
@@ -47,7 +46,7 @@ sub name {
 }
 
 sub required_interpreters {
-    return qw(position many-samples-vaf);
+    return qw(position vaf per-library-vaf);
 }
 
 sub headers {

@@ -260,8 +260,9 @@ sub do_shellcmd_with_stdout {
     catch {
         $self->error_message('Caught exception from shellcmd: '. $_);
         my $err = Genome::Sys->open_file_for_reading($stderr);
-        $self->error_message('STDERR: '. $_) while $err->getline;
-        $self->error_message($_) while $err->getline;
+        while (my $line = $err->getline) {
+            $self->error_message("STDERR: $line");
+        }
         return;
     };
 }

@@ -63,4 +63,5 @@ reports:
             nhlbi: {}
             '1kg': {}
             vaf:
-                sample_name: tumor
+                sample_names:
+                    - tumor

@@ -28,9 +28,10 @@ sub required_arch_os { 'x86_64' }
 # LSF resources required to run the alignment.
 sub required_rusage {
     my $self = shift;
+    my %params = @_;
     my $cores = 4; # default to 4, although decomposed_aligner_params should always include "-p N" even if the processing-profile does not
 
-    my $params = $self->decomposed_aligner_params();
+    my $params = $self->decomposed_aligner_params($params{aligner_params});
     if ($params =~ /-p\s+(\d+)/) {
         $cores = $1;
     }

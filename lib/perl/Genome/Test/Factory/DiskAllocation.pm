@@ -38,7 +38,12 @@ my $overloaded_archiving_methods;
 sub overload_archiving_methods {
     return 1 if $overloaded_archiving_methods;
     Sub::Install::reinstall_sub({
-            code => sub{ $_[0]->{_mount_path} = $_[0]->mount_path; $_[0]->mount_path( archived_volume()->mount_path ); return 1; },
+            code => sub{
+                $_[0]->{_mount_path} = $_[0]->mount_path;
+                $_[0]->mount_path( archived_volume()->mount_path );
+                $_[0]->status('archived');
+                return 1;
+            },
             into => 'Genome::Disk::Allocation',
             as   => 'archive',
         });
@@ -46,6 +51,7 @@ sub overload_archiving_methods {
     Sub::Install::reinstall_sub({
             code => sub{ 
                 $_[0]->mount_path( $_[0]->{_mount_path} // tmp_volume()->mount_path );
+                $_[0]->status('active');
                 return 1;
             },
             into => 'Genome::Disk::Allocation',

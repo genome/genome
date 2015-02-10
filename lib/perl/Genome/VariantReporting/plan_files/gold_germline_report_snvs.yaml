@@ -60,7 +60,10 @@ reports:
                     - Varscan
                     - Samtools
                 sample_name: normal
-            'many-samples-vaf':
+            vaf:
+                sample_names:
+                    - normal
+            'per-library-vaf':
                 sample_names:
                     - normal
                 library_name_labels: library_name_labels
@@ -150,7 +153,11 @@ reports:
                     - Varscan
                     - Samtools
                 sample_name: normal
-            'many-samples-vaf':
+            vaf:
+                sample_name_labels: sample_name_labels
+                sample_names:
+                    - normal
+            'per-library-vaf':
                 sample_name_labels: sample_name_labels
                 sample_names:
                     - normal
