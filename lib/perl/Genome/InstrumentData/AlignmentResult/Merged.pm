@@ -8,6 +8,8 @@ use File::Find::Rule qw();
 use File::stat;
 use File::Path 'rmtree';
 use List::MoreUtils qw{ uniq };
+use List::Util qw(shuffle);
+use Try::Tiny qw(try catch finally);
 
 use Genome;
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
@@ -153,8 +155,10 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return unless ($self);
 
+    $self->_lock_per_lane_alignment();
     my @temp_allocations = ();
-    my $rv = eval {
+
+    try {
         #TODO In a future version collect relevant alignments from other merged alignment results when available
         $self->debug_message('Collecting alignments for merger...');
         my @alignments = $self->collect_individual_alignments;
@@ -222,22 +226,20 @@ sub create {
         for my $alignment (@alignments) {
             $alignment->add_user(user => $self, label => 'uses');
         }
-
-        return 1;
-    };
-
-    map{$_->delete}@temp_allocations;
-
-    if (my $error = $@) {
-        $tx->rollback();
-        die $error;
-    } elsif ($rv ne 1) {
-        $tx->rollback();
-        $self->error_message('Unexpected return value: ' . $rv);
-        die $self->error_message;
-    } else {
-        $tx->commit();
     }
+    catch {
+        $tx->rollback();
+        die $self->error_message('Merge failed due to error: ' . $_);
+    }
+    finally {
+        for my $allocation (@temp_allocations) {
+            $allocation->delete;
+        }
+        unless ($_) {
+            $tx->commit();
+            $self->debug_message('Merge done');
+        }
+    };
 
     $self->resize_disk_allocation;
 
@@ -289,13 +291,18 @@ sub _get_temp_allocation {
     my ($self, $alignment) = @_;
     return Genome::Disk::Allocation->create(
         disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
-        allocation_path     => 'merged/recreated_per_lane_bam/'.$alignment->id,
+        allocation_path     => 'merged/recreated_per_lane_bam/'.$alignment->id.'_'._get_uuid_string(),
         kilobytes_requested => Genome::Sys->disk_usage_for_path($self->output_dir),
         owner_class_name    => 'Genome::Sys::User',
         owner_id            => Genome::Sys->username,
     );
 }
 
+sub _get_uuid_string {
+    my $ug = Data::UUID->new();
+    my $uuid = $ug->create();
+    return $ug->to_string($uuid);
+}
 
 sub collect_individual_alignments {
     my $self = shift;
@@ -783,6 +790,35 @@ sub resize_disk_allocation {
         $self->output_dir($self->_disk_allocation->absolute_path); #update if was moved
     }
     return 1;
+}
+
+
+sub _lock_per_lane_alignment {
+    my $self = shift;
+
+    for my $alignment ($self->collect_individual_alignments) {
+        unless ($alignment->get_merged_alignment_results) {
+            unless ($ENV{UR_DBI_NO_COMMIT}) {
+                my $id = $alignment->id;
+                my $lock_var = 'genome_instrument_data_alignment_result-merged-per-lane-'.$id.'/lock';
+                my $lock = Genome::Sys->lock_resource(
+                    resource_lock => $lock_var,
+                    scope         => 'site',
+                    max_try       => 288, # Try for 48 hours every 10 minutes
+                    block_sleep   => 600,
+                );
+
+                die "Unable to acquire the lock for per lane alignment $id !" unless $lock;
+
+                UR::Context->current->add_observer(
+                    aspect   => 'commit',
+                    callback => sub {
+                        Genome::Sys->unlock_resource(resource_lock => $lock);
+                    }
+                );
+            }
+        }
+    }
 }
 
 1;

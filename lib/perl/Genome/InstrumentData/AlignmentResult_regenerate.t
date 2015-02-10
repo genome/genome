@@ -86,14 +86,13 @@ subtest 'test per lane bam removal and recreation' => sub {
     ok(-s $ar2_header, "$per_lane_header copied over ok");
 
     my $temp_allocation_dir = Genome::Sys->create_temp_directory();
-    my $owner = Genome::Sys::User->create(
-        email => 'someone@somewhere.org',
-        name => 'Fake McFakerston'
-    );
+    my $owner = Genome::Sys::User->get(username=>"apipe-tester");
+
     my $temp_allocation = $allocation_class->generate_obj(
         mount_path => $temp_allocation_dir,
         owner => $owner,
     );
+
     is_deeply([$ar2->recreated_alignment_bam_file_paths(disk_allocation => $temp_allocation)], [File::Spec->join($ar2->output_dir, $per_lane_bam)], 'AR2 recreated_alignment_bam_file_paths exist ok');
 
     for my $extension qw(.bam .bam.bai) {
