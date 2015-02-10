@@ -45,8 +45,6 @@ function help {
     -u ur_repo
           The path to a UR repo to use instead of the default.
 
-    -v    Enable verbose status messages.
-
     -W    Disable configuration of Workflow.
 
     -w workflow_repo
@@ -64,7 +62,7 @@ function main {
     fi
 
     local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF \
-        DB_SNAPSHOT_NAME SQITCH_REPO UR_REPO VERBOSE WF_REPO
+        DB_SNAPSHOT_NAME SQITCH_REPO UR_REPO WF_REPO
     parse_opts "$@"
     shift $((OPTIND-1))
 
@@ -139,9 +137,6 @@ function parse_opts {
                 ;;
             u)
                 UR_REPO="$OPTARG"
-                ;;
-            v)
-                VERBOSE="TRUE"
                 ;;
             W)
                 DISABLE_WF="TRUE"
