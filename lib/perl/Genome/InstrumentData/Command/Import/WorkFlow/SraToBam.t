@@ -12,6 +12,7 @@ use warnings;
 use above "Genome";
 
 require File::Compare;
+require File::Spec;
 require File::Temp;
 require Genome::Utility::Test;
 require Path::Class;
@@ -36,14 +37,13 @@ my $library_name = join('-', $sample_name, 'extlibs');
 my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::SraToBam->execute(
     sra_path => "$sra_path", # stringify
     working_directory => $tempdir,
-    sample_name => $sample_name,
-    library_name => $library_name,
 );
 ok($cmd->result, "execute sra to bam");
 
+is($cmd->sra_basename, $sra_basename, 'sra_basename');
 my $bam_path = $cmd->output_bam_path;
-ok(-s $bam_path, 'bam path exists');
-is($bam_path, $sra_path.'.bam', 'bam path correctly named');
-is(File::Compare::compare($bam_path.'.flagstat', $expected_bam_path.'.flagstat'), 0, 'flagstats match');
+ok(-s $bam_path, 'output_bam_path exists');
+is($bam_path, File::Spec->join($tempdir, $sra_basename.'.bam'), 'output_bam_path correctly named');
+Genome::Utility::Test::compare_ok($bam_path.'.flagstat', $expected_bam_path.'.flagstat', 'flagstats match');
 
 done_testing();

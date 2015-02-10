@@ -342,18 +342,6 @@ sub _add_sra_to_bam_op_to_workflow {
             right_property => $right_property,
         );
     }
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'library_name',
-        right_operation => $sra_to_bam_op,
-        right_property => 'library_name',
-    );
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'sample_name',
-        right_operation => $sra_to_bam_op,
-        right_property => 'sample_name',
-    );
 
     return $sra_to_bam_op;
 }
