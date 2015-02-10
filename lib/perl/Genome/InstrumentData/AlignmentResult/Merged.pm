@@ -241,7 +241,13 @@ sub create {
         }
     };
 
-    $self->resize_disk_allocation;
+    $self->debug_message("Resizing the disk allocation...");
+    if ($self->_disk_allocation) {
+        unless (eval { $self->_disk_allocation->reallocate }) {
+            $self->warning_message("Failed to reallocate my disk allocation with id (%s). Eval returned (%s) ", $self->_disk_allocation->id, $@);
+        }
+        $self->output_dir($self->_disk_allocation->absolute_path); #update if was moved
+    }
 
     #purge per lane alignment along with its .bai and md5 files, but
     #create header files and keep flagstat files for the future use
@@ -278,7 +284,13 @@ sub create {
                 }
             }
         }
-        $self->resize_disk_allocation;
+        $self->debug_message("Resizing the disk allocation...");
+        if ($alignment->_disk_allocation) {
+            unless (eval { $alignment->_disk_allocation->reallocate }) {
+                $self->warning_message("Failed to reallocate my disk allocation with id (%s). Eval returned (%s) ", $alignment->_disk_allocation->id, $@);
+            }
+            $alignment->output_dir($alignment->_disk_allocation->absolute_path); #update if was moved
+        }
     }
 
     $self->debug_message('All processes completed.');
@@ -774,22 +786,6 @@ sub scalar_property_from_underlying_alignment_results {
     } else {
         die("Could not determine $property value for your alignments!");
     }
-}
-
-sub resize_disk_allocation {
-    my $self = shift;
-    my %params = @_;
-
-    $self->debug_message("Resizing the disk allocation...");
-    if ($self->_disk_allocation) {
-        $params{allow_reallocate_with_move} = 0;
-        $params{allow_reallocate_with_move} = 1 if $self->_disk_allocation->kilobytes_requested < 10_485_760; # 10GB
-        unless (eval { $self->_disk_allocation->reallocate(%params) }) {
-            $self->warning_message("Failed to reallocate my disk allocation with id (%s). Eval returned (%s) ", $self->_disk_allocation->id, $@);
-        }
-        $self->output_dir($self->_disk_allocation->absolute_path); #update if was moved
-    }
-    return 1;
 }
 
 
