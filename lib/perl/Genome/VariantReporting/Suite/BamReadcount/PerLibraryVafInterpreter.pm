@@ -87,7 +87,12 @@ sub flatten_hash {
     my ($self, $per_library_hash, $field_name) = @_;
     my %flattened_hash;
     for my $library_name ($self->library_names) {
-        $flattened_hash{$self->create_library_specific_field_name($field_name, $library_name)} = $per_library_hash->{$library_name};
+        if (defined($per_library_hash->{$library_name})) {
+            $flattened_hash{$self->create_library_specific_field_name($field_name, $library_name)} = $per_library_hash->{$library_name};
+        }
+        else {
+            $flattened_hash{$self->create_library_specific_field_name($field_name, $library_name)} = $self->interpretation_null_character;
+        }
     }
     return %flattened_hash;
 }
