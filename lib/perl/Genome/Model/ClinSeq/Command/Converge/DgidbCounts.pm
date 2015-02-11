@@ -69,27 +69,43 @@ sub write_totals_genes {
   my $self = shift;
   my $totals = shift;
   my $outdir = $self->outdir;
-  my $outfile2 = File::Spec->catfile(
+  my $totals_f = File::Spec->catfile(
     $outdir,
     "ClinSeq_WGS-EXOME-RNASEQ_drugabble_targets_summary_totals.txt");
-  my $outfile3 = File::Spec->catfile(
+  my $genes_f = File::Spec->catfile(
     $outdir,
     "ClinSeq_WGS-EXOME-RNASEQ_drugabble_targets_summary_genes.txt");
-  open (TOTALS, ">$outfile2") or die "can't open $outfile2 for write\n";
-  open (GENES, ">$outfile3") or die "can't open $outfile3 for write\n";
-  print TOTALS "patient\tdata_type\tdruggable_gene_count\n";
-  print GENES "patient\tdata_type\tdruggable_gene\n";
+  my @totals_header = ("patient", "data_type", "druggable_gene_count");
+  my $totals_writer = Genome::Utility::IO::SeparatedValueWriter->create(
+    output => $totals_f,
+    separator => "\t",
+    headers => \@totals_header,
+    print_headers => 1,
+  );
+  my @genes_header = ("patient", "data_type", "druggable_gene");
+  my $genes_writer = Genome::Utility::IO::SeparatedValueWriter->create(
+    output => $genes_f,
+    separator => "\t",
+    headers => \@genes_header,
+    print_headers => 1,
+  );
+  my $totals_data;
+  my $genes_data;
   foreach my $patient (sort keys %$totals){
     foreach my $data_type (sort keys %{$totals->{$patient}}){
       my $gene_count = keys %{$totals->{$patient}{$data_type}};
-      print TOTALS "$patient\t$data_type\t$gene_count\n";
+      $totals_data->{patient} = $patient;
+      $totals_data->{data_type} = $data_type;
+      $totals_data->{druggable_gene_count} = $gene_count;
+      $totals_writer->write_one($totals_data);
       foreach my $gene (sort keys %{$totals->{$patient}{$data_type}}){
-        print GENES "$patient\t$data_type\t$gene\n";
+        $genes_data->{patient} = $patient;
+        $genes_data->{data_type} = $data_type;
+        $genes_data->{druggable_gene} = $gene;
+        $genes_writer->write_one($genes_data);
       }
     }
   }
-  close TOTALS;
-  close GENES;
 }
 
 #Print summary of druggable genes broken down by event and data type
@@ -101,8 +117,14 @@ sub write_summary {
   my $k_g = shift;
   my $outdir = $self->outdir;
   my $outfile = "$outdir/ClinSeq_WGS-EXOME-RNASEQ_drugabble_targets_summary.txt";
-  open (SUMMARY, ">$outfile") or die "can't open $outfile for write\n";
-  print SUMMARY "patient\tevent_type\tdata_type\tgene\tdrug\n";
+  my @header = ("patient", "event_type", "data_type", "gene", "drug");
+  my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
+    output => $outfile,
+    separator => "\t",
+    headers => \@header,
+    print_headers => 1,
+  );
+  my $out_data;
   foreach my $patient (sort keys %{$data_type_sum}){
     foreach my $event_type (sort keys %{$data_type_sum->{$patient}}){
       foreach my $data_type (sort keys %{$data_type_sum->{$patient}->{$event_type}}){
@@ -111,7 +133,12 @@ sub write_summary {
           my %drugs = %{$k_g->{$gene}->{drug_list}};
           foreach my $drug (sort keys %drugs){
             $totals->{$patient}{$data_type}{$gene}++;
-            print SUMMARY "$patient\t$event_type\t$data_type\t$gene\t$drug\n";
+            $out_data->{patient} = $patient;
+            $out_data->{event_type} = $event_type;
+            $out_data->{data_type} = $data_type;
+            $out_data->{gene} = $gene;
+            $out_data->{drug} = $drug;
+            $writer->write_one($out_data);
             my $collapsed_string="$patient\t$event_type\t$data_type\t$gene\t$drug";
             $data_type_sum_collapsed->{$collapsed_string} = 1;
           }
@@ -119,7 +146,6 @@ sub write_summary {
       }
     }
   }
-  close SUMMARY;
   return $data_type_sum_collapsed;
 }
 
