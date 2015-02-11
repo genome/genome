@@ -45,8 +45,6 @@ function help {
     -u ur_repo
           The path to a UR repo to use instead of the default.
 
-    -v    Enable verbose status messages.
-
     -W    Disable configuration of Workflow.
 
     -w workflow_repo
@@ -64,7 +62,7 @@ function main {
     fi
 
     local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF \
-        DB_SNAPSHOT_NAME SQITCH_REPO UR_REPO VERBOSE WF_REPO
+        DB_SNAPSHOT_NAME SQITCH_REPO UR_REPO WF_REPO
     parse_opts "$@"
     shift $((OPTIND-1))
 
@@ -86,8 +84,12 @@ function main {
     do
         log.info "${MODULE}: $(genome-perl -M$MODULE -e "print \$INC{q(${MODULE}.pm)}, qq(\n)")"
     done
-    log.info "Test DB Snapshot: $DB_SNAPSHOT_NAME"
-    log.info "Test DB Name: $TESTDBSERVER_DB_NAME"
+
+    if test -z "$DISABLE_DB"
+    then
+        log.info "Test DB Snapshot: $DB_SNAPSHOT_NAME"
+        log.info "Test DB Name: $TESTDBSERVER_DB_NAME"
+    fi
     log.info ''
 
     if test "$#" -gt 0
@@ -139,9 +141,6 @@ function parse_opts {
                 ;;
             u)
                 UR_REPO="$OPTARG"
-                ;;
-            v)
-                VERBOSE="TRUE"
                 ;;
             W)
                 DISABLE_WF="TRUE"
@@ -227,7 +226,7 @@ function append_submodule {
 function set_defaults {
     if test -z "$DISABLE_MIGRATIONS" -a -z "$SQITCH_REPO"
     then
-        SQITCH_GENOME='sqitch/genome'
+        local SQITCH_GENOME='sqitch/genome'
         append_submodule $SQITCH_GENOME
         SQITCH_REPO="$TOP/$SQITCH_GENOME"
     fi
@@ -262,7 +261,7 @@ DEP_ERR=1 # 1 = dependency error
 OPT_ERR=2 # 2 = option error
 BUILD_ERR=3 # 3 = build error
 function fatal {
-    EXIT="$1"
+    local EXIT="$1"
     shift
     log.error "$@"
     exit $EXIT
@@ -281,8 +280,8 @@ function log.info {
 function __quiet_git {
     (
         set +o errexit
-        OUT="$($GIT "$@" 2>&1)"
-        GIT_EXIT=$?
+        local OUT="$($GIT "$@" 2>&1)"
+        local GIT_EXIT=$?
         if test $GIT_EXIT -ne 0
         then
             fatal $BUILD_ERR -e "$OUT"
@@ -313,9 +312,9 @@ function prepare_submodules {
                 log.info "OK"
             else
                 (
-                    EXPECTED_HEAD=$($GIT ls-tree HEAD $submodule | awk '{print $3}')
+                    local EXPECTED_HEAD=$($GIT ls-tree HEAD $submodule | awk '{print $3}')
                     cd $submodule
-                    HEAD=$($GIT rev-parse HEAD)
+                    local HEAD=$($GIT rev-parse HEAD)
 
                     if ! $GIT cat-file -e $EXPECTED_HEAD
                     then
@@ -345,7 +344,7 @@ function prepare_submodules {
 function regen_db {
     local DB_TXT="$1"
     log.info -n '.'
-    DB_BIN=${DB_TXT/-dump/}
+    local DB_BIN=${DB_TXT/-dump/}
     if test "$DB_BIN" -ot "$DB_TXT"
     then
         rm -f "$DB_BIN"
@@ -398,7 +397,7 @@ function setup_test_db {
     then
         echo -n "=> Migrating test database..."
         (
-            SQITCH_TMP="$(mktemp -d -t genome-env-sqitch-XXXXX)"
+            local SQITCH_TMP="$(mktemp -d -t genome-env-sqitch-XXXXX)"
             trap "rm -rf \"$SQITCH_TMP\"" EXIT
 
             cp -aT "$SQITCH_REPO" "$SQITCH_TMP"
@@ -468,9 +467,12 @@ function setup_env {
         fi
     done
 
-    export GENOME_DS_GMSCHEMA_SERVER="dbname=${TESTDBSERVER_DB_NAME};host=${TESTDBSERVER_DB_HOST};port=${TESTDBSERVER_DB_PORT}"
-    export GENOME_DS_GMSCHEMA_LOGIN=$TESTDBSERVER_DB_USER
-    export GENOME_DS_GMSCHEMA_AUTH=$TESTDBSERVER_DB_PASS
+    if test -z "$DISABLE_DB"
+    then
+        export GENOME_DS_GMSCHEMA_SERVER="dbname=${TESTDBSERVER_DB_NAME};host=${TESTDBSERVER_DB_HOST};port=${TESTDBSERVER_DB_PORT}"
+        export GENOME_DS_GMSCHEMA_LOGIN=$TESTDBSERVER_DB_USER
+        export GENOME_DS_GMSCHEMA_AUTH=$TESTDBSERVER_DB_PASS
+    fi
 
     hash -r
 }
