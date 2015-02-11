@@ -64,14 +64,13 @@ sub _interpret_entry {
     my @vaf_interpreter_accessors = qw/normal_vaf_interpreter tumor_vaf_interpreter/;
     my $it                    = each_array(@sample_name_accessors, @vaf_hash_names, @vaf_interpreter_accessors);
     while ( my ($sample_name_accessor, $vaf_hash_ref, $vaf_interpreter_accessor) = $it->() ) {
-        if ($self->$sample_name_accessor) {
-            my $interpreter = $self->$vaf_interpreter_accessor;
-            my %result = $interpreter->interpret_entry($entry, $passed_alt_alleles);
-            for my $alt_allele (@$passed_alt_alleles) {
-                for my $sample_name ($self->$sample_name_accessor) {
-                    my $vaf = $result{$alt_allele}->{$interpreter->create_sample_specific_field_name('vaf', $sample_name)};
-                    $vaf_hash_ref->{$alt_allele}->{$sample_name} = $vaf;
-                }
+        my $interpreter = $self->$vaf_interpreter_accessor;
+        next unless $interpreter;
+        my %result = $interpreter->interpret_entry($entry, $passed_alt_alleles);
+        for my $alt_allele (@$passed_alt_alleles) {
+            for my $sample_name ($self->$sample_name_accessor) {
+                my $vaf = $result{$alt_allele}->{$interpreter->create_sample_specific_field_name('vaf', $sample_name)};
+                $vaf_hash_ref->{$alt_allele}->{$sample_name} = $vaf;
             }
         }
     }
