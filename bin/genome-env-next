@@ -32,6 +32,9 @@ function help {
 
     -M    Disable migration of database.
 
+    -m sqitch_repo
+          The path to a genome-sqitch repo to use instead of the default.
+
     -D    Disable configuration of database.
 
     -d db_snapshot_name
@@ -61,9 +64,11 @@ function main {
     fi
 
     local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF \
-        DB_SNAPSHOT_NAME UR_REPO VERBOSE WF_REPO
+        DB_SNAPSHOT_NAME SQITCH_REPO UR_REPO VERBOSE WF_REPO
     parse_opts "$@"
     shift $((OPTIND-1))
+
+    prepare_submodules
 
     validate_bash
 
@@ -106,7 +111,7 @@ function validate_bash {
 }
 
 function parse_opts {
-    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" UR_REPO="" WF_REPO=""
+    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" SQITCH_REPO="" UR_REPO="" WF_REPO=""
 
     local opts
     while getopts :hMDd:Uu:vWw: opts "$@"
@@ -119,8 +124,12 @@ function parse_opts {
             M)
                 DISABLE_MIGRATIONS="TRUE"
                 ;;
+            m)
+                SQITCH_REPO="$OPTARG"
+                ;;
             D)
                 DISABLE_DB="TRUE"
+                DISABLE_MIGRATIONS="TRUE"
                 ;;
             d)
                 DB_SNAPSHOT_NAME="$OPTARG"
@@ -154,19 +163,19 @@ function parse_opts {
 }
 
 function validate_opts {
-    if test -n "$DISABLE_DB" -a -n "$DISABLE_MIGRATIONS"
-    then
-        fatal $OPT_ERR "cannot use -S and -M options together"
-    fi
-
     if test -n "$DISABLE_DB" -a -n "$DB_SNAPSHOT_NAME"
     then
-        fatal $OPT_ERR "cannot use -S and -s options together"
+        fatal $OPT_ERR "cannot use -D and -d options together"
     fi
 
     if test -n "$DISABLE_UR" -a -n "$UR_REPO"
     then
         fatal $OPT_ERR "cannot use -U and -u options together"
+    fi
+
+    if test -n "$DISABLE_MIGRATIONS" -a -n "$SQITCH_REPO"
+    then
+        fatal $OPT_ERR "cannot use -M and -m options together"
     fi
 
     if test -n "$DISABLE_WF" -a -n "$WF_REPO"
@@ -180,6 +189,11 @@ function validate_opts {
         then
             fatal $OPT_ERR "invalid snapshot name -- $DB_SNAPSHOT_NAME"
         fi
+    fi
+
+    if test -n "$SQITCH_REPO"
+    then
+        assert_dir "-m" "$SQITCH_REPO"
     fi
 
     if test -n "$UR_REPO"
@@ -200,8 +214,23 @@ function assert_dir {
     fi
 }
 
+declare -a SUBMODULES
+function append_submodule {
+    if test "${#SUBMODULES}" -gt 0
+    then
+        SUBMODULES=("${SUBMODULES[@]}" "$@")
+    else
+        SUBMODULES=("$@")
+    fi
+}
+
 function set_defaults {
-    local SUBMODULES=()
+    if test -z "$DISABLE_MIGRATIONS" -a -z "$SQITCH_REPO"
+    then
+        SQITCH_GENOME='sqitch/genome'
+        append_submodule $SQITCH_GENOME
+        SQITCH_REPO="$TOP/$SQITCH_GENOME"
+    fi
 
     if test -z "$DB_SNAPSHOT_NAME"
     then
@@ -214,7 +243,7 @@ function set_defaults {
         then
             fatal $OPT_ERR "-u must be specified if not in a Genome repo"
         fi
-        SUBMODULES=(ur)
+        append_submodule ur
         UR_REPO="$TOP/ur"
     fi
 
@@ -224,13 +253,8 @@ function set_defaults {
         then
             fatal $OPT_ERR "-w must be specified if not in a Genome repo"
         fi
-        SUBMODULES=("${SUBMODULES[@]}" workflow)
+        append_submodule workflow
         WF_REPO="$TOP/workflow"
-    fi
-
-    if test "${#SUBMODULES}" -gt 0
-    then
-        prepare_submodules "${SUBMODULES[@]}"
     fi
 }
 
@@ -269,13 +293,18 @@ function __quiet_git {
 # prepare_submodules tries to (essentially) do a fast-forward update on
 # submodules when the submodules are used as the default repo.
 function prepare_submodules {
+    if test "${#SUBMODULES}" -eq 0
+    then
+        return
+    fi
+
     (
         log.info -e "\n=> Preparing Submodules..."
         cd "$($GIT rev-parse --show-cdup)"
 
-        __quiet_git submodule sync "$@"
+        __quiet_git submodule sync "${SUBMODULES[@]}"
 
-        for submodule in "$@"
+        for submodule in "${SUBMODULES[@]}"
         do
             log.info -n "   $submodule: "
             if $GIT submodule status $submodule | $GREP -q ^-
@@ -353,6 +382,11 @@ function rebuild_meta_db {
 # on it, and provides shell variables used to configure GMSchema later.
 function setup_test_db {
     local BASE_DIR="$1"
+    if test -n "$DISABLE_DB"
+    then
+        return
+    fi
+
     echo "=> Creating test database..."
     eval "$($TESTDB database create --bash --owner $TESTDBSERVER_DB_USER --based-on $DB_SNAPSHOT_NAME)"
     if test -z "$TESTDBSERVER_DB_NAME"
@@ -362,19 +396,22 @@ function setup_test_db {
 
     if test -z "$DISABLE_MIGRATIONS"
     then
-        echo "=> Migrating test database..."
+        echo -n "=> Migrating test database..."
         (
-            SQITCH_TMP="$(mktemp -d)"
+            SQITCH_TMP="$(mktemp -d -t genome-env-sqitch-XXXXX)"
             trap "rm -rf \"$SQITCH_TMP\"" EXIT
 
-            cp -a "$BASE_DIR/sqitch/gms" "$SQITCH_TMP"
-            cd "$SQITCH_TMP/gms"
+            cp -aT "$SQITCH_REPO" "$SQITCH_TMP"
+            cd "$SQITCH_TMP"
             $SQITCH config core.pg.host     $TESTDBSERVER_DB_HOST
             $SQITCH config core.pg.username $TESTDBSERVER_DB_USER
             $SQITCH config core.pg.password $TESTDBSERVER_DB_PASS
             $SQITCH config core.pg.db_name  $TESTDBSERVER_DB_NAME
-            if ! $SQITCH status | grep -q 'Nothing to deploy'
+            if $SQITCH status | grep -q 'Nothing to deploy'
             then
+                echo " nothing to deploy"
+            else
+                echo ""
                 $SQITCH deploy
             fi
         )
