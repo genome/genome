@@ -119,6 +119,7 @@ sub check_sr_user {
     my $user = shift;
     my $label = shift;
 
+    UR::Context->commit();
     subtest sprintf("SoftwareResult::User (%s)", $user->name) => sub {
         my $sr_user = Genome::SoftwareResult::User->get(
             user => $user,
