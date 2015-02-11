@@ -352,7 +352,7 @@ sub resolve_clinseq_reference_build{
     print Dumper %reference_builds;
     die $self->error_message("Found $rb_count reference builds for this group of input builds - must be only one");
   }
-  $self->debug_message("\tFound 1: " . $reference_build->__display_name__);
+  $self->debug_message("Found 1: " . $reference_build->__display_name__);
 
   return ($reference_build);
 }
@@ -387,7 +387,7 @@ sub resolve_clinseq_annotation_build{
     print Dumper %annotation_builds;
     die $self->error_message("Found $ab_count annotation builds for this group of input builds - must be only one");
   }
-  $self->debug_message("\tFound 1: " . $annotation_build->__display_name__ . " (" . $annotation_build->name . ")");
+  $self->debug_message("Found 1: " . $annotation_build->__display_name__ . " (" . $annotation_build->name . ")");
 
   return ($annotation_build);
 }
@@ -483,7 +483,7 @@ sub getModelsBuilds{
     my @models = $mg->models;
     $target_count = scalar(@models);
   }
-  if ($verbose){$self->debug_message("\nSearching for $target_count models/builds");}
+  if ($verbose){$self->debug_message("Searching for $target_count models/builds");}
 
   #Always returns model AND build objects for convenience
   #If a model-group ID or array of model IDs is provided, get the last successful build for each and return that
@@ -504,7 +504,7 @@ sub getModelsBuilds{
         push(@builds, $b);
         push(@models, $m);
       }else{
-        $self->debug_message("\n\tWarning - build $build_id has a status of $status");
+        $self->debug_message("Warning - build $build_id has a status of $status");
       }
     }
   }
@@ -520,10 +520,10 @@ sub getModelsBuilds{
           push(@builds, $b);
           push(@models, $m);
         }else{
-          $self->warning_message("\n\tWarning - build $build_id has a status of $status");
+          $self->warning_message("Warning - build $build_id has a status of $status");
         }
       }else{
-        $self->warning_message("\n\tWarning - model $model_id has no complete builds");
+        $self->warning_message("Warning - model $model_id has no complete builds");
       }
     }
   }
@@ -539,10 +539,10 @@ sub getModelsBuilds{
         if ($status eq "Succeeded"){
           push(@builds, $b);
         }else{
-          $self->warning_message("\n\tWarning - build $build_id has a status of $status");
+          $self->warning_message("Warning - build $build_id has a status of $status");
         }
       }else{
-        $self->warning_message("\n\tWarning - model $model_id has no complete builds");
+        $self->warning_message("Warning - model $model_id has no complete builds");
       }
     }
   }
@@ -735,11 +735,11 @@ sub parseKnownDruggableFiles{
   #To get a sense of the total number of events will have to wait until the annotation files are being proccessed
 
   foreach my $patient (keys %{$files}){
-    $self->status_message("\n\t$patient");
+    $self->status_message("$patient");
     foreach my $event_type (@event_types){
       foreach my $data_type (sort keys %{$files->{$patient}->{$event_type}}){
         my $drug_file_path = $files->{$patient}->{$event_type}->{$data_type}->{drug_file_path};
-        $self->status_message("\n\t\t$drug_file_path");
+        $self->status_message("$drug_file_path");
         open (IN, "$drug_file_path") || die "Could not open gene-drug interaction file: $drug_file_path";
         my $header = 1;
         my %columns;
@@ -875,7 +875,7 @@ sub getFiles{
     if ($subject_common_name and $subject_name) {
       $final_name = $subject_common_name . "_" . $subject_name;
     }
-    $self->status_message("\n\t$final_name\t$build_id\t$build_directory");
+    $self->status_message("$final_name\t$build_id\t$build_directory");
 
     #Some event types could have come from exome, wgs, or wgs_exome... depending on the event type allow these options and check in order
     #1.) Look for SNV files
@@ -915,7 +915,7 @@ sub getFiles{
       $files{$final_name}{indel}{wgs}{annot_file_path} =
         $wgs_indel_annot;
     } elsif (not (-e $exome_indel_dgidb and -e $wgs_indel_dgidb)) {
-      $self->warning_message("could not find indel drug-gene file.");
+      $self->warning_message("Could not find indel drug-gene file.");
     }
 
     #3.) Look for CNV gain files
