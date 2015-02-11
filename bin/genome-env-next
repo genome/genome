@@ -84,8 +84,12 @@ function main {
     do
         log.info "${MODULE}: $(genome-perl -M$MODULE -e "print \$INC{q(${MODULE}.pm)}, qq(\n)")"
     done
-    log.info "Test DB Snapshot: $DB_SNAPSHOT_NAME"
-    log.info "Test DB Name: $TESTDBSERVER_DB_NAME"
+
+    if test -z "$DISABLE_DB"
+    then
+        log.info "Test DB Snapshot: $DB_SNAPSHOT_NAME"
+        log.info "Test DB Name: $TESTDBSERVER_DB_NAME"
+    fi
     log.info ''
 
     if test "$#" -gt 0
@@ -463,9 +467,12 @@ function setup_env {
         fi
     done
 
-    export GENOME_DS_GMSCHEMA_SERVER="dbname=${TESTDBSERVER_DB_NAME};host=${TESTDBSERVER_DB_HOST};port=${TESTDBSERVER_DB_PORT}"
-    export GENOME_DS_GMSCHEMA_LOGIN=$TESTDBSERVER_DB_USER
-    export GENOME_DS_GMSCHEMA_AUTH=$TESTDBSERVER_DB_PASS
+    if test -z "$DISABLE_DB"
+    then
+        export GENOME_DS_GMSCHEMA_SERVER="dbname=${TESTDBSERVER_DB_NAME};host=${TESTDBSERVER_DB_HOST};port=${TESTDBSERVER_DB_PORT}"
+        export GENOME_DS_GMSCHEMA_LOGIN=$TESTDBSERVER_DB_USER
+        export GENOME_DS_GMSCHEMA_AUTH=$TESTDBSERVER_DB_PASS
+    fi
 
     hash -r
 }
