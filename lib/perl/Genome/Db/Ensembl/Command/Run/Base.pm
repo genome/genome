@@ -382,7 +382,6 @@ sub api {
     my $self = shift;
     return Genome::Db::Ensembl::Api->get_or_create(
         version => $self->ensembl_version,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
         users => $self->_result_users,
     );
 }
@@ -735,7 +734,6 @@ sub cache {
     my %cache_result_params;
     $cache_result_params{version} = $self->ensembl_version;
     $cache_result_params{species} = $self->_species_lookup($self->species);
-    $cache_result_params{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
     if ($self->gtf_cache) {
         $cache_result_params{reference_build_id} = $self->reference_build_id;
         if (defined $self->gtf_file) {
