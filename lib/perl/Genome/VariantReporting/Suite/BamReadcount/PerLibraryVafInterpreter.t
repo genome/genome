@@ -142,16 +142,31 @@ subtest "long indel" => sub {
     is_deeply(\%result, \%expected, "Values are as expected");
 };
 
-subtest "libraries don't match" => sub {
-    for my $incorrect_library_names ([qw(Solexa-135853)], [qw(Solexa-135854 Solexa-135853 Solexa-135852)], [qw(nonexistent_library)]) {
-        my $interpreter = $pkg->create(
-            sample_names => ["S1"],
-            library_names => $incorrect_library_names,
-        );
-        lives_ok(sub {$interpreter->validate}, "Interpreter validates");
-        my $entry = create_default_entry();
-        dies_ok(sub{$interpreter->interpret_entry($entry, ['G'])}, "Libraries don't match fails ok");
-    }
+subtest 'additional libraries' => sub {
+    my $interpreter = $pkg->create(
+        sample_names => ["S1"],
+        library_names => [@$library_names, 'additional_library'],
+    );
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected = (
+        G => {
+            'Solexa-135852_var_count' => '155',
+            'Solexa-135853_var_count' => '186',
+            'Solexa-135852_ref_count' => '2',
+            'Solexa-135853_ref_count' => '1',
+            'Solexa-135852_vaf' => '87.0786516853933',
+            'Solexa-135853_vaf' => '99.4652406417112',
+            'additional_library_var_count' => '.',
+            'additional_library_ref_count' => '.',
+            'additional_library_vaf' => '.',
+        }
+    );
+
+    my $entry = create_default_entry();
+    my %result = $interpreter->interpret_entry($entry, ['G']);
+    is_deeply(\%result, \%expected, "Values are as expected");
+
 };
 
 done_testing;
