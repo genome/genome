@@ -99,14 +99,14 @@ sub _register_users {
     my $label = $newly_created ? 'created' : 'shortcut';
     $user_hash{$label} = $requestor;
 
-    my @all_params;
+    my @param_sets;
     while(my ($label, $object) = each %user_hash) {
         my %params = (
             label           => $label,
             user            => $object,
             software_result => $software_result,
         );
-        push @all_params, \%params;
+        push @param_sets, \%params;
     }
 
     my $observer;
@@ -120,7 +120,7 @@ sub _register_users {
                 Carp::confess 'observer triggered multiple times!';
             }
             my @locks;
-            for my $params (@all_params) {
+            for my $params (@param_sets) {
                 next if grep { $params->{$_}->isa('UR::DeletedRef') } qw(user software_result);
                 push @locks, $class->_lock_and_get_or_create($params);
             }
