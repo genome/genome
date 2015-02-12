@@ -82,6 +82,9 @@ sub lock_resource {
                 $args{scope}));
     }
 
+    # need to install handlers before backends start locking
+    $class->_cleanup_handler_check();
+
     my @locks;
     my $unwind = sub {
         for my $pair (@locks) {
@@ -109,8 +112,6 @@ sub lock_resource {
     } else {
         Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.inconsistent');
     }
-
-    $class->_cleanup_handler_check();
 
     $RESOURCE_LOCK_SCOPE{$args{resource_lock}} = $args{scope};
 
