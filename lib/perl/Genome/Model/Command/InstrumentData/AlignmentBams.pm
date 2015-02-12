@@ -56,7 +56,7 @@ sub execute {
         my ($alignment_result) = $build->alignment_results_for_instrument_data($instrument_data);
 
         $data->{BAM_PATH} = $alignment_result->output_dir . '/all_sequences.bam' if $alignment_result;
-        $data->{BAMQC_PATH} = $self->_get_bamqc_path($alignment_result);
+        $data->{BAMQC_PATH} = $self->_get_bamqc_path($build, $alignment_result);
         $writer->write_one($data);
     }
 
@@ -74,17 +74,21 @@ sub get_lane_bamqc_path {
         my $lane = eval { $instrument_data->lane } || '-';
         my ($alignment_result) = $build->alignment_results_for_instrument_data($instrument_data);
         #Get the latest bamqc result
-        my $bamqc_path = $self->_get_bamqc_path($alignment_result);
+        my $bamqc_path = $self->_get_bamqc_path($build, $alignment_result);
         $lane_bamqcpath->{$lane} = $bamqc_path;
     }
 }
 
 sub _get_bamqc_path {
     my $self = shift;
+    my $build = shift;
     my $alignment_result = shift;
+
     my @bamqc_results =  Genome::InstrumentData::AlignmentResult::Merged::BamQc->get(
-        alignment_result_id => $alignment_result->id
+        alignment_result_id => $alignment_result->id,
+        builds => $build,
     );
+
     my $max = '0';
     my $bamqc_result;
     for(@bamqc_results) {
