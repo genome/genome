@@ -1386,8 +1386,7 @@ sub get_perlane_bamqc_results {
     Genome::Sys->shellcmd(cmd => "mkdir -p $qc_dir");
     my $bam_qc_metrics = Genome::Model::ReferenceAlignment::Command::InstrumentDataAlignmentBams->create(
             build => $build, outdir => $qc_dir);
-    my %lane_bamqc_path;
-    $bam_qc_metrics->get_lane_bamqc_path($build, \%lane_bamqc_path);
+    my %lane_bamqc_path = %{ $bam_qc_metrics->get_lane_bamqc_path($build) };
     foreach my $lane  (keys(%lane_bamqc_path)) {
         if($lane_bamqc_path{$lane} ne "-") {
             my $perlane_bamqc_results_dir = $lane_bamqc_path{$lane};

@@ -67,7 +67,8 @@ sub execute {
 sub get_lane_bamqc_path {
     my $self = shift;
     my $build = shift;
-    my $lane_bamqcpath = shift;
+
+    my $lane_bamqcpath = {};
     for my $instrument_data ($build->instrument_data) {
         my $instrument_data_id = $instrument_data->id;
         my $flow_cell_id = eval { $instrument_data->flow_cell_id } || '-';
@@ -77,6 +78,7 @@ sub get_lane_bamqc_path {
         my $bamqc_path = $self->_get_bamqc_path($build, $alignment_result);
         $lane_bamqcpath->{$lane} = $bamqc_path;
     }
+    return $lane_bamqcpath;
 }
 
 sub _get_bamqc_path {
