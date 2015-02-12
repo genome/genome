@@ -145,28 +145,14 @@ sub generate_result {
     $self->debug_message("Constructing Workflow...");
     my ($workflow_xml, $variant_type_specific_inputs, $region_limiting_specific_inputs) = $self->_construct_workflow;
 
-    my $process = $self->process;
-
     $self->debug_message("Getting Workflow Inputs...");
-    my $inputs = $self->_get_workflow_inputs([$process->builds], $variant_type_specific_inputs, $region_limiting_specific_inputs, $staging_directory);
+    my $inputs = $self->_get_workflow_inputs([$self->process->builds], $variant_type_specific_inputs, $region_limiting_specific_inputs, $staging_directory);
 
     $self->debug_message("Running Workflow...");
-    my $transaction = UR::Context::Transaction->begin();
-    $process->create_disk_allocation();
+
     my $xml = Genome::Sys->read_file($workflow_xml);
-    $process->_write_workflow_file($xml);
-    $process->_write_inputs_file($inputs);
-    my $executor = Genome::Process::Command::Run->create(
-        process => $process,
-        update_with_commit => 0,
-    );
-
-    unless($executor->execute){
-        $transaction->rollback();
-        die $self->error_message("Workflow did not return correctly.");
-    }
-    $transaction->commit();
-
+    $self->process->run_and_wait(workflow_xml => $xml,
+                               workflow_inputs => $inputs);
     return 1;
 }
 
