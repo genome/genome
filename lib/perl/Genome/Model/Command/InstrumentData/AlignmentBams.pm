@@ -3,6 +3,8 @@ package Genome::Model::Command::InstrumentData::AlignmentBams;
 use strict;
 use warnings;
 
+use File::Spec;
+
 use Genome;
 
 class Genome::Model::Command::InstrumentData::AlignmentBams {
@@ -33,25 +35,31 @@ sub execute {
         die $self->error_message('This command does not work for builds of type %s.', $build->type_name);
     }
 
-    my $op_fh;
+    my @io_params = (
+        headers => ['INSTRUMENT_DATA_ID', 'FLOW_CELL_ID', 'LANE', 'BAM_PATH', 'BAMQC_PATH'],
+        separator => "\t",
+        in_place_of_null_value => '-',
+    );
     if($self->outdir) {
-        open $op_fh, ">",$self->outdir."/".$build->id.".instrumentdataalignmentbams.txt";
-    } else {
-        open $op_fh, ">-";
+        push @io_params, output => File::Spec->join($self->outdir, $build->id.".instrumentdataalignmentbams.txt");
     }
-    print $op_fh join("\t", 'INSTRUMENT_DATA_ID', 'FLOW_CELL_ID', 'LANE', 'BAM_PATH', 'BAMQC_PATH') . "\n";
+
+    my $writer = Genome::Utility::IO::SeparatedValueWriter->create(@io_params);
+
     for my $instrument_data ($build->instrument_data) {
-        my $instrument_data_id = $instrument_data->id;
-        my $flow_cell_id = eval { $instrument_data->flow_cell_id } || '-';
-        my $lane = eval { $instrument_data->lane } || '-';
+        my $data = {};
+
+        $data->{INSTRUMENT_DATA_ID} = $instrument_data->id;
+        $data->{FLOW_CELL_ID } = eval { $instrument_data->flow_cell_id };
+        $data->{LANE} = eval { $instrument_data->lane };
 
         my ($alignment_result) = $build->alignment_results_for_instrument_data($instrument_data);
 
-        my $bam_path = $alignment_result ? $alignment_result->output_dir . '/all_sequences.bam' : '-';
-        my $bamqc_path = $self->_get_bamqc_path($alignment_result);
-        print $op_fh join("\t", $instrument_data_id, $flow_cell_id, $lane, $bam_path, $bamqc_path) . "\n";
+        $data->{BAM_PATH} = $alignment_result->output_dir . '/all_sequences.bam' if $alignment_result;
+        $data->{BAMQC_PATH} = $self->_get_bamqc_path($alignment_result);
+        $writer->write_one($data);
     }
-    close $op_fh;
+
     return 1;
 }
 
