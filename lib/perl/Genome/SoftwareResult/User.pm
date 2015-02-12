@@ -122,7 +122,7 @@ sub _register_users {
             my @locks;
             for my $params (@all_params) {
                 next if grep { $params->{$_}->isa('UR::DeletedRef') } qw(user software_result);
-                push @locks, $class->_get_or_create_with_lock($params);
+                push @locks, $class->_lock_and_get_or_create($params);
             }
 
             return unless @locks;
@@ -150,7 +150,7 @@ sub _register_users {
     }
 }
 
-sub _get_or_create_with_lock {
+sub _lock_and_get_or_create {
     my $class = shift;
     my $params = shift;
 
