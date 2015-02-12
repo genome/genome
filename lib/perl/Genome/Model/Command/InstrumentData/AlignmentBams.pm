@@ -68,14 +68,14 @@ sub get_lane_bamqc_path {
     my $self = shift;
     my $build = shift;
 
-    my $lane_bamqcpath = {};
+    my $lane_bamqc_path = {};
     for my $instrument_data ($build->instrument_data) {
         my ($alignment_result) = $build->alignment_results_for_instrument_data($instrument_data);
         #Get the latest bamqc result
         my $bamqc_path = $self->_get_bamqc_path($build, $alignment_result);
-        $lane_bamqcpath->{$instrument_data->id} = $bamqc_path;
+        $lane_bamqc_path->{$instrument_data->id} = $bamqc_path;
     }
-    return $lane_bamqcpath;
+    return $lane_bamqc_path;
 }
 
 sub _get_bamqc_path {
