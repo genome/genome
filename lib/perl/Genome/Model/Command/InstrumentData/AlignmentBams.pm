@@ -70,13 +70,10 @@ sub get_lane_bamqc_path {
 
     my $lane_bamqcpath = {};
     for my $instrument_data ($build->instrument_data) {
-        my $instrument_data_id = $instrument_data->id;
-        my $flow_cell_id = eval { $instrument_data->flow_cell_id } || '-';
-        my $lane = eval { $instrument_data->lane } || '-';
         my ($alignment_result) = $build->alignment_results_for_instrument_data($instrument_data);
         #Get the latest bamqc result
         my $bamqc_path = $self->_get_bamqc_path($build, $alignment_result);
-        $lane_bamqcpath->{$instrument_data_id} = $bamqc_path;
+        $lane_bamqcpath->{$instrument_data->id} = $bamqc_path;
     }
     return $lane_bamqcpath;
 }
