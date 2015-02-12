@@ -48,6 +48,8 @@ isa_ok($base_recalibrator_bam_result, 'Genome::InstrumentData::Gatk::BaseRecalib
 my $base_recalibrator_result = $base_recalibrator_bam_result->base_recalibrator_result;
 ok($base_recalibrator_result, 'get base_recalibrator_result');
 
+UR::Context->commit();
+
 # Users
 my @sr_users = $bam_source->users;
 is(@sr_users, 1, 'add user to bam source');

@@ -5,6 +5,9 @@ use warnings;
 use Genome;
 use List::MoreUtils qw(any);
 use Params::Validate qw(:types);
+use Carp qw();
+
+use Genome::Utility::Text;
 
 class Genome::SoftwareResult::User {
     table_name => 'result.user',
@@ -96,14 +99,86 @@ sub _register_users {
     my $label = $newly_created ? 'created' : 'shortcut';
     $user_hash{$label} = $requestor;
 
+    my @all_params;
     while(my ($label, $object) = each %user_hash) {
         my %params = (
             label           => $label,
             user            => $object,
             software_result => $software_result,
         );
-       $class->get(%params) || $class->create(%params);
+        push @all_params, \%params;
     }
+
+    my $observer;
+    $observer = UR::Context->process->add_observer(
+        aspect => 'precommit',
+        callback => sub {
+            if($observer) {
+                $observer->delete;
+                $observer = undef;
+            } else {
+                Carp::confess 'observer triggered multiple times!';
+            }
+            my @locks;
+            for my $params (@all_params) {
+                push @locks, $class->_get_or_create_with_lock($params);
+            }
+            my $unlocker;
+            $unlocker = UR::Context->process->add_observer(
+                aspect => 'commit',
+                callback => sub {
+                    if($unlocker) {
+                        $unlocker->delete;
+                        $unlocker = undef;
+                    } else {
+                        Carp::confess 'unlocker triggered multiple times!';
+                    }
+
+                    for my $lock (@locks) {
+                        Genome::Sys->unlock_resource(resource_lock => $lock);
+                    }
+                }
+            );
+        }
+    );
+    unless($observer) {
+        die 'Failed to create observer';
+    }
+}
+
+sub _get_or_create_with_lock {
+    my $class = shift;
+    my $params = shift;
+
+    my $existing = $class->get(%$params);
+    return if $existing;
+
+    my $resource = $class->_resolve_lock_name($params);
+    my $lock = Genome::Sys->lock_resource(resource_lock => $resource, scope => 'site');
+    $class->_get_or_create($params);
+
+    return $lock;
+}
+
+sub _get_or_create {
+    my $class = shift;
+    my $params = shift;
+
+    my $self = $class->load(%$params);
+    unless($self) {
+        $self = $class->create(%$params);
+    }
+
+    return $self;
+}
+
+sub _resolve_lock_name {
+    my $class = shift;
+    my $params = shift;
+
+    return 'genome/software-result-user/' . Genome::Utility::Text::sanitize_string_for_filesystem(
+        join('_', $params->{label}, $params->{user}->id, $params->{software_result}->id)
+    );
 }
 
 sub _role_for_type {

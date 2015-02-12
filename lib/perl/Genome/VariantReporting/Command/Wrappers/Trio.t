@@ -89,6 +89,8 @@ my $cmd = $pkg->create(
 my $p = $cmd->execute();
 isa_ok($p, 'Genome::VariantReporting::Process::Trio');
 
+UR::Context->commit();
+
 test_xml($p->workflow_file, __FILE__);
 
 my $output_dir = Genome::Sys->create_temp_directory();

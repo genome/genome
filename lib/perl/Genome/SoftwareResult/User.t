@@ -22,11 +22,11 @@ class SR_Test {
 };
 
 sub _newly_created_callback {
-    return (SR_Test->__define__(p1 => 'turkey'), 1);
+    return (SR_Test->create(p1 => 'turkey'), 1);
 }
 
 sub _shortcut_callback {
-    return SR_Test->__define__(p1 => 'turkey');
+    return SR_Test->create(p1 => 'turkey2');
 }
 
 my $class = 'Genome::SoftwareResult::User';
@@ -68,6 +68,7 @@ my $new_sr = $class->with_registered_users(
             callback => \&_newly_created_callback,
             %users_hash
         );
+UR::Context->commit();
 
 is(
     $new_sr->users(label => 'created')->user,
@@ -81,6 +82,7 @@ my $shortcut_sr = $class->with_registered_users(
             callback => \&_shortcut_callback,
             users => \%extra_users,
         );
+UR::Context->commit();
 
 is(
     $shortcut_sr->users(label => 'shortcut')->user,
@@ -107,6 +109,7 @@ $class->with_registered_users(
     callback => sub { return ($new_sr, 1); },
     %users_hash,
 );
+UR::Context->commit();
 my @users_after_additional_call = $new_sr->users;
 
 is(
@@ -122,11 +125,43 @@ subtest 'user_hash_for_build produces expected results' => sub {
     is($user_hash1->{requestor}, $requestor_build, 'set requestor for build without an analysis project');
     is($user_hash1->{sponsor}->username, $run_as, 'set sponsor for build without an analysis project');
 
-    my $test_anp = Genome::Config::AnalysisProject->__define__(name => 'test project for G:SR:User test');
+    my $test_anp = Genome::Config::AnalysisProject->create(name => 'test project for G:SR:User test', run_as => 'nobody');
     Genome::Config::AnalysisProject::ModelBridge->create(analysis_project => $test_anp, model => $requestor_model);
     my $user_hash2 = Genome::SoftwareResult::User->user_hash_for_build($requestor_build);
     is($user_hash2->{requestor}, $requestor_build, 'set requestor for build with an analysis project');
     is($user_hash2->{sponsor}, $test_anp, 'set sponsor for build with an analysis project');
 };
+
+subtest 'multiple shortcutters result in only one user' => sub {
+    my $sr = SR_Test->create(p1 => 'multiple turkeys');
+    my $callback = sub {
+        return ($sr, 0);
+    };
+    for (1..3) {
+        $class->with_registered_users(callback => $callback, %users_hash);
+    }
+    UR::Context->commit();
+
+    subtest 'lock not still held after commit is complete' => sub {
+        my $resource = Genome::SoftwareResult::User->_resolve_lock_name({
+                label => 'sponsor',
+                user => $users_hash{users}{sponsor},
+                software_result => $sr,
+        });
+        my $lock = Genome::Sys->lock_resource(resource_lock => $resource, scope => 'site', max_try => 1);
+        ok($lock, 'got lock');
+        Genome::Sys->unlock_resource(resource_lock => $lock);
+    };
+
+    my @users = $sr->users;
+    is(scalar(@users), 2, 'users only added once across all three calls');
+    my @sponsors = grep { $_->label eq 'sponsor' } @users;
+    is(scalar(@sponsors), 1, 'found the sponsor');
+    is($sponsors[0]->user, $users_hash{users}{sponsor}, 'the sponsor is who we thought it would be');
+    my @requestors = grep { $_->label eq 'shortcut' } @users;
+    is(scalar(@requestors), 1, 'found the requestor');
+    is($requestors[0]->user, $users_hash{users}{requestor}, 'the requestor is who we thought it would be');
+};
+
 
 done_testing();
