@@ -38,16 +38,6 @@ sub _interpret_entry {
     my $entry = shift;
     my $passed_alt_alleles = shift;
 
-    if ($self->library_names) {
-        my $available_libraries = $self->available_libraries($entry);
-        my $expected_libraries  = Set::Scalar->new($self->library_names);
-        unless ($available_libraries->is_equal($expected_libraries)) {
-            die $self->error_message(
-                "Available libraries (%s) are not identical to planned libraries (%s)",
-                join(', ', $available_libraries->members), join(', ', $expected_libraries->members)
-            );
-        }
-    }
     my %return_values;
 
     for my $sample_name ($self->sample_names) {
@@ -96,8 +86,13 @@ sub per_library_coverage {
 sub flatten_hash {
     my ($self, $per_library_hash, $field_name) = @_;
     my %flattened_hash;
-    for my $library_name (keys %$per_library_hash) {
-        $flattened_hash{$self->create_library_specific_field_name($field_name, $library_name)} = $per_library_hash->{$library_name};
+    for my $library_name ($self->library_names) {
+        if (defined($per_library_hash->{$library_name})) {
+            $flattened_hash{$self->create_library_specific_field_name($field_name, $library_name)} = $per_library_hash->{$library_name};
+        }
+        else {
+            $flattened_hash{$self->create_library_specific_field_name($field_name, $library_name)} = $self->interpretation_null_character;
+        }
     }
     return %flattened_hash;
 }

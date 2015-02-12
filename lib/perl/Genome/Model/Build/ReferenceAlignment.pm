@@ -183,12 +183,12 @@ sub check_region_of_interest {
             }
 
             if ($roi_reference and !$rsb->is_compatible_with($roi_reference)) {
-                my $converter =  Genome::Model::Build::ReferenceSequence::Converter->get_with_lock(
-                    source_reference_build => $roi_reference, 
-                    destination_reference_build => $rsb,
+                my $converter_exists =  Genome::Model::Build::ReferenceSequence::Converter->exists_for_references(
+                    $roi_reference,
+                    $rsb,
                 );
 
-                unless ($converter) {
+                unless ($converter_exists) {
                     push @tags, UR::Object::Tag->create(
                         type => 'invalid',
                         properties => [qw/ region_of_interest_set_name /],
