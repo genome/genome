@@ -159,12 +159,12 @@ sub _lock_and_get_or_create {
 
     my $resource = $class->_resolve_lock_name($params);
     my $lock = Genome::Sys->lock_resource(resource_lock => $resource, scope => 'site');
-    $class->_get_or_create($params);
+    $class->_load_or_create($params);
 
     return $lock;
 }
 
-sub _get_or_create {
+sub _load_or_create {
     my $class = shift;
     my $params = shift;
 
