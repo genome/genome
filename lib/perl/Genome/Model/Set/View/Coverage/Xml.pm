@@ -2,6 +2,7 @@ package Genome::Model::Set::View::Coverage::Xml;
 
 use strict;
 use warnings;
+use List::AllUtils qw(uniq);
 
 class Genome::Model::Set::View::Coverage::Xml {
     is => 'UR::Object::View::Default::Xml',
@@ -439,7 +440,7 @@ sub _results_for_build {
         push @results, $build;
     }
 
-    return @results;
+    return uniq @results;
 }
 
 sub _get_model_node {
