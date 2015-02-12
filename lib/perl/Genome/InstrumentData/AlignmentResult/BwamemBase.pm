@@ -300,7 +300,7 @@ sub prepare_reference_sequence_index {
     Genome::Sys->create_symlink($refindex->reference_build->get_sequence_dictionary("sam"), $staging_dir ."/all_sequences.dict" );
 
     my $bwa_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(
-        users              => [ $refindex->users ],
+        users              => $refindex->_user_data_for_nested_results,
         reference_build_id => $refindex->reference_build_id,
         aligner_name       => 'bwa',
         #aligner_params    => $refindex->aligner_params, # none of the aligner params should affect the index step so I think this okay
