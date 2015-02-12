@@ -9,8 +9,8 @@ class Genome::Model::Command::InstrumentData::AlignmentBams {
     is => 'Command::V2',
     doc => 'Lists the paths of instrument-data alignment BAMs for the provided build',
     has => [
-        build_id => {
-            is => 'Number',
+        build => {
+            is => 'Genome::Model::Build',
             shell_args_position => 1,
         },
     ],
@@ -27,9 +27,7 @@ sub help_detail {
 
 sub execute {
     my $self = shift;
-    my $build = Genome::Model::Build->get($self->build_id);
-
-    die $self->error_message('Please provide valid build id') unless $build;
+    my $build = $self->build;
 
     unless ($build->can('alignment_results_for_instrument_data')) {
         die $self->error_message('This command does not work for builds of type %s.', $build->type_name);
