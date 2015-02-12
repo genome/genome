@@ -21,10 +21,6 @@ class SR_Test {
     },
 };
 
-sub SR_Test::create {
-    return shift->Genome::SoftwareResult::create(@_);
-}
-
 sub _newly_created_callback {
     return (SR_Test->create(p1 => 'turkey'), 1);
 }
