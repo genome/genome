@@ -76,7 +76,7 @@ sub get_lane_bamqc_path {
         my ($alignment_result) = $build->alignment_results_for_instrument_data($instrument_data);
         #Get the latest bamqc result
         my $bamqc_path = $self->_get_bamqc_path($build, $alignment_result);
-        $lane_bamqcpath->{$lane} = $bamqc_path;
+        $lane_bamqcpath->{$instrument_data_id} = $bamqc_path;
     }
     return $lane_bamqcpath;
 }
