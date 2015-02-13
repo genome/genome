@@ -81,7 +81,7 @@ my @INVALID_FEATURE_LIST_CHARACTERS = qw/;/;
 sub _validate_feature_lists {
     my $self = shift;
 
-    for my $tag ($self->custom_annotation_tags) {
+    TAG: for my $tag ($self->custom_annotation_tags) {
         my $id = $self->decoded_feature_list_ids->{$tag};
         my $feature_list_file_path = $self->_get_processed_file_path_for_feature_list($id);
         my $bed_reader = Genome::Utility::IO::BedReader->create(
@@ -92,6 +92,7 @@ sub _validate_feature_lists {
         #Typically, invalid characters will be present on every line
         for my $line (1..10) {
             my $bed_entry = $bed_reader->next;
+            next TAG unless defined($bed_entry);
             my $invalid_characters_string = join('', @INVALID_FEATURE_LIST_CHARACTERS);
             if (my @invalid_characters_captured = $bed_entry->{annotation} =~ m/([\Q$invalid_characters_string\E])/g) {
                 die $self->error_message("Feature list (%s) contains the following invalid characters (%s) in the 4th column on line (%s).", $id, join(' ', uniq @invalid_characters_captured), $line);
