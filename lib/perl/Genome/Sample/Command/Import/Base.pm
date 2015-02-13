@@ -56,6 +56,10 @@ class Genome::Sample::Command::Import::Base {
         _sample_attributes => { is => 'Hash' },
         # library
         _library => { is => 'Genome::Library', is_optional => 1, },
+        _library_name => { 
+            calculate_from => [qw/ name /],
+            calculate => q( return $name.'-'.$self->library_extension ), 
+        },
         _library_attributes => { is => 'Hash' },
         # misc
         _created_objects => { is => 'ARRAY', is_optional => 1, },
@@ -293,22 +297,10 @@ sub _get_or_create_library_for_extension {
     return $self->_create_library_for_extension($ext);
 }
 
-sub _get_library_name_for_extension {
-    my ($self, $ext) = @_;
-
-    Carp::confess('No sample set to get or create library') if not $self->_sample;
-    Carp::confess('No library extension') if not defined $ext;
-    my @valid_exts = (qw/ extlibs microarraylib /);
-    Carp::confess("Invalid library extension ($ext). Valid extentions: ".join(' ', @valid_exts)) if not grep { $ext eq $_ } @valid_exts;
-
-    return $self->_sample->name.'-'.$ext;
-}
-
 sub _get_library_for_extension {
     my ($self, $ext) = @_;
 
-    my $name = $self->_get_library_name_for_extension($ext); # confess on error
-    my $library = Genome::Library->get(name => $name);
+    my $library = Genome::Library->get(name => $self->_library_name);
     return if not $library;
 
     $self->status_message('Found library: '.join(' ', map{ $library->$_ } (qw/ id name/)));
@@ -321,7 +313,7 @@ sub _create_library_for_extension {
     my ($self, $ext) = @_;
 
     my %params = (
-        name => $self->_get_library_name_for_extension($ext), # confess on error
+        name => $self->_library_name,
         sample_id => $self->_sample->id,
     );
 
