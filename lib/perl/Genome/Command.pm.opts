@@ -6495,6 +6495,21 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
+        '>dgidb-counts',
+        [
+          'builds=s@',
+          undef,
+          'outdir=s',
+          'files',
+          'bam-readcount-version=s',
+          'files',
+          'mq=s',
+          undef,
+          'bq=s',
+          undef,
+          'help!',
+          undef
+        ],
         '>cancer-relevance-score',
         [
           'builds=s@',
@@ -6562,6 +6577,23 @@ $Genome::Command::OPTS_SPEC = [
           'files',
           'unfiltered-report=s',
           'files',
+          'help!',
+          undef
+        ],
+        '>dgidb-genes',
+        [
+          'builds=s@',
+          undef,
+          'outdir=s',
+          'files',
+          'bam-readcount-version=s',
+          'files',
+          'cancer-annotation-db=s',
+          undef,
+          'mq=s',
+          undef,
+          'bq=s',
+          undef,
           'help!',
           undef
         ],
