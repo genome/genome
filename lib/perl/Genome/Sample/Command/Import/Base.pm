@@ -151,7 +151,7 @@ sub _import {
     }
 
     # library
-    my $library = $self->_get_or_create_library_for_extension($self->library_extension);
+    my $library = $self->_get_or_create_library;
     $library = $self->_set_library_params($library);
     return if not $library;
 
@@ -288,38 +288,22 @@ sub _create_sample {
     return $self->_sample($sample);
 }
 
-sub _get_or_create_library_for_extension {
-    my ($self, $ext) = @_;
-
-    my $library = $self->_get_library_for_extension($ext);
-    return $library if $library;
-
-    return $self->_create_library_for_extension($ext);
-}
-
-sub _get_library_for_extension {
+sub _get_or_create_library {
     my ($self, $ext) = @_;
 
     my $library = Genome::Library->get(name => $self->_library_name);
-    return if not $library;
-
-    $self->status_message('Found library: '.join(' ', map{ $library->$_ } (qw/ id name/)));
-
-    return $self->_library($library);
-
-}
-
-sub _create_library_for_extension {
-    my ($self, $ext) = @_;
+    if ( $library ) {
+        $self->status_message('Found library: '.join(' ', map{ $library->$_ } (qw/ id name/)));
+        return $self->_library($library);
+    }
 
     my %params = (
         name => $self->_library_name,
         sample_id => $self->_sample->id,
     );
-
     $self->status_message('Create library...');
     $self->status_message('Library params: '._display_string_for_params(\%params));
-    my $library = Genome::Library->create(%params);
+    $library = Genome::Library->create(%params);
     if ( not $library ) {
         $self->error_message('Cannot not create library to import sample');
         return;
