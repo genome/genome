@@ -283,13 +283,84 @@ sub _open_input_file {
 sub execute {
     my $self = shift;
 
+    if (defined $self->analysis_process) {
+        $self->run;
+    }
+    else {
+        my $process = $self->_create_process;
+        my $workflow = $self->workflow;
+        my $workflow_inputs = $self->workflow_inputs;
+        $workflow_inputs->{analysis_process} = $process;
+        $process->run_and_wait(workflow_xml => $workflow->get_xml,
+                               workflow_inputs => $workflow_inputs);
+    }
+
+    return 1;
+}
+
+sub _create_process {
+    my $self = shift;
+    return Genome::Db::Ensembl::Command::Run::Process->create();
+}
+
+sub workflow {
+    my $self = shift;
+    my $dag = Genome::WorkflowBuilder::DAG->create(
+        name => "Run VEP",
+    );
+    my $vep_op = Genome::WorkflowBuilder::Command->create(
+        name => "Run",
+        command => $self->class,
+    );
+    $dag->add_operation($vep_op);
+    for my $property ($self->__meta__->properties(is_input => 1),
+        $self->__meta__->properties(is_param => 1)) {
+        my $name = $property->property_name;
+        if (defined $self->$name) {
+            $dag->connect_input(
+                input_property => $name,
+                destination => $vep_op,
+                destination_property => $name,
+            );
+        }
+    }
+    $dag->connect_input(
+        input_property => 'analysis_process',
+        destination => $vep_op,
+        destination_property => 'analysis_process',
+    );
+    $dag->connect_output(
+        output_property => "output",
+        source => $vep_op,
+        source_property => "output_file",
+    );
+    return $dag;
+}
+
+sub workflow_inputs {
+    my $self = shift;
+    my %params;
+    for my $property ($self->__meta__->properties(is_input => 1),
+                        $self->__meta__->properties(is_param => 1)) {
+        my $name = $property->property_name;
+        if (defined $self->$name) {
+            if ($property->is_many) {
+                $params{$name} = [$self->$name];
+            }
+            else {
+                $params{$name} = $self->$name;
+            }
+        }
+    }
+    return \%params;
+}
+
+sub run {
+    my $self = shift;
     $self->resolve_format_and_input_file;
     $self->stage_plugins;
     $self->stage_cache;
-
     $self->run_command();
-
-    return 1;
 }
 
 sub run_command {
