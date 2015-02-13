@@ -88,10 +88,13 @@ sub _validate_feature_lists {
             input => $feature_list_file_path,
             headers => [qw/chr start end annotation/],
         );
-        while (my $bed_entry = $bed_reader->next) {
+        #Only check the first 10 lines to reduce computational cost
+        #Typically, invalid characters will be present on every line
+        for my $line (1..10) {
+            my $bed_entry = $bed_reader->next;
             my $invalid_characters_string = join('', @INVALID_FEATURE_LIST_CHARACTERS);
             if (my @invalid_characters_captured = $bed_entry->{annotation} =~ m/([\Q$invalid_characters_string\E])/g) {
-                die $self->error_message("Feature list (%s) contains the following invalid characters (%s)", $id, join(' ', uniq @invalid_characters_captured));
+                die $self->error_message("Feature list (%s) contains the following invalid characters (%s) in the 4th column on line (%s).", $id, join(' ', uniq @invalid_characters_captured), $line);
             }
         }
     }
