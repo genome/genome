@@ -37,6 +37,12 @@ class Genome::Sample::Command::Import::Base {
             is_many => 1,
             doc => 'Additional attributes to add to the library. Give as key value pairs. Separate key and value with an equals (=) and pairs with a comma (,). Ex: attr1=val1,attr2=val2',
         },
+        library_extension => {
+            is => 'Text',
+            default_value => 'extlibs',
+            valid_values => [qw/ extlibs microarraylib /],
+            doc => 'The extension to add to the sample name to create teh library name.',
+        },
     ],
     has_optional_transient => [
         # taxon
@@ -68,13 +74,14 @@ sub execute {
     my $individual_name_ok = $self->_validate_name_and_set_individual_name;
     return if not $individual_name_ok;
 
-    my %individual_attributes = $self->_resolve_individual_attributes;
-    return if not %individual_attributes;
+    my $individual_attributes = $self->_resolve_individual_attributes;
+    return if not $individual_attributes;
 
-    my %sample_attributes = $self->_resolve_sample_attributes;
-    return if not %sample_attributes;
+    my $sample_attributes = $self->_resolve_sample_attributes;
+    return if not $sample_attributes;
     
-    my %library_attributes = $self->_resolve_library_attributes;
+    my $library_attributes = $self->_resolve_library_attributes;
+    return if not $library_attributes;
 
     my $import = $self->_import;
     return if not $import;
@@ -140,7 +147,7 @@ sub _import {
     }
 
     # library
-    my $library = $self->_get_or_create_library_for_extension($self->_library_attributes->{ext});
+    my $library = $self->_get_or_create_library_for_extension($self->library_extension);
     $library = $self->_set_library_params($library);
     return if not $library;
 
@@ -151,7 +158,6 @@ sub _set_library_params {
     my $self  = shift;
 
     my $params = $self->_library_attributes;
-    delete $params->{ext};
     for my $param_name (keys %$params) {
         $self->library->$param_name($params->{$param_name});
     }
@@ -372,9 +378,7 @@ sub _resolve_sample_attributes {
 
 sub _resolve_library_attributes {
     my $self = shift;
-    my %attributes = (
-        ext => "extlibs",
-    );
+    my %attributes;
     return if not $self->_resolve_attributes('library', \%attributes);
     return $self->_library_attributes(\%attributes);
 }
