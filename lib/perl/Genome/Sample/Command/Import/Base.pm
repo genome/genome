@@ -44,6 +44,7 @@ class Genome::Sample::Command::Import::Base {
         # source
         _individual => { is => 'Genome::Individual', is_optional => 1, },
         _individual_name => { is => 'Text', },
+        _individual_attributes => { is => 'Hash' },
         # sample
         _sample => { is => 'Genome::Sample', is_optional => 1, },
         # library
@@ -74,7 +75,6 @@ sub execute {
     my %library_attributes = $self->_resolve_library_attributes;
 
     my $import = $self->_import(
-        individual => \%individual_attributes,
         sample => \%sample_attributes,
         library => \%library_attributes,
     );
@@ -89,10 +89,6 @@ sub _import {
 
     # params
     Carp::confess('No params given to import') if not %params;
-    my $individual_params = delete $params{individual};
-    Carp::confess('No individual params given to import') if not $individual_params;
-    my $individual_upn = delete $individual_params->{upn};
-    Carp::confess('No individual upn in individual params given to import') if not $individual_upn;
     my $sample_params = delete $params{sample};
     Carp::confess('No sample params given to import') if not $sample_params;
     my $sample_name = delete $sample_params->{name};
@@ -126,17 +122,17 @@ sub _import {
     }
 
     # individual
-    my $individual = $self->_get_individual($individual_upn); # get by sample and upn
+    my $individual = $self->_get_individual($self->_individual_attributes->{upn}); # get by sample and upn
     if ( not $individual ) {
-        $individual = $self->_create_individual(
-            upn => $individual_upn,
-            %$individual_params,
-        );
+        $individual = $self->_create_individual( $self->_individual_attributes );
         return if not $individual;
     }
     else {
         $self->status_message('Found individual: '.join(' ', map{ $individual->$_ } (qw/ id name upn /)));
-        $self->status_message("Found individual 'upn' (".$self->_individual->upn.") does not match the upn given ($individual_upn). This is probably ok.") if $individual->upn ne $individual_upn;
+        $self->status_message(
+            "Found individual 'upn' (%s) does not match the upn given (%s). This is probably ok.",
+            $self->_individual->upn, $self->_individual_attributes->{upn},
+        ) if $individual->upn ne $self->_individual_attributes->{upn};
     }
 
     if ( not $sample->source_id ) {
@@ -236,8 +232,9 @@ sub _get_individual {
 }
 
 sub _create_individual {
-    my ($self, %params) = @_;
+    my $self = shift;
 
+    my %params = %{$self->_individual_attributes};
     Carp::confess('No "upn" given to create individual') if not $params{upn};
     Carp::confess('No "nomenclature" given to create individual') if not $params{nomenclature};
     Carp::confess('No taxon set to create individual') if not $self->_taxon;
@@ -368,7 +365,7 @@ sub _resolve_individual_attributes {
         upn => $self->_individual_name,
     );
     return if not $self->_resolve_attributes('individual', \%attributes);
-    return %attributes;
+    return $self->_individual_attributes(\%attributes);
 }
 
 sub _resolve_sample_attributes {
