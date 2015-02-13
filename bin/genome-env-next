@@ -1,5 +1,7 @@
 #!/bin/bash
 
+ORIG_SET="$(set +o | tr '\n' ';')"
+
 set -o errexit
 set -o pipefail
 
@@ -95,12 +97,14 @@ function main {
     if test "$#" -gt 0
     then
         log.info "$@"...
+        eval "$ORIG_SET"
         exec "$@"
     else
         echo 'Press <Ctrl>-D or type `logout` to return to normal environment.'
         echo ''
         unset PROMPT_COMMAND
         export PS1="(${GE_ENV_NAME}) \w $ "
+        eval "$ORIG_SET"
         exec "$BASH" --norc --noprofile
     fi
 }
