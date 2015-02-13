@@ -50,6 +50,7 @@ class Genome::Sample::Command::Import::Base {
         _sample_attributes => { is => 'Hash' },
         # library
         _library => { is => 'Genome::Library', is_optional => 1, },
+        _library_attributes => { is => 'Hash' },
         # misc
         _created_objects => { is => 'ARRAY', is_optional => 1, },
         _minimum_unique_source_name_parts => { is => 'Number', default_value => 2, },
@@ -75,9 +76,7 @@ sub execute {
     
     my %library_attributes = $self->_resolve_library_attributes;
 
-    my $import = $self->_import(
-        library => \%library_attributes,
-    );
+    my $import = $self->_import;
     return if not $import;
 
     $self->status_message('Import sample...OK');
@@ -85,18 +84,7 @@ sub execute {
 }
 
 sub _import {
-    my ($self, %params) = @_;
-
-    # params
-    Carp::confess('No params given to import') if not %params;
-    #my $sample_params = delete $params{sample};
-    #Carp::confess('No sample params given to import') if not $sample_params;
-    #my $sample_name = delete $sample_params->{name};
-    #Carp::confess('No sample name in sample params given to import') if not $sample_name;
-    my $library_params = delete $params{library};
-    Carp::confess('No library params given to import') if not $library_params;
-    my $library_ext = delete $library_params->{ext};
-    Carp::confess('No library ext given to import') if not $library_ext;
+    my $self = shift;
 
     # taxon
     $self->_taxon( Genome::Taxon->get(name => $self->taxon_name) );
@@ -152,22 +140,23 @@ sub _import {
     }
 
     # library
-    my $library = $self->_get_or_create_library_for_extension($library_ext);
-    $library = $self->_set_library_params($library, $library_params);
+    my $library = $self->_get_or_create_library_for_extension($self->_library_attributes->{ext});
+    $library = $self->_set_library_params($library);
     return if not $library;
 
     return 1;
 }
 
 sub _set_library_params {
-    my $self = shift;
-    my $library = shift;
-    my $params = shift;
+    my $self  = shift;
 
-    for my $param_name (keys %{$params}) {
-        $library->$param_name($params->{$param_name});
+    my $params = $self->_library_attributes;
+    delete $params->{ext};
+    for my $param_name (keys %$params) {
+        $self->library->$param_name($params->{$param_name});
     }
-    return $library;
+
+    return 1;
 }
 
 sub _validate_name_and_set_individual_name {
@@ -387,7 +376,7 @@ sub _resolve_library_attributes {
         ext => "extlibs",
     );
     return if not $self->_resolve_attributes('library', \%attributes);
-    return %attributes;
+    return $self->_library_attributes(\%attributes);
 }
 
 sub _resolve_attributes {
