@@ -74,7 +74,6 @@ sub execute {
     my %library_attributes = $self->_resolve_library_attributes;
 
     my $import = $self->_import(
-        taxon => $self->taxon_name,
         individual => \%individual_attributes,
         sample => \%sample_attributes,
         library => \%library_attributes,
@@ -90,8 +89,6 @@ sub _import {
 
     # params
     Carp::confess('No params given to import') if not %params;
-    my $taxon_name = delete $params{taxon};
-    Carp::confess('No taxon name given to import') if not $taxon_name;
     my $individual_params = delete $params{individual};
     Carp::confess('No individual params given to import') if not $individual_params;
     my $individual_upn = delete $individual_params->{upn};
@@ -106,8 +103,8 @@ sub _import {
     Carp::confess('No library ext given to import') if not $library_ext;
 
     # taxon
-    $self->_taxon( Genome::Taxon->get(name => $taxon_name) );
-    Carp::confess("Cannot get taxon for '$taxon_name'") if not $self->_taxon;
+    $self->_taxon( Genome::Taxon->get(name => $self->taxon_name) );
+    Carp::confess( $self->error_message("Cannot get taxon for '%s'", $self->taxon_name) ) if not $self->_taxon;
     $self->status_message('Found taxon: '.$self->_taxon->__display_name__);
 
     # sample
