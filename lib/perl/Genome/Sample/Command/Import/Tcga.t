@@ -15,9 +15,12 @@ use_ok('Genome::Sample::Command::Import') or die;
 ok(Genome::Sample::Command::Import::Tcga->__meta__, 'class meta for import tcga sample');
 
 # basic import - no exsting patients/samples
+my $taxon = Genome::Taxon->__define__(name => 'almost human');
+ok($taxon, 'defined taxon');
 my $name = 'TCGA-00-0000-01A-00R-0000-00';
 my $import = Genome::Sample::Command::Import::Tcga->create(
     name => $name,
+    taxon => $taxon,
 );
 ok($import, 'create');
 $import->dump_status_messages(1);
@@ -39,7 +42,7 @@ my $patient = Genome::Individual->create(
     name => 'H_00-D0000',
     upn => 'D0000',
     nomenclature => 'caTissue',
-    taxon => $import->_taxon,
+    taxon => $taxon,
 );
 ok($patient, 'create patient') or die;
 my $sample = Genome::Sample->create(
@@ -51,7 +54,10 @@ my $sample = Genome::Sample->create(
 );
 ok($sample, 'create sample') or die;
 my $name2 = 'TCGA-11-1111-10A-00W-0000-00';
-$import = Genome::Sample::Command::Import::Tcga->create(name => $name2);
+$import = Genome::Sample::Command::Import::Tcga->create(
+    name => $name2, 
+    taxon => $taxon,
+);
 ok($import, 'create');
 $import->dump_status_messages(1);
 ok($import->execute, 'execute');

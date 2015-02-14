@@ -14,9 +14,10 @@ use Test::More;
 use_ok('Genome::Sample::Command::Import') or die;
 ok(Genome::Sample::Command::Import::Atcc->__meta__, 'class meta for import atcc sample');
 
+my $taxon = Genome::Taxon->__define__(name => 'almost human');
+ok($taxon, 'defined taxon');
 my $common_name = 'COLO-000';
 my $individual_name = 'ATCC-'.$common_name;
-
 my $name = 'ATCC-COLO-000-BL';
 my $import_normal = Genome::Sample::Command::Import::Atcc->create(
     name => $name,
@@ -24,6 +25,7 @@ my $import_normal = Genome::Sample::Command::Import::Atcc->create(
     ethnicity => 'caucasian',
     age => 45,
     organ_name => 'blood',
+    taxon => $taxon,
 );
 ok($import_normal, 'create');
 $import_normal->dump_status_messages(1);
@@ -51,6 +53,7 @@ my $import_tumor = Genome::Sample::Command::Import::Atcc->create(
     age => 45,
     organ_name => 'skin',
     disease => 'malignant melanoma',
+    taxon => $taxon,
 );
 ok($import_tumor, 'create');
 $import_tumor->dump_status_messages(1);
@@ -81,6 +84,7 @@ my $import_fail = Genome::Sample::Command::Import::Atcc->create(
     age => 45,
     organ_name => 'skin',
     disease => 'malignant melanoma',
+    taxon => $taxon,
 );
 ok($import_fail, 'create');
 $import_fail->dump_status_messages(1);
@@ -93,6 +97,7 @@ $import_fail = Genome::Sample::Command::Import::Atcc->create(
     age => 45,
     organ_name => 'skin',
     disease => 'malignant melanoma',
+    taxon => $taxon,
 );
 ok($import_fail, 'create');
 $import_fail->dump_status_messages(1);
