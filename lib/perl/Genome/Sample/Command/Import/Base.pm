@@ -77,14 +77,8 @@ sub execute {
     my $individual_name_ok = $self->_validate_name_and_set_individual_name;
     return if not $individual_name_ok;
 
-    my $individual_attributes = $self->_resolve_individual_attributes;
-    return if not $individual_attributes;
-
-    my $sample_attributes = $self->_resolve_sample_attributes;
-    return if not $sample_attributes;
-    
-    my $library_attributes = $self->_resolve_library_attributes;
-    return if not $library_attributes;
+    my $resolve_attrs_ok = $self->_resolve_incoming_attributes;
+    return if not $resolve_attrs_ok;
 
     my $import = $self->_import;
     return if not $import;
@@ -312,6 +306,18 @@ sub _display_string_for_params {
     }
 
     return $string;
+}
+
+sub _resolve_incoming_attributes {
+    my $self = shift;
+
+    for my $type (qw/ individual sample library /) {
+        my $method = '_resolve_'.$type.'_attributes';
+        my $resolve_ok = $self->$method;
+        return if not $resolve_ok;
+    }
+
+    return 1;
 }
 
 sub _resolve_individual_attributes {
