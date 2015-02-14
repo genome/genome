@@ -74,16 +74,21 @@ sub execute {
     my $self = shift;
     $self->status_message('Import '.$self->nomenclature.' sample...');
 
+    my $sample = $self->_does_sample_already_exist;
+    return 1 if $sample; # and done!
+
     my $individual_name_ok = $self->_validate_name_and_set_individual_name;
     return if not $individual_name_ok;
 
     my $resolve_attrs_ok = $self->_resolve_incoming_attributes;
     return if not $resolve_attrs_ok;
 
+    $sample = $self->_create_sample;
+    return if not $sample;
+
     my $import = $self->_import;
     return if not $import;
 
-    $self->status_message('Import sample...OK');
     return 1;
 }
 
@@ -94,24 +99,6 @@ sub _import {
     $self->_taxon( Genome::Taxon->get(name => $self->taxon_name) );
     Carp::confess( $self->error_message("Cannot get taxon for '%s'", $self->taxon_name) ) if not $self->_taxon;
     $self->status_message('Found taxon: '.$self->_taxon->__display_name__);
-
-    # sample
-    my $sample = Genome::Sample->get(name => $self->_sample_attributes->{name});
-    if ( $sample ) {
-        $self->_sample($sample);
-        $self->status_message('Found sample: '.join(' ', map{ $sample->$_ } (qw/ id name/)));
-        my $sample_attributes = $self->_sample_attributes;
-        my $name = delete $sample_attributes->{name};
-        if ( %$sample_attributes ) { # got additional attributes - try to update
-            my $update = $self->_update_attributes($sample, $sample_attributes);
-            return if not $update;
-        }
-        $sample_attributes->{name} = $name; # set name back
-    }
-    else { # create, set individual later
-        $sample = $self->_create_sample;
-        return if not $sample;
-    }
 
     # individual
     my $individual = $self->_get_individual($self->_individual_attributes->{upn}); # get by sample and upn
@@ -127,6 +114,7 @@ sub _import {
         ) if $individual->upn ne $self->_individual_attributes->{upn};
     }
 
+    my $sample = $self->_sample;
     if ( not $sample->source_id ) {
         $sample->source_id( $individual->id );
     }
@@ -180,6 +168,16 @@ sub _validate_name_and_set_individual_name {
 
     $self->status_message('Validate sample name and resolve individual name...done');
     return 1
+}
+
+sub _does_sample_already_exist {
+    my $self = shift;
+
+    my $sample = Genome::Sample->get(name => $self->name);
+    return if not $sample;
+
+    $self->status_message('Found sample: '.$sample->__display_name__);
+    return $self->_sample($sample);
 }
 
 sub _get_individual {
