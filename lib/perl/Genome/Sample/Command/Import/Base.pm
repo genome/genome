@@ -86,8 +86,8 @@ sub execute {
     my $sample = $self->_create_sample;
     return if not $sample;
 
-    my $import = $self->_import;
-    return if not $import;
+    my $individual = $self->_get_or_create_individual;
+    return if not $individual;
 
     $library = $self->_create_library;
     return if not $library;
@@ -95,7 +95,7 @@ sub execute {
     return 1;
 }
 
-sub _import {
+sub _get_or_create_individual {
     my $self = shift;
 
     # taxon
