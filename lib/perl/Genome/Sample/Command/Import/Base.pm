@@ -89,6 +89,11 @@ sub execute {
     my $import = $self->_import;
     return if not $import;
 
+
+    # library
+    my $library = $self->_get_or_create_library;
+    return if not $library;
+
     return 1;
 }
 
@@ -130,11 +135,6 @@ sub _import {
         $self->error_message('Sample ('.$sample->id.') source type ('.$sample->source_type.') does not match individual ('.$individual->subject_type.')');
         return;
     }
-
-    # library
-    my $library = $self->_get_or_create_library;
-    $library = $self->_set_library_params($library);
-    return if not $library;
 
     return 1;
 }
@@ -290,6 +290,9 @@ sub _get_or_create_library {
         $self->error_message('Cannot not create library to import sample');
         return;
     }
+
+    my $set_params_ok = $self->_set_library_params($library);
+    return if not $set_params_ok;
 
     $self->status_message('Create library: '.join(' ', map{ $library->$_ } (qw/ id name/)));
     return $self->_library($library);
