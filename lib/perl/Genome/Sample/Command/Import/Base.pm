@@ -383,30 +383,5 @@ sub _resolve_attributes {
     return 1;
 }
 
-sub _update_attributes {
-    my ($self, $obj, %attributes) = @_;
-
-    $self->status_message('Update '.$obj->name.' ('.$obj->id.')');
-    my $force = delete $attributes{__force__};
-    $self->status_message('Force is '.($force ? 'on' : 'off'));
-    $self->status_message('Params: '._display_string_for_params(\%attributes));
-
-    for my $label ( keys %attributes ) {
-        my $value = eval{ $obj->attributes(attribute_label => $label)->attribute_value; };
-        if ( defined $value ) {
-            $self->status_message("Not updating '$label' for ".$obj->id." because it already has a value ($value)");
-            next;
-        }
-        $obj->add_attribute(
-            attribute_label => $label,
-            attribute_value => $attributes{$label},
-            nomenclature => $self->nomenclature,
-        );
-    }
-
-    $self->status_message('Update...OK');
-    return 1;
-}
-
 1;
 
