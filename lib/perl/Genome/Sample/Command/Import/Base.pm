@@ -137,17 +137,6 @@ sub _get_or_create_individual {
     return 1;
 }
 
-sub _set_library_params {
-    my $self  = shift;
-
-    my $params = $self->_library_attributes;
-    for my $param_name (keys %$params) {
-        $self->library->$param_name($params->{$param_name});
-    }
-
-    return 1;
-}
-
 sub _validate_name_and_set_individual_name {
     my $self = shift;
     $self->status_message('Validate sample name and resolve individual name...');
@@ -295,8 +284,10 @@ sub _create_library {
         return;
     }
 
-    my $set_params_ok = $self->_set_library_params($library);
-    return if not $set_params_ok;
+    my $params = $self->_library_attributes;
+    for my $param_name (keys %$params) {
+        $self->library->$param_name($params->{$param_name});
+    }
 
     $self->status_message('Create library: '.join(' ', map{ $library->$_ } (qw/ id name/)));
     return $self->_library($library);
