@@ -74,8 +74,8 @@ sub execute {
     my $self = shift;
     $self->status_message('Import '.$self->nomenclature.' sample...');
 
-    my $sample = $self->_does_sample_already_exist;
-    return 1 if $sample; # and done!
+    my $library = $self->_does_library_already_exist;
+    return 1 if $library; # and done!
 
     my $individual_name_ok = $self->_validate_name_and_set_individual_name;
     return if not $individual_name_ok;
@@ -83,15 +83,13 @@ sub execute {
     my $resolve_attrs_ok = $self->_resolve_incoming_attributes;
     return if not $resolve_attrs_ok;
 
-    $sample = $self->_create_sample;
+    my $sample = $self->_create_sample;
     return if not $sample;
 
     my $import = $self->_import;
     return if not $import;
 
-
-    # library
-    my $library = $self->_get_or_create_library;
+    $library = $self->_create_library;
     return if not $library;
 
     return 1;
@@ -170,14 +168,18 @@ sub _validate_name_and_set_individual_name {
     return 1
 }
 
-sub _does_sample_already_exist {
+sub _does_library_already_exist {
     my $self = shift;
 
     my $sample = Genome::Sample->get(name => $self->name);
     return if not $sample;
-
     $self->status_message('Found sample: '.$sample->__display_name__);
-    return $self->_sample($sample);
+    $self->_sample($sample);
+
+    my $library = Genome::Library->get(name => $self->_library_name);
+    return if not $library;
+    $self->status_message('Found library: '.$library->__display_name__);
+    return $self->_library($library);
 }
 
 sub _get_individual {
@@ -249,6 +251,8 @@ sub _create_individual {
 sub _create_sample {
     my $self = shift;
 
+    return 1 if $self->_sample;
+
     my %params = %{$self->_sample_attributes};
     Carp::confess('No name given to create sample') if not $params{name};
     Carp::confess('No nomenclature set to create sample') if not $params{nomenclature};
@@ -270,7 +274,7 @@ sub _create_sample {
     return $self->_sample($sample);
 }
 
-sub _get_or_create_library {
+sub _create_library {
     my ($self, $ext) = @_;
 
     my $library = Genome::Library->get(name => $self->_library_name);

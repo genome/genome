@@ -17,17 +17,28 @@ class SampleImporter {
     is => 'Genome::Sample::Command::Import::Base',
     has => {
         nomenclature => {},
+        # these are deprecated
+        name_regexp => { default_value => '(TGI\-[\w\d]+)\-[\w\d]+', },
+        taxon_name => { default_value => 'human', },
     },
 };
 
-my $sample_name = '_SAMPLE_';
+my $sample_name = 'TGI-INDINDIVIDUAL-SAMPLE';
 my $sample = Genome::Sample->__define__(
     name => $sample_name,
 );
 ok($sample, 'defined sample');
 
-my $cmd = SampleImporter->execute(name => $sample_name, nomenclature => 'TGI');
-ok($cmd->result, 'execute sample importer for existoing sample');
-is($cmd->_sample, $sample, 'set sample');
+my $cmd1 = SampleImporter->execute(name => $sample_name, nomenclature => 'TGI');
+ok($cmd1->result, 'execute sample importer for existoing sample');
+ok($cmd1->_individual, 'set individual');
+is($cmd1->_sample, $sample, 'set existing sample');
+ok($cmd1->_library, 'set library');
+
+my $cmd2 = SampleImporter->execute(name => $sample_name, nomenclature => 'TGI');
+ok($cmd2->result, 'execute sample importer for existoing sample');
+ok(!$cmd2->_individual, 'did not set individual');
+is($cmd2->_sample, $sample, 'found existing sample');
+is($cmd2->_library, $cmd1->_library, 'found existing library');
 
 done_testing();
