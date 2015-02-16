@@ -104,7 +104,7 @@ sub _get_or_create_individual {
     my $individual = $self->_get_individual($self->_individual_attributes->{upn}); # get by sample and upn
     if ( not $individual ) {
         if ( not $self->taxon ) {
-            $self->error_message('No taxon given an dan individual must be created. Please specify one.');
+            $self->error_message('No taxon given and an individual must be created. Please specify one.');
             return;
         }
         $self->status_message('Found taxon: '.$self->taxon->__display_name__);
@@ -288,7 +288,7 @@ sub _create_library {
 
     my $params = $self->_library_attributes;
     for my $param_name (keys %$params) {
-        $self->library->$param_name($params->{$param_name});
+        $library->$param_name($params->{$param_name});
     }
 
     $self->status_message('Create library: '.join(' ', map{ $library->$_ } (qw/ id name/)));
