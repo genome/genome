@@ -359,7 +359,7 @@ sub processed_bed_file {
     Genome::Sys->write_file($temp_file, $content);
     return $temp_file;
 }
-Memoize::memoize('processed_bed_file');
+Memoize::memoize('processed_bed_file', LIST_CACHE => 'MERGE');
 
 sub generate_merged_bed_file {
     my $self = shift;
