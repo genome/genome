@@ -17,6 +17,9 @@ sub generate_obj {
     unless(exists $params{status}) {
         $params{status} = 'In Progress'; #most commonly needed for tests
     }
+    unless(exists $params{run_as}) {
+        $params{run_as} = Genome::Sys->username;
+    }
 
     my $project = Genome::Config::AnalysisProject->create(%params);
     my $config_profile_item = Genome::Test::Factory::Config::Profile::Item->setup_object(analysis_project => $project);
