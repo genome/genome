@@ -184,13 +184,7 @@ sub _user_params {
 sub _get_file_path_for_feature_list {
     my ($self, $id) = @_;
     my $feature_list = Genome::FeatureList->get($id);
-    my $processed_bed = $self->_get_processed_file_path_for_feature_list($id);
-    my $sorted_processed_bed = Genome::Sys->create_temp_file_path;
-    Genome::Model::Tools::Joinx::Sort->execute(
-        input_files => [$processed_bed],
-        output_file => $sorted_processed_bed,
-    );
-    return $feature_list->gzip_and_tabix_bed($sorted_processed_bed);
+    return $feature_list->get_tabix_and_gzipped_bed_file;
 }
 Memoize::memoize("_get_file_path_for_feature_list", LIST_CACHE => 'MERGE');
 
