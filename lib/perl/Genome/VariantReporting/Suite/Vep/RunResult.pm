@@ -8,6 +8,7 @@ use IPC::Run qw(run);
 use File::Basename qw(dirname);
 use JSON;
 use Memoize qw();
+use List::MoreUtils qw(uniq);
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 
@@ -62,6 +63,7 @@ sub output_filename {
 sub _run {
     my $self = shift;
 
+    $self->_validate_feature_lists;
     $self->_sort_input_vcf;
     $self->_strip_input_vcf;
     $self->_split_alternate_alleles;
@@ -72,6 +74,31 @@ sub _run {
     $self->_zip;
 
     return;
+}
+
+my @INVALID_FEATURE_LIST_CHARACTERS = qw/;/;
+
+sub _validate_feature_lists {
+    my $self = shift;
+
+    TAG: for my $tag ($self->custom_annotation_tags) {
+        my $id = $self->decoded_feature_list_ids->{$tag};
+        my $feature_list_file_path = $self->_get_processed_file_path_for_feature_list($id);
+        my $bed_reader = Genome::Utility::IO::BedReader->create(
+            input => $feature_list_file_path,
+            headers => [qw/chr start end annotation/],
+        );
+        #Only check the first 10 lines to reduce computational cost
+        #Typically, invalid characters will be present on every line
+        for my $line (1..10) {
+            my $bed_entry = $bed_reader->next;
+            next TAG unless defined($bed_entry);
+            my $invalid_characters_string = join('', @INVALID_FEATURE_LIST_CHARACTERS);
+            if (my @invalid_characters_captured = $bed_entry->{annotation} =~ m/([\Q$invalid_characters_string\E])/g) {
+                die $self->error_message("Feature list (%s) contains the following invalid characters (%s) in the 4th column on line (%s).", $id, join(' ', uniq @invalid_characters_captured), $line);
+            }
+        }
+    }
 }
 
 sub _sort_input_vcf {
@@ -157,9 +184,16 @@ sub _user_params {
 sub _get_file_path_for_feature_list {
     my ($self, $id) = @_;
     my $feature_list = Genome::FeatureList->get($id);
-    return $feature_list->get_tabix_and_gzipped_bed_file,
+    return $feature_list->get_tabix_and_gzipped_bed_file;
 }
 Memoize::memoize("_get_file_path_for_feature_list", LIST_CACHE => 'MERGE');
+
+sub _get_processed_file_path_for_feature_list {
+    my ($self, $id) = @_;
+    my $feature_list = Genome::FeatureList->get($id);
+    return $feature_list->processed_bed_file(short_name => 0),
+}
+Memoize::memoize("_get_processed_file_path_for_feature_list", LIST_CACHE => 'MERGE');
 
 sub custom_annotation_inputs {
     my $self = shift;
