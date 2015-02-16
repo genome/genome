@@ -98,22 +98,23 @@ sub _process_models {
                 $model->id, ($created_new ? 'created' : 'found'), $instrument_data->id ));
 
         $self->_assign_model_to_analysis_project($analysis_project, $model, $config_profile_item, $created_new);
-        $self->_assign_instrument_data_to_model($model, $instrument_data, $created_new);
+        $self->_assign_instrument_data_to_model($model, $instrument_data, $config_profile_item, $created_new);
         $self->_update_model($model);
         $self->_request_build_if_necessary($model, $created_new);
     }
 }
 
 sub _assign_instrument_data_to_model {
-    my ($self, $model, $instrument_data, $newly_created) = @_;
+    my ($self, $model, $instrument_data, $config_profile_item, $newly_created) = @_;
 
     #if a model is newly created, we want to assign all applicable instrument data to it
     my %params_hash = (model => $model);
     my $executed_ok = 1;
     if ($newly_created && $model->auto_assign_inst_data) {
-        my $cmd = Genome::Model::Command::InstrumentData::Assign::AnalysisProject->create(
+        my $cmd = Genome::Model::Command::InstrumentData::Assign::AnalysisProject::ByConfig->create(
             model => $model,
             analysis_project => $model->analysis_project,
+            config_profile_item => $config_profile_item,
         );
         $executed_ok &&= eval{ $cmd->execute; };
     } else {
