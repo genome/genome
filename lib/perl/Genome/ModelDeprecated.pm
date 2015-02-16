@@ -631,38 +631,53 @@ sub _resolve_type_name_for_class {
 
 sub compatible_instrument_data {
     my $self = shift;
-    my %params;
 
-    if (my @samples = $self->get_all_possible_samples)  {
-        my @sample_ids = map($_->id, @samples);
-        %params = (
-                   sample_id => \@sample_ids,
-               );
-    } else {
-        %params = (
-                   $self->subject_type => $self->subject_name,
-               );
-    }
-    $params{sequencing_platform} = $self->sequencing_platform if $self->sequencing_platform;
-    my @compatible_instrument_data = Genome::InstrumentData->get(%params);
-
-    if($params{sequencing_platform} and $params{sequencing_platform} eq 'solexa') {
-        # FASTQs with 0 reads crash in alignment.  Don't assign them. -??
-        # TODO: move this into the assign logic, not here. -ss
-        my @filtered_compatible_instrument_data;
-        for my $idata (@compatible_instrument_data) {
-            if (defined($idata->total_bases_read)&&($idata->total_bases_read == 0)) {
-                $self->warning_message(sprintf("ignoring %s because it has zero bases read",$idata->__display_name__));
-                next;
-            }
-            else {
-                push @filtered_compatible_instrument_data, $idata;
-            }
+    if($self->analysis_project) {
+        my $config_item = $self->analysis_project_bridge->config_profile_item;
+        unless($config_item) {
+            die $self->error_message('Configuration missing from analysis project association.  Cannot determine compatible instrument data for model %s and analysis project %s.', $self->__display_name__, $self->analysis_project->__display_name__);
         }
-        @compatible_instrument_data = @filtered_compatible_instrument_data;
-    }
 
-    return @compatible_instrument_data;
+        my $rmm = Genome::Config::Translator->get_rule_model_map_from_config($config_item);
+        my @project_instrument_data = $self->analysis_project->instrument_data;
+
+        return grep { $rmm->match($_) } @project_instrument_data;
+    } else {
+        $self->warning_message('No analysis project associated with model %s.', $self->__display_name__);
+
+        my %params;
+        if (my @samples = $self->get_all_possible_samples)  {
+            my @sample_ids = map($_->id, @samples);
+            %params = (
+                       sample_id => \@sample_ids,
+                   );
+        } else {
+            %params = (
+                       $self->subject_type => $self->subject_name,
+                   );
+        }
+        $params{sequencing_platform} = $self->sequencing_platform if $self->sequencing_platform;
+        my @compatible_instrument_data = Genome::InstrumentData->get(%params);
+
+        if($params{sequencing_platform} and $params{sequencing_platform} eq 'solexa') {
+            # FASTQs with 0 reads crash in alignment.  Don't assign them. -??
+            # TODO: move this into the assign logic, not here. -ss
+            my @filtered_compatible_instrument_data;
+            for my $idata (@compatible_instrument_data) {
+                if (defined($idata->total_bases_read)&&($idata->total_bases_read == 0)) {
+                    $self->warning_message(sprintf("ignoring %s because it has zero bases read",$idata->__display_name__));
+                    next;
+                }
+                else {
+                    push @filtered_compatible_instrument_data, $idata;
+                }
+            }
+            @compatible_instrument_data = @filtered_compatible_instrument_data;
+        }
+
+        return @compatible_instrument_data;
+
+    }
 }
 
 sub assigned_instrument_data { return $_[0]->instrument_data; }
