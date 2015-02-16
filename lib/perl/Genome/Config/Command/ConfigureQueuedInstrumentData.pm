@@ -111,9 +111,8 @@ sub _assign_instrument_data_to_model {
     my %params_hash = (model => $model);
     my $executed_ok = 1;
     if ($newly_created && $model->auto_assign_inst_data) {
-        my $cmd = Genome::Model::Command::InstrumentData::Assign::AnalysisProject->create(
+        my $cmd = Genome::Model::Command::InstrumentData::Assign::AllCompatible->create(
             model => $model,
-            analysis_project => $model->analysis_project,
         );
         $executed_ok &&= eval{ $cmd->execute; };
     } else {
