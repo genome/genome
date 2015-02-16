@@ -14,9 +14,10 @@ use Test::More;
 use_ok('Genome::Sample::Command::Import') or die;
 ok(Genome::Sample::Command::Import::Atcc->__meta__, 'class meta for import atcc sample');
 
+my $taxon = Genome::Taxon->__define__(name => 'almost human');
+ok($taxon, 'defined taxon');
 my $common_name = 'COLO-000';
 my $individual_name = 'ATCC-'.$common_name;
-
 my $name = 'ATCC-COLO-000-BL';
 my $import_normal = Genome::Sample::Command::Import::Atcc->create(
     name => $name,
@@ -24,6 +25,7 @@ my $import_normal = Genome::Sample::Command::Import::Atcc->create(
     ethnicity => 'caucasian',
     age => 45,
     organ_name => 'blood',
+    taxon => $taxon,
 );
 ok($import_normal, 'create');
 $import_normal->dump_status_messages(1);
@@ -42,7 +44,6 @@ is($import_normal->_sample->organ_name, 'blood', 'sample organ name');
 is_deeply($import_normal->_sample->source, $import_normal->_individual, 'sample source');
 is($import_normal->_library->name, $name.'-extlibs', 'library name');
 is_deeply($import_normal->_library->sample, $import_normal->_sample, 'library sample');
-is(@{$import_normal->_created_objects}, 3, 'created 3 objects');
 
 $name = 'ATCC-COLO-000';
 my $import_tumor = Genome::Sample::Command::Import::Atcc->create(
@@ -52,6 +53,7 @@ my $import_tumor = Genome::Sample::Command::Import::Atcc->create(
     age => 45,
     organ_name => 'skin',
     disease => 'malignant melanoma',
+    taxon => $taxon,
 );
 ok($import_tumor, 'create');
 $import_tumor->dump_status_messages(1);
@@ -73,7 +75,6 @@ is_deeply($import_tumor->_sample->source, $import_tumor->_individual, 'sample so
 is_deeply($import_tumor->_individual, $import_normal->_individual, 'individuals match for tumor/normal');
 is($import_tumor->_library->name, $name.'-extlibs', 'library name');
 is_deeply($import_tumor->_library->sample, $import_tumor->_sample, 'library sample');
-is(@{$import_tumor->_created_objects}, 2, 'created 2 objects');
 
 # fail
 my $import_fail = Genome::Sample::Command::Import::Atcc->create(
@@ -83,6 +84,7 @@ my $import_fail = Genome::Sample::Command::Import::Atcc->create(
     age => 45,
     organ_name => 'skin',
     disease => 'malignant melanoma',
+    taxon => $taxon,
 );
 ok($import_fail, 'create');
 $import_fail->dump_status_messages(1);
@@ -95,6 +97,7 @@ $import_fail = Genome::Sample::Command::Import::Atcc->create(
     age => 45,
     organ_name => 'skin',
     disease => 'malignant melanoma',
+    taxon => $taxon,
 );
 ok($import_fail, 'create');
 $import_fail->dump_status_messages(1);

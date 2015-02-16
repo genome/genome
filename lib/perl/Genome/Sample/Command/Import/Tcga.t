@@ -15,9 +15,12 @@ use_ok('Genome::Sample::Command::Import') or die;
 ok(Genome::Sample::Command::Import::Tcga->__meta__, 'class meta for import tcga sample');
 
 # basic import - no exsting patients/samples
+my $taxon = Genome::Taxon->__define__(name => 'almost human');
+ok($taxon, 'defined taxon');
 my $name = 'TCGA-00-0000-01A-00R-0000-00';
 my $import = Genome::Sample::Command::Import::Tcga->create(
     name => $name,
+    taxon => $taxon,
 );
 ok($import, 'create');
 $import->dump_status_messages(1);
@@ -33,14 +36,13 @@ is($import->_sample->extraction_type, 'rna', 'sample extraction type');
 is_deeply($import->_sample->source, $import->_individual, 'sample source');
 is($import->_library->name, $name.'-extlibs', 'library name');
 is_deeply($import->_library->sample, $import->_sample, 'library sample');
-is(@{$import->_created_objects}, 3, 'created 3 objects');
 
 # import w/ existing patients/samples but the patient name is screwy
 my $patient = Genome::Individual->create(
     name => 'H_00-D0000',
     upn => 'D0000',
     nomenclature => 'caTissue',
-    taxon => $import->_taxon,
+    taxon => $taxon,
 );
 ok($patient, 'create patient') or die;
 my $sample = Genome::Sample->create(
@@ -52,7 +54,10 @@ my $sample = Genome::Sample->create(
 );
 ok($sample, 'create sample') or die;
 my $name2 = 'TCGA-11-1111-10A-00W-0000-00';
-$import = Genome::Sample::Command::Import::Tcga->create(name => $name2);
+$import = Genome::Sample::Command::Import::Tcga->create(
+    name => $name2, 
+    taxon => $taxon,
+);
 ok($import, 'create');
 $import->dump_status_messages(1);
 ok($import->execute, 'execute');
@@ -67,7 +72,6 @@ is($import->_sample->extraction_type, 'ipr product', 'sample extraction type');
 is_deeply($import->_sample->source, $import->_individual, 'sample source');
 is($import->_library->name, $name2.'-extlibs', 'library name');
 is_deeply($import->_library->sample, $import->_sample, 'library sample');
-is(@{$import->_created_objects}, 2, 'created 3 objects');
 
 # fail
 $import = Genome::Sample::Command::Import::Tcga->create(name => 'AGCT-00-0000-000-00R-0000-00');

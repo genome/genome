@@ -48,7 +48,6 @@ sub _load_import_configs {
         {
             nomenclature => 'ATCC',
             name_regexp => '(ATCC\-[\w\d]+\-[\w\d]+)(\-[\w\d]+)?',
-            taxon_name => 'human',
             sample_attributes => {
                 age => {},
                 disease => { is_optional => 1, },
@@ -77,14 +76,12 @@ sub _load_import_configs {
         {
             nomenclature => 'dbGaP',
             name_regexp => '(dbGaP\-\d+)\-\d+',
-            taxon_name => 'human',
             sample_attributes => [qw/ tissue /],
             individual_attributes => [qw/ race gender /],
         },
         {
             nomenclature => 'EMBL-EBI',
             name_regexp => '(EMBL\-[\w\d_]+)\-.+',
-            taxon_name => 'human',
             sample_attributes => {
                 age => {},
                 tissue_label => { doc => 'Tissue from where the sample was taken.', },
@@ -98,7 +95,6 @@ sub _load_import_configs {
         {
             nomenclature => 'METAHIT',
             name_regexp => '(METAHIT\-[\w\d]+)\-\d+',
-            taxon_name => 'human',
             sample_attributes => [qw/ age body_mass_index tissue_label /],
             individual_attributes => [qw/ gender /],
         },
@@ -115,7 +111,6 @@ sub _load_import_configs {
                     default_value => "unstranded",
                 },
             },
-            taxon_name => 'human',
        },
        {
             nomenclature => 'SRA',
@@ -130,7 +125,6 @@ sub _load_import_configs {
                     default_value => "unstranded",
                 },
             },
-            taxon_name => 'human',
        },
        {
             nomenclature => 'BRC46',
@@ -140,12 +134,10 @@ sub _load_import_configs {
                     default_value => "rna",
                 },
             },
-            taxon_name => 'human',
         },
         {
             nomenclature => 'TCGA',
             name_regexp => '(TCGA\-[\w\d]+\-[\w\d]+)\-[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+',
-            taxon_name => 'human',
             sample_attributes => {
                 extraction_type => {
                     calculate_from => [qw/ name /],
@@ -200,7 +192,6 @@ sub _load_import_configs {
         {
             nomenclature => 'DREAM',
             name_regexp => '(DREAM\-[\w\d]+)\-[\w\d]+',
-            taxon_name => 'human',
             sample_attributes => {
                 extraction_type => {
                     default_value => "genomic dna",
@@ -212,7 +203,6 @@ sub _load_import_configs {
         {
             nomenclature => 'WHIM',
             name_regexp => '(WHIM[\d]+)\-[\w\d]+(\-[\w\d]+)*',
-            taxon_name => 'human',
         },
     );
 }
@@ -248,9 +238,6 @@ sub _create_import_command_for_config {
         push @command_properties, $properties;
     }
 
-    my $taxon_name = $config->{taxon_name};
-    die 'No taxon name in sample import command config!' if not defined $taxon_name; # TODO add a property?
-
     my $importer_class_meta = UR::Object::Type->define(
         class_name => $class_name,
         is => 'Genome::Sample::Command::Import::Base',
@@ -258,7 +245,6 @@ sub _create_import_command_for_config {
             map({%$_ } @command_properties),
             name_regexp => { is_constant => 1, value => $name_regexp, },
             nomenclature => { is_constant => 1, },
-            taxon_name => { is_constant => 1, value => $taxon_name, },
         },
         doc => "import $nomenclature samples",
     );
