@@ -44,6 +44,5 @@ is_deeply($import->_sample->source, $import->_individual, 'sample source');
 my $library_name = $name.'-extlibs';
 is($import->_library->name, $library_name, 'library name');
 is_deeply($import->_library->sample, $import->_sample, 'library sample');
-is(@{$import->_created_objects}, 3, 'created 3 objects');
 
 done_testing();

@@ -49,7 +49,6 @@ class Genome::Sample::Command::Import::Base {
         # library
         _library => { is => 'Genome::Library', is_optional => 1, },
         # misc
-        _created_objects => { is => 'ARRAY', is_optional => 1, },
         _minimum_unique_source_name_parts => { is => 'Number', default_value => 2, },
     ],
 };
@@ -258,11 +257,7 @@ sub _create_individual {
         return;
     }
 
-    my $created_objects = $self->_created_objects;
-    push @$created_objects, $individual;
-    $self->_created_objects($created_objects);
     $self->status_message('Create individual: '.join(' ', map{ $individual->$_ } (qw/ id name/)));
-
     return $self->_individual($individual);
 }
 
@@ -285,12 +280,7 @@ sub _create_sample {
         return;
     }
 
-    my $created_objects = $self->_created_objects;
-    push @$created_objects, $sample;
-    $self->_created_objects($created_objects);
-
     $self->status_message('Create sample: '.join(' ', map { $sample->$_ } (qw/ id name /)));
-
     return $self->_sample($sample);
 }
 
@@ -343,12 +333,7 @@ sub _create_library_for_extension {
         return;
     }
 
-    my $created_objects = $self->_created_objects;
-    push @$created_objects, $library;
-    $self->_created_objects($created_objects);
-
     $self->status_message('Create library: '.join(' ', map{ $library->$_ } (qw/ id name/)));
-    
     return $self->_library($library);
 }
 
