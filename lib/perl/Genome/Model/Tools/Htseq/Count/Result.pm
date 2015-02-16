@@ -1,5 +1,10 @@
 package Genome::Model::Tools::Htseq::Count::Result;
 
+use strict;
+use warnings;
+
+use Genome;
+
 class Genome::Model::Tools::Htseq::Count::Result {
     is => ['Genome::SoftwareResult::StageableSimple', 'Genome::SoftwareResult::WithNestedResults'],
     has_param => [
