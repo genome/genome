@@ -121,8 +121,12 @@ sub _register_users {
             }
             my @locks;
             for my $params (@all_params) {
+                next if $params->{user}->isa('UR::DeletedRef');
                 push @locks, $class->_get_or_create_with_lock($params);
             }
+
+            return unless @locks;
+
             my $unlocker;
             $unlocker = UR::Context->process->add_observer(
                 aspect => 'commit',
