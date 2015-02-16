@@ -33,12 +33,6 @@ class Genome::VariantReporting::Framework::MergeReports {
             default => "\t",
             doc => 'Field separator for the reports',
         },
-        split_indicators => {
-            is => 'Text',
-            is_optional => 1,
-            is_many => 1,
-            doc => 'A regular expression that indicates that columns whose headers match should be split up.  These columns contain key:value pairs.  The key will be appended to the column header and the value will be put in the column.  Only valid if the file has a header.',
-        },
         entry_sources => {
             is_many => 'Text',
             is => 'Text',
