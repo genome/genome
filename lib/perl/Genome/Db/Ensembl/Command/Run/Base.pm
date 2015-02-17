@@ -754,8 +754,7 @@ sub cache {
             $cache_result_params{sift} = 0;
         }
         $cache_result_params{users} = $self->_result_users;
-        eval {$cache_result = Genome::Db::Ensembl::VepCache->get_or_create(%cache_result_params);
-        };
+        $cache_result = Genome::Db::Ensembl::VepCache->get_or_create(%cache_result_params);
     }
 
     return $cache_result;
