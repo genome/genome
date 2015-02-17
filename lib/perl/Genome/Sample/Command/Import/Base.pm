@@ -50,6 +50,7 @@ class Genome::Sample::Command::Import::Base {
         _sample_attributes => { is => 'Hash', },
         # library
         _library => { is => 'Genome::Library', is_optional => 1, },
+        _library_attributes => { is => 'Hash', },
         # misc
         _minimum_unique_source_name_parts => { is => 'Number', default_value => 2, },
     ],
@@ -72,11 +73,11 @@ sub execute {
     $resolve_attrs_ok = $self->_resolve_sample_attributes;
     return if not $resolve_attrs_ok;
     
-    my %library_attributes = $self->_resolve_library_attributes;
+    $resolve_attrs_ok = $self->_resolve_library_attributes;
+    return if not $resolve_attrs_ok;
 
     my $import = $self->_import(
         taxon => $self->taxon_name,
-        library => \%library_attributes,
     );
     return if not $import;
 
@@ -98,7 +99,7 @@ sub _import {
     Carp::confess('No sample params given to import') if not $sample_params;
     my $sample_name = $sample_params->{name};
     Carp::confess('No sample name in sample params given to import') if not $sample_name;
-    my $library_params = delete $params{library};
+    my $library_params = $self->_library_attributes;
     Carp::confess('No library params given to import') if not $library_params;
     my $library_ext = delete $library_params->{ext};
     Carp::confess('No library ext given to import') if not $library_ext;
@@ -374,7 +375,8 @@ sub _resolve_library_attributes {
         ext => "extlibs",
     );
     return if not $self->_resolve_attributes('library', \%attributes);
-    return %attributes;
+    $self->_library_attributes(\%attributes);
+    return 1;
 }
 
 sub _resolve_attributes {
