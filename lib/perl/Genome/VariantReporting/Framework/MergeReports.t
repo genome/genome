@@ -182,44 +182,6 @@ subtest "Source tags must be defined" => sub {
         "Error if source tag is not defined for one report");
 };
 
-subtest "columns to split only works with headers" => sub {
-    my $result_a = get_report_result('report_a.noheader');
-    my $result_b = get_report_result('report_b.noheader');
-    my $expected = get_data('expected.noheader');
-
-    my $cmd = $pkg->create(
-        report_results => [$result_a, $result_b],
-        sort_columns => ['1', '2'],
-        contains_header => 0,
-        split_indicators => ["split"],
-        process_id => $process->id,
-        label => 'results',
-    );
-    isa_ok($cmd, $pkg);
-
-    ok(!$cmd->execute, "Execute returns false value");
-    ok($cmd->error_message =~ qr/If split_indicators are specified, then a header must be present/,
-        'columns_to_split fails without header');
-};
-
-subtest "with split" => sub {
-    my $result_c = get_report_result('report_c.header');
-    my $expected = get_data('expected_split.header');
-
-    my $cmd = $pkg->create(
-        report_results => [$result_c],
-        sort_columns => ['chr', 'pos'],
-        contains_header => 1,
-        split_indicators => ["split"],
-        process_id => $process->id,
-        label => 'results',
-    );
-    isa_ok($cmd, $pkg);
-
-    ok($cmd->execute, 'Executed the test command');
-    compare_ok($cmd->output_result->report_path, $expected, 'Output file looks as expected');
-};
-
 subtest "test one empty file" => sub {
     my $result_a = get_report_result('report_a.noheader');
     my $result_b = get_report_result('report_empty');

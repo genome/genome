@@ -38,11 +38,6 @@ class Genome::VariantReporting::Framework::Component::Report::MergedReport {
         separator => {
             is => 'Text',
         },
-        split_indicators => {
-            is => 'Text',
-            is_optional => 1,
-            is_many => 1,
-        },
         entry_sources => {
             is_many => 'Text',
             is => 'Text',
@@ -74,13 +69,7 @@ sub _run {
 
     my $sorted_file = $self->sort_file($merged_file);
 
-    if ($self->split_indicators) {
-        my $split_file = $self->split_file($sorted_file);
-        $self->move_file_to_output($split_file);
-    }
-    else {
-        $self->move_file_to_output($sorted_file);
-    }
+    $self->move_file_to_output($sorted_file);
     return 1;
 }
 
@@ -94,14 +83,6 @@ sub get_reports_with_size {
         }
     }
     return @reports_with_size;
-}
-
-sub columns_to_split {
-    my $self = shift;
-    return grep {
-        my $field = $_;
-        first {$field =~ $_} $self->split_indicators
-    } $self->get_master_header;
 }
 
 sub move_file_to_output {
@@ -272,102 +253,6 @@ sub sort_file {
     return $sorted_file;
 }
 
-sub split_file {
-    my ($self, $file) = @_;
-    my $split_file = Genome::Sys->create_temp_file_path;
-
-    my @header_fields = $self->get_header($file);
-    my %keys_to_append = $self->get_keys_to_append($file);
-    my @new_header = $self->calculate_new_header(\@header_fields, \%keys_to_append);
-
-    my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
-        headers => [@new_header],
-        print_headers => 1,
-        separator => $self->separator,
-        output => $split_file,
-    );
-
-    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
-        separator => $self->separator,
-        input => $file,
-    );
-    while (my $entry = $reader->next) {
-        my $new_entry = $self->calculate_new_entry($entry, \@header_fields, \%keys_to_append);
-        $writer->write_one($new_entry);
-    }
-    return $split_file;
-}
-
-sub get_keys_to_append {
-    my ($self, $file) = @_;
-
-    my %keys_to_append;
-    for my $header_field ($self->columns_to_split) {
-        $keys_to_append{$header_field} = {};
-    }
-
-    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $file,
-        separator => $self->separator,
-    );
-
-    while (my $entry = $reader->next) {
-        for my $field_name ($self->columns_to_split) {
-            my @values = split(",", $entry->{$field_name});
-            for my $value (@values) {
-                unless ($value eq ".") {
-                    my ($sub_field, $sub_value) = split(":", $value);
-                    $keys_to_append{$field_name}->{$sub_field} = $field_name."-".$sub_field;
-                }
-            }
-        }
-    }
-    return %keys_to_append;
-}
-
-sub calculate_new_header {
-    my ($self, $header_fields, $keys_to_append) = @_;
-    my @new_header;
-    for my $header_field (@$header_fields) {
-        if (defined $keys_to_append->{$header_field}) {
-            for my $split_header (values %{$keys_to_append->{$header_field}}) {
-                push @new_header, $split_header;
-            }
-        }
-        else {
-            push @new_header, $header_field;
-        }
-    }
-    return @new_header;
-}
-
-sub calculate_new_entry {
-    my ($self, $entry, $header_fields, $keys_to_append) = @_;
-    my $new_entry;
-    for my $header_field (@$header_fields) {
-        if (defined $keys_to_append->{$header_field}) {
-            my @split_field = split(",", $entry->{$header_field});
-            my %split_field_dict;
-            for my $split_field_item (@split_field) {
-                my ($subfield, $subvalue) = split(":", $split_field_item);
-                $split_field_dict{"$header_field-$subfield"} = $subvalue;
-            }
-            for my $split_header (values %{$keys_to_append->{$header_field}}) {
-                if (defined $split_field_dict{$split_header}) {
-                    $new_entry->{$split_header} = $split_field_dict{$split_header};
-                }
-                else {
-                    $new_entry->{$split_header} = ".";
-                }
-            }
-        }
-        else {
-            $new_entry->{$header_field} = $entry->{$header_field};
-        }
-    }
-    return $new_entry;
-}
-
 sub print_header_to_fh {
     my ($self, $fh) = @_;
     if ($self->contains_header) {
@@ -409,10 +294,6 @@ sub file_name {
 sub validate {
     my $self = shift;
     my @reports_with_size = @_;
-
-    if ($self->split_indicators and !$self->contains_header) {
-        die $self->error_message("If split_indicators are specified, then a header must be present");
-    }
 
     my $master_header = Set::Scalar->new($self->get_master_header);
     for my $report (@reports_with_size) {
