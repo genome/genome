@@ -76,9 +76,7 @@ sub execute {
     $resolve_attrs_ok = $self->_resolve_library_attributes;
     return if not $resolve_attrs_ok;
 
-    my $import = $self->_import(
-        taxon => $self->taxon_name,
-    );
+    my $import = $self->_import;
     return if not $import;
 
     $self->status_message('Import sample...OK');
@@ -86,12 +84,9 @@ sub execute {
 }
 
 sub _import {
-    my ($self, %params) = @_;
+    my $self = shift;
 
-    # params
-    Carp::confess('No params given to import') if not %params;
-    my $taxon_name = delete $params{taxon};
-    Carp::confess('No taxon name given to import') if not $taxon_name;
+    my $taxon_name = $self->taxon_name;
     my $individual_params = $self->_individual_attributes;
     my $individual_upn = $individual_params->{upn};
     Carp::confess('No individual upn in individual params given to import') if not $individual_upn;
