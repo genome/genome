@@ -86,6 +86,9 @@ sub execute {
     my $import = $self->_import;
     return if not $import;
 
+    $library = $self->_get_or_create_library;
+    return if not $library;
+
     $self->status_message('Import sample...OK');
     return 1;
 }
@@ -169,10 +172,6 @@ sub _import {
         $self->error_message('Sample ('.$sample->id.') source type ('.$sample->source_type.') does not match individual ('.$individual->subject_type.')');
         return;
     }
-
-    # library
-    my $library = $self->_get_or_create_library;
-    return if not $library;
 
     return 1;
 }
