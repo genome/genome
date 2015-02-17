@@ -31,10 +31,10 @@ sub execute {
         delete $REPORT_TYPES{InputBaseCounts};
     }
 
-    unless (defined $build->dbsnp_build) {
-        $self->debug_message("No dbsnp_build defined for model, skipping dbsnp concordance report.");
+    unless (defined $build->dbsnp_build && defined $model->snv_detection_strategy) {
+        $self->debug_message("Either no dbsnp_build or snv detection for build; skipping dbsnp concordance report.");
         delete $REPORT_TYPES{DbSnpConcordance};
-    } 
+    }
 
     unless ($self->validate_gold_snp_path) {
         $self->debug_message("No valid gold_snp_path for the build, skip GoldSnpConcordance report");
