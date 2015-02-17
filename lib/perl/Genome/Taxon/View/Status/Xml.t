@@ -12,7 +12,7 @@ use above "Genome";
 use Genome::Test::Factory::Individual;
 use Genome::Test::Factory::Taxon;
 
-use Test::More tests => 6;
+use Test::More tests => 5;
 
 use_ok('Genome::Taxon::View::Status::Xml') or die "test cannot continue...";
 
@@ -37,15 +37,5 @@ isa_ok($view_obj, 'Genome::Taxon::View::Status::Xml');
 
 my $xml = $view_obj->_generate_content();
 ok($xml, "view returns XML") or die "test cannot continue...";
-
-SKIP: {
-    skip "No Xml.t.expected in place.",1;
-    my @diff =
-        grep { $_ !~ /generated-at/ }
-        grep { /\w/ }
-        Genome::Sys->diff_file_vs_text(__FILE__ . '.expected',$xml);
-    
-    is("@diff","","XML has no differences from expected value");
-}
 
 1;

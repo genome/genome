@@ -12,7 +12,7 @@ use above "Genome";
 use Genome::Test::Factory::Individual;
 use Genome::Test::Factory::Taxon;
 
-use Test::More tests => 6;
+use Test::More tests => 5;
 
 use_ok('Genome::Taxon::View::Status::Html') or die "test cannot continue...";
 
@@ -42,15 +42,5 @@ isa_ok($view_obj, 'Genome::Taxon::View::Status::Html');
 
 my $html = $view_obj->_generate_content();
 ok($html, "view returns HTML") or die "test cannot continue...";
-
-SKIP: {
-    skip "No Html.t.expected in place.",1;
-    my @diff =
-        grep { $_ !~ /generated-at/ }
-        grep { /\w/ }
-        Genome::Sys->diff_file_vs_text(__FILE__ . '.expected',$html);
-    
-    is("@diff","","HTML has no differences from expected value");
-}
 
 1;
