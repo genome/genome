@@ -857,7 +857,6 @@ sub parse_read_counts{
     }
     my $min_coverage_observed = 'inf';
     foreach my $sample_name (keys %samples){
-      my $prefix = $samples{$sample_name}{prefix};
       my $coverage = $samples{$sample_name}{coverage};
 
       #don't apply min_coverage on rnaseq, the transcript might not be expressed.
