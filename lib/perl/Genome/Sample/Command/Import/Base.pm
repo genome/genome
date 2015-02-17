@@ -155,21 +155,9 @@ sub _import {
 
     # library
     my $library = $self->_get_or_create_library;
-    $library = $self->_set_library_params($library);
     return if not $library;
 
     return 1;
-}
-
-sub _set_library_params {
-    my $self = shift;
-    my $library = shift;
-
-    my $params = $self->_library_attributes;
-    for my $param_name (keys %{$params}) {
-        $library->$param_name($params->{$param_name});
-    }
-    return $library;
 }
 
 sub _validate_name_and_set_individual_name {
@@ -317,6 +305,11 @@ sub _create_library {
     if ( not $library ) {
         $self->error_message('Cannot not create library to import sample');
         return;
+    }
+
+    my $params = $self->_library_attributes;
+    for my $param_name (keys %{$params}) {
+        $library->$param_name($params->{$param_name});
     }
 
     $self->status_message('Create library: '.join(' ', map{ $library->$_ } (qw/ id name/)));
