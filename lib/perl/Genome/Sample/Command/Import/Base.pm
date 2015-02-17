@@ -91,11 +91,9 @@ sub _import {
     my $individual_upn = $individual_params->{upn};
     Carp::confess('No individual upn in individual params given to import') if not $individual_upn;
     my $sample_params = $self->_sample_attributes;
-    Carp::confess('No sample params given to import') if not $sample_params;
     my $sample_name = $sample_params->{name};
     Carp::confess('No sample name in sample params given to import') if not $sample_name;
     my $library_params = $self->_library_attributes;
-    Carp::confess('No library params given to import') if not $library_params;
     my $library_ext = delete $library_params->{ext};
     Carp::confess('No library ext given to import') if not $library_ext;
 
@@ -109,10 +107,6 @@ sub _import {
     if ( $sample ) {
         $self->_sample($sample);
         $self->status_message('Found sample: '.join(' ', map{ $sample->$_ } (qw/ id name/)));
-        if ( %$sample_params ) { # got additional attributes - try to update
-            my $update = $self->_update_attributes($sample, %$sample_params);
-            return if not $update;
-        }
     }
     else { # create, set individual later
         $sample = $self->_create_sample;
@@ -408,31 +402,6 @@ sub _resolve_attributes {
         $attributes->{$name} = $value;
     }
 
-    return 1;
-}
-
-sub _update_attributes {
-    my ($self, $obj, %attributes) = @_;
-
-    $self->status_message('Update '.$obj->name.' ('.$obj->id.')');
-    my $force = delete $attributes{__force__};
-    $self->status_message('Force is '.($force ? 'on' : 'off'));
-    $self->status_message('Params: '._display_string_for_params(\%attributes));
-
-    for my $label ( keys %attributes ) {
-        my $value = eval{ $obj->attributes(attribute_label => $label)->attribute_value; };
-        if ( defined $value ) {
-            $self->status_message("Not updating '$label' for ".$obj->id." because it already has a value ($value)");
-            next;
-        }
-        $obj->add_attribute(
-            attribute_label => $label,
-            attribute_value => $attributes{$label},
-            nomenclature => $self->nomenclature,
-        );
-    }
-
-    $self->status_message('Update...OK');
     return 1;
 }
 
