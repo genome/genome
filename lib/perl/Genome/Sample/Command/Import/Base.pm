@@ -74,6 +74,9 @@ sub execute {
     my $self = shift;
     $self->status_message('Import '.$self->nomenclature.' sample...');
 
+    my $library = $self->_does_library_already_exist;
+    return 1 if $library; # and done!
+
     my $individual_name_ok = $self->_validate_name_and_set_individual_name;
     return if not $individual_name_ok;
 
@@ -85,6 +88,20 @@ sub execute {
 
     $self->status_message('Import sample...OK');
     return 1;
+}
+
+sub _does_library_already_exist {
+    my $self = shift;
+
+    my $sample = Genome::Sample->get(name => $self->name);
+    return if not $sample;
+    $self->status_message('Found sample: '.$sample->__display_name__);
+    $self->_sample($sample);
+
+    my $library = Genome::Library->get(name => $self->_library_name);
+    return if not $library;
+    $self->status_message('Found library: '.$library->__display_name__);
+    return $self->_library($library);
 }
 
 sub _resolve_incoming_attributes {
