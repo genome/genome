@@ -859,9 +859,13 @@ sub parse_read_counts{
     foreach my $sample_name (keys %samples){
       my $prefix = $samples{$sample_name}{prefix};
       my $coverage = $samples{$sample_name}{coverage};
+
       #don't apply min_coverage on rnaseq, the transcript might not be expressed.
-      $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed and
-        $samples{$sample_name}{build_type} !~ /rnaseq/);
+      if($samples{$sample_name}{build_type} !~ /rnaseq/) {
+        if($coverage < $min_coverage_observed) {
+          $min_coverage_observed = $coverage;
+        }
+      }
     }
 
     if ($na_found){
