@@ -44,13 +44,13 @@ class Genome::Sample::Command::Import::Base {
         # source
         _individual => { is => 'Genome::Individual', is_optional => 1, },
         _individual_name => { is => 'Text', },
-        _individual_attributes => { is => 'Hash', },
+        _individual_attributes => { is => 'HASH', },
         # sample
         _sample => { is => 'Genome::Sample', is_optional => 1, },
-        _sample_attributes => { is => 'Hash', },
+        _sample_attributes => { is => 'HASH', },
         # library
         _library => { is => 'Genome::Library', is_optional => 1, },
-        _library_attributes => { is => 'Hash', },
+        _library_attributes => { is => 'HASH', },
         # misc
         _minimum_unique_source_name_parts => { is => 'Number', default_value => 2, },
     ],
