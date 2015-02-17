@@ -148,7 +148,7 @@ sub _import {
 
     # library
     my $library = $self->_get_or_create_library_for_extension($library_ext);
-    $library = $self->_set_library_params($library, $library_params);
+    $library = $self->_set_library_params($library);
     return if not $library;
 
     return 1;
@@ -157,8 +157,8 @@ sub _import {
 sub _set_library_params {
     my $self = shift;
     my $library = shift;
-    my $params = shift;
 
+    my $params = $self->_library_attributes;
     for my $param_name (keys %{$params}) {
         $library->$param_name($params->{$param_name});
     }
