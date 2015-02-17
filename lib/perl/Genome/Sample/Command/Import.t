@@ -17,7 +17,6 @@ use_ok('Genome::Sample::Command::Import') or die;
 Genome::Sample::Command::Import::_create_import_command_for_config({
         nomenclature => 'TeSt',
         name_regexp => '(TeSt-\d+)\-[\w\d]+\-\d\w\-\d+',
-        taxon_name => 'human',
         sample_attributes => [qw/ tissue_desc /],# tests array
         individual_attributes => { # tests hash
             gender => { valid_values => [qw/ male female /], }, # tests getting meta from individual
@@ -53,9 +52,11 @@ is($individual_gender_property->{is}, $gender_property->{is}, 'gender type (is)'
 is($individual_gender_property->doc, $gender_property->doc, 'gender doc');
 is_deeply($gender_property->valid_values, [qw/ male female /], 'gender valid_values');
 
+my $taxon = Genome::Taxon->__define__(name => 'almost human');
 my $individual_name = 'TeSt-1111';
 my $name = $individual_name.'-A1A-1A-1111';
 my %import_params = (
+    taxon => $taxon,
     gender => 'female',
     tissue_desc => 'blood',
     extraction_type => 'genomic dna',
@@ -70,7 +71,7 @@ my $import = Genome::Sample::Command::Import::Test->create(
 ok($import, 'create');
 ok($import->execute, 'execute');
 
-is($import->_individual->taxon->name, 'human', 'taxon name');
+is($import->_individual->taxon, $taxon, 'taxon name');
 is($import->_individual->name, $individual_name, 'patient name');
 is($import->_individual->upn, $individual_name, 'patient name');
 is($import->_individual->nomenclature, 'TeSt', 'patient nomenclature');

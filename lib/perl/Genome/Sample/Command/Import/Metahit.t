@@ -14,10 +14,13 @@ use Test::More;
 use_ok('Genome::Sample::Command::Import') or die;
 ok(Genome::Sample::Command::Import::Metahit->__meta__, 'class meta for import metahit sample');
 
+my $taxon = Genome::Taxon->__define__(name => 'almost human');
+ok($taxon, 'defined taxon');
 my $name = 'MH0000';
 my $individual_name = 'METAHIT-'.$name;
 my $sample_name = $individual_name.'-1';
 my $import = Genome::Sample::Command::Import::Metahit->create(
+    taxon => $taxon,
     name => $sample_name,
     tissue_label => 'G_DNA_Stool',
     gender => 'male',
