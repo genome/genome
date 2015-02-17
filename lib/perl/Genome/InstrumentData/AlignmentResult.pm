@@ -1718,7 +1718,8 @@ sub get_merged_bam_to_revivify_per_lane_bam {
 
 sub get_merged_alignment_results {
     my $self = shift;
-    my @results = Genome::InstrumentData::AlignmentResult::Merged->get(
+    # Always load from the database, since other merged results may have committed since we updated the UR cache
+    my @results = Genome::InstrumentData::AlignmentResult::Merged->load(
         'inputs.value_id' => $self->instrument_data_id,
         test_name => $self->test_name,
     );
