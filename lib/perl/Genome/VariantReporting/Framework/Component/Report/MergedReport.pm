@@ -174,10 +174,9 @@ sub _get_headers_and_filters {
 
 sub legend_file_name {
     my $self = shift;
-    my @report_results = $self->report_results;
-    my $first_result = $report_results[0];
-    if ($first_result->can('legend_file_name')) {
-        return $first_result->legend_file_name;
+    my $base_report = $self->base_report;
+    if ($base_report->can('legend_file_name')) {
+        return $base_report->legend_file_name;
     } else {
         return;
     }
@@ -286,16 +285,14 @@ sub can_be_merged {
 
 sub merge_parameters {
     my $self = shift;
-    my @report_results = $self->report_results;
-    my $result_class = $report_results[0]->class;
+    my $result_class = $self->base_report->class;
     return $result_class->merge_parameters;
 }
 
 
 sub file_name {
     my $self = shift;
-    my @report_results = $self->report_results;
-    return $report_results[0]->file_name;
+    return $self->base_report->file_name;
 }
 
 
