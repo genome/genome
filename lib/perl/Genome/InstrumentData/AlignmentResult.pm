@@ -9,6 +9,7 @@ use YAML;
 use Time::HiRes;
 use POSIX qw(ceil);
 use File::Copy;
+use File::stat;
 use Carp qw(confess);
 use File::Basename;
 use Scalar::Util qw(refaddr);
@@ -255,6 +256,10 @@ class Genome::InstrumentData::AlignmentResult {
                                         is_optional=>1,
                                 },
         singleton_base_count => {
+                                        is=>'Number',
+                                        is_optional=>1,
+                                },
+        bam_size  => {
                                         is=>'Number',
                                         is_optional=>1,
                                 },
@@ -1054,6 +1059,7 @@ sub _compute_alignment_metrics {
         $self->singleton_read_count         ($res->{singleton});
         $self->singleton_base_count         ($res->{singleton_bp});
 
+        $self->bam_size(stat($bam)->size); #store this for per lane bam recreation
         Genome::Utility::Instrumentation::inc('alignment_result.read_count', $self->total_read_count);
     }
 

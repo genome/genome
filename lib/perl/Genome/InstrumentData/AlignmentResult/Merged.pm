@@ -255,7 +255,7 @@ sub create {
         for my $bam_path ($alignment->alignment_bam_file_paths) {
             my $header = $bam_path . '.header';
             unless (-s $header) {
-                my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version); 
+                my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
                 my $cmd = "$sam_path view -H $bam_path > $header";
                 Genome::Sys->shellcmd(
                     cmd => $cmd,
@@ -267,8 +267,8 @@ sub create {
             unless (-s $flagstat) {
                 my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
                     bam_file    => $bam_path,
-                    output_file => $flagstat, 
-                    use_version => $self->samtools_version,  
+                    output_file => $flagstat,
+                    use_version => $self->samtools_version,
                 );
 
                 unless ($cmd->execute) {
@@ -436,29 +436,28 @@ sub estimated_kb_usage {
     my $self = shift;
     my $alignments = shift;
 
-    my @bams;
-    for my $alignment (@$alignments) {
-        my @aln_bams = $alignment->alignment_bam_file_paths;
-        unless (@aln_bams) {
-            $self->debug_message("alignment $alignment has no bams at " . $alignment->output_dir);
-        }
-        push @bams, @aln_bams;
-    }
     my $total_size;
-    
-    unless (@bams) {
-        die "No bams?";
-    }
 
-    for (@bams) {
-        my $size = stat($_)->size;
-        $self->debug_message("BAM has size: " . $size);
-        $total_size += $size;
+    for my $alignment (@$alignments) {
+        my $bam_size = $alignment->bam_size;
+
+        unless (defined $bam_size) {
+            my @aln_bams = $alignment->alignment_bam_file_paths;
+            unless (@aln_bams) {
+                die $self->error_message("alignment $alignment has no bams at " . $alignment->output_dir);
+            }
+            for (@aln_bams) {
+                my $size = stat($_)->size;
+                $self->debug_message("BAM has size: " . $size);
+                $bam_size += $size;
+            }
+        }
+        $total_size += $bam_size;
     }
 
     #take the total size plus a 10% safety margin
     # 2x total size; full build merged bam, full build deduped bam
-    $total_size = sprintf("%.0f", ($total_size/1024)*1.1); 
+    $total_size = sprintf("%.0f", ($total_size/1024)*1.1);
     $total_size = ($total_size * 2);
 
     return $total_size;
@@ -483,15 +482,15 @@ sub _prepare_working_directories {
     my $output_dir = $self->output_dir;
 
     #file sizes are so large that /tmp/ would be exhausted--stage files to the allocation itself instead
-    my $staging_tempdir = File::Temp->newdir( 
+    my $staging_tempdir = File::Temp->newdir(
         "staging-XXXXX",
-        DIR     => $output_dir, 
+        DIR     => $output_dir,
         CLEANUP => 1,
     );
 
-    my $scratch_tempdir = File::Temp->newdir( 
+    my $scratch_tempdir = File::Temp->newdir(
         "scratch-XXXXX",
-        DIR     => $output_dir, 
+        DIR     => $output_dir,
         CLEANUP => 1,
     );
 
@@ -551,7 +550,7 @@ sub handle_duplicates {
         die $self->error_message('Failed to handle duplicates.');
     }
 
-    $self->verify_result([$input_bam], [$output_path]);    
+    $self->verify_result([$input_bam], [$output_path]);
 }
 
 sub verify_result {
@@ -633,7 +632,7 @@ sub _bam_flagstat_total {
     }
     my $total = $flagstat_data->{total_reads};
 
-    $self->debug_message('flagstat for ' . $bam_file . ' reports ' . $total . ' in total');    
+    $self->debug_message('flagstat for ' . $bam_file . ' reports ' . $total . ' in total');
     return $total;
 }
 
@@ -738,7 +737,7 @@ sub _resolve_duplication_metrics_name {
     $bam_path =~ s/$scratch_dir/$staging_dir/;
     $bam_path =~ s/.bam$//;
 
-    return $bam_path . '.metrics';    
+    return $bam_path . '.metrics';
 }
 
 sub create_bam_md5 {
@@ -751,11 +750,11 @@ sub create_bam_md5 {
     $self->debug_message("Creating md5 file for the BAM file...");
 
     Genome::Sys->shellcmd(
-        cmd                        => $cmd, 
+        cmd                        => $cmd,
         input_files                => [$bam_file],
         output_files               => [$md5_file],
         skip_if_output_is_present  => 0,
-    ); 
+    );
 
     return 1;
 }
@@ -793,9 +792,19 @@ sub _lock_per_lane_alignment {
     my $self = shift;
 
     for my $alignment ($self->collect_individual_alignments) {
+        my $id = $alignment->id;
         unless ($alignment->get_merged_alignment_results) {
+            my @bams = $alignment->alignment_bam_file_paths;
+            unless (@bams) {
+               die $self->error_message("Per lane alignment $id has neither merged results nor bam paths. Please create an apipe-support ticket for this.");
+               #There is no way to recreate per lane bam if merged bam
+               #does not exist and per lane bam is removed. Software
+               #result of this per lane alignment needs to be removed and
+               #this per lane instrument data needs to be realigned
+               #with that aligner.
+            }
+
             unless ($ENV{UR_DBI_NO_COMMIT}) {
-                my $id = $alignment->id;
                 my $lock_var = 'genome_instrument_data_alignment_result-merged-per-lane-'.$id.'/lock';
                 my $lock = Genome::Sys->lock_resource(
                     resource_lock => $lock_var,
