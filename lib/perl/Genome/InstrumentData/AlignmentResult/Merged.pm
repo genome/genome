@@ -815,15 +815,23 @@ sub _lock_per_lane_alignment {
 
                 die "Unable to acquire the lock for per lane alignment $id !" unless $lock;
 
-                UR::Context->current->add_observer(
-                    aspect   => 'commit',
-                    callback => sub {
-                        Genome::Sys->unlock_resource(resource_lock => $lock);
-                    }
-                );
+                # If the build before us successfully created a merged alignment result, we no longer need a lock
+                # If it failed, we will add an observer just as the first build did.
+                if ($alignment->get_merged_alignment_results) {
+                    Genome::Sys->unlock_resource(resource_lock => $lock);
+                } else {
+                    UR::Context->process->add_observer(
+                        aspect   => 'commit',
+                        callback => sub {
+                            Genome::Sys->unlock_resource(resource_lock => $lock);
+                        }
+                    );
+                }
             }
         }
     }
+
+    return;
 }
 
 1;
