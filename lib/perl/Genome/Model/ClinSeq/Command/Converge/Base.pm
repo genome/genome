@@ -601,6 +601,9 @@ sub get_case_name{
     $final_common_name = $name;
   }
   my $ncn = keys %common_names;
+  if ($ncn > 1){
+    die $self->error_message("$ncn cases found among these builds, this tool is meant to operate on builds from a single individual");
+  }
 
   #Second attempt to find a name
   my %names;
@@ -611,6 +614,10 @@ sub get_case_name{
     $final_name = $name;
   }
   my $nn = keys %names;
+  if ($nn > 1){
+    die $self->error_message("$nn cases found among these builds, this tool is meant to operate on builds from a single individual");
+  }
+
   my $resolved_name;
   if ($final_common_name){
     $resolved_name = $final_common_name;
