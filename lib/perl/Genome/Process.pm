@@ -141,6 +141,20 @@ sub run {
     }
 }
 
+sub run_and_wait {
+    my $self = shift;
+    my %p = Params::Validate::validate(@_, {
+            workflow_xml => {type => SCALAR},
+            workflow_inputs => {type => HASHREF},
+    });
+
+    my $transaction = UR::Context::Transaction->begin();
+    $self->create_disk_allocation();
+    $self->_write_workflow_file($p{workflow_xml});
+    $self->_write_inputs_file($p{workflow_inputs});
+    return $self->_execute_process($transaction);
+}
+
 sub _write_workflow_file {
     my $self = shift;
     my $workflow_xml = shift;
