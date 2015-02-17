@@ -25,11 +25,6 @@ class Genome::VariantReporting::Framework::MergeReports {
             is => 'Boolean',
             doc => 'Set to true if the report contains headers'
         },
-        use_header_from => {
-            is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
-            doc => 'Use the header from this report_result in the merged report',
-            is_optional => 1,
-        },
         separator => {
             is => 'Text',
             is_optional => 1,

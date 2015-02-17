@@ -150,33 +150,33 @@ sub connect_merge_operations {
                 command => 'Genome::VariantReporting::Framework::MergeReports',
             );
 
-            $dag->create_link(
-                source => $snvs_dag,
-                source_property => $output_name,
-                destination => $merge_op,
-                destination_property => 'base_report',
-            );
-
-            $dag->create_link(
-                source => $indels_dag,
-                source_property => $output_name,
-                destination => $merge_op,
-                destination_property => 'supplemental_report',
-            );
-
             if (defined($self->use_header_from) && $self->use_header_from eq 'indels') {
                 $dag->create_link(
                     source => $indels_dag,
                     source_property => $output_name,
                     destination => $merge_op,
-                    destination_property => 'use_header_from',
+                    destination_property => 'base_report',
+                );
+
+                $dag->create_link(
+                    source => $snvs_dag,
+                    source_property => $output_name,
+                    destination => $merge_op,
+                    destination_property => 'supplemental_report',
                 );
             } else {
                 $dag->create_link(
                     source => $snvs_dag,
                     source_property => $output_name,
                     destination => $merge_op,
-                    destination_property => 'use_header_from',
+                    destination_property => 'base_report',
+                );
+
+                $dag->create_link(
+                    source => $indels_dag,
+                    source_property => $output_name,
+                    destination => $merge_op,
+                    destination_property => 'supplemental_report',
                 );
             }
 

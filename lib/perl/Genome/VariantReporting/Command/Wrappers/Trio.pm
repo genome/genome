@@ -223,13 +223,6 @@ sub add_merge_discovery_and_followup_reports_to_workflow {
                     destination_property => 'supplemental_report',
                 );
 
-                $dag->create_link(
-                    source => $discovery_dag,
-                    source_property => $output_name,
-                    destination => $merge_op,
-                    destination_property => 'use_header_from',
-                );
-
                 $merge_op->declare_constant(
                     label => 'report:' . to_json({
                             roi_name => $roi_name,

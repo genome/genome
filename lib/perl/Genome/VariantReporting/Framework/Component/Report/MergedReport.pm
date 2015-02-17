@@ -35,10 +35,6 @@ class Genome::VariantReporting::Framework::Component::Report::MergedReport {
         contains_header => {
             is => 'Boolean',
         },
-        use_header_from => {
-            is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
-            is_optional => 1,
-        },
         separator => {
             is => 'Text',
         },
@@ -46,11 +42,6 @@ class Genome::VariantReporting::Framework::Component::Report::MergedReport {
             is_many => 'Text',
             is => 'Text',
             is_optional => 1,
-        },
-    ],
-    has_transient_optional => [
-        _master_header => {
-            is => 'ARRAY',
         },
     ],
 };
@@ -355,24 +346,7 @@ sub get_sort_column_numbers {
 sub get_master_header {
     my $self = shift;
 
-    unless (defined($self->_master_header)) {
-        my $result;
-        if (defined($self->use_header_from) &&
-            -s $self->use_header_from->report_path) {
-            $result = $self->use_header_from;
-        } else {
-            my @report_results = grep {-s $_->report_path}
-                $self->report_results;
-            if (@report_results) {
-                $result = shift @report_results;
-            } else {
-                die "No files available to get_master_header";
-            }
-        }
-        my @header = $self->get_header($result->report_path);
-        $self->_master_header(\@header);
-    }
-    return @{$self->_master_header};
+    return $self->get_header($self->base_report->report_path);
 }
 
 sub get_master_header_with_source {

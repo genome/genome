@@ -116,7 +116,6 @@ subtest "test with different orders of headers" => sub {
         base_report => $result_a,
         supplemental_report => $result_b,
         sort_columns => ['chr', 'pos'],
-        use_header_from => $result_a,
         contains_header => 1,
         process_id => $process->id,
         label => 'results',

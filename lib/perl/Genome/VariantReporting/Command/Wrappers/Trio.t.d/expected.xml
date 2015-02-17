@@ -843,11 +843,8 @@
     <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (simple)" toOperation="output connector" toProperty="indels_result (simple)"/>
     <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (vcf)" toOperation="output connector" toProperty="indels_result (vcf)"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="base_report"/>
-    <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="use_header_from"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="Merge Reports (full)" toProperty="base_report"/>
-    <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="Merge Reports (full)" toProperty="use_header_from"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="Merge Reports (simple)" toProperty="base_report"/>
-    <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="Merge Reports (simple)" toProperty="use_header_from"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="output connector" toProperty="snvs_result (bed)"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="output connector" toProperty="snvs_result (full)"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="output connector" toProperty="snvs_result (simple)"/>
@@ -1182,9 +1179,7 @@
     <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (bed)" toOperation="output connector" toProperty="indels_result (bed)"/>
     <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (docm)" toOperation="output connector" toProperty="indels_result (docm)"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="base_report"/>
-    <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="use_header_from"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (docm)" toOperation="Merge Reports (docm)" toProperty="base_report"/>
-    <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (docm)" toOperation="Merge Reports (docm)" toProperty="use_header_from"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="output connector" toProperty="snvs_result (bed)"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (docm)" toOperation="output connector" toProperty="snvs_result (docm)"/>
     <link fromOperation="input connector" fromProperty="Merge Reports (bed).contains_header" toOperation="Merge Reports (bed)" toProperty="contains_header"/>
@@ -1878,11 +1873,8 @@
     <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (simple)" toOperation="output connector" toProperty="indels_result (simple)"/>
     <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (vcf)" toOperation="output connector" toProperty="indels_result (vcf)"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="base_report"/>
-    <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="use_header_from"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="Merge Reports (full)" toProperty="base_report"/>
-    <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="Merge Reports (full)" toProperty="use_header_from"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="Merge Reports (simple)" toProperty="base_report"/>
-    <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="Merge Reports (simple)" toProperty="use_header_from"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="output connector" toProperty="snvs_result (bed)"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="output connector" toProperty="snvs_result (full)"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="output connector" toProperty="snvs_result (simple)"/>
@@ -2746,13 +2738,9 @@
     <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (simple)" toOperation="output connector" toProperty="indels_result (simple)"/>
     <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (vcf)" toOperation="output connector" toProperty="indels_result (vcf)"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (acmg)" toOperation="Merge Reports (acmg)" toProperty="base_report"/>
-    <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (acmg)" toOperation="Merge Reports (acmg)" toProperty="use_header_from"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="base_report"/>
-    <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="use_header_from"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="Merge Reports (full)" toProperty="base_report"/>
-    <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="Merge Reports (full)" toProperty="use_header_from"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="Merge Reports (simple)" toProperty="base_report"/>
-    <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="Merge Reports (simple)" toProperty="use_header_from"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (acmg)" toOperation="output connector" toProperty="snvs_result (acmg)"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="output connector" toProperty="snvs_result (bed)"/>
     <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="output connector" toProperty="snvs_result (full)"/>
@@ -2836,11 +2824,8 @@
   <link fromOperation="Create IGV session (test roi)" fromProperty="output_result" toOperation="output connector" toProperty="igv_session.test roi"/>
   <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" fromProperty="merged_result (bed)" toOperation="Converge for igv (test roi)" toProperty="discovery_bed_report_result"/>
   <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" fromProperty="merged_result (bed)" toOperation="Merge Discovery and Followup Reports (bed)" toProperty="base_report"/>
-  <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" fromProperty="merged_result (bed)" toOperation="Merge Discovery and Followup Reports (bed)" toProperty="use_header_from"/>
   <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" fromProperty="merged_result (full)" toOperation="Merge Discovery and Followup Reports (full)" toProperty="base_report"/>
-  <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" fromProperty="merged_result (full)" toOperation="Merge Discovery and Followup Reports (full)" toProperty="use_header_from"/>
   <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" fromProperty="merged_result (simple)" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="base_report"/>
-  <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-discovery)" fromProperty="merged_result (simple)" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="use_header_from"/>
   <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-docm)" fromProperty="merged_result (bed)" toOperation="Converge for igv (test roi)" toProperty="docm_bed_report_result"/>
   <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" fromProperty="merged_result (bed)" toOperation="Converge for igv (test roi)" toProperty="followup_bed_report_result"/>
   <link fromOperation="Create Snvs, Indels, and Merged Reports (test roi-followup)" fromProperty="merged_result (bed)" toOperation="Merge Discovery and Followup Reports (bed)" toProperty="supplemental_report"/>

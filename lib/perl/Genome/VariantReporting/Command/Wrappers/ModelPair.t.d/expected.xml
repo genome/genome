@@ -665,11 +665,8 @@
   <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (simple)" toOperation="output connector" toProperty="indels_result (simple)"/>
   <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (vcf)" toOperation="output connector" toProperty="indels_result (vcf)"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="base_report"/>
-  <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="use_header_from"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="Merge Reports (full)" toProperty="base_report"/>
-  <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="Merge Reports (full)" toProperty="use_header_from"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="Merge Reports (simple)" toProperty="base_report"/>
-  <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="Merge Reports (simple)" toProperty="use_header_from"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="output connector" toProperty="snvs_result (bed)"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (full)" toOperation="output connector" toProperty="snvs_result (full)"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="output connector" toProperty="snvs_result (simple)"/>
