@@ -44,6 +44,7 @@ class Genome::Sample::Command::Import::Base {
         # source
         _individual => { is => 'Genome::Individual', is_optional => 1, },
         _individual_name => { is => 'Text', },
+        _individual_attributes => { is => 'Hash', },
         # sample
         _sample => { is => 'Genome::Sample', is_optional => 1, },
         # library
@@ -64,8 +65,8 @@ sub execute {
     my $individual_name_ok = $self->_validate_name_and_set_individual_name;
     return if not $individual_name_ok;
 
-    my %individual_attributes = $self->_resolve_individual_attributes;
-    return if not %individual_attributes;
+    my $resolve_attrs_ok = $self->_resolve_individual_attributes;
+    return if not $resolve_attrs_ok;
 
     my %sample_attributes = $self->_resolve_sample_attributes;
     return if not %sample_attributes;
@@ -74,7 +75,6 @@ sub execute {
 
     my $import = $self->_import(
         taxon => $self->taxon_name,
-        individual => \%individual_attributes,
         sample => \%sample_attributes,
         library => \%library_attributes,
     );
@@ -91,9 +91,8 @@ sub _import {
     Carp::confess('No params given to import') if not %params;
     my $taxon_name = delete $params{taxon};
     Carp::confess('No taxon name given to import') if not $taxon_name;
-    my $individual_params = delete $params{individual};
-    Carp::confess('No individual params given to import') if not $individual_params;
-    my $individual_upn = delete $individual_params->{upn};
+    my $individual_params = $self->_individual_attributes;
+    my $individual_upn = $individual_params->{upn};
     Carp::confess('No individual upn in individual params given to import') if not $individual_upn;
     my $sample_params = delete $params{sample};
     Carp::confess('No sample params given to import') if not $sample_params;
@@ -130,10 +129,7 @@ sub _import {
     # individual
     my $individual = $self->_get_individual($individual_upn); # get by sample and upn
     if ( not $individual ) {
-        $individual = $self->_create_individual(
-            upn => $individual_upn,
-            %$individual_params,
-        );
+        $individual = $self->_create_individual;
         return if not $individual;
     }
     else {
@@ -238,8 +234,9 @@ sub _get_individual {
 }
 
 sub _create_individual {
-    my ($self, %params) = @_;
+    my $self = shift;
 
+    my %params = %{$self->_individual_attributes};
     Carp::confess('No "upn" given to create individual') if not $params{upn};
     Carp::confess('No "nomenclature" given to create individual') if not $params{nomenclature};
     Carp::confess('No taxon set to create individual') if not $self->_taxon;
@@ -356,7 +353,8 @@ sub _resolve_individual_attributes {
         upn => $self->_individual_name,
     );
     return if not $self->_resolve_attributes('individual', \%attributes);
-    return %attributes;
+    $self->_individual_attributes(\%attributes);
+    return 1;
 }
 
 sub _resolve_sample_attributes {
