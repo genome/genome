@@ -57,6 +57,10 @@ class Genome::Sample::Command::Import::Base {
         # library
         _library => { is => 'Genome::Library', is_optional => 1, },
         _library_attributes => { is => 'HASH', },
+        _library_name => { 
+            calculate_from => [qw/ name library_extension /],
+            calculate => q( return $name.'-'.$library_extension ), 
+        },
         # misc
         _minimum_unique_source_name_parts => { is => 'Number', default_value => 2, },
     ],
@@ -287,15 +291,10 @@ sub _get_or_create_library {
     return $self->_create_library;
 }
 
-sub _get_library_name {
-    my $self = shift;
-    return $self->name.'-'.$self->library_extension;
-}
-
 sub _get_library {
     my $self = shift;
 
-    my $name = $self->_get_library_name;
+    my $name = $self->_library_name;
     my $library = Genome::Library->get(name => $name);
     return if not $library;
 
@@ -308,7 +307,7 @@ sub _create_library {
     my $self = shift;
 
     my %params = (
-        name => $self->_get_library_name,
+        name => $self->_library_name,
         sample_id => $self->_sample->id,
     );
 
