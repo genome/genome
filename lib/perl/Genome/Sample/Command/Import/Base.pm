@@ -47,6 +47,7 @@ class Genome::Sample::Command::Import::Base {
         _individual_attributes => { is => 'Hash', },
         # sample
         _sample => { is => 'Genome::Sample', is_optional => 1, },
+        _sample_attributes => { is => 'Hash', },
         # library
         _library => { is => 'Genome::Library', is_optional => 1, },
         # misc
@@ -68,14 +69,13 @@ sub execute {
     my $resolve_attrs_ok = $self->_resolve_individual_attributes;
     return if not $resolve_attrs_ok;
 
-    my %sample_attributes = $self->_resolve_sample_attributes;
-    return if not %sample_attributes;
+    $resolve_attrs_ok = $self->_resolve_sample_attributes;
+    return if not $resolve_attrs_ok;
     
     my %library_attributes = $self->_resolve_library_attributes;
 
     my $import = $self->_import(
         taxon => $self->taxon_name,
-        sample => \%sample_attributes,
         library => \%library_attributes,
     );
     return if not $import;
@@ -94,9 +94,9 @@ sub _import {
     my $individual_params = $self->_individual_attributes;
     my $individual_upn = $individual_params->{upn};
     Carp::confess('No individual upn in individual params given to import') if not $individual_upn;
-    my $sample_params = delete $params{sample};
+    my $sample_params = $self->_sample_attributes;
     Carp::confess('No sample params given to import') if not $sample_params;
-    my $sample_name = delete $sample_params->{name};
+    my $sample_name = $sample_params->{name};
     Carp::confess('No sample name in sample params given to import') if not $sample_name;
     my $library_params = delete $params{library};
     Carp::confess('No library params given to import') if not $library_params;
@@ -119,10 +119,7 @@ sub _import {
         }
     }
     else { # create, set individual later
-        $sample = $self->_create_sample(
-            name => $sample_name,
-            %$sample_params,
-        );
+        $sample = $self->_create_sample;
         return if not $sample;
     }
 
@@ -259,8 +256,9 @@ sub _create_individual {
 }
 
 sub _create_sample {
-    my ($self, %params) = @_;
+    my $self = shift;
 
+    my %params = %{$self->_sample_attributes};
     Carp::confess('No name given to create sample') if not $params{name};
     Carp::confess('No nomenclature set to create sample') if not $params{nomenclature};
 
@@ -366,7 +364,8 @@ sub _resolve_sample_attributes {
     );
     return if not $self->_resolve_attributes('sample', \%attributes);
     $attributes{extraction_type} = $self->extraction_type if not defined $attributes{extraction_type};
-    return %attributes;
+    $self->_sample_attributes(\%attributes);
+    return 1;
 }
 
 sub _resolve_library_attributes {
