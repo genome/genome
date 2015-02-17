@@ -150,31 +150,18 @@ sub connect_merge_operations {
                 command => 'Genome::VariantReporting::Framework::MergeReports',
             );
 
-            my $converge = Genome::WorkflowBuilder::Converge->create(
-                output_properties => ['report_results'],
-                name => "Converge ($output_name)",
-            );
-            $dag->add_operation($converge);
-
             $dag->create_link(
                 source => $snvs_dag,
                 source_property => $output_name,
-                destination => $converge,
-                destination_property => 'snvs_report_result',
+                destination => $merge_op,
+                destination_property => 'base_report',
             );
 
             $dag->create_link(
                 source => $indels_dag,
                 source_property => $output_name,
-                destination => $converge,
-                destination_property => 'indels_report_result',
-            );
-
-            $dag->create_link(
-                source => $converge,
-                source_property => 'report_results',
                 destination => $merge_op,
-                destination_property => 'report_results',
+                destination_property => 'supplemental_report',
             );
 
             if (defined($self->use_header_from) && $self->use_header_from eq 'indels') {

@@ -17,9 +17,13 @@ class Genome::VariantReporting::Framework::Component::Report::MergedReport {
         'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
     ],
     has_input => [
-        report_results => {
+        base_report => {
             is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
-            is_many => 1,
+            doc => 'The main report to be merged.'
+        },
+        supplemental_report => {
+            is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
+            doc => 'The report that is to be added to the main report.'
         },
     ],
     has_param => [
@@ -71,6 +75,11 @@ sub _run {
 
     $self->move_file_to_output($sorted_file);
     return 1;
+}
+
+sub report_results {
+    my $self = shift;
+    return ($self->base_report, $self->supplemental_report);
 }
 
 sub get_reports_with_size {
