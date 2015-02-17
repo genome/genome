@@ -73,14 +73,11 @@ EOS
 
 sub execute {
     my $self = shift;
-    $DB::single = 1;
+
+    $self->check_minimum_version($MINIMUM_JOINX_VERSION);
+
     my ($per_sample_output, $per_site_output) = qw{ per_sample_report.txt per_site_report.txt }; #these are the default output file names in the program
 
-    if($self->use_version < $MINIMUM_JOINX_VERSION) {
-        $self->error_message("This module requires joinx version $MINIMUM_JOINX_VERSION or higher to function correctly.");
-        return;
-    }
-    
     my $input_file = $self->input_file;
 
     unless(-s $input_file) {
