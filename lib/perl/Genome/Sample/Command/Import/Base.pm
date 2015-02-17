@@ -67,19 +67,25 @@ sub execute {
     my $individual_name_ok = $self->_validate_name_and_set_individual_name;
     return if not $individual_name_ok;
 
-    my $resolve_attrs_ok = $self->_resolve_individual_attributes;
-    return if not $resolve_attrs_ok;
-
-    $resolve_attrs_ok = $self->_resolve_sample_attributes;
-    return if not $resolve_attrs_ok;
-    
-    $resolve_attrs_ok = $self->_resolve_library_attributes;
+    my $resolve_attrs_ok = $self->_resolve_incoming_attributes;
     return if not $resolve_attrs_ok;
 
     my $import = $self->_import;
     return if not $import;
 
     $self->status_message('Import sample...OK');
+    return 1;
+}
+
+sub _resolve_incoming_attributes {
+    my $self = shift;
+
+    for my $type (qw/ individual sample library /) {
+        my $method = '_resolve_'.$type.'_attributes';
+        my $resolve_attrs_ok = $self->$method;
+        return if not $resolve_attrs_ok;
+    }
+
     return 1;
 }
 
