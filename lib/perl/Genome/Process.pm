@@ -20,6 +20,7 @@ class Genome::Process {
         "Genome::Notable",
         "Genome::Utility::ObjectWithCreatedBy",
         "Genome::SoftwareResult::Requestor",
+        "Genome::Interfaces::Comparable",
     ],
     is_abstract => 1,
     table_name => 'process.process',
