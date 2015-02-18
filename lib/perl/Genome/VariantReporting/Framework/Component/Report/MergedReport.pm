@@ -49,7 +49,6 @@ class Genome::VariantReporting::Framework::Component::Report::MergedReport {
 sub _run {
     my $self = shift;
 
-    my @reports_with_size = $self->get_reports_with_size;
     if (!$self->base_report->has_size && !$self->supplemental_report->has_size) {
         #Create an empty output file
         Genome::Sys->touch($self->_temp_output_file);
@@ -71,18 +70,6 @@ sub _run {
 sub report_results {
     my $self = shift;
     return ($self->base_report, $self->supplemental_report);
-}
-
-sub get_reports_with_size {
-    my $self = shift;
-
-    my @reports_with_size;
-    for my $result ($self->report_results) {
-        if ($result->has_size) {
-            push @reports_with_size, $result->report_path;
-        }
-    }
-    return @reports_with_size;
 }
 
 sub move_file_to_output {
