@@ -303,9 +303,8 @@ sub _run_htseq_count {
 
         try {
             Genome::Sys->shellcmd(
-                cmd => $cmd, # "touch $output_dir/${type}-counts.tsv", #$cmd,
+                cmd => $cmd,
                 input_files => [$sorted_bam, $gtf_file],
-                #output_files => ["$output_dir/${type}-counts.tsv"],
             );
         } catch {
             my $error = $_;
