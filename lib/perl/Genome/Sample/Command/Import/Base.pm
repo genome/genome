@@ -91,7 +91,7 @@ sub execute {
     my $import = $self->_import;
     return if not $import;
 
-    $library = $self->_get_or_create_library;
+    $library = $self->_create_library;
     return if not $library;
 
     $self->status_message('Import sample...OK');
@@ -273,27 +273,6 @@ sub _create_sample_if_needed {
     $self->status_message('Create sample: %s', $sample->__display_name__);
 
     return 1;
-}
-
-sub _get_or_create_library {
-    my $self = shift;
-
-    my $library = $self->_get_library;
-    return $library if $library;
-
-    return $self->_create_library;
-}
-
-sub _get_library {
-    my $self = shift;
-
-    my $name = $self->_library_name;
-    my $library = Genome::Library->get(name => $name);
-    return if not $library;
-
-    $self->status_message('Found library: '.join(' ', map{ $library->$_ } (qw/ id name/)));
-
-    return $self->_library($library);
 }
 
 sub _create_library {
