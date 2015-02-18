@@ -263,7 +263,7 @@ sub can_be_merged {
 
 sub merge_parameters {
     my $self = shift;
-    return $self->base_report->class->merge_parameters;
+    return $self->base_report->merge_parameters;
 }
 
 
