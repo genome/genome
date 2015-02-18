@@ -56,7 +56,7 @@ sub _run {
         return 1;
     }
 
-    $self->validate(@reports_with_size);
+    $self->validate;
 
     $self->merge_legend_files();
 
@@ -290,15 +290,15 @@ sub file_name {
 # Make sure all inputs and outputs are readable. Make sure all headers are the same. Make sure sort_columns are contained in the header (this also ensures they are numeric if they must be).
 sub validate {
     my $self = shift;
-    my @reports_with_size = @_;
+
+    Genome::Sys->validate_file_for_reading($self->base_report->report_path);
+    Genome::Sys->validate_file_for_reading($self->supplemental_report->report_path);
 
     my $master_header = Set::Scalar->new($self->get_master_header);
-    for my $report (@reports_with_size) {
-        Genome::Sys->validate_file_for_reading($report);
-
-        my $current_header = Set::Scalar->new($self->get_header($report));
-        unless ($current_header->is_equal($master_header)) {
-            die $self->error_message("Headers for the reports are not the same. First header:\n%s\nCurrent header:\n%s", $master_header, $current_header);
+    if ($self->supplemental_report->has_size) {
+        my $supplemental_report_header = Set::Scalar->new($self->get_header($self->supplemental_report->report_path));
+        unless ($supplemental_report_header->is_equal($master_header)) {
+            die $self->error_message("Headers for the reports are not the same. Base report header:\n%s\nSupplemental report header:\n%s", $master_header, $supplemental_report_header);
         }
     }
 
