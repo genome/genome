@@ -117,26 +117,4 @@ ok($import, 'create');
 ok(!$import->execute, 'execute fails b/c of invalid individual name');
 is($import->error_message, "Name (TeSt-1A11-A1A-1A-1111) is invalid!", 'correct error message');
 
-# Fail - invalid sample attrs
-my %invalid_import_params = %import_params;
-$invalid_import_params{sample_attributes} = [qw/ age_baseline= /];
-$import = Genome::Sample::Command::Import::Test->create(
-    name => $name,
-    %invalid_import_params,
-);
-ok($import, 'create');
-ok(!$import->execute, 'execute fails b/c of invalid sample attributes');
-is($import->error_message, "Sample attribute label (age_baseline) does not have a value!", 'correct error message');
-
-# Fail - invalid individual attrs
-%invalid_import_params = %import_params;
-$invalid_import_params{individual_attributes} = [qw/ eye_color= /];
-$import = Genome::Sample::Command::Import::Test->create(
-    name => $name,
-    %invalid_import_params,
-);
-ok($import, 'create');
-ok(!$import->execute, 'execute fails b/c of invalid individual attributes');
-is($import->error_message, "Individual attribute label (eye_color) does not have a value!", 'correct error message');
-
 done_testing();
