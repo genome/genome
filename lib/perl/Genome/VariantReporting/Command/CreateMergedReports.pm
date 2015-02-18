@@ -150,35 +150,27 @@ sub connect_merge_operations {
                 command => 'Genome::VariantReporting::Framework::MergeReports',
             );
 
+            my ($base_report_source, $supplemental_report_source);
             if (defined($self->use_header_from) && $self->use_header_from eq 'indels') {
-                $dag->create_link(
-                    source => $indels_dag,
-                    source_property => $output_name,
-                    destination => $merge_op,
-                    destination_property => 'base_report',
-                );
-
-                $dag->create_link(
-                    source => $snvs_dag,
-                    source_property => $output_name,
-                    destination => $merge_op,
-                    destination_property => 'supplemental_report',
-                );
+                $base_report_source = $indels_dag;
+                $supplemental_report_source = $snvs_dag;
             } else {
-                $dag->create_link(
-                    source => $snvs_dag,
-                    source_property => $output_name,
-                    destination => $merge_op,
-                    destination_property => 'base_report',
-                );
-
-                $dag->create_link(
-                    source => $indels_dag,
-                    source_property => $output_name,
-                    destination => $merge_op,
-                    destination_property => 'supplemental_report',
-                );
+                $base_report_source = $snvs_dag;
+                $supplemental_report_source = $indels_dag;
             }
+            $dag->create_link(
+                source => $base_report_source,
+                source_property => $output_name,
+                destination => $merge_op,
+                destination_property => 'base_report',
+            );
+
+            $dag->create_link(
+                source => $supplemental_report_source,
+                source_property => $output_name,
+                destination => $merge_op,
+                destination_property => 'supplemental_report',
+            );
 
             $merge_op->declare_constant(
                 label => 'report:' . to_json({
