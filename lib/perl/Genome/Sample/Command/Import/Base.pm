@@ -41,7 +41,7 @@ class Genome::Sample::Command::Import::Base {
             is => 'Text',
             default_value => 'extlibs',
             valid_values => [qw/ extlibs microarraylib /],
-            doc => 'The extension to add to the sample name to create teh library name.',
+            doc => 'The extension to add to the sample name to create the library name.',
         },
     ],
     has_optional_transient => [
