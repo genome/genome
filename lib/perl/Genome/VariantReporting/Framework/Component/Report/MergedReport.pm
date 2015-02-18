@@ -60,7 +60,7 @@ sub _run {
 
     $self->merge_legend_files();
 
-    my $merged_file = $self->merge_files(@reports_with_size);
+    my $merged_file = $self->merge_files;
 
     my $sorted_file = $self->sort_file($merged_file);
 
@@ -185,16 +185,16 @@ sub legend_path {
 
 sub merge_files {
     my $self = shift;
-    my @reports_with_size = @_;
 
     my $merged_file = Genome::Sys->create_temp_file_path;
 
-    for my $report (@reports_with_size) {
+    for my $report ($self->report_results) {
+        next unless $report->has_size;
         my $file_to_merge;
         if ($self->contains_header) {
             $file_to_merge = Genome::Sys->create_temp_file_path;
             my $reader = Genome::Utility::IO::SeparatedValueReader->create(
-                input => $report,
+                input => $report->report_path,
                 separator => $self->separator,
             );
             my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
@@ -207,9 +207,9 @@ sub merge_files {
                 $writer->write_one($entry);
             }
         } else {
-            $file_to_merge = $report;
+            $file_to_merge = $report->report_path;
         }
-        my $with_source = $self->add_source($report, $file_to_merge);
+        my $with_source = $self->add_source($report->report_path, $file_to_merge);
         my $merge_command = 'cat %s >> %s';
         Genome::Sys->shellcmd(cmd => sprintf($merge_command, $with_source, $merged_file));
     }
