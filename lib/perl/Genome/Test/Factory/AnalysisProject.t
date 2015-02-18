@@ -11,18 +11,24 @@ use warnings;
 use above 'Genome';
 use Test::More;
 
+use Genome::Test::Factory::InstrumentData::Solexa;
+
 my $class = 'Genome::Test::Factory::AnalysisProject';
 use_ok($class);
 
 my $ap = $class->setup_object();
 isa_ok($ap, 'Genome::Config::AnalysisProject', 'It sets up an AnalysisProject object');
 
-my $test_hash = { blah => { blah => 'test' } };
+my $test_hash = {
+    rules => { blah => 'test' },
+    models => { 'Genome::Model::Test' => { auto_assign_inst_data => 1 } },
+};
 my $ap2 = $class->setup_object(config_hash => $test_hash);
 isa_ok($ap2, 'Genome::Config::AnalysisProject', 'It sets up an AnalysisProject object');
 
-is_deeply($test_hash, $ap2->get_configuration_profile->get_config(),
-    'it allows for the config reader to be mocked');
+my $inst_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object();
 
+my $config = $ap2->get_configuration_profile->get_config($inst_data);
+ok($config, 'Its config is mocked up sufficiently to be usable');
 done_testing();
 

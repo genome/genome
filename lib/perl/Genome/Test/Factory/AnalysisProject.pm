@@ -17,21 +17,21 @@ sub generate_obj {
     unless(exists $params{status}) {
         $params{status} = 'In Progress'; #most commonly needed for tests
     }
+    unless(exists $params{run_as}) {
+        $params{run_as} = Genome::Sys->username;
+    }
 
     my $project = Genome::Config::AnalysisProject->create(%params);
-    my $config_profile_item = Genome::Test::Factory::Config::Profile::Item->setup_object(analysis_project => $project);
 
     if ($config_hash) {
-        for my $model_config (values %$config_hash) {
-            if(ref($model_config) eq 'ARRAY') {
-                for my $model_instance_config (@$model_config){
-                    $model_instance_config->{config_profile_item} = $config_profile_item
-                }
-            } else {
-                $model_config->{config_profile_item} = $config_profile_item
-            }
+        my @configs = (ref $config_hash eq 'ARRAY'? @$config_hash : $config_hash);
+        for my $config (@configs) {
+            my $config_profile_item = Genome::Test::Factory::Config::Profile::Item->setup_object(analysis_project => $project);
+            $config->{config_profile_item} = $config_profile_item;
+            $config_profile_item->{__dummy_config_hash__} = $config;
         }
-        $project->{__dummy_config_hash__} = $config_hash;
+    } else {
+        Genome::Test::Factory::Config::Profile::Item->setup_object(analysis_project => $project);
     }
 
     return $project;
@@ -42,24 +42,43 @@ sub create_name {
     return Genome::Test::Factory::Util::generate_name('analysis_project_name');
 }
 
-use Genome::Config::AnalysisProject;
-my $old_get_config_method = \&Genome::Config::AnalysisProject::get_configuration_profile;
-
+use Genome::Config::Profile::Item;
+use Genome::Config::Parser;
+my $old_file_path_method = \&Genome::Config::Profile::Item::file_path;
+my $old_is_concrete_method = \&Genome::Config::Profile::Item::is_concrete;
+my $old_parse_method = \&Genome::Config::Parser::parse;
 no warnings qw(redefine);
-*Genome::Config::AnalysisProject::get_configuration_profile = sub {
+
+my $next = 0;
+my %configs;
+
+*Genome::Config::Profile::Item::file_path = sub {
     my $self = shift;
     if ($self->{__dummy_config_hash__}) {
-        return bless { config => $self->{__dummy_config_hash__} },
-            'Genome::Config::DummyConfigReader';
+        unless ($self->{__dummy_key__}) {
+            my $key = '!dummy' . $next++;
+            $configs{$key} = $self->{__dummy_config_hash__};
+            $self->{__dummy_key__} = $key;
+        }
+        return $self->{__dummy_key__};
     } else {
-        return $old_get_config_method->($self, @_);
+        return $old_file_path_method->($self, @_);
+    }
+};
+*Genome::Config::Profile::Item::is_concrete = sub {
+    my $self = shift;
+    return 1 if $self->{__dummy_config_hash__};
+    return $old_is_concrete_method->($self, @_);
+};
+*Genome::Config::Parser::parse = sub {
+    my $class = shift;
+    my $path = shift;
+    if (substr($path,0,1) eq '!') {
+        return $configs{$path};
+    } else {
+        return $old_parse_method($class, $path, @_);
     }
 };
 use warnings;
-
-package Genome::Config::DummyConfigReader;
-sub get_config {
-    return UR::Util::deep_copy(shift->{'config'});
-}
 
 1;
