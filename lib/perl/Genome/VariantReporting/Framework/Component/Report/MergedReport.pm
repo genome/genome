@@ -78,7 +78,7 @@ sub get_reports_with_size {
 
     my @reports_with_size;
     for my $result ($self->report_results) {
-        if (-s $result->report_path) {
+        if ($result->has_size) {
             push @reports_with_size, $result->report_path;
         }
     }

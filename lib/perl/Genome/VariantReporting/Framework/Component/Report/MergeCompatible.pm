@@ -23,4 +23,10 @@ sub report_path {
         $self->class);
 }
 
+sub has_size {
+    my $self = shift;
+
+    return -s $self->report_path;
+}
+
 1;
