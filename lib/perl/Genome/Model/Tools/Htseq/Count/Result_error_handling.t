@@ -74,7 +74,7 @@ Sub::Install::reinstall_sub({
         my $cmd = $params{cmd};
         return unless($cmd and $cmd =~ /htseq-count/);
 
-        my ($err_file) = $cmd =~ /2>'(.*)'/;
+        my $err_file = $params{redirect_stderr};
         return unless $err_file;
 
         Genome::Sys->write_file(

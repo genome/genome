@@ -298,13 +298,13 @@ sub _run_htseq_count {
             . " --idattr ${type}_id"
             . " -"
             . " '$gtf_file'"
-            . " 1>'$output_dir/${type}-counts.tsv'"
-            . " 2>'$err_file'";
+            . " 1>'$output_dir/${type}-counts.tsv'";
 
         try {
             Genome::Sys->shellcmd(
                 cmd => $cmd,
                 input_files => [$sorted_bam, $gtf_file],
+                redirect_stderr => $err_file,
             );
         } catch {
             my $error = $_;
