@@ -8182,19 +8182,6 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
-        '>analysis-project',
-        [
-          'analysis-project=s',
-          undef,
-          'model=s',
-          undef,
-          'force!',
-          undef,
-          'newly-added-data=s@',
-          undef,
-          'help!',
-          undef
-        ],
         '>flowcell',
         [
           'model=s',
