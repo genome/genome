@@ -240,7 +240,7 @@ function set_defaults {
         DB_SNAPSHOT_NAME="77c3c2a"
     fi
 
-    if test -z "$UR_REPO"
+    if test -z "$UR_REPO" -a -z "$DISABLE_UR"
     then
         if test -z "$TOP" -o ! -d "$TOP/ur"
         then
@@ -250,7 +250,7 @@ function set_defaults {
         UR_REPO="$TOP/ur"
     fi
 
-    if test -z "$WF_REPO"
+    if test -z "$WF_REPO" -a -z "$DISABLE_WF"
     then
         if test -z "$TOP" -o ! -d "$TOP/workflow"
         then
@@ -433,43 +433,76 @@ function setup_env {
 
     # remove deployed bin directory from PATH
     PATH="$(echo $PATH | tr : "\n" | $GREP -v "$SNAPSHOT_BIN" | tr '\n' : | sed 's/:$//')"
-    PATH=$UR_REPO/bin:$PATH
-    PATH=$WF_REPO/bin:$PATH
-    PATH=$BASE_DIR/bin:$PATH
-    export PATH
+    export PATH=$BASE_DIR/bin:$PATH
 
     # remove deployed lib/perl directory from PATH
-    PERL5LIB="$(echo $PERL5LIB | tr : "\n" | $GREP -v "$SNAPSHOT_LIB" | tr '\n' : | sed 's/:$//')"
+    export PERL5LIB="$(echo $PERL5LIB | tr : "\n" | $GREP -v "$SNAPSHOT_LIB" | tr '\n' : | sed 's/:$//')"
 
-    for MODULE in UR Workflow Genome
-    do
-        if genome-perl -M$MODULE -e 1 2> /dev/null
+    if genome-perl -MGenome -e 1 2> /dev/null
+    then
+        fatal $BUILD_ERR "still found Genome after removing deployed snapshot" $(genome-perl -S wtf Genome)
+    fi
+
+    if test -z "$DISABLE_UR"
+    then
+        export PATH=$UR_REPO/bin:$PATH
+        if genome-perl -MUR -e 1 2> /dev/null
         then
-            fatal $BUILD_ERR "still found $MODULE after removing deployed snapshot"
+            fatal $BUILD_ERR "still found UR after removing deployed snapshot"
         fi
-    done
+    fi
 
-    PERL5LIB=$UR_REPO/lib:$PERL5LIB
-    PERL5LIB=$BASE_DIR/configuration-manager/lib:$PERL5LIB
-    PERL5LIB=$WF_REPO/lib:$PERL5LIB
-    PERL5LIB=$BASE_DIR/lib/perl:$PERL5LIB
-    export PERL5LIB
-
-    for MODULE in UR Workflow Genome
-    do
-        if ! genome-perl -M$MODULE -e 1 2> /dev/null
+    if test -z "$DISABLE_WF"
+    then
+        export PATH=$WF_REPO/bin:$PATH
+        if genome-perl -MWorkflow -e 1 2> /dev/null
         then
-            fatal $BUILD_ERR "failed to load $MODULE"
+            fatal $BUILD_ERR "still found Workflow after removing deployed snapshot"
         fi
-    done
+    fi
 
-    for BIN in ur workflow genome
-    do
-        if which $BIN | $GREP -q "$SNAPSHOT_BIN"
+    if which genome | $GREP -q "$SNAPSHOT_BIN"
+    then
+        fatal $BUILD_ERR "genome found in $SNAPSHOT_BIN"
+    fi
+
+    if test -z "$DISABLE_UR"
+    then
+        export PERL5LIB=$UR_REPO/lib:$PERL5LIB
+
+        if ! genome-perl -MUR -e 1 2> /dev/null
         then
-            fatal $BUILD_ERR "$BIN found in $SNAPSHOT_BIN"
+            genome-perl -MUR -e 1
+            fatal $BUILD_ERR "failed to load UR"
         fi
-    done
+
+        if which ur | $GREP -q "$SNAPSHOT_BIN"
+        then
+            fatal $BUILD_ERR "ur found in $SNAPSHOT_BIN"
+        fi
+    fi
+
+    if test -z "$DISABLE_WF"
+    then
+        export PERL5LIB=$WF_REPO/lib:$PERL5LIB
+
+        if ! genome-perl -MWorkflow -e 1 2> /dev/null
+        then
+            fatal $BUILD_ERR "failed to load Workflow"
+        fi
+
+        if which workflow | $GREP -q "$SNAPSHOT_BIN"
+        then
+            fatal $BUILD_ERR "workflow found in $SNAPSHOT_BIN"
+        fi
+    fi
+
+    export PERL5LIB=$BASE_DIR/lib/perl:$PERL5LIB
+
+    if ! genome-perl -MGenome -e 1 2> /dev/null
+    then
+        fatal $BUILD_ERR "failed to load Genome: $PERL5LIB"
+    fi
 
     if test -z "$DISABLE_DB"
     then
