@@ -50,7 +50,7 @@ sub _run {
     my $self = shift;
 
     my @reports_with_size = $self->get_reports_with_size;
-    if (scalar(@reports_with_size) == 0) {
+    if (!$self->base_report->has_size && !$self->supplemental_report->has_size) {
         #Create an empty output file
         Genome::Sys->touch($self->_temp_output_file);
         return 1;
