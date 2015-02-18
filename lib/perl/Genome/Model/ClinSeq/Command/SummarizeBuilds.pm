@@ -1385,13 +1385,12 @@ sub get_perlane_bamqc_results {
     $qc_dir =~ s/ /_/g;
     Genome::Sys->shellcmd(cmd => "mkdir -p $qc_dir");
     my $bam_qc_metrics = Genome::Model::ReferenceAlignment::Command::InstrumentDataAlignmentBams->create(
-            build_id => $build->id, outdir => $qc_dir);
-    my %lane_bamqc_path;
-    $bam_qc_metrics->get_lane_bamqc_path($build, \%lane_bamqc_path);
-    foreach my $lane  (keys(%lane_bamqc_path)) {
-        if($lane_bamqc_path{$lane} ne "-") {
-            my $perlane_bamqc_results_dir = $lane_bamqc_path{$lane};
-            my $perlane_bamqc_op_dir = $qc_dir . "/lane" . $lane . "/";
+            build => $build, outdir => $qc_dir);
+    my %lane_bamqc_path = %{ $bam_qc_metrics->get_lane_bamqc_path($build) };
+    foreach my $instrument_data_id (keys(%lane_bamqc_path)) {
+        if($lane_bamqc_path{$instrument_data_id} ne "-") {
+            my $perlane_bamqc_results_dir = $lane_bamqc_path{$instrument_data_id};
+            my $perlane_bamqc_op_dir = $qc_dir . "/" . $instrument_data_id . "/";
             $perlane_bamqc_op_dir =~ s/ /_/g;
             Genome::Sys->shellcmd(cmd => "mkdir -p $perlane_bamqc_op_dir");
             Genome::Sys->shellcmd(cmd => "rsync -lrv --exclude=*.bam*  $perlane_bamqc_results_dir/* $perlane_bamqc_op_dir");
