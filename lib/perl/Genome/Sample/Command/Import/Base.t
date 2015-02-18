@@ -17,8 +17,6 @@ class SampleImporter {
     },
 };
 
-my $taxon = Genome::Taxon->__define__(name => 'almost human');
-ok($taxon, 'defined taxon');
 my $sample_name = 'TGI-INDINDIVIDUAL-SAMPLE';
 
 # Fail w/o taxon
