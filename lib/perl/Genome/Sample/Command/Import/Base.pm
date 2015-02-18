@@ -22,6 +22,10 @@ class Genome::Sample::Command::Import::Base {
         },
     ],
     has_optional => [
+        taxon => {
+            is => 'Genome::Taxon',
+            doc => 'Taxon to associate when creating an individual. If the indivdual does not exist, the taxon is required.',
+        },
         individual_attributes => {
             is => 'Text',
             is_many => 1,
@@ -45,8 +49,6 @@ class Genome::Sample::Command::Import::Base {
         },
     ],
     has_optional_transient => [
-        # taxon
-        _taxon => { is => 'Genome::Taxon', is_optional => 1, },
         # source
         _individual => { is => 'Genome::Individual', is_optional => 1, },
         _individual_name => { is => 'Text', },
@@ -122,18 +124,12 @@ sub _resolve_incoming_attributes {
 sub _import {
     my $self = shift;
 
-    my $taxon_name = $self->taxon_name;
     my $individual_params = $self->_individual_attributes;
     my $individual_upn = $individual_params->{upn};
     Carp::confess('No individual upn in individual params given to import') if not $individual_upn;
     my $sample_params = $self->_sample_attributes;
     my $sample_name = $sample_params->{name};
     Carp::confess('No sample name in sample params given to import') if not $sample_name;
-
-    # taxon
-    $self->_taxon( Genome::Taxon->get(name => $taxon_name) );
-    Carp::confess("Cannot get taxon for '$taxon_name'") if not $self->_taxon;
-    $self->status_message('Found taxon: '.$self->_taxon->__display_name__);
 
     # sample
     my $sample = Genome::Sample->get(name => $sample_name);
@@ -243,10 +239,10 @@ sub _create_individual {
     my %params = %{$self->_individual_attributes};
     Carp::confess('No "upn" given to create individual') if not $params{upn};
     Carp::confess('No "nomenclature" given to create individual') if not $params{nomenclature};
-    Carp::confess('No taxon set to create individual') if not $self->_taxon;
+    Carp::confess('No taxon given and an individual must be created. Please specify one.') if not $self->taxon;
 
     $params{name} = $params{upn} if not $params{name};
-    $params{taxon} = $self->_taxon;
+    $params{taxon} = $self->taxon;
     $params{gender} = 'unspecified' if not $params{gender};
 
     $self->status_message('Create individual...');

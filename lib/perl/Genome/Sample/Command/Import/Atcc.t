@@ -14,11 +14,13 @@ use Test::More;
 use_ok('Genome::Sample::Command::Import') or die;
 ok(Genome::Sample::Command::Import::Atcc->__meta__, 'class meta for import atcc sample');
 
+my $taxon = Genome::Taxon->__define__(name => 'almost human');
+ok($taxon, 'defined taxon');
 my $common_name = 'COLO-000';
 my $individual_name = 'ATCC-'.$common_name;
-
 my $name = 'ATCC-COLO-000-BL';
 my $import_normal = Genome::Sample::Command::Import::Atcc->create(
+    taxon => $taxon,
     name => $name,
     gender => 'male',
     ethnicity => 'caucasian',
@@ -45,6 +47,7 @@ is_deeply($import_normal->_library->sample, $import_normal->_sample, 'library sa
 
 $name = 'ATCC-COLO-000';
 my $import_tumor = Genome::Sample::Command::Import::Atcc->create(
+    taxon => $taxon,
     name => $name,
     gender => 'male',
     ethnicity => 'caucasian',
