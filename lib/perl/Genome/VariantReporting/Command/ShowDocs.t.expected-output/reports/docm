@@ -31,5 +31,6 @@ bam-readcount
 
 [4mREQUIRED INTERPRETERS[0m
 position
-many-samples-vaf
+vaf
+per-library-vaf
 

@@ -87,6 +87,9 @@ sub params_for_result {
         die $self->error_message('No alignment result found for build: '. $build->id);
     }
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{'bam-qc'} = $build;
+
     return (
         alignment_result_id => $alignment_result->id,
         picard_version      => $pp->picard_version || Genome::Model::Tools::Picard->default_picard_version,
@@ -97,6 +100,7 @@ sub params_for_result {
         error_rate          => $pp->calculate_error_rate || 0,
         read_length         => 1,
         test_name           => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        users               => $result_users,
     );
 }
 
@@ -106,9 +110,7 @@ sub link_result_to_build {
     my $build = $self->build;
 
     my $link = join('/', $build->data_directory, 'bam-qc');
-    my $label = join('_', 'bam-qc');
     Genome::Sys->create_symlink($result->output_dir, $link);
-    $result->add_user(label => $label, user => $build);
 
     $self->bam_qc_result($result);
 

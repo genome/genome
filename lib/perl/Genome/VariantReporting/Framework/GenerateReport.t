@@ -13,6 +13,7 @@ use Test::More;
 use File::Basename qw(basename);
 use File::Copy::Recursive qw(dircopy);
 use Genome::Utility::Test qw(compare_ok);
+use Genome::Test::Factory::Process;
 use Genome::VariantReporting::Framework::Plan::TestHelpers;
 use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(
     compare_directories_and_files
@@ -35,6 +36,8 @@ $plan->validate();
 $plan->validate_translation_provider($provider);
 $plan->translate($provider->translations);
 
+my $process = Genome::Test::Factory::Process->setup_object();
+
 for my $report_name (qw(report_alpha report_gamma)) {
     subtest "report_name = $report_name" => sub {
         my $generator = $pkg->create(
@@ -42,6 +45,8 @@ for my $report_name (qw(report_alpha report_gamma)) {
             plan_json => $plan->as_json,
             report_name => 'report_alpha',
             variant_type => "snvs",
+            process_id => $process->id,
+            label => $report_name,
         );
         ok($generator->isa($pkg), "Generator created ok");
         ok($generator->execute, "Generator executed ok");

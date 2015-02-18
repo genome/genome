@@ -13,6 +13,7 @@ use Sub::Install;
 use Set::Scalar;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Vcf::AnnotateWithReadcounts;
+use Genome::Test::Factory::Process;
 use Genome::VariantReporting::Framework::TestHelpers qw(test_cmd_and_result_are_in_sync);
 
 use Test::More;
@@ -60,10 +61,13 @@ sub generate_test_cmd {
         code => sub {my $self = shift; return ['rc_file1:sample1', 'rc_file2:sample2'];},
     });
 
+    my $process = Genome::Test::Factory::Process->setup_object();
+
     my %params = (
         readcount_results => [$rc_result1, $rc_result2],
         input_vcf => __FILE__,
         variant_type => 'snvs',
+        process_id => $process->id,
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd, $tool_args;

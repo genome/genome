@@ -6,7 +6,7 @@ use strict;
 
 
 class Genome::Model::Build::ReferenceSequence::AlignerIndex {
-    is => ['Genome::SoftwareResult::Stageable'],
+    is => ['Genome::SoftwareResult::Stageable', 'Genome::SoftwareResult::WithNestedResults'],
 
     has => [
 
@@ -177,6 +177,7 @@ sub generate_dependencies_as_needed {
             aligner_name => $self->aligner_name,
             aligner_params => $self->aligner_params,
             aligner_version => $self->aligner_version,
+            users => $self->_user_data_for_nested_results,
         );
 
         for my $b ($self->reference_build->append_to) { # (append_to is_many)

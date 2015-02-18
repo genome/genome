@@ -144,7 +144,10 @@ sub find_common_reference {
     my $convertible_reference = $class->_find_convertible_reference(@all_references);
     return $convertible_reference if $convertible_reference;
 
-    die 'No compatible common reference for the input feature-lists was found.  Define one with `genome model define imported-reference-sequence`.';
+    my $combined_reference_with_conversions = $class->_find_combined_reference_with_conversions(@all_references);
+    return $combined_reference_with_conversions if $combined_reference_with_conversions;
+
+    die 'No compatible common reference for the input feature-lists was found.  Please specify one directly, or, if needed, define a new one with `genome model define imported-reference-sequence`.';
 }
 
 sub _find_combined_reference {
@@ -193,6 +196,31 @@ sub _find_convertible_reference {
     }
 
     return $convertible_references[0];
+}
+
+sub _find_combined_reference_with_conversions {
+    my $class = shift;
+    my @references = @_;
+
+    return unless scalar(@references) == 2;
+
+    #optimistically apply conversion if we find one.
+    my @possible_references;
+    for my $i (0,1) {
+        for my $conversion ($references[$i]->convertible_to) {
+            my $combined_reference = $class->_find_combined_reference($conversion, $references[$i-1]);
+            push @possible_references, $combined_reference if $combined_reference;
+        }
+    }
+
+    if(scalar(@possible_references) > 1) {
+        $class->_die_with_multiple_candidate_references(
+            'There are multiple ways these feature-lists can be combined.  Candidate references:',
+            @possible_references,
+        );
+    }
+
+    return $possible_references[0];
 }
 
 sub _die_with_multiple_candidate_references {
@@ -274,20 +302,13 @@ sub _bed_file_for_list_and_reference {
     }
 
     if(grep { $_->id eq $target_reference->id } $list_reference->convertible_to) {
-        my $converted_bed_result = Genome::Model::Build::ReferenceSequence::ConvertedBedResult->get_or_create(
-            source_reference => $list_reference,
-            target_reference => $target_reference,
-            source_bed => $feature_list->file_path,
-            source_md5 => Genome::Sys->md5sum($feature_list->file_path),
-        );
-        unless ($converted_bed_result) {
-            die $class->error_message(
-                'Failure converting feature-list %s to reference %s.',
-                $feature_list->__display_name__,
-                $target_reference->__display_name__,
-            );
+        return $class->_converted_bed_path($feature_list, $target_reference);
+    }
+
+    for my $convertible_reference ($list_reference->convertible_to) {
+        if(grep { $_->id eq $convertible_reference->id } $target_reference->combines) {
+            return $class->_converted_bed_path($feature_list, $convertible_reference);
         }
-        return $converted_bed_result->target_bed;
     }
 
     $class->error_message(
@@ -298,6 +319,33 @@ sub _bed_file_for_list_and_reference {
     );
     die 'Please create or specify a compatible reference for the merged feature-list.';
 }
+
+sub _converted_bed_path {
+    my $class = shift;
+    my $feature_list = shift;
+    my $target_reference = shift;
+
+    my $converted_bed_result = Genome::Model::Build::ReferenceSequence::ConvertedBedResult->get_or_create(
+        source_reference => $feature_list->reference,
+        target_reference => $target_reference,
+        source_bed       => $feature_list->file_path,
+        source_md5       => Genome::Sys->md5sum($feature_list->file_path),
+        users => {
+            requestor => $target_reference,
+            sponsor   => Genome::Sys->current_user(),
+        },
+    );
+    unless ($converted_bed_result) {
+        die $class->error_message(
+            'Failure converting feature-list %s to reference %s.',
+            $feature_list->__display_name__,
+            $target_reference->__display_name__,
+        );
+    }
+
+    return $converted_bed_result->target_bed;
+}
+
 
 #### Based on GSC::BEDFile ####
 

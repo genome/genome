@@ -13,6 +13,7 @@ use Test::More;
 use File::Compare;
 use File::Temp;
 use IO::File;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -43,6 +44,10 @@ my $tmp_dir = $tmp_base . '/filter';
 #my $refbuild_id = 101947881;
 my $refbuild_id = 109104543;   #human36_chr16_17_for_novo_test ref_seq_build I made for this test
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build_id => $refbuild_id,
+);
+
 my $detector_result = Genome::Model::Tools::DetectVariants2::Result->__define__(
     output_dir => $test_input_dir,
     detector_name => 'Genome::Model::Tools::DetectVariants2::Breakdancer',
@@ -57,6 +62,7 @@ $detector_result->lookup_hash($detector_result->calculate_lookup_hash());
 my $sv_valid = Genome::Model::Tools::DetectVariants2::Filter::NovoRealign->create(
     previous_result_id => $detector_result->id,
     output_directory    => $tmp_dir,
+    result_users => $result_users,
 );
 
 $sv_valid->dump_status_messages(1);

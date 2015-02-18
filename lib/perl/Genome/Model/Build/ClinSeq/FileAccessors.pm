@@ -157,6 +157,22 @@ sub rnaseq_tumor_tophat_junctions_absolute_dir {
   return $rnaseq_tumor_tophat_junctions_absolute_dir;
 }
 
+sub rnaseq_tumor_tophat_dgidb_dir {
+  my $self = shift;
+  my $rnaseq_tumor_tophat_dgidb_dir = File::Spec->catdir(
+    $self->rnaseq_tumor_tophat_junctions_absolute_dir,
+    "Junction.GeneExpression.topnpercent.tsv.dgidb");
+  return $rnaseq_tumor_tophat_dgidb_dir;
+}
+
+sub rnaseq_tumor_cufflinks_dgidb_dir {
+  my $self = shift;
+  my $rnaseq_tumor_cufflinks_dgidb_dir = File::Spec->catdir(
+    $self->rnaseq_tumor_cufflinks_isoforms_merged_dir,
+    "isoforms.merged.fpkm.expsort.top1percent.tsv.dgidb");
+  return $rnaseq_tumor_cufflinks_dgidb_dir;
+}
+
 sub rnaseq_tumor_cufflinks_genes_summary_dir {
   my $self = shift;
   my $rnaseq_tumor_cufflinks_genes_summary_dir = File::Spec->catdir(
@@ -366,6 +382,91 @@ sub wgs_cnv_wg_plot {
     return $wgs_cnv_wg_plot;
   } else {
     $self->warning_message("unable to find $wgs_cnv_wg_plot");
+    return;
+  }
+}
+
+sub wgs_snv_dgidb_file {
+  my $self = shift;
+  my $wgs_snv_dgidb_file = File::Spec->catfile(
+    $self->wgs_snv_dir,
+    "snvs.hq.tier1.v1.annotated.compact.tsv.dgidb",
+    "expert_antineoplastic.tsv");
+  if(-e $wgs_snv_dgidb_file) {
+    return $wgs_snv_dgidb_file;
+  } else {
+    $self->warning_message("unable to find $wgs_snv_dgidb_file");
+    return;
+  }
+}
+
+sub wgs_indel_dgidb_file {
+  my $self = shift;
+  my $wgs_indel_dgidb_file = File::Spec->catfile(
+    $self->wgs_indel_dir,
+    "indels.hq.tier1.v1.annotated.compact.tsv.dgidb",
+    "expert_antineoplastic.tsv");
+  if(-e $wgs_indel_dgidb_file) {
+    return $wgs_indel_dgidb_file;
+  } else {
+    $self->warning_message("unable to find $wgs_indel_dgidb_file");
+    return;
+  }
+}
+
+sub wgs_cnv_annot_file {
+  my $self = shift;
+  my $wgs_cnv_annot_file = File::Spec->catfile(
+    $self->wgs_cnv_dir,
+    "cnview" ,
+    "cnv.All_genes.amp.tsv");
+  if(-e $wgs_cnv_annot_file) {
+    return $wgs_cnv_annot_file;
+  } else {
+    $self->warning_message("unable to find $wgs_cnv_annot_file");
+    return;
+  }
+}
+
+sub wgs_cnv_dgidb_file {
+  my $self = shift;
+  my $wgs_cnv_dgidb_file = File::Spec->catfile(
+    $self->wgs_cnv_dir,
+    "cnview" ,
+    "cnv.All_genes.amp.tsv.dgidb",
+    "expert_antineoplastic.tsv");
+  if(-e $wgs_cnv_dgidb_file) {
+    return $wgs_cnv_dgidb_file;
+  } else {
+    $self->warning_message("unable to find $wgs_cnv_dgidb_file");
+    return;
+  }
+}
+
+sub exome_snv_dgidb_file {
+  my $self = shift;
+  my $exome_snv_dgidb_file = File::Spec->catfile(
+    $self->exome_snv_dir,
+    "snvs.hq.tier1.v1.annotated.compact.tsv.dgidb",
+    "expert_antineoplastic.tsv");
+  if(-e $exome_snv_dgidb_file) {
+    return $exome_snv_dgidb_file;
+  } else {
+    $self->warning_message("unable to find $exome_snv_dgidb_file");
+    return;
+  }
+}
+
+sub exome_indel_dgidb_file {
+  my $self = shift;
+  my $exome_indel_dgidb_file = File::Spec->catfile(
+    $self->exome_indel_dir,
+    "indels.hq.tier1.v1.annotated.compact.tsv.dgidb",
+    "expert_antineoplastic.tsv");
+  if(-e $exome_indel_dgidb_file) {
+    return $exome_indel_dgidb_file;
+  } else {
+    $self->warning_message("unable to find $exome_indel_dgidb_file");
     return;
   }
 }
@@ -687,6 +788,38 @@ sub rnaseq_tumor_cufflinks_isoforms_merged_stats_file {
         $rnaseq_tumor_cufflinks_isoforms_merged_stats_file);
     return;
   }
+}
+
+sub rnaseq_tumor_cufflinks_dgidb_file {
+  my $self = shift;
+  my $rnaseq_tumor_cufflinks_dgidb_file = File::Spec->catdir(
+    $self->rnaseq_tumor_cufflinks_dgidb_dir,
+    "expert_antineoplastic.tsv");
+  return $rnaseq_tumor_cufflinks_dgidb_file;
+}
+
+sub rnaseq_tumor_tophat_dgidb_file {
+  my $self = shift;
+  my $rnaseq_tumor_tophat_dgidb_file = File::Spec->catdir(
+    $self->rnaseq_tumor_tophat_dgidb_dir,
+    "expert_antineoplastic.tsv");
+  return $rnaseq_tumor_tophat_dgidb_file;
+}
+
+sub rnaseq_tumor_tophat_annot_file {
+  my $self = shift;
+  my $rnaseq_tumor_tophat_annot_file = File::Spec->catfile(
+    $self->rnaseq_tumor_tophat_junctions_absolute_dir,
+    "Junction.GeneExpression.topnpercent.tsv");
+  return $rnaseq_tumor_tophat_annot_file;
+}
+
+sub rnaseq_tumor_cufflinks_annot_file {
+  my $self = shift;
+  my $rnaseq_tumor_cufflinks_annot_file = File::Spec->catfile(
+    $self->rnaseq_tumor_cufflinks_isoforms_merged_dir,
+    "isoforms.merged.fpkm.expsort.top1percent.tsv");
+  return $rnaseq_tumor_cufflinks_annot_file;
 }
 
 sub rnaseq_tumor_tophat_junctions_absolute_stats_file {

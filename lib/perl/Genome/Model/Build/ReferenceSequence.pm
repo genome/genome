@@ -942,6 +942,16 @@ sub combined_references {
     #filter to only those that combine exactly all our references
     my @exact_combined_references = grep { $reference_set == Set::Scalar->new(map $_->id, $_->combines) } @combined_references;
 
+    unless(@exact_combined_references) {
+        #see if one of the provided references is a combination of the others.
+        for my $reference (@references) {
+            my $remaining_reference_set = $reference_set - $reference->id;
+            if($remaining_reference_set <= Set::Scalar->new(map $_->id, $reference->combines)) {
+                push @exact_combined_references, $reference;
+            }
+        }
+    }
+
     return @exact_combined_references;
 }
 

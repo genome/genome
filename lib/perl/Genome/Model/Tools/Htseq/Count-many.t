@@ -4,6 +4,7 @@ use warnings;
 use above "Genome";
 use Test::More tests => 9;
 use Genome::Model::Tools::Htseq::Count;
+use Genome::Test::Factory::SoftwareResult::User;
 
 $ENV{UR_DBI_NO_COMMIT} = 1;
 
@@ -24,10 +25,20 @@ for (@sr) {
     $_->test_name($test_name);
 }
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $alignment_results[0]->reference_build,
+);
+
+my @result_user_params = (
+    requestor => $result_users->{requestor},
+    sponsor => $result_users->{sponsor},
+);
+
 # generate a composite result
 my $cmd = Genome::Model::Tools::Htseq::Count->execute(
     alignment_results => \@alignment_results,
     result_version => 1,
+    @result_user_params,
 );
 ok($cmd, "executed command with two inputs");
 my $result = $cmd->output_result();

@@ -246,8 +246,7 @@ sub _generate_aligner_index_creation_step {
         aligner_version => $version,
         reference_sequence_build_id => $self->inputs->{$reference}->id,
         annotation_build_id => ($annotation? $self->inputs->{$annotation}->id : undef),
-        aligner_params => (defined $params? $params : '')
- 
+        aligner_params => (defined $params? $params : ''),
     };
 }
 
@@ -552,6 +551,7 @@ sub _general_workflow_input_properties {
         trimmer_name
         trimmer_version
         trimmer_params
+        result_users
         );
 }
 
@@ -566,6 +566,7 @@ sub _merge_workflow_input_properties {
         duplication_handler_version
         duplication_handler_params
         samtools_version
+        result_users
         );
 }
 
@@ -1049,6 +1050,18 @@ sub _wire_index_operation_to_master_workflow {
             if ($pmeta->id_by) {
                 next;
             }
+
+            if($property eq 'result_users') {
+                #result users are the same for all steps in workflow
+                $self->_add_link_to_workflow($master_workflow,
+                    left_workflow_operation_id => $input_connector->id,
+                    left_property => 'm_' . $property,
+                    right_workflow_operation_id => $operation->{operation}->id,
+                    right_property => $property,
+                );
+                next;
+            }
+
             $self->_add_link_to_workflow($master_workflow,
                 left_workflow_operation_id => $input_connector->id,
                 left_property => join('_', "index", $operation->{index}, $property),
@@ -1166,6 +1179,13 @@ sub _wire_refinement_operation_to_master_workflow {
             right_property => $right_property,
         );
     }
+
+    $self->_add_link_to_workflow($master_workflow,
+        left_workflow_operation_id => $master_input_connector->id,
+        left_property => 'm_result_users',
+        right_workflow_operation_id => $refinement->id,
+        right_property => 'result_users',
+    );
 
     if ($refiner eq $self->last_refiner) {
         for my $property (@{ $refinement->operation_type->output_properties }) {

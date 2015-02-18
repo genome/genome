@@ -17,6 +17,10 @@ Keyword Arguments:
 C<resource_lock> is the path to the file representing the lock for some
 resource.
 
+=item scope
+
+C<scope> is the scope to which the lock is bound.  See C<scopes()> for valid scopes.
+
 =item block_sleep
 
 C<block_sleep> specifies the the number of seconds to sleep between attempts to
@@ -78,6 +82,9 @@ sub lock_resource {
                 $args{scope}));
     }
 
+    # need to install handlers before backends start locking
+    $class->_cleanup_handler_check();
+
     my @locks;
     my $unwind = sub {
         for my $pair (@locks) {
@@ -106,8 +113,6 @@ sub lock_resource {
         Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.inconsistent');
     }
 
-    $class->_cleanup_handler_check();
-
     $RESOURCE_LOCK_SCOPE{$args{resource_lock}} = $args{scope};
 
     return $args{resource_lock};
@@ -124,6 +129,10 @@ Keyword Arguments:
 
 C<resource_lock> is the path to the file representing the lock for some
 resource.
+
+=item scope
+
+C<scope> is the scope to which the lock is bound.  See C<scopes()> for valid scopes.
 
 =back
 

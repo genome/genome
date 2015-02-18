@@ -14,6 +14,7 @@ use Test::More;
 use Test::Exception;
 use File::Compare qw(compare);
 use Genome::Utility::Test qw(compare_ok);
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $VERSION = 2;
 
@@ -25,6 +26,10 @@ my $test_dir    = Genome::Utility::Test->data_dir($pkg, $VERSION);
 my $output_dir  = Genome::Sys->create_temp_directory();
 my $tumor_bam   = File::Spec->join($test_dir, 'tumor.bam');
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build_id => $refbuild_id,
+);
+
 my $command = Genome::Model::Tools::DetectVariants2::Lumpy->create(
     reference_build_id  => $refbuild_id,
     aligned_reads_input => $tumor_bam,
@@ -35,6 +40,7 @@ my $command = Genome::Model::Tools::DetectVariants2::Lumpy->create(
     ),
     output_directory    => $output_dir,
     version             => "0.2.6",
+    result_users        => $result_users,
 );
 ok($command, 'Created `gmt detect-variants2 Lumpy` command');
 
@@ -80,6 +86,7 @@ subtest 'parameter parsing' => sub {
         params              => '-test,-mw:4,-tt:0.0',
         output_directory    => $output_dir,
         version             => "0.2.6",
+        result_users        => $result_users,
     );
     dies_ok(sub {$command2->params_hash}, 'Lumpy command with malformed parameters dies');
 };
@@ -118,6 +125,7 @@ subtest "test file without split reads" => sub {
         ),
         output_directory    => $output_dir2,
         version             => "0.2.6",
+        result_users        => $result_users,
     );
     ok($command2, 'Created `gmt detect-variants2 Lumpy` command');
     ok($command2->execute, 'Executed `gmt detect-variants2 lumpy` command');
@@ -148,6 +156,7 @@ subtest "test matched samples" => sub {
         ),
         output_directory => $output_dir2,
         version          => "0.2.6",
+        result_users     => $result_users,
     );
     ok($command2, 'Created `gmt detect-variants2 Lumpy` command');
     ok($command2->execute, 'Executed `gmt detect-variants2 Lumpy` command');

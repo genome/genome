@@ -15,13 +15,21 @@ class Genome::Command::DelegatesToResult {
         },
     ],
     has_optional_input => [
+        sponsor => {
+            is => 'UR::Object',
+            doc => 'The responsible party for this result (defaults to the current user)',
+        },
+        requestor => {
+            is => 'UR::Object',
+            doc => 'The process that wants the result (must be provided if not derivable)',
+        },
         user => {
             is => 'UR::Object',
-            doc => 'To generate a SoftwareResult::User',
+            doc => 'An additional user of the result',
         },
         label => {
             is => 'Text',
-            doc => 'Add the user with this label',
+            doc => 'Label for the additional user (if any) of the result',
         }
     ],
 };
@@ -54,10 +62,50 @@ sub input_hash {
 
 sub _input_hash {
     my $self = shift;
+
+    my $result_users = {
+        sponsor   => $self->sponsor // Genome::Sys->current_user,
+        requestor => $self->requestor,
+    };
+    if($self->label and $self->user) {
+        $result_users->{$self->label} = $self->user;
+    }
+
     return (
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
         $self->input_hash,
+        users => $result_users,
     );
+}
+
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+
+    for my $pair (['label', 'user'], ['user', 'label']) {
+        my ($first_property, $second_property) = @$pair;
+        if(defined $self->$first_property and not defined $self->$second_property) {
+            push @errors, UR::Object::Tag->create(
+                type => 'error',
+                properties => [$second_property],
+                desc => sprintf(
+                    q('%s' is required when '%s' is specified.),
+                    $second_property, $first_property
+                ),
+            );
+        }
+    }
+
+    unless(defined $self->requestor) {
+        push @errors, UR::Object::Tag->create(
+            type => 'error',
+            properties => 'requestor',
+            desc => 'No value specified for required property',
+        );
+    }
+
+    return @errors;
 }
 
 # Do whatever you want to after a result was created or looked up.
@@ -70,22 +118,22 @@ sub post_get_or_create {
 sub shortcut {
     my $self = shift;
 
-    return $self->_protected_fetch('shortcut', 'get_with_lock', 'shortcut');
+    return $self->_protected_fetch('shortcut', 'get_with_lock');
 }
 
 sub execute {
     my $self = shift;
 
-    return $self->_protected_fetch('execute', 'get_or_create', 'created');
+    return $self->_protected_fetch('execute', 'get_or_create');
 }
 
 sub _protected_fetch {
-    my ($self, $name, $method, $label) = validate_pos(@_, {type => OBJECT},
-        {type => SCALAR}, {type => SCALAR}, {type => SCALAR});
+    my ($self, $name, $method) = validate_pos(@_, {type => OBJECT},
+        {type => SCALAR}, {type => SCALAR});
 
     my $error;
     my $rv = try {
-        $self->_fetch_result($method, $label);
+        $self->_fetch_result($method);
     } catch {
         $error = $_ || 'unknown error';
     };
@@ -99,8 +147,7 @@ sub _protected_fetch {
 }
 
 sub _fetch_result {
-    my ($self, $method, $user_label) = validate_pos(@_, {type => OBJECT},
-        {type => SCALAR}, {type => SCALAR});
+    my ($self, $method) = validate_pos(@_, {type => OBJECT}, {type => SCALAR});
 
     $self->debug_message("Attempting to %s a %s with arguments %s",
         $method, $self->result_class, pp({$self->_input_hash}));
@@ -110,10 +157,6 @@ sub _fetch_result {
         $self->debug_message("%s returned result (%s)", $method, $result->id);
         $self->delete_transients($result);
         $self->output_result($result);
-        $self->create_software_result_user($user_label);
-        if (defined $self->label) {
-            $self->create_software_result_user($self->label);
-        }
         return $self->post_get_or_create;
     } else {
         $self->debug_message("Failed to %s result.", $method);
@@ -134,24 +177,6 @@ sub delete_transients {
 
         my $name = $transient_property->property_name;
         $result->$name($value);
-    }
-    return;
-}
-
-sub create_software_result_user {
-    my ($self, $label) = @_;
-
-    if ($self->user) {
-        $self->debug_message(
-            "Making %s(%s) a user of SoftwareResult(%s) with label '%s'",
-            $self->user->class, $self->user->id, $self->output_result->id, $label,
-        );
-        $self->output_result->add_user(user => $self->user, label => $label);
-    } else {
-        $self->debug_message("Not making anything a user of " .
-            "SoftwareResult(%s) because no 'user' was provided as an input",
-            $self->output_result->id
-        );
     }
     return;
 }

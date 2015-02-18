@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::SomaticValidation::Command::AlignmentStatsSummary {
-    is => 'Genome::SoftwareResult::StageableSimple',
+    is => ['Genome::SoftwareResult::StageableSimple','Genome::SoftwareResult::WithNestedResults'],
     doc => 'Generate a spreadsheet, tsv file, of alignment metrics for Somatic Validation models.  Duplicate samples using the same processing profile will only be reported once.',
     has_input => [
         builds => {
@@ -133,7 +133,7 @@ sub _alignment_metrics_from_result {
     my $flagstat_path = $result->bam_flagstat_path;
     my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
     
-    my @per_lane_alignments = $result->collect_individual_alignments;
+    my @per_lane_alignments = $result->collect_individual_alignments($self->_user_data_for_nested_results);
     my ($total_bases, $total_mapped_bases, $total_unique_mapped_bases) = (0,0,0);
     my $mismatches = 0;
     my $haploid_coverage = 0;

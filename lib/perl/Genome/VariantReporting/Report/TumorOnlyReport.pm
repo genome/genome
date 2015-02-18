@@ -58,10 +58,14 @@ sub available_fields_dict {
     my $self = shift;
     my %dict = $self->SUPER::available_fields_dict;
     my $interpreter = $self->interpreters->{'vaf'};
+    my @sample_names = $interpreter->sample_names;
+    if (scalar(@sample_names) > 1) {
+        die $self->error_message('Expecting only one sample to be used for the vaf interpreter. Got %s: %s', scalar(@sample_names), join(', ', @sample_names));
+    }
     for my $field (qw(vaf ref_count var_count)) {
         $dict{$field} = {
             interpreter => 'vaf',
-            field => $interpreter->create_sample_specific_field_name($field),
+            field => $interpreter->create_sample_specific_field_name($field, $sample_names[0]),
         };
     }
     return %dict;

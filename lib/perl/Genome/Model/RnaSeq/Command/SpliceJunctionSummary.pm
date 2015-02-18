@@ -101,10 +101,14 @@ sub params_for_result {
         die $self->error_message('No alignment result found for build: '. $build->id);
     }
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{'splice-junction-summary'} = $build;
+
     return (
         alignment_result_id => $alignment_result->id,
         bedtools_version => $bedtools_version,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        users => $result_users,
     );
 }
 
@@ -114,9 +118,7 @@ sub link_result_to_build {
     my $build = $self->build;
 
     my $link = $build->junctions_directory;
-    my $label = join('_', 'splice-junction-summary');
     Genome::Sys->create_symlink($result->output_dir, $link);
-    $result->add_user(label => $label, user => $build);
     
     $self->splice_junction_summary_result($result);
 

@@ -20,7 +20,7 @@ require File::Path;
 #  grp [from recalibrator]
 #  > bam
 class Genome::InstrumentData::Gatk::BaseRecalibratorBamResult { 
-    is => 'Genome::InstrumentData::Gatk::BaseWithKnownSites',
+    is => ['Genome::InstrumentData::Gatk::BaseWithKnownSites', 'Genome::SoftwareResult::WithNestedResults'],
     has_transient_optional => [
         base_recalibrator_result => { is => 'Genome::InstrumentData::Gatk::BaseRecalibratorResult', },
     ],
@@ -75,7 +75,10 @@ sub _get_or_create_base_recalibrator_result {
     $self->debug_message('Get or create base recalibrator result...');
 
     my %base_recalibrator_params = $self->base_recalibrator_params;
-    my $base_recalibrator_result = Genome::InstrumentData::Gatk::BaseRecalibratorResult->get_or_create(%base_recalibrator_params);
+    my $base_recalibrator_result = Genome::InstrumentData::Gatk::BaseRecalibratorResult->get_or_create(
+        %base_recalibrator_params,
+        users => $self->_user_data_for_nested_results,
+    );
     if ( not $base_recalibrator_result ) {
         $self->error_message('Failed to get or create base recalibrator result!');
         return;

@@ -591,7 +591,7 @@ sub execute {
         my ($chr, $pos, $knownRef, $knownVar) = split("\t",$k);
         if($self->per_library) {
             my $num_libs = scalar(@libraries) || 1;
-            printLibs($OUTFILE, $chr, $pos, $knownVar, $knownVar, ("NA") x ($num_libs * 3));
+            printLibs($OUTFILE, $chr, $pos, $knownRef, $knownVar, ("NA") x ($num_libs * 3));
         }
         else {
             filterAndPrint($chr, $pos, $knownRef, $knownVar, "NA", "NA", "NA",

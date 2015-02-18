@@ -25,10 +25,6 @@ class Genome::Config::AnalysisProject::Command::View {
     ],
 
     has_optional_input => [
-        COLUMN_WIDTH => {
-            is => 'Number',
-            default_value => 40,
-        },
         config => {
             is => 'Text',
             valid_values => ['parsed', 'verbose', 'terse', 'quiet'],
@@ -158,20 +154,6 @@ sub _get_heading_lines {
         ["Updated", $ap->updated_at, "Created by", $ap->created_by],
     );
 }
-
-
-sub _write_pairs_line {
-    my ($self, $handle, $l_label, $l_value, $r_label, $r_value) = @_;
-
-    if ($r_label and $r_value) {
-        print $handle justify($self->_color_pair($l_label, $l_value), 'left',
-            $self->COLUMN_WIDTH), " ", $self->_color_pair($r_label, $r_value), "\n";
-
-    } else {
-        print $handle $self->_color_pair($l_label, $l_value), "\n";
-    }
-}
-
 
 sub _write_instrument_data_summary {
     my ($self, $handle) = @_;
@@ -306,7 +288,7 @@ sub _get_model_summary {
 
     my $summary = {};
     my $model_iterator = Genome::Model->create_iterator(
-        'analysis_projects.id' => $self->analysis_project->id,
+        'analysis_project.id' => $self->analysis_project->id,
     );
     while (my $model = $model_iterator->next) {
         $summary->{$model->class}->{$model->status}++;

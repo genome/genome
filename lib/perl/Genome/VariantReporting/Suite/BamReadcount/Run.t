@@ -14,6 +14,7 @@ use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Sam::Readcount;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
+use Genome::Test::Factory::Process;
 use Genome::VariantReporting::Framework::TestHelpers qw(test_cmd_and_result_are_in_sync);
 use Genome::Utility::Test qw(compare_ok);
 
@@ -53,6 +54,7 @@ sub generate_test_cmd {
         code => sub {my $self = shift; my $file = $self->output_file; `touch $file`;},
     });
 
+    my $process = Genome::Test::Factory::Process->setup_object();
 
     my $aligned_bam_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
         bam_file => 1,
@@ -69,6 +71,7 @@ sub generate_test_cmd {
         minimum_base_quality => 0,
         max_count => 1,
         insertion_centric => 1,
+        process_id => $process->id,
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd

@@ -279,12 +279,11 @@ sub reference_being_replaced_for_input {
         }
 
         if ($roi_reference and !$rsb->is_compatible_with($roi_reference)) {
-            my $converter =  Genome::Model::Build::ReferenceSequence::Converter->get_with_lock(
-                source_reference_build => $roi_reference, 
-                destination_reference_build => $rsb,
+            my $converter_exists =  Genome::Model::Build::ReferenceSequence::Converter->exists_for_references(
+                $roi_reference, $rsb,
             );
 
-            if ($converter) {
+            if ($converter_exists) {
                 return 1;
             }
         }

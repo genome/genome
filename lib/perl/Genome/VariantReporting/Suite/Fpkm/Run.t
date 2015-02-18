@@ -12,6 +12,7 @@ use above "Genome";
 use Sub::Install;
 use Genome::Test::Factory::Model::ReferenceSequence;
 use Genome::Test::Factory::Build;
+use Genome::Test::Factory::Process;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
 use Genome::VariantReporting::Framework::TestHelpers qw(test_cmd_and_result_are_in_sync);
@@ -46,12 +47,15 @@ sub generate_test_cmd {
 
     my $input_result = $result_class->__define__();
 
+    my $process = Genome::Test::Factory::Process->setup_object();
+
     my %params = (
         input_vcf => __FILE__,
         fpkm_file => __FILE__,
         sample_name => 'TEST-patient1-somval_tumor1',
         variant_type      => 'snvs',
         fpkm_file         => __FILE__,
+        process_id        => $process->id,
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd;

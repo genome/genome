@@ -14,6 +14,7 @@ use Test::More tests=>36;
 use above 'Genome';
 use Genome::SoftwareResult;
 use Genome::Utility::Test qw(compare_ok);
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -65,6 +66,10 @@ my $reduced_ref_seq_build = Genome::Model::Build::ReferenceSequence->create(
 );
 ok($reduced_ref_seq_build, "Created a reduced reference sequence build for testing") or die;
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reduced_ref_seq_build,
+);
+
 #Set params option below to be the default for Strelka 0.4.6.2, except reduce the bin size to something suitable for the test reference genome
 #e.g. 1500000
 my $params_string = "isSkipDepthFilters = 0;depthFilterMultiple = 3.0;snvMaxFilteredBasecallFrac = 0.4;snvMaxSpanningDeletionFrac = 0.75;indelMaxRefRepeat = 8;indelMaxWindowFilteredBasecallFrac = 0.3;indelMaxIntHpolLength = 14;ssnvPrior = 0.000001;sindelPrior = 0.000001;ssnvNoise = 0.0000005;sindelNoise = 0.000001;ssnvNoiseStrandBiasFrac = 0.5;minTier1Mapq = 20;ssnvQuality_LowerBound = 15;sindelQuality_LowerBound = 30;isWriteRealignedBam = 0;binSize = 1500000;extraStrelkaArguments =";
@@ -77,7 +82,8 @@ my $strelka = Genome::Model::Tools::DetectVariants2::Strelka->create(aligned_rea
                                                                      version => '1.0.10',
                                                                      params => $params_string,
                                                                      control_aligned_reads_sample => 'TEST_NORMAL',
-                                                                     aligned_reads_sample => 'TEST',);
+                                                                     aligned_reads_sample => 'TEST',
+                                                                     result_users => $result_users,);
 ok($strelka, 'strelka command created');
 $strelka->dump_status_messages(1);
 my $rv = $strelka->execute;

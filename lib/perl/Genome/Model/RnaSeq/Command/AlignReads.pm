@@ -64,6 +64,7 @@ sub execute {
         inputs => \%composite_inputs,
         strategy => $self->_generate_alignment_strategy,
         log_directory => $build->log_directory,
+        result_users => Genome::SoftwareResult::User->user_hash_for_build($build),
     );
 
     my @bams = $result->bam_paths;
@@ -84,10 +85,10 @@ sub execute {
         $r->add_user(label => 'merged_alignment', user => $build);
         Genome::Sys->create_symlink($r->output_dir, $build_alignment_dir);
 
-        my @individual_alignment_results = $r->collect_individual_alignments;
-        for my $i (@individual_alignment_results) {
-            $r->add_user(label => 'individual_alignment', user => $build);
-        }
+        my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+        $result_users->{individual_alignment} = $build;
+
+        my @individual_alignment_results = $r->collect_individual_alignments($result_users);
         $self->individual_alignment_results(\@individual_alignment_results);
     }
 

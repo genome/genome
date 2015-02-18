@@ -103,6 +103,7 @@ sub execute {
         },
         strategy => 'instrument_data aligned to reference_sequence_build using bwa 0.5.9 [-t 4 -q 5::] then merged using picard 1.46 then deduplicated using picard 1.46 api v2',#TODO make me a processing profile parameter, backfilled default
         log_directory => $build->log_directory,
+        result_users => Genome::SoftwareResult::User->user_hash_for_build($build),
     );
 
     my @bams = $result->bam_paths;

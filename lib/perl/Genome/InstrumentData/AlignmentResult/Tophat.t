@@ -17,6 +17,7 @@ BEGIN {
 };
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 
 use_ok('Genome::InstrumentData::AlignmentResult::Tophat');
 *Genome::InstrumentData::AlignmentResult::Tophat::estimated_kb_usage = sub {
@@ -51,6 +52,9 @@ ok($reference_model, "got reference model");
 my $reference_build = $reference_model->build_by_version('1');
 ok($reference_build, "got reference build");
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
 
 my @instrument_data = generate_fake_instrument_data();
 
@@ -84,7 +88,7 @@ for my $file (qw(alignment_stats.txt junctions.bed)) {
         or diag("diff:\n". $diff);
 }
 
-my $existing_alignment_result = Genome::InstrumentData::AlignmentResult::Tophat->get_or_create(@params);
+my $existing_alignment_result = Genome::InstrumentData::AlignmentResult::Tophat->get_or_create(@params, users => $result_users);
 is($existing_alignment_result, $alignment_result, 'got back the previously created result');
 
 # Setup methods

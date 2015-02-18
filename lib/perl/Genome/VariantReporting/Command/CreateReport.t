@@ -41,7 +41,7 @@ subtest 'working_command' => sub {
         translations_file => get_translations_file($input_vcf),
     );
     my $p = $cmd->execute();
-
+    UR::Context->commit();
     my $expected_result_dir = File::Spec->join($test_dir, "expected_in_result");
 
     my $output_dir = Genome::Sys->create_temp_directory;
@@ -67,6 +67,7 @@ subtest 'working_command' => sub {
             translations_file => get_translations_file($other_input_vcf),
         );
         my $other_p = $other_cmd->execute();
+        UR::Context->commit();
         is_deeply({$p->compare_output($other_p->id)}, {}, 'Two identical process executions produce the same output');
     };
 
@@ -85,6 +86,7 @@ subtest 'working_command' => sub {
             translations_file => get_translations_file($other_input_vcf),
         );
         my $other_p = $other_cmd->execute();
+        UR::Context->commit();
         my %diffs = $p->compare_output($other_p->id);
         my $report_file = File::Spec->join($p->output_directory('__test__'), 'report.txt');
         my $other_report_file = File::Spec->join($other_p->output_directory('__test__'), 'report.txt');
@@ -122,6 +124,7 @@ subtest 'working_command' => sub {
            translations_file => get_translations_file_for_plan2($other_input_vcf),
         );
         my $other_p = $other_cmd->execute();
+        UR::Context->commit();
         my %diffs = $p->compare_output($other_p->id);
         like($diffs{'__translated_test__'}, qr/no directory __translated_test__ found/, 'Additional report gets detected');
         like($diffs{File::Spec->join('__test__', 'plan.yaml')}, qr/files are not the same/, 'Plan file difference gets detected');

@@ -20,7 +20,7 @@ class Genome::Model::Tools::Analysis::ResolveIgvReferenceName {
             is_transient => 1,
             default => 'unknown',
             doc => "name of the IGV reference derived from the input reference name",
-            example_values => ["reference_build36","b37","mm9"],
+            example_values => ['hg18', 'b37', 'mm9'],
         },
     ],
 };

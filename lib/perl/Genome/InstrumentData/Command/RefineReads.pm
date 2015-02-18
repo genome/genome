@@ -35,6 +35,10 @@ class Genome::InstrumentData::Command::RefineReads {
             is_optional => 1,
             doc => 'ID of the variant list to use for refinement',
         },
+        result_users => {
+            is => 'HASH',
+            doc => 'mapping of labels to user objects. Will be added to any generated results',
+        },
     ],
     has_optional_output => [
         result_id => {
@@ -117,6 +121,7 @@ sub _params {
         params => $self->refiner_params,
         known_sites => \@known_sites,
         bam_source => $self->input_result,
+        result_users => $self->result_users,
     );
 }
 

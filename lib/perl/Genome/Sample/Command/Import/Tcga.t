@@ -33,7 +33,6 @@ is($import->_sample->extraction_type, 'rna', 'sample extraction type');
 is_deeply($import->_sample->source, $import->_individual, 'sample source');
 is($import->_library->name, $name.'-extlibs', 'library name');
 is_deeply($import->_library->sample, $import->_sample, 'library sample');
-is(@{$import->_created_objects}, 3, 'created 3 objects');
 
 # import w/ existing patients/samples but the patient name is screwy
 my $patient = Genome::Individual->create(
@@ -67,7 +66,6 @@ is($import->_sample->extraction_type, 'ipr product', 'sample extraction type');
 is_deeply($import->_sample->source, $import->_individual, 'sample source');
 is($import->_library->name, $name2.'-extlibs', 'library name');
 is_deeply($import->_library->sample, $import->_sample, 'library sample');
-is(@{$import->_created_objects}, 2, 'created 3 objects');
 
 # fail
 $import = Genome::Sample::Command::Import::Tcga->create(name => 'AGCT-00-0000-000-00R-0000-00');

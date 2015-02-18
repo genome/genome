@@ -109,24 +109,21 @@ sub _assign_instrument_data_to_model {
 
     #if a model is newly created, we want to assign all applicable instrument data to it
     my %params_hash = (model => $model);
-    my $executed_all_ok = 1;
+    my $executed_ok = 1;
     if ($newly_created && $model->auto_assign_inst_data) {
-        for my $analysis_project ($model->analysis_projects) {
-            my $cmd = Genome::Model::Command::InstrumentData::Assign::AnalysisProject->create(
-                model => $model,
-                analysis_project => $analysis_project,
-            );
-            $executed_all_ok &&= eval{ $cmd->execute; };
-        }
+        my $cmd = Genome::Model::Command::InstrumentData::Assign::AllCompatible->create(
+            model => $model,
+        );
+        $executed_ok &&= eval{ $cmd->execute; };
     } else {
         my $cmd = Genome::Model::Command::InstrumentData::Assign::ByExpression->create(
             model => $model,
             instrument_data => [$instrument_data]
         );
-        $executed_all_ok &&= eval{ $cmd->execute };
+        $executed_ok &&= eval{ $cmd->execute };
     }
 
-    unless ($executed_all_ok) {
+    unless ($executed_ok) {
         die(sprintf('Failed to assign %s to %s', $instrument_data->__display_name__,
                 $model->__display_name__));
     }
@@ -236,7 +233,7 @@ sub _get_model_for_config_hash {
 
     my @extra_params = (auto_assign_inst_data => 1);
 
-    my @found_models = $class_name->get(@extra_params, %read_config, analysis_projects => [$analysis_project]);
+    my @found_models = $class_name->get(@extra_params, %read_config, analysis_project => $analysis_project);
     my @m = grep { $_->analysis_project_bridges->profile_item_id eq $config_profile_item->id } @found_models;
 
     if (scalar(@m) > 1) {

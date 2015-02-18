@@ -13,6 +13,7 @@ class Genome::InstrumentData::Command::RefineReads::GatkBase {
     has_input => {
         version => { is => 'Text', },
         bam_source => { is => 'Genome::InstrumentData::AlignedBamResult', },
+        result_users => { is => 'HASH' },
     },
     has_param => {
         lsf_resource => {
@@ -121,6 +122,7 @@ sub _load_result {
         bam_source => $bam_source,
         version => $self->version,
         reference_build => $reference_build,
+        users => $self->result_users,
         # TODO use params from class
     );
     my @known_sites = $self->known_sites;
@@ -145,7 +147,15 @@ sub _params_display_name {
     for my $key ( keys %$params ) {
         $display_name .= $key.': ';
         if ( my $ref = ref $params->{$key} ) {
-            my @params = ( $ref eq 'ARRAY' ) ? @{$params->{$key}} : $params->{$key};
+            my @params;
+            if($ref eq 'ARRAY') {
+                @params = @{$params->{$key}};
+            } elsif ($ref eq 'HASH') {
+                $display_name .= $self->_params_display_name($params->{$key});
+            } else {
+                @params = $params->{$key};
+            }
+
             for my $param ( @params ) {
                 $display_name .= $param->id."\n";
             }

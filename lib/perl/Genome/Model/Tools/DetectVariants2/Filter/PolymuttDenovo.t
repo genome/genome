@@ -10,6 +10,7 @@ use warnings;
 
 use above 'Genome';
 
+use Genome::Test::Factory::SoftwareResult::User;
 use Test::More;
 
 if (Genome::Config->arch_os ne 'x86_64') {
@@ -90,6 +91,7 @@ my $filter_command = Genome::Model::Tools::DetectVariants2::Filter::PolymuttDeno
     output_directory => $output_dir,
     pedigree_file_path => "$detector_directory/DS10239.ped",
     bam_readcount_version => 0.6,
+    result_users => Genome::Test::Factory::SoftwareResult::User->setup_user_hash(),
 );
 $filter_command->dump_status_messages(1);
 isa_ok($filter_command, 'Genome::Model::Tools::DetectVariants2::Filter::PolymuttDenovo', 'created filter command');

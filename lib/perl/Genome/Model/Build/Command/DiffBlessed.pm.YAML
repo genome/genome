@@ -1,7 +1,7 @@
 ---
 apipe-test-amplicon-assembly: 133133151
 apipe-test-clinseq-v1: 133114501
-apipe-test-clinseq-wer: 37f1664b92c747ecb9c46c21f6528bee
+apipe-test-clinseq-wer: 6595b01570a34c4dbbd83b060f1e0b53
 apipe-test-de-novo-soap: 137388725
 apipe-test-de-novo-velvet: 79a406fcf18c46e090dec62342b2c4ae
 apipe-test-gene-prediction-bacterial: 4ddaecaa52364dd09b3a4d7709ddfc3b
@@ -14,6 +14,6 @@ apipe-test-reference-alignment: 47bb46ba47d64b6e87714c606377ad98
 apipe-test-rnaseq: d43e5b2f2e2f496aa9329a160d3833e1
 apipe-test-somatic-validation-sv: fca9bd3a029d48099f07092c19989d16
 apipe-test-somatic-validation: 750be33ae59f4a588b87a587d9df22bb
-apipe-test-somatic-variation-short: f3d6a8e349404994a1cb0816e7a0b06d
+apipe-test-somatic-variation-short: e1c9bd1b11a94d55855d2d9ad6fedc0b
 apipe-test-somatic-variation-sv-detection: 2a046f43a086479b9d6c957b9d977312
-apipe-test-somatic-variation: b89dc737d7d045f4be9b64489fa14e46 
+apipe-test-somatic-variation: b396a01c42ea42249422e1a69f10195d 

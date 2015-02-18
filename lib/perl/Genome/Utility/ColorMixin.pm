@@ -3,6 +3,9 @@ package Genome::Utility::ColorMixin;
 use strict;
 use warnings;
 
+use Genome;
+use Genome::Utility::Text qw(justify);
+
 class Genome::Utility::ColorMixin {
     has => [
         color => {
@@ -90,6 +93,20 @@ sub _color_dim {
     return $self->_color($text, 'white');
 }
 
+sub _column_width {
+    return Genome::Command::Viewer->get_terminal_width / 2;
+}
 
+sub _write_pairs_line {
+    my ($self, $handle, $l_label, $l_value, $r_label, $r_value) = @_;
+
+    if ($r_label and $r_value) {
+        print $handle justify($self->_color_pair($l_label, $l_value), 'left',
+            $self->_column_width), " ", $self->_color_pair($r_label, $r_value), "\n";
+
+    } else {
+        print $handle $self->_color_pair($l_label, $l_value), "\n";
+    }
+}
 
 1;

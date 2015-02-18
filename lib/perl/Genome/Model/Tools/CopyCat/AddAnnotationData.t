@@ -12,6 +12,7 @@ use Test::More tests => 6;
 
 use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
+use Genome::Test::Factory::SoftwareResult::User;
 use File::Spec;
 
 my $class = 'Genome::Model::Tools::CopyCat::AddAnnotationData';
@@ -24,6 +25,11 @@ my $reference_build = Genome::Model::Build->get(106942997);
 ok($reference_build, 'Successfully found reference build');
 my $version = '-99';
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
+
+
 my $cmd = Genome::Model::Tools::CopyCat::AddAnnotationData->create(reference_sequence => $reference_build,
                                                                    version            => $version,
                                                                    data_directory     => $data_directory);
@@ -34,5 +40,6 @@ ok($cmd->execute, 'Successfully executed command');
 my $result = Genome::Model::Tools::CopyCat::AnnotationData->get_with_lock(
                                                                     reference_sequence => $reference_build,
                                                                     version            => $version,
+                                                                    users              => $result_users,
 );
 ok($result, 'Successfully found the AnnotationData');

@@ -16,6 +16,7 @@ use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Test::Factory::InstrumentData::Imported;
 use Genome::Test::Factory::Model::GenotypeMicroarray;
 use Genome::Test::Factory::Build;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $package = "Genome::InstrumentData::VerifyBamIdResult";
 
@@ -34,7 +35,9 @@ subtest test_convert_caf_to_af_bad_caf => sub {
     dies_ok(sub {Genome::InstrumentData::VerifyBamIdResult::_convert_caf_to_af(create_entry("0.07163,0.9284"))});
 };
 
-
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $dbsnp_build->reference,
+);
 
 subtest test_on_target => sub{
     my $sr = Genome::InstrumentData::VerifyBamIdResult->create(
@@ -47,6 +50,7 @@ subtest test_on_target => sub{
         precise => 0,
         version => "20120620",
         result_version => 2,
+        _user_data_for_nested_results => $result_users,
     );
     ok($sr, "Software result was created ok");
     test_metrics($sr);
@@ -62,6 +66,7 @@ subtest test_no_intersect => sub{
         precise => 0,
         version => "20120620",
         result_version => 2,
+        _user_data_for_nested_results => $result_users,
     );
     ok($sr, "Software result was created ok");
     test_metrics($sr);

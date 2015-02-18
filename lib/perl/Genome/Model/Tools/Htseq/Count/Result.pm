@@ -1,7 +1,7 @@
 package Genome::Model::Tools::Htseq::Count::Result;
 
 class Genome::Model::Tools::Htseq::Count::Result {
-    is => ['Genome::SoftwareResult::StageableSimple'],
+    is => ['Genome::SoftwareResult::StageableSimple', 'Genome::SoftwareResult::WithNestedResults'],
     has_param => [
         app_version => {
             is => 'SoftwareVersion',
@@ -73,6 +73,7 @@ sub _parallelize {
 
         $params->{$name} = $self->$name;
     }
+    $params->{users} = $self->_user_data_for_nested_results;
 
     # TODO: compose a workflow here instead of a linear run
     my $n = 0;

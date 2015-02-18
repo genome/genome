@@ -37,6 +37,7 @@ sub test_report_result {
         plan_json => $plan->as_json,
         variant_type => $p{variant_type},
         process_id => $process->id,
+        label => $p{pkg}->name,
     );
 
     mock_interpret_entry($p{interpretations});

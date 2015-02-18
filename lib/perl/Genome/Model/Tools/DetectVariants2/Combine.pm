@@ -28,6 +28,10 @@ class Genome::Model::Tools::DetectVariants2::Combine {
             is => 'Text',
             is_optional => 1,
         },
+        result_users => {
+            is => 'HASH',
+            doc => 'mapping of labels to user objects. Will be added to any generated results',
+        },
     ],
     has_param => [
         lsf_queue => {
@@ -169,7 +173,7 @@ sub _try_vcf {
             $self->debug_message("No software-result associated with input_id: ".$input_id);
             return 0;
         }
-        my $input_vcf_result = $input_result->get_vcf_result($self->aligned_reads_sample, $self->control_aligned_reads_sample);
+        my $input_vcf_result = $input_result->get_vcf_result($self->aligned_reads_sample, $self->control_aligned_reads_sample, $self->result_users);
         $vcf_count++ if $input_vcf_result;
     }
     if($vcf_count == 2){
@@ -265,6 +269,7 @@ sub params_for_combine_result {
         input_b_id => $self->input_b_id,
         subclass_name => $self->_result_class,
         test_name => $self->test_name_from_input_results,
+        users => $self->result_users,
     );
 
     return \%params;
@@ -274,12 +279,13 @@ sub params_for_vcf_result {
     my $self = shift;
     my $aligned_reads_sample = $self->aligned_reads_sample;
     my $control_aligned_reads_sample = $self->control_aligned_reads_sample;
+    my $result_users = $self->result_users;
 
     my $prev_result_a = Genome::SoftwareResult->get($self->input_a_id);
     my $prev_result_b = Genome::SoftwareResult->get($self->input_b_id);
 
-    my $prev_vcf_result_a = $prev_result_a->get_vcf_result($aligned_reads_sample, $control_aligned_reads_sample);
-    my $prev_vcf_result_b = $prev_result_b->get_vcf_result($aligned_reads_sample, $control_aligned_reads_sample);
+    my $prev_vcf_result_a = $prev_result_a->get_vcf_result($aligned_reads_sample, $control_aligned_reads_sample, $result_users);
+    my $prev_vcf_result_b = $prev_result_b->get_vcf_result($aligned_reads_sample, $control_aligned_reads_sample, $result_users);
 
     my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
     my $joinx_version = Genome::Model::Tools::Joinx->get_default_version;
@@ -307,6 +313,7 @@ sub params_for_vcf_result {
         vcf_version => $vcf_version,
         variant_type => $self->_variant_type,
         joinx_version => $joinx_version,
+        users => $self->result_users,
     );
 
     return \%params;

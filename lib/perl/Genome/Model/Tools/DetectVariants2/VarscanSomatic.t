@@ -12,6 +12,7 @@ use above 'Genome';
 use Genome::SoftwareResult;
 use Test::More;
 use File::Compare;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -30,6 +31,10 @@ my $test_base_dir = Genome::Sys->create_temp_directory;
 my $bam_input = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 my $normal_bam = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
+
 # Updated to .v5 due to additional column in Varscan
 # Updated to .v6 due to the addition of quality and natural sort order to bed file output 
 # Updated to .v7 due to the addition of read depth
@@ -40,13 +45,13 @@ my $normal_bam = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 my $expected_dir = $test_dir . '/expected.v16/';
 ok(-d $expected_dir, "expected results directory exists");
 
-run_test('default_params', '');
-run_test('non_default_params', '--min-coverage 2 --min-var-freq 0.02 --p-value 0.02 --somatic-p-value 0.02 --strand-filter 1');
+run_test('default_params', '', $result_users);
+run_test('non_default_params', '--min-coverage 2 --min-var-freq 0.02 --p-value 0.02 --somatic-p-value 0.02 --strand-filter 1', $result_users);
 
 done_testing();
 
 sub run_test {
-    my ($type, $param) = @_;
+    my ($type, $param, $result_users) = @_;
     my $version = '2.3.2'; 
     my $output_dir = $test_base_dir. "/$type";
     my $expect_dir = $expected_dir . "/$type";
@@ -59,6 +64,7 @@ sub run_test {
         output_directory             => $output_dir,
         aligned_reads_sample         => 'TEST',
         control_aligned_reads_sample => 'TEST_NORMAL',
+        result_users                 => $result_users,
     );
     $params{params} = $param if $param;
 

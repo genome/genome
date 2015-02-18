@@ -124,7 +124,7 @@ $subject_mapping = Genome::Config::AnalysisProject::SubjectMapping->create(
 my $tag = Genome::Config::Tag->create(name => 'test tag for somval 1');
 $subject_mapping->add_tag($tag);
 
-my $profile_item = $analysis_project->get_configuration_profile->get_config->{'Genome::Model::SomaticValidation'}{config_profile_item};
+my $profile_item = $analysis_project->config_items;
 $profile_item->add_tag($tag);
 
 Genome::Config::AnalysisProject::SubjectMapping::Subject->create(
@@ -262,7 +262,12 @@ sub generate_rna_seq_instrument_data {
 
     my $ap = Genome::Test::Factory::AnalysisProject->setup_object(
         config_hash => {
-            'Genome::Model::RnaSeq' => _rna_seq_config_hash()
+            rules => {
+                'sequencing_platform' => 'solexa',
+            },
+            models => {
+                'Genome::Model::RnaSeq' => _rna_seq_config_hash()
+            },
         }
     );
 
@@ -331,7 +336,12 @@ sub _generate_som_val_instrument_data {
 
     my $ap = Genome::Test::Factory::AnalysisProject->setup_object(
         config_hash => {
-            'Genome::Model::SomaticValidation' => _som_val_config_hash()
+            rules => {
+                'sequencing_platform' => 'solexa',
+            },
+            models => {
+                'Genome::Model::SomaticValidation' => _som_val_config_hash()
+            },
         }
     );
 
@@ -411,7 +421,12 @@ sub _generate_lane_qc_instrument_data {
     for my $inst_data ($sans_data, $plus_data) {
         my $ap = Genome::Test::Factory::AnalysisProject->setup_object(
             config_hash => {
-                'Genome::Model::ReferenceAlignment' => _ref_align_config_hash()
+                rules => {
+                    'sequencing_platform' => 'solexa',
+                },
+                models => {
+                    'Genome::Model::ReferenceAlignment' => _ref_align_config_hash(),
+                },
             }
         );
 
