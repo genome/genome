@@ -227,7 +227,6 @@ sub _run_htseq_count {
 
     my $output_dir = $self->temp_staging_directory;
     $self->debug_message("Output staging directory: $output_dir");
-    $self->debug_message('Output destination directory: %s', $self->output_dir);
 
     # The samtools version is not part of the params because it is not yet required for it to vary.
     # If it does need to vary in the future a param should be addeed and backfilled
