@@ -29,6 +29,7 @@ our @EXPORT_OK = qw(
     test_cmd_and_result_are_in_sync
     get_test_dir
     get_translation_provider
+    get_plan_object
     get_reference_build
     get_translation_provider_with_vep
     test_dag_xml
@@ -90,6 +91,29 @@ sub get_translation_provider {
                 reference_fasta => $fasta_file,
             },
     );
+}
+
+sub get_plan_object {
+    my %p = validate(@_, {
+        plan_file => {type => SCALAR},
+        provider => {type => OBJECT},
+    });
+
+    my $plan_file = $p{plan_file};
+    my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->
+        create_from_file($plan_file);
+
+    note sprintf("Validating plan (%s)", $plan_file);
+    $plan->validate();
+
+    note "Validating plan against translations provider";
+    my $provider = $p{provider};
+    $plan->validate_translation_provider($provider);
+
+    note "Translating plan";
+    $plan->translate($provider->translations);
+
+    return $plan;
 }
 
 sub setup_bam_results {
@@ -162,14 +186,7 @@ sub test_dag_execute {
     my $process = Genome::Test::Factory::Process->setup_object();
 
     my $plan_file = File::Spec->join($test_file . '.d', 'plan.yaml');
-    my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->
-        create_from_file($plan_file);
-    note sprintf("Validating plan (%s)", $plan_file);
-    $plan->validate();
-    note "Validating plan against translations provider";
-    $plan->validate_translation_provider($provider);
-    note "Translating plan";
-    $plan->translate($provider->translations);
+    my $plan = get_plan_object( plan_file => $plan_file, provider => $provider );
     note "Launching workflow";
     my $output = $dag->execute(
         input_vcf => $input_vcf,
