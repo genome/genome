@@ -654,7 +654,7 @@ sub execute {
   my $som_var_bam_files=[];
   my $som_var_labels=[];
   if(defined $self->somatic_variation_model_id){
-      ($som_var_bam_files,$som_var_labels) = process_somatic_variation_models($self->somatic_variation_model_id,$sample_name);
+      ($som_var_bam_files,$som_var_labels) = $self->process_somatic_variation_models($self->somatic_variation_model_id,$sample_name);
   
   }
 
@@ -1269,6 +1269,7 @@ sub process_somatic_variation_models {
 #takes a somatic var model ID and returns the path to the 
 #parent BAM files and labels
 
+    my $self = shift;
     my $som_var_model_id = shift;
     my $sample_name = shift;   #som_var probably has its own sample name, but need to be consistent with validation model
 
@@ -1279,19 +1280,19 @@ sub process_somatic_variation_models {
     my @labels;
     my $som_var_obj={};
     if(!defined($var_model)){
-	print STDERR "ERROR: Could not find a model with ID: $som_var_model_id\n";
+	$self->error_message("Could not find a model with ID: $som_var_model_id");
     }
     else {
 	my $tvar_build = $var_model->tumor_model->last_succeeded_build;
 	my $nvar_build = $var_model->normal_model->last_succeeded_build;
 	if(!defined($nvar_build) || !defined($tvar_build) ){
-	    print STDERR "ERROR: Could not find a succeeded refalign builds from model ID: $som_var_model_id\n";
+	    $self->error_message("Could not find a succeeded refalign builds from model ID: $som_var_model_id");
 	}
 	else {                  
 	    my $tbam = $tvar_build->whole_rmdup_bam_file;
 	    my $nbam = $nvar_build->whole_rmdup_bam_file;
 	    if (!-s $tbam && !-s $nbam){
-		print STDERR "couldn't resolve bam files for somatic variation model";
+		$self->error_message("couldn't resolve bam files for somatic variation model");
 	    } else {
 		push(@bam_files, ($nbam,$tbam));
 		push(@labels, "original normal $sample_name","original tumor $sample_name" );
