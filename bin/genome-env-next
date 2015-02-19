@@ -472,7 +472,6 @@ function setup_env {
 
         if ! genome-perl -MUR -e 1 2> /dev/null
         then
-            genome-perl -MUR -e 1
             fatal $BUILD_ERR "failed to load UR"
         fi
 
