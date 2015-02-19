@@ -792,11 +792,13 @@ sub _lock_per_lane_alignment {
     my $self = shift;
 
     for my $alignment ($self->collect_individual_alignments) {
-        my $id = $alignment->id;
         unless ($alignment->get_merged_alignment_results) {
             my @bams = $alignment->alignment_bam_file_paths;
             unless (@bams) {
-               die $self->error_message("Per lane alignment $id has neither merged results nor bam paths. Please create an apipe-support ticket for this.");
+               die $self->error_message("Alignment result with class (%s) and id (%s) has neither ".
+                   "merged results nor valid bam paths. This likely means that this alignment result ".
+                   "needs to be removed and realigned because data has been lost. ".
+                   "Please create an apipe-support ticket for this.", $alignment->class, $alignment->id);
                #There is no way to recreate per lane bam if merged bam
                #does not exist and per lane bam is removed. Software
                #result of this per lane alignment needs to be removed and
@@ -805,29 +807,25 @@ sub _lock_per_lane_alignment {
             }
 
             unless ($ENV{UR_DBI_NO_COMMIT}) {
-                my $lock_var = File::Spec->join($ENV{GENOME_LOCK_DIR}, 'genome', __PACKAGE__, 'lock-per-lane-alignment-'.$id);
+                my $lock_var = 'genome_instrument_data_alignment_result-merged-per-lane-'.$alignment->id.'/lock';
                 my $lock = Genome::Sys->lock_resource(
                     resource_lock => $lock_var,
                     scope         => 'site',
                     max_try       => 288, # Try for 48 hours every 10 minutes
                     block_sleep   => 600,
                 );
-
-                die "Unable to acquire the lock for per lane alignment $id !" unless $lock;
+                die $self->error_message("Unable to acquire the lock for per lane alignment result id (%s) !", $alignment->id) unless $lock;
 
                 # If the build before us successfully created a merged alignment result, we no longer need a lock
                 # If it failed, we will add an observer just as the first build did.
                 if ($alignment->get_merged_alignment_results) {
                     Genome::Sys->unlock_resource(resource_lock => $lock);
                 } else {
-                    # The problem here is if we commit BEFORE merge is done, we unlock too early.
-                    # However, if we unlock any other way we may fail to unlock more often and leave old locks.
                     UR::Context->process->add_observer(
                         aspect   => 'commit',
-                        once => 1,
                         callback => sub {
                             Genome::Sys->unlock_resource(resource_lock => $lock);
-                        },
+                        }
                     );
                 }
             }
