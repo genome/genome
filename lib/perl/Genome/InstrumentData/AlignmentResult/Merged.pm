@@ -805,7 +805,7 @@ sub _lock_per_lane_alignment {
             }
 
             unless ($ENV{UR_DBI_NO_COMMIT}) {
-                my $lock_var = 'genome_instrument_data_alignment_result-merged-per-lane-'.$id.'/lock';
+                my $lock_var = File::Spec->join($ENV{GENOME_LOCK_DIR}, 'genome', __PACKAGE__, 'lock-per-lane-alignment-'.$id);
                 my $lock = Genome::Sys->lock_resource(
                     resource_lock => $lock_var,
                     scope         => 'site',
