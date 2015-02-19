@@ -31,6 +31,8 @@ sub report_path {
 sub has_size {
     my $self = shift;
 
+    return unless $self->report_path;
+
     unless (defined($self->__has_size)) {
         $self->__has_size(-s $self->report_path);
     }
