@@ -4,13 +4,14 @@ use strict;
 use warnings;
 
 use above "Genome";
-use Test::More tests => 7;
+use Test::More;
 
-use_ok('Genome::Model::Tools::Picard');
+my $pkg = 'Genome::Model::Tools::Picard';
+use_ok($pkg);
 
-my $picard = Genome::Model::Tools::Picard->create();
+my $picard = $pkg->create();
 
-isa_ok($picard, 'Genome::Model::Tools::Picard');
+isa_ok($picard, $pkg);
 
 # should get default versions since we do not specify
 my $picard_version = $picard->use_version();
@@ -48,7 +49,7 @@ for (0..6) {
 }
 |),'writing temp pl');
 
-    my $picard_cmd = Genome::Model::Tools::Picard->create(
+    my $picard_cmd = $pkg->create(
         _monitor_check_interval => 1,
         _monitor_stdout_interval => 5,
         _monitor_mail_to => Genome::Sys->username,
@@ -61,4 +62,52 @@ for (0..6) {
 
 };
 
-1;
+subtest "Version compare" => sub {
+    my @less_cases = (
+        ["1.85", "1.123"],
+        ["1.05", "1.05.1"]
+        );
+
+    for my $v (@less_cases) {
+        ok($pkg->version_compare($v->[0], $v->[1]) < 0, "$v->[0] < $v->[1]");
+        ok($pkg->version_compare($v->[1], $v->[0]) > 0, "$v->[1] > $v->[0]");
+        ok($pkg->version_compare($v->[0], $v->[0]) == 0, "$v->[0] == $v->[0]");
+        ok($pkg->version_compare($v->[1], $v->[1]) == 0, "$v->[1] == $v->[1]");
+    }
+};
+
+subtest "Enforce minimum version" => sub {
+    # These are ordered from greatest to least
+    my @versions = $pkg->_versions_serial;
+    my $obj = $pkg->create;
+
+    for my $i (0..$#versions) {
+        my @failures;
+
+        my $ver = $versions[$i];
+        $obj->use_version($ver);
+
+        # For each version greater than or equal to the given version
+        for my $j (0..($i-1)) {
+            my $min_ver = $versions[$j];
+            # omg hush!
+            eval { $obj->enforce_minimum_version($min_ver); };
+            if (!$@) {
+                push @failures, "$min_ver > $ver";
+            }
+        }
+
+        # For each version less than the given version
+        for my $j ($i..$#versions) {
+            my $min_ver = $versions[$j];
+            if (!$obj->enforce_minimum_version($min_ver)) {
+                push @failures, "$min_ver <= $ver";
+            }
+        }
+
+        ok(!@failures, "version $ver behaves as expected")
+            or diag("Failures: " . Data::Dumper::Dumper(\@failures));
+    }
+};
+
+done_testing();
