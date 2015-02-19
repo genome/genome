@@ -1768,19 +1768,19 @@ sub get_unarchived_merged_alignment_results {
 }
 
 sub get_smallest_merged_alignment_result {
-    my ($self, @results) = @_;
-    return unless @results;
-    my $smallest = $results[0];
+    my ($self, @merged_alignment_results) = @_;
+    return unless @merged_alignment_results;
+    my $smallest_result = $merged_alignment_results[0];
 
-    for my $result (@results) {
-        my @current_id = $result->instrument_data;
-        my @smallest_id = $smallest->instrument_data;
-        if ( scalar(@current_id) < scalar(@smallest_id) ) {
-            $smallest = $result;
+    for my $result (@merged_alignment_results) {
+        my @current_instrument_data = $result->instrument_data;
+        my @smallest_instrument_data = $smallest_result->instrument_data;
+        if ( scalar(@current_instrument_data) < scalar(@smallest_instrument_data) ) {
+            $smallest_result = $result;
         }
     }
 
-    return $smallest;
+    return $smallest_result;
 }
 
 sub requires_read_group_addition {
