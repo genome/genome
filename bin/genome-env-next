@@ -431,6 +431,16 @@ function assert_module_missing {
     fi
 }
 
+# assert_module_found only works with single word module names, e.g. UR, Workflow, and Genome.
+function assert_module_found {
+    local MODULE=$1
+    local MODULE_PATH="$(genome-perl -M${MODULE} -e "print \$INC{q($MODULE.pm)}, qq(\\n)" 2> /dev/null )"
+    if test -z "$MODULE_PATH"
+    then
+        fatal $BUILD_ERR "module not found: $MODULE ($MODULE_PATH)"
+    fi
+}
+
 # setup_env tries to clean the current environment and then updates the
 # environment to run tests.
 function setup_env {
@@ -472,11 +482,7 @@ function setup_env {
     if test -z "$DISABLE_UR"
     then
         export PERL5LIB=$UR_REPO/lib:$PERL5LIB
-
-        if ! genome-perl -MUR -e 1 2> /dev/null
-        then
-            fatal $BUILD_ERR "failed to load UR"
-        fi
+        assert_module_found UR
 
         if which ur | $GREP -q "$SNAPSHOT_BIN"
         then
@@ -487,11 +493,7 @@ function setup_env {
     if test -z "$DISABLE_WF"
     then
         export PERL5LIB=$WF_REPO/lib:$PERL5LIB
-
-        if ! genome-perl -MWorkflow -e 1 2> /dev/null
-        then
-            fatal $BUILD_ERR "failed to load Workflow"
-        fi
+        assert_module_found Workflow
 
         if which workflow | $GREP -q "$SNAPSHOT_BIN"
         then
@@ -500,11 +502,7 @@ function setup_env {
     fi
 
     export PERL5LIB=$BASE_DIR/lib/perl:$PERL5LIB
-
-    if ! genome-perl -MGenome -e 1 2> /dev/null
-    then
-        fatal $BUILD_ERR "failed to load Genome: $PERL5LIB"
-    fi
+    assert_module_found Genome
 
     if test -z "$DISABLE_DB"
     then
