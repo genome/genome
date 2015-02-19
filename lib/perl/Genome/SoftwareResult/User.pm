@@ -173,7 +173,7 @@ sub _load_or_create {
         $self = $class->create(%$params);
     }
 
-    return $self;
+    return 1;
 }
 
 sub _resolve_lock_name {
