@@ -85,10 +85,13 @@ sub execute {
     my $resolve_attrs_ok = $self->_resolve_incoming_attributes;
     return if not $resolve_attrs_ok;
 
-    my $import = $self->_import;
-    return if not $import;
+    my $sample_ok = $self->_create_sample_if_needed;
+    return if not $sample_ok;
 
-    $library = $self->_get_or_create_library;
+    my $individual_ok = $self->_get_or_create_indivdual;
+    return if not $individual_ok;
+
+    $library = $self->_create_library;
     return if not $library;
 
     $self->status_message('Import sample...OK');
@@ -121,26 +124,12 @@ sub _resolve_incoming_attributes {
     return 1;
 }
 
-sub _import {
+sub _get_or_create_indivdual {
     my $self = shift;
 
     my $individual_params = $self->_individual_attributes;
     my $individual_upn = $individual_params->{upn};
     Carp::confess('No individual upn in individual params given to import') if not $individual_upn;
-    my $sample_params = $self->_sample_attributes;
-    my $sample_name = $sample_params->{name};
-    Carp::confess('No sample name in sample params given to import') if not $sample_name;
-
-    # sample
-    my $sample = Genome::Sample->get(name => $sample_name);
-    if ( $sample ) {
-        $self->_sample($sample);
-        $self->status_message('Found sample: '.join(' ', map{ $sample->$_ } (qw/ id name/)));
-    }
-    else { # create, set individual later
-        $sample = $self->_create_sample;
-        return if not $sample;
-    }
 
     # individual
     my $individual = $self->_get_individual($individual_upn); # get by sample and upn
@@ -153,6 +142,7 @@ sub _import {
         $self->status_message("Found individual 'upn' (".$self->_individual->upn.") does not match the upn given ($individual_upn). This is probably ok.") if $individual->upn ne $individual_upn;
     }
 
+    my $sample = $self->_sample;
     if ( not $sample->source_id ) {
         $sample->source_id( $individual->id );
     }
@@ -258,8 +248,10 @@ sub _create_individual {
     return $self->_individual($individual);
 }
 
-sub _create_sample {
+sub _create_sample_if_needed {
     my $self = shift;
+
+    return 1 if $self->_sample;
 
     my %params = %{$self->_sample_attributes};
     Carp::confess('No name given to create sample') if not $params{name};
@@ -277,30 +269,10 @@ sub _create_sample {
         $self->error_message('Cannot create sample');
         return;
     }
+    $self->_sample($sample);
+    $self->status_message('Create sample: %s', $sample->__display_name__);
 
-    $self->status_message('Create sample: '.join(' ', map { $sample->$_ } (qw/ id name /)));
-    return $self->_sample($sample);
-}
-
-sub _get_or_create_library {
-    my $self = shift;
-
-    my $library = $self->_get_library;
-    return $library if $library;
-
-    return $self->_create_library;
-}
-
-sub _get_library {
-    my $self = shift;
-
-    my $name = $self->_library_name;
-    my $library = Genome::Library->get(name => $name);
-    return if not $library;
-
-    $self->status_message('Found library: '.join(' ', map{ $library->$_ } (qw/ id name/)));
-
-    return $self->_library($library);
+    return 1;
 }
 
 sub _create_library {
