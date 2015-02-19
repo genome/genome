@@ -103,7 +103,7 @@ ok($wf, "workflow validates");
 # first create a build with a data directory of the expected test results dir
 #
 {
-my $b2 = Genome::Model::Build::Command::DiffBlessed::retrieve_blessed_build('apipe-test-clinseq-wer', '5.10' ) or die "Unable to grab blessed clinseq build";
+my $b2 = Genome::Model::Build::Command::DiffBlessed->retrieve_blessed_build('apipe-test-clinseq-wer', '5.10' ) or die "Unable to grab blessed clinseq build";
 my $individual_name = $b2->common_name or die "Unable to grab a common name for blessed clinseq build";
 my $data_dir = $b2->data_directory or die "Unable to grab data_directory of blessed clinseq build";
 is( Genome::Model::ClinSeq::->patient_dir($b2), $data_dir . "/$individual_name", "patient directory returned as expected" ) or die "Patient dir test failed. Aborting testing";
