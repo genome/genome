@@ -807,7 +807,7 @@ sub _lock_per_lane_alignment {
             }
 
             unless ($ENV{UR_DBI_NO_COMMIT}) {
-                my $lock_var = 'genome_instrument_data_alignment_result-merged-per-lane-'.$alignment->id.'/lock';
+                my $lock_var = File::Spec->join($ENV{GENOME_LOCK_DIR}, 'genome', __PACKAGE__, 'lock-per-lane-alignment-'.$alignment->id);
                 my $lock = Genome::Sys->lock_resource(
                     resource_lock => $lock_var,
                     scope         => 'site',
@@ -821,8 +821,11 @@ sub _lock_per_lane_alignment {
                 if ($alignment->get_merged_alignment_results) {
                     Genome::Sys->unlock_resource(resource_lock => $lock);
                 } else {
+                    # The problem here is if we commit BEFORE merge is done, we unlock too early.
+                    # However, if we unlock any other way we may fail to unlock more often and leave old locks.
                     UR::Context->process->add_observer(
                         aspect   => 'commit',
+                        once => 1,
                         callback => sub {
                             Genome::Sys->unlock_resource(resource_lock => $lock);
                         }
