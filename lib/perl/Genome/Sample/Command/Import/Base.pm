@@ -88,8 +88,8 @@ sub execute {
     my $sample_ok = $self->_create_sample_if_needed;
     return if not $sample_ok;
 
-    my $import = $self->_import;
-    return if not $import;
+    my $individual_ok = $self->_get_or_create_indivdual;
+    return if not $individual_ok;
 
     $library = $self->_create_library;
     return if not $library;
@@ -124,7 +124,7 @@ sub _resolve_incoming_attributes {
     return 1;
 }
 
-sub _import {
+sub _get_or_create_indivdual {
     my $self = shift;
 
     my $individual_params = $self->_individual_attributes;
