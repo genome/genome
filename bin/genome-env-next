@@ -233,7 +233,7 @@ function set_defaults {
 
     if test -z "$DB_SNAPSHOT_NAME"
     then
-        DB_SNAPSHOT_NAME="77c3c2a"
+        DB_SNAPSHOT_NAME="53a549f"
     fi
 
     if test -z "$UR_REPO"
