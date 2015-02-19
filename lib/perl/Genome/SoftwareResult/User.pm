@@ -121,7 +121,7 @@ sub _register_users {
             }
             my @locks;
             for my $params (@all_params) {
-                next if $params->{user}->isa('UR::DeletedRef');
+                next if grep { $params->{$_}->isa('UR::DeletedRef') } qw(user software_result);
                 push @locks, $class->_get_or_create_with_lock($params);
             }
 
