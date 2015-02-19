@@ -35,32 +35,20 @@
     <outputproperty>snvs_result (simple)</outputproperty>
     <outputproperty>snvs_result (vcf)</outputproperty>
   </operationtype>
-  <operation name="Converge (output_result (bed))">
-    <operationtype typeClass="Workflow::OperationType::Converge">
-      <inputproperty>snvs_report_result</inputproperty>
-      <inputproperty>indels_report_result</inputproperty>
-      <outputproperty>report_results</outputproperty>
-    </operationtype>
-  </operation>
-  <operation name="Converge (output_result (simple))">
-    <operationtype typeClass="Workflow::OperationType::Converge">
-      <inputproperty>snvs_report_result</inputproperty>
-      <inputproperty>indels_report_result</inputproperty>
-      <outputproperty>report_results</outputproperty>
-    </operationtype>
-  </operation>
   <operation name="Merge Reports (bed)">
     <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Framework::MergeReports">
+      <inputproperty>base_report</inputproperty>
       <inputproperty>contains_header</inputproperty>
-      <inputproperty>report_results</inputproperty>
+      <inputproperty>supplemental_report</inputproperty>
       <outputproperty>output_result</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
   </operation>
   <operation name="Merge Reports (simple)">
     <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Framework::MergeReports">
+      <inputproperty>base_report</inputproperty>
       <inputproperty>contains_header</inputproperty>
-      <inputproperty>report_results</inputproperty>
+      <inputproperty>supplemental_report</inputproperty>
       <outputproperty>output_result</outputproperty>
       <outputproperty>result</outputproperty>
     </operationtype>
@@ -321,19 +309,15 @@
     <link fromOperation="vep" fromProperty="output_vcf" toOperation="Generate Report (simple)" toProperty="input_vcf"/>
     <link fromOperation="vep" fromProperty="output_vcf" toOperation="Generate Report (vcf)" toProperty="input_vcf"/>
   </operation>
-  <link fromOperation="Converge (output_result (bed))" fromProperty="report_results" toOperation="Merge Reports (bed)" toProperty="report_results"/>
-  <link fromOperation="Converge (output_result (simple))" fromProperty="report_results" toOperation="Merge Reports (simple)" toProperty="report_results"/>
   <link fromOperation="Merge Reports (bed)" fromProperty="output_result" toOperation="output connector" toProperty="merged_result (bed)"/>
   <link fromOperation="Merge Reports (simple)" fromProperty="output_result" toOperation="output connector" toProperty="merged_result (simple)"/>
-  <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (bed)" toOperation="Converge (output_result (bed))" toProperty="indels_report_result"/>
-  <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (simple)" toOperation="Converge (output_result (simple))" toProperty="indels_report_result"/>
+  <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="supplemental_report"/>
+  <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (simple)" toOperation="Merge Reports (simple)" toProperty="supplemental_report"/>
   <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (bed)" toOperation="output connector" toProperty="indels_result (bed)"/>
   <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (simple)" toOperation="output connector" toProperty="indels_result (simple)"/>
   <link fromOperation="Variant Reporting (indels)" fromProperty="output_result (vcf)" toOperation="output connector" toProperty="indels_result (vcf)"/>
-  <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Converge (output_result (bed))" toProperty="snvs_report_result"/>
-  <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="Converge (output_result (simple))" toProperty="snvs_report_result"/>
-  <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="use_header_from"/>
-  <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="Merge Reports (simple)" toProperty="use_header_from"/>
+  <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="Merge Reports (bed)" toProperty="base_report"/>
+  <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="Merge Reports (simple)" toProperty="base_report"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (bed)" toOperation="output connector" toProperty="snvs_result (bed)"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (simple)" toOperation="output connector" toProperty="snvs_result (simple)"/>
   <link fromOperation="Variant Reporting (snvs)" fromProperty="output_result (vcf)" toOperation="output connector" toProperty="snvs_result (vcf)"/>

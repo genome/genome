@@ -7,10 +7,13 @@ use Genome;
 class Genome::VariantReporting::Framework::MergeReports {
     is => 'Genome::Command::DelegatesToResult',
     has_input => [
-        report_results => {
+        base_report => {
             is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
-            doc => 'The reports you wish to merge. They must all be the same type of report (same columns).',
-            is_many => 1,
+            doc => 'The main report to be merged.'
+        },
+        supplemental_report => {
+            is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
+            doc => 'The report that is to be added to the main report.'
         },
         sort_columns => {
             is_optional => 1,
@@ -21,11 +24,6 @@ class Genome::VariantReporting::Framework::MergeReports {
         contains_header => {
             is => 'Boolean',
             doc => 'Set to true if the report contains headers'
-        },
-        use_header_from => {
-            is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
-            doc => 'Use the header from this report_result in the merged report',
-            is_optional => 1,
         },
         separator => {
             is => 'Text',

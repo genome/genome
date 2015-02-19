@@ -207,17 +207,11 @@ sub add_merge_discovery_and_followup_reports_to_workflow {
                     command => 'Genome::VariantReporting::Framework::MergeReports',
                 );
 
-                my $converge = Genome::WorkflowBuilder::Converge->create(
-                    output_properties => ['report_results'],
-                    name => "Converge ($output_name)",
-                );
-                $dag->add_operation($converge);
-
                 $dag->create_link(
                     source => $discovery_dag,
                     source_property => $output_name,
-                    destination => $converge,
-                    destination_property => 'discovery_report_result',
+                    destination => $merge_op,
+                    destination_property => 'base_report',
                 );
 
                 my $followup_dag = $dag->operation_named(sub_dag_name(
@@ -225,22 +219,8 @@ sub add_merge_discovery_and_followup_reports_to_workflow {
                 $dag->create_link(
                     source => $followup_dag,
                     source_property => $output_name,
-                    destination => $converge,
-                    destination_property => 'followup_report_result',
-                );
-
-                $dag->create_link(
-                    source => $converge,
-                    source_property => 'report_results',
                     destination => $merge_op,
-                    destination_property => 'report_results',
-                );
-
-                $dag->create_link(
-                    source => $discovery_dag,
-                    source_property => $output_name,
-                    destination => $merge_op,
-                    destination_property => 'use_header_from',
+                    destination_property => 'supplemental_report',
                 );
 
                 $merge_op->declare_constant(

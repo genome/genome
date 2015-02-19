@@ -52,7 +52,12 @@ my $bams = {
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 
+my $base_report = Genome::VariantReporting::Framework::Component::Report::MergedReport->__define__();
+my $supplemental_report = Genome::VariantReporting::Framework::Component::Report::MergedReport->__define__();
+
 my $merged_report = Genome::VariantReporting::Framework::Component::Report::MergedReport->__define__(
+    base_report => $base_report,
+    supplemental_report => $supplemental_report,
 );
 
 my $process = Genome::Test::Factory::Process->setup_object();

@@ -150,48 +150,27 @@ sub connect_merge_operations {
                 command => 'Genome::VariantReporting::Framework::MergeReports',
             );
 
-            my $converge = Genome::WorkflowBuilder::Converge->create(
-                output_properties => ['report_results'],
-                name => "Converge ($output_name)",
-            );
-            $dag->add_operation($converge);
-
-            $dag->create_link(
-                source => $snvs_dag,
-                source_property => $output_name,
-                destination => $converge,
-                destination_property => 'snvs_report_result',
-            );
-
-            $dag->create_link(
-                source => $indels_dag,
-                source_property => $output_name,
-                destination => $converge,
-                destination_property => 'indels_report_result',
-            );
-
-            $dag->create_link(
-                source => $converge,
-                source_property => 'report_results',
-                destination => $merge_op,
-                destination_property => 'report_results',
-            );
-
+            my ($base_report_source, $supplemental_report_source);
             if (defined($self->use_header_from) && $self->use_header_from eq 'indels') {
-                $dag->create_link(
-                    source => $indels_dag,
-                    source_property => $output_name,
-                    destination => $merge_op,
-                    destination_property => 'use_header_from',
-                );
+                $base_report_source = $indels_dag;
+                $supplemental_report_source = $snvs_dag;
             } else {
-                $dag->create_link(
-                    source => $snvs_dag,
-                    source_property => $output_name,
-                    destination => $merge_op,
-                    destination_property => 'use_header_from',
-                );
+                $base_report_source = $snvs_dag;
+                $supplemental_report_source = $indels_dag;
             }
+            $dag->create_link(
+                source => $base_report_source,
+                source_property => $output_name,
+                destination => $merge_op,
+                destination_property => 'base_report',
+            );
+
+            $dag->create_link(
+                source => $supplemental_report_source,
+                source_property => $output_name,
+                destination => $merge_op,
+                destination_property => 'supplemental_report',
+            );
 
             $merge_op->declare_constant(
                 label => 'report:' . to_json({
