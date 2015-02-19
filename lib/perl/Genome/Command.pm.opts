@@ -3560,7 +3560,7 @@ $Genome::Command::OPTS_SPEC = [
       [
         'outdir=s',
         'files',
-        'build-id=s',
+        'build=s',
         undef,
         'help!',
         undef
@@ -4618,7 +4618,7 @@ $Genome::Command::OPTS_SPEC = [
       [
         'outdir=s',
         'files',
-        'build-id=s',
+        'build=s',
         undef,
         'help!',
         undef
@@ -8147,6 +8147,15 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>instrument-data',
     [
+      '>alignment-bams',
+      [
+        'outdir=s',
+        'files',
+        'build=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>assign',
       [
         '>all-compatible',
@@ -10432,16 +10441,23 @@ $Genome::Command::OPTS_SPEC = [
     [
       '>Sra',
       [
-        'name=s',
-        'files',
         'extraction-type=s',
         'files',
+        'name=s',
+        'files',
+        'taxon=s',
+        undef,
         'individual-attributes=s@',
         'files',
         'sample-attributes=s@',
         'files',
         'library-attributes=s@',
         'files',
+        'library-extension=s',
+        [
+          'extlibs',
+          'microarraylib'
+        ],
         'help!',
         undef
       ],
@@ -10449,18 +10465,27 @@ $Genome::Command::OPTS_SPEC = [
       [
         'name=s',
         'files',
+        'taxon=s',
+        undef,
         'individual-attributes=s@',
         'files',
         'sample-attributes=s@',
         'files',
         'library-attributes=s@',
         'files',
+        'library-extension=s',
+        [
+          'extlibs',
+          'microarraylib'
+        ],
         'help!',
         undef
       ],
       '>Dbgap',
       [
         'name=s',
+        'files',
+        'race=s',
         'files',
         'extraction-type=s',
         [
@@ -10470,18 +10495,23 @@ $Genome::Command::OPTS_SPEC = [
           'rna',
           'total rna'
         ],
-        'race=s',
-        'files',
         'tissue=s',
         'files',
         'gender=s',
         'files',
+        'taxon=s',
+        undef,
         'individual-attributes=s@',
         'files',
         'sample-attributes=s@',
         'files',
         'library-attributes=s@',
         'files',
+        'library-extension=s',
+        [
+          'extlibs',
+          'microarraylib'
+        ],
         'help!',
         undef
       ],
@@ -10509,12 +10539,19 @@ $Genome::Command::OPTS_SPEC = [
           'female',
           'unknown'
         ],
+        'taxon=s',
+        undef,
         'individual-attributes=s@',
         'files',
         'sample-attributes=s@',
         'files',
         'library-attributes=s@',
         'files',
+        'library-extension=s',
+        [
+          'extlibs',
+          'microarraylib'
+        ],
         'help!',
         undef
       ],
@@ -10541,12 +10578,19 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'age=s',
         'files',
+        'taxon=s',
+        undef,
         'individual-attributes=s@',
         'files',
         'sample-attributes=s@',
         'files',
         'library-attributes=s@',
         'files',
+        'library-extension=s',
+        [
+          'extlibs',
+          'microarraylib'
+        ],
         'disease=s',
         'files',
         'help!',
@@ -10554,16 +10598,23 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>Lsr',
       [
-        'name=s',
-        'files',
         'extraction-type=s',
         'files',
+        'name=s',
+        'files',
+        'taxon=s',
+        undef,
         'individual-attributes=s@',
         'files',
         'sample-attributes=s@',
         'files',
         'library-attributes=s@',
         'files',
+        'library-extension=s',
+        [
+          'extlibs',
+          'microarraylib'
+        ],
         'help!',
         undef
       ],
@@ -10575,27 +10626,41 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'extraction-type=s',
         'files',
+        'taxon=s',
+        undef,
         'individual-attributes=s@',
         'files',
         'sample-attributes=s@',
         'files',
         'library-attributes=s@',
         'files',
+        'library-extension=s',
+        [
+          'extlibs',
+          'microarraylib'
+        ],
         'help!',
         undef
       ],
       '>Brc46',
       [
-        'name=s',
-        'files',
         'extraction-type=s',
         'files',
+        'name=s',
+        'files',
+        'taxon=s',
+        undef,
         'individual-attributes=s@',
         'files',
         'sample-attributes=s@',
         'files',
         'library-attributes=s@',
         'files',
+        'library-extension=s',
+        [
+          'extlibs',
+          'microarraylib'
+        ],
         'help!',
         undef
       ],
@@ -10619,12 +10684,19 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'gender=s',
         'files',
+        'taxon=s',
+        undef,
         'individual-attributes=s@',
         'files',
         'sample-attributes=s@',
         'files',
         'library-attributes=s@',
         'files',
+        'library-extension=s',
+        [
+          'extlibs',
+          'microarraylib'
+        ],
         'help!',
         undef
       ],
@@ -10640,12 +10712,19 @@ $Genome::Command::OPTS_SPEC = [
           'rna',
           'total rna'
         ],
+        'taxon=s',
+        undef,
         'individual-attributes=s@',
         'files',
         'sample-attributes=s@',
         'files',
         'library-attributes=s@',
         'files',
+        'library-extension=s',
+        [
+          'extlibs',
+          'microarraylib'
+        ],
         'help!',
         undef
       ],
