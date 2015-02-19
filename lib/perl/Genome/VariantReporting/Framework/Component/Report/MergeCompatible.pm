@@ -7,7 +7,7 @@ use Genome;
 class Genome::VariantReporting::Framework::Component::Report::MergeCompatible {
     is => 'Genome::SoftwareResult::StageableSimple',
     is_abstract => 1,
-    has_transient => {
+    has_transient_optional => {
         has_size => {
             is => 'Boolean',
         },
