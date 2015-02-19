@@ -1,5 +1,7 @@
 #!/bin/bash
 
+ORIG_SET="$(set +o | tr '\n' ';')"
+
 set -o errexit
 set -o pipefail
 
@@ -95,12 +97,14 @@ function main {
     if test "$#" -gt 0
     then
         log.info "$@"...
+        eval "$ORIG_SET"
         exec "$@"
     else
         echo 'Press <Ctrl>-D or type `logout` to return to normal environment.'
         echo ''
         unset PROMPT_COMMAND
         export PS1="(${GE_ENV_NAME}) \w $ "
+        eval "$ORIG_SET"
         exec "$BASH" --norc --noprofile
     fi
 }
@@ -236,7 +240,7 @@ function set_defaults {
         DB_SNAPSHOT_NAME="53a549f"
     fi
 
-    if test -z "$UR_REPO"
+    if test -z "$UR_REPO" -a -z "$DISABLE_UR"
     then
         if test -z "$TOP" -o ! -d "$TOP/ur"
         then
@@ -246,7 +250,7 @@ function set_defaults {
         UR_REPO="$TOP/ur"
     fi
 
-    if test -z "$WF_REPO"
+    if test -z "$WF_REPO" -a -z "$DISABLE_WF"
     then
         if test -z "$TOP" -o ! -d "$TOP/workflow"
         then
@@ -417,6 +421,26 @@ function setup_test_db {
     fi
 }
 
+# assert_module_missing only works with single word module names, e.g. UR, Workflow, and Genome.
+function assert_module_missing {
+    local MODULE=$1
+    local MODULE_PATH="$(genome-perl -M${MODULE} -e "print \$INC{q($MODULE.pm)}, qq(\\n)" 2> /dev/null )"
+    if test -n "$MODULE_PATH"
+    then
+        fatal $BUILD_ERR "found shadow module: $MODULE ($MODULE_PATH)"
+    fi
+}
+
+# assert_module_found only works with single word module names, e.g. UR, Workflow, and Genome.
+function assert_module_found {
+    local MODULE=$1
+    local MODULE_PATH="$(genome-perl -M${MODULE} -e "print \$INC{q($MODULE.pm)}, qq(\\n)" 2> /dev/null )"
+    if test -z "$MODULE_PATH"
+    then
+        fatal $BUILD_ERR "module not found: $MODULE ($MODULE_PATH)"
+    fi
+}
+
 # setup_env tries to clean the current environment and then updates the
 # environment to run tests.
 function setup_env {
@@ -429,43 +453,56 @@ function setup_env {
 
     # remove deployed bin directory from PATH
     PATH="$(echo $PATH | tr : "\n" | $GREP -v "$SNAPSHOT_BIN" | tr '\n' : | sed 's/:$//')"
-    PATH=$UR_REPO/bin:$PATH
-    PATH=$WF_REPO/bin:$PATH
-    PATH=$BASE_DIR/bin:$PATH
-    export PATH
+    export PATH=$BASE_DIR/bin:$PATH
 
     # remove deployed lib/perl directory from PATH
-    PERL5LIB="$(echo $PERL5LIB | tr : "\n" | $GREP -v "$SNAPSHOT_LIB" | tr '\n' : | sed 's/:$//')"
+    export PERL5LIB="$(echo $PERL5LIB | tr : "\n" | $GREP -v "$SNAPSHOT_LIB" | tr '\n' : | sed 's/:$//')"
 
-    for MODULE in UR Workflow Genome
-    do
-        if genome-perl -M$MODULE -e 1 2> /dev/null
+    assert_module_missing Genome
+
+    if test -z "$DISABLE_UR"
+    then
+        export PATH=$UR_REPO/bin:$PATH
+
+        assert_module_missing UR
+    fi
+
+    if test -z "$DISABLE_WF"
+    then
+        export PATH=$WF_REPO/bin:$PATH
+
+        assert_module_missing Workflow
+    fi
+
+    if which genome | $GREP -q "$SNAPSHOT_BIN"
+    then
+        fatal $BUILD_ERR "genome found in $SNAPSHOT_BIN"
+    fi
+
+    if test -z "$DISABLE_UR"
+    then
+        export PERL5LIB=$UR_REPO/lib:$PERL5LIB
+        assert_module_found UR
+
+        if which ur | $GREP -q "$SNAPSHOT_BIN"
         then
-            fatal $BUILD_ERR "still found $MODULE after removing deployed snapshot"
+            fatal $BUILD_ERR "ur found in $SNAPSHOT_BIN"
         fi
-    done
+    fi
 
-    PERL5LIB=$UR_REPO/lib:$PERL5LIB
-    PERL5LIB=$BASE_DIR/configuration-manager/lib:$PERL5LIB
-    PERL5LIB=$WF_REPO/lib:$PERL5LIB
-    PERL5LIB=$BASE_DIR/lib/perl:$PERL5LIB
-    export PERL5LIB
+    if test -z "$DISABLE_WF"
+    then
+        export PERL5LIB=$WF_REPO/lib:$PERL5LIB
+        assert_module_found Workflow
 
-    for MODULE in UR Workflow Genome
-    do
-        if ! genome-perl -M$MODULE -e 1 2> /dev/null
+        if which workflow | $GREP -q "$SNAPSHOT_BIN"
         then
-            fatal $BUILD_ERR "failed to load $MODULE"
+            fatal $BUILD_ERR "workflow found in $SNAPSHOT_BIN"
         fi
-    done
+    fi
 
-    for BIN in ur workflow genome
-    do
-        if which $BIN | $GREP -q "$SNAPSHOT_BIN"
-        then
-            fatal $BUILD_ERR "$BIN found in $SNAPSHOT_BIN"
-        fi
-    done
+    export PERL5LIB=$BASE_DIR/lib/perl:$PERL5LIB
+    assert_module_found Genome
 
     if test -z "$DISABLE_DB"
     then
