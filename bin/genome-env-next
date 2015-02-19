@@ -421,6 +421,16 @@ function setup_test_db {
     fi
 }
 
+# assert_module_missing only works with single word module names, e.g. UR, Workflow, and Genome.
+function assert_module_missing {
+    local MODULE=$1
+    local MODULE_PATH="$(genome-perl -M${MODULE} -e "print \$INC{q($MODULE.pm)}, qq(\\n)" 2> /dev/null )"
+    if test -n "$MODULE_PATH"
+    then
+        fatal $BUILD_ERR "found shadow module: $MODULE ($MODULE_PATH)"
+    fi
+}
+
 # setup_env tries to clean the current environment and then updates the
 # environment to run tests.
 function setup_env {
@@ -438,27 +448,20 @@ function setup_env {
     # remove deployed lib/perl directory from PATH
     export PERL5LIB="$(echo $PERL5LIB | tr : "\n" | $GREP -v "$SNAPSHOT_LIB" | tr '\n' : | sed 's/:$//')"
 
-    if genome-perl -MGenome -e 1 2> /dev/null
-    then
-        fatal $BUILD_ERR "still found Genome after removing deployed snapshot"
-    fi
+    assert_module_missing Genome
 
     if test -z "$DISABLE_UR"
     then
         export PATH=$UR_REPO/bin:$PATH
-        if genome-perl -MUR -e 1 2> /dev/null
-        then
-            fatal $BUILD_ERR "still found UR after removing deployed snapshot"
-        fi
+
+        assert_module_missing UR
     fi
 
     if test -z "$DISABLE_WF"
     then
         export PATH=$WF_REPO/bin:$PATH
-        if genome-perl -MWorkflow -e 1 2> /dev/null
-        then
-            fatal $BUILD_ERR "still found Workflow after removing deployed snapshot"
-        fi
+
+        assert_module_missing Workflow
     fi
 
     if which genome | $GREP -q "$SNAPSHOT_BIN"
