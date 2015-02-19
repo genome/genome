@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::Command::Diff {
-    is => 'Genome::Details::Comparable::Command::Diff',
+    is => 'Genome::Interfaces::Comparable::Command::Diff',
     has => [
         blessed_build => {
             is => 'Genome::Model::Build',

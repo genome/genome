@@ -8,7 +8,7 @@ use File::Spec;
 use YAML;
 
 class Genome::Model::Build::Command::DiffBlessed {
-    is => 'Genome::Details::Comparable::Command::DiffBlessed',
+    is => 'Genome::Interfaces::Comparable::Command::DiffBlessed',
     has => [
         new_build => {
             is => 'Genome::Model::Build',
