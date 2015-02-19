@@ -303,7 +303,6 @@ sub annoFileToSlashedBedFile{
 
 sub bedToAnno{
     my ($chr,$start,$stop,$ref,$var) = split("\t",$_[0]);
-    #print STDERR join("|",($chr,$start,$stop,$ref,$var)) . "\n";
     if ($ref =~ /^[-0*]/){ #indel INS
         $stop = $stop+1;
     } else { #indel DEL or SNV
@@ -559,38 +558,33 @@ sub execute {
   my @statuses = split(",",$self->statuses_to_review);
   foreach my $i (@statuses){
       unless($i =~ /^newcall$|^validated$|^nonvalidated$/){
-	  $self->status_message("ERROR: status $i is not a valid status to review. Status must be one of [validated,nonvalidated,newcall]");
-          #print STDERR "ERROR: status $i is not a valid status to review. Status must be one of [validated,nonvalidated,newcall]";
-          die();
+	  die $self->error_message("status $i is not a valid status to review. Status must be one of [validated,nonvalidated,newcall]");
       }
   }
 
   #check that a build or model was specified
   unless(defined($self->somatic_validation_build_id) || defined($self->somatic_validation_model_id)){
-      die("must specify either somatic-validation-build-id or somatic-validation-model-id");
+      die $self->error_message("must specify either somatic-validation-build-id or somatic-validation-model-id");
   }
   
   # Check on the input model and params
   if(defined($self->somatic_validation_model_id)){
       $model = Genome::Model->get( $self->somatic_validation_model_id );
       unless( defined $model ){
-	  $self->status_message("ERROR: Could not find a model with ID: %s", $self->somatic_validation_model_id);
-          #print STDERR "ERROR: Could not find a model with ID: " . $self->somatic_validation_model_id . "\n";
+	  $self->error_message("Could not find a model with ID: %s", $self->somatic_validation_model_id);
           return undef;
       }
       
       $build = $model->last_succeeded_build;
       unless( defined($build) ){
-	  $self->status_message("WARNING: Model %s has no succeeded builds", $model->id);
-          #print STDERR "WARNING: Model ", $model->id, "has no succeeded builds\n";
+	  $self->warning_message("Model %s has no succeeded builds", $model->id);
           return undef;
       }
 
   } elsif(defined($self->somatic_validation_build_id)){
       $build = Genome::Model::Build->get( $self->somatic_validation_build_id );
       unless( defined $build ){
-	  $self->status_message("ERROR: Could not find a build with ID: %s", $self->somatic_validation_build_id);
-          #print STDERR "ERROR: Could not find a build with ID: " . $self->somatic_validation_build_id . "\n";
+	  $self->error_message("Could not find a build with ID: %s", $self->somatic_validation_build_id );
           return undef;
       }
       $model = $build->model;      
@@ -600,7 +594,7 @@ sub execute {
   #valid target-regions
   if($self->restrict_to_target_regions){
       unless($model->target_region_set || $self->target_regions){        
-          die("ERROR: No target regions provided and no target_region_set defined on model. Can't use the --restrict-to-target-regions option on this model.\n");
+          die $self->error_message("No target regions provided and no target_region_set defined on model. Can't use the --restrict-to-target-regions option on this model.");
       }
   }
 
@@ -621,16 +615,13 @@ sub execute {
   my $tstring = "";  
   foreach my $t (sort(@tiers)){
       unless ($t =~/^[1234]$/){
-          #print STDERR "ERROR: $t is not a valid tier to review. tiers-to-review should be a comma-separated list containing only [1,2,3,4]";
-	  die $self->error_message("ERROR: $t is not a valid tier to review. tiers-to-review should be a comma-separated list containing only [1,2,3,4]");
+	  die $self->error_message("$t is not a valid tier to review. tiers-to-review should be a comma-separated list containing only [1,2,3,4]");
                     
       }
       $tstring .= $t
   }
   if(($tstring ne "1234") && !($self->add_tiers)){
-      $self->warning_message("ERROR: if a combination of tiers-to-review other than 1,2,3,4 is specified, --add-tiers must be specified. (otherwise I don't know how to grab the tiers you want for review!");
-      #print STDERR "ERROR: if a combination of tiers-to-review other than 1,2,3,4 is specified, --add-tiers must be specified. (otherwise I don't know how to grab the tiers you want for review!";
-      die();          
+      die $self->error_message("if a combination of tiers-to-review other than 1,2,3,4 is specified, --add-tiers must be specified. (otherwise I don't know how to grab the tiers you want for review!");
   }
 
 
@@ -640,7 +631,6 @@ sub execute {
   my $annotation_build_name = $model->annotation_build->name;
   if(defined $self->reference_transcripts){
       $self->status_message("Model's annotation build overridden. Using %s", $self->reference_transcripts);
-      #print STDERR "Model's annotation build overridden. Using " . $self->reference_transcripts . "\n";
       $annotation_build_name = $self->reference_transcripts;
   }
 
@@ -653,7 +643,6 @@ sub execute {
   }
 
   
-  #print STDERR "processing model with sample_name: " . $sample_name . "\n";
   $self->status_message("processing model with sample_name: $sample_name\n");
   #retrieve validation BAMs
   my $tumor_bam = $build->tumor_bam;
@@ -704,10 +693,10 @@ sub execute {
   if($self->restrict_to_target_regions){
       if(defined($self->target_regions)){
           my $target_regions = $self->target_regions;
-          print STDERR "joinx sort $target_regions > $output_dir/$sample_name/target_regions\n";
+          $self->status_message("joinx sort $target_regions > $output_dir/$sample_name/target_regions");
           `joinx sort $target_regions > $output_dir/$sample_name/target_regions`;
           $target_regions = "$output_dir/$sample_name/target_regions";
-          print STDERR "joinx intersect -a $build_dir/validation/snvs/snvs.newcalls -b $target_regions -o $output_dir/$sample_name/snvs/snvs.newcalls.on_target";
+          $self->status_message("joinx intersect -a $build_dir/validation/snvs/snvs.newcalls -b $target_regions -o $output_dir/$sample_name/snvs/snvs.newcalls.on_target");
           `joinx intersect -a $build_dir/validation/snvs/snvs.newcalls -b $target_regions -o $output_dir/$sample_name/snvs/snvs.newcalls.on_target`;
           $newcalls = "$output_dir/$sample_name/snvs/snvs.newcalls.on_target";
      } else {
@@ -715,7 +704,7 @@ sub execute {
              $newcalls = "$build_dir/validation/snvs/snvs.newcalls.on_target";
              push(@snv_files,$newcalls);
          } else {
-             print STDERR "WARNING: No target regions defined on build, can't restrict newcalls to target regions\n";
+             $self->warning_message("No target regions defined on build, can't restrict newcalls to target regions");
              push(@snv_files,$newcalls);
          }
      }
@@ -726,7 +715,7 @@ sub execute {
 
   for my $file (@snv_files){
       unless( -e $file ){
-          die "ERROR: SNV results for $sample_name not found at $file\n";
+          die $self->error_message("SNV results for $sample_name not found at $file");
       }
       `cp $file $output_dir/$sample_name/snvs/`;
   }
@@ -738,7 +727,7 @@ sub execute {
   my $sv_file = "$build_dir/validation/sv/assembly_output.csv.merged.readcounts.somatic.wgs_readcounts.somatic";
   if($process_svs){
       unless( -e $sv_file ){
-          print STDERR "WARNING: SV results for $sample_name not found, skipping SVs\n";
+          $self->warning_message("SV results for $sample_name not found, skipping SVs");
           $process_svs = 0;
       }
   }
@@ -790,7 +779,7 @@ sub execute {
   #-------------------------------------------------
   #remove filter sites specified by the user
   if(defined($self->filter_sites)){
-      print STDERR "Applying user-supplied filter...\n";
+      $self->status_message("Applying user-supplied filter...");
       my $filterSites = getFilterSites($self->filter_sites);
 
       for($i=0;$i<@snv_files;$i++){
@@ -815,7 +804,7 @@ sub execute {
       }
       close($fh);
 
-      print STDERR "Removing user-specified filter regions...\n";
+      $self->status_message("Removing user-specified filter regions...");
       for($i=0;$i<@snv_files;$i++){
           my $snv_file = $snv_files[$i];
           my $cmd = "joinx intersect --miss-a $snv_file.filteredReg -a $snv_file -b $temp_file >/dev/null";
@@ -823,8 +812,7 @@ sub execute {
               cmd => "$cmd",
               );
           unless($result) {
-              $self->error_message("Failed to execute joinx: Returned $result");
-              die $self->error_message;
+              die $self->error_message("Failed to execute joinx: Returned $result");
           }
           $snv_files[$i] = addName($snv_files[$i],"filteredReg");
       }
@@ -834,8 +822,7 @@ sub execute {
           cmd => "$cmd",
           );
       unless($result) {
-          $self->error_message("Failed to execute joinx: Returned $result");
-          die $self->error_message;
+          die $self->error_message("Failed to execute joinx: Returned $result");
       }
       $indel_file = addName($indel_file,"filteredReg");
   }
@@ -864,7 +851,7 @@ sub execute {
   #-------------------------------------------------------
   #add tiers
   if($self->add_tiers){
-      print STDERR "Adding tiers...\n";
+      $self->status_message("Adding tiers...");
       #do annotation
       for($i=0;$i<@snv_files;$i++){
           $snv_files[$i] = addTiering($snv_files[$i], $tiering_files);
@@ -881,7 +868,7 @@ sub execute {
   # add dbsnp/gmaf
 
   if ($self->add_dbsnp_and_gmaf){
-      print STDERR "Adding dbsnp info...\n";
+      $self->status_message("Adding dbsnp info...");
 
       if(defined($model->previously_discovered_variations_build)){
           my $dbsnpPath = $model->previously_discovered_variations_build->snv_result->path;
@@ -901,7 +888,7 @@ sub execute {
                           vcf_file => "$dbsnpVcf",
                           );
                       unless ($db_cmd->execute) {
-                          die "Failed to add dbsnp anno to file $snv_file.\n";
+                          die $self->error_message("Failed to add dbsnp anno to file $snv_file.");
                       }
                   }
                   $snv_files[$i] = $newfile;
@@ -922,10 +909,10 @@ sub execute {
               close(OUTFILE);
               $indel_file = $newfile;
           } else {
-              print STDERR "Warning: couldn't find VCF with dbsnp annotations - skipping dbsnp anno\n";
+              $self->warning_message("couldn't find VCF with dbsnp annotations - skipping dbsnp anno");
           }
       } else {
-          print STDERR "Warning: couldn't find VCF with dbsnp annotations - skipping dbsnp anno\n";
+	  $self->warning_message("Warning: couldn't find VCF with dbsnp annotations - skipping dbsnp anno");
       }
   }
 
@@ -935,9 +922,9 @@ sub execute {
   #get readcounts
   my $indel_size=$self->max_indel_size;
   if($self->get_readcounts){
-      print STDERR "Getting readcounts...\n";
+      $self->status_message("Getting readcounts...");
       if(!(defined($tumor_bam)) || !(-s $tumor_bam)){
-          print STDERR "Tumor bam not found - skipping readcounting\n";
+          $self->warning_message("Tumor bam not found - skipping readcounting");
       } 
       else {
 	  #getting readcounts for SNV files
@@ -1015,17 +1002,17 @@ sub execute {
                   if($comp[1] =~ /\d+\((\d+)\)/){
                       $key = $key . "\t" . $1;
                   } else {
-                      print STDERR "WARNING: unable to parse \"$F[0]\"\n";
+                      $self->warning_message("unable to parse \"$F[0]\"");
                       next;
                   }
                   if($comp[2] =~ /\d+\((\d+)\)/){
                       $key = $key . "\t" . $1;
                   } else {
-                      print STDERR "WARNING: unable to parse \"$F[0]\"\n";
+                      $self->warning_message("unable to parse \"$F[0]\"");
                       next;
                   }
                   $key = $key . "\t" . $comp[5] . "\t" . $comp[6];
-                  print STDERR $key . "\n";
+		  $self->status_message($key);
                   if($get_tumor_only){
 		      $counts{$key} = join("\t",($F[27]-$F[21], $F[21], $F[28]*100));
 		  }else {
@@ -1149,7 +1136,7 @@ sub execute {
   #------------------------------------------------------
   #now get the files together for review
   if($self->create_review_files){
-      print "Generating Review files...\n";
+      $self->status_message("Generating Review files...");
       my @tiers = split(",",$self->tiers_to_review);
       my $tierstring = join("",@tiers);
       for my $i (@tiers){
@@ -1192,7 +1179,7 @@ sub execute {
       if(defined($self->igv_reference_name)){
           $igv_reference_name = $self->igv_reference_name;
       } else {
-          print STDERR "WARNING: No IGV reference name supplied - defaulting to build 37\n";
+          $self->warning_message("No IGV reference name supplied - defaulting to build 37");
       }
 
 
@@ -1206,14 +1193,15 @@ sub execute {
           reference_name => $igv_reference_name,
           );
       unless ($dumpXML->execute) {
-          die "Failed to dump IGV xml.\n";
+          die $self->error_message("Failed to dump IGV xml.");
       }
 
-      print STDERR "\n--------------------------------------------------------------------------------\n";
-      print STDERR "Sites to review are here:\n";
-      print STDERR "$output_dir/review/$sample_name.bed\n";
-      print STDERR "IGV XML file is here:";
-      print STDERR "$output_dir/review/$sample_name.xml\n\n";
+      my $str = "\n--------------------------------------------------------------------------------\n"
+              .  "Sites to review are here:\n"
+              ."$output_dir/review/$sample_name.bed\n"
+              ."IGV XML file is here:"
+              ."$output_dir/review/$sample_name.xml\n\n";
+      $self->status_message($str);
   }
 
   #------------------------------------------------
@@ -1262,16 +1250,16 @@ sub indel_files {
     my ($self, $build_dir) = @_;
     my $small_indel_file = "$build_dir/validation/small_indel/final_output";
     unless( -e $small_indel_file && $self->use_assembled_indels ){
-        print STDERR "WARNING: realigned small indels not found (tumor only build?) or not requested. Using raw calls from validation data\n";
+        $self->warning_message("realigned small indels not found (tumor only build?) or not requested. Using raw calls from validation data");
         $small_indel_file = "$build_dir/variants/indels.hq.bed";
     }
     my $large_indel_file = "$build_dir/validation/large_indel/combined_counts.csv.somatic.adapted";
     unless( -e $large_indel_file && $self->use_assembled_indels ){
-        print STDERR "WARNING: realigned large indels not found (tumor only build?) or not requested. Using raw calls from validation data\n";
+        $self->warning_message("realigned large indels not found (tumor only build?) or not requested. Using raw calls from validation data");
         $large_indel_file = "$build_dir/variants/indels.hq.bed";
-        print STDERR $large_indel_file . "\n";
+        $self->warning_message($large_indel_file);
     }
-    print STDERR "indel1: " . $large_indel_file . "\n";
+    $self->status_message("indel1: " . $large_indel_file);
     return ($small_indel_file,$large_indel_file);
 }
 
