@@ -7,6 +7,11 @@ use Genome;
 class Genome::VariantReporting::Framework::Component::Report::MergeCompatible {
     is => 'Genome::SoftwareResult::StageableSimple',
     is_abstract => 1,
+    has_transient => {
+        has_size => {
+            is => 'Boolean',
+        },
+    },
 };
 
 sub can_be_merged {
@@ -26,7 +31,10 @@ sub report_path {
 sub has_size {
     my $self = shift;
 
-    return -s $self->report_path;
+    unless (defined($self->__has_size)) {
+        $self->__has_size(-s $self->report_path);
+    }
+    return $self->__has_size;
 }
 
 1;
