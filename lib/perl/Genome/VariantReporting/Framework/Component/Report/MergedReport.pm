@@ -254,6 +254,7 @@ sub _temp_output_file {
 
 sub report_path {
     my $self = shift;
+    return unless $self->output_dir;
     return File::Spec->join($self->output_dir, $self->file_name);
 }
 
