@@ -440,7 +440,7 @@ function setup_env {
 
     if genome-perl -MGenome -e 1 2> /dev/null
     then
-        fatal $BUILD_ERR "still found Genome after removing deployed snapshot" $(genome-perl -S wtf Genome)
+        fatal $BUILD_ERR "still found Genome after removing deployed snapshot"
     fi
 
     if test -z "$DISABLE_UR"
