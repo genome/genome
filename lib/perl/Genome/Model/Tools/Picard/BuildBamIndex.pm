@@ -4,18 +4,21 @@ use strict;
 use warnings;
 
 use Genome;
+use File::Spec qw();
 
 class Genome::Model::Tools::Picard::BuildBamIndex {
-    is  => 'Genome::Model::Tools::Picard',
+    is  => 'Genome::Model::Tools::Picard::Base',
     has_input => [
         input_file   => {
             is  => 'String',
             doc => 'A BAM file to process.',
+            picard_param_name => 'INPUT',
         },
         output_file => {
             is => 'String',
             doc => 'The BAM index file. Defaults to x.bai if INPUT is x.bam, otherwise INPUT.bai.  If INPUT is a URL and OUTPUT is unspecified, defaults to a file in the current directory.',
             is_optional => 1,
+            picard_param_name => 'OUTPUT',
         },
     ],
 };
@@ -31,29 +34,26 @@ sub help_detail {
 EOS
 }
 
-sub execute {
+sub _jar_name {
     my $self = shift;
-
-    my $jar_path = $self->picard_path .'/BuildBamIndex.jar';
-    unless (-e $jar_path) {
-        if ($self->use_version < 1.23) {
-            die('Please define version 1.23 or greater.');
-        } else {
-            die('Missing jar path: '. $jar_path);
-        }
-    }
-    my $cmd = $jar_path .' net.sf.picard.sam.BuildBamIndex INPUT='. $self->input_file;
-    if ($self->output_file) {
-        $cmd .= ' OUTPUT='. $self->output_file;
-    }
-
-    $self->run_java_vm(
-        cmd          => $cmd,
-        input_files  => [$self->input_file],
-        skip_if_output_is_present => 0,
-    );
-    return 1;
+    return 'BuildBamIndex.jar';
 }
 
+sub _java_class_name {
+    return 'net.sf.picard.sam.BuildBamIndex';
+}
+
+sub _validate_params {
+    my $self = shift;
+    $self->enforce_minimum_version("1.23");
+}
+
+sub _shellcmd_extra_params {
+    my $self = shift;
+    return (
+        input_files  => [$self->input_file],
+        skip_if_output_is_present => 0,
+        );
+}
 
 1;
