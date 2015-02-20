@@ -195,6 +195,15 @@ sub _parsed_version {
     return version->parse("v$version");
 }
 
+# version_compare(a, b)
+#   => integer less than zero if a is less than b
+#   => integer greater than zero if b is less than a
+#   => 0 if a == b
+sub version_compare {
+    my ($class, $a, $b) = @_;
+    return _parsed_version($a) <=> _parsed_version($b);
+}
+
 # die if $self->use_version is less than the $min_version argument passed here
 sub enforce_minimum_version {
     my ($self, $min_version) = @_;
@@ -207,7 +216,7 @@ sub enforce_minimum_version {
         confess "Minimum Picard version is invalid ($min_version)";
     };
 
-    if (_parsed_version($self->use_version) < _parsed_version($min_version)) {
+    if ($self->version_compare($self->use_version, $min_version) < 0) {
         confess sprintf "This module requires picard version >= %s (%s requested)",
                 $min_version, $self->use_version;
     }
@@ -215,13 +224,11 @@ sub enforce_minimum_version {
     return 1;
 }
 
-sub version_compare {
-    my ($class, $a, $b) = @_;
-    return _parsed_version($a) <=> _parsed_version($b);
-}
-
+# in decreasing order of recency
 sub available_picard_versions {
-    return uniq(installed_picard_versions(), sort {$b cmp $a} keys %PICARD_VERSIONS);
+    return uniq(installed_picard_versions(),
+        sort {__PACKAGE__->version_compare($b, $a)} keys %PICARD_VERSIONS
+        );
 }
 
 sub path_for_picard_version {
@@ -250,7 +257,7 @@ sub installed_picard_versions {
         }
     }
 
-    return sort { _parsed_version($b) <=> _parsed_version($a) } @versions;
+    return sort { __PACKAGE__->version_compare($b, $a) } @versions;
 }
 
 sub default_picard_version {
