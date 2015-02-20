@@ -29,8 +29,5 @@ sub blessed_object {
     return Genome::Process->get(id => $blessed_id);
 }
 
-sub source_file {
-    return __FILE__;
-}
 1;
 

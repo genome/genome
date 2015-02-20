@@ -45,7 +45,3 @@ sub retrieve_blessed_build {
     return $blessed_build;
 }
 
-sub source_file {
-    return __FILE__;
-}
-

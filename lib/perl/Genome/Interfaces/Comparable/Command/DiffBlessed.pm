@@ -11,10 +11,6 @@ class Genome::Interfaces::Comparable::Command::DiffBlessed {
     is_abstract => 1,
 };
 
-sub source_file {
-    die "Must implement method source_file";
-}
-
 sub bless_message {
     my $self = shift;
     my $rel_db_file = $self->rel_db_file();
@@ -42,7 +38,7 @@ sub blessed_id {
 
 sub db_file {
     my $self = shift;
-    return $self->source_file.".YAML";
+    return $self->__meta__->module_path.".YAML";
 }
 
 sub rel_db_file {
