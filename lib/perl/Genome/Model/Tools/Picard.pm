@@ -20,6 +20,22 @@ my $DEFAULT_MAX_RECORDS_IN_RAM = 500000;
 
 class Genome::Model::Tools::Picard {
     is  => 'Command',
+
+    # XXX: this is transitional
+    # ultimately, gmt::picard::base should supersede this class as the parent of
+    # all picard commands. when that happens, this (and all the picard_param_name
+    # attributes) can be moved there.
+    #
+    # to clarify, this class doesn't currently care about this attribute being
+    # applied to its members, but one of its children (who aims to steal the
+    # throne) does.
+    attributes_have => [
+        picard_param_name => {
+            is => 'String',
+            is_optional => 1,
+        },
+    ],
+
     has_input => [
         java_interpreter => {
             is => 'String',
@@ -36,6 +52,7 @@ class Genome::Model::Tools::Picard {
             doc => 'When writing SAM files that need to be sorted, this will specify the number of records stored in RAM before spilling to disk. Increasing this number reduces the number of file handles needed to sort a SAM file, and increases the amount of RAM needed.',
             is_optional => 1,
             default_value => $DEFAULT_MAX_RECORDS_IN_RAM,
+            picard_param_name => 'MAX_RECORDS_IN_RAM',
         },
         maximum_memory => {
             is => 'Integer',
@@ -53,6 +70,7 @@ class Genome::Model::Tools::Picard {
             is => 'String',
             doc => 'A temp directory to use when sorting or merging BAMs results in writing partial files to disk.  The default temp directory is resolved for you if not set.',
             is_optional => 1,
+            picard_param_name => 'TMP_DIR',
         },
         validation_stringency => {
             is => 'String',
@@ -60,6 +78,7 @@ class Genome::Model::Tools::Picard {
             is_optional => 1,
             default_value => $DEFAULT_VALIDATION_STRINGENCY,
             valid_values => ['SILENT','STRICT','LENIENT'],
+            picard_param_name => 'VALIDATION_STRINGENCY',
         },
         log_file => {
             is => 'String',
@@ -76,6 +95,7 @@ class Genome::Model::Tools::Picard {
             is_optional => 1,
             doc => 'Whether to create an MD5 digest for any BAM files created.',
             default_value => 0,
+            picard_param_name => 'CREATE_MD5_FILE',
         },
         #These parameters are mainly for use in pipelines
         _monitor_command => {
