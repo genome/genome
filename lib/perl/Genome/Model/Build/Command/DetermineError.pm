@@ -48,8 +48,8 @@ our $ERROR_FINDING_REGEX = qr{
 our $EXCEPTION_FINDING_REGEX = qr{
                 (?:
                     $WORKFLOW_DATE_AND_HOST
-                    |
-                    $PTERO_DATE
+                    | $PTERO_DATE
+                    | $FLOW_DATE
                 )
                 \s
                 (?<error_text>.*) \s (?<!called\s) $ERROR_LOCATION
