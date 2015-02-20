@@ -51,4 +51,9 @@ sub _shellcmd_extra_params {
         );
 }
 
+sub _validate_params {
+    my $self = shift;
+    $self->enforce_minimum_version('1.120');
+}
+
 1;
