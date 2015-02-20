@@ -208,14 +208,6 @@ sub version_compare {
 sub enforce_minimum_version {
     my ($self, $min_version) = @_;
 
-    eval {
-        $self->path_for_picard_version($min_version);
-    };
-
-    if ($@) {
-        confess "Minimum Picard version is invalid ($min_version)";
-    };
-
     if ($self->version_compare($self->use_version, $min_version) < 0) {
         confess sprintf "This module requires picard version >= %s (%s requested)",
                 $min_version, $self->use_version;
