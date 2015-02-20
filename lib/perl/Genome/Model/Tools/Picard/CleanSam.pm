@@ -5,18 +5,21 @@ use warnings;
 
 use Genome;
 use File::Basename;
+use Carp qw(confess);
 
 
 class Genome::Model::Tools::Picard::CleanSam {
-    is  => 'Genome::Model::Tools::Picard',
+    is  => 'Genome::Model::Tools::Picard::Base',
     has_input => [
         input_file  => {
             is  => 'String',
             doc => 'The SAM files to run on',
+            picard_param_name => 'INPUT',
         },
         output_file => {
             is  => 'String',
             doc => 'The output clean sam file',
+            picard_param_name => 'OUTPUT',
         },
     ],
 };
@@ -32,26 +35,30 @@ sub help_detail {
 EOS
 }
 
-sub execute {
+sub _jar_name {
+    return 'CleanSam.jar';
+}
+
+sub _java_class_name {
+    return 'net.sf.picard.sam.CleanSam';
+}
+
+sub _validate_params {
     my $self = shift;
 
     unless ($self->input_file and -s $self->input_file) {
-        $self->error_message("Input file is invalid");
+        confess $self->error_message("Input file is invalid");
         return;
-        
     }
+}
 
-    my $cmd = $self->picard_path .'/CleanSam.jar net.sf.picard.sam.CleanSam';
-    $cmd   .= ' OUTPUT='. $self->output_file  .' INPUT='. $self->input_file;
-        
-    $self->run_java_vm(
-        cmd          => $cmd,
+sub _shellcmd_extra_params {
+    my $self = shift;
+    return (
         input_files  => [$self->input_file],
         #output_files => [$self->output_file],
         skip_if_output_is_present => 0,
-    );
-    return 1;
+        );
 }
-
 
 1;
