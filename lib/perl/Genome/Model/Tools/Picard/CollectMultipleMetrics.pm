@@ -18,8 +18,14 @@ class Genome::Model::Tools::Picard::CollectMultipleMetrics {
         },
         program_list => {
             is_optional => 1,
-            doc => 'The default are CollectAlignmentSummaryMetrics,CollectInsertSizeMetrics,QualityScoreDistribution,MeanQualityByCycle',
-        }, 
+            doc => 'Comma-delimited ist of picard metrics collection programs to run.',
+            default_value => join(',',
+                'CollectAlignmentSummaryMetrics',
+                'CollectInsertSizeMetrics',
+                'QualityScoreDistribution',
+                'MeanQualityByCycle'
+                )
+        },
         reference_sequence => {
             is_optional => 1,
         },
@@ -47,55 +53,47 @@ sub help_detail {
 EOS
 }
 
-sub execute {
-    my $self = shift;
-
-    my $jar_path = $self->picard_path .'/CollectMultipleMetrics.jar';
-    unless (-e $jar_path) {
-        if ($self->use_version < 1.40) {
-            die('Please use Picard version 1.40 or greater.');
-        } else {
-            die('Missing jar file: '. $jar_path);
-        }
-    }
-
-    my $cmd = $self->picard_path .'/CollectMultipleMetrics.jar net.sf.picard.analysis.CollectMultipleMetrics';
-    $cmd   .= ' OUTPUT='. $self->output_basename  .' INPUT='. $self->input_file;
-    if (defined($self->stop_after)) {
-        $cmd .= ' STOP_AFTER='. $self->stop_after;
-    }
-    if (defined($self->reference_sequence)) {
-        $cmd .= ' REFERENCE_SEQUENCE='. $self->reference_sequence;
-    }
-    if (defined($self->assume_sorted)) {
-        if ($self->assume_sorted) {
-            $cmd .= ' ASSUME_SORTED=true';
-        } else {
-            $cmd .= ' ASSUME_SORTED=false';
-        }
-    }
-
-    my $program_list = $self->program_list;
-    if ($program_list) {
-        $program_list = 'null,' . $program_list;  #turn off the default 4
-    }
-    else {
-        $program_list = 'CollectAlignmentSummaryMetrics,CollectInsertSizeMetrics,QualityScoreDistribution,MeanQualityByCycle';
-    }
-
-    my @programs = split(',', $program_list);
-
-    for my $program (@programs) {
-        $program =~ s/ //g;
-        $cmd .= ' PROGRAM='. $program;
-    }
-
-    $self->run_java_vm(
-        cmd          => $cmd,
-        input_files  => [$self->input_file],
-    );
-    return 1;
+sub _jar_name {
+    return 'CollectMultipleMetrics.jar';
 }
 
+sub _java_class_name {
+    return 'net.sf.picard.analysis.CollectMultipleMetrics';
+}
+
+sub _cmdline_args {
+    my $self = shift;
+
+    my @args = $self->_translate_args(
+        args => [qw(
+            input_file
+            output_basename
+            stop_after
+            reference_sequence
+            assume_sorted
+            )],
+
+        translations => {
+            input_file => 'INPUT',
+            output_basename => 'OUTPUT',
+        });
+
+    my $programs = $self->program_list;
+    $programs =~ s/ //g;
+    my @programs = split(',', $self->program_list);
+    push @args, map {sprintf "PROGRAM=%s", $_} @programs;
+
+    return @args;
+}
+
+sub _validate_params {
+    my $self = shift;
+    $self->enforce_minimum_version('1.40');
+}
+
+sub execute {
+    my $self = shift;
+    return $self->basic_execute;
+}
 
 1;
