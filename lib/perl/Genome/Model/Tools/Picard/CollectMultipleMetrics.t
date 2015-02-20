@@ -20,7 +20,7 @@ my $cmd = Genome::Model::Tools::Picard::CollectMultipleMetrics->create(
     input_file         => $bam,
     output_basename    => $output_base,
     reference_sequence => $ref,
-    program_list       => 'CollectAlignmentSummaryMetrics,CollectInsertSizeMetrics',
+    program_list       => ['CollectAlignmentSummaryMetrics', 'CollectInsertSizeMetrics'],
     use_version        => $picard_version,
 );
 
