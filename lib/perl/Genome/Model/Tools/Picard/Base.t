@@ -49,15 +49,14 @@ subtest "Command line args" => sub {
 
     my @args = $obj->_cmdline_args;
 
-    # There are 4 parameters inherited from gmt::picard.
+    # There are 3 parameters that will show up from gmt::picard.
     # we are not interested in testing those right here. they are:
     #   MAX_RECORDS_IN_RAM
     #   VALIDATION_STRINGENCY
     #   TMP_DIR
-    #   CREATE_MD5_FILE
     #
     # once refactoring is complete, we might be able to clean this up a little
-    is(scalar @args, 9 + 4, 'got the right number of arguments');
+    is(scalar @args, 9 + 3, 'got the right number of arguments');
 
     my $extract_values = sub {
         my $prefix = shift;

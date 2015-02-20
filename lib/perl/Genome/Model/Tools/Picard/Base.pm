@@ -81,7 +81,14 @@ sub _picard_args_from_meta {
 # Override for custom behavior.
 sub _cmdline_args {
     my $self = shift;
-    return map {$self->_picard_args_from_meta($_)} $self->_picard_param_metas;
+
+    # CREATE_MD5_FILE will cause errors for certain picard commands (e.g., CompareSAMs)
+    # the picard default value is false.
+    my @metas = grep {$_->property_name ne 'create_md5_file'} $self->_picard_param_metas;
+    my @args = map {$self->_picard_args_from_meta($_)} @metas;
+
+    push @args, 'CREATE_MD5_FILE=true' if $self->create_md5_file;
+    return @args;
 }
 
 # this is your chance to make a loud sound and die if a caller asks for
@@ -136,7 +143,8 @@ sub build_cmdline_string {
         $java_vm_cmd =~ s/net\.sf\.picard\./picard./;
     }
 
-    $java_vm_cmd = join(" ", $java_vm_cmd, $self->_redirects);
+    my $redirects = $self->_redirects;
+    $java_vm_cmd = join(" ", $java_vm_cmd, $redirects) if $redirects;
 
     return $java_vm_cmd;
 }
