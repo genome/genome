@@ -4,13 +4,15 @@ use strict;
 use warnings;
 
 use Genome;
+use Carp qw(confess);
 
 class Genome::Model::Tools::Picard::BamIndexStats {
-    is  => 'Genome::Model::Tools::Picard',
+    is => 'Genome::Model::Tools::Picard::Base',
     has_input => [
-        input_file   => {
-            is  => 'String',
+        input_file  => {
+            is => 'String',
             doc => 'A BAM file to process.',
+            picard_param_name => 'INPUT',
         },
         output_file => {
             is => 'String',
@@ -30,27 +32,26 @@ sub help_detail {
 EOS
 }
 
-sub execute {
+sub _jar_name { 'BamIndexStats.jar' }
+sub _java_class_name { 'net.sf.picard.sam.BamIndexStats' }
+
+sub _redirects {
     my $self = shift;
-
-    my $jar_path = $self->picard_path .'/BamIndexStats.jar';
-    unless (-e $jar_path) {
-        if ($self->use_version < 1.29) {
-            die('Please define version 1.29 or greater.');
-        } else {
-            die('Missing jar path: '. $jar_path);
-        }
-    }
-    my $cmd = $jar_path .' net.sf.picard.sam.BamIndexStats INPUT='. $self->input_file .' > '. $self->output_file;
-
-    $self->run_java_vm(
-        cmd          => $cmd,
-        input_files  => [$self->input_file],
-        output_files => [$self->output_file],
-        skip_if_output_is_present => 0,
-    );
-    return 1;
+    return sprintf '> %s', $self->output_file;
 }
 
+sub _shellcmd_extra_params {
+    my $self = shift;
+    return (
+        input_files => [$self->input_file],
+        output_files => [$self->output_file],
+        skip_if_output_is_present => 0,
+        );
+}
+
+sub _validate_params {
+    my $self = shift;
+    $self->enforce_minimum_version("1.29");
+}
 
 1;
