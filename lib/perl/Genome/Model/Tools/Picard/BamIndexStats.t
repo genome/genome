@@ -29,7 +29,7 @@ ok($cmd->execute, "executed command");
 compare_ok($expected_file, $output_file, "output file is correct");
 
 my $bad_cmd = $pkg->create(
-    input_file => "$data_dir/coordsort.bam",
+    input_file => $input_file,
     output_file => $output_file,
     use_version => "1.22",
     );
