@@ -8,7 +8,7 @@ use Genome::VariantReporting::Framework::Plan::Base;
 class Genome::VariantReporting::Framework::Plan::ExpertPlan {
     is => 'Genome::VariantReporting::Framework::Plan::Base',
     has => [
-        adaptor_params => {
+        run_params => {
             is => 'HASH',
             default => {},
         },
@@ -21,21 +21,21 @@ sub category {
 
 sub needed_translations {
     my $self = shift;
-    return Set::Scalar->new(map {$self->adaptor_params->{$_}}
-        $self->get_class->adaptor_class->required_translated_input_names);
+    return Set::Scalar->new(map {$self->run_params->{$_}}
+        $self->get_class->run_class->required_translated_input_names);
 }
 
 sub translate {
     my ($self, $translations) = @_;
-    return $self->_translate($translations, 'adaptor_params', $self->get_class->adaptor_class);
+    return $self->_translate($translations, 'run_params', $self->get_class->run_class);
 }
 
-# ExpertPlans don't have any params but have adaptor_params instead
+# ExpertPlans don't have any params but have run_params instead
 sub as_hashref {
     my $self = shift;
 
     my %body;
-    while (my ($name, $value) = each %{$self->adaptor_params}) {
+    while (my ($name, $value) = each %{$self->run_params}) {
         $body{$name} = $value;
     }
 
@@ -50,7 +50,7 @@ sub __class_errors__ {
     my @errors = $self->SUPER::__class_errors__;
     return @errors if @errors; # Can't know anything else in this case
 
-    for my $accessor ('run_class', 'adaptor_class') {
+    for my $accessor ('run_class') {
         eval {
             $self->get_class->$accessor;
         };
@@ -70,7 +70,7 @@ sub __class_errors__ {
 sub __object_errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__object_errors__;
-    push @errors, $self->get_class->adaptor_class->__planned_output_errors__($self->adaptor_params);
+    push @errors, $self->get_class->run_class->__planned_errors__($self->run_params);
     return @errors;
 }
 
