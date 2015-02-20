@@ -51,7 +51,8 @@ sub _picard_args_from_meta {
     my ($self, $meta) = @_;
 
     my $ur_name = $meta->property_name;
-    my $type = $meta->data_type // 'String';
+    # using // instead of ? : below made a lims perl test fail
+    my $type = defined $meta->data_type ? $meta->data_type : 'String';
     my $picard_name = $meta->picard_param_name;
 
     return unless defined $self->$ur_name;
