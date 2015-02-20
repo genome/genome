@@ -21,6 +21,11 @@ my $DEFAULT_MAX_RECORDS_IN_RAM = 500000;
 class Genome::Model::Tools::Picard {
     is  => 'Command',
     has_input => [
+        java_interpreter => {
+            is => 'String',
+            doc => 'The java interpreter to use',
+            default_value => 'java',
+        },
         use_version => {
             is  => 'Version',
             doc => 'Picard version to be used.',
@@ -243,7 +248,8 @@ sub _java_cmdline {
 
     my $jvm_options = $self->additional_jvm_options || '';
 
-    my $java_vm_cmd = sprintf 'java -Xmx%dm -XX:MaxPermSize=%dm %s -cp /usr/share/java/ant.jar:%s',
+    my $java_vm_cmd = sprintf '%s -Xmx%dm -XX:MaxPermSize=%dm %s -cp /usr/share/java/ant.jar:%s',
+        $self->java_interpreter,
         int(1024 * $self->maximum_memory),
         $self->maximum_permgen_memory,
         $jvm_options,
