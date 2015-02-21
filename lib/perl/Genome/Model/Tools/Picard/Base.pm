@@ -42,7 +42,7 @@ sub _format_picard_arg {
     return sprintf '%s=%s', $name, $value;
 }
 
-# given a property meta object for (defining property name, and ostensibly
+# given a property meta object (defining property name, and ostensibly
 # picard_param_name), return the list of cmdline args that should be passed
 # to picard based on the values set on the current object.
 #
@@ -57,7 +57,7 @@ sub _picard_args_from_meta {
 
     return unless defined $self->$ur_name;
 
-    # This handles both is_many => true / false.
+    # This works for things that are is_many or not.
     return map {_format_picard_arg($type, $picard_name, $_)} $self->$ur_name;
 }
 
@@ -93,12 +93,14 @@ sub _cmdline_args {
 }
 
 # this is your chance to make a loud sound and die if a caller asks for
-# something ridiculous
+# something ridiculous. params can also be edited here if that is somehow
+# appropriate.
 sub _validate_params {
     # example:
     # my $self = shift;
     # $self->enforce_minimum_version('1.85');
     # die unless -s $self->input_file;
+    # $self->be_noisy(0) unless $self->log_file;
 }
 
 # want to pass extra stuff to Genome::Sys->shellcmd? return a hash (not ref)
