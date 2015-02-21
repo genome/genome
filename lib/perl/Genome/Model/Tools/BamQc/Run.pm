@@ -338,7 +338,6 @@ sub execute {
             input_properties => {
                 bam_file                      => 'input_file',
                 reference_sequence            => 'refseq_file',
-                clean_bam                     => 'clean_bam',
                 picard_version                => 'use_version',
                 picard_maximum_memory         => 'maximum_memory',
                 picard_maximum_permgen_memory => 'maximum_permgen_memory',
