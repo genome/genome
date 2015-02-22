@@ -33,3 +33,11 @@ function teardown {
 @test "basic test: genome-env-next -w" {
     $BATS_TEST_DIRNAME/../bin/genome-env-next -w $WORKSPACE/workflow "$BATS_TEST_DIRNAME/testexec/W.sh"
 }
+
+@test "basic test: genome-env-next -M" {
+    $BATS_TEST_DIRNAME/../bin/genome-env-next -M "$BATS_TEST_DIRNAME/testexec/M.sh"
+}
+
+@test "basic test: genome-env-next -m" {
+    $BATS_TEST_DIRNAME/../bin/genome-env-next -m $WORKSPACE/genome-sqitch "$BATS_TEST_DIRNAME/testexec/M.sh"
+}
