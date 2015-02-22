@@ -68,7 +68,7 @@ sub create {
     unless ($self) { return; }
 
     unless ($] > 5.010) {
-        die 'Subcommands run by '. __PACKAGE__ .' require perl 5.10 or greater! Consider using \'/usr/bin/perl -S gmt\' instead of \'gmt\'.';
+        die 'Subcommands run by '. __PACKAGE__ .' require perl 5.10 or greater!';
     }
     return $self;
 }

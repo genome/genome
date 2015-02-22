@@ -7,7 +7,10 @@ use Genome;
 use File::Basename;
 
 class Genome::Model::Build::SomaticVariation {
-    is => 'Genome::Model::Build',
+    is => [
+        'Genome::Model::Build',
+        'Genome::Model::Build::RunsDV2',
+        'Genome::Model::Build::HasFeatureLists'],
     has => [
         snv_detection_strategy => {
             is => 'Text',
@@ -30,6 +33,10 @@ class Genome::Model::Build::SomaticVariation {
             via => 'model',
         },
         loh_version => {
+            is => 'Text',
+            via => 'model',
+        },
+        bam_readcount_version =>{
             is => 'Text',
             via => 'model',
         },
@@ -165,6 +172,17 @@ sub validate_model_and_build_inputs {
             type => 'error',
             properties => ['normal_build'],
             desc => "Failed to get a normal_build!"
+        );
+    }
+
+    my $tumor_ref_seq_build_id  = $self->tumor_model->reference_sequence_build_id;
+    my $normal_ref_seq_build_id = $self->normal_model->reference_sequence_build_id;
+
+    unless ($tumor_ref_seq_build_id eq $normal_ref_seq_build_id) {
+        push @tags, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['reference_sequence_build'],
+            desc => "Normal and tumor model get different ref seq build!"
         );
     }
 
@@ -413,6 +431,22 @@ sub path_to_individual_output {
         }
     }
     return $answer;
+}
+
+sub get_target_region_feature_list {
+    my $self = shift;
+
+    if (defined($self->tumor_build->target_region_set_name)) {
+        return Genome::FeatureList->get(
+            name => $self->tumor_build->target_region_set_name);
+    } else {
+        return;
+    }
+}
+
+sub get_feature_list_from_reference {
+    my ($self, $feature_list_accessor) = @_;
+    return $self->tumor_build->reference_sequence_build->get_feature_list($feature_list_accessor);
 }
 
 1;

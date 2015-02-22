@@ -38,9 +38,17 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
 
   ## add options for plotting just a smaller region - TODO
   xlim = NULL
-
+  options(error=function()traceback(2))
   ## read in the segments
   segs=read.table(filename,comment.char="#")
+  #remove header
+  segs=segs[segs$V1!="chrom",]
+  #if header was present, have to update the classes of the fields
+  segs$V1=as.character(segs$V1)
+  segs$V2=as.numeric(as.character(segs$V2))
+  segs$V3=as.numeric(as.character(segs$V3))
+  segs$V4=as.numeric(as.character(segs$V4))
+  segs$V5=as.numeric(as.character(segs$V5))
 
   ## read in the entrypoints
   entrypoints=addOffsets(readEntrypoints(entrypoints))

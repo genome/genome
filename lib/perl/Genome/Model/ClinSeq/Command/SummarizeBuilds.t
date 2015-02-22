@@ -34,12 +34,12 @@ my $expected_data_directory;
 my $cmd;
 if (@ARGV and $ARGV[0] eq 'LIMS_INFO_TEST'){
   $cmd = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(builds=>[$b], outdir=>$temp_dir);
-  $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds-WithReports/2013-09-10';
+  $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds-WithReports/2014-04-14';
   ok(-d $expected_data_directory, "found expected data directory: $expected_data_directory") or die;
 }elsif ($ARGV[0]){
   die "unexpected cmdline options @ARGV: expected nothing or 'LIMS_INFO_TEST', got " . $ARGV[0];
 }else{
-  $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2014-03-04';
+  $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-SummarizeBuilds/2014-08-25';
   ok(-d $expected_data_directory, "found expected data directory: $expected_data_directory") or die;
   $cmd = Genome::Model::ClinSeq::Command::SummarizeBuilds->create(builds=>[$b], outdir=>$temp_dir, skip_lims_reports=>1);
 }
@@ -54,7 +54,7 @@ $log->print(join("\n", @output));
 
 print "\n\nDiffing results from this run to the expected results here:\n\t$expected_data_directory\n";
 my @diff = `diff -r $expected_data_directory $temp_dir`;
-is(@diff, 5, "no differences from expected results and actual other than the 5 lines corresponding to the random temp dir statement")
+is(@diff, 0, "no differences from expected results.")
   or do { 
       diag("differences are:");
       diag(@diff);

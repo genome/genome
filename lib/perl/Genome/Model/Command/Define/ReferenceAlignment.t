@@ -285,7 +285,7 @@ sub create_reference_builds {
 
     # make sure the annotation build is 'completed' and has status 'Succeeded '
     $abuild->status('Succeeded');
-    $abuild->the_master_event->date_completed(UR::Context->current->now);
+    $abuild->date_completed(UR::Context->current->now);
 
     return ($rbuild, $rbuild2, $abuild);
 }

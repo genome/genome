@@ -58,7 +58,7 @@ class Genome::Model::Tools::Somatic::IndelpeRunner {
        # Make workflow choose 64 bit blades
         lsf_resource => {
             is_param => 1,
-            default_value => 'rusage[mem=2000] select[type==LINUX64 & mem > 2000] span[hosts=1]',
+            default_value => 'rusage[mem=2000] select[mem > 2000] span[hosts=1]',
         },
         lsf_queue => {
             is_param => 1,
@@ -134,7 +134,6 @@ sub execute {
             $self->error_message("Failed to create directory: $analysis_base_path");
             die;
         }
-        chmod 02775, $analysis_base_path;
     }
 
     # Generate files not provided from data directory

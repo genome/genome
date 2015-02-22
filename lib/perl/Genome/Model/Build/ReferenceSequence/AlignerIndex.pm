@@ -6,7 +6,7 @@ use strict;
 
 
 class Genome::Model::Build::ReferenceSequence::AlignerIndex {
-    is => ['Genome::SoftwareResult::Stageable'],
+    is => ['Genome::SoftwareResult::Stageable', 'Genome::SoftwareResult::WithNestedResults'],
 
     has => [
 
@@ -71,13 +71,21 @@ sub __display_name__ {
 
 sub required_rusage {
     # override in subclasses
-    # e.x.: "-R 'select[model!=Opteron250 && type==LINUX64] span[hosts=1] rusage[tmp=50000:mem=12000]' -M 1610612736";
+    # e.x.: "-R 'span[hosts=1] rusage[tmp=50000:mem=12000]' -M 1610612736";
     ''
 }
 
 sub aligner_requires_param_masking {
     my $class = shift;
     my $aligner_name = shift;
+
+    # If $aligner_name is not known then we can't ask.  While this could be an
+    # exception it is the case that while an object is being created its
+    # params/inputs getted added one-by-one which means sometime $aligner_name
+    # was not yet known.
+    unless ($aligner_name) {
+        return 0;
+    }
 
     my $aligner_class = 'Genome::InstrumentData::AlignmentResult::'  . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($aligner_name);
 
@@ -169,6 +177,7 @@ sub generate_dependencies_as_needed {
             aligner_name => $self->aligner_name,
             aligner_params => $self->aligner_params,
             aligner_version => $self->aligner_version,
+            users => $self->_user_data_for_nested_results,
         );
 
         for my $b ($self->reference_build->append_to) { # (append_to is_many)
@@ -253,11 +262,6 @@ sub _gather_params_for_get_or_create {
     if (exists $p->{params}{aligner_name} && $class->aligner_requires_param_masking($p->{params}{aligner_name})) {
         $p->{params}{aligner_params} = undef;
     }
-
-    #my $inputs_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %{ $p->{inputs} });
-    #my $params_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($class, %{ $p->{params} });
-    #$p->{software_result_params}{params_id} = $params_bx->id;
-    #$p->{software_result_params}{inputs_id} = $inputs_bx->id;
 
     return $p;
 }

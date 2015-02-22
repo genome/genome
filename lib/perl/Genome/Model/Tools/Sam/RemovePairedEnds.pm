@@ -14,7 +14,7 @@ class Genome::Model::Tools::Sam::RemovePairedEnds
     has_param => [
             lsf_resource =>          
             {
-                value => "-R 'select[model!=Opteron250 && type==LINUX64] span[hosts=1] rusage[mem=10000]' -M 10000000",
+                value => "-R 'span[hosts=1] rusage[mem=10000]' -M 10000000",
             },
     ],
     has_input => [

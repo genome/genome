@@ -5,10 +5,10 @@ use warnings;
 
 use Genome;
 use Genome::Utility::Instrumentation;
+use Genome::Utility::File::Mode qw(mode);
 
 use Carp qw(croak confess);
 use Digest::MD5 qw(md5_hex);
-use File::Copy::Recursive qw(dircopy dirmove);
 use File::Find;
 use File::Find::Rule;
 use Cwd;
@@ -71,9 +71,10 @@ class Genome::Disk::Allocation {
         },
         status => {
             is => 'Text',
-            valid_values => ['active', 'completed', 'purged', 'archived', 'invalid'],
-            doc => 'The current status of this allocation',
+            len => 40,
             default_value => 'active',
+            valid_values => [ "active", "purged", "archived", "invalid" ],
+            doc => 'The current status of this allocation',
         },
         absolute_path => {
             calculate_from => [ 'mount_path', 'group_subdirectory', 'allocation_path' ],
@@ -98,12 +99,13 @@ class Genome::Disk::Allocation {
             is => 'DateTime',
             len => 11,
             default_value => &_default_archive_after_time,
-            doc => 'After this time, this allocation is subject to being archived'
+            doc => 'After this time, this allocation is subject to being archived',
         },
         timeline_events => {
-            is_many => 1,
             is => 'Genome::Timeline::Event::Allocation',
             reverse_as => 'object',
+            where => [ -order_by => [ "created_at" ] ],
+            is_many => 1,
         },
     ],
     has_optional => [
@@ -144,9 +146,9 @@ class Genome::Disk::Allocation {
         },
         file_summaries => {
             is => 'Genome::Disk::Allocation::FileSummary',
+            reverse_as => 'allocation',
             is_many => 1,
-            reverse_as => 'allocation'
-        }
+        },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -181,28 +183,22 @@ sub du {
     return $kb_used;
 }
 
-
+sub set_read_only { shift->set_permissions_read_only(@_) }
 sub set_permissions_read_only {
     my $self = shift;
-
-    $self->set_file_permissions(0444);
-    $self->set_directory_permissions(0555);
-
-    chmod 0555, $self->absolute_path;
+    my @paths = File::Find::Rule->not(File::Find::Rule->symlink)->in($self->absolute_path);
+    for my $path (@paths) {
+        mode($path)->rm_all_writable();
+    }
 }
 
-sub set_file_permissions {
-    my ($self, $mode) = @_;
-    my @files = File::Find::Rule->file->in($self->absolute_path);
-    chmod $mode, @files;
+sub set_files_read_only {
+    my $self = shift;
+    my @paths = File::Find::Rule->not(File::Find::Rule->symlink)->file->in($self->absolute_path);
+    for my $path (@paths) {
+        mode($path)->rm_all_writable();
+    }
 }
-
-sub set_directory_permissions {
-    my ($self, $mode) = @_;
-    my @subdirs = File::Find::Rule->directory->in($self->absolute_path);
-    chmod $mode, @subdirs;
-}
-
 
 sub allocate { return shift->create(@_); }
 sub create {
@@ -217,7 +213,7 @@ sub create {
 
     # If no commit is on, make a dummy volume to allocate to
     if ($ENV{UR_DBI_NO_COMMIT}) {
-        if ($CREATE_DUMMY_VOLUMES_FOR_TESTING) { # && !$params{mount_path}) {
+        if ($CREATE_DUMMY_VOLUMES_FOR_TESTING) {
             my $tmp_volume = Genome::Disk::Volume->create_dummy_volume(
                 mount_path => $params{mount_path},
                 disk_group_name => $params{disk_group_name},
@@ -287,7 +283,7 @@ sub unarchive {
 
 sub is_archived {
     my $self = shift;
-    return $self->volume->is_archive;
+    return $self->status eq 'archived';
 }
 
 sub tar_path {
@@ -335,20 +331,39 @@ sub _delete {
 
     my $self = $class->get($id);
 
-    my $path = $self->absolute_path;
+    $self->_delete_timeline_events;
+    my @deletion_observers = $self->_get_deletion_observers;
+    $self->SUPER::delete;
+
+    $class->_create_observer(@deletion_observers);
+
+    return 1;
+}
+
+sub _delete_timeline_events {
+    my $self = shift;
 
     for my $event ($self->timeline_events) {
         $event->delete();
     }
+}
 
-    $self->SUPER::delete;
+sub _get_deletion_observers {
+    my $self = shift;
 
-    $class->_create_observer(
-        $class->_mark_for_deletion_closure($path),
-        $class->_remove_directory_closure($path),
-    );
+    my $class = $self->class;
+    my $path = $self->absolute_path;
 
-    return 1;
+    if ($self->is_archived) {
+        return sub {$class->_cleanup_archive_directory($path)};
+
+    } else {
+        return (
+            $class->_mark_for_deletion_closure($path),
+            $class->_remove_directory_closure($path),
+        );
+    }
+
 }
 
 sub _reallocate {
@@ -422,7 +437,8 @@ sub get_lock {
     $tries ||= 60;
 
     my $allocation_lock = Genome::Sys->lock_resource(
-        resource_lock => $ENV{GENOME_LOCK_DIR} . '/allocation/allocation_' . join('_', split(' ', $id)),
+        resource_lock => 'allocation/allocation_' . join('_', split(' ', $id)),
+        scope => 'site',
         max_try => $tries,
         block_sleep => 1,
     );
@@ -469,13 +485,13 @@ sub shadow_get_or_create {
     my $md5_hex = md5_hex($params{allocation_path});;
 
     my $path = File::Spec->join(
-        $ENV{GENOME_LOCK_DIR},
         'allocation',
         'allocation_path_' . $md5_hex,
     );
 
     my $lock = Genome::Sys->lock_resource(
         resource_lock => $path,
+        scope => 'site',
         wait_announce_interval => 600,
     );
 
@@ -536,8 +552,7 @@ sub _execute_system_command {
         $allocation = $class->$method(%params);
     }
     else {
-        # remove the parens if you DARE
-        my @includes = map { ( '-I' => $_ ) } UR::Util::used_libs;
+        my @includes = map { -I => $_ } UR::Util::used_libs;
 
         my $param_string = Genome::Utility::Text::hash_to_string(\%params, 'q');
         my @statements = (
@@ -625,6 +640,12 @@ sub _reload_allocation {
         $allocation = Genome::Disk::Allocation->get($id);
     } elsif ($mode eq 'load') {
         $allocation = UR::Context->current->reload($class, id => $id);
+        if ($allocation) {
+            my $owner = $allocation->owner;
+            if($owner and UR::Context->current->object_exists_in_underlying_context($owner)) {
+                UR::Context->current->reload($owner);
+            }
+        }
     } else {
         die 'Unrecognized _retrieve_mode: ' . $class->_retrieve_mode;
     }
@@ -670,11 +691,8 @@ sub _create_directory_closure {
     my ($class, $path) = @_;
     return sub {
         # This method currently returns the path if it already exists instead of failing
-        my $dir = eval{ Genome::Sys->create_directory($path) };
-        if (defined $dir and -d $dir) {
-            chmod(02775, $dir);
-        }
-        else {
+        my $dir = eval { Genome::Sys->create_directory($path) };
+        unless (defined $dir and -d $dir) {
             $class->error_message("Could not create allocation directory at $path!\n$@");
         }
     };
@@ -726,39 +744,11 @@ sub _mark_read_only_closure {
 
         require File::Find;
         sub mark_read_only {
-            my $file = $File::Find::name;
-            if (-d $file) {
-                chmod 0555, $file;
-            }
-            else {
-                chmod 0444, $file
-            }
+            mode($File::Find::name)->rm_all_writable();
         };
 
         $class->debug_message("Marking directory at $path read-only");
         File::Find::find(\&mark_read_only, $path);
-    };
-}
-
-# Changes an allocation directory to default permissions
-sub _set_default_permissions_closure {
-    my ($class, $path) = @_;
-    return sub {
-        return unless -d $path and not $ENV{UR_DBI_NO_COMMIT};
-
-        require File::Find;
-        sub set_default_perms {
-            my $file = $File::Find::name;
-            if (-d $file) {
-                chmod 0775, $file;
-            }
-            else {
-                chmod 0664, $file
-            }
-        };
-
-        $class->debug_message("Setting permissions to defaults for $path");
-        File::Find::find(\&set_default_perms, $path);
     };
 }
 
@@ -947,7 +937,7 @@ sub _retrieve_mode {
 
 sub _cleanup_archive_directory {
     my ($class, $directory) = @_;
-    my $cmd = "if [ -a $directory] ; then rm -rf $directory ; fi";
+    my $cmd = "if [ -d $directory ] ; then rm -rf $directory ; else exit 1; fi";
     unless ($ENV{UR_DBI_NO_COMMIT}) {
         my ($job_id, $status) = Genome::Sys->bsub_and_wait(
             queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
@@ -1036,11 +1026,14 @@ sub _create_file_summaries {
     my $self = shift;
 
     my $old_cwd = getcwd;
-    chdir($self->absolute_path);
+    chdir($self->absolute_path)
+        or return $self->warning_message('Failed to chdir to %s. Skipping file summaries.', $self->absolute_path);
+
     my @files;
     #why is File::Find this stupid? who knows...
     File::Find::find(sub { push(@files, $File::Find::name) unless (-d $_) }, '.');
-    chdir($old_cwd);
+    chdir($old_cwd)
+        or die $self->error_message('Failed to chdir back to %s.', $old_cwd);
 
     for my $file (@files) {
         Genome::Disk::Allocation::FileSummary->create_or_update(
@@ -1048,6 +1041,8 @@ sub _create_file_summaries {
             file => $file
         );
     }
+
+    return 1;
 }
 
 sub _symlink_new_path_from_old {
@@ -1080,19 +1075,7 @@ sub _default_archive_after_time {
 sub _get_trash_folder {
     my $self = shift;
 
-    my @dv = Genome::Disk::Volume->get(disk_group_names => $ENV{GENOME_DISK_GROUP_TRASH});
-    my %trash_map = map {
-       $self->_extract_aggr($_->physical_path) => File::Spec->join($_->mount_path, '.trash');
-    } @dv;
-
-    my $aggr = $self->_extract_aggr($self->volume->physical_path);
-
-    return $trash_map{$aggr};
-}
-
-sub _extract_aggr {
-    my $self = shift;
-    return (shift =~ m!/(aggr\d{2})/!)[0];
+    return File::Spec->join($self->volume->get_trash_folder(), $self->id);
 }
 
 1;

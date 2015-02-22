@@ -110,7 +110,8 @@ sub create {
     if (defined($alignment_result->annotation_build)) {
         $params{annotation_build} = $alignment_result->annotation_build;
     }
-    unless (Genome::InstrumentData::AlignmentResult::Command::CufflinksExpression->execute(%params)) {
+    my $expression_cmd = Genome::InstrumentData::AlignmentResult::Command::CufflinksExpression->execute(%params);
+    unless ($expression_cmd and $expression_cmd->result) {
         return;
     }
 

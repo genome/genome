@@ -391,7 +391,7 @@ For a given variant file, this module will split it up into files containing 100
 
 =head1 Usage
 
- $success = Genome::Model::Command::Report::VariationsBatchToLsf->execute
+ $command = Genome::Model::Command::Report::VariationsBatchToLsf->execute
  (
      variant_type => 'snp', # opt, default snp, valid types: snp, indel
      variant_file => $detail_file, # req
@@ -402,7 +402,7 @@ For a given variant file, this module will split it up into files containing 100
      variant_range => 0, # opt, default 0
  );
 
- if ( $success )
+ if ( $command->result )
  { 
     ...
  }

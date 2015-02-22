@@ -10,7 +10,7 @@ require File::Basename;
 require File::Temp;
 
 class Genome::Report::GeneratorCommand {
-    is => 'Command',
+    is => 'Command::V2',
     has_optional => [
         print_xml => {
             is => 'Boolean',

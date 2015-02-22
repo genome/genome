@@ -8,7 +8,6 @@ use Carp;
 
 class Genome::Model {
     is => [ "Genome::Notable", "Genome::Searchable" ],
-    subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
     table_name => 'model.model',
     is_abstract => 1,
     attributes_have => [
@@ -38,8 +37,8 @@ class Genome::Model {
             doc => 'on is_param attribute, the default value is stored here, since it is used when making profiles, not making models',
         },
     ],
+    subclass_description_preprocessor => 'Genome::Model::_preprocess_subclass_description',
     subclassify_by => 'subclass_name',
-    id_generator => '-uuid',
     id_by => [
         genome_model_id => {
             # TODO: change to just "id"
@@ -66,7 +65,7 @@ class Genome::Model {
         subclass_name => {
             is => 'Text',
             column_name => 'SUBCLASS_NAME',
-            calculate_from => ['processing_profile_id'],
+            calculate_from => 'processing_profile_id',
             calculate => sub {
                 my $pp_id = shift;
                 return unless $pp_id;
@@ -76,6 +75,7 @@ class Genome::Model {
                 }
                 return __PACKAGE__ . '::' . Genome::Utility::Text::string_to_camel_case($pp->type_name);
             },
+
             doc => 'the software subclass for the model in question',
         },
         type_name => {
@@ -83,27 +83,62 @@ class Genome::Model {
             via => 'processing_profile',
             doc => 'the name of the type of model (pipeline name)',
         },
+# These were added by 'ur update classes-from-db' on 22 Sep 2014.  They look like
+# old columns that should be removed
+#        _user_name => {
+#            is => 'Text',
+#            len => 64,
+#            column_name => 'user_name',
+#            is_optional => 1,
+#        },
+#        build_granularity_unit => {
+#            is => 'Text',
+#            len => 20,
+#            is_optional => 1,
+#        },
+#        build_granularity_value => {
+#            is => 'Integer',
+#            len => 4,
+#            is_optional => 1,
+#        },
+#        comparable_normal_model_id => {
+#            is => 'Text',
+#            len => 32,
+#            is_optional => 1,
+#        },
+#        current_running_build_id => {
+#            is => 'Text',
+#            len => 32,
+#            is_optional => 1,
+#        },
+#        data_directory => { is => 'Text', len => 1000, is_optional => 1 },
+#        is_default => { is => 'Boolean', len => 1, is_optional => 1 },
+#        keep => { is => 'Boolean', len => 1, is_optional => 1 },
+#        sample_name => { is => 'Text', len => 255, is_optional => 1 },
     ],
     has_optional => [
         user_name => {
             is => 'Text',
+            via => '__self__',
+            to => 'created_by',
             is_deprecated => 1,
-            doc => 'use created_by (or maybe run_as), accessor overridden for transition to created_by',
+            doc => 'use created_by (or maybe run_as)',
         },
         created_by => {
             is => 'Text',
-            doc => 'entity that created the model, accessor overridden for transition to created_by',
+            len => 64,
+            doc => 'entity that created the model',
         },
         run_as => {
             is => 'Text',
-            doc => 'username to run builds as, accessor overridden for transition to created_by',
+            len => 64,
+            doc => 'username to run builds as',
         },
         creation_date => {
-            # TODO: switch from timestamp to Date when we go Oracle to PostgreSQL
             # TODO: this is redundant with the model creation event.
             # Rails standard is created_at and updated_at.
             # Switching from timestamp in Oracle simplifies querying.  Not sure about postgres.
-            is => 'Timestamp',
+            is => 'DateTime',
             doc => 'the time at which the model was defined',
         },
         auto_build => {
@@ -126,7 +161,7 @@ class Genome::Model {
             # ssmith: I agree it is more work to write code to get this set correctly.
             # The only issue with that is that having to figure this dynamically is slow.
             # If we do it once when it changes, instead of every time someone wants to check, it could be more DRY.
-            is => 'Number',
+            is => 'Text',
             column_name => 'LAST_COMPLETE_BUILD_ID',
             doc => 'the last complete build id',
         },
@@ -144,9 +179,21 @@ class Genome::Model {
             is_many => 1,
         },
         analysis_projects => {
+            via => '__self__',
+            to => 'analysis_project',
+            is_deprecated => 1,
+            doc => 'use analysis_project instead',
+        },
+        analysis_project => {
             is => 'Genome::Config::AnalysisProject',
             via => 'analysis_project_bridges',
             to => 'analysis_project',
+            is_many => 0,
+        },
+        config_profile_items => {
+            is => 'Genome::Config::Profile::Item',
+            via => 'analysis_project_bridges',
+            to => 'config_profile_item',
             is_many => 1,
         },
     ],
@@ -178,13 +225,13 @@ class Genome::Model {
         builds => {
             is => 'Genome::Model::Build',
             reverse_as => 'model',
+            where => [ -order_by => '-created_at' ],
             doc => 'Versions of a model over time, with varying quantities of evidence',
-            where => [ -order_by => '-date_scheduled', ],
         },
         downstream_model_associations => {
             is => 'Genome::Model::Input',
             reverse_as => '_model_value',
-            doc => 'links to models which use this model as an input', 
+            doc => 'links to models which use this model as an input',
         },
         downstream_models => {
             is => 'Genome::Model',
@@ -192,11 +239,9 @@ class Genome::Model {
             to => 'model',
             doc => 'models which use this model as an input',
         },
-
         inputs => {
             is => 'Genome::Model::Input',
             reverse_as => 'model',
-            is_many => 1,
             doc => 'links to data currently assigned to the model for processing',
         },
         input_values => {
@@ -276,6 +321,7 @@ class Genome::Model {
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
     doc => 'a data model describing the sequence and/or features of a genome',
 };
 
@@ -408,7 +454,7 @@ sub _resolve_resource_requirements_for_build {
     # This is called during '_resolve_workflow_for_build' to specify the lsf resource requirements of the one-step
     # workflow that is generated from '_execute_build'.
     my ($build) = @_;
-    return "-R 'select[model!=Opteron250 && type==LINUX64] rusage[tmp=10000:mem=1000]' -M 1000000";
+    return "-R 'rusage[tmp=10000:mem=1000]' -M 1000000";
 }
 
 sub _initialize_build {
@@ -574,7 +620,7 @@ sub from_models {
 # Returns a list of builds (all statuses) sorted from oldest to newest
 # TODO: see why this is needed as builds are already sorted by default with get()
 sub sorted_builds {
-    return shift->builds(-order_by => 'date_scheduled');
+    return shift->builds(-order_by => 'created_at');
 }
 
 # Returns a list of succeeded builds sorted from oldest to newest
@@ -587,10 +633,10 @@ sub completed_builds {
 # Returns the latest build of the model, regardless of status
 sub latest_build {
     my $self = shift;
-    my $build_event_iterator = Genome::Model::Event->create_iterator(model_id => $self->id, event_type => 'genome model build', -order_by => '-date_scheduled');
-    my $event = $build_event_iterator->next;
-    return unless $event;
-    return $event->build
+    my $build_iterator = Genome::Model::Build->create_iterator(model_id => $self->id, -order_by => '-created_at');
+    my $build = $build_iterator->next;
+    return unless $build;
+    return $build
 }
 
 # Returns the latest build of the model that successfully completed
@@ -598,10 +644,10 @@ sub last_succeeded_build { return $_[0]->resolve_last_complete_build; }
 sub last_complete_build { return $_[0]->resolve_last_complete_build; }
 sub resolve_last_complete_build {
     my $self = shift;
-    my $build_event_iterator = Genome::Model::Event->create_iterator(model_id => $self->id, event_type => 'genome model build', event_status => 'Succeeded', -order_by => '-date_completed');
-    my $event = $build_event_iterator->next;
-    return unless $event;
-    return $event->build
+    my $build_iterator = Genome::Model::Build->create_iterator(model_id => $self->id, status => 'Succeeded', -order_by => '-date_completed');
+    my $build = $build_iterator->next;
+    return unless $build;
+    return $build
 }
 
 # Returns a list of builds with the specified status sorted from oldest to newest
@@ -619,6 +665,7 @@ sub build_requested {
     my ($self, $value, $reason) = @_;
     # Writing the if like this allows someone to do build_requested(undef)
     if (@_ > 1) {
+        $self->_lock();
         my ($calling_package, $calling_subroutine) = (caller(1))[0,3];
         my $default_reason = 'no reason given';
         $default_reason .= ' called by ' . $calling_package . '::' . $calling_subroutine if $calling_package;
@@ -631,12 +678,38 @@ sub build_requested {
     return $self->__build_requested;
 }
 
+sub _lock {
+    my $self = shift;
+
+    return 1 if $self->{_lock};
+
+    my $model_id = $self->id;
+    unless ($ENV{UR_DBI_NO_COMMIT}) {
+        my $lock_var = File::Spec->join('build_requested', $model_id);
+        my $lock = $self->{_lock} = Genome::Sys->lock_resource(
+            resource_lock => $lock_var, scope => 'site', max_try => 30,
+            block_sleep => 30);
+
+        die("Unable to acquire the lock to request $model_id. Is something already running or did it exit uncleanly?")
+            unless $lock;
+
+        my $commit_observer;
+        $commit_observer = UR::Context->process->add_observer(
+                               aspect => 'commit',
+                               callback => sub {
+                                   Genome::Sys->unlock_resource(resource_lock => $lock);
+                                   $commit_observer->delete;
+                               }
+                           );
+    }
+}
+
 # Returns the latest non-abandoned build that has inputs that match the current state of the model
 sub current_build {
     my $self = shift;
     my $build_iterator = $self->build_iterator(
         'status not like' => 'Abandoned',
-        '-order_by' => '-date_scheduled',
+        '-order_by' => '-created_at',
     );
     while (my $build = $build_iterator->next) {
         return $build if $build->is_current;
@@ -676,7 +749,9 @@ sub status {
     return $status;
 }
 
-# TODO Clean this up
+# Copy model to a new model, overridding some properties
+# TODO allow for the filter desc for an input to be passed in
+# TODO allow for additions to be passed in
 sub copy {
     my ($self, %overrides) = @_;
 
@@ -697,7 +772,8 @@ sub copy {
     }
 
     # input properties
-    for my $property ( $self->real_input_properties ) {
+    my @input_properties = $self->real_input_properties;
+    for my $property ( @input_properties ) {
         my $name = $property->{name};
         if ( defined $overrides{$name} ) { # override
             my $ref = ref $overrides{$name};
@@ -732,6 +808,23 @@ sub copy {
     if ( not $copy ) {
         $self->error_message('Failed to copy model: '.$@);
         return;
+    }
+
+    # copy the inputs filter desc
+    for my $property ( @input_properties ) {
+        my $name = $property->{name};
+        my @inputs = $self->inputs(name => $name);
+        next if not @inputs;
+        for my $input ( @inputs ) {
+            next if not $input->filter_desc;
+            my $copy_input = $copy->inputs(
+                name => $name,
+                value_class_name => $input->value_class_name, 
+                value_id => $input->value_id,
+            );
+            next if not $copy_input;
+            $copy_input->filter_desc( $input->filter_desc );
+        }
     }
 
     return $copy;
@@ -816,11 +909,8 @@ sub _trigger_downstream_builds {
 sub default_model_name {
     my ($self, %params) = @_;
 
-    my $auto_increment = delete $params{auto_increment};
-    $auto_increment = 1 unless defined $auto_increment;
-
-    my $name_template = ($self->subject->name).'.';
-    $name_template .= 'prod-' if (($self->run_as && $self->run_as eq 'apipe-builder') || $params{prod});
+    my $name = ($self->subject->name).'.';
+    $name .= 'prod-' if (($self->run_as && $self->run_as eq 'apipe-builder') || $params{prod});
 
     my $type_name = $self->processing_profile->type_name;
     my %short_names = (
@@ -829,27 +919,49 @@ sub default_model_name {
         'de novo assembly' => 'denovo',
         'metagenomic composition 16s' => 'mc16s',
     );
-    $name_template .= ( exists $short_names{$type_name} )
+    $name .= ( exists $short_names{$type_name} )
     ? $short_names{$type_name}
     : join('_', split(/\s+/, $type_name));
-
-    $name_template .= '%s%s';
 
     my @parts = eval{ $self->_additional_parts_for_default_name(%params); };
     if ( $@ ) {
         $self->error_message("Failed to get addtional default name parts: $@");
         return;
     }
-    $name_template .= '.'.join('.', @parts) if @parts;
 
-    my $name = sprintf($name_template, '', '');
-    my $cnt = 0;
-    while ( $auto_increment && scalar @{[Genome::Model->get(name => $name)]} ) {
-        $name = sprintf($name_template, '-', ++$cnt);
+    my $suffix = '';
+    $suffix .= '.'.join('.', @parts) if @parts;
+
+    return $self->_get_incremented_name($name, $suffix);
+}
+
+sub _check_for_existing_model_name {
+    my $self = shift;
+    my $model_name = shift;
+    return scalar @{[Genome::Model->get(name => $model_name)]};
+}
+
+sub _get_incremented_name {
+    my $self = shift;
+    my $model_name = shift;
+    my $suffix = shift;
+    my $counter = 1;
+
+    my $plain_model_name = $model_name . $suffix;
+    unless($self->_check_for_existing_model_name($plain_model_name)) {
+        return $plain_model_name;
     }
 
-    return $name;
+    my $format_name = sub {
+        return sprintf("%s-%s%s", shift, shift, shift);
+    };
+    while ($self->_check_for_existing_model_name($format_name->($model_name, $counter, $suffix))) {
+            $counter++;
+    }
+
+    return $format_name->($model_name, $counter, $suffix);
 }
+
 
 # Ensures there are no other models of the same class that have the same name. If any are found, information
 # about them is printed to the screen the create fails.
@@ -1090,49 +1202,23 @@ sub files_ignored_by_build_diff { () }
 #Used by Analysis Project configuration to "pair" somatic samples or otherwise aggregate them for analysis
 sub requires_subject_mapping { return 0; }
 
-# For transition to created_by
-sub user_name {
+sub sudo_wrapper { '/usr/local/bin/sudo-genome-build-start' }
+
+sub should_run_as {
     my $self = shift;
-    if (@_) {
-        return $self->__created_by(@_);
-    } else {
-        # Perl 5.8 does not support //
-        if (defined $self->__created_by) {
-            return $self->__created_by;
-        } else {
-            $self->__user_name;
-        }
-    }
+    return unless $self->_can_run_as();
+    return (Genome::Sys->username ne $self->run_as);
 }
 
-# For transition to created_by
-sub created_by {
+sub _can_run_as {
     my $self = shift;
-    if (@_) {
-        return $self->__created_by(@_);
-    } else {
-        # Perl 5.8 does not support //
-        if (defined $self->__created_by) {
-            return $self->__created_by;
-        } else {
-            $self->__user_name;
-        }
-    }
-}
 
-# For transition to created_by
-sub run_as {
-    my $self = shift;
-    if (@_) {
-        return $self->__run_as(@_);
-    } else {
-        # Perl 5.8 does not support //
-        if (defined $self->__run_as) {
-            return $self->__run_as;
-        } else {
-            $self->__user_name;
-        }
+    my $sudo_wrapper = sudo_wrapper();
+    unless ( -x $sudo_wrapper ) {
+        return;
     }
+
+    return 1;
 }
 
 1;

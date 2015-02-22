@@ -14,7 +14,7 @@ class Genome::Model::Event::Build::RnaSeq::Expression::Cufflinks {
 };
 
 sub bsub_rusage {
-    return "-R 'select[model!=Opteron250 && type==LINUX64 && mem>=32000] rusage[mem=32000] span[hosts=1]' -M 32000000 -n 4";
+    return "-R 'select[mem>=32000] rusage[mem=32000] span[hosts=1]' -M 32000000 -n 4";
 }
 
 sub execute {
@@ -32,10 +32,11 @@ sub execute {
             $tophat_file = $alignment_result->bam_file;
         } else {
             $tophat_file = Genome::Sys->create_temp_file_path($self->build->id .'.sam');
-            unless (Genome::Model::Tools::Sam::BamToSam->execute(
+            my $convert_cmd = Genome::Model::Tools::Sam::BamToSam->execute(
                 bam_file => $alignment_result->bam_file,
                 sam_file => $tophat_file,
-            )) {
+            );
+            unless ($convert_cmd and $convert_cmd->result) {
                 $self->error_message('Failed to convert BAM '. $alignment_result->bam_file .' to tmp SAM file '. $tophat_file);
                 die($self->error_message);
             }
@@ -114,12 +115,13 @@ sub execute {
         # This could be a param in the processing profile; however, resolving the annotation set(hence the right build/version) is performed here...
         # jwalker 06/24/2011 - You can easily define any set of params in the processing profile and not define annotation_reference_transcripts for the model
     }
-    unless (Genome::Model::Tools::Cufflinks::Assemble->execute(
+    my $assemble_cmd = Genome::Model::Tools::Cufflinks::Assemble->execute(
         input_file => $tophat_file,
         params => $params,
         output_directory => $expression_directory,
         use_version => $self->model->expression_version,
-    )) {
+    );
+    unless ($assemble_cmd and $assemble_cmd->result) {
         $self->error_message('Failed to execute cufflinks!');
         die($self->error_message);
     }

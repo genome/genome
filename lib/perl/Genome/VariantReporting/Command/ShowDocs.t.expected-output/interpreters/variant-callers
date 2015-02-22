@@ -1,0 +1,17 @@
+[4mOVERVIEW[0m
+Output a list of variant callers that called this position for the specified sample, as well as the number of callers
+
+[4mPROPERTIES[0m
+  [1msample_name[0m   Text
+    This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
+  [1mvalid_callers[0m   String
+    List of variant callers to include in determination for filtering
+
+[4mAVAILABLE FIELDS[0m
+  [1mvariant_caller_count[0m
+    Number of callers that called this position for sample sample_name
+  [1mvariant_callers[0m
+    List of variant callers that called this position for sample sample_name
+

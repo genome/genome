@@ -20,6 +20,11 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
             len => 64,
             doc => 'The species name of the reference.  This value must correspond to a species name found in the gsc.organism_taxon table.'
         },
+        allosome_names => {
+            is => 'Text',
+            doc => 'A comma-separated list of the names of chromosomes that should be treated as non-autosomal',
+            default_value => "X,Y,MT",
+        },
     ],
     has_optional_input => [
         append_to => {
@@ -92,17 +97,20 @@ class Genome::Model::Command::Define::ImportedReferenceSequence {
             doc => 'Indicates if this reference could be rederived from other internal results or if it is an external import',
         },
     ],
-    has_transient => [
+    has_transient_optional => [
         result_build_id => {
             is => 'Text',
-            is_optional => 1,
             doc => 'newly created build ID of reference sequence model',
+        },
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'Analysis Project to which to associate the new model (if any)',
         },
     ],
 };
 
 sub help_synopsis {
-    return "genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/gscuser/person/fastafile.fasta\n"
+    return "genome model define imported-reference-sequence --species-name=human --prefix=NCBI --fasta-file=/path/to/fastafile.fasta\n"
 }
 
 sub help_detail {
@@ -120,7 +128,7 @@ sub _prompt_to_continue {
         $self->warning_message($str);
         return 1;
     } else {
-        my $answer = Genome::Command::Base->_ask_user_question($str . " Continue anyway?");
+        my $answer = Command::V2->_ask_user_question($str . " Continue anyway?");
 
         if($answer and $answer eq 'yes') {
             $self->status_message('Continuing.');
@@ -302,6 +310,9 @@ sub _get_or_create_model {
             'name' => $self->model_name,
             'is_rederivable' => $self->is_rederivable,
         );
+        if($self->analysis_project) {
+            $model->add_analysis_project_bridge(analysis_project => $self->analysis_project);
+        }
 
         if($model) {
             if(my @problems = $model->__errors__){
@@ -326,6 +337,7 @@ sub _create_build {
     my @build_parameters = (
         model_id => $model->id,
         fasta_file => $self->fasta_file,
+        allosome_names => $self->allosome_names,
     );
 
     if ($self->use_default_sequence_uri) {

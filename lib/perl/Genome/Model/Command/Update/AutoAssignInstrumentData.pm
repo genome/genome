@@ -1,12 +1,12 @@
 package Genome::Model::Command::Update::AutoAssignInstrumentData;
 
 class Genome::Model::Command::Update::AutoAssignInstrumentData {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         models => {
             is => 'Genome::Model',
             is_many => 1,
-            doc => 'Models for which auto_assign_inst_data will be set to the value provided. Resolved by Genome::Command::Base.',
+            doc => 'Models for which auto_assign_inst_data will be set to the value provided.',
         },
         value => {
             is => 'Text',

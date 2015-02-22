@@ -8,7 +8,7 @@ use List::Util qw(sum);
 use Statistics::Descriptive;
 
 class Genome::Model::Tools::Analysis::LaneQc::CopyNumberCorrelation {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_optional => [
         output_file => {
             type => 'FilePath',

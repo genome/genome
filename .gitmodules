@@ -39,7 +39,7 @@
 	url = ssh://git//srv/git/bam-readcount.git
 [submodule "ur"]
 	path = ur
-	url = http://github.com/genome/UR.git 
+	url = https://github.com/genome/UR.git
 [submodule "workflow"]
 	path = workflow
 	url = https://github.com/genome/tgi-workflow.git
@@ -192,7 +192,7 @@
 	url = git@github.com:genome-vendor/bedtools.git
 [submodule "genome-snapshot-deps"]
 	path = genome-snapshot-deps
-	url = ssh://git/srv/git/genome-snapshot-deps.git
+	url = git@github.com:genome/genome-snapshot-deps.git
 [submodule "vendor/polymutt"]
 	path = vendor/polymutt
 	url = git@github.com:genome-vendor/polymutt.git
@@ -277,3 +277,12 @@
 [submodule "verifyBamId"]
 	path = vendor/verifyBamId
 	url = https://github.com/genome-vendor/verifyBamId.git
+[submodule "vendor/bamUtil"]
+	path = vendor/bamUtil
+	url = https://github.com/genome-vendor/bamUtil.git
+[submodule "vendor/star"]
+	path = vendor/star
+	url = git@github.com:genome-vendor/star.git
+[submodule "sqitch/genome"]
+	path = sqitch/genome
+	url = https://github.com/genome/genome-sqitch.git

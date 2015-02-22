@@ -17,6 +17,7 @@ BEGIN {
 };
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 
 use_ok('Genome::InstrumentData::AlignmentResult::Merged');
 #
@@ -52,6 +53,9 @@ ok($reference_model, "got reference model");
 my $reference_build = $reference_model->build_by_version('1');
 ok($reference_build, "got reference build");
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
 
 my @instrument_data = generate_fake_instrument_data();
 my @individual_results = generate_individual_alignment_results(@instrument_data);
@@ -74,14 +78,15 @@ my @params = (
      duplication_handler_version => $picard_version,
      instrument_data_id => [map($_->id, @instrument_data)],
      test_name => 'merged_unit_test',
+     instrument_data_segment => [map {$_->id . ':A:2:read_group'} @instrument_data],
 );
 
-my $merged_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->create(@params);
+my $merged_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->create(@params, _user_data_for_nested_results => $result_users);
 
 isa_ok($merged_alignment_result, 'Genome::InstrumentData::AlignmentResult::Merged', 'produced merged alignment result');
 
 my $expected_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Merged/expected';
-my $diff = Genome::Sys->diff_file_vs_file($merged_alignment_result->merged_alignment_bam_path, join('/', $expected_dir, '-120573001.bam'));
+my $diff = Genome::Sys->diff_file_vs_file($merged_alignment_result->bam_file, join('/', $expected_dir, '-120573001.bam'));
 ok(!$diff, 'merged bam matches expected result')
     or diag("diff:\n". $diff);
 
@@ -95,7 +100,7 @@ for my $i (@individual_alignments) {
     ok(!defined($i->filter_name), 'filter_name is not defined as expected');
 }
 
-my $existing_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get_or_create(@params);
+my $existing_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get_or_create(@params, users => $result_users);
 is($existing_alignment_result, $merged_alignment_result, 'got back the previously created result');
 
 my @filtered_params = (
@@ -103,11 +108,11 @@ my @filtered_params = (
     filter_name => [$instrument_data[0]->id . ':forward-only', $instrument_data[1]->id . ':forward-only'],
 );
 
-my $filtered_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get_or_create(@filtered_params);
+my $filtered_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get_or_create(@filtered_params, users => $result_users);
 isa_ok($filtered_alignment_result, 'Genome::InstrumentData::AlignmentResult::Merged', 'produced merged alignment result with filter applied');
 
 #same expected files since we faked the alignment results to use the same data
-my $filtered_diff = Genome::Sys->diff_file_vs_file($filtered_alignment_result->merged_alignment_bam_path, join('/', $expected_dir, '-120573001.bam'));
+my $filtered_diff = Genome::Sys->diff_file_vs_file($filtered_alignment_result->bam_file, join('/', $expected_dir, '-120573001.bam'));
 ok(!$filtered_diff, 'merged bam matches expected result')
     or diag("diff:\n". $filtered_diff);
 
@@ -123,10 +128,10 @@ for my $i (@filtered_individual_alignments) {
 
 isnt($filtered_alignment_result, $existing_alignment_result, 'produced a different result when filter applied');
 
-my $existing_filtered_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get_or_create(@filtered_params);
+my $existing_filtered_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get_or_create(@filtered_params, users => $result_users);
 is($existing_filtered_alignment_result, $filtered_alignment_result, 'got back the previously created filtered result');
 
-my $gotten_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get_with_lock(@params);
+my $gotten_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get_with_lock(@params, users => $result_users);
 is($gotten_alignment_result, $existing_alignment_result, 'using get returns same result as get_or_create');
 
 my @segmented_params = (
@@ -135,7 +140,7 @@ my @segmented_params = (
 );
 
 my $segmented_alignment_result = eval {
-    Genome::InstrumentData::AlignmentResult::Merged->get_or_create(@segmented_params);
+    Genome::InstrumentData::AlignmentResult::Merged->get_or_create(@segmented_params, users => $result_users);
 };
 
 my $error = $@;
@@ -157,6 +162,8 @@ sub generate_individual_alignment_results {
         samtools_version => $samtools_version,
         picard_version   => $picard_version,
         reference_build  => $reference_build,
+        instrument_data_segment_type => "read_group",
+        instrument_data_segment_id => "A:2",
     );
 
     for my $i (0,1) {

@@ -11,7 +11,7 @@ require File::Temp;
 require IO::File;
 
 class Genome::Model::DeNovoAssembly::Command::UploadToDacc {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         model => {
             is => 'Genome::Model',

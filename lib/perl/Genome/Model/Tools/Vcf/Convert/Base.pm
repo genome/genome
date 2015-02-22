@@ -5,7 +5,9 @@ use warnings;
 
 use JSON;
 use Genome;
+use Genome::Utility::Instrumentation qw();
 use File::Slurp;
+use Params::Validate qw(validate CODEREF SCALAR);
 use POSIX 'strftime';
 use LWP::UserAgent;
 use Carp qw(croak);
@@ -159,20 +161,11 @@ sub check_tcga_vcf {
     for my $sample_type qw(aligned_reads_sample control_aligned_reads_sample) {
         my $sample_name = $self->$sample_type;
         if ($sample_name) {
-            if ($sample_name =~ /^TCGA\-/) {
+            my $name_in_vcf = Genome::Sample->sample_name_to_name_in_vcf($sample_name);
+            if ($name_in_vcf =~ /^TCGA\-/) {
                 $flag++;
             }
-            else {
-                my $sample = Genome::Sample->get(name => $sample_name);
-                if ($sample) {
-                    my $sample_tcga_name = $sample->extraction_label;
-                    if ($sample_tcga_name and $sample_tcga_name =~ /^TCGA\-/) {
-                        $self->debug_message("Found TCGA name: $sample_tcga_name for sample: $sample_name");
-                        $self->$sample_type($sample_tcga_name);
-                        $flag++;
-                    }
-                }
-            }
+            $self->$sample_type($name_in_vcf);
         }
     }
     $self->_tcga_vcf(1) if $flag;
@@ -361,29 +354,33 @@ sub format_meta_line {
     return $string;
 }
 
-sub retry_request {
-    my %argv = @_;
+sub retry {
+    my %p = validate(@_, {
+        func => {
+            type => CODEREF,
+        },
+        sleep => {
+            type => SCALAR,
+            regex => qr(^\d+$),
+        },
+        attempts => {
+            type => SCALAR,
+            regex => qr(^\d+$),
+            callbacks => { 'greater than zero' => sub { $_[0] > 0 } },
+        },
+    });
 
-    my $agent = delete $argv{agent} or croak 'required argument: agent';
-    my $sleep = delete $argv{sleep} or croak 'required argument: sleep';
-    my $request = delete $argv{request} or croak 'required argument: request';
-    my $attempts = delete $argv{attempts} or croak 'required argument: attempts';
-
-    if ($sleep < 0 || $attempts < 1) {
-        die;
-    }
-
-    my $response;
-
-    while ($attempts-- > 0) {
-        $response = $agent->request($request);
-        if ($response->is_success) {
-            return $response;
+    my $attempt;
+    while ($p{attempts}-- > 0) {
+        $attempt++;
+        if ($p{func}->()) {
+            return $attempt;
+        } else {
+            sleep $p{sleep};
         }
-        sleep $sleep;
     }
 
-    return $response;
+    return;
 }
 
 sub query_tcga_barcode_error_template {
@@ -396,21 +393,35 @@ sub query_tcga_barcode {
     my %argv = @_;
 
     my $url = delete $argv{url} || 'https://tcga-data.nci.nih.gov/uuid/uuidws/mapping/json/barcode/batch';
-    my $sleep = delete $argv{sleep} || 60;
+    my $sleep = delete $argv{sleep} || 10;
 
     my $agent = LWP::UserAgent->new();
+
+    # based on instrumentation the upper bound on response times is 700 ms
+    $agent->timeout(5);
 
     my $request = HTTP::Request->new(POST => $url);
     $request->content_type('text/plain');
     $request->content($barcode_str);
 
-    my $response = retry_request(
-        agent    => $agent,
-        request  => $request,
-        sleep    => $sleep,
-        attempts => 5,
-    );
-    unless ($response->is_success) {
+    my @prefix = qw(gmt vcf convert query_tcga_barcode);
+    my $response;
+    my $attempts = retry(func => sub {
+        my $rv;
+        Genome::Utility::Instrumentation::timer(
+            join('.', @prefix, 'request'), sub {
+                $response = $agent->request($request);
+                $rv = $response->is_success;
+            }
+        );
+        return $rv;
+    }, sleep => $sleep, attempts => 8);
+    if ($attempts) {
+        Genome::Utility::Instrumentation::gauge(
+            join('.', @prefix, 'retry_attempts'), $attempts,
+        );
+    } else {
+        Genome::Utility::Instrumentation::inc(join('.', @prefix, 'retry_failure'));
         my $message = $response->message;
         my $error_message = sprintf(query_tcga_barcode_error_template, $barcode_str, $message);
         die $self->error_message($error_message);
@@ -511,17 +522,21 @@ sub write_line {
 # alt alleles is an arrayref of  the alleles from the "ALT" column, all calls for this position that don't match the reference.
 # genotype alleles is an arrayref of the alleles called at this position for this sample, including those that match the reference
 sub generate_gt {
-    my ($self, $reference, $alt_alleles, $genotype_alleles) = @_;
+    my ($self, $reference, $alt_alleles_orig, $genotype_alleles_orig) = @_;
+
+    my @alt_alleles = map { uc } @$alt_alleles_orig;
+    my @genotype_alleles = map { uc } @$genotype_alleles_orig;
+    $reference = uc($reference);
 
     my @gt_string;
-    for my $genotype_allele (@$genotype_alleles) {
+    for my $genotype_allele (@genotype_alleles) {
         my $allele_number;
         if ($genotype_allele eq $reference) {
             $allele_number = 0;
         } else {
             # Find the index of the alt allele that matches this genotype allele, add 1 to offset 0 based index
-            for (my $i = 0; $i < scalar @$alt_alleles; $i++) {
-                if ($genotype_allele eq @$alt_alleles[$i]) {
+            for (my $i = 0; $i < scalar @alt_alleles; $i++) {
+                if ($genotype_allele eq $alt_alleles[$i]) {
                     $allele_number = $i + 1; # Genotype index starts at 1
                 }
             }

@@ -14,7 +14,7 @@ class Genome::Model::DifferentialExpression::Command::List {
             is_constant => 1, 
             value => 'Genome::Model::DifferentialExpression' 
         },
-        show => { default_value => 'id,name,processing_profile_id,condition_labels_string,condition_model_ids_string' },
+        show => { default_value => 'id,name,processing_profile_id,condition_pairs' },
     ],
     doc => 'list differential expression genome models',
 };

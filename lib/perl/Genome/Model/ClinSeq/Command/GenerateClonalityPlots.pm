@@ -5,22 +5,21 @@ package Genome::Model::ClinSeq::Command::GenerateClonalityPlots;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::ClinSeq::Util qw(:all);
-
 
 class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
-    is => 'Command::V2',
+    is => ['Command::V2',
+          'Genome::Model::ClinSeq::Util'],
     has_input => [
-        somatic_var_build   => { is => 'Genome::Model::Build::SomaticVariation', id_by => 'somatic_var_build_id', 
+        somatic_var_build   => { is => 'Genome::Model::Build::SomaticVariation', id_by => 'somatic_var_build_id',
                                 doc => 'Build ID for a somatic variation model' },
 
-        misc_annotation_db  => { is => 'Genome::Db::Tgi::MiscAnnotation', 
+        misc_annotation_db  => { is => 'Genome::Db::Tgi::MiscAnnotation',
                                 doc => 'misc annotation for the reference sequence, supplying centromere ideogram and gaps' },
 
-        common_name         => { is => 'Text', 
+        common_name         => { is => 'Text',
                                 doc => 'Human readable name for the patient / sample comparison' },
-        
-        output_dir          => { is => 'Text', 
+
+        output_dir          => { is => 'Text',
                                 doc => 'Directory to place temp files and results' },
     ],
     has_param => [
@@ -29,10 +28,10 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
 
         verbose             => { is => 'Boolean', is_optional => 1, default_value => 0,
                                 doc => 'To display more output, set this flag' },
-        
+
         limit               => { is => 'Number', is_optional => 1,
                                 doc => 'Limit the number of SNVs to the first N (mostly for testing).' },
-        
+
         chromosome          => { is => 'Text', is_optional => 1,
                                  doc => 'Limit analysis to variants on a specified chromosome' },
 
@@ -45,14 +44,19 @@ class Genome::Model::ClinSeq::Command::GenerateClonalityPlots {
         max_normal_vaf      => { is => 'Number', is_optional => 1, default_value => 3,
                                  doc => 'Specify a maximum allowed normal VAF (you will still get another plot with all data)' },
 
+        bam_readcount_version => { is => 'Text', doc => 'The version of bam-readcounts to use', },
     ],
     has_output => [
         cnv_hmm_file => {
             is => 'FilesystemPath',
             is_optional => 1,
         },
+        cnv_hq_file => {
+            is => 'FilesystemPath',
+            is_optional => 1,
+        },
     ],
-    doc => "This script attempts to automate the process of creating a 'clonality' plot"
+    doc => "creates clonality plots"
 };
 
 sub help_synopsis {
@@ -65,7 +69,7 @@ sub execute {
     my $self = shift;
 
     #This script running a series of commands obtained from Nate Dees that results in the creation of a clonality plot (.pdf)
-    my $somatic_var_build = $self->somatic_var_build; 
+    my $somatic_var_build = $self->somatic_var_build;
     my $output_dir = $self->output_dir;
     my $common_name = $self->common_name;
     my $verbose = $self->verbose;
@@ -89,25 +93,10 @@ sub execute {
     #TODO: Replace all of this with a new process that gets variants from a unified clin-seq BAM read counts result
     #TODO: This step should just run the clonality tool in different ways on different input files.  All of this hacky file manipulation should be removed
 
-    # This tool calls some scripts which have not been converted into tools
-    #TODO: Fix that so that Nate and Krishna's old code is cleaned up and brought into the fold
-    my $script_dir = Cwd::abs_path(File::Basename::dirname(__FILE__) . '/../OriginalScripts/') . '/';
-    unless (-d $script_dir) {
-      die $self->error_message("failed to find script dir $script_dir!")
-    }
-
     #Get somatic variation effects dir, tumor bam and normal bam from a somatic variation model ID
     my %data_paths;
-    #... /genome/lib/perl/Genome/Model/Build/SomaticVariation.pm
-    $data_paths{root_dir} = $somatic_var_build->data_directory ."/";
-    $data_paths{effects_dir} = "$data_paths{root_dir}"."effects/";
-    $data_paths{cnvs_hq} = "$data_paths{root_dir}"."variants/cnvs.hq";
-    $data_paths{normal_bam} = $somatic_var_build->normal_bam;
-    $data_paths{tumor_bam} = $somatic_var_build->tumor_bam;
-    my $reference_build = $somatic_var_build->reference_sequence_build;
-    $data_paths{reference_fasta} = $reference_build->full_consensus_path('fa');
-    $data_paths{display_name} = $reference_build->__display_name__;
-
+    my $is_copycat = $self->_is_copycat_somvar($somatic_var_build);
+    $self->get_data_paths(\%data_paths, $somatic_var_build, $is_copycat, $output_dir);
     my $somatic_effects_dir = $data_paths{effects_dir};
 
     #Make sure the specified parameters are correct
@@ -125,47 +114,30 @@ sub execute {
     #Step 2 - put them together in one file:
     my $snv_file = $output_dir . "allsnvs.hq.novel.tier123.v2.bed";
     my $cat_cmd = "cat $output_dir"."snvs* > $snv_file";
-    
+
     if ($verbose){$self->debug_message("$cat_cmd");}
     Genome::Sys->shellcmd(cmd => $cat_cmd);
-    
+
     #Apply the chromosome filter if specified
-    if (defined $chromosome){
-      $self->warning_message("limiting SNVs to only those on chromosome: $chromosome");
+    if (defined $chromosome or defined $limit){
+      $self->warning_message("limiting SNVs to only those on chromosome: $chromosome") if defined $chromosome;
+      $self->warning_message("limiting SNVs to a max of $limit") if defined $limit;
+
       my $file = $snv_file . ".tmp";
-      open (IN, $snv_file) || die $self->error_message("Could not open file reading: $snv_file");
-      open (OUT, ">$file") || die $self->error_message("Could not open file for writing: $file");
+      my $snv_fh = Genome::Sys->open_file_for_reading($snv_file);
+      my $filtered_fh = Genome::Sys->open_file_for_writing($file);
       my $s = 0;
-      while(<IN>){
-        if ($_ =~ /^$chromosome\s+/){
-          print OUT $_;
+      while(<$snv_fh>){
+        if (!defined($chromosome) or $_ =~ /^$chromosome\s+/){
+          print $filtered_fh $_;
           $s++;
         }
-      }
-      close(IN);
-      close (OUT);
-      $self->debug_message("Filtered down to $s variants on chromosome: $chromosome");
-      unlink($snv_file);
-      Genome::Sys->move_file($file, $snv_file);
-    }
 
-    #Apply the variant limit if specified
-    if (defined $limit) {
-      $self->warning_message("limiting SNVs to a max of $limit");
-      my $file = $snv_file . ".tmp";
-      open (IN, $snv_file) || die $self->error_message("Could not open file reading: $snv_file");
-      open (OUT, ">$file") || die $self->error_message("Could not open file for writing: $file");
-      my $c = 0;
-      while(<IN>){
-        $c++;
-        if ($c <= $limit){
-          print OUT "$_";
-        }else{
-          last;
-        }
+        last if defined($limit) and $s >= $limit;
       }
-      close(IN);
-      close (OUT);
+      $snv_fh->close;
+      $filtered_fh->close;
+      $self->debug_message("Filtered down to $s variants on chromosome: $chromosome");
       unlink($snv_file);
       Genome::Sys->move_file($file, $snv_file);
     }
@@ -176,7 +148,7 @@ sub execute {
     if ($verbose){$self->debug_message("$awk_cmd");}
     Genome::Sys->shellcmd(cmd => $awk_cmd);
 
-    #Define the BAM files.  
+    #Define the BAM files.
     #The 'old' method supplied both Tumor & Normal coverage and both would be used to assess a minimum coverage cutoff for plotting
     #The 'new' method uses only the Tumor coverage
     my $tumor_bam = $data_paths{tumor_bam};
@@ -189,17 +161,20 @@ sub execute {
     }
     else {
         $readcounts_outfile = "$adapted_file".".readcounts";
-        my $read_counts_cmd = "$script_dir"."borrowed/ndees/give_me_readcounts.pl  --sites_file=$adapted_file --bam_list=\"Tumor:$tumor_bam,Normal:$normal_bam\" --reference_fasta=$data_paths{reference_fasta} --output_file=$readcounts_outfile";
-        if ($verbose){$self->debug_message("$read_counts_cmd");}
-        Genome::Sys->shellcmd(cmd => $read_counts_cmd);
+        my $read_counts_cmd = Genome::Model::ClinSeq::Command::GenerateClonalityPlots::Readcounts->create(
+            sites_file => $adapted_file,
+            bam_files => ["Tumor:$tumor_bam", "Normal:$normal_bam"],
+            reference_build => $somatic_var_build->reference_sequence_build,
+            output_file => $readcounts_outfile,
+            bam_readcount_version => $self->bam_readcount_version,
+        );
+        $read_counts_cmd->execute
+            or die $self->error_message('Failed to generate readcounts');
     }
 
     #Step 5 - create a varscan-format file from these outputs:
-    #perl ~kkanchi/bin/create_pseudo_varscan.pl     allsnvs.hq.novel.tier123.v2.bed.adapted     allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts     >     allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan
     my $readcounts_varscan_file = "$readcounts_outfile".".varscan";
-    my $varscan_format_cmd = "$script_dir"."borrowed/kkanchi/create_pseudo_varscan.pl $adapted_file $readcounts_outfile > $readcounts_varscan_file";
-    if ($verbose){$self->debug_message("$varscan_format_cmd");}
-    Genome::Sys->shellcmd(cmd => $varscan_format_cmd);
+    $self->create_pseudo_varscan_file($adapted_file, $readcounts_outfile, $readcounts_varscan_file);
 
     #TODO: Replace steps 4-5 above by using the following script:
     #TODO: Once you know this is working, use $readcounts_clonality_outfile instead of $readcounts_varscan_file in the clonality commands below.  Then comment out steps 2-5 above
@@ -222,7 +197,7 @@ sub execute {
     #Make a copy of the cnvs.hq file
     my $cnvs_output_path = "${output_dir}cnvs.hq";
     Genome::Sys->copy_file($data_paths{cnvs_hq}, $cnvs_output_path);
-    chmod 0664, $cnvs_output_path;
+    chmod 0660, $cnvs_output_path;
 
     my $misc_annotation_db = $self->misc_annotation_db;
     my $centromere_file = $misc_annotation_db->data_set_path("centromere.csv");
@@ -256,7 +231,7 @@ sub execute {
     #gmt validation clonality-plot     --cnvhmm-file     /gscuser/ndees/103/wgs/SV_somatic/CNV/aml103.cnvhmm     --output-image     aml103.clonality.pdf     --r-script-output-file     clonality.R     --varscan-file     allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan     --analysis-type     wgs     --sample-id     'AML103'     --positions-highlight     IL2RA_NF1_positions
 
     #gmt validation clonality-plot  --cnvhmm-file='/gscmnt/sata132/techd/mgriffit/hg1/clonality/hg1.cnvhmm'  --output-image hg1.clonality.pdf  --r-script-output-file clonality.R  --varscan-file allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan  --analysis-type wgs  --sample-id 'HG1'
-    
+
     #Step 7-A. Without clusters
     my $output_image_file1a = "$output_dir"."$common_name".".clonality.pdf";
     my $r_script_file = "$output_dir"."clonality.R";
@@ -282,19 +257,21 @@ sub execute {
     #Step 7-C.  Without clusters but after filtering the input file to remove those with low coverage in tumor or high VAF in normal
     #normal coverage = col5+col6; normal vaf = col7; tumor coverage = col9+10; tumor vaf = col11
     my $filtered_file = $varscan_file . ".filt";
-    open (SNV, $varscan_file) || die $self->error_message("Could not open snv file: $varscan_file for reading");
-    open (SNV2, ">$filtered_file") || die $self->error_message("Could not open filtered snv file: $filtered_file for writing");
-    while(<SNV>){
+
+    my $varscan_fh = Genome::Sys->open_file_for_reading($varscan_file);
+    my $filtered_fh = Genome::Sys->open_file_for_writing($filtered_file);
+    while(<$varscan_fh>){
       my @line = split("\t", $_);
       my $normal_cov = $line[4] + $line[5];
       my $normal_vaf = $line[6];
       my $tumor_cov = $line[8]+$line[9];
       my $tumor_vaf = $line[10];
       next if ($tumor_cov < $self->min_tumor_cov || $tumor_cov > $self->max_tumor_cov || $normal_vaf > $self->max_normal_vaf);
-      print SNV2 $_;
+      print $filtered_fh $_;
     }
-    close(SNV);
-    close(SNV2);
+    $varscan_fh->close;
+    $filtered_fh->close;
+
     if (-s $filtered_file){
       my $output_image_file3a = "$output_dir"."$common_name".".clonality.filtered_snvs.pdf";
       my $clonality_cmd3a = Genome::Model::Tools::Validation::ClonalityPlot->create(cnvhmm_file=>$cnvhmm_file, output_image=>$output_image_file3a, r_script_output_file=>$r_script_file, varscan_file=>$filtered_file, analysis_type=>'wgs', sample_id=>$uc_common_name);
@@ -305,13 +282,79 @@ sub execute {
     }else{
       $self->warning_message("Empty filtered snv file: $filtered_file");
     }
-    #Keep the files that were needed to run the cna-seg and clonality plot steps so that someone can rerun with different parameters 
+    #Keep the files that were needed to run the cna-seg and clonality plot steps so that someone can rerun with different parameters
 
     #Define the output parameter for the cnvhmm so that it can be fed into downstream steps in a workflow
-    $self->cnv_hmm_file($cnvhmm_file);
+    if(not $is_copycat) {
+        $self->cnv_hmm_file($cnvhmm_file);
+    } else {
+        my $copycat_cnvhmm_file = $output_dir . "cnaseq.cnvhmm";
+        $self->create_copycat_cnvhmm_file($somatic_var_build, $copycat_cnvhmm_file);
+        $self->cnv_hmm_file($copycat_cnvhmm_file);
+    }
+    $self->cnv_hq_file($cnvs_output_path);
 
     return 1;
 };
+
+sub get_data_paths {
+    my $self = shift;
+    my $data_paths = shift;
+    my $somatic_var_build = shift;
+    my $is_copycat = shift;
+    my $output_dir = shift;
+    $data_paths->{root_dir} = $somatic_var_build->data_directory ."/";
+    $data_paths->{effects_dir} = $data_paths->{root_dir} . "effects/";
+    if(not $is_copycat) {
+        $data_paths->{cnvs_hq} = $data_paths->{root_dir} . "variants/cnvs.hq";
+    } else {
+        $data_paths->{cnvs_hq} = $self->create_copycat_cnvhq_file($somatic_var_build, $output_dir);
+    }
+    $data_paths->{normal_bam} = $somatic_var_build->normal_bam;
+    $data_paths->{tumor_bam} = $somatic_var_build->tumor_bam;
+    my $reference_build = $somatic_var_build->reference_sequence_build;
+    $data_paths->{reference_fasta} = $reference_build->full_consensus_path('fa');
+    $data_paths->{display_name} = $reference_build->__display_name__;
+}
+
+sub create_pseudo_varscan_file {
+    my $self = shift;
+    my $snvs_file = shift;
+    my $readcounts_file = shift;
+    my $output_file = shift;
+
+    my $output_fh = Genome::Sys->open_file_for_writing($output_file);
+
+    my %tumHash;
+    my $rc_fh = Genome::Sys->open_file_for_reading( $readcounts_file );
+    while( my $line = $rc_fh->getline )
+    {
+        chomp($line);
+        my @fields = split("\t",$line);
+        $tumHash{$fields[0] . "|" . $fields[1]} = $line;
+    }
+    $rc_fh->close;
+
+    my $snvs_fh = Genome::Sys->open_file_for_reading( $snvs_file );
+    while( my $line = $snvs_fh->getline )
+    {
+        chomp($line);
+        my @fields = split("\t",$line);
+        if(exists($tumHash{$fields[0] . "|" . $fields[1]})){
+            my @tum = split("\t",$tumHash{$fields[0] . "|" . $fields[1]});
+
+            print $output_fh join("\t",
+                @fields[0..1,3..4],
+                @tum[10..12], "NULL", @tum[5..7],
+                "NULL", "Somatic", (("NULL") x 6)
+            ), "\n";
+
+        }
+    }
+    $snvs_fh->close;
+
+    return 1;
+}
 
 1;
 

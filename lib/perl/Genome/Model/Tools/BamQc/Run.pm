@@ -10,7 +10,7 @@ use File::Basename qw(basename);
 
 my $DEFAULT_PICARD_VERSION    = Genome::Model::Tools::Picard->default_picard_version;
 my $DEFAULT_SAMSTAT_VERSION   = Genome::Model::Tools::SamStat::Base->default_samstat_version;
-my $DEFAULT_FASTQC_VERSION    = Genome::Model::Tools::Fastqc->default_fastqc_version; 
+my $DEFAULT_FASTQC_VERSION    = Genome::Model::Tools::Fastqc->default_fastqc_version;
 my $DEFAULT_ERRORRATE_VERSION = Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version;
 my $DEFAULT_SAMTOOLS_VERSION  = Genome::Model::Tools::Sam->default_samtools_version;
 my $DEFAULT_SAMTOOLS_MAXIMUM_MEMORY = Genome::Model::Tools::Sam->default_samtools_maximum_memory;
@@ -142,7 +142,7 @@ sub execute {
 
     #TODO: Validate BAM sort order or at least throw a warning if not found
     #BAM header tag under @HD SO, valid values: unknown (default), unsorted, queryname and coordinate
-    
+
     my ($bam_basename, $bam_dirname, $bam_suffix) = File::Basename::fileparse($self->bam_file, qw/\.bam/);
     $bam_basename = $self->bam_link_name if $self->bam_link_name;
     my $file_basename = $output_directory .'/'. $bam_basename;
@@ -162,16 +162,17 @@ sub execute {
             unless (symlink($bai_file,$bai_path)) {
                 die('Failed to create symlink '. $bai_path .' -> '. $bai_file);
             }
-        } 
+        }
         else {
             # TODO: test if BAM file is sorted before indexing
-            unless (Genome::Model::Tools::Picard::BuildBamIndex->execute(
+            my $index_cmd = Genome::Model::Tools::Picard::BuildBamIndex->create(
                 use_version            => $self->picard_version,
                 maximum_permgen_memory => $self->picard_maximum_permgen_memory,
                 maximum_memory         => $self->picard_maximum_memory,
                 input_file             => $bam_path,
                 output_file            => $bai_path,
-            )) {
+            );
+            unless ($index_cmd->execute) {
                 die('Failed to index BAM file: '. $bam_path);
             }
         }
@@ -182,7 +183,7 @@ sub execute {
     unless (@mrkdup_files) {
         # TODO: run MarkDuplicates passing the mrkdup bam file as input to the downstream steps in workflow
         # Not sure because some BAMs are intentionally left unmarked (ex. RNASeq)....
-    } 
+    }
     else {
         for my $mrkdup_file (@mrkdup_files) {
             my ($mrkdup_basename, $mrkdup_dirname, $mrkdup_suffix) = File::Basename::fileparse($mrkdup_file,qw/\.metrics/);
@@ -200,7 +201,7 @@ sub execute {
     my $picard_gc_metrics_file  = $file_basename .'-PicardGC_metrics.txt';
     my $picard_gc_chart_file    = $file_basename .'-PicardGC_chart.pdf';
     my $picard_gc_summary_file  = $file_basename .'-PicardGC_summary.txt';
-    
+
     #ASSUME_SORTED only applied to picard 1.77 and later
     my $picard_gc_assume_sorted = $self->picard_version >= 1.77 ? 1 : 0;
 
@@ -219,7 +220,7 @@ sub execute {
         fastqc_version                 => $self->fastqc_version,
     );
 
-    $workflow_params{picard_gc_assume_sorted} = 1 if $picard_gc_assume_sorted; 
+    $workflow_params{picard_gc_assume_sorted} = 1 if $picard_gc_assume_sorted;
     my @output_properties = qw(picard_metrics_result fastqc_result);
 
     my $flagstat_path = $file_basename .'.bam.flagstat';
@@ -229,7 +230,7 @@ sub execute {
             unless (symlink($flagstat_file,$flagstat_path)) {
                 die('Failed to create symlink '. $flagstat_path .' -> '. $flagstat_file);
             }
-        } 
+        }
         else {
             $workflow_params{samtools_version}        = $self->samtools_version;
             $workflow_params{samtools_maximum_memory} = $self->samtools_maximum_memory;
@@ -304,7 +305,7 @@ sub execute {
         );
         my $samtools_flagstat_operation = $self->setup_workflow_operation(%samtools_flagstat_operation_params);
     }
-    
+
     # PicardMetrics
     my %picard_metrics_operation_params = (
         workflow   => $workflow,
@@ -326,8 +327,8 @@ sub execute {
     }
     my $picard_metrics_operation = $self->setup_workflow_operation(%picard_metrics_operation_params);
     my $max_memory = $self->picard_maximum_memory + 2;
-    $picard_metrics_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
-    
+    $picard_metrics_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
+
     # PicardGcBias
     if ($workflow_params{reference_sequence}) {
         my %picard_gc_bias_operation_params = (
@@ -350,13 +351,13 @@ sub execute {
                 result => 'picard_gc_bias_result',
             },
         );
-        $picard_gc_bias_operation_params{input_properties}->{picard_gc_assume_sorted} = 'assume_sorted' 
-            if $picard_gc_assume_sorted; 
-        
+        $picard_gc_bias_operation_params{input_properties}->{picard_gc_assume_sorted} = 'assume_sorted'
+            if $picard_gc_assume_sorted;
+
         my $picard_gc_bias_operation = $self->setup_workflow_operation(%picard_gc_bias_operation_params);
-        $picard_gc_bias_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
+        $picard_gc_bias_operation->operation_type->lsf_resource('-M '. $max_memory .'000000 -R \'select[tmp>1000 && mem>'. $max_memory.'000] rusage[tmp=1000, mem='. $max_memory.'000]\'');
     }
-    
+
     # SamStat
     if ($self->samstat) {
         my %samstat_operation_params = (
@@ -406,9 +407,9 @@ sub execute {
             },
         );
         my $error_rate_operation = $self->setup_workflow_operation(%error_rate_operation_params);
-        $error_rate_operation->operation_type->lsf_resource('-M 8000000 -R \'select[type==LINUX64 && model!=Opteron250 && tmp>1000 && mem>8000] rusage[tmp=1000, mem=8000]\'');
+        $error_rate_operation->operation_type->lsf_resource('-M 8000000 -R \'select[tmp>1000 && mem>8000] rusage[tmp=1000, mem=8000]\'');
     }
-    
+
     # Read Length
     if ($self->read_length) {
         my %read_length_operation_params = (
@@ -513,7 +514,7 @@ sub execute {
         while (my $refcov_data = $refcov_stats->next) {
             if ($data{'RefCovMetrics'}{$refcov_data->{'name'}}) {
                 die('Multiple RefCov entries found.  Probably from multiple min_depth or wingspan filters.');
-            } 
+            }
             else {
                 $data{'RefCovMetrics'}{$refcov_data->{'name'}} = $refcov_data;
             }

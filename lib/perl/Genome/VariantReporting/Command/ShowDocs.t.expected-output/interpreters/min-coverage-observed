@@ -1,0 +1,19 @@
+[4mOVERVIEW[0m
+Calculate the minimum coverage (ref_count+var_count) between all the samples specified
+
+[4mPROPERTIES[0m
+  [1msample_name_labels[0m   Hash
+    Hash of sample_name to label
+    Default value {} if not specified
+    This is a translated property.
+  [1msample_names[0m   Text
+    List of sample names to be used in the report
+    This is a translated property.
+
+[4mREQUIRED EXPERTS[0m
+bam-readcount
+
+[4mAVAILABLE FIELDS[0m
+  [1mmin_coverage_observed[0m
+    Minimum coverage (ref_count+var_count) between all the samples at this position
+

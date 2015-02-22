@@ -279,7 +279,8 @@ sub execute {
     my $rrna_screen = Genome::Model::Tools::Hgmi::RrnaScreen->create(
         sequence_set_id => $merge->sequence_set_id,
         dev => $self->dev,
-        rrna_database => '/gscmnt/278/analysis/HGMI/rRNA_testing/16s_23srnadb',
+        rrna_database => File::Spec->join(Genome::Model::Tools::Hgmi->installation_path,
+            'rRNA_testing', '16s23srnadb'),
     );
     confess "Could not create rrna screen object!" unless $rrna_screen;
     my $rrna_screen_rv = $rrna_screen->execute;

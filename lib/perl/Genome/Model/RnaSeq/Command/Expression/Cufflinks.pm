@@ -7,7 +7,9 @@ use version;
 
 use Genome;
 
-my $DEFAULT_LSF_RESOURCE = "-R 'select[model!=Opteron250 && type==LINUX64 && mem>=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4";
+my $DEFAULT_LSF_RESOURCE = $ENV{GENOME_TESTING}
+    ? "-R 'span[hosts=1]' -n 4"
+    : "-R 'select[mem>=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4";
 
 class Genome::Model::RnaSeq::Command::Expression::Cufflinks {
     is => ['Command::V2'],
@@ -88,7 +90,8 @@ sub execute {
             $params{annotation_build} = $build->annotation_build;
         }
         delete($params{test_name});
-        unless (Genome::InstrumentData::AlignmentResult::Command::CufflinksExpression->execute(%params)) {
+        my $cmd = Genome::InstrumentData::AlignmentResult::Command::CufflinksExpression->create(%params);
+        unless ($cmd and $cmd->execute) {
             return;
         }
     }
@@ -105,12 +108,17 @@ sub params_for_result {
     unless ($alignment_result) {
         die $self->error_message('No alignment result found for build: '. $build->id);
     }
+
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{cufflinks_expression} = $build;
+
     my %params = (
         alignment_result_id => $alignment_result->id,
         cufflinks_version => $pp->expression_version,
         cufflinks_params => $pp->expression_params,
         annotation_reference_transcripts_mode  => $self->annotation_reference_transcripts_mode,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        users => $result_users,
     );
     if ( defined($pp->mask_reference_transcripts) ) {
         $params{mask_reference_transcripts} = $pp->mask_reference_transcripts;
@@ -123,14 +131,12 @@ sub link_result_to_build {
     my $result = shift;
 
     my $build = $self->build;
-    my $label = join('_', 'cufflinks_expression');
     my $mode = $self->annotation_reference_transcripts_mode;
     Genome::Sys->create_symlink($result->output_dir, $build->expression_directory($mode));
     if ($mode eq 'reference only') {
         # create the old expression directory for compatibility
         Genome::Sys->create_symlink($build->expression_directory($mode), $build->expression_directory);
     }
-    $result->add_user(label => $label, user => $build);
 
     $self->cufflinks_expression_result($result);
 

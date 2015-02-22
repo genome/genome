@@ -25,6 +25,25 @@ class Genome::Library::View::Solr::Xml {
             calculate_from => ['subject'],
             calculate => sub { return join ('?id=', '/view/genome/library/status.html',$_[0]->id()); },
         },
+        default_aspects => {
+            is => 'ARRAY',
+            default => [
+                {
+                    name => 'sample_name',
+                    position => 'content',
+                },
+                {
+                    name => 'species_name',
+                    position => 'content',
+                },
+                {
+                    name => '__display_name__',
+                    position => 'display_title',
+                },
+            ],
+        }
+    ],
+    has_optional_field => [
         display_label1 => {
             is  => 'Text',
         },
@@ -43,24 +62,7 @@ class Genome::Library::View::Solr::Xml {
         display_url3 => {
             is  => 'Text',
         },
-        default_aspects => {
-            is => 'ARRAY',
-            default => [
-                {
-                    name => 'sample_name',
-                    position => 'content',
-                },
-                {
-                    name => 'species_name',
-                    position => 'content',
-                },
-                {
-                    name => '__display_name__',
-                    position => 'display_title',
-                },
-            ],
-        }
-    ]
+    ],
 };
 
 1;

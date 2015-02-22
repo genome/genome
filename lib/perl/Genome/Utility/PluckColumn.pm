@@ -1,7 +1,10 @@
 package Genome::Utility::PluckColumn;
+use parent 'Exporter';
 
 use strict;
 use warnings;
+
+our @EXPORT_OK = qw(pluck_column_from_class);
 
 use List::Util qw(first);
 

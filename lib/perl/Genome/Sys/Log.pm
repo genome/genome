@@ -7,6 +7,11 @@ use Log::Log4perl qw(get_logger :levels);
 use JSON;
 use Digest::SHA qw(sha1);
 
+# syslog, logstash, and UDP MTU can all affect this length.  Most recently we
+# hit the UDP MTU limit going through the switches between blades and logstash.
+# This is obviously site specific and should be move to configuration.
+use constant MAX_SYSLOG_MSG_LEN => 1280;
+
 my %MESSAGE_TYPE_TO_LOG_LEVEL = (
     debug_message => 'debug',
     status_message => 'info',
@@ -62,6 +67,10 @@ my $callback = sub {
                 my $a = ref($self) ? $self->class . ' id('. $self->__display_name__.')' : $self;
                 $message = $a . ': ' . $message;
             }
+
+            # truncate message due to syslog limitation
+            $message = substr($message, 0, MAX_SYSLOG_MSG_LEN);
+
             unless ($ENV{UR_DBI_NO_COMMIT}) {
                 $retval = $log4perl->$level($message);
             }
@@ -145,7 +154,7 @@ my $callback = sub {
     };
     my $json = encode_json $msg;
 
-    if (length($json) > 1024) {
+    if (length($json) > MAX_SYSLOG_MSG_LEN) {
         # omit the explicit stack if the message is too long
         # the sha1 of the stack is still there
         delete $msg->{c};

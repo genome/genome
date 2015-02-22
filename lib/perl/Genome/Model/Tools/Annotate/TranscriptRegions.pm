@@ -211,11 +211,11 @@ This script will produce transcript info for defined regions
 
 =head1 Input Options:
 
-chrmosome start stop organism version output
+chromosome start stop organism version output
 
 =head1 KNOWN BUGS
 
-Please report bugs to <rmeyer@genome.wustl.edu>
+Please report bugs to <gmt@genome.wustl.edu>
 
 =head1 AUTHOR
 

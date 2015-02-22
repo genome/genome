@@ -7,12 +7,15 @@ use Genome;
 
 class Genome::Model::GenotypeMicroarray::Build::CreateOriginalGenotypeFiles {
     is => 'Command::V2',
-    has => {
+    has_input_output => {
         build => { is => 'Genome::Model::Build::GenotypeMicroarray', },
     },
     has_optional_transient => {
         alleles => { is => 'Hash', },
         genotypes_output => { is => 'Number', },
+    },
+    has_param => {
+        lsf_resource => { default_value => "-R 'select[mem>=16000] rusage[mem=16000] span[hosts=1]' -M 16000000", },
     },
 };
 

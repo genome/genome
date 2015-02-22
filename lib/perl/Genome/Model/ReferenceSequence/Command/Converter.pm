@@ -7,7 +7,7 @@ use Genome;
 
 
 class Genome::Model::ReferenceSequence::Command::Converter {
-    is => 'Genome::Command::Base',
+    is => 'Command::Tree',
 };
 
 sub help_brief {

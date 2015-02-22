@@ -12,6 +12,7 @@ use Test::More tests => 26;
 
 use above 'Genome';
 use File::Compare;
+use Genome::Test::Factory::SoftwareResult::User;
 
 use_ok('Genome::Model::Tools::DetectVariants2::Filter::Depth') || die;
 
@@ -22,6 +23,10 @@ my $bam_file = join('/', $test_data_dir, 'tumor.tiny.bam');
 
 my $reference = Genome::Model::Build::ImportedReferenceSequence->get_by_name('NCBI-human-build36');
 ok($reference, 'found the reference sequence');
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference,
+);
 
 my $detector_directory = join('/', $test_data_dir, 'varscan-somatic-2.2.4-');
 my $detector_vcf_directory = join('/', $test_data_dir, 'detector_vcf_result');
@@ -54,18 +59,27 @@ my %minimum_only_params = (
     previous_result_id => $detector_result->id,
     output_directory => $output_base . '/filter-minimum-only',
     params => '--minimum-depth 3',
+    aligned_reads_sample => "TEST",
+    control_aligned_reads_sample => "TEST-normal",
+    result_users => $result_users,
 );
 
 my %maximum_only_params = (
     previous_result_id => $detector_result->id,
     output_directory => $output_base . '/filter-maximum-only',
     params => '--maximum-depth 3',
+    aligned_reads_sample => "TEST",
+    control_aligned_reads_sample => "TEST-normal",
+    result_users => $result_users,
 );
 
 my %combined_params = (
     previous_result_id => $detector_result->id,
     output_directory => $output_base . '/filter-combined',
     params => '--minimum-depth 3 --maximum-depth 3',
+    aligned_reads_sample => "TEST",
+    control_aligned_reads_sample => "TEST-normal",
+    result_users => $result_users,
 );
 
 my @expected_output_files = qw| 

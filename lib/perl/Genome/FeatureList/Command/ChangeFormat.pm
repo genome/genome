@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::FeatureList::Command::ChangeFormat{
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         feature_list => { is => 'Genome::FeatureList', doc => 'The feature list whose status is to be changed', shell_args_position => 1},
         format => { is => 'VARCHAR2', len => 64, doc => 'The format that the feature_list will be given', valid_values => ['1-based', 'true-BED', 'multi-tracked', 'multi-tracked 1-based'], },

@@ -110,7 +110,7 @@ sub make_report {
             $self->error_message("Too many re-runs of this report!  Clean up old ones first.");
             die $self->error_message;
         }
-        rename $output, "$output.$n";
+        Genome::Sys->rename($output, "$output.$n");
         if (Genome::Sys->check_for_path_existence($output)) {
             $self->error_message("failed to move old report dir $output to $output.$n!: $!");
             die $self->error_message;

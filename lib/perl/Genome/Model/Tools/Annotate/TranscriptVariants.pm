@@ -170,7 +170,7 @@ class Genome::Model::Tools::Annotate::TranscriptVariants {
     has_param => [
         lsf_resource => {
             is => 'Text',
-            default => "-M 7000000 -R 'select[type==LINUX64 && mem>7000 && tmp>10240] rusage[mem=7000]'",
+            default => "-M 7000000 -R 'select[mem>7000 && tmp>10240] rusage[mem=7000]'",
         },
         lsf_queue => {
             is => 'Text',
@@ -336,7 +336,7 @@ sub _convert_bed_file {
     if ($self->extra_columns and $self->use_version >= 3){
         $bed_converter_params{'extra_columns'} = $self->extra_columns;
     }
-    $bed_converter_class->execute(%bed_converter_params) || ($self->error_message("Could not convert BED file to annotator format") and return);
+    $bed_converter_class->execute(%bed_converter_params)->result || ($self->error_message("Could not convert BED file to annotator format") and return);
     $self->variant_file($converted_bed_file);
 }
 
@@ -445,7 +445,7 @@ sub _create_variant_reader {
         headers => \@columns,
         separator => "\t",
         is_regex => 1,
-        ignore_extra_columns => 1,
+        allow_extra_columns => 1,
     );
     unless ($variant_svr) {
         $self->error_message("error opening file " . $self->variant_file);
@@ -472,7 +472,7 @@ sub _setup_report_fh {
             UNLINK => 1,
             CLEANUP => 1,
         );
-        chmod(0664, $temp_output_file);
+        chmod(0660, $temp_output_file);
     }
     $self->_transcript_report_fh($output_fh);
     $self->_temp_output_file($temp_output_file);
@@ -759,6 +759,23 @@ sub transcript_report_headers {
     return ($self->variant_attributes, $self->variant_output_attributes, $self->get_extra_columns, $self->transcript_attributes);
 }
 
+sub file_has_header {
+    my $class = shift;
+    my $file = shift;
+
+    my $input_fh = Genome::Sys->open_file_for_reading($file);
+    my $first_line = $input_fh->getline();
+
+    my @expected_column_headers = $class->variant_attributes();
+    my $expected_header = join("\t", @expected_column_headers);
+    if ($first_line =~ m/^$expected_header/) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
 1;
 
 =pod
@@ -779,7 +796,7 @@ Goes through each variant in a file, retrieving annotation information from Geno
 
  in Perl:
 
-     $success = Genome::Model::Tools::Annotate::TranscriptVariants->execute(
+     Genome::Model::Tools::Annotate::TranscriptVariants->execute(
          variant_file => 'myoutput.csv',
          output_file => 'myoutput.csv',
      );

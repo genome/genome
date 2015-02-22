@@ -254,10 +254,9 @@ EOS
 #sub _initialize_profile {
 sub __profile_errors__ {
     my $class = shift;      # a class method on this model subclass
-    my $profile = shift;    # which takes one profile which goes with this sub-type of model and validates it
+    my ($profile) = @_;    # which takes one profile which goes with this sub-type of model and validates it
 
-    my @errors;
-
+    my @errors = $class->SUPER::__profile_errors__(@_);
     # ensure that each of the variant detection strategies specified will function:
     for my $strategy ('snv','indel','sv','cnv') {
         my $method_name = $strategy . '_detection_strategy';
@@ -345,6 +344,13 @@ sub _execute_build {
         unless($result) {
             die $self->error_message("Failed to copy previous variant detection results to the build directory");
         }
+        my $index_file = $self->previous_variant_detection_results . '.tbi';
+        if (-s $index_file) {
+            my $copied_index_filename = $copied_filename . '.tbi';
+            $self->debug_message("Copying index: $index_file");
+            my $rv = Genome::Sys->copy_file($index_file, $copied_index_filename);
+            die $self->error_message("Failed to copy index file to the build directory") unless $rv;
+        }
         $self->multisample_vcf($copied_filename);
     }
     else {
@@ -402,6 +408,7 @@ sub _execute_build {
 
     ##For now, simply pass the required items to the delegate class
     my %inputs = $self->_map_properties_to_delegate_inputs($delegate_class);
+    $inputs{build} = $build;
     my $delegate_obj = $delegate_class->create(%inputs);
     if($delegate_obj) {
         return $delegate_obj->execute;
@@ -477,6 +484,7 @@ sub _find_or_generate_multisample_vcf {
             },
             strategy => $self->alignment_strategy,
             log_directory => $build->log_directory,
+            result_users => Genome::SoftwareResult::User->user_hash_for_build($build),
         );
 
         # used by the updated DV2 API
@@ -563,6 +571,10 @@ sub _find_or_generate_multisample_vcf {
         }
         my $ref_fasta = $reference_build->full_consensus_path("fa");
         my $ped_file = $build->pedigree_file_path->path;
+
+        my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+        $result_users->{uses} = $build;
+
         $self->debug_message("About to run Sequencing QC (IBD)");
         $self->debug_message("Parameters:");
         $self->debug_message("Bams: @bams");
@@ -576,9 +588,9 @@ sub _find_or_generate_multisample_vcf {
             reference_fasta=>$reference_build->full_consensus_path("fa"),
             snp_files=>\@snp_files,
             output_dir=>"$output_dir/IBD_QC",
+            result_users => $result_users,
         );
         my $IBD_STATUS = $sqc_obj->execute();
-        $sqc_obj->software_result->add_user(label => 'uses', user => $build);
         if($IBD_STATUS eq 'Fail') {
             $self->error_message("Sequencing QC module returned fail code, this ped/model-group has a relationship problem");
             $self->error_message("Continuing with analysis despite QC failure...");
@@ -593,6 +605,8 @@ sub _find_or_generate_multisample_vcf {
     }
     $params{roi_list} = $build->roi_list;
     $params{roi_wingspan} = $self->roi_wingspan;
+
+    $params{result_users} = Genome::SoftwareResult::User->user_hash_for_build($build);
 
     my $command = Genome::Model::Tools::DetectVariants2::Dispatcher->create(%params);
     unless ($command){
@@ -615,7 +629,7 @@ sub _find_or_generate_multisample_vcf {
 sub get_snp_list_for_something_close_to_this_result {
     my ($self, $alignment_result) = @_;
     my $return_snp_file;
-    my $bam_path = $alignment_result->merged_alignment_bam_path;
+    my $bam_path = $alignment_result->bam_file;
     my $reference_build_id = $alignment_result->reference_build->id;
 
     # Try to find a snplist that was run with this bam
@@ -640,7 +654,7 @@ sub get_snp_list_for_something_close_to_this_result {
 
     # For every bam you found, look for an existing useable snp list
     for my $alignment_result (@more_alignment_results) {
-        $bam_path = $alignment_result->merged_alignment_bam_path;
+        $bam_path = $alignment_result->bam_file;
         my @results = Genome::Model::Tools::DetectVariants2::Result::Filter->get(
             filter_name => "Genome::Model::Tools::DetectVariants2::Filter::SnpFilter",
             reference_build_id => $reference_build_id,

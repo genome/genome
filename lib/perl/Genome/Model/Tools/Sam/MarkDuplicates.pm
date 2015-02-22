@@ -133,7 +133,10 @@ sub execute {
         assume_sorted     => $self->assume_sorted,
     );
 
-    my @valid_markdup_params = qw(max_sequences_for_disk_read_ends_map); #list here each time adding new parameters
+    my @valid_markdup_params = qw(
+            max_sequences_for_disk_read_ends_map
+            read_name_regex
+        ); #list here each time adding new parameters
 
     my $dedup_params = $self->dedup_params;
     if ($dedup_params) {

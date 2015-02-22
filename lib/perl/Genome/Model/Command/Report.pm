@@ -43,7 +43,7 @@ class Genome::Model::Command::Report {
 
 #< Command API >#
 sub help_brief {
-    return "run, list, view and emailreports"
+    return "run, list, view and email reports"
 }
 
 sub sub_command_sort_position { 9 }

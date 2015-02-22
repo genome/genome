@@ -6,7 +6,7 @@ use Genome;
 use Carp 'confess';
 
 class Genome::Model::Command::Diff {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         models => {
             is => 'Genome::Model',
@@ -24,6 +24,7 @@ class Genome::Model::Command::Diff {
             doc => 'Path to revision that other build was run on'
         },
     ],
+    doc => 'compare builds generated from different versions of the genome code',
 };
 
 sub hudson_build_from_revision {

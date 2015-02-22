@@ -165,7 +165,7 @@ sub execute {
                     while ($n < 10 and -e $subdir . '.' . $n) {
                         $n++;
                     }
-                    rename $subdir, "$subdir.$n";
+                    Genome::Sys->rename($subdir, "$subdir.$n");
                     if (-e $subdir) {
                         die "failed to move old report dir $subdir to $subdir.$n!: $!";
                     }
@@ -217,7 +217,7 @@ sub execute {
             ),
             to => $me,
         );
-        unless ($r) {
+        unless ($r and $r->result) {
             $self->error_message("Failed to send email!");
         }
     }

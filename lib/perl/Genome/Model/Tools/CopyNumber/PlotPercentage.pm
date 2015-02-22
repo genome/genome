@@ -26,11 +26,11 @@ class Genome::Model::Tools::CopyNumber::PlotPercentage {
 			doc => 'The tool takes two types of input files:
 I. A group of individual files (--list-input)
 The user needs to provide a list of all individual files
-e.g /gscuser/user/analysis/BRCA_list.tsv
-|/gscuser/user/analysis/BRCA/BRC1.seg.cbs
-|/gscuser/user/analysis/BRCA/BRC2.seg.cbs
-|/gscuser/user/analysis/BRCA/BRC3.seg.cbs
-|/gscuser/user/analysis/BRCA/BRC4.seg.cbs
+e.g /path/to/analysis/BRCA_list.tsv
+|/path/to/analysis/BRCA/BRC1.seg.cbs
+|/path/to/analysis/BRCA/BRC2.seg.cbs
+|/path/to/analysis/BRCA/BRC3.seg.cbs
+|/path/to/analysis/BRCA/BRC4.seg.cbs
 
 II. One individual file that contains multiple samples (--single-input)
 The file should be in the following format:

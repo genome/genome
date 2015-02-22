@@ -72,8 +72,8 @@ sub _run_aligner {
         output_files => [ "$staging_directory/accepted_hits.bam", "$staging_directory/unmapped.bam" ]
     );
 
-    rename("$staging_directory/accepted_hits.bam", "$scratch_directory/accepted_hits.bam");
-    rename("$staging_directory/unmapped.bam", "$scratch_directory/unmapped.bam");
+    Genome::Sys->rename("$staging_directory/accepted_hits.bam", "$scratch_directory/accepted_hits.bam");
+    Genome::Sys->rename("$staging_directory/unmapped.bam", "$scratch_directory/unmapped.bam");
 
     my $bam_with_unaligned_reads_cmd = Genome::Model::Tools::Picard::MergeSamFiles->create(
         input_files => ["$scratch_directory/unmapped.bam", "$scratch_directory/accepted_hits.bam",],
@@ -100,10 +100,10 @@ sub _run_aligner {
     }
 
     #promote other misc tophat result files - converted sam will be handled downstream
-    rename("$scratch_directory/junctions.bed", "$staging_directory/junctions.bed");
-    rename("$scratch_directory/insertions.bed", "$staging_directory/insertions.bed");
-    rename("$scratch_directory/deletions.bed", "$staging_directory/deletions.bed");
-    rename("$scratch_directory/logs", "$staging_directory/logs");
+    Genome::Sys->rename("$scratch_directory/junctions.bed", "$staging_directory/junctions.bed");
+    Genome::Sys->rename("$scratch_directory/insertions.bed", "$staging_directory/insertions.bed");
+    Genome::Sys->rename("$scratch_directory/deletions.bed", "$staging_directory/deletions.bed");
+    Genome::Sys->rename("$scratch_directory/logs", "$staging_directory/logs");
     return 1;
 }
 
@@ -187,6 +187,7 @@ sub _get_reference_fasta {
         aligner_version => $annotation_index->aligner_version,
         aligner_params => $annotation_index->aligner_params,
         reference_build => $annotation_index->reference_build,
+        users => $annotation_index->_user_data_for_nested_results,
     );
     unless ($reference_index) {
         $class->error_message('Failed to find the reference index to retrieve the reference FASTA file!  '.
@@ -370,6 +371,7 @@ sub prepare_reference_sequence_index {
         aligner_name => 'bowtie',
         aligner_version => $bowtie_version,
         test_name => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME},
+        users => $refindex->_user_data_for_nested_results,
     );
 
     for my $filepath (glob($bowtie_index->output_dir . "/*")){
@@ -432,6 +434,7 @@ sub get_annotation_index {
         aligner_params => $self->aligner_params,
         reference_build => $self->reference_build,
         annotation_build => $annotation_build,
+        users => $self->_user_data_for_nested_results,
     );
 
     if (!$index) {
@@ -479,18 +482,9 @@ sub _get_modified_tophat_params {
     my $estimated_library_size = 350;
     my $estimated_sd = 50;
     
-    #my $median_inner_insert_size = 300;
-    #if ($instrument_data->resolve_median_insert_size) {
-    #    $median_inner_insert_size  = ($instrument_data->resolve_median_insert_size - ($instrument_data->read_length * 2) );
-    #}
-    
     my $median_inner_insert_size = ($estimated_library_size - ($instrument_data->read_length * 2) );
     
-    #my $sd_insert_size = 20;
     my $sd_insert_size = $estimated_sd;
-    #if ($instrument_data->resolve_sd_insert_size) {
-    #    $sd_insert_size = $instrument_data->resolve_sd_insert_size;
-    #}
     $params .= ' --mate-inner-dist '. $median_inner_insert_size;
     $params .= ' --mate-std-dev '. $sd_insert_size;
     return $params;

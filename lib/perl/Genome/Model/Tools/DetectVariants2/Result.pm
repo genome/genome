@@ -10,6 +10,6 @@ class Genome::Model::Tools::DetectVariants2::Result {
     doc => 'This class represents the result of a variant detector.',
 };
 
-#Most detector-specific logic is in Detector.pm
+#This is a concrete subclass for "DetectionBase" that adds no additional functionality.
 
 1;

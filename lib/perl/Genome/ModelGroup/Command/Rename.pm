@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::ModelGroup::Command::Rename {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         from => {
             is => 'Genome::ModelGroup',

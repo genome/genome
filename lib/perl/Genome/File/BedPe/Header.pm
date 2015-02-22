@@ -3,6 +3,31 @@ package Genome::File::BedPe::Header;
 use strict;
 use warnings;
 
+use Exporter;
+use base qw(Exporter);
+
+our @REQUIRED_FIELDS = qw{
+    chrom1
+    start1
+    end1
+    chrom2
+    start2
+    end2
+};
+
+our @OPTIONAL_FIELDS = qw{
+    name
+    score
+    strand1
+    strand2
+};
+
+our @ALL_FIELDS = (@REQUIRED_FIELDS, @OPTIONAL_FIELDS);
+
+our %FIELD_INDICES = map {$ALL_FIELDS[$_] => $_} 0..$#ALL_FIELDS;
+
+our @EXPORT_OK = qw(@REQUIRED_FIELDS @EXTRA_FIELDS @ALL_FIELDS %FIELD_INDICES);
+
 sub new {
     my ($class, $lines) = @_;
 
@@ -16,6 +41,13 @@ sub new {
 
     bless $self, $class;
     return $self;
+}
+
+sub make_header_line {
+    my $self = shift;
+    die "make_header_line called on header that already has data!" if @{$self->{lines}};
+    push @{$self->{lines}},
+        join("\t", @ALL_FIELDS, @{$self->{custom_fields}});
 }
 
 sub _build_custom_field_idx {

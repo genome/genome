@@ -7,13 +7,20 @@ use Genome;
 use Statistics::Descriptive;
 
 class Genome::Model::RnaSeq::Command::FpkmMatrix {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         models => {
             is => 'Genome::Model::RnaSeq',
             is_many => 1,
             shell_args_position => 1,
             doc => 'RNAseq models to generate expression matrix.',
+        },
+        valid_fpkm_status => {
+            # TODO: Can this be made an is_many property with multiple values?
+            doc => 'The valid value of Cufflinks FPKM_status to report.',
+            is_optional => 1,
+            default_value => 'OK',
+            valid_values => ['OK','LOWDATA','HIDATA','FAIL','NOTEST'],
         },
         gene_fpkm_tsv_file => {
             doc => 'The output tsv file of gene-level FPKM values per model.',
@@ -98,6 +105,8 @@ sub create {
 sub execute {
     my $self = shift;
 
+    my %valid_fpkm_status = map { $_ => 1 } $self->valid_fpkm_status;
+
     my @models = $self->models;
     # The values are attributes in the GTF file of known annotation
     my %feature_types = (
@@ -142,17 +151,18 @@ sub execute {
         }
     }
     my @model_identifiers = sort keys %model_identifiers;
-    
+
     my $gene_gtf_path = $annotation_build->annotation_file('gtf',$reference_build->id);
     if ($self->gene_biotypes) {
         my $transcript_info_tsv_file = $annotation_build->transcript_info_file($reference_build->id);
         my $tmp_gtf_path = Genome::Sys->create_temp_file_path();
-        unless (Genome::Model::Tools::Gtf::LimitByBiotype->execute(
+        my $limit_cmd = Genome::Model::Tools::Gtf::LimitByBiotype->execute(
             input_gtf_file => $gene_gtf_path,
             output_gtf_file => $tmp_gtf_path,
             gene_biotypes => $self->gene_biotypes,
             transcript_info_tsv_file => $transcript_info_tsv_file,
-        )) {
+        );
+        unless($limit_cmd and $limit_cmd->result) {
             $self->error_message('Failed to limit  by gene biotypes: '. $self->gene_biotypes);
             return;
         }
@@ -196,10 +206,25 @@ sub execute {
                     my $type_id = $feature_types{$feature_type};
                     my $tracking_id = $fpkm_data->{tracking_id};
                     if ( defined($gene_transcripts{$gene_id}{$type_id}{$tracking_id}) ) {
+                        unless ($valid_fpkm_status{$fpkm_data->{FPKM_status}}) {
+                            $fpkm_data->{FPKM} = 'na';
+                        }
                         if ( defined($gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier}) ) {
-                            # If duplicate entries exist then keep the highest FPKM value
-                            if ($gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier}->{FPKM} < $fpkm_data->{FPKM}) {
+                            $self->debug_message('Duplicate entries found for gene \''. $gene_id .'\' and type \''. $type_id .'\' and model '. $method .' \''. $model_identifier);
+                            # If duplicate entries exist then keep the highest FPKM value that is not 'na'
+                            # The correct thing might be to sum the value: http://seqanswers.com/forums/showthread.php?t=5224
+                            if ($gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier}->{FPKM} eq 'na' &&
+                                    $fpkm_data->{FPKM} eq 'na') {
+                                # Both values are 'na' Do nothing
+                            } elsif ($gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier}->{FPKM} eq 'na') {
+                                # New FPKM data has value
                                 $gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier} = $fpkm_data;
+                            } elsif ($fpkm_data->{FPKM} eq 'na') {
+                                # New FPKM is 'na', keep old value
+                            } else {
+                                if ($gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier}->{FPKM} < $fpkm_data->{FPKM}) {
+                                    $gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier} = $fpkm_data;
+                                }
                             }
                         } else {
                             $gene_transcripts{$gene_id}{$type_id}{$tracking_id}{$model_identifier} = $fpkm_data;
@@ -208,17 +233,26 @@ sub execute {
                     }
                 }
             }
-            $self->debug_message('There are '. $match .' matching '. $feature_type .'s in FPKM file: '. $fpkm_tracking);
+            $self->debug_message('There are '. $match .' matching '. $feature_type .'s in FPKM file: '. $fpkm_tracking .' with an FPKM_status of '. join(',',$self->valid_fpkm_status));
         }
     }
     $self->debug_message('Printing output FPKM tsv files...');
-    my %tsv_writers;
+
+    # Determine the correct headers for the different output formats
+    my @output_headers;
+    my $model_data_key = 'model_'. $self->model_identifier;
     if ($self->as_table) {
-        my $model_data_key = 'model_'. $self->model_identifier;
         my @output_headers = ($model_data_key,@fpkm_tracking_headers);
-        for my $feature_type (keys %feature_types) {
-            my $output_file_method = $feature_type .'_fpkm_tsv_file';
-            my $output_file = $self->$output_file_method;
+    } else {
+        @output_headers = ('tracking_id','gene_id','gene_name','locus',@model_identifiers);
+    }
+
+    # Pre-load the writer objects for each feature type
+    my %tsv_writers;
+    for my $feature_type (keys %feature_types) {
+        my $output_file_method = $feature_type .'_fpkm_tsv_file';
+        my $output_file = $self->$output_file_method;
+        if ($output_file) {
             my $tsv_writer = Genome::Utility::IO::SeparatedValueWriter->create(
                 output => $output_file,
                 separator => "\t",
@@ -229,47 +263,24 @@ sub execute {
             }
             $tsv_writers{$feature_type} = $tsv_writer;
         }
-        for my $gene_id (sort keys %gene_transcripts) {
-            for my $feature_type (keys %feature_types) {
-                my $tsv_writer = $tsv_writers{$feature_type};
-                my $type_id = $feature_types{$feature_type};
-                for my $tracking_id (sort keys %{$gene_transcripts{$gene_id}{$type_id}}) {
-                    my %tracking_data = %{$gene_transcripts{$gene_id}{$type_id}{$tracking_id}};
-                    if (scalar(keys %tracking_data) == (scalar(@model_identifiers))) {
+    }
+
+    # Iterate over all objects and write output to the correct writer
+    for my $gene_id (sort keys %gene_transcripts) {
+        for my $feature_type (keys %feature_types) {
+            my $tsv_writer = $tsv_writers{$feature_type};
+            my $type_id = $feature_types{$feature_type};
+            for my $tracking_id (sort keys %{$gene_transcripts{$gene_id}{$type_id}}) {
+                my %tracking_data = %{$gene_transcripts{$gene_id}{$type_id}{$tracking_id}};
+                if (scalar(keys %tracking_data) == (scalar(@model_identifiers))) {
+                    my %data;
+                    if ($self->as_table) {
                         for my $model_identifier (@model_identifiers) {
-                            my %model_data = %{$tracking_data{$model_identifier}};
-                            $model_data{$model_data_key} = $model_identifier;
-                            $tsv_writer->write_one(\%model_data);
+                            %data = %{$tracking_data{$model_identifier}};
+                            $data{$model_data_key} = $model_identifier;
                         }
                     } else {
-                        #is there a minimum number of samples(90%) that is required....
-                    }
-                }
-            }
-        }
-    } else {
-        my @output_headers = ('tracking_id','gene_id','gene_name','locus',@model_identifiers);
-        for my $feature_type (keys %feature_types) {
-            my $output_file_method = $feature_type .'_fpkm_tsv_file';
-            my $output_file = $self->$output_file_method;
-            my $tsv_writer = Genome::Utility::IO::SeparatedValueWriter->create(
-                output => $output_file,
-                separator => "\t",
-                headers => \@output_headers,
-            );
-            unless ($tsv_writer) {
-                die('Failed to open '. $feature_type .' FPKM output file: '. $output_file);
-            }
-            $tsv_writers{$feature_type} = $tsv_writer;
-        }
-        for my $gene_id (sort keys %gene_transcripts) {
-            for my $feature_type (keys %feature_types) {
-                my $tsv_writer = $tsv_writers{$feature_type};
-                my $type_id = $feature_types{$feature_type};
-                for my $tracking_id (sort keys %{$gene_transcripts{$gene_id}{$type_id}}) {
-                    my %tracking_data = %{$gene_transcripts{$gene_id}{$type_id}{$tracking_id}};
-                    if (scalar(keys %tracking_data) == (scalar(@model_identifiers))) {
-                        my %data = (
+                        %data = (
                             tracking_id => $tracking_id,
                             gene_id => $gene_id,
                             gene_name => $gene_transcripts{$gene_id}{gene_name},
@@ -283,14 +294,15 @@ sub execute {
                                 $data{locus} = $model_data{locus};
                             }
                         }
-                        $tsv_writer->write_one(\%data);
-                    } else {
-                        #is there a minimum number of samples(90%) that is required....
                     }
+                    $tsv_writer->write_one(\%data);
+                } else {
+                    #is there a minimum number of samples(90%) that is required....
                 }
             }
         }
     }
+
     if ($self->de_model_groups) {
          my $r_script_path = $self->__meta__->module_path;
          $r_script_path =~ s/\.pm/\.R/;

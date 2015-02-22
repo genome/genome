@@ -50,7 +50,7 @@ sub create {
 
 sub execute {
     my $self = shift;
-    
+
     unless (-s $self->bam_file) {
         $self->error_message('Map file '. $self->map_file .' not found or has zero size.');
         return;
@@ -62,14 +62,13 @@ sub execute {
         my $bai_mtime = (stat($bai_file))[9];
         if ($bam_mtime > $bai_mtime) {
             unless (unlink $bai_file) {
-                die('Failed to remove old bai file'. $bai_file); 
+                die('Failed to remove old bai file'. $bai_file);
             }
         }
     }
     unless (-e $bai_file) {
-        my $index_rv = Genome::Model::Tools::Sam::IndexBam->execute(bam_file => $bam_file);
-        unless ($index_rv) 
-        {
+        my $index = Genome::Model::Tools::Sam::IndexBam->execute(bam_file => $bam_file);
+        unless ($index->result) {
             print "Failed to index $bam_file\n" and return;
         }
     }

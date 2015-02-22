@@ -1,0 +1,34 @@
+experts:
+    'bam-readcount':
+        aligned_bam_result_id: [aligned_bam_result_id]
+        version: 0.7
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 0
+    vep:
+        ensembl_version: 75
+        feature_list_names_and_tags: {}
+        feature_list_ids: {}
+        reference_fasta: reference_fasta
+        species: 'homo-sapiens'
+        plugins: []
+        joinx_version: 1.9
+        plugins_version: 1
+reports:
+    simple:
+        filters:
+            'allele-in-genotype':
+                sample_name: tumor
+            'ft-keep':
+                keep_filter_values:
+                    - SnpFilter
+                sample_name: tumor
+            'min-coverage':
+                min_coverage: 10
+                sample_name: tumor
+        interpreters:
+            position: {}
+            vep: {}
+            'variant-type': {}

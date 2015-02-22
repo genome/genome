@@ -1,0 +1,21 @@
+[4mOVERVIEW[0m
+Filter variants that don't meet minimum coverage
+
+[4mPROPERTIES[0m
+  [1mmin_coverage[0m   Number
+    Miminum coverage
+  [1msample_name[0m   Text
+    This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
+
+[4mREQUIRED EXPERTS[0m
+bam-readcount
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Coverage for sample sample_name is larger than or equal to min_coverage
+
+[4mFILTER DESCRIPTION[0m
+Coverage for sample sample_name is larger than or equal to min_coverage
+

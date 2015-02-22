@@ -1,0 +1,46 @@
+Headers
+chromosome_name	Chromosome: an identifier from the reference genome or an angle-bracketed ID String ("<ID>") pointing to a contig in the assembly file
+start	The start position of the variant. One-based
+stop	The end position of the variant. One-based, inclusive
+reference	The reference allele at this position
+variant	The variant called at this position
+variant_type	The type of variant: snp, ins (insertion), del (deletion), other
+transcript_name	Ensembl stable ID of feature
+trv_type	Consequence type of this variation
+trv_type_category	The category for the trv type: splice_site, non_synonymous, other
+amino_acid_change	The HGVS protein sequence name
+default_gene_name	The gene symbol
+ensembl_gene_id	Ensembl stable ID of affected gene
+inSegDup	A list of info tags at this position
+AML_RMG	A list of info tags at this position
+rsid	A list of rsids at this position
+caf	Allele frequency at this position based on 1000Genomes
+max_alt_af	The highest allele frequency at this position
+onTarget	A list of info tags at this position
+MeetsMinDepthCutoff	Coverage for sample TEST-patient1-somval_tumor1 is larger than or equal to 10
+TEST-patient1-somval_tumor1_vaf	Variant allele frequency for sample TEST-patient1-somval_tumor1
+TEST-patient1-somval_tumor1_ref_count	Number of reads supporting the reference for sample TEST-patient1-somval_tumor1
+TEST-patient1-somval_tumor1_var_count	Number of reads supporting variant for sample TEST-patient1-somval_tumor1
+TEST-patient1-somval_tumor2_vaf	Variant allele frequency for sample TEST-patient1-somval_tumor2
+TEST-patient1-somval_tumor2_ref_count	Number of reads supporting the reference for sample TEST-patient1-somval_tumor2
+TEST-patient1-somval_tumor2_var_count	Number of reads supporting variant for sample TEST-patient1-somval_tumor2
+TEST-patient1-somval_normal1_vaf	Variant allele frequency for sample TEST-patient1-somval_normal1
+TEST-patient1-somval_normal1_ref_count	Number of reads supporting the reference for sample TEST-patient1-somval_normal1
+TEST-patient1-somval_normal1_var_count	Number of reads supporting variant for sample TEST-patient1-somval_normal1
+min_coverage_observed	Minimum coverage (ref_count+var_count) between all the samples at this position
+max_normal_vaf_observed	The maximum vaf value observed between all the normal samples : TEST-patient1-somval_normal1
+max_tumor_vaf_observed	The maximum vaf value observed between all the tumor samples : TEST-patient1-somval_tumor1, TEST-patient1-somval_tumor2
+variant_callers	List of variant callers that called this position for sample TEST-patient1-somval_tumor1
+variant_caller_count	Number of callers that called this position for sample TEST-patient1-somval_tumor1
+TEST-patient1-somval_tumor1_per_library_var_count	Number of reads supporting variant for each library of sample TEST-patient1-somval_tumor1
+TEST-patient1-somval_tumor1_per_library_ref_count	Number of reads supporting the reference for each library of sample TEST-patient1-somval_tumor1
+TEST-patient1-somval_tumor1_per_library_vaf	Variant allele frequency for each library of sample TEST-patient1-somval_tumor1
+TEST-patient1-somval_tumor2_per_library_var_count	Number of reads supporting variant for each library of sample TEST-patient1-somval_tumor2
+TEST-patient1-somval_tumor2_per_library_ref_count	Number of reads supporting the reference for each library of sample TEST-patient1-somval_tumor2
+TEST-patient1-somval_tumor2_per_library_vaf	Variant allele frequency for each library of sample TEST-patient1-somval_tumor2
+TEST-patient1-somval_normal1_per_library_var_count	Number of reads supporting variant for each library of sample TEST-patient1-somval_normal1
+TEST-patient1-somval_normal1_per_library_ref_count	Number of reads supporting the reference for each library of sample TEST-patient1-somval_normal1
+TEST-patient1-somval_normal1_per_library_vaf	Variant allele frequency for each library of sample TEST-patient1-somval_normal1
+Filters
+ft-keep	FTPASS	FT value for sample TEST-patient1-somval_tumor1 is one of [PASS,.]
+contains-tag	CONTAINS_TAG_ON_TARGET	INFO field for entry contains tag ON_TARGET

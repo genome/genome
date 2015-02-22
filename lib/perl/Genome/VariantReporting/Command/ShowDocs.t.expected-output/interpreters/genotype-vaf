@@ -1,0 +1,28 @@
+[4mOVERVIEW[0m
+Filter variants based on the sample genotype and matching vaf values
+
+[4mPROPERTIES[0m
+  [1mmax_het_vaf[0m   Number
+    Maximum VAF value if the genotype if heterozygous. Expressed as a whole percentage.
+  [1mmax_hom_vaf[0m   Number
+    Maximum VAF value if the genotype if homozygous. Expressed as a whole percentage.
+  [1mmin_het_vaf[0m   Number
+    Minimum VAF value if the genotype if heterozygous. Expressed as a whole percentage.
+  [1mmin_hom_vaf[0m   Number
+    Minimum VAF value if the genotype if homozygous. Expressed as a whole percentage.
+  [1msample_name[0m   Text
+    This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
+
+[4mREQUIRED EXPERTS[0m
+bam-readcount
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Coverage and VAF for sample sample_name follows criteria: [heterozygous: VAF between
+    min_het_vaf and max_het_vaf,homozygous: VAF between min_hom_vaf and max_hom_vaf]
+
+[4mFILTER DESCRIPTION[0m
+Coverage and VAF for sample sample_name follows criteria: [heterozygous: VAF between min_het_vaf and max_het_vaf,homozygous: VAF between min_hom_vaf and max_hom_vaf]
+

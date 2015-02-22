@@ -69,7 +69,6 @@ sub execute {
     my $seq_dict = $reference_build->get_sequence_dictionary('sam',$self->species,$self->picard_version);
 
     my $tmp_file = Genome::Sys->create_temp_file_path;
-    # This is only required to run perl5.10.1 or greater required by Bio-SamTools
 
     my $cmd = Genome::Model::Tools::BioSamtools::ListChromosomes->execute(
         input_file => $seq_dict,

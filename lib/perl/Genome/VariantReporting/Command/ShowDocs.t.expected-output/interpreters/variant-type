@@ -1,0 +1,7 @@
+[4mOVERVIEW[0m
+Determine the type of variant: snp (single-nucleotide polymorphism), ins (insertion), del (deletion), other
+
+[4mAVAILABLE FIELDS[0m
+  [1mvariant_type[0m
+    The type of variant: snp, ins (insertion), del (deletion), other
+

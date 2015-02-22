@@ -4,6 +4,8 @@ use Data::Dumper;
 use Carp qw/confess/;
 use Genome;
 use List::Util qw/first/;
+require List::MoreUtils;
+use Genome::File::Vcf::Genotype;
 
 use strict;
 use warnings;
@@ -39,7 +41,7 @@ VCF file.
 
     printf "CHROM:   %s\n", $entry->{chrom};
     printf "POS:     %s\n", $entry->{position};
-    printf "IDENT:   %s\n", join(",", $entry->{identifiers});
+    printf "IDENT:   %s\n", join(",", @{$entry->{identifiers}});
     printf "REF:     %s\n", $entry->{reference_allele};
     printf "ALT:     %s\n", join(",", $entry->{alternate_alleles});
     printf "QUAL:    %s\n", $entry->{quality};
@@ -156,20 +158,28 @@ sub _parse_list {
     return split($delim, $identifiers);
 }
 
+sub _raw_set_info {
+    my ($self, $k, $v) = @_;
+
+    my $info = $self->{info_fields};
+    push(@{$info->{order}}, $k) unless exists $info->{hash}{$k};
+    $info->{hash}{$k} = $v;
+}
+
 # transform a string A=B;C=D;... into a hashref { A=>B, C=>D, ...}
 # take care about the string being . (_parse_list does this for us)
 sub _parse_info {
-    my $info_str = shift;
+    my $self = shift;
+    my $info_str = $self->{_fields}->[INFO];
+    $self->{info_fields} = {hash => {}, order => []};
+
     my @info_list = _parse_list($info_str, ';');
     my %info_hash;
     my @info_order;
     for my $i (@info_list) {
         my ($k, $v) = split('=', $i, 2);
-        # we do this rather than just split to handle Flag types (they have undef values)
-        $info_hash{$k} = $v;
-        push(@info_order, $k);
+        $self->_raw_set_info($k, $v);
     }
-    return { hash => \%info_hash, order => \@info_order };
 }
 
 # this assumes $self->{_format} is set
@@ -209,7 +219,44 @@ list can be used to convert GT sample indexes to actual allele values.
 
 sub alleles {
     my $self = shift;
-    return ($self->{reference_allele}, @{$self->{alternate_alleles}});
+    my @allele_array = ($self->{reference_allele}, @{$self->{alternate_alleles}});
+    return @allele_array;
+}
+
+=item C<add_allele>
+
+DOC ME!
+
+=cut
+
+my @valid_alleles = (qw/ A C G T /);
+sub add_allele {
+    my ($self, $allele) = @_;
+    confess 'No allele given to add!' if not $allele;
+
+    # Make allele capital
+    $allele = uc $allele;
+
+    # Check if valid alele
+    confess "Invalid allele given to add! '$allele'" if not List::MoreUtils::any { $allele eq $_ } @valid_alleles;
+
+    # No op if allele already exists
+    return 1 if List::MoreUtils::any { $allele eq $_ } $self->alleles;
+
+    # Push to alt alleles
+    push @{$self->{alternate_alleles}}, $allele;
+
+    # Add info
+    my $info = $self->info;
+    my $info_types = $self->{header}->info_types;
+    my @info_type_names = keys %$info_types;
+    return 1 if not @info_type_names;
+    for my $info_type_name ( @info_type_names ) {
+        next if not List::MoreUtils::any { $_ eq $info_types->{$info_type_name}->{number} } (qw/ A R /);
+        next if not $info->{$info_type_name};
+        $self->set_info_field($info_type_name, $self->info($info_type_name).",.");
+    }
+    return 1;
 }
 
 =item C<has_indel>
@@ -220,8 +267,41 @@ Returns true if the given entry has an insertion or deletion, false otherwise.
 
 sub has_indel {
     my $self = shift;
+    return 1 if $self->has_insertion or $self->has_deletion;
+    return 0;
+}
+
+
+sub has_deletion {
+    my $self = shift;
     for my $alt (@{$self->{alternate_alleles}}) {
-        if (length($alt) != length($self->{reference_allele})) {
+        if ($self->is_deletion($alt)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+sub is_deletion {
+    my ($self, $alt) = @_;
+
+    return length($alt) < length($self->{reference_allele});
+}
+
+sub has_insertion {
+    my $self = shift;
+    for my $alt (@{$self->{alternate_alleles}}) {
+        if (length($alt) > length($self->{reference_allele})) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+sub has_substitution {
+    my $self = shift;
+    for my $alt (@{$self->{alternate_alleles}}) {
+        if (length($alt) == length($self->{reference_allele})) {
             return 1;
         }
     }
@@ -310,8 +390,8 @@ See info_for_allele for an example.
 sub info {
     my ($self, $key) = @_;
 
-    if (!$self->{info_fields}) {
-        $self->{info_fields} = _parse_info($self->{_fields}->[INFO]);
+    if (!defined $self->{info_fields}) {
+        $self->_parse_info;
     }
 
     my $hash = $self->{info_fields}{hash};
@@ -356,10 +436,14 @@ sub info_for_allele {
     my $hash = $self->info;
     return unless defined $hash;
 
+    # There is no this info_tag in this vcf line
+    if (defined $key) {
+        return unless exists $hash->{$key};
+    }
+
     # we don't have that allele, or it is the reference (idx 0)
     my $idx = $self->allele_index($allele);
-    return unless defined $idx && $idx > 0;
-    --$idx; # we don't care about the reference allele
+    return unless defined $idx;
 
     # no header! what are you doing?
     confess "info_for_allele called on entry with no vcf header!" unless $self->{header};
@@ -370,12 +454,24 @@ sub info_for_allele {
     for my $k (@keys) {
         my $type = $self->{header}->info_types->{$k};
         warn "Unknown info type $k encountered!" if !defined $type;
+
         if (defined $type && $type->{number} eq 'A') { # per alt field
+
+            next if $idx == 0;
+            my @values = split(',', $hash->{$k});
+            next if ( $idx - 1 ) > $#values;
+            $result{$k} = $values[$idx - 1];
+
+        }
+        elsif (defined $type && $type->{number} eq 'R') { # per ref & alt field
 
             my @values = split(',', $hash->{$k});
             next if $idx > $#values;
             $result{$k} = $values[$idx];
-        } else {
+
+        }
+        else {
+            next if $idx == 0;
             $result{$k} = $hash->{$k}
         }
     }
@@ -579,7 +675,7 @@ sub sample_field {
     my ($self, $sample_idx, $field_name) = @_;
     my $n_samples = $self->{header}->num_samples;
     confess "Invalid sample index $sample_idx (have $n_samples samples): "
-        unless ($sample_idx >= 0 && $sample_idx <= $n_samples);
+        unless ($sample_idx >= 0 && $sample_idx < $n_samples);
 
     my $sample_data = $self->sample_data;
     return unless $sample_idx <= $#$sample_data;
@@ -635,6 +731,26 @@ sub set_sample_field {
     $self->_extend_sample_data($sample_idx);
     my $field_idx = $cache->{$field_name};
     $sample_data->[$sample_idx]->[$field_idx] = $value;
+}
+
+=item C<set_info_field>
+
+Sets the value of per-site fields.
+
+params:
+    $field_name - name of the field to set
+    $value      - the value to set $field_name to
+
+=cut
+
+sub set_info_field {
+    my ($self, $field_name, $value) = @_;
+    unless (defined $field_name) {
+        confess "No info tag given to add!";
+    }
+
+    $self->_parse_info unless defined $self->{info_fields};
+    $self->_raw_set_info($field_name, $value);
 }
 
 =item C<filter_calls_involving_only>
@@ -717,9 +833,88 @@ sub genotype_for_sample {
     my $alts = $self->{alternate_alleles};
     my $gt = $self->sample_field($sample_index, 'GT');
     unless ($gt) {
-        confess "No sample for index $sample_index";
+        return; # This is acceptable - the sample may be '.'
     }
     return Genome::File::Vcf::Genotype->new($self->{reference_allele}, $alts, $gt);
+}
+
+=item C<alt_bases_for_sample>
+
+Returns an array of nuclotides for the alternate alleles for a given sample
+
+params:
+    $sample_index - sample index
+
+=back
+
+=cut
+
+sub alt_bases_for_sample {
+    my ($self, $sample_index) = @_;
+    return grep {$_ ne $self->{reference_allele}} $self->bases_for_sample($sample_index);
+}
+
+=item C<bases_for_sample>
+
+Returns an array of nuclotides for the genotype alleles for a given sample, including reference
+
+params:
+    $sample_index - sample index
+
+=back
+
+=cut
+
+sub bases_for_sample {
+    my ($self, $sample_index) = @_;
+
+    my $genotype = $self->genotype_for_sample($sample_index);
+    return unless defined $genotype;
+
+    return $genotype->get_alleles;
+}
+
+sub to_hashref {
+    my $self = shift;
+
+    my @keys = $self->{header}->all_columns;
+    my @values = split(/\t/, $self->to_string);
+
+    my %hash;
+    @hash{@keys} = @values;
+    return \%hash;
+}
+
+=item C<info_to_string>
+
+Returns the string representation of the info fields for this entry.
+
+=back
+
+=cut
+
+sub info_to_string {
+    my $self = shift;
+
+    my %info;
+    if ($self->info) {
+        %info = %{$self->info};
+    }
+    my %info_keys = map {$_ => undef} keys %info;
+
+    my @info_order;
+    for my $info_key (@{$self->{info_fields}{order}}) {
+        push(@info_order, $info_key) if exists $info{$info_key};
+        delete $info_keys{$info_key};
+    }
+
+    push(@info_order, keys %info_keys);
+    return join(";",
+        map {
+            defined $info{$_} ?
+            join("=", $_, $info{$_})
+            : $_
+        } @info_order) || '.'
 }
 
 =item C<to_string>
@@ -730,20 +925,8 @@ Returns a string representation of the entry in VCF format.
 
 =cut
 
-
 sub to_string {
     my ($self) = @_;
-
-    my %info = %{$self->info};
-    my %info_keys = map {$_ => undef} keys %info;
-
-    my @info_order;
-    for my $info_key (@{$self->{info_fields}{order}}) {
-        push(@info_order, $info_key) if exists $info{$info_key};
-        delete $info_keys{$info_key};
-    }
-
-    push(@info_order, keys %info_keys);
 
     # We want to display ./. when the GT format field is undefined,
     # but . otherwise. To this end, we build an array containing the
@@ -763,12 +946,7 @@ sub to_string {
         join(",", @{$self->{alternate_alleles}}) || '.',
         $self->{quality} || '.',
         join(";", @{$self->{_filter}}) || '.',
-        join(";",
-            map {
-                defined $info{$_} ?
-                    join("=", $_, $info{$_})
-                    : $_
-            } @info_order) || '.',
+        $self->info_to_string,
         join(":", @{$self->{_format}}) || '.',
         map {
             # Join values for an individual sample

@@ -26,13 +26,13 @@ my $sample = Genome::Sample->create(
     extraction_label => 'TCGA-1234-232-12',
     extraction_type  => 'genomic dna',
     extraction_desc  => 'This is a test',
-    cell_type        => 'primary',
     source           => $source,
     tissue_desc      => 'normal',
     age => 99,
     body_mass_index => 22.4,
 );
 isa_ok($sample, 'Genome::Sample');
+is($sample->name_in_vcf, "TCGA-1234-232-12");
 is($sample->subject_type, 'sample_name', 'subject type is organism sample');
 is_deeply($sample->taxon, $source->taxon, 'taxon');
 is($sample->age, 99, 'age');

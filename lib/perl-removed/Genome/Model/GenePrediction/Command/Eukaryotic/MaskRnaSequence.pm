@@ -68,7 +68,7 @@ sub execute {
             CLEANUP => 0,
             UNLINK => 0,
         );
-        chmod(0666, $masked_fh->filename);
+        chmod(0660, $masked_fh->filename);
         $self->masked_fasta_file($masked_fh->filename);
         $masked_fh->close;
     }

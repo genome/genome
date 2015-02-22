@@ -72,7 +72,7 @@ sub execute {
     my $tumor_bam = $tumor_build->whole_rmdup_bam_file or die "Cannot find tumor .bam.\n";
     my $normal_bam = $normal_build->whole_rmdup_bam_file or die "Cannot find normal .bam.\n";
 
-    my $rv = Genome::Model::Tools::Validation::LongIndelsParseRemapped->execute(
+    my $cmd = Genome::Model::Tools::Validation::LongIndelsParseRemapped->create(
         contigs_file => $contigs_file,
         tumor_bam => $tumor_bam,
         normal_bam => $normal_bam,
@@ -80,7 +80,7 @@ sub execute {
         tier_file_location => $tier_file_location,
     );
 
-    return $rv;
+    return $cmd->execute;
 }
 
 1;

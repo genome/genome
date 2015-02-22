@@ -6,7 +6,7 @@ use Genome;
 use Carp 'confess';
 
 class Genome::Model::GenePrediction::Command::Eukaryotic::CodingGenesToGff {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         prediction_directory => {
             is => 'DirectoryPath',

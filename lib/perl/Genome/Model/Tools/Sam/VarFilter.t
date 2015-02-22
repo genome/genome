@@ -11,7 +11,7 @@ use File::Compare;
 
 BEGIN {
     if (`uname -a` =~ /x86_64/){
-        plan tests => 13;
+        plan tests => 15;
     }
     else{
         plan skip_all => 'Must run on a 64 bit machine';
@@ -29,6 +29,7 @@ my $tmp_dir  = File::Temp::tempdir(
 
 my $pileup_var_file = "$root_dir/test.pileup";
 my $vcf_var_file    = "$root_dir/test.vcf";
+my $vcf_var_file_small    = "$root_dir/test.small.vcf";
 
 my @out_files = qw(
     snv.varfilter
@@ -41,6 +42,7 @@ my @formats = qw(pileup vcf);
 
 my @pileup_out_files = map{$tmp_dir.'/'.$_.'.pileup'}@out_files;
 my @vcf_out_files    = map{$tmp_dir.'/'.$_.'.vcf'}@out_files;
+my @vcf_small_out_files = map{$tmp_dir.'/'.$_.'.small.vcf'}@out_files;
 
 #using the default for samtools r963 samtools.pl varFilter params
 my $filter = Genome::Model::Tools::Sam::VarFilter->create(
@@ -73,6 +75,19 @@ $filter = Genome::Model::Tools::Sam::VarFilter->create(
 
 isa_ok($filter,'Genome::Model::Tools::Sam::VarFilter');
 ok($filter->execute,'Vcf varfilter executed ok');
+
+$filter = Genome::Model::Tools::Sam::VarFilter->create(
+    use_version      => 'r963',
+    input_var_format => 'vcf',
+    input_var_file   => $vcf_var_file_small,
+    snv_out_file     => $vcf_small_out_files[0],
+    indel_out_file   => $vcf_small_out_files[1],
+    filtered_snv_out_file   => $vcf_small_out_files[2],
+    filtered_indel_out_file => $vcf_small_out_files[3],
+);
+
+isa_ok($filter,'Genome::Model::Tools::Sam::VarFilter');
+ok($filter->execute,'Vcf varfilter with zero-size output executed ok');
 
 for my $format (@formats) {
     for my $i (0..$#out_files) {

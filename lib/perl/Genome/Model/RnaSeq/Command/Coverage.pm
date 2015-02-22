@@ -44,7 +44,7 @@ sub sub_command_sort_position { 7 }
 sub shortcut {
     my $self = shift;
     my $build = $self->build;
-    
+
     my $pp = $build->processing_profile;
     if ($pp->transcriptome_coverage_annotation_file_basenames eq 'none') {
         $self->debug_message('The annotation file defined in the processing profile is \'none\'.  Transcriptome coverage will be skipped.');
@@ -88,7 +88,7 @@ sub execute {
     unless  (version->parse($alignment_result->aligner_version) >= version->parse('1.1.0')) {
         die('Coverage requires a BAM file produced by TopHat v1.1.0 or greater');
     }
-    
+
     if ($alignment_result->isa('Genome::InstrumentData::AlignmentResult::Merged')) {
         my %params = (
             $self->params_for_result,
@@ -106,7 +106,8 @@ sub execute {
         );
         #This is not a software result, yet...
         delete($params{test_name});
-        unless (Genome::InstrumentData::AlignmentResult::Command::TranscriptomeCoverage->execute(%params)) {
+        my $cmd = Genome::InstrumentData::AlignmentResult::Command::TranscriptomeCoverage->create(%params);
+        unless ($cmd and $cmd->execute) {
             return;
         }
     }
@@ -158,12 +159,17 @@ sub params_for_result {
     if ($pp->transcriptome_coverage_mask_reference_transcripts) {
         $mask_reference_transcripts = $pp->transcriptome_coverage_mask_reference_transcripts;
     }
+
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{transcriptome_coverage} = $build;
+
     return (
         alignment_result_id => $alignment_result->id,
         annotation_file_basenames => $annotation_file_basenames,
         merge_annotation_features => $merge_annotation_features,
         mask_reference_transcripts => $mask_reference_transcripts,
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        users => $result_users,
     );
 }
 
@@ -172,9 +178,7 @@ sub link_result_to_build {
     my $result = shift;
 
     my $build = $self->build;
-    my $label = join('_', 'transcriptome_coverage');
     Genome::Sys->create_symlink($result->output_dir, $build->coverage_directory);
-    $result->add_user(label => $label, user => $build);
 
     $self->transcriptome_coverage_result($result);
 

@@ -1,0 +1,10 @@
+[4mOVERVIEW[0m
+Output the allele frequency based on 1000Genomes
+
+[4mREQUIRED EXPERTS[0m
+1kg
+
+[4mAVAILABLE FIELDS[0m
+  [1m1kg-af[0m
+    Allele frequency based on thousand genomes project
+

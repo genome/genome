@@ -3,14 +3,17 @@ package Genome::Model::Tools::MetagenomicClassifier::Rdp::ClassifierBase;
 use strict;
 use warnings;
 
+use Genome;
+
 use Genome::InlineConfig;
+use Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet;
+require Scalar::Util;
 
 class Genome::Model::Tools::MetagenomicClassifier::Rdp::ClassifierBase {
     is_abstract => 1,
     has => [
         training_set => {
-            is => 'Text',
-            valid_values => [ valid_training_sets() ],
+            is => 'Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet',
             doc => 'Training set to use.'
         },
     ],
@@ -22,16 +25,24 @@ class Genome::Model::Tools::MetagenomicClassifier::Rdp::ClassifierBase {
 
 $ENV{PERL_INLINE_JAVA_JNI} = 1;
 
-sub valid_training_sets {
-    return (qw/ 4 6 9 broad /);
-}
+sub __errors__ {
+    my $self = shift;
 
-sub get_training_path {
-    my $class = shift;
-    my $training_set = shift;
+    my @errors = $self->SUPER::__errors__;
+    return @errors if @errors;
 
-    $training_set |= '';
-    return "/gsc/scripts/share/rdp/$training_set";
+    my $training_set_class = 'Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet';
+    if ( not Scalar::Util::blessed($self->training_set) ) {
+        return (
+            UR::Object::Tag->create(
+                type => 'invalid',
+                properties => [qw/ training_set /],
+                desc => "Training set must be an obejct of the $training_set_class",
+            )
+        );
+    }
+
+    return;
 }
 
 sub create {
@@ -40,13 +51,13 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
-    my $classifier_properties_path = eval{ $self->classifier_properties_path_for_set( $self->training_set ); };
-    if ( not $classifier_properties_path ) {
-        $self->error_message($@);
+    my @errors = $self->__errors__;
+    if ( @errors ) {
+        $self->error_message( $errors[0]->__display_name__ );
         return;
     }
 
-    my $factory = new FactoryInstance($classifier_properties_path);
+    my $factory = new FactoryInstance( $self->training_set->classifier_properties_path );
     $self->_factory($factory);
     $self->_classifier( $factory->createClassifier );
 
@@ -57,40 +68,6 @@ sub new {
     my $class = shift;
     warn "Called method 'new' instantiate $class, but it is deprecated. Please use 'create.'";
     return $class->create(@_);
-}
-
-sub base_training_path {
-    return "/gsc/scripts/share/rdp/";
-}
-
-sub training_path_for_set {
-    my ($self, $training_set) = @_;
-
-    die 'No training set given to get training path!' if not $training_set;
-    die 'Invalid training set given to get training path!' if not grep { $training_set eq $_ } $self->valid_training_sets;
-
-    my $training_path = $self->base_training_path.'/'.$training_set;
-    if ( not -d $training_path ) {
-        $self->error_message("Training path does not exist: $training_path");
-        return;
-    }
-
-    return $training_path;
-}
-
-sub classifier_properties_path_for_set {
-    my ($self, $training_set) = @_;
-
-    my $training_path = $self->training_path_for_set($training_set);
-    return if not $training_path;
-
-    my $classifier_properties_path = $training_path.'/rRNAClassifier.properties';
-    if ( not -s $classifier_properties_path ) {
-        $self->error_message('No rRNAClassifier.properties in training path! '.$training_path);
-        return;
-    }
-
-    return $classifier_properties_path;
 }
 
 sub classify {

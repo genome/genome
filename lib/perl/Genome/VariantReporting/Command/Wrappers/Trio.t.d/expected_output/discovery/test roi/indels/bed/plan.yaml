@@ -1,0 +1,195 @@
+---
+experts:
+  bam-readcount:
+    aligned_bam_result_id:
+      - -b52e1b52f81e4541af7f71ce14ca96f6
+      - -533e0bb1a99f4fbe9e31cf6e19907133
+      - -ghij4i5j230509ug345
+    insertion_centric: 1
+    max_count: 10000000
+    minimum_base_quality: 0
+    minimum_mapping_quality: 0
+    per_library: 1
+    version: 0.5
+  dbsnp:
+    info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+    joinx_version: 1.9
+    vcf: /gscuser/dmorton/deployments/trio/genome/lib/perl/Genome/VariantReporting/Command/Wrappers/TestHelpers.pm.d/dbsnp_nhlbi.vcf
+  homopolymer:
+    homopolymer_list_id: 696318bab30d47d49fab9afa845691b7
+    info_string: HOMP_FILTER
+    joinx_version: 1.9
+    max_length: 2
+  nhlbi:
+    info_string: AAC:PP:CDP:PH:EA_GTC:AA_GTC:MAF
+    joinx_version: 1.9
+    vcf: /gscuser/dmorton/deployments/trio/genome/lib/perl/Genome/VariantReporting/Command/Wrappers/TestHelpers.pm.d/dbsnp_nhlbi.vcf
+  vep:
+    custom_annotation_tags:
+      - ON_TARGET
+      - SEG_DUP
+      - AML_RMG
+    ensembl_version: 75
+    feature_list_ids:
+      AML_RMG: 0e4973c600244c3f804d54bee6f81145
+      ON_TARGET: -1
+      SEG_DUP: -1
+    joinx_version: 1.9
+    plugins:
+      - Condel@PLUGIN_DIR@b@2
+    plugins_version: 1
+    reference_fasta: $GENOME_TEST_INPUTS/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/reference.fasta
+    species: homo-sapiens
+needs_translation: 0
+reports:
+  acmg:
+    filters:
+      allele-in-genotype:
+        sample_name: TEST-patient1-somval_tumor1
+      annotation-category:
+        category_list:
+          - splice_site
+          - non_synonymous
+      contains-tag:
+        info_tag: ON_TARGET
+      ft-keep:
+        keep_filter_values:
+          - PASS
+          - .
+        sample_name: TEST-patient1-somval_tumor1
+      gene:
+        gene_set: acmg
+      homopolymer:
+        info_tag: HOMP_FILTER
+      max-af:
+        max_af: 0.5
+      max-maf:
+        max_maf: 0.5
+        population_code: All
+    interpreters:
+      caf: {}
+      info-tags: {}
+      many-samples-vaf:
+        sample_names:
+          - TEST-patient1-somval_tumor1
+          - TEST-patient1-somval_tumor2
+          - TEST-patient1-somval_normal1
+      max-vaf-observed:
+        normal_sample_names:
+          - TEST-patient1-somval_normal1
+        tumor_sample_names:
+          - TEST-patient1-somval_tumor1
+          - TEST-patient1-somval_tumor2
+      min-coverage:
+        min_coverage: 10
+        sample_name: TEST-patient1-somval_tumor1
+      min-coverage-observed:
+        sample_names:
+          - TEST-patient1-somval_tumor1
+          - TEST-patient1-somval_tumor2
+          - TEST-patient1-somval_normal1
+      nhlbi: {}
+      position: {}
+      rsid: {}
+      variant-callers:
+        sample_name: TEST-patient1-somval_tumor1
+      variant-type: {}
+      vep: {}
+    params:
+      sample_names:
+        - TEST-patient1-somval_tumor1
+        - TEST-patient1-somval_tumor2
+        - TEST-patient1-somval_normal1
+  bed:
+    filters:
+      allele-in-genotype:
+        sample_name: TEST-patient1-somval_tumor1
+      contains-tag:
+        info_tag: ON_TARGET
+      ft-keep:
+        keep_filter_values:
+          - PASS
+          - .
+        sample_name: TEST-patient1-somval_tumor1
+      homopolymer:
+        info_tag: HOMP_FILTER
+    interpreters:
+      bed-entry: {}
+    params:
+      generate_legend_file: 0
+  full:
+    filters:
+      allele-in-genotype:
+        sample_name: TEST-patient1-somval_tumor1
+      contains-tag:
+        info_tag: ON_TARGET
+      ft-keep:
+        keep_filter_values:
+          - PASS
+          - .
+        sample_name: TEST-patient1-somval_tumor1
+      homopolymer:
+        info_tag: HOMP_FILTER
+    interpreters:
+      caf: {}
+      info-tags: {}
+      many-samples-vaf:
+        sample_names:
+          - TEST-patient1-somval_tumor1
+          - TEST-patient1-somval_tumor2
+          - TEST-patient1-somval_normal1
+      max-vaf-observed:
+        normal_sample_names:
+          - TEST-patient1-somval_normal1
+        tumor_sample_names:
+          - TEST-patient1-somval_tumor1
+          - TEST-patient1-somval_tumor2
+      min-coverage:
+        min_coverage: 10
+        sample_name: TEST-patient1-somval_tumor1
+      min-coverage-observed:
+        sample_names:
+          - TEST-patient1-somval_tumor1
+          - TEST-patient1-somval_tumor2
+          - TEST-patient1-somval_normal1
+      position: {}
+      rsid: {}
+      variant-callers:
+        sample_name: TEST-patient1-somval_tumor1
+      variant-type: {}
+      vep: {}
+    params:
+      sample_names:
+        - TEST-patient1-somval_tumor1
+        - TEST-patient1-somval_tumor2
+        - TEST-patient1-somval_normal1
+  simple:
+    filters:
+      allele-in-genotype:
+        sample_name: TEST-patient1-somval_tumor1
+      contains-tag:
+        info_tag: ON_TARGET
+      ft-keep:
+        keep_filter_values:
+          - PASS
+          - .
+        sample_name: TEST-patient1-somval_tumor1
+      homopolymer:
+        info_tag: HOMP_FILTER
+    interpreters:
+      position: {}
+      variant-type: {}
+      vep: {}
+  vcf:
+    filters: {}
+    interpreters:
+      contains-tag:
+        info_tag: ON_TARGET
+      ft-keep:
+        keep_filter_values:
+          - PASS
+          - .
+        sample_name: TEST-patient1-somval_tumor1
+      homopolymer:
+        info_tag: HOMP_FILTER
+      vcf-entry: {}

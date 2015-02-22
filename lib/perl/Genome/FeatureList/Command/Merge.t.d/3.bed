@@ -1,0 +1,15 @@
+track name="target_region"
+1	123	1234
+1	234	2345
+2	345	3456
+X	456	4567
+track name="tiled_region"
+1	123	500	probe1
+1	501	1234	probe2
+1	234	1000	probe3
+1	1001	2345	probe4
+2	345	2000	probe5
+2	2001	3456	probe6
+X	456	3000	probe7
+X	3001	4567	probe8
+

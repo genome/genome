@@ -8,7 +8,7 @@ use Genome;
 use Cwd;
 
 class Genome::Model::Command::Remove {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         models => {
             is => 'Genome::Model',

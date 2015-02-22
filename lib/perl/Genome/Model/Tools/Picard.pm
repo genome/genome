@@ -8,6 +8,7 @@ use File::Basename;
 use Sys::Hostname;
 use Genome::Utility::AsyncFileSystem qw(on_each_line);
 use Genome::Utility::Email;
+use List::MoreUtils 'uniq';
 
 my $PICARD_DEFAULT = '1.46';
 my $DEFAULT_MEMORY = 4;
@@ -116,6 +117,7 @@ EOS
 # NOTE: These are in order.
 # Please put the most recent first.
 my @PICARD_VERSIONS = (
+    '1.123' => '/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123',
     '1.82' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.82',
     '1.77' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.77',
     '1.52' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.52',
@@ -144,6 +146,10 @@ my %PICARD_VERSIONS = @PICARD_VERSIONS;
 
 sub latest_version { ($_[0]->installed_picard_versions)[0] }
 
+sub available_picard_versions {
+    return uniq(installed_picard_versions(), sort {$b cmp $a} keys %PICARD_VERSIONS);
+}
+
 sub path_for_picard_version {
     my ($class, $version) = @_;
     $version ||= $PICARD_DEFAULT;
@@ -165,12 +171,31 @@ sub installed_picard_versions {
     my @versions;
     for my $f (@files) {
         if($f =~ /picard-([\d\.]+).jar$/) {
+            next if $1 eq '1.124';
             push @versions, $1;
         }
     }
 
-    #all versions should be #.## for now (this'll break on 1.100!)
-    return sort { $b <=> $a } @versions;
+    my $sortsub = sub {
+        my ($astr, $bstr) = @_;
+
+        my @aa = split /\./, $astr;
+        my @bb = split /\./, $bstr;
+
+        while (@aa and @bb) {
+            my $acmp = shift @aa;
+            my $bcmp = shift @bb;
+
+            return  1 if $acmp > $bcmp;
+            return -1 if $acmp < $bcmp;
+        }
+
+        return  1 if @aa; # Assumes 1.85.1 is newer than 1.85
+        return -1 if @bb;
+        return 0;
+    };
+
+    return sort { $sortsub->($b, $a) } @versions;
 }
 
 sub default_picard_version {
@@ -193,7 +218,7 @@ sub run_java_vm {
     
     my $jvm_options = $self->additional_jvm_options || '';
     
-    my $java_vm_cmd = 'java -Xmx'. $self->maximum_memory .'g -XX:MaxPermSize=' . $self->maximum_permgen_memory . 'm ' . $jvm_options . ' -cp /usr/share/java/ant.jar:'. $cmd;
+    my $java_vm_cmd = 'java -Xmx'. int(1024*$self->maximum_memory) .'m -XX:MaxPermSize=' . $self->maximum_permgen_memory . 'm ' . $jvm_options . ' -cp /usr/share/java/ant.jar:'. $cmd;
     $java_vm_cmd .= ' VALIDATION_STRINGENCY='. $self->validation_stringency;
     $java_vm_cmd .= ' TMP_DIR='. $self->temp_directory;
     if ($self->create_md5_file) {
@@ -201,6 +226,11 @@ sub run_java_vm {
     }
     if ($self->log_file) {
         $java_vm_cmd .= ' >> ' . $self->log_file;
+    }
+
+    # hack to workaround premature release of 1.123 with altered classnames
+    if ($java_vm_cmd =~ /picard-tools.?1\.123/) {
+        $java_vm_cmd =~ s/net\.sf\.picard\./picard./;
     }
     
     $params{'cmd'} = $java_vm_cmd;

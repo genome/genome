@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 class Genome::Sys::Command::Completion::Bash {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => 'outputs completion code for Bash',
 };
 

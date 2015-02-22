@@ -16,7 +16,7 @@ use Genome;
 
 class Genome::Model::RnaSeq::Command::RawcountMatrix
 {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input =>
     [
         models =>
@@ -34,6 +34,10 @@ class Genome::Model::RnaSeq::Command::RawcountMatrix
         {
             doc => 'An optional Boolean, if true (i.e. 1) performs a simple differential expression analysis',
             is_optional => 1,
+        },
+        model_identifier => {
+            default_value => 'name',
+            valid_values => ['name','id','subject_name','individual_common_name'],
         },
     ],
 };
@@ -79,7 +83,10 @@ sub execute
     my $reference_build;
     
     # loop through the models in the group and perform various quality checks
-
+    my $model_identifier_method = $self->model_identifier;
+    if ($self->edgeR){
+        warn('Overriding the model_identifier '. $model_identifier_method .' for subject attributes expected by edgeR!');
+    }
     foreach my $model (@models)
     {
 
@@ -145,30 +152,16 @@ sub execute
 
     # open the gtf file and read it creating a hash of ensemble_id => gene name
 
-    open(GTF, "$gene_gtf_path") || die "Can not open path to file: $!";
+    my $gtf_reader = Genome::Utility::IO::GffReader->create(
+        input => $gene_gtf_path,
+    );
+    unless ($gtf_reader) {
+        die "Can not open path to file: $!";
+    }
 
-    while(<GTF>)
-    {
-        chomp $_;
-        my @tmp = split("\t", $_);
-       
-    # extract just the gene name from the annotation file
-
-        $tmp[8] =~ /gene_name\s*"[A-Za-z0-9._-]*"/;
-        my $gene_name = $&;
-        $gene_name =~ s/gene_name\s*"//g;
-        $gene_name =~ s/"//g;
-
-    # extract just the ensemble id from the annotation file
-
-        $tmp[8] =~ /gene_id\s*"\w+"/;
-        my $ensemble_id = $&;
-        $ensemble_id =~ s/gene_id\s*"//g;
-        $ensemble_id =~ s/"//g;
-
-    # build the hash
-        
-        $annotation_hash{$ensemble_id} = "$gene_name\t";
+    while (my $data = $gtf_reader->next_with_attributes) {
+        # build the hash
+        $annotation_hash{$data->{gene_id}} = $data->{gene_name} ."\t";
     }
 
     $self->debug_message('There are '. scalar(keys %annotation_hash). ' genes in the annotation file: '. $gene_gtf_path);
@@ -177,20 +170,19 @@ sub execute
     # then if the ensemble_id exist in the annotation hash created above append the raw_counts
     # to the value of the hash, else kill the program as annotation file does not match data file
 
-    my @subject;
-    my $subject;
-    my $subject_a;
-    my $subject_b;
-
+    my @labels;
     foreach my $build (@builds)
     {
 
-        # set up @subject array to hold subjects for each build ID to use as header later
-
-         $subject_a = $build->subject->common_name;
-         $subject_b = $build->subject->name;
-         $subject = $subject_a . $subject_b;
-         push(@subject, $subject);
+        # set up @labels array to hold subjects for each model to use as header later
+        
+        my $label = $build->model->$model_identifier_method;
+        if ($self->edgeR) {
+            my $subject_a = $build->subject->common_name;
+            my $subject_b = $build->subject->name;
+            $label = $subject_a . $subject_b;
+        }
+        push(@labels, $label);
 
          my $gene_count_tracking = $build->data_directory .'/results/digital_expression_result/gene-counts.tsv';
 
@@ -238,7 +230,7 @@ sub execute
 
     print OUTPUT "Ensemble_id\tGene_name";
 
-    foreach(@subject)
+    foreach(@labels)
     {
         print OUTPUT "\t$_";
     }

@@ -9,14 +9,6 @@ use IO::Handle;
 class Genome::Command::Viewer {
     doc => "Base class for 'view' commands.",
     is => 'Command::V2',
-    has => [
-        color => {
-            is => 'Boolean',
-            is_optional => 1,
-            default_value => 1,
-            doc => 'Display report in color.'
-        },
-    ],
 };
 
 
@@ -57,5 +49,51 @@ sub get_report {
 
     return $report;
 }
+
+sub _display_many {
+    my ($self, $handle, $section_name, $method_name, @items) = @_;
+
+    print $handle $self->_color_heading($section_name) . "\n";
+    if(@items) {
+        for my $item (@items) {
+            $self->$method_name($handle, $item);
+        }
+    } else {
+        print $handle "None\n";
+    }
+    print $handle "\n";
+}
+
+sub _software_result_test_names {
+    my ($self, @results) = @_;
+
+    unless (scalar(@results)) {
+        return "No results found";
+    }
+
+    my $UNDEF = '***undef***';
+    my @test_names = map {$_->test_name ? $_->test_name : $UNDEF} @results;
+
+    my %counts;
+    $counts{$_}++ for @test_names;
+    my @sorted_counts = (
+        sort { $b->[1] <=> $a->[1] }
+        map { [ $_, $counts{$_} ] } keys %counts
+    );
+
+    my @entries;
+    while (my $entry = shift(@sorted_counts)) {
+        my ($name, $count) = @{$entry};
+        if ($name eq $UNDEF) {
+            $name = "undef";
+        } else {
+            $name = '"' . $name . '"';
+        }
+
+        push @entries, sprintf("%s (%d)", $name, $count);
+    }
+    return join(", ", @entries);
+}
+
 
 1;

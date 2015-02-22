@@ -29,7 +29,7 @@ class Genome::Model::SomaticValidation::Command::Loh {
 sub shortcut {
     my $self = shift;
 
-    return 1 if $self->should_skip_run;
+    return 1 if $self->should_skip_run($self->build);
 
     return;
 
@@ -53,7 +53,7 @@ sub execute {
     my $self = shift;
     my $build = $self->build;
 
-    return 1 if $self->should_skip_run;
+    return 1 if $self->should_skip_run($self->build);
 
     my @params = $self->_params_for_result;
     if(@params) {
@@ -68,30 +68,31 @@ sub execute {
 }
 
 sub should_skip_run {
-    my $self = shift;
-    my $build = $self->build;
+    my $class = shift;
+    $class = ref($class) || $class;
+    my $build = shift;
 
     unless ($build){
-        die $self->error_message("no build provided!");
+        die $class->error_message("no build provided!");
     }
 
     unless(defined($build->model->loh_version)){
-        $self->debug_message("No LOH version was found, skipping LOH detection!");
+        $class->debug_message("No LOH version was found, skipping LOH detection!");
         return 1;
     }
 
     unless(defined($build->model->snv_detection_strategy)){
-        $self->debug_message("No SNV Detection Strategy, skipping LOH.");
+        $class->debug_message("No SNV Detection Strategy, skipping LOH.");
         return 1;
     }
 
     unless(defined($build->model->loh_snv_detection_strategy)) {
-        $self->debug_message("No LOH SNV detection strategy, skipping LOH");
+        $class->debug_message("No LOH SNV detection strategy, skipping LOH");
         return 1;
     }
 
     unless($build->normal_sample) {
-        $self->debug_message('No control to compare against, skipping LOH');
+        $class->debug_message('No control to compare against, skipping LOH');
         return 1;
     }
 
@@ -110,7 +111,7 @@ sub _fetch_control_snv_result {
     return unless $build->model->loh_snv_detection_strategy;
 
     my $alignment_result = $build->control_merged_alignment_result;
-    my $bam = $alignment_result->merged_alignment_bam_path;
+    my $bam = $alignment_result->bam_file;
 
     my $dir = $build->data_directory .'/control_variants_for_loh';
     Genome::Sys->create_directory($dir);
@@ -121,6 +122,7 @@ sub _fetch_control_snv_result {
         aligned_reads_sample => $build->normal_sample->name,
         reference_build_id => $build->reference_sequence_build->id,
         output_directory => $dir,
+        result_users => Genome::SoftwareResult::User->user_hash_for_build($build),
     );
 
     my $command = Genome::Model::Tools::DetectVariants2::Dispatcher->create(%params);
@@ -150,11 +152,15 @@ sub _params_for_result {
 
     return unless $prior_result and $control_result;
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{loh} = $build;
+
     return (
         prior_result_id => $prior_result->id,
         control_result_id => $control_result->id,
         classifier_version => $loh_version,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        users => $result_users,
     );
 }
 
@@ -163,7 +169,6 @@ sub link_result_to_build {
     my $result = shift;
     my $build = $self->build;
 
-    $result->add_user(user => $build, label => 'loh');
     Genome::Sys->create_symlink($result->output_dir, join('/', $build->data_directory, 'loh'));
 
     return 1;

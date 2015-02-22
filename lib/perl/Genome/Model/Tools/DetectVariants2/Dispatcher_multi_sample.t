@@ -36,7 +36,7 @@ my $dispatcher_class = "${det_class_base}::Dispatcher";
 use_ok($dispatcher_class);
 
 # TODO use alignment results that are defined in the test rather than relying on existing data
-# Would need to satisfy these calls: $ar->reference_build->full_consensus_path("fa"); $ar->instrument_data; $ar->merged_alignment_bam_path; # $id->sample_name
+# Would need to satisfy these calls: $ar->reference_build->full_consensus_path("fa"); $ar->instrument_data; $ar->bam_file; # $id->sample_name
 
 my @test_alignment_result_ids = qw(121781692 121781691 121781695);
 my @test_alignment_results = Genome::InstrumentData::AlignmentResult::Merged->get(\@test_alignment_result_ids);

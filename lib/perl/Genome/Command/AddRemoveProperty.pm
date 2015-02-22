@@ -8,7 +8,7 @@ use Genome;
 use Data::Dumper 'Dumper';
 
 class Genome::Command::AddRemoveProperty {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     is_abstract => 1,
     doc => 'CRUD update property command class.',
 };

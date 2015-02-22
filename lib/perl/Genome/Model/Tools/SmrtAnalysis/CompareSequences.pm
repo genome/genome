@@ -7,7 +7,7 @@ use Genome;
 
 use File::Temp qw/tempfile/;
 
-my $DEFAULT_LSF_RESOURCE = "-g /pacbio/smrtanalysis -M 4000000 -R 'select[type==LINUX64 && mem>=4000 && tmp>=40000] rusage[mem=4000,tmp=20000] span[hosts=1]' -n 4";
+my $DEFAULT_LSF_RESOURCE = "-g /pacbio/smrtanalysis -M 4000000 -R 'select[mem>=4000 && tmp>=40000] rusage[mem=4000,tmp=20000] span[hosts=1]' -n 4";
 
 class Genome::Model::Tools::SmrtAnalysis::CompareSequences {
     is  => 'Genome::Model::Tools::SmrtAnalysis::Base',

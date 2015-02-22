@@ -7,10 +7,10 @@ use Genome;
 
 class Genome::Model::Build::Command::List {
     is => 'Genome::Model::Command::BuildRelatedList',
-    has => [
+    has => {
         subject_class_name  => {
-            is_constant => 1, 
-            value => 'Genome::Model::Build' 
+            is_constant => 1,
+            value => 'Genome::Model::Build'
         },
         order_by => {
             default_value => 'date_scheduled',
@@ -19,7 +19,10 @@ class Genome::Model::Build::Command::List {
             doc => 'Output rows are listed sorted by these named columns in increasing order.',
         },
         show => { default_value => 'id,model_id,model_name,run_by,status,date_scheduled,date_completed,software_revision,data_directory' },
-    ],
+    },
+    has_optional => {
+        order_by => { default_value => 'created_at', },
+    },
 };
 
 sub sub_command_sort_position { 1 }
@@ -43,7 +46,7 @@ sub help_synopsis {
   genome model build list mymodel
 
   # or use standard filters
-  genome model build list --filter status=Abandoned,data_directory~/gscmnt/839% --show id,subject_name,data_directory
+  genome model build list --filter status=Running,subject.name~TCGA% --show id,subject_name,data_directory
 EOS
     return $syn;
 }

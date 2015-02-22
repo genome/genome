@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use constant MAX_GENOTYPE_DATA_TO_PROCESS => 500;
+
 class Genome::Site::TGI::Synchronize::SyncLimsAndGenome {
     is => 'Command::V2',
     has_optional => [
@@ -64,7 +66,8 @@ sub _lock_me {
     return 1 if $ENV{UR_DBI_NO_COMMIT};
     $self->status_message('Lock...');
     my $lock = Genome::Sys->lock_resource(
-        resource_lock => $ENV{GENOME_LOCK_DIR} . '/synchronize-genome-from-lims',
+        resource_lock => 'synchronize-genome-from-lims',
+        scope => 'site',
         max_try => 1,
     );
     if ( not $lock ) {
@@ -265,12 +268,16 @@ sub _create_object {
     return $original_object->create_in_genome;
 }
 
+my $genotype_count = 0;
 sub _create_genotyping {
     my ($self, $original_object, $new_object_class) = @_;
 
     # Successful PIDFA required! The value is the genotype file. It must exist, too!
     my $genotype_file = $self->instrument_data_with_successful_pidfas->{$original_object->id};
     return 0 unless $genotype_file and -s $genotype_file;
+
+    $genotype_count++;
+    return 0 if $genotype_count > MAX_GENOTYPE_DATA_TO_PROCESS;
 
     $original_object->genotype_file($genotype_file);
 
@@ -322,7 +329,7 @@ sub _expunge {
         next unless $class =~ m/Genome::InstrumentData/; #only remove instrument data for now
         next if $class eq 'Genome::InstrumentData::Imported'; #imported instrument data doesn't come from LIMS, so skip it
 
-        my @ids = @{$report->{$class}->{missing}} if $report->{$class}->{missing};
+        my @ids = @{$report->{$entity_name}->{missing}} if $report->{$entity_name}->{missing};
         next if not @ids;
 
         my $transaction = UR::Context::Transaction->begin();

@@ -11,7 +11,7 @@ class Genome::Model::Event::Build::RnaSeq::PrepareReads {
     ],
 };
 sub bsub_rusage {
-    return "-R 'select[model!=Opteron250 && type==LINUX64 && mem>16000 && tmp>150000] rusage[tmp=150000, mem=16000]' -M 16000000";
+    return "-R 'select[mem>16000 && tmp>150000] rusage[tmp=150000, mem=16000]' -M 16000000";
 }
 
 sub execute {
@@ -64,7 +64,7 @@ sub execute {
         $picard_version = Genome::Model::Tools::Picard->default_picard_version;
         $self->warning_message('Picard version not defined in processing profile.  Using default picard version: '. $picard_version);
     }
-    unless (Genome::Model::Tools::Picard::FastqToSam->execute(
+    my $converter_cmd = Genome::Model::Tools::Picard::FastqToSam->execute(
         fastq => $self->fastq_directory .'/'. $instrument_data->read1_fastq_name,
         fastq2 => $self->fastq_directory .'/'. $instrument_data->read2_fastq_name,
         output => $self->fastq_directory .'/s_'. $instrument_data->subset_name .'_sequence.bam',
@@ -80,7 +80,8 @@ sub execute {
         maximum_memory => 12,
         maximum_permgen_memory => 256,
         max_records_in_ram => 3000000,
-    )) {
+    );
+    unless ($converter_cmd and $converter_cmd->result) {
         die ('Failed to create per lane, unaligned BAM file: '. $self->fastq_directory .'/s_'. $instrument_data->subset_name .'_sequence.bam');
     }
     return 1;

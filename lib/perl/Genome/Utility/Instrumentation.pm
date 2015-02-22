@@ -1,5 +1,5 @@
 package Genome::Utility::Instrumentation;
-
+use parent 'Exporter';
 
 # --- WARNING ---
 # This is a prototype interface to the statsd server.
@@ -9,6 +9,16 @@ package Genome::Utility::Instrumentation;
 
 use strict;
 use warnings;
+
+our @EXPORT_OK = qw(
+    dec
+    decrement
+    inc
+    increment
+    gauge
+    timer
+    timing
+);
 
 use Net::Statsd;
 use Time::HiRes;
@@ -58,7 +68,8 @@ sub increment {
 
 sub timer {
     return unless $Net::Statsd::HOST;
-    my ($name, $code) = @_;
+    my $code = pop @_;
+    my @names = @_;
 
     my $start_time = Time::HiRes::time();
 
@@ -68,17 +79,16 @@ sub timer {
     if ($@) {
         my $error = $@;
         my $stop_time = Time::HiRes::time();
-        eval {
-            my $error_name = "$name\_error";
-            Net::Statsd::timing($error_name, 1000 * ($stop_time - $start_time));
-        };
+        for (@names) {
+            timing("$_\_error", 1000 * ($stop_time - $start_time));
+        }
         die $error;
     }
 
     my $stop_time = Time::HiRes::time();
-    eval {
-        Net::Statsd::timing($name, 1000 * ($stop_time - $start_time));
-    };
+    for(@names) {
+        timing($_, 1000 * ($stop_time - $start_time));
+    }
 }
 
 sub timing {

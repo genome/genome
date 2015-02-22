@@ -1,7 +1,7 @@
 package Genome::Model::Command::Admin::MissingBuilds;
 
 class Genome::Model::Command::Admin::MissingBuilds {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => 'Identify models that are missing builds.',
     has => [
         models => {

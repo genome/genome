@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 class Genome::Sys::Command::Completion::Update {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => 'update the tab completion spec files (.opts)',
     has => [
         git_add => {

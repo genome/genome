@@ -44,7 +44,7 @@ sub execute {
     $out->close;
 
     #Get only regions of ROIs that overlap with good scored-regions
-    my $rv = Genome::Model::Tools::BedTools::Intersect->execute(
+    Genome::Model::Tools::BedTools::Intersect->execute(
         input_file_a => $self->roi_list,
         input_file_b => $good_scores,
         intersection_type => 'overlaps',

@@ -25,6 +25,25 @@ class Genome::InstrumentData::Solexa::View::Solr::Xml {
             calculate_from => ['subject'],
             calculate => sub { return join ('=', '/view/genome/instrument-data/solexa/status.html?id',$_[0]->id()); }
         },
+        default_aspects => {
+            is => 'ARRAY',
+            default => [
+                {
+                    name => 'id',
+                    position => 'title',
+                },
+                {
+                    name => 'id',
+                    position => 'content',
+                },
+                {
+                    name => '__display_name__',
+                    position => 'display_title',
+                },
+            ],
+        },
+    ],
+    has_optional_field => [
         display_label1 => {
             is  => 'Text',
         },
@@ -42,23 +61,6 @@ class Genome::InstrumentData::Solexa::View::Solr::Xml {
         },
         display_url3 => {
             is  => 'Text',
-        },
-        default_aspects => {
-            is => 'ARRAY',
-            default => [
-                {
-                    name => 'id',
-                    position => 'title',
-                },
-                {
-                    name => 'id',
-                    position => 'content',
-                },
-                {
-                    name => '__display_name__',
-                    position => 'display_title',
-                },
-            ],
         },
     ],
 };

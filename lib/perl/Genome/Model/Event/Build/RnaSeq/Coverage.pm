@@ -69,13 +69,16 @@ sub execute {
         my $transcript_stats_file = $coverage_directory .'/'. $annotation_basename .'_transcript_STATS.tsv';
         my @output_files = ($stats_file,$transcript_stats_file);
 
-        my $cmd = 'genome-perl5.10 -S gmt ref-cov rna-seq --alignment-file-path='. $bam_file .' --roi-file-path='. $bed_file .' --reference-fasta='. $reference_path .' --stats-file='. $stats_file .' --merged-stats-file='. $transcript_stats_file;
-        Genome::Sys->shellcmd(
-           cmd => $cmd,
-            input_files => [$bam_file,$bed_file,$reference_path],
-            output_files => \@output_files,
-            skip_if_output_is_present => 0,
+        my $cmd = Genome::Model::Tools::RefCov::RnaSeq->create(
+            alignment_file_path => $bam_file,
+            roi_file_path => $bed_file,
+            reference_fasta => $reference_path,
+            stats_file => $stats_file,
+            merged_stats_file => $transcript_stats_file,
         );
+        unless ($cmd->execute) {
+            die('Failed to run ref-cov');
+        }
 
         my $squashed_bed_file = $annotation_build->$annotation_file_method('bed',$reference_build->id,1);
         unless ($squashed_bed_file) {
@@ -84,23 +87,27 @@ sub execute {
         }
         my $squashed_stats_file = $coverage_directory .'/'. $annotation_basename .'_squashed_by_gene_STATS.tsv';
         my $genes_stats_file = $coverage_directory .'/'. $annotation_basename .'_gene_STATS.tsv';
-
-        my $gene_cmd = 'genome-perl5.10 -S gmt ref-cov rna-seq --alignment-file-path='. $bam_file .' --roi-file-path='. $squashed_bed_file .' --reference-fasta='. $reference_path .' --stats-file='. $squashed_stats_file .' --merged-stats-file='. $genes_stats_file;
-
         my @squashed_output_files = ($squashed_stats_file, $genes_stats_file);
-        Genome::Sys->shellcmd(
-            cmd => $gene_cmd,
-            input_files => [$bam_file,$squashed_bed_file,$reference_path],
-            output_files => \@squashed_output_files,
-            skip_if_output_is_present => 0,
+
+        my $gene_cmd = Genome::Model::Tools::RefCov::RnaSeq->create(
+            alignment_file_path => $bam_file,
+            roi_file_path => $squashed_bed_file,
+            reference_fasta => $reference_path,
+            stats_file => $squashed_stats_file,
+            merged_stats_file => $genes_stats_file,
         );
+        unless ($gene_cmd->execute) {
+            die('Failed to run ref-cov on squashed BED');
+        }
+
         for my $stats_output_file (@squashed_output_files, @output_files) {
             my ($basename,$dirname,$suffix) = File::Basename::fileparse($stats_output_file,qw/\.tsv/);
             my $summary_output_file = $dirname . $basename .'.txt';
-            unless (Genome::Model::Tools::BioSamtools::StatsSummary->execute(
+            my $summary_cmd = Genome::Model::Tools::BioSamtools::StatsSummary->execute(
                 stats_file => $stats_output_file,
                 output_file => $summary_output_file,
-            )) {
+            );
+            unless ($summary_cmd and $summary_cmd->result) {
                 die('Failed to generate stats sumamry for stats file: '. $stats_output_file);
             }
         }
@@ -117,23 +124,23 @@ sub execute {
 sub _save_metrics {
     my $self = shift;
 
-    my $build = $self->build;    
+    my $build = $self->build;
     my $coverage_dir = $build->coverage_directory;
     my @metric_files = glob($coverage_dir . "/*_STATS.txt");
-    
+
     for my $metric_file (@metric_files) {
         my $file_basename = File::Basename::basename($metric_file);
         my ($stat_type) = $file_basename =~ m/(.*)_STATS/;
         my $metric_body = `cat $metric_file`;
         my ($raw_keys, $raw_values) = split "\n", $metric_body;
-   
+
         my @keys = split /\s/, $raw_keys;
         my @values = split /\s/, $raw_values;
 
         for my $i (0..$#keys) {
             my $stat_key = sprintf("%s %s", $stat_type, $keys[$i]);
-            print $stat_key . "-->" . $values[$i] . "\n"; 
-            
+            print $stat_key . "-->" . $values[$i] . "\n";
+
             my $metric = Genome::Model::Metric->create(build=>$build, name=>$stat_key, value=>$values[$i]);
             unless($metric) {
                 $self->error_message("Failed creating metric for $stat_key");

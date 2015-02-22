@@ -46,7 +46,7 @@ sub args_builder {
         delete $args{$flag};
     }
     if (keys %args) {
-        push @args, map { _option_mapper($_) . $args{$_} } sort keys %args;
+        push @args, map { _option_mapper($_), $args{$_} } sort keys %args;
     }
 
     if (ref($command) ne 'ARRAY') {

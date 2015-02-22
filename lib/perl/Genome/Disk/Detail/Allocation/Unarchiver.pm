@@ -106,8 +106,10 @@ sub unarchive {
         # Make updates to the allocation
         $allocation_object->mount_path($shadow_allocation->volume->mount_path);
         Genome::Sys->create_directory($allocation_object->absolute_path);
-        unless (rename $shadow_allocation->absolute_path,
-                $allocation_object->absolute_path) {
+        unless (Genome::Sys->rename(
+                $shadow_allocation->absolute_path,
+                $allocation_object->absolute_path)
+        ) {
             confess($allocation_object->error_message(sprintf(
                     "Could not move shadow allocation path (%s) to "
                     . "final path (%s).  This should never happen, "

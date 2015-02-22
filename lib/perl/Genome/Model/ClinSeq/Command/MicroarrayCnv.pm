@@ -59,7 +59,7 @@ class Genome::Model::ClinSeq::Command::MicroarrayCnv {
             default_value => '124434505',
         },
     ],
-    doc => 'Create somatic CopyNumber plots using MicroArray build files with CnView',
+    doc => 'create somatic copy number plots using genotype-microarray build files with CnView',
 };
 
 sub help_synopsis {
@@ -155,9 +155,128 @@ sub get_copynumber_files {
             die $self->error_message("Unable to find copynumber file for " . $microarray_normal->name);
         }
     }
-    Genome::Sys->copy_file($copynumber_tumor, $self->outdir."/tumor.copynumber.original");
-    Genome::Sys->copy_file($copynumber_normal, $self->outdir."/normal.copynumber.original");
-    return ($copynumber_tumor, $copynumber_normal);
+    my $copynumber_tumor_copy = $self->outdir."/tumor.copynumber.original";
+    my $copynumber_normal_copy = $self->outdir."/normal.copynumber.original";
+    Genome::Sys->copy_file($copynumber_tumor, $copynumber_tumor_copy);
+    Genome::Sys->copy_file($copynumber_normal, $copynumber_normal_copy);
+    return ($copynumber_tumor_copy, $copynumber_normal_copy);
+}
+
+sub intersect_files {
+  my $self = shift;
+  my $f1 = shift;
+  my $f2 = shift;
+  my $f1_o = $f1 . ".intersected";
+  my $f2_o = $f2 . ".intersected";
+
+  open(my $f1_fh, "<". $f1);
+  open(my $f1_ofh, ">". $f1_o);
+  open(my $f2_fh, "<". $f2);
+  open(my $f2_ofh, ">". $f2_o);
+
+  my %f1;
+  my %chr_pos1;
+  my $is_header = 1;
+
+  while(<$f1_fh>) {
+    my $line = $_;
+    if($is_header) {
+      $f1{"header"} = $line;
+      $is_header = 0;
+      next;
+    }
+    my @fields = split("\t", $line);
+    my $key = $fields[0] . ":" . $fields[1];
+    $chr_pos1{$key} = 1;
+    $f1{$key} = $line;
+  }
+
+  $is_header = 1;
+  while(<$f2_fh>) {
+    my $line = $_;
+    if($is_header) {
+      print $f2_ofh $line;
+      print $f1_ofh $f1{"header"};
+      $is_header = 0;
+      next;
+    }
+    my @fields = split("\t", $line);
+    my $key = $fields[0] . ":" . $fields[1];
+    if($chr_pos1{$key}) {
+      print $f2_ofh $line;
+      print $f1_ofh $f1{$key};
+    }
+  }
+  return ($f1_o, $f2_o);
+}
+
+sub create_cnv_diff_hq_file {
+  my $self = shift;
+  my $tumor_cn_f = shift;
+  my $normal_cn_f = shift;
+  my $diff_f = shift;
+  my $cnvhq_f = shift;
+  #at the time of writing the headers for these files look like "chromosome position alleles reference id sample_name log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2"
+  my $reader_t = Genome::Utility::IO::SeparatedValueReader->create(
+    separator => "\t",
+    input => $tumor_cn_f,
+  );
+  my $reader_n = Genome::Utility::IO::SeparatedValueReader->create(
+    separator => "\t",
+    input => $normal_cn_f,
+  );
+  my @headers_diff = qw/chr pos cnv_diff/;
+  my $writer_diff = Genome::Utility::IO::SeparatedValueWriter->create(
+    output => $diff_f,
+    separator => "\t",
+    headers => \@headers_diff,
+    print_headers => 0,
+  );
+  my @headers_cnvhq = qw/CHR POS TUMOR NORMAL DIFF/;
+  my $writer_cnvhq = Genome::Utility::IO::SeparatedValueWriter->create(
+    output => $cnvhq_f,
+    separator => "\t",
+    headers => \@headers_cnvhq,
+    print_headers => 1,
+  );
+  unless ($reader_t and $reader_n) {
+    die $self->error_message('Unable to create SeparatedValueReader for '
+                              . $tumor_cn_f . ' and ' . $normal_cn_f);
+  }
+  while (my $data_t = $reader_t->next and my $data_n = $reader_n->next) {
+    if($data_n->{chromosome} ne $data_t->{chromosome} or 
+      $data_n->{position} ne $data_t->{position}) {
+        $self->warning_message('Mismatch in chr:pos between '. $tumor_cn_f . ' and ' . $normal_cn_f . '. Taking intersection.');
+        ($tumor_cn_f, $normal_cn_f) = $self->intersect_files($tumor_cn_f, $normal_cn_f);
+        Genome::Sys->shellcmd(cmd => "rm -f $diff_f $cnvhq_f");
+        $self->create_cnv_diff_hq_file($tumor_cn_f, $normal_cn_f, $diff_f, $cnvhq_f);
+        return;
+    }
+    if($data_n->{chromosome} eq "chr" or $data_n->{log_r_ratio} eq "NaN" or $data_t->{log_r_ratio} eq "NaN") {
+        next;
+    }
+    my $diff_data;
+    my $cnvhq_data;
+    $diff_data->{chr} = $data_n->{chromosome};
+    $cnvhq_data->{CHR} = $data_n->{chromosome};
+    $diff_data->{pos} = $data_n->{position};
+    $cnvhq_data->{POS} = $data_n->{position};
+    #copynumber ~ 2^(log_r_ratio + 1)
+    my $log_cn_normal = $data_n->{log_r_ratio};
+    my $log_cn_tumor = $data_t->{log_r_ratio};
+    my $cnv_ratio = $log_cn_tumor - $log_cn_normal;
+    $cnvhq_data->{TUMOR} = 2.0**($data_t->{log_r_ratio} + 1.0);
+    $cnvhq_data->{NORMAL} = 2.0**($data_n->{log_r_ratio} + 1.0);;
+    $diff_data->{cnv_diff} = $cnv_ratio; #segment the ratio of LRR
+    $cnvhq_data->{DIFF} = $cnvhq_data->{TUMOR} - $cnvhq_data->{NORMAL};
+    if(not $self->test) {
+      $writer_diff->write_one($diff_data);
+      $writer_cnvhq->write_one($cnvhq_data);
+    } elsif($data_n->{chromosome} eq 6) { #for test, use only chr6
+      $writer_diff->write_one($diff_data);
+      $writer_cnvhq->write_one($cnvhq_data);
+    }
+  }
 }
 
 sub intersect_files {

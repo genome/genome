@@ -10,6 +10,7 @@ use Set::Scalar qw();
 use XML::LibXML qw();
 use Carp qw(confess);
 use Data::Dumper qw();
+use List::MoreUtils qw(firstval);
 
 
 class Genome::WorkflowBuilder::Detail::Operation {
@@ -31,6 +32,12 @@ class Genome::WorkflowBuilder::Detail::Operation {
             is_optional => 1,
         },
     ],
+    has_transient => {
+        constant_values => {
+            is => 'HASH',
+            default => {},
+        },
+    }
 };
 
 
@@ -68,7 +75,8 @@ sub execute {
     require Workflow::Simple;
 
     my $self = shift;
-    my $result = Workflow::Simple::run_workflow_lsf($self->get_xml, @_);
+    my %inputs = (%{$self->constant_values}, @_);
+    my $result = Workflow::Simple::run_workflow_lsf($self->get_xml, %inputs);
     unless (defined($result)) {
         die $self->error_message(sprintf(
             "Workflow failed with these errors: %s",
@@ -104,6 +112,18 @@ sub operation_type {
     return Genome::WorkflowBuilder::Detail::TypeMap::type_from_class($self->class);
 }
 
+sub declare_constant {
+    my $self = shift;
+    my %constants = @_;
+
+    while (my ($key, $value) = each %constants) {
+        unless ($self->is_input_property($key)) {
+            die sprintf("No input named (%s) on operation named (%s)",
+                $key, $self->name);
+        }
+        $self->constant_values->{$key} = $value;
+    }
+}
 
 # ------------------------------------------------------------------------------
 # Inherited methods

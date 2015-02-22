@@ -92,6 +92,13 @@ sub create {
 
 }
 
+sub stage {
+    my $self = shift;
+    my $staging_directory = shift;
+
+    Genome::Sys->symlink_directory($self->output_dir, $staging_directory);
+}
+
 sub resolve_allocation_subdirectory {
     my $self = shift;
     my $hostname = hostname;

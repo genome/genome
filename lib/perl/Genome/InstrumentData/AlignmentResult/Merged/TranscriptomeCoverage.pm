@@ -84,7 +84,7 @@ sub create {
     return unless ($self);
 
     $self->_prepare_staging_directory;
-    
+
     my $log_dir = $self->log_directory;
     unless($log_dir) {
         $log_dir = '' . $self->temp_staging_directory;
@@ -93,7 +93,7 @@ sub create {
 
     my $coverage_directory = $self->temp_staging_directory;
     my $alignment_result = $self->alignment_result;
-    unless (Genome::InstrumentData::AlignmentResult::Command::TranscriptomeCoverage->execute(
+    my $cmd = Genome::InstrumentData::AlignmentResult::Command::TranscriptomeCoverage->execute(
         alignment_result => $alignment_result,
         reference_build => $alignment_result->reference_build,
         annotation_build => $alignment_result->annotation_build,
@@ -101,7 +101,8 @@ sub create {
         merge_annotation_features => $self->merge_annotation_features,
         mask_reference_transcripts => $self->mask_reference_transcripts,
         annotation_file_basenames => [$self->annotation_file_basenames],
-    )) {
+    );
+    unless ($cmd and $cmd->result) {
         return;
     }
 
@@ -116,7 +117,7 @@ sub create {
 
 sub _generate_metrics {
     my $self = shift;
-    
+
     my $coverage_dir = $self->output_dir;
     my @metric_files = glob($coverage_dir . "/*_STATS.txt");
     for my $metric_file (@metric_files) {

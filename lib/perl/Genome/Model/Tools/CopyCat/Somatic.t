@@ -4,7 +4,8 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 14;
+use Test::More tests => 16;
+use Test::Exception;
 use Genome::Utility::Test;
 use File::Spec;
 use File::Compare;
@@ -31,9 +32,9 @@ ok(-s $normal_samtools_file, 'normal samtools file exists');
 my $reference_build_id = '106942997';
 
 my $output_directory = Genome::Sys->create_temp_directory();
-my $version = _create_test_annotation_data($reference_build_id, File::Spec->join($test_dir, 'annotation_data'));
+my $annotation_data_id = _create_test_annotation_data($reference_build_id, File::Spec->join($test_dir, 'annotation_data'));
 
-my $cmd = Genome::Model::Tools::CopyCat::Somatic->create(
+my %params = (
     normal_window_file => $normal_window_file,
     tumor_window_file => $tumor_window_file,
     output_directory => $output_directory,
@@ -42,9 +43,10 @@ my $cmd = Genome::Model::Tools::CopyCat::Somatic->create(
     normal_samtools_file => $normal_samtools_file,
     tumor_samtools_file => $tumor_samtools_file,
     samtools_file_format => "unknown",
-    reference_build_id => $reference_build_id,
-    annotation_version => $version,
+    annotation_data_id => $annotation_data_id,
 );
+
+my $cmd = Genome::Model::Tools::CopyCat::Somatic->create( %params );
 ok($cmd, "Created command successfully");
 ok($cmd->execute, "Executed the command successfully");
 
@@ -69,6 +71,16 @@ for my $file (@non_diffable_files){
     ok(abs ($expected_wc - $actual_wc) <= 1, "$file line length is withing tolerance");
 }
 
+#test that we're able to catch errors. This is a regression test.
+my ($mfh, $malformed_file) = Genome::Sys->create_temp_file();
+print $mfh "gobbledygook\n";
+$mfh->close;
+
+$params{normal_window_file} = $malformed_file;
+my $fail_cmd = Genome::Model::Tools::CopyCat::Somatic->create( %params );
+ok($fail_cmd, "Created command successfully");
+dies_ok { $fail_cmd->execute } "Command failed correctly";
+
 sub _create_test_annotation_data{
     my $reference_build_id = shift;
     my $annotation_dir = shift;
@@ -80,8 +92,9 @@ sub _create_test_annotation_data{
         reference_sequence => $reference_build,
     );
     ok($cmd, "Annotation data creation command exists");
-    ok($cmd->execute, 'Successfully created annotation data set');
-    return $version;
+    my $result_id = $cmd->execute;
+    ok($result_id, 'Successfully created annotation data set');
+    return $result_id;
 }
 
 1;

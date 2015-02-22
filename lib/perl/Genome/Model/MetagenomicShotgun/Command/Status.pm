@@ -102,7 +102,7 @@ sub _model_status {
     my $ref = eval{ $model->reference_sequence_build; };
     if ( $ref ) {
         push @info , [ Ref => sprintf($display_name_format, $ref->id, $ref->name) ];
-        push @info , [ Fasta => $ref->fasta_file ];
+        push @info , [ Fasta => $ref->full_consensus_path('fa') ];
     }
 
     if ( eval{ $processing_profile->read_aligner_name; } ) {

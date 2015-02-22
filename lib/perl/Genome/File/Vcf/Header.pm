@@ -24,9 +24,14 @@ sub column_headers {
     return @COLUMN_HEADERS;
 }
 
+sub all_columns {
+    my $self = shift;
+    return (column_headers(), $self->sample_names);
+}
 
 my %VALID_VCF_TYPE_NON_NUMERIC_NUMBERS = (
     'A' => 1, # per alt
+    'R' => 1, # per allele [ref + alts]
     'G' => 1, # per genotype
     '.' => 1, # variable length
 );
@@ -124,15 +129,36 @@ sub num_samples {
     return $self->_num_sample_names;
 };
 
+sub index_for_sample_name {
+    my $self = shift;
+    my $name = shift;
+    my $counter = 0;
+    for my $sample ($self->sample_names) {
+        if ($sample eq $name) {
+            return $counter;
+        }
+        $counter++;
+    }
+    confess "Sample name $name not found in header";
+}
+
 sub _header_line {
     my $self = shift;
-    return "#" . join("\t", column_headers(), $self->sample_names);
+    return "#" . join("\t", $self->all_columns);
 }
 
 sub _metainfo_lines {
     my $self = shift;
-    return unless $self->metainfo;
-    return map {sprintf "##%s=%s", $_, $self->_metainfo_to_string($self->metainfo->{$_})} sort keys %{$self->metainfo};
+    my $metainfo = $self->metainfo;
+    return unless $metainfo;
+
+    my @metainfo_lines;
+    for my $key (sort keys %$metainfo) {
+        my $value = $metainfo->{$key};
+        my @values = (ref $value eq 'ARRAY'? @$value : $value);
+        push @metainfo_lines, map { sprintf "##%s=%s", $key, $self->_metainfo_to_string($_) } @values;
+    }
+    return @metainfo_lines;
 }
 
 sub _metainfo_to_string {
@@ -150,9 +176,6 @@ sub _metainfo_to_string {
     }
     elsif (ref $metainfo eq 'HASH') {
         return "<".join(",", map {$self->_format_hash_entry($_, $metainfo->{$_})} sort keys %$metainfo).">";
-    }
-    elsif (ref $metainfo eq 'ARRAY') {
-        return join(",", map {$self->_metainfo_to_string($_) } @$metainfo);
     }
     else {
         confess "Unknown metainfo object ".Data::Dumper::Dumper($metainfo);

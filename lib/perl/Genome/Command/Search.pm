@@ -22,6 +22,7 @@ class Genome::Command::Search {
             doc => 'Maximum number of rows to return',
         },
     ],
+    doc => 'search at the command line for various genome objects',
 };
 
 

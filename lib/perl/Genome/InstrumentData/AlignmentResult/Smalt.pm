@@ -19,7 +19,7 @@ class Genome::InstrumentData::AlignmentResult::Smalt {
 sub required_arch_os { 'x86_64' }
 
 sub required_rusage { 
-    "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>12000] span[hosts=1] rusage[tmp=90000, mem=12000]' -M 12000000";
+    "-R 'select[tmp>90000 && mem>12000] span[hosts=1] rusage[tmp=90000, mem=12000]' -M 12000000";
 }
 
 sub _run_aligner {

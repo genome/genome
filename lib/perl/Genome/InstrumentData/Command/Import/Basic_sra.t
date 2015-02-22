@@ -18,24 +18,26 @@ use Test::More;
 use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'sra/v3');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'sra/v4');
 my $source_sra = $test_dir.'/input.sra';
 ok(-s $source_sra, 'source sra exists') or die;
 
 my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
 ok($analysis_project, 'create analysis project');
-my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
-ok($sample, 'Create sample');
+my $library = Genome::Library->create(
+    name => '__TEST_SAMPLE__-extlibs', sample => Genome::Sample->create(name => '__TEST_SAMPLE__')
+);
+ok($library, 'Create library');
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
-    sample => $sample,
+    library => $library,
     source_files => [$source_sra],
     import_source_name => 'sra',
     instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],
 );
 ok($cmd, "create import command");
-ok($cmd->execute, "excute import command") or die;
+ok($cmd->execute, "execute import command") or die;
 
 my $md5 = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->load_md5($source_sra.'.md5');
 ok($md5, 'load source md5');
@@ -54,7 +56,7 @@ is($instrument_data->read_length, 232, 'read_length correctly set');
 is(eval{$instrument_data->attributes(attribute_label => 'original_data_path_md5')->attribute_value;}, 'dcd04a5bcb2d18f29c21c25b0f2387e3', 'original_data_path_md5 correctly set');
 is($instrument_data->analysis_projects, $analysis_project, 'set analysis project');
 
-my $allocation = $instrument_data->allocations;
+my $allocation = $instrument_data->disk_allocation;
 ok($allocation, 'got allocation');
 ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 

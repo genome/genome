@@ -297,9 +297,9 @@ sub lock {
     my @parts = @_;
     my $lock_key = join('_', @parts);
     $self->debug_message("Creating lock on $lock_key...");
-    my $resource_lock = File::Spec->join($ENV{GENOME_LOCK_DIR}, $lock_key);
     my $lock = Genome::Sys->lock_resource(
-        resource_lock => $resource_lock,
+        resource_lock => $lock_key,
+        scope => 'site',
         max_try => 2,
     );
     return $lock;

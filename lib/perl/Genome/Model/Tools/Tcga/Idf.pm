@@ -17,29 +17,49 @@ my %HARD_CODED_PROTOCOLS = (
                                                      description => "Automatic and manual filtering and curation of variants"},
     "nucleic acid sequencing"                    => {name => "genome.wustl.edu:DNA_sequencing:Illumina:01", 
                                                      description => "Illumina sequencing by synthesis"},
-    "library preparation"                        => {name => "genome.wustl.edu:DNA_extraction:IlluminaHiSeq_DNASeq:01",
+    "imported nucleic acid sequencing"           => {name => "genome.wustl.edu:DNA_sequencing:Imported:01", 
+                                                     description => "Imported data"},
+    "library preparation"                        => {name => "genome.wustl.edu:library_preparation:IlluminaHiSeq_DNASeq:01",
                                                      description => "Illumina library prep"},
+    "imported library preparation"               => {name => "genome.wustl.edu:library_preparation:Imported:01",
+                                                     description => "Imported data"},
 
 );
 
-my %PROCESSING_PROFILE_PROTOCOL_TYPES = (
-    "sequence alignment" => "alignment",
+my %SOMATIC_PROCESSING_PROFILE_PROTOCOL_TYPES = (
     "variant calling" => "variant_calling",
 );
 
-my @HARD_CODED_ROW_HEADERS = (
+my %REFALIGN_PROCESSING_PROFILE_PROTOCOL_TYPES = (
+    "sequence alignment" => "alignment",
+);
+
+my %PROCESSING_PROFILE_PROTOCOL_TYPES = (
+    %SOMATIC_PROCESSING_PROFILE_PROTOCOL_TYPES,
+    %REFALIGN_PROCESSING_PROFILE_PROTOCOL_TYPES
+);
+
+my @HARD_CODED_ROW_HEADERS_BEFORE_PROTOCOL = (
     "Investigation Title",
     "Experimental Design",
     "Experimental Design Term Source REF",
     "Experimental Factor Name",
     "Experimental Factor Type",
-    "Person Last Name",
-    "Person First Name",
-    "Person Email",
-    "Person Affiliation",
+    "Person Last Name\tMcLellan",
+    "Person First Name\tMichael",
+    "Person Mid Initials\tD",
+    "Person Email\ttcga-help\@genome.wustl.edu",
+    "Person Address\tWashington University School of Medicine,Campus Box 8501,4444 Forest Park Ave,St Louis,MO 63108",
+    "Person Affiliation\tThe Genome Institute, Washington University School of Medicine",
     "Person Roles",
+    "PubMed ID",
+    "Publication Author List",
+    "Publication Title",
+    "Publication Status",
     "Experiment Description",
-    "Protocol Term Source REF",
+);
+
+my @HARD_CODED_ROW_HEADERS_AFTER_PROTOCOL = (
     "Term Source Name",
     "Term Source File",
     "Term Source Version",
@@ -67,11 +87,20 @@ sub create {
     return $self;
 }
 
-sub add_pp_protocols {
+sub add_somatic_pp_protocols {
     my $self = shift;
     my $processing_profile = shift;
 
-    for my $type (keys %PROCESSING_PROFILE_PROTOCOL_TYPES) {
+    for my $type (keys %SOMATIC_PROCESSING_PROFILE_PROTOCOL_TYPES) {
+        $self->_add_protocol_with_pp($processing_profile, $type);
+    }
+}
+
+sub add_refalign_pp_protocols {
+    my $self = shift;
+    my $processing_profile = shift;
+
+    for my $type (keys %REFALIGN_PROCESSING_PROFILE_PROTOCOL_TYPES) {
         $self->_add_protocol_with_pp($processing_profile, $type);
     }
 }
@@ -100,8 +129,14 @@ sub resolve_maf_protocol {
 
 sub resolve_sequencing_protocol {
     my $self = shift;
+    my $build = shift;
 
-    return $self->_resolve_hard_coded_protocol("nucleic acid sequencing");
+    if ($build->has_imported_instrument_data) {
+        return $self->_resolve_hard_coded_protocol("imported nucleic acid sequencing");
+    }
+    else {
+        return $self->_resolve_hard_coded_protocol("nucleic acid sequencing");
+    }
 }
 
 sub _resolve_protocol_with_pp {
@@ -118,7 +153,7 @@ sub _add_protocol_with_pp {
     my $type = shift;
 
     my $name = $self->_resolve_protocol_with_pp($processing_profile, $type);
-    my $description = $processing_profile->name;
+    my $description = $processing_profile->param_summary;
     my $found = 0;
     for my $protocol (@{$self->protocols->{$type}}) {
         if ($protocol->{name} eq $name) {
@@ -141,8 +176,14 @@ sub resolve_mapping_protocol {
 
 sub resolve_library_protocol {
     my $self = shift;
+    my $build = shift;
 
-    return $self->_resolve_hard_coded_protocol("library preparation");
+    if ($build->has_imported_instrument_data) {
+        return $self->_resolve_hard_coded_protocol("imported library preparation");
+    }
+    else {
+        return $self->_resolve_hard_coded_protocol("library preparation");
+    }
 }
 
 sub resolve_variants_protocol {
@@ -163,19 +204,25 @@ sub print_idf {
     my @protocol_parameters;
     for my $protocol_type (sort keys %{$self->protocols}) {
         for my $protocol (@{$self->protocols->{$protocol_type}}) {
+            my $base_protocol_type = $protocol_type;
+            $base_protocol_type =~ s/^imported //;
             push @protocol_names, $protocol->{name};
-            push @protocol_types, $protocol_type;
+            push @protocol_types, $base_protocol_type;
             push @protocol_descriptions, $protocol->{description};
             push @protocol_parameters, $PROTOCOL_PARAMS{$protocol_type};
         }
     }
 
+    for my $row_header (@HARD_CODED_ROW_HEADERS_BEFORE_PROTOCOL) {
+        $out->print("$row_header\n");
+    }
     $out->print(join("\t", "Protocol Name", @protocol_names)."\n");
     $out->print(join("\t", "Protocol Type", @protocol_types)."\n");
     $out->print(join("\t", "Protocol Description", @protocol_descriptions)."\n");
     $out->print(join("\t", "Protocol Parameters", map {if (defined $_){join(";", @{$_})}else {""}} @protocol_parameters)."\n");
+    $out->print("Protocol Term Source REF\n");
     $out->print(join("\t", "SDRF Files", $self->sdrf_file)."\n");
-    for my $row_header (@HARD_CODED_ROW_HEADERS) {
+    for my $row_header (@HARD_CODED_ROW_HEADERS_AFTER_PROTOCOL) {
         $out->print("$row_header\n");
     }
 

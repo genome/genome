@@ -11,218 +11,142 @@ class Genome::InstrumentData::Solexa {
     has_constant => [
         sequencing_platform => { value => 'solexa' },
     ],
-    has_optional => [
+    has_optional_attribute => [
         project_name => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'project_name' ],
-            is_mutable => 1,
+            is => 'Text',
         },
         target_region_set_name => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'target_region_set_name' ],
-            is_mutable => 1,
+            is => 'Text',
         },
         flow_cell_id => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'flow_cell_id' ],
-            is_mutable => 1,
+            is => 'Text',
         },
+        lane => {
+            is => 'Text',
+        },
+        read_length => {
+            is => 'Integer',
+        },
+        rev_filt_aligned_clusters_pct => {
+            is => 'Float',
+        },
+        fwd_filt_aligned_clusters_pct => {
+            is => 'Float',
+        },
+        rev_seq_id => {
+            is => 'Integer',
+        },
+        fwd_seq_id => {
+            is => 'Integer',
+        },
+        rev_read_length => {
+            is => 'Integer',
+        },
+        fwd_read_length => {
+            is => 'Integer',
+        },
+        rev_kilobases_read => {
+            is => 'Integer',
+        },
+        fwd_kilobases_read => {
+            is => 'Integer',
+        },
+        rev_run_type => {
+            is => 'Text',
+        },
+        fwd_run_type => {
+            is => 'Text',
+        },
+        run_type => {
+            is => 'Text',
+        },
+        gerald_directory => {
+            is => 'Text',
+        },
+        is_external => {
+            is => 'Boolean',
+        },
+        archive_path => {
+            is => 'Text',
+        },
+        bam_path => {
+            is => 'Text',
+        },
+        adaptor_path => {
+            is => 'Text',
+        },
+        rev_clusters => {
+            is => 'Integer',
+        },
+        fwd_clusters => {
+            is => 'Integer',
+        },
+        clusters => {
+            is => 'Integer',
+        },
+        analysis_software_version => {
+            is => 'Text',
+        },
+        index_sequence => {
+            is => 'Text',
+        },
+        gc_bias_path => {
+            is => 'Text',
+        },
+        fastqc_path => {
+            is => 'Text',
+        },
+    ],
+    has_optional => [
         # TODO Need to remove, depends on LIMS tables
         flow_cell => {
             is => 'Genome::InstrumentData::FlowCell',
             id_by => 'flow_cell_id',
         },
-        lane => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'lane' ],
-            is_mutable => 1,
-        },
-        read_length => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'read_length' ],
-            is_mutable => 1,
-        },
         old_filt_error_rate_avg => {
+            is => 'Float',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'filt_error_rate_avg' ],
             is_mutable => 1,
         },
         old_rev_filt_error_rate_avg => {
+            is => 'Float',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'rev_filt_error_rate_avg' ],
             is_mutable => 1,
         },
         old_fwd_filt_error_rate_avg => {
+            is => 'Float',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'fwd_filt_error_rate_avg' ],
             is_mutable => 1,
         },
-        rev_filt_aligned_clusters_pct => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'rev_filt_aligned_clusters_pct' ],
-            is_mutable => 1,
-        },
-        fwd_filt_aligned_clusters_pct => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fwd_filt_aligned_clusters_pct' ],
-            is_mutable => 1,
-        },
-        rev_seq_id => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'rev_seq_id' ],
-            is_mutable => 1,
-        },
-        fwd_seq_id => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fwd_seq_id' ],
-            is_mutable => 1,
-        },
-        rev_read_length => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'rev_read_length' ],
-            is_mutable => 1,
-        },
-        fwd_read_length => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fwd_read_length' ],
-            is_mutable => 1,
-        },
-        rev_kilobases_read => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'rev_kilobases_read' ],
-            is_mutable => 1,
-        },
-        fwd_kilobases_read => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fwd_kilobases_read' ],
-            is_mutable => 1,
-        },
-        rev_run_type => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'rev_run_type' ],
-            is_mutable => 1,
-        },
-        fwd_run_type => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fwd_run_type' ],
-            is_mutable => 1,
-        },
-        run_type => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'run_type' ],
-            is_mutable => 1,
-        },
-        gerald_directory => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'gerald_directory' ],
-            is_mutable => 1,
-        },
         old_median_insert_size => {
+            is => 'Integer',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'median_insert_size' ],
             is_mutable => 1,
         },
         old_sd_above_insert_size => {
+            is => 'Integer',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'sd_above_insert_size' ],
             is_mutable => 1,
         },
         old_sd_below_insert_size => {
+            is => 'Integer',
             via => 'attributes',
             to => 'attribute_value',
             where => [ attribute_label => 'sd_below_insert_size' ],
             is_mutable => 1,
         },
-        is_external => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'is_external' ],
-            is_mutable => 1,
-        },
-        archive_path => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'archive_path' ],
-            is_mutable => 1,
-        },
-        bam_path => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'bam_path' ],
-            is_mutable => 1,
-        },
-        adaptor_path => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'adaptor_path' ],
-            is_mutable => 1,
-        },
-        rev_clusters => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'rev_clusters' ],
-            is_mutable => 1,
-        },
-        fwd_clusters => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fwd_clusters' ],
-            is_mutable => 1,
-        },
-        clusters => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'clusters' ],
-            is_mutable => 1,
-        },
         read_count => {
             calculate => q| my $reads = $self->clusters; $reads *= 2 if $self->is_paired_end; return $reads; |,
-        },
-        analysis_software_version => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'analysis_software_version' ],
-            is_mutable => 1,
-        },
-        index_sequence => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'index_sequence' ],
-            is_mutable => 1,
-        },
-        gc_bias_path => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'gc_bias_path' ],
-            is_mutable => 1,
-        },
-        fastqc_path => {
-            via => 'attributes',
-            to => 'attribute_value',
-            where => [ attribute_label => 'fastqc_path' ],
-            is_mutable => 1,
         },
 
         #TODO These three columns will point to "read_length" or whatever name is decided
@@ -467,9 +391,11 @@ sub dump_sanger_fastq_files {
         if ($self->resolve_quality_converter eq 'sol2sanger') {
             $converted_fastq_pathname = $requested_directory . '/' . $self->id . '-sanger-fastq-'. $counter . ".fastq";
             $self->debug_message("Applying sol2sanger quality conversion.  Converting to $converted_fastq_pathname");
-            unless (Genome::Model::Tools::Fastq::Sol2sanger->execute(
-                                                                    fastq_file => $illumina_fastq_pathname,
-                                                                    sanger_fastq_file => $converted_fastq_pathname)) {
+            my $sol2sanger_cmd = Genome::Model::Tools::Fastq::Sol2sanger->execute(
+                fastq_file => $illumina_fastq_pathname,
+                sanger_fastq_file => $converted_fastq_pathname
+            );
+            unless ($sol2sanger_cmd and $sol2sanger_cmd->result) {
                 $self->error_message('Failed to execute sol2sanger quality conversion $illumina_fastq_pathname $converted_fastq_pathname.');
                 die($self->error_message);
             }
@@ -477,8 +403,11 @@ sub dump_sanger_fastq_files {
             $converted_fastq_pathname = $requested_directory . '/' . $self->id . '-sanger-fastq-'. $counter . ".fastq";
             $self->debug_message("Applying sol2phred quality conversion.  Converting to $converted_fastq_pathname");
 
-            unless (Genome::Model::Tools::Fastq::Sol2phred->execute(fastq_file => $illumina_fastq_pathname,
-                                                                    phred_fastq_file => $converted_fastq_pathname)) {
+            my $sol2phred_cmd = Genome::Model::Tools::Fastq::Sol2phred->execute(
+                fastq_file => $illumina_fastq_pathname,
+                phred_fastq_file => $converted_fastq_pathname
+            );
+            unless ($sol2phred_cmd and $sol2phred_cmd->result) {
                 $self->error_message('Failed to execute sol2phred quality conversion.');
                 die($self->error_message);
             }
@@ -718,7 +647,7 @@ sub dump_trimmed_fastq_files {
                     input => $input_fastq_pathname,
                     output => $trimmed_input_fastq_pathname,
                 );
-                unless ($trim) {
+                unless ($trim and $trim->result) {
                     die('Failed to trim reads using test_trim_and_random_subset');
                 }
                 my $random_input_fastq_pathname = $data_directory . '/random-sanger-fastq-' . $counter;
@@ -1311,15 +1240,18 @@ sub get_default_alignment_results {
     my $self = shift;
 
     my @alignment_results = $self->alignment_results_from_analysis_projects;
-    return @alignment_results if @alignment_results;
 
-    # Get alignment results for this inst data and the default aligner name, newest first
-    my $pp = Genome::ProcessingProfile::ReferenceAlignment->default_profile;
-    @alignment_results = sort {$b->best_guess_date cmp $a->best_guess_date} Genome::InstrumentData::AlignmentResult->get(
-        instrument_data_id => $self->id,
-        aligner_name       => $pp->read_aligner_name,
-    );
+    unless(@alignment_results) {
+        # Get alignment results for this inst data and the default aligner name
+        my $pp = Genome::ProcessingProfile::ReferenceAlignment->default_profile;
+        @alignment_results = Genome::InstrumentData::AlignmentResult->get(
+            instrument_data_id => $self->id,
+            aligner_name       => $pp->read_aligner_name,
+        );
+    }
+
     return unless @alignment_results;
+    @alignment_results = sort {$b->best_guess_date cmp $a->best_guess_date} @alignment_results;
 
     #Prefer alignment results created by apipe-builder models (via AQID autocron)
     my @ars_by_apipe_builder;
@@ -1382,9 +1314,15 @@ sub get_default_alignment_metrics_hash {
 sub is_capture {
     my $self = shift;
 
-    return defined $self->target_region_set_name;
+    return defined($self->target_region_set_name) ? 1 : 0;
 }
 
+sub target_region_set {
+    my $self = shift;
+
+    return unless $self->target_region_set_name;
+    return Genome::FeatureList->get(name => $self->target_region_set_name);
+}
 
 1;
 

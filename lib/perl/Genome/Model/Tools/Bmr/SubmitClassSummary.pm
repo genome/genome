@@ -8,7 +8,7 @@ use IO::File;
 use Time::HiRes qw(sleep); #This alternate sleep() allows delays that are fractions of a second
 
 class Genome::Model::Tools::Bmr::SubmitClassSummary {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
     wiggle_file_dirs => {
         is => 'Csv',

@@ -398,9 +398,9 @@ sub execute {
     # Dump IGV XML files to make it easy on the manual reviewers
     my $reference = (( $refseq_version eq "GRCh37-lite-build37" ) ? "b37" : "reference" );
     unless( Genome::Model::Tools::Analysis::DumpIgvXml->execute( tumor_bam => $tumor_bam, normal_bam => $normal_bam, reference_name => $reference,
-            review_bed_file => $indel_bed_file, review_description => "High-confidence Tier1 Indels", genome_name => "$case.indel", output_dir => $output_dir_new ) and
+            review_bed_file => $indel_bed_file, review_description => "High-confidence Tier1 Indels", genome_name => "$case.indel", output_dir => $output_dir_new )->result and
             Genome::Model::Tools::Analysis::DumpIgvXml->execute( tumor_bam => $tumor_bam, normal_bam => $normal_bam, reference_name => $reference,
-            review_bed_file => $snv_bed_file, review_description => "High-confidence Tier1 SNVs", genome_name => "$case.snv", output_dir => $output_dir_new ))
+            review_bed_file => $snv_bed_file, review_description => "High-confidence Tier1 SNVs", genome_name => "$case.snv", output_dir => $output_dir_new )->result)
     {
       print STDERR "WARNING: Unable to generate IGV XMLs for $case\n";
     }

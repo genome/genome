@@ -82,7 +82,7 @@ sub execute {
         headers => $self->annotation_columns,
         separator => "\t",
         is_regex => 1,
-        ignore_extra_columns => 1,
+        allow_extra_columns => 1,
         input => $self->annotation_file,
     );
     confess 'Could not create separated value reader object for annotation file!' unless $reader;

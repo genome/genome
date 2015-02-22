@@ -1,13 +1,13 @@
 package Genome::File::BamReadcount::Reader;
 
-use Genome::File::TypedStream;
+use Genome::File::TypedReader;
 use Genome::File::BamReadcount::Entry;
 use Genome;
 use Carp qw/confess/;
 use strict;
 use warnings;
 
-use base qw(Genome::File::TypedStream);
+use base qw(Genome::File::TypedReader);
 
 =head1 NAME
 

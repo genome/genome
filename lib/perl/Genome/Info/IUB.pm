@@ -165,6 +165,12 @@ sub iub_for_alleles {
        return; 
    }
 
+
+    # I'm not really sure this belongs here.  VCF treats 'N' as a valid allele.
+    if ( grep { uc($_) eq 'N' } @alleles ) {
+        return 'N';
+    }
+
    my %iub_for_alleles = reverse %iub_as_string;
    if(exists($iub_for_alleles{uc(join("",@alleles))})) {
        return $iub_for_alleles{uc(join("",@alleles))};

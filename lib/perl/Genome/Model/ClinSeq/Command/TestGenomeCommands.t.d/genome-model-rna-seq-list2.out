@@ -1,0 +1,2 @@
+id	name	processing_profile	last_succeeded_build.id	last_succeeded_build.alignment_result.bam_file
+-54	H_TEST-ClinSeqGenomeCommands-tumor_cdna.rnaseq	TestGenomeCommands RnaSeq ProcessingProfile (-53)	-55	/tmp/fake-rna-path/-56.bam

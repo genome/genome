@@ -12,7 +12,7 @@ use Data::Dumper 'Dumper';
 use Regexp::Common;
 
 class Genome::Model::Build::Command::Start {
-    is => 'Genome::Command::Base',
+    is => 'Genome::Command::WithColor',
     doc => "Create and start a build.",
     has => [
         models => {
@@ -47,6 +47,10 @@ class Genome::Model::Build::Command::Start {
         },
         max_builds => {
             is => 'Integer',
+        },
+        unstartable_ok => {
+            is => 'Boolean',
+            default => 0,
         },
         _builds_started => {
             is => 'Integer',
@@ -157,7 +161,9 @@ sub create_and_start_build {
             }
             else {
                 if ($build->status eq 'Unstartable') {
-                    $self->append_error($model->__display_name__, 'Build (' . $build->id . ') created but Unstartable, review build\'s notes.');
+                    unless ($self->unstartable_ok) {
+                        $self->append_error($model->__display_name__, 'Build (' . $build->id . ') created but Unstartable, review build\'s notes.');
+                    }
                 }
                 elsif ($@) {
                     $self->append_error($model->__display_name__, 'Build (' . $build->id . ') ' . $@);

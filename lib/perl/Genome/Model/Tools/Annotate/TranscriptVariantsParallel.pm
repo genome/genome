@@ -104,7 +104,7 @@ sub pre_execute {
             abs_path(dirname($self->output_file)));
         die;
     }
-    chmod(0775, $temp_dir);
+    chmod(0770, $temp_dir);
     $self->_temp_dir($temp_dir);
     
     my @splitFiles;
@@ -144,7 +144,7 @@ sub pre_execute {
             headers => \@variant_columns,
             separator => '\t',
             is_regex => 1,
-            ignore_extra_columns => 1,
+            allow_extra_columns => 1,
         );
         unless ($reader) {
             $self->error_message("Could not get reader for " . $self->variant_file);
@@ -160,7 +160,7 @@ sub pre_execute {
                 $currChrom = $chrom;
                 $fh->close if $fh;
                 $fh = File::Temp->new (DIR => $self->_temp_dir);
-                chmod(0664, $fh->filename);
+                chmod(0660, $fh->filename);
                 push @splitFiles, $fh;
             }
 

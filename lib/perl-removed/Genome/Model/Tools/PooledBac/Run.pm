@@ -179,19 +179,19 @@ sub execute {
     delete $map_contigs_params{'percent_overlap'} unless $percent_overlap;
     delete $map_contigs_params{'percent_identity'} unless $percent_identity;
     $self->error_message("Error running map-contigs-to-assembly")  and die unless
-    Genome::Model::Tools::PooledBac::MapContigsToAssembly->execute( %map_contigs_params );
+    Genome::Model::Tools::PooledBac::MapContigsToAssembly->execute( %map_contigs_params )->result;
 
     $self->error_message("Error running add-linking-contigs")  and die unless
-    Genome::Model::Tools::PooledBac::AddLinkingContigs->execute( project_dir => $project_dir);
+    Genome::Model::Tools::PooledBac::AddLinkingContigs->execute( project_dir => $project_dir)->result;
 
     $self->error_message("Error generating reports")  and die unless
-    Genome::Model::Tools::PooledBac::GenerateReports->execute( project_dir => $project_dir);
+    Genome::Model::Tools::PooledBac::GenerateReports->execute( project_dir => $project_dir)->result;
 
     $self->error_message("Error creating project directories")  and die unless
-    Genome::Model::Tools::PooledBac::CreateProjectDirectoriesNew->execute(pooled_bac_dir=>$pooled_bac_dir,ace_file_name => $ace_file_name,phd_file_name_or_dir => $phd_ball, project_dir => $project_dir);
+    Genome::Model::Tools::PooledBac::CreateProjectDirectoriesNew->execute(pooled_bac_dir=>$pooled_bac_dir,ace_file_name => $ace_file_name,phd_file_name_or_dir => $phd_ball, project_dir => $project_dir)->result;
 
     $self->error_message("Error generating post assembly reports")  and die unless
-    Genome::Model::Tools::PooledBac::GeneratePostAssemblyReports->execute( project_dir => $project_dir);
+    Genome::Model::Tools::PooledBac::GeneratePostAssemblyReports->execute( project_dir => $project_dir)->result;
 
 #    $self->error_message("Error updating seqmgr") unless
 #    Genome::Model::Tools::Lims::UpdateSeqMgr->execute(project_dir => $project_dir);

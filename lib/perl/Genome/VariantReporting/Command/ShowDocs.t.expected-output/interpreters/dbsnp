@@ -1,0 +1,10 @@
+[4mOVERVIEW[0m
+Output the allele frequency from dbsnp CAF field
+
+[4mREQUIRED EXPERTS[0m
+dbsnp
+
+[4mAVAILABLE FIELDS[0m
+  [1mallele_frequency[0m
+    Allele frequency from dbsnp CAF field
+

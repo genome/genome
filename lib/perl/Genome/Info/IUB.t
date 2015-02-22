@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 45;
+use Test::More tests => 44;
 use above "Genome";
 use Genome::Info::IUB;
 
@@ -42,12 +42,7 @@ cmp_warn(sub {
         qr{Conversion of more than 2 alleles to IUB code is currently unsupported \(3 passed\)},
         'expected warning');
 
-cmp_warn(sub {
-            is(Genome::Info::IUB::iub_for_alleles('A','N'),
-                undef, "iub_for_alleles: invalid nucleotides return undef");
-        },
-        qr{Invalid alleles A N},
-        'expected warning');
+is(Genome::Info::IUB::iub_for_alleles('A','N'), 'N', "iub_for_alleles: allele with 'N' returns 'N'");
 is(Genome::Info::IUB::iub_for_alleles('a','T'), 'W', "iub_for_alleles: case insensitivity and valid result");
 
 

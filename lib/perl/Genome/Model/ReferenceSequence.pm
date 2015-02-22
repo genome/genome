@@ -96,7 +96,7 @@ class Genome::Model::ReferenceSequence {
             id_by => 'processing_profile_id',
         },
     ],
-    doc => 'a versioned reference sequence, with cordinates suitable for annotation',
+    doc => 'a versioned reference sequence',
 };
 
 sub _has_legacy_input_types { 1 };
@@ -176,7 +176,7 @@ sub _execute_build {
         DIR     => $build_directory,
         CLEANUP => 1,
     );
-    chmod(0775, $output_directory); #so can be manually cleaned up by others if need be
+    chmod(0770, $output_directory); #so can be manually cleaned up by others if need be
 
     unless ($self->_copy_fasta_file($build, $output_directory)) {
         $self->error_message("fasta copy failed.");
@@ -187,7 +187,7 @@ sub _execute_build {
     for my $staged_file (glob($output_directory . '/*')) {
         my ($vol, $dir, $file_base) = File::Spec->splitpath($staged_file);
         my $final_file = join('/', $build_directory, $file_base);
-        rename($staged_file, $final_file);
+        Genome::Sys->rename($staged_file, $final_file);
     }
 
     $self->debug_message('Creating sequence dictionaries');

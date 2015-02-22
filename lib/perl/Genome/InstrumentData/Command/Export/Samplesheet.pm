@@ -76,7 +76,6 @@ our @context_headers = qw(
     
     sample.name
     sample.common_name
-    sample.cell_type
     sample.default_genotype_data_id
     sample.extraction_label
     sample.extraction_type
@@ -802,7 +801,7 @@ sub _finish {
     $self->debug_message('Remove tmp dir...done');
 
     $self->debug_message('Reallocate...');
-    $self->instrument_data->allocations->reallocate;# with move??
+    $self->instrument_data->reallocate_disk_allocations;
     $self->debug_message('Reallocate...done');
 
     return 1;

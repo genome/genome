@@ -91,7 +91,7 @@ class Genome::Model::Tools::Varscan::Germline {
 
     has_param => [
         lsf_resource => {
-            default_value => 'select[model!=Opteron250 && type==LINUX64 && mem>4000] rusage[mem=4000]',
+            default_value => 'select[mem>4000] rusage[mem=4000]',
             doc => "LSF resource requirements [default: 64-bit, 4 GB RAM]",
             is_optional => 1
         },
@@ -209,7 +209,7 @@ sub parse_variants_file
     my $snps = Genome::Sys->open_file_for_writing($output_snp);
     my $indels = Genome::Sys->open_file_for_writing($output_indel);
 
-    my $input = Genome::Sys->open_file_for_reading($variants_file);	
+    my $input = Genome::Sys->open_file_for_reading($variants_file);
     my $lineCounter = 0;
 
     while (<$input>) {

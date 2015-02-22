@@ -1,0 +1,17 @@
+[4mOVERVIEW[0m
+Filter variants that exceed maximum allele frequency cutoff
+
+[4mPROPERTIES[0m
+  [1mmax_gmaf[0m   Number
+    Maximum allele frequency
+
+[4mREQUIRED EXPERTS[0m
+dbsnp
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Filter out variants with gmaf being greater than max_gmaf
+
+[4mFILTER DESCRIPTION[0m
+Filter out variants with gmaf being greater than max_gmaf
+

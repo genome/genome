@@ -18,7 +18,7 @@ use Test::More;
 use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 use_ok('Genome::InstrumentData::Command::Import::WorkFlow::Helpers') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v1');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'fastq/v3');
 my @source_files = (
     $test_dir.'/input.1.fastq.gz', 
     $test_dir.'/input.2.fastq',
@@ -27,19 +27,21 @@ is(grep({ -s $_ } @source_files), 2, 'source fastqs exist');
 
 my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
 ok($analysis_project, 'create analysis project');
-my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
-ok($sample, 'Create sample');
+my $library = Genome::Library->create(
+    name => '__TEST_SAMPLE__-extlibs', sample => Genome::Sample->create(name => '__TEST_SAMPLE__')
+);
+ok($library, 'Create library');
 
 my $cmd = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
-    sample => $sample,
+    library => $library,
     source_files => \@source_files,
     import_source_name => 'broad',
     instrument_data_properties => [qw/ lane=2 flow_cell_id=XXXXXX /],
     original_format => 'fastq',
 );
 ok($cmd, "create import command");
-ok($cmd->execute, "excute import command");
+ok($cmd->execute, "execute import command");
 
 my %instrument_data;
 for my $source_file ( @source_files ) {
@@ -69,10 +71,10 @@ my $bam_path = $instrument_data->bam_path;
 ok(-s $bam_path, 'bam path exists');
 is($bam_path, $instrument_data->data_directory.'/all_sequences.bam', 'bam path correctly named');
 is(eval{$instrument_data->attributes(attribute_label => 'bam_path')->attribute_value}, $bam_path, 'set attributes bam path');
-is(File::Compare::compare($bam_path, $test_dir.'/input.fastq.bam'), 0, 'bam matches');
-is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/input.fastq.bam.flagstat'), 0, 'flagstat matches');
+is(File::Compare::compare($bam_path, $test_dir.'/all_sequences.bam'), 0, 'bam matches');
+is(File::Compare::compare($bam_path.'.flagstat', $test_dir.'/all_sequences.bam.flagstat'), 0, 'flagstat matches');
 
-my $allocation = $instrument_data->allocations;
+my $allocation = $instrument_data->disk_allocation;
 ok($allocation, 'got allocation');
 ok($allocation->kilobytes_requested > 0, 'allocation kb was set');
 

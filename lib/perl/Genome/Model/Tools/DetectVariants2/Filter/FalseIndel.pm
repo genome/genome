@@ -104,7 +104,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalseIndel {
     ],
     has_param => [
        lsf_resource => {
-           default_value => "-M 32000000 -R 'select[type==LINUX64 && mem>32000] rusage[mem=32000]'",
+           default_value => "-M 32000000 -R 'select[mem>32000] rusage[mem=32000]'",
        },
     ]
 };

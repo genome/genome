@@ -36,14 +36,14 @@ sub execute {
         build_ids => \@build_ids,
         output_file => $self->alignment_summary,
         wingspan => $self->wingspan,
-    )) {
+    )->result) {
         die('Failed to generate alignment summary '. $self->alignment_summary ." for builds:\n\t". join("\n\t", @build_ids));
     }
     unless (Genome::Model::Tools::TechD::ConvergeCoverageStatsSummaries->execute(
         build_ids => \@build_ids,
         output_file => $self->coverage_summary,
         wingspan => $self->wingspan,
-    )) {
+    )->result) {
         die('Failed to generate coverage summary '. $self->coverage_summary ." for builds:\n\t". join("\n\t", @build_ids));
     }
     return 1;

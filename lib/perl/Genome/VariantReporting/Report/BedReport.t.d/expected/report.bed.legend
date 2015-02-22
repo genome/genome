@@ -1,0 +1,5 @@
+Headers
+chromosome_name	Chromosome: an identifier from the reference genome or an angle-bracketed ID String ("<ID>") pointing to a contig in the assembly file
+start	The start position of the variant. Zero-based
+stop	The end position of the variant. Zero-based, exclusive
+Filters

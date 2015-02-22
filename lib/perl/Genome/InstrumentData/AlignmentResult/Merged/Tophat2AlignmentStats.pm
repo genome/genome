@@ -72,10 +72,11 @@ sub create {
     my $bam_file = $self->alignment_result->bam_file;
     my $alignment_stats_file = $self->temp_staging_directory .'/alignment_stats.txt';
 
-    unless (Genome::Model::Tools::BioSamtools::Tophat2AlignmentStats->execute(
+    my $cmd = Genome::Model::Tools::BioSamtools::Tophat2AlignmentStats->execute(
         bam_file => $bam_file,
         alignment_stats_file => $alignment_stats_file,
-    )) {
+    );
+    unless ($cmd and $cmd->result) {
         $self->error_message('Failed to run BioSamtools Tophat2AlignmentStats for bam file: '. $bam_file);
         return;
     }
@@ -101,7 +102,7 @@ sub _generate_metrics {
             metric_value => $metrics_hash_ref->{$metric_name},
         );
     }
-    
+
     return 1;
 }
 

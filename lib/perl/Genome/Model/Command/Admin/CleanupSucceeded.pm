@@ -1,7 +1,7 @@
 package Genome::Model::Command::Admin::CleanupSucceeded;
 
 class Genome::Model::Command::Admin::CleanupSucceeded {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => 'Abandon unsuccessful builds that have been superceded.',
     has => [
         models => {
@@ -9,7 +9,7 @@ class Genome::Model::Command::Admin::CleanupSucceeded {
             is_many => 1,
             is_optional => 1,
             shell_args_position => 1,
-            doc => 'Models to check; resolved by Genome::Command::Base',
+            doc => 'Models to check',
         },
     ],
 };

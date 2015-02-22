@@ -78,7 +78,7 @@ class Genome::Model::SuperModel { is => 'Genome::Model', };
 my $model = Genome::Model::SuperModel->__define__(
     id => -111,
     name => 'Cathy Ireland',
-    user_name => 'apipe-builder',
+    created_by => 'apipe-builder',
 );
 $model->add_instrument_data($inst_data);
 
@@ -124,9 +124,9 @@ ok($tophat_result->add_user(user => $build, label => 'uses'), 'add build as user
 ok($inst_data->delete, 'delete super seq inst data');
 ok(!$model->instrument_data, 'removed inst data from model');
 is($build->status, 'Abandoned', 'set build to abandoned');
-ok(ref($alignment_result) eq 'UR::DeletedRef', 'deleted alignment result');
-ok(ref($merged_result) eq 'UR::DeletedRef', 'deleted merged result');
-ok(ref($qc_result) eq 'UR::DeletedRef', 'deleted qc result');
-ok(ref($tophat_result) eq 'UR::DeletedRef', 'deleted top hat result');
+
+for my $result ($alignment_result, $merged_result, $tophat_result) {
+    ok($result->test_name, 'set test name on result for expunged data');
+}
 
 done_testing();

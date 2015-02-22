@@ -43,7 +43,7 @@ class Genome::Model::GenePrediction::Command::Pap::AnnoSqlite {
                          },
             lsf_resource => {
                 is_param => 1,
-                default_value => '-R \'select[mem>8192 && type==LINUX64] rusage[mem=8192,tmp=100]\' -M 8192000 ',
+                default_value => '-R \'select[mem>8192] rusage[mem=8192,tmp=100]\' -M 8192000 ',
             },
         ],
 };

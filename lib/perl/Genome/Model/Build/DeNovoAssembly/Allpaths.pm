@@ -145,7 +145,7 @@ sub before_assemble {
             $genomic_end = 50;
         }
 
-        $in_group = $in_group."\n".$self->data_directory."/".$sx_result->resolve_base_name_from_instrument_data($sx_result->instrument_data).".*.".$sx_result->output_file_suffix.",\t".$lib_name.",\t".$sx_result->id;
+        $in_group = $in_group."\n".$self->data_directory."/".$sx_result->resolve_base_name_from_instrument_data($sx_result->instrument_data)."*.".$sx_result->output_file_suffix.",\t".$lib_name.",\t".$sx_result->id;
         
         if (! $libs_seen{$lib_id}) {
             my $orientation;
@@ -255,6 +255,7 @@ sub read_processor_params_for_instrument_data {
         output_file_count => $output_file_count,
         output_file_type => 'sanger',
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        users => Genome::SoftwareResult::User->user_hash_for_build($self),
     );
 }
 
@@ -265,7 +266,7 @@ sub resolve_assemble_lsf_resource {
 
     my $mem_reserve = $mem*1024;
     my $mem_limit = $mem_reserve*1024 + 1048576;
-    my $template = "-n 4 -R 'span[hosts=1] select[type==LINUX64 && mem>%s] rusage[mem=%s]' -M %s";
+    my $template = "-n 4 -R 'span[hosts=1] select[mem>%s] rusage[mem=%s]' -M %s";
     return sprintf($template, $mem_reserve, $mem_reserve, $mem_limit);
 }
 

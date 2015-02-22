@@ -1,0 +1,8 @@
+aligned_bam_result_id:
+    - 126399389
+    - 46cde6c18d084b058b366eb1e6593878
+reference_fasta: /gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa
+fpkm_file: /gscmnt/gc12001/info/model_data/e0a385a63f644d048247c789b5074bb7/builda5165a94248e42b9a8e6d890d30f9fe7/expression/genes.fpkm_tracking
+feature_list_ids: {}
+tumor: H_LX-WU_mel_38-1309709_38C.4
+normal: H_LX-WU_mel_38-1212565

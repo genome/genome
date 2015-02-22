@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::SomaticValidation::Command::DetectVariants{
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has =>[
         build_id => {
             is => 'Text',
@@ -73,7 +73,7 @@ sub execute{
 
     my $tumor_bam = $self->bam_path;
     unless (-e $tumor_bam){
-        die $self->error_message("No tumor bam found for somatic model");
+        die $self->error_message("No tumor bam found for somatic model. Tried to access it at path: $tumor_bam");
     }
     $params{aligned_reads_input} = $tumor_bam;
 
@@ -100,6 +100,8 @@ sub execute{
         my $control_aligned_reads_sample = $build->normal_sample->name;
         $params{control_aligned_reads_sample} = $control_aligned_reads_sample;
     }
+
+    $params{result_users} = Genome::SoftwareResult::User->user_hash_for_build($build);
 
     my $command = Genome::Model::Tools::DetectVariants2::Dispatcher->create(%params);
     unless ($command){
@@ -143,6 +145,21 @@ sub execute{
             }
             symlink($unexpected_filename_output, $lq_result);
         }
+        #find the relevant output files for outputs from this step
+        my $hq_snv_file = $self->build->data_set_path('variants/snvs.hq', $version, 'bed');
+        my $lq_snv_file = $self->build->data_set_path('variants/snvs.lq', $version, 'bed');
+
+        unless($hq_snv_file) {
+            die $self->error_message('Could not find an HQ snv file.');
+        }
+        unless($lq_snv_file) {
+            die $self->error_message('Could not find an LQ snv file.');
+        }
+
+        $self->hq_snv_file($hq_snv_file);
+        $self->lq_snv_file($lq_snv_file);
+
+
     }
 
     if ($build->indel_detection_strategy){
@@ -198,20 +215,6 @@ sub execute{
             symlink($unexpected_filename_output, $result);
         }
     }
-
-    #find the relevant output files for outputs from this step
-    my $hq_snv_file = $self->build->data_set_path('variants/snvs.hq', $version, 'bed');
-    my $lq_snv_file = $self->build->data_set_path('variants/snvs.lq', $version, 'bed');
-
-    unless($hq_snv_file) {
-        die $self->error_message('Could not find an HQ snv file.');
-    }
-    unless($lq_snv_file) {
-        die $self->error_message('Could not find an LQ snv file.');
-    }
-
-    $self->hq_snv_file($hq_snv_file);
-    $self->lq_snv_file($lq_snv_file);
 
     $self->debug_message("detect variants step completed");
 

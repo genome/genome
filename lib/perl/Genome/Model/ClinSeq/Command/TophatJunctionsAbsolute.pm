@@ -4,10 +4,10 @@ package Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute {
-    is => 'Command::V2',
+    is => ['Command::V2',
+           'Genome::Model::ClinSeq::Util'],
     has_input => [
         build => {
             is => 'Genome::Model::Build::RnaSeq',

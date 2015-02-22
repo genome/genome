@@ -1,4 +1,4 @@
-#!/gsc/bin/perl
+#!/usr/bin/env genome-perl
 
 BEGIN { 
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -51,7 +51,34 @@ subtest "testPrintSdrf" => sub {
     my $idf = Genome::Model::Tools::Tcga::Idf->create;
 
     my $test_somatic_build = setup_test_build();
-    $idf->add_pp_protocols($test_somatic_build->processing_profile);
+    $idf->add_somatic_pp_protocols($test_somatic_build->processing_profile);
+    $idf->add_refalign_pp_protocols($test_somatic_build->normal_build->processing_profile);
+    my $cghub_ids = setup_cghubids_file();
+
+    my $sdrf = $class->create(idf => $idf, cghub_id_file => $cghub_ids, archive_name => "test_archive");
+    my $sample_1 = {
+        ID => {content => "TCGA_1"},
+        SampleUUID => {content => "3958t6"},
+        SampleTCGABarcode => {content => "TCGA_1"},
+    };
+
+    my $row1 = $sdrf->create_vcf_row($test_somatic_build->normal_build, $test_somatic_build, "snvs.vcf", $sample_1);
+    my $row2 = $sdrf->create_vcf_row($test_somatic_build->normal_build, $test_somatic_build, "indels.vcf", $sample_1);
+    my $row3 = $sdrf->create_maf_row($test_somatic_build->normal_build, $test_somatic_build, "/test/maf/path", $sample_1);
+    my $row4 = $sdrf->create_maf_row($test_somatic_build->tumor_build, $test_somatic_build, "/test/maf/path", $sample_1);
+
+    my $output_sdrf = Genome::Sys->create_temp_file_path;
+    ok($sdrf->print_sdrf($output_sdrf, ($row1, $row2, $row3, $row4)), "sdrf printed");
+};
+
+subtest "testPrintSdrfWgs" => sub {
+    my $idf = Genome::Model::Tools::Tcga::Idf->create;
+
+    my $test_somatic_build = setup_test_build();
+    $test_somatic_build->normal_build->model->target_region_set_name(undef);
+    $test_somatic_build->tumor_build->model->target_region_set_name(undef);
+    $idf->add_somatic_pp_protocols($test_somatic_build->processing_profile);
+    $idf->add_refalign_pp_protocols($test_somatic_build->normal_build->processing_profile);
     my $cghub_ids = setup_cghubids_file();
 
     my $sdrf = $class->create(idf => $idf, cghub_id_file => $cghub_ids, archive_name => "test_archive");
@@ -85,7 +112,12 @@ subtest "resolve cghub id" => sub {
 
 subtest "resolve capture reagent" => sub {
     my $test_somatic_build = setup_test_build();
-    is_deeply([$class->resolve_capture_reagent($test_somatic_build->normal_build)], ["Nimblegen", "Nimblegen EZ Exome v3.0", "06465692001"], "Capture reagent resolved correctly");
+    is_deeply([$class->resolve_capture_reagent($test_somatic_build->normal_build)], ["Nimblegen", "Nimblegen EZ Exome v3.0", "06465692001", "http://www.nimblegen.com/downloads/annotation/ez_exome_v3/SeqCapEZ_Exome_v3.0_Design_Annotation_files.zip#SeqCap_EZ_Exome_v3_capture.bed", "BED", "http://genome.ucsc.edu/FAQ/FAQformat.html#format1"], "Capture reagent resolved correctly");
+};
+
+subtest "resolve multi capture reagent" => sub {
+    my $test_somatic_build = setup_test_build_with_capture_sets("HPV IDT all pooled probes + SeqCap EZ Human Exome v3.0", "SeqCap EZ Human Exome v2.0");
+    is_deeply([$class->resolve_capture_reagent($test_somatic_build->normal_build)], ["IDT,Nimblegen", "HPV IDT all pooled probes,Nimblegen SeqCap EZ Human Exome Library v3.0", "NA,06465692001", "ftp://genome.wustl.edu/pub/custom_capture/HPV_IDT_all_pooled_probes/37b1fc41fd114b64b94336ff9b4d97ae.bed,http://www.nimblegen.com/downloads/annotation/ez_exome_v3/SeqCapEZ_Exome_v3.0_Design_Annotation_files.zip#SeqCap_EZ_Exome_v3_capture.bed", "BED", "http://genome.ucsc.edu/FAQ/FAQformat.html#format1"], "Capture reagent resolved correctly");
 };
 
 sub setup_cghubids_file {
@@ -95,16 +127,21 @@ sub setup_cghubids_file {
 }
 
 sub setup_test_build {
+    return setup_test_build_with_capture_sets("11111001 capture chip set", "SeqCap EZ Human Exome v2.0");
+}
+
+sub setup_test_build_with_capture_sets {
+    my ($normal_capture_set, $tumor_capture_set) = @_;
     my $test_somatic_build = Genome::Test::Factory::Model::SomaticVariation->setup_somatic_variation_build();
     $test_somatic_build->normal_build->subject->common_name("normal");
     $test_somatic_build->normal_build->subject->extraction_label("TCGA-1");
     $test_somatic_build->normal_build->subject->source->upn("TCGA-UPN-A");
-    $test_somatic_build->normal_build->model->target_region_set_name("11111001 capture chip set");
+    $test_somatic_build->normal_build->model->target_region_set_name($normal_capture_set);
     $test_somatic_build->normal_build->data_directory($base_dir."/refalign_dir");
 
     $test_somatic_build->tumor_build->subject->common_name("tumor");
     $test_somatic_build->tumor_build->subject->extraction_label("TCGA-2");
-    $test_somatic_build->tumor_build->model->target_region_set_name("SeqCap EZ Human Exome v2.0");
+    $test_somatic_build->tumor_build->model->target_region_set_name($tumor_capture_set);
     $test_somatic_build->tumor_build->data_directory($base_dir."/refalign_dir2");
 
     $test_somatic_build->data_directory("$base_dir/somvar_dir");

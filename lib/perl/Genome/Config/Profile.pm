@@ -29,7 +29,7 @@ sub create_from_analysis_project {
 
     my @config_rule_maps = map {
         Genome::Config::Translator->get_rule_model_map_from_config($_)
-    } grep{$_->status ne 'disabled'} $analysis_project->config_items;
+    } grep{ $_->status ne 'disabled' } $analysis_project->config_items;
 
     return $class->create(
         config_rule_maps => \@config_rule_maps,
@@ -42,7 +42,7 @@ sub get_config {
     my $inst_data = shift;
 
     my @model_hashes = map { $_->models }
-        grep { $_->match($inst_data) }
+        grep { $_->match_and_concretize($inst_data) }
         $self->config_rule_maps;
 
     return $self->_merge_extra_parameters($self->_merge_model_hashes(@model_hashes));

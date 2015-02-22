@@ -17,7 +17,7 @@ class Genome::Model::Tools::Somatic::BamToCna {
     is => 'Command',
     has => [
     bam_window_version => {
-        is_input=>1, 
+        is_input=>1,
         is => 'Version',
         is_optional => 1,
         default_value => $DEFAULT_VERSION,
@@ -98,7 +98,7 @@ class Genome::Model::Tools::Somatic::BamToCna {
         default => 1,
     },
     plot_only=> {
-	type => 'Boolean',
+        type => 'Boolean',
         is_optional => 1,
         doc => 'Will ONLY run R plot on the --output-file if it exists. Default is false.'
     },
@@ -120,7 +120,7 @@ class Genome::Model::Tools::Somatic::BamToCna {
     # Make workflow choose 64 bit blades
     lsf_resource => {
         is_param => 1,
-        default_value => 'rusage[mem=4000] select[type==LINUX64] span[hosts=1]',
+        default_value => 'rusage[mem=4000] span[hosts=1]',
     },
     lsf_queue => {
         is_param => 1,
@@ -137,7 +137,7 @@ sub help_synopsis {
     my $self = shift;
     return <<"EOS"
 gmt somatic bam-to-cna --tumor-bam-file tumor.bam --normal-bam-file normal.bam --output-file copy_number.out
-gmt somatic bam-to-cna --tumor-bam-file tumor.bam --normal-bam-file normal.bam --output-file copy_number.out --window-size 100000 --ratio 0.3 --maq-quality-cutoff 40 
+gmt somatic bam-to-cna --tumor-bam-file tumor.bam --normal-bam-file normal.bam --output-file copy_number.out --window-size 100000 --ratio 0.3 --maq-quality-cutoff 40
 EOS
 }
 
@@ -198,8 +198,14 @@ sub execute {
         $statistics{$sample} = Statistics::Descriptive::Sparse->new();
 
         my ($previous_chr,$window)=(0,0);
+        my $line_num = 0;
         while(<MAP>){
+            ++$line_num;
             chomp;
+
+            # Skip header line
+            next if $line_num == 1 && /^Chr\tStart/;
+
             my ($chr,$pos,$nread) = split /\t/;
             $window = 0 if($chr ne $previous_chr);
             $data{$sample}{$chr}[$window++]=$nread; #store each window's result as an entry in the array.
@@ -234,7 +240,7 @@ sub execute {
 
         for my $window (0..$window_count){
             my $f2x=1;
-            next unless (defined $data{tumor}{$chr}[$window] && defined $data{normal}{$chr}[$window]); 
+            next unless (defined $data{tumor}{$chr}[$window] && defined $data{normal}{$chr}[$window]);
             for my $sample (@samples){
                 #test whether or not this particular window is close enough to the median to be considered neutral
                 $f2x=0 if($data{$sample}{$chr}[$window]<$medians{$sample}*(1-$self->ratio) || $data{$sample}{$chr}[$window]>$medians{$sample}*(1+$self->ratio));
@@ -293,7 +299,7 @@ sub execute {
         else{
             $self->warning_message('No reads within specified ratio of median for chromosome ' . $chr . '. Skipping. ');
             next;
-        } 
+        }
 
         my $tumor_window_count = $#{$data{tumor}{$chr}};
         my $normal_window_count = $#{$data{normal}{$chr}};
@@ -325,7 +331,7 @@ sub execute {
     undef %depth2x;
 
 #plot output
-    if ($self->plot) { 
+    if ($self->plot) {
         $self->plot_output($outfile, \@included_chrs);
     }
 
@@ -369,16 +375,16 @@ sub plot_output {
         par(mfrow=c(4,6));
         x=read.table('$datafile',comment.char='#',header=TRUE);
         for (i in c($chr_list)) {
-            y=subset(x,CHR==i); 
-            plot(y\$POS/1000000,y\$DIFF,main=paste('chr.',i),xlab='mb',ylab='cn',type='p',col=rgb(0,0,0),pch='.',ylim=c(-4,4),cex.axis=0.9,xaxt="n"); 
-            par(cex.axis=0.9); 
+            y=subset(x,CHR==i);
+            plot(y\$POS/1000000,y\$DIFF,main=paste('chr.',i),xlab='mb',ylab='cn',type='p',col=rgb(0,0,0),pch='.',ylim=c(-4,4),cex.axis=0.9,xaxt="n");
+            par(cex.axis=0.9);
             axis(1,at=c(0,floor(max(y\$POS/1000000)/2),floor(max(y\$POS/1000000))));
         }
         dev.off();
     }
     );
 $R->stopR();
-chdir $cwd; 
+chdir $cwd;
 }
 
 sub bamwindow_path {

@@ -168,7 +168,8 @@ sub execute {
     $temp_file->close;
     my $unique_coverage = 0;
     my $temp_output_path = Genome::Sys->create_temp_file_path;
-    if(Genome::Model::Tools::BedTools::Merge->execute(input_file => $temp_file_path, output_file => $temp_output_path)) {
+    my $merge = Genome::Model::Tools::BedTools::Merge->create(input_file => $temp_file_path, output_file => $temp_output_path);
+    if($merge and $merge->execute) {
         my $merged_output_fh = IO::File->new($temp_output_path);
         unless($merged_output_fh) {
             $self->error_message("Unable to open temporary bedtools mergeBed output file");

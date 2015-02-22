@@ -1,0 +1,27 @@
+Headers
+chromosome_name	Chromosome: an identifier from the reference genome or an angle-bracketed ID String ("<ID>") pointing to a contig in the assembly file
+start	The start position of the variant. One-based
+stop	The end position of the variant. One-based, inclusive
+reference	The reference allele at this position
+variant	The variant called at this position
+rsid	A list of rsids at this position
+transcript_name	Ensembl stable ID of feature
+trv_type	Consequence type of this variation
+amino_acid_change	The HGVS protein sequence name
+default_gene_name	The gene symbol
+gene_name_source	The source of the gene symbol
+ensembl_gene_id	Ensembl stable ID of affected gene
+c_position	The HGVS coding sequence name
+canonical	Is this transcript canonical
+sift	The SIFT prediction and/or score, with both given as prediction(score)
+polyphen	The PolyPhen prediction and/or score
+condel	The Consensus Deleteriousness (Condel) score
+dbSNP_caf	Allele frequency at this position based on dbSNP
+NHLBI_All_MAF	Overall minor allele frequency from NHLBI
+NHLBI_AA_MAF	African American minor allele frequency from NHLBI
+NHLBI_EU_MAF	European minor allele frequency from NHLBI
+1kg-af	Allele frequency based on thousand genomes project
+vaf	Variant allele frequency for sample sample_name
+ref_count	Number of reads supporting the reference for sample sample_name
+var_count	Number of reads supporting variant for sample sample_name
+Filters

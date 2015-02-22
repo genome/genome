@@ -11,23 +11,10 @@ class Genome::Model::Input {
     table_name => 'model.model_input',
     type_name => 'genome model input',
     id_by => [
-        value_class_name => {
-            is => 'VARCHAR2',
-            len => 255,
-        },
-        value_id => {
-            is => 'VARCHAR2',
-            implied_by => 'value',
-            len => 1000,
-        },
-        model_id => {
-            is => 'Text',
-            len => 32,
-        },
-        name => {
-            is => 'VARCHAR2',
-            len => 255,
-        },
+        value_class_name => { is => 'Text', len => 255 },
+        value_id => { is => 'Text', len => 1000 },
+        model_id => { is => 'Text', len => 32 },
+        name => { is => 'Text', len => 255 },
     ],
     has => [
         model => {
@@ -48,10 +35,7 @@ class Genome::Model::Input {
         },
     ],
     has_optional => [
-        _model_value => {
-            is => 'Genome::Model',
-            id_by => 'value_id',
-        },
+        _model_value => { is => 'Genome::Model', id_by => 'value_id' },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -64,29 +48,34 @@ sub __display_name__ {
     return (($model ? $model->__display_name__ : "") . " " . $self->name . ": " . ($value ? $value->__display_name__ : ""));
 }
 
-sub delete {
-    my $self = shift;
-    my $input_name = $self->__display_name__;
+sub copy {
+    my ($self, %overrides) = @_;
 
-    # TODO I don't care for the instrument data special case. I think that inputs should be completely modifiable
-    # without triggering builds being abandoned
-    unless ($self->name eq 'instrument_data') {
-        my $delete_rv = $self->SUPER::delete;
-        Carp::confess "Could not delete input $input_name" unless $delete_rv;
-        return 1;
+    if ( not %overrides ) {
+        $self->error_message('No overrides to copy model input!');
+        return;
     }
 
-    for my $build ($self->builds_with_input) {
-        $self->status_message("Abandoning build " . $build->__display_name__ . " that uses input $input_name");
-        my $abandon_rv = eval { $build->abandon };
-        unless ($abandon_rv) {
-            Carp::confess "Could not abandon build " . $build->__display_name__ . " while deleting input";
+    my %params;
+    PROPERTY: for my $property ( $self->__meta__->properties ) {
+        next if not defined $property->{column_name};
+        my $property_name = $property->property_name;
+        if ( exists $overrides{$property_name} ) {
+            my $new_value = delete $overrides{$property_name};
+            next PROPERTY if not defined $new_value;
+            $params{$property_name} = $new_value;
+        }
+        else {
+            $params{$property_name} = $self->$property_name;
         }
     }
 
-    my $delete_rv = $self->SUPER::delete;
-    Carp::confess "Could not delete input $input_name!" unless $delete_rv;
-    return 1;
+    if ( %overrides ) {
+        $self->error_message('Unknown overrides given to copy model input! '.Data::Dumper::Dumper(\%overrides));
+        return;
+    }
+
+    return __PACKAGE__->create(%params);
 }
 
 sub builds_with_input {

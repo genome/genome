@@ -28,7 +28,7 @@ class Genome::Site::TGI::Project {
     ],
     has_optional => [ 
         work_orders         => { is => 'Genome::WorkOrder', reverse_as => 'project', is_many => 1 },
-        samples             => { is => 'Genome::Site::TGI::Sample', via => 'work_orders', to => 'samples' },
+        samples             => { is => 'Genome::Sample', via => 'work_orders', to => 'samples' },
         models              => { is => 'Genome::Model', via => 'samples', to => 'models' },
 
         external_contact        => { is => 'Genome::Site::TGI::ProjectContact', id_by => 'ext_con_id' },

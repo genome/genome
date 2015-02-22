@@ -37,7 +37,7 @@ class Genome::Model::Tools::Predictor::Ber::Hmmpfam {
         lsf_resource => {
             is_param => 1,
             is_input => 1,
-            default => "-M 4000000 -R 'select[type==LINUX64 && mem4000] rusage[mem=4000]'",
+            default => "-M 4000000 -R 'select[mem4000] rusage[mem=4000]'",
         },
     ],
 };

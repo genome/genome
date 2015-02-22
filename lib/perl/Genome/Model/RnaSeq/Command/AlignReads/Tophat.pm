@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-my $DEFAULT_LSF_RESOURCE = "-R 'select[model!=Opteron250 && type==LINUX64 && mem>64000 && tmp>150000] span[hosts=1] rusage[tmp=150000, mem=64000]' -M 64000000 -n 4";
+my $DEFAULT_LSF_RESOURCE = "-R 'select[mem>64000 && tmp>150000] span[hosts=1] rusage[tmp=150000, mem=64000]' -M 64000000 -n 4";
 
 class Genome::Model::RnaSeq::Command::AlignReads::Tophat {
     is => ['Command::V2'],

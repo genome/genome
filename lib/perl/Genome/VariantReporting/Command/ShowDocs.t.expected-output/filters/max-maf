@@ -1,0 +1,23 @@
+[4mOVERVIEW[0m
+Filter variants that exceed maximum minor allele frequency for the specified population
+
+[4mPROPERTIES[0m
+  [1mmax_maf[0m   Number
+    Maximum minor allele frequency
+  [1mpopulation_code[0m   String
+    Population for which to compare MAF
+    valid values:
+     All
+     EU
+     AA
+
+[4mREQUIRED EXPERTS[0m
+nhlbi
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Filter out variants with population_code maf being greater than max_maf
+
+[4mFILTER DESCRIPTION[0m
+Filter out variants with population_code maf being greater than max_maf
+

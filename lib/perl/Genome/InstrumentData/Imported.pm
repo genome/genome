@@ -4,8 +4,11 @@ use strict;
 use warnings;
 
 use Genome;
+
+require File::Basename;
 use File::stat;
 use File::Path;
+use Genome::InstrumentData::Microarray;
 use Set::Scalar;
 
 class Genome::InstrumentData::Imported {
@@ -14,148 +17,73 @@ class Genome::InstrumentData::Imported {
         source => { is => 'Genome::Subject', via => 'sample', to => 'source', },
         source_id => { is=> 'Text', via => 'source', to => 'id', },
         source_name => { is=> 'Text', via => 'source', to => 'name', },
-        import_date => {
-            is => 'DateTime',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'import_date' ],
-        },
-        user_name => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'user_name' ],
-        },
-        original_data_path => {
-            is => 'DirectoryPath',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'original_data_path' ],
-        },
-        read_count => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'read_count' ],
-        },
-        base_count => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'base_count' ],
-        },
-        fragment_count => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'fragment_count' ],
-        },
-        fwd_read_length => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'fwd_read_length' ],
-        },
-        is_paired_end => {
-            is => 'Boolean',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'is_paired_end' ],
-        },
-        median_insert_size => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'median_insert_size' ],
-        },
-        read_length => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'read_length' ],
-        },
-        rev_read_length => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'rev_read_length' ],
-        },
-        sd_above_insert_size => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'sd_above_insert_size' ],
-        },
-        target_region_set_name => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'target_region_set_name' ],
-        },
-        sra_accession => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'sra_accession' ],
-        },
-        sra_sample_id => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'sra_sample_id' ],
-        },
-        barcode => {
-            is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'barcode' ],
-        },
-        reference_sequence_build_id => {
-            is => 'Number',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'reference_sequence_build_id' ],
-        },
         reference_sequence_build => {
             is => 'Genome::Model::Build::ImportedReferenceSequence',
             id_by => 'reference_sequence_build_id',
         },
-        genotype_file => {
+        full_name => {
+            calculate_from => [ 'run_name', 'subset_name' ],
+            calculate => q( $subset_name ? "$run_name/$subset_name" : $run_name ),
+        },
+    ],
+    has_optional_attribute => [
+        import_date => {
+            is => 'DateTime',
+        },
+        user_name => {
             is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_optional => 1,
-            is_mutable => 1,
-            where => [ attribute_label => 'genotype_file' ],
+        },
+        original_data_path => {
+            is => 'DirectoryPath',
+        },
+        read_count => {
+            is => 'Number',
+        },
+        base_count => {
+            is => 'Number',
+        },
+        fragment_count => {
+            is => 'Number',
+        },
+        fwd_read_length => {
+            is => 'Number',
+        },
+        is_paired_end => {
+            is => 'Boolean',
+        },
+        median_insert_size => {
+            is => 'Number',
+        },
+        read_length => {
+            is => 'Number',
+        },
+        rev_read_length => {
+            is => 'Number',
+        },
+        sd_above_insert_size => {
+            is => 'Number',
+        },
+        target_region_set_name => {
+            is => 'Text',
+        },
+        sra_accession => {
+            is => 'Text',
+        },
+        sra_sample_id => {
+            is => 'Text',
+        },
+        barcode => {
+            is => 'Text',
+        },
+        reference_sequence_build_id => {
+            is => 'Number',
         },
         blacklisted_segments => {
             is_many => 1,
             is => 'Text',
-            via => 'attributes',
-            to => 'attribute_value',
-            is_mutable => 1,
-            where => [ attribute_label => 'blacklisted_segments' ],
         },
-        full_name => {
-            calculate_from => [ 'run_name', 'subset_name' ],
-            calculate => q( $subset_name ? "$run_name/$subset_name" : $run_name ),
+        downsample_ratio => {
+            is => 'Float',
         },
     ],
 };
@@ -177,21 +105,12 @@ sub run_name {
 sub data_directory {
     my $self = shift;
 
-    my $alloc = $self->get_disk_allocation;
-
-    if (defined($alloc)) {
-        return $alloc->absolute_path;
-    } else {
-        $self->error_message("Could not find an associated disk_allocations record.");
-        die $self->error_message;
+    my $disk_allocation = $self->disk_allocation;
+    if ( not $disk_allocation ) {
+        die $self->error_message("Could not find disk allocation for ".$self->__display_name__);
     }
 
-}
-
-# TODO: remove me and use the actual object accessor
-sub get_disk_allocation {
-    my $self = shift;
-    return $self->allocations;
+    return $disk_allocation->absolute_path;
 }
 
 sub calculate_alignment_estimated_kb_usage {
@@ -199,7 +118,7 @@ sub calculate_alignment_estimated_kb_usage {
     my $answer;
 
     # Check for an existing allocation for this instrument data, which would've been created by the importer
-    my $allocation = Genome::Disk::Allocation->get(owner_class_name => $self->class, owner_id => $self->id);
+    my $allocation = $self->disk_allocation;
     if ($allocation) {
         return int(($allocation->kilobytes_requested/1000) + 100);
     }
@@ -292,6 +211,8 @@ BEGIN: {
     *get_default_alignment_results = \&Genome::InstrumentData::Solexa::get_default_alignment_results;
     *get_default_alignment_metrics_hash = \&Genome::InstrumentData::Solexa::get_default_alignment_metrics_hash;
     *_convert_trimmer_to_sx_commands = \&Genome::InstrumentData::Solexa::_convert_trimmer_to_sx_commands;
+    *is_capture = \&Genome::InstrumentData::Solexa::is_capture;
+    *target_region_set = \&Genome::InstrumentData::Solexa::target_region_set;
 }
 
 sub dump_sanger_fastq_files {
@@ -416,7 +337,7 @@ sub _archive_file_name { # private for now...can be public
         return 'all_sequences.sff';
     }
     elsif ( $format eq 'raw sra download' ) {
-        my $alloc = $self->allocations;
+        my $alloc = $self->disk_allocation;
         die $self->error_message("Couldn't get allocations")
             if not $alloc;
         my $base_dir = $alloc->absolute_path;
@@ -483,7 +404,7 @@ sub _archive_file_name { # private for now...can be public
 sub archive_path {
     my $self = shift;
 
-    my $alloc = $self->allocations;
+    my $alloc = $self->disk_allocation;
     return if not $alloc;
 
     my $file_name = $self->_archive_file_name;
@@ -493,7 +414,7 @@ sub archive_path {
 sub bam_path {
     my ($self) = @_;
 
-    my ($allocation) = $self->allocations;
+    my ($allocation) = $self->disk_allocation;
     unless ($allocation) {
         $self->error_message("Found no disk allocation for imported instrument data " . $self->id, ", so cannot find bam!");
         die $self->error_message;
@@ -547,79 +468,6 @@ sub get_segments {
     }
 
     return map {{segment_type=>'read_group', segment_id=>$_}} $read_groups->elements;
-}
-
-# Microarray stuff eventually need to subclass
-sub genotype_microarray_raw_file {
-    my $self = shift;
-
-    my $disk_allocation = $self->allocations;
-    return if not $disk_allocation;
-
-    my $absolute_path = $disk_allocation->absolute_path;
-    Carp::confess('No absolute path for instrument data ('.$self->id.') disk allocation: '.$disk_allocation->id) if not $absolute_path;
-    my $sample_name = $self->sample_name;
-    Carp::confess('No sample name for instrument data: '.$self->id) if not $sample_name;
-
-    # sanitize these
-    $sample_name =~ s/[^\w\-\.]/_/g;
-    return $absolute_path.'/'.$sample_name.'.raw.genotype';
-}
-
-sub genotype_microarray_file_for_subject_and_version {
-    my ($self, $subject_name, $version) = @_;
-
-    Carp::confess('No reference name given to get genotype microarray file') if not $subject_name;
-    Carp::confess('No version given to get genotype microarray file') if not defined $version;
-
-    my $disk_allocation = $self->allocations;
-    if (not $disk_allocation) {
-        $self->status_message('Missing disk allocation for genotype microarray file.');
-        return;
-    }
-
-    my $absolute_path = $disk_allocation->absolute_path;
-    Carp::confess('No absolute path for instrument data ('.$self->id.') disk allocation: '.$disk_allocation->id) if not $absolute_path;
-    my $sample_name = $self->sample_name;
-
-    # sanitize these
-    $sample_name =~ s/[^\w\-\.]/_/g;
-    $subject_name =~ s/[^\w\-\.]/_/g;
-    Carp::confess('No sample name for instrument data: '.$self->id) if not $sample_name;
-
-    my $file_glob = "$absolute_path/*.$subject_name-$version.genotype";
-    $self->status_message("Looking for genotype file like '$file_glob'.");
-    my @files = glob $file_glob;
-    if (@files > 1) {
-        $self->status_message("Found multiple matching genotype files.");
-        die $self->status_message;
-    }
-    elsif (@files == 0) {
-        # previous behavior was to return this path always but now we give preference to
-        # existing files
-        return "$absolute_path/$sample_name.$subject_name-$version.genotype";
-    }
-    else {
-        return $files[0];
-    }
-}
-
-sub genotype_microarray_file_for_human_version_37 {
-    my $self = shift;
-    return $self->genotype_microarray_file_for_subject_and_version('human', '37');
-}
-
-sub genotype_microarray_file_for_human_version_36 {
-    my $self = shift;
-    return $self->genotype_microarray_file_for_subject_and_version('human', '36');
-}
-
-sub genotype_microarray_file_for_reference_sequence_build {
-    my ($self, $build) = @_;
-
-    Carp::confess('No refernce sequence build given to get genotype microarray file') if not $build;
-
-    return $self->genotype_microarray_file_for_subject_and_version($build->subject_name, $build->version);
 }
 
 1;

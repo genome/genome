@@ -23,7 +23,7 @@ class Genome::Model::Tools::DetectVariants2::GatkGermlineSnv{
     ],
     has_param => [
          lsf_resource => {
-             default_value => "-M 8000000 -R 'select[type==LINUX64 && mem>8000] rusage[mem=8000]'",
+             default_value => "-M 8000000 -R 'select[mem>8000] rusage[mem=8000]'",
          },
      ],
 };
@@ -39,7 +39,7 @@ sub _detect_variants {
         reference_fasta => $refseq,
         version => $self->version,
     );
-    if (Genome::Model::Tools::Gatk->is_legacy_version($self->version)) {
+    if (Genome::Model::Tools::Gatk::GermlineSnv->is_legacy_version($self->version)) {
         $gatk_cmd->verbose_output_file($self->_temp_staging_directory."/gatk_output_file");
     }
 
@@ -61,7 +61,7 @@ sub _detect_variants {
 sub has_version {
     my $self = shift;
 
-    return Genome::Model::Tools::Gatk->has_version(@_);
+    return Genome::Model::Tools::Gatk::GermlineSnv->has_version(@_);
 }
 
 #TODO clean all of this up. It is usually/should be based on logic from Genome::Model::Tools::Bed::Convert logic in process_source... 

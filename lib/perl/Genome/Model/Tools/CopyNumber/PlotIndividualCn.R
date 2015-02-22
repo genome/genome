@@ -35,10 +35,10 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
                          lowResMax=NULL, showNorm=FALSE, baseline=2,
                          gainThresh=2.5, lossThresh=1.5, annotationsTop=NULL,
                          annotationsBottom = NULL, plotTitle="", gaps=NULL, tumorNormalRatio=1,
-                         gainColor="indianred4", lossColor="midnightblue", correctedWindows=NULL,
+                         gainColor="indianred4", lossColor="blue", correctedWindows=NULL,
                          xmin=NULL, xmax=NULL, label_size=0.6, pdfOpen=FALSE,
                          pdfClose=FALSE, pdfFile=NULL, pdfWidth=12, pdfHeight=9,
-                         tumorWindows=NULL, normalWindows=NULL,coverageTracks=FALSE){
+                         tumorWindows=NULL, normalWindows=NULL, coverageTracks=FALSE, tumorPurity=1){
 
   if(pdfOpen){
     if(!is.null(pdfFile)){
@@ -62,6 +62,9 @@ plotSegments <- function(chr="ALL", filename, entrypoints, ymax=NULL, ymin=NULL,
   ## read in the segments
   segs=read.table(filename,comment.char="#")
 
+  ## adjust for purity
+  segs$V5 = 2+(segs$V5-2)/tumorPurity
+  
   ## read in the entrypoints
   entrypoints=addOffsets(readEntrypoints(entrypoints))
   names(entrypoints) = c("chr","length","ploidy","offset")

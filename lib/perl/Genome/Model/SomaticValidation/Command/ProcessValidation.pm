@@ -9,7 +9,7 @@ use Cwd qw(abs_path);
 class Genome::Model::SomaticValidation::Command::ProcessValidation {
     is => 'Command',
     has_input => [
-        filtered_validation_file    => { is => 'Text', doc => "bed file of variants passing filter", is_optional => 0 },
+        filtered_validation_file    => { is => 'Text', doc => "bed file of variants passing filter", is_optional => 1 },
         min_coverage                => { is => 'Text', doc => "Minimum coverage to call a site", is_optional => 1 },
         output_file                 => { is => 'Text', doc => "Output file for validation results", is_output => 1 },
         output_plot                 => { is => 'Boolean', doc => "Optional plot of variant allele frequencies", is_optional => 1, },
@@ -41,6 +41,11 @@ sub should_skip_run {
 
     my $build = $self->build;
 
+    unless($build->run_snv_validation) {
+        $self->status_message('Build indicates SNV validation should not run. Skipping.');
+        return 1;
+    }
+
     unless($build->normal_sample) {
         $self->status_message('No control sample. Skipping run.');
         return 1;
@@ -60,6 +65,9 @@ sub execute {
     my $build = $self->build;
 
     return 1 if $self->should_skip_run;
+    unless($self->filtered_validation_file) {
+        die $self->error_message('Filtered Validation File is required when not skipping this step!');
+    }
 
     my $variant_list = $build->snv_variant_list;
     my ($snv_variant_file) = glob($variant_list->output_dir . '/snvs.hq.bed');

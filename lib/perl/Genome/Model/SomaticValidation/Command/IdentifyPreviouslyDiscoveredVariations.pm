@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::SomaticValidation::Command::IdentifyPreviouslyDiscoveredVariations{
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has =>[
         build_id => {
             is => 'Text',
@@ -146,7 +146,7 @@ sub params_for_result {
     my $build = $self->build;
 
     my $label;
-    if($variant_type eq 'snv' and $build->loh_version and $build->normal_sample) {
+    if($variant_type eq 'snv' and $build->loh_version and $build->model->loh_snv_detection_strategy and $build->normal_sample) {
         $label = 'loh';
     } else {
         $label = $variant_type . '_result';
@@ -169,6 +169,7 @@ sub params_for_result {
         variant_type => $variant_type,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         skip_filtering => undef,
+        users => Genome::SoftwareResult::User->user_hash_for_build($build),
     );
 }
 

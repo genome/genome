@@ -40,7 +40,13 @@ sub shortcut {
 
             my @params = $self->params_for_result($qual, $variant_type);
             unless(@params) {
-                die $self->error_message('Failed to get params for ' . $qual . ' ' . $variant_type . ' tiering');
+                my $msg = 'Failed to get params for ' . $qual . ' ' . $variant_type . ' tiering';
+                if ($qual eq 'lq') {
+                    $self->status_message($msg);
+                    next;
+                } else {
+                    die $self->error_message($msg);
+                }
             }
 
             my $existing_result = Genome::Model::Tools::DetectVariants2::Classify::Tier->get_with_lock(@params);
@@ -108,7 +114,13 @@ sub execute {
                 }
             } else {
                 unless(@params) {
-                    die $self->error_message('Failed to get params for ' . $qual . ' ' . $variant_type . ' tiering');
+                    my $msg = 'Failed to get params for ' . $qual . ' ' . $variant_type . ' tiering';
+                    if ($qual eq 'lq') {
+                        $self->status_message($msg);
+                        next;
+                    } else {
+                        die $self->error_message($msg);
+                    }
                 }
             }
         }
@@ -129,7 +141,7 @@ sub params_for_result {
         my $accessor = $variant_type . '_result';
         if($build->previously_discovered_variations_build and $build->previously_discovered_variations_build->$accessor) {
             $label = $variant_type . '_identify_previously_discovered_result';
-        } elsif($variant_type eq 'snv' and $build->model->loh_version) {
+        } elsif($variant_type eq 'snv' and !Genome::Model::SomaticValidation::Command::Loh->should_skip_run($build)) {
             $label = 'loh';
         } else {
             $label = $variant_type . '_result';
@@ -154,6 +166,7 @@ sub params_for_result {
         annotation_build_id => $build->annotation_build->id,
         classifier_version => $build->tiering_version,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        users => Genome::SoftwareResult::User->user_hash_for_build($build),
     );
 }
 

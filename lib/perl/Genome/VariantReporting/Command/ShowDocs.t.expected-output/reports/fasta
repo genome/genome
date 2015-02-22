@@ -1,0 +1,14 @@
+[4mOVERVIEW[0m
+Prints out a fasta file with both reference and alternate alleles surrounded by a short flanking sequence
+
+[4mREQUIRED EXPERTS[0m
+flanking-regions
+bam-readcount
+vep
+
+[4mREQUIRED INTERPRETERS[0m
+position
+flanking-regions
+vaf
+vep
+

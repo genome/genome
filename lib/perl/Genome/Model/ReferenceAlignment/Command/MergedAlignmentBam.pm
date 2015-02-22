@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::ReferenceAlignment::Command::MergedAlignmentBam {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => "List the path of the merged alignment BAMs for the provided builds.",
     has => [
         builds => {

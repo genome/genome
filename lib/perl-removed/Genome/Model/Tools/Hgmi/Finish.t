@@ -24,7 +24,7 @@ my $finish = Genome::Model::Tools::Hgmi::Finish->create(
   'org_dirname'       => "B_catenulatum",
   'assembly_version'  => "Version_1.0",
   'pipe_version'      => "Version_1.0",
-  'path'              => "/gscmnt/278/analysis/HGMI",
+  'path'              => Genome::Model::Tools::Hgmi->installation_path,
   'script_location'   => "/gsc/scripts/gsc/annotation/bap_finish_project",
 );
 

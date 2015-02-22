@@ -137,7 +137,7 @@ sub execute {
             $normal_sample = $model->normal_sample;
         }
 
-        my $define_cmd = Genome::Model::Command::Define::SomaticValidation->create(
+        my $define_cmd = Genome::Model::SomaticValidation::Command::DefineValidationModel->create(
             @params,
             (scalar @results?
                 () :

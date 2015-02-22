@@ -4,13 +4,13 @@ use strict;
 use warnings;
 
 use Genome;
-use IO::File;
-use File::Basename;
 
+use File::Basename;
+use IO::File;
 
 class Genome::Model::Tools::Picard::Downsample {
-    is  => 'Genome::Model::Tools::Picard',
-    has_input => [
+    is => [qw/ Genome::Model::Tools::Picard Genome::Model::Tools::Picard::WithRequiredDownsampleRatio /],
+    has_input => {
         input_file => {
             is  => 'String',
             doc => 'The SAM/BAM file to downsample.',
@@ -19,11 +19,6 @@ class Genome::Model::Tools::Picard::Downsample {
         output_file => {
             is  => 'String',
             doc => 'The resulting downsampled SAM/BAM file.  File type is determined by suffix.',
-            is_optional => 0,
-        },
-        downsample_ratio => {
-            is => 'String',
-            doc => 'ratio at which to keep reads in order to downsample. 0.01 means keep 1 in 100 reads. ',
             is_optional => 0,
         },
         use_version => {
@@ -41,7 +36,7 @@ class Genome::Model::Tools::Picard::Downsample {
             doc => 'Set this to attain reproducability',
             is_optional => 1,
         },
-    ],
+    },
 };
 
 sub help_detail {
@@ -75,5 +70,5 @@ sub execute {
     return 1;
 }
 
-
 1;
+

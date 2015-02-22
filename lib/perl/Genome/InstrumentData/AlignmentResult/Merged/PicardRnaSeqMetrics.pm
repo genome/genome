@@ -18,7 +18,13 @@ class Genome::InstrumentData::AlignmentResult::Merged::PicardRnaSeqMetrics {
     has_param => [
         picard_version => {
             is => 'Text',
-            doc => 'The version of cufflinks to use.',
+            doc => 'The version of Picard to use.',
+        },
+        picard_strand_specificity => {
+            is => 'Text',
+            doc => 'The transcript strand specificity used by Picard.',
+            valid_values => Genome::Model::Tools::Picard::CollectRnaSeqMetrics->__meta__->property("strand_specificity")->valid_values,
+            is_optional => 1,
         },
     ],
     has_metric => [
@@ -85,16 +91,20 @@ sub create {
     $self->_log_directory($log_dir);
 
     my $metrics_directory = $self->temp_staging_directory;
-    unless (Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics->execute(
+    my %picard_params = (
         metrics_directory => $metrics_directory,
         annotation_build => $alignment_result->annotation_build,
         reference_build => $alignment_result->reference_build,
         alignment_result => $alignment_result,
         picard_version => $self->picard_version,
-    )) {
+    );
+    if ($self->picard_strand_specificity) {
+        $picard_params{picard_strand_specificity} = $self->picard_strand_specificity,
+    }
+    unless (Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics->execute(%picard_params)) {
         return;
     }
-    
+
     $self->_prepare_output_directory;
     $self->_promote_data;
     $self->_reallocate_disk_allocation;

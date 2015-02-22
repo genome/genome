@@ -49,12 +49,13 @@ sub execute {
 
     my @instrument_data = $build->instrument_data;
     my %composite_inputs = (
-            instrument_data => \@instrument_data,
+            instrument_data  => \@instrument_data,
             reference_sequence_build => $build->reference_sequence_build,
-            picard_version => $build->processing_profile->picard_version,
-            trimmer_name => $build->processing_profile->read_trimmer_name,
-            trimmer_version => $build->processing_profile->read_trimmer_version,
-            trimmer_params => $build->processing_profile->read_trimmer_params,
+            picard_version   => $build->processing_profile->picard_version,
+            samtools_version => $build->processing_profile->samtools_version,
+            trimmer_name     => $build->processing_profile->read_trimmer_name,
+            trimmer_version  => $build->processing_profile->read_trimmer_version,
+            trimmer_params   => $build->processing_profile->read_trimmer_params,
     );
     if (defined($build->annotation_build)) {
         $composite_inputs{annotation_build} = $build->annotation_build;
@@ -63,6 +64,7 @@ sub execute {
         inputs => \%composite_inputs,
         strategy => $self->_generate_alignment_strategy,
         log_directory => $build->log_directory,
+        result_users => Genome::SoftwareResult::User->user_hash_for_build($build),
     );
 
     my @bams = $result->bam_paths;
@@ -79,14 +81,14 @@ sub execute {
 
     for my $r (@results) {
         $self->merged_alignment_result_id($r->id);
-        $self->merged_bam_path($r->merged_alignment_bam_path);
+        $self->merged_bam_path($r->bam_file);
         $r->add_user(label => 'merged_alignment', user => $build);
         Genome::Sys->create_symlink($r->output_dir, $build_alignment_dir);
 
-        my @individual_alignment_results = $r->collect_individual_alignments;
-        for my $i (@individual_alignment_results) {
-            $r->add_user(label => 'individual_alignment', user => $build);
-        }
+        my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+        $result_users->{individual_alignment} = $build;
+
+        my @individual_alignment_results = $r->collect_individual_alignments($result_users);
         $self->individual_alignment_results(\@individual_alignment_results);
     }
 
@@ -97,18 +99,22 @@ sub _generate_alignment_strategy {
     my $self = shift;
     my $pp = $self->build->processing_profile;
     my $picard_version = $pp->picard_version;
-    my $aligner = 'per-lane-tophat';
+    my $aligner = $pp->read_aligner_name;
+    $aligner = 'per-lane-tophat' if $aligner =~ /^tophat$/i;
     my $aligner_version = $pp->read_aligner_version;
     my $aligner_params = $pp->read_aligner_params;
     my $strategy = 'instrument_data aligned to reference_sequence_build';
+
     if (defined($self->build->annotation_build)) {
         $strategy .= ' and annotation_build';
     }
     $strategy .= " using $aligner $aligner_version [$aligner_params] then merged using picard $picard_version";
+
     if (defined($pp->deduplication_handler)) {
         if ($pp->deduplication_handler eq 'picard') {
             $strategy .= ' then deduplicated using '. $pp->deduplication_handler .' '. $picard_version;
-        } else {
+        } 
+        else {
             die('Failed to recognize the deduplication_handler '. $pp->deduplication_handler);
         }
     }

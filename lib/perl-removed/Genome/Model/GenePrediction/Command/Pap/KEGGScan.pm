@@ -93,7 +93,7 @@ class Genome::Model::GenePrediction::Command::Pap::KEGGScan {
     # These parameters tell workflow the requirements needed for this module 
     has_param => [
         lsf_resource => {
-            default => "-R 'select[mem=8192,type==LINUX64] rusage[mem=8192,tmp=1024]' -M 8192000",
+            default => "-R 'select[mem=8192] rusage[mem=8192,tmp=1024]' -M 8192000",
         },
         lsf_queue => {
             default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
@@ -133,7 +133,7 @@ sub execute {
             CLEANUP => 0,
         )
     );
-    chmod(0777, $self->_working_directory);
+    chmod(0770, $self->_working_directory);
     my $fasta_file = $self->fasta_file();
 
     ## We're about to screw with the current working directory.

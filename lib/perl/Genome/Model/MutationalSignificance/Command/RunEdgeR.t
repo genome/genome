@@ -72,6 +72,7 @@ my $clinseq_model_s1 = Genome::Test::Factory::Model::ClinSeq->setup_object(
 );
 
 my $clinseq_model_s2 = Genome::Test::Factory::Model::ClinSeq->setup_object(
+    processing_profile_id  => $clinseq_model_s1->processing_profile_id,
     tumor_rnaseq_model  => $rnaseq_model_s2_t,
     normal_rnaseq_model => $rnaseq_model_s2_n,
 );

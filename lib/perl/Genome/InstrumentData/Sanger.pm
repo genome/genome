@@ -19,11 +19,6 @@ class Genome::InstrumentData::Sanger {
             is_mutable => 1,
             default_value => 'unknown',
         },
-        disk_allocation => {
-            is => 'Genome::Disk::Allocation',
-            calculate_from => [ 'subclass_name', 'id' ],
-            calculate => q{ return Genome::Disk::Allocation->get(owner_id => $id, owner_class_name => $subclass_name); },
-        },
     ],
 };
 
@@ -34,20 +29,6 @@ sub full_path {
     return if not $disk_allocation;
 
     return $disk_allocation->absolute_path;
-}
-
-sub dump_to_file_system {
-    my $self = shift;
-
-    my $rv = eval { 
-        Genome::Sys->shellcmd(
-            cmd => 'gmt lims import-sanger-runs '.$self->id,
-        );
-    };
-    return 1 if $rv;
-
-    $self->error_message('Failed to dump reads to file system for run '.$self->id);
-    return;
 }
 
 1;

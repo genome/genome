@@ -6,10 +6,11 @@ use Genome;
 use Genome::Info::IUB;
 use Genome::Model::Tools::DetectVariants2::Utilities qw(
     final_result_for_variant_type
+    final_result_for_variants_directory
 );
 
 class Genome::Model::SomaticVariation::Command::Loh {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has =>[
         build_id => {
             is => 'Text',
@@ -157,16 +158,20 @@ sub _params_for_result {
     my $build = $self->build;
 
     my $prior_result = final_result_for_variant_type([$build->results], 'snv');
-    my $control_result = final_result_for_variant_type([$build->normal_build->results], 'snv');
+    my $control_result = final_result_for_variants_directory($build->normal_build->variants_directory, 'snv');
     my $loh_version = $build->loh_version;
 
     return unless $prior_result and $control_result; #can't create a result for old things
+
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{uses} = $build;
 
     return (
         prior_result_id => $prior_result->id,
         control_result_id => $control_result->id,
         classifier_version => $loh_version,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        users => $result_users,
     );
 }
 
@@ -180,7 +185,6 @@ sub link_result_to_build {
         $symlink_target = $self->output_directory;
     } else {
         my $build = $self->build;
-        $result->add_user(user => $build, label => 'uses');
         $symlink_target = join('/', $build->data_directory, 'loh')
     }
 

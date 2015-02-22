@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-my $DEFAULT_LSF_RESOURCE = "-R 'select[type==LINUX64 && mem>=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4";
+my $DEFAULT_LSF_RESOURCE = "-R 'select[mem>=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4";
 
 class Genome::Model::DifferentialExpression::Command::Cuffdiff {
     is => ['Command::V2'],
@@ -22,7 +22,7 @@ class Genome::Model::DifferentialExpression::Command::Cuffdiff {
 
 sub execute {
     my $self = shift;
-    
+
     my $build = $self->build;
     my $model = $build->model;
 
@@ -33,8 +33,12 @@ sub execute {
     unless (-d $output_directory) {
         Genome::Sys->create_directory($output_directory);
     }
+
+    # This provides a sorted map of labels -> ids as an array of hashes
+    my @condition_pairs = $model->condition_pairs_sorted_mapping;
+
     my $params = $model->differential_expression_params;
-    $params .= ' --labels '. $model->condition_labels_string;
+    $params .= ' --labels '. (join ',', map { $_->{label} } @condition_pairs);
 
     my $reference_fasta_path = $reference_sequence_build->full_consensus_path('fa');
     $params .= ' --frag-bias-correct '. $reference_fasta_path;
@@ -43,13 +47,11 @@ sub execute {
         my $mask_gtf_path = $annotation_build->$mask_file_method('gtf',$reference_sequence_build->id);
         $params .= ' --mask-file '. $mask_gtf_path;
     }
-    my $condition_model_ids_string = $model->condition_model_ids_string;
-    my @condition_model_ids = split(/ /, $condition_model_ids_string);
+    my @condition_model_ids = map { $_->{model_ids} } @condition_pairs;
     my $bam_file_paths = '';
-    for my $condition_model_ids (@condition_model_ids) {
-        my @model_ids = split(/,/,$condition_model_ids);
+    for my $model_ids (@condition_model_ids) {
         my @condition_bam_file_paths;
-        for my $model_id (@model_ids) {
+        for my $model_id (@$model_ids) {
             my $rna_seq_model = Genome::Model->get($model_id);
             # Or should we just fine the latest AlignmentResult....
             my $last_succeeded_build = $rna_seq_model->last_succeeded_build;
@@ -66,7 +68,8 @@ sub execute {
         use_version => $model->differential_expression_version,
         output_directory => $output_directory,
     );
-    unless (Genome::Model::Tools::Cufflinks::Cuffdiff->execute(%cuffdiff_params)) {
+    my $cuffdiff_cmd = Genome::Model::Tools::Cufflinks::Cuffdiff->execute(%cuffdiff_params);
+    unless ($cuffdiff_cmd and $cuffdiff_cmd->result) {
         $self->error_message('Failed to execute Cuffdiff with params: '. Data::Dumper::Dumper(%cuffdiff_params));
         return;
     }

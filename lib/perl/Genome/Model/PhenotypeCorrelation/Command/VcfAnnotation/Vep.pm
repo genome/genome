@@ -79,7 +79,7 @@ sub execute {
         if (exists $params{"plugins"}) {
             confess "The options 'condel' and 'plugins' may not be used together";
         }
-        push @{$params{"plugins"}}, "Condel,PLUGIN_DIR,$condel,2";
+        push @{$params{"plugins"}}, "Condel\@PLUGIN_DIR\@$condel\@2";
     }
 
     $self->status_message("Running vep with parameters: " . Dumper(\%params));

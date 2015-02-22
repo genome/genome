@@ -40,11 +40,11 @@ sub execute {
     copy($path . "/tool_conf.xml.sample", $path . "/tool_conf.xml");
 
     $self->status_message("Updating to the latest revision...");
-    my $result = Genome::Model::Tools::Galaxy::Update->execute(
+    my $cmd = Genome::Model::Tools::Galaxy::Update->execute(
         path => $path,
         pull => 0
     );
-    unless ($result) {
+    unless ($cmd and $cmd->result) {
         $self->error_message("error updating Galaxy!: " . Genome::Model::Tools::Galaxy::Update->error_message());
     }
 

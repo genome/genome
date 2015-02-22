@@ -8,7 +8,7 @@ use Sys::Hostname;
 use File::Path;
 
 class Genome::InstrumentData::AlignmentResult::Merged::CoverageStats {
-    is => ['Genome::SoftwareResult::Stageable'],
+    is => ['Genome::SoftwareResult::Stageable', 'Genome::SoftwareResult::WithNestedResults'],
     has_input => [
         alignment_result_id => {
             is => 'Number',
@@ -129,7 +129,7 @@ sub create {
     $self->_prepare_staging_directory;
 
     my $bed_file = $self->_dump_bed_file;
-    my $bam_file = $self->alignment_result->merged_alignment_bam_path;
+    my $bam_file = $self->alignment_result->bam_file;
 
     die $self->error_message("Bed File ($bed_file) is missing") unless -s $bed_file;
     die $self->error_message("Bam File ($bam_file) is missing") unless -s $bam_file;
@@ -151,29 +151,17 @@ sub create {
         minimum_mapping_quality => $self->minimum_mapping_quality,
     );
 
-    unless($] > 5.010) {
-        #need to shell out to a newer perl #TODO remove this once 5.10 transition complete
-        my $cmd = 'genome-perl5.10 -S gmt bio-samtools coverage-stats ';
-        while (my ($key, $value) = (each %coverage_params)) {
-            $key =~ s/_/-/g;
-            $cmd .= " --$key=$value";
-        }
-
-        Genome::Sys->shellcmd(
-            cmd => $cmd,
-            input_files => [$bed_file, $bam_file],
-        );
-    } else {
-        my $cmd = Genome::Model::Tools::BioSamtools::CoverageStats->create(%coverage_params);
-        unless($cmd->execute) {
-            die('Failed to run coverage stats tool');
-        }
+    my $cmd = Genome::Model::Tools::BioSamtools::CoverageStats->create(%coverage_params);
+    unless($cmd->execute) {
+        die('Failed to run coverage stats tool');
     }
 
     $self->_promote_data;
+    $self->_generate_metrics;
+
+    $self->_cleanup_files;
     $self->_reallocate_disk_allocation;
 
-    $self->_generate_metrics;
 
     #quick sanity check--all wingspans should run on the same number of total reads
     my @wingspan_values = split(',', $self->wingspan_values);
@@ -216,6 +204,7 @@ sub _dump_bed_file {
             alternate_reference => $alt_reference,
             merge => $merge_status,
             short_name => $use_short_names,
+            result_users => $self->_user_data_for_nested_results,
         );
         if ($self->roi_track_name) {
             $dump_params{track_name} = $self->roi_track_name;
@@ -235,6 +224,7 @@ sub _generate_metrics {
     $self->_generate_alignment_summary_metrics('');;
     $self->_generate_alignment_summary_metrics('-v2');
     $self->_generate_coverage_stats_summary_metrics;
+    $self->_generate_total_bp_metrics;
 
     return 1;
 }
@@ -527,5 +517,89 @@ sub coverage_stats_summary_hash_ref {
     return $self->{_coverage_stats_summary_hash_ref};
 }
 
+sub _generate_total_bp_metrics {
+    my $self = shift;
+
+    return ($self->_add_genome_total_bp_metric, $self->_add_target_total_bp_metric);
+}
+
+sub _add_genome_total_bp_metric {
+    my $self = shift;
+
+    my $genome_total_bp = 0;
+    my $refseq_build = $self->alignment_result->reference_build;
+
+    my $seqdict = $refseq_build->data_directory . "/seqdict/seqdict.sam";
+
+    my $seqdict_fh = Genome::Sys->open_file_for_reading($seqdict)
+        or die $self->error_message('Could not open seqdict at %s', $seqdict);
+
+    while (<$seqdict_fh>) {
+        chomp;
+        unless($_ =~ /$@HD/) { # skip the header row
+            my @f = split(/\t/, $_);
+            my $ln = $f[2];
+            $ln =~ s/LN://;
+            $genome_total_bp += $ln;
+        }
+    }
+    $seqdict_fh->close;
+
+    return $self->add_metric(metric_name => 'genome_total_bp', metric_value => $genome_total_bp);
+}
+
+sub _add_target_total_bp_metric {
+    my $self = shift;
+    my $metric = $self->metrics(metric_name => 'target_total_bp');
+    return $metric if $metric;
+    my $target_total_bp = $self->get_target_total_bp;
+    return $self->add_metric(metric_name => 'target_total_bp', metric_value => $target_total_bp);
+}
+
+sub get_target_total_bp {
+    my $self = shift;
+
+    my $metric = $self->metrics(metric_name => 'target_total_bp');
+    return $metric->metric_value if $metric;
+
+    my $target_total_bp = 0;
+    my ($bed_file) = glob($self->output_dir . '/*.bed');
+    unless($bed_file) {
+        $bed_file = $self->region_of_interest_set->file_path;
+    }
+
+    my $bed_fh = Genome::Sys->open_file_for_reading($bed_file)
+        or die $self->error_message('Could not open BED file at', $bed_file);
+
+    while (<$bed_fh>) {
+        chomp;
+        my @f      = split (/\t/, $_);
+        my $start  = $f[1];
+        my $stop   = $f[2];
+        next if not defined $stop; # Meta info may be present
+        my $length = ($stop - $start);
+        $target_total_bp += $length;
+    }
+    $bed_fh->close;
+
+    return $target_total_bp;
+}
+
+sub _cleanup_files {
+    my $self = shift;
+
+    Genome::Sys->remove_directory_tree($self->temp_staging_directory);
+
+    if($self->use_short_roi_names) {
+        my @files_to_remove = glob($self->output_dir . '/*.bed');
+        push @files_to_remove, map { $self->stats_file($_) } split(',', $self->wingspan_values);
+
+        for my $file (@files_to_remove) {
+            unlink $file or $self->warning_message('Failed to clean up %s: %s', $file, $!);
+        }
+    }
+
+    return 1;
+}
 
 1;

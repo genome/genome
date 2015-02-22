@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Convergence::Command::FindSignificantAttributes {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         build => {
             shell_args_position => 1,

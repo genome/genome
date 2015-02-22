@@ -127,7 +127,7 @@ sub required_arch_os {
 
 sub required_rusage { 
     # override in subclasses
-    # e.x.: "-R 'select[model!=Opteron250 && type==LINUX64] span[hosts=1] rusage[tmp=50000:mem=12000]' -M 1610612736";
+    # e.x.: "-R 'span[hosts=1] rusage[tmp=50000:mem=12000]' -M 1610612736";
     ''
 }
 
@@ -308,14 +308,8 @@ sub _gather_params_for_get_or_create {
 
     }
 
-    #my $inputs_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($subclass, %is_input);
-    #my $params_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($subclass, %is_param);
+    my %software_result_params = ( subclass_name => $subclass );
 
-    my %software_result_params = (#software_version=>$params_bx->value_for('aligner_version'),
-        #params_id=>$params_bx->id,
-        #inputs_id=>$inputs_bx->id,
-                                  subclass_name=>$subclass);
-    
     return {
         software_result_params => \%software_result_params,
         subclass => $subclass,

@@ -1,0 +1,23 @@
+[4mOVERVIEW[0m
+Filter variants that don't match vaf cutoffs
+
+[4mPROPERTIES[0m
+  [1mmax_vaf[0m   Number
+    The inclusive upper bound for VAF values that will pass the filter (will be kept)
+  [1mmin_vaf[0m   Number
+    The inclusive lower bound for VAF values that will pass the filter (will be kept)
+  [1msample_name[0m   Text
+    This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
+
+[4mREQUIRED EXPERTS[0m
+bam-readcount
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    VAF value for sample sample_name is between min_vaf and max_vaf
+
+[4mFILTER DESCRIPTION[0m
+VAF value for sample sample_name is between min_vaf and max_vaf
+

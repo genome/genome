@@ -1,0 +1,42 @@
+experts:
+    'bam-readcount':
+        aligned_bam_result_id: [aligned_bam_result_id]
+        version: 0.7
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 0
+reports:
+    'docm':
+        filters: {}
+        interpreters:
+            position: {}
+            vaf:
+                sample_name_labels: sample_name_labels
+                sample_names:
+                    - discovery_tumor
+                    - followup_tumor
+                    - normal
+            'per-library-vaf':
+                sample_name_labels: sample_name_labels
+                sample_names:
+                    - discovery_tumor
+                    - followup_tumor
+                    - normal
+                library_name_labels: library_name_labels
+                library_names: [library_names]
+        params:
+            sample_name_labels: sample_name_labels
+            sample_names:
+                - discovery_tumor
+                - followup_tumor
+                - normal
+            library_name_labels: library_name_labels
+            library_names: [library_names]
+    'bed':
+        filters: {}
+        interpreters:
+            'bed-entry': {}
+        params:
+            generate_legend_file: 0

@@ -260,11 +260,6 @@ class Genome::Model::Tools::RefCov {
             is_optional => 1,
             default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
-        lsf_resource => {
-            doc => 'When run in parallel, the resource request necessary to run jobs on LSF.',
-            is_optional => 1,
-            default_value => "-R 'select[type==LINUX64]'",
-        },
     ],
     has_optional => [
         _alignments => {},

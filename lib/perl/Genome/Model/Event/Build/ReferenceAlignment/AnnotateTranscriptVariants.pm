@@ -73,7 +73,7 @@ sub execute {
         #reference_transcripts => $self->model->annotation_reference_transcripts, 
         use_version                => $annotator_version,
     );
-    my $abuild = $self->model->annotation_reference_build;
+    my $abuild = $self->build->annotation_reference_build;
     $params{build_id} = $abuild->id if $abuild;
 
     use Data::Dumper;

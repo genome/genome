@@ -9,19 +9,16 @@ use File::Basename;
 use Lingua::EN::Inflect;
 
 class Genome::Config::Profile::Item {
-    is => ['Genome::Utility::ObjectWithTimestamps','Genome::Utility::ObjectWithCreatedBy'],
-    data_source => 'Genome::DataSource::GMSchema',
+    is => [ "Genome::Utility::ObjectWithTimestamps", "Genome::Utility::ObjectWithCreatedBy" ],
     table_name => 'config.profile_item',
-    id_generator => '-uuid',
+    id_by => [
+        id => { is => 'Text', len => 64 },
+    ],
     has => [
-        id => {
-            is => 'Text',
-            len => 64,
-        },
         allocation => {
             is => 'Genome::Disk::Allocation',
+            reverse_as => 'owner',
             is_many => 1,
-            reverse_as => 'owner'
         },
         analysis_menu_item => {
             is => 'Genome::Config::AnalysisMenu::Item',
@@ -31,21 +28,67 @@ class Genome::Config::Profile::Item {
         analysis_project => {
             is => 'Genome::Config::AnalysisProject',
             id_by => 'analysis_project_id',
+            constraint_name => 'profile_item_analysis_project_id_fkey',
         },
         status => {
             is => 'Text',
-            valid_values => [qw/ disabled active /],
-            is_optional => 1,
+            valid_values => [ "disabled", "active" ],
+            default_value => 'active',
+        },
+        model_bridges => {
+            is => 'Genome::Config::AnalysisProject::ModelBridge',
+            reverse_as => 'config_profile_item',
+            is_many => 1,
+        },
+        models => {
+            is => 'Genome::Model',
+            via => 'model_bridges',
+            to => 'model',
+            is_many => 1,
+        },
+        tag_bridges => {
+            is => 'Genome::Config::Tag::Profile::Item',
+            reverse_as => 'profile_item',
+            is_many => 1,
+        },
+        tags => {
+            is => 'Genome::Config::Tag',
+            via => 'tag_bridges',
+            to => 'tag',
+            is_many => 1,
+            is_mutable => 1,
+        },
+        tag_names => {
+            is => 'Text',
+            via => 'tags',
+            to => 'name',
+            is_many => 1,
         },
     ],
+    schema_name => 'GMSchema',
+    data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 __PACKAGE__->add_observer(aspect => 'create', callback => \&_is_created);
 
+sub delete {
+    my $self = shift;
+    eval {
+        if ($self->allocation) {
+            $self->allocation->delete();
+        }
+    };
+    if(my $error = $@) {
+        die($error);
+    }
+    return $self->SUPER::delete();
+}
+
 sub file_path {
     my $self = shift;
 
-    if ($self->_is_concrete) {
+    if ($self->is_concrete) {
         return $self->_get_concrete_file_path();
     } else {
         return $self->analysis_menu_item->file_path;
@@ -55,7 +98,7 @@ sub file_path {
 sub concretize {
     my $self = shift;
 
-    return if $self->_is_concrete();
+    return if $self->is_concrete();
 
     my $original_file_path = $self->file_path;
     return $self->_create_allocation_for_file($original_file_path);
@@ -71,6 +114,18 @@ sub create_from_file_path {
     my $profile_item = $class->create(%params);
     $profile_item->_create_allocation_for_file($file);
     return $profile_item;
+}
+
+sub has_model_for {
+    my $self = shift;
+    my $instrument_data = shift;
+
+    my $model_set = Genome::Model->define_set(
+        'analysis_project_bridges.profile_item_id' => $self->id,
+        'instrument_data.id' => $instrument_data->id,
+    );
+
+    return $model_set->count;
 }
 
 sub _create_allocation_for_file {
@@ -100,7 +155,7 @@ sub _copy_file_to_allocation {
     return $destination_file_path;
 }
 
-sub _is_concrete { return defined(shift->allocation); }
+sub is_concrete { return defined(shift->allocation); }
 
 sub _get_concrete_file_path {
     my $self = shift;

@@ -152,7 +152,7 @@ sub _update_phdball_file {
     return if not -s $phdball_file;
 
     my $renamed_file = $phdball_file.'.orig';
-    rename $phdball_file, $renamed_file;
+    Genome::Sys->rename($phdball_file, $renamed_file);
     
     my $reader = Genome::Sys->open_file_for_reading( $renamed_file );
     my $writer = Genome::Sys->open_file_for_writing( $phdball_file );

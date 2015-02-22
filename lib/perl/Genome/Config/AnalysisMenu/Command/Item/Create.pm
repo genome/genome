@@ -8,7 +8,7 @@ use File::Spec;
 use File::Basename;
 
 class Genome::Config::AnalysisMenu::Command::Item::Create {
-   is => 'Genome::Command::Base',
+   is => 'Command::V2',
    has => [
         name => {
             is => 'Text',

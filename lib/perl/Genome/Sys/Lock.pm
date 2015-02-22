@@ -1,482 +1,266 @@
 package Genome::Sys::Lock;
+
 use strict;
 use warnings;
-use Time::HiRes;
-use File::Basename;
-use MIME::Lite;
-use Carp;
-use File::Temp;
-use Sys::Hostname qw/hostname/;
-use Genome;
-use base 'UR::ModuleBase';   # *_message methods, but no constructor
-use Genome::Utility::Instrumentation;
 
-my %SYMLINKS_TO_REMOVE;
-my %NESSY_LOCKS_TO_REMOVE;
-my $LOCKING_CLIENT;
+use Carp qw(carp croak);
+use List::MoreUtils qw(all);
 
+=item lock_resource()
+
+Keyword Arguments:
+
+=over
+
+=item resource_lock
+
+C<resource_lock> is the path to the file representing the lock for some
+resource.
+
+=item scope
+
+C<scope> is the scope to which the lock is bound.  See C<scopes()> for valid scopes.
+
+=item block_sleep
+
+C<block_sleep> specifies the the number of seconds to sleep between attempts to
+acquire the lock.
+
+Default value: 60
+
+=item max_try
+
+C<max_try> specifies the number of retries to attempt to acquire the lock.
+
+Default value: 7200
+
+=item wait_announce_interval
+
+C<wait_announce_interval> specifies the interval in seconds between status
+updates indicating the contentious lock.  A zero value means to announce every attempt.
+
+Default value: 0
+
+=back
+
+Returns:
+
+=over
+
+=item On Success
+
+When C<lock()> acquired a lock on the resource it returns the lock path, i.e.
+C<resource_lock>.
+
+=item On Timeout
+
+When C<lock()> is not able to acquire a lock on the resource within C<max_try>
+(+1) attempts it returns C<undef>.
+
+=item On Failure
+
+When C<lock()> fails to create the lock, for reasons other than contention,
+then C<lock()> will C<croak()>.
+
+=back
+
+=cut
+
+my %RESOURCE_LOCK_SCOPE;
 sub lock_resource {
-    my ($self,%args) = @_;
-
-    @args{'resource_lock', 'parent_dir'} = $self->_resolve_resource_lock_and_parent_dir_for_lock_resource(%args);
-
-    $self->_start_locking_client;
-
-    my $nessy_claim = $self->_new_style_lock(%args);
-    my $rv = $self->_file_based_lock_resource(%args);
-    $self->_lock_resource_report_inconsistent_locks($args{resource_lock}, $rv, $nessy_claim);
-
-    return $rv;
-
-}
-
-sub _lock_resource_report_inconsistent_locks {
-    my($self, $resource_lock, $file_lock, $nessy_claim) = @_;
-
-    return unless $LOCKING_CLIENT;
-
-    my $t = "%s-lock acquired but %s-based did not: $resource_lock";
-
-    if ($nessy_claim and !$file_lock) {
-        Genome::Utility::Instrumentation::increment('sys.lock.locked_nessy_only');
-        Genome::Logger->debugf($t, 'Nessy', 'File');
-        return;
-    }
-
-    if ($file_lock and !$nessy_claim) {
-        Genome::Utility::Instrumentation::increment('sys.lock.locked_file_only');
-        Genome::Logger->debugf($t, 'File', 'Nessy');
-        return;
-    }
-
-    if ($file_lock and $nessy_claim) {
-        Genome::Utility::Instrumentation::increment('sys.lock.locked_both');
-        return;
-    }
-}
-
-
-sub _resolve_resource_lock_and_parent_dir_for_lock_resource {
-    my($self, %args) = @_;
-
-    my $resource_lock = delete $args{resource_lock};
-    my ($lock_directory,$resource_id,$parent_dir);
-    if ($resource_lock) {
-        $parent_dir = File::Basename::dirname($resource_lock);
-        Genome::Sys->create_directory($parent_dir);
-        unless (-d $parent_dir) {
-            Carp::croak("failed to make parent directory $parent_dir for lock $resource_lock!: $!");
-        }
-    }
-    else {
-        $lock_directory =  delete $args{lock_directory} || Carp::croak('Must supply lock_directory to lock resource');
-        Genome::Sys->create_directory($lock_directory);
-        $resource_id = $args{'resource_id'} || Carp::croak('Must supply resource_id to lock resource');
-        $resource_lock = $lock_directory . '/' . $resource_id . ".lock";
-        $parent_dir = $lock_directory
-    }
-
-    return ($resource_lock, $parent_dir);
-}
-
-sub _file_based_lock_resource {
-    my($self, %args) = @_;
-
-    my $total_lock_start_time = Time::HiRes::time();
-
-    my($resource_lock, $parent_dir)
-        = delete @args{'resource_lock','parent_dir'};
-
-    my $wait_on_self = delete $args{wait_on_self} || 0;
-    my $basename = File::Basename::basename($resource_lock);
-
-    my $block_sleep = delete $args{block_sleep};
-    $block_sleep = 60 unless defined $block_sleep;
-    my $max_try = delete $args{max_try};
-    $max_try = 7200 unless defined $max_try;
-    my $wait_announce_interval = delete $args{wait_announce_interval};
-    $wait_announce_interval = 0 unless defined $wait_announce_interval;
-
-    my $owner_details = $self->_resolve_lock_owner_details;
-    my $lock_dir_template = sprintf("lock-%s--%s_XXXX",$basename,$owner_details);
-    my $tempdir =  File::Temp::tempdir($lock_dir_template, DIR=>$parent_dir, CLEANUP=>1);
-
-    unless (-d $tempdir) {
-        Carp::croak("Failed to create temp lock directory ($tempdir)");
-    }
-
-    # make this readable for everyone
-    chmod(0777, $tempdir) or Carp::croak("Can't chmod 0777 path ($tempdir): $!");
-
-    # drop an info file into here for compatibility's sake with old stuff.
-    # put a "NOKILL" here on LSF_JOB_ID so an old process doesn't try to snap off the job ID and kill me.
-    my $lock_info = IO::File->new("$tempdir/info", ">");
-    unless ($lock_info) {
-        Carp::croak("Can't create info file $tempdir/info: $!");
-    }
-
-    my ($my_host, $my_pid, $my_lsf_id, $my_user) = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
-    my $job_id = (defined $ENV{'LSB_JOBID'} ? $ENV{'LSB_JOBID'} : "NONE");
-    $lock_info->printf("HOST %s\nPID $$\nLSF_JOB_ID_NOKILL %s\nUSER %s\n",
-                       $my_host,
-                       $ENV{'LSB_JOBID'},
-                       $ENV{'USER'},
-                     );
-    $lock_info->close();
-
-    my $initial_time = time;
-    my $last_wait_announce_time = $initial_time;
-
-    my $lock_attempts = 1;
-    my $ret;
-    while(!($ret = symlink($tempdir,$resource_lock))) {
-        # TONY: The only allowable failure is EEXIST, right?
-        # If any other error comes through, we end up in bigger trouble.
-        use Errno qw(EEXIST ENOENT :POSIX);
-        if ($! != EEXIST) {
-            $self->error_message("Can't create symlink from $tempdir to lock resource $resource_lock because: $!");
-            Carp::croak($self->error_message());
-        }
-        my $symlink_error = $!;
-        chomp $symlink_error;
-        return undef unless $max_try--;
-
-        my $target = readlink($resource_lock);
-
-        #If symlink no longer exists
-        if ($! == ENOENT || !$target) {
-            sleep $block_sleep;
-            next;
-        }
-
-        #symlink could have disappeared between the top of the while loop and now, so we check to see if it's changed
-        my $target_exists = (-e $target);
-        unless($target eq readlink($resource_lock)){
-            next;
-        }
-
-        if (!$target_exists) {
-            # TONY: This means the lock symlink points to something that's been deleted
-            # That's _really_ bad news and should probably get an email like below.
-            $self->error_message("Lock ($resource_lock) exists but target ($target) does not exist.");
-            Carp::croak($self->error_message);
-        }
-
-        if (not $wait_on_self and $self->is_my_lock_target($target)) {
-            $self->warning_message("Looks like I'm waiting on my own lock, forcing unlock...");
-            $self->unlock_resource(resource_lock => $resource_lock, force => 1);
-            next;
-        }
-
-        my $target_basename = File::Basename::basename($target);
-        $target_basename =~ s/lock-.*?--//; #might not always work if lock name starts with "-" or contains "--"
-        my ($host, $user, $pid, $lsf_id) = split /_/, $target_basename;
-        my $info_content=sprintf("HOST %s\nPID %s\nLSF_JOB_ID %s\nUSER %s",$host,$pid,$lsf_id,$user);
-
-        my $time = time;
-        my $elapsed_time = $time - $last_wait_announce_time;
-        if ($elapsed_time >= $wait_announce_interval) {
-            $last_wait_announce_time = $time;
-            my $total_elapsed_time = $time - $initial_time;
-            $self->status_message("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource_lock': $symlink_error. lock_info is:\n$info_content");
-        }
-
-        if ($lsf_id ne "NONE") {
-            my ($job_info,$events) = Genome::Model::Event->lsf_state($lsf_id);
-                 unless ($job_info) {
-                     $self->warning_message("Invalid lock for resource $resource_lock\n"
-                                            ." lock info was:\n". $info_content ."\n"
-                                            ."Removing old resource lock $resource_lock\n");
-                     unless ($Genome::Sys::IS_TESTING) {
-                        my $message_content = <<END_CONTENT;
-Hey Apipe,
-
-This is a lock attempt on %s running as PID $$ LSF job %s and user %s.
-
-I'm about to remove a lock file held by a LSF job that I think is dead.
-
-The resource is:
-
-%s
-
-Here's info about the job that I think is gone.
-
-%s
-
-I'll remove the lock in an hour.  If you want to save the lock, kill me
-before I unlock the process!
-
-Your pal,
-Genome::Utility::Filesystem
-
-END_CONTENT
-
-                        my $msg = MIME::Lite->new(From    => sprintf('"Genome::Utility::Filesystem" <%s@%s>', $ENV{'USER'}, $ENV{GENOME_EMAIL_DOMAIN}),
-                                              To      => $ENV{GENOME_EMAIL_PIPELINE_NOISY},
-                                              Subject => 'Attempt to release a lock held by a dead process',
-                                              Data    => sprintf($message_content, $my_host, $ENV{'LSB_JOBID'}, $ENV{'USER'}, $resource_lock, $info_content),
-                                            );
-                        $msg->send();
-                        $self->status_message('Sleeping for one hour...');
-                        sleep 60 * 60;
-                 }
-                     $self->unlock_resource(resource_lock => $resource_lock, force => 1);
-                     #maybe warn here before stealing the lock...
-               }
-           }
-        sleep $block_sleep;
-        $lock_attempts += 1;
-       }
-    $SYMLINKS_TO_REMOVE{$resource_lock} = 1;
-
-    # do we need to activate a cleanup handler?
-    $self->cleanup_handler_check();
-
-    my $total_lock_stop_time = Time::HiRes::time();
-    my $lock_time_miliseconds = 1000 * ($total_lock_stop_time - $total_lock_start_time);
-
-    my $caller_name = _resolve_caller_name(caller());
-
-    Genome::Utility::Instrumentation::timing("lock_resource.$caller_name", $lock_time_miliseconds);
-    Genome::Utility::Instrumentation::timing("lock_resource_attempts.$caller_name",
-        $lock_attempts);
-
-    Genome::Utility::Instrumentation::timing('lock_resource.total', $lock_time_miliseconds);
-    Genome::Utility::Instrumentation::timing('lock_resource_attempts.total',
-        $lock_attempts);
-
-    return $resource_lock;
-}
-
-sub _start_locking_client {
     my $class = shift;
+    my %args = with_default_lock_resource_args(@_);
+    validate_scope($args{scope});
 
-    if ($ENV{GENOME_NESSY_SERVER} and ! $LOCKING_CLIENT) {
-        require Nessy::Client;
-        $LOCKING_CLIENT = Nessy::Client->new(url => $ENV{GENOME_NESSY_SERVER});
-    }
-}
-
-sub _new_style_lock {
-    my($self, %args) = @_;
-
-    return 1 unless $LOCKING_CLIENT;
-
-    my %user_data;
-    @user_data{'host','pid','lsf_id','user'}
-        = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
-
-    my $resource_lock = $args{resource_lock};
-
-    if (not $args{wait_on_self} and $self->_is_holding_nessy_lock($resource_lock)) {
-        $self->warning_message("Looks like I'm waiting on my own lock, forcing unlock...");
-        $self->_new_style_release($resource_lock);
+    if (exists $RESOURCE_LOCK_SCOPE{$args{resource_lock}}
+        && $RESOURCE_LOCK_SCOPE{$args{resource_lock}} ne $args{scope}) {
+        Carp::confess(sprintf("Attempted to lock the resource (%s) in "
+                . "scope (%s) while it has an existing lock in scope (%s).  "
+                . "Locking in multiple scopes is not currently supported.",
+                $args{resource_lock},
+                $RESOURCE_LOCK_SCOPE{$args{resource_lock}},
+                $args{scope}));
     }
 
-    my $timeout = $self->_new_style_lock_timeout_from_args(%args);
+    # need to install handlers before backends start locking
+    $class->_cleanup_handler_check();
 
-    my $claim = $LOCKING_CLIENT->claim($resource_lock, timeout => $timeout, user_data => \%user_data);
-    $NESSY_LOCKS_TO_REMOVE{$resource_lock} = $claim if $claim;
-    return $claim;
-}
+    my @locks;
+    my $unwind = sub {
+        for my $pair (@locks) {
+            my ($backend, $resource_lock) = @$pair;
+            my @unlock_args = $backend->translate_unlock_args(resource_lock => $resource_lock);
+            $backend->unlock(@unlock_args);
+        }
+    };
 
-sub _new_style_lock_timeout_from_args {
-    my($self, %args) = @_;
+    for my $backend (backends($args{scope})) {
+        my @lock_args = $backend->translate_lock_args(%args);
+        my $lock = $backend->lock(@lock_args);
+        if ($lock) {
+            push @locks, [$backend, $lock];
+        }
 
-    if (exists($args{max_try}) and exists($args{block_sleep})) {
-        return $args{max_try} * $args{block_sleep};
+        if (is_mandatory($backend) && !$lock) {
+            $unwind->();
+            return;
+        }
     }
 
-    return undef;
+    if (all { $_->has_lock($args{resource_lock}) } backends($args{scope})) {
+        Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.consistent');
+    } else {
+        Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.inconsistent');
+    }
+
+    $RESOURCE_LOCK_SCOPE{$args{resource_lock}} = $args{scope};
+
+    return $args{resource_lock};
+
 }
 
-sub _is_holding_nessy_lock {
-    my($self, $resource_lock) = @_;
-    return $NESSY_LOCKS_TO_REMOVE{$resource_lock};
-}
+=item unlock_resource()
 
-sub _resolve_caller_name {
-    my ($package, $filename, $line) = @_;
-    $package =~ s/::/./g;
-    return $package;
-}
+Keyword Arguments:
 
-#build the string for locks generated by this process
-sub _resolve_lock_owner_details {
-    my $self = shift;
-    my ($my_host, $my_pid, $my_lsf_id, $my_user) = (hostname, $$, ($ENV{'LSB_JOBID'} || 'NONE'), Genome::Sys->username);
-    my $job_id = (defined $ENV{'LSB_JOBID'} ? $ENV{'LSB_JOBID'} : "NONE");
-    my $lock_details = join('_',$my_host,$ENV{'USER'},$$,$job_id);
+=over
 
-    return $lock_details;
-}
+=item resource_lock
 
-sub is_my_lock_target {
-    my $self = shift;
-    my $target = shift;
+C<resource_lock> is the path to the file representing the lock for some
+resource.
 
-     my $basename = File::Basename::basename($target);
-    $basename =~ s/_.{4}$//; #remove random chars tmpdir adds to end
-    my $expected_details = $self->_resolve_lock_owner_details;
-    my $length = length($expected_details);
+=item scope
 
-    return (substr($basename, (0-$length)) eq $expected_details);
-}
+C<scope> is the scope to which the lock is bound.  See C<scopes()> for valid scopes.
 
+=back
+
+=cut
 
 sub unlock_resource {
-    my ($self,%args) = @_;
+    my $class = shift;
+    my %args = @_;
 
-    my $resource_lock = $self->_resolve_resource_lock_for_unlock_resource(%args);
+    my $scope = $RESOURCE_LOCK_SCOPE{$args{resource_lock}};
 
-    my $rv = $self->_file_based_unlock_resource(
-            resource_lock => $resource_lock,
-            %args,
-        );
-
-    unless ($self->_new_style_release($resource_lock)) {
-        $self->error_message("file-based released the lock, but Nessy did not.  resource_lock: $resource_lock");
-    }
-    return $rv;
-}
-
-sub _resolve_resource_lock_for_unlock_resource {
-    my($self, %args) = @_;
-
-    my $resource_lock = $args{resource_lock};
-    unless ($resource_lock) {
-        my ($lock_directory,$resource_id);
-        $lock_directory =  delete $args{lock_directory} || Carp::croak('Must supply lock_directory to lock resource');
-        $resource_id = $args{'resource_id'} || Carp::croak('Must supply resource_id to lock resource');
-        $resource_lock = $lock_directory . '/' . $resource_id . ".lock";
-    }
-    return $resource_lock;
-}
-
-sub _file_based_unlock_resource {
-    my($self, %args) = @_;
-
-    my $resource_lock = delete $args{resource_lock};
-    my $force = delete $args{force};
-
-    my $target = readlink($resource_lock);
-    if (!$target) {
-        if ($! == ENOENT) {
-            $self->error_message("Tried to unlock something that's not locked -- $resource_lock.");
-            Carp::croak($self->error_message);
-        } else {
-            $self->error_message("Couldn't readlink $resource_lock: $!");
-        }
-    }
-    unless (-d $target) {
-        $self->error_message("Lock symlink '$resource_lock' points to something that's not a directory - $target. ");
-        Carp::croak($self->error_message);
-    }
-
-    unless ($force) {
-        unless ($self->is_my_lock_target($target)) {
-             my $basename = File::Basename::basename($target);
-             my $expected_details = $self->_resolve_lock_owner_details;
-             $self->error_message("This lock does not look like it belongs to me.  $basename does not match $expected_details.");
-             delete $SYMLINKS_TO_REMOVE{$resource_lock}; # otherwise the lock would be forcefully cleaned up when process exits
-             Carp::croak($self->error_message);
-        }
-    }
-
-    my $unlink_rv = unlink($resource_lock);
-    if (!$unlink_rv) {
-        $self->error_message("Failed to remove lock symlink '$resource_lock':  $!");
-        Carp::croak($self->error_message);
-    }
-
-    my $rmdir_rv = File::Path::rmtree($target);
-    if (!$rmdir_rv) {
-        $self->error_message("Failed to remove lock symlink target '$target', but we successfully unlocked.");
-        Carp::croak($self->error_message);
-    }
-
-    delete $SYMLINKS_TO_REMOVE{$resource_lock};
-    $self->cleanup_handler_check();
-    return 1;
-}
-
-sub _new_style_release {
-    my($self, $resource_lock) = @_;
-
-    if ($LOCKING_CLIENT) {
-        my $claim = delete $NESSY_LOCKS_TO_REMOVE{$resource_lock};
-        if ($claim) {
-            $claim->release;
-        } else {
-            $self->error_message("Nessy tried to release, but no claim in slot for resource_lock: $resource_lock");
-        }
-    } else {
-        return 1;
-    }
-}
-
-# FIXME - I think this is a private function to Filesystem.pm
-sub cleanup_handler_check {
-    my $self = shift;
-
-    my $symlink_count = scalar keys %SYMLINKS_TO_REMOVE;
-
-    if ($symlink_count > 0) {
-        $SIG{'INT'} = \&INT_cleanup;
-        $SIG{'TERM'} = \&INT_cleanup;
-        $SIG{'HUP'} = \&INT_cleanup;
-        $SIG{'ABRT'} = \&INT_cleanup;
-        $SIG{'QUIT'} = \&INT_cleanup;
-        $SIG{'SEGV'} = \&INT_cleanup;
-    } else {
-        delete $SIG{'INT'};
-        delete $SIG{'TERM'};
-        delete $SIG{'HUP'};
-        delete $SIG{'ABRT'};
-        delete $SIG{'QUIT'};
-        delete $SIG{'SEGV'};
-    }
-}
-
-END {
-    exit_cleanup();
-};
-
-sub INT_cleanup {
-    exit_cleanup();
-    print STDERR "INT/TERM cleanup activated in Genome::Utility::Filesystem\n";
-    Carp::confess;
-}
-
-sub exit_cleanup {
-    for my $sym_to_remove (keys %SYMLINKS_TO_REMOVE) {
-        if (-l $sym_to_remove) {
-            warn("Removing remaining resource lock: '$sym_to_remove'") unless $ENV{'HARNESS_ACTIVE'};
-            unlink($sym_to_remove) or warn "Can't unlink $sym_to_remove: $!";
-        }
-    }
-    if ($LOCKING_CLIENT) {
-        foreach my $resource_lock ( keys %NESSY_LOCKS_TO_REMOVE ) {
-            __PACKAGE__->_new_style_release($resource_lock);
-        }
-        %NESSY_LOCKS_TO_REMOVE = ();
-        undef $LOCKING_CLIENT;
-    }
-}
-
-UR::Context->process->add_observer(
-    aspect => 'sync_databases',
-    callback => sub {
-        my($ctx, $aspect, $sync_db_result) = @_;
-        if ($sync_db_result) {
-            use vars '@CARP_NOT';
-            local @CARP_NOT = (@CARP_NOT, 'UR::Context');
-            foreach my $claim (values %NESSY_LOCKS_TO_REMOVE ) {
-                $claim->validate
-                    || Carp::croak(sprintf('Claim %s failed to verify during commit', $claim->resource_name));
+    my $rv = 1;
+    for my $backend (backends($scope)) {
+        if ($backend->has_lock($args{resource_lock})) {
+            my @unlock_args = $backend->translate_unlock_args(%args);
+            my $unlocked = $backend->unlock(@unlock_args);
+            if (is_mandatory($backend)) {
+                $rv = $rv && $unlocked;
             }
         }
     }
-);
+
+    return $rv;
+}
+
+=item release_all()
+
+C<release_all()> should release all locks managed by this process.  This should
+not be called under normal circumstances.  Instead unlock each lock
+individually.
+
+=cut
+
+sub release_all {
+    for my $scope (scopes()) {
+        for my $backend(backends($scope)) {
+            $backend->release_all();
+        }
+    }
+}
+
+sub with_default_lock_resource_args {
+    my %args = @_;
+
+    $args{block_sleep} = 60 unless defined $args{block_sleep};
+    $args{max_try} = 7200 unless defined $args{max_try};
+    $args{wait_announce_interval} = 0 unless defined $args{wait_announce_interval};
+
+    return %args;
+}
+
+sub is_mandatory {
+    my $backend = shift;
+    return $backend->is_mandatory();
+}
+
+my $backends = {};
+sub backends {
+    my $scope = shift;
+
+    validate_scope($scope);
+
+    if (exists $backends->{$scope}) {
+        return @{$backends->{$scope}};
+    } else {
+        Carp::confess(sprintf("No backends registered for scope '%s'",
+                $scope));
+    }
+}
+
+sub all_backends {
+    return %$backends;
+}
+
+sub scopes {
+    return ('site', 'tgisan', 'unknown');
+}
+
+sub clear_backends {
+    $backends = {};
+}
+
+sub set_backends {
+    my $class = shift;
+    my %new_backends = @_;
+
+    $class->clear_backends();
+    for my $scope (keys %new_backends) {
+        for my $backend (@{$new_backends{$scope}}) {
+            $class->add_backend($scope, $backend);
+        }
+    }
+}
+
+sub add_backend {
+    my ($class, $scope, $backend) = @_;
+    validate_scope($scope);
+
+    push @{$backends->{$scope}}, $backend;
+}
+
+sub validate_scope {
+    my $scope = shift;
+    unless (grep {$scope eq $_} scopes()) {
+        Carp::confess(sprintf("Invalid scope '%s'.  Valid scopes are [%s].",
+                    $scope, join(', ', scopes())));
+    }
+}
+
+my $_cleanup_handler_installed;
+sub _cleanup_handler_check {
+    my $class = shift;
+    return if $_cleanup_handler_installed++;
+    $SIG{'INT'} = \&_INT_cleanup;
+    $SIG{'TERM'} = \&_INT_cleanup;
+    $SIG{'HUP'} = \&_INT_cleanup;
+    $SIG{'ABRT'} = \&_INT_cleanup;
+    $SIG{'QUIT'} = \&_INT_cleanup;
+    $SIG{'SEGV'} = \&_INT_cleanup;
+}
+
+sub _INT_cleanup {
+    release_all();
+    Carp::confess("INT/TERM cleanup activated in Genome::Sys::Lock");
+}
+
+END {
+    release_all();
+};
 
 1;

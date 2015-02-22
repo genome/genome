@@ -22,6 +22,18 @@ class Genome::Config::RuleModelMap {
     ]
 };
 
+sub match_and_concretize {
+    my $self = shift;
+    my $instrument_data = shift;
+
+    if ($self->match($instrument_data)) {
+        $self->config->concretize();
+        return 1;
+    } else {
+        return;
+    }
+}
+
 sub match {
     my $self = shift;
     my $instrument_data = shift;
@@ -30,33 +42,39 @@ sub match {
         unless $instrument_data;
 
     for my $rule ($self->rules) {
-        my $result = $self->_evaluate_rule($rule, $instrument_data);
+        my $result = $self->evaluate_rule($rule, $instrument_data);
         return unless $result;
     }
 
-    $self->config->concretize();
     return 1;
 }
 
-sub _evaluate_rule {
+sub evaluate_rule {
     my $self = shift;
     my $rule = shift;
     my $instrument_data = shift;
 
     my $actual_value = _evaluate_method_chain($instrument_data, @{$rule->method_chain});
-    return $actual_value eq $rule->expected_value;
+    my $matches = $actual_value eq $rule->expected_value;
+
+    return ($matches, $actual_value) if wantarray;
+    return $matches;
 }
 
 sub _evaluate_method_chain {
-    return unless defined($_[0]);
+    return '' unless defined($_[0]);
 
     if (@_ >= 2) {
         my $obj = shift;
         my $meth = shift;
-        return _evaluate_method_chain($obj->$meth, @_);
-    } else {
-       return shift;
+        if ($obj->can($meth)) {
+            return _evaluate_method_chain($obj->$meth, @_);
+        } else {
+            Genome::Config::RuleModelMap->warning_message("Attempt to call nonexistent method %s on %s", $meth, $obj->__display_name__);
+            return '';
+        }
     }
+    return shift // '';
 }
 
 1;

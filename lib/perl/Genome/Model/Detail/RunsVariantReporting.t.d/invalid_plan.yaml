@@ -1,0 +1,9 @@
+experts:
+    __test__:
+        __planned__: foo
+reporters:
+    __test_misspelled__:
+        interpreters:
+            __test__: {}
+        params:
+            file_name: 'report.1'

@@ -126,7 +126,7 @@ class Genome::Model::Tools::Pindel::RunPindelModelGroup {
             default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         }, 
         lsf_resource => {
-            default_value => "-M 12000000 -R 'select[type==LINUX64 && mem>12000] rusage[mem=12000]'",
+            default_value => "-M 12000000 -R 'select[mem>12000] rusage[mem=12000]'",
         },
     ],
     # These are params from the superclass' standard API that we do not require for this class (dont show in the help)
@@ -224,7 +224,6 @@ sub _create_directories {
         }
 
         $self->debug_message("Created directory: $output_directory");
-        chmod 02775, $output_directory;
     }
 
     #$self->_temp_staging_directory(Genome::Sys->create_temp_directory);
@@ -309,7 +308,7 @@ sub _detect_variants {
                 die;
             }
 
-            rename($chunk_file,$target_file) or die $!;
+            Genome::Sys->rename($chunk_file, $target_file) or die $!;
         }
 
         # Put the insertions and deletions where the rest of the pipe expects them 

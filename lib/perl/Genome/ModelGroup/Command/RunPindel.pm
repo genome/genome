@@ -13,7 +13,7 @@ my $DEFAULT_VERSION = '0.5';
 my $PINDEL_COMMAND = 'pindel_64';
 
 class Genome::ModelGroup::Command::RunPindel {
-    is => ['Genome::Command::Base'],
+    is => ['Command::V2'],
     doc => "Runs the pindel pipeline on the last complete build of a somatic model.",
     has => [
         model_group_id=> {

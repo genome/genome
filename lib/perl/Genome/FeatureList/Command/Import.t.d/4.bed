@@ -1,0 +1,8 @@
+browser position 1:1-100
+browser hide all
+track name="target_region"
+1	1	2	position1
+6	100	105	range1
+track name="tiled_region"
+1	1	100	position1
+6	80	179	range1

@@ -8,7 +8,7 @@ class Genome::Model::Tools::DetectVariants2::Samtools {
     is => ['Genome::Model::Tools::DetectVariants2::Detector'],
     has_param => [
         lsf_resource => {
-            default => "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>1000 && mem>16000] span[hosts=1] rusage[tmp=1000:mem=16000]' -M 1610612736",
+            default => "-R 'select[tmp>1000 && mem>16000] span[hosts=1] rusage[tmp=1000:mem=16000]' -M 1610612736",
         }
     ],
     has_optional => [
@@ -52,7 +52,7 @@ EOS
 }
 
 sub help_detail {
-    return <<EOS 
+    return <<EOS
 This tool runs samtools for detection of SNVs and/or indels.
 EOS
 }
@@ -96,7 +96,7 @@ sub _detect_variants {
         $parameters .= " -l $bed_file" if $self->region_of_interest;
         $snv_cmd   = "$samtools_path $parameters -f $ref_seq_file $bam_file | $bcftools_path view -Avcg - > $vcf_output_file";
         $check_out = $vcf_output_file;
-    } 
+    }
     else {
         $snv_cmd   = sprintf($samtools_pu_cmd, '-v', $snv_output_file);
         $check_out = $snv_output_file;
@@ -146,7 +146,7 @@ sub _detect_variants {
             return;
         }
         $self->warning_message("No indels detected.") if -z $indel_output_file;
-    
+
         #for capture models we need to limit the snvs and indels to within the defined target regions
         if ($self->region_of_interest) {
             for my $var_file ($snv_output_file, $indel_output_file) {
@@ -156,11 +156,12 @@ sub _detect_variants {
                 }
                 my $tmp_limited_file = $var_file .'_limited';
                 my $no_limit_file    = $var_file .'.no_bed_limit';
-                unless (Genome::Model::Tools::Sam::LimitVariants->execute(
+                my $limit_variants = Genome::Model::Tools::Sam::LimitVariants->create(
                     variants_file => $var_file,
                     bed_file      => $bed_file,
                     output_file   => $tmp_limited_file,
-                )) {
+                );
+                unless ($limit_variants->execute) {
                     $self->error_message('Failed to limit samtools variants '. $var_file .' to within capture target regions '. $bed_file);
                     die $self->error_message;
                 }
@@ -175,9 +176,9 @@ sub _detect_variants {
             }
         }
         if (-s $indel_output_file) {
-            my %indel_filter_params = ( 
-                indel_file => $indel_output_file, 
-                out_file   => $filtered_indel_file, 
+            my %indel_filter_params = (
+                indel_file => $indel_output_file,
+                out_file   => $filtered_indel_file,
             );
             # for capture data we do not know the proper ceiling for depth
             $indel_filter_params{max_read_depth} = 1000000 if $self->region_of_interest;
@@ -204,7 +205,7 @@ sub _detect_variants {
 
 
 #need separate indel and snv by "INDEL", also need sanitize the vcf
-#file (removing "N" and "." lines) 
+#file (removing "N" and "." lines)
 sub create_snv_indel_output_file {
     my $self = shift;
     my $vcf_file    = $self->_vcf_staging_output;
@@ -302,8 +303,24 @@ sub _mpileup_or_pileup {
 }
 
 sub is_mpileup_compatible {
-    my ($ver_num) = shift->version =~ /r(\d+)/;
-    return $ver_num >= 599;   #samtools r599 is the first version to have mpileup
+    # TODO This capability/version checking should be centralized in GMT::Sam
+    my $self = shift;
+    my $version_string = $self->version;
+    if ($version_string =~ /r(\d+)/) {
+        my $version_number = $1;
+        return $version_number >= 599;
+    } elsif ($version_string =~ /(\d+)\.(\d+)\.(\d+)/) {
+        # Try comparing version string against 0.1.8 (version '0.1.7ar599' is
+        # also compatible, but it should be covered by the above check)
+        my @version_min = ('0', '1', '8');
+        my @version_cur = ($1, $2, $3);
+        for (0..2) {
+            return 0 if $version_min[$_] > $version_cur[$_];
+            return 1 if $version_min[$_] < $version_cur[$_];
+        }
+        return 1; # Versions are equal
+    }
+    return 0;
 }
 
 
@@ -314,7 +331,7 @@ sub is_pileup_compatible {
 
 
 sub generate_genotype_detail_file {
-    my ($self, $snv_output_file) = @_; 
+    my ($self, $snv_output_file) = @_;
 
     unless (-f $snv_output_file) { # and -s $snv_output_file) {
         $self->error_message("SNV output File: $snv_output_file is invalid.");
@@ -328,7 +345,7 @@ sub generate_genotype_detail_file {
 
     my $report_input_file = $self->_genotype_detail_staging_output;
 
-    my %params = ( 
+    my %params = (
         snp_file => $snv_output_file,
         out_file => $report_input_file,
     );

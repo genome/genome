@@ -4,10 +4,11 @@ use strict;
 use warnings;
 
 use Genome;
-      
+
 require Carp;
 use Data::Dumper 'Dumper';
 require Lingua::EN::Inflect;
+use Genome::Utility::Text;
 
 class Genome::Command::Crud {
     doc => 'Class for dynamically building CRUD commands',
@@ -19,10 +20,7 @@ sub camel_case_to_string {
         Carp::confess "No camel case string to convert to string"
     }
 
-    # Split on capital letters
-    my @words = split( /(?=(?<![A-Z])[A-Z])|(?=(?<!\d)\d)/, $string);
-    my $join = ( @_ ) ? $_[0] : ' '; 
-    return join($join, map { lc } @words);
+    return Genome::Utility::Text::camel_case_to_string($string, @_);
 }
 
 sub display_name_for_value {
@@ -79,7 +77,7 @@ sub init_sub_commands {
     $config{target_name_ub} = $config{target_name};
     $config{target_name_ub} =~ s/ /_/;
     $config{target_name_pl} = ( exists $incoming_config{target_name_pl} )
-    ? delete $incoming_config{target_name_pl} 
+    ? delete $incoming_config{target_name_pl}
     : Lingua::EN::Inflect::PL($target_name);
     $config{target_name_pl_ub} = $config{target_name_pl};
     $config{target_name_pl_ub} =~ s/ /_/;
@@ -91,16 +89,19 @@ sub init_sub_commands {
 
     # Get the current sub commands
     my @namespace_sub_command_classes = $config{namespace}->sub_command_classes;
-    my @namespace_sub_command_names = @namespace_sub_command_classes;
-    @namespace_sub_command_names = map {
-        s/$config{namespace}:://; $_ = lc($_); $_;
-    } @namespace_sub_command_names;
+    my @namespace_sub_command_names = $config{namespace}->sub_command_names;
 
     # Create the sub commands
-    my @command_names = (qw/ create list update delete /);
+    my @command_names = (qw/ create copy list update delete /);
     my @command_classes;
     my @command_names_used; #omits anything skipped
     for my $command_name ( @command_names ) {
+
+        # unlike other commands 'copy' is opt-in
+        if ($command_name eq 'copy' && !$incoming_config{copy}) {
+            next;
+        }
+
         # config for this sub command
         my %command_config;
         if ( exists $incoming_config{$command_name} ) {
@@ -113,8 +114,6 @@ sub init_sub_commands {
 
         # skip existing sub commands, except update
         if ( $command_name ne 'update' and grep { $command_name eq $_ } @namespace_sub_command_names ) {
-            next if not %command_config;
-            #Carp::confess("Subcommand '$sub_command' for namespace '$config{namespace}' already exists, but there is CRUD config for it. Please correct.");
             next;
         }
 
@@ -231,6 +230,25 @@ sub _build_create_command {
     return $sub_class;
 }
 
+sub _build_copy_command {
+    my ($class, %config) = @_;
+
+    my $class_name = join('::', $config{namespace}, 'Copy');
+    UR::Object::Type->define(
+        class_name => $class_name,
+        is => 'Genome::Command::Copy',
+        doc => sprintf('copy a %s', $config{target_name}),
+        has => [
+            source => {
+                is => $config{target_class},
+                doc => sprintf('the source %s to copy from', $config{target_name}),
+            },
+        ],
+    );
+
+    return $class_name;
+}
+
 sub _build_list_command {
     my ($class, %config) = @_;
 
@@ -259,7 +277,7 @@ sub _build_list_command {
 
     return $list_command_class_name;
 }
-   
+
 sub _build_update_command {
     my ($class, %config) = @_;
 
@@ -370,7 +388,7 @@ sub _build_update_property_sub_command {
     UR::Object::Type->define(
         class_name => $update_property_class_name,
         is => 'Genome::Command::UpdateProperty',
-        has => [ 
+        has => [
             $config{target_name_pl_ub} => {
                 is => $config{target_class},
                 is_many => 1,
@@ -397,7 +415,7 @@ sub _build_update_property_sub_command {
     return $update_property_class_name;
 }
 
-sub _build_add_remove_property_sub_commands { 
+sub _build_add_remove_property_sub_commands {
     my ($class, %config) = @_;
 
     my $property = $config{property};
@@ -424,7 +442,7 @@ sub _build_add_remove_property_sub_commands {
         UR::Object::Type->define(
             class_name => $update_sub_command_class_name,
             is => 'Genome::Command::AddRemoveProperty',
-            has => [ 
+            has => [
                 $config{target_name_pl_ub} => {
                     is => $config{target_class},
                     is_many => 1,
@@ -438,7 +456,6 @@ sub _build_add_remove_property_sub_commands {
                     doc => $property->{doc},
                 },
             ],
-            #doc => $function.' '.$property->{name_pl}.' to '.$config{target_name_pl},
             doc => $config{target_name_pl}.' '.$function.' '.$property->{name_pl},
         );
         no strict;
@@ -461,7 +478,7 @@ sub _build_delete_command {
     UR::Object::Type->define(
         class_name => $sub_class,
         is => 'Genome::Command::Delete',
-        has => [ 
+        has => [
             $config{target_name_pl_ub} => {
                 is => $config{target_class},
                 is_many => 1,

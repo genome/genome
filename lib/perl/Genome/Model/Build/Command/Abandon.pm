@@ -26,6 +26,12 @@ class Genome::Model::Build::Command::Abandon {
             doc => 'Body for build note.',
         },
     ],
+    has_transient_optional => [
+        show_display_command_summary_report => {
+            default_value => 1,
+            doc => 'whether to display the summary after abandoning builds',
+        },
+    ],
 };
 
 sub sub_command_sort_position { 5 }
@@ -56,7 +62,7 @@ sub execute {
         }
     }
 
-    $self->display_command_summary_report();
+    $self->display_command_summary_report() if $self->show_display_command_summary_report;
 
     return !scalar(keys %{$self->_command_errors});
 }

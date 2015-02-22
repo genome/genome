@@ -15,7 +15,7 @@ use Carp;
 use Math::Trig;
 
 class Genome::Model::Build::ReferenceAlignment {
-    is => 'Genome::Model::Build',
+    is => ['Genome::Model::Build', 'Genome::Model::Build::RunsDV2'],
     is_abstract => 1,
     subclassify_by => 'subclass_name',
     has => [
@@ -183,12 +183,12 @@ sub check_region_of_interest {
             }
 
             if ($roi_reference and !$rsb->is_compatible_with($roi_reference)) {
-                my $converter =  Genome::Model::Build::ReferenceSequence::Converter->get_with_lock(
-                    source_reference_build => $roi_reference, 
-                    destination_reference_build => $rsb,
+                my $converter_exists =  Genome::Model::Build::ReferenceSequence::Converter->exists_for_references(
+                    $roi_reference,
+                    $rsb,
                 );
 
-                unless ($converter) {
+                unless ($converter_exists) {
                     push @tags, UR::Object::Tag->create(
                         type => 'invalid',
                         properties => [qw/ region_of_interest_set_name /],
@@ -270,6 +270,8 @@ sub alignment_results_for_instrument_data {
     my $processing_profile = $model->processing_profile;
     my $input = $model->input_for_instrument_data($instrument_data);
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($self);
+
     if ($processing_profile->can('results_for_instrument_data_input')) {
         my @results;
         # TODO There's gotta be a better way to get segment info
@@ -285,11 +287,11 @@ sub alignment_results_for_instrument_data {
                     $segment_info{instrument_data_segment_type} = $align_reads_event->instrument_data_segment_type;
                     $segment_info{instrument_data_segment_id} = $align_reads_event->instrument_data_segment_id;
                 };
-                push @results, $processing_profile->results_for_instrument_data_input($input, %segment_info);
+                push @results, $processing_profile->results_for_instrument_data_input($input, $result_users, %segment_info);
             }
             return @results;
         } else {
-            return $processing_profile->results_for_instrument_data_input($input);
+            return $processing_profile->results_for_instrument_data_input($input, $result_users);
         }
     }
 
@@ -415,23 +417,12 @@ sub compare_snps_file {
 
 sub get_alignments {
     my $self = shift;
-    return map { $self->model->processing_profile->results_for_instrument_data_input($_) }
-        $self->instrument_data_inputs;
+    return map { $self->alignment_results_for_instrument_data($_) } $self->instrument_data;
 }
 
 sub get_alignment_bams {
     my $self = shift;
     return map { $_->alignment_bam_file_paths } $self->get_alignments;
-}
-
-sub get_indels_vcf {
-    my $self = shift;
-    return $self->variants_directory . "/indels.vcf.gz";
-}
-
-sub get_snvs_vcf {
-    my $self = shift;
-    return $self->variants_directory . "/snvs.vcf.gz";
 }
 
 sub calculate_estimated_kb_usage {
@@ -574,21 +565,6 @@ sub filtered_snvs_bed {
     return $self->get_variant_bed_file($name, $ver);
 }
 
-sub variants_directory {
-    my $self = shift;
-
-    my $expected_directory = $self->data_directory . '/variants';
-    return $expected_directory if -d $expected_directory;
-
-    #for compatibility with previously existing builds
-    my @dir_names = ('snp_related_metrics', 'sam_snp_related_metrics', 'maq_snp_related_metrics', 'var-scan_snp_related_metrics');
-    for my $dir_name (@dir_names) {
-        my $dir = $self->data_directory . '/' . $dir_name;
-        return $dir if -d $dir;
-    }
-
-    return $expected_directory; #new builds should use current location
-}
 
 sub log_directory {
     my $self = shift;
@@ -675,7 +651,7 @@ sub whole_rmdup_bam_file {
 
     my $merged_alignment = $self->merged_alignment_result;
     if($merged_alignment) {
-        return $merged_alignment->merged_alignment_bam_path;
+        return $merged_alignment->bam_file;
     }
 
     #for BAMs produced prior to merged alignment results
@@ -744,6 +720,7 @@ sub _fetch_merged_alignment_result {
     my ($params) = $self->processing_profile->params_for_merged_alignment($self, @instrument_data_inputs);
     my $alignment = Genome::InstrumentData::AlignmentResult::Merged->$mode(
         %$params,
+        users => Genome::SoftwareResult::User->user_hash_for_build($self),
     );
 
     return $alignment;
@@ -1036,32 +1013,6 @@ sub eviscerate {
     }
 }
 
-sub _X_resolve_subclass_name { # only temporary, subclass will soon be stored
-    my $class = shift;
-    return __PACKAGE__->_resolve_subclass_name_by_sequencing_platform(@_);
-}
-
-
-sub _resolve_subclass_name_for_sequencing_platform {
-    my ($class,$sequencing_platform) = @_;
-    my @type_parts = split(' ',$sequencing_platform);
-
-    my @sub_parts = map { ucfirst } @type_parts;
-    my $subclass = join('',@sub_parts);
-
-    my $class_name = join('::', 'Genome::Model::Build::ReferenceAlignment' , $subclass);
-    return $class_name;
-}
-
-sub _resolve_sequencing_platform_for_subclass_name {
-    my ($class,$subclass_name) = @_;
-    my ($ext) = ($subclass_name =~ /Genome::Model::Build::ReferenceAlignment::(.*)/);
-    return unless ($ext);
-    my @words = $ext =~ /[a-z]+|[A-Z](?:[A-Z]+|[a-z]*)(?=$|[A-Z])/g;
-    my $sequencing_platform = lc(join(" ", @words));
-    return $sequencing_platform;
-}
-
 #This directory is used by both cDNA and now Capture models as well
 sub reference_coverage_directory {
     my $self = shift;
@@ -1329,6 +1280,7 @@ sub coverage_stats_summary_hash_ref {
 
 sub region_of_interest_set_bed_file {
     my $self = shift;
+    my $bed_file_path = shift; # optional
 
     my $roi_set = $self->model->region_of_interest_set;
     return unless $roi_set;
@@ -1352,8 +1304,12 @@ sub region_of_interest_set_bed_file {
         # This is to retain backward compatibility, previously all BED files had short roi names(like r###)
         $use_short_names = 1;
     }
-    my $bed_file_path = $self->reference_coverage_directory .'/'. $roi_set->id .'.bed';
-    unless (-e $bed_file_path) {
+
+    unless ($bed_file_path) {
+        $bed_file_path = $self->reference_coverage_directory .'/'. $roi_set->id .'.bed';
+    }
+
+    unless (-s $bed_file_path) {
         my %dump_params = (
             feature_list => $roi_set,
             output_path => $bed_file_path,
@@ -1369,6 +1325,7 @@ sub region_of_interest_set_bed_file {
             die('Failed to print bed file to path '. $bed_file_path);
         }
     }
+
     return $bed_file_path;
 }
 

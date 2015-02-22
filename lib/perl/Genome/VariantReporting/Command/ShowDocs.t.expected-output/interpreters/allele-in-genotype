@@ -1,0 +1,16 @@
+[4mOVERVIEW[0m
+Filter out alternate alleles that aren't part of the specified sample's genotype
+
+[4mPROPERTIES[0m
+  [1msample_name[0m   Text
+    This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Filter out alleles that are not part of the genotype of sample sample_name
+
+[4mFILTER DESCRIPTION[0m
+Filter out alleles that are not part of the genotype of sample sample_name
+

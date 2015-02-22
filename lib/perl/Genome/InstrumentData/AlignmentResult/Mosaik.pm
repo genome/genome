@@ -18,32 +18,32 @@ class Genome::InstrumentData::AlignmentResult::Mosaik {
 
 sub required_arch_os { 'x86_64' }
 
-sub required_rusage { 
+sub required_rusage {
     my $class = shift;
     my %p = @_;
     my $instrument_data = delete $p{instrument_data};
 
-    return "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>4000] span[hosts=1] rusage[tmp=90000, mem=4000]' -M 24000000 -n 4";
+    return "-R 'select[tmp>90000 && mem>4000] span[hosts=1] rusage[tmp=90000, mem=4000]' -M 24000000 -n 4";
 }
 
 sub required_rusage_for_building_index { #NOT sure what appropriate reserve here is
-    return "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>4000] span[hosts=1] rusage[tmp=90000, mem=4000]' -M 24000000 -n 4";
+    return "-R 'select[tmp>90000 && mem>4000] span[hosts=1] rusage[tmp=90000, mem=4000]' -M 24000000 -n 4";
 }
 # TODO should generate the reference index and jump databases using MosaikJump and MosaikBuild
 
 sub _run_aligner {
     my $self = shift;
     my @input_pathnames = @_;
-    
+
     my $tmp_dir = $self->temp_scratch_directory;
-    my $tmp_reads_file = "$tmp_dir/reads.dat"; 
+    my $tmp_reads_file = "$tmp_dir/reads.dat";
     my $tmp_align_file = "$tmp_dir/aligned.dat";
     my $tmp_unalign_fq_file = "$tmp_dir/unaligned.fastq";
     my $tmp_unalign_sam_file = "$tmp_dir/unaligned.sam";
     my $tmp_sort_file = "$tmp_dir/sorted.dat";
     my $tmp_sam_file = "$tmp_dir/aligned_mosaik.sam";
     my $staging_sam_file = "$tmp_dir/all_sequences.sam";
-    
+
 
     my $reference_build = $self->reference_build;
     my $ref_file = $self->get_reference_sequence_index->output_dir.'/reference_mosaik.dat';
@@ -67,7 +67,7 @@ sub _run_aligner {
 
     my $align_cmdline;
     my $sort_cmdline;
-    
+
     my %aligner_params = $self->decomposed_aligner_params;
 
     #### STEP 1: Convert fastq files to binary format used by Mosaik
@@ -76,7 +76,7 @@ sub _run_aligner {
             $input_pathnames[0], $input_pathnames[1], $tmp_reads_file, $aligner_params{mosaik_build_params});
 
         #TODO - see if this works with > 2 input files
-        
+
         Genome::Sys->shellcmd(
             cmd             => $cmdline,
             input_files     => [ $input_pathnames[0], $input_pathnames[1] ],
@@ -92,14 +92,14 @@ sub _run_aligner {
     } elsif (scalar(@input_pathnames) == 1) {
         my $cmdline = $mosaik_build_path . sprintf(' -q %s -out %s %s',
             $input_pathnames[0], $tmp_reads_file, $aligner_params{mosaik_build_params});
-        
+
         Genome::Sys->shellcmd(
             cmd             => $cmdline,
             input_files     => [ $input_pathnames[0] ],
             output_files    => [ $tmp_reads_file ],
             skip_if_output_is_present => 0,
         );
-        
+
         unless (-s $tmp_reads_file) {
             $self->error_message("Unable to convert reads at $input_pathnames[0] into binary Mosaik file $tmp_reads_file");
             die($self->error_message);
@@ -109,14 +109,14 @@ sub _run_aligner {
         $self->error_message("number of input pathnames to Mosaik was not 1 or 2");
         die($self->error_message);
     }
-    
+
     #### STEP 2: Align
 
     {
         #$align_cmdline = $mosaik_align_path . sprintf(' -in %s -out %s -ia %s -rur %s %s -j %s',
         $align_cmdline = $mosaik_align_path . sprintf(' -in %s -out %s -ia %s -rur %s %s',
             $tmp_reads_file, $tmp_align_file, $ref_file, $tmp_unalign_fq_file, $aligner_params{mosaik_align_params}, $jump_db_root_name);
-        
+
         Genome::Sys->shellcmd(
             cmd             => $align_cmdline,
             input_files     => [ $tmp_reads_file, $ref_file, $jump_db_root_name."_keys.jmp", $jump_db_root_name."_meta.jmp", $jump_db_root_name."_positions.jmp" ],
@@ -135,10 +135,10 @@ sub _run_aligner {
         }
 
     }
-    
+
 
     #### STEP 3: Sort & Pair
-    
+
     {
         $sort_cmdline = $mosaik_sort_path . sprintf(' -in %s -out %s %s',
             $tmp_align_file, $tmp_sort_file, $aligner_params{mosaik_sort_params});
@@ -156,9 +156,9 @@ sub _run_aligner {
         }
 
     }
-    
+
     #### STEP 4: Convert & Clean
-    
+
     {
         my $cmdline = $mosaik_text_path . sprintf(' -in %s -sam %s %s',
             $tmp_sort_file, $tmp_sam_file, $aligner_params{mosaik_text_params});
@@ -210,7 +210,7 @@ sub _filter_sam_output {
         return;
     }
     $self->debug_message("Opened $all_sequences_sam_file");
-    
+
     while (<$mosaik_fh>) {
         #write out the aligned map, excluding the default header- all lines starting with @.
         $all_seq_fh->print($_) unless $_ =~ /^@/;
@@ -232,7 +232,7 @@ sub decomposed_aligner_params {
     # TODO this may be redundant considering the conditionals below
     #my $params = $self->aligner_params || "-st illumina:-hs 15 -mm 4 -mhp 100 -act 20 -p 8::";
     my $params = $self->aligner_params || "-st illumina:-hs 15 -mm 12 -mhp 100 -act 35 -p 4 -bw 29::";
-    
+
     my @spar = split /\:/, $params;
     # TODO this could potentially be a problem if we don't want to, say, force 4 cores when not otherwise specified
     if ($spar[0] !~ /-st/) { $spar[0] .= " -st illumina"; }
@@ -248,7 +248,7 @@ sub decomposed_aligner_params {
 
 sub aligner_params_for_sam_header {
     my $self = shift;
-    
+
     my %params = $self->decomposed_aligner_params;
     #return "MosaikBuild $params{mosaik_build_params}; MosaikAlign $params{mosaik_align_params}; MosaikSort $params{mosaik_sort_params}; MosaikText $params{mosaik_text_params}";
     #TODO - Sort and Text params are null .. take em out
@@ -283,7 +283,7 @@ sub prepare_reference_sequence_index {
         unless($actual_fasta_file) {
             $class->error_message("Can't read target of symlink $staged_fasta_file");
             return;
-        } 
+        }
     }
 
     $class->debug_message("Building mosaik reference sequence index file");

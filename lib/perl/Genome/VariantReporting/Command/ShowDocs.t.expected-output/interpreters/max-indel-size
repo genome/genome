@@ -1,0 +1,14 @@
+[4mOVERVIEW[0m
+Filter out indels that exceed the specified size
+
+[4mPROPERTIES[0m
+  [1msize[0m   Number
+    The maximum size of an INDEL to pass
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    The size of an indel is less than or equal to size
+
+[4mFILTER DESCRIPTION[0m
+The size of an indel is less than or equal to size
+

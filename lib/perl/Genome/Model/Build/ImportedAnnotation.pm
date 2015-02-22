@@ -334,11 +334,15 @@ sub get_or_create_roi_bed {
     close $out_file;
 
     my $sorted_out = Genome::Sys->create_temp_file_path;
-    my $rv = Genome::Model::Tools::Joinx::Sort->execute(
+    my $sort = Genome::Model::Tools::Joinx::Sort->execute(
         input_files => [$out],
         unique => 1,
         output_file => $sorted_out
     );
+    unless($sort->result) {
+        $self->error_message('Failed to sort %s', $out);
+        return;
+    }
     my $file_content_hash = Genome::Sys->md5sum($sorted_out);
 
     my $format;
@@ -601,7 +605,6 @@ sub generate_annotation_file {
         if ($squashed) {
             die('Support for squashed representations of GTF files is not supported!');
         }
-        # TODO: Once we have perl5.12.1 or perl5.10.1 working, this command can be removed and replaced with in-line code to generate the file
         my %params = (
             anno_db => $self->model_name,
             version => $self->version,
@@ -624,10 +627,11 @@ sub generate_annotation_file {
             # Get the un-squashed BED file path
             my $bed_path = $self->annotation_file('bed',$reference_sequence_id,0);
             my $tmp_file = Genome::Sys->create_temp_file_path;
-            unless (Genome::Model::Tools::BedTools::MergeBy->execute(
+            my $merge = Genome::Model::Tools::BedTools::MergeBy->create(
                 input_file => $bed_path,
                 output_file => $tmp_file,
-            )) {
+            );
+            unless($merge and $merge->execute) {
                 $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
             }
             # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
@@ -764,11 +768,12 @@ sub generate_rRNA_MT_pseudogene_file {
         if ($squashed) {
             die('Support for squashed representations of GTF files is not supported!');
         }
-        unless (Genome::Model::Tools::Gtf::Cat->execute(
+        my $cat = Genome::Model::Tools::Gtf::Cat->create(
             input_files => \@input_files,
             output_file => $file_name,
             remove_originals => 0,
-        )) {
+        );
+        unless ($cat and $cat->execute) {
             die('Failed to merge GTF files: '. Data::Dumper::Dumper(@input_files));
         }
     } elsif ($suffix eq 'bed') {
@@ -776,10 +781,11 @@ sub generate_rRNA_MT_pseudogene_file {
             # Get the un-squashed BED file path
             my $bed_path = $self->rRNA_MT_file('bed',$reference_sequence_id,0);
             my $tmp_file = Genome::Sys->create_temp_file_path;
-            unless (Genome::Model::Tools::BedTools::MergeBy->execute(
+            my $merge = Genome::Model::Tools::BedTools::MergeBy->create(
                 input_file => $bed_path,
                 output_file => $tmp_file,
-            )) {
+            );
+            unless($merge and $merge->execute) {
                 $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
             }
             # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
@@ -791,9 +797,10 @@ sub generate_rRNA_MT_pseudogene_file {
         }
     }
 
-    unless (Genome::Model::Tools::BedTools::Sort->execute(
+    my $sort = Genome::Model::Tools::BedTools::Sort->create(
         input_file => $file_name,
-    )) {
+    );
+    unless ($sort and $sort->execute) {
         die('Failed to sort file: '. $file_name);
     }
     unless (-s $file_name){
@@ -843,11 +850,12 @@ sub generate_rRNA_MT_file {
         if ($squashed) {
             die('Support for squashed representations of GTF files is not supported!');
         }
-        unless (Genome::Model::Tools::Gtf::Cat->execute(
+        my $cat = Genome::Model::Tools::Gtf::Cat->execute(
             input_files => \@input_files,
             output_file => $file_name,
             remove_originals => 0,
-        )) {
+        );
+        unless ($cat and $cat->execute) {
             die('Failed to merge GTF files: '. Data::Dumper::Dumper(@input_files));
         }
     } elsif ($suffix eq 'bed') {
@@ -855,10 +863,11 @@ sub generate_rRNA_MT_file {
             # Get the un-squashed BED file path
             my $bed_path = $self->rRNA_MT_file('bed',$reference_sequence_id,0);
             my $tmp_file = Genome::Sys->create_temp_file_path;
-            unless (Genome::Model::Tools::BedTools::MergeBy->execute(
+            my $merge = Genome::Model::Tools::BedTools::MergeBy->create(
                 input_file => $bed_path,
                 output_file => $tmp_file,
-            )) {
+            );
+            unless ($merge and $merge->execute) {
                 $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
             }
             # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
@@ -870,9 +879,10 @@ sub generate_rRNA_MT_file {
         }
     }
 
-    unless (Genome::Model::Tools::BedTools::Sort->execute(
+    my $sort = Genome::Model::Tools::BedTools::Sort->create(
         input_file => $file_name,
-    )) {
+    );
+    unless ($sort and $sort->execute) {
         die('Failed to sort file: '. $file_name);
     }
     unless (-s $file_name){
@@ -929,12 +939,13 @@ sub generate_rRNA_file {
         }
         my @rRNA_ids = keys %rRNA;
         my $annotation_file = $self->annotation_file($suffix,$reference_sequence_id);
-        unless (Genome::Model::Tools::Gtf::Limit->execute(
+        my $limit = Genome::Model::Tools::Gtf::Limit->create(
             input_gtf_file => $annotation_file,
             output_gtf_file => $file_name,
             ids => \@rRNA_ids,
             id_type => 'transcript_id',
-        )) {
+        );
+        unless ($limit and $limit->execute) {
             die('Failed to execute GTF limit tool for coding rRNA!');
         }
     } elsif ($suffix eq 'bed') {
@@ -942,10 +953,11 @@ sub generate_rRNA_file {
             # Get the un-squashed BED file path
             my $bed_path = $self->rRNA_file('bed',$reference_sequence_id,0);
             my $tmp_file = Genome::Sys->create_temp_file_path;
-            unless (Genome::Model::Tools::BedTools::MergeBy->execute(
+            my $merge = Genome::Model::Tools::BedTools::MergeBy->create(
                 input_file => $bed_path,
                 output_file => $tmp_file,
-            )) {
+            );
+            unless ($merge and $merge->execute) {
                 $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
             }
             # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
@@ -956,9 +968,10 @@ sub generate_rRNA_file {
             $self->_convert_gtf_to_bed($gtf_path,$file_name);
         }
     }
-    unless (Genome::Model::Tools::BedTools::Sort->execute(
+    my $sort = Genome::Model::Tools::BedTools::Sort->create(
         input_file => $file_name,
-    )) {
+    );
+    unless ($sort and $sort->execute) {
         die('Failed to sort file: '. $file_name);
     }
     unless (-s $file_name){
@@ -1035,12 +1048,13 @@ sub generate_rRNA_protein_file {
         }
         my @protein_ids = keys %rRNA_protein;
         my $annotation_file = $self->annotation_file($suffix,$reference_sequence_id);
-        unless (Genome::Model::Tools::Gtf::Limit->execute(
+        my $limit = Genome::Model::Tools::Gtf::Limit->create(
             input_gtf_file => $annotation_file,
             output_gtf_file => $file_name,
             ids => \@protein_ids,
             id_type => 'transcript_id',
-        )) {
+        );
+        unless ($limit and $limit->execute) {
             die('Failed to execute GTF limit tool for rRNA_protein!');
         }
     } elsif ($suffix eq 'bed') {
@@ -1048,10 +1062,11 @@ sub generate_rRNA_protein_file {
             # Get the un-squashed BED file path
             my $bed_path = $self->rRNA_protein_file('bed',$reference_sequence_id,0);
             my $tmp_file = Genome::Sys->create_temp_file_path;
-            unless (Genome::Model::Tools::BedTools::MergeBy->execute(
+            my $merge = Genome::Model::Tools::BedTools::MergeBy->create(
                 input_file => $bed_path,
                 output_file => $tmp_file,
-            )) {
+            );
+            unless ($merge and $merge->execute) {
                 $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
             }
             # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
@@ -1062,9 +1077,10 @@ sub generate_rRNA_protein_file {
             $self->_convert_gtf_to_bed($gtf_path,$file_name);
         }
     }
-    unless (Genome::Model::Tools::BedTools::Sort->execute(
+    my $sort = Genome::Model::Tools::BedTools::Sort->create(
         input_file => $file_name,
-    )) {
+    );
+    unless ($sort and $sort->execute) {
         die('Failed to sort file: '. $file_name);
     }
     unless (-s $file_name){
@@ -1135,10 +1151,11 @@ sub generate_MT_file {
             my $bed_path = $self->MT_file('bed',$reference_sequence_id,0);
             if ($bed_path && -s $bed_path) {
                 my $tmp_file = Genome::Sys->create_temp_file_path;
-                unless (Genome::Model::Tools::BedTools::MergeBy->execute(
+                my $merge = Genome::Model::Tools::BedTools::MergeBy->create(
                     input_file => $bed_path,
                     output_file => $tmp_file,
-                )) {
+                );
+                unless ($merge and $merge->execute) {
                     $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
                 }
                 # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
@@ -1158,9 +1175,10 @@ sub generate_MT_file {
     }
 
     if (-s $file_name){
-        unless (Genome::Model::Tools::BedTools::Sort->execute(
+        my $sort = Genome::Model::Tools::BedTools::Sort->create(
             input_file => $file_name,
-        )) {
+        );
+        unless ($sort and $sort->execute) {
             die('Failed to sort file: '. $file_name);
         }
         return $file_name;
@@ -1231,10 +1249,11 @@ sub generate_pseudogene_file {
             # Get the un-squashed BED file path
             my $bed_path = $self->pseudogene_file('bed',$reference_sequence_id,0);
             my $tmp_file = Genome::Sys->create_temp_file_path;
-            unless (Genome::Model::Tools::BedTools::MergeBy->execute(
+            my $merge = Genome::Model::Tools::BedTools::MergeBy->create(
                 input_file => $bed_path,
                 output_file => $tmp_file,
-            )) {
+            );
+            unless ($merge and $merge->execute) {
                 $self->error_message('Failed to squash the annotation by gene: '. $bed_path);
             }
             # Remove the long names created by MergeBy and replace with gene and 'squashed' as the transcript name
@@ -1279,18 +1298,20 @@ sub _convert_gtf_to_bed {
     my $bed_path = shift;
 
     my $exon_only_tmp_file = Genome::Sys->create_temp_file_path;
-    unless (Genome::Model::Tools::Gtf::Limit->execute(
+    my $limit = Genome::Model::Tools::Gtf::Limit->create(
         input_gtf_file => $gtf_path,
         output_gtf_file => $exon_only_tmp_file,
         feature_type => 'exon',
-    )) {
+    );
+    unless ($limit and $limit->execute) {
         $self->error_message('Failed to generate an exon only GTF version of: '. $gtf_path);
         die($self->error_message);
     }
-    unless (Genome::Model::Tools::RefCov::GtfToBed->execute(
+    my $convert = Genome::Model::Tools::RefCov::GtfToBed->create(
         bed_file => $bed_path,
         gff_file => $exon_only_tmp_file,
-    )) {
+    );
+    unless ($convert and $convert->execute) {
         $self->error_message('Failed to generate a BED format file: '. $bed_path);
         die($self->error_message);
     }

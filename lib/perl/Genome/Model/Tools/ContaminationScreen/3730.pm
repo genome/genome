@@ -13,7 +13,7 @@ class Genome::Model::Tools::ContaminationScreen::3730
     is => 'Genome::Model::Tools::ContaminationScreen',
     has_param => [
         lsf_resource => {
-            default_value => "-M 15000000 -R 'select[type==LINUX64] rusage[mem=15000]'",
+            default_value => "-M 15000000 -R 'rusage[mem=15000]'",
         }
     ],
 };

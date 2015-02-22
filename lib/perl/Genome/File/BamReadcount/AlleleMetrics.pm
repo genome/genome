@@ -1,6 +1,7 @@
 package Genome::File::BamReadcount::AlleleMetrics;
 
 use Genome;
+use Scalar::Util qw(looks_like_number);
 
 use strict;
 use warnings;
@@ -32,6 +33,8 @@ sub new {
             die "Invalid entry\n";
         }
     }
+    die sprintf("%s is not a valid count", $property_hash{_count})
+            unless looks_like_number($property_hash{_count});
     my $self = \%property_hash;
     bless $self, $class;
     return $self;

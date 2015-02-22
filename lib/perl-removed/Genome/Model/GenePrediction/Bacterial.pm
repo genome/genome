@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Carp "confess";
+use File::Spec;
 
 class Genome::Model::GenePrediction::Bacterial {
     is => 'Genome::Model::GenePrediction',
@@ -134,8 +135,10 @@ sub _execute_build {
 
     $self->status_message("Configuration file created at $config_file_path, creating hap command object");
 
-    Genome::Sys->create_symlink('/gscmnt/278/analysis/HGMI/Acedb', $build->data_directory . '/Acedb'); #FIXME Replace this hardcoded path
-    Genome::Sys->create_symlink('/gscmnt/278/analysis/HGMI/' . $build->org_dirname, $build->data_directory . '/' . $build->org_dirname); #FIXME Replace this hardcoded path
+    Genome::Sys->create_symlink(File::Spec->join(Genome::Model::Tools::Hgmi->installation_path, 'Acedb'),
+        $build->data_directory . '/Acedb');
+    Genome::Sys->create_symlink(File::Spec->join(Genome::Model::Tools::Hgmi->installation_path, $build->org_dirname),
+        $build->data_directory . '/' . $build->org_dirname);
 
     my $hap_object = Genome::Model::Tools::Hgmi::Hap->create(
         config => $config_file_path,
@@ -176,7 +179,7 @@ sub _resolve_resource_requirements_for_build {
     # This is called during '_resolve_workflow_for_build' to specify the lsf resource requirements of the one-step
     # workflow that is generated from '_execute_build'.
     my ($build) = @_;
-    return "-R 'select[model!=Opteron250 && type==LINUX64] rusage[tmp=10000:mem=2000]' -M 2000000";
+    return "-R 'rusage[tmp=10000:mem=2000]' -M 2000000";
 }
 
 1;

@@ -6,7 +6,6 @@ sleep 5;
 use strict;
 use warnings;
 
-$Genome::Sys::IS_TESTING=1;
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
 };
@@ -419,23 +418,6 @@ for(1..27) {
 
 done_testing();
 
-
-sub test_locking {
-    my %params = @_;
-    my $successful = delete $params{successful};
-    die unless defined($successful);
-    my $message = delete $params{message};
-    die unless defined($message);
-
-    my $lock = Genome::Sys->lock_resource(%params);
-    if ($successful) {
-        ok($lock,$message);
-        if ($lock) { return $lock; }
-    } else {
-        ok(!$lock,$message);
-    }
-    return;
-}
 
 sub print_event {
     my $fh = shift;

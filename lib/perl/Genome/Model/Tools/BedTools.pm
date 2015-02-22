@@ -12,9 +12,9 @@ class Genome::Model::Tools::BedTools {
     is_abstract => 1,
     has_input => [
         use_version => {
-            is  => 'Version', 
+            is  => 'Version',
             doc => 'BEDTools version to be used.  default_value='. $BEDTOOLS_DEFAULT,
-            is_optional   => 1, 
+            is_optional   => 1,
             default_value => $BEDTOOLS_DEFAULT,
         },
     ],
@@ -28,17 +28,18 @@ sub help_brief {
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-gmt bed-tools ...    
+gmt bed-tools ...
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
 More information about the BedTools suite of tools can be found at http://code.google.com/p/bedtools/.
 EOS
 }
 
 my %BEDTOOLS_VERSIONS = (
+    '2.17.0' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.17.0',
     '2.16.2' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.16.2',
     '2.14.3' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.14.3',
     '2.9.0' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.9.0',
@@ -61,7 +62,7 @@ sub path_for_bedtools_version {
         }
     }
     return $path if (defined $path && -d $path);
-    die 'No path found for samtools version: '. $version;
+    die 'No path found for bedtools version: '. $version;
 }
 
 sub default_bedtools_version {
@@ -74,7 +75,4 @@ sub bedtools_path {
     return $self->path_for_bedtools_version($self->use_version);
 }
 
-
-
 1;
-

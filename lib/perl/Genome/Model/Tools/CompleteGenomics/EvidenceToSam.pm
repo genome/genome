@@ -38,7 +38,7 @@ class Genome::Model::Tools::CompleteGenomics::EvidenceToSam {
     ],
     has_param => [
         lsf_resource => {
-            default_value => "-R 'select[model!=Opteron250 && type==LINUX64 && gtmp>20 && mem>4000] span[hosts=1] rusage[gtmp=20,mem=4000]'",
+            default_value => "-R 'select[gtmp>20 && mem>4000] span[hosts=1] rusage[gtmp=20,mem=4000]'",
         },
     ],
 };

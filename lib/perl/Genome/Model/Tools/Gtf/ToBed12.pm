@@ -44,7 +44,7 @@ sub execute {
         input_gtf_file => $self->gtf_file,
         output_file => $tmp_gene_pred,
         extended => 1,
-    )) {
+    )->result) {
         $self->error_message('Failed to convert from GTF to genePred!');
     }
     my $gene_pred_reader = Genome::Utility::IO::GenePredReader->create(

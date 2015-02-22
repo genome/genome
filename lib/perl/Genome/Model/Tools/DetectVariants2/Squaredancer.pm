@@ -165,7 +165,7 @@ sub run_squaredancer {
     my $bam_string = join ' ', @bam_list;
 
     my $sd_path = $self->squaredancer_path;
-    my $pl_path = 'genome-perl5.10'; #64 bit perl
+    my $pl_path = 'genome-perl';
     my $ori_out = $output_file . '.ori';
     
     my $cmd = $sd_params ? $sd_path . " $sd_params" : $sd_path;

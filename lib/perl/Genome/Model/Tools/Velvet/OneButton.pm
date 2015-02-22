@@ -528,7 +528,7 @@ sub _run_velveth_get_opt_expcov_covcutoff {
 
 
     (undef, $genome_length) = $self->_run_velvetg_get_n50_total($median_cov_cutoff, $median_exp_coverage, $hash_size);
-    return if not defined $genome_length;
+    return if not $genome_length;
 
     $self->_best_estimated_genome_length($genome_length); #<- global in orig code .. need to retain changes in memory
 
@@ -747,7 +747,7 @@ sub _run_velvetg_get_n50_total {
         my $fa_file = $self->output_dir.'/contigs.fa';
         my $file_prefix = $self->_output_file_prefix_name();
         my $new_file_name = $file_prefix.'-hash_size_'.$hash_size.'-contigs.fa';
-        rename $fa_file, $new_file_name;
+        Genome::Sys->rename($fa_file, $new_file_name);
     }
     return @n50_total;
 }

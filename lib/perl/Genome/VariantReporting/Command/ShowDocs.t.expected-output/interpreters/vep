@@ -1,0 +1,32 @@
+[4mOVERVIEW[0m
+Output transcript information from VEP
+
+[4mREQUIRED EXPERTS[0m
+vep
+
+[4mAVAILABLE FIELDS[0m
+  [1mpolyphen[0m
+    The PolyPhen prediction and/or score
+  [1msift[0m
+    The SIFT prediction and/or score, with both given as prediction(score)
+  [1mcanonical[0m
+    Is this transcript canonical
+  [1mamino_acid_change[0m
+    The HGVS protein sequence name
+  [1mtrv_type_category[0m
+    The category for the trv type: splice_site, non_synonymous, other
+  [1mc_position[0m
+    The HGVS coding sequence name
+  [1mtranscript_name[0m
+    Ensembl stable ID of feature
+  [1mtrv_type[0m
+    Consequence type of this variation
+  [1mdefault_gene_name[0m
+    The gene symbol
+  [1mgene_name_source[0m
+    The source of the gene symbol
+  [1mcondel[0m
+    The Consensus Deleteriousness (Condel) score
+  [1mensembl_gene_id[0m
+    Ensembl stable ID of affected gene
+

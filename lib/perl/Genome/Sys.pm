@@ -2,22 +2,30 @@ package Genome::Sys;
 
 use strict;
 use warnings;
-use autodie qw(chown);
+
 use Genome;
+use Genome::Utility::File::Mode qw(mode);
+
+use autodie qw(chown);
+use Carp;
 use Cwd;
+use Digest::MD5;
+use Errno qw();
+use File::Basename;
+use File::Copy qw();
 use File::Path;
 use File::Spec;
-use File::Basename;
-use File::Copy;
-use Carp;
+use File::stat qw(stat);
 use IO::File;
-use LWP::Simple qw(getstore RC_OK);
-use List::MoreUtils "each_array";
-use Set::Scalar;
-use Digest::MD5;
 use JSON;
+use List::MoreUtils "each_array";
+use LWP::Simple qw(getstore RC_OK);
 use Params::Validate qw(:types validate_pos);
 use POSIX qw(EEXIST);
+use Set::Scalar;
+use Scalar::Util qw(blessed reftype);
+
+our @CARP_NOT = qw(Genome::Model::Build::Command::DetermineError);
 
 # these are optional but should load immediately when present
 # until we can make the Genome::Utility::Instrumentation optional (Net::Statsd deps)
@@ -661,6 +669,9 @@ sub copy_file {
     #  the files can never be exactly the same.
 
     unless ( File::Copy::copy($file, $dest) ) {
+        # It is unclear whether File::Copy::copy intends to remove $dest but we
+        # definitely have cases where it's not.
+        unlink $dest;
         Carp::croak("Can't copy $file to $dest: $!");
     }
 
@@ -679,7 +690,7 @@ sub move_file {
     # Note: since the file is validate_file_for_reading, and the dest is validate_file_for_writing,
     #  the files can never be exactly the same.
 
-    unless ( File::Copy::move($file, $dest) ) {
+    unless ( $self->move($file, $dest) ) {
         Carp::croak("Can't move $file to $dest: $!");
     }
 
@@ -836,7 +847,7 @@ sub create_directory {
 
     # have to set umask, make_path's mode/umask option is not sufficient
     my $umask = umask;
-    umask $ENV{GENOME_SYS_UMASK};
+    umask oct($ENV{GENOME_SYS_UMASK});
     make_path($directory); # not from File::Path
     umask $umask;
 
@@ -857,7 +868,11 @@ sub make_path {
         my $rv = mkdir $subpath;
         my $mkdir_errno = $!;
         if ($rv) {
-            chown -1, $gid, $subpath;
+            my $stat = stat($subpath);
+
+            if ($stat->gid != $gid) {
+                set_gid($gid, $subpath);
+            }
         } else {
             if ($mkdir_errno == EEXIST) {
                 next;
@@ -872,6 +887,19 @@ sub make_path {
         die "directory does not exist: $path";
     }
 
+}
+
+sub set_gid {
+    my $gid = shift;
+    my $path = shift;
+
+    # chown removes the setgid bit on root_squashed NFS volumes so preserve manually
+    my $mode = mode($path);
+    my $had_setgid = $mode->is_setgid;
+    chown -1, $gid, $path;
+    if ($had_setgid) {
+        $mode->add_setgid();
+    }
 }
 
 sub gidgrnam {
@@ -890,7 +918,7 @@ sub create_symlink {
         Carp::croak("Can't create_symlink: no 'link' given");
     }
 
-    if ( -e $link ) { # the link exists and points to spmething
+    if ( -e $link ) { # the link exists and points to something
         Carp::croak("Link ($link) for target ($target) already exists.");
     }
 
@@ -986,8 +1014,7 @@ sub read_file {
         return @lines;
     }
     else {
-        my $text = do { local( $/ ) ; <$fh> } ;  # slurp mode
-        return $text;
+        return( do { local( $/ ) ; <$fh> });  # slurp mode
     }
 }
 
@@ -1139,10 +1166,7 @@ sub open_gzip_file_for_reading {
     $self->validate_file_for_reading($file)
         or return;
 
-    #check file type for gzip or symlink to a gzip
-    my $file_type = $self->file_type($file);
-    #debian bug #522441 - `file` can report gzip files as any of these....
-    if ($file_type ne "gzip" && $file_type ne "Sun" && $file_type ne "Minix") {
+    unless ($self->file_is_gzipped($file)) {
         Carp::croak("File ($file) is not a gzip file");
     }
 
@@ -1171,11 +1195,29 @@ sub file_is_gzipped {
     my $file_type = $self->file_type($filename);
 
     #NOTE: debian bug #522441 - `file` can report gzip files as any of these....
-    if ($file_type eq "gzip" or $file_type eq "Sun" or $file_type eq "Minix") {
+    if ($file_type eq "gzip" or $file_type eq "Sun" or $file_type eq "Minix" or $file_type eq 'GRand') {
         return 1;
     } else {
         return 0;
     }
+}
+
+sub gzip_file {
+    my ($class, $input_file, $target_file) = @_;
+
+    unless (-e $input_file) {
+        die $class->error_message("Input file ($input_file) does not exist");
+    }
+    Genome::Sys->validate_file_for_writing($target_file);
+
+    my $bgzip_cmd = "bgzip -c $input_file > $target_file";
+    Genome::Sys->shellcmd(cmd => $bgzip_cmd);
+
+    unless (-e $target_file) {
+        die $class->error_message("Target file ($target_file) does not exist after bgzipping");
+    }
+
+    return $target_file;
 }
 
 # Follows a symlink chain to reach the final file, accounting for relative symlinks along the way
@@ -1203,6 +1245,57 @@ sub get_file_extension_for_path {
     my $path = shift;
     my ($extension) = $path =~ /(\.[^.]+)$/;
     return $extension;
+}
+
+sub iterate_file_lines {
+    my $class = shift;
+    my $fh = shift;
+
+    Carp::croak('File handle or name required as the first param of iterate_file_lines')
+        unless ($fh);
+
+    if (!ref($fh) or ! $fh->can('getline')) {
+        $fh = $class->open_file_for_reading($fh);
+    }
+
+    my @line_cb;
+    my $line_preprocessor = sub {};
+    while( my $arg = shift ) {
+        if ($arg eq 'line_preprocessor') {
+            $line_preprocessor = shift;
+            Carp::croak('The line_preprocessor must be a CODE ref') unless reftype($line_preprocessor) eq 'CODE';
+
+        } elsif (blessed($arg) and blessed($arg) eq 'Regexp') {  # reftype() returns SCALAR for regexes on perl5.10
+            my $re = $arg;
+            my $cb = shift;
+            Carp::croak("Expected CODE ref after regex $re, but got " . ref($cb))
+                unless (reftype($cb) eq 'CODE');
+            my $wrapped_cb = sub {
+                if ($_[0] =~ $re) {
+                    $cb->(@_);
+                }
+            };
+            push @line_cb, $wrapped_cb;
+
+        } elsif (reftype($arg) eq 'CODE') {
+            push @line_cb, $arg;
+
+        } else {
+            Carp::croak("Unexpected argument to iterate_file_lines: $arg");
+        }
+    }
+
+    my $lines_read = 0;
+
+    while(my $line = $fh->getline) {
+        $lines_read++;
+        my @preprocessed = $line_preprocessor->($line);
+        foreach my $cb (@line_cb) {
+            $cb->($line, @preprocessed);
+        }
+    }
+
+    return($lines_read || '0 but true');
 }
 
 #####
@@ -1397,24 +1490,38 @@ sub shellcmd {
         $t1 = time();
         my $system_retval;
         eval {
-                my ($restore_stdout);
+            # Use fork/exec here so we can redirect stdout and/or stderr in the child and
+            # not have to worry about resetting them after the child process is done.
+            # Note to the future: FCGI ties STDOUT and STDERR and does something with them
+            # that means you can't open() them with typeglobs or references.  See commit 0d56bbc
+
+            my $pid = fork();
+            if (!defined $pid) {
+                # error
+                die "Couldn't fork: $!";
+
+            } elsif ($pid) {
+                # parent
+                waitpid($pid, 0);
+                $system_retval = $?;
+                # add a new line so that bad programs don't break TAP, etc
+                # Adding a newline to the redirected stdout file isn't strictly
+                # necessary, but is included for compatibility with previous versions
+                # of this code that always printed an extra newline to STDOUT, whether
+                # it was redirected or not.
+                my $extra_newline = $redirect_stdout
+                                    ? IO::File->new($redirect_stdout, O_WRONLY|O_APPEND)
+                                    : *STDOUT;
+                print $extra_newline "\n";
+
+            } else {
+                # child
                 if ($redirect_stdout) {
-                    no warnings 'once'; # OLDOUT is used only once, not
-                    open(OLDOUT, '>&STDOUT') || die "Can't dup STDOUT: $!";
                     open(STDOUT, '>', $redirect_stdout) || die "Can't redirect stdout to $redirect_stdout: $!";
-                    $restore_stdout = UR::Util::on_destroy(sub {
-                        open(STDOUT, '>&OLDOUT');
-                    });
                 }
 
-                my ($restore_stderr);
                 if ($redirect_stderr) {
-                    no warnings 'once'; # OLDERR is used only once, not
-                    open(OLDERR, '>&STDERR') || die "Can't dup STDERR: $!";
                     open(STDERR, '>', $redirect_stderr) || die "Can't redirect stderr to $redirect_stderr: $!";
-                    $restore_stderr = UR::Util::on_destroy(sub {
-                        open(STDERR, '>&OLDERR');
-                    });
                 }
 
                 # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
@@ -1429,10 +1536,15 @@ sub shellcmd {
                 {   # POE sets a handler to ignore SIG{PIPE}, that makes the
                     # pipefail option useless.
                     local $SIG{PIPE} = 'DEFAULT';
-                    $system_retval = system('bash', '-c', "$shellopts_part $cmd");
+                    my @cmdline = ('bash', '-c', "$shellopts_part $cmd");
+                    exec(@cmdline)
+                        or do {
+                            print STDERR "Can't exec: $!\nCommand line was: ",join(' ', @cmdline),"\n";
+                            exit(127);
+                        };
                 }
+            }
 
-                print STDOUT "\n"; # add a new line so that bad programs don't break TAP, etc.
         };
         my $exception = $@;
         if ($exception) {
@@ -1585,6 +1697,115 @@ sub retry {
     return $rv;
 }
 
+sub _unpreserved_permissions {
+    my ($class, $oldname, $newname, $func) = @_;
+
+    if ( -l $oldname) {
+        return $func->();
+    }
+
+    # mimic (anticipated) CORE::rename errors
+    if ( ! -e $oldname ) {
+        $! = &Errno::ENOENT;
+        return;
+    }
+    if ( -f $oldname && -d $newname ) {
+        $! = &Errno::EISDIR;
+        return;
+    }
+    if ( -d $oldname && -f $newname ) {
+        $! = &Errno::ENOTDIR;
+        return;
+    }
+    if ( -d $oldname && -d $newname ) {
+        opendir(my $dh, $newname)
+            or return;
+        while ( my $entry = readdir $dh ) {
+            if ( $entry ne '.' && $entry ne '..' ) {
+                $! = &Errno::ENOTEMPTY;
+                return;
+            }
+        }
+        closedir($dh) or die($!);
+    }
+
+    # If target doesn't exist then create it so we can copy it's mode, gid, and
+    # uid.  I am not sure if it's appropriate to preserve an existing target's
+    # mode, gid, and uid (as opposed to destroying it and creating fresh).
+    if ( -f $oldname && ! -e $newname ) {
+        $class->touch($newname)
+            or return;
+    }
+    if ( -d $oldname && ! -e $newname ) {
+        mkdir($newname)
+            or return;
+    }
+
+    # preserve mode, gid, and uid
+    my $stat = stat($newname)
+        or return;
+    my $mode = $stat->mode;
+    my $gid  = $stat->gid;
+    my $uid  = $stat->uid;
+
+    $func->();
+
+    # restore mode, gid, and uid
+    chown($uid, $gid, $newname)
+        or return;
+    eval { mode($newname)->set_mode($mode) }
+        or return;
+
+    return 1;
+}
+
+sub rename {
+    my ($class, $oldname, $newname) = @_;
+    _unpreserved_permissions($class, $oldname, $newname, sub {
+        unless ( CORE::rename $oldname, $newname ) {
+            die qq(CORE::rename should never fail or we didn't do a good enough job mimicking it.  Error was: $!);
+        }
+    });
+}
+
+sub move {
+    my ($class, $oldname, $newname) = @_;
+    _unpreserved_permissions($class, $oldname, $newname, sub {
+        unless ( File::Copy::move $oldname, $newname ) {
+            die qq(File::Copy::move should never fail or we didn't do a good enough job mimicking it.  Error was: $!);
+        }
+    });
+}
+
+sub renamex {
+    my $class = shift;
+    unless ($class->rename(@_)) {
+        croak "rename failed: $!";
+    }
+}
+
+sub movex {
+    my $class = shift;
+    unless ($class->move(@_)) {
+        croak "move failed: $!";
+    }
+}
+
+sub touch {
+    my ($class, $path) = @_;
+
+    my $file = IO::File->new($path, 'a')
+        or return;
+    $file->close()
+        or croak $!;
+
+    # using the undef pair uses system's current time (better for NFS)
+    utime undef, undef, $path
+        or return;;
+
+    return 1;
+}
+
 1;
 
 __END__
@@ -1679,5 +1900,67 @@ The default value is /var/lib/genome/db/.
 =head3 ex:
 
     my $dir1 = Genome::Sys->db_path('cosmic', 'latest');
+
+=head2 Genome::Sys->open_file_for_reading($filename);
+
+Opens the given filename for reading and returns a filehandle for it.
+open_file_for_reading() throws an exception for several conditions:
+
+=over 2
+
+=item * The given filename does not exist
+
+=item * The given filename is not readable
+
+=item * The given filename is not a plain file (for example, a directory)
+
+=back
+
+=head2 Genome::Sys->read_file($filename);
+
+Read in the given filename and return the contents.  If $filename is C<->,
+then it reads from STDIN.
+
+If called in list context, it returns a list with one line per list element.
+If called in scalar context, it returns a single string with the entire file
+contents.
+
+=head2 Genome::Sys->open_file_for_writing($filename);
+
+Opens the given filename for writing and returns a filehandle for it.
+open_file_for_writing() throws an exception for several conditions:
+
+=over 2
+
+=item * $filename exists _and_ the file has non-zero size
+
+=item * The directory containing $filename does not exist
+
+=item * The directory containing $filename is not writable
+
+=back
+
+=head2 Genome::Sys->write_file($filename, @lines);
+
+Creates a file with the given name and writes the contents of @lines to it.
+If $filename is C<->, then it writes to STDOUT.
+write_file() throws the same exceptions as open_file_for_writing().
+
+=head2 Genome::Sys->iterate_file_lines($filename_or_handle,
+                                       line_preprocessor => $preprocessor_code,
+                                       $line_callback1, $line_callback2, ...,
+                                       $regex1, $regex_callback1, $regex2, $regex_callback2, ...);
+
+If given a file name as the first argument, calls Genome::Sys->open_file_for_writing()
+first.  The first file/handle argument is required, all others are optional.
+
+Reads the given file/filehandle one line at a time.  If a line_preprocessor was
+specified, its coderef is called in list context with the line as its only
+argument.  Each callback is then called.  Callback arguments are the line from
+the file followed by the return values from the line_preprocessor.
+
+Callbacks preceded by a regex (created by qr) are only called if the regex
+matches the line.  Captured groups are available inside these callbacks using
+the normal variables $1, $2, etc.
 
 =cut

@@ -16,9 +16,12 @@ use Test::More;
 use_ok('Genome::Sample::Command::Import') or die;
 ok(Genome::Sample::Command::Import::EmblEbi->__meta__, 'class meta for import embl-ebi sample');
 
-my $patient_name = 'EMBL-HCT00000';
-my $name = $patient_name.'-ERS000000';
+my $taxon = Genome::Taxon->__define__(name => 'almost human');
+ok($taxon, 'defined taxon');
+my $individual_name = 'EMBL-HCT00000';
+my $name = $individual_name.'-ERS000000';
 my $import = Genome::Sample::Command::Import::EmblEbi->create(
+    taxon => $taxon,
     name => $name,
     ethnicity => 'caucasian',
     gender => 'male',
@@ -29,7 +32,7 @@ my $import = Genome::Sample::Command::Import::EmblEbi->create(
 ok($import, 'create');
 ok($import->execute, 'execute');
 
-is($import->_individual->name, $patient_name, 'patient name');
+is($import->_individual->name, $individual_name, 'patient name');
 is($import->_individual->nomenclature, 'EMBL-EBI', 'patient nomenclature');
 is($import->_individual->gender, 'male', 'patient gender');
 is($import->_individual->ethnicity, 'caucasian', 'patient ethnicity');
@@ -37,12 +40,12 @@ is($import->_sample->name, $name, 'sample name');
 is($import->_sample->nomenclature, 'EMBL-EBI', 'sample nomenclature');
 is($import->_sample->extraction_label, $name, 'sample extraction label');
 is($import->_sample->extraction_type, 'rna', 'sample extraction type');
+is($import->_sample->tissue_label, 'heart', 'sample tissue');
 is($import->_sample->tissue_desc, 'heart', 'sample tissue');
 is($import->_sample->age, 25, 'sample age');
 is_deeply($import->_sample->source, $import->_individual, 'sample source');
 my $library_name = $name.'-extlibs';
 is($import->_library->name, $library_name, 'library name');
 is_deeply($import->_library->sample, $import->_sample, 'library sample');
-is(@{$import->_created_objects}, 3, 'created 3 objects');
 
 done_testing();

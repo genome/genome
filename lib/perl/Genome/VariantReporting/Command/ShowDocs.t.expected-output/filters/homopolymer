@@ -1,0 +1,17 @@
+[4mOVERVIEW[0m
+Filter out indels hitting homopolymers
+
+[4mPROPERTIES[0m
+  [1minfo_tag[0m   String
+    custom tag name in the info field to show homopolymer status, like HOMP_FILTER=0,1
+
+[4mREQUIRED EXPERTS[0m
+homopolymer
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Filter out indels hitting homopolymers
+
+[4mFILTER DESCRIPTION[0m
+Filter out indels hitting homopolymers
+

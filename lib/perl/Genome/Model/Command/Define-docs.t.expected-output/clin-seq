@@ -6,11 +6,8 @@
     [--force]
 
 [4mSYNOPSIS[0m
-
-    genome processing-profile create clin-seq  --name 'November 2011 Clinical Sequencing' 
-
+    genome processing-profile create clin-seq  --name 'November 2011 Clinical Sequencing'
     genome model define clin-seq  --processing-profile='November 2011 Clinical Sequencing'  --wgs-model=2882504846 --exome-model=2882505032 --tumor-rnaseq-model=2880794613
-    
     # Automatically builds if/when the models have a complete underlying build
 
 [4mREQUIRED INPUTS[0m
@@ -34,13 +31,13 @@
     differential-expression for tumor vs normal rna-seq data 
   [1mcancer-annotation-db[0m
     (undocumented) 
-    Default value 'tgi/cancer-annotation/human/build37-20131010.1' if not specified
+    Default value 'tgi/cancer-annotation/human/build37-20140205.1' if not specified
   [1mmisc-annotation-db[0m
     (undocumented) 
     Default value 'tgi/misc-annotation/human/build37-20130113.1' if not specified
   [1mcosmic-annotation-db[0m
     (undocumented) 
-    Default value 'cosmic/65.1' if not specified
+    Default value 'cosmic/65.3' if not specified
   [1mforce[0m
     skip sanity checks on input models 
   [1mnoforce[0m

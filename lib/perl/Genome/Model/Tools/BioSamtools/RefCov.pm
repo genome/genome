@@ -54,11 +54,6 @@ class Genome::Model::Tools::BioSamtools::RefCov {
             is_optional => 1,
             default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
         },
-        lsf_resource => {
-            doc => 'When run in parallel, the resource request necessary to run jobs on LSF.',
-            is_optional => 1,
-            default_value => "-R 'select[type==LINUX64]'",
-        },
     ],
 };
 
@@ -123,21 +118,27 @@ sub execute {
 
     my $temp_stats_file = Genome::Sys->create_temp_file_path;
     $self->warning_message('Please use \'gmt ref-cov\' instead of \'gmt bio-samtools ref-cov\'!');
-    my $cmd = 'genome-perl5.10 -S gmt ref-cov standard --alignment-file-path='. $self->bam_file .' --min-depth-filter='. $self->min_depth_filter .' --roi-file-path='. $self->bed_file .' --stats-file='. $temp_stats_file;
+
+    my %params = (
+        alignment_file_path => $self->bam_file,
+        min_depth_filter => $self->min_depth_filter,
+        roi_file_path => $self->bed_file,
+        stats_file => $temp_stats_file,
+    );
     if (defined $wingspan) {
-        $cmd .= ' --wingspan='. $wingspan ;
+        $params{wingspan} = $wingspan;
     }
     if ($self->min_base_quality) {
-        $cmd .= ' --min-base-quality='. $self->min_base_quality;
+        $params{min_base_quality} = $self->min_base_quality;
     }
     if ($self->min_mapping_quality) {
-        $cmd .= ' --min-mapping-quality='. $self->min_mapping_quality;
+        $params{min_mapping_quality} = $self->min_mapping_quality;
     }
-    Genome::Sys->shellcmd(
-        cmd => $cmd,
-        input_files => [$self->bam_file,$self->bed_file],
-        output_files => [$temp_stats_file],
-    );
+
+    my $cmd = Genome::Model::Tools::RefCov::Standard->create(%params);
+    unless($cmd->execute) {
+        die('Failed to execute ref-cov command');
+    }
 
     Genome::Sys->copy_file($temp_stats_file, $self->stats_file);
 

@@ -12,7 +12,7 @@ use Workflow;
 my $base_R_commands = join("/", dirname(__FILE__), "gstat/burdentest/burdentest.R");
 
 class Genome::Model::Tools::Germline::BurdenAnalysis {
-    is => ['Genome::Command::Base'],
+    is => ['Command::V2'],
     has_input => [
         mutation_file => {
             is => 'Text',

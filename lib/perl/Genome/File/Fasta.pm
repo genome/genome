@@ -136,5 +136,24 @@ sub divide_into_chunks {
     }
 }
 
+sub divide_sequence_into_chunks_of_size {
+    my ($self, $seq_id, $chunk_size) = @_;
+
+    my $cinfo = $self->chromosome_info;
+    die sprintf("Unknown sequence $seq_id in %s", $self->path) unless exists $cinfo->{$seq_id};
+    my $seq_len = $cinfo->{$seq_id};
+
+    my $chunk_count = int(($seq_len + $chunk_size - 1) / $chunk_size);
+    my @chunks;
+    my $pos = 1;
+    for my $i (1..$chunk_count) {
+        my $end = $pos + $chunk_size - 1;
+        $end = $seq_len if $end > $seq_len;
+        push @chunks, [$seq_id, $pos, $end];
+        $pos += $chunk_size;
+    }
+    return @chunks;
+}
+
 1;
 

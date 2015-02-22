@@ -12,7 +12,7 @@ use Regexp::Common;
 class Genome::Model::Command::InstrumentData::List {
     is => 'Genome::Object::Command::List',
     has => [
-        model => { is => 'Genome::Model', id_by => 'model_id' },
+        model => { is => 'Genome::Model', id_by => 'model_id', doc => 'model whose instrument-data to query' },
         model_id => { is => 'Text', doc => 'ID of the genome model' },
         subject_class_name => {
             is_constant => 1,
@@ -28,12 +28,12 @@ class Genome::Model::Command::InstrumentData::List {
         unassigned => {
             is => 'Boolean',
             default => 0,
-            doc => 'List instrument data that is compatable to the model, but not yet assigned',
+            doc => 'List instrument data that is compatible to the model, but not yet assigned',
         },
         compatible => {
             is => 'Boolean',
             default => 0,
-            doc => 'List instrument data that has been is compatable to the model',
+            doc => 'List instrument data that has been is compatible to the model',
         },
         show => {
             is => 'Text',
@@ -50,7 +50,7 @@ sub help_brief {
 }
 
 sub help_detail {
-    return '';
+    return 'Lists the instrument data either assigned or available for assignment to a model';
 }
 
 #########################################################

@@ -11,6 +11,12 @@ use Genome::File::BamReadcount::Reader;
 class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
     is => 'Command',
     has => [
+    bam_readcount_version => {
+        is => 'String',
+        is_optional => 1,
+        doc => 'version of bam-readcount to use',
+    },
+
     bam_file => {
         is => 'String',
         is_optional => 0,
@@ -107,7 +113,7 @@ sub help_brief {
 }
 
 sub help_detail {
-    "get readcounts. make pretty"
+    "This is a wrapper for bam-readcount. This tool takes in a BAM file and a list of positions in a variant-file and gets the read-depths at those positions. The 'variant-file' needs to be in the 1-based format. For SNV's this means that 'start' and 'stop' positions are the same. For other variants like INDEL's the start and stop are different. Refer to http://www.biostars.org/p/84686/ if you need more detail regarding this."
 }
 
 
@@ -242,7 +248,7 @@ sub execute {
 
     #split out the chromosome we're working on, if necessary
     if (defined($chrom) && ($chrom ne "all")){
-        my $cmd = "grep \"^" . $chrom . "[[:space:]]\" $variant_file>$tempdir/varfile";
+        my $cmd = "grep \"^" . $chrom . "[[:space:]]\" '" . $variant_file . "' >'" . $tempdir . "/varfile'";
         my $return = Genome::Sys->shellcmd(
             cmd => "$cmd",
         );
@@ -262,15 +268,19 @@ sub execute {
 
     #read in all the variants and hash both the ref and var allele by position
     #also dump the snvs and indels in seperate files for readcounting
-    my $inFh = IO::File->new( $variant_file ) || die "can't open file\n";
+    my $inFh = IO::File->new( $variant_file )
+        or die "can't open file: $variant_file\n";
     open(SNVFILE,">$tempdir/snvpos");
     open(INDELFILE,">$tempdir/indelpos");
+    my $on_first_line = 1;
     while( my $sline = $inFh->getline )
     {
         chomp($sline);
 
         #skip header lines
-        next if($sline =~ /^(#|Hugo_Symbol|Chr|chromosome)/i);
+        next if ($on_first_line
+            && ($sline =~ /^(#|Hugo_Symbol|Chrom|chromosome|chr\s)/i));
+        $on_first_line = 0;
 
         my @fields = split("\t",$sline);
 
@@ -338,23 +348,29 @@ sub execute {
         print $OUTFILE "\n";
     }
 
-
-
     #------------------------------------------
     #now run the readcounting on snvs
-    if( -s "$tempdir/snvpos"){
-        my $return = Genome::Model::Tools::Sam::Readcount->execute(
-            use_version => 0.5,
-            bam_file => $bam_file,
-            minimum_mapping_quality => $min_mapping_quality,
-            minimum_base_quality => $min_base_quality,
+
+    my %params = (
+        bam_file                => $bam_file,
+        per_library             => $self->per_library,
+        reference_fasta         => $fasta,
+        minimum_base_quality    => $min_base_quality,
+        minimum_mapping_quality => $min_mapping_quality,
+    );
+
+    if ($self->bam_readcount_version){
+        $params{use_version} = $self->bam_readcount_version;
+    }
+
+    if (-s "$tempdir/snvpos") {
+        my $readcount_cmd = Genome::Model::Tools::Sam::Readcount->create(
+            %params,
             output_file => "$tempdir/readcounts",
-            reference_fasta => $fasta,
             region_list => "$tempdir/snvpos",
-            per_library => $self->per_library,
         );
-        unless($return) {
-            $self->error_message("Failed to execute: Returned $return");
+        unless($readcount_cmd->execute) {
+            $self->error_message("Failed to execute sam readcount.");
             die $self->error_message;
         }
 
@@ -362,7 +378,7 @@ sub execute {
         my $cmd_obj = Genome::Model::Tools::Joinx::Sort->create(
             input_files => [ "$tempdir/readcounts" ],
             output_file => "$tempdir/readcounts.sorted",
-            );
+        );
         $cmd_obj->execute;
         system( "uniq $tempdir/readcounts.sorted >$tempdir/readcounts.sorted.uniq" );
 
@@ -459,20 +475,15 @@ sub execute {
     #the way pileup places the coordinates gets weird, so output the appropriate bases to look at:
 
     #if there are no indels, skip
-    if( -s "$tempdir/indelpos"){
-        my $return = Genome::Model::Tools::Sam::Readcount->execute(
-            use_version => 0.5,
-            bam_file => $bam_file,
-            minimum_mapping_quality => $min_mapping_quality,
-            minimum_base_quality => $min_base_quality,
-            output_file => "$tempdir/readcounts_indel",
-            reference_fasta => $fasta,
-            region_list => "$tempdir/indelpos",
+    if (-s "$tempdir/indelpos") {
+        my $readcount_cmd = Genome::Model::Tools::Sam::Readcount->create(
+            %params,
+            output_file       => "$tempdir/readcounts_indel",
+            region_list       => "$tempdir/indelpos",
             insertion_centric => 1,
-            per_library => $self->per_library,
         );
-        unless($return) {
-            $self->error_message("Failed to execute: Returned $return");
+        unless($readcount_cmd->execute) {
+            $self->error_message("Failed to execute.");
             die $self->error_message;
         }
 
@@ -480,7 +491,7 @@ sub execute {
         my $cmd_obj = Genome::Model::Tools::Joinx::Sort->create(
             input_files => [ "$tempdir/readcounts_indel" ],
             output_file => "$tempdir/readcounts_indel.sorted",
-            );
+        );
         $cmd_obj->execute;
         system( "uniq $tempdir/readcounts_indel.sorted >$tempdir/readcounts_indel.sorted.uniq" );
 
@@ -580,7 +591,7 @@ sub execute {
         my ($chr, $pos, $knownRef, $knownVar) = split("\t",$k);
         if($self->per_library) {
             my $num_libs = scalar(@libraries) || 1;
-            printLibs($OUTFILE, $chr, $pos, $knownVar, $knownVar, ("NA") x ($num_libs * 3));
+            printLibs($OUTFILE, $chr, $pos, $knownRef, $knownVar, ("NA") x ($num_libs * 3));
         }
         else {
             filterAndPrint($chr, $pos, $knownRef, $knownVar, "NA", "NA", "NA",
@@ -597,7 +608,8 @@ sub indelCounts {
     my $ref_count = 0;
     my $var_count = 0;
     for my $allele ($lib->alleles) {
-        if($allele ne $testvarallele) {
+        my $ucallele = uc($allele); #bam-readcount can return lowercase alleles, we always hash them uc
+        if($ucallele ne $testvarallele) {
             $ref_count += $lib->metrics_for($allele)->count;
         }
         else {
@@ -615,14 +627,15 @@ sub snvCounts {
     for my $allele ($lib->alleles) {
         # assume that the ref call is ACTG, not iub
         # (assumption looks valid in my files)
-        if ($allele eq $knownRef){
+        my $ucallele = uc($allele); #bam-readcount can return lowercase alleles, we always hash them uc
+        if ($ucallele eq $knownRef){
             $ref_count += $lib->metrics_for($allele)->count;
             next;
         }
 
         # if we're counting all non-reference reads, not just the specified allele
         if($self->count_non_reference_reads){
-            unless($allele eq $knownRef){
+            unless($ucallele eq $knownRef){
                 $var_count += $lib->metrics_for($allele)->count;
             }
             next;

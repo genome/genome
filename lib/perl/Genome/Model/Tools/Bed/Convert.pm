@@ -12,6 +12,7 @@ my $CURRENT_VERSION = "v2";
 my @COMPATIBLE_PREVIOUS_VERSIONS = ( "v1" );
 
 class Genome::Model::Tools::Bed::Convert {
+    is_abstract => 1,
     is => ['Command'],
     has_input => [
         source => {
@@ -30,11 +31,23 @@ class Genome::Model::Tools::Bed::Convert {
             is_optional => 1,
         },
     ],
+    has_param => [
+        one_based => {
+            is => "Boolean",
+            default => 0,
+            doc => "Generate a one-based bed file (some tools such as bam-readcount want that).",
+        },
+    ],
     has_optional => [
         detector_style_input => {
             is => 'String',
             doc => 'Original file output by detector to provide lines for the output',
         },
+        clean_output => {
+            is => "Boolean",
+            default => 0,
+            doc => "Don't create versioned symlink noise, just output the bed file",
+        }
     ],
     has_transient_optional => [
         _input_fh => {
@@ -93,25 +106,27 @@ sub execute {
 
     return unless $retval;
 
-    my $final_output = versioned_path($self->output, $CURRENT_VERSION);
-    if ($self->_need_chrom_sort) {
-        my $sort_cmd = Genome::Model::Tools::Bed::ChromSort->create(
-            input => $self->output,
-            output => $final_output,
-        );
-
-        if ($sort_cmd->execute()) {
-            unlink($self->output);
+    unless($self->clean_output){
+        my $final_output = versioned_path($self->output, $CURRENT_VERSION);
+        if ($self->_need_chrom_sort) {
+            my $sort_cmd = Genome::Model::Tools::Bed::ChromSort->create(
+                input => $self->output,
+                output => $final_output,
+                );
+            
+            if ($sort_cmd->execute()) {
+                unlink($self->output);
+            } else {
+                $self->error_message("Failed to sort bed file " . $self->output);
+                return;
+            }
         } else {
-            $self->error_message("Failed to sort bed file " . $self->output);
-            return;
+            Genome::Sys->rename($self->output, $final_output);
         }
-    } else {
-        rename($self->output, $final_output);
-    }
-    symlink(basename($final_output), $self->output);
-    for my $v (@COMPATIBLE_PREVIOUS_VERSIONS) {
-        symlink(basename($final_output), versioned_path($self->output, $v));
+        symlink(basename($final_output), $self->output);
+        for my $v (@COMPATIBLE_PREVIOUS_VERSIONS) {
+            symlink(basename($final_output), versioned_path($self->output, $v));
+        }
     }
 
     return 1;
@@ -161,12 +176,28 @@ sub format_line {
     if (@values < 5) {
         croak "Not enough fields to write bed file in input: ".join("\t", @values);
     }
+    if ($self->should_increment_start($values[3], $values[4])) {
+        $values[1] += 1;
+    }
     splice(@values,3,2, join('/', @values[3,4]));
     # push - if quality and/or depth fields are missing
     while (@values < 6) {
         push(@values, '-');
     }
     return join("\t", @values);
+}
+
+# We only need to increment the start position when requesting one-based output and only for snvs
+sub should_increment_start {
+    my ($self, $ref, $alt) = @_;
+    if ($self->one_based) {
+        if ( (length($ref) == 1) and ($ref ne '*') and
+            (length($alt) == 1) and ($alt ne '*') ) {
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 sub write_bed_line {

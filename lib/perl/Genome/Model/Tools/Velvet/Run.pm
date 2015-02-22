@@ -220,12 +220,12 @@ sub execute {
 	    return;
 	}
 	#create velvet std output files
-#	my $ec = Genome::Model::Tools::Velvet::CreateStdoutFiles->execute(
-	my $ec = Genome::Model::Tools::Velvet::StandardOutputs->execute(
+#	my $ec = Genome::Model::Tools::Velvet::CreateStdoutFiles->create(
+	my $ec = Genome::Model::Tools::Velvet::StandardOutputs->create(
 #	    input_fastq_file => $self->file_name,
 	    directory => $self->directory,
 	    );
-	unless ($ec) {
+	unless ($ec->execute) {
 	    $self->error_message("Failed to create submission files");
 	    return;
 	}

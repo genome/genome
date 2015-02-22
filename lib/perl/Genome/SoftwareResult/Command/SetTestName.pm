@@ -32,7 +32,7 @@ sub execute {
         $self->status_message(
                 "Setting test_name to \"$new_test_name\" on id:$sr_id");
 
-        $software_result->set_test_name($new_test_name);
+        $software_result->test_name($new_test_name);
         if ($software_result->test_name eq $new_test_name) {
             $self->status_message("    Success! New lookup_hash is " .
                     $software_result->lookup_hash);

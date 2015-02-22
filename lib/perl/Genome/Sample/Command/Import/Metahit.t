@@ -14,10 +14,13 @@ use Test::More;
 use_ok('Genome::Sample::Command::Import') or die;
 ok(Genome::Sample::Command::Import::Metahit->__meta__, 'class meta for import metahit sample');
 
+my $taxon = Genome::Taxon->__define__(name => 'almost human');
+ok($taxon, 'defined taxon');
 my $name = 'MH0000';
 my $individual_name = 'METAHIT-'.$name;
 my $sample_name = $individual_name.'-1';
 my $import = Genome::Sample::Command::Import::Metahit->create(
+    taxon => $taxon,
     name => $sample_name,
     tissue_label => 'G_DNA_Stool',
     gender => 'male',
@@ -42,6 +45,5 @@ is_deeply($import->_sample->source, $import->_individual, 'sample source');
 my $library_name = $sample_name.'-extlibs';
 is($import->_library->name, $library_name, 'library name');
 is_deeply($import->_library->sample, $import->_sample, 'library sample');
-is(@{$import->_created_objects}, 3, 'created 3 objects');
 
 done_testing();

@@ -1,0 +1,12 @@
+[4mOVERVIEW[0m
+Annotate vcf with results from NHLBI vcf
+
+[4mPROPERTIES[0m
+  [1minfo_string[0m   Text
+    Field ids to embed from the annotation VCF. Use colons to separate multiple field descriptors.
+  [1mjoinx_version[0m   Version
+    joinx version to be used.
+  [1mvcf[0m   Path
+    Vcf File containing annotation
+    This is a translated property.
+

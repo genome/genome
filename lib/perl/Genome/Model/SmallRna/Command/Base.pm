@@ -12,7 +12,7 @@ class Genome::Model::SmallRna::Command::Base {
 	
 };
 sub help_detail {
-    "These commands are setup to run perl5.10 or /usr/bin/perl";
+    "These commands require at least perl 5.10.";
 }
 
 sub create {
@@ -20,7 +20,7 @@ sub create {
     my $self = $class->SUPER::create(@_);
     unless ($self) { return; }
     unless ($] > 5.010) {
-        die 'Bio::DB::Sam requires perl 5.10! Consider using /usr/bin/perl instead of gmt for all small-rna commands!';
+        die 'Bio::DB::Sam requires perl 5.10!';
     }
     require Bio::DB::Sam;
     return $self;

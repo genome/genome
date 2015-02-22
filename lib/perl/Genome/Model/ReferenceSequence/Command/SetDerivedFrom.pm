@@ -8,7 +8,7 @@ use Carp qw/confess/;
 
 
 class Genome::Model::ReferenceSequence::Command::SetDerivedFrom {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         child_build => {
             is => 'Genome::Model::Build::ImportedReferenceSequence',

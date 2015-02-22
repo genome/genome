@@ -71,6 +71,17 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::AlignReads {
 
 sub sub_command_category { 'pipeline steps' }
 
+sub shortcut {
+    my $self = shift;
+
+    if($self->skip) {
+        $self->status_message("skip signal received. not running.");
+        return 1;
+    }
+
+    return;
+}
+
 sub execute {
     my $self = shift;
     my $build = $self->build;
@@ -92,6 +103,7 @@ sub execute {
         },
         strategy => 'instrument_data aligned to reference_sequence_build using bwa 0.5.9 [-t 4 -q 5::] then merged using picard 1.46 then deduplicated using picard 1.46 api v2',#TODO make me a processing profile parameter, backfilled default
         log_directory => $build->log_directory,
+        result_users => Genome::SoftwareResult::User->user_hash_for_build($build),
     );
 
     my @bams = $result->bam_paths;
@@ -116,12 +128,12 @@ sub execute {
         my $sample = $i[0]->sample;
         if($sample eq $build->tumor_sample) {
             $self->merged_alignment_result_id($r->id);
-            $self->merged_bam_path($r->merged_alignment_bam_path);
+            $self->merged_bam_path($r->bam_file);
             $r->add_user(label => 'sv_validation_merged_alignment', user => $build);
             Genome::Sys->create_symlink($r->output_dir, $build_alignment_dir . '/tumor');
         } elsif ($sample eq $build->normal_sample) {
             $self->control_merged_alignment_result_id($r->id);
-            $self->control_merged_bam_path($r->merged_alignment_bam_path);
+            $self->control_merged_bam_path($r->bam_file);
             $r->add_user(label => 'sv_validation_control_merged_alignment', user => $build);
             Genome::Sys->create_symlink($r->output_dir, $build_alignment_dir . '/normal');
         } else {

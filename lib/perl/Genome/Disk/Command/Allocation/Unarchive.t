@@ -109,6 +109,7 @@ my $allocation = Genome::Disk::Allocation->create(
     mount_path => $archive_volume->mount_path,
 );
 ok($allocation, 'created test allocation');
+$allocation->status('archived');
 ok($allocation->is_archived, 'allocation is archived prior to running command, as expected');
 
 # Create a test tarball
@@ -145,6 +146,7 @@ $allocation = Genome::Disk::Allocation->create(
     mount_path => $archive_volume->mount_path,
 );
 ok($allocation, 'created test allocation');
+$allocation->status('archived');
 ok($allocation->is_archived, 'allocation is archived before running command, as expected');
 
 # Create a test tarball

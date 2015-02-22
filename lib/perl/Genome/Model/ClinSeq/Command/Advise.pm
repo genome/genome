@@ -78,7 +78,7 @@ class Genome::Model::ClinSeq::Command::Advise {
         },
         _clinseq_pp_id => {
               is => 'Number',
-              default => '2649924',
+              default => '33c5f2c5752e47eda3ea89dc8c47e1c0',
         },
         clinseq_pp => {
               is => 'Genome::ProcessingProfile',
@@ -468,7 +468,7 @@ sub get_samples{
   my $sample_count = scalar(@samples);
   $self->status_message("\nEXAMINE SAMPLES");
   $self->status_message("Found $sample_count samples:");
-  $self->status_message("id\tname\tsample_common_name\tsample_type\tcell_type\ttissue_desc\tdefault_genotype_data_id\tmodel_count\tlibrary_count\tid_count");
+  $self->status_message("id\tname\tsample_common_name\tsample_type\ttissue_desc\tdefault_genotype_data_id\tmodel_count\tlibrary_count\tid_count");
   my $skip_count = 0;
   my $sample_mismatch = 0;
   foreach my $sample (@samples){
@@ -479,7 +479,6 @@ sub get_samples{
     my $extraction_type = $sample->extraction_type || "NULL";
     my $sample_type = $sample->sample_type || "NULL";
     my $extraction_desc = $sample->extraction_desc || "NULL";
-    my $cell_type = $sample->cell_type || "NULL";
     my $tissue_label = $sample->tissue_label || "NULL";
     my $tissue_desc = $sample->tissue_desc || "NULL";
     my $organ_name = $sample->organ_name || "NULL";
@@ -505,14 +504,14 @@ sub get_samples{
     next if $skip;
 
     #Make sure the individual specified matches that of every sample
-    my $patient_id = $sample->patient->id;
+    my $patient_id = $sample->individual->id;
     my $individual_id = $individual->id;
     unless ($patient_id eq $individual_id){
       $self->error_message("ID of individual supplied by user ($individual_id) does not match that associated with a sample ($patient_id)");
       $sample_mismatch++;
     }
-    #$self->status_message("id\tname\tsample_common_name\tsample_type\tcell_type\ttissue_desc\tdefault_genotype_data_id\tmodel_count\tlibrary_count\tid_count");
-    $self->status_message("$id\t$name\t$sample_common_name\t$sample_type\t$cell_type\t$tissue_desc\t$default_genotype_data_id\t$model_count\t$library_count\t$id_count");
+    #$self->status_message("id\tname\tsample_common_name\tsample_type\ttissue_desc\tdefault_genotype_data_id\tmodel_count\tlibrary_count\tid_count");
+    $self->status_message("$id\t$name\t$sample_common_name\t$sample_type\t$tissue_desc\t$default_genotype_data_id\t$model_count\t$library_count\t$id_count");
     push(@final_samples, $sample);
   }
 
@@ -930,7 +929,7 @@ sub check_for_missing_and_excluded_data{
       $self->status_message("\tName: $model_name ($model_id)");  
       $self->status_message("\tWARNING -> Model: $model_id appears to be missing the following instrument data: $id_string");
       $self->status_message("\tYou should consider performing the following update before proceeding:");
-      $self->status_message("\tgenome model instrument-data assign expression --instrument-data='$id_string'  --model=$model_id\n\t\t\tgenome model build start $model_id");
+      $self->status_message("\tgenome model instrument-data assign by-expression --instrument-data='$id_string'  --model=$model_id\n\t\t\tgenome model build start $model_id");
     }
   }
 
@@ -1014,7 +1013,7 @@ sub get_genotype_microarray_model_id{
     my $microarray_model_id = $model->id;
 
     #Make sure the genotype microarray model is on the specified version of the reference genome
-    next unless ($model->reference_sequence_build->id eq $self->reference_sequence_build->id);
+    next unless ($model->reference_sequence_build->is_compatible_with($self->reference_sequence_build));
 
     #TODO: Make sure the genotype microarray model is using the specified version of dbSNP?  Skip this test for now...
     #if ($model->can("dbsnp_build")){
@@ -1083,7 +1082,7 @@ sub check_ref_align_models{
   my @sample_instrument_data = $self->get_dna_instrument_data('-sample'=>$sample, '-data_type'=>$data_type);
   return @tmp unless (scalar(@sample_instrument_data));
 
-  my $subject_id = $sample->patient->id;
+  my $subject_id = $sample->individual->id;
   my @models = $sample->models;
   my $model_count = scalar(@models);
   $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet basic criteria:");
@@ -1214,7 +1213,7 @@ sub check_rnaseq_models{
     $self->status_message("\tCould not find any rna-seq data");
     return @tmp;
   }
-  my $subject_id = $sample->patient->id;
+  my $subject_id = $sample->individual->id;
   my @models = $sample->models;
   my $model_count = scalar(@models);
   $self->status_message("\tStarting with " . $model_count . " models for this sample. Candidates that meet basic criteria:");
@@ -1226,6 +1225,7 @@ sub check_rnaseq_models{
     next unless ($model->reference_sequence_build->id eq $self->reference_sequence_build->id);
     next unless ($model->annotation_build->id eq $self->annotation_build->id);
     next unless ($model->can("cancer_annotation_db"));
+    next unless (defined($model->cancer_annotation_db));
     next unless ($model->cancer_annotation_db eq $self->cancer_annotation_db->id);
     push (@final_models, $model);
     #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
@@ -1274,15 +1274,25 @@ sub check_de_models{
   foreach my $model (@models){
     next unless ($model->class eq "Genome::Model::DifferentialExpression");
     next unless ($model->processing_profile_id eq $self->differential_expression_pp->id);
-    my $condition_model_ids_string = $model->condition_model_ids_string;
-    my @groups = split(" ", $condition_model_ids_string);
-    next unless (scalar(@groups) == 2);
-    my @group1_members = split(",", $groups[0]);
-    my @group2_members = split(",", $groups[1]);
-    next unless (scalar(@group1_members == 1) && scalar(@group2_members));
+    my %condition_pairs_hash = $model->condition_pairs_unsorted_hash;
+    my @groups = values(%condition_pairs_hash);
+    next unless @groups == 2;
 
-    next unless ($group1_members[0] eq $normal_rnaseq_model->id);
-    next unless ($group2_members[0] eq $tumor_rnaseq_model->id);
+    my $check_order_1 = $self->check_de_model_members(
+      '-normal_rnaseq_model' => $normal_rnaseq_model,
+      '-tumor_rnaseq_model'  => $tumor_rnaseq_model,
+      '-normal_members'      => $groups[0],
+      '-tumor_members'       => $groups[1],
+    );
+
+    my $check_order_2 = $self->check_de_model_members(
+      '-normal_rnaseq_model' => $normal_rnaseq_model,
+      '-tumor_rnaseq_model'  => $tumor_rnaseq_model,
+      '-normal_members'      => $groups[1],
+      '-tumor_members'       => $groups[0],
+    );
+
+    next unless $check_order_1 or $check_order_2;
 
     #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
     push (@final_models, $model);
@@ -1310,6 +1320,18 @@ sub check_de_models{
   }
 }
 
+sub check_de_model_members{
+  my $self = shift;
+  my %args = @_;
+  my $normal_rnaseq_model = $args{'-normal_rnaseq_model'};
+  my $tumor_rnaseq_model  = $args{'-tumor_rnaseq_model'};
+  my @normal_members      = @{$args{'-normal_members'}};
+  my @tumor_members       = @{$args{'-tumor_members'}};
+
+  return (@normal_members == 1) and (@tumor_members != 0) and
+         ($normal_members[0] eq $normal_rnaseq_model->id) and
+         ($tumor_members[0] eq $tumor_rnaseq_model->id);
+}
 
 #Check for existence of a somatic variation model meeting desired criteria and create one if it does not exist
 sub check_somatic_variation_models{
@@ -1582,11 +1604,11 @@ sub create_de_model{
   my $individual_name = $self->individual->name;
   my $normal_rnaseq_model_id = $normal_rnaseq_model->id;
   my $normal_subject_name = $normal_rnaseq_model->subject->name;
-  my $normal_individual_common_name = $normal_rnaseq_model->subject->patient_common_name;
+  my $normal_individual_common_name = $normal_rnaseq_model->subject->individual_common_name;
   my $normal_sample_common_name = $normal_rnaseq_model->subject->common_name;
   my $tumor_rnaseq_model_id = $tumor_rnaseq_model->id;
   my $tumor_subject_name = $tumor_rnaseq_model->subject->name;
-  my $tumor_individual_common_name = $tumor_rnaseq_model->subject->patient_common_name;
+  my $tumor_individual_common_name = $tumor_rnaseq_model->subject->individual_common_name;
   my $tumor_sample_common_name = $tumor_rnaseq_model->subject->common_name;
   my $differential_expression_pp_id = $self->differential_expression_pp->id;
 
@@ -1608,9 +1630,9 @@ sub create_de_model{
 
   my @commands;
 
-  #genome model define differential-expression --processing-profile=? --condition-model-ids-string=? --condition-labels-string=? 
+  #genome model define differential-expression --processing-profile=? --condition-pairs=? 
   push(@commands, "\n#Create a differential-expression model as follows:");
-  push(@commands, "genome model define differential-expression --processing-profile='$differential_expression_pp_id' --condition-model-ids-string='$normal_rnaseq_model_id $tumor_rnaseq_model_id' --condition-labels-string='$final_normal_name,$final_tumor_name' --subject='$individual_name'");
+  push(@commands, "genome model define differential-expression --processing-profile='$differential_expression_pp_id' --condition-pairs='$final_normal_name $normal_rnaseq_model_id','$final_tumor_name $tumor_rnaseq_model_id' --subject='$individual_name'");
   push(@commands, "genome model build start ''");
 
   foreach my $line (@commands){

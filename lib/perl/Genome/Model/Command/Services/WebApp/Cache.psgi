@@ -121,7 +121,9 @@ sub delete {
 
 sub {
     my $class = __PACKAGE__;
-    my ($env, $ajax_refresh) = @_;
+    my ($env) = @_;
+
+    my $ajax_refresh = $env->{AJAX_REFRESH};
 
     my $url = $env->{'PATH_INFO'};
     if (exists $env->{'QUERY_STRING'} && defined $env->{'QUERY_STRING'}) {

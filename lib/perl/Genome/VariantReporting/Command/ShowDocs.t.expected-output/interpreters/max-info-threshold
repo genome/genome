@@ -1,0 +1,16 @@
+[4mOVERVIEW[0m
+Filter out variants that exceed the specified threshold in the specified INFO field
+
+[4mPROPERTIES[0m
+  [1minfo_tag[0m   String
+    custom tag name in the info field to show threshold, like SEGDUP=82
+  [1mthreshold[0m   Number
+    The maximum thresold to pass
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Filter out variants with info field info_tag being greater than threshold
+
+[4mFILTER DESCRIPTION[0m
+Filter out variants with info field info_tag being greater than threshold
+

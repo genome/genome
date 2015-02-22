@@ -18,7 +18,7 @@ class Foo::Bar {
 };
 
 class Genome::Model::Command::Test {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         bar => { is => 'Foo::Bar' },
         bars => { is => 'Foo::Bar', is_many => 1 },

@@ -31,6 +31,7 @@ run_test(
     somatic_variation_build => $somatic_variation_build,
     target_regions          => "$input_dir/target_regions.bed",
     required_snv_callers    => 2,
+    bam_readcount_version   => 0.6,
 );
 
 done_testing();

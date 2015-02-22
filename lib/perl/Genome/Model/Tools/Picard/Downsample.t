@@ -4,10 +4,18 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 1;
+use Test::More tests => 4;
 
-# This test was auto-generated because './Model/Tools/Picard/Downsample.pm'
-# had no '.t' file beside it.  Please remove this test if you believe it was
-# created unnecessarily.  This is a bare minimum test that just compiles Perl
-# and the UR class.
-use_ok('Genome::Model::Tools::Picard::Downsample');
+use_ok('Genome::Model::Tools::Picard::Downsample') or die;
+
+my $cmd = Genome::Model::Tools::Picard::Downsample->create(
+    input_file => 'blah',
+    output_file => 'blah',
+    downsample_ratio => 0,
+);
+ok($cmd, 'create downsample command w/ invalid downsample_ratio');
+my @errors = $cmd->__errors__;
+is(@errors, 1, 'correct number of errors');
+is($errors[0]->__display_name__, "INVALID: property 'downsample_ratio': Must be greater than 0 and less than 1! 0", 'correct error __display_name__');
+
+done_testing();

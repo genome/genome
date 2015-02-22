@@ -1,7 +1,7 @@
 package Genome::Model::ReferenceAlignment::Command::ExampleOneModel; 
 
 class Genome::Model::ReferenceAlignment::Command::ExampleOneModel {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         model => { shell_args_position => 1, is => 'Genome::Model', id_by => 'model_id' }, 
     ],

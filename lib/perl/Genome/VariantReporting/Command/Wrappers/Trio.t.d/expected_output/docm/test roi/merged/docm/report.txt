@@ -1,0 +1,3 @@
+chromosome_name	start	stop	reference	variant	TEST-patient1-somval_tumor1_ref_count	TEST-patient1-somval_tumor2_ref_count	TEST-patient1-somval_tumor1_var_count	TEST-patient1-somval_tumor2_vaf	TEST-patient1-somval_tumor1_vaf	TEST-patient1-somval_normal1_var_count	TEST-patient1-somval_normal1_ref_count	TEST-patient1-somval_tumor2_var_count	TEST-patient1-somval_normal1_vaf
+1	2013	2013	A	T	.	.	.	.	.	.	.	.	.
+1	2013	2013	A	T	.	.	.	.	.	.	.	.	.

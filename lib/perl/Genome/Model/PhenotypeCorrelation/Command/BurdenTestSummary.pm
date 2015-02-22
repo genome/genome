@@ -20,7 +20,7 @@ use strict;
 use warnings;
 
 class Genome::Model::PhenotypeCorrelation::Command::BurdenTestSummary {
-    is => "Genome::Command::Base",
+    is => "Command::V2",
     has => [
         summary_file => {
             is => "Text",

@@ -1,51 +1,43 @@
 
 [4mUSAGE[0m
- [1mgenome model define metagenomic-shotgun[0m --name=? --processing-profile=? --subject=?
-    [--color] [--debug] [--projects=?[,?]] [PARAMS]
+ [1mgenome model define metagenomic-shotgun[0m --name=? --subject=? --processing-profile=?
+    [--projects=?[,?]] [PARAMS]
 
-[4mREQUIRED ARGUMENTS[0m
-  [1mname[0m   Text
+[4mREQUIRED PARAMS[0m
+  [1mname[0m
     Model name 
-  [1mprocessing-profile[0m   Genome::ProcessingProfile
-    Processing profileby id or name. 
-  [1msubject[0m   Genome::Subject
+  [1msubject[0m
     Model subject. Taxon, individual, sample, etc. 
+  [1mprocessing-profile[0m
+    Processing profileby id or name. 
 
-[4mOPTIONAL ARGUMENTS[0m
-  [1mcolor[0m   Boolean
-    Display report in color. 
-    Default value 'true' if not specified
-  [1mnocolor[0m   Boolean
-    Make color 'false' 
-  [1mdebug[0m   Boolean
-    enable debug messages 
-  [1mnodebug[0m   Boolean
-    Make debug 'false' 
-  [1mprojects[0m   Genome::Project
+[4mOPTIONAL PARAMS[0m
+  [1mprojects[0m
     (undocumented) 
-  [1mPARAMS[0m   
+  [1mPARAMS[0m
     Params for the model. Use the format: property=value. The value can be an id or filter string.
     If the property can have many values, use a filter string, or multiple key=value pairs. 
 
 [4mDESCRIPTION[0m
- This will define a model, setting inputs, instrument data as given. List params as space separated
- bare args. Use the format: property=value. The value can be an id or filter string.  If the
- property can have many values, use a filter string, or multiple key=value pairs.
- 
- Params for all model types
-  * auto_assign_inst_data
-  * auto_build_alignments
-  * instrument_data
- 
- Specific params for Genome::Model::MetagenomicShotgun
-  * contamination_screen_reference (singular)
-  * merge_roi_set (singular)
-  * metagenomic_nucleotide_reference (singular)
-  * metagenomic_protein_reference (singular)
-  * region_of_interest_set_name (many)
-  * roi_track_name (singular)
-  * short_roi_names (singular)
-  * viral_nucleotide_reference (singular)
-  * viral_protein_reference (singular)
+    This will define a model, setting inputs, instrument data as given. List params as space
+    separated bare args. Use the format: property=value. The value can be an id or filter string.
+    If the property can have many values, use a filter string, or multiple key=value pairs.
+
+     Params for all model types
+      * auto_assign_inst_data
+      * auto_build_alignments
+      * instrument_data
+    
+     Specific params for Genome::Model::MetagenomicShotgun
+      * contamination_screen_reference (singular)
+      * merge_roi_set (singular)
+      * metagenomic_nucleotide_reference (singular)
+      * metagenomic_protein_reference (singular)
+      * region_of_interest_set_name (many)
+      * roi_track_name (singular)
+      * short_roi_names (singular)
+      * viral_nucleotide_reference (singular)
+      * viral_protein_reference (singular)
+
 
 

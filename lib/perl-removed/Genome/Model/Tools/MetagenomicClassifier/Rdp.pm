@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet;
+
 class Genome::Model::Tools::MetagenomicClassifier::Rdp {
     is => 'Command',
     has => [ 
@@ -18,12 +20,13 @@ class Genome::Model::Tools::MetagenomicClassifier::Rdp {
         },
         training_set => {
             type => 'String',
-            valid_values => [qw/ 4 6 9 broad /],
-            doc => 'Name of training set.',
+            doc => 'The name or path for the training set. Current installed training sets: '
+                    . join(' ', Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->valid_set_names)
+            ,
         },
         version => {
             type => 'String',
-            valid_values => [qw/ 2x1 2x2 2x3 2x5 /],
+            valid_values => [qw/ 2x1 2x2 2x3 2x5 2x9 2x10 /],
             doc => 'Version of rdp to run.',
         },
         format => {
@@ -45,7 +48,37 @@ DOC
             doc => "Write metrics to file. File name is classification file w/ '.metrics' extension",
         },
     ],
+    has_transient => {
+        _training_set => { is => 'Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet', },
+    },
 };
+
+sub create {
+    my $class = shift;
+
+    my $self = $class->SUPER::create(@_);
+    return if not $self;
+
+    my $training_set_path = $self->training_set;
+    if ( not -d $training_set_path ) {
+        $training_set_path = eval{ Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->path_for_set_name(
+                $self->training_set
+            );
+        };
+        if ( not $training_set_path ) {
+            $self->error_message($@);
+            return;
+        }
+    }
+
+    my $training_set = Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->create(
+        path => $training_set_path,
+    );
+    return if not $training_set;
+    $self->_training_set($training_set);
+
+    return $self;
+}
 
 sub execute {
     my $self = shift;
@@ -86,7 +119,7 @@ sub execute {
             #child
             my $classifier_class = 'Genome::Model::Tools::MetagenomicClassifier::Rdp::Version'.$self->version;
             my $classifier = $classifier_class->create(
-                training_set => $self->training_set,
+                training_set => $self->_training_set,
             );
             die $self->error_message('Failed to create classifier') if not $classifier;
             my $metrics = $self->_load_metrics;

@@ -28,7 +28,7 @@ my $sample = Genome::Sample->__define__(
 
 my @properties_to_copy = $lims_class->properties_to_copy;
 my %properties = (
-    'id' => '2893660983',
+    'id' => Genome::InstrumentData->__meta__->autogenerate_new_object_id(),
     'chip_name' => 'HumanOmniExpress',
     'import_source_name' => 'wugc',
     'sequencing_platform' => 'infinium',
@@ -61,8 +61,7 @@ ok($genome_genotyp_file, 'got genotype file from genome object');
 is($genome_genotyp_file, $genome_genotyp_file, 'genotype files mathce');
 ok(-s $genotype_file, 'genome genotype file exists');
 
-# cannot test chip_name and version b/c of UR error
-for my $property (qw/ id sequencing_platform import_source_name /) {
+for my $property (qw/ id sequencing_platform import_source_name chip_name version /) {
     my $value = eval{ $genome_object->$property; };
     $value = eval{ $genome_object->attributes(attribute_label => $property)->attribute_value; } if not defined $value;
     $value = $genome_object->attributes(attribute_label => $property)->attribute_value if not defined $value;

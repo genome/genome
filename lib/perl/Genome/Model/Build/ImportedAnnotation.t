@@ -61,7 +61,6 @@ $abuild = Genome::Model::Build::ImportedAnnotation->get(name => $abuild->name);
 ok($abuild, 'got build by name');
 
 $abuild->status('Succeeded');
-my $abuild_event = $abuild->the_master_event;
 
 # now set a (different) reference_sequence_build and make sure we get different answers
 ok($abuild->is_compatible_with_reference_sequence_build($rbuilds{'human'}->[0]), 'reference sequence compatibility');
@@ -71,7 +70,7 @@ ok(!$abuild->is_compatible_with_reference_sequence_build($rbuilds{'mouse'}->[1])
 
 my @invalid_status = ('', 'Crashed', 'Failed', 'Scheduled', 'Running', 'Abandoned');
 for my $invalid (@invalid_status) {
-    $abuild_event->event_status($invalid);
+    $abuild->status($invalid);
     ok(!$abuild->is_compatible_with_reference_sequence_build($rbuilds{'human'}->[0]), "Build status '$invalid' not allowed as annotation build");
 }
 

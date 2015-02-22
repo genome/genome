@@ -49,14 +49,14 @@ sub execute {
     }
     my @eligible_to_abandon;
     for my $build (@builds){
-        push @eligible_to_abandon, $build unless $build->id == $build->model->latest_build->id;
+        push @eligible_to_abandon, $build unless $build->id eq $build->model->latest_build->id;
     }
     my $gamma = Benchmark->new();
     #print "pruned ineligible builds ".timestr(timediff($gamma,$beta))."\n";
 
     $self->status_message("User $user has ". scalar @builds ." failed builds.  Of these ". scalar @eligible_to_abandon ." are eligible to abandon.");
     $self->status_message(join("\n", map { $_->__display_name__ } @eligible_to_abandon));
-    # TODO: use Genome::Command::Base->ask_user_question
+    # TODO: use Command::V2->_ask_user_question
     $self->status_message("Are you sure you want to abandon these builds? (y/n) [n]");
     my $answer = <STDIN>;
     return unless $answer =~ /^[yY]/;

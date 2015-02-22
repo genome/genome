@@ -30,7 +30,13 @@ class Genome::InstrumentData::AlignmentResult::Command::PicardRnaSeqMetrics {
     has_param => [
         picard_version => {
             is => 'Text',
-            doc => 'The version of picard to use.',
+            doc => 'The version of Picard to use.',
+        },
+        picard_strand_specificity => {
+            is => 'Text',
+            doc => 'The transcript strand specificity used by Picard.',
+            valid_values => Genome::Model::Tools::Picard::CollectRnaSeqMetrics->__meta__->property("strand_specificity")->valid_values,
+            is_optional => 1,
         },
     ],
     has => [
@@ -102,45 +108,47 @@ sub execute {
     
     # Get all MT and rRNA annotation in intervals format
     my $rRNA_MT_gtf_file = $annotation_build->rRNA_MT_file('gtf',$reference_build->id,0);
-    unless(-s $rRNA_MT_gtf_file) {
+    unless (-s $rRNA_MT_gtf_file) {
         $rRNA_MT_gtf_file = $annotation_build->rRNA_MT_file('gtf',undef,0);
     }
     my $seqdict_file = $reference_build->get_sequence_dictionary('sam',$reference_build->species_name,$picard_version);
-    unless (Genome::Model::Tools::Gtf::ToIntervals->execute(
+    my $to_intervals_cmd = Genome::Model::Tools::Gtf::ToIntervals->execute(
         gtf_file => $rRNA_MT_gtf_file,
         seqdict_file => $seqdict_file,
         interval_file => $ribo_intervals,
-    )) {
+    );
+    unless ($to_intervals_cmd && $to_intervals_cmd->result) {
         $self->error_message('Failed to convert the rRNA_MT GTF file '. $rRNA_MT_gtf_file .' to intervals: '. $ribo_intervals);
         return;
     }
 
     # Get all mRNA annotation in RefFlat format
     my $mRNA_gtf_file = $annotation_build->annotation_file('gtf',$reference_build->id,0);
-    unless(-s $mRNA_gtf_file) {
+    unless (-s $mRNA_gtf_file) {
         $mRNA_gtf_file = $annotation_build->annotation_file('gtf',undef,0);
     }
-    unless (Genome::Model::Tools::Gtf::ToRefFlat->execute(
+    my $to_ref_flat_cmd = Genome::Model::Tools::Gtf::ToRefFlat->execute(
         input_gtf_file => $mRNA_gtf_file,
         output_file => $mRNA_ref_flat,
-    )) {
+    );
+    unless ($to_ref_flat_cmd && $to_ref_flat_cmd->result) {
         $self->error_message('Failed to convert the all_sequences GTF file '. $mRNA_gtf_file .'  to RefFlat: '. $mRNA_ref_flat);
         return;
     }
 
     # This is wasteful, but required since BAM sort order does not match our FASTA chromosome order
     my $tmp_bam_file = Genome::Sys->create_temp_file_path();
-    unless (Genome::Model::Tools::Picard::ReorderSam->execute(
+    my $reorder_sam_cmd = Genome::Model::Tools::Picard::ReorderSam->execute(
         input_file => $bam_file,
         output_file => $tmp_bam_file,
         reference_file => $reference_fasta_file,
         use_version => $picard_version,
-    )) {
+    );
+    unless ($reorder_sam_cmd && $reorder_sam_cmd->result) {
         $self->error_message('Failed to reorder BAM file: '. $bam_file);
         return;
     }
-    
-    unless (Genome::Model::Tools::Picard::CollectRnaSeqMetrics->execute(
+    my %picard_params = (
         input_file => $tmp_bam_file,
         output_file => $metrics_output_file,
         refseq_file => $reference_fasta_file,
@@ -148,15 +156,21 @@ sub execute {
         ref_flat_file => $mRNA_ref_flat,
         use_version => $picard_version,
         chart_output => $chart_output_file,
-    )) {
+    );
+    if ($self->picard_strand_specificity) {
+        $picard_params{strand_specificity} = $self->picard_strand_specificity;
+    }
+    my $collect_rna_seq_metrics_cmd = Genome::Model::Tools::Picard::CollectRnaSeqMetrics->execute(%picard_params);
+    unless ($collect_rna_seq_metrics_cmd && $collect_rna_seq_metrics_cmd->result) {
         $self->error_message('Failed to run Picard CollectRnaSeqMetrics for alignment result: '. $alignment_result->id);
         return;
     }
-    unless (Genome::Model::Tools::Picard::PlotRnaSeqMetrics->execute(
+    my $plot_rna_seq_metrics_cmd = Genome::Model::Tools::Picard::PlotRnaSeqMetrics->execute(
         input_file => $metrics_output_file,
         output_file => $pie_chart_file,
         label => $alignment_result->id,
-    )) {
+    );
+    unless ($plot_rna_seq_metrics_cmd && $plot_rna_seq_metrics_cmd->result) {
         $self->error_message('Failed to run PlotRnaSeqMetrics for alignment result: '. $alignment_result->id);
         return;
     }

@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Model::Command {
     is => 'Command::Tree',
-    doc => 'commands that act on models',
+    doc => 'work with models',
 };
 
 1;

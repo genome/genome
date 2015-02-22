@@ -75,28 +75,6 @@ sub verify_permissions {
     }
 }
 
-subtest 'set_file_permissions' => sub {
-    plan tests => 2 * scalar(@_FILES);
-
-    my $a = create_allocation_with_stuff('file-perm-test');
-
-    $a->set_file_permissions(0444);
-    verify_permissions(0444, $a, @_FILES);
-    $a->set_file_permissions(0777);
-    verify_permissions(0777, $a, @_FILES);
-};
-
-subtest 'set_dir_permissions' => sub {
-    plan tests => 2 * scalar(@_DIRECTORIES);
-
-    my $a = create_allocation_with_stuff('dir-perm-test');
-
-    $a->set_directory_permissions(0555);
-    verify_permissions(0555, $a, @_DIRECTORIES);
-    $a->set_directory_permissions(0777);
-    verify_permissions(0777, $a, @_DIRECTORIES);
-};
-
 subtest 'set_permissions_read_only' => sub {
     plan tests => scalar(@_DIRECTORIES) + scalar(@_FILES) + 1;
 

@@ -104,6 +104,7 @@ sub execute {
         separator => "\t",
         headers => \@headers,
         output => $self->output_file,
+        ignore_extra_columns => 1,
     );
     for my $data (@data) {
         $writer->write_one($data);

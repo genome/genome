@@ -2,7 +2,7 @@ package Genome;
 use warnings;
 use strict;
 
-our $VERSION = '0.080001';
+our $VERSION = '0.080100';
 $DB::deep = 10000;
 
 use UR;
@@ -26,6 +26,13 @@ require Genome::Site;
 # Checks that all variables that start with GENOME_ have a corresponding Genome/Env/* module
 # and assigns default values to any variables that have one set.
 require Genome::Env;
+
+if ($ENV{GENOME_SYS_UMASK}) {
+    my $old_umask = umask oct($ENV{GENOME_SYS_UMASK});
+    if (!defined($old_umask)) {
+        die 'failed to set umask';
+    }
+}
 
 # If the search engine is installed, configure its hooks
 eval {
@@ -90,98 +97,6 @@ require Genome::Patch;
 # set it to zero in the debugger to turn off the constant stopping...
 $DB::stopper = 1;
 
-# This is tested by Genome/SoftwareResult/Default.t
-# And also by Genome/Command/WithSavedResult-buildwrapper.t
-# It is only used by the full GMS install.
-# They probably needs a better home than the base module.
-
-our %NAMESPACE_EXTENSIONS = (
-    Result => {
-        base_class => 'Genome::SoftwareResult::Default',
-        doc => 'results for CLASS',
-    },
-    BuildStepWrapper => {
-        base_class => 'Genome::Command::BuildStepWrapper',
-        doc => 'wrap CLASS as a step in a build workflow',
-    },
-);
-
-sub __extend_namespace__ {
-    my ($self,$ext) = @_;
-
-    my $meta = $self->SUPER::__extend_namespace__($ext);
-    if ($meta) {
-        return $meta;
-    }
-
-    my $new_class = $self . '::' . $ext;
-    my ($command_class,$final_ext) = ($new_class =~ /^(.*)::(.*)$/);
-
-    my $cmd_meta = UR::Object::Type->get($command_class);
-    return unless $cmd_meta;
-
-    return unless $command_class->isa("Command");
-
-    return unless $command_class->isa("Command::V2");
-
-    my $spec = $NAMESPACE_EXTENSIONS{$final_ext};
-    return unless $spec;
-
-    my $base_class = $spec->{base_class};
-    my $doc = $spec->{doc};
-    $doc =~ s/CLASS/$new_class/;
-
-    my %has = $self->_wrapper_has($command_class,$base_class);
-
-    class {$new_class} {
-        is => $base_class,
-        has => [ %has ],
-        doc => $doc,
-    };
-}
-
-
-# TODO: switch to calling the static _wrapper_has method on Command::V2
-sub _wrapper_has {
-    my ($self, $command_class, $base) = @_;
-
-    my $command_meta = $command_class->__meta__;
-    my @properties = $command_meta->properties();
-
-    my %has;
-    for my $property (@properties) {
-        my %desc;
-        next unless $property->can("is_param") and $property->can("is_input") and $property->can("is_output");
-
-        my $name = $property->property_name;
-
-        next if $base->can($name);
-
-        if ($property->is_param) {
-            $desc{is_param} = 1;
-        }
-        elsif ($property->is_input) {
-            $desc{is_input} = 1;
-        }
-        #elsif ($property->can("is_metric") and $property->is_metric) {
-        #    $desc{is_metric} = 1;
-        #}
-        #elsif ($property->can("is_output") and $property->is_output) {
-        #    $desc{is_output} = 1;
-        #}
-        else {
-            next;
-        }
-
-        $has{$name} = \%desc;
-        $desc{is} = $property->data_type;
-        $desc{doc} = $property->doc;
-        $desc{is_many} = $property->is_many;
-        $desc{is_optional} = $property->is_optional;
-    }
-
-    return %has;
-}
 1;
 
 =pod

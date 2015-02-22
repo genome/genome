@@ -585,7 +585,7 @@ if (exists("gene_expression")){
 stats = data.frame(NA,NA,NA,NA,NA,NA)
 names(stats) = c("Question", "Answer", "Data_Type", "Analysis_Type", "Statistic_Type", "Extra_Description")
 total_variants = dim(readcounts)[1]
-stats[dim(stats)[1],] = c("Number of variants", total_variants,"RNA-seq","SNV","Count","Variants from WGS/Exome")
+stats[dim(stats)[1],] = c("Number of variants", total_variants,"WGS/Exome","SNV","Count","Variants from WGS/Exome")
 
 #Correlation values for:
 # - WGS vs. Exome VAFs

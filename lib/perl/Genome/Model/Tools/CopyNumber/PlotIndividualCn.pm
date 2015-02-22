@@ -79,6 +79,12 @@ class Genome::Model::Tools::CopyNumber::PlotIndividualCn{
             is_optional => 1,
             default => 0,
             doc =>'output only a view of the entirety of each chromosome',
+        },
+        tumor_purity => {
+            is => 'Float',
+            is_optional => 1,
+            default => 1,
+            doc =>'fractional purity to use for scaling the plot. Assumes that copyCat output has not already been purity corrected.',
         }
 
         ]
@@ -111,6 +117,24 @@ sub execute {
         }
     }
 
+    #check for more than one header line, which causes strange things to happen
+    #in R (because of numeric vs character classes)
+    my $inFh = IO::File->new( $self->corrected_window_file ) || die "can't open file\n";
+    my $count = 0;
+    my $hlines = 0;
+    while( $count < 2 )
+    {
+        my $line = $inFh->getline;
+        chomp($line);
+        $hlines++ if $line =~ /Chr/;
+        $count++;
+    }
+    close($inFh);
+    if($hlines > 1){
+        die("corrected window file appears to contain more than one header line. Fix this and try again.")
+    }
+
+
     my $dir_name = dirname(__FILE__);
     print $rfile 'source("' . $dir_name . "/PlotIndividualCn.R" . '")' . "\n";
 
@@ -122,7 +146,7 @@ sub execute {
 
     print $rfile 'db = sqldf() #open temp db' . "\n";
 
-    my $count = 0;
+    $count = 0;
     my $skipped = 0;
 
     #if plot full chrs, create a new segment file for each chromosome.
@@ -131,7 +155,7 @@ sub execute {
         unless($seghandle) {
             $self->error_message("Unable to create temporary file $!");
             die;
-        }        
+        }
 
         my $entryfile = $self->annotation_directory . "/" . $self->genome_build . '/entrypoints.male';
         my $infile = IO::File->new( $entryfile ) || die "can't open segment file\n";
@@ -143,12 +167,12 @@ sub execute {
         }
         close($infile);
         close($seghandle);
-        $segment_file = $segfile;        
+        $segment_file = $segfile;
     }
 
 
 
-    my $inFh = IO::File->new( $segment_file ) || die "can't open segment file\n";
+    $inFh = IO::File->new( $segment_file ) || die "can't open segment file\n";
     while( my $line = $inFh->getline )
     {
         chomp($line);
@@ -199,6 +223,17 @@ sub execute {
             print $rfile ', tableName="corrected")' . "\n";
         }
 
+        if(defined($self->tumor_purity)){
+            #cover a bunch of edge cases (Inf, NAs, etc)
+            print $rfile 'cwinds=cwinds[!is.na(cwinds[,2]),]' . "\n";
+            print $rfile 'cwinds=cwinds[cwinds[,2] != "Inf",]' . "\n";
+            print $rfile 'cwinds=cwinds[cwinds[,2] != "NA",]' . "\n";
+            print $rfile 'if(length(cwinds[,1]) > 0){' . "\n";
+            print $rfile '  cwinds[,2] = as.character(cwinds[,2])' . "\n";
+            print $rfile '  cwinds[,2] = 2+(as.numeric(cwinds[,2])-2)/' . $self->tumor_purity . "\n";
+            print $rfile '}' . "\n";
+        }
+
         if(defined($self->tumor_window_file)){
             print $rfile "if(is.null(tumorNormalRatio)){\n";
             print $rfile "  tumorNormalRatio=getTumorNormalRatio(\"tumor\",\"normal\")\n";
@@ -221,7 +256,7 @@ sub execute {
         if(defined($self->gaps_file)){
             print $rfile ", gaps=gaps";
         }
-
+        print $rfile ", tumorPurity=" . $self->tumor_purity;
         print $rfile ", lossThresh=" . $self->loss_threshold;
         print $rfile ", gainThresh=" . $self->gain_threshold;
 

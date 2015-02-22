@@ -77,7 +77,7 @@ class Genome::Model::Tools::Somatic::ValidateIndels {
              default_value => 'tcga',
          }, 
          lsf_resource => {
-             default_value => "-M 6000000 -R 'select[type==LINUX64 && mem>16000] rusage[mem=16000]'",
+             default_value => "-M 6000000 -R 'select[mem>16000] rusage[mem=16000]'",
          },
      ],
 };

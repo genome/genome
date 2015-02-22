@@ -46,7 +46,7 @@ my $filter_command = Genome::Model::Tools::Somatic::FilterFalsePositives->create
     output_file => $output_file,
     filtered_file => $filtered_file,
 
-    reference => $reference->fasta_file,
+    reference => $reference->full_consensus_path('fa'),
     min_strandedness => 0.01,
     min_var_freq => 0.05,
     min_var_count => 4,
@@ -83,7 +83,7 @@ my $filter_command2 = Genome::Model::Tools::Somatic::FilterFalsePositives->creat
     output_file => $output_file . '.2',
     filtered_file => $filtered_file . '.2',
 
-    reference => $reference->fasta_file,
+    reference => $reference->full_consensus_path('fa'),
     min_strandedness => 0.01,
     min_var_freq => 0.05,
     min_var_count => 4,
@@ -117,7 +117,7 @@ my $filter_command3 = Genome::Model::Tools::Somatic::FilterFalsePositives->creat
     output_file => $output_file . '.3',
     filtered_file => $filtered_file . '.3',
 
-    reference => $reference->fasta_file,
+    reference => $reference->full_consensus_path('fa'),
     min_strandedness => 0.01,
     min_var_freq => 0.05,
     min_var_count => 4,

@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::Model::ImportedVariationList::Command {
     is => 'Command::Tree',
-    doc => 'Commands that operate on imported variation list models and builds',
+    doc => 'commands that operate on imported variation list models and builds',
 };
 
 1;

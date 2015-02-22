@@ -4,6 +4,7 @@ use Genome;
 use Sys::Hostname;
 use IO::File;
 use File::Path;
+use Path::Class;
 use YAML;
 use Time::HiRes;
 use POSIX qw(ceil);
@@ -17,7 +18,7 @@ use strict;
 
 class Genome::InstrumentData::AlignmentResult {
     is_abstract => 1,
-    is => 'Genome::SoftwareResult::Stageable',
+    is => ['Genome::SoftwareResult::Stageable', 'Genome::SoftwareResult::WithNestedResults'],
     sub_classification_method_name => '_resolve_subclass_name',
     has => [
         instrument_data         => {
@@ -128,6 +129,11 @@ class Genome::InstrumentData::AlignmentResult {
                                     is=>'Text',
                                     is_optional=>1,
                                     doc=>'Version of samtools to use when creating BAM files',
+                                },
+        bedtools_version        => {
+                                    is => 'Text',
+                                    is_optional => 1,
+                                    doc => "Version of bedtools to use for BAM > fastq conversion",
                                 },
         picard_version          => {
                                     is=>'Text',
@@ -264,6 +270,7 @@ class Genome::InstrumentData::AlignmentResult {
         _is_inferred_paired_end => { is => 'Boolean', is_optional=>1},
         _extracted_bam_path    => { is => 'String', is_optional=>1},
         _flagstat_file         => { is => 'Text', is_optional=>1},
+        _temporary_input_files => { is => 'ARRAY', is_optional => 1, default_value => []},
     ],
 };
 
@@ -285,16 +292,16 @@ sub __display_name__ {
         $name = '';
     }
 
-    $name .= $self->aligner_name 
-        . ' ' . $self->aligner_version 
+    $name .= $self->aligner_name
+        . ' ' . $self->aligner_version
         . ' [' . $self->aligner_params . ']'
         . ' on ' . $instrument_data->__display_name__
-        . ($instrument_data_segment_id ? " ($instrument_data_segment_id)" : '')
+        . (defined $instrument_data_segment_id ? " ($instrument_data_segment_id)" : '')
         . ($reference_build ? ' against ' . $reference_build->__display_name__ : '')
         . ($annotation_build ? ' annotated by ' . $annotation_build->__display_name__ : '')
         . " (" . $self->id . ")";
 
-    return $name; 
+    return $name;
 }
 
 sub required_arch_os {
@@ -304,7 +311,7 @@ sub required_arch_os {
 
 sub required_rusage {
     # override in subclasses
-    # e.x.: "-R 'select[model!=Opteron250 && type==LINUX64] span[hosts=1] rusage[tmp=50000:mem=12000]' -M 1610612736";
+    # e.x.: "-R 'span[hosts=1] rusage[tmp=50000:mem=12000]' -M 1610612736";
     ''
 }
 
@@ -535,7 +542,7 @@ sub delete {
 
     # find child objects for which there are no more users.
     for my $child (@child_objects) {
-        my @users = Genome::SoftwareResult::User->get(software_result => $child);
+        my @users = Genome::SoftwareResult::User->get(software_result => $child, active => 1);
         $child->delete if !@users;
     }
 
@@ -548,10 +555,20 @@ sub delete {
     return $self->SUPER::delete(@_);
 }
 
+sub scratch_sam_file_path {
+    my $self = shift;
+    return File::Spec->catfile($self->temp_scratch_directory, "all_sequences.sam");
+}
+
+sub final_staged_bam_path {
+    my $self = shift;
+    return File::Spec->catfile($self->temp_staging_directory, "all_sequences.bam");
+}
+
 sub prepare_scratch_sam_file {
     my $self = shift;
 
-    my $scratch_sam_file = $self->temp_scratch_directory . "/all_sequences.sam";
+    my $scratch_sam_file = $self->scratch_sam_file_path;
 
     unless($self->construct_groups_file) {
         $self->error_message("failed to create groups file");
@@ -603,6 +620,10 @@ sub prepare_scratch_sam_file {
     return 1;
 }
 
+# Override and return 1 if the aligner module can handle the read group
+# extraction more efficiently than copying the whole bam (e.g., by piping).
+sub can_extract_read_groups { 0 }
+
 sub requires_fastqs_to_align {
     my $self = shift;
     # disqualify if the aligner can't take a bam
@@ -625,10 +646,12 @@ sub requires_fastqs_to_align {
 sub _extract_input_read_group_bam {
     my $self = shift;
     my $file = sprintf("%s/%s.rg_extracted_%s.bam", $self->temp_scratch_directory,  $self->instrument_data_id, $self->instrument_data_segment_id);
-    
+
     my $cmd = Genome::Model::Tools::Sam::ExtractReadGroup->create(
-        input  => $self->instrument_data->bam_path,
-        output => $file,
+        input         => $self->instrument_data->bam_path,
+        output        => $file,
+        name_sort     => 1,
+        use_version   => $self->samtools_version,
         read_group_id => $self->instrument_data_segment_id,
     );
 
@@ -636,8 +659,8 @@ sub _extract_input_read_group_bam {
         $self->error_message($cmd->error_message);
         return;
     }
-     
-    $self->_extracted_bam_path($file);         
+
+    $self->_extracted_bam_path($file);
     return $file;
 }
 
@@ -649,7 +672,7 @@ sub collect_inputs {
     if ($self->requires_fastqs_to_align) {
         $self->debug_message('Requires fastqs to align');
         return $self->_extract_input_fastq_filenames;
-    } 
+    }
 
     # snag the bam from the instrument data
     my $instr_data = $self->instrument_data;
@@ -664,7 +687,7 @@ sub collect_inputs {
     }
 
     # maybe we want to extract a read group from that bam and deal with that instead...
-    if (defined $self->instrument_data_segment_id) {
+    if (defined $self->instrument_data_segment_id && !$self->can_extract_read_groups) {
         $self->debug_message('Extract input read group bam');
         $bam_file = $self->_extract_input_read_group_bam;
         unless ($bam_file) {
@@ -673,9 +696,30 @@ sub collect_inputs {
         }
     }
 
-    # Some old imported bam does not have is_paired_end set, patch for now
     $self->debug_message("Checking if this read group is paired end...");
     my $paired = $instr_data->is_paired_end;
+
+    #One extra check to see whether the instrument data is really not
+    #paired_end or just set wrong in production
+    unless ($paired) {
+        my $output_file = $bam_file . '.flagstat';
+        unless (-s $output_file) {
+            $output_file = $self->temp_scratch_directory . '/import_bam.flagstat';
+            die unless $self->_create_bam_flagstat($bam_file, $output_file);
+        }
+        my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
+        die $self->error_message('Failed to get flagstat data on input bam: '. $bam_file) unless $stats;
+
+        my $percent_paired = $stats->{reads_paired_in_sequencing} / $stats->{total_reads};
+
+        # Boundaries were arbitrarily chosen, feel free to adjust as a matter
+        # of policy.
+
+        if ($percent_paired >= 0.9) {
+            die $self->error_message('flagstat on input bam: '. $bam_file.' infers paired_end on instrument_data: '.$instr_data->id);
+        }
+    }
+
 
     return ("$bam_file:1", "$bam_file:2") if $paired;
     return ("$bam_file:0");
@@ -691,7 +735,7 @@ sub run_aligner {
     }
 
     # Perform N-removal if requested
-    
+
     if ($self->n_remove_threshold) {
         $self->debug_message("Running N-remove.  Threshold is " . $self->n_remove_threshold);
 
@@ -786,7 +830,7 @@ sub run_aligner {
                 $fastq_rd_ct += $wc_ct/4;
             }
         }
-    } 
+    }
     else {
         $fastq_rd_ct = $self->determine_input_read_count_from_bam;
     }
@@ -869,33 +913,45 @@ sub close_out_streamed_bam_file {
     $self->_sam_output_fh->close;
     $self->_sam_output_fh(undef);
 
-    $self->debug_message("Sorting by name to do fixmate...");
-    my $bam_file = $self->temp_scratch_directory . "/raw_all_sequences.bam";
-    my $final_bam_file = $self->temp_staging_directory . "/all_sequences.bam";
-    my $samtools = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+    if ($self->requires_fixmate) {
+        $self->debug_message("Sorting by name to do fixmate...");
+        my $bam_file = $self->temp_scratch_directory . "/raw_all_sequences.bam";
+        my $final_bam_file = $self->final_staged_bam_path;
 
-    my $tmp_file = $bam_file.'.sort';
-    my $rv = system "$samtools sort -n $bam_file $tmp_file";
-    $self->error_message("Sort by name failed") and return if $rv or !-s $tmp_file.'.bam';
-    $self->debug_message("unlinking original bam file $bam_file.");
-    unlink $bam_file;
+        my $samtools = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 
-    # TODO: run htseq here
-    # We need a way to have down-stream steps run before their predecessor cleans-up.
+        my $tmp_file = $bam_file.'.sort';
+        my $rv = system "$samtools sort -n $bam_file $tmp_file";
+        $self->error_message("Sort by name failed") and return if $rv or !-s $tmp_file.'.bam';
+        $self->debug_message("unlinking original bam file $bam_file.");
+        unlink $bam_file;
 
-    $self->debug_message("Now running fixmate");
-    $rv = system "$samtools fixmate $tmp_file.bam $tmp_file.fixmate";
-    $self->error_message("fixmate failed") and return if $rv or !-s $tmp_file.'.fixmate';
-    unlink "$tmp_file.bam";
+        # TODO: run htseq here
+        # We need a way to have down-stream steps run before their predecessor cleans-up.
 
-    $self->debug_message("Now putting things back in chr/pos order");
-    $rv = system "$samtools sort $tmp_file.fixmate $tmp_file.fix";
-    $self->error_message("Sort by position failed") and return if $rv or !-s $tmp_file.'.fix.bam';
+        $self->debug_message("Now running fixmate");
+        $rv = system "$samtools fixmate $tmp_file.bam $tmp_file.fixmate";
+        $self->error_message("fixmate failed") and return if $rv or !-s $tmp_file.'.fixmate';
+        unlink "$tmp_file.bam";
 
-    unlink "$tmp_file.fixmate";
-    unlink $bam_file;
+        $self->debug_message("Now putting things back in chr/pos order");
+        $rv = system "$samtools sort $tmp_file.fixmate $tmp_file.fix";
+        $self->error_message("Sort by position failed") and return if $rv or !-s $tmp_file.'.fix.bam';
 
-    move "$tmp_file.fix.bam", $final_bam_file;
+        unlink "$tmp_file.fixmate";
+        unlink $bam_file;
+
+        move "$tmp_file.fix.bam", $final_bam_file;
+    } else {
+        $self->debug_message("Skipping fixmate...");
+        my $bam_file = $self->temp_scratch_directory . "/raw_all_sequences.bam";
+
+        # TODO: run htseq here
+        # We need a way to have down-stream steps run before their predecessor cleans-up.
+
+        my $final_bam_file = $self->final_staged_bam_path;
+        move $bam_file, $final_bam_file;
+    }
     return 1;
 }
 
@@ -913,7 +969,7 @@ sub create_BAM_in_staging_directory {
 sub postprocess_bam_file {
     my $self = shift;
 
-    my $bam_file    = $self->temp_staging_directory . '/all_sequences.bam';
+    my $bam_file    = $self->final_staged_bam_path;
     my $output_file = $bam_file . '.flagstat';
 
     #STEPS 8:  CREATE BAM.FLAGSTAT
@@ -946,7 +1002,7 @@ sub _use_alignment_summary_cpp { return 1; };
 
 sub _compute_alignment_metrics {
     my $self = shift;
-    my $bam = $self->temp_staging_directory . "/all_sequences.bam";
+    my $bam = $self->final_staged_bam_path;
 
     if ($self->_use_alignment_summary_cpp){
         my $out = `bash -c "LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/gsc/scripts/opt/genome_legacy_code/lib:/gsc/pkg/boost/boost_1_42_0/lib /gsc/scripts/opt/genome_legacy_code/bin/alignment-summary-v1.2.6 --bam=\"$bam\" --ignore-cigar-md-errors"`;
@@ -997,7 +1053,7 @@ sub _compute_alignment_metrics {
 
 sub _create_bam_index {
     my $self = shift;
-    my $bam_file    = $self->temp_staging_directory . '/all_sequences.bam';
+    my $bam_file    = $self->final_staged_bam_path;
 
     unless (-s $bam_file) {
         $self->error_message('BAM file ' . $bam_file . ' does not exist or is empty');
@@ -1048,7 +1104,7 @@ sub _create_bam_flagstat {
 sub _verify_bam {
     my $self = shift;
 
-    my $bam_file  = $self->temp_staging_directory . '/all_sequences.bam';
+    my $bam_file  = $self->final_staged_bam_path;
     my $flag_file = $bam_file . '.flagstat';
     my $flag_stat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flag_file);
 
@@ -1101,7 +1157,7 @@ sub _check_read_count {
 sub _create_bam_md5 {
     my $self = shift;
 
-    my $bam_file = $self->temp_staging_directory . '/all_sequences.bam';
+    my $bam_file = $self->final_staged_bam_path;
     my $md5_file = $bam_file . '.md5';
     my $cmd      = "md5sum $bam_file > $md5_file";
 
@@ -1145,15 +1201,7 @@ sub _promote_validated_data {
         }
     }
 
-    chmod 02775, $output_dir;
-    for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
-        chmod 02775, $subdir;
-    }
-
-    # Make everything in here read-only
-    for my $file (grep { -f $_  } glob("$output_dir/*")) {
-        chmod 0444, $file;
-    }
+    $self->_disk_allocation->set_files_read_only;
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
 
@@ -1165,11 +1213,11 @@ sub _process_sam_files {
     my $groups_input_file;
 
     # if a bam file is already staged at the end of _run_aligner, trust it to be correct.
-    if (-e $self->temp_staging_directory . "/all_sequences.bam") {
+    if (-e $self->final_staged_bam_path) {
         return 1;
     }
 
-    my $sam_input_file = $self->temp_scratch_directory . "/all_sequences.sam";
+    my $sam_input_file = $self->scratch_sam_file_path;
 
     unless (-e $sam_input_file) {
         $self->error_message("$sam_input_file is nonexistent.  Can't convert!");
@@ -1244,21 +1292,16 @@ sub _process_sam_files {
         return;
     }
 
-    my $per_lane_bam_file = $self->temp_staging_directory . "/all_sequences.bam";
+    my $per_lane_bam_file = $self->final_staged_bam_path;
     my %params = (
         bam_file => $per_lane_bam_file,
         sam_file => $final_sam_file,
         keep_sam => 0,
-        fix_mate => 1,
+        fix_mate => $self->requires_fixmate,
         index_bam => 1,
         ref_list => $ref_list,
         use_version => $self->samtools_version,
     );
-    
-    if ($self->aligner_name =~ /rtg/){
-        #adukes - fix_mate screws up bitflags with rtg alignment, this is probably not the ideal spot for this...
-        $params{fix_mate} = 0;
-    }
 
     my $to_bam = Genome::Model::Tools::Sam::SamToBam->create(
         %params,
@@ -1295,13 +1338,7 @@ sub _gather_params_for_get_or_create {
 
     }
 
-    #my $inputs_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($subclass, %is_input);
-    #my $params_bx = UR::BoolExpr->resolve_normalized_rule_for_class_and_params($subclass, %is_param);
-
-    my %software_result_params = (#software_version=>$params_bx->value_for('aligner_version'),
-        #params_id=>$params_bx->id,
-        #inputs_id=>$inputs_bx->id,
-        subclass_name=>$subclass);
+    my %software_result_params = ( subclass_name => $subclass );
 
     return {
         software_result_params => \%software_result_params,
@@ -1323,7 +1360,7 @@ sub _prepare_working_and_staging_directories {
     my $hostname = hostname;
     my $user = $ENV{'USER'};
 
-    my $scratch_basedir = sprintf("scratch-%s-%s-%s", $hostname, $user, $$);
+    my $scratch_basedir = sprintf("scratch-%s-%s-%s-%s", $hostname, $user, $$, $self->id);
     my $scratch_tempdir =  Genome::Sys->create_temp_directory($scratch_basedir);
     $self->temp_scratch_directory($scratch_tempdir);
     unless($scratch_tempdir) {
@@ -1402,7 +1439,7 @@ sub _extract_input_fastq_filenames {
                 die($self->error_message);
             }
         }
-    } 
+    }
     else {
         # FIXME - getting a warning about undefined string with 'eq'
         if (! defined($self->filter_name)) {
@@ -1445,6 +1482,7 @@ sub _extract_input_fastq_filenames {
             unlink($report_file);
         }
         $self->_input_fastq_pathnames(\@input_fastq_pathnames);
+        $self->add_to_temporary_input_files_queue(@input_fastq_pathnames);
     }
     return @input_fastq_pathnames;
 }
@@ -1484,48 +1522,79 @@ sub get_or_create_sequence_dictionary {
     return $seq_dict;
 }
 
+sub _sam_header_extra {
+    my $self = shift;
+
+    my $instr_data = $self->instrument_data;
+
+    my $insert_size_for_header = 0;
+    if ($instr_data->can('resolve_median_insert_size') &&
+            $instr_data->resolve_median_insert_size)
+    {
+        $insert_size_for_header = $instr_data->resolve_median_insert_size;
+    }
+
+    my $seems_paired = $self->_is_inferred_paired_end;
+    my $paired = defined $seems_paired ? $seems_paired : $instr_data->is_paired_end;
+    my $description_for_header = $paired ? "paired end" : "fragment";
+    my $aligner_command_line = $self->aligner_params_for_sam_header;
+
+    my $id_tag = $self->read_and_platform_group_tag_id;
+    my $pu_tag = sprintf("%s.%s", $instr_data->run_identifier, $instr_data->subset_name);
+    my $lib_tag = $instr_data->library_name;
+    my $date_run_tag = $instr_data->run_start_date_formatted;
+    my $sample_tag = $instr_data->sample_name;
+    my $aligner_version_tag = $self->aligner_version;
+    my $aligner_cmd  =  $aligner_command_line;
+    my $platform = $instr_data->sequencing_platform;
+    $platform = ($platform eq 'solexa' ? 'illumina' : $platform);
+
+    my @rg_data = (
+        "\@RG",
+        "ID:$id_tag",
+        "PL:$platform",
+        "PU:$pu_tag",
+        "LB:$lib_tag",
+        "PI:$insert_size_for_header",
+        "DS:$description_for_header",
+        "DT:$date_run_tag",
+        "SM:$sample_tag",
+        "CN:WUGSC",
+        );
+
+    my @pg_data = (
+        "\@PG",
+        "ID:$id_tag",
+        "VN:$aligner_version_tag",
+        "CL:$aligner_cmd",
+        );
+
+    return {
+        RG => join("\t", @rg_data),
+        PG => join("\t", @pg_data),
+        };
+}
+
 sub construct_groups_file {
     my $self = shift;
     my $output_file = shift || $self->temp_scratch_directory . "/groups.sam";
 
-    my $aligner_command_line = $self->aligner_params_for_sam_header;
-    my $instr_data = $self->instrument_data;
+    my $extra = $self->_sam_header_extra;
 
-    my $insert_size_for_header;
-    if ($instr_data->can('resolve_median_insert_size') && $instr_data->resolve_median_insert_size) {
-        $insert_size_for_header= $instr_data->resolve_median_insert_size;
-    }
-    else {
-        $insert_size_for_header = 0;
-    }
-
-    my $paired = defined $self->_is_inferred_paired_end ? $self->_is_inferred_paired_end : $instr_data->is_paired_end;
-    my $description_for_header = $paired ? "paired end" : "fragment";
-
-    # build the header
-    my $id_tag       = $self->read_and_platform_group_tag_id;
-    my $pu_tag       = sprintf("%s.%s", $instr_data->run_identifier, $instr_data->subset_name);
-    my $lib_tag      = $instr_data->library_name;
-    my $date_run_tag = $instr_data->run_start_date_formatted;
-    my $sample_tag   = $instr_data->sample_name;
-    my $aligner_version_tag = $self->aligner_version;
-    my $aligner_cmd  =  $aligner_command_line;
-
-    my $platform = $instr_data->sequencing_platform;
-    $platform = ($platform eq 'solexa' ? 'illumina' : $platform);
-
-    #@RG     ID:2723755796   PL:illumina     PU:30945.1      LB:H_GP-0124n-lib1      PI:0    DS:paired end   DT:2008-10-03   SM:H_GP-0124n   CN:WUGSC
-    #@PG     ID:0    VN:0.4.9        CL:bwa aln -t4
-    my $rg_tag = "\@RG\tID:$id_tag\tPL:$platform\tPU:$pu_tag\tLB:$lib_tag\tPI:$insert_size_for_header\tDS:$description_for_header\tDT:$date_run_tag\tSM:$sample_tag\tCN:WUGSC\n";
-    my $pg_tag = "\@PG\tID:$id_tag\tVN:$aligner_version_tag\tCL:$aligner_cmd\n";
+    my $rg_tag = $extra->{RG};
+    my $pg_tag = $extra->{PG};
+    die "Failed to generate \@RG line for sam header" unless $rg_tag;
+    die "Failed to generate \@PG line for sam header" unless $pg_tag;
 
     $self->debug_message("RG: $rg_tag");
     $self->debug_message("PG: $pg_tag");
 
-    my $header_groups_fh = IO::File->new(">>".$output_file) || die "failed opening groups file for writing";
-    print $header_groups_fh $rg_tag;
-    print $header_groups_fh $pg_tag;
-    $header_groups_fh->close;
+    my $fh = IO::File->new($output_file, "a")
+        || die "failed opening groups file for writing";
+
+    $fh->printf("%s\n", $rg_tag);
+    $fh->printf("%s\n", $pg_tag);
+    $fh->close;
 
     unless (-s $output_file) {
         $self->error_message("Failed to create groups file");
@@ -1573,6 +1642,10 @@ sub supports_streaming_to_bam {
     0;
 }
 
+sub requires_fixmate {
+    1;
+}
+
 sub accepts_bam_input {
     0;
 }
@@ -1581,11 +1654,24 @@ sub aligner_params_required_for_index {
     0;
 }
 
+sub aligner_name_for_aligner_index {
+    my $self = shift;
+    return $self->aligner_name;
+}
+
 sub get_reference_sequence_index {
     my $self = shift;
     my $build = shift || $self->reference_build;
     my @overrides = @_;
-    my $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(aligner_name=>$self->aligner_name, aligner_version=>$self->aligner_version, aligner_params=>$self->aligner_params, reference_build=>$build, @overrides);
+
+    my $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(
+        aligner_name => $self->aligner_name_for_aligner_index,
+        aligner_version => $self->aligner_version,
+        aligner_params => $self->aligner_params,
+        reference_build => $build,
+        users => $self->_user_data_for_nested_results,
+        @overrides
+        );
 
     if (!$index) {
         die $self->error_message(sprintf("No reference index prepared for %s with params %s and reference build %s", $self->aligner_name, $self->aligner_params, $self->reference_build->id));
@@ -1608,12 +1694,12 @@ sub _derive_insert_size_bounds {
     my $stddev = $self->instrument_data->resolve_sd_insert_size;
 
     my ($upper, $lower);
-    
+
     if (defined $median && defined $stddev) {
         $upper = $median + $stddev*5;
         $lower = $median - $stddev*5;
     }
-    
+
     if (!defined $upper || $upper <= 0) {
         $self->debug_message("Calculated upper bound on insert size is undef or less than 0, defaulting to $up_default");
         $upper = $up_default;
@@ -1623,6 +1709,81 @@ sub _derive_insert_size_bounds {
         $lower = $low_default;
     }
     return ($lower, $upper);
+}
+
+sub show_temporary_input_files_queue {
+    my $self = shift;
+
+    my @paths = $self->temporary_input_files_queue;
+
+    unless(@paths) {
+        $self->debug_message("Paths in Temporary Storage Queue: None");
+        return 1;
+    }
+
+    $self->debug_message("Paths in Temporary Storage Queue:");
+    for (my $i = 0; $i < @paths; $i++) {
+        if ($paths[$i]->is_dir) {
+            $self->debug_message('---> [%d] (Directory) %s', $i, $paths[$i]->stringify);
+        } else {
+            $self->debug_message('---> [%d] (File) %s', $i, $paths[$i]->stringify);
+        }
+    }
+
+    return 1;
+}
+
+sub clear_temporary_input_files_queue {
+    my $self = shift;
+
+    while (my $path = shift @{$self->_temporary_input_files}) {
+        if ($path->is_dir) {
+            $self->debug_message(
+                "[delete] Temprorary Storage Queue:  "
+                . "(Directory) - '$path'"
+            );
+            $path->rmtree;
+        }
+        else {
+            $self->debug_message(
+                "[delete] Temprorary Storage Queue:  "
+                . "(File) - '$path'"
+            );
+            $path->remove;
+        }
+    }
+
+    return 1;
+}
+
+sub temporary_input_files_queue {
+    my ($self, @args) = @_;
+    return @{$self->_temporary_input_files}
+}
+
+sub add_to_temporary_input_files_queue {
+    my ($self, @input_paths) = @_;
+
+    for my $path (@input_paths) {
+        my $p;
+        if (-d $path) {
+            $self->debug_message(
+                "[push] Temprorary Storage Queue:  "
+                . "(Directory) - '$path'"
+            );
+            $p = Path::Class::Dir->new("$path");
+        }
+        else {
+            $self->debug_message(
+                "[push] Temprorary Storage Queue:  "
+                . "(File) - '$path'"
+            );
+            $p = Path::Class::File->new("$path");
+        }
+        push(@{$self->_temporary_input_files}, $p);
+    }
+
+    return 1;
 }
 
 1;

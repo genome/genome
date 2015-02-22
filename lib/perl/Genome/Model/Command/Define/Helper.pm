@@ -35,6 +35,10 @@ class Genome::Model::Command::Define::Helper {
             is_transient => 1,
             doc => 'Stores the ID of the newly created model, useful when running this command from a script',
         },
+        run_as => {
+            is => 'Text',
+            doc => 'Specify who the model should run_as if run in production'
+        },
     ],
     has_optional_param => [
         auto_assign_inst_data => {

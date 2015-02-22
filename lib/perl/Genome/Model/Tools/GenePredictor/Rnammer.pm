@@ -57,7 +57,7 @@ class Genome::Model::Tools::GenePredictor::Rnammer {
     ],
     has_param => [
         lsf_resource => {
-            default_value => "-M 12000000 -R 'select[type==LINUX64 && mem>12000] rusage[mem=12000]'",
+            default_value => "-M 12000000 -R 'select[mem>12000] rusage[mem=12000]'",
         }
     ],
 };
@@ -137,7 +137,7 @@ sub execute {
     );
     my $output_file = $output_file_fh->filename;
     $output_file_fh->close;
-    chmod(0666, $output_file);
+    chmod(0660, $output_file);
     push @params, $param . $output_file;
 
     push @params, $fasta_file;

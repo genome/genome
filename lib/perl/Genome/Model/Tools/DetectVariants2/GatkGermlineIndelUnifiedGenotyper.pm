@@ -23,7 +23,7 @@ class Genome::Model::Tools::DetectVariants2::GatkGermlineIndelUnifiedGenotyper{
     ],
     has_param => [
          lsf_resource => {
-             default_value => "-R 'rusage[mem=6000] select[type==LINUX64 && model != Opteron250 && mem>6000 && maxtmp>100000] span[hosts=1]' -M 6000000",
+             default_value => "-R 'rusage[mem=6000] select[mem>6000 && maxtmp>100000] span[hosts=1]' -M 6000000",
          },
      ],
 };
@@ -53,7 +53,7 @@ sub _detect_variants {
 sub has_version {
     my $self = shift;
 
-    return Genome::Model::Tools::Gatk->has_version(@_);
+    return Genome::Model::Tools::Gatk::GermlineIndelUnifiedGenotyper->has_version(@_);
 }
 
 sub parse_line_for_bed_intersection {

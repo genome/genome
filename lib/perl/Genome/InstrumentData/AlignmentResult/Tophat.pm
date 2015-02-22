@@ -7,6 +7,7 @@ use File::Basename;
 use Sys::Hostname;
 use File::stat;
 use File::Path 'rmtree';
+use File::Find::Rule qw();
 
 use Genome;
 
@@ -111,7 +112,7 @@ class Genome::InstrumentData::AlignmentResult::Tophat {
 sub required_arch_os { 'x86_64' }
 
 sub required_rusage {
-     "-R 'select[model!=Opteron250 && type==LINUX64 && mem>16000 && tmp>150000] span[hosts=1] rusage[tmp=150000, mem=16000]' -M 16000000 -n 4";
+     "-R 'select[mem>16000 && tmp>150000] span[hosts=1] rusage[tmp=150000, mem=16000]' -M 16000000 -n 4";
 }
 
 sub create {
@@ -246,8 +247,8 @@ sub _prepare_working_directories {
     );
 
     # fix permissions on this temp dir so others can clean it up later if need be
-    chmod(0775,$staging_tempdir);
-    chmod(0775,$scratch_tempdir);
+    chmod(0770,$staging_tempdir);
+    chmod(0770,$scratch_tempdir);
 
     $self->temp_staging_directory($staging_tempdir->dirname);
     $self->temp_scratch_directory($scratch_tempdir->dirname);
@@ -308,7 +309,8 @@ sub _gather_input_fastqs {
             # If these are paired-end reads, then don't forget the second fastq file
             $params{fastq2} = $files[1] if( scalar(@files) == 2 );
 
-            unless (Genome::Model::Tools::Picard::FastqToSam->execute( %params )) {
+            my $fastq_to_sam_cmd = Genome::Model::Tools::Picard::FastqToSam->execute( %params );
+            unless ($fastq_to_sam_cmd and $fastq_to_sam_cmd->result) {
                 die $self->error_message('Failed to create per lane, unaligned BAM file: '
                 .$self->temp_scratch_directory .'/s_'. $instrument_data->subset_name .'_sequence.bam');
             }
@@ -425,20 +427,21 @@ sub _merge_and_calculate_stats {
     my $unaligned_bams = shift;
 
     my $tmp_all_reads_bam_file = $self->temp_scratch_directory . '/all_fastq_reads.bam';
-    unless (Genome::Model::Tools::Picard::MergeSamFiles->execute(
+    my $merge_cmd = Genome::Model::Tools::Picard::MergeSamFiles->execute(
         input_files => $unaligned_bams,
         output_file => $tmp_all_reads_bam_file,
         maximum_memory => 12,
         maximum_permgen_memory => 256,
         sort_order => 'queryname',
         use_version => $self->picard_version,
-    )) {
+    );
+    unless ($merge_cmd and $merge_cmd->result) {
         die $self->error_message('Failed to merge unaligned BAM files!');
     }
 
     # queryname sort the aligned BAM file
     my $tmp_aligned_bam_file = $self->temp_scratch_directory . '/accepted_hits_queryname_sort.bam';
-    unless (Genome::Model::Tools::Picard::SortSam->execute(
+    my $sort_cmd = Genome::Model::Tools::Picard::SortSam->execute(
         sort_order => 'queryname',
         input_file => $self->temp_staging_directory .'/accepted_hits.bam',
         output_file => $tmp_aligned_bam_file,
@@ -447,7 +450,8 @@ sub _merge_and_calculate_stats {
         maximum_permgen_memory => 256,
         temp_directory => $self->temp_scratch_directory,
         use_version => $self->picard_version,
-    )) {
+    );
+    unless ($sort_cmd and $sort_cmd->result) {
         die $self->error_message('Failed to queryname sort the aligned BAM file!');
     }
 
@@ -455,12 +459,15 @@ sub _merge_and_calculate_stats {
     my $tmp_unaligned_bam_file = $self->temp_scratch_directory . '/unaligned_reads.bam';
     my $unaligned_bam_file = $self->temp_staging_directory . '/unaligned_reads.bam';
     my $alignment_stats_file = $self->temp_staging_directory . '/alignment_stats.txt';
-    my $cmd = "genome-perl5.10 -S gmt bio-samtools tophat-alignment-stats --aligned-bam-file=$tmp_aligned_bam_file --all-reads-bam-file=$tmp_all_reads_bam_file --unaligned-bam-file=$tmp_unaligned_bam_file --alignment-stats-file=$alignment_stats_file";
-    Genome::Sys->shellcmd(
-        cmd => $cmd,
-        input_files => [$tmp_aligned_bam_file,$tmp_all_reads_bam_file],
-        output_files => [$tmp_unaligned_bam_file,$alignment_stats_file],
+    my $cmd = Genome::Model::Tools::BioSamtools::TophatAlignmentStats->create(
+        aligned_bam_file => $tmp_aligned_bam_file,
+        all_reads_bam_file => $tmp_all_reads_bam_file,
+        unaligned_bam_file => $tmp_unaligned_bam_file,
+        alignment_stats_file => $alignment_stats_file,
     );
+    unless($cmd->execute) {
+        die $self->error_message('Failed to generate alignment stats!');
+    }
     unlink($tmp_all_reads_bam_file);
     unlink($tmp_aligned_bam_file);
 
@@ -494,18 +501,10 @@ sub _promote_validated_data {
     for my $staged_file (glob("$staging_dir/*")) {
         my $destination = $staged_file;
         $destination =~ s/$staging_dir/$output_dir/;
-        rename($staged_file, $destination);
+        Genome::Sys->rename($staged_file, $destination);
     }
 
-    chmod 02775, $output_dir;
-    for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
-        chmod 02775, $subdir;
-    }
-
-    # Make everything in here read-only
-    for my $file (grep { -f $_  } glob("$output_dir/*")) {
-        chmod 0444, $file;
-    }
+    $self->_disk_allocation->set_files_read_only;
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
 

@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::SoftwareResult::Command {
     is => 'Command::Tree',
-    doc => 'commands that work with software results',
+    doc => 'work with software results',
 };
 
 1;

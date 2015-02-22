@@ -1,0 +1,20 @@
+experts:
+    __test__:
+        __planned__: foo
+    __translated_test__:
+        __planned__: tumor
+        __input__: __input__
+reports:
+    __test__:
+        interpreters:
+            __test__:
+                info_field: TST
+    __translated_test__:
+        interpreters:
+            __translated_test__:
+                translated1: to_translate1
+                translated2:
+                    - old_value
+                translated3:
+                    - old_value1
+                    - old_value2

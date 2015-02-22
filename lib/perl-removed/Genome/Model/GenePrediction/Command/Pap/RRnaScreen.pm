@@ -32,7 +32,7 @@ class Genome::Model::GenePrediction::Command::Pap::RRnaScreen {
             is => 'SCALAR',
             doc => 'blast database for rRNA',
             is_optional => 1,
-            example_values => ["/gscmnt/278/analysis/HGMI/rRNA_testing/16s_23srnadb"],
+            example_values => ["/gscmnt/gc2514/mitrevalab/HGMI/rRNA_testing/16s_23srnadb"],
         },
         blast_report => {
                          is          => 'SCALAR',

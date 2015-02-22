@@ -6,13 +6,8 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject::Command::AddMenuItem {
-    is => 'Command::V2',
+    is => 'Genome::Config::AnalysisProject::Command::Base',
     has_input => [
-       analysis_project  => {
-            is                  => 'Genome::Config::AnalysisProject',
-            doc                 => 'the analysis project to add the config file to',
-            shell_args_position => 1,
-        },
         analysis_menu_items => {
             is                  => 'Genome::Config::AnalysisMenu::Item',
             is_optional         => 1,
@@ -40,6 +35,10 @@ sub help_detail {
     return <<"EOS"
 Given an analysis project and a config file, this will associate the two
 EOS
+}
+
+sub valid_statuses {
+    return ("Pending", "Hold", "In Progress", "Template");
 }
 
 sub execute {
@@ -87,6 +86,7 @@ sub _add_config_items_to_project {
         Genome::Config::Profile::Item->create(
             analysis_menu_item => $_,
             analysis_project => $project,
+            status => 'active',
         );
     }
 

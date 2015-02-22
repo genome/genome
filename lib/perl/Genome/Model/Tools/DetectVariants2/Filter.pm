@@ -751,8 +751,9 @@ sub params_for_filter_result {
         control_alignment_results => \@control_alignment_results,
         reference_build_id => $self->reference_build_id,
         region_of_interest_id => $previous_result->region_of_interest_id,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => $previous_result->test_name,
         chromosome_list => $previous_result->chromosome_list,
+        users => $self->result_users,
     );
 
     return \%params;
@@ -760,17 +761,18 @@ sub params_for_filter_result {
 
 sub params_for_vcf_result {
     my $self = shift;
-    my $prev_vcf_result = $self->previous_result->get_vcf_result;
+
+    my $prev_vcf_result = $self->previous_result->get_vcf_result($self->aligned_reads_sample, $self->control_aligned_reads_sample, $self->result_users);
     my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
-    unless($prev_vcf_result->vcf_version eq $vcf_version){
-        die $self->error_message("Couldn't locate a vcf_result with the same vcf_version");
-    }
     unless($prev_vcf_result){
         die $self->error_message("Could not locate a vcf result to use as a previous vcf-result!");
     }
+    unless($prev_vcf_result->vcf_version eq $vcf_version){
+        die $self->error_message("Couldn't locate a vcf_result with the same vcf_version");
+    }
 
     my %params = (
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => $prev_vcf_result->test_name,
         input_id => $self->_result->id,
         aligned_reads_sample => $self->aligned_reads_sample,
         incoming_vcf_result => $prev_vcf_result,
@@ -780,6 +782,7 @@ sub params_for_vcf_result {
         filter_description => $self->filter_description,
         vcf_version => $vcf_version,
         previous_filter_strategy => $self->_previous_filter_strategy,
+        users => $self->result_users,
 
     );
     $params{control_aligned_reads_sample} = $self->control_aligned_reads_sample if defined $self->control_aligned_reads_sample;
@@ -807,6 +810,7 @@ sub detector_directory {
             region_of_interest_id => $previous_result->region_of_interest_id,
             test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
             chromosome_list => $previous_result->chromosome_list,
+            users => $self->result_users,
         );
 
         unless($detector_result) {

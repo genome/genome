@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Genome;
 use Regexp::Common;
-use YAML;
 use File::Path;
 
 class Genome::ModelDeprecated {
@@ -20,9 +19,9 @@ class Genome::ModelDeprecated {
             is_optional => 1,
             id_by => 'subject_id',
         },
-        subject_type => { 
-            is => 'Text', 
-            valid_values => ["species_name","sample_group","sample_name"], 
+        subject_type => {
+            is => 'Text',
+            valid_values => ["species_name","sample_group","sample_name"],
             calculate_from => 'subject_class_name',
             calculate => q|
                 #This could potentially live someplace else like the previous giant hash
@@ -33,12 +32,12 @@ class Genome::ModelDeprecated {
                     'Genome::Taxon' => 'species_name',
                 );
                 return $types{$subject_class_name};
-            |, 
+            |,
         },
         processing_profile_name => { via => 'processing_profile', to => 'name' },
     ],
     has_optional => [
-        is_default => { 
+        is_default => {
             is => 'Boolean',
             doc => 'flag the model as the default system "answer" for its subject'
         },
@@ -66,26 +65,26 @@ class Genome::ModelDeprecated {
 
         # model links are now deprecated in favor of making the from_model an
         # input on the to_model
-        from_model_links => { 
+        from_model_links => {
             is => 'Genome::Model::Link', reverse_as => 'to_model',
-            doc => 'bridge table entries where this is the "to" model (used to retrieve models this model is "from"' 
+            doc => 'bridge table entries where this is the "to" model (used to retrieve models this model is "from"'
         },
-        from_models => { 
+        from_models => {
             is => 'Genome::Model', via => 'from_model_links', to => 'from_model',
-            doc => 'Genome models that contribute "to" this model' 
+            doc => 'Genome models that contribute "to" this model'
         },
-        to_model_links => { 
+        to_model_links => {
             is => 'Genome::Model::Link', reverse_as => 'from_model',
-            doc => 'bridge entries where this is the "from" model(used to retrieve models models this model is "to")' 
+            doc => 'bridge entries where this is the "from" model(used to retrieve models models this model is "to")'
         },
-        to_models => { 
+        to_models => {
             is => 'Genome::Model', via => 'to_model_links', to => 'to_model',
-            doc => 'Genome models this model contributes "to"' 
+            doc => 'Genome models this model contributes "to"'
         },
-        attributes => { 
-            is => 'Genome::MiscAttribute', 
-            reverse_as => '_model', 
-            where => [ entity_class_name => 'Genome::Model' ] 
+        attributes => {
+            is => 'Genome::MiscAttribute',
+            reverse_as => '_model',
+            where => [ entity_class_name => 'Genome::Model' ]
         },
         # TODO: these go into a model subclass for models which apply directly to sequencer data
         sequencing_platform         => { via => 'processing_profile' },
@@ -100,47 +99,47 @@ class Genome::ModelDeprecated {
         },
     ],
     has_optional_deprecated => [
-        events => { 
-            # TODO: events are used in old-style processing profiles for workflow steps, 
+        events => {
+            # TODO: events are used in old-style processing profiles for workflow steps,
             # which is deprecated, but also have a non-deprecated uses like logging
             # model creation, addition of instrument data or other input changes, etc.,
             # abandon dates, and other things we don't want to give special fields to.
-            is => 'Genome::Model::Event', 
-            reverse_as => 'model', 
+            is => 'Genome::Model::Event',
+            reverse_as => 'model',
             is_many => 1,
-            doc => 'all events which have occurred for this model' 
+            doc => 'all events which have occurred for this model'
         },
 
-        # this is all old junk but things really use them right now 
+        # this is all old junk but things really use them right now
         reports                 => { via => 'last_succeeded_build' },
         reports_directory       => { via => 'last_succeeded_build' },
 
         # these go on refalign models
-        region_of_interest_set_name => { 
+        region_of_interest_set_name => {
             is => 'Text',
-            is_many => 1, 
+            is_many => 1,
             is_mutable => 1,
-            via => 'inputs', 
+            via => 'inputs',
             to => 'value_id',
-            where => [ name => 'region_of_interest_set_name', value_class_name => 'UR::Value' ], 
+            where => [ name => 'region_of_interest_set_name', value_class_name => 'UR::Value' ],
         },
         merge_roi_set => {
             is_mutable => 1,
-            via => 'inputs', 
+            via => 'inputs',
             to => 'value_id',
-            where => [ name => 'merge_roi_set', value_class_name => 'UR::Value' ], 
+            where => [ name => 'merge_roi_set', value_class_name => 'UR::Value' ],
         },
         short_roi_names => {
             is_mutable => 1,
-            via => 'inputs', 
+            via => 'inputs',
             to => 'value_id',
-            where => [ name => 'short_roi_names', value_class_name => 'UR::Value' ], 
+            where => [ name => 'short_roi_names', value_class_name => 'UR::Value' ],
         },
         roi_track_name => {
             is_mutable => 1,
-            via => 'inputs', 
+            via => 'inputs',
             to => 'value_id',
-            where => [ name => 'roi_track_name', value_class_name => 'UR::Value' ], 
+            where => [ name => 'roi_track_name', value_class_name => 'UR::Value' ],
         },
     ],
     has_optional_calculated => [
@@ -151,7 +150,7 @@ class Genome::ModelDeprecated {
                 if ($subject->class eq 'Genome::Individual') {
                     return $subject->common_name();
                 } elsif($subject->class eq 'Genome::Sample') {
-                    return $subject->patient_common_name();
+                    return $subject->individual_common_name();
                 } else {
                     return undef;
                 }
@@ -355,16 +354,6 @@ sub latest_build_directory {
     }
 }
 
-sub yaml_string {
-    my $self = shift;
-    my $string = YAML::Dump($self);
-    my @objects = $self->get_all_objects;
-    for my $object (@objects) {
-        $string .= $object->yaml_string;
-    }
-    return $string;
-}
-
 # TODO Will be removed when model links are phased out
 # TODO please rename this -ss
 sub add_to_model{
@@ -461,22 +450,6 @@ sub _resolve_type_name_for_subclass_name {
     return $type_name;
 }
 
-# TODO: please rename this -ss
-sub get_all_objects {
-    my $self = shift;
-    my $sorter = sub { # not sure why we sort, but I put it in a anon sub for convenience
-        return unless @_;
-        if ( $_[0]->id =~ /^\-/) {
-            return sort {$b->id cmp $a->id} @_;
-        }
-        else {
-            return sort {$a->id cmp $b->id} @_;
-        }
-    };
-
-    return map { $sorter->( $self->$_ ) } (qw{ inputs builds to_model_links from_model_links });
-}
-
 sub create_rule_limiting_instrument_data {
     my ($self, @instrument_data) = @_;
     @instrument_data = $self->instrument_data unless @instrument_data;
@@ -502,7 +475,7 @@ sub latest_build_request_note {
     return unless @notes;
     return $notes[0];
 }
-    
+
 sub time_of_last_build_request {
     my $self = shift;
     my $note = $self->latest_build_request_note;
@@ -520,12 +493,12 @@ sub property_names_for_copy {
     }
 
     my @base_properties = (qw/
-        auto_assign_inst_data auto_build_alignments processing_profile subject 
+        auto_assign_inst_data auto_build_alignments processing_profile subject
         /);
 
-    my @input_properties = map { 
+    my @input_properties = map {
         $_->property_name
-    } grep { 
+    } grep {
         defined $_->via and $_->via eq 'inputs'
     } $meta->property_metas;
 
@@ -658,43 +631,53 @@ sub _resolve_type_name_for_class {
 
 sub compatible_instrument_data {
     my $self = shift;
-    my %params;
 
-    my $subject_type_class;
-    if (my @samples = $self->get_all_possible_samples)  {
-        my @sample_ids = map($_->id, @samples);
-        %params = (
-                   sample_id => \@sample_ids,
-               );
-        $params{sequencing_platform} = $self->sequencing_platform if $self->sequencing_platform;
-    } else {
-        %params = (
-                   $self->subject_type => $self->subject_name,
-               );
-        $subject_type_class = $self->instrument_data_class_name;
-    }
-    unless ($subject_type_class) {
-        $subject_type_class = 'Genome::InstrumentData';
-    }
-    my @compatible_instrument_data = $subject_type_class->get(%params);
-
-    if($params{sequencing_platform} and $params{sequencing_platform} eq 'solexa') {
-        # FASTQs with 0 reads crash in alignment.  Don't assign them. -??
-        # TODO: move this into the assign logic, not here. -ss
-        my @filtered_compatible_instrument_data;
-        for my $idata (@compatible_instrument_data) {
-            if (defined($idata->total_bases_read)&&($idata->total_bases_read == 0)) {
-                $self->warning_message(sprintf("ignoring %s because it has zero bases read",$idata->__display_name__));
-                next;
-            }
-            else {
-                push @filtered_compatible_instrument_data, $idata;
-            }
+    if($self->analysis_project) {
+        my $config_item = $self->analysis_project_bridge->config_profile_item;
+        unless($config_item) {
+            die $self->error_message('Configuration missing from analysis project association.  Cannot determine compatible instrument data for model %s and analysis project %s.', $self->__display_name__, $self->analysis_project->__display_name__);
         }
-        @compatible_instrument_data = @filtered_compatible_instrument_data;
-    }
 
-    return @compatible_instrument_data;
+        my $rmm = Genome::Config::Translator->get_rule_model_map_from_config($config_item);
+        my @project_instrument_data = $self->analysis_project->instrument_data;
+
+        return grep { $rmm->match($_) } @project_instrument_data;
+    } else {
+        $self->warning_message('No analysis project associated with model %s.', $self->__display_name__);
+
+        my %params;
+        if (my @samples = $self->get_all_possible_samples)  {
+            my @sample_ids = map($_->id, @samples);
+            %params = (
+                       sample_id => \@sample_ids,
+                   );
+        } else {
+            %params = (
+                       $self->subject_type => $self->subject_name,
+                   );
+        }
+        $params{sequencing_platform} = $self->sequencing_platform if $self->sequencing_platform;
+        my @compatible_instrument_data = Genome::InstrumentData->get(%params);
+
+        if($params{sequencing_platform} and $params{sequencing_platform} eq 'solexa') {
+            # FASTQs with 0 reads crash in alignment.  Don't assign them. -??
+            # TODO: move this into the assign logic, not here. -ss
+            my @filtered_compatible_instrument_data;
+            for my $idata (@compatible_instrument_data) {
+                if (defined($idata->total_bases_read)&&($idata->total_bases_read == 0)) {
+                    $self->warning_message(sprintf("ignoring %s because it has zero bases read",$idata->__display_name__));
+                    next;
+                }
+                else {
+                    push @filtered_compatible_instrument_data, $idata;
+                }
+            }
+            @compatible_instrument_data = @filtered_compatible_instrument_data;
+        }
+
+        return @compatible_instrument_data;
+
+    }
 }
 
 sub assigned_instrument_data { return $_[0]->instrument_data; }

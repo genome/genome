@@ -132,7 +132,7 @@ sub execute {
             file_name => $bam_file,
             output_file => $tmp_bam,
             use_version => $self->use_version,
-        )) {
+        )->result) {
             $self->error_message('Failed to sort bam file '. $bam_file);
             die($self->error_message);
         }
@@ -150,7 +150,7 @@ sub execute {
         unless (Genome::Model::Tools::Sam::IndexBam->execute(
             bam_file => $bam_file,
             use_version => $self->use_version,
-        )) {
+        )->result) {
             $self->error_message('Failed to index BAM file '. $bam_file);
             die($self->error_message);
         }

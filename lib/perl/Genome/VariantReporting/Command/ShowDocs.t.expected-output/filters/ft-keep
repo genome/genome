@@ -1,0 +1,19 @@
+[4mOVERVIEW[0m
+Filter out variants that don't contain the specified FT values
+
+[4mPROPERTIES[0m
+  [1mkeep_filter_values[0m   Text
+    A list of FT values
+    Default value ["PASS"] if not specified
+  [1msample_name[0m   Text
+    This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    FT value for sample sample_name is one of [keep_filter_values]
+
+[4mFILTER DESCRIPTION[0m
+FT value for sample sample_name is one of [keep_filter_values]
+

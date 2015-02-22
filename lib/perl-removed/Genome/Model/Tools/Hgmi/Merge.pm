@@ -111,9 +111,9 @@ sub execute {
 
     my %params = $self->gather_details();
     $self->debug_message("Gathered params, now running merge:\n" . Data::Dumper::Dumper(\%params));
-    my $rv = Genome::Model::GenePrediction::Command::Bacterial::Merge->execute(%params);
+    my $cmd = Genome::Model::GenePrediction::Command::Bacterial::Merge->execute(%params);
 
-    unless($rv) {
+    unless($cmd and $cmd->result) {
         confess 'Could not run merge step!';
     }
 

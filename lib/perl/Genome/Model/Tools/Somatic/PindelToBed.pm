@@ -67,7 +67,7 @@ class Genome::Model::Tools::Somatic::PindelToBed {
     has_param => [
         # Make workflow choose 64 bit blades, this is needed for samtools faidx
         lsf_resource => {
-            default_value => 'rusage[mem=4000] select[type==LINUX64] span[hosts=1] -M 4000000',
+            default_value => 'rusage[mem=4000] span[hosts=1] -M 4000000',
         },
         lsf_queue => {
             default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
@@ -269,7 +269,7 @@ sub parse {
     }
     elsif($type =~ m/I/) {
         #misunderstanding of bed format
-        #0 based numbers teh gaps so an insertion of any number of bases between base 10 and 11 in 1base
+        #0 based numbers the gaps so an insertion of any number of bases between base 10 and 11 in 1base
         #is 10 10 in bed format
         #$start = $start - 1;
         $ref=0;

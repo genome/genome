@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 class Genome::Model::Build::Command::HeartbeatCheck {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         builds => {
             is => 'Genome::Model::Build',

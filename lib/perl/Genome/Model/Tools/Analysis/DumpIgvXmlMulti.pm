@@ -7,6 +7,7 @@ use Genome;
 use Command;
 use IO::File;
 use Cwd qw(abs_path);
+use URI;
 
 class Genome::Model::Tools::Analysis::DumpIgvXmlMulti {
     is => 'Command',
@@ -21,10 +22,11 @@ class Genome::Model::Tools::Analysis::DumpIgvXmlMulti {
         is_optional=>0,
         doc => "labels for the data (single label or comma separated list)",,
     },
-    review_bed_file => {
+    review_bed_files => {
         type => 'String',
         is_optional => 0,
-        doc => "Bed file of sites to review",
+        is_many => 1,
+        doc => "Bed files of sites to review (single file or comma separated list)",
     },
     genome_name => {
         type => 'String',
@@ -45,7 +47,8 @@ class Genome::Model::Tools::Analysis::DumpIgvXmlMulti {
     reference_name => {
         type => 'String',
         is_optional => 0,
-        doc => 'the name of the reference (in IGV) that the bams are aligned to. E.g. "b37" for build 37 or "reference"for our internal build36',
+        doc => 'The name of the reference (in IGV) that the bams are aligned to.',
+        example_values => ['b37', 'hg18', 'mm9'],
     },
     roi => {
         is => 'Text',
@@ -70,10 +73,10 @@ sub execute {
     my $tumor_common_name = $self->genome_name;   
     my $output_file = $self->output_file;
     my $genome_name = $self->genome_name;
-    my $review_bed_file = abs_path($self->review_bed_file);
+    my @review_bed_files = map { resolve_file_path($_) } $self->review_bed_files;
     my $reference_name = $self->reference_name;
 
-    my @bams = split(/\,/,$self->bams);
+    my @bams = map { resolve_file_path($_) } split(/\,/, $self->bams);
     my @labels = split(/\,/,$self->labels);
 
     unless (@bams == @labels){
@@ -87,12 +90,16 @@ sub execute {
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Session genome="$reference_name" locus="1:1-100" version="3">
     <Resources>
-    <Resource path="$review_bed_file" relativePath="false"/>
 XML
+    for my $review_bed_file (@review_bed_files) {
+        $header .= <<"XML";
+     <Resource path="$review_bed_file" relativePath="false"/>
+XML
+    }
 
     my $i=0;    
     for($i=0;$i<@bams;$i++){
-        my $path = abs_path($bams[$i]);
+        my $path = $bams[$i];
         $header .= <<"XML";
      <Resource path="$path" relativePath="false"/>
 XML
@@ -118,7 +125,7 @@ XML
     my $panels;
 
     for($i=0;$i<@bams;$i++){
-        my $path = abs_path($bams[$i]);
+        my $path = $bams[$i];
         my $label = $labels[$i];
         my $cov = $path . "_coverage";
 
@@ -139,9 +146,15 @@ my $features = <<"XML";
         <Track color="0,0,0" expand="false" fontSize="9" height="14" id="Reference" name="Reference" showDataRange="true" visible="true">
             <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
         </Track>
+XML
+    for my $review_bed_file (@review_bed_files) {
+        $features .= <<"XML";
         <Track color="0,0,178" expand="true" featureVisibilityWindow="-1" fontSize="9" height="45" id="$review_bed_file" name="$review_bed_file" renderer="BASIC_FEATURE" showDataRange="true" visible="true" windowFunction="count">
             <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
         </Track>
+XML
+    }
+    $features .= <<"XML";
     </Panel>
 XML
 
@@ -160,6 +173,24 @@ XML
     
 return 1;
     
+}
+
+sub resolve_file_path {
+    my $file = shift;
+    my $uri = URI->new($file);
+    my $path;
+    if (defined($uri->scheme)) {
+        if ($uri->scheme eq 'file') {
+            $path = abs_path($uri->path);
+        }
+        else {
+            $path = $uri->as_string;
+        }
+    }
+    else {
+        $path = abs_path($file);
+    }
+    return $path;
 }
 
 

@@ -7,7 +7,7 @@ use Genome;
 use Statistics::Descriptive;
 
 class Genome::Model::RnaSeq::Command::ExpressionCvFilter {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         models => {
             is => 'Genome::Model::RnaSeq',

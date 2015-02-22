@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::ModelGroup::Command::Diff {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         from => {
             is => 'Genome::ModelGroup',

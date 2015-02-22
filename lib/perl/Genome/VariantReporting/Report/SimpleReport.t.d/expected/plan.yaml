@@ -1,0 +1,10 @@
+---
+experts: {}
+needs_translation: 1
+reports:
+  simple:
+    filters: {}
+    interpreters:
+      position: {}
+      variant-type: {}
+      vep: {}

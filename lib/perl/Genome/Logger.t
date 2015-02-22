@@ -1,7 +1,8 @@
 use strict;
 use warnings;
 
-use Test::More tests => 4;
+use Test::More tests => 5;
+use Test::Fatal qw(exception);
 
 use Memoize qw();
 
@@ -34,6 +35,8 @@ subtest 'color screen' => sub {
 subtest 'context independent memoize' => sub {
     plan tests => 3;
 
+    Memoize::flush_cache('Genome::Logger::logger');
+
     my $sl = Genome::Logger->logger();
     ok($sl, 'got logger in scalar context');
 
@@ -41,4 +44,25 @@ subtest 'context independent memoize' => sub {
     ok($ll, 'got logger in list context');
 
     is($sl, $ll, 'both loggers are the same');
+};
+
+subtest 'exceptions' => sub {
+    plan tests => 4;
+
+    Memoize::flush_cache('Genome::Logger::logger');
+    my $logger = Genome::Logger->logger();
+    $logger->remove('screen');
+
+    my $message = 'something happened';
+    like(exception { Genome::Logger->croak('error', $message) },
+        qr/^$message/, 'exception thrown with message');
+
+    like(exception { Genome::Logger->croak('foo', $message) },
+        qr/^invalid level/, 'exception thrown for invalid level');
+
+    like(exception { Genome::Logger->fatal($message) },
+        qr/^$message/, 'exception thrown with message');
+
+    like(exception { Genome::Logger->fatalf($message) },
+        qr/^$message/, 'exception thrown with message');
 };

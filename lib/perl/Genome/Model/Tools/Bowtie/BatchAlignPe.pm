@@ -156,7 +156,7 @@ sub execute {                               # replace with real execution logic.
 			print "$fastq_file1\t$fastq_file2\t$batch_output_file\n";
 			
 			## Run the alignment ##
-			system("bsub -q $lsf_queue -R\"select[type==LINUX64 && model != Opteron250 && mem>10000] rusage[mem=12000] span[hosts=1]\" -n $num_cores -M 10000000 -oo $batch_output_file.log \"$path_to_novoalign $novoalign_params -d $reference -f $fastq_file1 $fastq_file2 >$batch_output_file 2>$batch_output_file.err\"");
+			system("bsub -q $lsf_queue -R\"select[mem>10000] rusage[mem=12000] span[hosts=1]\" -n $num_cores -M 10000000 -oo $batch_output_file.log \"$path_to_novoalign $novoalign_params -d $reference -f $fastq_file1 $fastq_file2 >$batch_output_file 2>$batch_output_file.err\"");
 		}
 
 		## Soft link to original fastq ##

@@ -146,6 +146,11 @@ sub execute {
         my $build = Genome::Model::Build->get($self->somatic_validation_build);
         die $self->error_message("Could not get a build for id " . $self->somatic_validation_build) unless ($build);
 
+        unless($build->run_indel_validation) {
+            $self->status_message('Build indicates indel validation should not be run. Skipping.');
+            return 1;
+        }
+
         unless($build->normal_sample) {
             $self->status_message('No normal sample found.  Skipping.');
             return 1;
@@ -365,7 +370,7 @@ sub execute {
     my $normal_purity = $self->normal_purity;
     my $varscan_params = "--validation 1 --somatic-p-value 1.0e-02 --p-value 0.10 --min-coverage 8 --min-var-freq $min_freq --normal-purity $normal_purity";
     my $default_varscan_params = "--validation 1 --somatic-p-value 1.0e-02 --p-value 0.10 --min-coverage 8 --min-var-freq 0.08 --normal-purity 1";
-    my $bsub = qq(bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R "select[type==LINUX64 && mem>16000 && tmp>10000] rusage[mem=16000, tmp=10000]" -M 16000000 );
+    my $bsub = qq(bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R "select[mem>16000 && tmp>10000] rusage[mem=16000, tmp=10000]" -M 16000000 );
 
     # put several jobs into array @cmds
     my @cmds;

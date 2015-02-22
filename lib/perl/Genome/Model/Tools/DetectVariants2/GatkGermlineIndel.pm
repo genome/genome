@@ -23,7 +23,7 @@ class Genome::Model::Tools::DetectVariants2::GatkGermlineIndel{
     ],
     has_param => [
          lsf_resource => {
-             default_value => "-M 8000000 -R 'select[type==LINUX64 && mem>8000] rusage[mem=8000]'",
+             default_value => "-M 8000000 -R 'select[mem>8000] rusage[mem=8000]'",
          },
      ],
 };
@@ -59,7 +59,7 @@ sub _detect_variants {
 sub has_version {
     my $self = shift;
 
-    return Genome::Model::Tools::Gatk->has_version(@_);
+    return Genome::Model::Tools::Gatk::GermlineIndel->has_version(@_);
 }
 
 sub parse_line_for_bed_intersection {

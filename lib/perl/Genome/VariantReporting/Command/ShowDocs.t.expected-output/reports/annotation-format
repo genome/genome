@@ -1,0 +1,21 @@
+[4mOVERVIEW[0m
+Report to mimic the legacy annotation format
+
+[4mPROPERTIES[0m
+  [1mdelimiter[0m   Text
+    Character to be used to separate columns
+    Default value "\t" if not specified
+  [1mgenerate_legend_file[0m   Boolean
+    Boolean flag to control whether or not a legend file will be created
+    Default value 'true' if not specified
+  [1mnull_character[0m   Text
+    Character to be used for undefined values in the report
+    Default value "-" if not specified
+
+[4mREQUIRED EXPERTS[0m
+vep
+
+[4mREQUIRED INTERPRETERS[0m
+position
+vep
+

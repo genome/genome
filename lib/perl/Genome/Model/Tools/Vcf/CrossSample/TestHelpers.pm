@@ -7,8 +7,6 @@ use above 'Genome';
 use Test::More;
 use File::Spec;
 use Genome::Utility::Test 'compare_ok';
-use Genome::File::Vcf::Reader;
-use Genome::File::Vcf::Differ;
 use File::Copy qw(cp);
 use File::Slurp qw(write_file);
 use Memoize;
@@ -110,8 +108,8 @@ sub _create_test_build {
         get_indels_vcf => $indel_vcf,
         reference_sequence_build => $reference_sequence_build,
     );
-    $build->the_master_event->event_status('Succeeded');
-    $build->the_master_event->date_completed($date_completed);
+    $build->status('Succeeded');
+    $build->date_completed($date_completed);
     return $build;
 }
 
@@ -131,7 +129,7 @@ sub create_test_builds {
             File::Spec->join($dir, 'snvs_file.vcf.gz'),
             File::Spec->join($dir, 'indels_file.vcf.gz'),
             $rsb,
-            $i,
+            sprintf("2013-07-11 20:47:5%s", $i),
         );
         _ensure_object($build);
 
@@ -186,6 +184,7 @@ sub get_roi_list {
     _ensure_object($roi_list);
     return $roi_list;
 }
+Memoize::memoize('get_roi_list');
 
 sub test_indel_cmd {
     my ($version, $use_mg, $region_limiting) = @_;
@@ -199,7 +198,7 @@ sub test_indel_cmd {
             roi_list => get_roi_list($test_dir, 'roi.bed'),
             wingspan => 500,
             allow_multiple_processing_profiles => 0,
-            joinx_version => '1.8',
+            joinx_version => '1.9',
             varscan_version => '2.3.6',
             output_directory => $output_dir,
     );
@@ -232,6 +231,12 @@ sub test_indel_cmd {
         },
     });
 
+    Sub::Install::reinstall_sub({
+        into => 'Genome::Model::Tools::Park::Base',
+        as => '_link_process',
+        code => sub {return;},
+    });
+
     my $expected_inputs;
     my $expected_source;
     if ($region_limiting){
@@ -250,7 +255,11 @@ sub test_indel_cmd {
     ok($cmd->execute(), "executed CrossSample Indel");
 
     my %compare_args = (
-        replace => [ [ qr(^region_bed_file\t.*$) => "region_bed_file\tSOMEPATH"] ],
+        replace => [
+            [ qr(^region_bed_file\t.*$) => "region_bed_file\tSOMEPATH" ],
+            [ qr(merge\.joinx_version\t.*$) => "merge.joinx_version\tSOMEVERSION" ],
+            [ qr(\Q$test_dir\E) => 'TEST_INPUTS_DIR' ],
+        ],
     );
 
     compare_ok($output_tsv, $expected_inputs, "expected inputs file ($expected_inputs) matches what we made ($output_tsv)", %compare_args);

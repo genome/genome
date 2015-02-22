@@ -1,0 +1,6 @@
+reports:
+    simple:
+        interpreters:
+            position: {}
+            vep: {}
+            "variant-type": {}

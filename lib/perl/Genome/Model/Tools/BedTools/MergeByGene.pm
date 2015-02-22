@@ -104,7 +104,8 @@ sub execute {
         my $merged_bed_file = $gene_dir .'/merged.bed';
         $merge_params{input_file} = $gene_bed_file;
         $merge_params{output_file} = $merged_bed_file;
-        unless (Genome::Model::Tools::BedTools::Merge->execute(%merge_params)) {
+        my $merge_cmd = Genome::Model::Tools::BedTools::Merge->create(%merge_params);
+        unless ($merge_cmd and $merge_cmd->execute) {
             die('Failed to run mergeBed with params:  '. Data::Dumper::Dumper(%merge_params));
         }
         my $merged_bed_fh = Genome::Sys->open_file_for_reading($merged_bed_file);

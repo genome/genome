@@ -1,0 +1,14 @@
+[4mOVERVIEW[0m
+Output the European, African American, and overall minor allele frequencies from NHLBI
+
+[4mREQUIRED EXPERTS[0m
+nhlbi
+
+[4mAVAILABLE FIELDS[0m
+  [1mNHLBI_EU_MAF[0m
+    European minor allele frequency from NHLBI
+  [1mNHLBI_AA_MAF[0m
+    African American minor allele frequency from NHLBI
+  [1mNHLBI_All_MAF[0m
+    Overall minor allele frequency from NHLBI
+

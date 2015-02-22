@@ -11,7 +11,7 @@ use File::Basename;
 use Genome;
 
 class Genome::Model::Tools::DetectVariants2::Base {
-    is => ['Genome::Command::Base'],
+    is => ['Command::V2'],
     is_abstract => 1,
     has => [
         # TODO: update the workflow to be smart enough to let reference_build be an input, so we don't need to independently declare the _id
@@ -42,6 +42,10 @@ class Genome::Model::Tools::DetectVariants2::Base {
             is_input => 1,
             is_output => 1,
         },        
+        result_users => {
+            is => 'HASH',
+            doc => 'mapping of labels to user objects. Will be added to any generated results',
+        },
     ],
     has_optional_input => [
         alignment_results => {
@@ -198,7 +202,7 @@ sub _verify_inputs {
 
     my $errors = 0;
     for my $result (@alignment_results,@control_alignment_results) { 
-        my $bam = $result->merged_alignment_bam_path; 
+        my $bam = $result->bam_file; 
         unless (Genome::Sys->validate_file_for_reading($bam)) {
             $self->error_message("BAM file unreadable: $bam for " . $result->__display_name__);
             $errors++;
@@ -237,7 +241,6 @@ sub _create_directories {
         }
 
         $self->debug_message("Created directory: $output_directory");
-        chmod 02775, $output_directory;
     }
 
     $self->_create_temp_directories;
@@ -358,11 +361,6 @@ sub _promote_staged_data {
         $self->error_message("Did not get a valid return from rsync, rv was $rv for call $call.  Cleaning up and bailing out");
         rmtree($output_dir);
         die $self->error_message;
-    }
-
-    chmod 02775, $output_dir;
-    for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
-        chmod 02775, $subdir;
     }
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));

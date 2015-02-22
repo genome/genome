@@ -166,7 +166,7 @@ sub do_pap_workflow {
             CLEANUP => 0, 
             DIR => '/gscmnt/temp212/info/annotation/pap_workflow_logs/',
         );
-        chmod(0755, $tempdir);
+        chmod(0750, $tempdir);
         $workflow->log_dir($tempdir);
 
         # TODO Implement dynamic workflow generation to allow an arbitrary combo of tools to be used

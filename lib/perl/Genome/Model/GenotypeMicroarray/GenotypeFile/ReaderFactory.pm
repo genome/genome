@@ -44,6 +44,14 @@ sub build_reader {
 sub _build_reader_for_instrument_data {
     my ($class, $instrument_data, $variation_list_build) = @_;
 
+    if ( $instrument_data->are_disk_allocations_archived ) {
+        my $unarchive_ok = $instrument_data->unarchive_disk_allocations;
+        if ( not $unarchive_ok ) {
+            $class->error_message('Failed to unarchive instrument data! '.$instrument_data->__display_name__);
+            return;
+        }
+    }
+
     my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForInstDataWithAnnotation->create(
         instrument_data => $instrument_data,
         variation_list_build => $variation_list_build,
@@ -56,13 +64,6 @@ sub _build_reader_for_instrument_data {
 
 sub _build_reader_for_build {
     my ($class, $build) = @_;
-
-    # VCF
-    my $genotype_file = $build->original_genotype_vcf_file_path;
-    if ( -s $genotype_file ) {
-        $current_sample_name = $build->subject->name;
-        return Genome::File::Vcf::Reader->new($genotype_file);
-    }
 
     # Use inst data
     my $instrument_data = $build->instrument_data;

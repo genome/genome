@@ -49,14 +49,8 @@ sub generate_report_brief {
 
 sub generate_report_detail {
     my $self       = shift;
-    my $dedup_name = $self->model->duplication_handler_name;
 
-    if ($dedup_name eq 'maq') { 
-        return $self->get_maq_content;
-    } 
-    else {
-        return $self->get_bam_content;
-    }
+    return $self->get_bam_content;
 }
 
 sub get_bam_content {
@@ -125,40 +119,6 @@ sub get_bam_content {
     }
 }
 
-sub get_maq_content {
-    my $self = shift;
-
-    my $model = $self->model;
-    my $build = $self->build;
-
-    my $mapcheck_output = Genome::Sys->create_temp_file_path('mapcheck');
-    #my $accumulated_alignments_file = $build->accumulate_maps;
-    my $accumulated_alignments_file = $build->whole_rmdup_map_file;
-    unless (Genome::Model::Tools::Maq::Mapcheck->execute(
-            use_version => $build->maq_version_for_pp_parameter,
-            bfa_file => $model->reference_sequence_build->full_consensus_path('bfa'),
-            map_file => $accumulated_alignments_file,
-            output_file => $mapcheck_output,
-        ) ) {
-        $self->error_message();
-        die($self->error_message);
-    }
-    #my $rm_cmd = "rm $accumulated_alignments_file";
-    #$self->shellcmd(cmd => $rm_cmd);
-
-    my $mapcheck_output_fh = Genome::Sys->open_file_for_reading($mapcheck_output);
-    my @maq = $mapcheck_output_fh->getlines;
-
-    my $rpt = join('',@maq);
-    $rpt = $self->format_maq_content($rpt);
-
-    my $fh = IO::String->new();
-    $fh->print($rpt);
-
-    $fh->seek(0 ,0);
-    return join('', $fh->getlines);
-}
-
 sub get_coverage_filename {
     my $self = shift;
     my $reports_dir = $self->build->resolve_reports_directory;
@@ -167,127 +127,6 @@ sub get_coverage_filename {
     return $reports_dir . '/' .  $model->genome_model_id . '_coverage_detail.html';
 }
 
-sub format_maq_report
-{
-    #format plain text for html viewability
-    my ($self,$content) = @_;
-
-    my ($stats, $table);
-    if ($content=~m/(.*)(\n\n)(.*)/sm)
-    {
-        ($stats, $table) = ($1, $3); 
-        $stats=~s/\n/\<br>\n/g; 
-        $stats = "<div id=\"stats\">$stats</div>";
-
-        my @table = split("\n",$table);
-        for (my $row = 0, my $cell, my $formatted_cell = ''; $row < scalar(@table); $row++, $formatted_cell = '')
-        {   
-            $cell = $table[$row];
-            #trim leading & trailing
-            $cell=~ s/^\s+//;
-            $cell=~ s/\s+$//;
-
-            #wrap cells
-            if ($row == 0) #header
-            {
-                $cell=~s/\s*:\s/ /g;
-                $cell=~s/\s+/<\/th><th>/g;
-                $formatted_cell="<tr><td id=\"corner\"></td><th>$cell</th></tr>";
-            }
-            else
-            {
-                #color-code colon-delimited sections
-                if ($cell=~m/(\s*)(\d+)(\s*)(.*?)(\s*:\s*)(.*?)(\s*:\s*)(.*?)(\s*:\s*)(.*)/)
-                {
-                    my (@sections) = ($2, $4, $6, $8, $10);
-                    for (my $i = 0, my $sec; $i < scalar(@sections); $i++)
-                    {
-                        $sec = $sections[$i];
-                        $sec=~s/\s+/<\/td><td class=\"sec$i\">/g;
-                        $sec = "<td class=\"sec$i\">$sec</td>";
-                        $formatted_cell .= $sec;
-                    }
-                }
-                $formatted_cell = "<tr>$formatted_cell</tr>";
-            } 
-            $table[$row] = $formatted_cell;
-        }
-
-        $table = join('',@table);
-        $table = "\n<table border=1 id=\"data\">$table</table>";
-
-        return "<!--\n$content\n-->\n" . 
-        "<div id=\"maq_report\">" .
-        $stats . 
-        $table . 
-        "</div>" .   
-        $self->get_style;
-    }
-    else
-    {
-        die("Expected format STATS \n\n TABLE");
-    }
-}
-
-sub format_maq_content
-{
-    my ($self,$content) = @_;
-
-    my ($stats, $table, @table);
-
-    if ($content=~m/(.*)(\n\n)(.*)/sm)
-    {
-        ($stats, $table) = ($1, $3); 
-        $stats=~s/\n/\<br>\n/g; 
-        $stats = "<div id=\"stats\">$stats</div>";
-
-        @table = split("\n",$table);
-        for (my $row = 0, my $cell, my $formatted_cell = ''; $row < scalar(@table); $row++, $formatted_cell = '')
-        {   
-            $cell = $table[$row];
-            #trim leading & trailing
-            $cell=~ s/^\s+//;
-            $cell=~ s/\s+$//;
-
-            #wrap cells
-            if ($row == 0) #header
-            {
-                $cell=~s/\s*:\s/ /g;
-                $cell=~s/\s+/<\/th><th>/g;
-                $formatted_cell="<tr><td id=\"corner\"></td><th>$cell</th></tr>";
-
-            }
-            else
-            {
-                #color-code colon-delimited sections
-                if ($cell=~m/(\s*)(\d+)(\s*)(.*?)(\s*:\s*)(.*?)(\s*:\s*)(.*?)(\s*:\s*)(.*)/)
-                {
-                    my (@sections) = ($2, $4, $6, $8, $10);
-                    for (my $i = 0, my $sec; $i < scalar(@sections); $i++)
-                    {
-                        $sec = $sections[$i];
-                        $sec=~s/\s+/<\/td><td class=\"sec$i\">/g;
-                        $sec = "<td class=\"sec$i\">$sec</td>";
-                        $formatted_cell .= $sec;
-                    }
-
-                    $formatted_cell = "<tr>$formatted_cell</tr>";
-                }
-            } 
-
-            $table[$row] = $formatted_cell;
-        }
-    }
-    $table = join('',@table);
-    $table = "\n<table border=1 id=\"data\">$table</table>";
-
-    return "<!--\n$content\n-->\n" . 
-    "<div id=\"maq_report\">" .
-    $stats .
-    $table . 
-    "</div>" . 
-    $self->get_css;
-}
 
 sub get_css
 {    

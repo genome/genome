@@ -3,6 +3,8 @@ package Genome::Config::AnalysisProject::Command::Create;
 use strict;
 use warnings;
 
+use feature qw(switch);
+
 use Genome;
 
 class Genome::Config::AnalysisProject::Command::Create {
@@ -13,11 +15,10 @@ class Genome::Config::AnalysisProject::Command::Create {
             doc                 => 'the name of the analysis project to create',
             shell_args_position => 1
         },
-        is_cle => {
-            is => 'Boolean',
-            is_optional => 1,
-            default_value => 0,
-            doc => 'If specified, this will flag this analysis project as being CLIA-related. All models will be created accordingly.',
+        environment => {
+            is => 'Text',
+            valid_values => ['cle', 'production', 'ad-hoc'],
+            doc => 'The environment in which the analysis will be run. "cle" is for CLIA-related analysis, "production" for analysis of production sequence, and "ad-hoc" for any other analysis',
         },
         no_config => {
             is => 'Boolean',
@@ -54,9 +55,10 @@ sub execute {
     my $self = shift;
 
     $self->_validate_name($self->name);
+    my %env_properties = $self->_resolve_properties_for_environment($self->environment);
     my $project = Genome::Config::AnalysisProject->create(
         name => $self->name,
-        is_cle => $self->is_cle,
+        %env_properties,
     );
     die('No project created!') unless $project;
 
@@ -81,6 +83,35 @@ sub _validate_name {
     if ($existing) {
         die "An Analysis Project with the name " . $name
         . " already exists! Please choose a unique name";
+    }
+}
+
+sub _resolve_properties_for_environment {
+    my $self = shift;
+    my $environment = shift;
+
+    for ($environment) {
+        when ('cle') {
+            return (
+                run_as => 'cle',
+                is_cle => 1,
+            );
+        }
+        when ('production') {
+            return (
+                run_as => 'apipe-builder',
+                is_cle => 0,
+            );
+        }
+        when ('ad-hoc') {
+            return (
+                run_as => Genome::Sys->username,
+                is_cle => 0,
+            );
+        }
+        default {
+            die "Unexpected environment: $environment";
+        }
     }
 }
 
@@ -112,6 +143,7 @@ sub _add_config_items_to_project {
         Genome::Config::Profile::Item->create(
             analysis_menu_item => $_,
             analysis_project => $project,
+            status => 'active',
         );
     }
 

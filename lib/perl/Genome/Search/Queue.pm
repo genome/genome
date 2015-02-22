@@ -8,10 +8,7 @@ use warnings;
 class Genome::Search::Queue {
     table_name => 'web.search_index_queue',
     id_by => [
-        id => {
-            is => 'Text',
-            len => 32,
-        },
+        id => { is => 'Text', len => 32 },
     ],
     has => [
         subject_class => {
@@ -26,12 +23,12 @@ class Genome::Search::Queue {
         },
         timestamp => {
             is => 'DateTime',
-            default_value => UR::Context->now,
             len => 11,
+            default_value => UR::Context->now,
             doc => 'Timestamp of first request. Automatically added if not provided.',
         },
         priority => {
-            is => 'Number',
+            is => 'Integer',
             len => 1,
             default_value => 1,
             is_optional => 1,

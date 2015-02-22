@@ -1,0 +1,16 @@
+[4mOVERVIEW[0m
+Determine the read depth at the variant position
+
+[4mPROPERTIES[0m
+  [1msample_name[0m   Text
+    This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
+
+[4mREQUIRED EXPERTS[0m
+bam-readcount
+
+[4mAVAILABLE FIELDS[0m
+  [1mcoverage[0m
+    Read depth at position
+

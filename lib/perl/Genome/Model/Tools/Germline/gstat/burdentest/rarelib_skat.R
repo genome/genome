@@ -67,8 +67,10 @@ collapse.analysis=function(z)
         if (!is.null(X)) {
             md="Y"; for (i in colnames(X)) md=paste(md,i,sep="+")
             sub("[+]","~",md)->md
+            if (ytype=="D") {X=as.matrix(X);md="Y~X"}
         }
-        obj<-SKAT_Null_Model(formula(md), data=as.data.frame(cbind(X,Y)), out_type=ytype)
+        if (ytype=="C") obj<-SKAT_Null_Model(formula(md), data=as.data.frame(cbind(X,Y)), out_type=ytype)
+        if (ytype=="D") obj<-SKAT_Null_Model(formula(md), out_type=ytype)
         SKAT(Z, obj,weights.beta=c(1,1))$p.value->skat
         #SKAT(Z, obj,kernel = "linear.weighted", weights.beta=c(1,25))$p.value->skat
         #### multi var, lm, lme
@@ -82,6 +84,8 @@ collapse.analysis=function(z)
         p=list(skat=skat,mreg=mreg)
         p
     }
+
+
 
     ### call skat & mreg
     mv=c(NA,NA)

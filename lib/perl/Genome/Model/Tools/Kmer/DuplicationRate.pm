@@ -38,7 +38,7 @@ sub execute {
             unless (Genome::Model::Tools::Fastq::ToFasta->execute(
                 fastq_file => $fastq_file,
                 fasta_file => $fasta_file,
-            )) {
+            )->result) {
                 die('Failed to convert fastq_file '. $fastq_file .' to fasta file '. $fasta_file);
             }
         }
@@ -59,7 +59,7 @@ sub execute {
         fasta_files => \@fasta_files,
         index_name => $index_name,
         log_file => $log_file,
-    )) {
+    )->result) {
         die("Failed to run suffixerator on fasta files:\n". join("\n", @fasta_files) );
     }
     for my $fasta_file (@fasta_files) {
@@ -73,7 +73,7 @@ sub execute {
         scan => 1,
         output_file => $self->output_file,
         output_type => 'nonuniquemulti relative',
-    )) {
+    )->result) {
         die('Failed to generate occurence ratio file '. $self->output_file .' from index '. $index_name);
     }
     return 1;

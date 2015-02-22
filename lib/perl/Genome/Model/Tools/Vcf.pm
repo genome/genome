@@ -24,8 +24,11 @@ use Genome;
 #20: Switch to natural sorting of normalized indels and change null GT from '.' to './.'
 #21: Tabix index all vcf results
 #22: For samtools (pileup) snv vcf convert, change null ALT from '.' to 'N'
+#23: Default joinx version bumped from 1.6 -> 1.8
+#24: Default joinx version bumped from 1.8 -> 1.9
+#25: Fix bug when appending FT field in Vcf::VcfFilter
 
-my $VCF_VERSION = "22";
+my $VCF_VERSION = "25";
 
 class Genome::Model::Tools::Vcf {
     is => ['Command'],

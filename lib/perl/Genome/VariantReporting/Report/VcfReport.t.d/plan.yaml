@@ -1,0 +1,8 @@
+reports:
+    vcf:
+        interpreters:
+           'contains-tag':
+               info_tag: 'ON_TARGET'
+           'ft-keep':
+               sample_name: 'S1'
+           'vcf-entry': {}

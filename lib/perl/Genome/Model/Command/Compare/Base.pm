@@ -15,7 +15,7 @@ class Genome::Model::Command::Compare::Base {
         new_build => {
             is => 'Genome::Model::Build',
             shell_args_position => 2,
-            doc => 'the other buid ot be used in the comparision, by convention the one with new/experimental results',
+            doc => 'the other build to be used in the comparision, by convention the one with new/experimental results',
         },
         output_dir => {
             is => 'FilesystemDirectory',

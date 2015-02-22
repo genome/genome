@@ -29,7 +29,7 @@ my $m3 = Genome::Model::Foo->create(@p, name => 'model3');
 ok($m1, "made a model $m3");
 
 class Genome::Model::Command::T1 {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         model => { is => 'Genome::Model' },
     ]
@@ -67,7 +67,7 @@ sub sh {
     local *STDERR;
     open(STDERR,">/dev/null") or die "Failed to redirect STDERR";
     my $rv = eval {
-        Genome::Command::Base->_ask_user_question('Can I talk to you?');
+        Command::V2->_ask_user_question('Can I talk to you?');
     };
 }
 ok($@ =~ /Attempting to ask user question but cannot interact with user!/, "correctly died when unable to interact with user");

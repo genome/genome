@@ -26,7 +26,7 @@ sub required_arch_os { 'x86_64' }
 
 #TODO: Put the LSF resources required to run the alignment here.
 sub required_rusage { 
-    "-R 'select[type==LINUX64 && tmp>90000 && mem>30000] span[hosts=1] rusage[tmp=90000, mem=30000]' -M 30000000 -n 4";
+    "-R 'select[tmp>90000 && mem>30000] span[hosts=1] rusage[tmp=90000, mem=30000]' -M 30000000 -n 4";
 }
 
 #
@@ -172,6 +172,11 @@ sub fillmd_for_sam {
 # tags with either the wrapper or the aligner itself, and this needs to be 0.
 sub requires_read_group_addition {
     return 1;
+}
+
+# fixmate ruins bitflags with rtg alignment
+sub requires_fixmate {
+    return 0;
 }
 
 # if you are streaming to bam, set this to 1.  Beware of read groups.

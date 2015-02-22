@@ -47,6 +47,17 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::CreateAssembledCon
 
 sub sub_command_category { 'pipeline steps' }
 
+sub shortcut {
+    my $self = shift;
+
+    if($self->skip) {
+        $self->status_message("skip signal received. not running.");
+        return 1;
+    }
+
+    return;
+}
+
 sub execute {
     my $self = shift;
     my $build = $self->build;
@@ -100,6 +111,7 @@ sub execute {
         prefix => $prefix,
         server_dispatch => 'inline',
         is_rederivable => 1,
+        analysis_project => $build->model->analysis_project,
     );
     unless ($new_ref_cmd->execute) {
         $self->error_message('Failed to execute the definition of the new reference sequence with added contigs.');

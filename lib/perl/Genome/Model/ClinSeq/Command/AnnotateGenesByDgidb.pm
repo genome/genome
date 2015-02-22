@@ -17,9 +17,9 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb {
             doc => 'regular expression of column names containing gene names/symbols'
         },
     ],
-    has_output => [
+    has_input_output => [
         output_dir => {
-            is  => 'FilesystemPath',            
+            is  => 'FilesystemPath',
             is_optional => 1,
             doc => 'result directory of DGIDB output, it will create a xxx.dgidb subdir under input file source dir',
         },
@@ -62,12 +62,7 @@ sub execute {
         return 1;
     }
 
-    my ($outdir_name, $dir) = fileparse($infile);
-    $outdir_name .= '.dgidb';
-    $outdir_name = $dir . $outdir_name;
-
-    Genome::Sys->create_directory($outdir_name) or die "Failed to create directory $outdir_name\n";
-    $self->output_dir($outdir_name);
+    my $outdir_name = $self->_prepare_output_directory;
 
     my @parameter_sets = (
         {
@@ -117,6 +112,22 @@ sub convert {
     return join ',', sort keys %list;
 }
 
+sub _prepare_output_directory {
+    my $self = shift;
+
+    unless($self->output_dir) {
+        my $infile = $self->input_file;
+        my ($outdir_name, $dir) = fileparse($infile);
+        $outdir_name .= '.dgidb';
+        $outdir_name = $dir . $outdir_name;
+        $self->output_dir($outdir_name);
+    }
+
+    my $outdir_name = $self->output_dir;
+    Genome::Sys->create_directory($outdir_name) or die "Failed to create directory $outdir_name";
+
+    return $outdir_name;
+}
 
 1;
 

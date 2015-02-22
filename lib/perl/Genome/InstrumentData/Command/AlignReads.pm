@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Data::Dump qw(pp);
 
 class Genome::InstrumentData::Command::AlignReads {
     is => ['Command::V2'],
@@ -36,8 +37,16 @@ class Genome::InstrumentData::Command::AlignReads {
             is => 'Text',
             doc => 'The version of Samtools to use when needed by aligners/filters',
         },
+        result_users => {
+            is => 'HASH',
+            doc => 'mapping of labels to user objects. Will be added to any generated results',
+        },
     ],
     has_optional_input => [
+        bedtools_version => {
+            is => 'Text',
+            doc => 'The version of Bedtools to use when needed by aligners/filters',
+        },
         annotation_build_id => {
             is => 'Number',
             doc => 'Id of the annotation build to use when aligning',
@@ -162,8 +171,8 @@ sub params_for_alignment {
 
     my %params = (
         instrument_data_id => $self->instrument_data_id || undef,
-        instrument_data_segment_type => $self->instrument_data_segment_type || undef,
-        instrument_data_segment_id => $self->instrument_data_segment_id || undef,
+        instrument_data_segment_type => $self->instrument_data_segment_type // undef,
+        instrument_data_segment_id => $self->instrument_data_segment_id // undef,
 
         aligner_name => $self->name || undef,
         aligner_version => $self->version || undef,
@@ -175,6 +184,7 @@ sub params_for_alignment {
         force_fragment => $self->force_fragment || undef,
         picard_version => $self->picard_version || undef,
         samtools_version => $self->samtools_version || undef,
+        bedtools_version => $self->bedtools_version || undef,
 
         trimmer_name => $self->trimmer_name || undef,
         trimmer_version => $self->trimmer_version || undef,
@@ -183,6 +193,8 @@ sub params_for_alignment {
         filter_name => $self->instrument_data_filter || undef,
 
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+
+        users => $self->result_users,
     );
 
     return \%params;
@@ -231,6 +243,7 @@ sub _process_alignments {
 
     $self->_link_alignment_to_inputs($alignment);
     $self->result_id($alignment->id);
+    $self->debug_message("Using alignment %s", $alignment->id);
 
     $self->debug_message("Complete!");
     return 1;
@@ -245,10 +258,19 @@ sub _fetch_alignment_sets {
         $self->error_message('Could not get alignment parameters for this instrument data');
         return;
     }
+
+    $self->debug_message("Attempting to Genome::InstrumentData::AlignmentResult->%s with params: \n%s", $mode, pp($params));
+
     my $alignment = eval { Genome::InstrumentData::AlignmentResult->$mode(%$params) };
     if($@) {
         $self->error_message($mode . ': ' . $@);
         return;
+    }
+
+    if ($alignment) {
+        $self->debug_message("Found alignment result (%s)", $alignment->id);
+    } else {
+        $self->debug_message("Failed to find alignment result with those params");
     }
 
     return $alignment;

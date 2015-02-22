@@ -8,13 +8,13 @@ use Genome;
 class Genome::InstrumentData::Command::Import::WorkFlow::SortBam { 
     is => 'Command::V2',
     has_input => [
-        unsorted_bam_path => {
+        bam_path => {
             is => 'Text',
             doc => 'The path of the unsorted bam to sort.',
         }
     ],
     has_output => [ 
-        sorted_bam_path => {
+        output_bam_path => {
             is => 'Text',
             calculate_from => [qw/ sorted_bam_prefix /],
             calculate => q( return $sorted_bam_prefix.'.bam'; ),
@@ -24,9 +24,9 @@ class Genome::InstrumentData::Command::Import::WorkFlow::SortBam {
     has_optional_calculated => [
         sorted_bam_prefix => {
             is => 'Text',
-            calculate_from => [qw/ unsorted_bam_path /],
+            calculate_from => [qw/ bam_path /],
             calculate => q(
-                my $sorted_bam_prefix = $unsorted_bam_path;
+                my $sorted_bam_prefix = $bam_path;
                 $sorted_bam_prefix =~ s/\.bam$/.sorted/;
                 return $sorted_bam_prefix;
             ),
@@ -45,7 +45,7 @@ sub execute {
     my $verify_read_count_ok = $self->_verify_read_count;
     return if not $verify_read_count_ok;
 
-    my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->unsorted_bam_path);
+    my $cleanup_ok = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->remove_paths_and_auxiliary_files($self->bam_path);
     return if not $cleanup_ok;
 
     $self->debug_message('Sort bams...done');
@@ -55,18 +55,18 @@ sub execute {
 sub _sort_bam {
     my $self = shift;
 
-    my $unsorted_bam_path = $self->unsorted_bam_path;
-    $self->debug_message("Unsorted bam path: $unsorted_bam_path");
+    my $bam_path = $self->bam_path;
+    $self->debug_message("Unsorted bam path: $bam_path");
 
     my $sorted_bam_prefix = $self->sorted_bam_prefix;
     $self->debug_message("Sorted bam prefix: $sorted_bam_prefix");
 
-    my $sorted_bam_path = $self->sorted_bam_path;
-    $self->debug_message("Sorted bam path: $sorted_bam_path");
+    my $output_bam_path = $self->output_bam_path;
+    $self->debug_message("Sorted bam path: $output_bam_path");
 
-    my $cmd = "samtools sort -m 3000000000 -n $unsorted_bam_path $sorted_bam_prefix";
+    my $cmd = "samtools sort -m 3000000000 -n $bam_path $sorted_bam_prefix";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-    if ( not $rv or not -s $sorted_bam_path ) {
+    if ( not $rv or not -s $output_bam_path ) {
         $self->error_message($@) if $@;
         $self->error_message('Failed to run samtools sort!');
         return;
@@ -80,10 +80,10 @@ sub _verify_read_count {
     $self->debug_message('Verify read count...');
 
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $unsorted_flagstat = $helpers->load_or_run_flagstat($self->unsorted_bam_path);
+    my $unsorted_flagstat = $helpers->load_or_run_flagstat($self->bam_path);
     return if not $unsorted_flagstat;
 
-    my $sorted_flagstat = $helpers->load_or_run_flagstat($self->sorted_bam_path);
+    my $sorted_flagstat = $helpers->load_or_run_flagstat($self->output_bam_path);
     return if not $sorted_flagstat;
 
     $self->debug_message('Sorted bam read count: '.$sorted_flagstat->{total_reads});

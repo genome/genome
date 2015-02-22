@@ -182,7 +182,7 @@ sub execute {
     $self->error_message("Failed to create directory $reports_dir")  and die unless Genome::Sys->create_directory($reports_dir);
     #`mkdir -p $reports_dir`;
     my $out = Genome::Model::Tools::WuBlast::Parse->execute(blast_outfile => $blastfile, parse_outfile => $reports_dir."blast_report");
-    $self->error_message("Failed to parse $blastfile")  and die unless defined $out; 
+    $self->error_message("Failed to parse $blastfile")  and die unless defined $out && $out->result;
 
     my $ut = Genome::Model::Tools::PooledBac::Utils->create;
     $self->error_message("Genome::Model::Tools::PooledBac::Utils->create failed.\n") unless defined $ut;

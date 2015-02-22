@@ -6,10 +6,9 @@ use Genome;
 use Data::Dumper;
 use File::Basename;
 
-use Genome::Model::ClinSeq::Util qw(:all);
-
 class Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport {
-    is => 'Command::V2',
+    is => ['Command::V2',
+           'Genome::Model::ClinSeq::Util'],
     has_input => [
         wgs_build           => { is => 'Genome::Model::Build', is_optional => 1, },
         exome_build         => { is => 'Genome::Model::Build', is_optional => 1, },
@@ -31,7 +30,7 @@ class Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport {
     has_param => [
         verbose => { is => 'Boolean', default_value => 0 },
     ],
-    doc => 'Get BAM red counts for SNV positions from WGS, Exome and RNAseq BAMS',     
+    doc => 'get BAM read counts for SNV positions from WGS, Exome and RNA-seq BAMS',     
 };
 
 sub positions_files {

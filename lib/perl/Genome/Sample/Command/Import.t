@@ -17,7 +17,6 @@ use_ok('Genome::Sample::Command::Import') or die;
 Genome::Sample::Command::Import::_create_import_command_for_config({
         nomenclature => 'TeSt',
         name_regexp => '(TeSt-\d+)\-[\w\d]+\-\d\w\-\d+',
-        taxon_name => 'human',
         sample_attributes => [qw/ tissue_desc /],# tests array
         individual_attributes => { # tests hash
             gender => { valid_values => [qw/ male female /], }, # tests getting meta from individual
@@ -37,7 +36,6 @@ ok($meta, 'class meta for command to import test namespace sample');
 my $nomenclature_property = $meta->property_meta_for_name('nomenclature');
 is($nomenclature_property->default_value, 'TeSt', 'set value on nomenclature property');
 is(Genome::Sample::Command::Import->importer_class_name_for_namespace('Test'), 'Genome::Sample::Command::Import::Test', 'importer class name for namespace');
-is_deeply([sort Genome::Sample::Command::Import->importer_property_names_for_namespace('Test')], [qw/ gender tissue_desc /], 'property names for namespace importer');
 is(Genome::Sample::Command::Import->namespace_for_nomenclature('TeSt'), 'Test', 'namespace for nomenclature');
 
 # attr names
@@ -54,9 +52,11 @@ is($individual_gender_property->{is}, $gender_property->{is}, 'gender type (is)'
 is($individual_gender_property->doc, $gender_property->doc, 'gender doc');
 is_deeply($gender_property->valid_values, [qw/ male female /], 'gender valid_values');
 
-my $patient_name = 'TeSt-1111';
-my $name = $patient_name.'-A1A-1A-1111';
+my $taxon = Genome::Taxon->__define__(name => 'almost human');
+my $individual_name = 'TeSt-1111';
+my $name = $individual_name.'-A1A-1A-1111';
 my %import_params = (
+    taxon => $taxon,
     gender => 'female',
     tissue_desc => 'blood',
     extraction_type => 'genomic dna',
@@ -71,9 +71,9 @@ my $import = Genome::Sample::Command::Import::Test->create(
 ok($import, 'create');
 ok($import->execute, 'execute');
 
-is($import->_individual->taxon->name, 'human', 'taxon name');
-is($import->_individual->name, $patient_name, 'patient name');
-is($import->_individual->upn, $patient_name, 'patient name');
+is($import->_individual->taxon, $taxon, 'taxon name');
+is($import->_individual->name, $individual_name, 'patient name');
+is($import->_individual->upn, $individual_name, 'patient name');
 is($import->_individual->nomenclature, 'TeSt', 'patient nomenclature');
 is($import->_individual->gender, 'female', 'patient gender');
 is($import->_individual->common_name, '1111', 'patient common_name');
@@ -90,7 +90,6 @@ is_deeply($import->_sample->source, $import->_individual, 'sample source');
 my $library_name = $name.'-extlibs';
 is($import->_library->name, $library_name, 'library name');
 is_deeply($import->_library->sample, $import->_sample, 'library sample');
-is(@{$import->_created_objects}, 3, 'created 3 objects');
 
 # Fail - invalid name (nomenclature)
 $import = Genome::Sample::Command::Import::Test->create(
@@ -118,27 +117,5 @@ $import = Genome::Sample::Command::Import::Test->create(
 ok($import, 'create');
 ok(!$import->execute, 'execute fails b/c of invalid individual name');
 is($import->error_message, "Name (TeSt-1A11-A1A-1A-1111) is invalid!", 'correct error message');
-
-# Fail - invalid sample attrs
-my %invalid_import_params = %import_params;
-$invalid_import_params{sample_attributes} = [qw/ age_baseline= /];
-$import = Genome::Sample::Command::Import::Test->create(
-    name => $name,
-    %invalid_import_params,
-);
-ok($import, 'create');
-ok(!$import->execute, 'execute fails b/c of invalid sample attributes');
-is($import->error_message, "Sample attribute label (age_baseline) does not have a value!", 'correct error message');
-
-# Fail - invalid individual attrs
-%invalid_import_params = %import_params;
-$invalid_import_params{individual_attributes} = [qw/ eye_color= /];
-$import = Genome::Sample::Command::Import::Test->create(
-    name => $name,
-    %invalid_import_params,
-);
-ok($import, 'create');
-ok(!$import->execute, 'execute fails b/c of invalid individual attributes');
-is($import->error_message, "Individual attribute label (eye_color) does not have a value!", 'correct error message');
 
 done_testing();

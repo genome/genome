@@ -34,7 +34,7 @@ class Genome::Model::RnaSeq::Command::DetectFusions::Chimerascan::IndexBase {
     ],
     has => [
         lsf_resource => {
-            default_value => "-R 'select[type==LINUX64 && mem>32000] span[hosts=1] rusage[mem=32000]' -M 32000000 -n 2",
+            default_value => "-R 'select[mem>32000] span[hosts=1] rusage[mem=32000]' -M 32000000 -n 2",
             is_param => 1,
             is_optional => 1,
             doc => 'default LSF resource expectations',
@@ -73,6 +73,7 @@ sub _fetch_result {
             reference_build => $self->build->reference_sequence_build,
             annotation_build => $self->build->annotation_build,
             picard_version => $self->build->processing_profile->picard_version,
+            users => Genome::SoftwareResult::User->user_hash_for_build($self->build),
     );
 
     if ($result){

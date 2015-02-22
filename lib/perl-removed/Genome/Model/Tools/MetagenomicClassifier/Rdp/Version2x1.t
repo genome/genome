@@ -16,8 +16,11 @@ my $seq = {
 $seq->{seq} = reverse $seq->{seq};
 $seq->{seq} =~ tr/ATGC/TACG/;
 
+my $training_set = Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->create(
+    path => Genome::Model::Tools::MetagenomicClassifier::Rdp::TrainingSet->path_for_set_name(4),
+);
 my $classifier = Genome::Model::Tools::MetagenomicClassifier::Rdp::Version2x1->create(
-    training_set => 4,# 4,6,broad
+    training_set => $training_set,
 );
 ok($classifier, 'Created rdp classifier');
 
@@ -40,11 +43,5 @@ diag($@);
 eval{ $classifier->classify({seq => 'A'}); };
 like($@, qr(Seq does not have an id:), 'fail to classify w/o sequence id');
 ok(!$classifier->classify({ id => 'Short Seq', -seq => 'A' }), 'fail to classify short sequence');
-
-# create fails
-my $fail = Genome::Model::Tools::MetagenomicClassifier::Rdp::Version2x1->create( );
-ok(!$fail, 'fail w/o training set');
-$fail = Genome::Model::Tools::MetagenomicClassifier::Rdp::Version2x1->create( training_set => 5,);
-ok(!$fail, 'fail w/ invalid training set');
 
 done_testing();

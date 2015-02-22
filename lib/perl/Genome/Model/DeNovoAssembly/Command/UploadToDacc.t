@@ -77,8 +77,8 @@ my $build = Genome::Model::Build->create(
 );
 ok($build, 'create example build');
 is($build->assembly_length(1000000), 1000000, 'build assembly length');
-#$build->the_master_event->status('Succeeded');
-#$build->the_master_event->date_completed(UR::Context->current->now);
+#$build->status('Succeeded');
+#$build->date_completed(UR::Context->current->now);
 
 no warnings;
 *Genome::Model::last_succeeded_build = sub{ return $build; };

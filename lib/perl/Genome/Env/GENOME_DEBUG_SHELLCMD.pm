@@ -1,5 +1,4 @@
 package Genome::Env::GENOME_DEBUG_SHELLCMD;
-our $default_value = undef;
 
 =pod
 

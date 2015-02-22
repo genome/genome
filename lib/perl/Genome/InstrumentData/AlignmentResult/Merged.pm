@@ -4,16 +4,16 @@ use strict;
 use warnings;
 
 use Sys::Hostname;
+use File::Find::Rule qw();
 use File::stat;
 use File::Path 'rmtree';
 use List::MoreUtils qw{ uniq };
 
 use Genome;
-
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
 
 class Genome::InstrumentData::AlignmentResult::Merged {
-    is => 'Genome::InstrumentData::AlignedBamResult',
+    is => ['Genome::InstrumentData::AlignedBamResult', 'Genome::SoftwareResult::WithNestedResults'],
     has => [
         instrument_data => {
             is => 'Genome::InstrumentData',
@@ -147,6 +147,8 @@ class Genome::InstrumentData::AlignmentResult::Merged {
 sub create {
     my $class = shift;
 
+    my $tx = UR::Context::Transaction->begin();
+
     #This will do some locking and the like for us.
     my $self = $class->SUPER::create(@_);
     return unless ($self);
@@ -220,13 +222,15 @@ sub create {
 
         return 1;
     };
-    if(my $error = $@) {
-        $self->_cleanup;
+    if (my $error = $@) {
+        $tx->rollback();
         die $error;
     } elsif ($rv ne 1) {
+        $tx->rollback();
         $self->error_message('Unexpected return value: ' . $rv);
-        $self->_cleanup;
         die $self->error_message;
+    } else {
+        $tx->commit();
     }
 
     $self->debug_message("Resizing the disk allocation...");
@@ -236,8 +240,6 @@ sub create {
         }
     }
 
-    
-
     $self->debug_message('All processes completed.');
 
     return $self;
@@ -245,6 +247,7 @@ sub create {
 
 sub collect_individual_alignments {
     my $self = shift;
+    my $result_users = shift || $self->_user_data_for_nested_results;
 
     my @instrument_data = $self->instrument_data();
     my %params;
@@ -266,7 +269,10 @@ sub collect_individual_alignments {
     my $segments = {};
 
     for my $segment_string (@segments) {
-        my ($id, $segment_id, $segment_type) = split(':', $segment_string);
+        my @parts = split(':', $segment_string);
+        my $id = shift @parts;
+        my $segment_type = pop @parts;
+        my $segment_id = join(":", @parts);
         $segments->{$id}{$segment_type} ||= [];
         push @{$segments->{$id}{$segment_type} }, $segment_id;
     }
@@ -293,16 +299,22 @@ sub collect_individual_alignments {
         }
 
         for my $segment_param (@segment_params) {
-            my $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
+            my %all_params = (
                 %params,
                 reference_build_id => $self->reference_build_id,
                 annotation_build_id => ($self->annotation_build_id || undef),
                 instrument_data_id => $i->id,
                 filter_name => ($filters->{$i->id} || undef),
                 test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+                users => $result_users,
                 %$segment_param,
             );
+            $self->debug_message("Looking for alignment result with params: %s",
+                Data::Dumper::Dumper(\%all_params));
 
+            my $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
+                %all_params
+            );
             if($alignment) {
                 push @alignments, $alignment;
             } else {
@@ -404,8 +416,8 @@ sub _prepare_working_directories {
     );
 
     # fix permissions on this temp dir so others can clean it up later if need be
-    chmod(0775,$staging_tempdir);
-    chmod(0775,$scratch_tempdir);
+    chmod(0770,$staging_tempdir);
+    chmod(0770,$scratch_tempdir);
 
     $self->temp_staging_directory($staging_tempdir->dirname);
     $self->temp_scratch_directory($scratch_tempdir->dirname);
@@ -424,18 +436,10 @@ sub _promote_validated_data {
     for my $staged_file (glob("$staging_dir/*")) {
         my $destination = $staged_file;
         $destination =~ s/$staging_dir/$output_dir/;
-        rename($staged_file, $destination);
+        Genome::Sys->rename($staged_file, $destination);
     }
 
-    chmod 02775, $output_dir;
-    for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
-        chmod 02775, $subdir;
-    }
-
-    # Make everything in here read-only
-    for my $file (grep { -f $_  } glob("$output_dir/*")) {
-        chmod 0444, $file;
-    }
+    $self->_disk_allocation->set_files_read_only;
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
 
@@ -674,23 +678,6 @@ sub create_bam_md5 {
     ); 
 
     return 1;
-}
-
-sub _cleanup {
-    my $self = shift;
-
-    return unless $self->_disk_allocation;
-
-    $self->debug_message('Now deleting allocation with owner_id = ' . $self->id);
-    my $allocation = $self->_disk_allocation;
-    if ($allocation) {
-        my $path = $allocation->absolute_path;
-        unless (rmtree($path)) {
-            $self->error_message("could not rmtree $path");
-            return;
-       }
-       $allocation->deallocate; 
-    }
 }
 
 sub bowtie_version { return shift->scalar_property_from_underlying_alignment_results('bowtie_version'); }

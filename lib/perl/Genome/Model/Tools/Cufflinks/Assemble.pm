@@ -100,6 +100,7 @@ sub execute {
         cmd => $self->command($params),
         input_files => [$self->input_file],
         output_files => \@output_files,
+        allow_zero_size_output_files => 1,
     );
     if (defined($cwd)) {
         unless (chdir($cwd)) {

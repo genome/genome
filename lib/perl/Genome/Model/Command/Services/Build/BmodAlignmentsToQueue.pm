@@ -9,7 +9,7 @@ require Carp;
 use Data::Dumper 'Dumper';
 
 class Genome::Model::Command::Services::Build::BmodAlignmentsToQueue { 
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         queue => {
             is => 'Text',

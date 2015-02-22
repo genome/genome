@@ -1,0 +1,10 @@
+[4mOVERVIEW[0m
+Output the global minor allele frequency from the dbsnp GMAF field
+
+[4mREQUIRED EXPERTS[0m
+dbsnp
+
+[4mAVAILABLE FIELDS[0m
+  [1mdbSNP_gmaf[0m
+    Global minor allele frequency from dbSNP
+

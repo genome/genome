@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 class Genome::Model::PhenotypeCorrelation::Command::ClinicalDataSummary {
-    is => "Genome::Command::Base",
+    is => "Command::V2",
     doc => "Produce summary tables and plots for clinical data files",
     has_input => [
         glm_model_file => {

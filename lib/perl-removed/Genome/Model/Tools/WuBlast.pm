@@ -103,7 +103,7 @@ sub create {
     Genome::Model::Tools::WuBlast::Xdformat::Verify->execute(
         database => $self->database,
         db_type  => $self->_blast_db_type,
-    )
+    )->result
         or return;
 
     # Verify query file

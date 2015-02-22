@@ -147,6 +147,19 @@ class Genome::Model::Tools::Somatic::ProcessSomaticVariation {
           doc => "use this reference transcript build instead of the one specified in the model (e.g. NCBI-mouse.ensembl/67_37)",
       },
 
+      bam_readcount_version => {
+          is => 'Text',
+          doc => "the version of bam-readcount to use if generating counts. If not specified, the default version in G::M::T::Sam::Readcount will be used.",
+      },
+
+      max_indel_size => {
+          is => 'Integer',
+          is_optional => 1,
+          doc => "set max indel size to extract readcounts",
+          default => "4",
+      },
+
+
       ],
 };
 
@@ -250,7 +263,6 @@ sub annoFileToSlashedBedFile{
 
 sub bedToAnno{
     my ($chr,$start,$stop,$ref,$var) = split("\t",$_[0]);
-    #print STDERR join("|",($chr,$start,$stop,$ref,$var)) . "\n";
     if ($ref =~ /^[-0*]/){ #indel INS
         $stop = $stop+1;
     } else { #indel DEL or SNV
@@ -337,8 +349,11 @@ sub cleanFile{
     }
     close(OUTFILE);
     close($inFh);
-    `joinx sort -i $newfile >$newfile.tmp`;
-    `mv -f $newfile.tmp $newfile`;
+
+    my $cmd = "joinx sort -i '" . $newfile . "' >'" . $newfile . ".tmp'";
+    `$cmd`;
+    $cmd = "mv -f '" . $newfile . ".tmp' '" . $newfile . "'";
+    `$cmd`;
     return($newfile)
 }
 
@@ -385,7 +400,7 @@ sub removeFilterSites{
     my $newfile = addName($file,"filtered");
     #handle zero size files
     if( -z $file ){
-        `touch $newfile`;
+        my $cmd = "touch '" . $newfile . "'";
         return($newfile);
     }
 
@@ -452,10 +467,9 @@ sub getVcfFile{
 
 sub removeUnsupportedSites{
     my ($snv_file, $numcallers, $build_dir) = @_;
-    
+
     #hash all of the sites
     my $sites = getFilterSites($snv_file);
-    print "here\n";
     for my $k (keys(%{$sites})){
         $sites->{$k} = 0;
     }
@@ -493,7 +507,7 @@ sub removeUnsupportedSites{
         chomp $line;
         my ($chr, $start, $stop, $ref, $var, @rest) = split /\t/, $line;
         my $key = join("\t",($chr, $start, $stop, $ref, $var));
-        
+
         if(!defined($sites->{$key})){
             print STDERR "wut?: " . $key . "\n";
         }
@@ -518,7 +532,8 @@ sub doAnnotation{
 
     #handle zero size files
     if( -z $file ){
-        `touch $file.anno`;
+        my $cmd = "touch '" . $file . ".anno'";
+        `$cmd`;
         return($file . ".anno");
     }
 
@@ -542,7 +557,8 @@ sub addTiering{
 
     #handle zero size files
     if( -z $file ){
-        `touch $newfile`;
+        my $cmd = "touch '" . $newfile . "'";
+        `$cmd`;
         return($newfile);
     }
 
@@ -558,29 +574,35 @@ sub addTiering{
 }
 
 sub getReadcounts{
-    my ($file, $ref_seq_fasta, @bams) = @_;
+    my ($file, $ref_seq_fasta, $bams, $max_indel_size,$rc_version) = @_;
     #todo - should check if input is bed and do coversion if necessary
 
     if( -s "$file" ){
-        my $bamfiles = join(",",@bams);
+        my $bamfiles = join(",",@$bams);
         my $header = "Tumor";
-        if(@bams == 2){
+        if(scalar(@$bams) == 2){
             $header = "Normal,Tumor";
         }
         #get readcounts from the tumor bam only
-        my $rc_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(
+        my %params = (
             bam_files => $bamfiles,
             output_file => "$file.rcnt",
             variant_file => "$file",
             genome_build => $ref_seq_fasta,
             header_prefixes => $header,
-            indel_size_limit => 4,
+            indel_size_limit => $max_indel_size,
             );
+        if($rc_version) {
+            $params{bam_readcount_version} = $rc_version;
+        }
+        my $rc_cmd = Genome::Model::Tools::Analysis::Coverage::AddReadcounts->create(%params);
+
         unless ($rc_cmd->execute) {
             die "Failed to obtain readcounts for file $file.\n";
         }
     } else {
-        `touch $file.rcnt`;
+        my $cmd = "touch '" . $file . ".rcnt'";
+        `$cmd`;
     }
     return("$file.rcnt");
 }
@@ -596,30 +618,28 @@ sub execute {
   if(!(-e $output_dir)){
       mkdir($output_dir);
   }
-
   # Check on the input data before starting work
   my $model = Genome::Model->get( $somatic_variation_model_id );
-  print STDERR "ERROR: Could not find a model with ID: $somatic_variation_model_id\n" unless( defined $model );
-  print STDERR "ERROR: Output directory not found: $output_dir\n" unless( -e $output_dir );
+  $self->error_message("Could not find a model with ID: $somatic_variation_model_id") unless( defined $model );
+  $self->error_message("Output directory not found: $output_dir") unless( -e $output_dir );
   return undef unless( defined $model && -e $output_dir );
 
 
   #grab the info from the model
   my $build = $model->last_succeeded_build;
   unless( defined($build) ){
-      print STDERR "WARNING: Model ", $model->id, "has no succeeded builds\n";
+      $self->error_message("Model %s has no succeeded builds",$model->id);
       return undef;
   }
 
-  my $tumor_model = $model->tumor_model;
-  my $normal_model = $model->normal_model;
+  my $tumor_build = $build->tumor_build;
+  my $normal_build = $build->normal_build;
 
-  my $ref_seq_build_id = $tumor_model->reference_sequence_build->build_id;
-  my $ref_seq_build = Genome::Model::Build->get($ref_seq_build_id);
+  my $ref_seq_build = $tumor_build->reference_sequence_build;
   my $ref_seq_fasta = $ref_seq_build->full_consensus_path('fa');
   my $annotation_build_name = $model->annotation_build->name;
   if(defined $self->reference_transcripts){
-      print STDERR "Model's annotation build overriden. Using " . $self->reference_transcripts . "\n";
+      $self->status_message("Model's annotation build overriden. Using %s", $self->reference_transcripts);
       $annotation_build_name = $self->reference_transcripts;
   }
   my $tiering_files = $model->annotation_build->data_directory . "/annotation_data/tiering_bed_files_v3/";
@@ -629,9 +649,9 @@ sub execute {
   } else {
       $sample_name = $self->sample_name;
   }
-  print STDERR "processing model with sample_name: " . $sample_name . "\n";
-  my $tumor_bam = $tumor_model->last_succeeded_build->merged_alignment_result->bam_file;
-  my $normal_bam = $normal_model->last_succeeded_build->merged_alignment_result->bam_file;
+  $self->status_message("processing model with sample_name: $sample_name");
+  my $tumor_bam = $tumor_build->merged_alignment_result->bam_file;
+  my $normal_bam = $normal_build->merged_alignment_result->bam_file;
   my $build_dir = $build->data_directory;
 
   my $igv_reference_name;
@@ -639,10 +659,9 @@ sub execute {
       if(defined($self->igv_reference_name)){
           $igv_reference_name = $self->igv_reference_name;
       } else {
-          die("igv-reference-name required if --create-review-files is specified");
+          die $self->error_message("igv-reference-name required if --create-review-files is specified");
       }
   }
-
 
   # create subdirectories, get files in place
 
@@ -661,18 +680,18 @@ sub execute {
   mkdir "$output_dir/$sample_name/snvs" unless( -e "$output_dir/$sample_name/snvs" );
   mkdir "$output_dir/$sample_name/indels" unless( -e "$output_dir/$sample_name/indels" );
   mkdir "$output_dir/review" unless( -e "$output_dir/review" || !($self->create_review_files));
-  `ln -s $build_dir $output_dir/$sample_name/build_directory`;
+  my $cmd = "ln -s '" . $build_dir . "' '" . $output_dir . "/" . $sample_name . "/build_directory'";;
+  `$cmd`;
 
-
-
+  
   # Check if the necessary files exist in this build
   my $snv_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";
   unless( -e $snv_file ){
-      die "ERROR: SNV results for $sample_name not found at $snv_file\n";
+      die $self->error_message("Cannot find SNV file $snv_file for $sample_name");
   }
   my $indel_file = "$build_dir/effects/indels.hq.novel.tier1.v2.bed";
   unless( -e $indel_file ){
-      die "ERROR: INDEL results for $sample_name not found at $indel_file\n";
+      die $self->error_message("INDEL results for $sample_name not found at $indel_file");
   }
   my $sv_file;
   my $process_svs = $self->process_svs;
@@ -680,21 +699,29 @@ sub execute {
       my @sv_files = glob("$build_dir/variants/sv/union-union-sv_breakdancer_*sv_squaredancer*/svs.merge.file.somatic");
       $sv_file = $sv_files[0];
       unless( -e $sv_file ){
-          print STDERR "ERROR: SV results for $sample_name not found, skipping SVs\n";
+         $self->warning_message("SV results for $sample_name not found, skipping SVs");
           $process_svs = 0;
       }
   }
 
+    #cat all the filtered snvs together (same for indels) 
+  my @sfiles = glob("$build_dir/effects/snvs.hq.novel.tier*.v2.bed");
+  @sfiles = (@sfiles, glob("$build_dir/effects/snvs.hq.previously_detected.tier*.v2.bed"));
+  #enclose names in single quotes to handle special characters in bash
+  $cmd = "cat '" . join("' '", @sfiles) . "' | joinx sort >'" . $output_dir . "/" . $sample_name . "/snvs/snvs.hq.bed'";
+  `$cmd`;
 
-  #cat all the filtered snvs together (same for indels)
-  `cat $build_dir/effects/snvs.hq.novel.tier*.v2.bed $build_dir/effects/snvs.hq.previously_detected.tier*.v2.bed | joinx sort >$output_dir/$sample_name/snvs/snvs.hq.bed`;
-  `cat $build_dir/effects/indels.hq.novel.tier*.v2.bed $build_dir/effects/indels.hq.previously_detected.tier*.v2.bed | joinx sort >$output_dir/$sample_name/indels/indels.hq.bed`;
+  @sfiles = glob("$build_dir/effects/indels.hq.novel.tier*.v2.bed");
+  @sfiles = (@sfiles, glob("$build_dir/effects/indels.hq.previously_detected.tier*.v2.bed"));
+  $cmd = "cat '" . join("' '", @sfiles) . "' | joinx sort >'" . $output_dir . "/" . $sample_name . "/indels/indels.hq.bed'";
+  `$cmd`;
 
-#  `ln -s $snv_file $output_dir/$sample_name/snvs/` unless( -e "$output_dir/$sample_name/snvs/$snv_file");
-#  `ln -s $indel_file $output_dir/$sample_name/indels/` unless( -e "$output_dir/$sample_name/indels/$indel_file");
   if($process_svs){
-      `mkdir $output_dir/$sample_name/svs`;
-      `ln -s $sv_file $output_dir/$sample_name/svs/svs.hq` unless( -e "$output_dir/$sample_name/svs/$sv_file");
+      mkdir("$output_dir/$sample_name/svs");
+      unless( -e "$output_dir/$sample_name/svs/$sv_file"){
+          $cmd = "ln -s '" . $sv_file . "' '" . $output_dir . "/" . $sample_name . "/svs/svs.hq'";
+          `$cmd`;
+      }
 
 #       #annotate the svs
 #       my $anno_cmd = Genome::Model::Tools::Annotate::Sv::Combine->create(
@@ -726,22 +753,18 @@ sub execute {
   $snv_file = "$output_dir/$sample_name/snvs/snvs.hq.bed";
   $indel_file = "$output_dir/$sample_name/indels/indels.hq.bed";
 
-
-
   my %dups;
-
-
-  #munge through SNV file to remove duplicates and fix IUB codes
+  
   #--------------------------------------------------------------
+  #munge through SNV file to remove duplicates and fix IUB codes
   $snv_file = cleanFile($snv_file);
   $indel_file = cleanFile($indel_file);
-
 
 
   #-------------------------------------------------
   #filter out the off-target regions, if target regions are available
   if($self->restrict_to_target_regions){
-      print STDERR "Filtering out off-target regions...\n";
+      $self->status_message("Filtering out off-target regions...");
 
       my $featurelist;
       if($self->target_regions) {
@@ -767,12 +790,16 @@ sub execute {
           close(FEATFILE);
           my $new_snv_file = addName($snv_file,"ontarget");
           my $new_indel_file = addName($indel_file,"ontarget");
-          
-          `joinx sort $output_dir/$sample_name/featurelist.tmp >$output_dir/$sample_name/featurelist`;
-          `rm -f $output_dir/$sample_name/featurelist.tmp`;
-          `joinx intersect -a $snv_file -b $output_dir/$sample_name/featurelist >$new_snv_file`;
+
+          $cmd = "joinx sort '" . $output_dir . "/" . $sample_name . "/featurelist.tmp'" . " >'" . $output_dir . "/" . $sample_name . "/featurelist'";
+          `$cmd`;
+          $cmd = "rm -f '" . $output_dir . "/" . $sample_name . "/featurelist.tmp'";
+          `$cmd`;
+          $cmd = "joinx intersect -a '" . $snv_file . "' -b '" . $output_dir . "/" . $sample_name . "/featurelist' >'" . $new_snv_file . "'";
+          `$cmd`;
           $snv_file = "$new_snv_file";
-          `joinx intersect -a $indel_file -b $output_dir/$sample_name/featurelist >$new_indel_file`;
+          $cmd = "joinx intersect -a '" . $indel_file . "' -b '" . $output_dir . "/" . $sample_name . "/featurelist' >'" . $new_indel_file . "'";
+          `$cmd`;
           $indel_file = "$new_indel_file";      
       } else {
           $self->warning_message("feature list not found or target regions not specified; No target region filtering being done even though --restrict-to-target-regions set.");
@@ -783,7 +810,7 @@ sub execute {
   #-------------------------------------------------
   #remove filter sites specified by the user
   if(defined($self->filter_sites)){
-      print STDERR "Applying user-supplied filter...\n";
+      $self->status_message("Applying user-supplied filter...");
       my $filterSites = getFilterSites($self->filter_sites);
       $snv_file = removeFilterSites($snv_file,$filterSites);
       $indel_file = removeFilterSites($indel_file,$filterSites);
@@ -808,14 +835,13 @@ sub execute {
       }
       close($fh);
 
-      print STDERR "Removing user-specified filter...\n";
+      $self->status_message("Removing user-specified filter...");
       my $cmd = "joinx intersect --miss-a $snv_file.filteredReg -a $snv_file -b $temp_file >/dev/null";
       my $result = Genome::Sys->shellcmd(
           cmd => "$cmd",
           );
       unless($result) {
-          $self->error_message("Failed to execute joinx: Returned $result");
-          die $self->error_message;
+          die $self->error_message("Failed to execute joinx: Returned $result");
       }
       $snv_file = "$snv_file.filteredReg";
 
@@ -824,8 +850,7 @@ sub execute {
           cmd => "$cmd",
           );
       unless($result) {
-          $self->error_message("Failed to execute joinx: Returned $result");
-          die $self->error_message;
+          die $self->error_message("Failed to execute joinx: Returned $result");
       }
       $indel_file = "$indel_file.filteredReg";
   }
@@ -834,7 +859,7 @@ sub execute {
   #-------------------------------------------------------
   # remove regions called by less than the required number of callers
   unless($self->required_snv_callers == 1){
-      print STDERR "Removing snvs supported by less than " . $self->required_snv_callers . " callers...\n";
+      $self->status_message("Removing snvs supported by less than %s callers", $self->required_snv_callers);
       $snv_file = removeUnsupportedSites($snv_file, $self->required_snv_callers, $build_dir);
   }
 
@@ -850,7 +875,7 @@ sub execute {
   #-------------------------------------------------------
   #add tiers
   if($self->add_tiers){
-      print STDERR "Adding tiers...\n";
+      $self->status_message("Adding tiers...");
       #do annotation
       $snv_file = addTiering($snv_file, $tiering_files);
       $indel_file = addTiering($indel_file, $tiering_files);
@@ -862,8 +887,8 @@ sub execute {
   # add dbsnp/gmaf
 
   if ($self->add_dbsnp_and_gmaf){
-      print STDERR "==== adding dbsnp ids ====\n";
-      print STDERR "$build_dir/variants/snvs.annotated.vcf.gz\n";
+      $self->status_message("==== adding dbsnp ids ====");
+      $self->status_message("$build_dir/variants/snvs.annotated.vcf.gz");
       if(-s "$build_dir/variants/snvs.annotated.vcf.gz"){
           my $db_cmd = Genome::Model::Tools::Annotate::AddRsid->create(
               anno_file => $snv_file,
@@ -871,7 +896,7 @@ sub execute {
               vcf_file => "$build_dir/variants/snvs.annotated.vcf.gz",
               );
           unless ($db_cmd->execute) {
-              die "Failed to add dbsnp anno to file $snv_file.\n";
+              die $self->error_message("Failed to add dbsnp anno to file $snv_file.");
           }
           #pad indel file with tabs to match - if we ever start annotating with indels from dbsnp, replace this section
           open(OUTFILE,">$indel_file.rsid");
@@ -886,7 +911,7 @@ sub execute {
           $snv_file = "$snv_file.rsid";
           $indel_file = "$indel_file.rsid";
       } else {
-          print STDERR "Warning: couldn't find annotated SNV file in build, skipping dbsnp anno\n";
+          $self->warning_message("Couldn't find annotated SNV file in build, skipping dbsnp anno");
       }
   }
 
@@ -894,13 +919,14 @@ sub execute {
 
   #-------------------------------------------------------
   #get readcounts
+  my $indel_size=$self->max_indel_size;
   if($self->get_readcounts){
-      print STDERR "Getting readcounts...\n";
+      $self->status_message("Getting readcounts...");
       if( -s "$snv_file" ){
-          $snv_file = getReadcounts($snv_file, $ref_seq_fasta, $normal_bam, $tumor_bam);
+          $snv_file = getReadcounts($snv_file, $ref_seq_fasta, [$normal_bam, $tumor_bam], $indel_size, $self->bam_readcount_version);
       }
       if( -s "$indel_file" ){
-          $indel_file = getReadcounts($indel_file, $ref_seq_fasta, $normal_bam, $tumor_bam);
+          $indel_file = getReadcounts($indel_file, $ref_seq_fasta, [$normal_bam, $tumor_bam], $indel_size, $self->bam_readcount_version);
       }
   }
 
@@ -908,11 +934,16 @@ sub execute {
 
   #------------------------------------------------------
   # combine the files into one master table
-  `head -n 1 $snv_file >$output_dir/$sample_name/snvs.indels.annotated`;
-  `tail -n +2 $indel_file >>$output_dir/$sample_name/snvs.indels.annotated.tmp`;
-  `tail -n +2 $snv_file >>$output_dir/$sample_name/snvs.indels.annotated.tmp`;
-  `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tmp >>$output_dir/$sample_name/snvs.indels.annotated`;
-  `rm -f $output_dir/$sample_name/snvs.indels.annotated.tmp`;
+  $cmd = "head -n 1 '" . $snv_file . "' >'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated'";
+  `$cmd`;
+  $cmd = "tail -n +2 '" . $indel_file . "' >>'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tmp'";
+  `$cmd`;  
+  $cmd = "tail -n +2 '" . $snv_file . "' >>'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tmp'";
+  `$cmd`;
+  $cmd = "joinx sort -i '" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tmp' >>'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated'";
+  `$cmd`;
+  $cmd = "rm -f '" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tmp'";
+  `$cmd`;
 
   # convert master table to excel
   my $workbook  = Spreadsheet::WriteExcel->new("$output_dir/$sample_name/snvs.indels.annotated.xls");
@@ -936,14 +967,18 @@ sub execute {
   #------------------------------------------------------
   #now get the files together for review
   if($self->create_review_files){
-      print "Generating Review files...\n";
+      $self->status_message("Generating Review files...");
       my @tiers = split(",",$self->tiers_to_review);
       my $tierstring = join("",@tiers);
       for my $i (@tiers){
-          `grep -w tier$i $output_dir/$sample_name/snvs.indels.annotated >>$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
+          $cmd = "grep -w tier$i '" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated' >>'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tier" . $tierstring . ".tmp'";
+          `$cmd`;
       }
-      `joinx sort -i $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp >$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring`;
-      `rm -f $output_dir/$sample_name/snvs.indels.annotated.tier$tierstring.tmp`;
+      $cmd = "joinx sort -i '" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tier" . $tierstring . ".tmp' >'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tier" . $tierstring . "'";
+      `$cmd`;
+      $cmd = "rm -f '" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tier$tierstring.tmp'";
+      `$cmd`;
+
       annoFileToSlashedBedFile("$output_dir/$sample_name/snvs.indels.annotated.tier$tierstring","$output_dir/review/$sample_name.bed");
 
       my $bam_files;
@@ -955,7 +990,7 @@ sub execute {
       if(defined($igv_reference_name)){
           $igv_reference_name = $self->igv_reference_name;
       } else {
-          print STDERR "WARNING: No IGV reference name supplied - defaulting to build 37\n";
+          $self->warning_message("No IGV reference name supplied - defaulting to build 37");
       }
 
       #create the xml file for review
@@ -964,18 +999,19 @@ sub execute {
           labels => "$labels",
           output_file => "$output_dir/review/$sample_name.xml",
           genome_name => $sample_name,
-          review_bed_file => "$output_dir/review/$sample_name.bed",
+          review_bed_files => "$output_dir/review/$sample_name.bed",
           reference_name => $igv_reference_name,
           );
       unless ($dumpXML->execute) {
-          die "Failed to create IGV xml file\n";
+          die $self->error_message("Failed to create IGV xml file");
       }
 
-      print STDERR "\n--------------------------------------------------------------------------------\n";
-      print STDERR "Sites to review are here:\n";
-      print STDERR "$output_dir/review/$sample_name.bed\n";
-      print STDERR "IGV XML file is here:";
-      print STDERR "$output_dir/review/$sample_name.xml\n\n";
+      my $str = "\n--------------------------------------------------------------------------------\n"
+              . "Sites to review are here:\n"
+              . "$output_dir/review/$sample_name.bed\n"
+              . "IGV XML file is here:"
+              . "$output_dir/review/$sample_name.xml\n\n";
+      $self->status_message($str);
   }
 
   #------------------------------------------------
@@ -983,38 +1019,44 @@ sub execute {
   #
   if($self->create_archive){
       mkdir("$output_dir/$sample_name/$sample_name");
-
       chdir("$output_dir/$sample_name/");
       #VCF files
       if($self->include_vcfs_in_archive){
           if(-e "$build_dir/variants/indels.detailed.vcf.gz"){
-              `ln -s $build_dir/variants/indels.detailed.vcf.gz $sample_name/indels.vcf.gz`;
+              $cmd = "ln -s '" . $build_dir . "/variants/indels.detailed.vcf.gz' '" . $sample_name . "/indels.vcf.gz'";
+              `$cmd`;
           } elsif(-e "$build_dir/variants/indels.vcf.gz") {
-              `ln -s $build_dir/variants/indels.vcf.gz $sample_name/indels.vcf.gz`;
+              $cmd = "ln -s '" . $build_dir . "/variants/indels.vcf.gz' '" . $sample_name . "/indels.vcf.gz'";
+              `$cmd`;
           } else {
-              print STDERR "WARNING: no indel VCF file available. If this is an older model, a rebuild may fix this\n";
+              $self->warning_message("no indel VCF file available. If this is an older model, a rebuild may fix this");
           }
           if(-e "$build_dir/variants/snvs.annotated.vcf.gz"){
-              `ln -s $build_dir/variants/snvs.annotated.vcf.gz  $sample_name/snvs.vcf.gz`;
+              $cmd = "ln -s '" . $build_dir . "/variants/snvs.annotated.vcf.gz' '" . $sample_name . "/snvs.vcf.gz'";
+              `$cmd`;
           } elsif (-e "$build_dir/variants/snvs.vcf.gz"){
-              `ln -s $build_dir/variants/snvs.vcf.gz  $sample_name/snvs.vcf.gz`;
+              $cmd = "ln -s '" . $build_dir . "/variants/snvs.vcf.gz' '" . $sample_name . "/snvs.vcf.gz'";
+              `$cmd`;
           } else {
-              print STDERR "WARNING: no snv VCF file available. If this is an older model, a rebuild may fix this\n";
+              $self->warning_message("No snv VCF file available. If this is an older model, a rebuild may fix this");
           }
       }
       #annotated snvs and indels
-      `ln -s ../snvs.indels.annotated $sample_name/snvsAndIndels.annotated`;
+      $cmd = "ln -s ../snvs.indels.annotated '" . $sample_name . "/snvsAndIndels.annotated'";
+      `$cmd`;
       #same in excel format
-      `ln -s ../snvs.indels.annotated.xls $sample_name/snvsAndIndels.annotated.xls`;
+      $cmd = "ln -s ../snvs.indels.annotated.xls '" . $sample_name . "/snvsAndIndels.annotated.xls'";
+      `$cmd`;
       #sv calls
       if($process_svs){
-          `ln -s $sv_file $output_dir/$sample_name/$sample_name/svs`;
-          #`ln -s $sv_file $output_dir/$sample_name/$sample_name/svs.annotated`;
+          $cmd = "ln -s '" . $sv_file . "' '" . $output_dir . "/" . $sample_name . "/svs'";
+          `$cmd`;
       }
       #cnv calls - todo
 
       #tar it up
-      `tar -chzvf $sample_name.tar.gz $sample_name`;
+      $cmd = "tar -chzvf '" . $sample_name . ".tar.gz' '" . $sample_name ."'";
+      `$cmd`;
   }
 
   return 1;

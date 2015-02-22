@@ -35,7 +35,7 @@ use_ok('Genome::Model::Tools::Vcf::Convert::Indel::Pindel');
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Convert-Indel-Pindel";
 
-my $expected_base = "expected.v3";
+my $expected_base = "expected.v4";
 my $input_base    = "input";
 my $expected_dir  = "$test_dir/$expected_base";
 my $input_dir     = "$test_dir/$input_base";

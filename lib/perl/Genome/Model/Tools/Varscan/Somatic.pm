@@ -84,7 +84,7 @@ class Genome::Model::Tools::Varscan::Somatic {
     ],
     has_param => [
         lsf_resource => {
-            default_value => 'select[model!=Opteron250 && type==LINUX64 && mem>4000 && tmp>2000] rusage[mem=4000] span[hosts=1]'
+            default_value => 'select[mem>4000 && tmp>2000] rusage[mem=4000] span[hosts=1]'
         },
    ],
 };

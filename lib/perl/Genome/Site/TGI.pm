@@ -5,6 +5,15 @@ use warnings;
 # do this first so we get usage metrics even if something crashes below
 use Genome::Site::TGI::UsageLog;
 
+use File::Spec qw();
+my $plugins_dir;
+BEGIN {
+    my $file = __FILE__;
+    my $tgi_dir = ($file =~ /(.*)\.pm$/)[0];
+    $plugins_dir = File::Spec->join($tgi_dir, 'SiteLib');
+};
+use lib $plugins_dir;
+
 BEGIN {
     my @shell_vars = qw(
         GENOME_DB
@@ -129,7 +138,15 @@ use Genome::Site::TGI::LegacyTime;
 use Genome::Sys;
 use Genome::Site::TGI::Extension::Sys;      # extensions to Genome::Sys
 
-use Genome::Site::TGI::Extension::Logger;
+BEGIN {
+    unless ($ENV{GENOME_DEV_MODE}) {
+        require Genome::Site::TGI::Extension::Logger;
+        Genome::Site::TGI::Extension::Logger->import();
+    }
+};
+
+use Genome::Sys::Lock;
+use Genome::Site::TGI::Extension::Sys::Lock;
 
 # the old Genome::Config is all deprecated
 # the core stuff about looking up your host config is now in Genome::Site
@@ -148,30 +165,12 @@ use Genome::Site::TGI::Observers;
 
 # A white-list of GSC modules which can be used on the /usr/bin/perl interpreter
 my @lims_whitelist = (
-    'GSC::PSEParam' => [
-        ['Genome/Model/Tools/Lims/ApipeBridge/InstrumentDataStatus.pm', 109],
-    ],
-    'GSC::PSE' => [
-        ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 89],
-        ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForBase.pm', 118],
-        ['Genome/Model/Tools/Lims/ApipeBridge/FixPidfaParamsForGenotype.pm', 25],
-        ['Genome/Model/Tools/Lims/ApipeBridge/InstrumentDataStatus.pm', 115],
-    ],
-    'GSC::Sequence::Genome' => [
-        ['Genome/Model/Tools/Snp/GetDbsnps.pm', 282],
-    ],
     'GSC::Clone' => [
         ['Genome/Site/TGI/objects-load.t', 13],
         ['Genome/Site/TGI/use-gscapp-in-modules-fails.t', 17],
     ],
-    'GSC::Genotyping::External' => [
-        ['Genome/Model/Tools/Lims/ApipeBridge/UpdateGenomeGenotypes', 48],
-    ],
-    'GSC::Genotyping::Internal::Illumina' => [
-        ['Genome/Model/Tools/Lims/ApipeBridge/UpdateGenomeGenotypes', 48],
-    ],
     'App::DB::TableRow::Iterator' => [
-        ['Genome/Model/Tools/Lims/ImportSangerRuns.pm', 105],
+        ['Genome/Site/TGI/Synchronize/Classes/SangerRun.pm', 58],
     ],
     'GSC::Setup::CaptureSet' => [
         ['Genome/Site/TGI/CaptureSet.pm', 110],

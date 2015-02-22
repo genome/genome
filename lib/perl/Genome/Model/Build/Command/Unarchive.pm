@@ -15,6 +15,12 @@ class Genome::Model::Build::Command::Unarchive {
             doc => 'Build(s) to use. Resolved from command line via text string.',
             require_user_verify => 0,
         },
+        queue => {
+            is => 'Boolean',
+            doc => 'If enabled, will queue the model after successful unarchive.',
+            is_optional => 1,
+            default => 0,
+        },
     ],
 };
 
@@ -42,7 +48,7 @@ sub _execute {
         DIR => "/gsc/var/tmp/build_unarchive", 
         CLEANUP => 0
     );
-    chmod 0755, $dir;
+    chmod 0750, $dir;
 
     $self->status_message("Unarchiving data for $total_builds builds, logs being written to $dir");
 
@@ -52,7 +58,7 @@ sub _execute {
         $self->status_message("\nWorking on build " . $build->id . 
             " ($current_build_num of $total_builds)");
 
-        my @allocations = grep { $_->is_archived } $build->all_allocations;
+        my @allocations = grep { $_->is_archived } $build->associated_disk_allocations;
         my $num_allocations = @allocations;
         my (%job_statuses, %job_to_allocation_mapping);
         if ( @allocations ) {
@@ -103,9 +109,11 @@ sub _execute {
 
         # Set the data directory to the absolute path of the main alloc
         my $main_allocation = $build->disk_allocation;
-        UR::Context->reload($main_allocation); # this may have been loaded and unarchived earlier
-        if ( $build->data_directory ne $main_allocation->absolute_path ) {
-            $build->data_directory($main_allocation->absolute_path);
+        if ($main_allocation) {
+            UR::Context->reload($main_allocation); # this may have been loaded and unarchived earlier
+            if ( $build->data_directory ne $main_allocation->absolute_path ) {
+                $build->data_directory($main_allocation->absolute_path);
+            }
         }
 
         if ( $num_allocations == 0 ) {
@@ -127,6 +135,9 @@ sub _execute {
         }
         else {
             $msg .= ", all $num_allocations unarchives finished successfully.";
+            if ($self->queue) {
+                $build->model->build_requested(1, 'queue requested after unarchive');
+            }
         }
         $self->status_message($msg);
     }

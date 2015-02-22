@@ -1,0 +1,13 @@
+[4mOVERVIEW[0m
+Filter out variants that aren't considered damaging
+
+[4mREQUIRED EXPERTS[0m
+vep
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Filter out variants that aren't considered to be damaging
+
+[4mFILTER DESCRIPTION[0m
+Filter out variants that aren't considered to be damaging
+

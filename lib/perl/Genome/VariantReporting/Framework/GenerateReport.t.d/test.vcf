@@ -1,0 +1,6 @@
+##INFO=<ID=EXP1,Number=1,Type=String,Description="Expert 1">
+##INFO=<ID=EXP2,Number=1,Type=String,Description="Expert 2">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+1	1	.	A	T	.	.	EXP1=A;EXP2=B
+1	2	.	A	C,T	.	.	EXP1=C;EXP2=D
+1	3	.	A	T,AA	.	.	EXP2=F

@@ -3,7 +3,7 @@ package Genome::Model::Tools::Relationship::PolymuttDenovoFilter;
 use strict;
 use warnings;
 use Data::Dumper;
-use Genome;           
+use Genome;
 use Genome::Info::IUB;
 use POSIX;
 our $VERSION = '0.01';
@@ -13,32 +13,33 @@ use File::Path;
 
 class Genome::Model::Tools::Relationship::PolymuttDenovoFilter {
     is => 'Command',
-    has_optional_input => [
-    model_group_id => {
-        is_optional=>0,
-        doc=>'id of model group for family',
-    },
-    denovo_vcf=> {
-        is_optional=>0,
-        doc=>'denovo vcf output for same family',
-    },
-    output_file=> {
-        is_optional=>0,
-        doc=>'binomial test outputs for each individual in the family',
-    },
-    min_read_qual=> {
-        is_optional=>1,
-        doc=>'the lowest quality reads to use in the calculation. default q20',
-        default=>"20",
-    },   
-    min_unaffected_pvalue=> {
-        is_optional=>1,
-        doc=>"the minimum binomial test result from unaffected members to pass through the filter",
-        default=>"1.0e-4",
-    },
+    has => [
+        bam_readcount_version => {
+            is => 'Version',
+            doc => 'Version of bam readcount to utilize',
+        },
     ],
-
-
+    has_input => [
+        model_group_id => {
+            doc=>'id of model group for family',
+        },
+        denovo_vcf=> {
+            doc=>'denovo vcf output for same family',
+        },
+        output_file=> {
+            doc=>'binomial test outputs for each individual in the family',
+        },
+        min_read_qual=> {
+            is_optional=>1,
+            doc=>'the lowest quality reads to use in the calculation. default q20',
+            default=>"20",
+        },
+        min_unaffected_pvalue=> {
+            is_optional=>1,
+            doc=>"the minimum binomial test result from unaffected members to pass through the filter",
+            default=>"1.0e-4",
+        },
+    ],
 };
 
 sub help_brief {
@@ -47,7 +48,7 @@ sub help_brief {
 
 sub help_detail {
 }
-#/gscuser/dlarson/src/polymutt.0.01/bin/polymutt -p 20000492.ped -d 20000492.dat -g 20000492.glfindex --minMapQuality 1 --nthreads 4 --vcf 20000492.standard.vcf
+
 sub execute {
     $DB::single=1;
     my $self=shift;
@@ -149,14 +150,15 @@ sub prepare_readcount_files {
         push @readcount_files, $readcount_out;
         unless(-s $readcount_out) {
             print STDERR "running bam-readcount";
-            my $rv = Genome::Model::Tools::Sam::Readcount->execute(
+            my $rc = Genome::Model::Tools::Sam::Readcount->execute(
                 bam_file => $bam,
                 minimum_mapping_quality => $qual,
                 output_file => $readcount_out,
                 reference_fasta => $ref_fasta,
                 region_list => $sites_file,
+                use_version => $self->bam_readcount_version,
             );
-            unless ($rv) {
+            unless ($rc and $rc->result) {
                 $self->error_message("Failed to run readcount");
                 return;
             }

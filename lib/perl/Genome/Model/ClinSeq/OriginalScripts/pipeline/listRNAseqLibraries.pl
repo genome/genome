@@ -30,7 +30,7 @@ if ($common_names){
   print GREEN, "\n\n$usage", RESET;
 }
 
-print YELLOW, "LEGEND:\nCN = common name\nSN = sample name\nET = extraction_type\nSCN = sample common name\nTD = tissue description\nCT = cell type\n", RESET;
+print YELLOW, "LEGEND:\nCN = common name\nSN = sample name\nET = extraction_type\nSCN = sample common name\nTD = tissue description\n", RESET;
 
 #my @common_names = qw/BRC18 BRC36 BRC38/;
 my @common_names = split(",", $common_names);
@@ -54,9 +54,8 @@ for my $common_name (@common_names) {
     my $extraction_type = $sample->extraction_type || "UNDEF";
     my $sample_common_name = $sample->common_name || "UNDEF";
     my $tissue_desc = $sample->tissue_desc || "UNDEF";
-    my $cell_type = $sample->cell_type || "UNDEF";
     if ($extraction_type eq "rna"){
-      print MAGENTA, "\n\t\tSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc\tCT: $cell_type", RESET;
+      print MAGENTA, "\n\t\tSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc", RESET;
       #Get libraries associated with each sample
       my @libraries = $sample->libraries;
       for my $library (@libraries) {

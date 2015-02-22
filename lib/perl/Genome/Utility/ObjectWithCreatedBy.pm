@@ -17,7 +17,7 @@ sub _preprocess_subclass_description {
     my ($class, $desc) = @_;
     $desc->{has}{created_by} = {
         property_name => 'created_by',
-        is => 'Timestamp'
+        is => 'Text'
     };
 
     return $desc;

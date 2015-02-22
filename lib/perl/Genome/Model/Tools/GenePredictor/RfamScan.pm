@@ -87,7 +87,7 @@ sub execute {
     );
     my $raw_output_file = $raw_output_fh->filename;
     $raw_output_fh->close;
-    chmod(0666, $raw_output_file);
+    chmod(0660, $raw_output_file);
     $self->debug_message("Raw output being placed in $raw_output_file");
 
     # Create a list of parameters and then create the command string

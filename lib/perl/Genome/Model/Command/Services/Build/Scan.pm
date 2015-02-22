@@ -58,7 +58,7 @@ sub _build_is_bad {
     }
     #Build could have succeeded in between getting the list of running builds and
     #checking the jobs
-    UR::Context->current->reload($build->the_master_event);
+    UR::Context->current->reload($build);
     if ($build->status eq "Scheduled" or $build->status eq "Running") {
         return 1;
     }

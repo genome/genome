@@ -4,10 +4,11 @@ use strict;
 use warnings;
 
 use Genome;
+use Data::Dump qw(pp);
 use File::Basename;
 
 class Genome::Model::Tools::DetectVariants2::Combine {
-    is  => ['Genome::Command::Base'],
+    is  => ['Command::V2'],
     is_abstract => 1,
     has_input => [
         input_a_id => {
@@ -20,6 +21,17 @@ class Genome::Model::Tools::DetectVariants2::Combine {
             is => 'Text',
             is_output => 1,
         },
+        aligned_reads_sample => {
+            is => 'Text',
+        },
+        control_aligned_reads_sample => {
+            is => 'Text',
+            is_optional => 1,
+        },
+        result_users => {
+            is => 'HASH',
+            doc => 'mapping of labels to user objects. Will be added to any generated results',
+        },
     ],
     has_param => [
         lsf_queue => {
@@ -27,6 +39,16 @@ class Genome::Model::Tools::DetectVariants2::Combine {
         },
     ],
     has_optional => [
+        input_a => {
+            is_transient => 1,
+            is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
+            id_by => 'input_a_id',
+        },
+        input_b => {
+            is_transient => 1,
+            is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
+            id_by => 'input_b_id',
+        },
         _result_id => {
             is => 'Text',
             is_output => 1,
@@ -151,7 +173,7 @@ sub _try_vcf {
             $self->debug_message("No software-result associated with input_id: ".$input_id);
             return 0;
         }
-        my $input_vcf_result = $input_result->get_vcf_result;
+        my $input_vcf_result = $input_result->get_vcf_result($self->aligned_reads_sample, $self->control_aligned_reads_sample, $self->result_users);
         $vcf_count++ if $input_vcf_result;
     }
     if($vcf_count == 2){
@@ -226,6 +248,18 @@ sub _resolve_output_directory {
     return 1;
 }
 
+sub test_name_from_input_results {
+    my $self = shift;
+
+    if (pp($self->input_a->test_name) eq pp($self->input_b->test_name)) {
+        return $self->input_a->test_name;
+    } else {
+        die sprintf("The test_names on inputs do not match: input_a (%s) has test_name (%s) and input_b (%s) has (%s)",
+            $self->input_a_id, pp($self->input_a->test_name),
+            $self->input_b_id, pp($self->input_b->test_name),
+        );
+    }
+}
 
 sub params_for_combine_result {
     my $self = shift;
@@ -234,7 +268,8 @@ sub params_for_combine_result {
         input_a_id => $self->input_a_id,
         input_b_id => $self->input_b_id,
         subclass_name => $self->_result_class,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => $self->test_name_from_input_results,
+        users => $self->result_users,
     );
 
     return \%params;
@@ -242,12 +277,15 @@ sub params_for_combine_result {
 
 sub params_for_vcf_result {
     my $self = shift;
+    my $aligned_reads_sample = $self->aligned_reads_sample;
+    my $control_aligned_reads_sample = $self->control_aligned_reads_sample;
+    my $result_users = $self->result_users;
 
     my $prev_result_a = Genome::SoftwareResult->get($self->input_a_id);
     my $prev_result_b = Genome::SoftwareResult->get($self->input_b_id);
 
-    my $prev_vcf_result_a = $prev_result_a->get_vcf_result;
-    my $prev_vcf_result_b = $prev_result_b->get_vcf_result;
+    my $prev_vcf_result_a = $prev_result_a->get_vcf_result($aligned_reads_sample, $control_aligned_reads_sample, $result_users);
+    my $prev_vcf_result_b = $prev_result_b->get_vcf_result($aligned_reads_sample, $control_aligned_reads_sample, $result_users);
 
     my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
     my $joinx_version = Genome::Model::Tools::Joinx->get_default_version;
@@ -269,12 +307,13 @@ sub params_for_vcf_result {
         input_a_id => $self->input_a_id,
         input_b_id => $self->input_b_id,
         input_id => $self->_result->id,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => $self->test_name_from_input_results,
         incoming_vcf_result_a => $prev_vcf_result_a,
         incoming_vcf_result_b => $prev_vcf_result_b,
         vcf_version => $vcf_version,
         variant_type => $self->_variant_type,
         joinx_version => $joinx_version,
+        users => $self->result_users,
     );
 
     return \%params;

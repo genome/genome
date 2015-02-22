@@ -53,12 +53,12 @@ sub _execute {
     $self->status_message("Starting unarchive command...");
 
     for my $allocation ($self->allocations) {
-        $self->debug_message("Unarchiving allocation " . $allocation->id);
+        $self->status_message("Unarchiving allocation " . $allocation->id);
         my $rv = $allocation->unarchive(reason => $self->reason);
         unless ($rv) {
             Carp::confess "Could not unarchive alloation " . $allocation->id;
         }
-        $self->debug_message("Finished unarchiving allocation " . $allocation->id);
+        $self->status_message("Finished unarchiving allocation " . $allocation->id);
     }
 
     $self->status_message("Done unarchiving, exiting...");

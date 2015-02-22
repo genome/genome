@@ -82,7 +82,7 @@ class Genome::Model::Tools::Varscan::SomaticMt {
     ],
     has_param => [
         lsf_resource => {
-            default_value => 'select[model!=Opteron250 && type==LINUX64] rusage[mem=4000]'
+            default_value => 'rusage[mem=4000]'
         },
     ],
 };

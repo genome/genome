@@ -1,0 +1,67 @@
+experts:
+    'bam-readcount':
+        aligned_bam_result_id: [aligned_bam_result_id]
+        version: 0.7
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 1
+        insertion_centric: 0
+    vep:
+        ensembl_version: 75
+        custom_annotation_tags:
+            - ON_TARGET
+        feature_list_ids: feature_list_ids
+        reference_fasta: reference_fasta
+        species: 'homo-sapiens'
+        plugins:
+            - Condel@PLUGIN_DIR@b@2
+        plugins_version: 1
+        joinx_version: 1.9
+    dbsnp:
+        joinx_version: 1.10
+        info_string: 'CAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+        vcf: dbsnp_vcf
+    nhlbi:
+        joinx_version: 1.10
+        info_string: 'AAC:PP:CDP:PH:EA_GTC:AA_GTC:MAF'
+        vcf: nhlbi_vcf
+    '1kg':
+        joinx_version: 1.10
+        info_string: 'AF:AFR_AF:AMR_AF'
+        vcf: thousand_genomes_vcf
+reports:
+    'tumor-only':
+        filters:
+            'allele-in-genotype':
+                sample_name: tumor
+            'ft-keep':
+                keep_filter_values:
+                    - PASS
+                    - .
+                sample_name: tumor
+            'vaf-cutoff':
+                min_vaf: 10
+                sample_name: tumor
+            'min-coverage':
+                min_coverage: 10
+                sample_name: tumor
+            'max-af':
+                max_af: 0.001
+            'contains-tag':
+                info_tag: ON_TARGET
+            'max-maf':
+                max_maf: 0.1
+                population_code: All
+            '1kg-max-af':
+                max_af: 0.001
+        interpreters:
+            position: {}
+            vep: {}
+            rsid: {}
+            caf: {}
+            nhlbi: {}
+            '1kg': {}
+            vaf:
+                sample_names:
+                    - tumor

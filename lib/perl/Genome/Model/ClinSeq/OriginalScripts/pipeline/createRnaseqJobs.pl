@@ -143,11 +143,10 @@ if ($common_names){
       my $individual = $sample->patient;
       my $common_name = $individual->common_name || "unknown";
       my $tissue_desc = $sample->tissue_desc || "unknown";
-      my $cell_type = $sample->cell_type || "unknown";
       my $sample_common_name = $sample->common_name || "unknown";
       if ($extraction_type){
         if ($extraction_type eq "rna"){
-          print BLUE, "\n\t\t$common_name. Found RNA sample ($sample_name) for $individual_name of tissue description: $tissue_desc and cell type: $cell_type and sample common name: $sample_common_name", RESET;
+          print BLUE, "\n\t\t$common_name. Found RNA sample ($sample_name) for $individual_name of tissue description: $tissue_desc and sample common name: $sample_common_name", RESET;
           push (@aggregate_samples, $sample);
         }
       }else{
@@ -175,11 +174,10 @@ if ($individual_names){
       my $individual = $sample->patient;
       my $common_name = $individual->common_name || "unknown";
       my $tissue_desc = $sample->tissue_desc || "unknown";
-      my $cell_type = $sample->cell_type || "unknown";
       my $sample_common_name = $sample->common_name || "unknown";
       if ($extraction_type){
         if ($extraction_type eq "rna"){
-          print BLUE, "\n\t\t$common_name. Found RNA sample ($sample_name) for $individual_name of tissue description: $tissue_desc and cell type: $cell_type and sample common name: $sample_common_name", RESET;
+          print BLUE, "\n\t\t$common_name. Found RNA sample ($sample_name) for $individual_name of tissue description: $tissue_desc and sample common name: $sample_common_name", RESET;
           push (@aggregate_samples, $sample);
         }
       }else{
@@ -205,11 +203,10 @@ if ($sample_names){
     my $sample_name = $sample->name;
     my $common_name = $individual->common_name || "unknown";
     my $tissue_desc = $sample->tissue_desc || "unknown";
-    my $cell_type = $sample->cell_type || "unknown";
     my $sample_common_name = $sample->common_name || "unknown";
     if ($extraction_type){
       if ($extraction_type eq "rna"){
-        print BLUE, "\n\t\t$common_name. Found RNA sample ($sample_name) for $individual_name of tissue description: $tissue_desc and cell type: $cell_type and sample common name: $sample_common_name", RESET;
+        print BLUE, "\n\t\t$common_name. Found RNA sample ($sample_name) for $individual_name of tissue description: $tissue_desc and sample common name: $sample_common_name", RESET;
         push (@aggregate_samples, $sample);
       }
     }else{
@@ -237,11 +234,10 @@ if ($model_groups){
       my $individual_name = $individual->name;
       my $common_name = $individual->common_name || "unknown";
       my $tissue_desc = $sample->tissue_desc || "unknown";
-      my $cell_type = $sample->cell_type || "unknown";
       my $sample_common_name = $sample->common_name || "unknown";
       if ($extraction_type){
         if ($extraction_type eq "rna"){
-          print BLUE, "\n\t\t$common_name. Found RNA sample ($sample_name) for $individual_name of tissue description: $tissue_desc and cell type: $cell_type and sample common name: $sample_common_name", RESET;
+          print BLUE, "\n\t\t$common_name. Found RNA sample ($sample_name) for $individual_name of tissue description: $tissue_desc and sample common name: $sample_common_name", RESET;
           push (@aggregate_samples, $sample);
         }
       }else{
@@ -277,7 +273,6 @@ foreach my $sample (@final_samples){
   my $individual_name = $individual->name;
   my $common_name = $individual->common_name || "unknown";
   my $tissue_desc = $sample->tissue_desc || "unknown";
-  my $cell_type = $sample->cell_type || "unknown";
   my $sample_common_name = $sample->common_name || "unknown";
 
   #Add a sort value to the sample objects
@@ -319,7 +314,7 @@ foreach my $sample (@final_samples){
 
 
   $output{$s}{sort_name} = $sort_name;
-  $output{$s}{header} = "\n#Common_name = $common_name, Individual_name = $individual_name, Sample_name = $sample_name, Sample_common_name = $sample_common_name, Cell_type = $cell_type, Tissue_desc = $tissue_desc";
+  $output{$s}{header} = "\n#Common_name = $common_name, Individual_name = $individual_name, Sample_name = $sample_name, Sample_common_name = $sample_common_name, Tissue_desc = $tissue_desc";
   $output{$s}{clinseq_cmd} = "\ngenome model define rna-seq  --processing-profile='$pp_id'  --reference-sequence-build='$reference_sequence_build_id'  --annotation-build='$annotation_build'  --subject='$sample_name'  --model-name='$model_name'";
   $output{$s}{id_cmd} = "\ngenome model instrument-data assign all-compatible --model='$model_name'";
   $output{$s}{build_cmd} = "\ngenome model build start '$model_name'\n";

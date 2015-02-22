@@ -12,36 +12,43 @@ use File::Path;
 use File::Find 'find';
 use File::Next;
 use File::Basename qw/ dirname fileparse /;
+use List::MoreUtils qw(uniq);
 use Regexp::Common;
 use Workflow;
-use YAML;
 use Date::Manip;
 
 use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
 
 class Genome::Model::Build {
-    is => ['Genome::Notable','Genome::Searchable'],
-    type_name => 'genome model build',
+    is => [
+        "Genome::Notable",
+        "Genome::Searchable",
+        "Genome::Utility::ObjectWithAllocations",
+        "Genome::Utility::ObjectWithCreatedBy",
+        "Genome::Utility::ObjectWithTimestamps",
+        "Genome::SoftwareResult::Requestor",
+    ],
     table_name => 'model.build',
     is_abstract => 1,
+    attributes_have => [
+        is_input => { is => 'Boolean', is_optional => 1 },
+        is_param => { is => 'Boolean', is_optional => 1 },
+        is_output => { is => 'Boolean', is_optional => 1 },
+        is_metric => { is => 'Boolean', is_optional => 1 },
+    ],
+    subclass_description_preprocessor => 'Genome::Model::Build::_preprocess_subclass_description',
     subclassify_by => 'subclass_name',
-    subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
+    type_name => 'genome model build',
     id_by => [
         # TODO: change to just "id"
         build_id => { is => 'Text', len => 64 },
     ],
-    attributes_have => [
-        is_input    => { is => 'Boolean', is_optional => 1, },
-        is_param    => { is => 'Boolean', is_optional => 1, },
-        is_output   => { is => 'Boolean', is_optional => 1, },
-        is_metric   => { is => 'Boolean', is_optional => 1 },
-    ],
     has => [
         is_last_complete => {
             is => 'Boolean',
-            calculate_from => ['id','model'],
-            calculate => q|my $build = $model->last_complete_build; return $build && $build->id eq $id|,
+            calculate_from => [ 'id', 'model' ],
+            calculate => q(my $build = $model->last_complete_build; return $build && $build->id eq $id),
             doc => 'true for any build which is the last complete bulid for a model',
         },
         subclass_name => {
@@ -49,68 +56,143 @@ class Genome::Model::Build {
             len => 255,
             is_mutable => 0,
             column_name => 'SUBCLASS_NAME',
-            calculate_from => ['model_id'],
-            # We subclass via our model's type_name (which is via it's processing profile's type_name)
+            calculate_from => 'model_id',
             calculate => sub {
                 my($model_id) = @_;
                 return unless $model_id;
                 my $model = Genome::Model->get($model_id);
                 Carp::croak("Can't find Genome::Model with ID $model_id while resolving subclass for Build") unless $model;
                 return __PACKAGE__ . '::' . Genome::Utility::Text::string_to_camel_case($model->type_name);
-            }
+            },
         },
-        data_directory          => { is => 'Text', len => 1000, is_optional => 1 },
-        model                   => { is => 'Genome::Model', id_by => 'model_id' },
-        type_name               => { via => 'model', is => 'Text' },
-        subject                 => { via => 'model', is => 'Genome::Subject' },
-        processing_profile      => { via => 'model', is => 'Genome::ProcessingProfile' },
-        run_by                  => { via => 'creation_event', to => 'user_name' },
-        status                  => { via => 'creation_event', to => 'event_status', is_mutable => 1 },
-        date_scheduled          => { via => 'creation_event', to => 'date_scheduled', },
-        date_completed          => { via => 'creation_event', to => 'date_completed' },
-
+        data_directory => { is => 'Text', len => 1000, is_optional => 1 },
+        model => { is => 'Genome::Model', id_by => 'model_id' },
+        type_name => { is => 'Text', via => 'model' },
+        subject => { is => 'Genome::Subject', via => 'model' },
+        processing_profile => { is => 'Genome::ProcessingProfile', via => 'model' },
+        run_by => { is => 'Text', doc => 'the user whose build is run' },
+        status => { is => 'Text', doc => 'the current status of the build' },
+        date_scheduled => {
+            is => 'DateTime',
+            is_optional => 1,
+            doc => 'when the build was originally scheduled',
+        },
+        date_completed => {
+            is => 'DateTime',
+            is_optional => 1,
+            doc => 'when the build has finally completed',
+        },
         # this is the one event type we tentatively intended to keep for builds
         # even fully workflowified, it is possibly still a candidate for retention, logging things like input changes, etc.
-        creation_event          => { is => 'Genome::Model::Event', reverse_as => 'build', where => [ event_type => 'genome model build' ], is_many => 1, is_constant => 1},
-        _events                 => { is => 'Genome::Model::Event', reverse_as => 'build', is_many => 1 },
+        creation_event => {
+            is => 'Genome::Model::Event',
+            reverse_as => 'build',
+            where => [ event_type => 'genome model build' ],
+            is_constant => 1,
+            is_many => 1,
+        },
+        _events => {
+            is => 'Genome::Model::Event',
+            reverse_as => 'build',
+            is_many => 1,
+        },
     ],
     has_optional => [
         _newest_workflow_instance => {
             is => 'Workflow::Operation::Instance',
-            is_calculated => 1,
-            calculate => q{ return $self->newest_workflow_instance(); }
+            calculate => q( return $self->newest_workflow_instance(); ),
         },
-        disk_allocation   => { 
-            is => 'Genome::Disk::Allocation', 
-            calculate_from => [ 'class', 'id' ],
-            calculate => q(
-                my $disk_allocation = Genome::Disk::Allocation->get(
-                                        owner_class_name => $class,
-                                        owner_id => $id,
-                                    );
-                return $disk_allocation;
-            ) 
+        software_revision => { is => 'Text', len => 1000 },
+    ],
+    has_many_optional_deprecated => [
+        # the_* ?
+        # I don't believe anythign which uses events actually needs these
+        the_events => {
+            is => 'Genome::Model::Event',
+            via => '__self__',
+            to => '_events',
         },
-        software_revision => { 
-            is => 'Text', 
-            len => 1000 
+        the_events_statuses => {
+            is => 'Text',
+            via => 'event_status',
+            to => '_events',
+            is_many => 1,
+        },
+        # these are ambiguosuly named and are still present only for backward compatibility
+        # these returns the "bridge", but are named for the thing on the other side of the bridge
+        # now there is "*_associations", which are clearly a bridge,
+        attributes => {
+            is => 'Genome::MiscAttribute',
+            via => 'attribute_associations',
+            to => '__self__',
+        },
+        instrument_data_inputs => {
+            is => 'Genome::Model::Build::Input',
+            via => '__self__',
+            to => 'instrument_data_associations',
+        },
+        result_users => {
+            # this is particularly confusing, because it is giving the user
+            # of the builds's results, but the cases where the build itself
+            # is the user of the result (ie: use $build->result_associations)
+            is => 'Genome::SoftwareResult::User',
+            via => '__self__',
+            to => 'result_associations',
+        },
+        # unnecessary now that the dot syntax is supported on the command line, and also in get():
+        instrument_data_ids => { via => 'instrument_data', to => 'id' },
+        model_groups => { via => 'model', is_many => 1 },
+        work_order_names => { via => 'work_orders', to => 'name' },
+        work_order_numbers => { via => 'work_orders', to => 'id' },
+
+        # this is just a duplicate of "status" with a different name
+        master_event_status => {
+            via => 'the_master_event',
+            to => 'event_status',
+            is_many => 1,
+        },
+
+        # we now use model/build inputs instead of links
+        # when these can be removed do
+        # see "downstream_builds"
+        from_build_links => {
+            is => 'Genome::Model::Build::Link',
+            reverse_as => 'to_build',
+            doc => q(bridge table entries where this is the "to" build(used to retrieve builds this build is "from")),
+        },
+        from_builds => {
+            is => 'Genome::Model::Build',
+            via => 'from_build_links',
+            to => 'from_build',
+            doc => q(Genome builds that contribute "to" this build),
+        },
+        to_build_links => {
+            is => 'Genome::Model::Build::Link',
+            reverse_as => 'from_build',
+            doc => q(bridge entries where this is the "from" build(used to retrieve builds builds this build is "to")),
+        },
+        to_builds => {
+            is => 'Genome::Model::Build',
+            via => 'to_build_links',
+            to => 'to_build',
+            doc => q(Genome builds this build contributes "to"),
         },
     ],
     has_many_optional => [
         input_values => {
             via => 'inputs',
             to => 'value',
-            doc => "The values associated with a build's input associations.",
+            doc => q(The values associated with a build's input associations.),
         },
         inputs => {
             is => 'Genome::Model::Build::Input',
             reverse_as => 'build',
-            doc => 'Links between a build and its input values, including the specification of which input the value satisfies.'
+            doc => 'Links between a build and its input values, including the specification of which input the value satisfies.',
         },
         downstream_build_associations => {
             is => 'Genome::Model::Build::Input',
             reverse_as => '_build_value',
-            doc => 'links to models which use this model as an input', 
+            doc => 'links to models which use this model as an input',
         },
         downstream_builds => {
             is => 'Genome::Model::Build',
@@ -118,14 +200,13 @@ class Genome::Model::Build {
             to => 'build',
             doc => 'models which use this model as an input',
         },
-
-        instrument_data  => {
+        instrument_data => {
             is => 'Genome::InstrumentData',
             via => 'inputs',
             to => 'value',
             is_mutable => 1,
             where => [ name => 'instrument_data' ],
-            doc => 'Instrument data assigned to the model when the build was created.'
+            doc => 'Instrument data assigned to the model when the build was created.',
         },
         instrument_data_associations => {
             is => 'Genome::Model::Build::Input',
@@ -144,95 +225,51 @@ class Genome::Model::Build {
             is => 'Genome::SoftwareResult::User',
             reverse_as => 'user',
         },
-        attribute_associations => { 
-            is => 'Genome::MiscAttribute', 
-            reverse_as => '_build', 
-            where => [ entity_class_name => 'Genome::Model::Build' ] 
+        attribute_associations => {
+            is => 'Genome::MiscAttribute',
+            reverse_as => '_build',
+            where => [ entity_class_name => 'Genome::Model::Build' ],
         },
-        metrics => { 
-            is => 'Genome::Model::Metric', 
+        metrics => {
+            is => 'Genome::Model::Metric',
             reverse_as => 'build',
-            doc => 'Build metrics' 
+            doc => 'Build metrics',
         },
         projects => {
             # TODO: shoudln't this be Genome::Project?  Genome::Site::TGI::Project is used by the sync cron only, right?
-            is => 'Genome::Site::TGI::Project', 
-            via => 'model' 
+            is => 'Genome::Site::TGI::Project',
+            via => 'model',
+            is_many => 1,
         },
         work_orders => {
             # TODO: is this relationship correct?
             # workorders should be more granular than projects
-            is => 'Genome::WorkOrder', 
-            via => 'projects' 
+            is => 'Genome::WorkOrder',
+            via => 'projects',
         },
     ],
     has_optional_deprecated => [
         # unnecessary now that the dot syntax is supported on the command line, and also in get():
-        processing_profile_id   => { via => 'model' },
+        processing_profile_id => { via => 'model' },
         processing_profile_name => { via => 'model' },
-        subject_id              => { via => 'model' },
-        subject_name            => { via => 'subject', to => 'name' },
-        model_id                => { is => 'NUMBER', implied_by => 'model', constraint_name => 'GMB_GMM_FK' },
-        model_name              => { via => 'model', to => 'name' },
-        
+        subject_id => { via => 'model' },
+        subject_name => { via => 'subject', to => 'name' },
+        model_name => { via => 'model', to => 'name' },
         # this should be moved down into the classes which actually use it
         region_of_interest_set_name => {
             is => 'Text',
-            is_many => 1,
-            is_mutable => 1,
             via => 'inputs',
             to => 'value_id',
+            is_mutable => 1,
             where => [ name => 'region_of_interest_set_name', value_class_name => 'UR::Value' ],
+            is_many => 1,
         },
-        
-        # poorly named 
-        the_master_event => { 
-            is => 'Genome::Model::Event', 
-            via => 'creation_event', 
-            to => '__self__' 
-        }, 
-    ],
-    has_many_optional_deprecated => [
-        # the_* ?
-        # I don't believe anythign which uses events actually needs these
-        the_events => { is => 'Genome::Model::Event', to => '_events', via => '__self__' },
-        the_events_statuses => { is => 'Text', to => '_events', via => 'event_status' },
-        
-        # these are ambiguosuly named and are still present only for backward compatibility
-        # these returns the "bridge", but are named for the thing on the other side of the bridge
-        # now there is "*_associations", which are clearly a bridge,
-        # and "*_values", which are unambiguously the value across the bridge
-        attributes => { is => 'Genome::MiscAttribute', via => 'attribute_associations', to => '__self__', },
-        instrument_data_inputs => { is => 'Genome::Model::Build::Input', to => 'instrument_data_associations', via => '__self__', },
-        result_users => {
-            # this is particularly confusing, because it is giving the user
-            # of the builds's results, but the cases where the build itself
-            # is the user of the result (ie: use $build->result_associations)
-            is => 'Genome::SoftwareResult::User',
-            to => 'result_associations',
-            via => '__self__',
+        the_master_event => {
+            is => 'Genome::Model::Event',
+            via => 'creation_event',
+            to => '__self__',
+            is_many => 0,
         },
-       
-        # unnecessary now that the dot syntax is supported on the command line, and also in get():
-        instrument_data_ids => { via => 'instrument_data', to => 'id', is_many => 1, }, # use instrument_data.id instead
-        model_groups     => { via => 'model', is_many => 1, },      # use model.groups instead
-        work_order_names => { via => 'work_orders', to => 'name' }, # use work_orders.name instead
-        work_order_numbers => { via => 'work_orders', to => 'id' }, # use work_orders.number instead
-        
-        # this is just a duplicate of "status" with a different name
-        master_event_status     => { via => 'the_master_event', to => 'event_status' },
-
-        # we now use model/build inputs instead of links
-        # when these can be removed do
-        # see "downstream_builds" 
-        from_build_links => { is => 'Genome::Model::Build::Link', reverse_as => 'to_build',
-                              doc => 'bridge table entries where this is the \"to\" build(used to retrieve builds this build is \"from\")' },
-        from_builds      => { is => 'Genome::Model::Build', via => 'from_build_links', to => 'from_build',
-                              doc => 'Genome builds that contribute \"to\" this build' },
-        to_build_links   => { is => 'Genome::Model::Build::Link', reverse_as => 'from_build',
-                              doc => 'bridge entries where this is the \"from\" build(used to retrieve builds builds this build is \"to\")' },
-        to_builds        => { is => 'Genome::Model::Build', via => 'to_build_links', to => 'to_build',
-                              doc => 'Genome builds this build contributes \"to\"' },
     ],
     schema_name => 'GMSchema',
     data_source => 'Genome::DataSource::GMSchema',
@@ -363,6 +400,8 @@ sub create {
         }
 
         # Create master event, which stores status/user/date created, etc
+        $self->status('New');
+        $self->run_by(Genome::Sys->username);
         unless ($self->_create_master_event) {
             Carp::confess "Could not create master event for new build of model " . $self->model->__display_name__;
         }
@@ -373,7 +412,8 @@ sub create {
     };
 
     if ($@) {
-        $self->error_message("Could not create new build of model " . $self->__display_name__ . ", reason: $@");
+        my $error = $@;
+        $self->error_message("Could not create new build of model " . $self->__display_name__ . ", reason: $error");
         $self->delete;
         return;
     }
@@ -672,38 +712,38 @@ sub get_or_create_data_directory {
     return $self->data_directory;
 }
 
-sub reallocate {
-    my $self = shift;
+sub _unarchive_disk_allocations {
+    my ($self, %params) = @_;
 
-    my $status = $self->status;
-    my $disk_allocation = $self->disk_allocation;
-
-    if ($disk_allocation) {
-        my $reallocated = eval { $disk_allocation->reallocate };
-        $self->warning_message("Failed to reallocate disk space!") unless $reallocated;
-    }
-    else {
-        $self->warning_message("Reallocate called for build (" . $self->__display_name__ . ") but it does not have a disk allocation.");
+    my $unarchive_cmd = Genome::Model::Build::Command::Unarchive->create(
+        builds => [ $self ],
+        lab => 'Informatics',
+    );
+    if ( not $unarchive_cmd ) {
+        $self->error_message();
+        return;
     }
 
-    # Always returns 1 due to legacy behavior.
+    my $unarchive_ok = $unarchive_cmd->execute(
+    );
+    if ( not $unarchive_ok ) {
+        $self->error_message();
+        return;
+    }
+
     return 1;
 }
 
-sub all_allocations {
+sub _additional_associated_disk_allocations {
     my $self = shift;
 
     my @allocations;
-    push @allocations, $self->disk_allocation if $self->disk_allocation;
-
     push @allocations, $self->user_allocations;
     push @allocations, $self->symlinked_allocations;
-
     push @allocations, $self->input_allocations;
     push @allocations, $self->event_allocations;
 
-    my %allocations = map { $_->id => $_ } @allocations;
-    return values %allocations;
+    return @allocations;
 }
 
 sub disk_usage_allocations {
@@ -743,7 +783,7 @@ sub input_allocations {
     for my $input ($self->inputs) {
         my $value = $input->value;
         if ($value and $value->isa('Genome::Model::Build')) {
-            push @allocations, $input->value->all_allocations();
+            push @allocations, $input->value->associated_disk_allocations();
         }
         else {
             push @allocations, Genome::Disk::Allocation->get(
@@ -782,22 +822,11 @@ sub event_allocations {
 
 sub all_results {
     my $self = shift;
-
-    my @users = $self->result_users;
-    my %seen;
-    my @results;
-    while(@users) {
-        my $u = shift @users;
-        my $result = $u->software_result;
-        next if $seen{$result->id}; #already processed
-
-        push @results, $result;
-        push @users, Genome::SoftwareResult::User->get(user_class_name => $result->class, user_id => $result->id);
-        $seen{$result->id}++;
-    }
-
-    return @results;
+    my @results = $self->results;
+    my @ancestors = map { $_->ancestors } @results;
+    return uniq @results, @ancestors;
 }
+
 
 sub symlinked_allocations {
     my $self = shift;
@@ -805,7 +834,7 @@ sub symlinked_allocations {
     my $data_directory = $self->data_directory;
     return if not $data_directory or not -d $data_directory;
 
-    # In some circumstances, this can get called (though all_allocations())
+    # In some circumstances, this can get called (though associated_disk_allocations())
     # many times.  NFS slowness would compound the problem and make this
     # method way too slow.  We'll get the result the first time and cache
     # the answer
@@ -932,7 +961,7 @@ sub add_report {
             if ($n == $max) {
                 die "Too many re-runs of this report!  Contact Informatics..."
             }
-            rename $subdir, "$subdir.$n";
+            Genome::Sys->rename($subdir, "$subdir.$n");
             if (-e $subdir) {
                 die "failed to move old report dir $subdir to $subdir.$n!: $!";
             }
@@ -953,29 +982,6 @@ sub add_report {
         $self->error_message("Error saving report!: " . $report->error_message());
         return;
     }
-}
-
-sub archivable {
-    my $self = shift;
-    my $allocation = $self->disk_allocation;
-    unless ($allocation) {
-        $self->warning_message("Could not get allocation for build " . $self->__display_name__);
-        return 0;
-    }
-    return $allocation->archivable();
-}
-
-sub is_archived {
-    my $self = shift;
-    my $is_archived = 0;
-    my @allocations = $self->all_allocations;
-    for my $allocation (@allocations) {
-        if ($allocation->is_archived()) {
-            $is_archived = 1;
-            last;
-        }
-    }
-    return $is_archived;
 }
 
 sub start {
@@ -1011,7 +1017,7 @@ sub start {
         }
 
         # Record that the event has been scheduled.
-        $self->the_master_event->schedule;
+        $self->schedule;
 
         # Creates a workflow for the build
         # TODO Initialize workflow shouldn't take arguments
@@ -1035,12 +1041,24 @@ sub start {
             header_text => 'Unstartable',
             body_text => "Could not start build, reason: $error",
         );
-        $self->the_master_event->event_status('Unstartable');
+        $self->status('Unstartable');
         $self->error_message("Could not start build " . $self->__display_name__ . ", reason: $error");
         return;
     }
 
     return 1;
+}
+
+sub schedule {
+    my $self = shift;
+
+    $self->status("Scheduled");
+    $self->date_scheduled( UR::Context->current->now );
+    $self->date_completed(undef);
+
+    if($self->the_master_event) {
+        $self->the_master_event->schedule;
+    }
 }
 
 sub post_allocation_initialization {
@@ -1102,18 +1120,34 @@ sub validate_instrument_data{
     my @tags;
     my @instrument_data = $self->instrument_data;
     for my $instrument_data (@instrument_data){
-        if (not defined $instrument_data->read_count){
+        if (not defined $instrument_data->read_count) {
             push @tags, UR::Object::Tag->create(
                 type => 'error',
                 properties => ['instrument_data'],
                 desc => 'read count for instrument data (' . $instrument_data->id . ') has not been calculated, use `genome instrument-data calculate-read-count` to correct this.',
             );
-        } elsif (not $instrument_data->read_count){
+        } elsif (not $instrument_data->read_count) {
             push @tags, UR::Object::Tag->create(
                 type => 'error',
                 properties => ['instrument_data'],
                 desc => 'no reads for instrument data (' . $instrument_data->id . ') assigned to build',
             );
+        }
+        if (my $bam_path = $instrument_data->bam_path) {
+            if (! -f $bam_path) {
+                push @tags, UR::Object::Tag->create(
+                    type => 'error',
+                    properties => ['instrument_data'],
+                    desc => 'instrument data (' . $instrument_data->id . ') has bam_path but the file does not exist',
+                );
+
+            } elsif (! -s $bam_path) {
+                push @tags, UR::Object::Tag->create(
+                    type => 'error',
+                    properties => ['instrument_data'],
+                    desc => 'instrument data (' . $instrument_data->id . ') has bam_path but no size',
+                );
+            }
         }
     }
     return @tags;
@@ -1345,16 +1379,7 @@ sub _launch {
         my $lsf_project = "build" . $self->id;
         $ENV{'WF_LSF_PROJECT'} = $lsf_project;
 
-        my $bsub_bin = 'bsub';
         my $genome_bin = $Command::entry_point_bin || 'genome';
-
-        if ($self->_should_run_as && $self->_can_run_as) {
-            # -i simulates login which help prevent this from being abused to
-            # execute arbitrary commands.
-            $self->creation_event->user_name($self->model->run_as);
-            $bsub_bin = [qw(sudo -n -i -u), $self->model->run_as, '--',
-                _sudo_wrapper()];
-        }
 
         my @bsub_args = (
             email    => Genome::Utility::Email::construct_address(),
@@ -1387,13 +1412,7 @@ sub _launch {
         );
 
         my @genome_args;
-    
-        # args have to be --key=value for _sudo_wrapper()
-        # NOTE: an $add_args value was previously prepended
-        #   my $add_args = ($job_dispatch eq 'inline') ? ' --inline' : '';
-        #   if ($fresh_workflow) {
-        #       $add_args .= ' --restart';
-        #   }
+        # args have to be --key=value for Genome::Model->sudo_wrapper()
         push @genome_args, '--model-id=' . $model->id;
         push @genome_args, '--build-id=' . $self->id;
         # NOTE: gms-pub previously explicitly redirected output b/c
@@ -1406,7 +1425,7 @@ sub _launch {
 
         my $cmd = ["bash -c '" . join(" ", @genome_cmd, @genome_args) . "'"];
         my $job_id = $self->_execute_bsub_command(
-            $bsub_bin,
+            'bsub',
             @bsub_args,
             cmd => $cmd, 
         );
@@ -1417,24 +1436,6 @@ sub _launch {
         return 1;
     }
 }
-
-sub _should_run_as {
-    my $self = shift;
-    return (Genome::Sys->username ne $self->model->run_as);
-}
-
-sub _can_run_as {
-    my $self = shift;
-
-    my $sudo_wrapper = _sudo_wrapper();
-    unless ( -x $sudo_wrapper ) {
-        return;
-    }
-
-    return 1;
-}
-
-sub _sudo_wrapper { '/usr/local/bin/bsub-genome-build' }
 
 sub _job_dispatch {
     my $model = shift;
@@ -1584,14 +1585,13 @@ sub fail {
     $self->_verify_build_is_not_abandoned_and_set_status_to('Failed', 1)
         or return;
 
-    if ($self->disk_allocation) {
-        $self->reallocate;
-    }
+    $self->reallocate_disk_allocations;
 
     # set event status
     for my $e ($self->the_events(event_status => 'Running')) {
         $e->event_status('Failed');
     }
+    $self->status('Failed');
 
     $self->generate_send_and_save_report(
         'Genome::Model::Report::BuildFailed', {
@@ -1656,7 +1656,7 @@ sub success {
 
     my $commit_callback;
     $commit_callback = sub {
-        $self->the_master_event->cancel_change_subscription('commit', $commit_callback); #only fire once
+        $self->cancel_change_subscription('commit', $commit_callback); #only fire once
         $self->debug_message('Firing build success commit callback.');
         my $result = eval {
             Genome::Search->queue_for_update($self->model);
@@ -1676,13 +1676,12 @@ sub success {
 
     #The build itself has no __changes__ and UR::Context->commit() will not trigger the subscription if on that object, so
     #use the master build event which has just been updated to 'Succeeded' with the current time.
-    $self->the_master_event->create_subscription(
+    $self->create_subscription(
         method => 'commit',
         callback => $commit_callback,
     );
 
-    # reallocate - always returns true (legacy behavior)
-    $self->reallocate;
+    $self->reallocate_disk_allocations;
 
     # TODO Reconsider this method name
     $self->perform_post_success_actions;
@@ -1699,28 +1698,26 @@ sub perform_post_success_actions {
 sub _verify_build_is_not_abandoned_and_set_status_to {
     my ($self, $status, $set_date_completed) = @_;
 
-    my $build_event = $self->build_event;
-    # Do we have a master event?
-    unless ( $build_event ) {
-        $self->error_message(
-            'Cannot set build ('.$self->id.") status to '$status' because it does not have a master event."
-        );
-        return;
-    }
-
     # Is it abandoned?
-    if ( $build_event->event_status eq 'Abandoned' ) {
+    if($self->status eq 'Abandoned') {
         $self->error_message(
-            'Cannot set build ('.$self->id.") status to '$status' because the master event has been abandoned."
+            'Cannot set build ('.$self->id.") status to '$status' because it has been abandoned."
         );
         return;
     }
 
-    # Set status and date completed
-    $build_event->event_status($status);
-    $build_event->date_completed( UR::Context->current->now ) if $set_date_completed;
+    my $build_event = $self->build_event;
+    my $completion_date = UR::Context->current->now;
+    if($build_event) {
+        # Set status and date completed
+        $build_event->event_status($status);
+        $build_event->date_completed( $completion_date ) if $set_date_completed;
+    }
 
-    return $build_event;
+    $self->status($status);
+    $self->date_completed( $completion_date ) if $set_date_completed;
+
+    return $self;
 }
 
 
@@ -1738,15 +1735,13 @@ sub abandon {
         $self->stop;
     }
 
+    $self->status('Abandoned');
+
     # Abandon events
     $self->_abandon_events
         or return;
 
-    # Reallocate - always returns true (legacy behavior)
-    if ($self->disk_allocation) {
-        $self->reallocate;
-    }
-
+    $self->reallocate_disk_allocations;
     $self->_deactivate_software_results;
 
     my %add_note_args = (header_text => $header_text);
@@ -1962,26 +1957,7 @@ sub _resolve_type_name_for_class {
 sub get_all_objects {
     my $self = shift;
 
-    my $sorter = sub { # not sure why we sort, but I put it in a anon sub for convenience
-        return unless @_;
-        #if ( $_[0]->id =~ /^\-/) {
-            return sort {$b->id cmp $a->id} @_;
-            #}
-            #else {
-            #return sort {$a->id cmp $b->id} @_;
-            #}
-    };
-
-    return map { $sorter->( $self->$_ ) } (qw(events inputs metrics from_build_links to_build_links));
-}
-
-sub yaml_string {
-    my $self = shift;
-    my $string = YAML::Dump($self);
-    for my $object ($self->get_all_objects) {
-        $string .= YAML::Dump($object);
-    }
-    return $string;
+    return map { $self->$_ } qw(events inputs metrics from_build_links to_build_links);
 }
 
 sub add_to_build{
@@ -2079,15 +2055,6 @@ sub delete {
     $self->status_message("Unregistering software results associated with build");
     $self->_unregister_software_results;
 
-    # Deallocate build directory, which will also remove it (unless no commit is on)
-    my $disk_allocation = $self->disk_allocation;
-    if ($disk_allocation) {
-        $self->status_message("Deallocating build directory");
-        unless ($disk_allocation->deallocate) {
-            $self->warning_message('Failed to deallocate disk space.');
-        }
-    }
-
     return $self->SUPER::delete;
 }
 
@@ -2122,8 +2089,13 @@ sub get_metric {
 # Returns a list of files contained in the build's data directory
 sub files_in_data_directory {
     my $self = shift;
+    return _files_in_directory($self->data_directory);
+}
+
+sub _files_in_directory {
+    my $directory = shift;
     my @files;
-    my $iter = File::Next::files($self->data_directory);
+    my $iter = File::Next::files($directory);
     while(defined (my $file = $iter->())) {
         push @files, $file;
     }
@@ -2133,10 +2105,18 @@ sub files_in_data_directory {
 # Given a full path to a file, return a path relative to the build directory
 sub full_path_to_relative {
     my ($self, $path) = @_;
+    return _canon_path_prefix_from_relative($self->data_directory, $path);
+}
+
+# Given a canonical pathname and a relative pathname, return the
+# canonical portion that, when prepended to the relative path, is
+# the original canonical path
+sub _canon_path_prefix_from_relative {
+    my($base_dir, $path) = @_;
+
     my $rel_path = $path;
-    my $dir = $self->data_directory;
-    $dir .= '/' unless substr($dir, -1, 1) eq '/';
-    $rel_path =~ s/$dir//;
+    $base_dir .= '/' unless substr($base_dir, -1, 1) eq '/';
+    $rel_path =~ s/$base_dir//;
     $rel_path .= '/' if -d $path and substr($rel_path, -1, 1) ne '/';
     return $rel_path;
 }
@@ -2269,17 +2249,41 @@ sub compare_output {
         confess "Builds $build_id and $other_build_id are not the same type!";
     }
 
+    my %diffs = $self->_compare_output_files($other_build);
+
+    # Now compare metrics of both builds
+    my %metric_diffs = $self->diff_metrics($other_build);
+    @diffs{ keys %metric_diffs } = values %metric_diffs if %metric_diffs;
+
+    return %diffs;
+}
+
+sub _compare_output_files {
+    my($self, $other_build) = @_;
+
+    return $self->_compare_output_directories(
+                        $self->data_directory,
+                        $other_build->data_directory,
+
+                        $self->build_id,
+                        $other_build->build_id,
+                    );
+}
+
+sub _compare_output_directories {
+    my($class, $blessed_data_dir, $other_data_dir, $build_id, $other_build_id) = @_;
+
     # Create hashes for each build, keys are paths relative to build directory and
     # values are full file paths
     my (%file_paths, %other_file_paths);
     require Cwd;
-    for my $file (@{$self->files_in_data_directory}) {
+    for my $file (@{_files_in_directory($blessed_data_dir)}) {
         my $abs_path = Cwd::abs_path($file);
         next unless $abs_path; # abs_path returns undef if a subdirectory of file does not exist
-        $file_paths{$self->full_path_to_relative($file)} = $abs_path;
+        $file_paths{_canon_path_prefix_from_relative($blessed_data_dir, $file)} = $abs_path;
     }
-    for my $other_file (@{$other_build->files_in_data_directory}) {
-        $other_file_paths{$other_build->full_path_to_relative($other_file)} = Cwd::abs_path($other_file);
+    for my $other_file (@{_files_in_directory($other_data_dir)}) {
+        $other_file_paths{_canon_path_prefix_from_relative($other_data_dir, $other_file)} = Cwd::abs_path($other_file);
     }
 
     # Now cycle through files in this build's data directory and compare with
@@ -2288,18 +2292,18 @@ sub compare_output {
     FILE: for my $rel_path (sort keys %file_paths) {
         my $abs_path = delete $file_paths{$rel_path};
         warn "abs_path ($abs_path) does not exist\n" unless (-e $abs_path);
-        my $dir = $self->full_path_to_relative(dirname($abs_path));
+        my $dir = _canon_path_prefix_from_relative($blessed_data_dir, dirname($abs_path));
 
         next FILE if -d $abs_path;
         next FILE if $rel_path =~ /server_location.txt/;
-        next FILE if grep { $dir =~ /$_/ } $self->dirs_ignored_by_diff;
-        next FILE if grep { $rel_path =~ /$_/ } $self->files_ignored_by_diff;
+        next FILE if grep { $dir =~ /$_/ } $class->dirs_ignored_by_diff;
+        next FILE if grep { $rel_path =~ /$_/ } $class->files_ignored_by_diff;
 
         # Gotta check if this file matches any of the supplied regex patterns.
         # If so, find the one (and only one) file from the other build that
         # matches the same pattern
         my ($other_rel_path, $other_abs_path);
-        REGEX: for my $regex ($self->regex_files_for_diff) {
+        REGEX: for my $regex ($class->regex_files_for_diff) {
             next REGEX unless $rel_path =~ /$regex/;
 
             #check for captures to narrow the search for the matching file
@@ -2342,7 +2346,7 @@ sub compare_output {
         # Check if the files end with a suffix that requires special handling. If not,
         # just do an md5sum on the files and compare
         my $diff_result = 0;
-        my %matching_regex_for_custom_diff = $self->matching_regex_for_custom_diff($abs_path);
+        my %matching_regex_for_custom_diff = $class->matching_regex_for_custom_diff($abs_path);
         if (keys %matching_regex_for_custom_diff > 1) {
             die "Path ($abs_path) matched multiple regex_for_custom_diff ('" . join("', '", keys %matching_regex_for_custom_diff) . "')!\n";
         }
@@ -2350,16 +2354,16 @@ sub compare_output {
             my ($key) = keys %matching_regex_for_custom_diff;
             my $method = "diff_$key";
             # Check build class first
-            if ($self->can($method)) {
-                $diff_result = $self->$method($abs_path, $other_abs_path);
+            if ($class->can($method)) {
+                $diff_result = $class->$method($abs_path, $other_abs_path);
             }
             # then model class
-            elsif ($self->model_class->can($method)) {
-                $diff_result = $self->model_class->$method($abs_path, $other_abs_path);
+            elsif ($class->model_class->can($method)) {
+                $diff_result = $class->model_class->$method($abs_path, $other_abs_path);
             }
             # cannot find it..die
             else {
-                die "Custom diff method ($method) not implemented in " . $self->class . " or ".$self->model_class."!\n";
+                die "Custom diff method ($method) not implemented in " . $class->class . " or ".$class->model_class."!\n";
             }
         }
         else {
@@ -2369,9 +2373,7 @@ sub compare_output {
         }
 
         unless ($diff_result) {
-            my $build_dir = $self->data_directory;
-            my $other_build_dir = $other_build->data_directory;
-            $diffs{$rel_path} = "files are not the same (diff -u {$build_dir,$other_build_dir}/$rel_path)";
+            $diffs{$rel_path} = "files are not the same (diff -u {$blessed_data_dir,$other_data_dir}/$rel_path)";
         }
     }
 
@@ -2379,55 +2381,65 @@ sub compare_output {
     for my $rel_path (sort keys %other_file_paths) {
         my $abs_path = delete $other_file_paths{$rel_path};
         warn "abs_path ($abs_path) does not exist\n" unless (-e $abs_path);
-        my $dir = $self->full_path_to_relative(dirname($abs_path));
+        my $dir = _canon_path_prefix_from_relative($blessed_data_dir, dirname($abs_path));
         next if -d $abs_path;
-        next if grep { $dir =~ /$_/ } $self->dirs_ignored_by_diff;
-        next if grep { $rel_path =~ /$_/ } $self->files_ignored_by_diff;
+        next if grep { $dir =~ /$_/ } $class->dirs_ignored_by_diff;
+        next if grep { $rel_path =~ /$_/ } $class->files_ignored_by_diff;
         $diffs{$rel_path} = "no file in build $build_id";
     }
 
-    # Now compare metrics of both builds
-    my %metric_diffs = $self->diff_metrics($other_build);
-    @diffs{ keys %metric_diffs } = values %metric_diffs if %metric_diffs;
-
     return %diffs;
+}
+
+sub _remove_metrics_ignored_by_diff {
+    my($self, $metrics) = @_;
+
+    my @metrics_ignored_by_diff = $self->metrics_ignored_by_diff;
+    delete @$metrics{@metrics_ignored_by_diff};
 }
 
 sub diff_metrics {
     my ($build1, $build2) = @_;
 
+    my $metrics = $build1->_extract_metrics_for_diff();
+    my $other_metrics = $build2->_extract_metrics_for_diff();
+
+    return _diff_metrics_hashrefs($metrics, $other_metrics, $build1->id, $build2->id);
+}
+
+sub _extract_metrics_for_diff {
+    my($self) = @_;
+
+    my %metrics = map { $_->name => $_->value } $self->metrics;
+
+    my @metrics_ignored_by_diff = $self->metrics_ignored_by_diff;
+    delete @metrics{@metrics_ignored_by_diff};
+
+    return \%metrics;
+}
+
+sub _diff_metrics_hashrefs {
+    my($metrics, $other_metrics, $metrics_build_id, $other_metrics_build_id) = @_;
+
     my %diffs;
-    my %metrics;
-    map { $metrics{$_->name} = $_ } $build1->metrics;
-    my %other_metrics;
-    map { $other_metrics{$_->name} = $_ } $build2->metrics;
-
-    METRIC: for my $metric_name (sort keys %metrics) {
-        my $metric = $metrics{$metric_name};
-
-        if ( grep { $metric_name =~ /$_/ } $build1->metrics_ignored_by_diff ) {
-            delete $other_metrics{$metric_name} if exists $other_metrics{$metric_name};
+    METRIC: for my $metric_name (sort keys %$metrics) {
+        unless (exists $other_metrics->{$metric_name}) {
+            $diffs{$metric_name} = "no build metric with name $metric_name found for build ".$other_metrics_build_id;
             next METRIC;
         }
 
-        my $other_metric = delete $other_metrics{$metric_name};
-        unless ($other_metric) {
-            $diffs{$metric_name} = "no build metric with name $metric_name found for build ".$build2->id;
-            next METRIC;
-        }
-
-        my $metric_value = $metric->value;
-        my $other_metric_value = $other_metric->value;
+        my $metric_value = $metrics->{$metric_name};
+        my $other_metric_value = delete $other_metrics->{$metric_name};
         unless ($metric_value eq $other_metric_value) {
-            $diffs{$metric_name} = "metric $metric_name has value $metric_value for build ".$build1->id." and value " .
-            "$other_metric_value for build ".$build2->id;
+            $diffs{$metric_name} = "metric $metric_name has value $metric_value for build ".$metrics_build_id." and value " .
+                                    "$other_metric_value for build ".$other_metrics_build_id;
             next METRIC;
         }
     }
 
     # Catch any extra metrics that the other build has
-    for my $other_metric_name (sort keys %other_metrics) {
-        $diffs{$other_metric_name} = "no build metric with name $other_metric_name found for build ".$build1->id;
+    for my $other_metric_name (sort keys %$other_metrics) {
+        $diffs{$other_metric_name} = "no build metric with name $other_metric_name found for build ".$metrics_build_id;
     }
 
     return %diffs;
@@ -2888,6 +2900,12 @@ sub is_current {
     }
 
     return 1;
+}
+
+sub has_imported_instrument_data {
+    my $self = shift;
+    my @instrument_data = $self->instrument_data('subclass_name isa' => 'Genome::InstrumentData::Imported');
+    return scalar(@instrument_data)? 1 : 0;
 }
 
 1;

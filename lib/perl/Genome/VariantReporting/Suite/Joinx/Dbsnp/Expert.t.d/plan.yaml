@@ -1,0 +1,14 @@
+experts:
+    dbsnp:
+        joinx_version: 1.8
+        info_string: 'GMAF:dbSNPBuildID=dbSNPBuildID,per-alt:MUT'
+        vcf: dbsnp_vcf
+reports:
+    report_alpha:
+        interpreters:
+            interpreter_x:
+                ix_p1: something
+                ix_p2: something else
+        params:
+            ra_p1: something
+            ra_p2: something else

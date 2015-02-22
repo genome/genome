@@ -16,6 +16,7 @@ use strict;
 
 use File::Basename;
 use Plack::Util;
+use Plack::Builder;
 
 our $always_memcache = $ENV{'GENOME_VIEW_CACHE'};
 
@@ -28,15 +29,16 @@ unless (defined $psgi_path) {
     $psgi_path = File::Basename::dirname(__FILE__);
 }
 
-our %app = map { $_ => load_app($_) } qw/
-  Rest.psgi
-  Redirect.psgi
-  404Handler.psgi
-  Dump.psgi 
-  Cache.psgi
-  Info.psgi
-  File.psgi
-  /;
+my @psgi = qw(
+    Rest.psgi
+    Redirect.psgi
+    404Handler.psgi
+    Dump.psgi
+    Cache.psgi
+    Info.psgi
+    File.psgi
+);
+our %app = map { $_ => load_app($_) } @psgi;
 
 ## Utility functions
 sub load_app {
@@ -59,7 +61,8 @@ sub redispatch_psgi {
 
 sub redirect_to {
     my ($path, $request) = @_;
-    redispatch_psgi( $app{'Redirect.psgi'}, $request, $path);
+    $request->{REDIRECT_URI} = $path;
+    redispatch_psgi( $app{'Redirect.psgi'}, $request);
 }
 
 ## Web::Simple dispatcher for all apps
@@ -116,12 +119,14 @@ sub dispatch_request {
       #  because we want generate the view synchronously to the request
       #  and fill in memcached after its generated
       sub (/cachefill/...) {
-        redispatch_psgi($app{'Cache.psgi'}, $_[1], 2);
+        $_[1]->{AJAX_REFRESH} = 2;
+        redispatch_psgi($app{'Cache.psgi'}, $_[1]);
       },
 
       ## This is triggered as an ajax request from the cache-miss page
       sub (/cachetrigger/...) {
-        redispatch_psgi($app{'Cache.psgi'}, $_[1], 1);
+        $_[1]->{AJAX_REFRESH} = 1;
+        redispatch_psgi($app{'Cache.psgi'}, $_[1]);
       },
 
       ## In apache /view maps to /cache which will show the cache-miss
@@ -141,7 +146,7 @@ sub dispatch_request {
       ) : (
       ## this exists so the embedded web server can run without caching
       sub (/view/...) {
-        redispatch_psgi ($app{'Rest.psgi'}, $_[1], 2);
+        redispatch_psgi ($app{'Rest.psgi'}, $_[1]);
       },
       )),
 

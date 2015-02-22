@@ -34,7 +34,7 @@ sub execute{
     my $bam = $build->whole_rmdup_bam_file;
     $params{aligned_reads_input} = $bam;
 
-    my $reference_build = $build->model->reference_sequence_build;
+    my $reference_build = $build->reference_sequence_build;
     my $reference_fasta = $reference_build->full_consensus_path('fa');
     unless(-e $reference_fasta){
         die $self->error_message("fasta file for reference build doesn't exist!");
@@ -46,6 +46,8 @@ sub execute{
 
     my $aligned_reads_sample = $build->subject->name;
     $params{aligned_reads_sample} = $aligned_reads_sample;
+
+    $params{result_users} = Genome::SoftwareResult::User->user_hash_for_build($build);
 
     my $command = Genome::Model::Tools::DetectVariants2::Dispatcher->create(%params);
     unless ($command){

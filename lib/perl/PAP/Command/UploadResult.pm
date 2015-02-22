@@ -47,11 +47,12 @@ sub help_brief {
 sub execute {
     my $self = shift;
 
-    my $lock_path = $ENV{GENOME_LOCK_DIR} . "/PAP_Command/UploadResult";
+    my $lock_path = "PAP_Command/UploadResult";
     my $lock = Genome::Sys->lock_resource(
         resource_lock => $lock_path,
         block_sleep => 90,
         max_try => 10_000,
+        scope => 'site',
     );
     unless ($lock) {
         die "Failed to get the lock to upload to BioSQL";

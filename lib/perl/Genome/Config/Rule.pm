@@ -29,7 +29,7 @@ sub create_from_hash {
     my @rule_objects;
     while (my ($key, $val) = each %$rules_hash) {
         my $method_chain = $class->_parse_method_chain($key);
-        my $expected_value = $val;
+        my $expected_value = $val // '';
         push @rule_objects, $class->create(
             method_chain => $method_chain,
             expected_value => $expected_value
@@ -46,6 +46,12 @@ sub _parse_method_chain {
     die('No method string given!') unless $method_string;
 
     return [split('->', $method_string)];
+}
+
+sub __display_name__ {
+    my $self = shift;
+
+    return join('->', @{ $self->method_chain }) . ': ' . $self->expected_value;
 }
 
 1;

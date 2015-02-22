@@ -8,7 +8,7 @@ use UR;
 
 class Genome::DruggableGene::Command {
     is => 'Command::Tree',
-    doc => 'commands that work with druggable gene objects',
+    doc => 'work with druggable gene objects',
 };
 
 1;

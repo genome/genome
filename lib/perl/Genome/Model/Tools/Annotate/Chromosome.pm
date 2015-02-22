@@ -37,7 +37,7 @@ class Genome::Model::Tools::Annotate::Chromosome {
     has_param => [
         lsf_resource => {
             is => 'Text',
-            default_value => "-M 8000000 -R 'select[type==LINUX64 && mem>8000] rusage[mem=8000]'",
+            default_value => "-M 8000000 -R 'select[mem>8000] rusage[mem=8000]'",
         },
     ],
     has_output => [

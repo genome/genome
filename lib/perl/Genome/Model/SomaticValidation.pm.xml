@@ -5,12 +5,19 @@
   <link fromOperation="input connector" fromProperty="build_id" toOperation="Detect Variants" toProperty="build_id" />
   <link fromOperation="input connector" fromProperty="tumor_mode" toOperation="Reference Coverage Stats (Tumor)" toProperty="mode" />
   <link fromOperation="input connector" fromProperty="normal_mode" toOperation="Reference Coverage Stats (Normal)" toProperty="mode" />
-
+  <link fromOperation="input connector" fromProperty="tumor_mode" toOperation="Verify Bam (Tumor)" toProperty="mode" />
+  <link fromOperation="input connector" fromProperty="normal_mode" toOperation="Verify Bam (Normal)" toProperty="mode" />
   <link fromOperation="Alignments" fromProperty="build_id" toOperation="Reference Coverage Stats (Tumor)" toProperty="build_id" />
   <link fromOperation="Alignments" fromProperty="build_id" toOperation="Reference Coverage Stats (Normal)" toProperty="build_id" />
 
+  <link fromOperation="Alignments" fromProperty="build_id" toOperation="Verify Bam (Tumor)" toProperty="build_id" />
+  <link fromOperation="Alignments" fromProperty="build_id" toOperation="Verify Bam (Normal)" toProperty="build_id" />
+  
   <link fromOperation="Reference Coverage Stats (Tumor)" fromProperty="result" toOperation="output connector" toProperty="tumor_reference_coverage_result"/>
   <link fromOperation="Reference Coverage Stats (Normal)" fromProperty="result" toOperation="output connector" toProperty="normal_reference_coverage_result"/>
+
+  <link fromOperation="Verify Bam (Tumor)" fromProperty="result" toOperation="output connector" toProperty="tumor_verify_bam_result"/>
+  <link fromOperation="Verify Bam (Normal)" fromProperty="result" toOperation="output connector" toProperty="normal_verify_bam_result"/>
 
   <link fromOperation="Alignments" fromProperty="merged_bam_path" toOperation="Detect Variants" toProperty="bam_path"/>
   <link fromOperation="Alignments" fromProperty="control_merged_bam_path" toOperation="Detect Variants" toProperty="control_bam_path"/>
@@ -51,6 +58,13 @@
   </operation>
   <operation name="Reference Coverage Stats (Normal)">
       <operationtype commandClass="Genome::Model::SomaticValidation::Command::CoverageStats" typeClass="Workflow::OperationType::Command"/>
+  </operation>
+
+  <operation name="Verify Bam (Tumor)">
+      <operationtype commandClass="Genome::Model::SomaticValidation::Command::VerifyBam" typeClass="Workflow::OperationType::Command"/>
+  </operation>
+  <operation name="Verify Bam (Normal)">
+      <operationtype commandClass="Genome::Model::SomaticValidation::Command::VerifyBam" typeClass="Workflow::OperationType::Command"/>
   </operation>
 
   <operation name="Validate Large Indels">
@@ -168,6 +182,8 @@
     <outputproperty>build_id</outputproperty>
     <outputproperty>sv_validation_output</outputproperty>
     <outputproperty>large_indel_build_id</outputproperty>
+    <outputproperty>tumor_verify_bam_result</outputproperty>
+    <outputproperty>normal_verify_bam_result</outputproperty>
 
   </operationtype>
 

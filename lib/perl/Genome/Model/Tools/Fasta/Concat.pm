@@ -5,7 +5,7 @@ use IO::File;
 use Carp qw/confess/;
 
 class Genome::Model::Tools::Fasta::Concat {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         input_files => {
             is => 'Text',

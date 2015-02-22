@@ -14,6 +14,7 @@ use Data::Dumper;
 use Test::More;
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -22,6 +23,10 @@ if (Genome::Config->arch_os ne 'x86_64') {
 my $refbuild_id = 101947881;
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
 ok($ref_seq_build, 'human36 reference sequence build') or die;
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
 
 #Parsing tests
 my $det_class_base = 'Genome::Model::Tools::DetectVariants2';
@@ -39,6 +44,7 @@ my $filter_test = $dispatcher_class->create(
     aligned_reads_input => $tumor_bam,
     control_aligned_reads_input => $normal_bam,
     aligned_reads_sample => 'TEST',
+    result_users => $result_users,
 );
 ok($filter_test, "Object to test a filter case created");
 $filter_test->dump_status_messages(1);

@@ -1,0 +1,25 @@
+[4mOVERVIEW[0m
+Annotate vcf with results from Ensembl VEP (Variant Effect Predictor)
+
+[4mPROPERTIES[0m
+  [1mcustom_annotation_tags[0m   String
+    Custom annotation tags to be used for the --custom option(s)
+  [1mensembl_version[0m   String
+    Version of ensembl database to use
+  [1mfeature_list_ids[0m   Hash
+    A hash keyed on INFO TAG with values of FeatureList IDs
+    This is a translated property.
+  [1mjoinx_version[0m   String
+    The joinx version to use for sorting
+  [1mplugins[0m   String
+    Plugins to use.  These should be formated: PluginName@arg1@arg2,...  If you need to reference
+    the plugin config directory in any of the args, use the placeholder PLUGIN_DIR.  For example,
+    the Condel plugin should be called as follows: Condel@PLUGIN_DIR@b@2
+  [1mplugins_version[0m   String
+    Version of the vepplugins package to use
+  [1mreference_fasta[0m   Path
+    Reference fasta file
+    This is a translated property.
+  [1mspecies[0m   Text
+    Species to use
+

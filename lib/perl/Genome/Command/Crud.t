@@ -51,61 +51,60 @@ class Person {
     has => [
         name => { is => 'Text', doc => 'Name of the person', },
         title => {
-            is => 'Text', 
+            is => 'Text',
             valid_values => [qw/ mr sir mrs ms miss dr /],
             default_value => 'mr',
             doc => 'Title',
         },
-        has_pets => { 
+        has_pets => {
             is => 'Text',
             is_optional => 1,
             valid_values => [qw/ yes no /],
             default_value => 'no',
-            doc => 'Does this person have pets?', 
+            doc => 'Does this person have pets?',
         },
-        job => { 
-            is => 'Person::Job', 
-            is_optional => 1, 
-            id_by => 'job_id', 
+        job => {
+            is => 'Person::Job',
+            id_by => 'job_id',
             is_optional => 1,
             doc => 'The person\'s job',
         },
-        relationships => { 
+        relationships => {
             is => 'Person::Relationship',
             is_many => 1,
             is_optional => 1,
             reverse_as => 'person',
-            doc => 'This person\'s relationships', 
+            doc => 'This person\'s relationships',
         },
-        friends => { 
+        friends => {
             is => 'Person',
             is_many => 1,
             is_optional => 1,
             is_mutable => 1,
-            via => 'relationships', 
+            via => 'relationships',
             to => 'related',
             where => [ name => 'friend' ],
-            doc => 'Friends of this person', 
+            doc => 'Friends of this person',
         },
        mom => {
            is => 'Person',
            is_optional => 1,
            is_mutable => 1,
            is_many => 0,
-           via => 'relationships', 
+           via => 'relationships',
            to => 'related',
            where => [ name => 'mom' ],
-           doc => 'The person\'s Mom', 
+           doc => 'The person\'s Mom',
        },
        best_friend => {
            is => 'Person',
            is_optional => 1,
            is_mutable => 1,
            is_many => 0,
-           via => 'relationships', 
+           via => 'relationships',
            to => 'related',
            where => [ name => 'best friend' ],
-           doc => 'Best friend of this person', 
+           doc => 'Best friend of this person',
        },
     ],
 };
@@ -147,7 +146,7 @@ ok($main_tree_meta, 'MAIN TREE meta');
 #print Person::Command->help_usage_complete_text;
 
 # CREATE
-# meta 
+# meta
 my $create_meta = Person::Command::Create->__meta__;
 ok($create_meta, 'CREATE meta');
 $help_text = strip_ansi( Person::Command::Create->help_usage_complete_text );
@@ -163,7 +162,7 @@ like($help_text,
 like($help_text,
     qr(DESCRIPTION\s+This command creates a person\.),
     'Person Create help description');
-    
+
 is(Person::Command::Create->_target_class, 'Person', 'CREATE: _target_class');
 is(Person::Command::Create->_target_name, 'person', 'CREATE: _target_name');
 
@@ -198,7 +197,7 @@ is_deeply($mom->job, $care_taker_of_earth, 'Mom is care taker of the earth');
 is_deeply([$mom->friends], [], 'Mom does not have friends');
 ok(!$mom->best_friend, 'Mom does not have a best friend');
 
-# Creater Ronnie 
+# Creater Ronnie
 my $create_ronnie = Person::Command::Create->create(
     name => 'Ronald Reagan',
     title => 'sir',
@@ -217,12 +216,12 @@ is_deeply($ronnie->mom, $mom, 'Ronnie has a mom!');
 is_deeply([$ronnie->friends], [], 'Ronnie does not have friends');
 ok(!$ronnie->best_friend, 'Ronnie  does not have a best friend');
 
-# Create George 
+# Create George
 my $create_george = Person::Command::Create->create(
     name =>  'George HW Bush',
     title => 'mr',
     job => $vice_president,
-    has_pets => 'yes', 
+    has_pets => 'yes',
     best_friend => $ronnie,
     friends => [ $ronnie ],
 );
@@ -273,7 +272,7 @@ like($help_text,
     qr(USAGE\s+person update title)s,
     'person update title help header');
 like($help_text,
-    qr(REQUIRED ARGUMENTS\s+value\s+Text.*?PEOPLE\s+Person\s+People to update, resolved via string\.)s,
+    qr(REQUIRED PARAMS\s+value.*?PEOPLE\s+People to update, resolved via string\.)s,
     'person update required args help');
 
 
@@ -282,11 +281,11 @@ like($help_text,
     qr(USAGE\s+person update best-friend),
     'person update best-friend help header');
 like($help_text,
-    qr(REQUIRED ARGUMENTS\s+value\s+Person\s+Best friend of this person\s+PEOPLE\s+Person\s+People to update, resolved via string\.),
+    qr(REQUIRED PARAMS\s+value\s+Best friend of this person\s+PEOPLE\s+People to update, resolved via string\.),
     'person update best-friend required args help');
 
 # update property
-# text 
+# text
 my $update_title = Person::Command::Update::Title->create(
     people => [$ronnie, $george],
     value => 'mr',
@@ -341,7 +340,7 @@ $update_bf->dump_status_messages(0);
 ok(($update_bf->execute && $update_bf->result), "UPDATE PROPERTY best_friend: execute");
 is_deeply($ronnie->best_friend, $george, "UPDATE PROPERTY best_friend: Ronnie is now best friends w/ George!");
 
-# FIXME per Scott this is to fail - object to null/undef
+# fail - object to null/undef
 my $update_job_null = Person::Command::Update::Job->create(
     people => [$george],
     value => '',
@@ -355,9 +354,9 @@ ok(eval{(!$update_job_null->execute && !$update_job_null->result)}, 'UPDATE PROP
 is_deeply(\@error_messages,
     [q(Cannot set job to NULL. Sorry.)],
     'Expected error message');
-is_deeply($george->job, $vice_president, 'UPDATE PROPERTY job: George does not have a job.');
+is_deeply($george->job, $vice_president, 'UPDATE PROPERTY job: George is still VP.');
 
-# FIXME per Scott this is to fail - object, single prop via a many property
+# fail - object, single prop via a many property to null
 my $update_bf_null = Person::Command::Update::BestFriend->create(
     people => [$ronnie],
     value => '',
@@ -376,16 +375,16 @@ is_deeply($ronnie->best_friend, $george, "UPDATE PROPERTY best_friend: Ronnie st
 # fail: text only if null
 my $update_no_people_fail = Person::Command::Update::Name->create(
     value => 'Bob Robertson',
-); 
+);
 ok($update_no_people_fail, 'UPDATE PROPERTY name: create w/o people');
 $update_no_people_fail->dump_status_messages(0);
 $update_no_people_fail->dump_error_messages(0);
 $update_no_people_fail->queue_error_messages(1);
 ok((!$update_no_people_fail->execute && !$update_no_people_fail->result), 'UPDATE PROPERTY name: execute failed w/o people');
+$DB::single = 1;
 @error_messages = $update_no_people_fail->error_messages();
 is_deeply(\@error_messages,
-    [ q(Property 'people': No value specified for required property),
-      q(Please see 'person update name --help' for more information.), ],
+    [ q(Property 'people': No value specified for required property), ],
     'Expected error messages');
 $update_no_people_fail->delete;
 
@@ -447,8 +446,7 @@ ok((!$update_pets_fail->execute && !$update_pets_fail->result), 'UPDATE PROPERTY
 is($ronnie->has_pets, $ronnie_has_pets, 'UPDATE PROPERTY has pets: unchanged');
 @error_messages = $update_pets_fail->error_messages();
 is_deeply(\@error_messages,
-    [   q(Property 'value': The value blah is not in the list of valid values for value.  Valid values are: yes, no),
-        q(Please see 'person update has-pets --help' for more information.) ],
+    [   q(Property 'value': The value blah is not in the list of valid values for value.  Valid values are: yes, no), ],
     'Expected error messages');
 $update_pets_fail->delete;
 
@@ -467,7 +465,7 @@ like($help_text,
     qr(USAGE\s+person update friends add),
     'person update friends add help header');
 like($help_text,
-    qr(REQUIRED ARGUMENTS\s+values\s+Person\s+Friends of this person\s+PEOPLE\s+Person\s+People to update, resolved via string\.),
+    qr(REQUIRED PARAMS\s+values\s+Friends of this person\s+PEOPLE\s+People to update, resolved via string\.),
     'person update friends add required args help');
 
 $help_text = strip_ansi( Person::Command::Update::Friends::Remove->help_usage_complete_text );
@@ -475,7 +473,7 @@ like($help_text,
     qr(USAGE\s+person update friends remove),
     'person update friends remove help header');
 like($help_text,
-    qr(REQUIRED ARGUMENTS\s+values\s+Person\s+Friends of this person\s+PEOPLE\s+Person\s+People to update, resolved via string\.),
+    qr(REQUIRED PARAMS\s+values\s+Friends of this person\s+PEOPLE\s+People to update, resolved via string\.),
     'person update friends add required args help');
 
 my @georges_friends = $george->friends;
@@ -530,8 +528,7 @@ $update_add_fail_no_people->queue_error_messages(1);
 ok((!$update_add_fail_no_people->execute && !$update_add_fail_no_people->result), 'UPDATE ADD friends: execute fails as expected, no people');
 @error_messages = $update_add_fail_no_people->error_messages();
 is_deeply(\@error_messages,
-    [   q(Property 'people': No value specified for required property),
-        q(Please see 'person update friends add --help' for more information.) ],
+    [   q(Property 'people': No value specified for required property), ],
     'Expected error messages');
 $update_add_fail_no_people->delete;
 
@@ -545,8 +542,7 @@ $update_add_fail_no_values->queue_error_messages(1);
 ok((!$update_add_fail_no_values->execute && !$update_add_fail_no_values->result), 'UPDATE ADD friends: execute fails as expected, no values');
 @error_messages = $update_add_fail_no_values->error_messages();
 is_deeply(\@error_messages,
-    [   q(Property 'values': No value specified for required property),
-        q(Please see 'person update friends add --help' for more information.) ],
+    [   q(Property 'values': No value specified for required property), ],
     'Expected error messages');
 $update_add_fail_no_values->delete;
 

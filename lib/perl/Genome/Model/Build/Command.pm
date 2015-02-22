@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Model::Build::Command {
     is => 'Command',
-    doc => "Work with model builds.",
+    doc => "work with model builds",
     has => [
         builds => {
             is => 'Genome::Model::Build',

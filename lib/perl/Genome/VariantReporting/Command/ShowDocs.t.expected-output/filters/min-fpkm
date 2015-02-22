@@ -1,0 +1,21 @@
+[4mOVERVIEW[0m
+Filter variants that don't meet minimum FPKM value
+
+[4mPROPERTIES[0m
+  [1mmin_fpkm[0m   Number
+    The minimum FPKM value to pass
+  [1msample_name[0m   Text
+    This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
+
+[4mREQUIRED EXPERTS[0m
+fpkm
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    The FPKM value for sample sample_name is at least min_fpkm
+
+[4mFILTER DESCRIPTION[0m
+The FPKM value for sample sample_name is at least min_fpkm
+

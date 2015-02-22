@@ -113,8 +113,8 @@ sub execute
     #    carp "uh, we should have quit by now";
     #    exit 1;
     #}
-    my $rv = Genome::Model::GenePrediction::Command::Bacterial::Predict->execute(%params);
-    unless($rv) {
+    my $cmd = Genome::Model::GenePrediction::Command::Bacterial::Predict->execute(%params);
+    unless($cmd and $cmd->result) {
         $self->error_message("can't run prediction step");
         return 0;
     }
@@ -188,7 +188,7 @@ sub gather_details
     }
 
     # cwd should look like:
-    # /gscmnt/278/analysis/HGMI/B_catenulatum/Bifidobacterium_catenulatum_BIFCATDFT_1.0_newb/Version_1.0/BAP/Version_1.0
+    # /gscmnt/gc2514/mitrevalab/HGMI/B_catenulatum/Bifidobacterium_catenulatum_BIFCATDFT_1.0_newb/Version_1.0/BAP/Version_1.0
     my $cwd;
     my @cwd;
     if(!defined($self->work_directory))

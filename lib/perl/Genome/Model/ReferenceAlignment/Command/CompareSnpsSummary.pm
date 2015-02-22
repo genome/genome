@@ -6,7 +6,7 @@ use Genome;
 use Carp 'confess';
 
 class Genome::Model::ReferenceAlignment::Command::CompareSnpsSummary {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         build => {
             is => 'Genome::Model::Build::ReferenceAlignment',
@@ -157,10 +157,10 @@ sub get_compare_snps_metrics {
 sub create_and_retrieve_qc_metrics {
     my ($self, $qc_build) = @_;
 
-    my $rv = Genome::Model::ReferenceAlignment::Command::CreateMetrics::CompareSnps->execute(
+    my $cmd = Genome::Model::ReferenceAlignment::Command::CreateMetrics::CompareSnps->execute(
         build_id => $qc_build->id,
     );
-    return unless $rv;
+    return unless $cmd and $cmd->result;
 
     return Genome::Model::Metric->get(
         build_id => $qc_build->id,

@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Data::Dump qw(pp);
 
 class Genome::Model::Tools::DetectVariants2::Result::Filter {
     is => ['Genome::Model::Tools::DetectVariants2::Result::DetectionBase'],
@@ -30,6 +31,42 @@ class Genome::Model::Tools::DetectVariants2::Result::Filter {
     ],
 };
 
-#Most filter-specific logic is in Detector.pm
+sub previous_result {
+    my $self = shift;
+
+    my @parents = grep {pp($_->test_name) eq pp($self->test_name)} $self->parents;
+    if (scalar(@parents) == 1) {
+        return shift @parents;
+    } else {
+        my $message = sprintf("Number of previous results (%d) is not 1.  Result IDs: (%s)",
+            scalar(@parents), join(', ', map {$_->id} @parents));
+        die $message;
+    }
+}
+
+sub vcf_result_params {
+    my $self = shift;
+    my $aligned_reads_sample = shift;
+    my $control_aligned_reads_sample = shift;
+    my $users = shift;
+
+    return (
+        filter_name => $self->filter_name,
+        filter_params => $self->filter_params,
+        filter_version => $self->filter_version,
+        incoming_vcf_result => $self->previous_result->get_vcf_result($aligned_reads_sample, $control_aligned_reads_sample),
+        input_id => $self->id,
+        previous_filter_strategy => $self->previous_filter_strategy,
+        test_name => $self->test_name,
+        vcf_version => Genome::Model::Tools::Vcf->get_vcf_version,
+        aligned_reads_sample => $aligned_reads_sample,
+        ($control_aligned_reads_sample? (control_aligned_reads_sample => $control_aligned_reads_sample) : ()),
+        #users => $users, #Needed if get() inside get_vcf_result becomes get_with_lock()
+    );
+}
+
+sub vcf_result_class {
+    'Genome::Model::Tools::DetectVariants2::Result::Vcf::Filter';
+}
 
 1;

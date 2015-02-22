@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::Model::Tools::Gatk::IndelRealigner {
     doc => "Run GATK with the 'IndelRealigner' tool",
-    is => 'Genome::Model::Tools::Gatk',
+    is => 'Genome::Model::Tools::Gatk::Base',
     has_input => [
         target_intervals => {
             is => 'Text',

@@ -81,7 +81,7 @@ sub execute
     {
         my $ace_file_string = join ',',@ace_files;
         my $ret = Genome::Model::Tools::Assembly::BuildAceIndices->execute(ace_directory => $ace_directory, cache_dir => $cache_dir, ace_file => $ace_file_string);
-        $self->error_message("Failed to initialized assembly cache\n") and return unless defined $ret;
+        $self->error_message("Failed to initialized assembly cache\n") and return unless defined $ret->result;
     }
     $self->error_message( "There are no valid ace files in $ace_directory\n") and return unless (scalar @ace_files);  
     my $mod = scalar @ace_files;

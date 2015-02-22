@@ -14,7 +14,7 @@ class Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow{
     doc => "Produces somatic copy-number calls from paired samples",
     has_param => [
         lsf_resource => {
-            default_value => 'rusage[mem=4000] select[type==LINUX64 && maxtmp>10000] span[hosts=1]',
+            default_value => 'rusage[mem=4000] select[maxtmp>10000] span[hosts=1]',
         },
     ],
     has => [
@@ -76,6 +76,16 @@ sub _detect_variants {
         $annotation_version = $1;
     }
 
+    my $samtools_strategy;
+    if($params =~ m/--samtools-strategy/) {
+        $params =~ m/--samtools-strategy\s*\{([^\}]+)\}/;
+        $samtools_strategy = $1;
+    }
+
+    unless($samtools_strategy) {
+        die $self->error_message("No --samtools-strategy found in params");
+    }
+
     my %input;
 
     # Define a workflow from the static XML at the bottom of this module
@@ -102,11 +112,33 @@ sub _detect_variants {
     #for copycat
     $input{per_read_length} = $per_read_length;
     $input{per_library} = $per_library;
-    $input{tumor_samtools_file} = $self->get_samtools_results($self->aligned_reads_input);
-    $input{normal_samtools_file} = $self->get_samtools_results($self->control_aligned_reads_input);
+    $input{tumor_samtools_file} = $self->get_samtools_results(
+        $self->aligned_reads_input,
+        $self->aligned_reads_sample,
+        $samtools_strategy,
+        $self->output_directory . '/tumor-samtools-result',
+    );
+    $input{normal_samtools_file} = $self->get_samtools_results(
+        $self->control_aligned_reads_input,
+        $self->control_aligned_reads_sample,
+        $samtools_strategy,
+        $self->output_directory . '/normal-samtools-result',
+    );
     $input{copycat_output_directory} = $self->_temp_staging_directory;
-    $input{annotation_version} = $annotation_version;
-    $input{reference_build_id} = $self->reference_build_id;
+
+    my $annotation_sr = Genome::Model::Tools::CopyCat::AnnotationData->get_with_lock(
+        reference_sequence => $self->reference_build,
+        version            => $annotation_version,
+        users              => $self->result_users,
+    );
+    unless($annotation_sr) {
+        die $self->error_message(
+            'No annotation data found for version %s and reference %s',
+            $annotation_version,
+            $self->reference_build->id,
+        );
+    }
+    $input{annotation_data_id} = $annotation_sr->id;
 
     my $log_dir = $self->output_directory;
     if(Workflow::Model->parent_workflow_log_dir) {
@@ -144,17 +176,34 @@ sub _sort_detector_output {
 sub get_samtools_results{
     my $self = shift;
     my $bam_path = shift;
-    my $return_snp_file;
-    my @results = Genome::Model::Tools::DetectVariants2::Result::DetectionBase->get(
-        detector_name => "Genome::Model::Tools::DetectVariants2::Samtools",
-        aligned_reads =>$bam_path );
-    if(@results) {
-        return $results[0]->path("snvs.hq");
-    } else {
-        $self->debug_message("Could not find any DV2::Samtools result object for $bam_path");
-        #alternative lookup - maybe later?
+    my $sample_name = shift;
+    my $samtools_strategy = shift;
+    my $output_directory = shift;
+
+    Genome::Sys->create_directory($output_directory) unless -d $output_directory;
+
+    my $dispatcher = Genome::Model::Tools::DetectVariants2::Dispatcher->create(
+        snv_detection_strategy => $samtools_strategy,
+        aligned_reads_input => $bam_path,
+        aligned_reads_sample => $sample_name,
+        reference_build_id => $self->reference_build->id,
+        output_directory => $output_directory,
+        result_users => $self->result_users,
+    );
+    $dispatcher->execute or die $self->error_message('Failed to run dispatcher to get samtools result');
+
+    my $result = $dispatcher->snv_result;
+    unless($result) {
+        die $self->error_message('Failed to find result after running dispatcher');
     }
-    return "";
+
+    my $snv_hq = $result->path('snvs.hq');
+    unless($snv_hq) {
+        die $self->error_message('no snv file found on result');
+    }
+
+    $result->add_user(user => $self, label => 'uses_for_running_copycat');
+    return $snv_hq;
 }
 
 sub _promote_staged_data {
@@ -204,8 +253,7 @@ __DATA__
     <link fromOperation="input connector" fromProperty="tumor_samtools_file" toOperation="CopyCat Somatic" toProperty="tumor_samtools_file" />
     <link fromOperation="input connector" fromProperty="normal_samtools_file" toOperation="CopyCat Somatic" toProperty="normal_samtools_file" />
     <link fromOperation="input connector" fromProperty="copycat_output_directory" toOperation="CopyCat Somatic" toProperty="output_directory" />
-    <link fromOperation="input connector" fromProperty="reference_build_id" toOperation="CopyCat Somatic" toProperty="reference_build_id" />
-    <link fromOperation="input connector" fromProperty="annotation_version" toOperation="CopyCat Somatic" toProperty="annotation_version" />
+    <link fromOperation="input connector" fromProperty="annotation_data_id" toOperation="CopyCat Somatic" toProperty="annotation_data_id" />
 
 
     <link fromOperation="BamWindow Normal" fromProperty="output_file" toOperation="output connector" toProperty="bam_window_normal_output_file" />
@@ -237,8 +285,7 @@ __DATA__
     <inputproperty>tumor_samtools_file</inputproperty>
     <inputproperty>normal_samtools_file</inputproperty>
     <inputproperty>copycat_output_directory</inputproperty>
-    <inputproperty>annotation_version</inputproperty>
-    <inputproperty>reference_build_id</inputproperty>
+    <inputproperty>annotation_data_id</inputproperty>
     <inputproperty isOptional="Y">bamwindow_filter_to_chromosomes</inputproperty>
 
     <outputproperty>bam_window_normal_output_file</outputproperty>

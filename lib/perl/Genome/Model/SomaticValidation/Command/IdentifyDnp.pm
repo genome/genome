@@ -74,6 +74,7 @@ sub params_for_result {
         tumor_aligment_result_id => $tumor_aligment_result_id,
         dv2_result_id => $dv2_result_id,
         test_name => $test_name,
+        users => Genome::SoftwareResult::User->user_hash_for_build($build),
     };
 
     return $params;
@@ -99,6 +100,8 @@ sub _link_to_result {
 sub shortcut {
     my $self = shift;
 
+    return 1 if $self->should_skip;
+
     #try to get using the lock in order to wait here in shortcut if another process is creating this alignment result
     my $params = $self->params_for_result;
     my $result = Genome::Model::Build::SomaticValidation::IdentifyDnpResult->get_with_lock(%$params);
@@ -118,10 +121,7 @@ sub shortcut {
 sub execute {
     my $self = shift;
 
-    unless ($self->build->snv_detection_strategy) {
-        $self->warning_message("Snv detection strategy not defined. Skipping IdentifyDnp");
-        return 1;
-    }
+    return 1 if $self->should_skip;
 
     my $params = $self->params_for_result;
     my $result = Genome::Model::Build::SomaticValidation::IdentifyDnpResult->get_or_create(%$params);
@@ -136,5 +136,18 @@ sub execute {
 
     return $rv;
 }
+
+sub should_skip {
+    my $self = shift;
+
+    unless ($self->build->snv_detection_strategy) {
+        $self->warning_message("Snv detection strategy not defined. Skipping IdentifyDnp");
+        $self->dnp_result_id(0);
+        return 1;
+    }
+
+    return;
+}
+
 
 1;

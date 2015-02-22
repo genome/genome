@@ -124,11 +124,12 @@ sub execute {
 
     #Sort the tmp BED12
     my $tmp_sorted_bed12_file = Genome::Sys->create_temp_file_path();
-    unless (Genome::Model::Tools::BedTools::Sort->execute(
+    my $sort_cmd = Genome::Model::Tools::BedTools::Sort->create(
         input_file => $tmp_unsorted_bed12_file,
         output_file => $tmp_sorted_bed12_file,
         use_version => $self->bedtools_version,
-    )) {
+    );
+    unless ($sort_cmd->execute) {
         $self->error_message('Failed to sort BED12 file!');
         die($self->error_message);
     }

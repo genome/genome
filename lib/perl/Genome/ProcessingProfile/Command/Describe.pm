@@ -8,7 +8,7 @@ use Genome;
 require Term::ANSIColor;
       
 class Genome::ProcessingProfile::Command::Describe {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         processing_profiles => {
             is => 'Genome::ProcessingProfile',
@@ -37,6 +37,7 @@ sub execute {
         );
 
         for my $param ( sort { $a cmp $b } $pp->params_for_class ) {
+            $DB::single = 1 if $param eq 'refcov_wingspan_values';
             my @values = $pp->$param;
             foreach my $value (@values) {
                 if (Scalar::Util::blessed($value)) {
@@ -44,7 +45,7 @@ sub execute {
                 }
             }
             my $value;
-            if (@values != 0 and $values[0]) {
+            if (@values != 0 and defined $values[0]) {
                 $value = join(",",@values);
             }
             printf(

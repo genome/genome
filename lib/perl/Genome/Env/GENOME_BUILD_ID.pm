@@ -1,5 +1,4 @@
 package Genome::Env::GENOME_BUILD_ID;
-our $default_value = undef; 
 
 =pod
 

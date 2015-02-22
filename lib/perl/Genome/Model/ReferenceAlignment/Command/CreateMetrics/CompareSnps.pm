@@ -6,7 +6,7 @@ use Genome;
 use Carp 'confess';
 
 class Genome::Model::ReferenceAlignment::Command::CreateMetrics::CompareSnps {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         build => {
             is => 'Genome::Model::Build::ReferenceAlignment',
@@ -56,7 +56,7 @@ sub execute {
             headers => \@output_columns,
             separator => "\t",
             is_regex => 1,
-            ignore_extra_columns => 0,
+            allow_extra_columns => 0,
             input => $output_file
         );
         confess "Could not create separated value reader for $output_file!" unless $svr;

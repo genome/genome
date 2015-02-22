@@ -32,19 +32,6 @@ sub importer_class_name_for_namespace {
     return $config->{importer_class_name};
 }
 
-sub importer_property_names_for_namespace {
-    my ($self, $namespace) = @_;
-
-    Carp::confess('No namespace to get property names for importer!') if not $namespace;
-
-    my $config = $import_namespaces{$namespace};
-    if ( not $config ) {
-        Carp::confess('No config found for namespace to get property names for importer!');
-    }
-
-    return @{$config->{importer_property_names}};
-}
-
 sub _create_import_commands {
     my @configs = _load_import_configs();
     for my $config ( @configs ) { 
@@ -61,7 +48,6 @@ sub _load_import_configs {
         {
             nomenclature => 'ATCC',
             name_regexp => '(ATCC\-[\w\d]+\-[\w\d]+)(\-[\w\d]+)?',
-            taxon_name => 'human',
             sample_attributes => {
                 age => {},
                 disease => { is_optional => 1, },
@@ -90,14 +76,12 @@ sub _load_import_configs {
         {
             nomenclature => 'dbGaP',
             name_regexp => '(dbGaP\-\d+)\-\d+',
-            taxon_name => 'human',
             sample_attributes => [qw/ tissue /],
             individual_attributes => [qw/ race gender /],
         },
         {
             nomenclature => 'EMBL-EBI',
-            name_regexp => '(EMBL\-[\w\d]+)\-[\w\d]+',
-            taxon_name => 'human',
+            name_regexp => '(EMBL\-[\w\d_]+)\-.+',
             sample_attributes => {
                 age => {},
                 tissue_label => { doc => 'Tissue from where the sample was taken.', },
@@ -111,7 +95,6 @@ sub _load_import_configs {
         {
             nomenclature => 'METAHIT',
             name_regexp => '(METAHIT\-[\w\d]+)\-\d+',
-            taxon_name => 'human',
             sample_attributes => [qw/ age body_mass_index tissue_label /],
             individual_attributes => [qw/ gender /],
         },
@@ -128,7 +111,6 @@ sub _load_import_configs {
                     default_value => "unstranded",
                 },
             },
-            taxon_name => 'human',
        },
        {
             nomenclature => 'SRA',
@@ -143,22 +125,19 @@ sub _load_import_configs {
                     default_value => "unstranded",
                 },
             },
-            taxon_name => 'human',
        },
        {
             nomenclature => 'BRC46',
-            name_regexp => '(BRC46\-BRC[0-9]+)\_.+',
+            name_regexp => '(BRC46\-(BRC|CSB)[0-9]+)\_.+',
             sample_attributes => {
                 extraction_type => {
                     default_value => "rna",
                 },
             },
-            taxon_name => 'human',
         },
         {
             nomenclature => 'TCGA',
             name_regexp => '(TCGA\-[\w\d]+\-[\w\d]+)\-[\w\d]+\-[\w\d]+\-[\w\d]+\-[\w\d]+',
-            taxon_name => 'human',
             sample_attributes => {
                 extraction_type => {
                     calculate_from => [qw/ name /],
@@ -213,7 +192,6 @@ sub _load_import_configs {
         {
             nomenclature => 'DREAM',
             name_regexp => '(DREAM\-[\w\d]+)\-[\w\d]+',
-            taxon_name => 'human',
             sample_attributes => {
                 extraction_type => {
                     default_value => "genomic dna",
@@ -225,7 +203,6 @@ sub _load_import_configs {
         {
             nomenclature => 'WHIM',
             name_regexp => '(WHIM[\d]+)\-[\w\d]+(\-[\w\d]+)*',
-            taxon_name => 'human',
         },
     );
 }
@@ -247,36 +224,28 @@ sub _create_import_command_for_config {
     die 'Invalid name regexp (no parens to capture individual name) in sample import command config! '.$name_regexp_string if $name_regexp_string !~ /^\(.+\)/;
     my $name_regexp =  qr|^$name_regexp_string$|; 
 
-    my %properties;
-    $config->{importer_property_names} = [];
-    for my $type (qw/ sample individual /) {
-        my $key_name = $type.'_attributes';
+    my @command_properties;
+    for my $entity (qw/ sample individual /) {
+        my $key_name = $entity.'_attributes';
         next if not $config->{$key_name};
         my %attributes;
-        if ( ref $config->{$key_name} eq 'ARRAY' ) {
-            %attributes = map { $_ => {} } @{$config->{$key_name}};
+        if ( ref $config->{$key_name} eq 'ARRAY' ) { # convert to HASH
+            $config->{$key_name} = { map { $_ => {} } @{$config->{$key_name}} };
         }
-        else { # hash
-            %attributes = %{$config->{$key_name}};
-        }
-        my %type_properties = _get_properties_for_import_command_from_entity($type, %attributes);
-        push @{$config->{importer_property_names}}, grep { not $type_properties{$_}->{calculate} } keys %type_properties;
-        %properties = ( %properties, %type_properties );
-        $properties{'_'.$type.'_attribute_names'} = { is => 'ARRAY', is_constant => 1, value => [ sort keys %attributes ], };
+        my $properties = $config->{$key_name};
+        _add_property_meta_from_entity_to_importer_properties($entity, $properties);
+        $properties->{'_'.$entity.'_attribute_names'} = { is => 'ARRAY', is_constant => 1, value => [ sort keys %$properties ], };
+        push @command_properties, $properties;
     }
-
-    my $taxon_name = $config->{taxon_name};
-    die 'No taxon name in sample import command config!' if not defined $taxon_name; # TODO add a property?
 
     my $importer_class_meta = UR::Object::Type->define(
         class_name => $class_name,
         is => 'Genome::Sample::Command::Import::Base',
-        has => [
-            %properties,
+        has => {
+            map({%$_ } @command_properties),
             name_regexp => { is_constant => 1, value => $name_regexp, },
             nomenclature => { is_constant => 1, },
-            taxon_name => { is_constant => 1, value => $taxon_name, },
-        ],
+        },
         doc => "import $nomenclature samples",
     );
 
@@ -292,25 +261,31 @@ sub _create_import_command_for_config {
     return 1;
 }
 
-sub _get_properties_for_import_command_from_entity {
-    my ($entity, %attributes) = @_;
+sub _add_property_meta_from_entity_to_importer_properties {
+    my ($entity, $properties) = @_;
+
+    Carp::confess('No entity!') if not $entity;
+    Carp::confess('No property names!') if not $properties;
 
     my $class_name = 'Genome::'.ucfirst($entity);
     my $meta = $class_name->__meta__;
-    my %properties;
-    for my $name ( keys %attributes ) {
-        my $property = $meta->property_meta_for_name($name);
-        $properties{$name} = $attributes{$name};
-        $properties{$name}->{is} = 'Text' if not defined $properties{$name}->{is};
-        $properties{$name}->{doc} = "The value of '".join(' ', split('_', $name))."' for the $entity." if not defined $properties{$name}->{doc};
-        if ( $property ) {
-            $properties{$name}->{is} = $property->{is} if $property->{is};
-            $properties{$name}->{doc} = $property->doc if $property->doc;
-            $properties{$name}->{valid_values} = $property->valid_values if $property->valid_values;
+    for my $name ( keys %$properties ) {
+        my $property = $properties->{$name};
+        my $property_from_entity = $meta->property_meta_for_name($name);
+        if ( $property_from_entity ) {
+            for my $from_entity_property_name (qw/ doc is valid_values /) {
+                next if not defined $property_from_entity->{$from_entity_property_name};
+                $property->{$from_entity_property_name} = $property_from_entity->{$from_entity_property_name};
+            }
         }
+        else { 
+            $property->{is} = 'Text' if not defined $property->{is};
+            $property->{doc} = "The value of '".join(' ', split('_', $name))."' for the $entity." if not defined $property->{doc};
+        }
+        $property->{is_optional} = 1 if $property->{calculate};
     }
 
-    return %properties;
+    return 1;
 }
 
 # Overload sub command classes to return these in memory ones, plus the existing ones

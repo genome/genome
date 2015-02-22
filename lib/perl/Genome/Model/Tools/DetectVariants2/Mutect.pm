@@ -21,7 +21,7 @@ class Genome::Model::Tools::DetectVariants2::Mutect {
     ],
     has_param => [
         lsf_resource => {
-            default_value => 'rusage[mem=4000] select[type==LINUX64 && maxtmp>100000] span[hosts=1]',
+            default_value => 'rusage[mem=4000] select[maxtmp>100000] span[hosts=1]',
         },
     ],
 };
@@ -48,7 +48,7 @@ sub _detect_variants {
 
     my $output_dir = $self->_temp_staging_directory;
     my $scratch_dir = $self->_temp_scratch_directory;
-    my @basic_params = (   
+    my @basic_params = (
         '--normal-bam' => $self->control_aligned_reads_input,
         '--tumor-bam' => $self->aligned_reads_input,
         '--version' => $self->version,
@@ -92,13 +92,13 @@ sub _detect_variants {
             die $self->error_message;
         }
         print Dumper $output,"\n";
-        my $merger = Genome::Model::Tools::Mutect::MergeOutputFiles->execute(mutect_output_files => $output->{output_file}, merged_file => $self->_snv_staging_output);
-        unless($merger) {
+        my $merger = Genome::Model::Tools::Mutect::MergeOutputFiles->create(mutect_output_files => $output->{output_file}, merged_file => $self->_snv_staging_output);
+        unless($merger->execute()) {
             die "Error merging mutect sub-job output files\n";
         }
 
-        my $vcf_merger = Genome::Model::Tools::Joinx::VcfMerge->execute(input_files => $output->{vcf}, output_file => $self->_snv_staging_output . ".raw.vcf", merge_samples => 1);
-        unless($vcf_merger) {
+        my $vcf_merger = Genome::Model::Tools::Joinx::VcfMerge->create(input_files => $output->{vcf}, output_file => $self->_snv_staging_output . ".raw.vcf", merge_samples => 1);
+        unless($vcf_merger->execute()) {
             die "Error merging mutect sub-job vcf files\n";
         }
     }

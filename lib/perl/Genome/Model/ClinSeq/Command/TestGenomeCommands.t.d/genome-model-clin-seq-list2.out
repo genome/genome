@@ -1,0 +1,2 @@
+id	name	wgs_model	tumor_rnaseq_model	subject.common_name
+-67	H_TEST-ClinSeqGenomeCommands.clin-seq	H_TEST-ClinSeqGenomeCommands-tumor.somatic-variation (-65)	H_TEST-ClinSeqGenomeCommands-tumor_cdna.rnaseq (-54)	TEST_1

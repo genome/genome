@@ -66,7 +66,7 @@ sub execute {
         file_name => $self->bam_file,
         output_file => $name_sorted_bam,
         name_sort => 1,
-    )) {
+    )->result) {
         die('Failed to name sort bam file '. $self->bam_file);
     }
 
@@ -106,7 +106,7 @@ sub execute {
             ref_list => $self->reference_index,
             use_version => $self->use_version,
             index_bam => 0,
-        ) ) {
+        )->result ) {
             $self->error_message('Failed to convert sam file '. $tmp_sam_file .' to bam file '. $bam_file);
             die($self->error_message);
         }

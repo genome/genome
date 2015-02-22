@@ -174,6 +174,14 @@ sub execute {
         return;
     }
 
+    #Check ref_seq_build of tumor and normal model and make sure they are the same
+    my $tumor_ref_seq_build_id  = $self->tumor_model->reference_sequence_build_id;
+    my $normal_ref_seq_build_id = $self->normal_model->reference_sequence_build_id;
+
+    unless ($tumor_ref_seq_build_id eq $normal_ref_seq_build_id) {
+        die $self->error_message("Different ref seq build, tumor: $tumor_ref_seq_build_id, normal: $normal_ref_seq_build_id");
+    }
+    
     # run Genome::Model::Command::Define execute
     my $super = $self->super_can('_execute_body');
     return $super->($self,@_);

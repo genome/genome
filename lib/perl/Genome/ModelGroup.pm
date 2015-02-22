@@ -63,8 +63,22 @@ class Genome::ModelGroup {
 
 sub __display_name__ {
     my $self = shift;
-    my @models = $self->models();
-    return join(' ' ,$self->name, '('. scalar(@models), 'models)');
+    my $set = $self->model_bridge_set;
+    return join(' ' ,$self->name, '('. $set->count, 'models)');
+}
+
+sub unload {
+    if (not ref $_[0]) {
+        my $class = shift;
+        return $class->SUPER::unload();
+    }
+    my $self = shift;
+
+    for my $b ($self->model_bridges) {
+        $b->unload();
+    }
+
+    $self->SUPER::unload();
 }
 
 sub create {
@@ -292,7 +306,7 @@ sub infer_group_subject {
         next unless $subject;
 
         if ($subject->isa('Genome::Sample')) {
-            my $indiv = $subject->patient;
+            my $indiv = $subject->individual;
             unless ($indiv) {
                 $use_taxon = 1;
                 next;
@@ -372,6 +386,23 @@ sub tags_for_model {
     my %tags = map { $_->header_text() => $_->body_text() } @notes;
 
     return \%tags;
+}
+
+sub _model_content_for_search {
+    my $self = shift;
+    my $dbh = $self->__meta__->data_source->get_default_handle();
+    my $sth = $dbh->prepare(
+        'SELECT m.genome_model_id, m.name, s.name
+        FROM model.model_group mg
+        LEFT JOIN model.model_group_bridge b ON mg.id = b.model_group_id
+        LEFT JOIN model.model m ON b.model_id = m.genome_model_id
+        LEFT JOIN subject.subject s ON m.subject_id = s.subject_id
+        WHERE mg.id = ?'
+    );
+    my $rv = $sth->execute($self->id);
+    warn $self->error_message('Failed to execute query') unless $rv;
+    my $ref = $sth->fetchall_arrayref;
+    return join(' ', map @$_, @$ref);
 }
 
 1;

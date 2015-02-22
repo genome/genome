@@ -74,7 +74,7 @@ sub create {
     unless ($self) { return; }
 
     unless ($] > 5.010) {
-        die 'Subcommands run by '. __PACKAGE__ .' require perl 5.10 or greater! Consider using \'/usr/bin/perl -S gmt\' instead of \'gmt\'.';
+        die 'Subcommands run by '. __PACKAGE__ .' require perl 5.10 or greater!';
     }
     return $self;
 }
@@ -88,7 +88,7 @@ sub execute {
     }
 
     my ($bed_basename,$bed_dirname,$bed_suffix) = File::Basename::fileparse($self->bed_file,qw/\.bed/);
-    
+
     my @wingspans = split(',',$self->wingspan_values);
     my @bed_files;
     for my $wingspan (@wingspans) {
@@ -104,14 +104,16 @@ sub execute {
                 output_file => $tmp_slop_bed_file,
                 both => $wingspan,
             );
-            unless (Genome::Model::Tools::BedTools::Slop->execute(%slop_bed_params)) {
+            my $slop_cmd = Genome::Model::Tools::BedTools::Slop->create(%slop_bed_params);
+            unless ($slop_cmd and $slop_cmd->execute) {
                 die('Failed to run SlopBed with params : '. Data::Dumper::Dumper(%slop_bed_params));
             }
-            unless (Genome::Model::Tools::BedTools::Merge->execute(
+            my $merge_cmd = Genome::Model::Tools::BedTools::Merge->create(
                 input_file => $tmp_slop_bed_file,
                 output_file => $wingspan_bed_file,
                 report_names => 1,
-            )) {
+            );
+            unless ($merge_cmd and $merge_cmd->execute) {
                 die('Failed to run MergeBed after wingspan slop added!');
             }
         } else {
@@ -119,7 +121,7 @@ sub execute {
         }
         push @bed_files, $wingspan_bed_file;
     }
-    
+
     my $module_path = $self->__meta__->module_path;
     my $xml_path = $module_path;
     $xml_path =~ s/\.pm/\.xml/;
@@ -181,7 +183,7 @@ sub setup_workflow_operation {
     my $input_properties = delete($params{'input_properties'});
     my $output_properties = delete($params{'output_properties'});
     my $parallel_by = delete($params{'parallel_by'});
-    
+
     my $input_connector = $workflow->get_input_connector;
     my $output_connector = $workflow->get_output_connector;
 

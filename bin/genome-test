@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# delegate to local version if it is found
+if git rev-parse --is-inside-work-tree 1> /dev/null 2> /dev/null
+then
+    WORK_TREE="$(git rev-parse --show-toplevel)"
+    BIN="$(basename "$0")"
+    BIN="${WORK_TREE}/bin/${BIN}"
+    if test "$0" != "$BIN" && test -x "$BIN"
+    then
+        exec "$BIN" "$@"
+    fi
+fi
+
+if test $# -gt 0
+then
+    ARGS=("$@")
+else
+    ARGS=(--lsf --git)
+fi
+
+exec genome-test-env test-tracker prove "${ARGS[@]}"

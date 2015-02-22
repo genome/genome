@@ -51,12 +51,31 @@ class Genome::Model::SomaticValidation::Command::ValidateSvs::GenerateMergedAsse
 
 sub sub_command_category { 'pipeline steps' }
 
+sub shortcut {
+    my $self = shift;
+    my $build = $self->build;
+
+    unless($build->run_sv_validation) {
+        $self->debug_message('Processing profile indicates SV validation should not run. Skipping.');
+        $self->skip(1);
+        return 1;
+    }
+
+    return;
+}
+
 sub execute {
     my $self = shift;
     my $build = $self->build;
 
     unless($build) {
         die $self->error_message('No build found.');
+    }
+
+    unless($build->run_sv_validation) {
+        $self->debug_message('Processing profile indicates SV validation should not run. Skipping.');
+        $self->skip(1);
+        return 1;
     }
 
     Genome::Sys->create_directory($self->output_dir);

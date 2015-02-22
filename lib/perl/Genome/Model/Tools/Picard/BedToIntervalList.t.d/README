@@ -1,0 +1,8 @@
+#BEDTools version 2.17.0
+
+bedtools random -seed 1 -n 1000 -g /gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.genome  > random.bed
+
+bedtools sort -i random.bed > random_sorted.bed
+
+cp /gscmnt/ams1102/info/model_data/2869585698/build106942997/seqdict/seqdict.sam .
+

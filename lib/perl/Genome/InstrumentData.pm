@@ -8,7 +8,7 @@ use Genome;
 use List::MoreUtils qw(uniq);
 
 class Genome::InstrumentData {
-    is => 'Genome::Notable',
+    is => [qw/ Genome::Utility::ObjectWithAllocations Genome::Notable /],
     table_name => 'instrument.data',
     is_abstract => 1,
     subclass_description_preprocessor => __PACKAGE__ . '::_preprocess_subclass_description',
@@ -78,7 +78,7 @@ class Genome::InstrumentData {
         individual => {
             is => 'Genome::Individual',
             via => 'sample',
-            to => 'patient',
+            to => 'individual',
         },
         taxon => {
             is => 'Genome::Taxon',
@@ -201,10 +201,6 @@ class Genome::InstrumentData {
             via => 'sample_source',
             to => 'name',
         },
-        taxon => {
-            is => 'Genome::Taxon',
-            via => 'sample',
-        },
         species_name => { via => 'taxon' },
     ],
     has_many_optional => [
@@ -215,10 +211,6 @@ class Genome::InstrumentData {
         events => {
             is => 'Genome::Model::Event',
             reverse_as => 'instrument_data',
-        },
-        allocations => {
-            is => 'Genome::Disk::Allocation',
-            reverse_as => 'owner',
         },
     ],
     schema_name => 'GMSchema',
@@ -289,8 +281,6 @@ sub delete {
     my ($expunge_status) = $self->_expunge_assignments;
     return unless $expunge_status;
 
-    $self->_create_deallocate_observer;
-
     for my $attribute ($self->attributes) {
         $attribute->delete;
     }
@@ -301,12 +291,6 @@ sub delete {
 
     return $self->SUPER::delete;
 }
-
-my @_AR_SUBCLASSES_TO_EXPUNGE = (
-    'Genome::InstrumentData::AlignmentResult::Merged',
-    'Genome::InstrumentData::AlignmentResult',
-    'Genome::InstrumentData::AlignmentResult::Tophat',
-);
 
 sub _expunge_assignments{
     my $self = shift;
@@ -333,53 +317,13 @@ sub _expunge_assignments{
     );
     my @builds = map($_->build, @build_inputs);
     for my $build (@builds) {
-        $build->abandon();
+        $build->abandon(undef, 'Expunging instrument data ' . $instrument_data_id);
         push @models, $build->model;
     }
 
-    for my $ar_subclass_name (@_AR_SUBCLASSES_TO_EXPUNGE) {
-        my @alignment_results = $ar_subclass_name->get(
-            instrument_data_id => $self->id);
-
-        for my $alignment_result (@alignment_results) {
-            for my $bamqc_result (Genome::InstrumentData::AlignmentResult::Merged::BamQc->get(alignment_result_id => $alignment_result->id)) {
-                unless ($bamqc_result->delete) {
-                    die $self->error_message(sprintf(
-                            "Failed to remove BamQc result (%s) for alignment result (%s)",
-                            $alignment_result->id, $bamqc_result->id));
-                }
-            }
-
-            unless ($alignment_result->delete) {
-                die $self->error_message("Could not remove instrument data " . $self->__display_name__ .
-                    " because alignment result " . $alignment_result->__display_name__ .
-                    " that uses this instrument data could not be deleted!");
-            }
-        }
-
-    }
+    Genome::SoftwareResult->expunge_results_containing_object($self, 'Expunging instrument data ' . $instrument_data_id);
 
     return 1, %affected_users;
-}
-
-sub _create_deallocate_observer {
-    my $self = shift;
-    my @allocations = $self->allocations;
-    return 1 unless @allocations;
-    my $deallocator;
-    $deallocator = sub {
-        for my $allocation (@allocations) {
-            $allocation->delete;
-        }
-        UR::Context->cancel_change_subscription(
-            'commit', $deallocator
-        );
-    };
-    UR::Context->create_subscription(
-        method => 'commit',
-        callback => $deallocator
-    );
-    return 1;
 }
 
 sub calculate_alignment_estimated_kb_usage {

@@ -200,8 +200,8 @@ sub execute {
         $cmd .= $self->_get_cmd_opts(%common_options, %pileup_options);
     }
 
-    my $tmp_file     = Genome::Sys->create_temp_file_path('tmp_var.'.$input_var_format);
-    my $flt_tmp_file = Genome::Sys->create_temp_file_path('tmp_var_filtered.'.$input_var_format);
+    my $tmp_file     = Genome::Sys->create_temp_file_path();
+    my $flt_tmp_file = Genome::Sys->create_temp_file_path();
    
     if ($input_var_format eq 'bcf') { #stdout for good vars, stderr for filtered vars
         $cmd .= " - 1> $tmp_file 2> $flt_tmp_file";
@@ -214,6 +214,7 @@ sub execute {
         cmd => $cmd,
         output_files => [$tmp_file, $flt_tmp_file],
         skip_if_output_is_present => 0,
+        allow_zero_size_output_files => 1,
     );
         
     unless ($rv == 1) {
@@ -224,13 +225,13 @@ sub execute {
     my ($tmp_snv_fh, $tmp_snv_file, $tmp_flt_snv_fh, $tmp_flt_snv_file, $tmp_indel_fh, $tmp_indel_file, $tmp_flt_indel_fh, $tmp_flt_indel_file);
 
     if ($snv_out_file) {
-        ($tmp_snv_fh, $tmp_snv_file)         = Genome::Sys->create_temp_file('tmp_snv.'.$input_var_format);
-        ($tmp_flt_snv_fh, $tmp_flt_snv_file) = Genome::Sys->create_temp_file('tmp_snv_filtered.'.$input_var_format);
+        ($tmp_snv_fh, $tmp_snv_file)         = Genome::Sys->create_temp_file();
+        ($tmp_flt_snv_fh, $tmp_flt_snv_file) = Genome::Sys->create_temp_file();
     }
 
     if ($indel_out_file) {
-        ($tmp_indel_fh, $tmp_indel_file)         = Genome::Sys->create_temp_file('tmp_indel.'.$input_var_format);
-        ($tmp_flt_indel_fh, $tmp_flt_indel_file) = Genome::Sys->create_temp_file('tmp_indel_filtered.'.$input_var_format);
+        ($tmp_indel_fh, $tmp_indel_file)         = Genome::Sys->create_temp_file();
+        ($tmp_flt_indel_fh, $tmp_flt_indel_file) = Genome::Sys->create_temp_file();
     }
 
     my $header;
@@ -254,15 +255,22 @@ sub execute {
     map{$_->close if $_}($tmp_flt_snv_fh, $tmp_flt_indel_fh);
 
     if ($header) {
-        my ($header_fh, $header_file) = Genome::Sys->create_temp_file('tmp_header_'.$input_var_format);
+        my ($header_fh, $header_file) = Genome::Sys->create_temp_file();
         $header_fh->print($header);
         $header_fh->close;
 
         my @touch_files;
-
         if ($snv_out_file) {
-            Genome::Sys->cat(input_files => [$header_file, $tmp_snv_file],     output_file => $snv_out_file);
-            Genome::Sys->cat(input_files => [$header_file, $tmp_flt_snv_file], output_file => $flt_snv_out_file);
+            Genome::Sys->cat(
+                input_files => [$header_file, $tmp_snv_file],
+                allow_zero_size_input_files => 1,
+                output_file => $snv_out_file
+            );
+            Genome::Sys->cat(
+                input_files => [$header_file, $tmp_flt_snv_file],
+                allow_zero_size_input_files => 1,
+                output_file => $flt_snv_out_file
+            );
         }
         if ($indel_out_file) { #sometimes for testing data, pass_indel_filter or fail_indel_filter file could be empty
             if (-z $tmp_indel_file) {

@@ -9,6 +9,9 @@ use File::Spec;
 use Genome::Utility::Test 'compare_ok';
 use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Differ;
+use Genome::Test::Factory::Build;
+use Genome::Test::Factory::Model::ImportedVariationList;
+use Genome::Test::Factory::SoftwareResult::User;
 
 use Exporter 'import';
 
@@ -114,8 +117,8 @@ sub _create_test_build {
         get_indels_vcf => $indel_vcf,
         reference_sequence_build => $reference_sequence_build,
     );
-    $build->the_master_event->event_status('Succeeded');
-    $build->the_master_event->date_completed("2013-07-11 20:47:51");
+    $build->status('Succeeded');
+    $build->date_completed("2013-07-11 20:47:51");
     return $build;
 }
 
@@ -167,19 +170,19 @@ sub get_roi_list {
 }
 
 sub test_cmd {
-    my ($variant_type, $version, $use_mg, $no_region_limiting) = @_;
+    my ($variant_type, $version, $use_mg, $no_region_limiting, $use_forced_variations_build_id) = @_;
 
     my $class = 'Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcf' . ucfirst($variant_type);
 
     my $sr_class = $class . "::Result";
-    use_ok($class);
-    use_ok($sr_class);
+    use_ok($class) or die;
+    use_ok($sr_class) or die;
 
     my $test_dir = get_test_dir($class, $version);
 
     my $roi_list;
     $roi_list = get_roi_list($test_dir, 'roi.bed') unless $no_region_limiting;
-    my $joinx_version = "1.8";
+    my $joinx_version = "1.9";
     my $varscan_version = "2.3.6";
     my @input_builds = create_test_builds($test_dir);
 
@@ -192,6 +195,12 @@ sub test_cmd {
             varscan_version => $varscan_version,
             builds => \@input_builds,
     );
+
+    if ($use_forced_variations_build_id) {
+        my $vcf = File::Spec->join($test_dir, 'forced_sites.vcf.gz'); #FIXME will this have to be gzipped?
+        my $build = _setup_sites_build('forced_sites', 1, $vcf);
+        $params{forced_variations_build_id} = $build->id;
+    }
 
     if ($no_region_limiting){
        delete $params{'roi_list'};
@@ -225,6 +234,7 @@ sub test_cmd {
     ok(-s $result, "result of CreateCrossSampleVcf: $result exists");
 
     delete $sr_params{'output_directory'};
+    $sr_params{users} = Genome::Test::Factory::SoftwareResult::User->setup_user_hash();
     my $sr = $sr_class->get_with_lock(%sr_params);
     ok($sr, "found software result for test1");
     is($sr, $cmd->software_result, "found software result via cmd for test1");
@@ -232,7 +242,9 @@ sub test_cmd {
     my $expected_result = get_expected_result($variant_type, $test_dir);
 
     my $differ = Genome::File::Vcf::Differ->new($result, $expected_result);
-    is($differ->diff, undef, "Found No differences between $result and (expected) $expected_result");
+    my $diff = $differ->diff;
+    is($diff, undef, "Found No differences between $result and (expected) $expected_result") ||
+        diag $diff->to_string;
 }
 
 sub get_expected_result {
@@ -240,6 +252,29 @@ sub get_expected_result {
     my $expected_result = File::Spec->join($result_dir, "$variant_type.merged.vcf.gz");
     ok(-s $expected_result, "expected result exists: $expected_result");
     return $expected_result;
+}
+
+sub _setup_sites_build {
+    my ($source_name, $version, $file) = @_;
+    my $annotation_model = Genome::Test::Factory::Model::ImportedVariationList->setup_object(
+        name => "omg-fake-annotation-$source_name",
+    );
+    $annotation_model->source_name($source_name);
+
+    my $output_dir = Genome::Sys->create_temp_directory;
+    symlink($file, "$output_dir/snvs.hq.vcf");
+
+    my $swr = Genome::Model::Tools::DetectVariants2::Result::Manual->__define__(
+        output_dir => $output_dir,
+        variant_type => "snv"
+    );
+
+    return Genome::Test::Factory::Build->setup_object(
+        model_id => $annotation_model->id,
+        status => "Succeeded",
+        version => $version,
+        snv_result => $swr,
+    );
 }
 
 

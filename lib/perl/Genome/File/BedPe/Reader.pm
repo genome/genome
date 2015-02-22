@@ -5,12 +5,12 @@ use Genome::File::BedPe::Entry;
 
 use Carp qw/confess/;
 use Genome;
-use Genome::File::TypedStream;
+use Genome::File::TypedReader;
 
 use strict;
 use warnings;
 
-use base qw(Genome::File::TypedStream);
+use base qw(Genome::File::TypedReader);
 
 sub _parse_header {
     my $self = shift;

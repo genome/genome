@@ -45,7 +45,7 @@ my $filter_command = Genome::Model::Tools::Somatic::FilterFalseIndels->create(
     output_file => $output_file,
     filtered_file => $filtered_file,
 
-    reference => $reference->fasta_file,
+    reference => $reference->full_consensus_path('fa'),
     min_strandedness => 0.01,
     min_var_freq => 0.05,
     min_var_count => 2,

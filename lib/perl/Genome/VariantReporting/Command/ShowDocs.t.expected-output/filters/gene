@@ -1,0 +1,19 @@
+[4mOVERVIEW[0m
+Filter out variants that aren't part of the specified gene set
+
+[4mPROPERTIES[0m
+  [1mgene_set[0m   String
+    Name of the gene set to utilize for filtering
+    valid values:
+     acmg
+
+[4mREQUIRED EXPERTS[0m
+vep
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    This transcript is part of the gene_set gene set
+
+[4mFILTER DESCRIPTION[0m
+This transcript is part of the gene_set gene set
+

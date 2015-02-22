@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 class Genome::Model::PhenotypeCorrelation::Command::DumpClinicalData {
-    is => "Genome::Command::Base",
+    is => "Command::V2",
     doc => "Dump clinical data for the specified samples (or population group) to a tsv file",
     has => [
         samples => {

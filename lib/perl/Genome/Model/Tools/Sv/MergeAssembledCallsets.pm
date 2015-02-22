@@ -20,7 +20,7 @@ class Genome::Model::Tools::Sv::MergeAssembledCallsets {
         max_merge_distance => { #-d
             is => 'Integer',
             default_value => 20,
-            doc => 'do not merge SVs unless they differ less than this many basepairs in start and end positions, subject ot 1 duplication',
+            doc => 'do not merge SVs unless they differ less than this many basepairs in start and end positions, subject to 1 duplication',
         },
         max_merge_size_difference => { #-p
             is => 'Integer',

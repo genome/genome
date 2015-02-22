@@ -10,6 +10,7 @@ BEGIN{
 
 use above "Genome";
 use Test::More;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -20,6 +21,10 @@ use_ok('Genome::Model::Tools::DetectVariants2::Result');
 my $refbuild_id = 101947881;
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
 ok($ref_seq_build, 'human36 reference sequence build') or die;
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
 
 #TODO this could really use its own very tiny dataset--we don't care about the results in this test so much as the process
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Samtools/';
@@ -40,6 +45,7 @@ my %command_params = (
     params => $detector_parameters,
     aligned_reads_sample => 'TEST',
     output_directory => $test_working_dir . '/test',
+    result_users => $result_users,
 );
 
 my $command = Genome::Model::Tools::DetectVariants2::Samtools->create(%command_params);

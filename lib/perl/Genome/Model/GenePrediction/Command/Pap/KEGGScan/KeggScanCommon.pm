@@ -16,7 +16,7 @@ our @EXPORT_OK = qw(create_directory revise_subject_for_ECs build_EC_index creat
 sub create_directory {
     my ($self, $dir) = @_;
     make_path($dir);
-    chmod(0755, $dir);
+    chmod(0750, $dir);
     return $dir;
 }
 

@@ -15,9 +15,10 @@ my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Dgidb-QueryGene/'
 my $expected_out = $test_dir.'v3/expected.out';
 my $output_file  = Genome::Sys->create_temp_file_path('query_gene.out');
 
+my $genes = 'FLT3,EGFR,KRAS';
 my $cmd =Genome::Model::Tools::Dgidb::QueryGene->create(
     output_file         => $output_file,
-    genes               => 'FLT3,EGFR,KRAS',
+    genes               => $genes,
     gene_categories     => 'KINASE',
     interaction_types   => 'inhibitor',
     interaction_sources => 'TALC,TEND,MyCancerGenome',
@@ -35,7 +36,7 @@ my $reader = Genome::Utility::IO::SeparatedValueReader->create(
     separator => "\t",
 );
 
-my $resp = $cmd->get_response();
+my $resp = $cmd->get_response($genes);
 ok($resp->is_success, "Got a successful response from dgidb");
 
 my @outputs;

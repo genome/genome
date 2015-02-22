@@ -31,7 +31,7 @@ sub _generate_content {
     }
 
     my $json = {};
-    my @allocs = $build->all_allocations();
+    my @allocs = $build->associated_disk_allocations();
 
     for my $a (@allocs) {
         my $j = [];

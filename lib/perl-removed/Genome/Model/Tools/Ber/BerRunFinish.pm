@@ -197,8 +197,7 @@ sub execute
     # recent versions of BER try to be helpful and append '.dat' to dat files
     # then we get .dat.dat on the ends of the files.
     if(-f $sqlitedatafile.".dat") {
-        # rename file.
-        rename($sqlitedatafile.".dat",$sqlitedatafile);
+        Genome::Sys->rename($sqlitedatafile.".dat",$sqlitedatafile);
     }
     
     ## get the latest filename
@@ -473,7 +472,7 @@ sub execute
 
     $parse_script_fh->close();
 
-    my $mode = 0775;
+    my $mode = 0770;
     chmod $mode, $parse_script_full;
     my $aceparce_stdout
         = $acedb_data_path . "/STDOUT_" . $locus_tag . "_ace_parse.txt";

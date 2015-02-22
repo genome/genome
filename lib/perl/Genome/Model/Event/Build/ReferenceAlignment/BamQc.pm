@@ -3,7 +3,9 @@ package Genome::Model::Event::Build::ReferenceAlignment::BamQc;
 use strict;
 use warnings;
 
+use version 0.77;
 use Genome;
+use Set::Scalar;
 
 class Genome::Model::Event::Build::ReferenceAlignment::BamQc {
     is  => ['Genome::Model::Event'],
@@ -41,8 +43,7 @@ sub execute {
     my $build = $self->build;
     my $pp    = $build->processing_profile;
 
-    if ($pp->read_aligner_name eq 'imported') {
-        $self->warning_message('Skip BamQc step for imported alignment bam');
+    if ($self->_should_skip_bam_qc($pp)) {
         return 1;
     }
 
@@ -62,9 +63,19 @@ sub params_for_result {
     my $build = $self->build;
     my $pp    = $build->processing_profile;
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+
     unless ($self->_alignment_result) {
         my $instrument_data_input = $self->instrument_data_input;
-        my ($align_result) = $build->alignment_results_for_instrument_data($instrument_data_input->value);
+
+        my %segment_info;
+        if(defined $self->instrument_data_segment_id) {
+            for my $key (qw(instrument_data_segment_id instrument_data_segment_type)) {
+                $segment_info{$key} = $self->$key;
+            }
+        }
+
+        my ($align_result) = $pp->results_for_instrument_data_input($instrument_data_input, $result_users, %segment_info);
 
         unless ($align_result) {
             die $self->error_message('No alignment result found for build: '. $build->id);
@@ -72,29 +83,16 @@ sub params_for_result {
         $self->_alignment_result($align_result);
     }
 
-    my $picard_version = $pp->picard_version;
+    my $picard_version = $self->_select_picard_version($pp->picard_version);
 
-    if ($picard_version < 1.40) {
-        my $pp_picard_version = $picard_version;
-        $picard_version = Genome::Model::Tools::Picard->default_picard_version;
-        $self->warning_message('Given picard version: '.$pp_picard_version.' not compatible to CollectMultipleMetrics. Use default: '.$picard_version);
-    }
 
     my $instr_data  = $self->instrument_data;
     #read length takes long time to run and seems not useful for illumina/solexa data
     my $read_length = $instr_data->sequencing_platform =~ /^solexa$/i ? 0 : 1;
 
-    my $error_rate = 1;
+    my $error_rate_version = $self->_select_error_rate_version_for_pp($pp);
 
-    if ($pp->can('read_aligner_name')
-        and $pp->can('read_aligner_version')
-        and defined $pp->read_aligner_name
-        and defined $pp->read_aligner_version
-        and ($pp->read_aligner_name eq 'bwamem')
-        and ($pp->read_aligner_version =~ /^0\.7\.(5a|7)$/)
-    ) {
-        $error_rate = 0;
-    }
+    $result_users->{uses} = $build;
 
     return (
         alignment_result_id => $self->_alignment_result->id,
@@ -102,10 +100,11 @@ sub params_for_result {
         samtools_version    => $pp->samtools_version,
         fastqc_version      => Genome::Model::Tools::Fastqc->default_fastqc_version,
         samstat_version     => Genome::Model::Tools::SamStat::Base->default_samstat_version,
-        error_rate_version  => Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version,
-        error_rate          => $error_rate,
+        error_rate_version  => $error_rate_version,
+        error_rate          => 1,
         read_length         => $read_length,
         test_name           => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        users               => $result_users,
     );
 }
 
@@ -126,12 +125,68 @@ sub link_result {
         $align_result->_reallocate_disk_allocation;
     }
 
-    my @users = $align_result->users;
-    unless (grep{$_->user eq $result}@users) {
-        $align_result->add_user(label => 'uses', user => $result);
-    }
-
     return 1;
 }
+
+sub _select_picard_version {
+    my ($self, $picard_version) = @_;
+
+    my $selected_picard_version = $picard_version;
+    #picard versions are a little odd. 1.40 is less than 1.113 but then simple arithmetic doesn't work
+    if (version->parse("v$picard_version") < version->parse("v1.40")) {
+        $selected_picard_version = Genome::Model::Tools::Picard->default_picard_version;
+        $self->warning_message('Requested picard version: '.$picard_version.' is not compatible with CollectMultipleMetrics. Using default: '.$selected_picard_version);
+    }
+
+    return $selected_picard_version;
+}
+
+sub _select_error_rate_version_for_pp {
+    my ($self, $pp) = @_;
+
+    my $error_rate_version = Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version;
+
+    if ($pp->can('read_aligner_name')
+        and $pp->can('read_aligner_version')
+        and defined $pp->read_aligner_name
+        and defined $pp->read_aligner_version
+        and ($pp->read_aligner_name =~ /^bwamem/)
+    ) {
+        my $mem_version = $self->_bwa_mem_version_object($pp->read_aligner_version);
+        if($mem_version > $self->_bwa_mem_version_object("0.7.5")) {
+            $error_rate_version = '1.0a2';
+        }
+    }
+
+    return $error_rate_version;
+}
+
+sub _should_skip_bam_qc {
+    my ($self, $pp) = @_;
+
+    if ($pp->can('read_aligner_name')) {
+        my $aligner = $pp->read_aligner_name;
+        if ($self->_aligner_blacklist->has($aligner)) {
+            $self->warning_message("Skipping BamQc because aligner is '$aligner'");
+            return 1;
+        }
+    }
+    return 0;
+}
+
+sub _aligner_blacklist {
+    return Set::Scalar->new(qw(imported bsmap));
+}
+
+sub _bwa_mem_version_object {
+    my ($self, $mem_version) = @_;
+    my ($main_version, $letter_version) = $mem_version =~ /(\d+\.\d+.\d+)([a-z]){0,1}/;
+    my $full_version = "v$main_version";
+    if(defined $letter_version) {
+        $full_version = join("_",$main_version,ord($letter_version) - 96);
+    }
+    return version->parse($full_version);
+}
+
 
 1;

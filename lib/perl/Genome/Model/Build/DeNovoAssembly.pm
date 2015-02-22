@@ -477,11 +477,11 @@ sub files_ignored_by_diff {
 
 sub regex_for_custom_diff {
     return (
-        metrics => '\.(in|out)put_metrics',
+        metrics_files => '\.(in|out)put_metrics',
     );
 }
 
-sub diff_metrics {
+sub diff_metrics_files {
     my ($self, $file1, $file2) = @_;
 
     my $metrics_from_file1 = Genome::Model::Tools::Sx::Metrics->from_file($file1);

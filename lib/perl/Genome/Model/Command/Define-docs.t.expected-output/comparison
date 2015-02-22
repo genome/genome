@@ -6,19 +6,19 @@
 [4mSYNOPSIS[0m
  genome model define comparison 
     --name test-bwasw1-on-somatic 
-    --from test-cancer-aml31  
-    --changes "tumor_model.read_aligner_name=bwa-sw 
-                and normal_model.read_aligner_name=bwa-sw 
-                and tumor_model.read_aligner_version=0.6.1  
-                and normal_model.read_aligner_version=0.6.1 "  
-    --aspects alignments,variants,metrics 
- 
+    --from test-cancer-aml31 
+    --changes "tumor_model.read_aligner_name=bwa-sw
+                and normal_model.read_aligner_name=bwa-sw
+                and tumor_model.read_aligner_version=0.6.1
+                and normal_model.read_aligner_version=0.6.1 " 
+    --aspects alignments,variants,metrics
+
  genome model define comparison 
     --name test-clinseq-noexome-dgidb 
     --from id:2890260793/2890224790 
     --changes "exome_model=''" 
-    #--aspects drug-gene-interactions,metrics,run-time 
-    --processing-profile "compare clinseq default" 
+    #--aspects drug-gene-interactions,metrics,run-time
+    --processing-profile "compare clinseq default"
 
 [4mREQUIRED INPUTS[0m
   [1mfrom-models[0m

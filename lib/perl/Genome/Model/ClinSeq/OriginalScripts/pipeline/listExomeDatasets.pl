@@ -53,9 +53,8 @@ for my $common_name (@common_names) {
     my $extraction_type = $sample->extraction_type || "UNDEF";
     my $sample_common_name = $sample->common_name || "UNDEF";
     my $tissue_desc = $sample->tissue_desc || "UNDEF";
-    my $cell_type = $sample->cell_type || "UNDEF";
-    #print BLUE, "\n\t\tSAMPLE\t". $common_name ."\t". $sample->name ."\t". $sample->extraction_type ."\t". $sample->common_name ."\t". $sample->tissue_desc ."\t". $sample->cell_type, RESET;
-    print MAGENTA, "\n\t\tSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc\tCT: $cell_type", RESET;
+    #print BLUE, "\n\t\tSAMPLE\t". $common_name ."\t". $sample->name ."\t". $sample->extraction_type ."\t". $sample->common_name ."\t". $sample->tissue_desc , RESET;
+    print MAGENTA, "\n\t\tSAMPLE\tCN: $common_name\tSN: $sample_name\tET: $extraction_type\tSCN: $sample_common_name\tTD: $tissue_desc", RESET;
 
     #Get libraries associated with each sample
     my @libraries = $sample->libraries;

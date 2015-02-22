@@ -14,7 +14,7 @@ class Genome::Model::DeNovoAssembly::Command::PostAssemble {
     has_constant => [
 
         lsf_resource => { is => 'Text',
-            default_value => "-R 'select[type==LINUX64 && mem>30000] rusage[mem=30000] span[hosts=1]' -M 30000000",
+            default_value => "-R 'select[mem>30000] rusage[mem=30000] span[hosts=1]' -M 30000000",
         },
     ],
 };

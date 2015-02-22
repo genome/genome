@@ -9,7 +9,7 @@ use strict;
 use warnings;
 
 class Genome::Model::PhenotypeCorrelation::Command::SplitVariantMatrix {
-    is => "Genome::Command::Base",
+    is => "Command::V2",
     doc => "Split a variant matrix into multiple files by column",
     has => [
         input_file => {

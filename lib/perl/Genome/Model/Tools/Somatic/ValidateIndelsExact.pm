@@ -78,7 +78,7 @@ class Genome::Model::Tools::Somatic::ValidateIndelsExact {
              default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
          }, 
          lsf_resource => {
-             default_value => "-M 6000000 -R 'select[type==LINUX64 && mem>16000] rusage[mem=16000]'",
+             default_value => "-M 6000000 -R 'select[mem>16000] rusage[mem=16000]'",
          },
      ],
 };

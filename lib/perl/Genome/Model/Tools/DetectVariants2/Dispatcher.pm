@@ -240,6 +240,7 @@ sub _detect_variants {
     $input->{alignment_results} = \@alignment_results;
     $input->{control_alignment_results} = \@control_alignment_results;
     $input->{pedigree_file_path} = $self->pedigree_file_path;
+    $input->{result_users} = $self->result_users;
 
     $self->_dump_workflow($workflow);
     $self->_dump_dv_cmd;
@@ -469,6 +470,7 @@ sub generate_workflow {
             'control_aligned_reads_sample',
             'output_directory',
             'pedigree_file_path',
+            'result_users',
         ],
         output_properties => [
             @output_properties
@@ -673,6 +675,15 @@ sub create_combine_operation {
     $workflow_links->{$unique_combine_name."_output_directory"}->{right_operation} = $combine_operation;
     $workflow_links->{$unique_combine_name."_output_directory"}->{last_operation} = $unique_combine_name;
 
+    for my $input_key ('aligned_reads_sample', 'control_aligned_reads_sample', 'result_users') {
+        $workflow_model->add_link(
+            left_operation => $workflow_model->get_input_connector,
+            left_property => $input_key,
+            right_operation => $combine_operation,
+            right_property => $input_key,
+        );
+    }
+
     # Add this output directory to the list of expected directories so we can compile all LQ variants later
     push @{$self->{_expected_output_directories}->{$variant_type}}, $combine_directory;
 
@@ -785,6 +796,7 @@ sub add_detectors_and_filters {
                     'pedigree_file_path',
                     'aligned_reads_sample',
                     'control_aligned_reads_sample',
+                    'result_users',
                 );
 
                 # A superset of the above
@@ -949,7 +961,6 @@ sub _create_directories {
             }
 
             $self->debug_message("Created directory: $output_directory");
-            chmod 02775, $output_directory;
         }
     }
 
@@ -994,6 +1005,9 @@ sub _promote_staged_data {
                 my $link_target = $output_dir."/$variant_type" . "s.detailed.vcf.gz";
                 my $clipped_vcf = $output_dir."/$variant_type" . "s.vcf.gz";
                 Genome::Model::Tools::Vcf::CleanupVcf->execute(input_file => $source, output_file => $clipped_vcf);
+                if ($variant_type eq "snv") {
+                    $self->_create_bed_from_vcf($clipped_vcf);
+                }
                 # Link both the vcf and the tabix index
                 Genome::Sys->create_symlink($source, $link_target);
                 Genome::Sys->create_symlink("$source.tbi", "$link_target.tbi");
@@ -1030,6 +1044,23 @@ sub _promote_staged_data {
     }
 
     return 1;
+}
+
+sub _create_bed_from_vcf {
+    my $self = shift;
+    my $vcf = shift;
+
+    eval {
+        Genome::Model::Tools::Bed::Convert::VcfToBed->execute(source => $vcf,
+            output => "$vcf.bed",
+            sample_name => Genome::Sample->sample_name_to_name_in_vcf($self->aligned_reads_sample),
+        );
+    };
+    if ($@) {
+        $self->error_message("VcfToBed conversion failed: $@");
+        die $self->error_message();
+    }
+    return;
 }
 
 # for each strategy input we look in the workflow result for output_directories which we then turn into relative paths, and then into final full paths
@@ -1117,6 +1148,7 @@ sub _generate_standard_files {
                 result_ids => [keys %results],
                 variant_type => $variant_type,
                 test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+                users => $self->result_users,
             );
 
             unless($lq_result) {
@@ -1152,7 +1184,7 @@ sub _rotate_old_files {
         die $self->error_message('Too many old files encountered! (Is there a systematic issue, or do old files just need cleaning up?)');
     }
 
-    unless(rename($file, "$file.$i")) {
+    unless(Genome::Sys->rename($file, "$file.$i")) {
         die $self->error_message('Failed to move old file out of the way ' . $!);
     }
 

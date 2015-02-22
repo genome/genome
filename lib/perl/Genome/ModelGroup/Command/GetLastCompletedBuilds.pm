@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::ModelGroup::Command::GetLastCompletedBuilds {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => "Obtain all of the last_completed_builds from a model group. Not intended for command line use.",
     has_input => [
         model_group => {

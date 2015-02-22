@@ -18,11 +18,12 @@ sub execute {
     my $self = shift;
 
     my $version = $self->use_version;
-    ($version) = $version =~ /(\d+)/;
 
-    if ($version < 613) {
-        $self->warning_message('samtools version: '.$self->use_version .' do not have idxstats option. Instead r783 will be used');
-        $self->use_version('r783');
+    if ( my ($version_num) = $version =~ m/^r(\d+)/) {
+        if ($version_num < 613) {
+            $self->error_message('samtools version: '. $self->use_version .' does not have idxstats option.  Please provide a more recent verison of samtools.');
+            die($self->error_message);
+        }
     }
 
     my $stderr_redirector = $self->include_stderr ? ' 2>&1 ' : '';

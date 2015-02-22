@@ -6,7 +6,10 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::SomaticValidation {
-    is => 'Genome::Model::Build',
+    is => [
+        'Genome::Model::Build',
+        'Genome::Model::Build::RunsDV2',
+        'Genome::Model::Build::HasFeatureLists'],
     has_optional => [
         reference_sequence_build => {
             is => 'Genome::Model::Build::ReferenceSequence', via => 'inputs', to => 'value', where => [name => 'reference_sequence_build'],
@@ -117,9 +120,14 @@ class Genome::Model::Build::SomaticValidation {
         loh_version => {
             via => 'model',
         },
+        loh_snv_detection_strategy => {
+            via => 'model',
+        },
         tiering_version => {
             via => 'model',
         },
+
+        map { $_ => { via => 'model' } } ('run_snv_validation', 'run_sv_validation', 'run_indel_validation'),
     ],
 };
 
@@ -271,12 +279,11 @@ sub reference_being_replaced_for_input {
         }
 
         if ($roi_reference and !$rsb->is_compatible_with($roi_reference)) {
-            my $converter =  Genome::Model::Build::ReferenceSequence::Converter->get_with_lock(
-                source_reference_build => $roi_reference, 
-                destination_reference_build => $rsb,
+            my $converter_exists =  Genome::Model::Build::ReferenceSequence::Converter->exists_for_references(
+                $roi_reference, $rsb,
             );
 
-            if ($converter) {
+            if ($converter_exists) {
                 return 1;
             }
         }
@@ -289,28 +296,25 @@ sub reference_being_replaced_for_input {
     return;
 }
 
-sub get_indels_vcf {
-    my $self = shift;
-    return $self->variants_directory . "/indels.vcf.gz";
-}
-
-sub get_snvs_vcf {
-    my $self = shift;
-    return $self->variants_directory . "/snvs.vcf.gz";
-}
-
 sub whole_rmdup_bam_file {
     my $self = shift;
     return $self->tumor_bam;
 }
 
-sub variants_directory {
+sub get_target_region_feature_list {
     my $self = shift;
-    my $expected_directory = $self->data_directory . '/variants';
-    unless (-d $expected_directory) {
-        die $self->error_message("Variants directory does not exist at $expected_directory");
+
+    if (defined($self->target_region_set_name)) {
+        return Genome::FeatureList->get(
+            name => $self->target_region_set_name);
+    } else {
+        return;
     }
-    return $expected_directory;
+}
+
+sub get_feature_list_from_reference {
+    my ($self, $feature_list_accessor) = @_;
+    return $self->reference_sequence_build->get_feature_list($feature_list_accessor);
 }
 
 1;

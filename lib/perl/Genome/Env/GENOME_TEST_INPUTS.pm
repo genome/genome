@@ -1,5 +1,5 @@
 package Genome::Env::GENOME_TEST_INPUTS;
-our $default_value = '/var/lib/genome/testsuite-inputs';
+sub default_value { '/var/lib/genome/testsuite-inputs' }
 
 =pod
 

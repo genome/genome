@@ -74,7 +74,7 @@ ok(!@errors, 'No errors for test date');
 $reconcile->_stop_at('2000-01-08 23:59:59'); # set stop at so we only do the updates for Jan 01 01
 diag('Check that the correct misc updates were retrieved');
 ok($reconcile->_load_misc_updates, 'load misc updates');
-is(@{$reconcile->_misc_updates}, 44, 'loaded 44 misc updates');
+is(@{$reconcile->_misc_updates}, 43, 'loaded 43 misc updates');
 is_deeply(
     [ map { $_->id } grep { $_->description eq 'UPDATE' } @{$reconcile->_misc_updates} ], 
     [ map { $_->id } grep { $_->description eq 'UPDATE' } @misc_updates, @sub_attr_misc_updates, @misc_updates_that_skip_or_fail ],
@@ -161,9 +161,9 @@ sub _entity_attrs {
         { _type => 'PopulationGroup', id => -300, taxon_id => -100, },
         { _type => 'PopulationGroup', id => -301, taxon_id => -100, },
         # Sample
-        { _type => 'Sample', _site_tgi_subclass => 'OrganismSample', id => -400, source_id => -200, cell_type => 'primary', nomenclature => 'WUGC', },
-        { _type => 'Sample', _site_tgi_subclass => 'OrganismSample', id => -401, source_id => -201, cell_type => 'primary', nomenclature => 'WUGC', },
-        { _type => 'Sample', _site_tgi_subclass => 'OrganismSample', id => -402, source_id => -202, cell_type => 'primary', nomenclature => 'WUGC', },
+        { _type => 'Sample', _site_tgi_subclass => 'OrganismSample', id => -400, source_id => -200, nomenclature => 'WUGC', },
+        { _type => 'Sample', _site_tgi_subclass => 'OrganismSample', id => -401, source_id => -201, nomenclature => 'WUGC', },
+        { _type => 'Sample', _site_tgi_subclass => 'OrganismSample', id => -402, source_id => -202, nomenclature => 'WUGC', },
     ];
 }
 
@@ -203,7 +203,6 @@ sub _update_params {
         [ 'PopulationGroup', 0, 'name', 'NEW_NAME' ], # has value
         [ 'PopulationGroup', 1, 'taxon_id', -101 ], # has value, is FK
         # Sample
-        [ 'Sample', 0, 'cell_type', 'primary' ], # is undef
         [ 'Sample', 0, 'extraction_label', 'NEW_EXTRACTION_LABEL' ], # has value
         [ 'Sample', 1, 'source_id', -201 ],# has value, is FK
     ];

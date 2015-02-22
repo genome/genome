@@ -230,8 +230,7 @@ sub execute {
     }
 
     #reallocate build's data_directory since we have added some data
-    my $build_allocation = $build->disk_allocation;
-    $build_allocation->reallocate;
+    my $build_allocation = $build->reallocate_disk_allocations;
     return 1;
 }
 

@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<operation name="vep">
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>input_vcf</inputproperty>
+    <inputproperty>plan_json</inputproperty>
+    <inputproperty>process_id</inputproperty>
+    <inputproperty>variant_type</inputproperty>
+    <outputproperty>output_result</outputproperty>
+    <outputproperty>output_vcf</outputproperty>
+  </operationtype>
+  <operation name="Get inputs from plan">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Vep::Adaptor">
+      <inputproperty>plan_json</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>custom_annotation_tags</outputproperty>
+      <outputproperty>ensembl_version</outputproperty>
+      <outputproperty>feature_list_ids</outputproperty>
+      <outputproperty>joinx_version</outputproperty>
+      <outputproperty>plugins</outputproperty>
+      <outputproperty>plugins_version</outputproperty>
+      <outputproperty>reference_fasta</outputproperty>
+      <outputproperty>result</outputproperty>
+      <outputproperty>species</outputproperty>
+      <outputproperty>variant_type</outputproperty>
+    </operationtype>
+  </operation>
+  <operation name="Run vep">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;32000] rusage[mem=32000]' -M 32000000" commandClass="Genome::VariantReporting::Suite::Vep::Run">
+      <inputproperty>ensembl_version</inputproperty>
+      <inputproperty>feature_list_ids</inputproperty>
+      <inputproperty>input_vcf</inputproperty>
+      <inputproperty>joinx_version</inputproperty>
+      <inputproperty>plugins_version</inputproperty>
+      <inputproperty>reference_fasta</inputproperty>
+      <inputproperty>species</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>output_result</outputproperty>
+      <outputproperty>output_vcf</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <link fromOperation="Get inputs from plan" fromProperty="custom_annotation_tags" toOperation="Run vep" toProperty="custom_annotation_tags"/>
+  <link fromOperation="Get inputs from plan" fromProperty="ensembl_version" toOperation="Run vep" toProperty="ensembl_version"/>
+  <link fromOperation="Get inputs from plan" fromProperty="feature_list_ids" toOperation="Run vep" toProperty="feature_list_ids"/>
+  <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run vep" toProperty="joinx_version"/>
+  <link fromOperation="Get inputs from plan" fromProperty="plugins_version" toOperation="Run vep" toProperty="plugins_version"/>
+  <link fromOperation="Get inputs from plan" fromProperty="plugins" toOperation="Run vep" toProperty="plugins"/>
+  <link fromOperation="Get inputs from plan" fromProperty="reference_fasta" toOperation="Run vep" toProperty="reference_fasta"/>
+  <link fromOperation="Get inputs from plan" fromProperty="species" toOperation="Run vep" toProperty="species"/>
+  <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
+  <link fromOperation="Run vep" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
+  <link fromOperation="Run vep" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
+  <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
+  <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run vep" toProperty="input_vcf"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="Run vep" toProperty="process_id"/>
+</operation>

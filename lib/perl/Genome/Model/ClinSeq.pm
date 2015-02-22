@@ -3,15 +3,17 @@ package Genome::Model::ClinSeq;
 use strict;
 use warnings;
 use Genome;
+use List::MoreUtils;
 
 # these are used below, and are also used in the documentation on commands in the tree
 # to provide the most useful examples possible
-our $DEFAULT_CANCER_ANNOTATION_DB_ID    = 'tgi/cancer-annotation/human/build37-20131010.1';
+our $DEFAULT_CANCER_ANNOTATION_DB_ID    = 'tgi/cancer-annotation/human/build37-20140205.1';
 our $DEFAULT_MISC_ANNOTATION_DB_ID      = 'tgi/misc-annotation/human/build37-20130113.1';
-our $DEFAULT_COSMIC_ANNOTATION_DB_ID    = 'cosmic/65.1';
+our $DEFAULT_COSMIC_ANNOTATION_DB_ID    = 'cosmic/65.3';
 
 class Genome::Model::ClinSeq {
-    is => 'Genome::Model',
+    is => ['Genome::Model',
+           'Genome::Model::ClinSeq::Util',],
     has_optional_input => [
         wgs_model               => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for wgs data' },
         exome_model             => { is => 'Genome::Model::SomaticVariation', doc => 'somatic variation model for exome data' },
@@ -19,19 +21,20 @@ class Genome::Model::ClinSeq {
         normal_rnaseq_model     => { is => 'Genome::Model::RnaSeq', doc => 'rnaseq model for normal rna-seq data' },
         de_model                => { is => 'Genome::Model::DifferentialExpression', doc => 'differential-expression for tumor vs normal rna-seq data' },
 
-        cancer_annotation_db    => { is => 'Genome::Db::Tgi::CancerAnnotation', default_value => $DEFAULT_CANCER_ANNOTATION_DB_ID }, 
+        cancer_annotation_db    => { is => 'Genome::Db::Tgi::CancerAnnotation', default_value => $DEFAULT_CANCER_ANNOTATION_DB_ID },
         misc_annotation_db      => { is => 'Genome::Db::Tgi::MiscAnnotation', default_value => $DEFAULT_MISC_ANNOTATION_DB_ID },
         cosmic_annotation_db    => { is => 'Genome::Db::Cosmic', default_value => $DEFAULT_COSMIC_ANNOTATION_DB_ID },
-        
+
         force                   => { is => 'Boolean', doc => 'skip sanity checks on input models' },
 
         #processing_profile      => { is => 'Genome::ProcessingProfile::ClinSeq', id_by => 'processing_profile_id', default_value => { } },
     ],
-    has_optional_param => [
-        #Processing profile parameters would go in here
-        #someparam1 => { is => 'Number', doc => 'blah' },
-        #someparam2 => { is => 'Boolean', doc => 'blah' },
-        #someparam2 => { is => 'Text', valid_values => ['a','b','c'], doc => 'blah' },
+    has_param => [ # Processing profile parameters
+        bam_readcount_version => { is => 'Text', doc => 'The bam readcount version to use during clonality analysis' },
+        sireport_min_tumor_vaf => { is => 'Number', doc => 'Variants with a tumor VAF less than this (in any tumor sample) will be filtered out.'},
+        sireport_max_normal_vaf => { is => 'Number', doc => 'Variants with a normal VAF greater than this (in any normal sample) will be filtered out.'},
+        sireport_min_coverage => { is => 'Number', doc => 'Variants with coverage less than this (in any sample) will be filtered out.'},
+        sireport_min_mq_bq => { is => 'Text', doc => 'Comma separated increasing-list of minimum mapping qualities for bam-readcounting.'},
     ],
     has_optional_metric => [
         common_name         => { is => 'Text', doc => 'the name chosen for the root directory in the build' },
@@ -43,20 +46,20 @@ class Genome::Model::ClinSeq {
             calculate => q|
               my ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
               if ($wgs_model) {
-                  $wgs_common_name = $wgs_model->subject->patient->common_name;
-                  $wgs_name = $wgs_model->subject->patient->name;
+                  $wgs_common_name = $wgs_model->subject->individual->common_name;
+                  $wgs_name = $wgs_model->subject->individual->name;
               }
               if ($exome_model) {
-                  $exome_common_name = $exome_model->subject->patient->common_name;
-                  $exome_name = $exome_model->subject->patient->name;
+                  $exome_common_name = $exome_model->subject->individual->common_name;
+                  $exome_name = $exome_model->subject->individual->name;
               }
               if ($tumor_rnaseq_model) {
-                  $tumor_rnaseq_common_name = $tumor_rnaseq_model->subject->patient->common_name;
-                  $tumor_rnaseq_name = $tumor_rnaseq_model->subject->patient->name;
+                  $tumor_rnaseq_common_name = $tumor_rnaseq_model->subject->individual->common_name;
+                  $tumor_rnaseq_name = $tumor_rnaseq_model->subject->individual->name;
               }
               if ($normal_rnaseq_model) {
-                  $normal_rnaseq_common_name = $normal_rnaseq_model->subject->patient->common_name;
-                  $normal_rnaseq_name = $normal_rnaseq_model->subject->patient->name;
+                  $normal_rnaseq_common_name = $normal_rnaseq_model->subject->individual->common_name;
+                  $normal_rnaseq_name = $normal_rnaseq_model->subject->individual->name;
               }
               my @names = ($wgs_common_name, $exome_common_name, $tumor_rnaseq_common_name, $normal_rnaseq_common_name, $wgs_name, $exome_name, $tumor_rnaseq_name, $normal_rnaseq_name);
               my $final_name = "UnknownName";
@@ -85,20 +88,21 @@ sub define_by { 'Genome::Model::Command::Define::BaseMinimal' }
 sub _help_synopsis {
     my $self = shift;
     return <<"EOS"
-
-    genome processing-profile create clin-seq  --name 'November 2011 Clinical Sequencing' 
-
+    genome processing-profile create clin-seq  --name 'November 2011 Clinical Sequencing'
     genome model define clin-seq  --processing-profile='November 2011 Clinical Sequencing'  --wgs-model=2882504846 --exome-model=2882505032 --tumor-rnaseq-model=2880794613
-    
     # Automatically builds if/when the models have a complete underlying build
 EOS
 }
 
-sub _help_detail_for_profile_create {
+sub help_detail_for_create_profile {
     return <<EOS
-
-The ClinSeq pipeline has no parameters.  Just use the default profile to run it.
-
+The ClinSeq pipeline has the following processing-profile parameters.
+  bam_readcount_version => version of bamreadcounts to use for read-counting steps,
+  sireport_min_tumor_vaf => minimum tumor VAF cutoff to filter out variants in SnvIndelReport,
+  sireport_max_normal_vaf   => maximum normal VAF cutoff to filter out variants in SnvIndelReport,
+  sireport_min_coverage => minimum coverage cutoff to filter out variants in SnvIndelReport,
+  sireport_min_mq_bq => semicolon delimited list of comma separated mapping quality and base quality scores, these
+    are used as cutoffs for read-counting in SnvIndelReport.
 EOS
 }
 
@@ -207,7 +211,7 @@ sub map_workflow_inputs {
   my $exome_build         = $build->exome_build;
   my $tumor_rnaseq_build  = $build->tumor_rnaseq_build;
   my $normal_rnaseq_build = $build->normal_rnaseq_build;
-  
+
   # set during build initialization
   my $common_name         = $build->common_name;
   unless ($common_name) {
@@ -217,16 +221,14 @@ sub map_workflow_inputs {
   my $cancer_annotation_db = $build->cancer_annotation_db;
   my $misc_annotation_db = $build->misc_annotation_db;
   my $cosmic_annotation_db = $build->cosmic_annotation_db;
+  my ($mqs, $bqs) = $self->parse_qualities;
 
   # initial inputs used for various steps
   my @inputs = (
       model => $model,
       build => $build,
-      build_as_array => [$build],
       wgs_build => $wgs_build,
-      wgs_build_as_array => [$wgs_build],
       exome_build => $exome_build,
-      exome_build_as_array => [$exome_build],
       tumor_rnaseq_build => $tumor_rnaseq_build,
       normal_rnaseq_build => $normal_rnaseq_build,
       working_dir => $data_directory,
@@ -235,8 +237,12 @@ sub map_workflow_inputs {
       cancer_annotation_db => $cancer_annotation_db,
       misc_annotation_db => $misc_annotation_db,
       cosmic_annotation_db => $cosmic_annotation_db,
+      bam_readcount_version => $self->bam_readcount_version,
+      sireport_min_tumor_vaf => $self->sireport_min_tumor_vaf,
+      sireport_max_normal_vaf => $self->sireport_max_normal_vaf,
+      sireport_min_coverage => $self->sireport_min_coverage,
   );
-  
+
   my $annotation_build = $self->_resolve_annotation;
   push @inputs, annotation_build => $annotation_build;
 
@@ -247,7 +253,7 @@ sub map_workflow_inputs {
   my $input_summary_dir = $patient_dir . "/input";
   push @dirs, $input_summary_dir;
   push @inputs, summarize_builds_outdir => $input_summary_dir;
-  push @inputs, summarize_builds_log_file => $input_summary_dir . "/SummarizeBuilds.log.tsv";
+  push @inputs, summarize_builds_log_file => $input_summary_dir . "/QC_Report.tsv";
 
   if ($build->id) {
     push @inputs, summarize_builds_skip_lims_reports => 0;
@@ -287,8 +293,8 @@ sub map_workflow_inputs {
     push @dirs, $mutation_diagram_dir;
     push @inputs, (
         mutation_diagram_outdir => $mutation_diagram_dir,
-        mutation_diagram_collapse_variants=>1, 
-        mutation_diagram_max_snvs_per_file=>1500, 
+        mutation_diagram_collapse_variants=>1,
+        mutation_diagram_max_snvs_per_file=>1500,
         mutation_diagram_max_indels_per_file=>1500,
     );
   }
@@ -335,45 +341,70 @@ sub map_workflow_inputs {
     if ($tumor_rnaseq_build){
       #Check for ChimeraScan fusion results
       if(-e $tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
-          #copy over fusion files to this dir even if SV calls do not exist.
-          my $tumor_filtered_fusion_dir = $patient_dir . '/rnaseq/fusions/tumor';
-          push @dirs, $tumor_filtered_fusion_dir;
-          if ($wgs_build){
-            #Check for SV calls file
-            if(-e $wgs_build->data_directory . '/effects/svs.hq.annotated'){
-              my $ncbi_human_ensembl_build_id = $tumor_rnaseq_build->annotation_build->id;
-              my $tumor_filtered_fusion_file =  $tumor_filtered_fusion_dir . '/filtered_chimeras.bedpe';
-              my $wgs_sv_file = $build->wgs_build->data_directory . '/effects/svs.hq.annotated';
-              my $tumor_filtered_intersected_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.intersected.bedpe';
-              push @inputs, ncbi_human_ensembl_build_id => $ncbi_human_ensembl_build_id;
-              push @inputs, wgs_sv_file => $wgs_sv_file;
-              push @inputs, tumor_filtered_fusion_file => $tumor_filtered_fusion_file;
-              push @inputs, tumor_filtered_intersected_fusion_file => $tumor_filtered_intersected_fusion_file;
-            }
+        #copy over fusion files to this dir even if SV calls do not exist.
+        my $tumor_filtered_fusion_dir = $patient_dir . '/rnaseq/tumor/fusions';
+        push @dirs, $tumor_filtered_fusion_dir;
+        if ($wgs_build){
+          #Check for SV calls file
+          if(-e $wgs_build->data_directory . '/effects/svs.hq.annotated'){
+            my $ncbi_human_ensembl_build_id = $tumor_rnaseq_build->annotation_build->id;
+            my $tumor_filtered_fusion_file =  $tumor_filtered_fusion_dir . '/filtered_chimeras.bedpe';
+            my $wgs_sv_file = $build->wgs_build->data_directory . '/effects/svs.hq.annotated';
+            my $tumor_filtered_intersected_fusion_file =  $tumor_filtered_fusion_dir . '/chimeras.filtered.intersected.bedpe';
+            push @inputs, ncbi_human_ensembl_build_id => $ncbi_human_ensembl_build_id;
+            push @inputs, wgs_sv_file => $wgs_sv_file;
+            push @inputs, tumor_filtered_fusion_file => $tumor_filtered_fusion_file;
+            push @inputs, tumor_filtered_intersected_fusion_file => $tumor_filtered_intersected_fusion_file;
           }
         }
       }
     }
+  }
 
     #GenerateClonalityPlots
     if ($wgs_build){
       my $clonality_dir = $patient_dir . "/clonality/";
       push @dirs, $clonality_dir;
-      push @inputs, clonality_dir => $clonality_dir;      
+      push @inputs, clonality_dir => $clonality_dir;
     }
 
-    #RunCnView
-    if ($wgs_build){
+    #Make base-dir for CNV's
+    if ($wgs_build or $exome_build or $self->has_microarray_build()){
       my $cnv_dir = $patient_dir . "/cnv/";
       push @dirs, $cnv_dir;
       push @inputs, cnv_dir => $cnv_dir;
     }
-    
+
+    #Make base-dir for WGS CNV's
+    if ($wgs_build){
+      my $wgs_cnv_dir = $patient_dir . "/cnv/wgs_cnv";
+      push @dirs, $wgs_cnv_dir;
+      push @inputs, wgs_cnv_dir => $wgs_cnv_dir;
+    }
+
     #RunMicroArrayCnView
     if ($self->has_microarray_build()) {
       my $microarray_cnv_dir = $patient_dir . "/cnv/microarray_cnv/";
       push @dirs, $microarray_cnv_dir;
       push @inputs, microarray_cnv_dir => $microarray_cnv_dir;
+    }
+
+    #ExomeCNV
+    if ($exome_build) {
+      my $exome_cnv_dir = $patient_dir . "/cnv/exome_cnv/";
+      push @dirs, $exome_cnv_dir;
+      push @inputs, exome_cnv_dir => $exome_cnv_dir;
+    }
+
+    my $docm_variants_file = $self->_get_docm_variants_file($self->cancer_annotation_db);
+    #Make DOCM report
+    if (($exome_build or $wgs_build) and $docm_variants_file) {
+      my $docm_report_dir = $patient_dir . "/docm_report/";
+      push @dirs, $docm_report_dir;
+      push @inputs, docm_report_dir => $docm_report_dir;
+      push @inputs, docm_variants_file => $docm_variants_file;
+      push @inputs, docmreport_min_bq => 0;
+      push @inputs, docmreport_min_mq => 1;
     }
 
     #SummarizeSvs
@@ -383,20 +414,38 @@ sub map_workflow_inputs {
       push @inputs, sv_dir => $sv_dir;
     }
 
-    #CreateMutationSpectrum
-    if ($wgs_build) {
-      push @inputs, 'wgs_mutation_spectrum_outdir' => $patient_dir . '/mutation-spectrum';
-      push @inputs, 'wgs_mutation_spectrum_datatype' => 'wgs';
+    #Make base-dir for WGS CNV's
+    if ($wgs_build){
+      my $wgs_cnv_summary_dir = $patient_dir . "/cnv/wgs_cnv/summary/";
+      push @dirs, $wgs_cnv_summary_dir;
+      push @inputs, wgs_cnv_summary_dir => $wgs_cnv_summary_dir;
     }
-    if ($exome_build) {
-      push @inputs, 'exome_mutation_spectrum_outdir' => $patient_dir . '/mutation-spectrum';
-      push @inputs, 'exome_mutation_spectrum_datatype' => 'exome';
+
+    #CreateMutationSpectrum
+    my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
+    while(my ($i, $mq, $bq) = $iterator->()) {
+      if ($wgs_build) {
+        push @inputs, 'wgs_mutation_spectrum_outdir' . $i =>
+        $patient_dir . "/mutation-spectrum/b". $bq . "_q" . $mq .  "/";
+        push @inputs, 'wgs_mutation_spectrum_datatype' . $i =>
+        'wgs';
+      }
+      if ($exome_build) {
+        push @inputs, 'exome_mutation_spectrum_outdir' . $i  =>
+        $patient_dir . "/mutation-spectrum/b". $bq . "_q" . $mq .  "/";
+        push @inputs, 'exome_mutation_spectrum_datatype' . $i =>
+        'exome';
+      }
+    }
+    if($wgs_build or $exome_build) {
+      my $mutation_spectrum_dir = $patient_dir . "/mutation-spectrum";
+      push @dirs, $mutation_spectrum_dir;
     }
 
     #AnnotateGenesByCategory
     push @inputs, 'gene_name_columns' => ['mapped_gene_name'];
     push @inputs, 'gene_name_regex' => 'mapped_gene_name';
-    
+
     #MakeCircosPlot
     if ($wgs_build){
       my $circos_dir = $patient_dir . "/circos";
@@ -404,22 +453,32 @@ sub map_workflow_inputs {
       push @inputs, circos_outdir => $circos_dir;
     }
 
-    #Converge SnvIndelReport
-    if ($exome_build || $wgs_build){
-      my $snv_indel_report_dir = $patient_dir . "/snv_indel_report";
+    #Converge SnvIndelReport and SciClone
+    if ($exome_build || $wgs_build) {
+      my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
+      while(my ($i, $mq, $bq) = $iterator->()) {
+        my $snv_indel_report_dir1 = $patient_dir .
+        "/snv_indel_report/" . "b" . $bq . "_" . "q" . $mq;
+        my $sciclone_dir1 = $patient_dir .
+        "/clonality/sciclone/" . "b" . $bq . "_" . "q" . $mq;
+        push @dirs, $snv_indel_report_dir1;
+        push @dirs, $sciclone_dir1;
+        push @inputs, "snv_indel_report_dir" . $i => $snv_indel_report_dir1;
+        push @inputs, "sciclone_dir" . $i  => $sciclone_dir1;
+        push @inputs, "sireport_min_bq" . $i => $bq;
+        push @inputs, "sireport_min_mq" . $i => $mq;
+      }
       my $target_gene_list = $cancer_annotation_db->data_directory . "/CancerGeneCensus/cancer_gene_census_ensgs.tsv";
       my $target_gene_list_name = "CancerGeneCensus";
- 
-      push @dirs, $snv_indel_report_dir;
-      push @inputs, snv_indel_report_dir => $snv_indel_report_dir;
+
       push @inputs, snv_indel_report_clean => 1;
       push @inputs, snv_indel_report_tmp_space => 1;
       push @inputs, snv_indel_report_target_gene_list => $target_gene_list;
       push @inputs, snv_indel_report_target_gene_list_name => $target_gene_list_name;
       push @inputs, snv_indel_report_tiers => 'tier1';
     }
-    
-    # For now it works to create directories here because the data_directory has been allocated.  
+
+    # For now it works to create directories here because the data_directory has been allocated.
     #It is possible that this would not happen until later, which would mess up assigning inputs to many of the commands.
     for my $dir (@dirs) {
       Genome::Sys->create_directory($dir);
@@ -435,7 +494,7 @@ sub _resolve_workflow_for_build {
   my $build = shift;
   my $lsf_queue = shift;   # TODO: the workflow shouldn't need this yet
   my $lsf_project = shift;
-
+  my ($mqs, $bqs) = $self->parse_qualities;
   if (!defined $lsf_queue || $lsf_queue eq '' || $lsf_queue eq 'inline') {
       $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
   }
@@ -448,7 +507,7 @@ sub _resolve_workflow_for_build {
   # automatically take all inputs that method will assign.
   my %inputs = $self->map_workflow_inputs($build);
   my @input_properties = sort keys %inputs;
- 
+
   # This must be updated for each new tool added which is "terminal" in the workflow!
   # (too bad it can't just be inferred from a dynamically expanding output connector)
   my @output_properties = qw(
@@ -457,11 +516,10 @@ sub _resolve_workflow_for_build {
   );
 
   if ($build->wgs_build) {
-      push @output_properties, qw( 
+      push @output_properties, qw(
           summarize_wgs_tier1_snv_support_result
           summarize_svs_result
           summarize_cnvs_result
-          wgs_mutation_spectrum_result
           clonality_result
           run_cn_view_result
           gene_category_cnv_amp_result
@@ -481,7 +539,6 @@ sub _resolve_workflow_for_build {
   if ($build->exome_build) {
       push @output_properties, qw(
           summarize_exome_tier1_snv_support_result
-          exome_mutation_spectrum_result
           gene_category_exome_snv_result
           gene_category_exome_indel_result
           dgidb_exome_snv_result
@@ -499,13 +556,32 @@ sub _resolve_workflow_for_build {
   }
 
   if ($build->wgs_build or $build->exome_build) {
-      push @output_properties, 'mutation_diagram_result';
-      push @output_properties, 'import_snvs_indels_result';
-      push @output_properties, 'converge_snv_indel_report_result';
+    push @output_properties, 'mutation_diagram_result';
+    push @output_properties, 'import_snvs_indels_result';
+    my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
+    while(my ($i, $mq, $bq) = $iterator->()) {
+      if($build->wgs_build) {
+        push @output_properties,  'wgs_mutation_spectrum_result' . $i;
+      }
+      if($build->exome_build) {
+        push @output_properties, 'exome_mutation_spectrum_result' . $i;
+      }
+      push @output_properties, 'converge_snv_indel_report_result' . $i;
+      push @output_properties, 'sciclone_result' . $i;
+    }
   }
-  
+
   if ($self->has_microarray_build()) {
       push @output_properties, 'microarray_cnv_result';
+  }
+
+  if ($build->exome_build) {
+      push @output_properties, 'exome_cnv_result';
+  }
+
+  if (($build->exome_build or $build->wgs_build)
+          and $self->_get_docm_variants_file($self->cancer_annotation_db)) {
+      push @output_properties, 'docm_report_result';
   }
 
   if ($build->normal_rnaseq_build){
@@ -520,8 +596,6 @@ sub _resolve_workflow_for_build {
       push @output_properties, 'gene_category_tophat_result';
       push @output_properties, 'dgidb_cufflinks_result';
       push @output_properties, 'dgidb_tophat_result';
-  }
-  if ($build->tumor_rnaseq_build){
       if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
           if ($build->wgs_build){
               if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
@@ -530,6 +604,7 @@ sub _resolve_workflow_for_build {
           }
       }
   }
+
   if ($build->normal_rnaseq_build and $build->tumor_rnaseq_build){
       push @output_properties, 'cufflinks_differential_expression_result';
       push @output_properties, 'gene_category_coding_de_up_result';
@@ -541,7 +616,7 @@ sub _resolve_workflow_for_build {
 
   my $workflow = Workflow::Model->create(
       name => $build->workflow_name,
-      input_properties  => \@input_properties, 
+      input_properties  => \@input_properties,
       output_properties => \@output_properties,
   );
 
@@ -551,7 +626,7 @@ sub _resolve_workflow_for_build {
   my $input_connector  = $workflow->get_input_connector;
   my $output_connector = $workflow->get_output_connector;
 
-  my %steps_by_name; 
+  my %steps_by_name;
   my $step = 0;
   my $add_step;
   my $add_link;
@@ -562,7 +637,7 @@ sub _resolve_workflow_for_build {
       if (substr($cmd,0,2) eq '::') {
           $cmd = 'Genome::Model::ClinSeq::Command' . $cmd;
       }
-      
+
       unless ($cmd->can("execute")) {
           die "bad command $cmd!";
       }
@@ -583,16 +658,16 @@ sub _resolve_workflow_for_build {
       # should this be default behavior for commands in a model's namespace?
       my $cmeta = $cmd->__meta__;
       for my $pname (qw/
-          cancer_annotation_db 
-          misc_annotation_db 
+          cancer_annotation_db
+          misc_annotation_db
           cosmic_annotation_db
       /) {
           my $pmeta = $cmeta->property($pname);
           if ($pmeta) {
-              $add_link->($input_connector, $pname, $op, $pname);            
+              $add_link->($input_connector, $pname, $op, $pname);
           }
       }
-          
+
       return $op;
   };
 
@@ -601,7 +676,7 @@ sub _resolve_workflow_for_build {
   $add_link = sub {
       my ($from_op, $from_p, $to_op, $to_p) = @_;
       $to_p = $from_p if not defined $to_p;
-      
+
       if (ref($to_p) eq 'ARRAY') {
           Carp::confess("the 'to' property in a link cannot be a list!");
       }
@@ -646,7 +721,7 @@ sub _resolve_workflow_for_build {
               die "expected \$op2,['p1','p2',...],\$op2,['p3','p4'],...";
           }
           unless (ref($from_props) eq 'ARRAY') {
-              die "expected the second param (and every even param) in converge to be an arrayref of property names"; 
+              die "expected the second param (and every even param) in converge to be an arrayref of property names";
           }
           $input_count += scalar(@$from_props);
           if ($name) {
@@ -674,7 +749,7 @@ sub _resolve_workflow_for_build {
               output_properties => ['outputs'],
           )
       );
-      
+
       # create links
       my $input_n = 0;
       while (@params2) {
@@ -698,7 +773,7 @@ sub _resolve_workflow_for_build {
   #SummarizeBuilds - Summarize build inputs using SummarizeBuilds.pm
   my $msg = "Creating a summary of input builds using summarize-builds";
   my $summarize_builds_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeBuilds");
-  $add_link->($input_connector, 'build_as_array', $summarize_builds_op, 'builds');
+  $add_link->($input_connector, 'build', $summarize_builds_op, 'builds');
   $add_link->($input_connector, 'summarize_builds_outdir', $summarize_builds_op, 'outdir');
   $add_link->($input_connector, 'summarize_builds_skip_lims_reports', $summarize_builds_op, 'skip_lims_reports');
   $add_link->($input_connector, 'summarize_builds_log_file', $summarize_builds_op, 'log_file');
@@ -725,7 +800,7 @@ sub _resolve_workflow_for_build {
   if ($build->wgs_build) {
     my $msg = "Determining source variant callers of all tier1-3 SNVs and InDels for wgs data";
     $wgs_variant_sources_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GetVariantSources");
-    $add_link->($input_connector, 'wgs_build_as_array', $wgs_variant_sources_op, 'builds');
+    $add_link->($input_connector, 'wgs_build', $wgs_variant_sources_op, 'builds');
     $add_link->($input_connector, 'wgs_variant_sources_dir', $wgs_variant_sources_op, 'outdir');
     $add_link->($wgs_variant_sources_op, 'result', $output_connector, 'wgs_variant_sources_result');
   }
@@ -734,29 +809,9 @@ sub _resolve_workflow_for_build {
   if ($build->exome_build) {
     my $msg = "Determining source variant callers of all tier1-3 SNVs and InDels for exome data";
     $exome_variant_sources_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GetVariantSources");
-    $add_link->($input_connector, 'exome_build_as_array', $exome_variant_sources_op, 'builds');
+    $add_link->($input_connector, 'exome_build', $exome_variant_sources_op, 'builds');
     $add_link->($input_connector, 'exome_variant_sources_dir', $exome_variant_sources_op, 'outdir');
     $add_link->($exome_variant_sources_op, 'result', $output_connector, 'exome_variant_sources_result');
-  }
-
-  #CreateMutationDiagrams - Create mutation spectrum results for wgs data
-  if ($build->wgs_build) {
-    my $msg = "Creating mutation spectrum results for wgs snvs using create-mutation-spectrum";
-    my $create_mutation_spectrum_wgs_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
-    $add_link->($input_connector, 'wgs_build', $create_mutation_spectrum_wgs_op, 'build');
-    $add_link->($input_connector, 'wgs_mutation_spectrum_outdir', $create_mutation_spectrum_wgs_op, 'outdir');
-    $add_link->($input_connector, 'wgs_mutation_spectrum_datatype', $create_mutation_spectrum_wgs_op, 'datatype');
-    $add_link->($create_mutation_spectrum_wgs_op, 'result', $output_connector, 'wgs_mutation_spectrum_result')
-  }
-
-  #CreateMutationDiagrams - Create mutation spectrum results for exome data
-  if ($build->exome_build) {
-    my $msg = "Creating mutation spectrum results for exome snvs using create-mutation-spectrum";
-    my $create_mutation_spectrum_exome_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
-    $add_link->($input_connector, 'exome_build', $create_mutation_spectrum_exome_op, 'build');
-    $add_link->($input_connector, 'exome_mutation_spectrum_outdir', $create_mutation_spectrum_exome_op, 'outdir');
-    $add_link->($input_connector, 'exome_mutation_spectrum_datatype', $create_mutation_spectrum_exome_op, 'datatype');
-    $add_link->($create_mutation_spectrum_exome_op, 'result', $output_connector, 'exome_mutation_spectrum_result')
   }
 
   #CreateMutationDiagrams - Create mutation diagrams (lolliplots) for all Tier1 SNVs/Indels and compare to COSMIC SNVs/Indels
@@ -765,13 +820,13 @@ sub _resolve_workflow_for_build {
     my $mutation_diagram_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::CreateMutationDiagrams");
     if ($build->wgs_build and $build->exome_build) {
         $add_link->($input_connector, ['wgs_build','exome_build'], $mutation_diagram_op, 'builds');
-    }elsif ($build->wgs_build) {
+    } elsif ($build->wgs_build) {
         $add_link->($input_connector, 'wgs_build', $mutation_diagram_op, 'builds');
-    }elsif ($build->exome_build) {
+    } elsif ($build->exome_build) {
         $add_link->($input_connector, 'exome_build', $mutation_diagram_op, 'builds');
     }
     $add_link->($mutation_diagram_op,'result',$output_connector,'mutation_diagram_result');
-    
+
     for my $p (qw/outdir collapse_variants max_snvs_per_file max_indels_per_file/) {
         my $input_name = 'mutation_diagram_' . $p;
         $add_link->($input_connector,$input_name,$mutation_diagram_op,$p);
@@ -785,7 +840,7 @@ sub _resolve_workflow_for_build {
     $normal_tophat_junctions_absolute_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute');
     $add_link->($input_connector, 'normal_rnaseq_build', $normal_tophat_junctions_absolute_op, 'build');
     $add_link->($input_connector, 'normal_tophat_junctions_absolute_dir', $normal_tophat_junctions_absolute_op, 'outdir');
-    $add_link->($normal_tophat_junctions_absolute_op, 'result', $output_connector, 'normal_tophat_junctions_absolute_result'); 
+    $add_link->($normal_tophat_junctions_absolute_op, 'result', $output_connector, 'normal_tophat_junctions_absolute_result');
   }
   #TophatJunctionsAbsolute - Run tophat junctions absolute analysis on tumor
   my $tumor_tophat_junctions_absolute_op;
@@ -794,7 +849,7 @@ sub _resolve_workflow_for_build {
     $tumor_tophat_junctions_absolute_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::TophatJunctionsAbsolute');
     $add_link->($input_connector, 'tumor_rnaseq_build', $tumor_tophat_junctions_absolute_op, 'build');
     $add_link->($input_connector, 'tumor_tophat_junctions_absolute_dir', $tumor_tophat_junctions_absolute_op, 'outdir');
-    $add_link->($tumor_tophat_junctions_absolute_op, 'result', $output_connector, 'tumor_tophat_junctions_absolute_result'); 
+    $add_link->($tumor_tophat_junctions_absolute_op, 'result', $output_connector, 'tumor_tophat_junctions_absolute_result');
   }
 
   #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on normal
@@ -805,7 +860,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'normal_rnaseq_build', $normal_cufflinks_expression_absolute_op, 'build');
     $add_link->($input_connector, 'normal_cufflinks_expression_absolute_dir', $normal_cufflinks_expression_absolute_op, 'outdir');
     $add_link->($input_connector, 'cufflinks_percent_cutoff', $normal_cufflinks_expression_absolute_op, 'percent_cutoff');
-    $add_link->($normal_cufflinks_expression_absolute_op, 'result', $output_connector, 'normal_cufflinks_expression_absolute_result'); 
+    $add_link->($normal_cufflinks_expression_absolute_op, 'result', $output_connector, 'normal_cufflinks_expression_absolute_result');
   }
   #CufflinksExpressionAbsolute - Run cufflinks expression absolute analysis on tumor
   my $tumor_cufflinks_expression_absolute_op;
@@ -832,30 +887,30 @@ sub _resolve_workflow_for_build {
   #Intersect filtered fusion calls with WGS SV calls.
   my $intersect_tumor_fusion_sv_op;
   if ($build->tumor_rnaseq_build){
-      if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
-          #copy over fusion files
-          $self->copy_fusion_files($build);
-          if ($build->wgs_build){
-              if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
-                  my $msg = "Intersecting filtered tumor ChimeraScan fusion calls with WGS SV calls.";
-                  $intersect_tumor_fusion_sv_op = $add_step->($msg, 'Genome::Model::Tools::ChimeraScan::IntersectSv');
-                  $add_link->($input_connector, 'ncbi_human_ensembl_build_id', $intersect_tumor_fusion_sv_op, 'annotation_build_id');
-                  $add_link->($input_connector, 'tumor_filtered_intersected_fusion_file', $intersect_tumor_fusion_sv_op, 'output_file');
-                  $add_link->($input_connector, 'wgs_sv_file', $intersect_tumor_fusion_sv_op, 'sv_output_file');
-                  $add_link->($input_connector, 'tumor_filtered_fusion_file', $intersect_tumor_fusion_sv_op, 'filtered_bedpe_file');
-                  $add_link->($intersect_tumor_fusion_sv_op, 'result', $output_connector, 'intersect_tumor_fusion_sv_result');
-              }
-          }
+    if(-e $build->tumor_rnaseq_build->data_directory . '/fusions/filtered_chimeras.bedpe'){
+      #copy over fusion files
+      $self->copy_fusion_files($build);
+      if ($build->wgs_build){
+        if(-e $build->wgs_build->data_directory . '/effects/svs.hq.annotated'){
+          my $msg = "Intersecting filtered tumor ChimeraScan fusion calls with WGS SV calls.";
+          $intersect_tumor_fusion_sv_op = $add_step->($msg, 'Genome::Model::Tools::ChimeraScan::IntersectSv');
+          $add_link->($input_connector, 'ncbi_human_ensembl_build_id', $intersect_tumor_fusion_sv_op, 'annotation_build_id');
+          $add_link->($input_connector, 'tumor_filtered_intersected_fusion_file', $intersect_tumor_fusion_sv_op, 'output_file');
+          $add_link->($input_connector, 'wgs_sv_file', $intersect_tumor_fusion_sv_op, 'sv_output_file');
+          $add_link->($input_connector, 'tumor_filtered_fusion_file', $intersect_tumor_fusion_sv_op, 'filtered_bedpe_file');
+          $add_link->($intersect_tumor_fusion_sv_op, 'result', $output_connector, 'intersect_tumor_fusion_sv_result');
+        }
       }
+    }
   }
 
   #DumpIgvXml - Create IGV xml session files with increasing numbers of tracks and store in a single (WGS and Exome BAM files, RNA-seq BAM files, junctions.bed, SNV bed files, etc.)
   #genome model clin-seq dump-igv-xml --outdir=/gscuser/mgriffit/ --builds=119971814
   $msg = "Create IGV XML session files for varying levels of detail using the input builds";
   my $igv_session_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::DumpIgvXml");
-  $add_link->($input_connector, 'build_as_array', $igv_session_op, 'builds');
+  $add_link->($input_connector, 'build', $igv_session_op, 'builds');
   $add_link->($input_connector, 'igv_session_dir', $igv_session_op, 'outdir');
-  $add_link->($igv_session_op, 'result', $output_connector, 'igv_session_result'); 
+  $add_link->($igv_session_op, 'result', $output_connector, 'igv_session_result');
 
   #GenerateClonalityPlots - Run clonality analysis and produce clonality plots
   my $clonality_op;
@@ -865,7 +920,8 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'wgs_build', $clonality_op, 'somatic_var_build');
     $add_link->($input_connector, 'clonality_dir', $clonality_op, 'output_dir');
     $add_link->($input_connector, 'common_name', $clonality_op, 'common_name');
-    $add_link->($clonality_op, 'result', $output_connector, 'clonality_result'); 
+    $add_link->($input_connector, 'bam_readcount_version', $clonality_op, 'bam_readcount_version');
+    $add_link->($clonality_op, 'result', $output_connector, 'clonality_result');
   }
 
   #RunCnView - Produce copy number results with run-cn-view.  Relies on clonality step already having been run
@@ -874,44 +930,73 @@ sub _resolve_workflow_for_build {
     my $msg = "Use gmt copy-number cn-view to produce copy number tables and images";
     $run_cn_view_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::RunCnView");
     $add_link->($input_connector, 'wgs_build', $run_cn_view_op, 'build');
-    $add_link->($input_connector, 'cnv_dir', $run_cn_view_op, 'outdir');
+    $add_link->($input_connector, 'wgs_cnv_dir', $run_cn_view_op, 'outdir');
     $add_link->($clonality_op, 'cnv_hmm_file', $run_cn_view_op);
+    $add_link->($clonality_op, 'cnv_hq_file', $run_cn_view_op);
     $add_link->($run_cn_view_op, 'result', $output_connector, 'run_cn_view_result');
   }
 
-  #RunMicroarrayCNV - produce cnv plots with microarray results
+  #RunMicroarrayCNV - produce cnv plots using microarray results
   my $microarray_cnv_op;
   if ($self->has_microarray_build()) {
     my $msg = "Call somatic copy number changes using microarray calls";
     $microarray_cnv_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::MicroarrayCnv");
     $add_link->($input_connector, 'microarray_cnv_dir', $microarray_cnv_op, 'outdir');
     $add_link->($input_connector, 'model', $microarray_cnv_op, 'clinseq_model');
+    $add_link->($input_connector, 'annotation_build', $microarray_cnv_op, 'annotation_build_id');
     $add_link->($microarray_cnv_op, 'result', $output_connector, 'microarray_cnv_result');
   }
 
+  #RunExomeCNV - produce cnv plots using WEx results
+  my $exome_cnv_op;
+  if ($build->exome_build) {
+    my $msg = "Call somatic copy number changes using exome data";
+    $exome_cnv_op = $add_step->($msg, "Genome::Model::Tools::CopyNumber::Cnmops");
+    $add_link->($input_connector, 'exome_cnv_dir', $exome_cnv_op, 'outdir');
+    $add_link->($input_connector, 'model', $exome_cnv_op, 'clinseq_model');
+    $add_link->($input_connector, 'annotation_build', $exome_cnv_op, 'annotation_build_id');
+    $add_link->($exome_cnv_op, 'result', $output_connector, 'exome_cnv_result');
+  }
+
+  #RunDOCMReport
+  my $docm_report_op;
+  if (($build->exome_build or $build->wgs_build)
+        and $self->_get_docm_variants_file($self->cancer_annotation_db)) {
+    my $msg = "Produce a report using DOCM";
+    $docm_report_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::DocmReport");
+    $add_link->($input_connector, 'docm_report_dir', $docm_report_op, 'outdir');
+    $add_link->($input_connector, 'build', $docm_report_op, 'builds');
+    $add_link->($input_connector, 'docm_variants_file', $docm_report_op, 'docm_variants_file');
+    $add_link->($input_connector, 'bam_readcount_version', $docm_report_op, 'bam_readcount_version');
+    $add_link->($input_connector, 'docmreport_min_bq', $docm_report_op, 'bq');
+    $add_link->($input_connector, 'docmreport_min_mq', $docm_report_op, 'mq');
+    $add_link->($docm_report_op, 'result', $output_connector, 'docm_report_result');
+}
+
   #SummarizeCnvs - Generate a summary of CNV results, copy cnvs.hq, cnvs.png, single-bam copy number plot PDF, etc. to the cnv directory
-  #This step relies on the generate-clonality-plots step already having been run 
+  #This step relies on the generate-clonality-plots step already having been run
   #It also relies on run-cn-view step having been run already
   my $summarize_cnvs_op;
   if ($build->wgs_build){
-      my $msg = "Summarize CNV results from WGS somatic variation";
-      $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
-      $add_link->($input_connector, 'cnv_dir', $summarize_cnvs_op, 'outdir');
-      $add_link->($input_connector, 'wgs_build', $summarize_cnvs_op, 'build');
-      $add_link->($clonality_op, 'cnv_hmm_file', $summarize_cnvs_op);
-      $add_link->($run_cn_view_op, 'gene_amp_file', $summarize_cnvs_op);
-      $add_link->($run_cn_view_op, 'gene_del_file', $summarize_cnvs_op);
-      $add_link->($summarize_cnvs_op, 'result', $output_connector, 'summarize_cnvs_result');
+    my $msg = "Summarize CNV results from WGS somatic variation";
+    $summarize_cnvs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeCnvs");
+    $add_link->($input_connector, 'wgs_cnv_summary_dir', $summarize_cnvs_op, 'outdir');
+    $add_link->($input_connector, 'wgs_build', $summarize_cnvs_op, 'build');
+    $add_link->($clonality_op, 'cnv_hmm_file', $summarize_cnvs_op);
+    $add_link->($clonality_op, 'cnv_hq_file', $summarize_cnvs_op);
+    $add_link->($run_cn_view_op, 'gene_amp_file', $summarize_cnvs_op);
+    $add_link->($run_cn_view_op, 'gene_del_file', $summarize_cnvs_op);
+    $add_link->($summarize_cnvs_op, 'result', $output_connector, 'summarize_cnvs_result');
   }
 
   #SummarizeSvs - Generate a summary of SV results from the WGS SV results
   my $summarize_svs_op;
   if ($build->wgs_build){
-      my $msg = "Summarize SV results from WGS somatic variation";
-      $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
-      $add_link->($input_connector, 'wgs_build_as_array', $summarize_svs_op, 'builds');
-      $add_link->($input_connector, 'sv_dir', $summarize_svs_op, 'outdir');
-      $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
+    my $msg = "Summarize SV results from WGS somatic variation";
+    $summarize_svs_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::SummarizeSvs");
+    $add_link->($input_connector, 'wgs_build', $summarize_svs_op, 'builds');
+    $add_link->($input_connector, 'sv_dir', $summarize_svs_op, 'outdir');
+    $add_link->($summarize_svs_op, 'result', $output_connector, 'summarize_svs_result');
   }
 
   #Add gene category annotations to some output files from steps above. (e.g. determine which SNV affected genes are kinases, ion channels, etc.)
@@ -1082,7 +1167,7 @@ sub _resolve_workflow_for_build {
     $add_link->($input_connector, 'verbose', $summarize_tier1_snv_support_op);
     $add_link->($summarize_tier1_snv_support_op, 'result', $output_connector, "summarize_${run}_tier1_snv_support_result");
   }
-  
+
   #MakeCircosPlot - Creates a Circos plot to summarize the data using MakeCircosPlot.pm
   #Currently WGS data is a minimum requirement for Circos plot generation.
   my $make_circos_plot_op;
@@ -1106,38 +1191,108 @@ sub _resolve_workflow_for_build {
   }
 
   #Converge SnvIndelReport
-  my $converge_snv_indel_report_op;
-  if ($build->wgs_build || $build->exome_build){
-    $msg = "Generate SnvIndel Report";
-    $converge_snv_indel_report_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::SnvIndelReport");
-    $add_link->($input_connector, 'build', $converge_snv_indel_report_op, 'builds');
-    $add_link->($input_connector, 'snv_indel_report_dir', $converge_snv_indel_report_op, 'outdir');
-    $add_link->($input_connector, 'snv_indel_report_clean', $converge_snv_indel_report_op, 'clean');
-    $add_link->($input_connector, 'snv_indel_report_tmp_space', $converge_snv_indel_report_op, 'tmp_space');
-    $add_link->($input_connector, 'annotation_build', $converge_snv_indel_report_op, 'annotation_build');
-    $add_link->($input_connector, 'snv_indel_report_target_gene_list', $converge_snv_indel_report_op, 'target_gene_list');
-    $add_link->($input_connector, 'snv_indel_report_target_gene_list_name', $converge_snv_indel_report_op, 'target_gene_list_name');
-    if ($build->wgs_build){
-      $add_link->($wgs_variant_sources_op, 'snv_variant_sources_file', $converge_snv_indel_report_op, '_wgs_snv_variant_sources_file');
-      $add_link->($wgs_variant_sources_op, 'indel_variant_sources_file', $converge_snv_indel_report_op, '_wgs_indel_variant_sources_file');
+  my $converge_snv_indel_report_op1;
+  my @converge_snv_indel_report_ops;
+  if ($build->wgs_build || $build->exome_build) {
+    #Create a report for each $bq $mq combo.
+    my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
+    while(my ($i, $mq, $bq) = $iterator->()) {
+        $msg = "Generate SnvIndel Report" . $i . ".";
+        $converge_snv_indel_report_op1 = $add_step->($msg, "Genome::Model::ClinSeq::Command::Converge::SnvIndelReport");
+        $add_link->($input_connector, 'build', $converge_snv_indel_report_op1, 'builds');
+        $add_link->($input_connector, 'bam_readcount_version', $converge_snv_indel_report_op1, 'bam_readcount_version');
+        $add_link->($input_connector, 'snv_indel_report_dir' . $i, $converge_snv_indel_report_op1, 'outdir');
+        $add_link->($input_connector, 'snv_indel_report_clean', $converge_snv_indel_report_op1, 'clean');
+        $add_link->($input_connector, 'snv_indel_report_tmp_space', $converge_snv_indel_report_op1, 'tmp_space');
+        $add_link->($input_connector, 'annotation_build', $converge_snv_indel_report_op1, 'annotation_build');
+        $add_link->($input_connector, 'snv_indel_report_target_gene_list', $converge_snv_indel_report_op1, 'target_gene_list');
+        $add_link->($input_connector, 'snv_indel_report_target_gene_list_name', $converge_snv_indel_report_op1, 'target_gene_list_name');
+        $add_link->($input_connector, 'sireport_min_tumor_vaf', $converge_snv_indel_report_op1, 'min_tumor_vaf');
+        $add_link->($input_connector, 'sireport_max_normal_vaf', $converge_snv_indel_report_op1, 'max_normal_vaf');
+        $add_link->($input_connector, 'sireport_min_coverage', $converge_snv_indel_report_op1, 'min_coverage');
+        $add_link->($input_connector, 'sireport_min_bq' . $i, $converge_snv_indel_report_op1, 'bq');
+        $add_link->($input_connector, 'sireport_min_mq' . $i, $converge_snv_indel_report_op1, 'mq');
+        if ($build->wgs_build){
+            $add_link->($wgs_variant_sources_op, 'snv_variant_sources_file', $converge_snv_indel_report_op1, '_wgs_snv_variant_sources_file');
+            $add_link->($wgs_variant_sources_op, 'indel_variant_sources_file', $converge_snv_indel_report_op1, '_wgs_indel_variant_sources_file');
+        }
+        if ($build->exome_build){
+            $add_link->($exome_variant_sources_op, 'snv_variant_sources_file', $converge_snv_indel_report_op1, '_exome_snv_variant_sources_file');
+            $add_link->($exome_variant_sources_op, 'indel_variant_sources_file', $converge_snv_indel_report_op1, '_exome_indel_variant_sources_file');
+        }
+        #If this is a build of a test model, perform a faster analysis (e.g. apipe-test-clinseq-wer)
+        my $model_name = $self->name;
+        if ($self->name =~ /^apipe\-test/){
+          $add_link->($input_connector, 'snv_indel_report_tiers', $converge_snv_indel_report_op1, 'tiers');
+        }
+        $add_link->($converge_snv_indel_report_op1, 'result', $output_connector, 'converge_snv_indel_report_result' . $i);
+        push @converge_snv_indel_report_ops, $converge_snv_indel_report_op1;
     }
-    if ($build->exome_build){
-      $add_link->($exome_variant_sources_op, 'snv_variant_sources_file', $converge_snv_indel_report_op, '_exome_snv_variant_sources_file');
-      $add_link->($exome_variant_sources_op, 'indel_variant_sources_file', $converge_snv_indel_report_op, '_exome_indel_variant_sources_file');
-    }
-
-    #If this is a build of a test model, perform a faster analysis (e.g. apipe-test-clinseq-wer)
-    my $model_name = $self->name; 
-    if ($self->name =~ /^apipe\-test/){
-      $add_link->($input_connector, 'snv_indel_report_tiers', $converge_snv_indel_report_op, 'tiers');
-    }
-
-    $add_link->($converge_snv_indel_report_op, 'result', $output_connector, 'converge_snv_indel_report_result');
   }
+
+  #CreateMutationDiagrams - Create mutation spectrum results for wgs data
+  if ($build->wgs_build) {
+    my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
+    while(my ($i, $mq, $bq) = $iterator->()) {
+      my $msg = "Creating mutation spectrum results for wgs snvs using create-mutation-spectrum" . $i;
+      my $create_mutation_spectrum_wgs_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
+      $add_link->($input_connector, 'build', $create_mutation_spectrum_wgs_op, 'clinseq_build');
+      $add_link->($input_connector, 'wgs_build', $create_mutation_spectrum_wgs_op, 'somvar_build');
+      $add_link->($input_connector, 'wgs_mutation_spectrum_outdir' . $i, $create_mutation_spectrum_wgs_op, 'outdir');
+      $add_link->($input_connector, 'wgs_mutation_spectrum_datatype' . $i, $create_mutation_spectrum_wgs_op, 'datatype');
+      $add_link->($input_connector, 'sireport_min_bq' . $i, $create_mutation_spectrum_wgs_op, 'min_base_quality');
+      $add_link->($input_connector, 'sireport_min_mq' . $i, $create_mutation_spectrum_wgs_op, 'min_quality_score');
+      $add_link->($converge_snv_indel_report_ops[$i-1], 'result', $create_mutation_spectrum_wgs_op, 'converge_snv_indel_report_result');
+      $add_link->($create_mutation_spectrum_wgs_op, 'result', $output_connector, 'wgs_mutation_spectrum_result' . $i);
+    }
+  }
+
+  #CreateMutationDiagrams - Create mutation spectrum results for exome data
+  if ($build->exome_build) {
+    my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
+    while(my ($i, $mq, $bq) = $iterator->()) {
+      my $msg = "Creating mutation spectrum results for exome snvs using create-mutation-spectrum " . $i;
+      my $create_mutation_spectrum_exome_op = $add_step->($msg, 'Genome::Model::ClinSeq::Command::CreateMutationSpectrum');
+      $add_link->($input_connector, 'build', $create_mutation_spectrum_exome_op, 'clinseq_build');
+      $add_link->($input_connector, 'exome_build', $create_mutation_spectrum_exome_op, 'somvar_build');
+      $add_link->($input_connector, 'exome_mutation_spectrum_outdir' . $i, $create_mutation_spectrum_exome_op, 'outdir' );
+      $add_link->($input_connector, 'exome_mutation_spectrum_datatype' . $i, $create_mutation_spectrum_exome_op, 'datatype');
+      $add_link->($input_connector, 'sireport_min_bq' . $i, $create_mutation_spectrum_exome_op, 'min_base_quality');
+      $add_link->($input_connector, 'sireport_min_mq' . $i, $create_mutation_spectrum_exome_op, 'min_quality_score');
+      $add_link->($converge_snv_indel_report_ops[$i-1], 'result', $create_mutation_spectrum_exome_op, 'converge_snv_indel_report_result');
+      $add_link->($create_mutation_spectrum_exome_op, 'result', $output_connector, 'exome_mutation_spectrum_result' . $i);
+    }
+  }
+
+  #GenerateSciClonePlots - Run clonality analysis and produce clonality plots
+  if ($build->wgs_build or $build->exome_build){
+    my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
+    while(my ($i, $mq, $bq) = $iterator->()) {
+      my $msg = "Run clonality analysis and produce clonality plots using SciClone " . $i;
+      my $sciclone_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::GenerateSciclonePlots");
+      $add_link->($input_connector, 'sciclone_dir' . $i, $sciclone_op, 'outdir');
+      $add_link->($input_connector, 'build', $sciclone_op, 'clinseq_build');
+      $add_link->($input_connector, 'sireport_min_coverage', $sciclone_op, 'min_coverage');
+      $add_link->($input_connector, 'sireport_min_mq' . $i, $sciclone_op, 'min_mq');
+      $add_link->($input_connector, 'sireport_min_bq' . $i, $sciclone_op, 'min_bq');
+      if ($build->wgs_build) {
+        $add_link->($run_cn_view_op, 'result', $sciclone_op, 'wgs_cnv_result');
+      }
+      if ($build->exome_build) {
+        $add_link->($exome_cnv_op, 'result', $sciclone_op, 'exome_cnv_result');
+      }
+      if ($self->has_microarray_build()) {
+        $add_link->($microarray_cnv_op, 'result', $sciclone_op, 'microarray_cnv_result');
+      }
+      $add_link->($converge_snv_indel_report_ops[$i-1], 'result', $sciclone_op, 'converge_snv_indel_report_result');
+      $add_link->($sciclone_op, 'result', $output_connector, 'sciclone_result' . $i);
+    }
+  }
+
 
   # REMINDER:
   # For new steps be sure to add their result to the output connector if they do not feed into another step.
-  # When you do that, expand the list of output properties above. 
+  # When you do that, expand the list of output properties above.
 
   my @errors = $workflow->validate();
   if (@errors) {
@@ -1149,7 +1304,6 @@ sub _resolve_workflow_for_build {
 
   return $workflow;
 }
-
 
 sub add_dgidb_op_to_flow {
   my ($self, $add_step, $add_link, $op, $op_prop, $input_connector, $output_connector, $out_prop) = @_;
@@ -1172,15 +1326,15 @@ sub _infer_candidate_subjects_from_input_models {
     if ($input_model->subject->isa("Genome::Individual")){
       $patient = $input_model->subject;
     }else {
-      $patient = $input_model->subject->patient;
+      $patient = $input_model->subject->individual;
     }
     $subjects{ $patient->id } = $patient;
-     
+
     if ($input_model->can("tumor_model")) {
-      $subjects{ $input_model->tumor_model->subject->patient->id } = $input_model->tumor_model->subject->patient;
+      $subjects{ $input_model->tumor_model->subject->individual->id } = $input_model->tumor_model->subject->individual;
     }
     if ($input_model->can("normal_model")) {
-      $subjects{ $input_model->normal_model->subject->patient->id } = $input_model->normal_model->subject->patient;
+      $subjects{ $input_model->normal_model->subject->individual->id } = $input_model->normal_model->subject->individual;
     }
   }
   my @subjects = sort { $a->id cmp $b->id } values %subjects;
@@ -1234,7 +1388,7 @@ sub _infer_references_from_input_models {
 
 sub _resolve_resource_requirements_for_build {
   #Set LSF parameters for the ClinSeq job
-  my $lsf_resource_string = "-R 'select[model!=Opteron250 && type==LINUX64] rusage[tmp=10000:mem=4000]' -M 4000000";
+  my $lsf_resource_string = "-R 'rusage[tmp=10000:mem=4000]' -M 4000000";
   return($lsf_resource_string);
 }
 
@@ -1248,16 +1402,18 @@ sub files_ignored_by_build_diff {
         reports/Build_Succeeded/report.xml
         logs/.*
         .*.R$
+        .*.Robject$
         .*.pdf$
         .*.jpg$
         .*.jpeg$
         .*.png$
         .*.svg$
         .*.xls$
+        .*.bam$
         .*/summary/rc_summary.stderr$
         .*._COSMIC.svg$
         .*.clustered.data.tsv$
-        .*.SummarizeBuilds.log.tsv$
+        .*QC_Report.tsv$
         .*.DumpIgvXml.log.txt$
         .*/mutation_diagrams/cosmic.mutation-diagram.stderr$
         .*/mutation_diagrams/somatic.mutation-diagram.stderr$
@@ -1268,6 +1424,8 @@ sub files_ignored_by_build_diff {
         .*LIMS_Sample_Sequence_QC_library.tsv$
         .*.R.stderr$
         .*/snv_indel_report/subjects_legend.txt$
+        .*sciclone.*.clusters.txt$
+        .*mutation_spectrum.input.tsv$
     );
 };
 
@@ -1285,24 +1443,24 @@ sub diff_circos_conf {
 }
 
 # Below are some methods to retrieve files from a build
-# Ideally they would be tied to creation of these file paths, but they currently 
+# Ideally they would be tied to creation of these file paths, but they currently
 # throw an exception if the files don't exist. Consider another approach...
 sub patient_dir {
-  my ($class, $build) = @_;
+  my ($self, $build) = @_;
   unless($build->common_name) {
-    die $class->error_message("Common name is not defined.");
+    die $self->error_message("Common name is not defined.");
   }
   my $patient_dir = $build->data_directory . "/" . $build->common_name;
   unless(-d $patient_dir) {
-    die $class->error_message("ClinSeq patient directory not found. Expected: $patient_dir");
+    die $self->error_message("ClinSeq patient directory not found. Expected: $patient_dir");
   }
   return $patient_dir;
 }
 
 sub snv_variant_source_file {
-  my ($class, $build, $data_type,) = @_;
+  my ($self, $build, $data_type,) = @_;
 
-  my $patient_dir = $class->patient_dir($build);
+  my $patient_dir = $self->patient_dir($build);
   my $source = $patient_dir . "/variant_source_callers";
   my $exception;
   if(-d $source) {
@@ -1313,28 +1471,28 @@ sub snv_variant_source_file {
              return $file;
          }
          else {
-             $exception = $class->error_message("Expected $file inside $dir and it did not exist.");
+             $exception = $self->error_message("Expected $file inside $dir and it did not exist.");
          }
      }
      else {
-         $exception = $class->error_message("$data_type sub-directory not found in $source."); 
+         $exception = $self->error_message("$data_type sub-directory not found in $source.");
      }
   }
   else {
-      $exception = $class->error_message("$source directory not found");
+      $exception = $self->error_message("$source directory not found");
   }
   die $exception;
 }
 
 sub copy_fusion_files {
-  my ($class, $build) = @_;
+  my ($self, $build) = @_;
   my $rnaseq_build_dir = $build->tumor_rnaseq_build->data_directory;
   my $tumor_unfiltered_fusion_file =  $rnaseq_build_dir . '/fusions/Genome_Model_RnaSeq_DetectFusionsResult_Chimerascan_VariableReadLength_Result/chimeras.bedpe';
   my $tumor_filtered_fusion_file =  $rnaseq_build_dir . '/fusions/filtered_chimeras.bedpe';
   my $tumor_filtered_annotated_fusion_file =  $rnaseq_build_dir . '/fusions/filtered_chimeras.catanno.bedpe';
-  my $clinseq_tumor_unfiltered_fusion_file = $class->patient_dir($build) . '/rnaseq/fusions/tumor/chimeras.bedpe';
-  my $clinseq_tumor_filtered_fusion_file = $class->patient_dir($build) . '/rnaseq/fusions/tumor/filtered_chimeras.bedpe';
-  my $clinseq_tumor_filtered_annotated_fusion_file = $class->patient_dir($build) . '/rnaseq/fusions/tumor/filtered_chimeras.catanno.bedpe';
+  my $clinseq_tumor_unfiltered_fusion_file = $self->patient_dir($build) . '/rnaseq/tumor/fusions/chimeras.bedpe';
+  my $clinseq_tumor_filtered_fusion_file = $self->patient_dir($build) . '/rnaseq/tumor/fusions/filtered_chimeras.bedpe';
+  my $clinseq_tumor_filtered_annotated_fusion_file = $self->patient_dir($build) . '/rnaseq/tumor/fusions/filtered_chimeras.catanno.bedpe';
   if(-e $tumor_unfiltered_fusion_file) {
       unless(Genome::Sys->copy_file($tumor_unfiltered_fusion_file, $clinseq_tumor_unfiltered_fusion_file)) {
          die "unable to copy $tumor_unfiltered_fusion_file";
@@ -1353,33 +1511,33 @@ sub copy_fusion_files {
 }
 
 sub clonality_dir {
-  my ($class, $build) = @_;
+  my ($self, $build) = @_;
 
-  my $patient_dir = $class->patient_dir($build);
+  my $patient_dir = $self->patient_dir($build);
   my $clonality_dir = $patient_dir . "/clonality";
-  
+
   unless(-d $clonality_dir) {
-      die $class->error_message("Clonality directory does not exist. Expected: $clonality_dir");
+      die $self->error_message("Clonality directory does not exist. Expected: $clonality_dir");
   }
   return $clonality_dir;
 }
 
 sub varscan_formatted_readcount_file {
-  my ($class, $build) = @_;
-  my $clonality_dir = $class->clonality_dir($build);
+  my ($self, $build) = @_;
+  my $clonality_dir = $self->clonality_dir($build);
   my $readcount_file = $clonality_dir ."/allsnvs.hq.novel.tier123.v2.bed.adapted.readcounts.varscan";
   unless(-e $readcount_file) {
-      die $class->error_message("Unable to find varscan formatted readcount file. Expected: $readcount_file");
+      die $self->error_message("Unable to find varscan formatted readcount file. Expected: $readcount_file");
   }
   return $readcount_file;
 }
 
 sub cnaseq_hmm_file {
-  my ($class, $build) = @_;
-  my $clonality_dir = $class->clonality_dir($build);
+  my ($self, $build) = @_;
+  my $clonality_dir = $self->clonality_dir($build);
   my $hmm_file = $clonality_dir . "/cnaseq.cnvhmm";
   unless(-e $hmm_file) {
-      die $class->error_message("Unable to find cnaseq hmm file. Expected: $hmm_file");
+      die $self->error_message("Unable to find cnaseq hmm file. Expected: $hmm_file");
   }
   return $hmm_file;
 }
@@ -1402,6 +1560,19 @@ sub has_microarray_build {
     }
   } else {
       return 0;
+  }
+}
+
+sub _get_docm_variants_file {
+  my $self = shift;
+  my $cancer_annotation_db = shift;
+  my $cad_data_directory = $cancer_annotation_db->data_directory;
+  my $docm_variants_file = $cad_data_directory . "/DOCM/DOCM_v0.1.tsv";
+  if(-e $docm_variants_file ) {
+    return $docm_variants_file;
+  } else {
+    $self->status_message("Unable to find DOCM variants file in cancer annotation db directory $docm_variants_file");
+    return 0;
   }
 }
 

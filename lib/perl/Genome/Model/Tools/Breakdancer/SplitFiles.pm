@@ -6,6 +6,8 @@ use Genome;
 use File::Basename 'dirname';
 use Carp 'confess';
 
+use Genome::Utility::Text;
+
 class Genome::Model::Tools::Breakdancer::SplitFiles {
     is => 'Command',
     has => [
@@ -110,8 +112,9 @@ sub execute {
                 $output_fh = $output_handles{$chrom};
             }
             else {
+                my $sanitized_chrom = Genome::Utility::Text::sanitize_string_for_filesystem($chrom);
                 my $file_name = $self->output_directory . '/' . $self->output_file_template;
-                $file_name =~ s/CHR/$chrom/;
+                $file_name =~ s/CHR/$sanitized_chrom/;
                 unlink $file_name if -e $file_name;
                 $output_fh = IO::File->new($file_name, 'w');
                 confess "Could not get file handled for output file $output_fh!" unless $output_fh;

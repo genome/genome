@@ -4,12 +4,57 @@ use warnings;
 use strict;
 
 use Genome;
-use File::Slurp 'read_file';
 use IPC::System::Simple qw(capture);
+use File::ReadBackwards;
 use Try::Tiny;
 
+# This is normally loaded automagically when Perl sees you're using %+.
+# but due to some interaction with Class::Autouse (when it installs its
+# UNIVERSAL::AUTOLOAD handler), this magic stops working.  Using the
+# module explicitly fixes the problem in perl 5.10.1.  The bug seems to
+# be fixed by 5.18
+use Tie::Hash::NamedCapture;
+
+our $WORKFLOW_DATE_AND_HOST = qr{
+        (?<date>\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})-\d{4}  # workflow date
+        \s                                                   # and
+        (?<host>[^\:]+)\:                                    # host
+    }x;
+our $PTERO_DATE = qr{
+        \[(?<date>\d{4}/\d{2}/\d{2}\s\d{2}\:\d{2}\:\d{2}).\d+\]
+    }x;
+our $ERROR_LOCATION = qr{
+        at \s (?<error_source_file>\S+\.pm) \s line \s (?<error_source_line>\d+)
+    }x;
+
+our $ERROR_FINDING_REGEX = qr{
+                (?:
+                    $WORKFLOW_DATE_AND_HOST
+                    |
+                    $PTERO_DATE
+                )
+                \s
+                (?:
+                    (?:(?<error_text>ERROR:? .*?) \s $ERROR_LOCATION)
+                    |
+                    (?<error_text>ERROR:? .*)
+                )
+            }x;
+
+our $EXCEPTION_FINDING_REGEX = qr{
+                (?:
+                    $WORKFLOW_DATE_AND_HOST
+                    |
+                    $PTERO_DATE
+                )
+                \s
+                (?<error_text>.*) \s (?<!called\s) $ERROR_LOCATION
+        }x;
+
+our $PTERO_HOST_FINDING_REGEX = qr{Starting log annotation on host:\s(.*)};
+
 class Genome::Model::Build::Command::DetermineError {
-    is => 'Genome::Command::Base',
+    is => 'Genome::Command::WithColor',
     has => [
         build => {
             is => 'Genome::Model::Build',
@@ -175,6 +220,9 @@ sub set_status_from_log_file {
             ($error_source_file, $error_source_line, $error_host, $error_date, $error_text) = parse_output_log($output_log);
             if($error_text) {
                 $error_log = $output_log; #only prefer .out files if we got a result
+            } else {
+                #if we still don't know, try to find the last message printed by die() or warn()
+                ($error_source_file, $error_source_line, $error_host, $error_date, $error_text) = find_die_or_warn_in_log($error_log);
             }
         }
     }
@@ -194,23 +242,36 @@ sub parse_error_log {
 
     my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
 
-    my $file_text = read_file($filename);
+    my($get_one_more_line, $found_host);
+    no warnings 'exiting';
+    SCAN_FILE:
+    for(1) {
+        Genome::Sys->iterate_file_lines(
+            $filename,
+            $PTERO_HOST_FINDING_REGEX,
+                sub { $found_host = $1 },
 
-    ($error_date, $error_host, my $date_removed_text) = get_error_date($file_text);
-    if ($error_date) {
-        my $text = '(ERROR[\s\:]+.{1,400}?)';
-        my $file = 'at\s([^\s]*?\.pm)';
-        my $line = 'line\s(\d+)';
-        my $query = join('\s+', $text, $file, $line);
-        if ($date_removed_text =~ m/$query/s) {
-            $error_text = $1;
-            $error_source_file = $2;
-            $error_source_line = $3;
-        } elsif ($date_removed_text =~ m/(ERROR.*)/) {
-            $error_text = $1;
-        }
+            $ERROR_FINDING_REGEX,
+                sub {
+                    ($error_date, $error_text, $error_source_file, $error_source_line)
+                        = @+{'date','error_text','error_source_file','error_source_line'};
+                    $error_host = $found_host || $+{'host'};
+
+                    last SCAN_FILE if ($error_source_file);
+                    $get_one_more_line = 1;
+                },
+
+            sub {
+                if ($get_one_more_line) {
+                    # sometimes we die immediately after the error
+                    ($error_source_file, $error_source_line) = shift =~ m/at (\S+\.pm) line (\d+)/;
+                    last SCAN_FILE;
+                }
+            }
+        );
     }
 
+    return unless $error_date;
     return ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
 }
 
@@ -218,69 +279,62 @@ sub parse_output_log {
     my $filename = shift;
 
     my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
-    my $file_text = Genome::Sys->read_file($filename);
 
-    if($file_text =~ /(TERM_\w+:.+$)/m) {
-        $error_text = $1;
+    $error_source_file = 'n/a';
+    $error_source_line = 'n/a';
 
-        if($file_text =~ /Results reported at (.*)$/m) {
-            $error_date = $1;
-        }
+    no warnings 'exiting';
+    SCAN_FILE:
+    for (1) {
+        Genome::Sys->iterate_file_lines(
+                $filename,
+                qr{Results reported at (.*)$/},
+                    sub { $error_date = $1 },
 
-        if($file_text =~ /Job was executed on host\(s\) <([^>]+)>/) {
-            $error_host = $1;
-        }
+                qr{Job was executed on host\(s\) <([^>]+)>},
+                    sub { $error_host = $1 },
 
-        $error_source_file = 'n/a';
-        $error_source_line = 'n/a';
+                qr{(TERM_\w+:.+$)},
+                    sub { $error_text = $1; last SCAN_FILE }, # This appears third in the LSF output, so we've located all three fields.
+        );
     }
 
+    return unless $error_text;
     return ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
 }
 
-sub get_error_date {
-    my $file_text = shift;
+sub find_die_or_warn_in_log {
+    my $filename = shift;
 
-    my $date = '(\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2})-\d{4}';
-    my $host = '([^\:]+)\:';
+    my ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
 
-    my ($error_date, $error_host, $formatted_text);
-    if ($file_text =~ m/$date\s$host\s+ERROR/) {
-        $error_date = $1;
-        $error_host = $2;
-        ($formatted_text = $file_text) =~ s/$date\s+$host\s//g;
-    } else {
-        ($error_date, $error_host, $formatted_text) = get_error_date_from_ptero_log($file_text);
+    my $backwards_fh = File::ReadBackwards->new($filename);
+
+    no warnings 'exiting';
+    SCAN_FILE:
+    for(1) {
+        Genome::Sys->iterate_file_lines(
+            $backwards_fh,
+            $PTERO_HOST_FINDING_REGEX,
+                sub {
+                    $error_host = $1;
+                    last SCAN_FILE if $error_text;
+                },
+
+            $EXCEPTION_FINDING_REGEX,
+                sub {
+                    unless($error_text) {
+                        ($error_date, $error_text, $error_source_file, $error_source_line, $error_host)
+                            = @+{'date','error_text','error_source_file','error_source_line','host'};
+                        last SCAN_FILE if ($error_host);
+                    }
+                },
+        );
     }
 
-    return $error_date, $error_host, $formatted_text;
-}
+    $backwards_fh->close;
 
-sub get_error_date_from_ptero_log {
-    my $file_text = shift;
-
-    my ($error_date, $error_host, $formatted_text);
-
-    my $date = '\[(\d{4}/\d{2}/\d{2}\s\d{2}\:\d{2}\:\d{2}).\d+\]';
-    if ($file_text =~ m/$date\s+ERROR/) {
-        $error_date = $1;
-
-        # remove everything after the error and search backwards through the file
-        # for the host
-        (my $error_truncated_text = $file_text) =~ s/ERROR.*//s;
-
-        my @lines = split(/\n/, $error_truncated_text);
-        for my $line (reverse @lines) {
-            if ($line =~ m/Starting log annotation on host:\s(.*)/) {
-                $error_host = $1;
-                last;
-            }
-        }
-
-        ($formatted_text = $file_text) =~ s/$date\s//g;
-    }
-
-    return $error_date, $error_host, $formatted_text;
+    return ($error_source_file, $error_source_line, $error_host, $error_date, $error_text);
 }
 
 sub failed_workflow_steps {

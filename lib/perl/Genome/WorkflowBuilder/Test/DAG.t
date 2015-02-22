@@ -3,6 +3,7 @@ use warnings;
 
 use above 'Genome';
 use Test::More;
+use Test::Exception;
 
 
 use_ok('Genome::WorkflowBuilder::DAG');
@@ -50,7 +51,7 @@ subtest 'Simple DAG' => sub {
 </operation>
 EOS
 
-    is($dag->get_xml, $expected_xml, 'simple dag produces expected xml');
+    cmp_xml($dag->get_xml, $expected_xml);
 };
 
 subtest 'Invalid DAG Name' => sub {
@@ -184,7 +185,7 @@ subtest 'XML Round Trip' => sub {
 EOS
 
     my $dag = Genome::WorkflowBuilder::DAG->from_xml($xml);
-    is($dag->get_xml, $xml, 'xml round trip');
+    cmp_xml($dag->get_xml, $xml);
 };
 
 subtest 'Converge XML Round Trip' => sub {
@@ -211,7 +212,7 @@ subtest 'Converge XML Round Trip' => sub {
 EOS
 
     my $dag = Genome::WorkflowBuilder::DAG->from_xml($xml);
-    is($dag->get_xml, $xml, 'xml round trip');
+    cmp_xml($dag->get_xml, $xml);
 };
 
 subtest 'Converge DAG' => sub {
@@ -247,7 +248,85 @@ EOS
     $dag->connect_output(output_property => 'external_output',
         source => $converge, source_property => 'converge_output');
 
-    is($dag->get_xml, $xml, 'xml round trip');
+    cmp_xml($dag->get_xml, $xml);
 };
 
+subtest 'Nested DAG with constant input' => sub {
+    my $outer = Genome::WorkflowBuilder::DAG->create(
+        name => 'outer',
+        log_dir => '/tmp',
+    );
+
+    my $inner = Genome::WorkflowBuilder::DAG->create(
+        name => 'inner',
+        log_dir => '/tmp',
+    );
+
+    my $op = Genome::WorkflowBuilder::Command->create(
+        name => 'some op',
+        command => 'Genome::WorkflowBuilder::Test::DummyCommand',
+    );
+
+    dies_ok {$op->declare_constant('non-property' => 'value')}
+        'cannot declare constants that are not input properties';
+    $op->declare_constant(input => 'foo');
+    lives_ok {$op->declare_constant(input => 'bar')}
+        'can declare constants more than once';
+
+    $inner->add_operation($op);
+
+    # no 'connect_input' needed
+    $inner->connect_output(
+        output_property => 'output',
+        source => $op,
+        source_property => 'single_output',
+    );
+
+    $outer->add_operation($inner);
+    # no 'connect_input' needed
+    $outer->connect_output(
+        output_property => 'output',
+        source => $inner,
+        source_property => 'output',
+    );
+
+    my $expected_xml = <<EOS;
+<?xml version="1.0"?>
+<operation name="outer" logDir="/tmp">
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>inner.some op.input</inputproperty>
+    <outputproperty>output</outputproperty>
+  </operationtype>
+  <operation name="inner" logDir="/tmp">
+    <operationtype typeClass="Workflow::OperationType::Model">
+      <inputproperty>some op.input</inputproperty>
+      <outputproperty>output</outputproperty>
+    </operationtype>
+    <operation name="some op">
+      <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+        <inputproperty>input</inputproperty>
+        <outputproperty>many_output</outputproperty>
+        <outputproperty>result</outputproperty>
+        <outputproperty>single_output</outputproperty>
+      </operationtype>
+    </operation>
+    <link fromOperation="input connector" fromProperty="some op.input" toOperation="some op" toProperty="input"/>
+    <link fromOperation="some op" fromProperty="single_output" toOperation="output connector" toProperty="output"/>
+  </operation>
+  <link fromOperation="inner" fromProperty="output" toOperation="output connector" toProperty="output"/>
+  <link fromOperation="input connector" fromProperty="inner.some op.input" toOperation="inner" toProperty="some op.input"/>
+</operation>
+EOS
+    is_deeply($outer->constant_values, {'inner.some op.input' => 'bar'},
+        'found expected constants');
+    cmp_xml($outer->get_xml, $expected_xml);
+};
+
+
 done_testing();
+
+sub cmp_xml {
+    my ($got, $expected) = @_;
+
+    is_deeply([split(/\n/, $got)], [split(/\n/, $expected)], 'got expected xml');
+}

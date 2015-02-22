@@ -1,0 +1,12 @@
+[4mOVERVIEW[0m
+Calculate the allele frequence based on 1000Genomes and the highest allele frequency
+
+[4mREQUIRED EXPERTS[0m
+dbsnp
+
+[4mAVAILABLE FIELDS[0m
+  [1mdbSNP_caf[0m
+    Allele frequency at this position based on dbSNP
+  [1mdbSNP_max_alt_af[0m
+    The highest allele frequency at this position based on dbSNP
+

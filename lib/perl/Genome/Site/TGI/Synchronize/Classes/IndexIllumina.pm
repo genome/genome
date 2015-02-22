@@ -69,8 +69,8 @@ N_READ_COUNT                NUMBER   (15)                    {null} {null}   NOT
 Q2_BASE_COUNT               NUMBER   (15)                    {null} {null}   NOT_SYNCED
 Q2_READ_COUNT               NUMBER   (15)                    {null} {null}   NOT_SYNCED
 Q20_BASE_COUNT              NUMBER   (15)                    {null} {null}   NOT_SYNCED
-BASE_QUALITY_SUM            NUMBER   (15)                    {null} {null}   NOT_SYNCED
-Q30_BASE_COUNT              NUMBER   (15)                    {null} {null}   NOT_SYNCED
+BASE_QUALITY_SUM            NUMBER   (15)                    {null} {null}   ok
+Q30_BASE_COUNT              NUMBER   (15)                    {null} {null}   ok
 FIRST_AVG_Q_BELOW_20        VARCHAR2 (7)                     {null} {null}   NOT_SYNCED
 
 =cut
@@ -117,6 +117,8 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 (case when r1.seq_id is not null then i.filt_clusters else null end) fwd_filt_clusters,
                 r1.filt_aligned_clusters_pct old_fwd_filt_aligned_pct,
                 r1.filt_error_rate_avg old_fwd_filt_error_rate_avg,
+                r1.q30_base_count fwd_q30_base_count,
+                r1.base_quality_sum fwd_base_quality_sum,
 
                 --Rev
                 (case when r1.seq_id is not null then r2.sls_seq_id else null end) rev_seq_id,
@@ -127,6 +129,8 @@ class Genome::Site::TGI::Synchronize::Classes::IndexIllumina {
                 (case when r1.seq_id is not null then i.filt_clusters else null end) rev_filt_clusters,
                 (case when r1.seq_id is not null then r2.filt_error_rate_avg else null end) old_rev_filt_error_rate_avg,
                 (case when r1.seq_id is not null then r2.filt_aligned_clusters_pct else null end) old_rev_filt_aligned_pct,
+                (case when r1.seq_id is not null then r2.q30_base_count else null end) rev_q30_base_count,
+                (case when r1.seq_id is not null then r2.base_quality_sum else null end) rev_base_quality_sum,
 
                 --Misc Paths
                 archive2.path archive_path,
@@ -205,6 +209,10 @@ EOS
         rev_seq_id                       => { },
         old_fwd_filt_error_rate_avg      => { },
         old_rev_filt_error_rate_avg      => { },
+        fwd_q30_base_count               => { },
+        rev_q30_base_count               => { },
+        fwd_base_quality_sum             => { },
+        rev_base_quality_sum             => { },
     ],
     data_source => 'Genome::DataSource::Dwrac',
 };
@@ -231,8 +239,10 @@ sub properties_to_keep_updated {
         clusters
         fastqc_path
         flow_cell_id
+        fwd_base_quality_sum
         fwd_clusters
         fwd_kilobases_read
+        fwd_q30_base_count
         fwd_read_length
         fwd_run_type
         gerald_directory
@@ -248,8 +258,10 @@ sub properties_to_keep_updated {
         old_rev_filt_aligned_clusters_pct
         old_fwd_filt_aligned_clusters_pct
         read_length
+        rev_base_quality_sum
         rev_clusters
         rev_kilobases_read
+        rev_q30_base_count
         rev_read_length
         rev_run_type
         run_name

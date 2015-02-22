@@ -72,10 +72,7 @@ sub execute {
                 $self->error_message("Cannot update $name to NULL because it is a required model input!");
                 return;
             }
-            # FIXME - do we want to ask here?
-            #$self->status_message("Really update '$name' to NULL/undefined? (y/[n])");
-            #my $response = <STDIN>;
-            #return if $response !~ /y/i;
+
             $self->status_message('Value: NULL');
 
             my $input_name = $property->{input_name};

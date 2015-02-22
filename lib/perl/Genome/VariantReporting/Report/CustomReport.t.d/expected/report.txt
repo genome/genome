@@ -1,0 +1,3 @@
+chromosome_name	start	stop	reference	variant	ensembl_gene_id
+1	1	1	A	T	ENSG00000223659
+1	1	1	A	G	ENSG00000223695

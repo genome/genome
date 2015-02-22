@@ -1,0 +1,22 @@
+[4mOVERVIEW[0m
+Filter variants based on coverage and matching vaf values
+
+[4mPROPERTIES[0m
+  [1mcoverages_and_vafs[0m   Hash
+    A mapping of coverages and the minimum vafs.
+  [1msample_name[0m   Text
+    This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
+
+[4mREQUIRED EXPERTS[0m
+bam-readcount
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Coverage and VAF for sample sample_name follows criteria: [coverages_and_vafs.keyX and
+    VAF>coverages_and_vafs.value%]
+
+[4mFILTER DESCRIPTION[0m
+Coverage and VAF for sample sample_name follows criteria: [coverages_and_vafs.keyX and VAF>coverages_and_vafs.value%]
+

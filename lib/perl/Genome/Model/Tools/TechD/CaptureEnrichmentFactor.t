@@ -19,7 +19,7 @@ my $myEF = Genome::Model::Tools::TechD::CaptureEnrichmentFactor->execute(
                                         genome_total_bp                =>  2_858_012_809,
                                        );
 
-ok($myEF, "CaptureEnrichmentFactor executed.") or die "test cannot continue...";
+ok($myEF->result, "CaptureEnrichmentFactor executed.") or die "test cannot continue...";
 
 my $theoretical_max_enrichment_factor  = $myEF->theoretical_max_enrichment_factor();
 ok($theoretical_max_enrichment_factor eq 63.2) or die "theoretical_max_enrichment_factor should equal 6.2, but $theoretical_max_enrichment_factor is returned";

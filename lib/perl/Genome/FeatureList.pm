@@ -4,20 +4,17 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Utility::File::Mode qw(mode);
+use Memoize qw();
+use Text::ParseWords;
 
 class Genome::FeatureList {
     table_name => 'model.feature_list',
     id_by => [
-        id => {
-            is => 'Text',
-            len => 64,
-        },
+        id => { is => 'Text', len => 64 },
     ],
     has => [
-        name => {
-            is => 'Text',
-            len => 200,
-        },
+        name => { is => 'Text', len => 1500 },
         format => {
             is => 'Text',
             len => 64,
@@ -55,19 +52,13 @@ class Genome::FeatureList {
             is => 'Genome::Model::Build::ReferenceSequence',
             id_by => 'reference_id',
         },
-        reference_name => {
-            via => 'reference',
-            to => 'name',
-        },
+        reference_name => { via => 'reference', to => 'name' },
         subject_id => {
-            is => 'NUMBER',
-            len => 10,
+            is => 'Text',
+            len => 32,
             doc => 'ID of the subject to which the features are relevant',
         },
-        subject => {
-            is => 'Genome::Model::Build',
-            id_by => 'subject_id',
-        },
+        subject => { is => 'Genome::Model::Build', id_by => 'subject_id' },
         disk_allocation => {
             is => 'Genome::Disk::Allocation',
             reverse_as => 'owner',
@@ -89,23 +80,18 @@ class Genome::FeatureList {
                ),
         },
         content_type => {
-            is => 'VARCHAR2',
+            is => 'Text',
             len => 255,
             valid_values => [ "exome", "targeted", "validation", "roi", undef ],
             doc => 'The type of list (used for determining automated processing)',
         },
         description => {
-            is => 'VARCHAR2',
+            is => 'Text',
             len => 255,
             doc => 'General description of the BED file',
         },
     ],
     has_optional_transient => [
-        #TODO These could be pre-computed and stored in the allocation rather than re-generated every time
-        _processed_bed_file_path => {
-            is => 'Text',
-            doc => 'The path to the temporary dumped copy of the post-processed BED file',
-        },
         _merged_bed_file_path => {
             is => 'Text',
             doc => 'The path to the temporary dumped copy of the merged post-processed BED file',
@@ -160,9 +146,9 @@ sub create {
         $self->delete;
         return;
     }
-    #set the newly copied file to read only
+
     my $result = eval{
-        chmod 0444, $self->file_path;
+        mode($self->file_path)->rm_all_writable;
     };
     if($@ or !$result){
         $self->error_message("Could not modify file permissions for: ".$self->file_path);
@@ -297,24 +283,28 @@ sub processed_bed_file_content {
         }
 
         if($self->is_multitracked) {
-            if ($line =~ /^track name=tiled_region/ or $line =~ /^track name=probes/) {
-                if ($track_name eq 'tiled_region') {
-                    $print = 1;
+            if($line =~ /^track /) {
+                my %track_attrs = $self->parse_track_definition($line);
+                my $name = $self->_standardize_track_name($track_attrs{name});
+                if ($name eq 'probes') {
+                    if ($track_name eq 'tiled_region') {
+                        $print = 1;
+                    } else {
+                        $print = 0;
+                    }
+                    next;
+                } elsif ($name eq 'targets') {
+                    if ($track_name eq 'target_region') {
+                        $print = 1;
+                    } else {
+                        $print = 0;
+                    }
+                    next;
                 } else {
-                    $print = 0;
-                }
-                next;
-            } elsif ($line =~ /^track name=target_region/ or $line =~ /^track name=targets/) {
-                if ($track_name eq 'target_region') {
+                    $self->warning_message("Unknown track name (line $line_no '$line'). Including regions.");
                     $print = 1;
-                } else {
-                    $print = 0;
+                    next;
                 }
-                next;
-            } elsif ($line =~ /^track\s.*?name=/) {
-                $self->warning_message("Unknown track name (line $line_no '$line'). Including regions.");
-                $print = 1;
-                next;
             }
         }
 
@@ -364,15 +354,12 @@ sub processed_bed_file {
         die $self->error_message;
     }
 
-    unless($self->_processed_bed_file_path) {
-        my $content = $self->processed_bed_file_content(%args);
-        my $temp_file = Genome::Sys->create_temp_file_path( $self->id . '.processed.bed' );
-        Genome::Sys->write_file($temp_file, $content);
-        $self->_processed_bed_file_path($temp_file);
-    }
-
-    return $self->_processed_bed_file_path;
+    my $content = $self->processed_bed_file_content(%args);
+    my $temp_file = Genome::Sys->create_temp_file_path();
+    Genome::Sys->write_file($temp_file, $content);
+    return $temp_file;
 }
+Memoize::memoize('processed_bed_file', LIST_CACHE => 'MERGE');
 
 sub generate_merged_bed_file {
     my $self = shift;
@@ -432,9 +419,20 @@ sub generate_converted_bed_file {
     } else {
         $original_file_path = $self->processed_bed_file(%args);
     }
+    my $original_md5 = Genome::Sys->md5sum($original_file_path);
+
+    my $result_users = delete($args{result_users});
+    $result_users->{'feature-list'} = $self;
+    $result_users->{requestor}    ||= $reference;
+    $result_users->{sponsor}      ||= Genome::Sys->current_user;
 
     my $sr = Genome::Model::Build::ReferenceSequence::ConvertedBedResult->get_or_create(
-        source_bed => $original_file_path, source_reference => $self->reference, target_reference => $reference);
+        source_reference => $self->reference,
+        target_reference => $reference,
+        source_bed => $original_file_path,
+        source_md5 => $original_md5,
+        users => $result_users,
+    );
 
     my $converted_file_path = delete($args{file_path});
     if (defined $converted_file_path) {
@@ -465,7 +463,7 @@ sub _resolve_param_value_from_text_by_name_or_id {
     my $param_arg = shift;
 
     #First try default behaviour of looking up by name or id
-    my @results = Genome::Command::Base->_resolve_param_value_from_text_by_name_or_id($class, $param_arg);
+    my @results = Command::V2->_resolve_param_value_from_text_by_name_or_id($class, $param_arg);
 
     #If that didn't work, and the argument is a filename, see if we have a feature list matching the provided file.
     if(!@results and -f $param_arg) {
@@ -509,5 +507,153 @@ sub resolve_bed_for_reference {
     }
     return $bed_file;
 }
+
+sub get_tabix_and_gzipped_bed_file {
+    my $self = shift;
+
+    if ($self->format eq 'unknown') {
+        die $self->error_message("Cannot convert format of BED file with unknown format");
+    }
+
+    my $processed_bed = $self->processed_bed_file(short_name => 0);
+    my $sorted_processed_bed = Genome::Sys->create_temp_file_path;
+    Genome::Model::Tools::Joinx::Sort->execute(
+        input_files => [$processed_bed],
+        output_file => $sorted_processed_bed,
+    );
+    return $self->gzip_and_tabix_bed($sorted_processed_bed);
+}
+
+sub gzip_and_tabix_bed {
+    my $class = shift;
+    my $file = shift;
+
+    Genome::Sys->validate_file_for_reading($file);
+    my $gzipped_file = Genome::Sys->create_temp_file_path;
+
+    unless ( Genome::Sys->gzip_file($file, $gzipped_file) ) {
+        die $class->error_message("Failed to gzip file ($file) to ($gzipped_file)");
+    }
+
+    my $tabix_cmd = Genome::Model::Tools::Tabix::Index->create(
+        input_file => $gzipped_file,
+        preset => 'bed',
+    );
+
+    unless ($tabix_cmd->execute) {
+        die $class->error_message("Failed to tabix index file ($gzipped_file)");
+    }
+
+    return $gzipped_file;
+}
+
+sub chromosome_list {
+    my $self = shift;
+    my $indexed_bed = $self->get_tabix_and_gzipped_bed_file;
+    my $list_command = Genome::Model::Tools::Tabix::ListChromosomes->execute(
+        input_file => $indexed_bed,
+    );
+
+    my @chromosomes = $list_command? ($list_command->chromosomes) : ();
+    unless (@chromosomes) {
+        die $self->error_message("Failed to tabix list-chromosomes on indexed bed (%s) of bed (%s)", $indexed_bed, $self->processed_bed_file(short_name => 0));
+    }
+
+    return @chromosomes;
+}
+
+sub get_target_track_only {
+    my ($self, $target_track) = @_;
+
+    unless ($self->is_multitracked) {
+        die $self->error_message("get_target_track_only can only be called on multitracked feature lists");
+    }
+
+    my ($ofh, $output_path)  = Genome::Sys->create_temp_file;
+    my $ifh = Genome::Sys->open_file_for_reading($self->file_path);
+
+    my $correct_track = 0;
+    my $target_track_is_empty = 1;
+    while (my $line = $ifh->getline) {
+        if ( my ($name) = $line =~ m/^track name=(\w+) description=/) {
+            if ($name eq $target_track) {
+                $correct_track = 1;
+            } else {
+                $correct_track = 0;
+            }
+        } else {
+            if ($correct_track) {
+                $ofh->print($line);
+                $target_track_is_empty = 0;
+            }
+        }
+    }
+
+    if ($target_track_is_empty) {
+        die $self->error_message("No data found for target track ($target_track)! Does it exist in the file?");
+    }
+
+    return $output_path;
+}
+
+use constant STANDARDIZED_TRACK_NAMES => {
+    # nimblegen lingo:
+    'tiled_region'  => 'probes',
+    'target_region' => 'targets',
+
+    # agilent lingo:
+    'Target Regions' => 'targets',
+    'Probes'         => 'probes',
+};
+
+sub _standardize_track_name {
+    my $class = shift;
+    my $track_name = shift;
+
+
+    if(exists STANDARDIZED_TRACK_NAMES->{$track_name}) {
+        return STANDARDIZED_TRACK_NAMES->{$track_name};
+    }
+
+    return $track_name;
+}
+
+# input a track definition such as:
+# track name=foo description="this is a track" some_arbitrary_attribute=yes
+# and parse it into a hash of attribute/value pairs:
+# %attrs = (
+#    name                     => 'foo',
+#    description              => 'this is a track',
+#    some_arbitrary_attribute => 'yes',
+# );
+sub parse_track_definition {
+    my $class = shift;
+    my $track_def = shift;
+    $track_def =~ s/^track\s*//;
+
+    my %track_attrs;
+    my @attr_pairs = parse_line('\s+', 1, $track_def); # break on spaces, ignoring spaces inside quotes
+    foreach (grep {defined} @attr_pairs) {
+        my ($attr, $value) = parse_line('=', 0, $_);
+        die "badly formed track definition in BED file, could not parse track definition: $track_def" unless ($attr && $value);
+        $track_attrs{$attr} = $value;
+    }
+    return %track_attrs;
+}
+
+sub _derive_format {
+    my $class = shift;
+    my ($is_1_based, $is_multitracked) = @_;
+
+    return 'unknown' unless defined($is_1_based) && defined($is_multitracked);
+
+    return 'multi-tracked 1-based' if $is_multitracked && $is_1_based;
+    return '1-based' if !$is_multitracked && $is_1_based;
+    return 'multi-tracked' if $is_multitracked && !$is_1_based;
+    return 'true-BED' if !$is_multitracked && !$is_1_based;
+
+    die 'Logic error in _derive_format.';
+}
+
 
 1;

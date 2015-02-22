@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+use Sort::Naturally qw(nsort);
 use Workflow;
 use Workflow::Simple qw(run_workflow_lsf);
 
@@ -40,7 +41,19 @@ class Genome::InstrumentData::Composite::Workflow {
         log_directory => {
             is => 'Text',
             doc => 'Where to write the workflow logs',
-        }
+        },
+        refiners => {
+            is => 'ArrayRef',
+            doc => 'the refiner strategies used in the workflow',
+        },
+        first_refiner => {
+            is => 'Text',
+            doc => 'the first refiner strategy used in the workflow',
+        },
+        last_refiner => {
+            is => 'Text',
+            doc => 'the last refiner strategy used in the workflow',
+        },
     ],
 };
 
@@ -107,9 +120,11 @@ sub _generate_workflow {
 
     my ($merge_operations, $merge_inputs) = $self->_generate_merge_operations($tree, \@alignment_objects);
 
-    my $inputs = [@$index_inputs, @$object_inputs, @$merge_inputs];
+    my ($refinement_operations, $refinement_inputs) = $self->_generate_refinement_operations($tree, \@alignment_objects);
 
-    return $self->_generate_master_workflow($index_operations, $object_workflows, $merge_operations, $inputs, \@alignment_objects, $tree->{api_version});
+    my $inputs = [@$index_inputs, @$object_inputs, @$merge_inputs, @$refinement_inputs];
+
+    return $self->_generate_master_workflow($index_operations, $object_workflows, $merge_operations, $refinement_operations, $inputs, \@alignment_objects, $tree->{api_version});
 }
 
 my %VERSIONS = (
@@ -125,7 +140,24 @@ my %VERSIONS = (
         picard_version => '1.42',
         samtools_version => 'r599',
     },
+    'v4' => {
+        picard_version => '1.85',
+        samtools_version => 'r982',
+    },
+    'v5' => {
+        picard_version => '1.113',
+        samtools_version => 'r982',
+    },
+    'v6' => {
+        picard_version => '1.113',
+        samtools_version => '0.1.19',
+        bedtools_version => '2.17.0',
+    },
 );
+
+sub available_api_versions {
+    return nsort keys %VERSIONS;
+}
 
 sub inputs_for_api_version {
     my $self = shift;
@@ -160,7 +192,7 @@ sub _generate_aligner_index_creation_operations {
     my $workflow_operations = {};
     while(my ($aligner, $versions) = each %aligners) {
         my $alignment_result_class = 'Genome::InstrumentData::AlignmentResult::' . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($aligner);
-        next unless $alignment_result_class && $alignment_result_class->can('prepare_reference_sequence_index');
+        next unless $alignment_result_class and ($alignment_result_class->can('prepare_reference_sequence_index') or $alignment_result_class->can('prepare_annotation_index'));
 
         while(my ($version, $references) = each %$versions) {
             while(my ($reference, $annotations) = each %$references) {
@@ -202,6 +234,11 @@ sub _generate_aligner_index_creation_step {
         ),
     );
 
+    #overwrite lsf_resource for star alinger
+    if ($aligner eq 'star') {
+        $operation->operation_type->lsf_resource("-R \'select[ncpus>=12 && mem>=48000] span[hosts=1] rusage[mem=48000]\' -M 48000000 -n 12");
+    }
+
     return {
         operation => $operation,
         index => $index_num,
@@ -209,8 +246,7 @@ sub _generate_aligner_index_creation_step {
         aligner_version => $version,
         reference_sequence_build_id => $self->inputs->{$reference}->id,
         annotation_build_id => ($annotation? $self->inputs->{$annotation}->id : undef),
-        aligner_params => (defined $params? $params : '')
- 
+        aligner_params => (defined $params? $params : ''),
     };
 }
 
@@ -255,7 +291,7 @@ sub _alignment_objects {
 
     for my $i (@segmentable_data) {
         my @segments = $i->get_segments();
-        if (@segments > 1 && $read_aligner_name ne 'imported' && $i->isa('Genome::InstrumentData::Imported')) {
+        if (@segments > 0 && $read_aligner_name ne 'imported' && $i->isa('Genome::InstrumentData::Imported')) {
             for my $seg (@segments) {
                 push @instrument_data_output, [
                     $i,
@@ -507,13 +543,64 @@ sub _instrument_data_workflow_input_properties {
 sub _general_workflow_input_properties {
     my $self = shift;
 
-    return qw(picard_version samtools_version force_fragment trimmer_name trimmer_version trimmer_params);
+    return qw(
+        picard_version
+        samtools_version
+        bedtools_version
+        force_fragment
+        trimmer_name
+        trimmer_version
+        trimmer_params
+        result_users
+        );
 }
 
 sub _merge_workflow_input_properties {
     my $self = shift;
 
-    return qw(merger_name merger_version merger_params duplication_handler_name duplication_handler_version duplication_handler_params refiner_name refiner_version refiner_params refiner_known_sites_ids samtools_version);
+    return qw(
+        merger_name
+        merger_version
+        merger_params
+        duplication_handler_name
+        duplication_handler_version
+        duplication_handler_params
+        samtools_version
+        result_users
+        );
+}
+
+my $REFINEMENT_INPUT_PROPERTY_SEPARATOR = ':';
+
+sub _base_refinement_workflow_input_properties {
+    my $self = shift;
+
+    return qw(refiner_name refiner_version refiner_params refiner_known_sites_ids);
+}
+
+sub _refinement_workflow_input_properties {
+    my $self = shift;
+
+    my @refiners = @{$self->refiners};
+
+    my @base_names = $self->_base_refinement_workflow_input_properties;
+
+    my @input_properties;
+    for my $refiner (@refiners) {
+        for my $base_name (@base_names) {
+            push @input_properties, $self->_construct_refiner_input_property($base_name, $refiner);
+        }
+    }
+
+    return @input_properties;
+}
+
+sub _construct_refiner_input_property {
+    my $self = shift;
+    my $property = shift;
+    my $refiner = shift;
+
+    return join($REFINEMENT_INPUT_PROPERTY_SEPARATOR, $property, $refiner);
 }
 
 sub _index_workflow_input_properties {
@@ -560,8 +647,11 @@ sub _generate_operation {
 
     # TODO WF now has better support for customizing this, so this hack could be replaced
     # Use PerLaneTophat class to override default lsf_resource
-    if ($action->{name} eq 'per-lane-tophat') {
-        $action_class_bases->{align} = 'Genome::InstrumentData::Command::AlignReads::PerLaneTophat';
+    my $aligner_name = $action->{name};
+
+    if ($aligner_name eq 'per-lane-tophat' or $aligner_name eq 'star') {
+        my $subclass_name = 'Genome::InstrumentData::AlignmentResult'->_resolve_subclass_name_for_aligner_name($aligner_name);
+        $action_class_bases->{align} = 'Genome::InstrumentData::Command::AlignReads::'.$subclass_name;
     }
 
     my $class_name = $action_class_bases->{$action->{type}};
@@ -650,13 +740,6 @@ sub _generate_merge_operations {
                     m_duplication_handler_params => $next_op->{params},
                     m_duplication_handler_version => $next_op->{version}
                 );
-            } elsif($next_op->{type} eq 'refine') {
-                push @inputs, (
-                    m_refiner_name => $next_op->{name},
-                    m_refiner_params => $next_op->{params},
-                    m_refiner_version => $next_op->{version},
-                    m_refiner_known_sites_ids => [ map { $_->id } @{($self->inputs)->{$next_op->{known_sites}}} ],
-                );
             }
         }
 
@@ -674,6 +757,67 @@ sub _generate_merge_operations {
     }
 
     return (\%merge_operations, \@inputs);
+}
+
+sub _generate_refinement_operations {
+    my $self = shift;
+    my $tree = shift;
+    my $alignment_objects = shift;
+
+    my %refinement_operations;
+    my @inputs;
+
+    my @refiners;
+
+    if(exists $tree->{then}) {
+        my $merge_tree = $tree->{then};
+        my $next_op = $merge_tree;
+        while(exists $next_op->{then}) {
+            $next_op = $next_op->{then};
+
+            if($next_op->{type} eq 'refine') {
+                my $refiner = $next_op->{name};
+                if (grep { $_ eq $refiner } @refiners) {
+                    die $self->error_message("Refiner $refiner is used more than once");
+                }
+                push @refiners, $refiner;
+                push @inputs, (
+                    $self->_construct_refiner_input_property('m_refiner_name', $refiner)   => $next_op->{name},
+                    $self->_construct_refiner_input_property('m_refiner_params', $refiner)  => $next_op->{params},
+                    $self->_construct_refiner_input_property('m_refiner_version', $refiner) => $next_op->{version},
+                    $self->_construct_refiner_input_property('m_refiner_known_sites_ids', $refiner) => [ map { $_->id } @{($self->inputs)->{$next_op->{known_sites}}} ],
+                );
+                if($self->merge_group eq 'all') {
+                    #this case is a simplification for efficiency
+                    my $key = $self->refiner_key("all", $refiner);
+                    $refinement_operations{$key} = $self->_generate_refinement_operation($merge_tree, $key);
+                } else {
+                    my %groups;
+                    for my $o (@$alignment_objects) {
+                        $groups{ $self->_merge_group_for_alignment_object($o) }++;
+                    }
+
+                    for my $group (sort keys %groups) {
+                        my $key = $self->refiner_key($group, $refiner);
+                        $refinement_operations{$key} = $self->_generate_refinement_operation($merge_tree, $key);
+                    }
+                }
+            }
+        }
+    }
+
+    if (scalar(@refiners) > 0) {
+        $self->refiners(\@refiners);
+        $self->first_refiner($refiners[0]);
+        $self->last_refiner($refiners[$#refiners]);
+    }
+
+    return (\%refinement_operations, \@inputs);
+}
+
+sub refiner_key {
+    my ($self, $group, $refiner_name) = @_;
+    return join ("_", $group, $refiner_name);
 }
 
 sub _merge_group_for_alignment_object {
@@ -724,16 +868,40 @@ sub _generate_merge_operation {
     return $operation;
 }
 
+my $_refinealignments_command_id;
+my $_generate_refinement_operation_tmpl;
+sub _generate_refinement_operation {
+    my $self = shift;
+    my $merge_tree = shift;
+    my $refiner = shift;
+
+    unless ($_generate_refinement_operation_tmpl) {
+        $_generate_refinement_operation_tmpl = UR::BoolExpr::Template->resolve('Workflow::Operation', 'id','name','workflow_operationtype_id')->get_normalized_template_equivalent();
+        $_refinealignments_command_id = Workflow::OperationType::Command->get('Genome::InstrumentData::Command::RefineReads')->id;
+    }
+
+    my $operation = Workflow::Operation->create(
+        $_generate_refinement_operation_tmpl->get_rule_for_values(
+                UR::Object::Type->autogenerate_new_object_id_urinternal(),
+                'refine_' . $refiner,
+                $_refinealignments_command_id
+        )
+    );
+
+    return $operation;
+}
+
 sub _generate_master_workflow {
     my $self = shift;
     my $index_operations = shift;
     my $object_workflows = shift;
     my $merge_operations = shift;
+    my $refinement_operations = shift;
     my $inputs = shift;
     my $alignment_objects = shift;
     my $api_version = shift;
 
-    my ($input_properties_list, $output_properties_list) = $self->_inputs_and_outputs_for_master_workflow($index_operations, $object_workflows, $merge_operations);
+    my ($input_properties_list, $output_properties_list) = $self->_inputs_and_outputs_for_master_workflow($index_operations, $object_workflows, $merge_operations, $refinement_operations);
 
     my $master_workflow = Workflow::Model->create(
         name => 'Master Alignment Dispatcher',
@@ -767,10 +935,23 @@ sub _generate_master_workflow {
 
     if(%$merge_operations) {
         for my $merge_operation (values %$merge_operations) {
-            $self->_wire_merge_operation_to_master_workflow($master_workflow, $block_operation, $merge_operation);
+            $self->_wire_merge_operation_to_master_workflow($master_workflow, $block_operation, $merge_operation, $refinement_operations);
         }
 
         $self->_wire_object_workflows_to_merge_operations($master_workflow, $object_workflows, $merge_operations, $alignment_objects);
+    }
+
+    if(%$refinement_operations) {
+        while (my ($refiner_key, $refinement_operation) = each %$refinement_operations) {
+            my $refiner = (split("_", $refiner_key))[1];
+            $self->_wire_refinement_operation_to_master_workflow($master_workflow, $block_operation, $refinement_operation, $refiner);
+        }
+
+        $self->_wire_merge_to_refinement_operations($master_workflow, $merge_operations, $refinement_operations);
+
+        if (scalar(@{$self->refiners}) == 2) {
+            $self->_wire_refinement_to_refinement_operations($master_workflow, $merge_operations, $refinement_operations);
+        }
     }
 
     #add the global inputs
@@ -789,6 +970,7 @@ sub _inputs_and_outputs_for_master_workflow {
     my $index_operations = shift;
     my $object_workflows = shift;
     my $merge_operations = shift;
+    my $refinement_operations = shift;
 
     my %input_properties;
     my %output_properties;
@@ -807,7 +989,24 @@ sub _inputs_and_outputs_for_master_workflow {
             $input_properties{$prop}++;
         }
 
-        for my $op (values %$merge_operations) {
+        unless (%$refinement_operations) {
+            for my $op (values %$merge_operations) {
+                for my $prop (@{ $op->operation_type->output_properties }) {
+                   $output_properties{join('_', $prop, $op->name)}++;
+                }
+            }
+        }
+    }
+
+    if(%$refinement_operations) {
+        for my $prop ($self->_refinement_workflow_input_properties()) {
+            $input_properties{$prop}++;
+        }
+
+        my $last_refiner = $self->last_refiner;
+        my @last_refinement_keys = grep { $_ =~ $last_refiner } keys %$refinement_operations;
+        for my $refinement_key (@last_refinement_keys) {
+            my $op = $refinement_operations->{$refinement_key};
             for my $prop (@{ $op->operation_type->output_properties }) {
                $output_properties{join('_', $prop, $op->name)}++;
             }
@@ -851,6 +1050,18 @@ sub _wire_index_operation_to_master_workflow {
             if ($pmeta->id_by) {
                 next;
             }
+
+            if($property eq 'result_users') {
+                #result users are the same for all steps in workflow
+                $self->_add_link_to_workflow($master_workflow,
+                    left_workflow_operation_id => $input_connector->id,
+                    left_property => 'm_' . $property,
+                    right_workflow_operation_id => $operation->{operation}->id,
+                    right_property => $property,
+                );
+                next;
+            }
+
             $self->_add_link_to_workflow($master_workflow,
                 left_workflow_operation_id => $input_connector->id,
                 left_property => join('_', "index", $operation->{index}, $property),
@@ -917,6 +1128,7 @@ sub _wire_merge_operation_to_master_workflow {
     my $master_workflow = shift;
     my $block_operation = shift; #unused by merge operations
     my $merge = shift;
+    my $refinements = shift;
 
     my $master_input_connector = $master_workflow->get_input_connector;
     my $master_output_connector = $master_workflow->get_output_connector;
@@ -932,17 +1144,106 @@ sub _wire_merge_operation_to_master_workflow {
         );
     }
 
-    for my $property (@{ $merge->operation_type->output_properties }) {
+    unless (%$refinements) {
+        for my $property (@{ $merge->operation_type->output_properties }) {
+            $self->_add_link_to_workflow($master_workflow,
+                left_workflow_operation_id => $merge->id,
+                left_property => $property,
+                right_workflow_operation_id => $master_output_connector->id,
+                right_property => 'm_' . join('_', $property, $merge->name),
+            );
+        }
+    }
+
+    return 1;
+}
+sub _wire_refinement_operation_to_master_workflow {
+    my $self = shift;
+    my $master_workflow = shift;
+    my $block_operation = shift; #unused by merge operations
+    my $refinement = shift;
+    my $refiner = shift;
+
+    my $master_input_connector = $master_workflow->get_input_connector;
+    my $master_output_connector = $master_workflow->get_output_connector;
+
+    $refinement->workflow_model($master_workflow);
+
+    for my $property ($self->_base_refinement_workflow_input_properties) {
+        my $left_property = "m_" . $self->_construct_refiner_input_property($property, $refiner);
+        my $right_property = $property;
         $self->_add_link_to_workflow($master_workflow,
-            left_workflow_operation_id => $merge->id,
-            left_property => $property,
-            right_workflow_operation_id => $master_output_connector->id,
-            right_property => 'm_' . join('_', $property, $merge->name),
+            left_workflow_operation_id => $master_input_connector->id,
+            left_property => $left_property,
+            right_workflow_operation_id => $refinement->id,
+            right_property => $right_property,
+        );
+    }
+
+    $self->_add_link_to_workflow($master_workflow,
+        left_workflow_operation_id => $master_input_connector->id,
+        left_property => 'm_result_users',
+        right_workflow_operation_id => $refinement->id,
+        right_property => 'result_users',
+    );
+
+    if ($refiner eq $self->last_refiner) {
+        for my $property (@{ $refinement->operation_type->output_properties }) {
+            $self->_add_link_to_workflow($master_workflow,
+                left_workflow_operation_id => $refinement->id,
+                left_property => $property,
+                right_workflow_operation_id => $master_output_connector->id,
+                right_property => 'm_' . join('_', $property, $refinement->name),
+            );
+        }
+    }
+
+    return 1;
+}
+
+sub _wire_merge_to_refinement_operations {
+    my $self = shift;
+    my $master_workflow = shift;
+    my $merge_operations = shift;
+    my $refinement_operations = shift;
+    my $refiner_names = $self->refiners;
+
+    for my $group_key (keys %$merge_operations ) {
+        my $refiner_name = $self->first_refiner;
+        my $refiner_key = $self->refiner_key($group_key, $refiner_name);
+        $self->_add_link_to_workflow($master_workflow,
+            left_workflow_operation_id => $merge_operations->{$group_key}->id,
+            left_property => 'result_id',
+            right_workflow_operation_id => $refinement_operations->{$refiner_key}->id,
+            right_property => 'input_result_id',
         );
     }
 
     return 1;
 }
+
+sub _wire_refinement_to_refinement_operations {
+    my $self = shift;
+    my $master_workflow = shift;
+    my $merge_operations = shift;
+    my $refinement_operations = shift;
+    my @refiner_names = @{$self->refiners};
+
+    for my $group_key (keys %$merge_operations ) {
+        my $refiner1_key = $self->refiner_key($group_key, $refiner_names[0]);
+        my $refiner2_key = $self->refiner_key($group_key, $refiner_names[1]);
+
+        $self->_add_link_to_workflow($master_workflow,
+            left_workflow_operation_id => $refinement_operations->{$refiner1_key}->id,
+            left_property => 'result_id',
+            right_workflow_operation_id => $refinement_operations->{$refiner2_key}->id,
+            right_property => 'input_result_id',
+        );
+    }
+
+    return 1;
+}
+
 
 sub _wire_object_workflows_to_merge_operations {
     my $self = shift;
@@ -997,7 +1298,6 @@ sub _wire_object_workflows_to_merge_operations {
         }
     }
 
-
     return 1;
 }
 
@@ -1012,7 +1312,10 @@ sub _run_workflow {
     my $result = Workflow::Simple::run_workflow_lsf( $workflow, @$inputs);
 
     unless($result){
-        $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );
+        $self->error_message(join("\n", map {
+            ($_->can('name') ? $_->name .': ' : ''). $_->error
+        } @Workflow::Simple::ERROR));
+
         die $self->error_message("Workflow did not return correctly.");
     }
 

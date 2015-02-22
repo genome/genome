@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<Session genome="unknown" locus="1:1-100" version="3">
+    <Resources>
+     <Resource path="/tmp/tempoNsNB/info/model_data/software-result/62a75f4c837243beba885c2f55333f61/report.txt" relativePath="false"/>
+     <Resource path="/tmp/tempHm7ih/info/model_data/software-result/a71c3c65e604421e80b8c60270e4a8bf/report.txt" relativePath="false"/>
+     <Resource path="/tmp/tempE9NZ_/info/model_data/software-result/d2131e819d9b4b919314e078ef63943b/report.txt" relativePath="false"/>
+     <Resource path="/tmp/tempcP1s2/info/model_data/software-result/ddecd2c178b54bd189df743d39b7afa7/report.txt" relativePath="false"/>
+     <Resource path="/gscmnt/gc7007/info/genome/test_inputs/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/bam1.bam" relativePath="false"/>
+     <Resource path="/gscmnt/gc7007/info/genome/test_inputs/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/bam3.bam" relativePath="false"/>
+     <Resource path="/gscmnt/gc7007/info/genome/test_inputs/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/bam2.bam" relativePath="false"/>
+    </Resources>
+   <Panel height="1000" name="Panel0" width="1901">
+        <Track color="200,200,200" expand="false" fontSize="9" height="40" id="/gscmnt/gc7007/info/genome/test_inputs/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/bam1.bam_coverage" name="TEST-patient1-somval_tumor1 Coverage" showDataRange="true" visible="true">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track expand="true" fontSize="9" height="1000" id="/gscmnt/gc7007/info/genome/test_inputs/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/bam1.bam" name="TEST-patient1-somval_tumor1" showDataRange="true" visible="true">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+   </Panel>
+   <Panel height="1000" name="Panel1" width="1901">
+        <Track color="200,200,200" expand="false" fontSize="9" height="40" id="/gscmnt/gc7007/info/genome/test_inputs/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/bam3.bam_coverage" name="TEST-patient1-somval_tumor2 Coverage" showDataRange="true" visible="true">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track expand="true" fontSize="9" height="1000" id="/gscmnt/gc7007/info/genome/test_inputs/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/bam3.bam" name="TEST-patient1-somval_tumor2" showDataRange="true" visible="true">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+   </Panel>
+   <Panel height="1000" name="Panel2" width="1901">
+        <Track color="200,200,200" expand="false" fontSize="9" height="40" id="/gscmnt/gc7007/info/genome/test_inputs/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/bam2.bam_coverage" name="TEST-patient1-somval_normal1 Coverage" showDataRange="true" visible="true">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track expand="true" fontSize="9" height="1000" id="/gscmnt/gc7007/info/genome/test_inputs/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/bam2.bam" name="TEST-patient1-somval_normal1" showDataRange="true" visible="true">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+   </Panel>
+    <Panel height="60" name="FeaturePanel" width="1901">
+        <Track color="0,0,0" expand="false" fontSize="9" height="14" id="Reference" name="Reference" showDataRange="true" visible="true">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track color="0,0,178" expand="true" featureVisibilityWindow="-1" fontSize="9" height="45" id="/tmp/tempoNsNB/info/model_data/software-result/62a75f4c837243beba885c2f55333f61/report.txt" name="/tmp/tempoNsNB/info/model_data/software-result/62a75f4c837243beba885c2f55333f61/report.txt" renderer="BASIC_FEATURE" showDataRange="true" visible="true" windowFunction="count">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track color="0,0,178" expand="true" featureVisibilityWindow="-1" fontSize="9" height="45" id="/tmp/tempHm7ih/info/model_data/software-result/a71c3c65e604421e80b8c60270e4a8bf/report.txt" name="/tmp/tempHm7ih/info/model_data/software-result/a71c3c65e604421e80b8c60270e4a8bf/report.txt" renderer="BASIC_FEATURE" showDataRange="true" visible="true" windowFunction="count">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track color="0,0,178" expand="true" featureVisibilityWindow="-1" fontSize="9" height="45" id="/tmp/tempE9NZ_/info/model_data/software-result/d2131e819d9b4b919314e078ef63943b/report.txt" name="/tmp/tempE9NZ_/info/model_data/software-result/d2131e819d9b4b919314e078ef63943b/report.txt" renderer="BASIC_FEATURE" showDataRange="true" visible="true" windowFunction="count">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+        <Track color="0,0,178" expand="true" featureVisibilityWindow="-1" fontSize="9" height="45" id="/tmp/tempcP1s2/info/model_data/software-result/ddecd2c178b54bd189df743d39b7afa7/report.txt" name="/tmp/tempcP1s2/info/model_data/software-result/ddecd2c178b54bd189df743d39b7afa7/report.txt" renderer="BASIC_FEATURE" showDataRange="true" visible="true" windowFunction="count">
+            <DataRange baseline="0.0" drawBaseline="true" flipAxis="false" maximum="10.0" minimum="0.0" type="LINEAR"/>
+        </Track>
+    </Panel>
+</Session>

@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Site::TGI::CaptureSet::Command::Synchronize {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         direction => {
             is => 'Text',
@@ -61,8 +61,12 @@ EOS
 sub execute {
     my $self = shift;
 
-    my $lock_resource = $ENV{GENOME_LOCK_DIR} . '/genome_site_tgi_captureset_command_synchronize/loader';
-    my $lock = Genome::Sys->lock_resource(resource_lock=>$lock_resource, max_try=>1);
+    my $lock_resource = 'genome_site_tgi_captureset_command_synchronize/loader';
+    my $lock = Genome::Sys->lock_resource(
+        resource_lock=>$lock_resource,
+        scope => 'site',
+        max_try=>1,
+    );
     unless ($lock) {
         $self->error_message("could not lock, another instance must be running.");
         return;

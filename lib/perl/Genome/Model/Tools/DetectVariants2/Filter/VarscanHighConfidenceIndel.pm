@@ -18,7 +18,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::VarscanHighConfidenceIndel{
              default_value => $ENV{GENOME_LSF_QUEUE_DV2_WORKFLOW},
          },
          lsf_resource => {
-             default_value => "-M 6000000 -R 'select[type==LINUX64 && mem>6000] rusage[mem=6000]'",
+             default_value => "-M 6000000 -R 'select[mem>6000] rusage[mem=6000]'",
          },
      ],
 };
@@ -85,7 +85,7 @@ sub prepare_output {
     my $lq_scratch_file = $self->_temp_scratch_directory."/indels.lq";
 
     Genome::Sys->copy_file( $somatic_hq, $hq_file );
-    
+
     # FIXME other is possibly not sorted by position
     my @lq_source = ($somatic_lq, $germline, $loh);
     if (-e $other) {
@@ -101,10 +101,11 @@ sub prepare_output {
     my $lq_scratch_file_temp = $lq_scratch_file.".tmp";
     my $result = `sort -k2 -n $lq_scratch_file > $lq_scratch_file_temp`;
 
-    unless(Genome::Model::Tools::Bed::ChromSort->execute( input => $lq_scratch_file_temp, output => $lq_file)){
+    my $chrom_sort_cmd = Genome::Model::Tools::Bed::ChromSort->create( input => $lq_scratch_file_temp, output => $lq_file);
+    unless( $chrom_sort_cmd->execute ){
         die $self->error_message("Failed to chrom sort lq output.");
     }
-    return 1; 
+    return 1;
 }
 
 #check that the natively formatted file matches expectation

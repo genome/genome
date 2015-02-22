@@ -52,13 +52,13 @@ my @cases = (
         [
             email => 'nnutter@genome.wustl.edu',
             cmd => 'true',
-        ], [qw(-unnutter@genome.wustl.edu true)], 'single option',
+        ], [qw(-u nnutter@genome.wustl.edu true)], 'single option',
     ],[
         [
             email => 'nnutter@genome.wustl.edu',
             project => 'HighPriority',
             cmd => 'true',
-        ], [qw(-unnutter@genome.wustl.edu -PHighPriority true)], 'multiple options',
+        ], [qw(-u nnutter@genome.wustl.edu -P HighPriority true)], 'multiple options',
     ],[
         [
             hold_job => 0,

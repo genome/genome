@@ -84,22 +84,23 @@ sub execute {
         die('Failed to parse BED file path:  '. $self->annotation_bed_file);
     }
     my $sorted_bam_file = Genome::Sys->create_temp_file_path($exome_basename .'_sorted.bam');
-    my $BedToSortedBam = Genome::Model::Tools::BedTools::BedToSortedBam->execute(
+    my $BedToSortedBam = Genome::Model::Tools::BedTools::BedToSortedBam->create(
         input_file => $self->exome_bed_file,
         output_file => $sorted_bam_file,
         use_version => $self->bedtools_version,
         samtools_version => $self->samtools_version,
     );
-    unless ($BedToSortedBam) {
+    unless ($BedToSortedBam->execute) {
         die('Failed to convert BED file to sorted BAM file!');
     }
     my $limited_bed_file = Genome::Sys->create_temp_file_path($annotation_basename .'_limited_to_list.bed');
-    unless (Genome::Model::Tools::Bed::Limit->execute(
+    my $Limit = Genome::Model::Tools::Bed::Limit->create(
         gene_list => $self->include_list,
         input_bed_file => $self->annotation_bed_file,
         output_bed_file => $limited_bed_file,
         feature_types => $self->coverage_of,
-    )) {
+    );
+    unless ($Limit->execute) {
         die('Failed to limit BED file '. $self->annotation_bed_file .' to the genes in '. $self->include_list);
     }
     my $merged_bed_file = Genome::Sys->create_temp_file_path($annotation_basename .'_merged_by_'. $self->report_by .'.bed');
@@ -118,22 +119,22 @@ sub execute {
         $merged_bed_file = $limited_bed_file;
     }
     my $stats_file = Genome::Sys->create_temp_file_path($annotation_basename .'_merged_by_'. $self->report_by .'_STATS.tsv');;
-    my $RefCov = Genome::Model::Tools::BioSamtools::RefCov->execute(
+    my $RefCov = Genome::Model::Tools::BioSamtools::RefCov->create(
         bed_file => $merged_bed_file,
         bam_file => $sorted_bam_file,
         stats_file => $stats_file,
     );
-    unless ($RefCov) {
+    unless ($RefCov->execute) {
         die('Failed to genarate coverage!');
     }
-    my $MergeStats = Genome::Model::Tools::BioSamtools::MergeStats->execute(
+    my $MergeStats = Genome::Model::Tools::BioSamtools::MergeStats->create(
         stats_file => $stats_file,
         output_file => $self->output_file,
         merge_by => $self->report_by,
         delimiter => $self->delimiter,
         minimum_breadth_filters => $self->minimum_breadth_filters,
     );
-    unless ($MergeStats) {
+    unless ($MergeStats->execute) {
         die ('Failed to merge stats by '. $self->report_by);
     }
     return 1;

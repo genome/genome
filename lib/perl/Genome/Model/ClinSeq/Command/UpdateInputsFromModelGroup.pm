@@ -106,8 +106,8 @@ sub execute {
             @checks = (qw/
                 wgs_model.subject.id 
                 exome_model.subject.id 
-                tumor_rnaseq_model.subject.patient.id 
-                normal_rnaseq_model.subject.patient.id
+                tumor_rnaseq_model.subject.individual.id 
+                normal_rnaseq_model.subject.individual.id
             /);
             $expected_type = 'Genome::Model::SomaticVariation';
         }

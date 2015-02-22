@@ -153,13 +153,13 @@ sub execute {
                 $params{regulome_db_file} = $rdb_file;
             }
 
-            my $rv = Genome::Model::MutationalSignificance::Command::MergeAnnotations->execute(
+            my $merge_cmd = Genome::Model::MutationalSignificance::Command::MergeAnnotations->execute(
                 %params
             );
-           
-            unless ($rv) {
+
+            unless ($merge_cmd->result) {
                 $self->error_message("Failed to merge annotations for tier $tier");
-                return $rv;
+                return $merge_cmd->result;
             }
         }
 
@@ -167,8 +167,7 @@ sub execute {
         chomp @snv_lines;
 
         #Remove any variants that failed review
-        for my $line ( @snv_lines )
-        {
+        for my $line ( @snv_lines ) {
             my ( $chr, $start, $stop, $ref, $var ) = split( /\t/, $line );
             if (%failed_variants and defined $failed_variants{"$chr\t$start\t$stop"}) {
                 next;
@@ -214,12 +213,12 @@ sub execute {
             my ($base0_start, $base0_stop) = ($start-1,$stop-1);
             my $refvar = ($ref eq '-' ? "0/$var": "$ref/0");
 
-            if (%failed_variants and 
+            if (%failed_variants and
                 (defined $failed_variants{"$chr\t$start\t$stop"} or
                     defined $failed_variants{"$chr\t$base0_start\t$base0_stop"})) {
                 next;
             }
-            elsif ($self->exclude_pindel_only_indels and (defined $uniq_to_pindel{"$chr\t$base0_start\t$stop\t$refvar"} or 
+            elsif ($self->exclude_pindel_only_indels and (defined $uniq_to_pindel{"$chr\t$base0_start\t$stop\t$refvar"} or
                     defined $uniq_to_pindel{"$chr\t$start\t$base0_stop\t$refvar"} )){
                 $review_lines{pindels}{$chr}{$start}{$stop} = $line;
             }
@@ -244,7 +243,7 @@ sub execute {
 
     #TODO: Option to remove any that fail manual review
     #TODO: Check count of variants to review and set aside if too many (maybe put this in merge-maf?)
-    
+
     #Include the ultra-high-confidence snvs
     #my $uhc_cmd = Genome::Model::Tools::Somatic::UltraHighConfidence->create(
     #    normal_bam_file => $self->somatic_variation_build->normal_bam,
@@ -252,7 +251,7 @@ sub execute {
     #    variant_file => $snv_anno_file,
     #    output_file => $snv_file,
     #    filtered_file => $self->output_dir."/".$self->somatic_variation_build->id.".not_uhc.anno",
-    #    reference => $self->somatic_variation_build->reference_sequence_build->fasta_file,
+    #    reference => $self->somatic_variation_build->reference_sequence_build->full_consensus_path('fa'),
     #);
 
     #my $uhc_result = $uhc_cmd->execute;
@@ -274,7 +273,7 @@ sub execute {
         unless ($annotation_build) {
             print "annotation build was null for somatic variation build ".$self->somatic_variation_build->id."\n";
         }
-        my $annotation_build_id = $self->somatic_variation_build->annotation_build->id; 
+        my $annotation_build_id = $self->somatic_variation_build->annotation_build->id;
         my $rv = `gmt annotate transcript-variants --variant-bed-file $skipped_bed --output-file $skipped --build-id $annotation_build_id --annotation-filter top --accept-reference-IUB-codes`;
         my @skipped_loci = `cat $skipped`;
 
@@ -290,7 +289,7 @@ sub execute {
 
         $snv_anno_file = $self->sort_and_write_to_temp_file($snv_anno_file);
     }
-    
+
     my %params = (
         snv_file => $snv_anno_file,
         snv_annotation_file => $snv_anno_file,

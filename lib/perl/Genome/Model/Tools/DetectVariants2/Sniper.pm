@@ -18,7 +18,7 @@ class Genome::Model::Tools::DetectVariants2::Sniper {
     # Make workflow choose 64 bit blades
     has_param => [
         lsf_resource => {
-            default_value => 'rusage[mem=4000] select[type==LINUX64 && maxtmp>100000] span[hosts=1]',
+            default_value => 'rusage[mem=4000] select[maxtmp>100000] span[hosts=1]',
         },
     ],
 };
@@ -31,6 +31,7 @@ my %SNIPER_VERSIONS = (
     '1.0.0' => '/usr/bin/' . $SNIPER_COMMAND,
     '1.0.1' => '/usr/bin/bam-somaticsniper1.0.1',
     '1.0.2' => '/usr/bin/bam-somaticsniper1.0.2',
+    '1.0.4' => '/usr/bin/bam-somaticsniper1.0.4',
 );
 
 sub help_synopsis {

@@ -12,7 +12,7 @@ use File::Spec qw();
 use File::Basename qw();
 
 class Genome::Model::SomaticValidation::Command::AnnotateVariants {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         annotator_version => {
             doc => 'Version of the "annotate transcript-variants" tool to run   during the annotation step',
@@ -66,16 +66,6 @@ sub execute {
     return 1;
 }
 
-sub get_input_path_for_tier {
-    my ($self, $tiering_result, $tier, $type) = @_;
-
-    if ($self->build->previously_discovered_variations_build and $type eq 'hq') {
-        return $tiering_result->path(sprintf('*novel*tier%s*.bed', $tier));
-    } else {
-        return $tiering_result->path(sprintf('*tier%s*.bed', $tier));
-    }
-}
-
 sub annotate_snvs {
     my ($self, $annotation_directory) = @_;
 
@@ -94,7 +84,7 @@ sub annotate_snvs {
                 next TYPE;
             }
 
-            my $input_path = $self->get_input_path_for_tier($tiering_result, $tier, $type);
+            my $input_path = $tiering_result->tier_bed_path($tier);
             $self->debug_message(sprintf('Preparing to annotate file: %s',
                     $input_path));
 
@@ -133,13 +123,11 @@ sub annotate_snvs {
                     'Executing GMT:AnnotateTranscriptVariants with parameters: %s',
                     join('', Data::Dumper::Dumper(%annotation_params))));
 
-            my $annotation_rv = Genome::Model::Tools::Annotate::TranscriptVariants->execute(
-                %annotation_params);
-            my $annotation_error = $@;
-
-            unless ($annotation_rv) {
-                die $self->error_message(sprintf(
-                        'Failed to execute GMT:Annotate::TranscriptVariants: %s', $@));
+            my $annotation_cmd = Genome::Model::Tools::Annotate::TranscriptVariants->create(
+                %annotation_params
+            );
+            unless ($annotation_cmd->execute) {
+                die $self->error_message('Failed to execute GMT:Annotate::TranscriptVariants.');
             }
 
             # verify output file exists?

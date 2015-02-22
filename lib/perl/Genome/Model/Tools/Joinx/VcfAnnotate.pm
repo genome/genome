@@ -76,11 +76,8 @@ EOS
 
 sub execute {
     my $self = shift;
-    $DB::single = 1;
 
-    if($self->use_version < $MINIMUM_JOINX_VERSION) {
-        die $self->error_message("This module requires joinx version $MINIMUM_JOINX_VERSION or higher to function correctly.");
-    }
+    $self->check_minimum_version($MINIMUM_JOINX_VERSION);
 
     if($self->use_bgzip && not defined($self->output_file)){
        die $self->error_message("If use_bgzip is set, output_file must also be set, otherwise binary nonsense will spew forth."); 
@@ -132,5 +129,6 @@ sub execute {
 
     return 1;
 }
+
 
 1;

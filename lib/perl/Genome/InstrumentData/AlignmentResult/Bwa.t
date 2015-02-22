@@ -10,6 +10,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 
 use File::Path;
 use Test::More;
@@ -53,14 +54,21 @@ my %result_params = (
     aligner_name => 'bwa',
 );
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $result_params{reference_build},
+);
+
 # ALIGN!
-my $alignment = Genome::InstrumentData::AlignmentResult->create(%result_params);
+my $alignment = Genome::InstrumentData::AlignmentResult->create(
+    %result_params,
+    _user_data_for_nested_results => $result_users
+);
 ok($alignment, "created alignment");
 isa_ok($alignment, 'Genome::InstrumentData::AlignmentResult::Bwa');
 my $bam_path = $alignment->output_dir."/all_sequences.bam";
 ok(-s $bam_path, "created a bam");
 my $generated_bam_md5 = Genome::Sys->md5sum($bam_path);
-is($generated_bam_md5, 'c503838df748e349d6c44103e50984e9', "MD5 of bam matches");
+is($generated_bam_md5, 'a15544d06deeda14506ac9beb8af78d1', "MD5 of bam matches");
 
 # FIXME test if the iar are deleted? if not we is done
 
@@ -68,12 +76,18 @@ my @users = Genome::SoftwareResult::User->get(user => $alignment, label => 'inte
 ok(!@users, 'alignment is not using any intermediate results');
 
 # RECREATE FAIL
-my $recreate = Genome::InstrumentData::AlignmentResult->create(%result_params);
+my $recreate = Genome::InstrumentData::AlignmentResult->create(
+    %result_params,
+    _user_data_for_nested_results => $result_users,
+);
 ok(!$recreate, "Did not recreate the alignment result");
 like(Genome::InstrumentData::AlignmentResult::Bwa->error_message, qr/already have one/, "correct error");
 
 # GET WITH LOCK OK
-my $get_with_lock = Genome::InstrumentData::AlignmentResult->get_with_lock(%result_params);
+my $get_with_lock = Genome::InstrumentData::AlignmentResult->get_with_lock(
+    %result_params,
+    users => $result_users
+);
 ok($get_with_lock, 'Re-get with lock');
 is($get_with_lock, $alignment, 'Got the same alignment');
 
@@ -85,13 +99,16 @@ for ( glob( Genome::Sys->base_temp_directory."/*") ) {
 # ALIGN BY READ GROUP - not sure why this is tested here
 $result_params{instrument_data_segment_id} = 'Z';
 $result_params{instrument_data_segment_type} = 'read_group';
-$alignment = Genome::InstrumentData::AlignmentResult->create(%result_params);
+$alignment = Genome::InstrumentData::AlignmentResult->create(
+    %result_params,
+    _user_data_for_nested_results => $result_users,
+);
 ok($alignment, "created alignment");
 isa_ok($alignment, 'Genome::InstrumentData::AlignmentResult::Bwa');
 $bam_path = $alignment->output_dir."/all_sequences.bam";
 ok(-s $bam_path, "created a bam");
 $generated_bam_md5 = Genome::Sys->md5sum($bam_path);
-is($generated_bam_md5, '1c29b3f9feedd2ed300cf6cc74f961cd', "MD5 of bam matches");
+is($generated_bam_md5, '2ea7b6431d9e9cb7e33207ecf7438d3e', "MD5 of bam matches");
 @users = Genome::SoftwareResult::User->get(user => $alignment, label => 'intermediate result');
 ok(!@users, 'alignment is not using any intermediate results');
 

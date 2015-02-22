@@ -7,7 +7,7 @@ use Genome;
 use Genome::Info::IUB;
 
 class Genome::Model::GenotypeMicroarray::Command::CreateGoldSnpBed {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => 'Convert the genotype microarray file to the .bed format used by the GoldSnp view',
     has_input => [
         input_file => {

@@ -51,12 +51,6 @@ class Genome::Model::Tools::Cmds::Execute {
         doc => 'Directory containing the plot output files',
     },
     ],
-    # This tool does not actually *require* 64 bit, but produces different results (floating point rounding) on a 32 bit blade. Do this to stay consistent.
-    has_param => [
-        lsf_resource => {
-            default_value => 'select[type==LINUX64]',
-        },
-    ],
 };
 
 sub help_brief {

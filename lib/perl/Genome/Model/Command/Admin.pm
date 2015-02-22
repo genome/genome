@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Model::Command::Admin {
     is => 'Command::Tree',
-    doc => 'admion models and builds',
+    doc => 'administer models and builds',
 };
 
 1;

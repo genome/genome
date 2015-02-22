@@ -1,0 +1,11 @@
+[4mOVERVIEW[0m
+Annotate variants with FPKM value for the sample specified
+
+[4mPROPERTIES[0m
+  [1mfpkm_file[0m   Path
+    The fpkm file to use for annotation
+    This is a translated property.
+  [1msample_name[0m   Text
+    The sample to analyze
+    This is a translated property.
+

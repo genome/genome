@@ -6,7 +6,8 @@ use warnings;
 use Genome;
 
 require File::Basename;
-use Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForBuildOriginalTsv
+use Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv;
+use Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderForBuildOriginalTsv;
 
 class Genome::Model::GenotypeMicroarray::Command::ExtractToCsv {
     is => 'Command::V2',
@@ -25,8 +26,8 @@ class Genome::Model::GenotypeMicroarray::Command::ExtractToCsv {
         fields => {
             is => 'Text',
             is_many => 1,
-            valid_values => [qw/ chromosome position alleles reference id sample_name log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 / ],
-            default_value => [qw/ chromosome position alleles reference id sample_name log_r_ratio gc_score cnv_value cnv_confidence allele1 allele2 / ],
+            valid_values => [ Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv->available_fields() ],
+            default_value => [ Genome::Model::GenotypeMicroarray::GenotypeFile::WriteCsv->available_fields() ],
             doc => 'The fields to include in the output CSV output.',
         },
         separator => {

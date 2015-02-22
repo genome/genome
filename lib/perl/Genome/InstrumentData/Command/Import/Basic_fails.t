@@ -17,9 +17,9 @@ use_ok('Genome::InstrumentData::Command::Import::Basic') or die;
 
 my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_AP__');
 ok($analysis_project, 'create analysis project');
-my $sample = Genome::Sample->create(name => '__TEST_SAMPLE__');
-ok($sample, 'Create sample');
-my $library = Genome::Library->create(name => '__TEST_SAMPLE__-extlibs', sample => $sample);
+my $library = Genome::Library->create(
+    name => '__TEST_SAMPLE__-extlibs', sample => Genome::Sample->create(name => '__TEST_SAMPLE__')
+);
 ok($library, 'Create library');
 
 my @source_files = (
@@ -29,20 +29,19 @@ my @source_files = (
 
 my $fail = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
-    sample => $sample,
+    library => $library,
     source_files => [ 'blah.fastq' ],
     import_source_name => 'broad',
     instrument_data_properties => [qw/ sequencing_platform=solexa lane=2 flow_cell_id=XXXXXX /],
 );
 ok(!$fail->execute, 'Fails w/ invalid files');
-my $error;
 #FIXME can this error be retrieved?
 #my $error = $fail->error_message;
 #is($error, 'Source file does not exist! blah.fastq', 'Correct error meassage');
 
 $fail = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
-    sample => $sample,
+    library => $library,
     source_files => [ 'blah' ],
     import_source_name => 'broad',
     instrument_data_properties => [qw/ sequencing_platform=solexa lane=2 flow_cell_id=XXXXXX /],
@@ -54,23 +53,34 @@ ok(!$fail->execute, 'Fails w/ no suffix');
 
 $fail = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
-    sample => $sample,
+    library => $library,
     source_files => \@source_files,
     import_source_name => 'broad',
     instrument_data_properties => [qw/ sequencing_platform=solexa lane= flow_cell_id=XXXXXX /],
 );
 ok(!$fail->execute, 'Fails w/ invalid instrument_data_properties');
-is(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, 'Failed to parse with instrument data property label/value! lane=', 'Correct error meassage');
+is($fail->error_message, 'Failed to process instrument data properties!', 'Correct error meassage');
 
 $fail = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
-    sample => $sample,
+    library => $library,
     source_files => \@source_files,
     import_source_name => 'broad',
     instrument_data_properties => [qw/ sequencing_platform=solexa lane=2 lane=3 flow_cell_id=XXXXXX /],
 );
 ok(!$fail->execute, 'Fails w/ invalid instrument_data_properties');
-is(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, 'Multiple values for instrument data property! lane => 2, 3', 'Correct error meassage');
+is($fail->error_message, 'Failed to process instrument data properties!', 'Correct error meassage');
+
+$fail = Genome::InstrumentData::Command::Import::Basic->create(
+    analysis_project => $analysis_project,
+    library => $library,
+    source_files => \@source_files,
+    import_source_name => 'broad',
+    downsample_ratio => 0.25,
+    instrument_data_properties => [qw/ downsample_ratio=0.24 /],
+);
+ok(!$fail->execute, 'Fails w/ conflicting cmd and instdata properties instrument_data_properties');
+is($fail->error_message, "Failed to process instrument data properties!", 'Correct error message');
 
 my $inst_data = Genome::InstrumentData::Imported->create(
     library => $library,
@@ -79,7 +89,7 @@ my $inst_data = Genome::InstrumentData::Imported->create(
 $inst_data->add_attribute(attribute_label => 'segment_id', attribute_value => '__TEST_SAMPLE__-extlibs');
 $fail = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
-    sample => $sample,
+    library => $library,
     source_files => \@source_files,
     import_source_name => 'broad',
     instrument_data_properties => [qw/ sequencing_platform=solexa lane=2 flow_cell_id=XXXXXX /],

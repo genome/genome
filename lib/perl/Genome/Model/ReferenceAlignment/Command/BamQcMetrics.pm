@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::ReferenceAlignment::Command::BamQcMetrics {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => "Generate tab-delimited (*.tsv) files with BamQc metrics summarized by instrument data id.",
     has => [
         build_id => {
@@ -69,25 +69,29 @@ sub execute {
         $output_basename = $self->output_directory .'/'. $self->build_id;
     }
     unless (@labels) {
-        die $self->error_message('No BamQc output found for instrument data. Unable to run SummarizeAsText on BamQC output for build: '. $self->build_id);
+        $self->warning_message('No BamQc output found for instrument data. Unable to run SummarizeAsText on BamQC output for build: '. $self->build_id);
+        return 0;
     }
-    unless (Genome::Model::Tools::BamQc::SummarizeAsText->execute(
+    my $summarize_cmd = Genome::Model::Tools::BamQc::SummarizeAsText->execute(
         labels => join(',',@labels),
         directories => join(',',@directories),
         output_basename => $output_basename,
         labels_are_instrument_data_ids => 1,
-    )) {
+    );
+    unless ($summarize_cmd and $summarize_cmd->result) {
         die $self->error_message('Failed to run SummarizeAsText on BamQc output for build: '. $self->build_id);
     }
 
     my $merged_pdf = $output_basename .'.pdf';
-    my $cmd = 'pdftk '. join(' ',@pdf_files) .' cat output '. $merged_pdf;
-    unless (Genome::Sys->shellcmd(
-        cmd => $cmd,
-        input_files => \@pdf_files,
-        output_files => [$merged_pdf],
-    )) {
-        die('Failed to merge PDF files!');
+    if(scalar(@pdf_files) >= 1) {
+        my $cmd = 'pdftk '. join(' ',@pdf_files) .' cat output '. $merged_pdf;
+        unless (Genome::Sys->shellcmd(
+            cmd => $cmd,
+            input_files => \@pdf_files,
+            output_files => [$merged_pdf],
+        )) {
+            die('Failed to merge PDF files!');
+        }
     }
     
     # TODO: Make a summary html file that provides web links to all instrument data SAMStat and FastQc output.

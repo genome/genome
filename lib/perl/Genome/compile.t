@@ -34,7 +34,7 @@ for my $file (@files_to_compile) {
 
 sub compile_file {
     my $file = shift;
-    my @output = qx(perl -c "$file" 2>&1);
+    my @output = qx(genome-perl -c "$file" 2>&1);
     my $exit = $? >> 8;
     if ($exit != 0) {
         diag @output;
@@ -60,16 +60,23 @@ sub resolve_start_point {
         return $ENV{JENKINS_STABLE_REVISION};
     }
 
-    return '@{u}';
+    if (system(q(git rev-parse '@{u}' 2> /dev/null)) == 0) {
+        return '@{u}';
+    }
+
+    return;
 }
 
 
 sub is_blacklisted {
     my $file = shift;
     my @blacklist = (
-        qr(Db/Ensembl/Command/Vep.d/),
-        qr(Site/CLIA.pm$),
-        qr(Site/CLIA.t$),
+        qr(lib/perl/Genome/Db/Ensembl/Command/Vep\.d/),
+        qr(lib/perl/Genome/Db/Ensembl/Command/Run/Vep\.d/),
+        qr(lib/perl/Genome/Site/CLIA\.pm$),
+        qr(lib/perl/Genome/Site/CLIA\.t$),
+        qr(lib/perl/Genome/Site/TGI/Extension/),
+        qr(bin/genome-re.pl), # start re.pl on compile
     );
     return grep { $file =~ /$_/ } @blacklist;
 }
@@ -77,13 +84,14 @@ sub is_blacklisted {
 
 sub files_to_compile {
     my $start_point = shift;
-    my @files;
 
     my $git_dir = capture('git', 'rev-parse', '--show-toplevel');
     chomp $git_dir;
 
-    my @cmd = ('git', 'diff', '--name-only', $start_point);
-    @files = capture(@cmd);
+    my @cmd = $start_point
+            ? ('git', 'diff', '--name-only', $start_point)
+            : ('git', 'ls-files');
+    my @files = capture(@cmd);
     chomp @files;
 
     @files = map { File::Spec->join($git_dir, $_) } @files;

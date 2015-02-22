@@ -13,15 +13,21 @@ use File::Path;
 
 class Genome::Model::Tools::DetectVariants2::Filter::PolymuttDenovo {
     is => 'Genome::Model::Tools::DetectVariants2::Filter',
+    has => [
+        bam_readcount_version => {
+            is => 'Version',
+            doc => 'Version of bam readcount to utilize',
+        },
+    ],
     has_optional_input => [
-    min_read_qual=> {
-        doc=>'the lowest quality reads to use in the calculation. default q20',
-        default=>"20",
-    },
-    min_unaffected_pvalue=> {
-        doc=>"the minimum binomial test result from unaffected members to pass through the filter",
-        default=>"1.0e-4",
-    },
+        min_read_qual=> {
+            doc=>'the lowest quality reads to use in the calculation. default q20',
+            default=>"20",
+        },
+        min_unaffected_pvalue=> {
+            doc=>"the minimum binomial test result from unaffected members to pass through the filter",
+            default=>"1.0e-4",
+        },
     ],
     doc => "A binomial filter for polymutt denovo output",
 };
@@ -52,12 +58,12 @@ sub _filter_variants {
     my $sites_cmd = qq/ $cat_cmd $vcf | grep -v "^#" | grep "DA" | awk '{OFS="\t"}{print \$1, \$2, \$2}' > $sites_file/;
 
     unless(-s $sites_file) {
-        print STDERR "running $sites_cmd\n";
+        $self->status_message("running `$sites_cmd`");
         `$sites_cmd`;
     }
     unless(-s $sites_file) {
         $self->debug_message("No denovo sites found to filter. this filter is a no-op, copying file over.");
-        `cp $vcf $output_file`;
+        Genome::Sys->copy_file($vcf, $output_file);
         return 1;
     }
 
@@ -151,7 +157,7 @@ sub find_indexes_of_unaffecteds {
 sub output_passing_vcf {
     my($self, $input_filename, $r_output, $pvalue_cutoff, $output_filename, $ped_hashref) = @_;
     my $pvalues = Genome::Sys->open_file_for_reading($r_output);
-    my %pass_hash;    
+    my %pass_hash;
 
     while(my $pvalues_line = $pvalues->getline) { #parse pvalue returns and figure out who is gonna pass
         my @fields = split"\t", $pvalues_line;
@@ -177,8 +183,8 @@ sub output_passing_vcf {
     my @filtered_already=`zcat $input_filename | grep "DNFT"`; #we got hacks
     if(@filtered_already) {
         $header_printed=1;
-    }    
-    while(my $line = $input_file->getline) { #stream through whole file and only touch the members of the hash we filled out above 
+    }
+    while(my $line = $input_file->getline) { #stream through whole file and only touch the members of the hash we filled out above
 
         if($line =~m/^#/) {
             if($line=~m/^##FORMAT/ && !$header_printed) {
@@ -225,23 +231,24 @@ sub prepare_readcount_files {
     for my $alignment_result(@$alignment_results_ref) {
         my $sample_name = $self->find_sample_name_for_alignment_result($alignment_result);
         my $readcount_out = Genome::Sys->create_temp_file_path($sample_name . ".readcount.output");
-        my $bam = $alignment_result->merged_alignment_bam_path;
+        my $bam = $alignment_result->bam_file;
         unless (-f $bam) {
-            die "merged_alignment_bam_path does not exist: $bam";
+            die "bam_file does not exist: $bam";
         }
         push @readcount_files, $readcount_out;
 
         #my $readcount_cmd = "bam-readcount -q $qual -f $ref_fasta -l $sites_file $bam > $readcount_out";
         unless(-s $readcount_out) {
-            print STDERR "running bam-readcount";
-            my $rv = Genome::Model::Tools::Sam::Readcount->execute(
+            $self->status_message("running bam-readcount");
+            my $readcount_cmd = Genome::Model::Tools::Sam::Readcount->execute(
                 bam_file => $bam,
                 minimum_mapping_quality => $qual,
                 output_file => $readcount_out,
                 reference_fasta => $ref_fasta,
                 region_list => $sites_file,
+                use_version => $self->bam_readcount_version,
             );
-            unless($rv) {
+            unless($readcount_cmd and $readcount_cmd->result) {
                 $self->error_message("bam-readcount failed");
                 return;
             }
@@ -262,7 +269,7 @@ sub prepare_r_input {
         my @alts = split ",", $alt;
         my @possible_alleles = ($ref, @alts);
         my @novel = ();
-        my @info_fields = split";", $info; 
+        my @info_fields = split";", $info;
         for my $info_field (@info_fields) {
             if($info_field =~m/^DA=/) {
                 my ($novel_string) = ($info_field =~m/^DA=(\d+)/);
@@ -280,7 +287,7 @@ sub prepare_r_input {
         }
         if(scalar(@novel) >= 1) {
             $r_input_fh->print("$chr\t$pos");
-            for (my $i=0; $i < scalar(@samples); $i++) {    
+            for (my $i=0; $i < scalar(@samples); $i++) {
                 my $readcount_file = $readcount_files->[$i];
                 chomp(my $readcount_line = `grep "^$chr\t$pos" $readcount_file`);
                 my ($chr, $pos, $rc_ref, $depth, @fields) = split "\t", $readcount_line;

@@ -276,6 +276,7 @@ sub sx_result_params_for_instrument_data {
         instrument_data_id => $instrument_data->id,
         read_processor => join(' | ', @read_processor),
         output_file_config => \@output_file_configs,
+        users => Genome::SoftwareResult::User->user_hash_for_build($self),
     );
 }
 
@@ -669,6 +670,7 @@ sub classify_amplicons {
         my $cmd = "gmt metagenomic-classifier $classifier --input-file $fasta_file --output-file $classification_file $classifier_params --metrics"; 
         my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
         if ( not $rv ) {
+            $self->error_message($@) if $@;
             $self->error_message('Failed to execute classifier command');
             return;
         }
@@ -887,7 +889,7 @@ sub calculate_estimated_kb_usage {
     for my $instrument_data ( @instrument_data ) {
         my $sequencing_platform = $instrument_data->sequencing_platform;
         switch ($sequencing_platform) {
-               case '454'    { $est_kb_usage += $instrument_data->read_count * 5 * 1024 }
+               case '454'    { $est_kb_usage += $instrument_data->read_count * 100 }
                case 'sanger' { $est_kb_usage += 30_000 }
                case 'solexa' { $est_kb_usage += 500_000 } # FIXME update once implemented
                else          { Carp::confess('Unknown sequencing platform! '.$sequencing_platform) }
@@ -916,7 +918,7 @@ sub regex_for_custom_diff {
     return (
         gz => '\.gz$',
         rdp => '\.rdp1-[12]$',
-        metrics => 'metrics\.processed\.(in|out)\.txt',
+        metrics_files => 'metrics\.processed\.(in|out)\.txt',
     );
 }
 
@@ -963,7 +965,7 @@ sub diff_rdp {
     return 1;
 }
 
-sub diff_metrics {
+sub diff_metrics_files {
     my ($self, $file1, $file2) = @_;
 
     my $metrics_from_file1 = Genome::Model::Tools::Sx::Metrics->from_file($file1);

@@ -5,6 +5,7 @@ package Genome::File::Vcf::VepConsequenceParser;
 
 use Data::Dumper;
 use Carp qw/confess/;
+use CGI qw/unescape/;
 
 use strict;
 use warnings;
@@ -51,7 +52,19 @@ sub new {
 sub resolve_alleles {
     my ($entry) = @_;
     if ($entry->has_indel) {
-        return map {substr($_, 1) || '-' => $_} @{$entry->{alternate_alleles}};
+        my %alleles;
+        for my $alt (@{$entry->{alternate_alleles}}) {
+            if (substr($alt, 0, 1) ne substr($entry->{reference_allele}, 0, 1)) {
+                $alleles{$alt} = $alt;
+            }
+            elsif (substr($alt, 1) eq "") {
+                $alleles{'-'} = $alt;
+            }
+            else {
+                $alleles{substr($alt, 1)} = $alt;
+            }
+        }
+        return %alleles;
     }
     return;
 }
@@ -72,6 +85,7 @@ sub process_entry {
     my $value = $entry->info($self->{tag_name});
     return unless $value;
 
+    $value = CGI::unescape($value);
     my @annotations = split(",", $value);
 
     my %allele_map = resolve_alleles($entry);
@@ -84,7 +98,8 @@ sub process_entry {
         if (%allele_map) {
             if (!exists $allele_map{$h{allele}}) {
                 confess "Unknown allele from vep in vcf entry: $h{allele} not found in entry "
-                    . Dumper($entry);
+                    . Dumper($entry)
+                    . Dumper(\%allele_map);
             }
 
             $allele = $allele_map{$h{allele}};
@@ -110,6 +125,25 @@ sub format_transcripts {
     return '.' unless %$transcripts;
     my @flat_transcripts = map { @$_ } values %$transcripts;
     return join(",", map {$self->_format_transcript($_)} @flat_transcripts);
+}
+
+sub transcripts {
+    my ($self, $entry, $allele) = @_;
+
+    my $processed_entry = $self->process_entry($entry);
+    my $transcripts = $processed_entry->{$allele};
+    if (defined $transcripts) {
+        return @{$transcripts};
+    } else {
+        return;
+    }
+}
+
+sub canonical_transcripts {
+    my ($self, $entry, $allele) = @_;
+
+    my @transcripts = @{$self->process_entry($entry)->{$allele}};
+    return grep {$_->{'canonical'} eq 'YES'} @transcripts;
 }
 
 1;

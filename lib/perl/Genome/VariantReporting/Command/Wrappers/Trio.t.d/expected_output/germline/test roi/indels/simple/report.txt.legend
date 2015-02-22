@@ -1,0 +1,16 @@
+Headers
+chromosome_name	Chromosome: an identifier from the reference genome or an angle-bracketed ID String ("<ID>") pointing to a contig in the assembly file
+start	The start position of the variant. One-based
+stop	The end position of the variant. One-based, inclusive
+reference	The reference allele at this position
+variant	The variant called at this position
+variant_type	The type of variant: snp, ins (insertion), del (deletion), other
+transcript_name	Ensembl stable ID of feature
+trv_type	Consequence type of this variation
+amino_acid_change	The HGVS protein sequence name
+default_gene_name	The gene symbol
+ensembl_gene_id	Ensembl stable ID of affected gene
+Filters
+homopolymer	HOMOPOLYMERS	Filter out indels hitting homopolymers
+ft-keep	FTPASS	FT value for sample TEST-patient1-somval_normal1 is one of [PASS,.]
+contains-tag	CONTAINS_TAG_ON_TARGET	INFO field for entry contains tag ON_TARGET

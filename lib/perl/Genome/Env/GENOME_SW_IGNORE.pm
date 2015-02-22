@@ -1,5 +1,4 @@
 package Genome::Env::GENOME_SW_IGNORE;
-our $default_value = undef;
 
 =pod
 

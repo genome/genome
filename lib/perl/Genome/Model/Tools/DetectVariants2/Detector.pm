@@ -375,7 +375,7 @@ sub _sort_detector_output {
     for my $detector_file (@detector_files){
         my $detector_unsorted_output = $self->_temp_scratch_directory . "/" . basename($detector_file) . ".unsorted";
 
-        unless(rename($detector_file, $detector_unsorted_output)) {
+        unless(Genome::Sys->rename($detector_file, $detector_unsorted_output)) {
             my $m = sprintf(q(Failed to move '%s' to '%s' for sorting: %s), $detector_file, $detector_unsorted_output, $!);
             $self->error_message($m);
             return;
@@ -423,6 +423,8 @@ sub params_for_detector_result {
         region_of_interest_id => $self->region_of_interest_id,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         chromosome_list => undef,
+
+        users => $self->result_users,
     );
 
     return \%params;
@@ -432,10 +434,11 @@ sub params_for_vcf_result {
     my $self = shift;
     my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
     my %params = (
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => $self->_result->test_name,
         input_id => $self->_result->id,
         vcf_version => $vcf_version,
         aligned_reads_sample => $self->aligned_reads_sample,
+        users => $self->result_users,
     );
     $params{control_aligned_reads_sample} = $self->control_aligned_reads_sample if defined $self->control_aligned_reads_sample;
 

@@ -46,6 +46,17 @@ my $diff = Genome::Sys->diff_file_vs_file($test_bed_file, $file_path);
 ok(!$diff, 'returned file matches expected file')
     or diag("diff:\n" . $diff);
 
+# Test gzipping and tabix indexing
+my $gzipped_file = $feature_list->get_tabix_and_gzipped_bed_file;
+my $tabix_file = "$gzipped_file.tbi";
+my $expected_gzipped_file = "$test_dir/expected.bed.gz";
+my $expected_tabix_file = "$expected_gzipped_file.tbi";
+
+ok(-s $gzipped_file, "Gzipped file exists");
+compare_ok($gzipped_file, $expected_gzipped_file, "gzipped file ($gzipped_file) is as expected ($expected_gzipped_file)");
+ok(-s $tabix_file, "Tabix index exists");
+compare_ok($tabix_file, $expected_tabix_file, "tabix file ($tabix_file) is as expected ($expected_tabix_file)");
+
 my $merged_file = $feature_list->merged_bed_file;
 ok(-s $merged_file, 'merged file created');
 my $merged_diff = Genome::Sys->diff_file_vs_file($merged_file, $test_merged_bed_file);
@@ -93,6 +104,13 @@ my $one_based_file2 = $feature_list->get_one_based_file;
 ok(-s $one_based_file2, "one_based_file exists");
 compare_ok($one_based_file2, $one_based_file_output, name => "true-BED was correctly converted to 1-based file");
 
+# Test converting multi-tracked to single-tracked
+my $single_track_bed = $feature_list_2->get_target_track_only('target_region');
+my $expected_single_track_bed = File::Spec->join($test_dir, "single_track_of_multi_track.bed");
+compare_ok($single_track_bed, $expected_single_track_bed, name => "get_target_track_only returned the expected file");
+
+dies_ok {$feature_list_2->get_target_track_only('does not exist')}, "get_target_track_only dies when provided with a bad track name";
+
 my $feature_list_3 = Genome::FeatureList->create(
     name => 'GFL test unknown format feature-list',
     format              => 'unknown',
@@ -110,5 +128,7 @@ eval{$processed_bed_file = $feature_list_3->processed_bed_file};
 ok(!$processed_bed_file, 'attempt to process bed file did not return a bed file');
 
 lives_ok {$feature_list_3->_check_bed_list_is_on_correct_reference}, "_check_bed_list_is_on_correct_reference worked";
+
+is_deeply([$feature_list_2->chromosome_list],[qw(1 2 X)], "list_chromosomes returns the expected list");
 
 done_testing();

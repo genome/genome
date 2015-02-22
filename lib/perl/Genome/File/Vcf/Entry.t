@@ -2,6 +2,7 @@
 
 use above 'Genome';
 use Data::Dumper;
+use Test::Exception;
 use Test::More;
 use Genome::File::Vcf::Genotype;
 
@@ -23,11 +24,13 @@ my $header_txt = <<EOS;
 ##FILTER=<ID=BAD,Description="This entry is bad and it should feel bad">
 ##INFO=<ID=A,Number=1,Type=String,Description="Info field A">
 ##INFO=<ID=C,Number=A,Type=String,Description="Info field C (per-alt)">
+##INFO=<ID=D,Number=R,Type=String,Description="Info field D (per-alt)">
 ##INFO=<ID=E,Number=0,Type=Flag,Description="Info field E">
+##INFO=<ID=F,Number=A,Type=String,Description="Info field F (per-alt)">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 ##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">
 ##FORMAT=<ID=FT,Number=.,Type=String,Description="Filter">
-#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S2	S3	S4
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S2	S3	S4	S5
 EOS
 my @lines = split("\n", $header_txt);
 my $header = Genome::File::Vcf::Header->create(lines => \@lines);
@@ -83,7 +86,7 @@ subtest "basic parsing/accessors" => sub {
         'C,G',          # ALT
         '10.3',         # QUAL
         'PASS',         # FILTER
-        'A=B;C=8,9;E',  # INFO
+        'A=B;C=8,9;D=REF-A,ALT-C,ALT-G;E',  # INFO
         'GT:DP:FT',     # FORMAT
         '0/1:12',       # FIRST_SAMPLE
         '0/2:24:PASS',
@@ -102,6 +105,9 @@ subtest "basic parsing/accessors" => sub {
     is($entry->{reference_allele}, 'A', 'Parsed reference allele');
     is_deeply($entry->{alternate_alleles}, ['C', 'G'], 'Parsed alternate alleles');
     ok(!$entry->has_indel, "has_indel reports correct value (false)");
+    ok(!$entry->has_deletion, "has_deletion reports correct value (false)");
+    ok(!$entry->has_insertion, "has_insertion reports correct value (false)");
+    ok($entry->has_substitution, "has_substitution reports correct value (true)");
     my @alleles = $entry->alleles;
     is_deeply(\@alleles, ['A', 'C', 'G'], 'All alleles accessor');
     is($entry->allele_index('A'), 0, 'allele index');
@@ -110,7 +116,7 @@ subtest "basic parsing/accessors" => sub {
     ok(!defined $entry->allele_index('AA'), 'allele index (not found)');
     is($entry->{quality}, '10.3', 'Parsed quality');
     is_deeply([$entry->filters], ['PASS'], 'Parsed filter');
-    is_deeply($entry->info, { A => 'B', C => '8,9', E => undef  }, 'Parsed info fields');
+    is_deeply($entry->info, { A => 'B', C => '8,9', D => 'REF-A,ALT-C,ALT-G', E => undef  }, 'Parsed info fields');
     is_deeply([$entry->format], ['GT', 'DP', 'FT'], 'Parsed format');
 
     is($entry->info('A'), 'B', 'Info accessor works for A');
@@ -135,9 +141,18 @@ subtest "basic parsing/accessors" => sub {
 
     ok(!$entry->info_for_allele("X"), "info_for_allele with bad allele name");
     is($entry->info_for_allele("C", "C"), 8, "info_for_allele 1");
+    is($entry->info_for_allele("C", "D"), 'ALT-C', "info_for_allele for alt C field D");
     is($entry->info_for_allele("G", "C"), 9, "info_for_allele 2");
-    is_deeply($entry->info_for_allele("C"), { A => 'B', C => 8, E => undef }, "info_for_allele (all fields)");
-    is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, E => undef }, "info_for_allele (all fields)");
+    is($entry->info_for_allele("G", "D"), 'ALT-G', "info_for_allele for alt G field D");
+    is($entry->info_for_allele("G", "F"), undef, "info_for_allele for alt G field F is undef");
+    is_deeply($entry->info_for_allele("C"), { A => 'B', C => 8, D => 'ALT-C', E => undef }, "info_for_allele (all fields)");
+    is_deeply($entry->info_for_allele("G"), { A => 'B', C => 9, D => 'ALT-G', E => undef }, "info_for_allele (all fields)");
+
+    is($entry->info_for_allele("A", "A"), undef, "info_for_allele ref for field 'A' is undef");
+    is($entry->info_for_allele("A", "C"), undef, "info_for_allele ref for field 'C' is undef");
+    is($entry->info_for_allele("A", "D"), 'REF-A', "info_for_allele ref for field 'D' is 1");
+    print Data::Dumper::Dumper([$entry->info_for_allele("A")]);
+    is_deeply($entry->info_for_allele("A"), { D => 'REF-A', }, "info_for_allele ref (all fields) is correct");
 
 };
 
@@ -188,6 +203,9 @@ subtest "has_indel function (with deletion)" => sub {
     my $entry = $pkg->new($header, $entry_txt);
     ok($entry, "parsed entry");
     ok($entry->has_indel, "has_indel detected deletion");
+    ok($entry->has_deletion, "has_deletion detected deletion");
+    ok(!$entry->has_insertion, "has_insertion returns correct value: false");
+    ok($entry->has_substitution, "has_substitution detected substitution");
 };
 
 subtest "has_indel function (with insertion)" => sub {
@@ -211,6 +229,9 @@ subtest "has_indel function (with insertion)" => sub {
     my $entry = $pkg->new($header, $entry_txt);
     ok($entry, "parsed entry");
     ok($entry->has_indel, "has_indel detected insertion");
+    ok(!$entry->has_deletion, "has_deletion returns correct value: fasle");
+    ok($entry->has_insertion, "has_insertion detects insertion");
+    ok($entry->has_substitution, "has_substitution detects substitution");
 };
 
 subtest "to_string" => sub {
@@ -347,9 +368,140 @@ subtest "get genotype for sample" => sub {
     is_deeply($retreived_genotype, $expected_genotype, "The genotype for the first sample was created correctly");
 
     eval {
-        my $non_genotype = $entry->genotype_for_sample(3);
+        my $non_genotype = $entry->genotype_for_sample(5);
     };
     ok($@, "Getting a genotype for an out-of-bounds sample index is an error");
+};
+
+subtest "get alt bases for sample" => sub {
+    my @fields = ('1', 99, '.', 'CG', 'CA,C', '.', '.', '.', 'GT:DP:FT',
+        '0/1', '0/0', '0/2', '1/2', './.');
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+
+    my %expected_bases_for_sample = (
+        0 => ['CA'],
+        1 => [],
+        2 => ['C'],
+        3 => ['CA', 'C'],
+        4 => [],
+    );
+
+    while( my ($sample_index, $expected_bases) = each %expected_bases_for_sample ) {
+        my @retrieved_bases = $entry->alt_bases_for_sample($sample_index);
+        is_deeply(\@retrieved_bases, $expected_bases, "The alt bases for sample $sample_index were determined correctly");
+    }
+
+    # eval {
+        # my $non_genotype = $entry->genotype_for_sample(3);
+    # };
+    # ok($@, "Getting a genotype for an out-of-bounds sample index is an error");
+};
+
+subtest "bases_for_sample" => sub {
+    my @fields = ('1', 99, '.', 'CG', 'CA,C', '.', '.', '.', 'GT:DP:FT',
+        '0/0', '0/1', '1/2', './.', '.');
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "Created entry");
+
+    my @expected_bases = (
+        ['CG', 'CG'],
+        ['CG', 'CA'],
+        ['CA', 'C'],
+        [],
+        [],
+    );
+
+    for my $i (0..$#expected_bases) {
+        my @got = $entry->bases_for_sample($i);
+        is_deeply(\@got, $expected_bases[$i], "Sample index: $i");
+    }
+};
+
+subtest "add_allele" => sub {
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'A',            # REF
+        'C,G',          # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        'A=B;C=8,9;D=REF-A,ALT-C,ALT-G;E',  # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12',       # FIRST_SAMPLE
+        '0/2:24:PASS',
+        '0/2:24:.',
+        '0/2:24:BAD',
+    );
+
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "parsed entry");
+
+    throws_ok( sub{ $entry->add_allele(); }, qr/No allele given to add!/, 'add_allele fails without allele');
+    throws_ok( sub{ $entry->add_allele('-'); }, qr/Invalid allele given to add! '-'/, 'add_allele fails with invalid allele');
+    is_deeply($entry->{alternate_alleles}, [qw/ C G /], 'alternate_alleles is correct');
+    ok($entry->add_allele('T'), 'add_allele T');
+    is_deeply($entry->{alternate_alleles}, [qw/ C G T /], 'alternate_alleles is correct after adding T');
+    is_deeply($entry->info, { A => 'B', C => '8,9,.', D => 'REF-A,ALT-C,ALT-G,.', E => undef  }, 'add_allele updated info fields');
+    ok($entry->add_allele('T'), 'add_allele T again');
+    is_deeply($entry->{alternate_alleles}, [qw/ C G T /], 'alternate_alleles is correct after readding T');
+
+    ok($entry->add_allele('A'), 'add_allele reference A');
+    is_deeply($entry->{alternate_alleles}, [qw/ C G T /], 'alternate_alleles is correct after adding reference');
+
+};
+
+subtest 'set_info_field' => sub {
+    my $orig_info = 'A=B;C=8,9;D=REF-A,ALT-C,ALT-G;E';
+    my @fields = (
+        '1',            # CHROM
+        10,             # POS
+        '.',            # ID
+        'A',            # REF
+        'C,G',          # ALT
+        '10.3',         # QUAL
+        'PASS',         # FILTER
+        $orig_info,     # INFO
+        'GT:DP:FT',     # FORMAT
+        '0/1:12',       # FIRST_SAMPLE
+        '0/2:24:PASS',
+        '0/2:24:.',
+        '0/2:24:BAD',
+    );
+    my $expected_info = {
+        A => 'B',
+        C => '8,9',
+        D => 'REF-A,ALT-C,ALT-G',
+        E => undef,
+    };
+
+    my $entry_txt = join("\t", @fields);
+    my $entry = $pkg->new($header, $entry_txt);
+    ok($entry, "parsed entry");
+
+
+    throws_ok( sub{ $entry->set_info_field(); }, qr/No info tag given to add!/, 'set_info_field fails without info');
+
+    $expected_info->{OMG} = undef;
+    $entry->set_info_field('OMG', undef);
+    is_deeply($entry->info, $expected_info, 'Info field is correct after adding a flag');
+    is($entry->info_to_string, $orig_info . ';OMG', 'Info string is correct after updating');
+
+    $entry->set_info_field('F', 'old');
+    $expected_info->{'F'} = 'old';
+    is_deeply($entry->info, $expected_info, 'Info field is correct after adding');
+    is($entry->info_to_string, $orig_info . ';OMG;F=old', 'Info string is correct after adding');
+
+    $entry->set_info_field('F', 'new');
+    $expected_info->{'F'} = 'new';
+    is_deeply($entry->info, $expected_info, 'Info field is correct after changing a value');
+    is($entry->info_to_string, $orig_info . ';OMG;F=new', 'Info string is correct after updating');
+
+
 };
 
 done_testing();

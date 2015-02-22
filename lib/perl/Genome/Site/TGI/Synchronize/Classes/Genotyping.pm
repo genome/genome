@@ -19,9 +19,10 @@ class Genome::Site::TGI::Synchronize::Classes::Genotyping { # EXTERNAL 287713868
         union all
         select g.seq_id id, g.status status,
          g.organism_sample_id sample_id, s.full_name sample_name,
-         'infinium' sequencing_platform, 'HumanOmniExpress' chip_name, '12v1_A' version,
+	     lower(p.name) sequencing_platform, p.chip_type chip_name, p.version version,
          'wugc' import_source_name
         from illumina_genotyping g
+        join genotyping_platform p on p.genotyping_platform_id = g.genotyping_platform_id
         join organism_sample s on s.organism_sample_id = g.organism_sample_id
         where g.status = 'pass'
     ) genotyping
@@ -97,7 +98,7 @@ sub create_in_genome {
     my $genome_object = $genome_class->create(%params); 
     return if not $genome_object;
 
-    my $new_genotype_file = eval{ Genome::InstrumentData::Microarray->update_genotype_file($genome_object, $genotype_file); };
+    my $new_genotype_file = $genome_object->update_genotype_file($genotype_file);
     if ( not $new_genotype_file ) {
         Carp::confess "$@\nFailed to update genotype_file: $genotype_file on instrument data: ".$genome_object->id;
     }

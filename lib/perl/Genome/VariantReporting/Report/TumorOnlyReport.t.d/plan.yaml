@@ -1,0 +1,12 @@
+reports:
+    "tumor-only":
+        interpreters:
+            position: {}
+            vep: {}
+            rsid: {}
+            caf: {}
+            nhlbi: {}
+            "1kg": {}
+            vaf:
+                sample_names:
+                    - sample_name

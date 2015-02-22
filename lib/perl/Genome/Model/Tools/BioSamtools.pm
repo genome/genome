@@ -11,7 +11,7 @@ class Genome::Model::Tools::BioSamtools {
 };
 
 sub help_detail {
-    "These commands are setup to run perl5.10.0 scripts that use Bio-Samtools and require bioperl v1.6.0.  Most require 64-bit architecture except those that simply work with output files from other Bio-Samtools commands.";
+    "These commands are setup to run scripts that use Bio-Samtools and require at least perl 5.10 and bioperl v1.6.0.  Most require 64-bit architecture except those that simply work with output files from other Bio-Samtools commands.";
 }
 
 sub create {
@@ -19,7 +19,7 @@ sub create {
     my $self = $class->SUPER::create(@_);
     unless ($self) { return; }
     unless ($] > 5.010) {
-        die 'Bio::DB::Sam requires perl 5.10 or greater! Consider using \'/usr/bin/perl -S gmt\' instead of \'gmt\' for all bio-samtools commands!';
+        die 'Bio::DB::Sam requires perl 5.10 or greater!';
     }
     require Bio::DB::Sam;
     return $self;

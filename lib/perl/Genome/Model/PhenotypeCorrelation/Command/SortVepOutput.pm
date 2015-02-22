@@ -7,7 +7,7 @@ use strict;
 use warnings;
 
 class Genome::Model::PhenotypeCorrelation::Command::SortVepOutput {
-    is => "Genome::Command::Base",
+    is => "Command::V2",
     doc => "Sort Vep output files by chrom/pos",
     has => [
         input_file => {

@@ -7,7 +7,7 @@ use File::Basename;
 use Genome;
 
 class Genome::Model::ReferenceAlignment::Command::CreateMetrics::DbSnpConcordance {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         build => {
             doc => 'The build for which to compute dbSNP concordance',

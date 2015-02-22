@@ -183,7 +183,7 @@ sub _build_if_necessary {
         }
         sleep $inc;
         $time += $inc;
-        UR::Context->current->reload($sub_build->the_master_event);
+        UR::Context->current->reload($sub_build);
         $status = $sub_build->status;
     }
 

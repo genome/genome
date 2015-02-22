@@ -7,6 +7,12 @@ use Genome;
 
 class Genome::Model::SomaticValidation {
     is  => 'Genome::ModelDeprecated',
+    has_param => [
+        bam_readcount_version => {
+            is => 'Text',
+            doc => 'The bam readcount version to use',
+        },
+    ],
     has_param_optional => [
         alignment_strategy => {
             is => 'Text',
@@ -67,6 +73,10 @@ class Genome::Model::SomaticValidation {
             is => 'Text',
             doc => 'version of varscan to use in the post-variant detection validation processes',
         },
+        verify_bam_id_version => {
+            is => 'Text',
+            doc => 'version of verifyBamId to use',
+        },
 
         #RefCov parameters
         refcov_wingspan_values => {
@@ -98,22 +108,40 @@ class Genome::Model::SomaticValidation {
             valid_values => ['target_region','tiled_region'],
             doc => 'For multi-tracked BED files we define which track to use.',
         },
+
+        run_snv_validation => {
+            is => 'Boolean',
+            doc => 'control whether SNV validation is run in the pipeline (if other prerequisites for validation are met)'
+        },
+        run_sv_validation => {
+            is => 'Boolean',
+            doc => 'control whether SV validation is run in the pipeline (if other prerequisites for validation are met)'
+        },
+        run_indel_validation => {
+            is => 'Boolean',
+            doc => 'control whether indel validation is run in the pipeline (if other prerequisites for validation are met)'
+        },
     ],
     has_input_optional_mutable => [
         snv_variant_list => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
+            doc => 'prior SNVs to be validated',
         },
         indel_variant_list => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
+            doc => 'prior indels to be validated',
         },
         sv_variant_list => {
             is => 'Genome::Model::Tools::DetectVariants2::Result::Base',
+            doc => 'prior SVs to be validated',
         },
         reference_sequence_build => {
             is => 'Genome::Model::Build::ReferenceSequence',
+            doc => 'reference to which to align the instrument data',
         },
         annotation_build => {
             is => 'Genome::Model::Build::ImportedAnnotation',
+            doc => 'annotation data set to annotate the newly called variants',
         },
         previously_discovered_variations_build => {
             is => 'Genome::Model::Build::ImportedVariationList',
@@ -121,18 +149,23 @@ class Genome::Model::SomaticValidation {
         },
         target_region_set => {
             is => 'Genome::FeatureList',
+            doc => 'target set of the instrument data',
         },
         region_of_interest_set => {
             is => 'Genome::FeatureList',
+            doc => 'the region of interest for coverage analysis',
         },
         design_set => {
             is => 'Genome::FeatureList',
+            doc => 'the idealized region of interest as sent for probe design',
         },
         tumor_sample => {
             is => 'Genome::Sample',
+            doc => 'the experimental sample',
         },
         normal_sample => {
             is => 'Genome::Sample',
+            doc => 'the control sample',
         },
         known_sites => {
             is => 'Genome::Model::Build::ImportedVariationList',
@@ -140,7 +173,7 @@ class Genome::Model::SomaticValidation {
             doc => 'Build[s] of known variants to use in when refining with GATK best practices.',
         },
     ],
-    has_optional => [
+    has_optional_mutable => [
         region_of_interest_set_name => {
             is => 'Text',
             via => 'region_of_interest_set',
@@ -151,17 +184,34 @@ class Genome::Model::SomaticValidation {
             via => 'target_region_set',
             to => 'name',
         },
-        experimental_subject => {
-            is => 'Genome::Sample',
-            via => '__self__',
-            to => 'tumor_sample'
+        snv_variant_list_id => {
+            via => 'snv_variant_list',
+            to => 'id',
         },
-        control_subject => {
-            is => 'Genome::Sample',
-            via => '__self__',
-            to => 'normal_sample'
+        indel_variant_list_id => {
+            via => 'indel_variant_list',
+            to => 'id',
         },
-
+        sv_variant_list_id => {
+            via => 'sv_variant_list',
+            to => 'id',
+        },
+        previously_discovered_variations_build_id => {
+            via => 'previously_discovered_variations_build',
+            to => 'id'
+        },
+        annotation_build_id => {
+            via => 'annotation_build',
+            to => 'id'
+        },
+        reference_sequence_build_id => {
+            via => 'reference_sequence_build',
+            to => 'id'
+        },
+        known_sites_id => {
+            via => 'known_sites',
+            to => 'id',
+        },
     ],
     has_transient_constant_optional => {
         sequencing_platform => {
@@ -172,6 +222,78 @@ class Genome::Model::SomaticValidation {
     },
 };
 
+sub add_target_region_set {
+    my $self = shift;
+
+    my $trs = Genome::FeatureList->get(@_) or die 'Failed to get FeatureList';
+    $self->target_region_set($trs);
+}
+
+sub add_region_of_interest_set {
+    my $self = shift;
+
+    my $rois = Genome::FeatureList->get(@_) or die 'Failed to get FeatureList';
+    $self->region_of_interest_set($rois);
+}
+
+sub add_snv_variant_list {
+    my $self = shift;
+
+    my $variant_list = Genome::SoftwareResult->get(@_);
+    $self->snv_variant_list($variant_list);
+}
+
+sub add_sv_variant_list {
+    my $self = shift;
+
+    my $variant_list = Genome::SoftwareResult->get(@_);
+    $self->sv_variant_list($variant_list);
+}
+
+sub add_indel_variant_list {
+    my $self = shift;
+
+    my $variant_list = Genome::SoftwareResult->get(@_);
+    $self->indel_variant_list($variant_list);
+}
+
+sub add_previously_discovered_variations_build {
+    my $self = shift;
+
+    my $build = Genome::Model::Build->get(@_);
+    $self->previously_discovered_variations_build($build);
+}
+
+sub add_annotation_build {
+    my $self = shift;
+
+    my $build = Genome::Model::Build->get(@_);
+    $self->annotation_build($build);
+}
+
+sub add_reference_sequence_build {
+    my $self = shift;
+
+    my $build = Genome::Model::Build->get(@_);
+    $self->reference_sequence_build($build);
+}
+
+sub _add_known_site {
+    my $self = shift;
+
+    my @builds = Genome::Model::Build->get(@_);
+    map $self->add_input(name => 'known_sites', value => $_), @builds;
+}
+
+sub known_sites_id {
+    my $self = shift;
+    if(@_) {
+        $self->_add_known_site(id => $_[0]);
+    }
+
+    return $self->__known_sites_id;
+}
+
 sub _validate_required_for_start_properties {
     my $self = shift;
 
@@ -179,7 +301,6 @@ sub _validate_required_for_start_properties {
     push @missing_required_properties, 'reference_sequence_build' unless ($self->reference_sequence_build);
     push @missing_required_properties, 'tumor_sample' unless ($self->tumor_sample);
     push @missing_required_properties, 'instrument_data' unless (scalar @{[ $self->instrument_data ]} );
-    push @missing_required_properties, 'annotation_build' unless ($self->annotation_build);
 
     my $tag;
     if (@missing_required_properties) {
@@ -292,5 +413,28 @@ sub default_single_bam_profile {
 }
 
 sub requires_subject_mapping { return 1; }
+
+sub default_model_name {
+    my $self = shift;
+
+    my @parts;
+    if($self->tumor_sample) {
+        if($self->tumor_sample->source) {
+            push @parts, $self->tumor_sample->source->name;
+        } else {
+            push @parts, $self->tumor_sample->name;
+        }
+    } else {
+        push @parts, $self->subject->name;
+    }
+
+    if($self->run_as && $self->run_as eq 'apipe-builder') {
+        push @parts, 'prod-somatic_validation';
+    } else {
+        push @parts, 'somatic_validation';
+    }
+
+    return $self->_get_incremented_name(join('.', @parts), '');
+}
 
 1;

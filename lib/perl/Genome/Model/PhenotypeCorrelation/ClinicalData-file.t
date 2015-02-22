@@ -2,7 +2,6 @@
 
 use Data::Dumper;
 use IO::String;
-use File::Temp qw/tempdir/;
 use Test::More;
 use above 'Genome';
 
@@ -16,12 +15,6 @@ BEGIN {
 
 my $pkg = 'Genome::Model::PhenotypeCorrelation::ClinicalData';
 use_ok($pkg);
-
-my $tmpdir = tempdir(
-    't-ClinicalData-badhdr-XXXXX',
-    DIR => '/gsc/var/cache/testsuite/running_testsuites',
-    CLEANUP => 1
-);
 
 # S1 has more columns than the header
 my $extra_data_col = new IO::String(<<EOS

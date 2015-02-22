@@ -168,31 +168,47 @@ sub allocated_kb {
 
     my $set = Genome::Disk::Allocation->define_set(mount_path => $self->mount_path);
     my $field = 'kilobytes_requested';
-    my $f = "sum($field)";
 
-    # UR caches the value so we're just going to reach in and "fix" it.
-    # Newer UR Sets store all their cached aggregate values under the __aggregates key
-    if (exists $set->{__aggregates}) {
-        $set->__invalidate_cache__($f);
-    } elsif (exists $set->{$f}) {
-        delete $set->{$f}
-    }
+    $set->__invalidate_cache__("sum($field)");
 
     # We only want to time the sum aggregate, not including any time to connect to the DB
     Genome::Disk::Allocation->__meta__->data_source->get_default_handle();
-    my $allocated_kb;
-    Genome::Utility::Instrumentation::timer(
-        'disk.volume.allocated_kb',
-        sub { $allocated_kb = ($set->sum($field) or 0); }
-    );
+    my ($allocated_kb, $allocation_count);
+    Genome::Utility::Instrumentation::timer('disk.volume.allocated_kb', sub {
+        $allocated_kb = ($set->sum($field) or 0);
+        $allocation_count = $set->count();
+    });
 
-    # Now we'll check that it is cached so we test that the underlying
-    # structure hasn't changed.
-    unless(exists($set->{$f}) || (exists($set->{__aggregates}) && exists($set->{__aggregates}->{$f}))) {
-        die $self->error_message("$f value not found in set's hash. Did underlying object structure change?");
+    if (wantarray) {
+        return $allocated_kb, $allocation_count;
+    } else {
+        return $allocated_kb;
     }
+}
 
-    return $allocated_kb;
+sub soft_unallocated_kb {
+    my $self = shift;
+    return $self->soft_limit_kb - $self->allocated_kb;
+}
+
+sub hard_unallocated_kb {
+    my $self = shift;
+    return $self->hard_limit_kb - $self->allocated_kb;
+}
+
+sub unused_kb {
+    my $self = shift;
+    return $self->total_kb - $self->used_kb;
+}
+
+sub soft_unused_kb {
+    my $self = shift;
+    return $self->soft_limit_kb - $self->used_kb;
+}
+
+sub hard_unused_kb {
+    my $self = shift;
+    return $self->hard_limit_kb - $self->used_kb;
 }
 
 sub get_lock {
@@ -201,7 +217,8 @@ sub get_lock {
     my $modified_mount = $mount_path;
     $modified_mount =~ s/\//_/g;
     my $volume_lock = Genome::Sys->lock_resource(
-        resource_lock => $ENV{GENOME_LOCK_DIR} . '/allocation/volume' . $modified_mount,
+        resource_lock => 'allocation/volume' . $modified_mount,
+        scope => 'site',
         max_try => $tries,
         block_sleep => 1,
         wait_announce_interval => 10,
@@ -413,8 +430,46 @@ sub get_active_volume {
 sub has_space {
     my ($self, $kilobytes_requested) = @_;
 
-    return ($self->allocated_kb + $kilobytes_requested <= $self->soft_limit_kb);
+    my $kb = max($self->used_kb, $self->allocated_kb);
+    return ($kb + $kilobytes_requested <= $self->soft_limit_kb);
 }
 
-1;
+sub is_near_soft_limit {
+    my $self = shift;
 
+    my ($total_allocated_kb, $allocation_count) = $self->allocated_kb;
+    my $avg_allocated_kb = $allocation_count
+                         ? ($total_allocated_kb / $allocation_count)
+                         : 0;
+
+    my $kb = max($self->used_kb, $total_allocated_kb);
+
+    my $threshold = 3 * $avg_allocated_kb;
+    return (($self->soft_limit_kb - $kb) < $threshold );
+}
+
+sub get_trash_folder {
+    my $self = shift;
+
+    my $aggr = _extract_aggr($self->physical_path);
+
+    my $trash_volume = Genome::Disk::Volume->get(
+        disk_group_names => $ENV{GENOME_DISK_GROUP_TRASH},
+        'physical_path like' => "/vol/$aggr/%",
+    );
+
+    unless ($trash_volume) {
+        die $self->error_message(
+            "Unable to get trash volume for volume (%s) via aggr (%s)",
+            $self->mount_path, $aggr);
+    }
+
+    return File::Spec->join($trash_volume->mount_path, '.trash');
+}
+
+sub _extract_aggr {
+    return (shift =~ m!/(aggr\d{2})/!)[0];
+}
+
+
+1;

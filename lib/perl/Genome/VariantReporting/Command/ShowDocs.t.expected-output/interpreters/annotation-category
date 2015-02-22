@@ -1,0 +1,20 @@
+[4mOVERVIEW[0m
+Filter out variants that don't belong to one of the specified categories
+
+[4mPROPERTIES[0m
+  [1mcategory_list[0m   Text
+    A list of annotation categories
+    valid values:
+     splice_site
+     non_synonymous
+
+[4mREQUIRED EXPERTS[0m
+vep
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Variant hits annotation categories: category_list
+
+[4mFILTER DESCRIPTION[0m
+Variant hits annotation categories: category_list
+

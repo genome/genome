@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Command::Export::Pcgp { 
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         paths => { shell_args_position => 1, is => 'FilePath', is_many => 1, doc => 'path(s) to BAMs' }, 
     ],
@@ -99,18 +99,18 @@ sub execute {
             $errors++;
             next;
         }
-        my $patient = $sample->patient;
-        unless ($patient) {
-            $self->error_message("no patient for sample " . $sample->__display_name__);
+        my $individual = $sample->individual;
+        unless ($individual) {
+            $self->error_message("no individual for sample " . $sample->__display_name__);
             $errors++;
             next;
         }
-        unless ($patient->common_name) {
-            $self->error_message("no common name for patient " . $patient->__display_name__);
+        unless ($individual->common_name) {
+            $self->error_message("no common name for patient " . $individual->__display_name__);
             $errors++;
             next;
         }
-        my $name = $patient->common_name . "_" . $sample->common_name;
+        my $name = $individual->common_name . "_" . $sample->common_name;
         $self->status_message("build " . $build->id . " gets name $name");
         push @names, $name;
     }

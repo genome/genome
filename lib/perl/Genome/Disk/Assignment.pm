@@ -32,6 +32,7 @@ class Genome::Disk::Assignment {
         },
         mount_path => { via => 'volume' },
         total_kb   => { via => 'volume' },
+        cached_unallocated_kb => { via => 'volume' },
         unallocated_kb => { via => 'volume' },
         percent_allocated => { via => 'volume' },
         percent_used => { via => 'volume' },

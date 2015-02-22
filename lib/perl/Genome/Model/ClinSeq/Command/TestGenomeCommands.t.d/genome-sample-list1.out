@@ -1,0 +1,5 @@
+ID   NAME                                      COMMON_NAME   TISSUE_DESC   EXTRACTION_TYPE   EXTRACTION_LABEL
+--   ----                                      -----------   -----------   ---------------   ----------------
+-3   H_TEST-ClinSeqGenomeCommands-tumor        tumor         liver         genomic dna       TESTY
+-5   H_TEST-ClinSeqGenomeCommands-normal       normal        skin          genomic dna       TESTY control
+-6   H_TEST-ClinSeqGenomeCommands-tumor_cdna   tumor         liver         rna               TESTY rna

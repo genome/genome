@@ -6,8 +6,9 @@ use warnings;
 use above 'Genome';
 
 require File::Compare;
-use Storable 'retrieve';
 use Test::More;
+use Test::Deep qw(cmp_bag);
+use Test::Exception;
 
 use_ok('Genome::Utility::IO::SeparatedValueReader') or die;
 use_ok('Genome::Utility::IO::SeparatedValueWriter') or die;
@@ -87,34 +88,37 @@ my %fails = (
     'different headers' => { different => 'headers' },
 );
 for my $desc ( keys %fails ) {
-    ok(!$writer->write_one($fails{$desc}), "Failed as expected, tried to 'write one' w/ $desc");
+    dies_ok(sub {$writer->write_one($fails{$desc})}, "Failed as expected, tried to 'write one' w/ $desc");
 }
 
 # READER FAILS
 $reader = Genome::Utility::IO::SeparatedValueReader->create(
-    input => $albums_no_headers, 
+    input => $albums_no_headers,
     headers => [qw/ not the right number of headers /],
 );
 ok($reader, 'create reader');
-ok(!$reader->next, 'Failed as expected - next');
+dies_ok(sub {$reader->next}, "line with too many columns causes die");
 
 # This should fail because we ignore extra columns but we dont have the minimum
 $reader = Genome::Utility::IO::SeparatedValueReader->create(
     input => $albums_no_headers,
     headers => [qw/ dont have data to fill all these columns /],
-    ignore_extra_columns => 1,
+    allow_extra_columns => 1,
 );
 ok($reader, 'Created SVR to test too few columns while ignoring extra columns');
-ok(!$reader->next, 'Failed as expected - next');
+dies_ok(sub {$reader->next}, 'Failed as expected - next');
 
 # This should succeed because we ignore extra columns
 $reader = Genome::Utility::IO::SeparatedValueReader->create(
     input => $albums_no_headers,
     headers => [qw/ have enough data /],
-    ignore_extra_columns => 1,
+    allow_extra_columns => 1,
 );
 ok($reader, 'Created SVR to test too many columns while ignoring extra columns');
 ok($reader->next, 'Succeeded as expected');
+my $extra = $reader->current_extra_columns;
+ok(scalar(@$extra), 'extra columns set as expected');
+cmp_bag($extra, ['legend', 'reggae'], 'extra columns are the trailing ones in the file');
 
 #print "$tmpdir\n"; <STDIN>;
 done_testing();

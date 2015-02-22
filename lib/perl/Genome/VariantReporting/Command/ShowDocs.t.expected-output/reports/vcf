@@ -1,0 +1,6 @@
+[4mOVERVIEW[0m
+Output variants in vcf format. Set soft filter result ALLFILTERSPASS based on chosen filters specified in the interpreters section.
+
+[4mREQUIRED INTERPRETERS[0m
+vcf-entry
+

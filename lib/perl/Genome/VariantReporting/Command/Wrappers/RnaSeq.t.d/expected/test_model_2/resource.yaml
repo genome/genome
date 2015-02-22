@@ -1,0 +1,9 @@
+---
+aligned_bam_result_id:
+  - -b52e1b52f81e4541af7f71ce14ca96f6
+  - -533e0bb1a99f4fbe9e31cf6e19907133
+feature_list_ids: {}
+fpkm_file: RnaSeq.t.d/expression/genes.fpkm_tracking
+normal: TEST-patient1-somval_normal1
+reference_fasta: GENOME_TEST_INPUTS/Genome-VariantReporting-Framework-Component-RuntimeTranslations/v3/reference.fasta
+tumor: TEST-patient1-somval_tumor1

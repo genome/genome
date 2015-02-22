@@ -1,0 +1,14 @@
+[4mOVERVIEW[0m
+Filter out variants that don't contain the specified info tag
+
+[4mPROPERTIES[0m
+  [1minfo_tag[0m   String
+    Entry must contain this tag in the info field to keep
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    INFO field for entry contains tag info_tag
+
+[4mFILTER DESCRIPTION[0m
+INFO field for entry contains tag info_tag
+

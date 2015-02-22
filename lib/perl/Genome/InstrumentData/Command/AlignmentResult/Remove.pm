@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::InstrumentData::Command::AlignmentResult::Remove {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         alignment_results => {
             is => 'Genome::InstrumentData::AlignmentResult',

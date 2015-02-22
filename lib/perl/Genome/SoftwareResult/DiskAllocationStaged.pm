@@ -56,9 +56,9 @@ sub create {
 }
 
 # override to create the result
-sub _generate_results {
+sub _generate_result {
     my ($self, $staging_directory) = @_;
-    Carp::croak($self->error_message('_generate_results not implemented'));
+    Carp::croak($self->error_message('_generate_result not implemented'));
 }
 
 # override to customize how disk allocation is acquired
@@ -133,7 +133,7 @@ sub _destage_result {
         my $source = join('/', $staging_directory, $name);
         my $destination = join('/', $allocation_path, $name);
         if(not -e $destination) {
-            rename($source, $destination);
+            Genome::Sys->rename($source, $destination);
         } else {
             $self->error_message("Couldn't move $source to $destination since desination already exists.");
         }

@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::DeNovoAssembly::Command::RunMlstAlignments {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         sample_names => {
             is => 'Text',

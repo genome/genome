@@ -15,6 +15,7 @@ use_ok($class);
 my $test_obj = Genome::Config::AnalysisProject->create(
     created_by => Genome::Sys->username,
     name => 'Test Project',
+    run_as => Genome::Sys->username,
 );
 
 isa_ok($test_obj, $class, 'It creates an object');

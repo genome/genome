@@ -4,11 +4,13 @@ use strict;
 use warnings;
 
 use Genome;
+use version 0.77;
 use Carp qw/confess/;
 use Sys::Hostname;
 
-my $DEFAULT_VER = '1.6';
+my $DEFAULT_VER = '1.9';
 my $MINIMUM_VER_FOR_RLIB = 1.5;
+my $MINIMUM_VER_FOR_GZIP = '1.8';
 
 class Genome::Model::Tools::Joinx {
     is  => 'Command',
@@ -65,6 +67,26 @@ sub rlib_path {
     else {
         confess "joinx version $ver does not install scripts.";
     }
+}
+
+# Is the current version compatible with gzip natively?
+sub is_gzip_compatible {
+    my $self = shift;
+    return ($self->use_version ge $MINIMUM_VER_FOR_GZIP);
+}
+
+# If we are supposed to use bgzip and this version of joinx can't handle gzip natively, we should use zcat
+sub use_zcat {
+    my $self = shift;
+    return ($self->use_bgzip and not $self->is_gzip_compatible);
+}
+
+sub check_minimum_version {
+    my ($self, $min_version) = @_;
+    if(version->parse("v".$self->use_version) < version->parse("v$min_version")) {
+        die $self->error_message("This module requires joinx version $min_version or higher to function correctly.");
+    }
+    return 1;
 }
 
 1;

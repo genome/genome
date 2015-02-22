@@ -1,0 +1,16 @@
+[4mOVERVIEW[0m
+Output the FPKM values
+
+[4mPROPERTIES[0m
+  [1msample_name[0m   Text
+    This is a translated property.
+  [1msample_name_label[0m   Text
+    This is a translated property.
+
+[4mREQUIRED EXPERTS[0m
+fpkm
+
+[4mAVAILABLE FIELDS[0m
+  [1mfpkm[0m
+    Fragments per kilobase of transcript per million mapped reads
+

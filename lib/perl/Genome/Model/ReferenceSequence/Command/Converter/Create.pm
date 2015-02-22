@@ -7,7 +7,7 @@ use Genome;
 
 
 class Genome::Model::ReferenceSequence::Command::Converter::Create {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has_input => [
         source_reference => { is => 'Genome::Model::Build::ReferenceSequence', doc => 'the reference to convert from' },
         destination_reference => { is => 'Genome::Model::Build::ReferenceSequence', doc => 'the reference to convert to' },
@@ -38,7 +38,7 @@ EOS
 sub execute {
     my $self = shift;
 
-    my $existing_converter = Genome::Model::Build::ReferenceSequence::Converter->get_with_lock(source_reference_build => $self->source_reference, destination_reference_build => $self->destination_reference);
+    my $existing_converter = Genome::Model::Build::ReferenceSequence::Converter->exists_for_references($self->source_reference, $self->destination_reference);
     if($existing_converter) {
         $self->error_message('There is already an existing reference-sequence converter for the specified references.');
         return;

@@ -80,6 +80,7 @@ sub execute {
         my $factory = Bio::Tools::Run::Fgenesh->new(
             -program => 'fgenesh',
             -param   =>  $self->model_file,
+            -verbose => 2,
         );
         my $parser = $factory->run($seq);
         my $current_seq_name = $seq->id();

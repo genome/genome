@@ -9,7 +9,7 @@ use Workflow;
 use Workflow::Simple;
 
 class Genome::Model::PhenotypeCorrelation::Command::CaseControl::Unrelated {
-    is  => 'Command',
+    is  => 'Genome::Model::PhenotypeCorrelation::Command::Base',
     has_input => [
         multisample_vcf => {
             is => "String",
@@ -297,7 +297,8 @@ sub _create_workflow {
                 work_dir => $vep_work_directory,
                 ensembl_annotation_build => $ensembl_annotation_build,
                 log_dir => $log_dir,
-
+                analysis_build => $self->build,
+                analysis_project => $self->build->model->analysis_projects,
                 #input_file => $multisample_vcf,
                 #output_file => $vep_annotation_file_path,
                 #format => "vcf",
@@ -564,8 +565,8 @@ sub update_clinical_data_and_get_phenotype_name {
             );
         my $orig_cdata_file = "$cdata_file.orig";
         my $orig_cdata_md5_file = "$cdata_md5_file.orig";
-        rename($cdata_file, $orig_cdata_file);
-        rename($cdata_md5_file, $orig_cdata_md5_file) if -e $cdata_md5_file;
+        Genome::Sys->rename($cdata_file, $orig_cdata_file);
+        Genome::Sys->rename($cdata_md5_file, $orig_cdata_md5_file) if -e $cdata_md5_file;
         my $md5 = $cdata->to_file($cdata_file);
         my $md5_fh = Genome::Sys->open_file_for_writing($cdata_md5_file);
         $md5_fh->write("$md5\n");

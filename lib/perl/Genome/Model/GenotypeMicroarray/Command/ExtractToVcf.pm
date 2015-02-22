@@ -49,7 +49,7 @@ class Genome::Model::GenotypeMicroarray::Command::ExtractToVcf {
         filters => {
             is => 'Text',
             is_many => 1,
-            doc => "Filter genotypes. Give name and parameters, if required. Filters:\n gc_scrore => filter by min gc score (Ex: gc_score:min=0.7)\n invalid_iscan_ids => list of invalid iscan snvs compiled by Nate",
+            doc => "Filter genotypes. Give name and parameters, if required. Filters:\n gc_scrore => filter by min gc score (Ex: gc_score:min=0.7)\n invalid_iscan_ids => list of invalid iscan snvs compiled by Nate\nchromosome => exclude genotypes on a list of chromosomes (Ex: chromosome:exclude=X,Y,MT)",
         },
     },
     has_optional_transient => {
@@ -83,11 +83,8 @@ sub execute {
     my $resolve_source = $self->resolve_source;
     return if not $resolve_source;
 
-    return 1 if $self->_vcf_is_requested_and_available;
-
     my $filters = $self->_create_filters;
     return if not $filters;
-
     my $reader = Genome::Model::GenotypeMicroarray::GenotypeFile::ReaderFactory->build_reader(
         source => $self->source,
         variation_list_build => $self->variation_list_build,
@@ -154,6 +151,7 @@ sub _resolve_source_for_model {
 
     my $build = $self->model->last_succeeded_build;
     if ( not $build ) {
+        $self->variation_list_build( $self->model->dbsnp_build ); 
         $self->instrument_data( $self->model->instrument_data );
         return $self->_resolve_source_for_instrument_data;
     }
@@ -175,47 +173,44 @@ sub _resolve_source_for_sample {
         return;
     }
 
-    # Get InstData
+    # Get microarray libs for sample [used to be only one, maybe do this on the source level?]
     my $sample = $self->sample;
-    my $library = Genome::Library->get(name => $sample->name.'-microarraylib', sample => $sample);
-        #'import_source_name in' => ( $self->use_external ) ? [qw/ BGI bgi Broad broad CSHL cshl external /] : [qw/ wugsc wugc wutgi tgi /],
-    my @instrument_data = Genome::InstrumentData->get(library => $library);
+    my @microarray_libs = grep { $_->name =~ /microarraylib$/ } $sample->libraries;
+    # Get instrument data for the microarray libs
+    my @instrument_data = map { $_->instrument_data } @microarray_libs;
+
+    my $default_genotype_data = $sample->default_genotype_data;
+    push @instrument_data, $default_genotype_data if $default_genotype_data; # multiple copies of this inst data is ok
+    @instrument_data = sort { $b->import_date cmp $a->import_date } @instrument_data;
     if ( not @instrument_data ) {
-        $self->error_message('No microarray instrument data for sample!' .$sample->__display_name__);
+        if ( not @microarray_libs ) {
+            $self->error_message("Failed to find microarray libraries for sample (%s)", $sample->__display_name__);
+        } else {
+            $self->error_message('No microarray instrument data for sample (%s)!', $self->sample->__display_name__);
+        }
         return;
     }
 
     # Restrict by priority
-    my @filtered_instrument_data;
-    for my $priority ( $self->sample_type_priority ) {
+    my $filtered_instrument_data;
+    PRIORITY: for my $priority ( $self->sample_type_priority ) {
         for my $instrument_data ( @instrument_data ) {
             my $verification_method = '_is_instrument_data_'.$priority;
-            push @filtered_instrument_data, $instrument_data if $self->$verification_method($instrument_data);
+            next unless $self->$verification_method($instrument_data);
+            $filtered_instrument_data = $instrument_data;
+            last PRIORITY;
         }
     }
 
-    if ( not @filtered_instrument_data ) {
-        $self->error_message('No instrument data found matches the indicated priorities!');
+    if ( not $filtered_instrument_data ) {
+        $self->error_message('No instrument data found matches the indicated priorities (%s) for sample (%s)!', join(' ', $self->sample_type_priority), $sample->__display_name__);
         return;
     }
 
-    # Maybe there is a build already
-    my $build;
-    for my $instrument_data ( @filtered_instrument_data ) {
-        $build = $self->_last_succeeded_build_from_model_for_instrument_data($instrument_data);
-        last if $build;
-    }
-
-    if ( $build ) {
-        $self->source($build);
-        $self->source_type('build');
-        $self->sample( $build->subject);
-    }
-    else {
-        $self->source($filtered_instrument_data[$#filtered_instrument_data]);
-        $self->source_type('instrument_data');
-        $self->sample( $filtered_instrument_data[$#filtered_instrument_data]->sample );
-    }
+    # Take the newest
+    $self->source($filtered_instrument_data);
+    $self->source_type('instrument_data');
+    $self->sample( $filtered_instrument_data->sample );
 
     return 1;
 }
@@ -268,10 +263,10 @@ sub _is_instrument_data_external {
     my ($self, $instrument_data) = @_;
 
     for my $internal_source_name ( @internal_source_names ) {
-        return 1 if $instrument_data->import_source_name !~ /^$internal_source_name$/i;
+        return if $instrument_data->import_source_name =~ /^$internal_source_name$/i;
     }
 
-    return;
+    return 1;
 }
 
 sub _last_succeeded_build_from_model_for_instrument_data {
@@ -317,6 +312,7 @@ sub _create_filters {
     for my $filter_string ( $self->filters ) {
         $self->debug_message('Filter: '.$filter_string);
         my ($name, $config) = split(':', $filter_string, 2);
+        $self->debug_message("For filter string (%s) name is (%s) config is (%s)", $filter_string, $name, $config);
         my %params;
         %params = map { split('=') } split(':', $config) if $config;
         my $filter_class = 'Genome::Model::GenotypeMicroarray::Filter::By'.Genome::Utility::Text::string_to_camel_case($name);

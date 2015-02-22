@@ -95,14 +95,14 @@ sub execute {
         next if $class->isa("UR::Value");
 
         my $dbc = delete $hash->{db_committed};
-        
+
         if ($dbc) {
             for my $key (%$dbc, 'id') {
                 no warnings;
                 unless ($key eq 'id' or $hash->{$key} eq $dbc->{$key}) {
                     die "data discrepancy: $hash with ID $hash->{id} has key $key with value $hash->{$key} but db_committed is $dbc->{$key}\n";
                 }
-                
+
                 if ($hash->{$key} =~ m|gscmnt|) {
                     if ($hash->{$key} =~ s|gscmnt|opt/gms/fs|) {
                         if ($self->verbose){
@@ -182,7 +182,7 @@ sub execute {
                     unless ($prev) {
                         die $self->error_message("Failed to find $class $id!");
                     }
-                    
+
                 }
                 else {
                     if ($self->verbose){
@@ -215,7 +215,7 @@ sub execute {
                 print "\nNo $c $i!" if $self->verbose;
                 next;
             }
-            
+
             # TODO: standardize on a method in the class to initialize imported data
             # This should match a companion method to export data.
             if ($o->isa("Genome::Disk::Volume")) {
@@ -233,7 +233,7 @@ sub execute {
       #genome db ucsc install --species=human --branch=human-build37
       eval { Genome::Db::Ucsc::Command::Install->execute(species => 'human', branch => 'human-build37'); };
       die $self->error_message("errors installing ucsc db human-build37: $@") if $@;
-      
+
       #genome db db-var install --species=human --branch=human-build37
       eval { Genome::Db::DbVar::Command::Install->execute(species => 'human', branch => 'human-build37'); };
       die $self->error_message("errors installing dbvar db human-build37: $@") if $@;

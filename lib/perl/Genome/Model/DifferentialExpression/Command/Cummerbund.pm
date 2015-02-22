@@ -5,7 +5,7 @@ use warnings;
 
 use Genome;
 
-my $DEFAULT_LSF_RESOURCE = "-R 'select[type==LINUX64 && mem>=16000] rusage[mem=16000] span[hosts=1]' -M 16000000 ";
+my $DEFAULT_LSF_RESOURCE = "-R 'select[mem>=16000] rusage[mem=16000] span[hosts=1]' -M 16000000 ";
 
 class Genome::Model::DifferentialExpression::Command::Cummerbund {
     is => ['Command::V2'],
@@ -27,10 +27,11 @@ sub execute {
     unless (-d $output_dir) {
         Genome::Sys->create_directory($output_dir);
     }
-    unless (Genome::Model::Tools::Cufflinks::Cummerbund->execute(
+    my $cmd = Genome::Model::Tools::Cufflinks::Cummerbund->execute(
         cuffdiff_directory => $self->build->differential_expression_directory,
         pdf_report_file => $self->build->summary_report_pdf_file,
-    )) {
+    );
+    unless ($cmd and $cmd->result) {
         $self->error_message('Failed to run cummerbund!');
         return;
     }

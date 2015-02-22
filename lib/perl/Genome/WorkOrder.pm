@@ -86,10 +86,15 @@ class Genome::WorkOrder {
                 is => 'Integer',
                 len => 10,
         },
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            id_by => 'analysis_project_id',
+        },
         items => {
             is => 'Genome::WorkOrderItem',
             is_many => 1,
             reverse_as => 'work_order',
+            where => [ 'status not in' => ['abandoned', 'inactive'] ],
         },
         samples => {
             is => 'Genome::Sample',
@@ -109,9 +114,7 @@ class Genome::WorkOrder {
     data_source => 'Genome::DataSource::Oltp',
 };
 
-sub xitems {
-    return Genome::WorkOrderItem->get(setup_wo_id => $_[0]->id);
-}
+sub xitems { return shift->items }
 
 sub sample_description {
     my ($self) = @_;

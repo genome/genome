@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Command::RenameToDefault {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         models => {
             is => 'Genome::Model',

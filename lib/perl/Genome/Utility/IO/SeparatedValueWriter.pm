@@ -25,6 +25,7 @@ class Genome::Utility::IO::SeparatedValueWriter {
         },
         in_place_of_null_value => {
             doc => 'Use this in place of an undefined value.',
+            default_value => '',
         },
         print_headers => {
             is => 'Boolean',
@@ -57,10 +58,6 @@ sub create {
         $self->output->print( join($self->separator, @$headers)."\n" );
     }
 
-    if ( not defined $self->in_place_of_null_value ) {
-        $self->in_place_of_null_value('');
-    }
-
     return $self;
 }
 
@@ -91,19 +88,16 @@ sub _validate_data_to_write {
     my ($self, $data) = @_;
 
     unless ( $data ) {
-        $self->error_message("No data sent to 'write_one'");
-        return;
+        die $self->error_message("No data sent to 'write_one'");
     }
 
     my $reftype = Scalar::Util::reftype($data);
     unless ( $reftype and $reftype eq 'HASH' ) {
-        $self->error_message("Need data as an hash ref to 'write_one'. Received:\n".Dumper($data));
-        return;
+        die $self->error_message("Need data as an hash ref to 'write_one'. Received:\n".Dumper($data));
     }
 
     unless ( %$data ) {
-        $self->error_message("No data in data hash ref sent to 'write_one'");
-        return;
+        die $self->error_message("No data in data hash ref sent to 'write_one'");
     }
 
     my @headers = sort @{$self->headers};
@@ -112,7 +106,7 @@ sub _validate_data_to_write {
         # If we dont care about extra columns, all is well... unless we dont at least have the minimum required
         if ((!$self->ignore_extra_columns) || (@headers > @keys) ) {
                 #  Bomb out if we dont want extra columns
-                $self->error_message(
+                die $self->error_message(
                     sprintf(
                         'Expected %d values, got %d in hash %s.',
                         scalar @headers,
@@ -120,12 +114,10 @@ sub _validate_data_to_write {
                         Data::Dumper::Dumper($data),
                     )
                 );
-                return;
         }
     } else {
         unless ( Compare(\@headers,\@keys) ) {
-            $self->error_message("Headers in data do not match headers being written:\n\tHEADERS:\n". Dumper(@headers) ."\tDATA_HASH_KEYS:\n". Dumper(@keys));
-            return;
+            die $self->error_message("Headers in data do not match headers being written:\n\tHEADERS:\n". Dumper(@headers) ."\tDATA_HASH_KEYS:\n". Dumper(@keys));
         }
     }
 

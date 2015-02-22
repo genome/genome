@@ -17,7 +17,7 @@ class Genome::Model::Command::AddNote {
 
 sub help_detail {
     return <<EOS
-This command adds a note to the specified model
+add a note to the specified model
 EOS
 }
 

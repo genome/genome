@@ -4,7 +4,7 @@ use warnings;
 use Genome;
 
 class  Genome::Db::Cosmic::Command::Import {
-    is => 'Genome::Command::WithSavedResults',
+    is => 'Command::V2',
     has_input => [
         source_name         => { is => 'Text', is_constant => 1, value => 'cosmic' },
         database_name       => { is => 'Text', is_constant => 1, value => '' },           
@@ -13,6 +13,12 @@ class  Genome::Db::Cosmic::Command::Import {
     ],
     has_param => [
         result_version      => { is => 'Integer', default_value => 1 },
+    ],
+    has_output => [
+        output_dir  => {
+            is => 'FilesystemPath',
+            doc => 'the output directory',
+        },
     ],
     #    source_directory    => { is => 'Text', is_constant => 1, value => undef },                       
     #    data_directory      => { is => 'Text', is_constant => 1, value => undef },           

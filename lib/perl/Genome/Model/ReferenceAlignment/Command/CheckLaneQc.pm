@@ -1,7 +1,7 @@
 package Genome::Model::ReferenceAlignment::Command::CheckLaneQc;
 
 class Genome::Model::ReferenceAlignment::Command::CheckLaneQc {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => 'make sure lane QC exists for the supplied instrument data',
     has => [
         genome_models => {

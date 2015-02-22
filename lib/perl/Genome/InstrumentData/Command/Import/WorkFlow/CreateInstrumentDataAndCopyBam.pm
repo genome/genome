@@ -16,14 +16,9 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAnd
             is_many => 1,
             doc => 'The paths of the bams to verify and move.',
         },
-        sample => {
-            is => 'Genome::Sample',
-            doc => 'Sample to use. The external library for the instrument data will be gotten or created.',
-        },
         library => {
             is => 'Genome::Library',
-            is_optional => 1,
-            doc => 'Library to use. The library for the instrument data will be gotten or created.',
+            doc => 'Library to use. The library must exist.',
         },
         analysis_project => {
             is => 'Genome::Config::AnalysisProject',
@@ -76,6 +71,7 @@ sub __errors__ {
     $self->instrument_data_subset_name($subset_name);
 
     $instrument_data_properties->{import_format} = 'bam';
+    delete $instrument_data_properties->{is_paired_end};
 
     $self->instrument_data_properties($instrument_data_properties);
 
@@ -86,8 +82,9 @@ sub execute {
     my $self = shift;
     $self->debug_message('Create instrument data and copy bam...');
 
-    my $was_not_imported = $self->helpers->ensure_original_data_path_md5s_were_not_previously_imported($self->source_md5s);
-    return if not $was_not_imported;
+    my @source_md5s = $self->source_md5s;
+    my $previously_imported = $self->helpers->were_original_path_md5s_previously_imported(md5s => \@source_md5s);
+    return if $previously_imported;
 
     my $library = defined($self->library)
         ? $self->library
@@ -98,37 +95,26 @@ sub execute {
     my @instrument_data;
     my @bam_paths = $self->bam_paths;
     for my $bam_path ( @bam_paths ) {
-        # Read length FIXME get from metrics or something else while processing!
-        my $read_length = $self->_determine_read_length_in_bam($bam_path);
-        return if not $read_length;
-
         # Create inst data
         my $instrument_data = $self->_create_instrument_data_for_bam_path($bam_path);
         return if not $instrument_data;
 
         # Create allocation
-        my $allcoation = $self->_create_allocation($instrument_data, $bam_path);
-        return if not $allcoation;
-
-        # Flagstat
-        my $flagstat_path = $bam_path.'.flagstat';
-        $self->debug_message("Flagstat path: $flagstat_path");
-        my $flagstat = $helpers->load_flagstat($flagstat_path);
-        return if not $flagstat;
+        my $allocation = $self->_create_allocation($instrument_data, $bam_path);
+        return if not $allocation;
 
         # Move bam and flagstat
         my $final_bam_path = $instrument_data->data_directory.'/all_sequences.bam';
         my $move_ok = $helpers->move_path($bam_path, $final_bam_path);
         return if not $move_ok;
-        my $final_flagstat_path = $final_bam_path . '.flagstat';
+
+        my $flagstat_path = $bam_path.'.flagstat';
+        my $final_flagstat_path = $final_bam_path.'.flagstat';
         $move_ok = $helpers->move_path($flagstat_path, $final_flagstat_path);
         return if not $move_ok;
 
         # Attrs
-        $instrument_data->add_attribute(attribute_label => 'bam_path', attribute_value => $final_bam_path);
-        $instrument_data->add_attribute(attribute_label => 'is_paired_end', attribute_value => $flagstat->{is_paired_end});
-        $instrument_data->add_attribute(attribute_label => 'read_count', attribute_value => $flagstat->{total_reads});
-        $instrument_data->add_attribute(attribute_label => 'read_length', attribute_value => $read_length);
+        $self->helpers->update_bam_metrics_for_instrument_data($instrument_data);
 
         # Analysis Project
         if ($self->analysis_project) {
@@ -137,7 +123,7 @@ sub execute {
 
         # Reallocate
         $self->debug_message('Reallocate...');
-        $instrument_data->allocations->reallocate;# with move??
+        $instrument_data->reallocate_disk_allocations;
         $self->debug_message('Reallocate...done');
 
         push @instrument_data, $instrument_data;
@@ -151,35 +137,6 @@ sub execute {
 
     $self->debug_message('Create instrument data and copy bam...done');
     return 1;
-}
-
-sub _resvolve_library {
-    my $self = shift;
-    $self->debug_message('Resolve library...');
-
-    my $sample = $self->sample;
-    $self->debug_message('Sample name: '.$sample->name);
-    $self->debug_message('Sample id: '.$sample->id);
-    my $library_name = $sample->name.'-extlibs';
-    $self->debug_message('Library name: '.$library_name);
-    my $library = Genome::Library->get(
-        name => $library_name,
-        sample => $sample,
-    );
-    if ( not $library ) {
-        $library = Genome::Library->create(
-            name => $library_name,
-            sample => $sample,
-        );
-        if ( not $library ) {
-            $self->error_message('Failed to get or create external library for sample! '.$sample->id);
-            return;
-        }
-    }
-    $self->debug_message('Library id: '.$library->id);
-
-    $self->debug_message('Resolve library...done');
-    return $self->library($library);
 }
 
 sub _create_instrument_data_for_bam_path {
@@ -254,30 +211,6 @@ sub _create_allocation {
 
     $self->debug_message('Create instrument data for bam path...done');
     return $instrument_data;
-}
-
-sub _determine_read_length_in_bam {
-    my ($self, $bam_path) = @_;
-
-    my $read_length = `samtools view $bam_path | head -n 1000 | awk '{print \$10}'  | xargs -I{} expr length {} | perl -mstrict -e 'my \$c = 0; my \$t = 0; while (<>) { chomp; \$c++; \$t += \$_; } printf("%d\\n", \$t/\$c);'`;
-    chomp $read_length;
-
-    if ( not $read_length ) {
-        $self->error_message('Failed to get read length from bam! '.$bam_path);
-        return;
-    }
-
-    if ( $read_length !~ /^\d+$/ ) {
-        $self->error_message("Non numeric read length ($read_length) from bam! ".$bam_path);
-        return;
-    }
-
-    if ( $read_length == 0 ) {
-        $self->error_message('Read length for bam is 0! '.$bam_path);
-        return;
-    }
-
-    return $read_length;
 }
 
 1;

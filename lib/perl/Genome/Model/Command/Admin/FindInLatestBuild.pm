@@ -1,7 +1,7 @@
 package Genome::Model::Command::Admin::FindInLatestBuild;
 
 class Genome::Model::Command::Admin::FindInLatestBuild {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     doc => 'Find models whose latest builds have <search text> in their .err or .out files.',
     has => [
         models => {

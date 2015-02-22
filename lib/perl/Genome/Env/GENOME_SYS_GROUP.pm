@@ -1,5 +1,5 @@
 package Genome::Env::GENOME_SYS_GROUP;
-our $default_value = 'genome';
+sub default_value { 'genome' }
 
 =pod
 

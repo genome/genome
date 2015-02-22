@@ -42,7 +42,7 @@ class Genome::Model::Tools::Nimblegen::DesignFromLowexoncov {
         type => 'String',
         is_optional => 0,
         doc => "Samtools index of the reference sequence (To check chromosomal bounds of regions)",
-        example_values => ["/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa.fai"],
+        example_values => ["/gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa.fai"],
     },
     
     ]

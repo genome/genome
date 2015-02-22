@@ -79,11 +79,11 @@ sub build_with_example_build {
     );
     die 'Failed to create MC16s model!' if not $entities{'build_'.$sequencing_platform};
     $entities{'build_'.$sequencing_platform}->create_subdirectories;
-    $entities{'build_'.$sequencing_platform}->the_master_event->event_status('Succeeded');
+    $entities{'build_'.$sequencing_platform}->status('Succeeded');
     my $time = time();
     my $date_template = UR::Context->date_template;
     my $timestamp = Date::Format::time2str($date_template, $time);
-    $entities{'build_'.$sequencing_platform}->the_master_event->date_completed($timestamp);
+    $entities{'build_'.$sequencing_platform}->date_completed($timestamp);
 
     $entities{'example_build_'.$sequencing_platform} = Genome::Model::Build->create(
         model=> $model,
@@ -96,9 +96,9 @@ sub build_with_example_build {
         sanger => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16sSanger/build_v3',
     );
     $entities{'example_build_'.$sequencing_platform}->data_directory( $example_data_directories{$sequencing_platform} ) or die 'Failed to get example data directory!';
-    $entities{'example_build_'.$sequencing_platform}->the_master_event->event_status('Succeeded');
+    $entities{'example_build_'.$sequencing_platform}->status('Succeeded');
     my $past_timestamp = Date::Format::time2str($date_template, $time - 60);
-    $entities{'example_build_'.$sequencing_platform}->the_master_event->date_completed($past_timestamp);
+    $entities{'example_build_'.$sequencing_platform}->date_completed($past_timestamp);
 
     my $instrument_data_method = 'instrument_data_'.$sequencing_platform;
     my $instrument_data = __PACKAGE__->$instrument_data_method;
@@ -150,7 +150,6 @@ sub instrument_data_sanger {
     die 'Failed to create instrument data sanger!' if not $entities{instrument_data_sanger};
 
     no warnings qw/ once redefine /;
-    *Genome::InstrumentData::Sanger::dump_to_file_system = sub{ 1; };
     *Genome::InstrumentData::Sanger::full_path = sub{ $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16sSanger/inst_data/'.$entities{instrument_data_sanger}->id; };
     use warnings;
 

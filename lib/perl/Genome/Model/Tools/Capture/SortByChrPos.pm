@@ -33,7 +33,7 @@ class Genome::Model::Tools::Capture::SortByChrPos {
 	],
 	
 	has_param => [
-		lsf_resource => { default_value => 'select[model!=Opteron250 && type==LINUX64 && mem>6000] rusage[mem=6000]'},
+		lsf_resource => { default_value => 'select[mem>6000] rusage[mem=6000]'},
        ],	
 };
 

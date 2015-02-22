@@ -39,7 +39,7 @@ ok($build2, "obtained a clinseq build from the database for clinseq build id: $b
 #Create converge cufflinks-de command and execute
 #genome model clin-seq converge cufflinks-de --builds='id in [133577030,133611960]' --outdir=/tmp/converge_de/ --fc-cutoff=3
  
-my $converge_cufflinks_de_cmd = Genome::Model::ClinSeq::Command::Converge::CufflinksDe->create(outdir=>$temp_dir, builds=>[$build1,$build2], fc_cutoff=>3);
+my $converge_cufflinks_de_cmd = Genome::Model::ClinSeq::Command::Converge::CufflinksDe->create(outdir=>$temp_dir, builds=>[$build1,$build2], fc_cutoff=>3, bam_readcount_version => 0.6);
 $converge_cufflinks_de_cmd->queue_status_messages(1);
 my $r1 = $converge_cufflinks_de_cmd->execute();
 is($r1, 1, 'Testing for successful execution.  Expecting 1.  Got: '.$r1);

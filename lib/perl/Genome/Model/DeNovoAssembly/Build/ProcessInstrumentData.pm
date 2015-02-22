@@ -28,7 +28,7 @@ class Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData {
     has_constant => [
         lsf_resource => { 
             is => 'Text',
-            default_value => "-R 'select[type==LINUX64 && mem>32000 && gtmp>200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000",
+            default_value => "-R 'select[mem>32000 && gtmp>200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000",
         },
     ],
 };
@@ -91,6 +91,8 @@ sub _get_sx_result_params {
     my $sx_result_params = $sx_processor->sx_result_params_for_instrument_data($instrument_data);
     return if not $sx_result_params;
     $self->debug_message('SX reults params: '.Data::Dumper::Dumper($sx_result_params));
+
+    $sx_result_params->{users} = Genome::SoftwareResult::User->user_hash_for_build($self->build);
 
     return $sx_result_params;
 }

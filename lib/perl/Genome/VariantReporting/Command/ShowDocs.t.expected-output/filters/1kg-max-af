@@ -1,0 +1,17 @@
+[4mOVERVIEW[0m
+Filter variants that exceed maximum minor allele frequency
+
+[4mPROPERTIES[0m
+  [1mmax_af[0m   Number
+    Maximum minor allele frequency
+
+[4mREQUIRED EXPERTS[0m
+1kg
+
+[4mAVAILABLE FIELDS[0m
+  [1mfilter_status[0m
+    Filter out variants with minor allele frequency being greater than max_af
+
+[4mFILTER DESCRIPTION[0m
+Filter out variants with minor allele frequency being greater than max_af
+

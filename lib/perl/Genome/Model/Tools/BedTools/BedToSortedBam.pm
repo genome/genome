@@ -83,7 +83,7 @@ sub execute {
         $params{mapq} = $self->mapq;
     }
     my $BedToBam = Genome::Model::Tools::BedTools::BedToBam->execute(%params);
-    unless ($BedToBam) {
+    unless ($BedToBam->result) {
         die('Failed to run BedToBam command with params:  '. Data::Dumper::Dumper(%params));
     }
     my $SortBam = Genome::Model::Tools::Sam::SortBam->execute(
@@ -91,14 +91,14 @@ sub execute {
         output_file => $self->output_file,
         use_version => $self->samtools_version,
     );
-    unless ($SortBam) {
+    unless ($SortBam->result) {
         die('Failed to sort BAM file:  '. $unsorted_bam);
     }
     my $IndexBam = Genome::Model::Tools::Sam::IndexBam->execute(
         bam_file => $self->output_file,
         use_version => $self->samtools_version,
     );
-    unless ($IndexBam) {
+    unless ($IndexBam->result) {
         die('Failed to index BAM file:  '. $self->output_file);
     }
     return 1;

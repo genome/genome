@@ -175,4 +175,45 @@ sub _add_as_user_of_inputs {
     );
 }
 
+sub vcf_result_params {
+    my $self = shift;
+    my $aligned_reads_sample = shift;
+    my $control_aligned_reads_sample = shift;
+    my $users = shift;
+
+    return (
+        incoming_vcf_result_a => $self->input_a->get_vcf_result($aligned_reads_sample, $control_aligned_reads_sample, $users),
+        incoming_vcf_result_b => $self->input_b->get_vcf_result($aligned_reads_sample, $control_aligned_reads_sample, $users),
+        input_a_id => $self->input_a_id,
+        input_b_id => $self->input_b_id,
+        input_id => $self->id,
+
+        joinx_version => Genome::Model::Tools::Joinx->get_default_version,
+        test_name => $self->test_name,
+        variant_type => $self->_variant_type,
+        vcf_version => Genome::Model::Tools::Vcf->get_vcf_version,
+
+        users => $users,
+    );
+}
+
+sub get_vcf_result {
+    my $self = shift;
+    my $aligned_reads_sample = shift;
+    my $control_aligned_reads_sample = shift;
+    my $users = shift;
+
+    my %params = $self->vcf_result_params($aligned_reads_sample, $control_aligned_reads_sample, $users);
+    if (!defined($params{incoming_vcf_result_a}) or !defined($params{incoming_vcf_result_b})) {
+        # Either one or both of the input results did not produce a vcf.
+        # That means that this result didn't produce one either.
+        return;
+    } else {
+        return Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine->get_with_lock(
+            %params,
+            users => $users,
+        );
+    }
+}
+
 1;

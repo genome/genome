@@ -17,5 +17,5 @@ ok(Genome::Model::Tools::Assembly::UnpackTraces->execute (
 							  clip_quality => 1,
 							  data_out_dir => $temp_dir,
 							  zip_files => 1,
-							  )
+							  )->result
 );

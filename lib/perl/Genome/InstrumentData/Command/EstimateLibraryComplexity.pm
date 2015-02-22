@@ -42,12 +42,12 @@ sub execute {
 
 
     my $instrument_data = $self->instrument_data;
-    
+
     my $quality_format;
     my @fastq_filenames;
-    
+
     my $quality_converter = $instrument_data->resolve_quality_converter;
-    
+
     if($quality_converter eq 'sol2sanger') {
         $quality_format = 'Solexa';
         @fastq_filenames = $instrument_data->dump_solexa_fastq_files;
@@ -58,10 +58,10 @@ sub execute {
         $quality_format = 'Sanger';
         @fastq_filenames = $instrument_data->dump_sanger_fastq_files;
     }
-    
+
     #my @fastq_filenames = $instrument_data->fastq_filenames;
     my $tmp_bam = Genome::Sys->base_temp_directory .'/'. $instrument_data->id .'.bam';
-    unless (Genome::Model::Tools::Picard::FastqToSam->execute(
+    my $fastq_to_sam_cmd = Genome::Model::Tools::Picard::FastqToSam->execute(
         fastq => Genome::Sys->base_temp_directory.'/'. $instrument_data->read1_fastq_name,
         fastq2 => Genome::Sys->base_temp_directory .'/'. $instrument_data->read2_fastq_name ,
         sample_name => $instrument_data->sample_name,
@@ -70,15 +70,21 @@ sub execute {
         quality_format => $quality_format,
         use_version => $self->picard_version,
         output => $tmp_bam,
-    )) {
+    );
+    unless ($fastq_to_sam_cmd and $fastq_to_sam_cmd->result) {
         die('Failed to generate BAM for instrument data id '. $instrument_data->id);
     }
-    unless (Genome::Model::Tools::Picard::EstimateLibraryComplexity->execute(
+
+    my $elc_cmd = Genome::Model::Tools::Picard::EstimateLibraryComplexity->execute(
         use_version => $self->picard_version,
         input_file => [$tmp_bam],
         output_file => $self->output_file,
-    )) {
+    );
+    unless ($elc_cmd and $elc_cmd->result) {
         die('Failed to generate library complexity for instrument data id '. $instrument_data->id);
     }
+
     return 1;
 }
+
+1;

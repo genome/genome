@@ -3,10 +3,10 @@ package Genome::Model::ClinSeq::Command::AnnotateGenesByCategory;
 use strict;
 use warnings;
 use Genome;
-use Genome::Model::ClinSeq::Util qw(:all);
 
 class Genome::Model::ClinSeq::Command::AnnotateGenesByCategory {
-    is => 'Command::V2',
+    is => ['Command::V2',
+           'Genome::Model::ClinSeq::Util'],
     has_input => [
         infile => {
             is => 'FilesystemPath',
@@ -25,6 +25,7 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByCategory {
             is => 'Text',
             doc => 'name of list of gene groups to use',
             default => "Default",
+            is_optional => 1,
         },
     ],
     has_optional_output => [
@@ -39,7 +40,7 @@ class Genome::Model::ClinSeq::Command::AnnotateGenesByCategory {
 sub help_synopsis {
     return <<EOS
 
-genome model clin-seq annotate-genes-by-category --infile=/gscmnt/ams1108/info/model_data/2888708572/build134369422/AML103/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv --cancer_annotation_db='tgi/cancer-annotation/human/build37-20130711.1'  --gene-name-column='mapped_gene_name'
+genome model clin-seq annotate-genes-by-category --infile=/gscmnt/ams1108/info/model_data/2888708572/build134369422/AML103/snv/wgs_exome/snvs.hq.tier1.v1.annotated.compact.readcounts.tsv --cancer-annotation-db='tgi/cancer-annotation/human/build37-20130711.1'  --gene-name-column='mapped_gene_name'
 
 EOS
 }

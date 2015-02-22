@@ -7,7 +7,7 @@ use Genome;
 our $VERSION = $Genome::VERSION;
 
 class Genome::Model::Tools {
-    is => 'Command::Tree',
+    is => 'Genome::Command::Base',
     doc => 'bioinformatics tools for genomics'
 };
 

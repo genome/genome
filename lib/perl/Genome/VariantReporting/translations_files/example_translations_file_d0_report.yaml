@@ -1,0 +1,8 @@
+aligned_bam_result_id:
+    - 78dd8481ba974d78a77943a5995c1600
+    - 9d85414258fe422491669fbe3416a323
+feature_list_ids:
+    ON_TARGET: a2733b8111c24110805025137c878e13
+reference_fasta: /gscmnt/sata420/info/model_data/2857786885/build102671028/all_sequences.fa
+tumor: H_KA-220882-1309235
+normal: H_KA-220882-1222132

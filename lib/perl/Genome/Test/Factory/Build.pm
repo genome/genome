@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use Genome;
 
-our @required_params = qw(model_id data_directory);
+our @required_params = qw(model_id data_directory run_by status);
 
 sub generate_obj {
     my $self = shift;
@@ -27,8 +27,16 @@ sub _set_status_on_build {
     my $build = shift;
     my $status = shift;
 
-    $build->the_master_event->event_status($status);
-    $build->the_master_event->date_completed("2013-07-11 20:47:51");
+    $build->status($status);
+    $build->date_completed("2013-07-11 20:47:51");
+}
+
+sub create_run_by {
+    return Genome::Sys->username;
+}
+
+sub create_status {
+    return 'New';
 }
 
 1;

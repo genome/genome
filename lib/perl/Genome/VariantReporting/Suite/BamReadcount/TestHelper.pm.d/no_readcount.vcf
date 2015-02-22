@@ -1,0 +1,11 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="Passed all filters">
+##FILTER=<ID=BAD,Description="This entry is bad and it should feel bad">
+##INFO=<ID=A,Number=1,Type=String,Description="Info field A">
+##INFO=<ID=C,Number=A,Type=String,Description="Info field C (per-alt)">
+##INFO=<ID=E,Number=0,Type=Flag,Description="Info field E">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">
+##FORMAT=<ID=BRCT,Number=1,Type=String,Description="Bam readcount entry">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	S1	S2	S3	S4
+21	10402985	.	A	G,C,AA	10.3	PASS	A=B;C=8,9;E	GT:DP:BRCT	0/1:12:{"0";".","AA";0,"C";0,"G";0}	1/2:12:{"0";".","AA";0,"C";0,"G";0}	1/1:12:{"0";".","AA";0,"C";0,"G";0}	3/3:12:{"0";".","AA";0,"C";0,"G";0}

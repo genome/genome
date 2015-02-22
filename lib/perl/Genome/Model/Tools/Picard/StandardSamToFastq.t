@@ -17,7 +17,7 @@ BEGIN {
        plan skip_all => 'requires 64-bit machine';
     }
     else {
-       plan tests => 9;
+       plan tests => 13;
     }
 };
 
@@ -49,7 +49,6 @@ isa_ok($cmd_1, 'Genome::Model::Tools::Picard::StandardSamToFastq');
 ok( $cmd_1->execute, 'execute' );
 ok( -s $fq1,         'output file is non-zero' );
 ok( -s $fq2,         'output file is non-zero' );
-
 unlink($fq1->stringify, $fq2->stringify);
 
 my $cmd_2  = Genome::Model::Tools::Picard::StandardSamToFastq->create(
@@ -64,5 +63,20 @@ isa_ok($cmd_2, 'Genome::Model::Tools::Picard::StandardSamToFastq');
 ok( $cmd_2->execute, 'execute' );
 ok( -s $fq1,         'output file is non-zero' );
 ok( -s $fq2,         'output file is non-zero' );
+unlink($fq1->stringify, $fq2->stringify);
+
+my $cmd_3  = Genome::Model::Tools::Picard::StandardSamToFastq->create(
+    input  => $bam . '',
+    fastq  => $fq1 . '',
+    second_end_fastq => $fq2 . '',
+    re_reverse => 1,
+    use_version => '1.113'
+);
+isa_ok($cmd_3, 'Genome::Model::Tools::Picard::StandardSamToFastq');
+ok( $cmd_3->execute, 'execute' );
+ok( -s $fq1,         'output file is non-zero' );
+ok( -s $fq2,         'output file is non-zero' );
+unlink($fq1->stringify, $fq2->stringify);
+
 
 $tmpdir->rmtree;

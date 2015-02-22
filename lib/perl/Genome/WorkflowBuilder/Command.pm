@@ -34,8 +34,8 @@ sub create {
     eval sprintf("require %s", $self->command);
     my $error = $@;
     if ($error) {
-        Carp::confess(sprintf("Failed to load command class (%s)",
-                $self->command));
+        Carp::confess(sprintf("Failed to load command class (%s): %s\n",
+                $self->command, $error));
     }
     return $self;
 }
@@ -65,8 +65,6 @@ sub input_properties {
     my $self = shift;
     my @result = map {$_->property_name} $self->command->__meta__->properties(
         is_input => 1, is_optional => 0);
-    push @result, grep {!exists $_EXPECTED_ATTRIBUTES{$_}} map {$_->property_name} $self->command->__meta__->properties(
-        is_param => 1, is_optional => 0);
     return sort @result;
 }
 
@@ -80,7 +78,7 @@ sub operation_type_attributes {
         if (defined($self->$name)) {
             $value = $self->$name;
         } else {
-            $value = $self->_get_attribue_from_command($name);
+            $value = $self->_get_attribute_from_command($name);
         }
 
         if (defined($value)) {
@@ -137,7 +135,7 @@ sub is_many_property {
 # Private Methods
 # ------------------------------------------------------------------------------
 
-sub _get_attribue_from_command {
+sub _get_attribute_from_command {
     my ($self, $property_name) = @_;
 
     my $property = $self->command->__meta__->properties(

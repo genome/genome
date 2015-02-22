@@ -16,8 +16,8 @@ class Genome::InstrumentData::AlignmentResult::Novocraft {
 sub required_arch_os { 'x86_64' }
 
 # fill me in here with what compute resources you need.
-sub required_rusage { 
-    "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>90000 && mem>10000] span[hosts=1] rusage[tmp=90000, mem=10000]' -M 10000000 -n 1";
+sub required_rusage {
+    "-R 'select[tmp>90000 && mem>10000] span[hosts=1] rusage[tmp=90000, mem=10000]' -M 10000000 -n 1";
 }
 
 
@@ -28,11 +28,11 @@ sub _run_aligner {
     # get refseq info
     my $reference_build = $self->reference_build;
     my $reference_novocraft_index_path = $self->get_reference_sequence_index->full_consensus_path('fa.novocraft');
-    
+
     # check index file exists and is non-zero sized.
     unless (-s $reference_novocraft_index_path) {
         $self->error_message("Index file not found or empty at $reference_novocraft_index_path");
-        die; 
+        die;
     };
 
     my $aligner_params = $self->aligner_params;
@@ -48,7 +48,7 @@ sub _run_aligner {
         $self->error_message("Input pathnames shouldn't have more than 2...: " . Data::Dumper::Dumper(\@input_pathnames) );
         die $self->error_message;
     }
-    
+
     # Format command
     my $cmdline = sprintf('%s %s -d %s -f %s -o SAM 1>> %s 2>> %s',
         $path_to_novoalign,
@@ -58,7 +58,7 @@ sub _run_aligner {
         $novocraft_output,
         $log_file
     );
-    
+
     # Execute alignment command
     Genome::Sys->shellcmd(
         cmd                         => $cmdline,
@@ -66,7 +66,7 @@ sub _run_aligner {
         output_files                => [$novocraft_output],
         skip_if_output_is_present   => 0,
     );
-    
+
     # Run raw output through SamToBam in order to fix mates.
     my $intermediate_bam_file = $self->temp_scratch_directory . "/all_sequences_with_header.bam";
     my $sam_to_bam_object = Genome::Model::Tools::Sam::SamToBam->create(
@@ -75,7 +75,7 @@ sub _run_aligner {
         bam_file    => $intermediate_bam_file,
         fix_mate    => 1
     );
-    
+
     $sam_to_bam_object->execute;
 
     # Convert Bam from fix mates to Sam
@@ -83,7 +83,7 @@ sub _run_aligner {
         bam_file    => $intermediate_bam_file,
         sam_file    => $cleaned_with_headers
     );
-    
+
     $self->_strip_header($cleaned_with_headers, $output_file);
 
     return 1;
@@ -92,7 +92,7 @@ sub _run_aligner {
 sub _strip_header {
     my ($self, $novocraft_output, $output_file) = @_;
     my $novocraft_output_fh = IO::File->new( $novocraft_output );
-    
+
     unless ( $novocraft_output_fh ) {
         $self->error_message("Error opening novocraft output file: $novocraft_output for writing!");
         die;
@@ -102,7 +102,7 @@ sub _strip_header {
             $self->error_message("Error opening output sam file: $output_file for writing!");
             die;
     }
-    
+
     $self->debug_message("Removing Novocraft generated header from SAM file.");
     while (<$novocraft_output_fh>) {
             #write out the aligned map, excluding the default header- all lines starting with @.
@@ -143,7 +143,7 @@ sub prepare_reference_sequence_index {
         $class->error_message("Couldn't make an all_sequences.fa.ssaha2 symlink to the raw fasta file");
         return;
     }
-        
+
     my $nv_path = Genome::Model::Tools::Novocraft->path_for_novocraft_version($refindex->aligner_version);
     $nv_path =~ s/novoalign/novoindex/;
     my $assembly_name = $refindex->reference_build->assembly_name;
@@ -178,4 +178,5 @@ sub prepare_reference_sequence_index {
 sub aligner_params_required_for_index {
     return 1;
 }
-    
+
+1;

@@ -7,7 +7,7 @@ use Genome;
 
 class Genome::Model::ProteinAnnotation::Command {
     is => 'Command::Tree',
-    doc => 'commands that act on protein annotation models',
+    doc => 'operate on protein annotation models',
 };
 
 sub sub_command_category { 'type specific' }

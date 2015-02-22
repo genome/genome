@@ -2,7 +2,7 @@
 [4mUSAGE[0m
  [1mgenome model define amplicon-assembly[0m [--auto-assign-inst-data] [--auto-build-alignments]
     --processing-profile=? [--add-to-projects=?[,?]] [--instrument-data=?[,?]] [--subject=?]
-    [--groups=?[,?]] [--model-name=?]
+    [--groups=?[,?]] [--model-name=?] [--run-as=?]
 
 [4mSYNOPSIS[0m
   genome model define amplicon-assembly \
@@ -26,6 +26,8 @@
     Model groups to put the newly created model into 
   [1mmodel-name[0m
     User meaningful name for this model, a default is used if none is provided 
+  [1mrun-as[0m
+    Specify who the model should run_as if run in production 
 
 [4mOPTIONAL PARAMS[0m
   [1mauto-assign-inst-data[0m

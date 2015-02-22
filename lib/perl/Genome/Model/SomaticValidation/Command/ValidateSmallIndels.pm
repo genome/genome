@@ -10,7 +10,7 @@ use File::Basename;
 use Workflow::Simple;
 
 class Genome::Model::SomaticValidation::Command::ValidateSmallIndels {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
         varscan_version => {
             is => 'Text',

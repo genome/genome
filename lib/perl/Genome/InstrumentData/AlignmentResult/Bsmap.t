@@ -6,6 +6,7 @@ use Test::More;
 use Sys::Hostname;
 
 use above 'Genome';
+use Genome::Test::Factory::SoftwareResult::User;
 
 BEGIN {
     if (`uname -a` =~ /x86_64/) {
@@ -51,7 +52,7 @@ $aligner_label =~ s/\./\_/g;
 
 #was the path for BSMAP2.1 - new path is in the more canonical location
 #my $expected_shortcut_path = "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456",
-my $expected_shortcut_path = $ENV{GENOME_TEST_INPUTS} . "/Genome-InstrumentData-AlignmentResult-Bsmap/v2.74/2013-11-27";
+my $expected_shortcut_path = $ENV{GENOME_TEST_INPUTS} . "/Genome-InstrumentData-AlignmentResult-Bsmap/v2.74/2014-12-18";
 print STDERR $expected_shortcut_path . "\n";
 
 my $FAKE_INSTRUMENT_DATA_ID=-123456;
@@ -69,6 +70,10 @@ ok($reference_model, "got reference model");
 my $reference_build = $reference_model->build_by_version('1');
 #$reference_build = Genome::Model::Build->get(101947881); # XXX temporary reference override to full reference
 ok($reference_build, "got reference build");
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
 
 my $temp_reference_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->create(reference_build=>$reference_build, aligner_version=>$aligner_version, aligner_name=>'bsmap', aligner_params=>'');
 
@@ -197,6 +202,7 @@ sub test_shortcutting {
                                                               samtools_version => $samtools_version,
                                                               picard_version => $picard_version,
                                                               reference_build => $reference_build,
+                                                              users => $result_users,
                                                               );
     ok($alignment, "got an alignment object");
 
@@ -237,19 +243,11 @@ sub generate_fake_instrument_data {
         lane => '1',
         median_insert_size => '22',
         sd_insert_size => '34',
-        #median_insert_size => '195', # XXX huge datasets
-        #sd_below_insert_size => '38',
-        #sd_above_insert_size => '32',
-        #median_insert_size => '196', # XXX more huge datasets
-        #sd_below_insert_size => '22',
-        #sd_above_insert_size => '78',
         run_name => '110101_TEST',
         subset_name => 4,
         run_type => 'Paired',
         gerald_directory => $fastq_directory,
         bam_path => $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam'
-        #bam_path => '/gscuser/iferguso/bsmap_scratch/newcrashing.bam' # huge datasets
-        #bam_path => '/gscuser/iferguso/bsmap_scratch/crashing.bam' # more huge datasets
     );
     ok($instrument_data, 'create instrument data: '.$instrument_data->id);
     ok($instrument_data->is_paired_end, 'instrument data is paired end');

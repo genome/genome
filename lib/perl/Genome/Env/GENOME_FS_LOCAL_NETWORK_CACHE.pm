@@ -1,5 +1,5 @@
 package Genome::Env::GENOME_FS_LOCAL_NETWORK_CACHE;
-our $default_value = '/var/lib/genome/db';
+sub default_value { '/var/lib/genome/db' }
 
 =pod
 

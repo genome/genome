@@ -109,7 +109,7 @@ my %params = (
     roi => 'mouse',
     append_event_steps => undef,
 );
-ok(Genome::ProcessingProfile::Command::Create::Tester->execute(%params), "Create tester pp");
+ok(Genome::ProcessingProfile::Command::Create::Tester->execute(%params)->result, "Create tester pp");
 my $pp = Genome::ProcessingProfile::Tester->get();
 ok($pp, 'Got freshly created tester pp');
 
@@ -147,7 +147,7 @@ ok(!$creator->execute, 'Failed as expected - tried to base on pp w/o changing pa
     append_event_steps => undef,
     some_options => ['option1','option2'],
 );
-ok(Genome::ProcessingProfile::Command::Create::Tester->execute(%params), "Create tester pp");
+ok(Genome::ProcessingProfile::Command::Create::Tester->execute(%params)->result, "Create tester pp");
 $pp = Genome::ProcessingProfile::Tester->get(name => "__TEST__PP__IS_MANY");
 my @options = $pp->some_options;
 is_deeply(\@options, ['option1','option2'], 'Processing profile with is_many param got a list of options');

@@ -55,36 +55,10 @@ sub user_email {
     return join('@', $user, Genome::Config::domain());
 }
 
-
-sub admin_notice_users {
-    qw/abrummet jeldred ssmith apipe-run/;
-}
-
 sub namespaces {
 #    my @ns = (qw/BAP Command EGAP GAP Genome MGAP PAP UR Workflow/);
     my @ns = (qw/Genome UR Workflow/);
     return @ns;
-}
-
-# operating directories
-
-sub deploy_path {
-
-    if (Genome::Config::dev_mode()) {
-        return '/tmp/gsc/scripts/lib/perl';
-    } else {
-        return '/gsc/scripts/lib/perl';
-    }
-}
-
-sub snapshot_paths {
-
-    my @snapshot_paths = (
-        '/gsc/scripts/opt/passed-model-tests',
-        '/gsc/scripts/opt/passed-unit-tests'
-    );
-
-    return @snapshot_paths;
 }
 
 sub reference_sequence_directory {
@@ -94,67 +68,6 @@ sub reference_sequence_directory {
 sub root_directory {
     $ENV{GENOME_MODEL_ROOT} || '/gscmnt/gc4096/info/symlinks';
 }
-
-sub data_directory {
-     $ENV{GENOME_MODEL_DATA} || '/gscmnt/sata835/info/medseq';
-}
-
-# data
-
-sub alignment_data_directory {
-    return shift->data_directory . '/alignment_data';
-}
-
-sub model_comparison_data_directory {
-    return shift->data_directory . '/model_comparison_data';
-}
-
-# reflection of the different types of models, and their related processing profiles and builds
-
-sub type_names {
-    return 
-        map { s/\-/ /g; $_ }
-        map { Command->_command_name_for_class_word($_) }
-        map { s/^Genome\::Model:://; $_ } 
-        shift->model_subclass_names;
-}
-
-my $use_model_subclasses = 0;
-sub _use_model_subclasses {
-    # We follow a naming convention which allows us to dynamically list all sub-classes of model.
-    # There is some flexibility loss by enforcing the naming convention, but the benefit is reflection.
-    # A different config could make a different choice if necessary...
-    
-    unless ($use_model_subclasses) {
-        require Genome::Model;
-        my $path = $INC{'Genome/Model.pm'};
-        unless ($path) {
-            die "failed to find the path for Genome/Model.pm in %INC???";
-        }
-        $path =~ s/.pm\s*$// or die "no pm on $path?";
-        unless (-d $path) {
-            die "$path is not a directory?";
-        }
-        my @possible_subclass_modules = glob("$path/*.pm");
-        for my $possible_module (@possible_subclass_modules) {
-            my $class = $possible_module;
-            $class =~ s/.pm$//;
-            $class =~ s/\//\:\:/g;
-            $class =~ s/^.*(Genome::Model::[^\:]+)/$1/;
-            eval "use $class";
-            die "Error using module $class ($possible_module): $@" if $@;
-            unless ($class->isa("Genome::Model")) {
-                next;
-            }
-            my $suffix = $class;
-            $suffix =~ s/^Genome\::Model:://;
-            #$model_subclass_names, $class;
-        }
-        $use_model_subclasses = 1;
-    }
-    return 1;
-}
-
 
 sub should_use_alignment_pd {
     my $self = shift;

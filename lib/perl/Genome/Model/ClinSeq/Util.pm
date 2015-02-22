@@ -1,28 +1,14 @@
 package Genome::Model::ClinSeq::Util;
-
-#Written by Malachi Griffith
-
-require Exporter;
-
-@ISA = qw( Exporter );
-@EXPORT = qw();
-
-@EXPORT_OK = qw(
-                &createNewDir &checkDir &commify &memoryUsage &loadEnsemblMap &loadEntrezEnsemblData &mapGeneName &fixGeneName &importIdeogramData &getCytoband &getColumnPosition &listGeneCategories &importSymbolListNames &importGeneSymbolLists &getFilePathBase
-               );
-
-%EXPORT_TAGS = (
-                all => [qw(&createNewDir &checkDir &commify &memoryUsage &loadEnsemblMap &loadEntrezEnsemblData &mapGeneName &fixGeneName &importIdeogramData &getCytoband &getColumnPosition &listGeneCategories &importSymbolListNames &importGeneSymbolLists &getFilePathBase)]
-               );
-
 use strict;
 use warnings;
 use Data::Dumper;
+use List::MoreUtils qw/ uniq /;
 
+#Written by Malachi Griffith
+class Genome::Model::ClinSeq::Util{
+};
 
-###############################################################################################################
-#Create a new directory in a specified location                                                               #
-###############################################################################################################
+#Create a new directory in a specified location
 sub createNewDir{
   my $self = shift;
   my %args = @_;
@@ -86,10 +72,6 @@ sub createNewDir{
   return($new_path);
 }
 
-
-#############################################################################################################################
-#Check dir
-#############################################################################################################################
 sub checkDir{
   my $self = shift;
   my %args = @_;
@@ -162,10 +144,8 @@ sub checkDir{
 }
 
 
-#######################################################################################################################################################################
 #Load Ensembl Transcript ID - Gene ID - Gene Name mappings from flatfiles                                                                                             #
 #The GTF file seems to be the best for obtaining ensg -> enst -> gene name mappings.  But it does not contain biotypes so an extra file need to be parse for those    #
-#######################################################################################################################################################################
 sub loadEnsemblMap{
   my $self = shift;
   my %args = @_;
@@ -235,9 +215,7 @@ sub loadEnsemblMap{
 }
 
 
-#######################################################################################################################################################################
-#Load Entrez Data from flatfiles                                                                                                                                      #
-#######################################################################################################################################################################
+#Load Entrez Data from flatfiles
 sub loadEntrezEnsemblData {
   my $self = shift;
   my %args = @_;
@@ -494,9 +472,7 @@ sub loadEntrezEnsemblData {
 }
 
 
-#######################################################################################################################################################################
-#If possible translate the current gene name or ID into an official gene name from Entrez                                                                             #
-#######################################################################################################################################################################
+#If possible translate the current gene name or ID into an official gene name from Entrez
 sub mapGeneName{
   my $self = shift;
   my %args = @_;
@@ -703,8 +679,6 @@ sub mapGeneName{
       $corrected_name = $original_name;
     }
   }
-
-
   if ($verbose){
     if ($entrez_name_string eq $original_name){
       $self->status_message("\nSimple Entrez match: $original_name -> $corrected_name");
@@ -719,9 +693,7 @@ sub mapGeneName{
 }
 
 
-###################################################################################################################################
-#Attempt to fix gene names to Entrez                                                                                              #
-###################################################################################################################################
+#Attempt to fix gene names to Entrez
 sub fixGeneName{
   my $self = shift;
   my %args = @_;
@@ -743,9 +715,7 @@ sub fixGeneName{
 }
 
 
-###################################################################################################################################
-#List gene category files and the number of genes, return the names and counts for each                                           #
-###################################################################################################################################
+#List gene category files and the number of genes, return the names and counts for each
 sub listGeneCategories{
   my $self = shift;
   my %args = @_;
@@ -789,9 +759,7 @@ sub listGeneCategories{
 }
 
 
-###################################################################################################################################
-#Import symbol list names                                                                                               #
-###################################################################################################################################
+#Import symbol list names
 sub importSymbolListNames{
   my $self = shift;
   my %args = @_;
@@ -935,9 +903,7 @@ sub importSymbolListNames{
 }
 
 
-###################################################################################################################################
-#Import a set of gene symbol lists                                                                                                #
-###################################################################################################################################
+#Import a set of gene symbol lists
 sub importGeneSymbolLists{
   my $self = shift;
   my %args = @_;
@@ -972,9 +938,7 @@ sub importGeneSymbolLists{
 }
 
 
-#############################################################################################################################
-#Add commas to number.  e.g. 1000000 to 1,000,000                                                                           #
-#############################################################################################################################
+#Add commas to number.  e.g. 1000000 to 1,000,000
 sub commify {
    local $_  = shift;
    1 while s/^(-?\d+)(\d{3})/$1,$2/;
@@ -982,9 +946,7 @@ sub commify {
 }
 
 
-#############################################################################################################################
-#Return message describing memory usage of the current process                                                              #
-#############################################################################################################################
+#Return message describing memory usage of the current process
 sub memoryUsage{
   my $pid = $$;
   my $ps_query = `ps -p $pid -o pmem,rss`;
@@ -1001,10 +963,8 @@ sub memoryUsage{
 }
 
 
-#############################################################################################################################
-#Parse import the coordinates of the ideogram file using a subroutine                                                       #
-#Example input file: /gscmnt/sata132/techd/mgriffit/reference_annotations/hg19/ideogram/ChrBandIdeogram.tsv                 #
-#############################################################################################################################
+#Parse import the coordinates of the ideogram file using a subroutine
+#Example input file: /gscmnt/sata132/techd/mgriffit/reference_annotations/hg19/ideogram/ChrBandIdeogram.tsv
 sub importIdeogramData{
   my $self = shift;
   my %args = @_;
@@ -1053,10 +1013,9 @@ sub importIdeogramData{
 }
 
 
-#############################################################################################################################
-#Given some chromosome coordinates and an object of ideogram data, generate a cytoband string                               #
-#############################################################################################################################
+#Given some chromosome coordinates and an object of ideogram data, generate a cytoband string
 sub getCytoband{
+  my $self = shift;
   my %args = @_;
   my $ideo_data = $args{'-ideo_data'};
   my $chr = $args{'-chr'};
@@ -1100,9 +1059,7 @@ sub getCytoband{
 }
 
 
-#############################################################################################################################
-#Get column position                                                                                                        #
-#############################################################################################################################
+#Get column position
 sub getColumnPosition{
   my $self = shift;
   my %args = @_;
@@ -1134,9 +1091,7 @@ sub getColumnPosition{
 }
 
 
-#############################################################################################################################
-#Given a file name or path, return the path with the extension removed as well as the extension as a hash                   #
-#############################################################################################################################
+#Given a file name or path, return the path with the extension removed as well as the extension as a hash
 sub getFilePathBase{
   my $self = shift;
   my %args = @_;
@@ -1174,9 +1129,7 @@ sub getFilePathBase{
 }
 
 
-#############################################################################################################################
-#Given a clinseq object, resolve to a single reference sequence object based on the inputs                                  #
-#############################################################################################################################
+#Given a clinseq object, resolve to a single reference sequence object based on the inputs
 sub resolve_reference_sequence_build {
     my $clinseq_build = shift;
     my ($wgs_somvar_build, $exome_somvar_build, $tumor_rnaseq_build, $normal_rnaseq_build, $wgs_normal_refalign_build, $wgs_tumor_refalign_build, $exome_normal_refalign_build, $exome_tumor_refalign_build);
@@ -1206,6 +1159,282 @@ sub resolve_reference_sequence_build {
       die $clinseq_build->error_message("Did not find a single distinct Reference alignment build for ClinSeq build: ".$clinseq_build->id);
     }
     return $rb_names{$rb_names[0]};
+}
+
+sub _get_si_report_tumor_prefix {
+  my $self = shift;
+  my $clinseq_build = shift;
+  my (%somatic_builds, %rnaseq_builds);
+  $clinseq_build->resolve_somatic_builds(\%somatic_builds);
+  $clinseq_build->resolve_rnaseq_builds(\%rnaseq_builds);
+  my $align_builds = $self->get_ref_align_builds('-somatic_builds'=>\%somatic_builds, '-rnaseq_builds'=>\%rnaseq_builds);
+  my @prefixes = $self->get_header_prefixes('-align_builds'=>$align_builds);
+  my (@tumor_refalign_names, $somatic_build, $tumor_build);
+  my ($tumor_subject_name, $tumor_subject_common_name);
+  $self->status_message("keys " . keys %somatic_builds);
+  foreach my $somatic_build_id (keys %somatic_builds){
+    $somatic_build = $somatic_builds{$somatic_build_id}{build};
+    $tumor_build = $somatic_build->tumor_build;
+    $tumor_subject_name = $tumor_build->subject->name;
+    $tumor_subject_common_name = $tumor_build->subject->common_name;
+    $tumor_subject_common_name =~ s/\,//g;
+    $tumor_subject_common_name =~ s/\s+/\_/g;
+  }
+  foreach my $prefix (@prefixes) {
+    if(($prefix =~ /$tumor_subject_name/) or
+      ($prefix =~ /$tumor_subject_common_name/) or
+      ($prefix =~ /$tumor_build/)) {
+      push @tumor_refalign_names, $prefix;
+    }
+  }
+  return @tumor_refalign_names;
+}
+
+sub get_ref_align_builds{
+  my $self = shift;
+  my %args = @_;
+  my $somatic_builds = $args{'-somatic_builds'};
+  my $rnaseq_builds = $args{'-rnaseq_builds'};
+
+  my %ref_builds;
+
+  my $sort_on_time_point = 0;
+
+  foreach my $somatic_build_id (keys %{$somatic_builds}){
+    my $build_type = $somatic_builds->{$somatic_build_id}->{type};
+    my $somatic_build = $somatic_builds->{$somatic_build_id}->{build};
+    my @builds = ($somatic_build->normal_build, $somatic_build->tumor_build);
+    foreach my $build (@builds){
+      my $subject_name = $build->subject->name;
+      my $subject_common_name = $build->subject->common_name;
+      $subject_common_name =~ s/\,//g;
+      $subject_common_name =~ s/\s+/\_/g;
+      my $refalign_name = $subject_name . "_$build_type" . "_" . $subject_common_name;
+      my $bam_path = $build->whole_rmdup_bam_file;
+      my @timepoints = $build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+      my $tissue_desc = $build->subject->tissue_desc;
+      $tissue_desc =~ s/\s+/\-/g;
+      $tissue_desc =~ s/\,//g;
+
+      my $time_point = "day0";
+      if (@timepoints){
+        $time_point = $timepoints[0]->attribute_value;
+        $time_point =~ s/\s+//g;
+        $sort_on_time_point = 1;
+      }
+      $refalign_name .= "_"."$time_point";
+
+      $ref_builds{$refalign_name}{type} = $build_type;
+      $ref_builds{$refalign_name}{sample_name} = $subject_name;
+      $ref_builds{$refalign_name}{sample_name_build_type} = $subject_name . "_" . $build_type;
+      $ref_builds{$refalign_name}{sample_common_name} = $subject_common_name;
+      $ref_builds{$refalign_name}{bam_path} = $bam_path;
+      $ref_builds{$refalign_name}{time_point} = $subject_common_name . "_" .  $build_type . "_" . $time_point;
+      $ref_builds{$refalign_name}{time_point_tissue} = $subject_common_name . "_" . $build_type . "_" . $tissue_desc . "_" . $time_point;
+      $ref_builds{$refalign_name}{day} = $time_point;
+      $ref_builds{$refalign_name}{tissue_desc} = $tissue_desc;
+      $ref_builds{$refalign_name}{tissue_label} = $build->subject->tissue_label;
+      $ref_builds{$refalign_name}{tissue_label} = '' unless defined($build->subject->tissue_label);
+      $ref_builds{$refalign_name}{extraction_type} = $build->subject->extraction_type;
+      $ref_builds{$refalign_name}{extraction_label} = $build->subject->extraction_label;
+    }
+  }
+
+  if($rnaseq_builds) {
+    $self->add_rnaseq_ref_builds(\%ref_builds, $rnaseq_builds);
+  }
+
+  #Set an order on refalign builds (use time points if available, otherwise name)
+  my $o = 0;
+  if ($sort_on_time_point){
+    foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
+      $o++;
+      $ref_builds{$name}{order} = $o;
+    }
+  }else{
+    foreach my $name (sort keys %ref_builds){
+      $o++;
+      $ref_builds{$name}{order} = $o;
+    }
+  }
+
+  #Determine the time point position
+  my %timepoint_positions;
+  foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
+    my $day = $ref_builds{$name}{day};
+    if ($day =~ /day(\d+)/){
+      my $day_number = $1;
+      $timepoint_positions{$day_number}{position} = 0;
+      $ref_builds{$name}{day_number} = $day_number;
+    }else{
+      die $self->error_message("could not parse day value from sample attribute (caTissue timepoint): $day");
+    }
+  }
+  my $time_point_counter = 0;
+  foreach my $day_number (sort {$a <=> $b} keys %timepoint_positions){
+    $time_point_counter++;
+    $timepoint_positions{$day_number}{position} = $time_point_counter;
+  }
+
+  foreach my $name (sort {$ref_builds{$a}->{time_point} cmp $ref_builds{$b}->{time_point}} keys %ref_builds){
+    my $day_number = $ref_builds{$name}{day_number};
+    my $position = $timepoint_positions{$day_number}{position};
+    $ref_builds{$name}{timepoint_position} = $position;
+  }
+
+  my @time_points;
+  my @time_points_tissue;
+  my @samples;
+  my @names;
+  foreach my $name (sort {$ref_builds{$a}->{order} <=> $ref_builds{$b}->{order}} keys %ref_builds){
+    push(@time_points, $ref_builds{$name}{time_point});
+    push(@time_points_tissue, $ref_builds{$name}{time_point_tissue});
+    push(@samples, $ref_builds{$name}{sample_name_build_type});
+    push(@names, $name);
+  }
+
+  #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
+  my @prefixes;
+  my @unique_time_points = uniq @time_points;
+  my @unique_time_points_tissue = uniq @time_points_tissue;
+  my @unique_samples = uniq @samples;
+  my @unique_names = uniq @names;
+  if (scalar(@unique_time_points) == scalar(@time_points)){
+    @prefixes = @time_points;
+  }elsif(scalar(@unique_time_points_tissue) == scalar(@time_points_tissue)){
+    @prefixes = @time_points_tissue;
+  }elsif(scalar(@unique_samples) == scalar(@samples)){
+    @prefixes = @samples;
+  }elsif(scalar(@unique_names) == scalar(@names)){
+    @prefixes = @names;
+  }else{
+    die $self->error_message("could not resolve unique prefixes for add-readcounts");
+  }
+
+  #Record the header prefix chosen on the ref_builds object
+  foreach my $name (sort {$ref_builds{$a}->{order} <=> $ref_builds{$b}->{order}} keys  %ref_builds){
+    my $prefix = shift @prefixes;
+    $ref_builds{$name}{prefix} = $prefix;
+  }
+
+  return(\%ref_builds);
+}
+
+sub add_rnaseq_ref_builds {
+  my $self = shift;
+  my $ref_builds = shift;
+  my $rnaseq_builds = shift;
+  foreach my $rnaseq_build_id (keys %{$rnaseq_builds}){
+    my $build_type = $rnaseq_builds->{$rnaseq_build_id}->{type};
+    my $rnaseq_build = $rnaseq_builds->{$rnaseq_build_id}->{build};
+    my $subject_name = $rnaseq_build->subject->name;
+    my $subject_common_name = $rnaseq_build->subject->common_name;
+    $subject_common_name =~ s/\,//g;
+    $subject_common_name =~ s/\s+/\_/g;
+    my $bam_path = $rnaseq_build->alignment_result->bam_file;
+    my @timepoints = $rnaseq_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+
+    my $time_point = "day0";
+    if (@timepoints){
+      $time_point = $timepoints[0]->attribute_value;
+      $time_point =~ s/\s+//g;
+    }
+
+    my $tissue_desc = $rnaseq_build->subject->tissue_desc;
+    $tissue_desc =~ s/\s+/\-/g;
+    $tissue_desc =~ s/\,//g;
+
+    my $rnaseq_name = $subject_name . "_$build_type" . "_" .
+      $subject_common_name . "_$time_point";
+    $ref_builds->{$rnaseq_name}{type} = $build_type;
+    $ref_builds->{$rnaseq_name}{sample_name} = $subject_name;
+    $ref_builds->{$rnaseq_name}{sample_name_build_type} = $subject_name . "_" . $build_type;
+    $ref_builds->{$rnaseq_name}{sample_common_name} = $subject_common_name;
+    $ref_builds->{$rnaseq_name}{bam_path} = $bam_path;
+    $ref_builds->{$rnaseq_name}{time_point} = $subject_common_name . "_" . $build_type . "_" . $time_point;
+    $ref_builds->{$rnaseq_name}{time_point_tissue} = $subject_common_name  . "_" . $build_type . "_" . $tissue_desc . "_" . $time_point;
+    $ref_builds->{$rnaseq_name}{day} = $time_point;
+  }
+}
+
+sub get_header_prefixes {
+  my $self = shift;
+  my %args = @_;
+  my $align_builds = $args{'-align_builds'};
+  #Determine header prefixes to use. In order of preference if all are unique: (time_points, samples, names)
+  my @prefixes;
+  foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys %{$align_builds}){
+    push(@prefixes, $align_builds->{$name}->{prefix});
+  }
+  return @prefixes;
+}
+
+sub parse_qualities {
+  my $self = shift;
+  my $min_mq_bq = $self->sireport_min_mq_bq;
+  my @mq_bq_pairs = split(";", $min_mq_bq);
+  my (@mqs, @bqs);
+  foreach my $mq_bq_pair(@mq_bq_pairs) {
+    my ($mq, $bq) = split(",", $mq_bq_pair);
+    if($mq < 0) {
+      die $self->error_message("Negative mapping quality $mq in Processing Profile");
+    }
+    if($bq < 0) {
+      die $self->error_message("Negative mapping quality $bq in Processing Profile");
+    }
+    push @mqs, $mq;
+    push @bqs, $bq;
+  }
+  return (\@mqs, \@bqs);
+}
+
+sub create_copycat_cnvhmm_file {
+    my $self = shift;
+    my $somatic_var_build = shift;
+    my $copycat_cnvhmm_file = shift;
+    my @copycat_dirs = glob($somatic_var_build->data_directory ."/variants/cnv/copy-cat*");
+    my $alt_paired;
+    for my $copycat_dir (@copycat_dirs) {
+        if(-e $copycat_dir . "/alts.paired.dat") {
+            $alt_paired =  $copycat_dir . "/alts.paired.dat";
+            last;
+        }
+    }
+    my $awk_command = "awk \'BEGIN { print \"CHR\\tSTART\\tEND\\tSIZE\\tnMarkers\\tCN1\\tAdjusted_CN1\\tCN2\\tAdjusted_CN2\\tLLR_Somatic\\tStatus\" }\'" .
+        "\'{ if(\$5>2) { status = \"Gain\"; } else { status = \"Loss\"; } print \$1\"\\t\"\$2\"\\t\"\$3\"\\t\"\$3-\$2\"\\t\"\$4\"\\t\"\$5\"\\t\"\$5\"\\t2\\t2\\tNA\\t\"status }\' " .
+        "$alt_paired > $copycat_cnvhmm_file";
+    Genome::Sys->status_message("$awk_command");
+    Genome::Sys->shellcmd(cmd => $awk_command);
+}
+
+sub create_copycat_cnvhq_file {
+    my $self = shift;
+    my $somatic_var_build = shift;
+    my $output_dir = shift;
+    my $copycat_dir = glob($somatic_var_build->data_directory . "/variants/cnv/copy-cat*");
+    my $rd_bins;
+    if(-e $copycat_dir . "/rd.bins.dat") {
+        $rd_bins = $copycat_dir . "/rd.bins.dat";
+    } else {
+        die $self->error_message("Unable to find rd.bins.dat in " . $copycat_dir);
+    }
+    my $copycat_cnvhmm = $output_dir . "/copycat.cnvs.hq";
+    my $awk_cmd = "awk 'BEGIN { print \"CHR\\tPOS\\tTUM\\tNORMAL\\tDIFF\" }" .
+        "!/NA|Inf/ {  print \$1\"\\t\"\$2\"\\t\"\$3\"\\t2\\t\"\$3-2}\' " .
+        "$rd_bins > $copycat_cnvhmm";
+    Genome::Sys->shellcmd(cmd => $awk_cmd);
+    return $copycat_cnvhmm;
+}
+
+sub _is_copycat_somvar {
+    my $self = shift;
+    my $somatic_var_build = shift;
+    if(not -s $somatic_var_build->data_directory . "/variants/cnvs.hq" and
+        glob( $somatic_var_build->data_directory . "/variants/cnv/copy-cat*")) {
+          return 1;
+    } else {
+      return 0;
+    }
 }
 
 1;

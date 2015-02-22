@@ -45,17 +45,11 @@ class Genome::Model::Tools::CopyCat::Somatic{
             default => 1,
             doc =>'do normalization on a per-read-length basis',
         },
-        reference_build_id => {
+        annotation_data_id => {
             is => 'String',
             is_optional => 0,
             is_input => 1,
-            doc => 'Reference build of annotation set to use',
-        },
-        annotation_version => {
-            is => 'String',
-            is_optional => 0,
-            is_input => 1,
-            doc =>'annotation version to use. (i.e. "1") Run "gmt copy-cat list" to see available versions (and be aware that the list command takes like 3 minutes to complete).'
+            doc => 'Run "gmt copy-cat list" to see available versions (and be aware that the list command takes like 3 minutes to complete',
         },
         tumor_samtools_file => {
             is => 'String',
@@ -111,8 +105,13 @@ class Genome::Model::Tools::CopyCat::Somatic{
             is_optional => 1,
             default => 1,
             doc => "the estimated fraction of the tumor sample composed of tumor cells (as opposed to normal admixture)",
-        }
-        ]
+        },
+    ],
+    has_param => [
+        lsf_resource => {
+            default_value => "-M 8000000 -R 'select[mem>8000] rusage[mem=8000]'",
+        },
+    ],
 };
 
 sub help_brief {
@@ -131,8 +130,6 @@ sub execute {
     my $output_directory = $self->output_directory;
     my $per_lib = $self->per_library;
     my $per_read_length = $self->per_read_length;
-    my $annotation_version = $self->annotation_version;
-    my $reference_build_id = $self->reference_build_id;
     my $tumor_samtools_file = $self->tumor_samtools_file;
     my $normal_samtools_file = $self->normal_samtools_file;
     my $processors = $self->processors;
@@ -143,9 +140,9 @@ sub execute {
 
 
     #get annotation directory
-    my $annotation_sr = Genome::Model::Tools::CopyCat::AnnotationData->get_with_lock(reference_sequence => $reference_build_id, version => $annotation_version);
-    unless ($annotation_sr){
-        $self->error_message("Couldn't find an annotation data set for reference_build: $reference_build_id version: $annotation_version");
+    my $annotation_sr = Genome::Model::Tools::CopyCat::AnnotationData->get($self->annotation_data_id);
+    unless ($annotation_sr) {
+        die $self->error_message("Couldn't find an annotation data set for ID %s", $self->annotation_data_id);
     }
     my $annotation_directory = $annotation_sr->annotation_data_path;
 
@@ -209,6 +206,7 @@ sub execute {
 
     #open the r file
     open(my $RFILE, ">$output_directory/run.R") || die "Can't open R file for writing.\n";
+    print $RFILE "options(error = \n","   function() {\n", "      traceback(2)\n","      quit(\"no\",status=1)\n","   }",")\n";      
     print $RFILE "library(copyCat)\n";
 
     print $RFILE "runPairedSampleAnalysis(annotationDirectory=\"$annotation_directory\",\n";
@@ -231,6 +229,27 @@ sub execute {
     print $RFILE "                        tumorSamtoolsFile=$tumor_samtools_file)\n";
 
     close($RFILE);
+
+#print all of this to STDERR for debugging:
+    print STDERR "Calling copy cat with params:\n";
+    print STDERR "runPairedSampleAnalysis(annotationDirectory=\"$annotation_directory\",\n";
+    print STDERR "                        outputDirectory=\"$output_directory\",\n";
+    print STDERR "                        normal=\"$normal_window_file\",\n";
+    print STDERR "                        tumor=\"$tumor_window_file\",\n";
+    print STDERR "                        inputType=\"bins\",\n";
+    print STDERR "                        maxCores=$processors,\n";
+    print STDERR "                        binSize=0,\n";
+    print STDERR "                        perLibrary=$per_lib,\n";
+    print STDERR "                        perReadLength=$per_read_length,\n";
+    print STDERR "                        verbose=TRUE,\n";
+    print STDERR "                        minWidth=$min_width,\n";
+    print STDERR "                        minMapability=$min_mapability,\n";
+    print STDERR "                        dumpBins=$dump_bins,\n";
+    print STDERR "                        doGcCorrection=$gcCorr,\n";
+    print STDERR "                        samtoolsFileFormat=\"" . $self->samtools_file_format ."\",\n";
+    print STDERR "                        purity=" . $tumor_purity .",\n";
+    print STDERR "                        normalSamtoolsFile=$normal_samtools_file,\n";
+    print STDERR "                        tumorSamtoolsFile=$tumor_samtools_file)\n";
 
     #drop into the output directory to make running the R script easier
     my $cmd = "Rscript $output_directory/run.R";

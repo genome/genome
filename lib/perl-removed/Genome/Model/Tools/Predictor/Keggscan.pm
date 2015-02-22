@@ -118,7 +118,7 @@ sub run_predictor {
     }
 
     make_path($self->output_directory);
-    chmod(0775, $self->output_directory);
+    chmod(0770, $self->output_directory);
 
     $self->debug_message("Done creating output directory, now creating EC indices.");
 

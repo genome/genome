@@ -3,7 +3,7 @@ package Genome::Model::Tools::Relationship::HomozygousRecessive;
 use strict;
 use warnings;
 use Data::Dumper;
-use Genome;           
+use Genome;
 use Genome::Info::IUB;
 use Genome::Utility::Vcf qw(get_vcf_header open_vcf_file);
 use POSIX;
@@ -50,7 +50,7 @@ sub help_brief {
 
 sub help_detail {
 }
-#/gscuser/dlarson/src/polymutt.0.01/bin/polymutt -p 20000492.ped -d 20000492.dat -g 20000492.glfindex --minMapQuality 1 --nthreads 4 --vcf 20000492.standard.vcf
+
 sub execute {
     my $self = shift;
 

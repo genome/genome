@@ -67,7 +67,6 @@ foreach my $m (@models){
   my $extraction_type = $sample->extraction_type || "UNDEF";
   my $sample_common_name = $sample->common_name || "UNDEF";
   my $tissue_desc = $sample->tissue_desc || "UNDEF";
-  my $cell_type = $sample->cell_type || "UNDEF";
 
   my $data_directory = "NA";
   if ($m->_last_complete_build_id){

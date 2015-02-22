@@ -133,7 +133,7 @@ class Genome::Model::Tools::Somatic::PlotCircos{
         },
         lsf_resource => {
             is_param => 1,
-            default_value => 'rusage[mem=8000, tmp=2000] select[type==LINUX64 && mem > 8000 && tmp > 2000] span[hosts=1] -M 8000000'
+            default_value => 'rusage[mem=8000, tmp=2000] select[mem > 8000 && tmp > 2000] span[hosts=1] -M 8000000'
         }, 
         lsf_queue => {
             is_param => 1,

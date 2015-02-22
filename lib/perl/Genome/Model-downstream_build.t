@@ -28,13 +28,12 @@ class Genome::Model::Build::Test {
 };
 ok(Genome::Model::Build::Test->__meta__, 'got meta object for test build subclass') or die;
 
-my $observer = Genome::Model::Event::Build->add_observer(
-    aspect => 'event_status',
+my $observer = Genome::Model::Build->add_observer(
+    aspect => 'status',
     note => 'build_success',
     callback => sub {
         my ($self, $property_name, $old_value, $new_value) = @_;
-        my $build = $self->build;
-        my $model = $build->model;
+        my $model = $self->model;
         my @to_models = $model->to_models;
         map { $_->build_requested(1) } @to_models;
         return 1;
@@ -44,8 +43,8 @@ ok($observer, 'successfully created observer for build');
 
 my @observers = UR::Observer->get(
     note => 'build_success',
-    aspect => 'event_status',
-    subject_class_name => 'Genome::Model::Event::Build',
+    aspect => 'status',
+    subject_class_name => 'Genome::Model::Build',
 );
 ok(@observers == 1, 'got one observer back, as expected');
 

@@ -9,7 +9,7 @@ use Workflow::Simple;
 
 use List::MoreUtils qw/ uniq /;
 class Genome::ModelGroup::Command::FamilyBasedSubmission {
-    is => 'Genome::Command::Base',
+    is => 'Command::V2',
     has => [
     model_group => {
         is => 'Genome::ModelGroup',
@@ -83,7 +83,7 @@ sub execute {
         my @results = $build->results;
         for my $result (@results) {
             if ($result->class eq "Genome::InstrumentData::AlignmentResult::Merged") {
-                push @bams, $result->merged_alignment_bam_path;
+                push @bams, $result->bam_file;
             }
         }
         my @base_bam_name = map {basename($_)} @bams;

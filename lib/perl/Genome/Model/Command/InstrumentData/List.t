@@ -55,7 +55,7 @@ $lister = Genome::Model::Command::InstrumentData::List->create(
     compatible => 1,
 );
 ok($lister, 'Created the lister for compatible inst data');
-ok($lister->execute, 'Show compatable instrument data');
+ok($lister->execute, 'Show compatible instrument data');
 
 #< Fails >#
 # no model id

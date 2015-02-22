@@ -8,7 +8,7 @@ use File::Basename qw/dirname/;
 use File::Spec::Functions;
 
 class Genome::Model::Tools::Gatk::SomaticIndel {
-    is => 'Genome::Model::Tools::Gatk',
+    is => 'Genome::Model::Tools::Gatk::Base',
     has => [
         normal_bam => {
             is => 'Text',
@@ -63,7 +63,7 @@ class Genome::Model::Tools::Gatk::SomaticIndel {
             doc => "Parameters for GATK",
             is_optional => 1,
             is_input => 1,
-            example_values => ["/gscmnt/839/info/medseq/reference_sequences/NCBI-human-build36/all_sequences.fa"],
+            example_values => ["/gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/all_sequences.fa"],
         },
         mb_of_ram => {
             is => 'Text',
@@ -79,7 +79,7 @@ class Genome::Model::Tools::Gatk::SomaticIndel {
     ],
     has_param => [
         lsf_resource => {
-            default => "-R 'select[model!=Opteron250 && type==LINUX64 && tmp>1000] span[hosts=1] rusage[mem=6000, tmp=1000]' -M 6000000",
+            default => "-R 'select[tmp>1000] span[hosts=1] rusage[mem=6000, tmp=1000]' -M 6000000",
         }
     ],
 };

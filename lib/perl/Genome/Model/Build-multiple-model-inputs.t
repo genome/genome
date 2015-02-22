@@ -160,5 +160,5 @@ is_deeply(\@input_builds, \@expected_inputs,'user-defined input build was copied
 done_testing;
 
 sub by_date {
-    $a->date_scheduled cmp $b->date_scheduled
+    $a->date_scheduled cmp $b->date_scheduled || $a->date_completed cmp $b->date_completed
 }

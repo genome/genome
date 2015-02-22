@@ -1,5 +1,5 @@
 package Genome::Env::GENOME_JAR_PATH;
-our $default_value = '/usr/share/java';
+sub default_value { '/usr/share/java' }
 
 =pod
 

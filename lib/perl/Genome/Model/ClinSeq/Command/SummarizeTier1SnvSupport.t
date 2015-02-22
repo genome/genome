@@ -13,11 +13,11 @@ use Test::More tests => 22;
 use_ok('Genome::Model::ClinSeq::Command::SummarizeTier1SnvSupport');
 
 #Define the location of expected test results and check that it is valid
-my $expected_out = $ENV{GENOME_TEST_INPUTS} . 'Genome-Model-ClinSeq-Command-SummarizeTier1SnvSupport/2013-11-30/';
+my $expected_out = $ENV{GENOME_TEST_INPUTS} . 'Genome-Model-ClinSeq-Command-SummarizeTier1SnvSupport/2014-05-27/';
 ok(-d $expected_out, "Directory of expected output exists: $expected_out") or die;
 
 #Get an exome somatic variation build
-my $exome_build_id = 138012408;
+my $exome_build_id = 'e1094ea82292499cba50a90bfbd6e390';
 my $exome_build = Genome::Model::Build->get($exome_build_id);
 ok($exome_build, "Got exome somatic variation build from id: $exome_build_id") or die;
 
@@ -69,7 +69,7 @@ foreach my $pdf (@pdf_list){
 
 #Diff the result, if there are differences, store the new result in /tmp for examination
 my $temp_dir = "/tmp/last-summarize-tier1-snv-support/";
-my @diff = `diff -x '*.pdf' -x '*.R' -x '.stderr' -x '.stdout' -r $expected_out $output_dir`;
+my @diff = `diff -x '*.pdf' -x '*.R' -x '*.stderr' -x '*.stdout' -r $expected_out $output_dir`;
 is(scalar(@diff), 0, "only expected differences")
 or do {
   for (@diff) { diag($_) }

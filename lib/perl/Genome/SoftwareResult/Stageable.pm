@@ -2,8 +2,11 @@ package Genome::SoftwareResult::Stageable;
 
 use warnings;
 use strict;
+
 use Genome;
+
 use Sys::Hostname;
+use File::Find::Rule qw();
 use File::Path;
 
 class Genome::SoftwareResult::Stageable {
@@ -73,7 +76,6 @@ sub _needs_symlinks_followed_when_syncing {
 sub _promote_data {
     my $self = shift;
 
-    #my $container_dir = File::Basename::dirname($self->output_dir);
     my $staging_dir = $self->temp_staging_directory;
     my $output_dir  = $self->output_dir;
 
@@ -114,15 +116,7 @@ sub _promote_data {
         }
     }
 
-    chmod 02775, $output_dir;
-    for my $subdir (grep { -d $_  } glob("$output_dir/*")) {
-        chmod 02775, $subdir;
-    }
-
-    # Make everything in here read-only 
-    for my $file (grep { -f $_  } glob("$output_dir/*")) {
-        chmod 0444, $file;
-    }
+    $self->disk_allocations->set_files_read_only;
 
     $self->debug_message("Files in $output_dir: \n" . join "\n", glob($output_dir . "/*"));
 

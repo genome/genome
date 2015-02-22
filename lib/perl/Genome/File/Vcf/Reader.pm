@@ -1,13 +1,13 @@
 package Genome::File::Vcf::Reader;
 
-use Genome::File::TypedStream;
+use Genome::File::TypedReader;
 use Genome::File::Vcf::Entry;
 use Genome;
 use Carp qw/confess/;
 use strict;
 use warnings;
 
-use base qw(Genome::File::TypedStream);
+use base qw(Genome::File::TypedReader);
 
 =head1 NAME
 

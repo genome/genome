@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Logger;
 
 use Carp qw(confess);
 use List::Util 'shuffle';
@@ -184,15 +185,22 @@ sub _get_allocation_without_lock_impl {
     my @randomized_candidate_volumes = (@$candidate_volumes,
         shuffle(@$candidate_volumes));
 
+    my $attempts = 0;
     my $chosen_allocation;
     for my $candidate_volume (@randomized_candidate_volumes) {
         if ($candidate_volume->has_space(
                 $self->parameters->kilobytes_requested)) {
             $self->_verify_allocation_path_unused($candidate_volume);
 
+            $attempts++;
             $chosen_allocation = $self->_attempt_allocation_creation(
                 $candidate_volume);
             if ($chosen_allocation) {
+                # we can pretend $attempts is a unit of time to get the metrics we want
+                Genome::Utility::Instrumentation::timing(
+                    'disk.allocation.create.get_allocation_without_lock.attempts',
+                    $attempts * 1000,
+                );
                 last;
             }
         }
@@ -207,8 +215,8 @@ sub _get_allocation_without_lock_impl {
         ));
     }
 
-    $chosen_allocation->debug_message(sprintf("Allocation (%s) created at %s",
-        $chosen_allocation->id, $chosen_allocation->absolute_path));
+    Genome::Logger->debugf("Allocation (%s) created at %s",
+        $chosen_allocation->id, $chosen_allocation->absolute_path);
 
     return $chosen_allocation;
 }
@@ -265,25 +273,25 @@ sub _attempt_allocation_creation {
     }
 
     if ($candidate_volume->is_allocated_over_soft_limit) {
-        Genome::Utility::Instrumentation::inc('disk.allocation."
-            . "get_allocation_without_lock.rollback.over_allocated');
-        $self->debug_message(sprintf(
+        Genome::Utility::Instrumentation::inc('disk.allocation.'
+            . 'get_allocation_without_lock.rollback.over_allocated');
+        Genome::Logger->debugf(
                 "%s's allocated_kb exceeded soft limit (%d kB), "
                 . "rolling back allocation.",
                 $candidate_volume->mount_path,
-                $candidate_volume->soft_limit_kb, 'kB'));
+                $candidate_volume->soft_limit_kb, 'kB');
         $candidate_allocation->delete();
         Genome::Disk::Allocation::_commit_unless_testing();
         return;
 
     } elsif ($candidate_volume->is_used_over_soft_limit) {
-        Genome::Utility::Instrumentation::inc('disk.allocation."
-            . "get_allocation_without_lock.rollback.over_used');
-        $self->debug_message(sprintf(
+        Genome::Utility::Instrumentation::inc('disk.allocation.'
+            . 'get_allocation_without_lock.rollback.over_used');
+        Genome::Logger->debugf(
                 "%s's used_kb exceeded soft limit (%d %s), "
                 . "rolling back allocation.",
                 $candidate_volume->mount_path,
-                $candidate_volume->soft_limit_kb, 'kB'));
+                $candidate_volume->soft_limit_kb, 'kB');
         $candidate_allocation->delete();
         Genome::Disk::Allocation::_commit_unless_testing();
         return;
