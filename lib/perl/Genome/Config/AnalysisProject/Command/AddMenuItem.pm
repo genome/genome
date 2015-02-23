@@ -54,7 +54,9 @@ sub execute {
     }
 
     if($self->reprocess_existing){
-        $self->_mark_instrument_data_bridges;
+        Genome::Config::AnalysisProject::Command::Reprocess->execute(
+            analysis_project => $self->analysis_project
+        );
     }
 
     return $self->analysis_project;
@@ -90,15 +92,6 @@ sub _add_config_items_to_project {
         );
     }
 
-    return 1;
-}
-
-sub _mark_instrument_data_bridges {
-    my $self = shift;
-    my $analysis_project = $self->analysis_project;
-    for my $bridge ($analysis_project->analysis_project_bridges){
-        $bridge->status('new');
-    }
     return 1;
 }
 
