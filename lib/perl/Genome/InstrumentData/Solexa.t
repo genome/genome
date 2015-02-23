@@ -120,6 +120,11 @@ is_deeply( # 'no' property
     ['trim flexbar --adapter CTTTGTGTTTGA --adapter-trim-end LEFT --nono-length-dist --threads 12 --adapter-min-overlap 7 --max-uncalled 150 --min-readlength 25'],
     '"flexbar" w/ params w/ "no" property is an SX trimmer and the command parts are ok!',
 );
+is_deeply( # new SX style, but in trimmer params
+    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'flexbar', trimmer_params => '--adapter CTTTGT  GTTTGA --adapter-trim-end LEFT --nono-length-dist --threads 12 --adapter-min-overlap 7 --max-uncalled 150 --min-readlength 25')],
+    ["trim flexbar --adapter 'CTTTGT  GTTTGA' --adapter-trim-end 'LEFT' --nono-length-dist --threads '12' --adapter-min-overlap '7' --max-uncalled '150' --min-readlength '25'"],
+    '"flexbar" new style, but in trimmer_params command parts are ok!',
+);
 
 #  old style - fails
 ok(

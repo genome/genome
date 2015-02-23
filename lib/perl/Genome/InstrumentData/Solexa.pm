@@ -745,14 +745,15 @@ sub _convert_trimmer_to_sx_commands {
                 return;
             }
         } elsif ( $trimmer_params =~ /--\S+?[= ]\S+/ ) {
-            while($trimmer_params =~ /--(\S+)?[= ](\S+)/g) {
-                my ($key, $value) = ($1, $2);
-                #for compatibility with pre-SX far processing profiles
-                if($trimmer_name eq 'far') {
-                    next if $key eq 'format';
-                }
-
-                push @params, $key => $value;
+            my @tokens = split(/\s\-\-/, $trimmer_params);
+            $tokens[0] =~ s/^\-\-//;
+            for my $token ( @tokens ) {
+                my ($key, $value) = split(/\s/, $token, 2);
+                next if $trimmer_name eq 'far' and $key eq 'format';
+                $value = 1 if not defined $value;
+                $value =~ s/^["']//;
+                $value =~ s/["']$//;
+                push @params, $key, $value;
             }
         } else {
             Carp::confess("Unknown params ($trimmer_params) to convert trimmer to sx command!");
