@@ -522,6 +522,8 @@ sub _print_error_log_preview {
     # terminate any unfinished color regions in preview
     $preview .= $self->_color(' ', 'white');
 
+    # get_terminal_width() appears to be a case of object schizophrenia, it
+    # comes from Genome::Command::Viewer.
     my $screen_width = $self->get_terminal_width();
     if (length($preview) > $screen_width - 20) {
         $preview = substr($preview, 0, $screen_width - 20) . "...";
