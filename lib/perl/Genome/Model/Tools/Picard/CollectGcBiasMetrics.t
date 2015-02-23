@@ -16,12 +16,18 @@ my $input_file = File::Spec->catfile($data_dir, "sorted.bam");
 my $ref_file = File::Spec->catfile($data_dir, "small.fa");
 my $expected_file = File::Spec->catfile($data_dir, "expected.txt");
 
-my $output_file = Genome::Sys->create_temp_file_path;
+my $tmpdir = Genome::Sys->create_temp_directory;
+
+my $output_file = File::Spec->catfile($tmpdir, 'gc_bias.txt');
+my $summary_output_file = File::Spec->catfile($tmpdir, 'gc_bias_summary.txt');
+my $chart_output_file = File::Spec->catfile($tmpdir, 'gc_bias.pdf');
 
 my $cmd = $pkg->create(
     input_file => $input_file,
     refseq_file => $ref_file,
     output_file => $output_file,
+    summary_output => $summary_output_file,
+    chart_output => $chart_output_file,
     );
 
 ok($cmd, "created command");
