@@ -137,7 +137,7 @@ EOS
 
 sub help_detail {
     return <<EOS
-More information about the Picard suite of tools can be found at http://picard.sourceforge.net/.
+More information about the Picard suite of tools can be found at http://broadinstitute.github.io/picard/.
 EOS
 }
 
