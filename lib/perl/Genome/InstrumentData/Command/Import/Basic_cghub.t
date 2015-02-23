@@ -26,7 +26,6 @@ my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_A
 ok($analysis_project, 'create analysis project');
 
 # Create library
-use_ok('Genome::Sample::Command::Import') or die;
 my $sample = Genome::Sample->create(
     name => 'TCGA-AB-2804-03B-01W-0728-08',
 );
