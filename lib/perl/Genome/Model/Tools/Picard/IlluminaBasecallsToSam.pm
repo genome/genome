@@ -1,7 +1,7 @@
 
 package Genome::Model::Tools::Picard::IlluminaBasecallsToSam;
 
-# http://picard.sourceforge.net/command-line-overview.shtml#IlluminaBasecallsToSam
+# http://broadinstitute.github.io/picard/command-line-overview.html#IlluminaBasecallsToSam
 
 use strict;
 use warnings FATAL => 'all';
@@ -89,7 +89,7 @@ sub help_brief {
 sub help_detail {
     return <<EOS
     Generate a SAM or BAM file from data in an Illumina basecalls output directory.  For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#IlluminaBasecallsToSam
+    http://broadinstitute.github.io/picard/command-line-overview.html#IlluminaBasecallsToSam
 EOS
 }
 

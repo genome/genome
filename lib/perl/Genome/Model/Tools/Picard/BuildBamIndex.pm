@@ -30,7 +30,7 @@ sub help_brief {
 sub help_detail {
     return <<EOS
     For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#BuildBamIndex
+    http://broadinstitute.github.io/picard/command-line-overview.html#BuildBamIndex
 EOS
 }
 
