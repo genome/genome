@@ -73,4 +73,13 @@ sub _java_class_name {
     return 'net.sf.picard.sam.EstimateLibraryComplexity';
 }
 
+sub _shellcmd_extra_params {
+    my $self = shift;
+    return (
+        input_files => [$self->input_file],
+        output_files => [$self->output_file],
+        skip_if_output_is_present => 0,
+        );
+}
+
 1;
