@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use File::Basename;
 
 class Genome::Model::Tools::Somatic::FilterFalsePositives {
     is => 'Command',
@@ -24,7 +25,15 @@ class Genome::Model::Tools::Somatic::FilterFalsePositives {
             type => 'String',
             is_input => 1,
             is_output => 1,
+            is_optional => 1,
             doc => 'Filename for variants that pass filter',
+        },
+        'outdir' => {
+            type => 'String',
+            is_input => 1,
+            is_output => 1,
+            is_optional => 1,
+            doc => 'Directory for filter output',
         },
         'filtered_file' => {
             type => 'String',
@@ -198,6 +207,10 @@ sub execute {
         return 1;
     }
 
+    unless($self->output_file or $self->outdir) {
+        die $self->error_message("Please specify output-file or output-directory");
+    }
+
     if (($self->skip_if_output_present)&&(-s $self->output_file)) {
         $self->status_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
         return 1;
@@ -220,9 +233,12 @@ sub execute {
         die;
     }
 
+    my $output_file =
+      $self->output_file?$self->output_file:File::Spec->join($self->outdir, basename($self->variant_file) . ".filtered");
+    $self->status_message("outfile is $output_file");
 
     ## Run the FP filter. Note that both WGS and capture use the same filter now ##
-    $self->run_filter();
+    $self->run_filter($output_file);
 
 }
 
@@ -234,6 +250,7 @@ sub execute {
 
 sub run_filter {
     my $self = shift(@_);
+    my $output_file = shift;
 
     ## Determine the strandedness and read position thresholds ##
 
@@ -263,7 +280,7 @@ sub run_filter {
     my $temp_output_file = Genome::Sys->create_temp_file_path;
     my $ofh = Genome::Sys->open_file_for_writing($temp_output_file);
     unless($ofh) {
-        $self->error_message("Unable to open " . $self->output_file . " for writing.");
+        $self->error_message("Unable to open " . $output_file . " for writing.");
         die;
     }
 
@@ -553,10 +570,10 @@ sub run_filter {
     close($ofh);
     close($ffh);
 
-    my $filtered_file = $self->output_file . ".removed";
+    my $filtered_file = $output_file . ".removed";
     $filtered_file = $self->filtered_file if($self->filtered_file);
 
-    Genome::Sys->copy_file($temp_output_file, $self->output_file);
+    Genome::Sys->copy_file($temp_output_file, $output_file);
     Genome::Sys->copy_file($temp_filtered_file, $filtered_file);
 
     print $stats{'num_variants'} . " variants\n";
