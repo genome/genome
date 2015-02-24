@@ -374,14 +374,7 @@ sub collect_individual_alignments {
             };
         }
 
-        my $test_name;
-        if ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME}) {
-            $test_name = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
-        } elsif ($self->test_name) {
-            $test_name = $self->test_name;
-        } else {
-            $test_name = undef;
-        }
+        my $test_name = $self->test_name // undef;
 
         for my $segment_param (@segment_params) {
             my %all_params = (
