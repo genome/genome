@@ -304,12 +304,8 @@ sub run_filter {
         $self->debug_message('Running BAM Readcounts...');
 
         #First, need to create a variant list file to use for generating the readcounts.
-        my $input = Genome::Sys->open_file_for_reading($self->variant_file);
-
-        unless($input) {
-            $self->error_message("Unable to open " . $self->variant_file . ".");
-            die;
-        }
+        my $input = Genome::Sys->open_file_for_reading($self->variant_file) or
+          die $self->error_message("Unable to open " . $self->variant_file . ".");
 
         ## Build temp file for positions where readcounts are needed ##
         my ($tfh,$temp_path) = Genome::Sys->create_temp_file;
@@ -350,20 +346,24 @@ sub run_filter {
         );
     }
 
+    my $out_readcounts = $output_file . ".readcounts";
+    unless(-e $out_readcounts) {
+      Genome::Sys->copy_file($readcount_file, $out_readcounts);
+    } else {
+      die $self->error_message("$out_readcounts exists already.");
+    }
 
     ## Open the readcounts file ##
-    Genome::Sys->copy_file($readcount_file, $self->output_file . ".readcounts");
-
     my $readcount_fh = Genome::Sys->open_file_for_reading($readcount_file);
     $self->debug_message('Readcounts loaded');
-
 
     ## Open the filtered output file ##
     my $temp_filtered_file = Genome::Sys->create_temp_file_path();
     my $ffh = Genome::Sys->open_file_for_writing($temp_filtered_file);
 
     ## Reopen file for parsing ##
-    my $input = Genome::Sys->open_file_for_reading($self->variant_file);
+    my $input = Genome::Sys->open_file_for_reading($self->variant_file) or
+      die $self->error_message("unable to open variant file");
 
     ## Parse the variants file ##
     my $lineCounter = 0;
