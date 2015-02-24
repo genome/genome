@@ -128,6 +128,12 @@ class Genome::Model::Tools::Somatic::FilterFalsePositives {
             is_optional => 1,
             doc => 'Existing BAM-Readcounts file to save execution time',
         },
+        'bam_readcount_version' => {
+            type => 'String',
+            is_input => 1,
+            is_optional => 1,
+            doc => 'bam-readcount version to use.',
+        },
         ## WGS FILTER OPTIONS ##
 
 
@@ -653,6 +659,10 @@ sub fails_homopolymer_check {
 sub readcount_program {
     my $self = shift;
     my $reference = $self->reference;
+    if($self->bam_readcount_version) {
+      my $bam_rc = "bam-readcount" . $self->bam_readcount_version;
+      return "$bam_rc -f $reference";
+    }
     return "bam-readcount0.4 -f $reference";
 #    return "/gscuser/dlarson/src/genome/bam-readcount/bin/bam-readcount -f $reference";
 }
