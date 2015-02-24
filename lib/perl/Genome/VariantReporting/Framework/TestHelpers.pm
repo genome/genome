@@ -141,8 +141,15 @@ sub setup_bam_results {
     reinstall_sub( {
         into => 'Genome::InstrumentData::AlignmentResult::Merged',
         as => 'bam_file',
-        code => sub {my $self = shift;
-            return $result_to_bam_file{$self->id};
+        code => sub {
+            my $self = shift;
+            my $bam_file = $result_to_bam_file{$self->id};
+            if ($bam_file) {
+                return $bam_file;
+            }
+            else {
+                return File::Spec->join($self->output_dir, $self->id . 'out');
+            }
         },
     });
     reinstall_sub( {
