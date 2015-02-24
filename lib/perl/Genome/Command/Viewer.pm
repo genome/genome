@@ -18,11 +18,9 @@ sub write_report {
 }
 
 sub get_terminal_width {
-    my $screen_width = 80;
-
-    # this can fail in cases where no terminal is queriable
-    eval {($screen_width) = GetTerminalSize();};
-
+    # GetTerminalSize() returns an empty array if unsupported, e.g. in apipe-ci logs.
+    my ($screen_width) = GetTerminalSize();
+    $screen_width ||= 80;
     return $screen_width;
 }
 
