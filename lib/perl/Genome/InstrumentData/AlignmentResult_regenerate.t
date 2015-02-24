@@ -40,9 +40,6 @@ my $ar_class         = 'Genome::Test::Factory::InstrumentData::AlignmentResult';
 my $merge_class      = 'Genome::Test::Factory::InstrumentData::MergedAlignmentResult';
 my $allocation_class = 'Genome::Test::Factory::DiskAllocation';
 
-# We need to override this because when an allocation is moved the contents do not seem to be copied. A bug or something we messed up? FIXME 
-Sub::Install::install_sub({code => sub { 1; }, into => 'Genome::InstrumentData::AlignmentResult', as => 'resize_disk_allocation'});
-
 # We need to override this because get_merged_alignment_results only returns objects in the database... and these are mock objects
 Sub::Install::install_sub({code => sub { my $self = shift; return @_; }, into => 'Genome::InstrumentData::AlignmentResult', as => 'filter_non_database_objects'});
 
