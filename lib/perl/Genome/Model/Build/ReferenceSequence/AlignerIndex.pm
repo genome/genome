@@ -108,10 +108,9 @@ sub _supports_multiple_reference {
 
 sub get_or_create {
     my $class = shift;
-
-    my @objects = $class->SUPER::get_or_create(@_);
-
     my %params = @_;
+
+    my @objects = $class->SUPER::get_or_create(%params);
 
     for my $obj (@objects) {
         next unless ref($obj); # sometimes UR gives us back the package name when deleting?
