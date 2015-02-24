@@ -1,0 +1,18 @@
+experts:
+    'bam-readcount':
+        version: 0.7
+        aligned_bam_result_id: [aligned_bam_result_id]
+        minimum_mapping_quality: 0
+        minimum_base_quality: 0
+        max_count: 10000000
+        per_library: 0
+        insertion_centric: 0
+reports:
+    report_alpha:
+        interpreters:
+            interpreter_x:
+                ix_p1: something
+                ix_p2: something else
+        params:
+            ra_p1: something
+            ra_p2: something else
