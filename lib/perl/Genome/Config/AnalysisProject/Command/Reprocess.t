@@ -20,17 +20,20 @@ my $analysis_project = Genome::Config::AnalysisProject->create(
     name => 'Test Project for Reprocess Command',
 );
 
+my $bridge_class = 'Genome::Config::AnalysisProject::InstrumentDataBridge';
+my $possible_statuses = $bridge_class->__meta__->property(property_name => 'status')->valid_values;
+
 my @instrument_data;
 my @bridges;
-for my $i (0..3) {
+
+for my $i (0..$#$possible_statuses) {
     my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(lane => $i);
     push @instrument_data, $instrument_data;
 
-    my $bridge_class = 'Genome::Config::AnalysisProject::InstrumentDataBridge';
     my $bridge = $bridge_class->create(
         analysis_project => $analysis_project,
         instrument_data => $instrument_data,
-        status => $bridge_class->__meta__->property(property_name => 'status')->valid_values->[$i],
+        status => $possible_statuses->[$i],
     );
     push @bridges, $bridge;
 }
