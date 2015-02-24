@@ -1,5 +1,13 @@
 package Genome::Model::Tools::Htseq::Count::Result;
 
+use strict;
+use warnings;
+
+use File::ReadBackwards;
+use Try::Tiny qw(try catch);
+
+use Genome;
+
 class Genome::Model::Tools::Htseq::Count::Result {
     is => ['Genome::SoftwareResult::StageableSimple', 'Genome::SoftwareResult::WithNestedResults'],
     has_param => [
@@ -219,7 +227,6 @@ sub _run_htseq_count {
 
     my $output_dir = $self->temp_staging_directory;
     $self->debug_message("Output staging directory: $output_dir");
-    $self->debug_message('Output destination directory: %s', $self->output_dir);
 
     # The samtools version is not part of the params because it is not yet required for it to vary.
     # If it does need to vary in the future a param should be addeed and backfilled
@@ -276,6 +283,7 @@ sub _run_htseq_count {
         # from Malachi's notes in JIRA issue TD-490
         # samtools view -h chr22_tumor_nonstranded_sorted.bam | htseq-count --mode intersection-strict --stranded no --minaqual 1 --type exon --idattr transcript_id - chr22.gff > transcript_tumor_read_counts_table.tsv
 
+        my $err_file = "$output_dir/${type}.err";
         my $cmd = $samtools_path
             . " view -h '$sorted_bam' "
             . ($whitelist_alignments_flags ? " -f $whitelist_alignments_flags " : '')
@@ -290,14 +298,31 @@ sub _run_htseq_count {
             . " --idattr ${type}_id"
             . " -"
             . " '$gtf_file'"
-            . " 1>'$output_dir/${type}-counts.tsv'"
-            . " 2>'$output_dir/${type}.err'";
+            . " 1>'$output_dir/${type}-counts.tsv'";
 
-        Genome::Sys->shellcmd(
-            cmd => $cmd, # "touch $output_dir/${type}-counts.tsv", #$cmd,
-            input_files => [$sorted_bam, $gtf_file],
-            #output_files => ["$output_dir/${type}-counts.tsv"],
-        );
+        try {
+            Genome::Sys->shellcmd(
+                cmd => $cmd,
+                input_files => [$sorted_bam, $gtf_file],
+                redirect_stderr => $err_file,
+            );
+        } catch {
+            my $error = $_;
+
+            my $fh = File::ReadBackwards->new($err_file) or die('Failed to read error file from HTSeq run');
+            my @error_lines;
+            for(1..100) {
+                my $line = $fh->readline;
+                last unless defined($line);
+
+                unshift @error_lines, $line;
+            }
+
+            $self->debug_message(join('', "-----Last lines of <$err_file>:\n", @error_lines, "-----End of <$err_file>.\n"));
+
+            die $error;
+        };
+
 
     }
 
