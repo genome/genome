@@ -245,13 +245,7 @@ sub create {
         }
     };
 
-    $self->debug_message("Resizing the disk allocation...");
-    if ($self->_disk_allocation) {
-        unless (eval { $self->_disk_allocation->reallocate }) {
-            $self->warning_message("Failed to reallocate my disk allocation with id (%s). Eval returned (%s) ", $self->_disk_allocation->id, $@);
-        }
-        $self->output_dir($self->_disk_allocation->absolute_path); #update if was moved
-    }
+    $self->resize_disk_allocation;
 
     #purge per lane alignment along with its .bai and md5 files, but
     #create header files and keep flagstat files for the future use
@@ -289,13 +283,8 @@ sub create {
                 }
             }
         }
-        $self->debug_message("Resizing the per lane alignment disk allocation...");
-        if ($alignment->_disk_allocation) {
-            unless (eval { $alignment->_disk_allocation->reallocate }) {
-                $self->warning_message("Failed to reallocate my disk allocation with id (%s). Eval returned (%s) ", $alignment->_disk_allocation->id, $@);
-            }
-            $alignment->output_dir($alignment->_disk_allocation->absolute_path); #update if was moved
-        }
+
+        $alignment->resize_disk_allocation;
     }
 
     $self->debug_message('All processes completed.');
