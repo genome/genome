@@ -16,6 +16,8 @@ package Genome::Model::Tools::Capture::FormatSnvs;     # rename this when you gi
 use strict;
 use warnings;
 use FileHandle;
+use File::Spec;
+use File::Basename;
 use Genome;                                 # using the namespace authorizes Class::Autouse to lazy-load modules under it
 use Genome::Model::Tools::Capture::Helpers qw/iupac_to_base fix_chrom sortByChrPos/;
 
@@ -24,7 +26,8 @@ class Genome::Model::Tools::Capture::FormatSnvs {
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		variants_file	=> { is => 'Text', doc => "File of SNV predictions", is_optional => 0, is_input => 1 },
-		output_file     => { is => 'Text', doc => "Output file to receive formatted lines", is_optional => 0, is_input => 1, is_output => 1 },
+		output_file     => { is => 'Text', doc => "Output file to receive formatted lines", is_optional => 0, is_input => 1, is_optional => 1 },
+		outdir => { is => 'Text', doc => "Output directory to store formatted lines", is_optional => 0, is_input => 1 },
 		preserve_call	=> { is => 'Text', doc => "If set to 1, preserves the consensus call", is_optional => 1, is_input => 1 },
 		append_line	=> { is => 'Text', doc => "If set to 1, appends extra columns in input lines to output lines", is_optional => 1, is_input => 1, default => 0 },
 	],
@@ -38,7 +41,7 @@ sub help_brief {                            # keep this to just a few words <---
 
 sub help_synopsis {
     return <<EOS
-This command formats indels for the annotation pipeline
+This command formats snvs for the annotation pipeline
 EXAMPLE:	gmt analysis somatic-pipeline format-snvs-for-annotation --variants-file [file] --output-file [file]
 EOS
 }
@@ -60,10 +63,19 @@ sub execute {                               # replace with real execution logic.
 
 	## Get required parameters ##
 	my $variants_file = $self->variants_file;
-	my $output_file = $self->output_file;
+	my $output_file;
+	if($self->output_file) {
+		$output_file = $self->output_file;
+	} elsif($self->outdir) {
+		$output_file = File::Spec->join(
+		$self->outdir,
+		basename($variants_file) . ".formatted");
+	} else {
+		die $self->error_message("Specify variants file or outdir.");
+	}
 	
 	## Open outfile ##
-	
+	$self->status_message("Outfile is $output_file");
 	open(OUTFILE, ">$output_file") or die "Can't open outfile: $!\n";
 	
 	## Parse the indels ##
