@@ -739,7 +739,6 @@ sub _convert_trimmer_to_sx_commands {
     # Convert the trimmer params to strings params
     my @params;
     if ( $trimmer_params ) {
-        $self->error_message("Trimmer params: $trimmer_params");
         if($trimmer_params =~ '=>') {
             @params = eval("no strict; no warnings; $trimmer_params");
         } else {
