@@ -36,7 +36,7 @@ class Genome::Model::Tools::Picard::SortSam {
             doc => 'When writing SAM files that need to be sorted, this will specify the number of records stored in RAM before spilling to disk. Increasing this number reduces the number of file handles needed to sort a SAM file, and increases the amount of RAM needed.',
             is_optional => 1,
             default_value => $DEFAULT_MAX_RECORDS_IN_RAM,
-            max_records_in_ram => 'MAX_RECORDS_IN_RAM',
+            picard_param_name => 'MAX_RECORDS_IN_RAM',
         },
     ],
 };
