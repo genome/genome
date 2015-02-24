@@ -234,12 +234,14 @@ sub create {
     #The transaction commit and temporary allocation deletion need to
     #be in different finally blocks.
     finally {
-        for my $allocation (@temp_allocations) {
-            $allocation->delete;
-        }
         unless ($_) {
             $tx->commit();
             $self->debug_message('Merge done');
+        }
+    }
+    finally {
+        for my $allocation (@temp_allocations) {
+            $allocation->delete;
         }
     };
 
