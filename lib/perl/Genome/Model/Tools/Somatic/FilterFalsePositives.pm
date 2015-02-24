@@ -424,7 +424,13 @@ sub run_filter {
                     my $search_chrom = $chrom;
                     $search_chrom = "chr$chrom" if $self->prepend_chr;
                     unless($readcounts = $self->_get_readcount_line($readcount_fh, $search_chrom,$chr_start)){
-                        die $self->error_message("Failed to find readcount data for: ".$search_chrom."\t".$chr_start);
+                        $self->warning_message("Failed to find readcount data for: ".$search_chrom."\t".$chr_start . "\t" . $readcount_file);
+                        $stats{'num_no_readcounts'}++;
+                        print $ffh "$line\tno_reads\n" if($self->filtered_file);
+                        #reset the readcount filehandle
+                        close($readcount_fh);
+                        $readcount_fh = Genome::Sys->open_file_for_reading($readcount_file);
+                        next;
                     }
 
 
