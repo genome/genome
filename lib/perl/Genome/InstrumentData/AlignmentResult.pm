@@ -12,7 +12,6 @@ use File::Copy;
 use File::stat;
 use Carp qw(confess);
 use File::Basename;
-use Scalar::Util qw(refaddr);
 
 use Genome::Utility::Instrumentation;
 
@@ -1748,7 +1747,7 @@ sub filter_non_matching_results {
     for my $merged_result (@merged_results) {
         my @individual_results = $merged_result->collect_individual_alignments;
         if (@individual_results) {
-            push @matching_results, $merged_result if grep{refaddr($_) == refaddr($self)}@individual_results;
+            push @matching_results, $merged_result if grep{$_->id eq $self->id}@individual_results;
         }
     }
 
