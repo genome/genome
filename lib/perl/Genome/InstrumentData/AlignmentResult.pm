@@ -519,7 +519,6 @@ sub create {
     }
 
     # STEP 14: RESIZE THE DISK
-    # TODO: move this into the actual original allocation so we don't need to do this
     $self->resize_disk_allocation;
 
     $self->status_message("Alignment complete.");
@@ -1663,7 +1662,7 @@ sub recreated_alignment_bam_file_paths {
     my $merged_bam    = $self->get_merged_bam_to_revivify_per_lane_bam;
 
     unless ($merged_bam and -s $merged_bam) {
-        die $self->error_message('Failed to get valid merged bam to recreate per lane bam.');
+        die $self->error_message('Failed to get valid merged bam to recreate per lane bam '.$self->id);
     }
 
     my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
@@ -1677,7 +1676,7 @@ sub recreated_alignment_bam_file_paths {
     );
 
     unless ($cmd->execute) {
-        die $self->error_message('Failed to execute RecreatePerLaneBam');
+        die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
     }
 
     if (-s $recreated_bam) {
@@ -1705,6 +1704,9 @@ sub get_merged_bam_to_revivify_per_lane_bam {
 
     unless ($merged_result) {
         $merged_result = $self->get_smallest_merged_alignment_result($self->get_merged_alignment_results);
+        unless ($merged_result) {
+            die $self->error_message('Failed to get archived merged result for per lane alignment '.$self->id);
+        }
         $merged_result->_auto_unarchive;
     }
 

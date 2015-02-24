@@ -231,6 +231,8 @@ sub create {
         $tx->rollback();
         die $self->error_message('Merge failed due to error: ' . $_);
     }
+    #The transaction commit and temporary allocation deletion need to
+    #be in different finally blocks.
     finally {
         for my $allocation (@temp_allocations) {
             $allocation->delete;
@@ -251,6 +253,7 @@ sub create {
 
     #purge per lane alignment along with its .bai and md5 files, but
     #create header files and keep flagstat files for the future use
+    #This is done AFTER merge alignment result commits.
     for my $alignment ($self->collect_individual_alignments) {
         for my $bam_path ($alignment->alignment_bam_file_paths) {
             my $header = $bam_path . '.header';
@@ -284,7 +287,7 @@ sub create {
                 }
             }
         }
-        $self->debug_message("Resizing the disk allocation...");
+        $self->debug_message("Resizing the per lane alignment disk allocation...");
         if ($alignment->_disk_allocation) {
             unless (eval { $alignment->_disk_allocation->reallocate }) {
                 $self->warning_message("Failed to reallocate my disk allocation with id (%s). Eval returned (%s) ", $alignment->_disk_allocation->id, $@);
