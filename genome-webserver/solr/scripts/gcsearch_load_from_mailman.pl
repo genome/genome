@@ -24,13 +24,13 @@ my $HTTP_PATH = 'http://gscsmtp.wustl.edu/pipermail';
 my $MONTH_NAMES = month_names();
 
 
-my $lock_resource = $ENV{GENOME_LOCK_DIR} . '/gcsearch/mailman_loader';
+my $lock_resource = 'gcsearch/mailman_loader';
 
 if (Genome::Config->dev_mode()) {
     $lock_resource .= '_dev';
 }
 
-my $lock = Genome::Sys->lock_resource(resource_lock=>$lock_resource, max_try=>0);
+my $lock = Genome::Sys->lock_resource(resource_lock=>$lock_resource, max_try=>0, scope=>'site');
 unless ($lock) {
     die "could not lock, another instance must be running.";
 }
