@@ -66,10 +66,6 @@ Compare the abundance of an ERCC spike-in with a known concentration.
 EOS
 }
 
-#sub samtools_version { return '0.1.19'; }
-#sub bwa_version { return '0.6.2'; } 
-#sub samtools_max_mem { return 14000000000; }
-
 sub execute {
     my $self = shift;
     
