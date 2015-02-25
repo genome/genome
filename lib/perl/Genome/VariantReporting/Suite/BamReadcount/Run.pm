@@ -42,7 +42,7 @@ class Genome::VariantReporting::Suite::BamReadcount::Run {
             doc => "report results per library. This is the -p parameter in version 0.5.",
         },
         insertion_centric => {
-            is  => 'Bool',
+            is  => 'Boolean',
             example_values => [0],
             doc => "do not include reads containing insertions after the current position in per-base counts. This is the -i parameter in version 0.5.",
         },

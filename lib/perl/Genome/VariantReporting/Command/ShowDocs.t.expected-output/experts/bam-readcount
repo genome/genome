@@ -5,7 +5,7 @@ Add bam readcount information to a vcf
   [1maligned_bam_result_id[0m   Text
     The bam result used to calculate read counts
     This is a translated property.
-  [1minsertion_centric[0m   Bool
+  [1minsertion_centric[0m   Boolean
     do not include reads containing insertions after the current position in per-base counts. This
     is the -i parameter in version 0.5.
     example:
