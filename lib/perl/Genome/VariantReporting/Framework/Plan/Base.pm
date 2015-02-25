@@ -123,9 +123,10 @@ sub __translation_errors__ {
 
 sub needed_translations {
     my $self = shift;
-    return Set::Scalar->new(map {$self->params->{$_}} $self->get_class->required_translated_input_names);
+    my $needed = Set::Scalar->new(map {$self->params->{$_}} $self->get_class->required_translated_input_names);
+    $needed->insert(map {@{$self->params->{$_}}} $self->get_class->required_translated_is_many_input_names);
+    return $needed;
 }
-
 
 sub __object_errors__ {
     my $self = shift;

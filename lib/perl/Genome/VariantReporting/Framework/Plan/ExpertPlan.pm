@@ -21,8 +21,9 @@ sub category {
 
 sub needed_translations {
     my $self = shift;
-    return Set::Scalar->new(map {$self->run_params->{$_}}
-        $self->get_class->run_class->required_translated_input_names);
+    my $needed = Set::Scalar->new(map {$self->run_params->{$_}} $self->get_class->run_class->required_translated_input_names);
+    $needed->insert(map {@{$self->run_params->{$_}}} $self->get_class->run_class->required_translated_is_many_input_names);
+    return $needed;
 }
 
 sub translate {
