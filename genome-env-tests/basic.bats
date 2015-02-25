@@ -12,6 +12,10 @@ function teardown {
     rm_workspace
 }
 
+@test "basic test: genome-env-next" {
+    $BATS_TEST_DIRNAME/../bin/genome-env-next "$BATS_TEST_DIRNAME/testexec/default.sh"
+}
+
 @test "basic test: genome-env-next -D" {
     $BATS_TEST_DIRNAME/../bin/genome-env-next -D "$BATS_TEST_DIRNAME/testexec/D.sh"
 }
