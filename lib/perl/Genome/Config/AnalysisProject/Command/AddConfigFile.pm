@@ -64,19 +64,12 @@ sub execute {
     $self->_apply_tags($result);
 
     if($self->reprocess_existing){
-        $self->_mark_instrument_data_bridges;
+        Genome::Config::AnalysisProject::Command::Reprocess->execute(
+            analysis_project => $self->analysis_project
+        );
     }
 
     return $result;
-}
-
-sub _mark_instrument_data_bridges {
-    my $self = shift;
-    my $analysis_project = $self->analysis_project;
-    for my $bridge ($analysis_project->analysis_project_bridges){
-        $bridge->status('new');
-    }
-    return 1;
 }
 
 sub _apply_tags {
