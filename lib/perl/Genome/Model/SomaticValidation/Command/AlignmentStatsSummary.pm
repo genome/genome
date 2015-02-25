@@ -143,7 +143,13 @@ sub _alignment_metrics_from_result {
     for my $lane (@per_lane_alignments) {
         $total_bases += $lane->total_base_count;
         $total_mapped_bases += $lane->total_aligned_base_count;
-        $mismatches += $lane->total_base_count * $lane->instrument_data->filt_error_rate_avg / 100;
+        my $filt_error_rate_avg;
+        if ($mismatches ne "NA" and $lane->instrument_data->can("filt_error_rate_avg")) {
+            $mismatches += $lane->total_base_count * $lane->instrument_data->filt_error_rate_avg / 100;
+        }
+        else {
+            $mismatches = "NA";
+        }
         push @inserts, $lane->instrument_data->library->original_insert_size;
         $readlengths{$lane->instrument_data->read_length} = 1;
     }
@@ -178,6 +184,10 @@ sub _alignment_metrics_from_result {
 
     #this is approximate. Running our c alignment stat tool to double check...
     $total_unique_mapped_bases = $total_mapped_bases - $flagstat->{reads_marked_duplicates} * (keys %readlengths)[0];
+    my $error_rate = "NA";
+    unless ($mismatches eq "NA") {
+        $error_rate = $mismatches / $total_bases * 100;
+    }
     my $data = {
         '# of lanes (or "sequence events")' => scalar(@per_lane_alignments),
         'Total Bases' => $total_bases,
@@ -185,7 +195,7 @@ sub _alignment_metrics_from_result {
         'Total Unique Mapped Bases' => $total_unique_mapped_bases,
         'Aligned %' => sprintf("%0.02f",$flagstat->{reads_mapped}/$flagstat->{total_reads} * 100),
         'Unique %' => sprintf("%0.02f",($flagstat->{reads_mapped} - $flagstat->{reads_marked_duplicates})/$flagstat->{total_reads} * 100),
-        'Error Rate' => sprintf("%0.02f",$mismatches / $total_bases * 100),
+        'Error Rate' => sprintf("%0.02f",$error_rate),
         'Total # Reads' => $flagstat->{total_reads},
         '%pairs mapping across chromosomes' => sprintf("%0.02f", ($flagstat->{'reads_mapped_in_interchromosomal_pairs'} / $flagstat->{'reads_mapped_in_pair'}) * 100 ),
     };
