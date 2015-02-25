@@ -167,8 +167,13 @@ sub _resolve_lock_name {
     my $class = shift;
     my $params = shift;
 
+    my $label = $params->{label};
+    if(length($label) >= 32) {
+        $label = Genome::Sys->md5sum_data($label);
+    }
+
     return 'genome/software-result-user/' . Genome::Utility::Text::sanitize_string_for_filesystem(
-        join('_', Genome::Sys->md5sum_data($params->{label}), $params->{user}->id, $params->{software_result}->id)
+        join('_', $label, $params->{user}->id, $params->{software_result}->id)
     );
 }
 
