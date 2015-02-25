@@ -1,0 +1,7 @@
+experts:
+    __test__:
+        __planned__: foo
+reports:
+    __test__:
+        interpreters:
+            __test__: {}
