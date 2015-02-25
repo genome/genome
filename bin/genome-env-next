@@ -98,15 +98,23 @@ function main {
     then
         log.info "$@"...
         eval "$ORIG_SET"
-        exec "$@"
+        "$@"
+        EXIT=$?
     else
         echo 'Press <Ctrl>-D or type `logout` to return to normal environment.'
         echo ''
         unset PROMPT_COMMAND
         export PS1="(${GE_ENV_NAME}) \w $ "
         eval "$ORIG_SET"
-        exec "$BASH" --norc --noprofile
+        "$BASH" --norc --noprofile
+        EXIT=$?
     fi
+
+    if test -z "$DISABLE_DB"
+    then
+        test-db delete database $TESTDBSERVER_DB_NAME > /dev/null
+    fi
+    exit $EXIT
 }
 
 function validate_bash {
