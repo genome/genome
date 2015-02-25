@@ -12,11 +12,7 @@ for M in sqitch/genome ur workflow ; do
     submodule_is_clean $M
 done
 
-if git submodule status sqitch/genome | grep -qv '^-'
-then
-    echo "submodule should not be initialized: sqitch/genome" >&2
-    exit 1
-fi
+submodule_is_not_initialized sqitch/genome
 
 if test "$WORKSPACE/genome/ur/lib/UR.pm" != "$(perl -MUR -e 'print $INC{q(UR.pm)}, qq(\n)')"
 then

@@ -69,3 +69,11 @@ function submodule_is_initialized {
         exit 1
     fi
 }
+
+function submodule_is_not_initialized {
+    if git submodule status $1 | grep -qv '^-'
+    then
+        echo "submodule should be not initialized: $1" >&2
+        exit 1
+    fi
+}
