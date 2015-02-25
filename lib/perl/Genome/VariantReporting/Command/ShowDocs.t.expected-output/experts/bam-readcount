@@ -10,6 +10,10 @@ Add bam readcount information to a vcf
     is the -i parameter in version 0.5.
     example:
     0
+  [1mmax_count[0m   Integer
+    max depth to avoid excessive memory. This is the -d parameter in version 0.5.
+    example:
+    10000000
   [1mminimum_base_quality[0m   Integer
     don't include reads where the base quality is less than this. This is the -b parameter. This is
     only available in versions 0.3 and later.

@@ -50,7 +50,16 @@ sub properties_in_plan {
             implied_by => undef,
             is_structural => undef)) {
         next if $property->{is_param} && $property->property_name =~ m/_md5$/;
-        next if $property->{is_param} && $property->property_name =~ m/_count$/;
+        if ($property->{is_param} && $property->property_name =~ m/^(.*)_count$/) {
+            my $base_property_name = $1;
+            my $md5_property_name = join('_', $base_property_name, 'md5');
+            next if $class->__meta__->properties(
+                implied_by => undef,
+                is_structural => undef,
+                is_param => 1,
+                property_name => $md5_property_name,
+            );
+        }
         push @properties, $property;
     }
     return @properties;
