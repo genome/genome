@@ -7,8 +7,6 @@ Extract flanking sequence around variant and reference allele
   [1mreference_fasta[0m   Path
     The reference fasta to use for extracting the sequence
     This is a translated property.
-  [1mrequestor[0m   Genome::Process
-    (undocumented)
   [1mtumor_sample_name[0m   Text
     The sample to analyze
     This is a translated property.

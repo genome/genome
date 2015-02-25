@@ -11,6 +11,4 @@ Annotate vcf with information from one homopolymer bed file
     joinx version to use
   [1mmax_length[0m   Integer
     maximum indel length to annotate as in the homopolymer, default is 2
-  [1mrequestor[0m   Genome::Process
-    (undocumented)
 

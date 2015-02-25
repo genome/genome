@@ -5,8 +5,6 @@ Annotate variants with FPKM value for the sample specified
   [1mfpkm_file[0m   Path
     The fpkm file to use for annotation
     This is a translated property.
-  [1mrequestor[0m   Genome::Process
-    (undocumented)
   [1msample_name[0m   Text
     The sample to analyze
     This is a translated property.

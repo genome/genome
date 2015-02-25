@@ -23,8 +23,6 @@ Add bam readcount information to a vcf
     report results per library. This is the -p parameter in version 0.5.
     example:
     0
-  [1mrequestor[0m   Genome::Process
-    (undocumented)
   [1mversion[0m   Version
     bam-readcount version to be used.
     example:

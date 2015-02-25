@@ -45,7 +45,7 @@ class Genome::VariantReporting::Framework::Component::Expert::Command {
             is => 'Text',
         }
     ],
-    has_transient_optional => [
+    has_transient_structural_optional => [
         requestor => {
             is => 'Genome::Process',
             id_by => 'process_id',

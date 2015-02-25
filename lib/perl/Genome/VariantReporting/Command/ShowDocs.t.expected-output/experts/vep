@@ -22,8 +22,6 @@ Annotate vcf with results from Ensembl VEP (Variant Effect Predictor)
   [1mreference_fasta[0m   Path
     Reference fasta file
     This is a translated property.
-  [1mrequestor[0m   Genome::Process
-    (undocumented)
   [1mspecies[0m   Text
     Species to use
 

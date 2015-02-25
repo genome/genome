@@ -6,8 +6,6 @@ Annotate vcf with results from 1000Genomes vcf
     Field ids to embed from the annotation VCF. Use colons to separate multiple field descriptors.
   [1mjoinx_version[0m   Text
     joinx version to be used.
-  [1mrequestor[0m   Genome::Process
-    (undocumented)
   [1mvcf[0m   Path
     Vcf File containing annotation
     This is a translated property.
