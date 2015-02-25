@@ -53,6 +53,10 @@ class Genome::Model::ClinSeq::Command::Converge::DocmReport {
               is => 'Text',
               doc => 'Limit analysis to variants on this chromosome only',
         },
+        case_name => {
+              is => 'Text',
+              doc => 'Case name to be used for output report prefix.',
+        },
     ],
 };
 
@@ -121,20 +125,29 @@ sub execute {
 
   #Get human readable names hash, keyed on build id
   my $subject_labels = $self->resolve_clinseq_subject_labels;
+  my $case_name;
 
   #Get the case name for this set of builds, if more than one are found, warn the user
-  my $case_name = $self->get_case_name;
+  if($self->case_name) {
+    $case_name = $self->case_name;
+  } else {
+    $case_name = $self->get_case_name;
+  }
   $self->status_message("Producing report for individual: $case_name");
 
   #Get somatic builds associated with the clin-seq builds
   my @clinseq_builds = $self->builds;
   my %somatic_builds;
+  my %rnaseq_builds;
   foreach my $clinseq_build(@clinseq_builds) {
     $clinseq_build->resolve_somatic_builds(\%somatic_builds);
+    $clinseq_build->resolve_rnaseq_builds(\%rnaseq_builds);
   }
 
   #Get reference alignment builds associated with the somatic builds
-  my $align_builds = $self->get_ref_align_builds('-somatic_builds'=>\%somatic_builds);
+  my $align_builds = $self->get_ref_align_builds(
+    '-somatic_builds'=>\%somatic_builds,
+    '-rnaseq_builds'=>\%rnaseq_builds);
 
   #Import the variants, save a local copy for reference, if specified by the user, filter by chr and number
   my $result = $self->gather_variants;
@@ -300,16 +313,20 @@ sub parse_read_counts{
     foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys  %{$align_builds}){
       my $prefix = $align_builds->{$name}->{prefix};
       my $sample_common_name = $align_builds->{$name}->{sample_common_name};
+      my $build_type = $align_builds->{$name}->{type};
       my $ref_count_colname = $prefix . "_ref_count";
       my $var_count_colname = $prefix . "_var_count";
       my $vaf_colname = $prefix . "_VAF";
-
       my $vaf = "NA";
       $vaf = $line[$columns{$vaf_colname}{c}] if (defined($line[$columns{$vaf_colname}{c}]));
-
       if ($vaf eq "NA"){
         $na_found = 1;
         push(@covs, "NA");
+        next;
+      }
+      my $coverage = $line[$columns{$ref_count_colname}{c}] + $line[$columns{$var_count_colname}{c}];
+      push(@covs, $coverage);
+      if($build_type =~ /rnaseq/) {
         next;
       }
       if ($sample_common_name =~ /normal/){
@@ -321,8 +338,6 @@ sub parse_read_counts{
         my $tumor_var_count = $line[$columns{$var_count_colname}{c}];
         $max_tumor_var_count_observed = $tumor_var_count if ($tumor_var_count > $max_tumor_var_count_observed);
       }
-      my $coverage = $line[$columns{$ref_count_colname}{c}] + $line[$columns{$var_count_colname}{c}];
-      push(@covs, $coverage);
       $min_coverage_observed = $coverage if ($coverage < $min_coverage_observed);
     }
 
