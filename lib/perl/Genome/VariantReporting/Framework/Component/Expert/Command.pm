@@ -27,7 +27,7 @@ class Genome::VariantReporting::Framework::Component::Expert::Command {
             default => 0,
         },
     },
-    has_input => [
+    has_structural_input => [
         input_vcf => {
             is => 'Path',
             is_argument => 1,
@@ -51,7 +51,7 @@ class Genome::VariantReporting::Framework::Component::Expert::Command {
             id_by => 'process_id',
         },
     ],
-    has_optional_output => [
+    has_optional_structural_output => [
         output_vcf => {
             is => 'Path',
         },

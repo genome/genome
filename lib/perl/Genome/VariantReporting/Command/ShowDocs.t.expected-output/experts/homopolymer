@@ -7,21 +7,10 @@ Annotate vcf with information from one homopolymer bed file
     This is a translated property.
   [1minfo_string[0m   Text
     name of per-allele info field to store the annotation, default is HOMP_FILTER
-  [1minput_vcf[0m   Path
-    (undocumented)
   [1mjoinx_version[0m   Version
     joinx version to use
   [1mmax_length[0m   Integer
     maximum indel length to annotate as in the homopolymer, default is 2
-  [1moutput_vcf[0m   Path
-    (undocumented)
-  [1mplan_json[0m   Text
-    (undocumented)
   [1mrequestor[0m   Genome::Process
     (undocumented)
-  [1mvariant_type[0m   Text
-    The type of variant the input_result represents
-    valid values:
-     snvs
-     indels
 

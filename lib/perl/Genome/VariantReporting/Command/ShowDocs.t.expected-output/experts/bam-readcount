@@ -5,8 +5,6 @@ Add bam readcount information to a vcf
   [1maligned_bam_result_id[0m   Text
     The bam result used to calculate read counts
     This is a translated property.
-  [1minput_vcf[0m   Path
-    (undocumented)
   [1minsertion_centric[0m   Bool
     do not include reads containing insertions after the current position in per-base counts. This
     is the -i parameter in version 0.5.
@@ -21,21 +19,12 @@ Add bam readcount information to a vcf
     filter reads with mapping quality less than this. This is the -q parameter.
     example:
     0
-  [1moutput_vcf[0m   Path
-    (undocumented)
   [1mper_library[0m   Bool
     report results per library. This is the -p parameter in version 0.5.
     example:
     0
-  [1mplan_json[0m   Text
-    (undocumented)
   [1mrequestor[0m   Genome::Process
     (undocumented)
-  [1mvariant_type[0m   Text
-    The type of variant the input_result represents
-    valid values:
-     snvs
-     indels
   [1mversion[0m   Version
     bam-readcount version to be used.
     example:

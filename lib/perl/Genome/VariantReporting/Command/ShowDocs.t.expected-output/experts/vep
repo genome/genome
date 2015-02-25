@@ -9,16 +9,10 @@ Annotate vcf with results from Ensembl VEP (Variant Effect Predictor)
   [1mfeature_list_ids[0m   Hash
     A hash keyed on INFO TAG with values of FeatureList IDs
     This is a translated property.
-  [1minput_vcf[0m   Path
-    (undocumented)
   [1mjoinx_version[0m   String
     The joinx version to use for sorting
   [1mlsf_resource[0m
     Default value "-R 'select[mem>32000] rusage[mem=32000]' -M 32000000" if not specified
-  [1moutput_vcf[0m   Path
-    (undocumented)
-  [1mplan_json[0m   Text
-    (undocumented)
   [1mplugins[0m   String
     Plugins to use.  These should be formated: PluginName@arg1@arg2,...  If you need to reference
     the plugin config directory in any of the args, use the placeholder PLUGIN_DIR.  For example,
@@ -32,9 +26,4 @@ Annotate vcf with results from Ensembl VEP (Variant Effect Predictor)
     (undocumented)
   [1mspecies[0m   Text
     Species to use
-  [1mvariant_type[0m   Text
-    The type of variant the input_result represents
-    valid values:
-     snvs
-     indels
 

@@ -4,21 +4,10 @@ Annotate vcf with results from 1000Genomes vcf
 [4mPROPERTIES[0m
   [1minfo_string[0m   Text
     Field ids to embed from the annotation VCF. Use colons to separate multiple field descriptors.
-  [1minput_vcf[0m   Path
-    (undocumented)
   [1mjoinx_version[0m   Text
     joinx version to be used.
-  [1moutput_vcf[0m   Path
-    (undocumented)
-  [1mplan_json[0m   Text
-    (undocumented)
   [1mrequestor[0m   Genome::Process
     (undocumented)
-  [1mvariant_type[0m   Text
-    The type of variant the input_result represents
-    valid values:
-     snvs
-     indels
   [1mvcf[0m   Path
     Vcf File containing annotation
     This is a translated property.

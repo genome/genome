@@ -4,12 +4,6 @@ Extract flanking sequence around variant and reference allele
 [4mPROPERTIES[0m
   [1mflank_size[0m   Integer
     The length of the flanking sequence to extract
-  [1minput_vcf[0m   Path
-    (undocumented)
-  [1moutput_vcf[0m   Path
-    (undocumented)
-  [1mplan_json[0m   Text
-    (undocumented)
   [1mreference_fasta[0m   Path
     The reference fasta to use for extracting the sequence
     This is a translated property.
@@ -18,9 +12,4 @@ Extract flanking sequence around variant and reference allele
   [1mtumor_sample_name[0m   Text
     The sample to analyze
     This is a translated property.
-  [1mvariant_type[0m   Text
-    The type of variant the input_result represents
-    valid values:
-     snvs
-     indels
 
