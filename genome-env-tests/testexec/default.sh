@@ -8,6 +8,8 @@ then
     exit 1
 fi
 
+source "$BATS_TEST_DIRNAME/test_helper.bash"
+
 for M in sqitch/genome ur workflow ; do
     submodule_is_clean $M
     submodule_is_initialized $M

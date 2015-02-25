@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 
 load test_helper
+export BATS_TEST_DIRNAME
 
 function setup {
     init_workspace
