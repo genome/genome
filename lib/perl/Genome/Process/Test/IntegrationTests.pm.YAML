@@ -7,9 +7,9 @@ trio_main:
             - cd55282b9dca4d8db8350f281007503e
             - 7718ad01cbe54e2f9c8618396bab778e
             - 216e854d84cf42eea613f1fedf1c94c9
-        tumor_sample: "H_IJ-NA12878"
-        followup_sample: "H_IJ-NA12878-12-NA12892-87"
-        normal_sample: "H_IJ-NA12892"
+        tumor_sample: 2376483307
+        followup_sample: 2894139141
+        normal_sample: 2376482667
         coverage_models:
             - 5484dc982ade42f69231e4f97c7e0349
             - 81d7f0aaf2294378b7080fe3691bf02a
