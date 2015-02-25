@@ -35,8 +35,8 @@ then
     exit 1
 fi
 
-if echo "$GENOME_DS_GMSCHEMA_SERVER" | grep -qv 'apipe-test-db'
+if echo "$GENOME_DS_GMSCHEMA_SERVER" | grep -q 'apipe-test-db'
 then
-    echo "GENOME_DS_GMSCHEMA_SERVER should refer to apipe-test-db" >&2
+    echo "GENOME_DS_GMSCHEMA_SERVER should not refer to apipe-test-db" >&2
     exit 1
 fi
