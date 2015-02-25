@@ -46,7 +46,7 @@ class Genome::VariantReporting::Suite::Vep::Run {
             doc => 'Version of the vepplugins package to use',
         },
     ],
-    has_param => [
+    has_structural_param => [
         lsf_resource => {
             value => q{-R 'select[mem>32000] rusage[mem=32000]' -M 32000000},
         },
