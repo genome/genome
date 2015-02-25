@@ -280,6 +280,7 @@
         <operation name="Annotate vcf with readcounts">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Annotate">
             <inputproperty>input_vcf</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>readcount_results</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -290,15 +291,8 @@
         <operation name="Get inputs from plan">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Adaptor">
             <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
             <outputproperty>aligned_bam_result_id</outputproperty>
-            <outputproperty>insertion_centric</outputproperty>
-            <outputproperty>max_count</outputproperty>
-            <outputproperty>minimum_base_quality</outputproperty>
-            <outputproperty>minimum_mapping_quality</outputproperty>
-            <outputproperty>per_library</outputproperty>
             <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
             <outputproperty>version</outputproperty>
           </operationtype>
         </operation>
@@ -306,11 +300,7 @@
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Run">
             <inputproperty>aligned_bam_result_id</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>insertion_centric</inputproperty>
-            <inputproperty>max_count</inputproperty>
-            <inputproperty>minimum_base_quality</inputproperty>
-            <inputproperty>minimum_mapping_quality</inputproperty>
-            <inputproperty>per_library</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <inputproperty>version</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -319,22 +309,18 @@
           </operationtype>
         </operation>
         <link fromOperation="Annotate vcf with readcounts" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="aligned_bam_result_id" toOperation="Run bam-readcount" toProperty="aligned_bam_result_id"/>
-        <link fromOperation="Get inputs from plan" fromProperty="insertion_centric" toOperation="Run bam-readcount" toProperty="insertion_centric"/>
-        <link fromOperation="Get inputs from plan" fromProperty="max_count" toOperation="Run bam-readcount" toProperty="max_count"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_base_quality" toOperation="Run bam-readcount" toProperty="minimum_base_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_mapping_quality" toOperation="Run bam-readcount" toProperty="minimum_mapping_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="per_library" toOperation="Run bam-readcount" toProperty="per_library"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="version" toOperation="Run bam-readcount" toProperty="version"/>
         <link fromOperation="Run bam-readcount" fromProperty="output_result" toOperation="Annotate vcf with readcounts" toProperty="readcount_results"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Annotate vcf with readcounts" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Annotate vcf with readcounts" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Annotate vcf with readcounts" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run bam-readcount" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run bam-readcount" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run bam-readcount" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
       </operation>
       <operation name="Generate Report (bed)">
         <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -385,39 +371,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Dbsnp::Adaptor">
+        <operation name="Run dbsnp">
+          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Dbsnp::Run">
+            <inputproperty>input_vcf</inputproperty>
             <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
-            <outputproperty>info_string</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-            <outputproperty>vcf</outputproperty>
-          </operationtype>
-        </operation>
-        <operation name="Run dbsnp">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Run">
-            <inputproperty>info_string</inputproperty>
-            <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <inputproperty>vcf</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run dbsnp" toProperty="info_string"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run dbsnp" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run dbsnp" toProperty="variant_type"/>
-        <link fromOperation="Get inputs from plan" fromProperty="vcf" toOperation="Run dbsnp" toProperty="vcf"/>
         <link fromOperation="Run dbsnp" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run dbsnp" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run dbsnp" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run dbsnp" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run dbsnp" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run dbsnp" toProperty="variant_type"/>
       </operation>
       <operation name="homopolymer">
         <operationtype typeClass="Workflow::OperationType::Model">
@@ -428,42 +397,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Homopolymer::Adaptor">
-            <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <outputproperty>homopolymer_list_id</outputproperty>
-            <outputproperty>info_string</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>max_length</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-          </operationtype>
-        </operation>
         <operation name="Run homopolymer">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Homopolymer::Run">
-            <inputproperty>homopolymer_list_id</inputproperty>
-            <inputproperty>info_string</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>max_length</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="homopolymer_list_id" toOperation="Run homopolymer" toProperty="homopolymer_list_id"/>
-        <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run homopolymer" toProperty="info_string"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run homopolymer" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="max_length" toOperation="Run homopolymer" toProperty="max_length"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run homopolymer" toProperty="variant_type"/>
         <link fromOperation="Run homopolymer" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run homopolymer" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run homopolymer" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run homopolymer" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run homopolymer" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run homopolymer" toProperty="variant_type"/>
       </operation>
       <operation name="vep">
         <operationtype typeClass="Workflow::OperationType::Model">
@@ -474,52 +423,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Vep::Adaptor">
-            <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <outputproperty>custom_annotation_tags</outputproperty>
-            <outputproperty>ensembl_version</outputproperty>
-            <outputproperty>feature_list_ids</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>plugins</outputproperty>
-            <outputproperty>plugins_version</outputproperty>
-            <outputproperty>reference_fasta</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>species</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-          </operationtype>
-        </operation>
         <operation name="Run vep">
           <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;32000] rusage[mem=32000]' -M 32000000" commandClass="Genome::VariantReporting::Suite::Vep::Run">
-            <inputproperty>ensembl_version</inputproperty>
-            <inputproperty>feature_list_ids</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>plugins_version</inputproperty>
-            <inputproperty>reference_fasta</inputproperty>
-            <inputproperty>species</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="custom_annotation_tags" toOperation="Run vep" toProperty="custom_annotation_tags"/>
-        <link fromOperation="Get inputs from plan" fromProperty="ensembl_version" toOperation="Run vep" toProperty="ensembl_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="feature_list_ids" toOperation="Run vep" toProperty="feature_list_ids"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run vep" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="plugins_version" toOperation="Run vep" toProperty="plugins_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="plugins" toOperation="Run vep" toProperty="plugins"/>
-        <link fromOperation="Get inputs from plan" fromProperty="reference_fasta" toOperation="Run vep" toProperty="reference_fasta"/>
-        <link fromOperation="Get inputs from plan" fromProperty="species" toOperation="Run vep" toProperty="species"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
         <link fromOperation="Run vep" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run vep" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run vep" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run vep" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run vep" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
       </operation>
       <link fromOperation="BamReadcount" fromProperty="output_vcf" toOperation="dbsnp" toProperty="input_vcf"/>
       <link fromOperation="Generate Report (bed)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (bed)"/>
@@ -596,6 +515,7 @@
         <operation name="Annotate vcf with readcounts">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Annotate">
             <inputproperty>input_vcf</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>readcount_results</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -606,15 +526,8 @@
         <operation name="Get inputs from plan">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Adaptor">
             <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
             <outputproperty>aligned_bam_result_id</outputproperty>
-            <outputproperty>insertion_centric</outputproperty>
-            <outputproperty>max_count</outputproperty>
-            <outputproperty>minimum_base_quality</outputproperty>
-            <outputproperty>minimum_mapping_quality</outputproperty>
-            <outputproperty>per_library</outputproperty>
             <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
             <outputproperty>version</outputproperty>
           </operationtype>
         </operation>
@@ -622,11 +535,7 @@
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Run">
             <inputproperty>aligned_bam_result_id</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>insertion_centric</inputproperty>
-            <inputproperty>max_count</inputproperty>
-            <inputproperty>minimum_base_quality</inputproperty>
-            <inputproperty>minimum_mapping_quality</inputproperty>
-            <inputproperty>per_library</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <inputproperty>version</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -635,22 +544,18 @@
           </operationtype>
         </operation>
         <link fromOperation="Annotate vcf with readcounts" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="aligned_bam_result_id" toOperation="Run bam-readcount" toProperty="aligned_bam_result_id"/>
-        <link fromOperation="Get inputs from plan" fromProperty="insertion_centric" toOperation="Run bam-readcount" toProperty="insertion_centric"/>
-        <link fromOperation="Get inputs from plan" fromProperty="max_count" toOperation="Run bam-readcount" toProperty="max_count"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_base_quality" toOperation="Run bam-readcount" toProperty="minimum_base_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_mapping_quality" toOperation="Run bam-readcount" toProperty="minimum_mapping_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="per_library" toOperation="Run bam-readcount" toProperty="per_library"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="version" toOperation="Run bam-readcount" toProperty="version"/>
         <link fromOperation="Run bam-readcount" fromProperty="output_result" toOperation="Annotate vcf with readcounts" toProperty="readcount_results"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Annotate vcf with readcounts" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Annotate vcf with readcounts" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Annotate vcf with readcounts" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run bam-readcount" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run bam-readcount" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run bam-readcount" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
       </operation>
       <operation name="Generate Report (bed)">
         <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -701,39 +606,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Dbsnp::Adaptor">
+        <operation name="Run dbsnp">
+          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Dbsnp::Run">
+            <inputproperty>input_vcf</inputproperty>
             <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
-            <outputproperty>info_string</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-            <outputproperty>vcf</outputproperty>
-          </operationtype>
-        </operation>
-        <operation name="Run dbsnp">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Run">
-            <inputproperty>info_string</inputproperty>
-            <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <inputproperty>vcf</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run dbsnp" toProperty="info_string"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run dbsnp" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run dbsnp" toProperty="variant_type"/>
-        <link fromOperation="Get inputs from plan" fromProperty="vcf" toOperation="Run dbsnp" toProperty="vcf"/>
         <link fromOperation="Run dbsnp" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run dbsnp" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run dbsnp" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run dbsnp" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run dbsnp" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run dbsnp" toProperty="variant_type"/>
       </operation>
       <operation name="vep">
         <operationtype typeClass="Workflow::OperationType::Model">
@@ -744,52 +632,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Vep::Adaptor">
-            <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <outputproperty>custom_annotation_tags</outputproperty>
-            <outputproperty>ensembl_version</outputproperty>
-            <outputproperty>feature_list_ids</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>plugins</outputproperty>
-            <outputproperty>plugins_version</outputproperty>
-            <outputproperty>reference_fasta</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>species</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-          </operationtype>
-        </operation>
         <operation name="Run vep">
           <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;32000] rusage[mem=32000]' -M 32000000" commandClass="Genome::VariantReporting::Suite::Vep::Run">
-            <inputproperty>ensembl_version</inputproperty>
-            <inputproperty>feature_list_ids</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>plugins_version</inputproperty>
-            <inputproperty>reference_fasta</inputproperty>
-            <inputproperty>species</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="custom_annotation_tags" toOperation="Run vep" toProperty="custom_annotation_tags"/>
-        <link fromOperation="Get inputs from plan" fromProperty="ensembl_version" toOperation="Run vep" toProperty="ensembl_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="feature_list_ids" toOperation="Run vep" toProperty="feature_list_ids"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run vep" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="plugins_version" toOperation="Run vep" toProperty="plugins_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="plugins" toOperation="Run vep" toProperty="plugins"/>
-        <link fromOperation="Get inputs from plan" fromProperty="reference_fasta" toOperation="Run vep" toProperty="reference_fasta"/>
-        <link fromOperation="Get inputs from plan" fromProperty="species" toOperation="Run vep" toProperty="species"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
         <link fromOperation="Run vep" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run vep" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run vep" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run vep" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run vep" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
       </operation>
       <link fromOperation="BamReadcount" fromProperty="output_vcf" toOperation="dbsnp" toProperty="input_vcf"/>
       <link fromOperation="Generate Report (bed)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (bed)"/>
@@ -958,6 +816,7 @@
         <operation name="Annotate vcf with readcounts">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Annotate">
             <inputproperty>input_vcf</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>readcount_results</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -968,15 +827,8 @@
         <operation name="Get inputs from plan">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Adaptor">
             <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
             <outputproperty>aligned_bam_result_id</outputproperty>
-            <outputproperty>insertion_centric</outputproperty>
-            <outputproperty>max_count</outputproperty>
-            <outputproperty>minimum_base_quality</outputproperty>
-            <outputproperty>minimum_mapping_quality</outputproperty>
-            <outputproperty>per_library</outputproperty>
             <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
             <outputproperty>version</outputproperty>
           </operationtype>
         </operation>
@@ -984,11 +836,7 @@
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Run">
             <inputproperty>aligned_bam_result_id</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>insertion_centric</inputproperty>
-            <inputproperty>max_count</inputproperty>
-            <inputproperty>minimum_base_quality</inputproperty>
-            <inputproperty>minimum_mapping_quality</inputproperty>
-            <inputproperty>per_library</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <inputproperty>version</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -997,22 +845,18 @@
           </operationtype>
         </operation>
         <link fromOperation="Annotate vcf with readcounts" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="aligned_bam_result_id" toOperation="Run bam-readcount" toProperty="aligned_bam_result_id"/>
-        <link fromOperation="Get inputs from plan" fromProperty="insertion_centric" toOperation="Run bam-readcount" toProperty="insertion_centric"/>
-        <link fromOperation="Get inputs from plan" fromProperty="max_count" toOperation="Run bam-readcount" toProperty="max_count"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_base_quality" toOperation="Run bam-readcount" toProperty="minimum_base_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_mapping_quality" toOperation="Run bam-readcount" toProperty="minimum_mapping_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="per_library" toOperation="Run bam-readcount" toProperty="per_library"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="version" toOperation="Run bam-readcount" toProperty="version"/>
         <link fromOperation="Run bam-readcount" fromProperty="output_result" toOperation="Annotate vcf with readcounts" toProperty="readcount_results"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Annotate vcf with readcounts" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Annotate vcf with readcounts" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Annotate vcf with readcounts" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run bam-readcount" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run bam-readcount" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run bam-readcount" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
       </operation>
       <operation name="Generate Report (bed)">
         <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -1077,6 +921,7 @@
         <operation name="Annotate vcf with readcounts">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Annotate">
             <inputproperty>input_vcf</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>readcount_results</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -1087,15 +932,8 @@
         <operation name="Get inputs from plan">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Adaptor">
             <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
             <outputproperty>aligned_bam_result_id</outputproperty>
-            <outputproperty>insertion_centric</outputproperty>
-            <outputproperty>max_count</outputproperty>
-            <outputproperty>minimum_base_quality</outputproperty>
-            <outputproperty>minimum_mapping_quality</outputproperty>
-            <outputproperty>per_library</outputproperty>
             <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
             <outputproperty>version</outputproperty>
           </operationtype>
         </operation>
@@ -1103,11 +941,7 @@
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Run">
             <inputproperty>aligned_bam_result_id</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>insertion_centric</inputproperty>
-            <inputproperty>max_count</inputproperty>
-            <inputproperty>minimum_base_quality</inputproperty>
-            <inputproperty>minimum_mapping_quality</inputproperty>
-            <inputproperty>per_library</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <inputproperty>version</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -1116,22 +950,18 @@
           </operationtype>
         </operation>
         <link fromOperation="Annotate vcf with readcounts" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="aligned_bam_result_id" toOperation="Run bam-readcount" toProperty="aligned_bam_result_id"/>
-        <link fromOperation="Get inputs from plan" fromProperty="insertion_centric" toOperation="Run bam-readcount" toProperty="insertion_centric"/>
-        <link fromOperation="Get inputs from plan" fromProperty="max_count" toOperation="Run bam-readcount" toProperty="max_count"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_base_quality" toOperation="Run bam-readcount" toProperty="minimum_base_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_mapping_quality" toOperation="Run bam-readcount" toProperty="minimum_mapping_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="per_library" toOperation="Run bam-readcount" toProperty="per_library"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="version" toOperation="Run bam-readcount" toProperty="version"/>
         <link fromOperation="Run bam-readcount" fromProperty="output_result" toOperation="Annotate vcf with readcounts" toProperty="readcount_results"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Annotate vcf with readcounts" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Annotate vcf with readcounts" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Annotate vcf with readcounts" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run bam-readcount" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run bam-readcount" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run bam-readcount" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
       </operation>
       <operation name="Generate Report (bed)">
         <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -1310,6 +1140,7 @@
         <operation name="Annotate vcf with readcounts">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Annotate">
             <inputproperty>input_vcf</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>readcount_results</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -1320,15 +1151,8 @@
         <operation name="Get inputs from plan">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Adaptor">
             <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
             <outputproperty>aligned_bam_result_id</outputproperty>
-            <outputproperty>insertion_centric</outputproperty>
-            <outputproperty>max_count</outputproperty>
-            <outputproperty>minimum_base_quality</outputproperty>
-            <outputproperty>minimum_mapping_quality</outputproperty>
-            <outputproperty>per_library</outputproperty>
             <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
             <outputproperty>version</outputproperty>
           </operationtype>
         </operation>
@@ -1336,11 +1160,7 @@
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Run">
             <inputproperty>aligned_bam_result_id</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>insertion_centric</inputproperty>
-            <inputproperty>max_count</inputproperty>
-            <inputproperty>minimum_base_quality</inputproperty>
-            <inputproperty>minimum_mapping_quality</inputproperty>
-            <inputproperty>per_library</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <inputproperty>version</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -1349,22 +1169,18 @@
           </operationtype>
         </operation>
         <link fromOperation="Annotate vcf with readcounts" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="aligned_bam_result_id" toOperation="Run bam-readcount" toProperty="aligned_bam_result_id"/>
-        <link fromOperation="Get inputs from plan" fromProperty="insertion_centric" toOperation="Run bam-readcount" toProperty="insertion_centric"/>
-        <link fromOperation="Get inputs from plan" fromProperty="max_count" toOperation="Run bam-readcount" toProperty="max_count"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_base_quality" toOperation="Run bam-readcount" toProperty="minimum_base_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_mapping_quality" toOperation="Run bam-readcount" toProperty="minimum_mapping_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="per_library" toOperation="Run bam-readcount" toProperty="per_library"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="version" toOperation="Run bam-readcount" toProperty="version"/>
         <link fromOperation="Run bam-readcount" fromProperty="output_result" toOperation="Annotate vcf with readcounts" toProperty="readcount_results"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Annotate vcf with readcounts" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Annotate vcf with readcounts" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Annotate vcf with readcounts" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run bam-readcount" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run bam-readcount" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run bam-readcount" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
       </operation>
       <operation name="Generate Report (bed)">
         <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -1415,39 +1231,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Dbsnp::Adaptor">
+        <operation name="Run dbsnp">
+          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Dbsnp::Run">
+            <inputproperty>input_vcf</inputproperty>
             <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
-            <outputproperty>info_string</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-            <outputproperty>vcf</outputproperty>
-          </operationtype>
-        </operation>
-        <operation name="Run dbsnp">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Run">
-            <inputproperty>info_string</inputproperty>
-            <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <inputproperty>vcf</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run dbsnp" toProperty="info_string"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run dbsnp" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run dbsnp" toProperty="variant_type"/>
-        <link fromOperation="Get inputs from plan" fromProperty="vcf" toOperation="Run dbsnp" toProperty="vcf"/>
         <link fromOperation="Run dbsnp" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run dbsnp" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run dbsnp" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run dbsnp" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run dbsnp" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run dbsnp" toProperty="variant_type"/>
       </operation>
       <operation name="homopolymer">
         <operationtype typeClass="Workflow::OperationType::Model">
@@ -1458,42 +1257,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Homopolymer::Adaptor">
-            <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <outputproperty>homopolymer_list_id</outputproperty>
-            <outputproperty>info_string</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>max_length</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-          </operationtype>
-        </operation>
         <operation name="Run homopolymer">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Homopolymer::Run">
-            <inputproperty>homopolymer_list_id</inputproperty>
-            <inputproperty>info_string</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>max_length</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="homopolymer_list_id" toOperation="Run homopolymer" toProperty="homopolymer_list_id"/>
-        <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run homopolymer" toProperty="info_string"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run homopolymer" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="max_length" toOperation="Run homopolymer" toProperty="max_length"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run homopolymer" toProperty="variant_type"/>
         <link fromOperation="Run homopolymer" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run homopolymer" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run homopolymer" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run homopolymer" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run homopolymer" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run homopolymer" toProperty="variant_type"/>
       </operation>
       <operation name="vep">
         <operationtype typeClass="Workflow::OperationType::Model">
@@ -1504,52 +1283,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Vep::Adaptor">
-            <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <outputproperty>custom_annotation_tags</outputproperty>
-            <outputproperty>ensembl_version</outputproperty>
-            <outputproperty>feature_list_ids</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>plugins</outputproperty>
-            <outputproperty>plugins_version</outputproperty>
-            <outputproperty>reference_fasta</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>species</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-          </operationtype>
-        </operation>
         <operation name="Run vep">
           <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;32000] rusage[mem=32000]' -M 32000000" commandClass="Genome::VariantReporting::Suite::Vep::Run">
-            <inputproperty>ensembl_version</inputproperty>
-            <inputproperty>feature_list_ids</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>plugins_version</inputproperty>
-            <inputproperty>reference_fasta</inputproperty>
-            <inputproperty>species</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="custom_annotation_tags" toOperation="Run vep" toProperty="custom_annotation_tags"/>
-        <link fromOperation="Get inputs from plan" fromProperty="ensembl_version" toOperation="Run vep" toProperty="ensembl_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="feature_list_ids" toOperation="Run vep" toProperty="feature_list_ids"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run vep" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="plugins_version" toOperation="Run vep" toProperty="plugins_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="plugins" toOperation="Run vep" toProperty="plugins"/>
-        <link fromOperation="Get inputs from plan" fromProperty="reference_fasta" toOperation="Run vep" toProperty="reference_fasta"/>
-        <link fromOperation="Get inputs from plan" fromProperty="species" toOperation="Run vep" toProperty="species"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
         <link fromOperation="Run vep" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run vep" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run vep" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run vep" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run vep" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
       </operation>
       <link fromOperation="BamReadcount" fromProperty="output_vcf" toOperation="dbsnp" toProperty="input_vcf"/>
       <link fromOperation="Generate Report (bed)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (bed)"/>
@@ -1626,6 +1375,7 @@
         <operation name="Annotate vcf with readcounts">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Annotate">
             <inputproperty>input_vcf</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>readcount_results</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -1636,15 +1386,8 @@
         <operation name="Get inputs from plan">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Adaptor">
             <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
             <outputproperty>aligned_bam_result_id</outputproperty>
-            <outputproperty>insertion_centric</outputproperty>
-            <outputproperty>max_count</outputproperty>
-            <outputproperty>minimum_base_quality</outputproperty>
-            <outputproperty>minimum_mapping_quality</outputproperty>
-            <outputproperty>per_library</outputproperty>
             <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
             <outputproperty>version</outputproperty>
           </operationtype>
         </operation>
@@ -1652,11 +1395,7 @@
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Run">
             <inputproperty>aligned_bam_result_id</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>insertion_centric</inputproperty>
-            <inputproperty>max_count</inputproperty>
-            <inputproperty>minimum_base_quality</inputproperty>
-            <inputproperty>minimum_mapping_quality</inputproperty>
-            <inputproperty>per_library</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <inputproperty>version</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -1665,22 +1404,18 @@
           </operationtype>
         </operation>
         <link fromOperation="Annotate vcf with readcounts" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="aligned_bam_result_id" toOperation="Run bam-readcount" toProperty="aligned_bam_result_id"/>
-        <link fromOperation="Get inputs from plan" fromProperty="insertion_centric" toOperation="Run bam-readcount" toProperty="insertion_centric"/>
-        <link fromOperation="Get inputs from plan" fromProperty="max_count" toOperation="Run bam-readcount" toProperty="max_count"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_base_quality" toOperation="Run bam-readcount" toProperty="minimum_base_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_mapping_quality" toOperation="Run bam-readcount" toProperty="minimum_mapping_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="per_library" toOperation="Run bam-readcount" toProperty="per_library"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="version" toOperation="Run bam-readcount" toProperty="version"/>
         <link fromOperation="Run bam-readcount" fromProperty="output_result" toOperation="Annotate vcf with readcounts" toProperty="readcount_results"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Annotate vcf with readcounts" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Annotate vcf with readcounts" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Annotate vcf with readcounts" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run bam-readcount" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run bam-readcount" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run bam-readcount" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
       </operation>
       <operation name="Generate Report (bed)">
         <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -1731,39 +1466,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Dbsnp::Adaptor">
+        <operation name="Run dbsnp">
+          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Dbsnp::Run">
+            <inputproperty>input_vcf</inputproperty>
             <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
-            <outputproperty>info_string</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-            <outputproperty>vcf</outputproperty>
-          </operationtype>
-        </operation>
-        <operation name="Run dbsnp">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Run">
-            <inputproperty>info_string</inputproperty>
-            <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <inputproperty>vcf</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run dbsnp" toProperty="info_string"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run dbsnp" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run dbsnp" toProperty="variant_type"/>
-        <link fromOperation="Get inputs from plan" fromProperty="vcf" toOperation="Run dbsnp" toProperty="vcf"/>
         <link fromOperation="Run dbsnp" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run dbsnp" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run dbsnp" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run dbsnp" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run dbsnp" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run dbsnp" toProperty="variant_type"/>
       </operation>
       <operation name="vep">
         <operationtype typeClass="Workflow::OperationType::Model">
@@ -1774,52 +1492,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Vep::Adaptor">
-            <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <outputproperty>custom_annotation_tags</outputproperty>
-            <outputproperty>ensembl_version</outputproperty>
-            <outputproperty>feature_list_ids</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>plugins</outputproperty>
-            <outputproperty>plugins_version</outputproperty>
-            <outputproperty>reference_fasta</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>species</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-          </operationtype>
-        </operation>
         <operation name="Run vep">
           <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;32000] rusage[mem=32000]' -M 32000000" commandClass="Genome::VariantReporting::Suite::Vep::Run">
-            <inputproperty>ensembl_version</inputproperty>
-            <inputproperty>feature_list_ids</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>plugins_version</inputproperty>
-            <inputproperty>reference_fasta</inputproperty>
-            <inputproperty>species</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="custom_annotation_tags" toOperation="Run vep" toProperty="custom_annotation_tags"/>
-        <link fromOperation="Get inputs from plan" fromProperty="ensembl_version" toOperation="Run vep" toProperty="ensembl_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="feature_list_ids" toOperation="Run vep" toProperty="feature_list_ids"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run vep" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="plugins_version" toOperation="Run vep" toProperty="plugins_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="plugins" toOperation="Run vep" toProperty="plugins"/>
-        <link fromOperation="Get inputs from plan" fromProperty="reference_fasta" toOperation="Run vep" toProperty="reference_fasta"/>
-        <link fromOperation="Get inputs from plan" fromProperty="species" toOperation="Run vep" toProperty="species"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
         <link fromOperation="Run vep" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run vep" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run vep" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run vep" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run vep" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
       </operation>
       <link fromOperation="BamReadcount" fromProperty="output_vcf" toOperation="dbsnp" toProperty="input_vcf"/>
       <link fromOperation="Generate Report (bed)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (bed)"/>
@@ -2041,6 +1729,7 @@
         <operation name="Annotate vcf with readcounts">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Annotate">
             <inputproperty>input_vcf</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>readcount_results</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -2051,15 +1740,8 @@
         <operation name="Get inputs from plan">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Adaptor">
             <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
             <outputproperty>aligned_bam_result_id</outputproperty>
-            <outputproperty>insertion_centric</outputproperty>
-            <outputproperty>max_count</outputproperty>
-            <outputproperty>minimum_base_quality</outputproperty>
-            <outputproperty>minimum_mapping_quality</outputproperty>
-            <outputproperty>per_library</outputproperty>
             <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
             <outputproperty>version</outputproperty>
           </operationtype>
         </operation>
@@ -2067,11 +1749,7 @@
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Run">
             <inputproperty>aligned_bam_result_id</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>insertion_centric</inputproperty>
-            <inputproperty>max_count</inputproperty>
-            <inputproperty>minimum_base_quality</inputproperty>
-            <inputproperty>minimum_mapping_quality</inputproperty>
-            <inputproperty>per_library</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <inputproperty>version</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -2080,22 +1758,18 @@
           </operationtype>
         </operation>
         <link fromOperation="Annotate vcf with readcounts" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="aligned_bam_result_id" toOperation="Run bam-readcount" toProperty="aligned_bam_result_id"/>
-        <link fromOperation="Get inputs from plan" fromProperty="insertion_centric" toOperation="Run bam-readcount" toProperty="insertion_centric"/>
-        <link fromOperation="Get inputs from plan" fromProperty="max_count" toOperation="Run bam-readcount" toProperty="max_count"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_base_quality" toOperation="Run bam-readcount" toProperty="minimum_base_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_mapping_quality" toOperation="Run bam-readcount" toProperty="minimum_mapping_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="per_library" toOperation="Run bam-readcount" toProperty="per_library"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="version" toOperation="Run bam-readcount" toProperty="version"/>
         <link fromOperation="Run bam-readcount" fromProperty="output_result" toOperation="Annotate vcf with readcounts" toProperty="readcount_results"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Annotate vcf with readcounts" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Annotate vcf with readcounts" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Annotate vcf with readcounts" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run bam-readcount" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run bam-readcount" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run bam-readcount" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
       </operation>
       <operation name="Generate Report (acmg)">
         <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -2156,39 +1830,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Dbsnp::Adaptor">
+        <operation name="Run dbsnp">
+          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Dbsnp::Run">
+            <inputproperty>input_vcf</inputproperty>
             <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
-            <outputproperty>info_string</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-            <outputproperty>vcf</outputproperty>
-          </operationtype>
-        </operation>
-        <operation name="Run dbsnp">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Run">
-            <inputproperty>info_string</inputproperty>
-            <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <inputproperty>vcf</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run dbsnp" toProperty="info_string"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run dbsnp" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run dbsnp" toProperty="variant_type"/>
-        <link fromOperation="Get inputs from plan" fromProperty="vcf" toOperation="Run dbsnp" toProperty="vcf"/>
         <link fromOperation="Run dbsnp" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run dbsnp" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run dbsnp" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run dbsnp" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run dbsnp" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run dbsnp" toProperty="variant_type"/>
       </operation>
       <operation name="homopolymer">
         <operationtype typeClass="Workflow::OperationType::Model">
@@ -2199,42 +1856,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Homopolymer::Adaptor">
-            <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <outputproperty>homopolymer_list_id</outputproperty>
-            <outputproperty>info_string</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>max_length</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-          </operationtype>
-        </operation>
         <operation name="Run homopolymer">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Homopolymer::Run">
-            <inputproperty>homopolymer_list_id</inputproperty>
-            <inputproperty>info_string</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>max_length</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="homopolymer_list_id" toOperation="Run homopolymer" toProperty="homopolymer_list_id"/>
-        <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run homopolymer" toProperty="info_string"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run homopolymer" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="max_length" toOperation="Run homopolymer" toProperty="max_length"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run homopolymer" toProperty="variant_type"/>
         <link fromOperation="Run homopolymer" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run homopolymer" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run homopolymer" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run homopolymer" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run homopolymer" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run homopolymer" toProperty="variant_type"/>
       </operation>
       <operation name="nhlbi">
         <operationtype typeClass="Workflow::OperationType::Model">
@@ -2245,39 +1882,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Nhlbi::Adaptor">
+        <operation name="Run nhlbi">
+          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Nhlbi::Run">
+            <inputproperty>input_vcf</inputproperty>
             <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
-            <outputproperty>info_string</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-            <outputproperty>vcf</outputproperty>
-          </operationtype>
-        </operation>
-        <operation name="Run nhlbi">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Run">
-            <inputproperty>info_string</inputproperty>
-            <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <inputproperty>vcf</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run nhlbi" toProperty="info_string"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run nhlbi" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run nhlbi" toProperty="variant_type"/>
-        <link fromOperation="Get inputs from plan" fromProperty="vcf" toOperation="Run nhlbi" toProperty="vcf"/>
         <link fromOperation="Run nhlbi" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run nhlbi" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run nhlbi" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run nhlbi" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run nhlbi" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run nhlbi" toProperty="variant_type"/>
       </operation>
       <operation name="vep">
         <operationtype typeClass="Workflow::OperationType::Model">
@@ -2288,52 +1908,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Vep::Adaptor">
-            <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <outputproperty>custom_annotation_tags</outputproperty>
-            <outputproperty>ensembl_version</outputproperty>
-            <outputproperty>feature_list_ids</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>plugins</outputproperty>
-            <outputproperty>plugins_version</outputproperty>
-            <outputproperty>reference_fasta</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>species</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-          </operationtype>
-        </operation>
         <operation name="Run vep">
           <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;32000] rusage[mem=32000]' -M 32000000" commandClass="Genome::VariantReporting::Suite::Vep::Run">
-            <inputproperty>ensembl_version</inputproperty>
-            <inputproperty>feature_list_ids</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>plugins_version</inputproperty>
-            <inputproperty>reference_fasta</inputproperty>
-            <inputproperty>species</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="custom_annotation_tags" toOperation="Run vep" toProperty="custom_annotation_tags"/>
-        <link fromOperation="Get inputs from plan" fromProperty="ensembl_version" toOperation="Run vep" toProperty="ensembl_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="feature_list_ids" toOperation="Run vep" toProperty="feature_list_ids"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run vep" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="plugins_version" toOperation="Run vep" toProperty="plugins_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="plugins" toOperation="Run vep" toProperty="plugins"/>
-        <link fromOperation="Get inputs from plan" fromProperty="reference_fasta" toOperation="Run vep" toProperty="reference_fasta"/>
-        <link fromOperation="Get inputs from plan" fromProperty="species" toOperation="Run vep" toProperty="species"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
         <link fromOperation="Run vep" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run vep" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run vep" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run vep" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run vep" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
       </operation>
       <link fromOperation="BamReadcount" fromProperty="output_vcf" toOperation="dbsnp" toProperty="input_vcf"/>
       <link fromOperation="Generate Report (acmg)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (acmg)"/>
@@ -2424,6 +2014,7 @@
         <operation name="Annotate vcf with readcounts">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Annotate">
             <inputproperty>input_vcf</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>readcount_results</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -2434,15 +2025,8 @@
         <operation name="Get inputs from plan">
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Adaptor">
             <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
             <outputproperty>aligned_bam_result_id</outputproperty>
-            <outputproperty>insertion_centric</outputproperty>
-            <outputproperty>max_count</outputproperty>
-            <outputproperty>minimum_base_quality</outputproperty>
-            <outputproperty>minimum_mapping_quality</outputproperty>
-            <outputproperty>per_library</outputproperty>
             <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
             <outputproperty>version</outputproperty>
           </operationtype>
         </operation>
@@ -2450,11 +2034,7 @@
           <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::BamReadcount::Run">
             <inputproperty>aligned_bam_result_id</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>insertion_centric</inputproperty>
-            <inputproperty>max_count</inputproperty>
-            <inputproperty>minimum_base_quality</inputproperty>
-            <inputproperty>minimum_mapping_quality</inputproperty>
-            <inputproperty>per_library</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <inputproperty>version</inputproperty>
             <outputproperty>output_result</outputproperty>
@@ -2463,22 +2043,18 @@
           </operationtype>
         </operation>
         <link fromOperation="Annotate vcf with readcounts" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="aligned_bam_result_id" toOperation="Run bam-readcount" toProperty="aligned_bam_result_id"/>
-        <link fromOperation="Get inputs from plan" fromProperty="insertion_centric" toOperation="Run bam-readcount" toProperty="insertion_centric"/>
-        <link fromOperation="Get inputs from plan" fromProperty="max_count" toOperation="Run bam-readcount" toProperty="max_count"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_base_quality" toOperation="Run bam-readcount" toProperty="minimum_base_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="minimum_mapping_quality" toOperation="Run bam-readcount" toProperty="minimum_mapping_quality"/>
-        <link fromOperation="Get inputs from plan" fromProperty="per_library" toOperation="Run bam-readcount" toProperty="per_library"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
         <link fromOperation="Get inputs from plan" fromProperty="version" toOperation="Run bam-readcount" toProperty="version"/>
         <link fromOperation="Run bam-readcount" fromProperty="output_result" toOperation="Annotate vcf with readcounts" toProperty="readcount_results"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Annotate vcf with readcounts" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Annotate vcf with readcounts" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Annotate vcf with readcounts" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Annotate vcf with readcounts" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run bam-readcount" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run bam-readcount" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run bam-readcount" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run bam-readcount" toProperty="variant_type"/>
       </operation>
       <operation name="Generate Report (acmg)">
         <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;16000] rusage[mem=16000]' -M 16000000" commandClass="Genome::VariantReporting::Framework::GenerateReport">
@@ -2539,39 +2115,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Dbsnp::Adaptor">
+        <operation name="Run dbsnp">
+          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Dbsnp::Run">
+            <inputproperty>input_vcf</inputproperty>
             <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
-            <outputproperty>info_string</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-            <outputproperty>vcf</outputproperty>
-          </operationtype>
-        </operation>
-        <operation name="Run dbsnp">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Run">
-            <inputproperty>info_string</inputproperty>
-            <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <inputproperty>vcf</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run dbsnp" toProperty="info_string"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run dbsnp" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run dbsnp" toProperty="variant_type"/>
-        <link fromOperation="Get inputs from plan" fromProperty="vcf" toOperation="Run dbsnp" toProperty="vcf"/>
         <link fromOperation="Run dbsnp" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run dbsnp" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run dbsnp" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run dbsnp" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run dbsnp" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run dbsnp" toProperty="variant_type"/>
       </operation>
       <operation name="nhlbi">
         <operationtype typeClass="Workflow::OperationType::Model">
@@ -2582,39 +2141,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Nhlbi::Adaptor">
+        <operation name="Run nhlbi">
+          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Nhlbi::Run">
+            <inputproperty>input_vcf</inputproperty>
             <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
-            <outputproperty>info_string</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-            <outputproperty>vcf</outputproperty>
-          </operationtype>
-        </operation>
-        <operation name="Run nhlbi">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Joinx::Run">
-            <inputproperty>info_string</inputproperty>
-            <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <inputproperty>vcf</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="info_string" toOperation="Run nhlbi" toProperty="info_string"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run nhlbi" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run nhlbi" toProperty="variant_type"/>
-        <link fromOperation="Get inputs from plan" fromProperty="vcf" toOperation="Run nhlbi" toProperty="vcf"/>
         <link fromOperation="Run nhlbi" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run nhlbi" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run nhlbi" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run nhlbi" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run nhlbi" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run nhlbi" toProperty="variant_type"/>
       </operation>
       <operation name="vep">
         <operationtype typeClass="Workflow::OperationType::Model">
@@ -2625,52 +2167,22 @@
           <outputproperty>output_result</outputproperty>
           <outputproperty>output_vcf</outputproperty>
         </operationtype>
-        <operation name="Get inputs from plan">
-          <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::Vep::Adaptor">
-            <inputproperty>plan_json</inputproperty>
-            <inputproperty>variant_type</inputproperty>
-            <outputproperty>custom_annotation_tags</outputproperty>
-            <outputproperty>ensembl_version</outputproperty>
-            <outputproperty>feature_list_ids</outputproperty>
-            <outputproperty>joinx_version</outputproperty>
-            <outputproperty>plugins</outputproperty>
-            <outputproperty>plugins_version</outputproperty>
-            <outputproperty>reference_fasta</outputproperty>
-            <outputproperty>result</outputproperty>
-            <outputproperty>species</outputproperty>
-            <outputproperty>variant_type</outputproperty>
-          </operationtype>
-        </operation>
         <operation name="Run vep">
           <operationtype typeClass="Workflow::OperationType::Command" lsfResource="-R 'select[mem&gt;32000] rusage[mem=32000]' -M 32000000" commandClass="Genome::VariantReporting::Suite::Vep::Run">
-            <inputproperty>ensembl_version</inputproperty>
-            <inputproperty>feature_list_ids</inputproperty>
             <inputproperty>input_vcf</inputproperty>
-            <inputproperty>joinx_version</inputproperty>
-            <inputproperty>plugins_version</inputproperty>
-            <inputproperty>reference_fasta</inputproperty>
-            <inputproperty>species</inputproperty>
+            <inputproperty>plan_json</inputproperty>
             <inputproperty>variant_type</inputproperty>
             <outputproperty>output_result</outputproperty>
             <outputproperty>output_vcf</outputproperty>
             <outputproperty>result</outputproperty>
           </operationtype>
         </operation>
-        <link fromOperation="Get inputs from plan" fromProperty="custom_annotation_tags" toOperation="Run vep" toProperty="custom_annotation_tags"/>
-        <link fromOperation="Get inputs from plan" fromProperty="ensembl_version" toOperation="Run vep" toProperty="ensembl_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="feature_list_ids" toOperation="Run vep" toProperty="feature_list_ids"/>
-        <link fromOperation="Get inputs from plan" fromProperty="joinx_version" toOperation="Run vep" toProperty="joinx_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="plugins_version" toOperation="Run vep" toProperty="plugins_version"/>
-        <link fromOperation="Get inputs from plan" fromProperty="plugins" toOperation="Run vep" toProperty="plugins"/>
-        <link fromOperation="Get inputs from plan" fromProperty="reference_fasta" toOperation="Run vep" toProperty="reference_fasta"/>
-        <link fromOperation="Get inputs from plan" fromProperty="species" toOperation="Run vep" toProperty="species"/>
-        <link fromOperation="Get inputs from plan" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
         <link fromOperation="Run vep" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
         <link fromOperation="Run vep" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
-        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Get inputs from plan" toProperty="plan_json"/>
-        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Get inputs from plan" toProperty="variant_type"/>
         <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run vep" toProperty="input_vcf"/>
+        <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run vep" toProperty="plan_json"/>
         <link fromOperation="input connector" fromProperty="process_id" toOperation="Run vep" toProperty="process_id"/>
+        <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run vep" toProperty="variant_type"/>
       </operation>
       <link fromOperation="BamReadcount" fromProperty="output_vcf" toOperation="dbsnp" toProperty="input_vcf"/>
       <link fromOperation="Generate Report (acmg)" fromProperty="output_result" toOperation="output connector" toProperty="output_result (acmg)"/>
