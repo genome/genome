@@ -12,8 +12,8 @@ source "$BATS_TEST_DIRNAME/test_helper.bash"
 
 for M in sqitch/genome ur workflow ; do
     submodule_is_clean $M
+    submodule_is_initialized $M
 done
-submodule_is_not_initialized ur
-module_not_loaded_from_submodule UR
+module_loaded_from_submodule UR
 module_loaded_from_submodule Workflow
-apipe_test_db_is_not_used
+apipe_test_db_is_used

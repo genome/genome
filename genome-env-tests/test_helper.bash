@@ -53,3 +53,61 @@ function rm_workspace {
         rm -rf "$WORKSPACE"
     fi
 }
+
+function submodule_is_clean {
+    if ! git diff --exit-code $1
+    then
+        echo "submodule should be clean: $1" >&2
+        exit 1
+    fi
+}
+
+function submodule_is_initialized {
+    if git submodule status $1 | grep -q '^-'
+    then
+        echo "submodule should be initialized: $1" >&2
+        exit 1
+    fi
+}
+
+function submodule_is_not_initialized {
+    if git submodule status $1 | grep -qv '^-'
+    then
+        echo "submodule should be not initialized: $1" >&2
+        exit 1
+    fi
+}
+
+function apipe_test_db_is_used {
+    if echo "$GENOME_DS_GMSCHEMA_SERVER" | grep -qv 'apipe-test-db'
+    then
+        echo "GENOME_DS_GMSCHEMA_SERVER should refer to apipe-test-db" >&2
+        exit 1
+    fi
+}
+
+function apipe_test_db_is_not_used {
+    if echo "$GENOME_DS_GMSCHEMA_SERVER" | grep -q 'apipe-test-db'
+    then
+        echo "GENOME_DS_GMSCHEMA_SERVER should not refer to apipe-test-db" >&2
+        exit 1
+    fi
+}
+
+function module_loaded_from_submodule {
+    local SUBMODULE="${1,,}"
+    if test "$WORKSPACE/genome/$SUBMODULE/lib/$1.pm" != "$(perl -M$1 -e "print \$INC{q($1.pm)}, qq(\\n)")"
+    then
+        echo "$1 should be loaded from submodule" >&2
+        exit 1
+    fi
+}
+
+function module_not_loaded_from_submodule {
+    local SUBMODULE="${1,,}"
+    if test "$WORKSPACE/genome/$SUBMODULE/lib/$1.pm" == "$(perl -M$1 -e "print \$INC{q($1.pm)}, qq(\\n)")"
+    then
+        echo "$1 should not be loaded from submodule" >&2
+        exit 1
+    fi
+}
