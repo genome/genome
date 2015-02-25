@@ -5,6 +5,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use Test::Exception;
 
 my $pkg = 'Genome::Model::Tools::Picard';
 use_ok($pkg);
@@ -107,6 +108,15 @@ subtest "Enforce minimum version" => sub {
 
         ok(!@failures, "version $ver behaves as expected")
             or diag("Failures: " . Data::Dumper::Dumper(\@failures));
+    }
+};
+
+subtest "Enforce minimum version (invalid version given)" => sub {
+    my $obj = $pkg->create(use_version => '1.82');
+    ok($obj->enforce_minimum_version('1.82'));
+    my @bads = qw(foo v1.82 1.82a);
+    for my $bad (@bads) {
+        dies_ok(sub {$obj->enforce_minimum_version($bad)}, "version '$bad' is invalid");
     }
 };
 

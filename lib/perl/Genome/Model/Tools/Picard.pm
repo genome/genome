@@ -192,7 +192,10 @@ sub _parsed_version {
         $version =~ s/wu0$//;
     }
 
-    return version->parse("v$version");
+    use warnings FATAL => 'all';
+    my $parsed = version->parse("v$version");
+
+    return $parsed;
 }
 
 # version_compare(a, b)
