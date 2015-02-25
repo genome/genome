@@ -61,3 +61,11 @@ function submodule_is_clean {
         exit 1
     fi
 }
+
+function submodule_is_initialized {
+    if git submodule status $1 | grep -q '^-'
+    then
+        echo "submodule should be initialized: $1" >&2
+        exit 1
+    fi
+}
