@@ -93,3 +93,12 @@ function apipe_test_db_is_not_used {
         exit 1
     fi
 }
+
+function module_loaded_from_submodule {
+    local SUBMODULE="${1,,}"
+    if test "$WORKSPACE/genome/$SUBMODULE/lib/$1.pm" != "$(perl -M$1 -e "print \$INC{q($1.pm)}, qq(\\n)")"
+    then
+        echo "$1 should be loaded from submodule" >&2
+        exit 1
+    fi
+}

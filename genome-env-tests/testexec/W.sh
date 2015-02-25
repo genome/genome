@@ -14,11 +14,7 @@ done
 
 submodule_is_not_initialized workflow
 
-if test "$WORKSPACE/genome/ur/lib/UR.pm" != "$(perl -MUR -e 'print $INC{q(UR.pm)}, qq(\n)')"
-then
-    echo "UR should be loaded from submodule" >&2
-    exit 1
-fi
+module_loaded_from_submodule UR
 
 if test "$WORKSPACE/genome/workflow/lib/Workflow.pm" == "$(perl -MWorkflow -e 'print $INC{q(Workflow.pm)}, qq(\n)')"
 then

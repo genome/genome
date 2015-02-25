@@ -20,10 +20,5 @@ then
     exit 1
 fi
 
-if test "$WORKSPACE/genome/workflow/lib/Workflow.pm" != "$(perl -MWorkflow -e 'print $INC{q(Workflow.pm)}, qq(\n)')"
-then
-    echo "Workflow should be loaded from submodule" >&2
-    exit 1
-fi
-
+module_loaded_from_submodule Workflow
 apipe_test_db_is_not_used

@@ -12,19 +12,6 @@ for M in sqitch/genome ur workflow ; do
     submodule_is_clean $M
     submodule_is_initialized $M
 done
-
-if test "$WORKSPACE/genome/ur/lib/UR.pm" != "$(perl -MUR -e 'print $INC{q(UR.pm)}, qq(\n)')"
-then
-    echo "$WORKSPACE/genome/ur/lib/UR.pm" >&2
-    perl -MUR -e 'print $INC{q(UR.pm)}, qq(\n)' >&2
-    echo "UR should be loaded from submodule" >&2
-    exit 1
-fi
-
-if test "$WORKSPACE/genome/workflow/lib/Workflow.pm" != "$(perl -MWorkflow -e 'print $INC{q(Workflow.pm)}, qq(\n)')"
-then
-    echo "Workflow should be loaded from submodule" >&2
-    exit 1
-fi
-
+module_loaded_from_submodule UR
+module_loaded_from_submodule Workflow
 apipe_test_db_is_used

@@ -11,7 +11,5 @@ fi
 for M in sqitch/genome ur workflow ; do
     submodule_is_clean $M
 done
-
 submodule_is_not_initialized sqitch/genome
-
 apipe_test_db_is_not_used
