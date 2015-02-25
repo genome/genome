@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use File::Basename;
+use Text::ParseWords;
 
 class Genome::InstrumentData::Solexa {
     is => ['Genome::InstrumentData', 'Genome::Searchable'],
@@ -740,22 +741,13 @@ sub _convert_trimmer_to_sx_commands {
     if ( $trimmer_params ) {
         if($trimmer_params =~ '=>') {
             @params = eval("no strict; no warnings; $trimmer_params");
-            if ( not @params ) {
-                $self->error_message("Invalid params ($trimmer_params) to convert to command line params! $@");
-                return;
-            }
-        } elsif ( $trimmer_params =~ /--\S+?[= ]\S+/ ) {
-            while($trimmer_params =~ /--(\S+)?[= ](\S+)/g) {
-                my ($key, $value) = ($1, $2);
-                #for compatibility with pre-SX far processing profiles
-                if($trimmer_name eq 'far') {
-                    next if $key eq 'format';
-                }
-
-                push @params, $key => $value;
-            }
         } else {
-            Carp::confess("Unknown params ($trimmer_params) to convert trimmer to sx command!");
+            @params = Text::ParseWords::shellwords($trimmer_params);
+        }
+
+        if ( not @params ) {
+            $self->error_message("Failed to convert trimmer params!");
+            return;
         }
     }
 
@@ -764,9 +756,16 @@ sub _convert_trimmer_to_sx_commands {
 
     # Add -- to the odd, and quotes to the even, handle logicals
     my $sx_cmd = 'trim '.$trimmer_name;
-    for ( my $i = 0; $i < @params; $i += 2 ) {
+    my $i = 0;
+    while ( $i <= $#params ) {
         my $property_name = $params[$i];
+        $property_name =~ s/^\-+//;
         $property_name =~ s/\-/_/g;
+        # The far format param is not valid anymore.
+        if ( $property_name eq 'format' and $trimmer_name eq 'far' ) {
+            $i += 2;
+            next;
+        }
         my $property_meta = $sx_class_meta->property_meta_for_name($property_name);
         if ( not $property_meta ) {
             my $starts_with_no_property_name = $property_name;
@@ -775,13 +774,23 @@ sub _convert_trimmer_to_sx_commands {
         }
         Carp::confess("Failed to get property '$property_name' from sx class ".$sx_class_meta->class_name) if not $property_meta;
         my $param_name = $params[$i];
+        $param_name = '--'.$param_name if $param_name !~ /^\-/;
         $param_name =~ s/_/-/g;
         my $value = $params[$i + 1];
         if ( $property_meta->data_type eq 'Boolean' ) {
-            $sx_cmd .= ' --'.$param_name if $value;
+            if ( $i == $#params or ( defined $value and $value =~ /^\-+/ ) ) {
+                # last param OR the value is really the next param
+                $sx_cmd .= ' '.$param_name;
+                $i += 1;
+            }
+            else { # the boolean has a value
+                $sx_cmd .= ' '.$param_name if $value;
+                $i += 2;
+            }
         }
         else {
-            $sx_cmd .= ' --'.$param_name." '".$value."'";
+            $sx_cmd .= ' '.$param_name.' '.( $value =~ /\s+/ ? "'".$value."'" : $value );
+            $i += 2;
         }
     }
 
