@@ -85,3 +85,11 @@ function apipe_test_db_is_used {
         exit 1
     fi
 }
+
+function apipe_test_db_is_not_used {
+    if echo "$GENOME_DS_GMSCHEMA_SERVER" | grep -q 'apipe-test-db'
+    then
+        echo "GENOME_DS_GMSCHEMA_SERVER should not refer to apipe-test-db" >&2
+        exit 1
+    fi
+}
