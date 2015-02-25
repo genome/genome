@@ -108,12 +108,13 @@ sub _supports_multiple_reference {
 
 sub get_or_create {
     my $class = shift;
+    my %params = @_;
 
-    my @objects = $class->SUPER::get_or_create(@_);
+    my @objects = $class->SUPER::get_or_create(%params);
 
     for my $obj (@objects) {
         next unless ref($obj); # sometimes UR gives us back the package name when deleting?
-        unless ($obj->generate_dependencies_as_needed()) {
+        unless ($obj->generate_dependencies_as_needed($params{users})) {
             $obj->error_message("Failed to get AlignmentIndex objects for dependencies of " . $obj->__display_name__);
             return;
         }
@@ -155,7 +156,7 @@ sub create {
         return;
     }
 
-    unless ($self->generate_dependencies_as_needed()) {
+    unless ($self->generate_dependencies_as_needed($self->_user_data_for_nested_results)) {
         $self->error_message("Failed to create AlignmentIndex objects for dependencies");
         return;
     }
@@ -170,6 +171,7 @@ sub create {
 # -ssmith
 sub generate_dependencies_as_needed {
     my $self = shift;
+    my $users = shift;
 
     # if the reference is a compound reference
     if ($self->reference_build->append_to) {
@@ -177,7 +179,7 @@ sub generate_dependencies_as_needed {
             aligner_name => $self->aligner_name,
             aligner_params => $self->aligner_params,
             aligner_version => $self->aligner_version,
-            users => $self->_user_data_for_nested_results,
+            users => $users,
         );
 
         for my $b ($self->reference_build->append_to) { # (append_to is_many)
