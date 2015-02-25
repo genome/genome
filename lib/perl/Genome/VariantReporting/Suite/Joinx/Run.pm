@@ -18,7 +18,7 @@ class Genome::VariantReporting::Suite::Joinx::Run {
             doc => 'Field ids to embed from the annotation VCF. Use colons to separate multiple field descriptors.',
         },
         joinx_version => {
-            is => 'Text',
+            is => 'Version',
             doc => 'joinx version to be used.',
         },
     ],

@@ -23,7 +23,7 @@ Add bam readcount information to a vcf
     filter reads with mapping quality less than this. This is the -q parameter.
     example:
     0
-  [1mper_library[0m   Bool
+  [1mper_library[0m   Boolean
     report results per library. This is the -p parameter in version 0.5.
     example:
     0

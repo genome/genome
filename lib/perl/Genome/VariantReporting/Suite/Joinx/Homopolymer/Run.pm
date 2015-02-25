@@ -11,20 +11,20 @@ class Genome::VariantReporting::Suite::Joinx::Homopolymer::Run {
     has_planned_transient_argument => [
         joinx_version => {
             is  => 'Version',
-            doc => 'joinx version to use',
+            doc => 'joinx version to be used.',
         },
         homopolymer_list_id => {
-            is  => 'Text',
+            is  => 'String',
             is_translated => 1,
-            doc => 'Homopolymer bed file feature list id',
+            doc => 'Bed File FeatureList id containing homopolymer',
         },
         max_length => {
             is  => 'Integer',
-            doc => 'maximum indel length to annotate as in the homopolymer, default is 2',
+            doc => 'maximum indel length to annotate as in the homopolymer',
         },
         info_string => {
             is  => 'Text',
-            doc => 'name of per-allele info field to store the annotation, default is HOMP_FILTER',
+            doc => 'name of per-allele info field to store the annotation',
         }
     ],
     doc => 'Annotate vcf with information from one homopolymer bed file',

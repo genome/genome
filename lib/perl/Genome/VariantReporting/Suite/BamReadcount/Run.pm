@@ -37,7 +37,7 @@ class Genome::VariantReporting::Suite::BamReadcount::Run {
             doc => "max depth to avoid excessive memory. This is the -d parameter in version 0.5.",
         },
         per_library => {
-            is  => 'Bool',
+            is  => 'Boolean',
             example_values => [0],
             doc => "report results per library. This is the -p parameter in version 0.5.",
         },
