@@ -53,3 +53,11 @@ function rm_workspace {
         rm -rf "$WORKSPACE"
     fi
 }
+
+function submodule_is_clean {
+    if ! git diff --exit-code $1
+    then
+        echo "submodule should be clean: $1" >&2
+        exit 1
+    fi
+}

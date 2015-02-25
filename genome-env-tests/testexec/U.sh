@@ -9,11 +9,7 @@ then
 fi
 
 for M in sqitch/genome ur workflow ; do
-    if ! git diff --exit-code $M
-    then
-        echo "submodule should be clean: $M" >&2
-        exit 1
-    fi
+    submodule_is_clean $M
 done
 
 if git submodule status ur | grep -qv '^-'
