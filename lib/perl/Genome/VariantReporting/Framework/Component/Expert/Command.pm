@@ -178,9 +178,6 @@ sub input_hash {
 
     $hash{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
 
-    for my $key (qw(requestor user sponsor process_id label plan_json)) {
-        delete $hash{$key};
-    }
     return %hash;
 }
 
