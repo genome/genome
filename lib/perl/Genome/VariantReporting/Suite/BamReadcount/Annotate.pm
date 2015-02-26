@@ -5,12 +5,6 @@ use warnings FATAL => 'all';
 
 class Genome::VariantReporting::Suite::BamReadcount::Annotate {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
-    attributes_have => {
-        is_argument => {
-            is => "Boolean",
-            default => 0,
-        },
-    },
     has_input => [
         input_vcf => {
             is => 'Path',
