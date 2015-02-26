@@ -69,8 +69,8 @@ EOS
 sub execute {
     my $self = shift;
     
-    my $unmapped_bam = $self->generate_unmapped_bam();
     my $ercc_bwa_index = $self->create_ercc_bwa_index();
+    my $unmapped_bam = $self->generate_unmapped_bam();
 
     my $sai_read1 = $self->align_unmapped_reads(
         bam => $unmapped_bam,
