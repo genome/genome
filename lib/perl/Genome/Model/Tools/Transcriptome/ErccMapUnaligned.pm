@@ -325,3 +325,6 @@ sub generate_tsvfile {
     return Path::Class::File->new($r_input_file);
 }
 
+1;
+
+__END__
