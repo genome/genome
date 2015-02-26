@@ -6,6 +6,7 @@ use Genome;
 use Set::Scalar;
 use JSON;
 use Params::Validate qw(validate validate_pos :types);
+use List::MoreUtils qw(apply);
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 
@@ -22,19 +23,13 @@ class Genome::VariantReporting::Framework::Component::Expert::Command {
             is => "Boolean",
             default => 0,
         },
-        is_argument => {
-            is => "Boolean",
-            default => 0,
-        },
     },
     has_structural_input => [
         input_vcf => {
             is => 'Path',
-            is_argument => 1,
         },
         variant_type => {
             is => 'Text',
-            is_argument => 1,
             valid_values => ['snvs', 'indels'],
             doc => "The type of variant the input_result represents",
         },
@@ -144,17 +139,13 @@ sub input_names {
 sub is_many_input_names {
     my $self = shift;
 
-    my @properties = $self->__meta__->properties(
-        is_many => 1, is_argument => 1);
-    return map {$_->property_name} @properties;
+    return apply {s/_lookup$//} $self->result_class->is_many_property_names;
 }
 
 sub is_not_many_input_names {
     my $self = shift;
 
-    my @properties = $self->__meta__->properties(
-        is_many => 0, is_argument => 1);
-    return map {$_->property_name} @properties;
+    return apply {s/_lookup$//} $self->result_class->is_not_many_property_names;
 }
 
 sub input_hash {
@@ -164,6 +155,7 @@ sub input_hash {
 
     my %hash;
     for my $input_name ($self->is_many_input_names) {
+        next unless $self->can($input_name);
         my $value = [$self->$input_name];
         $hash{$input_name} = $value;
         if (is_file($value->[0])) {
@@ -171,6 +163,7 @@ sub input_hash {
         }
     }
     for my $input_name ($self->is_not_many_input_names) {
+        next unless $self->can($input_name);
         my $value = $self->$input_name;
         if (is_hashref($value)) {
             $hash{$input_name} = json_encode($value);

@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Suite::Fpkm::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
-    has_planned_transient_argument => [
+    has_planned_transient => [
         fpkm_file => {
             is => 'Path',
             is_translated => 1,

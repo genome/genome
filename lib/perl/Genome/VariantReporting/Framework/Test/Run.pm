@@ -7,10 +7,10 @@ use File::Basename qw(dirname);
 
 class Genome::VariantReporting::Framework::Test::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
-    has_planned_transient_argument => [
+    has_planned_transient => [
         __planned__ => {},
     ],
-    has_transient_argument => [
+    has_transient => [
         __input__ => {
             is_many => 1,
         },

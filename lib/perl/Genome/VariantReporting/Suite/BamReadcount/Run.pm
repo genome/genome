@@ -8,7 +8,7 @@ use Params::Validate qw(validate_pos);
 
 class Genome::VariantReporting::Suite::BamReadcount::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
-    has_planned_argument_input => [
+    has_planned_input => [
         aligned_bam_result_id => {
             is => 'Text',
             is_translated => 1,
@@ -20,7 +20,7 @@ class Genome::VariantReporting::Suite::BamReadcount::Run {
             doc => "bam-readcount version to be used.",
         },
     ],
-    has_planned_argument_optional => [
+    has_planned_optional => [
         minimum_mapping_quality => {
             is => 'Integer',
             example_values => [0],

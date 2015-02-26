@@ -8,7 +8,7 @@ our $MINIMUM_JOINX_VERSION = 1.9;
 
 class Genome::VariantReporting::Suite::Joinx::Homopolymer::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
-    has_planned_transient_argument => [
+    has_planned_transient => [
         joinx_version => {
             is  => 'Version',
             doc => 'joinx version to be used.',

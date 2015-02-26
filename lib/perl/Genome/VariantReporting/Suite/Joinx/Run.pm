@@ -7,7 +7,7 @@ use Genome;
 class Genome::VariantReporting::Suite::Joinx::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     is_abstract => 1,
-    has_planned_transient_argument => [
+    has_planned_transient => [
         vcf => {
             is => 'Path',
             is_translated => 1,

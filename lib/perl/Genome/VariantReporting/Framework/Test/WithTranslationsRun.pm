@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Framework::Test::WithTranslationsRun {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
-    has_planned_transient_argument => [
+    has_planned_transient => [
         __planned__ => {
             is_translated => 1,
         },

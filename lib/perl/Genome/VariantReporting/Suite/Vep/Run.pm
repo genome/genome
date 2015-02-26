@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Suite::Vep::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
-    has_planned_transient_argument => [
+    has_planned_transient => [
         ensembl_version => {
             is => 'String',
             doc => 'Version of ensembl database to use',

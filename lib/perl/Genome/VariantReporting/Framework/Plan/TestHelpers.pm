@@ -376,7 +376,7 @@ sub set_what_interpreter_x_requires {
 
     class Genome::VariantReporting::ExpertOneRun {
         is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
-        has_planned_transient_argument => [
+        has_planned_transient => [
             e1_p1 => {},
             e1_p2 => {},
             e1_translated1 => {is_translated => 1},
@@ -420,7 +420,7 @@ sub set_what_interpreter_x_requires {
 
     class Genome::VariantReporting::ExpertTwoRun {
         is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
-        has_planned_transient_argument => [
+        has_planned_transient => [
             e2_p1 => {},
             e2_p2 => {},
             e2_translated1 => {is_translated => 1},

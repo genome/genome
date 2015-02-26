@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::VariantReporting::Suite::FlankingRegions::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
-    has_planned_transient_argument => [
+    has_planned_transient => [
         flank_size => {
             is => 'Integer',
             doc => 'The length of the flanking sequence to extract'
