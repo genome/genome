@@ -6632,6 +6632,8 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'chromosome=s',
           'files',
+          'case-name=s',
+          'files',
           'help!',
           undef
         ],
