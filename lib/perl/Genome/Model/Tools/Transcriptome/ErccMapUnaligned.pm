@@ -241,7 +241,7 @@ sub generate_remapped_bam {
         output_files => [$remapped_bam_path],
     );
 
-    return Path::Class::File->new($remapped_bam_basename);
+    return Path::Class::File->new($remapped_bam_path);
 }
 
 sub index_bam {
