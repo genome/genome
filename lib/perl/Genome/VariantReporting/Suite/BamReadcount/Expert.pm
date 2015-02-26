@@ -90,13 +90,11 @@ sub connected_adaptor_operation {
 
     my $adaptor_operation = $self->adaptor_operation;
     $dag->add_operation($adaptor_operation);
-    for my $name qw(plan_json) {
-        $dag->connect_input(
-            input_property => $name,
-            destination => $adaptor_operation,
-            destination_property => $name,
-        );
-    }
+    $dag->connect_input(
+        input_property => 'plan_json',
+        destination => $adaptor_operation,
+        destination_property => 'plan_json',
+    );
     return $adaptor_operation;
 }
 

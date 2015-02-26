@@ -51,18 +51,16 @@ sub __class_errors__ {
     my @errors = $self->SUPER::__class_errors__;
     return @errors if @errors; # Can't know anything else in this case
 
-    for my $accessor ('run_class') {
-        eval {
-            $self->get_class->$accessor;
-        };
+    eval {
+        $self->get_class->run_class;
+    };
 
-        if (my $error = $@) {
-            push @errors, UR::Object::Tag->create(
-                type => 'error',
-                properties => [],
-                desc => $error,
-            );
-        }
+    if (my $error = $@) {
+        push @errors, UR::Object::Tag->create(
+            type => 'error',
+            properties => [],
+            desc => $error,
+        );
     }
 
     return @errors;
