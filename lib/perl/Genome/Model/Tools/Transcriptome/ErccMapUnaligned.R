@@ -1,6 +1,8 @@
 #!/usr/bin/env Rscript
 
-library(ggplot2)
+library(plyr, quietly=TRUE)
+library(reshape, warn.conflicts=FALSE, quiet=TRUE)
+library(ggplot2, quietly=TRUE)
 library(getopt)
 
 opt <- getopt(
