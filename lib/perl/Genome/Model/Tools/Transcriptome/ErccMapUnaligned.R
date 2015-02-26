@@ -61,5 +61,9 @@ ggplot(data, aes(x=log_concentration, y=log_count)
                     label=paste("R^2 =", count_r_squared, sep=' '))
 dev.off()
 
+r2 <- paste("R^2 :", count_r_squared, sep=" ")
+cat(paste("\n", "===========", r2, "===========", "\n", sep="\n"))
+cat(paste("See", pdfFile, "for the analysis plots", "\n", sep=" "))
+
 # signal success and exit
 q(status=0)
