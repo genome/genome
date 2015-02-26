@@ -53,3 +53,6 @@ ggplot(data, aes(x=log_concentration, y=log_count)
        ) + annotate('text', 5, -3,
                     label=paste("R^2 =", count_r_squared, sep=' '))
 dev.off()
+
+# signal success and exit
+q(status=0)
