@@ -6,11 +6,13 @@ library(ggplot2, quietly=TRUE)
 library(getopt)
 
 opt <- getopt(
-matrix(
-  c('filename', 'f', 2, "character",
-  'epsilon' ,   'e', 2, "double",
-  'help'    ,   'h', 0, "logical"),
-  byrow=TRUE, ncol=4 )
+  matrix(
+    c('data'    ,   'd', 1, "character",
+      'output'  ,   'o', 2, "character",
+      'epsilon' ,   'e', 2, "double",
+      'help'    ,   'h', 0, "logical"),
+    byrow=TRUE, ncol=4
+  )
 );
 
 #help was asked for.
@@ -18,18 +20,25 @@ if ( !is.null(opt$help) ) {
   #get the script name (only works when invoked with Rscript).
   self <- commandArgs()[1];
   #print a friendly message and exit with a non-zero error code
-  cat(paste("Usage: ",self," [-[-help|h]] [-[-filename|f] <output.pdf>] [-[-epsilon|e] <0.01>]\n",sep=""));
+  cat(paste("Usage: ",self," [-[-help|h]] [-[-data|d] <data.tsv>] [-[-output|o] <output.pdf>] [-[-epsilon|e] <0.01>]\n",sep=""));
+  q(status=1);
+}
+
+if ( is.null(opt$data) ) {
+  #get the script name (only works when invoked with Rscript).
+  cat(paste("Please specify an input data file via the '--data=<data.tsv>' option! \n",sep=""));
   q(status=1);
 }
 
 #set some reasonable defaults for the options
- if ( is.null(opt$filename ) ) { opt$filename <- 'output.pdf' }
- if ( is.null(opt$epsilon  ) ) { opt$epsilon <- 0.01          }
+ if ( is.null(opt$output  ) ) { opt$output  <- 'output.pdf' }
+ if ( is.null(opt$epsilon ) ) { opt$epsilon <- 0.01         }
 
-filename <- opt$filename
+inputTSV <- opt$data
 epsilon  <- opt$epsion
+pdfFile  <- opt$output
 
-data = read.delim(filename)
+data = read.delim(inputTSV)
 
 data$count = as.numeric(data$count)
 
@@ -37,18 +46,14 @@ data$log_concentration = log2(data$concentration)
 data$log_count         = log2(data$count + 1)
 
 
-pdf('concentration-histogram.pdf')
+pdf(pdfFile)
 ggplot(data, aes(x=log_concentration)) + geom_histogram()
-dev.off()
 
-pdf('count-histogram.pdf')
 ggplot(data, aes(x=log_count)) + geom_histogram()
-dev.off()
 
 count_model <- lm(log_count ~ log_concentration, data=data)
 count_r_squared = summary(count_model)[['r.squared']]
 
-pdf('count-vs-concentration.pdf')
 ggplot(data, aes(x=log_concentration, y=log_count)
        ) + geom_point(aes(color=subgroup)
        ) + geom_smooth(method=lm

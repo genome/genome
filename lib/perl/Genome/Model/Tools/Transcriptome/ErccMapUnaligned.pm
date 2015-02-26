@@ -126,7 +126,7 @@ sub ERCC_analysis_script {
 sub run_analysis_script {
     my ($self, $tsv) = @_;
     my $ercc_r = $self->ERCC_analysis_script;
-    my $cmd = "$ercc_r --filename $tsv";
+    my $cmd = "$ercc_r --data $tsv";
     Genome::Sys->shellcmd(cmd => $cmd);
 }
 
