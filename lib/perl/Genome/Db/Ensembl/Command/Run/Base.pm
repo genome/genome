@@ -291,8 +291,11 @@ sub execute {
         my $workflow = $self->workflow;
         my $workflow_inputs = $self->workflow_inputs;
         $workflow_inputs->{analysis_process} = $process;
+        my $no_lsf = $ENV{NO_LSF};
+        $ENV{NO_LSF} = 1;
         $process->run_and_wait(workflow_xml => $workflow->get_xml,
                                workflow_inputs => $workflow_inputs);
+        $ENV{NO_LSF} = $no_lsf;
     }
 
     return 1;
