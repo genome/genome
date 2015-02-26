@@ -167,14 +167,14 @@ sub _resolve_lock_name {
     my $class = shift;
     my $params = shift;
 
-    my $label = $params->{label};
-    if(length($label) >= 32) {
-        $label = Genome::Sys->md5sum_data($label);
+    my $lock_name = Genome::Utility::Text::sanitize_string_for_filesystem(
+        join('_', $params->{label}, $params->{user}->id, $params->{software_result}->id)
+    );
+    if (length($lock_name) > 255) {
+        $lock_name = Genome::Sys->md5sum_data($lock_name);
     }
 
-    return 'genome/software-result-user/' . Genome::Utility::Text::sanitize_string_for_filesystem(
-        join('_', $label, $params->{user}->id, $params->{software_result}->id)
-    );
+    return 'genome/software-result-user/' . $lock_name;
 }
 
 sub _role_for_type {
