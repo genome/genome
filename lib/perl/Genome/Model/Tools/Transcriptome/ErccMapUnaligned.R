@@ -1,17 +1,31 @@
 #!/usr/bin/env Rscript
 
 library(ggplot2)
-library(optparse)
+library(getopt)
 
-option_parser <- OptionParser(option_list=list(
-    make_option(c("-f", "--filename")),
-    make_option(c("--epsilon"), type="double", default=0.001)
-))
+opt <- getopt(
+matrix(
+  c('filename', 'f', 2, "character",
+  'epsilon' ,   'e', 2, "double",
+  'help'    ,   'h', 0, "logical"),
+  byrow=TRUE, ncol=4 )
+);
 
-options  <- parse_args(option_parser)
-filename <- options[[1]]
-epsilon  <- options[[2]]
+#help was asked for.
+if ( !is.null(opt$help) ) {
+  #get the script name (only works when invoked with Rscript).
+  self <- commandArgs()[1];
+  #print a friendly message and exit with a non-zero error code
+  cat(paste("Usage: ",self," [-[-help|h]] [-[-filename|f] <output.pdf>] [-[-epsilon|e] <0.01>]\n",sep=""));
+  q(status=1);
+}
 
+#set some reasonable defaults for the options
+ if ( is.null(opt$filename ) ) { opt$filename <- 'output.pdf' }
+ if ( is.null(opt$epsilon  ) ) { opt$epsilon <- 0.01          }
+
+filename <- opt$filename
+epsilon  <- opt$epsion
 
 data = read.delim(filename)
 
