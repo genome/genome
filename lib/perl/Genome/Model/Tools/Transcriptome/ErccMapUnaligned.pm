@@ -78,16 +78,16 @@ sub execute {
         read_pair => 1
     );
 
-    my $sai_read2 = $self->align_unmapped_reads(
-        bam => $unmapped_bam,
-        index => $ercc_bwa_index,
-        read_pair => 2
-    );
+#    my $sai_read2 = $self->align_unmapped_reads(
+#        bam => $unmapped_bam,
+#        index => $ercc_bwa_index,
+#        read_pair => 2
+#    );
 
     my $remapped_bam = $self->generate_remapped_bam(
         index => $ercc_bwa_index,
         sai_read1 => $sai_read1,
-        sai_read2 => $sai_read2,
+        sai_read2 => $sai_read1,
         unmapped_bam => $unmapped_bam,
     );
 
