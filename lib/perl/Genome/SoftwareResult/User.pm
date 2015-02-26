@@ -109,16 +109,10 @@ sub _register_users {
         push @all_params, \%params;
     }
 
-    my $observer;
-    $observer = UR::Context->process->add_observer(
+    my $observer = UR::Context->process->add_observer(
         aspect => 'precommit',
+        once => 1,
         callback => sub {
-            if($observer) {
-                $observer->delete;
-                $observer = undef;
-            } else {
-                Carp::confess 'observer triggered multiple times!';
-            }
             my @locks;
             for my $params (@all_params) {
                 next if grep { $params->{$_}->isa('UR::DeletedRef') } qw(user software_result);
@@ -127,17 +121,10 @@ sub _register_users {
 
             return unless @locks;
 
-            my $unlocker;
-            $unlocker = UR::Context->process->add_observer(
+            UR::Context->process->add_observer(
                 aspect => 'commit',
+                once => 1,
                 callback => sub {
-                    if($unlocker) {
-                        $unlocker->delete;
-                        $unlocker = undef;
-                    } else {
-                        Carp::confess 'unlocker triggered multiple times!';
-                    }
-
                     for my $lock (@locks) {
                         Genome::Sys->unlock_resource(resource_lock => $lock);
                     }
@@ -180,9 +167,14 @@ sub _resolve_lock_name {
     my $class = shift;
     my $params = shift;
 
-    return 'genome/software-result-user/' . Genome::Utility::Text::sanitize_string_for_filesystem(
+    my $lock_name = Genome::Utility::Text::sanitize_string_for_filesystem(
         join('_', $params->{label}, $params->{user}->id, $params->{software_result}->id)
     );
+    if (length($lock_name) > 255) {
+        $lock_name = Genome::Sys->md5sum_data($lock_name);
+    }
+
+    return 'genome/software-result-user/' . $lock_name;
 }
 
 sub _role_for_type {
