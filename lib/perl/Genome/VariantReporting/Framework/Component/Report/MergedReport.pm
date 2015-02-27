@@ -302,11 +302,11 @@ sub validate {
         die $self->error_message('The sort columns (%s) are not contained within the first header (%s)', $sort_columns, $master_header);
     }
 
-    if ($self->base_report_source || $self->supplemental_report_source) {
-        unless ($self->base_report_source) {
+    if (defined($self->base_report_source) || defined($self->supplemental_report_source)) {
+        unless (defined($self->base_report_source)) {
             die $self->error_message("No entry source for base report: base_report_source needs to be set.");
         }
-        unless ($self->supplemental_report_source) {
+        unless (defined($self->supplemental_report_source)) {
             die $self->error_message("No entry source for supplemental report: supplemental_report_source needs to be set.");
         }
     }
@@ -382,7 +382,7 @@ sub get_header {
 
 sub has_entry_sources {
     my $self = shift;
-    return ($self->base_report_source && $self->supplemental_report_source);
+    return (defined($self->base_report_source) && defined($self->supplemental_report_source));
 }
 
 sub has_sort_columns {
