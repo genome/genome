@@ -30,17 +30,9 @@ my $alignment_result_class_name = "Genome::InstrumentData::AlignmentResult::" . 
 my $samtools_version = Genome::Model::Tools::Sam->default_samtools_version;
 my $picard_version = Genome::Model::Tools::Picard->default_picard_version;
 
-my $aligner_version_method_name = sprintf("default_%s_version", $aligner_name);
-
 my $test_name = 'merged_unit_test';
-my $aligner_name = 'bwa';
 my $convert_name = Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($aligner_name);
 
-my $aligner_tools_class_name    = 'Genome::Model::Tools::' .$convert_name;
-my $alignment_result_class_name = 'Genome::InstrumentData::AlignmentResult::' .$convert_name;
-
-my $samtools_version = Genome::Model::Tools::Sam->default_samtools_version;
-my $picard_version   = Genome::Model::Tools::Picard->default_picard_version;
 my $aligner_version  = $aligner_tools_class_name->default_version;
 my $aligner_label    = $aligner_name.$aligner_version;
 $aligner_label       =~ s/\./\_/g;
@@ -84,13 +76,10 @@ my @params = (
      instrument_data_segment     => [map {$_->id . ':A:2:read_group'} @instrument_data],
 );
 
-my $merged_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->create(@params, _user_data_for_nested_results => $result_users);
-
-isa_ok($merged_alignment_result, 'Genome::InstrumentData::AlignmentResult::Merged', 'produced merged alignment result');
+my $merged_alignment_result = $pkg->create(@params, _user_data_for_nested_results => $result_users);
+isa_ok($merged_alignment_result, $pkg, 'produced merged alignment result');
 
 subtest 'testing merge without filter_name' => sub {
-    my $merged_alignment_result = $pkg->create(@params);
-    isa_ok($merged_alignment_result, $pkg, 'produced merged alignment result');
     compare_ok($merged_alignment_result->bam_file, File::Spec->join($expected_dir, '-120573001.bam'), 'merged bam matches expected result');
     compare_ok($merged_alignment_result->merged_alignment_bam_flagstat, File::Spec->join($expected_dir, '-120573001.bam.flagstat'), 'flagstat matches expected result');
 
@@ -117,7 +106,7 @@ subtest 'testing merge without filter_name' => sub {
         }
     }
 
-    my $existing_alignment_result = $pkg->get_or_create(@params);
+    my $existing_alignment_result = $pkg->get_or_create(@params, users => $result_users);
     is($existing_alignment_result, $merged_alignment_result, 'got back the previously created result');
 };
 
@@ -127,17 +116,18 @@ subtest 'testing merge with filter_name' => sub {
         filter_name => [$instrument_data[0]->id . ':forward-only', $instrument_data[1]->id . ':forward-only'],
     );
 
-    my $existing_alignment_result = Genome::InstrumentData::AlignmentResult::Merged->get_or_create(@params, users => $result_users);
+    my $existing_alignment_result = $pkg->get_or_create(@params, users => $result_users);
     is($existing_alignment_result, $merged_alignment_result, 'got back the previously created result');
 
-    #same expected files since we faked the alignment results to use the same data
-    compare_ok($filtered_alignment_result->bam_file, File::Spec->join($expected_dir, '-120573001.bam'), 'merged bam matches expected result');
-    compare_ok($filtered_alignment_result->merged_alignment_bam_flagstat, File::Spec->join($expected_dir, '-120573001.bam.flagstat'), 'flagstat matches expected result');
 
     my $filtered_alignment_result = $pkg->get_or_create(@filtered_params, users => $result_users);
     isa_ok($filtered_alignment_result, $pkg, 'produced merged alignment result with filter applied');
     my @filtered_individual_alignments = $filtered_alignment_result->collect_individual_alignments;
     is(scalar @filtered_individual_alignments, 2, 'got back expected number of alignments');
+
+    #same expected files since we faked the alignment results to use the same data
+    compare_ok($filtered_alignment_result->bam_file, File::Spec->join($expected_dir, '-120573001.bam'), 'merged bam matches expected result');
+    compare_ok($filtered_alignment_result->merged_alignment_bam_flagstat, File::Spec->join($expected_dir, '-120573001.bam.flagstat'), 'flagstat matches expected result');
 
     for my $i (@filtered_individual_alignments) {
         is($i->filter_name, 'forward-only', 'filter_name is defined as expected');
@@ -146,7 +136,6 @@ subtest 'testing merge with filter_name' => sub {
     my $existing_filtered_alignment_result = $pkg->get_or_create(@filtered_params, users => $result_users);
     isnt($filtered_alignment_result, $existing_alignment_result, 'produced a different result when filter applied');
 
-    my $existing_filtered_alignment_result = $pkg->get_or_create(@filtered_params);
     is($existing_filtered_alignment_result, $filtered_alignment_result, 'got back the previously created filtered result');
 
     my $gotten_alignment_result = $pkg->get_with_lock(@params, users => $result_users);
@@ -159,7 +148,7 @@ subtest 'testing invalid merged alignment' => sub {
         instrument_data_segment => [$instrument_data[0]->id . ':test:read_group', $instrument_data[0]->id . ':test2:read_group'],
     );
 
-    my $segmented_alignment_result = eval { $pkg->get_or_create(@segmented_params, users => $result_users);
+    my $segmented_alignment_result = eval { $pkg->get_or_create(@segmented_params, users => $result_users) };
     my $error = $@;
 
     ok(!defined $segmented_alignment_result, 'no result returned for nonexistent segments');
