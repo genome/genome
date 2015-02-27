@@ -201,7 +201,7 @@ sub merge_files {
             $file_to_merge = $report->report_path;
         }
         my $report_source_accessor = $report_name . '_source';
-        my $report_source = $self->$report_source_accessor,
+        my $report_source = $self->$report_source_accessor;
         my $with_source;
         if ($report_source) {
             $with_source = $self->add_source($report->report_path, $file_to_merge, $report_source);
