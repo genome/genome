@@ -226,18 +226,13 @@ sub create {
         for my $alignment (@alignments) {
             $alignment->add_user(user => $self, label => 'uses');
         }
+
+        $tx->commit();
+        $self->debug_message('Merge done');
     }
     catch {
         $tx->rollback();
         die $self->error_message('Merge failed due to error: ' . $_);
-    }
-    #The transaction commit and temporary allocation deletion need to
-    #be in different finally blocks.
-    finally {
-        unless ($_) {
-            $tx->commit();
-            $self->debug_message('Merge done');
-        }
     }
     finally {
         for my $allocation (@temp_allocations) {
