@@ -15,7 +15,7 @@ function teardown {
 @test "unclean submodule fails" {
     git submodule update --init ur
     echo >> ur/lib/UR.pm
-    run $BATS_TEST_DIRNAME/../bin/genome-env-next
+    run $BATS_TEST_DIRNAME/../bin/genome-env
     test "$status" -ne 0
 }
 
@@ -26,6 +26,6 @@ function teardown {
         echo >> lib/UR.pm
         git commit -m whitespace lib/UR.pm
     )
-    run $BATS_TEST_DIRNAME/../bin/genome-env-next
+    run $BATS_TEST_DIRNAME/../bin/genome-env
     test "$status" -ne 0
 }

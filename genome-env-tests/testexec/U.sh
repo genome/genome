@@ -1,7 +1,5 @@
 #!/bin/bash
 
-type -p genome-env-next
-
 if test -z "$WORKSPACE"
 then
     echo "WORKSPACE is not set" >&2
