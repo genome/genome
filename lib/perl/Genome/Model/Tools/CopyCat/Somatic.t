@@ -68,7 +68,7 @@ for my $file (@non_diffable_files){
     my $actual = File::Spec->join($output_directory, $file);
     my ($actual_wc) = split(" ", `wc -l $actual`);    
     my ($expected_wc) = split(" ", `wc -l $expected`);    
-    ok(abs ($expected_wc - $actual_wc) <= 1, "$file line length is withing tolerance");
+    ok(abs ($expected_wc - $actual_wc) <= 1, "$file line length is within tolerance");
 }
 
 #test that we're able to catch errors. This is a regression test.
