@@ -127,15 +127,21 @@
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Variant Reporting (snvs).input_vcf</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Variant Reporting (snvs).plan_json</inputproperty>
     <inputproperty>Create Snvs, Indels, and Merged Reports (test roi-germline).Variant Reporting (snvs).variant_type</inputproperty>
+    <inputproperty>Merge Discovery and Followup Reports (bed).base_report_source</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (bed).contains_header</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (bed).label</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (bed).sort_columns</inputproperty>
+    <inputproperty>Merge Discovery and Followup Reports (bed).supplemental_report_source</inputproperty>
+    <inputproperty>Merge Discovery and Followup Reports (full).base_report_source</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (full).contains_header</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (full).label</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (full).sort_columns</inputproperty>
+    <inputproperty>Merge Discovery and Followup Reports (full).supplemental_report_source</inputproperty>
+    <inputproperty>Merge Discovery and Followup Reports (simple).base_report_source</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (simple).contains_header</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (simple).label</inputproperty>
     <inputproperty>Merge Discovery and Followup Reports (simple).sort_columns</inputproperty>
+    <inputproperty>Merge Discovery and Followup Reports (simple).supplemental_report_source</inputproperty>
     <inputproperty>process_id</inputproperty>
     <outputproperty>Alignment stats result</outputproperty>
     <outputproperty>Coverage stats result</outputproperty>
@@ -2968,16 +2974,22 @@
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-germline).Variant Reporting (snvs).plan_json" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="Variant Reporting (snvs).plan_json"/>
   <link fromOperation="input connector" fromProperty="Create Snvs, Indels, and Merged Reports (test roi-germline).Variant Reporting (snvs).variant_type" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="Variant Reporting (snvs).variant_type"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Create Snvs, Indels, and Merged Reports (test roi-germline)" toProperty="process_id"/>
+  <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (bed).base_report_source" toOperation="Merge Discovery and Followup Reports (bed)" toProperty="base_report_source"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (bed).contains_header" toOperation="Merge Discovery and Followup Reports (bed)" toProperty="contains_header"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (bed).label" toOperation="Merge Discovery and Followup Reports (bed)" toProperty="label"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (bed).sort_columns" toOperation="Merge Discovery and Followup Reports (bed)" toProperty="sort_columns"/>
+  <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (bed).supplemental_report_source" toOperation="Merge Discovery and Followup Reports (bed)" toProperty="supplemental_report_source"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Discovery and Followup Reports (bed)" toProperty="process_id"/>
+  <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (full).base_report_source" toOperation="Merge Discovery and Followup Reports (full)" toProperty="base_report_source"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (full).contains_header" toOperation="Merge Discovery and Followup Reports (full)" toProperty="contains_header"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (full).label" toOperation="Merge Discovery and Followup Reports (full)" toProperty="label"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (full).sort_columns" toOperation="Merge Discovery and Followup Reports (full)" toProperty="sort_columns"/>
+  <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (full).supplemental_report_source" toOperation="Merge Discovery and Followup Reports (full)" toProperty="supplemental_report_source"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Discovery and Followup Reports (full)" toProperty="process_id"/>
+  <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (simple).base_report_source" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="base_report_source"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (simple).contains_header" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="contains_header"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (simple).label" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="label"/>
   <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (simple).sort_columns" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="sort_columns"/>
+  <link fromOperation="input connector" fromProperty="Merge Discovery and Followup Reports (simple).supplemental_report_source" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="supplemental_report_source"/>
   <link fromOperation="input connector" fromProperty="process_id" toOperation="Merge Discovery and Followup Reports (simple)" toProperty="process_id"/>
 </operation>

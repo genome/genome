@@ -95,10 +95,8 @@ subtest "test with headers with source" => sub {
         supplemental_report => $result_b,
         sort_columns => ['chr', 'pos'],
         contains_header => 1,
-        entry_sources => [
-            sprintf("%s|%s", $result_a->id, 'report_a'),
-            sprintf("%s|%s", $result_b->id, 'report_b'),
-        ],
+        base_report_source => 'report_a',
+        supplemental_report_source => 'report_b',
         process_id => $process->id,
         label => 'results',
     );
@@ -155,10 +153,8 @@ subtest "test without headers with source" => sub {
         supplemental_report => $result_b,
         sort_columns => ['1', '2'],
         contains_header => 0,
-        entry_sources => [
-            sprintf("%s|%s", $result_a->id, 'report_a'),
-            sprintf("%s|%s", $result_b->id, 'report_b'),
-        ],
+        base_report_source => 'report_a',
+        supplemental_report_source => 'report_b',
         process_id => $process->id,
         label => 'results',
     );
@@ -178,14 +174,12 @@ subtest "Source tags must be defined" => sub {
         supplemental_report => $result_b,
         sort_columns => ['1', '2'],
         contains_header => 0,
-        entry_sources => [
-            sprintf("%s|%s", $result_b->id, 'report_b'),
-        ],
+        supplemental_report_source => 'report_b',
         process_id => $process->id,
         label => 'results',
     );
     ok(!$cmd->execute, "Execute returns false value");
-    ok($cmd->error_message =~ qr/No entry source for report/,
+    ok($cmd->error_message =~ qr/No entry source for/,
         "Error if source tag is not defined for one report");
 };
 

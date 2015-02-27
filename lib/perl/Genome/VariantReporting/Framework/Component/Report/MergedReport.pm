@@ -38,8 +38,11 @@ class Genome::VariantReporting::Framework::Component::Report::MergedReport {
         separator => {
             is => 'Text',
         },
-        entry_sources => {
-            is_many => 'Text',
+        base_report_source => {
+            is => 'Text',
+            is_optional => 1,
+        },
+        supplemental_report_source => {
             is => 'Text',
             is_optional => 1,
         },
@@ -175,7 +178,8 @@ sub merge_files {
 
     my $merged_file = Genome::Sys->create_temp_file_path;
 
-    for my $report ($self->report_results) {
+    for my $report_name ('base_report', 'supplemental_report') {
+        my $report = $self->$report_name;
         next unless $report->has_size;
         my $file_to_merge;
         if ($self->contains_header) {
@@ -196,7 +200,15 @@ sub merge_files {
         } else {
             $file_to_merge = $report->report_path;
         }
-        my $with_source = $self->add_source($report->report_path, $file_to_merge);
+        my $report_source_accessor = $report_name . '_source';
+        my $report_source = $self->$report_source_accessor;
+        my $with_source;
+        if ($report_source) {
+            $with_source = $self->add_source($report->report_path, $file_to_merge, $report_source);
+        }
+        else {
+            $with_source = $file_to_merge;
+        }
         my $merge_command = 'cat %s >> %s';
         Genome::Sys->shellcmd(cmd => sprintf($merge_command, $with_source, $merged_file));
     }
@@ -204,11 +216,7 @@ sub merge_files {
 }
 
 sub add_source {
-    my ($self, $report, $file) = @_;
-    unless ($self->has_entry_sources) {
-        return $file;
-    }
-    my $tag = $self->get_entry_source($report);
+    my ($self, $report, $file, $tag) = @_;
     my $out_file = Genome::Sys->create_temp_file_path;
     my $out = Genome::Sys->open_file_for_writing($out_file);
     my $in = Genome::Sys->open_file_for_reading($file);
@@ -294,6 +302,15 @@ sub validate {
         die $self->error_message('The sort columns (%s) are not contained within the first header (%s)', $sort_columns, $master_header);
     }
 
+    if (defined($self->base_report_source) || defined($self->supplemental_report_source)) {
+        unless (defined($self->base_report_source)) {
+            die $self->error_message("No entry source for base report: base_report_source needs to be set.");
+        }
+        unless (defined($self->supplemental_report_source)) {
+            die $self->error_message("No entry source for supplemental report: supplemental_report_source needs to be set.");
+        }
+    }
+
     return 1;
 }
 
@@ -365,28 +382,13 @@ sub get_header {
 
 sub has_entry_sources {
     my $self = shift;
-    my @entry_sources = $self->entry_sources;
-    return scalar(@entry_sources);
+    return (defined($self->base_report_source) && defined($self->supplemental_report_source));
 }
 
 sub has_sort_columns {
     my $self = shift;
     my @sort_columns = $self->sort_columns;
     return scalar(@sort_columns);
-}
-
-sub get_entry_source {
-    my ($self, $report) = validate_pos(@_, 1, 1);
-
-    for my $entry_source ($self->entry_sources) {
-        my ($report_id, $tag) = split(/\|/, $entry_source);
-        my $report_result = Genome::VariantReporting::Framework::Component::Report::MergeCompatible->get($report_id);
-
-        if ($report_result->report_path eq $report) {
-            return $tag;
-        }
-    }
-    die sprintf("No entry source for report (%s)", $report);
 }
 
 sub category {
