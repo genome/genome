@@ -98,6 +98,7 @@ sub encode {
     my $line = shift;
 
     $line =~ s/([:])/;/g;
+    $line =~ s/([,])/|/g;
     return $line;
 }
 
@@ -105,6 +106,7 @@ sub decode {
     my $line = shift;
 
     $line =~ s/([;])/:/g;
+    $line =~ s/([|])/,/g;
     return $line;
 }
 1;
