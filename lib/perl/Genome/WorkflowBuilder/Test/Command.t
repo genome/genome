@@ -115,11 +115,12 @@ subtest 'specified_operation_type_attributes' => sub {
         name => 'some op',
         command => 'Genome::WorkflowBuilder::Test::DummyCommand',
     );
-    $op->lsf_queue('not apipe');
+    my $queue = 'not apipe';
+    $op->lsf_queue($queue);
     $op->lsf_project('specified project');
     my %got = $op->operation_type_attributes;
     my %expected = (
-        lsfQueue => "not $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}",
+        lsfQueue => $queue,
         lsfResource => "-M 25000000 -R 'select[mem>25000] rusage[mem=25000]'",
         lsfProject => 'specified project',
         commandClass => 'Genome::WorkflowBuilder::Test::DummyCommand',
