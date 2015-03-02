@@ -83,3 +83,5 @@ sub _get_result_for_file {
             ref($candidate), $allocation->id, $path, $expected_isa);
     }
 }
+
+1;
