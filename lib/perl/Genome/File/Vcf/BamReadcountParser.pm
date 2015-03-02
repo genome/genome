@@ -97,16 +97,16 @@ sub add_readcount_to_vcf_entry {
 sub encode {
     my $line = shift;
 
-    $line =~ s/([\t])/?/g;
     $line =~ s/([:])/;/g;
+    $line =~ s/([,])/|/g;
     return $line;
 }
 
 sub decode {
     my $line = shift;
 
-    $line =~ s/([?])/\t/g;
     $line =~ s/([;])/:/g;
+    $line =~ s/([|])/,/g;
     return $line;
 }
 1;
