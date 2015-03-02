@@ -82,9 +82,6 @@ sub help_detail {
 sub execute {
     my $self = shift;
     
-    #$DB::deep = 200;		# for debug
-    
-    
     # defines the folder and file names
     my $dir_refcov = "refcov";
     my $filetab = "table.tsv";
@@ -189,9 +186,6 @@ sub execute {
 	    die "Invalid model ID: $id" unless defined $model;
 	    
 	    $list->add([ "", $model->id, $model->last_complete_build->merged_alignment_result->bam_path, "" ]);
-	    
-	    # for debug
-	    #print $model->name;
 	}
     }
     else
@@ -263,19 +257,6 @@ sub execute {
     mkdir catfile($tempdir, $dir_refcov);
     
     
-    
-    # for debug
-    #if (1)
-    #{
-	#$list->data->[0]->[3] = "./refcov-debug/NA12878-CRE-KAPA-refcov-std.tsv";
-	#$list->data->[1]->[3] = "./refcov-debug/NA12878-CRE-QXT-refcov-std.tsv";
-    #}
-    #else
-    #{
-	# /gscuser/gchang/usr/tool/sum1stat.pl ./refcov-debug 1,40 /tmp/gm-genome_sys-2015-02-05_14_48_50--m60W/anonymous0 nrd0
-	# /usr/bin/Rscript /gscuser/gchang/usr/tool/stat1plot.R 1,40 /tmp/gm-genome_sys-2015-02-05_14_48_50--m60W/anonymous0
-    #}
-    
     # step 1. makes a gmt ref-cov standard run
     my @output1;
     for (my $i=0; $i<$list->count_row; $i ++)
@@ -336,9 +317,6 @@ sub execute {
     
     
     # step 2. compiles refcov stats outputs
-    #my $cmd2 = sprintf "%s %s %s %s %s", $script2, catfile($tempdir, $dir_refcov), join(",", @$min_depth_filters), $tempdir, $bw, join(",", @output1);
-    #print STDERR sprintf("Compiling RefCov stats files in %s\n%s\n", $dir_refcov, $cmd2);
-    #system($cmd2);
     my $cmd2 = sprintf "sum1stat: %s %s %s %s %s", catfile($tempdir, $dir_refcov), join(",", @$min_depth_filters), $tempdir, $bw, join(",", @output1);
     print STDERR sprintf("Compiling RefCov stats files in %s\n%s\n", $dir_refcov, $cmd2);
     sum1stat(catfile($tempdir, $dir_refcov), $min_depth_filters, $tempdir, $bw, \@output1, $tempdir);
@@ -359,13 +337,8 @@ sub execute {
     
     # copies the output file
     print STDERR "Copying output files\n";
-    #Genome::Sys->copy_file("$tempdir/*", './');		# does not work
     `cp -fr $tempdir/* $output_directory/`;
     
-    
-    # for debug to print out the commands
-    #print sprintf("Compiling RefCov stats files in %s\n%s\n", $dir_refcov, $cmd2);
-    #print sprintf("\nCreating coverage plots\n%s\n", $cmd3);
     
     print STDERR "Done\n";
     
@@ -413,8 +386,6 @@ sub sum1stat {
     
     
     # create a communication bridge with R and start R
-    # warning message: cannot fetch initial working directory: No such file or directory at /usr/share/perl5/File/Temp.pm line 902
-    #my $R = Statistics::R->new(r_bin=>'/usr/bin/R', tmp_dir=>$tmp_dir);
     my $R = Statistics::R->new(r_bin=>'/usr/bin/R');
     $R->startR;
     
@@ -490,10 +461,6 @@ sub sum1stat {
             
             @colors = map($ct->rgb2hex(@{$set->[$_]}), (0 .. $ncolor - 1));
         }
-        
-        # for debug
-        #printf "\nncolor=%d\n", $ncolor;
-        #print_array @colors;
     }
     else
     {
@@ -761,27 +728,11 @@ sub sum1stat {
     }
     
     
-    # sorts the table
-    # NOTE: This will determine the sample order in the plots.
-    # as default       $tabdist->sort3("median", C_SORT_NUMD, "mean", C_SORT_NUMD, "sample", C_SORT_STR);
-    #$tabdist->{_data} = [ map { $_->[0] }
-    #        sort {
-    #                    $b->[1] <=> $a->[1]
-    #                            ||
-    #                    $b->[2] <=> $a->[2]
-    #                            ||
-    #                    $a->[3] cmp $b->[3]
-    #               }
-    #        map { [$_, $_->[3], $_->[2], $_->[0]] } @{$tabdist->{_data}} ];
-    
-    # prints out the boxplot statistics
-    #printf "\n\n[Boxplot for %s by %s min-depth: %d samples]\n", $statcol, $statdepth, $tabdist->count_row;
-    #$tabdist->print_tab;
+    # writes the boxplot statistics
     $tabdist->write(catfile($dirout, "boxplot.tab"));
     
     
     # sorts the table
-    #$tabstat->sort2("sample", C_SORT_STR, "min_depth_filter", C_SORT_NUM);
     $tabstat->{_data} = [ map { $_->[0] }
                 sort {
                             $a->[1] cmp $b->[1]
@@ -790,14 +741,11 @@ sub sum1stat {
                        }
                 map { [$_, $_->[0], $_->[1]] } @{$tabstat->{_data}} ];
     
-    # prints out the tabular table in tab delimited text format
-    #printf "\n\n[Sample coverage table: %d samples]\n", $count{"nsample"};
-    #$tabstat->print_tab;
+    # writes the tabular table in tab delimited text format
     $tabstat->write(catfile($dirout, "coverage.tab"));
     
     
     # sorts the table
-    #$tabden->sort2("sample", C_SORT_STR, "i", C_SORT_NUM);
     $tabden->{_data} = [ map { $_->[0] }
                 sort {
                             $a->[1] cmp $b->[1]
@@ -806,17 +754,11 @@ sub sum1stat {
                        }
                 map { [$_, $_->[0], $_->[1]] } @{$tabden->{_data}} ];
     
-    # prints out the density function
-    #printf "\n\n[Density estimate table]\n";
-    #$tabden->print_tab;
+    # writes out the density function
     $tabden->write(catfile($dirout, "density.tab"));
     
     
     $R->stopR();
-    
-    
-    # removes the temporary directory
-    # `rm -fr $tmp_dir/Statistics-R`;
     
     
     # the end of the main subroutine
@@ -838,9 +780,6 @@ sub get1rvar {
     if (defined $print && $print =~ /^\s*\[1\]\s+/)
     {
         # replaces the multiple numbers
-        # [1]    1.0  250.5  500.5  750.5 1000.0
-        # [1] 500.5
-        # [1]   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18 [19]  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36 [37]  37  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54 [55]  55  56  57  58  59  60  61  62  63  64  65  66  67  68  69  70  71  72 [73]  73  74  75  76  77  78  79  80  81  82  83  84  85  86  87  88  89  90 [91]  91  92  93  94  95  96  97  98  99 100  51  50  50  52
         $print =~ s/\s*\[\d+\]\s*/ /g;
         $print =~ s/^\s+//g;
         $print =~ s/\s+$//g;
@@ -1000,7 +939,7 @@ sub addhash {
         
         if (exists $data->{$name})
         {
-            carp "Uninitialized value in $name" unless defined $data->{$name};      # for debug
+            carp "Uninitialized value in $name" unless defined $data->{$name};
             
             push @d, sprintf($hsob->{_format}->[$i], $data->{$name});
         }
@@ -1282,15 +1221,12 @@ sub from_file {
         
         # for debug     print $l;
         chomp $l;
-        #$l =~ s/\s*$//; # just to make it sure
-        #$l =~ s/^\s*//;
         
         # parses the data line
         my @fs = split /$delim/, $l;
         @fs = $hsob->_array_size(\@fs, $ncol) if defined $ncol && $ncol > 0;
         
         # checks the data dimension
-        # updated on 2012-05-30
         if (scalar @fs > $hsob->count_col)
         {
             # ignores the extra columns

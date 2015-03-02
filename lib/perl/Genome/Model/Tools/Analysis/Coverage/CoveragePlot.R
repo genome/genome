@@ -4,72 +4,6 @@
 library(grid);
 
 
-
-sumg <- function(g)
-{
-    # prints out the summary information of the gTree
-    cat("\ngTree summary");
-    cat(paste("\n  $name: ", g$name, sep=""));
-    if (! is.null(g$vp$name)) cat(paste("\nparentvp name: ", g$vp$name, sep=""));    
-    cat(paste("\n  $childrenvp name: ", g$childrenvp$name, sep=""));
-    cat(paste("\n  $children: ", toString(names(g$children)), sep=""));
-
-    cat("\nChildren summary");    
-    for (i in 1:length(g$children))
-    {
-        cat(paste("\n  $", g$children[[i]]$name, " children: ", toString(names(g$children[[i]]$children)), sep=""));
-    }
-
-    cat("\n");
-}
-
-sumg2 <- function(g)
-{
-    # prints out the summary information of the gTree
-    sumg(g$gt1);
-    sumg(g$gt2);
-}
-
-
-
-cs_locator <- function(vp, unit="native", times=1, print=TRUE)
-{
-    # sets up the current viewport
-    pushViewport(vp);
-
-    # the vector
-    v <- vector("list", length=times);
-    
-    # the for loop for rows
-    for (i in 1:times)
-    {
-       c <- grid.locator(unit=unit);
-
-       if (print)
-       {
-           cat("[", i, "] x=", c$x, ", y=", c$y, "\n", sep="");
-       }
-       else
-       {
-           #cat("Click ", i, "\n", sep="");
-       }
-
-       v[[i]] <- c;
-    }
-
-    popViewport();
-
-    return(v);
-}
-
-
-cs_glocator <- function(g, unit="native", times=1, print=TRUE)
-{
-    #return(cs_locator(g$vp, unit=unit, times=times, print=print));
-    return(cs_locator(g$childrenvp, unit=unit, times=times, print=print));
-}
-
-
 cs_scale <- function(data, breaks=5, range=NULL, fraction=0.0, order=FALSE)
 {
     # if there is no data points
@@ -143,26 +77,6 @@ cs_range <- function(x)
 
 
 
-cs_extend_scale <- function(scale, range=NULL)
-{
-    if(is.null(range)) return(scale);
-    
-    # extends a numerical range by a small percentage, i.e., fraction, on both sides
-    breaks <- length(scale);
-    e <- extendrange(scale, r=range(range, na.rm=T), f=0)
-
-    # gets the data scope
-    s <- cs_range(e);
-        
-    # gets pretty breakpoints
-    p <- pretty(e, n=breaks);
-    
-    if (s[3]) return(rev(p))
-    else return(p);
-}
-
-
-
 cs_range_limit2 <- function(x, y, xlim=NULL, ylim=NULL)
 {
     if (is.null(xlim)) stop("xlim not defined");
@@ -227,75 +141,6 @@ cs_range_limit2 <- function(x, y, xlim=NULL, ylim=NULL)
     
     return(data);
 }
-
-
-
-cs_range_limit3 <- function(x, y, z, xlim=NULL, ylim=NULL, zlim=NULL)
-{
-    if (is.null(xlim) || is.null(ylim)) stop("both xlim and ylim not defined");
-    
-    # checks the data region
-    minx = min(x);
-    maxx = max(x);
-    miny = min(y);
-    maxy = max(y);
-    if (! is.null(zlim)) minz = min(z);
-    if (! is.null(zlim)) maxz = max(z);
-    
-    #print(c(minx, maxx, miny, maxy));   # for debug
-    #print(xlim);  # for debug
-    #print(ylim);  # for debug
-        
-    # if all x and y data points are within the given range
-    if ((xlim[1] <= minx & maxx <= xlim[2]) & (ylim[1] <= miny & maxy <= ylim[2]))
-    {
-        if (is.null(zlim))
-        {
-            return(list(x=x, y=y, z=z));
-        }
-        else
-        {
-            if (zlim[1] <= minz & maxz <= zlim[2]) return(list(x=x, y=y, z=z));
-        }
-    }
-
-    # selects the data points that are within the given range
-    data <- list(x=vector(mode="numeric"), y=vector(mode="numeric"), z=vector(mode=mode(z)));
-    
-    # adds into a new dataset
-    idx <- 1;
-    for(i in 1:length(x))
-    {
-        if (xlim[1] <= x[i] & x[i] <= xlim[2] & ylim[1] <= y[i] & y[i] <= ylim[2])
-        {
-            if (is.null(zlim))
-            {
-              # a new dataset
-              data$x[idx] <- x[i];
-              data$y[idx] <- y[i];
-              data$z[idx] <- z[i];
-            }
-            else
-            {
-                if (zlim[1] <= z[i] & z[i] <= zlim[2])
-                {
-                    # a new dataset
-                    data$x[idx] <- x[i];
-                    data$y[idx] <- y[i];
-                    data$z[idx] <- z[i];
-                }
-            }
-            
-            # increases the index number
-            idx <- idx + 1;
-        }
-    }
-    
-    #print(data);    # for debug
-    
-    return(data);
-}
-
 
 
 cs_vmargin <- function(x, visible=T, rot=0, label=FALSE, default=unit(1.5, "lines"))
