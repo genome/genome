@@ -72,6 +72,7 @@ sub execute {
         die($error);
     }
     $self->status_message(q{Successfully created '} . $project->name . q{' (} . $project->id . q{).});
+    $self->status_message('Current status is "Pending". Models will not be created until the project is released');
     return $project;
 }
 
