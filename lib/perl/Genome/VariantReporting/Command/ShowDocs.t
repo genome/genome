@@ -31,7 +31,7 @@ else {
 
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 
-for my $component_type qw(experts interpreters filters reports) {
+for my $component_type (qw(experts interpreters filters reports)) {
     Genome::Sys->create_directory(File::Spec->join($actual_dir, $component_type));
     my $internal_type = Genome::VariantReporting::Command::ShowDocs::type_lookup($component_type);
     my @components = $factory->names($internal_type);
