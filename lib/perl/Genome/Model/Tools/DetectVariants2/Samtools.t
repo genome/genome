@@ -119,7 +119,7 @@ sub run_test {
         is(compare($actual_file, $expected_file), 0, "$output_file output matched expected output");
     }
 
-    for my $file_name qw(snvs.vcf.gz indels.vcf.gz) {
+    for my $file_name (qw(snvs.vcf.gz indels.vcf.gz)) {
         ok(-s $test_dir."/$file_name",   "Found $file_name");
         diff_vcf_gz($test_dir, $expected_dir, $file_name);
     }

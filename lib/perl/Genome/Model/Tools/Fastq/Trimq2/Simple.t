@@ -51,7 +51,7 @@ compare_output('smart1');
 sub compare_output {
     my $style = shift;
 
-    for my $file qw(test_simple.trimq2.fastq trimq2.report) {
+    for my $file (qw(test_simple.trimq2.fastq trimq2.report)) {
         my $output_file = $tmp_dir."/$file";
         my $expect_file = $base_dir."/$file.$style";
         ok(compare($output_file, $expect_file) == 0, "Output $file with $style style is created as expected");
