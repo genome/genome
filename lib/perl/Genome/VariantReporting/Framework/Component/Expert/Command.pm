@@ -5,6 +5,8 @@ use warnings FATAL => 'all';
 use Genome;
 use Set::Scalar;
 use JSON;
+use Params::Validate qw(validate validate_pos :types);
+use List::MoreUtils qw(apply);
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 
@@ -15,8 +17,14 @@ use Genome::VariantReporting::Framework::FileLookup qw(
 
 class Genome::VariantReporting::Framework::Component::Expert::Command {
     is_abstract => 1,
-    is => ['Genome::Command::DelegatesToResult', 'Genome::VariantReporting::Framework::Component::Base'],
-    has_input => [
+    is => ['Genome::Command::DelegatesToResult', 'Genome::VariantReporting::Framework::Component::WithTranslatedInputs'],
+    attributes_have => {
+        is_planned => {
+            is => "Boolean",
+            default => 0,
+        },
+    },
+    has_structural_input => [
         input_vcf => {
             is => 'Path',
         },
@@ -28,19 +36,88 @@ class Genome::VariantReporting::Framework::Component::Expert::Command {
         process_id => {
             is => 'Text',
         },
+        plan_json => {
+            is => 'Text',
+        }
     ],
-    has_transient_optional => [
+    has_transient_structural_optional => [
         requestor => {
             is => 'Genome::Process',
             id_by => 'process_id',
         },
     ],
-    has_optional_output => [
+    has_optional_structural_output => [
         output_vcf => {
             is => 'Path',
         },
     ],
 };
+
+sub name {
+    die "Abstract";
+}
+
+sub resolve_plan_attributes {
+    my $self = shift;
+
+    my $variant_reporting_plan = $self->plan;
+    my $specific_plan = $variant_reporting_plan->get_plan('expert', $self->name);
+    while (my ($name, $value) = each %{$specific_plan->run_params}) {
+        $self->$name($value);
+    }
+    return;
+}
+
+sub plan {
+    my $self = shift;
+
+    return Genome::VariantReporting::Framework::Plan::MasterPlan->create_from_json($self->plan_json);
+}
+
+sub planned_names {
+    my $self = shift;
+
+    my @properties = $self->__meta__->properties(is_planned => 1);
+    return map {$_->property_name} @properties;
+}
+
+# TODO this is not covered by tests
+sub validate_with_plan_params {
+    my ($self, $params) = validate_pos(@_, 1, 1);
+
+    my @errors = $self->__planned_errors__($params);
+    if (@errors) {
+        $self->print_errors(@errors);
+        die $self->error_message("Failed to validate_with_plan_params with params:\n" . Data::Dumper::Dumper $params);
+    }
+    return;
+}
+
+sub __planned_errors__ {
+    my ($self, $params) = validate_pos(@_, 1, 1);
+    my $needed = Set::Scalar->new($self->planned_names);
+    return Genome::VariantReporting::Framework::Utility::get_missing_errors($self->class, $params, $needed, "Parameters", "run"),
+        $self->_get_extra_errors($params, $needed);
+}
+
+sub _get_extra_errors {
+    my ($self, $params, $needed) = validate_pos(@_, 1, 1, 1);
+
+    my $have = Set::Scalar->new(keys %{$params});
+    my @errors;
+    unless($needed->is_equal($have)) {
+        if (my $not_needed = $have - $needed) {
+            push @errors, UR::Object::Tag->create(
+                type => 'error',
+                properties => [$not_needed->members],
+                desc => sprintf("Parameters provided but not required by expert (%s): (%s)",
+                    $self->class, join(",", $not_needed->members)),
+            );
+        }
+    }
+
+    return @errors;
+}
 
 sub result_class {
     my $self = shift;
@@ -62,24 +139,23 @@ sub input_names {
 sub is_many_input_names {
     my $self = shift;
 
-    my @properties = $self->__meta__->properties(
-        is_many => 1, is_input => 1);
-    return map {$_->property_name} @properties;
+    return apply {s/_lookup$//} $self->result_class->is_many_property_names;
 }
 
 sub is_not_many_input_names {
     my $self = shift;
 
-    my @properties = $self->__meta__->properties(
-        is_many => 0, is_input => 1);
-    return map {$_->property_name} @properties;
+    return apply {s/_lookup$//} $self->result_class->is_not_many_property_names;
 }
 
 sub input_hash {
     my $self = shift;
 
+    $self->resolve_plan_attributes;
+
     my %hash;
     for my $input_name ($self->is_many_input_names) {
+        next unless $self->can($input_name);
         my $value = [$self->$input_name];
         $hash{$input_name} = $value;
         if (is_file($value->[0])) {
@@ -87,6 +163,7 @@ sub input_hash {
         }
     }
     for my $input_name ($self->is_not_many_input_names) {
+        next unless $self->can($input_name);
         my $value = $self->$input_name;
         if (is_hashref($value)) {
             $hash{$input_name} = json_encode($value);
@@ -101,9 +178,6 @@ sub input_hash {
 
     $hash{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
 
-    for my $key (qw(requestor user sponsor process_id label)) {
-        delete $hash{$key};
-    }
     return %hash;
 }
 

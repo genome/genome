@@ -37,12 +37,6 @@ sub run_class {
     return $factory->get_class('runners', $self->name);
 }
 
-sub adaptor_class {
-    my $self = shift;
-    my $factory = Genome::VariantReporting::Framework::Factory->create();
-    return $factory->get_class('adaptors', $self->name);
-}
-
 sub run_operation {
     my $self = shift;
     return Genome::WorkflowBuilder::Command->create(
@@ -56,7 +50,7 @@ sub connected_run_operation {
 
     my $run_operation = $self->run_operation;
     $dag->add_operation($run_operation);
-    for my $name qw(process_id input_vcf) {
+    for my $name qw(process_id input_vcf plan_json variant_type) {
         $dag->connect_input(
             input_property => $name,
             destination => $run_operation,
@@ -71,29 +65,6 @@ sub connected_run_operation {
         );
     }
     return $run_operation;
-}
-
-sub adaptor_operation {
-    my $self = shift;
-    return Genome::WorkflowBuilder::Command->create(
-        name => 'Get inputs from plan',
-        command => $self->adaptor_class,
-    );
-}
-
-sub connected_adaptor_operation {
-    my ($self, $dag) = validate_pos(@_, 1, 1);
-
-    my $adaptor_operation = $self->adaptor_operation;
-    $dag->add_operation($adaptor_operation);
-    for my $name qw(variant_type plan_json) {
-        $dag->connect_input(
-            input_property => $name,
-            destination => $adaptor_operation,
-            destination_property => $name,
-        );
-    }
-    return $adaptor_operation;
 }
 
 sub dag {
@@ -119,13 +90,8 @@ sub _simple_dag {
     my $dag = Genome::WorkflowBuilder::DAG->create(
         name => $self->name,
     );
-    my $adaptor_operation = $self->connected_adaptor_operation($dag);
 
     my $run_operation = $self->connected_run_operation($dag);
-    $self->_link(dag => $dag,
-          adaptor => $adaptor_operation,
-          target => $run_operation,
-    );
 
     return $dag;
 }

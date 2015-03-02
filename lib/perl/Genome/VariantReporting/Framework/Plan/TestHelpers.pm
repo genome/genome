@@ -368,30 +368,6 @@ sub set_what_interpreter_x_requires {
 }
 
 {
-    package Genome::VariantReporting::ExpertOneAdaptor;
-
-    use strict;
-    use warnings FATAL => 'all';
-    use Genome;
-
-    class Genome::VariantReporting::ExpertOneAdaptor {
-        is => 'Genome::VariantReporting::Framework::Component::Adaptor',
-        has_planned_output => [
-            e1_p1 => {},
-            e1_p2 => {},
-            e1_translated1 => {is_translated => 1},
-            e1_translated2 => {is_translated => 1},
-        ],
-    };
-
-    sub name {
-        "expert_one";
-    }
-
-    1;
-}
-
-{
     package Genome::VariantReporting::ExpertOneRun;
 
     use strict;
@@ -400,6 +376,12 @@ sub set_what_interpreter_x_requires {
 
     class Genome::VariantReporting::ExpertOneRun {
         is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
+        has_planned_transient => [
+            e1_p1 => {},
+            e1_p2 => {},
+            e1_translated1 => {is_translated => 1},
+            e1_translated2 => {is_translated => 1},
+        ],
     };
 
     sub name {
@@ -430,30 +412,6 @@ sub set_what_interpreter_x_requires {
 }
 
 {
-    package Genome::VariantReporting::ExpertTwoAdaptor;
-
-    use strict;
-    use warnings FATAL => 'all';
-    use Genome;
-
-    class Genome::VariantReporting::ExpertTwoAdaptor {
-        is => 'Genome::VariantReporting::Framework::Component::Adaptor',
-        has_planned_output => [
-            e2_p1 => {},
-            e2_p2 => {},
-            e2_translated1 => {is_translated => 1},
-            e2_translated2 => {is_translated => 1},
-        ],
-    };
-
-    sub name {
-        "expert_two";
-    }
-
-    1;
-}
-
-{
     package Genome::VariantReporting::ExpertTwoRun;
 
     use strict;
@@ -462,6 +420,12 @@ sub set_what_interpreter_x_requires {
 
     class Genome::VariantReporting::ExpertTwoRun {
         is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
+        has_planned_transient => [
+            e2_p1 => {},
+            e2_p2 => {},
+            e2_translated1 => {is_translated => 1},
+            e2_translated2 => {is_translated => 1},
+        ],
     };
 
     sub name {
@@ -563,8 +527,6 @@ sub set_what_interpreter_x_requires {
 
 # These allow the above classes to be used to create DAGs
 # that are used to generate xml for testing DAG generation.
-$INC{'Genome/VariantReporting/ExpertOneAdaptor.pm'} = '1',
-$INC{'Genome/VariantReporting/ExpertTwoAdaptor.pm'} = '1',
 $INC{'Genome/VariantReporting/ExpertOneRun.pm'} = '1',
 $INC{'Genome/VariantReporting/ExpertTwoRun.pm'} = '1',
 

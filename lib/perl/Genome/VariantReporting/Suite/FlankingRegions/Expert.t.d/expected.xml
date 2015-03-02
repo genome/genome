@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<operation name="flanking-regions">
+  <operationtype typeClass="Workflow::OperationType::Model">
+    <inputproperty>input_vcf</inputproperty>
+    <inputproperty>plan_json</inputproperty>
+    <inputproperty>process_id</inputproperty>
+    <inputproperty>variant_type</inputproperty>
+    <outputproperty>output_result</outputproperty>
+    <outputproperty>output_vcf</outputproperty>
+  </operationtype>
+  <operation name="Run flanking-regions">
+    <operationtype typeClass="Workflow::OperationType::Command" commandClass="Genome::VariantReporting::Suite::FlankingRegions::Run">
+      <inputproperty>input_vcf</inputproperty>
+      <inputproperty>plan_json</inputproperty>
+      <inputproperty>variant_type</inputproperty>
+      <outputproperty>output_result</outputproperty>
+      <outputproperty>output_vcf</outputproperty>
+      <outputproperty>result</outputproperty>
+    </operationtype>
+  </operation>
+  <link fromOperation="Run flanking-regions" fromProperty="output_result" toOperation="output connector" toProperty="output_result"/>
+  <link fromOperation="Run flanking-regions" fromProperty="output_vcf" toOperation="output connector" toProperty="output_vcf"/>
+  <link fromOperation="input connector" fromProperty="input_vcf" toOperation="Run flanking-regions" toProperty="input_vcf"/>
+  <link fromOperation="input connector" fromProperty="plan_json" toOperation="Run flanking-regions" toProperty="plan_json"/>
+  <link fromOperation="input connector" fromProperty="process_id" toOperation="Run flanking-regions" toProperty="process_id"/>
+  <link fromOperation="input connector" fromProperty="variant_type" toOperation="Run flanking-regions" toProperty="variant_type"/>
+</operation>

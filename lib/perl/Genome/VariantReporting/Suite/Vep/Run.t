@@ -15,12 +15,22 @@ use Genome::Test::Factory::Build;
 use Genome::Test::Factory::Process;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
-use Genome::VariantReporting::Framework::TestHelpers qw(test_cmd_and_result_are_in_sync);
-
+use Genome::VariantReporting::Framework::TestHelpers qw(
+    test_cmd_and_result_are_in_sync
+    get_translation_provider
+    get_reference_build
+    get_plan_object
+);
+use Genome::VariantReporting::Framework::Plan::TestHelpers qw(
+    set_what_interpreter_x_requires
+);
 use Test::More;
 
 my $cmd_class = 'Genome::VariantReporting::Suite::Vep::Run';
 use_ok($cmd_class) or die;
+
+my $data_dir = __FILE__.".d";
+my $RESOURCE_VERSION = 2;
 
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('runners', $cmd_class->name), $cmd_class);
@@ -28,6 +38,8 @@ isa_ok($factory->get_class('runners', $cmd_class->name), $cmd_class);
 my $result_class = 'Genome::VariantReporting::Suite::Vep::RunResult';
 use_ok($result_class) or die;
 use_ok('Genome::Db::Ensembl::Command::Run::Vep') or die;
+
+set_what_interpreter_x_requires('vep');
 
 my $cmd = generate_test_cmd();
 ok($cmd->isa($cmd_class), "Command created correctly");
@@ -55,20 +67,27 @@ sub generate_test_cmd {
 
     my $process = Genome::Test::Factory::Process->setup_object();
 
+    my $reference_sequence_build => get_reference_build(version => $RESOURCE_VERSION);
+    my $feature_list_cmd = Genome::FeatureList::Command::Create->create(
+        reference => $reference_sequence_build,
+        file_path => File::Spec->join($data_dir, "feature_list.bed"),
+        format => "true-BED",
+        content_type => "roi",
+        name => "test",
+    );
+    my $feature_list = $feature_list_cmd->execute;
+
+    my $provider = get_translation_provider(version => $RESOURCE_VERSION);
+    $provider->translations({%{$provider->translations}, feature_list_ids => {TEST => $feature_list->id}});
+
+    my $plan_file = File::Spec->join($data_dir, 'plan.yaml');
+    my $plan = get_plan_object( plan_file => $plan_file, provider => $provider );
+
     my %params = (
         input_vcf => __FILE__,
-        ensembl_version => "1",
-        custom_annotation_tags => [qw(ROI SEGDUP)],
-        feature_list_ids => {
-            ROI => $roi->id,
-            SEGDUP => $segdup->id,
-        },
-        variant_type => 'snvs',
-        plugins_version => 0,
-        species => "alien",
-        joinx_version => '1.9',
-        reference_fasta => __FILE__,
+        variant_type     => 'snvs',
         process_id => $process->id,
+        plan_json => $plan->as_json,
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd

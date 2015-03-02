@@ -4,7 +4,12 @@ use strict;
 use warnings FATAL => 'all';
 
 use Test::More;
+use Test::Exception;
 use above 'Genome';
+use Genome::VariantReporting::Framework::TestHelpers qw(
+    get_translation_provider
+    get_plan_object
+);
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -14,16 +19,18 @@ BEGIN {
 my $pkg = 'Genome::VariantReporting::Framework::Component::Expert::Command';
 use_ok($pkg) || die;
 
-{
-    package Genome::VariantReporting::Framework::Component::Expert::TestCommand;
+my $RESOURCE_VERSION = 2;
+my $data_dir = __FILE__.".d";
 
-    class Genome::VariantReporting::Framework::Component::Expert::TestCommand {
-        is => $pkg,
-    };
-}
-my $obj = Genome::VariantReporting::Framework::Component::Expert::TestCommand->create(
+my $provider = get_translation_provider(version => $RESOURCE_VERSION);
+
+my $plan_file = File::Spec->join($data_dir, 'plan.yaml');
+my $plan = get_plan_object( plan_file => $plan_file, provider => $provider );
+
+my $obj = Genome::VariantReporting::Framework::Test::Run->create(
     input_vcf => __FILE__,
     variant_type => 'snvs',
+    plan_json => $plan->as_json,
 );
 
 my %input_hash = $obj->input_hash;
@@ -32,5 +39,8 @@ ok(exists($input_hash{'input_vcf_lookup'}) && ($input_hash{'input_vcf_lookup'} n
     'input_vcf_lookup entry exists and is not the same as input_vcf');
 is($input_hash{'variant_type'}, 'snvs', 'variant_type entry is as expected');
 ok(!exists $input_hash{'variant_type_lookup'}, 'variant_type_lookup entry absent as expected');
+
+lives_ok { $obj->resolve_plan_attributes } 'resolve_plan_attributes execute successfully';
+is($obj->__planned__, 'foo', 'Value of __planned__ is as expected');
 
 done_testing();

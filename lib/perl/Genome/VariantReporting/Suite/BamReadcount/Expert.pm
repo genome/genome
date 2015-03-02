@@ -5,6 +5,7 @@ use warnings FATAL => 'all';
 use Genome;
 use Genome::WorkflowBuilder::DAG;
 use Genome::WorkflowBuilder::Command;
+use Params::Validate qw(validate_pos);
 
 class Genome::VariantReporting::Suite::BamReadcount::Expert {
     is => 'Genome::VariantReporting::Framework::Component::Expert',
@@ -25,7 +26,7 @@ sub dag {
     my $run_op = $self->run_op;
     $dag->add_operation($run_op);
     $run_op->parallel_by('aligned_bam_result_id');
-    for my $name qw(process_id input_vcf) {
+    for my $name qw(process_id input_vcf variant_type plan_json) {
         $dag->connect_input(
             input_property => $name,
             destination => $run_op,
@@ -39,7 +40,7 @@ sub dag {
 
     my $annotate_op = $self->annotate_op;
     $dag->add_operation($annotate_op);
-    for my $name qw(process_id input_vcf) {
+    for my $name qw(process_id input_vcf variant_type plan_json) {
         $dag->connect_input(
             input_property => $name,
             destination => $annotate_op,
@@ -51,10 +52,6 @@ sub dag {
         source_property => 'output_result',
         destination => $annotate_op,
         destination_property => 'readcount_results',
-    );
-    $self->_link(dag => $dag,
-          adaptor => $adaptor_op,
-          target => $annotate_op,
     );
 
     $dag->connect_output(
@@ -80,6 +77,29 @@ sub annotate_op {
     );
 }
 
+sub adaptor_operation {
+    my $self = shift;
+    return Genome::WorkflowBuilder::Command->create(
+        name => 'Get inputs from plan',
+        command => 'Genome::VariantReporting::Suite::BamReadcount::Adaptor',
+    );
+}
 
+sub connected_adaptor_operation {
+    my ($self, $dag) = validate_pos(@_, 1, 1);
+
+    my $adaptor_operation = $self->adaptor_operation;
+    $dag->add_operation($adaptor_operation);
+    $dag->connect_input(
+        input_property => 'plan_json',
+        destination => $adaptor_operation,
+        destination_property => 'plan_json',
+    );
+    return $adaptor_operation;
+}
+
+sub run_class {
+    return 'Genome::VariantReporting::Suite::BamReadcount::Run';
+}
 
 1;

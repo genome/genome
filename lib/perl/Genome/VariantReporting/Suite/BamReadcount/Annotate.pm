@@ -11,10 +11,19 @@ class Genome::VariantReporting::Suite::BamReadcount::Annotate {
             is_many => 1,
         },
     ],
+    has_optional_output => [
+        output_vcf => {
+            is => 'Path',
+        },
+    ],
 };
 
 sub result_class {
     'Genome::VariantReporting::Suite::BamReadcount::AnnotateResult';
+}
+
+sub resolve_plan_attributes {
+    return;
 }
 
 1;
