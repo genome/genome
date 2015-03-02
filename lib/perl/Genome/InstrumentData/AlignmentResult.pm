@@ -1527,13 +1527,6 @@ sub _sam_header_extra {
 
     my $instr_data = $self->instrument_data;
 
-    my $insert_size_for_header = 0;
-    if ($instr_data->can('resolve_median_insert_size') &&
-            $instr_data->resolve_median_insert_size)
-    {
-        $insert_size_for_header = $instr_data->resolve_median_insert_size;
-    }
-
     my $seems_paired = $self->_is_inferred_paired_end;
     my $paired = defined $seems_paired ? $seems_paired : $instr_data->is_paired_end;
     my $description_for_header = $paired ? "paired end" : "fragment";
@@ -1555,7 +1548,6 @@ sub _sam_header_extra {
         "PL:$platform",
         "PU:$pu_tag",
         "LB:$lib_tag",
-        "PI:$insert_size_for_header",
         "DS:$description_for_header",
         "DT:$date_run_tag",
         "SM:$sample_tag",

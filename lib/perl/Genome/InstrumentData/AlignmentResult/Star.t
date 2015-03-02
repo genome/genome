@@ -15,7 +15,7 @@ use above 'Genome';
 use Genome::Test::Factory::SoftwareResult::User;
 use_ok('Genome::InstrumentData::AlignmentResult::Star');
 
-my $VERSION = 1;
+my $VERSION = 2;
 
 my $aligner_name  = "star";
 my $ar_base_class = 'Genome::InstrumentData::AlignmentResult';
