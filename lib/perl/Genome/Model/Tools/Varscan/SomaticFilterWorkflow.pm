@@ -7,6 +7,10 @@ use Genome;
 use Workflow::Simple;
 use File::Basename;
 
+BEGIN {
+    $ENV{WF_USE_FLOW} = 1;
+}
+
 class Genome::Model::Tools::Varscan::SomaticFilterWorkflow {
     is => 'Genome::Model::Tools::Varscan',
     has_input => [
