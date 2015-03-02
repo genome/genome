@@ -50,14 +50,14 @@ sub connected_run_operation {
 
     my $run_operation = $self->run_operation;
     $dag->add_operation($run_operation);
-    for my $name qw(process_id input_vcf plan_json variant_type) {
+    for my $name (qw(process_id input_vcf plan_json variant_type)) {
         $dag->connect_input(
             input_property => $name,
             destination => $run_operation,
             destination_property => $name,
         );
     }
-    for my $name qw(output_result output_vcf) {
+    for my $name (qw(output_result output_vcf)) {
         $dag->connect_output(
             output_property => $name,
             source => $run_operation,
