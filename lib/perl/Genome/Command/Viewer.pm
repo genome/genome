@@ -19,6 +19,7 @@ sub write_report {
 
 sub get_terminal_width {
     # GetTerminalSize() returns an empty array if unsupported, e.g. in apipe-ci logs.
+    local $SIG{__WARN__} = sub { };
     my ($screen_width) = GetTerminalSize();
     $screen_width ||= 80;
     return $screen_width;
