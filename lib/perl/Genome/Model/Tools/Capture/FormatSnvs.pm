@@ -71,7 +71,7 @@ sub execute {                               # replace with real execution logic.
 		$self->outdir,
 		basename($variants_file) . ".formatted");
 	} else {
-		die $self->error_message("Specify variants file or outdir.");
+		die $self->error_message("Please specify output-file or outdir.");
 	}
 	
 	## Open outfile ##
