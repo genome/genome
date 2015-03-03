@@ -245,7 +245,7 @@ function set_defaults {
 
     if test -z "$DB_SNAPSHOT_NAME"
     then
-        DB_SNAPSHOT_NAME="eb3d990"
+        DB_SNAPSHOT_NAME="b46c0e7"
     fi
 
     if test -z "$UR_REPO" -a -z "$DISABLE_UR"
