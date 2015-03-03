@@ -99,14 +99,14 @@ sub _register_users {
     my $label = $newly_created ? 'created' : 'shortcut';
     $user_hash{$label} = $requestor;
 
-    my @all_params;
+    my @param_sets;
     while(my ($label, $object) = each %user_hash) {
         my %params = (
             label           => $label,
             user            => $object,
             software_result => $software_result,
         );
-        push @all_params, \%params;
+        push @param_sets, \%params;
     }
 
     my $observer = UR::Context->process->add_observer(
@@ -114,9 +114,9 @@ sub _register_users {
         once => 1,
         callback => sub {
             my @locks;
-            for my $params (@all_params) {
+            for my $params (@param_sets) {
                 next if grep { $params->{$_}->isa('UR::DeletedRef') } qw(user software_result);
-                push @locks, $class->_get_or_create_with_lock($params);
+                push @locks, $class->_lock_and_create_if_needed($params);
             }
 
             return unless @locks;
@@ -137,7 +137,7 @@ sub _register_users {
     }
 }
 
-sub _get_or_create_with_lock {
+sub _lock_and_create_if_needed {
     my $class = shift;
     my $params = shift;
 
@@ -146,12 +146,12 @@ sub _get_or_create_with_lock {
 
     my $resource = $class->_resolve_lock_name($params);
     my $lock = Genome::Sys->lock_resource(resource_lock => $resource, scope => 'site');
-    $class->_get_or_create($params);
+    $class->_load_or_create($params);
 
     return $lock;
 }
 
-sub _get_or_create {
+sub _load_or_create {
     my $class = shift;
     my $params = shift;
 
@@ -160,7 +160,7 @@ sub _get_or_create {
         $self = $class->create(%$params);
     }
 
-    return $self;
+    return 1;
 }
 
 sub _resolve_lock_name {
