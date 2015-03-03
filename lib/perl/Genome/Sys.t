@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use above 'Genome';
+use Test::Exception;
 use Test::More;
 
 use Genome::Sys;
@@ -191,6 +192,22 @@ subtest iterate_file_lines => sub {
         plan tests => 4;
         $the_test->(IO::File->new($source_file));
     };
+};
+
+subtest test_write__read_file => sub {
+    plan tests => 2;
+
+    my @lines = map { $_."\n" } ('A'..'C');
+
+    # first write to STDOUT is ok
+    ok(Genome::Sys->write_file('-', @lines), 'first write_file to STDOUT succeeds');
+    # second fails
+    throws_ok(
+        sub{ Genome::Sys->write_file('-', @lines); },
+        qr/Failed to write to file \-\! Bad file descriptor/,
+        'second write_file to STDOUT fails',
+    );
+
 };
 
 done_testing();
