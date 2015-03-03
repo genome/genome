@@ -198,15 +198,10 @@ subtest test_write__read_file => sub {
     plan tests => 2;
 
     my @lines = map { $_."\n" } ('A'..'C');
-
-    # first write to STDOUT is ok
     ok(Genome::Sys->write_file('-', @lines), 'first write_file to STDOUT succeeds');
-    # second fails
-    throws_ok(
-        sub{ Genome::Sys->write_file('-', @lines); },
-        qr/Failed to write to file \-\! Bad file descriptor/,
-        'second write_file to STDOUT fails',
-    );
+    ok(Genome::Sys->write_file('-', @lines), 'second write_file to STDOUT succeeds');
+
+    select STDOUT;
 
 };
 
