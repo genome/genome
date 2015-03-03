@@ -31,33 +31,6 @@ class Genome::Model::Tools::Varscan::SomaticFilterWorkflow {
             doc => "Reference FASTA file for BAMs",
             example_values => [(Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa')],
         },
-        chromosome => {
-            is => 'Text',
-            doc => "Specify a single chromosome (optional)",
-            is_optional => 1,
-        },
-        filter_loh => {
-            is => 'Text',
-            doc => "Flag to apply filter to LOH-HC calls using normal BAM",
-            is_optional => 1,
-            default => 1,
-        },
-        filter_germline => {
-            is => 'Text',
-            doc => "Flag to apply filter to Germline-HC calls using tumor BAM",
-            is_optional => 1,
-            default => 0,
-        },
-        skip_if_output_present => {
-            is => 'Text',
-            doc => "If set to 1, skip execution if output files exist",
-            is_optional => 1,
-        },
-        varscan_params => {
-            is => 'Text',
-            doc => "Parameters to pass to VarScan [--min-coverage 3 --min-var-freq 0.08 --p-value 0.10 --somatic-p-value 0.05 --strand-filter 1]" ,
-            is_optional => 1,
-        },
         outdir => {
             is => 'FilesystemPath',
             doc => 'Directory where output files will be written',
@@ -66,7 +39,7 @@ class Genome::Model::Tools::Varscan::SomaticFilterWorkflow {
 };
 
 sub help_brief {
-    "This filter is identical to SomaticParallelFilter. Uses a workflow instead of manual 'bsub'. Filters SNVs only."
+    "This filter is identical to GMT Varscan SomaticParallelFilter. Uses a workflow instead of manual 'bsub'. Filters SNVs only."
 }
 
 sub help_synopsis {
@@ -92,7 +65,7 @@ sub get_variant_files {
     my ($chrom) = split(/\t/, $line);
     next if($chrom =~ 'NT_' || $chrom =~ /GL/ || $chrom =~ /MT/);
     my $variant_f = $prefix . ".$chrom.snp";
-	if(-e $variant_f) {
+    if(-e $variant_f) {
       push @$variant_files, $variant_f;
     }
   }
@@ -135,11 +108,37 @@ sub map_workflow_inputs {
   $input->{tumor_bam} = $self->tumor_bam;
 }
 
-sub _run_format_workflow {
+sub check_result {
+  my $self = shift;
+  my $result = shift;
+  unless($result){
+    foreach my $error (@Workflow::Simple::ERROR){
+      print STDERR $error->error ."\n";
+    }
+    die $self->error_message("Workflow did not return correctly.");
+  }
+}
+
+sub validate_workflow {
+  my $self = shift;
+  my $w = shift;
+  my @errors = $w->validate;
+  if (@errors) {
+    $self->error_message(@errors);
+    die "Errors validating workflow\n";
+  }
+}
+
+sub set_lsf_queue {
+  my $self = shift;
+  my $w = shift;
+  my $lsf_queue = $ENV{'GENOME_LSF_QUEUE_BUILD_WORKER_ALT'};
+  $w->operation_type->lsf_queue($lsf_queue);
+}
+
+sub run_format_workflow {
   my $self = shift;
   my $input = shift;
-
-  my $lsf_queue = $ENV{'GENOME_LSF_QUEUE_BUILD_WORKER_ALT'};
 
   my $w = Workflow::Operation->create(
     name => "Format Varscan SNVs",
@@ -147,17 +146,9 @@ sub _run_format_workflow {
       'Genome::Model::Tools::Capture::FormatSnvs')
   );
   $w->parallel_by('variants_file');
-  $w->operation_type->lsf_queue($lsf_queue);
-
-  my $log_dir = $self->outdir;
-  $w->log_dir($log_dir);
-
-  # Validate the workflow
-  my @errors = $w->validate;
-  if (@errors) {
-    $self->error_message(@errors);
-    die "Errors validating workflow\n";
-  }
+  $self->set_lsf_queue($w);
+  $w->log_dir($self->outdir);
+  $self->validate_workflow($w);
 
   # Launch workflow
   $self->status_message("Launching workflow now.");
@@ -168,20 +159,12 @@ sub _run_format_workflow {
     'append_line' => 1,
   );
 
-  # Collect and analyze results
-  unless($result){
-    foreach my $error (@Workflow::Simple::ERROR){
-      print STDERR $error->error ."\n";
-    }
-    die $self->error_message("Workflow did not return correctly.");
-  }
+  $self->check_result($result);
 }
 
-sub _run_process_workflow {
+sub run_process_workflow {
   my $self = shift;
   my $input = shift;
-
-  my $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
 
   my $w = Workflow::Operation->create(
     name => "Process Varscan SNVs",
@@ -189,17 +172,9 @@ sub _run_process_workflow {
       'Genome::Model::Tools::Varscan::ProcessSomatic')
   );
   $w->parallel_by('status_file');
-  $w->operation_type->lsf_queue($lsf_queue);
-
-  my $log_dir = $self->outdir;
-  $w->log_dir($log_dir);
-
-  # Validate the workflow
-  my @errors = $w->validate;
-  if (@errors) {
-    $self->error_message(@errors);
-    die "Errors validating workflow\n";
-  }
+  $self->set_lsf_queue($w);
+  $w->log_dir($self->outdir);
+  $self->validate_workflow($w);
 
   # Launch workflow
   $self->status_message("Launching workflow now.");
@@ -208,21 +183,13 @@ sub _run_process_workflow {
     'status_file' => $input->{format_output},
   );
 
-  #Collect and analyze results
-  unless($result){
-    foreach my $error (@Workflow::Simple::ERROR){
-      print STDERR $error->error ."\n";
-    }
-    die $self->error_message("Workflow did not return correctly.");
-  }
+  $self->check_result($result);
 }
 
-sub _run_filter_workflow {
+sub run_filter_workflow {
   my $self = shift;
   my $processed_input = shift;
   my $bam = shift;
-
-  my $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
 
   my $w = Workflow::Operation->create(
     name => "Filter Varscan SNVs",
@@ -230,17 +197,9 @@ sub _run_filter_workflow {
       'Genome::Model::Tools::Somatic::FilterFalsePositives')
   );
   $w->parallel_by('variant_file');
-  $w->operation_type->lsf_queue($lsf_queue);
-
-  my $log_dir = $self->outdir;
-  $w->log_dir($log_dir);
-
-  # Validate the workflow
-  my @errors = $w->validate;
-  if (@errors) {
-    $self->error_message(@errors);
-    die "Errors validating workflow\n";
-  }
+  $self->set_lsf_queue($w);
+  $w->log_dir($self->outdir);
+  $self->validate_workflow($w);
 
   # Launch workflow
   $self->status_message("Launching filter workflow now.");
@@ -253,25 +212,18 @@ sub _run_filter_workflow {
     'bam_readcount_version' => "0.6",
   );
 
-  #Collect and analyze results
-  unless($result){
-    foreach my $error (@Workflow::Simple::ERROR) {
-      $self->error_message($error->stdout());
-      $self->error_message($error->stderr());
-    }
-    die $self->error_message("Workflow did not return correctly.");
-  }
+  $self->check_result($result);
 }
 
 sub execute {
   my $self = shift;
   my %input;
   $self->map_workflow_inputs(\%input);
-  $self->_run_format_workflow(\%input);
-  $self->_run_process_workflow(\%input);
-  $self->_run_filter_workflow($input{processed_somatic}, $input{tumor_bam});
-  $self->_run_filter_workflow($input{processed_germline}, $input{tumor_bam});
-  $self->_run_filter_workflow($input{processed_loh}, $input{normal_bam});
+  $self->run_format_workflow(\%input);
+  $self->run_process_workflow(\%input);
+  $self->run_filter_workflow($input{processed_somatic}, $input{tumor_bam});
+  $self->run_filter_workflow($input{processed_germline}, $input{tumor_bam});
+  $self->run_filter_workflow($input{processed_loh}, $input{normal_bam});
   return 1;
 }
 
