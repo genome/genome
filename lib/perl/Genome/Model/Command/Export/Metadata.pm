@@ -341,7 +341,7 @@ sub add_to_dump_queue {
     }
 
     if ($obj->isa("Genome::Model::Build")) {
-        $obj->{status} = "Dummy";
+        $obj->{status} = $obj->status || "Dummy";
         $obj->{db_committed}{status} = "Dummy";
         my $e = $obj->the_master_event;
         $e->event_status("Dummy");
