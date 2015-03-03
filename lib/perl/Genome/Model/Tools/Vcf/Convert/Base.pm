@@ -158,7 +158,7 @@ sub check_tcga_vcf {
     my $self = shift;
     my $flag = 0;
 
-    for my $sample_type qw(aligned_reads_sample control_aligned_reads_sample) {
+    for my $sample_type (qw(aligned_reads_sample control_aligned_reads_sample)) {
         my $sample_name = $self->$sample_type;
         if ($sample_name) {
             my $name_in_vcf = Genome::Sample->sample_name_to_name_in_vcf($sample_name);

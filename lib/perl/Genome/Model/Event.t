@@ -132,7 +132,7 @@ ok($event->should_calculate,'should calculate metrics for event status'. $event-
 
 is($event->build_directory,$new_build->data_directory,'data directory from parent event');
 
-for my $hang_off qw(input output metric) {
+for my $hang_off (qw(input output metric)) {
     my %hang_off_params =  (
                             name => 'test_'. $hang_off .'_name',
                             value => 'test_'. $hang_off .'_value',

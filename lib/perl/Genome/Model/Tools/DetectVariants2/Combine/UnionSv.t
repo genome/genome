@@ -81,7 +81,7 @@ ok($union_sv_object, 'created UnionSv object');
 ok($union_sv_object->execute(), 'executed UnionSv object');
 
 my @files = ('svs.hq', 'svs.hq.merge.annot.somatic');
-for my $type qw(Inter Intra) {
+for my $type (qw(Inter Intra)) {
     push @files, map{$type.'.svs.merge.'.$_}qw(fasta file out file.annot);
 }
 

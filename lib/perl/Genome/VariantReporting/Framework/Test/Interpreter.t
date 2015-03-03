@@ -35,7 +35,7 @@ subtest 'test good as expected' => sub {
 };
 
 subtest 'test wrong input alleles' => sub {
-    for my $allele qw(T BBB GGGGGG --__++) { 
+    for my $allele (qw(T BBB GGGGGG --__++)) {
         my $rv = eval {$interpreter->interpret_entry($entry, [$allele])};
         ok(!$rv, 'Failed as expected: '.$@);
     }

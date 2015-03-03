@@ -38,8 +38,8 @@ is($sanger_trimq2->pair1_out_file, "$tmp_dir/test_pair_end_1.trimq2.fastq", 'pai
 is($sanger_trimq2->pair2_out_file, "$tmp_dir/test_pair_end_2.trimq2.fastq", 'pair_end 2 output name ok');
 is($sanger_trimq2->pair_as_frag_file, "$tmp_dir/trimq2.pair_as_fragment.fastq", 'pair as fragment output name ok');
 
-for my $file qw(trimq2.pair_as_fragment.fastq
-test_pair_end_1.trimq2.fastq test_pair_end_2.trimq2.fastq trimq2.pair_end.filtered.fastq trimq2.pair_as_fragment.filtered.fastq trimq2.report) {
+for my $file (qw(trimq2.pair_as_fragment.fastq
+test_pair_end_1.trimq2.fastq test_pair_end_2.trimq2.fastq trimq2.pair_end.filtered.fastq trimq2.pair_as_fragment.filtered.fastq trimq2.report)) {
     my $output_file = $tmp_dir."/$file";
     my $expect_file = $base_dir."/$file";
     ok(compare($output_file, $expect_file) == 0, "Output $file is created as expected");

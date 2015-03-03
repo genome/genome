@@ -26,7 +26,7 @@ sub dag {
     my $run_op = $self->run_op;
     $dag->add_operation($run_op);
     $run_op->parallel_by('aligned_bam_result_id');
-    for my $name qw(process_id input_vcf variant_type plan_json) {
+    for my $name (qw(process_id input_vcf variant_type plan_json)) {
         $dag->connect_input(
             input_property => $name,
             destination => $run_op,
@@ -40,7 +40,7 @@ sub dag {
 
     my $annotate_op = $self->annotate_op;
     $dag->add_operation($annotate_op);
-    for my $name qw(process_id input_vcf variant_type plan_json) {
+    for my $name (qw(process_id input_vcf variant_type plan_json)) {
         $dag->connect_input(
             input_property => $name,
             destination => $annotate_op,

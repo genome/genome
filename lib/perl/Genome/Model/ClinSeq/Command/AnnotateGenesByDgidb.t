@@ -80,7 +80,7 @@ ok($cmd->execute, 'command completed successfully');
 my $output_dir = $cmd->output_dir;
 is($output_dir, $tmp_test_tsv.'.dgidb', 'output dir named ok');
 
-for my $file_name qw(all_interactions.tsv expert_antineoplastic.tsv kinase_only.tsv) {
+for my $file_name (qw(all_interactions.tsv expert_antineoplastic.tsv kinase_only.tsv)) {
     my ($output_file, $expected) = map{$_ . "/$file_name"}($output_dir, $test_dir);
     compare_ok($output_file, $expected, 'output file created ok as expected');
 }
