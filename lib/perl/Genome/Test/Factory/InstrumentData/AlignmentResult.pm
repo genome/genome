@@ -5,10 +5,13 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Test::Factory::SoftwareResult::User;
 
 sub generate_obj {
     my $self = shift;
-    return Genome::InstrumentData::AlignmentResult::Bwa->__define__(@_);
+
+    my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash();
+    return Genome::InstrumentData::AlignmentResult::Bwa->__define__(@_, _user_data_for_nested_results => $result_users);
 }
 
 
