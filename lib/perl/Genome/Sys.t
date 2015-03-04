@@ -2,7 +2,6 @@
 use strict;
 use warnings;
 use above 'Genome';
-use Test::Exception;
 use Test::More;
 
 use Genome::Sys;
