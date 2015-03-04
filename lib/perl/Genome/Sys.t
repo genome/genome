@@ -201,8 +201,6 @@ subtest test_write__read_file => sub {
     ok(Genome::Sys->write_file('-', @lines), 'first write_file to STDOUT succeeds');
     ok(Genome::Sys->write_file('-', @lines), 'second write_file to STDOUT succeeds');
 
-    select STDOUT;
-
 };
 
 done_testing();
