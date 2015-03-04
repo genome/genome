@@ -208,11 +208,13 @@ sub all_backends {
 }
 
 sub scopes {
-    if ($ENV{GENOME_SYS_ID} && $ENV{GENOME_SYS_ID} ne 'GMS1') {
-        return ('site', 'unknown');
-    } else {
-        return ('site', 'tgisan', 'unknown');
-    }
+   if ($ENV{GENOME_LOCK_SCOPES}) {
+      return split(":", $ENV{GENOME_LOCK_SCOPES});
+   } else {
+      # Ultimately move this into the TGI config and
+      # not have it in code at all.
+      return ('site', 'tgisan', 'unknown');
+   }
 }
 
 sub clear_backends {
