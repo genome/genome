@@ -30,6 +30,7 @@ sub _error {
 sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
+    return unless $self;
 
     $self->_error("Failed to prepare staging directory") unless $self->_prepare_staging_directory;
     my $vcf = File::Spec->join($self->temp_staging_directory, $self->vcf_file_name);
