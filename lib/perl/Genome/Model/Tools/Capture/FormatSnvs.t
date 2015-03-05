@@ -5,7 +5,6 @@ use warnings;
 
 use above 'Genome';
 use Test::More;
-use Genome::Utility::Test;
 use Genome::Utility::Test qw(compare_ok);
 
 BEGIN {
