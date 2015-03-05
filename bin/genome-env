@@ -121,7 +121,7 @@ function main {
         "$@"
         EXIT=$?
     else
-        echo 'Press <Ctrl>-D or type `logout` to return to normal environment.'
+        echo 'Press <Ctrl>-D or type `exit` to return to normal environment.'
         echo ''
         unset PROMPT_COMMAND
         export PS1="(${GE_ENV_NAME}) \w $ "
