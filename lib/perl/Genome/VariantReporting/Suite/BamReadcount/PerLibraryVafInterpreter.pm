@@ -38,19 +38,20 @@ sub _interpret_entry {
     my $passed_alt_alleles = shift;
 
     my %return_values;
+    for my $alt_allele (@$passed_alt_alleles) {
+        $return_values{$alt_allele} = {map {$_ => $self->interpretation_null_character} $self->available_fields};
+    }
 
     for my $sample_name ($self->sample_names) {
         my $readcount_entries = $self->get_readcount_entries($entry, $sample_name);
         unless (defined($readcount_entries)) {
-            for my $alt_allele (@$passed_alt_alleles) {
-                $return_values{$alt_allele} = {map {$_ => $self->interpretation_null_character} $self->available_fields};
-            }
+            return %return_values;
         }
 
         for my $alt_allele (@$passed_alt_alleles) {
             my $readcount_entry = $readcount_entries->{$alt_allele};
             if (!defined $readcount_entry) {
-                $return_values{$alt_allele} = {map {$_ => $self->interpretation_null_character} $self->available_fields};
+                next;
             }
             else {
                 my $translated_reference_allele = translate_ref_allele($entry->{reference_allele}, $alt_allele);
@@ -65,6 +66,7 @@ sub _interpret_entry {
             }
         }
     }
+
     return %return_values;
 }
 
@@ -88,9 +90,6 @@ sub flatten_hash {
     for my $library_name ($self->library_names) {
         if (defined($per_library_hash->{$library_name})) {
             $flattened_hash{$self->create_library_specific_field_name($field_name, $library_name)} = $per_library_hash->{$library_name};
-        }
-        else {
-            $flattened_hash{$self->create_library_specific_field_name($field_name, $library_name)} = $self->interpretation_null_character;
         }
     }
     return %flattened_hash;

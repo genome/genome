@@ -16,6 +16,7 @@ use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(
     create_default_entry
     create_deletion_entry
     create_long_deletion_entry
+    create_trio_entry
     create_no_readcount_entry
 );
 
@@ -49,6 +50,72 @@ subtest "one alt allele - multiple samples" => sub {
     is(keys %result, keys %expected, "First level keys as expected");
     is_deeply(\%result, \%expected, "Values are as expected");
     cmp_bag([$interpreter->available_fields], [keys %{$expected{G}}], 'Available fields as expected');
+};
+
+subtest "one alt allele - multiple samples - with library labels" => sub {
+    my $interpreter = $pkg->create(
+        sample_names => [
+            'S1',
+            'S2',
+            'S3',
+        ],
+        library_names => [
+            'S1-lg3-lib1',
+            'S2-lg4-lib1',
+            'S2-lg2-lib1',
+            'S1-lg5-lib1',
+            'S2-lg5-lib1',
+            'S3-lg3-lib1',
+            'S3-lg5-lib1',
+            'S3-lg4-lib1',
+        ],
+        library_name_labels => {
+            'S3-lg3-lib1'  => 'Followup-Library2(S3-lg3-lib1)',
+            'S3-lg4-lib1'  => 'Followup-Library3(S3-lg4-lib1)',
+            'S3-lg5-lib1'  => 'Followup-Library4(S3-lg5-lib1)',
+            'S1-lg3-lib1'  => 'Discovery-Library2(S1-lg3-lib1)',
+            'S1-lg5-lib1'  => 'Discovery-Library4(S1-lg5-lib1)',
+            'S2-lg2-lib1'  => 'Normal-Library2(S2-lg2-lib1)',
+            'S2-lg4-lib1'  => 'Normal-Library3(S2-lg4-lib1)',
+            'S2-lg5-lib1'  => 'Normal-Library4(S2-lg5-lib1)',
+        }
+    );
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected = (
+        T => {
+            'Discovery-Library2(S1-lg3-lib1)_ref_count' => 267,
+            'Discovery-Library2(S1-lg3-lib1)_vaf' => 1.11111111111111,
+            'Discovery-Library2(S1-lg3-lib1)_var_count' => 3,
+            'Discovery-Library4(S1-lg5-lib1)_ref_count' => 184,
+            'Discovery-Library4(S1-lg5-lib1)_vaf' => 0.537634408602151,
+            'Discovery-Library4(S1-lg5-lib1)_var_count' => 1,
+            'Followup-Library2(S3-lg3-lib1)_ref_count' => 238,
+            'Followup-Library2(S3-lg3-lib1)_vaf' => 0,
+            'Followup-Library2(S3-lg3-lib1)_var_count' => 0,
+            'Followup-Library3(S3-lg4-lib1)_ref_count' => 320,
+            'Followup-Library3(S3-lg4-lib1)_vaf' => 0,
+            'Followup-Library3(S3-lg4-lib1)_var_count' => 0,
+            'Followup-Library4(S3-lg5-lib1)_ref_count' => 189,
+            'Followup-Library4(S3-lg5-lib1)_vaf' => 0,
+            'Followup-Library4(S3-lg5-lib1)_var_count' => 0,
+            'Normal-Library2(S2-lg2-lib1)_ref_count' => 221,
+            'Normal-Library2(S2-lg2-lib1)_vaf' => 0,
+            'Normal-Library2(S2-lg2-lib1)_var_count' => 0,
+            'Normal-Library3(S2-lg4-lib1)_ref_count' => 260,
+            'Normal-Library3(S2-lg4-lib1)_vaf' => 0,
+            'Normal-Library3(S2-lg4-lib1)_var_count' => 0,
+            'Normal-Library4(S2-lg5-lib1)_ref_count' => 208,
+            'Normal-Library4(S2-lg5-lib1)_vaf' => 0.478468899521531,
+            'Normal-Library4(S2-lg5-lib1)_var_count' => 1,
+        }
+    );
+
+    my $entry = create_trio_entry;
+    my %result = $interpreter->interpret_entry($entry, ['T']);
+    is(keys %result, keys %expected, "First level keys as expected");
+    is_deeply(\%result, \%expected, "Values are as expected");
+    cmp_bag([$interpreter->available_fields], [keys %{$expected{T}}], 'Available fields as expected');
 };
 
 subtest "one alt allele" => sub {
