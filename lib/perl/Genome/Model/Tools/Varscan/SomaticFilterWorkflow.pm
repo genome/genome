@@ -7,10 +7,6 @@ use Genome;
 use Workflow::Simple;
 use File::Basename;
 
-BEGIN {
-    $ENV{WF_USE_FLOW} = 1;
-}
-
 class Genome::Model::Tools::Varscan::SomaticFilterWorkflow {
     is => 'Genome::Model::Tools::Varscan',
     has_input => [
@@ -216,6 +212,7 @@ sub run_filter_workflow {
 }
 
 sub execute {
+    local $ENV{WF_USE_FLOW} = 1;
     my $self = shift;
     my %input;
     $self->map_workflow_inputs(\%input);
