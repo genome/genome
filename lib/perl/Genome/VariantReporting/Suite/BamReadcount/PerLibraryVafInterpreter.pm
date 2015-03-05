@@ -45,7 +45,7 @@ sub _interpret_entry {
     for my $sample_name ($self->sample_names) {
         my $readcount_entries = $self->get_readcount_entries($entry, $sample_name);
         unless (defined($readcount_entries)) {
-            return %return_values;
+            next;
         }
 
         for my $alt_allele (@$passed_alt_alleles) {
