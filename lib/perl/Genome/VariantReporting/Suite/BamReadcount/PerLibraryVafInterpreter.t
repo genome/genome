@@ -189,19 +189,19 @@ subtest "deletion" => sub {
 
 subtest "long indel" => sub {
     my $interpreter = $pkg->create(
-        sample_names => ["H_KA-174556-1309245"],
-        library_names => [qw(H_KA-174556-1309245-lg3-lib1 H_KA-174556-1309245-lg5-lib1)]
+        sample_names => ["S3"],
+        library_names => [qw(S3-lg3-lib1 S3-lg5-lib1)]
     );
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
     my %expected = (
         'GTATA' => {
-            'H_KA-174556-1309245-lg3-lib1_ref_count' => 29,
-            'H_KA-174556-1309245-lg3-lib1_vaf' => 6.25,
-            'H_KA-174556-1309245-lg3-lib1_var_count' => 2,
-            'H_KA-174556-1309245-lg5-lib1_ref_count' => 18,
-            'H_KA-174556-1309245-lg5-lib1_vaf' => 9.52380952380952,
-            'H_KA-174556-1309245-lg5-lib1_var_count' => 2,
+            'S3-lg3-lib1_ref_count' => 29,
+            'S3-lg3-lib1_vaf' => 6.25,
+            'S3-lg3-lib1_var_count' => 2,
+            'S3-lg5-lib1_ref_count' => 18,
+            'S3-lg5-lib1_vaf' => 9.52380952380952,
+            'S3-lg5-lib1_var_count' => 2,
         }
     );
 
