@@ -16,6 +16,7 @@ use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(
     create_default_entry
     create_deletion_entry
     create_long_deletion_entry
+    create_no_readcount_entry
 );
 
 my $pkg = 'Genome::VariantReporting::Suite::BamReadcount::PerLibraryVafInterpreter';
@@ -166,7 +167,29 @@ subtest 'additional libraries' => sub {
     my $entry = create_default_entry();
     my %result = $interpreter->interpret_entry($entry, ['G']);
     is_deeply(\%result, \%expected, "Values are as expected");
+};
 
+subtest 'no readcount entry' => sub {
+    my $interpreter = $pkg->create(
+        sample_names => ["S1"],
+        library_names => $library_names,
+    );
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected = (
+        G => {
+            'Solexa-135852_var_count' => '.',
+            'Solexa-135853_var_count' => '.',
+            'Solexa-135852_ref_count' => '.',
+            'Solexa-135853_ref_count' => '.',
+            'Solexa-135852_vaf' => '.',
+            'Solexa-135853_vaf' => '.',
+        }
+    );
+
+    my $entry = create_no_readcount_entry();
+    my %result = $interpreter->interpret_entry($entry, ['G']);
+    is_deeply(\%result, \%expected, "Values are as expected");
 };
 
 done_testing;

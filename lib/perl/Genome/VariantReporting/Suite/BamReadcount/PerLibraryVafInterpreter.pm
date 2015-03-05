@@ -5,7 +5,6 @@ use warnings;
 use Genome;
 use Genome::VariantReporting::Suite::BamReadcount::VafInterpreterHelpers qw(
     many_libraries_field_descriptions
-    per_sample_field_descriptions
     translate_ref_allele
 );
 use Set::Scalar;
@@ -44,14 +43,14 @@ sub _interpret_entry {
         my $readcount_entries = $self->get_readcount_entries($entry, $sample_name);
         unless (defined($readcount_entries)) {
             for my $alt_allele (@$passed_alt_alleles) {
-                $return_values{$alt_allele} = {map {$_ => $self->interpretation_null_character} per_sample_field_descriptions($sample_name)};
+                $return_values{$alt_allele} = {map {$_ => $self->interpretation_null_character} $self->available_fields};
             }
         }
 
         for my $alt_allele (@$passed_alt_alleles) {
             my $readcount_entry = $readcount_entries->{$alt_allele};
             if (!defined $readcount_entry) {
-                $return_values{$alt_allele} = {map {$_ => $self->interpretation_null_character} per_sample_field_descriptions($sample_name)};
+                $return_values{$alt_allele} = {map {$_ => $self->interpretation_null_character} $self->available_fields};
             }
             else {
                 my $translated_reference_allele = translate_ref_allele($entry->{reference_allele}, $alt_allele);
