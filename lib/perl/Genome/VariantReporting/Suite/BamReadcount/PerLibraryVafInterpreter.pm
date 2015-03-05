@@ -95,16 +95,6 @@ sub flatten_hash {
     return %flattened_hash;
 }
 
-sub available_libraries {
-    my ($self, $entry) = @_;
-
-    my %readcount_entries;
-    for my $sample_name ($self->sample_names) {
-        %readcount_entries = (%readcount_entries, %{$self->get_readcount_entries($entry, $sample_name)});
-    }
-    return Set::Scalar->new(map {$_->name} map {$_->libraries} grep {defined($_)} values %readcount_entries);
-}
-
 sub get_readcount_entries {
     my ($self, $entry, $sample_name) = @_;
 
