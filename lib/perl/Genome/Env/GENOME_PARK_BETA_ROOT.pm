@@ -1,5 +1,5 @@
 package Genome::Env::GENOME_PARK_BETA_ROOT;
-sub default_value { '/gscmnt/sata400/info/model_data/ParkBeta' }
+sub default_value { '/gscmnt/gc7006/info/model_data/ParkBeta2' }
 
 =pod
 
