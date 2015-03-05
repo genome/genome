@@ -371,13 +371,26 @@ sub collect_individual_alignments {
                 test_name => $test_name,
                 %$segment_param,
             );
+
+            delete $all_params{users} unless defined $result_users;
             $self->debug_message("Looking for alignment result with params: %s",
                 Data::Dumper::Dumper(\%all_params));
 
-            my $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
-                %all_params
-            );
-            if($alignment) {
+            my $alignment;
+            if (defined $result_users) {
+                $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(%all_params);
+            }
+            else { #workaround way to get AR for now if per lane AR does not have _user_data_for_nested_results set
+                $self->warning_message('Now try to get per lane alignment result without using users');
+                my $lookup_hash = Genome::InstrumentData::AlignmentResult->calculate_lookup_hash_from_arguments(%all_params); 
+                my @alignments  = Genome::InstrumentData::AlignmentResult->get(lookup_hash => $lookup_hash);
+                unless (@alignments and @alignments == 1) {
+                    die $self->error_message('Only 1 alignment is expected, but got '.scalar @alignments);
+                }
+                $alignment = shift @alignments;
+            }
+
+            if ($alignment) {
                 push @alignments, $alignment;
             } else {
                 push @not_found, $i;
