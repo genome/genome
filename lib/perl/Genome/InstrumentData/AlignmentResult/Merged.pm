@@ -358,7 +358,7 @@ sub collect_individual_alignments {
             };
         }
 
-        my $test_name = $self->test_name // undef;
+        my $test_name = $self->test_name;
 
         for my $segment_param (@segment_params) {
             my %all_params = (

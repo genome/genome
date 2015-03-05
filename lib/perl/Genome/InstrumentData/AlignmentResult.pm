@@ -1731,7 +1731,7 @@ sub filter_non_matching_results {
 
     my @matching_results;
     for my $merged_result (@merged_results) {
-        my @individual_results = $merged_result->collect_individual_alignments;
+        my @individual_results = $merged_result->collect_individual_alignments($self->_user_data_for_nested_results);
         if (@individual_results) {
             push @matching_results, $merged_result if grep{$_->id eq $self->id}@individual_results;
         }
