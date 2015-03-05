@@ -31,11 +31,15 @@ class Genome::VariantReporting::Framework::MergeReports {
             default => "\t",
             doc => 'Field separator for the reports',
         },
-        entry_sources => {
-            is_many => 'Text',
+        base_report_source => {
             is => 'Text',
             is_optional => 1,
-            doc => "An array of strings of the format <Report ID>|<TAG>",
+            doc => "A tag to identify which entries came from the base report.",
+        },
+        supplemental_report_source => {
+            is => 'Text',
+            is_optional => 1,
+            doc => "A tag to identify which entries came from the supplemental report.",
         },
         process_id => {
             is => 'Text',

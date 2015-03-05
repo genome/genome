@@ -12,11 +12,11 @@ use Genome;
 my %type_lookup = (
     filters => 'filters',
     interpreters => 'interpreters',
-    experts => 'adaptors',
+    experts => 'runners',
     reports => 'reports',
     filter => 'filters',
     interpreter => 'interpreters',
-    expert => 'adaptors',
+    expert => 'runners',
     report => 'reports',
 );
 

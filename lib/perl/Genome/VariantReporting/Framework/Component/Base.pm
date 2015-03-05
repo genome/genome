@@ -49,10 +49,13 @@ sub properties_in_plan {
     for my $property ($class->__meta__->properties(
             implied_by => undef,
             is_structural => undef)) {
-        next if $property->{is_param} && $property->property_name =~ m/_md5$/;
-        next if $property->{is_param} && $property->property_name =~ m/_count$/;
+        if ($class->class->isa('Genome::SoftwareResult')) {
+            next if $property->{is_param} && $property->property_name =~ m/_md5$/;
+            next if $property->{is_param} && $property->property_name =~ m/_count$/;
+        }
         push @properties, $property;
     }
+
     return @properties;
 }
 

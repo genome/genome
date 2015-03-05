@@ -13,7 +13,7 @@ use_ok('Genome::Model::Tools::Sv::SvAnnot');
 my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sv-SvAnnot/';
 my $tmp_dir = Genome::Sys->create_temp_directory();
 
-for my $type qw(36_standard 37_merged) {
+for my $type (qw(36_standard 37_merged)) {
     my $sv_file    = $test_input_dir . 'sv.file.' . $type;
     my $expect_out = $test_input_dir . 'sv.annot.'. $type;
     my $out_file   = $tmp_dir . '/sv.annot.' . $type;

@@ -1,0 +1,19 @@
+experts:
+    'vep':
+        ensembl_version: 75
+        custom_annotation_tags: []
+        feature_list_ids: feature_list_ids
+        reference_fasta: reference_fasta
+        species: 'homo-sapiens'
+        joinx_version: 1.8
+        plugins: []
+        plugins_version: 1
+reports:
+    report_alpha:
+        interpreters:
+            interpreter_x:
+                ix_p1: something
+                ix_p2: something else
+        params:
+            ra_p1: something
+            ra_p2: something else

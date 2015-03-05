@@ -35,8 +35,7 @@ sub execute {
     unless($self->_validate_file($file_path)){
         die $self->error_message("$file_path is invalid");
     }
-    my $allocated_file_path = $self->_copy_file_to_allocation($file_path);
-    my $item = Genome::Config::AnalysisMenu::Item->create(name => $name, file_path => $allocated_file_path, description => $self->description);
+    my $item = Genome::Config::AnalysisMenu::Item->create(name => $name, file_path => $file_path, description => $self->description);
     $self->status_message("Successfully created AnalysisMenu Item $name for $file_path");
     return 1;
 }
@@ -44,25 +43,13 @@ sub execute {
 sub _validate_file {
     my $self = shift;
     my $file_path = shift;
+    my ($filename, $dir) = File::Basename::fileparse($file_path);
+    $dir =~ s!/$!!;
+    unless ($dir eq $ENV{'GENOME_ANALYSIS_PROJECT_DEFAULTS'}){
+        return 0;
+    }
 #TODO: once an actual validator for these files is written, swap this out for a call to that tool
     return -s $file_path;
-}
-
-sub _copy_file_to_allocation {
-    my $self = shift;
-    my $original_file = shift;
-    my $destination = File::Spec->join($ENV{GENOME_ANALYSIS_PROJECT_DEFAULTS}, $self->_determine_file_name($original_file));
-    unless( Genome::Sys->copy_file($original_file, $destination) ){
-        die $self->error_message("Failed to copy $original_file to $destination : $@");
-    }
-    return $destination;
-}
-
-sub _determine_file_name {
-    my $self = shift;
-    my $file = shift;
-    my ($file_name, undef, undef) = File::Basename::fileparse($file);
-    return join('_', time, $file_name);
 }
 
 1;

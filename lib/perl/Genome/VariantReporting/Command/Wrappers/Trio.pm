@@ -213,6 +213,7 @@ sub add_merge_discovery_and_followup_reports_to_workflow {
                     destination => $merge_op,
                     destination_property => 'base_report',
                 );
+                $merge_op->declare_constant(base_report_source => 'discovery');
 
                 my $followup_dag = $dag->operation_named(sub_dag_name(
                         $roi_name, 'followup'));
@@ -222,6 +223,7 @@ sub add_merge_discovery_and_followup_reports_to_workflow {
                     destination => $merge_op,
                     destination_property => 'supplemental_report',
                 );
+                $merge_op->declare_constant(supplemental_report_source => 'followup');
 
                 $merge_op->declare_constant(
                     label => 'report:' . to_json({

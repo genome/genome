@@ -28,6 +28,7 @@ class Genome::Model::Build {
         "Genome::Utility::ObjectWithCreatedBy",
         "Genome::Utility::ObjectWithTimestamps",
         "Genome::SoftwareResult::Requestor",
+        "Genome::Interfaces::Comparable",
     ],
     table_name => 'model.build',
     is_abstract => 1,

@@ -43,7 +43,7 @@ sub variants_directory {
         return $expected_directory;
     } else {
         #for compatibility with previously existing builds
-        for my $dir_name qw(snp_related_metrics  sam_snp_related_metrics  maq_snp_related_metrics  var-scan_snp_related_metrics) {
+        for my $dir_name (qw(snp_related_metrics  sam_snp_related_metrics  maq_snp_related_metrics  var-scan_snp_related_metrics)) {
             my $dir = File::Spec->join($self->data_directory, $dir_name);
             return $dir if -d $dir;
         }
@@ -83,3 +83,5 @@ sub _get_result_for_file {
             ref($candidate), $allocation->id, $path, $expected_isa);
     }
 }
+
+1;

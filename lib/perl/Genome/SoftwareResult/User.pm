@@ -99,45 +99,32 @@ sub _register_users {
     my $label = $newly_created ? 'created' : 'shortcut';
     $user_hash{$label} = $requestor;
 
-    my @all_params;
+    my @param_sets;
     while(my ($label, $object) = each %user_hash) {
         my %params = (
             label           => $label,
             user            => $object,
             software_result => $software_result,
         );
-        push @all_params, \%params;
+        push @param_sets, \%params;
     }
 
-    my $observer;
-    $observer = UR::Context->process->add_observer(
+    my $observer = UR::Context->process->add_observer(
         aspect => 'precommit',
+        once => 1,
         callback => sub {
-            if($observer) {
-                $observer->delete;
-                $observer = undef;
-            } else {
-                Carp::confess 'observer triggered multiple times!';
-            }
             my @locks;
-            for my $params (@all_params) {
+            for my $params (@param_sets) {
                 next if grep { $params->{$_}->isa('UR::DeletedRef') } qw(user software_result);
-                push @locks, $class->_get_or_create_with_lock($params);
+                push @locks, $class->_lock_and_create_if_needed($params);
             }
 
             return unless @locks;
 
-            my $unlocker;
-            $unlocker = UR::Context->process->add_observer(
+            UR::Context->process->add_observer(
                 aspect => 'commit',
+                once => 1,
                 callback => sub {
-                    if($unlocker) {
-                        $unlocker->delete;
-                        $unlocker = undef;
-                    } else {
-                        Carp::confess 'unlocker triggered multiple times!';
-                    }
-
                     for my $lock (@locks) {
                         Genome::Sys->unlock_resource(resource_lock => $lock);
                     }
@@ -150,7 +137,7 @@ sub _register_users {
     }
 }
 
-sub _get_or_create_with_lock {
+sub _lock_and_create_if_needed {
     my $class = shift;
     my $params = shift;
 
@@ -159,12 +146,12 @@ sub _get_or_create_with_lock {
 
     my $resource = $class->_resolve_lock_name($params);
     my $lock = Genome::Sys->lock_resource(resource_lock => $resource, scope => 'site');
-    $class->_get_or_create($params);
+    $class->_load_or_create($params);
 
     return $lock;
 }
 
-sub _get_or_create {
+sub _load_or_create {
     my $class = shift;
     my $params = shift;
 
@@ -173,15 +160,20 @@ sub _get_or_create {
         $self = $class->create(%$params);
     }
 
-    return $self;
+    return 1;
 }
 
 sub _resolve_lock_name {
     my $class = shift;
     my $params = shift;
 
+    my $label = $params->{label};
+    if(length($label) >= 32) {
+        $label = Genome::Sys->md5sum_data($label);
+    }
+
     return 'genome/software-result-user/' . Genome::Utility::Text::sanitize_string_for_filesystem(
-        join('_', $params->{label}, $params->{user}->id, $params->{software_result}->id)
+        join('_', $label, $params->{user}->id, $params->{software_result}->id)
     );
 }
 

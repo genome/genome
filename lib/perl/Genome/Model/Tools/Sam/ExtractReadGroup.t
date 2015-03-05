@@ -30,7 +30,7 @@ subtest 'testing command failure with invalid input' => sub {
 };
 
 subtest 'testing command execution' => sub {
-    for my $type qw(namesorted no_namesorted) {
+    for my $type (qw(namesorted no_namesorted)) {
         my $name = $type . '.bam';
         my $out_bam = Genome::Sys->create_temp_file_path($name);
     

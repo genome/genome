@@ -1418,6 +1418,13 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>reprocess',
+    [
+      'analysis-project=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>release',
     [
       'analysis-projects=s@',
@@ -6625,6 +6632,8 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'chromosome=s',
           'files',
+          'case-name=s',
+          'files',
           'help!',
           undef
         ],
@@ -9370,13 +9379,13 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>diff-blessed',
       [
+        'new-build=s',
+        undef,
         'perl-version=s',
         [
           '5.8',
           '5.10'
         ],
-        'new-build=s',
-        undef,
         'help!',
         undef
       ],
@@ -37484,10 +37493,35 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>symlink-results',
+    [
+      'process=s',
+      undef,
+      'destination=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>run',
     [
       'update-with-commit!',
       undef,
+      'process=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>diff-blessed',
+    [
+      'process-name=s',
+      'files',
+      'new-process=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>verify-for-cle',
+    [
       'process=s',
       undef,
       'help!',
@@ -37520,18 +37554,11 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>verify-for-cle',
+    '>diff',
     [
-      'process=s',
+      'new-process=s',
       undef,
-      'help!',
-      undef
-    ],
-    '>symlink-results',
-    [
-      'process=s',
-      undef,
-      'destination=s',
+      'blessed-process=s',
       undef,
       'help!',
       undef
@@ -38066,6 +38093,13 @@ $Genome::Command::OPTS_SPEC = [
       '>update-config-to-current',
       [
         'profile-item=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>reprocess',
+      [
+        'analysis-project=s',
         undef,
         'help!',
         undef

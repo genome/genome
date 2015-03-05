@@ -1,0 +1,15 @@
+experts:
+    homopolymer:
+        max_length: 2
+        joinx_version: 1.9
+        info_string: 'HOMP_FILTER'
+        homopolymer_list_id: homopolymer_list_id
+reports:
+    report_alpha:
+        interpreters:
+            interpreter_x:
+                ix_p1: something
+                ix_p2: something else
+        params:
+            ra_p1: something
+            ra_p2: something else

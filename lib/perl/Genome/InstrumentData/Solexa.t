@@ -9,6 +9,7 @@ BEGIN {
 use strict;
 use warnings;
 
+use Test::Exception;
 use Test::More;
 
 use above 'Genome';
@@ -96,23 +97,23 @@ is_deeply(
     'Old style SX trimmer "foo" commands are ok!',
 );
 is_deeply( # w/ params as --
-    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => '--num 20 --words hello --bool 1')],
-    ["trim foo --num '20' --words 'hello' --bool"],
-    'Old style SX trimmer "foo" w/ params \'-num 20 --words hello -bool 1\' commands are ok!',
+    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => '--num 20 --words "hello world!" --bool 1')],
+    ['trim foo --num 20 --words \'hello world!\' --bool'],
+    'Old style SX trimmer "foo" w/ params \'-num 20 --words "hello world!" -bool 1\' commands are ok!',
 );
 is_deeply( # w/ params as -- tests boolean false
-    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => '--num 20 --words hello --bool 0')],
-    ["trim foo --num '20' --words 'hello'"],
-    'Old style SX trimmer "foo" w/ params \'-num 20 --words hello\' [boolean is false] commands are ok!',
+    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => "--num 20 --words 'hello world!' --bool 0")],
+    ["trim foo --num 20 --words 'hello world!'"],
+    'Old style SX trimmer "foo" w/ params \'--num 20 --words "hello world!" [boolean is false] commands are ok!',
 );
 is_deeply( # w/ params as name => val
     [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => 'num => 20, words => "hello world", bool => 1')],
-    ["trim foo --num '20' --words 'hello world' --bool"],
+    ["trim foo --num 20 --words 'hello world' --bool"],
     'Old style SX trimmer "foo" w/ params [=>] "-num 20 --words hello" -bool 1" commands are ok!',
 );
 is_deeply( # w/ params as -- tests boolean false
     [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => 'num => 20, words => "hello world", bool => 0,')],
-    ["trim foo --num '20' --words 'hello world'"],
+    ["trim foo --num 20 --words 'hello world'"],
     'Old style SX trimmer "foo" w/ params [=> and boolean is false] "-num 20 --words "hello world"" commands are ok!',
 );
 is_deeply( # 'no' property
@@ -120,14 +121,23 @@ is_deeply( # 'no' property
     ['trim flexbar --adapter CTTTGTGTTTGA --adapter-trim-end LEFT --nono-length-dist --threads 12 --adapter-min-overlap 7 --max-uncalled 150 --min-readlength 25'],
     '"flexbar" w/ params w/ "no" property is an SX trimmer and the command parts are ok!',
 );
+is_deeply( # new SX style, but in trimmer params
+    [$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'flexbar', trimmer_params => '--adapter "CTTTGT  GTTTGA" --adapter-trim-end LEFT --nono-length-dist --threads 12 --adapter-min-overlap 7 --max-uncalled 150 --min-readlength 25')],
+    ["trim flexbar --adapter 'CTTTGT  GTTTGA' --adapter-trim-end LEFT --nono-length-dist --threads 12 --adapter-min-overlap 7 --max-uncalled 150 --min-readlength 25"],
+    '"flexbar" new style, but in trimmer_params command parts are ok!',
+);
 
 #  old style - fails
-ok(
-    !eval{$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => '--nm 20')},
+throws_ok(
+    sub{ $instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => '--nm 20'); },
+    qr/Failed to get property 'nm' from sx class/,
     'Old style SX trimmer "foo" w/ INVALID params "-nm 20" fails!',
 );
-ok(
-    !eval{$instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => 'num')},
+
+    $instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => 'num'); 
+throws_ok(
+    sub{ $instrument_data->_convert_trimmer_to_sx_commands(trimmer_name => 'foo', trimmer_params => 'num'); },
+    qr//,
     'Old style SX trimmer "foo" w/ INVALID params "num" fails!',
 );
 
@@ -137,7 +147,7 @@ is_deeply( # this has a special case that needs to be supported using the real f
         trimmer_params => '--adapters /gscmnt/sata132/techd/twylie/2_x_250/ADAPTORS.fa --trim-end right --min-readlength 17 --nr-threads 4 --algorithm needlemanQuality --adaptive-overlap yes --format blah', 
         trimmer_version => '2.17',
     )],
-    ["trim far --adapters '/gscmnt/sata132/techd/twylie/2_x_250/ADAPTORS.fa' --trim-end 'right' --min-readlength '17' --nr-threads '4' --algorithm 'needlemanQuality' --adaptive-overlap 'yes' --version '2.17'"],
+    ["trim far --adapters /gscmnt/sata132/techd/twylie/2_x_250/ADAPTORS.fa --trim-end right --min-readlength 17 --nr-threads 4 --algorithm needlemanQuality --adaptive-overlap yes --version 2.17"],
     'converted trimmer FAR params: "--fixed-pre-trim 150 --adapters /gscmnt/sata132/techd/twylie/2_x_250/ADAPTORS.fa --trim-end right --min-readlength 17 --nr-threads 4 --algorithm needlemanQuality --adaptive-overlap yes --format blah"',
 );
 

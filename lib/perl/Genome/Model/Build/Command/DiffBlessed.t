@@ -30,12 +30,21 @@ YAML
     local *Genome::Model::Build::get;
     *Genome::Model::Build::get = sub { return $_[2]; };
 
+    like(Genome::Model::Build::Command::DiffBlessed->db_file, qr(Genome/Model/Build/Command/DiffBlessed.pm.YAML$),
+        "yaml file is found correctly");
+    ok(-s Genome::Model::Build::Command::DiffBlessed->db_file, "Yaml file exists");
     my $fh = File::Temp->new();
     ok($fh, 'Created temp file') or die;
     my $retval = print $fh $yaml;
     ok($retval, "wrote test YAML file") or die;
     $fh->close;
-    is(Genome::Model::Build::Command::DiffBlessed::retrieve_blessed_build($model_name, $perl_version, $fh->filename ), $build_id, "blessed build returned as expected");
+
+    Sub::Install::reinstall_sub({
+        into => 'Genome::Interfaces::Comparable::Command::DiffBlessed',
+        as => 'db_file',
+        code => sub {return $fh->filename},
+    });
+    is(Genome::Model::Build::Command::DiffBlessed->retrieve_blessed_build($model_name, $perl_version, $fh->filename ), $build_id, "blessed build returned as expected");
 }
 done_testing();
 

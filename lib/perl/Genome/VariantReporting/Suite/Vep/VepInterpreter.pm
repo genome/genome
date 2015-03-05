@@ -77,7 +77,7 @@ sub trv_type_category {
     my $category  = 'Genome::VariantReporting::Suite::Vep::AnnotationCategory';
     my $trv_type  = 'other';
 
-    for my $category_type qw(splice_site non_synonymous) {
+    for my $category_type (qw(splice_site non_synonymous)) {
         if ($category->is_category($category_type, @types)) {
             $trv_type = $category_type;
             last;

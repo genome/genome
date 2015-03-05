@@ -7,11 +7,12 @@ use Sys::Hostname;
 
 use above 'Genome';
 use Genome::Test::Factory::SoftwareResult::User;
+use Genome::Utility::Test;
 
 BEGIN {
     if (`uname -a` =~ /x86_64/) {
         #plan tests => 31; # TODO change this back when force_fragment is fixed
-        plan tests => 23;
+        plan tests => 24;
     } else {
         plan skip_all => 'Must run on a 64 bit machine';
     }
@@ -52,7 +53,9 @@ $aligner_label =~ s/\./\_/g;
 
 #was the path for BSMAP2.1 - new path is in the more canonical location
 #my $expected_shortcut_path = "/gscmnt/sata828/info/alignment_data/$aligner_label/TEST-human/test_run_name/4_-123456",
-my $expected_shortcut_path = $ENV{GENOME_TEST_INPUTS} . "/Genome-InstrumentData-AlignmentResult-Bsmap/v2.74/2014-12-18";
+my $BSMAP_VERSION = 'v2.74';
+my $TEST_DATE = '2015-03-02';
+my $expected_shortcut_path = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::AlignmentResult::Bsmap', File::Spec->join($BSMAP_VERSION, $TEST_DATE));
 print STDERR $expected_shortcut_path . "\n";
 
 my $FAKE_INSTRUMENT_DATA_ID=-123456;

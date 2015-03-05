@@ -20,6 +20,8 @@ if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 
+plan skip_all => 'causes timeout on pd queues';
+
 use_ok('Genome::Model::Build::DeNovoAssembly::Abyss') or die;
 
 my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/DeNovoAssembly';

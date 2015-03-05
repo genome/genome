@@ -3,7 +3,7 @@ experts:
         __planned__: foo
     __translated_test__:
         __planned__: tumor
-        __input__: __input__
+        __input__: [__input__]
 reports:
     __test__:
         interpreters:
