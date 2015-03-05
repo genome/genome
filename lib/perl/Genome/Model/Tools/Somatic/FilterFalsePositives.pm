@@ -239,8 +239,9 @@ sub execute {
         die;
     }
 
-    my $output_file =
-      $self->output_file?$self->output_file:File::Spec->join($self->outdir, basename($self->variant_file) . ".filtered");
+    my $output_file = $self->output_file //
+        File::Spec->join($self->outdir, basename($self->variant_file) . ".filtered");
+
     $self->status_message("outfile is $output_file");
 
     ## Run the FP filter. Note that both WGS and capture use the same filter now ##
