@@ -264,6 +264,7 @@ class Genome::InstrumentData::AlignmentResult {
                                 },
     ],
     has_transient => [
+        _recreated_bam_file_path => { is => 'Text', is_optional=>1},
         temp_scratch_directory  => {
                                     is=>'Text',
                                     doc=>'Temp scratch directory',
@@ -1637,8 +1638,12 @@ sub recreated_alignment_bam_file_paths {
     my $self = shift;
     my %p = Params::Validate::validate(@_, {disk_allocation => { isa => 'Genome::Disk::Allocation'}});
 
-    my @bams = $self->alignment_bam_file_paths;
-    if (@bams) {
+    # If we have a merged alignment result, the per-lane bam can be regenerated and we will do so now
+    # This is less efficient than using the in-place per-lane bam. However, it aids us in terms of
+    # contention, and in our transition period (allowing us to delete all per-lane bams now).
+    if ($self->get_merged_alignment_results) {
+        return $self->_recreated_bam_file_path if defined $self->_recreated_bam_file_path;
+    } elsif (my @bams = $self->alignment_bam_file_paths) {
         return @bams;
     }
 
@@ -1664,6 +1669,8 @@ sub recreated_alignment_bam_file_paths {
     }
 
     if (-s $recreated_bam) {
+        # Cache the path of this recreated bam for future access
+        $self->_recreated_bam_file_path($recreated_bam);
         return ($recreated_bam);
     }
     else {

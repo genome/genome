@@ -90,7 +90,10 @@ subtest 'test per lane bam removal and recreation' => sub {
         owner => $owner,
     );
 
-    is_deeply([$ar2->recreated_alignment_bam_file_paths(disk_allocation => $temp_allocation)], [File::Spec->join($ar2->output_dir, $per_lane_bam)], 'AR2 recreated_alignment_bam_file_paths exist ok');
+    # The old and new paths should differ because the file has been recreated elsewhere
+    my $old_path = File::Spec->join($ar2->output_dir, $per_lane_bam);
+    my $new_path = $ar2->recreated_alignment_bam_file_paths(disk_allocation => $temp_allocation);
+    isnt($old_path, $new_path, 'AR2 recreated_alignment_bam_file_paths exist and the path has changed');
 
     for my $extension qw(.bam .bam.bai) {
         my $base = $per_lane_file_basename.$extension;
