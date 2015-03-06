@@ -2047,6 +2047,21 @@ sub create_clinseq_model{
   $clinseq_cmd .= "  --tumor-rnaseq-model='$tumor_rnaseq_model_id'" if $tumor_rnaseq_model;
   $clinseq_cmd .= "  --de-model='$de_model_id'" if $de_model;
 
+  #Specify the user specified annotation DBs if they differ from the default
+  my $default_cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
+  my $default_misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
+  my $default_cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
+
+  unless ($default_cancer_annotation_db_id eq $self->cancer_annotation_db->id){
+    $clinseq_cmd .= "  --cancer-annotation-db='" . $self->cancer_annotation_db->id . "'";
+  }
+  unless ($default_misc_annotation_db_id eq $self->misc_annotation_db->id){
+    $clinseq_cmd .= "  --misc-annotation-db='" . $self->misc_annotation_db->id . "'";
+  }
+  unless ($default_cosmic_annotation_db_id eq $self->cosmic_annotation_db->id){
+    $clinseq_cmd .= "  --cosmic-annotation-db='" . $self->cosmic_annotation_db->id . "'";
+  }
+
   push(@commands, "\n#Create a Clin-Seq model for $final_individual_name as follows:");
   push(@commands, $clinseq_cmd);
   push(@commands, "genome model build start ''");
