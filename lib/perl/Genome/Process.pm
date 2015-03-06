@@ -732,6 +732,9 @@ sub _compare_output_directories {
 sub _compare_files {
     my ($self, $target, $other_target) = @_;
     my $handler = $self->_get_handler_for_file($target);
+    unless ($handler) {
+        die $self->error_message("No handler found for comparing file $target");
+    }
     return $self->$handler($target, $other_target);
 }
 
