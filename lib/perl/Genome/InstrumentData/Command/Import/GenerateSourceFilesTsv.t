@@ -25,7 +25,7 @@ my $cmd = Genome::InstrumentData::Command::Import::GenerateSourceFilesTsv->execu
     output_file => $source_files_tsv,
 );
 ok($cmd->result, 'execute');
-Genome::Utility::Test::compare_ok($cmd->output_file, File::Spec->join($data_dir, $source_files_tsv_name), 'source-files.tsv files matche');
+Genome::Utility::Test::compare_ok($cmd->output_file, File::Spec->join($data_dir, $source_files_tsv_name), 'source-files.tsv files match');
 
 # Fails 
 ## no source files in header
@@ -38,7 +38,7 @@ throws_ok(
 ## no source files
 throws_ok(
     sub{ Genome::InstrumentData::Command::Import::GenerateSourceFilesTsv->execute(file => File::Spec->join($data_dir, 'no-source-files.csv')); },
-    qr/No instrument data source files speicifed\!/,
+    qr/No instrument data source files specified for library: TGI-AA12345-Z98765-extlibs/,
     'failed w/o source files',
 );
 

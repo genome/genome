@@ -29,7 +29,6 @@ sub _output_header {
 
 sub execute {
     my $self = shift;
-    $self->status_message('Create commands to import entites and instruemnt data...');
     
     my $parser = $self->_open_file_parser;
 
@@ -45,15 +44,13 @@ sub execute {
 
     $self->_generate_output;
 
-    $self->status_message('Done');
     return 1;
 }
 
 sub _add_instdata_source_files_line {
     my ($self, $entity_params) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => HASHREF});
 
-    die 'No instrument data source files speicifed!' if not $entity_params->{instdata}->{source_files};
-    print STDERR 'Missing! '.$entity_params->{instdata}->{source_files}."\n" and  return 1 if not -s $entity_params->{instdata}->{source_files};
+    die $self->error_message('No instrument data source files specified for library: '.$entity_params->{library}->{name}) if not $entity_params->{instdata}->{source_files};
 
     push @{$self->_output}, join(
         "\t",
