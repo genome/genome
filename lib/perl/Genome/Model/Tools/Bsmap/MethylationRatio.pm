@@ -29,7 +29,7 @@ class Genome::Model::Tools::Bsmap::MethylationRatio {
         },
         threads => {
             is => 'Text',
-            doc => 'Numer of threads (2 minimum: one for reading and one for writing; additional threads beyond 2 will be allocated for reading; recommended number is 5)',
+            doc => 'Number of threads (2 minimum: one for reading and one for writing; additional threads beyond 2 will be allocated for reading; recommended number is 5)',
             is_output => 0,
             is_input => 1,
             default_value => '2',

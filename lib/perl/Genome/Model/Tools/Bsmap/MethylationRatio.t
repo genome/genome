@@ -7,13 +7,13 @@ use above 'Genome';
 use File::Slurp;
 use File::Compare;
 use List::AllUtils qw(max);
+use Genome::Utility::Test;
 use Test::More tests => 3;
 
 my $class = 'Genome::Model::Tools::Bsmap::MethylationRatio';
 use_ok($class);
 
-my $test_root = File::Spec->join($ENV{GENOME_TEST_INPUTS},
-    qw(Genome-Model-Tools-Bsmap-MethylationRatio v1));
+my $test_root = Genome::Utility::Test->data_dir($class, 'v1');
 
 sub fasta_for_reference {
     my ($name, $version) = @_;
