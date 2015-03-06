@@ -7,8 +7,10 @@ use Genome;
 
 use Genome::Utility::Text qw(sanitize_string_for_filesystem);
 use File::Spec;
+use File::Basename qw();
 
-my $METHRATIO_COMMAND = File::Spec->join(getcwd, 'methylation_ratio.py');
+my (undef, $dir) = File::Basename::fileparse(__FILE__);
+my $METHRATIO_COMMAND = File::Spec->join($dir, 'methylation_ratio.py');
 
 class Genome::Model::Tools::Bsmap::MethylationRatio {
     is => 'Command',
