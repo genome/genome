@@ -19,6 +19,7 @@ use Date::Manip;
 
 use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
+use Genome::Utility::Vcf;
 
 class Genome::Model::Build {
     is => [
@@ -2194,9 +2195,7 @@ sub diff_gz {
 
 sub diff_vcf {
     my ($self, $first_file, $second_file) = @_;
-    my $first_md5  = qx(grep -vP '^##fileDate' $first_file | md5sum);
-    my $second_md5 = qx(grep -vP '^##fileDate' $second_file | md5sum);
-    return ($first_md5 eq $second_md5 ? 1 : 0);
+    return !Genome::Utility::Vcf::compare_vcf($first_file, $second_file);
 }
 
 sub diff_hq {
