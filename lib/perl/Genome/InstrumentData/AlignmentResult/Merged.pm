@@ -249,15 +249,7 @@ sub create {
     for my $alignment ($self->collect_individual_alignments) {
         for my $bam_path ($alignment->alignment_bam_file_paths) {
             #Reserve some space beforehand for flagstat and header files
-            unless ($ENV{UR_DBI_NO_COMMIT}) {
-                my @disk_allocations = $alignment->_disk_allocation;
-                unless (@disk_allocations and @disk_allocations == 1) {
-                    die $self->error_message('Only 1 disk allocation is expected, but got '.scalar @disk_allocations);
-                }
-                my $disk_allocation = shift @disk_allocations;
-                my $kilobytes = $disk_allocation->kilobytes_requested;
-                $disk_allocation->kilobytes_requested(5*1024 + $kilobytes);
-            }
+            $self->_size_up_allocation($alignment);
 
             my $header = $bam_path . '.header';
             unless (-s $header) {
@@ -288,6 +280,21 @@ sub create {
     $self->debug_message('All processes completed.');
 
     return $self;
+}
+
+# Adds a small amount of space requested to the disk allocation so we can add .header and .flagstat files
+sub _size_up_allocation {
+    my ($self, $alignment) = @_;
+
+    my @disk_allocations = $alignment->_disk_allocation;
+    unless (@disk_allocations and @disk_allocations == 1) {
+        die $self->error_message('Only 1 disk allocation is expected, but got '.scalar @disk_allocations);
+    }
+    my $disk_allocation = shift @disk_allocations;
+    my $kilobytes = $disk_allocation->kilobytes_requested;
+    $disk_allocation->kilobytes_requested(5*1024 + $kilobytes);
+
+    return 1;
 }
 
 sub _remove_per_lane_bam_post_commit {

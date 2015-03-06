@@ -25,6 +25,9 @@ use_ok($pkg);
 Sub::Install::install_sub({code => sub { my ($self, $bam_path) = @_; $self->_remove_per_lane_bam($bam_path); },
         into => 'Genome::InstrumentData::AlignmentResult::Merged', as => '_remove_per_lane_bam_post_commit'});
 
+Sub::Install::install_sub({code => sub { return 1; },
+        into => 'Genome::InstrumentData::AlignmentResult::Merged', as => '_size_up_allocation'});
+
 
 #
 # Gather up versions for the tools used herein
