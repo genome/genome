@@ -12,6 +12,12 @@ use File::Basename qw();
 my (undef, $dir) = File::Basename::fileparse(__FILE__);
 my $METHRATIO_COMMAND = File::Spec->join($dir, 'methylation_ratio.py');
 
+reference => {
+  is => 'Genome::Model::Build::ReferenceSequence',
+  is_input => 1,
+  doc => ...,
+}
+
 class Genome::Model::Tools::Bsmap::MethylationRatio {
     is => 'Command',
     has => [
@@ -48,25 +54,30 @@ class Genome::Model::Tools::Bsmap::MethylationRatio {
     ],
 };
 
+#sub _reference_fasta {
+#    
+#    my ($self) = @_;
+#
+#    my %mapping = (
+#        36 => 'NCBI-human-build36',
+#        37 => 'GRCh37-lite-build37',
+#    );
+#
+#    my $reference = $self->reference;
+#
+#    if (exists $mapping{$reference}) {
+#        my $reference_build = Genome::Model::Build::ReferenceSequence->get(
+#            name => $mapping{$reference}
+#        );
+#        $reference = $reference_build->cached_full_consensus_path('fa');
+#    }
+#
+#    return $reference;
+#}
+
 sub _reference_fasta {
-    
-    my ($self) = @_;
-
-    my %mapping = (
-        36 => 'NCBI-human-build36',
-        37 => 'GRCh37-lite-build37',
-    );
-
-    my $reference = $self->reference;
-
-    if (exists $mapping{$reference}) {
-        my $reference_build = Genome::Model::Build::ReferenceSequence->get(
-            name => $mapping{$reference}
-        );
-        $reference = $reference_build->cached_full_consensus_path('fa');
-    }
-
-    return $reference;
+  my ($self) = @_;
+  return $self->reference->cached_full_consensus_path('fa');
 }
 
 sub _generate_command_line {
