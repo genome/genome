@@ -12,11 +12,6 @@ use File::Basename qw();
 my (undef, $dir) = File::Basename::fileparse(__FILE__);
 my $METHRATIO_COMMAND = File::Spec->join($dir, 'methylation_ratio.py');
 
-reference => {
-  is => 'Genome::Model::Build::ReferenceSequence',
-  is_input => 1,
-  doc => ...,
-};
 
 class Genome::Model::Tools::Bsmap::MethylationRatio {
     is => 'Command',
@@ -46,34 +41,13 @@ class Genome::Model::Tools::Bsmap::MethylationRatio {
             is_output => 1,
             is_input => 1,
         },
-        reference => {
-            is => 'Text',
-            doc => '36, 37, or a path to the reference fasta',
-            is_input => 1,
-        },
+		reference => {
+		  is => 'Genome::Model::Build::ReferenceSequence',
+		  is_input => 1,
+		  doc => 'Specify reference build',
+		};
     ],
 };
-
-#sub _reference_fasta {
-#    
-#    my ($self) = @_;
-#
-#    my %mapping = (
-#        36 => 'NCBI-human-build36',
-#        37 => 'GRCh37-lite-build37',
-#    );
-#
-#    my $reference = $self->reference;
-#
-#    if (exists $mapping{$reference}) {
-#        my $reference_build = Genome::Model::Build::ReferenceSequence->get(
-#            name => $mapping{$reference}
-#        );
-#        $reference = $reference_build->cached_full_consensus_path('fa');
-#    }
-#
-#    return $reference;
-#}
 
 sub _reference_fasta {
   my ($self) = @_;
