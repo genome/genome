@@ -245,8 +245,20 @@ sub create {
     #purge per lane alignment along with its .bai and md5 files, but
     #create header files and keep flagstat files for the future use
     #This is done AFTER merge alignment result commits.
+
     for my $alignment ($self->collect_individual_alignments) {
         for my $bam_path ($alignment->alignment_bam_file_paths) {
+            #Reserve some space beforehand for flagstat and header files
+            unless ($ENV{UR_DBI_NO_COMMIT}) {
+                my @disk_allocations = $alignment->_disk_allocation;
+                unless (@disk_allocations and @disk_allocations == 1) {
+                    die $self->error_message('Only 1 disk allocation is expected, but got '.scalar @disk_allocations);
+                }
+                my $disk_allocation = shift @disk_allocations;
+                my $kilobytes = $disk_allocation->kilobytes_requested;
+                $disk_allocation->kilobytes_requested(5*1024 + $kilobytes);
+            }
+
             my $header = $bam_path . '.header';
             unless (-s $header) {
                 my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
@@ -269,24 +281,46 @@ sub create {
                     die $self->error_message("Fail to run flagstat on $bam_path");
                 }
             }
-            $self->debug_message("Now removing the per lane bam");
-            for my $type ('', '.bai', '.md5') {
-                my $file = $bam_path . $type;
-                unlink $file;
-                if (-s $file and !$type) {  #only bam matters
-                    die $self->error_message("Failed to cleanup $file");
-                }
-            }
+            $alignment->resize_disk_allocation;
+            $self->_remove_per_lane_bam_post_commit($bam_path, $alignment);
         }
-
-        $alignment->resize_disk_allocation;
     }
-
     $self->debug_message('All processes completed.');
 
     return $self;
 }
 
+sub _remove_per_lane_bam_post_commit {
+    my ($self, $bam_path, $alignment) = @_;
+    $self->debug_message("Now removing the per lane bam");
+
+    if ($ENV{UR_DBI_NO_COMMIT}) {
+        $self->_remove_per_lane_bam($bam_path);
+    }
+    else {
+        UR::Context->process->add_observer(
+            aspect => 'commit',
+            once => 1,
+            callback => sub {
+                $self->_remove_per_lane_bam($bam_path);
+                $alignment->resize_disk_allocation;
+            }
+        );
+    }
+    return;
+}
+
+sub _remove_per_lane_bam {
+    my ($self, $bam_path) = @_;
+    for my $type ('', '.bai', '.md5') {
+        my $file = $bam_path . $type;
+        unlink $file;
+        if (-s $file and !$type) {  #only bam matters
+            die $self->error_message("Failed to cleanup $file");
+        }
+    }
+    return;
+}
 
 sub _get_temp_allocation {
     my ($self, $alignment) = @_;
