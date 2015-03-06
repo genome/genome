@@ -6,7 +6,7 @@ use Genome;
 use JSON qw(from_json);
 
 class Genome::VariantReporting::Process::Trio {
-    is => 'Genome::Process',
+    is => 'Genome::Process::WithVcf',
     has_input => [
         builds => {
             is => 'Genome::Model::Build::SomaticValidation',

@@ -714,7 +714,7 @@ sub _compare_output_directories {
                     my %additional_diffs = $self->_compare_output_directories($target, $other_target, $other_process);
                     %diffs = (%diffs, %additional_diffs);
                 }
-                elsif (-f $target && -f $other_target && !compare($target, $other_target)) {
+                elsif (-f $target && -f $other_target && !$self->_compare_files($target, $other_target)) {
                     #Files are in fact the same - do nothing
                 }
                 else {
@@ -727,6 +727,23 @@ sub _compare_output_directories {
         },
     );
     return %diffs;
+}
+
+sub _compare_files {
+    my ($self, $target, $other_target) = @_;
+    my $handler = $self->_get_handler_for_file($target);
+    return $self->$handler($target, $other_target);
+}
+
+sub _basic_compare {
+    my ($self, $target, $other_target) = @_;
+    return compare($target, $other_target);
+}
+
+sub _get_handler_for_file {
+    my $self = shift;
+    my $file = shift;
+    return "_basic_compare";
 }
 
 1;
