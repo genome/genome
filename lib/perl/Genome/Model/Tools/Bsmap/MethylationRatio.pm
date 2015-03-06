@@ -16,7 +16,7 @@ reference => {
   is => 'Genome::Model::Build::ReferenceSequence',
   is_input => 1,
   doc => ...,
-}
+};
 
 class Genome::Model::Tools::Bsmap::MethylationRatio {
     is => 'Command',
@@ -98,14 +98,11 @@ sub _generate_command_line {
 
 sub execute {
     my ($self) = @_;
-    my $return = Genome::Sys->shellcmd(
+    Genome::Sys->shellcmd(
         cmd => $self->_generate_command_line,
         input_files => [$self->bam_file, $self->_reference_fasta],
     );
 
-    unless ($return) {
-        die $self->error_message('Failed to execute: returned %s', $return);
-    }
     return 1;
 }
 
