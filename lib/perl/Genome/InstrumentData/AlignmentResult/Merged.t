@@ -6,6 +6,7 @@ use warnings;
 use above 'Genome';
 use Test::More;
 use Test::Exception;
+use Sub::Override;
 use File::Copy::Recursive qw(dircopy);
 use Genome::Utility::Test qw(compare_ok);
 
@@ -19,6 +20,12 @@ use Genome::Test::Factory::SoftwareResult::User;
 
 my $pkg = 'Genome::InstrumentData::AlignmentResult::Merged';
 use_ok($pkg);
+
+# Override methods for testing. We do this here so we don't worry about UR_DBI_NO_COMMIT in actual code.
+Sub::Install::install_sub({code => sub { my ($self, $bam_path) = @_; $self->_remove_per_lane_bam($bam_path); },
+        into => 'Genome::InstrumentData::AlignmentResult::Merged', as => '_remove_per_lane_bam_post_commit'});
+
+
 #
 # Gather up versions for the tools used herein
 #

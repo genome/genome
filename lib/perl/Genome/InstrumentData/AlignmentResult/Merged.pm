@@ -294,20 +294,15 @@ sub _remove_per_lane_bam_post_commit {
     my ($self, $bam_path, $alignment) = @_;
     $self->debug_message("Now removing the per lane bam");
 
-    if ($ENV{UR_DBI_NO_COMMIT}) {
-        $self->_remove_per_lane_bam($bam_path);
-    }
-    else {
-        UR::Context->process->add_observer(
-            aspect => 'commit',
-            once => 1,
-            callback => sub {
-                $self->_remove_per_lane_bam($bam_path);
-                $alignment->resize_disk_allocation;
-            }
-        );
-    }
-    return;
+    UR::Context->process->add_observer(
+        aspect => 'commit',
+        once => 1,
+        callback => sub {
+            $self->_remove_per_lane_bam($bam_path);
+            $alignment->resize_disk_allocation;
+        }
+    );
+    return 1;
 }
 
 sub _remove_per_lane_bam {
@@ -319,7 +314,7 @@ sub _remove_per_lane_bam {
             die $self->error_message("Failed to cleanup $file");
         }
     }
-    return;
+    return 1;
 }
 
 sub _get_temp_allocation {
