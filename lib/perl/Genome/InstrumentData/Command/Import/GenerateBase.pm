@@ -36,7 +36,31 @@ class Genome::InstrumentData::Command::Import::GenerateBase {
 };
 
 sub help_detail {
-    return;
+    return <<HELP;
+The file should be a comma or tab separated values and indicated with the appropriate extension (csv and tsv). Column headers to use to generate the create commands should start with the entity (individual, sample, library, instdata) name then a period (.) and then then attribute name. Here are some required and optional columns. For more, see each entity's create command (Ex: genome sample create --h).
+
+Individual:
+ Required:
+  name or name_part => Name or id from external source.
+  taxon             => Species name of the taxon.
+
+Sample:
+ Required:
+  name or name_part => Name or id from external source. If name is given, the individual and library names will be resolved from it.
+
+ Optional, but recommended:
+  common_name       => Usually normal or tumor to indicate disease state.
+
+Library:
+ Optional:
+  ext               => Extension to append to the sample name. Deault is 'extlibs'.
+ 
+Instrument Data (only for generating source-files.tsv).
+ Required:
+  source_files      => Local copy of the source files to import.
+  run_name          => The run name or id.
+
+HELP
 }
 
 sub entity_types {
@@ -72,7 +96,7 @@ sub _resolve_headers {
     my @entity_attributes;
     for my $header ( @$headers ) {
         my ($type, $attribute) = split(/\./, $header, 2);
-        next if not defined $attribute; # FIXME silently skip?
+        next if not defined $attribute; # silently skip columns w/o an entity type
         die $self->error_message('Invalid entity type: %s', $type) if not List::MoreUtils::any { $type eq $_ } $self->entity_types;
         push @entity_attributes, {
             header => $header,
