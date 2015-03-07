@@ -1,4 +1,4 @@
 #! /bin/bash
 
-source /gscmnt/sata400/info/model_data/ParkBeta/workon_park_user.sh
+source $GENOME_PARK_BETA_ROOT/workon_park_user.sh
 rex process view $@
