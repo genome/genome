@@ -31520,6 +31520,8 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'varscan-min-var-freq=s',
           undef,
+          'max-haplotypes=s',
+          undef,
           'wingspan=s',
           'files',
           'joinx-version=s',
