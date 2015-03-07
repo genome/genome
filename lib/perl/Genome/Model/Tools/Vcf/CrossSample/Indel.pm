@@ -29,6 +29,12 @@ class Genome::Model::Tools::Vcf::CrossSample::Indel {
             default => 0.20,
             doc => "Minimum variant allele frequency to call a variant",
         },
+        max_haplotypes => {
+            is => 'Number',
+            default => 8,
+            doc => "This option controls the number of candidate haplotypes " .
+                "against which each candidate variant is tested.",
+        }
     ],
     has_transient_optional => [
         _template_path => {
