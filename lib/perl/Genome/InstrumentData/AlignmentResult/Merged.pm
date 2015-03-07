@@ -176,7 +176,7 @@ sub create {
             for my $alignment (@alignments) {
                 my $library = $alignment->instrument_data->library;
                 my $temp_allocation = $self->_get_temp_allocation($alignment);
-                push @{ $bams_per_library->{$library->id} }, $alignment->recreated_alignment_bam_file_paths(disk_allocation => $temp_allocation);
+                push @{ $bams_per_library->{$library->id} }, $alignment->revivified_alignment_bam_file_paths(disk_allocation => $temp_allocation);
                 $libraries->{$library->id} = $library;
                 push @temp_allocations, $temp_allocation;
             }
@@ -197,7 +197,7 @@ sub create {
             #just collect the BAMs for a merge
             for my $alignment (@alignments) {
                 my $temp_allocation = $self->_get_temp_allocation($alignment);
-                push @bams_for_final_merge, $alignment->recreated_alignment_bam_file_paths(disk_allocation => $temp_allocation);
+                push @bams_for_final_merge, $alignment->revivified_alignment_bam_file_paths(disk_allocation => $temp_allocation);
                 push @temp_allocations, $temp_allocation;
             }
         }

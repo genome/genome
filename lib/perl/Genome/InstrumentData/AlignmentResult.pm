@@ -264,7 +264,7 @@ class Genome::InstrumentData::AlignmentResult {
                                 },
     ],
     has_transient => [
-        _recreated_bam_file_path => { is => 'Text', is_optional=>1},
+        _revivified_bam_file_path => { is => 'Text', is_optional=>1},
         temp_scratch_directory  => {
                                     is=>'Text',
                                     doc=>'Temp scratch directory',
@@ -1634,7 +1634,7 @@ sub alignment_bam_file_paths {
 # This method will recreate the per-lane bam file and return the path.
 # This must be provided an allocation into which the bam will go (so that it can be cleaned up in the parent process once it is done).
 # The calling process is responsible for cleaning up the allocation after we are done with it.
-sub recreated_alignment_bam_file_paths {
+sub revivified_alignment_bam_file_paths {
     my $self = shift;
     my %p = Params::Validate::validate(@_, {disk_allocation => { isa => 'Genome::Disk::Allocation'}});
 
@@ -1642,12 +1642,12 @@ sub recreated_alignment_bam_file_paths {
     # This is less efficient than using the in-place per-lane bam. However, it aids us in terms of
     # contention, and in our transition period (allowing us to delete all per-lane bams now).
     if ($self->get_merged_alignment_results) {
-        return $self->_recreated_bam_file_path if defined $self->_recreated_bam_file_path;
+        return $self->_revivified_bam_file_path if defined $self->_revivified_bam_file_path;
     } elsif (my @bams = $self->alignment_bam_file_paths) {
         return @bams;
     }
 
-    my $recreated_bam = File::Spec->join($p{disk_allocation}->absolute_path, 'all_sequences.bam');
+    my $revivified_bam = File::Spec->join($p{disk_allocation}->absolute_path, 'all_sequences.bam');
     my $merged_bam    = $self->get_merged_bam_to_revivify_per_lane_bam;
 
     unless ($merged_bam and -s $merged_bam) {
@@ -1656,7 +1656,7 @@ sub recreated_alignment_bam_file_paths {
 
     my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
         merged_bam          => $merged_bam,
-        per_lane_bam        => $recreated_bam,
+        per_lane_bam        => $revivified_bam,
         instrument_data_id  => $self->instrument_data_id,
         samtools_version    => $self->samtools_version,
         picard_version      => $self->picard_version,
@@ -1668,13 +1668,13 @@ sub recreated_alignment_bam_file_paths {
         die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
     }
 
-    if (-s $recreated_bam) {
-        # Cache the path of this recreated bam for future access
-        $self->_recreated_bam_file_path($recreated_bam);
-        return ($recreated_bam);
+    if (-s $revivified_bam) {
+        # Cache the path of this revivified bam for future access
+        $self->_revivified_bam_file_path($revivified_bam);
+        return ($revivified_bam);
     }
     else {
-        die $self->error_message("After running RecreatePerLaneBam, no per-lane bam (%s) exists still!", $recreated_bam);
+        die $self->error_message("After running RecreatePerLaneBam, no per-lane bam (%s) exists still!", $revivified_bam);
     }
 }
 

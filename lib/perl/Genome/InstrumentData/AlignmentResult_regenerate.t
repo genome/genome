@@ -90,10 +90,10 @@ subtest 'test per lane bam removal and recreation' => sub {
         owner => $owner,
     );
 
-    # The old and new paths should differ because the file has been recreated elsewhere
+    # The old and new paths should differ because the file has been revivified elsewhere
     my $old_path = File::Spec->join($ar2->output_dir, $per_lane_bam);
-    my $new_path = $ar2->recreated_alignment_bam_file_paths(disk_allocation => $temp_allocation);
-    isnt($old_path, $new_path, 'AR2 recreated_alignment_bam_file_paths exist and the path has changed');
+    my $new_path = $ar2->revivified_alignment_bam_file_paths(disk_allocation => $temp_allocation);
+    isnt($old_path, $new_path, 'AR2 revivified_alignment_bam_file_paths exist and the path has changed');
 
     for my $extension qw(.bam .bam.bai) {
         my $base = $per_lane_file_basename.$extension;
@@ -102,11 +102,11 @@ subtest 'test per lane bam removal and recreation' => sub {
         ok(!-s $file, "File $base removed ok as expected");
     }
 
-    my @recreated_bams = $ar2->recreated_alignment_bam_file_paths(disk_allocation => $temp_allocation);
-    is_deeply(\@recreated_bams, [File::Spec->join($temp_allocation_dir, $per_lane_bam)], 'AR2 recreated_alignment_bam_file_paths recreated as per lane bam ok');
+    my @revivified_bams = $ar2->revivified_alignment_bam_file_paths(disk_allocation => $temp_allocation);
+    is_deeply(\@revivified_bams, [File::Spec->join($temp_allocation_dir, $per_lane_bam)], 'AR2 revivified_alignment_bam_file_paths revivified as per lane bam ok');
 
     my $new_flagstat_file = Genome::Sys->create_temp_file_path;
-    `samtools flagstat $recreated_bams[0] > $new_flagstat_file`;
+    `samtools flagstat $revivified_bams[0] > $new_flagstat_file`;
     compare_ok($new_flagstat_file, File::Spec->join($ar2->output_dir, $per_lane_flagstat));
 };
 
