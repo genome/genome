@@ -37,28 +37,28 @@ class Genome::InstrumentData::Command::Import::GenerateBase {
 
 sub help_detail {
     return <<HELP;
-The file should be a comma or tab separated values and indicated with the appropriate extension (csv and tsv). Column headers to use to generate the create commands should start with the entity (individual, sample, library, instdata) name then a period (.) and then then attribute name. Here are some required and optional columns. For more, see each entity's create command (Ex: genome sample create --h).
+The file should be a comma or tab separated values and indicated with the appropriate extension (csv and tsv). Column headers to use to generate the create commands should start with the entity (individual, sample, library, instdata) name then a period (.) and then then attribute name (Ex: sample.name_part). Here are some required and optional columns. For more, see each entity's create command (Ex: genome sample create --h).
 
 Individual:
  Required:
-  name or name_part => Name or id from external source.
-  taxon             => Species name of the taxon.
+  individual.name or name_part => Name or id from external source.
+  individual.taxon => Species name of the taxon.
 
 Sample:
  Required:
-  name or name_part => Name or id from external source. If name is given, the individual and library names will be resolved from it.
+  sample.name or sample.name_part => Name or id from external source. If name is given, the individual and library names will be resolved from it.
 
  Optional, but recommended:
-  common_name       => Usually normal or tumor to indicate disease state.
+  sample.common_name => Usually normal or tumor to indicate disease state.
 
 Library:
  Optional:
-  ext               => Extension to append to the sample name. Deault is 'extlibs'.
+  library.ext   => Extension to append to the sample name. Deault is 'extlibs'.
  
-Instrument Data (only for generating source-files.tsv).
+Instrument Data (only for generating source-files.tsv)
  Required:
-  source_files      => Local copy of the source files to import.
-  run_name          => The run name or id.
+  instdata.source_files  => Local copy of the source files to import.
+  instdata.run_name      => The run name or id.
 
 HELP
 }
