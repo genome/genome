@@ -257,7 +257,7 @@ sub test_diff_vcf {
 
     my $different_file = join('/', $input_dir, 'indels_modified.vcf');
     ok(-s $different_file, 'different_file has size') || return;
-    is(Genome::Model::Build->diff_vcf($control_file, $different_file), 0, 'different_file does not match control_file');
+    ok(!Genome::Model::Build->diff_vcf($control_file, $different_file), 'different_file does not match control_file');
 }
 
 sub _test_expected_report_params {
