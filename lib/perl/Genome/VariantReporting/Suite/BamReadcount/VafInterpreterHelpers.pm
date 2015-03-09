@@ -13,6 +13,7 @@ our @EXPORT_OK = qw(
     per_library_vaf_headers
     many_libraries_field_descriptions
     translate_ref_allele
+    vaf_fields
 );
 
 sub vaf_fields {
