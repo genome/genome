@@ -585,8 +585,6 @@ default_value TESTDBSERVER_DB_USER "genome"
 default_value TESTDBSERVER_DB_PASS "mypassword"
 default_value TESTDBSERVER_URL "https://apipe-test-db.gsc.wustl.edu"
 default_value GE_ENV_NAME "genome-env"
-default_value TESTDBSERVER_DB_HOST "apipe-test-db.gsc.wustl.edu"
-default_value TESTDBSERVER_DB_PORT "5432"
 
 export TESTDBSERVER_URL
 
