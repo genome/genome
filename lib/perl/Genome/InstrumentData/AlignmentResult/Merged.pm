@@ -837,7 +837,7 @@ sub _lock_per_lane_alignment {
                #with that aligner.
             }
 
-            my $lock_var = File::Spec->join($ENV{GENOME_LOCK_DIR}, 'genome', __PACKAGE__, 'lock-per-lane-alignment-'.$alignment->id);
+            my $lock_var = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$alignment->id);
             my $lock = Genome::Sys->lock_resource(
                 resource_lock => $lock_var,
                 scope         => 'site',
