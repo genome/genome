@@ -18,10 +18,9 @@ def write_data(result_queue, out_file, work_units):
     fout.write('chr\tpos\tratio\ttotal_C\tmethy_C\tunmeth_C\n')
     tab = '\t'
     new_line = '\n'
-    print 'writer opens shop. waiting for ', work_units, ' work units'
-    work_written = 0
     logging.basicConfig(level=logging.DEBUG, format='(%(threadName)-10s) %(message)s')
-
+    work_written = 0
+    
     while work_written < work_units:
         counter = result_queue.get()
         work_written += 1
@@ -39,11 +38,10 @@ def write_data(result_queue, out_file, work_units):
                                  str(un_methylated) + new_line]))            
         
         logging.debug('wrote %s', ''.join(['work unit ', str(work_written), ' out of ', str(work_units)]))
-    print 'writer calling quits'
     fout.close()
     end = time.clock()
     run_time = end - start
-    print 'Running time: ', run_time, ' seconds'
+    logging.debug('Running time %s: ', ' '.join([str(run_time), 'seconds']))
 
 def isOnWatsonStrand(tags):
     """ Parses the ZS field to determine if the read is on the Crick strand """
@@ -58,8 +56,6 @@ def isOnWatsonStrand(tags):
 
 def process_region_pileup(i, bam_file_path, fasta_path, work_queue, out_queue):
     bam_file = pysam.AlignmentFile(bam_file_path, 'rb')
-    logging.basicConfig(level=logging.DEBUG,
-                        format='(%(threadName)-10s) %(message)s')
 
     genome = pysam.FastaFile(fasta_path)
     nuc_A = 'A'
@@ -101,7 +97,6 @@ def process_region_pileup(i, bam_file_path, fasta_path, work_queue, out_queue):
                 counter[position].set_methylation_coverage(meth_cov)
                 counter[position].set_un_methylation_coverage(un_meth_cov)
         out_queue.put(counter)
-    print 'Quitting work'
 
 class Counter:
     def __init__(self):
@@ -133,6 +128,9 @@ if __name__ == '__main__':
      
     do_debug = False
     usage = "usage: %prog [options] BSMAP_MAPPING_FILES (sorted BAM files)"
+
+    logging.basicConfig(level=logging.DEBUG, format='(%(threadName)-10s) %(message)s')
+
     parser = optparse.OptionParser(usage=usage)
     parser.add_option("-o", "--out", dest="outfile", metavar="FILE", help="output file name. (required)", default="")
     parser.add_option("-d", "--ref", dest="reffile", metavar="FILE", help="reference genome fasta file. (required)", default="")
@@ -170,12 +168,10 @@ if __name__ == '__main__':
     writer = Process(target=write_data, args=(write_queue, raw_file.name, work_units,))
     writer.start()
     writer.join()
-    print "Sorting and compressing reads..."
     command = ''.join(['tail -n +2 ', raw_file.name, ' | sort -k1V -k2n | bgzip > ', options.outfile, '.bgz'])
-    print(command)
+    #logging.debug(command)
     os.system(command)
     
-    print "Indexing..."
     command = ''.join(['tabix -f -s 1 -b 2 -e 2 ', options.outfile, '.bgz'])
-    print(command)
+    #logging.debug(command)
     os.system(command)
