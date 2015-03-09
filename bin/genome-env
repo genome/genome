@@ -107,12 +107,12 @@ function main {
         if test -n "$DB_ID"
         then
             log.info "Using existing test DB"
-            log.info "Test DB Host: ${TESTDBSERVER_DB_HOST}"
-            log.info "Test DB Port: ${TESTDBSERVER_DB_PORT}"
         else
             log.info "Test DB Snapshot: $DB_SNAPSHOT_NAME"
         fi
         log.info "Test DB Name: $TESTDBSERVER_DB_NAME"
+        log.info "Test DB Host: ${TESTDBSERVER_DB_HOST}"
+        log.info "Test DB Port: ${TESTDBSERVER_DB_PORT}"
     fi
     log.info ''
 
