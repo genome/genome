@@ -31,6 +31,11 @@ class Genome::VariantReporting::Suite::Vep::RunResult {
             is => 'String',
         },
         reference_fasta_lookup => {is => 'Path'},
+        short_name => {
+            is => 'Bool',
+            doc => 'Turn on the short_name option in Genome::FeatureList::processed_bed_file_content. This replaces the content of the bed file name column with region numbers. Useful if the name column contains special characters.',
+            default => 0,
+        },
     ],
     has_param => [
         plugins => {is => 'String',
@@ -184,7 +189,7 @@ sub _user_params {
 sub _get_file_path_for_feature_list {
     my ($self, $id) = @_;
     my $feature_list = Genome::FeatureList->get($id);
-    return $feature_list->get_tabix_and_gzipped_bed_file;
+    return $feature_list->get_tabix_and_gzipped_bed_file(short_name => $self->short_name);
 }
 Memoize::memoize("_get_file_path_for_feature_list", LIST_CACHE => 'MERGE');
 
