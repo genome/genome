@@ -45,6 +45,8 @@ function help {
     -i db_id:db_host:db_port
           The connection information of an existing database to use.  Format is name:host:port
 
+    -p    Persist the test-db outside of this shell.
+
     -U    Disable configuration of UR.
 
     -u ur_repo
@@ -130,7 +132,7 @@ function main {
         EXIT=$?
     fi
 
-    if test -z "$DISABLE_DB" -a -z "$DB_ID"
+    if test -z "$DISABLE_DB" -a -z "$PERSIST_DB"
     then
         test-db delete database $TESTDBSERVER_DB_NAME > /dev/null
     fi
@@ -145,10 +147,10 @@ function validate_bash {
 }
 
 function parse_opts {
-    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" DB_ID="" DB_HOST="" DB_PORT="" SQITCH_REPO="" UR_REPO="" WF_REPO=""
+    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" DB_ID="" DB_HOST="" DB_PORT="" SQITCH_REPO="" UR_REPO="" WF_REPO="" PERSIST_DB=""
 
     local opts
-    while getopts :hMm:Dd:i:Uu:Ww: opts "$@"
+    while getopts :hMm:Dd:i:pUu:Ww: opts "$@"
     do
         case $opts in
             h)
@@ -173,6 +175,9 @@ function parse_opts {
                 DB_ID=${args[0]}
                 DB_HOST=${args[1]}
                 DB_PORT=${args[2]}
+                PERSIST_DB="TRUE"
+                ;;
+            p)  PERSIST_DB="TRUE"
                 ;;
             U)
                 DISABLE_UR="TRUE"
