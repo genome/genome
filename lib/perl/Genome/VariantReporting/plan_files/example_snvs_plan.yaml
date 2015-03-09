@@ -17,6 +17,7 @@ experts:
         joinx_version: 1.9
         plugins_version: 1
         short_name: 0
+        allow_same_file: 0
 reports:
     simple:
         filters:

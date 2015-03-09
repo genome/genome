@@ -2,6 +2,9 @@
 Annotate vcf with results from Ensembl VEP (Variant Effect Predictor)
 
 [4mPROPERTIES[0m
+  [1mallow_same_file[0m   Bool
+    Toggles the allow-same-file flag in joinx vcf-merge to allow merging entries from the same
+    file. Requires joinx version 1.11 or higher
   [1mcustom_annotation_tags[0m   String
     Custom annotation tags to be used for the --custom option(s)
   [1mensembl_version[0m   String

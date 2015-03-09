@@ -9,6 +9,7 @@ experts:
         plugins: []
         plugins_version: 1
         short_name: 0
+        allow_same_file: 0
 reports:
     bed:
         interpreters:

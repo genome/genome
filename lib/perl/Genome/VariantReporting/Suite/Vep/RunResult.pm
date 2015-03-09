@@ -42,6 +42,10 @@ class Genome::VariantReporting::Suite::Vep::RunResult {
                     is_many => 1},
         plugins_version => {is => 'String',},
         joinx_version => {is => 'String',},
+        allow_same_file => {
+            is => 'Bool',
+            default => 0,
+        }
     ],
     has_transient_optional => [
         reference_fasta => {is => 'Path'},
@@ -247,6 +251,7 @@ sub vep_params {
     delete $params{variant_type};
     delete $params{test_name};
     delete $params{joinx_version};
+    delete $params{allow_same_file};
 
     return %params;
 }
@@ -281,6 +286,7 @@ sub _merge_annotations {
         use_version => $self->joinx_version,
         merge_strategy_file => $self->joinx_merge_strategy_file,
         exact_pos => 1,
+        allow_same_file => $self->allow_same_file,
     );
     unlink($self->sorted_input_vcf);
     unlink($self->sorted_vep_output);

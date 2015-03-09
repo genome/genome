@@ -20,6 +20,7 @@ experts:
             - Condel@PLUGIN_DIR@b@2
         plugins_version: 1
         joinx_version: 1.10
+        allow_same_file: 0
 reports:
     'docm':
         filters: {}
