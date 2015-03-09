@@ -1,15 +1,13 @@
 package Genome::Model::ClinSeq::Command::UpdateAnalysis;
 
-#Written by Malachi Griffith
-
 use strict;
 use warnings;
 use Genome;
 use Time::Piece;
 
-my $cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
-my $misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
-my $cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
+my $default_cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
+my $default_misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
+my $default_cosmic_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cosmic_annotation_db")->default_value;
 
 class Genome::Model::ClinSeq::Command::UpdateAnalysis {
     is => 'Command::V2',
@@ -123,7 +121,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _cancer_annotation_db_id => {
         	  is => 'Text',
-        	  default => $cancer_annotation_db_id,
+        	  default => $default_cancer_annotation_db_id,
         },
         cancer_annotation_db => { 
             is => 'Genome::Db::Tgi::CancerAnnotation', 
@@ -132,7 +130,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _misc_annotation_db_id => {
         	  is => 'Text',
-        	  default => $misc_annotation_db_id,
+        	  default => $default_misc_annotation_db_id,
         },
         misc_annotation_db => { 
             is => 'Genome::Db::Tgi::MiscAnnotation', 
@@ -142,7 +140,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
  
         _cosmic_annotation_db_id => {
         	  is => 'Text',
-        	  default => $cosmic_annotation_db_id,
+        	  default => $default_cosmic_annotation_db_id,
         },
         cosmic_annotation_db => { 
             is => 'Genome::Db::Cosmic', 
@@ -2046,6 +2044,17 @@ sub create_clinseq_model{
   $clinseq_cmd .= "  --normal-rnaseq-model='$normal_rnaseq_model_id'" if $normal_rnaseq_model;
   $clinseq_cmd .= "  --tumor-rnaseq-model='$tumor_rnaseq_model_id'" if $tumor_rnaseq_model;
   $clinseq_cmd .= "  --de-model='$de_model_id'" if $de_model;
+
+  #Specify the user specified annotation DBs if they differ from the default
+  unless ($default_cancer_annotation_db_id eq $self->cancer_annotation_db->id){
+    $clinseq_cmd .= "  --cancer-annotation-db='" . $self->cancer_annotation_db->id . "'";
+  }
+  unless ($default_misc_annotation_db_id eq $self->misc_annotation_db->id){
+    $clinseq_cmd .= "  --misc-annotation-db='" . $self->misc_annotation_db->id . "'";
+  }
+  unless ($default_cosmic_annotation_db_id eq $self->cosmic_annotation_db->id){
+    $clinseq_cmd .= "  --cosmic-annotation-db='" . $self->cosmic_annotation_db->id . "'";
+  }
 
   push(@commands, "\n#Create a Clin-Seq model for $final_individual_name as follows:");
   push(@commands, $clinseq_cmd);
