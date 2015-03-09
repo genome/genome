@@ -139,7 +139,7 @@ sub before_assemble {
         my $lib_id = join("-", @lib_ids);
         my $genomic_start = 0;
         my $genomic_end = 0;
-        my $lib_name = join("-", map{Genome::Library->get($_)->name} @lib_ids);
+        my $lib_name = join("-", map{ my $name = Genome::Library->get($_)->name; $name =~ s/[,#'"()]/_/g; $name; } @lib_ids);
         if ($lib_name =~ /CHORI/) {
             $genomic_start = 2;
             $genomic_end = 50;
