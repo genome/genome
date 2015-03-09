@@ -19,8 +19,8 @@ experts:
         plugins:
             - Condel@PLUGIN_DIR@b@2
         plugins_version: 1
-        joinx_version: 1.10
-        allow_same_file: 0
+        joinx_version: 1.11
+        allow_same_file: 1
 reports:
     'docm':
         filters: {}
