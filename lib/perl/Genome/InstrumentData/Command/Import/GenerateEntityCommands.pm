@@ -30,7 +30,7 @@ sub execute {
         my $library = Genome::Library->get(name => $entity_params->{library}->{name});
         next if $library;
 
-        if ( not $self->_get_individual($entity_params) ) {
+        if ( not Genome::Individual->get(name => $entity_params->{individual}->{name}) ) {
             $self->_add_individual_create_command($entity_params);
         }
 
@@ -44,19 +44,6 @@ sub execute {
     $self->_generate_output;
 
     return 1;
-}
-
-sub _get_individual {
-    my ($self, $entity_params) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => HASHREF});
-
-    my $individual = Genome::Individual->get(name => $entity_params->{individual}->{name}); # by name
-    if ( not $individual ) {
-        my @individuals = Genome::Individual->get(upn => $entity_params->{individual}->{upn}); # by upn
-        return if not @individuals or @individuals > 1;
-        $individual = $individuals[0];
-    }
-
-    return $individual;
 }
 
 sub _add_individual_create_command {
