@@ -240,7 +240,7 @@ sub create {
         }
     };
 
-    $self->resize_disk_allocation;
+    $self->_reallocate_disk_allocation;
 
     #purge per lane alignment along with its .bai and md5 files, but
     #create header files and keep flagstat files for the future use
@@ -273,7 +273,7 @@ sub create {
                     die $self->error_message("Fail to run flagstat on $bam_path");
                 }
             }
-            $alignment->resize_disk_allocation;
+            $alignment->_reallocate_disk_allocation;
             $self->_remove_per_lane_bam_post_commit($bam_path, $alignment);
         }
     }
@@ -306,7 +306,7 @@ sub _remove_per_lane_bam_post_commit {
         once => 1,
         callback => sub {
             $self->_remove_per_lane_bam($bam_path);
-            $alignment->resize_disk_allocation;
+            $alignment->_reallocate_disk_allocation;
         }
     );
     return 1;

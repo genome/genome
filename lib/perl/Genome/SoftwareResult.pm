@@ -1190,22 +1190,4 @@ sub expunge {
     return 1;
 }
 
-sub resize_disk_allocation {
-    my $self = shift;
-    my %params = @_;
-
-    $self->debug_message("Resizing the disk allocation...");
-
-    # The property is technically is_many but I believe this would break a lot of things in practice
-    if ($self->disk_allocations) {
-        $params{allow_reallocate_with_move} = 0;
-        $params{allow_reallocate_with_move} = 1 if $self->disk_allocations->kilobytes_requested < 10_485_760; # 10GB
-        unless (eval { $self->disk_allocations->reallocate(%params) }) {
-            $self->warning_message("Failed to reallocate my disk allocation with id (%s). Eval returned (%s) ", $self->disk_allocations->id, $@);
-        }
-        $self->output_dir($self->disk_allocations->absolute_path); #update if was moved
-    }
-    return 1;
-}
-
 1;

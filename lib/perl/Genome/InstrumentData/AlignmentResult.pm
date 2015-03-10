@@ -520,7 +520,7 @@ sub create {
     }
 
     # STEP 14: RESIZE THE DISK
-    $self->resize_disk_allocation;
+    $self->_reallocate_disk_allocation;
 
     $self->status_message("Alignment complete.");
     return $self;
