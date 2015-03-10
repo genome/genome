@@ -297,18 +297,26 @@ sub _size_up_allocation {
     return 1;
 }
 
+# Remove per lane bams during UR commit.
+# We must avoid doing this if NO_COMMIT is on, because if a developer is
+# testing an in-line NO_COMMIT build, this will blow away per-lane bam
+# files and the merged result will not be committed. This will orphan
+# per-lane bam results and make them non-recoverable without realignment.
 sub _remove_per_lane_bam_post_commit {
     my ($self, $bam_path, $alignment) = @_;
-    $self->debug_message("Now removing the per lane bam");
 
-    UR::Context->process->add_observer(
-        aspect => 'commit',
-        once => 1,
-        callback => sub {
-            $self->_remove_per_lane_bam($bam_path);
-            $alignment->_reallocate_disk_allocation;
-        }
-    );
+    unless ($ENV{UR_DBI_NO_COMMIT}) {
+        $self->debug_message("Now removing the per lane bam");
+
+        UR::Context->process->add_observer(
+            aspect => 'commit',
+            once => 1,
+            callback => sub {
+                $self->_remove_per_lane_bam($bam_path);
+                $alignment->_reallocate_disk_allocation;
+            }
+        );
+    }
     return 1;
 }
 
