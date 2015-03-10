@@ -26,7 +26,7 @@ class Genome::Model::Tools::Capture::FormatSnvs {
 	
 	has => [                                # specify the command's single-value properties (parameters) <--- 
 		variants_file	=> { is => 'Text', doc => "File of SNV predictions", is_optional => 0, is_input => 1 },
-		output_file     => { is => 'Text', doc => "Output file to receive formatted lines", is_optional => 1, is_input => 1, is_optional => 1 },
+		output_file     => { is => 'Text', doc => "Output file to receive formatted lines", is_optional => 1, is_input => 1},
 		outdir => { is => 'Text', doc => "Output directory to store formatted lines", is_optional => 1, is_input => 1 },
 		preserve_call	=> { is => 'Text', doc => "If set to 1, preserves the consensus call", is_optional => 1, is_input => 1 },
 		append_line	=> { is => 'Text', doc => "If set to 1, appends extra columns in input lines to output lines", is_optional => 1, is_input => 1, default => 0 },
