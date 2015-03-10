@@ -21,7 +21,7 @@ use Genome::Test::Factory::SoftwareResult::User;
 my $pkg = 'Genome::InstrumentData::AlignmentResult::Merged';
 use_ok($pkg);
 
-# Override methods for testing. We do this here so we don't worry about UR_DBI_NO_COMMIT in actual code.
+# Override methods for testing so we don't need to worry about commit observers in the unit test
 Sub::Install::install_sub({code => sub { my ($self, $bam_path) = @_; $self->_remove_per_lane_bam($bam_path); },
         into => 'Genome::InstrumentData::AlignmentResult::Merged', as => '_remove_per_lane_bam_post_commit'});
 
