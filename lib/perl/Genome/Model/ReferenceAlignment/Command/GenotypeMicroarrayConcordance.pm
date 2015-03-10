@@ -49,13 +49,13 @@ sub execute {
     my @data;
     my @instrument_data = $self->build->instrument_data;
     unless (@instrument_data) {
-        $self->error_message('Found no instrument data assigned to build: '. $self->build->display_name);
+        $self->error_message('Found no instrument data assigned to build: '. $self->build->__display_name__);
         die($self->error_message);
     }
     for my $instrument_data (@instrument_data) {
         my $qc_build = $instrument_data->lane_qc_build;
         unless ($qc_build) {
-            $self->error_message('Failed to find lane qc build for instrument data : '. $instrument_data->display_name);
+            $self->error_message('Failed to find lane qc build for instrument data : '. $instrument_data->__display_name__);
             die($self->error_message);
         }
         
@@ -168,7 +168,7 @@ sub resolve_lane_qc_vcf {
     
     my $build_vcf = $qc_build->get_detailed_snvs_vcf;
     unless (-e $build_vcf) {
-        $self->error_message('Unable to find the snvs VCF for build : '. $qc_build->display_name);
+        $self->error_message('Unable to find the snvs VCF for build : '. $qc_build->__display_name__);
         die($self->error_message);
     }
     
@@ -210,7 +210,7 @@ sub resolve_genotype_microarray_vcf_and_sample {
 
     # there is no existing microarray build or the VCF does not exist (ie. old genotype build)
     unless (-e $microarray_vcf) {
-        $self->debug_message('Get or create genotype VCF result for sample: '. $genotype_sample->display_name);
+        $self->debug_message('Get or create genotype VCF result for sample: '. $genotype_sample->__display_name__);
         
         my $vcf_result = Genome::InstrumentData::Microarray::Result::Vcf->get_or_create(
             sample => $genotype_sample,
@@ -218,7 +218,7 @@ sub resolve_genotype_microarray_vcf_and_sample {
         );
         $microarray_vcf = $vcf_result->vcf_path;
         unless (-e $microarray_vcf) {
-            $self->error_message('Failed to get or create microarray VCF for sample: '. $genotype_sample->display_name);
+            $self->error_message('Failed to get or create microarray VCF for sample: '. $genotype_sample->__display_name__);
             die($self->error_message);
         }
     }
