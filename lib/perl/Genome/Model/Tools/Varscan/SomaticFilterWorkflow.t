@@ -40,7 +40,9 @@ Genome::Model::Tools::Varscan::SomaticFilterWorkflow->create(
     outdir => $temp_dir,
     tumor_bam => $tumor_bam,
     normal_bam => $normal_bam,
-    prefix => $expected_output_dir . "varscan.snps",
+    prefix => File::Spec->join(
+        $expected_output_dir,
+        "varscan.snps"),
     reference => $ref_fa,
 );
 $somatic_filter->queue_status_messages(1);
