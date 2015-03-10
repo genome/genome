@@ -60,10 +60,13 @@ sub get_variant_files {
         my $line = $_;
         my ($chrom) = split(/\t/, $line);
         next if($chrom =~ 'NT_' || $chrom =~ /GL/ || $chrom =~ /MT/);
-        my $variant_f = $prefix . ".$chrom.snp";
+        my $variant_f = join "", $prefix, ".$chrom.snp";
         if(-e $variant_f) {
             push @$variant_files, $variant_f;
         }
+    }
+    unless(@$variant_files) {
+        die $self->error_message("Unable to find variant files of prefix $prefix");
     }
 }
 
