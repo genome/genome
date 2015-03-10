@@ -17,4 +17,7 @@ Genome::Sys::Lock->add_backend('unknown',
     Genome::Sys::Lock::FileBackend->new(is_mandatory => 1,
         parent_dir => '/'));
 
+Genome::Sys::Lock->add_backend('tgisan',
+    Genome::Sys::Lock::FileBackend->new(is_mandatory => 1,
+        parent_dir => '/'));
 1;
