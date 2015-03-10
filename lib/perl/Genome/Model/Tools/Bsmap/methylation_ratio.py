@@ -140,8 +140,10 @@ if __name__ == '__main__':
     if len(options.reffile) == 0: parser.error("Missing reference file, use -d or --ref option.")
     if len(options.outfile) == 0: parser.error("Missing output file name, use -o or --out option.")
     if len(infile) == 0: parser.error("Require at least one BSMAP_MAPPING_FILE.")
+    if len(infile) > 1: parser.error("Could not parse all arguments. Likely that your outfile parameter name contained a space.")
     
-    
+    if " " in options.outfile:
+        parser.error("outfile parameter cannot contain spaces.")    
     step = 100000
     genome = pysam.FastaFile(options.reffile)
     work_queue = Queue()
