@@ -100,7 +100,10 @@ sub _validate_feature_lists {
             next TAG unless defined($bed_entry);
             my $invalid_characters_string = join('', @INVALID_FEATURE_LIST_CHARACTERS);
             if (my @invalid_characters_captured = $bed_entry->{annotation} =~ m/([\Q$invalid_characters_string\E])/g) {
-                die $self->error_message("Feature list (%s) contains the following invalid characters (%s) in the 4th column on line (%s).", $id, join(' ', uniq @invalid_characters_captured), $line);
+                die $self->error_message(
+                    "Feature list (%s) contains the following invalid characters (%s) in the name column on line (%s). Use the short_name option to annotate with region numbers instead or re-import a sanitized feature list.",
+                    $id, join(' ', uniq @invalid_characters_captured), $line
+                );
             }
         }
     }
