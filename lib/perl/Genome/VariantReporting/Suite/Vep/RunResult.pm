@@ -68,7 +68,9 @@ sub output_filename {
 sub _run {
     my $self = shift;
 
-    $self->_validate_feature_lists;
+    unless ($self->short_name) {
+        $self->_validate_feature_lists;
+    }
     $self->_sort_input_vcf;
     $self->_strip_input_vcf;
     $self->_split_alternate_alleles;
