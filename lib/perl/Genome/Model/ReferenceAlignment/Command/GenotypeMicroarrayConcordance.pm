@@ -215,6 +215,7 @@ sub resolve_genotype_microarray_vcf_and_sample {
         my $vcf_result = Genome::InstrumentData::Microarray::Result::Vcf->get_or_create(
             sample => $genotype_sample,
             known_sites_build => $self->dbsnp_build,
+            users => Genome::SoftwareResult::User->user_hash_for_build($qc_build),
         );
         $microarray_vcf = $vcf_result->vcf_path;
         unless (-e $microarray_vcf) {
