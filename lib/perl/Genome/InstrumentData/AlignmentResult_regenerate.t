@@ -53,7 +53,7 @@ subtest 'get_merged_alignment_results' => sub {
 
 subtest 'get_unarchived_merged_alignment_results' => sub {
     is_deeply([sort $ar1->get_unarchived_merged_alignment_results], [sort($merged_result, $smaller_merged_result)], 'Got two unarchived merged results for ar1');
-    is_deeply([$ar2->get_unarchived_merged_alignment_results], [$merged_result], 'Got one unarchived merged results for ar2');
+    is_deeply([$ar2->get_unarchived_merged_alignment_results], [$merged_result], 'Got one unarchived merged result for ar2');
     my $override = Sub::Override->new('Genome::Disk::Allocation::is_archived', sub {'1'});
     is_deeply([$ar1->get_unarchived_merged_alignment_results], [], 'Got 0 unarchived merged results for ar1');
     is_deeply([$ar2->get_unarchived_merged_alignment_results], [], 'Got 0 unarchived merged results for ar2');
@@ -181,11 +181,10 @@ sub get_test_alignment_results {
         value_id => $ar1_instrument_data_id,
     );
 
-    # need to manually calculte the lookup hash or get_with_lock will fail on mock objects
+    # need to manually calculate the lookup hash or get_with_lock will fail on mock objects
     map {$_->test_name($test_name); $_->recalculate_lookup_hash} ($ar1, $ar2, $bad_ar, $merged_result, $smaller_merged_result, $bad_merged_result);
 
     # Set up allocations
-    class GenomeTest::Object{ };
     my $ar1_allocation = $allocation_class->generate_obj(
         owner => $ar1,
     );

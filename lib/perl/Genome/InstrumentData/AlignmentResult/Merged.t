@@ -41,13 +41,12 @@ my $samtools_version = Genome::Model::Tools::Sam->default_samtools_version;
 my $picard_version = Genome::Model::Tools::Picard->default_picard_version;
 
 my $test_name = 'merged_unit_test';
-my $convert_name = Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($aligner_name);
 
 my $aligner_version  = $aligner_tools_class_name->default_version;
 my $aligner_label    = $aligner_name.$aligner_version;
 $aligner_label       =~ s/\./\_/g;
 
-my $expected_base_dir = $ENV{GENOME_TEST_INPUTS} .'/Genome-InstrumentData-AlignmentResult-Merged';
+my $expected_base_dir = Genome::Utility::Test->data_dir_ok($pkg);
 my $expected_shortcut_path = $expected_base_dir .'/bwa/',
 my $expected_dir = $expected_base_dir .'/expected';
 
