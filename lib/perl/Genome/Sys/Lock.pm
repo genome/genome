@@ -208,13 +208,7 @@ sub all_backends {
 }
 
 sub scopes {
-   if ($ENV{GENOME_LOCK_SCOPES}) {
-      return split(":", $ENV{GENOME_LOCK_SCOPES});
-   } else {
-      # Ultimately move this into the TGI config and
-      # not have it in code at all.
-      return ('site', 'tgisan', 'unknown');
-   }
+    return ('site', 'tgisan', 'unknown');
 }
 
 sub clear_backends {
