@@ -95,7 +95,7 @@ sub _validate_feature_lists {
         );
         #Only check the first 10 lines to reduce computational cost
         #Typically, invalid characters will be present on every line
-        for my $line (1..10) {
+        for my $line (1..100) {
             my $bed_entry = $bed_reader->next;
             next TAG unless defined($bed_entry);
             my $invalid_characters_string = join('', @INVALID_FEATURE_LIST_CHARACTERS);
