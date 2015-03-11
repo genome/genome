@@ -27,8 +27,8 @@ use_ok($pkg);
         has => {param1 => {}},
     };
 
-    sub run {
-        return 1;
+    sub cmd_line {
+        return ("echo", $self->param1);
     }
 
     sub supports_streaming {
@@ -53,8 +53,8 @@ use_ok($pkg);
         has => {param2 => {}},
     };
 
-    sub run {
-        return 1;
+    sub cmd_line {
+        return ("echo", $self->param2);
     }
 
     sub supports_streaming {

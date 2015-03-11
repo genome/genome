@@ -18,7 +18,7 @@ class Genome::Qc::Tool {
     ],
 };
 
-sub run {
+sub cmd_line {
     die $self->error_message("Abstract method run must be overriden by subclass");
 }
 

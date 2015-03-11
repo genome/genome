@@ -9,10 +9,10 @@ class Genome::Qc::Tool::PicardCollectMultipleMetrics {
 };
 
 sub supports_streaming {
-    return 0;
+    return 1;
 }
 
-sub run {
+sub cmd_line {
 }
 
 sub get_metrics {
