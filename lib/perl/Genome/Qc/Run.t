@@ -18,16 +18,17 @@ my $pkg = "Genome::Qc::Run";
 use_ok($pkg);
 
 {
-    package Genome::Qc::Tool::TestTool1;
+    package TestTool1;
 
     use Genome;
 
-    class Genome::Qc::Tool::TestTool1 {
+    class TestTool1 {
         is => [$pkg],
         has => {param1 => {}},
     };
 
     sub cmd_line {
+        my $self = shift;
         return ("echo", $self->param1);
     }
 
@@ -44,16 +45,17 @@ use_ok($pkg);
 }
 
 {
-    package Genome::Qc::Tool::TestTool2;
+    package TestTool2;
 
     use Genome;
 
-    class Genome::Qc::Tool::TestTool2 {
+    class TestTool2 {
         is => [$pkg],
         has => {param2 => {}},
     };
 
     sub cmd_line {
+        my $self = shift;
         return ("echo", $self->param2);
     }
 
@@ -74,7 +76,8 @@ reinstall_sub({
     into => 'Genome::Qc::Config',
     as => 'get_commands_for_alignment_result',
     code => sub {
-        return {TestTool1 => {params => {param1 => 1}}, TestTool2 => {params => {param2 => 2}}};
+        return {test1 => {class => "TestTool1", params => {param1 => 1}},
+            test2 => {class => "TestTool2", params => {param2 => 2}}};
     },
 });
 
