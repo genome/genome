@@ -155,7 +155,7 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return unless ($self);
 
-    $self->_lock_per_lane_alignment();
+    $self->_lock_per_lane_alignments();
     my @temp_allocations = ();
 
     try {
@@ -827,7 +827,7 @@ sub scalar_property_from_underlying_alignment_results {
 }
 
 
-sub _lock_per_lane_alignment {
+sub _lock_per_lane_alignments {
     my $self = shift;
 
     for my $alignment ($self->collect_individual_alignments) {
