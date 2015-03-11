@@ -31,6 +31,11 @@ class Genome::VariantReporting::Suite::Vep::RunResult {
             is => 'String',
         },
         reference_fasta_lookup => {is => 'Path'},
+        short_name => {
+            is => 'Bool',
+            doc => 'Turn on the short_name option in Genome::FeatureList::processed_bed_file_content. This replaces the content of the bed file name column with region numbers. Useful if the name column contains special characters.',
+            default => 0,
+        },
     ],
     has_param => [
         plugins => {is => 'String',
@@ -63,7 +68,9 @@ sub output_filename {
 sub _run {
     my $self = shift;
 
-    $self->_validate_feature_lists;
+    unless ($self->short_name) {
+        $self->_validate_feature_lists;
+    }
     $self->_sort_input_vcf;
     $self->_strip_input_vcf;
     $self->_split_alternate_alleles;
@@ -90,12 +97,15 @@ sub _validate_feature_lists {
         );
         #Only check the first 10 lines to reduce computational cost
         #Typically, invalid characters will be present on every line
-        for my $line (1..10) {
+        for my $line (1..100) {
             my $bed_entry = $bed_reader->next;
             next TAG unless defined($bed_entry);
             my $invalid_characters_string = join('', @INVALID_FEATURE_LIST_CHARACTERS);
             if (my @invalid_characters_captured = $bed_entry->{annotation} =~ m/([\Q$invalid_characters_string\E])/g) {
-                die $self->error_message("Feature list (%s) contains the following invalid characters (%s) in the 4th column on line (%s).", $id, join(' ', uniq @invalid_characters_captured), $line);
+                die $self->error_message(
+                    "Feature list (%s) contains the following invalid characters (%s) in the name column on line (%s). Use the short_name option to annotate with region numbers instead or re-import a sanitized feature list.",
+                    $id, join(' ', uniq @invalid_characters_captured), $line
+                );
             }
         }
     }
@@ -184,7 +194,7 @@ sub _user_params {
 sub _get_file_path_for_feature_list {
     my ($self, $id) = @_;
     my $feature_list = Genome::FeatureList->get($id);
-    return $feature_list->get_tabix_and_gzipped_bed_file;
+    return $feature_list->get_tabix_and_gzipped_bed_file(short_name => $self->short_name);
 }
 Memoize::memoize("_get_file_path_for_feature_list", LIST_CACHE => 'MERGE');
 
