@@ -41,16 +41,21 @@ sub _run {
 
 sub _run_tools {
     my $self = shift;
-    my $process_graph = Genome::Sys::ProcessGraph->create;
-    my %tools = $self->_streaming_tools;
-
-    while (my ($name, $tool)  = each %tools) {
+    my %tools = $self->_tools;
+=cut
+    my $process_graph = Genome::Sys::ProcessGraph->create(
+        log_directory => File::Spec->join($self->temp_staging_directory, "process_logs"));
+    my %process_ref;
+    for my $name ($self->_streaming_tools) {
+        my $tool = $tools{$name};
+        my $log_file = File::Spec->join($self->temp_staging_directory, "$name.log");
         $process_ref{$name} = $process_graph->add(
             command_line => $tool->cmd_line,
-            stderr => ?);
+            stderr => $log_file);
     }
 
-    while (my ($name, $tool) = each %tools) {
+    for my $name ($self->_streaming_tools) {
+        my $tool = $tools{$name};
         my $dependency = $self->_dependency_for_tool($name);
         if (defined $dependency) {
             $process_graph->connect($process_ref{$dependency->{name}},
@@ -59,9 +64,13 @@ sub _run_tools {
     }
 
     $process_graph->execute;
+=cut
+    for my $tool (map {$tools{$_}} $self->_non_streaming_tools) {
+        $self->_run_tool_simple($tool);
+    }
 
-    for my $tool ($self->_non_streaming_tools) {
-        $self->_run_tools_simple($tool);
+    for my $tool (map {$tools{$_}} $self->_streaming_tools, $self->_non_streaming_tools) {
+        $self->_add_metrics($tool);
     }
 }
 
@@ -70,7 +79,7 @@ sub _dependency_for_tool {
     return $self->qc_config->get_commands_for_alignment_results->{$name}->{dependency};
 }
 
-sub _run_tools_simple {
+sub _run_tool_simple {
     my $self = shift;
     my $tool = shift;
     run($tool->cmd_line);
@@ -79,20 +88,25 @@ sub _run_tools_simple {
 sub _tools {
     my $self = shift;
     my $commands = $self->qc_config->get_commands_for_alignment_result($self->alignment_result);
-    my @tools;
+    my %tools;
     for my $name (keys %$commands) {
-        my $tool = _tool_from_name_and_params($name, $commands->{$name}->{params});
-        push @tools, $tool;
+        my $tool = _tool_from_name_and_params($commands->{$name}->{class},
+                    $commands->{$name}->{params});
+        $tools{$name} = $tool;
     }
-    return @tools;
+    return %tools;
 }
 
 sub _streaming_tools {
-    return grep {$_->supports_streaming} $self->_tools;
+    my $self = shift;
+    my %tools = $self->_tools;
+    return grep {$tools{$_}->supports_streaming} keys %tools;
 }
 
 sub _non_streaming_tools {
-    return grep {!$_->supports_streaming} $self->_tools;
+    my $self = shift;
+    my %tools = $self->_tools;
+    return grep {!$tools{$_}->supports_streaming} keys %tools;
 }
 
 sub _tool_from_name_and_params {
