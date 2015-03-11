@@ -14,12 +14,16 @@ class Genome::Qc::Config {
 
 sub get_commands_for_alignment_result {
     return {
-        PicardCollectMultipleMetrics => {
+        picard_collect_multiple_metrics => {
+            class => 'Genome::Qc::Tool::PicardCollectMultipleMetrics',
             params => {
                 param1 => 'a',
                 param2 => 'b',
             },
-            dependencies => [],
+            dependency => {name => "bam_file", fd => "STDOUT"},
+        },
+        bam_file => {
+            class => 'Genome::Qc::Tool::BamFile',
         },
     };
 }
