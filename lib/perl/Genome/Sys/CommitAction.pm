@@ -21,6 +21,7 @@ sub __save__ {
 sub __commit__ {
     my $self = shift;
     $self->_run('on_commit');
+    $self->delete();
 }
 
 sub __rollback__ {
