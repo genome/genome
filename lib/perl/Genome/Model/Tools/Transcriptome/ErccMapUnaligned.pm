@@ -31,8 +31,8 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
         samtools_version => {
             is => 'Text',
             doc => 'The version of samtools to run analysis.',
-            example_values => ['0.1.19'],
-            default_value => '0.1.19',
+            example_values => ['1.2'],
+            default_value => '1.2',
             is_optional => '1',
         },
         samtools_max_mem => {
@@ -89,8 +89,11 @@ sub execute {
 sub samtools {
     my $self = shift;
     my $version = $self->samtools_version;
-    my $samtools_path =
-      Genome::Model::Tools::Sam->path_for_samtools_version($version);
+#    my $samtools_path =
+#      Genome::Model::Tools::Sam->path_for_samtools_version($version);
+
+    my $samtools_path = '/usr/bin/samtools1.2';
+
     return $samtools_path;
 }
 
@@ -247,32 +250,40 @@ sub generate_remapped_bam {
 
 sub index_bam {
     my ($self, $bam) = @_;
-    my $samtools_index_cmd = Genome::Model::Tools::Sam::IndexBam->execute(
-        bam_file => "$bam",
-        use_version => $self->samtools_version,
+
+    my $cmd = join(' ', $self->samtools, 'index', "$bam");
+    my $index_file = Path::Class::File->new(
+        $bam->stringify . '.bai'
     );
 
-    unless ($samtools_index_cmd && $samtools_index_cmd->result) {
-        die("Failed to run samtools index for BAM file: $bam");
-    }
+    Genome::Sys->shellcmd(
+        cmd => $cmd,
+        input_files => ["$bam"],
+        output_files => ["$index_file"],
+        skip_if_output_is_present => 0
+    );
 }
 
 sub generate_idxstats {
     my ($self, $bam) = @_;
 
-    my $samtools_idxstats_path = Genome::Sys->create_temp_file_path();
-    my $samtools_idxstats_cmd = Genome::Model::Tools::Sam::Idxstats->execute(
-        bam_file => "$bam",
-        output_file => $samtools_idxstats_path,
-        use_version => $self->samtools_version,
+    my $samtools_idxstats_path = Path::Class::File->new(Genome::Sys->create_temp_file_path());
+
+    my $cmd = join(' ',
+        $self->samtools, 'idxstats',
+        "$bam", 
+        '>', "$samtools_idxstats_path"
     );
 
-    unless ($samtools_idxstats_cmd && $samtools_idxstats_cmd->result) {
-        die "Failed to run samtools idxstats for BAM file: $bam";
-    }
+    Genome::Sys->shellcmd(
+        cmd => $cmd,
+        input_files => ["$bam"],
+        output_files => ["$samtools_idxstats_path"],
+        skip_if_output_is_present => 0
+    );
 
-    my $idxstats_hash_ref = $samtools_idxstats_cmd->parse_file_into_hashref(
-        $samtools_idxstats_path
+    my $idxstats_hash_ref = Genome::Model::Tools::Sam::Idxstats->parse_file_into_hashref(
+        "$samtools_idxstats_path"
     );
 
     return $idxstats_hash_ref;
