@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::Qc::Factory;
+use IPC::Run qw(run);
 
 class Genome::Qc::Result {
     is => 'Genome::SoftwareResult::StageableSimple',
@@ -72,8 +73,7 @@ sub _dependency_for_tool {
 sub _run_tools_simple {
     my $self = shift;
     my $tool = shift;
-    $tool->run;
-    $self->_add_metrics($tool);
+    run($tool->cmd_line);
 }
 
 sub _tools {
