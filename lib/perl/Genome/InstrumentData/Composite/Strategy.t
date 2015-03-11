@@ -485,6 +485,31 @@ _test_strategy(
     'parsed merge strategy as expected'
 );
 
+_test_strategy(
+    'instrument_data aligned to reference using bwa 0.5.5 @festive-decoration [turkey] then merged using picard 1.29 api v3',
+    {
+        'api_version' => 'v3',
+        'then' => {
+            'params' => '',
+            'version' => '1.29',
+            'name' => 'picard',
+            'type' => 'merge'
+        },
+        'action' => [{
+            'params' => '',
+            'decoration' => {
+                'params' => 'turkey',
+                'name' => 'festive-decoration'
+            },
+            'reference' => 'reference',
+            'version' => '0.5.5',
+            'name' => 'bwa',
+            'type' => 'align'
+        }],
+       'data' => 'instrument_data'
+    },
+);
+
 done_testing();
 
 
