@@ -11,7 +11,8 @@ use Test::More;
 
 # M A I N #####################################################################
 
-my $model = '0b215bb8e5d7456db9c011b20be9fcc7';
+my $model = '39f7c31b4e28432f8cbee18c8a391d06'; # GRCh37 only align (Mix 2)
+#my $model = 'f8e2cf3aa1fe4e6da97370d8d7dd4f5a'; # GRCh37+ERCC align (Mix 2)
 my $ercc_dir = Path::Class::Dir->new(
     '/gscmnt/gc13001/info/',
     'model_data/jwalker_scratch/ERCC/remap'
@@ -29,7 +30,7 @@ sub run_analysis {
         ercc_fasta_file => $ercc_dir->file('ERCC92.fa')->stringify,
         ercc_spike_in_file =>
           $ercc_dir->file('ERCC_Controls_Analysis.txt')->stringify,
-        ercc_spike_in_mix => 1,
+        ercc_spike_in_mix => 2,
     );
     ok($tool, 'Got a G::M::T::Transcriptome::ErccMapUnaligned instance');
     $tool->execute or die "[err] Trouble running tool!\n";
