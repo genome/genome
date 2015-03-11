@@ -237,7 +237,6 @@ sub generate_remapped_bam {
         redirects => "> $stdout 2> $stderr",
     );
 
-    $DB::single = 1;
     $stream->execute
       or die "[err] Trouble executing remapped bam stream command!\n";
 
