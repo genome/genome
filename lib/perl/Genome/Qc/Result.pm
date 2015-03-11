@@ -98,8 +98,7 @@ sub _non_streaming_tools {
 sub _tool_from_name_and_params {
     my ($name, $params) = @_;
 
-    my $tool = "Genome::Qc::Tool::$name";
-    return $tool->create(%{$params});
+    return $name->create(%{$params});
 }
 
 sub _add_metrics {
