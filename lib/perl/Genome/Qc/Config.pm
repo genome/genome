@@ -5,7 +5,8 @@ use warnings;
 use Genome;
 
 class Genome::Qc::Config {
-    has => [
+    is => 'UR::Value',
+    id_by => [
         name => {
             is => 'String',
         },
