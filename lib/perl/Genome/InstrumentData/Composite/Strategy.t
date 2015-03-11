@@ -15,7 +15,8 @@ use Test::More;
 
 use above "Genome";
 
-use_ok('Genome::InstrumentData::Composite::Strategy')
+my $package = 'Genome::InstrumentData::Composite::Strategy';
+use_ok($package)
   or die('test cannot continue');
 
 my $strategy_fail = Genome::InstrumentData::Composite::Strategy->create(strategy =>
