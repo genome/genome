@@ -10,7 +10,6 @@ use Path::Class;
 use Test::More;
 
 # M A I N #####################################################################
-use_ok('Genome::Model::Tools::Transcriptome::ErccMapUnaligned');
 
 my $model = '0b215bb8e5d7456db9c011b20be9fcc7';
 my $ercc_dir = Path::Class::Dir->new(
