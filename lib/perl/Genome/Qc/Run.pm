@@ -27,3 +27,5 @@ sub input_hash {
         config_name => $self->config_name,
     );
 }
+
+1;
