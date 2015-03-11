@@ -84,6 +84,7 @@ reinstall_sub({
 my $alignment_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object();
 my $command = $pkg->create(
     alignment_result => $alignment_result,
+    config_name => 'testing_config',
     %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
 );
 

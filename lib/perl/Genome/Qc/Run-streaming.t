@@ -124,6 +124,7 @@ subtest "teed input" => sub {
         });
 
     my $command = $pkg->create(
+        config_name => 'testing-qc-run',
         alignment_result => $alignment_result,
         %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
     );
@@ -162,6 +163,7 @@ subtest "piped input" => sub {
         });
 
     my $command = $pkg->create(
+        config_name => 'testing-qc-run',
         alignment_result => $alignment_result,
         %{Genome::Test::Factory::SoftwareResult::User->setup_user_hash},
     );

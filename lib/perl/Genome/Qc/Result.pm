@@ -3,7 +3,6 @@ package Genome::Qc::Result;
 use strict;
 use warnings;
 use Genome;
-use Genome::Qc::Factory;
 
 class Genome::Qc::Result {
     is => 'Genome::SoftwareResult::StageableSimple',
@@ -11,15 +10,15 @@ class Genome::Qc::Result {
         alignment_result => {
             is => 'Genome::InstrumentData::AlignedBamResult',
         },
-        #This will need to be backfilled once we have a db-backed Qc::Config
-        #qc_config => {
-        #    is => 'Genome::Qc::Config',
-        #},
+        config_name => {
+            is => 'Text',
+        },
     ],
 };
 
 sub qc_config {
-    return Genome::Qc::Factory::get_config(name => "default");
+    my $self = shift;
+    return Genome::Qc::Config->get(name => $self->config_name);
 }
 
 sub get_metrics {
