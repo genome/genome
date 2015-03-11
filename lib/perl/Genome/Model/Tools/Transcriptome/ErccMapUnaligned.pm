@@ -158,7 +158,9 @@ sub create_ercc_bowtie_index {
 
     my $cmd = join(' ',
         "cd $index_dir &&",
-        $self->bowtie2_build->stringify, "$fasta", 'ERCC');
+        $self->bowtie2_build->stringify, "$fasta", 'ERCC',
+        '1>/dev/null'
+    );
 
     Genome::Sys->shellcmd(
         cmd => $cmd,
