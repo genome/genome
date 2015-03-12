@@ -57,7 +57,7 @@ sub help_brief {
 sub help_detail {
     return <<EOS
     Tool to create FASTQ file from SAM/BAM using Picard.  For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#SamToFastq
+    http://broadinstitute.github.io/picard/command-line-overview.html#SamToFastq
 EOS
 }
 

@@ -6,32 +6,46 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::Picard::CollectMultipleMetrics {
-    is  => 'Genome::Model::Tools::Picard',
+    is  => 'Genome::Model::Tools::Picard::Base',
+
+
     has_input => [
         input_file   => {
             is  => 'String',
             doc => 'The SAM/BAM files to run on.  File type is determined by suffix.',
+            picard_param_name => 'INPUT',
         },
         output_basename  => {
             is  => 'String',
             doc => 'Basename to write output metrics files to.',
+            picard_param_name => 'OUTPUT',
         },
         program_list => {
             is_optional => 1,
-            doc => 'The default are CollectAlignmentSummaryMetrics,CollectInsertSizeMetrics,QualityScoreDistribution,MeanQualityByCycle',
-        }, 
+            is_many => 1,
+            picard_param_name => 'PROGRAM',
+            doc => 'List of picard metrics collection programs to run. Default: ' .
+                join(',',
+                    'CollectAlignmentSummaryMetrics',
+                    'CollectInsertSizeMetrics',
+                    'QualityScoreDistribution',
+                    'MeanQualityByCycle'),
+        },
         reference_sequence => {
             is_optional => 1,
+            picard_param_name => 'REFERENCE_SEQUENCE',
         },
         stop_after => {
             is  => 'Integer',
             doc => 'Stop after processing N reads, mainly for debugging. Default value: 0.',
             is_optional   => 1,
+            picard_param_name => 'STOP_AFTER',
         },
         assume_sorted => {
             is => 'Boolean',
             default_value => 1,
             is_optional => 1,
+            picard_param_name => 'ASSUME_SORTED',
         },
     ],
 };
@@ -43,59 +57,34 @@ sub help_brief {
 sub help_detail {
     return <<EOS
     For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#CollectMultipleMetrics
+    http://broadinstitute.github.io/picard/command-line-overview.html#CollectMultipleMetrics
 EOS
 }
 
-sub execute {
-    my $self = shift;
-
-    my $jar_path = $self->picard_path .'/CollectMultipleMetrics.jar';
-    unless (-e $jar_path) {
-        if ($self->use_version < 1.40) {
-            die('Please use Picard version 1.40 or greater.');
-        } else {
-            die('Missing jar file: '. $jar_path);
-        }
-    }
-
-    my $cmd = $self->picard_path .'/CollectMultipleMetrics.jar net.sf.picard.analysis.CollectMultipleMetrics';
-    $cmd   .= ' OUTPUT='. $self->output_basename  .' INPUT='. $self->input_file;
-    if (defined($self->stop_after)) {
-        $cmd .= ' STOP_AFTER='. $self->stop_after;
-    }
-    if (defined($self->reference_sequence)) {
-        $cmd .= ' REFERENCE_SEQUENCE='. $self->reference_sequence;
-    }
-    if (defined($self->assume_sorted)) {
-        if ($self->assume_sorted) {
-            $cmd .= ' ASSUME_SORTED=true';
-        } else {
-            $cmd .= ' ASSUME_SORTED=false';
-        }
-    }
-
-    my $program_list = $self->program_list;
-    if ($program_list) {
-        $program_list = 'null,' . $program_list;  #turn off the default 4
-    }
-    else {
-        $program_list = 'CollectAlignmentSummaryMetrics,CollectInsertSizeMetrics,QualityScoreDistribution,MeanQualityByCycle';
-    }
-
-    my @programs = split(',', $program_list);
-
-    for my $program (@programs) {
-        $program =~ s/ //g;
-        $cmd .= ' PROGRAM='. $program;
-    }
-
-    $self->run_java_vm(
-        cmd          => $cmd,
-        input_files  => [$self->input_file],
-    );
-    return 1;
+sub _jar_name {
+    return 'CollectMultipleMetrics.jar';
 }
 
+sub _java_class_name {
+    return 'net.sf.picard.analysis.CollectMultipleMetrics';
+}
+
+sub _cmdline_args {
+    my $self = shift;
+    my @args = $self->SUPER::_cmdline_args;
+    my @programs = $self->program_list;
+    if (@programs) {
+        # by default, adding PROGRAM=xyz /appends/ to the default list picard
+        # already has. PROGRAM=null clears the default, so we prepend that to
+        # the argument list.
+        unshift @args, 'PROGRAM=null';
+    }
+    return @args;
+}
+
+sub _validate_params {
+    my $self = shift;
+    $self->enforce_minimum_version('1.40');
+}
 
 1;

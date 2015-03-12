@@ -70,7 +70,7 @@ sub help_detail {
     Examines aligned records in the supplied SAM or BAM file to locate duplicate molecules.
     All records are then written to the output file with the duplicate records flagged.
     For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#MarkDuplicates
+    http://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates
 EOS
 }
 

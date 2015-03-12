@@ -1,7 +1,7 @@
 
 package Genome::Model::Tools::Picard::ExtractIlluminaBarcodes;
 
-# http://picard.sourceforge.net/command-line-overview.shtml#ExtractIlluminaBarcodes
+# http://broadinstitute.github.io/picard/command-line-overview.html#ExtractIlluminaBarcodes
 
 use strict;
 use warnings FATAL => 'all';
@@ -73,7 +73,7 @@ sub help_brief {
 sub help_detail {
     return <<EOS
     Determine the barcode for each read in an Illumina lane.  For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#ExtractIlluminaBarcodes
+    http://broadinstitute.github.io/picard/command-line-overview.html#ExtractIlluminaBarcodes
 EOS
 }
 

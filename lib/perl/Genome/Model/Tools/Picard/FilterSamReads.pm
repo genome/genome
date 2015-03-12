@@ -49,7 +49,7 @@ sub help_brief {
 sub help_detail {
    return <<EOS
     Tool to filter reads out of a SAM/BAM file. For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#FilterSamReads
+    http://broadinstitute.github.io/picard/command-line-overview.html#FilterSamReads
 EOS
 }
 

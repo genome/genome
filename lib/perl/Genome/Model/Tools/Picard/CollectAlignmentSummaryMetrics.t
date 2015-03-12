@@ -4,10 +4,28 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 1;
+use Test::More;
+use Genome::Utility::Test qw(compare_ok);
+use File::Spec qw();
 
-# This test was auto-generated because './Model/Tools/Picard/CollectAlignmentSummaryMetrics.pm'
-# had no '.t' file beside it.  Please remove this test if you believe it was
-# created unnecessarily.  This is a bare minimum test that just compiles Perl
-# and the UR class.
-use_ok('Genome::Model::Tools::Picard::CollectAlignmentSummaryMetrics');
+my $pkg = 'Genome::Model::Tools::Picard::CollectAlignmentSummaryMetrics';
+
+use_ok($pkg);
+
+my $data_dir = File::Spec->catfile($ENV{GENOME_TEST_INPUTS}, 'Genome-Model-Tools-Picard-CollectAlignmentSummaryMetrics');
+my $bam_file = File::Spec->catfile($data_dir, 'aligned.bam');
+my $ref_file = File::Spec->catfile($data_dir, 'small.fa');
+my $expected_file = File::Spec->catfile($data_dir, 'expected.txt');
+my $output_file = Genome::Sys->create_temp_file_path;
+
+my $obj = $pkg->create(
+    input_file => $bam_file,
+    output_file => $output_file,
+    refseq_file => $ref_file,
+    );
+
+ok($obj, 'created command');
+ok($obj->execute, 'executed command');
+
+compare_ok($expected_file, $output_file, diag => 1, filters => ['^#.*']);
+done_testing();

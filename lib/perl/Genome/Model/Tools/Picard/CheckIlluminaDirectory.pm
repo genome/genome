@@ -1,7 +1,7 @@
 
 package Genome::Model::Tools::Picard::CheckIlluminaDirectory;
 
-# http://picard.sourceforge.net/command-line-overview.shtml#CheckIlluminaDirectory
+# http://broadinstitute.github.io/picard/command-line-overview.html#CheckIlluminaDirectory
 
 use strict;
 use warnings FATAL => 'all';
@@ -33,7 +33,7 @@ sub help_brief {
 sub help_detail {
     return <<EOS
     Check an Illumina run directory.  For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#CheckIlluminaDirectory
+    http://broadinstitute.github.io/picard/command-line-overview.html#CheckIlluminaDirectory
 EOS
 }
 

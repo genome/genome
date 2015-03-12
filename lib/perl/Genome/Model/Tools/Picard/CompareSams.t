@@ -4,8 +4,9 @@ use strict;
 use warnings;
 
 use above "Genome";
+use Test::Exception;
 
-use Test::More tests => 9;
+use Test::More;
 
 use_ok('Genome::Model::Tools::Picard::CompareSams');
 
@@ -38,7 +39,7 @@ my $command_2 = Genome::Model::Tools::Picard::CompareSams->create(
 );
 
 ok($command_2, 'created command for picard version r116');
-ok(! $command_2->execute(), 'could not execute command for unsupported version');
+dies_ok(sub { $command_2->execute() }, 'could not execute command for unsupported version');
 
 #Test a newer version
 my $output_3 = Genome::Sys->create_temp_file_path();
@@ -53,3 +54,5 @@ my $command_3 = Genome::Model::Tools::Picard::CompareSams->create(
 ok($command_3, 'created command for picard version 1.25');
 ok($command_3->execute(), 'executed command');
 ok(-s $output_3, 'produced some output');
+
+done_testing();
