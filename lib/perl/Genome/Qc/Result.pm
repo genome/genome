@@ -61,6 +61,18 @@ sub _run_tools {
             $process_graph->connect($process_ref{$dependency->{name}},
                 $dependency->{fd}, $process_ref{$name}, "STDIN");
         }
+        my $in_file = $self->_input_file_for_tool($name);
+        if (defined $in_file) {
+            $process_graph->connect_input_file($tool->$in_file, $process_ref{$name}, "STDIN");
+        }
+        my $out_file = File::Spec->join($self->temp_staging_directory, $self->_output_file_for_tool($name));
+        if (defined $out_file) {
+            $process_graph->connect_output_file($tool->$out_file, $process_ref{$name}, "STDOUT");
+        }
+        my $err_file = File::Spec->join($self->temp_staging_directory, $self->_error_file_for_tool($name));
+        if (defined $err_file) {
+            $process_graph->connect_output_file($tool->$err_file, $process_ref{$name}, "STDERR");
+        }
     }
 
     $process_graph->execute;
@@ -77,6 +89,21 @@ sub _run_tools {
 sub _dependency_for_tool {
     my ($self, $name) = @_;
     return $self->qc_config->get_commands_for_alignment_results->{$name}->{dependency};
+}
+
+sub _input_file_for_tool {
+    my ($self, $name) = @_;
+    return $self->qc_config->get_commands_for_alignment_results->{$name}->{in_file};
+}
+
+sub _error_file_for_tool {
+    my ($self, $name) = @_;
+    return $self->qc_config->get_commands_for_alignment_results->{$name}->{error_file};
+}
+
+sub _output_file_for_tool {
+    my ($self, $name) = @_;
+    return $self->qc_config->get_commands_for_alignment_results->{$name}->{out_file};
 }
 
 sub _run_tool_simple {

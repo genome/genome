@@ -22,8 +22,9 @@ sub get_commands_for_alignment_result {
             },
             dependency => {name => "bam_file", fd => "STDOUT"},
         },
-        bam_file => {
+        samtools_view => {
             class => 'Genome::Qc::Tool::BamFile',
+            in_file => "bam_file",
         },
     };
 }
