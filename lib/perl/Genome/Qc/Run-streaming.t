@@ -18,6 +18,34 @@ my $pkg = "Genome::Qc::Run";
 use_ok($pkg);
 
 my $test_dir = __FILE__.".d";
+
+{
+    package TestCat;
+
+    use Genome;
+
+    class TestCat {
+        is => [$pkg],
+        has => {input_file => {}},
+    };
+
+    sub first_input_file {
+        return File::Spec->join($test_dir, "in");
+    }
+
+    sub cmd_line {
+        my $self = shift;
+        return ("cat", $self->input_file);
+    }
+
+    sub supports_streaming {
+        return 1;
+    }
+
+    sub get_metrics {
+        return {};
+    }
+}
 {
     package TestTool1;
 
@@ -27,11 +55,6 @@ my $test_dir = __FILE__.".d";
         is => [$pkg],
         has => {input_file => {}},
     };
-
-    sub first_input_file {
-        my $self = shift;
-        return $self->alignment_result->bam_path;
-    }
 
     sub cmd_line {
         my $self = shift;
@@ -60,11 +83,6 @@ my $test_dir = __FILE__.".d";
         has => {input_file => {}},
     };
 
-    sub first_input_file {
-        my $self = shift;
-        return $self->alignment_result->bam_path;
-    }
-
     sub cmd_line {
         my $self = shift;
         return ("tail", "-n", "1", $self->input_file);
@@ -82,29 +100,24 @@ my $test_dir = __FILE__.".d";
     }
 }
 
-    my $alignment_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object();
-    my $bam = File::Spec->join($test_dir, "in");
-    reinstall_sub({
-            into => 'Genome::InstrumentData::AlignmentResult::Merged',
-            as => 'bam_path',
-            code => sub {
-                return $bam;
-            },
-        });
-
 subtest "teed input" => sub {
     use Genome::Qc::Config;
     reinstall_sub({
             into => 'Genome::Qc::Config',
             as => 'get_commands_for_alignment_result',
             code => sub {
-                return {test1 => {class => "TestTool1",
+                return {
+                    cat => {class => "TestCat",
+                        params => {input_file => '-'},
+                        in_file => "first_input_file",
+                    },
+                    test1 => {class => "TestTool1",
                                   params => {input_file => '-'},
-                                  in_file => "first_input_file",
+                                  dependency => {name => 'cat', fd => "STDOUT"},
                                   out_file => "test1.out"},
                     test2 => {class => "TestTool2",
                               params => {input_file => '-'},
-                              in_file => "first_input_file",
+                              dependency => {name => 'cat', fd => "STDOUT"},
                               out_file => "test2.out"}};
             },
         });
@@ -130,13 +143,19 @@ subtest "piped input" => sub {
             into => 'Genome::Qc::Config',
             as => 'get_commands_for_alignment_result',
             code => sub {
-                return {test1 => {class => "TestTool1",
+                return {
+                    cat => {class => "TestCat",
                         params => {input_file => '-'},
-                        in_file => "first_input_file"},
+                        in_file => "first_input_file",
+                    },
+                    test1 => {class => "TestTool1",
+                        params => {input_file => '-'},
+                        dependency => {fd => "STDOUT", name => "cat"},
+                    },
                     test2 => {class => "TestTool2",
-                    params => {input_file => '-'},
-                    dependency => {fd => "STDOUT", name => "test1"},
-                    out_file => "test-piped.out"}};
+                        params => {input_file => '-'},
+                        dependency => {fd => "STDOUT", name => "test1"},
+                        out_file => "test-piped.out"}};
             },
         });
 
