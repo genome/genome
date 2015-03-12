@@ -1025,7 +1025,9 @@ sub write_file {
     for (@content) {
         $fh->print($_) or Carp::croak "Failed to write to file $fname! $!";
     }
-    $fh->close or Carp::croak "Failed to close file $fname! $!";
+    if ( $fname ne '-' ) {
+        $fh->close or Carp::croak "Failed to close file $fname! $!";
+    }
     return $fname;
 }
 

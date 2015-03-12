@@ -45,6 +45,10 @@ class Genome::VariantReporting::Suite::Vep::Run {
             is => 'String',
             doc => 'Version of the vepplugins package to use',
         },
+        short_name => {
+            is => 'Bool',
+            doc => 'Turn on the short_name option in Genome::FeatureList::processed_bed_file_content. This replaces the content of the bed file name column with region numbers. Useful if the name column contains special characters.',
+        },
     ],
     has_structural_param => [
         lsf_resource => {

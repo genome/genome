@@ -42,6 +42,11 @@ function help {
     -d db_snapshot_name
           The name of the database snapshot to use instead of the default.
 
+    -i db_id:db_host:db_port
+          The connection information of an existing database to use.  Format is name:host:port
+
+    -p    Persist the test-db outside of this shell.
+
     -U    Disable configuration of UR.
 
     -u ur_repo
@@ -64,7 +69,7 @@ function main {
     fi
 
     local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF \
-        DB_SNAPSHOT_NAME SQITCH_REPO UR_REPO WF_REPO
+        DB_SNAPSHOT_NAME DB_ID DB_HOST DB_PORT SQITCH_REPO UR_REPO WF_REPO
     parse_opts "$@"
     shift $((OPTIND-1))
 
@@ -73,9 +78,19 @@ function main {
     validate_bash
 
     rebuild_meta_db
-
     local TESTDBSERVER_DB_NAME TESTDBSERVER_DB_HOST TESTDBSERVER_DB_PORT
-    setup_test_db "$TOP"
+    if test -z "$DISABLE_DB"
+    then
+        if test -n "$DB_ID"
+        then
+            export TESTDBSERVER_DB_NAME=$DB_ID
+            export TESTDBSERVER_DB_HOST=$DB_HOST
+            export TESTDBSERVER_DB_PORT=$DB_PORT
+        else
+            setup_test_db "$TOP"
+        fi
+    fi
+
 
     setup_env "$TOP"
 
@@ -89,8 +104,15 @@ function main {
 
     if test -z "$DISABLE_DB"
     then
-        log.info "Test DB Snapshot: $DB_SNAPSHOT_NAME"
+        if test -n "$DB_ID"
+        then
+            log.info "Using existing test DB"
+        else
+            log.info "Test DB Snapshot: $DB_SNAPSHOT_NAME"
+        fi
         log.info "Test DB Name: $TESTDBSERVER_DB_NAME"
+        log.info "Test DB Host: ${TESTDBSERVER_DB_HOST}"
+        log.info "Test DB Port: ${TESTDBSERVER_DB_PORT}"
     fi
     log.info ''
 
@@ -101,7 +123,7 @@ function main {
         "$@"
         EXIT=$?
     else
-        echo 'Press <Ctrl>-D or type `logout` to return to normal environment.'
+        echo 'Press <Ctrl>-D or type `exit` to return to normal environment.'
         echo ''
         unset PROMPT_COMMAND
         export PS1="(${GE_ENV_NAME}) \w $ "
@@ -110,7 +132,7 @@ function main {
         EXIT=$?
     fi
 
-    if test -z "$DISABLE_DB"
+    if test -z "$DISABLE_DB" -a -z "$PERSIST_DB"
     then
         test-db delete database $TESTDBSERVER_DB_NAME > /dev/null
     fi
@@ -125,10 +147,10 @@ function validate_bash {
 }
 
 function parse_opts {
-    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" SQITCH_REPO="" UR_REPO="" WF_REPO=""
+    DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" DB_ID="" DB_HOST="" DB_PORT="" SQITCH_REPO="" UR_REPO="" WF_REPO="" PERSIST_DB=""
 
     local opts
-    while getopts :hMm:Dd:Uu:Ww: opts "$@"
+    while getopts :hMm:Dd:i:pUu:Ww: opts "$@"
     do
         case $opts in
             h)
@@ -147,6 +169,15 @@ function parse_opts {
                 ;;
             d)
                 DB_SNAPSHOT_NAME="$OPTARG"
+                ;;
+            i)
+                args=(${OPTARG//:/ })
+                DB_ID=${args[0]}
+                DB_HOST=${args[1]}
+                DB_PORT=${args[2]}
+                PERSIST_DB="TRUE"
+                ;;
+            p)  PERSIST_DB="TRUE"
                 ;;
             U)
                 DISABLE_UR="TRUE"
@@ -179,6 +210,16 @@ function validate_opts {
         fatal $OPT_ERR "cannot use -D and -d options together"
     fi
 
+    if test -n "$DISABLE_DB" -a -n "$DB_ID"
+    then
+        fatal $OPT_ERR "cannot use -D and -i options together"
+    fi
+
+    if test -n "$DB_SNAPSHOT_NAME" -a -n "$DB_ID"
+    then
+        fatal $OPT_ERR "cannot use -d and -i options together"
+    fi
+
     if test -n "$DISABLE_UR" -a -n "$UR_REPO"
     then
         fatal $OPT_ERR "cannot use -U and -u options together"
@@ -199,6 +240,14 @@ function validate_opts {
         if ! $TESTDB template list | cut -f 1 | $GREP -q "^${DB_SNAPSHOT_NAME}$"
         then
             fatal $OPT_ERR "invalid snapshot name -- $DB_SNAPSHOT_NAME"
+        fi
+    fi
+
+    if test -n "$DB_ID"
+    then
+        if ! $TESTDB database list | cut -f 1 | $GREP -q "^${DB_ID}$"
+        then
+            fatal $OPT_ERR "invalid database name -- $DB_ID"
         fi
     fi
 
@@ -243,7 +292,7 @@ function set_defaults {
         SQITCH_REPO="$TOP/$SQITCH_GENOME"
     fi
 
-    if test -z "$DB_SNAPSHOT_NAME"
+    if test -z "$DB_SNAPSHOT_NAME" -a -z "$DB_ID"
     then
         DB_SNAPSHOT_NAME="0e2e7ad"
     fi
@@ -393,11 +442,6 @@ function rebuild_meta_db {
 # on it, and provides shell variables used to configure GMSchema later.
 function setup_test_db {
     local BASE_DIR="$1"
-    if test -n "$DISABLE_DB"
-    then
-        return
-    fi
-
     echo "=> Creating test database..."
     eval "$($TESTDB database create --timeout 30 --bash --owner $TESTDBSERVER_DB_USER --based-on $DB_SNAPSHOT_NAME)"
     if test -z "$TESTDBSERVER_DB_NAME"
