@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::GenerateEntityCommands;
+package Genome::InstrumentData::Command::Import::GenerateEntityCreateCommands;
 
 use strict;
 use warnings;
@@ -9,7 +9,7 @@ require File::Basename;
 require List::MoreUtils;
 use Params::Validate qw( :types );
 
-class Genome::InstrumentData::Command::Import::GenerateEntityCommands {
+class Genome::InstrumentData::Command::Import::GenerateEntityCreateCommands {
     is => 'Genome::InstrumentData::Command::Import::GenerateBase',
     doc => 'generate commands to create individuals, samples, and libraries that are necessary to import instrument data',
 };
