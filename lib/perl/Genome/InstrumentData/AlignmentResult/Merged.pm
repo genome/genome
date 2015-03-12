@@ -8,6 +8,8 @@ use File::Find::Rule qw();
 use File::stat;
 use File::Path 'rmtree';
 use List::MoreUtils qw{ uniq };
+use List::Util qw(shuffle);
+use Try::Tiny qw(try catch finally);
 
 use Genome;
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
@@ -153,8 +155,10 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return unless ($self);
 
-    my $rv = eval {
+    $self->_lock_per_lane_alignments();
+    my @temp_allocations = ();
 
+    try {
         #TODO In a future version collect relevant alignments from other merged alignment results when available
         $self->debug_message('Collecting alignments for merger...');
         my @alignments = $self->collect_individual_alignments;
@@ -171,9 +175,10 @@ sub create {
             #handle duplicates on a per-library basis
             for my $alignment (@alignments) {
                 my $library = $alignment->instrument_data->library;
-
-                push @{ $bams_per_library->{$library->id} }, $alignment->alignment_bam_file_paths;
+                my $temp_allocation = $self->_get_temp_allocation($alignment);
+                push @{ $bams_per_library->{$library->id} }, $alignment->revivified_alignment_bam_file_paths(disk_allocation => $temp_allocation);
                 $libraries->{$library->id} = $library;
+                push @temp_allocations, $temp_allocation;
             }
 
             for my $library_id (keys %$bams_per_library) {
@@ -191,7 +196,9 @@ sub create {
         } else {
             #just collect the BAMs for a merge
             for my $alignment (@alignments) {
-                push @bams_for_final_merge, $alignment->alignment_bam_file_paths;
+                my $temp_allocation = $self->_get_temp_allocation($alignment);
+                push @bams_for_final_merge, $alignment->revivified_alignment_bam_file_paths(disk_allocation => $temp_allocation);
+                push @temp_allocations, $temp_allocation;
             }
         }
 
@@ -220,29 +227,126 @@ sub create {
             $alignment->add_user(user => $self, label => 'uses');
         }
 
-        return 1;
-    };
-    if (my $error = $@) {
-        $tx->rollback();
-        die $error;
-    } elsif ($rv ne 1) {
-        $tx->rollback();
-        $self->error_message('Unexpected return value: ' . $rv);
-        die $self->error_message;
-    } else {
         $tx->commit();
+        $self->debug_message('Merge done');
     }
+    catch {
+        $tx->rollback();
+        die $self->error_message('Merge failed due to error: ' . $_);
+    }
+    finally {
+        for my $allocation (@temp_allocations) {
+            $allocation->delete;
+        }
+    };
 
-    $self->debug_message("Resizing the disk allocation...");
-    if ($self->_disk_allocation) {
-        unless ($self->_disk_allocation->reallocate) {
-            $self->warning_message("Failed to reallocate disk allocation: " . $self->_disk_allocation->id);
+    $self->_reallocate_disk_allocation;
+
+    #purge per lane alignment along with its .bai and md5 files, but
+    #create header files and keep flagstat files for the future use
+    #This is done AFTER merge alignment result commits.
+
+    for my $alignment ($self->collect_individual_alignments) {
+        for my $bam_path ($alignment->alignment_bam_file_paths) {
+            #Reserve some space beforehand for flagstat and header files
+            $self->_size_up_allocation($alignment);
+
+            my $header = $bam_path . '.header';
+            unless (-s $header) {
+                my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+                my $cmd = "$sam_path view -H $bam_path > $header";
+                Genome::Sys->shellcmd(
+                    cmd => $cmd,
+                    input_files  => [$bam_path],
+                    output_files => [$header],
+                );
+            }
+            my $flagstat = $bam_path . '.flagstat';
+            unless (-s $flagstat) {
+                my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
+                    bam_file    => $bam_path,
+                    output_file => $flagstat,
+                    use_version => $self->samtools_version,
+                );
+
+                unless ($cmd->execute) {
+                    die $self->error_message("Fail to run flagstat on $bam_path");
+                }
+            }
+            $alignment->_reallocate_disk_allocation;
+            $self->_remove_per_lane_bam_post_commit($bam_path, $alignment);
         }
     }
-
     $self->debug_message('All processes completed.');
 
     return $self;
+}
+
+# Adds a small amount of space requested to the disk allocation so we can add .header and .flagstat files
+sub _size_up_allocation {
+    my ($self, $alignment) = @_;
+
+    my @disk_allocations = $alignment->_disk_allocation;
+    unless (@disk_allocations and @disk_allocations == 1) {
+        die $self->error_message('Only 1 disk allocation is expected, but got '.scalar @disk_allocations);
+    }
+    my $disk_allocation = shift @disk_allocations;
+    my $kilobytes = $disk_allocation->kilobytes_requested;
+    $disk_allocation->kilobytes_requested(5*1024 + $kilobytes);
+
+    return 1;
+}
+
+# Remove per lane bams during UR commit.
+# We must avoid doing this if NO_COMMIT is on, because if a developer is
+# testing an in-line NO_COMMIT build, this will blow away per-lane bam
+# files and the merged result will not be committed. This will orphan
+# per-lane bam results and make them non-recoverable without realignment.
+sub _remove_per_lane_bam_post_commit {
+    my ($self, $bam_path, $alignment) = @_;
+
+    unless ($ENV{UR_DBI_NO_COMMIT}) {
+        $self->debug_message("Now removing the per lane bam");
+
+        UR::Context->process->add_observer(
+            aspect => 'commit',
+            once => 1,
+            callback => sub {
+                $self->_remove_per_lane_bam($bam_path);
+                $alignment->_reallocate_disk_allocation;
+            }
+        );
+    }
+    return 1;
+}
+
+sub _remove_per_lane_bam {
+    my ($self, $bam_path) = @_;
+    for my $type ('', '.bai', '.md5') {
+        my $file = $bam_path . $type;
+        unlink $file;
+        if (-s $file and !$type) {  #only bam matters
+            die $self->error_message("Failed to cleanup $file");
+        }
+    }
+    return 1;
+}
+
+sub _get_temp_allocation {
+    my ($self, $alignment) = @_;
+    return Genome::Disk::Allocation->create(
+        disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
+        allocation_path     => 'merged/recreated_per_lane_bam/'.$alignment->id.'_'._get_uuid_string(),
+        kilobytes_requested => Genome::Sys->disk_usage_for_path($self->output_dir),
+        owner_class_name    => 'Genome::Sys::User',
+        owner_id            => Genome::Sys->username,
+    );
+}
+
+sub _get_uuid_string {
+    my $ug = Data::UUID->new();
+    my $uuid = $ug->create();
+    return $ug->to_string($uuid);
 }
 
 sub collect_individual_alignments {
@@ -298,6 +402,8 @@ sub collect_individual_alignments {
             };
         }
 
+        my $test_name = $self->test_name;
+
         for my $segment_param (@segment_params) {
             my %all_params = (
                 %params,
@@ -305,17 +411,30 @@ sub collect_individual_alignments {
                 annotation_build_id => ($self->annotation_build_id || undef),
                 instrument_data_id => $i->id,
                 filter_name => ($filters->{$i->id} || undef),
-                test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
                 users => $result_users,
+                test_name => $test_name,
                 %$segment_param,
             );
+
+            delete $all_params{users} unless defined $result_users;
             $self->debug_message("Looking for alignment result with params: %s",
                 Data::Dumper::Dumper(\%all_params));
 
-            my $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(
-                %all_params
-            );
-            if($alignment) {
+            my $alignment;
+            if (defined $result_users) {
+                $alignment = Genome::InstrumentData::AlignmentResult->get_with_lock(%all_params);
+            }
+            else { #workaround way to get AR for now if per lane AR does not have _user_data_for_nested_results set
+                $self->warning_message('Now try to get per lane alignment result without using users');
+                my $lookup_hash = Genome::InstrumentData::AlignmentResult->calculate_lookup_hash_from_arguments(%all_params); 
+                my @alignments  = Genome::InstrumentData::AlignmentResult->get(lookup_hash => $lookup_hash);
+                unless (@alignments and @alignments == 1) {
+                    die $self->error_message('Only 1 alignment is expected, but got '.scalar @alignments);
+                }
+                $alignment = shift @alignments;
+            }
+
+            if ($alignment) {
                 push @alignments, $alignment;
             } else {
                 push @not_found, $i;
@@ -356,29 +475,28 @@ sub estimated_kb_usage {
     my $self = shift;
     my $alignments = shift;
 
-    my @bams;
-    for my $alignment (@$alignments) {
-        my @aln_bams = $alignment->alignment_bam_file_paths;
-        unless (@aln_bams) {
-            $self->debug_message("alignment $alignment has no bams at " . $alignment->output_dir);
-        }
-        push @bams, @aln_bams;
-    }
     my $total_size;
-    
-    unless (@bams) {
-        die "No bams?";
-    }
 
-    for (@bams) {
-        my $size = stat($_)->size;
-        $self->debug_message("BAM has size: " . $size);
-        $total_size += $size;
+    for my $alignment (@$alignments) {
+        my $bam_size = $alignment->bam_size;
+
+        unless (defined $bam_size) {
+            my @aln_bams = $alignment->alignment_bam_file_paths;
+            unless (@aln_bams) {
+                die $self->error_message("alignment $alignment has no bams at " . $alignment->output_dir);
+            }
+            for (@aln_bams) {
+                my $size = stat($_)->size;
+                $self->debug_message("BAM has size: " . $size);
+                $bam_size += $size;
+            }
+        }
+        $total_size += $bam_size;
     }
 
     #take the total size plus a 10% safety margin
     # 2x total size; full build merged bam, full build deduped bam
-    $total_size = sprintf("%.0f", ($total_size/1024)*1.1); 
+    $total_size = sprintf("%.0f", ($total_size/1024)*1.1);
     $total_size = ($total_size * 2);
 
     return $total_size;
@@ -403,15 +521,15 @@ sub _prepare_working_directories {
     my $output_dir = $self->output_dir;
 
     #file sizes are so large that /tmp/ would be exhausted--stage files to the allocation itself instead
-    my $staging_tempdir = File::Temp->newdir( 
+    my $staging_tempdir = File::Temp->newdir(
         "staging-XXXXX",
-        DIR     => $output_dir, 
+        DIR     => $output_dir,
         CLEANUP => 1,
     );
 
-    my $scratch_tempdir = File::Temp->newdir( 
+    my $scratch_tempdir = File::Temp->newdir(
         "scratch-XXXXX",
-        DIR     => $output_dir, 
+        DIR     => $output_dir,
         CLEANUP => 1,
     );
 
@@ -471,7 +589,7 @@ sub handle_duplicates {
         die $self->error_message('Failed to handle duplicates.');
     }
 
-    $self->verify_result([$input_bam], [$output_path]);    
+    $self->verify_result([$input_bam], [$output_path]);
 }
 
 sub verify_result {
@@ -553,7 +671,7 @@ sub _bam_flagstat_total {
     }
     my $total = $flagstat_data->{total_reads};
 
-    $self->debug_message('flagstat for ' . $bam_file . ' reports ' . $total . ' in total');    
+    $self->debug_message('flagstat for ' . $bam_file . ' reports ' . $total . ' in total');
     return $total;
 }
 
@@ -658,7 +776,7 @@ sub _resolve_duplication_metrics_name {
     $bam_path =~ s/$scratch_dir/$staging_dir/;
     $bam_path =~ s/.bam$//;
 
-    return $bam_path . '.metrics';    
+    return $bam_path . '.metrics';
 }
 
 sub create_bam_md5 {
@@ -671,11 +789,11 @@ sub create_bam_md5 {
     $self->debug_message("Creating md5 file for the BAM file...");
 
     Genome::Sys->shellcmd(
-        cmd                        => $cmd, 
+        cmd                        => $cmd,
         input_files                => [$bam_file],
         output_files               => [$md5_file],
         skip_if_output_is_present  => 0,
-    ); 
+    );
 
     return 1;
 }
@@ -708,5 +826,53 @@ sub scalar_property_from_underlying_alignment_results {
     }
 }
 
+
+sub _lock_per_lane_alignments {
+    my $self = shift;
+
+    for my $alignment ($self->collect_individual_alignments) {
+        unless ($alignment->get_merged_alignment_results) {
+            my @bams = $alignment->alignment_bam_file_paths;
+            unless (@bams) {
+               die $self->error_message("Alignment result with class (%s) and id (%s) has neither ".
+                   "merged results nor valid bam paths. This likely means that this alignment result ".
+                   "needs to be removed and realigned because data has been lost. ".
+                   "Please create an apipe-support ticket for this.", $alignment->class, $alignment->id);
+               #There is no way to recreate per lane bam if merged bam
+               #does not exist and per lane bam is removed. Software
+               #result of this per lane alignment needs to be removed and
+               #this per lane instrument data needs to be realigned
+               #with that aligner.
+            }
+
+            my $lock_var = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$alignment->id);
+            my $lock = Genome::Sys->lock_resource(
+                resource_lock => $lock_var,
+                scope         => 'site',
+                max_try       => 288, # Try for 48 hours every 10 minutes
+                block_sleep   => 600,
+            );
+            die $self->error_message("Unable to acquire the lock for per lane alignment result id (%s) !", $alignment->id) unless $lock;
+
+            # If the build before us successfully created a merged alignment result, we no longer need a lock
+            # If it failed, we will add an observer just as the first build did.
+            if ($alignment->get_merged_alignment_results) {
+                Genome::Sys->unlock_resource(resource_lock => $lock);
+            } else {
+                # The problem here is if we commit BEFORE merge is done, we unlock too early.
+                # However, if we unlock any other way we may fail to unlock more often and leave old locks.
+                UR::Context->process->add_observer(
+                    aspect   => 'commit',
+                    once => 1,
+                    callback => sub {
+                        Genome::Sys->unlock_resource(resource_lock => $lock);
+                    }
+                );
+            }
+        }
+    }
+
+    return 1;
+}
 
 1;
