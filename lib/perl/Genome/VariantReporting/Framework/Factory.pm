@@ -25,15 +25,8 @@ use Module::Pluggable
 use Module::Pluggable
     require => 1,
     search_path => search_path(),
-    only => qr(Adaptor$),
-    except => ['Genome::VariantReporting::Framework::Component::Adaptor',
-               'Genome::VariantReporting::Suite::Joinx::Adaptor'],
-    sub_name => 'adaptors';
-
-use Module::Pluggable
-    require => 1,
-    search_path => search_path(),
     only => qr(Run$),
+    except => ['Genome::VariantReporting::Suite::Joinx::Run'],
     sub_name => 'runners';
 
 

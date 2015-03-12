@@ -53,6 +53,7 @@ sub required_rusage {
     else {
         $host_groups =~ s/\/\s+/\ /;
         $host_groups =~ s/^HOSTS:\s+//;
+        $host_groups =~ s/\+\d+//g;
     }
 
     my $select  = "select[ncpus >= $cpus && mem >= $mem_mb && gtmp >= $tmp_gb] span[hosts=1]";

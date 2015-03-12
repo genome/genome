@@ -33,7 +33,7 @@ ok($trimq2->execute,'execute command '. $trimq2->command_name);
 
 is($trimq2->out_file, "$tmp_dir/test_fragment.trimq2.fastq", 'output name is ok');
 
-for my $file qw(test_fragment.trimq2.fastq trimq2.fragment.filtered.fastq trimq2.report) {
+for my $file (qw(test_fragment.trimq2.fastq trimq2.fragment.filtered.fastq trimq2.report)) {
     my $output_file = $tmp_dir."/$file";
     my $expect_file = $base_dir."/$file";
     ok(compare($output_file, $expect_file) == 0, "Output $file is created as expected");

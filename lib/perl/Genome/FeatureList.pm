@@ -510,12 +510,18 @@ sub resolve_bed_for_reference {
 
 sub get_tabix_and_gzipped_bed_file {
     my $self = shift;
+    my %args = @_;
+
+    my $short_name = delete($args{short_name});
+    unless (defined($short_name)) {
+        $short_name = 0;
+    }
 
     if ($self->format eq 'unknown') {
         die $self->error_message("Cannot convert format of BED file with unknown format");
     }
 
-    my $processed_bed = $self->processed_bed_file(short_name => 0);
+    my $processed_bed = $self->processed_bed_file(short_name => $short_name);
     my $sorted_processed_bed = Genome::Sys->create_temp_file_path;
     Genome::Model::Tools::Joinx::Sort->execute(
         input_files => [$processed_bed],

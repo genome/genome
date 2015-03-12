@@ -104,7 +104,6 @@ subtest "construct groups file" => sub {
         ID => sprintf("%d", $inst_data->id),
         PL => "illumina",
         PU => $pu_tag,
-        PI => "0",
         DS => "paired end",
         LB => $inst_data->library->name,
         SM => $inst_data->sample->name,

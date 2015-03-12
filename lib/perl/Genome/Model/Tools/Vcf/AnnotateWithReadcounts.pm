@@ -9,7 +9,7 @@ use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Writer;
 
 my $RC_TAG = 'BRCT';
-my $RC_HEADER = sprintf('<ID=%s,Number=1,Type=String,Description="Bam readcount line, gzipped then base-64 encoded">',$RC_TAG);
+my $RC_HEADER = sprintf('<ID=%s,Number=1,Type=String,Description="Bam readcount lines, json encoded with character swaps (: to ;) and (, to |) for vcf spec compatibility">',$RC_TAG);
 
 class Genome::Model::Tools::Vcf::AnnotateWithReadcounts {
     is => 'Command::V2',

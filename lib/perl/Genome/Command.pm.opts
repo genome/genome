@@ -1250,6 +1250,30 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>define-template',
+    [
+      'environment=s',
+      [
+        'cle',
+        'production',
+        'ad-hoc'
+      ],
+      'no-config!',
+      undef,
+      'analysis-menu-items=s@',
+      undef,
+      'name=s',
+      'files',
+      'help!',
+      undef
+    ],
+    '>disable-config-file',
+    [
+      'profile-item=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>copy-config',
     [
       'tags!',
@@ -1257,13 +1281,6 @@ $Genome::Command::OPTS_SPEC = [
       'from-project=s',
       undef,
       'to-project=s',
-      undef,
-      'help!',
-      undef
-    ],
-    '>disable-config-file',
-    [
-      'profile-item=s',
       undef,
       'help!',
       undef
@@ -1414,6 +1431,13 @@ $Genome::Command::OPTS_SPEC = [
     '>update-config-to-current',
     [
       'profile-item=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>reprocess',
+    [
+      'analysis-project=s',
       undef,
       'help!',
       undef
@@ -6625,6 +6649,8 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'chromosome=s',
           'files',
+          'case-name=s',
+          'files',
           'help!',
           undef
         ],
@@ -9370,13 +9396,13 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>diff-blessed',
       [
+        'new-build=s',
+        undef,
         'perl-version=s',
         [
           '5.8',
           '5.10'
         ],
-        'new-build=s',
-        undef,
         'help!',
         undef
       ],
@@ -31494,6 +31520,8 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'varscan-min-var-freq=s',
           undef,
+          'max-haplotypes=s',
+          undef,
           'wingspan=s',
           'files',
           'joinx-version=s',
@@ -36981,11 +37009,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>hmp',
-    [
-      'help!',
-      undef
-    ],
     '>import',
     [
       '>basic',
@@ -37118,8 +37141,6 @@ $Genome::Command::OPTS_SPEC = [
       'refine-reads',
       undef,
       'alignment-result',
-      undef,
-      'hmp',
       undef,
       'import',
       undef,
@@ -37484,10 +37505,35 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>symlink-results',
+    [
+      'process=s',
+      undef,
+      'destination=s',
+      undef,
+      'help!',
+      undef
+    ],
     '>run',
     [
       'update-with-commit!',
       undef,
+      'process=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>diff-blessed',
+    [
+      'process-name=s',
+      'files',
+      'new-process=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>verify-for-cle',
+    [
       'process=s',
       undef,
       'help!',
@@ -37520,18 +37566,11 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>verify-for-cle',
+    '>diff',
     [
-      'process=s',
+      'new-process=s',
       undef,
-      'help!',
-      undef
-    ],
-    '>symlink-results',
-    [
-      'process=s',
-      undef,
-      'destination=s',
+      'blessed-process=s',
       undef,
       'help!',
       undef
@@ -37902,6 +37941,30 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>define-template',
+      [
+        'environment=s',
+        [
+          'cle',
+          'production',
+          'ad-hoc'
+        ],
+        'no-config!',
+        undef,
+        'analysis-menu-items=s@',
+        undef,
+        'name=s',
+        'files',
+        'help!',
+        undef
+      ],
+      '>disable-config-file',
+      [
+        'profile-item=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>copy-config',
       [
         'tags!',
@@ -37909,13 +37972,6 @@ $Genome::Command::OPTS_SPEC = [
         'from-project=s',
         undef,
         'to-project=s',
-        undef,
-        'help!',
-        undef
-      ],
-      '>disable-config-file',
-      [
-        'profile-item=s',
         undef,
         'help!',
         undef
@@ -38066,6 +38122,13 @@ $Genome::Command::OPTS_SPEC = [
       '>update-config-to-current',
       [
         'profile-item=s',
+        undef,
+        'help!',
+        undef
+      ],
+      '>reprocess',
+      [
+        'analysis-project=s',
         undef,
         'help!',
         undef

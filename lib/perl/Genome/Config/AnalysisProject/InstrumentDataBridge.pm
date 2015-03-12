@@ -35,4 +35,10 @@ class Genome::Config::AnalysisProject::InstrumentDataBridge {
     id_generator => '-uuid',
 };
 
+sub reschedule {
+    my $self = shift;
+
+    $self->status('new');
+}
+
 1;

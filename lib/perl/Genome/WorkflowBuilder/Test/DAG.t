@@ -303,7 +303,7 @@ subtest 'Nested DAG with constant input' => sub {
       <outputproperty>output</outputproperty>
     </operationtype>
     <operation name="some op">
-      <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="apipe" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+      <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
         <inputproperty>input</inputproperty>
         <outputproperty>many_output</outputproperty>
         <outputproperty>result</outputproperty>
