@@ -620,9 +620,9 @@ sub delete {
         $input->delete;
     }
 
-    my $observer;
-    $observer = UR::Context->current->add_observer(aspect=>'commit',
-        callback=>$self->_disk_allocation_cleanup_closure(\$observer));
+    my $observer = Genome::Sys::CommitAction->create(
+        on_commit => $self->_disk_allocation_cleanup_closure(\$observer)
+    );
     if ($observer) {
         $self->status_message("Registered observer to delete disk allocation " .
             "(%s) upon commit", $self->disk_allocation_id);

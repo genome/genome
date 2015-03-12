@@ -74,9 +74,8 @@ sub execute {
         return;
     }
 
-    UR::Context->current->add_observer(
-        aspect => 'commit',
-        callback => sub{
+    Genome::Sys::CommitAction->create(
+        on_commit => sub{
             $lock->unlock();
         }
     );

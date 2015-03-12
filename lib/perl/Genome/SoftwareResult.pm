@@ -788,7 +788,7 @@ sub delete {
     };
 
     #hook our anonymous sub into the commit callback
-    $observer = $class_name->ghost_class->add_observer(aspect=>'commit', callback=>$upon_delete_callback);
+    Genome::Sys::CommitAction->create( on_commit => $upon_delete_callback );
 
     return $self->SUPER::delete(@_);
 }

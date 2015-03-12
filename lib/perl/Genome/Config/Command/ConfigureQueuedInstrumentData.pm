@@ -381,9 +381,8 @@ sub _lock {
         die('Unable to acquire the lock! Is ConfigureQueuedInstrumentData already running or did it exit uncleanly?')
             unless $lock;
 
-        UR::Context->current->add_observer(
-            aspect => 'commit',
-            callback => sub {
+        Genome::Sys::CommitAction->create(
+            on_commit => sub {
                 $lock->unlock();
             }
         );
