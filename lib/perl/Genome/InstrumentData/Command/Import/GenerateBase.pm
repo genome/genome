@@ -37,27 +37,29 @@ class Genome::InstrumentData::Command::Import::GenerateBase {
 
 sub help_detail {
     return <<HELP;
-The file should be a comma or tab separated values and indicated with the appropriate extension (csv and tsv). Column headers to use to generate the create commands should start with the entity (individual, sample, library, instdata) name then a period (.) and then then attribute name (Ex: sample.name_part). Here are some required and optional columns. For more, see each entity's create command (Ex: genome sample create --h).
+The file should be a comma or tab separated values and indicated with the appropriate extension (csv and tsv). Column headers to use to generate the create commands should start with the entity (individual, sample, library, instdata) name then a period (.) and then then attribute name (Ex: sample.name_part). Here are some required and optional columns. For more, see each entity's create command (Ex: genome sample create --h). Please see Confluence documentation for more information and a full example.
 
-Individual:
- Required:
-  individual.name or name_part => Name or id from external source.
-  individual.taxon => Species name of the taxon.
+Individual\n
+ Required
+  individual.name_part => Name or id from external source.
+  individual.taxon      => Species name of the taxon.
 
-Sample:
- Required:
-  sample.name or sample.name_part => Name or id from external source. If name is given, the individual and library names will be resolved from it.
+Sample\n
+ Required
+  sample.name_part => Name or id from external source. If name is given, the individual and library names will be resolved from it.
+  sample.extraction_type => 'genomic dna' or 'rna'
 
  Optional, but recommended:
-  sample.common_name => Usually normal or tumor to indicate disease state.
+  sample.common_name    => Usually normal or tumor to indicate disease state.
 
-Library:
- Optional:
-  library.ext   => Extension to append to the sample name. Deault is 'extlibs'.
+Library\n
+ Optional
+  library.ext           => Extension to append to the sample name. Deault is 'extlibs'.
  
-Instrument Data (only for generating source-files.tsv)
- Required:
+Instrument Data (needed for generating source-files.tsv)
+ Required
   instdata.source_files  => Local copy of the source files to import.
+ Optional
   instdata.run_name      => The run name or id.
 
 HELP
