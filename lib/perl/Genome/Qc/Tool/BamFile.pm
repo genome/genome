@@ -6,6 +6,10 @@ use Genome;
 
 class Genome::Qc::Tool::BamFile {
     is => 'Genome::Qc::Tool',
+    has => {
+        input_file => {
+        },
+    },
 };
 
 sub supports_streaming {
@@ -13,7 +17,7 @@ sub supports_streaming {
 }
 
 sub cmd_line {
-    return qw(samtools view);
+    return (qw(samtools view), $self->input_file);
 }
 
 1;

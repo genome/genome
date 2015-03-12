@@ -24,6 +24,9 @@ sub get_commands_for_alignment_result {
         },
         samtools_view => {
             class => 'Genome::Qc::Tool::BamFile',
+            params => {
+                input_file => '-',
+            },
             in_file => "bam_file",
         },
     };
