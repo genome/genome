@@ -7,6 +7,11 @@ use feature qw(say);
 
 use Genome;
 
+use Carp qw(croak);
+use File::Spec qw();
+use IO::File qw();
+use Set::Scalar qw();
+
 class Genome::FeatureList::Command::Import {
     is => 'Command::V2',
     has_input => [
@@ -208,7 +213,73 @@ sub _resolve_bed_file_from_directory {
         return $all_tracks[0];
     }
 
+    if ($self->_has_nimblegen_capture_primary_pair(@bed_files)) {
+        my @pair = $self->_nimblegen_capture_primary_pair(@bed_files);
+        return $self->_create_nimblegen_capture_primary_multitrack_bed_file(@pair);
+    }
+
     die $self->error_message('Multiple candidate BED files found in directory %s. Please select one.', $directory);
+}
+
+sub _nimblegen_capture_primary_pair {
+    my $self = shift;
+    my @bed_files = @_;
+
+    my @suffixes = qw(_capture_targets.bed _primary_targets.bed);
+    my @matches;
+    for my $suffix (@suffixes) {
+        my @matching = grep { /\Q$suffix\E$/ } @bed_files;
+        my @prefixes = map { /(.*)\Q$suffix\E$/; $1 } @matching;
+        push @matches, Set::Scalar->new(@prefixes)
+    }
+    my $intersection = $matches[0]->intersection($matches[1]);
+
+    if ($intersection->is_empty) {
+        croak 'unable to find a capture/primary pair';
+    }
+
+    if ($intersection->size > 1) {
+        croak 'found multiple capture/primary pairs';
+    }
+
+    my $prefix = ($intersection->members)[0];
+    return map { join('', $prefix, $_) } @suffixes;
+}
+
+sub _has_nimblegen_capture_primary_pair {
+    my $self = shift;
+    my @bed_files = @_;
+    my @pair = eval { $self->_nimblegen_capture_primary_pair(@bed_files) };
+    return (@pair > 0);
+}
+
+sub _create_nimblegen_capture_primary_multitrack_bed_file {
+    my $self = shift;
+    my @pair = @_;
+
+    my ($capture_path, $primary_path) = sort @pair;
+    my @data = (
+        [IO::File->new($capture_path, 'r'), 'tiled_region',  (File::Spec->splitpath($capture_path))[2]],
+        [IO::File->new($primary_path, 'r'), 'target_region', (File::Spec->splitpath($primary_path))[2]],
+    );
+
+    my ($multitrack_fh, $multitrack_path) = Genome::Sys->create_temp_file();
+    for (@data) {
+        my ($fh, $name, $desc) = @{$_};
+        $multitrack_fh->printf(qq(track name=%s description="%s"\n), $name, $desc);
+        while (my $line = $fh->getline) {
+
+            # normalize chromosome names...
+            if (index($line, 'chr') == 0) {
+                $line = substr($line, 3);
+            }
+
+            $multitrack_fh->print($line);
+        }
+    }
+    $multitrack_fh->close();
+
+    return $multitrack_path;
 }
 
 sub find_existing_list {
