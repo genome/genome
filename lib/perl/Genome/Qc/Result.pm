@@ -42,7 +42,7 @@ sub _run {
 sub _run_tools {
     my $self = shift;
     my %tools = $self->_tools;
-=cut
+
     my $process_graph = Genome::Sys::ProcessGraph->create(
         log_directory => File::Spec->join($self->temp_staging_directory, "process_logs"));
     my %process_ref;
@@ -76,7 +76,7 @@ sub _run_tools {
     }
 
     $process_graph->execute;
-=cut
+
     for my $tool (map {$tools{$_}} $self->_non_streaming_tools) {
         $self->_run_tool_simple($tool);
     }
