@@ -41,8 +41,24 @@ sub _run {
 
 sub _run_tools {
     my $self = shift;
-    my %tools = $self->_tools;
 
+    if ($self->_streaming_tools) {
+        $self->_run_streaming_tools;
+    }
+
+    my %tools = $self->_tools;
+    for my $tool (map {$tools{$_}} $self->_non_streaming_tools) {
+        $self->_run_tool_simple($tool);
+    }
+
+    for my $tool (map {$tools{$_}} $self->_streaming_tools, $self->_non_streaming_tools) {
+        $self->_add_metrics($tool);
+    }
+}
+
+sub _run_streaming_tools {
+    my $self = shift;
+    my %tools = $self->_tools;
     my $process_graph = Genome::Sys::ProcessGraph->create(
         log_directory => File::Spec->join($self->temp_staging_directory, "process_logs"));
     my %process_ref;
@@ -77,13 +93,6 @@ sub _run_tools {
 
     $process_graph->execute;
 
-    for my $tool (map {$tools{$_}} $self->_non_streaming_tools) {
-        $self->_run_tool_simple($tool);
-    }
-
-    for my $tool (map {$tools{$_}} $self->_streaming_tools, $self->_non_streaming_tools) {
-        $self->_add_metrics($tool);
-    }
 }
 
 sub _dependency_for_tool {
