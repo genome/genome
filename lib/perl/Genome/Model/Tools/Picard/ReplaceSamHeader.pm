@@ -32,7 +32,7 @@ sub help_brief {
 sub help_detail {
     return <<EOS
     Tool to replace the header of a BAM or SAM file using Picard.  For Picard documentation of this command see:
-    http://broadinstitute.github.io/picard/command-line-overview.html#SortSam
+    http://broadinstitute.github.io/picard/command-line-overview.html#ReplaceSamHeader
 EOS
 }
 

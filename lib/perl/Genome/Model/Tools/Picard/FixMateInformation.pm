@@ -34,7 +34,7 @@ sub help_brief {
 sub help_detail {
     return <<EOS
     For Picard documentation of this command see:
-    http://broadinstitute.github.io/picard/command-line-overview.html#CollectGcBiasMetrics
+    http://broadinstitute.github.io/picard/command-line-overview.html#FixMateInformation
 EOS
 }
 
