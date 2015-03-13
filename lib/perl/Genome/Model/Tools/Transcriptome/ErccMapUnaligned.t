@@ -7,7 +7,7 @@ use warnings;
 # M O D U L E S ###############################################################
 use above 'Genome';
 use Path::Class;
-use Test::More;
+use Test::More skip_all => "using production data, bypassing for now";
 
 # M A I N #####################################################################
 
