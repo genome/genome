@@ -9,7 +9,7 @@ use strict;
 use warnings;
 
 use above "Genome";
-use Test::More;
+use Test::More skip_all => "Streaming is not ready yet";
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Test::Factory::SoftwareResult::User;
 use Sub::Install qw (reinstall_sub);
