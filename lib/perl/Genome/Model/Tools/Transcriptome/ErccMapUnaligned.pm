@@ -124,7 +124,7 @@ sub bowtie2_build {
 sub ERCC_analysis_script {
     my $self = shift;
     my $ercc_r = $self->__meta__->module_path;
-    $ercc_r =~ s/\.pm/\.R/;
+    $ercc_r =~ s/\.pm$/\.R/;
     return $ercc_r;
 }
 
