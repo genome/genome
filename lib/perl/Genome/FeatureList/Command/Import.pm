@@ -11,6 +11,7 @@ use Carp qw(croak);
 use File::Spec qw();
 use IO::File qw();
 use Set::Scalar qw();
+use Try::Tiny qw(try);
 
 class Genome::FeatureList::Command::Import {
     is => 'Command::V2',
@@ -249,7 +250,7 @@ sub _nimblegen_capture_primary_pair {
 sub _has_nimblegen_capture_primary_pair {
     my $self = shift;
     my @bed_files = @_;
-    my @pair = eval { $self->_nimblegen_capture_primary_pair(@bed_files) };
+    my @pair = try { $self->_nimblegen_capture_primary_pair(@bed_files) };
     return (@pair > 0);
 }
 
