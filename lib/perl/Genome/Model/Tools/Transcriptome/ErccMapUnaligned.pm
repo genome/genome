@@ -79,7 +79,7 @@ sub execute {
     $self->index_bam($remapped_bam);
     my $idxstats = $self->generate_idxstats($remapped_bam);
     my $tsv = $self->generate_tsvfile($idxstats);
-    $self->copy_to( $tsv, Path::Class::Dir->new() );
+    $self->save_tsv_stats($tsv);
 
     $self->run_analysis_script($tsv);
 
@@ -340,28 +340,17 @@ sub generate_tsvfile {
     return Path::Class::File->new($r_input_file);
 }
 
-sub copy_to {
-    my $self = shift;
-    my ($src, $dest) = @_;
-    if (UNIVERSAL::isa($dest, Path::Class::File::)) {
-        $dest = $dest->stringify;
-        die "Can't copy to file $dest: it is a directory" if -d $dest;
-    }
-    elsif (UNIVERSAL::isa($dest, Path::Class::Dir::)) {
-        $dest = $dest->stringify;
-        die "Can't copy to directory $dest: it is a file" if -f $dest;
-        die "Can't copy to directory $dest: no such directory"
-          unless -d $dest;
-    }
-    elsif (ref $dest) {
-        die "Don't know how to copy files to objects of type '"
-            . ref($src) . "'";
-    }
+sub save_tsv_stats {
+    my ($self, $tsv) = @_;
 
-    File::Copy::cp($src->stringify, "${dest}")
-      or die "[err] Trouble copying from $src to $dest : \n\n $! \n\n";
+    my $tsv_output = join('.',
+        Path::Class::File->new($self->bam_file)->basename,
+        'ERCC.raw.tsv'
+    );
+    my $dst_file = Path::Class::Dir->new()->file($tsv_output);
 
-    return $src->new($dest);
+    $self->status_message("Saving raw stats to $dst_file");
+    Genome::Sys->copy_file("$tsv", "$dst_file");
 }
 
 1;
