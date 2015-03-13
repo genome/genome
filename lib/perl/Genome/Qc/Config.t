@@ -18,18 +18,5 @@ use_ok($pkg);
 my $config = $pkg->create(name => 'test');
 ok($config->isa($pkg), "Config created");
 
-my $alignment_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object();
-my $command_hash = $config->get_commands_for_alignment_result($alignment_result);
-
-my $expected_command_hash = {
-        PicardCollectMultipleMetrics => {
-            params => {
-                param1 => 'a',
-                param2 => 'b',
-            },
-            dependencies => [],
-        }
-};
-is_deeply($command_hash, $expected_command_hash, "Config returned correctly");
 done_testing;
 
