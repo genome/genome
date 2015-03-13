@@ -215,8 +215,8 @@ sub _resolve_bed_file_from_directory {
     }
 
     if ($self->_has_nimblegen_capture_primary_pair(@bed_files)) {
-        my @pair = $self->_nimblegen_capture_primary_pair(@bed_files);
-        return $self->_create_nimblegen_capture_primary_multitrack_bed_file(@pair);
+        my $pair = $self->_nimblegen_capture_primary_pair(@bed_files);
+        return $self->_create_nimblegen_capture_primary_multitrack_bed_file($pair);
     }
 
     die $self->error_message('Multiple candidate BED files found in directory %s. Please select one.', $directory);
@@ -243,25 +243,28 @@ sub _nimblegen_capture_primary_pair {
         croak 'found multiple capture/primary pairs';
     }
 
+
     my $prefix = ($intersection->members)[0];
-    return map { join('', $prefix, $_) } @suffixes;
+    return {
+        capture => join('', $prefix, $suffixes[0]),
+        primary => join('', $prefix, $suffixes[1]),
+    };
 }
 
 sub _has_nimblegen_capture_primary_pair {
     my $self = shift;
     my @bed_files = @_;
-    my @pair = try { $self->_nimblegen_capture_primary_pair(@bed_files) };
-    return (@pair > 0);
+    my $pair = try { $self->_nimblegen_capture_primary_pair(@bed_files) };
+    return defined $pair;
 }
 
 sub _create_nimblegen_capture_primary_multitrack_bed_file {
     my $self = shift;
-    my @pair = @_;
+    my $pair = shift;
 
-    my ($capture_path, $primary_path) = sort @pair;
     my @data = (
-        [IO::File->new($capture_path, 'r'), 'tiled_region',  (File::Spec->splitpath($capture_path))[2]],
-        [IO::File->new($primary_path, 'r'), 'target_region', (File::Spec->splitpath($primary_path))[2]],
+        [IO::File->new($pair->{capture}, 'r'), 'tiled_region',  (File::Spec->splitpath($pair->{primary}))[2]],
+        [IO::File->new($pair->{primary}, 'r'), 'target_region', (File::Spec->splitpath($pair->{primary}))[2]],
     );
 
     my ($multitrack_fh, $multitrack_path) = Genome::Sys->create_temp_file();

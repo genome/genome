@@ -61,16 +61,18 @@ for my $failing_bed(@test_beds[@should_fail]) {
 }
 
 subtest _nimblegen_capture_primary_pair => sub {
-    plan tests => 2;
+    plan tests => 4;
     my @bed_files = qw(
         150203_HG19_CRC_OID42357_EZ_HX1_capture_targets.bed
         150203_HG19_CRC_OID42357_EZ_HX1_coverage_summary.txt
         150203_HG19_CRC_OID42357_EZ_HX1_primary_targets.bed
         CRC_nimbegen_design_hg19_v3.bed
     );
-    my @pair = $class->_nimblegen_capture_primary_pair(@bed_files);
-    is(scalar(@pair), 2, 'two items are returned');
-    isnt($pair[0], $pair[1], 'the items are distinct');
+    my $pair = $class->_nimblegen_capture_primary_pair(@bed_files);
+    is(scalar(keys %$pair), 2, 'two items are returned');
+    ok($pair->{capture}, 'it has a capture value');
+    ok($pair->{primary}, 'it has a primary value');
+    isnt($pair->{capture}, $pair->{primary}, 'the items are distinct');
 };
 
 subtest _has_nimblegen_capture_primary_pair => sub {
