@@ -36,8 +36,8 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
             is_optional => '1',
         },
         samtools_max_mem => {
-            is => 'Text',
-            doc => 'The max memory required by samtools.',
+            is => 'Integer',
+            doc => 'The max memory required by samtools (in bytes).',
             example_values => ['14000000000'],
             default_value => '14000000000',
             is_optional => '1',
