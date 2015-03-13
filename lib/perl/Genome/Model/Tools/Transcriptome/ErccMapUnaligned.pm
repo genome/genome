@@ -10,11 +10,11 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
     is => 'Command::V2',
     has_input => [
         bam_file => {
-            is => 'Text',
+            is => 'FilePath',
             doc => 'An aligned BAM file to a reference genome without the ERCC transcripts spiked in.',
         },
         ercc_fasta_file => {
-            is => 'Text',
+            is => 'FilePath',
             doc => 'The FASTA format sequence for all ERCC transcripts.',
             example_values => ['/gscmnt/gc13001/info/model_data/jwalker_scratch/ERCC/ERCC92.fa'],
         },
