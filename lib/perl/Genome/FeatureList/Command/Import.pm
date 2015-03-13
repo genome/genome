@@ -263,8 +263,8 @@ sub _create_nimblegen_capture_primary_multitrack_bed_file {
     my $pair = shift;
 
     my @data = (
-        [IO::File->new($pair->{capture}, 'r'), 'tiled_region',  (File::Spec->splitpath($pair->{primary}))[2]],
-        [IO::File->new($pair->{primary}, 'r'), 'target_region', (File::Spec->splitpath($pair->{primary}))[2]],
+        [Genome::Sys->open_file_for_reading($pair->{capture}), 'tiled_region',  (File::Spec->splitpath($pair->{primary}))[2]],
+        [Genome::Sys->open_file_for_reading($pair->{primary}), 'target_region', (File::Spec->splitpath($pair->{primary}))[2]],
     );
 
     my ($multitrack_fh, $multitrack_path) = Genome::Sys->create_temp_file();
