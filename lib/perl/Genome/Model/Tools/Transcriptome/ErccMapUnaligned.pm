@@ -86,13 +86,17 @@ sub execute {
     return 1;
 }
 
+sub _bin_dir {
+    return Path::Class::Dir->new("/usr/bin");
+}
+
 sub samtools {
     my $self = shift;
     my $version = $self->samtools_version;
 #    my $samtools_path =
 #      Genome::Model::Tools::Sam->path_for_samtools_version($version);
 
-    my $samtools_path = '/usr/bin/samtools1.2';
+    my $samtools_path = $self->_bin_dir->file('samtools1.2');
 
     return $samtools_path;
 }
@@ -100,8 +104,7 @@ sub samtools {
 sub bowtie2_align {
     my $self = shift;
     my $version = $self->bowtie2_version;
-    my $bowtie2_dir = Path::Class::Dir->new("/usr/bin");
-    my $bowtie2_align = $bowtie2_dir->file('bowtie2-align' . $version);
+    my $bowtie2_align = $self->_bin_dir->file('bowtie2-align' . $version);
     unless (-e $bowtie2_align) {
         die "[err] Couldn't find '$bowtie2_align' on the file system!\n";
     }
@@ -111,8 +114,7 @@ sub bowtie2_align {
 sub bowtie2_build {
     my $self = shift;
     my $version = $self->bowtie2_version;
-    my $bowtie2_dir = Path::Class::Dir->new("/usr/bin");
-    my $bowtie2_build = $bowtie2_dir->file('bowtie2-build' . $version);
+    my $bowtie2_build = $self->_bin_dir->file('bowtie2-build' . $version);
     unless (-e $bowtie2_build) {
         die "[err] Couldn't find '$bowtie2_build' on the file system!\n";
     }
