@@ -13,20 +13,24 @@ class Genome::Qc::Tool {
     has_calculated => [
         bam_file => {
             is => 'Path',
-            calculate => qq|return $alignment_result->bam_path|,
+            calculate_from => [qw(alignment_result)],
+            calculate => q{return $alignment_result->bam_path},
         },
     ],
 };
 
 sub cmd_line {
+    my $self = shift;
     die $self->error_message("Abstract method run must be overriden by subclass");
 }
 
 sub supports_streaming {
+    my $self = shift;
     die $self->error_message("Abstract method supports_streaming must be overridden by subclass");
 }
 
 sub get_metrics {
+    my $self = shift;
     die $self->error_message("Abstract method get_metrics must be overridden by subclass");
 }
 

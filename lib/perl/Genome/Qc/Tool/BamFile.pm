@@ -17,6 +17,7 @@ sub supports_streaming {
 }
 
 sub cmd_line {
+    my $self = shift;
     return (qw(samtools view), $self->input_file);
 }
 
