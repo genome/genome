@@ -175,7 +175,7 @@ sub create {
             #handle duplicates on a per-library basis
             for my $alignment (@alignments) {
                 my $library = $alignment->instrument_data->library;
-                my $temp_allocation = $self->_get_temp_allocation($alignment);
+                my $temp_allocation = $self->_get_temp_allocation($alignment->id, $self->output_dir);
                 push @{ $bams_per_library->{$library->id} }, $alignment->revivified_alignment_bam_file_paths(disk_allocation => $temp_allocation);
                 $libraries->{$library->id} = $library;
                 push @temp_allocations, $temp_allocation;
@@ -196,7 +196,7 @@ sub create {
         } else {
             #just collect the BAMs for a merge
             for my $alignment (@alignments) {
-                my $temp_allocation = $self->_get_temp_allocation($alignment);
+                my $temp_allocation = $self->_get_temp_allocation($alignment->id, $self->output_dir);
                 push @bams_for_final_merge, $alignment->revivified_alignment_bam_file_paths(disk_allocation => $temp_allocation);
                 push @temp_allocations, $temp_allocation;
             }
@@ -333,11 +333,11 @@ sub _remove_per_lane_bam {
 }
 
 sub _get_temp_allocation {
-    my ($self, $alignment) = @_;
+    my ($self, $alignment_id, $output_dir) = @_;
     return Genome::Disk::Allocation->create(
         disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
-        allocation_path     => 'merged/recreated_per_lane_bam/'.$alignment->id.'_'._get_uuid_string(),
-        kilobytes_requested => Genome::Sys->disk_usage_for_path($self->output_dir),
+        allocation_path     => 'merged/recreated_per_lane_bam/'.$alignment_id.'_'._get_uuid_string(),
+        kilobytes_requested => Genome::Sys->disk_usage_for_path($output_dir),
         owner_class_name    => 'Genome::Sys::User',
         owner_id            => Genome::Sys->username,
     );
