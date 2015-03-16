@@ -60,7 +60,7 @@ for my $failing_bed(@test_beds[@should_fail]) {
     ok(!$rv && $error, 'failed to execute');
 }
 
-subtest _nimblegen_capture_primary_pair => sub {
+subtest _nimblegen_pair => sub {
     plan tests => 4;
     my @bed_files = qw(
         150203_HG19_CRC_OID42357_EZ_HX1_capture_targets.bed
@@ -68,14 +68,14 @@ subtest _nimblegen_capture_primary_pair => sub {
         150203_HG19_CRC_OID42357_EZ_HX1_primary_targets.bed
         CRC_nimbegen_design_hg19_v3.bed
     );
-    my $pair = $class->_nimblegen_capture_primary_pair(@bed_files);
+    my $pair = $class->_nimblegen_pair(@bed_files);
     is(scalar(keys %$pair), 2, 'two items are returned');
-    ok($pair->{capture}, 'it has a capture value');
-    ok($pair->{primary}, 'it has a primary value');
-    isnt($pair->{capture}, $pair->{primary}, 'the items are distinct');
+    ok($pair->{tiled_region}, 'it has a tiled_region value');
+    ok($pair->{target_region}, 'it has a target_region value');
+    isnt($pair->{tiled_region}, $pair->{target_region}, 'the items are distinct');
 };
 
-subtest _has_nimblegen_capture_primary_pair => sub {
+subtest _has_nimblegen_pair => sub {
     plan tests => 3;
 
     do {
@@ -85,7 +85,7 @@ subtest _has_nimblegen_capture_primary_pair => sub {
             150203_HG19_CRC_OID42357_EZ_HX1_primary_targets.bed
             CRC_nimbegen_design_hg19_v3.bed
         );
-        ok($class->_has_nimblegen_capture_primary_pair(@bed_files),
+        ok($class->_has_nimblegen_pair(@bed_files),
             'single match: should have Nimblegen capture/primary pair');
     };
 
@@ -95,7 +95,7 @@ subtest _has_nimblegen_capture_primary_pair => sub {
             150203_HG19_CRC_OID42357_EZ_HX1_primary_targets.bed
             CRC_nimbegen_design_hg19_v3.bed
         );
-        ok(not($class->_has_nimblegen_capture_primary_pair(@bed_files)),
+        ok(not($class->_has_nimblegen_pair(@bed_files)),
             'empty match: should not have Nimblegen capture/primary pair');
     };
 
@@ -108,7 +108,7 @@ subtest _has_nimblegen_capture_primary_pair => sub {
             250203_HG19_CRC_OID42357_EZ_HX1_primary_targets.bed
             CRC_nimbegen_design_hg19_v3.bed
         );
-        ok(not($class->_has_nimblegen_capture_primary_pair(@bed_files)),
+        ok(not($class->_has_nimblegen_pair(@bed_files)),
             'multiple match: should not have Nimblegen capture/primary pair');
     };
 };

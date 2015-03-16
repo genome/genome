@@ -214,15 +214,15 @@ sub _resolve_bed_file_from_directory {
         return $all_tracks[0];
     }
 
-    if ($self->_has_nimblegen_capture_primary_pair(@bed_files)) {
-        my $pair = $self->_nimblegen_capture_primary_pair(@bed_files);
-        return $self->_create_nimblegen_capture_primary_multitrack_bed_file($pair);
+    if ($self->_has_nimblegen_pair(@bed_files)) {
+        my $pair = $self->_nimblegen_pair(@bed_files);
+        return $self->_create_combined_nimblegen_bed_file($pair);
     }
 
     die $self->error_message('Multiple candidate BED files found in directory %s. Please select one.', $directory);
 }
 
-sub _nimblegen_capture_primary_pair {
+sub _nimblegen_pair {
     my $self = shift;
     my @bed_files = @_;
 
@@ -246,30 +246,26 @@ sub _nimblegen_capture_primary_pair {
 
     my $prefix = ($intersection->members)[0];
     return {
-        capture => join('', $prefix, $suffixes[0]),
-        primary => join('', $prefix, $suffixes[1]),
+        tiled_region => join('', $prefix, $suffixes[0]),
+        target_region => join('', $prefix, $suffixes[1]),
     };
 }
 
-sub _has_nimblegen_capture_primary_pair {
+sub _has_nimblegen_pair {
     my $self = shift;
     my @bed_files = @_;
-    my $pair = try { $self->_nimblegen_capture_primary_pair(@bed_files) };
+    my $pair = try { $self->_nimblegen_pair(@bed_files) };
     return defined $pair;
 }
 
-sub _create_nimblegen_capture_primary_multitrack_bed_file {
+sub _create_combined_nimblegen_bed_file {
     my $self = shift;
     my $pair = shift;
 
-    my @data = (
-        [Genome::Sys->open_file_for_reading($pair->{capture}), 'tiled_region'],
-        [Genome::Sys->open_file_for_reading($pair->{primary}), 'target_region'],
-    );
-
     my ($multitrack_fh, $multitrack_path) = Genome::Sys->create_temp_file();
-    for (@data) {
-        my ($fh, $name) = @{$_};
+    my %fh_pair = map { $_ => scalar(Genome::Sys->open_file_for_reading($pair->{$_})) } keys %{$pair};
+    for my $name (keys %fh_pair) {
+        my $fh = $fh_pair{$name};
         $multitrack_fh->printf(qq(track name=%s\n), $name);
         while (my $line = $fh->getline) {
             $multitrack_fh->print($line);
