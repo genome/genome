@@ -19,7 +19,7 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
             example_values => ['/gscmnt/gc13001/info/model_data/jwalker_scratch/ERCC/ERCC92.fa'],
         },
         ercc_spike_in_file => {
-            is => 'Text',
+            is => 'FilePath',
             doc => 'The control analysis file provided by Agilent for the ERCC spike-in.',
             example_values => ['/gscmnt/gc13001/info/model_data/jwalker_scratch/ERCC/ERCC_Controls_Analysis.txt'],
         },
@@ -52,7 +52,7 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
     ],
     has_output => [
         pdf_file => {
-            is => 'Text',
+            is => 'FilePath',
             doc => 'The output PDF with histograms and linearity plot.',
             default_value => 'output.pdf',
             is_optional => '1',
