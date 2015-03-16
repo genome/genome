@@ -100,6 +100,8 @@ my $test_dir = __FILE__.".d";
     }
 }
 
+my $alignment_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object();
+
 subtest "teed input" => sub {
     use Genome::Qc::Config;
     reinstall_sub({
@@ -108,16 +110,16 @@ subtest "teed input" => sub {
             code => sub {
                 return {
                     cat => {class => "TestCat",
-                        params => {input_file => '-'},
+                        params => {input_file => '/dev/stdin'},
                         in_file => "first_input_file",
                     },
                     test1 => {class => "TestTool1",
-                                  params => {input_file => '-'},
-                                  dependency => {name => 'cat', fd => "STDOUT"},
+                                  params => {input_file => '/dev/stdin'},
+                                  dependency => {name => 'cat', fd => "stdout"},
                                   out_file => "test1.out"},
                     test2 => {class => "TestTool2",
-                              params => {input_file => '-'},
-                              dependency => {name => 'cat', fd => "STDOUT"},
+                              params => {input_file => '/dev/stdin'},
+                              dependency => {name => 'cat', fd => "stdout"},
                               out_file => "test2.out"}};
             },
         });
@@ -135,6 +137,7 @@ subtest "teed input" => sub {
         compare_ok(File::Spec->join($command->output_result->output_dir, $file_name),
             File::Spec->join($test_dir, $file_name), "Teed processes produced correct file $test");
     }
+    $command->output_result->test_name("first subtest");
 };
 
 subtest "piped input" => sub {
@@ -145,16 +148,16 @@ subtest "piped input" => sub {
             code => sub {
                 return {
                     cat => {class => "TestCat",
-                        params => {input_file => '-'},
+                        params => {input_file => '/dev/stdin'},
                         in_file => "first_input_file",
                     },
                     test1 => {class => "TestTool1",
-                        params => {input_file => '-'},
-                        dependency => {fd => "STDOUT", name => "cat"},
+                        params => {input_file => '/dev/stdin'},
+                        dependency => {fd => "stdout", name => "cat"},
                     },
                     test2 => {class => "TestTool2",
-                        params => {input_file => '-'},
-                        dependency => {fd => "STDOUT", name => "test1"},
+                        params => {input_file => '/dev/stdin'},
+                        dependency => {fd => "stdout", name => "test1"},
                         out_file => "test-piped.out"}};
             },
         });

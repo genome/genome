@@ -59,35 +59,30 @@ sub _run_tools {
 sub _run_streaming_tools {
     my $self = shift;
     my %tools = $self->_tools;
-    my $process_graph = Genome::Sys::ProcessGraph->create(
-        log_directory => File::Spec->join($self->temp_staging_directory, "process_logs"));
+    my $process_graph = Genome::WorkflowBuilder::StreamGraph->create();
     my %process_ref;
     for my $name ($self->_streaming_tools) {
         my $tool = $tools{$name};
-        my $log_file = File::Spec->join($self->temp_staging_directory, "$name.log");
-        $process_ref{$name} = $process_graph->add(
-            command_line => $tool->cmd_line,
-            stderr => $log_file);
+        $process_ref{$name} = Genome::WorkflowBuilder::StreamProcess->create(
+            name => $name,
+            args => [$tool->cmd_line],
+            in_file_link => $self->_input_file_for_tool($tool, $name),
+            out_file_link => $self->_output_file_for_tool($name),
+            err_file_link => $self->_error_file_for_tool($name)
+        );
+        $process_graph->add_process($process_ref{$name});
     }
 
     for my $name ($self->_streaming_tools) {
         my $tool = $tools{$name};
         my $dependency = $self->_dependency_for_tool($name);
         if (defined $dependency) {
-            $process_graph->connect($process_ref{$dependency->{name}},
-                $dependency->{fd}, $process_ref{$name}, "STDIN");
-        }
-        my $in_file = $self->_input_file_for_tool($name);
-        if (defined $in_file) {
-            $process_graph->connect_input_file($tool->$in_file, $process_ref{$name}, "STDIN");
-        }
-        my $out_file = File::Spec->join($self->temp_staging_directory, $self->_output_file_for_tool($name));
-        if (defined $out_file) {
-            $process_graph->connect_output_file($tool->$out_file, $process_ref{$name}, "STDOUT");
-        }
-        my $err_file = File::Spec->join($self->temp_staging_directory, $self->_error_file_for_tool($name));
-        if (defined $err_file) {
-            $process_graph->connect_output_file($tool->$err_file, $process_ref{$name}, "STDERR");
+            my $link = Genome::WorkflowBuilder::StreamLink->create(
+                source => $process_ref{$dependency->{name}},
+                target => $process_ref{$name},
+                source_fd => $dependency->{fd},
+            );
+            $process_graph->add_link($link);
         }
     }
 
