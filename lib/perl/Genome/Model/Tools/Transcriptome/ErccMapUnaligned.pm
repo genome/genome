@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
-use Path::Class;
+use Path::Class qw();
 
 class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
     is => 'Command::V2',
