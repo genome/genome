@@ -452,7 +452,7 @@ Genome::Utility::Test
 
 =head1 SYNOPSIS
 
-    use Genome::Utiltiy::Test qw(compare_ok);
+    use Genome::Utility::Test qw(compare_ok);
 
     compare_ok($file_1, $file_1);
 
