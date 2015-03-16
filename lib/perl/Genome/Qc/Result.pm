@@ -85,29 +85,39 @@ sub _run_streaming_tools {
             $process_graph->add_link($link);
         }
     }
-
     $process_graph->execute;
-
 }
 
 sub _dependency_for_tool {
     my ($self, $name) = @_;
-    return $self->qc_config->get_commands_for_alignment_results->{$name}->{dependency};
+    return $self->qc_config->get_commands_for_alignment_result->{$name}->{dependency};
 }
 
 sub _input_file_for_tool {
-    my ($self, $name) = @_;
-    return $self->qc_config->get_commands_for_alignment_results->{$name}->{in_file};
+    my ($self, $tool, $name) = @_;
+    my $input_file_method = $self->qc_config->get_commands_for_alignment_result->{$name}->{in_file};
+    if (defined $input_file_method) {
+        return $tool->$input_file_method;
+    }
+    return undef;
 }
 
 sub _error_file_for_tool {
     my ($self, $name) = @_;
-    return $self->qc_config->get_commands_for_alignment_results->{$name}->{error_file};
+    my $file_name = $self->qc_config->get_commands_for_alignment_result->{$name}->{error_file};
+    if (defined $file_name) {
+        return File::Spec->join($self->temp_staging_directory, $file_name);
+    }
+    return undef;
 }
 
 sub _output_file_for_tool {
     my ($self, $name) = @_;
-    return $self->qc_config->get_commands_for_alignment_results->{$name}->{out_file};
+    my $file_name = $self->qc_config->get_commands_for_alignment_result->{$name}->{out_file};
+    if (defined $file_name) {
+        return File::Spec->join($self->temp_staging_directory, $file_name);
+    }
+    return undef;
 }
 
 sub _run_tool_simple {
