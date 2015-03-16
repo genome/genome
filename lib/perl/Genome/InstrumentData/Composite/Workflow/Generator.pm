@@ -65,25 +65,28 @@ sub _alignment_objects {
     my $input_data = shift;
 
     my @instrument_data = $class->_load_instrument_data($tree, $input_data);
-    my @actions = @{ $tree->{action}};
+    my @actions = @{$tree->{action}};
     my $read_aligner_name = $actions[0]->{name};
 
-    my @instrument_data_output = map([$_, $class->_instrument_data_params($_, $input_data)], grep {! $_->can('get_segments')} @instrument_data);
-    my @segmentable_data = grep {$_->can('get_segments')} @instrument_data;
+    my @instrument_data_output;
+    my $should_segment = $read_aligner_name ne 'imported';
+    for my $i (@instrument_data) {
+        my @params = ($i, $class->_instrument_data_params($i, $input_data));
+        my @segments;
+        if ($should_segment && $i->isa('Genome::InstrumentData::Imported') && $i->can('get_segments')) {
+            @segments = $i->get_segments();
+        }
 
-    for my $i (@segmentable_data) {
-        my @segments = $i->get_segments();
-        if (@segments > 0 && $read_aligner_name ne 'imported' && $i->isa('Genome::InstrumentData::Imported')) {
+        if(@segments > 0) {
             for my $seg (@segments) {
                 push @instrument_data_output, [
-                    $i,
+                    @params,
                     instrument_data_segment_type => $seg->{segment_type},
                     instrument_data_segment_id => $seg->{segment_id},
-                    $class->_instrument_data_params($i, $input_data),
                 ];
             }
         } else {
-            push @instrument_data_output, [$i, $class->_instrument_data_params($i, $input_data)];
+            push @instrument_data_output, \@params;
         }
     }
 
