@@ -65,7 +65,7 @@ sub get_link_xml_elements {
 sub _get_args_xml {
     my $self = shift;
     my $element = XML::LibXML::Element->new('args');
-    for my $arg ($self->args) {
+    for my $arg (@{$self->args}) {
         $element->appendTextChild('arg', $arg);
     }
     return $element;
