@@ -231,8 +231,18 @@ sub _get_model_for_config_hash {
     if (scalar(@m) > 1) {
         die(sprintf("Sorry, but multiple identical models were found: %s", join(',', map { $_->id } @m)));
     };
+
     #return the model, plus a 'boolean' value indicating if we created a new model
-    my @model_info =  $m[0] ? ($m[0], 0, $config_profile_item) : ($class_name->create(@extra_params, %$config), 1, $config_profile_item);
+    my @model_info;
+    if ($m[0]) {
+       @model_info = ($m[0], 0, $config_profile_item);
+    } else {
+       for my $key (keys %$config) {
+            delete $config->{$key} unless defined $config->{$key};
+       }
+       @model_info = ($class_name->create(@extra_params, %$config), 1, $config_profile_item);
+    }
+
     return wantarray ? @model_info : $model_info[0];
 }
 
@@ -257,7 +267,7 @@ sub _prepare_configuration_hashes_for_instrument_data {
                             @$instrument_data_property
                         ];
                     } else {
-                        $model_instance->{$model_property} = $instrument_data->$instrument_data_property if defined($instrument_data->$instrument_data_property);
+                        $model_instance->{$model_property} = $instrument_data->$instrument_data_property;
                     }
                 }
             }
