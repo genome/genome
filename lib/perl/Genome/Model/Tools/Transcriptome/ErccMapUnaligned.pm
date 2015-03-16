@@ -25,7 +25,7 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
         },
         ercc_spike_in_mix => {
             is => 'Integer',
-            doc => 'The expected ERCC spike-in mix.',
+            doc => 'The name of the Life Technologies ERCC spike-in mixture.',
             valid_values => [ '1', '2'],
         },
         samtools_version => {
