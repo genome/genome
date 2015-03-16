@@ -9,10 +9,11 @@ use strict;
 use warnings;
 
 use above "Genome";
-use Test::More skip_all => "Streaming is not ready yet";
+use Test::More;
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Test::Factory::SoftwareResult::User;
 use Sub::Install qw (reinstall_sub);
+use Genome::Utility::Test qw(compare_ok);
 
 my $pkg = "Genome::Qc::Run";
 use_ok($pkg);
