@@ -103,22 +103,20 @@ sub samtools {
 
 sub bowtie2_align {
     my $self = shift;
-    my $version = $self->bowtie2_version;
-    my $bowtie2_align = $self->_bin_dir->file('bowtie2-align' . $version);
-    unless (-e $bowtie2_align) {
-        die "[err] Couldn't find '$bowtie2_align' on the file system!\n";
-    }
-    return $bowtie2_align;
+    my $bowtie2_align = Genome::Model::Tools::Bowtie->path_for_bowtie_version(
+        $self->bowtie2_version,
+        'align'
+    );
+    return Path::Class::File->new($bowtie2_align);
 }
 
 sub bowtie2_build {
     my $self = shift;
-    my $version = $self->bowtie2_version;
-    my $bowtie2_build = $self->_bin_dir->file('bowtie2-build' . $version);
-    unless (-e $bowtie2_build) {
-        die "[err] Couldn't find '$bowtie2_build' on the file system!\n";
-    }
-    return $bowtie2_build;
+    my $bowtie2_build = Genome::Model::Tools::Bowtie->path_for_bowtie_version(
+        $self->bowtie2_version,
+        'build'
+    );
+    return Path::Class::File->new($bowtie2_build);
 }
 
 sub ERCC_analysis_script {
