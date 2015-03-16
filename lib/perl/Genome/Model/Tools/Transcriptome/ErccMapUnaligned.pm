@@ -123,13 +123,16 @@ sub ERCC_analysis_script {
     my $self = shift;
     my $ercc_r = $self->__meta__->module_path;
     $ercc_r =~ s/\.pm$/\.R/;
-    return $ercc_r;
+    return Path::Class::File->new($ercc_r);
 }
 
 sub run_analysis_script {
     my ($self, $tsv) = @_;
-    my $ercc_r = $self->ERCC_analysis_script;
-    my $cmd = "$ercc_r --data $tsv";
+    my $cmd = join(' ',
+        $self->ERCC_analysis_script->stringify,
+        "--data $tsv",
+        "--output", $self->pdf_file
+    );
     Genome::Sys->shellcmd(cmd => $cmd);
 }
 
