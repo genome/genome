@@ -68,7 +68,8 @@ sub _run_streaming_tools {
             args => [$tool->cmd_line],
             in_file_link => $self->_input_file_for_tool($tool, $name),
             out_file_link => $self->_output_file_for_tool($name),
-            err_file_link => $self->_error_file_for_tool($name)
+            err_file_link => $self->_error_file_for_tool($name),
+            output_xml => File::Spec->join($self->temp_staging_dir, "out.xml"),
         );
         $process_graph->add_process($process_ref{$name});
     }
