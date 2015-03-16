@@ -71,7 +71,7 @@ sub _add_library_create_command {
 
 sub _add_create_command_for_type {
     my ($self, $type, $params, $dependent_params) = Params::Validate::validate_pos(
-        @_, {type => HASHREF}, {type => SCALAR}, {type => HASHREF},# {type => HASHREF},
+        @_, {type => HASHREF}, {type => SCALAR}, {type => HASHREF},
     );
 
     return 1 if $self->_names_seen->{$type}->{ $params->{name} };

@@ -16,7 +16,7 @@ class Genome::InstrumentData::Command::Import::GenerateBase {
     has_input => {
         file => {
             is => 'Text',
-            doc => 'Comma (.csv) or tab (.tsv) separated file of entity names, attributes and other meta data. Separartor is determined by file extension.',
+            doc => 'Comma (.csv) or tab (.tsv) separated file of entity names, attributes and other meta data. Separator is determined by file extension.',
         },
     },
     has_optional_output => {
@@ -54,7 +54,7 @@ Sample\n
 
 Library\n
  Optional
-  library.ext           => Extension to append to the sample name. Deault is 'extlibs'.
+  library.ext           => Extension to append to the sample name. Default is 'extlibs'.
  
 Instrument Data (needed for generating source-files.tsv)
  Required
