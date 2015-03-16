@@ -58,7 +58,11 @@ sub execute {
     my $self = shift;
     my $xml_file = Genome::Sys->create_temp_file_path;
     Genome::Sys->write_file($xml_file, $self->get_xml);
-    run(qw(/home/archive/streamgraph/build/bin/streamgraph run -x), $xml_file, '-o', 'out.xml');#FIXME!
+    my $output_xml = $self->output_xml;
+    unless ($output_xml) {
+        $output_xml = Genome::Sys->create_temp_file_path;
+    }
+    run(qw(/gscuser/aregier/scratch/streamgraph/build/bin/streamgraph run -x), $xml_file, '-o', $output_xml);#FIXME
     return 1;
 }
 
