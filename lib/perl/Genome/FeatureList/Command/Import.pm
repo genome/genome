@@ -263,14 +263,14 @@ sub _create_nimblegen_capture_primary_multitrack_bed_file {
     my $pair = shift;
 
     my @data = (
-        [Genome::Sys->open_file_for_reading($pair->{capture}), 'tiled_region',  (File::Spec->splitpath($pair->{primary}))[2]],
-        [Genome::Sys->open_file_for_reading($pair->{primary}), 'target_region', (File::Spec->splitpath($pair->{primary}))[2]],
+        [Genome::Sys->open_file_for_reading($pair->{capture}), 'tiled_region'],
+        [Genome::Sys->open_file_for_reading($pair->{primary}), 'target_region'],
     );
 
     my ($multitrack_fh, $multitrack_path) = Genome::Sys->create_temp_file();
     for (@data) {
-        my ($fh, $name, $desc) = @{$_};
-        $multitrack_fh->printf(qq(track name=%s description="%s"\n), $name, $desc);
+        my ($fh, $name) = @{$_};
+        $multitrack_fh->printf(qq(track name=%s\n), $name);
         while (my $line = $fh->getline) {
 
             # normalize chromosome names...
