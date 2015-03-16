@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Genome;
 use Genome::Qc::Factory;
-use IPC::Run qw(run);
 
 class Genome::Qc::Result {
     is => 'Genome::SoftwareResult::StageableSimple',
@@ -33,49 +32,23 @@ sub get_metrics {
 
 sub _run {
     my $self = shift;
-    $self->_run_tools;
-    my $temp = File::Spec->join($self->temp_staging_directory, "temp");
-    `touch $temp`;
-    return 1;
-}
-
-sub _run_tools {
-    my $self = shift;
-
-    if ($self->_streaming_tools) {
-        $self->_run_streaming_tools;
-    }
-
     my %tools = $self->_tools;
-    for my $tool (map {$tools{$_}} $self->_non_streaming_tools) {
-        $self->_run_tool_simple($tool);
-    }
-
-    for my $tool (map {$tools{$_}} $self->_streaming_tools, $self->_non_streaming_tools) {
-        $self->_add_metrics($tool);
-    }
-}
-
-sub _run_streaming_tools {
-    my $self = shift;
-    my %tools = $self->_tools;
-    my $process_graph = Genome::WorkflowBuilder::StreamGraph->create();
+    my $process_graph = Genome::WorkflowBuilder::StreamGraph->create(
+        output_xml => File::Spec->join($self->temp_staging_directory, "out.xml"),
+    );
     my %process_ref;
-    for my $name ($self->_streaming_tools) {
-        my $tool = $tools{$name};
+    while (my ($name, $tool) = each %tools) {
         $process_ref{$name} = Genome::WorkflowBuilder::StreamProcess->create(
             name => $name,
             args => [$tool->cmd_line],
             in_file_link => $self->_input_file_for_tool($tool, $name),
             out_file_link => $self->_output_file_for_tool($name),
             err_file_link => $self->_error_file_for_tool($name),
-            output_xml => File::Spec->join($self->temp_staging_dir, "out.xml"),
         );
         $process_graph->add_process($process_ref{$name});
     }
 
-    for my $name ($self->_streaming_tools) {
-        my $tool = $tools{$name};
+    while (my ($name, $tool) = each %tools) {
         my $dependency = $self->_dependency_for_tool($name);
         if (defined $dependency) {
             my $link = Genome::WorkflowBuilder::StreamLink->create(
@@ -87,6 +60,11 @@ sub _run_streaming_tools {
         }
     }
     $process_graph->execute;
+
+    for my $tool (values %tools) {
+        $self->_add_metrics($tool);
+    }
+    return 1;
 }
 
 sub _dependency_for_tool {
@@ -119,12 +97,6 @@ sub _output_file_for_tool {
         return File::Spec->join($self->temp_staging_directory, $file_name);
     }
     return undef;
-}
-
-sub _run_tool_simple {
-    my $self = shift;
-    my $tool = shift;
-    run($tool->cmd_line);
 }
 
 sub _tools {

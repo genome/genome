@@ -15,6 +15,10 @@ class Genome::WorkflowBuilder::StreamGraph {
             is => 'ARRAY',
             default => [],
         },
+        output_xml => {
+            is => 'Path',
+            is_optional => 1,
+        },
     ],
 };
 
