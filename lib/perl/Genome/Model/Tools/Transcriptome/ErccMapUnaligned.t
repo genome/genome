@@ -16,8 +16,10 @@ use_ok('Genome::Model::Tools::Transcriptome::ErccMapUnaligned');
 SKIP: {
     skip "this is a long-running test & requires a human to view its outputs",
          3;
-    my $model = '39f7c31b4e28432f8cbee18c8a391d06'; # GRCh37 only align (Mix 2)
+    #my $model = '39f7c31b4e28432f8cbee18c8a391d06'; # GRCh37 only align (Mix 2)
     #my $model = 'f8e2cf3aa1fe4e6da97370d8d7dd4f5a'; # GRCh37+ERCC align (Mix 2)
+    #my $model = '46fccb0ce8334d06bb09a26dd9903f9f'; # Heather's Model (1st)
+    my $model = '576d3c68ae574779b92052daead2fa2d'; # Heather's Model (2nd)
     my $ercc_dir = Path::Class::Dir->new(
         '/gscmnt/gc13001/info/',
         'model_data/jwalker_scratch/ERCC/remap'

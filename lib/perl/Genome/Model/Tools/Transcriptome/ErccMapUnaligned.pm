@@ -299,13 +299,13 @@ sub generate_tsvfile {
     my $r_input_file = Genome::Sys->create_temp_file_path();
 
     my @headers = (
-        'Re-sort ID',
-        'ERCC ID',
-        'subgroup',
-        'ERCC Mix',
-        'concentration (attomoles/ul)',
-        'label',
-        'count',
+        q{'Re-sort ID'},
+        q{'ERCC ID'},
+        q{'subgroup'},
+        q{'Mix 1 concentration (attomoles/ul)'},
+        q{'Mix 2 concentration (attomoles/ul)'},
+        q{'label'},
+        q{'count'},
     );
 
     my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
@@ -321,18 +321,16 @@ sub generate_tsvfile {
         unless ($ercc_data) {
             die('Missing chromosome: '. $chr);
         }
-        my $concentration = $ercc_data->{'concentration in Mix 1 (attomoles/ul)'};
-        if ($self->ercc_spike_in_mix == 2) {
-            $concentration = $ercc_data->{'concentration in Mix 2 (attomoles/ul)'};
-        }
+        my $mix1_concentration = $ercc_data->{'concentration in Mix 1 (attomoles/ul)'};
+        my $mix2_concentration = $ercc_data->{'concentration in Mix 2 (attomoles/ul)'};
         my %data = (
-            'Re-sort ID' => $ercc_data->{'Re-sort ID'},
-            'ERCC ID' => $ercc_data->{'ERCC ID'},
-            'subgroup' => $ercc_data->{'subgroup'},
-            'ERCC Mix' => $self->ercc_spike_in_mix,
-            'concentration (attomoles/ul)' => $concentration,
-            'label' => 'na',
-            'count' => $idxstats->{$chr}{map_read_ct},
+            q{'Re-sort ID'} => $ercc_data->{'Re-sort ID'},
+            q{'ERCC ID'} => $ercc_data->{'ERCC ID'},
+            q{'subgroup'} => $ercc_data->{'subgroup'},
+            q{'Mix 1 concentration (attomoles/ul)'} => $mix1_concentration,
+            q{'Mix 2 concentration (attomoles/ul)'} => $mix2_concentration,
+            q{'label'} => 'na',
+            q{'count'} => $idxstats->{$chr}{map_read_ct},
         );
         $writer->write_one(\%data);
     }
