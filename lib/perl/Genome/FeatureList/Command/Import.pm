@@ -272,12 +272,6 @@ sub _create_nimblegen_capture_primary_multitrack_bed_file {
         my ($fh, $name) = @{$_};
         $multitrack_fh->printf(qq(track name=%s\n), $name);
         while (my $line = $fh->getline) {
-
-            # normalize chromosome names...
-            if (index($line, 'chr') == 0) {
-                $line = substr($line, 3);
-            }
-
             $multitrack_fh->print($line);
         }
     }
