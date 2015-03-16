@@ -6,7 +6,7 @@ use Genome;
 
 class Genome::WorkflowBuilder::StreamProcess {
     has => [
-        command_name => {
+        name => {
             is => 'String',
         },
         args => {
@@ -30,7 +30,7 @@ class Genome::WorkflowBuilder::StreamProcess {
 sub get_xml_element {
     my $self = shift;
     my $element = XML::LibXML::Element->new('command');
-    $element->setAttribute('command name', $self->command_name);
+    $element->setAttribute('name', $self->name);
     $element->addChild($self->_get_args_xml);
     return $element;
 }
