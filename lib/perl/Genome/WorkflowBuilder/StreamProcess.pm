@@ -40,23 +40,23 @@ sub get_link_xml_elements {
     my @elements;
     if (defined $self->in_file_link) {
         my $element = XML::LibXML::Element->new('connect_input_file');
-        $element->addAttribute('source', sprintf('"%s"', $self->in_file_link));
-        $element->addAttribute('target', sprintf('"%s"', $self->name));
-        $element->addAttribute('target_fd', '"stdin"');
+        $element->setAttribute('source', $self->in_file_link);
+        $element->setAttribute('target', $self->name);
+        $element->setAttribute('target_fd', 'stdin');
         push @elements, $element;
     }
     if (defined $self->out_file_link) {
         my $element = XML::LibXML::Element->new('connect_output_file');
-        $element->addAttribute('source_fd', 'stdout"');
-        $element->addAttribute('source', sprintf('"%s"', $self->name));
-        $element->addAttribute('target', sprintf('"%s"', $self->out_file_link));
+        $element->setAttribute('source_fd', 'stdout');
+        $element->setAttribute('source', $self->name);
+        $element->setAttribute('target', $self->out_file_link);
         push @elements, $element;
     }
     if (defined $self->err_file_link) {
         my $element = XML::LibXML::Element->new('connect_output_file');
-        $element->addAttribute('source_fd', 'stderr"');
-        $element->addAttribute('source', sprintf('"%s"', $self->name));
-        $element->addAttribute('target', sprintf('"%s"', $self->out_file_link));
+        $element->setAttribute('source_fd', 'stderr');
+        $element->setAttribute('source', $self->name);
+        $element->setAttribute('target', $self->out_file_link);
         push @elements, $element;
     }
     return @elements;

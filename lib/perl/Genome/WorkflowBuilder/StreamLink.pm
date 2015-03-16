@@ -22,10 +22,10 @@ class Genome::WorkflowBuilder::StreamLink {
 sub get_xml_element {
     my $self = shift;
     my $element = XML::LibXML::Element->new('connect');
-    $element->addAttribute('source', sprintf('"%s"', $self->source->name));
-    $element->addAttribute('source_fd', sprintf('"%s"', $self->source_fd));
-    $element->addAttribute('target', sprintf('"%s"', $self->target->name));
-    $element->addAttribute('target_fd', '"stdin"');
+    $element->setAttribute('source', $self->source->name);
+    $element->setAttribute('source_fd', $self->source_fd);
+    $element->setAttribute('target', $self->target->name);
+    $element->setAttribute('target_fd', 'stdin');
     return $element;
 }
 
