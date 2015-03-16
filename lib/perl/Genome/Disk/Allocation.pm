@@ -16,6 +16,8 @@ use DateTime;
 
 our $TESTING_DISK_ALLOCATION = 0;
 
+use constant SECONDS_IN_ONE_YEAR => 365*24*60*60;
+
 class Genome::Disk::Allocation {
     is => 'Genome::Notable',
     table_name => 'disk.allocation',
@@ -1040,7 +1042,7 @@ sub _commit_unless_testing {
 }
 
 sub _default_archive_after_time {
-    DateTime->now(time_zone => 'local')->add(years => 1)->strftime('%F 00:00:00');
+    DateTime->now(time_zone => 'local')->add(seconds => SECONDS_IN_ONE_YEAR)->strftime('%F 00:00:00');
 }
 
 sub _get_trash_folder {
