@@ -48,7 +48,7 @@ sub record_usage {
     my $dbh = log_dbi('DBI', 'connect', dsn(), db_username(), db_password(), db_opts());
     if (! $dbh) {
         my $connect_error = $DBI::errstr;
-        eval qq( END { print STDERR "Warning: Failed to connect to logging DB when starting up: $connect_error\n" } );
+        eval qq( END { print STDERR "Warning: Failed to connect to logging DB when starting up: \Q$connect_error\E\n" } );
 
     } else {
         my @columns = qw(recorded_at hostname username perl_path genome_path git_revision command perl5lib);
