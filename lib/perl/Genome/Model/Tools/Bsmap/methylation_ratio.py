@@ -55,9 +55,9 @@ def isOnWatsonStrand(tags):
 
 
 def process_region_pileup(i, bam_file_path, fasta_path, work_queue, out_queue):
-    bam_file = pysam.AlignmentFile(bam_file_path, 'rb')
+    bam_file = pysam.Samfile(bam_file_path, 'rb')
 
-    genome = pysam.FastaFile(fasta_path)
+    genome = pysam.Fastafile(fasta_path)
     nuc_A = 'A'
     nuc_T = 'T'
     nuc_C = 'C'
@@ -85,14 +85,15 @@ def process_region_pileup(i, bam_file_path, fasta_path, work_queue, out_queue):
                 for pileupread in pileupcolumn.pileups:          
                     read = pileupread.alignment
                     watson_strand = isOnWatsonStrand(read.tags)
-                    if read.query_sequence[pileupread.query_position] == ref_seq[ref_seq_offset]:
+                    # qpos became query_position in later releases of pysam
+                    if read.seq[pileupread.qpos] == ref_seq[ref_seq_offset]:
                         if ref_seq[ref_seq_offset] == nuc_C and watson_strand:
                             meth_cov += 1
                         elif ref_seq[ref_seq_offset] == nuc_G and watson_strand is False:
                             meth_cov += 1
-                    elif ref_seq[ref_seq_offset] == nuc_C and watson_strand and read.query_sequence[pileupread.query_position] == nuc_T:
+                    elif ref_seq[ref_seq_offset] == nuc_C and watson_strand and read.seq[pileupread.qpos] == nuc_T:
                         un_meth_cov += 1
-                    elif ref_seq[ref_seq_offset] == nuc_G and watson_strand is False and read.query_sequence[pileupread.query_position] == nuc_A:
+                    elif ref_seq[ref_seq_offset] == nuc_G and watson_strand is False and read.seq[pileupread.qpos] == nuc_A:
                         un_meth_cov += 1           
                 counter[position].set_methylation_coverage(meth_cov)
                 counter[position].set_un_methylation_coverage(un_meth_cov)
@@ -145,11 +146,11 @@ if __name__ == '__main__':
     if " " in options.outfile:
         parser.error("outfile parameter cannot contain spaces.")    
     step = 100000
-    genome = pysam.FastaFile(options.reffile)
+    genome = pysam.Fastafile(options.reffile)
     work_queue = Queue()
     work_units = 0
     for chromosome in genome.references:
-        chr_length = genome.get_reference_length(chromosome)
+        chr_length = genome.getReferenceLength(chromosome)
         start = 0
         end = min(start + step, chr_length)
         while True:
