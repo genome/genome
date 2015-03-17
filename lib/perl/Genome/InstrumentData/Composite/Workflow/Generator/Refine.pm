@@ -16,7 +16,7 @@ sub generate {
     my $group = shift;
     my $alignment_objects = shift;
 
-    my %refinement_operations;
+    my @refinement_operations;
     my @inputs;
 
     my @refiners;
@@ -41,12 +41,12 @@ sub generate {
                 );
 
                 my $key = $class->refiner_key($group, $refiner);
-                $refinement_operations{$key} = $class->_generate_refinement_operation($merge_tree, $key);
+                push @refinement_operations, $class->_generate_refinement_operation($merge_tree, $key);
             }
         }
     }
 
-    return (\%refinement_operations, \@inputs, \@refiners);
+    return (\@refinement_operations, \@inputs, \@refiners);
 }
 
 my $_refinealignments_command_id;

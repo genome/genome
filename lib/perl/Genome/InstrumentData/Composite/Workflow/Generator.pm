@@ -64,9 +64,11 @@ sub generate {
         }
 
         my ($next_refinement_operations, $next_refinement_inputs, $next_refiners) = Genome::InstrumentData::Composite::Workflow::Generator::Refine->generate($tree, $input_data, $group, $alignment_objects);
-        @$refinement_operations{keys %$next_refinement_operations} = values %$next_refinement_operations;
-        push @inputs, @$next_refinement_inputs;
-        $refiners = $next_refiners;
+        if(@$next_refinement_operations) {
+            $refinement_operations->{$group} = $next_refinement_operations;
+            push @inputs, @$next_refinement_inputs;
+            $refiners = $next_refiners;
+        }
     }
 
     push @inputs, @$index_inputs;
@@ -187,15 +189,15 @@ sub _generate_master_workflow {
     }
 
     if(%$refinement_operations) {
-        while (my ($refiner_key, $refinement_operation) = each %$refinement_operations) {
-            my $refiner = (split("_", $refiner_key))[1];
-            $class->_wire_refinement_operation_to_master_workflow($master_workflow, $block_operation, $refinement_operation, $refiner, $refiners);
+        for my $group (keys %$refinement_operations) {
+            my $refinement_operation = $refinement_operations->{$group};
+            $class->_wire_refinement_operation_to_master_workflow($master_workflow, $block_operation, $refinement_operation, $refiners);
         }
 
-        $class->_wire_merge_to_refinement_operations($master_workflow, $merge_operations, $refinement_operations, $refiners);
+        $class->_wire_merge_to_refinement_operations($master_workflow, $merge_operations, $refinement_operations);
 
         if (scalar(@$refiners) == 2) {
-            $class->_wire_refinement_to_refinement_operations($master_workflow, $merge_operations, $refinement_operations, $refiners);
+            $class->_wire_refinement_to_refinement_operations($master_workflow, $refinement_operations);
         }
     }
 
@@ -264,10 +266,8 @@ sub _inputs_and_outputs_for_master_workflow {
             $input_properties{$prop}++;
         }
 
-        my $last_refiner = $refiners->[-1];
-        my @last_refinement_keys = grep { $_ =~ $last_refiner } keys %$refinement_operations;
-        for my $refinement_key (@last_refinement_keys) {
-            my $op = $refinement_operations->{$refinement_key};
+        my @last_refinement_operations = map { $_->[-1] } values %$refinement_operations;
+        for my $op (@last_refinement_operations) {
             for my $prop (@{ $op->operation_type->output_properties }) {
                $output_properties{join('_', $prop, $op->name)}++;
             }
@@ -420,42 +420,43 @@ sub _wire_refinement_operation_to_master_workflow {
     my $class = shift;
     my $master_workflow = shift;
     my $block_operation = shift; #unused by merge operations
-    my $refinement = shift;
-    my $refiner = shift;
+    my $refinement_operation = shift;
     my $refiners = shift;
 
     my $master_input_connector = $master_workflow->get_input_connector;
     my $master_output_connector = $master_workflow->get_output_connector;
 
-    $refinement->workflow_model($master_workflow);
+    for my $refinement (@$refinement_operation) {
+        $refinement->workflow_model($master_workflow);
+        my ($refiner) = grep { $refinement->name =~ /$_/ } @$refiners;
 
-    for my $property ($class->_base_refinement_workflow_input_properties) {
-        my $left_property = "m_" . $class->_construct_refiner_input_property($property, $refiner);
-        my $right_property = $property;
+        for my $property ($class->_base_refinement_workflow_input_properties) {
+            my $left_property = "m_" . $class->_construct_refiner_input_property($property, $refiner);
+            my $right_property = $property;
+            $class->_add_link_to_workflow($master_workflow,
+                left_workflow_operation_id => $master_input_connector->id,
+                left_property => $left_property,
+                right_workflow_operation_id => $refinement->id,
+                right_property => $right_property,
+            );
+        }
+
         $class->_add_link_to_workflow($master_workflow,
             left_workflow_operation_id => $master_input_connector->id,
-            left_property => $left_property,
+            left_property => 'm_result_users',
             right_workflow_operation_id => $refinement->id,
-            right_property => $right_property,
+            right_property => 'result_users',
         );
     }
 
-    $class->_add_link_to_workflow($master_workflow,
-        left_workflow_operation_id => $master_input_connector->id,
-        left_property => 'm_result_users',
-        right_workflow_operation_id => $refinement->id,
-        right_property => 'result_users',
-    );
-
-    if ($refiner eq $refiners->[-1]) {
-        for my $property (@{ $refinement->operation_type->output_properties }) {
-            $class->_add_link_to_workflow($master_workflow,
-                left_workflow_operation_id => $refinement->id,
-                left_property => $property,
-                right_workflow_operation_id => $master_output_connector->id,
-                right_property => 'm_' . join('_', $property, $refinement->name),
-            );
-        }
+    my $last_refinement = $refinement_operation->[-1];
+    for my $property (@{ $last_refinement->operation_type->output_properties }) {
+        $class->_add_link_to_workflow($master_workflow,
+            left_workflow_operation_id => $last_refinement->id,
+            left_property => $property,
+            right_workflow_operation_id => $master_output_connector->id,
+            right_property => 'm_' . join('_', $property, $last_refinement->name),
+        );
     }
 
     return 1;
@@ -466,15 +467,13 @@ sub _wire_merge_to_refinement_operations {
     my $master_workflow = shift;
     my $merge_operations = shift;
     my $refinement_operations = shift;
-    my $refiner_names = shift;
 
     for my $group_key (keys %$merge_operations ) {
-        my $refiner_name = $refiner_names->[0];
-        my $refiner_key = $class->refiner_key($group_key, $refiner_name);
+        my $refinement_operation = $refinement_operations->{$group_key};
         $class->_add_link_to_workflow($master_workflow,
             left_workflow_operation_id => $merge_operations->{$group_key}->id,
             left_property => 'result_id',
-            right_workflow_operation_id => $refinement_operations->{$refiner_key}->id,
+            right_workflow_operation_id => $refinement_operation->[0]->id,
             right_property => 'input_result_id',
         );
     }
@@ -485,20 +484,18 @@ sub _wire_merge_to_refinement_operations {
 sub _wire_refinement_to_refinement_operations {
     my $class = shift;
     my $master_workflow = shift;
-    my $merge_operations = shift;
     my $refinement_operations = shift;
-    my $refiner_names = shift;
 
-    for my $group_key (keys %$merge_operations ) {
-        my $refiner1_key = $class->refiner_key($group_key, $refiner_names->[0]);
-        my $refiner2_key = $class->refiner_key($group_key, $refiner_names->[1]);
-
-        $class->_add_link_to_workflow($master_workflow,
-            left_workflow_operation_id => $refinement_operations->{$refiner1_key}->id,
-            left_property => 'result_id',
-            right_workflow_operation_id => $refinement_operations->{$refiner2_key}->id,
-            right_property => 'input_result_id',
-        );
+    for my $refinement_operation (values %$refinement_operations ) {
+        next unless (scalar @$refinement_operation > 1);
+        for my $i (1..$#$refinement_operation) {
+            $class->_add_link_to_workflow($master_workflow,
+                left_workflow_operation_id => $refinement_operation->[$i-1]->id,
+                left_property => 'result_id',
+                right_workflow_operation_id => $refinement_operation->[$i]->id,
+                right_property => 'input_result_id',
+            );
+        }
     }
 
     return 1;
