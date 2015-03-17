@@ -127,28 +127,6 @@ sub get_unique_action_name {
     return join('_', $name, $index);
 }
 
-sub _merge_group_for_alignment_object {
-    my $class = shift;
-    my $merge_group = shift;
-    my $alignment_object = shift;
-
-    if($merge_group eq 'all') {
-        return 'all';
-    }
-
-    if(ref $alignment_object eq 'ARRAY') {
-        #accept either the output of _alignment_objects or a straight instrument_data
-        $alignment_object = $alignment_object->[0];
-    }
-
-    my $group_obj = $alignment_object->$merge_group;
-    unless($group_obj) {
-        die $class->error_message('Could not determine ' . $merge_group . ' for data ' . $alignment_object->[0]->__display_name__);
-    }
-
-   return $group_obj->id;
-}
-
 sub _general_workflow_input_properties {
     my $class = shift;
 
