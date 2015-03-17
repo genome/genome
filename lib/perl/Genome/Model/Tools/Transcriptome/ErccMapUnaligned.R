@@ -47,7 +47,7 @@ process.opts <- function() {
   return(opts)
 }
 
-make.LinearityPlot <- function(df) {
+linearity.plot <- function(df) {
   df$count <- as.numeric(df$count)
 
   df$logMix1  <- log2(df$Mix1)
@@ -208,7 +208,7 @@ main <- function() {
   }
 
   pdf(opts$output)
-  r2 <- make.LinearityPlot(df)
+  r2 <- linearity.plot(df)
   mix.plot(mix1DF, "Mix1")
   mix.plot(mix2DF, "Mix2")
 
