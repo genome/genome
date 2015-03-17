@@ -439,6 +439,10 @@ sub save_tsv_stats {
     my ($self, $tsv) = @_;
 
     my $dst_file = Path::Class::File->new($self->raw_stats_file);
+    if (-e $dst_file) {
+        $self->status_message("Removing an earlier version of '$dst_file'");
+        $dst_file->remove();
+    }
 
     $self->status_message("Saving raw stats to $dst_file");
     Genome::Sys->copy_file("$tsv", "$dst_file");
