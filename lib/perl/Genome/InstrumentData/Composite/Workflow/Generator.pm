@@ -438,6 +438,7 @@ sub _wire_merge_operation_to_master_workflow {
 
     return 1;
 }
+
 sub _wire_refinement_operation_to_master_workflow {
     my $class = shift;
     my $master_workflow = shift;
