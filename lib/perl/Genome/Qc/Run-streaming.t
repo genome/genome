@@ -26,7 +26,7 @@ my $test_dir = __FILE__.".d";
     use Genome;
 
     class TestCat {
-        is => [$pkg],
+        is => ['Genome::Qc::Tool'],
         has => {input_file => {}},
     };
 
@@ -53,7 +53,7 @@ my $test_dir = __FILE__.".d";
     use Genome;
 
     class TestTool1 {
-        is => [$pkg],
+        is => ['Genome::Qc::Tool'],
         has => {input_file => {}},
     };
 
@@ -80,7 +80,7 @@ my $test_dir = __FILE__.".d";
     use Genome;
 
     class TestTool2 {
-        is => [$pkg],
+        is => ['Genome::Qc::Tool'],
         has => {input_file => {}},
     };
 

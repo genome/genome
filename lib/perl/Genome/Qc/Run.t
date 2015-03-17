@@ -23,7 +23,7 @@ use_ok($pkg);
     use Genome;
 
     class TestTool1 {
-        is => [$pkg],
+        is => ['Genome::Qc::Tool'],
         has => {param1 => {}},
     };
 
@@ -50,7 +50,7 @@ use_ok($pkg);
     use Genome;
 
     class TestTool2 {
-        is => [$pkg],
+        is => ['Genome::Qc::Tool'],
         has => {param2 => {}},
     };
 
