@@ -42,7 +42,7 @@ sub create {
 }
 
 sub get_ptero_builder_task {
-    require Ptero;
+    require Ptero::Builder::Detail::Workflow::Task;
 
     my $self = shift;
 
@@ -81,7 +81,7 @@ sub _get_ptero_shortcut_method {
 }
 
 sub _get_ptero_execute_method {
-    require Ptero;
+    require Ptero::Builder::ShellCommand;
 
     my $self = shift;
     # XXX This should use the LSF service, or be configuration based
