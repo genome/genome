@@ -4,9 +4,13 @@ use strict;
 use warnings;
 use Genome;
 use IPC::Run qw(run);
+use XML::LibXML;
 
 class Genome::WorkflowBuilder::StreamGraph {
     has => [
+        name => {
+            is => 'String',
+        },
         processes => {
             is => 'ARRAY',
             default => [],
@@ -46,6 +50,7 @@ sub get_xml {
 sub get_xml_element {
     my $self = shift;
     my $element = XML::LibXML::Element->new('streamgraph');
+    $element->setAttribute('name', $self->name);
     for my $process (@{$self->processes}) {
         $element->addChild($process->get_xml_element);
         for my $link ($process->get_link_xml_elements) {
