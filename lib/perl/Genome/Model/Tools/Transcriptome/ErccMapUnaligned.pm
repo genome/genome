@@ -22,7 +22,8 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
         ercc_fasta_file => {
             is => 'FilePath',
             doc => 'The FASTA format sequence for all ERCC transcripts.',
-            example_values => ['/gscmnt/gc13001/info/model_data/jwalker_scratch/ERCC/ERCC92.fa'],
+            default_value => '/gscmnt/gc13001/info/model_data/jwalker_scratch/ERCC/ERCC92.fa',
+            is_optional => '1',
         },
         ercc_spike_in_file => {
             is => 'FilePath',
