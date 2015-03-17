@@ -173,6 +173,10 @@ sub get_bam {
             "bam file via '--bam_file' to proceed!\n";
     }
 
+    if ($self->bam_file && $self->model) {
+        die "Specify only ONE '--model' or '--bam-file', NOT both!\n";
+    }
+
     my $bam;
     if ($self->bam_file) {
         $bam = Path::Class::File->new($self->bam_file);
