@@ -72,4 +72,9 @@ sub _generate_refinement_operation {
     return $operation;
 }
 
+sub refiner_key {
+    my ($class, $group, $refiner_name) = @_;
+    return join ("_", $group, $refiner_name);
+}
+
 1;

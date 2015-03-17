@@ -173,9 +173,4 @@ sub _construct_refiner_input_property {
     return join($REFINEMENT_INPUT_PROPERTY_SEPARATOR, $property, $refiner);
 }
 
-sub refiner_key {
-    my ($class, $group, $refiner_name) = @_;
-    return join ("_", $group, $refiner_name);
-}
-
 1;
