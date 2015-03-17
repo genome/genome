@@ -185,6 +185,10 @@ sub get_bam {
         $bam = $self->get_bam_from_model();
     }
 
+    unless (-e $bam) {
+        die "Couldn't find bam: '$bam' on file system!\n";
+    }
+
     return $bam;
 }
 
