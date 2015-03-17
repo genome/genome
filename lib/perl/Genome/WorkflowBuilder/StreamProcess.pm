@@ -56,7 +56,7 @@ sub get_link_xml_elements {
         my $element = XML::LibXML::Element->new('connect_output_file');
         $element->setAttribute('source_fd', 'stderr');
         $element->setAttribute('source', $self->name);
-        $element->setAttribute('target', $self->out_file_link);
+        $element->setAttribute('target', $self->err_file_link);
         push @elements, $element;
     }
     return @elements;
