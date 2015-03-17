@@ -28,12 +28,8 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
         ercc_spike_in_file => {
             is => 'FilePath',
             doc => 'The control analysis file provided by Agilent for the ERCC spike-in.',
-            example_values => ['/gscmnt/gc13001/info/model_data/jwalker_scratch/ERCC/ERCC_Controls_Analysis.txt'],
-        },
-        ercc_spike_in_mix => {
-            is => 'Integer',
-            doc => 'The name of the Life Technologies ERCC spike-in mixture.',
-            valid_values => [ '1', '2'],
+            default_value => '/gscmnt/gc13001/info/model_data/jwalker_scratch/ERCC/ERCC_Controls_Analysis.txt',
+            is_optional => '1',
         },
         samtools_version => {
             is => 'Text',
