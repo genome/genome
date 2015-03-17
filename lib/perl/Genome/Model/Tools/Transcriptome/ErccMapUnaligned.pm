@@ -9,9 +9,15 @@ use Path::Class qw();
 class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
     is => 'Command::V2',
     has_input => [
+        model => {
+            is => 'Text',
+            doc => 'A RNASeq model that has ERCC transcripts spiked in.',
+            is_optional => '1,',
+        },
         bam_file => {
             is => 'FilePath',
-            doc => 'An aligned BAM file to a reference genome without the ERCC transcripts spiked in.',
+            doc => 'A path to a BAM file that has ERCC transcripts spiked in.',
+            is_optional => '1,',
         },
         ercc_fasta_file => {
             is => 'FilePath',
@@ -54,7 +60,13 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
         pdf_file => {
             is => 'FilePath',
             doc => 'The output PDF with histograms and linearity plot.',
-            default_value => 'output.pdf',
+            example_values => ['<model-id>.ERCC.QC.pdf', '<id>.bam.ERCC.QC.pdf'],
+            is_optional => '1',
+        },
+        raw_stats_file => {
+            is => 'FilePath',
+            doc => 'The raw data (in TSV format) used to create the pdf file.',
+            example_values => ['<model-id>.ERCC.QC.tsv', '<id>.bam.ERCC.QC.tsv'],
             is_optional => '1',
         }
     ],
@@ -69,11 +81,14 @@ EOS
 sub execute {
     my $self = shift;
     
+    my $input_bam = $self->get_bam();
+    $self->setup_outputs();
+
     my $ercc_bowtie_index = $self->create_ercc_bowtie_index();
 
     my $remapped_bam = $self->generate_remapped_bam(
         index => $ercc_bowtie_index,
-        input_bam => $self->bam_file,
+        input_bam => $input_bam,
     );
 
     $self->index_bam($remapped_bam);
@@ -84,6 +99,92 @@ sub execute {
     $self->run_analysis_script($tsv);
 
     return 1;
+}
+
+sub get_bam_from_model {
+    my $self = shift;
+    my $model = Genome::Model->get(id => $self->model);
+
+    my $build = $model->last_succeeded_build;
+    unless ($build) {
+        die "Couldn't find a recent successful build for model: ",
+            $self->model, "\n"
+    }
+    $self->status_message("Using build: " . $build->id);
+
+    my $bam = $build->merged_alignment_result->bam_path
+      or die "Didn't find a bam file associated with build ",
+             $self->model, "\n";
+    $bam = Path::Class::File->new($bam);
+    unless (-e $bam) {
+        die "Didn't find bam file: '$bam' on file system!\n";
+    }
+    $self->status_message("Using BAM: $bam");
+    $self->bam_file("$bam");
+
+    return $bam;
+}
+
+sub setup_outputs {
+    my $self = shift;
+    my $dir = Path::Class::Dir->new(); # current working directory
+    $self->setup_pdf_file($dir);
+    $self->setup_raw_stats_file($dir);
+}
+
+sub setup_pdf_file {
+    my ($self, $dir) = @_;
+
+    my $name;
+    if ($self->model) {
+        $name = join('.', $self->model, 'ERCC.QC', 'pdf');
+    }
+    else {
+        my $bam = Path::Class::File->new($self->bam_file);
+        my $basename = $bam->basename;
+        $name = join('.', $basename, 'ERCC.QC', 'pdf');
+    }
+
+    my $f = $dir->file($name);
+    $self->pdf_file("$f");
+    return $f;
+}
+
+sub setup_raw_stats_file {
+    my ($self, $dir) = @_;
+
+    my $name;
+    if ($self->model) {
+        $name = join('.', $self->model, 'ERCC.QC', 'tsv');
+    }
+    else {
+        my $bam = Path::Class::File->new($self->bam_file);
+        my $basename = $bam->basename;
+        $name = join('.', $basename, 'ERCC.QC', 'tsv');
+    }
+
+    my $f = $dir->file($name);
+    $self->raw_stats_file("$f");
+    return $f;
+}
+
+sub get_bam {
+    my $self = shift;
+
+    unless ($self->bam_file || $self->model) {
+        die "Please specify either a model via '--model' or ",
+            "bam file via '--bam_file' to proceed!\n";
+    }
+
+    my $bam;
+    if ($self->bam_file) {
+        $bam = Path::Class::File->new($self->bam_file);
+    }
+    else {
+        $bam = $self->get_bam_from_model();
+    }
+
+    return $bam;
 }
 
 sub _bin_dir {
@@ -131,7 +232,7 @@ sub run_analysis_script {
     my $cmd = join(' ',
         $self->ERCC_analysis_script->stringify,
         "--data $tsv",
-        "--output", $self->pdf_file
+        '--output', $self->pdf_file
     );
     Genome::Sys->shellcmd(cmd => $cmd);
 }
@@ -184,8 +285,6 @@ sub generate_remapped_bam {
     my $self = shift;
     my %args = @_;
     my ($index, $input_bam) = @args{'index', 'input_bam'};
-
-    $input_bam = Path::Class::File->new($input_bam);
 
     my $remapped_bam_basename = Genome::Sys->create_temp_file_path();
     my $remapped_bam_path =
@@ -342,11 +441,7 @@ sub generate_tsvfile {
 sub save_tsv_stats {
     my ($self, $tsv) = @_;
 
-    my $tsv_output = join('.',
-        Path::Class::File->new($self->bam_file)->basename,
-        'ERCC.raw.tsv'
-    );
-    my $dst_file = Path::Class::Dir->new()->file($tsv_output);
+    my $dst_file = Path::Class::File->new($self->raw_stats_file);
 
     $self->status_message("Saving raw stats to $dst_file");
     Genome::Sys->copy_file("$tsv", "$dst_file");
