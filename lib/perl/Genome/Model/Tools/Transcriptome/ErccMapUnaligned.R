@@ -198,7 +198,14 @@ main <- function() {
   cat(paste("\n===> Mix2 Summary Stats <=== \n"))
   print(mix2DF)
 
-  test.mixture(mix1DF, mix2DF)
+  if (sum(mix1DF$AlignmentCounts) > 0 &&
+      sum(mix2DF$AlignmentCounts) > 0) {
+    test.mixture(mix1DF, mix2DF)
+  }
+  else {
+    cat(paste("===> No ERCC Spike-Ins Found! <===\n"))
+    q(status=0)
+  }
 
   pdf(opts$output)
   r2 <- make.LinearityPlot(df)
