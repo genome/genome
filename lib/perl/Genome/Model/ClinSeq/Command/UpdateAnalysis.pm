@@ -58,7 +58,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _rnaseq_pp_id => {
               is => 'Number',
-              default => '2762841',
+              default => '7381e45615374670877a4e16c97b4908',
         },
         rnaseq_pp => {
               is => 'Genome::ProcessingProfile',
