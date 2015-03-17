@@ -63,7 +63,13 @@ make.LinearityPlot <- function(df) {
           geom_point(aes(color=subgroup)) +
           geom_smooth(method=lm) +
           annotate('text', 5, -3, label=correlation_label)
-  p <- p + opts(title="log2(alignment counts) vs log2(Mix 1 concentrations)")
+
+  p <- p +
+       opts(title="log2(alignment counts) vs log2(Mix 1 concentrations)")
+
+  # adjust axis labels
+  p <- p + ylab("log2(Count)") + xlab("log2(Mix1)")
+
   print(p)
 
   return(count_r_squared)
