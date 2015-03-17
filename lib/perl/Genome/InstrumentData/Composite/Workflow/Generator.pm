@@ -218,7 +218,7 @@ sub _generate_master_workflow {
 
         $class->_wire_merge_to_refinement_operations($master_workflow, $merge_operations, $refinement_operations);
 
-        if (scalar(@$refiners) == 2) {
+        if (scalar(@$refiners) > 1) {
             $class->_wire_refinement_to_refinement_operations($master_workflow, $refinement_operations);
         }
     }
