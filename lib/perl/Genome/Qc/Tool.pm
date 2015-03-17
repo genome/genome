@@ -37,5 +37,9 @@ sub get_metrics {
     die $self->error_message("Abstract method get_metrics must be overridden by subclass");
 }
 
+sub output_file_accessor {
+    return undef;
+}
+
 1;
 
