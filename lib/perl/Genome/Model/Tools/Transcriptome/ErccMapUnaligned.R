@@ -80,16 +80,9 @@ make.MixFrame <- function(mixType, df) {
             by=list(Group=df$subgroup),
             FUN=sum)
 
-  epsilon <- 0.0001
-
   colnames(mix)[3] <- "AlignmentCounts"
   mix$Probability <- mix[,mixType] / sum(mix[,mixType])
   mix$ExpectedCounts <- mix$Probability * sum(mix$AlignmentCounts)
-
-  # account for 0 count cases ( log2(0) is undefined )
-  tmpCounts <- ifelse(mix$AlignmentCounts == 0, epsilon, mix$AlignmentCounts)
-  mix$log2AlignmentCounts <- log2(tmpCounts)
-
   colnames(mix)[2] <- paste("Concentration", mixType, sep="")
 
   return(mix)
@@ -129,14 +122,16 @@ test.mixture <- function(Mix1DF, Mix2DF) {
   p_value_threshold <- 0.05
 
 #  cat(paste("Running Chi-squared test for Mix 1 usage\n"))
-  test.mix1 <- chisq.test(Mix1DF$log2AlignmentCounts, p=Mix1DF$Probability)
+  test.mix1 <- chisq.test(Mix1DF$AlignmentCounts/10000, p=Mix1DF$Probability)
+#  print(test.mix1)
 
   if (test.mix1[["p.value"]] < p_value_threshold) {
     hypo.mix1 <- FALSE
   }
 
 #  cat(paste("Running Chi-squared test for Mix 2 usage\n"))
-  test.mix2 <- chisq.test(Mix2DF$log2AlignmentCounts, p=Mix2DF$Probability)
+  test.mix2 <- chisq.test(Mix2DF$AlignmentCounts/10000, p=Mix2DF$Probability)
+#  print(test.mix2)
 
   if (test.mix2[["p.value"]] < p_value_threshold) {
     hypo.mix2 <- FALSE
