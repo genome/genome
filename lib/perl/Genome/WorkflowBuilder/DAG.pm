@@ -78,7 +78,7 @@ sub execute {
         return $self->_execute_with_workflow($inputs);
 
     } else {
-        Carp::confess sprintf("Unknown backend specified: %s", $backend);
+        die $self->error_message("Unknown backend specified: %s", $backend);
     }
 }
 
