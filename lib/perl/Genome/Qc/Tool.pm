@@ -9,6 +9,9 @@ class Genome::Qc::Tool {
         alignment_result => {
             is => 'Genome::InstrumentData::AlignmentResult',
         },
+        gmt_params => {
+            is => 'Hash',
+        }
     ],
     has_calculated => [
         bam_file => {

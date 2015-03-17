@@ -124,9 +124,12 @@ sub _non_streaming_tools {
 }
 
 sub _tool_from_name_and_params {
-    my ($name, $params) = @_;
-
-    return $name->create(%{$params});
+    my ($name, $gmt_params) = @_;
+    if (defined $name->output_file_accessor) {
+        my $output_param_name = $name->output_file_accessor;
+        $gmt_params->{$output_param_name} = Genome::Sys->create_temp_file;
+    }
+    return $name->create(gmt_params => $gmt_params);
 }
 
 sub _add_metrics {

@@ -27,7 +27,6 @@ my $test_dir = __FILE__.".d";
 
     class TestCat {
         is => ['Genome::Qc::Tool'],
-        has => {input_file => {}},
     };
 
     sub first_input_file {
@@ -36,7 +35,7 @@ my $test_dir = __FILE__.".d";
 
     sub cmd_line {
         my $self = shift;
-        return ("cat", $self->input_file);
+        return ("cat", $self->gmt_params->{input_file});
     }
 
     sub supports_streaming {
@@ -54,12 +53,11 @@ my $test_dir = __FILE__.".d";
 
     class TestTool1 {
         is => ['Genome::Qc::Tool'],
-        has => {input_file => {}},
     };
 
     sub cmd_line {
         my $self = shift;
-        return ("head", "-n", "1", $self->input_file);
+        return ("head", "-n", "1", $self->gmt_params->{input_file});
     }
 
     sub supports_streaming {
@@ -86,7 +84,7 @@ my $test_dir = __FILE__.".d";
 
     sub cmd_line {
         my $self = shift;
-        return ("tail", "-n", "1", $self->input_file);
+        return ("tail", "-n", "1", $self->gmt_params->{input_file});
     }
 
     sub supports_streaming {
