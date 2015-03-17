@@ -22,7 +22,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::CreateInstrumentDataAnd
         },
         analysis_project => {
             is => 'Genome::Config::AnalysisProject',
-            is_optional => 1,
             doc => 'Analysis project to assign to the created instrument data.',
         },
         instrument_data_properties => {
@@ -117,9 +116,7 @@ sub execute {
         $self->helpers->update_bam_metrics_for_instrument_data($instrument_data);
 
         # Analysis Project
-        if ($self->analysis_project) {
-            $instrument_data->add_analysis_project_bridge(analysis_project => $self->analysis_project);
-        }
+        $instrument_data->add_analysis_project_bridge(analysis_project => $self->analysis_project);
 
         # Reallocate
         $self->debug_message('Reallocate...');
