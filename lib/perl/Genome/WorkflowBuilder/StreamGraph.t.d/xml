@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<streamgraph name="">
+  <command name="p1">
+    <args>
+      <arg>cat</arg>
+      <arg>/dev/stdin</arg>
+    </args>
+  </command>
+  <connect_input_file source="WorkflowBuilder/StreamGraph.t.d/in" target="p1" target_fd="stdin"/>
+  <command name="p2">
+    <args>
+      <arg>tail</arg>
+      <arg>-n</arg>
+      <arg>2</arg>
+      <arg>/dev/stdin</arg>
+    </args>
+  </command>
+  <connect_output_file source_fd="stdout" source="p2" target="/tmp/gm-genome_sys-2015-03-17_11_09_38--ORz5/anonymous1"/>
+  <connect_output_file source_fd="stderr" source="p2" target="/tmp/gm-genome_sys-2015-03-17_11_09_38--ORz5/anonymous2"/>
+  <connect source="p1" source_fd="stdout" target="p2" target_fd="stdin"/>
+</streamgraph>
