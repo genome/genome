@@ -71,7 +71,7 @@ sub execute {
 
     my @errors = $workflow->validate;
     if (@errors) {
-        $self->error_message(@errors);
+        $self->error_message($_) for @errors;
         die 'Errors validating workflow';
     }
 
