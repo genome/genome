@@ -25,17 +25,16 @@ SKIP: {
         'model_data/jwalker_scratch/ERCC/remap'
     );
 
-    my $bam = get_bam($model);
-    run_analysis($bam, $ercc_dir);
-}
+    run_analysis($model, $ercc_dir);
+#}
 
 done_testing();
 
 # S U B R O U T I N E S #######################################################
 sub run_analysis {
-    my ($bam, $ercc_dir) = @_;
+    my ($model, $ercc_dir) = @_;
     my $tool = Genome::Model::Tools::Transcriptome::ErccMapUnaligned->create(
-        bam_file        => $bam,
+        model           => $model,
         ercc_fasta_file => $ercc_dir->file('ERCC92.fa')->stringify,
         ercc_spike_in_file =>
           $ercc_dir->file('ERCC_Controls_Analysis.txt')->stringify,
