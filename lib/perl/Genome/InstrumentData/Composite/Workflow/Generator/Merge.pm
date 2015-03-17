@@ -12,10 +12,10 @@ class Genome::InstrumentData::Composite::Workflow::Generator::Merge {
 sub generate {
     my $class = shift;
     my $tree = shift;
-    my $merge_group = shift;
+    my $group = shift;
     my $alignment_objects = shift;
 
-    my %merge_operations;
+    my $merge_operation;
     my @inputs;
 
     if(exists $tree->{then}) {
@@ -39,20 +39,10 @@ sub generate {
             }
         }
 
-        if($merge_group eq 'all') {
-            #this case is a simplification for efficiency
-            $merge_operations{all} = $class->_generate_merge_operation($merge_tree, 'all');
-        } else {
-            my %groups;
-            for my $o (@$alignment_objects) {
-                $groups{ $class->_merge_group_for_alignment_object($merge_group, $o) }++;
-            }
-
-            %merge_operations = map (($_ => $class->_generate_merge_operation($merge_tree, $_)), sort keys %groups);
-        }
+        $merge_operation = $class->_generate_merge_operation($merge_tree, $group);
     }
 
-    return (\%merge_operations, \@inputs);
+    return ($merge_operation, \@inputs);
 }
 
 my $_mergealignments_command_id;

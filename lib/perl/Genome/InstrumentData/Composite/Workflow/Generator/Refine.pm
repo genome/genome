@@ -13,7 +13,7 @@ sub generate {
     my $class = shift;
     my $tree = shift;
     my $input_data = shift;
-    my $merge_group = shift;
+    my $group = shift;
     my $alignment_objects = shift;
 
     my %refinement_operations;
@@ -39,21 +39,9 @@ sub generate {
                     $class->_construct_refiner_input_property('m_refiner_version', $refiner) => $next_op->{version},
                     $class->_construct_refiner_input_property('m_refiner_known_sites_ids', $refiner) => [ map { $_->id } @{$input_data->{$next_op->{known_sites}}} ],
                 );
-                if($merge_group eq 'all') {
-                    #this case is a simplification for efficiency
-                    my $key = $class->refiner_key("all", $refiner);
-                    $refinement_operations{$key} = $class->_generate_refinement_operation($merge_tree, $key);
-                } else {
-                    my %groups;
-                    for my $o (@$alignment_objects) {
-                        $groups{ $class->_merge_group_for_alignment_object($merge_group, $o) }++;
-                    }
 
-                    for my $group (sort keys %groups) {
-                        my $key = $class->refiner_key($group, $refiner);
-                        $refinement_operations{$key} = $class->_generate_refinement_operation($merge_tree, $key);
-                    }
-                }
+                my $key = $class->refiner_key($group, $refiner);
+                $refinement_operations{$key} = $class->_generate_refinement_operation($merge_tree, $key);
             }
         }
     }

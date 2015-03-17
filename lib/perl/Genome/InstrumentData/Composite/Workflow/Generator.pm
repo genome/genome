@@ -46,7 +46,8 @@ sub generate {
 
     my ($index_operations, $index_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::AlignerIndex->generate($tree, $input_data);
 
-    my (@inputs, $object_workflows, $merge_operations, $refinement_operations, $refiners);
+    my @inputs;
+    my ($object_workflows, $merge_operations, $refinement_operations, $refiners) = ({}, {}, {});
 
     my $objects_by_group = $class->_alignment_objects($tree, $input_data, $merge_group);
     for my $group (keys %$objects_by_group) {
@@ -56,11 +57,13 @@ sub generate {
         @$object_workflows{keys %$next_object_workflows} = values %$next_object_workflows;
         push @inputs, @$next_object_inputs;
 
-        my ($next_merge_operations, $next_merge_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::Merge->generate($tree, $merge_group, $alignment_objects);
-        @$merge_operations{keys %$next_merge_operations} = values %$next_merge_operations;
-        push @inputs, @$next_merge_inputs;
+        my ($next_merge_operation, $next_merge_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::Merge->generate($tree, $group, $alignment_objects);
+        if($next_merge_operation) {
+            $merge_operations->{$group} = $next_merge_operation;
+            push @inputs, @$next_merge_inputs;
+        }
 
-        my ($next_refinement_operations, $next_refinement_inputs, $next_refiners) = Genome::InstrumentData::Composite::Workflow::Generator::Refine->generate($tree, $input_data, $merge_group, $alignment_objects);
+        my ($next_refinement_operations, $next_refinement_inputs, $next_refiners) = Genome::InstrumentData::Composite::Workflow::Generator::Refine->generate($tree, $input_data, $group, $alignment_objects);
         @$refinement_operations{keys %$next_refinement_operations} = values %$next_refinement_operations;
         push @inputs, @$next_refinement_inputs;
         $refiners = $next_refiners;
