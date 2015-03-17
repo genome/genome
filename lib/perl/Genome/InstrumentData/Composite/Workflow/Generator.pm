@@ -46,31 +46,46 @@ sub generate {
 
     my ($index_operations, $index_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::AlignerIndex->generate($tree, $input_data);
 
-    my @alignment_objects = $class->_alignment_objects($tree, $input_data);
+    my (@inputs, $object_workflows, $merge_operations, $refinement_operations, $refiners);
 
-    my ($object_workflows, $object_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::Align->generate( $tree, $input_data, \@alignment_objects);
+    my $objects_by_group = $class->_alignment_objects($tree, $input_data, $merge_group);
+    for my $group (keys %$objects_by_group) {
+        my $alignment_objects = $objects_by_group->{$group};
 
-    my ($merge_operations, $merge_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::Merge->generate($tree, $merge_group, \@alignment_objects);
+        my ($next_object_workflows, $next_object_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::Align->generate( $tree, $input_data, $alignment_objects);
+        @$object_workflows{keys %$next_object_workflows} = values %$next_object_workflows;
+        push @inputs, @$next_object_inputs;
 
-    my ($refinement_operations, $refinement_inputs, $refiners) = Genome::InstrumentData::Composite::Workflow::Generator::Refine->generate($tree, $input_data, $merge_group, \@alignment_objects);
+        my ($next_merge_operations, $next_merge_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::Merge->generate($tree, $merge_group, $alignment_objects);
+        @$merge_operations{keys %$next_merge_operations} = values %$next_merge_operations;
+        push @inputs, @$next_merge_inputs;
 
-    my $inputs = [@$index_inputs, @$object_inputs, @$merge_inputs, @$refinement_inputs];
+        my ($next_refinement_operations, $next_refinement_inputs, $next_refiners) = Genome::InstrumentData::Composite::Workflow::Generator::Refine->generate($tree, $input_data, $merge_group, $alignment_objects);
+        @$refinement_operations{keys %$next_refinement_operations} = values %$next_refinement_operations;
+        push @inputs, @$next_refinement_inputs;
+        $refiners = $next_refiners;
+    }
 
-    return $class->_generate_master_workflow($index_operations, $object_workflows, $merge_operations, $refinement_operations, $inputs, \@alignment_objects, $refiners, $tree->{api_version}, $input_data, $merge_group);
+    push @inputs, @$index_inputs;
+
+    return $class->_generate_master_workflow($index_operations, $object_workflows, $merge_operations, $refinement_operations, \@inputs, $objects_by_group, $refiners, $tree->{api_version}, $input_data, $merge_group);
 }
 
 sub _alignment_objects {
     my $class = shift;
     my $tree = shift;
     my $input_data = shift;
+    my $merge_group = shift;
 
     my @instrument_data = $class->_load_instrument_data($tree, $input_data);
     my @actions = @{$tree->{action}};
     my $read_aligner_name = $actions[0]->{name};
 
-    my @instrument_data_output;
+    my $output_by_group = {};
+
     my $should_segment = $read_aligner_name ne 'imported';
     for my $i (@instrument_data) {
+        my $instrument_data_output = $output_by_group->{ $class->_merge_group_for_alignment_object($merge_group, $i) } ||= [];
         my @params = ($i, $class->_instrument_data_params($i, $input_data));
         my @segments;
         if ($should_segment && $i->isa('Genome::InstrumentData::Imported') && $i->can('get_segments')) {
@@ -79,18 +94,18 @@ sub _alignment_objects {
 
         if(@segments > 0) {
             for my $seg (@segments) {
-                push @instrument_data_output, [
+                push @$instrument_data_output, [
                     @params,
                     instrument_data_segment_type => $seg->{segment_type},
                     instrument_data_segment_id => $seg->{segment_id},
                 ];
             }
         } else {
-            push @instrument_data_output, \@params;
+            push @$instrument_data_output, \@params;
         }
     }
 
-    return @instrument_data_output;
+    return $output_by_group;
 }
 
 sub _load_instrument_data {
@@ -122,7 +137,7 @@ sub _generate_master_workflow {
     my $merge_operations = shift;
     my $refinement_operations = shift;
     my $inputs = shift;
-    my $alignment_objects = shift;
+    my $objects_by_group = shift;
     my $refiners = shift;
     my $api_version = shift;
     my $input_data = shift;
@@ -165,7 +180,7 @@ sub _generate_master_workflow {
             $class->_wire_merge_operation_to_master_workflow($master_workflow, $block_operation, $merge_operation, $refinement_operations);
         }
 
-        $class->_wire_object_workflows_to_merge_operations($master_workflow, $object_workflows, $merge_operations, $alignment_objects, $merge_group);
+        $class->_wire_object_workflows_to_merge_operations($master_workflow, $object_workflows, $merge_operations, $objects_by_group, $merge_group);
     }
 
     if(%$refinement_operations) {
@@ -492,52 +507,53 @@ sub _wire_object_workflows_to_merge_operations {
     my $master_workflow = shift;
     my $object_workflows = shift;
     my $merge_operations = shift;
-    my $alignment_objects = shift;
+    my $objects_by_group = shift;
     my $merge_group = shift;
 
     my %converge_inputs_for_group;
-    for my $o (@$alignment_objects) {
-        my $align_wf = $object_workflows->{$o};
-        my $group = $class->_merge_group_for_alignment_object($merge_group, $o);
+    for my $group (keys %$objects_by_group) {
+        for my $o (@{ $objects_by_group->{$group} }) {
+            my $align_wf = $object_workflows->{$o};
 
-        $converge_inputs_for_group{$group} ||= [];
-
-        push @{ $converge_inputs_for_group{$group} }, @{ $align_wf->operation_type->output_properties };
+            $converge_inputs_for_group{$group} ||= [];
+            push @{ $converge_inputs_for_group{$group} }, @{ $align_wf->operation_type->output_properties };
+        }
     }
 
     my %converge_operation_for_group;
-    for my $o (@$alignment_objects) {
-        my $align_wf = $object_workflows->{$o};
-        my $group = $class->_merge_group_for_alignment_object($merge_group, $o);
-        my $merge_op = $merge_operations->{$group};
+    for my $group (keys %$objects_by_group) {
+        for my $o (@{ $objects_by_group->{$group} }) {
+            my $align_wf = $object_workflows->{$o};
+            my $merge_op = $merge_operations->{$group};
 
-        unless(exists $converge_operation_for_group{$group}) {
-            my $converge_operation = Workflow::Operation->create(
-                name => join('_', 'converge', $group),
-                operation_type => Workflow::OperationType::Converge->create(
-                    input_properties => $converge_inputs_for_group{$group},
-                    output_properties => ['alignment_result_ids'],
-                ),
-            );
+            unless(exists $converge_operation_for_group{$group}) {
+                my $converge_operation = Workflow::Operation->create(
+                    name => join('_', 'converge', $group),
+                    operation_type => Workflow::OperationType::Converge->create(
+                        input_properties => $converge_inputs_for_group{$group},
+                        output_properties => ['alignment_result_ids'],
+                    ),
+                );
 
-            $converge_operation->workflow_model($master_workflow);
-            $class->_add_link_to_workflow($master_workflow,
-                left_workflow_operation_id => $converge_operation->id,
-                left_property => 'alignment_result_ids',
-                right_workflow_operation_id => $merge_op->id,
-                right_property => 'alignment_result_ids',
-            );
+                $converge_operation->workflow_model($master_workflow);
+                $class->_add_link_to_workflow($master_workflow,
+                    left_workflow_operation_id => $converge_operation->id,
+                    left_property => 'alignment_result_ids',
+                    right_workflow_operation_id => $merge_op->id,
+                    right_property => 'alignment_result_ids',
+                );
 
-            $converge_operation_for_group{$group} = $converge_operation;
-        }
+                $converge_operation_for_group{$group} = $converge_operation;
+            }
 
-        for my $property (@{ $align_wf->operation_type->output_properties }) {
-            $class->_add_link_to_workflow($master_workflow,
-                left_workflow_operation_id => $align_wf->id,
-                left_property => $property,
-                right_workflow_operation_id => $converge_operation_for_group{$group}->id,
-                right_property => $property,
-            );
+            for my $property (@{ $align_wf->operation_type->output_properties }) {
+                $class->_add_link_to_workflow($master_workflow,
+                    left_workflow_operation_id => $align_wf->id,
+                    left_property => $property,
+                    right_workflow_operation_id => $converge_operation_for_group{$group}->id,
+                    right_property => $property,
+                );
+            }
         }
     }
 
