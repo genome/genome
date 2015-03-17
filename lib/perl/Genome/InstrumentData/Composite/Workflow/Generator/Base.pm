@@ -140,7 +140,7 @@ sub _merge_group_for_alignment_object {
         #accept either the output of _alignment_objects or a straight instrument_data
         $alignment_object = $alignment_object->[0];
     }
-    $DB::single = 1;
+
     my $group_obj = $alignment_object->$merge_group;
     unless($group_obj) {
         die $class->error_message('Could not determine ' . $merge_group . ' for data ' . $alignment_object->[0]->__display_name__);
