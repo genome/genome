@@ -1649,7 +1649,7 @@ sub revivified_alignment_bam_file_paths {
     my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
         merged_bam          => $merged_bam,
         per_lane_bam        => $revivified_bam,
-        instrument_data_id  => $self->instrument_data_id,
+        instrument_data_id  => $self->read_and_platform_group_tag_id,
         samtools_version    => $self->samtools_version,
         picard_version      => $self->picard_version,
         bam_header          => $self->bam_header_path,
