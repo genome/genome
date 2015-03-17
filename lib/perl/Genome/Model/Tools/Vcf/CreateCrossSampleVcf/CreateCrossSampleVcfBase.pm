@@ -136,6 +136,12 @@ sub _create_process {
         joinx_version => $self->joinx_version
     );
 
+    # Commit here so that the Process is in the DB, since other processes
+    # will be creating SRs and need to have a requestor.
+    # This will be unneeded once ccsvcf command runs its Process in the
+    # more usual way and does not block.
+    UR::Context->commit();
+
     $self->process($process);
 }
 
