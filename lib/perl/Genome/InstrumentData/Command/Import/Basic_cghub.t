@@ -26,12 +26,12 @@ my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_A
 ok($analysis_project, 'create analysis project');
 
 # Create library
-use_ok('Genome::Sample::Command::Import') or die;
-my $sample_importer = Genome::Sample::Command::Import::Tcga->execute(
+my $sample = Genome::Sample->create(
     name => 'TCGA-AB-2804-03B-01W-0728-08',
 );
-my $library = $sample_importer->_library;
-ok($library, 'created library') or die;
+ok($sample, 'define sample');
+my $library = Genome::Library->__define__(name => $sample->name.'-extlibs', sample => $sample);
+ok($library, 'define library library');
 
 # Local Bam
 my $cmd = Genome::InstrumentData::Command::Import::Basic->execute(
