@@ -18,8 +18,8 @@ SKIP: {
          1;
     #my $model = '39f7c31b4e28432f8cbee18c8a391d06'; # GRCh37 only align (Mix 2)
     #my $model = 'f8e2cf3aa1fe4e6da97370d8d7dd4f5a'; # GRCh37+ERCC align (Mix 2)
-    #my $model = '46fccb0ce8334d06bb09a26dd9903f9f'; # Heather's Model (1st)
-    my $model = '576d3c68ae574779b92052daead2fa2d'; # Heather's Model (2nd)
+    #my $model = '46fccb0ce8334d06bb09a26dd9903f9f'; # Heather's 1st Model [NO ERCC]
+    my $model = '576d3c68ae574779b92052daead2fa2d'; # Heather's 2nd Model [Mix1]
     my $ercc_dir = Path::Class::Dir->new(
         '/gscmnt/gc13001/info/',
         'model_data/jwalker_scratch/ERCC/remap'
