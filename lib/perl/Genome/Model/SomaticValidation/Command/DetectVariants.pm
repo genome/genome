@@ -35,7 +35,7 @@ class Genome::Model::SomaticValidation::Command::DetectVariants{
             default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         },
         lsf_resource => {
-            default => "-R 'select[mem>600] rusage[mem=600]' -M 600000",
+            default => "-R 'select[tmp>4000 && mem>600] rusage[tmp=4000,mem=600]' -M 600000",
         },
     ],
     #specific things used by the final process-validation script
