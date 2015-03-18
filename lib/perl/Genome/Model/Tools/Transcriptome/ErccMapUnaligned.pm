@@ -112,11 +112,9 @@ sub get_bam_from_model {
     my $bam = $build->merged_alignment_result->bam_path
       or die "Didn't find a bam file associated with build ",
              $self->model, "\n";
-    unless (-e $bam) {
-        die "Didn't find bam file: '$bam' on file system!\n";
-    }
+
     $self->status_message("Using BAM: $bam");
-    return $self->bam_file($bam);
+    return $bam;
 }
 
 sub setup_outputs {
@@ -174,19 +172,15 @@ sub get_bam {
         die "Specify only ONE '--model' or '--bam-file', NOT both!\n";
     }
 
-    my $bam;
-    if ($self->bam_file) {
-        $bam = $self->bam_file;
-    }
-    else {
-        $bam = $self->get_bam_from_model();
+    unless ($self->bam_file) {
+        $self->bam_file($self->get_bam_from_model());
     }
 
-    unless (-e $bam) {
-        die "Couldn't find bam: '$bam' on file system!\n";
+    unless (-e $self->bam_file) {
+        die "Couldn't find bam: '$self->bam_file' on file system!\n";
     }
 
-    return Path::Class::File->new($bam);
+    return Path::Class::File->new($self->bam_file);
 }
 
 sub _bin_dir {
