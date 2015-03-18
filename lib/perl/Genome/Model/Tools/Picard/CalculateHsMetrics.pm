@@ -71,7 +71,7 @@ sub _jar_name {
 }
 
 sub _java_class {
-    return qw(net sf picard analysis directed CalculateHsMetrics);
+    return qw(picard analysis directed CalculateHsMetrics);
 }
 
 sub _shellcmd_extra_params {

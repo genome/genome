@@ -85,7 +85,7 @@ sub _jar_name {
 }
 
 sub _java_class {
-    return qw(net sf picard analysis CollectGcBiasMetrics);
+    return qw(picard analysis CollectGcBiasMetrics);
 }
 
 1;

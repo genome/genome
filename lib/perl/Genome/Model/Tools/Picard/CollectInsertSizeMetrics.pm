@@ -67,7 +67,7 @@ sub _jar_name {
 }
 
 sub _java_class {
-    return qw(net sf picard analysis CollectInsertSizeMetrics);
+    return qw(picard analysis CollectInsertSizeMetrics);
 }
 
 sub _metric_header_as_key {

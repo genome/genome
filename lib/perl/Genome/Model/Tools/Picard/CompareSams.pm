@@ -41,8 +41,8 @@ sub _jar_name {
 
 sub _java_class {
     my $self = shift;
-    return qw(net sf samtools apps CompareSAMs) if $self->use_version eq '1.17';
-    return qw(net sf picard sam CompareSAMs);
+    return qw(samtools apps CompareSAMs) if $self->use_version eq '1.17';
+    return qw(picard sam CompareSAMs);
 }
 
 sub _validate_params {

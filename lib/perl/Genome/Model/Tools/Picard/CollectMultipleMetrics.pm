@@ -66,7 +66,7 @@ sub _jar_name {
 }
 
 sub _java_class {
-    return qw(net sf picard analysis CollectMultipleMetrics);
+    return qw(picard analysis CollectMultipleMetrics);
 }
 
 sub _cmdline_args {

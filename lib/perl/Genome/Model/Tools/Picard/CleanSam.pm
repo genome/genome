@@ -40,7 +40,7 @@ sub _jar_name {
 }
 
 sub _java_class {
-    return qw(net sf picard sam CleanSam);
+    return qw(picard sam CleanSam);
 }
 
 sub _validate_params {

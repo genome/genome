@@ -70,7 +70,7 @@ sub _jar_name {
 }
 
 sub _java_class {
-    return qw(net sf picard sam EstimateLibraryComplexity);
+    return qw(picard sam EstimateLibraryComplexity);
 }
 
 sub _shellcmd_extra_params {

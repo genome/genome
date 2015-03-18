@@ -81,7 +81,7 @@ sub _jar_name {
 }
 
 sub _java_class {
-    return qw(net sf picard analysis CollectAlignmentSummaryMetrics);
+    return qw(picard analysis CollectAlignmentSummaryMetrics);
 }
 
 sub _metric_header_as_key {

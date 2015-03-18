@@ -57,7 +57,7 @@ sub _jar_name {
 }
 
 sub _java_class {
-    return qw(net sf picard sam SortSam);
+    return qw(picard sam SortSam);
 }
 
 sub _shellcmd_extra_params {
