@@ -9,9 +9,9 @@ use Path::Class qw();
 class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
     is => 'Command::V2',
     has_input => [
-        model => {
-            is => 'Text',
-            doc => 'A RNASeq model that has ERCC transcripts spiked in.',
+        build => {
+            is => 'Genome::Model::Build::RnaSeq',
+            doc => 'A RNASeq build that has ERCC transcripts spiked in.',
             is_optional => '1,',
         },
         bam_file => {
@@ -54,13 +54,13 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
         pdf_file => {
             is => 'FilePath',
             doc => 'The output PDF with histograms and linearity plot.',
-            example_values => ['<model-id>.ERCC.QC.pdf', '<id>.bam.ERCC.QC.pdf'],
+            example_values => ['<build-id>.ERCC.QC.pdf', '<id>.bam.ERCC.QC.pdf'],
             is_optional => '1',
         },
         raw_stats_file => {
             is => 'FilePath',
             doc => 'The raw data (in TSV format) used to create the pdf file.',
-            example_values => ['<model-id>.ERCC.QC.tsv', '<id>.bam.ERCC.QC.tsv'],
+            example_values => ['<build-id>.ERCC.QC.tsv', '<id>.bam.ERCC.QC.tsv'],
             is_optional => '1',
         }
     ],
@@ -95,20 +95,28 @@ sub execute {
     return 1;
 }
 
-sub get_bam_from_model {
+sub get_bam_from_build {
     my $self = shift;
-    my $model = Genome::Model->get(id => $self->model);
 
-    my $build = $model->last_succeeded_build;
+    my $build = $self->build;
     unless ($build) {
-        die "Couldn't find a recent successful build for model: ",
-            $self->model, "\n"
+        my $msg = "Couldn't find build: " . $self->build->__display_name__;
+        die $self->error_message($msg);
     }
     $self->status_message("Using build: " . $build->id);
 
     my $bam = $build->merged_alignment_result->bam_path
-      or die "Didn't find a bam file associated with build ",
-             $self->model, "\n";
+      or die $self->error_message(
+          "Didn't find a bam file associated with build %s",
+          $self->build->__display_name__
+      );
+    $bam = Path::Class::File->new($bam);
+    unless (-e $bam) {
+        my $msg = "Didn't find bam file: '$bam' on file system!";
+        die $self->error_message($msg);
+    }
+    $self->status_message("Using BAM: $bam");
+    $self->bam_file("$bam");
 
     $self->status_message("Using BAM: $bam");
     return $bam;
@@ -121,56 +129,56 @@ sub setup_outputs {
     $self->setup_raw_stats_file($dir);
 }
 
-sub setup_pdf_file {
-    my ($self, $dir) = @_;
+sub setup_output_file {
+    my ($self, $dir, $file_type, $attr_name) = @_;
 
     my $name;
-    if ($self->model) {
-        $name = join('.', $self->model, 'ERCC.QC', 'pdf');
+    if ($self->build) {
+        $name = join('.', $self->build->id, 'ERCC.QC', $file_type);
     }
     else {
         my $bam = Path::Class::File->new($self->bam_file);
         my $basename = $bam->basename;
-        $name = join('.', $basename, 'ERCC.QC', 'pdf');
+        $name = join('.', $basename, 'ERCC.QC', $file_type);
     }
 
     my $f = $dir->file($name);
-    $self->pdf_file("$f");
+    $self->$attr_name("$f");
     return $f;
+}
+
+sub setup_pdf_file {
+    my ($self, $dir) = @_;
+    return $self->setup_output_file($dir, 'pdf', 'pdf_file');
 }
 
 sub setup_raw_stats_file {
     my ($self, $dir) = @_;
-
-    my $name;
-    if ($self->model) {
-        $name = join('.', $self->model, 'ERCC.QC', 'tsv');
-    }
-    else {
-        my $bam = Path::Class::File->new($self->bam_file);
-        my $basename = $bam->basename;
-        $name = join('.', $basename, 'ERCC.QC', 'tsv');
-    }
-
-    my $f = $dir->file($name);
-    $self->raw_stats_file("$f");
-    return $f;
+    return $self->setup_output_file($dir, 'tsv', 'raw_stats_file');
 }
 
 sub get_bam {
     my $self = shift;
 
-    unless ($self->bam_file || $self->model) {
-        die "Please specify either a model via '--model' or ",
-            "bam file via '--bam_file' to proceed!\n";
+    unless ($self->bam_file || $self->build) {
+        die $self->error_message(
+            "Please specify either a build via '--build' or "
+            . "bam file via '--bam_file' to proceed!"
+        );
     }
 
-    if ($self->bam_file && $self->model) {
-        die "Specify only ONE '--model' or '--bam-file', NOT both!\n";
+    if ($self->bam_file && $self->build) {
+        die $self->error_message(
+            "Specify only ONE '--build' or '--bam-file', NOT both!"
+        );
     }
 
-    unless ($self->bam_file) {
-        $self->bam_file($self->get_bam_from_model());
+    my $bam;
+    if ($self->bam_file) {
+        $bam = Path::Class::File->new($self->bam_file);
+    }
+    else {
+        $bam = $self->get_bam_from_build();
     }
 
     unless (-e $self->bam_file) {
