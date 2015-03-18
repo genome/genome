@@ -36,7 +36,6 @@ sub run_analysis {
     my ($model, $ercc_dir) = @_;
     my $tool = Genome::Model::Tools::Transcriptome::ErccMapUnaligned->create(
         build           => $model,
-        ercc_fasta_file => $ercc_dir->file('ERCC92.fa')->stringify,
         ercc_spike_in_file =>
           $ercc_dir->file('ERCC_Controls_Analysis.txt')->stringify,
     );
