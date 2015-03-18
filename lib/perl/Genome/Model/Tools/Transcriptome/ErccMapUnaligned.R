@@ -81,8 +81,8 @@ make.MixFrame <- function(mixType, df) {
             FUN=sum)
 
   colnames(mix)[3] <- "AlignmentCounts"
-  mix$Probability <- mix[,mixType] / sum(mix[,mixType])
-  mix$ExpectedCounts <- mix$Probability * sum(mix$AlignmentCounts)
+  mix$ExpectedMixRatios <- mix[,mixType] / sum(mix[,mixType])
+  mix$ExpectedCounts <- mix$ExpectedMixRatios * sum(mix$AlignmentCounts)
   colnames(mix)[2] <- paste("Concentration", mixType, sep="")
 
   return(mix)
@@ -122,7 +122,7 @@ test.mixture <- function(Mix1DF, Mix2DF) {
   p_value_threshold <- 0.05
 
 #  cat(paste("Running Chi-squared test for Mix 1 usage\n"))
-  test.mix1 <- chisq.test(Mix1DF$AlignmentCounts/10000, p=Mix1DF$Probability)
+  test.mix1 <- chisq.test(Mix1DF$AlignmentCounts/10000, p=Mix1DF$ExpectedMixRatios)
 #  print(test.mix1)
 
   if (test.mix1[["p.value"]] < p_value_threshold) {
@@ -130,7 +130,7 @@ test.mixture <- function(Mix1DF, Mix2DF) {
   }
 
 #  cat(paste("Running Chi-squared test for Mix 2 usage\n"))
-  test.mix2 <- chisq.test(Mix2DF$AlignmentCounts/10000, p=Mix2DF$Probability)
+  test.mix2 <- chisq.test(Mix2DF$AlignmentCounts/10000, p=Mix2DF$ExpectedMixRatios)
 #  print(test.mix2)
 
   if (test.mix2[["p.value"]] < p_value_threshold) {
