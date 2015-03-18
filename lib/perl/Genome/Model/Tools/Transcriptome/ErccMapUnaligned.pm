@@ -77,7 +77,7 @@ EOS
 
 sub execute {
     my $self = shift;
-    
+
     my $input_bam = $self->get_bam();
     $self->setup_outputs();
 
@@ -379,7 +379,7 @@ sub generate_idxstats {
 
     my $cmd = join(' ',
         $self->samtools, 'idxstats',
-        "$bam", 
+        "$bam",
         '>', "$samtools_idxstats_path"
     );
 
