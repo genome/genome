@@ -35,7 +35,6 @@ EOS
 }
 
 sub _jar_name {
-    my $self = shift;
     return 'BuildBamIndex.jar';
 }
 
