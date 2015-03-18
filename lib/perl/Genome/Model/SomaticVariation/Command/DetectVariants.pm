@@ -22,6 +22,9 @@ class Genome::Model::SomaticVariation::Command::DetectVariants{
         lsf_queue => {
             default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         },
+        lsf_resource => {
+            default => "-R 'select[mem>600] rusage[mem=600]' -M 600000",
+        },
     ],
 };
 
