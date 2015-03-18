@@ -9,24 +9,11 @@ class Genome::Process::WithVcf {
     is => 'Genome::Process',
 };
 
-sub _get_handler_for_file {
+sub special_compare_functions {
     my $self = shift;
-    my $file = shift;
-    if (is_vcf($file)) {
-        return "compare_vcf";
-    }
-
-    return $self->SUPER::_get_handler_for_file($file);
-}
-
-sub compare_vcf {
-    my ($self, $first_file, $second_file) = @_;
-    return Genome::Utility::Vcf::compare_vcf($first_file, $second_file);
-}
-
-sub is_vcf {
-   my $file = shift;
-   return $file =~ m/\.vcf$/;
+    my @functions = $self->SUPER::special_compare_functions(@_);
+    push @functions, qr(\.vcf$), sub {my ($a, $b) = @_; Genome::Utility::Vcf::compare_vcf($a, $b)};
+    return @functions;
 }
 
 1;

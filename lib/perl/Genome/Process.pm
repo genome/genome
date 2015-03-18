@@ -13,7 +13,6 @@ use List::MoreUtils qw(uniq);
 use Genome::Disk::Group::Validate::GenomeDiskGroups;
 use Cwd qw(abs_path);
 use File::DirCompare;
-use File::Compare;
 
 class Genome::Process {
     is => [
@@ -100,6 +99,11 @@ class Genome::Process {
         }
 
     ],
+    has_transient_optional => {
+        comparer => {
+            is => 'Genome::Utility::File::Comparer',
+        },
+    },
     doc => 'A base class to manage meta-data related to running a process (workflow)',
 };
 
@@ -714,7 +718,7 @@ sub _compare_output_directories {
                     my %additional_diffs = $self->_compare_output_directories($target, $other_target, $other_process);
                     %diffs = (%diffs, %additional_diffs);
                 }
-                elsif (-f $target && -f $other_target && !$self->_compare_files($target, $other_target)) {
+                elsif (-f $target && -f $other_target && !$self->comparer->compare($target, $other_target)) {
                     #Files are in fact the same - do nothing
                 }
                 else {
@@ -729,24 +733,20 @@ sub _compare_output_directories {
     return %diffs;
 }
 
-sub _compare_files {
-    my ($self, $target, $other_target) = @_;
-    my $handler = $self->_get_handler_for_file($target);
-    unless ($handler) {
-        die $self->error_message("No handler found for comparing file $target");
-    }
-    return $self->$handler($target, $other_target);
-}
-
-sub _basic_compare {
-    my ($self, $target, $other_target) = @_;
-    return compare($target, $other_target);
-}
-
-sub _get_handler_for_file {
+sub comparer {
     my $self = shift;
-    my $file = shift;
-    return "_basic_compare";
+    unless (defined $self->__comparer) {
+        my $comparer = Genome::Utility::File::Comparer->create(
+            special_compare_functions => [$self->special_compare_functions],
+        );
+        $self->__comparer($comparer);
+    }
+    return $self->__comparer;
+}
+
+sub special_compare_functions {
+    my $self = shift;
+    return ();
 }
 
 1;
