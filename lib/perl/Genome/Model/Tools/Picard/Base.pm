@@ -145,7 +145,7 @@ sub build_cmdline_list {
 }
 
 sub build_cmdline_string {
-    my ($self, $cmd) = shift;
+    my ($self, $cmd) = @_;
 
     my $java_vm_cmd = join(' ', $self->build_cmdline_list);
 
