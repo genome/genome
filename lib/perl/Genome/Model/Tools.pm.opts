@@ -473,6 +473,30 @@ $Genome::Model::Tools::OPTS_SPEC = [
   ],
   '>transcriptome',
   [
+    '>ercc-map-unaligned',
+    [
+      'bam-file=s',
+      'files',
+      'ercc-fasta-file=s',
+      'files',
+      'ercc-spike-in-file=s',
+      'files',
+      'ercc-spike-in-mix=s',
+      [
+        '1',
+        '2'
+      ],
+      'pdf-file=s',
+      'files',
+      'samtools-version=s',
+      'files',
+      'samtools-max-mem=s',
+      undef,
+      'bowtie2-version=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>splice-junction-summary',
     [
       'output-directory=s',
@@ -21778,6 +21802,23 @@ $Genome::Model::Tools::OPTS_SPEC = [
       'header!',
       undef,
       'output-zeros!',
+      undef,
+      'help!',
+      undef
+    ],
+    '>methylation-ratio',
+    [
+      'bam-file=s',
+      'files',
+      'output-directory=s',
+      'files',
+      'output-file=s',
+      'files',
+      'reference=s',
+      'files',
+      'threads=s',
+      'files',
+      'debug!',
       undef,
       'help!',
       undef
