@@ -15,7 +15,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalseIndel {
             default => '4',
             is_optional => 1,
             doc => 'Minimum length of a homopolymer to auto-filter small (1-2 bp) indels',
-       },       
+       },
        ## CAPTURE FILTER OPTIONS ##
        'min_strandedness' => {
             type => 'String',
@@ -79,7 +79,7 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalseIndel {
             type => 'String',
             is_optional => 1,
             doc => 'Minimum average aligned read length of variant-supporting reads [recommended: 75]',
-       },       
+       },
        bam_readcount_version => {
            is => 'Text',
            is_optional => 1,
@@ -90,10 +90,10 @@ class Genome::Model::Tools::DetectVariants2::Filter::FalseIndel {
            default => 15,
            doc => 'The minimum base quality to require for bam-readcount',
        },
-       
+
        ## WGS FILTER OPTIONS ##
-       
-       
+
+
        ## SHARED OPTIONS ##
        verbose => {
            is => 'Boolean',
@@ -120,8 +120,8 @@ sub help_synopsis {
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
 This module uses detailed readcount information from bam-readcounts to filter likely false positives
 For questions, e-mail Dan Koboldt (dkoboldt\@genome.wustl.edu) or Dave Larson (dlarson\@genome.wustl.edu)
 EOS
@@ -141,12 +141,12 @@ sub _filter_variants {
     my $min_coverage = $self->min_coverage;
 
     ## Determine the strandedness and read position thresholds ##
-    
+
     my $min_read_pos = $self->min_read_pos;
     my $max_read_pos = 1 - $min_read_pos;
     my $min_var_freq = $self->min_var_freq;
     my $min_var_count = $self->min_var_count;
-    
+
     my $min_strandedness = $self->min_strandedness;
     my $max_strandedness = 1 - $min_strandedness;
 
@@ -156,7 +156,7 @@ sub _filter_variants {
     my $min_var_dist_3 = $self->min_var_dist_3;
 
     ## Reset counters ##
-    
+
     my %stats = (
         num_fail_homopolymer => 0,
         num_got_readcounts => 0,
@@ -239,12 +239,12 @@ sub _filter_variants {
 
     ## Reopen file for parsing ##
     $input_fh = Genome::Sys->open_file_for_reading($input_file);
-    
+
     my $readcount_fh = Genome::Sys->open_file_for_reading($readcount_file);
-    
+
     ## Parse the variants file ##
     my $lineCounter = 0;
-    
+
     while (my $line = <$input_fh>) {
         chomp $line;
         $lineCounter++;
@@ -265,7 +265,7 @@ sub _filter_variants {
         if($indel_size > 0) {
             if($indel_size <= 2 && fails_homopolymer_check($self, $self->reference_sequence_input, $min_homopolymer, $chrom, $chr_start, $chr_stop, $ref, $var)) {
                 $stats{'num_fail_homopolymer'}++;
-                print $lq_fh join("\t", $line, "Homopolymer") . "\n";    
+                print $lq_fh join("\t", $line, "Homopolymer") . "\n";
             }
 
             # Skip MT chromosome sites,w hich almost always pass ##
@@ -346,7 +346,7 @@ sub _filter_variants {
                         ## FAILURE 2b : Variant allele count does not meet minimum ##
                         elsif($var_count < $min_var_count) {
                             $FilterResult = "VarCount:$var_count<$min_var_count";
-                            $stats{'num_fail_varcount'}++;                         
+                            $stats{'num_fail_varcount'}++;
                         }
 
                         ## FAILURE 2c : Variant allele frequency does not meet minimum ##
@@ -363,7 +363,7 @@ sub _filter_variants {
                         ## FAILURE 3B: Var MMQS ##
                         elsif($self->max_var_mmqs && $var_mmqs > $self->max_var_mmqs) {
                             $FilterResult = "VarMMQS:$var_mmqs\n" if ($self->verbose);
-                            $stats{'num_fail_var_mmqs'}++;					
+                            $stats{'num_fail_var_mmqs'}++;
                         }
 
                         ## FAILURE 4: Mapping quality difference exceeds allowable maximum ##
@@ -383,7 +383,7 @@ sub _filter_variants {
                             $stats{'num_fail_var_readlen'}++;
                         }
                         ## SUCCESS: Pass Filter ##
-                        else {                         
+                        else {
                             $FilterResult = "Pass";
                         }
 
@@ -393,7 +393,7 @@ sub _filter_variants {
                             print $hq_fh join("\t", $line, $readcount_info) . "\n";
                         } else {
                             $stats{'num_fail_filter'}++;
-                            print $lq_fh join("\t", $line, $readcount_info, $FilterResult) . "\n";                      
+                            print $lq_fh join("\t", $line, $readcount_info, $FilterResult) . "\n";
                         }
 
                         print join("\t", $line, $readcount_info) . "\n" if($self->verbose);
@@ -421,11 +421,11 @@ sub _filter_variants {
                     }
 
                     print $hq_fh join("\t", $line, "\tNoReadcount_autopass") . "\n";
-                }              
+                }
             }
         } else {
             print $lq_fh "$line\tno_allele\n";
-            print "$line\tFailure: Unable to determine allele!\n" if($self->verbose);        
+            print "$line\tFailure: Unable to determine allele!\n" if($self->verbose);
             $stats{'num_no_allele'}++;
         }
     }
@@ -453,7 +453,7 @@ sub _filter_variants {
 
     print "\t" . $stats{'num_fail_mmqs'} . " had mismatch qualsum difference > $max_mm_qualsum_diff\n";
     print "\t" . $stats{'num_fail_mapqual'} . " had mapping quality difference > $max_mapqual_diff\n";
-    print "\t" . $stats{'num_fail_readlen'} . " had read length difference > $max_readlen_diff\n";  
+    print "\t" . $stats{'num_fail_readlen'} . " had read length difference > $max_readlen_diff\n";
     print "\t" . $stats{'num_fail_dist3'} . " had var_distance_to_3' < $min_var_dist_3\n";
 
     return 1;
@@ -462,7 +462,7 @@ sub _filter_variants {
 
 sub fails_homopolymer_check {
     my ($self, $reference, $min_homopolymer, $chrom, $chr_start, $chr_stop, $ref, $var) = @_;
-    
+
     ## Auto-pass large indels ##
     my $indel_size = length($ref);
     $indel_size = length($var) if(length($var) > $indel_size);
@@ -500,7 +500,7 @@ sub read_counts_for_indel {
 
     ## Determine indel type and size ##
     my $indel_type = my $indel_size = "";
-    
+
     if($ref eq "0" || $ref eq "-") {
         $indel_type = "INS";
         $indel_size = length($var);
@@ -524,7 +524,7 @@ sub read_counts_for_indel {
     my @lines = split(/\n/, $readcount_lines);
 
     my %readcounts_by_position = ();
-    
+
     foreach my $line (@lines) {
         my @lineContents = split(/\t/, $line);
         my $numContents = @lineContents;
@@ -566,7 +566,7 @@ sub read_counts_for_indel {
         my $var_result = "";
         for(my $colCounter = 2; $colCounter < $numContents; $colCounter++) { ## Note, allele included ##
             $var_result .= "\t" if($var_result);
-            $var_result .= $lineContents[$colCounter];       
+            $var_result .= $lineContents[$colCounter];
         }
 
         ## At the same position, get the readcounts for the reference base ##
@@ -619,13 +619,13 @@ sub read_counts_by_type_size {
         if(length($this_allele) > 1) {
             my $this_indel_type = my $this_indel_size = 0;
 
-            ## Determine indel type and size ##               
+            ## Determine indel type and size ##
             if(substr($this_allele, 0, 1) eq '+') {
                 $this_indel_type = "INS";
                 $this_indel_size = length($this_allele) - 1;
             } elsif(substr($this_allele, 0, 1) eq '-') {
                 $this_indel_type = "DEL";
-                $this_indel_size = length($this_allele) - 1;                
+                $this_indel_size = length($this_allele) - 1;
             }
 
             ## Try to match indel type and size ##
