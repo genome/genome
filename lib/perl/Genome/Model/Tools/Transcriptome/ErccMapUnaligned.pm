@@ -181,8 +181,8 @@ sub get_bam {
         $bam = $self->get_bam_from_build();
     }
 
-    unless (-e $self->bam_file) {
-        die "Couldn't find bam: '$self->bam_file' on file system!\n";
+    unless (-e $bam) {
+        die $self->error_message("Couldn't find bam: '$bam' on file system!");
     }
 
     return Path::Class::File->new($self->bam_file);
@@ -275,8 +275,9 @@ sub create_ercc_bowtie_index {
     my $search_pattern = $index_dir->file('ERCC.*');
     my @index_files = glob("$search_pattern");
     unless (@index_files == 6) {
-        die "[err] Didn't create the proper bowtie2 index file set in ",
-          "$index_dir !\n";
+        my $msg = "Didn't create the proper bowtie2 index file set in "
+                  .  "$index_dir !\n";
+        die $self->error_message($msg);
     }
 
     return $index_dir->file('ERCC');
@@ -343,10 +344,14 @@ sub generate_remapped_bam {
     );
 
     $stream->execute
-      or die "[err] Trouble executing remapped bam stream command!\n";
+      or die $self->error_message(
+           "Trouble executing remapped bam stream command!"
+       );
 
     unless (-e $remapped_bam_path) {
-        die "[err] Couldn't find the remapped bam: $remapped_bam_path \n!";
+        die $self->error_message(
+            "Couldn't find the remapped bam: $remapped_bam_path!"
+        );
     }
 
     return $remapped_bam_path;
@@ -419,7 +424,7 @@ sub generate_tsvfile {
     for my $chr (keys %{$idxstats}) {
         my $ercc_data = $ercc_control{$chr};
         unless ($ercc_data) {
-            die('Missing chromosome: '. $chr);
+            die $self->error_messasge('Missing chromosome: '. $chr);
         }
         my $mix1_concentration = $ercc_data->{'concentration in Mix 1 (attomoles/ul)'};
         my $mix2_concentration = $ercc_data->{'concentration in Mix 2 (attomoles/ul)'};
