@@ -25,7 +25,15 @@ class Genome::Qc::Tool {
 
 sub cmd_line {
     my $self = shift;
-    die $self->error_message("Abstract method run must be overriden by subclass");
+    my $cmd = $self->gmt_class->create($self->gmt_params);
+    return $cmd->build_cmdline_list;
+}
+
+sub output_file {
+    my $self = shift;
+    my $output_file_accessor = $self->output_file_accessor;
+    my %params = %{$self->gmt_params};
+    return $params{$output_file_accessor};
 }
 
 sub supports_streaming {
@@ -38,9 +46,9 @@ sub get_metrics {
     die $self->error_message("Abstract method get_metrics must be overridden by subclass");
 }
 
+# Overwrite this in subclass to return the gmt tool parameter name for the output file
 sub output_file_accessor {
     return undef;
 }
 
 1;
-
