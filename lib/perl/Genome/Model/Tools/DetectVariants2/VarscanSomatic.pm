@@ -16,7 +16,7 @@ class Genome::Model::Tools::DetectVariants2::VarscanSomatic {
     ],
     has_param => [
         lsf_resource => {
-            default => "-R 'select[ncpus>=3] span[hosts=1] rusage[mem=16000]' -M 1610612736 -n 3",
+            default => "-R 'select[ncpus>=3] span[hosts=1] rusage[mem=16000]' -M 16000000 -n 3",
         },
     ],
 };
