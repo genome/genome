@@ -273,7 +273,6 @@ sub create {
                     die $self->error_message("Fail to run flagstat on $bam_path");
                 }
             }
-            $alignment->_reallocate_disk_allocation;
             $self->_remove_per_lane_bam_post_commit($bam_path, $alignment);
         }
     }
