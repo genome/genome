@@ -110,13 +110,6 @@ sub get_bam_from_build {
           "Didn't find a bam file associated with build %s",
           $self->build->__display_name__
       );
-    $bam = Path::Class::File->new($bam);
-    unless (-e $bam) {
-        my $msg = "Didn't find bam file: '$bam' on file system!";
-        die $self->error_message($msg);
-    }
-    $self->status_message("Using BAM: $bam");
-    $self->bam_file("$bam");
 
     $self->status_message("Using BAM: $bam");
     return $bam;
@@ -174,14 +167,12 @@ sub get_bam {
     }
 
     my $bam;
-    if ($self->bam_file) {
-        $bam = Path::Class::File->new($self->bam_file);
-    }
-    else {
-        $bam = $self->get_bam_from_build();
+
+    unless ($self->bam_file) {
+        $self->bam_file($self->get_bam_from_build());
     }
 
-    unless (-e $bam) {
+    unless (-e $self->bam_file) {
         die $self->error_message("Couldn't find bam: '$bam' on file system!");
     }
 
