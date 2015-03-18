@@ -90,6 +90,18 @@ sub get_max_filehandles_param {
 sub execute {
     my $self = shift;
 
+    my $dedup_cmd = $self->build_cmdline_string;
+    $self->run_java_vm(
+        cmd => $dedup_cmd,
+        input_files => [$self->input_file],
+        output_files => [$self->output_file, $self->metrics_file],
+        skip_if_output_is_present => 0,
+    );
+    return 1;
+}
+
+sub build_cmdline_string {
+    my ($self, $cmd) = @_;
 
     my $dedup_cmd = $self->picard_path .'/MarkDuplicates.jar net.sf.picard.sam.MarkDuplicates';
     if ($self->remove_duplicates) {
@@ -121,15 +133,11 @@ sub execute {
         }
     }
     $dedup_cmd .= ' ' . $self->get_max_filehandles_param;
+}
 
-
-    $self->run_java_vm(
-        cmd => $dedup_cmd,
-        input_files => [$self->input_file],
-        output_files => [$self->output_file, $self->metrics_file],
-        skip_if_output_is_present => 0,
-    );
-    return 1;
+sub build_cmdline_list {
+    my $self = shift;
+    return split(' ', $self->_java_cmdline($self->build_cmdline_string));
 }
 
 
