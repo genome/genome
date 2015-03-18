@@ -39,10 +39,10 @@ sub _jar_name {
     return 'CompareSAMs.jar';
 }
 
-sub _java_class_name {
+sub _java_class {
     my $self = shift;
-    return 'net.sf.samtools.apps.CompareSAMs' if $self->use_version eq '1.17';
-    return 'net.sf.picard.sam.CompareSAMs';
+    return qw(net sf samtools apps CompareSAMs) if $self->use_version eq '1.17';
+    return qw(net sf picard sam CompareSAMs);
 }
 
 sub _validate_params {

@@ -22,9 +22,15 @@ sub _jar_path {
     return File::Spec->catfile($self->picard_path, $self->_jar_name);
 }
 
-# java class name within the jar to run (e.g., 'net.sf.picard.sam.CleanSam')
+# Java class as an array (e.g., qw(picard sam SortSam))
+sub _java_class {
+    confess "sub _java_class must be overridden in child class";
+}
+
+# Java class name within the jar to run (e.g., 'net.sf.picard.sam.CleanSam')
 sub _java_class_name {
-    confess "sub _java_class_name must be overridden in child class";
+    my $self = shift;
+    return join '.', $self->_java_class;
 }
 
 # picard params should be 'inputs' and also have picard_param_name defined

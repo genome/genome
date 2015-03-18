@@ -66,8 +66,8 @@ sub _jar_name {
     return 'CreateSequenceDictionary.jar';
 }
 
-sub _java_class_name {
-    return 'net.sf.picard.sam.CreateSequenceDictionary';
+sub _java_class {
+    return qw(net sf picard sam CreateSequenceDictionary);
 }
 
 1;

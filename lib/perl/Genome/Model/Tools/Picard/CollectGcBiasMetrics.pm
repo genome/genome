@@ -84,8 +84,8 @@ sub _jar_name {
     return 'CollectGcBiasMetrics.jar';
 }
 
-sub _java_class_name {
-    return 'net.sf.picard.analysis.CollectGcBiasMetrics';
+sub _java_class {
+    return qw(net sf picard analysis CollectGcBiasMetrics);
 }
 
 1;

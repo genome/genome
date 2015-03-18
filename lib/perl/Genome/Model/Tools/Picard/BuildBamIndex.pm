@@ -38,8 +38,8 @@ sub _jar_name {
     return 'BuildBamIndex.jar';
 }
 
-sub _java_class_name {
-    return 'net.sf.picard.sam.BuildBamIndex';
+sub _java_class {
+    return qw(net sf picard sam BuildBamIndex);
 }
 
 sub _validate_params {

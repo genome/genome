@@ -66,8 +66,8 @@ sub _jar_name {
     return 'CollectInsertSizeMetrics.jar';
 }
 
-sub _java_class_name {
-    return 'net.sf.picard.analysis.CollectInsertSizeMetrics';
+sub _java_class {
+    return qw(net sf picard analysis CollectInsertSizeMetrics);
 }
 
 sub _metric_header_as_key {

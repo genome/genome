@@ -44,8 +44,8 @@ sub _jar_name {
     return 'BedToIntervalList.jar';
 }
 
-sub _java_class_name {
-    return 'picard.util.BedToIntervalList';
+sub _java_class {
+    return qw(picard util BedToIntervalList);
 }
 
 sub _shellcmd_extra_params {

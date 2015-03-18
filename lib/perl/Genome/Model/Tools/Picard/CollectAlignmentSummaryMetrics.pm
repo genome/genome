@@ -80,8 +80,8 @@ sub _jar_name {
     return 'CollectAlignmentSummaryMetrics.jar';
 }
 
-sub _java_class_name {
-    return 'net.sf.picard.analysis.CollectAlignmentSummaryMetrics';
+sub _java_class {
+    return qw(net sf picard analysis CollectAlignmentSummaryMetrics);
 }
 
 sub _metric_header_as_key {

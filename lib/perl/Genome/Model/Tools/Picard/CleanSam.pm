@@ -39,8 +39,8 @@ sub _jar_name {
     return 'CleanSam.jar';
 }
 
-sub _java_class_name {
-    return 'net.sf.picard.sam.CleanSam';
+sub _java_class {
+    return qw(net sf picard sam CleanSam);
 }
 
 sub _validate_params {

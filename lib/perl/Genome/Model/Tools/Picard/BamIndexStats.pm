@@ -36,8 +36,8 @@ sub _jar_name {
     return 'BamIndexStats.jar';
 }
 
-sub _java_class_name {
-    return 'net.sf.picard.sam.BamIndexStats';
+sub _java_class {
+    return qw(net sf picard sam BamIndexStats);
 }
 
 sub _redirects {

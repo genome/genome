@@ -70,8 +70,8 @@ sub _jar_name {
     return 'CalculateHsMetrics.jar';
 }
 
-sub _java_class_name {
-    return 'net.sf.picard.analysis.directed.CalculateHsMetrics';
+sub _java_class {
+    return qw(net sf picard analysis directed CalculateHsMetrics);
 }
 
 sub _shellcmd_extra_params {
