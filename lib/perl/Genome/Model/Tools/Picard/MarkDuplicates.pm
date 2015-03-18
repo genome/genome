@@ -103,7 +103,14 @@ sub execute {
 sub build_cmdline_string {
     my ($self, $cmd) = @_;
 
-    my $dedup_cmd = $self->picard_path .'/MarkDuplicates.jar net.sf.picard.sam.MarkDuplicates';
+    my $dedup_cmd = $self->picard_path .'/MarkDuplicates.jar';
+    if ($self->version_compare($self->use_version, '1.122') >= 0) {
+        $dedup_cmd .= ' net.sf.picard.sam.markduplicates.MarkDuplicates';
+    }
+    else {
+        $dedup_cmd .= ' net.sf.picard.sam.MarkDuplicates';
+    }
+
     if ($self->remove_duplicates) {
         $dedup_cmd .= ' REMOVE_DUPLICATES=true';
     } else {
