@@ -77,7 +77,7 @@ EOS
 
 sub execute {
     my $self = shift;
-    
+
     my $input_bam = $self->get_bam();
     $self->setup_outputs();
 
@@ -112,13 +112,8 @@ sub get_bam_from_model {
     my $bam = $build->merged_alignment_result->bam_path
       or die "Didn't find a bam file associated with build ",
              $self->model, "\n";
-    $bam = Path::Class::File->new($bam);
-    unless (-e $bam) {
-        die "Didn't find bam file: '$bam' on file system!\n";
-    }
-    $self->status_message("Using BAM: $bam");
-    $self->bam_file("$bam");
 
+    $self->status_message("Using BAM: $bam");
     return $bam;
 }
 
@@ -177,19 +172,15 @@ sub get_bam {
         die "Specify only ONE '--model' or '--bam-file', NOT both!\n";
     }
 
-    my $bam;
-    if ($self->bam_file) {
-        $bam = Path::Class::File->new($self->bam_file);
-    }
-    else {
-        $bam = $self->get_bam_from_model();
+    unless ($self->bam_file) {
+        $self->bam_file($self->get_bam_from_model());
     }
 
-    unless (-e $bam) {
-        die "Couldn't find bam: '$bam' on file system!\n";
+    unless (-e $self->bam_file) {
+        die "Couldn't find bam: '$self->bam_file' on file system!\n";
     }
 
-    return $bam;
+    return Path::Class::File->new($self->bam_file);
 }
 
 sub _bin_dir {
@@ -379,7 +370,7 @@ sub generate_idxstats {
 
     my $cmd = join(' ',
         $self->samtools, 'idxstats',
-        "$bam", 
+        "$bam",
         '>', "$samtools_idxstats_path"
     );
 
