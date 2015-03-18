@@ -34,21 +34,18 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
         samtools_version => {
             is => 'Text',
             doc => 'The version of samtools to run analysis.',
-            example_values => ['1.2'],
             default_value => '1.2',
             is_optional => '1',
         },
         samtools_max_mem => {
             is => 'Integer',
             doc => 'The max memory required by samtools (in bytes).',
-            example_values => ['14000000000'],
             default_value => '14000000000',
             is_optional => '1',
         },
         bowtie2_version => {
             is => 'Text',
             doc => 'The version of bwa to run analysis.',
-            example_values => ['2.1.0'],
             default_value => '2.1.0',
             is_optional => '1',
         },
