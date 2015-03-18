@@ -1919,5 +1919,48 @@ sub add_to_temporary_input_files_queue {
     return 1;
 }
 
+sub lock_bam_file_access {
+    my $self = shift;
+    unless ($self->get_merged_alignment_results) {
+        my @bams = $self->alignment_bam_file_paths;
+        unless (@bams) {
+            die $self->error_message("Alignment result with class (%s) and id (%s) has neither ".
+                "merged results nor valid bam paths. This likely means that this alignment result ".
+                "needs to be removed and realigned because data has been lost. ".
+                "Please create an apipe-support ticket for this.", $self->class, $self->id);
+            #There is no way to recreate per lane bam if merged bam
+            #does not exist and per lane bam is removed. Software
+            #result of this per lane alignment needs to be removed and
+            #this per lane instrument data needs to be realigned
+            #with that aligner.
+        }
+
+        my $lock_var = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$self->id);
+        my $lock = Genome::Sys->lock_resource(
+            resource_lock => $lock_var,
+            scope         => 'site',
+            max_try       => 288, # Try for 48 hours every 10 minutes
+            block_sleep   => 600,
+        );
+        die $self->error_message("Unable to acquire the lock for per lane alignment result id (%s) !", $self->id) unless $lock;
+
+        # If the build before us successfully created a merged alignment result, we no longer need a lock
+        # If it failed, we will add an observer just as the first build did.
+        if ($self->get_merged_alignment_results) {
+            Genome::Sys->unlock_resource(resource_lock => $lock);
+        } else {
+            # The problem here is if we commit BEFORE merge is done, we unlock too early.
+            # However, if we unlock any other way we may fail to unlock more often and leave old locks.
+            UR::Context->process->add_observer(
+                aspect   => 'commit',
+                once => 1,
+                callback => sub {
+                    Genome::Sys->unlock_resource(resource_lock => $lock);
+                }
+            );
+        }
+    }
+}
+
 1;
 
