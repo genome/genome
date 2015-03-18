@@ -5,6 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Qc::Tool {
+    is_abstract => 1,
     has => [
         alignment_result => {
             is => 'Genome::InstrumentData::AlignmentResult',
