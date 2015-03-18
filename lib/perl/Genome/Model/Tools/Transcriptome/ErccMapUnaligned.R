@@ -121,17 +121,23 @@ test.mixture <- function(Mix1DF, Mix2DF) {
   hypo.mix2 <- TRUE
   p_value_threshold <- 0.05
 
-#  cat(paste("Running Chi-squared test for Mix 1 usage\n"))
+  cat(paste("Running Chi-squared test for Mix 1 usage\n"))
   test.mix1 <- chisq.test(Mix1DF$AlignmentCounts/10000, p=Mix1DF$ExpectedMixRatios)
-#  print(test.mix1)
+  cat(paste("\t(Mix1) Chi-squared Statistic :", test.mix1[['statistic']], "\n", sep=' '))
+  cat(paste("\t(Mix1) Degrees-of-Freedom    :", test.mix1[['parameter']], "\n", sep=' '))
+  cat(paste("\t(Mix2) p-value               :", test.mix1[['p.value']],   "\n", sep=' '))
+  cat(paste("\n"))
 
   if (test.mix1[["p.value"]] < p_value_threshold) {
     hypo.mix1 <- FALSE
   }
 
-#  cat(paste("Running Chi-squared test for Mix 2 usage\n"))
+  cat(paste("Running Chi-squared test for Mix 2 usage\n"))
   test.mix2 <- chisq.test(Mix2DF$AlignmentCounts/10000, p=Mix2DF$ExpectedMixRatios)
-#  print(test.mix2)
+  cat(paste("\t(Mix2) Chi-squared Statistic :", test.mix2[['statistic']], "\n", sep=' '))
+  cat(paste("\t(Mix2) Degrees-of-Freedom    :", test.mix2[['parameter']], "\n", sep=' '))
+  cat(paste("\t(Mix2) p-value               :", test.mix2[['p.value']],   "\n", sep=' '))
+  cat(paste("\n"))
 
   if (test.mix2[["p.value"]] < p_value_threshold) {
     hypo.mix2 <- FALSE
@@ -139,22 +145,17 @@ test.mixture <- function(Mix1DF, Mix2DF) {
 
   if ( (hypo.mix1 == FALSE && hypo.mix2 == FALSE) ||
        (hypo.mix1 == TRUE && hypo.mix2 == TRUE) ) {
-    cat(paste("==> Couldn't ascertain whether mix 1 or mix 2 was used! <==\n"))
-    cat(paste("\n"))
-    cat(paste("==== Chi-squared test for Mix 1 usage results ==== \n"))
-    print(test.mix1)
-    cat(paste("==== Chi-squared test for Mix 2 usage results ==== \n"))
-    print(test.mix2)
-    return
+    cat(paste("DECISION: Couldn't ascertain whether mix 1 or mix 2 was used! \n"))
+    cat(paste("          -- Please investigate with the analysis plots -- \n"))
+  }
+  else if (hypo.mix1 == TRUE) {
+    cat(paste("DECISION: Mix 1 was used \n"))
+  }
+  else {
+    cat(paste("DECISION: Mix 2 was used \n"))
   }
 
-  if (hypo.mix1 == TRUE) {
-    cat(paste("\n===> Mix 1 was used <=== \n"))
-  }
-
-  if (hypo.mix2 == TRUE) {
-    cat(paste("\n===> Mix 2 was used <=== \n"))
-  }
+  cat(paste("\n"))
 }
 
 readTSV <- function(inputTSV) {
@@ -197,9 +198,11 @@ main <- function() {
   print(mix1DF)
   cat(paste("\n===> Mix2 Summary Stats <=== \n"))
   print(mix2DF)
+  cat(paste("\n"))
 
   if (sum(mix1DF$AlignmentCounts) > 0 &&
       sum(mix2DF$AlignmentCounts) > 0) {
+    cat(paste("===> Goodness-of-Fit-Tests to Determine Which Mix Was Used <===\n"))
     test.mixture(mix1DF, mix2DF)
   }
   else {
@@ -207,6 +210,7 @@ main <- function() {
     q(status=0)
   }
 
+  cat(paste("===> Generating Output Plots <===\n"))
   pdf(opts$output)
   r2 <- linearity.plot(df)
   mix.plot(mix1DF, "Mix1")
@@ -218,7 +222,7 @@ main <- function() {
 
 
   r2_text <- paste("R^2 :", r2, sep=" ")
-  cat(paste("===>", r2_text, "<===", "\n", sep=" "))
+  cat(paste(r2_text, "\n", sep=" "))
 
   cat(paste("\nSee", opts$output, "for the analysis plots", "\n", sep=" "))
 }
