@@ -86,7 +86,7 @@ sub execute {
     my $inputs = $self->_get_workflow_inputs();
 
     $self->debug_message("Running Workflow...");
-    my $result = $workflow->execute(%$inputs);
+    my $result = $workflow->execute(inputs => $inputs);
 
     unless($result){
         $self->error_message( join("\n", map($_->name . ': ' . $_->error, @Workflow::Simple::ERROR)) );

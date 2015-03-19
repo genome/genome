@@ -61,6 +61,46 @@ sub add_link {
 # Public Methods
 # ------------------------------------------------------------------------------
 
+sub execute {
+    my $self = shift;
+
+    my %p = Params::Validate::validate(@_, {
+        inputs => {type => HASHREF},
+    });
+
+    my $inputs = {%{$self->constant_values}, %{$p{inputs}}};
+
+    my $backend = $ENV{GENOME_WORKFLOW_BUILDER_BACKEND} || 'workflow';
+    if ($backend eq 'ptero') {
+        return $self->_execute_with_ptero($inputs);
+
+    } elsif ($backend eq 'workflow') {
+        return $self->_execute_with_workflow($inputs);
+
+    } else {
+        Carp::confess sprintf("Unknown backend specified: %s", $backend);
+    }
+}
+
+sub _execute_with_workflow {
+    require Workflow::Simple;
+
+    my ($self, $inputs) = @_;
+
+    my $result = Workflow::Simple::run_workflow_lsf($self->get_xml, %$inputs);
+    unless (defined($result)) {
+        die $self->error_message(sprintf(
+            "Workflow failed with these errors: %s",
+            Data::Dumper::Dumper(map {$_->error} @Workflow::Simple::ERROR)
+        ));
+    }
+    return $result;
+}
+
+sub _execute_with_ptero {
+    die "This is not implemented yet, sorry";
+}
+
 sub create_link {
     my $self = shift;
     $self->add_link(Genome::WorkflowBuilder::Link->create(@_));

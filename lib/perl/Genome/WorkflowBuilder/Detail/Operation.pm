@@ -71,21 +71,6 @@ sub is_many_property {}
 # Public methods
 # ------------------------------------------------------------------------------
 
-sub execute {
-    require Workflow::Simple;
-
-    my $self = shift;
-    my %inputs = (%{$self->constant_values}, @_);
-    my $result = Workflow::Simple::run_workflow_lsf($self->get_xml, %inputs);
-    unless (defined($result)) {
-        die $self->error_message(sprintf(
-            "Workflow failed with these errors: %s",
-            Data::Dumper::Dumper(map {$_->error} @Workflow::Simple::ERROR)
-        ));
-    }
-    return $result;
-}
-
 sub from_xml {
     my ($class, $xml) = @_;
     my $fh = new IO::Scalar \$xml;
