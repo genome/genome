@@ -89,10 +89,10 @@ sub _execute_with_workflow {
 
     my $result = Workflow::Simple::run_workflow_lsf($self->get_xml, %$inputs);
     unless (defined($result)) {
-        die $self->error_message(sprintf(
+        die $self->error_message(
             "Workflow failed with these errors: %s",
             Data::Dumper::Dumper(map {$_->error} @Workflow::Simple::ERROR)
-        ));
+        );
     }
     return $result;
 }
