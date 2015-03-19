@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Cwd qw();
 
 
 class Genome::WorkflowBuilder::Command {
@@ -38,6 +39,65 @@ sub create {
                 $self->command, $error));
     }
     return $self;
+}
+
+sub get_ptero_builder_task {
+    require Ptero;
+
+    my $self = shift;
+
+    $self->validate;
+
+    my %params = (
+        name => $self->name,
+        methods => [
+            $self->_get_ptero_shortcut_method,
+            $self->_get_ptero_execute_method,
+        ],
+    );
+    if (defined $self->parallel_by) {
+        $params{parallel_by} = $self->parallel_by;
+    }
+    return Ptero::Builder::Detail::Workflow::Task->new(%params);
+}
+
+sub _get_ptero_shortcut_method {
+    require Ptero::Builder::ShellCommand;
+
+    my $self = shift;
+    return Ptero::Builder::ShellCommand->new(
+        name => 'shortcut',
+        parameters => {
+            commandLine => [
+                'genome', 'ptero', 'wrapper', 'command',
+                '--command-class', $self->command,
+                '--method', 'shortcut',
+            ],
+            environment => \%ENV,
+            user => $ENV{USER},
+            workingDirectory => Cwd::getcwd,
+        },
+    );
+}
+
+sub _get_ptero_execute_method {
+    require Ptero;
+
+    my $self = shift;
+    # XXX This should use the LSF service, or be configuration based
+    return Ptero::Builder::ShellCommand->new(
+        name => 'execute',
+        parameters => {
+            commandLine => [
+                'genome', 'ptero', 'wrapper', 'command',
+                '--command-class', $self->command,
+                '--method', 'execute',
+            ],
+            environment => \%ENV,
+            user => $ENV{USER},
+            workingDirectory => Cwd::getcwd,
+        },
+    );
 }
 
 

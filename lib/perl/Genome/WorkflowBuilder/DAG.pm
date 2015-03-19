@@ -98,8 +98,55 @@ sub _execute_with_workflow {
 }
 
 sub _execute_with_ptero {
-    die "This is not implemented yet, sorry";
+    die "This is not implemented, sorry";
 }
+
+sub get_ptero_builder {
+    require Ptero::Builder::Workflow;
+
+    my $self = shift;
+    my $name = shift;
+
+    $self->validate;
+
+    my $dag_method = Ptero::Builder::Workflow->new(name => $name || 'root');
+
+    for my $operation (@{$self->operations}) {
+        $dag_method->_add_task($operation->get_ptero_builder_task);
+    }
+
+    for my $link (@{$self->links}) {
+        $link->validate;
+        $dag_method->link_tasks(
+            source => $link->source_operation_name,
+            source_property => $link->source_property,
+            destination => $link->destination_operation_name,
+            destination_property => $link->destination_property,
+        );
+    }
+
+    return $dag_method;
+}
+
+sub get_ptero_builder_task {
+    require Ptero::Builder::Detail::Workflow::Task;
+
+    my $self = shift;
+
+    $self->validate;
+
+    my %params = (
+        name => $self->name,
+        methods => [
+            $self->get_ptero_builder,
+        ],
+    );
+    if (defined $self->parallel_by) {
+        $params{parallel_by} = $self->parallel_by;
+    }
+    return Ptero::Builder::Detail::Workflow::Task->new(%params);
+}
+
 
 sub create_link {
     my $self = shift;
