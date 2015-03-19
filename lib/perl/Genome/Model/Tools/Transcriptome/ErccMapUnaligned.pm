@@ -90,7 +90,14 @@ sub execute {
     my $tsv = $self->generate_tsvfile($idxfile);
     $self->save_tsv_stats($tsv);
 
-    $self->run_analysis_script($tsv);
+    # perform analyses on the derived files
+    my $aln_count = $self->display_remapped_alignment_statistics($idxfile);
+    if ($aln_count == 0) {
+        print "\n ===> No ERCC Spike-Ins Found! <===\n";
+    }
+    else {
+        $self->run_analysis_script($tsv);
+    }
 
     return 1;
 }
@@ -210,6 +217,36 @@ sub bowtie2_build {
         'build'
     );
     return Path::Class::File->new($bowtie2_build);
+}
+
+sub display_remapped_alignment_statistics {
+    my ($self, $file) = @_;
+
+    my $fh = $file->openr;
+
+    my %alignment_counts = (mapped => 0, unmapped => 0);
+    while (my $line = <$fh>) {
+        chomp($line);
+        my ($ref_name, $ref_length, $aligned, $unaligned) = split(/\t/, $line);
+        $alignment_counts{'mapped'} += $aligned;
+        $alignment_counts{'unmapped'} += $unaligned;
+    }
+    my $total = $alignment_counts{'mapped'} + $alignment_counts{'unmapped'};
+
+    print "\n";
+    print '===> ERCC Reference Alignment Statistics <===', "\n";
+    print "\t", '# Mapped   : ', $alignment_counts{'mapped'}  , "\n";
+    print "\t", '# Unmapped : ', $alignment_counts{'unmapped'}, "\n";
+    print "\t", 'Total      : ', $total                       , "\n";
+    if ($total != 0) {
+        print "\t", '% Mapped   : ', $alignment_counts{'mapped'}/$total, "\n";
+    }
+    else {
+        print "\t", '% Mapped   : 0', "\n";
+    }
+    print "\n";
+
+    return $alignment_counts{'mapped'};
 }
 
 sub ERCC_analysis_script {
