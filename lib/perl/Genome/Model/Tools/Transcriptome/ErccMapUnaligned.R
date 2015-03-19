@@ -125,7 +125,7 @@ test.mixture <- function(Mix1DF, Mix2DF) {
   test.mix1 <- chisq.test(Mix1DF$AlignmentCounts/10000, p=Mix1DF$ExpectedMixRatios)
   cat(paste("\t(Mix1) Chi-squared Statistic :", test.mix1[['statistic']], "\n", sep=' '))
   cat(paste("\t(Mix1) Degrees-of-Freedom    :", test.mix1[['parameter']], "\n", sep=' '))
-  cat(paste("\t(Mix2) p-value               :", test.mix1[['p.value']],   "\n", sep=' '))
+  cat(paste("\t(Mix1) p-value               :", test.mix1[['p.value']],   "\n", sep=' '))
   cat(paste("\n"))
 
   if (test.mix1[["p.value"]] < p_value_threshold) {
