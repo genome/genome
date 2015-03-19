@@ -86,8 +86,8 @@ sub execute {
     );
 
     $self->index_bam($remapped_bam);
-    my $idxstats = $self->generate_idxstats($remapped_bam);
-    my $tsv = $self->generate_tsvfile($idxstats);
+    my $idxfile = $self->generate_idxstats($remapped_bam);
+    my $tsv = $self->generate_tsvfile($idxfile);
     $self->save_tsv_stats($tsv);
 
     $self->run_analysis_script($tsv);
@@ -382,15 +382,14 @@ sub generate_idxstats {
         skip_if_output_is_present => 0
     );
 
-    my $idxstats_hash_ref = Genome::Model::Tools::Sam::Idxstats->parse_file_into_hashref(
-        "$samtools_idxstats_path"
-    );
-
-    return $idxstats_hash_ref;
+    return $samtools_idxstats_path;
 }
 
 sub generate_tsvfile {
-    my ($self, $idxstats) = @_;
+    my ($self, $idxfile) = @_;
+
+    my $idxstats =
+      Genome::Model::Tools::Sam::Idxstats->parse_file_into_hashref("$idxfile");
 
     my $r_input_file = Genome::Sys->create_temp_file_path();
 
