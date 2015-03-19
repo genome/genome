@@ -119,6 +119,29 @@ subtest 'simple alignments' => sub {
     is_deeply([sort @alignment_result_two_inst_data], [sort @ad_results], 'found expected alignment results');
 };
 
+subtest 'simple alignments with qc decoration' => sub {
+    my $log_directory = Genome::Sys->create_temp_directory();
+    my $qc_for_testing = Genome::Qc::Config->get(name => 'qc for Workflow test');
+
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
+        inputs => {
+            inst => \@two_instrument_data,
+            ref => $ref,
+            force_fragment => 0,
+            result_users => $result_users,
+        },
+        strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] @qc [qc for Workflow test] api v1',
+        log_directory => $log_directory,
+    );
+    isa_ok(
+        $ad,
+        'Genome::InstrumentData::Composite::Workflow',
+        'created dispatcher for simple alignments with qc decoration'
+    );
+
+    ok($ad->execute, 'executed dispatcher for simple alignments with qc decoration');
+};
+
 subtest 'simple alignments with merge' => sub {
    my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
