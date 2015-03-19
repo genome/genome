@@ -28,7 +28,7 @@ class Genome::Model::Tools::Transcriptome::ErccMapUnaligned {
         ercc_spike_in_file => {
             is => 'FilePath',
             doc => 'The control analysis file provided by Agilent for the ERCC spike-in.',
-            default_value => '/gscmnt/gc13001/info/model_data/jwalker_scratch/ERCC/ERCC_Controls_Analysis.txt',
+            default_value => '/gscmnt/gc13025/info/RNASeq/ERCC/metadata/ERCC_Controls_Analysis-v1.txt',
             is_optional => '1',
         },
         samtools_version => {
