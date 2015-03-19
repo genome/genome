@@ -99,11 +99,6 @@ class Genome::Process {
         }
 
     ],
-    has_transient_optional => {
-        comparer => {
-            is => 'Genome::Utility::File::Comparer',
-        },
-    },
     doc => 'A base class to manage meta-data related to running a process (workflow)',
 };
 
@@ -733,15 +728,17 @@ sub _compare_output_directories {
     return %diffs;
 }
 
+my %comparators;
+
 sub comparer {
     my $self = shift;
-    unless (defined $self->__comparer) {
+    unless (defined $comparators{$self->id}) {
         my $comparer = Genome::Utility::File::Comparer->create(
             special_compare_functions => [$self->special_compare_functions],
         );
-        $self->__comparer($comparer);
+        $comparators{$self->id} = $comparer;
     }
-    return $self->__comparer;
+    return $comparators{$self->id};
 }
 
 sub special_compare_functions {
