@@ -713,7 +713,7 @@ sub _compare_output_directories {
                     my %additional_diffs = $self->_compare_output_directories($target, $other_target, $other_process);
                     %diffs = (%diffs, %additional_diffs);
                 }
-                elsif (-f $target && -f $other_target && !$self->comparer->compare($target, $other_target)) {
+                elsif (-f $target && -f $other_target && !$self->file_comparer->compare($target, $other_target)) {
                     #Files are in fact the same - do nothing
                 }
                 else {
@@ -726,24 +726,6 @@ sub _compare_output_directories {
         },
     );
     return %diffs;
-}
-
-my %comparators;
-
-sub comparer {
-    my $self = shift;
-    unless (defined $comparators{$self->id}) {
-        my $comparer = Genome::Utility::File::Comparer->create(
-            special_compare_functions => [$self->special_compare_functions],
-        );
-        $comparators{$self->id} = $comparer;
-    }
-    return $comparators{$self->id};
-}
-
-sub special_compare_functions {
-    my $self = shift;
-    return ();
 }
 
 1;
