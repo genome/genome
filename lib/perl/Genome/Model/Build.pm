@@ -2142,51 +2142,10 @@ sub metrics_ignored_by_diff {
     return ();
 }
 
-# A hash of method suffixes and a file name regex that triggers a custom diff method. This should include those
-# files that have timestamps or other changing fields in them that an md5sum can't handle.
-# Each suffix should have a method called diff_<SUFFIX> that'll contain the logic.
-sub regex_for_custom_diff {
-    my $self = shift;
-
-    # Standard custom differs
-    my @regex_for_custom_diff = (
-        hq     => '\.hq$',
-        gz     => '(?<!\.vcf)\.gz$',
-        vcf    => '\.vcf$',
-        vcf_gz => '\.vcf\.gz$',
-    );
-
-    # Addition custom differs
-    my $model_class = $self->model_class;
-    if ( $model_class->can('addtional_regex_for_custom_diff') ) {
-        my @addtional_regex_for_custom_diff = $model_class->addtional_regex_for_custom_diff;
-        if ( @addtional_regex_for_custom_diff % 2 != 0 ) {
-            Carp::confess('Invalid addtional_regex_for_custom_diff! '.Data::Dumper::Dumper(\@addtional_regex_for_custom_diff));
-        }
-        push @regex_for_custom_diff, @addtional_regex_for_custom_diff;
-    }
-
-    return @regex_for_custom_diff;
-}
-
-sub matching_regex_for_custom_diff {
-    my $self = shift;
-    my $path = shift;
-
-    my %regex_for_custom_diff = $self->regex_for_custom_diff;
-    my %matching_regex_for_custom_diff;
-    for my $key (keys %regex_for_custom_diff) {
-        my $regex = $regex_for_custom_diff{$key};
-        $matching_regex_for_custom_diff{$key} = $regex if $path =~ /$regex/;
-    }
-
-    return %matching_regex_for_custom_diff;
-}
-
 # Gzipped files contain the timestamp and name of the original file, so this prints
 # the uncompressed file to STDOUT and pipes it to md5sum.
 sub diff_gz {
-    my ($self, $first_file, $second_file) = @_;
+    my ($first_file, $second_file) = @_;
     my $first_md5  = `gzip -dc $first_file | md5sum`;
     my $second_md5 = `gzip -dc $second_file | md5sum`;
     return 1 if $first_md5 eq $second_md5;
@@ -2194,19 +2153,19 @@ sub diff_gz {
 }
 
 sub diff_vcf {
-    my ($self, $first_file, $second_file) = @_;
+    my ($first_file, $second_file) = @_;
     return !Genome::Utility::Vcf::compare_vcf($first_file, $second_file);
 }
 
 sub diff_hq {
-    my ($self, $first_file, $second_file) = @_;
+    my ($first_file, $second_file) = @_;
     my $first_md5  = qx(grep -vP '^##fileDate' $first_file | grep -vP '^##startTime' | grep -vP '^##cmdline' | md5sum);
     my $second_md5 = qx(grep -vP '^##fileDate' $second_file | grep -vP '^##startTime' | grep -vP '^##cmdline' | md5sum);
     return ($first_md5 eq $second_md5 ? 1 : 0);
 }
 
 sub diff_vcf_gz {
-    my ($self, $first_file, $second_file) = @_;
+    my ($first_file, $second_file) = @_;
     my $first_md5  = qx(zcat $first_file | grep -vP '^##fileDate' | md5sum);
     my $second_md5 = qx(zcat $second_file | grep -vP '^##fileDate' | md5sum);
     return ($first_md5 eq $second_md5 ? 1 : 0);
@@ -2327,32 +2286,7 @@ sub _compare_output_directories {
 
         # Check if the files end with a suffix that requires special handling. If not,
         # just do an md5sum on the files and compare
-        my $diff_result = 0;
-        my %matching_regex_for_custom_diff = $class->matching_regex_for_custom_diff($abs_path);
-        if (keys %matching_regex_for_custom_diff > 1) {
-            die "Path ($abs_path) matched multiple regex_for_custom_diff ('" . join("', '", keys %matching_regex_for_custom_diff) . "')!\n";
-        }
-        elsif (keys %matching_regex_for_custom_diff == 1) {
-            my ($key) = keys %matching_regex_for_custom_diff;
-            my $method = "diff_$key";
-            # Check build class first
-            if ($class->can($method)) {
-                $diff_result = $class->$method($abs_path, $other_abs_path);
-            }
-            # then model class
-            elsif ($class->model_class->can($method)) {
-                $diff_result = $class->model_class->$method($abs_path, $other_abs_path);
-            }
-            # cannot find it..die
-            else {
-                die "Custom diff method ($method) not implemented in " . $class->class . " or ".$class->model_class."!\n";
-            }
-        }
-        else {
-            my $file_md5 = Genome::Sys->md5sum($abs_path);
-            my $other_md5 = Genome::Sys->md5sum($other_abs_path);
-            $diff_result = ($file_md5 eq $other_md5);
-        }
+        my $diff_result = !$class->file_comparer->compare($abs_path, $other_abs_path);
 
         unless ($diff_result) {
             $diffs{$rel_path} = "files are not the same (diff -u {$blessed_data_dir,$other_data_dir}/$rel_path)";
@@ -2371,6 +2305,17 @@ sub _compare_output_directories {
     }
 
     return %diffs;
+}
+
+sub special_compare_functions {
+    my $self = shift;
+
+    my @functions;
+    push @functions, qr(\.hq$), sub {my ($a, $b) = @_; Genome::Model::Build::diff_hq($a, $b)};
+    push @functions, qr((?<!\.vcf)\.gz$), sub {my ($a, $b) = @_; Genome::Model::Build::diff_gz($a, $b)},
+    push @functions, qr(\.vcf$), sub {my ($a, $b) = @_; Genome::Model::Build::diff_vcf($a, $b)},
+    push @functions, qr(\.vcf\.gz$), sub {my ($a, $b) = @_; Genome::Model::Build::diff_vcf_gz($a, $b)},
+    return @functions;
 }
 
 sub _remove_metrics_ignored_by_diff {

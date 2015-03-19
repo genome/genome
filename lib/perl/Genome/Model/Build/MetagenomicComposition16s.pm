@@ -914,11 +914,11 @@ sub files_ignored_by_diff {
     return (qw/ build.xml /);
 }
 
-sub regex_for_custom_diff {
+sub special_compare_functions {
     return (
-        gz => '\.gz$',
-        rdp => '\.rdp1-[12]$',
-        metrics_files => 'metrics\.processed\.(in|out)\.txt',
+        '\.gz$' => sub {my ($a, $b) = @_; Genome::Model::Build::diff_gz($a, $b)},
+        '\.rdp1-[12]$' => sub {my ($a, $b) = @_; Genome::Model::Build::MetagenomicComposition16s->diff_rdp($a, $b);},
+        'metrics\.processed\.(in|out)\.txt' => sub {my ($a, $b) = @_; Genome::Model::Build::MetagenomicComposition16s->diff_metrics_files($a, $b);},
     );
 }
 

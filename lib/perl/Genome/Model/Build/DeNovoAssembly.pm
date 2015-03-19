@@ -475,9 +475,9 @@ sub files_ignored_by_diff {
     return (qw/ build.xml /);
 }
 
-sub regex_for_custom_diff {
+sub special_compare_functions {
     return (
-        metrics_files => '\.(in|out)put_metrics',
+        qr(\.(in|out)put_metrics), sub {my ($a, $b) = @_; Genome::Model::Build::DeNovoAssembly->diff_metrics_files($a, $b);}
     );
 }
 
