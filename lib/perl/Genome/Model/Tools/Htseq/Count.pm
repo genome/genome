@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use Genome;
 
+use File::Spec;
+
 class Genome::Model::Tools::Htseq::Count {
     is => 'Genome::Command::DelegatesToResult',
     has_param => [
@@ -69,31 +71,17 @@ class Genome::Model::Tools::Htseq::Count {
             doc => 'alignment results, typically from an RNA aligner',
         },
     ],
+    has_optional => [
+        output_dir => {
+            is => 'FilesystemPath',
+            doc => 'Location to symlink the result output_dir',
+        },
+    ],
     doc => 'generate htseq results for an (annotation-based) alignment result',
 };
 
 sub result_class {
     return __PACKAGE__ . '::Result';
-}
-
-sub input_hash {
-    my $self = shift;
-
-    my %inputs = ();
-    for my $property ($self->result_class->__meta__->properties()) {
-        next unless $property->{is_param} or $property->{is_input};
-
-        my $name = $property->property_name;
-        next unless $self->can($name);
-
-        if($property->is_many) {
-            $inputs{$name} = [$self->$name];
-        } else {
-            $inputs{$name} = $self->$name;
-        }
-    }
-
-    return %inputs;
 }
 
 sub help_synopsis {
@@ -183,6 +171,19 @@ sub _doc_see_also {
 B<Genome::Model::RnaSeq>(3), B<Genome::InstrumentData::AlignmentResult::PerLaneTophat>(3)
 B<genome-model-rnaseq>(1), B<genome-instrument-data-align-per-lane-tophat>(1)
 EOS
+}
+
+sub post_get_or_create {
+    my $self = shift;
+    my $result = $self->output_result;
+
+    if($self->output_dir) {
+        my ($vol, $dir, $file) = File::Spec->splitpath($self->output_dir);
+        Genome::Sys->create_directory($dir);
+        Genome::Sys->create_symlink($result->output_dir, $self->output_dir);
+    }
+
+    return 1;
 }
 
 1;

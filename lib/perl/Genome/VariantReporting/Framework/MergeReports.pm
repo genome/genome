@@ -7,10 +7,13 @@ use Genome;
 class Genome::VariantReporting::Framework::MergeReports {
     is => 'Genome::Command::DelegatesToResult',
     has_input => [
-        report_results => {
+        base_report => {
             is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
-            doc => 'The reports you wish to merge. They must all be the same type of report (same columns).',
-            is_many => 1,
+            doc => 'The main report to be merged.'
+        },
+        supplemental_report => {
+            is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
+            doc => 'The report that is to be added to the main report.'
         },
         sort_columns => {
             is_optional => 1,
@@ -22,56 +25,40 @@ class Genome::VariantReporting::Framework::MergeReports {
             is => 'Boolean',
             doc => 'Set to true if the report contains headers'
         },
-        use_header_from => {
-            is => 'Genome::VariantReporting::Framework::Component::Report::MergeCompatible',
-            doc => 'Use the header from this report_result in the merged report',
-            is_optional => 1,
-        },
         separator => {
             is => 'Text',
             is_optional => 1,
             default => "\t",
             doc => 'Field separator for the reports',
         },
-        split_indicators => {
+        base_report_source => {
             is => 'Text',
             is_optional => 1,
-            is_many => 1,
-            doc => 'A regular expression that indicates that columns whose headers match should be split up.  These columns contain key:value pairs.  The key will be appended to the column header and the value will be put in the column.  Only valid if the file has a header.',
+            doc => "A tag to identify which entries came from the base report.",
         },
-        entry_sources => {
-            is_many => 'Text',
+        supplemental_report_source => {
             is => 'Text',
             is_optional => 1,
-            doc => "An array of strings of the format <Report ID>|<TAG>",
-        },
-        user => {
-            is => 'Genome::Process',
-            is_optional => 1,
-            id_by => 'process_id',
+            doc => "A tag to identify which entries came from the supplemental report.",
         },
         process_id => {
             is => 'Text',
+        },
+    ],
+    has_transient_optional => [
+        requestor => {
+            is => 'Genome::Process',
+            id_by => 'process_id',
+        },
+        user => {
+            is => 'Genome::Process',
+            id_by => 'process_id',
         },
     ],
 };
 
 sub result_class {
     return "Genome::VariantReporting::Framework::Component::Report::MergedReport";
-}
-
-sub input_hash {
-    my $self = shift;
-
-    return (
-        report_results => [$self->report_results],
-        sort_columns => [$self->sort_columns],
-        contains_header => $self->contains_header,
-        use_header_from => $self->use_header_from,
-        separator => $self->separator,
-        split_indicators => [$self->split_indicators],
-        entry_sources => [$self->entry_sources],
-    );
 }
 
 1;

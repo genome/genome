@@ -12,6 +12,7 @@ use above "Genome";
 use Test::More;
 use File::Compare;
 use Genome::SoftwareResult;
+use Genome::Test::Factory::SoftwareResult::User;
 
 BEGIN {
     my $archos = `uname -a`;
@@ -48,6 +49,10 @@ my $output_file_2 = "$output_directory_2/cnvs.hq";
 my $output_file_3 = "$output_directory_3/cnvs.hq";
 my $output_file_4 = "$output_directory_4/cnvs.hq";
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
+
 #This window size and ratio are atypical, but allow the test to generate all data given a sparse BAM file.
 my $bam_to_cna_1 = Genome::Model::Tools::DetectVariants2::BamToCna->create(
     aligned_reads_input  => $tumor_bam_file,
@@ -57,6 +62,7 @@ my $bam_to_cna_1 = Genome::Model::Tools::DetectVariants2::BamToCna->create(
     window_size     => 10000000,
     ratio           => 4.0,
     normalize_by_genome => 0,
+    result_users    => $result_users,
 );
 
 ok($bam_to_cna_1, 'created BamToCna object with ratio of 4.0');
@@ -77,6 +83,7 @@ my $bam_to_cna_2 = Genome::Model::Tools::DetectVariants2::BamToCna->create(
     window_size     => 10000000,
     ratio           => 0.25,
     normalize_by_genome => 0,
+    result_users    => $result_users,
 );
 
 ok($bam_to_cna_2, 'created BamToCna object with ratio of 0.25');
@@ -94,7 +101,8 @@ my $bam_to_cna_3 = Genome::Model::Tools::DetectVariants2::BamToCna->create(
     reference_build_id => $refbuild_id,
     output_directory     => $output_directory_3,
     window_size     => 10000000,
-    ratio           => 4.0
+    ratio           => 4.0,
+    result_users    => $result_users,
 );
 
 ok($bam_to_cna_3, 'created BamToCna object with ratio of 4.0 and whole genome normalization');
@@ -112,8 +120,8 @@ my $bam_to_cna_4 = Genome::Model::Tools::DetectVariants2::BamToCna->create(
     reference_build_id => $refbuild_id,
     output_directory     => $output_directory_4,
     window_size     => 10000000,
-    ratio           => 0.25
-
+    ratio           => 0.25,
+    result_users    => $result_users,
 );
 
 ok($bam_to_cna_4, 'created BamToCna object with ratio of 0.25 and whole genome normalization');

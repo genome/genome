@@ -34,6 +34,10 @@ class Genome::InstrumentData::Composite {
             doc => 'Holds the underlying merged results',
             is_many => 1,
         },
+        result_users => {
+            is => 'HASH',
+            doc => 'mapping of labels to user objects. Will be added to any generated results',
+        }
     ],
     has_transient_optional => {
         log_directory => {
@@ -65,6 +69,8 @@ sub get_or_create {
     my $inputs = $self->inputs;
     $inputs->{force_fragment} = $self->force_fragment;
     my $strategy = $self->strategy;
+
+    $inputs->{result_users} = $self->result_users;
 
     $self->debug_message('Create composite workflow...');
     my $generator = Genome::InstrumentData::Composite::Workflow->create(

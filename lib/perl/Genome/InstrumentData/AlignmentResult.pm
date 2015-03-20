@@ -9,7 +9,9 @@ use YAML;
 use Time::HiRes;
 use POSIX qw(ceil);
 use File::Copy;
+use File::stat;
 use Carp qw(confess);
+use File::Basename;
 
 use Genome::Utility::Instrumentation;
 
@@ -18,7 +20,7 @@ use strict;
 
 class Genome::InstrumentData::AlignmentResult {
     is_abstract => 1,
-    is => 'Genome::SoftwareResult::Stageable',
+    is => ['Genome::SoftwareResult::Stageable', 'Genome::SoftwareResult::WithNestedResults'],
     sub_classification_method_name => '_resolve_subclass_name',
     has => [
         instrument_data         => {
@@ -256,8 +258,13 @@ class Genome::InstrumentData::AlignmentResult {
                                         is=>'Number',
                                         is_optional=>1,
                                 },
+        bam_size  => {
+                                        is=>'Number',
+                                        is_optional=>1,
+                                },
     ],
     has_transient => [
+        _revivified_bam_file_path => { is => 'Text', is_optional=>1},
         temp_scratch_directory  => {
                                     is=>'Text',
                                     doc=>'Temp scratch directory',
@@ -513,17 +520,7 @@ sub create {
     }
 
     # STEP 14: RESIZE THE DISK
-    # TODO: move this into the actual original allocation so we don't need to do this
-    $self->debug_message("Resizing the disk allocation...");
-    if ($self->_disk_allocation) {
-        my %params;
-        $params{allow_reallocate_with_move} = 0;
-        $params{allow_reallocate_with_move} = 1 if $self->_disk_allocation->kilobytes_requested < 10_485_760; # 10GB
-        unless (eval { $self->_disk_allocation->reallocate(%params) }) {
-            $self->warning_message("Failed to reallocate my disk allocation: " . $self->_disk_allocation->id);
-        }
-        $self->output_dir($self->_disk_allocation->absolute_path); #update if was moved
-    }
+    $self->_reallocate_disk_allocation;
 
     $self->status_message("Alignment complete.");
     return $self;
@@ -1045,6 +1042,7 @@ sub _compute_alignment_metrics {
         $self->singleton_read_count         ($res->{singleton});
         $self->singleton_base_count         ($res->{singleton_bp});
 
+        $self->bam_size(stat($bam)->size); #store this for per lane bam recreation
         Genome::Utility::Instrumentation::inc('alignment_result.read_count', $self->total_read_count);
     }
 
@@ -1527,13 +1525,6 @@ sub _sam_header_extra {
 
     my $instr_data = $self->instrument_data;
 
-    my $insert_size_for_header = 0;
-    if ($instr_data->can('resolve_median_insert_size') &&
-            $instr_data->resolve_median_insert_size)
-    {
-        $insert_size_for_header = $instr_data->resolve_median_insert_size;
-    }
-
     my $seems_paired = $self->_is_inferred_paired_end;
     my $paired = defined $seems_paired ? $seems_paired : $instr_data->is_paired_end;
     my $description_for_header = $paired ? "paired end" : "fragment";
@@ -1555,7 +1546,6 @@ sub _sam_header_extra {
         "PL:$platform",
         "PU:$pu_tag",
         "LB:$lib_tag",
-        "PI:$insert_size_for_header",
         "DS:$description_for_header",
         "DT:$date_run_tag",
         "SM:$sample_tag",
@@ -1628,10 +1618,153 @@ sub verify_alignment_data {
     return 1;
 }
 
+# This will generally only return something until the first merge has deleted the original per-lane bam file
 sub alignment_bam_file_paths {
-    my $self = shift;
+    return glob(File::Spec->join(shift->output_dir, "*.bam"));
+}
 
-    return glob($self->output_dir . "/*.bam");
+# This method will recreate the per-lane bam file and return the path.
+# This must be provided an allocation into which the bam will go (so that it can be cleaned up in the parent process once it is done).
+# The calling process is responsible for cleaning up the allocation after we are done with it.
+sub revivified_alignment_bam_file_paths {
+    my $self = shift;
+    my %p = Params::Validate::validate(@_, {disk_allocation => { isa => 'Genome::Disk::Allocation'}});
+
+    # If we have a merged alignment result, the per-lane bam can be regenerated and we will do so now
+    # This is less efficient than using the in-place per-lane bam. However, it aids us in terms of
+    # contention, and in our transition period (allowing us to delete all per-lane bams now).
+    if ($self->get_merged_alignment_results) {
+        return $self->_revivified_bam_file_path if defined $self->_revivified_bam_file_path;
+    } elsif (my @bams = $self->alignment_bam_file_paths) {
+        return @bams;
+    }
+
+    my $revivified_bam = File::Spec->join($p{disk_allocation}->absolute_path, 'all_sequences.bam');
+    my $merged_bam    = $self->get_merged_bam_to_revivify_per_lane_bam;
+
+    unless ($merged_bam and -s $merged_bam) {
+        die $self->error_message('Failed to get valid merged bam to recreate per lane bam '.$self->id);
+    }
+
+    my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
+        merged_bam          => $merged_bam,
+        per_lane_bam        => $revivified_bam,
+        instrument_data_id  => $self->read_and_platform_group_tag_id,
+        samtools_version    => $self->samtools_version,
+        picard_version      => $self->picard_version,
+        bam_header          => $self->bam_header_path,
+        comparison_flagstat => $self->flagstat_path,
+    );
+
+    unless ($cmd->execute) {
+        die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
+    }
+
+    if (-s $revivified_bam) {
+        # Cache the path of this revivified bam for future access
+        $self->_revivified_bam_file_path($revivified_bam);
+        return ($revivified_bam);
+    }
+    else {
+        die $self->error_message("After running RecreatePerLaneBam, no per-lane bam (%s) exists still!", $revivified_bam);
+    }
+}
+
+
+sub bam_header_path {
+    return File::Spec->join(shift->output_dir, 'all_sequences.bam.header');
+}
+
+
+sub flagstat_path {
+    return File::Spec->join(shift->output_dir, 'all_sequences.bam.flagstat');
+}
+
+
+sub get_merged_bam_to_revivify_per_lane_bam {
+    my $self = shift;
+    my $merged_result = $self->get_smallest_merged_alignment_result($self->get_unarchived_merged_alignment_results);
+
+    unless ($merged_result) {
+        $merged_result = $self->get_smallest_merged_alignment_result($self->get_merged_alignment_results);
+        unless ($merged_result) {
+            die $self->error_message('Failed to get archived merged result for per lane alignment '.$self->id);
+        }
+        $merged_result->_auto_unarchive;
+    }
+
+    my $merged_bam = $merged_result->merged_alignment_bam_path;
+    unless (-s $merged_bam) {
+        die $self->error_message("Merged bam (%s) does not exist for merged result id (%s)", $merged_bam, $merged_result->id);
+    }
+    return $merged_bam;
+}
+
+sub get_merged_alignment_results {
+    my $self = shift;
+    # Always load from the database, since other merged results may have committed since we updated the UR cache
+    my @results = Genome::InstrumentData::AlignmentResult::Merged->load(
+        'inputs.value_id' => $self->instrument_data_id,
+        test_name => $self->test_name,
+    );
+    my @filtered_results = $self->filter_non_database_objects(@results);
+    return $self->filter_non_matching_results(@filtered_results);
+}
+
+# This was refactored out to override in the test - mock objects break this logic
+sub filter_non_database_objects {
+    my ($self, @results) = @_;
+    my @db_results;
+    for my $result (@results) {
+        if (UR::Context->current->object_exists_in_underlying_context($result)) {
+            push @db_results, $result;
+        }
+    }
+    return @db_results;
+}
+
+# This uses a sort of 'backwards lookup' from merged alignment results going back to per-lane alignment results.
+# This is nice because it allows us to keep the logic in one place rather than mirroring it here.
+sub filter_non_matching_results {
+    my ($self, @merged_results) = @_;
+
+    my @matching_results;
+    for my $merged_result (@merged_results) {
+        my @individual_results = $merged_result->collect_individual_alignments($self->_user_data_for_nested_results);
+        if (@individual_results) {
+            push @matching_results, $merged_result if grep{$_->id eq $self->id}@individual_results;
+        }
+    }
+
+    return @matching_results;
+}
+
+sub get_unarchived_merged_alignment_results {
+    my $self = shift;
+    my @merged = $self->get_merged_alignment_results;
+    my @unarchived;
+    for my $merged (@merged) {
+        unless ( grep { $_->is_archived } $merged->disk_allocations ) {
+            push @unarchived, $merged;
+        }
+    }
+    return @unarchived;
+}
+
+sub get_smallest_merged_alignment_result {
+    my ($self, @merged_alignment_results) = @_;
+    return unless @merged_alignment_results;
+    my $smallest_result = $merged_alignment_results[0];
+
+    for my $result (@merged_alignment_results) {
+        my @current_instrument_data = $result->instrument_data;
+        my @smallest_instrument_data = $smallest_result->instrument_data;
+        if ( scalar(@current_instrument_data) < scalar(@smallest_instrument_data) ) {
+            $smallest_result = $result;
+        }
+    }
+
+    return $smallest_result;
 }
 
 sub requires_read_group_addition {
@@ -1663,11 +1796,13 @@ sub get_reference_sequence_index {
     my $self = shift;
     my $build = shift || $self->reference_build;
     my @overrides = @_;
+
     my $index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_with_lock(
         aligner_name => $self->aligner_name_for_aligner_index,
         aligner_version => $self->aligner_version,
         aligner_params => $self->aligner_params,
         reference_build => $build,
+        users => $self->_user_data_for_nested_results,
         @overrides
         );
 

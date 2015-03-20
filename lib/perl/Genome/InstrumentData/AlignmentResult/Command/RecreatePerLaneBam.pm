@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 use File::Compare;
 use File::Basename;
+use List::MoreUtils qw(all uniq);
 
 class Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam {
     is  => 'Command::V2',
@@ -31,6 +32,14 @@ class Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam {
             is  => 'Version',
             doc => 'Picard version to replace bam header',
             valid_values => [Genome::Model::Tools::Picard->available_picard_versions],
+        },
+        bam_header => {
+            is  => 'FilePath',
+            doc => 'The path of bam header used to reheader per lane bam',
+        },
+        comparison_flagstat => {
+            is  => 'FilePath',
+            doc => 'The path of flagstat file that is used to compare with that of recreated bam',
         },
     ],
     has_transient_optional => [
@@ -61,7 +70,18 @@ sub execute {
 
     my $merged_bam   = $self->merged_bam;
     my $per_lane_bam = $self->per_lane_bam;
+    my $bam_header   = $self->bam_header;
+    my $flagstat     = $self->comparison_flagstat;
     
+
+    unless (-s $flagstat) {
+        die $self->error_message("comparison_flagstat $flagstat is not valid");
+    }
+
+    unless (-s $bam_header) {
+        die $self->error_message("bam_header $bam_header is not valid");
+    }
+
     unless (-s $merged_bam) {
         die $self->error_message("merged_bam $merged_bam is not valid");
     }
@@ -78,14 +98,17 @@ sub execute {
     $self->debug_message('Extract read group bam');
     $self->_extract_readgroup_bam($temp_bam);
 
-    $self->debug_message('Compare flagstat');
-    $self->_compare_flagstat($temp_bam);
+    $self->debug_message('Compare flagstat first time expect one diff');
+    $self->_compare_flagstat($temp_bam, $flagstat, 'ignore_duplicates');
 
     $self->debug_message('Revert bam Markdup tag');
     $self->_revert_markdup($temp_bam, $no_markdup_bam);
     
+    $self->debug_message('Compare flagstat second time expect no diff');
+    $self->_compare_flagstat($no_markdup_bam, $flagstat);
+
     $self->debug_message('Reheader bam');
-    $self->_reheader_bam($no_markdup_bam);
+    $self->_reheader_bam($no_markdup_bam, $bam_header);
     
     $self->debug_message('Create Bam index');
     $self->_create_bam_index;
@@ -117,29 +140,43 @@ sub _extract_readgroup_bam {
 
 
 sub _compare_flagstat {
-    my ($self, $temp_bam) = @_;
-    my $out_dir = dirname $self->per_lane_bam;
-
-    my @flagstats = glob($self->_output_dir ."/*.flagstat");
-    unless (@flagstats and @flagstats == 1) {
-        die $self->error_message("Failed to get 1 flagstat file from original per lane bam location");
-    }
+    my ($self, $temp_bam, $flagstat, $ignore_duplicates) = @_;
 
     my $temp_flagstat = Genome::Sys->create_temp_file_path;
 
-    my $flagstat = Genome::Model::Tools::Sam::Flagstat->create(
+    my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
         bam_file    => $temp_bam,
         output_file => $temp_flagstat, 
         use_version => $self->samtools_version,  
     );
 
-    unless ($flagstat->execute) {
+    unless ($cmd->execute) {
         die $self->error_message("Fail to run flagstat on $temp_bam");
     }
     
-    unless (compare($temp_flagstat, $flagstats[0]) == 0) {
-        die $self->error_message('The bam flagstat from the extracting is different from the original per lane bam flagstat');
+    if ($ignore_duplicates) { #expect only one line diff on duplicates
+        unless (_parse_flagstat_ignore_duplicates($temp_flagstat, $flagstat)) {
+            die $self->error_message("The diff between extracting bam flagstat and the comparison flagstat $flagstat is not expected");
+        }
     }
+    else {
+        unless (compare($temp_flagstat, $flagstat) == 0) {
+            die $self->error_message("The bam flagstat after reverting markdup is unexpectedly different from the comparison flagstat $flagstat");
+        }
+    }
+}
+
+
+sub _parse_flagstat_ignore_duplicates {
+    my ($temp_flagstat, $flagstat) = @_;
+    my $flagstat_data      = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat);
+    my $temp_flagstat_data = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($temp_flagstat);
+
+    delete $flagstat_data->{reads_marked_duplicates};
+    delete $temp_flagstat_data->{reads_marked_duplicates};
+
+    my @keys = uniq keys(%$flagstat_data), keys(%$temp_flagstat_data);
+    return all{ $flagstat_data->{$_} eq $temp_flagstat_data->{$_} }@keys;
 }
 
 
@@ -156,14 +193,9 @@ sub _revert_markdup {
 
 
 sub _reheader_bam {
-    my ($self, $temp_bam) = @_;
+    my ($self, $temp_bam, $bam_header) = @_;
 
-    my @header_files = glob($self->_output_dir ."/*.header");
-    unless (@header_files and @header_files == 1) {
-        die $self->error_message("Failed to get 1 header file from original per lane bam location");
-    }
-
-    my $header_content = Genome::Sys->read_file($header_files[0]);
+    my $header_content = Genome::Sys->read_file($bam_header);
     if ($header_content =~ /(SO:unsorted)/) {
         $header_content =~ s/$1/SO:coordinate/;
     }

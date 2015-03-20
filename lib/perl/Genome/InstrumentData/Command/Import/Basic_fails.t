@@ -59,7 +59,7 @@ $fail = Genome::InstrumentData::Command::Import::Basic->create(
     instrument_data_properties => [qw/ sequencing_platform=solexa lane= flow_cell_id=XXXXXX /],
 );
 ok(!$fail->execute, 'Fails w/ invalid instrument_data_properties');
-is(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, 'Failed to parse with instrument data property label/value! lane=', 'Correct error meassage');
+is($fail->error_message, 'Failed to process instrument data properties!', 'Correct error meassage');
 
 $fail = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
@@ -69,7 +69,7 @@ $fail = Genome::InstrumentData::Command::Import::Basic->create(
     instrument_data_properties => [qw/ sequencing_platform=solexa lane=2 lane=3 flow_cell_id=XXXXXX /],
 );
 ok(!$fail->execute, 'Fails w/ invalid instrument_data_properties');
-is(Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get->error_message, 'Multiple values for instrument data property! lane => 2, 3', 'Correct error meassage');
+is($fail->error_message, 'Failed to process instrument data properties!', 'Correct error meassage');
 
 $fail = Genome::InstrumentData::Command::Import::Basic->create(
     analysis_project => $analysis_project,
@@ -80,7 +80,7 @@ $fail = Genome::InstrumentData::Command::Import::Basic->create(
     instrument_data_properties => [qw/ downsample_ratio=0.24 /],
 );
 ok(!$fail->execute, 'Fails w/ conflicting cmd and instdata properties instrument_data_properties');
-is($fail->error_message, "Conflicting values given for command and instrument data properties downsample_ratio: '0.25' <=> '0.24'", 'Correct error message');
+is($fail->error_message, "Failed to process instrument data properties!", 'Correct error message');
 
 my $inst_data = Genome::InstrumentData::Imported->create(
     library => $library,

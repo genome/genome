@@ -102,12 +102,12 @@ data <- read.table(input_file,
 data$duplicate_percent <- as.numeric(as.character(data$duplicate_percent))
 
 dup.smp <- ddply(data, .(sample_name), function (x) {
-        dr <- sum(x$clusters * x$duplicate_percent) / sum(x$clusters)
+        dr <- sum(x$read_count * x$duplicate_percent) / sum(x$read_count)
         data.frame(duplication=dr, common_name=unique(x$common_name), ndata=nrow(x))
     })
 
 dup.lib <- ddply(data, .(library_name), function (x) {
-        dr <- sum(x$clusters * x$duplicate_percent) / sum(x$clusters)
+        dr <- sum(x$read_count * x$duplicate_percent) / sum(x$read_count)
         data.frame(duplication=dr, common_name=unique(x$common_name), ndata=nrow(x))
     })
 
@@ -158,10 +158,10 @@ ggplot(data, aes(duplicate_percent, fill=common_name)) +
     opts(legend.position="top", legend.direction="vertical", title="Duplication by Tissue Type") +
     scale_fill_brewer(palette="Set2")
 
-ggplot(data, aes(clusters, duplicate_percent, color=common_name)) +
+ggplot(data, aes(read_count, duplicate_percent, color=common_name)) +
     geom_point() +
-    labs(x="# Clusters", y="Duplicate percent") +
-    opts(title="Duplication by # Clusters") +
+    labs(x="# Reads", y="Duplicate percent") +
+    opts(title="Duplication by # Reads") +
     opts(legend.position="top", legend.direction="vertical") +
     scale_color_brewer(palette="Set2")
 
@@ -175,7 +175,7 @@ for (s in samples) {
     gc_df <- load_sample_gc(s, data)
     title <- sprintf("Sample %s (%s)", s, unique(ds$common_name))
 
-    tbl <- ds[, c("library_name", "id", "flow_cell_id", "lane", "clusters", "duplicate_percent")]
+    tbl <- ds[, c("library_name", "id", "flow_cell_id", "lane", "read_count", "duplicate_percent")]
     textplot(tbl, show.rownames=FALSE)
     title(title)
 

@@ -193,4 +193,13 @@ subtest iterate_file_lines => sub {
     };
 };
 
+subtest test_write__read_file => sub {
+    plan tests => 2;
+
+    my @lines = map { $_."\n" } ('A'..'C');
+    ok(Genome::Sys->write_file('-', @lines), 'first write_file to STDOUT succeeds');
+    ok(Genome::Sys->write_file('-', @lines), 'second write_file to STDOUT succeeds');
+
+};
+
 done_testing();

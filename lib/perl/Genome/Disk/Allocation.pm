@@ -16,6 +16,8 @@ use DateTime;
 
 our $TESTING_DISK_ALLOCATION = 0;
 
+use constant SECONDS_IN_ONE_YEAR => 365*24*60*60;
+
 class Genome::Disk::Allocation {
     is => 'Genome::Notable',
     table_name => 'disk.allocation',
@@ -283,7 +285,7 @@ sub unarchive {
 
 sub is_archived {
     my $self = shift;
-    return $self->volume->is_archive;
+    return $self->status eq 'archived';
 }
 
 sub tar_path {
@@ -437,7 +439,8 @@ sub get_lock {
     $tries ||= 60;
 
     my $allocation_lock = Genome::Sys->lock_resource(
-        resource_lock => $ENV{GENOME_LOCK_DIR} . '/allocation/allocation_' . join('_', split(' ', $id)),
+        resource_lock => 'allocation/allocation_' . join('_', split(' ', $id)),
+        scope => 'site',
         max_try => $tries,
         block_sleep => 1,
     );
@@ -484,13 +487,13 @@ sub shadow_get_or_create {
     my $md5_hex = md5_hex($params{allocation_path});;
 
     my $path = File::Spec->join(
-        $ENV{GENOME_LOCK_DIR},
         'allocation',
         'allocation_path_' . $md5_hex,
     );
 
     my $lock = Genome::Sys->lock_resource(
         resource_lock => $path,
+        scope => 'site',
         wait_announce_interval => 600,
     );
 
@@ -1039,7 +1042,7 @@ sub _commit_unless_testing {
 }
 
 sub _default_archive_after_time {
-    DateTime->now(time_zone => 'local')->add(years => 1)->strftime('%F 00:00:00');
+    DateTime->now(time_zone => 'local')->add(seconds => SECONDS_IN_ONE_YEAR)->strftime('%F 00:00:00');
 }
 
 sub _get_trash_folder {

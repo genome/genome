@@ -51,6 +51,13 @@ sub execute {
        delete $params{'roi_list'};
        delete $params{'wingspan'};
     }
+
+    $params{command} = $self;
+    $params{users} = {
+        requestor => $self->_create_process(),
+        sponsor   => Genome::Sys->current_user,
+    };
+
     my $software_result = Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfSnvs::Result->get_or_create(%params);
     $self->debug_message("Got or created software result with id "
         . $software_result->id . " (test_name='" . $software_result->test_name . "')");

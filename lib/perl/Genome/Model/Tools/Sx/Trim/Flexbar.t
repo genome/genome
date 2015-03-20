@@ -41,7 +41,7 @@ my $cmd = Genome::Model::Tools::Sx::Trim::Flexbar->create(
 ok($cmd, "create flexbar to remove single adapter");
 ok(eval{$cmd->execute}, "execute");
 print "$@\n" if $@;
-is_deeply($cmd->_cmds, ['/usr/bin/flexbar229 --adapter-gap-cost -20 --adapter-match 3 --adapter-min-overlap 16 --adapter-mismatch -3 --adapter-trim-end ANY --adapters '.$cmd->_tmpdir.'/adapters.fasta --max-uncalled 100 --no-length-dist --threads 4 --source '.$datadir.'/input_1.fastq --source2 '.$datadir.'/input_2.fastq --format fastq-sanger --target '.$cmd->_tmpdir.'/output.fastq'], 'flexbar command');
+is_deeply($cmd->_cmds, ['/usr/bin/flexbar229 --adapter-gap-cost -20 --adapter-match 3 --adapter-min-overlap 16 --adapter-mismatch -3 --adapter-trim-end ANY --adapters '.$cmd->_tmpdir.'/adapters.fasta --max-uncalled 100 --threads 4 --no-length-dist --source '.$datadir.'/input_1.fastq --source2 '.$datadir.'/input_2.fastq --format fastq-sanger --target '.$cmd->_tmpdir.'/output.fastq'], 'flexbar command');
 
 my @output = glob("$temp_dir/*fastq");
 is(@output, 1, "got 1 fastq files");
@@ -71,7 +71,7 @@ $cmd = Genome::Model::Tools::Sx::Trim::Flexbar->create(
 ok($cmd, "create flexbar to remove single adapter for v230");
 ok(eval{$cmd->execute}, "execute");
 print "$@\n" if $@;
-is_deeply( $cmd->_cmds, ['LD_LIBRARY_PATH=/gscmnt/gc3001/assembly/Downloads/Flexbar_2.4/flexbar_v2.4_linux64 /gsc/bin/flexbar --adapter-match 3 --adapter-min-overlap 16 --adapter-mismatch -3 --adapter-trim-end ANY --adapters '.$cmd->_tmpdir.'/adapters.fasta --max-uncalled 100 --threads 4 --reads '.$datadir.'/input_1.fastq --reads2 '.$datadir.'/input_2.fastq --format sanger --target '.$cmd->_tmpdir.'/output.fastq'], 'flexbar command');
+is_deeply( $cmd->_cmds, ['LD_LIBRARY_PATH=/gscmnt/gc3001/assembly/Downloads/Flexbar_2.4/flexbar_v2.4_linux64 /gsc/bin/flexbar --adapter-match 3 --adapter-min-overlap 16 --adapter-mismatch -3 --adapter-trim-end ANY --adapters '.$cmd->_tmpdir.'/adapters.fasta --max-uncalled 100 --threads 4 --length-dist --reads '.$datadir.'/input_1.fastq --reads2 '.$datadir.'/input_2.fastq --format sanger --target '.$cmd->_tmpdir.'/output.fastq'], 'flexbar command');
 
 @output = glob("$temp_dir/*fastq");
 is(@output, 1, "got 1 fastq files");

@@ -423,6 +423,8 @@ sub params_for_detector_result {
         region_of_interest_id => $self->region_of_interest_id,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
         chromosome_list => undef,
+
+        users => $self->result_users,
     );
 
     return \%params;
@@ -436,6 +438,7 @@ sub params_for_vcf_result {
         input_id => $self->_result->id,
         vcf_version => $vcf_version,
         aligned_reads_sample => $self->aligned_reads_sample,
+        users => $self->result_users,
     );
     $params{control_aligned_reads_sample} = $self->control_aligned_reads_sample if defined $self->control_aligned_reads_sample;
 

@@ -1,33 +1,23 @@
 [4mOVERVIEW[0m
-Calculate the variant allele frequency, number of reads supporting the reference, and number of reads supporting variant for a sample and its libraries
+Calculate the variant allele frequency, number of reads supporting the reference, and number of reads supporting variant for multiple samples
 
 [4mPROPERTIES[0m
-  [1mlibrary_name_labels[0m   Hash
-    Hash of library_name to label
+  [1msample_name_labels[0m   Hash
+    Hash of sample_name to label
     Default value {} if not specified
     This is a translated property.
-  [1mlibrary_names[0m   Text
-    List of library names to be used in the report
-    This is a translated property.
-  [1msample_name[0m   Text
-    This is a translated property.
-  [1msample_name_label[0m   Text
+  [1msample_names[0m   Text
+    List of sample names to be used in the report
     This is a translated property.
 
 [4mREQUIRED EXPERTS[0m
 bam-readcount
 
 [4mAVAILABLE FIELDS[0m
-  [1mlibrary_names_vaf[0m
-    Variant allele frequency for library library_names
-  [1msample_name_label_var_count[0m
-    Number of reads supporting variant for sample sample_name
-  [1msample_name_label_vaf[0m
-    Variant allele frequency for sample sample_name
-  [1mlibrary_names_var_count[0m
-    Number of reads supporting variant for library library_names
-  [1mlibrary_names_ref_count[0m
-    Number of reads supporting the reference for library library_names
-  [1msample_name_label_ref_count[0m
-    Number of reads supporting the reference for sample sample_name
+  [1msample_names_vaf[0m
+    Variant allele frequency for sample sample_names
+  [1msample_names_var_count[0m
+    Number of reads supporting variant for sample sample_names
+  [1msample_names_ref_count[0m
+    Number of reads supporting the reference for sample sample_names
 

@@ -7,6 +7,12 @@ use feature qw(say);
 
 use Genome;
 
+use Carp qw(croak);
+use File::Spec qw();
+use IO::File qw();
+use Set::Scalar qw();
+use Try::Tiny qw(try);
+
 class Genome::FeatureList::Command::Import {
     is => 'Command::V2',
     has_input => [
@@ -97,22 +103,27 @@ sub execute {
         die $self->error_message('Unable to import BED file due to validation errors.');
     }
 
-    my $create_cmd = Genome::FeatureList::Command::Create->create(
-        file_path => $sanitized_bed_path,
-        reference => $self->reference,
-        content_type => $self->content_type,
-        format => Genome::FeatureList->_derive_format($self->is_1_based, $self->is_multitracked),
-        description => ($self->description || 'created with `genome feature-list import`'),
-        source => $self->source,
-        name => $self->name,
-    );
-    my $new_feature_list = $create_cmd->execute;
-    unless($new_feature_list) {
-        die $self->error_message('Failed to execute command to create FeatureList');
+    my $md5 = Genome::Sys->md5sum($sanitized_bed_path);
+    my $imported_feature_list = $self->find_existing_list($md5, $self->name);
+
+    unless($imported_feature_list) {
+        my $create_cmd = Genome::FeatureList::Command::Create->create(
+            file_path => $sanitized_bed_path,
+            reference => $self->reference,
+            content_type => $self->content_type,
+            format => Genome::FeatureList->_derive_format($self->is_1_based, $self->is_multitracked),
+            description => ($self->description || 'created with `genome feature-list import`'),
+            source => $self->source,
+            name => $self->name,
+        );
+        $imported_feature_list = $create_cmd->execute;
+        unless($imported_feature_list) {
+            die $self->error_message('Failed to execute command to create FeatureList');
+        }
     }
 
-    say $new_feature_list->id;
-    $self->new_feature_list($new_feature_list);
+    say $imported_feature_list->id;
+    $self->new_feature_list($imported_feature_list);
 
     return 1;
 }
@@ -203,7 +214,107 @@ sub _resolve_bed_file_from_directory {
         return $all_tracks[0];
     }
 
+    if ($self->_has_nimblegen_pair(@bed_files)) {
+        my $pair = $self->_nimblegen_pair(@bed_files);
+        return $self->_create_combined_nimblegen_bed_file($pair);
+    }
+
     die $self->error_message('Multiple candidate BED files found in directory %s. Please select one.', $directory);
+}
+
+sub _nimblegen_pair {
+    my $self = shift;
+    my @bed_files = @_;
+
+    my @suffixes = qw(_capture_targets.bed _primary_targets.bed);
+    my @matches;
+    for my $suffix (@suffixes) {
+        my @matching = grep { /\Q$suffix\E$/ } @bed_files;
+        my @prefixes = map { /(.*)\Q$suffix\E$/; $1 } @matching;
+        push @matches, Set::Scalar->new(@prefixes)
+    }
+    my $intersection = $matches[0]->intersection($matches[1]);
+
+    if ($intersection->is_empty) {
+        croak 'unable to find a capture/primary pair';
+    }
+
+    if ($intersection->size > 1) {
+        croak 'found multiple capture/primary pairs';
+    }
+
+
+    my $prefix = ($intersection->members)[0];
+    return {
+        tiled_region => join('', $prefix, $suffixes[0]),
+        target_region => join('', $prefix, $suffixes[1]),
+    };
+}
+
+sub _has_nimblegen_pair {
+    my $self = shift;
+    my @bed_files = @_;
+    my $pair = try { $self->_nimblegen_pair(@bed_files) };
+    return defined $pair;
+}
+
+sub _create_combined_nimblegen_bed_file {
+    my $self = shift;
+    my $pair = shift;
+
+    my ($multitrack_fh, $multitrack_path) = Genome::Sys->create_temp_file();
+    my %fh_pair = map { $_ => scalar(Genome::Sys->open_file_for_reading($pair->{$_})) } keys %{$pair};
+    for my $name (keys %fh_pair) {
+        my $fh = $fh_pair{$name};
+        $multitrack_fh->printf(qq(track name=%s\n), $name);
+        while (my $line = $fh->getline) {
+            $multitrack_fh->print($line);
+        }
+    }
+    $multitrack_fh->close();
+
+    return $multitrack_path;
+}
+
+sub find_existing_list {
+    my $class = shift;
+    my ($bed_md5, $name) = @_;
+
+    my @existing_lists = Genome::FeatureList->get(file_content_hash => $bed_md5);
+
+    unless(@existing_lists) {
+        my $list_with_same_name = Genome::FeatureList->get(name => $name);
+        if($list_with_same_name) {
+            die $class->error_message(
+                'Found existing feature-list with the same name but a different BED file: %s',
+                $list_with_same_name->id,
+            );
+        } else {
+            return;
+        }
+    }
+
+    my $list_to_use;
+
+    if(@existing_lists == 1) {
+        $list_to_use = $existing_lists[0];
+    } else {
+        my @matches = grep { $_->name eq $name } @existing_lists;
+        if(@matches == 1) {
+            $list_to_use = $matches[0];
+        }
+    }
+
+    unless($list_to_use) {
+        $class->error_message(
+            'Multiple matching existing FeatureLists found: %s',
+            join(' ', map $_->id, @existing_lists)
+        );
+        die $class->error_message('To proceed make sure the --name parameter matches one of the existing lists.');
+    }
+
+    $class->status_message('Found existing list: %s', $list_to_use->__display_name__);
+    return $list_to_use;
 }
 
 1;

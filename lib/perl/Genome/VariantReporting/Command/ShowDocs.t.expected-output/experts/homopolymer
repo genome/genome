@@ -6,9 +6,9 @@ Annotate vcf with information from one homopolymer bed file
     Bed File FeatureList id containing homopolymer
     This is a translated property.
   [1minfo_string[0m   Text
-    Info field id for homopolymer
+    name of per-allele info field to store the annotation
   [1mjoinx_version[0m   Version
     joinx version to be used.
   [1mmax_length[0m   Integer
-    maximum indel length to annotate as in homopolymer
+    maximum indel length to annotate as in the homopolymer
 

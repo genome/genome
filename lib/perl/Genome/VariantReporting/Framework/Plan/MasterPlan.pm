@@ -129,10 +129,10 @@ sub create_from_hashref {
     }
     my $self = $class->SUPER::create(%params_for_create);
     my @expert_plans;
-    while (my ($expert_name, $adaptor_params) = each %{$hashref->{experts}}) {
+    while (my ($expert_name, $run_params) = each %{$hashref->{experts}}) {
         push @expert_plans, Genome::VariantReporting::Framework::Plan::ExpertPlan->create(
             name => $expert_name,
-            adaptor_params => $adaptor_params,
+            run_params => $run_params,
         );
     }
     $self->expert_plans(\@expert_plans);

@@ -17,10 +17,7 @@ sub create {
     } else {
         my $lock_id = $class->lock_id(@_);
 
-        my $lock_var = sprintf('%s/%s/%s',
-            $ENV{GENOME_LOCK_DIR},
-            $class,
-            $lock_id);
+        my $lock_var = sprintf('%s/%s', $class, $lock_id);
 
         my $obj = $class->get(@_);
         if($obj) {
@@ -35,7 +32,8 @@ sub create_with_lock {
     my $class = shift;
     my $lock_var = shift;
 
-    my $lock = Genome::Sys->lock_resource(resource_lock => $lock_var);
+    my $lock = Genome::Sys->lock_resource(resource_lock => $lock_var,
+        scope => 'site');
     die("Unable to get lock!") unless $lock;
 
     my $obj = $class->load(@_);

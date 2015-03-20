@@ -14,7 +14,7 @@ sub lsf_queue {
 }
 
 sub bsub_rusage {
-    return "-R 'select[tmp>4000] rusage[tmp=4000]'";
+    return "-R 'select[tmp>4000 && mem>600] rusage[tmp=4000,mem=600]' -M 600000 ";
 }
 
 sub execute{
@@ -46,6 +46,8 @@ sub execute{
 
     my $aligned_reads_sample = $build->subject->name;
     $params{aligned_reads_sample} = $aligned_reads_sample;
+
+    $params{result_users} = Genome::SoftwareResult::User->user_hash_for_build($build);
 
     my $command = Genome::Model::Tools::DetectVariants2::Dispatcher->create(%params);
     unless ($command){

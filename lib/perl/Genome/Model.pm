@@ -179,10 +179,16 @@ class Genome::Model {
             is_many => 1,
         },
         analysis_projects => {
+            via => '__self__',
+            to => 'analysis_project',
+            is_deprecated => 1,
+            doc => 'use analysis_project instead',
+        },
+        analysis_project => {
             is => 'Genome::Config::AnalysisProject',
             via => 'analysis_project_bridges',
             to => 'analysis_project',
-            is_many => 1,
+            is_many => 0,
         },
         config_profile_items => {
             is => 'Genome::Config::Profile::Item',
@@ -679,8 +685,10 @@ sub _lock {
 
     my $model_id = $self->id;
     unless ($ENV{UR_DBI_NO_COMMIT}) {
-        my $lock_var = File::Spec->join($ENV{GENOME_LOCK_DIR}, 'build_requested', $model_id);
-        my $lock = $self->{_lock} = Genome::Sys->lock_resource(resource_lock => $lock_var, max_try => 30, block_sleep => 30);
+        my $lock_var = File::Spec->join('build_requested', $model_id);
+        my $lock = $self->{_lock} = Genome::Sys->lock_resource(
+            resource_lock => $lock_var, scope => 'site', max_try => 30,
+            block_sleep => 30);
 
         die("Unable to acquire the lock to request $model_id. Is something already running or did it exit uncleanly?")
             unless $lock;

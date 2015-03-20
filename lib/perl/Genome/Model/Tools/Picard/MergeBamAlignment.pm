@@ -55,7 +55,7 @@ sub help_detail {
      Merges alignment data from a SAM or BAM file with additional data stored in an unmapped BAM file and produces a third SAM or BAM file of aligned and unaligned reads. NOTE that this program expects to find a sequence dictionary in the same directory as REFERENCE_SEQUENCE and expects it to have the same base name as the reference fasta except with the extension '.dict'
 
      For Picard documentation of this command see:
-     http://picard.sourceforge.net/command-line-overview.shtml#MergeBamAlignment
+     http://broadinstitute.github.io/picard/command-line-overview.html#MergeBamAlignment
 EOS
 }
 

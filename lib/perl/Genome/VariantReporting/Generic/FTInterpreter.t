@@ -27,7 +27,7 @@ my $ft_value = "PASS";
 my $entry = create_entry($ft_value);
 
 subtest 'test wrong input alleles' => sub {
-    for my $allele qw(WRONG T) { 
+    for my $allele (qw(WRONG T)) {
         my $rv = eval {$interpreter->interpret_entry($entry, [$allele])};
         ok(!$rv, 'Failed as expected: '.$@);
     }

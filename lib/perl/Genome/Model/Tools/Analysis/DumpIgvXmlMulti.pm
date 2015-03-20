@@ -7,6 +7,7 @@ use Genome;
 use Command;
 use IO::File;
 use Cwd qw(abs_path);
+use URI;
 
 class Genome::Model::Tools::Analysis::DumpIgvXmlMulti {
     is => 'Command',
@@ -46,7 +47,8 @@ class Genome::Model::Tools::Analysis::DumpIgvXmlMulti {
     reference_name => {
         type => 'String',
         is_optional => 0,
-        doc => 'the name of the reference (in IGV) that the bams are aligned to. E.g. "b37" for build 37 or "reference"for our internal build36',
+        doc => 'The name of the reference (in IGV) that the bams are aligned to.',
+        example_values => ['b37', 'hg18', 'mm9'],
     },
     roi => {
         is => 'Text',
@@ -71,10 +73,10 @@ sub execute {
     my $tumor_common_name = $self->genome_name;   
     my $output_file = $self->output_file;
     my $genome_name = $self->genome_name;
-    my @review_bed_files = map { abs_path($_) }$self->review_bed_files;
+    my @review_bed_files = map { resolve_file_path($_) } $self->review_bed_files;
     my $reference_name = $self->reference_name;
 
-    my @bams = split(/\,/,$self->bams);
+    my @bams = map { resolve_file_path($_) } split(/\,/, $self->bams);
     my @labels = split(/\,/,$self->labels);
 
     unless (@bams == @labels){
@@ -97,7 +99,7 @@ XML
 
     my $i=0;    
     for($i=0;$i<@bams;$i++){
-        my $path = abs_path($bams[$i]);
+        my $path = $bams[$i];
         $header .= <<"XML";
      <Resource path="$path" relativePath="false"/>
 XML
@@ -123,7 +125,7 @@ XML
     my $panels;
 
     for($i=0;$i<@bams;$i++){
-        my $path = abs_path($bams[$i]);
+        my $path = $bams[$i];
         my $label = $labels[$i];
         my $cov = $path . "_coverage";
 
@@ -171,6 +173,24 @@ XML
     
 return 1;
     
+}
+
+sub resolve_file_path {
+    my $file = shift;
+    my $uri = URI->new($file);
+    my $path;
+    if (defined($uri->scheme)) {
+        if ($uri->scheme eq 'file') {
+            $path = abs_path($uri->path);
+        }
+        else {
+            $path = $uri->as_string;
+        }
+    }
+    else {
+        $path = abs_path($file);
+    }
+    return $path;
 }
 
 

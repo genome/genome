@@ -1,0 +1,19 @@
+[4mOVERVIEW[0m
+A custom report where you can specify any headers.
+
+[4mPROPERTIES[0m
+  [1mdelimiter[0m   Text
+    Character to be used to separate columns
+    Default value "\t" if not specified
+  [1mgenerate_legend_file[0m   Boolean
+    Boolean flag to control whether or not a legend file will be created
+    Default value 'true' if not specified
+  [1mheader_labels[0m   Text
+    A comma separated list of the headers desired in the report.
+  [1mnull_character[0m   Text
+    Character to be used for undefined values in the report
+    Default value "-" if not specified
+
+[4mREQUIRED INTERPRETERS[0m
+position
+

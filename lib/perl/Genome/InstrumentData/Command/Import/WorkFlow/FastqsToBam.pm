@@ -8,6 +8,7 @@ use Genome;
 use Data::Dumper 'Dumper';
 require File::Basename;
 require List::Util;
+use Try::Tiny;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam { 
     is => 'Command::V2',
@@ -21,9 +22,13 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
             is_many => 1,
             doc => 'Paths of the fastq[s] to convert to a bam.',
         },
-        library => {
-            is => 'Genome::Library',
-            doc => 'The library name to use and then derive the read group name.',
+        sample_name => {
+            is => 'Text',
+            doc => 'The sample name to use in the RG header.',
+        },
+        library_name => {
+            is => 'Text',
+            doc => 'The library name to use as the IDs in the SAM RG and LB headers.',
         },
     ],
     has_output => [ 
@@ -34,17 +39,14 @@ class Genome::InstrumentData::Command::Import::WorkFlow::FastqsToBam {
             doc => 'The path of the bam.',
         },
     ],
-    has_calculated => {
-        sample_name => {
-            calculate_from => [qw/ library /],
-            calculate => q( return $library->sample->name ),
-        },
-    },
 };
 
 sub execute {
     my $self = shift;
     $self->debug_message('Fastqs to bam...');
+
+    my $unarchive_if_necessary = $self->_unarchive_fastqs_if_necessary;
+    return if not $unarchive_if_necessary;
 
     my $fastq_to_bam_ok = $self->_fastqs_to_bam;
     return if not $fastq_to_bam_ok;
@@ -59,12 +61,49 @@ sub execute {
     return 1;
 }
 
+sub _unarchive_fastqs_if_necessary {
+    my $self = shift;
+    $self->debug_message('Unarchive fastqs if necessary...');
+
+    my @new_fastq_paths;
+    for my $fastq_path ( $self->fastq_paths ) {
+        if ( $fastq_path !~ /\.gz$/ ) {
+            $self->debug_message('Unarchive not necessary for '.$fastq_path);
+            push @new_fastq_paths, $fastq_path;
+            next;
+        }
+        $self->debug_message('Unarchiving: '.$fastq_path);
+        
+        my $success = try {
+            Genome::Sys->shellcmd(cmd => "gunzip $fastq_path");
+        }
+        catch {
+            $self->error_message($_) if $_;
+            $self->error_message('Failed to gunzip fastq!');
+            return;
+        };
+        return if not $success;
+
+        my $unarchived_fastq_path = $fastq_path;
+        $unarchived_fastq_path =~ s/\.gz$//;
+        $self->debug_message("Unarchived fastq: $unarchived_fastq_path");
+        if ( not -s $unarchived_fastq_path ) {
+            $self->error_message('Unarchived fastq does not exist!');
+            return;
+        }
+        push @new_fastq_paths, $unarchived_fastq_path;
+        unlink $fastq_path;
+    }
+    $self->fastq_paths(\@new_fastq_paths);
+
+    $self->debug_message('Unarchive fastqs if necessary...');
+    return 1;
+}
+
 sub _fastqs_to_bam {
     my $self = shift;
     $self->debug_message('Run picard fastq to sam...');
 
-    my $sample_name = $self->sample_name;
-    my $read_group_name = $self->library->name;
     my @fastqs = $self->fastq_paths;
     $self->debug_message("Fastq 1: $fastqs[0]");
     my $output_bam_path = $self->output_bam_path;
@@ -72,8 +111,10 @@ sub _fastqs_to_bam {
         fastq => $fastqs[0],
         output => $output_bam_path,
         quality_format => 'Standard',
-        sample_name => $sample_name,
-        read_group_name => $read_group_name,
+        sample_name => $self->sample_name,
+        library_name => $self->library_name,
+        read_group_name => $self->library_name,
+        use_version => '1.113',
     );
     if ( $fastqs[1] ) {
         $self->debug_message("Fastq 2: $fastqs[1]");
@@ -86,10 +127,18 @@ sub _fastqs_to_bam {
         $self->error_message('Failed to create sam to fastq command!');
         return;
     }
-    my $execute_ok = eval{ $cmd->execute; };
-    if ( not $execute_ok or not -s $output_bam_path ) {
-        $self->error_message($@) if $@;
+    my $success = try {
+        $cmd->execute;
+    }
+    catch {
+        $self->error_message($_) if $_;
         $self->error_message('Failed to run picard fastq to sam!');
+        return;
+    };
+    return if not $success;
+
+    if ( not -s $output_bam_path ) {
+        $self->error_message('Ran picard fastq to sam, but bam path does not exist!');
         return;
     }
 

@@ -84,6 +84,7 @@ class Genome::Model::Build::ReferenceSequence {
         combines => {
             is => 'Genome::Model::Build::ReferenceSequence',
             doc => 'If specified, merges several other references into one.', 
+            is_many => 1,
         },
     ],
     has_many_optional => [
@@ -393,6 +394,7 @@ sub full_consensus_sam_index_path {
 
         my $lock = Genome::Sys->lock_resource(
             resource_lock => $data_dir.'/lock_for_faidx',
+            scope         => 'unknown',
             max_try       => 2,
         );
         unless ($lock) {
@@ -455,16 +457,21 @@ sub get_sequence_dictionary {
 
     $self->warning_message("No seqdict at path $path.  Creating...");
 
+    my $resource_lock = $seqdict_dir_path."/lock_for_seqdict-$file_type";
     #lock seqdict dir here
     my $lock = Genome::Sys->lock_resource(
-        resource_lock => $seqdict_dir_path."/lock_for_seqdict-$file_type",
+        resource_lock => $resource_lock,
+        scope         => 'unknown',
         max_try       => 2,
     );
 
     # if it couldn't get the lock after 2 tries, pop a message and keep trying as much as it takes
     unless ($lock) {
         $self->status_message("Couldn't get a lock after 2 tries, waiting some more...");
-        $lock = Genome::Sys->lock_resource(resource_lock => $seqdict_dir_path."/lock_for_seqdict-$file_type");
+        $lock = Genome::Sys->lock_resource(
+        resource_lock => $resource_lock,
+            scope => 'unknown',
+        );
         unless($lock) {
             $self->error_message("Failed to lock resource: $seqdict_dir_path");
             return;
@@ -659,7 +666,7 @@ sub local_cache_dir {
 
 sub local_cache_lock {
     my $self = shift;
-    return $self->local_cache_basedir."/LOCK-".$self->id;
+    return "LOCK-".$self->id;
 }
 
 #MOVE TO GENOME::SYS#
@@ -766,6 +773,7 @@ sub verify_or_create_local_cache {
     $self->status_message('Lock name: '.$lock_name);
     my $lock = Genome::Sys->lock_resource(
         resource_lock => $lock_name,
+        scope => 'tgisan',
         max_try => 20, # 20 x 180 sec each = 1hr
         block_sleep => 180,
     );
@@ -933,6 +941,16 @@ sub combined_references {
 
     #filter to only those that combine exactly all our references
     my @exact_combined_references = grep { $reference_set == Set::Scalar->new(map $_->id, $_->combines) } @combined_references;
+
+    unless(@exact_combined_references) {
+        #see if one of the provided references is a combination of the others.
+        for my $reference (@references) {
+            my $remaining_reference_set = $reference_set - $reference->id;
+            if($remaining_reference_set <= Set::Scalar->new(map $_->id, $reference->combines)) {
+                push @exact_combined_references, $reference;
+            }
+        }
+    }
 
     return @exact_combined_references;
 }

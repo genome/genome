@@ -252,6 +252,7 @@ sub run_breakdancer {
                 aligned_reads_input         => $self->aligned_reads_input,
                 reference_build_id          => $self->reference_build_id,
                 output_directory            => $self->_temp_staging_directory,
+                result_users                => $self->result_users,
                 config_file => $cfg_file,
                 params      => $self->params,
                 version     => $self->version,

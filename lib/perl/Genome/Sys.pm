@@ -669,6 +669,9 @@ sub copy_file {
     #  the files can never be exactly the same.
 
     unless ( File::Copy::copy($file, $dest) ) {
+        # It is unclear whether File::Copy::copy intends to remove $dest but we
+        # definitely have cases where it's not.
+        unlink $dest;
         Carp::croak("Can't copy $file to $dest: $!");
     }
 
@@ -1022,7 +1025,9 @@ sub write_file {
     for (@content) {
         $fh->print($_) or Carp::croak "Failed to write to file $fname! $!";
     }
-    $fh->close or Carp::croak "Failed to close file $fname! $!";
+    if ( $fname ne '-' ) {
+        $fh->close or Carp::croak "Failed to close file $fname! $!";
+    }
     return $fname;
 }
 
@@ -1487,24 +1492,38 @@ sub shellcmd {
         $t1 = time();
         my $system_retval;
         eval {
-                my ($restore_stdout);
+            # Use fork/exec here so we can redirect stdout and/or stderr in the child and
+            # not have to worry about resetting them after the child process is done.
+            # Note to the future: FCGI ties STDOUT and STDERR and does something with them
+            # that means you can't open() them with typeglobs or references.  See commit 0d56bbc
+
+            my $pid = fork();
+            if (!defined $pid) {
+                # error
+                die "Couldn't fork: $!";
+
+            } elsif ($pid) {
+                # parent
+                waitpid($pid, 0);
+                $system_retval = $?;
+                # add a new line so that bad programs don't break TAP, etc
+                # Adding a newline to the redirected stdout file isn't strictly
+                # necessary, but is included for compatibility with previous versions
+                # of this code that always printed an extra newline to STDOUT, whether
+                # it was redirected or not.
+                my $extra_newline = $redirect_stdout
+                                    ? IO::File->new($redirect_stdout, O_WRONLY|O_APPEND)
+                                    : *STDOUT;
+                print $extra_newline "\n";
+
+            } else {
+                # child
                 if ($redirect_stdout) {
-                    no warnings 'once'; # OLDOUT is used only once, not
-                    open(OLDOUT, '>&STDOUT') || die "Can't dup STDOUT: $!";
                     open(STDOUT, '>', $redirect_stdout) || die "Can't redirect stdout to $redirect_stdout: $!";
-                    $restore_stdout = UR::Util::on_destroy(sub {
-                        open(STDOUT, '>&OLDOUT');
-                    });
                 }
 
-                my ($restore_stderr);
                 if ($redirect_stderr) {
-                    no warnings 'once'; # OLDERR is used only once, not
-                    open(OLDERR, '>&STDERR') || die "Can't dup STDERR: $!";
                     open(STDERR, '>', $redirect_stderr) || die "Can't redirect stderr to $redirect_stderr: $!";
-                    $restore_stderr = UR::Util::on_destroy(sub {
-                        open(STDERR, '>&OLDERR');
-                    });
                 }
 
                 # Set -o pipefail ensures the command will fail if it contains pipes and intermediate pipes fail.
@@ -1519,10 +1538,15 @@ sub shellcmd {
                 {   # POE sets a handler to ignore SIG{PIPE}, that makes the
                     # pipefail option useless.
                     local $SIG{PIPE} = 'DEFAULT';
-                    $system_retval = system('bash', '-c', "$shellopts_part $cmd");
+                    my @cmdline = ('bash', '-c', "$shellopts_part $cmd");
+                    exec(@cmdline)
+                        or do {
+                            print STDERR "Can't exec: $!\nCommand line was: ",join(' ', @cmdline),"\n";
+                            exit(127);
+                        };
                 }
+            }
 
-                print STDOUT "\n"; # add a new line so that bad programs don't break TAP, etc.
         };
         my $exception = $@;
         if ($exception) {

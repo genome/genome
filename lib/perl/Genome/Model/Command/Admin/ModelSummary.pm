@@ -1,5 +1,12 @@
 package Genome::Model::Command::Admin::ModelSummary;
 
+use strict;
+use warnings;
+
+use Genome;
+
+use Try::Tiny qw(try catch);
+
 class Genome::Model::Command::Admin::ModelSummary {
     is => 'Command::V2',
     doc => 'Tool for the Cron Tzar to review builds, e.g. missing builds, failed builds, etc.',
@@ -34,9 +41,6 @@ class Genome::Model::Command::Admin::ModelSummary {
     ],
 };
 
-use strict;
-use warnings;
-use Genome;
 
 sub execute {
     my $self = shift;
@@ -60,16 +64,17 @@ sub execute {
     $self->print_message(join("\t", qw(-------- ------ ------------------- ------------------ ---------------- ---------- ------- ----------)));
 
     my %classes_to_unload;
-    my $tx; # UR::Context::Transaction->begin
     my $build_requested_count = 0;
     my %cleanup_rv;
     my $change_count = 0;
+
+    my $auto_batch_size_txn = UR::Context::Transaction->begin;
     my $commit = sub {
-        unless ($tx && $tx->isa('UR::Context::Transaction')) {
+        unless ($auto_batch_size_txn && $auto_batch_size_txn->isa('UR::Context::Transaction')) {
             die "Not in a transaction! Something went wrong.";
         }
 
-        if($tx->commit) {
+        if($auto_batch_size_txn->commit) {
             $self->debug_message('Committing...');
             unless (UR::Context->commit) {
                 die "Commit failed! Bailing out.";
@@ -82,14 +87,15 @@ sub execute {
             }
 
             $change_count = 0;
-            $tx = UR::Context::Transaction->begin;
+            $auto_batch_size_txn = UR::Context::Transaction->begin;
         } else {
-            $tx->rollback;
+            $auto_batch_size_txn->rollback;
         }
     };
 
-    $tx = UR::Context::Transaction->begin;
     for my $model (@models) {
+        my $per_model_txn = UR::Context::Transaction->begin();
+
         my $build_iterator = $model->build_iterator(
             'status not like' => 'Abandoned',
             '-order_by' => '-created_at',
@@ -105,17 +111,14 @@ sub execute {
         my $model_name   = ($model ? $model->name                     : '-');
         my $pp_name      = ($model ? $model->processing_profile->name : '-');
 
-        my $first_nondone_step = '-';
-        eval {
-            if ($latest_build) {
-                my $parent_workflow_instance = $latest_build->newest_workflow_instance;
-                $first_nondone_step = find_first_nondone_step($parent_workflow_instance) || '-';
-            }
-        };
+        my $first_nondone_step;
+        if ($latest_build) {
+           $first_nondone_step = find_first_nondone_step($latest_build);
+        }
+        $first_nondone_step ||= '-';
 
         my $track_change = sub {
             $change_count++;
-#            $classes_to_unload{$model->class}++;
             $classes_to_unload{$latest_build->class}++ if $latest_build;
         };
 
@@ -174,6 +177,11 @@ sub execute {
         my $should_hide_none = $self->hide_no_action_needed && $action eq 'none';
         unless ($has_hidden_status || $should_hide_none) {
             $self->print_message(join "\t", $model_id, $action, $latest_build_status, $first_nondone_step, $latest_build_revision, $model_name, $pp_name, $fail_count);
+        }
+
+        # help avoid bad state in the larger auto_batch_size transaction
+        unless ($per_model_txn->commit) {
+            $per_model_txn->rollback;
         }
 
         if ($change_count > $self->auto_batch_size) {
@@ -288,16 +296,23 @@ sub previous_build {
 sub workflow_status {
     my $build = shift;
 
-    my %status = eval {
+    # The following is wrapped in a transaction and try to protect against
+    # "corrupt" Workflow::Models.
+    my $tx = UR::Context::Transaction->begin();
+    my %status = try {
         my $build_instance = $build->newest_workflow_instance;
-        my @child_instances = $build_instance->sorted_child_instances if $build_instance;
+        my @child_instances = $build_instance ? $build_instance->sorted_child_instances : ();
 
         my %status;
         for my $child_instance (@child_instances) {
             (my $name = $child_instance->name) =~ s/^[0-9]+\s+//;
             $status{$name} = $child_instance->status;
         }
+        $tx->commit();
         return %status;
+    } catch {
+        $tx->rollback();
+        return;
     };
 
     return %status;
@@ -318,12 +333,32 @@ sub status_compare { # http://stackoverflow.com/q/540229
 
 
 sub find_first_nondone_step {
+    my $build = shift;
+
+    # The following is wrapped in a transaction and try to protect against
+    # "corrupt" Workflow::Models.
+    my $tx = UR::Context::Transaction->begin();
+    my $first_nondone_step = try {
+        my $wf = $build->newest_workflow_instance;
+        my $step =  _find_first_nondone_step_impl($wf);
+        $tx->commit();
+        return $step;
+    } catch {
+        $tx->rollback();
+        return;
+    };
+
+    return $first_nondone_step;
+}
+
+
+sub _find_first_nondone_step_impl {
     my $parent_workflow_instance = shift;
     my @child_workflow_instances = $parent_workflow_instance->related_instances;
 
     my $failed_step;
     for my $child_workflow_instance (@child_workflow_instances) {
-        $failed_step = find_first_nondone_step($child_workflow_instance);
+        $failed_step = _find_first_nondone_step_impl($child_workflow_instance);
         last if $failed_step;
     }
     # detect-variants is skipped because of the way the DV2 dispatcher works, not sure if this will work in general though

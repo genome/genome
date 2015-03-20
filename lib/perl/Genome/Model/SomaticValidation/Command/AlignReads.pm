@@ -64,6 +64,7 @@ sub execute {
         },
         strategy => $build->processing_profile->alignment_strategy,
         log_directory => $build->log_directory,
+        result_users => Genome::SoftwareResult::User->user_hash_for_build($build),
     );
 
     my @bams = $result->bam_paths;

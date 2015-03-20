@@ -16,6 +16,7 @@ use Params::Validate qw(validate validate_pos :types);
 use Genome::Test::Factory::Model::SomaticVariation;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
+use Genome::Test::Factory::Process;
 use Genome::File::Vcf::Differ;
 use Genome::Utility::Test;
 use File::Slurp qw(write_file);
@@ -28,6 +29,7 @@ our @EXPORT_OK = qw(
     test_cmd_and_result_are_in_sync
     get_test_dir
     get_translation_provider
+    get_plan_object
     get_reference_build
     get_translation_provider_with_vep
     test_dag_xml
@@ -91,6 +93,29 @@ sub get_translation_provider {
     );
 }
 
+sub get_plan_object {
+    my %p = validate(@_, {
+        plan_file => {type => SCALAR},
+        provider => {type => OBJECT},
+    });
+
+    my $plan_file = $p{plan_file};
+    my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->
+        create_from_file($plan_file);
+
+    note sprintf("Validating plan (%s)", $plan_file);
+    $plan->validate();
+
+    note "Validating plan against translations provider";
+    my $provider = $p{provider};
+    $plan->validate_translation_provider($provider);
+
+    note "Translating plan";
+    $plan->translate($provider->translations);
+
+    return $plan;
+}
+
 sub setup_bam_results {
     my ($bam1, $bam2, $reference_fasta) = validate_pos(@_, 1, 1, 1);
     my $bam_result1 = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object();
@@ -116,8 +141,15 @@ sub setup_bam_results {
     reinstall_sub( {
         into => 'Genome::InstrumentData::AlignmentResult::Merged',
         as => 'bam_file',
-        code => sub {my $self = shift;
-            return $result_to_bam_file{$self->id};
+        code => sub {
+            my $self = shift;
+            my $bam_file = $result_to_bam_file{$self->id};
+            if ($bam_file) {
+                return $bam_file;
+            }
+            else {
+                return File::Spec->join($self->output_dir, $self->id . 'out');
+            }
         },
     });
     reinstall_sub( {
@@ -158,15 +190,16 @@ sub test_xml {
 sub test_dag_execute {
     my ($dag, $expected_vcf, $input_vcf, $provider, $variant_type, $test_file) = @_;
 
-    my $plan = Genome::VariantReporting::Framework::Plan::MasterPlan->
-        create_from_file(File::Spec->join($test_file . '.d', 'plan.yaml'));
-    $plan->validate();
-    $plan->validate_translation_provider($provider);
-    $plan->translate($provider->translations);
+    my $process = Genome::Test::Factory::Process->setup_object();
+
+    my $plan_file = File::Spec->join($test_file . '.d', 'plan.yaml');
+    my $plan = get_plan_object( plan_file => $plan_file, provider => $provider );
+    note "Launching workflow";
     my $output = $dag->execute(
         input_vcf => $input_vcf,
         variant_type => $variant_type,
         plan_json => $plan->as_json,
+        process_id => $process->id,
     );
     my $vcf_path = $output->{output_vcf};
     my $differ = Genome::File::Vcf::Differ->new($vcf_path, $expected_vcf);

@@ -1,9 +1,11 @@
 #!/usr/bin/env genome-perl
 use strict;
 use warnings;
-use Test::More tests => 44; 
+use Test::More tests => 44;
 
 use above 'Genome';
+use Genome::Test::Factory::Build;
+use Genome::Test::Factory::Model::ReferenceAlignment;
 
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
@@ -43,9 +45,22 @@ class Genome::Foo {
     ],
 };
 
-sub Genome::Foo::resolve_module_version { 
+sub Genome::Foo::resolve_module_version {
     $DB::single = 1;
     shift->Genome::SoftwareResult::resolve_module_version(@_)
+}
+
+my $requestor_model = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
+my $requestor_build = Genome::Test::Factory::Build->setup_object(model_id => $requestor_model->id);
+my $sponsor_user = Genome::Sys->current_user();
+
+sub sr_users_hash {
+    return (
+        users => {
+            requestor => $requestor_build,
+            sponsor => $sponsor_user,
+        },
+    );
 }
 
 ###
@@ -71,13 +86,13 @@ my %params = (
     p3 => $b[0],
     p4 => [1011,1012,1013],
     p5 => \@b,
-    
+
     i1 => "ihello",
     i2 => 102,
     i3 => $b[1],
     i4 => [1021,1022,1023],
     i5 => \@b,
-    
+
     m1 => "mhello",
     m2 => 103,
     #m3 => $b[2],
@@ -85,8 +100,9 @@ my %params = (
     #i5 => \@b,
 );
 my $f = Genome::Foo->get_or_create(
-    %params,  
+    %params,
     output_dir => $tmp_dir,
+    sr_users_hash(),
 );
 ok($f, "made a software result");
 
@@ -97,26 +113,26 @@ $DB::single = 1;
 is($f->p1, 'phello', 'p1 text matches');
 is($f->p2, 101, 'p2 number matches');
 is($f->p3, $b[0], 'p3 object matches');
-is_deeply([$f->p4],[1011,1012,1013], 'p4 list of numbers match'); 
-is_deeply([$f->p5],\@b, 'p5 list of objects match'); 
+is_deeply([$f->p4],[1011,1012,1013], 'p4 list of numbers match');
+is_deeply([$f->p5],\@b, 'p5 list of objects match');
 
 is($f->i1, 'ihello', 'i1 text matches');
 is($f->i2, 102, 'i2 number matches');
 is($f->i3, $b[1], 'i3 object matches');
-is_deeply([$f->i4],[1021,1022,1023], 'i4 list of numbers match'); 
-is_deeply([$f->i5],\@b, 'i5 list of objects match'); 
+is_deeply([$f->i4],[1021,1022,1023], 'i4 list of numbers match');
+is_deeply([$f->i5],\@b, 'i5 list of objects match');
 
 is($f->m1, 'mhello', 'm1 text matches');
 is($f->m2, 103, 'm2 number matches');
 #is($f->m3, $b[2], 'm3 object matches');
-#is_deeply([$f->m4],[1031,1032,1033], 'm4 list of numbers match'); 
-#is_deeply([$f->m5],\@b, 'm5 list of objects match'); 
+#is_deeply([$f->m4],[1031,1032,1033], 'm4 list of numbers match');
+#is_deeply([$f->m5],\@b, 'm5 list of objects match');
 is($f->output_dir, $tmp_dir, "output dir matches");
 
-eval { 
+eval {
     #local $ENV{UR_DBI_MONITOR_DML} = 1;
     local $ENV{UR_DBI_NO_COMMIT} = 1; # this is above but just to be sure
-    UR::Context->commit; 
+    UR::Context->commit;
 };
 
 ok(!$@, "no exception during save (commit disabled)!")
@@ -131,6 +147,7 @@ for ($f->params, $f->inputs, $f) {
 my $f2 = Genome::Foo->get_or_create(
     %params,
     output_dir => $tmp_dir,
+    sr_users_hash(),
 );
 
 ok($f2, "got a software result on the second call");
@@ -140,7 +157,7 @@ is($f2->id, $prev_id, "the id matches that of the first one");
 my %prev_ids = ($f->id => $f, $f2->id => $f2);
 for my $p (grep { /^[ip]/ } sort keys %params) {
     my $old = $params{$p};
-    
+
     my $new;
     if ($p =~ /.1/) {
         $new = $old . "changed"
@@ -168,7 +185,7 @@ for my $p (grep { /^[ip]/ } sort keys %params) {
 
     my $new_printable = (ref($new) eq 'ARRAY' ? join(",",@$new) : $new);
 
-    my $alt_obj = Genome::Foo->get_or_create(%new_params);
+    my $alt_obj = Genome::Foo->get_or_create(%new_params, sr_users_hash());
     ok($alt_obj, "got object for params with altered $p of $new_printable");
 
     my $new_id = $alt_obj->id;
@@ -178,10 +195,10 @@ for my $p (grep { /^[ip]/ } sort keys %params) {
     $prev_ids{$new_id} = $alt_obj;
 }
 
-eval { 
+eval {
     #local $ENV{UR_DBI_MONITOR_DML} = 1;
     local $ENV{UR_DBI_NO_COMMIT} = 1; # this is above but just to be sure
-    UR::Context->commit; 
+    UR::Context->commit;
 };
 
 ok(!$@, "no exception during save (commit disabled)!")

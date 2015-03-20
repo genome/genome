@@ -5,15 +5,20 @@ use warnings;
 
 use Genome;
 
+require File::Temp;
 require List::MoreUtils;
 use Workflow::Simple;
 
 class Genome::InstrumentData::Command::Import::Basic { 
     is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithDownsampleRatio /],
     has_input => [
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'Analysis project to assign to the created instrument data.',
+        },
         import_source_name => {
             is => 'Text',
-            doc => 'Organiztion name or abbreviation from where the source file(s) were generated or downloaded.',
+            doc => "Organization or site name/abbreviation from where the source was generated or downloaded. Use 'CGHub' for TCGA downloaded data.",
         },
         library => {
             is => 'Genome::Library',
@@ -26,10 +31,6 @@ class Genome::InstrumentData::Command::Import::Basic {
         },
     ],
     has_optional_input => [
-        analysis_project => {
-            is => 'Genome::Config::AnalysisProject',
-            doc => 'Analysis project to assign to the created instrument data.',
-        },
         description  => {
             is => 'Text',
             doc => 'Description of the data.',
@@ -160,26 +161,24 @@ sub _resolve_original_format {
 sub _resolve_instrument_data_properties {
     my $self = shift;
 
-    my $properties = {};
-    if ( $self->instrument_data_properties ) {
-        my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-        $properties = $helpers->key_value_pairs_to_hash( $self->instrument_data_properties );
-        return if not $properties;
+    my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties';
+    if ( $self->import_source_name =~ /^cghub$/i ) {
+        $self->import_source_name('CGHub');
+        $class .= 'FromCgHub';
     }
 
-    for my $name (qw/ import_source_name description downsample_ratio /) {
-        my $value = $self->$name;
-        next if not defined $value;
-        if ( defined $properties->{$name} and $properties->{$name} ne $value ) {
-            $self->error_message("Conflicting values given for command and instrument data properties $name: '$value' <=> '$properties->{$name}'");
-            return;
-        }
-        $properties->{$name} = $value;
+    my @instrument_data_properties = $self->instrument_data_properties;
+    push @instrument_data_properties, 'downsample_ratio='.$self->downsample_ratio if defined $self->downsample_ratio;
+    my $insdata_props_processor = $class->execute(
+        instrument_data_properties => \@instrument_data_properties,
+        source => join(',', $self->source_files),
+    );
+    if ( not $insdata_props_processor->result ) {
+        $self->error_message('Failed to process instrument data properties!');
+        return;
     }
 
-    $properties->{original_data_path} = join(',', $self->source_files);
-
-    return $self->_instrument_data_properties($properties);
+    return $self->_instrument_data_properties( $insdata_props_processor->resolved_instrument_data_properties );
 }
 
 sub _resolve_working_directory {
@@ -209,7 +208,7 @@ sub _build_workflow {
 
     my $workflow = Workflow::Model->create(
         name => 'Import Instrument Data',
-        input_properties => [qw/ analysis_project instrument_data_properties downsample_ratio library source_paths working_directory /],
+        input_properties => [qw/ analysis_project instrument_data_properties downsample_ratio library library_name sample_name source_paths working_directory /],
         output_properties => [qw/ instrument_data /],
     );
     $self->_workflow($workflow);
@@ -343,12 +342,6 @@ sub _add_sra_to_bam_op_to_workflow {
             right_property => $right_property,
         );
     }
-    $workflow->add_link(
-        left_operation => $workflow->get_input_connector,
-        left_property => 'library',
-        right_operation => $sra_to_bam_op,
-        right_property => 'library',
-    );
 
     return $sra_to_bam_op;
 }
@@ -382,7 +375,7 @@ sub _add_fastqs_to_bam_op_to_workflow {
     my $fastqs_to_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'fastqs to bam');
     return if not $fastqs_to_bam_op;
 
-    for my $property (qw/ working_directory library /) {
+    for my $property (qw/ working_directory library_name sample_name /) {
         $self->_workflow->add_link(
             left_operation => $self->_workflow->get_input_connector,
             left_property => $property,
@@ -528,6 +521,8 @@ sub _gather_inputs_for_workflow {
         downsample_ratio => $self->downsample_ratio,
         instrument_data_properties => $self->_instrument_data_properties,
         library => $self->library,
+        library_name => $self->library->name,
+        sample_name => $self->library->sample->name,
         source_paths => [ $self->source_files ],
         working_directory => $self->_working_directory,
     };

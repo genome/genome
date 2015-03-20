@@ -8,7 +8,7 @@ use Sys::Hostname;
 use File::Path;
 
 class Genome::InstrumentData::AlignmentResult::Merged::SpliceJunctionSummary {
-    is => ['Genome::SoftwareResult::Stageable'],
+    is => ['Genome::SoftwareResult::Stageable', 'Genome::SoftwareResult::WithNestedResults'],
     has_input => [
         alignment_result_id => {
             is => 'Number',
@@ -90,7 +90,7 @@ sub create {
     $annotation_file_basename =~ s/\//-/g;
 
     # Alignment inputs
-    my @alignments = $self->alignment_result->collect_individual_alignments;
+    my @alignments = $self->alignment_result->collect_individual_alignments($self->_user_data_for_nested_results);
     $self->debug_message('Merging '. scalar(@alignments) .' per lane junctions BED12 files...');
 
     my @alignment_junctions_bed12_files;

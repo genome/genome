@@ -3,6 +3,7 @@ package Genome::VariantReporting::Command::Wrappers::IgvSession;
 use strict;
 use warnings;
 use Genome;
+use URI;
 
 my $_JSON_CODEC = new JSON->allow_nonref;
 
@@ -52,13 +53,10 @@ sub _temp_file_path {
 sub _run {
     my $self = shift;
 
-    my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlMulti->create(
-        bams             => $self->bam_paths,
-        labels           => $self->bam_labels,
-        output_file      => $self->_temp_file_path,
-        genome_name      => $self->genome_name,
-        review_bed_files => $self->bed_files,
-        reference_name   => $self->igv_reference_name,
+    my $dumpXML = Genome::Model::Tools::Analysis::DumpIgvXmlBasic->create(
+        output_file    => $self->_temp_file_path,
+        resource_files => $self->resource_files,
+        reference_name => $self->igv_reference_name,
     );
     unless ($dumpXML->execute) {
         confess $self->error_message("Failed to create IGV xml file");
@@ -70,20 +68,40 @@ sub bams {
     return $_JSON_CODEC->decode($self->bam_hash_json);
 }
 
-sub bam_paths {
-    my $self = shift;
-    #return join(',', map {File::Spec->join($ENV{GENOME_SYS_SERVICES_FILES_URL}, $_)} values %{$self->bams});
-    return join(',', values %{$self->bams});
+sub uri {
+    my $file = shift;
+    return URI->new_abs($file, $ENV{GENOME_SYS_SERVICES_FILES_URL})->as_string;
 }
 
-sub bam_labels {
+sub resource_files {
     my $self = shift;
-    return join(',', keys %{$self->bams});
+
+    my %bams = %{$self->bams};
+    my %reference_files = map { uri($bams{$_}) => $_ } keys %bams;
+
+
+    for my $bed_report ($self->merged_bed_reports) {
+        my @report_users = map { $_->users('label like' => 'report:%') } $bed_report->report_results;
+        my ($process) = grep { $_->isa('Genome::VariantReporting::Process::Trio') } $bed_report->children;
+        $reference_files{uri($bed_report->report_path)} = bed_file_label($bed_report->category, $process) || $bed_report->report_path;
+    }
+
+    return \%reference_files;
 }
 
-sub bed_files {
-    my $self = shift;
-    return [map {$_->report_path} $self->merged_bed_reports];
+sub bed_file_label {
+    my ($category, $process) = @_;
+
+    return unless defined($process);
+
+    my %labels = (
+        docm      => 'Recurrent AML Variants',
+        followup  => sprintf('Followup(%s) Variants', $process->followup_sample->name),
+        discovery => sprintf('Discovery(%s) Variants', $process->tumor_sample->name),
+        germline  => sprintf('Germline(%s) Variants', $process->normal_sample->name)
+    );
+
+    return $labels{$category};
 }
 
 sub igv_reference_name {

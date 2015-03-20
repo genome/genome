@@ -207,41 +207,23 @@ sub add_merge_discovery_and_followup_reports_to_workflow {
                     command => 'Genome::VariantReporting::Framework::MergeReports',
                 );
 
-                my $converge = Genome::WorkflowBuilder::Converge->create(
-                    output_properties => ['report_results'],
-                    name => "Converge ($output_name)",
-                );
-                $dag->add_operation($converge);
-
                 $dag->create_link(
                     source => $discovery_dag,
                     source_property => $output_name,
-                    destination => $converge,
-                    destination_property => 'discovery_report_result',
+                    destination => $merge_op,
+                    destination_property => 'base_report',
                 );
+                $merge_op->declare_constant(base_report_source => 'discovery');
 
                 my $followup_dag = $dag->operation_named(sub_dag_name(
                         $roi_name, 'followup'));
                 $dag->create_link(
                     source => $followup_dag,
                     source_property => $output_name,
-                    destination => $converge,
-                    destination_property => 'followup_report_result',
-                );
-
-                $dag->create_link(
-                    source => $converge,
-                    source_property => 'report_results',
                     destination => $merge_op,
-                    destination_property => 'report_results',
+                    destination_property => 'supplemental_report',
                 );
-
-                $dag->create_link(
-                    source => $discovery_dag,
-                    source_property => $output_name,
-                    destination => $merge_op,
-                    destination_property => 'use_header_from',
-                );
+                $merge_op->declare_constant(supplemental_report_source => 'followup');
 
                 $merge_op->declare_constant(
                     label => 'report:' . to_json({

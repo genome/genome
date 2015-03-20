@@ -60,7 +60,11 @@ sub resolve_start_point {
         return $ENV{JENKINS_STABLE_REVISION};
     }
 
-    return '@{u}';
+    if (system(q(git rev-parse '@{u}' 2> /dev/null)) == 0) {
+        return '@{u}';
+    }
+
+    return;
 }
 
 
@@ -80,13 +84,14 @@ sub is_blacklisted {
 
 sub files_to_compile {
     my $start_point = shift;
-    my @files;
 
     my $git_dir = capture('git', 'rev-parse', '--show-toplevel');
     chomp $git_dir;
 
-    my @cmd = ('git', 'diff', '--name-only', $start_point);
-    @files = capture(@cmd);
+    my @cmd = $start_point
+            ? ('git', 'diff', '--name-only', $start_point)
+            : ('git', 'ls-files');
+    my @files = capture(@cmd);
     chomp @files;
 
     @files = map { File::Spec->join($git_dir, $_) } @files;

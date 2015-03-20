@@ -183,12 +183,12 @@ sub check_region_of_interest {
             }
 
             if ($roi_reference and !$rsb->is_compatible_with($roi_reference)) {
-                my $converter =  Genome::Model::Build::ReferenceSequence::Converter->get_with_lock(
-                    source_reference_build => $roi_reference, 
-                    destination_reference_build => $rsb,
+                my $converter_exists =  Genome::Model::Build::ReferenceSequence::Converter->exists_for_references(
+                    $roi_reference,
+                    $rsb,
                 );
 
-                unless ($converter) {
+                unless ($converter_exists) {
                     push @tags, UR::Object::Tag->create(
                         type => 'invalid',
                         properties => [qw/ region_of_interest_set_name /],
@@ -270,6 +270,8 @@ sub alignment_results_for_instrument_data {
     my $processing_profile = $model->processing_profile;
     my $input = $model->input_for_instrument_data($instrument_data);
 
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($self);
+
     if ($processing_profile->can('results_for_instrument_data_input')) {
         my @results;
         # TODO There's gotta be a better way to get segment info
@@ -285,11 +287,11 @@ sub alignment_results_for_instrument_data {
                     $segment_info{instrument_data_segment_type} = $align_reads_event->instrument_data_segment_type;
                     $segment_info{instrument_data_segment_id} = $align_reads_event->instrument_data_segment_id;
                 };
-                push @results, $processing_profile->results_for_instrument_data_input($input, %segment_info);
+                push @results, $processing_profile->results_for_instrument_data_input($input, $result_users, %segment_info);
             }
             return @results;
         } else {
-            return $processing_profile->results_for_instrument_data_input($input);
+            return $processing_profile->results_for_instrument_data_input($input, $result_users);
         }
     }
 
@@ -718,6 +720,7 @@ sub _fetch_merged_alignment_result {
     my ($params) = $self->processing_profile->params_for_merged_alignment($self, @instrument_data_inputs);
     my $alignment = Genome::InstrumentData::AlignmentResult::Merged->$mode(
         %$params,
+        users => Genome::SoftwareResult::User->user_hash_for_build($self),
     );
 
     return $alignment;
@@ -1277,6 +1280,7 @@ sub coverage_stats_summary_hash_ref {
 
 sub region_of_interest_set_bed_file {
     my $self = shift;
+    my $bed_file_path = shift; # optional
 
     my $roi_set = $self->model->region_of_interest_set;
     return unless $roi_set;
@@ -1300,8 +1304,12 @@ sub region_of_interest_set_bed_file {
         # This is to retain backward compatibility, previously all BED files had short roi names(like r###)
         $use_short_names = 1;
     }
-    my $bed_file_path = $self->reference_coverage_directory .'/'. $roi_set->id .'.bed';
-    unless (-e $bed_file_path) {
+
+    unless ($bed_file_path) {
+        $bed_file_path = $self->reference_coverage_directory .'/'. $roi_set->id .'.bed';
+    }
+
+    unless (-s $bed_file_path) {
         my %dump_params = (
             feature_list => $roi_set,
             output_path => $bed_file_path,
@@ -1317,6 +1325,7 @@ sub region_of_interest_set_bed_file {
             die('Failed to print bed file to path '. $bed_file_path);
         }
     }
+
     return $bed_file_path;
 }
 

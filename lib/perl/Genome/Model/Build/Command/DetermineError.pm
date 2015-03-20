@@ -23,6 +23,10 @@ our $WORKFLOW_DATE_AND_HOST = qr{
 our $PTERO_DATE = qr{
         \[(?<date>\d{4}/\d{2}/\d{2}\s\d{2}\:\d{2}\:\d{2}).\d+\]
     }x;
+our $FLOW_DATE = qr{
+        (?<date>\d{4}-\d{2}-\d{2}\s\d{2}\:\d{2}\:\d{2}).\d+
+    }x;
+
 our $ERROR_LOCATION = qr{
         at \s (?<error_source_file>\S+\.pm) \s line \s (?<error_source_line>\d+)
     }x;
@@ -30,8 +34,8 @@ our $ERROR_LOCATION = qr{
 our $ERROR_FINDING_REGEX = qr{
                 (?:
                     $WORKFLOW_DATE_AND_HOST
-                    |
-                    $PTERO_DATE
+                    | $PTERO_DATE
+                    | $FLOW_DATE
                 )
                 \s
                 (?:
@@ -44,8 +48,8 @@ our $ERROR_FINDING_REGEX = qr{
 our $EXCEPTION_FINDING_REGEX = qr{
                 (?:
                     $WORKFLOW_DATE_AND_HOST
-                    |
-                    $PTERO_DATE
+                    | $PTERO_DATE
+                    | $FLOW_DATE
                 )
                 \s
                 (?<error_text>.*) \s (?<!called\s) $ERROR_LOCATION
@@ -323,10 +327,11 @@ sub find_die_or_warn_in_log {
 
             $EXCEPTION_FINDING_REGEX,
                 sub {
-                    ($error_date, $error_text, $error_source_file, $error_source_line, $error_host)
-                        = @+{'date','error_text','error_source_file','error_source_line','host'};
-
-                    last SCAN_FILE if ($error_host);
+                    unless($error_text) {
+                        ($error_date, $error_text, $error_source_file, $error_source_line, $error_host)
+                            = @+{'date','error_text','error_source_file','error_source_line','host'};
+                        last SCAN_FILE if ($error_host);
+                    }
                 },
         );
     }

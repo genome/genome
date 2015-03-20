@@ -1,0 +1,14 @@
+experts:
+    nhlbi:
+        joinx_version: 1.9
+        info_string: 'AAC:PP:CDP:PH:EA_GTC:AA_GTC'
+        vcf: nhlbi_vcf
+reports:
+    report_alpha:
+        interpreters:
+            interpreter_x:
+                ix_p1: something
+                ix_p2: something else
+        params:
+            ra_p1: something
+            ra_p2: something else

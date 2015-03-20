@@ -8,7 +8,6 @@ Output a list of variant callers that called this position for the specified sam
     This is a translated property.
   [1mvalid_callers[0m   String
     List of variant callers to include in determination for filtering
-    Default value ["VarscanSomatic", "Sniper", "Strelka"] if not specified
 
 [4mAVAILABLE FIELDS[0m
   [1mvariant_caller_count[0m

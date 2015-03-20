@@ -51,6 +51,18 @@ sub is_many_param_names {
     return map {$_->property_name} $self->__meta__->properties(is_many => 1, is_param => 1);
 }
 
+sub is_many_property_names {
+    my $self = shift;
+
+    return ($self->is_many_param_names, $self->is_many_input_names);
+}
+
+sub is_not_many_property_names {
+    my $self = shift;
+
+    return ($self->is_not_many_param_names, $self->is_not_many_input_names);
+}
+
 sub is_not_many_param_names {
     my $self = shift;
 

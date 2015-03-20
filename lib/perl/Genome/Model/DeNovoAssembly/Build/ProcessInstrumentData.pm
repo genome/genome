@@ -92,6 +92,8 @@ sub _get_sx_result_params {
     return if not $sx_result_params;
     $self->debug_message('SX reults params: '.Data::Dumper::Dumper($sx_result_params));
 
+    $sx_result_params->{users} = Genome::SoftwareResult::User->user_hash_for_build($self->build);
+
     return $sx_result_params;
 }
 

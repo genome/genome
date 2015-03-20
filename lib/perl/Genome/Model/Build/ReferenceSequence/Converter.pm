@@ -57,11 +57,20 @@ sub __errors__ {
     return @errors;
 }
 
+sub exists_for_references {
+    my $class = shift;
+    my $source_reference = shift;
+    my $destination_reference = shift;
+
+    my $ref = $class->_faster_get(source_reference_build => $source_reference, destination_reference_build => $destination_reference);
+    return defined($ref);
+}
+
 sub convert_bed {
     my $class = shift;
     my ($source_bed, $source_reference, $destination_bed, $destination_reference) = @_;
 
-    my $self = $class->get_with_lock(source_reference_build => $source_reference, destination_reference_build => $destination_reference);
+    my $self = $class->_faster_get(source_reference_build => $source_reference, destination_reference_build => $destination_reference);
     unless($self) {
         $class->error_message('Could not find converter from ' . $source_reference->__display_name__ . ' to ' . $destination_reference->__display_name__  . '. (See `genome model reference-sequence converter list` for available conversions.)');
         return;
@@ -75,15 +84,20 @@ sub convert_bed {
     if($self->is_per_position_algorithm) {
         my $source_fh = Genome::Sys->open_file_for_reading($source_bed);
         my $destination_fh = Genome::Sys->open_file_for_writing($destination_bed);
-    
+
         while(my $line = <$source_fh>) {
             chomp $line;
             my ($chrom, $start, $stop, @extra) = split("\t", $line);
+            unless($chrom && $start && $stop) {
+                $self->debug_message('Not converting non-entry line %s', $line);
+                $destination_fh->say($line);
+                next;
+            }
             my ($new_chrom, $new_start, $new_stop) = $self->convert_position($chrom, $start, $stop);
             my $new_line = join("\t", $new_chrom, $new_start, $new_stop, @extra) . "\n";
             print $destination_fh $new_line;
         }
-    
+
        $source_fh->close;
        $destination_fh->close;
     } else {

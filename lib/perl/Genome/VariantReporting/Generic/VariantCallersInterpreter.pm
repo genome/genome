@@ -12,7 +12,6 @@ class Genome::VariantReporting::Generic::VariantCallersInterpreter {
         valid_callers => {
             is => 'String',
             is_many => 1,
-            default_value => [qw(VarscanSomatic Sniper Strelka)],
             doc => 'List of variant callers to include in determination for filtering',
         },
     ],

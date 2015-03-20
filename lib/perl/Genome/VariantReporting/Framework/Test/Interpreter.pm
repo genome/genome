@@ -7,6 +7,12 @@ use Data::Dump qw(pp);
 
 class Genome::VariantReporting::Framework::Test::Interpreter {
     is => 'Genome::VariantReporting::Framework::Component::Interpreter',
+    has => {
+        info_field => {
+            is => 'Text',
+            is_optional => 1,
+        }
+    }
 };
 
 sub name {
@@ -28,7 +34,7 @@ sub _interpret_entry {
 
     my %return_values;
     for my $variant_allele (@$passed_alt_alleles) {
-        $return_values{$variant_allele}->{info} = pp($entry->info_for_allele($variant_allele));
+        $return_values{$variant_allele}->{info} = pp($entry->info_for_allele($variant_allele, $self->info_field));
     }
 
     return %return_values;

@@ -1,4 +1,4 @@
-package Genome::Model::Build::DeNovoAssembly::Allpaths;;
+package Genome::Model::Build::DeNovoAssembly::Allpaths;
 
 use strict;
 use warnings;
@@ -139,7 +139,7 @@ sub before_assemble {
         my $lib_id = join("-", @lib_ids);
         my $genomic_start = 0;
         my $genomic_end = 0;
-        my $lib_name = join("-", map{Genome::Library->get($_)->name} @lib_ids);
+        my $lib_name = join("-", map{ my $name = Genome::Library->get($_)->name; Genome::Utility::Text::sanitize_string_for_filesystem($name); } @lib_ids);
         if ($lib_name =~ /CHORI/) {
             $genomic_start = 2;
             $genomic_end = 50;
@@ -255,6 +255,7 @@ sub read_processor_params_for_instrument_data {
         output_file_count => $output_file_count,
         output_file_type => 'sanger',
         test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        users => Genome::SoftwareResult::User->user_hash_for_build($self),
     );
 }
 

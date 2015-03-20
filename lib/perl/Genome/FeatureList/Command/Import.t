@@ -9,9 +9,13 @@ BEGIN {
 
 use above "Genome";
 
-use Test::More tests => 20;
+use Test::More tests => 23;
 
-use_ok('Genome::FeatureList::Command::Import');
+use File::Copy qw(copy);
+use Genome::Utility::Test qw(compare_ok);
+
+my $class = 'Genome::FeatureList::Command::Import';
+use_ok($class);
 
 my $reference = Genome::Model::Build::ReferenceSequence->get(name => 'NCBI-human-build36');
 
@@ -55,3 +59,79 @@ for my $failing_bed(@test_beds[@should_fail]) {
     my $error = $@;
     ok(!$rv && $error, 'failed to execute');
 }
+
+subtest _nimblegen_pair => sub {
+    plan tests => 4;
+    my @bed_files = qw(
+        150203_HG19_CRC_OID42357_EZ_HX1_capture_targets.bed
+        150203_HG19_CRC_OID42357_EZ_HX1_coverage_summary.txt
+        150203_HG19_CRC_OID42357_EZ_HX1_primary_targets.bed
+        CRC_nimbegen_design_hg19_v3.bed
+    );
+    my $pair = $class->_nimblegen_pair(@bed_files);
+    is(scalar(keys %$pair), 2, 'two items are returned');
+    ok($pair->{tiled_region}, 'it has a tiled_region value');
+    ok($pair->{target_region}, 'it has a target_region value');
+    isnt($pair->{tiled_region}, $pair->{target_region}, 'the items are distinct');
+};
+
+subtest _has_nimblegen_pair => sub {
+    plan tests => 3;
+
+    do {
+        my @bed_files = qw(
+            150203_HG19_CRC_OID42357_EZ_HX1_capture_targets.bed
+            150203_HG19_CRC_OID42357_EZ_HX1_coverage_summary.txt
+            150203_HG19_CRC_OID42357_EZ_HX1_primary_targets.bed
+            CRC_nimbegen_design_hg19_v3.bed
+        );
+        ok($class->_has_nimblegen_pair(@bed_files),
+            'single match: should have Nimblegen capture/primary pair');
+    };
+
+    do {
+        my @bed_files = qw(
+            150203_HG19_CRC_OID42357_EZ_HX1_coverage_summary.txt
+            150203_HG19_CRC_OID42357_EZ_HX1_primary_targets.bed
+            CRC_nimbegen_design_hg19_v3.bed
+        );
+        ok(not($class->_has_nimblegen_pair(@bed_files)),
+            'empty match: should not have Nimblegen capture/primary pair');
+    };
+
+    do {
+        my @bed_files = qw(
+            150203_HG19_CRC_OID42357_EZ_HX1_capture_targets.bed
+            150203_HG19_CRC_OID42357_EZ_HX1_coverage_summary.txt
+            150203_HG19_CRC_OID42357_EZ_HX1_primary_targets.bed
+            250203_HG19_CRC_OID42357_EZ_HX1_capture_targets.bed
+            250203_HG19_CRC_OID42357_EZ_HX1_primary_targets.bed
+            CRC_nimbegen_design_hg19_v3.bed
+        );
+        ok(not($class->_has_nimblegen_pair(@bed_files)),
+            'multiple match: should not have Nimblegen capture/primary pair');
+    };
+};
+
+subtest 'Nimblegen capture/primary Import' => sub {
+    plan tests => 2;
+
+    my $reference = Genome::Model::Build::ReferenceSequence->get(name => 'NCBI-human-build36');
+    my ($expected_output, @originals) = map { sprintf('%s.d/%s.bed', __FILE__, $_) }
+        qw(X_multitrack X_capture_targets X_primary_targets);
+
+    my $temp_dir = Genome::Sys->create_temp_directory();
+    for (@originals) {
+        copy($_, $temp_dir);
+    }
+
+    my $cmd = $class->create(
+        file_path => $temp_dir,
+        name => 'Nimblegen capture/primary Import Test',
+        reference => $reference,
+    );
+    ok($cmd->execute, 'import executed successfully');
+
+    my $fl = $cmd->new_feature_list;
+    compare_ok($fl->file_path, $expected_output);
+};

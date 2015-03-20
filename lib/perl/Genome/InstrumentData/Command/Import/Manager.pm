@@ -11,6 +11,10 @@ class Genome::InstrumentData::Command::Import::Manager {
     is => 'Command::V2',
     doc => 'Manage importing sequence files into GMS',
     has => [
+        analysis_project => {
+            is => 'Genome::Config::AnalysisProject',
+            doc => 'Analysis project to assign to the created instrument data.',
+        },
         source_files_tsv => {
             is => 'Text',
             doc => <<DOC
@@ -33,15 +37,9 @@ Sample-01-extlibs   sample-1.2.bam  XAXAXA          1       TTAACC
 Sample-02-extlibs   http://fastqs.org/sample-2.fwd.fastq.gz,http://fastqs.org/sample-2.rev.fastq.gz  XYYYYX  2   GAACTT
 
 DOC
-
         },
-            ],
+    ],
     has_optional => [
-        analysis_project => {
-            is => 'Genome::Config::AnalysisProject',
-            doc => 'Analysis project to assign to the created instrument data.',
-        },
-
         launch_config => {
             is => 'Text',
             doc => <<DOC

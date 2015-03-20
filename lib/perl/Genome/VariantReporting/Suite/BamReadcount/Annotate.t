@@ -13,15 +13,27 @@ use Sub::Install;
 use Set::Scalar;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Vcf::AnnotateWithReadcounts;
-use Genome::VariantReporting::Framework::TestHelpers qw(test_cmd_and_result_are_in_sync);
-
+use Genome::Test::Factory::Process;
+use Genome::VariantReporting::Framework::TestHelpers qw(
+    test_cmd_and_result_are_in_sync
+    get_translation_provider
+    get_plan_object
+);
+use Genome::VariantReporting::Framework::Plan::TestHelpers qw(
+    set_what_interpreter_x_requires
+);
 use Test::More;
+
+my $RESOURCE_VERSION = 2;
+my $data_dir = __FILE__.".d";
 
 my $cmd_class = 'Genome::VariantReporting::Suite::BamReadcount::Annotate';
 use_ok($cmd_class) or die;
 
 my $result_class = 'Genome::VariantReporting::Suite::BamReadcount::AnnotateResult';
 use_ok($result_class) or die;
+
+set_what_interpreter_x_requires('bam-readcount');
 
 my ($cmd, $tool_args) = generate_test_cmd();
 
@@ -60,10 +72,19 @@ sub generate_test_cmd {
         code => sub {my $self = shift; return ['rc_file1:sample1', 'rc_file2:sample2'];},
     });
 
+    my $process = Genome::Test::Factory::Process->setup_object();
+
+    my $provider = get_translation_provider(version => $RESOURCE_VERSION);
+
+    my $plan_file = File::Spec->join($data_dir, 'plan.yaml');
+    my $plan = get_plan_object( plan_file => $plan_file, provider => $provider );
+
     my %params = (
         readcount_results => [$rc_result1, $rc_result2],
         input_vcf => __FILE__,
         variant_type => 'snvs',
+        process_id => $process->id,
+        plan_json => $plan->as_json,
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd, $tool_args;

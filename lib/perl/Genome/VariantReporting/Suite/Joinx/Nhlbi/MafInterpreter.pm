@@ -19,9 +19,9 @@ sub requires_annotations {
 
 sub field_descriptions {
     return (
-        EU_MAF => 'European minor allele frequency from NHLBI',
-        AA_MAF => 'African American minor allele frequency from NHLBI',
-        All_MAF => 'Overall minor allele frequency from NHLBI',
+        NHLBI_EU_MAF => 'European minor allele frequency from NHLBI',
+        NHLBI_AA_MAF => 'African American minor allele frequency from NHLBI',
+        NHLBI_All_MAF => 'Overall minor allele frequency from NHLBI',
     );
 }
 
@@ -35,9 +35,9 @@ sub _interpret_entry {
     my $aa_maf = $self->get_maf_for_entry($entry, "AA");
     my $all_maf = $self->get_maf_for_entry($entry, "All");
     for my $variant_allele (@$passed_alt_alleles) {
-        $return_values{$variant_allele}->{EU_MAF} = $eu_maf;
-        $return_values{$variant_allele}->{AA_MAF} = $aa_maf;
-        $return_values{$variant_allele}->{All_MAF} = $all_maf;
+        $return_values{$variant_allele}->{NHLBI_EU_MAF} = $eu_maf;
+        $return_values{$variant_allele}->{NHLBI_AA_MAF} = $aa_maf;
+        $return_values{$variant_allele}->{NHLBI_All_MAF} = $all_maf;
     }
     return %return_values;
 }

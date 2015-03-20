@@ -6,10 +6,19 @@ use Genome;
 
 class Genome::VariantReporting::Suite::Fpkm::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
-    has_input => [
-        fpkm_file => {is => 'Path'},
-        sample_name => {is => 'Text'},
+    has_planned_transient => [
+        fpkm_file => {
+            is => 'Path',
+            is_translated => 1,
+            doc => 'The fpkm file to use for annotation',
+        },
+        sample_name => {
+            is => 'Text',
+            is_translated => 1,
+            doc => 'The sample to analyze',
+        },
     ],
+    doc => 'Annotate variants with FPKM value for the sample specified',
 };
 
 sub name {

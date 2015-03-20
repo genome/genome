@@ -4,22 +4,31 @@ use strict;
 use warnings;
 use Genome;
 
-my $DEFAULT_VERSION = '2.6';
+use Genome::Utility::Text qw(sanitize_string_for_filesystem);
+use File::Spec;
+use Sort::strverscmp qw(strverssort);
+
 my $METHRATIO_COMMAND = 'methratio.py';
+
+my %METHRATIO_VERSIONS = (
+    2.6 => File::Spec->join('/gscuser/cmiller/usr/src/bsmap-2.6', $METHRATIO_COMMAND),
+    2.74 => File::Spec->join('/gsc/pkg/bio/bsmap/bsmap-2.74', $METHRATIO_COMMAND),
+);
 
 class Genome::Model::Tools::Bsmap::MethRatio {
     is => 'Command',
     has => [
         bam_file => {
             is => 'Text',
-            doc => 'The bam file to do the counting on (must be a product of bsmap alignment',
+            doc => 'The bam file to do the counting on (must be a product of bsmap alignment)',
             is_input => 1,
         },
         output_file => {
             is => 'Text',
-            doc => 'Where to output the methyl counts',
+            doc => 'File name for methyl counts',
             is_output => 1,
             is_input => 1,
+            default_value => 'snvs.hq',
         },
         output_directory => {
             is => 'Text',
@@ -34,10 +43,9 @@ class Genome::Model::Tools::Bsmap::MethRatio {
         },
         version => {
             is => 'Version',
-            is_optional => 1,
             is_input => 1,
-            default_value => $DEFAULT_VERSION,
-            doc => "Version of methratio to use",
+            valid_values => [available_methratio_versions()],
+            doc => 'Version of methratio to use',
         },
     ],
     has_optional => [
@@ -49,6 +57,11 @@ class Genome::Model::Tools::Bsmap::MethRatio {
         output_zeros => {
             is => 'Boolean',
             doc => 'report loci with zero methylation ratios',
+            default => 1,
+        },
+        header => {
+            is => 'Boolean',
+            doc => 'put a header on the file',
             default => 1,
         },
 
@@ -67,57 +80,78 @@ class Genome::Model::Tools::Bsmap::MethRatio {
     ],
 };
 
+sub available_methratio_versions {
+    return strverssort(keys %METHRATIO_VERSIONS);
+}
+
+sub _reference_fasta {
+    my ($self) = @_;
+
+    my %mapping = (
+        36 => 'NCBI-human-build36',
+        37 => 'GRCh37-lite-build37',
+    );
+
+    my $reference = $self->reference;
+
+    if (exists $mapping{$reference}) {
+        my $reference_build = Genome::Model::Build::ReferenceSequence->get(
+            name => $mapping{$reference}
+        );
+        $reference = $reference_build->cached_full_consensus_path('fa');
+    }
+
+    return $reference;
+}
+
+sub _generate_command_line {
+    my ($self) = @_;
+
+    my @cmd = (
+        'python', $METHRATIO_VERSIONS{$self->version},
+        '-o', File::Spec->join($self->output_directory, $self->output_file),
+        '-d', $self->_reference_fasta
+    );
+
+    if ($self->output_zeros) {
+        push @cmd, '-z';
+    }
+
+    if ($self->chromosome) {
+        push @cmd, '-c', Genome::Sys->quote_for_shell($self->chromosome);
+    }
+
+    unless ($self->header) {
+        push @cmd, '-n';
+    }
+
+    push @cmd, $self->bam_file;
+
+    return join ' ', @cmd;
+}
+
 sub execute {
-    my $self = shift;
-    my $fasta;
+    my ($self) = @_;
 
-    if ($self->reference eq "36") {
-        my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "NCBI-human-build36");
-        $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
+    if ($self->chromosome) {
+        my $sanitized_chromosome = sanitize_string_for_filesystem(
+            $self->chromosome);
+        my $chromosome_output_dir = File::Spec->join(
+            $self->output_directory, $sanitized_chromosome);
+        Genome::Sys->create_directory($chromosome_output_dir);
+        $self->output_directory($chromosome_output_dir);
     }
-    elsif ($self->reference eq "37") {
-        my $reference_build_fasta_object = Genome::Model::Build::ReferenceSequence->get(name => "GRCh37-lite-build37");
-        $fasta = $reference_build_fasta_object->cached_full_consensus_path('fa');
-    } else { #path to fasta
-        if( -s $self->reference){
-            $fasta = $self->reference;
-        } else {
-            $self->error_message('reference must be either "36", "37", or the path to a valid reference file');
-            return 0;
-        }
-    }
-
-    my $cmd = "python /gscuser/cmiller/usr/src/bsmap-2.6/methratio.py";
-    $cmd .= " -o ". $self->output_file;
-    $cmd .= " -d " . $fasta;
-    if($self->output_zeros){
-        $cmd .= " -z";
-    }
-    if($self->chromosome){
-        $cmd .= " -c" . $self->chromosome;
-    }
-    $cmd .= " " . $self->bam_file;
-    
-    $self->debug_message("Running command: $cmd");
 
     my $return = Genome::Sys->shellcmd(
-        cmd => "$cmd",
-        );
-    unless($return) {
-        $self->error_message("Failed to execute: Returned $return");
-        die $self->error_message;
-    }    
+        cmd => $self->_generate_command_line,
+        input_files => [$self->bam_file, $self->_reference_fasta],
+    );
+
+    unless ($return) {
+        die $self->error_message('Failed to execute: returned %s', $return);
+    }
 
     return 1;
 }
 
 1;
-
-my %METHRATIO_VERSIONS = (
-    '2.6' => '/gscuser/cmiller/usr/src/bsmap-2.6/' . $METHRATIO_COMMAND,
-);
-
-sub available_methratio_versions {
-    my $self = shift;
-    return keys %METHRATIO_VERSIONS;
-}

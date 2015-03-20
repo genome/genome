@@ -4,4 +4,5 @@ experts:
 reports:
     __test__:
         interpreters:
-            __test__: {}
+            __test__:
+                info_field: TST

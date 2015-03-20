@@ -16,7 +16,7 @@ use Genome::Utility::Test;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::Model::ImportedVariationList;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
-use Genome::Test::Factory::Build;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $TEST_DATA_VERSION = 2;
 
@@ -88,6 +88,11 @@ my $clip_overlap_result_two_inst_data = construct_clip_overlap_result(
     $ref, $merge_result_two_inst_data
 );
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref,
+);
+
+
 subtest 'simple alignments' => sub {
     my $log_directory = Genome::Sys->create_temp_directory();
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
@@ -95,6 +100,7 @@ subtest 'simple alignments' => sub {
             inst => \@two_instrument_data,
             ref => $ref,
             force_fragment => 0,
+            result_users => $result_users,
         },
         strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] api v1',
         log_directory => $log_directory,
@@ -119,6 +125,7 @@ subtest 'simple alignments with merge' => sub {
             inst => \@two_instrument_data,
             ref => $ref,
             force_fragment => 0,
+            result_users => $result_users,
         },
         strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] then merged using picard 1.29 then deduplicated using picard 1.29 api v1',
     );
@@ -141,6 +148,7 @@ subtest "simple alignments of different samples with merge" => sub {
             inst => \@three_instrument_data,
             ref => $ref,
             force_fragment => 0,
+            result_users => $result_users,
         },
         strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] then merged using picard 1.29 then deduplicated using picard 1.29 api v1',
     );
@@ -164,6 +172,7 @@ subtest "simple alignments of different samples with merge and gatk refine" => s
             ref => $ref,
             force_fragment => 0,
             variant_list => [$variation_list_build],
+            result_users => $result_users,
         },
         strategy => '
             inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::]
@@ -209,6 +218,7 @@ subtest "simple alignments of different samples with merge and clip overlap" => 
             ref => $ref,
             force_fragment => 0,
             variant_list => [$variation_list_build],
+            result_users => $result_users,
         },
         strategy => '
             inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::]
@@ -259,6 +269,7 @@ subtest "simple alignments of different samples with merge, gatk and clip overla
             ref => $ref,
             force_fragment => 0,
             variant_list => [$variation_list_build],
+            result_users => $result_users,
         },
         strategy => '
             inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::]
@@ -319,6 +330,7 @@ subtest "simple alignments of different samples with merge, clip overlap and gat
             ref => $ref,
             force_fragment => 0,
             variant_list => [$variation_list_build],
+            result_users => $result_users,
         },
         strategy => '
             inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::]

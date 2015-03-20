@@ -1,7 +1,15 @@
 package Genome::Model::Tools::Htseq::Count::Result;
 
+use strict;
+use warnings;
+
+use File::ReadBackwards;
+use Try::Tiny qw(try catch);
+
+use Genome;
+
 class Genome::Model::Tools::Htseq::Count::Result {
-    is => ['Genome::SoftwareResult::StageableSimple'],
+    is => ['Genome::SoftwareResult::StageableSimple', 'Genome::SoftwareResult::WithNestedResults'],
     has_param => [
         app_version => {
             is => 'SoftwareVersion',
@@ -62,7 +70,7 @@ sub _run {
     }
 }
 
-sub _paralellize {
+sub _parallelize {
     my $self = shift;
     my @alignment_results = @_;
 
@@ -71,8 +79,9 @@ sub _paralellize {
         my $name = $param->name;
         next if $name =~ /^alignment_results/; #derived params
 
-        $param{$name} = $self->$name;
+        $params->{$name} = $self->$name;
     }
+    $params->{users} = $self->_user_data_for_nested_results;
 
     # TODO: compose a workflow here instead of a linear run
     my $n = 0;
@@ -83,7 +92,8 @@ sub _paralellize {
 
     my @intermediate_results;
     for my $alignment_result (@alignment_results) {
-        my $intermediate_result = $self->get_or_create(%$params, alignment_results => $alignment_result);
+        my $class = ref $self;
+        my $intermediate_result = $class->get_or_create(%$params, alignment_results => [$alignment_result]);
         unless ($intermediate_result) {
             die "failed to create partial for " . $alignment_result->__display_name__;
         }
@@ -217,7 +227,6 @@ sub _run_htseq_count {
 
     my $output_dir = $self->temp_staging_directory;
     $self->debug_message("Output staging directory: $output_dir");
-    $self->debug_message('Output destination directory: %s', $self->output_dir);
 
     # The samtools version is not part of the params because it is not yet required for it to vary.
     # If it does need to vary in the future a param should be addeed and backfilled
@@ -241,7 +250,10 @@ sub _run_htseq_count {
     } else {
         # a completed alignment result will need to have a sorted bam created
         $self->debug_message("No temp_scratch_directory found: name sort the BAM in temp space.");
-        my $unsorted_bam = $alignment_result->output_dir . '/all_sequences.bam';
+
+        my $temp_allocation = Genome::InstrumentData::AlignmentResult::Merged->_get_temp_allocation($alignment_result->id, $output_dir);
+        my ($unsorted_bam) = $alignment_result->revivified_alignment_bam_file_paths(disk_allocation => $temp_allocation);
+
         my $sorted_bam_noprefix = "$tmp/all_sequences.namesorted";
         $sorted_bam = $sorted_bam_noprefix . '.bam';
 
@@ -250,6 +262,8 @@ sub _run_htseq_count {
             input_files => [$unsorted_bam],
             output_files => [$sorted_bam],
         );
+
+        $temp_allocation->delete;
     }
 
     my @header = `$samtools_path view -H $sorted_bam`;
@@ -274,6 +288,7 @@ sub _run_htseq_count {
         # from Malachi's notes in JIRA issue TD-490
         # samtools view -h chr22_tumor_nonstranded_sorted.bam | htseq-count --mode intersection-strict --stranded no --minaqual 1 --type exon --idattr transcript_id - chr22.gff > transcript_tumor_read_counts_table.tsv
 
+        my $err_file = "$output_dir/${type}.err";
         my $cmd = $samtools_path
             . " view -h '$sorted_bam' "
             . ($whitelist_alignments_flags ? " -f $whitelist_alignments_flags " : '')
@@ -288,14 +303,31 @@ sub _run_htseq_count {
             . " --idattr ${type}_id"
             . " -"
             . " '$gtf_file'"
-            . " 1>'$output_dir/${type}-counts.tsv'"
-            . " 2>'$output_dir/${type}.err'";
+            . " 1>'$output_dir/${type}-counts.tsv'";
 
-        Genome::Sys->shellcmd(
-            cmd => $cmd, # "touch $output_dir/${type}-counts.tsv", #$cmd,
-            input_files => [$sorted_bam, $gtf_file],
-            #output_files => ["$output_dir/${type}-counts.tsv"],
-        );
+        try {
+            Genome::Sys->shellcmd(
+                cmd => $cmd,
+                input_files => [$sorted_bam, $gtf_file],
+                redirect_stderr => $err_file,
+            );
+        } catch {
+            my $error = $_;
+
+            my $fh = File::ReadBackwards->new($err_file) or die('Failed to read error file from HTSeq run');
+            my @error_lines;
+            for(1..100) {
+                my $line = $fh->readline;
+                last unless defined($line);
+
+                unshift @error_lines, $line;
+            }
+
+            $self->debug_message(join('', "-----Last lines of <$err_file>:\n", @error_lines, "-----End of <$err_file>.\n"));
+
+            die $error;
+        };
+
 
     }
 

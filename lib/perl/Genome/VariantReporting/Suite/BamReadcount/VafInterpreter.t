@@ -9,9 +9,9 @@ use strict;
 use warnings;
 
 use above "Genome";
+use Test::Deep qw(cmp_bag);
 use Test::More;
 use Test::Exception;
-use Genome::File::Vcf::Entry;
 use Genome::VariantReporting::Suite::BamReadcount::TestHelper qw(
      create_default_entry  create_deletion_entry);
 
@@ -20,8 +20,10 @@ use_ok($pkg);
 my $factory = Genome::VariantReporting::Framework::Factory->create();
 isa_ok($factory->get_class('interpreters', $pkg->name), $pkg);
 
-subtest "one alt allele" => sub {
-    my $interpreter = $pkg->create(sample_name => "S1");
+subtest "one alt allele  - multiple samples" => sub {
+    my $interpreter = $pkg->create(
+        sample_names => ["S1", "S2", "S3"],
+    );
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
     my %expected = (
@@ -29,12 +31,33 @@ subtest "one alt allele" => sub {
             S1_vaf => 99.1279069767442,
             S1_ref_count => 3,
             S1_var_count => 341,
-            'Solexa-135852_var_count' => '155',
-            'Solexa-135853_var_count' => '186',
-            'Solexa-135852_ref_count' => '2',
-            'Solexa-135853_ref_count' => '1',
-            'Solexa-135852_vaf' => '87.0786516853933',
-            'Solexa-135853_vaf' => '99.4652406417112',
+            S2_vaf => 99.1279069767442,
+            S2_ref_count => 3,
+            S2_var_count => 341,
+            S3_vaf => 99.1279069767442,
+            S3_ref_count => 3,
+            S3_var_count => 341,
+        }
+    );
+
+    my $entry = create_default_entry;
+    my %result = $interpreter->interpret_entry($entry, ['G']);
+    is(keys %result, keys %expected, "First level keys as expected");
+    is_deeply(\%result, \%expected, "Values are as expected");
+    cmp_ok($result{G}->{S1_vaf}, ">", 99, 'vaf is in the desired range');
+    cmp_ok($result{G}->{S1_vaf},  "<", 100, 'vaf is in the desired range');
+    cmp_bag([$interpreter->available_fields], [keys %{$expected{G}}], 'Available fields as expected');
+};
+
+subtest "one alt allele" => sub {
+    my $interpreter = $pkg->create(sample_names => ["S1"]);
+    lives_ok(sub {$interpreter->validate}, "Interpreter validates");
+
+    my %expected = (
+        G => {
+            S1_vaf => 99.1279069767442,
+            S1_ref_count => 3,
+            S1_var_count => 341,
         }
     );
 
@@ -44,7 +67,7 @@ subtest "one alt allele" => sub {
 };
 
 subtest "insertion" => sub {
-    my $interpreter = $pkg->create(sample_name => "S4");
+    my $interpreter = $pkg->create(sample_names => ["S4"]);
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
     my %expected = (
@@ -52,12 +75,6 @@ subtest "insertion" => sub {
             S4_vaf => 5.81395348837209,
             S4_ref_count => 3,
             S4_var_count => 20,
-            'Solexa-135852_var_count' => '20',
-            'Solexa-135853_var_count' => '0',
-            'Solexa-135852_ref_count' => '2',
-            'Solexa-135853_ref_count' => '1',
-            'Solexa-135852_vaf' => '11.2359550561798',
-            'Solexa-135853_vaf' => '0',
         }
     );
 
@@ -67,7 +84,7 @@ subtest "insertion" => sub {
 };
 
 subtest "deletion" => sub {
-    my $interpreter = $pkg->create(sample_name => "S1");
+    my $interpreter = $pkg->create(sample_names => ["S1"]);
     lives_ok(sub {$interpreter->validate}, "Interpreter validates");
 
     my %expected = (
@@ -75,12 +92,6 @@ subtest "deletion" => sub {
             S1_vaf => 5.81395348837209,
             S1_ref_count => 5,
             S1_var_count => 20,
-            'Solexa-135852_var_count' => '20',
-            'Solexa-135853_var_count' => '0',
-            'Solexa-135852_ref_count' => '3',
-            'Solexa-135853_ref_count' => '2',
-            'Solexa-135852_vaf' => '11.0497237569061',
-            'Solexa-135853_vaf' => '0',
         }
     );
 
@@ -88,5 +99,5 @@ subtest "deletion" => sub {
     my %result = $interpreter->interpret_entry($entry, ['A']);
     is_deeply(\%result, \%expected, "Values are as expected");
 };
-done_testing;
 
+done_testing;

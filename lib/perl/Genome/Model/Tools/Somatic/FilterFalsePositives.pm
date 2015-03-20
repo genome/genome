@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use File::Basename;
 
 class Genome::Model::Tools::Somatic::FilterFalsePositives {
     is => 'Command',
@@ -24,7 +25,15 @@ class Genome::Model::Tools::Somatic::FilterFalsePositives {
             type => 'String',
             is_input => 1,
             is_output => 1,
+            is_optional => 1,
             doc => 'Filename for variants that pass filter',
+        },
+        'outdir' => {
+            type => 'String',
+            is_input => 1,
+            is_output => 1,
+            is_optional => 1,
+            doc => 'Directory for filter output',
         },
         'filtered_file' => {
             type => 'String',
@@ -119,6 +128,12 @@ class Genome::Model::Tools::Somatic::FilterFalsePositives {
             is_optional => 1,
             doc => 'Existing BAM-Readcounts file to save execution time',
         },
+        'bam_readcount_version' => {
+            type => 'String',
+            is_input => 1,
+            is_optional => 1,
+            doc => 'bam-readcount version to use.',
+        },
         ## WGS FILTER OPTIONS ##
 
 
@@ -198,6 +213,10 @@ sub execute {
         return 1;
     }
 
+    unless($self->output_file or $self->outdir) {
+        die $self->error_message("Please specify output-file or output-directory");
+    }
+
     if (($self->skip_if_output_present)&&(-s $self->output_file)) {
         $self->status_message("Skipping execution: Output is already present and skip_if_output_present is set to true");
         return 1;
@@ -220,9 +239,13 @@ sub execute {
         die;
     }
 
+    my $output_file = $self->output_file //
+        File::Spec->join($self->outdir, basename($self->variant_file) . ".filtered");
+
+    $self->status_message("outfile is $output_file");
 
     ## Run the FP filter. Note that both WGS and capture use the same filter now ##
-    $self->run_filter();
+    $self->run_filter($output_file);
 
 }
 
@@ -234,6 +257,7 @@ sub execute {
 
 sub run_filter {
     my $self = shift(@_);
+    my $output_file = shift;
 
     ## Determine the strandedness and read position thresholds ##
 
@@ -263,7 +287,7 @@ sub run_filter {
     my $temp_output_file = Genome::Sys->create_temp_file_path;
     my $ofh = Genome::Sys->open_file_for_writing($temp_output_file);
     unless($ofh) {
-        $self->error_message("Unable to open " . $self->output_file . " for writing.");
+        $self->error_message("Unable to open " . $output_file . " for writing.");
         die;
     }
 
@@ -281,12 +305,8 @@ sub run_filter {
         $self->debug_message('Running BAM Readcounts...');
 
         #First, need to create a variant list file to use for generating the readcounts.
-        my $input = Genome::Sys->open_file_for_reading($self->variant_file);
-
-        unless($input) {
-            $self->error_message("Unable to open " . $self->variant_file . ".");
-            die;
-        }
+        my $input = Genome::Sys->open_file_for_reading($self->variant_file) or
+          die $self->error_message("Unable to open " . $self->variant_file . ".");
 
         ## Build temp file for positions where readcounts are needed ##
         my ($tfh,$temp_path) = Genome::Sys->create_temp_file;
@@ -327,20 +347,24 @@ sub run_filter {
         );
     }
 
+    my $out_readcounts = $output_file . ".readcounts";
+    unless(-e $out_readcounts) {
+      Genome::Sys->copy_file($readcount_file, $out_readcounts);
+    } else {
+      die $self->error_message("$out_readcounts exists already.");
+    }
 
     ## Open the readcounts file ##
-    Genome::Sys->copy_file($readcount_file, $self->output_file . ".readcounts");
-
     my $readcount_fh = Genome::Sys->open_file_for_reading($readcount_file);
     $self->debug_message('Readcounts loaded');
-
 
     ## Open the filtered output file ##
     my $temp_filtered_file = Genome::Sys->create_temp_file_path();
     my $ffh = Genome::Sys->open_file_for_writing($temp_filtered_file);
 
     ## Reopen file for parsing ##
-    my $input = Genome::Sys->open_file_for_reading($self->variant_file);
+    my $input = Genome::Sys->open_file_for_reading($self->variant_file) or
+      die $self->error_message("unable to open variant file");
 
     ## Parse the variants file ##
     my $lineCounter = 0;
@@ -401,7 +425,13 @@ sub run_filter {
                     my $search_chrom = $chrom;
                     $search_chrom = "chr$chrom" if $self->prepend_chr;
                     unless($readcounts = $self->_get_readcount_line($readcount_fh, $search_chrom,$chr_start)){
-                        die $self->error_message("Failed to find readcount data for: ".$search_chrom."\t".$chr_start);
+                        $self->warning_message("Failed to find readcount data for: ".$search_chrom."\t".$chr_start . "\t" . $readcount_file);
+                        $stats{'num_no_readcounts'}++;
+                        print $ffh "$line\tno_reads\n" if($self->filtered_file);
+                        #reset the readcount filehandle
+                        close($readcount_fh);
+                        $readcount_fh = Genome::Sys->open_file_for_reading($readcount_file);
+                        next;
                     }
 
 
@@ -553,10 +583,10 @@ sub run_filter {
     close($ofh);
     close($ffh);
 
-    my $filtered_file = $self->output_file . ".removed";
+    my $filtered_file = $output_file . ".removed";
     $filtered_file = $self->filtered_file if($self->filtered_file);
 
-    Genome::Sys->copy_file($temp_output_file, $self->output_file);
+    Genome::Sys->copy_file($temp_output_file, $output_file);
     Genome::Sys->copy_file($temp_filtered_file, $filtered_file);
 
     print $stats{'num_variants'} . " variants\n";
@@ -636,6 +666,10 @@ sub fails_homopolymer_check {
 sub readcount_program {
     my $self = shift;
     my $reference = $self->reference;
+    if($self->bam_readcount_version) {
+      my $bam_rc = "bam-readcount" . $self->bam_readcount_version;
+      return "$bam_rc -f $reference";
+    }
     return "bam-readcount0.4 -f $reference";
 #    return "/gscuser/dlarson/src/genome/bam-readcount/bin/bam-readcount -f $reference";
 }

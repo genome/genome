@@ -495,7 +495,8 @@ sub bam_qc_regexes {
 sub alignment_results {
     my $self = shift;
     my $merged_alignment_result = $self->merged_alignment_result;
-    my @alignment_results = $merged_alignment_result->collect_individual_alignments;
+    my $result_users = Genome::SoftwareResult::User->user_hash_for_build($self);
+    my @alignment_results = $merged_alignment_result->collect_individual_alignments($result_users);
     return @alignment_results;
 }
 

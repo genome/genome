@@ -14,11 +14,20 @@ use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
 use Genome::Model::Tools::DetectVariants2::Result::Vcf;
 use Genome::Model::Tools::Sam::Readcount;
 use Genome::Model::Tools::Bed::Convert::VcfToBed;
-use Genome::VariantReporting::Framework::TestHelpers qw(test_cmd_and_result_are_in_sync);
+use Genome::Test::Factory::Process;
+use Genome::VariantReporting::Framework::TestHelpers qw(
+    test_cmd_and_result_are_in_sync
+    get_translation_provider
+    get_plan_object
+);
+use Genome::VariantReporting::Framework::Plan::TestHelpers qw(
+    set_what_interpreter_x_requires
+);
 use Genome::Utility::Test qw(compare_ok);
 
 use Test::More;
 
+my $RESOURCE_VERSION = 2;
 
 my $cmd_class = 'Genome::VariantReporting::Suite::BamReadcount::Run';
 use_ok($cmd_class) or die;
@@ -29,7 +38,9 @@ isa_ok($factory->get_class('runners', $cmd_class->name), $cmd_class);
 my $result_class = 'Genome::VariantReporting::Suite::BamReadcount::RunResult';
 use_ok($result_class) or die;
 
-my $test_data_dir = Genome::Utility::Test->data_dir_ok($cmd_class, 'v1');
+set_what_interpreter_x_requires('bam-readcount');
+
+my $test_data_dir = Genome::Utility::Test->data_dir_ok($cmd_class, 'v2');
 my $input_vcf = $test_data_dir . '/input.vcf';
 my $expected_output_vcf  = $test_data_dir . '/expected.vcf';
 my $expected_region_list = $test_data_dir . '/expected.region_list';
@@ -53,22 +64,25 @@ sub generate_test_cmd {
         code => sub {my $self = shift; my $file = $self->output_file; `touch $file`;},
     });
 
+    my $process = Genome::Test::Factory::Process->setup_object();
 
     my $aligned_bam_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
         bam_file => 1,
         reference_fasta => 1,
     );
 
+    my $provider = get_translation_provider(version => $RESOURCE_VERSION);
+
+    my $plan_file = File::Spec->join($test_data_dir, 'plan.yaml');
+    my $plan = get_plan_object( plan_file => $plan_file, provider => $provider );
+
     my %params = (
-        aligned_bam_result_id => $aligned_bam_result->id,
         input_vcf => $input_vcf,
+        aligned_bam_result_id => $aligned_bam_result->id,
         variant_type => 'snvs',
         version => 0.5,
-        per_library => 1,
-        minimum_mapping_quality => 0,
-        minimum_base_quality => 0,
-        max_count => 1,
-        insertion_centric => 1,
+        process_id => $process->id,
+        plan_json => $plan->as_json,
     );
     my $cmd = $cmd_class->create(%params);
     return $cmd

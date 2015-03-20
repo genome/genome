@@ -11,6 +11,7 @@ BEGIN {
 
 use above 'Genome';
 use Genome::SoftwareResult;
+use Genome::Test::Factory::SoftwareResult::User;
 
 use Test::More;
 use File::Compare qw(compare);
@@ -25,6 +26,10 @@ use_ok('Genome::Model::Tools::DetectVariants2::Breakdancer');
 my $refbuild_id = 101947881;
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
 ok($ref_seq_build, 'human36 reference sequence build') or die;
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Breakdancer';
 my $test_base_dir = File::Temp::tempdir(CLEANUP => 1);
@@ -49,6 +54,7 @@ my $command = Genome::Model::Tools::DetectVariants2::Breakdancer->create(
     chromosome => $chromosome,
     output_directory => $test_working_dir,
     config_file => $cfg_file,
+    result_users => $result_users,
 );
 ok($command, 'Created `gmt detect-variants2 breakdancer` command');
 $command->dump_status_messages(1);
@@ -98,6 +104,7 @@ my $command1 = Genome::Model::Tools::DetectVariants2::Breakdancer->create(
     chromosome => $chromosome,
     output_directory => $no_ctx_working_dir,
     config_file => $no_ctx_cfg_file,
+    result_users => $result_users,
 );
 ok($command1, 'Created `gmt detect-variants2 breakdancer` command for ctx');
 $command1->dump_status_messages(1);

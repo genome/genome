@@ -109,24 +109,13 @@ sub _assign_instrument_data_to_model {
 
     #if a model is newly created, we want to assign all applicable instrument data to it
     my %params_hash = (model => $model);
-    my $executed_all_ok = 1;
-    if ($newly_created && $model->auto_assign_inst_data) {
-        for my $analysis_project ($model->analysis_projects) {
-            my $cmd = Genome::Model::Command::InstrumentData::Assign::AnalysisProject->create(
-                model => $model,
-                analysis_project => $analysis_project,
-            );
-            $executed_all_ok &&= eval{ $cmd->execute; };
-        }
-    } else {
-        my $cmd = Genome::Model::Command::InstrumentData::Assign::ByExpression->create(
+    my $cmd = Genome::Model::Command::InstrumentData::Assign::ByExpression->create(
             model => $model,
             instrument_data => [$instrument_data]
         );
-        $executed_all_ok &&= eval{ $cmd->execute };
-    }
+    my $executed_ok = eval{ $cmd->execute };
 
-    unless ($executed_all_ok) {
+    unless ($executed_ok) {
         die(sprintf('Failed to assign %s to %s', $instrument_data->__display_name__,
                 $model->__display_name__));
     }
@@ -236,14 +225,24 @@ sub _get_model_for_config_hash {
 
     my @extra_params = (auto_assign_inst_data => 1);
 
-    my @found_models = $class_name->get(@extra_params, %read_config, analysis_projects => [$analysis_project]);
+    my @found_models = $class_name->get(@extra_params, %read_config, analysis_project => $analysis_project);
     my @m = grep { $_->analysis_project_bridges->profile_item_id eq $config_profile_item->id } @found_models;
 
     if (scalar(@m) > 1) {
         die(sprintf("Sorry, but multiple identical models were found: %s", join(',', map { $_->id } @m)));
     };
+
     #return the model, plus a 'boolean' value indicating if we created a new model
-    my @model_info =  $m[0] ? ($m[0], 0, $config_profile_item) : ($class_name->create(@extra_params, %$config), 1, $config_profile_item);
+    my @model_info;
+    if ($m[0]) {
+       @model_info = ($m[0], 0, $config_profile_item);
+    } else {
+       for my $key (keys %$config) {
+            delete $config->{$key} unless defined $config->{$key};
+       }
+       @model_info = ($class_name->create(@extra_params, %$config), 1, $config_profile_item);
+    }
+
     return wantarray ? @model_info : $model_info[0];
 }
 
@@ -268,7 +267,7 @@ sub _prepare_configuration_hashes_for_instrument_data {
                             @$instrument_data_property
                         ];
                     } else {
-                        $model_instance->{$model_property} = $instrument_data->$instrument_data_property if defined($instrument_data->$instrument_data_property);
+                        $model_instance->{$model_property} = $instrument_data->$instrument_data_property;
                     }
                 }
             }
@@ -370,8 +369,9 @@ sub _update_models_for_associated_projects {
 
 sub _lock {
     unless ($ENV{UR_DBI_NO_COMMIT}) {
-        my $lock_var = $ENV{GENOME_LOCK_DIR} . '/genome_config_command_configure-queued-instrument-data/lock';
-        my $lock = Genome::Sys->lock_resource(resource_lock => $lock_var, max_try => 1);
+        my $lock_var = 'genome_config_command_configure-queued-instrument-data/lock';
+        my $lock = Genome::Sys->lock_resource(resource_lock => $lock_var,
+            scope => 'site', max_try => 1);
 
         die('Unable to acquire the lock! Is ConfigureQueuedInstrumentData already running or did it exit uncleanly?')
             unless $lock;

@@ -56,9 +56,9 @@ sub create {
 }
 
 # override to create the result
-sub _generate_results {
+sub _generate_result {
     my ($self, $staging_directory) = @_;
-    Carp::croak($self->error_message('_generate_results not implemented'));
+    Carp::croak($self->error_message('_generate_result not implemented'));
 }
 
 # override to customize how disk allocation is acquired

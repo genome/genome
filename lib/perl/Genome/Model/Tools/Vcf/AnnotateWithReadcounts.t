@@ -16,7 +16,7 @@ use Genome::File::Vcf::Differ;
 my $pkg = 'Genome::Model::Tools::Vcf::AnnotateWithReadcounts';
 
 use_ok($pkg);
-my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "v4");
+my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, "v5");
 
 subtest "output vcf" => sub {
     my $out = Genome::Sys->create_temp_file_path;

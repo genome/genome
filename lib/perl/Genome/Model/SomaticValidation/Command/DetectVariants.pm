@@ -34,6 +34,9 @@ class Genome::Model::SomaticValidation::Command::DetectVariants{
         lsf_queue => {
             default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
         },
+        lsf_resource => {
+            default => "-R 'select[tmp>4000 && mem>600] rusage[tmp=4000,mem=600]' -M 600000",
+        },
     ],
     #specific things used by the final process-validation script
     has_output_optional => [
@@ -100,6 +103,8 @@ sub execute{
         my $control_aligned_reads_sample = $build->normal_sample->name;
         $params{control_aligned_reads_sample} = $control_aligned_reads_sample;
     }
+
+    $params{result_users} = Genome::SoftwareResult::User->user_hash_for_build($build);
 
     my $command = Genome::Model::Tools::DetectVariants2::Dispatcher->create(%params);
     unless ($command){

@@ -13,6 +13,7 @@ use above 'Genome';
 use Test::More;
 use Genome::SoftwareResult;
 use File::Compare;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $archos = `uname -a`;
 if ($archos !~ /64/) {
@@ -24,6 +25,10 @@ use_ok('Genome::Model::Tools::DetectVariants2::Samtools') or die;
 my $refbuild_id = 101947881;
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
 ok($ref_seq_build, 'human36 reference sequence build') or die;
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
 
 my $test_dir      = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Samtools/';
 my $test_base_dir = File::Temp::tempdir(
@@ -61,6 +66,7 @@ my %params = (
     params               => "",
     output_directory     => $test_working_dirs[0],
     aligned_reads_sample => 'TEST',
+    result_users         => $result_users,
 );
 
 run_test('pileup', \%params);
@@ -113,7 +119,7 @@ sub run_test {
         is(compare($actual_file, $expected_file), 0, "$output_file output matched expected output");
     }
 
-    for my $file_name qw(snvs.vcf.gz indels.vcf.gz) {
+    for my $file_name (qw(snvs.vcf.gz indels.vcf.gz)) {
         ok(-s $test_dir."/$file_name",   "Found $file_name");
         diff_vcf_gz($test_dir, $expected_dir, $file_name);
     }

@@ -63,7 +63,7 @@ sub lock {
         interval => $wait_announce_interval,
         cb => sub {
             my $total_elapsed_time = time() - $initial_time;
-            Genome::Logger->notice("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource': $claim_warning. lock_info is:\n$info_content");
+            Genome::Logger->notice("waiting (total_elapsed_time = $total_elapsed_time seconds) on lock for resource '$resource': $claim_warning. lock_info is:\n$info_content\n");
         },
     );
     my $claim = $self->client->claim($resource, timeout => $timeout,

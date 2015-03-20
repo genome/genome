@@ -8,6 +8,7 @@ use File::Temp;
 use Test::More;
 use Data::Dumper;
 use File::Compare;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -23,6 +24,10 @@ use_ok( 'Genome::Model::Tools::DetectVariants2::Filter::IndelFilter');
 
 my $refbuild_id = 101947881;
 my $test_data_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Filter-IndelFilter";
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build_id => $refbuild_id,
+);
 
 # Updated to .v2 for adding 1 to insertion start and stop values
 my $expected_directory = $test_data_directory . "/expected.v2";
@@ -69,6 +74,7 @@ my $indel_filter_high_confidence = Genome::Model::Tools::DetectVariants2::Filter
     previous_result_id => $detector_result->id,
     output_directory => $test_output_dir,
     aligned_reads_sample => "TEST",
+    result_users => $result_users,
 );
 
 ok($indel_filter_high_confidence, "created IndelFilter object");

@@ -125,8 +125,20 @@ sub _detect_variants {
         $self->output_directory . '/normal-samtools-result',
     );
     $input{copycat_output_directory} = $self->_temp_staging_directory;
-    $input{annotation_version} = $annotation_version;
-    $input{reference_build_id} = $self->reference_build_id;
+
+    my $annotation_sr = Genome::Model::Tools::CopyCat::AnnotationData->get_with_lock(
+        reference_sequence => $self->reference_build,
+        version            => $annotation_version,
+        users              => $self->result_users,
+    );
+    unless($annotation_sr) {
+        die $self->error_message(
+            'No annotation data found for version %s and reference %s',
+            $annotation_version,
+            $self->reference_build->id,
+        );
+    }
+    $input{annotation_data_id} = $annotation_sr->id;
 
     my $log_dir = $self->output_directory;
     if(Workflow::Model->parent_workflow_log_dir) {
@@ -176,6 +188,7 @@ sub get_samtools_results{
         aligned_reads_sample => $sample_name,
         reference_build_id => $self->reference_build->id,
         output_directory => $output_directory,
+        result_users => $self->result_users,
     );
     $dispatcher->execute or die $self->error_message('Failed to run dispatcher to get samtools result');
 
@@ -240,8 +253,7 @@ __DATA__
     <link fromOperation="input connector" fromProperty="tumor_samtools_file" toOperation="CopyCat Somatic" toProperty="tumor_samtools_file" />
     <link fromOperation="input connector" fromProperty="normal_samtools_file" toOperation="CopyCat Somatic" toProperty="normal_samtools_file" />
     <link fromOperation="input connector" fromProperty="copycat_output_directory" toOperation="CopyCat Somatic" toProperty="output_directory" />
-    <link fromOperation="input connector" fromProperty="reference_build_id" toOperation="CopyCat Somatic" toProperty="reference_build_id" />
-    <link fromOperation="input connector" fromProperty="annotation_version" toOperation="CopyCat Somatic" toProperty="annotation_version" />
+    <link fromOperation="input connector" fromProperty="annotation_data_id" toOperation="CopyCat Somatic" toProperty="annotation_data_id" />
 
 
     <link fromOperation="BamWindow Normal" fromProperty="output_file" toOperation="output connector" toProperty="bam_window_normal_output_file" />
@@ -273,8 +285,7 @@ __DATA__
     <inputproperty>tumor_samtools_file</inputproperty>
     <inputproperty>normal_samtools_file</inputproperty>
     <inputproperty>copycat_output_directory</inputproperty>
-    <inputproperty>annotation_version</inputproperty>
-    <inputproperty>reference_build_id</inputproperty>
+    <inputproperty>annotation_data_id</inputproperty>
     <inputproperty isOptional="Y">bamwindow_filter_to_chromosomes</inputproperty>
 
     <outputproperty>bam_window_normal_output_file</outputproperty>

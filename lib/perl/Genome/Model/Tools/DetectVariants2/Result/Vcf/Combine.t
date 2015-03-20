@@ -11,6 +11,7 @@ BEGIN{
 use above "Genome";
 use Test::More;
 use File::Compare;
+use Genome::Test::Factory::SoftwareResult::User;
 
 if (Genome::Config->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
@@ -53,6 +54,10 @@ my $bam_file = $test_dir . '/alignments/102922275_merged_rmdup.bam';
 
 
 my $refbuild_id = 101947881;
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build_id => $refbuild_id,
+);
 
 my $varscan_version = '2.2.9';
 my $samtools_version = 'r599';
@@ -211,26 +216,28 @@ $varscan_detector_result->add_user(user => $snp_filter_result, label => 'uses');
 $samtools_detector_result->add_user(user => $false_positive_filter_result, label => 'uses');
 
 #Test combining detector results with union
-run_combine_test($samtools_detector_result,$varscan_detector_result, $detector_union_expected_file, "Union");
+run_combine_test($samtools_detector_result,$varscan_detector_result, $detector_union_expected_file, "Union", $result_users);
 
 #Test combining filter results with union
-run_combine_test($snp_filter_result,$false_positive_filter_result, $filter_union_expected_file, "Union");
+run_combine_test($snp_filter_result,$false_positive_filter_result, $filter_union_expected_file, "Union", $result_users);
 
 #Test combining detector results with intersection
 # FIXME for now, do not test this because joinx doesnt like it that the input VCFs do not have a FORMAT tag for FT (unfiltered thus far)
-#run_combine_test($samtools_detector_result,$varscan_detector_result, $detector_intersect_expected_file, "Intersect");
+#run_combine_test($samtools_detector_result,$varscan_detector_result, $detector_intersect_expected_file, "Intersect", $result_users);
 
 #Test combining filter results with intersection
-run_combine_test($snp_filter_result,$false_positive_filter_result, $filter_intersect_expected_file, "Intersect");
+run_combine_test($snp_filter_result,$false_positive_filter_result, $filter_intersect_expected_file, "Intersect", $result_users);
 
 # Test combining a union and intersection result with a union
-run_combine_test($intersect_result, $union_result, $combine_union_expected_file, "Union");
+run_combine_test($intersect_result, $union_result, $combine_union_expected_file, "Union", $result_users);
 
 sub run_combine_test {
     my $result_a = shift;
     my $result_b = shift;
     my $expected_file = shift;
     my $operation = shift;
+
+    my $result_users = shift;
 
     my $test_working_dir = File::Temp::tempdir('DetectVariants2-Result-Vcf-CombineXXXXX', CLEANUP => 1, TMPDIR => 1);
 
@@ -239,6 +246,7 @@ sub run_combine_test {
         input_b_id => $result_b->id,
         output_directory => $test_working_dir,
         aligned_reads_sample => "TEST",
+        result_users => $result_users,
     );
 
     my $command_type = "Genome::Model::Tools::DetectVariants2::Combine::" . $operation . "Snv";

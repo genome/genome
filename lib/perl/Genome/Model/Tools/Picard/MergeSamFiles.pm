@@ -58,7 +58,7 @@ sub help_brief {
 sub help_detail {
     return <<EOS
     Tool to merge BAM or SAM files using Picard.  For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#MergeSamFiles
+    http://broadinstitute.github.io/picard/command-line-overview.html#MergeSamFiles
 EOS
 }
 

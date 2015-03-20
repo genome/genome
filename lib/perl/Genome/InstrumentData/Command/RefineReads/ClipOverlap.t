@@ -12,6 +12,7 @@ use above 'Genome';
 use Test::More;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Build;
+use Genome::Test::Factory::SoftwareResult::User;
 
 my $class = 'Genome::InstrumentData::Command::RefineReads::ClipOverlap';
 my $input_result_class = 'Genome::InstrumentData::AlignmentResult::Merged';
@@ -30,6 +31,10 @@ my $reference_build = Genome::Test::Factory::Build->setup_object(
     data_directory => $test_dir,
 );
 my $bam_source = $input_result_class->__define__(reference_build => $reference_build,);
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $reference_build,
+);
 
 # We are not testing the tool, so make the execute just create an output file
 Sub::Install::reinstall_sub({
@@ -52,6 +57,7 @@ Sub::Install::reinstall_sub({
 my %params = (
     version => $clip_overlap_version,
     bam_source => $bam_source,
+    result_users => $result_users,
 );
 
 my $clip_overlap = $class->create(%params);

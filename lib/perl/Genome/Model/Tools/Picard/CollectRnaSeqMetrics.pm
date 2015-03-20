@@ -27,7 +27,11 @@ class Genome::Model::Tools::Picard::CollectRnaSeqMetrics {
         },
         ribosomal_intervals_file => {
             is  => 'Text',
-            doc => 'Location of rRNA sequences in genome, in interval_list format. If not specified no bases will be identified as being ribosomal. Format described here: http://picard.sourceforge.net/javadoc/net/sf/picard/util/IntervalList.html',
+            doc => 'Location of rRNA sequences in genome, in interval_list format. ' .
+                'If not specified no bases will be identified as being ribosomal. ' .
+                'Interval files can be created with gmt picard bed-to-interval-list. ' .
+                'More details here: ' .
+                'http://samtools.github.io/htsjdk/javadoc/htsjdk/htsjdk/samtools/util/IntervalList.html',
         },
         ref_flat_file => {
             is  => 'Text',
@@ -61,7 +65,7 @@ sub help_brief {
 sub help_detail {
     return <<EOS
     For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#CollectRnaSeqMetrics
+    http://broadinstitute.github.io/picard/command-line-overview.html#CollectRnaSeqMetrics
 EOS
 }
 

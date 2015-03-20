@@ -108,6 +108,7 @@ sub run_test {
     my %expected_return_values = @_;
 
     my $interpreter = $pkg->create(
+        valid_callers => [qw(VarscanSomatic Sniper Strelka)],
         sample_name => $sample_name,
     );
     lives_ok(sub {$interpreter->validate}, "Filter validates ok");

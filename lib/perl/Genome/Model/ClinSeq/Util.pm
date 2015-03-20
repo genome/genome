@@ -1201,18 +1201,21 @@ sub get_ref_align_builds{
   my $sort_on_time_point = 0;
 
   foreach my $somatic_build_id (keys %{$somatic_builds}){
-    my $build_type = $somatic_builds->{$somatic_build_id}->{type};
-    my $somatic_build = $somatic_builds->{$somatic_build_id}->{build};
+    my $build_type = $somatic_builds->{$somatic_build_id}->{type} || "NA";
+    my $somatic_build = $somatic_builds->{$somatic_build_id}->{build} || "NA";
+    my $subject_icn = $somatic_build->model->subject->individual_common_name || "NA";
     my @builds = ($somatic_build->normal_build, $somatic_build->tumor_build);
     foreach my $build (@builds){
-      my $subject_name = $build->subject->name;
-      my $subject_common_name = $build->subject->common_name;
+      my $subject_name = $build->subject->name || "NA";
+      my $subject_common_name = $build->subject->common_name || "NA";
       $subject_common_name =~ s/\,//g;
       $subject_common_name =~ s/\s+/\_/g;
-      my $refalign_name = $subject_name . "_$build_type" . "_" . $subject_common_name;
-      my $bam_path = $build->whole_rmdup_bam_file;
-      my @timepoints = $build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
-      my $tissue_desc = $build->subject->tissue_desc;
+      my $refalign_name =
+        join("_", ($subject_name, $build_type, $subject_common_name));
+      my $bam_path = $build->whole_rmdup_bam_file || "NA";
+      my @timepoints =
+        $build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+      my $tissue_desc = $build->subject->tissue_desc || "NA";
       $tissue_desc =~ s/\s+/\-/g;
       $tissue_desc =~ s/\,//g;
 
@@ -1222,19 +1225,21 @@ sub get_ref_align_builds{
         $time_point =~ s/\s+//g;
         $sort_on_time_point = 1;
       }
-      $refalign_name .= "_"."$time_point";
+      $refalign_name = join("_", ($refalign_name, $time_point));
 
       $ref_builds{$refalign_name}{type} = $build_type;
       $ref_builds{$refalign_name}{sample_name} = $subject_name;
-      $ref_builds{$refalign_name}{sample_name_build_type} = $subject_name . "_" . $build_type;
+      $ref_builds{$refalign_name}{sample_name_build_type} =
+        join("_", ($subject_name, $subject_common_name, $subject_icn, $build_type));
       $ref_builds{$refalign_name}{sample_common_name} = $subject_common_name;
       $ref_builds{$refalign_name}{bam_path} = $bam_path;
-      $ref_builds{$refalign_name}{time_point} = $subject_common_name . "_" .  $build_type . "_" . $time_point;
-      $ref_builds{$refalign_name}{time_point_tissue} = $subject_common_name . "_" . $build_type . "_" . $tissue_desc . "_" . $time_point;
+      $ref_builds{$refalign_name}{time_point} =
+        join("_", ($subject_common_name, $build_type, $time_point));
+      $ref_builds{$refalign_name}{time_point_tissue} =
+        join("_", ($subject_common_name, $build_type, $tissue_desc, $time_point));
       $ref_builds{$refalign_name}{day} = $time_point;
       $ref_builds{$refalign_name}{tissue_desc} = $tissue_desc;
-      $ref_builds{$refalign_name}{tissue_label} = $build->subject->tissue_label;
-      $ref_builds{$refalign_name}{tissue_label} = '' unless defined($build->subject->tissue_label);
+      $ref_builds{$refalign_name}{tissue_label} = $build->subject->tissue_label || '';
       $ref_builds{$refalign_name}{extraction_type} = $build->subject->extraction_type;
       $ref_builds{$refalign_name}{extraction_label} = $build->subject->extraction_label;
     }
@@ -1325,34 +1330,38 @@ sub add_rnaseq_ref_builds {
   my $ref_builds = shift;
   my $rnaseq_builds = shift;
   foreach my $rnaseq_build_id (keys %{$rnaseq_builds}){
-    my $build_type = $rnaseq_builds->{$rnaseq_build_id}->{type};
-    my $rnaseq_build = $rnaseq_builds->{$rnaseq_build_id}->{build};
-    my $subject_name = $rnaseq_build->subject->name;
-    my $subject_common_name = $rnaseq_build->subject->common_name;
+    my $build_type = $rnaseq_builds->{$rnaseq_build_id}->{type} || "NA";
+    my $rnaseq_build = $rnaseq_builds->{$rnaseq_build_id}->{build} || "NA";
+    my $subject_name = $rnaseq_build->subject->name || "NA";
+    my $subject_common_name = $rnaseq_build->subject->common_name || "NA";
+    my $subject_icn = $rnaseq_build->subject->individual_common_name || "NA";
     $subject_common_name =~ s/\,//g;
     $subject_common_name =~ s/\s+/\_/g;
-    my $bam_path = $rnaseq_build->alignment_result->bam_file;
-    my @timepoints = $rnaseq_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
+    my $bam_path = $rnaseq_build->alignment_result->bam_file || "NA";
 
+    my @timepoints = $rnaseq_build->subject->attributes(attribute_label => "timepoint", nomenclature => "caTissue");
     my $time_point = "day0";
     if (@timepoints){
       $time_point = $timepoints[0]->attribute_value;
       $time_point =~ s/\s+//g;
     }
 
-    my $tissue_desc = $rnaseq_build->subject->tissue_desc;
+    my $tissue_desc = $rnaseq_build->subject->tissue_desc || "NA";
     $tissue_desc =~ s/\s+/\-/g;
     $tissue_desc =~ s/\,//g;
 
-    my $rnaseq_name = $subject_name . "_$build_type" . "_" .
-      $subject_common_name . "_$time_point";
+    my $rnaseq_name =
+      join("_", ($subject_name, $build_type, $subject_common_name, $time_point));
     $ref_builds->{$rnaseq_name}{type} = $build_type;
     $ref_builds->{$rnaseq_name}{sample_name} = $subject_name;
-    $ref_builds->{$rnaseq_name}{sample_name_build_type} = $subject_name . "_" . $build_type;
+    $ref_builds->{$rnaseq_name}{sample_name_build_type} =
+      join("_", ($subject_name, $subject_common_name, $subject_icn, $build_type));
     $ref_builds->{$rnaseq_name}{sample_common_name} = $subject_common_name;
     $ref_builds->{$rnaseq_name}{bam_path} = $bam_path;
-    $ref_builds->{$rnaseq_name}{time_point} = $subject_common_name . "_" . $build_type . "_" . $time_point;
-    $ref_builds->{$rnaseq_name}{time_point_tissue} = $subject_common_name  . "_" . $build_type . "_" . $tissue_desc . "_" . $time_point;
+    $ref_builds->{$rnaseq_name}{time_point} =
+      join("_", ($subject_common_name, $build_type, $time_point));
+    $ref_builds->{$rnaseq_name}{time_point_tissue} =
+      join("_", ($subject_common_name, $build_type, $tissue_desc, $time_point));
     $ref_builds->{$rnaseq_name}{day} = $time_point;
   }
 }

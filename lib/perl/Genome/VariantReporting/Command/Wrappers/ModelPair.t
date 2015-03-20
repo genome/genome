@@ -14,10 +14,21 @@ use File::Slurp qw(read_file);
 use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build compare_directories);
 use Genome::VariantReporting::Framework::TestHelpers qw(test_dag_xml);
 use Genome::Utility::Test qw(compare_ok);
+use Sub::Install qw(reinstall_sub);
 
 my $pkg = "Genome::VariantReporting::Command::Wrappers::ModelPair";
 
 use_ok($pkg);
+
+reinstall_sub({
+    into => "Genome::VariantReporting::Command::Wrappers::ModelPair",
+    as => "get_library_names",
+    code => sub {return [qw(
+        TEST-patient1-somval_tumor1-extlib
+        TEST-patient1-somval_tumor2-extlib
+        TEST-patient1-somval_normal1-extlib
+    )]},
+});
 
 my $roi_name = "test_roi";
 my $tumor_sample = Genome::Test::Factory::Sample->setup_object(name => "TEST-patient1-somval_tumor1");

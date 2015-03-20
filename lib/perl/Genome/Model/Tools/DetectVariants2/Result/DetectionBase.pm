@@ -396,6 +396,7 @@ sub vcf_result_params {
     my $self = shift;
     my $aligned_reads_sample = shift;
     my $control_aligned_reads_sample = shift;
+    my $users = shift;
 
     return (
         input_id => $self->id,
@@ -404,7 +405,6 @@ sub vcf_result_params {
 
         aligned_reads_sample => $aligned_reads_sample,
         ($control_aligned_reads_sample? (control_aligned_reads_sample => $control_aligned_reads_sample) : ()),
-
     );
 }
 
@@ -416,9 +416,9 @@ sub get_vcf_result {
     my $self = shift;
     my $aligned_reads_sample = shift;
     my $control_aligned_reads_sample = shift;
+    my $users = shift;
 
-
-    my %params = $self->vcf_result_params($aligned_reads_sample, $control_aligned_reads_sample);
+    my %params = $self->vcf_result_params($aligned_reads_sample, $control_aligned_reads_sample, $users);
     my @results = $self->vcf_result_class->get(%params);
     if (scalar(@results) > 1){
         my $message = sprintf("Found %d VCF results for parameters (%s): %s",

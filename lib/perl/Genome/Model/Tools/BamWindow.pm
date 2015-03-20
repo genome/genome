@@ -116,11 +116,12 @@ sub execute {
     Genome::Sys->validate_file_for_writing($output_file);
 
     my $cmd = join(" ", $base_cmd, $bam_file, $options_string, " > $tmp_file");
-    system($cmd);
-    if($@){
-        $self->error_message("Error running command $cmd: $@");
-        return 0;
-    }
+    Genome::Sys->shellcmd(
+        cmd => $cmd,
+        input_files => [ $bam_file ],
+        output_files => [ $tmp_file ],
+        skip_if_output_is_present => 0,
+    );
 
     if ($self->filter_to_chromosomes){
        $self->_filter_to_chromosomes($tmp_file, $output_file);

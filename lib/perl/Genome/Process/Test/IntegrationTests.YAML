@@ -1,0 +1,2 @@
+---
+trio_main: "genome variant-reporting wrappers trio --models=cd55282b9dca4d8db8350f281007503e,7718ad01cbe54e2f9c8618396bab778e,216e854d84cf42eea613f1fedf1c94c9 --tumor-sample=H_IJ-NA12878 --followup-sample=H_IJ-NA12878-12-NA12892-87 --normal-sample=H_IJ-NA12892 --coverage-models=5484dc982ade42f69231e4f97c7e0349,81d7f0aaf2294378b7080fe3691bf02a,cd55282b9dca4d8db8350f281007503e,7568ad60d6984dfc930d0de92c92bf92,7718ad01cbe54e2f9c8618396bab778e,cc43b812a799486bac93862fd2cc39cb"

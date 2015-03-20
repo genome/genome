@@ -15,6 +15,7 @@ use Sub::Install qw(reinstall_sub);
 use File::Basename qw(basename);
 use Genome::VariantReporting::Command::Wrappers::TestHelpers qw(get_build succeed_build compare_directories);
 use Genome::VariantReporting::Framework::TestHelpers qw(test_xml);
+use Set::Scalar;
 
 my $pkg = "Genome::VariantReporting::Command::Wrappers::Trio";
 use_ok($pkg);
@@ -55,6 +56,17 @@ reinstall_sub( {
     }
 );
 
+use Genome::VariantReporting::Command::Wrappers::ModelPair;
+reinstall_sub({
+    into => "Genome::VariantReporting::Command::Wrappers::ModelPair",
+    as => "get_library_names",
+    code => sub {return [qw(
+        TEST-patient1-somval_tumor1-extlib
+        TEST-patient1-somval_tumor2-extlib
+        TEST-patient1-somval_normal1-extlib
+    )]},
+});
+
 my $cmd = $pkg->create(
     models => [$discovery_build->model, $followup_build->model, $normal_build->model],
     coverage_models => [$discovery_build->model, $followup_build->model, $normal_build->model],
@@ -65,6 +77,8 @@ my $cmd = $pkg->create(
 
 my $p = $cmd->execute();
 isa_ok($p, 'Genome::VariantReporting::Process::Trio');
+
+UR::Context->commit();
 
 test_xml($p->workflow_file, __FILE__);
 

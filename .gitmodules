@@ -283,3 +283,6 @@
 [submodule "vendor/star"]
 	path = vendor/star
 	url = git@github.com:genome-vendor/star.git
+[submodule "sqitch/genome"]
+	path = sqitch/genome
+	url = https://github.com/genome/genome-sqitch.git

@@ -30,7 +30,8 @@ my $cmd_1 = Genome::Model::Tools::Sam::MarkDuplicates->create(file_to_mark=>$inp
                                                               log_file=>$log_file,
                                                               tmp_dir=>$tmp_dir,
                                                               remove_duplicates=>1,
-                                                              max_jvm_heap_size=>2,        
+                                                              max_jvm_heap_size=>2,
+                                                              dedup_params => "read_name_regex null",
                                                             );
 
 
