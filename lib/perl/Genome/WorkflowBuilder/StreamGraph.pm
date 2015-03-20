@@ -71,7 +71,7 @@ sub execute {
     unless ($output_xml) {
         $output_xml = Genome::Sys->create_temp_file_path;
     }
-    run(qw(/gscuser/aregier/scratch/streamgraph/build/bin/streamgraph run -x), $xml_file, '-o', $output_xml);#FIXME
+    run(qw(/usr/bin/streamgraph run -x), $xml_file, '-o', $output_xml);
     return 1;
 }
 
