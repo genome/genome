@@ -239,7 +239,8 @@ sub display_remapped_alignment_statistics {
     print "\t", '# Unmapped : ', $alignment_counts{'unmapped'}, "\n";
     print "\t", 'Total      : ', $total                       , "\n";
     if ($total != 0) {
-        print "\t", '% Mapped   : ', $alignment_counts{'mapped'}/$total, "\n";
+        my $pct = ($alignment_counts{'mapped'}/$total) * 100;
+        print "\t", '% Mapped   : ', $pct, "\n";
     }
     else {
         print "\t", '% Mapped   : 0', "\n";
