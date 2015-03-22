@@ -475,18 +475,17 @@ $Genome::Model::Tools::OPTS_SPEC = [
   [
     '>ercc-map-unaligned',
     [
+      'build=s',
+      undef,
+      'pdf-file=s',
+      'files',
       'bam-file=s',
+      'files',
+      'raw-stats-file=s',
       'files',
       'ercc-fasta-file=s',
       'files',
       'ercc-spike-in-file=s',
-      'files',
-      'ercc-spike-in-mix=s',
-      [
-        '1',
-        '2'
-      ],
-      'pdf-file=s',
       'files',
       'samtools-version=s',
       'files',
