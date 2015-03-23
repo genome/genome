@@ -98,7 +98,20 @@ sub _execute_with_workflow {
 }
 
 sub _execute_with_ptero {
-    die "This is not implemented, sorry";
+    my ($self, $inputs) = @_;
+
+    my $wf_builder = $self->get_ptero_builder($self->name);
+
+    my $wf_proxy = $wf_builder->submit( inputs => $inputs );
+    $wf_proxy->wait;
+
+    if ($wf_proxy->has_succeeded) {
+        return $wf_proxy->outputs;
+    }
+    else {
+        die $self->error_message('PTero workflow (%s) did not succeed',
+            $wf_proxy->url);
+    }
 }
 
 sub get_ptero_builder {
