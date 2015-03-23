@@ -330,10 +330,6 @@ sub lsf_queue {
         return $self->__lsf_queue;
     }
 
-    if (Genome::Config->can('should_use_alignment_pd') && Genome::Config->should_use_alignment_pd($self->model)) {
-        return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD};
-    }
-
     return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
 }
 
