@@ -74,4 +74,9 @@ sub _java_class_name {
     return 'picard.analysis.CollectWgsMetrics';
 }
 
+sub _validate_params {
+    my $self = shift;
+    $self->enforce_minimum_version('1.114');
+}
+
 1;
