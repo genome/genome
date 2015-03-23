@@ -8,7 +8,7 @@ class Genome::Qc::Tool {
     is_abstract => 1,
     has => [
         alignment_result => {
-            is => 'Genome::InstrumentData::AlignmentResult',
+            is => 'Genome::InstrumentData::AlignedBamResult',
         },
         gmt_params => {
             is => 'Hash',
