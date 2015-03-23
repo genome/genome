@@ -93,7 +93,7 @@ sub execute {
 
     my $error;
     my $outputs = try {
-        $dag->execute(%$inputs);
+        $dag->execute(inputs => $inputs);
     } catch {
         $error = $_;
         $self->error_message("Workflow failed to complete: $error");

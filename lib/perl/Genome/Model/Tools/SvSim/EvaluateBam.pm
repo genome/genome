@@ -44,7 +44,7 @@ sub execute {
     DumpFile($workflow_inputs_path, \%inputs);
     write_file($workflow_xml_path, $dag->get_xml);
 
-    my $rv = $dag->execute(%inputs);
+    my $rv = $dag->execute(inputs => \%inputs);
     die "Workflow failed" unless $rv;
     $self->status_message("Return value: " . Dumper($rv));
 

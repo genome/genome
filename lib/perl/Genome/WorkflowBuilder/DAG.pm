@@ -61,6 +61,93 @@ sub add_link {
 # Public Methods
 # ------------------------------------------------------------------------------
 
+sub execute {
+    my $self = shift;
+
+    my %p = Params::Validate::validate(@_, {
+        inputs => {type => HASHREF},
+    });
+
+    my $inputs = {%{$self->constant_values}, %{$p{inputs}}};
+
+    my $backend = $ENV{GENOME_WORKFLOW_BUILDER_BACKEND};
+    if ($backend eq 'ptero') {
+        return $self->_execute_with_ptero($inputs);
+
+    } elsif ($backend eq 'workflow') {
+        return $self->_execute_with_workflow($inputs);
+
+    } else {
+        die $self->error_message("Unknown backend specified: %s", $backend);
+    }
+}
+
+sub _execute_with_workflow {
+    require Workflow::Simple;
+
+    my ($self, $inputs) = @_;
+
+    my $result = Workflow::Simple::run_workflow_lsf($self->get_xml, %$inputs);
+    unless (defined($result)) {
+        die $self->error_message(
+            "Workflow failed with these errors: %s",
+            Data::Dumper::Dumper(map {$_->error} @Workflow::Simple::ERROR)
+        );
+    }
+    return $result;
+}
+
+sub _execute_with_ptero {
+    die "This is not implemented, sorry";
+}
+
+sub get_ptero_builder {
+    require Ptero::Builder::Workflow;
+
+    my $self = shift;
+    my $name = shift;
+
+    $self->validate;
+
+    my $dag_method = Ptero::Builder::Workflow->new(name => $name || 'root');
+
+    for my $operation (@{$self->operations}) {
+        $dag_method->_add_task($operation->get_ptero_builder_task);
+    }
+
+    for my $link (@{$self->links}) {
+        $link->validate;
+        $dag_method->link_tasks(
+            source => $link->source_operation_name,
+            source_property => $link->source_property,
+            destination => $link->destination_operation_name,
+            destination_property => $link->destination_property,
+        );
+    }
+
+    return $dag_method;
+}
+
+sub get_ptero_builder_task {
+    require Ptero::Builder::Detail::Workflow::Task;
+
+    my $self = shift;
+
+    $self->validate;
+
+    my %params = (
+        name => $self->name,
+        methods => [
+            $self->get_ptero_builder,
+        ],
+    );
+    if (defined $self->parallel_by) {
+        $params{parallel_by} = $self->parallel_by;
+    }
+    return Ptero::Builder::Detail::Workflow::Task->new(%params);
+}
+
+
 sub create_link {
     my $self = shift;
     $self->add_link(Genome::WorkflowBuilder::Link->create(@_));

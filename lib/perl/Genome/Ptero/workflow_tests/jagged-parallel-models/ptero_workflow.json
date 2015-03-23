@@ -1,0 +1,194 @@
+{
+   "links" : [
+      {
+         "destination" : "Outer",
+         "destinationProperty" : "prefix_list",
+         "source" : "input connector",
+         "sourceProperty" : "model_prefix_lists"
+      },
+      {
+         "destination" : "Outer",
+         "destinationProperty" : "suffixes",
+         "source" : "input connector",
+         "sourceProperty" : "model_suffixes"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "model_outputs",
+         "source" : "Outer",
+         "sourceProperty" : "outputs"
+      },
+      {
+         "destination" : "Appender",
+         "destinationProperty" : "prefix",
+         "source" : "input connector",
+         "sourceProperty" : "command_prefixes"
+      },
+      {
+         "destination" : "Appender",
+         "destinationProperty" : "suffix",
+         "source" : "input connector",
+         "sourceProperty" : "command_suffix"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "command_outputs",
+         "source" : "Appender",
+         "sourceProperty" : "output"
+      }
+   ],
+   "tasks" : {
+      "Appender" : {
+         "methods" : [
+            {
+               "name" : "shortcut",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "ptero",
+                     "wrapper",
+                     "command",
+                     "--command-class",
+                     "Genome::Ptero::TestCommand::ParamAppender",
+                     "--method",
+                     "shortcut"
+                  ],
+                  "environment" : {},
+                  "user" : null,
+                  "workingDirectory" : ""
+               },
+               "service" : "shell-command"
+            },
+            {
+               "name" : "execute",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "ptero",
+                     "wrapper",
+                     "command",
+                     "--command-class",
+                     "Genome::Ptero::TestCommand::ParamAppender",
+                     "--method",
+                     "execute"
+                  ],
+                  "environment" : {},
+                  "user" : null,
+                  "workingDirectory" : ""
+               },
+               "service" : "shell-command"
+            }
+         ],
+         "parallelBy" : "prefix"
+      },
+      "Outer" : {
+         "methods" : [
+            {
+               "name" : "root",
+               "parameters" : {
+                  "links" : [
+                     {
+                        "destination" : "Inner",
+                        "destinationProperty" : "prefixes",
+                        "source" : "input connector",
+                        "sourceProperty" : "prefix_list"
+                     },
+                     {
+                        "destination" : "Inner",
+                        "destinationProperty" : "suffixes",
+                        "source" : "input connector",
+                        "sourceProperty" : "suffixes"
+                     },
+                     {
+                        "destination" : "output connector",
+                        "destinationProperty" : "outputs",
+                        "source" : "Inner",
+                        "sourceProperty" : "outputs"
+                     }
+                  ],
+                  "tasks" : {
+                     "Inner" : {
+                        "methods" : [
+                           {
+                              "name" : "root",
+                              "parameters" : {
+                                 "links" : [
+                                    {
+                                       "destination" : "Appender",
+                                       "destinationProperty" : "prefix",
+                                       "source" : "input connector",
+                                       "sourceProperty" : "prefixes"
+                                    },
+                                    {
+                                       "destination" : "Appender",
+                                       "destinationProperty" : "suffix",
+                                       "source" : "input connector",
+                                       "sourceProperty" : "suffixes"
+                                    },
+                                    {
+                                       "destination" : "output connector",
+                                       "destinationProperty" : "outputs",
+                                       "source" : "Appender",
+                                       "sourceProperty" : "output"
+                                    }
+                                 ],
+                                 "tasks" : {
+                                    "Appender" : {
+                                       "methods" : [
+                                          {
+                                             "name" : "shortcut",
+                                             "parameters" : {
+                                                "commandLine" : [
+                                                   "genome",
+                                                   "ptero",
+                                                   "wrapper",
+                                                   "command",
+                                                   "--command-class",
+                                                   "Genome::Ptero::TestCommand::ParamAppender",
+                                                   "--method",
+                                                   "shortcut"
+                                                ],
+                                                "environment" : {},
+                                                "user" : null,
+                                                "workingDirectory" : ""
+                                             },
+                                             "service" : "shell-command"
+                                          },
+                                          {
+                                             "name" : "execute",
+                                             "parameters" : {
+                                                "commandLine" : [
+                                                   "genome",
+                                                   "ptero",
+                                                   "wrapper",
+                                                   "command",
+                                                   "--command-class",
+                                                   "Genome::Ptero::TestCommand::ParamAppender",
+                                                   "--method",
+                                                   "execute"
+                                                ],
+                                                "environment" : {},
+                                                "user" : null,
+                                                "workingDirectory" : ""
+                                             },
+                                             "service" : "shell-command"
+                                          }
+                                       ],
+                                       "parallelBy" : "suffix"
+                                    }
+                                 }
+                              },
+                              "service" : "workflow"
+                           }
+                        ],
+                        "parallelBy" : "prefixes"
+                     }
+                  }
+               },
+               "service" : "workflow"
+            }
+         ],
+         "parallelBy" : "prefix_list"
+      }
+   }
+}
