@@ -61,6 +61,7 @@ ok($graph->execute, "Processes executed successfully");
 compare_ok($out, $expected_out, "output of process2 is correct");
 
 ok(-f $err, "Error file exists");
+ok(!-s $err, "Error file is empty");
 ok(-s $output_xml, "Output xml is not empty");
 
 done_testing;
