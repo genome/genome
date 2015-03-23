@@ -207,11 +207,32 @@ sub version_compare {
     return _parsed_version($a) <=> _parsed_version($b);
 }
 
+# convenience methods for version compare
+sub version_older_than {
+    my ($self, $version) = @_;
+    return $self->version_compare($self->use_version, $version) < 0;
+}
+
+sub version_newer_than {
+    my ($self, $version) = @_;
+    return $self->version_compare($self->use_version, $version) > 0;
+}
+
+sub version_at_most {
+    my ($self, $version) = @_;
+    return $self->version_compare($self->use_version, $version) <= 0;
+}
+
+sub version_at_least {
+    my ($self, $version) = @_;
+    return $self->version_compare($self->use_version, $version) >= 0;
+}
+
 # die if $self->use_version is less than the $min_version argument passed here
 sub enforce_minimum_version {
     my ($self, $min_version) = @_;
 
-    if ($self->version_compare($self->use_version, $min_version) < 0) {
+    if ($self->version_older_than($min_version)) {
         confess sprintf "This module requires picard version >= %s (%s requested)",
                 $min_version, $self->use_version;
     }

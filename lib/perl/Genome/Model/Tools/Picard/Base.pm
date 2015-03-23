@@ -31,7 +31,7 @@ sub _java_class {
 sub _java_class_name {
     my $self = shift;
     my @class = $self->_java_class;
-    if ($self->version_compare($self->use_version, '1.114') < 0) {
+    if ($self->version_older_than('1.114')) {
         unshift @class, qw(net sf);
     }
     return join '.', @class;

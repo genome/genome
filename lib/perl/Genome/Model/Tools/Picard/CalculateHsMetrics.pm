@@ -90,7 +90,7 @@ sub _shellcmd_extra_params {
 sub _validate_params {
     my $self = shift;
 
-    if ($self->bait_set_name && $self->version_compare($self->use_version, '1.52') <= 0) {
+    if ($self->bait_set_name && $self->version_at_most('1.52')) {
         $self->warning_message(
             sprintf 'bait_set_name is not compatible with Picard version %s, ignoring.',
                 $self->use_version
