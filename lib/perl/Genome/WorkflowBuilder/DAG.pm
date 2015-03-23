@@ -66,13 +66,14 @@ sub execute {
 
     my %p = Params::Validate::validate(@_, {
         inputs => {type => HASHREF},
+        polling_interval => {default => 120},
     });
 
     my $inputs = {%{$self->constant_values}, %{$p{inputs}}};
 
     my $backend = $ENV{GENOME_WORKFLOW_BUILDER_BACKEND};
     if ($backend eq 'ptero') {
-        return $self->_execute_with_ptero($inputs);
+        return $self->_execute_with_ptero($inputs, $p{polling_interval});
 
     } elsif ($backend eq 'workflow') {
         return $self->_execute_with_workflow($inputs);
@@ -98,12 +99,12 @@ sub _execute_with_workflow {
 }
 
 sub _execute_with_ptero {
-    my ($self, $inputs) = @_;
+    my ($self, $inputs, $polling_interval) = @_;
 
     my $wf_builder = $self->get_ptero_builder($self->name);
 
     my $wf_proxy = $wf_builder->submit( inputs => $inputs );
-    $wf_proxy->wait;
+    $wf_proxy->wait(polling_interval => $polling_interval);
 
     if ($wf_proxy->has_succeeded) {
         return $wf_proxy->outputs;

@@ -20,7 +20,8 @@ BEGIN {
 for my $test_directory (glob test_data_directory('parallel-cmd')) {
     my $test_name = basename($test_directory);
     my $workflow = Genome::WorkflowBuilder::DAG->from_xml_filename(workflow_xml_file($test_name));
-    my $outputs = $workflow->execute(inputs => get_test_inputs($test_name));
+    my $outputs = $workflow->execute(inputs => get_test_inputs($test_name),
+        polling_interval => 2);
     is_deeply($outputs, get_test_outputs($test_name));
 }
 
