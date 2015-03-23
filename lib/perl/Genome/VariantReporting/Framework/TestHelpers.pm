@@ -195,12 +195,12 @@ sub test_dag_execute {
     my $plan_file = File::Spec->join($test_file . '.d', 'plan.yaml');
     my $plan = get_plan_object( plan_file => $plan_file, provider => $provider );
     note "Launching workflow";
-    my $output = $dag->execute(
+    my $output = $dag->execute( inputs => {
         input_vcf => $input_vcf,
         variant_type => $variant_type,
         plan_json => $plan->as_json,
         process_id => $process->id,
-    );
+    });
     my $vcf_path = $output->{output_vcf};
     my $differ = Genome::File::Vcf::Differ->new($vcf_path, $expected_vcf);
     my $diff = $differ->diff;
