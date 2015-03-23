@@ -1,1 +1,1 @@
-{ outputs => ["hello polly", "goodbye polly"] }
+{ "outputs" : ["hello polly", "goodbye polly"] }
