@@ -193,6 +193,11 @@ sub _execute_build {
     $self->debug_message('Creating sequence dictionaries');
     return unless $self->_create_sequence_dictionary($build);
 
+    #create manifest file
+    unless ($self->_create_manifest_file($build)){
+        $self->error_message("Could not create manifest file");
+    }
+
     # Reallocate to amount of space actually consumed if the build has an associated allocation and that allocation
     # has an absolute path the same as this build's data_path
     $self->debug_message("Reallocating.");
@@ -201,11 +206,6 @@ sub _execute_build {
             $self->error_message("Reallocation failed.");
             return;
         }
-    }
-
-    #create manifest file
-    unless ($self->_create_manifest_file($build)){
-        $self->error_message("Could not create manifest file");
     }
 
     $self->debug_message("Done.");
