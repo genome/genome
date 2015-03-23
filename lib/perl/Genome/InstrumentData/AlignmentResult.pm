@@ -281,6 +281,32 @@ class Genome::InstrumentData::AlignmentResult {
     ],
 };
 
+# This will change once we have a universal method to get to the bam path no
+# matter if it's original or revivified
+sub bam_path {
+    my $self = shift;
+    return File::Spec->join($self->output_dir, 'all_sequences.bam');
+}
+
+sub bam_file {
+    my $self = shift;
+    return $self->bam_path;
+}
+
+sub bam_flagstat_path {
+    my $self = shift;
+    return File::Spec->join($self->output_dir, 'all_sequences.bam.flagstat');
+}
+
+sub bam_flagstat_file {
+    my $self = shift;
+    return $self->bam_flagstat_path;
+}
+
+sub bam_md5_path {
+    my $self = shift;
+    return File::Spec->join($self->output_dir, 'all_sequences.bam.md5');
+}
 
 sub __display_name__ {
     my $self = shift;
