@@ -12,7 +12,7 @@ class Genome::Model::Build::ClinSeq {
 sub special_compare_functions {
     my $self = shift;
     return ($self->SUPER::special_compare_functions,
-        'circos\.conf$' => sub {my ($a, $b) = @_; Genome::Model::Build::ClinSeq::diff_circos_conf($a, $b)} );
+        qr(circos\.conf$) => sub {my ($a, $b) = @_; Genome::Model::Build::ClinSeq::diff_circos_conf($a, $b)} );
 }
 
 sub diff_circos_conf {

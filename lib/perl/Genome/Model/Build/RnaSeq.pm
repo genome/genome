@@ -388,9 +388,9 @@ sub special_compare_functions {
 
     my @functions = $self->SUPER::special_compare_functions;
     return (@functions,
-        '\.bam$' => sub {my ($a, $b) = @_; Genome::Model::Build::RnaSeq::diff_bam_without_regard_to_header($a, $b)},
-        '\.fa$' => sub {my ($a, $b) = @_; Genome::Model::Build::RnaSeq::diff_via_md5($a, $b)},
-        '\.ebwt$' => sub {my ($a, $b) = @_; Genome::Model::Build::RnaSeq::diff_via_md5($a, $b)},
+        qr(\.bam$) => sub {my ($a, $b) = @_; Genome::Model::Build::RnaSeq::diff_bam_without_regard_to_header($a, $b)},
+        qr(\.fa$) => sub {my ($a, $b) = @_; Genome::Model::Build::RnaSeq::diff_via_md5($a, $b)},
+        qr(\.ebwt$) => sub {my ($a, $b) = @_; Genome::Model::Build::RnaSeq::diff_via_md5($a, $b)},
     );
 }
 

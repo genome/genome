@@ -174,12 +174,12 @@ sub regex_files_for_diff {
 
 sub special_compare_functions {
     return (
-        '\.ace$' => sub {my ($a, $b) = @_; Genome::Model::Build::GenePrediction::Bacterial::diff_ace($a, $b);},
-        '\.ks\.bz2$' => sub {my ($a, $b) = @_; Genome::Model::Build::GenePrediction::Bacterial::ks_bz2($a, $b);},
-        '\.ks\.bz2$' => sub {my ($a, $b) = @_; Genome::Model::Build::GenePrediction::Bacterial::ks_bz2($a, $b);},
-        '\.sorted\.bz2$' => sub {my ($a, $b) = @_; Genome::Model::Build::GenePrediction::Bacterial::sorted_bz2($a, $b);},
-        '\.fasta$' => sub {my ($a, $b) = @_; Genome::Model::Build::GenePrediction::Bacterial::diff_fasta($a, $b);},
-        'sqlite-[^-]+-\d{4}_\d{2}_\d{2}.dat$' => sub {my ($a, $b) = @_; Genome::Model::Build::GenePrediction::Bacterial::diff_sqlite($a, $b);}
+        qr(\.ace$) => sub {my ($a, $b) = @_; Genome::Model::Build::GenePrediction::Bacterial::diff_ace($a, $b);},
+        qr(\.ks\.bz2$) => sub {my ($a, $b) = @_; Genome::Model::Build::GenePrediction::Bacterial::ks_bz2($a, $b);},
+        qr(\.ks\.bz2$) => sub {my ($a, $b) = @_; Genome::Model::Build::GenePrediction::Bacterial::ks_bz2($a, $b);},
+        qr(\.sorted\.bz2$) => sub {my ($a, $b) = @_; Genome::Model::Build::GenePrediction::Bacterial::sorted_bz2($a, $b);},
+        qr(\.fasta$) => sub {my ($a, $b) = @_; Genome::Model::Build::GenePrediction::Bacterial::diff_fasta($a, $b);},
+        qr(sqlite-[^-]+-\d{4}_\d{2}_\d{2}.dat$) => sub {my ($a, $b) = @_; Genome::Model::Build::GenePrediction::Bacterial::diff_sqlite($a, $b);}
     ), $_[0]->SUPER::special_compare_functions(@_);
 }
 
