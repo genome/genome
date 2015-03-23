@@ -161,6 +161,16 @@ subtest "construct qc" => sub {
     ok(ref($qc_result) eq 'UR::DeletedRef', 'deleted qc result');
 };
 
+subtest "AlignedBamResult accessors" => sub {
+    my $alignment_result = make_alignment_result();
+
+    is($alignment_result->bam_path, File::Spec->join($alignment_result->output_dir, 'all_sequences.bam'), 'bam_path as expected');
+    is($alignment_result->bam_file, File::Spec->join($alignment_result->output_dir, 'all_sequences.bam'), 'bam_file as expected');
+    is($alignment_result->bam_flagstat_path, File::Spec->join($alignment_result->output_dir, 'all_sequences.bam.flagstat'), 'bam_flagstat_path as expected');;
+    is($alignment_result->bam_flagstat_file, File::Spec->join($alignment_result->output_dir, 'all_sequences.bam.flagstat'), 'bam_flagstat_file as expected');;
+    is($alignment_result->bam_md5_path, File::Spec->join($alignment_result->output_dir, 'all_sequences.bam.md5'), 'bam_md5_path as expected');;
+};
+
 done_testing();
 
 sub create_test_file_system {
