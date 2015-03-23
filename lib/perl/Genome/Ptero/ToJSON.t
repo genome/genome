@@ -37,7 +37,10 @@ for my $test_directory (glob test_data_directory('*')) {
 
     compare_ok($json_filename, $expected_json_filename,
         "$test_name JSON looks ok",
-        filters => [qr/^.*"workingDirectory" :.*$/],
+        filters => [
+            qr/^.*"workingDirectory" :.*$/,
+            qr/^.*"user" :.*$/,
+        ],
     );
 }
 
