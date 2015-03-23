@@ -36,6 +36,13 @@ sub decorate {
     );
     Genome::InstrumentData::Composite::Workflow::Generator::Base->_add_link_to_workflow(
         $workflow,
+        left_workflow_operation_id => $workflow->get_input_connector->id,
+        left_property => 'result_users',
+        right_workflow_operation_id => $qc_runner_op->id,
+        right_property => 'result_users',
+    );
+    Genome::InstrumentData::Composite::Workflow::Generator::Base->_add_link_to_workflow(
+        $workflow,
         left_workflow_operation_id => $operation->id,
         left_property => 'alignment_result',
         right_workflow_operation_id => $qc_runner_op->id,
