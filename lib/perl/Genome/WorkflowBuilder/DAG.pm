@@ -70,7 +70,7 @@ sub execute {
 
     my $inputs = {%{$self->constant_values}, %{$p{inputs}}};
 
-    my $backend = $ENV{GENOME_WORKFLOW_BUILDER_BACKEND} || 'workflow';
+    my $backend = $ENV{GENOME_WORKFLOW_BUILDER_BACKEND};
     if ($backend eq 'ptero') {
         return $self->_execute_with_ptero($inputs);
 
