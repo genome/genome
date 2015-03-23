@@ -69,7 +69,7 @@ sub _get_ptero_shortcut_method {
         name => 'shortcut',
         parameters => {
             commandLine => [
-                'genome', 'ptero', 'wrapper', 'command',
+                'genome', 'ptero', 'wrapper',
                 '--command-class', $self->command,
                 '--method', 'shortcut',
             ],
@@ -89,7 +89,7 @@ sub _get_ptero_execute_method {
         name => 'execute',
         parameters => {
             commandLine => [
-                'genome', 'ptero', 'wrapper', 'command',
+                'genome', 'ptero', 'wrapper',
                 '--command-class', $self->command,
                 '--method', 'execute',
             ],
