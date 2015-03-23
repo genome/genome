@@ -3,9 +3,8 @@ package Genome::Ptero::Wrapper;
 use strict;
 use warnings FATAL => qw(all);
 use Genome;
-use Ptero;
-use UR;
 use Data::Dump qw();
+use Ptero::Proxy::Workflow::Execution;
 
 class Genome::Ptero::Wrapper {
     is => 'Command::V2',
@@ -28,9 +27,12 @@ class Genome::Ptero::Wrapper {
 sub execute {
     my $self = shift;
 
-    my $execution = Ptero::Workflow::Execution->new();
+    validate_environment();
 
-    $self->_setup_logging($execution->metadata);
+    my $execution = Ptero::Proxy::Workflow::Execution->new(
+        $ENV{PTERO_WORKFLOW_EXECUTION_URL});
+
+    $self->_setup_logging($execution->data);
     $self->_log_execution_information($execution);
 
     my $command = $self->_instantiate_command($execution->inputs);
@@ -40,6 +42,14 @@ sub execute {
         _get_command_outputs($command, $self->command_class));
 
     return 1;
+}
+
+sub validate_environment {
+    my $self = shift;
+    unless (defined $ENV{PTERO_WORKFLOW_EXECUTION_URL}) {
+        die $self->error_message("Environment variable PTERO_WORKFLOW_EXECUTION_URL must be set");
+        exit 1;
+    }
 }
 
 sub _setup_logging {
