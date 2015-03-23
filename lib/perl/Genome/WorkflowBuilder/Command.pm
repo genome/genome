@@ -74,7 +74,7 @@ sub _get_ptero_shortcut_method {
                 '--method', 'shortcut',
             ],
             environment => \%ENV,
-            user => $ENV{USER},
+            user => Genome::Sys->username,
             workingDirectory => Cwd::getcwd,
         },
     );
@@ -94,7 +94,7 @@ sub _get_ptero_execute_method {
                 '--method', 'execute',
             ],
             environment => \%ENV,
-            user => $ENV{USER},
+            user => Genome::Sys->username,
             workingDirectory => Cwd::getcwd,
         },
     );
