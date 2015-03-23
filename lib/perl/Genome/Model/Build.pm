@@ -2311,10 +2311,10 @@ sub special_compare_functions {
     my $self = shift;
 
     my @functions;
-    push @functions, qr(\.hq$), sub {my ($a, $b) = @_; Genome::Model::Build::diff_hq($a, $b)};
-    push @functions, qr((?<!\.vcf)\.gz$), sub {my ($a, $b) = @_; Genome::Model::Build::diff_gz($a, $b)},
-    push @functions, qr(\.vcf$), sub {my ($a, $b) = @_; Genome::Model::Build::diff_vcf($a, $b)},
-    push @functions, qr(\.vcf\.gz$), sub {my ($a, $b) = @_; Genome::Model::Build::diff_vcf_gz($a, $b)},
+    push @functions, qr(\.hq$), sub {my ($a, $b) = @_; !Genome::Model::Build::diff_hq($a, $b)};
+    push @functions, qr((?<!\.vcf)\.gz$), sub {my ($a, $b) = @_; !Genome::Model::Build::diff_gz($a, $b)},
+    push @functions, qr(\.vcf$), sub {my ($a, $b) = @_; !Genome::Model::Build::diff_vcf($a, $b)},
+    push @functions, qr(\.vcf\.gz$), sub {my ($a, $b) = @_; !Genome::Model::Build::diff_vcf_gz($a, $b)},
     return @functions;
 }
 
