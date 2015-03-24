@@ -155,12 +155,17 @@ C<scope> is the scope to which the lock is bound.  See C<scopes()> for valid sco
 
 sub unlock_resource {
     my $class = shift;
-    my %args = @_;
-
-    my $scope = $RESOURCE_LOCK_SCOPE{$args{resource_lock}};
+    my %args = validate(@_, {
+        resource_lock => 1,
+        scope => {
+            callbacks => {
+                'valid scope' => sub { validate_scope(shift) },
+            },
+        },
+    });
 
     my $rv = 1;
-    for my $backend (backends($scope)) {
+    for my $backend (backends($args{scope})) {
         if ($backend->has_lock($args{resource_lock})) {
             my @unlock_args = $backend->translate_unlock_args(%args);
             my $unlocked = $backend->unlock(@unlock_args);

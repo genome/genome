@@ -132,6 +132,7 @@ subtest 'first optional fails to lock, then unlock' => sub {
 
         my $unlocked = Genome::Sys::Lock->unlock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         ok($unlocked, 'unlocked');
         ok(!(all { $_->has_lock($resource_lock) } @backends), 'both backends do not have resource lock');
@@ -159,6 +160,7 @@ subtest 'second optional fails to lock, then unlock' => sub {
 
         my $unlocked = Genome::Sys::Lock->unlock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         ok($unlocked, 'unlocked');
         ok(!(all { $_->has_lock($resource_lock) } @backends),
@@ -187,6 +189,7 @@ subtest 'with both locked, first optional fails to unlock' => sub {
 
         my $unlocked = Genome::Sys::Lock->unlock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         ok($unlocked, 'unlocked');
         ok(!(all { $_->has_lock($resource_lock) } grep { $_->is_mandatory } @backends),
@@ -215,6 +218,7 @@ subtest 'with both locked, second optional fails to unlock' => sub {
 
         my $unlocked = Genome::Sys::Lock->unlock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         ok($unlocked, 'unlocked');
         ok(!(all { $_->has_lock($resource_lock) } grep { $_->is_mandatory } @backends),
@@ -242,6 +246,7 @@ subtest 'with both locked, first mandatory fails to unlock' => sub {
 
         my $unlocked = Genome::Sys::Lock->unlock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         ok(!$unlocked, 'unlocked failed');
     });
@@ -267,6 +272,7 @@ subtest 'with both locked, second mandatory fails to unlock' => sub {
 
         my $unlocked = Genome::Sys::Lock->unlock_resource(
             resource_lock => $resource_lock,
+            scope => 'site',
         );
         ok(!$unlocked, 'unlocked failed');
     });
