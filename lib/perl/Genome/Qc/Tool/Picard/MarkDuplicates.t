@@ -10,6 +10,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use Sub::Override;
 
 my $pkg = 'Genome::Qc::Tool::Picard::MarkDuplicates';
 use_ok($pkg);
@@ -28,6 +29,15 @@ my $tool = $pkg->create(
     }
 );
 ok($tool->isa($pkg), 'Tool created successfully');
+
+# Value is different between workstations and blades
+use Genome::Model::Tools::Picard::MarkDuplicates;
+my $override = Sub::Override->new(
+    'Genome::Model::Tools::Picard::MarkDuplicates::get_max_filehandles_param',
+    sub {
+        return 'MAX_FILE_HANDLES=972';
+    }
+);
 
 my @expected_cmd_line = (
     'java',
@@ -55,5 +65,7 @@ my %expected_metrics = (
     'estimated_library_size' => 196212,
 );
 is_deeply({$tool->get_metrics}, {%expected_metrics}, 'Parsed metrics as expected');
+
+$override->restore;
 
 done_testing;
