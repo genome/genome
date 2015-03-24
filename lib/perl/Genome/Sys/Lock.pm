@@ -5,6 +5,7 @@ use warnings;
 
 use Carp qw(carp croak);
 use List::MoreUtils qw(all);
+use Params::Validate qw(validate HASHREF);
 
 =item lock_resource()
 
@@ -69,8 +70,7 @@ then C<lock()> will C<croak()>.
 my %RESOURCE_LOCK_SCOPE;
 sub lock_resource {
     my $class = shift;
-    my %args = with_default_lock_resource_args(@_);
-    validate_scope($args{scope});
+    my %args = validate(@_, LOCK_RESOURCE_PARAMS_SPEC());
 
     if (exists $RESOURCE_LOCK_SCOPE{$args{resource_lock}}
         && $RESOURCE_LOCK_SCOPE{$args{resource_lock}} ne $args{scope}) {
@@ -117,6 +117,20 @@ sub lock_resource {
 
     return $args{resource_lock};
 
+}
+
+sub LOCK_RESOURCE_PARAMS_SPEC {
+    return {
+        resource_lock => 1,
+        scope => {
+            callbacks => {
+                'valid scope' => sub { validate_scope(shift) },
+            },
+        },
+        block_sleep => { default => 60 },
+        max_try => { default => 7200 },
+        wait_announce_interval => { default => 0 },
+    };
 }
 
 =item unlock_resource()
@@ -172,16 +186,6 @@ sub release_all {
             $backend->release_all();
         }
     }
-}
-
-sub with_default_lock_resource_args {
-    my %args = @_;
-
-    $args{block_sleep} = 60 unless defined $args{block_sleep};
-    $args{max_try} = 7200 unless defined $args{max_try};
-    $args{wait_announce_interval} = 0 unless defined $args{wait_announce_interval};
-
-    return %args;
 }
 
 sub is_mandatory {
