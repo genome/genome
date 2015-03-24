@@ -26,7 +26,7 @@ class Genome::Model::Tools::Picard::CollectWgsMetrics {
             is => 'Integer',
             is_optional => 1,
             doc => "Minimum mapping quality for a read to contribute coverage. Default value: 20. This option can be set to 'null' to clear the default value.",
-            picard_param_name => 'MINIMUN_MAPPING_QUALITY',
+            picard_param_name => 'MINIMUM_MAPPING_QUALITY',
         },
         minimum_base_quality => {
             is => 'Integer',
