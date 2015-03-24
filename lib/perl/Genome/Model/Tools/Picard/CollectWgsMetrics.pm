@@ -32,7 +32,7 @@ class Genome::Model::Tools::Picard::CollectWgsMetrics {
             is => 'Integer',
             is_optional => 1,
             doc => "Minimum base quality for a base to contribute coverage. Default value: 20. This option can be set to 'null' to clear the default value.",
-            picard_param_name => 'MINIMUN_BASE_QUALITY',
+            picard_param_name => 'MINIMUM_BASE_QUALITY',
         },
         coverage_cap => {
             is => 'Integer',
