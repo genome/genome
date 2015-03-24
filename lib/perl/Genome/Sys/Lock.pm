@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Carp qw(carp croak);
+use Genome::Utility::Instrumentation qw();
 use List::MoreUtils qw(all);
 use Params::Validate qw(validate HASHREF);
 
