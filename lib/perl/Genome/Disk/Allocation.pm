@@ -678,16 +678,6 @@ sub _create_observer {
     return 1;
 }
 
-# Returns a closure that removes the given locks
-sub _unlock_closure {
-    my ($class, @locks) = @_;
-    return sub {
-        for my $lock (@locks) {
-            Genome::Sys->unlock_resource(resource_lock => $lock) if -e $lock;
-        }
-    };
-}
-
 # Returns a closure that creates a directory at the given path
 sub _create_directory_closure {
     my ($class, $path) = @_;
