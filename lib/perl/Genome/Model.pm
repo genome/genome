@@ -665,8 +665,14 @@ sub build_requested {
     my ($self, $value, $reason) = @_;
     # Writing the if like this allows someone to do build_requested(undef)
     if (@_ > 1) {
-        $self->_lock();
         my ($calling_package, $calling_subroutine) = (caller(1))[0,3];
+
+        if($calling_subroutine && grep { $_ eq $calling_subroutine } qw(UR::Change::undo UR::Context::_reverse_all_changes)) {
+            #don't log rollbacks--the log of the original request is removed by the rollback.
+            return $self->__build_requested($value);
+        }
+
+        $self->_lock();
         my $default_reason = 'no reason given';
         $default_reason .= ' called by ' . $calling_package . '::' . $calling_subroutine if $calling_package;
         $self->add_note(
