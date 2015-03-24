@@ -193,6 +193,11 @@ sub _execute_build {
     $self->debug_message('Creating sequence dictionaries');
     return unless $self->_create_sequence_dictionary($build);
 
+    #create manifest file
+    unless ($self->_create_manifest_file($build)){
+        $self->error_message("Could not create manifest file");
+    }
+
     # Reallocate to amount of space actually consumed if the build has an associated allocation and that allocation
     # has an absolute path the same as this build's data_path
     $self->debug_message("Reallocating.");
@@ -201,11 +206,6 @@ sub _execute_build {
             $self->error_message("Reallocation failed.");
             return;
         }
-    }
-
-    #create manifest file
-    unless ($self->_create_manifest_file($build)){
-        $self->error_message("Could not create manifest file");
     }
 
     $self->debug_message("Done.");
@@ -284,14 +284,8 @@ sub _copy_fasta_file {
         }
     }
 
-    my $sequence_count = `wc -l < $primary_fasta_path.fai`;
-    chomp $sequence_count;
 
-    if ($build->skip_bases_files) {
-        $self->debug_message("Skipping creation of $sequence_count bases files for fasta.");
-    } elsif ($sequence_count > 1024) {
-        $self->debug_message("You have requested creation of bases files, but there are $sequence_count sequences in the primary fasta file. Creating bases files when there are thousands or millions of sequences is potentially dangerous.")
-    } else {
+    if (my $sequence_count = $self->_should_make_bases_files($build, $primary_fasta_path)) {
         $self->debug_message("Making $sequence_count bases files from fasta.");
         my $rv = $self->_make_bases_files($primary_fasta_path, $output_directory);
 
@@ -302,6 +296,32 @@ sub _copy_fasta_file {
     }
 
     return 1;
+}
+
+sub _should_make_bases_files {
+    my $self = shift;
+    my $build = shift;
+    my $primary_fasta_path = shift;
+
+    unless(exists $self->{_should_make_bases_file}) {
+
+        if ($build->skip_bases_files) {
+            $self->debug_message("Skipping creation of bases files for fasta.");
+            $self->{_should_make_bases_files} = 0;
+        } else {
+            my $sequence_count = `wc -l < $primary_fasta_path.fai`;
+            chomp $sequence_count;
+
+            if($sequence_count > 1024) {
+                $self->debug_message("You have requested creation of bases files, but there are $sequence_count sequences in the primary fasta file. Creating bases files when there are thousands or millions of sequences is potentially dangerous.");
+                $self->{_should_make_bases_files} = 0;
+            } else {
+                $self->{_should_make_bases_files} = $sequence_count;
+            }
+        }
+    }
+
+    return $self->{_should_make_bases_files};
 }
 
 sub _create_sequence_dictionary {
@@ -411,20 +431,15 @@ sub _list_bases_files {
     my $build = shift;
 
     my $data_dir = $build->data_directory;
-    my $fa = $build->fasta_file;
+    my $fa = $build->full_consensus_path('fa');
     my $bases_dir = join('/', $data_dir, 'bases');
     $bases_dir = $data_dir unless -e $bases_dir; #some builds lack a bases directory
 
     my @bases_files;
 
     my $sequence_count = 0;
-    if (-e "$fa.fai") {
-        my $sequence_count = `wc -l < $fa.fai`;
-        chomp $sequence_count;
-        #$self->debug_message("There were $sequence_count bases in $fa.fai")
-    }
 
-    if (!($build->skip_bases_files) and !($sequence_count > 1024) and $fa and -e $fa){
+    if ($fa and -e $fa and $self->_should_make_bases_files($build, $fa)){
         my $fafh = Genome::Sys->open_file_for_reading($fa);
         unless($fafh){
             $self->error_message("Could not open file $fa for reading.");
