@@ -68,20 +68,9 @@ then C<lock()> will C<croak()>.
 
 =cut
 
-my %RESOURCE_LOCK_SCOPE;
 sub lock_resource {
     my $class = shift;
     my %args = validate(@_, LOCK_RESOURCE_PARAMS_SPEC());
-
-    if (exists $RESOURCE_LOCK_SCOPE{$args{resource_lock}}
-        && $RESOURCE_LOCK_SCOPE{$args{resource_lock}} ne $args{scope}) {
-        Carp::confess(sprintf("Attempted to lock the resource (%s) in "
-                . "scope (%s) while it has an existing lock in scope (%s).  "
-                . "Locking in multiple scopes is not currently supported.",
-                $args{resource_lock},
-                $RESOURCE_LOCK_SCOPE{$args{resource_lock}},
-                $args{scope}));
-    }
 
     # need to install handlers before backends start locking
     $class->_cleanup_handler_check();
@@ -113,8 +102,6 @@ sub lock_resource {
     } else {
         Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.inconsistent');
     }
-
-    $RESOURCE_LOCK_SCOPE{$args{resource_lock}} = $args{scope};
 
     return $args{resource_lock};
 
