@@ -246,10 +246,14 @@ subtest 'test per lane bam removal and recreation - AlignedBamResult accessors' 
 
     # The revivified bam will be in a different location
     my $new_path = $ar2->revivified_alignment_bam_file_paths(disk_allocation => $temp_allocation);
-    # This test currently fails because the bam_path points to the original
-    # output_dir. This will change once we have a universal method to get to
-    # the bam's path (which shouldn't be called bam_path)
-    # is($ar2->bam_path, File::Spec->join($temp_allocation_dir, $per_lane_bam), 'bam_path correct after revivification');
+
+    SKIP: {
+        # This test currently fails because the bam_path points to the original
+        # output_dir. This will change once we have a universal method to get to
+        # the bam's path (which shouldn't be called bam_path)
+        skip "revivified bam path not implemented", 1;
+        is($ar2->bam_path, File::Spec->join($temp_allocation_dir, $per_lane_bam), 'bam_path correct after revivification');
+    }
     is($ar2->bam_flagstat_path, File::Spec->join($ar2->output_dir, $per_lane_flagstat), 'bam_flagstat_path correct after revivification');
     is($ar2->bam_md5_path, File::Spec->join($ar2->output_dir, 'all_sequences.bam.md5'), 'bam_md5_path correct after revivification');
 };
