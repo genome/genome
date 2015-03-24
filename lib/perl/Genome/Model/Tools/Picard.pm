@@ -339,6 +339,11 @@ sub run_java_vm {
 sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
+
+    if (not defined $self->use_version) {
+        die $self->error_message('Cannot pass undef to Picard::use_version');
+    }
+
     unless ($self->temp_directory) {
         my $base_temp_directory = Genome::Sys->base_temp_directory;
         my $temp_dir = File::Temp::tempdir($base_temp_directory .'/Picard-XXXX', CLEANUP => 1);
