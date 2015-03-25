@@ -148,8 +148,6 @@ class Genome::Model {
             # new instrument data instead of input models
         },
         _build_requested => {
-            # TODO: this has limited tracking as to who/why the build was requested
-            # Is it better as a Note than a column since it is TGI specific?
             is => 'Boolean',
             column_name => 'build_requested',
             doc => 'accesses/modifies the "build_requested" value without locking',
