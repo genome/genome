@@ -43,7 +43,6 @@ my @expected_cmd_line =(
     sprintf('TMP_DIR=%s', $temp_file),
     'VALIDATION_STRINGENCY=SILENT',
 );
-$DB::single=1;
 is_deeply([$tool->cmd_line], [@expected_cmd_line], 'Command line list as expected');
 
 my %expected_metrics = (
