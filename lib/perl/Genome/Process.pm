@@ -715,7 +715,7 @@ sub _compare_output_directories {
                         my %additional_diffs = $self->_compare_output_directories($target, $other_target, $other_process);
                         %diffs = (%diffs, %additional_diffs);
                     }
-                    if (-f $target && -f $other_target) {
+                    elsif (-f $target && -f $other_target) {
                         if (compare($target, $other_target)) {
                             $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
                                 'symlinks are not the same (diff -u %s %s) (diff -u %s %s)',
@@ -726,13 +726,12 @@ sub _compare_output_directories {
                             #Symlink targets are in fact the same content - do nothing
                         }
                     }
+                    return;
                 }
-                else {
-                    $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
-                        'files are not the same (diff -u %s %s)',
-                        $file, $other_file
-                    );
-                }
+                $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
+                    'files are not the same (diff -u %s %s)',
+                    $file, $other_file
+                );
             }
         },
     );
