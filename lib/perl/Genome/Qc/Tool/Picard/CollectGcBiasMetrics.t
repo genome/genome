@@ -17,14 +17,15 @@ use_ok($pkg);
 my $data_dir = __FILE__.".d";
 
 my $summary_output = File::Spec->join($data_dir, 'output_file.txt');
+my $temp_file = Genome::Sys->create_temp_file_path;
 
 my $tool = $pkg->create(
     gmt_params => {
-        input_file => __FILE__,
-        refseq_file => __FILE__,
-        output_file => __FILE__,
+        input_file => $temp_file,
+        refseq_file => $temp_file,
+        output_file => $temp_file,
         summary_output => $summary_output,
-        temp_directory => __FILE__,
+        temp_directory => $temp_file,
         use_version => 1.123,
     }
 );
@@ -38,13 +39,13 @@ my @expected_cmd_line =(
     '/usr/share/java/ant.jar:/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123/CollectGcBiasMetrics.jar',
     'net.sf.picard.analysis.CollectGcBiasMetrics',
     'CHART_OUTPUT=GC_bias_chart.pdf',
-    sprintf('INPUT=%s', __FILE__),
+    sprintf('INPUT=%s', $temp_file),
     'MAX_RECORDS_IN_RAM=500000',
     'MINIMUM_GENOME_FRACTION=1.0E-5',
-    sprintf('OUTPUT=%s', __FILE__),
-    sprintf('REFERENCE_SEQUENCE=%s', __FILE__),
+    sprintf('OUTPUT=%s', $temp_file),
+    sprintf('REFERENCE_SEQUENCE=%s', $temp_file),
     sprintf('SUMMARY_OUTPUT=%s', $summary_output),
-    sprintf('TMP_DIR=%s', __FILE__),
+    sprintf('TMP_DIR=%s', $temp_file),
     'VALIDATION_STRINGENCY=SILENT',
     'WINDOW_SIZE=100',
 );

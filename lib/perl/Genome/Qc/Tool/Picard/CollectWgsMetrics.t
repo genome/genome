@@ -17,13 +17,14 @@ use_ok($pkg);
 my $data_dir = __FILE__.".d";
 
 my $output_file = File::Spec->join($data_dir, 'output_file.txt');
+my $temp_file = Genome::Sys->create_temp_file_path;
 
 my $tool = $pkg->create(
     gmt_params => {
-        reference_sequence => __FILE__,
-        input_file => __FILE__,
+        reference_sequence => $temp_file,
+        input_file => $temp_file,
         output_file => $output_file,
-        temp_directory => __FILE__,
+        temp_directory => $temp_file,
         use_version => 1.123,
     }
 );
@@ -36,11 +37,11 @@ my @expected_cmd_line =(
     '-cp',
     '/usr/share/java/ant.jar:/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123/CollectWgsMetrics.jar',
     'picard.analysis.CollectWgsMetrics',
-    sprintf('INPUT=%s', __FILE__),
+    sprintf('INPUT=%s', $temp_file),
     'MAX_RECORDS_IN_RAM=500000',
     sprintf('OUTPUT=%s', $output_file),
-    sprintf('REFERENCE_SEQUENCE=%s', __FILE__),
-    sprintf('TMP_DIR=%s', __FILE__),
+    sprintf('REFERENCE_SEQUENCE=%s', $temp_file),
+    sprintf('TMP_DIR=%s', $temp_file),
     'VALIDATION_STRINGENCY=SILENT',
 );
 is_deeply([$tool->cmd_line], [@expected_cmd_line], 'Command line list as expected');

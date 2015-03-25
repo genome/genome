@@ -17,12 +17,13 @@ use_ok($pkg);
 my $data_dir = __FILE__.".d";
 
 my $output_file = File::Spec->join($data_dir, 'output_file');
+my $temp_file = Genome::Sys->create_temp_file_path;
 
 my $tool = $pkg->create(
     gmt_params => {
-        input_file => __FILE__,
+        input_file => $temp_file,
         output_basename => $output_file,
-        temp_directory => __FILE__,
+        temp_directory => $temp_file,
         use_version => 1.123,
     }
 );
@@ -36,10 +37,10 @@ my @expected_cmd_line =(
     '/usr/share/java/ant.jar:/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123/CollectMultipleMetrics.jar',
     'net.sf.picard.analysis.CollectMultipleMetrics',
     'ASSUME_SORTED=true',
-    sprintf('INPUT=%s', __FILE__),
+    sprintf('INPUT=%s', $temp_file),
     'MAX_RECORDS_IN_RAM=500000',
     sprintf('OUTPUT=%s', $output_file),
-    sprintf('TMP_DIR=%s', __FILE__),
+    sprintf('TMP_DIR=%s', $temp_file),
     'VALIDATION_STRINGENCY=SILENT',
 );
 $DB::single=1;

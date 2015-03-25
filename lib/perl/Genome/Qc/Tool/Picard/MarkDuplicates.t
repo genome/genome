@@ -18,13 +18,14 @@ use_ok($pkg);
 my $data_dir = __FILE__.".d";
 
 my $metrics_file = File::Spec->join($data_dir, 'output_file.txt');
+my $temp_file = Genome::Sys->create_temp_file_path;
 
 my $tool = $pkg->create(
     gmt_params => {
-        input_file => __FILE__,
+        input_file => $temp_file,
         metrics_file => $metrics_file,
-        output_file => __FILE__,
-        temp_directory => __FILE__,
+        output_file => $temp_file,
+        temp_directory => $temp_file,
         use_version => 1.123,
     }
 );
@@ -48,13 +49,13 @@ my @expected_cmd_line = (
     'picard.sam.markduplicates.MarkDuplicates',
     'REMOVE_DUPLICATES=false',
     'ASSUME_SORTED=true',
-    sprintf('OUTPUT=%s', __FILE__),
+    sprintf('OUTPUT=%s', $temp_file),
     sprintf('METRICS_FILE=%s', $metrics_file),
-    sprintf('INPUT=%s', __FILE__),
+    sprintf('INPUT=%s', $temp_file),
     'MAX_RECORDS_IN_RAM=500000',
     'MAX_FILE_HANDLES=972',
     'VALIDATION_STRINGENCY=SILENT',
-    sprintf('TMP_DIR=%s', __FILE__),
+    sprintf('TMP_DIR=%s', $temp_file),
 
 );
 is_deeply([$tool->cmd_line], [@expected_cmd_line], 'Command line list as expected');
