@@ -147,10 +147,16 @@ class Genome::Model {
             # this is similar to auto_build_alignments, though that flag works on 
             # new instrument data instead of input models
         },
-        build_requested => {
+        _build_requested => {
             # TODO: this has limited tracking as to who/why the build was requested
             # Is it better as a Note than a column since it is TGI specific?
             is => 'Boolean',
+            column_name => 'build_requested',
+            doc => 'accesses/modifies the "build_requested" value without locking',
+        },
+        build_requested => {
+            via => '__self__',
+            to => '_build_requested',
             doc => 'when set to true the system will queue the model for building ASAP',
         },
         _last_complete_build_id => {
@@ -665,14 +671,8 @@ sub build_requested {
     my ($self, $value, $reason) = @_;
     # Writing the if like this allows someone to do build_requested(undef)
     if (@_ > 1) {
-        my ($calling_package, $calling_subroutine) = (caller(1))[0,3];
-
-        if($calling_subroutine && grep { $_ eq $calling_subroutine } qw(UR::Change::undo UR::Context::_reverse_all_changes)) {
-            #don't log rollbacks--the log of the original request is removed by the rollback.
-            return $self->__build_requested($value);
-        }
-
         $self->_lock();
+        my ($calling_package, $calling_subroutine) = (caller(1))[0,3];
         my $default_reason = 'no reason given';
         $default_reason .= ' called by ' . $calling_package . '::' . $calling_subroutine if $calling_package;
         $self->add_note(
