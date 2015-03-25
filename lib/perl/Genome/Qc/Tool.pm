@@ -25,8 +25,7 @@ class Genome::Qc::Tool {
 
 sub cmd_line {
     my $self = shift;
-    my $cmd = $self->gmt_class->create($self->gmt_params);
-    return $cmd->build_cmdline_list;
+    die $self->error_message("Abstract method run must be overriden by subclass");
 }
 
 sub output_file {

@@ -9,6 +9,12 @@ class Genome::Qc::Tool::Picard {
     is_abstract => 1,
 };
 
+sub cmd_line {
+    my $self = shift;
+    my $cmd = $self->gmt_class->create($self->gmt_params);
+    return $cmd->build_cmdline_list;
+}
+
 sub get_metrics {
     my $self = shift;
 
