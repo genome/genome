@@ -127,7 +127,7 @@ subtest 'working_command' => sub {
         UR::Context->commit();
         my %diffs = $p->compare_output($other_p->id);
         like($diffs{'__translated_test__'}, qr/no directory __translated_test__ found/, 'Additional report gets detected');
-        like($diffs{File::Spec->join('__test__', 'plan.yaml')}, qr/files are not the same/, 'Plan file difference gets detected');
+        like($diffs{File::Spec->join('__test__', 'plan.yaml')}, qr/symlinks are not the same/, 'Plan file difference gets detected');
     };
 };
 
