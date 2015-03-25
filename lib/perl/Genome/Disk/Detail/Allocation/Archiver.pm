@@ -126,7 +126,7 @@ sub archive {
 
     # If only there were finally blocks...
     if ($allocation_lock) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
+        $allocation_lock->unlock();
     }
 
     if ($error) {

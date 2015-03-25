@@ -35,7 +35,7 @@ sub unarchive {
         Genome::Disk::Allocation->get_with_lock($id);
 
     unless ($allocation_object->is_archived) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
+        $allocation_lock->unlock();
         $allocation_object->status_message(
             "Allocation is not archived, cannot unarchive. Exiting.");
         return 1;
@@ -133,7 +133,7 @@ sub unarchive {
     my $error = $@;
 
     # finally blocks would be really sweet. Alas...
-    Genome::Sys->unlock_resource(resource_lock => $allocation_lock) if $allocation_lock;
+    $allocation_lock->unlock() if $allocation_lock;
     $shadow_allocation->delete();
 
     if ($error) {
