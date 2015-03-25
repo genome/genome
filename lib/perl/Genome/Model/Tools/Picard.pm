@@ -341,7 +341,8 @@ sub create {
     my $self = $class->SUPER::create(@_);
 
     if (not defined $self->use_version) {
-        die $self->error_message('Cannot pass undef to Picard::use_version');
+        warn $self->warning_message('Should not pass undef to Picard::use_version');
+        $self->use_version($PICARD_DEFAULT);
     }
 
     unless ($self->temp_directory) {
