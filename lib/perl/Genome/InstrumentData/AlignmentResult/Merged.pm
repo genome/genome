@@ -232,7 +232,7 @@ sub create {
     }
     catch {
         $tx->rollback();
-        die $self->error_message('Merge failed due to error: ' . $_);
+        die $class->error_message('Merge failed due to error: ' . $_);
     }
     finally {
         for my $allocation (@temp_allocations) {
