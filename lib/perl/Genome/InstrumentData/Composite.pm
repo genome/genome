@@ -103,7 +103,7 @@ sub get_or_create {
     #    $result->add_user(label => 'uses', user => $self);
     #}
 
-    my @merged_results = grep($_->isa('Genome::InstrumentData::AlignedBamResult'), @all_results);
+    my @merged_results = grep(! $_->isa('Genome::InstrumentData::AlignmentResult'), grep($_->isa('Genome::InstrumentData::AlignedBamResult'), @all_results));
     $self->debug_message('Found '.@merged_results.' merged results');
     $self->_merged_results(\@merged_results);
 

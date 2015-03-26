@@ -22,9 +22,19 @@ sub _jar_path {
     return File::Spec->catfile($self->picard_path, $self->_jar_name);
 }
 
-# java class name within the jar to run (e.g., 'net.sf.picard.sam.CleanSam')
+# Java class as an array (e.g., qw(picard sam SortSam))
+sub _java_class {
+    confess "sub _java_class must be overridden in child class";
+}
+
+# Handles assembly of correct class name
 sub _java_class_name {
-    confess "sub _java_class_name must be overridden in child class";
+    my $self = shift;
+    my @class = $self->_java_class;
+    if ($self->version_older_than('1.114')) {
+        unshift @class, qw(net sf);
+    }
+    return join '.', @class;
 }
 
 # picard params should be 'inputs' and also have picard_param_name defined
@@ -148,11 +158,6 @@ sub build_cmdline_string {
     my ($self, $cmd) = @_;
 
     my $java_vm_cmd = join(' ', $self->build_cmdline_list);
-
-    # hack to workaround premature release of 1.123 with altered classnames
-    if ($java_vm_cmd =~ /picard-tools.?1\.123/) {
-        $java_vm_cmd =~ s/net\.sf\.picard\./picard./;
-    }
 
     my $redirects = $self->_redirects;
     $java_vm_cmd = join(" ", $java_vm_cmd, $redirects) if $redirects;

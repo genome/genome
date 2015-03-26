@@ -80,7 +80,12 @@ sub help_detail {
 EOS
 }
 
-sub _jar_name { 'CollectGcBiasMetrics.jar' }
-sub _java_class_name { 'net.sf.picard.analysis.CollectGcBiasMetrics' }
+sub _jar_name {
+    return 'CollectGcBiasMetrics.jar';
+}
+
+sub _java_class {
+    return qw(picard analysis CollectGcBiasMetrics);
+}
 
 1;

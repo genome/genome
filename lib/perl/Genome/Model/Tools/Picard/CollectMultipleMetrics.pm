@@ -65,8 +65,8 @@ sub _jar_name {
     return 'CollectMultipleMetrics.jar';
 }
 
-sub _java_class_name {
-    return 'net.sf.picard.analysis.CollectMultipleMetrics';
+sub _java_class {
+    return qw(picard analysis CollectMultipleMetrics);
 }
 
 sub _cmdline_args {

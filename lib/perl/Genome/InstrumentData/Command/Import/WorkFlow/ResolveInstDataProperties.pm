@@ -21,7 +21,7 @@ class Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperti
         },
     },
     has_output => {
-        resolved_instrument_data_properties => { is => 'Hash', },
+        resolved_instrument_data_properties => { is => 'Hash', default_value => {}, },
     },
 };
 
