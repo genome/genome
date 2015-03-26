@@ -3,7 +3,9 @@ package Genome::Model::Tools::Picard;
 use strict;
 use warnings;
 
+use version 0.77;
 use Genome;
+use Carp qw(confess);
 use File::Basename;
 use Sys::Hostname;
 use Genome::Utility::AsyncFileSystem qw(on_each_line);
@@ -18,17 +20,39 @@ my $DEFAULT_MAX_RECORDS_IN_RAM = 500000;
 
 class Genome::Model::Tools::Picard {
     is  => 'Command',
+
+    # XXX: this is transitional
+    # ultimately, gmt::picard::base should supersede this class as the parent of
+    # all picard commands. when that happens, this (and all the picard_param_name
+    # attributes) can be moved there.
+    #
+    # to clarify, this class doesn't currently care about this attribute being
+    # applied to its members, but one of its children (who aims to steal the
+    # throne) does.
+    attributes_have => [
+        picard_param_name => {
+            is => 'String',
+            is_optional => 1,
+        },
+    ],
+
     has_input => [
-        use_version => { 
-            is  => 'Version', 
+        java_interpreter => {
+            is => 'String',
+            doc => 'The java interpreter to use',
+            default_value => 'java',
+        },
+        use_version => {
+            is  => 'Version',
             doc => 'Picard version to be used.',
-            is_optional   => 1, 
+            is_optional   => 1,
             default_value => $PICARD_DEFAULT,
         },
         max_records_in_ram => {
             doc => 'When writing SAM files that need to be sorted, this will specify the number of records stored in RAM before spilling to disk. Increasing this number reduces the number of file handles needed to sort a SAM file, and increases the amount of RAM needed.',
             is_optional => 1,
             default_value => $DEFAULT_MAX_RECORDS_IN_RAM,
+            picard_param_name => 'MAX_RECORDS_IN_RAM',
         },
         maximum_memory => {
             is => 'Integer',
@@ -46,6 +70,7 @@ class Genome::Model::Tools::Picard {
             is => 'String',
             doc => 'A temp directory to use when sorting or merging BAMs results in writing partial files to disk.  The default temp directory is resolved for you if not set.',
             is_optional => 1,
+            picard_param_name => 'TMP_DIR',
         },
         validation_stringency => {
             is => 'String',
@@ -53,6 +78,7 @@ class Genome::Model::Tools::Picard {
             is_optional => 1,
             default_value => $DEFAULT_VALIDATION_STRINGENCY,
             valid_values => ['SILENT','STRICT','LENIENT'],
+            picard_param_name => 'VALIDATION_STRINGENCY',
         },
         log_file => {
             is => 'String',
@@ -69,6 +95,7 @@ class Genome::Model::Tools::Picard {
             is_optional => 1,
             doc => 'Whether to create an MD5 digest for any BAM files created.',
             default_value => 0,
+            picard_param_name => 'CREATE_MD5_FILE',
         },
         #These parameters are mainly for use in pipelines
         _monitor_command => {
@@ -104,13 +131,13 @@ sub help_brief {
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-gmt picard ...    
+gmt picard ...
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
-More information about the Picard suite of tools can be found at http://picard.sourceforge.net/.
+sub help_detail {
+    return <<EOS
+More information about the Picard suite of tools can be found at http://broadinstitute.github.io/picard/.
 EOS
 }
 
@@ -144,10 +171,58 @@ my @PICARD_VERSIONS = (
 
 my %PICARD_VERSIONS = @PICARD_VERSIONS;
 
+sub _versions_serial {
+    return @PICARD_VERSIONS[grep {!($_ & 1)} 0..$#PICARD_VERSIONS];
+}
+
 sub latest_version { ($_[0]->installed_picard_versions)[0] }
 
+# deal with the madness that is our list of picard versions
+# return something suited to numerical comparison operators
+sub _parsed_version {
+    my $version = shift;
+
+    # r436 is between 1.22 and 1.23
+    if ($version eq 'r436') {
+        $version = version->parse('1.22.0.0.0.1')
+    }
+    else {
+    # all other svnish versions come at the end and are ordered
+        $version =~ s/^r/0./;
+        $version =~ s/wu0$//;
+    }
+
+    use warnings FATAL => 'all';
+    my $parsed = version->parse("v$version");
+
+    return $parsed;
+}
+
+# version_compare(a, b)
+#   => integer less than zero if a is less than b
+#   => integer greater than zero if b is less than a
+#   => 0 if a == b
+sub version_compare {
+    my ($class, $a, $b) = @_;
+    return _parsed_version($a) <=> _parsed_version($b);
+}
+
+# die if $self->use_version is less than the $min_version argument passed here
+sub enforce_minimum_version {
+    my ($self, $min_version) = @_;
+
+    if ($self->version_compare($self->use_version, $min_version) < 0) {
+        confess sprintf "This module requires picard version >= %s (%s requested)",
+                $min_version, $self->use_version;
+    }
+
+    return 1;
+}
+
+# in decreasing order of recency
 sub available_picard_versions {
-    return uniq(installed_picard_versions(), sort {$b cmp $a} keys %PICARD_VERSIONS);
+    my @all_versions = uniq(installed_picard_versions(), keys %PICARD_VERSIONS);
+    return sort { __PACKAGE__->version_compare($b, $a) } @all_versions;
 }
 
 sub path_for_picard_version {
@@ -176,26 +251,7 @@ sub installed_picard_versions {
         }
     }
 
-    my $sortsub = sub {
-        my ($astr, $bstr) = @_;
-
-        my @aa = split /\./, $astr;
-        my @bb = split /\./, $bstr;
-
-        while (@aa and @bb) {
-            my $acmp = shift @aa;
-            my $bcmp = shift @bb;
-
-            return  1 if $acmp > $bcmp;
-            return -1 if $acmp < $bcmp;
-        }
-
-        return  1 if @aa; # Assumes 1.85.1 is newer than 1.85
-        return -1 if @bb;
-        return 0;
-    };
-
-    return sort { $sortsub->($b, $a) } @versions;
+    return sort { __PACKAGE__->version_compare($b, $a) } @versions;
 }
 
 sub default_picard_version {
@@ -208,6 +264,32 @@ sub picard_path {
     return $self->path_for_picard_version($self->use_version);
 }
 
+sub _java_cmdline {
+    my ($self, $cmd) = @_;
+
+    my $jvm_options = $self->additional_jvm_options || '';
+
+    my $java_vm_cmd = sprintf '%s -Xmx%dm -XX:MaxPermSize=%dm %s -cp /usr/share/java/ant.jar:%s',
+        $self->java_interpreter,
+        int(1024 * $self->maximum_memory),
+        $self->maximum_permgen_memory,
+        $jvm_options,
+        $cmd;
+
+    $java_vm_cmd .= ' VALIDATION_STRINGENCY='. $self->validation_stringency;
+    $java_vm_cmd .= ' TMP_DIR='. $self->temp_directory;
+    if ($self->create_md5_file) {
+        $java_vm_cmd .= ' CREATE_MD5_FILE=TRUE';
+    }
+
+    # hack to workaround premature release of 1.123 with altered classnames
+    if ($java_vm_cmd =~ /picard-tools.?1\.123/) {
+        $java_vm_cmd =~ s/net\.sf\.picard\./picard./;
+    }
+
+    return $java_vm_cmd;
+}
+
 sub run_java_vm {
     my $self = shift;
     my %params = @_;
@@ -215,32 +297,21 @@ sub run_java_vm {
     unless ($cmd) {
         die('Must pass cmd to run_java_vm');
     }
-    
-    my $jvm_options = $self->additional_jvm_options || '';
-    
-    my $java_vm_cmd = 'java -Xmx'. int(1024*$self->maximum_memory) .'m -XX:MaxPermSize=' . $self->maximum_permgen_memory . 'm ' . $jvm_options . ' -cp /usr/share/java/ant.jar:'. $cmd;
-    $java_vm_cmd .= ' VALIDATION_STRINGENCY='. $self->validation_stringency;
-    $java_vm_cmd .= ' TMP_DIR='. $self->temp_directory;
-    if ($self->create_md5_file) {
-        $java_vm_cmd .= ' CREATE_MD5_FILE=TRUE';
-    }
+
+    my $java_vm_cmd = $self->_java_cmdline($cmd);
+
     if ($self->log_file) {
         $java_vm_cmd .= ' >> ' . $self->log_file;
     }
 
-    # hack to workaround premature release of 1.123 with altered classnames
-    if ($java_vm_cmd =~ /picard-tools.?1\.123/) {
-        $java_vm_cmd =~ s/net\.sf\.picard\./picard./;
-    }
-    
     $params{'cmd'} = $java_vm_cmd;
-    
+
     if($self->_monitor_command) {
         $self->monitor_shellcmd(\%params);
     } else {
         my $result = Genome::Sys->shellcmd(%params);
     }
-    
+
     return 1;
 }
 
@@ -284,7 +355,7 @@ $cmd
 Has not produced output on STDOUT in at least $max_stdout_interval seconds.
 
 Host: %s
-Perl Pid: %s 
+Perl Pid: %s
 Java Pid: %s
 LSF Job: %s
 User: %s
@@ -344,7 +415,7 @@ sub parse_file_into_metrics_hashref {
             $metric_key_index = 0;
         }
     }
-    
+
     my @headers;
     my %data;
     while (my $line = $is_fh->getline) {
@@ -381,10 +452,10 @@ sub parse_file_into_metrics_hashref {
 
 sub parse_metrics_file_into_histogram_hashref {
     my ($class,$metrics_file,$metric_header_as_key) = @_;
-    
+
     my $as_fh = Genome::Sys->open_file_for_reading($metrics_file);
     my $metric_key_index;
-    
+
     unless ($metric_header_as_key) {
         if ($class->can('_histogram_header_as_key')) {
             $metric_header_as_key = $class->_metric_header_as_key;

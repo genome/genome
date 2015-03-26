@@ -29,12 +29,6 @@ class Genome::Model::Tools::Vcf::CreateCrossSampleVcf::CreateCrossSampleVcfSnvs 
             value => 'snvs',
         }
     ],
-    has_transient => [
-        process => {
-            is => 'Genome::Process',
-            doc => 'The process wrapping the workflow that generates this result',
-        },
-    ],
 };
 
 sub execute {

@@ -1,0 +1,240 @@
+{
+   "links" : [
+      {
+         "destination" : "A",
+         "destinationProperty" : "param",
+         "source" : "input connector",
+         "sourceProperty" : "a"
+      },
+      {
+         "destination" : "B",
+         "destinationProperty" : "param",
+         "source" : "input connector",
+         "sourceProperty" : "b"
+      },
+      {
+         "destination" : "C",
+         "destinationProperty" : "param",
+         "source" : "input connector",
+         "sourceProperty" : "c"
+      },
+      {
+         "destination" : "D",
+         "destinationProperty" : "param",
+         "source" : "input connector",
+         "sourceProperty" : "d"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "out_a",
+         "source" : "A",
+         "sourceProperty" : "result"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "out_b",
+         "source" : "B",
+         "sourceProperty" : "result"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "out_c",
+         "source" : "C",
+         "sourceProperty" : "result"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "out_d",
+         "source" : "D",
+         "sourceProperty" : "result"
+      },
+      {
+         "destination" : "C",
+         "destinationProperty" : "res1",
+         "source" : "A",
+         "sourceProperty" : "result"
+      },
+      {
+         "destination" : "D",
+         "destinationProperty" : "res1",
+         "source" : "A",
+         "sourceProperty" : "result"
+      },
+      {
+         "destination" : "D",
+         "destinationProperty" : "res2",
+         "source" : "B",
+         "sourceProperty" : "result"
+      }
+   ],
+   "tasks" : {
+      "A" : {
+         "methods" : [
+            {
+               "name" : "shortcut",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "ptero",
+                     "wrapper",
+                     "command",
+                     "--command-class",
+                     "Genome::Ptero::TestCommand::NullCommand",
+                     "--method",
+                     "shortcut"
+                  ],
+                  "environment" : {},
+                  "user" : null,
+                  "workingDirectory" : ""
+               },
+               "service" : "shell-command"
+            },
+            {
+               "name" : "execute",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "ptero",
+                     "wrapper",
+                     "command",
+                     "--command-class",
+                     "Genome::Ptero::TestCommand::NullCommand",
+                     "--method",
+                     "execute"
+                  ],
+                  "environment" : {},
+                  "user" : null,
+                  "workingDirectory" : ""
+               },
+               "service" : "shell-command"
+            }
+         ]
+      },
+      "B" : {
+         "methods" : [
+            {
+               "name" : "shortcut",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "ptero",
+                     "wrapper",
+                     "command",
+                     "--command-class",
+                     "Genome::Ptero::TestCommand::NullCommand",
+                     "--method",
+                     "shortcut"
+                  ],
+                  "environment" : {},
+                  "user" : null,
+                  "workingDirectory" : ""
+               },
+               "service" : "shell-command"
+            },
+            {
+               "name" : "execute",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "ptero",
+                     "wrapper",
+                     "command",
+                     "--command-class",
+                     "Genome::Ptero::TestCommand::NullCommand",
+                     "--method",
+                     "execute"
+                  ],
+                  "environment" : {},
+                  "user" : null,
+                  "workingDirectory" : ""
+               },
+               "service" : "shell-command"
+            }
+         ]
+      },
+      "C" : {
+         "methods" : [
+            {
+               "name" : "shortcut",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "ptero",
+                     "wrapper",
+                     "command",
+                     "--command-class",
+                     "Genome::Ptero::TestCommand::NullCommand",
+                     "--method",
+                     "shortcut"
+                  ],
+                  "environment" : {},
+                  "user" : null,
+                  "workingDirectory" : ""
+               },
+               "service" : "shell-command"
+            },
+            {
+               "name" : "execute",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "ptero",
+                     "wrapper",
+                     "command",
+                     "--command-class",
+                     "Genome::Ptero::TestCommand::NullCommand",
+                     "--method",
+                     "execute"
+                  ],
+                  "environment" : {},
+                  "user" : null,
+                  "workingDirectory" : ""
+               },
+               "service" : "shell-command"
+            }
+         ]
+      },
+      "D" : {
+         "methods" : [
+            {
+               "name" : "shortcut",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "ptero",
+                     "wrapper",
+                     "command",
+                     "--command-class",
+                     "Genome::Ptero::TestCommand::NullCommand",
+                     "--method",
+                     "shortcut"
+                  ],
+                  "environment" : {},
+                  "user" : null,
+                  "workingDirectory" : ""
+               },
+               "service" : "shell-command"
+            },
+            {
+               "name" : "execute",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "ptero",
+                     "wrapper",
+                     "command",
+                     "--command-class",
+                     "Genome::Ptero::TestCommand::NullCommand",
+                     "--method",
+                     "execute"
+                  ],
+                  "environment" : {},
+                  "user" : null,
+                  "workingDirectory" : ""
+               },
+               "service" : "shell-command"
+            }
+         ]
+      }
+   }
+}

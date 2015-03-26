@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Scalar::Util qw();
 
 class Genome::FeatureList::Command::Update{
     is => 'Command::V2',
@@ -68,7 +69,11 @@ sub execute{
             next if $property eq 'feature_list';
             if ($self->$property){
                 my $new_value = $self->$property;
-                $self->status_message("setting $property to $new_value\n");
+                my $display_value = $new_value;
+                if (defined Scalar::Util::blessed($new_value) and $new_value->can('__display_name__')) {
+                    $display_value = $new_value->__display_name__;
+                }
+                $self->status_message('setting %s to %s', $property, $display_value);
                 $feature_list->$property($new_value);
             }
         }

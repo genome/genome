@@ -250,7 +250,10 @@ sub _run_htseq_count {
     } else {
         # a completed alignment result will need to have a sorted bam created
         $self->debug_message("No temp_scratch_directory found: name sort the BAM in temp space.");
-        my $unsorted_bam = $alignment_result->output_dir . '/all_sequences.bam';
+
+        my $temp_allocation = Genome::InstrumentData::AlignmentResult::Merged->_get_temp_allocation($alignment_result->id, $output_dir);
+        my ($unsorted_bam) = $alignment_result->revivified_alignment_bam_file_paths(disk_allocation => $temp_allocation);
+
         my $sorted_bam_noprefix = "$tmp/all_sequences.namesorted";
         $sorted_bam = $sorted_bam_noprefix . '.bam';
 
@@ -259,6 +262,8 @@ sub _run_htseq_count {
             input_files => [$unsorted_bam],
             output_files => [$sorted_bam],
         );
+
+        $temp_allocation->delete;
     }
 
     my @header = `$samtools_path view -H $sorted_bam`;

@@ -49,7 +49,7 @@ subtest "bedtools versions api v6" => sub {
     ok($bedtools_path, "got a path for bedtools version $bt_version from api v6.");
 };
 
-for my $ver ($pkg->available_api_versions) {
+for my $ver (Genome::InstrumentData::Composite::Workflow::Generator->available_api_versions) {
     subtest "check program versions api $ver" => sub {
         my $strategy = "$base_strategy api $ver";
         my ($wf, $inputs) = workflow_and_inputs_for_strategy($strategy);

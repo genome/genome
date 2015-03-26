@@ -20,6 +20,12 @@ class Genome::Config::AnalysisProject::Command::AddMenuItem {
             default_value => 0,
             doc => 'Reprocess any existing instrument data with the new config',
         },
+        tag => {
+            is => 'Genome::Config::Tag',
+            is_many => 1,
+            doc => 'Tags to associate with the menu items',
+            is_optional => 1,
+        }
     ],
 };
 
@@ -85,13 +91,22 @@ sub _add_config_items_to_project {
     my $menu_items = shift;
 
     for (@$menu_items) {
-        Genome::Config::Profile::Item->create(
+        my $item = Genome::Config::Profile::Item->create(
             analysis_menu_item => $_,
             analysis_project => $project,
             status => 'active',
         );
+        $self->_apply_tags($item);
     }
 
+    return 1;
+}
+
+sub _apply_tags {
+    my ($self, $profile_item) = @_;
+    for my $tag ($self->tag){
+        $profile_item->add_tag($tag);
+    }
     return 1;
 }
 

@@ -32,7 +32,7 @@ sub help_detail {
     return <<EOS
     The command is based on the output of CollectRnaSeqMetrics,
     for Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#CollectRnaSeqMetrics
+    http://broadinstitute.github.io/picard/command-line-overview.html#CollectRnaSeqMetrics
 EOS
 }
 

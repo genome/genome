@@ -292,8 +292,11 @@ sub _resolve_workflow_for_build {
      my @output_properties = qw/
                                   transcript_convergence_result
                                   differential_expression_result
-                                  summarize_result
                               /;
+    if ($self->summarize_differential_expression_name) {
+        push @output_properties, 'summarize_result';
+    };
+    
     my $workflow = Workflow::Model->create(
         name => $build->workflow_name,
         input_properties => ['build_id',],
@@ -332,7 +335,7 @@ sub _resolve_workflow_for_build {
     } else {
         die('Unsupported transcript_convergence_name: '. $self->transcript_convergence_name);
     }
-    
+
     $transcript_convergence_operation->operation_type->lsf_queue($lsf_queue);
     $transcript_convergence_operation->operation_type->lsf_project($lsf_project);
     $workflow->add_link(
@@ -341,7 +344,7 @@ sub _resolve_workflow_for_build {
         right_operation => $transcript_convergence_operation,
         right_property => 'build_id'
     );
-    
+
     # Differential Expression
     my $differential_expression_name = $self->differential_expression_name;
     my $differential_expression_operation;
@@ -355,7 +358,7 @@ sub _resolve_workflow_for_build {
      } else {
          die('Unsupported differential_expression_name: '. $self->differential_expression_name);
     }
-    
+
     $differential_expression_operation->operation_type->lsf_queue($lsf_queue);
     $differential_expression_operation->operation_type->lsf_project($lsf_project);
     $workflow->add_link(
@@ -364,37 +367,37 @@ sub _resolve_workflow_for_build {
         right_operation => $differential_expression_operation,
         right_property => 'build_id'
     );
-    
-    # Summarize Results
-    # TODO: cummerbund
-    my $summarize_name = $self->summarize_differential_expression_name;
-    my $summarize_operation;
-    if ($summarize_name eq 'cummerbund') {
-        $summarize_operation = $workflow->add_operation(
-            name => 'Summarize Differential Expression',
-            operation_type => Workflow::OperationType::Command->create(
-                command_class_name => 'Genome::Model::DifferentialExpression::Command::Cummerbund',
-            )
-        );
-    } else {
-         die('Unsupported summarize differential_expression_name: '. $summarize_name);
-     }
-    
-    $summarize_operation->operation_type->lsf_queue($lsf_queue);
-    $summarize_operation->operation_type->lsf_project($lsf_project);
-    $workflow->add_link(
-        left_operation => $differential_expression_operation,
-        left_property => 'build_id',
-        right_operation => $summarize_operation,
-        right_property => 'build_id'
-    );
 
-    $workflow->add_link(
-        left_operation => $summarize_operation,
-        left_property => 'result',
-        right_operation => $output_connector,
-        right_property => 'summarize_result'
-    );
+    # Summarize Results
+    my $summarize_name = $self->summarize_differential_expression_name;
+    if ($summarize_name) {
+        my $summarize_operation;
+        if ($summarize_name eq 'cummerbund') {
+            $summarize_operation = $workflow->add_operation(
+                name => 'Summarize Differential Expression',
+                operation_type => Workflow::OperationType::Command->create(
+                    command_class_name => 'Genome::Model::DifferentialExpression::Command::Cummerbund',
+                )
+            );
+        } else {
+            die('Unsupported summarize differential_expression_name: '. $summarize_name);
+        }
+        $summarize_operation->operation_type->lsf_queue($lsf_queue);
+        $summarize_operation->operation_type->lsf_project($lsf_project);
+        $workflow->add_link(
+            left_operation => $differential_expression_operation,
+            left_property => 'build_id',
+            right_operation => $summarize_operation,
+            right_property => 'build_id'
+        );
+        $workflow->add_link(
+            left_operation => $summarize_operation,
+            left_property => 'result',
+            right_operation => $output_connector,
+            right_property => 'summarize_result'
+        );
+    }
+    
     $workflow->add_link(
         left_operation => $transcript_convergence_operation,
         left_property => 'result',

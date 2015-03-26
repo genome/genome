@@ -14,7 +14,7 @@ sub lsf_queue {
 }
 
 sub bsub_rusage {
-    return "-R 'select[tmp>4000] rusage[tmp=4000]'";
+    return "-R 'select[tmp>4000 && mem>600] rusage[tmp=4000,mem=600]' -M 600000 ";
 }
 
 sub execute{

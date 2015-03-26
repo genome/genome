@@ -42,7 +42,7 @@ class Genome::Model::Tools::Picard::Downsample {
 sub help_detail {
     return <<EOS
     Tool to downsample a BAM or SAM file using Picard.  For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#DownsampleSam
+    http://broadinstitute.github.io/picard/command-line-overview.html#DownsampleSam
 EOS
 }
 

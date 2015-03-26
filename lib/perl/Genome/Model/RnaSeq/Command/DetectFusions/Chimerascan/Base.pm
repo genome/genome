@@ -18,7 +18,7 @@ sub execute {
     my $self = shift;
 
     my $dag = $self->build_workflow();
-    my $outputs = $dag->execute(%{$self->workflow_inputs});
+    my $outputs = $dag->execute(inputs => $self->workflow_inputs);
 
     $self->software_results([
         $outputs->{'index_software_result'},

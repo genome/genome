@@ -31,7 +31,7 @@ sub help_brief {
 sub help_detail {
     return <<EOS
     Tool to sort a BAM or SAM file using Picard.  For Picard documentation of this command see:
-    http://picard.sourceforge.net/command-line-overview.shtml#ReorderSam
+    http://broadinstitute.github.io/picard/command-line-overview.html#ReorderSam
 EOS
 }
 
