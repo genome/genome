@@ -32,8 +32,13 @@ sub help_detail {
 EOS
 }
 
-sub _jar_name { 'BamIndexStats.jar' }
-sub _java_class_name { 'net.sf.picard.sam.BamIndexStats' }
+sub _jar_name {
+    return 'BamIndexStats.jar';
+}
+
+sub _java_class {
+    return qw(picard sam BamIndexStats);
+}
 
 sub _redirects {
     my $self = shift;

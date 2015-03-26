@@ -40,8 +40,13 @@ Converts a BED file to an Picard Interval List.
 EOS
 }
 
-sub _jar_name { 'BedToIntervalList.jar' }
-sub _java_class_name { 'picard.util.BedToIntervalList' }
+sub _jar_name {
+    return 'BedToIntervalList.jar';
+}
+
+sub _java_class {
+    return qw(picard util BedToIntervalList);
+}
 
 sub _shellcmd_extra_params {
     my $self = shift;
