@@ -31,7 +31,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _ref_align_pp_id => {
               is => 'Number',
-              default => '2635769',
+              default => 'f5593bdfc0aa432b84e2bbdcc30c1c76',
         },
         ref_align_pp => {
               is => 'Genome::ProcessingProfile',
@@ -58,7 +58,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _rnaseq_pp_id => {
               is => 'Number',
-              default => '2762841',
+              default => '7381e45615374670877a4e16c97b4908',
         },
         rnaseq_pp => {
               is => 'Genome::ProcessingProfile',
@@ -94,7 +94,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _annotation_build_id => {
               is => 'Number',
-              default => '124434505',
+              default => 'd00a39c84382427fa0efdec3229e8f5f',
         },
         annotation_build => {
               is => 'Genome::Model::Build',
@@ -103,7 +103,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _dbsnp_build_id => {
               is => 'Number',
-              default => '127786607',
+              default => '670086a1837548b5bd8abe7f240cd67d',
         },
         dbsnp_build => {
               is => 'Genome::Model::Build',
@@ -112,7 +112,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
         },
         _previously_discovered_variations_id => {
               is => 'Number',
-              default => '127786607',
+              default => '670086a1837548b5bd8abe7f240cd67d',
         },
         previously_discovered_variations => {
               is => 'Genome::Model::Build',
