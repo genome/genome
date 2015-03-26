@@ -45,14 +45,15 @@ sub get_ptero_builder_task {
     require Ptero::Builder::Detail::Workflow::Task;
 
     my $self = shift;
+    my $log_dir = shift;
 
     $self->validate;
 
     my %params = (
         name => $self->name,
         methods => [
-            $self->_get_ptero_shortcut_method,
-            $self->_get_ptero_execute_method,
+            $self->_get_ptero_shortcut_method($log_dir),
+            $self->_get_ptero_execute_method($log_dir),
         ],
     );
     if (defined $self->parallel_by) {
@@ -65,6 +66,7 @@ sub _get_ptero_shortcut_method {
     require Ptero::Builder::ShellCommand;
 
     my $self = shift;
+    my $log_dir = shift;
     return Ptero::Builder::ShellCommand->new(
         name => 'shortcut',
         parameters => {
@@ -72,6 +74,7 @@ sub _get_ptero_shortcut_method {
                 'genome', 'ptero', 'wrapper',
                 '--command-class', $self->command,
                 '--method', 'shortcut',
+                '--log-directory', $log_dir,
             ],
             environment => \%ENV,
             user => Genome::Sys->username,
@@ -84,6 +87,7 @@ sub _get_ptero_execute_method {
     require Ptero::Builder::ShellCommand;
 
     my $self = shift;
+    my $log_dir = shift;
     # XXX This should use the LSF service, or be configuration based
     return Ptero::Builder::ShellCommand->new(
         name => 'execute',
@@ -92,6 +96,7 @@ sub _get_ptero_execute_method {
                 'genome', 'ptero', 'wrapper',
                 '--command-class', $self->command,
                 '--method', 'execute',
+                '--log-directory', $log_dir,
             ],
             environment => \%ENV,
             user => Genome::Sys->username,

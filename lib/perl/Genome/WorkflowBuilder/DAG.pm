@@ -126,7 +126,7 @@ sub get_ptero_builder {
     my $dag_method = Ptero::Builder::Workflow->new(name => $name || 'root');
 
     for my $operation (@{$self->operations}) {
-        $dag_method->_add_task($operation->get_ptero_builder_task);
+        $dag_method->_add_task($operation->get_ptero_builder_task($self->log_dir));
     }
 
     for my $link (@{$self->links}) {

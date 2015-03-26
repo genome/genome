@@ -4,6 +4,7 @@ use strict;
 use warnings FATAL => qw(all);
 use Genome;
 use Data::Dump qw();
+use IO::Handle;
 use Ptero::Proxy::Workflow::Execution;
 
 class Genome::Ptero::Wrapper {
@@ -18,6 +19,16 @@ class Genome::Ptero::Wrapper {
             valid_values => ['execute', 'shortcut'],
             doc => 'method to call on the Genome Command object',
         },
+        'log_directory' => {
+            is => 'Path',
+            doc => "Where the log files should be stored (Their names will " .
+                "be automatically generated.)",
+        },
+    ],
+    has_transient_optional => [
+        'execution' => {
+            is => 'Ptero::Proxy::Workflow::Execution',
+        }
     ],
 
     doc => 'Ptero execution wrapper for Genome Command objects',
@@ -27,18 +38,26 @@ class Genome::Ptero::Wrapper {
 sub execute {
     my $self = shift;
 
+    Genome::Sys->create_directory($self->log_directory);
     validate_environment();
 
-    my $execution = Ptero::Proxy::Workflow::Execution->new(
-        $ENV{PTERO_WORKFLOW_EXECUTION_URL});
+    $self->execution(Ptero::Proxy::Workflow::Execution->new(
+        $ENV{PTERO_WORKFLOW_EXECUTION_URL}));
 
-    $self->_setup_logging($execution->data);
-    $self->_log_execution_information($execution);
+    # this will get saved to the execution's stderr/stdout
+    $self->_log_execution_information;
 
-    my $command = $self->_instantiate_command($execution->inputs);
+    $self->_setup_logging;
+
+    # this will get logged to the log files
+    $self->_log_execution_information;
+
+    my $command = $self->_instantiate_command($self->execution->inputs);
 
     $self->_run_command($command);
-    $execution->set_outputs(
+
+    $self->_teardown_logging;
+    $self->execution->set_outputs(
         _get_command_outputs($command, $self->command_class));
 
     return 1;
@@ -52,16 +71,55 @@ sub validate_environment {
     }
 }
 
+sub _stdout_log_path {
+    my $self = shift;
+
+    my $base_name = $self->execution->name;
+    my $output_log = File::Spec->join($self->log_directory, "$base_name.out");
+}
+
+sub _stderr_log_path {
+    my $self = shift;
+
+    my $base_name = $self->execution->name;
+    my $output_log = File::Spec->join($self->log_directory, "$base_name.err");
+}
+
 sub _setup_logging {
-    my ($self, $execution_metadata) = @_;
-    # Replace stdout/stderr with files
+    my $self = shift;
+
+    $self->execution->update_data(
+        stdout_log => $self->_stdout_log_path,
+        stderr_log => $self->_stderr_log_path,
+    );
+
+    open(SAVED_STDOUT, ">&STDOUT") || die "Can't save STDOUT\n";
+    open(SAVED_STDERR, ">&STDERR") || die "Can't save STDERR\n";
+
+    # redirect stdout/stderr through the annotate-log filter
+    open OUTPUT, '|-',  'annotate-log cat > ' .
+        $self->_stdout_log_path or die $!;
+    open ERROR, '|-',  'annotate-log cat > ' .
+        $self->_stderr_log_path or die $!;
+
+    STDOUT->fdopen(\*OUTPUT, 'w') or die $!;
+    STDERR->fdopen(\*ERROR,  'w') or die $!;
+}
+
+sub _teardown_logging {
+    my $self = shift;
+
+    open(STDOUT, ">&SAVED_STDOUT") || die "Can't restore STDOUT\n";
+    open(STDERR, ">&SAVED_STDERR") || die "Can't restore STDERR\n";
 }
 
 sub _log_execution_information {
-    my ($self, $execution) = @_;
-    # - Dump entire execution response
-    # - Write a pastable command that sets the PTERO_WORKFLOW_EXECUTION_URL and
-    #   runs this wrapper (could be useful for debugging).
+    my $self = shift;
+
+    $self->status_message("COMMAND: PTERO_WORKFLOW_EXECUTION_URL=%s %s " .
+        "ptero wrapper --command-class=\"%s\" --method=\"%s\" --log-directory=\"%s\"",
+        $ENV{PTERO_WORKFLOW_EXECUTION_URL}, $0,
+        $self->command_class, $self->method, $self->log_directory);
 }
 
 sub _instantiate_command {
