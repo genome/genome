@@ -6,7 +6,7 @@
       <arg>/dev/stdin</arg>
     </args>
   </command>
-  <connect_input_file source="WorkflowBuilder/StreamGraph.t.d/in" target="p1" target_fd="stdin"/>
+  <connect_input_file source="TEST_DIR/in" target="p1" target_fd="stdin"/>
   <command name="p2">
     <args>
       <arg>tail</arg>
