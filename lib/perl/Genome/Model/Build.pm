@@ -2312,13 +2312,13 @@ sub special_compare_functions {
 
     my @functions;
     push @functions, qr(\.hq$);
-    push @functions, sub {my ($a, $b) = @_; !Genome::Model::Build::diff_hq($a, $b)};
+    push @functions, sub {!Genome::Model::Build::diff_hq(@_)};
     push @functions, qr((?<!\.vcf)\.gz$);
-    push @functions, sub {my ($a, $b) = @_; !Genome::Model::Build::diff_gz($a, $b)};
+    push @functions, sub {!Genome::Model::Build::diff_gz(@_)};
     push @functions, qr(\.vcf$);
-    push @functions, sub {my ($a, $b) = @_; !Genome::Model::Build::diff_vcf($a, $b)};
+    push @functions, sub {!Genome::Model::Build::diff_vcf(@_)};
     push @functions, qr(\.vcf\.gz$);
-    push @functions, sub {my ($a, $b) = @_; !Genome::Model::Build::diff_vcf_gz($a, $b)};
+    push @functions, sub {!Genome::Model::Build::diff_vcf_gz(@_)};
     return @functions;
 }
 
