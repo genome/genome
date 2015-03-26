@@ -670,9 +670,7 @@ sub build_requested {
     # Writing the if like this allows someone to do build_requested(undef)
     if (@_ > 1) {
         $self->_lock();
-        my ($calling_package, $calling_subroutine) = (caller(1))[0,3];
-        my $default_reason = 'no reason given';
-        $default_reason .= ' called by ' . $calling_package . '::' . $calling_subroutine if $calling_package;
+        my $default_reason = Carp::shortmess('no reason given');
         $self->add_note(
             header_text => $value ? 'build_requested' : 'build_unrequested',
             body_text => defined $reason ? $reason : $default_reason,
