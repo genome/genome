@@ -343,7 +343,8 @@ sub _collect_call_info {
     eval {
         use Devel::StackTrace;
         use JSON;
-        use IO::Socket;
+        use HTTP::Request;
+        use LWP::UserAgent;
 
         my $trace = Devel::StackTrace->new();
         my @frames;
@@ -351,23 +352,15 @@ sub _collect_call_info {
             push @frames, $frame->as_string;
         }
 
-        my $json = encode_json({
+        my $request = HTTP::Request->new(GET => 'http://linus47.gsc.wustl.edu:3000');
+        $request->content_type('application/json');
+        $request->content(encode_json({
             frames => [@frames],
             args => [@args],
-        });
+        }));
 
-        my $socket = IO::Socket::INET->new(
-            PeerAddr => 'linus47.gsc.wustl.edu',
-            PeerPort => '8000',
-            Proto => 'tcp',
-            Timeout => '10',
-        ) or die "Could not create socket";
-
-        print $socket $json;
-
-        $socket->flush();
-        sleep 5;
-        $socket->close();
+        my $ua = LWP::UserAgent->new();
+        $ua->request($request);
     };
     $class->warning_message($@) if $@;
 }
