@@ -168,6 +168,7 @@ sub _resolve_instrument_data_properties {
     }
 
     my @instrument_data_properties = $self->instrument_data_properties;
+    push @instrument_data_properties, 'description='.$self->description if defined $self->description;
     push @instrument_data_properties, 'downsample_ratio='.$self->downsample_ratio if defined $self->downsample_ratio;
     my $insdata_props_processor = $class->execute(
         instrument_data_properties => \@instrument_data_properties,

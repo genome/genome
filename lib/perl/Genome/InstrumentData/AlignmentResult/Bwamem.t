@@ -16,6 +16,7 @@ use Genome::Test::Factory::SoftwareResult::User;
 
 my $TEST_BWA_VERSION = '0.7.10';
 my $TEST_SAMTOOLS_VERSION = '0.1.19';
+my $TEST_PICARD_VERSION = '1.113';
 my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($TEST_SAMTOOLS_VERSION);
 
 my $bam_path = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam';
@@ -154,6 +155,7 @@ sub make_alignment_result {
         aligner_name => $aligner_name,
         aligner_version => $TEST_BWA_VERSION,
         samtools_version => $TEST_SAMTOOLS_VERSION,
+        picard_version => $TEST_PICARD_VERSION,
         aligner_params => $bwa_params,
         _user_data_for_nested_results => $result_users,
     );

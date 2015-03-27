@@ -28,15 +28,21 @@ my $b2 = Genome::Config::AnalysisProject::InstrumentDataBridge->create( analysis
 
 my $item = Genome::Config::AnalysisMenu::Item->create( name => 'test_item', file_path => '/tmp/idontexist', description => 'test');
 
+my $tag = Genome::Config::Tag->create( name => 'test tag for add-menu-item' );
+
 my $cmd = $class->create(
     analysis_project => $ap,
     analysis_menu_items => [$item],
     reprocess_existing => 1,
+    tag => [$tag],
 );
 
 $cmd->execute();
 
-ok(Genome::Config::Profile::Item->get(analysis_project => $ap, analysis_menu_item => $item), 'added item to the project');
+my $profile_item = Genome::Config::Profile::Item->get(analysis_project => $ap, analysis_menu_item => $item);
+ok($profile_item, 'added item to the project');
+
+is($profile_item->tags, $tag, 'tag associated with item');
 
 ok($b1->status eq 'new', 'first instrument data set to new');
 ok($b2->status eq 'new', 'second instrument data set to new');

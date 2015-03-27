@@ -56,7 +56,12 @@ Genome::Sys->write_file($xml, $graph->get_xml);
 if ($ENV{GENERATE_TEST_DATA}) {
     Genome::Sys->copy_file($xml, $expected_xml);
 }
-compare_ok($xml, $expected_xml, "xml produced correctly", filters => [qr(/tmp.*"/)]);
+compare_ok($xml, $expected_xml, "xml produced correctly",
+    filters => [qr(/tmp.*"/)],
+    replace => [
+        [qr(\Q$test_dir\E), q(TEST_DIR)],
+    ],
+);
 ok($graph->execute, "Processes executed successfully");
 compare_ok($out, $expected_out, "output of process2 is correct");
 

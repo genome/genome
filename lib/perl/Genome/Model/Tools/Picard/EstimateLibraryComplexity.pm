@@ -69,8 +69,8 @@ sub _jar_name {
     return 'EstimateLibraryComplexity.jar';
 }
 
-sub _java_class_name {
-    return 'net.sf.picard.sam.EstimateLibraryComplexity';
+sub _java_class {
+    return qw(picard sam EstimateLibraryComplexity);
 }
 
 sub _shellcmd_extra_params {
