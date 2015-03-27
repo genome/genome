@@ -802,18 +802,6 @@ Houses some generic file and directory methods
 
 =back
 
-=head1 Methods for Locking
-
-=head2 lock_resource
-
-Document me!
-
-=head2 unlock_resource
-
-Document me!
-
-=head1 See Also
-
 =head1 Disclaimer
 
 Copyright (C) 2005 - 2008 Washington University Genome Sequencing Center
