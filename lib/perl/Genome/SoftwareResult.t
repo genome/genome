@@ -228,11 +228,11 @@ sub _get_lock_hash {
 
 my $sr1 = Genome::Test_SR->create(p1=>'test', i1=>'test');
 # the lock_name will have _username_timestamp, so we don't want to keep that
-my $hash_without_optionals = _get_lock_hash($sr1->_lock_name);
+my $hash_without_optionals = _get_lock_hash($sr1->_lock_proxy->resource);
 $sr1->delete();
 
 my $sr2 = Genome::Test_SR->create(p1=>'test', p2=>undef, i1=>'test', i2=>undef);
-my $hash_with_optionals = _get_lock_hash($sr2->_lock_name);
+my $hash_with_optionals = _get_lock_hash($sr2->_lock_proxy->resource);
 
 is($hash_with_optionals, $hash_without_optionals,
     'Creates the same lock with or without optionals (that default to undef) specified');

@@ -168,7 +168,7 @@ sub _fetch_result {
 sub delete_transients {
     my ($self, $result) = @_;
     for my $transient_property ($result->__meta__->properties(is_transient => 1)) {
-        next if $transient_property->property_name eq '_lock_name';
+        next if $transient_property->property_name eq '_lock_proxy';
 
         my $value = undef;
         if (defined($transient_property->default_value)) {
