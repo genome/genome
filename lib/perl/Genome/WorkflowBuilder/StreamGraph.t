@@ -10,12 +10,16 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+
+use File::Spec qw();
 use Genome::Utility::Test qw(compare_ok);
 
 my $pkg = 'Genome::WorkflowBuilder::StreamGraph';
 
 use_ok($pkg);
-my $test_dir = __FILE__.".d";
+# Use canonpath to normalize path as something in StreamGraph seemed to do the
+# same.  For example, `./WorkflowBuilder` becomes just `WorkflowBuilder`.
+my $test_dir = File::Spec->canonpath(__FILE__.".d");
 my $expected_out = File::Spec->join($test_dir, "out");
 my $expected_xml = File::Spec->join($test_dir, "xml");
 
