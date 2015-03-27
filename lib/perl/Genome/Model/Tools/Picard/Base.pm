@@ -49,6 +49,7 @@ sub _picard_param_metas {
 sub _format_picard_arg {
     my ($type, $name, $value) = @_;
     $value = $value ? 'true' : 'false' if $type eq 'Boolean';
+    $value = "\"$value\"" if $type eq 'Text';
     return sprintf '%s=%s', $name, $value;
 }
 
