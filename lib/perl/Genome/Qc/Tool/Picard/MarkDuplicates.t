@@ -34,9 +34,9 @@ ok($tool->isa($pkg), 'Tool created successfully');
 # Value is different between workstations and blades
 use Genome::Model::Tools::Picard::MarkDuplicates;
 my $override = Sub::Override->new(
-    'Genome::Model::Tools::Picard::MarkDuplicates::get_max_filehandles_param',
+    'Genome::Model::Tools::Picard::MarkDuplicates::calculate_max_file_handles',
     sub {
-        return 'MAX_FILE_HANDLES=972';
+        return 972;
     }
 );
 
@@ -47,15 +47,15 @@ my @expected_cmd_line = (
     '-cp',
     '/usr/share/java/ant.jar:/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123/MarkDuplicates.jar',
     'picard.sam.markduplicates.MarkDuplicates',
-    'REMOVE_DUPLICATES=false',
     'ASSUME_SORTED=true',
-    sprintf('OUTPUT=%s', $temp_file),
-    sprintf('METRICS_FILE=%s', $metrics_file),
     sprintf('INPUT=%s', $temp_file),
     'MAX_RECORDS_IN_RAM=500000',
-    'MAX_FILE_HANDLES=972',
-    'VALIDATION_STRINGENCY=SILENT',
+    sprintf('METRICS_FILE=%s', $metrics_file),
+    sprintf('OUTPUT=%s', $temp_file),
+    'REMOVE_DUPLICATES=false',
     sprintf('TMP_DIR=%s', $temp_file),
+    'VALIDATION_STRINGENCY=SILENT',
+    'MAX_FILE_HANDLES=972',
 
 );
 is_deeply([$tool->cmd_line], [@expected_cmd_line], 'Command line list as expected');
