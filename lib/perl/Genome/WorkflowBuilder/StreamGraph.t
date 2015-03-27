@@ -9,13 +9,14 @@ use strict;
 use warnings;
 
 use above "Genome";
+use File::Spec;
 use Test::More;
 use Genome::Utility::Test qw(compare_ok);
 
 my $pkg = 'Genome::WorkflowBuilder::StreamGraph';
 
 use_ok($pkg);
-my $test_dir = __FILE__.".d";
+my $test_dir = File::Spec->canonpath(__FILE__.".d");
 my $expected_out = File::Spec->join($test_dir, "out");
 my $expected_xml = File::Spec->join($test_dir, "xml");
 
