@@ -172,18 +172,19 @@ sub regex_files_for_diff {
     );
 }
 
-sub regex_for_custom_diff {
+sub special_compare_functions {
     return (
-        ace         => '\.ace$',
-        ks_bz2      => '\.ks\.bz2$',
-        sorted_bz2  => '\.sorted\.bz2$',
-        fasta       => '\.fasta$',
-        sqlite      => 'sqlite-[^-]+-\d{4}_\d{2}_\d{2}.dat$',
-    ), $_[0]->SUPER::regex_for_custom_diff(@_);
+        qr(\.ace$) => sub {!Genome::Model::Build::GenePrediction::Bacterial::diff_ace(@_);},
+        qr(\.ks\.bz2$) => sub {!Genome::Model::Build::GenePrediction::Bacterial::ks_bz2(@_);},
+        qr(\.ks\.bz2$) => sub {!Genome::Model::Build::GenePrediction::Bacterial::ks_bz2(@_);},
+        qr(\.sorted\.bz2$) => sub {!Genome::Model::Build::GenePrediction::Bacterial::sorted_bz2(@_);},
+        qr(\.fasta$) => sub {!Genome::Model::Build::GenePrediction::Bacterial::diff_fasta(@_);},
+        qr(sqlite-[^-]+-\d{4}_\d{2}_\d{2}.dat$) => sub {!Genome::Model::Build::GenePrediction::Bacterial::diff_sqlite(@_);}
+    ), $_[0]->SUPER::special_compare_functions(@_);
 }
 
 sub diff_ace {
-    my ($self, $first_file, $second_file) = @_;
+    my ($first_file, $second_file) = @_;
 
     my ($first_tag) = $first_file =~ m{([^/_]+)\_[^/]+$};
     my ($second_tag) = $second_file =~ m{([^/_]+)\_[^/]+$};
@@ -194,7 +195,7 @@ sub diff_ace {
 }
 
 sub diff_ks_bz2 {
-    my ($self, $first_file, $second_file) = @_;
+    my ($first_file, $second_file) = @_;
 
     my $first_md5 = `bunzip2 -dc $first_file | cut -f 1-2,4- | md5sum`;
     my $second_md5 = `bunzip2 -dc $second_file | cut -f 1-2,4- | md5sum`;
@@ -203,7 +204,7 @@ sub diff_ks_bz2 {
 }
 
 sub diff_sorted_bz2 {
-    my ($self, $first_file, $second_file) = @_;
+    my ($first_file, $second_file) = @_;
 
     my $first_md5 = `bunzip2 -dc $first_file | cut -f 2- | grep -vP '\\d{2}-\\w{3}-\\d{4}' | md5sum`;
     my $second_md5 = `bunzip2 -dc $second_file | cut -f 2- | grep -vP '\\d{2}-\\w{3}-\\d{4}' | md5sum`;
@@ -212,7 +213,7 @@ sub diff_sorted_bz2 {
 }
 
 sub diff_fasta {
-    my ($self, $first_file, $second_file) = @_;
+    my ($first_file, $second_file) = @_;
 
     #The contig names contain the locus_tag, so cut them out
     my $first_md5 = qx(grep -v '>' $first_file | md5sum);
@@ -221,7 +222,7 @@ sub diff_fasta {
 }
 
 sub diff_sqlite {
-    my ($self, $first_file, $second_file) = @_;
+    my ($first_file, $second_file) = @_;
 
     my $first_md5 = qx(cut -f 2- $first_file | md5sum);
     my $second_md5 = qx(cut -f 2- $second_file | md5sum);

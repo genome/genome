@@ -13,7 +13,6 @@ use List::MoreUtils qw(uniq);
 use Genome::Disk::Group::Validate::GenomeDiskGroups;
 use Cwd qw(abs_path);
 use File::DirCompare;
-use File::Compare;
 
 class Genome::Process {
     is => [
@@ -716,7 +715,7 @@ sub _compare_output_directories {
                         %diffs = (%diffs, %additional_diffs);
                     }
                     elsif (-f $target && -f $other_target) {
-                        if (compare($target, $other_target)) {
+                        if (!$self->file_comparer->compare($target, $other_target)) {
                             $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
                                 'symlinks are not the same (diff -u %s %s) (diff -u %s %s)',
                                 $file, $other_file, $target, $other_target

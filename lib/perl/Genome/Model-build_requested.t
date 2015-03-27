@@ -22,6 +22,8 @@ my $sample = create_test_sample('test_sample');
 my $pp = create_test_pp('test_pp');
 my $model = create_test_model($sample, $pp, 'test_model');
 
+my $tx = UR::Context::Transaction->begin();
+
 $model->build_requested(0);
 is($model->build_requested, 0, 'unset build requested');
 {
@@ -43,6 +45,16 @@ is($model->build_requested, 1, 'set build requested with reason provided');
         body_text => $reason,
     );
     is($count, 1, 'found expected note');
+}
+
+$tx->rollback();
+{
+    my $count = count_notes(
+        notes => [$model->notes],
+        header_text => 'build_unrequested',
+        body_text => 'no reason given',
+    );
+    is($count, 0, 'no new notes created during rollback');
 }
 
 done_testing();
