@@ -70,8 +70,8 @@ sub _jar_name {
     return 'CollectWgsMetrics.jar';
 }
 
-sub _java_class_name {
-    return 'picard.analysis.CollectWgsMetrics';
+sub _java_class {
+    return qw(picard analysis CollectWgsMetrics);
 }
 
 sub _validate_params {
