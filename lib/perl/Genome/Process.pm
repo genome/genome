@@ -732,11 +732,14 @@ sub _compare_output_directories {
                         );
                     }
                 }
-                else {
+                elsif ($self->file_comparer->compare($target, $other_target)) {
                     $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
                         'files are not the same (diff -u %s %s)',
                         $file, $other_file
                     );
+                }
+                else {
+                    # Files are the same
                 }
             }
         },
