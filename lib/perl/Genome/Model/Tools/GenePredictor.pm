@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Sys::LockProxy qw();
 use File::Temp;
 use File::Basename;
 use Bio::SeqIO;
@@ -131,9 +132,10 @@ sub lock_files_for_predictions {
         $lock_name =~ s/\//_/g;
         my $resource_lock = "gene_prediction/eukaryotic/$lock_name";
 
-        my $lock = Genome::Sys->lock_resource(
-            resource_lock => $resource_lock,
+        my $lock = Genome::Sys::LockProxy->new(
+            resource => $resource_lock,
             scope => 'site',
+        )->lock(
             block_sleep => 60,
             max_try => 10,
         );
@@ -147,9 +149,7 @@ sub lock_files_for_predictions {
 sub release_prediction_locks {
     my ($self, @locks) = @_;
     for my $lock (@locks) {
-        Genome::Sys->unlock_resource(
-            resource_lock => $lock,
-        );
+        $lock->unlock();
     }
     return 1;
 }
