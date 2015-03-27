@@ -27,8 +27,7 @@ class Genome::VariantReporting::Suite::BamReadcount::Adaptor {
 
 sub shortcut {
     my $self = shift;
-    $self->resolve_plan_attributes;
-    return 1;
+    return $self->execute;
 }
 
 sub execute {
