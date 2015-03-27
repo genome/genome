@@ -37,7 +37,7 @@ my @expected_cmd_line =(
     '-XX:MaxPermSize=64m',
     '-cp',
     '/usr/share/java/ant.jar:/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123/CalculateHsMetrics.jar',
-    'net.sf.picard.analysis.directed.CalculateHsMetrics',
+    'picard.analysis.directed.CalculateHsMetrics',
     sprintf('BAIT_INTERVALS=%s', $temp_file),
     sprintf('INPUT=%s', $temp_file),
     'MAX_RECORDS_IN_RAM=500000',

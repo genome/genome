@@ -37,7 +37,7 @@ my @expected_cmd_line =(
     '-XX:MaxPermSize=64m',
     '-cp',
     '/usr/share/java/ant.jar:/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123/CollectGcBiasMetrics.jar',
-    'net.sf.picard.analysis.CollectGcBiasMetrics',
+    'picard.analysis.CollectGcBiasMetrics',
     'CHART_OUTPUT=GC_bias_chart.pdf',
     sprintf('INPUT=%s', $temp_file),
     'MAX_RECORDS_IN_RAM=500000',
