@@ -13,7 +13,6 @@ use List::MoreUtils qw(uniq);
 use Genome::Disk::Group::Validate::GenomeDiskGroups;
 use Cwd qw(abs_path);
 use File::DirCompare;
-use File::Compare;
 
 class Genome::Process {
     is => [
@@ -714,7 +713,7 @@ sub _compare_output_directories {
                     my %additional_diffs = $self->_compare_output_directories($target, $other_target, $other_process);
                     %diffs = (%diffs, %additional_diffs);
                 }
-                elsif (-f $target && -f $other_target && !compare($target, $other_target)) {
+                elsif (-f $target && -f $other_target && !$self->file_comparer->compare($target, $other_target)) {
                     #Files are in fact the same - do nothing
                 }
                 else {

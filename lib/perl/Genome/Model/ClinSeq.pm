@@ -1429,19 +1429,6 @@ sub files_ignored_by_build_diff {
     );
 };
 
-# Custom differs for ClinSeq builds
-sub addtional_regex_for_custom_diff {
-  return ( circos_conf => 'circos\.conf$', );
-}
-
-sub diff_circos_conf {
-  my ($self, $first_file, $second_file) = @_;
-  Carp::confess('Missing files to diff!') if @_ != 3;
-  my $first_md5  = qx(grep -vP '\\w+/\\w+/info/model_data/\\w+/build\\w+/\\w+/circos/data' $first_file | md5sum);
-  my $second_md5 = qx(grep -vP '\\w+/\\w+/info/model_data/\\w+/build\\w+/\\w+/circos/data' $second_file | md5sum);
-  return ($first_md5 eq $second_md5 ? 1 : 0);
-}
-
 # Below are some methods to retrieve files from a build
 # Ideally they would be tied to creation of these file paths, but they currently
 # throw an exception if the files don't exist. Consider another approach...
