@@ -25,6 +25,11 @@ class Genome::VariantReporting::Suite::BamReadcount::Adaptor {
     ],
 };
 
+sub shortcut {
+    my $self = shift;
+    return $self->execute;
+}
+
 sub execute {
     my $self = shift;
 
