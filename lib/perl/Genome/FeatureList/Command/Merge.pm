@@ -193,7 +193,7 @@ sub _find_convertible_reference {
     }
 
     #prefer a reference from our original query set
-    my @preferred_references = grep { my $target = $_; any { $_ eq $target } @_ } @convertible_references;
+    my @preferred_references = grep { my $target = $_; any { $_ eq $target } @references } @convertible_references;
     if (scalar(@preferred_references) eq 1) {
         return $preferred_references[0];
     }
