@@ -939,7 +939,6 @@ sub get_imported_instrument_data_or_upload_paths {  #TODO not finished, not curr
     my ($self, $orig_inst_data, @paths) = @_;
     my @inst_data;
     my @upload_paths;
-    my @locks;
     my $tmp_dir;
     my $subdir;
 
@@ -959,7 +958,6 @@ sub get_imported_instrument_data_or_upload_paths {  #TODO not finished, not curr
                 } else {
                     die $self->error_message("Failed to lock $sub_path.");
                 }
-                push @locks, $lock;
             }
             push @upload_paths, $path;
         }
@@ -980,8 +978,6 @@ sub get_imported_instrument_data_or_upload_paths {  #TODO not finished, not curr
 
 sub upload_instrument_data_and_unlock {
     my ($self, $orig_data_paths_to_fastq_files, $locks_ref) = @_;
-    #TODO: Actually use locks.
-    my @locks;# = @$locks_ref;
 
     my @properties_from_prior = qw/ run_name subset_name sequencing_platform median_insert_size sd_above_insert_size library_name sample_name /;
     my @instrument_data;
@@ -1052,13 +1048,6 @@ sub upload_instrument_data_and_unlock {
         }
         if ($instrument_data->__changes__) {
             die "Unsaved changes present on instrument data $instrument_data->{id} from $original_data_path!!!";
-        }
-        for my $lock (@locks) {
-            if ($lock) {
-                unless(Genome::Sys->unlock_resource(resource_lock => $lock)) {
-                    die $self->error_message("Failed to unlock " . $lock->resource_lock . ".");
-                }
-            }
         }
         push @instrument_data, $instrument_data;
     }
