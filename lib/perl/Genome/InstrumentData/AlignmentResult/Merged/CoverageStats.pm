@@ -59,7 +59,7 @@ class Genome::InstrumentData::AlignmentResult::Merged::CoverageStats {
     ],
     has => [
         alignment_result => {
-            is => 'Genome::InstrumentData::AlignedBamResult',
+            is => 'Genome::InstrumentData::AlignedBamResult::Merged',
             id_by => 'alignment_result_id',
             doc => 'the alignment data upon which to run coverage stats',
         },

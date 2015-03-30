@@ -11,7 +11,7 @@ class Genome::InstrumentData::Command::RefineReads::ClipOverlap {
     is => 'Command::V2',
     has => [
         version => { is => 'Text', },
-        bam_source => { is => 'Genome::InstrumentData::AlignedBamResult', },
+        bam_source => { is => 'Genome::InstrumentData::AlignedBamResult::Merged', },
         result_users => { is => 'HASH' },
     ],
     has_optional => [

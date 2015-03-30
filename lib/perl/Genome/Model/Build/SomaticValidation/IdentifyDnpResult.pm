@@ -22,7 +22,7 @@ class Genome::Model::Build::SomaticValidation::IdentifyDnpResult {
             id_by => 'dv2_result_id',
         },
         tumor_alignment_result => {
-            is => 'Genome::InstrumentData::AlignedBamResult',
+            is => 'Genome::InstrumentData::AlignedBamResult::Merged',
             id_by => 'tumor_aligment_result_id',
         },
     ],
