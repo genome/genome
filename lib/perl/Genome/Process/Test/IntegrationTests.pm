@@ -5,11 +5,11 @@ use warnings;
 use Genome;
 use YAML;
 
-sub process_yaml {
+sub get_process_test_configuration {
     my $process_name = shift;
 
-    my ($yaml) = YAML::LoadFile(__FILE__ . '.YAML');
-    return $yaml->{$process_name};
+    my ($configurations) = YAML::LoadFile(__FILE__ . '.YAML');
+    return $configurations->{$process_name};
 }
 
 1;
