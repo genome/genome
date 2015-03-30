@@ -68,7 +68,6 @@ sub execute {
             $sheet->write_row($row++,0, $self->build_stats($build));
         }
     }
-    
 
     return 1;
 }

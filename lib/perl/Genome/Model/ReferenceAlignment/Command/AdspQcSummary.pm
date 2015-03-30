@@ -65,7 +65,6 @@ sub execute {
             $sheet->write_row($row++,0, $self->build_stats($build));
         }
     }
-    
 
     return 1;
 }
@@ -111,7 +110,7 @@ sub build_stats {
         sprintf("%0.02f",$mismatches / $total_bases * 100),
         $flagstat->{total_reads},
         join(",", sort {$a <=> $b} @inserts)
-        ];
+    ];
 }
 
 
