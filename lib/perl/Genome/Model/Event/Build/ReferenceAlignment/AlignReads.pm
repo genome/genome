@@ -459,6 +459,7 @@ sub _process_and_link_alignments_to_build {
     my @errors;
 
     my $result_users = Genome::SoftwareResult::User->user_hash_for_build($build);
+    $result_users->{uses} = $build;
 
     my %segment_info;
     if (defined $self->instrument_data_segment_id) {
@@ -488,7 +489,7 @@ sub _process_and_link_alignments_to_build {
     }
 
     for my $alignment (@alignments) {
-        my $link = $alignment->add_user(user => $build, label => 'uses');
+        my $link = $alignment->user(user => $build, label => 'uses');
         if ($link) {
             $self->debug_message("Linked alignment " . $alignment->id . " to the build");
         }
