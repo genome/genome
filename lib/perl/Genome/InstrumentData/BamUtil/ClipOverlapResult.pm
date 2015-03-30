@@ -6,10 +6,10 @@ use warnings;
 use Genome;
 
 class Genome::InstrumentData::BamUtil::ClipOverlapResult {
-    is => 'Genome::InstrumentData::AlignedBamResult',
+    is => 'Genome::InstrumentData::AlignedBamResult::Merged',
     has_input => [
         bam_source => { # PROVIDES bam_path SHOULD be in aligned bam result, but would be incompatible with AR::Merged
-            is => 'Genome::InstrumentData::AlignedBamResult',
+            is => 'Genome::InstrumentData::AlignedBamResult::Merged',
         },
     ],
     has_param => [

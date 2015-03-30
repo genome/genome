@@ -92,26 +92,26 @@ class Genome::Model::Build::SomaticValidation {
         },
 
         merged_alignment_result => {
-            is => 'Genome::InstrumentData::AlignedBamResult',
+            is => 'Genome::InstrumentData::AlignedBamResult::Merged',
             via => 'result_users',
             to => 'software_result',
             where => [label => 'merged_alignment'],
         },
         control_merged_alignment_result => {
-            is => 'Genome::InstrumentData::AlignedBamResult',
+            is => 'Genome::InstrumentData::AlignedBamResult::Merged',
             via => 'result_users',
             to => 'software_result',
             where => [label => 'control_merged_alignment'],
         },
 
         coverage_stats_result => {
-            is => 'Genome::InstrumentData::AlignedBamResult',
+            is => 'Genome::InstrumentData::AlignmentResult::Merged::CoverageStats',
             via => 'result_users',
             to => 'software_result',
             where => [label => 'coverage_stats_tumor'],
         },
         control_coverage_stats_result  => {
-            is => 'Genome::InstrumentData::AlignedBamResult',
+            is => 'Genome::InstrumentData::AlignmentResult::Merged::CoverageStats',
             via => 'result_users',
             to => 'software_result',
             where => [label => 'coverage_stats_normal'],

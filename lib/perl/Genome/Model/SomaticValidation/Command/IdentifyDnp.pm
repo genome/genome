@@ -55,7 +55,7 @@ sub params_for_result {
     my $build = $self->build;
     my @result_users = Genome::SoftwareResult::User->get(user => $build);
     my @results = map($_->software_result, @result_users);
-    my @merged_results = grep { $_->isa('Genome::InstrumentData::AlignedBamResult') } @results;
+    my @merged_results = grep { $_->isa('Genome::InstrumentData::AlignedBamResult::Merged') } @results;
     my ($tumor_alignment_result) = grep( ($_->instrument_data)[0]->sample eq $build->tumor_sample, @merged_results);
 
     my $tumor_aligment_result_id = $tumor_alignment_result->id;
