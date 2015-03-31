@@ -388,7 +388,7 @@ sub special_compare_functions {
 
     my @functions = $self->SUPER::special_compare_functions;
     return (@functions,
-        qr(\.bam$) => sub {!genome::model::build::rnaseq::diff_bam_without_regard_to_header(@_)},
+        qr(\.bam$) => sub {!Genome::Model::Build::RnaSeq::diff_bam_without_regard_to_header(@_)},
         qr(\.fa$) => sub {!Genome::Model::Build::RnaSeq::diff_via_md5(@_)},
         qr(\.ebwt$) => sub {!Genome::Model::Build::RnaSeq::diff_via_md5(@_)},
     );
