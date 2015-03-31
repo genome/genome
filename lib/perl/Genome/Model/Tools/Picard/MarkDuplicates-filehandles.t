@@ -16,10 +16,10 @@ my $cmd = $class->create(
     metrics_file => '/tmp/baz',
     temp_directory => '/tmp',
     use_version => "1.36"
-    );
+);
 
 my $fh = $cmd->build_cmdline_string;
-like($fh, qr/MAX_FILE_HANDLES=[0-9]+$/, "Version > 1.34 sets MAX_FILE_HANDLES");
+like($fh, qr/MAX_FILE_HANDLES=[0-9]+$/, "Version >= 1.34 sets MAX_FILE_HANDLES");
 
 $cmd->use_version("1.31");
 my $txt .= $cmd->build_cmdline_string;
