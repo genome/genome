@@ -21,8 +21,8 @@ sub get_metrics {
     my $file = $self->output_file;
     my $gmt_class = $self->gmt_class;
     my %metrics = $self->metrics;
-    my %metric_results = %{$gmt_class->parse_file_into_metrics_hashref($file)};
-    return $self->_get_metrics(\%metrics, \%metric_results);
+    my $metric_results = $gmt_class->parse_file_into_metrics_hashref($file);
+    return $self->_get_metrics(\%metrics, $metric_results);
 }
 
 sub metrics {
