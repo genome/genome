@@ -514,7 +514,7 @@ sub parse_metrics_file_into_histogram_hashref {
     my $metric_key_index;
 
     unless ($metric_header_as_key) {
-        if ($class->can('_histogram_header_as_key')) {
+        if ($class->can('_metric_header_as_key')) {
             $metric_header_as_key = $class->_metric_header_as_key;
         } else {
             $class->debug_message('Assuming the first column is the key for the histogram hashref in file: '. $metrics_file);
