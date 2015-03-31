@@ -468,7 +468,7 @@ sub parse_file_into_metrics_hashref {
         if ($class->can('_metric_header_as_key')) {
             $metric_header_as_key = $class->_metric_header_as_key;
         } else {
-            $class->debug_message('Assuming the first column is the key for the metrics hashsref in file: '. $metrics_file);
+            $class->debug_message('Assuming the first column is the key for the metrics hashref in file: '. $metrics_file);
             $metric_key_index = 0;
         }
     }
@@ -517,7 +517,7 @@ sub parse_metrics_file_into_histogram_hashref {
         if ($class->can('_histogram_header_as_key')) {
             $metric_header_as_key = $class->_metric_header_as_key;
         } else {
-            $class->debug_message('Assuming the first column is the key for the histogram hashsref in file: '. $metrics_file);
+            $class->debug_message('Assuming the first column is the key for the histogram hashref in file: '. $metrics_file);
             $metric_key_index = 0;
         }
     }
