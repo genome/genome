@@ -35,7 +35,7 @@ class Genome::Model::Tools::Picard::MarkDuplicates {
         },
         remove_duplicates => {
             is => 'Boolean',
-            doc => 'Merge the seqeunce dictionaries.',
+            doc => 'If true do not write duplicates to the output file instead of writing them with appropriate flags set.',
             default_value => $DEFAULT_REMOVE_DUPLICATES,
             is_optional => 1,
             picard_param_name => 'REMOVE_DUPLICATES',
