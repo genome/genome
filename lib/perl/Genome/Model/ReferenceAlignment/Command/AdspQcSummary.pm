@@ -65,7 +65,6 @@ sub execute {
             $sheet->write_row($row++,0, $self->build_stats($build));
         }
     }
-    
 
     return 1;
 }
@@ -78,7 +77,7 @@ sub build_stats {
     my $flagstat_path = $result->bam_flagstat_path;
     my $flagstat = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($flagstat_path);
     my @instrument_data = $build->instrument_data;
-    my @per_lane_alignments = $build->alignment_results;
+    my @per_lane_alignments = $build->get_alignments;
     my ($total_bases, $total_mapped_bases, $total_unique_mapped_bases) = (0,0,0);
     my $mismatches = 0;
     my @inserts;
@@ -111,7 +110,7 @@ sub build_stats {
         sprintf("%0.02f",$mismatches / $total_bases * 100),
         $flagstat->{total_reads},
         join(",", sort {$a <=> $b} @inserts)
-        ];
+    ];
 }
 
 
