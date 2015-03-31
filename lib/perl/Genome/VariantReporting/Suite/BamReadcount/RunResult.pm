@@ -31,7 +31,7 @@ sub output_filename {
 
 sub aligned_bam_result {
     my $self = shift;
-    return Genome::InstrumentData::AlignedBamResult->get($self->aligned_bam_result_id);
+    return Genome::InstrumentData::AlignedBamResult::Merged->get($self->aligned_bam_result_id);
 }
 
 sub _run {

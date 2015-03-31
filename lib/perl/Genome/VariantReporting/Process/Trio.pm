@@ -6,7 +6,7 @@ use Genome;
 use JSON qw(from_json);
 
 class Genome::VariantReporting::Process::Trio {
-    is => 'Genome::Process',
+    is => 'Genome::Process::WithVcf',
     has_input => [
         builds => {
             is => 'Genome::Model::Build::SomaticValidation',
@@ -135,6 +135,20 @@ sub get_cle_input_results {
         push @results, $build->control_merged_alignment_result;
     }
     return @results;
+}
+
+sub special_compare_functions {
+    my $self = shift;
+    my @functions = $self->SUPER::special_compare_functions(@_);
+    push @functions, qr(\.xml$) => sub {my ($a, $b) = @_; Genome::VariantReporting::Process::Trio::compare_igv_xml($a, $b)};
+    return @functions;
+}
+
+sub compare_igv_xml {
+    my ($first_file, $second_file) = @_;
+    my $first_md5 = qx(grep -vP 'https' $first_file | md5sum);
+    my $second_md5 = qx(grep -vP 'https' $second_file | md5sum);
+    return ($first_md5 eq $second_md5 ? 0 : 1);
 }
 
 1;

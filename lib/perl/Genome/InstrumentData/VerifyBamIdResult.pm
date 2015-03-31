@@ -15,7 +15,7 @@ class Genome::InstrumentData::VerifyBamIdResult {
     is => ['Genome::SoftwareResult::Stageable', 'Genome::SoftwareResult::WithNestedResults'],
     has_input => [
         aligned_bam_result => {
-            is => 'Genome::InstrumentData::AlignedBamResult',
+            is => 'Genome::InstrumentData::AlignedBamResult::Merged',
         },
         on_target_list => {
             is => "Genome::FeatureList",

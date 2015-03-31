@@ -383,19 +383,19 @@ sub reference_being_replaced_for_input {
 
 # DIFFING RELATED FUNCTIONS
 
-sub regex_for_custom_diff {
+sub special_compare_functions {
     my $self = shift;
 
-    my @regexes_from_base_class = $self->SUPER::regex_for_custom_diff;
-    return (@regexes_from_base_class,
-        'bam_without_regard_to_header' => '\.bam$',
-        'via_md5' => '\.fa$',
-        'via_md5' => '\.ebwt$',
+    my @functions = $self->SUPER::special_compare_functions;
+    return (@functions,
+        qr(\.bam$) => sub {!genome::model::build::rnaseq::diff_bam_without_regard_to_header(@_)},
+        qr(\.fa$) => sub {!Genome::Model::Build::RnaSeq::diff_via_md5(@_)},
+        qr(\.ebwt$) => sub {!Genome::Model::Build::RnaSeq::diff_via_md5(@_)},
     );
 }
 
 sub diff_via_md5 {
-    my ($self, $first_file, $second_file) = @_;
+    my ($first_file, $second_file) = @_;
 
     my $first_md5  = `md5sum $first_file`;
     my $second_md5 = `md5sum $second_file`;
@@ -404,7 +404,7 @@ sub diff_via_md5 {
 }
 
 sub diff_bam_without_regard_to_header {
-    my ($self, $first_file, $second_file) = @_;
+    my ($first_file, $second_file) = @_;
 
     my $first_md5  = `samtools view $first_file | md5sum`;
     my $second_md5 = `samtools view $second_file | md5sum`;

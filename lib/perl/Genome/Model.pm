@@ -147,10 +147,14 @@ class Genome::Model {
             # this is similar to auto_build_alignments, though that flag works on 
             # new instrument data instead of input models
         },
-        build_requested => {
-            # TODO: this has limited tracking as to who/why the build was requested
-            # Is it better as a Note than a column since it is TGI specific?
+        _build_requested => {
             is => 'Boolean',
+            column_name => 'build_requested',
+            doc => 'accesses/modifies the "build_requested" value without locking',
+        },
+        build_requested => {
+            via => '__self__',
+            to => '_build_requested',
             doc => 'when set to true the system will queue the model for building ASAP',
         },
         _last_complete_build_id => {
@@ -666,9 +670,7 @@ sub build_requested {
     # Writing the if like this allows someone to do build_requested(undef)
     if (@_ > 1) {
         $self->_lock();
-        my ($calling_package, $calling_subroutine) = (caller(1))[0,3];
-        my $default_reason = 'no reason given';
-        $default_reason .= ' called by ' . $calling_package . '::' . $calling_subroutine if $calling_package;
+        my $default_reason = Carp::shortmess('no reason given');
         $self->add_note(
             header_text => $value ? 'build_requested' : 'build_unrequested',
             body_text => defined $reason ? $reason : $default_reason,
@@ -693,9 +695,18 @@ sub _lock {
         die("Unable to acquire the lock to request $model_id. Is something already running or did it exit uncleanly?")
             unless $lock;
 
-        my $commit_observer;
+        my ($commit_observer, $rollback_observer);
         $commit_observer = UR::Context->process->add_observer(
                                aspect => 'commit',
+                               once => 1,
+                               callback => sub {
+                                   Genome::Sys->unlock_resource(resource_lock => $lock);
+                                   $rollback_observer->delete;
+                               }
+                           );
+        $rollback_observer = UR::Context->current->add_observer(
+                               aspect => 'rollback',
+                               once => 1,
                                callback => sub {
                                    Genome::Sys->unlock_resource(resource_lock => $lock);
                                    $commit_observer->delete;

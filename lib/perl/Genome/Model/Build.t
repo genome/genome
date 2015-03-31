@@ -33,7 +33,6 @@ class Genome::Model::Test {
 };
 sub Genome::Model::Test::_execute_build { return 1 };
 sub Genome::Model::Test::files_ignored_by_build_diff { return 'meh'; }
-sub Genome::Model::Test::addtional_regex_for_custom_diff { return ( 'blah' => '^blah$' ); }
 
 class Genome::Model::Build::Test {
     is => 'Genome::Model::Build',
@@ -168,15 +167,6 @@ ok(!$build->success, 'Failed to success an abandoned build');
 
 # DIFF
 my @files_ignored_by_build_diff = $build->files_ignored_by_diff;
-my %regex_for_custom_diff = Genome::Model::Build::Test->regex_for_custom_diff;
-my %expected_regex_for_custom_diff = (
-    hq     => '\.hq$',
-    gz     => '(?<!\.vcf)\.gz$',
-    vcf    => '\.vcf$',
-    vcf_gz => '\.vcf\.gz$',
-    blah => '^blah$',
-);
-is_deeply(\%regex_for_custom_diff, \%expected_regex_for_custom_diff, 'regex_for_custom_diff plus additional');
 
 is_deeply(\@files_ignored_by_build_diff, ['meh'], 'files_ignored_by_diff');
 my $build2 = Genome::Model::Build::Test->create(
@@ -253,11 +243,11 @@ sub test_diff_vcf {
 
     my $similar_file = join('/', $input_dir, 'indels_similar.vcf');
     ok(-s $similar_file, 'similar_file has size') || return;
-    is(Genome::Model::Build->diff_vcf($control_file, $similar_file), 1, 'similar_file matches control_file');
+    is(Genome::Model::Build::diff_vcf($control_file, $similar_file), 1, 'similar_file matches control_file');
 
     my $different_file = join('/', $input_dir, 'indels_modified.vcf');
     ok(-s $different_file, 'different_file has size') || return;
-    is(Genome::Model::Build->diff_vcf($control_file, $different_file), 0, 'different_file does not match control_file');
+    ok(!Genome::Model::Build::diff_vcf($control_file, $different_file), 'different_file does not match control_file');
 }
 
 sub _test_expected_report_params {

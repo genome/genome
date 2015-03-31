@@ -15,7 +15,7 @@ use Genome;
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
 
 class Genome::InstrumentData::AlignmentResult::Merged {
-    is => ['Genome::InstrumentData::AlignedBamResult', 'Genome::SoftwareResult::WithNestedResults'],
+    is => ['Genome::InstrumentData::AlignedBamResult::Merged', 'Genome::SoftwareResult::WithNestedResults'],
     has => [
         instrument_data => {
             is => 'Genome::InstrumentData',

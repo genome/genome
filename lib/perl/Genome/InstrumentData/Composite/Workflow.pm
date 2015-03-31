@@ -41,18 +41,6 @@ class Genome::InstrumentData::Composite::Workflow {
             is => 'Text',
             doc => 'Where to write the workflow logs',
         },
-        refiners => {
-            is => 'ArrayRef',
-            doc => 'the refiner strategies used in the workflow',
-        },
-        first_refiner => {
-            is => 'Text',
-            doc => 'the first refiner strategy used in the workflow',
-        },
-        last_refiner => {
-            is => 'Text',
-            doc => 'the last refiner strategy used in the workflow',
-        },
     ],
 };
 

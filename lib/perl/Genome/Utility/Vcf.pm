@@ -12,6 +12,7 @@ our @EXPORT_OK = qw(open_vcf_file
                     get_vcf_header_arrayref
                     diff_vcf_file_vs_file
                     diff_vcf_text_vs_text
+                    compare_vcf
                     convert_string_to_hash
                     convert_hash_to_string
                     parse_vcf_line
@@ -145,6 +146,13 @@ sub diff_vcf_file_vs_file {
     my $lines2 = [<$fh2>];
 
     return diff_vcf_text_vs_text($lines1, $lines2, %options);
+}
+
+sub compare_vcf {
+    my ($first_file, $second_file) = @_;
+    my $first_md5  = qx(grep -vP '^##fileDate' $first_file | md5sum);
+    my $second_md5 = qx(grep -vP '^##fileDate' $second_file | md5sum);
+    return ($first_md5 eq $second_md5 ? 0 : 1);
 }
 
 sub _strip_ignored_patterns {
