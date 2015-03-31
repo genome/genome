@@ -42,7 +42,13 @@ sub _get_metrics {
     while (my ($metric, $metric_details) = each %{$metrics}) {
         my $metric_key = $metric_details->{metric_key};
         unless (defined($metric_key)) {
-            ($metric_key) = keys %{$metric_results};
+            my @metric_keys = keys %{$metric_results};
+            if (scalar(@metric_keys > 1)) {
+                die $self->error_message("More than one metrics key found in the metrics results.");
+            }
+            else {
+                $metric_key = $metric_keys[0];
+            }
         }
         my $picard_metric = $metric_details->{picard_metric};
         $desired_metric_results{$metric} = $metric_results->{$metric_key}{$picard_metric};
