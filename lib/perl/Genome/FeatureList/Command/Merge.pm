@@ -27,6 +27,12 @@ class Genome::FeatureList::Command::Merge {
             is_optional => 1,
         },
     ],
+    has_optional_output => [
+        new_feature_list => {
+            is => 'Genome::FeatureList',
+            doc => 'the newly imported feature list',
+        },
+    ],
     doc => 'command to combine several feature-lists into one',
 };
 
@@ -88,6 +94,7 @@ sub execute {
         die $self->error_message('Failed to create FeatureList');
     }
     my $merged_list = $cmd->new_feature_list;
+    $self->new_feature_list($merged_list);
 
     return 1;
 }

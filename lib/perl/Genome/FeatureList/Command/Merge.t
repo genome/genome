@@ -9,7 +9,7 @@ BEGIN {
 
 use above "Genome";
 
-use Test::More tests => 52;
+use Test::More tests => 58;
 
 use_ok('Genome::FeatureList::Command::Merge');
 
@@ -56,6 +56,7 @@ for my $test (@should_pass) {
 
     my $new_feature_list = Genome::FeatureList->get(name => $name);
     ok($new_feature_list, 'created new feature list');
+    is($new_feature_list, $merge_cmd->new_feature_list, 'new feature list is available from accessor');
     is($new_feature_list->format, 'multi-tracked', 'format set properly on merged list');
     is($new_feature_list->reference, $test_refseq, 'reference set properly on merged list');
 
@@ -92,4 +93,5 @@ for my $test (@should_fail) {
     like($error, $test->[2], 'crashed with expected error');
     my $new_feature_list = Genome::FeatureList->get(name => $name);
     ok(!$new_feature_list, 'no new feature-list created');
+    ok(!$merge_cmd->new_feature_list, 'no feature-list available from accessor');
 }
