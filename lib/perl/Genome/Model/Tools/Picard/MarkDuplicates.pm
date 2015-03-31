@@ -28,14 +28,14 @@ class Genome::Model::Tools::Picard::MarkDuplicates {
         },
         assume_sorted => {
             is  => 'Boolean',
-            doc => 'Assume the input data is sorted.  default_value='. $DEFAULT_ASSUME_SORTED,
+            doc => 'Assume the input data is sorted.',
             default_value => $DEFAULT_ASSUME_SORTED,
             is_optional => 1,
             picard_param_name => 'ASSUME_SORTED',
         },
         remove_duplicates => {
             is => 'Boolean',
-            doc => 'Merge the seqeunce dictionaries. default_value='. $DEFAULT_REMOVE_DUPLICATES,
+            doc => 'Merge the seqeunce dictionaries.',
             default_value => $DEFAULT_REMOVE_DUPLICATES,
             is_optional => 1,
             picard_param_name => 'REMOVE_DUPLICATES',
