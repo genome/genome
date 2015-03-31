@@ -186,21 +186,6 @@ sub hard_unused_kb {
     return $self->hard_limit_kb - $self->used_kb;
 }
 
-sub get_lock {
-    my ($class, $mount_path, $tries) = @_;
-    $tries ||= 120;
-    my $modified_mount = $mount_path;
-    $modified_mount =~ s/\//_/g;
-    my $volume_lock = Genome::Sys->lock_resource(
-        resource_lock => 'allocation/volume' . $modified_mount,
-        scope => 'site',
-        max_try => $tries,
-        block_sleep => 1,
-        wait_announce_interval => 10,
-    );
-    return $volume_lock;
-}
-
 our @dummy_volumes;
 sub create_dummy_volume {
     my ($class, %params) = @_;
