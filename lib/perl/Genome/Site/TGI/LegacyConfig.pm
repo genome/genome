@@ -69,19 +69,6 @@ sub root_directory {
     $ENV{GENOME_MODEL_ROOT} || '/gscmnt/gc4096/info/symlinks';
 }
 
-sub should_use_alignment_pd {
-    my $self = shift;
-    my $model = shift;
-
-    if ($model) {
-        return ($model->run_as =~ /^apipe/);
-    } else {
-        my $username = Genome::Sys->username;
-        return ($username =~ /^apipe/);
-    }
-}
-
-
 1;
 
 =pod

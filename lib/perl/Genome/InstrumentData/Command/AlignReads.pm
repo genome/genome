@@ -129,9 +129,6 @@ sub _fallback_lsf_resource {
     my $user = getpwuid($<);
     my $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
 
-    # TODO: in-house TGI concepts like alignment_pd shouldn't be methods on the generic config module :( -ssmith
-    $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD} if (Genome::Config->can('should_use_alignment_pd') and Genome::Config->should_use_alignment_pd);
-
     #my $host_groups;
     #my $command = qq(bqueues -l $queue | grep ^HOSTS:);
     #$host_groups = qx($command);
