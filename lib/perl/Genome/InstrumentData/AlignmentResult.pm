@@ -1935,29 +1935,37 @@ sub lock_bam_file_access {
             #with that aligner.
         }
 
-        my $lock_var = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$self->id);
-        my $lock = Genome::Sys->lock_resource(
-            resource_lock => $lock_var,
-            scope         => 'site',
-            max_try       => 288, # Try for 48 hours every 10 minutes
-            block_sleep   => 600,
-        );
-        die $self->error_message("Unable to acquire the lock for per lane alignment result id (%s) !", $self->id) unless $lock;
+        #This locking is moved from merged AR to per lane AR, during
+        #the transition two lock names need be handled properly. This
+        #temporary code change need to be reverted after code is promoted
+        my @lock_vars = map{File::Spec->join('genome', $_, 'lock-per-lane-alignment-'.$self->id)}('Genome::InstrumentData::AlignmentResult::Merged',__PACKAGE__);
+        for my $lock_var (@lock_vars) {
+            my $lock = Genome::Sys->lock_resource(
+                resource_lock => $lock_var,
+                scope         => 'site',
+                max_try       => 288, # Try for 48 hours every 10 minutes
+                block_sleep   => 600,
+            );
+            die $self->error_message("Unable to acquire the lock $lock_var for per lane alignment result id (%s) !", $self->id) unless $lock;
+        }
 
         # If the build before us successfully created a merged alignment result, we no longer need a lock
         # If it failed, we will add an observer just as the first build did.
-        if ($self->get_merged_alignment_results) {
-            Genome::Sys->unlock_resource(resource_lock => $lock);
-        } else {
-            # The problem here is if we commit BEFORE merge is done, we unlock too early.
-            # However, if we unlock any other way we may fail to unlock more often and leave old locks.
-            UR::Context->process->add_observer(
-                aspect   => 'commit',
-                once => 1,
-                callback => sub {
-                    Genome::Sys->unlock_resource(resource_lock => $lock);
-                }
-            );
+        for my $lock (@lock_vars) {
+            if ($self->get_merged_alignment_results) {
+                Genome::Sys->unlock_resource(resource_lock => $lock);
+            } 
+            else {
+                # The problem here is if we commit BEFORE merge is done, we unlock too early.
+                # However, if we unlock any other way we may fail to unlock more often and leave old locks.
+                UR::Context->process->add_observer(
+                    aspect   => 'commit',
+                    once     => 1,
+                    callback => sub {
+                        Genome::Sys->unlock_resource(resource_lock => $lock);
+                    }
+                );
+            }
         }
     }
 }
