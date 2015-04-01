@@ -1650,7 +1650,6 @@ sub alignment_bam_file_paths {
 # The calling process is responsible for cleaning up the allocation after we are done with it.
 sub revivified_alignment_bam_file_paths {
     my $self = shift;
-    my %p = Params::Validate::validate(@_, {disk_allocation => { isa => 'Genome::Disk::Allocation'}});
 
     # If we have a merged alignment result, the per-lane bam can be regenerated and we will do so now
     # This is less efficient than using the in-place per-lane bam. However, it aids us in terms of
@@ -1661,8 +1660,14 @@ sub revivified_alignment_bam_file_paths {
         return @bams;
     }
 
-    my $revivified_bam = File::Spec->join($p{disk_allocation}->absolute_path, 'all_sequences.bam');
-    my $merged_bam    = $self->get_merged_bam_to_revivify_per_lane_bam;
+    my $temp_allocation = $self->_get_temp_allocation($self->output_dir);
+    UR::Context->process->add_observer(
+        aspect => 'commit',
+        callback => sub { $temp_allocation->delete; },
+    );
+
+    my $revivified_bam = File::Spec->join($temp_allocation->absolute_path, 'all_sequences.bam');
+    my $merged_bam = $self->get_merged_bam_to_revivify_per_lane_bam;
 
     unless ($merged_bam and -s $merged_bam) {
         die $self->error_message('Failed to get valid merged bam to recreate per lane bam '.$self->id);
@@ -1692,6 +1697,22 @@ sub revivified_alignment_bam_file_paths {
     }
 }
 
+sub _get_temp_allocation {
+    my ($self, $output_dir) = @_;
+    return Genome::Disk::Allocation->create(
+        disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
+        allocation_path     => 'merged/recreated_per_lane_bam/'.$self->id.'_'._get_uuid_string(),
+        kilobytes_requested => $self->bam_size || 100_000_000, # This should always be set, but just in case we reserve a lot
+        owner_class_name    => 'Genome::Sys::User',
+        owner_id            => Genome::Sys->username,
+    );
+}
+
+sub _get_uuid_string {
+    my $ug = Data::UUID->new();
+    my $uuid = $ug->create();
+    return $ug->to_string($uuid);
+}
 
 sub bam_header_path {
     return File::Spec->join(shift->output_dir, 'all_sequences.bam.header');
