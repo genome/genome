@@ -468,7 +468,7 @@ sub parse_file_into_metrics_hashref {
         if ($class->can('_metric_header_as_key')) {
             $metric_header_as_key = $class->_metric_header_as_key;
         } else {
-            $class->debug_message('Assuming the first column is the key for the metrics hashsref in file: '. $metrics_file);
+            $class->debug_message('Assuming the first column is the key for the metrics hashref in file: '. $metrics_file);
             $metric_key_index = 0;
         }
     }
@@ -506,61 +506,6 @@ sub parse_file_into_metrics_hashref {
     }
     return \%data;
 }
-
-sub parse_metrics_file_into_histogram_hashref {
-    my ($class,$metrics_file,$metric_header_as_key) = @_;
-
-    my $as_fh = Genome::Sys->open_file_for_reading($metrics_file);
-    my $metric_key_index;
-
-    unless ($metric_header_as_key) {
-        if ($class->can('_histogram_header_as_key')) {
-            $metric_header_as_key = $class->_metric_header_as_key;
-        } else {
-            $class->debug_message('Assuming the first column is the key for the histogram hashsref in file: '. $metrics_file);
-            $metric_key_index = 0;
-        }
-    }
-
-    my @headers;
-    my %data;
-    while (my $line = $as_fh->getline) {
-        chomp($line);
-        if ($line =~ /^## HISTOGRAM/) {
-            my $next_line = $as_fh->getline;
-            chomp($next_line);
-            @headers = split("\t",$next_line);
-            for (my $i = 0; $i < scalar(@headers); $i++) {
-                unless (defined($metric_key_index)) {
-                    if ($headers[$i] eq $metric_header_as_key) {
-                        $metric_key_index = $i;
-                    }
-                }
-            }
-            next;
-        }
-        if (@headers) {
-            if ($line =~ /^\s*$/) {
-                last;
-            } else {
-                my $category;
-                my @values = split("\t",$line);
-                unless (scalar(@values) == scalar(@headers)) {
-                    $DB::single=1;
-                    next;
-                }
-                my $metric_key = $headers[$metric_key_index] .'-'. $values[$metric_key_index];
-                for (my $i = 0; $i < scalar(@values); $i++) {
-                    my $header = $headers[$i];
-                    my $value = $values[$i];
-                    $data{$metric_key}{$header} = $value;
-                }
-            }
-        }
-    }
-    return \%data;
-}
-
 
 1;
 
