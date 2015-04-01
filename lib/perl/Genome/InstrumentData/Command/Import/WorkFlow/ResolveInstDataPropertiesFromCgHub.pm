@@ -60,7 +60,7 @@ sub _resolve_metadata_file {
     $metadata_file = File::Spec->join($tempdir, $metadata_file_basename);
 
     my $query = Genome::Model::Tools::CgHub::Query->execute(
-        uuid => $uuid,
+        query => 'analysis_id='.$uuid,
         xml_file => $metadata_file,
     );
     if ( not $query->result ) {

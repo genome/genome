@@ -10,9 +10,9 @@ use File::Temp;
 class Genome::Model::Tools::CgHub::Query {
     is => "Genome::Model::Tools::CgHub::Base",
     has_input => {
-        uuid => {
+        query => {
             is => "Text",
-            is_output => 1,
+            doc => 'The query to send to CG Hub.'
         },
     },
     has_optional_output => {
@@ -30,7 +30,7 @@ class Genome::Model::Tools::CgHub::Query {
 sub _build_command {
     my $self = shift;
 
-    my @cmd_parts = ( "cgquery", "'analysis_id=".$self->uuid."'" );
+    my @cmd_parts = ( "cgquery", "'".$self->query."'" );
     if ( $self->xml_file ) {
         push @cmd_parts, "-o", $self->xml_file;
     }
@@ -57,7 +57,7 @@ sub _verify_success {
 
     my ($number_of_hits) = $number_of_hits_line =~ m/$number_of_hits_regexp/;
     if ( not $number_of_hits or $number_of_hits == 0 ) {
-        $self->error_message('No matching objects found for uuid! '.$self->uuid);
+        $self->error_message('No matching objects found for query! '.$self->query);
         return;
     }
 

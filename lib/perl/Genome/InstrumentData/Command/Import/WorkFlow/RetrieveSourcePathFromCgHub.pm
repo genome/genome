@@ -115,7 +115,7 @@ sub _retrieve_metadata_path {
     $self->debug_message("Metadata file: $metadata_file");
 
     my $query = Genome::Model::Tools::CgHub::Query->execute(
-        uuid => $uuid,
+        query => 'analysis_id='.$uuid,
         xml_file => $metadata_file,
     );
     if ( not $query->result ) {

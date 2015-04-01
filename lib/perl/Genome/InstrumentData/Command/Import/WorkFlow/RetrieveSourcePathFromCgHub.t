@@ -16,8 +16,9 @@ my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Comma
 my $working_directory = File::Temp::tempdir(CLEANUP => 1);
 
 my $uuid = '387c3f70-46e9-4669-80e3-694d450f2919';
+my $query_string = 'analysis_id='.$uuid;
 my $source_basename = $uuid.'.bam';
-my $query = Genome::Model::Tools::CgHub::Query->create(uuid => $uuid);
+my $query = Genome::Model::Tools::CgHub::Query->create(query => $query_string);
 Sub::Install::reinstall_sub({ # do not execute query
         code => sub {
             Genome::Sys->create_symlink(
