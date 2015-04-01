@@ -49,6 +49,7 @@ sub _picard_param_metas {
 sub _format_picard_arg {
     my ($type, $name, $value) = @_;
     $value = $value ? 'true' : 'false' if $type eq 'Boolean';
+    $value = qq{"$value"} if $type eq 'Text';
     return sprintf '%s=%s', $name, $value;
 }
 
@@ -138,18 +139,26 @@ sub _redirects {
     return sprintf(">> %s", $self->log_file) if $self->log_file;
 }
 
-sub build_cmdline_string {
-    my ($self, $cmd) = shift;
+sub build_cmdline_list {
+    my $self = shift;
     my $jvm_options = $self->additional_jvm_options || '';
 
-    my $java_vm_cmd = sprintf '%s -Xmx%dm -XX:MaxPermSize=%dm %s -cp /usr/share/java/ant.jar:%s %s %s',
+    return (
         $self->java_interpreter,
-        int(1024 * $self->maximum_memory),
-        $self->maximum_permgen_memory,
-        $jvm_options,
-        $self->_jar_path,
+        sprintf('-Xmx%dm', int(1024 * $self->maximum_memory)),
+        sprintf('-XX:MaxPermSize=%dm', $self->maximum_permgen_memory),
+        split(' ', $jvm_options),
+        '-cp',
+        sprintf('/usr/share/java/ant.jar:%s', $self->_jar_path),
         $self->_java_class_name,
-        join(" ", $self->_cmdline_args);
+        $self->_cmdline_args
+    );
+}
+
+sub build_cmdline_string {
+    my ($self, $cmd) = @_;
+
+    my $java_vm_cmd = join(' ', $self->build_cmdline_list);
 
     my $redirects = $self->_redirects;
     $java_vm_cmd = join(" ", $java_vm_cmd, $redirects) if $redirects;

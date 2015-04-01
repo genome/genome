@@ -15,17 +15,14 @@ my $cmd = $class->create(
     output_file => '/tmp/bar',
     metrics_file => '/tmp/baz',
     temp_directory => '/tmp',
-    use_version => "1.34"
-    );
+    use_version => "1.36"
+);
 
-my $fh = $cmd->get_max_filehandles_param;
-like($fh, qr/^MAX_FILE_HANDLES=[0-9]+$/, "Version 1.34 sets MAX_FILE_HANDLES");
+my $fh = $cmd->build_cmdline_string;
+like($fh, qr/MAX_FILE_HANDLES=[0-9]+$/, "Version >= 1.34 sets MAX_FILE_HANDLES");
 
-my $txt = "";
-for my $v (1..33) {
-    $cmd->use_version("1.$v");
-    $txt .= $cmd->get_max_filehandles_param;
-}
-is($txt, "", "Versions < 1.34 do not set MAX_FILE_HANDLES");
+$cmd->use_version("1.31");
+my $txt .= $cmd->build_cmdline_string;
+unlike($txt, qr/MAX_FILE_HANDLES=[0-9]+$/, "Version < 1.34 does not set MAX_FILE_HANDLES");
 
 done_testing();

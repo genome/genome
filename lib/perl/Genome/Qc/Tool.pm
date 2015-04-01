@@ -28,6 +28,13 @@ sub cmd_line {
     die $self->error_message("Abstract method run must be overriden by subclass");
 }
 
+sub output_file {
+    my $self = shift;
+    my $output_file_accessor = $self->output_file_accessor;
+    my %params = %{$self->gmt_params};
+    return $params{$output_file_accessor};
+}
+
 sub supports_streaming {
     my $self = shift;
     die $self->error_message("Abstract method supports_streaming must be overridden by subclass");
@@ -38,9 +45,9 @@ sub get_metrics {
     die $self->error_message("Abstract method get_metrics must be overridden by subclass");
 }
 
+# Overwrite this in subclass to return the gmt tool parameter name for the output file
 sub output_file_accessor {
     return undef;
 }
 
 1;
-
