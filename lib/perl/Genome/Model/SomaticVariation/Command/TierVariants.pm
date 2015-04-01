@@ -189,7 +189,7 @@ sub params_for_result {
     my $variant_type = shift;
     my $build = $self->build;
 
-    my @results = List::MoreUtils::uniq $build->results;
+    my @results = List::MoreUtils::uniq map { $_->software_result } $build->result_users(label => 'uses');
     my $target_class;
     if($qual eq 'hq') {
         $target_class = 'Genome::Model::Tools::DetectVariants2::Classify::PreviouslyDiscovered';
