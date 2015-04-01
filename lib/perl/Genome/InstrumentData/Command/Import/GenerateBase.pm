@@ -81,9 +81,10 @@ sub _open_file_parser {
         });
     die $self->error_message('Failed to create Text::CSV parser!') if not $parser;
 
+    die $self->error_message('File (%s) is empty!', $file) if not -s $file;
     my $fh = Genome::Sys->open_file_for_reading($file);
     my $headers = $parser->getline($fh);
-    die $self->error_message('File (%s) does not have any headers! Is it empty?', $file) if not $headers;
+    die $self->error_message('File (%s) does not have any headers! Is is empty?', $file) if not $headers;
     $parser->column_names($headers);
 
     my $entity_attributes_ok = $self->_resolve_headers($headers);
