@@ -3,6 +3,7 @@ package Genome::Sys::LockProxy;
 use strict;
 use warnings;
 
+use Carp qw(croak);
 use Genome::Sys::Lock qw();
 use Params::Validate qw(validate_with);
 use Scalar::Util qw(blessed);
@@ -25,6 +26,9 @@ C<scope> is the scope to which the lock is bound.  See C<Genome::Sys::Lock::scop
 
 sub new {
     my $class = shift;
+    if (ref $class) {
+        croak 'new() should be called as a class method';
+    }
     my %params = validate_with(
         params => \@_,
         spec => Genome::Sys::Lock::PROXY_CONSTRUCTOR_PARAMS_SPEC(),

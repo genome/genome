@@ -26,6 +26,9 @@ A hash reference containing the constructor parameters for the desired/new lock.
 
 sub new {
     my $class = shift;
+    if (ref $class) {
+        croak 'new() should be called as a class method';
+    }
     my %params = validate(@_, {
         old => { type => HASHREF },
         new => { type => HASHREF },
