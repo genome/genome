@@ -53,8 +53,8 @@ is_deeply(
         target_region_set_name => 'agilent_sureselect_exome_version_2_broad_refseq_cds_only_hs37',
         participant_id => '569691a3-15b4-4b1c-b8b7-b3ad17d0996e',
         sample_id => 'f39b4cc9-9253-4cf9-8827-ebf26af1003a',
-        source_md5 => '1fb1b9a352c04623ec1422689754e83a',
-        source_size => 45644,
+        source_md5 => '5d2c5cbfc7420405fd4e8e7491a56dc8',
+        source_size => 12322789137,
     },
     'resolved_instrument_data_properties',
 );
