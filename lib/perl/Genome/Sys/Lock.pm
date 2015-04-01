@@ -107,18 +107,29 @@ sub lock_resource {
 
 }
 
-sub LOCK_RESOURCE_PARAMS_SPEC {
+sub PROXY_CONSTRUCTOR_PARAMS_SPEC {
     return {
-        resource_lock => 1,
+        resource => 1,
         scope => {
             callbacks => {
                 'valid scope' => sub { validate_scope(shift) },
             },
         },
+    };
+}
+
+sub PROXY_LOCK_PARAMS_SPEC {
+    return {
         block_sleep => { default => 60 },
         max_try => { default => 7200 },
         wait_announce_interval => { default => 0 },
     };
+}
+
+sub LOCK_RESOURCE_PARAMS_SPEC {
+    my %cons_spec = %{ PROXY_CONSTRUCTOR_PARAMS_SPEC() };
+    $cons_spec{resource_lock} = delete $cons_spec{resource};
+    return { %cons_spec, %{ PROXY_LOCK_PARAMS_SPEC() } };
 }
 
 =item unlock_resource()

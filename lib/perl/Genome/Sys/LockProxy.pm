@@ -25,11 +25,9 @@ C<scope> is the scope to which the lock is bound.  See C<Genome::Sys::Lock::scop
 
 sub new {
     my $class = shift;
-    my $spec = Genome::Sys::Lock::LOCK_RESOURCE_PARAMS_SPEC();
-    $spec->{resource} = delete $spec->{resource_lock};
     my %params = validate_with(
         params => \@_,
-        spec => $spec,
+        spec => Genome::Sys::Lock::PROXY_CONSTRUCTOR_PARAMS_SPEC(),
     );
     return bless \%params, $class;
 }
@@ -70,11 +68,7 @@ sub lock {
     my $self = shift;
     my %params = validate_with(
         params => \@_,
-        spec => {
-            block_sleep => 0,
-            max_try => 0,
-            wait_announce_interval => 0,
-        },
+        spec => Genome::Sys::Lock::PROXY_LOCK_PARAMS_SPEC(),
     );
     my $locked = Genome::Sys::Lock->lock_resource(%params,
         resource_lock => $self->resource,

@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
+use Genome::Sys::Lock qw();
 use Genome::Sys::LockProxy qw();
 use Params::Validate qw(validate validate_with HASHREF);
 
@@ -53,11 +54,7 @@ sub lock {
     my $self = shift;
     my %params = validate_with(
         params => \@_,
-        spec => {
-            block_sleep => 0,
-            max_try => 0,
-            wait_announce_interval => 0,
-        },
+        spec => Genome::Sys::Lock::PROXY_LOCK_PARAMS_SPEC(),
     );
 
     unless ($self->{old}->lock(%params)) {
