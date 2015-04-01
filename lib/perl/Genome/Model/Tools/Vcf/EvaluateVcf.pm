@@ -91,82 +91,6 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
     ]
 };
 
-
-sub _process_input_file {
-    my ($self, $input_file, $output_file) = @_;
-    my @cmds = (
-        restrict_commands($input_file, $self->roi),
-        restrict_to_sample_commands("/dev/stdin", $self->old_sample),
-        pass_only_commands("/dev/stdin", $self->pass_only_expression),
-        allelic_primitives_commands("/dev/stdin"),
-        normalize_vcf_commands("/dev/stdin", $REFERENCE),
-        sort_commands("/dev/stdin"),
-        restrict_commands("stdin", $self->roi),
-        "bgzip -c",
-        );
-
-    my $cmd = Genome::Sys::ShellPipeline->create(
-        pipe_commands => \@cmds,
-        redirects => " > $output_file",
-        );
-    $cmd->execute;
-
-}
-
-sub _clean_vcf {
-    my ($self, $input_file, $output_file) = @_;
-
-    $self->status_message("Cleaning vcf $input_file => $output_file");
-    $DB::single = 1;
-    my $reader = new Genome::File::Vcf::Reader($input_file);
-    my $writer = new Genome::File::Vcf::Writer($output_file, $reader->header);
-
-    $reader->add_filter(_make_bad_indel_filter($self->roi)) if $self->clean_indels;
-    $reader->add_filter(_make_per_allele_info_filter($reader->header));
-
-    while (my $entry = $reader->next) {
-        $writer->write($entry);
-    }
-    $writer->close;
-}
-
-sub _make_per_allele_info_filter {
-    my ($header) = @_;
-
-    my $info = $header->info_types;
-    my @remove = grep {$info->{$_}{number} =~ /^(A|R)$/} keys %$info;
-
-    return sub {
-        my $entry = shift;
-        my $info_hash = $entry->info;
-        delete @{$entry}{@remove};
-        return $entry;
-    };
-}
-
-sub _make_bad_indel_filter {
-    my ($roi_file) = @_;
-
-    my %bed_ends;
-
-    # This is compressed!
-    my $fh = new IO::Zlib;
-    $fh->open($roi_file, "rb") or die "Unable to open BED file $roi_file for removal of bad indel lines\n";
-    while(my $bedline = $fh->getline) {
-        chomp $bedline;
-        my ($chr, $start, $stop) = split "\t", $bedline;
-        $bed_ends{"$chr\t$stop"} = 1;
-    }
-    $fh->close;
-
-    return sub {
-        my $entry = shift;
-        my $x = sprintf "%s\t%s", $entry->{chrom}, $entry->{position};
-        return if exists $bed_ends{$x};
-        return $entry;
-    }
-}
-
 my $bgzip_pipe_cmd = "| bgzip -c ";
 
 sub execute {
@@ -258,6 +182,81 @@ sub execute {
     ), "\n";
 
     return 1;
+}
+
+sub _process_input_file {
+    my ($self, $input_file, $output_file) = @_;
+    my @cmds = (
+        restrict_commands($input_file, $self->roi),
+        restrict_to_sample_commands("/dev/stdin", $self->old_sample),
+        pass_only_commands("/dev/stdin", $self->pass_only_expression),
+        allelic_primitives_commands("/dev/stdin"),
+        normalize_vcf_commands("/dev/stdin", $REFERENCE),
+        sort_commands("/dev/stdin"),
+        restrict_commands("stdin", $self->roi),
+        "bgzip -c",
+        );
+
+    my $cmd = Genome::Sys::ShellPipeline->create(
+        pipe_commands => \@cmds,
+        redirects => " > $output_file",
+        );
+    $cmd->execute;
+
+}
+
+sub _clean_vcf {
+    my ($self, $input_file, $output_file) = @_;
+
+    $self->status_message("Cleaning vcf $input_file => $output_file");
+    $DB::single = 1;
+    my $reader = new Genome::File::Vcf::Reader($input_file);
+    my $writer = new Genome::File::Vcf::Writer($output_file, $reader->header);
+
+    $reader->add_filter(_make_bad_indel_filter($self->roi)) if $self->clean_indels;
+    $reader->add_filter(_make_per_allele_info_filter($reader->header));
+
+    while (my $entry = $reader->next) {
+        $writer->write($entry);
+    }
+    $writer->close;
+}
+
+sub _make_per_allele_info_filter {
+    my ($header) = @_;
+
+    my $info = $header->info_types;
+    my @remove = grep {$info->{$_}{number} =~ /^(A|R)$/} keys %$info;
+
+    return sub {
+        my $entry = shift;
+        my $info_hash = $entry->info;
+        delete @{$entry}{@remove};
+        return $entry;
+    };
+}
+
+sub _make_bad_indel_filter {
+    my ($roi_file) = @_;
+
+    my %bed_ends;
+
+    # This is compressed!
+    my $fh = new IO::Zlib;
+    $fh->open($roi_file, "rb") or die "Unable to open BED file $roi_file for removal of bad indel lines\n";
+    while(my $bedline = $fh->getline) {
+        chomp $bedline;
+        my ($chr, $start, $stop) = split "\t", $bedline;
+        $bed_ends{"$chr\t$stop"} = 1;
+    }
+    $fh->close;
+
+    return sub {
+        my $entry = shift;
+        my $x = sprintf "%s\t%s", $entry->{chrom}, $entry->{position};
+        return if exists $bed_ends{$x};
+        return $entry;
+    }
 }
 
 sub restrict {
