@@ -6,7 +6,7 @@ use warnings;
 use POSIX "floor";
 use List::Util 'max';
 require Carp;
-use Params::Validate qw(:types);
+use Params::Validate qw(validate :types);
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -17,6 +17,7 @@ our @EXPORT_OK = qw(camel_case_to_string
                     param_string_to_hash
                     sanitize_string_for_filesystem
                     find_diff_pos
+                    rand_string
                     side_by_side
                     string_to_camel_case
                     strip_color
@@ -158,6 +159,16 @@ sub find_diff_pos {
         push @diff_pos, $-[0];
     }
     return @diff_pos;
+}
+
+sub rand_string {
+    my %params = validate(@_, {
+        length => { default => 10 },
+        chars  => { default => ['a'..'z', 'A'..'Z', 0..9] },
+    });
+    my $n = @{$params{chars}};
+    my @chars = map { $params{chars}->[rand $n] } 1..$params{length};
+    return join('', @chars);
 }
 
 # put text side_by_side

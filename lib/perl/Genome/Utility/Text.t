@@ -65,4 +65,14 @@ subtest justify_spacer => sub {
     is(justify('12345', 'center', 9, '.', '  '), '  12345  ', 'Center justification works');
 };
 
+subtest rand_string => sub {
+    plan tests => 5;
+    my $func = \&Genome::Utility::Text::rand_string;
+    ok(length($func->()) > 0, 'default length is greater than zero');
+    is(length($func->(length =>  5)),  5, 'specifying length works');
+    is(length($func->(length => 13)), 13, 'specifying length works');
+    like($func->(chars => [0..9]), qr(^\d+$),        'specifying chars works');
+    like($func->(chars => ['a'..'z']), qr(^[a-z]+$), 'specifying chars works');
+};
+
 done_testing();

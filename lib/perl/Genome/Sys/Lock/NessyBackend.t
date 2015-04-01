@@ -2,6 +2,7 @@ use strict;
 use warnings;
 
 use Genome::Sys::Lock::NessyBackend;
+use Genome::Utility::Text qw(rand_string);
 use Test::More;
 
 if ($ENV{GENOME_NESSY_SERVER}) {
@@ -15,7 +16,7 @@ use List::Util qw(shuffle);
 subtest 'basic test' => sub {
     plan tests => 2;
 
-    my $resource_name = 'NessLock.t/' . random_string();
+    my $resource_name = 'NessLock.t/' . rand_string();
     diag 'resource = ' . $resource_name;
 
     my $n = Genome::Sys::Lock::NessyBackend->new(
@@ -39,7 +40,7 @@ subtest 'instance validation' => sub {
 
     my (@r, @n);
     for (1..2) {
-        push @r, 'NessLock.t/' . random_string();
+        push @r, 'NessLock.t/' . rand_string();
         push @n, Genome::Sys::Lock::NessyBackend->new(
             url => $ENV{GENOME_NESSY_SERVER},
             is_mandatory => 1,
@@ -65,8 +66,3 @@ subtest 'instance validation' => sub {
     $n[0]->unlock($r[0]);
     $n[1]->unlock($r[1]);
 };
-
-sub random_string {
-    my @chars = map { (shuffle 'a'..'z', 'A'..'Z', 0..9)[0] } 1..10;
-    return join('', @chars);
-}

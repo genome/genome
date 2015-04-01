@@ -9,6 +9,7 @@ use Test::More tests => 3;
 use Genome::Sys::Lock qw();
 use Genome::Sys::Lock::MockBackend qw();
 use Genome::Sys::LockMigrationProxy qw();
+use Genome::Utility::Text qw(rand_string);
 use List::Util qw(shuffle);
 use Scope::Guard qw();
 use Sub::Override qw();
@@ -24,7 +25,7 @@ subtest 'old fails' => sub {
     my $scopes_guard = Sub::Override->new('Genome::Sys::Lock::scopes', sub { keys %backends });
     Genome::Sys::Lock->set_backends(%backends);
 
-    my $resource = random_string();
+    my $resource = rand_string();
     my %lock_params = (
         block_sleep => 0,
         max_try => 0,
@@ -75,7 +76,7 @@ subtest 'new fails' => sub {
     my $scopes_guard = Sub::Override->new('Genome::Sys::Lock::scopes', sub { keys %backends });
     Genome::Sys::Lock->set_backends(%backends);
 
-    my $resource = random_string();
+    my $resource = rand_string();
     my %lock_params = (
         block_sleep => 0,
         max_try => 0,
@@ -126,7 +127,7 @@ subtest 'both ok' => sub {
     my $scopes_guard = Sub::Override->new('Genome::Sys::Lock::scopes', sub { keys %backends });
     Genome::Sys::Lock->set_backends(%backends);
 
-    my $resource = random_string();
+    my $resource = rand_string();
     my %lock_params = (
         block_sleep => 0,
         max_try => 0,
@@ -158,11 +159,6 @@ subtest 'both ok' => sub {
     );
     is($new_lock, undef, q(failed to lock on 'test_new' after LockMigrationProxy locked));
 };
-
-sub random_string {
-    my @chars = map { (shuffle 'a'..'z', 'A'..'Z', 0..9)[0] } 1..10;
-    return join('', @chars);
-}
 
 sub backend_guard {
     my %old_backends = Genome::Sys::Lock::all_backends();

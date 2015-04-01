@@ -9,6 +9,7 @@ use Test::More tests => 5;
 use Genome::Sys::Lock qw();
 use Genome::Sys::LockProxy qw();
 use Genome::Sys::Lock::MockBackend qw();
+use Genome::Utility::Text qw(rand_string);
 use List::Util qw(shuffle);
 use Scope::Guard qw();
 use Sub::Override qw();
@@ -20,7 +21,7 @@ my $backend_guard = backend_guard();
 Genome::Sys::Lock->set_backends(%backends);
 
 my $lock = Genome::Sys::LockProxy->new(
-    resource => random_string(),
+    resource => rand_string(),
     scope => 'site',
 );
 
@@ -29,11 +30,6 @@ ok(!$lock->lock, 'second lock fails');
 ok($lock->unlock, 'unlock succeeds');
 ok($lock->lock, 'lock after unlock succeeds');
 ok($lock->unlock, 'final unlock succeeds');
-
-sub random_string {
-    my @chars = map { (shuffle 'a'..'z', 'A'..'Z', 0..9)[0] } 1..10;
-    return join('', @chars);
-}
 
 sub backend_guard {
     my %old_backends = Genome::Sys::Lock::all_backends();
