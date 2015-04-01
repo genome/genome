@@ -30,7 +30,12 @@ class Genome::Command::DelegatesToResult {
         label => {
             is => 'Text',
             doc => 'Label for the additional user (if any) of the result',
-        }
+        },
+        result_users => {
+            is => 'HASH',
+            doc => 'for programmatically passing all users',
+            is_transient => 1,
+        },
     ],
 };
 
@@ -63,12 +68,15 @@ sub input_hash {
 sub _input_hash {
     my $self = shift;
 
-    my $result_users = {
-        sponsor   => $self->sponsor // Genome::Sys->current_user,
-        requestor => $self->requestor,
-    };
-    if($self->label and $self->user) {
-        $result_users->{$self->label} = $self->user;
+    my $result_users = $self->result_users;
+    unless ($result_users) {
+        $result_users = {
+            sponsor   => $self->sponsor // Genome::Sys->current_user,
+            requestor => $self->requestor,
+        };
+        if($self->label and $self->user) {
+            $result_users->{$self->label} = $self->user;
+        }
     }
 
     return (
@@ -97,7 +105,7 @@ sub __errors__ {
         }
     }
 
-    unless(defined $self->requestor) {
+    unless(defined $self->requestor or defined $self->result_users) {
         push @errors, UR::Object::Tag->create(
             type => 'error',
             properties => 'requestor',

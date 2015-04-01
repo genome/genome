@@ -73,6 +73,8 @@ sub _generate_workflow_for_instrument_data {
     #Last wire up the workflow
     my $inputs_for_links = $class->_generate_alignment_workflow_links($workflow, $tree, $input_data, $instrument_data, %options);
 
+    push @$inputs_for_links, map { $class->_process_decorations($_, $instrument_data, %options) } @{ $tree->{action} } ;
+
     return $workflow, $inputs_for_links;
 }
 
@@ -321,6 +323,26 @@ sub get_unique_action_name {
 
     my $name = $action->{name};
     return join('_', $name, $index);
+}
+
+sub _process_decorations {
+    my $class = shift;
+    my $action = shift;
+    my $instrument_data = shift;
+    my %options = @_;
+
+    my @additional_inputs;
+
+    if (exists $action->{decoration}) {
+        my $operation_key = $class->_operation_key($instrument_data, %options);
+        push @additional_inputs, Genome::InstrumentData::Composite::Decorator->decorate($action->{$operation_key}, $action->{decoration});
+    }
+
+    if (exists $action->{parent}) {
+        push @additional_inputs, $class->_process_decorations($action->{parent}, $instrument_data, %options);
+    }
+
+    return @additional_inputs;
 }
 
 1;

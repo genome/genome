@@ -97,8 +97,13 @@ class Genome::InstrumentData::Command::AlignReads {
     has_optional_output => [
         result_id => {
             is => 'Text',
-            doc => 'The result generated/found when running the command',
+            doc => 'The ID of the result generated/found when running the command',
         },
+        alignment_result => {
+            is => 'Genome::SoftwareResult',
+            id_by => 'result_id',
+            doc => 'The result generated/found when running the command',
+        }
     ],
     has_param => [
         lsf_resource => {

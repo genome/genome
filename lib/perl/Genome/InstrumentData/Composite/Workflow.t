@@ -9,6 +9,7 @@ BEGIN {
     $ENV{NO_LSF} = 1;
 }
 
+use Sub::Override;
 use Test::More;
 use above "Genome";
 
@@ -117,6 +118,62 @@ subtest 'simple alignments' => sub {
     my @ad_result_ids = $ad->_result_ids;
     my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
     is_deeply([sort @alignment_result_two_inst_data], [sort @ad_results], 'found expected alignment results');
+};
+
+subtest 'simple alignments with qc decoration' => sub {
+    {
+        package TestTool1;
+
+        use Genome;
+
+        class TestTool1 {
+            is => ['Genome::Qc::Tool'],
+            has => {param1 => {}},
+        };
+
+        sub cmd_line {
+            my $self = shift;
+            return ("echo", $self->param1);
+        }
+
+        sub supports_streaming { return 0; }
+
+        sub get_metrics {
+            return { metric1 => 1 };
+        }
+    }
+
+    use Genome::Qc::Config;
+    my $override = Sub::Override->new(
+        'Genome::Qc::Config::get_commands_for_alignment_result',
+        sub {
+            return {test1 => {class => "TestTool1", params => {param1 => 1}}};
+        },
+    );
+
+    my $log_directory = Genome::Sys->create_temp_directory();
+    my $qc_for_testing = Genome::Qc::Config->get(name => 'qc for Workflow test');
+    isa_ok($qc_for_testing, 'Genome::Qc::Config', 'test configuration exists') or die('cannot continue');
+
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
+        inputs => {
+            inst => \@two_instrument_data,
+            ref => $ref,
+            force_fragment => 0,
+            result_users => $result_users,
+        },
+        strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] @qc [qc for Workflow test] api v1',
+        log_directory => $log_directory,
+    );
+    isa_ok(
+        $ad,
+        'Genome::InstrumentData::Composite::Workflow',
+        'created dispatcher for simple alignments with qc decoration'
+    );
+
+    ok($ad->execute, 'executed dispatcher for simple alignments with qc decoration');
+
+    $override->restore;
 };
 
 subtest 'simple alignments with merge' => sub {
