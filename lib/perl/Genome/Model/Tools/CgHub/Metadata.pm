@@ -10,9 +10,9 @@ use XML::Simple;
 class Genome::Model::Tools::CgHub::Metadata {
     is => 'UR::Object',
     has => {
-        metadata_file => {
+        xml => {
             is => 'Text',
-            doc => 'The full path of a XML metadata file containing information about a particular TCGA run including sequence file information. A temp file will be used if not given.',
+            doc => 'XML from CG Query.',
         },
     },
     has_optional_transient => {
@@ -29,25 +29,24 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
-    my $load = $self->_load_metadata_file;
-    return if not $load;
+    die $self->error_message('No XML given!') if not $self->xml;
+    my $metadata = XMLin($self->xml);
+    die $self->error_message('Failed to load metadata XML!') if not $metadata;
+    $self->_metadata($metadata);
 
     return $self;
 }
 
-sub _load_metadata_file {
-    my $self = shift;
+sub create_from_file {
+    my ($class, $metadata_file) = @_;
 
-    my $metadata_file = $self->metadata_file;
-    Genome::Sys->validate_file_for_reading($metadata_file);
-    my $metadata = XMLin($metadata_file);
-    if ( not $metadata ) {
-        die $self->error_message('Failed to open metadata file! '.$metadata_file);
+    die $class->error_message('No CG Query Metadata XML file given!') if not $metadata_file;
+    my $xml = Genome::Sys->read_file($metadata_file);
+    if ( not $xml ) {
+        die $class->error_message('Failed to read in CG Query metadata XML from %s', $metadata_file);
     }
 
-    $self->_metadata($metadata);
-
-    return 1;
+    return $class->create(xml => $xml);
 }
 
 my %attribute_mapping = (

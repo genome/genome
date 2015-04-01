@@ -81,10 +81,7 @@ sub _add_properties_from_metadata {
     my $metadata_file = $self->metadata_file;
     return 1 if not -s $metadata_file;
 
-    my $metadata = Genome::Model::Tools::CgHub::Metadata->create(
-        metadata_file => $metadata_file,
-    );
-
+    my $metadata = Genome::Model::Tools::CgHub::Metadata->create_from_file($metadata_file);
     my %args = (
         aliquot_id => 0,
         analysis_id => 0,

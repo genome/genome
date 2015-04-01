@@ -94,9 +94,7 @@ sub _metadata {
     my $retrieve_ok = $self->_retrieve_metadata_path;
     return if not $retrieve_ok;
 
-    $self->{_metadata} = Genome::Model::Tools::CgHub::Metadata->create(
-        metadata_file => $self->metadata_file,
-    );
+    $self->{_metadata} = Genome::Model::Tools::CgHub::Metadata->create_from_file($self->metadata_file);
     if ( not $self->{_metadata} ) {
         $self->error_message('Failed to load metadata from file! '.$self->metadata_file);
         return;
