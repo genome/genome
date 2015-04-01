@@ -68,7 +68,7 @@ sub move {
                 $shadow_allocation->delete;
             }
         }
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
+        $allocation_lock->unlock();
         confess(sprintf(
                 "Could not copy allocation %s from %s to %s: %s",
                 $allocation_object->id, $original_absolute_path,
@@ -83,7 +83,7 @@ sub move {
 
     Genome::Sys->create_directory($new_volume_final_path);
     unless (Genome::Sys->rename($shadow_allocation->absolute_path, $new_volume_final_path)) {
-        Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
+        $allocation_lock->unlock();
         my $shadow_allocation_abs_path = $shadow_allocation->absolute_path;
         $shadow_allocation->delete;
         confess($allocation_object->error_message(sprintf(
@@ -111,7 +111,7 @@ sub move {
 
     Genome::Disk::Allocation::_commit_unless_testing();
 
-    Genome::Sys->unlock_resource(resource_lock => $allocation_lock);
+    $allocation_lock->unlock();
 
     $shadow_allocation->delete;
 

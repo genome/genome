@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Sys::LockProxy qw();
 
 class Genome::Site::TGI::CaptureSet::Command::Synchronize {
     is => 'Command::V2',
@@ -62,10 +63,11 @@ sub execute {
     my $self = shift;
 
     my $lock_resource = 'genome_site_tgi_captureset_command_synchronize/loader';
-    my $lock = Genome::Sys->lock_resource(
-        resource_lock=>$lock_resource,
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => $lock_resource,
         scope => 'site',
-        max_try=>1,
+    )->lock(
+        max_try => 1,
     );
     unless ($lock) {
         $self->error_message("could not lock, another instance must be running.");
@@ -75,7 +77,7 @@ sub execute {
     UR::Context->current->add_observer(
         aspect => 'commit',
         callback => sub{
-            Genome::Sys->unlock_resource(resource_lock=>$lock);
+            $lock->unlock();
         }
     );
 

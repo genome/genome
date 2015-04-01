@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Sys::LockProxy qw();
 
 class Genome::Model::MetagenomicShotgun::Build::ExtractFrom {
     is => 'Command::V2',
@@ -268,16 +269,16 @@ sub _extract_data_from_alignment_result{
             die "unsaved changes present on instrument data $new_instrument_data->{id} from $original_data_path!!!";
         }
         if ( $se_lock ) {
-            $self->debug_message("Attempting to remove lock on $se_lock...");
-            unless(Genome::Sys->unlock_resource(resource_lock => $se_lock)) {
-                die $self->error_message("Failed to unlock $se_lock.");
+            $self->debug_message("Attempting to remove lock on %s...", $se_lock->resource);
+            unless($se_lock->unlock()) {
+                die $self->error_message("Failed to unlock %s.", $se_lock->resource);
             }
             undef($se_lock);
         }
         if ( $pe_lock ) {
-            $self->debug_message("Attempting to remove lock on $pe_lock...");
-            unless(Genome::Sys->unlock_resource(resource_lock => $pe_lock)) {
-                die $self->error_message("Failed to unlock $pe_lock.");
+            $self->debug_message("Attempting to remove lock on %s...", $pe_lock->resource);
+            unless($pe_lock->unlock()) {
+                die $self->error_message("Failed to unlock %s.", $pe_lock->resource);
             }
             undef($pe_lock);
         }
@@ -297,9 +298,10 @@ sub lock {
     my @parts = @_;
     my $lock_key = join('_', @parts);
     $self->debug_message("Creating lock on $lock_key...");
-    my $lock = Genome::Sys->lock_resource(
-        resource_lock => $lock_key,
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => $lock_key,
         scope => 'site',
+    )->lock(
         max_try => 2,
     );
     return $lock;

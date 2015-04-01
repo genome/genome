@@ -4,7 +4,9 @@ use strict;
 use warnings;
 
 use Carp qw(carp croak);
+use Genome::Utility::Instrumentation qw();
 use List::MoreUtils qw(all);
+use Params::Validate qw(validate HASHREF);
 
 =item lock_resource()
 
@@ -66,21 +68,9 @@ then C<lock()> will C<croak()>.
 
 =cut
 
-my %RESOURCE_LOCK_SCOPE;
 sub lock_resource {
     my $class = shift;
-    my %args = with_default_lock_resource_args(@_);
-    validate_scope($args{scope});
-
-    if (exists $RESOURCE_LOCK_SCOPE{$args{resource_lock}}
-        && $RESOURCE_LOCK_SCOPE{$args{resource_lock}} ne $args{scope}) {
-        Carp::confess(sprintf("Attempted to lock the resource (%s) in "
-                . "scope (%s) while it has an existing lock in scope (%s).  "
-                . "Locking in multiple scopes is not currently supported.",
-                $args{resource_lock},
-                $RESOURCE_LOCK_SCOPE{$args{resource_lock}},
-                $args{scope}));
-    }
+    my %args = validate(@_, LOCK_RESOURCE_PARAMS_SPEC());
 
     # need to install handlers before backends start locking
     $class->_cleanup_handler_check();
@@ -113,10 +103,33 @@ sub lock_resource {
         Genome::Utility::Instrumentation::increment('genome.sys.lock.lock_resource.inconsistent');
     }
 
-    $RESOURCE_LOCK_SCOPE{$args{resource_lock}} = $args{scope};
-
     return $args{resource_lock};
 
+}
+
+sub PROXY_CONSTRUCTOR_PARAMS_SPEC {
+    return {
+        resource => 1,
+        scope => {
+            callbacks => {
+                'valid scope' => sub { validate_scope(shift) },
+            },
+        },
+    };
+}
+
+sub PROXY_LOCK_PARAMS_SPEC {
+    return {
+        block_sleep => { default => 60 },
+        max_try => { default => 7200 },
+        wait_announce_interval => { default => 0 },
+    };
+}
+
+sub LOCK_RESOURCE_PARAMS_SPEC {
+    my %cons_spec = %{ PROXY_CONSTRUCTOR_PARAMS_SPEC() };
+    $cons_spec{resource_lock} = delete $cons_spec{resource};
+    return { %cons_spec, %{ PROXY_LOCK_PARAMS_SPEC() } };
 }
 
 =item unlock_resource()
@@ -140,12 +153,17 @@ C<scope> is the scope to which the lock is bound.  See C<scopes()> for valid sco
 
 sub unlock_resource {
     my $class = shift;
-    my %args = @_;
-
-    my $scope = $RESOURCE_LOCK_SCOPE{$args{resource_lock}};
+    my %args = validate(@_, {
+        resource_lock => 1,
+        scope => {
+            callbacks => {
+                'valid scope' => sub { validate_scope(shift) },
+            },
+        },
+    });
 
     my $rv = 1;
-    for my $backend (backends($scope)) {
+    for my $backend (backends($args{scope})) {
         if ($backend->has_lock($args{resource_lock})) {
             my @unlock_args = $backend->translate_unlock_args(%args);
             my $unlocked = $backend->unlock(@unlock_args);
@@ -172,16 +190,6 @@ sub release_all {
             $backend->release_all();
         }
     }
-}
-
-sub with_default_lock_resource_args {
-    my %args = @_;
-
-    $args{block_sleep} = 60 unless defined $args{block_sleep};
-    $args{max_try} = 7200 unless defined $args{max_try};
-    $args{wait_announce_interval} = 0 unless defined $args{wait_announce_interval};
-
-    return %args;
 }
 
 sub is_mandatory {

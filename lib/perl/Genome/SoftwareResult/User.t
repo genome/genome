@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
+use Genome::Sys::LockProxy qw();
 use Test::More;
 use Test::Exception;
 use Genome::Test::Factory::Build;
@@ -148,9 +149,14 @@ subtest 'multiple shortcutters result in only one user' => sub {
                 user => $users_hash{users}{sponsor},
                 software_result => $sr,
         });
-        my $lock = Genome::Sys->lock_resource(resource_lock => $resource, scope => 'site', max_try => 1);
+        my $lock = Genome::Sys::LockProxy->new(
+            resource => $resource,
+            scope => 'site',
+        )->lock(
+            max_try => 1,
+        );
         ok($lock, 'got lock');
-        Genome::Sys->unlock_resource(resource_lock => $lock);
+        $lock->unlock();
     };
 
     my @users = $sr->users;

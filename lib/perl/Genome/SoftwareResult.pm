@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Sys::LockProxy qw();
 use Digest::MD5 qw(md5_hex);
 use Cwd;
 use File::Basename qw(fileparse);
@@ -38,7 +39,7 @@ class Genome::SoftwareResult {
         lookup_hash         => { is => 'Text', len => 32, column_name => 'LOOKUP_HASH', is_optional => 1 },
         output_dir          => { is => 'Text', len => 1000, column_name => 'OUTPUTS_PATH', is_optional => 1 },
         test_name           => { is_param => 1, is_delegated => 1, is_mutable => 1, via => 'params', to => 'value_id', where => ['name' => 'test_name'], is => 'Text', doc => 'Assigns a testing tag to the result.  These will not be used in default processing', is_optional => 1 },
-        _lock_name          => { is_optional => 1, is_transient => 1 },
+        _lock_proxy          => { is_optional => 1, is_transient => 1 },
     ],
     has_many_optional => [
         params              => { is => 'Genome::SoftwareResult::Param', reverse_as => 'software_result'},
@@ -205,14 +206,14 @@ sub get_with_lock {
 
 
             if ($result && $lock) {
-                $result->_lock_name($lock);
+                $result->_lock_proxy($lock);
 
-                $result->debug_message("Cleaning up lock $lock...");
+                $result->debug_message("Cleaning up lock %s...", $lock->resource);
                 unless ($result->_unlock) {
                     $result->error_message("Failed to unlock after getting software result");
                     die "Failed to unlock after getting software result";
                 }
-                $result->debug_message("Cleanup completed for lock $lock.");
+                $result->debug_message("Cleanup completed for lock %s.", $lock->resource);
             } elsif ($lock) {
                 $class->_release_lock_or_die($lock, "Failed to unlock after not finding software result.");
             }
@@ -325,7 +326,7 @@ sub create {
         return;
     }
 
-    $self->_lock_name($lock);
+    $self->_lock_proxy($lock);
 
     my $unlock_callback = sub {
         $self->_unlock;
@@ -797,45 +798,62 @@ sub _lock {
 
     my $resource_lock_name = $class->_resolve_lock_name($lookup_hash);
 
-    # if we're already locked, just increment the lock count
-    $LOCKS{$resource_lock_name} += 1;
-    return $resource_lock_name if ($LOCKS{$resource_lock_name} > 1);
+    # Maybe we should memoize on scope and resource but all SoftwareResult are
+    # in the 'site' scope which isn't currently expected to change.
+    my $lock = $LOCKS{$resource_lock_name}{object};
+    my $count = $LOCKS{$resource_lock_name}{count};
+    return $lock if $count;
 
-    my $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name,
-        scope => 'site', max_try => 2);
+    $lock = Genome::Sys::LockProxy->new(
+        resource => $resource_lock_name,
+        scope => 'site',
+    )->lock(
+        max_try => 2,
+    );
     if (!$lock && $wait) {
         $class->debug_message("This data set is still being processed by its creator.  Waiting for existing data lock...");
-        $lock = Genome::Sys->lock_resource(resource_lock => $resource_lock_name,
-            scope => 'site', wait_announce_interval => 600);
+        $lock = Genome::Sys::LockProxy->new(
+            resource => $resource_lock_name,
+            scope => 'site',
+        )->lock(
+            wait_announce_interval => 600,
+        );
         unless ($lock) {
             $class->error_message("Failed to get existing data lock!");
             die($class->error_message);
         }
     }
 
+    $LOCKS{$resource_lock_name}{object} = $lock;
+    $LOCKS{$resource_lock_name}{count}++;
+
     return $lock;
 }
 
 sub _unlock_resource {
     my $class = shift;
-    my $resource_lock_name = shift;
+    my $resource_lock = shift;
+
+    my $resource_lock_name = $resource_lock->resource;
 
     $class->debug_message("Cleaning up lock $resource_lock_name...");
 
-    if (!exists $LOCKS{$resource_lock_name})  {
+    if (!exists $LOCKS{$resource_lock_name}{count})  {
         $class->error_message("Attempt to unlock $resource_lock_name but this was never locked!");
         die $class->error_message;
     }
-    $LOCKS{$resource_lock_name} -= 1;
 
-    return 1 if ($LOCKS{$resource_lock_name} >= 1);
+    $LOCKS{$resource_lock_name}{count}--;
 
-    unless (Genome::Sys->unlock_resource(resource_lock=>$resource_lock_name)) {
+    return 1 if ($LOCKS{$resource_lock_name}{count} >= 1);
+
+    unless ($resource_lock->unlock()) {
         $class->error_message("Couldn't unlock $resource_lock_name.  error message was " . $class->error_message);
         die $class->error_message;
     }
 
     delete $LOCKS{$resource_lock_name};
+
     $class->debug_message("Cleanup completed for lock $resource_lock_name.");
     return 1;
 }
@@ -843,8 +861,8 @@ sub _unlock_resource {
 sub _unlock {
     my $self = shift;
 
-    my $resource_lock_name = $self->_lock_name;
-    $self->_unlock_resource($resource_lock_name);
+    my $resource_lock = $self->_lock_proxy;
+    $self->_unlock_resource($resource_lock);
 }
 
 sub _resolve_lock_name {
@@ -994,11 +1012,11 @@ sub _release_lock_or_die {
 
     $class->debug_message("Cleaning up lock $lock...");
 
-    unless (Genome::Sys->unlock_resource(resource_lock=>$lock)) {
+    unless ($lock->unlock()) {
         $class->error_message($error_message);
         die $error_message;
     }
-    delete $LOCKS{$lock};
+    delete $LOCKS{$lock->resource};
 
     $class->debug_message("Cleanup completed for lock $lock.");
 }

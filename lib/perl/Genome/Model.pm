@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Sys::LockProxy qw();
 use Carp;
 
 class Genome::Model {
@@ -687,10 +688,14 @@ sub _lock {
 
     my $model_id = $self->id;
     unless ($ENV{UR_DBI_NO_COMMIT}) {
-        my $lock_var = File::Spec->join('build_requested', $model_id);
-        my $lock = $self->{_lock} = Genome::Sys->lock_resource(
-            resource_lock => $lock_var, scope => 'site', max_try => 30,
-            block_sleep => 30);
+        my $resource = File::Spec->join('build_requested', $model_id);
+        my $lock = $self->{_lock} = Genome::Sys::LockProxy->new(
+            resource => $resource,
+            scope => 'site',
+        )->lock(
+            max_try => 30,
+            block_sleep => 30,
+        );
 
         die("Unable to acquire the lock to request $model_id. Is something already running or did it exit uncleanly?")
             unless $lock;
@@ -700,7 +705,7 @@ sub _lock {
                                aspect => 'commit',
                                once => 1,
                                callback => sub {
-                                   Genome::Sys->unlock_resource(resource_lock => $lock);
+                                   $lock->unlock();
                                    $rollback_observer->delete;
                                }
                            );
@@ -708,7 +713,7 @@ sub _lock {
                                aspect => 'rollback',
                                once => 1,
                                callback => sub {
-                                   Genome::Sys->unlock_resource(resource_lock => $lock);
+                                   $lock->unlock();
                                    $commit_observer->delete;
                                }
                            );

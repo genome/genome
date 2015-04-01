@@ -12,6 +12,7 @@ use List::Util qw(shuffle);
 use Try::Tiny qw(try catch finally);
 
 use Genome;
+use Genome::Sys::LockProxy qw();
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
 
 class Genome::InstrumentData::AlignmentResult::Merged {
@@ -845,10 +846,11 @@ sub _lock_per_lane_alignments {
                #with that aligner.
             }
 
-            my $lock_var = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$alignment->id);
-            my $lock = Genome::Sys->lock_resource(
-                resource_lock => $lock_var,
-                scope         => 'site',
+            my $resource = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$alignment->id);
+            my $lock = Genome::Sys::LockProxy->new(
+                resource => $resource,
+                scope => 'site',
+            )->lock(
                 max_try       => 288, # Try for 48 hours every 10 minutes
                 block_sleep   => 600,
             );
@@ -857,7 +859,7 @@ sub _lock_per_lane_alignments {
             # If the build before us successfully created a merged alignment result, we no longer need a lock
             # If it failed, we will add an observer just as the first build did.
             if ($alignment->get_merged_alignment_results) {
-                Genome::Sys->unlock_resource(resource_lock => $lock);
+                $lock->unlock();
             } else {
                 # The problem here is if we commit BEFORE merge is done, we unlock too early.
                 # However, if we unlock any other way we may fail to unlock more often and leave old locks.
@@ -865,7 +867,7 @@ sub _lock_per_lane_alignments {
                     aspect   => 'commit',
                     once => 1,
                     callback => sub {
-                        Genome::Sys->unlock_resource(resource_lock => $lock);
+                        $lock->unlock();
                     }
                 );
             }

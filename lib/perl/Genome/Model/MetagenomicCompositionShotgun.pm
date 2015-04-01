@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Sys::LockProxy qw();
 use File::Basename;
 use File::Path 'make_path';
 use Sys::Hostname;
@@ -939,7 +940,6 @@ sub get_imported_instrument_data_or_upload_paths {  #TODO not finished, not curr
     my ($self, $orig_inst_data, @paths) = @_;
     my @inst_data;
     my @upload_paths;
-    my @locks;
     my $tmp_dir;
     my $subdir;
 
@@ -959,7 +959,6 @@ sub get_imported_instrument_data_or_upload_paths {  #TODO not finished, not curr
                 } else {
                     die $self->error_message("Failed to lock $sub_path.");
                 }
-                push @locks, $lock;
             }
             push @upload_paths, $path;
         }
@@ -980,8 +979,6 @@ sub get_imported_instrument_data_or_upload_paths {  #TODO not finished, not curr
 
 sub upload_instrument_data_and_unlock {
     my ($self, $orig_data_paths_to_fastq_files, $locks_ref) = @_;
-    #TODO: Actually use locks.
-    my @locks;# = @$locks_ref;
 
     my @properties_from_prior = qw/ run_name subset_name sequencing_platform median_insert_size sd_above_insert_size library_name sample_name /;
     my @instrument_data;
@@ -1053,13 +1050,6 @@ sub upload_instrument_data_and_unlock {
         if ($instrument_data->__changes__) {
             die "Unsaved changes present on instrument data $instrument_data->{id} from $original_data_path!!!";
         }
-        for my $lock (@locks) {
-            if ($lock) {
-                unless(Genome::Sys->unlock_resource(resource_lock => $lock)) {
-                    die $self->error_message("Failed to unlock " . $lock->resource_lock . ".");
-                }
-            }
-        }
         push @instrument_data, $instrument_data;
     }
 
@@ -1071,9 +1061,10 @@ sub lock {
     my @parts = @_;
     my $lock_key = join('_', @parts);
     $self->debug_message("Creating lock on $lock_key...");
-    my $resource_lock = File::Spec->join($ENV{GENOME_LOCK_DIR}, $lock_key);
-    my $lock = Genome::Sys->lock_resource(
-        resource_lock => $resource_lock,
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => $lock_key,
+        scope => 'site',
+    )->lock(
         max_try => 2,
     );
     return $lock;
@@ -1531,16 +1522,16 @@ sub _process_unaligned_reads {
                 die "Unsaved changes present on instrument data $new_instrument_data->{id} from $original_data_path!!!";
             }
             if (!$new_instrument_data->is_paired_end && $se_lock) {
-                $self->debug_message("Attempting to remove lock on $se_lock...");
-                unless(Genome::Sys->unlock_resource(resource_lock => $se_lock)) {
-                    die $self->error_message("Failed to unlock $se_lock.");
+                $self->debug_message("Attempting to remove lock on %s...", $se_lock->resource);
+                unless($se_lock->unlock()) {
+                    die $self->error_message("Failed to unlock %s.", $se_lock->resource);
                 }
                 undef($se_lock);
             }
             if ($new_instrument_data->is_paired_end && $pe_lock) {
-                $self->debug_message("Attempting to remove lock on $pe_lock...");
-                unless(Genome::Sys->unlock_resource(resource_lock => $pe_lock)) {
-                    die $self->error_message("Failed to unlock $pe_lock.");
+                $self->debug_message("Attempting to remove lock on %s...", $pe_lock->resource);
+                unless($pe_lock->unlock()) {
+                    die $self->error_message("Failed to unlock %s.", $pe_lock->resource);
                 }
                 undef($pe_lock);
             }
