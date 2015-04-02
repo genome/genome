@@ -9,49 +9,50 @@ class Genome::Model::Tools::Picard::CollectRnaSeqMetrics {
     is  => 'Genome::Model::Tools::Picard',
     has_input => [
         input_file => {
-            is  => 'String',
-            doc => 'The SAM/BAM files to run on.  File type is determined by suffix.',
+            is => 'String',
+            doc => 'The SAM/BAM files to run on. File type is determined by suffix.',
         },
         output_file => {
-            is  => 'String',
+            is => 'String',
             doc => 'The output summary file',
         },
         chart_output => {
-            is_optional => 1,
             is => 'String',
             doc => 'The output PDF chart.',
+            is_optional => 1,
         },
         refseq_file => {
-            is  => 'String',
+            is => 'String',
             doc => 'The reference sequence file',
         },
         ribosomal_intervals_file => {
-            is  => 'Text',
-            doc => 'Location of rRNA sequences in genome, in interval_list format. ' .
-                'If not specified no bases will be identified as being ribosomal. ' .
-                'Interval files can be created with gmt picard bed-to-interval-list. ' .
-                'More details here: ' .
-                'http://samtools.github.io/htsjdk/javadoc/htsjdk/htsjdk/samtools/util/IntervalList.html',
+            is => 'Text',
+            doc => 'Location of rRNA sequences in genome, in interval_list '
+                 . 'format. If not specified no bases will be identified as '
+                 . 'being ribosomal. Interval files can be created with gmt '
+                 . 'picard bed-to-interval-list. More details here: '
+                 . 'http://samtools.github.io/htsjdk/javadoc/htsjdk/htsjdk/samtools/util/IntervalList.html',
         },
         ref_flat_file => {
-            is  => 'Text',
-            doc => 'Gene annotations in refFlat form. Format described here: http://genome.ucsc.edu/goldenPath/gbdDescriptionsOld.html#RefFlat',
+            is => 'Text',
+            doc => 'Gene annotations in refFlat form. Format described here: '
+                 . 'http://genome.ucsc.edu/goldenPath/gbdDescriptionsOld.html#RefFlat',
         },
         assume_sorted => {
-            is  => 'Boolean',
+            is => 'Boolean',
             doc => 'coordinate sorted beforehand or not, default 1',
             default_value => 1,
-            is_optional   => 1,
+            is_optional => 1,
         },
         stop_after => {
-            is  => 'Integer',
+            is => 'Integer',
             doc => 'Stop after processing N reads, mainly for debugging.',
-            is_optional   => 1,
+            is_optional => 1,
         },
         strand_specificity => {
-            is  => 'String',
+            is => 'String',
             doc => 'For strand-specific library prep. For unpaired reads, use FIRST_READ_TRANSCRIPTION_STRAND if the reads are expected to be on the transcription strand.',
-            valid_values =>['NONE','FIRST_READ_TRANSCRIPTION_STRAND','SECOND_READ_TRANSCRIPTION_STRAND'],
+            valid_values => ['NONE', 'FIRST_READ_TRANSCRIPTION_STRAND', 'SECOND_READ_TRANSCRIPTION_STRAND'],
             default_value => 'NONE',
             is_optional => 1,
         },
@@ -143,6 +144,5 @@ sub parse_file_into_metrics_hashref {
     }
     return \%data;
 }
-
 
 1;
