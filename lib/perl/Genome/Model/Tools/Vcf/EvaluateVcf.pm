@@ -301,10 +301,9 @@ sub _make_bad_indel_filter {
 
 sub restrict {
     my ($self, $input_file, $roi_file, $output_file) = @_;
-    my $dir = Genome::Model::Tools::BedTools->path_for_bedtools_version($self->bedtools_version);
-    my $exe = File::Spec->catfile($dir, "bin", "bedtools");
+    my $bedtools = $self->bedtools;
     $DB::single = 1;
-    my @args = ($exe, "intersect", "-header", "-a", $input_file, "-b", $roi_file, "> $output_file");
+    my @args = ($bedtools, "intersect", "-header", "-a", $input_file, "-b", $roi_file, "> $output_file");
     Genome::Sys->shellcmd( cmd => join(" ", @args) );
 
     $DB::single = 1;
