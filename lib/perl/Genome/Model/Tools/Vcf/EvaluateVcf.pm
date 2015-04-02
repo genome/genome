@@ -16,10 +16,8 @@ use File::Temp qw(tempdir);
 use Genome::Model::Tools::Vcf::VcfCompare;
 
 
-my $JOINX = "/gscmnt/gc2801/analytics/tabbott/vcf-evaluate/bin/joinx";
-my $BEDTOOLS = "/gscmnt/gc2801/analytics/tabbott/vcf-evaluate/bin/bedtools";
-my $VCFLIB = "/gscmnt/gc2801/analytics/tabbott/vcf-evaluate/bin";
-my $REFERENCE = "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa";
+my ($JOINX, $BEDTOOLS, $VCFLIB, $REFERENCE);
+my $bgzip_pipe_cmd = "| bgzip -c ";
 
 class Genome::Model::Tools::Vcf::EvaluateVcf {
     is => "Command::V2",
@@ -91,10 +89,10 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
     ]
 };
 
-my $bgzip_pipe_cmd = "| bgzip -c ";
-
 sub execute {
     my $self = shift;
+
+    $self->_setup_prg_tools();
 
     my $vcf = $self->vcf;
     my $roi = $self->roi;
@@ -182,6 +180,35 @@ sub execute {
     ), "\n";
 
     return 1;
+}
+
+sub joinx {
+    my $self = shift;
+    return "/gscmnt/gc2801/analytics/tabbott/vcf-evaluate/bin/joinx"
+}
+
+sub bedtools {
+    my $self = shift;
+    return "/gscmnt/gc2801/analytics/tabbott/vcf-evaluate/bin/bedtools";
+}
+
+sub vcflib {
+    my $self = shift;
+    return "/gscmnt/gc2801/analytics/tabbott/vcf-evaluate/bin";
+}
+
+sub reference {
+    my $self = shift;
+    return "/gscmnt/ams1102/info/model_data/"
+           . "2869585698/build106942997/all_sequences.fa";
+}
+
+sub _setup_prg_tools {
+    my $self = shift;
+    $JOINX = $self->joinx();
+    $BEDTOOLS = $self->bedtools();
+    $VCFLIB = $self->vcflib();
+    $REFERENCE = $self->reference();
 }
 
 sub _process_input_file {
