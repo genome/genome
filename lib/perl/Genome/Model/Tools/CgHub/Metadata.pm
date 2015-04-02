@@ -5,48 +5,37 @@ use warnings;
 
 use Genome;
 
+use Params::Validate ':types';
 use XML::Simple;
 
 class Genome::Model::Tools::CgHub::Metadata {
     is => 'UR::Object',
     has => {
-        xml => {
-            is => 'Text',
-            doc => 'XML from CG Query.',
-        },
-    },
-    has_optional_transient => {
-        _metadata => { 
+        metadata => { 
             is => 'Hash',
             doc => 'The hash version of the metadata XML.',
         },
     },
 };
 
-sub create {
-    my $class = shift;
+sub create_from_xml {
+    my ($class, $xml) = Params::Validate::validate_pos(@_, {type => SCALAR}, {type => SCALAR, called => 'XML',});
 
-    my $self = $class->SUPER::create(@_);
-    return if not $self;
+    my $metadata = XMLin($xml);
+    die $class->error_message('Failed to load metadata XML!') if not $metadata;
 
-    die $self->error_message('No XML given!') if not $self->xml;
-    my $metadata = XMLin($self->xml);
-    die $self->error_message('Failed to load metadata XML!') if not $metadata;
-    $self->_metadata($metadata);
-
-    return $self;
+    return $class->SUPER::create(metadata => $metadata);
 }
 
 sub create_from_file {
-    my ($class, $metadata_file) = @_;
+    my ($class, $metadata_file) = Params::Validate::validate_pos(@_, {type => SCALAR}, {type => SCALAR});
 
-    die $class->error_message('No CG Query Metadata XML file given!') if not $metadata_file;
     my $xml = Genome::Sys->read_file($metadata_file);
     if ( not $xml ) {
         die $class->error_message('Failed to read in CG Query metadata XML from %s', $metadata_file);
     }
 
-    return $class->create(xml => $xml);
+    return $class->create_from_xml($xml);
 }
 
 my %attribute_mapping = (
@@ -57,11 +46,11 @@ my %attribute_mapping = (
 sub get_attribute_value {
     my ($self, $name) = @_;
 
-    die $self->error_message('No metadata set to get attribute value!') if not $self->_metadata;
+    die $self->error_message('No metadata set to get attribute value!') if not $self->metadata;
     die $self->error_message('No name to get attribute value!') if not $name;
 
     $name = $attribute_mapping{$name} if exists $attribute_mapping{$name};
-    my $value = $self->_metadata->{Result}->{$name};
+    my $value = $self->metadata->{Result}->{$name};
 
     return if not defined $value or $value eq '';
     return $value;
@@ -77,7 +66,7 @@ sub reference_assembly_shortname {
     my $reference_shortname = $self->get_attribute_value('refassem_short_name');
     return $reference_shortname if $reference_shortname;
 
-    $reference_shortname = $self->_metadata->{Result}->{analysis_xml}->{ANALYSIS_SET}->{ANALYSIS}->{ANALYSIS_TYPE}->{REFERENCE_ALIGNMENT}->{ASSEMBLY}->{STANDARD}->{shortname};
+    $reference_shortname = $self->metadata->{Result}->{analysis_xml}->{ANALYSIS_SET}->{ANALYSIS}->{ANALYSIS_TYPE}->{REFERENCE_ALIGNMENT}->{ASSEMBLY}->{STANDARD}->{shortname};
     return $reference_shortname if $reference_shortname;
 
     return;
@@ -104,7 +93,7 @@ sub target_region {
     # This will need to be updated
     my $self = shift;
 
-    die $self->error_message('No metadata set to get target region!') if not $self->_metadata;
+    die $self->error_message('No metadata set to get target region!') if not $self->metadata;
 
     my $target_region;
     my $library_strategy = $self->get_attribute_value('library_strategy');
@@ -128,13 +117,13 @@ sub target_region {
 sub _files {
     my $self = shift;
 
-    die $self->error_message('No metadata set to get files!') if not $self->_metadata;
+    die $self->error_message('No metadata set to get files!') if not $self->metadata;
 
-    my $files_ref = ref $self->_metadata->{Result}->{files}->{file};
+    my $files_ref = ref $self->metadata->{Result}->{files}->{file};
     return (
         $files_ref eq 'ARRAY'
-        ? @{$self->_metadata->{Result}->{files}->{file}}
-        : $self->_metadata->{Result}->{files}->{file}
+        ? @{$self->metadata->{Result}->{files}->{file}}
+        : $self->metadata->{Result}->{files}->{file}
     );
 }
 

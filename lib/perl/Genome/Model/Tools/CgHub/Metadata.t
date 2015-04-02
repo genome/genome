@@ -22,15 +22,15 @@ my $xml_file = File::Spec->join($data_dir, 'metadata.xml');
 my $b36_xml_file = File::Spec->join($data_dir, 'metadata.b36.xml');
 
 # Failures 
-throws_ok(sub{ $class->create(); }, qr/No XML given\!/, 'create failed w/o XML');
-throws_ok(sub{ $class->create(xml => 'blah'); }, qr//, 'create failed w/ invalid xml');
+throws_ok(sub{ $class->create_from_xml; }, qr/create_from_xml but 2 were expected/, 'create failed w/o XML');
+throws_ok(sub{ $class->create_from_xml('blah'); }, qr//, 'create failed w/ invalid xml');
 throws_ok(sub{ $class->create_from_file('blah'); }, qr/File \(blah\) does not exist/, 'create_from_file failed w/ non existing file');
 
 # Success [b37]
 my $uuid = '387c3f70-46e9-4669-80e3-694d450f2919';
 my $metadata1 = $class->create_from_file($xml_file);
 ok($metadata1, 'create') or die;
-ok($metadata1->_metadata, '_metadata');
+ok($metadata1->metadata, 'metadata');
 is($metadata1->uuid, $uuid, 'uuid');
 ok(
     _test_metadata(
@@ -76,7 +76,7 @@ ok(
 my $uuid2 = 'a1d11d67-4d5f-4db9-a61d-a0279c3c3d4f';
 my $metadata2 = $class->create_from_file($b36_xml_file);
 ok($metadata2, 'create w/ b36 xml file') or die;
-ok($metadata2->_metadata, '_metadata');
+ok($metadata2->metadata, 'metadata');
 is($metadata2->uuid, $uuid2, 'uuid');
 ok(
     _test_metadata(
@@ -123,10 +123,10 @@ throws_ok(sub{ $metadata2->checksum_content_for_file_name(); }, qr/No file name 
 throws_ok(sub{ $metadata2->checksum_type_for_file_name(); }, qr/No file name given to get attribute value!/, 'checksum_type_for_file_name fails w/o file name');
 
 # Fail to get target region when no library strategy is given
-my $library_strategy = $metadata2->_metadata->{Result}->{library_strategy};
-$metadata2->_metadata->{Result}->{library_strategy} = undef;
+my $library_strategy = $metadata2->metadata->{Result}->{library_strategy};
+$metadata2->metadata->{Result}->{library_strategy} = undef;
 throws_ok(sub{ $metadata2->target_region; }, qr/No library strategy in metadata to resolve target region!/, 'failed to get target region w/o library strategy');
-$metadata2->_metadata->{Result}->{library_strategy} = $library_strategy;
+$metadata2->metadata->{Result}->{library_strategy} = $library_strategy;
 
 done_testing();
 
