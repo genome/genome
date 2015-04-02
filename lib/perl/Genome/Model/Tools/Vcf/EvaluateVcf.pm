@@ -301,7 +301,6 @@ sub restrict {
     return 1;
 }
 
-
 sub restrict_commands {
     my $self = shift;
     my ($input_file, $roi_file) = @_;
@@ -426,10 +425,3 @@ sub _run {
 1;
 
 __END__
-
-# idas -- refactoring note
-# The pure subroutines are :
-#      _make_per_allele_info_filter
-#      _make_bad_indel_filter
-#      count
-#      _run
