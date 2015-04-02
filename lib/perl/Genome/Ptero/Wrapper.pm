@@ -5,6 +5,7 @@ use warnings FATAL => qw(all);
 use Genome;
 use Data::Dump qw();
 use IO::Handle;
+use Cwd qw(abs_path);
 use Ptero::Proxy::Workflow::Execution;
 
 class Genome::Ptero::Wrapper {
@@ -75,14 +76,14 @@ sub _stdout_log_path {
     my $self = shift;
 
     my $base_name = $self->execution->name;
-    my $output_log = File::Spec->join($self->log_directory, "$base_name.out");
+    my $output_log = File::Spec->join(abs_path($self->log_directory), "$base_name.out");
 }
 
 sub _stderr_log_path {
     my $self = shift;
 
     my $base_name = $self->execution->name;
-    my $output_log = File::Spec->join($self->log_directory, "$base_name.err");
+    my $output_log = File::Spec->join(abs_path($self->log_directory), "$base_name.err");
 }
 
 sub _setup_logging {
@@ -119,7 +120,7 @@ sub _log_execution_information {
     $self->status_message("COMMAND: PTERO_WORKFLOW_EXECUTION_URL=%s %s " .
         "ptero wrapper --command-class=\"%s\" --method=\"%s\" --log-directory=\"%s\"",
         $ENV{PTERO_WORKFLOW_EXECUTION_URL}, $0,
-        $self->command_class, $self->method, $self->log_directory);
+        $self->command_class, $self->method, abs_path($self->log_directory));
 }
 
 sub _instantiate_command {
