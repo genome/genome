@@ -62,7 +62,6 @@ class Genome::Model::Tools::Picard::CollectRnaSeqMetrics {
             doc => 'For strand-specific library prep. For unpaired reads, use FIRST_READ_TRANSCRIPTION_STRAND if the reads are expected to be on the transcription strand.',
             valid_values => ['NONE', 'FIRST_READ_TRANSCRIPTION_STRAND', 'SECOND_READ_TRANSCRIPTION_STRAND'],
             default_value => 'NONE',
-            is_optional => 1,
             picard_param_name => 'STRAND_SPECIFICITY',
         },
     ],
