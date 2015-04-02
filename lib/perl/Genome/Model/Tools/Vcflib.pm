@@ -65,7 +65,7 @@ sub get_version_toolset {
     my ($self, $version) = @_;
     my %toolset = (
         '1.0' => {
-            # script tools
+            # core programs
             'vcf2dag'                    => '/usr/bin/vcf2dag1.0',
             'vcf2fasta'                  => '/usr/bin/vcf2fasta1.0',
             'vcf2tsv'                    => '/usr/bin/vcf2tsv1.0',
