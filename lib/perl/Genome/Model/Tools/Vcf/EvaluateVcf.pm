@@ -98,8 +98,6 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
 sub execute {
     my $self = shift;
 
-    $self->_setup_prg_tools();
-
     my $vcf = $self->vcf;
     my $roi = $self->roi;
     my $gold_vcf = $self->gold_vcf;
@@ -216,11 +214,6 @@ sub reference {
     my $self = shift;
     return "/gscmnt/ams1102/info/model_data/"
            . "2869585698/build106942997/all_sequences.fa";
-}
-
-sub _setup_prg_tools {
-    my $self = shift;
-    $REFERENCE = $self->reference();
 }
 
 sub _process_input_file {
