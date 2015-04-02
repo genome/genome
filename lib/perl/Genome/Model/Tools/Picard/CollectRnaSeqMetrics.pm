@@ -6,24 +6,28 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::Picard::CollectRnaSeqMetrics {
-    is  => 'Genome::Model::Tools::Picard',
+    is  => 'Genome::Model::Tools::Picard::Base',
     has_input => [
         input_file => {
             is => 'String',
             doc => 'The SAM/BAM files to run on. File type is determined by suffix.',
+            picard_param_name => 'INPUT',
         },
         output_file => {
             is => 'String',
             doc => 'The output summary file',
+            picard_param_name => 'OUTPUT',
         },
         chart_output => {
             is => 'String',
             doc => 'The output PDF chart.',
             is_optional => 1,
+            picard_param_name => 'CHART_OUTPUT',
         },
         refseq_file => {
             is => 'String',
             doc => 'The reference sequence file',
+            picard_param_name => 'REFERENCE_SEQUENCE',
         },
         ribosomal_intervals_file => {
             is => 'Text',
@@ -32,22 +36,26 @@ class Genome::Model::Tools::Picard::CollectRnaSeqMetrics {
                  . 'being ribosomal. Interval files can be created with gmt '
                  . 'picard bed-to-interval-list. More details here: '
                  . 'http://samtools.github.io/htsjdk/javadoc/htsjdk/htsjdk/samtools/util/IntervalList.html',
+            picard_param_name => 'RIBOSOMAL_INTERVALS',
         },
         ref_flat_file => {
             is => 'Text',
             doc => 'Gene annotations in refFlat form. Format described here: '
                  . 'http://genome.ucsc.edu/goldenPath/gbdDescriptionsOld.html#RefFlat',
+            picard_param_name => 'REF_FLAT',
         },
         assume_sorted => {
             is => 'Boolean',
             doc => 'coordinate sorted beforehand or not, default 1',
             default_value => 1,
             is_optional => 1,
+            picard_param_name => 'ASSUME_SORTED',
         },
         stop_after => {
             is => 'Integer',
             doc => 'Stop after processing N reads, mainly for debugging.',
             is_optional => 1,
+            picard_param_name => 'STOP_AFTER',
         },
         strand_specificity => {
             is => 'String',
@@ -55,6 +63,7 @@ class Genome::Model::Tools::Picard::CollectRnaSeqMetrics {
             valid_values => ['NONE', 'FIRST_READ_TRANSCRIPTION_STRAND', 'SECOND_READ_TRANSCRIPTION_STRAND'],
             default_value => 'NONE',
             is_optional => 1,
+            picard_param_name => 'STRAND_SPECIFICITY',
         },
     ],
 };
@@ -70,50 +79,35 @@ sub help_detail {
 EOS
 }
 
-sub execute {
+sub _jar_name {
+    return 'CollectRnaSeqMetrics.jar';
+}
+
+sub _java_class {
+    return qw(picard analysis CollectRnaSeqMetrics);
+}
+
+sub _validate_params {
     my $self = shift;
 
-    my @input_files;
-    for my $type (qw(input ribosomal_intervals ref_flat)) {
-        my $property_name = $type.'_file';
-        unless ($self->$property_name and -s $self->$property_name) {
-            $self->error_message("$property_name is invalid");
-            return;
-        }
-        push @input_files, $self->$property_name;
+    if ($self->chart_output and $self->version_older_than('1.52')) {
+        die $self->error_message('Picard CollectRnaSeqMetrics version ',
+            $self->use_version, ' does not support chart_output');
     }
+}
 
-    my $cmd = $self->picard_path .'/CollectRnaSeqMetrics.jar net.sf.picard.analysis.CollectRnaSeqMetrics';
-    $cmd   .= ' OUTPUT='. $self->output_file  .' INPUT='. $self->input_file  .' RIBOSOMAL_INTERVALS='. $self->ribosomal_intervals_file .' REF_FLAT='. $self->ref_flat_file;
-    if ($self->refseq_file) {
-        $cmd .= ' REFERENCE_SEQUENCE='. $self->refseq_file;
-        push @input_files, $self->refseq_file;
-    }
-    if ($self->assume_sorted) {
-        $cmd .= ' ASSUME_SORTED=true';
-    } else {
-        $cmd .= ' ASSUME_SORTED=false';
-    }
-    if ($self->stop_after) {
-        $cmd .= ' STOP_AFTER='. $self->stop_after;
-    }
-    if ($self->strand_specificity) {
-        $cmd .= ' STRAND_SPECIFICITY='. $self->strand_specificity;
-    }
-    if ($self->chart_output) {
-        if ($self->use_version >= '1.52') {
-            $cmd .= ' CHART_OUTPUT='. $self->chart_output;
-        } else {
-            $self->warning_message('Picard version '. $self->use_version .' does not support CHART_OUTPUT!');
-        }
-    }
-    $self->run_java_vm(
-        cmd          => $cmd,
-        input_files  => \@input_files,
+sub _shellcmd_extra_params {
+    my $self = shift;
+
+    my @inputs = grep defined, map $self->$_, map "${_}_file", qw(
+        input ribosomal_intervals ref_flat refseq
+    );
+
+    return (
+        input_files => \@inputs,
         output_files => [$self->output_file],
         skip_if_output_is_present => 0,
     );
-    return 1;
 }
 
 sub parse_file_into_metrics_hashref {
