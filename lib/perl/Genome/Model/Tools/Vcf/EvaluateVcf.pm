@@ -424,3 +424,12 @@ sub _run {
 }
 
 1;
+
+__END__
+
+# idas -- refactoring note
+# The pure subroutines are :
+#      _make_per_allele_info_filter
+#      _make_bad_indel_filter
+#      count
+#      _run
