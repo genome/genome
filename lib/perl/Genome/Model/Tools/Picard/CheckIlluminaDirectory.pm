@@ -1,7 +1,4 @@
-
 package Genome::Model::Tools::Picard::CheckIlluminaDirectory;
-
-# http://broadinstitute.github.io/picard/command-line-overview.html#CheckIlluminaDirectory
 
 use strict;
 use warnings FATAL => 'all';
@@ -9,19 +6,22 @@ use warnings FATAL => 'all';
 use Genome;
 
 class Genome::Model::Tools::Picard::CheckIlluminaDirectory {
-    is  => 'Genome::Model::Tools::Picard',
+    is  => 'Genome::Model::Tools::Picard::Base',
     has_input => [
         basecalls_directory => {
             is  => 'String',
-            doc => 'The basecalls output directory.',
+            doc => 'The basecalls output directory',
+            picard_param_name => 'BASECALLS_DIR',
         },
         lane => {
             is  => 'String',
-            doc => 'Lane number.',
+            doc => 'Lane number',
+            picard_param_name => 'LANES',
         },
         read_structure => {
             is  => 'String',
             doc => 'A description of the logical structure of clusters in an Illumina Run',
+            picard_param_name => 'READ_STRUCTURE',
         },
     ],
 };
@@ -37,38 +37,12 @@ sub help_detail {
 EOS
 }
 
-sub execute {
-    my $self = shift;
+sub _jar_name {
+    return 'CheckIlluminaDirectory.jar';
+}
 
-    my $jar_path = $self->picard_path . '/CheckIlluminaDirectory.jar';
-    unless (-e $jar_path) {
-        die('Failed to find '. $jar_path .'!  This command may not be available in version '. $self->use_version);
-    }
-
-    my %map_args = qw(
-        basecalls_directory basecalls_dir
-        lane lanes
-    );
-
-    my $args = join(' ',
-        map {
-            my $value = $self->$_;
-            my $arg = $map_args{$_} || $_;
-            defined($value) ? (uc($arg) . "='$value'") : ()
-        } sort qw(
-            basecalls_directory
-            lane
-            read_structure
-        )
-    );
-
-    my $cmd = $jar_path . " net.sf.picard.illumina.CheckIlluminaDirectory $args";
-    $self->run_java_vm(
-        cmd          => $cmd,
-    );
-    return 1;
+sub _java_class {
+    return qw(picard illumina CheckIlluminaDirectory);
 }
 
 1;
-__END__
-
