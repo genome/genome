@@ -216,7 +216,12 @@ sub all_backends {
 }
 
 sub scopes {
-    return ('site', 'tgisan', 'unknown');
+    return qw(
+        host
+        site
+        tgisan
+        unknown
+    );
 }
 
 sub clear_backends {
