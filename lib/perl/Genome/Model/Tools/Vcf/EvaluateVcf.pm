@@ -16,7 +16,7 @@ use File::Temp qw(tempdir);
 use Genome::Model::Tools::Vcf::VcfCompare;
 
 
-my ($JOINX, $BEDTOOLS, $VCFLIB, $REFERENCE);
+my ($JOINX, $BEDTOOLS, $REFERENCE);
 my $bgzip_pipe_cmd = "| bgzip -c ";
 
 class Genome::Model::Tools::Vcf::EvaluateVcf {
@@ -32,6 +32,12 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
             is => "Text",
             doc => "Joinx version to use",
             default_value => "v1.10",
+        },
+
+        vcflib_version => {
+            is => "Text",
+            doc => "vcflib toolset version to use",
+            default_value => "1.0",
         },
 
         vcf => {
@@ -192,9 +198,12 @@ sub bedtools {
     return "/gscmnt/gc2801/analytics/tabbott/vcf-evaluate/bin/bedtools";
 }
 
-sub vcflib {
-    my $self = shift;
-    return "/gscmnt/gc2801/analytics/tabbott/vcf-evaluate/bin";
+sub vcflib_tool {
+    my $tool = shift;
+    my $path = Genome::Model::Tools::Vcflib->vcflib_tool_path(
+        $tool, $self->vcflib_version
+    );
+    return $path;
 }
 
 sub reference {
@@ -207,7 +216,6 @@ sub _setup_prg_tools {
     my $self = shift;
     $JOINX = $self->joinx();
     $BEDTOOLS = $self->bedtools();
-    $VCFLIB = $self->vcflib();
     $REFERENCE = $self->reference();
 }
 
@@ -306,7 +314,8 @@ sub restrict_commands {
 
 sub restrict_to_sample_commands {
     my ($input_file, $sample) = @_;
-    return ("$VCFLIB/vcfkeepsamples $input_file $sample");
+    my $vcfkeepsamples = vcflib_tool('vcfkeepsamples');
+    return ("$vcfkeepsamples $input_file $sample");
 }
 
 sub normalize_vcf_commands {
@@ -321,16 +330,22 @@ sub sort_commands {
 
 sub allelic_primitives_commands {
     my ($input_file) = @_;
+
+    my $vcfallelicprimitives = vcflib_tool('vcfallelicprimitives');
+    my $vcffixup = vcflib_tool('vcffixup');
+    my $vcffilter = vcflib_tool('vcffilter');
+
     return (
-        "$VCFLIB/vcfallelicprimitives -t ALLELICPRIMITIVE /dev/stdin",
-        "$VCFLIB/vcffixup - ",
-        "$VCFLIB/vcffilter -f 'AC > 0'"
+        "$vcfallelicprimitives -t ALLELICPRIMITIVE /dev/stdin",
+        "$vcffixup - ",
+        "$vcffilter -f 'AC > 0'"
         );
 }
 
 sub pass_only_commands {
     my ($input_file, $expression) = @_;
-    return ("$VCFLIB/vcffilter $expression $input_file");
+    my $vcffilter = vcflib_tool('vcffilter');
+    return ("$vcffilter $expression $input_file");
 }
 
 
