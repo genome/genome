@@ -17,7 +17,7 @@ use Path::Class;
 use Genome::Model::Tools::Vcf::VcfCompare;
 
 
-my ($JOINX, $REFERENCE);
+my ($REFERENCE);
 my $bgzip_pipe_cmd = "| bgzip -c ";
 
 class Genome::Model::Tools::Vcf::EvaluateVcf {
@@ -191,7 +191,8 @@ sub execute {
 
 sub joinx {
     my $self = shift;
-    return "/gscmnt/gc2801/analytics/tabbott/vcf-evaluate/bin/joinx"
+    my $path = Genome::Model::Tools::Joinx->joinx_path($self->joinx_version);
+    return $path;
 }
 
 sub bedtools {
@@ -220,8 +221,6 @@ sub reference {
 
 sub _setup_prg_tools {
     my $self = shift;
-    $JOINX = $self->joinx();
-    $BEDTOOLS = $self->bedtools();
     $REFERENCE = $self->reference();
 }
 
@@ -327,13 +326,17 @@ sub restrict_to_sample_commands {
 }
 
 sub normalize_vcf_commands {
+    my $self = shift;
     my ($input_file, $reference, $output_file) = @_;
-    return ("$JOINX vcf-normalize-indels -f $reference $input_file");
+    my $joinx = $self->joinx;
+    return ("$joinx vcf-normalize-indels -f $reference $input_file");
 }
 
 sub sort_commands {
+    my $self = shift;
     my ($input_file) = @_;
-    return ("$JOINX sort $input_file");
+    my $joinx = $self->joinx;
+    return ("$joinx sort $input_file");
 }
 
 sub allelic_primitives_commands {
@@ -378,6 +381,7 @@ sub restrict_input_file {
 }
 
 sub compare_partial {
+    my $self = shift;
     my ($input_file, $variant_directory, $gold_file, $output_file, $gold_sample, $eval_sample, $new_sample) = @_;
     my $rename_option = "";
     if($new_sample) {
@@ -388,7 +392,8 @@ sub compare_partial {
             $rename_option .= " -R $eval_sample=$new_sample";
         }
     }
-    _run("$JOINX vcf-compare $rename_option -d $variant_directory $input_file $gold_file -s $new_sample > $output_file");
+    my $joinx = $self->joinx;
+    _run("$joinx vcf-compare $rename_option -d $variant_directory $input_file $gold_file -s $new_sample > $output_file");
 }
 
 sub true_positives {
