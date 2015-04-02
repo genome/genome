@@ -48,22 +48,22 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
         min_depth  => {
             is => 'Integer',
             is_optional => 1,
-            doc => 'minimum depth required for a site to be reported',
+            doc => 'minimum depth required for a site to be reported. Only use with single BAM.',
         },
         max_depth => {
             is => 'Integer',
             is_optional => 1,
-            doc => 'maximum depth allowed for a site to be reported',
+            doc => 'maximum depth allowed for a site to be reported. Only use with single BAM.',
         },
         min_vaf => {
             is => 'Integer',
             is_optional => 1,
-            doc => 'minimum variant allele frequency required for a site to be reported (0-100)',
+            doc => 'minimum variant allele frequency required for a site to be reported (0-100). Only use with single BAM.',
         },
         max_vaf => {
             is => 'Integer',
             is_optional => 1,
-            doc => 'maximum variant allele frequency allowed for a site to be reported (0-100)',
+            doc => 'maximum variant allele frequency allowed for a site to be reported (0-100). Only use with single BAM.',,
         },
         indel_size_limit => {
             is => 'Integer',
@@ -102,22 +102,31 @@ sub help_detail {
 
 sub execute {
     my $self = shift;
-    my $bam_files = $self->bam_files;
+    my @bams = split(",", $self->bam_files);
     my $variant_file = $self->variant_file;
     my $output_file = $self->output_file;
     my $genome_build = $self->genome_build;
     my $min_quality_score = $self->min_quality_score;
     my $min_base_quality = $self->min_base_quality;
 
+    # These options result in sites failing the filters to be removed
+    # from the output of Genome::Model::Tools::Analysis::Coverage::BamReadcount
+    # This is appropriate for single samples, but not for multiple. We will check
+    # and die with an appropriate error if someone tries to do the wrong thing
+
     my $min_vaf = $self->min_vaf;
     my $max_vaf = $self->max_vaf;
     my $min_depth = $self->min_depth;
     my $max_depth = $self->max_depth;
+
+    if(scalar(@bams) > 1 && grep { defined $_ } ($min_vaf, $max_vaf, $min_depth, $max_depth)) {
+        die "Cannot filter on VAF and/or Depth if gathering results from multiple BAM files";
+    }
+
     my $indel_size_limit = $self->indel_size_limit;
 
     my $chrom = $self->chrom;
     my @header_prefixes;
-    my @bams = split(",",$bam_files);
     if(defined($self->header_prefixes)){
         @header_prefixes = split(",",$self->header_prefixes);
     }
