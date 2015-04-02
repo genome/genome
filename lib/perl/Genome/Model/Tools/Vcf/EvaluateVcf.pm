@@ -30,7 +30,7 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
         joinx_version => {
             is => "Text",
             doc => "Joinx version to use",
-            default_value => "v1.10",
+            default_value => "1.11",
         },
 
         vcflib_version => {
