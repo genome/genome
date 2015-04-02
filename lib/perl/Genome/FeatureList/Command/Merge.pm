@@ -6,6 +6,7 @@ use warnings;
 use feature qw(say);
 
 use List::MoreUtils qw(any uniq all);
+use UR::Util;
 use Genome;
 
 class Genome::FeatureList::Command::Merge {
@@ -195,14 +196,20 @@ sub _find_convertible_reference {
         my $target = $_; all { $target->contains($_) || $available_conversions{$_->id}{$target->id} } @references;
     } @target_references;
 
-    if (scalar(@convertible_references) > 1) {
-        $class->_die_with_multiple_candidate_references(
-            'The references of the input feature-lists can be converted to multiple references:',
-            @convertible_references,
-        );
+    if (scalar(@convertible_references) < 2) {
+        return $convertible_references[0];
     }
 
-    return $convertible_references[0];
+    #prefer a reference from our original query set
+    my ($preferred_references) = UR::Util::intersect_lists(\@references, \@convertible_references);
+    if (scalar(@$preferred_references) eq 1) {
+        return $preferred_references->[0];
+    }
+
+    $class->_die_with_multiple_candidate_references(
+        'The references of the input feature-lists can be converted to multiple references:',
+        @convertible_references,
+    );
 }
 
 sub _find_combined_reference_with_conversions {
