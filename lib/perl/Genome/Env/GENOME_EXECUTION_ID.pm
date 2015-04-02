@@ -1,5 +1,7 @@
 package Genome::Env::GENOME_EXECUTION_ID;
-use base 'Genome::Env::Required';
+
+use UR;
+sub default_value { UR::Object::Type->autogenerate_new_object_id_uuid() }
 
 =pod
 

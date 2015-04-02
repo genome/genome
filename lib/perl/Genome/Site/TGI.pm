@@ -123,9 +123,6 @@ BEGIN { $INC{"Genome/Config.pm"} = 'no' };
 
 BEGIN { $INC{ "UR/Time.pm"} = "no" };
 
-# a unique ID for each program execution.  Used got logging saves to the database
-$ENV{GENOME_EXECUTION_ID} = UR::Object::Type->autogenerate_new_object_id_uuid();
-
 # this keeps available parts of the UR pre-0.01 API we still use
 use UR::ObjectV001removed;
 
