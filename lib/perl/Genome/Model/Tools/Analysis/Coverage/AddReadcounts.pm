@@ -48,22 +48,22 @@ class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
         min_depth  => {
             is => 'Integer',
             is_optional => 1,
-            doc => 'minimum depth required for a site to be reported. Only use with single BAM.',
+            doc => 'minimum depth required for a site to be reported. Only use with a single BAM.',
         },
         max_depth => {
             is => 'Integer',
             is_optional => 1,
-            doc => 'maximum depth allowed for a site to be reported. Only use with single BAM.',
+            doc => 'maximum depth allowed for a site to be reported. Only use with a single BAM.',
         },
         min_vaf => {
             is => 'Integer',
             is_optional => 1,
-            doc => 'minimum variant allele frequency required for a site to be reported (0-100). Only use with single BAM.',
+            doc => 'minimum variant allele frequency required for a site to be reported (0-100). Only use with a single BAM.',
         },
         max_vaf => {
             is => 'Integer',
             is_optional => 1,
-            doc => 'maximum variant allele frequency allowed for a site to be reported (0-100). Only use with single BAM.',,
+            doc => 'maximum variant allele frequency allowed for a site to be reported (0-100). Only use with a single BAM.',,
         },
         indel_size_limit => {
             is => 'Integer',
@@ -95,7 +95,7 @@ sub help_brief {
 }
 
 sub help_detail {
-    "get readcounts. make pretty. append to anno file"
+    "This expects input in old TGI annotator format. It appends reference, variant counts and VAF (as a percentage) to the end of each input line."
 }
 
 
