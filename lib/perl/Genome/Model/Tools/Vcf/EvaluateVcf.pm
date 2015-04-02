@@ -17,7 +17,6 @@ use Path::Class;
 use Genome::Model::Tools::Vcf::VcfCompare;
 
 
-my $bgzip_pipe_cmd = "| bgzip -c ";
 
 class Genome::Model::Tools::Vcf::EvaluateVcf {
     is => "Command::V2",
@@ -388,11 +387,11 @@ sub true_positives {
     );
 }
 
-
 sub number_within_roi {
     my $self = shift;
     my ($input_file, $roi, $output_file) = @_;
     my $bedtools = $self->bedtools;
+    my $bgzip_pipe_cmd = "| bgzip -c ";
     _run("zcat $input_file | $bedtools intersect -header -a stdin -b $roi $bgzip_pipe_cmd > $output_file");
     return count($output_file);
 }
