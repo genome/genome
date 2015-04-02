@@ -196,7 +196,7 @@ sub bedtools {
     my $base = Genome::Model::Tools::BedTools->path_for_bedtools_version(
         $self->bedtools_version
     );
-    my $base = Path::Class::Dir->new($base);
+    $base = Path::Class::Dir->new($base);
     my $prg = $base->subdir('bin')->file('bedtools');
     return $prg->stringify;
 }
