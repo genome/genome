@@ -1,12 +1,5 @@
 package Genome::Env::GENOME_SOFTWARE_RESULT_TEST_NAME;
 
-use strict;
-use warnings;
-
-use Genome;
-
-our $VERSION = $Genome::VERSION;
-
 =pod
 
 =head1 NAME
