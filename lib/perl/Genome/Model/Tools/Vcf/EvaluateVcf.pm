@@ -13,10 +13,11 @@ use Getopt::Long;
 use File::Basename;
 use File::Spec;
 use File::Temp qw(tempdir);
+use Path::Class;
 use Genome::Model::Tools::Vcf::VcfCompare;
 
 
-my ($JOINX, $BEDTOOLS, $REFERENCE);
+my ($JOINX, $REFERENCE);
 my $bgzip_pipe_cmd = "| bgzip -c ";
 
 class Genome::Model::Tools::Vcf::EvaluateVcf {
@@ -195,7 +196,12 @@ sub joinx {
 
 sub bedtools {
     my $self = shift;
-    return "/gscmnt/gc2801/analytics/tabbott/vcf-evaluate/bin/bedtools";
+    my $base = Genome::Model::Tools::BedTools->path_for_bedtools_version(
+        $self->bedtools_version
+    );
+    my $base = Path::Class::Dir->new($base);
+    my $prg = $base->subdir('bin')->file('bedtools');
+    return $prg->stringify;
 }
 
 sub vcflib_tool {
@@ -308,8 +314,10 @@ sub restrict {
 
 
 sub restrict_commands {
+    my $self = shift;
     my ($input_file, $roi_file) = @_;
-    return ("$BEDTOOLS intersect -header -a $input_file -b $roi_file");
+    my $bedtools = $self->bedtools;
+    return ("$bedtools intersect -header -a $input_file -b $roi_file");
 }
 
 sub restrict_to_sample_commands {
@@ -403,8 +411,10 @@ sub true_positives {
 
 
 sub number_within_roi {
+    my $self = shift;
     my ($input_file, $roi, $output_file) = @_;
-    _run("zcat $input_file | $BEDTOOLS intersect -header -a stdin -b $roi $bgzip_pipe_cmd > $output_file");
+    my $bedtools = $self->bedtools;
+    _run("zcat $input_file | $bedtools intersect -header -a stdin -b $roi $bgzip_pipe_cmd > $output_file");
     return count($output_file);
 }
 
