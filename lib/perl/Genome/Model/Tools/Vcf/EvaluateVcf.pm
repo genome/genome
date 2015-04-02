@@ -250,8 +250,8 @@ sub _clean_vcf {
 
     $self->status_message("Cleaning vcf $input_file => $output_file");
     $DB::single = 1;
-    my $reader = new Genome::File::Vcf::Reader($input_file);
-    my $writer = new Genome::File::Vcf::Writer($output_file, $reader->header);
+    my $reader = Genome::File::Vcf::Reader->new($input_file);
+    my $writer = Genome::File::Vcf::Writer->new($output_file, $reader->header);
 
     $reader->add_filter(_make_bad_indel_filter($self->roi)) if $self->clean_indels;
     $reader->add_filter(_make_per_allele_info_filter($reader->header));
@@ -282,7 +282,7 @@ sub _make_bad_indel_filter {
     my %bed_ends;
 
     # This is compressed!
-    my $fh = new IO::Zlib;
+    my $fh = IO::Zlib->new;
     $fh->open($roi_file, "rb") or die "Unable to open BED file $roi_file for removal of bad indel lines\n";
     while(my $bedline = $fh->getline) {
         chomp $bedline;
