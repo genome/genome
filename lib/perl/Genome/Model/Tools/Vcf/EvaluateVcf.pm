@@ -361,27 +361,6 @@ sub pass_only_commands {
     return ("$vcffilter $expression $input_file");
 }
 
-
-sub restrict_input_file {
-    my ($input_file, $roi_file, $output_file, $sample, $filter_exp)  = @_;
-    my @cmds = (
-        restrict_commands($input_file, $roi_file),
-        restrict_to_sample_commands("/dev/stdin", $sample),
-        pass_only_commands("/dev/stdin", $filter_exp),
-        allelic_primitives_commands("/dev/stdin"),
-        normalize_vcf_commands("/dev/stdin", $REFERENCE),
-        sort_commands("/dev/stdin"),
-        restrict_commands("stdin", $roi_file),
-        "bgzip -c",
-        );
-
-    my $cmd = Genome::Sys::ShellPipeline->create(
-        pipe_commands => \@cmds,
-        redirects => " > $output_file",
-        );
-    $cmd->execute;
-}
-
 sub compare_partial {
     my $self = shift;
     my ($input_file, $variant_directory, $gold_file, $output_file, $gold_sample, $eval_sample, $new_sample) = @_;
