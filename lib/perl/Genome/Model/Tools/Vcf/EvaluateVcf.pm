@@ -141,7 +141,7 @@ sub execute {
     $self->_clean_vcf($tmp, $final_gold_file);
 
 
-    compare_partial(
+    $self->compare_partial(
         $final_input_file,
         $variants_dir,
         $final_gold_file,
@@ -151,15 +151,15 @@ sub execute {
         $new_sample
         );
 
-    my $tn_bed_size = bed_size("$tn_bed.roi.bed.gz");
+    my $tn_bed_size = $self->bed_size("$tn_bed.roi.bed.gz");
 
-    my $false_positives_in_roi = number_within_roi(
+    my $false_positives_in_roi = $self->number_within_roi(
         $final_input_file,
         $final_tn_file,
         $fp_roi_file,
         );
 
-    my %results = true_positives($final_input_file, $final_gold_file, $compare_file, $new_sample);
+    my %results = $self->true_positives($final_input_file, $final_gold_file, $compare_file, $new_sample);
 
     print join("\t",
         # Exact matches
@@ -206,7 +206,7 @@ sub bedtools {
 }
 
 sub vcflib_tool {
-    my $tool = shift;
+    my ($self, $tool) = @_;
     my $path = Genome::Model::Tools::Vcflib->vcflib_tool_path(
         $tool, $self->vcflib_version
     );
@@ -227,13 +227,13 @@ sub _setup_prg_tools {
 sub _process_input_file {
     my ($self, $input_file, $output_file) = @_;
     my @cmds = (
-        restrict_commands($input_file, $self->roi),
-        restrict_to_sample_commands("/dev/stdin", $self->old_sample),
-        pass_only_commands("/dev/stdin", $self->pass_only_expression),
-        allelic_primitives_commands("/dev/stdin"),
-        normalize_vcf_commands("/dev/stdin", $REFERENCE),
-        sort_commands("/dev/stdin"),
-        restrict_commands("stdin", $self->roi),
+        $self->restrict_commands($input_file, $self->roi),
+        $self->restrict_to_sample_commands("/dev/stdin", $self->old_sample),
+        $self->pass_only_commands("/dev/stdin", $self->pass_only_expression),
+        $self->allelic_primitives_commands("/dev/stdin"),
+        $self->normalize_vcf_commands("/dev/stdin", $REFERENCE),
+        $self->sort_commands("/dev/stdin"),
+        $self->restrict_commands("stdin", $self->roi),
         "bgzip -c",
         );
 
@@ -320,8 +320,9 @@ sub restrict_commands {
 }
 
 sub restrict_to_sample_commands {
+    my $self = shift;
     my ($input_file, $sample) = @_;
-    my $vcfkeepsamples = vcflib_tool('vcfkeepsamples');
+    my $vcfkeepsamples = $self->vcflib_tool('vcfkeepsamples');
     return ("$vcfkeepsamples $input_file $sample");
 }
 
@@ -340,11 +341,12 @@ sub sort_commands {
 }
 
 sub allelic_primitives_commands {
+    my $self = shift;
     my ($input_file) = @_;
 
-    my $vcfallelicprimitives = vcflib_tool('vcfallelicprimitives');
-    my $vcffixup = vcflib_tool('vcffixup');
-    my $vcffilter = vcflib_tool('vcffilter');
+    my $vcfallelicprimitives = $self->vcflib_tool('vcfallelicprimitives');
+    my $vcffixup = $self->vcflib_tool('vcffixup');
+    my $vcffilter = $self->vcflib_tool('vcffilter');
 
     return (
         "$vcfallelicprimitives -t ALLELICPRIMITIVE /dev/stdin",
@@ -354,8 +356,9 @@ sub allelic_primitives_commands {
 }
 
 sub pass_only_commands {
+    my $self = shift;
     my ($input_file, $expression) = @_;
-    my $vcffilter = vcflib_tool('vcffilter');
+    my $vcffilter = $self->vcflib_tool('vcffilter');
     return ("$vcffilter $expression $input_file");
 }
 
@@ -397,6 +400,7 @@ sub compare_partial {
 }
 
 sub true_positives {
+    my $self = shift;
     my ($input_file, $gold_file, $joinx_output, $new_sample) = @_;
     my $table = Genome::Model::Tools::Vcf::VcfCompare->new($joinx_output);
     #for now only do perfect matches
@@ -424,6 +428,7 @@ sub number_within_roi {
 }
 
 sub bed_size {
+    my $self = shift;
     my $bed = shift;
     my $count = 0;
     my $fh = IO::File->new("zcat $bed |") or die "Unable to open $bed to calculate size\n";
