@@ -155,7 +155,12 @@ sub execute {
         $fp_roi_file,
         );
 
-    my %results = $self->true_positives($final_input_file, $final_gold_file, $compare_file, $new_sample);
+    my %results = $self->true_positives(
+        $final_input_file,
+        $final_gold_file,
+        $compare_file,
+        $new_sample
+    );
 
     print join("\t",
         # Exact matches
