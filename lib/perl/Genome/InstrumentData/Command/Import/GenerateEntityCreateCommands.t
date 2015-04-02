@@ -67,7 +67,7 @@ throws_ok(
 ## empty file
 throws_ok(
     sub{ Genome::InstrumentData::Command::Import::GenerateEntityCreateCommands->execute(file => File::Spec->join($data_dir, 'empty.csv')); },
-    qr/File \(.+\) does not have any headers\! Is it empty\?/,
+    qr/File \(.+\) is empty\!/,
     'failed w/ empty file',
 );
 
