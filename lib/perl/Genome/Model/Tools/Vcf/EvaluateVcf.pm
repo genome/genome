@@ -17,7 +17,6 @@ use Path::Class;
 use Genome::Model::Tools::Vcf::VcfCompare;
 
 
-my ($REFERENCE);
 my $bgzip_pipe_cmd = "| bgzip -c ";
 
 class Genome::Model::Tools::Vcf::EvaluateVcf {
@@ -231,7 +230,7 @@ sub _process_input_file {
         $self->restrict_to_sample_commands("/dev/stdin", $self->old_sample),
         $self->pass_only_commands("/dev/stdin", $self->pass_only_expression),
         $self->allelic_primitives_commands("/dev/stdin"),
-        $self->normalize_vcf_commands("/dev/stdin", $REFERENCE),
+        $self->normalize_vcf_commands("/dev/stdin", $self->reference),
         $self->sort_commands("/dev/stdin"),
         $self->restrict_commands("stdin", $self->roi),
         "bgzip -c",
