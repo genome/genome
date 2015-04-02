@@ -480,7 +480,7 @@ sub _parse_metrics_file_into_hashref {
     my $metrics_fh = Genome::Sys->open_file_for_reading($metrics_file);
 
     my $metric_key_index;
-    unless ($metric_header_as_key) {
+    unless (defined $metric_header_as_key) {
         if ($class->can('_metric_header_as_key')) {
             $metric_header_as_key = $class->_metric_header_as_key;
         } else {
