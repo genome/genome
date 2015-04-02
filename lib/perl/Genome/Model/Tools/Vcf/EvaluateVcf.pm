@@ -443,11 +443,6 @@ sub count {
     return $results[0];
 }
 
-sub print_versions {
-    print `$JOINX --version`;
-    print `$BEDTOOLS --version`;
-}
-
 sub _run {
     my $cmd = shift;
 
