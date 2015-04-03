@@ -10,6 +10,7 @@ use Genome;
 use warnings;
 use strict;
 
+use Genome::Sys::LockProxy qw();
 use Getopt::Long;
 
 my ($rebuild, $help, $add_all, $add, $lock_name, $chunk);
@@ -73,17 +74,18 @@ Genome::Search->get()->refresh_cache_on_add(1);
 
 my $time;
 
-my $lock_resource = $ENV{GENOME_LOCK_DIR} . '/gcsearch/db_loader';
-
+my $lock_resource = 'gcsearch/db_loader';
 if (Genome::Config->dev_mode()) {
     $lock_resource .= '_dev';
 }
-
 if ($lock_name) {
     $lock_resource .= "_$lock_name";
 }
 
-my $lock = Genome::Sys->lock_resource(resource_lock=>$lock_resource, max_try=>0);
+my $lock = Genome::Sys::LockProxy->new(
+    resource => $lock_resource,
+    scope => 'site',
+)->lock(max_try => 0);
 unless ($lock) {
     die "could not lock, another instance must be running.";
 }
@@ -102,7 +104,7 @@ for my $t (@types_to_add) {
     $f->{$t}->();
 }
 
-Genome::Sys->unlock_resource(resource_lock=>$lock);
+$lock->unlock();
 
 exit;
 

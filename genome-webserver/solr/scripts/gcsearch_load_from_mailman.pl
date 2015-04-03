@@ -5,9 +5,10 @@ use above "Genome";
 use strict;
 use warnings;
 
-use LWP::UserAgent;
-use Email::Simple;
 use Data::Dumper;
+use Email::Simple;
+use Genome::Sys::LockProxy qw();
+use LWP::UserAgent;
 
 STDOUT->autoflush(1);
 STDERR->autoflush(1);
@@ -25,19 +26,21 @@ my $MONTH_NAMES = month_names();
 
 
 my $lock_resource = 'gcsearch/mailman_loader';
-
 if (Genome::Config->dev_mode()) {
     $lock_resource .= '_dev';
 }
 
-my $lock = Genome::Sys->lock_resource(resource_lock=>$lock_resource, max_try=>0, scope=>'site');
+my $lock = Genome::Sys::LockProxy->new(
+    resource => $lock_resource,
+    scope => 'site',
+)->lock(max_try => 0);
 unless ($lock) {
     die "could not lock, another instance must be running.";
 }
 
 main();
 
-Genome::Sys->unlock_resource(resource_lock=>$lock);
+$lock->unlock();
 
 exit;
 
