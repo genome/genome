@@ -65,6 +65,17 @@ sub path_for_bedtools_version {
     die 'No path found for bedtools version: '. $version;
 }
 
+sub bedtools_executable_path {
+    my $self = shift;
+    my $version = shift;
+    my $bedtools = File::Spec->catfile(
+        $self->path_for_bedtools_version($version),
+        "bin",
+        "bedtools");
+    return $bedtools if (defined $bedtools && -e $bedtools);
+    die 'No bedtools executable found for bedtools version: '. $version;
+}
+
 sub default_bedtools_version {
     die "default bedtools version: $BEDTOOLS_DEFAULT is not valid" unless $BEDTOOLS_VERSIONS{$BEDTOOLS_DEFAULT};
     return $BEDTOOLS_DEFAULT;
