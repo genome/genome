@@ -8,11 +8,7 @@ use Genome;
 require File::Temp;
 
 class Genome::Model::DeNovoAssembly::Build::PrepareInstrumentData {
-    is => 'Command::V2',
-    has_input => [
-        build => { is => 'Genome::Model::Build::DeNovoAssembly',
-            is_output => 1 },
-    ],
+    is => 'Genome::Model::DeNovoAssembly::Build::ProcessInstrumentDataBase',
     has_optional => [
         _input_count => { is => 'Number', default_value => 0, },
         _input_bases => { is => 'Number', default_value => 0, },
@@ -20,11 +16,6 @@ class Genome::Model::DeNovoAssembly::Build::PrepareInstrumentData {
         _output_bases => { is => 'Number', default_value => 0, },
         _original_base_limit => { is => 'Number', },
         _base_limit => { is => 'Number', },
-    ],
-    has_constant => [
-        lsf_resource => { is => 'Text',
-            default_value => "-R 'select[mem>32000 && gtmp>200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000",
-        },
     ],
 };
 

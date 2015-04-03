@@ -336,6 +336,18 @@ sub metric_names {
 }
 
 #< Inst Data Info >#
+sub resolve_resource_requirements_for_processing_instrument_data {
+    my ($self, $instdata_processing_class) = @_;
+
+    my $lsf_resource = $instdata_processing_class->__meta__->property_meta_for_name('lsf_resource')->default_value;
+    my $read_processor = $self->processing_profile->read_processor;
+    return $lsf_resource if not $read_processor;
+    my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(processor => $read_processor);
+    die $self->error_message('Failed to parse read processor: %s', $read_processor) if not $sx_processor;
+
+    return $lsf_resource.' -n '.$sx_processor->number_of_threads_required;
+}
+
 sub calculate_reads_attempted {
     my $self = shift;
 
