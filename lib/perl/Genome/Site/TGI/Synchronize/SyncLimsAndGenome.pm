@@ -67,7 +67,7 @@ sub _lock_me {
     return 1 if $ENV{UR_DBI_NO_COMMIT};
     $self->status_message('Lock...');
     my $lock = Genome::Sys::LockProxy->new(
-        resource_lock => 'synchronize-genome-from-lims',
+        resource => 'synchronize-genome-from-lims',
         scope => 'site',
     )->lock(
         max_try => 1,
