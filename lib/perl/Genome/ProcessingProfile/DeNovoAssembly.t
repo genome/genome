@@ -144,7 +144,7 @@ EOS
     <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::Assemble" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-n 4 -R 'span[hosts=1] select[mem&gt;30000] rusage[mem=30000]' -M 30000000" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="PrepareInstrumentData">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::PrepareInstrumentData" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000" typeClass="Workflow::OperationType::Command" />
+    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::PrepareInstrumentData" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="Report">
     <operationtype commandClass="Genome::Model::DeNovoAssembly::Command::Report" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" typeClass="Workflow::OperationType::Command" />

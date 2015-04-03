@@ -7,6 +7,6 @@ use above 'Genome';
 
 use Test::More;
 
-use_ok('Genome::Model::DeNovoAssembly::Command::PrepareInstrumentData') or die;
+use_ok('Genome::Model::DeNovoAssembly::Build::PrepareInstrumentData') or die;
 
 done_testing();

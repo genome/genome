@@ -534,7 +534,7 @@ sub _resolve_workflow_for_normal_assembly {
             left_operation => $merge_op, left_property => 'sx_results',
             right_operation => $assemble_op, right_property => 'sx_results');
     } else {
-        $id_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::PrepareInstrumentData', {
+        $id_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Build::PrepareInstrumentData', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
 
         $workflow->add_link(

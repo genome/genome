@@ -1,4 +1,4 @@
-package Genome::Model::DeNovoAssembly::Command::PrepareInstrumentData;
+package Genome::Model::DeNovoAssembly::Build::PrepareInstrumentData;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 require File::Temp;
 
-class Genome::Model::DeNovoAssembly::Command::PrepareInstrumentData {
+class Genome::Model::DeNovoAssembly::Build::PrepareInstrumentData {
     is => 'Command::V2',
     has_input => [
         build => { is => 'Genome::Model::Build::DeNovoAssembly',
