@@ -11,12 +11,13 @@ BEGIN {
 
 use above "Genome";
 use Test::More;
+use Genome::Utility::Test qw(compare_ok);
 
 use_ok('Genome::Model::ClinSeq::Command::IdentifyLoh') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} .
-  "Genome-Model-ClinSeq-Command-IdentifyLoh/2014-12-23/";
+my $expected_output_dir =
+  Genome::Utility::Test->data_dir_ok('Genome::Model::ClinSeq::Command::IdentifyLoh', '2015-03-26');
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 my $temp_dir = Genome::Sys->create_temp_directory();
@@ -43,7 +44,7 @@ $log->close();
 ok(-e $log_file, "Wrote message file from identify-loh to a log
      file: $log_file");
 
-my @diff = `diff -r -x '*.log.txt' -x '*png' -x '*R' -x '*cbs*' -x '*seg' $expected_output_dir $temp_dir`;
+my @diff = `diff -r -x '*.log.txt' -x '*png' -x '*R' -x '*cbs*' -x '*seg' -x '*.err' -x '*.out' $expected_output_dir $temp_dir`;
 ok(@diff == 0, "Found only expected number of differences between expected
   results and test results")
 or do {

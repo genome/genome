@@ -106,9 +106,9 @@ sub split_snvs {
   my $varscan_op = shift;
   my $snv_prefix = shift;
   my $awk_cmd;
-  #use chr1 variants only for chr1
+  #use subsample of chr1 variants only for chr1
   if($self->test) {
-    $awk_cmd = "awk '\$1==1 { print > \"$snv_prefix.\"\$1\".snp\" }' $varscan_op";
+    $awk_cmd = "awk '\$1==1 { if(NR\%1000 == 0) { print > \"$snv_prefix.\"\$1\".snp\" }}' $varscan_op";
   } else {
     $awk_cmd = "awk '{ print > \"$snv_prefix.\"\$1\".snp\" }' $varscan_op";
   }
