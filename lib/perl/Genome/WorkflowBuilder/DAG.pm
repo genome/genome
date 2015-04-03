@@ -132,11 +132,10 @@ sub get_ptero_builder {
     require Ptero::Builder::Workflow;
 
     my $self = shift;
-    my $name = shift;
 
     $self->validate;
 
-    my $dag_method = Ptero::Builder::Workflow->new(name => $name || 'root');
+    my $dag_method = Ptero::Builder::Workflow->new(name => $self->name);
 
     for my $operation (@{$self->operations}) {
         $dag_method->_add_task($operation->get_ptero_builder_task($self->log_dir));
