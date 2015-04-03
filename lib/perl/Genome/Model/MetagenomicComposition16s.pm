@@ -132,8 +132,7 @@ sub validate_amplicon_processor {
         $command =~ s/^\s+//;
         $command =~ s/\s+$//;
         $command = "gmt sx $command";
-        my $valid = Genome::Model::Tools::Sx::Validate->validate_command( $command );
-        if ( not $valid ) {
+        if ( Genome::Model::Tools::Sx::Validate->create(command => $command)->is_valid ) {
             push @error_msgs, "Invalid amplicon processor command: $command";
         }
     }
