@@ -9,6 +9,7 @@ use Test::More tests => 3;
 use Genome::Sys::Lock qw();
 use Genome::Sys::Lock::MockBackend qw();
 use Genome::Sys::LockMigrationProxy qw();
+use Genome::Sys::LockProxy qw();
 use Genome::Utility::Text qw(rand_string);
 use List::Util qw(shuffle);
 use Scope::Guard qw();
@@ -31,11 +32,10 @@ subtest 'old fails' => sub {
         max_try => 0,
     );
 
-    my $old_lock = Genome::Sys::Lock->lock_resource(
-        resource_lock => $resource,
+    my $old_lock = Genome::Sys::LockProxy->new(
+        resource => $resource,
         scope => 'test_old',
-        %lock_params,
-    );
+    )->lock(%lock_params);
     ok($old_lock, q(preemptively locked on 'test_old'));
 
     my $success = Genome::Sys::LockMigrationProxy->new(
@@ -50,18 +50,16 @@ subtest 'old fails' => sub {
     )->lock(%lock_params);
     ok(!$success, q(failed to lock when 'test_old' was already locked));
 
-    $old_lock = Genome::Sys::Lock->lock_resource(
-        resource_lock => $resource,
+    $old_lock = Genome::Sys::LockProxy->new(
+        resource => $resource,
         scope => 'test_old',
-        %lock_params,
-    );
+    )->lock(%lock_params);
     is($old_lock, undef, q(still locked on 'test_old'));
 
-    my $new_lock = Genome::Sys::Lock->lock_resource(
-        resource_lock => $resource,
+    my $new_lock = Genome::Sys::LockProxy->new(
+        resource => $resource,
         scope => 'test_new',
-        %lock_params,
-    );
+    )->lock(%lock_params);
     ok($new_lock, q(able to lock on 'test_new' after LockMigrationProxy failed to lock));
 };
 
@@ -82,11 +80,10 @@ subtest 'new fails' => sub {
         max_try => 0,
     );
 
-    my $new_lock = Genome::Sys::Lock->lock_resource(
-        resource_lock => $resource,
+    my $new_lock = Genome::Sys::LockProxy->new(
+        resource => $resource,
         scope => 'test_new',
-        %lock_params,
-    );
+    )->lock(%lock_params);
     ok($new_lock, q(preemptively locked on 'test_new'));
 
     my $success = Genome::Sys::LockMigrationProxy->new(
@@ -101,18 +98,16 @@ subtest 'new fails' => sub {
     )->lock(%lock_params);
     ok(!$success, q(failed to lock when 'test_new' was already locked));
 
-    my $old_lock = Genome::Sys::Lock->lock_resource(
-        resource_lock => $resource,
+    my $old_lock = Genome::Sys::LockProxy->new(
+        resource => $resource,
         scope => 'test_old',
-        %lock_params,
-    );
+    )->lock(%lock_params);
     ok($old_lock, q(able to lock on 'test_old' after LockMigrationProxy failed to lock));
 
-    $new_lock = Genome::Sys::Lock->lock_resource(
-        resource_lock => $resource,
+    $new_lock = Genome::Sys::LockProxy->new(
+        resource => $resource,
         scope => 'test_new',
-        %lock_params,
-    );
+    )->lock(%lock_params);
     is($new_lock, undef, q(still locked on 'test_new'));
 };
 
@@ -145,18 +140,16 @@ subtest 'both ok' => sub {
     )->lock(%lock_params);
     ok($success, q(successfully locked LockMigrationProxy));
 
-    my $old_lock = Genome::Sys::Lock->lock_resource(
-        resource_lock => $resource,
+    my $old_lock = Genome::Sys::LockProxy->new(
+        resource => $resource,
         scope => 'test_old',
-        %lock_params,
-    );
+    )->lock(%lock_params);
     is($old_lock, undef, q(failed to lock on 'test_old' after LockMigrationProxy locked));
 
-    my $new_lock = Genome::Sys::Lock->lock_resource(
-        resource_lock => $resource,
+    my $new_lock = Genome::Sys::LockProxy->new(
+        resource => $resource,
         scope => 'test_new',
-        %lock_params,
-    );
+    )->lock(%lock_params);
     is($new_lock, undef, q(failed to lock on 'test_new' after LockMigrationProxy locked));
 };
 

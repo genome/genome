@@ -110,18 +110,6 @@ sub disk_usage_for_path {
     return $kb_used;
 }
 
-# locking has been moved into its own module
-
-sub lock_resource {
-    shift;
-    Genome::Sys::Lock->lock_resource(@_);
-}
-
-sub unlock_resource {
-    shift;
-    Genome::Sys::Lock->unlock_resource(@_);
-}
-
 # directory manipulation
 
 sub validate_existing_directory {
