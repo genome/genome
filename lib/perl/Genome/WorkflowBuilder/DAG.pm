@@ -138,6 +138,9 @@ sub get_ptero_builder {
     my $dag_method = Ptero::Builder::Workflow->new(name => $self->name);
 
     for my $operation (@{$self->operations}) {
+        unless (defined $self->log_dir) {
+            die sprintf("DAG (%s) has no log_dir set!", $self->name);
+        }
         $dag_method->_add_task($operation->get_ptero_builder_task($self->log_dir));
     }
 
