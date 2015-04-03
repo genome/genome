@@ -5,49 +5,37 @@ use warnings;
 
 use Genome;
 
+use Params::Validate ':types';
 use XML::Simple;
 
 class Genome::Model::Tools::CgHub::Metadata {
     is => 'UR::Object',
     has => {
-        metadata_file => {
-            is => 'Text',
-            doc => 'The full path of a XML metadata file containing information about a particular TCGA run including sequence file information. A temp file will be used if not given.',
-        },
-    },
-    has_optional_transient => {
-        _metadata => { 
+        metadata => { 
             is => 'Hash',
             doc => 'The hash version of the metadata XML.',
         },
     },
 };
 
-sub create {
-    my $class = shift;
+sub create_from_xml {
+    my ($class, $xml) = Params::Validate::validate_pos(@_, {type => SCALAR}, {type => SCALAR, called => 'XML',});
 
-    my $self = $class->SUPER::create(@_);
-    return if not $self;
+    my $metadata = XMLin($xml);
+    die $class->error_message('Failed to load metadata XML!') if not $metadata;
 
-    my $load = $self->_load_metadata_file;
-    return if not $load;
-
-    return $self;
+    return $class->SUPER::create(metadata => $metadata);
 }
 
-sub _load_metadata_file {
-    my $self = shift;
+sub create_from_file {
+    my ($class, $metadata_file) = Params::Validate::validate_pos(@_, {type => SCALAR}, {type => SCALAR});
 
-    my $metadata_file = $self->metadata_file;
-    Genome::Sys->validate_file_for_reading($metadata_file);
-    my $metadata = XMLin($metadata_file);
-    if ( not $metadata ) {
-        die $self->error_message('Failed to open metadata file! '.$metadata_file);
+    my $xml = Genome::Sys->read_file($metadata_file);
+    if ( not $xml ) {
+        die $class->error_message('Failed to read in CG Query metadata XML from %s', $metadata_file);
     }
 
-    $self->_metadata($metadata);
-
-    return 1;
+    return $class->create_from_xml($xml);
 }
 
 my %attribute_mapping = (
@@ -58,11 +46,11 @@ my %attribute_mapping = (
 sub get_attribute_value {
     my ($self, $name) = @_;
 
-    die $self->error_message('No metadata set to get attribute value!') if not $self->_metadata;
+    die $self->error_message('No metadata set to get attribute value!') if not $self->metadata;
     die $self->error_message('No name to get attribute value!') if not $name;
 
     $name = $attribute_mapping{$name} if exists $attribute_mapping{$name};
-    my $value = $self->_metadata->{Result}->{$name};
+    my $value = $self->metadata->{Result}->{$name};
 
     return if not defined $value or $value eq '';
     return $value;
@@ -78,7 +66,7 @@ sub reference_assembly_shortname {
     my $reference_shortname = $self->get_attribute_value('refassem_short_name');
     return $reference_shortname if $reference_shortname;
 
-    $reference_shortname = $self->_metadata->{Result}->{analysis_xml}->{ANALYSIS_SET}->{ANALYSIS}->{ANALYSIS_TYPE}->{REFERENCE_ALIGNMENT}->{ASSEMBLY}->{STANDARD}->{shortname};
+    $reference_shortname = $self->metadata->{Result}->{analysis_xml}->{ANALYSIS_SET}->{ANALYSIS}->{ANALYSIS_TYPE}->{REFERENCE_ALIGNMENT}->{ASSEMBLY}->{STANDARD}->{shortname};
     return $reference_shortname if $reference_shortname;
 
     return;
@@ -105,7 +93,7 @@ sub target_region {
     # This will need to be updated
     my $self = shift;
 
-    die $self->error_message('No metadata set to get target region!') if not $self->_metadata;
+    die $self->error_message('No metadata set to get target region!') if not $self->metadata;
 
     my $target_region;
     my $library_strategy = $self->get_attribute_value('library_strategy');
@@ -129,13 +117,13 @@ sub target_region {
 sub _files {
     my $self = shift;
 
-    die $self->error_message('No metadata set to get files!') if not $self->_metadata;
+    die $self->error_message('No metadata set to get files!') if not $self->metadata;
 
-    my $files_ref = ref $self->_metadata->{Result}->{files}->{file};
+    my $files_ref = ref $self->metadata->{Result}->{files}->{file};
     return (
         $files_ref eq 'ARRAY'
-        ? @{$self->_metadata->{Result}->{files}->{file}}
-        : $self->_metadata->{Result}->{files}->{file}
+        ? @{$self->metadata->{Result}->{files}->{file}}
+        : $self->metadata->{Result}->{files}->{file}
     );
 }
 
