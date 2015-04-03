@@ -33,6 +33,19 @@ class Genome::WorkflowBuilder::DAG {
     ],
 };
 
+sub recursively_set_log_dir {
+    my ($self, $log_dir) = Params::Validate::validate_pos(@_, 1,
+        {type => SCALAR});
+
+    $self->log_dir($log_dir);
+    for my $op (@{$self->operations}) {
+        if ($op->can('recursively_set_log_dir')) {
+            $op->recursively_set_log_dir($log_dir);
+        }
+    }
+    return;
+}
+
 sub add_operation {
     my ($self, $op) = Params::Validate::validate_pos(@_, 1, {type => OBJECT});
     push @{$self->operations}, $op;
