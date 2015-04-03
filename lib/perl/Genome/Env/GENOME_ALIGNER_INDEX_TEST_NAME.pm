@@ -1,12 +1,5 @@
 package Genome::Env::GENOME_ALIGNER_INDEX_TEST_NAME;
 
-use strict;
-use warnings;
-
-use Genome;
-
-our $VERSION = $Genome::VERSION;
-
 =pod
 
 =head1 NAME

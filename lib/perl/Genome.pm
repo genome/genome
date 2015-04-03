@@ -19,12 +19,12 @@ UR::Object::Type->define(
     english_name => 'genome',
 );
 
-# Local configuration
-require Genome::Site;
-
 # Checks that all variables that start with GENOME_ have a corresponding Genome/Env/* module
 # and assigns default values to any variables that have one set.
 require Genome::Env;
+
+# Local configuration
+require Genome::Site;
 
 if ($ENV{GENOME_SYS_UMASK}) {
     my $old_umask = umask oct($ENV{GENOME_SYS_UMASK});
