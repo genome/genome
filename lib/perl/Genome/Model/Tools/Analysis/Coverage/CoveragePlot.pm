@@ -6,10 +6,12 @@ use IO::File;
 use warnings;
 use Carp;
 
+use Cwd 'abs_path';
 use File::Basename;
 use File::Spec::Functions;
 use POSIX qw(ceil floor log log10);
 
+use Scalar::Util qw(looks_like_number);
 use Statistics::R;
 
 
@@ -31,40 +33,47 @@ class Genome::Model::Tools::Analysis::Coverage::CoveragePlot{
 	bam_files => {
 	    is => 'String',
 	    is_optional => 1,
-	    doc => 'Comma-separated list of bam files to generate coverage plots from, Must specify either --bam_files or --refalign_models',
+	    is_many => 1,
+	    doc => 'Comma-separated list of bam files to generate coverage plots from, Must specify either --bam-files or --refalign-models',
 	},
 	
+	# The following line does not work. "gmt analysis coverage coverage-plot" does not recognize the --refalign-models parameter.
+	# is => 'Genome::Model::ReferenceAlignment',
 	refalign_models => {
-	    is => 'Number',
+	    is => 'String',
 	    is_optional => 1,
-	    doc => 'Comma-separated list of refalign model IDs to generate coverage plots from, bam_files will override refalign_models if given',
+	    is_many => 1,
+	    doc => 'Comma-separated list of refalign model IDs to generate coverage plots from, --bam-files will override --refalign-models if given',
 	},
 	
 	labels => {
 	    is => 'String',
 	    is_optional => 1,
+	    is_many => 1,
 	    doc => 'Comma-separated list of the names for each bam (or model), otherwise set such as 1, 2, 3, ... in the order',
 	},
 	
         min_depth_filters => {
             is => 'String',
-            doc => 'Comma-separated list of the minimum depths at each position to consider coverage plot, Must define at least 2 depths',
-            default_value => [1, 20, 40],
             is_optional => 1,
+            is_many => 1,
+	    default_value => [1, 20, 40],
+            doc => 'Comma-separated list of the minimum depths at each position to consider coverage plot, Must define at least 2 depths',
         },
 	
         wingspan => {
             is => 'Integer',
-            doc => 'A base pair wingspan value to add +/- of the input regions, Default is no wingspan',
 	    is_optional => 1,
+            doc => 'A base pair wingspan value to add +/- of the input regions, Default is no wingspan',
         },
 	
 	
 	# for plotting
-        bw => {
+        band_width => {
             is => 'String',
-            doc => 'the smoothing bandwidth to be used in density, Default is "nrd0"',
 	    is_optional => 1,
+	    default_value => "nrd0",
+            doc => 'the smoothing bandwidth to be used in density, Default is "nrd0"',
         },
     ]
 };
@@ -82,6 +91,9 @@ sub help_detail {
 sub execute {
     my $self = shift;
     
+    #$DB::deep = 200;		# for debug
+    
+    
     # defines the folder and file names
     my $dir_refcov = "refcov";
     my $filetab = "table.tsv";
@@ -92,115 +104,100 @@ sub execute {
     my $roi_file_path = $self->roi_file_path;
     my $output_directory = $self->output_directory;
     
-    my $bam_files = $self->bam_files;
-    my $refalign_models = $self->refalign_models;
+    my @bam_files = $self->bam_files;
+    my @refalign_models = $self->refalign_models;
     
-    my $labels = $self->labels;
-    my $min_depth_filters = $self->min_depth_filters;
+    my @labels = $self->labels;
+    my @min_depth_filters = $self->min_depth_filters;
     my $wingspan = $self->wingspan;
-    
-    my $bw = $self->bw;
-    $bw = "nrd0" if ($bw =~ /^\s*$/);
+    my $bw = $self->band_width;
     
     
     # as default
-    die "roi-file-path required" unless -e $roi_file_path;
-    print STDERR sprintf("%d region(s) of interest from %s\n", `wc -l $roi_file_path | cut -d " " -f 1`, $roi_file_path);
+    die("roi-file-path required or does not exist") unless -e $roi_file_path;
+    $self->status_message("%d region(s) of interest from %s\n", `wc -l $roi_file_path | cut -d " " -f 1`, $roi_file_path);
     
     if (-e $output_directory && -d $output_directory)
     {
-	print STDERR sprintf("Warning: same directory exists and will overwrite outputs: %s\n", $output_directory);
+	$self->warning_message("output-directory already exists and overwritten: %s\n", $output_directory);
     }
     
-    
-    if (defined $min_depth_filters)
+    # makes it sure that @min_depth_filters has the default
+    unless (@min_depth_filters > 0)
     {
-	if (ref($min_depth_filters) eq "ARRAY")
-	{
-	    # with the default
-	}
-	else
-	{
-	    $min_depth_filters = [ split(/,/, $min_depth_filters) ];
-	}
-    }
-    else
-    {
-	#die "min-depth-filters required";
-	
 	# with the default
-	$min_depth_filters = [1, 20, 40];
+	@min_depth_filters = (1, 20, 40);
     }
     
     # adds 1 if not included
     my $found = 0;
-    foreach my $d (@$min_depth_filters)
+    foreach my $d (@min_depth_filters)
     {
 	if ($d == 1)
 	{
 	    $found = 1;
+	    last;
 	}
     }
     
     # checks out for min-depth-filters
-    push @$min_depth_filters, 1 unless $found;
-    $min_depth_filters = [sort {$a <=> $b} @$min_depth_filters];
+    unless ($found)
+    {
+	push @min_depth_filters, 1;
+	
+	$self->status_message("1 added into min-depth-filters as default\n");
+    }
+    @min_depth_filters = sort {$a <=> $b} @min_depth_filters;
     
-    die "at least 2 min-depth-filter(s) required" unless @$min_depth_filters > 1;
-    print STDERR sprintf("%s as min-depth-filters for coverage plots\n", join(", ", @$min_depth_filters));
+    die("at least 2 min-depth-filters required") unless @min_depth_filters > 1;
+    $self->status_message("%s as min-depth-filters for coverage plots\n", join(", ", @min_depth_filters));
     
     if (defined $wingspan)
     {
-	die "invalid wingspan: $wingspan" unless $wingspan =~ /^\d+$/;
-	print STDERR sprintf("%d-bp wingspan for each region of interest\n", $wingspan);
+	die sprintf("invalid wingspan: %s", $wingspan) unless $wingspan =~ /^\d+$/;
+	$self->status_message("%d-bp wingspan for each region of interest\n", $wingspan);
     }
     
     
     # creates a tabular table
-    my $list = create_hash(
+    my $list = CSlib::Tabular->new(
                     header => [ 'id', 'model', 'bam_path', 'refcov_file' ],
                     format => [ '%s', '%s', '%s', '%s' ],
-		    data => [],
                 );
     
     # prepares the bam list and table
-    if (defined $bam_files)
+    if (@bam_files > 0)
     {
-	# if defined, this argument will override the refalign-models parameter
-	my @bams = split /\,/, $bam_files;
-	
 	# adds to the list
-	foreach my $b (@bams)
+	foreach my $b (@bam_files)
 	{
-	    die "invalid BAM path: $b" unless -e $b;
+	    die sprintf("invalid BAM path: %s", $b) unless -e $b;
 	    
 	    $list->add([ "", "", $b, "" ]);
 	}
     }
-    elsif (defined $refalign_models)
+    elsif (@refalign_models > 0)
     {
 	# prepares a bam list from the models
-	foreach my $id (split(",", $refalign_models))
+	foreach my $id (@refalign_models)
 	{
             my $model = Genome::Model->get(id =>$id);
-	    die "Invalid model ID: $id" unless defined $model;
+	    die sprintf("Invalid model ID: %s", $id) unless defined $model;
 	    
 	    $list->add([ "", $model->id, $model->last_complete_build->merged_alignment_result->bam_path, "" ]);
 	}
     }
     else
     {
-	die "bam-files or refalign-models required";
+	die("bam-files or refalign-models required");
     }
     
     
     # for the label
-    if (defined $labels)
+    if (@labels > 0)
     {
-	my @ids = split /,/, $labels;
-	
 	# if the label number is different with that of BAMs
-	die sprintf("%d label(s) required", $list->count_row) unless scalar(@ids) == $list->count_row;
+	die sprintf("%d label(s) required", $list->count_row) unless scalar(@labels) == $list->count_row;
 	
 	# updates the table
 	my %check;
@@ -210,17 +207,17 @@ sub execute {
 	    my $h = $list->row_hash_at($i);
 	    
 	    # checks if the ID is duplicate
-	    if (exists $check{$ids[$i]})
+	    if (exists $check{$labels[$i]})
 	    {
-		die "identical labels found: " . $ids[$i];
+		die sprintf("identical labels found: %s", $labels[$i]);
 	    }
 	    else
 	    {
-		$check{$ids[$i]} ++;
+		$check{$labels[$i]} ++;
 	    }
 	    
 	    # updates with the ID
-	    $h->{id} = $ids[$i];
+	    $h->{id} = $labels[$i];
 	    $list->updatehash($i, $h);
 	}
     }
@@ -244,13 +241,11 @@ sub execute {
     my $tempdir = Genome::Sys->create_temp_directory();
     if ($tempdir)
     {
-	print STDERR "$tempdir temporarily created\n";
+	$self->status_message("$tempdir temporarily created\n");
     }
     else
     {
-        $self->error_message("Unable to create temporary file $!");
-	
-        die;
+        die("Unable to create temporary file $!");
     }
     
     # creates directories
@@ -275,7 +270,7 @@ sub execute {
 		roi_file_path => $roi_file_path,
 		roi_file_format => "bed",
 		
-		min_depth_filter => join(",", @$min_depth_filters),		# no ARRAY
+		min_depth_filter => join(",", @min_depth_filters),		# no ARRAY
 		min_base_quality => 0,
 		min_mapping_quality => 0,
 		
@@ -298,7 +293,7 @@ sub execute {
 	}
 	else
 	{
-	    die "gmt ref-cov standard failed for " . $h->{id};
+	    die sprintf("gmt ref-cov standard failed for %s", $h->{id});
 	}
 	
 	# adds into the array
@@ -310,21 +305,21 @@ sub execute {
     
     
     # saves the summary table
-    print STDERR sprintf("Summary table with %d BAMs saved to %s\n", $list->count_row, $filetab);
+    $self->status_message("Summary table with %d BAMs saved to %s\n", $list->count_row, $filetab);
     
     my $pathtab = catfile $tempdir, $filetab;
     $list->write($pathtab);
     
     
     # step 2. compiles refcov stats outputs
-    my $cmd2 = sprintf "sum1stat: %s %s %s %s %s", catfile($tempdir, $dir_refcov), join(",", @$min_depth_filters), $tempdir, $bw, join(",", @output1);
-    print STDERR sprintf("Compiling RefCov stats files in %s\n%s\n", $dir_refcov, $cmd2);
-    sum1stat(catfile($tempdir, $dir_refcov), $min_depth_filters, $tempdir, $bw, \@output1, $tempdir);
+    my $cmd2 = sprintf "sum1stat: %s %s %s %s %s", catfile($tempdir, $dir_refcov), join(",", @min_depth_filters), $tempdir, $bw, join(",", @output1);
+    $self->status_message("Compiling RefCov stats files in %s\n%s\n", $dir_refcov, $cmd2);
+    $self->sum1stat(catfile($tempdir, $dir_refcov), \@min_depth_filters, $tempdir, $bw, \@output1, $tempdir);
     
     
     # step 3. creates coverage plots
-    my $cmd3 = sprintf "/usr/bin/env Rscript %s %s %s", $script3, join(",", @$min_depth_filters), $tempdir;
-    print STDERR sprintf("\nCreating coverage plots\n%s\n", $cmd3);
+    my $cmd3 = sprintf "/usr/bin/env Rscript %s %s %s", $script3, join(",", @min_depth_filters), $tempdir;
+    $self->status_message("\nCreating coverage plots\n%s\n", $cmd3);
     system($cmd3);
     
     
@@ -332,15 +327,20 @@ sub execute {
     unless (-e $output_directory && -d $output_directory)
     {
         mkdir $output_directory;
-	print STDERR sprintf("Output directory created: %s\n", $output_directory);
+	$self->status_message("Output directory created: %s\n", $output_directory);
     }
     
     # copies the output file
-    print STDERR "Copying output files\n";
+    $self->status_message("Copying output files to %s", abs_path($output_directory));
+    #Genome::Sys->copy_file("$tempdir/*", './');		# does not work
     `cp -fr $tempdir/* $output_directory/`;
     
+    # for debug to print out the commands
+    #print sprintf("Compiling RefCov stats files in %s\n%s\n", $dir_refcov, $cmd2);
+    #print sprintf("\nCreating coverage plots\n%s\n", $cmd3);
     
-    print STDERR "Done\n";
+    
+    #$self->status_message("\nDone\n");
     
     return 1;
 }
@@ -348,6 +348,7 @@ sub execute {
 
 
 sub sum1stat {
+    my $self = shift;
     my ($dir, $mindepths, $dirout, $bandwidth, $files, $tmp_dir) = @_;
     
     # local variables
@@ -386,6 +387,8 @@ sub sum1stat {
     
     
     # create a communication bridge with R and start R
+    # warning message: cannot fetch initial working directory: No such file or directory at /usr/share/perl5/File/Temp.pm line 902
+    #my $R = Statistics::R->new(r_bin=>'/usr/bin/R', tmp_dir=>$tmp_dir);		# needs to how tmp_dir works
     my $R = Statistics::R->new(r_bin=>'/usr/bin/R');
     $R->startR;
     
@@ -404,8 +407,6 @@ sub sum1stat {
     my $ncolor = scalar(@$mindepths);
     if ($ncolor > 1)
     {
-        my $ct = create_hash(color => {});
-        
         if ($ncolor == 2)
         {
             @colors = ("orange", "green");
@@ -416,8 +417,8 @@ sub sum1stat {
         }
         elsif ($ncolor < 10)
         {
-            my $set = $ct->gradient_3colors([255, 165, 0], [255, 255, 0], [0, 205, 0], $ncolor);
-            @colors = map($ct->rgb2hex(@{$set->[$_]}), (0 .. $ncolor - 1));
+            my $set = gradient_3colors([255, 165, 0], [255, 255, 0], [0, 205, 0], $ncolor);
+            @colors = map(rgb2hex(@{$set->[$_]}), (0 .. $ncolor - 1));
         }
         elsif ($ncolor < 20)
         {
@@ -426,7 +427,7 @@ sub sum1stat {
             
             while(1)
             {
-                $set = $ct->gradient_colors($n, [255, 165, 0], [255, 255, 0], [0, 255, 0], [0, 0, 255]);
+                $set = gradient_colors($n, [255, 165, 0], [255, 255, 0], [0, 255, 0], [0, 0, 255]);
                 
                 if (scalar(@$set) >= $ncolor)
                 {
@@ -438,7 +439,7 @@ sub sum1stat {
                 }
             }
             
-            @colors = map($ct->rgb2hex(@{$set->[$_]}), (0 .. $ncolor - 1));
+            @colors = map(rgb2hex(@{$set->[$_]}), (0 .. $ncolor - 1));
         }
         else
         {
@@ -447,7 +448,7 @@ sub sum1stat {
             
             while(1)
             {
-                $set = $ct->gradient_colors($n, [255, 165, 0], [255, 255, 0], [0, 255, 0], [0, 0, 255], [255, 0, 255]);
+                $set = gradient_colors($n, [255, 165, 0], [255, 255, 0], [0, 255, 0], [0, 0, 255], [255, 0, 255]);
                 
                 if (scalar(@$set) >= $ncolor)
                 {
@@ -459,8 +460,12 @@ sub sum1stat {
                 }
             }
             
-            @colors = map($ct->rgb2hex(@{$set->[$_]}), (0 .. $ncolor - 1));
+            @colors = map(rgb2hex(@{$set->[$_]}), (0 .. $ncolor - 1));
         }
+        
+        # for debug
+        #printf "\nncolor=%d\n", $ncolor;
+        #print_array @colors;
     }
     else
     {
@@ -499,24 +504,21 @@ sub sum1stat {
     
     
     # creates a tabular data object
-    my $tabstat = create_hash(
+    my $tabstat = CSlib::Tabular->new(
                 header => [ 'sample', 'nroi', 'min_depth_filter', 'percent_coverage', 'total_ref_bases', 'total_covered_bases', 'average_depth', 'col' ],      # 'percent_coverage_max', 'percent_coverage_min', 'average_depth_max', 'average_depth_min'
                 format => [ '%s', '%d', '%s', '%.2f', '%d', '%d', '%.2f', '%s' ],         # '%.2f', '%.2f', '%.2f', '%.2f'
-                data => [],
     );
     
     # creates a tabular data object
-    my $tabdist = create_hash(
+    my $tabdist = CSlib::Tabular->new(
                     header => [ 'sample', 'min_depth_filter', 'mean', 'median', 'column', 'stats', 'n', 'conf', 'out' ],
                     format => [ '%s', '%s', '%.2f', '%s', '%s', '%s', '%d', '%s', '%s' ],
-                    data => [],
                 );
     
     # creates a tabular data object
-    my $tabden = create_hash(
+    my $tabden = CSlib::Tabular->new(
                     header => [ 'sample', 'i', 'x', 'y', 'bw' ],
                     format => [ '%s', '%d', '%.6f', '%.6e', '%.6f' ],
-                    data => [],
                 );
     
     
@@ -547,14 +549,10 @@ sub sum1stat {
         
         
         # reads the refcov statistics table
-        my $tab = create_hash(
-                    header => undef,
-                    format => undef,
-                    data => undef,
-        );
+        my $tab = CSlib::Tabular->new;
         $tab->from_file($path, 1);       # with the column names at the first line
         
-        printf STDERR "\n  %d ROIs from %s", $tab->count_row, $path;
+	$self->status_message("\n  %d ROIs from %s", $tab->count_row, $path);
         
         
         # reads the row in the table
@@ -677,7 +675,7 @@ sub sum1stat {
                 # known errors:
                 # (1) bw.SJ(x, method = "ste") : sample is too sparse to find TD
                 # (2) while (fSD(lower) * fSD(upper) > 0) { :   missing value where TRUE/FALSE needed   Calls: density -> density.default -> bw.SJ
-                if (is_numeric($bandwidth))
+                if (looks_like_number($bandwidth))
                 {
                     $R->send("f <- density(d, bw=$bandwidth, kernel=\"gaussian\", n=512)");
                 }
@@ -706,17 +704,17 @@ sub sum1stat {
     # if there is no file
     unless ($count{"nsample"} > 0 && $count{nroi} > 0)
     {
-        print STDERR "\n\nNo data found to report: $dir";
+	$self->warning_message("\n\nNo data found to report: %s", $dir);
         exit
     }
     
     
     # prints out the total statistics
-    printf STDERR "\n\n[Summary with %d sample(s)]", scalar @$files;
-    printf STDERR "\nnsample\t" . $count{nsample};
-    printf STDERR "\nnroi\t" . $count{nroi};
+    $self->status_message("\n\n[Summary with %d sample(s)]", scalar @$files);
+    $self->status_message("nsample\t" . $count{nsample});
+    $self->status_message("nroi\t" . $count{nroi});
     
-    print STDERR "\n\nmin_depth_filter\tpercent_ref_bases_covered\ttotal_ref_bases\ttotal_covered_bases\tave_cov_depth";
+    $self->status_message("\nmin_depth_filter\tpercent_ref_bases_covered\ttotal_ref_bases\ttotal_covered_bases\tave_cov_depth");
     foreach my $filter (sort {$a <=> $b} @$mindepths)
     {
         next unless exists $count{$filter};
@@ -724,15 +722,31 @@ sub sum1stat {
         my $c = $count{$filter}->{total_covered_bases} / $count{$filter}->{total_ref_bases} * 100;;
         my $d = $count{$filter}->{sum_cov_depth} / $count{$filter}->{total_ref_bases};
         
-        printf STDERR "\n%d\t%.2f\t%u\t%u\t%.2f", $filter, $c, $count{$filter}->{total_ref_bases}, $count{$filter}->{total_covered_bases}, $d;
+	$self->status_message("%d\t%.2f\t%u\t%u\t%.2f", $filter, $c, $count{$filter}->{total_ref_bases}, $count{$filter}->{total_covered_bases}, $d);
     }
     
     
-    # writes the boxplot statistics
+    # sorts the table
+    # NOTE: This will determine the sample order in the plots.
+    # as default       $tabdist->sort3("median", C_SORT_NUMD, "mean", C_SORT_NUMD, "sample", C_SORT_STR);
+    #$tabdist->{_data} = [ map { $_->[0] }
+    #        sort {
+    #                    $b->[1] <=> $a->[1]
+    #                            ||
+    #                    $b->[2] <=> $a->[2]
+    #                            ||
+    #                    $a->[3] cmp $b->[3]
+    #               }
+    #        map { [$_, $_->[3], $_->[2], $_->[0]] } @{$tabdist->{_data}} ];
+    
+    # prints out the boxplot statistics
+    #printf "\n\n[Boxplot for %s by %s min-depth: %d samples]\n", $statcol, $statdepth, $tabdist->count_row;
+    #$tabdist->print_tab;
     $tabdist->write(catfile($dirout, "boxplot.tab"));
     
     
     # sorts the table
+    #$tabstat->sort2("sample", C_SORT_STR, "min_depth_filter", C_SORT_NUM);
     $tabstat->{_data} = [ map { $_->[0] }
                 sort {
                             $a->[1] cmp $b->[1]
@@ -741,11 +755,14 @@ sub sum1stat {
                        }
                 map { [$_, $_->[0], $_->[1]] } @{$tabstat->{_data}} ];
     
-    # writes the tabular table in tab delimited text format
+    # prints out the tabular table in tab delimited text format
+    #printf "\n\n[Sample coverage table: %d samples]\n", $count{"nsample"};
+    #$tabstat->print_tab;
     $tabstat->write(catfile($dirout, "coverage.tab"));
     
     
     # sorts the table
+    #$tabden->sort2("sample", C_SORT_STR, "i", C_SORT_NUM);
     $tabden->{_data} = [ map { $_->[0] }
                 sort {
                             $a->[1] cmp $b->[1]
@@ -754,11 +771,17 @@ sub sum1stat {
                        }
                 map { [$_, $_->[0], $_->[1]] } @{$tabden->{_data}} ];
     
-    # writes out the density function
+    # prints out the density function
+    #printf "\n\n[Density estimate table]\n";
+    #$tabden->print_tab;
     $tabden->write(catfile($dirout, "density.tab"));
     
     
     $R->stopR();
+    
+    
+    # removes the temporary directory
+    # `rm -fr $tmp_dir/Statistics-R`;
     
     
     # the end of the main subroutine
@@ -780,6 +803,9 @@ sub get1rvar {
     if (defined $print && $print =~ /^\s*\[1\]\s+/)
     {
         # replaces the multiple numbers
+        # [1]    1.0  250.5  500.5  750.5 1000.0
+        # [1] 500.5
+        # [1]   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18 [19]  19  20  21  22  23  24  25  26  27  28  29  30  31  32  33  34  35  36 [37]  37  38  39  40  41  42  43  44  45  46  47  48  49  50  51  52  53  54 [55]  55  56  57  58  59  60  61  62  63  64  65  66  67  68  69  70  71  72 [73]  73  74  75  76  77  78  79  80  81  82  83  84  85  86  87  88  89  90 [91]  91  92  93  94  95  96  97  98  99 100  51  50  50  52
         $print =~ s/\s*\[\d+\]\s*/ /g;
         $print =~ s/^\s+//g;
         $print =~ s/\s+$//g;
@@ -798,477 +824,8 @@ sub get1rvar {
 }
 
 
-sub create_hash {
-    # creates a hash with the given properties
-    my (%property) = @_;
-    
-    # local variables
-    
-    # as defaults
-    # with no property          croak "property hash required" unless keys(%property) > 0;
-    
-    
-    # with the current package namespace
-    my $hash = {};
-    bless $hash;
-    
-    # creates a hash
-    foreach my $name (keys %property)
-    {
-        # assigns the property with its default
-        $hash->{"_$name"} = $property{$name};
-    }
-    
-    return $hash;
-}
-
-
-sub get_filename {
-    # param: path, return: file name and extension
-    # gets the file name
-    my $filepath = shift;
-
-    # On Unix returns ("baz", "/foo/bar", ".txt") from "/foo/bar/baz.txt"
-    my ($name, $path, $ext) = fileparse($filepath, qr/\.[^.]*/);
-    return $name . $ext;
-}
-
-
-sub is_numeric {
-    # checks if the value is numeric
-    my ($value) = @_;
-
-    if ($value =~ /^\s*$/)
-    {
-	return 0;
-    }
-    elsif ($value =~ /\s/)
-    {
-	return 0;
-    }
-    else
-    {
-	if ($value =~ /^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?$/)
-	{
-	    return 1;
-	}
-	else
-	{
-	    return 0;
-	}
-    }
-}
-
-
-sub count_col {
-    # gets the row number
-    my ($hsob) = shift;
-
-    # local variables
-    
-    return (defined $hsob->{_header}) ? scalar(@{$hsob->{_header}}) : 0;
-}
-
-
-sub count_row {
-    # gets the column number
-    my ($hsob) = shift;
-
-    # local variables
-    
-    return (defined $hsob->{_data}) ? scalar(@{$hsob->{_data}}) : 0;
-}
-
-
-sub hline {
-    # prints out the data line with the given sprint format
-    my ($hsob) = shift;
-    my ($delimit) = @_;
-
-    # local variables
-    $delimit = "\t" unless defined $delimit;
-    
-    return join($delimit, @{$hsob->{_header}});
-}
-
-
-sub add {
-    # adds a data to the end of the tabular data
-    my ($hsob) = shift;
-    my ($data) = @_;
-
-    # local variables
-    
-    # the data size
-    my $size = scalar(@$data);
-    croak sprintf("Mismatched array size of data to add [%d:%d mismatch]\n%s", scalar(@{$hsob->{_header}}), $size, join(" ", @$data)) unless $size == scalar(@{$hsob->{_header}});
-    
-    # applies the sprintf format to each data element
-    # updated on 2012-09-08     my @d = map(sprintf($hsob->{_format}->[$_], $data->[$_]), (0 ... $size - 1));
-    my @d;
-    for (my $i=0; $i<$size; $i ++)
-    {
-        unless (defined $data->[$i])
-        {
-            carp sprintf("Uninitialized value in CSlib::Tabular::add [%d, %s]", $i, $hsob->{_header}->[$i]);
-        }
-        
-        push @d, sprintf($hsob->{_format}->[$i], $data->[$i]);
-    }
-    
-    push @{$hsob->{_data}}, \@d;
-}
-
-
-sub addhash {
-    # adds a data to the end of the tabular data with a data hash
-    my ($hsob) = shift;
-    my ($data, $default) = @_;
-
-    # local variables
-    
-    # as defaults
-    croak "data required" unless defined $data;
-    #$default = undef unless defined $default;
-    
-    # create a data array
-    my @d;
-    for (my $i=0; $i<@{$hsob->{_header}}; $i ++)
-    {
-        my $name = $hsob->{_header}->[$i];
-        
-        if (exists $data->{$name})
-        {
-            carp "Uninitialized value in $name" unless defined $data->{$name};
-            
-            push @d, sprintf($hsob->{_format}->[$i], $data->{$name});
-        }
-        else
-        {
-            push @d, sprintf($hsob->{_format}->[$i], $default);
-        }
-    }
-    
-    # adds to the table
-    push @{$hsob->{_data}}, \@d;
-}
-
-
-sub updatehash {
-    # updates the table with a data hash
-    my ($hsob) = shift;
-    my ($row, $data, $hash) = @_;
-
-    # local variables
-    my $c = 0;
-    
-    # as defaults
-    croak "row required" unless defined $row;
-    croak "Out of row range: $row" if ($row < 0 || $hsob->count_row <= $row);
-    croak "data required" unless defined $data;
-    $hash = $hsob->column_index_hash unless defined $hash;
-    
-    
-    # updates the table
-    foreach my $col (keys %$data)
-    {
-        if (exists $hash->{$col})
-        {
-            $hsob->{_data}->[$row]->[$hash->{$col}] = sprintf($hsob->{_format}->[$hash->{$col}], $data->{$col});
-            
-            $c ++;
-        }
-    }
-    
-    return $c;
-}
-
-
-sub row_hash_at {
-    # gets a row as a row hash for faster speed
-    my ($hsob) = shift;
-    my ($index) = @_;
-    
-    # local variables
-    
-    # as defaults
-    # $index for faster speed
-    
-    # gets a row as an array by the row index number (0-based)
-    my $row = $hsob->row($index);
-    
-    return $hsob->row_hash_by($row, $hsob->{_header});
-}
-
-
-sub write {
-    # writes the tabular table to a text file
-    my ($hsob) = shift;
-    my ($path, $header) = @_;
-
-    # local variables
-    
-    # as defaults
-    $header = 1 unless defined $header;
-
-    # writes into a file
-    my $fh = FileHandle->new("> $path");
-    croak "Cannot write a file: $path" unless (defined $fh);
-    
-    print $fh $hsob->text_tab($header);
-    
-    # prevents the warning message in R
-    # saying "incomplete final line found by readTableHeader..."
-    print $fh "\n";
-    
-    $fh->close;
-}
-
-
-sub text {
-    # gets a text of the tabular table in a text format
-    my ($hsob) = shift;
-    my ($delimit, $header) = @_;
-
-    # local variables
-    
-    # as defaults
-    $header = 1 unless defined $header;
-
-    # the header
-    my $txt = '';
-    $txt = $hsob->hline($delimit) if $header;
-
-    # gets the data line with the given sprint format
-    foreach my $d (@{$hsob->{_data}})
-    {
-        $txt .= "\n" if $header;
-        $txt .= $hsob->line($d, $delimit);
-        
-        $header = 1;
-    }
-    
-    return $txt;
-}
-
-
-sub text_tab {
-    # gets a text of the tabular table in tab delimited text format
-    my ($hsob) = shift;
-    my ($header) = @_;
-
-    # local variables
-
-    return $hsob->text("\t", $header);
-}
-
-
-sub row {
-    # gets a row as an array by the row index number (0-based)
-    my ($hsob) = shift;
-    my ($index) = @_;
-
-    # local variables
-    
-    croak "Incorrect row index number: $index" if $index < 0 || $hsob->count_row <= $index;
-    
-    return $hsob->{_data}->[$index];
-}
-
-
-sub row_hash_by {
-    # gets a row as a row hash (as a basic method for internal use)
-    my ($hsob) = shift;
-    my ($data, $keys) = @_;
-    
-    # local variables
-    
-    # as defaults
-    croak "Data array required" unless defined $data;
-    $keys = $hsob->{_header} unless defined $keys;
-    croak "Wrong key number" unless $hsob->count_col == @$keys;
-    
-    
-    # creates a row hash
-    my %row = map { $keys->[$_] => $data->[$_] } (0 .. @$keys - 1);
-    
-    return \%row;
-}
-
-
-sub column_index_hash {
-    # gets the column index hash
-    my ($hsob) = shift;
-
-    # local variables
-    my %hash;
-    
-    for(my $i=0; $i<@{$hsob->{_header}}; $i++)
-    {
-        croak "The same column name found: " . $hsob->{_header}->[$i] if exists $hash{$hsob->{_header}->[$i]};
-        $hash{$hsob->{_header}->[$i]} = $i;
-    }
-    
-    return \%hash;
-}
-
-
-sub line {
-    # prints out the data line with the given sprint format
-    my ($hsob) = shift;
-    my ($data, $delimit) = @_;
-
-    # local variables
-    $delimit = "\t" unless defined $delimit;
-    
-    # the data size
-    my $size = scalar(@$data);
-    croak "Mismatched array size of data to add" unless $size == scalar(@{$hsob->{_header}});
-    
-    # applies the sprintf format to each data element
-    my @d = map(sprintf($hsob->{_format}->[$_], $data->[$_]), (0 ... $size - 1));
-    
-    return join($delimit, @d);
-}
-
-
-sub _array_size {
-    # returns an array with the given size
-    my ($hsob) = shift;
-    my ($array, $size) = @_;
-
-    # local variables
-    my @new;
-    
-    foreach my $e (@$array)
-    {
-        push @new, $e if $size > 0;
-        $size --;
-    }
-    
-    return @new;
-}
-
-
-sub from_file {
-    # creates a tabular data object from a data file
-    my ($hsob) = shift;
-    my ($path, $hasheader, $delim, $nrow, $ncol) = @_;
-
-    # local variables
-    my $null = "";      # "NA" as the null character
-    
-    # as a deliminator
-    $delim = '\t' unless defined $delim;
-    # as a default format
-    my $format = '%s';
-    # the row and column number
-    #$nrow
-    #$ncol;
-    
-    
-    # opens the file
-    my $fh = FileHandle->new;
-    croak "Cannot open a file: $path" unless ($fh->open("< $path"));
-    
-    # for the column names
-    if ($hasheader)
-    {
-        my $l = $fh->getline;
-        chomp $l;
-        $l =~ s/\s*$//; # just to make it sure
-        $l =~ s/^\s*//;
-        
-        if ($hasheader == 1)
-        {
-            # reads the first line
-            my @names = split /$delim/, $l;
-            @names = $hsob->_array_size(\@names, $ncol) if defined $ncol && $ncol > 0;
-            
-            if (defined $hsob->{_header})
-            {
-                # checks the header line
-                croak "Different column number" unless scalar(@names) == scalar(@{$hsob->{_header}});
-                
-                for (my $i=0; $i<@names; $i ++)
-                {
-                    croak "Different column name: " . $hsob->{_header}->[$i] unless $hsob->{_header}->[$i] eq $names[$i];
-                }
-            }
-            else
-            {
-                # parses the header line
-                for (my $i=0; $i<@names; $i ++)
-                {
-                    # adds the header and format automatically
-                    push @{$hsob->{_header}}, $names[$i];
-                    push @{$hsob->{_format}}, $format;
-                }
-            }
-        }
-        elsif ($hasheader == 2)
-        {
-            # skip reading the first line
-        }
-    }
-    
-    # add each data line
-    my $n = 0;
-    my $warn;
-    while (my $l = $fh->getline)
-    {
-        next if $l =~ /^\s*$/;
-        
-        # for debug     print $l;
-        chomp $l;
-        
-        # parses the data line
-        my @fs = split /$delim/, $l;
-        @fs = $hsob->_array_size(\@fs, $ncol) if defined $ncol && $ncol > 0;
-        
-        # checks the data dimension
-        if (scalar @fs > $hsob->count_col)
-        {
-            # ignores the extra columns
-            carp sprintf("Larger column size and ignored (Line %d)\n%s", $n + 1, $l) unless defined $warn;
-            $warn = $n;
-            
-            # resizes the input array
-            @fs = $hsob->_array_size(\@fs, $hsob->count_col)
-        }
-        elsif (scalar @fs < $hsob->count_col)
-        {
-            # adds empty columns if the column size is smaller
-            carp sprintf("Smaller column size and defaulted (Line %d)\n%s", $n + 1, $l) unless defined $warn;
-            $warn = $n;
-            
-            foreach my $i ($#fs + 1 ... $hsob->count_col - 1)
-            {
-                $fs[$i] = $null;   # with a null character
-            }
-        }
-        
-        # adds a data to the end of the tabular data
-        # Note: the format of each data element will be reapplied by the given sprintf format
-        $hsob->add(\@fs);
-        
-        $n ++;
-        
-        if (defined $nrow && $nrow > 0)
-        {
-            last if $n >= $nrow;
-        }
-    }
-    
-    $fh->close;
-    
-    return $n;
-}
-
-
 sub gradient_2colors {
     # creates a new gradient from the first color to the last color
-    my ($hsob) = shift;
     my ($color1, $color2, $ncolor) = @_;
     
     # local variables
@@ -1300,7 +857,6 @@ sub gradient_2colors {
 
 sub gradient_colors {
     # as a generalized interface with any number of colors
-    my ($hsob) = shift;
     my ($nstep, @colors) = @_;
     
     # local variables
@@ -1314,7 +870,7 @@ sub gradient_colors {
     my @cols;
     for(my $i=0; $i<scalar(@colors) - 1; $i++)
     {
-        my $cs = $hsob->gradient_2colors($colors[$i], $colors[$i+1], $nstep);
+        my $cs = gradient_2colors($colors[$i], $colors[$i+1], $nstep);
         
         if (@cols == 0)
         {
@@ -1336,7 +892,6 @@ sub gradient_colors {
 
 sub gradient_3colors {
     # creates a new gradient with 3 colors
-    my ($hsob) = shift;
     my ($color1, $color2, $color3, $ncolor) = @_;
     
     # local variables
@@ -1345,8 +900,8 @@ sub gradient_3colors {
     my ($n1, $n2) = ($ncolor % 2 == 0) ? ($ncolor / 2, $ncolor / 2 + 1) : (ceil($ncolor / 2), ceil($ncolor / 2));
     
     # creates a new gradient from the first color to the last color
-    my $col1 = $hsob->gradient_2colors($color1, $color2, $n1);
-    my $col2 = $hsob->gradient_2colors($color2, $color3, $n2);
+    my $col1 = gradient_2colors($color1, $color2, $n1);
+    my $col2 = gradient_2colors($color2, $color3, $n2);
     
     # joins the two color arrays
     shift @$col2;
@@ -1359,7 +914,6 @@ sub gradient_3colors {
 
 sub rgb2hex {
     # converts a rgb color to a hexadecimal string
-    my ($hsob) = shift;
     my ($red, $green, $blue) = @_;
     
     # local variables
@@ -1371,5 +925,526 @@ sub rgb2hex {
     my $hexcolor = sprintf ("#%02lx%02lx%02lx", $red, $green, $blue);
     
     return uc $hexcolor;
+}
+
+
+sub get_filename {
+    # param: path, return: file name and extension
+    # gets the file name
+    my $filepath = shift;
+
+    # On Unix returns ("baz", "/foo/bar", ".txt") from "/foo/bar/baz.txt"
+    my ($name, $path, $ext) = fileparse($filepath, qr/\.[^.]*/);
+    return $name . $ext;
+}
+
+
+
+
+
+# declares the module (class) name and its CSlib
+package CSlib::Tabular;
+
+# for the basic Perl modules
+use strict;     # restricts unsafe constructs
+use warnings;
+use Carp;
+
+
+{
+    # a list of all attributes with defaults and read/write/required/noinit/nocomp properties
+    my %_attribute_properties = (
+        # user-defined properties and their defaults
+        # format: name => default, permission
+        # for example, the private attributes have the permission of 'noinit.nocomp'
+        # TODO: adds the attributes for the class
+        # CAUTION! Don't use the other reference types except HASH and ARRAY type.
+        
+        # an array of column names used in the tabular data
+        _header     => [ undef,    'read.write'],
+        
+        # an array of sprintf format of each column in the tabular data
+        _format     => [ undef,    'read.write'],
+        
+        # a data array (N by M, N: the number of data, M: the number of columns)
+        _data     => [ undef,    'read.write'],
+    );
+
+    # global variables and their access methods
+    my $_classname = 'Tabular';
+    my $_namespace = 'CSlib';
+
+    sub get_classname {
+        $_classname;
+    }
+
+    sub get_namespace {
+        $_namespace;
+    }
+
+    sub get_class_id {
+        $_classname . '_' . $_namespace;
+    }
+    
+    # return a list of all attributes
+    sub _all_attributes {
+        [keys %_attribute_properties];
+    }
+    
+    # return the default value for a given attribute
+    sub _attribute_default {
+        my($self, $attribute) = @_;
+	
+        # assigns the default value
+        # Be cautious when dealing with a hash reference and an array reference        
+        SWITCH: {
+            ref($_attribute_properties{$attribute}[0]) eq 'ARRAY' && do { return []; };
+            ref($_attribute_properties{$attribute}[0]) eq 'HASH' && do { return {}; };
+            return $_attribute_properties{$attribute}[0];
+        }
+    }
+}
+
+
+# The constructor method
+# called from class, e.g. $obj = Gene->new();
+sub new {
+    my ($class, %arg) = @_;
+    my $self = bless {}, $class;
+    
+    foreach my $attribute (@{$self->_all_attributes()})
+    {
+        # e.g. attribute = "_name",  argument = "name"
+        my ($argument) = ($attribute =~ /^_(.*)/);
+        
+        # initializes data members
+        if (exists $arg{$argument})
+        {
+            # if explicitly defined
+            $self->{$attribute} = $arg{$argument};
+        }
+        else
+        {
+            # set to the default
+            $self->{$attribute} = $self->_attribute_default($attribute);
+        }
+    }
+
+    # TODO: create objects
+    if (defined $self->{_header})
+    {
+	croak "Size mismatch in header and format" unless scalar(@{$self->{_header}}) == scalar(@{$self->{_format}});
+    }
+    
+    return $self;
+}
+
+
+sub count_col {
+    # gets the row number
+    my ($self) = shift;
+
+    # local variables
+    
+    return (defined $self->{_header}) ? scalar(@{$self->{_header}}) : 0;
+}
+
+
+sub count_row {
+    # gets the column number
+    my ($self) = shift;
+
+    # local variables
+    
+    return (defined $self->{_data}) ? scalar(@{$self->{_data}}) : 0;
+}
+
+
+sub hline {
+    # prints out the data line with the given sprint format
+    my ($self) = shift;
+    my ($delimit) = @_;
+
+    # local variables
+    $delimit = "\t" unless defined $delimit;
+    
+    return join($delimit, @{$self->{_header}});
+}
+
+
+sub add {
+    # adds a data to the end of the tabular data
+    my ($self) = shift;
+    my ($data) = @_;
+
+    # local variables
+    
+    # the data size
+    my $size = scalar(@$data);
+    croak sprintf("Mismatched array size of data to add [%d:%d mismatch]\n%s", scalar(@{$self->{_header}}), $size, join(" ", @$data)) unless $size == scalar(@{$self->{_header}});
+    
+    # applies the sprintf format to each data element
+    # updated on 2012-09-08     my @d = map(sprintf($self->{_format}->[$_], $data->[$_]), (0 ... $size - 1));
+    my @d;
+    for (my $i=0; $i<$size; $i ++)
+    {
+        unless (defined $data->[$i])
+        {
+            carp sprintf("Uninitialized value in CSlib::Tabular::add [%d, %s]", $i, $self->{_header}->[$i]);
+        }
+        
+        push @d, sprintf($self->{_format}->[$i], $data->[$i]);
+    }
+    
+    push @{$self->{_data}}, \@d;
+}
+
+
+sub addhash {
+    # adds a data to the end of the tabular data with a data hash
+    my ($self) = shift;
+    my ($data, $default) = @_;
+
+    # local variables
+    
+    # as defaults
+    croak "data required" unless defined $data;
+    #$default = undef unless defined $default;
+    
+    # create a data array
+    my @d;
+    for (my $i=0; $i<@{$self->{_header}}; $i ++)
+    {
+        my $name = $self->{_header}->[$i];
+        
+        if (exists $data->{$name})
+        {
+            carp "Uninitialized value in $name" unless defined $data->{$name};      # for debug
+            
+            push @d, sprintf($self->{_format}->[$i], $data->{$name});
+        }
+        else
+        {
+            push @d, sprintf($self->{_format}->[$i], $default);
+        }
+    }
+    
+    # adds to the table
+    push @{$self->{_data}}, \@d;
+}
+
+
+sub updatehash {
+    # updates the table with a data hash
+    my ($self) = shift;
+    my ($row, $data, $hash) = @_;
+
+    # local variables
+    my $c = 0;
+    
+    # as defaults
+    croak "row required" unless defined $row;
+    croak "Out of row range: $row" if ($row < 0 || $self->count_row <= $row);
+    croak "data required" unless defined $data;
+    $hash = $self->column_index_hash unless defined $hash;
+    
+    
+    # updates the table
+    foreach my $col (keys %$data)
+    {
+        if (exists $hash->{$col})
+        {
+            $self->{_data}->[$row]->[$hash->{$col}] = sprintf($self->{_format}->[$hash->{$col}], $data->{$col});
+            
+            $c ++;
+        }
+    }
+    
+    return $c;
+}
+
+
+sub row_hash_at {
+    # gets a row as a row hash for faster speed
+    my ($self) = shift;
+    my ($index) = @_;
+    
+    # local variables
+    
+    # as defaults
+    # $index for faster speed
+    
+    # gets a row as an array by the row index number (0-based)
+    my $row = $self->row($index);
+    
+    return $self->row_hash_by($row, $self->{_header});
+}
+
+
+sub write {
+    # writes the tabular table to a text file
+    my ($self) = shift;
+    my ($path, $header) = @_;
+
+    # local variables
+    
+    # as defaults
+    $header = 1 unless defined $header;
+
+    # writes into a file
+    my $fh = FileHandle->new("> $path");
+    croak "Cannot write a file: $path" unless (defined $fh);
+    
+    print $fh $self->text_tab($header);
+    
+    # prevents the warning message in R
+    # saying "incomplete final line found by readTableHeader..."
+    print $fh "\n";
+    
+    $fh->close;
+}
+
+
+sub text {
+    # gets a text of the tabular table in a text format
+    my ($self) = shift;
+    my ($delimit, $header) = @_;
+
+    # local variables
+    
+    # as defaults
+    $header = 1 unless defined $header;
+
+    # the header
+    my $txt = '';
+    $txt = $self->hline($delimit) if $header;
+
+    # gets the data line with the given sprint format
+    foreach my $d (@{$self->{_data}})
+    {
+        $txt .= "\n" if $header;
+        $txt .= $self->line($d, $delimit);
+        
+        $header = 1;
+    }
+    
+    return $txt;
+}
+
+
+sub text_tab {
+    # gets a text of the tabular table in tab delimited text format
+    my ($self) = shift;
+    my ($header) = @_;
+
+    # local variables
+
+    return $self->text("\t", $header);
+}
+
+
+sub row {
+    # gets a row as an array by the row index number (0-based)
+    my ($self) = shift;
+    my ($index) = @_;
+
+    # local variables
+    
+    croak "Incorrect row index number: $index" if $index < 0 || $self->count_row <= $index;
+    
+    return $self->{_data}->[$index];
+}
+
+
+sub row_hash_by {
+    # gets a row as a row hash (as a basic method for internal use)
+    my ($self) = shift;
+    my ($data, $keys) = @_;
+    
+    # local variables
+    
+    # as defaults
+    croak "Data array required" unless defined $data;
+    $keys = $self->{_header} unless defined $keys;
+    croak "Wrong key number" unless $self->count_col == @$keys;
+    
+    
+    # creates a row hash
+    my %row = map { $keys->[$_] => $data->[$_] } (0 .. @$keys - 1);
+    
+    return \%row;
+}
+
+
+sub column_index_hash {
+    # gets the column index hash
+    my ($self) = shift;
+
+    # local variables
+    my %hash;
+    
+    for(my $i=0; $i<@{$self->{_header}}; $i++)
+    {
+        croak "The same column name found: " . $self->{_header}->[$i] if exists $hash{$self->{_header}->[$i]};
+        $hash{$self->{_header}->[$i]} = $i;
+    }
+    
+    return \%hash;
+}
+
+
+sub line {
+    # prints out the data line with the given sprint format
+    my ($self) = shift;
+    my ($data, $delimit) = @_;
+
+    # local variables
+    $delimit = "\t" unless defined $delimit;
+    
+    # the data size
+    my $size = scalar(@$data);
+    croak "Mismatched array size of data to add" unless $size == scalar(@{$self->{_header}});
+    
+    # applies the sprintf format to each data element
+    my @d = map(sprintf($self->{_format}->[$_], $data->[$_]), (0 ... $size - 1));
+    
+    return join($delimit, @d);
+}
+
+
+sub _array_size {
+    # returns an array with the given size
+    my ($self) = shift;
+    my ($array, $size) = @_;
+
+    # local variables
+    my @new;
+    
+    foreach my $e (@$array)
+    {
+        push @new, $e if $size > 0;
+        $size --;
+    }
+    
+    return @new;
+}
+
+
+sub from_file {
+    # creates a tabular data object from a data file
+    my ($self) = shift;
+    my ($path, $hasheader, $delim, $nrow, $ncol) = @_;
+
+    # local variables
+    my $null = "";      # "NA" as the null character
+    
+    # as a deliminator
+    $delim = '\t' unless defined $delim;
+    # as a default format
+    my $format = '%s';
+    # the row and column number
+    #$nrow
+    #$ncol;
+    
+    
+    # opens the file
+    my $fh = FileHandle->new;
+    croak "Cannot open a file: $path" unless ($fh->open("< $path"));
+    
+    # for the column names
+    if ($hasheader)
+    {
+        my $l = $fh->getline;
+        chomp $l;
+        $l =~ s/\s*$//; # just to make it sure
+        $l =~ s/^\s*//;
+        
+        if ($hasheader == 1)
+        {
+            # reads the first line
+            my @names = split /$delim/, $l;
+            @names = $self->_array_size(\@names, $ncol) if defined $ncol && $ncol > 0;
+            
+            if (defined $self->{_header})
+            {
+                # checks the header line
+                croak "Different column number" unless scalar(@names) == scalar(@{$self->{_header}});
+                
+                for (my $i=0; $i<@names; $i ++)
+                {
+                    croak "Different column name: " . $self->{_header}->[$i] unless $self->{_header}->[$i] eq $names[$i];
+                }
+            }
+            else
+            {
+                # parses the header line
+                for (my $i=0; $i<@names; $i ++)
+                {
+                    # adds the header and format automatically
+                    push @{$self->{_header}}, $names[$i];
+                    push @{$self->{_format}}, $format;
+                }
+            }
+        }
+        elsif ($hasheader == 2)
+        {
+            # skip reading the first line
+        }
+    }
+    
+    # add each data line
+    my $n = 0;
+    my $warn;
+    while (my $l = $fh->getline)
+    {
+        next if $l =~ /^\s*$/;
+        
+        # for debug     print $l;
+        chomp $l;
+        #$l =~ s/\s*$//; # just to make it sure
+        #$l =~ s/^\s*//;
+        
+        # parses the data line
+        my @fs = split /$delim/, $l;
+        @fs = $self->_array_size(\@fs, $ncol) if defined $ncol && $ncol > 0;
+        
+        # checks the data dimension
+        # updated on 2012-05-30
+        if (scalar @fs > $self->count_col)
+        {
+            # ignores the extra columns
+            carp sprintf("Larger column size and ignored (Line %d)\n%s", $n + 1, $l) unless defined $warn;
+            $warn = $n;
+            
+            # resizes the input array
+            @fs = $self->_array_size(\@fs, $self->count_col)
+        }
+        elsif (scalar @fs < $self->count_col)
+        {
+            # adds empty columns if the column size is smaller
+            carp sprintf("Smaller column size and defaulted (Line %d)\n%s", $n + 1, $l) unless defined $warn;
+            $warn = $n;
+            
+            foreach my $i ($#fs + 1 ... $self->count_col - 1)
+            {
+                $fs[$i] = $null;   # with a null character
+            }
+        }
+        
+        # adds a data to the end of the tabular data
+        # Note: the format of each data element will be reapplied by the given sprintf format
+        $self->add(\@fs);
+        
+        $n ++;
+        
+        if (defined $nrow && $nrow > 0)
+        {
+            last if $n >= $nrow;
+        }
+    }
+    
+    $fh->close;
+    
+    return $n;
 }
 

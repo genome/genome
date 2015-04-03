@@ -44,11 +44,11 @@ eval
         roi_file_path => $roi_file_path,
         output_directory => $tempdir,
         
-        bam_files => "$bam_file1,$bam_file2,$bam_file3",
-        labels => "sample1,sample2,sample3",
-        min_depth_filters => "1,20,40,60,80,100",
+        bam_files => [$bam_file1, $bam_file2, $bam_file3],
+        labels => ["sample1", "sample2", "sample3"],
+        min_depth_filters => [1, 20, 40, 60, 80, 100],
         wingspan  => 0,
-        bw => 10,
+        band_width => 10,
     );
     
     ok($cmd, 'created command') or die;

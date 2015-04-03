@@ -36,11 +36,6 @@ cs_scale <- function(data, breaks=5, range=NULL, fraction=0.0, order=FALSE)
     {
         return(p);
     }
-    
-    # updated on 2010-08-26, by using the "pretty" function
-    # computes the histgram of the given data
-    #h <- hist(data, breaks=breaks, plot=F);
-    #return(h$breaks);
 }
 
 
@@ -55,10 +50,6 @@ cs_scale_scope <- function(scale, factor=0.05)
     
     if (s[3]) return(c(r[2], r[1]))
     else return(c(r[1], r[2]));
-
-    # updated on 2010/09/22
-    #r <- range(scale);
-    #return (range(scale) + c(-factor, factor) * diff(range(scale)));
 }
 
 
@@ -77,7 +68,7 @@ cs_range <- function(x)
 
 
 
-cs_range_limit2 <- function(x, y, xlim=NULL, ylim=NULL)
+cs_range_limit_xy <- function(x, y, xlim=NULL, ylim=NULL)
 {
     if (is.null(xlim)) stop("xlim not defined");
     
@@ -87,10 +78,6 @@ cs_range_limit2 <- function(x, y, xlim=NULL, ylim=NULL)
     miny = min(y);
     maxy = max(y);
     
-    #print(c(minx, maxx, miny, maxy));   # for debug
-    #print(xlim);  # for debug
-    #print(ylim);  # for debug
-        
     # if all x and y data points are within the given range
     if (xlim[1] <= minx & maxx <= xlim[2])
     {
@@ -136,8 +123,6 @@ cs_range_limit2 <- function(x, y, xlim=NULL, ylim=NULL)
             }
         }
     }
-    
-    #print(data);    # for debug
     
     return(data);
 }
@@ -187,10 +172,6 @@ cs_vmargin <- function(x, visible=T, rot=0, label=FALSE, default=unit(1.5, "line
     
     # determines the margin where the X label is placed
     if (label) margin <- margin + unit(3, "strheight", "O");
-    
-    # for debug
-    #print(max);
-    #print(convertUnit(margin, "mm"));
     
     return (margin);
 }
@@ -242,10 +223,6 @@ cs_hmargin <- function(y, visible=T, rot=0, label=FALSE, default=unit(1.5, "line
     # determines the margin where the Y label is placed
     if (label) margin <- margin + unit(3, "strheight", "O");
     
-    # for debug
-    #print(max);
-    #print(convertUnit(margin, "mm"));
-    
     return (margin);
 }
 
@@ -270,11 +247,6 @@ cs_viewport2 <- function(left, bottom, xscale, xfactor=0.05, yscale, yfactor=0.0
 
         name = name
     );
-    
-    # for debug
-    #str(vp);
-    #print(paste("x=", vp$x));
-    #print(paste("y=", vp$y));
     
     return(vp);
 }
@@ -319,17 +291,6 @@ cs_base <- function(title=NULL, lines=2, xlab=NULL, xmargin=2, ylab=NULL, ymargi
     {
         # uses the given viewport
         cv <- vp;
-        
-        # the margins obtained from the given viewport
-        # The following margins do not work in an accurate way
-        #xmar = vp$x;
-        #ymar = vp$y;
-        
-        # for debug
-        #print(xmar);
-        #print(vp$x);
-        #print(ymar);
-        #print(vp$y);
     }
 
 
@@ -381,12 +342,6 @@ cs_base <- function(title=NULL, lines=2, xlab=NULL, xmargin=2, ylab=NULL, ymargi
          gp = gp,
          vp = parent
         );    # cs_base
-    
-    # for debug
-    #grid.draw(g);
-        
-    # for debug, prints out the summary information of the gTree
-    #sumg(g);
 
     return(g);
 }
@@ -491,9 +446,6 @@ grid.cs_vruler <- function(scale=NULL, breaks=NULL, type=c("top", "bottom"), inn
         if (type == "bottom") bottom = TRUE;
     }
     
-    #print(top);
-    #print(bottom);
-    
     
     # TODO: data custimization (optional)
     
@@ -539,8 +491,6 @@ grid.cs_vruler <- function(scale=NULL, breaks=NULL, type=c("top", "bottom"), inn
     i = 0;
     while(cur <= max(scale))
     {
-        #print(cur); # for debug
-        
         # create a major and minor mark
         if (i == 0)
         {
@@ -659,9 +609,6 @@ grid.cs_hruler <- function(scale=NULL, breaks=NULL, type=c("left", "right"), inn
         if (type == "left") left = TRUE;
     }
     
-    #print(right);
-    #print(left);
-    
     
     # TODO: data custimization (optional)
     
@@ -707,8 +654,6 @@ grid.cs_hruler <- function(scale=NULL, breaks=NULL, type=c("left", "right"), inn
     i = 0;
     while(cur <= max(scale))
     {
-        #print(cur); # for debug
-        
         # create a major and minor mark
         if (i == 0)
         {
@@ -1068,10 +1013,10 @@ cs_boxplotGrob <- function(d, at=0, width=NULL, outline=FALSE, horizon=FALSE, gp
 
 
 
-cs_plot1 <- function(title=NULL, xlab=NULL, ylab=NULL, xscale=NULL, xfactor=0.05, yscale=NULL, yfactor=0.05, gp=gpar(), name=NULL, parent=NULL)
+cs_plot <- function(title=NULL, xlab=NULL, ylab=NULL, xscale=NULL, xfactor=0.05, yscale=NULL, yfactor=0.05, gp=gpar(), name=NULL, parent=NULL)
 {
     # lists up the chracter identifiers for the grid components
-    if (is.null(name)) nv = "cs_plot1" else nv <- name;
+    if (is.null(name)) nv = "cs_plot" else nv <- name;
     nvr = "vruler";    # the vertical ruler
     nhr = "hruler";    # the horizontal ruler
 
@@ -1095,11 +1040,10 @@ cs_plot1 <- function(title=NULL, xlab=NULL, ylab=NULL, xscale=NULL, xfactor=0.05
 # --------------------------------------
 # gets the command line arguments when run by Rscript
 args <- commandArgs(trailingOnly=TRUE);
-#args[1] <- "1,40";                                   # for debug
+if (length(args) != 2) stop("Two parameters required");
 
 # sets the workding directory
 setwd(args[2]);
-#setwd('D:\\Work2\\01_EXOME-SEQ\\13-26-CoveragePlot\\3.R-script');     # for debug
 
 
 
@@ -1189,7 +1133,7 @@ if (width1 > 0.6) width1 = 0.6;
 
 
 # draws plot 1
-g1 <- cs_plot1(title=title1, xlab=xlab1, ylab=ylab1, xscale=c(1:length(samples)), xfactor=xfactor1, yscale=yscale1, gp=gpar(), name=NULL, parent=vt1);
+g1 <- cs_plot(title=title1, xlab=xlab1, ylab=ylab1, xscale=c(1:length(samples)), xfactor=xfactor1, yscale=yscale1, gp=gpar(), name=NULL, parent=vt1);
 
 #
 g1 <- addGrob(g1, cs_hrulerGrob(scale=yscale1, breaks=NULL, type=c("left", "right"), inner=TRUE, lty=3, lwd=0.5, gp=gpar(col="gray", alpha=0.7), name="hruler", vp=g1$childrenvp));
@@ -1236,7 +1180,7 @@ yscale2 <- c(0, 20, 40, 60, 80, 100);
 
 
 # draws plot 2
-g2 <- cs_plot1(title=title2, xlab=xlab2, ylab=ylab2, xscale=xscale2, yscale=yscale2, gp=gpar(), name=NULL, parent=vt2);
+g2 <- cs_plot(title=title2, xlab=xlab2, ylab=ylab2, xscale=xscale2, yscale=yscale2, gp=gpar(), name=NULL, parent=vt2);
 
 #
 g2 <- addGrob(g2, cs_hrulerGrob(scale=yscale2, breaks=NULL, type=c("left", "right"), inner=TRUE, lty=3, lwd=0.5, gp=gpar(col="gray", alpha=0.7), name="hruler", vp=g2$childrenvp));
@@ -1290,7 +1234,7 @@ yscale3 <- cs_scale(d$y, breaks=5);
 
 
 # draws plot 2
-g3 <- cs_plot1(title=title3, xlab=xlab3, ylab=ylab3, xscale=xscale3, yscale=yscale3, xfactor=0.05, gp=gpar(), name=NULL, parent=vt3);
+g3 <- cs_plot(title=title3, xlab=xlab3, ylab=ylab3, xscale=xscale3, yscale=yscale3, xfactor=0.05, gp=gpar(), name=NULL, parent=vt3);
 
 # density
 for (i in 1:length(samples))
@@ -1302,7 +1246,7 @@ for (i in 1:length(samples))
     ds <- d[d$sample == s, ];
     
     # filters out data within the given range by the new x and y scale
-    p <- cs_range_limit2(ds$x, ds$y, xlim=range(xscale3), ylim=range(yscale3));
+    p <- cs_range_limit_xy(ds$x, ds$y, xlim=range(xscale3), ylim=range(yscale3));
     
     # defines the color and symbol
     col <- colors[as.integer(i / length(pchars)) + 1];
@@ -1328,7 +1272,7 @@ yscale4 <- c(0, 20, 40, 60, 80, 100);
 
 
 # draws plot 4
-g4 <- cs_plot1(title=title4, xlab=xlab4, ylab=ylab4, xscale=xscale4, xfactor=xfactor1, yscale=yscale4, gp=gpar(), name=NULL, parent=vt4);
+g4 <- cs_plot(title=title4, xlab=xlab4, ylab=ylab4, xscale=xscale4, xfactor=xfactor1, yscale=yscale4, gp=gpar(), name=NULL, parent=vt4);
 
 #
 g4 <- addGrob(g4, cs_hrulerGrob(scale=yscale4, breaks=0, type=c("left", "right"), inner=TRUE, lty=3, lwd=0.5, gp=gpar(col="gray", alpha=0.7), name="hruler", vp=g4$childrenvp));
