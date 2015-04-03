@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::Sys::LockProxy qw();
+use Genome::Sys::LockMigrationProxy qw();
 use File::Path;
 use File::Copy;
 
@@ -774,9 +775,15 @@ sub verify_or_create_local_cache {
     $self->status_message('Lock local cache directory');
     my $lock_name = $self->local_cache_lock;
     $self->status_message('Lock name: '.$lock_name);
-    my $lock = Genome::Sys::LockProxy->new(
-        resource => $lock_name,
-        scope => 'tgisan',
+    my $lock = Genome::Sys::LockMigrationProxy->new(
+        old => {
+            resource => $lock_name,
+            scope => 'tgisan',
+        },
+        new => {
+            resource => $lock_name,
+            scope => 'host',
+        },
     )->lock(
         max_try => 20, # 20 x 180 sec each = 1hr
         block_sleep => 180,
