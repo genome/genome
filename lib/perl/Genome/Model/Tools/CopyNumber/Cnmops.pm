@@ -204,21 +204,13 @@ sub annotate_cnvs {
   }
 }
 
-sub _bedtools_path {
-  my $self = shift;
-  # The bedtools module returns the path to the bedtools dir, not the executable
-  return File::Spec->catfile(
-    Genome::Model::Tools::BedTools->path_for_bedtools_version($self->bedtools_version),
-    "bin",
-    "bedtools");
-}
-
 sub intersect_bed {
   my $self = shift;
   my $bed_a = shift;
   my $bed_b = shift;
   my $bed_intersect = shift;
-  my $bedtools = $self->_bedtools_path;
+  my $bedtools = Genome::Model::Tools::BedTools->bedtools_executable_path(
+    $self->bedtools_version);
   Genome::Sys->shellcmd(cmd => "$bedtools intersect -a $bed_a -b $bed_b > $bed_intersect");
 }
 
