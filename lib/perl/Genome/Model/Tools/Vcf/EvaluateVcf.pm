@@ -15,8 +15,7 @@ use File::Spec;
 use File::Temp qw(tempdir);
 use Path::Class;
 use Genome::Model::Tools::Vcf::VcfCompare;
-
-
+use String::TT qw(strip);
 
 class Genome::Model::Tools::Vcf::EvaluateVcf {
     is => "Command::V2",
@@ -41,7 +40,7 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
 
         vcf => {
             is => "Text",
-            doc => "Vcf file to analyze",
+            doc => "VCF file to be evaluated",
         },
 
         output_directory => {
@@ -52,17 +51,18 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
 
         old_sample => {
             is => "Text",
-            doc => "Sample name in input vcf file",
+            doc => "Sample name in the VCF file to use",
         },
 
         new_sample => {
             is => "Text",
-            doc => "Sample to use in output files",
+            doc => "Sample name to call the old sample during comparisons",
         },
 
         gold_vcf => {
             is => "Text",
-            doc => "Gold standard vcf to compare to",
+            doc => "VCF file containing gold standard variant sites "
+                   . "to be used to measure the evaluation VCF"
         },
 
         gold_sample => {
@@ -72,23 +72,32 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
 
         roi => {
             is => "Text",
-            doc => "Region of interest bed file",
+            doc => "BED file of the target regions to restrict the analysis to",
         },
 
         true_negative_bed => {
             is => "Text",
-            doc => "True negatives bed file",
+            doc => "BED file containing regions where no "
+                   . "variant call should be made",
+        },
+
+        true_negative_size => {
+            is => "Integer",
+            doc => "Use this number as the size of the TN BED "
+                   . "file rather than calculating on the fly",
         },
 
         pass_only_expression => {
             is => "Text",
-            doc => "Expression for vcflib/vcffilter to select only passing (unfiltered) variants",
+            doc => "String to pass to vcflib vcffilter in order to "
+                   . "select variants from the evaluation VCF",
             default_value => q{-g 'FT = PASS | FT = .'},
         },
 
         clean_indels => {
             is => "Text",
-            doc => "If set, attempt to cleanup indels",
+            doc => "Whether or not to exclude indels that don't "
+                   . "actually overlap the ROI",
             default_value => 0,
         },
     ]
@@ -425,6 +434,172 @@ sub _run {
     my $cmd = shift;
 
     return Genome::Sys->shellcmd(cmd => $cmd);
+}
+
+sub help_brief {
+    return "Compare or Validate VCF files to a Gold Standard";
+}
+
+sub help_detail {
+    my $doc = q{
+
+    BACKGROUND
+    ==========
+
+    For validation, it is important to compare calls from the pipeline +
+    reporting framework and calculate sensitivity, specificity and positive
+    predictive value of the pipeline's calls versus the gold standard.
+    The standard currency for doing this is a VCF file. A procedure was
+    developed for simplifying callsets and then comparing them to each
+    other. It roughly follows the recommendations of NIST as detailed in the
+    [Genome In a Bottle paper][1].
+
+    METHODOLOGY
+    ===========
+
+    This tool compares a gold-standard VCF to an experimental VCF and a BED
+    file of true negative positions.
+
+    Genotype comparisons are done using [joinx vcf-compare][2]. This program
+    reports an exact and a partial genotype match to the gold standard VCF.
+    Exact matches are straightforward, if both samples report the variant than
+    it is an exact match. Partial matches are more complex, joinx reports the
+    number of unique, matching alternate alleles at each site giving a zygosity
+    independent measure of concordance. For example, a heterozygous variant in
+    the gold sample and a homozygous variant in the evaluation sample would
+    yield a single partial match.
+
+    In order to calculate metrics, the following calculations were used and are
+    further detailed in Output Formats below:
+
+    Metric                      Calculation
+    -------------------------   --------------
+    Specificity                 TN / (TN + FP)
+    Sensitivity                 TP / (TP + FN)
+    Positive Predictive Value   TP / (TP + FP)
+
+    where 
+    
+        TP = True Positives
+        FP = False Positives
+        TN = True Negatives
+        
+    The TP, FP and TN counts are explicitly define as:
+
+    True Positive
+    -------------
+
+        Variant in the Evaluation VCF matches the variant in the Gold Standard
+        VCF (either exactly or partially)
+
+    False Positive
+    --------------
+
+        Variant present in the Evaluation VCF that is not present in the Gold
+        Standard VCF
+
+    True Negative
+    -------------
+
+        Position known to not contain a variant in the Gold Standard sample
+        that is also not called in the Evaluation VCF
+
+    Workflow
+    ========
+
+    The high-level algorithm of this tool is:
+    
+    1. Remove CAF fields if they exist.
+    2. Restrict evaluation VCF to the ROI.
+    3. Restrict gold VCF to the ROI.
+    4. Restrict true negative BED to the ROI.
+    5. Restrict evaluation VCF to the requested sample.
+    6. Use the --pass-only-expression to restrict the evaluation VCF to only
+       those variants passing the expression.
+    7. Break complex indels into simpler ones using vcflib vcfallelicprimitives.
+    8. Resort the file.
+    9. Re-restrict to the ROI.
+    10. Compare the resulting VCF to the ROI-restricted gold VCF using
+        joinx vcf-compare.
+    11. Calculate metrics and print output.
+
+    Results or Output Statistics
+    ============================
+
+    The output statistics produced by the execute method are available as 
+    accessor methods.  The available statistics are:
+
+    True_Positive_Found_Exact
+
+       Exact Genotype Matches between the Gold and Eval VCF
+
+    Total_True_Positive_Exact
+
+       Total Genotypes in the Gold VCF that were evaluated
+
+    Sensitivity_Exact
+
+       True_Positive_Found_Exact / Total_True_Positive_Exact
+
+    True_Positive_Found_Partial
+
+       At least one alternative allele matches between the Gold and Eval VCF
+
+    Total_True_Positive_Partial
+
+       Total Partial Genotypes in the Gold VCF that were evaluated
+
+    Sensitivity_Partial
+
+       True_Positive_Found_Partial / Total_True_Positive_Partial
+
+    False_Positive_Exact
+
+       Eval VCF sites that didn't match a site in the Gold VCF
+
+    False_Positive_Partial
+
+       Eval VCF alleles that didn't match a site in the Gold VCF
+
+    True_Negatives
+
+       Number of bases in the True Negative BED file
+
+    Exact_Specificity
+   
+       (True_Negatives - False_Positive_Exact) / True_Negatives
+
+    Partial_Specificity
+
+       (True_Negatives - False_Positive_Partial) / True_Negatives
+
+    Exact_PPV
+
+       True_Positive_Found_Exact / (False_Positive_Exact + True_Positive_Found_Exact)
+   
+    Partial_PPV 
+
+       True_Positive_Found_Partial / (False_Positive_Partial + True_Positive_Found_Partial)
+
+    VCF_Lines_Overlapping_TN
+
+       VCF lines in the Evaluation VCF found inside of the True Negative
+       BED file. More conservative definition of False Positive.
+
+    Lines_Specificity_in_TN_Only
+
+       (True_Negatives - VCF_Lines_Overlapping_TN) / True_Negatives
+
+
+    References
+    ==========
+
+    [1]: http://www.nature.com/nbt/journal/v32/n3/full/nbt.2835.html
+    [2]: https://github.com/genome/joinx
+
+    };
+
+    return $doc;
 }
 
 1;
