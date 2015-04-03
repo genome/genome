@@ -43,7 +43,7 @@ class Genome::Model::Tools::SmrtAnalysis::Filter {
     ],
     has_optional_param => [
         lsf_queue => {
-            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW},
+            default_value => $ENV{GENOME_LSF_QUEUE_DV2_WORKFLOW},
         },
         lsf_resource => {
             default_value => '',
