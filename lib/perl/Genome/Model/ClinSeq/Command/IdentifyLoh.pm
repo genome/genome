@@ -21,7 +21,7 @@ class Genome::Model::ClinSeq::Command::IdentifyLoh {
       doc => 'Directory where output files will be written.',
     },
     somvar_build => {
-      is => 'Genome::Model::Build::ClinSeq',
+      is => 'Genome::Model::Build::SomaticVariation',
       doc => 'SomVar build to identify LOH regions in.
       [Either this or a clinseq build is required.]',
       is_optional => 1,
@@ -51,11 +51,11 @@ class Genome::Model::ClinSeq::Command::IdentifyLoh {
 sub help_synopsis {
   return <<EOS
 genome model clin-seq identify-loh\\
-  --outdir=/gscuser/gscuser1/tmp/ \\
+  --outdir=/tmp/test/ \\
   --clinseq-build='a4abcd1313eb4376b59e68a9dd9d5ad2'
 genome model clin-seq identify-loh\\
-  --outdir=/gscuser/gscuser1/tmp/ \\
-  --somvar-build='a4abcd1313eb4376b59e68a9dd9d5ad2'
+  --outdir=/tmp/test/ \\
+  --somvar-build='9dc0385a1b634c9bb85eb2017b3a0c73'
 EOS
 }
 
@@ -64,11 +64,13 @@ sub help_detail {
 Use the results from Varscan in the somatic-variation builds and identify
 regions of LOH. Specifically, look at heterozygous single nucleotide variants
 in the normal sample and compare with stretches of homozygosity in the tumor.
-We will attempt to use the results from the WGS-somatic-variation build input, if
-these are unavailable the tool looks for WEx-somatic-variation build.
 
-Alternatively, instead of a clin-seq model you can supply a
-somatic-variation model as an input.
+If a clinseq build is supplied as input, the tool attempts to use the results
+from the WGS-somatic-variation build input, if these are unavailable the tool
+looks for WEx-somatic-variation build.
+
+Alternatively, instead of a clin-seq build you can supply a
+somatic-variation build as an input.
 
 Thanks to Chris Miller for working out the workflow.
 EOS
@@ -88,25 +90,28 @@ sub __errors__ {
   return @errors;
 }
 
+#Get a somatic-variation build from input or from clinseq-build
 sub resolve_somvar {
   my $self = shift;
   my $somvar_build = $self->somvar_build;
   unless($somvar_build) {
     my $clinseq_build = $self->clinseq_build;
     unless($clinseq_build) {
-      die $self->error_message("Please pass a somatic-variation or clinseq build as input.");
+      die $self->error_message("Please pass a somatic-variation
+        or clinseq build as input.");
     }
     $somvar_build = $self->get_best_somvar_build($clinseq_build);
   }
   return $somvar_build;
 }
 
+#Take Varscan SNVs and split into per-chromosome calls.
 sub split_snvs {
   my $self = shift;
   my $varscan_op = shift;
   my $snv_prefix = shift;
   my $awk_cmd;
-  #use subsample of chr1 variants only for chr1
+  #use subsample of chr1 variants for test
   if($self->test) {
     $awk_cmd = "awk '\$1==1 { if(NR\%1000 == 0) { print > \"$snv_prefix.\"\$1\".snp\" }}' $varscan_op";
   } else {
@@ -116,6 +121,7 @@ sub split_snvs {
   return;
 }
 
+#Get Varscan SNVs from somatic-variation
 sub get_varscan_snvs {
   my $self = shift;
   my $somvar_build = shift;
@@ -127,10 +133,11 @@ sub get_varscan_snvs {
     die $self->error_message("Unable to find varscan SNVs in $dd");
   }
   $self->status_message("varscan snvs file found: " .
-    join(@varscan_snvs, "\t"));
+    join("\t", @varscan_snvs));
   $self->split_snvs($varscan_snvs[0], $snv_prefix);
 }
 
+#Get tumor/normal BAMs from somatic-variation
 sub get_tumor_normal_bam {
   my $self = shift;
   my $somvar_build = shift;
@@ -145,6 +152,8 @@ sub get_tumor_normal_bam {
   return ($tumor_bam, $normal_bam);
 }
 
+#Get the reference-sequence build from the
+# ref-align builds used in somatic-variation
 sub reference_build {
   my $self = shift;
   my $somvar_build = shift;
@@ -161,6 +170,7 @@ sub reference_build {
   }
 }
 
+#Filter out putative false-positive SNVs
 sub filter_snvs {
   my $self = shift;
   my $somvar_build = shift;
@@ -180,6 +190,7 @@ sub filter_snvs {
   $filter->execute();
 }
 
+#Combine germline, LOH calls and sort them
 sub combine_sort_snvs {
   my $self = shift;
   my $snv_prefix = shift;
@@ -201,6 +212,7 @@ sub combine_sort_snvs {
   return $snv_combined_sorted;
 }
 
+#Segment the combined calls
 sub segment_loh {
   my $self = shift;
   my $snvs_combined_sorted = shift;
@@ -213,6 +225,7 @@ sub segment_loh {
   $segmenter->execute();
 }
 
+#Filter out LOH segments without sufficient support
 sub filter_loh {
   my $self = shift;
   my $loh_basename = shift;
@@ -230,6 +243,7 @@ sub filter_loh {
   Genome::Sys->shellcmd(cmd => $awk_filter);
 }
 
+#Get rid of intermediate files
 sub cleanup {
   my $self = shift;
   my $unwanted;
@@ -243,7 +257,7 @@ sub cleanup {
   }
 }
 
-#The usual file munging to get what we want - sorting, filtering etc.
+#Get, Filter, Combine, Segment, Filter, Cleanup
 sub execute {
   my $self = shift;
   my $somvar_build = $self->resolve_somvar;
