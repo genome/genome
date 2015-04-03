@@ -8,6 +8,7 @@ use above 'Genome';
 use File::Basename qw(dirname basename);
 use File::Slurp qw(read_file);
 use File::Spec qw();
+use Cwd qw(abs_path);
 use JSON qw(from_json);
 
 BEGIN {
@@ -50,5 +51,5 @@ sub get_test_outputs {
 sub test_data_directory {
     my $name = shift;
 
-    return File::Spec->join(dirname(__FILE__), 'workflow_tests', $name);
+    return File::Spec->join(dirname(abs_path(__FILE__)), 'workflow_tests', $name);
 }
