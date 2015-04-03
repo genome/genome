@@ -251,11 +251,11 @@ sub is_many_property {
 # ------------------------------------------------------------------------------
 
 sub from_xml_element {
-    my ($class, $element) = @_;
+    my ($class, $element, $parent_log_dir) = @_;
 
     my $self = $class->create(
         name => $element->getAttribute('name'),
-        log_dir => $element->getAttribute('logDir'),
+        log_dir => $element->getAttribute('logDir') || $parent_log_dir,
         parallel_by => $element->getAttribute('parallelBy'),
     );
 
@@ -326,7 +326,10 @@ sub _add_operations_from_xml_element {
 
     my $nodelist = $element->find('operation');
     for my $node ($nodelist->get_nodelist) {
-        my $op = Genome::WorkflowBuilder::Detail::Operation->from_xml_element($node);
+        my $op = Genome::WorkflowBuilder::Detail::Operation->from_xml_element(
+            $node,
+            $self->log_dir,
+        );
         $self->add_operation($op);
     }
 }
