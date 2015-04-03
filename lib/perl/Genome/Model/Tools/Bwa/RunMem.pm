@@ -202,17 +202,6 @@ sub _samtools_path {
     return Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 }
 
-sub _bedtools_path {
-    my $self = shift;
-
-    # The bedtools module returns the path to the bedtools dir, not the executable
-    return File::Spec->catfile(
-        Genome::Model::Tools::BedTools->path_for_bedtools_version($self->bedtools_version),
-        "bin",
-        "bedtools")
-        ;
-}
-
 sub _param_join {
     return join(" \\\n        ", @_);
 }
@@ -310,7 +299,8 @@ sub _bam_to_fastq_commands {
     my $bad_sort_msg = sprintf "ERROR: Input bam %s is not in name sorted order, abort!",
         $bam_path;
 
-    my $path = $self->_bedtools_path;
+    my $bedtools = Genome::Model::Tools::BedTools->bedtools_executable_path(
+        $self->bedtools_version);
 
     # Bedtools does not /enforce/ that the input bam is in name sorted order.
     # It does, however, warn about such. We'll juggle file descriptors around a
@@ -319,7 +309,7 @@ sub _bam_to_fastq_commands {
     return <<EOS;
 {
     # swap stdin and stderr
-    $path bamtofastq -i /dev/stdin -fq /dev/stdout -fq2 /dev/stdout 3>&1 1>&2 2>&3 \\
+    $bedtools bamtofastq -i /dev/stdin -fq /dev/stdout -fq2 /dev/stdout 3>&1 1>&2 2>&3 \\
         | {
             tee >(
                 if grep -q 'WARNING: Query'
