@@ -7,43 +7,43 @@ use Genome;
 
 class Genome::Model::ClinSeq::Command::IdentifyLoh {
   is => ['Command::V2',
-  'Genome::Model::ClinSeq::Util',
+    'Genome::Model::ClinSeq::Util',
   ],
   has_input => [
-  clinseq_build => {
-    is => 'Genome::Model::Build::ClinSeq',
-    doc => 'ClinSeq build to identify LOH regions in.
+    clinseq_build => {
+      is => 'Genome::Model::Build::ClinSeq',
+      doc => 'ClinSeq build to identify LOH regions in.
       [Either this or a somatic variation build is required.]',
-    is_optional => 1,
-  },
-  outdir => {
-    is => 'FilesystemPath',
-    doc => 'Directory where output files will be written.',
-  },
-  somvar_build => {
-    is => 'Genome::Model::Build::ClinSeq',
-    doc => 'SomVar build to identify LOH regions in.
+      is_optional => 1,
+    },
+    outdir => {
+      is => 'FilesystemPath',
+      doc => 'Directory where output files will be written.',
+    },
+    somvar_build => {
+      is => 'Genome::Model::Build::ClinSeq',
+      doc => 'SomVar build to identify LOH regions in.
       [Either this or a clinseq build is required.]',
-    is_optional => 1,
-  },
-  minprobes=> {
-    is => 'Number',
-    is_optional => 1,
-    doc => 'Minimum number of probes to call a loh segment.',
-    default => 10,
-  },
-  segment_pc_cutoff => {
-    is => 'Number',
-    is_optional => 1,
-    doc => 'Minimum percent of LOH in a segment. n_loh_probes/n_probes * 100',
-    default => 0.95,
-  },
-  test => {
-    is => 'Boolean',
-    doc => 'set for test-cases',
-    is_optional => 1,
-    default => 0,
-  },
+      is_optional => 1,
+    },
+    minprobes=> {
+      is => 'Number',
+      is_optional => 1,
+      doc => 'Minimum number of probes to call a loh segment.',
+      default => 10,
+    },
+    segment_pc_cutoff => {
+      is => 'Number',
+      is_optional => 1,
+      doc => 'Minimum percent of LOH in a segment. n_loh_probes/n_probes * 100',
+      default => 0.95,
+    },
+    test => {
+      is => 'Boolean',
+      doc => 'set for test-cases',
+      is_optional => 1,
+      default => 0,
+    },
   ],
   doc => 'Identify regions of LOH using clinseq tumor/normal pairs.',
 };
@@ -94,7 +94,7 @@ sub resolve_somvar {
   unless($somvar_build) {
     my $clinseq_build = $self->clinseq_build;
     unless($clinseq_build) {
-      die $self->error_message("Please pass somvar or clinseq build as input.");
+      die $self->error_message("Please pass a somatic-variation or clinseq build as input.");
     }
     $somvar_build = $self->get_best_somvar_build($clinseq_build);
   }
@@ -150,7 +150,8 @@ sub reference_build {
   my $somvar_build = shift;
   my $normal_refalign_build = $somvar_build->normal_build if ($somvar_build);
   my $tumor_refalign_build = $somvar_build->tumor_build if ($somvar_build);
-  my @input_builds = ($normal_refalign_build, $tumor_refalign_build, $somvar_build);
+  my @input_builds = ($normal_refalign_build,
+                      $tumor_refalign_build, $somvar_build);
   for my $build (@input_builds){
     next unless $build;
     my $m = $build->model;
@@ -168,16 +169,15 @@ sub filter_snvs {
     $self->get_tumor_normal_bam($somvar_build);
   my $refbuild = $self->reference_build($somvar_build);
   my $ref_fa = $refbuild->full_consensus_path('fa');
-  my $filter = Genome::Model::Tools::Varscan::SomaticParallelFilter->
+  my $filter = Genome::Model::Tools::Varscan::SomaticFilterWorkflow->
     create(
+      outdir => $self->outdir,
       tumor_bam => $tumor_bam,
       normal_bam => $normal_bam,
-      output => $snv_prefix,
-      filter_germline => 1,
+      prefix => $snv_prefix,
       reference => $ref_fa,
     );
   $filter->execute();
-  Genome::Sys->shellcmd(cmd => "/gscuser/cmiller/usr/bin//bwait -n varscan -s 60");
 }
 
 sub combine_sort_snvs {
@@ -185,9 +185,12 @@ sub combine_sort_snvs {
   my $snv_prefix = shift;
   my $snv_combined = $snv_prefix . ".combined";
   my $snv_combined_sorted = $snv_prefix . ".combined.sorted";
-  my $cat_cmd = "cat $snv_prefix.*.snp.*.LOH.hc.fpfilter " .
-    "$snv_prefix.*.snp.*.Germline.hc.fpfilter " .
-    "> $snv_combined";
+  my $germline = $snv_prefix . "*.formatted.LOH.hc.filtered";
+  my $loh = $snv_prefix . "*.formatted.Germline.hc.filtered";
+  unless(scalar glob("$germline $loh")) {
+      die $self->error_message("Unable to find $germline or $loh");
+  }
+  my $cat_cmd = "cat $germline $loh > $snv_combined";
   Genome::Sys->shellcmd(cmd => $cat_cmd);
   my $sort = Genome::Model::Tools::Capture::SortByChrPos->
     create(
@@ -240,6 +243,7 @@ sub cleanup {
   }
 }
 
+#The usual file munging to get what we want - sorting, filtering etc.
 sub execute {
   my $self = shift;
   my $somvar_build = $self->resolve_somvar;
