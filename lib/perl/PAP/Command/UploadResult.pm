@@ -50,7 +50,7 @@ sub execute {
 
     my $lock_path = "PAP_Command/UploadResult";
     my $lock = Genome::Sys::LockProxy->new(
-        resource_lock => $lock_path,
+        resource => $lock_path,
         scope => 'site',
     )->lock(
         block_sleep => 90,
