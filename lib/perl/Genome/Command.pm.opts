@@ -11765,6 +11765,8 @@ $Genome::Command::OPTS_SPEC = [
       [
         'outdir=s',
         'files',
+        'bedtools-version=s',
+        'files',
         'tumor-refalign=s',
         undef,
         'normal-refalign=s',
@@ -18461,7 +18463,7 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>query',
       [
-        'uuid=s',
+        'query=s',
         'files',
         'output-file=s',
         'files',
