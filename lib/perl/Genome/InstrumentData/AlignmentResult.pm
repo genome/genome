@@ -1648,7 +1648,7 @@ sub alignment_bam_file_paths {
 # This method will recreate the per-lane bam file and return the path.
 # This must be provided an allocation into which the bam will go (so that it can be cleaned up in the parent process once it is done).
 # The calling process is responsible for cleaning up the allocation after we are done with it.
-sub revivified_alignment_bam_file_paths {
+sub revivified_alignment_bam_file_path {
     my $self = shift;
 
     # If we have a merged alignment result, the per-lane bam can be regenerated and we will do so now

@@ -174,7 +174,7 @@ sub create {
             #handle duplicates on a per-library basis
             for my $alignment (@alignments) {
                 my $library = $alignment->instrument_data->library;
-                push @{ $bams_per_library->{$library->id} }, $alignment->revivified_alignment_bam_file_paths();
+                push @{ $bams_per_library->{$library->id} }, $alignment->revivified_alignment_bam_file_path;
                 $libraries->{$library->id} = $library;
             }
 
@@ -193,7 +193,7 @@ sub create {
         } else {
             #just collect the BAMs for a merge
             for my $alignment (@alignments) {
-                push @bams_for_final_merge, $alignment->revivified_alignment_bam_file_paths();
+                push @bams_for_final_merge, $alignment->revivified_alignment_bam_file_path;
             }
         }
 
