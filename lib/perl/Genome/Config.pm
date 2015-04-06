@@ -76,8 +76,15 @@ sub _home_dir {
 }
 
 sub _dirs {
-    my $dirs = $ENV{XGENOME_CONFIG_DIRS} || '/gscuser/nnutter/genome/config/etc:/etc';
-    return split(/:/, $dirs);
+    my $dirs = $ENV{XGENOME_CONFIG_DIRS} || '/etc';
+
+    # TODO One way to support per-snapshot dir.  Maybe not needed.
+    my @path = File::Spec->splitdir(__FILE__);
+    my @chop = ('lib', 'perl', split('::', __PACKAGE__));
+    my @chopped = splice(@path, -1 * @chop);
+    my @base_dir = @path;
+
+    return (File::Spec->join(@base_dir, 'etc'), split(/:/, $dirs));
 }
 
 1;
