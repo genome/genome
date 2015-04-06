@@ -5,7 +5,6 @@ use warnings;
 use Genome;
 
 use File::Basename qw(basename);
-use File::Slurp qw(write_file);
 
 class Genome::Model::Tools::BamUtil::ClipOverlap {
     doc => "Run BamUtil with the 'ClipOverlap' tool",
@@ -74,7 +73,7 @@ sub create_md5sum {
     my $md5line = sprintf '%s  %s', $digest, basename($self->output_file);
 
     my $md5file = join('.', $self->output_file, 'md5');
-    unless (write_file($md5file, $md5line)) {
+    unless (Genome::Sys->write_file($md5file, $md5line)) {
         die $self->error_message('Failed to write md5 file to %s', $md5file);
     }
 }
