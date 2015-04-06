@@ -126,7 +126,7 @@ sub _tool_from_name_and_params {
     my ($self, $name, $gmt_params) = @_;
     if (defined $name->output_file_accessor) {
         my $output_param_name = $name->output_file_accessor;
-        $gmt_params->{$output_param_name} = Genome::Sys->create_temp_file;
+        $gmt_params->{$output_param_name} = Genome::Sys->create_temp_file_path;
     }
     return $name->create(gmt_params => $gmt_params, alignment_result => $self->alignment_result);
 }
