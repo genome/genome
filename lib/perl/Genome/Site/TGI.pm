@@ -123,9 +123,6 @@ BEGIN {
 BEGIN { $INC{"UNIVERSAL/can.pm"} = 'no' };
 BEGIN { $INC{"UNIVERSAL/isa.pm"} = 'no' };
 
-# ensure nothing loads the old Genome::Config module
-BEGIN { $INC{"Genome/Config.pm"} = 'no' };
-
 BEGIN { $INC{ "UR/Time.pm"} = "no" };
 
 # this keeps available parts of the UR pre-0.01 API we still use
