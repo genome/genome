@@ -24,10 +24,5 @@ sub lsf_resource { # in 2 places b/c workflow requires a 'default_value' for thi
     $_[0]->__meta__->property_meta_for_name('lsf_resource')->default_value;
 }
 
-sub resolve_resource_requirements {
-    my ($class, $inputs) = @_;
-    return $inputs->{build}->resolve_resource_requirements_for_processing_instrument_data($class);
-}
-
 1;
 

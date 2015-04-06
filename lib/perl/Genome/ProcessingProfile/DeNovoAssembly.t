@@ -92,6 +92,7 @@ ok(
 my @params_and_xml_list = (
     {
         params => { name => 'allpaths test pp', coverage => 50,
+            read_processor => 'gmt sx trim far --nr-threads 4 --version 2.17',
             assembler_name => 'allpaths de-novo-assemble',
             assembler_version => 'allpaths test version',
         },
@@ -109,7 +110,7 @@ my @params_and_xml_list = (
     <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::Assemble" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT}" lsfResource="-n 4 -R 'span[hosts=1] select[mem&gt;61440] rusage[mem=61440]' -M 63963136" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="ProcessInstrumentData" parallelBy="instrument_data">
-    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000" typeClass="Workflow::OperationType::Command" />
+    <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-R 'select[mem&gt;32000 &amp;&amp; gtmp&gt;200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000 -n 4" typeClass="Workflow::OperationType::Command" />
   </operation>
   <operation name="MergeAndLinkSxResults">
     <operationtype commandClass="Genome::Model::DeNovoAssembly::Build::MergeAndLinkSxResults" lsfProject="build%s" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-R 'select[gtmp&gt;1000] rusage[gtmp=1000] span[hosts=1]'" typeClass="Workflow::OperationType::Command" />
