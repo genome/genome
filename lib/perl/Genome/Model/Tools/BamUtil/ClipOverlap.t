@@ -10,6 +10,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use Test::Exception;
 use Genome::Utility::Test qw(compare_ok);
 
 my $class = "Genome::Model::Tools::BamUtil::ClipOverlap";
@@ -33,6 +34,8 @@ ok($cmd, "Command was created correctly");
 ok($cmd->execute, "Command was executed successfuly");
 ok(-s $out, "Output file exists");
 ok(-s "$out.md5", "MD5 file exists");
+throws_ok { $cmd->create_md5sum } qr/Can't validate_file_for_writing/,
+    "Won't overwrite existing .md5 file";
 compare_ok($out, $expected_out, "Output file was as expected");
 
 done_testing;
