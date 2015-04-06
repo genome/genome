@@ -15,18 +15,27 @@ with qw(Genome::Sys::Lock::Backend);
 has 'url' => (is => 'ro', isa => 'Str');
 has 'client' => (is => 'ro', isa => 'Nessy::Client', lazy_build => 1);
 has 'claims' => (is => 'rw', isa => 'ArrayRef', auto_deref => 1);
+has 'namespace' => (is => 'ro', isa => 'Str');
 
 # TTL is specified in seconds.
 my $DEFAULT_TTL = 2 * 60 * 60;
 
 
+sub qualified_resource {
+    my ($self, $resource) = @_;
+    if ($self->namespace) {
+        return join(':', $self->namespace, $resource);
+    }
+    return $resource;
+}
+
 sub lock {
     my ($self, %args) = @_;
 
-    my $resource = $args{resource};
-    unless (defined $resource) {
+    unless (defined $args{resource}) {
         croak('resource not defined');
     }
+    my $resource = $self->qualified_resource($args{resource});
 
     my $timeout = delete $args{timeout};
     unless (defined $timeout) {
@@ -78,12 +87,17 @@ sub lock {
 
 sub unlock {
     my ($self, $resource) = @_;
-    unless ($resource) {
-        carp('resource is not set');
+
+    unless (defined $resource) {
+        croak('resource not defined');
     }
+    $resource = $self->qualified_resource($resource);
 
     if ($self->has_client) {
-        my $claim = $self->claim($resource);
+        my $claim = $self->_claim($resource);
+        unless ($claim) {
+            croak('no claim for resource');
+        }
         $self->remove_claim($claim);
         if ($claim) {
             $claim->release;
@@ -162,16 +176,17 @@ sub clear_claims {
     $self->claims([]);
 }
 
-sub claim {
-    my ($self, $resource) = @_;
-    my ($claim) = grep { $_->resource_name eq $resource } $self->claims;
+sub _claim {
+    my ($self, $qualified_resource) = @_;
+    my ($claim) = grep { $_->resource_name eq $qualified_resource } $self->claims;
     return $claim;
 }
 
 sub has_lock { _is_holding_nessy_lock(@_) }
 sub _is_holding_nessy_lock {
     my ($self, $resource) = @_;
-    return $self->claim($resource) ? 1 : 0;
+    $resource = $self->qualified_resource($resource);
+    return $self->_claim($resource) ? 1 : 0;
 }
 
 sub min_timeout {

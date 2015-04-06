@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::Sys::LockProxy qw();
+use Genome::Sys::LockMigrationProxy qw();
 use File::Path;
 use File::Copy;
 
@@ -393,9 +394,15 @@ sub full_consensus_sam_index_path {
         
         $self->warning_message("no failx file at $idx_file!");
 
-        my $lock = Genome::Sys::LockProxy->new(
-            resource => $data_dir.'/lock_for_faidx',
-            scope => 'unknown',
+        my $lock = Genome::Sys::LockMigrationProxy->new(
+            old => {
+                resource => $data_dir.'/lock_for_faidx',
+                scope => 'unknown',
+            },
+            new => {
+                resource => 'reference-sequence-' . $self->id . '-faidx',
+                scope => 'site',
+            },
         )->lock(
             max_try       => 2,
         );
@@ -459,11 +466,17 @@ sub get_sequence_dictionary {
 
     $self->warning_message("No seqdict at path $path.  Creating...");
 
-    my $resource_lock = $seqdict_dir_path."/lock_for_seqdict-$file_type";
-    #lock seqdict dir here
-    my $lock = Genome::Sys::LockProxy->new(
-        resource => $resource_lock,
+    my %old_seqdict = (
+        resource => $seqdict_dir_path."/lock_for_seqdict-$file_type",
         scope => 'unknown',
+    );
+    my %new_seqdict = (
+        resource => 'reference-sequence-' . $self->id . '-seqdict',
+        scope => 'site',
+    );
+    my $lock = Genome::Sys::LockMigrationProxy->new(
+        old => { %old_seqdict },
+        new => { %new_seqdict },
     )->lock(
         max_try => 2,
     );
@@ -471,9 +484,9 @@ sub get_sequence_dictionary {
     # if it couldn't get the lock after 2 tries, pop a message and keep trying as much as it takes
     unless ($lock) {
         $self->status_message("Couldn't get a lock after 2 tries, waiting some more...");
-        $lock = Genome::Sys::LockProxy->new(
-            resource => $resource_lock,
-            scope => 'unknown',
+        $lock = Genome::Sys::LockMigrationProxy->new(
+            old => { %old_seqdict },
+            new => { %new_seqdict },
         );
         unless($lock) {
             $self->error_message("Failed to lock resource: $seqdict_dir_path");
@@ -774,9 +787,15 @@ sub verify_or_create_local_cache {
     $self->status_message('Lock local cache directory');
     my $lock_name = $self->local_cache_lock;
     $self->status_message('Lock name: '.$lock_name);
-    my $lock = Genome::Sys::LockProxy->new(
-        resource => $lock_name,
-        scope => 'tgisan',
+    my $lock = Genome::Sys::LockMigrationProxy->new(
+        old => {
+            resource => $lock_name,
+            scope => 'tgisan',
+        },
+        new => {
+            resource => $lock_name,
+            scope => 'host',
+        },
     )->lock(
         max_try => 20, # 20 x 180 sec each = 1hr
         block_sleep => 180,
