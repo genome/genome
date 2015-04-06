@@ -1662,7 +1662,7 @@ sub revivified_alignment_bam_file_paths {
 
     my $temp_allocation = $self->_get_temp_allocation($self->output_dir);
     UR::Context->process->add_observer(
-        aspect => 'commit',
+        aspect => 'pre-commit',
         callback => sub { $temp_allocation->delete; },
     );
 
