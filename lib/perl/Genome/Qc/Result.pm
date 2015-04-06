@@ -103,7 +103,7 @@ sub _tools {
     my $commands = $self->qc_config->get_commands_for_alignment_result($self->alignment_result);
     my %tools;
     for my $name (keys %$commands) {
-        my $tool = _tool_from_name_and_params($commands->{$name}->{class},
+        my $tool = $self->_tool_from_name_and_params($commands->{$name}->{class},
                     $commands->{$name}->{params});
         $tools{$name} = $tool;
     }
@@ -123,12 +123,12 @@ sub _non_streaming_tools {
 }
 
 sub _tool_from_name_and_params {
-    my ($name, $gmt_params) = @_;
+    my ($self, $name, $gmt_params) = @_;
     if (defined $name->output_file_accessor) {
         my $output_param_name = $name->output_file_accessor;
         $gmt_params->{$output_param_name} = Genome::Sys->create_temp_file;
     }
-    return $name->create(gmt_params => $gmt_params);
+    return $name->create(gmt_params => $gmt_params, alignment_result => $self->alignment_result);
 }
 
 sub _add_metrics {
