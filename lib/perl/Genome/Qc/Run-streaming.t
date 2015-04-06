@@ -43,7 +43,7 @@ my $test_dir = __FILE__.".d";
     }
 
     sub get_metrics {
-        return {};
+        return ();
     }
 }
 {
@@ -65,10 +65,10 @@ my $test_dir = __FILE__.".d";
     }
 
     sub get_metrics {
-        return {
+        return (
             metric1 => 1,
             metric2 => 2,
-        };
+        );
     }
 }
 
@@ -92,10 +92,10 @@ my $test_dir = __FILE__.".d";
     }
 
     sub get_metrics {
-        return {
+        return (
             metricA => 1,
             metricB => 2,
-        };
+        );
     }
 }
 

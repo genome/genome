@@ -133,7 +133,7 @@ sub _tool_from_name_and_params {
 
 sub _add_metrics {
     my ($self, $tool) = @_;
-    my %metrics = %{$tool->get_metrics};
+    my %metrics = $tool->get_metrics;
     while (my ($name, $value) = each %metrics) {
         $self->add_metric(
             metric_name => $name,
