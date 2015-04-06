@@ -79,9 +79,8 @@ sub execute{
         die $self->error_message("Couldn't create detect variants dispatcher from params:\n".Data::Dumper::Dumper \%params);
     }
     my $rv = $command->execute;
-    my $err = $@;
     unless ($rv){
-        die $self->error_message("Failed to execute detect variants dispatcher(err:$@) with params:\n".Data::Dumper::Dumper \%params);
+        die $self->error_message("Failed to execute detect variants dispatcher with params:\n".Data::Dumper::Dumper \%params);
     }
     else {
         my @results = $command->results, $command->lq_results;

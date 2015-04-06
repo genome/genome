@@ -127,9 +127,8 @@ sub _fetch_control_snv_result {
 
     my $command = Genome::Model::Tools::DetectVariants2::Dispatcher->create(%params);
     my $rv = $command->execute;
-    my $err = $@;
     unless ($rv){
-        die $self->error_message("Failed to execute detect variants dispatcher(err:$@) with params:\n".Data::Dumper::Dumper \%params);
+        die $self->error_message("Failed to execute detect variants dispatcher with params:\n".Data::Dumper::Dumper \%params);
     }
 
     my $result = $command->snv_result;
