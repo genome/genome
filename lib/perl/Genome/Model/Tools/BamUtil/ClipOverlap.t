@@ -32,6 +32,7 @@ my $cmd = $class->create(
 ok($cmd, "Command was created correctly");
 ok($cmd->execute, "Command was executed successfuly");
 ok(-s $out, "Output file exists");
+ok(-s "$out.md5", "MD5 file exists");
 compare_ok($out, $expected_out, "Output file was as expected");
 
 done_testing;
