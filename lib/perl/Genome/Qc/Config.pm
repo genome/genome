@@ -15,18 +15,20 @@ class Genome::Qc::Config {
 
 sub get_commands_for_alignment_result {
     return {
-        picard_collect_multiple_metrics => {
-            class => 'Genome::Qc::Tool::PicardCollectMultipleMetrics',
+        picard_mark_duplicates => {
+            class => 'Genome::Qc::Tool::Picard::MarkDuplicates',
             params => {
-                param1 => 'a',
-                param2 => 'b',
+                output_file => '/dev/null',
+                input_file => '/dev/stdin',
+                use_version => 1.123,
             },
-            dependency => {name => "bam_file", fd => "STDOUT"},
+            in_file => "bam_file",
         },
-        samtools_view => {
-            class => 'Genome::Qc::Tool::BamFile',
+        picard_collect_multiple_metrics => {
+            class => 'Genome::Qc::Tool::Picard::CollectMultipleMetrics',
             params => {
-                input_file => '-',
+                input_file => '/dev/stdin',
+                use_version => 1.123,
             },
             in_file => "bam_file",
         },
