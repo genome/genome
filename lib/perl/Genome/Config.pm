@@ -22,7 +22,7 @@ sub get {
     }
 
     for my $v (@{$spec->validators}) {
-        if (my $error = $v->($value)) {
+        if (my $error = $v->($value, $spec)) {
             croakf('%s must be %s', $key, $error);
         }
     }
