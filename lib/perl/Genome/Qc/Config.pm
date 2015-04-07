@@ -15,6 +15,26 @@ class Genome::Qc::Config {
 
 sub get_commands_for_alignment_result {
     return {
+        picard_collect_wgs_metrics => {
+            class => 'Genome::Qc::Tool::Picard::CollectWgsMetrics',
+            params => {
+                input_file => '/dev/stdin',
+                reference_sequence => 'reference_sequence',
+                use_version => 1.123,
+            },
+            in_file => "bam_file",
+        },
+        picard_collect_gc_bias_metrics => {
+            class => 'Genome::Qc::Tool::Picard::CollectGcBiasMetrics',
+            params => {
+                input_file => '/dev/stdin',
+                refseq_file => 'reference_sequence',
+                assume_sorted => 1,
+                use_version => 1.123,
+                output_file=> '/dev/null',
+            },
+            in_file => "bam_file",
+        },
         picard_mark_duplicates => {
             class => 'Genome::Qc::Tool::Picard::MarkDuplicates',
             params => {
