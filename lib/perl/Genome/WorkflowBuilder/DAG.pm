@@ -117,6 +117,8 @@ sub _execute_with_ptero {
     my $wf_builder = $self->get_ptero_builder($self->name);
 
     my $wf_proxy = $wf_builder->submit( inputs => $inputs );
+    $self->status_message("Waiting on PTero workflow (%s) to complete",
+        $wf_proxy->url);
     $wf_proxy->wait(polling_interval => $polling_interval);
 
     if ($wf_proxy->has_succeeded) {
