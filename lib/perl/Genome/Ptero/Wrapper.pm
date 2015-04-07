@@ -163,13 +163,17 @@ sub _run_command {
 }
 
 sub _commit {
-    eval {
+    my $rv = eval {
         UR::Context->commit();
     };
 
     my $error = $@;
     if ($error) {
         Carp::confess "Failed to commit: $error";
+    } else {
+        unless ($rv) {
+            Carp::confess "Failed to commit: see above logged errors";
+        }
     }
 }
 
