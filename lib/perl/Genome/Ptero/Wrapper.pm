@@ -183,8 +183,6 @@ sub _get_command_outputs {
         $outputs{$prop_name} = $value;
     }
 
-    $outputs{result} = 1 unless exists $outputs{result};
-
     return \%outputs;
 }
 
