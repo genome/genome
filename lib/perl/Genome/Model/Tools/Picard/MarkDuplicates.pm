@@ -98,7 +98,7 @@ sub _cmdline_args {
     }
     # COMMENT supported in v1.77
     if ($self->include_comment && $self->version_at_least('1.77')) {
-        push @args, sprintf("COMMENT=%s", $self->include_comment);
+        push @args, sprintf("COMMENT='%s'", $self->include_comment);
     }
 
     return @args;
