@@ -28,6 +28,7 @@ my $cmd_1 = Genome::Model::Tools::Picard::MarkDuplicates->create(
     temp_directory => $tmp_dir->dirname,
     remove_duplicates => 1,
     use_version => "1.85",
+    include_comment => 'Testing Picard MarkDuplicates',
 );
 
 
