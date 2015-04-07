@@ -435,6 +435,7 @@ sub bed_size {
     return $count;
 }
 
+# H E L P E R  F U N C T I O N S ##############################################
 sub count {
     my $file = shift;
     my @results = `zgrep -v '^#' $file | cut -f1,2,3 | sort -u | wc -l`;
