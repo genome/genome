@@ -141,6 +141,7 @@ sub special_compare_functions {
     my $self = shift;
     my @functions = $self->SUPER::special_compare_functions(@_);
     push @functions, qr(\.xml$) => sub {Genome::VariantReporting::Process::Trio::compare_igv_xml(@_)};
+    push @functions, qr(\.yaml$) => sub {return 0};
     return @functions;
 }
 
