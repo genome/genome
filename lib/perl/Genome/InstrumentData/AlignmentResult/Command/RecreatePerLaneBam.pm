@@ -41,6 +41,12 @@ class Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam {
             is  => 'FilePath',
             doc => 'The path of flagstat file that is used to compare with that of recreated bam',
         },
+        include_qc_failed => {
+			is          => 'Boolean',
+			doc         => 'Include reads that were marked within the bam as having failed QC',
+			is_optional => 1,
+			default     => 0,
+		},
     ],
     has_transient_optional => [
         _temp_out_bam => {
@@ -131,6 +137,7 @@ sub _extract_readgroup_bam {
         output        => $temp_bam,
         read_group_id => $self->instrument_data_id,
         use_version   => $self->samtools_version,
+        include_qc_failed => $self->include_qc_failed,
     );
     
     unless ($extract->execute) {

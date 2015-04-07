@@ -1676,6 +1676,7 @@ sub revivified_alignment_bam_file_paths {
         picard_version      => $self->picard_version,
         bam_header          => $self->bam_header_path,
         comparison_flagstat => $self->flagstat_path,
+        include_qc_failed   => 1,
     );
 
     unless ($cmd->execute) {
