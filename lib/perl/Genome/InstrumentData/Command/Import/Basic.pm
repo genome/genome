@@ -243,7 +243,10 @@ sub _resolve_workflow_steps {
     my @steps = $self->$steps_method;
     return @steps if not $self->downsample_ratio;
 
-    my $idx = List::MoreUtils::firstidx(sub{ $_ eq 'sort bam' }, @steps);
+    my $idx = List::MoreUtils::firstidx(sub{ $_ eq 'sanitize bam' }, @steps);
+    if ( not $idx ) {
+        $idx = List::MoreUtils::firstidx(sub{ $_ eq 'sort bam' }, @steps);
+    }
     splice(@steps, $idx + 1, 0, 'downsample bam');
 
     return @steps;
@@ -253,7 +256,7 @@ sub _steps_to_build_workflow_for_bam {
     my $self = shift;
 
     return (
-        'sanitize bam', 'sort bam', 'split bam by rg',
+        'sort bam', 'sanitize bam', 'split bam by rg',
     );
 }
 
@@ -277,7 +280,7 @@ sub _steps_to_build_workflow_for_sra {
     my $self = shift;
 
     return (
-        'sra to bam', 'sanitize bam', 'sort bam', 'split bam by rg',
+        'sra to bam', 'sort bam', 'sanitize bam', 'split bam by rg',
     );
 }
 
@@ -423,7 +426,10 @@ sub _add_sort_bam_op_to_workflow {
     my $sort_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'sort bam');
     $self->_workflow->add_link(
         left_operation => $previous_op,
-        left_property => 'output_bam_path',
+        #left_property => 'output_bam_path',
+        left_property => ( $previous_op->name eq 'verify not imported' ) # not ideal...
+        ? 'source_path'
+        : 'output_bam_path',
         right_operation => $sort_bam_op,
         right_property => 'bam_path',
     );
