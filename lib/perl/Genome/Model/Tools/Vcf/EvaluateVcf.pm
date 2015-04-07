@@ -85,6 +85,7 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
             is => "Integer",
             doc => "Use this number as the size of the TN BED "
                    . "file rather than calculating on the fly",
+            is_optional => '1',
         },
 
         pass_only_expression => {
@@ -163,7 +164,8 @@ sub execute {
         $new_sample
         );
 
-    my $tn_bed_size = $self->bed_size("$tn_bed.roi.bed.gz");
+    my $tn_bed_size = $self->true_negative_size
+      || $self->bed_size("${tn_bed}.roi.bed.gz");
 
     my $false_positives_in_roi = $self->number_within_roi(
         $final_input_file,
