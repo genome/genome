@@ -132,7 +132,7 @@ sub _instantiate_command {
     my $error = $@;
     if ($error) {
         Carp::confess sprintf(
-            "Failed to intantiate class (%s) with inputs (%s): %s",
+            "Failed to instantiate class (%s) with inputs (%s): %s",
             $pkg, Data::Dump::pp($inputs), $error);
     }
     return $cmd;
