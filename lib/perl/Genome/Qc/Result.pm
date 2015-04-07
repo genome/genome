@@ -128,7 +128,13 @@ sub _tool_from_name_and_params {
         my $output_param_name = $name->output_file_accessor;
         $gmt_params->{$output_param_name} = Genome::Sys->create_temp_file_path;
     }
-    return $name->create(gmt_params => $gmt_params, alignment_result => $self->alignment_result);
+    my $tool = $name->create(gmt_params => $gmt_params, alignment_result => $self->alignment_result);
+    while (my ($param_name, $param_value) = each %$gmt_params) {
+        if ($tool->can($param_value)) {
+            $tool->gmt_params->{$param_name} = $tool->$param_value;
+        }
+    }
+    return $tool;
 }
 
 sub _add_metrics {
