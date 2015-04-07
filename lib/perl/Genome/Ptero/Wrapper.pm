@@ -181,7 +181,7 @@ sub _get_command_outputs {
     my ($cmd, $pkg) = @_;
 
     my %outputs;
-    for my $prop (_output_names($pkg)) {
+    for my $prop (_output_properties($pkg)) {
         my $prop_name = $prop->property_name;
         my $value = $prop->is_many ? [$cmd->$prop_name] : $cmd->$prop_name;
         $outputs{$prop_name} = $value;
@@ -190,7 +190,7 @@ sub _get_command_outputs {
     return \%outputs;
 }
 
-sub _output_names {
+sub _output_properties {
     my $pkg = shift;
 
     return $pkg->__meta__->properties(is_output => 1);
