@@ -72,7 +72,6 @@ looks for WEx-somatic-variation build.
 Alternatively, instead of a clin-seq build you can supply a
 somatic-variation build as an input.
 
-Thanks to Chris Miller for working out the workflow.
 EOS
 }
 
@@ -196,13 +195,15 @@ sub combine_sort_snvs {
     my $snv_prefix = shift;
     my $snv_combined = $snv_prefix . ".combined";
     my $snv_combined_sorted = $snv_prefix . ".combined.sorted";
-    my $germline = $snv_prefix . "*.formatted.LOH.hc.filtered";
-    my $loh = $snv_prefix . "*.formatted.Germline.hc.filtered";
+    my $germline = glob $snv_prefix . "*.formatted.LOH.hc.filtered";
+    my $loh = glob $snv_prefix . "*.formatted.Germline.hc.filtered";
     unless(scalar glob("$germline $loh")) {
         die $self->error_message("Unable to find $germline or $loh");
     }
-    my $cat_cmd = "cat $germline $loh > $snv_combined";
-    Genome::Sys->shellcmd(cmd => $cat_cmd);
+    Genome::Sys->cat(
+            input_files => [$germline, $loh],
+            output_file => $snv_combined
+            );
     my $sort = Genome::Model::Tools::Capture::SortByChrPos->
     create(
         input_file => $snv_combined,
