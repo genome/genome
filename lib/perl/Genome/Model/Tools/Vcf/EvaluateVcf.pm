@@ -100,7 +100,14 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
                    . "actually overlap the ROI",
             default_value => 0,
         },
-    ]
+    ],
+
+    has_output => [
+        rawstats => {
+            is => "HASH",
+            doc => "The raw stats generated during primary execution",
+        },
+    ],
 };
 
 sub execute {
@@ -171,32 +178,35 @@ sub execute {
         $new_sample
     );
 
-    print join("\t",
-        # Exact matches
-        $results{true_positive_exact},
+    $results{true_negatives} = $tn_bed_size;
+    $results{false_positives_in_roi} = $false_positives_in_roi;
 
-        # All true cases
-        $results{true_positive_exact} + $results{false_negative_exact},
+    $self->rawstats(\%results);
 
-        # Exact sensitivty
-        $results{true_positive_exact} / ($results{true_positive_exact} + $results{false_negative_exact}),
-
-        $results{true_positive_partial},
-        $results{true_positive_partial} + $results{false_negative_partial},
-        $results{true_positive_partial} / ($results{true_positive_partial} + $results{false_negative_partial}),
-        $results{false_positive_exact},
-        $results{false_positive_partial},
-        $tn_bed_size,
-        #exact specificity, these are not strictly accurate as the tn_bed may be significantly smaller than the target space ROI
-        ($tn_bed_size - $results{false_positive_exact}) / $tn_bed_size,
-        ($tn_bed_size - $results{false_positive_partial}) / $tn_bed_size,
-        $results{true_positive_exact} / ($results{false_positive_exact} + $results{true_positive_exact}),
-        $results{true_positive_partial} / ($results{false_positive_partial} + $results{true_positive_partial}),
-        $false_positives_in_roi,
-        ($tn_bed_size - $false_positives_in_roi) / $tn_bed_size, #this is more accurate than the other specificity measures, but doesn't take partial into account
-    ), "\n";
+    $self->display_all_stats();
 
     return 1;
+}
+
+sub display_all_stats {
+    my $self = shift;
+    print join("\t",
+        $self->stat_true_positive_found_exact(),
+        $self->stat_total_true_positive_exact(),
+        $self->stat_sensitivity_exact(),
+        $self->stat_true_positive_found_partial(),
+        $self->stat_total_true_positive_partial(),
+        $self->stat_sensitivity_partial(),
+        $self->stat_false_positive_exact(),
+        $self->stat_false_positive_partial(),
+        $self->stat_true_negatives(),
+        $self->stat_exact_specificity(),
+        $self->stat_partial_specificity(),
+        $self->stat_exact_ppv(),
+        $self->stat_partial_ppv(),
+        $self->stat_vcf_lines_overlapping_tn(),
+        $self->stat_lines_specificity_in_tn_only(),
+    ), "\n";
 }
 
 sub joinx {
@@ -434,6 +444,176 @@ sub _run {
     my $cmd = shift;
 
     return Genome::Sys->shellcmd(cmd => $cmd);
+}
+
+# S T A T  /  M E T R I C   A C C E S S O R S #################################
+sub get_rawstats {
+    my $self    = shift;
+    my $results = $self->rawstats or die $self->error_message(
+        "Please invoke 'execute' to generate rawstats!"
+    );
+    return $results;
+}
+
+sub stat_true_positive_found_exact {
+    my $self = shift;
+    my $results = $self->get_rawstats();
+    my $stat = $results->{true_positive_exact};
+    return $stat;
+}
+
+sub stat_total_true_positive_exact {
+    my $self    = shift;
+    my $results = $self->get_rawstats();
+    my $stat =
+      $results->{true_positive_exact} + $results->{false_negative_exact};
+    return $stat;
+}
+
+sub stat_sensitivity_exact {
+    my $self    = shift;
+    my $results = $self->get_rawstats();
+
+    my $total_true = $self->stat_total_true_positive_exact;
+    if ($total_true == 0) {
+        return 0;
+    }
+
+    my $stat = $results->{true_positive_exact} / $total_true;
+    return $stat;
+}
+
+sub stat_true_positive_found_partial {
+    my $self    = shift;
+    my $results = $self->get_rawstats();
+    my $stat    = $results->{true_positive_partial};
+    return $stat;
+}
+
+sub stat_total_true_positive_partial {
+    my $self    = shift;
+    my $results = $self->get_rawstats();
+    my $stat    = 
+        $results->{true_positive_partial} + $results->{false_negative_partial};
+    return $stat;
+}
+
+sub stat_sensitivity_partial {
+    my $self    = shift;
+    my $results = $self->get_rawstats();
+
+    my $total_true = $self->stat_total_true_positive_partial;
+    if ($total_true == 0) {
+        return 0;
+    }
+
+    my $stat = $results->{true_positive_partial} / $total_true;
+    return $stat;
+}
+
+sub stat_false_positive_exact {
+    my $self = shift;
+    my $results = $self->get_rawstats();
+    my $stat = $results->{false_positive_exact};
+    return $stat;
+}
+
+sub stat_false_positive_partial {
+    my $self = shift;
+    my $results = $self->get_rawstats();
+    my $stat = $results->{false_positive_partial};
+    return $stat;
+}
+
+sub stat_true_negatives {
+    my $self = shift;
+    my $results = $self->get_rawstats();
+    my $stat = $results->{true_negatives};
+    return $stat;
+}
+
+sub stat_exact_specificity {
+    my $self = shift;
+    my $results = $self->get_rawstats();
+
+    # exact specificity, these are not strictly accurate as the tn_bed
+    # may be significantly smaller than the target space ROI
+    
+    my $tn = $self->stat_true_negatives();
+    if ($tn == 0) {
+        return 0;
+    }
+
+    my $stat =
+      ($results->{true_negatives} - $results->{false_positive_exact}) / $tn;
+    return $stat;
+}
+
+sub stat_partial_specificity {
+    my $self    = shift;
+    my $results = $self->get_rawstats();
+
+    my $tn = $self->stat_true_negatives();
+    if ($tn == 0) {
+        return 0;
+    }
+
+    my $stat =
+      ($results->{true_negatives} - $results->{false_positive_partial}) / $tn;
+    return $stat;
+}
+
+sub stat_exact_ppv {
+    my $self    = shift;
+
+    my $fp_exact = $self->stat_false_positive_exact();
+    my $tp_exact = $self->stat_true_positive_found_exact();
+
+    my $denominator = $fp_exact + $tp_exact;
+    if ($denominator == 0) {
+        return 0;
+    }
+
+    my $stat = $tp_exact / $denominator;
+    return $stat;
+}
+
+sub stat_partial_ppv {
+    my $self    = shift;
+
+    my $fp_partial = $self->stat_false_positive_partial();
+    my $tp_partial = $self->stat_true_positive_found_partial();
+
+    my $denominator = $fp_partial + $tp_partial;
+    if ($denominator == 0) {
+        return 0;
+    }
+
+    my $stat = $tp_partial / $denominator;
+    return $stat;
+}
+
+sub stat_vcf_lines_overlapping_tn {
+    my $self    = shift;
+    my $results = $self->get_rawstats();
+    my $stat    = $results->{false_positives_in_roi};
+    return $stat;
+}
+
+sub stat_lines_specificity_in_tn_only {
+    my $self    = shift;
+    my $results = $self->get_rawstats();
+
+    # this is more accurate than the other specificity measures, but
+    # doesn't take partial into account
+
+    my $tn = $self->stat_true_negatives();
+    if ($tn == 0) {
+        return 0;
+    }
+
+    my $stat = ($tn - $results->{false_positives_in_roi}) / $tn;
+    return $stat;
 }
 
 sub help_brief {
