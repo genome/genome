@@ -141,10 +141,10 @@ sub get_varscan_snvs {
 sub get_tumor_normal_bam {
     my $self = shift;
     my $somvar_build = shift;
-    my $tumor_bam = $somvar_build->tumor_model->last_succeeded_build->
-    whole_rmdup_bam_file;
-    my $normal_bam = $somvar_build->normal_model->last_succeeded_build->
-    whole_rmdup_bam_file;
+    my $tumor_bam = $somvar_build->tumor_build->
+        whole_rmdup_bam_file;
+    my $normal_bam = $somvar_build->normal_build->
+        whole_rmdup_bam_file;
     unless (-e $tumor_bam and -e $normal_bam) {
         die $self->error_message("tumor_bam $tumor_bam or normal_bam " .
             "$normal_bam does not exist.");

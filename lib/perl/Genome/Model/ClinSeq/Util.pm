@@ -1450,9 +1450,9 @@ sub get_best_somvar_build {
     my $self = shift;
     my $clinseq_build = shift;
     my $somvar_build =
-        $clinseq_build->model->wgs_model->last_succeeded_build;
+        $clinseq_build->wgs_build;
     unless($somvar_build) {
-        my $somvar_build = $clinseq_build->model->wgs_model->last_succeeded_build;
+        my $somvar_build = $clinseq_build->exome_build;
         $self->status_message("Using exome somvvar build.");
     } else {
         $self->status_message("Using WGS somvvar build.");
