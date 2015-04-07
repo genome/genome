@@ -63,11 +63,6 @@ ok(
             sample_id => 'f39b4cc9-9253-4cf9-8827-ebf26af1003a',
             uuid => $uuid,
         },
-        target_region => 'agilent_sureselect_exome_version_2_broad_refseq_cds_only_hs37',
-        reference_assembly_attrs => {
-            shortname => 'HG19_Broad_variant',
-            version => '37',
-        }
     ),
     'test metadata'
 );
@@ -109,11 +104,6 @@ ok(
             sample_id => '8aca008c-f55a-420a-82c7-acd2cca77d85',
             uuid => $uuid2,
         },
-        target_region => 'agilent sureselect exome version 2 broad refseq cds only',
-        reference_assembly_attrs => {
-            shortname => 'NCBI36_BCM_variant',
-            version => '36',
-        }
     ),
     'test metadata'
 );
@@ -121,12 +111,6 @@ ok(
 # Fails to get checksum type/content
 throws_ok(sub{ $metadata2->checksum_content_for_file_name(); }, qr/No file name given to get attribute value!/, 'checksum_content_for_file_name fails w/o file name');
 throws_ok(sub{ $metadata2->checksum_type_for_file_name(); }, qr/No file name given to get attribute value!/, 'checksum_type_for_file_name fails w/o file name');
-
-# Fail to get target region when no library strategy is given
-my $library_strategy = $metadata2->metadata->{Result}->{library_strategy};
-$metadata2->metadata->{Result}->{library_strategy} = undef;
-throws_ok(sub{ $metadata2->target_region; }, qr/No library strategy in metadata to resolve target region!/, 'failed to get target region w/o library strategy');
-$metadata2->metadata->{Result}->{library_strategy} = $library_strategy;
 
 done_testing();
 
@@ -143,11 +127,6 @@ sub _test_metadata {
     for my $name ( sort keys %instdata_attrs ) {
         is($metadata->get_attribute_value($name), $instdata_attrs{$name}, "get_attribute_value for $name");
     }
-
-    # ref
-    my %reference_assembly_attrs = %{$params{reference_assembly_attrs}};
-    is($metadata->reference_assembly_shortname, $reference_assembly_attrs{shortname}, 'reference_assembly_shortname');
-    is($metadata->reference_assembly_version, $reference_assembly_attrs{version}, 'reference_assembly_version');
 
     # files
     my @files = @{$params{files}};
@@ -175,9 +154,6 @@ sub _test_metadata {
             "checksum_type_for_file_name for $file_name",
         );
     }
-
-    # target region
-    is($metadata->target_region, $params{target_region}, 'correct target_region');
 
     return 1;
 }
