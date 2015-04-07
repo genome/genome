@@ -593,6 +593,7 @@ sub _merge_workflow_input_properties {
         duplication_handler_name
         duplication_handler_version
         duplication_handler_params
+        bedtools_version
         samtools_version
         result_users
         );
