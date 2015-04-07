@@ -15,6 +15,16 @@ class Genome::Qc::Config {
 
 sub get_commands_for_alignment_result {
     return {
+        picard_calculate_hs_metrics => {
+            class => 'Genome::Qc::Tool::Picard::CalculateHsMetrics',
+            params => {
+                input_file => '/dev/stdin',
+                bait_intervals => 'bait_intervals', #region_of_interest_set
+                target_intervals => 'target_intervals', #target_region_set
+                use_version => 1.123,
+            },
+            in_file => "bam_file",
+        },
         picard_collect_wgs_metrics => {
             class => 'Genome::Qc::Tool::Picard::CollectWgsMetrics',
             params => {
