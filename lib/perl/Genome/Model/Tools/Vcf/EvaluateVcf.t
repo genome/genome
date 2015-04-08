@@ -24,7 +24,7 @@ done_testing();
 
 # S U B R O U T I N E S #######################################################
 sub run_evaluate_vcf {
-    my ($vcf, $gold_vcf, $roi, $true_negative_bed, $output_dir) =
+    my ($vcf, $gold_vcf, $roi, $true_negative_bed, $output_dir, $ref) =
       setup_evaluate_vcf_params();
 
     my $cmd = Genome::Model::Tools::Vcf::EvaluateVcf->create(
@@ -36,6 +36,7 @@ sub run_evaluate_vcf {
         roi               => $roi->stringify,
         true_negative_bed => $true_negative_bed->stringify,
         output_directory  => $output_dir->stringify,
+        reference         => $ref,
     );
     ok($cmd, 'Got a Genome::Model::Tools::Vcf::EvaluateVcf instance');
     diag('executing command');
@@ -105,5 +106,7 @@ sub setup_evaluate_vcf_params {
     }
     $output_dir->mkpath;
 
-    return ($vcf, $gold_vcf, $roi, $true_negative_bed, $output_dir);
+    my $ref = Genome::Model::Build::ReferenceSequence->get(106942997);
+
+    return ($vcf, $gold_vcf, $roi, $true_negative_bed, $output_dir, $ref);
 }

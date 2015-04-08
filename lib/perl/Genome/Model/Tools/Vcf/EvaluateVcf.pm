@@ -15,11 +15,15 @@ use File::Spec;
 use File::Temp qw(tempdir);
 use Path::Class;
 use Genome::Model::Tools::Vcf::VcfCompare;
-use String::TT qw(strip);
 
 class Genome::Model::Tools::Vcf::EvaluateVcf {
     is => "Command::V2",
     has_input => [
+        reference => {
+            is => 'Genome::Model::Build::ReferenceSequence',
+            doc => 'a reference sequence of interest.',
+        },
+
         bedtools_version => {
             is => "Text",
             doc => "Bedtools version to use",
@@ -235,10 +239,10 @@ sub vcflib_tool {
     return $path;
 }
 
-sub reference {
+sub reference_path {
     my $self = shift;
-    return "/gscmnt/ams1102/info/model_data/"
-           . "2869585698/build106942997/all_sequences.fa";
+    my $path = $self->reference->full_consensus_path('fa');
+    return $path;
 }
 
 sub _process_input_file {
@@ -248,7 +252,7 @@ sub _process_input_file {
         $self->restrict_to_sample_commands("/dev/stdin", $self->old_sample),
         $self->pass_only_commands("/dev/stdin", $self->pass_only_expression),
         $self->allelic_primitives_commands("/dev/stdin"),
-        $self->normalize_vcf_commands("/dev/stdin", $self->reference),
+        $self->normalize_vcf_commands("/dev/stdin", $self->reference_path),
         $self->sort_commands("/dev/stdin"),
         $self->restrict_commands("stdin", $self->roi),
         "bgzip -c",
