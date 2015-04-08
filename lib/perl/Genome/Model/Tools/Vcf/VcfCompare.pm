@@ -23,7 +23,6 @@ use IO::File;
 
 
 sub new {
-    $DB::single = 1;
     my ($class, $file) = @_;
 
     my $self;
