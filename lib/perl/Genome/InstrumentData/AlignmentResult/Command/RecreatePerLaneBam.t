@@ -34,6 +34,7 @@ my %params = (
     picard_version      => '1.82',
     bam_header          => File::Spec->join($out_dir, $out_base.'.header'),
     comparison_flagstat => File::Spec->join($out_dir, $out_base.'.flagstat'),
+    include_qc_failed   => 1,
 );
 
 subtest 'testing command failure with invalid input' => sub {
