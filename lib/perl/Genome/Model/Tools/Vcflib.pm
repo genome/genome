@@ -169,14 +169,14 @@ sub get_version_toolset {
         }
     );
 
-    if (exists $toolset{$version}) {
-        return $toolset{$version}
+    unless (exists $toolset{$version}) {
+        die $self->error_message(
+            "Couldn't find the vcflib tool set for version: '%s'",
+            $version
+        );
     }
 
-    die $self->error_message(
-        "Couldn't find the vcflib tool set for version: '%s'",
-        $version
-    );
+    return $toolset{$version};
 }
 
 1;
