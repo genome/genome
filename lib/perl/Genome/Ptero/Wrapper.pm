@@ -6,6 +6,9 @@ use Genome;
 use Data::Dump qw();
 use IO::Handle;
 use Cwd qw(abs_path);
+use Genome::Utility::Text qw(
+    sanitize_string_for_filesystem
+);
 use Ptero::Proxy::Workflow::Execution;
 
 class Genome::Ptero::Wrapper {
@@ -76,14 +79,16 @@ sub _stdout_log_path {
     my $self = shift;
 
     my $base_name = $self->execution->name;
-    my $output_log = File::Spec->join(abs_path($self->log_directory), "$base_name.out");
+    my $output_log = File::Spec->join(abs_path($self->log_directory),
+        sanitize_string_for_filesystem("$base_name.out"));
 }
 
 sub _stderr_log_path {
     my $self = shift;
 
     my $base_name = $self->execution->name;
-    my $output_log = File::Spec->join(abs_path($self->log_directory), "$base_name.err");
+    my $output_log = File::Spec->join(abs_path($self->log_directory),
+        sanitize_string_for_filesystem("$base_name.err"));
 }
 
 sub _setup_logging {
