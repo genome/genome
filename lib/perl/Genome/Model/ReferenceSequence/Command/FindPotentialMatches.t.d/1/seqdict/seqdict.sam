@@ -1,0 +1,5 @@
+@HD	VN:1.0	SO:unsorted
+@SQ	SN:1	LN:1	UR:ftp://ftp.example.com/reference.fa.gz AS:reference	M5:1234567890abcdef1234567890abcdef	SP:Unknown
+@SQ	SN:2	LN:1	UR:ftp://ftp.example.com/reference.fa.gz AS:reference	M5:1234567890abcdef1234567890abcdef	SP:Unknown
+@SQ	SN:3	LN:1	UR:ftp://ftp.example.com/reference.fa.gz AS:reference	M5:1234567890abcdef1234567890abcdef	SP:Unknown
+@SQ	SN:4	LN:1	UR:ftp://ftp.example.com/reference.fa.gz AS:reference	M5:1234567890abcdef1234567890abcdef	SP:Unknown
