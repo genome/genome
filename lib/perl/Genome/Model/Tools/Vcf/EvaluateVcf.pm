@@ -366,7 +366,7 @@ sub allelic_primitives_commands {
     my $vcffilter = $self->vcflib_tool('vcffilter');
 
     return (
-        "$vcfallelicprimitives -t ALLELICPRIMITIVE /dev/stdin",
+        "$vcfallelicprimitives -t ALLELICPRIMITIVE $input_file",
         "$vcffixup - ",
         "$vcffilter -f 'AC > 0'"
         );
