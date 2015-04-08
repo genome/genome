@@ -252,7 +252,7 @@ sub _run_htseq_count {
         $self->debug_message("No temp_scratch_directory found: name sort the BAM in temp space.");
 
         my $temp_allocation = Genome::InstrumentData::AlignmentResult::Merged->_get_temp_allocation($alignment_result->id, $output_dir);
-        my ($unsorted_bam) = $alignment_result->revivified_alignment_bam_file_path(disk_allocation => $temp_allocation);
+        my ($unsorted_bam) = $alignment_result->revivified_alignment_bam_file_path;
 
         my $sorted_bam_noprefix = "$tmp/all_sequences.namesorted";
         $sorted_bam = $sorted_bam_noprefix . '.bam';

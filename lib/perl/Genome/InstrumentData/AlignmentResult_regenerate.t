@@ -237,7 +237,7 @@ subtest 'test per lane bam removal and recreation - AlignedBamResult accessors' 
     );
 
     # The revivified bam will be in a different location
-    my $new_path = $ar2->revivified_alignment_bam_file_path(disk_allocation => $temp_allocation);
+    my $new_path = $ar2->revivified_alignment_bam_file_path;
 
     SKIP: {
         # This test currently fails because the bam_path points to the original
