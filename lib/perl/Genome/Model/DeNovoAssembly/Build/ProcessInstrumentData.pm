@@ -7,13 +7,8 @@ use Genome;
 use Genome::Model::DeNovoAssembly::SxReadProcessor;
 
 class Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData {
-    is => 'Command::V2',
+    is => 'Genome::Model::DeNovoAssembly::Build::ProcessInstrumentDataBase',
     has_input => [
-        build => { 
-            is => 'Genome::Model::Build::DeNovoAssembly',
-            is_output => 1,
-            doc => 'Build to process instrument data.',
-        },
         instrument_data => { 
             is => 'Genome::InstrumentData',
             doc => 'Instrument data to be processed.',
@@ -23,12 +18,6 @@ class Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData {
         sx_result => {
             is => 'Genome::InstrumentData::SxResult',
             doc => 'Sx result from processing instrument data.',
-        },
-    ],
-    has_constant => [
-        lsf_resource => { 
-            is => 'Text',
-            default_value => "-R 'select[mem>32000 && gtmp>200] rusage[mem=32000:gtmp=200] span[hosts=1]' -M 32000000",
         },
     ],
 };

@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use Data::Dumper 'Dumper';
+use List::Util;
 use Parse::RecDescent;
 
 class Genome::Model::DeNovoAssembly::SxReadProcessor { 
@@ -18,6 +19,7 @@ class Genome::Model::DeNovoAssembly::SxReadProcessor {
     has_transient_optional => [
         default_processing => { is => 'HASH', },
         additional_processings => { is => 'ARRAY', },
+        number_of_threads_required => { is => 'Number', },
         _instrument_data => { is => 'ARRAY', },
         _sx_result_params => { is => 'ARRAY', },
         _merged_sx_result_params => { is => 'ARRAY', },
@@ -123,6 +125,7 @@ sub __errors__ {
     return if not $processor; # do not validate SX command
 
     # Validate SX commands
+    my @threads;
     for my $processing ( $self->default_processing, @{$self->additional_processings} ) {
         $processing->{processor}= $self->default_processing->{processor} if $processing->{processor} eq 'DEFAULT';
         my @processor_parts = split(/\s+\|\s+/, $processing->{processor});
@@ -135,16 +138,18 @@ sub __errors__ {
         }
 
         for my $processor_part ( @processor_parts ) {
-            my $processor_is_ok = eval{ Genome::Model::Tools::Sx::Validate->validate_command('gmt sx '.$processor_part); };
-            if ( not $processor_is_ok ) {
+            my $validator = Genome::Model::Tools::Sx::Validate->create(command => 'gmt sx '.$processor_part);
+            if ( not $validator->is_valid ) {
                 return UR::Object::Tag->create(
                     type => 'invalid',
                     properties => [qw/ processor /],
                     desc => "Cannot validate processor part ($processor_part)! See above error(s)",
                 );
             }
+            push @threads, $validator->number_of_threads_required;
         }
     }
+    $self->number_of_threads_required( List::Util::max @threads );
 
     return;
 }

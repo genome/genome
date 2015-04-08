@@ -12,6 +12,7 @@ use_ok('Genome::Model::DeNovoAssembly::SxReadProcessor') or die;
 class Genome::Model::Tools::Sx::Test::Default {
     is => 'Genome::Model::Tools::Sx::Base',
     has => [ param => {}, ],
+    has_optional => [ thread => {}, ],
 };
 class Genome::Model::Tools::Sx::Test::InsertSize {
     is => 'Genome::Model::Tools::Sx::Base',
@@ -102,6 +103,7 @@ $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
     processor => 'test default --param 1',
 );
 ok($sx_processor, 'create sx read processor');
+is($sx_processor->number_of_threads_required, 1, 'number_of_threads_required');
 ok($sx_processor->determine_processing(@instrument_data), 'determine processing');
 my $old_way_processing = { condition => 'DEFAULT', processor => 'test default --param 1', };
 is_deeply($sx_processor->default_processing, $old_way_processing, 'default processing');
@@ -133,11 +135,12 @@ is_deeply(
 
 diag('SUCCESS (NEW WAY DEFAULT ONLY)');
 $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
-    processor => 'DEFAULT (test default --param 1, coverage 10X)',
+    processor => 'DEFAULT (test default --param 1 --thread 4, coverage 10X)',
 );
-ok($sx_processor->determine_processing(@instrument_data), 'determine processing');
 ok($sx_processor, 'create sx read processor');
-my $new_way_processing = { condition => 'DEFAULT', processor => 'test default --param 1', coverage => 10, };
+is($sx_processor->number_of_threads_required, 4, 'number_of_threads_required');
+ok($sx_processor->determine_processing(@instrument_data), 'determine processing');
+my $new_way_processing = { condition => 'DEFAULT', processor => 'test default --param 1 --thread 4', coverage => 10, };
 is_deeply($sx_processor->default_processing, $new_way_processing, 'default processing');
 is_deeply($sx_processor->additional_processings, [], 'no additional processings');
 my $merged_sx_result_params = $sx_processor->merged_sx_result_params_for_instrument_data($instrument_data[0]);
@@ -173,9 +176,9 @@ diag('SUCESS (NEW WAY, FULL TEST)');
 $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
     processor => 'DEFAULT (test default --param 1) original_est_fragment_size <= 2.5 * read_length (DEFAULT, coverage 30X) original_est_fragment_size > 1000 and original_est_fragment_size <= 6000 (test insert-size --min 1001 --max 6000 | test default --param 0, coverage 20X) original_est_fragment_size > 6000 and original_est_fragment_size <= 10000 (test insert-size --min 6001 --max 10000) read_length == 777 (test default --param 100)',
 );
+ok($sx_processor, 'create sx read processor');
 ok($sx_processor->determine_processing(@instrument_data), 'determine processing');
 is_deeply($sx_processor->default_processing, $old_way_processing, 'default processing');
-ok($sx_processor, 'create sx read processor');
 ok($sx_processor->parser, 'parser');
 my $default_processing = { condition => 'DEFAULT', processor => 'test default --param 1', };
 my @expected_processings = (
