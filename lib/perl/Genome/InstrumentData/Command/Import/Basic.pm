@@ -408,9 +408,7 @@ sub _add_sanitize_bam_op_to_workflow {
     return if not $sanitize_bam_op;
     $self->_workflow->add_link(
         left_operation => $previous_op,
-        left_property => ( $previous_op->name eq 'verify not imported' ) # not ideal...
-        ? 'source_path'
-        : 'output_bam_path',
+        left_property => 'output_bam_path',
         right_operation => $sanitize_bam_op,
         right_property => 'bam_path',
     );
@@ -426,10 +424,9 @@ sub _add_sort_bam_op_to_workflow {
     my $sort_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'sort bam');
     $self->_workflow->add_link(
         left_operation => $previous_op,
-        #left_property => 'output_bam_path',
-        left_property => ( $previous_op->name eq 'verify not imported' ) # not ideal...
-        ? 'source_path'
-        : 'output_bam_path',
+        left_property => ( $previous_op->operation_type->command_class_name->can('output_bam_path') )
+        ? 'output_bam_path'
+        : 'source_path',
         right_operation => $sort_bam_op,
         right_property => 'bam_path',
     );
