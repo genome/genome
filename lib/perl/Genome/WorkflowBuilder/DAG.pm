@@ -33,6 +33,19 @@ class Genome::WorkflowBuilder::DAG {
     ],
 };
 
+sub recursively_set_log_dir {
+    my ($self, $log_dir) = Params::Validate::validate_pos(@_, 1,
+        {type => SCALAR});
+
+    $self->log_dir($log_dir);
+    for my $op (@{$self->operations}) {
+        if ($op->can('recursively_set_log_dir')) {
+            $op->recursively_set_log_dir($log_dir);
+        }
+    }
+    return;
+}
+
 sub add_operation {
     my ($self, $op) = Params::Validate::validate_pos(@_, 1, {type => OBJECT});
     push @{$self->operations}, $op;
@@ -66,13 +79,14 @@ sub execute {
 
     my %p = Params::Validate::validate(@_, {
         inputs => {type => HASHREF},
+        polling_interval => {default => 120},
     });
 
     my $inputs = {%{$self->constant_values}, %{$p{inputs}}};
 
     my $backend = $ENV{GENOME_WORKFLOW_BUILDER_BACKEND};
     if ($backend eq 'ptero') {
-        return $self->_execute_with_ptero($inputs);
+        return $self->_execute_with_ptero($inputs, $p{polling_interval});
 
     } elsif ($backend eq 'workflow') {
         return $self->_execute_with_workflow($inputs);
@@ -98,21 +112,38 @@ sub _execute_with_workflow {
 }
 
 sub _execute_with_ptero {
-    die "This is not implemented, sorry";
+    my ($self, $inputs, $polling_interval) = @_;
+
+    my $wf_builder = $self->get_ptero_builder($self->name);
+
+    my $wf_proxy = $wf_builder->submit( inputs => $inputs );
+    $self->status_message("Waiting on PTero workflow (%s) to complete",
+        $wf_proxy->url);
+    $wf_proxy->wait(polling_interval => $polling_interval);
+
+    if ($wf_proxy->has_succeeded) {
+        return $wf_proxy->outputs;
+    }
+    else {
+        die $self->error_message('PTero workflow (%s) did not succeed',
+            $wf_proxy->url);
+    }
 }
 
 sub get_ptero_builder {
     require Ptero::Builder::Workflow;
 
     my $self = shift;
-    my $name = shift;
 
     $self->validate;
 
-    my $dag_method = Ptero::Builder::Workflow->new(name => $name || 'root');
+    my $dag_method = Ptero::Builder::Workflow->new(name => $self->name);
 
     for my $operation (@{$self->operations}) {
-        $dag_method->_add_task($operation->get_ptero_builder_task);
+        unless (defined $self->log_dir) {
+            die sprintf("DAG (%s) has no log_dir set!", $self->name);
+        }
+        $dag_method->_add_task($operation->get_ptero_builder_task($self->log_dir));
     }
 
     for my $link (@{$self->links}) {
@@ -222,11 +253,11 @@ sub is_many_property {
 # ------------------------------------------------------------------------------
 
 sub from_xml_element {
-    my ($class, $element) = @_;
+    my ($class, $element, $parent_log_dir) = @_;
 
     my $self = $class->create(
         name => $element->getAttribute('name'),
-        log_dir => $element->getAttribute('logDir'),
+        log_dir => $element->getAttribute('logDir') || $parent_log_dir,
         parallel_by => $element->getAttribute('parallelBy'),
     );
 
@@ -297,7 +328,10 @@ sub _add_operations_from_xml_element {
 
     my $nodelist = $element->find('operation');
     for my $node ($nodelist->get_nodelist) {
-        my $op = Genome::WorkflowBuilder::Detail::Operation->from_xml_element($node);
+        my $op = Genome::WorkflowBuilder::Detail::Operation->from_xml_element(
+            $node,
+            $self->log_dir,
+        );
         $self->add_operation($op);
     }
 }

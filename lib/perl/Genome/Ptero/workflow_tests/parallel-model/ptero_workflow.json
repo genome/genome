@@ -23,7 +23,7 @@
       "Inner" : {
          "methods" : [
             {
-               "name" : "root",
+               "name" : "Inner",
                "parameters" : {
                   "links" : [
                      {
@@ -55,11 +55,12 @@
                                     "genome",
                                     "ptero",
                                     "wrapper",
-                                    "command",
                                     "--command-class",
                                     "Genome::Ptero::TestCommand::ParamAppender",
                                     "--method",
-                                    "shortcut"
+                                    "shortcut",
+                                    "--log-directory",
+                                    "test_logs/parallel-model"
                                  ],
                                  "environment" : {},
                                  "user" : null,
@@ -74,11 +75,12 @@
                                     "genome",
                                     "ptero",
                                     "wrapper",
-                                    "command",
                                     "--command-class",
                                     "Genome::Ptero::TestCommand::ParamAppender",
                                     "--method",
-                                    "execute"
+                                    "execute",
+                                    "--log-directory",
+                                    "test_logs/parallel-model"
                                  ],
                                  "environment" : {},
                                  "user" : null,

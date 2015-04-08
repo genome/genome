@@ -29,6 +29,7 @@ my %command_map = (
     'processing-profile' => 'Genome::ProcessingProfile::Command',
     'project' => 'Genome::Project::Command',
     'project-part' => 'Genome::ProjectPart::Command',
+    'ptero' => 'Genome::Ptero',
     'report' => 'Genome::Report::Command',
     'sample' => 'Genome::Sample::Command',
     'search' => 'Genome::Command::Search',
