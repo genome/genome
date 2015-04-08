@@ -9,10 +9,13 @@ class Genome::InstrumentData::Reimport{
 };
 
 sub attribute_labels_to_ignore_when_reimporting {
-    (qw/ bam_path genotype_file genotype_file_name
+    (qw/ bam_path base_count genotype_file genotype_file_name
+        fragment_count
         ignored import_date import_format is_paired_end
         original_data_path original_data_path_md5
-        read_length read_count user_name /);
+        read_length read_count reference_sequece_build_id
+        user_name 
+        /);
 }
 
 sub attributes_for_reimport_from_instrument_data {
