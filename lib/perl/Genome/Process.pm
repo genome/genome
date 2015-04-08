@@ -11,6 +11,7 @@ use Try::Tiny qw(try catch);
 use JSON qw(to_json);
 use List::MoreUtils qw(uniq);
 use Genome::Disk::Group::Validate::GenomeDiskGroups;
+use Genome::Utility::Inputs qw(encode);
 use Cwd qw(abs_path);
 use File::DirCompare;
 
@@ -166,28 +167,8 @@ sub _write_inputs_file {
     my $self = shift;
     my $inputs = shift;
 
-    my %inputs = %$inputs;
-    while (my ($name, $value) = each %inputs) {
-        if (Scalar::Util::blessed($value)) {
-            $inputs->{$name} = convert_obj_to_hash($value);
-        } elsif (ref($value) eq 'ARRAY' &&
-                 scalar(@{$value}) &&
-                 Scalar::Util::blessed($value->[0])) {
-            $inputs->{$name} = [map {convert_obj_to_hash($_)} @{$value}];
-        }
-    }
-
     Genome::Sys->write_file($self->inputs_file,
-        to_json($inputs, {pretty => 1, canonical => 1}));
-}
-
-sub convert_obj_to_hash {
-    my $obj = shift;
-
-    return {
-        class => $obj->class,
-        id => $obj->id,
-    };
+        to_json(encode($inputs), {pretty => 1, canonical => 1}));
 }
 
 sub write_environment_file {

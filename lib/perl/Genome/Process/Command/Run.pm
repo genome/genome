@@ -6,6 +6,7 @@ use Genome;
 use Try::Tiny qw(try catch);
 use Data::Dump qw(pp);
 use Genome::Utility::Email;
+use Genome::Utility::Inputs qw(decode);
 use JSON qw(from_json);
 
 class Genome::Process::Command::Run {
@@ -49,29 +50,7 @@ sub get_workflow_inputs {
     my $json = Genome::Sys->read_file($self->process->inputs_file);
     my $inputs = from_json($json);
 
-    my %inputs = %$inputs;
-    while (my ($name, $value) = each %inputs) {
-        if (ref($value) eq 'HASH') {
-            $inputs->{$name} = convert_hash_to_obj($value);
-        } elsif (ref($value) eq 'ARRAY' &&
-                 scalar(@{$value}) &&
-                 ref($value->[0]) eq 'HASH') {
-            $inputs->{$name} = [map {convert_hash_to_obj($_)} @{$value}];
-        }
-    }
-
-    return $inputs
-}
-
-sub convert_hash_to_obj {
-    my $hash = shift;
-
-    my $class = $hash->{'class'};
-    my $obj = $class->get($hash->{'id'});
-    unless (defined($obj)) {
-        die sprintf("Couldn't convert hash to class: %s", pp($hash));
-    }
-    return $obj;
+    return decode($inputs);
 }
 
 sub execute {
