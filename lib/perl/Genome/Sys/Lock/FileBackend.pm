@@ -6,10 +6,11 @@ use warnings;
 use Carp qw(carp croak);
 use File::Basename;
 use File::Temp;
+use Genome::Utility::File::Mode qw(mode);
 use MIME::Lite;
+use Path::Class qw();
 use Sys::Hostname qw(hostname);
 use Time::HiRes;
-use Path::Class qw();
 
 use Genome::Logger;
 use Genome::Utility::Instrumentation;
@@ -294,8 +295,7 @@ sub tempdir_for_resource {
         Carp::croak("Failed to create temp lock directory ($tempdir)");
     }
 
-    # make this readable for everyone
-    chmod(0770, $tempdir) or Carp::croak("Can't chmod 0770 path ($tempdir): $!");
+    mode($tempdir)->add_group_rwx();
 
     return $tempdir;
 }
