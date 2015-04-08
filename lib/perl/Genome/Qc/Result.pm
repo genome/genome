@@ -34,6 +34,7 @@ sub _run {
     my %tools = $self->_tools;
     my $process_graph = Genome::WorkflowBuilder::StreamGraph->create(
         output_xml => File::Spec->join($self->temp_staging_directory, "out.xml"),
+        name => 'Run QC',
     );
     my %process_ref;
     while (my ($name, $tool) = each %tools) {
