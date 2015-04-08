@@ -276,17 +276,11 @@ sub lock_dir_for_resource {
     return Path::Class::file($self->parent_dir, $resource_lock)->parent->stringify;
 }
 
-sub make_dir_path {
-    my ($self, $dir_path) = @_;
-    my $obj = Path::Class::dir($dir_path);
-    $obj->mkpath(0, 0777);
-}
-
 sub tempdir_for_resource {
     my ($self, $resource_lock) = @_;
 
     my $lock_dir = $self->lock_dir_for_resource($resource_lock);
-    $self->make_dir_path($lock_dir);
+    Genome::Sys->create_directory($lock_dir . '');
 
     my $basename = File::Basename::basename($resource_lock);
 
