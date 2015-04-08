@@ -14,7 +14,7 @@ class Genome::Model::Tools::Vcflib {
             is            => 'Version',
             is_optional   => 1,
             default_value => $DEFAULT,
-            doc           => "Version of tophat to use, default is $DEFAULT"
+            doc           => "Version of vcflib to use, default is $DEFAULT"
         },
     ],
 };
