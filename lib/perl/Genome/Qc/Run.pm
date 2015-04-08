@@ -14,6 +14,11 @@ class Genome::Qc::Run {
             is => 'Genome::InstrumentData::AlignedBamResult',
         },
     ],
+    has_param => [
+        lsf_resource => {
+            value => q{-R 'select[mem>16000] rusage[mem=16000]' -M 16000000},
+        },
+    ],
 };
 
 sub result_class {
