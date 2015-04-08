@@ -447,7 +447,6 @@ sub count {
 
 sub _run {
     my $cmd = shift;
-
     return Genome::Sys->shellcmd(cmd => $cmd);
 }
 
