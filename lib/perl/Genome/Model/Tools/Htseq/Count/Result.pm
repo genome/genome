@@ -261,8 +261,6 @@ sub _run_htseq_count {
             input_files => [$unsorted_bam],
             output_files => [$sorted_bam],
         );
-
-        $temp_allocation->delete;
     }
 
     my @header = `$samtools_path view -H $sorted_bam`;
