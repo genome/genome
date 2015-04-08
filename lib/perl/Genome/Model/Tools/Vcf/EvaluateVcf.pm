@@ -322,12 +322,10 @@ sub _make_bad_indel_filter {
 
 sub restrict {
     my ($self, $input_file, $roi_file, $output_file) = @_;
-    my $bedtools = $self->bedtools;
-    $DB::single = 1;
-    my @args = ($bedtools, "intersect", "-header", "-a", $input_file, "-b", $roi_file, "> $output_file");
-    Genome::Sys->shellcmd( cmd => join(" ", @args) );
+    my $cmd = $self->restrict_commands($input_file, $roi_file);
+    $cmd .= " > $output_file";
+    Genome::Sys->shellcmd( cmd => $cmd );
 
-    $DB::single = 1;
     return 1;
 }
 
