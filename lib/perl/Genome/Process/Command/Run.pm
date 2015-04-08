@@ -84,7 +84,7 @@ sub execute {
     my $dag = Genome::WorkflowBuilder::DAG->from_xml_filename(
         $self->process->workflow_file);
 
-    $dag->log_dir($self->process->log_directory);
+    $dag->recursively_set_log_dir($self->process->log_directory);
     $dag->name($self->process->workflow_name);
 
     $self->update_status('Running');
