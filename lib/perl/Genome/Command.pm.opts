@@ -36754,6 +36754,8 @@ $Genome::Command::OPTS_SPEC = [
       'files',
       'duplication-handler-version=s',
       'files',
+      'bedtools-version=s',
+      'files',
       'help!',
       undef
     ],
