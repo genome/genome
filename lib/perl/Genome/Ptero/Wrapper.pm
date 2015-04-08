@@ -9,6 +9,7 @@ use Cwd qw(abs_path);
 use Genome::Utility::Text qw(
     sanitize_string_for_filesystem
 );
+use Genome::Utility::Inputs qw(encode decode);
 use Ptero::Proxy::Workflow::Execution;
 
 class Genome::Ptero::Wrapper {
@@ -56,7 +57,7 @@ sub execute {
     # this will get logged to the log files
     $self->_log_execution_information;
 
-    my $command = $self->_instantiate_command($self->execution->inputs);
+    my $command = $self->_instantiate_command(decode($self->execution->inputs));
 
     $self->_run_command($command);
 
@@ -192,7 +193,7 @@ sub _get_command_outputs {
         $outputs{$prop_name} = $value;
     }
 
-    return \%outputs;
+    return encode(\%outputs);
 }
 
 sub _output_properties {
