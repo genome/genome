@@ -281,7 +281,7 @@ sub tempdir_for_resource {
     my ($self, $resource_lock) = @_;
 
     my $lock_dir = $self->lock_dir_for_resource($resource_lock);
-    Genome::Sys->create_directory($lock_dir . '');
+    Genome::Sys->create_directory($lock_dir);
 
     my $basename = File::Basename::basename($resource_lock);
 
