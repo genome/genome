@@ -123,22 +123,22 @@ sub execute {
     my $gold_sample = $self->gold_sample;
     my $clean_indels = $self->clean_indels;
 
-    my $output_dir = $self->output_directory;
+    my $output_dir = Path::Class::Dir->new($self->output_directory);
 
     die "Output dir $output_dir does not exist" unless -d $output_dir;
-    my $orig_file = "$output_dir/orig.vcf";
-    my $input_file = "$output_dir/clean.vcf";
-    my $final_input_file = "$output_dir/final.vcf";
-    my $final_gold_file = "$output_dir/gold-final.vcf";
-    my $final_tn_file = "$output_dir/tn-final.bed";
-    my $variants_dir = "$output_dir/variants";
-    my $fp_roi_file = "$output_dir/fp_in_roi.vcf";
-    my $compare_file = "$output_dir/compare.txt";
+    my $orig_file = $output_dir->file("orig.vcf")->stringify;
+    my $input_file = $output_dir->file("clean.vcf")->stringify;
+    my $final_input_file = $output_dir->file("final.vcf")->stringify;
+    my $final_gold_file = $output_dir->file("gold-final.vcf")->stringify;
+    my $final_tn_file = $output_dir->file("tn-final.bed")->stringify;
+    my $variants_dir = $output_dir->subdir("variants")->stringify;
+    my $fp_roi_file = $output_dir->file("fp_in_roi.vcf")->stringify;
+    my $compare_file = $output_dir->file("compare.txt")->stringify;
 
     Genome::Sys->create_directory($variants_dir);
-    Genome::Sys->create_symlink($vcf, "$output_dir/orig.vcf");
-    Genome::Sys->create_symlink($roi, "$output_dir/roi.bed");
-    Genome::Sys->create_symlink($gold_vcf, "$output_dir/gold.vcf");
+    Genome::Sys->create_symlink($vcf, $orig_file);
+    Genome::Sys->create_symlink($roi, $output_dir->file("roi.bed")->stringify);
+    Genome::Sys->create_symlink($gold_vcf, $output_dir->file("gold.vcf")->stringify);
 
     $self->restrict($tn_bed, $roi, $final_tn_file);
 
