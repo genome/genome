@@ -42,11 +42,11 @@ class Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam {
             doc => 'The path of flagstat file that is used to compare with that of recreated bam',
         },
         include_qc_failed => {
-			is          => 'Boolean',
-			doc         => 'Include reads that were marked within the bam as having failed QC',
-			is_optional => 1,
-			default     => 0,
-		},
+            is          => 'Boolean',
+            doc         => 'Include reads that were marked within the bam as having failed QC',
+            is_optional => 1,
+            default     => 0,
+        },
     ],
     has_transient_optional => [
         _temp_out_bam => {
