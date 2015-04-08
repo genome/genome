@@ -10,6 +10,7 @@ use Genome::Utility::Text qw(
     sanitize_string_for_filesystem
 );
 use Genome::Utility::Inputs qw(encode decode);
+use Data::Dump qw(pp);
 use Ptero::Proxy::Workflow::Execution;
 
 class Genome::Ptero::Wrapper {
@@ -43,6 +44,7 @@ class Genome::Ptero::Wrapper {
 sub execute {
     my $self = shift;
 
+    $self->debug_message("Creating log directory %s", $self->log_directory);
     Genome::Sys->create_directory($self->log_directory);
     validate_environment();
 
@@ -62,6 +64,8 @@ sub execute {
     $self->_run_command($command);
 
     $self->_teardown_logging;
+
+    printf SAVED_STDERR "Setting outputs: %s\n", pp(_get_command_outputs($command, $self->command_class));
     $self->execution->set_outputs(
         _get_command_outputs($command, $self->command_class));
 
@@ -95,6 +99,11 @@ sub _stderr_log_path {
 sub _setup_logging {
     my $self = shift;
 
+    $self->debug_message(
+        "Preparing to redirect stderr to (%s) and stdout to (%s)",
+        $self->_stderr_log_path, $self->_stdout_log_path
+    );
+
     $self->execution->update_data(
         stdout_log => $self->_stdout_log_path,
         stderr_log => $self->_stderr_log_path,
@@ -116,6 +125,8 @@ sub _setup_logging {
 sub _teardown_logging {
     my $self = shift;
 
+    printf SAVED_STDERR "Removing stderr and stdout redirection\n";
+
     open(STDOUT, ">&SAVED_STDOUT") || die "Can't restore STDOUT\n";
     open(STDERR, ">&SAVED_STDERR") || die "Can't restore STDERR\n";
 }
@@ -132,6 +143,8 @@ sub _log_execution_information {
 sub _instantiate_command {
     my ($self, $inputs) = @_;
 
+    printf SAVED_STDERR "Instantiating command %s\n", $self->command_class;
+
     my $pkg = $self->command_class;
     eval "use $pkg";
     my $cmd = eval {$pkg->create(%$inputs)};
@@ -146,6 +159,8 @@ sub _instantiate_command {
 
 sub _run_command {
     my ($self, $command) = @_;
+
+    printf SAVED_STDERR "Running command %s\n", $self->command_class;
 
     my $method = $self->method;
     my $ret = eval { $command->$method() };
