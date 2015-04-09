@@ -270,7 +270,6 @@ sub _clean_vcf {
     my ($self, $input_file, $output_file) = @_;
 
     $self->status_message("Cleaning vcf $input_file => $output_file");
-    $DB::single = 1;
     my $reader = Genome::File::Vcf::Reader->new($input_file);
     my $writer = Genome::File::Vcf::Writer->new($output_file, $reader->header);
 
