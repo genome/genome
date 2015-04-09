@@ -18,7 +18,7 @@ sub get {
     }
 
     if (!defined($value)) {
-        return $spec->default_value;
+        $value = $spec->default_value;
     }
 
     for my $v (@{$spec->validators}) {
