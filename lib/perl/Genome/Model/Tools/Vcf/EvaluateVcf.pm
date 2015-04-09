@@ -630,13 +630,27 @@ sub help_detail {
     BACKGROUND
     ==========
 
-    For validation, it is important to compare calls from the pipeline +
-    reporting framework and calculate sensitivity, specificity and positive
-    predictive value of the pipeline's calls versus the gold standard.
-    The standard currency for doing this is a VCF file. A procedure was
-    developed for simplifying callsets and then comparing them to each
-    other. It roughly follows the recommendations of NIST as detailed in the
-    [Genome In a Bottle paper][1].
+    Modern genomic pipelines are composed of continually advancing next
+    generation sequencing technologies and software tools.  As pipelines
+    evolve, it is important, especially in a clinical setting, to
+    systematically assess the accuracy and reproducibility of the variant
+    calls that are produced as the end product.
+
+    One way to measure the overall accuracy of a genomic pipeline is to
+    compare variant calls generated from a special input data set with
+    already known variants.  The special data set is referred as a "gold
+    standard", and the process of comparing the pipeline obtained variant
+    calls to the known gold standard variant calls is called "validation".
+
+    The validation process categorizes whether a given variant call
+    produced by a genomic pipeline is correctly identified or missed.  The
+    classifications can be measured overall by the statstical notions of
+    sensitivity, specificity, and positive predictive value (PPV).
+
+    The standard format for storing variant calls is a VCF file.
+    A procedure to validate VCF files against each other is performed in
+    this script.  It roughly follows the NIST recommendations as described
+    in the [Genome in a Bottle paper][1].
 
     METHODOLOGY
     ===========
@@ -646,15 +660,15 @@ sub help_detail {
 
     Genotype comparisons are done using [joinx vcf-compare][2]. This program
     reports an exact and a partial genotype match to the gold standard VCF.
-    Exact matches are straightforward, if both samples report the variant than
-    it is an exact match. Partial matches are more complex, joinx reports the
-    number of unique, matching alternate alleles at each site giving a zygosity
-    independent measure of concordance. For example, a heterozygous variant in
-    the gold sample and a homozygous variant in the evaluation sample would
-    yield a single partial match.
+    Exact matches are straightforward: if both samples report the variant
+    then it is an exact match. Partial matches are more complex: joinx
+    reports the number of unique, matching alternate alleles at each site
+    giving a zygosity-independent measure of concordance. For example, a
+    heterozygous variant in the gold sample and a homozygous variant in the
+    evaluation sample would yield a single partial match.
 
-    In order to calculate metrics, the following calculations were used and are
-    further detailed in Output Formats below:
+    In order to calculate metrics, the following calculations are used and
+    are further detailed in Output Formats below:
 
     Metric                      Calculation
     -------------------------   --------------
@@ -668,7 +682,7 @@ sub help_detail {
         FP = False Positives
         TN = True Negatives
         
-    The TP, FP and TN counts are explicitly define as:
+    The TP, FP and TN counts are explicitly defined as:
 
     True Positive
     -------------
@@ -701,7 +715,7 @@ sub help_detail {
     6. Use the --pass-only-expression to restrict the evaluation VCF to only
        those variants passing the expression.
     7. Break complex indels into simpler ones using vcflib vcfallelicprimitives.
-    8. Resort the file.
+    8. Re-sort the file.
     9. Re-restrict to the ROI.
     10. Compare the resulting VCF to the ROI-restricted gold VCF using
         joinx vcf-compare.
