@@ -7,12 +7,6 @@ use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Writer;
 use Genome;
 use Genome::Sys::ShellPipeline;
-use IO::File;
-use IO::Zlib;
-use Getopt::Long;
-use File::Basename;
-use File::Spec;
-use File::Temp qw(tempdir);
 use Path::Class;
 use Genome::Model::Tools::Vcf::VcfCompare;
 
