@@ -1727,7 +1727,7 @@ sub get_merged_alignment_results {
     my $self = shift;
     # Always load from the database, since other merged results may have committed since we updated the UR cache
     my %params;
-    for my $param ($self->__meta__->params) {
+    for my $param ($self->__meta__->properties(is_param => 1)) {
         my $name = $param->property_name;
         $params{$name} = $self->$name;
     }
