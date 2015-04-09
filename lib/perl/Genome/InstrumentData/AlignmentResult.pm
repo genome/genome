@@ -1726,9 +1726,15 @@ sub get_merged_bam_to_revivify_per_lane_bam {
 sub get_merged_alignment_results {
     my $self = shift;
     # Always load from the database, since other merged results may have committed since we updated the UR cache
+    my %params;
+    for my $param ($self->__meta__->params) {
+        my $name = $param->property_name;
+        $params{$name} = $self->$name;
+    }
     my @results = Genome::InstrumentData::AlignmentResult::Merged->load(
         'inputs.value_id' => $self->instrument_data_id,
         test_name => $self->test_name,
+        %params,
     );
     my @filtered_results = $self->filter_non_database_objects(@results);
     return $self->filter_non_matching_results(@filtered_results);
