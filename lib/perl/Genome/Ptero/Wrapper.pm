@@ -12,6 +12,7 @@ use Genome::Utility::Text qw(
 use Genome::Utility::Inputs qw(encode decode);
 use Data::Dump qw(pp);
 use Ptero::Proxy::Workflow::Execution;
+use Try::Tiny qw(try catch);
 
 class Genome::Ptero::Wrapper {
     is => 'Command::V2',
@@ -147,13 +148,15 @@ sub _instantiate_command {
 
     my $pkg = $self->command_class;
     eval "use $pkg";
-    my $cmd = eval {$pkg->create(%$inputs)};
-    my $error = $@;
-    if ($error) {
+
+    my $cmd = try {
+        $pkg->create(%$inputs)
+    } catch {
         Carp::confess sprintf(
             "Failed to instantiate class (%s) with inputs (%s): %s",
-            $pkg, Data::Dump::pp($inputs), $error);
-    }
+            $pkg, Data::Dump::pp($inputs), $_)
+    };
+
     return $cmd;
 }
 
@@ -163,14 +166,14 @@ sub _run_command {
     printf SAVED_STDERR "Running command %s\n", $self->command_class;
 
     my $method = $self->method;
-    my $ret = eval { $command->$method() };
-    my $error = $@;
-    if ($error) {
+    my $ret = try {
+        $command->$method()
+    } catch {
         Carp::confess sprintf(
             "Crashed in %s for command %s: %s",
-            $self->method, $self->command_class, $error,
+            $self->method, $self->command_class, $_,
         );
-    }
+    };
     unless ($ret) {
         Carp::confess sprintf("Failed to %s for command %s.",
             $self->method, $self->command_class,
@@ -184,17 +187,14 @@ sub _run_command {
 }
 
 sub _commit {
-    my $rv = eval {
-        UR::Context->commit();
+    my $rv = try {
+        UR::Context->commit()
+    } catch {
+        Carp::confess "Failed to commit: $_";
     };
 
-    my $error = $@;
-    if ($error) {
-        Carp::confess "Failed to commit: $error";
-    } else {
-        unless ($rv) {
-            Carp::confess "Failed to commit: see above logged errors";
-        }
+    unless ($rv) {
+        Carp::confess "Failed to commit: see previously logged errors";
     }
 }
 
