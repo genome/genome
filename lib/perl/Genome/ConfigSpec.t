@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
-use Test::More tests => 6;
+use Test::More tests => 7;
 
 use File::Spec qw();
 use File::Temp qw();
@@ -30,6 +30,31 @@ subtest 'new_from_file: basic' => sub {
     is($spec->env, $data{env}, 'env matches');
     is($spec->default_value, $data{default_value}, 'default_value matches');
     is(scalar(@{$spec->validators}), scalar(@{$data{validators}}), q(validators' count matches));
+};
+
+subtest 'new_from_file: sticky' => sub {
+    plan tests => 3;
+    {
+        my ($input_fh, $input_file, $input_filename) = setup_yaml_file({
+            type => 'Str',
+        });
+        my $spec = Genome::ConfigSpec->new_from_file($input_file);
+        ok(!$spec->sticky, 'no sticky key results in non-sticky spec')
+    } {
+        my ($input_fh, $input_file, $input_filename) = setup_yaml_file({
+            type => 'Str',
+            sticky => 0,
+        });
+        my $spec = Genome::ConfigSpec->new_from_file($input_file);
+        ok(!$spec->sticky, 'sticky set to zero results in non-sticky spec')
+    } {
+        my ($input_fh, $input_file, $input_filename) = setup_yaml_file({
+            type => 'Str',
+            sticky => 1,
+        });
+        my $spec = Genome::ConfigSpec->new_from_file($input_file);
+        ok($spec->sticky, 'sticky set to one results in sticky spec')
+    }
 };
 
 subtest 'new_from_file: non-existant file' => sub {

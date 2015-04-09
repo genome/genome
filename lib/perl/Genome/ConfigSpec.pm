@@ -11,12 +11,13 @@ use Path::Class qw();
 use Try::Tiny qw(try catch);
 use YAML::Syck qw();
 
-has 'key'  => (is => 'ro', isa => 'Str', required => 1);
-has 'type' => (is => 'ro', isa => 'Str', required => 1);
-has 'validators'    => (is => 'ro', isa => 'ArrayRef[CodeRef]', default => sub { [] });
+has 'key'        => (is => 'ro', isa => 'Str', required => 1);
+has 'type'       => (is => 'ro', isa => 'Str', required => 1);
+has 'validators' => (is => 'ro', isa => 'ArrayRef[CodeRef]', default => sub { [] });
 
 has 'default_value' => (is => 'ro', isa => 'Str', predicate => 'has_default_value');
 has 'env'           => (is => 'ro', isa => 'Str', predicate => 'has_env');
+has 'sticky'        => (is => 'ro', isa => 'Bool');
 
 sub new_from_file {
     my $class = shift;
@@ -43,7 +44,7 @@ sub new_from_file {
         key => $key,
         validators => \@validators,
     );
-    for my $k (qw(env default_value type)) {
+    for my $k (qw(env default_value type sticky)) {
         if (defined $data->{$k}) {
             $params{$k} = $data->{$k};
         }
