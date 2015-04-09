@@ -40,7 +40,14 @@ sub get {
 sub spec {
     my $key = shift;
     my $subpath = Path::Class::File->new('genome', $key . '.yaml');
-    my $file = _lookup_file($subpath);
+
+    my @dirs;
+    if ($ENV{XGENOME_ENABLE_USER_CONFIG}) {
+        push @dirs, _home_dir();
+    }
+    push @dirs, _dirs();
+
+    my $file = _lookup_file($subpath, @dirs);
     unless (defined $file) {
         croakf('unable to locate spec: %s', $key);
     }
@@ -50,11 +57,19 @@ sub spec {
 sub _lookup_value {
     my $spec = shift;
 
-    if ($spec->has_env && exists $ENV{$spec->env}) {
-        return $ENV{$spec->env};
+    my $config_subpath = Path::Class::File->new('genome', 'config.yaml');
+
+    my @files;
+    if ($ENV{XGENOME_ENABLE_USER_CONFIG}) {
+        if ($spec->has_env && exists $ENV{$spec->env}) {
+            return $ENV{$spec->env};
+        }
+
+        push @files, _lookup_files($config_subpath, _home_dir());
     }
 
-    my @files = _lookup_files(Path::Class::File->new('genome', 'config.yaml'));
+    push @files, _lookup_files($config_subpath, _dirs());
+
     for my $f (@files) {
         my $data = YAML::Syck::LoadFile($f);
         if ($data->{$spec->key}) {
@@ -67,7 +82,7 @@ sub _lookup_value {
 
 sub _lookup_files {
     my $subpath = shift;
-    my @dirs = (_home_dir(), _dirs());
+    my @dirs = @_;
     my @files = map { Path::Class::File->new($_, $subpath) } @dirs;
     my @matches = grep { -f $_ } @files;
     return @matches;
