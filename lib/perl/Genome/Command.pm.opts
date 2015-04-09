@@ -3355,13 +3355,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>prepare-instrument-data',
-      [
-        'build=s',
-        undef,
-        'help!',
-        undef
-      ],
       '>copy-velvet-build',
       [
         'to=s',
@@ -10406,6 +10399,25 @@ $Genome::Command::OPTS_SPEC = [
       'files',
       'filter=s',
       'files',
+      'help!',
+      undef
+    ],
+    'help!',
+    undef
+  ],
+  '>ptero',
+  [
+    '>wrapper',
+    [
+      'command-class=s',
+      'files',
+      'method=s',
+      [
+        'execute',
+        'shortcut'
+      ],
+      'log-directory=s',
+      undef,
       'help!',
       undef
     ],
