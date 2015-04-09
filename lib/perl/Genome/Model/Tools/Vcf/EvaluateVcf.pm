@@ -637,7 +637,7 @@ sub help_detail {
 
     One way to measure the overall accuracy of a genomic pipeline is to
     compare variant calls generated from a special input data set with
-    already known variants.  The special data set is referred as a "gold
+    already known variants.  The special data set is called a "gold
     standard", and the process of comparing the pipeline obtained variant
     calls to the known gold standard variant calls is called "validation".
 
@@ -658,7 +658,7 @@ sub help_detail {
     file of true negative positions.
 
     Genotype comparisons are done using [joinx vcf-compare][2]. This program
-    reports an exact and a partial genotype match to the gold standard VCF.
+    reports an exact and a partial genotype match to the gold-standard VCF.
     Exact matches are straightforward: if both samples report the variant
     then it is an exact match. Partial matches are more complex: joinx
     reports the number of unique, matching alternate alleles at each site
