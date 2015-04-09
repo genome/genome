@@ -7,6 +7,8 @@ use Genome::File::Vcf::Reader;
 use Genome::File::Vcf::Writer;
 use Genome;
 use Genome::Sys::ShellPipeline;
+use IO::File;
+use IO::Zlib;
 use Path::Class;
 use Genome::Model::Tools::Vcf::VcfCompare;
 
