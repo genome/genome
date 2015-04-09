@@ -27,6 +27,13 @@ sub get {
         }
     }
 
+    if ($spec->sticky) {
+        unless ($spec->has_env) {
+            croakf('sticky values must have `env` set');
+        }
+        $ENV{$spec->env} = $value;
+    }
+
     return $value;
 }
 
