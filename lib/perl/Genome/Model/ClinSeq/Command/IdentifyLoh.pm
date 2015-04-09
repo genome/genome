@@ -195,13 +195,14 @@ sub combine_sort_snvs {
     my $snv_prefix = shift;
     my $snv_combined = $snv_prefix . ".combined";
     my $snv_combined_sorted = $snv_prefix . ".combined.sorted";
-    my $germline = glob $snv_prefix . "*.formatted.LOH.hc.filtered";
-    my $loh = glob $snv_prefix . "*.formatted.Germline.hc.filtered";
-    unless(scalar glob("$germline $loh")) {
-        die $self->error_message("Unable to find $germline or $loh");
+    my @germline = glob $snv_prefix . "*.formatted.LOH.hc.filtered";
+    my @loh = glob $snv_prefix . "*.formatted.Germline.hc.filtered";
+    unless(scalar @germline and scalar @loh) {
+        die $self->error_message("Unable to find germline or
+            loh filtered results");
     }
     Genome::Sys->cat(
-            input_files => [$germline, $loh],
+            input_files => [@germline, @loh],
             output_file => $snv_combined
             );
     my $sort = Genome::Model::Tools::Capture::SortByChrPos->
