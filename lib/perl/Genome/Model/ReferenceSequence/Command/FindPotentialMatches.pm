@@ -75,10 +75,8 @@ sub execute {
     my @subsets;
     my @partials;
     while (my $reference = $reference_iterator->next) {
-        my $seqdict_path = File::Spec->join($reference->data_directory, 'seqdict', 'seqdict.sam');
-        next unless(-e $seqdict_path); #don't try to generate this now
-
-        my $reference_chromosomes = $reference->chromosome_array_ref;
+        my $reference_chromosomes = $reference->chromosome_array_ref(create_seqdict => 0);
+        next unless defined $reference_chromosomes;
 
         my ($matching, $only_query, $only_reference) = UR::Util::intersect_lists($query_chromosomes, $reference_chromosomes);
         if(@$only_query == 0 and @$only_reference == 0) {
