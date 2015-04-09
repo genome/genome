@@ -430,7 +430,12 @@ sub collect_individual_alignments {
                 my $lookup_hash = Genome::InstrumentData::AlignmentResult->calculate_lookup_hash_from_arguments(%all_params); 
                 my @alignments  = Genome::InstrumentData::AlignmentResult->get(lookup_hash => $lookup_hash);
                 unless (@alignments and @alignments == 1) {
-                    die $self->error_message('Only 1 alignment is expected, but got '.scalar @alignments);
+                    $self->debug_message("Trying without test_name");
+                    delete $all_params{test_name};
+                    @alignments = Genome::InstrumentData::AlignmentResult->get(%all_params);
+                    unless (@alignments and @alignments == 1) {
+                        die $self->error_message('Only 1 alignment is expected, but got '.scalar @alignments);
+                    }
                 }
                 $alignment = shift @alignments;
             }
