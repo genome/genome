@@ -1726,15 +1726,9 @@ sub get_merged_bam_to_revivify_per_lane_bam {
 sub get_merged_alignment_results {
     my $self = shift;
     # Always load from the database, since other merged results may have committed since we updated the UR cache
-    my %params;
-    for my $param ($self->__meta__->properties(is_param => 1)) {
-        my $name = $param->property_name;
-        $params{$name} = $self->$name;
-    }
     my @results = Genome::InstrumentData::AlignmentResult::Merged->load(
         'inputs.value_id' => $self->instrument_data_id,
         test_name => $self->test_name,
-        %params,
     );
     my @filtered_results = $self->filter_non_database_objects(@results);
     return $self->filter_non_matching_results(@filtered_results);
@@ -1757,8 +1751,18 @@ sub filter_non_database_objects {
 sub filter_non_matching_results {
     my ($self, @merged_results) = @_;
 
+    my %params;
+    for my $param ($self->__meta__->properties(is_param => 1)) {
+        my $name = $param->property_name;
+        $params{$name} = $self->$name;
+    }
+    my $bx = Genome::InstrumentData::AlignmentResult::Merged->define_boolexpr(%params);
+
     my @matching_results;
     for my $merged_result (@merged_results) {
+        unless ($bx->evaluate($merged_result)) {
+            next;
+        }
         my @individual_results = $merged_result->collect_individual_alignments($self->_user_data_for_nested_results);
         if (@individual_results) {
             push @matching_results, $merged_result if grep{$_->id eq $self->id}@individual_results;
