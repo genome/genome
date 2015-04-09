@@ -643,7 +643,7 @@ sub help_detail {
 
     The validation process categorizes whether a given variant call
     produced by a genomic pipeline is correctly identified or missed.  The
-    classifications can be measured overall by the statstical notions of
+    classifications can be measured overall by the statistical notions of
     sensitivity, specificity, and positive predictive value (PPV).
 
     The standard format for storing variant calls is a VCF file.
