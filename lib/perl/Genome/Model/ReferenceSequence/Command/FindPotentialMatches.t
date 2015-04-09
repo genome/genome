@@ -7,6 +7,8 @@ BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
 };
 
+use File::Spec;
+
 use Test::More tests => 3;
 use Test::Deep qw(cmp_bag);
 
