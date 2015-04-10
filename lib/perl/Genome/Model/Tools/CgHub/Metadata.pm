@@ -13,61 +13,54 @@ class Genome::Model::Tools::CgHub::Metadata {
     has => {
         metadata => { 
             is => 'Hash',
+            default_value => {},
             doc => 'The hash version of the metadata XML.',
         },
     },
-    has_optional_transient => {
-        _lookup => { is => 'HASH', },
-    },
 };
 
-sub create_from_file {
-    my ($class, $metadata_file) = Params::Validate::validate_pos(@_, {type => SCALAR}, {type => SCALAR});
+sub add_file {
+    my ($self, $metadata_file) = Params::Validate::validate_pos(@_, {type => OBJECT}, {type => SCALAR, called => 'file'});
 
     my $xml = Genome::Sys->read_file($metadata_file);
     if ( not $xml ) {
-        die $class->error_message('Failed to read in CG Query metadata XML from %s', $metadata_file);
+        die $self->error_message('Failed to read in CG Query metadata XML from %s', $metadata_file);
     }
 
-    return $class->create_from_xml($xml);
+    return $self->add_xml($xml);
 }
 
-sub create_from_xml {
-    my ($class, $xml) = Params::Validate::validate_pos(@_, {type => SCALAR}, {type => SCALAR, called => 'XML',});
+sub add_xml {
+    my ($self, $xml) = Params::Validate::validate_pos(@_, {type => OBJECT}, {type => SCALAR, called => 'XML',});
 
     my $metadata = XMLin($xml);
-    die $class->error_message('Failed to load metadata XML!') if not $metadata;
+    die $self->error_message('Failed to load metadata XML!') if not $metadata;
+    $self->_add_metadata($metadata);
 
-    my $self = $class->SUPER::create(metadata => $metadata);
-    return if not $self;
-
-    $self->_set_lookup_hash;
-
-    return $self;
+    return 1;
 }
 
-sub _set_lookup_hash {
-    my $self = shift;
+sub _add_metadata {
+    my ($self, $incoming_metadata) = Params::Validate::validate_pos(@_, {type => OBJECT}, {type => HASHREF, called => 'metadata',});
 
-    my $metadata = $self->metadata;
-    if ( not $metadata->{Hits} or $metadata->{Hits} == 0) {
-        # FIXME error?
+    my $results;
+    if ( not $incoming_metadata->{Hits} or $incoming_metadata->{Hits} == 0) {
         return 1;
     }
-
-    if ( $metadata->{Hits} == 1) {
-        my $result = delete $metadata->{Result};
-        $metadata->{Result}->{1} = $result;
+    elsif ( $incoming_metadata->{Hits} == 1) {
+        $results = [ $incoming_metadata->{Result} ];
+    }
+    else {
+        $results = $incoming_metadata->{Result};
     }
 
-    my %lookup;
-    my $results = $metadata->{Result};
-    for my $num ( keys %$results ) {
+    my $metadata = $self->metadata;
+    for my $result ( @$results ) {
         for my $id_by (qw/ analysis_id legacy_sample_id /) {
-            $lookup{ $results->{$num}->{$id_by} } = $num;
+            $metadata->{ $result->{$id_by} } = $result;
         }
     }
-    $self->_lookup(\%lookup);
+    $self->metadata($metadata);
 
     return 1;
 }
@@ -77,9 +70,9 @@ sub get_attribute_value {
         @_, {type => HASHREF}, {type => SCALAR}, {type => SCALAR},
     );
 
-    my $num = $self->_lookup->{$lookup_id};
-    return if not defined $num;
-    my $value = $self->metadata->{Result}->{$num}->{$name};
+    my $result = $self->metadata->{$lookup_id};
+    return if not $result;
+    my $value = $result->{$name};
 
     return if not defined $value or $value eq '';
     return $value;
@@ -88,10 +81,10 @@ sub get_attribute_value {
 sub _files {
     my ($self, $lookup_id) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => SCALAR});
 
-    my $num = $self->_lookup->{$lookup_id};
-    return if not defined $num;
+    my $result = $self->metadata->{$lookup_id};
+    return if not $result;
 
-    my $files = $self->metadata->{Result}->{$num}->{files}->{file};
+    my $files = $result->{files}->{file};
     my $files_ref = ref $files;
     return ( $files_ref eq 'ARRAY' ? @$files : $files );
 }

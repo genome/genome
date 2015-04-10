@@ -21,15 +21,17 @@ my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::Model::Tools::CgHub')
 my $xml_file = File::Spec->join($data_dir, 'metadata.xml');
 my $b36_xml_file = File::Spec->join($data_dir, 'metadata.b36.xml');
 
+my $metadata1 = $class->create;
+
 # Failures 
-throws_ok(sub{ $class->create_from_xml; }, qr/create_from_xml but 2 were expected/, 'create failed w/o XML');
-throws_ok(sub{ $class->create_from_xml('blah'); }, qr//, 'create failed w/ invalid xml');
-throws_ok(sub{ $class->create_from_file('blah'); }, qr/File \(blah\) does not exist/, 'create_from_file failed w/ non existing file');
+throws_ok(sub{ $metadata1->add_xml; }, qr/add_xml but 2 were expected/, 'create failed w/o XML');
+throws_ok(sub{ $metadata1->add_xml('blah'); }, qr//, 'create failed w/ invalid xml');
+throws_ok(sub{ $metadata1->add_file('blah'); }, qr/File \(blah\) does not exist/, 'add_file failed w/ non existing file');
 
 # Success [b37]
 my $analysis_id1 = '387c3f70-46e9-4669-80e3-694d450f2919';
-my $metadata1 = $class->create_from_file($xml_file);
 ok($metadata1, 'create') or die;
+ok($metadata1->add_file($xml_file), 'add_file to metadata1') or die;
 ok($metadata1->metadata, 'metadata');
 
 # Fails to get_attribute_value
@@ -76,8 +78,9 @@ ok(
 
 # Success - load [b36]
 my $analysis_id2 = 'a1d11d67-4d5f-4db9-a61d-a0279c3c3d4f';
-my $metadata2 = $class->create_from_file($b36_xml_file);
+my $metadata2 = $class->create;
 ok($metadata2, 'create w/ b36 xml file') or die;
+ok($metadata2->add_file($b36_xml_file), 'add_file to metadata2');
 ok($metadata2->metadata, 'metadata');
 ok(
     _test_metadata(
@@ -111,7 +114,7 @@ ok(
             sample_id => '8aca008c-f55a-420a-82c7-acd2cca77d85',
         },
     ),
-    'test metadata'
+    'test old metadata'
 );
 
 done_testing();
