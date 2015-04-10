@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
-use Test::More tests => 4;
+use Test::More tests => 6;
 
 use File::Spec qw();
 use File::Temp qw();
@@ -14,23 +14,58 @@ use YAML::Syck qw();
 use_ok('Genome::ConfigSpec');
 
 subtest 'new_from_file: basic' => sub {
-    plan tests => 5;
+    plan tests => 3;
 
     my %data = (
         type => 'Str',
-        env => 'XGENOME_FOO',
         validators => [qw(numeric positive)],
-        default_value => 1,
     );
     my ($input_fh, $input_file, $input_filename) = setup_yaml_file({ %data });
 
     my $spec = Genome::ConfigSpec->new_from_file($input_file);
     is($spec->type, $data{type}, 'type matches');
     is($spec->key, $input_filename, 'key matches');
-    is($spec->env, $data{env}, 'env matches');
-    is($spec->default_value, $data{default_value}, 'default_value matches');
     is(scalar(@{$spec->validators}), scalar(@{$data{validators}}), q(validators' count matches));
 };
+
+for my $key (qw(default_value env)) {
+    my $has = 'has_' . $key;
+
+    subtest "new_from_file: $key" => sub {
+        plan tests => 3;
+        subtest "no $key key" => sub {
+            plan tests => 2;
+            my ($input_fh, $input_file, $input_filename) = setup_yaml_file({
+                type => 'Str',
+            });
+            my $spec = Genome::ConfigSpec->new_from_file($input_file);
+            ok(!$spec->$has, "$has is false");
+            is($spec->$key, undef, "$key is undefined")
+        };
+
+        subtest qq($key: '') => sub {
+            plan tests => 2;
+            my ($input_fh, $input_file, $input_filename) = setup_yaml_file({
+                type => 'Str',
+                $key => '',
+            });
+            my $spec = Genome::ConfigSpec->new_from_file($input_file);
+            ok($spec->$has, "$has is true");
+            is($spec->$key, '', "$key is set")
+        };
+
+        subtest qq($key: 'foo') => sub {
+            plan tests => 2;
+            my ($input_fh, $input_file, $input_filename) = setup_yaml_file({
+                type => 'Str',
+                $key => 'foo',
+            });
+            my $spec = Genome::ConfigSpec->new_from_file($input_file);
+            ok($spec->$has, "$has is true");
+            is($spec->$key, 'foo', "$key is set")
+        };
+    };
+}
 
 subtest 'new_from_file: sticky' => sub {
     plan tests => 3;
