@@ -3,6 +3,7 @@ package Genome::Config;
 use strict;
 use warnings;
 
+use File::Find::Rule qw();
 use Genome::Carp qw(croakf);
 use Genome::ConfigSpec qw();
 use Path::Class qw();
@@ -45,6 +46,23 @@ sub spec {
         croakf('unable to locate spec: %s', $key);
     }
     return Genome::ConfigSpec->new_from_file($file);
+}
+
+sub all_specs {
+    my @genome_dirs = map { Path::Class::Dir->new($_, 'genome') } global_dirs();
+    my @spec_files = File::Find::Rule->file()
+                                     ->name('*.yaml')
+                                     ->not(File::Find::Rule->new->name('config.yaml'))
+                                     ->in(@genome_dirs);
+    my @specs = map { Genome::ConfigSpec->new_from_file($_) } @spec_files;
+
+    my %specs;
+    for my $spec (@specs) {
+        next if exists $specs{$spec->key};
+        $specs{$spec->key} = $spec;
+    }
+
+    return values %specs;
 }
 
 sub config_subpath { Path::Class::File->new('genome', 'config.yaml') }
