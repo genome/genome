@@ -31,7 +31,6 @@ my @source_files = (
 # source file retrieval
 throws_ok(sub{ $helpers->source_file_retrieval_method(); }, qr/No source file to get retrieval method!/, 'source_file_retrieval_method fails w/o source file');
 my %source_files_and_retrieval_methods = (
-    'https://cghub.ucsc.edu/UUID' => 'cg hub',
     'file://some/url.edu/file' => 'remote url',
     'http://some.url.edu/file' => 'remote url',
     '/some/local/file' => 'local disk',
