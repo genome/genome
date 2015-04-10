@@ -489,7 +489,7 @@ function assert_module_found {
     local MODULE_PATH="$(genome-perl -M${MODULE} -e "print \$INC{q($MODULE.pm)}, qq(\\n)" 2> /dev/null )"
     if test -z "$MODULE_PATH"
     then
-        fatal $BUILD_ERR "module not found: $MODULE ($MODULE_PATH)"
+        fatal $BUILD_ERR "module not found: $MODULE"
     fi
 }
 
