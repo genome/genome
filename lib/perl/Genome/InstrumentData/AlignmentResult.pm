@@ -1969,15 +1969,20 @@ sub lock_bam_file_access {
     unless ($self->get_merged_alignment_results) {
         my @bams = $self->alignment_bam_file_paths;
         unless (@bams) {
-            die $self->error_message("Alignment result with class (%s) and id (%s) has neither ".
-                "merged results nor valid bam paths. This likely means that this alignment result ".
-                "needs to be removed and realigned because data has been lost. ".
-                "Please create an apipe-support ticket for this.", $self->class, $self->id);
-            #There is no way to recreate per lane bam if merged bam
-            #does not exist and per lane bam is removed. Software
-            #result of this per lane alignment needs to be removed and
-            #this per lane instrument data needs to be realigned
-            #with that aligner.
+            if ($self->get_merged_alignment_results) {
+                return 1;
+            }
+            else {
+                die $self->error_message("Alignment result with class (%s) and id (%s) has neither ".
+                    "merged results nor valid bam paths. This likely means that this alignment result ".
+                    "needs to be removed and realigned because data has been lost. ".
+                    "Please create an apipe-support ticket for this.", $self->class, $self->id);
+                #There is no way to recreate per lane bam if merged bam
+                #does not exist and per lane bam is removed. Software
+                #result of this per lane alignment needs to be removed and
+                #this per lane instrument data needs to be realigned
+                #with that aligner.
+            }
         }
 
         #This locking is moved from merged AR to per lane AR, during
