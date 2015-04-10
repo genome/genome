@@ -21,10 +21,10 @@ sub get {
         $value = $spec->default_value;
     }
 
-    for my $v (@{$spec->validators}) {
-        if (my $error = $v->($value, $spec)) {
-            croakf('%s must be %s', $key, $error);
-        }
+    my @errors = $spec->validate($value);
+    if (@errors) {
+        my $msg = $spec->validation_error(@errors);
+        croakf($msg);
     }
 
     if ($spec->sticky) {
