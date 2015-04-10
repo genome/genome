@@ -13,7 +13,6 @@ use Params::Validate qw(validate);
 
 my $temp_home_dir = File::Temp->newdir();
 my $temp_conf_dir = File::Temp->newdir();
-local $ENV{XGENOME_ENABLE_USER_CONFIG} = 1;
 local $ENV{XGENOME_CONFIG_HOME} = $temp_home_dir->dirname;
 local $ENV{XGENOME_CONFIG_DIRS} = $temp_conf_dir->dirname;
 

@@ -19,9 +19,6 @@ does a hierarchival search for the value,
 - snapshot config file
 - global config files
 
-Environment variables and user config files are ignored unless
-C<XGENOME_ENABLE_USER_CONFIG> is set.
-
 User's config files are discovered in C<XGENOME_CONFIG_HOME> which defaults to
 C<$HOME/.config>.  Global config files are discovered in C<XGENOME_CONFIG_DIRS>
 which defaults to C</etc> and can be a colon-delimited list of directories like
@@ -104,10 +101,6 @@ sub all_specs {
 
 sub config_subpath { Path::Class::File->new('genome', 'config.yaml') }
 
-sub local_values_enabled {
-    return ! ! $ENV{XGENOME_ENABLE_USER_CONFIG};
-}
-
 sub home_dir {
     my $path = ( $ENV{XGENOME_CONFIG_HOME} || File::Spec->join($ENV{HOME}, '.config') );
     return Path::Class::Dir->new($path);
@@ -128,30 +121,18 @@ sub global_dirs {
 
 sub _lookup_value {
     my $spec = shift;
-    my $value = _lookup_local_value($spec);
-    if (defined $value) {
-        return $value;
-    }
-    return _lookup_global_value($spec);
-}
-
-sub _lookup_local_value {
-    my $spec = shift;
-
-    return unless local_values_enabled();
 
     my $config_subpath = config_subpath();
     if ($spec->has_env && exists $ENV{$spec->env}) {
         return $ENV{$spec->env};
     }
     my @files = _lookup_files($config_subpath, home_dir());
-    return _lookup_value_from_files($spec, @files);
-}
+    my $value = _lookup_value_from_files($spec, @files);
+    if (defined $value) {
+        return $value;
+    }
 
-sub _lookup_global_value {
-    my $spec = shift;
-    my $config_subpath = config_subpath();
-    my @files = _lookup_files($config_subpath, global_dirs());
+    @files = _lookup_files($config_subpath, global_dirs());
     return _lookup_value_from_files($spec, @files);
 }
 
