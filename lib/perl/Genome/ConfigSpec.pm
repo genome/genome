@@ -77,3 +77,46 @@ sub validation_error {
 }
 
 1;
+
+=pod
+
+=head1 NAME
+
+Genome::ConfigSpec
+
+=head1 DESCRIPTION
+
+Genome::ConfigSpec defines the properties a given configuration value should
+have.  These properties are: C<key>, C<type>, C<validators>, C<env>,
+C<default_value>, and C<sticky>.
+
+=head2 Required Properties
+
+C<key> is the an identifier for the configuration value.
+
+C<type> species the type of the value...
+
+=head2 Optional Properties
+
+C<validators> are anonymous subs that validate...
+
+C<env> is the name of the environment variable that the configuration value is
+bound to...
+
+C<default_value> is the default value a configuration value should take when
+not otherwise specified...
+
+C<sticky> is an attribute that suggests the value should not be allowed to
+change...
+
+=head 1 EXAMPLE
+
+For example, if you want to register a configuration variable for the key,
+'foo', you could create C<foo.yaml>,
+
+  ---
+  type: Text
+  default_value: bar
+
+
+=cut

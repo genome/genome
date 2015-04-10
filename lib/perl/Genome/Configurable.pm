@@ -49,3 +49,21 @@ sub set_prop_desc_with_warn {
 }
 
 1;
+
+=pod
+
+=head1 NAME
+
+Genome::Configurable
+
+=head1 DESCRIPTION
+
+Genome::Configurable is a role that injects the C<data_type> and
+C<calculated_default> attributes into UR class properties based on the
+C<config> attribute such that the default value is determined via
+L<Genome::Config> when the object is created.
+
+Genome::Configurable is primarily intended for commands to incorporate command
+line arguments as a new primary source above the L<Genome::Config> API.
+
+=cut

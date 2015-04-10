@@ -9,6 +9,43 @@ use Genome::ConfigSpec qw();
 use Path::Class qw();
 use YAML::Syck qw();
 
+=item get()
+
+C<get($key)> retrieves the configuration value specified by the input key.  It
+does a hierarchival search for the value,
+
+- environment variable
+- user config file
+- snapshot config file
+- global config files
+
+Environment variables and user config files are ignored unless
+C<XGENOME_ENABLE_USER_CONFIG> is set.
+
+User's config files are discovered in C<XGENOME_CONFIG_HOME> which defaults to
+C<$HOME/.config>.  Global config files are discovered in C<XGENOME_CONFIG_DIRS>
+which defaults to C</etc> and can be a colon-delimited list of directories like
+C<PATH>.
+
+Values are specified in C<genome/config.yaml> in one of the source directories
+or via the corresponding environment variable.
+
+Configuration values are "registered" by creating a spec file, see
+L<Config::Spec>.  Spec files can go in either the snapshot config directory or
+the global config directories in the C<genome> subdirectory, e.g.
+C</etc/genome/foo.yaml>.
+
+If you want the configuration value to be optional you must specify a
+C<default_value> even if it is zero or an empty string but it must be defined.
+
+If the spec file enables the C<sticky> attribute then the C<env> attribute must
+also be set so that the value can be stored in an environment variable.  Since
+an environment variable is the primary source this will have the effect of
+ignoring values from any other location.  Since environment variables are
+global it cannot be guaranteed that it will not be overwritten.
+
+=cut
+
 sub get {
     my $key = shift;
     my $spec = spec($key);
