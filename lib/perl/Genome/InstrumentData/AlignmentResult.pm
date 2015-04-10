@@ -2005,8 +2005,6 @@ sub lock_bam_file_access {
         if ($self->get_merged_alignment_results) {
             $lock->unlock();
         } else {
-            # The problem here is if we commit BEFORE merge is done, we unlock too early.
-            # However, if we unlock any other way we may fail to unlock more often and leave old locks.
             UR::Context->process->add_observer(
                 aspect   => 'commit',
                 once     => 1,
