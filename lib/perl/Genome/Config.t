@@ -27,11 +27,6 @@ subtest 'get: basic' => sub {
             config => {
                 home_key => 'home_dir_value',
             },
-            spec => {
-                home_key => {
-                    type => 'Str',
-                },
-            },
         },
         conf => [
             {
@@ -41,6 +36,9 @@ subtest 'get: basic' => sub {
                     home_key => 'conf_dir_value',
                 },
                 spec => {
+                    home_key => {
+                        type => 'Str',
+                    },
                     conf_key => {
                         type => 'Str',
                     },

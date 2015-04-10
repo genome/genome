@@ -40,14 +40,7 @@ sub get {
 sub spec {
     my $key = shift;
     my $subpath = Path::Class::File->new('genome', $key . '.yaml');
-
-    my @dirs;
-    if ($ENV{XGENOME_ENABLE_USER_CONFIG}) {
-        push @dirs, _home_dir();
-    }
-    push @dirs, _dirs();
-
-    my $file = _lookup_file($subpath, @dirs);
+    my $file = _lookup_file($subpath, _dirs());
     unless (defined $file) {
         croakf('unable to locate spec: %s', $key);
     }

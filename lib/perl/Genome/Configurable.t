@@ -12,21 +12,28 @@ use Genome::Config qw();
 use Params::Validate qw(validate);
 
 my $temp_home_dir = File::Temp->newdir();
+my $temp_conf_dir = File::Temp->newdir();
 local $ENV{XGENOME_ENABLE_USER_CONFIG} = 1;
 local $ENV{XGENOME_CONFIG_HOME} = $temp_home_dir->dirname;
+local $ENV{XGENOME_CONFIG_DIRS} = $temp_conf_dir->dirname;
+
 setup(
     home => {
         dir => Path::Class::Dir->new($temp_home_dir->dirname, 'genome'),
         config => {
             'foo.name' => 'bar',
         },
-        spec => {
-            'foo.name' => {
-                type => 'Str',
+    },
+    conf => [
+        {
+            dir => Path::Class::Dir->new($temp_conf_dir->dirname, 'genome'),
+            spec => {
+                'foo.name' => {
+                    type => 'Str',
+                },
             },
         },
-    },
-    conf => [],
+    ],
 );
 
 UR::Object::Type->define(
