@@ -40,36 +40,74 @@ sub get {
 sub spec {
     my $key = shift;
     my $subpath = Path::Class::File->new('genome', $key . '.yaml');
-    my $file = _lookup_file($subpath, _dirs());
+    my $file = (_lookup_files($subpath, global_dirs()))[0];
     unless (defined $file) {
         croakf('unable to locate spec: %s', $key);
     }
     return Genome::ConfigSpec->new_from_file($file);
 }
 
+sub config_subpath { Path::Class::File->new('genome', 'config.yaml') }
+
+sub local_values_enabled {
+    return ! ! $ENV{XGENOME_ENABLE_USER_CONFIG};
+}
+
+sub home_dir {
+    my $path = ( $ENV{XGENOME_CONFIG_HOME} || File::Spec->join($ENV{HOME}, '.config') );
+    return Path::Class::Dir->new($path);
+}
+
+sub snapshot_dir {
+    my @path = File::Spec->splitdir(__FILE__);
+    my @chop = ('lib', 'perl', split('::', __PACKAGE__));
+    my @chopped = splice(@path, -1 * @chop);
+    my @base_dir = @path;
+    return File::Spec->join(@base_dir, 'etc');
+}
+
+sub global_dirs {
+    my $dirs = $ENV{XGENOME_CONFIG_DIRS} || '/etc';
+    return map { Path::Class::Dir->new($_) } (snapshot_dir(), split(/:/, $dirs));
+}
+
 sub _lookup_value {
     my $spec = shift;
-
-    my $config_subpath = Path::Class::File->new('genome', 'config.yaml');
-
-    my @files;
-    if ($ENV{XGENOME_ENABLE_USER_CONFIG}) {
-        if ($spec->has_env && exists $ENV{$spec->env}) {
-            return $ENV{$spec->env};
-        }
-
-        push @files, _lookup_files($config_subpath, _home_dir());
+    my $value = _lookup_local_value($spec);
+    if (defined $value) {
+        return $value;
     }
+    return _lookup_global_value($spec);
+}
 
-    push @files, _lookup_files($config_subpath, _dirs());
+sub _lookup_local_value {
+    my $spec = shift;
 
+    return unless local_values_enabled();
+
+    my $config_subpath = config_subpath();
+    if ($spec->has_env && exists $ENV{$spec->env}) {
+        return $ENV{$spec->env};
+    }
+    my @files = _lookup_files($config_subpath, home_dir());
+    return _lookup_value_from_files($spec, @files);
+}
+
+sub _lookup_global_value {
+    my $spec = shift;
+    my $config_subpath = config_subpath();
+    my @files = _lookup_files($config_subpath, global_dirs());
+    return _lookup_value_from_files($spec, @files);
+}
+
+sub _lookup_value_from_files {
+    my ($spec, @files) = @_;
     for my $f (@files) {
         my $data = YAML::Syck::LoadFile($f);
         if ($data->{$spec->key}) {
             return $data->{$spec->key};
         }
     }
-
     return;
 }
 
@@ -79,27 +117,6 @@ sub _lookup_files {
     my @files = map { Path::Class::File->new($_, $subpath) } @dirs;
     my @matches = grep { -f $_ } @files;
     return @matches;
-}
-
-sub _lookup_file {
-    my @matches = _lookup_files(@_);
-    return $matches[0];
-}
-
-sub _home_dir {
-    return $ENV{XGENOME_CONFIG_HOME} || '$HOME/.config';
-}
-
-sub _dirs {
-    my $dirs = $ENV{XGENOME_CONFIG_DIRS} || '/etc';
-
-    # TODO One way to support per-snapshot dir.  Maybe not needed.
-    my @path = File::Spec->splitdir(__FILE__);
-    my @chop = ('lib', 'perl', split('::', __PACKAGE__));
-    my @chopped = splice(@path, -1 * @chop);
-    my @base_dir = @path;
-
-    return (File::Spec->join(@base_dir, 'etc'), split(/:/, $dirs));
 }
 
 1;
