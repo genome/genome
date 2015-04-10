@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
-use Test::More tests => 7;
+use Test::More tests => 4;
 
 use File::Spec qw();
 use File::Temp qw();
@@ -57,16 +57,6 @@ subtest 'new_from_file: sticky' => sub {
     }
 };
 
-subtest 'new_from_file: non-existant file' => sub {
-    plan tests => 1;
-    ok(1);
-};
-
-subtest 'new_from_file: empty file' => sub {
-    plan tests => 1;
-    ok(1);
-};
-
 subtest 'new_from_file: non-existant validator' => sub {
     plan tests => 1;
 
@@ -79,11 +69,6 @@ subtest 'new_from_file: non-existant validator' => sub {
     my ($input_fh, $input_file, $input_filename) = setup_yaml_file({ %data });
     my $ex = exception { Genome::ConfigSpec->new_from_file($input_file) };
     like($ex, qr/failed to load validator/, 'failed to load validator');
-};
-
-subtest 'new_from_file: broken validator' => sub {
-    plan tests => 1;
-    ok(1);
 };
 
 sub setup_yaml_file {
