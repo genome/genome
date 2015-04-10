@@ -19,31 +19,31 @@ use_ok($class) or die;
 
 my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::Model::Tools::CgHub');
 my $xml_file = File::Spec->join($data_dir, 'metadata.xml');
-my $b36_xml_file = File::Spec->join($data_dir, 'metadata.b36.xml');
 
-my $metadata1 = $class->create;
+my $metadata = $class->create;
+ok($metadata, 'create metadata');
 
 # Failures 
-throws_ok(sub{ $metadata1->add_xml; }, qr/add_xml but 2 were expected/, 'create failed w/o XML');
-throws_ok(sub{ $metadata1->add_xml('blah'); }, qr//, 'create failed w/ invalid xml');
-throws_ok(sub{ $metadata1->add_file('blah'); }, qr/File \(blah\) does not exist/, 'add_file failed w/ non existing file');
+throws_ok(sub{ $metadata->add_xml; }, qr/add_xml but 2 were expected/, 'create failed w/o XML');
+throws_ok(sub{ $metadata->add_xml('blah'); }, qr//, 'create failed w/ invalid xml');
+throws_ok(sub{ $metadata->add_file('blah'); }, qr/File \(blah\) does not exist/, 'add_file failed w/ non existing file');
 
 # Success [b37]
 my $analysis_id1 = '387c3f70-46e9-4669-80e3-694d450f2919';
-ok($metadata1, 'create') or die;
-ok($metadata1->add_file($xml_file), 'add_file to metadata1') or die;
-ok($metadata1->metadata, 'metadata');
+ok($metadata, 'create') or die;
+ok($metadata->add_file($xml_file), 'add_file to metadata') or die;
+ok($metadata->metadata, 'metadata');
 
 # Fails to get_attribute_value
-throws_ok(sub{ $metadata1->get_attribute_value(); }, qr/but 3 were expected/, 'get_attribute_value fails w/o attribute name');
-throws_ok(sub{ $metadata1->get_attribute_value($analysis_id1); }, qr/but 3 were expected/, 'get_attribute_value fails w/o attribute name');
+throws_ok(sub{ $metadata->get_attribute_value(); }, qr/but 3 were expected/, 'get_attribute_value fails w/o attribute name');
+throws_ok(sub{ $metadata->get_attribute_value($analysis_id1); }, qr/but 3 were expected/, 'get_attribute_value fails w/o attribute name');
 # Fails to get checksum type/content
-throws_ok(sub{ $metadata1->checksum_content_for_file_name(); }, qr/but 3 were expected/, 'checksum_content_for_file_name fails w/o file name');
-throws_ok(sub{ $metadata1->checksum_type_for_file_name($analysis_id1); }, qr/but 3 were expected/, 'checksum_type_for_file_name fails w/o file name');
+throws_ok(sub{ $metadata->checksum_content_for_file_name(); }, qr/but 3 were expected/, 'checksum_content_for_file_name fails w/o file name');
+throws_ok(sub{ $metadata->checksum_type_for_file_name($analysis_id1); }, qr/but 3 were expected/, 'checksum_type_for_file_name fails w/o file name');
 
 ok(
     _test_metadata(
-        metadata => $metadata1,
+        metadata => $metadata,
         lookup => {
             legacy_sample_id => 'TCGA-77-8154-10A-01D-2244-08',
             analysis_id => $analysis_id1,
@@ -74,47 +74,6 @@ ok(
         },
     ),
     'test metadata'
-);
-
-# Success - load [b36]
-my $analysis_id2 = 'a1d11d67-4d5f-4db9-a61d-a0279c3c3d4f';
-my $metadata2 = $class->create;
-ok($metadata2, 'create w/ b36 xml file') or die;
-ok($metadata2->add_file($b36_xml_file), 'add_file to metadata2');
-ok($metadata2->metadata, 'metadata');
-ok(
-    _test_metadata(
-        metadata => $metadata2,
-        lookup => {
-            legacy_sample_id => 'TCGA-A6-2674-01A-02W-0831-10',
-            analysis_id => $analysis_id2,
-        },
-        files => [
-            {
-                file_name => 'TCGA-A6-2674-01A-02W-0831-10_SOLiD.bam',
-				file_size => 18604187778,
-				checksum => {
-                    type => "MD5",
-                    content => '0f307401916947ab16e37b225da8c919',
-                },
-            },
-            {
-                file_name => 'TCGA-A6-2674-01A-02W-0831-10_SOLiD.bam.bai',
-                file_size => 7121464,
-                checksum => {
-                    type => "MD5",
-                    content => '89a44bbea9fcd62e5c5e1a3dc3610014',
-                },
-            },
-        ],
-        instdata_attrs => {
-            aliquot_id => 'f957194b-6da9-4690-a87d-0051e239bf3f',
-            center_name => 'BCM',
-            library_strategy => 'WXS',
-            sample_id => '8aca008c-f55a-420a-82c7-acd2cca77d85',
-        },
-    ),
-    'test old metadata'
 );
 
 done_testing();
