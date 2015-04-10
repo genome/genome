@@ -1772,8 +1772,18 @@ sub filter_non_database_objects {
 sub filter_non_matching_results {
     my ($self, @merged_results) = @_;
 
+    my %params;
+    for my $param ($self->__meta__->properties(is_param => 1)) {
+        my $name = $param->property_name;
+        $params{$name} = $self->$name;
+    }
+    my $bx = Genome::InstrumentData::AlignmentResult::Merged->define_boolexpr(%params);
+
     my @matching_results;
     for my $merged_result (@merged_results) {
+        unless ($bx->evaluate($merged_result)) {
+            next;
+        }
         my @individual_results = $merged_result->collect_individual_alignments($self->_user_data_for_nested_results);
         if (@individual_results) {
             push @matching_results, $merged_result if grep{$_->id eq $self->id}@individual_results;
