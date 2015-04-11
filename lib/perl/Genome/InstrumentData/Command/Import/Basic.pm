@@ -18,7 +18,7 @@ class Genome::InstrumentData::Command::Import::Basic {
         },
         import_source_name => {
             is => 'Text',
-            doc => "Organization or site name/abbreviation from where the source was generated or downloaded. Use 'CGHub' for TCGA downloaded data.",
+            doc => "Organization or site name/abbreviation from where the source was generated or downloaded.",
         },
         library => {
             is => 'Genome::Library',
@@ -161,16 +161,10 @@ sub _resolve_original_format {
 sub _resolve_instrument_data_properties {
     my $self = shift;
 
-    my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties';
-    if ( $self->import_source_name =~ /^cghub$/i ) {
-        $self->import_source_name('CGHub');
-        $class .= 'FromCgHub';
-    }
-
     my @instrument_data_properties = $self->instrument_data_properties;
     push @instrument_data_properties, 'description='.$self->description if defined $self->description;
     push @instrument_data_properties, 'downsample_ratio='.$self->downsample_ratio if defined $self->downsample_ratio;
-    my $insdata_props_processor = $class->execute(
+    my $insdata_props_processor = Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties->execute(
         instrument_data_properties => \@instrument_data_properties,
         source => join(',', $self->source_files),
     );

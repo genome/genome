@@ -47,10 +47,7 @@ sub source_file_retrieval_method {
 
     Carp::confess('No source file to get retrieval method!') if not $file;
 
-    if ( $file =~ m#^https://cghub.ucsc.edu# ) {
-        return 'cg hub';
-    }
-    elsif ( $file =~ m#^(http|https|file)\://# ) {
+    if ( $file =~ m#^(http|https|file)\://# ) {
         return 'remote url';
     }
     else {
