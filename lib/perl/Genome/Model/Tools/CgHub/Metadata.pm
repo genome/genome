@@ -51,7 +51,7 @@ sub _add_metadata {
         $results = [ $incoming_metadata->{Result} ];
     }
     else {
-        $results = $incoming_metadata->{Result};
+        $results = [ values %{$incoming_metadata->{Result}} ];
     }
 
     my $metadata = $self->metadata;
