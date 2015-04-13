@@ -28,14 +28,21 @@ for my $method_name (@carp_methods) {
     });
 }
 
-sub dief {
-    my ($template, @args) = @_;
-    return Carp::croak(sprintf($template, @args));
-}
-
-sub warnf {
-    my ($template, @args) = @_;
-    return Carp::carp(sprintf($template, @args));
+my %method_name = (
+    croak => 'dief',
+    carp => 'warnf',
+);
+for my $carp_method_name (keys %method_name) {
+    my $method_name = $method_name{$carp_method_name};
+    my $carp_method = Carp->can($carp_method_name);
+    install_sub({
+        code => sub {
+            my ($template, @args) = @_;
+            return $carp_method->(sprintf($template, @args));
+        },
+        into => __PACKAGE__,
+        as => $method_name,
+    });
 }
 
 1;
