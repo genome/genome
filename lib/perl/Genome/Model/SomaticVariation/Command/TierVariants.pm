@@ -236,6 +236,7 @@ sub link_result_to_build {
 
         Genome::Sys->create_symlink($f, join('/', $effects_dir, $name));
     }
+    $result->add_user(user => $build, label => 'uses');
 
     return 1;
 }
