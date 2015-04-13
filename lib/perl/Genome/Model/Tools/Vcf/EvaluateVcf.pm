@@ -107,7 +107,6 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
         rawstats => {
             is => "HASH",
             doc => "The raw stats generated during primary execution",
-            is_optional => '1',
         },
     ],
 };
