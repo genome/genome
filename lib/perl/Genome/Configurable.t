@@ -3,20 +3,22 @@
 use strict;
 use warnings;
 
-use Test::More tests => 2;
-use Test::Fatal qw(exception);
+use Genome qw();
+
+use Test::More tests => 3;
 
 use File::Temp qw();
-use Genome qw();
-use Genome::Config qw();
-use Params::Validate qw(validate);
+use Genome::Test::Config qw(setup_config);
+use Path::Class::Dir qw();
+
+use_ok('Genome::Configurable');
 
 my $temp_home_dir = File::Temp->newdir();
 my $temp_conf_dir = File::Temp->newdir();
 local $ENV{XGENOME_CONFIG_HOME} = $temp_home_dir->dirname;
 local $ENV{XGENOME_CONFIG_DIRS} = $temp_conf_dir->dirname;
 
-setup(
+setup_config(
     home => {
         dir => Path::Class::Dir->new($temp_home_dir->dirname, 'genome'),
         config => {
@@ -50,46 +52,3 @@ is($foo1->name, 'bar');
 
 my $foo2 = Genome::Foo->create(name => 'Joe');
 is($foo2->name, 'Joe');
-
-sub setup {
-    my %params = validate(@_, {
-        home => 1,
-        conf => 1,
-    });
-
-    for my $blob ($params{home}, @{$params{conf}}) {
-        unless (-d $blob->{dir}) {
-            mkdir $blob->{dir};
-        }
-        for my $key (keys %{$blob->{spec}}) {
-            setup_spec_file(
-                dir => $blob->{dir},
-                key => $key,
-                spec => $blob->{spec}->{$key}
-            );
-        }
-        setup_config_file(
-            dir => $blob->{dir},
-            data => $blob->{config},
-        );
-    }
-}
-
-sub setup_spec_file {
-    my %params = validate(@_, {
-        dir => 1,
-        key => 1,
-        spec => 1,
-    });
-    my $spec_file = Path::Class::File->new($params{dir}, $params{key} . '.yaml');
-    YAML::Syck::DumpFile($spec_file . '', $params{spec});
-}
-
-sub setup_config_file {
-    my %params = validate(@_, {
-        dir => 1,
-        data => 1,
-    });
-    my $config_file = Path::Class::File->new($params{dir}, 'config.yaml');
-    YAML::Syck::DumpFile($config_file . '', $params{data});
-}
