@@ -20,7 +20,7 @@ for my $method_name (@carp_methods) {
     install_sub({
         code => sub {
             my ($template, @args) = @_;
-            local $Carp::CarpLevel = 1;
+            local $Carp::CarpLevel = $Carp::CarpLevel + 1;
             return $carp_method->(sprintf($template, @args));
         },
         into => __PACKAGE__,
