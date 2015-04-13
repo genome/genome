@@ -103,10 +103,11 @@ class Genome::Model::Tools::Vcf::EvaluateVcf {
         },
     ],
 
-    has_output => [
+    has_transient_optional_output => [
         rawstats => {
             is => "HASH",
             doc => "The raw stats generated during primary execution",
+            is_optional => '1',
         },
     ],
 };
