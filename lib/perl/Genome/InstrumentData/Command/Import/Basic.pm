@@ -164,16 +164,20 @@ sub _resolve_instrument_data_properties {
     my @instrument_data_properties = $self->instrument_data_properties;
     push @instrument_data_properties, 'description='.$self->description if defined $self->description;
     push @instrument_data_properties, 'downsample_ratio='.$self->downsample_ratio if defined $self->downsample_ratio;
-    my $insdata_props_processor = Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties->execute(
+    my $instdata_props_processor = Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties->execute(
         instrument_data_properties => \@instrument_data_properties,
-        source => join(',', $self->source_files),
     );
-    if ( not $insdata_props_processor->result ) {
+    if ( not $instdata_props_processor->result ) {
         $self->error_message('Failed to process instrument data properties!');
         return;
     }
 
-    return $self->_instrument_data_properties( $insdata_props_processor->resolved_instrument_data_properties );
+    my $instrument_data_properties =  $instdata_props_processor->resolved_instrument_data_properties;
+    if ( not $instrument_data_properties->{original_data_path} ) {
+        $instrument_data_properties->{original_data_path} = join(',', $self->source_files);
+    }
+
+    return $self->_instrument_data_properties($instrument_data_properties);
 }
 
 sub _resolve_working_directory {
