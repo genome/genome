@@ -38,6 +38,7 @@ for my $carp_method_name (keys %method_name) {
     install_sub({
         code => sub {
             my ($template, @args) = @_;
+            local $Carp::CarpLevel = 0;
             return $carp_method->(sprintf($template, @args));
         },
         into => __PACKAGE__,
