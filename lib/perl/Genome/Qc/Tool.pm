@@ -18,7 +18,7 @@ class Genome::Qc::Tool {
         bam_file => {
             is => 'Path',
             calculate_from => [qw(alignment_result)],
-            calculate => q{return $alignment_result->bam_path},
+            calculate => q{return $alignment_result->get_bam_file},
         },
     ],
 };

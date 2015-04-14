@@ -55,7 +55,7 @@ sub execute {
             my $rna_seq_model = Genome::Model->get($model_id);
             # Or should we just fine the latest AlignmentResult....
             my $last_succeeded_build = $rna_seq_model->last_succeeded_build;
-            my $bam_file = $last_succeeded_build->alignment_result->bam_file;
+            my $bam_file = $last_succeeded_build->alignment_result->get_bam_file;
             push @condition_bam_file_paths, $bam_file;
         }
         my $condition_bam_files_string = join(',',@condition_bam_file_paths);

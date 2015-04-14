@@ -29,11 +29,11 @@ sub execute {
     if (version->parse($alignment_result->aligner_version) >= version->parse('1.1.0')) {
         # Cufflinks v0.9.0 and later will work on sam or bam files
         if (version->parse($self->model->expression_version) >= version->parse('0.9.0')) {
-            $tophat_file = $alignment_result->bam_file;
+            $tophat_file = $alignment_result->get_bam_file;
         } else {
             $tophat_file = Genome::Sys->create_temp_file_path($self->build->id .'.sam');
             my $convert_cmd = Genome::Model::Tools::Sam::BamToSam->execute(
-                bam_file => $alignment_result->bam_file,
+                bam_file => $alignment_result->get_bam_file,
                 sam_file => $tophat_file,
             );
             unless ($convert_cmd and $convert_cmd->result) {

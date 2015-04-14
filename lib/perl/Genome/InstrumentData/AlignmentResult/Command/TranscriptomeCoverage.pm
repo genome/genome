@@ -74,7 +74,7 @@ sub execute {
     my $annotation_build = $self->annotation_build;
 
     # Alignment inputs
-    my $bam_file = $self->alignment_result->bam_file;
+    my $bam_file = $self->alignment_result->get_bam_file;
 
     my $coverage_directory = $self->coverage_directory;
     unless (-d $coverage_directory) {

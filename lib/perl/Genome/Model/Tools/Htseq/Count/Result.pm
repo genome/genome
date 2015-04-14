@@ -251,7 +251,7 @@ sub _run_htseq_count {
         # a completed alignment result will need to have a sorted bam created
         $self->debug_message("No temp_scratch_directory found: name sort the BAM in temp space.");
 
-        my ($unsorted_bam) = $alignment_result->revivified_alignment_bam_file_path;
+        my ($unsorted_bam) = $alignment_result->get_bam_file;
 
         my $sorted_bam_noprefix = "$tmp/all_sequences.namesorted";
         $sorted_bam = $sorted_bam_noprefix . '.bam';

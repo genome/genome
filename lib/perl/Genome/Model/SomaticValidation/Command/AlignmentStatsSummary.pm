@@ -156,7 +156,7 @@ sub _alignment_metrics_from_result {
     if ($self->haploid_coverage && ($total_mapped_bases > 0) ) {
         # Stolen from Genome::Model::ReferenceAlignment::Report::Mapcheck;
         my $coverage = Genome::Model::Tools::Sam::Coverage->create(
-            aligned_reads_file=> $result->bam_path,
+            aligned_reads_file=> $result->get_bam_file,
             reference_file => $result->reference_build->full_consensus_path('fa'),
             return_output => 1,
             coverage_command => $ENV{GENOME_SW} . '/samtools/bamcheck/bamcheck-v0.13/bam-check -q 1',

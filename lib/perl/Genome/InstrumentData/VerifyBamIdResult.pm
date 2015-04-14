@@ -118,7 +118,7 @@ sub _resolve_bam_file {
     my $self = shift;
     my $bam_result = $self->aligned_bam_result;
 
-    my $path = $bam_result->bam_path;
+    my $path = $bam_result->get_bam_file;
     unless (-s $path) {
         $self->_error("Could not get bam file for ".$bam_result->id);
     }
