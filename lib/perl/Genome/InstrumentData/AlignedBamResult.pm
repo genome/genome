@@ -50,6 +50,11 @@ class Genome::InstrumentData::AlignedBamResult {
     ],
 };
 
+sub get_bam_file {
+    my $self = shift;
+    return $self->bam_file;
+}
+
 sub instrument_data {
     die 'Abstract';
 }
