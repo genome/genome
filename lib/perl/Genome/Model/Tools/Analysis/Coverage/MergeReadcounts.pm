@@ -6,23 +6,26 @@ use warnings;
 
 
 class Genome::Model::Tools::Analysis::Coverage::MergeReadcounts{
-    is => 'Command',
+    is => 'Command::V2',
     has => [
 	bam_files => {
 	    is => 'String',
 	    is_optional => 0,
+	    is_many => 1,
 	    doc => 'comma-separated list of bam files to grab readcounts from, Output columns will be appended in this order',
 	},
 	
 	variant_files => {
 	    is => 'String',
 	    is_optional => 0,
+	    is_many => 1,
 	    doc => 'coma-separated list of text files containing snvs in annotation format (1-based, first 5-cols = [chr, st, sp, ref, var]), all variant sites will be combined to a list',
 	},
 	
 	variant_sources => {
 	    is => 'String',
-	    is_optional => 0,
+	    is_optional => 1,
+	    is_many => 1,
 	    doc => 'coma-separated list of the name for each variant_file, used in the source column (1-based index number as default such as 1, 2, 3, ...)',
 	},
 	
@@ -85,6 +88,7 @@ class Genome::Model::Tools::Analysis::Coverage::MergeReadcounts{
 	header_prefixes => { 
 	    is => 'String',
 	    is_optional => 1,
+	    is_many => 1,
 	    doc => 'Comma-separated list - if the file has a header, three column titles get added for each bam ("ref_count","var_count","VAF"). This specifies a prefix for those columns. (i.e.  "Normal" will lead to "Normal_ref_count","Normal_var_count","Normal_VAF"). As a default, the ascending integers in the same BAM order, e.g. 1, 2, 3, ...',
 	},
 	
@@ -94,13 +98,14 @@ class Genome::Model::Tools::Analysis::Coverage::MergeReadcounts{
 	    doc => 'whether or not to report counts on a per-library basis',
 	    default => 0,
 	},
-    bam_readcount_version => {
-        is => 'String',
-        doc => 'version of bam-readcount to use',
-        is_optional => 1,
-    },
-
-        ]
+	
+	bam_readcount_version => {
+	    is => 'String',
+	    doc => 'version of bam-readcount to use',
+	    is_optional => 1,
+	},
+	
+    ]
 };
 
 sub help_brief {
@@ -115,8 +120,8 @@ sub help_detail {
 
 sub execute {
     my $self = shift;
-    my $bam_files = $self->bam_files;
-    my $variant_files = $self->variant_files;
+    my @bam_files = $self->bam_files;
+    my @variant_files = $self->variant_files;
     my $output_file = $self->output_file;
     my $genome_build = $self->genome_build;
     my $min_quality_score = $self->min_quality_score;
@@ -129,30 +134,28 @@ sub execute {
 
     my $chrom = $self->chrom;
     my @header_prefixes;
-    my @bams = split(",",$bam_files);
-    my @variants = split(",",$variant_files);
     my @sources;
     
     if (defined($self->variant_sources))
     {
-	@sources = split(",",$self->variant_sources);
+	@sources = $self->variant_sources;
 	
-	die "Source and variant file do not match" unless scalar(@variants) == scalar(@sources);
+	die "Source and variant file do not match" unless scalar(@variant_files) == scalar(@sources);
     }
     else
     {
-	@sources = (1 ... scalar(@variants));
+	@sources = (1 ... scalar(@variant_files));
     }
     
     if (defined($self->header_prefixes))
     {
-        @header_prefixes = split(",",$self->header_prefixes);
+        @header_prefixes = $self->header_prefixes;
     }
 
     # checks the BAM and header prefixes in 1:1 relationship
     if (@header_prefixes > 0)
     {
-	unless (scalar(@header_prefixes) == scalar(@bams))
+	unless (scalar(@header_prefixes) == scalar(@bam_files))
 	{
 	    die "Header and variant file do not match";
 	}
@@ -160,7 +163,7 @@ sub execute {
     else
     {
 	# as a default
-	@header_prefixes = (1 ... scalar(@bams));
+	@header_prefixes = (1 ... scalar(@header_prefixes));
     }
     
     my $fasta;
@@ -210,17 +213,16 @@ sub execute {
     #create temp directory for munging
     my $tempdir = Genome::Sys->create_temp_directory();
     unless($tempdir) {
-        $self->error_message("Unable to create temporary file $!");
-        die;
+        die("Unable to create temporary file $!");
     }
     
     
     # reads the variant files and combine
     # for a hash with the keys chr, start, stop, ref, var, type
     my (%hash, @header);
-    for (my $n=0; $n<@variants; $n ++)
+    for (my $n=0; $n<@variant_files; $n ++)
     {
-	my $variant = $variants[$n];
+	my $variant = $variant_files[$n];
 	
 	
 	# creates a file handler
@@ -237,7 +239,17 @@ sub execute {
 	else
 	{
 	    my @new = split /\t/, $line;
-	    die "Inconsistent annotation format found: " . $variant unless scalar(@header) == scalar(@new);
+	    
+	    die "Inconsistent table format found in the header line: " . $variant unless scalar(@header) == scalar(@new);
+	    
+	    # double-checks whether they share the same column header
+	    for (my $i=0; $i<@header; $i ++)
+	    {
+		unless ($header[$i] eq $new[$i])
+		{
+		    die "Inconsistent table format found in the header line: " . $variant;
+		}
+	    }
 	}
 	
 	while (my $i = $fh->getline)
@@ -248,8 +260,9 @@ sub execute {
 	    # gets the field values
 	    my ($chr, $start, $stop, $ref, $var, $type, @vs) = split /\t/, $i;
 	    
-	    # chops off the read count columns assuming about the 25 extra columns
-	    @vs = splice @vs, 0, (25 - 6);
+	    # The following line was to chop off the read count columns assuming about the 25 extra columns,
+	    # but inactivated in order to keep the original header line.
+	    # @vs = splice @vs, 0, (25 - 6);   # prints only 25 fields
 	    
 	    # creates a hash with the field values
 	    my %h = ("chr" => $chr, "start" => $start, "stop" => $stop, "ref" => $ref, "var" => $var, "type" => $type, "extra" => \@vs,
@@ -284,7 +297,7 @@ sub execute {
            } map { [$_, $hash{$_}->{chr}, $hash{$_}->{start}, $hash{$_}->{stop}, $hash{$_}->{type}] } keys %hash;
     
     # prints out the progress
-    print STDERR sprintf("%d mutation sites combined from %d annotation files\n", scalar(@sort), scalar(@variants));
+    $self->status_message("%d mutation sites combined from %d annotation files\n", scalar(@sort), scalar(@variant_files));
     
     
     # writes the combined mutation sites in the annotation format
@@ -292,8 +305,9 @@ sub execute {
     my $fh = FileHandle->new("> $pathtab");
     die "Cannot write a file: " . $pathtab unless defined $fh;
     
-    # chops off the head columns assuming about the 25 extra columns
-    @header = splice @header, 0, 25;
+    # The following line was to chop off the read count columns assuming about the 25 extra columns,
+    # but inactivated in order to keep the original header line.
+    # @header = splice @header, 0, 25;   # prints only 25 columns in the header line
     
     # writes the header line
     print $fh join("\t", @header, "source") . "\n";
@@ -315,7 +329,7 @@ sub execute {
     
     # makes an AddReadcounts run
     my %params = (
-        bam_files => $bam_files,
+        bam_files => join(",", @bam_files),
         output_file =>  $pathmerge,
         variant_file => $pathtab,
         genome_build => $genome_build, 

@@ -16,7 +16,7 @@ use Statistics::R;
 
 
 class Genome::Model::Tools::Analysis::Coverage::CoveragePlot{
-    is => 'Command',
+    is => 'Command::V2',
     has => [
         roi_file_path => {
 	    is => 'String',
@@ -37,10 +37,8 @@ class Genome::Model::Tools::Analysis::Coverage::CoveragePlot{
 	    doc => 'Comma-separated list of bam files to generate coverage plots from, Must specify either --bam-files or --refalign-models',
 	},
 	
-	# The following line does not work. "gmt analysis coverage coverage-plot" does not recognize the --refalign-models parameter.
-	# is => 'Genome::Model::ReferenceAlignment',
 	refalign_models => {
-	    is => 'String',
+	    is => 'Genome::Model::ReferenceAlignment',
 	    is_optional => 1,
 	    is_many => 1,
 	    doc => 'Comma-separated list of refalign model IDs to generate coverage plots from, --bam-files will override --refalign-models if given',
@@ -338,9 +336,6 @@ sub execute {
     # for debug to print out the commands
     #print sprintf("Compiling RefCov stats files in %s\n%s\n", $dir_refcov, $cmd2);
     #print sprintf("\nCreating coverage plots\n%s\n", $cmd3);
-    
-    
-    #$self->status_message("\nDone\n");
     
     return 1;
 }
