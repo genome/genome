@@ -6,6 +6,11 @@ use Genome;
 
 class Genome::Model::ClinSeq::Command::MicroarrayCnv {
     is => 'Command::V2',
+    has_param => [
+        lsf_resource => {
+            default => "-R 'span[hosts=1] rusage[mem=8000]' -M 8000000",
+        }
+    ],
     has_input => [
         microarray_model_tumor => {
             is => 'Genome::Model::GenotypeMicroarray',
