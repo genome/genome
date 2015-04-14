@@ -1973,5 +1973,64 @@ sub add_to_temporary_input_files_queue {
     return 1;
 }
 
+sub lock_bam_file_access {
+    my $self = shift;
+
+    unless ($self->get_merged_alignment_results) {
+        my @bams = $self->alignment_bam_file_paths;
+        unless (@bams) {
+            if ($self->get_merged_alignment_results) {
+                return 1;
+            }
+            else {
+                die $self->error_message("Alignment result with class (%s) and id (%s) has neither ".
+                    "merged results nor valid bam paths. This likely means that this alignment result ".
+                    "needs to be removed and realigned because data has been lost. ".
+                    "Please create an apipe-support ticket for this.", $self->class, $self->id);
+                #There is no way to recreate per lane bam if merged bam
+                #does not exist and per lane bam is removed. Software
+                #result of this per lane alignment needs to be removed and
+                #this per lane instrument data needs to be realigned
+                #with that aligner.
+            }
+        }
+
+        #This locking is moved from merged AR to per lane AR, during
+        #the transition two lock names need be handled properly. This
+        #temporary code change need to be reverted after code is promoted
+        
+        my ($old_resource, $new_resource) = map{File::Spec->join('genome', $_, 'lock-per-lane-alignment-'.$self->id)}('Genome::InstrumentData::AlignmentResult::Merged', __PACKAGE__);
+        my $lock = Genome::Sys::LockMigrationProxy->new(
+            old => {
+                resource => $old_resource,
+                scope    => 'site',
+            },
+            new => {
+                resource => $new_resource,
+                scope    => 'site',
+            },
+        )->lock(
+            max_try       => 288, # Try for 48 hours every 10 minutes
+            block_sleep   => 600,
+        );
+        die $self->error_message("Unable to acquire the lock for per lane alignment result id (%s) !", $self->id) unless $lock;
+
+        # If the build before us successfully created a merged alignment result, we no longer need a lock
+        # If it failed, we will add an observer just as the first build did.
+        if ($self->get_merged_alignment_results) {
+            $lock->unlock();
+        } else {
+            UR::Context->process->add_observer(
+                aspect   => 'commit',
+                once     => 1,
+                callback => sub {
+                    $lock->unlock();
+                }
+            );
+        }
+    }
+    return 1;
+}
+
 1;
 

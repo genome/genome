@@ -264,7 +264,6 @@ sub create {
                     die $self->error_message("Fail to run flagstat on $bam_path");
                 }
             }
-            $alignment->_reallocate_disk_allocation;
             $self->_remove_per_lane_bam_post_commit($bam_path, $alignment);
         }
     }
@@ -805,48 +804,8 @@ sub _lock_per_lane_alignments {
     my $self = shift;
 
     for my $alignment ($self->collect_individual_alignments) {
-        unless ($alignment->get_merged_alignment_results) {
-            my @bams = $alignment->alignment_bam_file_paths;
-            unless (@bams) {
-               die $self->error_message("Alignment result with class (%s) and id (%s) has neither ".
-                   "merged results nor valid bam paths. This likely means that this alignment result ".
-                   "needs to be removed and realigned because data has been lost. ".
-                   "Please create an apipe-support ticket for this.", $alignment->class, $alignment->id);
-               #There is no way to recreate per lane bam if merged bam
-               #does not exist and per lane bam is removed. Software
-               #result of this per lane alignment needs to be removed and
-               #this per lane instrument data needs to be realigned
-               #with that aligner.
-            }
-
-            my $resource = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$alignment->id);
-            my $lock = Genome::Sys::LockProxy->new(
-                resource => $resource,
-                scope => 'site',
-            )->lock(
-                max_try       => 288, # Try for 48 hours every 10 minutes
-                block_sleep   => 600,
-            );
-            die $self->error_message("Unable to acquire the lock for per lane alignment result id (%s) !", $alignment->id) unless $lock;
-
-            # If the build before us successfully created a merged alignment result, we no longer need a lock
-            # If it failed, we will add an observer just as the first build did.
-            if ($alignment->get_merged_alignment_results) {
-                $lock->unlock();
-            } else {
-                # The problem here is if we commit BEFORE merge is done, we unlock too early.
-                # However, if we unlock any other way we may fail to unlock more often and leave old locks.
-                UR::Context->process->add_observer(
-                    aspect   => 'commit',
-                    once => 1,
-                    callback => sub {
-                        $lock->unlock();
-                    }
-                );
-            }
-        }
+        $alignment->lock_bam_file_access;
     }
-
     return 1;
 }
 
