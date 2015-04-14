@@ -7,12 +7,6 @@ use Genome;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties { 
     is => 'Command::V2',
-    has_input => {
-        source => {
-            is => 'Text',
-            doc => 'Source to import.',
-        },
-    },
     has_optional_input => {
         instrument_data_properties => {
             is => 'Text',
@@ -53,8 +47,6 @@ sub _resolve_instrument_data_properties {
         $properties{$label} = $value;
     
     }
-
-    $properties{original_data_path} = $self->source;
 
     return $self->resolved_instrument_data_properties(\%properties);
 }
