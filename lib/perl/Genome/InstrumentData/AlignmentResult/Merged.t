@@ -89,7 +89,10 @@ my $merged_alignment_result = $pkg->create(@params, _user_data_for_nested_result
 isa_ok($merged_alignment_result, $pkg, 'produced merged alignment result');
 
 subtest 'testing merge without filter_name' => sub {
-    compare_ok($merged_alignment_result->bam_file, File::Spec->join($expected_dir, '-120573001.bam'), 'merged bam matches expected result');
+    compare_ok($merged_alignment_result->bam_file, File::Spec->join($expected_dir, '-120573001.bam'),
+        name => 'merged bam matches expected result',
+        diag => 0,
+    );
     compare_ok($merged_alignment_result->merged_alignment_bam_flagstat, File::Spec->join($expected_dir, '-120573001.bam.flagstat'), 'flagstat matches expected result');
 
     my @individual_alignments = $merged_alignment_result->collect_individual_alignments;
@@ -135,7 +138,10 @@ subtest 'testing merge with filter_name' => sub {
     is(scalar @filtered_individual_alignments, 2, 'got back expected number of alignments');
 
     #same expected files since we faked the alignment results to use the same data
-    compare_ok($filtered_alignment_result->bam_file, File::Spec->join($expected_dir, '-120573001.bam'), 'merged bam matches expected result');
+    compare_ok($filtered_alignment_result->bam_file, File::Spec->join($expected_dir, '-120573001.bam'),
+        name => 'merged bam matches expected result',
+        diag => 0,
+    );
     compare_ok($filtered_alignment_result->merged_alignment_bam_flagstat, File::Spec->join($expected_dir, '-120573001.bam.flagstat'), 'flagstat matches expected result');
 
     for my $i (@filtered_individual_alignments) {
