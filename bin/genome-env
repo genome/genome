@@ -274,9 +274,9 @@ function assert_dir {
     fi
 }
 
-declare -a SUBMODULES
+declare SUBMODULES=()
 function append_submodule {
-    if test "${#SUBMODULES}" -gt 0
+    if test "${#SUBMODULES[@]}" -gt 0
     then
         SUBMODULES=("${SUBMODULES[@]}" "$@")
     else
