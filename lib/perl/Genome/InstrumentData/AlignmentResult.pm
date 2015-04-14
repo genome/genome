@@ -1645,6 +1645,97 @@ sub alignment_bam_file_paths {
     return glob(File::Spec->join(shift->output_dir, "*.bam"));
 }
 
+
+sub get_bam_file {
+    my $self = shift;
+
+    if ($self->get_merged_alignment_results) {
+        return $self->revivified_alignment_bam_file_path;
+    }
+    else {
+        my $lock = $self->get_bam_lock;
+        if ($self->get_merged_alignment_results) {
+            $lock->unlock;
+            return $self->revivified_alignment_bam_file_path;
+        }
+        else {
+            my @bams = $self->alignment_bam_file_paths;
+            unless (@bams) {
+                $lock->unlock;    
+                if ($self->get_merged_alignment_results) {
+                    return $self->revivified_alignment_bam_file_path;
+                }
+                else {
+                    die $self->error_message("Alignment result with class (%s) and id (%s) has neither ".
+                        "merged results nor valid bam paths. This likely means that this alignment result ".
+                        "needs to be removed and realigned because data has been lost. ".
+                        "Please create an apipe-support ticket for this.", $self->class, $self->id);
+                    #There is no way to recreate per lane bam if merged bam
+                    #does not exist and per lane bam is removed. Software
+                    #result of this per lane alignment needs to be removed and
+                    #this per lane instrument data needs to be realigned
+                    #with that aligner.
+                }
+            }
+            unless (@bams == 1) {
+                $lock->unlock;
+                die $self->error_message('Only 1 bam path is expected but got '.scalar @bams.'for '.$self->id);
+            }
+            my $temp_allocation = $self->_get_temp_allocation();
+
+            for my $type ('', '.bai', '.md5') {
+                my $file      = $bams[0] . $type;
+                my $dest_file = File::Spec->join($temp_allocation->absolute_path, basename($file));
+                if (-e $file) {
+                    Genome::Sys->copy_file($file, $dest_file);
+                }
+            }
+
+            $lock->unlock;
+            return File::Spec->join($temp_allocation->absolute_path, basename($bams[0]));
+        }
+    }
+}
+
+sub get_bam_lock {
+    my $self = shift;
+    my ($old_resource, $new_resource) = map{File::Spec->join('genome', $_, 'lock-per-lane-alignment-'.$self->id)}('Genome::InstrumentData::AlignmentResult::Merged', __PACKAGE__);
+    my $lock = Genome::Sys::LockMigrationProxy->new(
+        old => {
+            resource => $old_resource,
+            scope => 'site',
+        },
+        new => {
+            resource => $new_resource,
+            scope => 'site',
+        },
+    )->lock(
+        max_try => 288, # Try for 48 hours every 10 minutes
+        block_sleep => 600,
+    );
+    die $self->error_message("Unable to acquire the lock for per lane alignment result id (%s) !", $self->id) unless $lock;
+    return $lock;
+}
+
+sub remove_bam {
+    my $self = shift;
+
+    my $bam_path = $self->bam_path;
+    my $lock = $self->get_bam_lock;
+
+    for my $type ('', '.bai', '.md5') {
+        my $file = $bam_path . $type;
+        unlink $file;
+        if (-s $file and !$type) {  #only bam matters
+            die $self->error_message("Failed to cleanup $file");
+        }
+    }
+    $self->_reallocate_disk_allocation;
+    $lock->unlock;
+    return 1;
+}
+
+
 # This method will recreate the per-lane bam file and return the path.
 # This must be provided an allocation into which the bam will go (so that it can be cleaned up in the parent process once it is done).
 # The calling process is responsible for cleaning up the allocation after we are done with it.
@@ -1654,18 +1745,10 @@ sub revivified_alignment_bam_file_path {
     # If we have a merged alignment result, the per-lane bam can be regenerated and we will do so now
     # This is less efficient than using the in-place per-lane bam. However, it aids us in terms of
     # contention, and in our transition period (allowing us to delete all per-lane bams now).
-    if ($self->get_merged_alignment_results) {
-        return $self->_revivified_bam_file_path if defined $self->_revivified_bam_file_path;
-    } elsif (my @bams = $self->alignment_bam_file_paths) {
-        return @bams;
-    }
+    return $self->_revivified_bam_file_path if defined $self->_revivified_bam_file_path;
 
     my $temp_allocation = $self->_get_temp_allocation($self->output_dir);
-    UR::Context->process->add_observer(
-        aspect => 'pre-commit',
-        callback => sub { $temp_allocation->delete; },
-    );
-
+    
     my $revivified_bam = File::Spec->join($temp_allocation->absolute_path, 'all_sequences.bam');
     my $merged_bam = $self->get_merged_bam_to_revivify_per_lane_bam;
 
@@ -1699,14 +1782,21 @@ sub revivified_alignment_bam_file_path {
 }
 
 sub _get_temp_allocation {
-    my ($self, $output_dir) = @_;
-    return Genome::Disk::Allocation->create(
+    my $self = shift;
+    my $bam_size_kilobytes = $self->bam_size/1024 if $self->bam_size;
+
+    my $temp_allocation = Genome::Disk::Allocation->create(
         disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
         allocation_path     => 'merged/recreated_per_lane_bam/'.$self->id.'_'._get_uuid_string(),
-        kilobytes_requested => $self->bam_size || 100_000_000, # This should always be set, but just in case we reserve a lot
+        kilobytes_requested => $bam_size_kilobytes || 100_000_000, # This should always be set, but just in case we reserve a lot
         owner_class_name    => 'Genome::Sys::User',
         owner_id            => Genome::Sys->username,
     );
+    UR::Context->process->add_observer(
+        aspect => 'pre-commit',
+        callback => sub { $temp_allocation->delete; },
+    );
+    return $temp_allocation;
 }
 
 sub _get_uuid_string {
