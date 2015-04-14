@@ -1642,7 +1642,8 @@ sub verify_alignment_data {
 
 # This will generally only return something until the first merge has deleted the original per-lane bam file
 sub alignment_bam_file_paths {
-    return glob(File::Spec->join(shift->output_dir, "*.bam"));
+    my $self = shift;
+    return glob(File::Spec->join($self->output_dir, "*.bam"));
 }
 
 
