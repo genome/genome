@@ -27,6 +27,7 @@ sub required_rusage {
     my $reference_build = delete $p{reference_build};
     my $queue           = delete $p{queue} || $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
 
+    return if ($queue eq 'inline');
 
     my $tmp_mb = $class->tmp_megabytes_estimated($instrument_data);
     my $mem_mb = 1024 * 8; 
