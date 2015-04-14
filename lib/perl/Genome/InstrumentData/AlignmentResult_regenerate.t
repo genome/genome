@@ -265,11 +265,10 @@ subtest 'test get_bam_file' => sub {
         my $ar2_file  = File::Spec->join($ar2->output_dir, $base_name);
         compare_ok($file, $ar2_file, "AR2 get_bam_file $base_name copied ok");
     }
-    my $md5_ori_str  = `md5sum $ar2_ori_bam_file`;
-    ($md5_ori_str) = $md5_ori_str =~ /^(\S+)\s+/;
-    my $md5_copy_str = `md5sum $ar2_copy_bam_file`;
-    ($md5_copy_str) = $md5_copy_str =~ /^(\S+)\s+/;
-    is($md5_ori_str, $md5_copy_str, 'AR2 get_bam_file copied bam is exactly same as the original one');
+
+    my $md5_ori  = Genome::Sys->md5sum($ar2_ori_bam_file);
+    my $md5_copy = Genome::Sys->md5sum($ar2_copy_bam_file);
+    is($md5_ori, $md5_copy, 'AR2 get_bam_file copied bam is exactly same as the original one');
 };
 
 done_testing();
