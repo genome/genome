@@ -727,8 +727,8 @@ sub _compare_output_directories {
                     }
                     else {
                         $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
-                            'files are not the same (diff -u %s %s)',
-                            $file, $other_file
+                            'paths are not the same (diff -u %s %s) (diff -u %s %s)',
+                            $file, $other_file, $target, $other_target
                         );
                     }
                 }
