@@ -492,6 +492,8 @@ if (length(which(cnvs[,"DIFF"] < hard_cap_lower)) > 0){
 #Reset values larger than 20 to be 20 (arbitrary - for display purposes).  Single outliers, usually false positives near the centromeres obscure the data by jacking up the scale...
 if (length(which(cnvs[,"DIFF"] > hard_cap_upper)) > 0){
   cnvs[which(cnvs[,"DIFF"] > hard_cap_upper),"DIFF"] = hard_cap_upper
+}
+if (length(rownames(segments))>0){
   segments[which(segments[,"Adjusted_CN_DIFF"] > hard_cap_upper),"Adjusted_CN_DIFF"] = hard_cap_upper
 }
 
