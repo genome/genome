@@ -201,6 +201,12 @@ class Genome::Model::Tools::Sciclone {
             is_optional => 1,
             is_input => 1,
             is_output => 1
+        },
+        do_1d_clustering => {
+            is => 'Boolean',
+            doc => "do clustering in 1 dimension. If you have 2 or more samples, you should probably turn this off to save significant runtime.",
+            is_optional => 1,
+            default => 1,
         }
 
         ],
@@ -373,6 +379,10 @@ sub execute {
 
     if($cn_calls_are_log2){
         $cmd = $cmd . ", cnCallsAreLog2=TRUE";
+    }
+
+    unless($self->do_1d_clustering){ #is true by default in package
+       $cmd = $cmd . ", doClusteringAlongMargins=FALSE";
     }
 
     if($do_clustering){
