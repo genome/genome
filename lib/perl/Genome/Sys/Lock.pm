@@ -219,7 +219,6 @@ sub scopes {
     return qw(
         host
         site
-        unknown
     );
 }
 
