@@ -4,6 +4,8 @@ use Genome;
 use IO::File;
 use warnings;
 
+use List::MoreUtils qw(each_array all pairwise);
+
 
 class Genome::Model::Tools::Analysis::Coverage::MergeReadcounts{
     is => 'Command::V2',
@@ -19,14 +21,14 @@ class Genome::Model::Tools::Analysis::Coverage::MergeReadcounts{
 	    is => 'String',
 	    is_optional => 0,
 	    is_many => 1,
-	    doc => 'coma-separated list of text files containing snvs in annotation format (1-based, first 5-cols = [chr, st, sp, ref, var]), all variant sites will be combined to a list',
+	    doc => 'comma-separated list of text files containing snvs in annotation format (1-based, first 5-cols = [chr, st, sp, ref, var]), all variant sites will be combined to a list',
 	},
 	
 	variant_sources => {
 	    is => 'String',
 	    is_optional => 1,
 	    is_many => 1,
-	    doc => 'coma-separated list of the name for each variant_file, used in the source column (1-based index number as default such as 1, 2, 3, ...)',
+	    doc => 'comma-separated list of the name for each variant_file, used in the source column (1-based index number as default such as 1, 2, 3, ...)',
 	},
 	
 	output_file => {
@@ -220,11 +222,10 @@ sub execute {
     # reads the variant files and combine
     # for a hash with the keys chr, start, stop, ref, var, type
     my (%hash, @header);
-    for (my $n=0; $n<@variant_files; $n ++)
+
+    my $ea = each_array(@variant_files, @sources);
+    while (my ($variant, $source) = $ea->())
     {
-	my $variant = $variant_files[$n];
-	
-	
 	# creates a file handler
 	my $fh = FileHandle->new;
 	die "Cannot open a file: " . $variant unless $fh->open("< $variant");
@@ -243,12 +244,9 @@ sub execute {
 	    die "Inconsistent table format found in the header line: " . $variant unless scalar(@header) == scalar(@new);
 	    
 	    # double-checks whether they share the same column header
-	    for (my $i=0; $i<@header; $i ++)
+	    unless (all { $_ } pairwise { $a eq $b } @header, @new)
 	    {
-		unless ($header[$i] eq $new[$i])
-		{
-		    die "Inconsistent table format found in the header line: " . $variant;
-		}
+		die "Inconsistent table format found in the header line: " . $variant;
 	    }
 	}
 	
@@ -266,7 +264,7 @@ sub execute {
 	    
 	    # creates a hash with the field values
 	    my %h = ("chr" => $chr, "start" => $start, "stop" => $stop, "ref" => $ref, "var" => $var, "type" => $type, "extra" => \@vs,
-			"source" => {$sources[$n] => 1} );
+			"source" => {$source => 1} );
 	    
 	    # creates a mutation site ID
 	    my $id = sprintf "%s:%u:%u:%s:%s:%s", $chr, $start, $stop, $ref, $var, $type;
@@ -274,7 +272,7 @@ sub execute {
 	    # in theory	die "Identical mutation site found: $id" if exists $hash{$id};
 	    if (exists $hash{$id})
 	    {
-		$hash{$id}->{source}->{$sources[$n]} ++;
+		$hash{$id}->{source}->{$source} ++;
 	    }
 	    else
 	    {
