@@ -4,7 +4,6 @@ use strict;
 use warnings FATAL => 'all';
 
 use Test::More;
-use Test::Exception;
 use Test::Deep;
 use above 'Genome';
 use Genome::Utility::Inputs qw(
