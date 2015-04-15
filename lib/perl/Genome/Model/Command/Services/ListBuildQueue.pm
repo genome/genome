@@ -85,7 +85,7 @@ sub run_as_list {
 
     my $table_name    = $type->table_name;
     my $run_as_column = $type->properties(property_name => 'run_as')->column_name;
-    my $build_requested_column = $type->properties(property_name => 'build_requested')->column_name;
+    my $build_requested_column = $type->properties(property_name => '_build_requested')->column_name;
 
     my $sql_t = q/SELECT distinct(%s) FROM %s WHERE %s IS TRUE/;
     my $sql = sprintf($sql_t, $run_as_column, $table_name, $build_requested_column);

@@ -1198,6 +1198,10 @@ sub inputs_have_compatible_reference {
     my ($build_reference_method) = grep { $self->can($_) } @reference_sequence_methods;
     return unless $build_reference_method;
     my $build_reference_sequence = $self->$build_reference_method;
+    unless ($build_reference_sequence) {
+        # if this is required it should be caught elsewhere
+        return;
+    }
 
     # Determine the reference sequence for the inputs (and ensure compatiblity).
     my @inputs = $self->inputs;
@@ -1216,17 +1220,15 @@ sub inputs_have_compatible_reference {
         }
     }
 
-    # Create tags for all the inputs with incompatible reference sequences.
-    my $tag;
     if (@incompatible_properties) {
-        $tag = UR::Object::Tag->create(
+        return UR::Object::Tag->create(
             type => 'error',
             properties => \@incompatible_properties,
             desc => "Not compatible with build's reference sequence '" . $build_reference_sequence->__display_name__ . "'.",
         );
     }
 
-    return $tag;
+    return;
 }
 
 sub reference_being_replaced_for_input {

@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Sys::LockProxy qw();
 
 use constant MAX_GENOTYPE_DATA_TO_PROCESS => 500;
 
@@ -65,16 +66,17 @@ sub _lock_me {
     my $self = shift;
     return 1 if $ENV{UR_DBI_NO_COMMIT};
     $self->status_message('Lock...');
-    my $lock = Genome::Sys->lock_resource(
-        resource_lock => 'synchronize-genome-from-lims',
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => 'synchronize-genome-from-lims',
         scope => 'site',
+    )->lock(
         max_try => 1,
     );
     if ( not $lock ) {
         $self->error_message("Could not lock!");
         return;
     }
-    $self->status_message('Lock: '.$lock);
+    $self->status_message('Lock: ' . $lock->resource);
     $self->_lock($lock);
     return 1;
 }
@@ -83,8 +85,8 @@ sub _unlock_me {
     my $self = shift;
     return 1 if $ENV{UR_DBI_NO_COMMIT};
     return 1 if not $self->_lock;
-    $self->status_message('Unlock: '.$self->_lock);
-    eval{ Genome::Sys->unlock_resource(resource_lock => $self->_lock); };
+    $self->status_message('Unlock: '.$self->_lock->resource);
+    eval{ $self->_lock->unlock() };
     return 1;
 }
 

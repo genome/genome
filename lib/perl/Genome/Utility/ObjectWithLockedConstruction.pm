@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Sys::LockProxy qw();
 
 class Genome::Utility::ObjectWithLockedConstruction {
     is => 'UR::Object',
@@ -32,8 +33,10 @@ sub create_with_lock {
     my $class = shift;
     my $lock_var = shift;
 
-    my $lock = Genome::Sys->lock_resource(resource_lock => $lock_var,
-        scope => 'site');
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => $lock_var,
+        scope => 'site',
+    )->lock();
     die("Unable to get lock!") unless $lock;
 
     my $obj = $class->load(@_);
@@ -44,7 +47,7 @@ sub create_with_lock {
        UR::Context->current->add_observer(
            aspect => 'commit',
            callback => sub {
-               Genome::Sys->unlock_resource(resource_lock => $lock_var);
+               $lock->unlock();
            }
        );
     }

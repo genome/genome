@@ -6,6 +6,7 @@ use warnings;
 use feature qw(say);
 
 use List::MoreUtils qw(any uniq all);
+use UR::Util;
 use Genome;
 
 class Genome::FeatureList::Command::Merge {
@@ -25,6 +26,12 @@ class Genome::FeatureList::Command::Merge {
             is => 'Genome::Model::Build::ReferenceSequence',
             doc => 'the (combined) reference for the merged feature-list, if the lists do not share a reference',
             is_optional => 1,
+        },
+    ],
+    has_optional_output => [
+        new_feature_list => {
+            is => 'Genome::FeatureList',
+            doc => 'the newly imported feature list',
         },
     ],
     doc => 'command to combine several feature-lists into one',
@@ -88,6 +95,7 @@ sub execute {
         die $self->error_message('Failed to create FeatureList');
     }
     my $merged_list = $cmd->new_feature_list;
+    $self->new_feature_list($merged_list);
 
     return 1;
 }
@@ -188,14 +196,20 @@ sub _find_convertible_reference {
         my $target = $_; all { $target->contains($_) || $available_conversions{$_->id}{$target->id} } @references;
     } @target_references;
 
-    if (scalar(@convertible_references) > 1) {
-        $class->_die_with_multiple_candidate_references(
-            'The references of the input feature-lists can be converted to multiple references:',
-            @convertible_references,
-        );
+    if (scalar(@convertible_references) < 2) {
+        return $convertible_references[0];
     }
 
-    return $convertible_references[0];
+    #prefer a reference from our original query set
+    my ($preferred_references) = UR::Util::intersect_lists(\@references, \@convertible_references);
+    if (scalar(@$preferred_references) eq 1) {
+        return $preferred_references->[0];
+    }
+
+    $class->_die_with_multiple_candidate_references(
+        'The references of the input feature-lists can be converted to multiple references:',
+        @convertible_references,
+    );
 }
 
 sub _find_combined_reference_with_conversions {

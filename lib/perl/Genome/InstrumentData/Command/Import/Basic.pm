@@ -18,7 +18,7 @@ class Genome::InstrumentData::Command::Import::Basic {
         },
         import_source_name => {
             is => 'Text',
-            doc => "Organization or site name/abbreviation from where the source was generated or downloaded. Use 'CGHub' for TCGA downloaded data.",
+            doc => "Organization or site name/abbreviation from where the source was generated or downloaded.",
         },
         library => {
             is => 'Genome::Library',
@@ -161,25 +161,23 @@ sub _resolve_original_format {
 sub _resolve_instrument_data_properties {
     my $self = shift;
 
-    my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties';
-    if ( $self->import_source_name =~ /^cghub$/i ) {
-        $self->import_source_name('CGHub');
-        $class .= 'FromCgHub';
-    }
-
     my @instrument_data_properties = $self->instrument_data_properties;
     push @instrument_data_properties, 'description='.$self->description if defined $self->description;
     push @instrument_data_properties, 'downsample_ratio='.$self->downsample_ratio if defined $self->downsample_ratio;
-    my $insdata_props_processor = $class->execute(
+    my $instdata_props_processor = Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties->execute(
         instrument_data_properties => \@instrument_data_properties,
-        source => join(',', $self->source_files),
     );
-    if ( not $insdata_props_processor->result ) {
+    if ( not $instdata_props_processor->result ) {
         $self->error_message('Failed to process instrument data properties!');
         return;
     }
 
-    return $self->_instrument_data_properties( $insdata_props_processor->resolved_instrument_data_properties );
+    my $instrument_data_properties =  $instdata_props_processor->resolved_instrument_data_properties;
+    if ( not $instrument_data_properties->{original_data_path} ) {
+        $instrument_data_properties->{original_data_path} = join(',', $self->source_files);
+    }
+
+    return $self->_instrument_data_properties($instrument_data_properties);
 }
 
 sub _resolve_working_directory {
@@ -243,7 +241,10 @@ sub _resolve_workflow_steps {
     my @steps = $self->$steps_method;
     return @steps if not $self->downsample_ratio;
 
-    my $idx = List::MoreUtils::firstidx(sub{ $_ eq 'sort bam' }, @steps);
+    my $idx = List::MoreUtils::firstidx(sub{ $_ eq 'sanitize bam' }, @steps);
+    if ( not $idx ) {
+        $idx = List::MoreUtils::firstidx(sub{ $_ eq 'sort bam' }, @steps);
+    }
     splice(@steps, $idx + 1, 0, 'downsample bam');
 
     return @steps;
@@ -253,7 +254,7 @@ sub _steps_to_build_workflow_for_bam {
     my $self = shift;
 
     return (
-        'sanitize bam', 'sort bam', 'split bam by rg',
+        'sort bam', 'sanitize bam', 'split bam by rg',
     );
 }
 
@@ -277,7 +278,7 @@ sub _steps_to_build_workflow_for_sra {
     my $self = shift;
 
     return (
-        'sra to bam', 'sanitize bam', 'sort bam', 'split bam by rg',
+        'sra to bam', 'sort bam', 'sanitize bam', 'split bam by rg',
     );
 }
 
@@ -405,9 +406,7 @@ sub _add_sanitize_bam_op_to_workflow {
     return if not $sanitize_bam_op;
     $self->_workflow->add_link(
         left_operation => $previous_op,
-        left_property => ( $previous_op->name eq 'verify not imported' ) # not ideal...
-        ? 'source_path'
-        : 'output_bam_path',
+        left_property => 'output_bam_path',
         right_operation => $sanitize_bam_op,
         right_property => 'bam_path',
     );
@@ -423,7 +422,9 @@ sub _add_sort_bam_op_to_workflow {
     my $sort_bam_op = $self->helpers->add_operation_to_workflow_by_name($self->_workflow, 'sort bam');
     $self->_workflow->add_link(
         left_operation => $previous_op,
-        left_property => 'output_bam_path',
+        left_property => ( $previous_op->operation_type->command_class_name->can('output_bam_path') )
+        ? 'output_bam_path'
+        : 'source_path',
         right_operation => $sort_bam_op,
         right_property => 'bam_path',
     );

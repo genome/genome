@@ -12,10 +12,11 @@ use List::Util qw(shuffle);
 use Try::Tiny qw(try catch finally);
 
 use Genome;
+use Genome::Sys::LockProxy qw();
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
 
 class Genome::InstrumentData::AlignmentResult::Merged {
-    is => ['Genome::InstrumentData::AlignedBamResult', 'Genome::SoftwareResult::WithNestedResults'],
+    is => ['Genome::InstrumentData::AlignedBamResult::Merged', 'Genome::SoftwareResult::WithNestedResults'],
     has => [
         instrument_data => {
             is => 'Genome::InstrumentData',
@@ -156,7 +157,6 @@ sub create {
     return unless ($self);
 
     $self->_lock_per_lane_alignments();
-    my @temp_allocations = ();
 
     try {
         #TODO In a future version collect relevant alignments from other merged alignment results when available
@@ -175,10 +175,8 @@ sub create {
             #handle duplicates on a per-library basis
             for my $alignment (@alignments) {
                 my $library = $alignment->instrument_data->library;
-                my $temp_allocation = $self->_get_temp_allocation($alignment->id, $self->output_dir);
-                push @{ $bams_per_library->{$library->id} }, $alignment->revivified_alignment_bam_file_paths(disk_allocation => $temp_allocation);
+                push @{ $bams_per_library->{$library->id} }, $alignment->revivified_alignment_bam_file_path;
                 $libraries->{$library->id} = $library;
-                push @temp_allocations, $temp_allocation;
             }
 
             for my $library_id (keys %$bams_per_library) {
@@ -196,9 +194,7 @@ sub create {
         } else {
             #just collect the BAMs for a merge
             for my $alignment (@alignments) {
-                my $temp_allocation = $self->_get_temp_allocation($alignment->id, $self->output_dir);
-                push @bams_for_final_merge, $alignment->revivified_alignment_bam_file_paths(disk_allocation => $temp_allocation);
-                push @temp_allocations, $temp_allocation;
+                push @bams_for_final_merge, $alignment->revivified_alignment_bam_file_path;
             }
         }
 
@@ -233,11 +229,6 @@ sub create {
     catch {
         $tx->rollback();
         die $class->error_message('Merge failed due to error: ' . $_);
-    }
-    finally {
-        for my $allocation (@temp_allocations) {
-            $allocation->delete;
-        }
     };
 
     $self->_reallocate_disk_allocation;
@@ -330,23 +321,6 @@ sub _remove_per_lane_bam {
         }
     }
     return 1;
-}
-
-sub _get_temp_allocation {
-    my ($self, $alignment_id, $output_dir) = @_;
-    return Genome::Disk::Allocation->create(
-        disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
-        allocation_path     => 'merged/recreated_per_lane_bam/'.$alignment_id.'_'._get_uuid_string(),
-        kilobytes_requested => Genome::Sys->disk_usage_for_path($output_dir),
-        owner_class_name    => 'Genome::Sys::User',
-        owner_id            => Genome::Sys->username,
-    );
-}
-
-sub _get_uuid_string {
-    my $ug = Data::UUID->new();
-    my $uuid = $ug->create();
-    return $ug->to_string($uuid);
 }
 
 sub collect_individual_alignments {
@@ -845,10 +819,11 @@ sub _lock_per_lane_alignments {
                #with that aligner.
             }
 
-            my $lock_var = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$alignment->id);
-            my $lock = Genome::Sys->lock_resource(
-                resource_lock => $lock_var,
-                scope         => 'site',
+            my $resource = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$alignment->id);
+            my $lock = Genome::Sys::LockProxy->new(
+                resource => $resource,
+                scope => 'site',
+            )->lock(
                 max_try       => 288, # Try for 48 hours every 10 minutes
                 block_sleep   => 600,
             );
@@ -857,7 +832,7 @@ sub _lock_per_lane_alignments {
             # If the build before us successfully created a merged alignment result, we no longer need a lock
             # If it failed, we will add an observer just as the first build did.
             if ($alignment->get_merged_alignment_results) {
-                Genome::Sys->unlock_resource(resource_lock => $lock);
+                $lock->unlock();
             } else {
                 # The problem here is if we commit BEFORE merge is done, we unlock too early.
                 # However, if we unlock any other way we may fail to unlock more often and leave old locks.
@@ -865,7 +840,7 @@ sub _lock_per_lane_alignments {
                     aspect   => 'commit',
                     once => 1,
                     callback => sub {
-                        Genome::Sys->unlock_resource(resource_lock => $lock);
+                        $lock->unlock();
                     }
                 );
             }

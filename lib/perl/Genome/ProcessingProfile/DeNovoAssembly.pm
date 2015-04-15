@@ -485,6 +485,17 @@ sub _resolve_workflow_for_import {
     return $workflow;
 }
 
+sub resolve_resource_requirements_for_processing_instrument_data {
+    my ($self, $instdata_processing_class) = @_;
+
+    my $lsf_resource = $instdata_processing_class->__meta__->property_meta_for_name('lsf_resource')->default_value;
+    my $read_processor = $self->processing_profile->read_processor;
+    return $lsf_resource if not $read_processor;
+    my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(processor => $read_processor);
+    die $self->error_message('Failed to parse read processor: %s', $read_processor) if not $sx_processor;
+
+    return $lsf_resource.' -n '.$sx_processor->number_of_threads_required;
+}
 
 sub _resolve_workflow_for_normal_assembly {
     my ($self, $build, $lsf_queue, $lsf_project) = @_;
@@ -534,13 +545,22 @@ sub _resolve_workflow_for_normal_assembly {
             left_operation => $merge_op, left_property => 'sx_results',
             right_operation => $assemble_op, right_property => 'sx_results');
     } else {
-        $id_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Command::PrepareInstrumentData', {
+        $id_op = _add_operation($workflow, 'Genome::Model::DeNovoAssembly::Build::PrepareInstrumentData', {
             lsf_queue => $lsf_queue, lsf_project => $lsf_project});
 
         $workflow->add_link(
             left_operation => $id_op, left_property => 'build',
             right_operation => $assemble_op, right_property => 'build');
     }
+
+    my $lsf_resource = $id_op->operation_type->command_class_name->lsf_resource;
+    my $sx_processor = Genome::Model::DeNovoAssembly::SxReadProcessor->create(
+        processor => $build->processing_profile->read_processor
+    );
+    if ( $sx_processor->number_of_threads_required > 1 ) {
+        $lsf_resource .= ' -n '.$sx_processor->number_of_threads_required;
+    }
+    $id_op->operation_type->lsf_resource($lsf_resource);
 
     $workflow->add_link(
         left_operation => $input_connector, left_property => 'build',

@@ -7,46 +7,44 @@ use Genome;
 
 my $DEFAULT_ASSUME_SORTED = 1;
 my $DEFAULT_REMOVE_DUPLICATES = 0;
-my $DEFAULT_MAX_RECORDS_IN_RAM = 500000;
 
 class Genome::Model::Tools::Picard::MarkDuplicates {
-    is  => 'Genome::Model::Tools::Picard',
+    is  => 'Genome::Model::Tools::Picard::Base',
     has_input => [
         input_file => {
             is  => 'String',
             doc => 'The SAM/BAM files to merge.  File type is determined by suffix.',
+            picard_param_name => 'INPUT',
         },
         output_file => {
             is  => 'String',
             doc => 'The resulting merged SAM/BAM file.  File type is determined by suffix.',
+            picard_param_name => 'OUTPUT',
         },
         metrics_file => {
             is  => 'String',
             doc => 'File to write duplication metrics to.',
+            picard_param_name => 'METRICS_FILE',
         },
         assume_sorted => {
-            is  => 'Integer',
-            valid_values => [1, 0],
-            doc => 'Assume the input data is sorted.  default_value='. $DEFAULT_ASSUME_SORTED,
+            is  => 'Boolean',
+            doc => 'Assume the input data is sorted.',
             default_value => $DEFAULT_ASSUME_SORTED,
             is_optional => 1,
+            picard_param_name => 'ASSUME_SORTED',
         },
         remove_duplicates => {
-            is => 'Integer',
-            valid_values => [1, 0],
-            doc => 'Merge the seqeunce dictionaries. default_value='. $DEFAULT_REMOVE_DUPLICATES,
+            is => 'Boolean',
+            doc => 'If true do not write duplicates to the output file instead of writing them with appropriate flags set.',
             default_value => $DEFAULT_REMOVE_DUPLICATES,
             is_optional => 1,
+            picard_param_name => 'REMOVE_DUPLICATES',
         },
         max_sequences_for_disk_read_ends_map => {
             is => 'Integer',
             doc => 'The maximum number of sequences allowed in SAM file.  If this value is exceeded, the program will not spill to disk (used to avoid situation where there are not enough file handles',
             is_optional => 1,
-        },
-        max_records_in_ram => {
-            doc => 'When writing SAM files that need to be sorted, this will specify the number of records stored in RAM before spilling to disk. Increasing this number reduces the number of file handles needed to sort a SAM file, and increases the amount of RAM needed.',
-            default_value => $DEFAULT_MAX_RECORDS_IN_RAM,
-            is_optional => 1,
+            picard_param_name => 'MAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP ',
         },
         include_comment => {
             is => 'Text',
@@ -57,6 +55,7 @@ class Genome::Model::Tools::Picard::MarkDuplicates {
             is => 'Text',
             doc => "Set to 'null' to turn off optical duplicate detection",
             is_optional => 1,
+            picard_param_name => 'READ_NAME_REGEX',
         },
     ],
 };
@@ -73,64 +72,40 @@ sub help_detail {
     http://broadinstitute.github.io/picard/command-line-overview.html#MarkDuplicates
 EOS
 }
+sub _jar_name {
+    return 'MarkDuplicates.jar';
+}
 
-sub get_max_filehandles_param {
+sub _java_class {
     my $self = shift;
 
+    if ($self->version_at_least('1.122')) {
+        return qw(picard sam markduplicates MarkDuplicates);
+    }
+    else {
+        return qw(picard sam MarkDuplicates);
+    }
+}
+
+sub _cmdline_args {
+    my $self = shift;
+
+    my @args = $self->SUPER::_cmdline_args;
     # MAX_FILE_HANDLES supported in v1.34+
-    if ($self->use_version =~ /1\.([0-9]+)/ and int($1) >= 34) {
+    if ($self->version_at_least('1.34')) {
         # allow picard to use 95% of available file handles for caching reads
-        my $max_fh = int(0.95 * `sh -ec "ulimit -n"`);
-        return "MAX_FILE_HANDLES=$max_fh";
+        push @args, sprintf("MAX_FILE_HANDLES=%s", $self->calculate_max_file_handles);
+    }
+    # COMMENT supported in v1.77
+    if ($self->include_comment && $self->version_at_least('1.77')) {
+        push @args, sprintf("COMMENT='%s'", $self->include_comment);
     }
 
-    return "";
+    return @args;
 }
 
-sub execute {
-    my $self = shift;
-
-
-    my $dedup_cmd = $self->picard_path .'/MarkDuplicates.jar net.sf.picard.sam.MarkDuplicates';
-    if ($self->remove_duplicates) {
-        $dedup_cmd .= ' REMOVE_DUPLICATES=true';
-    } else {
-        $dedup_cmd .= ' REMOVE_DUPLICATES=false';
-    }
-    if ($self->assume_sorted) {
-        $dedup_cmd .= ' ASSUME_SORTED=true';
-    } else {
-        $dedup_cmd .= ' ASSUME_SORTED=false';
-    }
-    $dedup_cmd .= ' OUTPUT='. $self->output_file .' METRICS_FILE='. $self->metrics_file .' INPUT='. $self->input_file;
-    if (defined($self->max_sequences_for_disk_read_ends_map)) {
-        $dedup_cmd .= ' MAX_SEQUENCES_FOR_DISK_READ_ENDS_MAP='. $self->max_sequences_for_disk_read_ends_map;
-    }
-    if ($self->include_comment and not ($self->use_version =~ /1\.([0-9]+)/ and int($1) < 77)) {
-        $dedup_cmd .= " COMMENT='" . $self->include_comment . "'";
-    }
-    if (defined $self->read_name_regex) {
-        $dedup_cmd .= sprintf(" READ_NAME_REGEX='%s'", $self->read_name_regex);
-    }
-    my $version = $self->use_version;
-    if ($self->max_records_in_ram) {
-        if( grep($_ eq $version, ('r107', 'r104', 'r103wu0')) ) {
-            $self->warning_message('Max. records in RAM parameter is not supported in this version of Picard (first available in 1.16).  Ignoring.');
-        } else {
-            $dedup_cmd .= ' MAX_RECORDS_IN_RAM='. $self->max_records_in_ram;
-        }
-    }
-    $dedup_cmd .= ' ' . $self->get_max_filehandles_param;
-
-
-    $self->run_java_vm(
-        cmd => $dedup_cmd,
-        input_files => [$self->input_file],
-        output_files => [$self->output_file, $self->metrics_file],
-        skip_if_output_is_present => 0,
-    );
-    return 1;
+sub calculate_max_file_handles {
+    return int(0.95 * `sh -ec "ulimit -n"`);
 }
-
 
 1;

@@ -79,12 +79,11 @@ sub execute{
         die $self->error_message("Couldn't create detect variants dispatcher from params:\n".Data::Dumper::Dumper \%params);
     }
     my $rv = $command->execute;
-    my $err = $@;
     unless ($rv){
-        die $self->error_message("Failed to execute detect variants dispatcher(err:$@) with params:\n".Data::Dumper::Dumper \%params);
+        die $self->error_message("Failed to execute detect variants dispatcher with params:\n".Data::Dumper::Dumper \%params);
     }
     else {
-        my @results = $command->results, $command->lq_results;
+        my @results = ($command->results, $command->lq_results);
         push @results, map { Genome::Model::Tools::DetectVariants2::Result::Vcf->get(input_id => $_->id ); } @results;
         for my $result (@results) {
             $result->add_user(user => $build, label => 'uses');

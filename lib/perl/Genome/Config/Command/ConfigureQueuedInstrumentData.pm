@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Sys::LockProxy qw();
 
 use Lingua::EN::Inflect;
 use List::MoreUtils qw();
@@ -369,9 +370,10 @@ sub _update_models_for_associated_projects {
 
 sub _lock {
     unless ($ENV{UR_DBI_NO_COMMIT}) {
-        my $lock_var = 'genome_config_command_configure-queued-instrument-data/lock';
-        my $lock = Genome::Sys->lock_resource(resource_lock => $lock_var,
-            scope => 'site', max_try => 1);
+        my $lock = Genome::Sys::LockProxy->new(
+            resource => 'genome_config_command_configure-queued-instrument-data/lock',
+            scope => 'site',
+        )->lock(max_try => 1);
 
         die('Unable to acquire the lock! Is ConfigureQueuedInstrumentData already running or did it exit uncleanly?')
             unless $lock;
@@ -379,7 +381,7 @@ sub _lock {
         UR::Context->current->add_observer(
             aspect => 'commit',
             callback => sub {
-                Genome::Sys->unlock_resource(resource_lock => $lock);
+                $lock->unlock();
             }
         );
     }

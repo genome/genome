@@ -471,16 +471,16 @@ Compare two files line-by-line
   compare_ok($file_1, $file_2)
 
 With no options, it directly compares two files.  At the first difference, it
-will stop and print a diagnostic message about the difference (if diag => 1
+will stop and print a diagnostic message about the difference (unless C<diag =E<gt> 1>
 is passed as an option).
 
 Options include
 
 =over
 
-=item diag => 1 || 0
+=item diag => 0
 
-Do or do not print a diag() message if the files are different
+Disable printing of diagnostic message if the files are different.
 
 =item filters => [ string1, string2, ..., regex1, regex2, ...]
 
@@ -496,10 +496,6 @@ another string before the line comparison is done.
 =item name
 
 Specify a name for a test but requires 'name' key.
-
-=item diag
-
-Disable diag output when a diff is encountered. Added this in case people want to surpress any output.
 
 =item test
 

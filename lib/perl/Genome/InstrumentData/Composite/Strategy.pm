@@ -74,6 +74,8 @@ sub grammar {
 
         operation: "(" operation_list ")"
             { $item[2]; }
+        | alignment decoration
+            { $return = [ $item[1] ]; $item[1]->{decoration} = $item[2]; }
         | alignment
             { [ $item[1] ]; }
         | filtration
@@ -136,6 +138,19 @@ sub grammar {
                 }
 
             }
+
+        decoration: decorator params
+            {
+                $return = {
+                    name => $item[1],
+                    params => $item[2],
+                };
+            }
+        | decorator
+            { $return = { name => $item[1] } }
+
+        decorator: /@([\w\d-]+)/
+            { $return = $1; }
 
         api_version: "api" version
             { $item[2]; }

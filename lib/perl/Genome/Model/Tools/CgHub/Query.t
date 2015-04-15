@@ -5,41 +5,41 @@ use warnings;
 
 use above 'Genome';
 
-require File::Spec;
-require Genome::Utility::Test;
+use Sub::Install;
 use Test::Exception;
+use Test::MockObject;
 use Test::More;
 
 use_ok('Genome::Model::Tools::CgHub::Query') or die;
 
-my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::Model::Tools::CgHub');
-my $xml_file = File::Spec->join($data_dir, 'metadata.xml');
-my $success_output_file = File::Spec->join($data_dir, 'query.out');
-my $fail_output_file = File::Spec->join($data_dir, 'query.fail');
-
 # So we don't actually send a request
-my $run_command_cnt = 0;
-sub Genome::Model::Tools::CgHub::Query::_run_command { $run_command_cnt++; return 1; };
+my $request_cnt = 0;
+my $response = Test::MockObject->new();
+$response->mock('content', sub{ return "<XML>\n"; });
+Sub::Install::reinstall_sub({
+        code => sub{
+            $request_cnt++;
+            if ( ${$_[1]->uri} =~ /INVALID/ ) {
+                $response->set_false('is_success');
+            }
+            else {
+                $response->set_true('is_success');
+            }
+            return $response;
+        },
+        into => 'LWP::UserAgent',
+        as => 'request',
+    });
 
 # Failures 
-my $query = Genome::Model::Tools::CgHub::Query->create(
-    uuid => 'INVALID',
-    output_file => $fail_output_file,
-);
-ok($query, 'create w/ invalid uuid');
-throws_ok(sub{ $query->execute; }, qr/Ran CG Hub command, but it was determined that it was not successful!/, 'execute w/ invalid uuid fails');
+throws_ok(sub{ Genome::Model::Tools::CgHub::Query->execute(query => 'INVALID'); }, qr/Failed to execute query! INVALID/, 'execute w/ invalid query fails');
 
 # Success
-my $uuid = '387c3f70-46e9-4669-80e3-694d450f2919';
-$query = Genome::Model::Tools::CgHub::Query->create(
-    uuid => $uuid,
-    output_file => $success_output_file,
-    xml_file => $xml_file,
+my $analysis_id = '387c3f70-46e9-4669-80e3-694d450f2919';
+my $query = Genome::Model::Tools::CgHub::Query->execute(
+    query => 'analysis_id='.$analysis_id,
 );
-ok($query, 'create cg hub query cmd');
-is($query->_build_command, "cgquery 'analysis_id=$uuid' -o $xml_file", 'correct command');
-ok($query->execute, 'execute cg hub query cmd');
-
-is($run_command_cnt, 2, 'run command was invoked correctly');
+ok($query->result, 'execute cg hub query cmd');
+is($request_cnt, 2, 'LWP::UserAgent:request called 2X');
 
 done_testing();

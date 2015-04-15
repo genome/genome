@@ -77,11 +77,12 @@
                      "genome",
                      "ptero",
                      "wrapper",
-                     "command",
                      "--command-class",
                      "Genome::Ptero::TestCommand::NullCommand",
                      "--method",
-                     "shortcut"
+                     "shortcut",
+                     "--log-directory",
+                     "test_logs/n-shaped"
                   ],
                   "environment" : {},
                   "user" : null,
@@ -96,11 +97,12 @@
                      "genome",
                      "ptero",
                      "wrapper",
-                     "command",
                      "--command-class",
                      "Genome::Ptero::TestCommand::NullCommand",
                      "--method",
-                     "execute"
+                     "execute",
+                     "--log-directory",
+                     "test_logs/n-shaped"
                   ],
                   "environment" : {},
                   "user" : null,
@@ -119,11 +121,12 @@
                      "genome",
                      "ptero",
                      "wrapper",
-                     "command",
                      "--command-class",
                      "Genome::Ptero::TestCommand::NullCommand",
                      "--method",
-                     "shortcut"
+                     "shortcut",
+                     "--log-directory",
+                     "test_logs/n-shaped"
                   ],
                   "environment" : {},
                   "user" : null,
@@ -138,11 +141,12 @@
                      "genome",
                      "ptero",
                      "wrapper",
-                     "command",
                      "--command-class",
                      "Genome::Ptero::TestCommand::NullCommand",
                      "--method",
-                     "execute"
+                     "execute",
+                     "--log-directory",
+                     "test_logs/n-shaped"
                   ],
                   "environment" : {},
                   "user" : null,
@@ -161,11 +165,12 @@
                      "genome",
                      "ptero",
                      "wrapper",
-                     "command",
                      "--command-class",
                      "Genome::Ptero::TestCommand::NullCommand",
                      "--method",
-                     "shortcut"
+                     "shortcut",
+                     "--log-directory",
+                     "test_logs/n-shaped"
                   ],
                   "environment" : {},
                   "user" : null,
@@ -180,11 +185,12 @@
                      "genome",
                      "ptero",
                      "wrapper",
-                     "command",
                      "--command-class",
                      "Genome::Ptero::TestCommand::NullCommand",
                      "--method",
-                     "execute"
+                     "execute",
+                     "--log-directory",
+                     "test_logs/n-shaped"
                   ],
                   "environment" : {},
                   "user" : null,
@@ -203,11 +209,12 @@
                      "genome",
                      "ptero",
                      "wrapper",
-                     "command",
                      "--command-class",
                      "Genome::Ptero::TestCommand::NullCommand",
                      "--method",
-                     "shortcut"
+                     "shortcut",
+                     "--log-directory",
+                     "test_logs/n-shaped"
                   ],
                   "environment" : {},
                   "user" : null,
@@ -222,11 +229,12 @@
                      "genome",
                      "ptero",
                      "wrapper",
-                     "command",
                      "--command-class",
                      "Genome::Ptero::TestCommand::NullCommand",
                      "--method",
-                     "execute"
+                     "execute",
+                     "--log-directory",
+                     "test_logs/n-shaped"
                   ],
                   "environment" : {},
                   "user" : null,

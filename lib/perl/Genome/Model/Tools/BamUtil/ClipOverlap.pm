@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use Genome;
 
+use File::Basename qw(basename);
+
 class Genome::Model::Tools::BamUtil::ClipOverlap {
     doc => "Run BamUtil with the 'ClipOverlap' tool",
     is => 'Genome::Model::Tools::BamUtil',
@@ -51,6 +53,8 @@ sub execute {
         die $self->error_message("Failed to execute $command");
     }
 
+    $self->create_md5sum;
+
     if ($self->index_bam && $self->file_format eq 'bam') {
         my $clipped_bam = $self->output_file;
         die $self->error_message("Couldn't find clipped bam at $clipped_bam!") unless -f $clipped_bam;
@@ -60,6 +64,18 @@ sub execute {
     }
 
     return 1;
+}
+
+sub create_md5sum {
+    my $self = shift;
+
+    my $digest = Genome::Sys->md5sum($self->output_file);
+    my $md5line = sprintf '%s  %s', $digest, basename($self->output_file);
+
+    my $md5file = join('.', $self->output_file, 'md5');
+    unless (Genome::Sys->write_file($md5file, $md5line)) {
+        die $self->error_message('Failed to write md5 file to %s', $md5file);
+    }
 }
 
 sub clipoverlap_creator_command {

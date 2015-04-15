@@ -3,6 +3,7 @@ package Genome::SoftwareResult::User;
 use strict;
 use warnings;
 use Genome;
+use Genome::Sys::LockProxy qw();
 use List::MoreUtils qw(any);
 use Params::Validate qw(:types);
 use Carp qw();
@@ -126,7 +127,7 @@ sub _register_users {
                 once => 1,
                 callback => sub {
                     for my $lock (@locks) {
-                        Genome::Sys->unlock_resource(resource_lock => $lock);
+                        $lock->unlock();
                     }
                 }
             );
@@ -145,7 +146,10 @@ sub _lock_and_create_if_needed {
     return if $existing;
 
     my $resource = $class->_resolve_lock_name($params);
-    my $lock = Genome::Sys->lock_resource(resource_lock => $resource, scope => 'site');
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => $resource,
+        scope => 'site',
+    )->lock();
     $class->_load_or_create($params);
 
     return $lock;

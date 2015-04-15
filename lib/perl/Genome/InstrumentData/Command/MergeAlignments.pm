@@ -47,6 +47,11 @@ class Genome::InstrumentData::Command::MergeAlignments {
             is => 'Text',
             doc => 'The version of Samtools to use when needed by mergers/deduplicators',
         },
+        bedtools_version => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'The version of bedtools to use when needed',
+        },
         result_users => {
             is => 'HASH',
             doc => 'mapping of labels to user objects. Will be added to any generated results',
@@ -108,6 +113,7 @@ sub params_for_merged_alignment {
         duplication_handler_params => $self->duplication_handler_params,
         duplication_handler_version => $self->duplication_handler_version,
         samtools_version => $self->samtools_version || undef,
+        bedtools_version => $self->bedtools_version || undef,
         test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
 
         users => $self->result_users,

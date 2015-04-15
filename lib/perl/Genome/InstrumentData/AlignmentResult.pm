@@ -356,10 +356,6 @@ sub lsf_queue {
         return $self->__lsf_queue;
     }
 
-    if (Genome::Config->can('should_use_alignment_pd') && Genome::Config->should_use_alignment_pd($self->model)) {
-        return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_PROD};
-    }
-
     return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
 }
 
@@ -1652,9 +1648,8 @@ sub alignment_bam_file_paths {
 # This method will recreate the per-lane bam file and return the path.
 # This must be provided an allocation into which the bam will go (so that it can be cleaned up in the parent process once it is done).
 # The calling process is responsible for cleaning up the allocation after we are done with it.
-sub revivified_alignment_bam_file_paths {
+sub revivified_alignment_bam_file_path {
     my $self = shift;
-    my %p = Params::Validate::validate(@_, {disk_allocation => { isa => 'Genome::Disk::Allocation'}});
 
     # If we have a merged alignment result, the per-lane bam can be regenerated and we will do so now
     # This is less efficient than using the in-place per-lane bam. However, it aids us in terms of
@@ -1665,8 +1660,14 @@ sub revivified_alignment_bam_file_paths {
         return @bams;
     }
 
-    my $revivified_bam = File::Spec->join($p{disk_allocation}->absolute_path, 'all_sequences.bam');
-    my $merged_bam    = $self->get_merged_bam_to_revivify_per_lane_bam;
+    my $temp_allocation = $self->_get_temp_allocation($self->output_dir);
+    UR::Context->process->add_observer(
+        aspect => 'pre-commit',
+        callback => sub { $temp_allocation->delete; },
+    );
+
+    my $revivified_bam = File::Spec->join($temp_allocation->absolute_path, 'all_sequences.bam');
+    my $merged_bam = $self->get_merged_bam_to_revivify_per_lane_bam;
 
     unless ($merged_bam and -s $merged_bam) {
         die $self->error_message('Failed to get valid merged bam to recreate per lane bam '.$self->id);
@@ -1680,6 +1681,7 @@ sub revivified_alignment_bam_file_paths {
         picard_version      => $self->picard_version,
         bam_header          => $self->bam_header_path,
         comparison_flagstat => $self->flagstat_path,
+        include_qc_failed   => 1,
     );
 
     unless ($cmd->execute) {
@@ -1696,6 +1698,22 @@ sub revivified_alignment_bam_file_paths {
     }
 }
 
+sub _get_temp_allocation {
+    my ($self, $output_dir) = @_;
+    return Genome::Disk::Allocation->create(
+        disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
+        allocation_path     => 'merged/recreated_per_lane_bam/'.$self->id.'_'._get_uuid_string(),
+        kilobytes_requested => $self->bam_size || 100_000_000, # This should always be set, but just in case we reserve a lot
+        owner_class_name    => 'Genome::Sys::User',
+        owner_id            => Genome::Sys->username,
+    );
+}
+
+sub _get_uuid_string {
+    my $ug = Data::UUID->new();
+    my $uuid = $ug->create();
+    return $ug->to_string($uuid);
+}
 
 sub bam_header_path {
     return File::Spec->join(shift->output_dir, 'all_sequences.bam.header');
@@ -1754,8 +1772,18 @@ sub filter_non_database_objects {
 sub filter_non_matching_results {
     my ($self, @merged_results) = @_;
 
+    my %params;
+    for my $param ($self->__meta__->properties(is_param => 1)) {
+        my $name = $param->property_name;
+        $params{$name} = $self->$name;
+    }
+    my $bx = Genome::InstrumentData::AlignmentResult::Merged->define_boolexpr(%params);
+
     my @matching_results;
     for my $merged_result (@merged_results) {
+        unless ($bx->evaluate($merged_result)) {
+            next;
+        }
         my @individual_results = $merged_result->collect_individual_alignments($self->_user_data_for_nested_results);
         if (@individual_results) {
             push @matching_results, $merged_result if grep{$_->id eq $self->id}@individual_results;

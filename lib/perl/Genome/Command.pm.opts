@@ -3355,13 +3355,6 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>prepare-instrument-data',
-      [
-        'build=s',
-        undef,
-        'help!',
-        undef
-      ],
       '>copy-velvet-build',
       [
         'to=s',
@@ -6177,6 +6170,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>microarray-cnv',
       [
+        'lsf-resource=s',
+        'files',
         'outdir=s',
         'files',
         'copynumber-tumor=s',
@@ -10412,6 +10407,25 @@ $Genome::Command::OPTS_SPEC = [
     'help!',
     undef
   ],
+  '>ptero',
+  [
+    '>wrapper',
+    [
+      'command-class=s',
+      'files',
+      'method=s',
+      [
+        'execute',
+        'shortcut'
+      ],
+      'log-directory=s',
+      undef,
+      'help!',
+      undef
+    ],
+    'help!',
+    undef
+  ],
   '>sample',
   [
     '>attribute',
@@ -11764,6 +11778,8 @@ $Genome::Command::OPTS_SPEC = [
       '>cnmops',
       [
         'outdir=s',
+        'files',
+        'bedtools-version=s',
         'files',
         'tumor-refalign=s',
         undef,
@@ -15521,6 +15537,29 @@ $Genome::Command::OPTS_SPEC = [
           'help!',
           undef
         ],
+        '>coverage-plot',
+        [
+          'output-directory=s',
+          'files',
+          'roi-file-path=s',
+          'files',
+          'bam-files=s@',
+          'files',
+          'band-width=s',
+          'files',
+          'debug!',
+          undef,
+          'labels=s@',
+          'files',
+          'min-depth-filters=s@',
+          'files',
+          'refalign-models=s@',
+          'files',
+          'wingspan=s',
+          undef,
+          'help!',
+          undef
+        ],
         '>format-readcounts',
         [
           'output-file=s',
@@ -18461,7 +18500,7 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>query',
       [
-        'uuid=s',
+        'query=s',
         'files',
         'output-file=s',
         'files',
@@ -23594,6 +23633,53 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>collect-wgs-metrics',
+      [
+        'input-file=s',
+        'files',
+        'java-interpreter=s',
+        'files',
+        'output-file=s',
+        'files',
+        'reference-sequence=s',
+        'files',
+        'additional-jvm-options=s',
+        'files',
+        'coverage-cap=s',
+        undef,
+        'create-md5-file!',
+        undef,
+        'debug!',
+        undef,
+        'include-bq-histogram!',
+        undef,
+        'log-file=s',
+        'files',
+        'max-records-in-ram=s',
+        'files',
+        'maximum-memory=s',
+        undef,
+        'maximum-permgen-memory=s',
+        undef,
+        'minimum-base-quality=s',
+        undef,
+        'minimum-mapping-quality=s',
+        undef,
+        'stop-after=s',
+        undef,
+        'temp-directory=s',
+        'files',
+        'use-version=s',
+        undef,
+        'validation-stringency=s',
+        [
+          'SILENT',
+          'STRICT',
+          'LENIENT'
+        ],
+        'help!',
+        undef
+      ],
       '>compare-sams',
       [
         'input-file-1=s',
@@ -24164,11 +24250,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'additional-jvm-options=s',
         'files',
-        'assume-sorted=s',
-        [
-          1,
-          0
-        ],
+        'assume-sorted!',
+        undef,
         'create-md5-file!',
         undef,
         'debug!',
@@ -24187,11 +24270,8 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'read-name-regex=s',
         'files',
-        'remove-duplicates=s',
-        [
-          1,
-          0
-        ],
+        'remove-duplicates!',
+        undef,
         'temp-directory=s',
         'files',
         'use-version=s',
@@ -36711,6 +36791,8 @@ $Genome::Command::OPTS_SPEC = [
       'files',
       'duplication-handler-version=s',
       'files',
+      'bedtools-version=s',
+      'files',
       'help!',
       undef
     ],
@@ -37026,8 +37108,8 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       'bedtools-version=s',
       'files',
-      'result-id=s',
-      'files',
+      'alignment-result=s',
+      undef,
       'annotation-build-id=s',
       undef,
       'instrument-data-segment-id=s',
@@ -37683,6 +37765,8 @@ $Genome::Command::OPTS_SPEC = [
     [
       'name=s',
       'files',
+      'new-feature-list=s',
+      undef,
       'reference=s',
       undef,
       'source-lists=s@',

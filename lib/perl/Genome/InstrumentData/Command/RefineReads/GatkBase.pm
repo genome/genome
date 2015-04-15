@@ -12,7 +12,7 @@ class Genome::InstrumentData::Command::RefineReads::GatkBase {
     is_abstract => 1,
     has_input => {
         version => { is => 'Text', },
-        bam_source => { is => 'Genome::InstrumentData::AlignedBamResult', },
+        bam_source => { is => 'Genome::InstrumentData::AlignedBamResult::Merged', },
         result_users => { is => 'HASH' },
     },
     has_param => {
@@ -27,11 +27,11 @@ class Genome::InstrumentData::Command::RefineReads::GatkBase {
         params => { is => 'Text', }, # FIXME not used
     },
     has_many_optional_transient => {
-        results => { is => 'Genome::InstrumentData::AlignedBamResult', },
+        results => { is => 'Genome::InstrumentData::AlignedBamResult::Merged', },
     },
     has_optional_calculated => {
         final_result => { 
-            is => 'Genome::InstrumentData::AlignedBamResult',
+            is => 'Genome::InstrumentData::AlignedBamResult::Merged',
             calculate_from => [qw/ results /],
             calculate => q( my @results = $self->results; return $results[$#results]; ),
         },

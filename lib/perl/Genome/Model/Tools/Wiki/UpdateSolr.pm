@@ -2,6 +2,7 @@
 package Genome::Model::Tools::Wiki::UpdateSolr;
 
 use Genome;
+use Genome::Sys::LockProxy qw();
 
 use LWP::Simple;
 use XML::Simple;
@@ -36,9 +37,10 @@ sub execute {
         $resource_lock .= '_dev';
     }
 
-    my $lock = Genome::Sys->lock_resource(
-        resource_lock => $resource_lock,
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => $resource_lock,
         scope => 'site',
+    )->lock(
         max_try => 1,
     );
     die 'someone else has the wiki_loader lock' if !$lock;
@@ -86,7 +88,7 @@ sub execute {
     }
 
     UR::Context->commit();
-    Genome::Sys->unlock_resource(resource_lock=>$lock);
+    $lock->unlock();
 }
 
 

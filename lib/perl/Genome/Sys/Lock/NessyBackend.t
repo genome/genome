@@ -2,10 +2,11 @@ use strict;
 use warnings;
 
 use Genome::Sys::Lock::NessyBackend;
+use Genome::Utility::Text qw(rand_string);
 use Test::More;
 
 if ($ENV{GENOME_NESSY_SERVER}) {
-    plan tests => 2;
+    plan tests => 3;
 } else {
     plan skip_all => 'No Nessy URL specified for testing.';
 }
@@ -15,7 +16,7 @@ use List::Util qw(shuffle);
 subtest 'basic test' => sub {
     plan tests => 2;
 
-    my $resource_name = 'NessLock.t/' . random_string();
+    my $resource_name = 'NessLock.t/' . rand_string();
     diag 'resource = ' . $resource_name;
 
     my $n = Genome::Sys::Lock::NessyBackend->new(
@@ -39,7 +40,7 @@ subtest 'instance validation' => sub {
 
     my (@r, @n);
     for (1..2) {
-        push @r, 'NessLock.t/' . random_string();
+        push @r, 'NessLock.t/' . rand_string();
         push @n, Genome::Sys::Lock::NessyBackend->new(
             url => $ENV{GENOME_NESSY_SERVER},
             is_mandatory => 1,
@@ -66,7 +67,38 @@ subtest 'instance validation' => sub {
     $n[1]->unlock($r[1]);
 };
 
-sub random_string {
-    my @chars = map { (shuffle 'a'..'z', 'A'..'Z', 0..9)[0] } 1..10;
-    return join('', @chars);
-}
+subtest 'namespace validation' => sub {
+    plan tests => 7;
+
+    my $resource = rand_string();
+    my $root_n = Genome::Sys::Lock::NessyBackend->new(
+        url => $ENV{GENOME_NESSY_SERVER},
+        is_mandatory => 1,
+    );
+    my $namespace_n = Genome::Sys::Lock::NessyBackend->new(
+        url => $ENV{GENOME_NESSY_SERVER},
+        is_mandatory => 1,
+        namespace => 'foo',
+    );
+
+    isnt($root_n->client, $namespace_n->client, 'instances do not have the same client');
+    ok(!$root_n->has_lock($resource), 'root instance does not have lock on resource');
+    ok(!$namespace_n->has_lock($resource), 'namespace instance does not have lock on resource');
+
+    my $root_lock = $root_n->lock(
+        resource => $resource,
+        timeout => 5,
+        wait_announce_interval => 10,
+    );
+    ok($root_lock, 'root instance got lock on resource');
+
+    my $namespace_lock = $namespace_n->lock(
+        resource => $resource,
+        timeout => 5,
+        wait_announce_interval => 10,
+    );
+    ok($namespace_lock, 'namespace instance got lock on resource');
+
+    ok($root_n->unlock($resource), 'root instance unlocked');
+    ok($namespace_n->unlock($resource), 'namespace instance unlocked');
+};

@@ -50,6 +50,11 @@ class Genome::Model::Tools::CopyNumber::Cnmops {
     default => 'tgi/cancer-annotation/human/build37-20130401.1',
     is_optional => 1,
   },
+  bedtools_version => {
+      is => "String",
+      doc => "Bedtools version to use",
+      default_value => "2.17.0",
+  },
   ],
   doc => 'Call CNVs on refalign models(especially Exome) using CnMops',
 };
@@ -204,7 +209,9 @@ sub intersect_bed {
   my $bed_a = shift;
   my $bed_b = shift;
   my $bed_intersect = shift;
-  Genome::Sys->shellcmd(cmd => "bedtools intersect -a $bed_a -b $bed_b > $bed_intersect");
+  my $bedtools = Genome::Model::Tools::BedTools->bedtools_executable_path(
+    $self->bedtools_version);
+  Genome::Sys->shellcmd(cmd => "$bedtools intersect -a $bed_a -b $bed_b > $bed_intersect");
 }
 
 sub get_ROI {

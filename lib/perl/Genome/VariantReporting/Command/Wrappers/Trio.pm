@@ -54,11 +54,7 @@ sub execute {
     my $self = shift;
 
     my $p = $self->process_class->create(
-        builds => [$self->builds],
-        coverage_builds => [$self->coverage_builds],
-        tumor_sample => $self->tumor_sample,
-        followup_sample => $self->followup_sample,
-        normal_sample => $self->normal_sample,
+        $self->process_params,
     );
 
     $self->status_message("Constructing workflow from inputs. (this may take a while...)");
@@ -67,6 +63,17 @@ sub execute {
     );
 
     return $p;
+}
+
+sub process_params {
+    my $self = shift;
+    return (
+        builds => [$self->builds],
+        coverage_builds => [$self->coverage_builds],
+        tumor_sample => $self->tumor_sample,
+        followup_sample => $self->followup_sample,
+        normal_sample => $self->normal_sample,
+    );
 }
 
 sub builds {

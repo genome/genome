@@ -116,10 +116,6 @@ sub _add_mutations {
     while (my $mutation = $mutation_provider->next) {
         if($graph_all || exists($hugos{$mutation->{hugo}})) {
             my ($domains_ref, $amino_acid_length) = $self->get_domains_and_amino_acid_length($mutation->{transcript_name});
-            my @domains = @$domains_ref;
-            if (scalar @domains == 0) {
-                next;
-            }
             $mutation->{domains} = $domains_ref;
             $mutation->{protein_length} = $amino_acid_length;
             $self->_add_mutation($mutation);       

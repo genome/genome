@@ -2,6 +2,8 @@ package Genome::Model::Build::ReferenceSequence;
 use strict;
 use warnings;
 use Genome;
+use Genome::Sys::LockProxy qw();
+use Genome::Sys::LockMigrationProxy qw();
 use File::Path;
 use File::Copy;
 
@@ -392,9 +394,16 @@ sub full_consensus_sam_index_path {
         
         $self->warning_message("no failx file at $idx_file!");
 
-        my $lock = Genome::Sys->lock_resource(
-            resource_lock => $data_dir.'/lock_for_faidx',
-            scope         => 'unknown',
+        my $lock = Genome::Sys::LockMigrationProxy->new(
+            old => {
+                resource => $data_dir.'/lock_for_faidx',
+                scope => 'unknown',
+            },
+            new => {
+                resource => 'reference-sequence-' . $self->id . '-faidx',
+                scope => 'site',
+            },
+        )->lock(
             max_try       => 2,
         );
         unless ($lock) {
@@ -408,8 +417,8 @@ sub full_consensus_sam_index_path {
             output_files => [$idx_file],
         );
 
-        unless (Genome::Sys->unlock_resource(resource_lock => $lock)) {
-            $self->error_message("Failed to unlock resource: $lock");
+        unless ($lock->unlock()) {
+            $self->error_message("Failed to unlock resource: " . $lock->resource);
             return;
         }
         unless ($rv == 1) {
@@ -457,20 +466,27 @@ sub get_sequence_dictionary {
 
     $self->warning_message("No seqdict at path $path.  Creating...");
 
-    my $resource_lock = $seqdict_dir_path."/lock_for_seqdict-$file_type";
-    #lock seqdict dir here
-    my $lock = Genome::Sys->lock_resource(
-        resource_lock => $resource_lock,
-        scope         => 'unknown',
-        max_try       => 2,
+    my %old_seqdict = (
+        resource => $seqdict_dir_path."/lock_for_seqdict-$file_type",
+        scope => 'unknown',
+    );
+    my %new_seqdict = (
+        resource => 'reference-sequence-' . $self->id . '-seqdict',
+        scope => 'site',
+    );
+    my $lock = Genome::Sys::LockMigrationProxy->new(
+        old => { %old_seqdict },
+        new => { %new_seqdict },
+    )->lock(
+        max_try => 2,
     );
 
     # if it couldn't get the lock after 2 tries, pop a message and keep trying as much as it takes
     unless ($lock) {
         $self->status_message("Couldn't get a lock after 2 tries, waiting some more...");
-        $lock = Genome::Sys->lock_resource(
-        resource_lock => $resource_lock,
-            scope => 'unknown',
+        $lock = Genome::Sys::LockMigrationProxy->new(
+            old => { %old_seqdict },
+            new => { %new_seqdict },
         );
         unless($lock) {
             $self->error_message("Failed to lock resource: $seqdict_dir_path");
@@ -493,8 +509,8 @@ sub get_sequence_dictionary {
         $self->status_message("Detected a remap file, and we're appending to another build. We'll skip sequence dictionary creation for the remap file and just copy the sequence dictionary from the reference build we're appending to.");
         Genome::Sys->copy_file($append_ref->get_sequence_dictionary($file_type, $species, $picard_version), $path);
 
-        unless (Genome::Sys->unlock_resource(resource_lock => $lock)) {
-            $self->error_message("Failed to unlock resource: $lock");
+        unless ($lock->unlock()) {
+            $self->error_message("Failed to unlock resource: " . $lock->resource);
             return;
         }
     } else {
@@ -515,8 +531,8 @@ sub get_sequence_dictionary {
 
         my $csd_rv = Genome::Sys->shellcmd(cmd=>$create_seq_dict_cmd);
 
-        unless (Genome::Sys->unlock_resource(resource_lock => $lock)) {
-            $self->error_message("Failed to unlock resource: $lock");
+        unless ($lock->unlock()) {
+            $self->error_message("Failed to unlock resource: " . $lock->resource);
             return;
         }
 
@@ -771,14 +787,21 @@ sub verify_or_create_local_cache {
     $self->status_message('Lock local cache directory');
     my $lock_name = $self->local_cache_lock;
     $self->status_message('Lock name: '.$lock_name);
-    my $lock = Genome::Sys->lock_resource(
-        resource_lock => $lock_name,
-        scope => 'tgisan',
+    my $lock = Genome::Sys::LockMigrationProxy->new(
+        old => {
+            resource => $lock_name,
+            scope => 'tgisan',
+        },
+        new => {
+            resource => $lock_name,
+            scope => 'host',
+        },
+    )->lock(
         max_try => 20, # 20 x 180 sec each = 1hr
         block_sleep => 180,
     );
     unless ($lock) {
-        $self->error_message("Failed to get lock for $lock_name!");
+        $self->error_message("Failed to get lock for %s!", $lock->resource);
         return;
     }
     $self->status_message('Lock obtained');
@@ -844,9 +867,9 @@ sub verify_or_create_local_cache {
 
     # rm lock
     $self->status_message('Remove lock');
-    my $rv = eval { Genome::Sys->unlock_resource(resource_lock=>$lock); };
+    my $rv = eval { $lock->unlock() };
     if ( not $rv ) {
-        $self->error_message("Failed to unlock ($lock): $@. But we don't care.");
+        $self->error_message("Failed to unlock (%s): %. But we don't care.", $lock->resource, $@);
     }
 
     $self->status_message('Verify or create local cache...OK');

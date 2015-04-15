@@ -29,11 +29,12 @@
                      "genome",
                      "ptero",
                      "wrapper",
-                     "command",
                      "--command-class",
                      "Genome::Ptero::TestCommand::ParamAppender",
                      "--method",
-                     "shortcut"
+                     "shortcut",
+                     "--log-directory",
+                     "test_logs/parallel-cmd"
                   ],
                   "environment" : {},
                   "user" : null,
@@ -48,11 +49,12 @@
                      "genome",
                      "ptero",
                      "wrapper",
-                     "command",
                      "--command-class",
                      "Genome::Ptero::TestCommand::ParamAppender",
                      "--method",
-                     "execute"
+                     "execute",
+                     "--log-directory",
+                     "test_logs/parallel-cmd"
                   ],
                   "environment" : {},
                   "user" : null,

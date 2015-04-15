@@ -46,7 +46,7 @@ class Genome::WorkflowBuilder::Detail::Operation {
 # ------------------------------------------------------------------------------
 
 sub from_xml_element {
-    my ($class, $element) = @_;
+    my ($class, $element, @rest) = @_;
 
     # Prevent accidental recursion when subclasses don't override this method
     unless ($class eq 'Genome::WorkflowBuilder::Detail::Operation') {
@@ -55,7 +55,7 @@ sub from_xml_element {
     }
 
     my $subclass = $class->_get_subclass_from_element($element);
-    return $subclass->from_xml_element($element);
+    return $subclass->from_xml_element($element, @rest);
 }
 
 sub input_properties {}

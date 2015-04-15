@@ -5,12 +5,23 @@ use warnings;
 
 use Genome;
 
+use Params::Validate qw(:types);
+use List::MoreUtils;
+
 class Genome::Model::Tools::Sx::Validate { 
+    has => {
+        command => { is => 'Text', },
+    },
+    has_transient => {
+        command_class => { is => 'Text', },
+        command_params => { is => 'HASH', },
+    },
 };
 
-sub validate_command {
-    my ($self, $command) = @_;
+sub is_valid {
+    my ($self) = Params::Validate::validate_pos(@_, {type => HASHREF});
 
+    my $command = $self->command;
     if ( not defined $command ) { 
         $self->error_message('Cannot validate command. None given.');
         return;
@@ -19,7 +30,6 @@ sub validate_command {
     my @tokens = split(/\s+/, $command);
     my $gmt = shift @tokens;
     my $sx = $tokens[0];
-    #my $sx = shift @tokens;
     if ( not $gmt or $gmt ne 'gmt' or not $sx or $sx ne 'sx' ) {
         $self->error_message("Command ($command) must start w/ 'gmt sx'");
         return;
@@ -39,7 +49,6 @@ sub validate_command {
         return;
     }
 
-    #my $class = 'Genome::Model::Tools::Sx::'.
     my $class = 'Genome::Model::Tools::'.
     join(
         '::', 
@@ -88,12 +97,15 @@ sub validate_command {
             $converted_params{$new_key} = $params{$key};
         }
     }
+    $self->command_class($class);
+    $self->command_params(\%converted_params);
 
     my $obj = eval{ $class->create(%converted_params); };
     unless ( $obj ) {
         $self->error_message("Can't validate command ($command) using class ($class)".( $@ ? ": $@" : '') );
         return;
     }
+
     my @errors = $obj->__errors__;
     if ( @errors ) {
         $self->error_message("Found errors with command:\n".join("\n", map { $_->__display_name__ } @errors));
@@ -102,6 +114,15 @@ sub validate_command {
     $obj->delete;
 
     return 1;
+}
+
+sub number_of_threads_required {
+    my $self = shift;
+    my $command_params = $self->command_params;
+    die $self->error_message('No command params set! Please make sure the command is_valid') if not $command_params;
+    my $param_name = List::MoreUtils::firstval { $_ =~ /thread/ } keys %$command_params;
+    return 1 if not $param_name;
+    return $command_params->{$param_name};
 }
 
 1;

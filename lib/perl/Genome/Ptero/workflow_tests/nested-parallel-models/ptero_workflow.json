@@ -23,7 +23,7 @@
       "Outer" : {
          "methods" : [
             {
-               "name" : "root",
+               "name" : "Outer",
                "parameters" : {
                   "links" : [
                      {
@@ -49,7 +49,7 @@
                      "Inner" : {
                         "methods" : [
                            {
-                              "name" : "root",
+                              "name" : "Inner",
                               "parameters" : {
                                  "links" : [
                                     {
@@ -81,11 +81,12 @@
                                                    "genome",
                                                    "ptero",
                                                    "wrapper",
-                                                   "command",
                                                    "--command-class",
                                                    "Genome::Ptero::TestCommand::ParamAppender",
                                                    "--method",
-                                                   "shortcut"
+                                                   "shortcut",
+                                                   "--log-directory",
+                                                   "test_logs/nested-parallel-models"
                                                 ],
                                                 "environment" : {},
                                                 "user" : null,
@@ -100,11 +101,12 @@
                                                    "genome",
                                                    "ptero",
                                                    "wrapper",
-                                                   "command",
                                                    "--command-class",
                                                    "Genome::Ptero::TestCommand::ParamAppender",
                                                    "--method",
-                                                   "execute"
+                                                   "execute",
+                                                   "--log-directory",
+                                                   "test_logs/nested-parallel-models"
                                                 ],
                                                 "environment" : {},
                                                 "user" : null,

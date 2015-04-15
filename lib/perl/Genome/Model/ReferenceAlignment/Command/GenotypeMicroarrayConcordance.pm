@@ -86,7 +86,7 @@ sub execute {
             call_vcf => $intersect_vcf,
             output => $output,
             truth_sample => $genotype_sample->name,
-            call_sample => $qc_build->model->subject->name,
+            call_sample => $qc_build->model->subject->name_in_vcf,
             min_dp => $self->minimum_depth,
             use_version => $self->picard_version,
         );

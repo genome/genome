@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Sys::LockProxy qw();
 use Genome::Utility::Instrumentation;
 use Genome::Utility::File::Mode qw(mode);
 
@@ -438,9 +439,10 @@ sub get_lock {
     my ($class, $id, $tries) = @_;
     $tries ||= 60;
 
-    my $allocation_lock = Genome::Sys->lock_resource(
-        resource_lock => 'allocation/allocation_' . join('_', split(' ', $id)),
+    my $allocation_lock = Genome::Sys::LockProxy->new(
+        resource => 'allocation/allocation_' . join('_', split(' ', $id)),
         scope => 'site',
+    )->lock(
         max_try => $tries,
         block_sleep => 1,
     );
@@ -462,7 +464,7 @@ sub get_with_lock {
     my $mode = $class->_retrieve_mode;
     my $self = Genome::Disk::Allocation->$mode($id);
     unless ($self) {
-        Genome::Sys->unlock_resource(resource_lock => $lock);
+        $lock->unlock();
         confess "Found no allocation with ID $id";
     }
 
@@ -486,14 +488,15 @@ sub shadow_get_or_create {
 
     my $md5_hex = md5_hex($params{allocation_path});;
 
-    my $path = File::Spec->join(
+    my $resource = File::Spec->join(
         'allocation',
         'allocation_path_' . $md5_hex,
     );
 
-    my $lock = Genome::Sys->lock_resource(
-        resource_lock => $path,
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => $resource,
         scope => 'site',
+    )->lock(
         wait_announce_interval => 600,
     );
 
@@ -508,7 +511,7 @@ sub shadow_get_or_create {
         $allocation = $class->create(%params, %create_extra_params);
     }
 
-    Genome::Sys->unlock_resource(resource_lock => $lock);
+    $lock->unlock();
 
     unless ($allocation) {
         croak sprintf("Failed to shadow_get_or_create allocation from params %s",
@@ -676,16 +679,6 @@ sub _create_observer {
         callback => $callback,
     );
     return 1;
-}
-
-# Returns a closure that removes the given locks
-sub _unlock_closure {
-    my ($class, @locks) = @_;
-    return sub {
-        for my $lock (@locks) {
-            Genome::Sys->unlock_resource(resource_lock => $lock) if -e $lock;
-        }
-    };
 }
 
 # Returns a closure that creates a directory at the given path
