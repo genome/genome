@@ -131,8 +131,7 @@ sub execute {
             my $lane=$instrument_data->lane;
             my $flow_cell_id=$instrument_data->flow_cell_id;
             my $lane_name="$flow_cell_id"."_"."$lane";	
-            my @bam = $alignment->alignment_bam_file_paths;
-            my $alignment_file = $bam[0];
+            my $alignment_file = $alignment->get_bam_file;
 
             if ($alignment_file ne ""){
                 $self->error_message("$lane_name : $alignment_file");

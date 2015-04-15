@@ -86,7 +86,9 @@ sub test_metrics {
 sub setup_objects {
     my $test_dir = shift;
     my $bam_result_1 = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
-        bam_path => File::Spec->join($test_dir, "1.bam"));
+        id => 1,
+        output_dir => $test_dir,
+    );
 
     my $model = Genome::Test::Factory::Model::GenotypeMicroarray->setup_object();
 

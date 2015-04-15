@@ -80,10 +80,12 @@ sub setup_objects {
     $dbsnp_build->reference->allosome_names("X,Y,MT");
 
     my $merged_result1 = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
-        bam_path => File::Spec->join($test_dir, "1.bam"),
+        id => 1,
+        output_dir => $test_dir,
     );
     my $merged_result2 = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object(
-        bam_path => File::Spec->join($test_dir, "2.bam"),
+        id => 2,
+        output_dir => $test_dir,
     );
 
     my $pp = Genome::Test::Factory::ProcessingProfile::SomaticValidation->setup_object(

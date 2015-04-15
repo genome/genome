@@ -560,8 +560,8 @@ sub get_ref_align_builds{
       $bam_file = $build->whole_rmdup_bam_file;
     }elsif($build->can("alignment_result")){
       my $alignment_result = $build->alignment_result;
-      if ($alignment_result->can("bam_file")){
-        $bam_file = $alignment_result->bam_file;
+      if ($alignment_result->can("get_bam_file")){
+        $bam_file = $alignment_result->get_bam_file;
       }
     }
     if ($bam_file){

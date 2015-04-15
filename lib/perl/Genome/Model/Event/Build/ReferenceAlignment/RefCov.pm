@@ -70,7 +70,7 @@ sub sorted_bam_files {
                 return;
             }
             for my $alignment (@alignments) {
-                push @sorted_bam_files, $alignment->alignment_bam_file_paths;
+                push @sorted_bam_files, $alignment->get_bam_file;
             }
         }
         $self->_sorted_bams(\@sorted_bam_files);

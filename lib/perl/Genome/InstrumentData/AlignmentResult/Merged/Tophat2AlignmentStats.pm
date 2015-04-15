@@ -69,7 +69,7 @@ sub create {
 
     $self->_prepare_staging_directory;
 
-    my $bam_file = $self->alignment_result->bam_file;
+    my $bam_file = $self->alignment_result->get_bam_file;
     my $alignment_stats_file = $self->temp_staging_directory .'/alignment_stats.txt';
 
     my $cmd = Genome::Model::Tools::BioSamtools::Tophat2AlignmentStats->execute(

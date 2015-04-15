@@ -650,8 +650,8 @@ sub execute {
       $sample_name = $self->sample_name;
   }
   $self->status_message("processing model with sample_name: $sample_name");
-  my $tumor_bam = $tumor_build->merged_alignment_result->bam_file;
-  my $normal_bam = $normal_build->merged_alignment_result->bam_file;
+  my $tumor_bam = $tumor_build->merged_alignment_result->get_bam_file;
+  my $normal_bam = $normal_build->merged_alignment_result->get_bam_file;
   my $build_dir = $build->data_directory;
 
   my $igv_reference_name;

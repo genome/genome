@@ -311,7 +311,7 @@ sub generate_glfs {
         my @instrument_data = $alignments[$i]->instrument_data;
         my $output_name = $self->output_directory . "/" . $instrument_data[0]->sample_name . ".glf";
         push @outputs, $output_name;
-        $inputs{"bam_$i"}=$alignments[$i]->bam_file;
+        $inputs{"bam_$i"}=$alignments[$i]->get_bam_file;
         $inputs{"output_glf_$i"}=$output_name;
         push @inputs, ("bam_$i", "output_glf_$i");
     }

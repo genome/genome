@@ -45,7 +45,7 @@ sub _run {
     delete $params{test_name};
 
     Genome::Model::Tools::Sam::Readcount->execute(
-        bam_file => $self->aligned_bam_result->bam_file,
+        bam_file => $self->aligned_bam_result->get_bam_file,
         reference_fasta => $self->aligned_bam_result->reference_fasta,
         output_file => File::Spec->join($self->temp_staging_directory, $self->output_filename),
         region_list => $region_list,
