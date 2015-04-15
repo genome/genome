@@ -88,8 +88,11 @@ sub execute {
             my $instrument_data_id = $alignment->instrument_data_id;    
             my @bams = $alignment->alignment_bam_file_paths;
             unless(@bams) {
-                $self->error_message("No alignment bam for $alignment_id");
-                return;
+                @bams = $alignment->revivified_alignment_bam_file_path;
+                unless(@bams) {
+                    $self->error_message("No alignment bam for $alignment_id");
+                    return;
+                }
             }
             else {
                 my $alignment_count = @bams;
