@@ -9,7 +9,7 @@ BEGIN {
 
 use above 'Genome';
 
-use Test::More tests => 30;
+use Test::More tests => 33;
 
 use Genome::Test::Factory::AnalysisProject;
 use Genome::Test::Factory::Model::ReferenceAlignment;
@@ -104,7 +104,9 @@ EOFILE
         store_only => 1,
         reprocess_existing => 0,
     );
-    my $profile_item = $add_cmd->execute();
+    my $ok = $add_cmd->execute();
+    ok($ok, 'executed add command');
+    my $profile_item = Genome::Config::Profile::Item->get(analysis_project => $analysis_project, status => 'disabled');
     isa_ok($profile_item, 'Genome::Config::Profile::Item', 'created config');
     return $profile_item;
 }
