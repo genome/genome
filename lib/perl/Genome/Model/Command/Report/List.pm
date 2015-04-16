@@ -180,14 +180,14 @@ sub _list_reports_for_build {
     my $self = shift;
     
     my $type_name = $self->build->model->type_name;
-    my @availble_report_generators = Genome::Model::Report::get_report_names_for_type_name($type_name);
+    my @available_report_generators = Genome::Model::Report::get_report_names_for_type_name($type_name);
 
-    unless ( @availble_report_generators ) { # ok
+    unless ( @available_report_generators ) { # ok
         print "Model type ($type_name) does not have any reports.\n";
         return 1;
     }
     
-    my %reports = map { $_ => [] } @availble_report_generators;
+    my %reports = map { $_ => [] } @available_report_generators;
     for my $report ( $self->build->reports ) {
         my ($report_subclass) = $report->get_generator =~ m#::([\w\d]+)$#;
         my $report_generator = Genome::Utility::Text::camel_case_to_string($report_subclass);
@@ -199,7 +199,7 @@ sub _list_reports_for_build {
     $self->_print_header_for_build
         or return;
 
-    for my $report_name ( @availble_report_generators ) {
+    for my $report_name ( @available_report_generators ) {
         $self->_print_reports($report_name, $reports{$report_name})
             or return;
     }
