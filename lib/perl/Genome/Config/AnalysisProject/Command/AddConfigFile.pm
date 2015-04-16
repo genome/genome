@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Config::AnalysisProject::Command::AddConfigFile {
-    is => 'Genome::Config::AnalysisProject::Command::Base',
+    is => 'Genome::Config::AnalysisProject::Command::AddConfigBase',
     has_input => [
        config_file  => {
             is                  => 'Path',
@@ -18,19 +18,7 @@ class Genome::Config::AnalysisProject::Command::AddConfigFile {
             doc => 'If set, the config file will only be stored. (It will not be used for processing.)',
             default_value => 0,
         },
-        reprocess_existing => {
-            is => 'Boolean',
-            default_value => 0,
-            doc => 'Reprocess any existing instrument data with the new config',
-        },
     ],
-    has_optional_input => [
-        tag => {
-            is => 'Genome::Config::Tag',
-            is_many => 1,
-            doc => 'Tags to associate with the new configuration',
-        }
-    ]
 };
 
 sub help_brief {
@@ -53,8 +41,9 @@ sub valid_statuses {
     return ("Pending", "Hold", "In Progress", "Template");
 }
 
-sub execute {
+sub _create_profile_items {
     my $self = shift;
+
     my $status = $self->store_only ? 'disabled' : 'active';
 
     my $result = Genome::Config::Profile::Item->create_from_file_path(
@@ -62,24 +51,6 @@ sub execute {
         analysis_project => $self->analysis_project,
         status => $status,
     );
-
-    $self->_apply_tags($result);
-
-    if($self->reprocess_existing){
-        Genome::Config::AnalysisProject::Command::Reprocess->execute(
-            analysis_project => $self->analysis_project
-        );
-    }
-
-    return $result;
-}
-
-sub _apply_tags {
-    my ($self, $profile_item) = @_;
-    for my $tag ($self->tag){
-        $profile_item->add_tag($tag);
-    }
-    return 1;
 }
 
 1;
