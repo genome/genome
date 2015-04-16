@@ -205,7 +205,6 @@ class Genome::Model::Tools::Sciclone {
         do_1d_clustering => {
             is => 'Boolean',
             doc => "do clustering in 1 dimension. If you have 2 or more samples, you should probably turn this off to save significant runtime.",
-            is_optional => 1,
             default => 1,
         }
 
