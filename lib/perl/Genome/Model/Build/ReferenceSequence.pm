@@ -692,7 +692,7 @@ sub available_kb {
     Carp::confess('No directory to get available kb!') if not $directory;
     Carp::confess("Directory ($directory) does not exist! Cannot get available kb!") if not -d $directory;
 
-    $self->status_message('Get availble kb for '.$directory);
+    $self->status_message('Get available kb for '.$directory);
 
     my $cmd = "df -k $directory |";
     $self->status_message('DF command: '.$cmd);
