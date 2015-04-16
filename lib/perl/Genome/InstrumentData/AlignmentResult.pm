@@ -1795,7 +1795,7 @@ sub _get_temp_allocation {
     );
     UR::Context->process->add_observer(
         aspect   => 'pre-commit',
-        once     => 1
+        once     => 1,
         callback => sub { $temp_allocation->delete; },
     );
     return $temp_allocation;
