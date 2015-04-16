@@ -15,7 +15,7 @@ class Genome::Config::AnalysisProject::Command::AddConfigFile {
         },
         store_only => {
             is => 'Boolean',
-            doc => 'If set, the config file will only be stored (it will not be used for processing).',
+            doc => 'If set, the config file will only be stored. (It will not be used for processing.)',
             default_value => 0,
         },
         reprocess_existing => {
