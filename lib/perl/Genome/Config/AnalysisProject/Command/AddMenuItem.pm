@@ -42,7 +42,12 @@ EOS
 
 sub help_detail {
     return <<"EOS"
-Given an analysis project and a config file, this will associate the two
+This command is used to link standard configurations ("menu items") to an analysis-project.
+
+If run without specifying any menu items, an interactive prompt will allow selections from the list
+of all available menu items.
+
+(See also `genome config analysis-project add-config-file for adding a custom configuration.)
 EOS
 }
 
