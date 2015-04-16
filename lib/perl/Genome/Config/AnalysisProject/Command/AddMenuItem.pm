@@ -34,7 +34,10 @@ sub help_brief {
 }
 
 sub help_synopsis {
-    return "genome config analysis-project add-config-config-file <analysis-project> <file-path>";
+    return <<"EOS";
+genome config analysis-project add-menu-item <analysis-project>
+genome config analysis-project add-menu-item --analysis-menu-item <menu-item> <analysis-project>
+EOS
 }
 
 sub help_detail {
