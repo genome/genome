@@ -28,7 +28,7 @@ class Genome::Config::AnalysisProject::Command::AddConfigFile {
         tag => {
             is => 'Genome::Config::Tag',
             is_many => 1,
-            doc => 'Optional tags to add',
+            doc => 'Tags to associate with the new configuration',
         }
     ]
 };
