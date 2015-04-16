@@ -4,7 +4,6 @@ package Genome::Model::SomaticVariation::Command::SimplifyVcf;
 use strict;
 use warnings;
 use Genome;
-use Data::Dumper;
 use Term::ANSIColor qw(:constants);
 use File::Path;
 
@@ -302,7 +301,7 @@ sub simplify_vcf{
     if (defined $ft_pos) {
         $tumor_filter_value = $tumor[$ft_pos];
         unless ($tumor_filter_value){
-            print Dumper @line;
+            $self->warning_message("Could not find filter value for line: @line");
         }
     } else {
         $tumor_filter_value = uc $self->unfiltered_status;
