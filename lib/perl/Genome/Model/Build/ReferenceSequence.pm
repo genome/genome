@@ -392,7 +392,7 @@ sub full_consensus_sam_index_path {
         my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($sam_version);
         my $cmd      = $sam_path.' faidx '.$fa_file;
         
-        $self->warning_message("no failx file at $idx_file!");
+        $self->warning_message("no faidx file at $idx_file!");
 
         my $lock = Genome::Sys::LockMigrationProxy->new(
             old => {
