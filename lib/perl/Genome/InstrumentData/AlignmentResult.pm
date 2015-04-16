@@ -1794,7 +1794,8 @@ sub _get_temp_allocation {
         owner_id            => Genome::Sys->username,
     );
     UR::Context->process->add_observer(
-        aspect => 'pre-commit',
+        aspect   => 'pre-commit',
+        once     => 1
         callback => sub { $temp_allocation->delete; },
     );
     return $temp_allocation;
