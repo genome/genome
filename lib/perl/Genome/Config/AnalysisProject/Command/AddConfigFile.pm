@@ -8,7 +8,7 @@ use Genome;
 class Genome::Config::AnalysisProject::Command::AddConfigFile {
     is => 'Genome::Config::AnalysisProject::Command::AddConfigBase',
     has_input => [
-       config_file  => {
+        config_file  => {
             is                  => 'Path',
             doc                 => 'path to the config file',
             shell_args_position => 2,
