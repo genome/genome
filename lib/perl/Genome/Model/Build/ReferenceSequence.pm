@@ -85,7 +85,7 @@ class Genome::Model::Build::ReferenceSequence {
         },
         combines => {
             is => 'Genome::Model::Build::ReferenceSequence',
-            doc => 'If specified, merges several other references into one.', 
+            doc => 'If specified, merges several other references into one.',
             is_many => 1,
         },
     ],
@@ -391,7 +391,7 @@ sub full_consensus_sam_index_path {
     unless (-e $idx_file) {
         my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($sam_version);
         my $cmd      = $sam_path.' faidx '.$fa_file;
-        
+
         $self->warning_message("no faidx file at $idx_file!");
 
         my $lock = Genome::Sys::LockMigrationProxy->new(
@@ -462,7 +462,7 @@ sub get_sequence_dictionary {
 
     if (-s $path) {
         return $path;
-    } 
+    }
 
     $self->warning_message("No seqdict at path $path.  Creating...");
 
