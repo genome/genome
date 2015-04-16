@@ -32,10 +32,10 @@ class Genome::Model::ClinSeq::Command::IdentifyLoh {
         doc => 'Minimum number of probes to call a loh segment.',
         default => 10,
     },
-    segment_pc_cutoff => {
+    min_segmean => {
         is => 'Number',
         is_optional => 1,
-        doc => 'Minimum percent of LOH in a segment. n_loh_probes/n_probes * 100',
+        doc => 'Minimum segment mean.',
         default => 0.95,
     },
     test => {
@@ -231,7 +231,7 @@ sub segment_loh {
 sub filter_loh {
     my $self = shift;
     my $loh_basename = shift;
-    my $segment_pc_cutoff = $self->segment_pc_cutoff;
+    my $min_segmean = $self->min_segmean;
     my $minprobes = $self->minprobes;
     my $loh_segments =
     $loh_basename . ".segments.cbs";
@@ -240,8 +240,8 @@ sub filter_loh {
         die $self->error_message("Unable to find loh file $loh_segments");
     }
     my $awk_filter =
-    "awk '\$4 > $segment_pc_cutoff && \$3 >= $minprobes' $loh_segments " .
-    "> $loh_segments_filtered";
+    "awk '\$4 > $minprobes && \$5 >= $min_segmean' $loh_segments " .
+        "> $loh_segments_filtered";
     Genome::Sys->shellcmd(cmd => $awk_filter);
 }
 
