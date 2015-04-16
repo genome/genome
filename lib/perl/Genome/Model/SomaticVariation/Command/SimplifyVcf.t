@@ -9,7 +9,8 @@ BEGIN {
 };
 
 use above 'Genome';
-use Test::More tests => 6;
+use Test::More tests => 7;
+use Test::Exception;
 use Genome::Utility::Test qw(compare_ok);
 
 my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-SomaticVariation-Command-SimplifyVcf';
@@ -63,3 +64,57 @@ my $output_combined_vcf = $command->resolve_combined_vcf_filename($build);
 compare_ok($expected_snv_vcf, $output_snv_vcf, filters => qr(^##fileDate=.*));
 compare_ok($expected_indel_vcf, $output_indel_vcf, filters => qr(^##fileDate=.*));
 compare_ok($expected_combined_vcf, $output_combined_vcf, filters => qr(^##fileDate=.*));
+
+subtest 'unfiltered variants' => sub {
+    my $input_with_unfiltered_variant = "$test_dir/input_unfiltered.v1";
+    my $build2 = Genome::Model::Build::SomaticVariation->__define__(
+        data_directory => $input_with_unfiltered_variant,
+        model => $model,
+        normal_build =>$normal_build,
+        tumor_build => $tumor_build
+    );
+
+    subtest 'unfiltered_status = undef crashes' => sub {
+        my $output_dir = Genome::Sys->create_temp_directory();
+        my $cmd = $class->create(
+            builds => [$build2],
+            outdir => $output_dir,
+            include_and_merge_indels => 0,
+            unfiltered_status => undef,
+        );
+        isa_ok($cmd, $class);
+        dies_ok(sub { $cmd->execute }, 'fails with undef unfiltered status');
+    };
+
+    subtest 'included when unfiltered_status = pass' => sub {
+        my $output_dir = Genome::Sys->create_temp_directory();
+        my $cmd = $class->create(
+            builds => [$build2],
+            outdir => $output_dir,
+            include_and_merge_indels => 0,
+            unfiltered_status => 'pass',
+        );
+        isa_ok($cmd, $class);
+        ok($cmd->execute, 'executed command');
+
+        my $output_file = $cmd->resolve_snv_vcf_filename($build2);
+        my @lines = grep { $_ !~ /^#/ } Genome::Sys->read_file($output_file);
+        is(scalar(@lines), 1, 'variant was included');
+    };
+
+    subtest 'not included when unfiltered_status = fail' => sub {
+        my $output_dir = Genome::Sys->create_temp_directory();
+        my $cmd = $class->create(
+            builds => [$build2],
+            outdir => $output_dir,
+            include_and_merge_indels => 0,
+            unfiltered_status => 'fail',
+        );
+        isa_ok($cmd, $class);
+        ok($cmd->execute, 'executed command');
+
+        my $output_file = $cmd->resolve_snv_vcf_filename($build2);
+        my @lines = grep { $_ !~ /^#/ } Genome::Sys->read_file($output_file);
+        is(scalar(@lines), 0, 'variant was not included');
+    };
+};

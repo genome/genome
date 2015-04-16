@@ -28,6 +28,13 @@ class Genome::Model::SomaticVariation::Command::SimplifyVcf {
             doc => 'If set to true, simplify the indel file as well and merge the indels with snvs',
         },
     ],
+    has_optional_input => [
+        unfiltered_status => {
+            is => 'Text',
+            valid_values => ['pass', 'fail', undef],
+            doc => 'If set, any unfiltered variants will be considered to have passed or failed as specified. Otherwise, this tool will refuse to process unfiltered variants.',
+        },
+    ],
     doc => 'Create a simplified VCF that contains only column for tumor/normal and only passing somatic SNVs',
 };
 
@@ -284,16 +291,23 @@ sub simplify_vcf{
       $ft_pos = $p if ($format_tag eq "FT");
       $p++;
     }
-    unless (defined($ft_pos)){
-      #TODO: If 'FT' is not defined lq/hq status of a variant can not be determined.  
-      $self->error_message("Could not determine position of FT tag in FORMAT column:\n@line");
+    unless (defined($ft_pos) or defined $self->unfiltered_status) {
+      # If 'FT' is not defined lq/hq status of a variant can not be determined.
+      $self->error_message("Could not determine position of FT tag in FORMAT column and no --unfiltered-status was specified:\n@line");
       die($self->error_message);
     }
-    my $tumor_filter_value = $tumor[$ft_pos];
+
     $variant_count++;
-    unless ($tumor_filter_value){
-      print Dumper @line;
+    my $tumor_filter_value;
+    if (defined $ft_pos) {
+        $tumor_filter_value = $tumor[$ft_pos];
+        unless ($tumor_filter_value){
+            print Dumper @line;
+        }
+    } else {
+        $tumor_filter_value = uc $self->unfiltered_status;
     }
+
     next unless ($tumor_filter_value eq "PASS");
     $passing_variant_count++;
     print VCF2 "$line[0]\t$line[1]\t$line[2]\t$line[3]\t$line[4]\t$line[5]\t$line[6]\t$line[7]\t$line[8]\t$line[$header{$normal_sample_name}{pos}]\t$line[$header{$tumor_sample_name}{pos}]\n";
