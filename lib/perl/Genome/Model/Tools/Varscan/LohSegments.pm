@@ -283,7 +283,6 @@ sub execute {                               # replace with real execution logic.
         print OUTFILE qq{
 library(DNAcopy)
 CNA.object <- CNA(snp\$status[snp\$chrom=="$chrom"], snp\$chrom[snp\$chrom=="$chrom"], snp\$position[snp\$chrom=="$chrom"], data.type="binary", sampleid=c("Chromosome $chrom"))
-if(nrow(CNA.object == 0)) quit()
 png("$outfile", height=300, width=800)
 maxpos <- max(snp\$pos[snp\$chrom=="$chrom"])
 segment.CNA.object <- segment(CNA.object)
