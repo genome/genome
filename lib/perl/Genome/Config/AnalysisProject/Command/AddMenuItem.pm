@@ -40,10 +40,6 @@ of all available menu items.
 EOS
 }
 
-sub valid_statuses {
-    return ("Pending", "Hold", "In Progress", "Template");
-}
-
 sub _create_profile_items {
     my $self = shift;
 

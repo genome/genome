@@ -37,10 +37,6 @@ This command is used to link a custom configuration file directly to an analysis
 EOS
 }
 
-sub valid_statuses {
-    return ("Pending", "Hold", "In Progress", "Template");
-}
-
 sub _create_profile_items {
     my $self = shift;
 
