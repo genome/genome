@@ -119,7 +119,6 @@ sub execute {
 
             #Name the output file in a human readable way ($individual_common_name . $subject_name . $somatic_variation_build_id . passing.somatic.snvs.vcf
             my $resolve_method = "resolve_" . $type . "_vcf_filename";
-            $DB::single=1;
             my $new_vcf_path = $self->$resolve_method($somvar_build);
 
             #Parse the VCF file and dump simplified version
