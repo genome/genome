@@ -43,7 +43,9 @@ sub help_synopsis {
 
 sub help_detail {
     return <<"EOS"
-Given an analysis project and a config file, this will associate the two
+This command is used to link a custom configuration file directly to an analysis-project.
+
+(See also `genome config analysis-project add-menu-item` for adding a standard configuration.)
 EOS
 }
 
