@@ -26,7 +26,7 @@ sub help_brief {
 }
 
 sub help_synopsis {
-    return "genome config analysis-project add-config-file <analysis-project> <file-path>";
+    return "genome config analysis-project add-config-file <analysis-project> <file-path>\n";
 }
 
 sub help_detail {
