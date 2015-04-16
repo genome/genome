@@ -148,10 +148,9 @@ sub create {
     );
 
     # use per lane instrument data id as link name
-    my @instrument_data = $self->alignment_result->instrument_data;
     my $lane_flag;
-    if (@instrument_data == 1) {
-        my $instr_data = $instrument_data[0];
+    if ($self->alignment_result->isa('Genome::InstrumentData::AlignmentResult')) {
+        my $instr_data = $self->alignment_result->instrument_data;
         $bam_qc_params{bam_link_name} = $instr_data->id;
         $lane_flag = 1;
     }
