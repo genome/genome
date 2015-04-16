@@ -498,7 +498,7 @@ sub get_sequence_dictionary {
     my $seqdict_dir = $self->data_directory."/seqdict/";
     my $cd_rv =  Genome::Sys->create_directory($seqdict_dir);
     if ($cd_rv ne $seqdict_dir) {
-        $self->error_message("Failed to to create sequence dictionary directory for $path. Quiting");
+        $self->error_message("Failed to to create sequence dictionary directory for $path. Quitting");
         return;
     }
 
@@ -537,7 +537,7 @@ sub get_sequence_dictionary {
         }
 
         if ($csd_rv ne 1) {
-            $self->error_message("Failed to to create sequence dictionary for $path. Quiting");
+            $self->error_message("Failed to to create sequence dictionary for $path. Quitting");
             return;
         }
     }
