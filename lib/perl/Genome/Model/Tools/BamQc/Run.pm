@@ -143,7 +143,7 @@ sub execute {
     #TODO: Validate BAM sort order or at least throw a warning if not found
     #BAM header tag under @HD SO, valid values: unknown (default), unsorted, queryname and coordinate
 
-    my ($bam_basename, $bam_dirname, $bam_suffix) = File::Basename::fileparse($self->get_bam_file, qw/\.bam/);
+    my ($bam_basename, $bam_dirname, $bam_suffix) = File::Basename::fileparse($self->bam_file, qw/\.bam/);
     $bam_basename = $self->bam_link_name if $self->bam_link_name;
     my $file_basename = $output_directory .'/'. $bam_basename;
 
