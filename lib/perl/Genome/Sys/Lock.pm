@@ -219,8 +219,6 @@ sub scopes {
     return qw(
         host
         site
-        tgisan
-        unknown
     );
 }
 
