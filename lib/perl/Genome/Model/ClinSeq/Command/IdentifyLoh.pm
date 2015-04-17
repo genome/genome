@@ -38,6 +38,10 @@ class Genome::Model::ClinSeq::Command::IdentifyLoh {
         doc => 'Minimum segment mean.',
         default => 0.95,
     },
+    bamrc_version => {
+        is => 'String',
+        doc => 'version of bam-readcount to use',
+    },
     test => {
         is => 'Boolean',
         doc => 'set for test-cases',
@@ -52,10 +56,12 @@ sub help_synopsis {
     return <<EOS
 genome model clin-seq identify-loh\\
     --outdir=/tmp/test/ \\
-    --clinseq-build='a4abcd1313eb4376b59e68a9dd9d5ad2'
+    --clinseq-build='a4abcd1313eb4376b59e68a9dd9d5ad2' \\
+    --bamrc-version=0.7
 genome model clin-seq identify-loh\\
     --outdir=/tmp/test/ \\
-    --somvar-build='9dc0385a1b634c9bb85eb2017b3a0c73'
+    --somvar-build='9dc0385a1b634c9bb85eb2017b3a0c73' \\
+    --bamrc-version=0.7
 EOS
 }
 
@@ -185,6 +191,7 @@ sub filter_snvs {
         normal_bam => $normal_bam,
         prefix => $snv_prefix,
         reference => $ref_fa,
+        bamrc_version => $self->bamrc_version,
     );
     $filter->execute();
 }
