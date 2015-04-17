@@ -5,7 +5,7 @@ use warnings;
 
 use above "Genome";
 use Genome::Utility::Test qw(compare_ok);
-use Test::More tests => 11;
+use Test::More tests => 12;
 
 eval
 {
