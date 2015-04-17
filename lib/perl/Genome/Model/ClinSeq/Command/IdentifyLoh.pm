@@ -35,7 +35,7 @@ class Genome::Model::ClinSeq::Command::IdentifyLoh {
     min_segmean => {
         is => 'Number',
         is_optional => 1,
-        doc => 'Minimum segment mean.',
+        doc => 'Minimum segment mean. This is the percent of LOH SNPs in a segment',
         default => 0.95,
     },
     bamrc_version => {
