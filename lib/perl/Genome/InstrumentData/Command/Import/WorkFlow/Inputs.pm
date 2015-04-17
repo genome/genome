@@ -7,57 +7,62 @@ use Genome;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::Inputs { 
     is => 'UR::Object',
-    has => {
-        _inputs => { is => 'HASH', },
+    has_transient => {
+        incoming_params => { is => 'HASH', },
+        instrument_data_properties => { is => 'HASH', },
+        source_files => { is =>'ARRAY', },
     },
 };
 
 sub create {
     my ($class, %params) = @_;
 
-    my %inputs;
-    $inputs{source_files} = $class->_resolve_source_files(\%params);
-    $inputs{instrument_data_properties} = $class->_resolve_instrument_data_properties(\%params);
+    my $self = $class->SUPER::create(incoming_params => \%params);
+    return if not $self;
 
-    if ( not $inputs{instrument_data_properties}->{original_data_path} ) {
-        $inputs{instrument_data_properties}->{original_data_path} = join(',', @{$inputs{source_files}});
-    }
+    $self->_resolve_source_files;
+    $self->_resolve_instrument_data_properties;
 
-    return $class->SUPER::create(_inputs => \%inputs);
+    return $self;
 }
 
 sub for_worklflow {
     my $self = shift;
-    return $self->_inputs;
-}
-
-sub instrument_data_properties {
-    my $self = shift;
-    return $self->_inputs->{instrument_data_properties};
+    return {
+        source_files => $self->source_files,
+        instrument_data_properties => $self->instrument_data_properties,
+    };
 }
 
 sub _resolve_source_files {
-    my ($self, $params) = @_;
+    my $self = shift;
 
-    my $source_files = delete $params->{source_files};
+    my $source_files = delete $self->incoming_params->{source_files};
     die $self->error_message('No source files!') if not $source_files;
     my @source_files = split(/,/, $source_files);
     # FIXME check exists?
-
-    return \@source_files;
+    
+    return $self->source_files(\@source_files);
 }
 
 sub _resolve_instrument_data_properties {
-    my ($class, $params) = @_;
+    my $self = shift;
 
-    my $incoming_properties = delete $params->{instrument_data_properties} || [];
+    my $incoming_params = $self->incoming_params;
+    my $incoming_properties = delete $incoming_params->{instrument_data_properties} || [];
     for my $name (qw/ description downsample_ratio /) {
-        my $value = delete $params->{$name};
+        my $value = delete $incoming_params->{$name};
         next if not $value;
         push @$incoming_properties, $name.'='.$value;
     }
 
-    return $class->_resolve_incoming_instrument_data_property_strings($incoming_properties);
+    my $properties = $self->_resolve_incoming_instrument_data_property_strings($incoming_properties);
+
+    if ( not $properties->{original_data_path} ) {
+        $properties->{original_data_path} = join(',', @{$self->source_files});
+    }
+
+    return $self->instrument_data_properties($properties);
 }
 
 sub _resolve_incoming_instrument_data_property_strings {

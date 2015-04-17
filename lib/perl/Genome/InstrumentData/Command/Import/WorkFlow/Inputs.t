@@ -16,8 +16,10 @@ use Test::More;
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::Inputs';
 use_ok($class) or die;
 
+my @source_files = (qw/ in.1.fastq in.2.fastq /);
+my $original_data_path = join(',', @source_files);
 my $inputs = $class->create(
-    source_files => 'in.1.fastq,in.2.fastq',
+    source_files => $original_data_path,
     description => 'imported',
     instrument_data_properties => [qw/ 
         downsample_ratio=0.7
@@ -26,19 +28,27 @@ my $inputs = $class->create(
     /],
 );
 ok($inputs, 'create inputs');
+
+my %instrument_data_properties = (
+    downsample_ratio => 0.7,
+    description => 'imported',
+    import_source_name => 'TGI',
+    original_data_path => $original_data_path,
+    this => 'that', 
+);
 is_deeply(
     $inputs->for_worklflow,
-    { 
-        source_files => [qw/ in.1.fastq in.2.fastq /],
-        instrument_data_properties => {
-            downsample_ratio => 0.7,
-            description => 'imported',
-            import_source_name => 'TGI',
-            original_data_path => 'in.1.fastq,in.2.fastq',
-            this => 'that', 
-        },
+    {
+        source_files => \@source_files,
+        instrument_data_properties => \%instrument_data_properties,
     },
-    'inputs for workflow',
+    'for_worklflow',
+);
+is_deeply( $inputs->source_files, \@source_files, 'source_files');
+is_deeply(
+    $inputs->instrument_data_properties,
+    \%instrument_data_properties,
+    'instrument_data_properties',
 );
 
 # ERRORS
