@@ -5,7 +5,7 @@ use warnings;
 
 use Genome qw();
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 use Test::Fatal qw(exception);
 
 use File::Temp qw();
@@ -78,4 +78,37 @@ subtest 'required value' => sub {
     my $exception = exception { Genome::Config::get('some_key') };
     ok($exception, 'got exception');
     is(Genome::Config::get('some_key_with_default'), '', 'got empty string');
+};
+
+subtest 'validation' => sub {
+    plan tests => 2;
+
+    my $temp_conf_dir = File::Temp->newdir();
+    local $ENV{XGENOME_CONFIG_DIRS} = $temp_conf_dir->dirname;
+    setup_config(
+        home => {},
+        conf => [
+        {
+            dir => Path::Class::Dir->new($temp_conf_dir->dirname, 'genome'),
+            config => {
+                bad_numeric_key => 'abc',
+                good_numeric_key => '123',
+            },
+            spec => {
+                bad_numeric_key => {
+                    type => 'Int',
+                    validators => [ 'numeric' ],
+                },
+                good_numeric_key => {
+                    type => 'Int',
+                    validators => [ 'numeric' ],
+                },
+            },
+        },
+        ],
+    );
+
+    my $exception = exception { Genome::Config::get('bad_numeric_key') };
+    ok($exception, 'got exception');
+    is(Genome::Config::get('good_numeric_key'), '123', 'got number');
 };
