@@ -709,18 +709,37 @@ sub _compare_output_directories {
                 my $rel_path = File::Spec->abs2rel($file, $output_dir);
                 $diffs{$rel_path} = sprintf($template, $type, $rel_path, $other_process->id);
             } else {
-                if (-d $target && -d $other_target) {
-                    my %additional_diffs = $self->_compare_output_directories($target, $other_target, $other_process);
-                    %diffs = (%diffs, %additional_diffs);
+                if (-l $file || -l $other_file) {
+                    if (-d $target && -d $other_target) {
+                        my %additional_diffs = $self->_compare_output_directories($target, $other_target, $other_process);
+                        %diffs = (%diffs, %additional_diffs);
+                    }
+                    elsif (-f $target && -f $other_target) {
+                        if ($self->file_comparer->compare($target, $other_target)) {
+                            $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
+                                'symlinks are not the same (diff -u %s %s) (diff -u %s %s)',
+                                $file, $other_file, $target, $other_target
+                            );
+                        }
+                        else {
+                            #Symlink targets are in fact the same content - do nothing
+                        }
+                    }
+                    else {
+                        $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
+                            'paths are not the same (diff -u %s %s) (diff -u %s %s)',
+                            $file, $other_file, $target, $other_target
+                        );
+                    }
                 }
-                elsif (-f $target && -f $other_target && !$self->file_comparer->compare($target, $other_target)) {
-                    #Files are in fact the same - do nothing
-                }
-                else {
+                elsif ($self->file_comparer->compare($target, $other_target)) {
                     $diffs{File::Spec->abs2rel($file, $output_dir)} = sprintf(
                         'files are not the same (diff -u %s %s)',
                         $file, $other_file
                     );
+                }
+                else {
+                    # Files are the same
                 }
             }
         },

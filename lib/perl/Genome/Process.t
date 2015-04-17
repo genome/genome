@@ -104,6 +104,11 @@ my %tests = (
         test_name  => 'One-level symlink',
         diff_count => 0,
     },
+    symlink_changed => {
+        test_name  => 'File content of symlink target changed',
+        diff_count => 1,
+        diff_message => 'symlinks are not the same',
+    },
     deep_symlink => {
         test_name  => 'Two-level deep symlink',
         diff_count => 0,
