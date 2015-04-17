@@ -5,7 +5,7 @@ use warnings;
 
 use Genome qw();
 
-use Test::More tests => 4;
+use Test::More tests => 5;
 use Test::Fatal qw(exception);
 
 use File::Temp qw();
@@ -111,4 +111,38 @@ subtest 'validation' => sub {
     my $exception = exception { Genome::Config::get('bad_numeric_key') };
     ok($exception, 'got exception');
     is(Genome::Config::get('good_numeric_key'), '123', 'got number');
+};
+
+subtest 'sticky' => sub {
+    plan tests => 2;
+
+    my $temp_conf_dir = File::Temp->newdir();
+    local $ENV{XGENOME_CONFIG_DIRS} = $temp_conf_dir->dirname;
+    setup_config(
+        home => {},
+        conf => [
+        {
+            dir => Path::Class::Dir->new($temp_conf_dir->dirname, 'genome'),
+            config => {
+                bad_sticky_key => 'abc',
+                good_sticky_key => 'abc',
+            },
+            spec => {
+                bad_sticky_key => {
+                    type => 'Int',
+                    sticky => 1,
+                },
+                good_sticky_key => {
+                    type => 'Int',
+                    sticky => 1,
+                    env => 'GOOD_STICKY_KEY',
+                },
+            },
+        },
+        ],
+    );
+
+    my $exception = exception { Genome::Config::get('bad_sticky_key') };
+    ok($exception, 'got exception');
+    is(Genome::Config::get('good_sticky_key'), 'abc', 'got value');
 };
