@@ -17,6 +17,9 @@ sub setup_config {
     });
 
     for my $blob ($params{home}, @{$params{conf}}) {
+        unless (defined $blob->{dir}) {
+            next;
+        }
         unless (-d $blob->{dir}) {
             mkdir $blob->{dir};
         }
