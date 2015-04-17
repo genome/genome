@@ -5,7 +5,8 @@ use warnings;
 
 use Genome qw();
 
-use Test::More tests => 2;
+use Test::More tests => 3;
+use Test::Fatal qw(exception);
 
 use File::Temp qw();
 use Genome::Test::Config qw(setup_config);
@@ -49,4 +50,32 @@ subtest 'basic lookup' => sub {
 
     is(Genome::Config::get('home_key'), 'home_dir_value', 'looked up correct value for home_key');
     is(Genome::Config::get('conf_key'), 'conf_dir_value', 'looked up correct value for conf_key');
+};
+
+subtest 'required value' => sub {
+    plan tests => 2;
+
+    my $temp_conf_dir = File::Temp->newdir();
+    local $ENV{XGENOME_CONFIG_DIRS} = $temp_conf_dir->dirname;
+    setup_config(
+        home => {},
+        conf => [
+        {
+            dir => Path::Class::Dir->new($temp_conf_dir->dirname, 'genome'),
+            spec => {
+                some_key => {
+                    type => 'Str',
+                },
+                some_key_with_default => {
+                    type => 'Str',
+                    default_value => '',
+                },
+            },
+        },
+        ],
+    );
+
+    my $exception = exception { Genome::Config::get('some_key') };
+    ok($exception, 'got exception');
+    is(Genome::Config::get('some_key_with_default'), '', 'got empty string');
 };
