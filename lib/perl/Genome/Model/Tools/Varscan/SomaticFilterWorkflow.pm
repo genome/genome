@@ -31,6 +31,10 @@ class Genome::Model::Tools::Varscan::SomaticFilterWorkflow {
         is => 'FilesystemPath',
         doc => 'Directory where output files will be written',
     },
+    bamrc_version => {
+        is => 'String',
+        doc => 'version of bam-readcount to use',
+    },
     ],
 };
 
@@ -208,7 +212,7 @@ sub run_filter_workflow {
         'bam_file' => $bam,
         'outdir' => $self->outdir,
         'reference' => $self->reference,
-        'bam_readcount_version' => "0.6",
+        'bam_readcount_version' => $self->bamrc_version,
     );
 
     $self->check_result($result);

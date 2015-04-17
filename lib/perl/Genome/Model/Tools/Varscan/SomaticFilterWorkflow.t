@@ -44,6 +44,7 @@ Genome::Model::Tools::Varscan::SomaticFilterWorkflow->create(
         $expected_output_dir,
         "varscan.snps"),
     reference => $ref_fa,
+    bamrc_version => 0.7,
 );
 $somatic_filter->queue_status_messages(1);
 $somatic_filter->execute();
