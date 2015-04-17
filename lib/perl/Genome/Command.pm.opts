@@ -14402,6 +14402,8 @@ $Genome::Command::OPTS_SPEC = [
     [
       'clusters-file=s',
       'files',
+      'do-1d-clustering!',
+      undef,
       'r-script-file=s',
       'files',
       'sample-names=s',
