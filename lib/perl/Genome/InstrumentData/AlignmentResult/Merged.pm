@@ -156,8 +156,6 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return unless ($self);
 
-    $self->_lock_per_lane_alignments();
-
     try {
         #TODO In a future version collect relevant alignments from other merged alignment results when available
         $self->debug_message('Collecting alignments for merger...');
@@ -175,7 +173,7 @@ sub create {
             #handle duplicates on a per-library basis
             for my $alignment (@alignments) {
                 my $library = $alignment->instrument_data->library;
-                push @{ $bams_per_library->{$library->id} }, $alignment->revivified_alignment_bam_file_path;
+                push @{ $bams_per_library->{$library->id} }, $alignment->get_bam_file;
                 $libraries->{$library->id} = $library;
             }
 
@@ -194,7 +192,7 @@ sub create {
         } else {
             #just collect the BAMs for a merge
             for my $alignment (@alignments) {
-                push @bams_for_final_merge, $alignment->revivified_alignment_bam_file_path;
+                push @bams_for_final_merge, $alignment->get_bam_file;
             }
         }
 
@@ -264,8 +262,7 @@ sub create {
                     die $self->error_message("Fail to run flagstat on $bam_path");
                 }
             }
-            $alignment->_reallocate_disk_allocation;
-            $self->_remove_per_lane_bam_post_commit($bam_path, $alignment);
+            $self->_remove_per_lane_bam_post_commit($alignment);
         }
     }
     $self->debug_message('All processes completed.');
@@ -294,7 +291,7 @@ sub _size_up_allocation {
 # files and the merged result will not be committed. This will orphan
 # per-lane bam results and make them non-recoverable without realignment.
 sub _remove_per_lane_bam_post_commit {
-    my ($self, $bam_path, $alignment) = @_;
+    my ($self, $alignment) = @_;
 
     unless ($ENV{UR_DBI_NO_COMMIT}) {
         $self->debug_message("Now removing the per lane bam");
@@ -303,26 +300,14 @@ sub _remove_per_lane_bam_post_commit {
             aspect => 'commit',
             once => 1,
             callback => sub {
-                $self->_remove_per_lane_bam($bam_path);
-                $alignment->_reallocate_disk_allocation;
+                $alignment->remove_bam;
             }
         );
     }
     return 1;
 }
 
-sub _remove_per_lane_bam {
-    my ($self, $bam_path) = @_;
-    for my $type ('', '.bai', '.md5') {
-        my $file = $bam_path . $type;
-        unlink $file;
-        if (-s $file and !$type) {  #only bam matters
-            die $self->error_message("Failed to cleanup $file");
-        }
-    }
-    return 1;
-}
-
+    
 sub collect_individual_alignments {
     my $self = shift;
     my $result_users = shift || $self->_user_data_for_nested_results;
@@ -800,54 +785,5 @@ sub scalar_property_from_underlying_alignment_results {
     }
 }
 
-
-sub _lock_per_lane_alignments {
-    my $self = shift;
-
-    for my $alignment ($self->collect_individual_alignments) {
-        unless ($alignment->get_merged_alignment_results) {
-            my @bams = $alignment->alignment_bam_file_paths;
-            unless (@bams) {
-               die $self->error_message("Alignment result with class (%s) and id (%s) has neither ".
-                   "merged results nor valid bam paths. This likely means that this alignment result ".
-                   "needs to be removed and realigned because data has been lost. ".
-                   "Please create an apipe-support ticket for this.", $alignment->class, $alignment->id);
-               #There is no way to recreate per lane bam if merged bam
-               #does not exist and per lane bam is removed. Software
-               #result of this per lane alignment needs to be removed and
-               #this per lane instrument data needs to be realigned
-               #with that aligner.
-            }
-
-            my $resource = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$alignment->id);
-            my $lock = Genome::Sys::LockProxy->new(
-                resource => $resource,
-                scope => 'site',
-            )->lock(
-                max_try       => 288, # Try for 48 hours every 10 minutes
-                block_sleep   => 600,
-            );
-            die $self->error_message("Unable to acquire the lock for per lane alignment result id (%s) !", $alignment->id) unless $lock;
-
-            # If the build before us successfully created a merged alignment result, we no longer need a lock
-            # If it failed, we will add an observer just as the first build did.
-            if ($alignment->get_merged_alignment_results) {
-                $lock->unlock();
-            } else {
-                # The problem here is if we commit BEFORE merge is done, we unlock too early.
-                # However, if we unlock any other way we may fail to unlock more often and leave old locks.
-                UR::Context->process->add_observer(
-                    aspect   => 'commit',
-                    once => 1,
-                    callback => sub {
-                        $lock->unlock();
-                    }
-                );
-            }
-        }
-    }
-
-    return 1;
-}
 
 1;

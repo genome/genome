@@ -119,26 +119,14 @@ sub create {
 
     $self->_prepare_staging_directory;
 
-    #the bam could be either per lane bam or merged bam, hardcode for now
-    my $merge_bam = $self->alignment_result->output_dir.'/'.$self->alignment_result_id . '.bam';
-    my $lane_bam  = $self->alignment_result->output_dir.'/'.'all_sequences.bam';
-
-    my ($lane_flag, $bam_file);
-
-    if (-s $merge_bam) {
-        $bam_file  = $merge_bam;
-    }
-    elsif (-s $lane_bam) {
-        $bam_file  = $lane_bam;
-        $lane_flag = 1;
-    }
-    else {
-        die $self->error_message("Input alignment bam file is missing (no merge bam at $merge_bam or lane bam at $lane_bam)");
+    my $bam_file = $self->alignment_result->get_bam_file;
+    unless (-s $bam_file) {
+        die $self->error_message("Input alignment bam file is missing");
     }
 
     my $fasta_file = $self->alignment_result->reference_build->full_consensus_path('fa');
     die $self->error_message("Reference FASTA File ($fasta_file) is missing") unless -s $fasta_file;
-    
+
     my $log_dir = $self->log_directory;
     unless($log_dir) {
         $log_dir = '' . $self->temp_staging_directory;
@@ -160,9 +148,11 @@ sub create {
     );
 
     # use per lane instrument data id as link name
-    if ($lane_flag) {
+    my $lane_flag;
+    if ($self->alignment_result->isa('Genome::InstrumentData::AlignmentResult')) {
         my $instr_data = $self->alignment_result->instrument_data;
         $bam_qc_params{bam_link_name} = $instr_data->id;
+        $lane_flag = 1;
     }
 
     # Skip samstat html-report for bwamem/sw

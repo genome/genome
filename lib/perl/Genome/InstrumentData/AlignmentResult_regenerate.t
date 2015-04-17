@@ -237,4 +237,38 @@ subtest 'test per lane bam removal and recreation - AlignedBamResult accessors' 
     is($ar2->bam_md5_path, File::Spec->join($ar2->output_dir, 'all_sequences.bam.md5'), 'bam_md5_path correct after revivification');
 };
 
+subtest 'test get_bam_file' => sub {
+    my $ar2_ori_bam_file = File::Spec->join($ar2->output_dir, $per_lane_bam);
+    my $ar2_bam_file     = $ar2->get_bam_file;
+    isnt($ar2_bam_file, $ar2_ori_bam_file, 'AR2 get_bam_file exists and is different from the result bam path');
+
+    my $new_flagstat_file = Genome::Sys->create_temp_file_path;
+    `samtools flagstat $ar2_bam_file > $new_flagstat_file`;
+    compare_ok($new_flagstat_file, File::Spec->join($ar2->output_dir, $per_lane_flagstat), 'AR2 get_bam_file flagstat ok');
+
+    #copy .bam and .bam.bai back to ar2 per lane alignment result
+    #output dir since previous merge removed per lane bam
+    for my $type ('', '.bai') {
+        my $ar2_base = $per_lane_bam.$type;
+        my $ar2_file = File::Spec->join($ar2->output_dir, $ar2_base);
+        Genome::Sys->copy_file(File::Spec->join($test_data_dir, 'ar2', $ar2_base), $ar2_file);
+        ok(-s $ar2_file, "$ar2_base copied over ok");
+    }
+
+    $merged_result->test_name($test_name.' changed');
+    my $ar2_copy_bam_file = $ar2->get_bam_file;
+    isnt($ar2_copy_bam_file, $ar2_ori_bam_file, 'AR2 get_bam_file returns copied bam file and is different from the result bam path');
+
+    for my $type ('', '.bai') {
+        my $base_name = $per_lane_bam.$type;
+        my $file      = $ar2_copy_bam_file.$type;
+        my $ar2_file  = File::Spec->join($ar2->output_dir, $base_name);
+        compare_ok($file, $ar2_file, "AR2 get_bam_file $base_name copied ok");
+    }
+
+    my $md5_ori  = Genome::Sys->md5sum($ar2_ori_bam_file);
+    my $md5_copy = Genome::Sys->md5sum($ar2_copy_bam_file);
+    is($md5_ori, $md5_copy, 'AR2 get_bam_file copied bam is exactly same as the original one');
+};
+
 done_testing();

@@ -21,7 +21,7 @@ sub execute {
     # Tophat v1.1.0 and later produces BAM output
     my $bam_file;
     if (version->parse($alignment_result->aligner_version) >= version->parse('1.1.0')) {
-        $bam_file = $alignment_result->bam_file;
+        $bam_file = $alignment_result->get_bam_file;
     } else {
         die('Coverage requires a BAM file produced by TopHat v1.1.0 or greater');
     }

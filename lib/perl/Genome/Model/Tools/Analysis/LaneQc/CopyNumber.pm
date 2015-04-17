@@ -85,8 +85,8 @@ sub execute {
         for my $alignment (@alignments) {
             my $alignment_id = $alignment->id;
             my $reference = $alignment->reference_build->full_consensus_path('fa');
-            my $instrument_data_id = $alignment->instrument_data_id;    
-            my @bams = $alignment->alignment_bam_file_paths;
+            my $instrument_data_id = $alignment->instrument_data_id;
+            my @bams = $alignment->get_bam_file;
             unless(@bams) {
                 $self->error_message("No alignment bam for $alignment_id");
                 return;

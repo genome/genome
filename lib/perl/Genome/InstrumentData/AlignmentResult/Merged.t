@@ -22,7 +22,7 @@ my $pkg = 'Genome::InstrumentData::AlignmentResult::Merged';
 use_ok($pkg);
 
 # Override methods for testing so we don't need to worry about commit observers in the unit test
-Sub::Install::install_sub({code => sub { my ($self, $bam_path) = @_; $self->_remove_per_lane_bam($bam_path); },
+Sub::Install::install_sub({code => sub { my ($self, $alignment) = @_; $alignment->remove_bam; },
         into => 'Genome::InstrumentData::AlignmentResult::Merged', as => '_remove_per_lane_bam_post_commit'});
 
 Sub::Install::install_sub({code => sub { return 1; },
@@ -46,7 +46,7 @@ my $aligner_version  = $aligner_tools_class_name->default_version;
 my $aligner_label    = $aligner_name.$aligner_version;
 $aligner_label       =~ s/\./\_/g;
 
-my $expected_base_dir = Genome::Utility::Test->data_dir_ok($pkg);
+my $expected_base_dir = Genome::Utility::Test->data_dir_ok($pkg, 'v1');
 my $expected_shortcut_path = $expected_base_dir .'/bwa/',
 my $expected_dir = $expected_base_dir .'/expected';
 

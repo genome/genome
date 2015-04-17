@@ -36,6 +36,7 @@ ok($aligned_bam_result, 'defined aligned bam result');
 my $bam_path = $aligned_bam_result->bam_path;
 is($bam_path, $tmpdir.'/'.$aligned_bam_result->id.'.bam', 'bam path named correctly');
 is($aligned_bam_result->bam_file, $bam_path, 'bam file is same as bam path');
+is($aligned_bam_result->get_bam_file, $bam_path, 'get_bam_file interface works');
 Genome::Sys->create_symlink($input_bam, $bam_path);
 ok(-s $bam_path, 'linked bam');
 

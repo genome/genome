@@ -91,7 +91,7 @@ sub execute {
     my $alignment_result = $self->alignment_result;
     my $picard_version = $self->picard_version;
     
-    my $bam_file = $alignment_result->bam_file;
+    my $bam_file = $alignment_result->get_bam_file;
     
     my $reference_fasta_file = $reference_build->full_consensus_path('fa');
     unless (-s $reference_fasta_file) {

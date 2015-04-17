@@ -65,7 +65,7 @@ sub execute {
         }
         my @alignments = $build->alignment_results_for_instrument_data($instrument_data);
         for my $alignment (@alignments) {
-            my @bams = $alignment->alignment_bam_file_paths;
+            my @bams = $alignment->get_bam_file;
             $self->debug_message("bam file paths: ". @bams);
 
             push @{$library_alignments{$library}}, @bams;  #for the dedup step
@@ -247,7 +247,7 @@ sub calculate_required_disk_allocation_kb {
     for my $instrument_data (@instrument_data) {
         my @alignments = $build->alignment_results_for_instrument_data($instrument_data);
         for my $alignment (@alignments) {
-            my @aln_bams = $alignment->alignment_bam_file_paths;
+            my @aln_bams = $alignment->get_bam_file;
             push @build_bams, @aln_bams;
         }
     }
