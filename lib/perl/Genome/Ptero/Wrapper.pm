@@ -6,7 +6,13 @@ use Genome;
 use Data::Dump qw();
 use IO::Handle;
 use Cwd qw(abs_path);
+use Genome::Utility::Text qw(
+    sanitize_string_for_filesystem
+);
+use Genome::Utility::Inputs qw(encode decode);
+use Data::Dump qw(pp);
 use Ptero::Proxy::Workflow::Execution;
+use Try::Tiny qw(try catch);
 
 class Genome::Ptero::Wrapper {
     is => 'Command::V2',
@@ -39,6 +45,7 @@ class Genome::Ptero::Wrapper {
 sub execute {
     my $self = shift;
 
+    $self->debug_message("Creating log directory %s", $self->log_directory);
     Genome::Sys->create_directory($self->log_directory);
     validate_environment();
 
@@ -53,11 +60,13 @@ sub execute {
     # this will get logged to the log files
     $self->_log_execution_information;
 
-    my $command = $self->_instantiate_command($self->execution->inputs);
+    my $command = $self->_instantiate_command(decode($self->execution->inputs));
 
     $self->_run_command($command);
 
     $self->_teardown_logging;
+
+    printf SAVED_STDERR "Setting outputs: %s\n", pp(_get_command_outputs($command, $self->command_class));
     $self->execution->set_outputs(
         _get_command_outputs($command, $self->command_class));
 
@@ -76,18 +85,25 @@ sub _stdout_log_path {
     my $self = shift;
 
     my $base_name = $self->execution->name;
-    my $output_log = File::Spec->join(abs_path($self->log_directory), "$base_name.out");
+    my $output_log = File::Spec->join(abs_path($self->log_directory),
+        sanitize_string_for_filesystem("$base_name.out"));
 }
 
 sub _stderr_log_path {
     my $self = shift;
 
     my $base_name = $self->execution->name;
-    my $output_log = File::Spec->join(abs_path($self->log_directory), "$base_name.err");
+    my $output_log = File::Spec->join(abs_path($self->log_directory),
+        sanitize_string_for_filesystem("$base_name.err"));
 }
 
 sub _setup_logging {
     my $self = shift;
+
+    $self->debug_message(
+        "Preparing to redirect stderr to (%s) and stdout to (%s)",
+        $self->_stderr_log_path, $self->_stdout_log_path
+    );
 
     $self->execution->update_data(
         stdout_log => $self->_stdout_log_path,
@@ -110,6 +126,8 @@ sub _setup_logging {
 sub _teardown_logging {
     my $self = shift;
 
+    printf SAVED_STDERR "Removing stderr and stdout redirection\n";
+
     open(STDOUT, ">&SAVED_STDOUT") || die "Can't restore STDOUT\n";
     open(STDERR, ">&SAVED_STDERR") || die "Can't restore STDERR\n";
 }
@@ -126,30 +144,36 @@ sub _log_execution_information {
 sub _instantiate_command {
     my ($self, $inputs) = @_;
 
+    printf SAVED_STDERR "Instantiating command %s\n", $self->command_class;
+
     my $pkg = $self->command_class;
     eval "use $pkg";
-    my $cmd = eval {$pkg->create(%$inputs)};
-    my $error = $@;
-    if ($error) {
+
+    my $cmd = try {
+        $pkg->create(%$inputs)
+    } catch {
         Carp::confess sprintf(
             "Failed to instantiate class (%s) with inputs (%s): %s",
-            $pkg, Data::Dump::pp($inputs), $error);
-    }
+            $pkg, Data::Dump::pp($inputs), $_)
+    };
+
     return $cmd;
 }
 
 sub _run_command {
     my ($self, $command) = @_;
 
+    printf SAVED_STDERR "Running command %s\n", $self->command_class;
+
     my $method = $self->method;
-    my $ret = eval { $command->$method() };
-    my $error = $@;
-    if ($error) {
+    my $ret = try {
+        $command->$method()
+    } catch {
         Carp::confess sprintf(
             "Crashed in %s for command %s: %s",
-            $self->method, $self->command_class, $error,
+            $self->method, $self->command_class, $_,
         );
-    }
+    };
     unless ($ret) {
         Carp::confess sprintf("Failed to %s for command %s.",
             $self->method, $self->command_class,
@@ -163,17 +187,14 @@ sub _run_command {
 }
 
 sub _commit {
-    my $rv = eval {
-        UR::Context->commit();
+    my $rv = try {
+        UR::Context->commit()
+    } catch {
+        Carp::confess "Failed to commit: $_";
     };
 
-    my $error = $@;
-    if ($error) {
-        Carp::confess "Failed to commit: $error";
-    } else {
-        unless ($rv) {
-            Carp::confess "Failed to commit: see above logged errors";
-        }
+    unless ($rv) {
+        Carp::confess "Failed to commit: see previously logged errors";
     }
 }
 
@@ -187,7 +208,7 @@ sub _get_command_outputs {
         $outputs{$prop_name} = $value;
     }
 
-    return \%outputs;
+    return encode(\%outputs);
 }
 
 sub _output_properties {
