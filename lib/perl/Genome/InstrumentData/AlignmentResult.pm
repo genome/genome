@@ -13,6 +13,7 @@ use File::stat;
 use Carp qw(confess);
 use File::Basename;
 
+use Genome::Sys::LockMigrationProxy qw();
 use Genome::Utility::Instrumentation;
 
 use warnings;
