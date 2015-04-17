@@ -32,6 +32,7 @@ ok($clinseq_build, "Found clinseq build.");
 my $run_iloh = Genome::Model::ClinSeq::Command::IdentifyLoh->create(
     outdir => $temp_dir,
     clinseq_build => $clinseq_build,
+    bamrc_version => 0.6,
     test => 1,
 );
 $run_iloh->queue_status_messages(1);
