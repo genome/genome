@@ -12,7 +12,6 @@ use List::Util qw(shuffle);
 use Try::Tiny qw(try catch finally);
 
 use Genome;
-use Genome::Sys::LockProxy qw();
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
 
 class Genome::InstrumentData::AlignmentResult::Merged {
