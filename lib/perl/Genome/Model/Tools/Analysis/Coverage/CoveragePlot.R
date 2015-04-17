@@ -1160,7 +1160,9 @@ for (i in 1:length(samples))
     v$stats <- as.numeric(unlist(strsplit(bs$stats, ",")));
     v$n <- as.numeric(bs$n);
     v$conf <- as.numeric(unlist(strsplit(bs$conf, ",")));
-    v$out <- as.numeric(unlist(strsplit(bs$out, ",")));
+    if (grepl(",", bs$out)) {
+        v$out <- as.numeric(unlist(strsplit(bs$out, ",")));
+    }
     
     # gp=gpar(col=cols3[i]), gp=gpar(col="navy")
     name <- paste("boxplot", i, sep="");

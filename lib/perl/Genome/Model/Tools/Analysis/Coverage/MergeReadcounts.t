@@ -38,16 +38,18 @@ eval
 
     #create temp directory for merging
     my $tempdir = Genome::Sys->create_temp_directory();
-    #ok(-s $tempdir, 'temporary directory created') or die;
+    #$tempdir = '/gscmnt/gc3037/info/medseq/gchang/work2/09_OTHERS/14-24-MergeReadcount-upgrade1';       # for debug
+    ok(-s $tempdir, 'temporary directory created') or die;
+
 
     # creates and executes a command
     my $cmd = $class->create(
-        bam_files => "$bam_file1,$bam_file2",
-        variant_files => "$variant_file1,$variant_file2",
-        variant_sources => "sample1,sample2",
+        bam_files => [$bam_file1, $bam_file2],
+        variant_files => [$variant_file1, $variant_file2],
+        variant_sources => ["sample1", "sample2"],
         genome_build => "mm9",
         output_file => "$tempdir/out_file",
-        header_prefixes => "normal,tumor",
+        header_prefixes => ["normal", "tumor"],
         bam_readcount_version => 0.6,
     );
 
