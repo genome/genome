@@ -5,6 +5,7 @@ use warnings;
 
 use Mouse;
 
+use File::Basename qw(fileparse);
 use Genome::Carp qw(croakf);
 use Module::Runtime qw();
 use Path::Class qw();
@@ -23,7 +24,7 @@ sub new_from_file {
     my $class = shift;
     my $file = Path::Class::File->new(shift);
 
-    (my $key = $file->basename) =~ s/\.yaml$//i;
+    my $key = fileparse($file, qr/\.yaml/i);
     my $data = YAML::Syck::LoadFile($file->stringify);
 
     my @validators;
