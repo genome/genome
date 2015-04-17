@@ -18,8 +18,8 @@ use_ok($class) or die;
 
 my $inputs = $class->create(
     source_files => 'in.1.fastq,in.2.fastq',
+    description => 'imported',
     instrument_data_properties => [qw/ 
-        description=imported
         downsample_ratio=0.7
         import_source_name=TGI
         this=that
@@ -52,14 +52,23 @@ throws_ok(
     sub {
         $class->create(
             source_files => 'in.bam',
-            instrument_data_properties => [qw/ 
-            description=imported
-            description=inported
-            /],
+            instrument_data_properties => [qw/ foo=bar foo=baz /],
+        );
+    },
+    qr/Multiple values for instrument data property! foo => bar, baz/,
+    "execute failed w/ duplicate key, diff value for instdata properties",
+);
+
+throws_ok(
+    sub {
+        $class->create(
+            source_files => 'in.bam',
+            description => 'imported',
+            instrument_data_properties => [qw/ description=inported /],
         );
     },
     qr/Multiple values for instrument data property! description => imported, inported/,
-    "execute failed w/ duplicate key, diff value",
+    "execute failed w/ duplicate key, diff value for description",
 );
 
 throws_ok(
