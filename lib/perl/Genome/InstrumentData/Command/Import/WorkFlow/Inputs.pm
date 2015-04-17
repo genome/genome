@@ -16,7 +16,12 @@ sub create {
     my ($class, %params) = @_;
 
     my %inputs;
-    $inputs{instrument_data_properties} = $class->_resolve_instrument_data_properties($params{instrument_data_properties});
+    $inputs{source_files} = $class->_resolve_source_files(\%params);
+    $inputs{instrument_data_properties} = $class->_resolve_instrument_data_properties(\%params);
+
+    if ( not $inputs{instrument_data_properties}->{original_data_path} ) {
+        $inputs{instrument_data_properties}->{original_data_path} = join(',', @{$inputs{source_files}});
+    }
 
     return $class->SUPER::create(_inputs => \%inputs);
 }
@@ -31,9 +36,21 @@ sub instrument_data_properties {
     return $self->_inputs->{instrument_data_properties};
 }
 
-sub _resolve_instrument_data_properties {
-    my ($class, $incoming_properties) = @_;
+sub _resolve_source_files {
+    my ($self, $params) = @_;
 
+    my $source_files = delete $params->{source_files};
+    die $self->error_message('No source files!') if not $source_files;
+    my @source_files = split(/,/, $source_files);
+    # FIXME check exists?
+
+    return \@source_files;
+}
+
+sub _resolve_instrument_data_properties {
+    my ($class, $params) = @_;
+
+    my $incoming_properties = delete $params->{instrument_data_properties};
     return {} if not $incoming_properties and not @$incoming_properties;
 
     my %properties;

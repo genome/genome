@@ -17,6 +17,7 @@ my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::Inputs';
 use_ok($class) or die;
 
 my $inputs = $class->create(
+    source_files => 'in.1.fastq,in.2.fastq',
     instrument_data_properties => [qw/ 
         description=imported
         downsample_ratio=0.7
@@ -28,10 +29,12 @@ ok($inputs, 'create inputs');
 is_deeply(
     $inputs->for_worklflow,
     { 
+        source_files => [qw/ in.1.fastq in.2.fastq /],
         instrument_data_properties => {
             downsample_ratio => 0.7,
             description => 'imported',
             import_source_name => 'TGI',
+            original_data_path => 'in.1.fastq,in.2.fastq',
             this => 'that', 
         },
     },
@@ -40,8 +43,15 @@ is_deeply(
 
 # ERRORS
 throws_ok(
+    sub { $class->create(); },
+    qr/No source files\!/,
+    "create failed w/o source files",
+);
+
+throws_ok(
     sub {
         $class->create(
+            source_files => 'in.bam',
             instrument_data_properties => [qw/ 
             description=imported
             description=inported
@@ -55,6 +65,7 @@ throws_ok(
 throws_ok(
     sub{
         $class->create(
+            source_files => 'in.bam',
             instrument_data_properties => [qw/ 
             description=
             /],

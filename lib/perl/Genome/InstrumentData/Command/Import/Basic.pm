@@ -165,15 +165,11 @@ sub _resolve_instrument_data_properties {
     push @instrument_data_properties, 'description='.$self->description if defined $self->description;
     push @instrument_data_properties, 'downsample_ratio='.$self->downsample_ratio if defined $self->downsample_ratio;
     my $instdata_props_processor = Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
+        source_files => $self->source_files,
         instrument_data_properties => \@instrument_data_properties,
     );
 
-    my $instrument_data_properties = $instdata_props_processor->instrument_data_properties;
-    if ( not $instrument_data_properties->{original_data_path} ) {
-        $instrument_data_properties->{original_data_path} = join(',', $self->source_files);
-    }
-
-    return $self->_instrument_data_properties($instrument_data_properties);
+    return $self->_instrument_data_properties($instdata_props_processor->instrument_data_properties);
 }
 
 sub _resolve_working_directory {
