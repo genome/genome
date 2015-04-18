@@ -83,9 +83,10 @@ class Genome::Model::Tools::Vcf::EvaluateVcfs {
     ],
 
     has_output => [
-        rawstats => {
+        rawdata => {
             is => "HASH",
-            doc => "The raw stats generated during primary execution",
+            doc => "The organized stats & metadata generated during "
+                   . "primary execution",
         },
     ],
 };
@@ -95,6 +96,7 @@ sub execute {
     $DB::single = 1;
     my $configs = $self->parse_config_file();
     $self->collect_statistics($configs);
+    $self->rawdata($configs);
     $self->display_summary_stats($configs);
     return 1;
 }
