@@ -16,8 +16,8 @@ use above 'Genome';
 #This is a bare minimum test that just compiles Perl and the UR class.
 use_ok('Genome::Model::Tools::Vcf::EvaluateVcfs');
 
-#SKIP: {
-#    skip "this is a long-running test & must be run within TGI", 75;
+SKIP: {
+    skip "this is a long-running test & must be run within TGI", 75;
 
     # This directory contains the test data set (based from BIO-1176)
     my $basedir = Path::Class::Dir->new(
@@ -27,7 +27,7 @@ use_ok('Genome::Model::Tools::Vcf::EvaluateVcfs');
 
     my $cmd = run_evaluate_vcfs();
     check_stats($cmd);
-#}
+}
 
 done_testing();
 
