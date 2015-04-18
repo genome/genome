@@ -93,7 +93,6 @@ class Genome::Model::Tools::Vcf::EvaluateVcfs {
 
 sub execute {
     my $self = shift;
-    $DB::single = 1;
     my $configs = $self->parse_config_file();
     $self->collect_statistics($configs);
     $self->rawdata($configs);
@@ -175,7 +174,6 @@ sub parse_config_file {
 sub _run_evaluate_vcf {
     my ($self, $outdir, $inputs) = @_;
 
-    $DB::single = 1;
     my $cmd = Genome::Model::Tools::Vcf::EvaluateVcf->create(
         vcf                  => $inputs->{'vcf'}->stringify,
         old_sample           => $inputs->{'sample'},
