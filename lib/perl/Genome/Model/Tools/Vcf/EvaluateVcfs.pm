@@ -102,6 +102,12 @@ sub execute {
 sub display_summary_stats {
     my ($self, $configs) = @_;
 
+    print "\n";
+    print "==================", "\n";
+    print "Valdiation Summary", "\n";
+    print "==================", "\n";
+    print "\n";
+
     my @stat_names = $self->stat_types;
     my @headers = ('Name', 'ID', 'VarType', @stat_names);
     print join("\t", @headers), "\n";
