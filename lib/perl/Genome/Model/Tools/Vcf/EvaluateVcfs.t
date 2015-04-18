@@ -6,7 +6,9 @@ use warnings;
 
 # M O D U L E S ###############################################################
 use Test::More;
+use Test::Number::Delta within => 1e-4;
 use Path::Class;
+use YAML::XS;
 use above 'Genome';
 
 # M A I N #####################################################################
@@ -15,8 +17,16 @@ use above 'Genome';
 use_ok('Genome::Model::Tools::Vcf::EvaluateVcfs');
 
 #SKIP: {
-#    skip "this is a long-running test", 18;
-    run_evaluate_vcfs();
+#    skip "this is a long-running test & must be run within TGI", 75;
+
+    # This directory contains the test data set (based from BIO-1176)
+    my $basedir = Path::Class::Dir->new(
+        '/gscmnt/gc2801/analytics/idas',
+        'jira/BIO-1387/cle-data'
+    );
+
+    my $cmd = run_evaluate_vcfs();
+    check_stats($cmd);
 #}
 
 done_testing();
@@ -29,6 +39,35 @@ sub run_evaluate_vcfs {
     ok($cmd, 'Got a Genome::Model::Tools::Vcf::EvaluateVcfs instance');
     diag('executing command');
     ok($cmd->execute, 'successfully ran execute');
+    return $cmd;
+}
+
+sub check_stats {
+    my $cmd = shift;
+
+    my $expected_results = get_expected_results();
+    ok($expected_results, "Loaded the expected results");
+
+    my $rawdata = $cmd->rawdata();
+    ok($rawdata, 'Got the raw output command data');
+
+    my @stat_names = $cmd->stat_types;
+
+    for my $set (@{$rawdata}) {
+        my ($name, $type) = ($set->{'name'}, $set->{'variant_type'});
+        diag("\nvalidating stat set -- name: '$name' | type: '$type'\n");
+
+        my ($expected_set) =
+          grep { $_->{'name'} eq $name && $_->{'variant_type'} eq $type }
+          @{$expected_results};
+        ok($expected_set, "Got expected results set");
+
+        for my $stat (@stat_names) {
+            my $calculated = $set->{'stats'}->{$stat};
+            my $expected = $expected_set->{'stats'}->{$stat};
+            delta_ok($calculated, $expected, "stat: '$stat' matches up");
+        }
+    }
 }
 
 sub setup_evaluation_params {
@@ -38,11 +77,6 @@ sub setup_evaluation_params {
 
     my $outdir = setup_output_dir($tmp);
     ok (-e $outdir, "Created an output directory : $outdir");
-
-    my $basedir = Path::Class::Dir->new(
-        '/gscmnt/gc2801/analytics/idas',
-        'jira/BIO-1387/cle-data'
-    );
 
     my $config = $basedir->file('edited_germline_config.test.tsv');
     ok(-e "$config", "Got the config file : $config");
@@ -71,6 +105,14 @@ sub setup_evaluation_params {
     );
 
     return %params;
+}
+
+sub get_expected_results {
+    my $expected = $basedir->file('answers.yml');
+    ok(-e "$expected", "Got the expected results file : $expected");
+
+    my $results = YAML::XS::LoadFile($expected);
+    return $results;
 }
 
 sub setup_output_dir {
