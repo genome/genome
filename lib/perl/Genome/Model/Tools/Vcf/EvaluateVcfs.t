@@ -55,7 +55,7 @@ sub check_stats {
 
     for my $set (@{$rawdata}) {
         my ($name, $type) = ($set->{'name'}, $set->{'variant_type'});
-        diag("\nvalidating stat set -- name: '$name' | type: '$type'\n");
+        diag("\nvalidating stat set -- name: '$name' | type: '$type'\n\n");
 
         my ($expected_set) =
           grep { $_->{'name'} eq $name && $_->{'variant_type'} eq $type }
