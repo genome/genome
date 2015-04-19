@@ -96,12 +96,15 @@ sub execute {
     my $configs = $self->parse_config_file();
     $self->collect_statistics($configs);
     $self->rawdata($configs);
-    $self->display_summary_stats($configs);
+    $self->display_summary_stats();
     return 1;
 }
 
 sub display_summary_stats {
-    my ($self, $configs) = @_;
+    my $self = shift;
+    my $configs = $self->rawdata;
+
+    $self->status_message("Generating Summary Report");
 
     print "\n";
     print "==================", "\n";
@@ -124,16 +127,36 @@ sub display_summary_stats {
 sub collect_statistics {
     my ($self, $inputs) = @_;
 
+    my ($i, $total) = (1, scalar @{$inputs});
+    $self->status_message(
+        "Performing Evaluations & Collecting Statistics (%d vcfs)",
+        $total
+    );
+
     for my $set (@{$inputs}) {
+        $self->status_message(
+            "[ $i | $total ] Name: %s / Model ID: %s / Type: %s",
+            $set->{'name'}, $set->{'id'}, $set->{'variant_type'}
+        );
+        $self->status_message(" ---> Vcf: %s", $set->{'vcf'});
+
         my $wkspace = $self->create_subdirectory_workspace($set);
+        $self->status_message(" ---> Output Workspace: %s", $wkspace->stringify);
+
+        $self->status_message(" ---> Start VCF Evaluation");
         my $stats = $self->_run_evaluate_vcf($wkspace, $set);
+        $self->status_message(" ---> Finish VCF Evaluation\n\n");
+
         $set->{'stats'} = $stats;
+        $i++;
     }
 }
 
 sub parse_config_file {
     my $self = shift;
     my $config = $self->fetch_config_file;
+
+    $self->status_message("Parsing configuration file : $config");
 
     my $fh = $config->openr;
 
