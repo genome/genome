@@ -174,7 +174,7 @@ sub parse_config_file {
 sub _run_evaluate_vcf {
     my ($self, $outdir, $inputs) = @_;
 
-    my $cmd = Genome::Model::Tools::Vcf::EvaluateVcf->create(
+    my %params = (
         vcf                  => $inputs->{'vcf'}->stringify,
         old_sample           => $inputs->{'sample'},
         new_sample           => "GOLDSTANDARD_SAMPLE",
@@ -187,6 +187,12 @@ sub _run_evaluate_vcf {
         pass_only_expression => $self->pass_filter_expression,
         clean_indels         => $inputs->{'clean_indels'},
     );
+
+    if ($self->true_negative_size) {
+        $params{'true_negative_size'} = $self->true_negative_size;
+    }
+
+    my $cmd = Genome::Model::Tools::Vcf::EvaluateVcf->create(%params);
 
     $cmd->execute or die $self->error_message(
         "Trouble running Genome::Model::Tools::Vcf::EvaluateVcf!"
