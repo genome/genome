@@ -102,6 +102,7 @@ sub setup_evaluation_params {
         true_negative_bed      => "$true_negatives_bed",
         gold_sample            => 'NA12878',
         pass_filter_expression => "-f 'ALLFILTERSPASS > 0'",
+        true_negative_size     => 45235743,
     );
 
     return %params;
