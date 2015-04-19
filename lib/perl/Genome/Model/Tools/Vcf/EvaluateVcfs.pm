@@ -321,7 +321,21 @@ sub help_brief {
 
 sub help_detail {
     my $doc = q{
-      This is where the help details go.
+      This tool is a wrapper process to Genome::Model::Tools::Vcf::EvaluateVcf.
+      It allows one to compare multiple SNV and Indel VCFs against a Gold Standard
+      set.
+
+      A configuration file is used to specify the list of VCFs to compare.  The
+      configuration file is a TSV file with each row containing the following ordered
+      columns: name, model id, vcf file system path, variant type, and sample name.
+
+      This tools parses each line from the configruation file, appropriately
+      passes the parameters into Genome::Model::Tools::Vcf::EvaluateVcf, and records
+      the output statistics.  Once all the configuration lines are processed, a
+      summary report is printed out to the console.
+
+      The validation output statistics for each input VCF are also available via API
+      access for custom reporting.
     };
 
     return $doc;
