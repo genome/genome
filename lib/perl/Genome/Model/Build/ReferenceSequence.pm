@@ -84,7 +84,7 @@ class Genome::Model::Build::ReferenceSequence {
         },
         combines => {
             is => 'Genome::Model::Build::ReferenceSequence',
-            doc => 'If specified, merges several other references into one.', 
+            doc => 'If specified, merges several other references into one.',
             is_many => 1,
         },
     ],
@@ -390,8 +390,8 @@ sub full_consensus_sam_index_path {
     unless (-e $idx_file) {
         my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($sam_version);
         my $cmd      = $sam_path.' faidx '.$fa_file;
-        
-        $self->warning_message("no failx file at $idx_file!");
+
+        $self->warning_message("no faidx file at $idx_file!");
 
         my $lock = Genome::Sys::LockProxy->new(
             resource => 'reference-sequence-' . $self->id . '-faidx',
@@ -455,7 +455,7 @@ sub get_sequence_dictionary {
 
     if (-s $path) {
         return $path;
-    } 
+    }
 
     $self->warning_message("No seqdict at path $path.  Creating...");
 
@@ -481,7 +481,7 @@ sub get_sequence_dictionary {
     my $seqdict_dir = $self->data_directory."/seqdict/";
     my $cd_rv =  Genome::Sys->create_directory($seqdict_dir);
     if ($cd_rv ne $seqdict_dir) {
-        $self->error_message("Failed to to create sequence dictionary directory for $path. Quiting");
+        $self->error_message("Failed to to create sequence dictionary directory for $path. Quitting");
         return;
     }
 
@@ -520,7 +520,7 @@ sub get_sequence_dictionary {
         }
 
         if ($csd_rv ne 1) {
-            $self->error_message("Failed to to create sequence dictionary for $path. Quiting");
+            $self->error_message("Failed to to create sequence dictionary for $path. Quitting");
             return;
         }
     }
@@ -675,7 +675,7 @@ sub available_kb {
     Carp::confess('No directory to get available kb!') if not $directory;
     Carp::confess("Directory ($directory) does not exist! Cannot get available kb!") if not -d $directory;
 
-    $self->status_message('Get availble kb for '.$directory);
+    $self->status_message('Get available kb for '.$directory);
 
     my $cmd = "df -k $directory |";
     $self->status_message('DF command: '.$cmd);
