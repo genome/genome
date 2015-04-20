@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Carp qw();
 
 class Genome::Config::AnalysisProject::Command::AddConfigBase {
     is_abstract => 1,
@@ -42,6 +43,12 @@ sub execute {
     }
 
     return scalar(@new_items);
+}
+
+sub _create_profile_items {
+    my $self = shift;
+    my $name = $self->command_name;
+    Carp::confess sprintf('Command `%s` is missing a way to create profile items.', $name);
 }
 
 sub _apply_tags {
