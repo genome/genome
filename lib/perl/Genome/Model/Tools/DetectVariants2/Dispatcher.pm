@@ -214,7 +214,7 @@ sub _detect_variants {
     # handle the case of doing multi-sample detection on single-sample
     # detectors, where we need a merge
     if ($single_sample_detector_count and scalar(@alignment_results)) {
-        die "Single-sample detector supplied with multi-sample inputs. This cannot be handled properly. Quiting!";
+        die "Single-sample detector supplied with multi-sample inputs. This cannot be handled properly. Quitting!";
         return 1;
     }
 
