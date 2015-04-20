@@ -22,6 +22,12 @@ sub valid_statuses {
 sub _preprocess_subclass_description {
     my ($class, $desc) = @_;
 
+    #only preprocess if we're an immediate child
+    my $is = exists $desc->{is}? $desc->{is} : [];
+    unless (grep { $_ eq __PACKAGE__ } @$is) {
+        return $desc;
+    }
+
     my @statuses = $desc->{class_name}->valid_statuses;
 
     $desc->{has}{analysis_project} = {
