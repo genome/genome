@@ -9,7 +9,7 @@ BEGIN {
 
 use above 'Genome';
 
-use Test::More tests => 33;
+use Test::More tests => 36;
 
 use Genome::Test::Factory::AnalysisProject;
 use Genome::Test::Factory::Model::ReferenceAlignment;
@@ -98,6 +98,8 @@ EOFILE
     my $config_file = Genome::Sys->create_temp_file_path;
     Genome::Sys->write_file($config_file, $config);
 
+    my $early_profile_item = Genome::Config::Profile::Item->get(analysis_project => $analysis_project, status => 'disabled');
+    ok(!$early_profile_item, 'config does not already exist before testing command');
     my $add_cmd = Genome::Config::AnalysisProject::Command::AddConfigFile->create(
         analysis_project => $analysis_project,
         config_file => $config_file,
