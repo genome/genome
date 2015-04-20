@@ -86,7 +86,7 @@ sub _get_joinx_version_error {
         push @errors, UR::Object::Tag->create(
             type => 'error',
             properties => ['joinx_version'],
-            desc => "Provided parameter joinx_version: $version not supporting allow-same--file option, use 1.11 and above",
+            desc => "Provided parameter joinx_version: $version does not support --allow-same-file option, use 1.11 and above",
         );
     }
 
