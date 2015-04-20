@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::Sys::LockProxy qw();
+use File::Spec;
 use File::Path;
 use File::Copy;
 
@@ -442,19 +443,30 @@ sub external_url {
     return $url;
 }
 
+sub sequence_dictionary_path {
+    my $self = shift;
+    my $file_type = shift;
+
+    return File::Spec->join($self->data_directory, 'seqdict', "seqdict.$file_type");
+}
+
 sub get_sequence_dictionary {
     my $self = shift;
     my $file_type = shift;
     my $species = shift;
     my $picard_version = shift;
+    my $create_ok = shift;
+    $create_ok = 1 unless defined $create_ok;
 
     my $picard_path = Genome::Model::Tools::Picard->path_for_picard_version($picard_version);
 
     my $seqdict_dir_path = $self->data_directory.'/seqdict';
-    my $path = "$seqdict_dir_path/seqdict.$file_type";
+    my $path = $self->sequence_dictionary_path($file_type);
 
     if (-s $path) {
         return $path;
+    } elsif (not $create_ok) {
+        return;
     }
 
     $self->warning_message("No seqdict at path $path.  Creating...");
@@ -617,7 +629,11 @@ sub chromosome_array_ref {
     my $picard_version = delete($params{picard_version});
     unless ($picard_version) { $picard_version = '1.36'; }
 
-    my $seq_dict = $self->get_sequence_dictionary($format,$species,$picard_version);
+    my $create_if_necessary = delete($params{create_seqdict});
+    unless (defined $create_if_necessary) { $create_if_necessary = 1; }
+
+    my $seq_dict = $self->get_sequence_dictionary($format,$species,$picard_version,$create_if_necessary);
+    return unless $seq_dict;
 
     my $cmd = Genome::Model::Tools::BioSamtools::ListChromosomes->create(
         input_file => $seq_dict,
