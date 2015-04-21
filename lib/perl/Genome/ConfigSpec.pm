@@ -53,30 +53,6 @@ sub new_from_file {
     return $class->new(%params);
 }
 
-sub validate {
-    my ($self, $value) = @_;
-    return map { $_->($value, $self) } $self->validators;
-}
-
-sub validation_error {
-    my ($self, @errors) = @_;
-
-    if (@errors == 0) {
-        croakf('no errors to display');
-    }
-
-    if (@errors == 1) {
-        return sprintf('%s must be %s', $self->key, $errors[0]);
-    }
-
-    my @message = (
-        'multiple validation errors for %s:',
-        (map { ' - must be %s' } @errors),
-        '',
-    );
-    return sprintf(join("\n", @message), $self->key, @errors);
-}
-
 1;
 
 =pod

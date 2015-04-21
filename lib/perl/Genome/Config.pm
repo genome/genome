@@ -56,9 +56,9 @@ sub get {
         $value = $spec->default_value;
     }
 
-    my @errors = $spec->validate($value);
+    my @errors = validate($spec, $value);
     if (@errors) {
-        my $msg = $spec->validation_error(@errors);
+        my $msg = validation_error($spec, @errors);
         croakf($msg);
     }
 
@@ -80,6 +80,30 @@ sub spec {
         croakf('unable to locate spec: %s', $key);
     }
     return Genome::ConfigSpec->new_from_file($file);
+}
+
+sub validate {
+    my ($spec, $value) = @_;
+    return map { $_->($value, $spec) } $spec->validators;
+}
+
+sub validation_error {
+    my ($spec, @errors) = @_;
+
+    if (@errors == 0) {
+        croakf('no errors to display');
+    }
+
+    if (@errors == 1) {
+        return sprintf('%s must be %s', $spec->key, $errors[0]);
+    }
+
+    my @message = (
+        'multiple validation errors for %s:',
+        (map { ' - must be %s' } @errors),
+        '',
+    );
+    return sprintf(join("\n", @message), $spec->key, @errors);
 }
 
 sub all_specs {
