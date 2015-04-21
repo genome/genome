@@ -170,8 +170,14 @@ sub parse_config_file {
 
         my $clean_indels = $variant_type eq 'indels' ? 1 : 0;
 
-        my $model = Genome::Model->get($id);
-        my $build = $model->last_succeeded_build;
+        my $model = Genome::Model->get($id) or die $self->error_message(
+            "Did not find Model ID '$id' in the DB!"
+        );
+
+        my $build = $model->last_succeeded_build or die $self->error_message(
+            "Could not find a successful build for model ID: '$id'!"
+        );
+
         my $reference = $build->reference_sequence_build
           or die $self->error_message(
               "Did not find a reference for build %s", 
