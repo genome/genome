@@ -309,6 +309,10 @@ sub bam_md5_path {
     return File::Spec->join($self->output_dir, 'all_sequences.bam.md5');
 }
 
+sub bam_header_path {
+    return File::Spec->join(shift->output_dir, 'all_sequences.bam.header');
+}
+
 sub __display_name__ {
     my $self = shift;
 
@@ -725,7 +729,7 @@ sub collect_inputs {
         my $output_file = $bam_file . '.flagstat';
         unless (-s $output_file) {
             $output_file = $self->temp_scratch_directory . '/import_bam.flagstat';
-            die unless $self->_create_bam_flagstat($bam_file, $output_file);
+            die unless $self->create_bam_flagstat($bam_file, $output_file);
         }
         my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
         die $self->error_message('Failed to get flagstat data on input bam: '. $bam_file) unless $stats;
@@ -897,7 +901,7 @@ sub determine_input_read_count_from_bam {
     my $bam_file    = $self->_extracted_bam_path || $self->instrument_data->bam_path;
     my $output_file = $self->temp_scratch_directory . "/input_bam.flagstat";
 
-    die unless $self->_create_bam_flagstat($bam_file, $output_file);
+    die unless $self->create_bam_flagstat($bam_file, $output_file);
 
     $self->_flagstat_file($output_file);
     my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
@@ -994,7 +998,7 @@ sub postprocess_bam_file {
 
     #STEPS 8:  CREATE BAM.FLAGSTAT
     $self->debug_message("Creating all_sequences.bam.flagstat ...");
-    die unless $self->_create_bam_flagstat($bam_file, $output_file);
+    die unless $self->create_bam_flagstat($bam_file, $output_file);
 
     #STEPS 9: VERIFY BAM IS NOT TRUNCATED BY FLAGSTAT
     $self->debug_message("Verifying the bam...");
@@ -1094,7 +1098,7 @@ sub _create_bam_index {
     return 1;
 }
 
-sub _create_bam_flagstat {
+sub create_bam_flagstat {
     my ($self, $bam_file, $output_file) = @_;
 
     unless (-s $bam_file) {
@@ -1118,6 +1122,26 @@ sub _create_bam_flagstat {
         $self->error_message("Failed to create or execute flagstat command on bam: $bam_file");
         return;
     }
+    return 1;
+}
+
+sub create_bam_header {
+    my $self = shift;
+
+    if (-s $self->bam_header_path) {
+        return 1;
+    }
+
+    my $lock = $self->get_bam_lock;
+    my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+
+    Genome::Sys->shellcmd(
+        cmd => sprintf('%s view -H %s > %s', $sam_path, $self->bam_path, $self->bam_header_path),
+        output_files => [$self->bam_header_path],
+        input_files => [$self->bam_path],
+    );
+
+    $lock->unlock;
     return 1;
 }
 
@@ -1750,12 +1774,17 @@ sub revivified_alignment_bam_file_path {
     return $self->_revivified_bam_file_path if defined $self->_revivified_bam_file_path;
 
     my $temp_allocation = $self->_get_temp_allocation($self->output_dir);
-    
+
     my $revivified_bam = File::Spec->join($temp_allocation->absolute_path, 'all_sequences.bam');
     my $merged_bam = $self->get_merged_bam_to_revivify_per_lane_bam;
 
     unless ($merged_bam and -s $merged_bam) {
         die $self->error_message('Failed to get valid merged bam to recreate per lane bam '.$self->id);
+    }
+
+    $self->create_bam_header;
+    unless (-s $self->bam_flagstat_path) {
+        $self->create_bam_flagstat($self->bam_path, $self->bam_flagstat_path);
     }
 
     my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
@@ -1765,7 +1794,7 @@ sub revivified_alignment_bam_file_path {
         samtools_version    => $self->samtools_version,
         picard_version      => $self->picard_version,
         bam_header          => $self->bam_header_path,
-        comparison_flagstat => $self->flagstat_path,
+        comparison_flagstat => $self->bam_flagstat_path,
         include_qc_failed   => 1,
     );
 
@@ -1807,16 +1836,6 @@ sub _get_uuid_string {
     my $uuid = $ug->create();
     return $ug->to_string($uuid);
 }
-
-sub bam_header_path {
-    return File::Spec->join(shift->output_dir, 'all_sequences.bam.header');
-}
-
-
-sub flagstat_path {
-    return File::Spec->join(shift->output_dir, 'all_sequences.bam.flagstat');
-}
-
 
 sub get_merged_bam_to_revivify_per_lane_bam {
     my $self = shift;
