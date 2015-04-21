@@ -14,7 +14,7 @@ use YAML::Syck qw();
 
 has 'key'        => (is => 'ro', isa => 'Str', required => 1);
 has 'type'       => (is => 'ro', isa => 'Str', required => 1);
-has 'validators' => (is => 'ro', isa => 'ArrayRef[CodeRef]', default => sub { [] });
+has 'validators' => (is => 'ro', isa => 'ArrayRef[CodeRef]', default => sub { [] }, auto_deref => 1);
 
 has 'default_value' => (is => 'ro', isa => 'Str', predicate => 'has_default_value');
 has 'env'           => (is => 'ro', isa => 'Str', predicate => 'has_env');
@@ -55,7 +55,7 @@ sub new_from_file {
 
 sub validate {
     my ($self, $value) = @_;
-    return map { $_->($value, $self) } @{$self->validators};
+    return map { $_->($value, $self) } $self->validators;
 }
 
 sub validation_error {
