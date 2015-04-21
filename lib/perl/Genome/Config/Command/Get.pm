@@ -9,8 +9,10 @@ use Genome::Config qw();
 class Genome::Config::Command::Get {
     is => 'Command::V2',
     has => [
-        key => {
+        keys => {
             is => 'Text',
+            is_many => 1,
+            is_optional => 1,
             shell_args_position => 1,
         },
     ],
@@ -18,8 +20,11 @@ class Genome::Config::Command::Get {
 
 sub execute {
     my $self = shift;
-    my $value = Genome::Config::get($self->key);
-    print $value, "\n";
+    my @keys = $self->keys || Genome::Config::all_keys();
+    for my $key (@keys) {
+        my $value = Genome::Config::get($key);
+        printf "%s = '%s'\n", $key, $value;
+    }
     return 1;
 };
 

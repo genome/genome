@@ -122,6 +122,10 @@ sub all_specs {
     return values %specs;
 }
 
+sub all_keys {
+    return map { $_->key } all_specs();
+}
+
 sub config_subpath { Path::Class::File->new('genome', 'config.yaml') }
 
 sub home_dir {
