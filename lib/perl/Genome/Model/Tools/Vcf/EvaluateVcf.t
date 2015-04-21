@@ -105,7 +105,7 @@ sub setup_evaluate_vcf_params {
     my $true_negative_bed = $base_dir->file("gold/tn.bed.gz");
 
     # output directory
-    my $output_dir = Path::Class::Dir->new('/tmp/vcf/test');
+    my $output_dir = Path::Class::Dir->new( Genome::Sys->create_temp_directory() );
     if (-e $output_dir) {
         $output_dir->rmtree;
     }
