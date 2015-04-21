@@ -28,8 +28,8 @@ Values are specified in C<genome/config.yaml> in one of the source directories
 or via the corresponding environment variable.
 
 Configuration values are "registered" by creating a spec file, see
-L<Config::Spec>.  Spec files can go in either the snapshot config directory or
-the global config directories in the C<genome> subdirectory, e.g.
+L<Genome::ConfigSpec>.  Spec files can go in either the snapshot config
+directory or the global config directories in the C<genome> subdirectory, e.g.
 C</etc/genome/foo.yaml>.
 
 If you want the configuration value to be optional you must specify a
