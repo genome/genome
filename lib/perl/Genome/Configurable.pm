@@ -42,7 +42,7 @@ sub extend_class_with_config {
 
 sub set_prop_desc_with_warn {
     my ($prop_desc, $key, $value) = @_;
-    if ($prop_desc->{$key}) {
+    if (exists $prop_desc->{$key}) {
         warnf '%s has %s but overriding from config', $prop_desc->{class_name}, $key;
     }
     $prop_desc->{$key} = $value;
