@@ -9,7 +9,9 @@ use Test::More;
 use Test::Number::Delta within => 1e-4;
 use Path::Class;
 use YAML::XS;
+
 use above 'Genome';
+use Genome::Utility::Test;
 
 # M A I N #####################################################################
 
@@ -18,8 +20,9 @@ use_ok('Genome::Model::Tools::Vcf::EvaluateVcfs');
 
 # This directory contains the test data set (based from BIO-1176)
 my $basedir = Path::Class::Dir->new(
-    '/gscmnt/gc2801/analytics/idas',
-    'jira/BIO-1387/cle-data'
+    Genome::Utility::Test->data_dir_ok(
+        'Genome::Model::Tools::Vcf::EvaluateVcfs', 'v1'
+    )
 );
 
 SKIP: {
