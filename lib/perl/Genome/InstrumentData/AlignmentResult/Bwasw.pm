@@ -979,7 +979,7 @@ sub prepare_reference_sequence_index {
         aligner_name       => 'bwa',
         #aligner_params     => $refindex->aligner_params, # none of the aligner params should affect the index step so I think this okay
         aligner_version    => $aligner_version,
-        test_name          => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME},
+        test_name          => Genome::Config::get('aligner_index_test_name'),
     );
 
     for my $filepath (glob($bwa_index->output_dir . "/*")){

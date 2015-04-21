@@ -115,7 +115,7 @@ sub get {
     if (@_ % 2 == 0) {
         my %p = @_;
         unless ($p{test_name}) {
-            $p{test_name} = ($ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef);
+            $p{test_name} = (Genome::Config::get('aligner_index_test_name') || undef);
         }
         if (exists $p{aligner_name} && $class->aligner_requires_param_masking($p{aligner_name})) {
             $p{aligner_params} = undef;
@@ -150,7 +150,7 @@ sub create {
     my %p = @_;
 
     unless ($p{test_name}) {
-        $p{test_name} = ($ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef);
+        $p{test_name} = (Genome::Config::get('aligner_index_test_name') || undef);
     }
 
     my $aligner_class = 'Genome::InstrumentData::AlignmentResult::'  . Genome::InstrumentData::AlignmentResult->_resolve_subclass_name_for_aligner_name($p{aligner_name});
