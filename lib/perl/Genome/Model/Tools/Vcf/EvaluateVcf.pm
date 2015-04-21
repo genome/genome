@@ -165,7 +165,7 @@ sub execute {
         );
 
     my $tn_bed_size = $self->true_negative_size
-      || $self->bed_size(${tn_bed});
+      || $self->bed_size($final_tn_file);
 
     my $false_positives_in_roi = $self->number_within_roi(
         $final_input_file,
