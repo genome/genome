@@ -239,27 +239,9 @@ sub create {
             #Reserve some space beforehand for flagstat and header files
             $self->_size_up_allocation($alignment);
 
-            my $header = $bam_path . '.header';
-            unless (-s $header) {
-                my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
-                my $cmd = "$sam_path view -H $bam_path > $header";
-                Genome::Sys->shellcmd(
-                    cmd => $cmd,
-                    input_files  => [$bam_path],
-                    output_files => [$header],
-                );
-            }
-            my $flagstat = $bam_path . '.flagstat';
-            unless (-s $flagstat) {
-                my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
-                    bam_file    => $bam_path,
-                    output_file => $flagstat,
-                    use_version => $self->samtools_version,
-                );
-
-                unless ($cmd->execute) {
-                    die $self->error_message("Fail to run flagstat on $bam_path");
-                }
+            $alignment->create_bam_header;
+            unless (-s $alignment->bam_flagstat_path) {
+                $alignment->create_bam_flagstat($alignment->bam_path, $alignment->bam_flagstat_path);
             }
             $self->_remove_per_lane_bam_post_commit($alignment);
         }
