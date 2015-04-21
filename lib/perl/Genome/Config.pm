@@ -28,9 +28,8 @@ Values are specified in C<genome/config.yaml> in one of the source directories
 or via the corresponding environment variable.
 
 Configuration values are "registered" by creating a spec file, see
-L<Genome::ConfigSpec>.  Spec files can go in either the snapshot config
-directory or the global config directories in the C<genome> subdirectory, e.g.
-C</etc/genome/foo.yaml>.
+L<Genome::ConfigSpec>.  Spec files go in the snapshot config directory, e.g.
+C<etc/genome/foo.yaml>.
 
 If you want the configuration value to be optional you must specify a
 C<default_value>. The C<default_value> can be zero or an empty string but it
@@ -75,7 +74,7 @@ sub get {
 sub spec {
     my $key = shift;
     my $subpath = Path::Class::File->new('genome', $key . '.yaml');
-    my $file = (_lookup_files($subpath, snapshot_dir(), global_dirs()))[0];
+    my $file = (_lookup_files($subpath, snapshot_dir()))[0];
     unless (defined $file) {
         croakf('unable to locate spec: %s', $key);
     }
@@ -107,11 +106,11 @@ sub validation_error {
 }
 
 sub all_specs {
-    my @genome_dirs = map { Path::Class::Dir->new($_, 'genome') } snapshot_dir(), global_dirs();
+    my $snapshot_dir = Path::Class::Dir->new(snapshot_dir(), 'genome');
     my @spec_files = File::Find::Rule->file()
                                      ->name('*.yaml')
                                      ->not(File::Find::Rule->new->name('config.yaml'))
-                                     ->in(@genome_dirs);
+                                     ->in($snapshot_dir);
     my @specs = map { Genome::ConfigSpec->new_from_file($_) } @spec_files;
 
     my %specs;
