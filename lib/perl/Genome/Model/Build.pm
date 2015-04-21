@@ -1868,8 +1868,8 @@ sub generate_send_and_save_report {
     my $email_confirmation = Genome::Report::Email->send_report(
         report => $report,
         to => $to->id,
-        from => 'apipe@'.Genome::Config::domain(),
-        replyto => 'noreply@'.Genome::Config::domain(),
+        from => $ENV{GENOME_EMAIL_PIPELINE},
+        replyto => $ENV{GENOME_EMAIL_NOREPLY},
         # maybe not the best/correct place for this information but....
         xsl_files => [ $generator->get_xsl_file_for_html ],
     );
