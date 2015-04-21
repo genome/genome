@@ -204,6 +204,9 @@ sub _run_evaluate_vcf {
     my ($self, $outdir, $inputs) = @_;
 
     my %params = (
+        vcflib_version       => $self->vcflib_version,
+        joinx_version        => $self->joinx_version,
+        bedtools_version     => $self->bedtools_version,
         vcf                  => $inputs->{'vcf'}->stringify,
         old_sample           => $inputs->{'sample'},
         new_sample           => "GOLDSTANDARD_SAMPLE",
