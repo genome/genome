@@ -1128,11 +1128,10 @@ sub create_bam_flagstat {
 sub create_bam_header {
     my $self = shift;
 
-    if (-s $self->bam_header_path) {
-        return 1;
-    }
-
+    return 1 if (-s $self->bam_header_path);
     my $lock = $self->get_bam_lock;
+    return 1 if (-s $self->bam_header_path);
+
     my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 
     Genome::Sys->shellcmd(
