@@ -15,6 +15,7 @@ class Genome::VariantReporting::Framework::Test::RunResult {
     ],
     has_param => [
         __planned__ => {},
+        __planned_optional__ => {is_optional => 1}
     ],
     has_transient_optional => [
         __input__ => {
