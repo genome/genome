@@ -69,14 +69,15 @@ C<default_value>, and C<sticky>.
 
 =head2 Required Properties
 
-C<key> is the an identifier for the configuration value.
+C<key> is the identifier for the configuration value.  When loaded from a file
+the file's basename is used as the key.
 
-C<type> species the type of the value.
+C<type> specifies the type of the value.  This may often be a UR::Value type.
 
 =head2 Optional Properties
 
-C<validators> are anonymous subs that validate values, see examples in
-C<Genome::ConfigValidator>.
+C<validators> are anonymous subs that validate values.  When loaded from a file
+the basename of one or more C<Genome::ConfigValidator> is used.
 
 C<env> is the name of the environment variable that the configuration value is
 bound to.
@@ -95,6 +96,5 @@ For example, if you want to register a configuration variable for the key,
   ---
   type: Text
   default_value: bar
-
 
 =cut
