@@ -95,20 +95,21 @@ C<default_value>, and C<sticky>.
 
 C<key> is the an identifier for the configuration value.
 
-C<type> species the type of the value...
+C<type> species the type of the value.
 
 =head2 Optional Properties
 
-C<validators> are anonymous subs that validate...
+C<validators> are anonymous subs that validate values, see examples in
+C<Genome::ConfigValidator>.
 
 C<env> is the name of the environment variable that the configuration value is
-bound to...
+bound to.
 
 C<default_value> is the default value a configuration value should take when
-not otherwise specified...
+not otherwise specified.
 
 C<sticky> is an attribute that suggests the value should not be allowed to
-change...
+change.
 
 =head 1 EXAMPLE
 
