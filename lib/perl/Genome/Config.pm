@@ -33,7 +33,8 @@ the global config directories in the C<genome> subdirectory, e.g.
 C</etc/genome/foo.yaml>.
 
 If you want the configuration value to be optional you must specify a
-C<default_value> even if it is zero or an empty string but it must be defined.
+C<default_value>. The C<default_value> can be zero or an empty string but it
+must be defined.
 
 If the spec file enables the C<sticky> attribute then the C<env> attribute must
 also be set so that the value can be stored in an environment variable.  Since
