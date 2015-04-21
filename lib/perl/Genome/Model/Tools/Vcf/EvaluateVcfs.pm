@@ -28,24 +28,24 @@ class Genome::Model::Tools::Vcf::EvaluateVcfs {
         },
 
         config_file => {
-            is => 'Text',
+            is => 'Path',
             doc => 'config file input',
         },
 
         output_directory => {
-            is => "Text",
+            is => "Path",
             doc => "Output directory to write to",
             is_output => 1,
         },
 
         gold_snv_vcf => {
-            is => "Text",
+            is => "Path",
             doc => "VCF file containing gold standard variant sites "
                    . "to be used to measure the evaluation VCF (for snvs)"
         },
 
         gold_indel_vcf => {
-            is => "Text",
+            is => "Path",
             doc => "VCF file containing gold standard variant sites "
                    . "to be used to measure the evaluation VCF (for indels)"
         },
@@ -57,12 +57,12 @@ class Genome::Model::Tools::Vcf::EvaluateVcfs {
         },
 
         roi => {
-            is => "Text",
+            is => "Path",
             doc => "BED file of the target regions to restrict the analysis to",
         },
 
         true_negative_bed => {
-            is => "Text",
+            is => "Path",
             doc => "BED file containing regions where no "
                    . "variant call should be made",
         },
