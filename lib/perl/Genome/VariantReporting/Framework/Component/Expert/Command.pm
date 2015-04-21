@@ -88,18 +88,6 @@ sub planned_required_names {
     return map {$_->property_name} @properties;
 }
 
-# TODO this is not covered by tests
-sub validate_with_plan_params {
-    my ($self, $params) = validate_pos(@_, 1, 1);
-
-    my @errors = $self->__planned_errors__($params);
-    if (@errors) {
-        $self->print_errors(@errors);
-        die $self->error_message("Failed to validate_with_plan_params with params:\n" . Data::Dumper::Dumper $params);
-    }
-    return;
-}
-
 sub __planned_errors__ {
     my ($self, $params) = validate_pos(@_, 1, 1);
     my $needed = Set::Scalar->new($self->planned_required_names);
