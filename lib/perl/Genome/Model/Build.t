@@ -255,7 +255,7 @@ sub _test_expected_report_params {
     my %expected_params = (
         to => $build->the_master_event->user_name.'@'.Genome::Config::domain(),
         from => 'apipe@'.Genome::Config::domain(),
-        replyto => 'noreply@'.Genome::Config::domain(),
+        replyto => 'donotreply@'.Genome::Config::domain(),
     );
     my %got_params = map { $_ => $report_params->{$_} } keys %expected_params; 
     die 'No report params!' if not %got_params;
