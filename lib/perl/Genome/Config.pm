@@ -12,7 +12,7 @@ use YAML::Syck qw();
 =item get()
 
 C<get($key)> retrieves the configuration value specified by the input key.  It
-does a hierarchival search for the value,
+does a hierarchical search for the value,
 
 - environment variable
 - user config file
