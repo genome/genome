@@ -17,7 +17,7 @@ class Genome::Config::AnalysisProject::Command::AddConfigBase {
         },
     ],
     has_optional_input => [
-        tag => {
+        tags => {
             is => 'Genome::Config::Tag',
             is_many => 1,
             doc => 'Tags to associate with the new configuration',
@@ -54,7 +54,7 @@ sub _create_profile_items {
 sub _apply_tags {
     my ($self, @profile_items) = @_;
     for my $profile_item (@profile_items) {
-        for my $tag ($self->tag){
+        for my $tag ($self->tags){
             $profile_item->add_tag($tag);
         }
     }

@@ -34,7 +34,7 @@ my $cmd = $class->create(
     analysis_project => $ap,
     analysis_menu_items => [$item],
     reprocess_existing => 1,
-    tag => [$tag],
+    tags => [$tag],
 );
 
 $cmd->execute();
