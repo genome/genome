@@ -75,7 +75,7 @@ sub get {
 sub spec {
     my $key = shift;
     my $subpath = Path::Class::File->new('genome', $key . '.yaml');
-    my $file = (_lookup_files($subpath, global_dirs()))[0];
+    my $file = (_lookup_files($subpath, snapshot_dir(), global_dirs()))[0];
     unless (defined $file) {
         croakf('unable to locate spec: %s', $key);
     }
@@ -107,7 +107,7 @@ sub validation_error {
 }
 
 sub all_specs {
-    my @genome_dirs = map { Path::Class::Dir->new($_, 'genome') } global_dirs();
+    my @genome_dirs = map { Path::Class::Dir->new($_, 'genome') } snapshot_dir(), global_dirs();
     my @spec_files = File::Find::Rule->file()
                                      ->name('*.yaml')
                                      ->not(File::Find::Rule->new->name('config.yaml'))
@@ -140,7 +140,7 @@ sub snapshot_dir {
 
 sub global_dirs {
     my $dirs = $ENV{XGENOME_CONFIG_DIRS} || '/etc';
-    return map { Path::Class::Dir->new($_) } (snapshot_dir(), split(/:/, $dirs));
+    return map { Path::Class::Dir->new($_) } split(/:/, $dirs);
 }
 
 sub _lookup_value {
@@ -156,7 +156,7 @@ sub _lookup_value {
         return $value;
     }
 
-    @files = _lookup_files($config_subpath, global_dirs());
+    @files = _lookup_files($config_subpath, snapshot_dir(), global_dirs());
     return _lookup_value_from_files($spec, @files);
 }
 
