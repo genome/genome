@@ -12,19 +12,19 @@ class Genome::Model::Tools::Vcf::EvaluateVcfs {
         bedtools_version => {
             is => "Text",
             doc => "Bedtools version to use",
-            default_value => "2.17.0",
+            default_value => Genome::Model::Tools::Vcf::EvaluateVcf->__meta__->property(property_name => 'bedtools_version')->default_value,
         },
 
         joinx_version => {
             is => "Text",
             doc => "Joinx version to use",
-            default_value => "1.11",
+            default_value => Genome::Model::Tools::Vcf::EvaluateVcf->__meta__->property(property_name => 'joinx_version')->default_value,
         },
 
         vcflib_version => {
             is => "Text",
             doc => "vcflib toolset version to use",
-            default_value => "1.0",
+            default_value => Genome::Model::Tools::Vcf::EvaluateVcf->__meta__->property(property_name => 'vcflib_version')->default_value,
         },
 
         config_file => {
