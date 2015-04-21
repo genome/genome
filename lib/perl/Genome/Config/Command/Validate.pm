@@ -7,7 +7,7 @@ use Genome qw();
 use Genome::Config qw();
 
 class Genome::Config::Command::Validate {
-    is => 'Command',
+    is => 'Command::V2',
 };
 
 sub execute {

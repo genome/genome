@@ -7,7 +7,7 @@ use Genome qw();
 use Genome::Config qw();
 
 class Genome::Config::Command::Get {
-    is => 'Command',
+    is => 'Command::V2',
     has => [
         key => {
             is => 'Text',
