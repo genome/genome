@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Genome;
+use Genome qw();
 use Test::More tests => 6;
 
 use File::Spec qw();
