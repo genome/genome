@@ -1101,9 +1101,9 @@ sub _create_bam_index {
 sub create_bam_flagstat {
     my ($self, $bam_file, $output_file) = @_;
 
+    my $lock = $self->get_bam_lock;
     unless (-s $bam_file) {
-        $self->error_message('BAM file ' . $bam_file . ' does not exist or is empty');
-        return;
+        die $self->error_message('BAM file (%s) does not exist or is empty', $bam_file);
     }
 
     if (-e $output_file) {
@@ -1122,6 +1122,8 @@ sub create_bam_flagstat {
         $self->error_message("Failed to create or execute flagstat command on bam: $bam_file");
         return;
     }
+
+    $lock->unlock;
     return 1;
 }
 
