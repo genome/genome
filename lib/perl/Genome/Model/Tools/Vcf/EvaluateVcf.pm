@@ -185,8 +185,6 @@ sub execute {
 
     $self->rawstats(\%results);
 
-#    $self->display_all_stats();
-
     return 1;
 }
 
