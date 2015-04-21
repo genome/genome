@@ -81,6 +81,13 @@ sub planned_names {
     return map {$_->property_name} @properties;
 }
 
+sub planned_required_names {
+    my $self = shift;
+
+    my @properties = $self->__meta__->properties(is_planned => 1, is_optional => 0);
+    return map {$_->property_name} @properties;
+}
+
 # TODO this is not covered by tests
 sub validate_with_plan_params {
     my ($self, $params) = validate_pos(@_, 1, 1);
@@ -95,13 +102,15 @@ sub validate_with_plan_params {
 
 sub __planned_errors__ {
     my ($self, $params) = validate_pos(@_, 1, 1);
-    my $needed = Set::Scalar->new($self->planned_names);
+    my $needed = Set::Scalar->new($self->planned_required_names);
     return Genome::VariantReporting::Framework::Utility::get_missing_errors($self->class, $params, $needed, "Parameters", "run"),
-        $self->_get_extra_errors($params, $needed);
+        $self->_get_extra_errors($params);
 }
 
 sub _get_extra_errors {
-    my ($self, $params, $needed) = validate_pos(@_, 1, 1, 1);
+    my ($self, $params) = validate_pos(@_, 1, 1);
+
+    my $needed = Set::Scalar->new($self->planned_names);
 
     my $have = Set::Scalar->new(keys %{$params});
     my @errors;
