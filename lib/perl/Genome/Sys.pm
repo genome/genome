@@ -311,7 +311,7 @@ sub dbname_to_envname {
 sub _find_in_genome_db_paths {
     my ($class, $name, $version) = @_;
 
-    my $base_dirs = $ENV{GENOME_DB};
+    my $base_dirs = Genome::Config::get('db');
     my $subdir = "$name/$version";
 
     my @base_dirs = split(':',$base_dirs);

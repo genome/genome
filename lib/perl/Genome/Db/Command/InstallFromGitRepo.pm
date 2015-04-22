@@ -44,11 +44,11 @@ sub _resolve_repo {
 
 sub execute {
     my $self = shift;
-    my @dirs = split(":",$ENV{GENOME_DB});
+    my @dirs = split(":", Genome::Config::get('db'));
     unless (@dirs) {
         die "The GENOME_ENV environment variable must be set to the location of file-based databases!";
     }
-    $self->status_message("Database will be installed at GENOME_DB: " . $ENV{GENOME_DB}); 
+    $self->status_message("Database will be installed at: " . Genome::Config::get('db')); 
     $self->status_message("Found database directories: @dirs");
 
     my $dir = $dirs[0];
@@ -98,7 +98,7 @@ sub execute {
       die $self->error_message("It appears that this branch has already been cloned to $fulldir.  Aborting.  Delete it if you want to clone from scratch.");
     }
 
-    #Attempt to clone the specified git branch into the desired sub-directory of the database directory specified by $ENV{$GENOME_DB}
+    #Attempt to clone the specified git branch into the desired sub-directory of the database directory specified by Genome::Config::get('db')
     my $clone_cmd = "cd $dir; git clone $repo -b $branch $subdir";
     Genome::Sys->shellcmd(cmd => $clone_cmd);
 
