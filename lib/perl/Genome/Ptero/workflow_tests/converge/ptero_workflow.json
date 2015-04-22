@@ -1,0 +1,40 @@
+{
+   "links" : [
+      {
+         "destination" : "Convergence",
+         "destinationProperty" : "a",
+         "source" : "input connector",
+         "sourceProperty" : "a"
+      },
+      {
+         "destination" : "Convergence",
+         "destinationProperty" : "b",
+         "source" : "input connector",
+         "sourceProperty" : "b"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "out",
+         "source" : "Convergence",
+         "sourceProperty" : "out"
+      }
+   ],
+   "tasks" : {
+      "Convergence" : {
+         "methods" : [
+            {
+               "name" : "converge",
+               "parameters" : {
+                  "input_names" : [
+                     "a",
+                     "b"
+                  ],
+                  "output_name" : "out"
+               },
+               "service" : "workflow-converge"
+            }
+         ],
+         "parallelBy" : "a"
+      }
+   }
+}
