@@ -158,12 +158,18 @@ sub parse_config_file {
 
     $self->status_message("Parsing configuration file : $config");
 
-    my $fh = $config->openr;
+    my $reader = Genome::Utility::IO::SeparatedValueReader->create(
+        headers => [qw(name id path variant_type sample)],
+        input => $self->fetch_config_file->stringify,
+        separator => "\t",
+        allow_extra_columns => 1,
+    );
 
     my @inputs;
-    while (my $line = <$fh>) {
-        chomp $line;
-        my ($name, $id, $path, $variant_type, $sample) = split("\t", $line);
+    while (my $row = $reader->next) {
+        my ($name, $id, $path, $variant_type, $sample) =
+            @{$row}{'name', 'id', 'path', 'variant_type', 'sample'};
+
         $self->validate_type($variant_type);
         my $gold_vcf =
           $variant_type eq "snvs" ? $self->gold_snv_vcf : $self->gold_indel_vcf;
