@@ -239,34 +239,10 @@ sub _collect_evaluation_stats {
 
     my %stats;
 
-    $stats{'true_positive_found_exact'} =
-      $cmd->stat_true_positive_found_exact();
-
-    $stats{'total_true_positive_exact'} =
-      $cmd->stat_total_true_positive_exact();
-
-    $stats{'sensitivity_exact'} = $cmd->stat_sensitivity_exact();
-
-    $stats{'true_positive_found_partial'} =
-      $cmd->stat_true_positive_found_partial();
-
-    $stats{'total_true_positive_partial'} =
-      $cmd->stat_total_true_positive_partial();
-
-    $stats{'sensitivity_partial'}    = $cmd->stat_sensitivity_partial();
-    $stats{'false_positive_exact'}   = $cmd->stat_false_positive_exact();
-    $stats{'false_positive_partial'} = $cmd->stat_false_positive_partial();
-    $stats{'true_negatives'}         = $cmd->stat_true_negatives();
-    $stats{'exact_specificity'}      = $cmd->stat_exact_specificity();
-    $stats{'partial_specificity'}    = $cmd->stat_partial_specificity();
-    $stats{'exact_ppv'}              = $cmd->stat_exact_ppv();
-    $stats{'partial_ppv'}            = $cmd->stat_partial_ppv();
-
-    $stats{'vcf_lines_overlapping_tn'} =
-      $cmd->stat_vcf_lines_overlapping_tn();
-
-    $stats{'lines_specificity_in_tn_only'} =
-      $cmd->stat_lines_specificity_in_tn_only();
+    for my $stat ($self->stat_types) {
+        my $stat_accessor = join('_', 'stat', $stat);
+        $stats{$stat} = $cmd->$stat_accessor;
+    }
 
     return \%stats;
 }
