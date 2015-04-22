@@ -729,7 +729,7 @@ sub collect_inputs {
         my $output_file = $bam_file . '.flagstat';
         unless (-s $output_file) {
             $output_file = $self->temp_scratch_directory . '/import_bam.flagstat';
-            die unless $self->create_bam_flagstat($bam_file, $output_file);
+            $self->create_bam_flagstat($bam_file, $output_file);
         }
         my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
         die $self->error_message('Failed to get flagstat data on input bam: '. $bam_file) unless $stats;
@@ -901,7 +901,7 @@ sub determine_input_read_count_from_bam {
     my $bam_file    = $self->_extracted_bam_path || $self->instrument_data->bam_path;
     my $output_file = $self->temp_scratch_directory . "/input_bam.flagstat";
 
-    die unless $self->create_bam_flagstat($bam_file, $output_file);
+    $self->create_bam_flagstat($bam_file, $output_file);
 
     $self->_flagstat_file($output_file);
     my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
@@ -998,7 +998,7 @@ sub postprocess_bam_file {
 
     #STEPS 8:  CREATE BAM.FLAGSTAT
     $self->debug_message("Creating all_sequences.bam.flagstat ...");
-    die unless $self->create_bam_flagstat($bam_file, $output_file);
+    $self->create_bam_flagstat($bam_file, $output_file);
 
     #STEPS 9: VERIFY BAM IS NOT TRUNCATED BY FLAGSTAT
     $self->debug_message("Verifying the bam...");
@@ -1100,16 +1100,15 @@ sub _create_bam_index {
 
 sub create_bam_flagstat {
     my ($self, $bam_file, $output_file) = @_;
+    $bam_file = $self->bam_path unless defined $bam_file;
+    $output_file = $self->bam_flagstat_path unless defined $output_file;
 
-    my $lock = $self->get_bam_lock;
+    return 1 if (-e $output_file);
     unless (-s $bam_file) {
         die $self->error_message('BAM file (%s) does not exist or is empty', $bam_file);
     }
-
-    if (-e $output_file) {
-        $self->warning_message('Flagstat file '.$output_file.' exists. Now overwrite');
-        unlink $output_file;
-    }
+    my $lock = $self->get_bam_lock;
+    return 1 if (-e $output_file);
 
     my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
         bam_file       => $bam_file,
@@ -1119,8 +1118,7 @@ sub create_bam_flagstat {
     );
 
     unless ($cmd and $cmd->execute) {
-        $self->error_message("Failed to create or execute flagstat command on bam: $bam_file");
-        return;
+        die $self->error_message("Failed to create or execute flagstat command on bam: $bam_file");
     }
 
     $lock->unlock;
@@ -1784,9 +1782,7 @@ sub revivified_alignment_bam_file_path {
     }
 
     $self->create_bam_header;
-    unless (-s $self->bam_flagstat_path) {
-        $self->create_bam_flagstat($self->bam_path, $self->bam_flagstat_path);
-    }
+    $self->create_bam_flagstat;
 
     my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
         merged_bam          => $merged_bam,
