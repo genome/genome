@@ -14,16 +14,18 @@ class Genome::Config::Command::Get {
             is_many => 1,
             is_optional => 1,
             shell_args_position => 1,
+            calculated_default => 1,
         },
     ],
 };
 
+sub __default_keys__ {
+    return [ Genome::Config::all_keys() ];
+}
+
 sub execute {
     my $self = shift;
     my @keys = $self->keys;
-    unless (@keys) {
-        @keys = Genome::Config::all_keys();
-    }
     for my $key (@keys) {
         my $value = Genome::Config::get($key);
         printf "%s = '%s'\n", $key, $value;
