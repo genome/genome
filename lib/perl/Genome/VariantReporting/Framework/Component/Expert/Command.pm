@@ -78,19 +78,19 @@ sub planned_names {
     my $self = shift;
 
     my @properties = $self->__meta__->properties(is_planned => 1);
-    return map {$_->property_name} @properties;
+    return Set::Scalar->new(map {$_->property_name} @properties);
 }
 
 sub planned_required_names {
     my $self = shift;
 
     my @properties = $self->__meta__->properties(is_planned => 1, is_optional => 0);
-    return map {$_->property_name} @properties;
+    return Set::Scalar->new(map {$_->property_name} @properties);
 }
 
 sub __planned_errors__ {
     my ($self, $params) = validate_pos(@_, 1, 1);
-    my $needed = Set::Scalar->new($self->planned_required_names);
+    my $needed = $self->planned_required_names;
     return Genome::VariantReporting::Framework::Utility::get_missing_errors($self->class, $params, $needed, "Parameters", "run"),
         $self->_get_extra_errors($params);
 }
@@ -98,7 +98,7 @@ sub __planned_errors__ {
 sub _get_extra_errors {
     my ($self, $params) = validate_pos(@_, 1, 1);
 
-    my $needed = Set::Scalar->new($self->planned_names);
+    my $needed = $self->planned_names;
 
     my $have = Set::Scalar->new(keys %{$params});
     my @errors;
