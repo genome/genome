@@ -255,12 +255,14 @@ sub filter_loh {
 #Get rid of intermediate files
 sub cleanup {
     my $self = shift;
-    my $unwanted = "*.Somatic* *.readcounts *.hc *.LOH" .
-        " *.lc *.Germline *.removed *.formatted" .
-        " *.hc.err *.other";
-    for my $file (glob $unwanted) {
-        $self->status_message("unlinking $file");
-        unlink $file;
+    my @patterns = qw(*.Somatic* *.readcounts *.hc *.LOH
+        *.lc *.Germline *.removed *.formatted
+        *.hc.err *.other);
+    for my $pattern (@patterns) {
+        for my $file (glob File::Spec->join($self->outdir, $pattern)) {
+            $self->status_message("unlinking $file");
+            unlink $file;
+        }
     }
 }
 
