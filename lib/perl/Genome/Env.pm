@@ -18,25 +18,6 @@ sub allowed {
     return map { NAME($_) } allowed_modules();
 }
 
-sub check_genome_variables {
-    my @valid = allowed();
-    my @used  = used();
-
-    my $valid_set = Set::Scalar->new(@valid);
-    my $used_set = Set::Scalar->new(@used);
-    my $invalid_set = $used_set - $valid_set;
-
-    unless ($invalid_set->is_empty) {
-        print STDERR "Available environment variable(s):\n",
-            '  ', join("\n  ", @valid), "\n\n";
-        print STDERR "Unrecognized environment variable(s) found:\n",
-            '  ', join("\n  ", map { join('=', $_, ($ENV{$_} || '')) } $invalid_set->members), "\n";
-        return;
-    }
-
-    return 1;
-}
-
 sub set_default_values {
     my @valid = allowed_modules();
     for my $module (@valid) {
@@ -64,6 +45,4 @@ sub NAME {
 # unless the environment variable is already defined.
 set_default_values();
 
-# Make sure that all Genome environment variables that are
-# set correspond to a file in Genome/Env/*.
-check_genome_variables(); # instead of 1; this should be last statment
+1;
