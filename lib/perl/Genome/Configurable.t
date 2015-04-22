@@ -4,12 +4,9 @@ use strict;
 use warnings;
 
 use Genome qw();
+use Genome::Test::Config qw(setup_config);
 
 use Test::More tests => 3;
-
-use File::Temp qw();
-use Genome::Test::Config qw(setup_config);
-use Path::Class::Dir qw();
 
 use_ok('Genome::Configurable');
 

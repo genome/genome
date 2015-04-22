@@ -7,6 +7,7 @@ use Exporter qw(import);
 use File::Temp qw();
 use Genome::Carp qw(croakf);
 use Params::Validate qw(validate);
+use Path::Class::Dir qw();
 use Path::Class::File qw();
 use POSIX qw(EEXIST);
 use YAML::Syck qw();
