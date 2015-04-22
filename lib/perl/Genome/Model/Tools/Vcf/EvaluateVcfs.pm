@@ -311,7 +311,7 @@ sub fetch_output_directory {
     my $dir = Path::Class::Dir->new($self->output_directory());
     unless (-d $dir) {
         $self->status_message(
-            "'$dir' doesn't exist on file system."
+            "'$dir' doesn't exist on file system. "
             . "Making path"
         );
 
