@@ -20,7 +20,10 @@ class Genome::Config::Command::Get {
 
 sub execute {
     my $self = shift;
-    my @keys = $self->keys || Genome::Config::all_keys();
+    my @keys = $self->keys;
+    unless (@keys) {
+        @keys = Genome::Config::all_keys();
+    }
     for my $key (@keys) {
         my $value = Genome::Config::get($key);
         printf "%s = '%s'\n", $key, $value;
