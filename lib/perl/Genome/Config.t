@@ -17,35 +17,26 @@ use_ok('Genome::Config');
 subtest 'basic lookup' => sub {
     plan tests => 2;
 
-    my $temp_home_dir = File::Temp->newdir();
-    my $temp_conf_dir = File::Temp->newdir();
-    local $ENV{XGENOME_CONFIG_HOME} = $temp_home_dir->dirname;
-    local $ENV{XGENOME_CONFIG_DIRS} = $temp_conf_dir->dirname;
-
+    my ($temp_dirs, $new_temp_dir) = Genome::Test::Config::temp_dir_helper();
+    local $ENV{XGENOME_CONFIG_SNAP} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_HOME} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_DIRS} = $new_temp_dir->();
     setup_config(
+        spec => {
+            home_key => {
+                type => 'Str',
+            },
+            conf_key => {
+                type => 'Str',
+            },
+        },
         home => {
-            dir => Path::Class::Dir->new($temp_home_dir->dirname, 'genome'),
-            config => {
-                home_key => 'home_dir_value',
-            },
+            home_key => 'home_dir_value',
         },
-        conf => [
-        {
-            dir => Path::Class::Dir->new($temp_conf_dir->dirname, 'genome'),
-            config => {
-                conf_key => 'conf_dir_value',
-                home_key => 'conf_dir_value',
-            },
-            spec => {
-                home_key => {
-                    type => 'Str',
-                },
-                conf_key => {
-                    type => 'Str',
-                },
-            },
+        global => {
+            conf_key => 'conf_dir_value',
+            home_key => 'conf_dir_value',
         },
-        ],
     );
 
     is(Genome::Config::get('home_key'), 'home_dir_value', 'looked up correct value for home_key');
@@ -55,24 +46,20 @@ subtest 'basic lookup' => sub {
 subtest 'required value' => sub {
     plan tests => 2;
 
-    my $temp_conf_dir = File::Temp->newdir();
-    local $ENV{XGENOME_CONFIG_DIRS} = $temp_conf_dir->dirname;
+    my ($temp_dirs, $new_temp_dir) = Genome::Test::Config::temp_dir_helper();
+    local $ENV{XGENOME_CONFIG_SNAP} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_HOME} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_DIRS} = $new_temp_dir->();
     setup_config(
-        home => {},
-        conf => [
-        {
-            dir => Path::Class::Dir->new($temp_conf_dir->dirname, 'genome'),
-            spec => {
-                some_key => {
-                    type => 'Str',
-                },
-                some_key_with_default => {
-                    type => 'Str',
-                    default_value => '',
-                },
+        spec => {
+            some_key => {
+                type => 'Str',
+            },
+            some_key_with_default => {
+                type => 'Str',
+                default_value => '',
             },
         },
-        ],
     );
 
     my $exception = exception { Genome::Config::get('some_key') };
@@ -83,29 +70,25 @@ subtest 'required value' => sub {
 subtest 'validation' => sub {
     plan tests => 2;
 
-    my $temp_conf_dir = File::Temp->newdir();
-    local $ENV{XGENOME_CONFIG_DIRS} = $temp_conf_dir->dirname;
+    my ($temp_dirs, $new_temp_dir) = Genome::Test::Config::temp_dir_helper();
+    local $ENV{XGENOME_CONFIG_SNAP} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_HOME} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_DIRS} = $new_temp_dir->();
     setup_config(
-        home => {},
-        conf => [
-        {
-            dir => Path::Class::Dir->new($temp_conf_dir->dirname, 'genome'),
-            config => {
-                bad_numeric_key => 'abc',
-                good_numeric_key => '123',
+        spec => {
+            bad_numeric_key => {
+                type => 'Int',
+                validators => [ 'numeric' ],
             },
-            spec => {
-                bad_numeric_key => {
-                    type => 'Int',
-                    validators => [ 'numeric' ],
-                },
-                good_numeric_key => {
-                    type => 'Int',
-                    validators => [ 'numeric' ],
-                },
+            good_numeric_key => {
+                type => 'Int',
+                validators => [ 'numeric' ],
             },
         },
-        ],
+        global => {
+            bad_numeric_key => 'abc',
+            good_numeric_key => '123',
+        },
     );
 
     my $exception = exception { Genome::Config::get('bad_numeric_key') };
@@ -116,30 +99,26 @@ subtest 'validation' => sub {
 subtest 'sticky' => sub {
     plan tests => 2;
 
-    my $temp_conf_dir = File::Temp->newdir();
-    local $ENV{XGENOME_CONFIG_DIRS} = $temp_conf_dir->dirname;
+    my ($temp_dirs, $new_temp_dir) = Genome::Test::Config::temp_dir_helper();
+    local $ENV{XGENOME_CONFIG_SNAP} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_HOME} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_DIRS} = $new_temp_dir->();
     setup_config(
-        home => {},
-        conf => [
-        {
-            dir => Path::Class::Dir->new($temp_conf_dir->dirname, 'genome'),
-            config => {
-                bad_sticky_key => 'abc',
-                good_sticky_key => 'abc',
+        spec => {
+            bad_sticky_key => {
+                type => 'Int',
+                sticky => 1,
             },
-            spec => {
-                bad_sticky_key => {
-                    type => 'Int',
-                    sticky => 1,
-                },
-                good_sticky_key => {
-                    type => 'Int',
-                    sticky => 1,
-                    env => 'GOOD_STICKY_KEY',
-                },
+            good_sticky_key => {
+                type => 'Int',
+                sticky => 1,
+                env => 'GOOD_STICKY_KEY',
             },
         },
-        ],
+        global => {
+            bad_sticky_key => 'abc',
+            good_sticky_key => 'abc',
+        },
     );
 
     my $exception = exception { Genome::Config::get('bad_sticky_key') };
@@ -150,21 +129,17 @@ subtest 'sticky' => sub {
 subtest 'env' => sub {
     plan tests => 2;
 
-    my $temp_conf_dir = File::Temp->newdir();
-    local $ENV{XGENOME_CONFIG_DIRS} = $temp_conf_dir->dirname;
+    my ($temp_dirs, $new_temp_dir) = Genome::Test::Config::temp_dir_helper();
+    local $ENV{XGENOME_CONFIG_SNAP} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_HOME} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_DIRS} = $new_temp_dir->();
     setup_config(
-        home => {},
-        conf => [
-        {
-            dir => Path::Class::Dir->new($temp_conf_dir->dirname, 'genome'),
-            spec => {
-                some_key => {
-                    type => 'Int',
-                    env => 'SOME_KEY',
-                },
+        spec => {
+            some_key => {
+                type => 'Int',
+                env => 'SOME_KEY',
             },
         },
-        ],
     );
 
     my $exception = exception { Genome::Config::get('some_key') };

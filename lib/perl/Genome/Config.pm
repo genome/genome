@@ -130,6 +130,10 @@ sub home_dir {
 }
 
 sub snapshot_dir {
+    if ($ENV{XGENOME_CONFIG_SNAP}) {
+        return $ENV{XGENOME_CONFIG_SNAP};
+    }
+
     my @path = File::Spec->splitdir(__FILE__);
     my @chop = ('lib', 'perl', split('::', __PACKAGE__));
     my @chopped = splice(@path, -1 * @chop);

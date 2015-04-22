@@ -13,28 +13,19 @@ use Path::Class::Dir qw();
 
 use_ok('Genome::Configurable');
 
-my $temp_home_dir = File::Temp->newdir();
-my $temp_conf_dir = File::Temp->newdir();
-local $ENV{XGENOME_CONFIG_HOME} = $temp_home_dir->dirname;
-local $ENV{XGENOME_CONFIG_DIRS} = $temp_conf_dir->dirname;
-
+my ($temp_dirs, $new_temp_dir) = Genome::Test::Config::temp_dir_helper();
+local $ENV{XGENOME_CONFIG_SNAP} = $new_temp_dir->();
+local $ENV{XGENOME_CONFIG_HOME} = $new_temp_dir->();
+local $ENV{XGENOME_CONFIG_DIRS} = $new_temp_dir->();
 setup_config(
-    home => {
-        dir => Path::Class::Dir->new($temp_home_dir->dirname, 'genome'),
-        config => {
-            'foo.name' => 'bar',
+    spec => {
+        'foo.name' => {
+            type => 'Str',
         },
     },
-    conf => [
-        {
-            dir => Path::Class::Dir->new($temp_conf_dir->dirname, 'genome'),
-            spec => {
-                'foo.name' => {
-                    type => 'Str',
-                },
-            },
-        },
-    ],
+    home => {
+        'foo.name' => 'bar',
+    },
 );
 
 UR::Object::Type->define(
