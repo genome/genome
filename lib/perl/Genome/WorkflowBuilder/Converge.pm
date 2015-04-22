@@ -97,12 +97,12 @@ sub _get_ptero_converge_method {
     require Ptero::Builder::Detail::Workflow::Converge;
 
     my $self = shift;
-    my @output_names = $self->output_properties;
+    my ($output_name) = $self->output_properties;
     return Ptero::Builder::Detail::Workflow::Converge->new(
         name => 'converge',
         parameters => {
             input_names => [$self->input_properties],
-            output_name => shift @output_names,
+            output_name => $output_name,
         },
     );
 }
