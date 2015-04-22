@@ -9,6 +9,7 @@ class Genome::VariantReporting::Framework::Test::Run {
     is => 'Genome::VariantReporting::Framework::Component::Expert::Command',
     has_planned_transient => [
         __planned__ => {},
+        __planned_optional__ => {is_optional => 1}
     ],
     has_transient => [
         __input__ => {
