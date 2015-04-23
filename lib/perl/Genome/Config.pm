@@ -61,6 +61,13 @@ sub get {
     return $value;
 }
 
+sub validate {
+    my $key = shift;
+    my $spec = spec($key);
+    my $value = _lookup_value($spec);
+    return $spec->validate($value);
+}
+
 sub spec {
     my $key = shift;
     my $subpath = Path::Class::File->new('genome', $key . '.yaml');
