@@ -21,6 +21,13 @@ UR::Object::Type->define(
     english_name => 'genome',
 );
 
+sub execution_id {
+    unless ($ENV{GENOME_EXECUTION_ID}) {
+        $ENV{GENOME_EXECUTION_ID} = UR::Object::Type->autogenerate_new_object_id_uuid();
+    }
+    return $ENV{GENOME_EXECUTION_ID};
+}
+
 # Checks that all variables that start with GENOME_ have a corresponding Genome/Env/* module
 # and assigns default values to any variables that have one set.
 require Genome::Env;

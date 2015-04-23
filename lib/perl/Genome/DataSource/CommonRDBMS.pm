@@ -105,7 +105,7 @@ sub log_commit_time {
     my($db_name, $time) = @_;
 
     my $original_cmdline = get_command_line();
-    my $execution_id = $ENV{'GENOME_EXECUTION_ID'} || '';
+    my $execution_id = Genome::execution_id() || '';
 
     my $path = _determine_base_log_pathname();
     $path .= "-${db_name}.timing";
