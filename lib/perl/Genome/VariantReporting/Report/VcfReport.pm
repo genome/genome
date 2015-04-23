@@ -69,8 +69,8 @@ sub add_headers_for_soft_filters {
     my $header = shift;
 
     for my $filter ($self->soft_filters) {
-        $header->add_filter_str(sprintf(
-            "<ID=%s,Description=\"%s\">",
+        $header->add_info_str(sprintf(
+            "<ID=%s,Number=A,Type=Integer,Description=\"%s\">",
             $filter->vcf_id,
             $filter->vcf_description,
         ));
@@ -104,8 +104,23 @@ sub _process_entry {
     my $entry = shift;
     my $interpretations = shift;
 
+    $self->add_individual_filter_results($interpretations, $entry);
     $self->add_allfilterspass_result($interpretations, $entry);
     $self->vcf_file->write($entry);
+}
+
+sub add_individual_filter_results {
+    my $self = shift;
+    my $interpretations = shift;
+    my $entry = shift;
+
+    for my $filter ($self->soft_filters) {
+        my @results;
+        for my $alt_allele (@{$entry->{alternate_alleles}}) {
+            push @results, $interpretations->{$filter->name}->{$alt_allele}->{filter_status};
+        }
+        $entry->set_info_field($filter->vcf_id, join(',', @results));
+    }
 }
 
 sub add_allfilterspass_result {
