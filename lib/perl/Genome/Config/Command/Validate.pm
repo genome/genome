@@ -7,8 +7,13 @@ use Genome qw();
 use Genome::Config qw();
 
 class Genome::Config::Command::Validate {
+    doc => 'validate configuration key-value pairs',
     is => 'Command::V2',
 };
+
+sub help_detail {
+    'Validate configuration key-value pairs.'
+}
 
 sub execute {
     my $self = shift;

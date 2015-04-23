@@ -7,6 +7,7 @@ use Genome qw();
 use Genome::Config qw();
 
 class Genome::Config::Command::Get {
+    doc => 'list configuration key-value pairs',
     is => 'Command::V2',
     has => [
         keys => {
@@ -15,9 +16,14 @@ class Genome::Config::Command::Get {
             is_optional => 1,
             shell_args_position => 1,
             calculated_default => 1,
+            doc => 'Limit to one or more keys; otherwise all keys.',
         },
     ],
 };
+
+sub help_detail {
+    'List configuration key-value pairs.'
+}
 
 sub __default_keys__ {
     return [ Genome::Config::all_keys() ];
