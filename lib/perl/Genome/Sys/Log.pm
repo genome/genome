@@ -7,6 +7,8 @@ use Log::Log4perl qw(get_logger :levels);
 use JSON;
 use Digest::SHA qw(sha1);
 
+require Genome::Model::Build;
+
 # syslog, logstash, and UDP MTU can all affect this length.  Most recently we
 # hit the UDP MTU limit going through the switches between blades and logstash.
 # This is obviously site specific and should be move to configuration.
@@ -146,7 +148,7 @@ my $callback = sub {
             p => $$,
             j => $ENV{LSB_JOBID},
             u => $ENV{USER},
-            b => $ENV{GENOME_BUILD_ID},
+            b => Genome::Model::Build::get_build_id(),
             type => $level,
             ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} ? (test => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME}) : ()),
             ($incoming_json_data ? %$incoming_json_data : (msg => $message)),

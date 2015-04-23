@@ -9,6 +9,8 @@ use Sys::Hostname qw(hostname);
 
 use Genome::Logger;
 
+require Genome::Model::Build;
+
 use Mouse;
 with qw(Genome::Sys::Lock::Backend);
 
@@ -61,7 +63,7 @@ sub lock {
         pid => $$,
         lsf_id => ($ENV{LSB_JOBID} || 'NONE'),
         user => scalar(getpwuid($<)),
-        genome_build_id => ($ENV{GENOME_BUILD_ID} || 'NONE'),
+        genome_build_id => (Genome::Model::Build::get_build_id() || 'NONE'),
         lsf_project => ($ENV{WF_LSF_PROJECT} || 'NONE'),
         requested_at => strftime('%a, %d %b %Y %T %z', localtime($initial_time)),
     );
