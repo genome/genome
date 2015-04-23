@@ -144,13 +144,13 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
 sub help_synopsis {
   return <<EOS
 
-genome model clin-seq converge snv-indel-report --builds='id in ["4b7539bb10cc4b9c97577cf11f4c79a2","cdca0edf526c4fe193d3054627a5871b"]' --outdir=/tmp/snv_indel_report/
+genome model clin-seq converge snv-indel-report --builds='id in ["4b7539bb10cc4b9c97577cf11f4c79a2","cdca0edf526c4fe193d3054627a5871b"]' --outdir=/tmp/snv_indel_report/ --bam-readcount-version=0.7
 
-genome model clin-seq converge snv-indel-report --builds='model.model_groups.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/
+genome model clin-seq converge snv-indel-report --builds='model.model_groups.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/ --bam-readcount-version=0.7
 
-genome model clin-seq converge snv-indel-report --builds='model_groups.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/
+genome model clin-seq converge snv-indel-report --builds='model_groups.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/ --bam-readcount-version=0.7
 
-genome model clin-seq converge snv-indel-report --builds='model.id in ["279f50e35d2b479ea3c32486eafd4ad4","7143119a93984056ae3f32c88c9ac2a1"],is_last_complete=1' --outdir=/tmp/snv_indel_report/
+genome model clin-seq converge snv-indel-report --builds='model.id in ["279f50e35d2b479ea3c32486eafd4ad4","7143119a93984056ae3f32c88c9ac2a1"],is_last_complete=1' --outdir=/tmp/snv_indel_report/ --bam-readcount-version=0.7
 
 EOS
 }
