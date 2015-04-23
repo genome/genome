@@ -240,9 +240,7 @@ sub create {
             $self->_size_up_allocation($alignment);
 
             $alignment->create_bam_header;
-            unless (-s $alignment->bam_flagstat_path) {
-                $alignment->create_bam_flagstat;
-            }
+            $alignment->create_bam_flagstat;
             $self->_remove_per_lane_bam_post_commit($alignment);
         }
     }
