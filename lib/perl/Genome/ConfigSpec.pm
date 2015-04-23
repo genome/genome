@@ -14,7 +14,7 @@ use YAML::Syck qw();
 
 has 'key'        => (is => 'ro', isa => 'Str', required => 1);
 has 'type'       => (is => 'ro', isa => 'Str', required => 1);
-has 'validators' => (is => 'ro', isa => 'ArrayRef[CodeRef]', default => sub { [] }, auto_deref => 1);
+has 'validators' => (is => 'ro', isa => 'ArrayRef[CodeRef]', default => sub { [] });
 
 has 'default_value' => (is => 'ro', isa => 'Str', predicate => 'has_default_value');
 has 'env'           => (is => 'ro', isa => 'Str', predicate => 'has_env');

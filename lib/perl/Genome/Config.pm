@@ -83,7 +83,7 @@ sub spec {
 
 sub validate {
     my ($spec, $value) = @_;
-    return map { $_->($value, $spec) } $spec->validators;
+    return map { $_->($value, $spec) } @{$spec->validators};
 }
 
 sub validation_error {
