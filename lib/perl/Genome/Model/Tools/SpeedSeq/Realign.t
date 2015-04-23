@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 9;
+use Test::More tests => 3;
 use Genome::Utility::Test qw(compare_ok);
 
 my $pkg = 'Genome::Model::Tools::SpeedSeq::Realign';
