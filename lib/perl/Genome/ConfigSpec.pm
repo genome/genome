@@ -26,6 +26,13 @@ sub BUILD {
     if ($self->sticky && !$self->has_env) {
         croakf('`sticky` requires `env`');
     }
+
+    my $required = sub {
+        my $value = shift;
+        return if defined $value;
+        return 'defined';
+    };
+    unshift @{$self->validators}, $required;
 };
 
 sub new_from_file {

@@ -48,10 +48,7 @@ sub get {
     my $spec = spec($key);
 
     my $value = _lookup_value($spec);
-    if (!defined($value)) {
-        if (!$spec->has_default_value) {
-            croakf('required config key missing: %s', $key);
-        }
+    if (!defined($value) && $spec->has_default_value) {
         $value = $spec->default_value;
     }
 
