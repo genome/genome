@@ -19,7 +19,7 @@ use_ok('Genome::Model::ClinSeq::Command::IdentifyLoh') or die;
 my $expected_output_dir =
 Genome::Utility::Test->data_dir_ok(
     'Genome::Model::ClinSeq::Command::IdentifyLoh',
-    '2015-03-26');
+    '2015-04-22');
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 my $temp_dir = Genome::Sys->create_temp_directory();
