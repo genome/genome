@@ -48,10 +48,6 @@ sub get {
     my $spec = spec($key);
 
     my $value = _lookup_value($spec);
-    if (!defined($value) && $spec->has_default_value) {
-        $value = $spec->default_value;
-    }
-
     my @errors = $spec->validate($value);
     if (@errors) {
         my $msg = $spec->validation_error(@errors);
@@ -134,7 +130,13 @@ sub _lookup_value {
     }
 
     @files = _lookup_files($config_subpath, snapshot_dir(), global_dirs());
-    return _lookup_value_from_files($spec, @files);
+    $value = _lookup_value_from_files($spec, @files);
+
+    if (!defined($value) && $spec->has_default_value) {
+        $value = $spec->default_value;
+    }
+
+    return $value;
 }
 
 sub _lookup_value_from_files {
