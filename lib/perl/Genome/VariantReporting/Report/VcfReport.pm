@@ -104,12 +104,11 @@ sub _process_entry {
     my $entry = shift;
     my $interpretations = shift;
 
-    my @final_results = $self->determine_final_results($interpretations, $entry);
-    add_final_results($entry, @final_results);
+    $self->add_allfilterspass_result($interpretations, $entry);
     $self->vcf_file->write($entry);
 }
 
-sub determine_final_results {
+sub add_allfilterspass_result {
     my $self = shift;
     my $interpretations = shift;
     my $entry = shift;
@@ -118,7 +117,7 @@ sub determine_final_results {
     for my $alt_allele (@{$entry->{alternate_alleles}}) {
         push(@final_results, $self->all_filters_passed_for_allele($interpretations, $alt_allele));
     }
-    return @final_results;
+    $entry->set_info_field('ALLFILTERSPASS', join(',', @final_results));
 }
 
 sub all_filters_passed_for_allele {
@@ -128,13 +127,6 @@ sub all_filters_passed_for_allele {
 
     return (all { $interpretations->{$_->name}->{$allele}->{filter_status} == 1} $self->soft_filters) || 0;
 }
-
-sub add_final_results {
-    my $entry = shift;
-    my @final_results = @_;
-    $entry->set_info_field('ALLFILTERSPASS', join(',', @final_results));
-}
-
 sub soft_filters {
     my $self = shift;
     return grep { $_->isa('Genome::VariantReporting::Framework::Component::Filter') } values %{$self->interpreters};
