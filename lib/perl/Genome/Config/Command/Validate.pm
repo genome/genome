@@ -23,9 +23,9 @@ sub execute {
         }
 
         if ($spec->has_default_value) {
-            my @errors = $spec->validate($spec->default_value);
+            my @errors = Genome::Config::validate($spec, $spec->default_value);
             if (@errors) {
-                my $msg = $spec->validation_error(@errors);
+                my $msg = Genome::Config::validation_error($spec, @errors);
                 croakf($msg);
             }
         }
