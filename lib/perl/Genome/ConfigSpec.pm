@@ -20,6 +20,14 @@ has 'default_value' => (is => 'ro', isa => 'Str', predicate => 'has_default_valu
 has 'env'           => (is => 'ro', isa => 'Str', predicate => 'has_env');
 has 'sticky'        => (is => 'ro', isa => 'Bool');
 
+sub BUILD {
+    my $self = shift;
+
+    if ($self->sticky && !$self->has_env) {
+        croakf('`sticky` requires `env`');
+    }
+};
+
 sub new_from_file {
     my $class = shift;
     my $file = Path::Class::File->new(shift);

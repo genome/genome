@@ -86,6 +86,7 @@ subtest 'new_from_file: sticky' => sub {
         my ($input_fh, $input_file, $input_filename) = setup_yaml_file({
             type => 'Str',
             sticky => 1,
+            env => 'FOO',
         });
         my $spec = Genome::ConfigSpec->new_from_file($input_file);
         ok($spec->sticky, 'sticky set to one results in sticky spec')
