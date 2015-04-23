@@ -1462,5 +1462,12 @@ sub get_best_somvar_build {
     }
 }
 
+sub create_igv_link {
+    my $self = shift;
+    my ($chr, $start, $stop) = @_;
+    return "http://localhost:60151/goto?locus=" .
+        $chr . ":" . $start . "-" . $stop;
+}
+
 1;
 

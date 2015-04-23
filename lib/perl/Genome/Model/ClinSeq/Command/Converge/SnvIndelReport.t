@@ -2,9 +2,11 @@
 use strict;
 use warnings;
 use above "Genome";
-use Test::More tests => 6; 
+use Test::More tests => 7;
+use Genome::Utility::Test;
 
-my $expected_out = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-ClinSeq-Command-Converge-SnvIndelReport/2014-11-26/';
+my $expected_out = Genome::Utility::Test->data_dir_ok(
+    'Genome::Model::ClinSeq::Command::Converge::SnvIndelReport', '2015-04-23');
 ok(-d $expected_out, "directory of expected output exists: $expected_out") or die;
 
 my $clinseq_build_id = 'a2eb4f40a47a4dc5ac410c81b3d2fc17';

@@ -1210,7 +1210,7 @@ sub print_final_files{
       }
 
       #Print headers for each out file
-      my $header_extension = "min_coverage_observed\tmax_normal_vaf_observed\tmax_tumor_vaf_observed\tvariant_source_callers\tvariant_source_caller_count\tdata_type\tfiltered";
+      my $header_extension = "min_coverage_observed\tmax_normal_vaf_observed\tmax_tumor_vaf_observed\tvariant_source_callers\tvariant_source_caller_count\tdata_type\tigv_link\tfiltered";
       my $full_header = "$_"."\t$header_extension";
       $full_header .= "\t$per_lib_header" if $per_lib_header;
       print $final_unfiltered_fh "$full_header\n";
@@ -1228,6 +1228,7 @@ sub print_final_files{
 
     my ($chr, $start, $stop, $ref, $var) = ($line[0], $line[1], $line[2], $line[3], $line[4]);
     my $v = $chr . "_$start" . "_$stop" . "_$ref" . "_$var";
+    my $igv_link = $self->create_igv_link($chr, $start, $stop);
     die $self->error_message("parsed a variant that is not defined in the variant hash") unless $variants->{$v};
 
     my @per_lib_counts = @{$variants->{$v}->{per_lib_counts}} if defined($variants->{$v}->{per_lib_counts});
@@ -1235,7 +1236,7 @@ sub print_final_files{
     $variants->{$v}->{data_type} =~ s/,$//;
     $variants->{$v}->{filtered} =~ s/,$//;
 
-    my $line_extension = "$variants->{$v}->{min_coverage_observed}\t$variants->{$v}->{max_normal_vaf_observed}\t$variants->{$v}->{max_tumor_vaf_observed}\t$variants->{$v}->{variant_source_callers}\t$variants->{$v}->{variant_source_caller_count}\t$variants->{$v}->{data_type}\t$variants->{$v}->{filtered}";
+    my $line_extension = "$variants->{$v}->{min_coverage_observed}\t$variants->{$v}->{max_normal_vaf_observed}\t$variants->{$v}->{max_tumor_vaf_observed}\t$variants->{$v}->{variant_source_callers}\t$variants->{$v}->{variant_source_caller_count}\t$variants->{$v}->{data_type}\t$igv_link\t$variants->{$v}->{filtered}";
     my $full_line = "$_\t$line_extension";
     $full_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
 
@@ -1413,8 +1414,6 @@ sub create_plots{
   }
   return;
 }
-
-
 
 1;
 
