@@ -32,11 +32,17 @@ sub __default_keys__ {
 sub execute {
     my $self = shift;
 
+    my $return = 1;
     my %env;
     for my $key ($self->keys) {
-        my $value = Genome::Config::get($key);
-
         my $spec = Genome::Config::spec($key);
+
+        my @errors = Genome::Config::validate($key);
+        if (@errors) {
+            my $msg = $spec->validation_error(@errors);
+            printf("%s\n", $msg);
+            $return = 0;
+        }
 
         if ($spec->has_env) {
             push @{ $env{$spec->env} }, $spec;
@@ -45,8 +51,8 @@ sub execute {
         if ($spec->has_default_value) {
             my @errors = $spec->validate($spec->default_value);
             if (@errors) {
-                my $msg = Genome::Config::validation_error($spec, @errors);
-                croakf($msg);
+                printf("%s has an invalid default_value\n", $spec->key);
+                $return = 0;
             }
         }
     }
@@ -55,11 +61,12 @@ sub execute {
         my @specs = @{ $env{$env_key} };
         if (@specs > 1) {
             my $spec_keys = join(',', map { $_->key } @specs);
-            croakf('%s is used as the env value for multiple keys: %s', $env_key, $spec_keys);
+            printf("%s is used as the env value for multiple keys: %s\n", $env_key, $spec_keys);
+            $return = 0;
         }
     }
 
-    return 1;
+    return $return;
 }
 
 1;
