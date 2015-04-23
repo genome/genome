@@ -13,7 +13,7 @@ my $VALID_STATUS_TRANSITIONS = {
     Crashed => Set::Scalar->new(),
     Succeeded => Set::Scalar->new(),
 };
-my $VALID_STATUS_VALUES = [keys %$VALID_STATUS_TRANSITIONS];
+our $VALID_STATUS_VALUES = [keys %$VALID_STATUS_TRANSITIONS];
 
 class Genome::Process::StatusEvent {
     table_name => 'process.status_event',
