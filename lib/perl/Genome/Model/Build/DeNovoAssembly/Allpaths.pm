@@ -289,7 +289,7 @@ sub _mem_in_gb {
 sub resolve_assemble_lsf_queue {
     my $self = shift;
     my $queue = $ENV{GENOME_LSF_QUEUE_ASSEMBLY};
-    $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT} if $ENV{UR_DBI_NO_COMMIT};
+    $queue = Genome::Config::get('lsf_queue_alignment_default') if $ENV{UR_DBI_NO_COMMIT};
     return $queue;
 }
 

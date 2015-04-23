@@ -363,7 +363,7 @@ sub lsf_queue {
         return $self->__lsf_queue;
     }
 
-    return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+    return Genome::Config::get('lsf_queue_alignment_default');
 }
 
 sub required_rusage_for_building_index {

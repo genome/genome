@@ -32,7 +32,7 @@ sub results_class {
 sub lsf_queue {
     my $self = shift;
 
-    return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+    return Genome::Config::get('lsf_queue_alignment_default');
 }
 
 sub bsub_rusage {

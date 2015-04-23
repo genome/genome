@@ -25,7 +25,7 @@ sub required_rusage {
     my $instrument_data = delete $p{instrument_data};
     my $aligner_params  = delete $p{aligner_params};
     my $reference_build = delete $p{reference_build};
-    my $queue           = delete $p{queue} || $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+    my $queue           = delete $p{queue} || Genome::Config::get('lsf_queue_alignment_default');
 
 
     my $tmp_mb = $class->tmp_megabytes_estimated($instrument_data);

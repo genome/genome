@@ -42,7 +42,7 @@ sub required_rusage {
     my $mem_kb = $mem_mb*1024;
     my $tmp_gb = $tmp_mb/1024;
 
-    my $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+    my $queue = Genome::Config::get('lsf_queue_alignment_default');
 
     my $host_groups;
     $host_groups = qx(bqueues -l $queue | grep ^HOSTS:);

@@ -20,7 +20,7 @@ sub required_arch_os { 'x86_64' }
 
 # fill me in here with what compute resources you need.
 sub required_rusage {
-    my $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+    my $queue = Genome::Config::get('lsf_queue_alignment_default');
     "-R 'select[tmp>90000 && mem>10000] span[hosts=1] rusage[tmp=90000, mem=10000]' -M 10000000 -n 4 -m $queue -q $queue";
 }
 
