@@ -21,6 +21,8 @@ use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
 use Genome::Utility::Vcf;
 
+require Scope::Guard;
+
 class Genome::Model::Build {
     is => [
         "Genome::Notable",
@@ -1340,6 +1342,16 @@ sub _get_job {
     return shift @jobs;
 }
 
+sub get_build_id {
+    return $ENV{GENOME_BUILD_ID};
+}
+
+sub set_build_id {
+    my $new_value = shift;
+    (my $orig_genome_build_id, $ENV{GENOME_BUILD_ID}) = ($ENV{GENOME_BUILD_ID}, $new_value);
+    return Scope::Guard->new(sub { $ENV{GENOME_BUILD_ID} = $orig_genome_build_id });
+}
+
 sub _launch {
     my $self = shift;
     my %params = @_;
@@ -1348,7 +1360,8 @@ sub _launch {
     local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
     local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
-    local $ENV{GENOME_BUILD_ID} = $self->id;
+
+    my $build_id_guard = set_build_id($self->id);
 
     # right now it is "inline" or the name of an LSF queue.
     # ultimately, it will be the specification for parallelization
