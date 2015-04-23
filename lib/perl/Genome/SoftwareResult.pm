@@ -19,6 +19,8 @@ use JSON;
 
 use Genome::Utility::Instrumentation;
 
+require Genome::Model::Build;
+
 class Genome::SoftwareResult {
     is_abstract => 1,
     table_name => 'result.software_result',
@@ -646,7 +648,7 @@ sub _auto_unarchive {
     my ($package, undef, $line) = caller;
     my $reason = sprintf('Automatically unarchiving due to request from %s line %s for software result %s run by %s', $package, $line, $self->id, $user);
 
-    my $build = $ENV{GENOME_BUILD_ID};
+    my $build = Genome::Model::Build::get_build_id();
     $reason .= sprintf(' for build %s', $build) if $build;
 
     for my $allocation (@allocations) {
