@@ -127,7 +127,7 @@ sub postprocess_bam_file {
     # currently not 1:1 input/output ratio so _verify_bam will fail
     # create bam flagstat
     $self->debug_message('Creating flagstat for bam file');
-    unless( $self->_create_bam_flagstat ) {
+    unless( $self->create_bam_flagstat ) {
         $self->error_message('Failed to create bam flagstat file');
         die $self->error_message;
     }
