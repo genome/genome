@@ -9,19 +9,34 @@ use Genome::Config qw();
 class Genome::Config::Command::Validate {
     doc => 'validate configuration key-value pairs',
     is => 'Command::V2',
+    has => [
+        keys => {
+            is => 'Text',
+            is_many => 1,
+            is_optional => 1,
+            shell_args_position => 1,
+            calculated_default => 1,
+            doc => 'Limit to one or more keys; otherwise all keys.',
+        },
+    ],
 };
 
 sub help_detail {
     'Validate configuration key-value pairs.'
 }
 
+sub __default_keys__ {
+    return [ Genome::Config::all_keys() ];
+}
+
 sub execute {
     my $self = shift;
 
     my %env;
-    my @all_specs = Genome::Config::all_specs();
-    for my $spec (@all_specs) {
-        my $value = Genome::Config::get($spec->key);
+    for my $key ($self->keys) {
+        my $value = Genome::Config::get($key);
+
+        my $spec = Genome::Config::spec($key);
 
         if ($spec->has_env) {
             push @{ $env{$spec->env} }, $spec;
