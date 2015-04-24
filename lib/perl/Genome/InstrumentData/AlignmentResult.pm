@@ -1028,6 +1028,7 @@ sub _use_alignment_summary_cpp { return 1; };
 sub _compute_alignment_metrics {
     my $self = shift;
     my $bam = $self->final_staged_bam_path;
+    $self->bam_size(stat($bam)->size); #store this for per lane bam recreation
 
     if ($self->_use_alignment_summary_cpp){
         my $out = `bash -c "LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/gsc/scripts/opt/genome_legacy_code/lib:/gsc/pkg/boost/boost_1_42_0/lib /gsc/scripts/opt/genome_legacy_code/bin/alignment-summary-v1.2.6 --bam=\"$bam\" --ignore-cigar-md-errors"`;
@@ -1070,7 +1071,6 @@ sub _compute_alignment_metrics {
         $self->singleton_read_count         ($res->{singleton});
         $self->singleton_base_count         ($res->{singleton_bp});
 
-        $self->bam_size(stat($bam)->size); #store this for per lane bam recreation
         Genome::Utility::Instrumentation::inc('alignment_result.read_count', $self->total_read_count);
     }
 
