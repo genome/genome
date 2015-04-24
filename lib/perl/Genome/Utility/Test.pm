@@ -202,7 +202,7 @@ sub compare_ok {
             }
 
             # different
-            my($line1,$line2) = @lines[0,$i];
+            my($line1,$line2) = map { defined($_) ? $_ : "" } @lines[0,$i];
             chomp($line1, $line2);
 
             $tb->diag(sprintf("First diff:\n--- %s line %d\n+++ %s line %d\n-%s\n+%s\n",
