@@ -117,7 +117,7 @@ class Genome::Model::GenePrediction::Command::Bacterial::Merge {
         rpc_queue => {
             is      => 'String',
             doc     => "LSF queue to use",
-            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+            default => Genome::Config::get('lsf_queue_build_worker'),
         },
         rpc_core_number => {
             is      => 'String',

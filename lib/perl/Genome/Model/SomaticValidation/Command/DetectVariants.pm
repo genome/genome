@@ -32,7 +32,7 @@ class Genome::Model::SomaticValidation::Command::DetectVariants{
     ],
     has_param => [
         lsf_queue => {
-            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+            default => Genome::Config::get('lsf_queue_build_worker'),
         },
         lsf_resource => {
             default => "-R 'select[tmp>4000 && mem>600] rusage[tmp=4000,mem=600]' -M 600000",

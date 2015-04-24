@@ -309,7 +309,7 @@ write.table(p.segment.smoothed.CNA.object, file="$chrom_filename.segments.p_valu
 		}
 		else
 		{
-			system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>2000] rusage[mem=2000]\" \"R --no-save < $script_filename\"");						
+			system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>2000] rusage[mem=2000]\" \"R --no-save < $script_filename\"");						
 		}
 
 		

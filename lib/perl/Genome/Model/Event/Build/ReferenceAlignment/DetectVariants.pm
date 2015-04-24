@@ -10,7 +10,7 @@ class Genome::Model::Event::Build::ReferenceAlignment::DetectVariants{
 };
 
 sub lsf_queue {
-    return $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
+    return Genome::Config::get('lsf_queue_build_worker');
 }
 
 sub bsub_rusage {

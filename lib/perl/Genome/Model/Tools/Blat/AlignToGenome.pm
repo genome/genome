@@ -35,7 +35,7 @@ class Genome::Model::Tools::Blat::AlignToGenome {
 		query_file	=> { is => 'Text', doc => "Query file in FASTA format" },
 		output_dir	=> { is => 'Text', doc => "Directory to store output files" },
 		params		=> { is => 'Text', doc => "BLAT parameters", default_value => '-mask=lower -out=pslx -noHead', is_optional => 1 },
-		lsf_queue	=> { is => 'Text', doc => "LSF queue", default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER}, is_optional => 1 },
+		lsf_queue	=> { is => 'Text', doc => "LSF queue", default_value => Genome::Config::get('lsf_queue_build_worker'), is_optional => 1 },
 	],
 };
 
@@ -56,7 +56,7 @@ sub help_detail {                           # this is what the user will see wit
 This command would spawn BLAT alignments between myDeletions.fasta and each of the 24 human chrom refseqs:
  gmt blat align-to-genome --reference-dir /gscmnt/sata420/info/reference_sequences/Homo_sapiens.NCBI36.45.dna.aml/ --search-string *.fasta --query-file myDeletions.fasta --output-dir ./ 
 
-By default, each BLAT alignment will be launched in the $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} queue, and outputs will be in the ./ directory.
+By default, each BLAT alignment will be launched in the Genome::Config::get('lsf_queue_build_worker') queue, and outputs will be in the ./ directory.
 
 Output filenames are in the format [output_dir]/[query_filename].[reference_filename].psl.  For example, the above query
 would have output files ./myDeletions.fasta.chr1.fa.psl ./myDeletions.fasta.chr2.fa.psl etc.

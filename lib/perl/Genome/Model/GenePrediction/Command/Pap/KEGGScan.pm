@@ -54,7 +54,7 @@ class Genome::Model::GenePrediction::Command::Pap::KEGGScan {
         # for this module are any modules it calls!
         blast_lsf_queue => { 
             is => 'Text',
-            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+            default_value => Genome::Config::get('lsf_queue_build_worker'),
         },
         blast_lsf_resource => { 
             is => 'Text',
@@ -96,7 +96,7 @@ class Genome::Model::GenePrediction::Command::Pap::KEGGScan {
             default => "-R 'select[mem=8192] rusage[mem=8192,tmp=1024]' -M 8192000",
         },
         lsf_queue => {
-            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+            default => Genome::Config::get('lsf_queue_build_worker'),
         },
     ],
 };

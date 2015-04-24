@@ -21,7 +21,7 @@ use FileHandle;
 ## Bowtie Parameters ##
 my $batch_size = 1000000;
 my $num_cores = 1;
-my $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
+my $lsf_queue = Genome::Config::get('lsf_queue_build_worker');
 
 my %stats = ();
 

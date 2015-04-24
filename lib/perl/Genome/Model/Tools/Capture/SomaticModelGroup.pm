@@ -436,7 +436,7 @@ sub execute {                               # replace with real execution logic.
 						$cmd .= " --reference " . $self->reference if($self->reference);
 						if(!(-e "$output_dir/varScan.output.copynumber"))
 						{
-							system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>4000]\" $cmd");							
+							system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>4000]\" $cmd");							
 						}
 						else
 						{
@@ -1267,7 +1267,7 @@ sub output_germline_files
 
 	close(SCRIPT);
 	
-	system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $germline_dir/germline.sh.log \"sh $germline_dir/germline.sh\"");
+	system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $germline_dir/germline.sh.log \"sh $germline_dir/germline.sh\"");
 
 
 	## Process Germline Indels ##
@@ -1349,7 +1349,7 @@ sub output_germline_files
 		print SCRIPT "$cmd\n";
 	}
 
-	system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $germline_dir/germline-indel.sh.log \"sh $germline_dir/germline-indel.sh\"");
+	system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $germline_dir/germline-indel.sh.log \"sh $germline_dir/germline-indel.sh\"");
 
 }
 
@@ -1443,7 +1443,7 @@ sub output_loh_files
 		## Apply the FP-filter ##
 		my $cmd = "gmt somatic filter-false-positives --variant-file $germline_output_file.unfiltered --bam-file $tumor_bam --output-file $germline_output_file";
 		$cmd .= " --reference " . $self->reference if($self->reference);
-		system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
+		system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
 	}
 	
 
@@ -1462,7 +1462,7 @@ sub output_loh_files
 		## Apply the FP-filter ##
 		my $cmd = "gmt somatic filter-false-positives --variant-file $loh_output_file.unfiltered --bam-file $normal_bam --output-file $loh_output_file";
 		$cmd .= " --reference " . $self->reference if($self->reference);
-		system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} -R\"select[mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
+		system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
 	}
 	
 	## If both files exist, process them ##

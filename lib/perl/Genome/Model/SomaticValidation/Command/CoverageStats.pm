@@ -12,7 +12,7 @@ class Genome::Model::SomaticValidation::Command::CoverageStats {
 
     has_param => [
         lsf_queue => {
-            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+            default => Genome::Config::get('lsf_queue_build_worker'),
         },
     ],
     has_optional_output => [

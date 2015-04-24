@@ -206,7 +206,7 @@ sub execute {                               # replace with real execution logic.
 					my $cmd_mv = "mv $error_name $error_name_bak";
 					system($cmd_mv);
 				}
-				system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} -R\"select[mem>4000] rusage[mem=4000]\" -M 4000000 -J $job_name -o $output_name -e $error_name \"$cmd\"");
+				system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>4000] rusage[mem=4000]\" -M 4000000 -J $job_name -o $output_name -e $error_name \"$cmd\"");
 				sleep(1);
 			}
 		}
@@ -214,8 +214,9 @@ sub execute {                               # replace with real execution logic.
 			print "-e bam_file && -e snp_file && -e indel_file failed";
 			exit;
 		}
-		my $longqueue_pending=`bjobs -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} | grep PEND | wc -l`; chomp $longqueue_pending;
-		my $apipequeue_pending=`bjobs -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} | grep PEND | wc -l`; chomp $apipequeue_pending;
+        my $lsf_queue_build_worker = Genome::Config::get('lsf_queue_build_worker');
+		my $longqueue_pending=`bjobs -q $lsf_queue_build_worker | grep PEND | wc -l`; chomp $longqueue_pending;
+		my $apipequeue_pending=`bjobs -q $lsf_queue_build_worker | grep PEND | wc -l`; chomp $apipequeue_pending;
 		if ($longqueue_pending >= 75) {
 			sleep(600);
 		}
