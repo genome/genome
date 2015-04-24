@@ -12,6 +12,7 @@ use File::Copy;
 use File::stat;
 use Carp qw(confess);
 use File::Basename;
+use Scope::Guard qw();
 
 use Genome::Sys::LockMigrationProxy qw();
 use Genome::Utility::Instrumentation;
@@ -1103,12 +1104,14 @@ sub create_bam_flagstat {
     $bam_file = $self->bam_path unless defined $bam_file;
     $output_file = $self->bam_flagstat_path unless defined $output_file;
 
-    return 1 if (-e $output_file);
+    return 1 if -e $output_file;
     unless (-s $bam_file) {
         die $self->error_message('BAM file (%s) does not exist or is empty', $bam_file);
     }
-    my $lock = $self->get_bam_lock;
-    return 1 if (-e $output_file);
+
+    my $lock  = $self->get_bam_lock;
+    my $guard = Scope::Guard->new(sub { $lock->unlock() });
+    return 1 if -e $output_file;
 
     my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
         bam_file       => $bam_file,
@@ -1121,16 +1124,16 @@ sub create_bam_flagstat {
         die $self->error_message("Failed to create or execute flagstat command on bam: $bam_file");
     }
 
-    $lock->unlock;
     return 1;
 }
 
 sub create_bam_header {
     my $self = shift;
+    return 1 if -s $self->bam_header_path;
 
-    return 1 if (-s $self->bam_header_path);
-    my $lock = $self->get_bam_lock;
-    return 1 if (-s $self->bam_header_path);
+    my $lock  = $self->get_bam_lock;
+    my $guard = Scope::Guard->new(sub { $lock->unlock() });
+    return 1 if -s $self->bam_header_path;
 
     my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 
@@ -1140,7 +1143,6 @@ sub create_bam_header {
         input_files => [$self->bam_path],
     );
 
-    $lock->unlock;
     return 1;
 }
 
@@ -1679,14 +1681,14 @@ sub get_bam_file {
     }
     else {
         my $lock = $self->get_bam_lock;
+        my $guard = Scope::Guard->new(sub { $lock->unlock() });
+
         if ($self->get_merged_alignment_results) {
-            $lock->unlock;
             return $self->revivified_alignment_bam_file_path;
         }
         else {
             my @bams = $self->alignment_bam_file_paths;
             unless (@bams) {
-                $lock->unlock;    
                 if ($self->get_merged_alignment_results) {
                     return $self->revivified_alignment_bam_file_path;
                 }
@@ -1703,7 +1705,6 @@ sub get_bam_file {
                 }
             }
             unless (@bams == 1) {
-                $lock->unlock;
                 die $self->error_message('Only 1 bam path is expected but got '.scalar @bams.'for '.$self->id);
             }
             my $temp_allocation = $self->_get_temp_allocation();
@@ -1715,8 +1716,6 @@ sub get_bam_file {
                     Genome::Sys->copy_file($file, $dest_file);
                 }
             }
-
-            $lock->unlock;
             return File::Spec->join($temp_allocation->absolute_path, basename($bams[0]));
         }
     }
@@ -1746,7 +1745,8 @@ sub remove_bam {
     my $self = shift;
 
     my $bam_path = $self->bam_path;
-    my $lock = $self->get_bam_lock;
+    my $lock  = $self->get_bam_lock;
+    my $guard = Scope::Guard->new(sub { $lock->unlock() });
 
     for my $type ('', '.bai', '.md5') {
         my $file = $bam_path . $type;
@@ -1756,7 +1756,6 @@ sub remove_bam {
         }
     }
     $self->_reallocate_disk_allocation;
-    $lock->unlock;
     return 1;
 }
 
