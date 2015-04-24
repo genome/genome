@@ -17,7 +17,7 @@ subtest 'new_from_file: basic' => sub {
     plan tests => 2;
 
     my %data = (
-        validators => [qw(numeric positive)],
+        validators => [qw(numeric port)],
     );
     my ($input_fh, $input_file, $input_filename) = setup_yaml_file({ %data });
 
