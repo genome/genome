@@ -262,12 +262,11 @@ sub path_for_picard_version {
 }
 
 sub installed_picard_versions {
-    my @files = glob('/usr/share/java/picard-*.jar');
+    my @files = glob('/usr/share/java/picard-tools*');
 
     my @versions;
     for my $f (@files) {
-        if($f =~ /picard-([\d\.]+).jar$/) {
-            next if $1 eq '1.124';
+        if($f =~ /picard-tools([\d\.]+)\/?$/) {
             push @versions, $1;
         }
     }
