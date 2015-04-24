@@ -20,12 +20,8 @@ subtest 'basic lookup' => sub {
     local $ENV{XGENOME_CONFIG_DIRS} = $new_temp_dir->();
     setup_config(
         spec => {
-            home_key => {
-                type => 'Str',
-            },
-            conf_key => {
-                type => 'Str',
-            },
+            home_key => {},
+            conf_key => {},
         },
         home => {
             home_key => 'home_dir_value',
@@ -49,11 +45,8 @@ subtest 'required value' => sub {
     local $ENV{XGENOME_CONFIG_DIRS} = $new_temp_dir->();
     setup_config(
         spec => {
-            some_key => {
-                type => 'Str',
-            },
+            some_key => {},
             some_key_with_default => {
-                type => 'Str',
                 default_value => '',
             },
         },
@@ -74,11 +67,9 @@ subtest 'validation' => sub {
     setup_config(
         spec => {
             bad_numeric_key => {
-                type => 'Int',
                 validators => [ 'numeric' ],
             },
             good_numeric_key => {
-                type => 'Int',
                 validators => [ 'numeric' ],
             },
         },
@@ -103,11 +94,9 @@ subtest 'sticky' => sub {
     setup_config(
         spec => {
             bad_sticky_key => {
-                type => 'Int',
                 sticky => 1,
             },
             good_sticky_key => {
-                type => 'Int',
                 sticky => 1,
                 env => 'GOOD_STICKY_KEY',
             },
@@ -133,7 +122,6 @@ subtest 'env' => sub {
     setup_config(
         spec => {
             some_key => {
-                type => 'Int',
                 env => 'SOME_KEY',
             },
         },

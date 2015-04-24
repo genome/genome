@@ -13,7 +13,6 @@ use Try::Tiny qw(try catch);
 use YAML::Syck qw();
 
 has 'key'        => (is => 'ro', isa => 'Str', required => 1);
-has 'type'       => (is => 'ro', isa => 'Str', required => 1);
 has 'validators' => (is => 'ro', isa => 'ArrayRef[CodeRef]', default => sub { [] });
 
 has 'default_value' => (is => 'ro', isa => 'Str', predicate => 'has_default_value');
@@ -60,7 +59,7 @@ sub new_from_file {
         key => $key,
         validators => \@validators,
     );
-    for my $k (qw(env default_value type sticky)) {
+    for my $k (qw(env default_value sticky)) {
         if (defined $data->{$k}) {
             $params{$k} = $data->{$k};
         }
@@ -104,15 +103,13 @@ Genome::ConfigSpec
 =head1 DESCRIPTION
 
 Genome::ConfigSpec defines the properties a given configuration value should
-have.  These properties are: C<key>, C<type>, C<validators>, C<env>,
-C<default_value>, and C<sticky>.
+have.  These properties are: C<key>, C<validators>, C<env>, C<default_value>,
+and C<sticky>.
 
 =head2 Required Properties
 
 C<key> is the identifier for the configuration value.  When loaded from a file
 the file's basename is used as the key.
-
-C<type> specifies the type of the value.  This may often be a UR::Value type.
 
 =head2 Optional Properties
 
@@ -134,7 +131,6 @@ For example, if you want to register a configuration variable for the key,
 'foo', you could create C<foo.yaml>,
 
   ---
-  type: Text
   default_value: bar
 
 =cut

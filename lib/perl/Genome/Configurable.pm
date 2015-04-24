@@ -33,7 +33,6 @@ sub extend_class_with_config {
             as   => $default_method_name,
         });
 
-        set_prop_desc_with_warn($prop_desc, 'data_type', $spec->type);
         set_prop_desc_with_warn($prop_desc, 'calculated_default', $default_method_name);
     }
 
@@ -58,10 +57,9 @@ Genome::Configurable
 
 =head1 DESCRIPTION
 
-Genome::Configurable is a role that injects the C<data_type> and
-C<calculated_default> attributes into UR class properties based on the
-C<config> attribute such that the default value is determined via
-L<Genome::Config> when the object is created.
+Genome::Configurable is a role that injects the C<calculated_default> attribute
+into UR class properties based on the C<config> attribute such that the default
+value is determined via L<Genome::Config> when the object is created.
 
 Genome::Configurable is primarily intended for commands to incorporate command
 line arguments as a new primary source above the L<Genome::Config> API.
