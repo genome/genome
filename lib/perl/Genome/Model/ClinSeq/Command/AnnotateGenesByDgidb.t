@@ -61,7 +61,7 @@ my $column_regex = '^'.$column_name.'[0-9]';
 $list = Genome::Model::ClinSeq::Command::AnnotateGenesByDgidb->convert($reader, $column_regex);
 is($list, "FLT3,KRAS", "List with two items converted correctly");
 
-my $test_dir = Genome::Utility::Test->data_dir_ok($class, 'v2') or die "data_dir of $class is not valid\n";
+my $test_dir = Genome::Utility::Test->data_dir_ok($class, 'v3') or die "data_dir of $class is not valid\n";
 my $test_tsv = $test_dir . '/test.indels.tsv';
 
 my $tmp_dir      = Genome::Sys->create_temp_directory;
