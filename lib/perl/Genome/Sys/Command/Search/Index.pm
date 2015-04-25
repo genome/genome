@@ -75,7 +75,7 @@ sub execute {
 sub prompt_for_confirmation {
     my $self = shift;
 
-    my $solr_server = $ENV{GENOME_SYS_SERVICES_SOLR};
+    my $solr_server = Genome::Config::get('sys_services_solr');
     print "Are you sure you want to rebuild the index for the search server at $solr_server? ";
     my $response = <STDIN>;
     chomp $response;

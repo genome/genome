@@ -22,7 +22,7 @@ class Genome::Search {
         },
         solr_server => {
             is => 'Text',
-            default_value => $ENV{GENOME_SYS_SERVICES_SOLR},
+            default_value => Genome::Config::get('sys_services_solr'),
             doc => 'Location of the Solr server',
         },
         _solr_server => {
