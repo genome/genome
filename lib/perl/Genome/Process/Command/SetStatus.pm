@@ -18,7 +18,14 @@ class Genome::Process::Command::SetStatus {
             shell_args_position => 2,
             valid_values => $Genome::Process::StatusEvent::VALID_STATUS_VALUES,
             doc => 'The new status.',
-        }
+        },
+        exit_code => {
+            is => 'Number',
+            # We usually want to exit 1 so the step 'fails', but sometimes we want to
+            # exit 0.
+            default => '1',
+            doc => 'The exit code for this command.',
+        },
     ],
     doc => 'Sets the status of a Genome::Process.',
 };
@@ -40,6 +47,8 @@ sub execute {
     my $self = shift;
 
     $self->process->update_status($self->status);
+    UR::Context->commit();
+    exit($self->exit_code);
 }
 
 
