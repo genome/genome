@@ -41,7 +41,7 @@ class Genome::Sys::User::View::Solr::Xml {
         display_url2 => {
             is  => 'Text',
             calculate_from => ['subject'],
-            calculate => sub { return $ENV{GENOME_SYS_SERVICES_WIKI_URL} . 'User:' . $_[0]->username(); },
+            calculate => sub { return Genome::Config::get('sys_services_wiki_url') . 'User:' . $_[0]->username(); },
         },
         display_title => {
             is => 'Text',
