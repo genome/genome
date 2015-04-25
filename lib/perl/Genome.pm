@@ -5,6 +5,8 @@ use strict;
 
 our $VERSION = '0.080100';
 
+require Genome::Config;
+
 use UR;
 use File::Temp;
 use IO::String;
