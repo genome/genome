@@ -7,7 +7,7 @@ use version;
 
 use Genome;
 
-my $DEFAULT_LSF_RESOURCE = $ENV{GENOME_TESTING}
+my $DEFAULT_LSF_RESOURCE = Genome::Config::get('testing')
     ? "-R 'span[hosts=1]' -n 4"
     : "-R 'select[mem>=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4";
 
