@@ -85,7 +85,7 @@ sub execute {
 
     my $inputs = {%{$self->constant_values}, %{$p{inputs}}};
 
-    my $backend = $ENV{GENOME_WORKFLOW_BUILDER_BACKEND};
+    my $backend = Genome::Config::get('workflow_builder_backend');
     if ($backend eq 'ptero') {
         return $self->_execute_with_ptero($inputs, $p{polling_interval});
 
