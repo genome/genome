@@ -835,7 +835,7 @@ sub create_directory {
 
     # have to set umask, make_path's mode/umask option is not sufficient
     my $umask = umask;
-    umask oct($ENV{GENOME_SYS_UMASK});
+    umask oct(Genome::Config::get('sys_umask'));
     make_path($directory); # not from File::Path
     umask $umask;
 
