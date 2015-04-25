@@ -422,7 +422,7 @@ sub get_summary_information
         filtered_diploid_hom_coverage_actual_number   => commify($filtered_diploid_hom_coverage_actual_number),
         filtered_diploid_hom_coverage_percent         => $filtered_diploid_hom_coverage_percent,
 
-        view_url => $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL},
+        view_url => Genome::Config::get('sys_services_web_view_url'),
     );
 
     ##################################
