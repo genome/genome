@@ -1,0 +1,318 @@
+{
+   "links" : [
+      {
+         "destination" : "Parallel Model Test",
+         "destinationProperty" : "model_prefix_lists",
+         "source" : "input connector",
+         "sourceProperty" : "model_prefix_lists"
+      },
+      {
+         "destination" : "Parallel Model Test",
+         "destinationProperty" : "model_suffixes",
+         "source" : "input connector",
+         "sourceProperty" : "model_suffixes"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "model_outputs",
+         "source" : "Parallel Model Test",
+         "sourceProperty" : "model_outputs"
+      },
+      {
+         "destination" : "Parallel Model Test",
+         "destinationProperty" : "command_prefixes",
+         "source" : "input connector",
+         "sourceProperty" : "command_prefixes"
+      },
+      {
+         "destination" : "Parallel Model Test",
+         "destinationProperty" : "command_suffix",
+         "source" : "input connector",
+         "sourceProperty" : "command_suffix"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "command_outputs",
+         "source" : "Parallel Model Test",
+         "sourceProperty" : "command_outputs"
+      },
+      {
+         "destination" : "set status Succeeded",
+         "destinationProperty" : "command_outputs",
+         "source" : "Parallel Model Test",
+         "sourceProperty" : "command_outputs"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "command_outputs (duplicate)",
+         "source" : "set status Succeeded",
+         "sourceProperty" : "command_outputs"
+      }
+   ],
+   "tasks" : {
+      "Parallel Model Test" : {
+         "methods" : [
+            {
+               "name" : "set status Running",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Running",
+                     "--exit-code",
+                     1
+                  ],
+                  "environment" : {},
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            },
+            {
+               "name" : "Parallel Model Test",
+               "parameters" : {
+                  "links" : [
+                     {
+                        "destination" : "Outer",
+                        "destinationProperty" : "prefix_list",
+                        "source" : "input connector",
+                        "sourceProperty" : "model_prefix_lists"
+                     },
+                     {
+                        "destination" : "Outer",
+                        "destinationProperty" : "suffixes",
+                        "source" : "input connector",
+                        "sourceProperty" : "model_suffixes"
+                     },
+                     {
+                        "destination" : "output connector",
+                        "destinationProperty" : "model_outputs",
+                        "source" : "Outer",
+                        "sourceProperty" : "outputs"
+                     },
+                     {
+                        "destination" : "Appender",
+                        "destinationProperty" : "prefix",
+                        "source" : "input connector",
+                        "sourceProperty" : "command_prefixes"
+                     },
+                     {
+                        "destination" : "Appender",
+                        "destinationProperty" : "suffix",
+                        "source" : "input connector",
+                        "sourceProperty" : "command_suffix"
+                     },
+                     {
+                        "destination" : "output connector",
+                        "destinationProperty" : "command_outputs",
+                        "source" : "Appender",
+                        "sourceProperty" : "output"
+                     }
+                  ],
+                  "tasks" : {
+                     "Appender" : {
+                        "methods" : [
+                           {
+                              "name" : "shortcut",
+                              "parameters" : {
+                                 "commandLine" : [
+                                    "genome",
+                                    "ptero",
+                                    "wrapper",
+                                    "--command-class",
+                                    "Genome::Ptero::TestCommand::ParamAppender",
+                                    "--method",
+                                    "shortcut",
+                                    "--log-directory",
+                                    "test_logs/nested-parallel-models"
+                                 ],
+                                 "environment" : {},
+                                 "user" : "dmorton",
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                              },
+                              "service" : "shell-command"
+                           },
+                           {
+                              "name" : "execute",
+                              "parameters" : {
+                                 "commandLine" : [
+                                    "genome",
+                                    "ptero",
+                                    "wrapper",
+                                    "--command-class",
+                                    "Genome::Ptero::TestCommand::ParamAppender",
+                                    "--method",
+                                    "execute",
+                                    "--log-directory",
+                                    "test_logs/nested-parallel-models"
+                                 ],
+                                 "environment" : {},
+                                 "user" : "dmorton",
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                              },
+                              "service" : "shell-command"
+                           }
+                        ],
+                        "parallelBy" : "prefix"
+                     },
+                     "Outer" : {
+                        "methods" : [
+                           {
+                              "name" : "Outer",
+                              "parameters" : {
+                                 "links" : [
+                                    {
+                                       "destination" : "Inner",
+                                       "destinationProperty" : "prefixes",
+                                       "source" : "input connector",
+                                       "sourceProperty" : "prefix_list"
+                                    },
+                                    {
+                                       "destination" : "Inner",
+                                       "destinationProperty" : "suffixes",
+                                       "source" : "input connector",
+                                       "sourceProperty" : "suffixes"
+                                    },
+                                    {
+                                       "destination" : "output connector",
+                                       "destinationProperty" : "outputs",
+                                       "source" : "Inner",
+                                       "sourceProperty" : "outputs"
+                                    }
+                                 ],
+                                 "tasks" : {
+                                    "Inner" : {
+                                       "methods" : [
+                                          {
+                                             "name" : "Inner",
+                                             "parameters" : {
+                                                "links" : [
+                                                   {
+                                                      "destination" : "Appender",
+                                                      "destinationProperty" : "prefix",
+                                                      "source" : "input connector",
+                                                      "sourceProperty" : "prefixes"
+                                                   },
+                                                   {
+                                                      "destination" : "Appender",
+                                                      "destinationProperty" : "suffix",
+                                                      "source" : "input connector",
+                                                      "sourceProperty" : "suffixes"
+                                                   },
+                                                   {
+                                                      "destination" : "output connector",
+                                                      "destinationProperty" : "outputs",
+                                                      "source" : "Appender",
+                                                      "sourceProperty" : "output"
+                                                   }
+                                                ],
+                                                "tasks" : {
+                                                   "Appender" : {
+                                                      "methods" : [
+                                                         {
+                                                            "name" : "shortcut",
+                                                            "parameters" : {
+                                                               "commandLine" : [
+                                                                  "genome",
+                                                                  "ptero",
+                                                                  "wrapper",
+                                                                  "--command-class",
+                                                                  "Genome::Ptero::TestCommand::ParamAppender",
+                                                                  "--method",
+                                                                  "shortcut",
+                                                                  "--log-directory",
+                                                                  "test_logs/nested-parallel-models"
+                                                               ],
+                                                               "environment" : {},
+                                                               "user" : "dmorton",
+                                                               "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                                            },
+                                                            "service" : "shell-command"
+                                                         },
+                                                         {
+                                                            "name" : "execute",
+                                                            "parameters" : {
+                                                               "commandLine" : [
+                                                                  "genome",
+                                                                  "ptero",
+                                                                  "wrapper",
+                                                                  "--command-class",
+                                                                  "Genome::Ptero::TestCommand::ParamAppender",
+                                                                  "--method",
+                                                                  "execute",
+                                                                  "--log-directory",
+                                                                  "test_logs/nested-parallel-models"
+                                                               ],
+                                                               "environment" : {},
+                                                               "user" : "dmorton",
+                                                               "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                                                            },
+                                                            "service" : "shell-command"
+                                                         }
+                                                      ],
+                                                      "parallelBy" : "suffix"
+                                                   }
+                                                }
+                                             },
+                                             "service" : "workflow"
+                                          }
+                                       ],
+                                       "parallelBy" : "prefixes"
+                                    }
+                                 }
+                              },
+                              "service" : "workflow"
+                           }
+                        ],
+                        "parallelBy" : "prefix_list"
+                     }
+                  }
+               },
+               "service" : "workflow"
+            },
+            {
+               "name" : "set status Crashed",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Crashed",
+                     "--exit-code",
+                     1
+                  ],
+                  "environment" : {},
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            }
+         ]
+      },
+      "set status Succeeded" : {
+         "methods" : [
+            {
+               "name" : "set status Succeeded",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Succeeded",
+                     "--exit-code",
+                     0
+                  ],
+                  "environment" : {},
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            }
+         ]
+      }
+   }
+}

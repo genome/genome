@@ -97,6 +97,29 @@ sub execute {
     }
 }
 
+sub submit {
+    my $self = shift;
+
+    my %p = Params::Validate::validate(@_, {
+        inputs => {type => HASHREF},
+        process_id => {type => SCALAR},
+    });
+
+    my $inputs = {%{$self->constant_values}, %{$p{inputs}}};
+
+    my $backend = $ENV{GENOME_WORKFLOW_BUILDER_BACKEND};
+    if ($backend eq 'ptero') {
+        my $wf_builder = $self->get_ptero_builder_for_process($p{process_id});
+
+        my $wf_proxy = $wf_builder->submit(inputs => $inputs);
+        $self->status_message("Submitted workflow to petri service: %s",
+            $wf_proxy->url);
+        return $wf_proxy;
+    } else {
+        die $self->error_message("Only the ptero backend is supported for 'submit' not: %s", $backend);
+    }
+}
+
 sub _execute_with_workflow {
     require Workflow::Simple;
 
@@ -183,6 +206,107 @@ sub get_ptero_builder_task {
     return Ptero::Builder::Detail::Workflow::Task->new(%params);
 }
 
+
+sub get_ptero_builder_for_process {
+    require Ptero::Builder::Workflow;
+
+    my ($self, $process_id) = Params::Validate::validate_pos(@_, 1, 1);
+
+    my $outer_dag = Ptero::Builder::Workflow->new(name => "Genome::Process($process_id)");
+
+    my $inner_task = $self->get_ptero_builder_task();
+    $inner_task->methods([
+        $self->_get_method_to_set_status($process_id, 'Running', 1),
+        @{$inner_task->methods},
+        $self->_get_method_to_set_status($process_id, 'Crashed', 1),
+    ]);
+
+    $outer_dag->_add_task($inner_task);
+    my $success_task = $outer_dag->_add_task(
+        $self->_get_task_to_set_status($process_id, 'Succeeded', 0)
+    );
+
+    my $last_destination;
+    my $linked_inputs = Set::Scalar->new();
+    my $linked_outputs = Set::Scalar->new();
+    for my $link (@{$self->links}) {
+        $link->validate;
+
+        my $source = $link->source_property;
+        my $destination = $link->destination_property;
+
+        if ($link->external_input and
+                !$linked_inputs->contains($source)) {
+            $linked_inputs->insert($source);
+            $outer_dag->link_tasks(
+                source => $link->source_operation_name,
+                source_property => $source,
+                destination => $inner_task->name,
+                destination_property => $source,
+            );
+        } elsif ($link->external_output and
+                !$linked_outputs->contains($destination)) {
+            $linked_outputs->insert($destination);
+            $last_destination = $destination;
+            $outer_dag->link_tasks(
+                source => $inner_task->name,
+                source_property => $destination,
+                destination => $link->destination_operation_name,
+                destination_property => $destination,
+            );
+        }
+    }
+    $outer_dag->link_tasks(
+        source => $inner_task->name,
+        source_property => $last_destination,
+        destination => $success_task->name,
+        destination_property => $last_destination,
+    );
+    $outer_dag->link_tasks(
+        source => $success_task->name,
+        source_property => "dummy_output",
+        destination => 'output connector',
+        destination_property => "dummy_output for Genome::Process($process_id)",
+    );
+
+    return $outer_dag;
+}
+
+sub _get_method_to_set_status {
+    require Ptero::Builder::ShellCommand;
+
+    my ($self, $process_id, $status, $exit_code) = Params::Validate::validate_pos(
+        @_, 1, 1, 1, 1);
+
+    return Ptero::Builder::ShellCommand->new(
+        name => "set status $status",
+        parameters => {
+            commandLine => [
+                'genome', 'process', 'set-status',
+                $process_id, $status,
+                '--exit-code', $exit_code,
+            ],
+            environment => \%ENV,
+            user => Genome::Sys->username,
+            workingDirectory => Cwd::getcwd,
+        },
+    );
+}
+
+sub _get_task_to_set_status {
+    require Ptero::Builder::Detail::Workflow::Task;
+
+    my ($self, $process_id, $status, $exit_code) = Params::Validate::validate_pos(
+        @_, 1, 1, 1, 1);
+
+    my %params = (
+        name => "set status $status",
+        methods => [
+            $self->_get_method_to_set_status($process_id, $status, $exit_code),
+        ],
+    );
+    return Ptero::Builder::Detail::Workflow::Task->new(%params);
+}
 
 sub create_link {
     my $self = shift;
