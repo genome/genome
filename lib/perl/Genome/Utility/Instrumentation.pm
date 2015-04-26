@@ -25,7 +25,7 @@ use Time::HiRes;
 
 BEGIN {
     require Genome::Config;
-    $Net::Statsd::HOST = $ENV{GENOME_STATSD_HOST} || '';
+    $Net::Statsd::HOST = Genome::Config::get('statsd_host') || '';
     $Net::Statsd::PORT = Genome::Config::get('statsd_port') || 0;
 };
 
