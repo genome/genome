@@ -847,7 +847,7 @@ sub create_directory {
 sub make_path {
     my ($path) = validate_pos(@_, {type => SCALAR});
 
-    my $gid = gidgrnam($ENV{GENOME_SYS_GROUP});
+    my $gid = gidgrnam(Genome::Config::get('sys_group'));
 
     my @dirs = File::Spec->splitdir($path);
     for (my $i = 0; $i < @dirs; $i++) {

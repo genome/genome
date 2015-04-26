@@ -15,9 +15,9 @@ use Test::More tests => 12;
 do {
     my $umask = umask;
 
-    ok(getgrnam($ENV{GENOME_SYS_GROUP}), 'GENOME_SYS_GROUP is set to existing group') or abort;
+    ok(getgrnam(Genome::Config::get('sys_group')), 'GENOME_SYS_GROUP is set to existing group') or abort;
 
-    my $sys_group = first { $_ eq $ENV{GENOME_SYS_GROUP} } get_group_names();
+    my $sys_group = first { $_ eq Genome::Config::get('sys_group') } get_group_names();
     ok($sys_group, "user belongs to GENOME_SYS_GROUP ($sys_group)") or abort;
 
     my $test_group = first { $_ ne $sys_group } get_group_names();

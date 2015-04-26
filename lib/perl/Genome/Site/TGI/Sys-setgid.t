@@ -55,9 +55,9 @@ subtest 'create_directory (on NFS) preserves setgid even when set_gid is needed'
         code => sub { $set_gid->(@_); $set_gid_ran++ },
     });
 
-    ok(getgrnam($ENV{GENOME_SYS_GROUP}), 'GENOME_SYS_GROUP is set to existing group') or return;
+    ok(getgrnam(Genome::Config::get('sys_group')), 'GENOME_SYS_GROUP is set to existing group') or return;
 
-    my $sys_group = first { $_ eq $ENV{GENOME_SYS_GROUP} } get_group_names();
+    my $sys_group = first { $_ eq Genome::Config::get('sys_group') } get_group_names();
     ok($sys_group, "user belongs to GENOME_SYS_GROUP ($sys_group)") or return;
 
     my $test_group = first { $_ ne $sys_group } get_group_names();
