@@ -89,7 +89,7 @@ my $callback = sub {
    
     # should we just standardize on JSON log entries?
 
-    my $min_level = $ENV{GENOME_SYS_LOG_LEVEL};
+    my $min_level = Genome::Config::get('sys_log_level');
     if (not $min_level) {
         # skip message b/c syslog level is not set at all
         return 1;
