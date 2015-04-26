@@ -580,7 +580,7 @@ sub base_temp_directory {
 
     # For debugging purposes, allow cleanup to be disabled
     my $cleanup = 1;
-    if($ENV{'GENOME_SYS_NO_CLEANUP'}) {
+    if (Genome::Config::get('sys_no_cleanup')) {
         $cleanup = 0;
     }
     my $dir = File::Temp::tempdir($template, DIR=>$tmp_location, CLEANUP => $cleanup);
