@@ -27,7 +27,7 @@ sub initialize {
     # Don't use =>.
     my %resource_limit = (
         RLIMIT_CPU(), Genome::Config::get('rest_rlimit_cpu'),
-        RLIMIT_AS(), $ENV{GENOME_REST_RLIMIT_AS},
+        RLIMIT_AS(), Genome::Config::get('rest_rlimit_as'),
     );
     for my $resource (keys %resource_limit) {
         my $new_soft = $resource_limit{$resource};
