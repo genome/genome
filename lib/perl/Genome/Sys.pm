@@ -1460,7 +1460,8 @@ sub shellcmd {
     # disconnect the db handle in case this is about to take awhile
     $self->disconnect_default_handles unless $keep_dbh_connection_open;
 
-    if ($ENV{GENOME_SYS_PAUSE_SHELLCMD} and $cmd =~ $ENV{GENOME_SYS_PAUSE_SHELLCMD}) {
+    my $sys_pause_shellcmd = Genome::Config::get('sys_pause_shellcmd');
+    if ($sys_pause_shellcmd and $cmd =~ $sys_pause_shellcmd) {
         my $file = '/tmp/GENOME_SYS_PAUSE.' . $$;
         $self->warning_message("RUN MANUALLY (and remove $file afterward): $cmd");
         Genome::Sys->write_file($file,$cmd . "\n");
