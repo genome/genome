@@ -62,7 +62,7 @@ my $callback = sub {
 
     # original logic runs only if the GENOME_SYS_LOG_DETAIL variable is not set
 
-    unless ($ENV{GENOME_SYS_LOG_DETAIL}) {
+    unless (Genome::Config::get('sys_log_detail')) {
         # by default we just log errors, and do so as text
         if ($level eq 'error') {
             if (substr($message,0,1) ne '{') {
