@@ -70,7 +70,7 @@ sub bams {
 
 sub uri {
     my $file = shift;
-    return URI->new_abs($file, $ENV{GENOME_SYS_SERVICES_FILES_URL})->as_string;
+    return URI->new_abs($file, Genome::Config::get('sys_services_files_url'))->as_string;
 }
 
 sub resource_files {

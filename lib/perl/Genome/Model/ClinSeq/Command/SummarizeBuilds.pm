@@ -1063,12 +1063,12 @@ sub display_handy_rnaseq_urls {
     #display urls to some handy locations in the rna-seq build
     if (-e "$build_dir/bam-qc/"){
       $self->status_message("\nRNA-seq BAM-QC results:\n"
-        . Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL},
+        . Genome::Utility::List::join_with_single_slash(Genome::Config::get('sys_services_files_url'),
           "$build_dir/bam-qc/"));
     }
     if (-e "$build_dir/junctions/summary/"){
       $self->status_message("\nRNA-seq junction summary results:\n"
-        . Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL},
+        . Genome::Utility::List::join_with_single_slash(Genome::Config::get('sys_services_files_url'),
           "$build_dir/junctions/summary/"));
     }
 }

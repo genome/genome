@@ -473,7 +473,7 @@ sub generate_track_xml {
   my $color_option = "UNEXPECTED_PAIR";
 
   #Set the resource file url path
-  $resource_file_url = Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL}, $resource_file);
+  $resource_file_url = Genome::Utility::List::join_with_single_slash(Genome::Config::get('sys_services_files_url'), $resource_file);
 
   #Abbreviate some aspects of the base track name
   if ($tissue_desc =~ /skin\,\s+nos/i){
@@ -503,7 +503,7 @@ sub generate_track_xml {
     my $read_track_name = "$base_track_name Reads";
     my $resource_file_coverage = $resource_file . "_coverage";
 
-    my $resource_file_coverage_url = Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL}, $resource_file_coverage);
+    my $resource_file_coverage_url = Genome::Utility::List::join_with_single_slash(Genome::Config::get('sys_services_files_url'), $resource_file_coverage);
 
   $xml=<<XML;
     <Track altColor="0,0,178" autoScale="true" color="175,175,175" colorScale="ContinuousColorScale;0.0;9062.0;255,255,255;175,175,175" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="$font_size" id="$resource_file_coverage_url" name="$coverage_track_name" showDataRange="true" visible="true">
