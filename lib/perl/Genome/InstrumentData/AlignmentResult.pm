@@ -1156,7 +1156,11 @@ sub set_bam_size {
             die $self->error_message('BAM file (%s) does not exist or is empty', $bam_file);
         }
     }
-    return 1 if $self->bam_size;
+    my $previous_value = UR::Context->query_underlying_context;
+    UR::Context->query_underlying_context(1);
+    my $bam_size = $self->bam_size;
+    UR::Context->query_underlying_context($previous_value);
+    return 1 if $bam_size;
 
     $self->bam_size(stat($bam_file)->size);
 
