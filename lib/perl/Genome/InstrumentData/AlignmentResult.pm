@@ -1156,6 +1156,7 @@ sub set_bam_size {
             die $self->error_message('BAM file (%s) does not exist or is empty', $bam_file);
         }
     }
+    return 1 if $self->bam_size;
 
     $self->bam_size(stat($bam_file)->size);
 
