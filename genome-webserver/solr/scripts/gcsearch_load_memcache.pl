@@ -7,7 +7,9 @@ use Data::Dumper;
 use above "Genome";
 use Cache::Memcached;
 
-my $lock_resource = $ENV{GENOME_LOCK_DIR} . '/gcsearch/memcache_loader';
+require Genome::Config;
+
+my $lock_resource = Genome::Config::get('lock_dir') . '/gcsearch/memcache_loader';
 
 my $lock = Genome::Sys->lock_resource(resource_lock=>$lock_resource, max_try=>0);
 unless ($lock) {
