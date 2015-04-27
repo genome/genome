@@ -66,7 +66,7 @@ sub reference_sequence_directory {
 }
 
 sub root_directory {
-    $ENV{GENOME_MODEL_ROOT} || '/gscmnt/gc4096/info/symlinks';
+    Genome::Config::get('model_root') || '/gscmnt/gc4096/info/symlinks';
 }
 
 1;
