@@ -23,19 +23,20 @@ Genome::Sys::Lock->add_backend('site',
     Genome::Sys::Lock::FileBackend->new(is_mandatory => 1,
         parent_dir => Genome::Config::get('site_lock_dir')));
 
-if ($ENV{GENOME_NESSY_SERVER}) {
+my $nessy_server = Genome::Config::get('nessy_server');
+if ($nessy_server) {
     require Genome::Sys::Lock::NessyBackend;
     my $is_mandatory = $ENV{GENOME_NESSY_MANDATORY} ? 1 : 0;
 
     my $nessy_host_backend = Genome::Sys::Lock::NessyBackend->new(
-        url => $ENV{GENOME_NESSY_SERVER},
+        url => $nessy_server,
         is_mandatory => $is_mandatory,
         namespace => hostname(),
     );
     Genome::Sys::Lock->add_backend('host', $nessy_host_backend);
 
     my $nessy_site_backend = Genome::Sys::Lock::NessyBackend->new(
-        url => $ENV{GENOME_NESSY_SERVER},
+        url => $nessy_server,
         is_mandatory => $is_mandatory,
     );
     Genome::Sys::Lock->add_backend('site', $nessy_site_backend);
