@@ -623,7 +623,7 @@ sub _cpu_slot_usage_breakdown {
         }
 
         if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue)
-            and $op_type->lsf_queue eq $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW}
+            and $op_type->lsf_queue eq Genome::Config::get('lsf_queue_build_workflow')
         ) {
             # skip jobs which run in workflow because they internally run another workflow
             next;
@@ -1461,7 +1461,7 @@ sub _server_dispatch {
     } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
         $server_dispatch = $model->server_dispatch;
     } else {
-        $server_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW};
+        $server_dispatch = Genome::Config::get('lsf_queue_build_workflow');
     }
     return $server_dispatch;
 }
