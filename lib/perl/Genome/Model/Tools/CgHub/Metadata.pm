@@ -20,7 +20,7 @@ class Genome::Model::Tools::CgHub::Metadata {
 };
 
 sub add_file {
-    my ($self, $metadata_file) = Params::Validate::validate_pos(@_, {type => OBJECT}, {type => SCALAR, called => 'file'});
+    my ($self, $metadata_file) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR, called => 'file'});
 
     my $xml = Genome::Sys->read_file($metadata_file);
     if ( not $xml ) {
@@ -31,7 +31,7 @@ sub add_file {
 }
 
 sub add_xml {
-    my ($self, $xml) = Params::Validate::validate_pos(@_, {type => OBJECT}, {type => SCALAR, called => 'XML',});
+    my ($self, $xml) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR, called => 'XML',});
 
     my $metadata = XMLin($xml);
     die $self->error_message('Failed to load metadata XML!') if not $metadata;
@@ -41,7 +41,7 @@ sub add_xml {
 }
 
 sub _add_metadata {
-    my ($self, $incoming_metadata) = Params::Validate::validate_pos(@_, {type => OBJECT}, {type => HASHREF, called => 'metadata',});
+    my ($self, $incoming_metadata) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => HASHREF, called => 'metadata',});
 
     my $results;
     if ( not $incoming_metadata->{Hits} or $incoming_metadata->{Hits} == 0) {
@@ -67,7 +67,7 @@ sub _add_metadata {
 
 sub get_attribute_value {
     my ($self, $lookup_id, $name) = Params::Validate::validate_pos(
-        @_, {type => HASHREF}, {type => SCALAR}, {type => SCALAR},
+        @_, {isa => __PACKAGE__}, {type => SCALAR}, {type => SCALAR},
     );
 
     my $result = $self->metadata->{$lookup_id};
@@ -76,7 +76,7 @@ sub get_attribute_value {
 }
 
 sub _files {
-    my ($self, $lookup_id) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => SCALAR});
+    my ($self, $lookup_id) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
 
     my $result = $self->metadata->{$lookup_id};
     return if not $result;
@@ -101,7 +101,7 @@ sub bam_file_names {
 
 sub _get_attribute_value_for_file_name {
     my ($self, $lookup_id, $file_name, $attr_names) = Params::Validate::validate_pos(
-        @_, {type => HASHREF}, {type => SCALAR}, {type => SCALAR}, {type => ARRAYREF},
+        @_, {isa => __PACKAGE__}, {type => SCALAR}, {type => SCALAR}, {type => ARRAYREF},
     );
 
     my @files = $self->_files($lookup_id);
@@ -129,7 +129,7 @@ sub _get_attribute_value_for_file_name {
 
 sub checksum_type_for_file_name {
     my ($self, $lookup_id, $file_name) = Params::Validate::validate_pos(
-        @_, {type => HASHREF}, {type => SCALAR}, {type => SCALAR},
+        @_, {isa => __PACKAGE__}, {type => SCALAR}, {type => SCALAR},
     );
     my $checksum_type = $self->_get_attribute_value_for_file_name($lookup_id, $file_name, [qw/ checksum type /]);
     return uc $checksum_type;
@@ -137,14 +137,14 @@ sub checksum_type_for_file_name {
 
 sub checksum_content_for_file_name {
     my ($self, $lookup_id, $file_name) = Params::Validate::validate_pos(
-        @_, {type => HASHREF}, {type => SCALAR}, {type => SCALAR},
+        @_, {isa => __PACKAGE__}, {type => SCALAR}, {type => SCALAR},
     );
     return $self->_get_attribute_value_for_file_name($lookup_id, $file_name, [qw/ checksum content /]);
 }
 
 sub file_size_for_file_name {
     my ($self, $lookup_id, $bam_file) = Params::Validate::validate_pos(
-        @_, {type => HASHREF}, {type => SCALAR}, {type => SCALAR},
+        @_, {isa => __PACKAGE__}, {type => SCALAR}, {type => SCALAR},
     );
     return $self->_get_attribute_value_for_file_name($lookup_id, $bam_file, [qw/ filesize /]);
 }
