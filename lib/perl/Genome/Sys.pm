@@ -379,7 +379,7 @@ sub jar_version_path_map {
     my ($class, $pkg_name) = @_;
 
     my %versions;
-    my @dirs = split(':', $ENV{GENOME_JAR_PATH});
+    my @dirs = split(':', Genome::Config::get('jar_path'));
 
     for my $dir (@dirs) {
         my $prefix = "$dir/$pkg_name-";
