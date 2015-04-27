@@ -1070,7 +1070,7 @@ sub _compute_alignment_metrics {
         $self->singleton_read_count         ($res->{singleton});
         $self->singleton_base_count         ($res->{singleton_bp});
 
-        $self->bam_size(stat($bam)->size); #store this for per lane bam recreation
+        $self->set_bam_size($bam); #store this for per lane bam recreation
         Genome::Utility::Instrumentation::inc('alignment_result.read_count', $self->total_read_count);
     }
 
