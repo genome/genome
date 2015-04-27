@@ -72,10 +72,7 @@ sub get_attribute_value {
 
     my $result = $self->metadata->{$lookup_id};
     return if not $result;
-    my $value = $result->{$name};
-
-    return if not defined $value or $value eq '';
-    return $value;
+    return $result->{$name};
 }
 
 sub _files {
