@@ -26,7 +26,7 @@ Genome::Sys::Lock->add_backend('site',
 my $nessy_server = Genome::Config::get('nessy_server');
 if ($nessy_server) {
     require Genome::Sys::Lock::NessyBackend;
-    my $is_mandatory = $ENV{GENOME_NESSY_MANDATORY} ? 1 : 0;
+    my $is_mandatory = Genome::Config::get('nessy_mandatory') ? 1 : 0;
 
     my $nessy_host_backend = Genome::Sys::Lock::NessyBackend->new(
         url => $nessy_server,
