@@ -149,7 +149,7 @@ sub execute {                               # replace with real execution logic.
 		}
 		else
 		{
-			system(qq{bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -oo $ScriptFileOut -R "select[mem>2000] rusage[mem=2000]" $ScriptFileName});					
+			system(qq{bsub -q } . Genome::Config::get('lsf_queue_short') . qq{ -oo $ScriptFileOut -R "select[mem>2000] rusage[mem=2000]" $ScriptFileName});					
 		}
 
 	}

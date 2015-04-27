@@ -62,7 +62,7 @@ class Genome::Model::GenePrediction::Command::Pap::BtabHmmtab {
         },
         lsf_queue => {
             is_param => 1,
-            default_value => $ENV{GENOME_LSF_QUEUE_SHORT},
+            default_value => Genome::Config::get('lsf_queue_short'),
         },
         lsf_resource => {
             is_param => 1,

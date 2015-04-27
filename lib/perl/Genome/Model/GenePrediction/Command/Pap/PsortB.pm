@@ -40,7 +40,7 @@ class Genome::Model::GenePrediction::Command::Pap::PsortB {
     ],
     has_param => [
         lsf_resource => { 
-            default_value => "-q $ENV{GENOME_LSF_QUEUE_SHORT} -R 'rusage[tmp=100]'", 
+            default_value => "-q " . Genome::Config::get('lsf_queue_short') . " -R 'rusage[tmp=100]'", 
         },
     ],
 };
