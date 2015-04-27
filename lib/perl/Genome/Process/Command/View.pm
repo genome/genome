@@ -27,11 +27,17 @@ class Genome::Process::Command::View {
             default_value => 0,
             doc => 'Display process inputs.'
         },
+        notes => {
+            is => 'Boolean',
+            is_optional => 1,
+            default_value => 0,
+            doc => 'Display process notes.'
+        },
         full => {
             is => 'Boolean',
             is_optional => 1,
             default_value => 0,
-            doc => 'Display all process information. Equivalent to "--events --inputs --workflow".'
+            doc => 'Display all process information. Equivalent to "--events --inputs --notes --workflow".'
         },
     ],
     doc => 'Displays basic information about a process.',
@@ -62,11 +68,13 @@ sub write_report {
 
     if ($self->full) {
         $self->inputs(1);
+        $self->notes(1);
         $self->status_events(1);
         $self->workflow(1);
     }
 
-    for my $thing (["inputs", "Inputs", "_display_input"],
+    for my $thing (["notes", "Notes", "_display_note"],
+                   ["inputs", "Inputs", "_display_input"],
                    ["status_events", "Events", "_display_event"]) {
         my ($item, $section_name, $method_name) = @{$thing};
         if($self->$item) {
@@ -146,5 +154,20 @@ EOS
     );
 }
 
+sub _display_note {
+    my ($self, $handle, $note) = @_;
+
+    my $format_str = <<EOS;
+%s
+    %s
+    %s
+EOS
+    print $handle sprintf($format_str,
+        $note->entry_date,
+        $self->_color_pair('Header', $note->header_text),
+        $self->_color_pair('Body',
+            $self->_clean_up_timestamp($note->body_text)),
+    );
+}
 
 1;
