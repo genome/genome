@@ -286,7 +286,7 @@ sub _get_method_to_set_status {
                 $process_id, $status,
                 '--exit-code', $exit_code,
             ],
-            environment => \%ENV,
+            environment => $self->_get_sanitized_env(),
             user => Genome::Sys->username,
             workingDirectory => Cwd::getcwd,
         },
