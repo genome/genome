@@ -44,7 +44,7 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
     ],
     has_param => [
         lsf_queue => {
-            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
+            default => Genome::Config::get('lsf_queue_build_worker_alt'),
         },
         lsf_resource => {
             default => "-M 20000000 -R 'select[mem>20000] rusage[mem=20000]'",

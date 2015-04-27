@@ -274,7 +274,7 @@ sub _resolve_workflow_for_build {
         output_properties => [qw/ build /],
         log_dir => $build->log_directory,
     );
-    $lsf_queue //= $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+    $lsf_queue //= Genome::Config::get('lsf_queue_build_worker_alt');
     $lsf_project //= 'build' . $build->id;
     my $left_operation = $workflow->get_input_connector;
 

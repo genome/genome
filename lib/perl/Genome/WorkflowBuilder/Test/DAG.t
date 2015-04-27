@@ -8,6 +8,8 @@ use Test::Exception;
 
 use_ok('Genome::WorkflowBuilder::DAG');
 
+my $lsf_queue_build_worker_alt = Genome::Config::get('lsf_queue_build_worker_alt');
+
 subtest 'Simple DAG' => sub {
     my $dag = Genome::WorkflowBuilder::DAG->create(
         name => 'top level',
@@ -39,7 +41,7 @@ subtest 'Simple DAG' => sub {
     <outputproperty>some_external_output</outputproperty>
   </operationtype>
   <operation name="some op">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
       <inputproperty>input</inputproperty>
       <outputproperty>many_output</outputproperty>
       <outputproperty>result</outputproperty>
@@ -172,7 +174,7 @@ subtest 'XML Round Trip' => sub {
     <outputproperty>some_external_output</outputproperty>
   </operationtype>
   <operation name="some op">
-    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+    <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
       <inputproperty>input</inputproperty>
       <outputproperty>many_output</outputproperty>
       <outputproperty>result</outputproperty>
@@ -303,7 +305,7 @@ subtest 'Nested DAG with constant input' => sub {
       <outputproperty>output</outputproperty>
     </operationtype>
     <operation name="some op">
-      <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT}" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+      <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="$lsf_queue_build_worker_alt" lsfResource="-M 25000000 -R 'select[mem&gt;25000] rusage[mem=25000]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
         <inputproperty>input</inputproperty>
         <outputproperty>many_output</outputproperty>
         <outputproperty>result</outputproperty>

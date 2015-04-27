@@ -1025,7 +1025,7 @@ sub start {
 
         # Creates a workflow for the build
         # TODO Initialize workflow shouldn't take arguments
-        unless ($self->_initialize_workflow($params{job_dispatch} || $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT})) {
+        unless ($self->_initialize_workflow($params{job_dispatch} || Genome::Config::get('lsf_queue_build_worker_alt'))) {
             Carp::croak "Build " . $self->__display_name__ . " could not initialize workflow!";
         }
 
@@ -1445,7 +1445,7 @@ sub _job_dispatch {
     } elsif ($model->processing_profile->can('job_dispatch') && defined $model->processing_profile->job_dispatch) {
         $job_dispatch = $model->processing_profile->job_dispatch;
     } else {
-        $job_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+        $job_dispatch = Genome::Config::get('lsf_queue_build_worker_alt');
     }
     return $job_dispatch;
 }
@@ -1488,7 +1488,7 @@ sub _job_group_spec {
 sub _initialize_workflow {
     #     Create the data and log directories and resolve the workflow for this build.
     my $self = shift;
-    my $optional_lsf_queue = shift || $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+    my $optional_lsf_queue = shift || Genome::Config::get('lsf_queue_build_worker_alt');
 
     Genome::Sys->create_directory( $self->data_directory )
         or return;
