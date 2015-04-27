@@ -1148,9 +1148,15 @@ sub create_bam_header {
 
 sub set_bam_size {
     my ($self, $bam_file) = @_;
-    $bam_file = $self->get_bam_file unless defined $bam_file;
-
     return 1 if $self->bam_size;
+
+    unless (defined $bam_file || -s $bam_file) {
+        $bam_file = $self->get_bam_file unless defined $bam_file;
+        unless (-s $bam_file) {
+            die $self->error_message('BAM file (%s) does not exist or is empty', $bam_file);
+        }
+    }
+
     $self->bam_size(stat($bam_file)->size);
 
     return 1;
