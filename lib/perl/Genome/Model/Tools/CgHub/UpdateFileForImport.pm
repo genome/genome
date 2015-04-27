@@ -14,13 +14,13 @@ class Genome::Model::Tools::CgHub::UpdateFileForImport {
     has_input => {
         file => {
             is => 'Text',
-            doc => 'Comma (.csv) or tab (.tsv) separated file of that ahs an "analysis_id". Separator is determined by file extension.',
+            doc => 'Comma (.csv) or tab (.tsv) separated file of that has an "analysis_id". Separator is determined by file extension.',
         },
     },
     has_output => {
         output_file => { 
             is => 'Text',
-            doc => 'Output file. Will automaticall use the separator of the incoming file.',
+            doc => 'Output file. Will automatically use the separator of the incoming file.',
         },
     },
     has_optional_transient => {
