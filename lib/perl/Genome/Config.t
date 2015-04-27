@@ -3,13 +3,16 @@
 use strict;
 use warnings;
 
-use Genome qw();
 use Genome::Test::Config qw(setup_config);
 
 use Test::More tests => 6;
 use Test::Fatal qw(exception);
 
-use_ok('Genome::Config');
+
+subtest 'Genome does not need to be loaded for Genome::Config' => sub {
+    use_ok('Genome::Config');
+    ok(!scalar(grep { $_ eq 'Genome.pm' } keys %INC), 'Genome has not been loaded');
+};
 
 subtest 'basic lookup' => sub {
     plan tests => 2;
