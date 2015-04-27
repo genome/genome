@@ -419,15 +419,14 @@ sub estimated_kb_usage {
         my $bam_size = $alignment->bam_size;
 
         unless (defined $bam_size) {
-            my @aln_bams = $alignment->alignment_bam_file_paths;
-            unless (@aln_bams) {
+            my $aln_bam = $alignment->get_bam_file;
+            unless ($aln_bam) {
                 die $self->error_message("alignment $alignment has no bams at " . $alignment->output_dir);
             }
-            for (@aln_bams) {
-                my $size = stat($_)->size;
-                $self->debug_message("BAM has size: " . $size);
-                $bam_size += $size;
-            }
+            $alignment->set_bam_size($aln_bam);
+            my $size = $alignment->bam_size;
+            $self->debug_message("BAM has size: " . $size);
+            $bam_size = $size;
         }
         $total_size += $bam_size;
     }

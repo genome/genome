@@ -1146,6 +1146,15 @@ sub create_bam_header {
     return 1;
 }
 
+sub set_bam_size {
+    my ($self, $bam_file) = @_;
+    $bam_file = $self->get_bam_path unless defined $bam_file;
+
+    return 1 if $self->bam_size;
+    $self->bam_size(stat($bam_file)->size);
+
+    return 1;
+}
 
 sub _verify_bam {
     my $self = shift;
