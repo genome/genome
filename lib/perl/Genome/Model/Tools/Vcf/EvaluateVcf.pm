@@ -165,7 +165,7 @@ sub execute {
         );
 
     my $tn_bed_size = $self->true_negative_size
-      || $self->bed_size("${tn_bed}.roi.bed.gz");
+      || $self->bed_size($final_tn_file);
 
     my $false_positives_in_roi = $self->number_within_roi(
         $final_input_file,
@@ -184,8 +184,6 @@ sub execute {
     $results{false_positives_in_roi} = $false_positives_in_roi;
 
     $self->rawstats(\%results);
-
-    $self->display_all_stats();
 
     return 1;
 }
@@ -422,7 +420,7 @@ sub bed_size {
     my $self = shift;
     my $bed = shift;
     my $count = 0;
-    my $fh = IO::File->new("zcat $bed |") or die "Unable to open $bed to calculate size\n";
+    my $fh = IO::File->new($bed) or die "Unable to open $bed to calculate size\n";
     while(my $line  = $fh->getline) {
         chomp $line;
         my ($chr, $start, $stop) = split "\t", $line;

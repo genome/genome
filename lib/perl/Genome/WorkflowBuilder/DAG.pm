@@ -8,6 +8,7 @@ use Params::Validate qw(:types);
 use Set::Scalar qw();
 use JSON;
 use List::MoreUtils qw();
+use Genome::Utility::Inputs qw(encode decode);
 
 
 class Genome::WorkflowBuilder::DAG {
@@ -116,13 +117,17 @@ sub _execute_with_ptero {
 
     my $wf_builder = $self->get_ptero_builder($self->name);
 
-    my $wf_proxy = $wf_builder->submit( inputs => $inputs );
+    my $wf_proxy = $wf_builder->submit( inputs => encode($inputs) );
     $self->status_message("Waiting on PTero workflow (%s) to complete",
         $wf_proxy->url);
     $wf_proxy->wait(polling_interval => $polling_interval);
 
     if ($wf_proxy->has_succeeded) {
-        return $wf_proxy->outputs;
+        if (!defined($wf_proxy->outputs)) {
+            die $self->error_message('PTero workflow (%s) returned no results', $wf_proxy->url);
+        } else {
+            return decode($wf_proxy->outputs);
+        }
     }
     else {
         die $self->error_message('PTero workflow (%s) did not succeed',

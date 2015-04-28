@@ -7,8 +7,9 @@ use warnings;
 # M O D U L E S ###############################################################
 use Test::More;
 use Path::Class;
+
 use above 'Genome';
-#use Genome::Model::Tools::Vcf::EvaluateVcf;
+use Genome::Utility::Test;
 
 # M A I N #####################################################################
 
@@ -88,8 +89,12 @@ sub run_evaluate_vcf {
 
 sub setup_evaluate_vcf_params {
     # inputs
-    my $base_dir =
-      Path::Class::Dir->new('/gscmnt/gc2801/analytics/tabbott/vcf-evaluate');
+
+    my $base_dir = Path::Class::Dir->new(
+        Genome::Utility::Test->data_dir_ok(
+            'Genome::Model::Tools::Vcf::EvaluateVcf', 'v1'
+        )
+    );
 
     # Input VCF is based on original vcf file:
     #/gscmnt/gc13028/info/model_data/6195f53ff81046959a3bfee124c186f6/buildf60b23fdb26c45f486cf2d5937a7502b/variants/snvs.vcf.gz";
@@ -100,7 +105,7 @@ sub setup_evaluate_vcf_params {
     my $true_negative_bed = $base_dir->file("gold/tn.bed.gz");
 
     # output directory
-    my $output_dir = Path::Class::Dir->new('/tmp/vcf/test');
+    my $output_dir = Path::Class::Dir->new( Genome::Sys->create_temp_directory() );
     if (-e $output_dir) {
         $output_dir->rmtree;
     }
