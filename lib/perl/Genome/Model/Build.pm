@@ -1867,7 +1867,7 @@ sub generate_send_and_save_report {
         report => $report,
         to => $to->id,
         from => Genome::Config::get('email_pipeline'),
-        replyto => $ENV{GENOME_EMAIL_NOREPLY},
+        replyto => Genome::Config::get('email_noreply'),
         # maybe not the best/correct place for this information but....
         xsl_files => [ $generator->get_xsl_file_for_html ],
     );
