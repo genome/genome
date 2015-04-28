@@ -39,15 +39,6 @@ my %instrument_data_properties = (
     this => 'that', 
 );
 is_deeply(
-    $inputs->for_worklflow,
-    {
-        source_files => \@source_files,
-        instrument_data_properties => \%instrument_data_properties,
-    },
-    'for_worklflow',
-);
-isa_ok($inputs->source_files, 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles', 'source_files');
-is_deeply(
     $inputs->instrument_data_properties,
     \%instrument_data_properties,
     'instrument_data_properties',

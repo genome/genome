@@ -29,14 +29,6 @@ sub create {
     return $self;
 }
 
-sub for_worklflow {
-    my $self = shift;
-    return {
-        source_files => [ $self->source_files->paths ],
-        instrument_data_properties => $self->instrument_data_properties,
-    };
-}
-
 sub _resolve_source_files {
     my $self = shift;
 
