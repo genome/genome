@@ -15,17 +15,17 @@ use Params::Validate ':types';
 class Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles { 
     is => 'UR::Object',
     has => {
-        source_files => { is => 'Text', is_many => 1, },
+        paths => { is => 'Text', is_many => 1, },
     },
     has_transient => {
-        _source_files => { is => 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFile', is_many => 1 },
+        source_files => { is => 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFile', is_many => 1 },
         format => { is =>'Text', },
         retrieval_method => { is =>'Text', },
     },
 };
 
 sub original_data_path {
-    return join(',', $_[0]->source_files);
+    return join(',', $_[0]->paths);
 }
 
 sub create {
@@ -34,12 +34,12 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
-    die $self->error_message('No source files given!') if not $self->source_files;
+    die $self->error_message('No source files given!') if not $self->paths;
 
-    $self->_source_files([
+    $self->source_files([
         map { 
-            Genome::InstrumentData::Command::Import::WorkFlow::SourceFile->create(source_file => $_)
-        } $self->source_files
+            Genome::InstrumentData::Command::Import::WorkFlow::SourceFile->create(path => $_)
+        } $self->paths
         ]);
 
     $self->_resolve_property_for_source_files('format');
@@ -52,13 +52,13 @@ sub _resolve_property_for_source_files {
     my ($self, $property) = Params::Validate::validate_pos(@_, {type => OBJECT}, {type => SCALAR});
 
     my @values;
-    for my $source_file ( $self->_source_files ) {
+    for my $source_file ( $self->source_files ) {
         push @values, $source_file->$property;
     }
 
     @values = List::MoreUtils::uniq(@values);
     if ( @values > 1 ) {
-        die $self->error_message('Mixed values for source file %s! %s', $property, join(' ', $self->source_files));
+        die $self->error_message('Mixed values for source file %s! %s', $property, join(' ', $self->paths));
     }
 
     return $self->$property($values[0]);
@@ -68,7 +68,7 @@ sub kilobytes_required_for_processing {
     my $self = shift;
 
     my $kb_required = 0;
-    for my $source_file ( $self->_source_files ) {
+    for my $source_file ( $self->source_files ) {
         $kb_required += $source_file->kilobytes_required_for_processing;
     }
 

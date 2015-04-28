@@ -21,7 +21,7 @@ my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Comma
 
 my @source_files = map { File::Spec->join($test_dir, 'fastq', 'v3', $_) } (qw/ input.1.fastq.gz input.2.fastq /);
 
-my $sf = $class->create(source_files => \@source_files);
+my $sf = $class->create(paths => \@source_files);
 ok($sf, 'create');
 is($sf->format, 'fastq', 'format');
 is($sf->retrieval_method, 'local disk', 'retrieval_method');
@@ -36,13 +36,13 @@ throws_ok(
 );
 
 throws_ok(
-    sub{ $class->create(source_files => [qw/ file.bam file.fastq /]); },
+    sub{ $class->create(paths => [qw/ file.bam file.fastq /]); },
     qr/Mixed values for source file format\!/,
     'create fails w/ different formats',
 );
 
 throws_ok(
-    sub{ $class->create(source_files => [qw{ http://file.bam file.bam }]); },
+    sub{ $class->create(paths => [qw{ http://file.bam file.bam }]); },
     qr/Mixed values for source file retrieval_method\!/,
     'create fails w/ different retrieval_methods',
 );

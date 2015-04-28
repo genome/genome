@@ -12,7 +12,7 @@ require LWP::Simple;
 class Genome::InstrumentData::Command::Import::WorkFlow::SourceFile { 
     is => 'UR::Object',
     has => {
-        source_file => { is => 'Text', },
+        path => { is => 'Text', },
     },
     has_transient => {
         format => { is =>'Text', },
@@ -25,7 +25,7 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return if not $self;
 
-    die $self->error_message('No source file given!') if not $self->source_file;
+    die $self->error_message('No source file given!') if not $self->path;
 
     $self->_resolve_format;
 
@@ -41,7 +41,7 @@ sub _resolve_format {
         bam => 'bam',
         sra => 'sra',
     );
-    my $source_file = $self->source_file;
+    my $source_file = $self->path;
     $source_file =~ s/\Q.$_\E$// for Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs->types;
     my ($source_file_base_name, $path, $suffix) = File::Basename::fileparse(
         $source_file, keys %suffixes_to_original_format
@@ -62,7 +62,7 @@ sub _resolve_format {
 sub retrieval_method {
     my $self = shift;
 
-    if ( $self->source_file =~ m#^(http|https|file)\://# ) {
+    if ( $self->path =~ m#^(http|https|file)\://# ) {
         return 'remote url';
     }
     else {
@@ -73,9 +73,9 @@ sub retrieval_method {
 sub file_size {
     my $self = shift;
 
-    my $source_file = $self->source_file;
+    my $source_file = $self->path;
     if ( $source_file !~ /^http/ ) {
-        return -s $self->source_file;
+        return -s $self->path;
     }
 
     my $agent = LWP::UserAgent->new;
@@ -90,7 +90,7 @@ sub file_size {
 
 sub is_tar {
     my $self = shift;
-    my $source_file = $self->source_file;
+    my $source_file = $self->path;
     return List::MoreUtils::any { $source_file =~ /\Q$_\E$/ } (qw/ .tgz .tar .tar.gz /);
 }
 
@@ -104,7 +104,7 @@ sub kilobytes_required_for_processing {
         sra => 4,
     );
 
-    my $source_file = $self->source_file;
+    my $source_file = $self->path;
     my $size = $self->file_size($source_file);
     die $self->error_message('Source file does not have any size! '.$source_file) if not $size;
 

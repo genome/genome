@@ -24,7 +24,7 @@ my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Comma
 
 for my $format (qw/ bam fastq sra /) {
     my $source_file = 'file.'.$format;
-    my $sf = $class->create(source_file => $source_file);
+    my $sf = $class->create(path => $source_file);
     ok($sf, 'create');
     is($sf->format, $format, 'format');
     is($sf->retrieval_method, 'local disk', 'retrieval_method');
@@ -32,7 +32,7 @@ for my $format (qw/ bam fastq sra /) {
 }
 
 # Remote fastq archive
-my $sf = $class->create(source_file => File::Spec->join($test_dir, 'fastq', 'v3', 'input.fastq.tgz'));
+my $sf = $class->create(path => File::Spec->join($test_dir, 'fastq', 'v3', 'input.fastq.tgz'));
 ok($sf, 'create');
 is($sf->format, 'fastq_archive', 'format for fastq_archive');
 is($sf->retrieval_method, 'local disk', 'retrieval_method for fastq_archive');
@@ -53,7 +53,7 @@ Sub::Install::reinstall_sub({
         as => 'new',
     });
 
-$sf = $class->create(source_file => 'http://file.bam');
+$sf = $class->create(path => 'http://file.bam');
 ok($sf, 'create');
 is($sf->format, 'bam', 'format for remote bam');
 is($sf->retrieval_method, 'remote url', 'retrieval_method for remote bam');
@@ -68,7 +68,7 @@ throws_ok(
 );
 
 throws_ok(
-    sub{ $class->create(source_file => 'file.bam.tgz'); },
+    sub{ $class->create(path => 'file.bam.tgz'); },
     qr/Cannot process tar bam\!/,
     'create fails w/ tar bam',
 );
