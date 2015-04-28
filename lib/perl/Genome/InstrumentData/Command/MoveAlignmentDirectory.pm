@@ -61,7 +61,7 @@ sub execute {
     my $path = $gda->allocation_path;
 
     my $new_alloc_cmd = Genome::Disk::Allocation::Command::Allocate->create(allocation_path=>$gda->allocation_path,
-                            disk_group_name=>$ENV{GENOME_DISK_GROUP_DEV},
+                            disk_group_name=>Genome::Config::get('disk_group_dev'),
                             kilobytes_requested=>$gda->kilobytes_requested * 2,
                             owner_class_name=>$gda->owner_class_name,
                             owner_id=>$gda->owner_id,

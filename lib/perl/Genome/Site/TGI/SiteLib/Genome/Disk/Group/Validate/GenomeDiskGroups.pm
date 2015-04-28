@@ -53,7 +53,7 @@ sub genome_disk_group_names {
         'info_genome_models',
         'info_alignments',
         'apipe_ci',
-        $ENV{GENOME_DISK_GROUP_DEV},
+        Genome::Config::get('disk_group_dev'),
         Genome::Config::get('disk_group_references'),
         $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
         Genome::Config::get('disk_group_models'),
