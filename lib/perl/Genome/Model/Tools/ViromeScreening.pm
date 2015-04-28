@@ -153,7 +153,7 @@ sub _send_succeeded_mail {
 
     my $mail_dest = Genome::Config->user_email;
     my $sender = Mail::Sender->new({
-        smtp => $ENV{GENOME_EMAIL_SMTP_SERVER},
+        smtp => Genome::Config::get('email_smtp_server'),
         from => Genome::Config::get('email_virome_screening'),
         replyto => Genome::Config::get('email_virome_screening'),
     });
