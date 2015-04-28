@@ -511,7 +511,6 @@ plot_mutation_spectrum_seq_contextV2 <- function(input4type,input2type,plot_titl
 
 compare_prop2populations <- function(input_file,output_file) {
 
-  print(sessionInfo())
   input.df <- read.table(input_file,header=F,sep="\t");
 
   count_data <- input.df[,4:7];  #save the 4th-7th column into a separate dataframe
@@ -619,5 +618,10 @@ plot_mutation_distance<- function(mut_dist_file,chr_boundary_file,plot_title="Mu
     #return(list(a=p1,b=p2));
     return(p);
   }
+}
 
+debug_session <- function {
+  print(sessionInfo())
+  print(.libPaths())
+  print(capabilities())
 }
