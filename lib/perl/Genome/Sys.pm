@@ -15,7 +15,7 @@ use File::Basename;
 use File::Copy qw();
 use File::Path;
 use File::Spec;
-use File::stat qw(stat);
+use File::stat qw(stat lstat);
 use IO::File;
 use JSON;
 use List::MoreUtils "each_array";
@@ -1751,7 +1751,7 @@ sub _unpreserved_permissions {
 
 sub _same_device {
     my @paths = @_;
-    return (stat($paths[0])->dev == stat($paths[1])->dev);
+    return (lstat($paths[0])->dev == lstat($paths[1])->dev);
 }
 
 sub rename {
