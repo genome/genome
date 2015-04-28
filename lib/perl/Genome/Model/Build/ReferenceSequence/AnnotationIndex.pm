@@ -285,7 +285,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    $ENV{GENOME_DISK_GROUP_REFERENCES};
+    Genome::Config::get('disk_group_references');
 }
 
 sub full_consensus_path {

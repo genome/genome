@@ -302,7 +302,7 @@ sub resolve_allocation_disk_group_name {
     if ($_[0]->reference_build->model->is_rederivable) {
         return $ENV{GENOME_DISK_GROUP_MODELS};
     } else {
-        return $ENV{GENOME_DISK_GROUP_REFERENCES};
+        return Genome::Config::get('disk_group_references');
     }
 }
 

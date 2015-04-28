@@ -83,7 +83,7 @@ sub _execute_build {
 }
 
 sub _resolve_disk_group_name_for_build {
-    return $ENV{GENOME_DISK_GROUP_REFERENCES};
+    return Genome::Config::get('disk_group_references');
 }
 
 1;
