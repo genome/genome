@@ -39,7 +39,7 @@ my $new_dir = "$tmpdir/new";
 mkdir($old_dir);
 mkdir($new_dir);
 
-my $ensembl_annotation_build_id = $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD};
+my $ensembl_annotation_build_id = Genome::Config::get('db_ensembl_default_imported_annotation_build');
 my $annotation_build = Genome::Model::Build->get($ensembl_annotation_build_id);
 
 my $model = Genome::Test::Factory::Model::PhenotypeCorrelation->setup_object(
