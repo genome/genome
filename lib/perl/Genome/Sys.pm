@@ -1749,9 +1749,22 @@ sub _unpreserved_permissions {
     return 1;
 }
 
+sub _same_device {
+    my @paths = @_;
+    return (stat($paths[0])->dev == stat($paths[1])->dev);
+}
+
 sub rename {
     my ($class, $oldname, $newname) = @_;
+
     _unpreserved_permissions($class, $oldname, $newname, sub {
+        # Since it may be hard to know that rename is safe we'll check for
+        # cross-device renames and fallback to move.
+        my $newparentdir = (File::Spec->splitpath($newname))[1];
+        if (!_same_device($oldname, $newparentdir)) {
+            return $class->move($oldname, $newname);
+        }
+
         unless ( CORE::rename $oldname, $newname ) {
             die qq(CORE::rename should never fail or we didn't do a good enough job mimicking it.  Error was: $!);
         }
