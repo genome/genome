@@ -28,7 +28,7 @@ UR::Context->current->create_subscription(
 );
 
 sub query_pause_sentry_file_path {
-    $ENV{GENOME_DB_QUERY_PAUSE};
+    Genome::Config::get('db_query_pause');
 }
 
 sub commit_pause_sentry_file_path {
