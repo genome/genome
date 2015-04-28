@@ -431,7 +431,7 @@ MESSAGE
                 Genome::Utility::Email::send(
                     from    => $from,
                     to      => \@to,
-                    cc      => $ENV{GENOME_EMAIL_PIPELINE_NOISY},
+                    cc      => Genome::Config::get('email_pipeline_noisy'),
                     subject => $subject,
                     body    => $data,
                 );
