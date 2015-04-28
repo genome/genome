@@ -18547,6 +18547,15 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>update-file-for-import',
+      [
+        'file=s',
+        'files',
+        'output-file=s',
+        'files',
+        'help!',
+        undef
+      ],
       'help!',
       undef
     ],
