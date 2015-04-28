@@ -21,7 +21,8 @@ sub _html_body {
     my $body = Genome::Sys->read_file(__FILE__ .'.html');
 
     # Crappy templating
-    $body =~ s/##EMAIL##/$ENV{GENOME_EMAIL_PIPELINE}/g;
+    my $email = Genome::Config::get('email_pipeline');
+    $body =~ s/##EMAIL##/$email/g;
     return $body;
 }
 

@@ -865,7 +865,7 @@ sub perform_post_success_actions {
         Mail::Sendmail::sendmail(
             To => '',
             Cc => '',
-            From => $ENV{GENOME_EMAIL_PIPELINE},
+            From => Genome::Config::get('email_pipeline'),
             Subject => 'MC16s QC Build is Done',
             Message => $msg,
         );
