@@ -70,7 +70,7 @@ for my $result (@test_alignment_results) {
 }
 
 my $result_allocation = Genome::Disk::Allocation->create(
-    disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
+    disk_group_name => Genome::Config::get('disk_group_models'),
     kilobytes_requested => 1,
     allocation_path => 'this_is_a_test',
     owner_id => $detector_result->id,

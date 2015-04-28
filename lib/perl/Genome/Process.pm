@@ -388,7 +388,7 @@ sub create_disk_allocation {
     my $allocation_path = File::Spec->join('model_data', 'process', $self->id);
 
     my %args = (
-        disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
+        disk_group_name => Genome::Config::get('disk_group_models'),
         allocation_path => $allocation_path,
         kilobytes_requested => $kb_requested,
         owner_class_name => $self->class,

@@ -56,7 +56,7 @@ sub genome_disk_group_names {
         $ENV{GENOME_DISK_GROUP_DEV},
         Genome::Config::get('disk_group_references'),
         $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
-        $ENV{GENOME_DISK_GROUP_MODELS},
+        Genome::Config::get('disk_group_models'),
         Genome::Config::get('disk_group_trash'),
         Genome::Config::get('disk_group_research'),
     );
