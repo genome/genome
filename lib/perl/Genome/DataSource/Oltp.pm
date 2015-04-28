@@ -5,12 +5,12 @@ use warnings;
 use Genome;
 
 class Genome::DataSource::Oltp {
-    is => [$ENV{GENOME_DS_OLTP_TYPE}, 'Genome::DataSource::CommonRDBMS'],
+    is => [ Genome::Config::get('ds_oltp_type'), 'Genome::DataSource::CommonRDBMS' ],
     has_classwide_constant => [
-        server  => { default_value => $ENV{GENOME_DS_OLTP_SERVER} },
-        login   => { default_value => $ENV{GENOME_DS_OLTP_LOGIN} },
-        auth    => { default_value => $ENV{GENOME_DS_OLTP_AUTH}  },
-        owner   => { default_value => $ENV{GENOME_DS_OLTP_OWNER} },
+        server  => { default_value => Genome::Config::get('ds_oltp_server') },
+        login   => { default_value => Genome::Config::get('ds_oltp_login') },
+        auth    => { default_value => Genome::Config::get('ds_oltp_auth') },
+        owner   => { default_value => Genome::Config::get('ds_oltp_owner') },
     ],
 };
 
