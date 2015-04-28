@@ -9,11 +9,11 @@ use File::Spec;
 use Genome::DataSource::CommonRDBMS qw(log_error log_commit_time);
 
 class Genome::DataSource::GMSchema {
-    is => [$ENV{GENOME_DS_GMSCHEMA_TYPE}, 'Genome::DataSource::CommonRDBMS'],
+    is => [Genome::Config::get('ds_gmschema_type'), 'Genome::DataSource::CommonRDBMS'],
     has_constant => [
-        server  => { default_value  => $ENV{GENOME_DS_GMSCHEMA_SERVER} },
-        login   => { default_value  => $ENV{GENOME_DS_GMSCHEMA_LOGIN} },
-        auth    => { default_value  => $ENV{GENOME_DS_GMSCHEMA_AUTH} },
+        server  => { default_value  => Genome::Config::get('ds_gmschema_server') },
+        login   => { default_value  => Genome::Config::get('ds_gmschema_login') },
+        auth    => { default_value  => Genome::Config::get('ds_gmschema_auth') },
         owner   => { default_value => undef, is_optional => 1 },
     ],
 };
