@@ -721,7 +721,7 @@ sub params_for_alignment {
         picard_version => $self->picard_version || undef,
         samtools_version => $self->samtools_version || undef,
         filter_name => undef, #unused
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
         bowtie_version => $self->bowtie_version
     );
     #$self->debug_message('The AlignmentResult parameters are: '. Data::Dumper::Dumper(%params));

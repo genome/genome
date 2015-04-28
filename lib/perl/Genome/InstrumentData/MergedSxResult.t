@@ -28,7 +28,7 @@ my %sx_result_params = (
     read_processor => $read_processor,
     output_file_count => $output_file_count,
     output_file_type => $output_file_type,
-    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    test_name => (Genome::Config::get('software_result_test_name') || undef),
     users => Genome::Test::Factory::SoftwareResult::User->setup_user_hash,
 );
 
@@ -44,7 +44,7 @@ ok(Genome::InstrumentData::MergedSxResult->create(
     read_processor => $read_processor,
     output_file_count => $output_file_count,
     output_file_type => $output_file_type,
-    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    test_name => (Genome::Config::get('software_result_test_name') || undef),
     coverage => undef,
     _user_data_for_nested_results => Genome::Test::Factory::SoftwareResult::User->setup_user_hash,
     ),
@@ -58,7 +58,7 @@ ok(Genome::InstrumentData::MergedSxResult->create(
     read_processor => $read_processor,
     output_file_count => $output_file_count,
     output_file_type => $output_file_type,
-    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    test_name => (Genome::Config::get('software_result_test_name') || undef),
     coverage => 10,
     _user_data_for_nested_results => Genome::Test::Factory::SoftwareResult::User->setup_user_hash,
     ),

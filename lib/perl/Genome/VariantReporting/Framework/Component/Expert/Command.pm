@@ -173,7 +173,7 @@ sub input_hash {
         }
     }
 
-    $hash{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
+    $hash{test_name} = Genome::Config::get('software_result_test_name');
 
     return %hash;
 }

@@ -80,7 +80,7 @@ sub _input_hash {
     }
 
     return (
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
+        test_name => Genome::Config::get('software_result_test_name'),
         $self->input_hash,
         users => $result_users,
     );

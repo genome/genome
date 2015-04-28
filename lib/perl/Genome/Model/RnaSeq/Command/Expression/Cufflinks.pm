@@ -117,7 +117,7 @@ sub params_for_result {
         cufflinks_version => $pp->expression_version,
         cufflinks_params => $pp->expression_params,
         annotation_reference_transcripts_mode  => $self->annotation_reference_transcripts_mode,
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        test_name => (Genome::Config::get('software_result_test_name') || undef),
         users => $result_users,
     );
     if ( defined($pp->mask_reference_transcripts) ) {

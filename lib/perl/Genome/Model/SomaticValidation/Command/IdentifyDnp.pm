@@ -61,7 +61,7 @@ sub params_for_result {
 
     my $dv2_result_id = $snv_result->id;
 
-    my $test_name = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
+    my $test_name = Genome::Config::get('software_result_test_name');
 
     my $params = {
         proportion => $proportion,

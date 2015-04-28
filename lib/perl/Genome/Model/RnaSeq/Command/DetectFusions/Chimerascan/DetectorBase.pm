@@ -73,7 +73,7 @@ sub _fetch_result {
 
     my $result_class = $self->result_class;
     my $result = $result_class->$method(
-            test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+            test_name => Genome::Config::get('software_result_test_name') || undef,
             version => $self->detector_version,
             reuse_bam => $self->reuse_bam,
             bowtie_version => $self->bowtie_version,

@@ -309,7 +309,7 @@ sub params_for_result {
         previously_discovered_result_id => $previously_discovered_result->id,
         classifier_version => 1,
         variant_type => $variant_type,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
         skip_filtering => $skip,
         users => $result_users,
     );

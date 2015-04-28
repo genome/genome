@@ -808,7 +808,7 @@ sub detector_directory {
             control_alignment_results => \@control_alignment_results,
             reference_build_id => $self->reference_build_id,
             region_of_interest_id => $previous_result->region_of_interest_id,
-            test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+            test_name => Genome::Config::get('software_result_test_name') || undef,
             chromosome_list => $previous_result->chromosome_list,
             users => $self->result_users,
         );

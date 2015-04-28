@@ -67,10 +67,10 @@ sub execute {
                reference_build_id => $self->reference_sequence_build->id,
                species => $self->species,
                data_set => 'Core',
-               test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+               test_name => (Genome::Config::get('software_result_test_name') || undef),
         ),
         ucsc_directory => $self->ucsc_directory,
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        test_name => (Genome::Config::get('software_result_test_name') || undef),
         species => $self->species,
     );
 

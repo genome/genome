@@ -85,7 +85,7 @@ sub params_for_result {
 
     return (
         alignment_result_id => $alignment_result->id,
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        test_name => (Genome::Config::get('software_result_test_name') || undef),
         users => $result_users,
     );
 }

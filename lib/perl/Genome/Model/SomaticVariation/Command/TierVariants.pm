@@ -215,7 +215,7 @@ sub params_for_result {
         prior_result_id => $result->id,
         annotation_build_id => $build->annotation_build->id,
         classifier_version => $build->tiering_version,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
         users => $result_users,
     );
 }

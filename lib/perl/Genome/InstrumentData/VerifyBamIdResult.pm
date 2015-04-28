@@ -144,7 +144,7 @@ sub _resolve_genotype_vcf_result {
     my %params = (
         sample => $self->sample,
         known_sites_build => $self->known_sites_build,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
+        test_name => Genome::Config::get('software_result_test_name'),
         users => $users,
     );
     if ($self->genotype_filters) {

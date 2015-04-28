@@ -60,7 +60,7 @@ for my $inst_data_attr ( @inst_data_attrs, ) {
         instrument_data_id => $instrument_data[$i]->id,
         output_file_count => ( $instrument_data[$i]->is_paired_end ? 2 : 1 ),
         output_file_type => 'sanger',
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        test_name => (Genome::Config::get('software_result_test_name') || undef),
     };
     $i++;
 }
@@ -217,7 +217,7 @@ for ( my $i = 0; $i < @instrument_data; $i++ ) {
                 coverage => $processing->{coverage},
                 output_file_count => 2,
                 output_file_type => 'sanger',
-                test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+                test_name => (Genome::Config::get('software_result_test_name') || undef),
             },
             'merged sx result params',
         ); 

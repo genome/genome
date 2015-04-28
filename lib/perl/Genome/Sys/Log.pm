@@ -150,7 +150,7 @@ my $callback = sub {
             u => $ENV{USER},
             b => Genome::Model::Build::get_build_id(),
             type => $level,
-            ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} ? (test => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME}) : ()),
+            (Genome::Config::get('software_result_test_name') ? (test => Genome::Config::get('software_result_test_name')) : ()),
             ($incoming_json_data ? %$incoming_json_data : (msg => $message)),
         };
     };

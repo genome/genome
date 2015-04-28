@@ -165,7 +165,7 @@ sub _intermediate_result {
         trimmer_name                 => $self->trimmer_name,
         trimmer_version              => $self->trimmer_version,
         trimmer_params               => $self->trimmer_params,
-        test_name                    => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name                    => Genome::Config::get('software_result_test_name') || undef,
     );
 
     my $includes = join(' ', map { '-I ' . $_ } UR::Util::used_libs);

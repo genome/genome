@@ -170,7 +170,7 @@ sub _params_for_result {
         prior_result_id => $prior_result->id,
         control_result_id => $control_result->id,
         classifier_version => $loh_version,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
         users => $result_users,
     );
 }

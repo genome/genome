@@ -45,7 +45,7 @@ sub execute {
         wingspan => $self->wingspan,
         allow_multiple_processing_profiles => $self->allow_multiple_processing_profiles,
         joinx_version => $self->joinx_version,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
     );
     unless($self->roi_list){
        delete $params{'roi_list'};

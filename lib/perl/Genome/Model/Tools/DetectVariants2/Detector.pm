@@ -421,7 +421,7 @@ sub params_for_detector_result {
 
         reference_build_id => $self->reference_build_id,
         region_of_interest_id => $self->region_of_interest_id,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
         chromosome_list => undef,
 
         users => $self->result_users,

@@ -68,7 +68,7 @@ sub input_hash {
         plan_json => $self->plan_json,
         plan_json_lookup => md5_hex($self->plan_json),
         variant_type => $self->variant_type,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
+        test_name => Genome::Config::get('software_result_test_name'),
         $self->report_plan->params_for_create,
     );
 }

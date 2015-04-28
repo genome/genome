@@ -104,7 +104,7 @@ sub execute {
         min_coverage => $self->min_coverage,
         ped_file => $self->ped_file,
         parent_relationship_cutoff => $self->parent_relationship_cutoff,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
         users => $self->result_users,
     );
     Genome::Sys->symlink_directory($software_result->output_dir, $output_dir);
