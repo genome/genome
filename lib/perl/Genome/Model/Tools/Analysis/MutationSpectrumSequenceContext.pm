@@ -137,12 +137,12 @@ sub execute {
     my $R_cmd;
     STDERR->print("step3: Performing proportion test on Mutation vs Background\n");
     prepare_file4_proportion_test_4type($mutation_context4type,$random_context4type,"$proportiontestFile.4type");
-    $R_cmd = qq{ compare_prop2populations(input_file="${proportiontestFile}.4type",output_file="${proportiontestFile}.4type") };
+    $R_cmd = qq{ compare_prop2populations(input_file="${proportiontestFile}.4type",output_file="${proportiontestFile}.4type.pvalues") };
     $call = Genome::Model::Tools::R::CallR->create(command=>$R_cmd, library=> "MutationSpectrum.R");
     $call->execute;
 
     prepare_file4_proportion_test_2type($mutation_context2type,$random_context2type,"$proportiontestFile.2type");
-    $R_cmd = qq{ compare_prop2populations(input_file="${proportiontestFile}.2type",output_file="${proportiontestFile}.2type") };
+    $R_cmd = qq{ compare_prop2populations(input_file="${proportiontestFile}.2type",output_file="${proportiontestFile}.2type.pvalues") };
     $call = Genome::Model::Tools::R::CallR->create(command=>$R_cmd, library=> "MutationSpectrum.R");
     $call->execute;
 
