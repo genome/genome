@@ -567,10 +567,10 @@ sub cache_args {
 }
 
 sub db_connect_args {
-    my $host_param = defined $ENV{GENOME_DB_ENSEMBL_HOST} ? "--host ".$ENV{GENOME_DB_ENSEMBL_HOST} : "";
-    my $user_param = defined $ENV{GENOME_DB_ENSEMBL_USER} ? "--user ".$ENV{GENOME_DB_ENSEMBL_USER} : "";
-    my $password_param = defined $ENV{GENOME_DB_ENSEMBL_PASS} ? "--password ".$ENV{GENOME_DB_ENSEMBL_PASS} : "";
-    my $port_param = defined $ENV{GENOME_DB_ENSEMBL_PORT} ? "--port ".$ENV{GENOME_DB_ENSEMBL_PORT} : "";
+    my $host_param = defined Genome::Config::get('db_ensembl_host') ? "--host ".Genome::Config::get('db_ensembl_host') : "";
+    my $user_param = defined Genome::Config::get('db_ensembl_user') ? "--user ".Genome::Config::get('db_ensembl_user') : "";
+    my $password_param = defined Genome::Config::get('db_ensembl_pass') ? "--password ".Genome::Config::get('db_ensembl_pass') : "";
+    my $port_param = defined Genome::Config::get('db_ensembl_port') ? "--port ".Genome::Config::get('db_ensembl_port') : "";
     return join(" ", $host_param, $user_param, $password_param, $port_param);
 }
 
