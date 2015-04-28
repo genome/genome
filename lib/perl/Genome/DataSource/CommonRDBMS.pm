@@ -32,7 +32,7 @@ sub query_pause_sentry_file_path {
 }
 
 sub commit_pause_sentry_file_path {
-    $ENV{GENOME_DB_PAUSE};
+    Genome::Config::get('db_pause');
 }
 
 sub pause_sleep_length_seconds { 30 }
