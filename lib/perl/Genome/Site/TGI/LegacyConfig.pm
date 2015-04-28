@@ -45,7 +45,7 @@ sub auth_user {
 }
 
 sub domain {
-    return $ENV{GENOME_EMAIL_DOMAIN};
+    return Genome::Config::get('email_domain');
 }
 
 sub user_email {

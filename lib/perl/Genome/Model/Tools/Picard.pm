@@ -420,7 +420,7 @@ This is the last warning you will receive about this process.
 MESSAGE
 
                 undef $w;
-                my $from = '"' . __PACKAGE__ . sprintf('" <%s@%s>', Genome::Sys->username, $ENV{GENOME_EMAIL_DOMAIN});
+                my $from = '"' . __PACKAGE__ . sprintf('" <%s@%s>', Genome::Sys->username, Genome::Config::get('email_domain'));
 
                 my @to = map { Genome::Utility::Email::construct_address($_) }
                             split(' ', $self->_monitor_mail_to);

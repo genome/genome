@@ -122,12 +122,13 @@ sub execute {
 
             my $rv;
             if ($self->lsf) {
-                $rv = system("bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J $job1_name \"$cmd1\"");
+                my $email_domain = Genome::Config::get('email_domain');
+                $rv = system("bsub -N -u $user\@$email_domain -J $job1_name \"$cmd1\"");
                 if ($rv) {
                     $self->error_message("Failed to bsub $job1_name");
                     return;
                 }
-                $rv = system("bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J $job2_name -w \"$dependency\" \"$cmd2\"");
+                $rv = system("bsub -N -u $user\@$email_domain -J $job2_name -w \"$dependency\" \"$cmd2\"");
                 if ($rv) {
                     $self->error_message("Failed to bsub $job2_name");
                     return;
