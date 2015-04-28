@@ -668,7 +668,7 @@ sub cached_full_consensus_path {
 }
 
 sub local_cache_basedir {
-    return $ENV{GENOME_FS_LOCAL_NETWORK_CACHE};
+    return Genome::Config::get('fs_local_network_cache');
 }
 
 sub local_cache_dir {
