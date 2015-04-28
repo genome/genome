@@ -176,7 +176,7 @@ sub verify_disk_space {
     my $estimated_kb_usage = $self->estimated_kb_usage;
     $self->debug_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
     $self->debug_message("Check for available disk...");
-    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => $ENV{GENOME_DISK_GROUP_ALIGNMENTS}); 
+    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => Genome::Config::get('disk_group_alignments')); 
     $self->debug_message("Found " . scalar(@available_volumes) . " disk volumes");
     my $unallocated_kb = 0;
     for my $volume (@available_volumes) {
@@ -355,7 +355,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    $ENV{GENOME_DISK_GROUP_ALIGNMENTS};
+    Genome::Config::get('disk_group_alignments');
 }
 
 # this behavior was in the alignment class earlier and was set as changeable in SoftwareResult::Stageable.
