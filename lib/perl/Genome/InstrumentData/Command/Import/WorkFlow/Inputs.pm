@@ -5,12 +5,15 @@ use warnings;
 
 use Genome;
 
+use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
+
 class Genome::InstrumentData::Command::Import::WorkFlow::Inputs { 
     is => 'UR::Object',
     has_transient => {
         incoming_params => { is => 'HASH', },
         instrument_data_properties => { is => 'HASH', },
-        source_files => { is =>'ARRAY', },
+        source_files => { is => 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles', },
+        format => { via => 'source_files', to => 'format', },
     },
 };
 
@@ -29,7 +32,7 @@ sub create {
 sub for_worklflow {
     my $self = shift;
     return {
-        source_files => $self->source_files,
+        source_files => [ $self->source_files->paths ],
         instrument_data_properties => $self->instrument_data_properties,
     };
 }
@@ -39,10 +42,12 @@ sub _resolve_source_files {
 
     my $source_files = delete $self->incoming_params->{source_files};
     die $self->error_message('No source files!') if not $source_files;
-    my @source_files = split(/,/, $source_files);
-    # FIXME check exists?
-    
-    return $self->source_files(\@source_files);
+    die $self->error_message('Invalid source files!') if not ref $source_files;
+    $self->source_files(
+        Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles->create(paths => $source_files) 
+    );
+
+    return 1;
 }
 
 sub _resolve_instrument_data_properties {
@@ -59,7 +64,7 @@ sub _resolve_instrument_data_properties {
     my $properties = $self->_resolve_incoming_instrument_data_property_strings($incoming_properties);
 
     if ( not $properties->{original_data_path} ) {
-        $properties->{original_data_path} = join(',', @{$self->source_files});
+        $properties->{original_data_path} = join(',', $self->source_files->paths);
     }
 
     return $self->instrument_data_properties($properties);

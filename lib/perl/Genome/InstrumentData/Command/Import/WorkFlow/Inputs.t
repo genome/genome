@@ -17,9 +17,8 @@ my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::Inputs';
 use_ok($class) or die;
 
 my @source_files = (qw/ in.1.fastq in.2.fastq /);
-my $original_data_path = join(',', @source_files);
 my $inputs = $class->create(
-    source_files => $original_data_path,
+    source_files => \@source_files,
     description => 'imported',
     instrument_data_properties => [qw/ 
         downsample_ratio=0.7
@@ -29,11 +28,14 @@ my $inputs = $class->create(
 );
 ok($inputs, 'create inputs');
 
+isa_ok($inputs->source_files, 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles', 'set _source_files');
+is($inputs->format, 'fastq', 'source files format is fastq');
+
 my %instrument_data_properties = (
     downsample_ratio => 0.7,
     description => 'imported',
     import_source_name => 'TGI',
-    original_data_path => $original_data_path,
+    original_data_path => join(',', @source_files),
     this => 'that', 
 );
 is_deeply(
@@ -44,7 +46,7 @@ is_deeply(
     },
     'for_worklflow',
 );
-is_deeply( $inputs->source_files, \@source_files, 'source_files');
+isa_ok($inputs->source_files, 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles', 'source_files');
 is_deeply(
     $inputs->instrument_data_properties,
     \%instrument_data_properties,
@@ -61,7 +63,7 @@ throws_ok(
 throws_ok(
     sub {
         $class->create(
-            source_files => 'in.bam',
+            source_files => [qw/ in.bam /],
             instrument_data_properties => [qw/ foo=bar foo=baz /],
         );
     },
@@ -72,7 +74,7 @@ throws_ok(
 throws_ok(
     sub {
         $class->create(
-            source_files => 'in.bam',
+            source_files => [qw/ in.bam /],
             description => 'imported',
             instrument_data_properties => [qw/ description=inported /],
         );
@@ -84,7 +86,7 @@ throws_ok(
 throws_ok(
     sub{
         $class->create(
-            source_files => 'in.bam',
+            source_files => [qw/ in.bam /],
             instrument_data_properties => [qw/ 
             description=
             /],
