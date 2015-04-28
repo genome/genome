@@ -104,7 +104,7 @@ sub execute {
     # This is outside the repo intentionally.
     # This translates local values to those which are distributable outside of TGI.
 
-    my $sanitize_file = $ENV{GENOME_HOME} . "/export/sanitize.csv";
+    my $sanitize_file = Genome::Config::get('home') . "/export/sanitize.csv";
     unless (-e $sanitize_file) {
         die "Expected external file $sanitize_file to exist to sanitize data.  Disable this if you are sure you can dump data unsanitized.";
     }
