@@ -282,11 +282,9 @@ sub _uniq {
 
 sub dbpath {
     my ($class, $name, $version) = @_;
-    my $envname = $class->dbname_to_envname($name);
-    my $dbpath;
-    if ($envname and $ENV{$envname}) {
-        $dbpath = $ENV{$envname};
-        print STDERR "Using '$dbpath' from $envname.\n";
+    my $dbpath = $class->lookup_dbpath($name);
+    if ($dbpath) {
+        print STDERR "Using '$dbpath' from config.\n";
     } else {
         unless ($version) {
             die "Genome::Sys dbpath must be called with a database name and a version. " .
@@ -297,15 +295,15 @@ sub dbpath {
     return $dbpath;
 }
 
-sub dbname_to_envname {
+sub lookup_dbpath {
     my ($class, $name) = @_;
-    my %envmap = (
-        'genome-music-testdata' => 'GENOME_DB_MUSIC_TESTDATA',
-        'cosmic' => 'GENOME_DB_COSMIC',
-        'omim' => 'GENOME_DB_OMIM',
-        'pfam' => 'GENOME_DB_PFAM',
+    my %config_key = (
+        'genome-music-testdata' => 'db_music_testdata',
+        'cosmic' => 'db_cosmic',
+        'omim' => 'db_omim',
+        'pfam' => 'db_pfam',
     );
-    return $envmap{$name};
+    return Genome::Config::get($config_key{$name});
 }
 
 sub _find_in_genome_db_paths {
