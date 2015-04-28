@@ -398,7 +398,7 @@ sub get_trash_folder {
     my $aggr = _extract_aggr($self->physical_path);
 
     my $trash_volume = Genome::Disk::Volume->get(
-        disk_group_names => $ENV{GENOME_DISK_GROUP_TRASH},
+        disk_group_names => Genome::Config::get('disk_group_trash'),
         'physical_path like' => "/vol/$aggr/%",
     );
 
