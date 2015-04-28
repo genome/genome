@@ -28,7 +28,7 @@ class Genome::Sys::Gateway {
 
         is_current        => { is => 'Boolean',
                               calculate_from => ['id'],
-                              calculate => q|$id eq $ENV{GENOME_SYS_ID}|,
+                              calculate => q|$id eq Genome::Config::get('sys_id')|,
                               doc => 'true for the current system',
                             },
 
