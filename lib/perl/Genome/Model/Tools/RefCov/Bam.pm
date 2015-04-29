@@ -55,10 +55,10 @@ sub _load {
     }
     $self->bio_db_bam($bam);
     $self->header($bam->header);
-    
+
     my $bam_file = $self->bam_file;
     my $bam_mtime = (stat($bam_file))[9];
-    
+
     my $bai_mtime = (stat($bai_file))[9];
     if ((defined($bam_mtime) && defined($bai_mtime)) && $bam_mtime > $bai_mtime) {
         die('BAM file '. $bam_file .' appears to be newer than BAM index '. $bai_file);
