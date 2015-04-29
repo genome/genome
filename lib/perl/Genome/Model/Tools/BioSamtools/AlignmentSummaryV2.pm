@@ -577,8 +577,13 @@ sub _prepare_split_sorted_bed_files {
         my $chrom = $1;
 
         unless ($open_handles{$chrom}) {
+            if(scalar keys %open_handles >= 100) {
+                $_->close foreach values %open_handles;
+                %open_handles = ();
+            }
+
             my $filename = $self->_unsorted_bed_file_name_for_chrom($temp_dir, $chrom);
-            $open_handles{$chrom} = IO::File->new($filename, 'w');
+            $open_handles{$chrom} = IO::File->new($filename, 'a');
             $open_handles{$chrom} || die "Can't open file $filename for writing: $!";
         }
 
