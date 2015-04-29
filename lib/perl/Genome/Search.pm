@@ -16,7 +16,7 @@ class Genome::Search {
         environment => {
             is => 'Text',
             calculate => q|
-                return 'prod' if exists $ENV{GENOME_DEV_MODE} and $ENV{GENOME_DEV_MODE} == 1;
+                return 'prod' if Genome::Config::get('dev_mode');
                 return 'dev';
             |,
         },
