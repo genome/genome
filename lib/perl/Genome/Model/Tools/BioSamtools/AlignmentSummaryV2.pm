@@ -572,9 +572,11 @@ sub _prepare_split_sorted_bed_files {
 
     # First, bin each line by chromosome and make unsorted files
     my %open_handles;
+    my %chromosomes_seen;
     while(my $line = $original->getline()) {
         $line =~ m/^(\S+)/;  # First column is the chrom name
         my $chrom = $1;
+        $chromosomes_seen{$chrom} = 1;
 
         unless ($open_handles{$chrom}) {
             if(scalar keys %open_handles >= 100) {
@@ -598,7 +600,7 @@ sub _prepare_split_sorted_bed_files {
     $_->close foreach values %open_handles;
 
     # Now sort each file
-    foreach my $chrom ( keys %open_handles ) {
+    foreach my $chrom ( keys %chromosomes_seen ) {
         $self->debug_message("Sorting split bed file for chrom $chrom");
 
         my $read = IO::File->new($self->_unsorted_bed_file_name_for_chrom($temp_dir, $chrom), 'r');
