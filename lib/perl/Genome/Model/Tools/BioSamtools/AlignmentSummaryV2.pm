@@ -568,7 +568,7 @@ sub _prepare_split_sorted_bed_files {
     # Make a file for each chromosome, and sort by the start and end position 
 
     my $original = IO::File->new($self->bed_file, 'r') || die "Can't open bed file ".$self->bed_file." for reading: $!";
-    my $temp_dir = File::Temp::tempdir( CLEANUP => 1 );
+    my $temp_dir = Genome::Sys->create_temp_directory;
 
     # First, bin each line by chromosome and make unsorted files
     my %open_handles;
