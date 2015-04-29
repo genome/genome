@@ -351,9 +351,9 @@ sub create {
             eval {
                 Genome::Sys->create_directory($output_dir)
             };
-            if ($@) {
+            if (my $error = $@) {
                 $self->delete;
-                die $@;
+                die $error;
             }
         }
     }
