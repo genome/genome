@@ -15,7 +15,7 @@ use File::Basename;
 use File::Copy qw();
 use File::Path;
 use File::Spec;
-use File::stat qw(stat);
+use File::stat qw(stat lstat);
 use IO::File;
 use JSON;
 use List::MoreUtils "each_array";
@@ -1749,9 +1749,20 @@ sub _unpreserved_permissions {
     return 1;
 }
 
+sub _same_device {
+    my @paths = @_;
+    return (lstat($paths[0])->dev == lstat($paths[1])->dev);
+}
+
 sub rename {
     my ($class, $oldname, $newname) = @_;
+
     _unpreserved_permissions($class, $oldname, $newname, sub {
+        my $newparentdir = (File::Spec->splitpath($newname))[1];
+        if (!_same_device($oldname, $newparentdir)) {
+            confess 'cannot rename across devices, use move instead';
+        }
+
         unless ( CORE::rename $oldname, $newname ) {
             die qq(CORE::rename should never fail or we didn't do a good enough job mimicking it.  Error was: $!);
         }
