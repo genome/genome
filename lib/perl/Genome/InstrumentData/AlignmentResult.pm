@@ -1736,6 +1736,7 @@ sub get_bam_file {
                     Genome::Sys->copy_file($file, $dest_file);
                 }
             }
+            eval{$temp_allocation->reallocate};
             return File::Spec->join($temp_allocation->absolute_path, basename($bams[0]));
         }
     }
@@ -1817,6 +1818,8 @@ sub revivified_alignment_bam_file_path {
     unless ($cmd->execute) {
         die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
     }
+
+    eval{$temp_allocation->reallocate};
 
     if (-s $revivified_bam) {
         # Cache the path of this revivified bam for future access
