@@ -1289,7 +1289,7 @@ sub output_germline_files
 			$cmd = "grep GERMLINE $gatk_indel_file >$gatk_output_file.temp";
 			print SCRIPT "$cmd\n";
 			print SCRIPT "echo Limiting to ROI...\n";
-			$cmd = "java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.v2.2.6.jar limit $gatk_output_file.temp --regions-file " . $self->germline_roi_file . " --output-file $gatk_output_file";
+			$cmd = "java -jar " . Genome::Config::get('sw_legacy_java') . "/VarScan/VarScan.v2.2.6.jar limit $gatk_output_file.temp --regions-file " . $self->germline_roi_file . " --output-file $gatk_output_file";
 			print SCRIPT "$cmd\n";
 			$cmd = "rm -rf $gatk_output_file.temp";
 			print SCRIPT "$cmd\n";
@@ -1320,7 +1320,7 @@ sub output_germline_files
 		if($self->germline_roi_file)
 		{
 			print SCRIPT "echo Limiting to ROI...\n";
-			$cmd = "java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar limit $output_indel_varscan --regions-file " . $self->germline_roi_file . " --output-file $output_indel_varscan.roi";
+			$cmd = "java -jar " . Genome::Config::get('sw_legacy_java') . "/VarScan/VarScan.jar limit $output_indel_varscan --regions-file " . $self->germline_roi_file . " --output-file $output_indel_varscan.roi";
 			print SCRIPT "$cmd\n";
 			$output_indel_varscan .= ".roi";
 		}
