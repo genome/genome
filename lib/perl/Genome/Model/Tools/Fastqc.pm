@@ -7,7 +7,7 @@ use Genome;
 use File::Basename;
 
 my $FASTQC_DEFAULT = '0.10.0';
-my $DEFAULT_MEMORY = 250;
+my $DEFAULT_MEMORY = 512;
 
 class Genome::Model::Tools::Fastqc {
     is  => 'Command',
