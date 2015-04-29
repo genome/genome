@@ -10,7 +10,7 @@ use Genome::Utility::Test qw(compare_ok);
 
 use_ok('Genome::Model::Tools::Dgidb::QueryGene');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Dgidb-QueryGene/';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Dgidb-QueryGene/';
 
 my $expected_out = $test_dir.'v3/expected.out';
 my $output_file  = Genome::Sys->create_temp_file_path('query_gene.out');

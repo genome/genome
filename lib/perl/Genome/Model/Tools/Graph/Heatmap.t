@@ -9,7 +9,7 @@ use Test::More tests => 3;
 use Digest::MD5 qw(md5_hex);
 #plan "skip_all";
 
-my $file = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Graph/heatmap-test-matrix.csv";
+my $file = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Graph/heatmap-test-matrix.csv";
 my $tmp_dir = Genome::Sys->create_temp_directory('Genome-Model-Tools-Graph');
 my $outfile = "$tmp_dir/heatmap-test-image.png";
 my $columns = 3;
@@ -31,7 +31,7 @@ ok((-e $outfile), 'output file exists');
 
 unlink $outfile;
 
-my $nhfile = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Graph/heatmap-noheader-matrix.csv";
+my $nhfile = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Graph/heatmap-noheader-matrix.csv";
 my $hm_noheader = Genome::Model::Tools::Graph::Heatmap->create(
                                                          matrix => $nhfile,
                                                          image => $outfile,

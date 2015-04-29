@@ -6,7 +6,7 @@ use above "Genome";
 use Test::More tests => 6;
 use Genome::Model::Tools::CopyNumber::CnView;
 
-my $expected_results = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-CopyNumber-CnView-slow/2012-12-03";
+my $expected_results = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-CopyNumber-CnView-slow/2012-12-03";
 ok(-d $expected_results, "test data dir is " . $expected_results)
   or die "cannot continue";
 

@@ -19,7 +19,7 @@ else {
 
 use_ok('Genome::Model::Tools::Sam::Coverage');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-Coverage';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam-Coverage';
 
 my $tmp_dir  = File::Temp::tempdir(
     "Coverage_XXXXXX", 
@@ -27,7 +27,7 @@ my $tmp_dir  = File::Temp::tempdir(
     CLEANUP => 1,
 );
 
-my $compare_to_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-Coverage/compare.txt';
+my $compare_to_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam-Coverage/compare.txt';
 
 my $aligned_file_name = "normal.tiny.bam"; 
 my $output_file_name = "coverage.out";

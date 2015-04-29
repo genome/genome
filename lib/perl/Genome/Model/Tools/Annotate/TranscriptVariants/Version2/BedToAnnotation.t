@@ -8,7 +8,7 @@ use above "Genome";
 
 our $THIS_VERSION_ADAPTOR_SUBCLASS = 'Genome::Model::Tools::Annotate::TranscriptVariants::Version2::BedToAnnotation';
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Annotate-TranscriptVariants-BedToAnnotation';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Annotate-TranscriptVariants-BedToAnnotation';
 ok (-e $test_dir, "test data directory exists at $test_dir");
 
 test_snvs($test_dir);

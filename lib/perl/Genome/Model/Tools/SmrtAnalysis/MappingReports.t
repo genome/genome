@@ -14,7 +14,7 @@ use above 'Genome';
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::MappingReports');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-MappingReports';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-MappingReports';
 
 my $reference_directory = '/gscmnt/pacbio/production/smrtanalysis/common/references/BAC_AC241402_3';
 my $alignment_summary_gff = $data_directory .'/data/alignment_summary.gff';

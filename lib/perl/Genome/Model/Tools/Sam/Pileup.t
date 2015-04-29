@@ -17,7 +17,7 @@ if (`uname -a` =~ /x86_64/){
 }
 use_ok('Genome::Model::Tools::Sam::Pileup');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-Pileup';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam-Pileup';
 
 my $tmp_dir  = File::Temp::tempdir(
     "BamToSam_XXXXXX", 

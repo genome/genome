@@ -12,7 +12,7 @@ use File::Compare;
 use above "Genome";
 
 # Check test directory
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Annotate-TranscriptVariantsParallel';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Annotate-TranscriptVariantsParallel';
 my $test_output_dir = tempdir(
     '/Genome-Model-Tools-Annotate-TranscriptVariantsParallel-XXXXX',
     TMPDIR => 1,

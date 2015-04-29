@@ -12,7 +12,7 @@ use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
 use Test::More tests => 21;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-SomaticValidation-Command-PrepareIndelValidationInput';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-SomaticValidation-Command-PrepareIndelValidationInput';
 my $test_input_dir = "$test_dir/input.v1";
 my $detected_variants = "$test_input_dir/indels.hq.bed";
 my $variant_list = "$test_input_dir/variant_list.indels.hq.bed";

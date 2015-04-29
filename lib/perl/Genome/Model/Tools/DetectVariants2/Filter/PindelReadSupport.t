@@ -57,7 +57,7 @@ sub compare_files {
 
 
 my $refbuild_id = 101947881;
-my $input_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Filter-PindelReadSupport";
+my $input_directory = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Filter-PindelReadSupport";
 
 my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
     reference_sequence_build_id => $refbuild_id,

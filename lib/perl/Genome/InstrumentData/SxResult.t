@@ -19,7 +19,7 @@ use Genome::Test::Factory::SoftwareResult::User;
 use_ok('Genome::InstrumentData::SxResult');
 use_ok('Genome::InstrumentData::InstrumentDataTestObjGenerator');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-SxResult';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-SxResult';
 
 my ($instrument_data) = Genome::InstrumentData::InstrumentDataTestObjGenerator::create_solexa_instrument_data($data_dir.'/inst_data/-6666/archive.bam');
 my $read_processor = '';

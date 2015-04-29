@@ -10,7 +10,7 @@ require File::Compare;
 use_ok ('Genome::Model::Tools::Soap::CreateSupercontigsAgpFile') or die;
 
 #check test data files
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Soap/CreateSupercontigsAgpFile-v1';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Soap/CreateSupercontigsAgpFile-v1';
 ok(-d $data_dir, "Data dir exists") or die;
 
 ok(-s $data_dir."/TEST.scafSeq", "Data dir test file exists") or die;

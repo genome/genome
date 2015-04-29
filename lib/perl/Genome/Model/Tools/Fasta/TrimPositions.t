@@ -9,7 +9,7 @@ require File::Compare;
 
 use_ok('Genome::Model::Tools::Fasta::TrimPositions');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS}.'/Genome-Model-Tools-Fasta/TrimPositions';
+my $data_dir = Genome::Config::get('test_inputs').'/Genome-Model-Tools-Fasta/TrimPositions';
 ok( -d $data_dir, "data dir" );
 
 my $test_dir = Genome::Sys->create_temp_directory();

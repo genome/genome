@@ -74,7 +74,7 @@ sub Genome::Model::Tools::Sx::SeqReaderTestValidate::read {
         die 'Validate failed!';
     }
 }
-my $validate_test = Genome::Model::Tools::Sx::SeqReaderTestValidate->create(file => $ENV{GENOME_TEST_INPUTS}.'/Genome-Model-Tools-Sx/SeqReaderWriter/file_to_test_validate');
+my $validate_test = Genome::Model::Tools::Sx::SeqReaderTestValidate->create(file => Genome::Config::get('test_inputs').'/Genome-Model-Tools-Sx/SeqReaderWriter/file_to_test_validate');
 ok($validate_test, 'create validate test for good file');
 $validate_ok = 1;
 ok($validate_test->validate, 'validate ok');

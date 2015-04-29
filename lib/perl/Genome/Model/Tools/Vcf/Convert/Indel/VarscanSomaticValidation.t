@@ -13,7 +13,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
 use_ok('Genome::Model::Tools::Vcf::Convert::Indel::VarscanSomaticValidation');
 
 # the test indels.hq is from build 119211229
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Vcf-Convert-Indel-VarscanSomaticValidation';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Vcf-Convert-Indel-VarscanSomaticValidation';
 print STDERR $test_dir . "\n";
 my $expected_file = "$test_dir/v1/indels.vcf.gz";
 my $input_file    = "$test_dir/indels.hq";

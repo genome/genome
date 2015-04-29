@@ -9,7 +9,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Dacc::TarAndUpload') or die;
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Dacc';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Dacc';
 my @files = map { $dir.'/'.$_ } (qw/ a b /);
 my $tar_file = $dir.'/dacc.tar.gz';
 

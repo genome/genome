@@ -21,7 +21,7 @@ use Data::Dumper;
 use_ok('Genome::Model::ClinSeq::Command::ImportSnvsIndels') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-ClinSeq-Command-ImportSnvsIndels/2013-02-26/";
+my $expected_output_dir = Genome::Config::get('test_inputs') . "/Genome-Model-ClinSeq-Command-ImportSnvsIndels/2013-02-26/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 #Create a temp dir for results

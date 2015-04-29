@@ -8,7 +8,7 @@ use Test::More tests => 4;
 
 use_ok('Genome::Model::Tools::Sam::MarkDuplicates');
 
-my $input = $ENV{GENOME_TEST_INPUTS} . '/Genome-Tools-Sam-MarkDuplicates/sample.bam';
+my $input = Genome::Config::get('test_inputs') . '/Genome-Tools-Sam-MarkDuplicates/sample.bam';
 
 # step 1: test 1 
 

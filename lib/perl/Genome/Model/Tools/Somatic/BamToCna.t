@@ -21,7 +21,7 @@ BEGIN {
 
 use_ok( 'Genome::Model::Tools::Somatic::BamToCna');
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Somatic-BamToCna/61005/'; #Switched to whole genome normalization right around rev 61005
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Somatic-BamToCna/61005/'; #Switched to whole genome normalization right around rev 61005
 
 my $tumor_bam_file  = $test_input_dir . 'tumor.sparse.bam';
 my $normal_bam_file = $test_input_dir . 'normal.sparse.bam';

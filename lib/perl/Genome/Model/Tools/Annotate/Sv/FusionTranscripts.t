@@ -14,7 +14,7 @@ use Test::More;
 
 use_ok("Genome::Model::Tools::Annotate::Sv::FusionTranscripts");
 
-my $base_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Annotate-Sv-FusionTranscripts";
+my $base_dir = Genome::Config::get('test_inputs')."/Genome-Model-Tools-Annotate-Sv-FusionTranscripts";
 my $version = 3;
 my $data_dir = "$base_dir/v$version";
 

@@ -12,8 +12,8 @@ BEGIN {
         use_ok('Genome::Model::Tools::Snp::Sort');
     };
 
-my $test_snp_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Snp/Sort/test.snp';
-my $expected_out_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Snp/Sort/test.out';
+my $test_snp_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Snp/Sort/test.snp';
+my $expected_out_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Snp/Sort/test.out';
 
 my $tmp_dir =  File::Temp::tempdir('gt-snp-sort-XXXXXX',CLEANUP => 1, TMPDIR => 1);
 my $output_file = $tmp_dir .'/test.out';

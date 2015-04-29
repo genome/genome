@@ -10,7 +10,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Allpaths::Metrics') or die;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Allpaths/Metrics/v8';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Allpaths/Metrics/v8';
 my $example_metrics_file = $test_dir.'/metrics.txt';
 
 my $temp_dir = Genome::Sys->create_temp_directory();

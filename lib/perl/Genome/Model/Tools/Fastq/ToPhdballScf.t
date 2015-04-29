@@ -12,7 +12,7 @@ BEGIN {
         use_ok ('Genome::Model::Tools::Fastq::ToPhdballScf');
 }
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/ToPhdballScf';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fastq/ToPhdballScf';
 my $fastq_file = $dir .'/test.fq';
 my $time = 'Mon Jan 10 20:00:00 2009';
 

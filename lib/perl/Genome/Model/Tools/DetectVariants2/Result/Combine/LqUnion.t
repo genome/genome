@@ -14,7 +14,7 @@ use Test::More tests => 4;
 
 use_ok('Genome::Model::Tools::DetectVariants2::Result::Combine::LqUnion');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Combine-LqUnion';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Combine-LqUnion';
 
 #This is from the somatic-variation short test. Consider creating dummy data!
 my $hq_result = Genome::SoftwareResult->get(116186269);

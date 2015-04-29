@@ -27,7 +27,7 @@ my $test_dir = tempdir(
 );
 my $dir = $test_dir.'/velvet_run';
 
-my $file_location = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Velvet/Graph/velvet_run/';
+my $file_location = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Velvet/Graph/velvet_run/';
 ok(-d $file_location, "input directory found at $file_location");
 
 my $cp_rv = system("cp -r $file_location $test_dir");

@@ -31,7 +31,7 @@ my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
     reference_sequence_build => $ref_seq_build,
 );
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Breakdancer';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Breakdancer';
 my $test_base_dir = File::Temp::tempdir(CLEANUP => 1);
 my $test_working_dir = "$test_base_dir/output";
 

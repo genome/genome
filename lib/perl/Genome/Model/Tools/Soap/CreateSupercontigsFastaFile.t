@@ -9,7 +9,7 @@ require File::Compare;
 
 use_ok ('Genome::Model::Tools::Soap::CreateSupercontigsFastaFile');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Soap/CreateSupercontigsFastaFile';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Soap/CreateSupercontigsFastaFile';
 ok(-d $data_dir, "Data dir exists") or die;
 ok(-s $data_dir.'/TEST.scafSeq', "Data dir test file exists") or die;
 ok(-s $data_dir.'/supercontigs.fasta', "Data dir supercontigs.fasta file exists") or die;

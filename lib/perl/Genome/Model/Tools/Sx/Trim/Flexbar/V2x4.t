@@ -16,7 +16,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Sx::Trim::Flexbar::V2x4') or die;
 
-my $datadir = $ENV{GENOME_TEST_INPUTS}.'/Genome-Model-Tools-Sx/TrimFlexbar';
+my $datadir = Genome::Config::get('test_inputs').'/Genome-Model-Tools-Sx/TrimFlexbar';
 my $input1 = "$datadir/input_1.fastq";
 ok(-s $input1, 'fastq input 1') or die;
 my $input2 = "$datadir/input_2.fastq";

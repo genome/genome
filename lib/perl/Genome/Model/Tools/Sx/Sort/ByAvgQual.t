@@ -17,7 +17,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::Sx::Sort::ByAvgQual') or die;
 
 # Files
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/SortByAvgQual';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/SortByAvgQual';
 my $in_fastq = $dir.'/in.fastq';
 ok(-s $in_fastq, 'in fastq');
 my $example_fastq = $dir.'/out.fastq';

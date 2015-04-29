@@ -10,7 +10,7 @@ use Test::Exception;
 my $pkg = 'Genome::Model::Tools::Joinx::VcfReport';
 use_ok($pkg);
 
-my $test_data = File::Spec->catfile($ENV{GENOME_TEST_INPUTS}, "Genome-Model-Tools-Joinx-VcfReport");
+my $test_data = File::Spec->catfile(Genome::Config::get('test_inputs'), "Genome-Model-Tools-Joinx-VcfReport");
 
 my $input_file = File::Spec->catfile($test_data, "input.vcf");
 my $expected_site = File::Spec->catfile($test_data, "expected-site.txt");

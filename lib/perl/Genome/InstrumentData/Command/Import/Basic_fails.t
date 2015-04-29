@@ -23,8 +23,8 @@ my $library = Genome::Library->create(
 ok($library, 'Create library');
 
 my @source_files = (
-    $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-Import-Basic/fastq-1.txt.gz', 
-    $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-Import-Basic/fastq-2.fastq',
+    Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Command-Import-Basic/fastq-1.txt.gz', 
+    Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Command-Import-Basic/fastq-2.fastq',
 );
 
 my $fail = Genome::InstrumentData::Command::Import::Basic->create(

@@ -24,7 +24,7 @@ else {
 
 use_ok('Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcfDenovo');
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-FalsePositiveVcfDenovo';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Filter-FalsePositiveVcfDenovo';
 
 # FIXME currently snvs.vcf.gz has been copied into the detector dir even though that is a lie.
 

@@ -8,7 +8,7 @@ use Genome::Test::Factory::SoftwareResult::User;
 
 $ENV{UR_DBI_NO_COMMIT} = 1;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Htseq-Count/2013-04-04';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Htseq-Count/2013-04-04';
 my $rebuilding = (@ARGV and $ARGV[0] eq 'REBUILD');
 
 my $test_outdir;

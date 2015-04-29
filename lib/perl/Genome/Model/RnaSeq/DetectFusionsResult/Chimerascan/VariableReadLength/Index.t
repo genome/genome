@@ -16,7 +16,7 @@ use_ok('Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::VariableReadLen
 my $chimerascan_version = '0.4.6';
 my $picard_version = 1.82;
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanVrlResult-Index/v2";
+my $data_dir = Genome::Config::get('test_inputs')."/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanVrlResult-Index/v2";
 my $annotation_genepred = File::Spec->join($data_dir, '106942997-all_sequences.genepred');
 diag "Test data located at: $data_dir";
 

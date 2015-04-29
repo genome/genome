@@ -198,7 +198,7 @@ sub test_shortcutting {
 sub generate_fake_instrument_data {
 
     #my $fastq_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Align-Maq/test_sample_name';
-    my $fastq_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-RtgMapx';
+    my $fastq_directory = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-AlignmentResult-RtgMapx';
     my $tmp_fastq_dir = File::Temp::tempdir(
         'AlignmentResult-RtgMapx-XXXXXX',
         TMPDIR => 1,

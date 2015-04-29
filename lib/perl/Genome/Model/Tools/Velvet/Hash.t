@@ -16,7 +16,7 @@ else {
 
 use_ok('Genome::Model::Tools::Velvet::Hash');
 
-my $test_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Velvet/Hash';
+my $test_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Velvet/Hash';
 my $test_file = 'test1.fa';
 
 my $tmp_dir   = File::Temp::tempdir(

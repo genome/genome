@@ -13,7 +13,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::Fastq::Split');
 }
 
-my $dir      = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/Split';
+my $dir      = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fastq/Split';
 my $temp_dir = File::Temp::tempdir(
     "FastqSplit_XXXXXX",
     TMPDIR => 1,

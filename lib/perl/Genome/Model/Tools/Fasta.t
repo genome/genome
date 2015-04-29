@@ -20,7 +20,7 @@ use_ok ('Genome::Model::Tools::Fasta')
 my $CWD = getcwd();
 ok(-d $CWD, "We are in dir: $CWD");
 # Original files
-my $ORIG_DIR = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta';
+my $ORIG_DIR = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fasta';
 ok(-d $ORIG_DIR, "Test dir ($ORIG_DIR) exists");
 my $ORIG_FASTA = $ORIG_DIR.'/file.fasta';
 ok(-f $ORIG_FASTA, "Original fasta ($ORIG_FASTA) exists");

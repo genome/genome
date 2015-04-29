@@ -12,7 +12,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
 use above 'Genome';
 
 use_ok('Genome::Model::Tools::Mutect::MergeOutputFiles');
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Merge-Output-Files";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Mutect-Merge-Output-Files";
 
 my $expected_file = "$test_dir/expected.v1";
 my @input_files = ("$test_dir/output1.v1", "$test_dir/output2.v1");

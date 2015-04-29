@@ -19,7 +19,7 @@ BEGIN {
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 my $out_file = $tmp_dir .'/tmp.sff';
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-454-Newbler/R_2008_09_22_14_01_00_FLX12345678_TEST_12345678';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-454-Newbler/R_2008_09_22_14_01_00_FLX12345678_TEST_12345678';
 
 my @sff_files = glob($data_dir.'/*.sff');
 

@@ -15,7 +15,7 @@ use warnings;
 
 use_ok('Genome::Report::Command::Email') or die;
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Report-XSLT';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Report-XSLT';
 my $cmd = Genome::Report::Command::Email->create(
     report_directory => $dir.'/Assembly_Stats',
     xsl_files => $dir.'/AssemblyStats.txt.xsl',

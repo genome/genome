@@ -14,7 +14,7 @@ use above 'Genome';
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::Mapping');
 my $ref_dir = '/gscmnt/pacbio/production/smrtanalysis/common/references/BAC_AC241402_3';
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-Mapping';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-Mapping';
 
 my $input_fofn = $data_directory .'/input.fofn';
 my $region_table = $data_directory .'/data/post_control_regions.fofn';

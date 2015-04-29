@@ -12,7 +12,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::Sam::LimitVariants');
 }
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-LimitVariants';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam-LimitVariants';
 my $tmp_dir  = Genome::Sys->create_temp_directory('Genome-Model-Tools-Sam-LimitVariants-'. Genome::Sys->username);
 
 my $bed_file = $data_dir .'/test_regions.bed';

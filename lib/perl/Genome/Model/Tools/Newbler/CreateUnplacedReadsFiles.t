@@ -10,7 +10,7 @@ require File::Compare;
 use_ok( 'Genome::Model::Tools::Newbler::CreateUnplacedReadsFiles' ) or die;
 
 my $version = 'v1';
-my $example_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Newbler/CreateUnplacedReadsFiles-'.$version;
+my $example_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Newbler/CreateUnplacedReadsFiles-'.$version;
 ok( -d $example_dir, 'Example dir exists' ) or die;
 
 my $test_dir = Genome::Sys->create_temp_directory();

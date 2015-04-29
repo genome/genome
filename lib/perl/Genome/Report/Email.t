@@ -9,7 +9,7 @@ use Test::More;
 
 use_ok('Genome::Report::Email');
 
-my $test_report_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Report/Build_Start';
+my $test_report_dir = Genome::Config::get('test_inputs') . '/Genome-Report/Build_Start';
     
 my $report = Genome::Report->create_report_from_directory($test_report_dir);
 ok($report, 'create report') or die;

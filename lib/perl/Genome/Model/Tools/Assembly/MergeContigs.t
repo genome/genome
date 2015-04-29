@@ -11,7 +11,7 @@ use Genome::Model::Tools::Assembly::MergeContigs;
 use Test::More skip_all => "Does not play nice with the test harness";
 
 my $contigs = 'merge.ace contig00012.0 merge.ace contig00013.1';
-my $path = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Assembly-MergeContigs/edit_dir';
+my $path = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Assembly-MergeContigs/edit_dir';
 
 my $output_file_name = 'out.ace';
 chdir($path);

@@ -21,7 +21,7 @@ use_ok( 'Genome::Model::Tools::FastTier::FastTier');
 
 # General setup for v3 test
 
-my $test_data_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-FastTier-FastTier';
+my $test_data_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-FastTier-FastTier';
 my $test_input_dir = $test_data_dir."/inputs_v2"; # v2 has no repeated positions in either snvs or indels
 my $test_expected_data_dir = $test_data_dir."/expected_v4"; #v3 is the output of running on v2 inputs
 my $snvs_bed_file_name = "snvs.hq.novel.v2.bed";

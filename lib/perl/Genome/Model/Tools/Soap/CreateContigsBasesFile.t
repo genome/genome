@@ -9,7 +9,7 @@ require File::Compare;
 
 use_ok ('Genome::Model::Tools::Soap::CreateContigsBasesFile') or die;
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Soap/CreateContigsBasesFile';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Soap/CreateContigsBasesFile';
 
 ok(-d $data_dir, "Data dir exists");
 

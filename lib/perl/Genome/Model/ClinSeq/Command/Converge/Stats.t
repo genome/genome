@@ -4,7 +4,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} . "Genome-Model-ClinSeq-Command-Converge-Stats/2014-12-19/";
+my $expected_output_dir = Genome::Config::get('test_inputs') . "Genome-Model-ClinSeq-Command-Converge-Stats/2014-12-19/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 my $op_dir = Genome::Sys->create_temp_directory();

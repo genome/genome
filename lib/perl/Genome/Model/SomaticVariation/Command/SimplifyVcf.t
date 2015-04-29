@@ -13,7 +13,7 @@ use Test::More tests => 7;
 use Test::Exception;
 use Genome::Utility::Test qw(compare_ok);
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-SomaticVariation-Command-SimplifyVcf';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-SomaticVariation-Command-SimplifyVcf';
 my $test_input_dir = "$test_dir/input.v1";
 my $build_variants_dir = "$test_input_dir/variants";
 Genome::Sys->create_directory($build_variants_dir);

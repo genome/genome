@@ -11,7 +11,7 @@ use above 'Genome';
 
 use_ok('Genome::Model::Tools::Fasta::Split');
 my $cleanup = 1;
-my $test_fasta_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta/Chunk/test1.fa';
+my $test_fasta_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fasta/Chunk/test1.fa';
 my $tmp_dir = File::Temp::tempdir("FastaSplit1_XXXXXX",CLEANUP=>1, TMPDIR => 1);
 my $tmp_test_fasta_file = $tmp_dir.'/test1.fa';
 copy $test_fasta_file, $tmp_test_fasta_file;

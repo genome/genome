@@ -99,7 +99,7 @@ sub _run_workflow {
     my $self = shift;
 
     my $rv = run_workflow_lsf(
-	$ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreening/virome-screening6.xml',
+	Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ViromeScreening/virome-screening6.xml',
 	'fasta_file'  => $self->fasta_file,
 	'barcode_file'=> $self->barcode_file,
 	'dir'         => $self->dir,

@@ -9,7 +9,7 @@ require File::Compare;
 
 use_ok( 'Genome::Model::Tools::Velvet::ToConsed' ) or die;
 
-my $test_suite_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Velvet-ToConsed';
+my $test_suite_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Velvet-ToConsed';
 ok ( -d $test_suite_dir, "Test suite exists" ) or die;
 
 my $temp_test_dir = Genome::Sys->create_temp_directory();

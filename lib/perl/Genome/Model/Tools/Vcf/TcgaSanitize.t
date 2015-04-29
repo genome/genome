@@ -9,7 +9,7 @@ use Test::More tests => 13;
 
 use_ok('Genome::Model::Tools::Vcf::TcgaSanitize');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-TcgaSanitize";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Vcf-TcgaSanitize";
 my $input_dir = "$test_dir/input.v3";
 my $expected_base = "expected.v3";
 my $expected_dir = "$test_dir/$expected_base";

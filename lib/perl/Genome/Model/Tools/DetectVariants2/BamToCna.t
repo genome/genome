@@ -28,7 +28,7 @@ my $refbuild_id = 101947881;
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
 ok($ref_seq_build, 'human36 reference sequence build') or die;
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-BamToCna/'; #Switched to whole genome normalization right around rev 61005
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-BamToCna/'; #Switched to whole genome normalization right around rev 61005
 
 my $tumor_bam_file  = $test_input_dir . 'tumor.sparse.bam';
 my $normal_bam_file = $test_input_dir . 'normal.sparse.bam';

@@ -12,7 +12,7 @@ BEGIN {
         use_ok('Genome::Model::Tools::Snp::GenotypeDetail');
     };
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Snp/GenotypeDetail';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Snp/GenotypeDetail';
 
 my $test_snp_file = "$dir/test.sam.snp";
 my $exp_out_file  = $test_snp_file.'.genotype_detail.ori';

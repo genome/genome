@@ -29,7 +29,7 @@ my $instrument_data = Genome::InstrumentData::Solexa->create(
     rev_clusters => 300,
     fwd_read_length => 50,
     rev_read_length => 50,
-    bam_path => $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam',
+    bam_path => Genome::Config::get('test_inputs') . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam',
 );
 ok($instrument_data, 'create inst data');
 

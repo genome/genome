@@ -16,7 +16,7 @@ plan tests => 6;
 use_ok('Genome::Model::Tools::BioSamtools');
 use_ok('Genome::Model::Tools::BioSamtools::CleanBam');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-BioSamtools-CleanBam';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-BioSamtools-CleanBam';
 
 my $input_bam_file = $data_dir .'/dirty.bam';
 my $output_bam_file = Genome::Sys->create_temp_file_path('clean.bam');  

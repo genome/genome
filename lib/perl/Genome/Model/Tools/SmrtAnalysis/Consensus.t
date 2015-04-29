@@ -14,7 +14,7 @@ plan tests => 3;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::Consensus');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-Consensus';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-Consensus';
 
 my $original_cmp_hdf5_file = $data_directory .'/data/aligned_reads.cmp.h5';
 my $original_alignment_summary_gff = $data_directory .'/data/alignment_summary.gff';

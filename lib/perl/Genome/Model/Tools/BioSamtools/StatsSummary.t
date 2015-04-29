@@ -17,7 +17,7 @@ use_ok('Genome::Model::Tools::BioSamtools');
 use_ok('Genome::Model::Tools::BioSamtools::StatsSummary');
 
 my $tmp_dir = File::Temp::tempdir('BioSamtools-StatsSummary-'.Genome::Sys->username.'-XXXX',CLEANUP => 1, TMPDIR => 1);
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-BioSamtools/StatsSummary';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-BioSamtools/StatsSummary';
 
 my $stats_file = $data_dir .'/test.stats';
 my $expected_file = $data_dir .'/test_stats_summary-4.tsv';

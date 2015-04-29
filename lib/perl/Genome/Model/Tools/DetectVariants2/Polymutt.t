@@ -30,7 +30,7 @@ my @test_alignment_result_ids = qw(121781692 121781691 121781695);
 my @test_alignment_results = Genome::InstrumentData::AlignmentResult::Merged->get(\@test_alignment_result_ids);
 is(scalar(@test_alignment_results), 3, "Got 3 test alignment results");
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Polymutt';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Polymutt';
 my $ped_file = "$test_data_dir/DS10239.ped";
 my $expected_dir = join('/', $test_data_dir, 'expected.v1');
 

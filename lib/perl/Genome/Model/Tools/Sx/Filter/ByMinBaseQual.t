@@ -17,7 +17,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::Sx::Filter::ByMinBaseQual') or die;
 
 # Files
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/FilterByMinBaseQual';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/FilterByMinBaseQual';
 my $in_fastq = $dir.'/in.fastq';
 ok(-s $in_fastq, 'in fastq');
 my $example_fastq = $dir.'/out.fastq';

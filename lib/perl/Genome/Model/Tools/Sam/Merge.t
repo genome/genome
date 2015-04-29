@@ -15,7 +15,7 @@ if (`uname -a` =~ /x86_64/){
     plan skip_all => 'Must run on a 64 bit machine';
 }
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Tools-Sam-Merge';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Tools-Sam-Merge';
 
 my $input_normal = $dir. '/normal.tiny.bam';
 my $input_tumor  = $dir. '/tumor.tiny.bam';

@@ -15,7 +15,7 @@ if (`uname -a` =~ /x86_64/){
     plan skip_all => 'Must run on a 64 bit machine';
 }
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-AlignmentComparator';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam-AlignmentComparator';
 my $input_bwa  = "$dir/bwa_aln.sorted.bam";
 my $input_bwa2 = "$dir/bwa_aln.sorted.copy.bam";
 my $input_novo = "$dir/novotest.sorted.bam";

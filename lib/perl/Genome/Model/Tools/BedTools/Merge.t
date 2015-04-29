@@ -13,7 +13,7 @@ use_ok('Genome::Model::Tools::BedTools::Merge');
 
 my $tmp_dir = File::Temp::tempdir('BedTools-Merge-'.Genome::Sys->username.'-XXXX',CLEANUP => 1, TMPDIR => 1);
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-BedTools-Merge';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-BedTools-Merge';
 
 my $bed_file = $data_dir .'/full.bed';
 my $expected_file = $data_dir .'/merged.bed';

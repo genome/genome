@@ -26,7 +26,7 @@ if ($archos !~ /64/) {
 }
 
 
-my $test_data =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Analysis-Coverage-CoverageHist";
+my $test_data =  Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Analysis-Coverage-CoverageHist";
 
 my $tmpbase = File::Temp::tempdir('CoverageHistXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_file = "$tmpbase/output.pdf";

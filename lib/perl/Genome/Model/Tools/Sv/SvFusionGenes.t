@@ -13,7 +13,7 @@ use Test::More;
 
 use_ok("Genome::Model::Tools::Sv::SvFusionGenes");
 
-my $base_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Sv-SvFusionGenes";
+my $base_dir = Genome::Config::get('test_inputs')."/Genome-Model-Tools-Sv-SvFusionGenes";
 my $version = 1;
 my $data_dir = "$base_dir/v$version";
 

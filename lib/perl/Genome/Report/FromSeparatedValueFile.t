@@ -10,7 +10,7 @@ use Test::More;
 use_ok('Genome::Report::FromSeparatedValueFile') or die;
 
 my $svr = Genome::Utility::IO::SeparatedValueReader->create(
-    input => $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-IO/albums.csv',
+    input => Genome::Config::get('test_inputs') . '/Genome-Utility-IO/albums.csv',
 );
 ok($svr, 'create svr') or die;
 

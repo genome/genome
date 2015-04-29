@@ -27,7 +27,7 @@ BEGIN {
     use_ok( 'Genome::Model::Tools::454::Newbler::RunAssembly');
 };
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-454-Newbler';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-454-Newbler';
 #my $expected_path = Genome::Config::get('sw') . '/454/newbler/applicationsBin/';
 #my $expected_path = Genome::Config::get('sw') . '/454/offInstrumentApps-2.0.00.20-64/bin';
 

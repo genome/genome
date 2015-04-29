@@ -48,7 +48,7 @@ ok($cmd->execute, 'execute detect and remove chimeras cmd');
 
 my $amplicons_chimeric = 2;
 if ( $build->amplicons_chimeric == 3 ) { # switch to 3 chimeras if necessary
-    $example_build->data_directory($ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16s454/build_v5.3chimeras');
+    $example_build->data_directory(Genome::Config::get('test_inputs') . '/Genome-Model/MetagenomicComposition16s454/build_v5.3chimeras');
     # Get the sets again to pickup the new data_directory otherwise the old data_directory is used.
     @example_amplicon_sets = $example_build->amplicon_sets;
     $amplicons_chimeric = 3;

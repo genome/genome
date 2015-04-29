@@ -19,7 +19,7 @@ use_ok('Genome::Model::Tools::BioSamtools::CompareAlignmentSummaries');
 
 my $tmp_dir = File::Temp::tempdir('BioSamtools-CompareAlignmentSummaries-'.Genome::Sys->username.'-XXXX',CLEANUP => 1, TMPDIR => 1);
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-BioSamtools/AlignmentSummary';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-BioSamtools/AlignmentSummary';
 my $input_file_1 = $data_dir .'/alignment_summary.tsv';
 my $input_file_2 = $data_dir .'/alignment_summary_2.tsv';
 my $output_file = $tmp_dir .'/merged_alignment_summary.tsv';

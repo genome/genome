@@ -13,7 +13,7 @@ BEGIN {
         use_ok('Genome::Model::Tools::WuBlast::Parse');
 }
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-WuBlast';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-WuBlast';
 my $tmp_dir  = File::Temp::tempdir(
     "WuBlast_Blastn_XXXXXX", 
     TMPDIR => 1,

@@ -21,7 +21,7 @@ use above 'Genome';
 use_ok('Genome::Model::Tools::Dbsnp::Import');
 
 my $sub_dir = "/Genome-Model-Tools-Dbsnp-Import";
-my $test_dir = $ENV{GENOME_TEST_INPUTS}.$sub_dir;
+my $test_dir = Genome::Config::get('test_inputs').$sub_dir;
 ok (-d $test_dir, "test directory $test_dir is present");
 my $test_output = "$test_dir/v3/output.bed";
 ok(-e $test_output, "test output $test_output exists");

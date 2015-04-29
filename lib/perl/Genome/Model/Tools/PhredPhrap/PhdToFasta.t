@@ -11,7 +11,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::PhredPhrap::PhdToFasta') or die;
 
-my $path = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-PhredPhrap'; #directory for sample data and output
+my $path = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-PhredPhrap'; #directory for sample data and output
 my $static = "$path/PhdToFasta/_fasta_output.static"; #static file for comparison to output
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 my $fasta_file = $tmpdir.'/fasta';

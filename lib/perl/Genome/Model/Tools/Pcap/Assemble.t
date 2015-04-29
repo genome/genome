@@ -9,7 +9,7 @@ use Test::More;
 use Cwd;
 
 #check test suite dir/files
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-AssemblReads-Pcap/Proteus_penneri_ATCC_35198-1.0_080509.pcap';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-AssemblReads-Pcap/Proteus_penneri_ATCC_35198-1.0_080509.pcap';
 ok (-d $test_dir, "Test suite directory exists");
 
 #create temp test dir

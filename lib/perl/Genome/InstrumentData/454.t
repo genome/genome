@@ -25,7 +25,7 @@ my $library = Genome::Library->__define__(
 ok($library, 'define library');
 
 my $id = -1111;
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-454';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-454';
 my $id454 = Genome::InstrumentData::454->__define__(
     # This is info from a real 454 index region
     id => -1111,

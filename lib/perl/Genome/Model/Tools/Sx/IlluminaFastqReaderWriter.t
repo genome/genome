@@ -22,7 +22,7 @@ diag($@);
 ok(($@ && !$failed_write), 'Failed to write w/o fastqs');
 
 #< Files >#
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/';
 my $example_fastq = $dir.'/reader_writer.fastq';
 ok(-s $example_fastq, 'example fastq exists') or die;
 

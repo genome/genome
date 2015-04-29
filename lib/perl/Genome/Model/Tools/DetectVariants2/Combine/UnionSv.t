@@ -20,7 +20,7 @@ BEGIN {
 
 use_ok( 'Genome::Model::Tools::DetectVariants2::Combine::UnionSv');
 
-my $test_data_dir     = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Combine-UnionSv';
+my $test_data_dir     = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Combine-UnionSv';
 is(-d $test_data_dir, 1, 'test_data_dir exists') || die;
 
 my $expected_output   = $test_data_dir . '/expected_output_dir';

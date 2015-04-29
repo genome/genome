@@ -15,7 +15,7 @@ use_ok('Genome::Model::Tools::Dbsnp::Import::Flatfile');
 
 my $sub_dir = "/Genome-Model-Tools-Dbsnp-Import-Flatfile/v2";
 my $test_data_url_dir = Genome::Config::get('test_url') . $sub_dir;
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . $sub_dir;
+my $test_data_dir = Genome::Config::get('test_inputs') . $sub_dir;
 my $test_flat_file = "$test_data_url_dir/ds_flat_chMT.txt";
 my $test_output = "$test_data_dir/ds_flat_chMT.txt.out";
 ok(-e $test_output, "test file $test_output exists") || die;

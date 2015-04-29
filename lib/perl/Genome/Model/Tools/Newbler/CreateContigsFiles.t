@@ -12,7 +12,7 @@ use_ok( 'Genome::Model::Tools::Newbler::CreateContigsFiles' ) or die;
 
 #test suite dir
 my $version = 'v1';
-my $test_suite = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Newbler/CreateContigsFiles-'.$version;
+my $test_suite = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Newbler/CreateContigsFiles-'.$version;
 ok( -d $test_suite, "Test suite dir exists" ) or die;
 
 #temp test dir

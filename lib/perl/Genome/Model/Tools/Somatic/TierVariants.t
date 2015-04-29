@@ -14,7 +14,7 @@ BEGIN {
     use_ok( 'Genome::Model::Tools::Somatic::TierVariants');
 };
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Somatic-TierVariants/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Somatic-TierVariants/';
 my $variant_file    = $test_input_dir . 'variants.in';
 my $ucsc_file       = $test_input_dir . 'ucsc_annotation.in';
 my $transcript_file = $test_input_dir . 'transcript.in';

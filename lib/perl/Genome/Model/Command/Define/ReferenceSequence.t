@@ -23,7 +23,7 @@ if(Genome::Config->arch_os() =~ '64') {
 
 use_ok('Genome::Model::Command::Define::ImportedReferenceSequence');
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Command-Define-ImportedReferenceSequence/';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Command-Define-ImportedReferenceSequence/';
 
 
 #First test--a 42MB FASTA with 2 chromosomes

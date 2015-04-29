@@ -28,7 +28,7 @@ if ($archos !~ /64/) {
 use_ok('Genome::Model::Tools::DetectVariants2::Strelka') or die;
 
 #Define the test dir where test BAMs and pre-generated results files are stored
-my $test_dir = $ENV{"GENOME_TEST_INPUTS"} . "/Genome-Model-Tools-DetectVariants2-Strelka/";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Strelka/";
 ok(-e $test_dir, "Found test dir: $test_dir") or die;
 
 #Define the expected output dir where the expected Strelka results files are stored

@@ -14,7 +14,7 @@ if (`uname -a` =~ /x86_64/){
     plan skip_all => 'Must run on a 64 bit machine';
 }
 
-my $input = $ENV{GENOME_TEST_INPUTS} . '/Genome-Tools-Sam-SortBam/normal.tiny.bam';
+my $input = Genome::Config::get('test_inputs') . '/Genome-Tools-Sam-SortBam/normal.tiny.bam';
 
 # step 1: test 1 file case
 

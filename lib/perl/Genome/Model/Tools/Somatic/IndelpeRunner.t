@@ -20,7 +20,7 @@ BEGIN {
 
 use_ok( 'Genome::Model::Tools::Somatic::IndelpeRunner');
 
-my $test_input_dir      = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Somatic-IndelpeRunner/';
+my $test_input_dir      = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Somatic-IndelpeRunner/';
 
 my $bam_file            = $test_input_dir . 'tumor.tiny.bam';
 my $ref_seq_file        = Genome::Config::reference_sequence_directory() . '/NCBI-human-build36/all_sequences.fa'; #The real one

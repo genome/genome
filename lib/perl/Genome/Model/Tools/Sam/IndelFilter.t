@@ -14,7 +14,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::Sam::IndelFilter');
 }
 
-my $root_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam/IndelFilter';
+my $root_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam/IndelFilter';
 
 my $tmp_dir  = File::Temp::tempdir(
     "IndelFilter_XXXXXX", 

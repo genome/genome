@@ -11,7 +11,7 @@ use_ok('Genome::Model::GenePrediction::Command');
 use_ok('Genome::Model::GenePrediction::Command::Eukaryotic');
 use_ok('Genome::Model::GenePrediction::Command::Eukaryotic::PredictionsToAce');
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-GenePredictor/';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-GenePredictor/';
 ok(-d $test_data_dir, "test data dir exists at $test_data_dir");
 
 my $seq_file = $test_data_dir . '/Contig0a.masked.fasta';

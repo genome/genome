@@ -235,7 +235,7 @@ sub _test_fail {
 }
 
 sub test_diff_vcf {
-    my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Build';
+    my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Build';
     my $input_dir = join('/', $test_data_dir, 'input');
 
     my $control_file = join('/', $input_dir, 'indels.vcf');

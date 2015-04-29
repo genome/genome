@@ -27,7 +27,7 @@ my @test_alignment_result_ids = qw(116541600 116542878 116545029);
 my @test_alignment_results = Genome::InstrumentData::AlignmentResult::Merged->get(\@test_alignment_result_ids);
 is(scalar(@test_alignment_results), 3, "Got 3 test alignment results");
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-PolymuttDenovo';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Filter-PolymuttDenovo';
 my $expected_dir = join('/', $test_data_dir, 'expected.v1');
 
 my $detector_directory = join('/', $test_data_dir, 'polymutt-0.02');

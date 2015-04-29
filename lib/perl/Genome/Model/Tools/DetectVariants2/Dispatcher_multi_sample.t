@@ -27,7 +27,7 @@ my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbui
 ok($ref_seq_build, 'human36 reference sequence build') or die;
 my $refseq_tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Dispatcher-multi-sample";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Dispatcher-multi-sample";
 my $pedigree_file = "$test_dir/DS10239.ped";
 
 #Parsing tests

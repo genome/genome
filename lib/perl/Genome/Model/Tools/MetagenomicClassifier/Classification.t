@@ -15,7 +15,7 @@ use_ok('Genome::Model::Tools::MetagenomicClassifier::ClassificationReader') or d
 use_ok('Genome::Model::Tools::MetagenomicClassifier::ClassificationWriter') or die;
 use_ok('Genome::Model::Tools::MetagenomicClassifier::ClassificationComposition') or die;
 
-my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-MetagenomicClassifier-SequenceClassification-Writer/';
+my $base_dir = Genome::Config::get('test_inputs') . '/Genome-Utility-MetagenomicClassifier-SequenceClassification-Writer/';
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 
 # read/write hmp_fix_ranks

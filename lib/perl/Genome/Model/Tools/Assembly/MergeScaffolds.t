@@ -9,7 +9,7 @@ use Test::More;
 require File::Compare;
 
 #check test suite dir/files
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Assembly-SplitScaffold';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Assembly-SplitScaffold';
 ok (-d $test_dir, "Test suite dir exists");
 foreach (qw/ merge.ace out.ace /) {
     ok( -s $test_dir."/$_", "Test suite $_ file exists");

@@ -97,7 +97,7 @@ done_testing();
 
 
 sub generate_fake_instrument_data {
-    my $fastq_directory = File::Spec->join($ENV{GENOME_TEST_INPUTS}, 'Genome-InstrumentData-Align-Maq', 'test_sample_name');
+    my $fastq_directory = File::Spec->join(Genome::Config::get('test_inputs'), 'Genome-InstrumentData-Align-Maq', 'test_sample_name');
 
     my @instrument_data;
     my $i = 0;
@@ -115,7 +115,7 @@ sub generate_fake_instrument_data {
         subset_name => 4 + $i,
         run_type => 'Paired End Read 2',
         gerald_directory => $fastq_directory,
-        bam_path => File::Spec->join($ENV{GENOME_TEST_INPUTS}, 'Genome-InstrumentData-AlignmentResult-Bwa', 'input.bam'),
+        bam_path => File::Spec->join(Genome::Config::get('test_inputs'), 'Genome-InstrumentData-AlignmentResult-Bwa', 'input.bam'),
         library_id => '2792100280',
     );
 

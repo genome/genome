@@ -10,7 +10,7 @@ use Test::More tests => 4;
 
 use_ok('Genome::Model::Tools::AlignmentSummary::GenerateMetrics');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-AlignmentSummary-GenerateMetrics';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-AlignmentSummary-GenerateMetrics';
 
 my $test_bed = $data_dir .'/22.bed';
 my $test_bam = $data_dir .'/22.bam';

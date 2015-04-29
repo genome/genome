@@ -16,7 +16,7 @@ use Genome::Test::Factory::SoftwareResult::User;
 
 use_ok('Genome::Model::Tools::DetectVariants2::Filter::Depth') || die;
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-Depth';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Filter-Depth';
 my $expected_data_dir = join('/', $test_data_dir, 'expected');
 
 my $bam_file = join('/', $test_data_dir, 'tumor.tiny.bam');

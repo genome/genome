@@ -16,7 +16,7 @@ use File::Copy qw(copy);
 use_ok("Genome::Model::Tools::Validation::LongIndelsGenerateMergedAssemblies");
 
 my $version = 2;
-my $base_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Validation-LongIndelsGenerateMergedAssemblies/v$version";
+my $base_dir = Genome::Config::get('test_inputs')."/Genome-Model-Tools-Validation-LongIndelsGenerateMergedAssemblies/v$version";
 my $temp_dir = Genome::Sys->create_temp_directory;
 
 # copy to temp because the tool appears to make a large_indels.bed.dedup next

@@ -18,7 +18,7 @@ else {
 use_ok('Genome::Model::Tools::Cufflinks::Assemble');
 
 
-my $input_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Cufflinks-Assemble';
+my $input_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Cufflinks-Assemble';
 my $bam_file = $input_data_dir .'/accepted_hits.bam';
 
 # Nevermind, Cufflinks seems to produce slightly different results each time

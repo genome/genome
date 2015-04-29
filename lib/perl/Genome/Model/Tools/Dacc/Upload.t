@@ -10,7 +10,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::Dacc::Upload') or die;
 
 # setup
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Dacc';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Dacc';
 my @files_to_upload = map { $dir.'/'.$_ } (qw/ a b /);
 my %files;
 my $expected_cmd;

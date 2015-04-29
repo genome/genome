@@ -16,7 +16,7 @@ BEGIN {
         $ENV{NO_LSF} = 1;
         use_ok ('Genome::Model::Tools::Blat::Subjects');
 }
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Blat-Subjects';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Blat-Subjects';
 my $query_file = $data_dir .'/test.fa';
 my $expected_psl = $data_dir .'/test.psl';
 # Must use a network dis

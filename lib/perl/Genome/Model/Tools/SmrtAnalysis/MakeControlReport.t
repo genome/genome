@@ -15,7 +15,7 @@ plan tests => 4;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::MakeControlReport');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-MakeControlReport';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-MakeControlReport';
 
 my $cmp_hdf5_file = $data_directory .'/data/control_reads.cmp.h5';
 my $filtered_summary_csv_file = $data_directory .'/filtered_summary.csv';

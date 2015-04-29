@@ -15,7 +15,7 @@ plan tests => 3;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::CompareSequences');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-CompareSequences';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-CompareSequences';
 my $control_reference = $data_directory .'/Standard_v1';
 my $bas_h5_fofn = $data_directory .'/input.fofn';
 my $rgn_h5_fofn = $data_directory .'/output.fofn';

@@ -13,7 +13,7 @@ BEGIN
     use_ok ('Genome::Model::Tools::Fasta::Deduplicator');
 }
 
-my $fasta_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta-Deduplicator/rand60k_short.fna';
+my $fasta_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fasta-Deduplicator/rand60k_short.fna';
 my $deduplicated_file = Genome::Sys->create_temp_file_path("dedup.fna");
 my $deduplicator = Genome::Model::Tools::Fasta::Deduplicator->create(fasta_file => $fasta_file,
                                                                      deduplicated_file => $deduplicated_file);

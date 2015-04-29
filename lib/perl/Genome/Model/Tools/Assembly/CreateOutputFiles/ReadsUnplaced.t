@@ -10,7 +10,7 @@ require File::Compare;
 use_ok ('Genome::Model::Tools::Assembly::CreateOutputFiles::ReadsUnplaced') or die;
 
 #check data dir and input files for test
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Assembly/CreateOutputFiles/ReadsUnplaced_v0';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Assembly/CreateOutputFiles/ReadsUnplaced_v0';
 ok(-d $data_dir, "Data dir exists") or die;
 for my $file (qw/ GABJJ9O01.fasta.gz GABJJ9O01.fasta.qual.gz GABJJ9O02.fasta.gz reads.placed /) {
     ok(-s $data_dir."/edit_dir/$file", "$file file exists in data dir");

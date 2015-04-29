@@ -53,7 +53,7 @@ EOS
 };
 use warnings;
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Report-XSLT';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Report-XSLT';
 my $tmpdir = Genome::Sys->base_temp_directory;
 my $cmd = Genome::Report::Command::Xslt->create(
     report_directory => $dir.'/Assembly_Stats',

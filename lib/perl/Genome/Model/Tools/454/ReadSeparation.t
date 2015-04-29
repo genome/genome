@@ -20,7 +20,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::454::SeparateReadsWithCrossMatchAlignment');
 }
 
-my $sff_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-454-ReadSeparation/test_454_primer_tag_100k.sff';
+my $sff_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-454-ReadSeparation/test_454_primer_tag_100k.sff';
 
 my @version_subdirs = qw/ offInstrumentApps mapasm454_source /;
 foreach my $sub_dir (@version_subdirs) {

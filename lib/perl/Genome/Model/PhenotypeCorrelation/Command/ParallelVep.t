@@ -25,7 +25,7 @@ BEGIN {
 my $pkg = 'Genome::Model::PhenotypeCorrelation::Command::ParallelVep';
 use_ok($pkg);
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-PhenotypeCorrelation-testdata/CaseControl";
+my $test_data_dir = Genome::Config::get('test_inputs') . "/Genome-Model-PhenotypeCorrelation-testdata/CaseControl";
 
 my $tmpdir = tempdir(
     't-ParallelVep-XXXXX',

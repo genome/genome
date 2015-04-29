@@ -77,7 +77,7 @@ my $alignment_result = Genome::InstrumentData::AlignmentResult::Tophat->create(@
 
 isa_ok($alignment_result, 'Genome::InstrumentData::AlignmentResult::Tophat', 'produced merged alignment result');
 
-my $expected_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Tophat/expected_v1.3.0_1-lane';
+my $expected_dir = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-AlignmentResult-Tophat/expected_v1.3.0_1-lane';
 
 for my $file (qw(alignment_stats.txt junctions.bed)) {
     my $path = join('/', $alignment_result->output_dir, $file);
@@ -95,7 +95,7 @@ is($existing_alignment_result, $alignment_result, 'got back the previously creat
 
 sub generate_fake_instrument_data {
 
-    my $fastq_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Align-Maq/test_sample_name';
+    my $fastq_directory = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Align-Maq/test_sample_name';
 
     my @instrument_data;
     #for my $i (0,2) {
@@ -116,7 +116,7 @@ sub generate_fake_instrument_data {
             subset_name => 4 + $i,
             run_type => 'Paired End Read 2',
             gerald_directory => $fastq_directory,
-            bam_path => $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam',
+            bam_path => Genome::Config::get('test_inputs') . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam',
             #sample_type => 'dna',
             #sample_id => '2791246676',
             library_id => '2792100280',

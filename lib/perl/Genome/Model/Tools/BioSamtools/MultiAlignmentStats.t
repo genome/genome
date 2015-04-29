@@ -18,7 +18,7 @@ use_ok('Genome::Model::Tools::BioSamtools::MultiAlignmentStats');
 
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-BioSamtools-MultiAlignmentStats';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-BioSamtools-MultiAlignmentStats';
 my $expected_data_dir = $data_dir;
 
 my $alignment_file_path = $data_dir .'/test.bam';
