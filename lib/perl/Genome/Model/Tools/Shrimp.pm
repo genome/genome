@@ -47,7 +47,7 @@ sub shrimp_path {
 }
 
 my %SHRIMP_VERSIONS = (
-		    '1.0.2' => $ENV{GENOME_SW} . '/shrimp/SHRiMP_1_0_2/bin',
+		    '1.0.2' => Genome::Config::get('sw') . '/shrimp/SHRiMP_1_0_2/bin',
                 );
 
 sub available_shrimp_versions {

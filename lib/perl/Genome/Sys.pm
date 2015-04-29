@@ -447,7 +447,7 @@ sub sw_version_path_map {
     }
 
     my %pkgdirs;
-    my @dirs2 = split(':',$ENV{GENOME_SW});  #most of the system expects this to be one value not-colon separated currently
+    my @dirs2 = split(':',Genome::Config::get('sw'));  #most of the system expects this to be one value not-colon separated currently
     for my $dir2 (@dirs2) {
         # one subdir will exist per application
         my @app_subdirs = glob("$dir2/$pkg_name");

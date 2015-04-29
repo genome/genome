@@ -39,9 +39,9 @@ sub cmd_display_name {
 
 sub _cmd_versions {
     return (
-        '1.7' => $ENV{GENOME_SW} . '/flexibleadapter/flexibleadapter-1.7/far',
-        '1.84' => $ENV{GENOME_SW} . '/flexibleadapter/flexibleadapter-1.84/build/far',
-        '2.0' => $ENV{GENOME_SW} . '/flexibleadapter/flexibleadapter-2.0/build/far',
+        '1.7' => Genome::Config::get('sw') . '/flexibleadapter/flexibleadapter-1.7/far',
+        '1.84' => Genome::Config::get('sw') . '/flexibleadapter/flexibleadapter-1.84/build/far',
+        '2.0' => Genome::Config::get('sw') . '/flexibleadapter/flexibleadapter-2.0/build/far',
         '2.17' => '/usr/bin/far2.17.0',
     );
 }

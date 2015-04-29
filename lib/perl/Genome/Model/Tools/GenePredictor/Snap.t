@@ -27,7 +27,7 @@ ok(-d $test_data_dir, "test data directory exists at $test_data_dir");
 my $fasta = $test_data_dir . 'Contig0a.masked.fasta';
 ok(-e $fasta, "fasta file exists at $fasta");
 
-my $model = $ENV{GENOME_SW} . '/snap/installed/HMM/C.elegans.hmm';
+my $model = Genome::Config::get('sw') . '/snap/installed/HMM/C.elegans.hmm';
 ok(-e $model, "model file exists at $model");
 
 my $command = Genome::Model::Tools::GenePredictor::Snap->create(

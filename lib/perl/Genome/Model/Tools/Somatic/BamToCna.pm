@@ -130,7 +130,7 @@ class Genome::Model::Tools::Somatic::BamToCna {
 };
 
 my %BAMWINDOW_VERSIONS = (
-    '0.1' => $ENV{GENOME_SW} . '/bamwindow/bamwindow-v0.1/' . $BAMWINDOW_COMMAND,
+    '0.1' => Genome::Config::get('sw') . '/bamwindow/bamwindow-v0.1/' . $BAMWINDOW_COMMAND,
 );
 
 sub help_synopsis {

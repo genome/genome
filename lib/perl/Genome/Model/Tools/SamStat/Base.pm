@@ -21,8 +21,8 @@ class Genome::Model::Tools::SamStat::Base {
 };
 
 my @SAMSTAT_VERSIONS = (
-     '1.08' => $ENV{GENOME_SW} . '/samstat/samstat-1.08/src/samstat',
-     '1.03' => $ENV{GENOME_SW} . '/samstat/samstat-1.03/src/samstat',
+     '1.08' => Genome::Config::get('sw') . '/samstat/samstat-1.08/src/samstat',
+     '1.03' => Genome::Config::get('sw') . '/samstat/samstat-1.03/src/samstat',
 );
 
 my %SAMSTAT_VERSIONS = @SAMSTAT_VERSIONS;

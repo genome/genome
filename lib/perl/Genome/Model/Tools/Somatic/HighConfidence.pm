@@ -93,7 +93,7 @@ class Genome::Model::Tools::Somatic::HighConfidence {
 };
 
 my %READCOUNT_VERSIONS = (
-    '0.2' => $ENV{GENOME_SW} . '/samtools/readcount/readcount-v0.2/' . $READCOUNT_COMMAND,
+    '0.2' => Genome::Config::get('sw') . '/samtools/readcount/readcount-v0.2/' . $READCOUNT_COMMAND,
 );
 
 sub help_brief {

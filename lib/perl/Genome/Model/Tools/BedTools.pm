@@ -39,14 +39,14 @@ EOS
 }
 
 my %BEDTOOLS_VERSIONS = (
-    '2.17.0' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.17.0',
-    '2.16.2' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.16.2',
-    '2.14.3' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.14.3',
-    '2.9.0' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.9.0',
-    '2.8.3' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.8.3',
-    '2.6.1' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.6.1',
-    '2.5.4' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.5.4',
-    '2.3.2' => $ENV{GENOME_SW} . '/bedtools/BEDTools-2.3.2',
+    '2.17.0' => Genome::Config::get('sw') . '/bedtools/BEDTools-2.17.0',
+    '2.16.2' => Genome::Config::get('sw') . '/bedtools/BEDTools-2.16.2',
+    '2.14.3' => Genome::Config::get('sw') . '/bedtools/BEDTools-2.14.3',
+    '2.9.0' => Genome::Config::get('sw') . '/bedtools/BEDTools-2.9.0',
+    '2.8.3' => Genome::Config::get('sw') . '/bedtools/BEDTools-2.8.3',
+    '2.6.1' => Genome::Config::get('sw') . '/bedtools/BEDTools-2.6.1',
+    '2.5.4' => Genome::Config::get('sw') . '/bedtools/BEDTools-2.5.4',
+    '2.3.2' => Genome::Config::get('sw') . '/bedtools/BEDTools-2.3.2',
 );
 
 sub path_for_bedtools_version {

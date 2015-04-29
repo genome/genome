@@ -34,13 +34,13 @@ EOS
 }
 
 my %BOWTIE_VERSIONS = (
-    '0.12.7' => $ENV{GENOME_SW} . '/bowtie/bowtie-0.12.7',
-    '0.12.5' => $ENV{GENOME_SW} . '/bowtie/bowtie-0.12.5',
-    '0.12.1' => $ENV{GENOME_SW} . '/bowtie/bowtie-0.12.1',
-    '0.10.0.2' => $ENV{GENOME_SW} . '/bowtie/bowtie-0.10.0.2',
-    '0.9.9.2' => $ENV{GENOME_SW} . '/bowtie/bowtie-0.9.9.2',
-    '0.9.8' => $ENV{GENOME_SW} . '/bowtie/bowtie-0.9.8',
-    '0.9.4' => $ENV{GENOME_SW} . '/bowtie/bowtie-0.9.4',
+    '0.12.7' => Genome::Config::get('sw') . '/bowtie/bowtie-0.12.7',
+    '0.12.5' => Genome::Config::get('sw') . '/bowtie/bowtie-0.12.5',
+    '0.12.1' => Genome::Config::get('sw') . '/bowtie/bowtie-0.12.1',
+    '0.10.0.2' => Genome::Config::get('sw') . '/bowtie/bowtie-0.10.0.2',
+    '0.9.9.2' => Genome::Config::get('sw') . '/bowtie/bowtie-0.9.9.2',
+    '0.9.8' => Genome::Config::get('sw') . '/bowtie/bowtie-0.9.8',
+    '0.9.4' => Genome::Config::get('sw') . '/bowtie/bowtie-0.9.4',
 );
 
 sub base_path {

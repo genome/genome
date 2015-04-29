@@ -392,17 +392,18 @@ sub execute {
         }
     }
     elsif ($self->relapse_bam) {
+        my $sw = Genome::Config::get('sw');
         my $bsub_normal_output = "$realigned_bam_file_directory/realignment_normal.out";
         my $bsub_normal_error = "$realigned_bam_file_directory/realignment_normal.err";
-        push(@cmds,"$bsub -J $realigned_normal_bam_file -o $bsub_normal_output -e $bsub_normal_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_normal_bam_file -I $normal_bam -R $reference  --targetIntervalsAreNotSorted\'");
+        push(@cmds,"$bsub -J $realigned_normal_bam_file -o $bsub_normal_output -e $bsub_normal_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $sw/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_normal_bam_file -I $normal_bam -R $reference  --targetIntervalsAreNotSorted\'");
 
         my $bsub_tumor_output = "$realigned_bam_file_directory/realignment_tumor.out";
         my $bsub_tumor_error = "$realigned_bam_file_directory/realignment_tumor.err";
-        push(@cmds,"$bsub -J $realigned_tumor_bam_file -o $bsub_tumor_output -e $bsub_tumor_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_tumor_bam_file -I $tumor_bam -R $reference --targetIntervalsAreNotSorted\'");
+        push(@cmds,"$bsub -J $realigned_tumor_bam_file -o $bsub_tumor_output -e $bsub_tumor_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $sw/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_tumor_bam_file -I $tumor_bam -R $reference --targetIntervalsAreNotSorted\'");
 
         my $bsub_relapse_output = "$realigned_bam_file_directory/realignment_relapse.out";
         my $bsub_relapse_error = "$realigned_bam_file_directory/realignment_relapse.err";
-        push(@cmds,"$bsub -J $realigned_relapse_bam_file -o $bsub_relapse_output -e $bsub_relapse_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_relapse_bam_file -I $relapse_bam -R $reference --targetIntervalsAreNotSorted\'");
+        push(@cmds,"$bsub -J $realigned_relapse_bam_file -o $bsub_relapse_output -e $bsub_relapse_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $sw/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_relapse_bam_file -I $relapse_bam -R $reference --targetIntervalsAreNotSorted\'");
         push(@cmds,"$bsub -J bamindex_normal -w \'ended(JOB0)\' \'samtools index $realigned_normal_bam_file\'");
         push(@cmds,"$bsub -J bamindex_tumor -w \'ended(JOB1)\' \'samtools index $realigned_tumor_bam_file\'");
         push(@cmds,"$bsub -J bamindex_relapse -w \'ended(JOB2)\' \'samtools index $realigned_relapse_bam_file\'");

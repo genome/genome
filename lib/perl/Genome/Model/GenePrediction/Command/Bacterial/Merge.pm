@@ -132,7 +132,7 @@ class Genome::Model::GenePrediction::Command::Bacterial::Merge {
         rfam_seed => {
             is => 'Scalar',
             doc => "path to Rfam.seed file",
-            default => $ENV{GENOME_SW} . "/rfam/rfam-8.1/Rfam.seed",
+            default => Genome::Config::get('sw') . "/rfam/rfam-8.1/Rfam.seed",
         },
         _debug_fh => {
             is  => 'Scalar',

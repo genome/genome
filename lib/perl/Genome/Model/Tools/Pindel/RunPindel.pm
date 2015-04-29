@@ -151,7 +151,7 @@ class Genome::Model::Tools::Pindel::RunPindel {
 };
 
 # FIXME make this the real deployed path
-my $env_path = $ENV{GENOME_SW};
+my $env_path = Genome::Config::get('sw');
 my $old_pindel2vcf_path = $env_path . "/pindel2vcf/0.1.9/pindel2vcf-0.1.9";
 
 my %PINDEL_VERSIONS = (

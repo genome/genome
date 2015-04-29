@@ -25,7 +25,7 @@ sub path_to_version_run_assembly {
 
     my $app_bin;
     for my $bin( $self->possible_app_bin_names ) {
-        $app_bin = $ENV{GENOME_SW} . '/454/' . $self->version . "/$bin";
+        $app_bin = Genome::Config::get('sw') . '/454/' . $self->version . "/$bin";
         last if -d $app_bin;
     }
 

@@ -28,8 +28,8 @@ BEGIN {
 };
 
 my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-454-Newbler';
-#my $expected_path = $ENV{GENOME_SW} . '/454/newbler/applicationsBin/';
-#my $expected_path = $ENV{GENOME_SW} . '/454/offInstrumentApps-2.0.00.20-64/bin';
+#my $expected_path = Genome::Config::get('sw') . '/454/newbler/applicationsBin/';
+#my $expected_path = Genome::Config::get('sw') . '/454/offInstrumentApps-2.0.00.20-64/bin';
 
 my @version_subdirs = qw/ offInstrumentApps mapasm454_source /;
 
@@ -38,11 +38,11 @@ foreach my $subdir (@version_subdirs) {
     my ($version, $expected_path);
     if ($subdir =~ /offInstrumentApps/) {
 	$version = '2.0.00.20-1';
-	$expected_path = $ENV{GENOME_SW} . '/454/'.$subdir.'-'.$version.'/bin';
+	$expected_path = Genome::Config::get('sw') . '/454/'.$subdir.'-'.$version.'/bin';
     }
     if ($subdir =~ /mapasm454_source/) {
 	$version = '10282008';
-	$expected_path = $ENV{GENOME_SW} . '/454/'.$subdir.'_'.$version.'/applicationsBin';
+	$expected_path = Genome::Config::get('sw') . '/454/'.$subdir.'_'.$version.'/applicationsBin';
     }
 
     my $ref_seq_dir = Genome::Config::reference_sequence_directory() . '/refseq-for-test';

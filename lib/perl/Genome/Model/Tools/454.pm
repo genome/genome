@@ -128,7 +128,7 @@ sub create {
 }
 
 sub resolve_454_path {
-    return $ENV{GENOME_SW} . '/454/';
+    return Genome::Config::get('sw') . '/454/';
 }
 
 sub resolve_app_bin_name {

@@ -24,10 +24,10 @@ class Genome::Model::Tools::DetectVariants2::Sniper {
 };
 
 my %SNIPER_VERSIONS = (
-    '0.7'   => $ENV{GENOME_SW} . '/samtools/sniper/somatic_sniper-v0.7/'   . $LEGACY_SNIPER_COMMAND,
-    '0.7.1' => $ENV{GENOME_SW} . '/samtools/sniper/somatic_sniper-v0.7.1/' . $LEGACY_SNIPER_COMMAND,
-    '0.7.2' => $ENV{GENOME_SW} . '/samtools/sniper/somatic_sniper-v0.7.2/' . $LEGACY_SNIPER_COMMAND,
-    '0.7.3' => $ENV{GENOME_SW} . '/samtools/sniper/somatic_sniper-v0.7.3/' . $LEGACY_SNIPER_COMMAND,
+    '0.7'   => Genome::Config::get('sw') . '/samtools/sniper/somatic_sniper-v0.7/'   . $LEGACY_SNIPER_COMMAND,
+    '0.7.1' => Genome::Config::get('sw') . '/samtools/sniper/somatic_sniper-v0.7.1/' . $LEGACY_SNIPER_COMMAND,
+    '0.7.2' => Genome::Config::get('sw') . '/samtools/sniper/somatic_sniper-v0.7.2/' . $LEGACY_SNIPER_COMMAND,
+    '0.7.3' => Genome::Config::get('sw') . '/samtools/sniper/somatic_sniper-v0.7.3/' . $LEGACY_SNIPER_COMMAND,
     '1.0.0' => '/usr/bin/' . $SNIPER_COMMAND,
     '1.0.1' => '/usr/bin/bam-somaticsniper1.0.1',
     '1.0.2' => '/usr/bin/bam-somaticsniper1.0.2',
