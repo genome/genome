@@ -5,6 +5,7 @@ use above "Genome";
 use Test::Builder::Tester;
 use Genome::Utility::Test qw(capture_ok);
 use Test::More;
+use Test::Fatal qw(exception);
 
 BEGIN {
     use_ok 'Genome::Utility::Test', qw(compare_ok);
@@ -47,9 +48,9 @@ subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_C) => sub {
 
 my @args_D = ('file_1', 'file_2', 'args_D', name => 'args_D');
 subtest '_compare_ok_parse_args did fail to parse: ' . join(', ', @args_D) => sub {
-    local $@ = '';
-    my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_D) };
-    like($@,
+    plan tests => 1;
+    my $exception = exception { $_compare_ok_parse_args->(@args_D) };
+    like($exception,
         qr(^duplicate name argument not expected),
         'Got exception specifying the test name twice');
 };
