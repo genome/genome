@@ -16,7 +16,7 @@ class Genome::Process::Command::SetStatus {
         status => {
             is => 'Text',
             shell_args_position => 2,
-            valid_values => $Genome::Process::StatusEvent::VALID_STATUS_VALUES,
+            valid_values => Genome::Process::StatusEvent->valid_status_values(),
             doc => 'The new status.',
         },
         exit_code => {
