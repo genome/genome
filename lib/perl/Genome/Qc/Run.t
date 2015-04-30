@@ -37,10 +37,10 @@ use_ok($pkg);
     }
 
     sub get_metrics {
-        return {
+        return (
             metric1 => 1,
             metric2 => 2,
-        };
+        );
     }
 }
 
@@ -64,10 +64,10 @@ use_ok($pkg);
     }
 
     sub get_metrics {
-        return {
+        return (
             metricA => 1,
             metricB => 2,
-        };
+        );
     }
 }
 
