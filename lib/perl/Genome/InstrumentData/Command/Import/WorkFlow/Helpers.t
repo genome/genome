@@ -22,6 +22,72 @@ my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Comma
 my $helpers = $class->get;
 ok($helpers, 'get helpers');
 
+# source files functions
+my @source_files = (
+    $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-Import-Basic/fastq-1.fq.gz',
+    $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-Import-Basic/fastq-2.fastq',
+);
+
+# source file retrieval
+throws_ok(sub{ $helpers->source_file_retrieval_method(); }, qr/No source file to get retrieval method!/, 'source_file_retrieval_method fails w/o source file');
+my %source_files_and_retrieval_methods = (
+    'file://some/url.edu/file' => 'remote url',
+    'http://some.url.edu/file' => 'remote url',
+    '/some/local/file' => 'local disk',
+);
+for my $sf ( keys %source_files_and_retrieval_methods ) {
+    is(
+        $helpers->source_file_retrieval_method($sf),
+        $source_files_and_retrieval_methods{$sf},
+        "source file $sf retrieval method is '$source_files_and_retrieval_methods{$sf}'",
+    );
+}
+
+throws_ok(
+    sub{ $helpers->source_files_retrieval_method(); },
+    qr/No source files to get retrieval method!/,
+    'source_file_retrieval_methods fails w/o source file',
+);
+throws_ok(
+    sub{ $helpers->source_files_retrieval_method(keys %source_files_and_retrieval_methods); },
+    qr/Mixed file retrieval methods for source files! /,
+    'source_files_retrieval_method fails w/ many retrieval methods',
+);
+my @source_files_from_remote_url = grep { $source_files_and_retrieval_methods{$_} eq 'remote url' } keys %source_files_and_retrieval_methods;
+is(@source_files_from_remote_url, 2, '2 files from reote url');
+is(
+    $helpers->source_files_retrieval_method(@source_files_from_remote_url),
+    'remote url',
+    "source_file_retrieval_methods is 'remote url'",
+);
+
+# source file format
+ok(!eval{$helpers->source_file_format()}, 'format for no source file fails');
+ok(!$helpers->source_file_format('source.duh'), 'no format for unknown source file');
+is($helpers->error_message, 'Unrecognized source file format! source.duh', 'correct error');
+is($helpers->source_file_format($source_files[0]), 'fastq', 'source file 1 format');
+is($helpers->source_file_format($source_files[1]), 'fastq', 'source file 2 format');
+is($helpers->source_file_format('source_file.fastq.tgz'), 'fastq', 'format for tgz source file is fastq');
+is($helpers->source_file_format('source_file.fastq.tar.gz'), 'fastq', 'format for tar.gz source file is fastq');
+is($helpers->source_file_format('source.bam'), 'bam', 'format for bam source file is bam');
+is($helpers->source_file_format('source.sra'), 'sra', 'format for sra source file is sra');
+is($helpers->source_file_format('source.fasta'), 'fasta', 'format for fasta source file is fasta');
+is($helpers->source_file_format('source.fa'), 'fasta', 'format for fa source file is fasta');
+is($helpers->source_file_format('source.fna'), 'fasta', 'format for fna source file is fasta');
+
+# is_source_file_archived
+throws_ok(sub {$helpers->is_source_file_archived; }, qr/No source file to determined if archived!/, 'is_source_file_archived failed w/o source file');
+ok($helpers->is_source_file_archived('file.tar.gz'), 'file.tar.gz is archived');
+ok($helpers->is_source_file_archived('file.tar'), 'file.tar is archived');
+ok($helpers->is_source_file_archived('file.tgz'), 'file.tgz is archived');
+ok(!$helpers->is_source_file_archived('filetar.gz'), 'filetar.gz is not archived');
+
+ok(!eval{$helpers->size_of_source_file;}, 'failed to get size for source file w/o source file');
+ok(!eval{$helpers->size_of_remote_file;}, 'failed to get size for remote file w/o remote file');
+
+ok(!eval{$helpers->kilobytes_required_for_processing_of_source_files;}, 'failed to get kilobytes needed for processing w/o source files');
+is($helpers->kilobytes_required_for_processing_of_source_files(@source_files), 746, 'kilobytes needed for processing source files');
+
 # headers
 ok(!eval{$helpers->load_headers_from_bam;}, 'failed to get headers w/o bam');
 my $input_bam = $test_dir.'/bam-rg-multi/v1/input.rg-multi.bam';
@@ -67,6 +133,9 @@ ok($headers_string, 'headers to string');# cannot compare for some reason
 ok(!eval{$helpers->load_read_groups_from_bam;}, 'failed to load read groups from bam w/o bam');
 is_deeply($helpers->load_read_groups_from_bam($test_dir.'/sra/v1/input.sra.bam'), [], 'non read groups in bam');
 is_deeply($helpers->load_read_groups_from_bam($input_bam), [qw/ 2883581797 2883581798 2883581799 /], 'load read groups from bam');
+
+# verify tmp disk
+ok($helpers->verify_adequate_disk_space_is_available_for_source_files(working_directory => '/tmp', source_files => \@source_files), 'verify adequate disk space is available for source files');
 
 # flagstat
 my $bam_basename = 'input.bam';
