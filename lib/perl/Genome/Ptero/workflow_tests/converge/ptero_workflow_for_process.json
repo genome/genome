@@ -26,9 +26,9 @@
       },
       {
          "destination" : "output connector",
-         "destinationProperty" : "out (duplicate)",
+         "destinationProperty" : "dummy_output for Genome::Process(123)",
          "source" : "set status Succeeded",
-         "sourceProperty" : "out"
+         "sourceProperty" : "dummy_output"
       }
    ],
    "tasks" : {
