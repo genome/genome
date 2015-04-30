@@ -219,7 +219,7 @@ sub _reheader_bam {
     my ($per_lane_so) = $header_content =~ /(SO:(unsorted|coordinate))/;
 
     unless ($merged_so and $per_lane_so) {
-        die $self->error_message("Both merge $merged_so and per lane $per_lane_so sort orders are needed");
+        die $self->error_message("Both sort orders of merge $merged_so and per lane $per_lane_so are needed");
     }
 
     unless ($merged_so eq $per_lane_so) {
