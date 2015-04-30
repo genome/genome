@@ -201,12 +201,31 @@ sub _revert_markdup {
 
 sub _reheader_bam {
     my ($self, $temp_bam, $bam_header) = @_;
+    my $merged_bam = $self->merged_bam;
 
+    my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+    my $merged_bam_header = Genome::Sys->create_temp_file_path;
+
+    Genome::Sys->shellcmd(
+        cmd => sprintf('%s view -H %s > %s', $sam_path, $merged_bam, $merged_bam_header),
+        output_files => [$merged_bam_header],
+        input_files  => [$merged_bam],
+    );
+
+    my $merged_header_content = Genome::Sys->read_file($merged_bam_header);
     my $header_content = Genome::Sys->read_file($bam_header);
-    if ($header_content =~ /(SO:unsorted)/) {
-        $header_content =~ s/$1/SO:coordinate/;
+
+    my ($merged_so)   = $merged_header_content =~ /(SO:(unsorted|coordinate))/;
+    my ($per_lane_so) = $header_content =~ /(SO:(unsorted|coordinate))/;
+
+    unless ($merged_so and $per_lane_so) {
+        die $self->error_message("Both merge $merged_so and per lane $per_lane_so sort orders are needed");
     }
-    
+
+    unless ($merged_so eq $per_lane_so) {
+        $header_content =~ s/$per_lane_so/$merged_so/;
+    }
+
     my $header_file = Genome::Sys->create_temp_file_path; 
     Genome::Sys->write_file($header_file, $header_content);
 
