@@ -1,0 +1,148 @@
+{
+   "links" : [
+      {
+         "destination" : "Converge Test",
+         "destinationProperty" : "a",
+         "source" : "input connector",
+         "sourceProperty" : "a"
+      },
+      {
+         "destination" : "Converge Test",
+         "destinationProperty" : "b",
+         "source" : "input connector",
+         "sourceProperty" : "b"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "out",
+         "source" : "Converge Test",
+         "sourceProperty" : "out"
+      },
+      {
+         "destination" : "set status Succeeded",
+         "destinationProperty" : "out",
+         "source" : "Converge Test",
+         "sourceProperty" : "out"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "dummy_output for Genome::Process(123)",
+         "source" : "set status Succeeded",
+         "sourceProperty" : "dummy_output"
+      }
+   ],
+   "tasks" : {
+      "Converge Test" : {
+         "methods" : [
+            {
+               "name" : "set status Running",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Running",
+                     "--exit-code",
+                     1
+                  ],
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            },
+            {
+               "name" : "Converge Test",
+               "parameters" : {
+                  "links" : [
+                     {
+                        "destination" : "Convergence",
+                        "destinationProperty" : "a",
+                        "source" : "input connector",
+                        "sourceProperty" : "a"
+                     },
+                     {
+                        "destination" : "Convergence",
+                        "destinationProperty" : "b",
+                        "source" : "input connector",
+                        "sourceProperty" : "b"
+                     },
+                     {
+                        "destination" : "output connector",
+                        "destinationProperty" : "out",
+                        "source" : "Convergence",
+                        "sourceProperty" : "out"
+                     }
+                  ],
+                  "tasks" : {
+                     "Convergence" : {
+                        "methods" : [
+                           {
+                              "name" : "converge",
+                              "parameters" : {
+                                 "input_names" : [
+                                    "a",
+                                    "b"
+                                 ],
+                                 "output_name" : "out"
+                              },
+                              "service" : "workflow-converge"
+                           }
+                        ],
+                        "parallelBy" : "a"
+                     }
+                  }
+               },
+               "service" : "workflow"
+            },
+            {
+               "name" : "set status Crashed",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Crashed",
+                     "--exit-code",
+                     1
+                  ],
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            }
+         ]
+      },
+      "set status Succeeded" : {
+         "methods" : [
+            {
+               "name" : "set status Succeeded",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Succeeded",
+                     "--exit-code",
+                     0
+                  ],
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            }
+         ]
+      }
+   }
+}

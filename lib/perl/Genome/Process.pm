@@ -135,10 +135,16 @@ sub run {
     if ($ENV{UR_DBI_NO_COMMIT}) {
         return $self->_execute_process($transaction);
     } else {
-        local $ENV{WF_USE_FLOW} = 1 unless
-            exists $ENV{WF_USE_FLOW};
-        $self->_schedule_process($transaction);
-        return;
+        if ($ENV{GENOME_WORKFLOW_BUILDER_BACKEND} eq 'ptero') {
+            local $ENV{PTERO_WORKFLOW_SUBMIT_URL} =
+                $ENV{GENOME_PTERO_WORKFLOW_SUBMIT_URL};
+            $self->_submit_process($transaction);
+        } else {
+            local $ENV{WF_USE_FLOW} = 1 unless
+                exists $ENV{WF_USE_FLOW};
+            $self->_schedule_process($transaction);
+            return;
+        }
     }
 }
 
@@ -225,6 +231,24 @@ sub _schedule_process {
     }
 }
 
+sub _submit_process {
+    my $self = shift;
+    my $transaction = shift;
+
+    unless ($transaction->commit()) {
+        $transaction->rollback();
+        die sprintf("Failed to submit process (%s): %s",
+            $self->id, $transaction->error_message || 'Reason Unknown');
+    }
+
+    my $cmd = Genome::Process::Command::Run->create(
+        process => $self,
+    );
+    my $wf_proxy = $cmd->submit();
+    $self->status_message("Successfully launched process (%s) and ".
+        "submitted PTero workflow (%s)",
+        $self->id, $wf_proxy->url);
+}
 
 sub create {
     my $class = shift;

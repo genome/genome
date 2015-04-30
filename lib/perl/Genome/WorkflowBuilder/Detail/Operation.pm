@@ -199,4 +199,19 @@ sub _get_subclass_from_element {
         $operation_type_element->getAttribute('typeClass'));
 }
 
+sub _get_sanitized_env {
+    my $self = shift;
+
+    my $env = {};
+    while (my($key, $value) = each %ENV) {
+        if (defined($value)) {
+            $env->{$key} = $value;
+        } else {
+            $self->warning_message("Found Environment variable with no value: %s", $key);
+        }
+    }
+    return $env;
+}
+
+
 1;
