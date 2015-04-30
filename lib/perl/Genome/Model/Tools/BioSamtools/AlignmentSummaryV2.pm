@@ -568,17 +568,24 @@ sub _prepare_split_sorted_bed_files {
     # Make a file for each chromosome, and sort by the start and end position 
 
     my $original = IO::File->new($self->bed_file, 'r') || die "Can't open bed file ".$self->bed_file." for reading: $!";
-    my $temp_dir = File::Temp::tempdir( CLEANUP => 1 );
+    my $temp_dir = Genome::Sys->create_temp_directory;
 
     # First, bin each line by chromosome and make unsorted files
     my %open_handles;
+    my %chromosomes_seen;
     while(my $line = $original->getline()) {
         $line =~ m/^(\S+)/;  # First column is the chrom name
         my $chrom = $1;
+        $chromosomes_seen{$chrom} = 1;
 
         unless ($open_handles{$chrom}) {
+            if(scalar keys %open_handles >= 100) {
+                $_->close foreach values %open_handles;
+                %open_handles = ();
+            }
+
             my $filename = $self->_unsorted_bed_file_name_for_chrom($temp_dir, $chrom);
-            $open_handles{$chrom} = IO::File->new($filename, 'w');
+            $open_handles{$chrom} = IO::File->new($filename, 'a');
             $open_handles{$chrom} || die "Can't open file $filename for writing: $!";
         }
 
@@ -593,7 +600,7 @@ sub _prepare_split_sorted_bed_files {
     $_->close foreach values %open_handles;
 
     # Now sort each file
-    foreach my $chrom ( keys %open_handles ) {
+    foreach my $chrom ( keys %chromosomes_seen ) {
         $self->debug_message("Sorting split bed file for chrom $chrom");
 
         my $read = IO::File->new($self->_unsorted_bed_file_name_for_chrom($temp_dir, $chrom), 'r');
