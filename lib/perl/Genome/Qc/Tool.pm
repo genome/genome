@@ -57,7 +57,7 @@ sub reference_build {
 
 sub reference_sequence {
     my $self = shift;
-    my $build =  $self->reference_build->full_consensus_path('fa');
+    return $self->reference_build->full_consensus_path('fa');
 }
 
 1;
