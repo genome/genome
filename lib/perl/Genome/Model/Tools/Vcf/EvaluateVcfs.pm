@@ -82,7 +82,7 @@ class Genome::Model::Tools::Vcf::EvaluateVcfs {
         },
     ],
 
-    has_output => [
+    has_transient_optional_output => [
         rawdata => {
             is => "HASH",
             doc => "The organized stats & metadata generated during "
