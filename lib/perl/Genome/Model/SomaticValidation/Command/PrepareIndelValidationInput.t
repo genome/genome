@@ -29,7 +29,7 @@ test_build($expected_dvonly_dir, 'dv');
 sub test_build {
     my $expected_dir = shift;
     my $test_mode = shift;
-    my $temp_build_data_dir = File::Temp::tempdir('t_SomaticValidation_Build-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+    my $temp_build_data_dir = File::Temp::tempdir('t_SomaticValidation_Build-XXXXX', TMPDIR => 1, CLEANUP => 1);
     my $build_variants_dir = "$temp_build_data_dir/variants";
     my $build_indels = "$build_variants_dir/indels.hq.bed";
     Genome::Sys->create_directory($build_variants_dir);
