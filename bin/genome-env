@@ -486,7 +486,7 @@ function assert_module_missing {
 # assert_module_found only works with single word module names, e.g. UR, Workflow, and Genome.
 function assert_module_found {
     local MODULE=$1
-    local MODULE_PATH="$(genome-perl -M${MODULE} -e "print \$INC{q($MODULE.pm)}, qq(\\n)" 2> /dev/null )"
+    local MODULE_PATH="$(genome-perl -M${MODULE} -e "print \$INC{q($MODULE.pm)}, qq(\\n)")"
     if test -z "$MODULE_PATH"
     then
         fatal $BUILD_ERR "module not found: $MODULE"
