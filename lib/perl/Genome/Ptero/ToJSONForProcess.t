@@ -22,6 +22,8 @@ for my $test_directory (glob test_data_directory('*')) {
 
     my $json_filename = do {
         local %ENV; # otherwise the JSON contains the current user's environment.
+        $ENV{FOO} = "bar";
+        $ENV{BAZ} = undef;
         my $ptero_builder = $workflow->get_ptero_builder_for_process('123');
 
         my $json_filename = Genome::Sys->create_temp_file_path();

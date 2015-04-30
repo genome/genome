@@ -46,7 +46,9 @@
                      "--exit-code",
                      1
                   ],
-                  "environment" : {},
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
                   "user" : "dmorton",
                   "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
@@ -92,7 +94,9 @@
                                     "--log-directory",
                                     "test_logs/parallel-cmd"
                                  ],
-                                 "environment" : {},
+                                 "environment" : {
+                                    "FOO" : "bar"
+                                 },
                                  "user" : "dmorton",
                                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
@@ -112,7 +116,9 @@
                                     "--log-directory",
                                     "test_logs/parallel-cmd"
                                  ],
-                                 "environment" : {},
+                                 "environment" : {
+                                    "FOO" : "bar"
+                                 },
                                  "user" : "dmorton",
                                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                               },
@@ -137,7 +143,9 @@
                      "--exit-code",
                      1
                   ],
-                  "environment" : {},
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
                   "user" : "dmorton",
                   "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
@@ -159,7 +167,9 @@
                      "--exit-code",
                      0
                   ],
-                  "environment" : {},
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
                   "user" : "dmorton",
                   "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
                },
