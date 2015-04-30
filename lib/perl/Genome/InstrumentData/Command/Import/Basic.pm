@@ -84,6 +84,8 @@ sub execute {
     my $instdat_props_ok = $self->_resolve_instrument_data_properties;
     return if not $instdat_props_ok;
 
+    $self->_die_if_original_data_path_previously_imported;
+
     my $working_directory = $self->_resolve_working_directory;
     return if not $working_directory;
 
@@ -117,6 +119,20 @@ sub _resolve_instrument_data_properties {
     );
 
     return $self->inputs($instdata_props_processor);
+}
+
+sub _die_if_original_data_path_previously_imported {
+    my $self = shift;
+    my @odp_attrs = Genome::InstrumentDataAttribute->get(
+        attribute_label => 'original_data_path',
+        attribute_value => $self->inputs->source_files->original_data_path,
+    );
+    return 1 if not @odp_attrs;
+    die $self->error_message(
+        'Source files (%s) have existing instrument data (%s). Cannot reimport!', 
+        $self->inputs->source_files->original_data_path,
+        join(' ', map { $_->instrument_data_id } @odp_attrs),
+    );
 }
 
 sub _resolve_working_directory {
