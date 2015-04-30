@@ -430,9 +430,6 @@ sub sw_version_path_map {
         }
     }
 
-    # find software installed under $GENOME_SW
-    # The pattern for these has varied over time.  They will be like will be like:
-    #   $GENOME_SW/$pkg_name/{$pkg_name-,,*}$version/{.,bin,scripts}/{$pkg_name,}{-,}$app_name{-,}{$version,}
     sub _common_prefix_length {
         my ($first,@rest) = @_;
         my $len;
@@ -1859,8 +1856,8 @@ The 3-parameter variation is only for packages which have multiple executables.
 This is a wrapper for the OS-specific strategy for managing multiple versions of software packages,
 (i.e. /etc/alternatives for Debian/Ubuntu)
 
-The GENOME_SW environment variable contains a colon-separated lists of paths which this falls back to.
-The default value is /var/lib/genome/sw/.
+The 'sw' configuration variable contains a colon-separated lists of paths which
+this falls back to.  The default value is /var/lib/genome/sw/.
 
 =head3 ex:
 
@@ -1894,8 +1891,8 @@ Return a map of version numbers to executable paths.
 Return the path to the preprocessed copy of the specified database.
 (This is in lieu of a consistent API for the database in question.)
 
-The GENOME_DB environment variable contains a colon-separated lists of paths which this falls back to.
-The default value is /var/lib/genome/db/.
+The 'db' configuration variable contains a colon-separated lists of paths which
+this falls back to.  The default value is /var/lib/genome/db/.
 
 =head3 ex:
 

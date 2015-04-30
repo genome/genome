@@ -19,8 +19,8 @@ my $version = 2;
 my $base_dir = Genome::Config::get('test_inputs')."/Genome-Model-Tools-Validation-LongIndelsGenerateMergedAssemblies/v$version";
 my $temp_dir = Genome::Sys->create_temp_directory;
 
-# copy to temp because the tool appears to make a large_indels.bed.dedup next
-# to the original file and it doesn't seem good to have things writing in GENOME_TEST_INPUTS
+# Copy to temp because the tool appears to make a large_indels.bed.dedup next
+# to the original file and it isn't good to have things writing in test inputs.
 my $temp_large_indels = $temp_dir."/large_indels.bed";
 copy($base_dir."/large_indels.bed", $temp_large_indels)
     or die "failed to copy large_indels.bed to temp_dir: $!";

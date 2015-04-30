@@ -426,10 +426,7 @@ sub summarize_clinseq_build {
       }
     }
 
-    #Create ROI (i.e. exome) coverage view for a series of model IDs
-    #   $ENV{GENOME_SYS_SERVICES_SEARCH_URL}/view/genome/model/set/coverage.html?&id=2880223426&id=2880225204&id=2880225668
-    #Create coverage view for a series of build IDs
-    #   $ENV{GENOME_SYS_SERVICES_SEARCH_URL}/view/genome/model/build/set/coverage.html?&id=115088238&id=115092892&id=115667927
+    # Create ROI (i.e. exome) coverage view for a series of build IDs
     $self->status_message("\n\nCreate exome coverage reports for exome reference alignment builds");
     my $id_string = '';
     foreach my $exome_build (keys %exome_builds_with_coverage){
@@ -457,10 +454,6 @@ sub summarize_clinseq_build {
     #$build_dir/junctions/summary/TranscriptJunctionReadCounts_Log2_Hist.pdf
     #$build_dir/bam-qc/*.pdf (NEW)
     #$build_dir/bam-qc/*.html (NEW)
-
-    #$ENV{GENOME_SYS_SERVICES_FILES_URL}/$build_dir/bam-qc/
-    #$ENV{GENOME_SYS_SERVICES_FILES_URL}/$build_dir/junctions/summary/
-
 
     for my $build (@builds) {
       next unless $self->_is_rna_seq_build($build);

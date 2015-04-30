@@ -550,14 +550,6 @@ sub generate_resource_xml {
     exit(1);
   }
 
-  #Create an XML block like this:
-  # <Resources>
-  #   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc7001/info/model_data/2879615516/build114445127/alignments/114469152.bam"/>
-  #   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc7001/info/model_data/2879616958/build114445247/alignments/114445014.bam"/>
-  #   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/accepted_hits.bam"/>
-  #   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/junctions.bed"/>
-  # </Resources>
-
   my $xml = "  <Resources>";
   foreach my $resource (sort @resource_list){
     $xml .= "\n    <Resource path=\"$resource\"/>";

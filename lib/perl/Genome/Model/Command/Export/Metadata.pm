@@ -48,9 +48,6 @@ genome model export metadata id=2891454740 > 2891454740.dat
 genome model export metadata id=2891454740 --refdata > 2891454740.refdata.dat
 
 genome model export metadata "name like myproject%" > myproject.dat
-
-# untested
-GENOME_SYS_ID=gms100 genome model export data "name like myproject%" | GENOME_SYS_ID=gms200 genome model import data --update -
 EOS
 }
 

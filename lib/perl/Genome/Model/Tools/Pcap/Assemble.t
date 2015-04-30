@@ -22,7 +22,7 @@ my $pre_test_dir = cwd();
 #create/execute tool
 my $obj = Genome::Model::Tools::Pcap::Assemble->create (
      project_name       => 'Proteus_penneri_ATCC_35198',
-     disk_location      => $temp_dir,#$ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-AssemblReads-Pcap',
+     disk_location      => $temp_dir,
      parameter_setting  => 'RELAXED',
      assembly_version   => '1.0',
      assembly_date      => '080509',

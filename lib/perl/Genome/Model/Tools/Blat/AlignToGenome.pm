@@ -15,8 +15,6 @@ package Genome::Model::Tools::Blat::AlignToGenome;     # rename this when you gi
 #				-out=pslx	(provides extended-PSL output with read/ref sequences)
 #				-noHead		(specifies output without header)
 #
-#			Default BSUB parameters are: -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R"select[mem>3000] rusage[mem=3000]" 
-#
 #####################################################################################################################################
 
 use strict;

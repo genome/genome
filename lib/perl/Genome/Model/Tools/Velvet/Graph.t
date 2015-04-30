@@ -18,8 +18,8 @@ else {
 use_ok('Genome::Model::Tools::Velvet::Graph');
 
 # The directory contains files that this tool needs to run (apparently), and it
-# also writes to that diretory. So copy the data in $ENV{GENOME_TEST_INPUTS} to
-# the temp dir
+# also writes to that directory. So copy the data from test inputs to the
+# tempdir.
 my $test_dir = tempdir(
     'Genome-Model-Tools-Velvet-XXXXXX',
     TMPDIR => 1,

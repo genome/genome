@@ -43,7 +43,6 @@ EOS
 
 
 my %TIGRASV_VERSIONS = (
-    #20110321 => $ENV{GENOME_SW} . '/tigrasv/TIGRA_SV-20110321/tigra_sv',     
     20110321 => '/gscuser/tabbott/bin/tigra-sv',
     '0.1'    => '/usr/bin/tigra-sv0.1',
 );

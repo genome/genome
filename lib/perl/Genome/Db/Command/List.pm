@@ -12,7 +12,7 @@ class Genome::Db::Command::List {
 
 sub help_synopsis {
 return <<EOS
-    GENOME_DB=\$HOME/mydb:/gsc/scripts/opt/genome/db genome db list --filter "source_dir like '%mydb%'"
+    genome db list --filter "source_dir like '%mydb%'"
 EOS
 }
 

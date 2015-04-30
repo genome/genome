@@ -44,11 +44,12 @@ sub _resolve_repo {
 
 sub execute {
     my $self = shift;
-    my @dirs = split(":", Genome::Config::get('db'));
+    my $db_key = 'db';
+    my @dirs = split(":", Genome::Config::get($db_key));
     unless (@dirs) {
-        die "The GENOME_ENV environment variable must be set to the location of file-based databases!";
+        die "The '$db_key' configuration variable must be set to the location of file-based databases!";
     }
-    $self->status_message("Database will be installed at: " . Genome::Config::get('db')); 
+    $self->status_message("Database will be installed at: " . Genome::Config::get($db_key));
     $self->status_message("Found database directories: @dirs");
 
     my $dir = $dirs[0];

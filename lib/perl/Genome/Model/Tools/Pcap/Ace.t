@@ -65,7 +65,6 @@ foreach my $assembly (@assemblies) {
 }
 
 foreach my $assembly (@assemblies) {
-    #$assembly->_build_ace_index(file_name => $ENV{GENOME_TEST_INPUTS} . '/Genome-Assembly-Pcap/test.ace');
     #TODO: write tests for indexing
     ok(1, 'index built properly');
 }

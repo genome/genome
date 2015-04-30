@@ -60,8 +60,6 @@ my $callback = sub {
     my $level = $MESSAGE_TYPE_TO_LOG_LEVEL{$type};
     my $retval;
 
-    # original logic runs only if the GENOME_SYS_LOG_DETAIL variable is not set
-
     unless (Genome::Config::get('sys_log_detail')) {
         # by default we just log errors, and do so as text
         if ($level eq 'error') {
@@ -84,10 +82,6 @@ my $callback = sub {
         }
         return 1;
     }
-
-    # detailed JSON logging occurs only when the GENOME_SYS_LOG_DETAIL variable is set for now
-   
-    # should we just standardize on JSON log entries?
 
     my $min_level = Genome::Config::get('sys_log_level');
     if (not $min_level) {

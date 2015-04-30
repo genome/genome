@@ -19,9 +19,6 @@ ok($test_model, "got test model " . $test_model->name);
 my $test_build = $test_model->last_succeeded_build;
 ok($test_build, "got test build " . $test_build->id);
 
-# this directory lives under $GENOME_TEST_INPUTS at TGI
-#$GENOME_TEST_INPUTS/Genome-Model-ClinSeq-Command-MakeCircosPlot/2013-10-01/expected-output
-
 # make a temp directory for output
 my $actual_output_dir = Genome::Sys->create_temp_directory();
 ok(-e $actual_output_dir, "test output dir exists");

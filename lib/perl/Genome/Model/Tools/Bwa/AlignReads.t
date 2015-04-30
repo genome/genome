@@ -59,8 +59,6 @@ ok( scalar(@listing) eq $expected_output, "Number of output files expected = ".$
 $output_dir = File::Temp::tempdir(CLEANUP => 1);
 #get new input test data
 $files_to_align = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Bwa-AlignReads/paired-solexa";
-#Add a pipe delimited test eventually...
-#$files_to_align = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Bwa-AlignReads/paired-solexa/s_1_1_sequence_test.txt|$ENV{GENOME_TEST_INPUTS}Genome-Model-Tools-Bwa-AlignReads/paired-solexa/s_1_2_sequence_test.txt";
 
 $aligner = Genome::Model::Tools::Bwa::AlignReads->create(
 							 ref_seq_file => $ref_seq,
@@ -83,7 +81,6 @@ ok( scalar(@listing) eq $expected_output, "Number of output files expected = ".$
 
 #local testing
 $output_dir = File::Temp::tempdir(CLEANUP => 1);
-#$output_dir = "output";
 
 #get new input test data
 $files_to_align = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Maq-AlignReads/paired-solexa";

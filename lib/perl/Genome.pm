@@ -28,11 +28,7 @@ sub execution_id {
     return $ENV{GENOME_EXECUTION_ID};
 }
 
-# Checks that all variables that start with GENOME_ have a corresponding Genome/Env/* module
-# and assigns default values to any variables that have one set.
 require Genome::Env;
-
-# Local configuration
 require Genome::Site;
 
 if (my $umask = Genome::Config::get('sys_umask')) {
