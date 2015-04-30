@@ -246,7 +246,7 @@ sub _submit_process {
     );
     my $wf_proxy = $cmd->submit();
     $self->status_message("Successfully launched process (%s) and ".
-        "submitted ptero workflow (%s)",
+        "submitted PTero workflow (%s)",
         $self->id, $wf_proxy->url);
 }
 
