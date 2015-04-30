@@ -5,6 +5,7 @@ use warnings;
 
 use Cwd;
 use Path::Class;
+use JSON::XS;
 
 class Genome::Model::Tools::Vcf::EvaluateVcfs {
     is => "Command::V2",
@@ -89,6 +90,15 @@ class Genome::Model::Tools::Vcf::EvaluateVcfs {
                    . "primary execution",
         },
     ],
+
+    has_output => [
+        json_file => {
+            is             => "Path",
+            calculate_from => 'output_directory',
+            calculate      => q { return Path::Class::Dir->new($output_directory)->file('evaluation-stats.json'); },
+            doc            => "A JSON file dump of the rawdata stats.",
+        },
+      ],
 };
 
 sub execute {
@@ -97,6 +107,40 @@ sub execute {
     $self->collect_statistics($configs);
     $self->rawdata($configs);
     $self->display_summary_stats();
+    $self->dump_stats_to_json();
+    $self->status_message("All Done!");
+    return 1;
+}
+
+sub dump_stats_to_json {
+    my $self      = shift;
+
+    # collect the interesting statistics
+    my %summary = ();
+    for my $set (@{$self->rawdata}) {
+        my ($name, $id, $type, $stats) =
+          @{$set}{'name', 'id', 'variant_type', 'stats'};
+          $summary{$name}->{'ID'} = $id;
+          $summary{$name}->{$type} = $stats;
+    }
+
+    # JSON-ify
+    my $coder = JSON::XS->new()->pretty(1)->canonical(1)->allow_nonref;
+    my $json_txt = $coder->encode(\%summary);
+
+    # dump to file
+    $self->status_message(
+        "Dumping stats to JSON file: %s",
+        $self->json_file->stringify
+    );
+
+    my $fh = $self->json_file->openw();
+    print $fh $json_txt, "\n"
+      or die $self->error_message("JSON Printing Problems! : $!");
+
+    close($fh)
+      or die $self->error_message("Trouble closing JSON file: %s", $!);
+
     return 1;
 }
 
