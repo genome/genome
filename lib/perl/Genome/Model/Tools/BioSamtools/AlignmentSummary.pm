@@ -127,10 +127,15 @@ sub execute {
         if (defined($self->wingspan)) {
             $resolved_output_file .= '-wingspan_'. $self->wingspan;
         }
+
+        #Used for fast lookups at the cost of memory, the higher the number the more memory
+        my $substring_depth = 5;
+        $substring_depth -= int($targets / 10_000); #reduce the depth if there are a lot of contigs
+        $substring_depth = 0 if $substring_depth < 0;
+
         $regions = Genome::Model::Tools::RefCov::ROI::Bed->create(
             file => $bed_file,
-            #Used for fast lookups at the cost of memory, the higher the number the more memory
-            region_index_substring => 5,
+            region_index_substring => $substring_depth,
             wingspan => $self->wingspan,
         );
         unless ($regions) {
