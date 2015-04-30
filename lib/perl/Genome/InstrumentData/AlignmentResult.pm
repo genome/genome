@@ -1859,6 +1859,7 @@ sub _reallocate_temp_allocation {
     }
     catch {
         $self->warning_message('Failed to reallocate temp allocation '.$temp_allocation->id. " Error: $_");
+        return;
     }
 }
 
