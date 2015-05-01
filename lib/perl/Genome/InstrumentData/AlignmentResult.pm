@@ -1745,20 +1745,16 @@ sub get_bam_file {
 
 sub get_bam_lock {
     my $self = shift;
-    my ($old_resource, $new_resource) = map{File::Spec->join('genome', $_, 'lock-per-lane-alignment-'.$self->id)}('Genome::InstrumentData::AlignmentResult::Merged', __PACKAGE__);
-    my $lock = Genome::Sys::LockMigrationProxy->new(
-        old => {
-            resource => $old_resource,
-            scope => 'site',
-        },
-        new => {
-            resource => $new_resource,
-            scope => 'site',
-        },
+
+    my $resource = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$self->id);
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => $resource,
+        scope => 'site',
     )->lock(
         max_try => 288, # Try for 48 hours every 10 minutes
         block_sleep => 600,
     );
+
     die $self->error_message("Unable to acquire the lock for per lane alignment result id (%s) !", $self->id) unless $lock;
     return $lock;
 }
