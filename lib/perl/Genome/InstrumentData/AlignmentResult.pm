@@ -13,6 +13,7 @@ use File::stat;
 use Carp qw(confess);
 use File::Basename;
 use Scope::Guard qw();
+use Try::Tiny qw(try catch);
 
 use Genome::Sys::LockMigrationProxy qw();
 use Genome::Utility::Instrumentation;
@@ -1736,6 +1737,7 @@ sub get_bam_file {
                     Genome::Sys->copy_file($file, $dest_file);
                 }
             }
+            $self->_reallocate_temp_allocation($temp_allocation);
             return File::Spec->join($temp_allocation->absolute_path, basename($bams[0]));
         }
     }
@@ -1818,6 +1820,8 @@ sub revivified_alignment_bam_file_path {
         die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
     }
 
+    $self->_reallocate_temp_allocation($temp_allocation);
+
     if (-s $revivified_bam) {
         # Cache the path of this revivified bam for future access
         $self->_revivified_bam_file_path($revivified_bam);
@@ -1846,6 +1850,19 @@ sub _get_temp_allocation {
     );
     return $temp_allocation;
 }
+
+
+sub _reallocate_temp_allocation {
+    my ($self, $temp_allocation) = @_;
+    try {
+        $temp_allocation->reallocate;
+    }
+    catch {
+        $self->warning_message('Failed to reallocate temp allocation '.$temp_allocation->id. " Error: $_");
+        return;
+    }
+}
+
 
 sub _get_uuid_string {
     my $ug = Data::UUID->new();
