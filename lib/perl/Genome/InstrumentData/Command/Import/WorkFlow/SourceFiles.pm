@@ -72,7 +72,7 @@ sub kilobytes_required_for_processing {
         $kb_required += $source_file->kilobytes_required_for_processing;
     }
 
-    die $self->error_message('Failed to calculatge kilobytes required fo processing!') if not $kb_required;
+    die $self->error_message('Failed to calculate kilobytes required for processing!') if not $kb_required;
 
     return $kb_required;
 }
