@@ -351,9 +351,9 @@ sub create {
             eval {
                 Genome::Sys->create_directory($output_dir)
             };
-            if ($@) {
+            if (my $error = $@) {
                 $self->delete;
-                die $@;
+                die $error;
             }
         }
     }
@@ -434,7 +434,6 @@ my $recalculate_lookup_hash_callback = sub {
     my ($object, $aspect) = @_;
     return unless $object;
     return unless $object->software_result;
-    local $@;
     $object->software_result->recalculate_lookup_hash();
 };
 for my $name (qw(Param Input)) {
