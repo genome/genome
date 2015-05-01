@@ -47,12 +47,6 @@ sub _resolve_instrument_data_properties {
 
     my $incoming_params = $self->incoming_params;
     my $incoming_properties = delete $incoming_params->{instrument_data_properties} || [];
-    for my $name (qw/ description downsample_ratio /) {
-        my $value = delete $incoming_params->{$name};
-        next if not $value;
-        push @$incoming_properties, $name.'='.$value;
-    }
-
     my $properties = $self->_resolve_incoming_instrument_data_property_strings($incoming_properties);
 
     if ( not $properties->{original_data_path} ) {
