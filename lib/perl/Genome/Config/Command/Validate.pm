@@ -37,9 +37,9 @@ sub execute {
     for my $key ($self->keys) {
         my $spec = Genome::Config::spec($key);
 
-        my @errors = Genome::Config::validate($key);
-        if (@errors) {
-            my $msg = $spec->validation_error(@errors);
+        my $error = Genome::Config::validate($key);
+        if (defined $error) {
+            my $msg = $spec->validation_error($error);
             printf("%s\n", $msg);
             $return = 0;
         }
@@ -49,8 +49,8 @@ sub execute {
         }
 
         if ($spec->has_default_value) {
-            my @errors = $spec->validate($spec->default_value);
-            if (@errors) {
+            my $error = $spec->validate($spec->default_value);
+            if (defined $error) {
                 printf("%s has an invalid default_value\n", $spec->key);
                 $return = 0;
             }

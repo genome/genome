@@ -7,13 +7,16 @@ use Mouse;
 
 use File::Basename qw(fileparse);
 use Genome::Carp qw(croakf);
+use List::Util qw(first);
 use Module::Runtime qw();
 use Path::Class qw();
 use Try::Tiny qw(try catch);
 use YAML::Syck qw();
 
+require Genome::ConfigValidator::Defined;
+
 has 'key'        => (is => 'ro', isa => 'Str', required => 1);
-has 'validators' => (is => 'ro', isa => 'ArrayRef[CodeRef]', default => sub { [] });
+has 'validators' => (is => 'ro', isa => 'ArrayRef', default => sub { [] });
 
 has 'default_value' => (is => 'ro', isa => 'Str', predicate => 'has_default_value');
 has 'env'           => (is => 'ro', isa => 'Str', predicate => 'has_env');
@@ -26,12 +29,7 @@ sub BUILD {
         croakf('`sticky` requires `env`');
     }
 
-    my $required = sub {
-        my $value = shift;
-        return if defined $value;
-        return 'defined';
-    };
-    unshift @{$self->validators}, $required;
+    unshift @{$self->validators}, Genome::ConfigValidator::Defined->new();
 };
 
 sub new_from_file {
@@ -44,15 +42,9 @@ sub new_from_file {
     my @validators;
     for my $v (@{$data->{validators}}) {
         my $module_name = join('::', 'Genome', 'ConfigValidator', ucfirst($v));
-
         try { Module::Runtime::require_module($module_name) }
         catch { croakf('failed to load validator: %s', $v) };
-
-        my $coderef = $module_name->can('validate');
-        unless ($coderef) {
-            croakf('validator missing implementation: %s', $v);
-        }
-        push @validators, $coderef;
+        push @validators, $module_name->new();
     }
 
     my %params = (
@@ -69,26 +61,17 @@ sub new_from_file {
 
 sub validate {
     my ($self, $value) = @_;
-    return map { $_->($value, $self) } @{$self->validators};
+    return first { $_->validate($value) } @{$self->validators};
 }
 
 sub validation_error {
-    my ($self, @errors) = @_;
+    my ($self, $error) = @_;
 
-    if (@errors == 0) {
+    unless (defined $error) {
         croakf('no errors to display');
     }
 
-    if (@errors == 1) {
-        return sprintf('%s must be %s', $self->key, $errors[0]);
-    }
-
-    my @message = (
-        'multiple validation errors for %s:',
-        (map { ' - must be %s' } @errors),
-        '',
-    );
-    return sprintf(join("\n", @message), $self->key, @errors);
+    return sprintf('%s must be %s', $self->key, $error->message);
 }
 
 
@@ -113,7 +96,7 @@ the file's basename is used as the key.
 
 =head2 Optional Properties
 
-C<validators> are anonymous subs that validate values.  When loaded from a file
+C<validators> are C<Genome::ConfigValidator> objects.  When loaded from a file
 the basename of one or more C<Genome::ConfigValidator> is used.
 
 C<env> is the name of the environment variable that the configuration value is

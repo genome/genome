@@ -5,11 +5,19 @@ use warnings;
 
 require URI;
 
-sub validate {
-    my $value = shift;
+use Mouse;
+
+with qw(Genome::ConfigValidatorBase);
+
+sub check {
+    my ($self, $value) = @_;
     my $uri = URI->new($value);
-    return if $uri->scheme;
-    return 'a URL';
+    return $uri->as_string eq $value
+        && $uri->scheme;
+}
+
+sub message {
+    return 'an URL';
 }
 
 1;

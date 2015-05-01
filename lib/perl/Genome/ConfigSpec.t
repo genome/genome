@@ -23,6 +23,7 @@ subtest 'new_from_file: basic' => sub {
 
     my $spec = Genome::ConfigSpec->new_from_file($input_file);
     is($spec->key, $input_filename, 'key matches');
+
     my $got_validator_count = scalar(@{$spec->validators});
     my $exp_validator_count = scalar(@{$data{validators}}) + 1; # + 1 for implied required validator
     is($got_validator_count, $exp_validator_count, q(validators count matches));

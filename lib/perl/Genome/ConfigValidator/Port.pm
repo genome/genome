@@ -3,18 +3,21 @@ package Genome::ConfigValidator::Port;
 use strict;
 use warnings;
 
-use Scalar::Util qw(looks_like_number);
+require Scalar::Util;
 
-sub validate {
-    my $value = shift;
-    if (looks_like_number($value)
+use Mouse;
+
+with qw(Genome::ConfigValidatorBase);
+
+sub check {
+    my ($self, $value) = @_;
+    return Scalar::Util::looks_like_number($value)
         && $value <= 65535
-        && $value >= 1
-    ) {
-        return;
-    }
-    return 'a Port';
+        && $value >= 1;
+}
+
+sub message {
+    return 'a port';
 }
 
 1;
-

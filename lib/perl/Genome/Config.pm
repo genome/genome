@@ -48,9 +48,9 @@ sub get {
     my $spec = spec($key);
 
     my $value = _lookup_value($spec);
-    my @errors = $spec->validate($value);
-    if (@errors) {
-        my $msg = $spec->validation_error(@errors);
+    my $error = $spec->validate($value);
+    if (defined $error) {
+        my $msg = $spec->validation_error($error);
         croakf($msg);
     }
 

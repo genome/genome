@@ -1,9 +1,7 @@
-package Genome::ConfigValidator::Numeric;
+package Genome::ConfigValidator::Defined;
 
 use strict;
 use warnings;
-
-require Scalar::Util;
 
 use Mouse;
 
@@ -11,11 +9,11 @@ with qw(Genome::ConfigValidatorBase);
 
 sub check {
     my ($self, $value) = @_;
-    return Scalar::Util::looks_like_number($value);
+    return defined($value)
 }
 
 sub message {
-    return 'a number';
+    return 'defined';
 }
 
 1;

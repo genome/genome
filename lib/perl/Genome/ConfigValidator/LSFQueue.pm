@@ -3,13 +3,18 @@ package Genome::ConfigValidator::LSFQueue;
 use strict;
 use warnings;
 
-require URI;
+use Mouse;
 
-sub validate {
-    my $value = shift;
+with qw(Genome::ConfigValidatorBase);
+
+sub check {
+    my ($self, $value) = @_;
     system(qq(bqueues $value 1> /dev/null 2>&1));
-    return if $? == 0;
-    return 'a valid LSF queue';
+    return $? == 0;
+}
+
+sub message {
+    return 'an LSF queue';
 }
 
 1;
