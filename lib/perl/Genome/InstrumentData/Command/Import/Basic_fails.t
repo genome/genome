@@ -96,7 +96,7 @@ throws_ok(
         );
     },
     qr//,
-    'Fails w/ conflicting cmd and instdata properties instrument_data_properties',
+    'Fails w/ conflicting cmd and instdata properties',
 );
 
 my $inst_data = Genome::InstrumentData::Imported->create(

@@ -98,7 +98,6 @@ sub execute {
     my $inputs = $self->_gather_inputs_for_workflow;
     return if not $inputs;
 
-    $DB::single=1;
     my $success = Workflow::Simple::run_workflow($workflow, %$inputs);
     die 'Run wf failed!' if not $success;
 
