@@ -111,7 +111,7 @@ sub submit {
     if ($backend eq 'ptero') {
         my $wf_builder = $self->get_ptero_builder_for_process($p{process_id});
 
-        my $wf_proxy = $wf_builder->submit(inputs => $inputs);
+        my $wf_proxy = $wf_builder->submit(inputs => encode($inputs));
         $self->status_message("Submitted workflow to petri service: %s",
             $wf_proxy->url);
         return $wf_proxy;
