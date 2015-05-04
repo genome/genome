@@ -150,7 +150,10 @@ sub _swap_shadow_allocation {
     try {
         $allocation_object->mount_path($shadow_allocation->volume->mount_path);
         Genome::Sys->create_directory($allocation_object->absolute_path);
-        Genome::Sys->rename($shadow_allocation->absolute_path, $allocation_object->absolute_path);
+        my $rename_ok = Genome::Sys->rename($shadow_allocation->absolute_path, $allocation_object->absolute_path);
+        unless ($rename_ok) {
+            die 'rename failed';
+        };
         $tx->commit();
     }
     catch {
