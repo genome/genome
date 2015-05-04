@@ -291,14 +291,18 @@ sub is_archived {
     return $self->status eq 'archived';
 }
 
-sub tar_path {
+sub archive_path {
     my $self = shift;
     return File::Spec->join(
         $self->volume->archive_mount_path,
         $self->group_subdirectory,
         $self->allocation_path,
-        'archive.tar',
     );
+}
+
+sub tar_path {
+    my $self = shift;
+    return File::Spec->join($self->archive_path, 'archive.tar');
 }
 
 sub archivable {
