@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use Carp qw(confess);
+use Try::Tiny;
 
 class Genome::Disk::Detail::Allocation::Unarchiver {
     is => 'Genome::Disk::Detail::StrictObject',
@@ -56,7 +57,7 @@ sub unarchive {
     my $tar_path = $allocation_object->tar_path;
     my $cmd = "tar -C $target_path -xf $tar_path";
 
-    eval {
+    try {
         # It's very possible that if no commit is on, the volumes/allocations
         # being dealt with are test objects that don't exist out of this local
         # UR context, so bsubbing jobs would fail.
@@ -129,27 +130,25 @@ sub unarchive {
         unless ($allocation_object->_commit_unless_testing) {
             confess "Could not commit!";
         }
-    };
-    my $error = $@;
-
-    # finally blocks would be really sweet. Alas...
-    $allocation_lock->unlock() if $allocation_lock;
-    $shadow_allocation->delete();
-
-    if ($error) {
+    }
+    catch {
         if ($target_path and -d $target_path and not $ENV{UR_DBI_NO_COMMIT}) {
             Genome::Sys->remove_directory_tree($target_path);
         }
-        confess "Could not unarchive, received error:\n$error";
-    } else {
-        $allocation_object->add_note(
-            header_text => 'unarchived',
-            body_text => $self->reason,
-        );
-        Genome::Timeline::Event::Allocation->unarchived($self->reason,
-            $allocation_object);
-        $allocation_object->status('active');
+        confess "Could not unarchive, received error:\n$_";
     }
+    finally {
+        $allocation_lock->unlock() if $allocation_lock;
+        $shadow_allocation->delete();
+    };
+
+    $allocation_object->add_note(
+        header_text => 'unarchived',
+        body_text => $self->reason,
+    );
+    Genome::Timeline::Event::Allocation->unarchived($self->reason,
+        $allocation_object);
+    $allocation_object->status('active');
 
     $allocation_object->_cleanup_archive_directory($archive_path);
     return 1;
