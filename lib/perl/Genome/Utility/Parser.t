@@ -10,7 +10,7 @@ use Genome::Utility::Parser;
 use Test::More tests => 5;
 use Test::Differences;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-Parser';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Utility-Parser';
 my $tsv_file = "$test_dir/test.tsv";
 my $csv_file = "$test_dir/test.csv";
 

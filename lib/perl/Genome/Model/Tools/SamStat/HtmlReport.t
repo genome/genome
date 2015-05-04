@@ -13,7 +13,7 @@ use Test::More;
 # and the UR class.
 use_ok('Genome::Model::Tools::SamStat::HtmlReport');
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SamStat-HtmlReport/v1';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SamStat-HtmlReport/v1';
 my $tmp_dir = Genome::Sys->create_temp_directory(Genome::Sys->username . "SamStat_XXXXXX");
 
 my $bam_link = $dir . '/test.bam';

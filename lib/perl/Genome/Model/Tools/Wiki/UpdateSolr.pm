@@ -113,7 +113,7 @@ sub url {
     my ($self) = @_;
 
     my $url = join( '',
-        $ENV{GENOME_SYS_SERVICES_WIKI_URL} . 'index.php?title=Special:RecentChanges&feed=rss&days=',
+        Genome::Config::get('sys_services_wiki_url') . 'index.php?title=Special:RecentChanges&feed=rss&days=',
         $self->days_ago() );
 
     return $url;

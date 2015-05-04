@@ -21,7 +21,7 @@ class Genome::Model::Tools::DetectVariants2::WorkflowDetectorBase {
     ],
     has_param => [
         lsf_queue => {
-            default_value => $ENV{GENOME_LSF_QUEUE_DV2_WORKER},
+            default_value => Genome::Config::get('lsf_queue_dv2_worker'),
         },
     ],
     has_transient_optional => [

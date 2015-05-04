@@ -18,7 +18,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Sx') or die;
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx';
 my $example_in_file = $dir.'/fast_qual.example.fastq';
 ok(-s $example_in_file, 'example in fastq file exists');
 my $example_out_file = $dir.'/fast_qual.example.fasta';

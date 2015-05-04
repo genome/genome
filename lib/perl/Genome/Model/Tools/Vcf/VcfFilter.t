@@ -8,7 +8,7 @@ use Test::More tests => 31;
 
 use_ok('Genome::Model::Tools::Vcf::VcfFilter');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-VcfFilter";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Vcf-VcfFilter";
 
 # V2 adds the FT per-sample column
 # V3 adds the FT header line mistakenly omitted from v2

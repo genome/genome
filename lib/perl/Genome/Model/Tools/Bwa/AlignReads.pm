@@ -461,9 +461,6 @@ sub execute {
         #### STEP 3: Convert the SAM format output from samse/sampe (a text file) into the binary
         #### BAM file format.  This requires "samtools import"
 
-        #picard merge command
-        #java -Xmx8g -XX:MaxPermSize=256m -cp $ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.07/SamFormatConverter.jar net.sf.picard.sam.SamFormatConverter I=Q6OBHLc6AP.sam O=out2.bam VALIDATION_STRINGENCY=SILENT
-
         if ($self->sam_only) {
 
             my $from_file = $sam_map_output_fh->filename;
@@ -494,7 +491,7 @@ sub execute {
 
             if ($self->picard_conversion eq 1) {
                 $samtools_import_command_line = sprintf(
-                    "java -Xmx8g -XX:MaxPermSize=256m -cp $ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.07/SamFormatConverter.jar net.sf.picard.sam.SamFormatConverter I=%s O=%s VALIDATION_STRINGENCY=SILENT 2>>%s",
+                    "java -Xmx8g -XX:MaxPermSize=256m -cp " . Genome::Config::get('sw_legacy_java') . "/samtools/picard-tools-1.07/SamFormatConverter.jar net.sf.picard.sam.SamFormatConverter I=%s O=%s VALIDATION_STRINGENCY=SILENT 2>>%s",
                      $sam_map_output_fh->filename, $self->alignment_file, $self->aligner_output_file
                 );
                 push(@conversion_input_files,$sam_map_output_fh->filename);

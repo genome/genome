@@ -27,7 +27,7 @@ class Genome::Model::Tools::Relationship::LsfJob {
         default=>'Created',
     },
     queue=> {
-        default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+        default => Genome::Config::get('lsf_queue_build_worker'),
     },
     std_out=> {
     },

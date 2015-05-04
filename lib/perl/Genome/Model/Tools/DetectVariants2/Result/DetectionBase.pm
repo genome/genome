@@ -331,7 +331,7 @@ sub _prepare_output_directory {
 
     unless($allocation) {
         my %allocation_parameters = (
-            disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
+            disk_group_name => Genome::Config::get('disk_group_models'),
             allocation_path => $subdir,
             owner_class_name => $self->class,
             owner_id => $self->id,

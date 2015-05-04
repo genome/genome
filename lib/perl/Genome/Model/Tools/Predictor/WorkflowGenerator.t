@@ -28,7 +28,7 @@ my $temp_output_dir = File::Temp::tempdir(
 );
 ok(-d $temp_output_dir, 'created temp output directory');
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/';
 ok(-d $test_data_dir, "test data directory exists at $test_data_dir");
 
 my $test_fasta_file = $test_data_dir . 'Genome-Model-Tools-Predictor/medium.fasta';

@@ -26,7 +26,7 @@ my $test_taxon = Genome::Taxon->create(
 );
 ok($test_taxon, 'created test taxon successfully') or die;
 
-my $assembly_contigs = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-GenePrediction-Eukaryotic/shorter_ctg.dna';
+my $assembly_contigs = Genome::Config::get('test_inputs') . '/Genome-Model-GenePrediction-Eukaryotic/shorter_ctg.dna';
 
 my $test_model = Genome::Model::GenePrediction::Eukaryotic->create(
     subject_name => $test_taxon->name,

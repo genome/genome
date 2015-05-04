@@ -17,7 +17,7 @@ use_ok('Genome::Model::Tools::RefCov::Standard');
 
 my $tmp_dir = File::Temp::tempdir('BioSamtools-RefCov-'.Genome::Sys->username.'-XXXX',CLEANUP => 1, TMPDIR => 1);
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-RefCov-Standard';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-RefCov-Standard';
 my $expected_data_dir = $data_dir;
 
 my $alignment_file_path = $data_dir .'/test.bam';

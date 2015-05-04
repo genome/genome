@@ -5,12 +5,12 @@ use warnings;
 use Genome;
 
 class Genome::DataSource::Dgidb {
-    is => $ENV{GENOME_DS_DGIDB_TYPE},
+    is => Genome::Config::get('ds_dgidb_type'),
     has_constant => [
-        server  => { default_value => $ENV{GENOME_DS_DGIDB_SERVER} },
-        login   => { default_value => $ENV{GENOME_DS_DGIDB_LOGIN} },
-        auth    => { default_value => $ENV{GENOME_DS_DGIDB_AUTH} },
-        owner   => { default_value => $ENV{GENOME_DS_DGIDB_OWNER} },
+        server  => { default_value => Genome::Config::get('ds_dgidb_server') },
+        login   => { default_value => Genome::Config::get('ds_dgidb_login') },
+        auth    => { default_value => Genome::Config::get('ds_dgidb_auth') },
+        owner   => { default_value => Genome::Config::get('ds_dgidb_owner') },
     ],
 };
 

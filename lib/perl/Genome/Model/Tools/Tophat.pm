@@ -38,19 +38,19 @@ EOS
 
 
 my %TOPHAT_VERSIONS = (
-    '0.7.1'  => $ENV{GENOME_SW} . '/tophat/tophat-0.7.1-64/bin/tophat',
-    '0.7.2'  => $ENV{GENOME_SW} . '/tophat/tophat-0.7.2-64/bin/tophat',
-    '1.0.10' => $ENV{GENOME_SW} . '/tophat/tophat-1.0.10-64/bin/tophat',
+    '0.7.1'  => Genome::Config::get('sw') . '/tophat/tophat-0.7.1-64/bin/tophat',
+    '0.7.2'  => Genome::Config::get('sw') . '/tophat/tophat-0.7.2-64/bin/tophat',
+    '1.0.10' => Genome::Config::get('sw') . '/tophat/tophat-1.0.10-64/bin/tophat',
     # These are 64-bit installations.  tophat is really a python script and is OS dependent.
-    '1.0.12' => $ENV{GENOME_SW} . '/tophat/tophat-1.0.12/bin/tophat',
-    '1.0.13' => $ENV{GENOME_SW} . '/tophat/tophat-1.0.13/bin/tophat',
-    '1.0.14' => $ENV{GENOME_SW} . '/tophat/tophat-1.0.14/tophat',
-    '1.1.0'  => $ENV{GENOME_SW} . '/tophat/tophat-1.1.0/tophat',
-    '1.1.2'  => $ENV{GENOME_SW} . '/tophat/tophat-1.1.2/tophat',
-    '1.1.4'  => $ENV{GENOME_SW} . '/tophat/tophat-1.1.4/tophat',
-    '1.2.0'  => $ENV{GENOME_SW} . '/tophat/tophat-1.2.0/tophat',
-    '1.3.0'  => $ENV{GENOME_SW} . '/tophat/tophat-1.3.0/tophat',
-    '1.3.1'  => $ENV{GENOME_SW} . '/tophat/tophat-1.3.1/tophat',
+    '1.0.12' => Genome::Config::get('sw') . '/tophat/tophat-1.0.12/bin/tophat',
+    '1.0.13' => Genome::Config::get('sw') . '/tophat/tophat-1.0.13/bin/tophat',
+    '1.0.14' => Genome::Config::get('sw') . '/tophat/tophat-1.0.14/tophat',
+    '1.1.0'  => Genome::Config::get('sw') . '/tophat/tophat-1.1.0/tophat',
+    '1.1.2'  => Genome::Config::get('sw') . '/tophat/tophat-1.1.2/tophat',
+    '1.1.4'  => Genome::Config::get('sw') . '/tophat/tophat-1.1.4/tophat',
+    '1.2.0'  => Genome::Config::get('sw') . '/tophat/tophat-1.2.0/tophat',
+    '1.3.0'  => Genome::Config::get('sw') . '/tophat/tophat-1.3.0/tophat',
+    '1.3.1'  => Genome::Config::get('sw') . '/tophat/tophat-1.3.1/tophat',
     'tophat' => 'tophat',
 );
 

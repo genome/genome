@@ -10,7 +10,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Allpaths::EfastaToFasta') or die;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Allpaths/EfastaToFasta/v1';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Allpaths/EfastaToFasta/v1';
 my $example_clean_fasta = $test_dir.'/clean.final.assembly.fasta';      
 
 my $temp_dir = Genome::Sys->create_temp_directory();

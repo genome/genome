@@ -14,7 +14,7 @@ use Path::Class;
 use File::Slurp qw(read_file write_file);
 use Test::More;
 
-my $bam_path = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam';
+my $bam_path = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam';
 
 use_ok('Genome::InstrumentData::AlignmentResult');
 

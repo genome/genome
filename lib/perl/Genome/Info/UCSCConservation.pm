@@ -6,7 +6,7 @@ use Genome;
 
 my %ucsc_conservation_directories;
 
-if ($ENV{GENOME_SYS_ID} and $ENV{GENOME_SYS_ID} ne 'GMS1') {
+if (Genome::Config::get('sys_id') and Genome::Config::get('sys_id') ne 'GMS1') {
   %ucsc_conservation_directories =
   (
     36 => "/opt/gms/GMS1/fs/ams1100/info/v36_ucsc_conservation",

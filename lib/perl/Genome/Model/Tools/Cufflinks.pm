@@ -36,19 +36,19 @@ EOS
 
 # this is for old versions, from 1.3.0 onward we use a dpkg and heuristic for path resolution
 my %CUFFLINKS_VERSIONS = (
-    '0.7.0'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-0.7.0.Linux_x86_64',
-    '0.8.0'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-0.8.0.Linux_x86_64',
-    '0.8.2'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-0.8.2.Linux_x86_64',
-    '0.8.3'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-0.8.3.Linux_x86_64',
-    '0.9.0'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-0.9.0.Linux_x86_64',
-    '0.9.1'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-0.9.1.Linux_x86_64',
-    '0.9.2'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-0.9.2.Linux_x86_64',
-    '0.9.3'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-0.9.3.Linux_x86_64',
-    '1.0.0'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-1.0.0.Linux_x86_64',
-    '1.0.1'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-1.0.1.Linux_x86_64',
-    '1.0.3'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-1.0.3.Linux_x86_64',
-    '1.1.0'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-1.1.0.Linux_x86_64',
-    '1.2.1'  => $ENV{GENOME_SW} . '/cufflinks/cufflinks-1.2.1.Linux_x86_64',
+    '0.7.0'  => Genome::Config::get('sw') . '/cufflinks/cufflinks-0.7.0.Linux_x86_64',
+    '0.8.0'  => Genome::Config::get('sw') . '/cufflinks/cufflinks-0.8.0.Linux_x86_64',
+    '0.8.2'  => Genome::Config::get('sw') . '/cufflinks/cufflinks-0.8.2.Linux_x86_64',
+    '0.8.3'  => Genome::Config::get('sw') . '/cufflinks/cufflinks-0.8.3.Linux_x86_64',
+    '0.9.0'  => Genome::Config::get('sw') . '/cufflinks/cufflinks-0.9.0.Linux_x86_64',
+    '0.9.1'  => Genome::Config::get('sw') . '/cufflinks/cufflinks-0.9.1.Linux_x86_64',
+    '0.9.2'  => Genome::Config::get('sw') . '/cufflinks/cufflinks-0.9.2.Linux_x86_64',
+    '0.9.3'  => Genome::Config::get('sw') . '/cufflinks/cufflinks-0.9.3.Linux_x86_64',
+    '1.0.0'  => Genome::Config::get('sw') . '/cufflinks/cufflinks-1.0.0.Linux_x86_64',
+    '1.0.1'  => Genome::Config::get('sw') . '/cufflinks/cufflinks-1.0.1.Linux_x86_64',
+    '1.0.3'  => Genome::Config::get('sw') . '/cufflinks/cufflinks-1.0.3.Linux_x86_64',
+    '1.1.0'  => Genome::Config::get('sw') . '/cufflinks/cufflinks-1.1.0.Linux_x86_64',
+    '1.2.1'  => Genome::Config::get('sw') . '/cufflinks/cufflinks-1.2.1.Linux_x86_64',
 );
 
 our %MIN_VERSIONS = (

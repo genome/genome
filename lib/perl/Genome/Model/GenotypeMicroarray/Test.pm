@@ -7,7 +7,7 @@ require Genome::Test::Factory::InstrumentData::Imported;
 require File::Temp;
 
 sub testdir {
-    return $ENV{GENOME_TEST_INPUTS} . '/GenotypeMicroarray/v7';
+    return Genome::Config::get('test_inputs') . '/GenotypeMicroarray/v7';
 }
 
 my %cache;

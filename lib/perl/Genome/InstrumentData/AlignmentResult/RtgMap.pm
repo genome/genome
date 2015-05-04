@@ -21,7 +21,7 @@ class Genome::InstrumentData::AlignmentResult::RtgMap{
 sub required_arch_os { 'x86_64' }
 
 sub required_rusage { 
-    "-R 'select[tmp>90000 && mem>48000] span[hosts=1] rusage[tmp=90000, mem=48000]' -M 48000000 -n 8 -q $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT}";
+    "-R 'select[tmp>90000 && mem>48000] span[hosts=1] rusage[tmp=90000, mem=48000]' -M 48000000 -n 8 -q " . Genome::Config::get('lsf_queue_alignment_default');
 }
 
 sub _decomposed_aligner_params {

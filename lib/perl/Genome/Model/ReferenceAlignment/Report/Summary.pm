@@ -422,7 +422,7 @@ sub get_summary_information
         filtered_diploid_hom_coverage_actual_number   => commify($filtered_diploid_hom_coverage_actual_number),
         filtered_diploid_hom_coverage_percent         => $filtered_diploid_hom_coverage_percent,
 
-        view_url => $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL},
+        view_url => Genome::Config::get('sys_services_web_view_url'),
     );
 
     ##################################
@@ -435,7 +435,7 @@ sub get_summary_information
         name     => 'Mickey',
         debt     => '3 riffs and a solo',
         deadline => 'the next chorus',
-        files_url => $ENV{GENOME_SYS_SERVICES_FILES_URL},
+        files_url => Genome::Config::get('sys_services_files_url'),
     };
 
     $self->debug_message("processing template $template");

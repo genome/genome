@@ -11,7 +11,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Fasta::SortByName') or die;
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta/';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fasta/';
 ok(-d $test_data_dir, "test data dir existst at $test_data_dir");
 
 my $test_output_dir = File::Temp::tempdir(

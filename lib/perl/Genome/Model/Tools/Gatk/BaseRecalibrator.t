@@ -19,7 +19,7 @@ else {
 use_ok('Genome::Model::Tools::Gatk::BaseRecalibrator');
 
 # Inputs
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Gatk-BaseRecalibrator/v1';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Gatk-BaseRecalibrator/v1';
 my $input_bam    = "$test_data_dir/test.bam";
 my $input_ref_mt = "$test_data_dir/all_sequences.MT.fa";
 my $input_snv_mt = "$test_data_dir/snvs.MT.hq.vcf";

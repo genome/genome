@@ -47,7 +47,7 @@ class Genome::Model::Tools::Varscan::CopyNumberSegments {
 
         lsf_command  => {
             is => 'Text',
-            doc => "If set to something like bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER}, will run bsub",
+            doc => "If set to something like bsub -q " . Genome::Config::get('lsf_queue_build_worker') . ", will run bsub",
             is_optional => 1,
         },
         array_data  => {

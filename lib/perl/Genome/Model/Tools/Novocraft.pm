@@ -53,12 +53,12 @@ sub novocraft_path {
     return $self->path_for_novocraft_version($self->use_version);
 }
 my %NOVOCRAFT_VERSIONS = (
-                    '2.03.12' => $ENV{GENOME_SW} . '/novocraft/novocraft-2.03.12',
-                    '2.04.02' => $ENV{GENOME_SW} . '/novocraft/novocraft-2.04.02',
-                    '2.05.13' => $ENV{GENOME_SW} . '/novocraft/novocraft-2.05.13',
-                    '2.05.20' => $ENV{GENOME_SW} . '/novocraft/novocraft-2.05.20',
-                    '2.05.32' => $ENV{GENOME_SW} . '/novocraft/novocraft-2.05.33',
-                    '2.07.11' => $ENV{GENOME_SW} . '/novocraft/novocraft-2.07.11', 
+                    '2.03.12' => Genome::Config::get('sw') . '/novocraft/novocraft-2.03.12',
+                    '2.04.02' => Genome::Config::get('sw') . '/novocraft/novocraft-2.04.02',
+                    '2.05.13' => Genome::Config::get('sw') . '/novocraft/novocraft-2.05.13',
+                    '2.05.20' => Genome::Config::get('sw') . '/novocraft/novocraft-2.05.20',
+                    '2.05.32' => Genome::Config::get('sw') . '/novocraft/novocraft-2.05.33',
+                    '2.07.11' => Genome::Config::get('sw') . '/novocraft/novocraft-2.07.11', 
                     'novocraft'   => 'novoalign',
                 );
 

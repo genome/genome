@@ -70,7 +70,7 @@ sub execute {
     my $complete = $files[0];
     my $insmut = $files[1];
 
-    my @symlink_targets = split(':',$ENV{GENOME_DB});
+    my @symlink_targets = split(':', Genome::Config::get('db'));
     my $symlink_dir = $symlink_targets[0];
 
     

@@ -18,7 +18,7 @@ BEGIN {
 
 my @installed_links = qw/ installed newbler /;
 foreach my $link (@installed_links) {
-    my $path           = $ENV{GENOME_SW} . '/454/';
+    my $path           = Genome::Config::get('sw') . '/454/';
     my $installed_link = $path . $link;
     my $installed_path = readlink($installed_link);
     my $tool_454 = Genome::Model::Tools::454->create( test_link => $link );

@@ -45,7 +45,7 @@ use Genome::Utility::MetagenomicClassifier::PopulationCompositionFactory;
     ok($factory, 'Got factory instance');
     my $composition = $factory->get_composition(
         classifier => Genome::Utility::MetagenomicClassifier::Rdp::Version2x1->new( training_set => 'broad',),
-        fasta_file => $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-MetagenomicClassifier/U_PR-JP_TS1_2PCA.fasta',
+        fasta_file => Genome::Config::get('test_inputs') . '/Genome-Utility-MetagenomicClassifier/U_PR-JP_TS1_2PCA.fasta',
     );
     ok($composition, 'Got composition from factory');
     isa_ok($composition, 'Genome::Utility::MetagenomicClassifier::PopulationComposition');

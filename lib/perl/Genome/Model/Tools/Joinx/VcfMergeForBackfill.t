@@ -16,7 +16,7 @@ use_ok($pkg);
 
 my $tmpdir = File::Temp::tempdir('joinx-VcfMergeForBackfill-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_file = $tmpdir."/snvs.merged.vcf.gz";
-my $base_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Joinx-VcfMergeForBackfill";
+my $base_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Joinx-VcfMergeForBackfill";
 my $expected = $base_dir."/expected/snvs.merged.vcf.gz";
 my @input_files = glob($base_dir."/inputs/*");
 

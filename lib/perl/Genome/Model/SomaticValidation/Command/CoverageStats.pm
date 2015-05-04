@@ -12,7 +12,7 @@ class Genome::Model::SomaticValidation::Command::CoverageStats {
 
     has_param => [
         lsf_queue => {
-            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+            default => Genome::Config::get('lsf_queue_build_worker'),
         },
     ],
     has_optional_output => [
@@ -152,7 +152,7 @@ sub params_for_result {
         use_short_roi_names => $pp->refcov_use_short_names,
         merge_contiguous_regions => $pp->refcov_merge_roi_regions,
         roi_track_name => ($pp->refcov_roi_track_name || undef),
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        test_name => (Genome::Config::get('software_result_test_name') || undef),
         users => $result_users,
     );
 }

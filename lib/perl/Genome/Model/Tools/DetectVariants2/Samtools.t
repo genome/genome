@@ -30,7 +30,7 @@ my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
     reference_sequence_build => $ref_seq_build,
 );
 
-my $test_dir      = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Samtools/';
+my $test_dir      = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Samtools/';
 my $test_base_dir = File::Temp::tempdir(
     'DetectVariants2-SamtoolsXXXXX', 
     TMPDIR => 1,

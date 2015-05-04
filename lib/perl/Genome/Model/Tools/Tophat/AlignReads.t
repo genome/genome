@@ -17,7 +17,7 @@ else {
 
 use_ok('Genome::Model::Tools::Tophat::AlignReads');
 
-my $input_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Tophat-AlignReads';
+my $input_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Tophat-AlignReads';
 
 my $expected_data_dir = $input_data_dir .'/expected_output';
 my $expected_junctions_file = $expected_data_dir .'/junctions.bed';

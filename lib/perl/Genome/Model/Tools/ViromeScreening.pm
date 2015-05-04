@@ -99,7 +99,7 @@ sub _run_workflow {
     my $self = shift;
 
     my $rv = run_workflow_lsf(
-	$ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreening/virome-screening6.xml',
+	Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ViromeScreening/virome-screening6.xml',
 	'fasta_file'  => $self->fasta_file,
 	'barcode_file'=> $self->barcode_file,
 	'dir'         => $self->dir,
@@ -132,8 +132,8 @@ sub _send_failed_mail {
 
     my $sender = Mail::Sender->new({
         smtp => 'gscsmtp.wustl.edu',
-        from => $ENV{GENOME_EMAIL_VIROME_SCREENING},
-        replyto => $ENV{GENOME_EMAIL_VIROME_SCREENING},
+        from => Genome::Config::get('email_virome_screening'),
+        replyto => Genome::Config::get('email_virome_screening'),
     });
     $sender->MailMsg({
         to => $mail_dest,
@@ -153,9 +153,9 @@ sub _send_succeeded_mail {
 
     my $mail_dest = Genome::Config->user_email;
     my $sender = Mail::Sender->new({
-        smtp => $ENV{GENOME_EMAIL_SMTP_SERVER},
-        from => $ENV{GENOME_EMAIL_VIROME_SCREENING},
-        replyto => $ENV{GENOME_EMAIL_VIROME_SCREENING},
+        smtp => Genome::Config::get('email_smtp_server'),
+        from => Genome::Config::get('email_virome_screening'),
+        replyto => Genome::Config::get('email_virome_screening'),
     });
     $sender->MailMsg({
         to => $mail_dest,

@@ -95,7 +95,7 @@ sub construct_address {
     my $user = shift;
     $user = defined($user) ? $user : $ENV{USER};
 
-    return join('@', $user, $ENV{GENOME_EMAIL_DOMAIN});
+    return join('@', $user, Genome::Config::get('email_domain'));
 }
 
 1;

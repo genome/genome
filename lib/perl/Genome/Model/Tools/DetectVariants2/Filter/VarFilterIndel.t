@@ -17,7 +17,7 @@ BEGIN {
 };
 
 my $refbuild_id = 101947881;
-my $test_data_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Filter-VarFilterIndel";
+my $test_data_directory = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Filter-VarFilterIndel";
 
 my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
     reference_sequence_build_id => $refbuild_id,

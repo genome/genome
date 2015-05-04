@@ -14,7 +14,7 @@ plan tests => 3;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::CircularConsensus');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-CircularConsensus';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-CircularConsensus';
 
 my $reference_directory = $data_directory .'/references/lambda';
 my $control_reference_directory = $data_directory .'/references/B_subtilis_v1';

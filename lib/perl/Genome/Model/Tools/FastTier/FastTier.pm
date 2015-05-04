@@ -60,7 +60,7 @@ class Genome::Model::Tools::FastTier::FastTier {
         intersect_bed_bin_location => {
             type => 'Text',
             is_input => 1,
-            default => '/gsc/bin/intersectBed-pipes',  #$ENV{GENOME_SW} . '/bedtools/installed-64/intersectBed',
+            default => '/gsc/bin/intersectBed-pipes',
             doc => 'The path and filename of intersectBed',
         },
         output_directory => {

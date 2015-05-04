@@ -72,7 +72,7 @@ sub _allocation_subdirectory {
 
 # override to customize how disk allocation is acquired
 sub _allocation_disk_group_name {
-    $ENV{GENOME_DISK_GROUP_MODELS};
+    Genome::Config::get('disk_group_models');
 }
 
 # override to customize how disk allocation is acquired

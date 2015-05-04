@@ -11,7 +11,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::Sx::SeqReader') or die;
 use_ok('Genome::Model::Tools::Sx::SeqWriter') or die;
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/';
 my $fasta = $dir.'/reader_writer.sam.fasta';
 my $example_gzfasta = $fasta.'.gz';
 ok(-s $example_gzfasta, 'example gzfasta exists') or die;

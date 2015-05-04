@@ -100,7 +100,7 @@ class Genome::Model::Tools::DetectVariants2::Dispatcher {
     ],
     has_param => [
         lsf_queue => {
-            default_value => $ENV{GENOME_LSF_QUEUE_DV2_WORKFLOW},
+            default_value => Genome::Config::get('lsf_queue_dv2_workflow'),
         },
     ],
     doc => 'generate complex variant detection results'
@@ -1147,7 +1147,7 @@ sub _generate_standard_files {
             my $lq_result = Genome::Model::Tools::DetectVariants2::Result::Combine::LqUnion->get_or_create(
                 result_ids => [keys %results],
                 variant_type => $variant_type,
-                test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+                test_name => Genome::Config::get('software_result_test_name') || undef,
                 users => $self->result_users,
             );
 

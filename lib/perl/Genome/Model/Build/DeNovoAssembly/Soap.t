@@ -23,7 +23,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
 
 use_ok('Genome::Model::Build::DeNovoAssembly::Soap') or die;
 
-my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/DeNovoAssembly';
+my $base_dir = Genome::Config::get('test_inputs') . '/Genome-Model/DeNovoAssembly';
 
 print $base_dir."\n";
 

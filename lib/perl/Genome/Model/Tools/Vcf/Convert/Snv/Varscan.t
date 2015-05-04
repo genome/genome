@@ -16,7 +16,7 @@ use above 'Genome';
 
 use_ok('Genome::Model::Tools::Vcf::Convert::Snv::Varscan');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Convert-Snv-Varscan";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Vcf-Convert-Snv-Varscan";
 # V2 changed to expect a blank VAQ value
 # V3 has various corrections
 # V4 - remove VT INFO field in header

@@ -99,6 +99,6 @@ sub resolve_allocation_subdirectory {
     return join('/', 'build_merged_alignments', $self->id, 'compare-snps-' . $staged_basename);
 };
 
-sub resolve_allocation_disk_group_name { $ENV{GENOME_DISK_GROUP_MODELS} };
+sub resolve_allocation_disk_group_name { Genome::Config::get('disk_group_models') };
 
 1;

@@ -14,7 +14,7 @@ unless ($archos =~ /64/) {
 use_ok ('Genome::Model::Tools::Assembly::CreateOutputFiles::InputFromSff') or die;
 
 #check test dir/files
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Assembly/CreateOutputFiles/InputFromSff_v0';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Assembly/CreateOutputFiles/InputFromSff_v0';
 ok (-d $data_dir, "Data dir exists");
 ok (-s $data_dir.'/sff/GABJJ9O01.sff', "Test sff file exists");
 

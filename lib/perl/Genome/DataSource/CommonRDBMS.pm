@@ -28,11 +28,11 @@ UR::Context->current->create_subscription(
 );
 
 sub query_pause_sentry_file_path {
-    $ENV{GENOME_DB_QUERY_PAUSE};
+    Genome::Config::get('db_query_pause');
 }
 
 sub commit_pause_sentry_file_path {
-    $ENV{GENOME_DB_PAUSE};
+    Genome::Config::get('db_pause');
 }
 
 sub pause_sleep_length_seconds { 30 }
@@ -105,7 +105,7 @@ sub log_commit_time {
     my($db_name, $time) = @_;
 
     my $original_cmdline = get_command_line();
-    my $execution_id = $ENV{'GENOME_EXECUTION_ID'} || '';
+    my $execution_id = Genome::execution_id() || '';
 
     my $path = _determine_base_log_pathname();
     $path .= "-${db_name}.timing";

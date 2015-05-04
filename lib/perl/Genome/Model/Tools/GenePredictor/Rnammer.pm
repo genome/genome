@@ -102,7 +102,7 @@ sub execute {
         confess $self->error_message;
     }
 
-    my $rnammer_path = $ENV{GENOME_SW} . "/rnammer/rnammer-" . $self->version . "/rnammer";
+    my $rnammer_path = Genome::Config::get('sw') . "/rnammer/rnammer-" . $self->version . "/rnammer";
     confess "No rnammer executable found at $rnammer_path!" unless -e $rnammer_path;
 
     # Create a list of parameters

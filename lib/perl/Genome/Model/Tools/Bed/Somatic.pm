@@ -58,7 +58,7 @@ sub execute {
     }
 
     
-    my $tier1_cmd = $ENV{GENOME_SW} . "/bedtools/installed-64/intersectBed -wa -v -a " . $tumor_out . " -b " . $normal_out . " > " . $self->somatic_file;  
+    my $tier1_cmd = Genome::Config::get('sw') . "/bedtools/installed-64/intersectBed -wa -v -a " . $tumor_out . " -b " . $normal_out . " > " . $self->somatic_file;  
 
     my $result = system($tier1_cmd);
     

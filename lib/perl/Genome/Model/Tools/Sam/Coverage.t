@@ -19,7 +19,7 @@ else {
 
 use_ok('Genome::Model::Tools::Sam::Coverage');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-Coverage';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam-Coverage';
 
 my $tmp_dir  = File::Temp::tempdir(
     "Coverage_XXXXXX", 
@@ -27,7 +27,7 @@ my $tmp_dir  = File::Temp::tempdir(
     CLEANUP => 1,
 );
 
-my $compare_to_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-Coverage/compare.txt';
+my $compare_to_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam-Coverage/compare.txt';
 
 my $aligned_file_name = "normal.tiny.bam"; 
 my $output_file_name = "coverage.out";
@@ -47,7 +47,7 @@ my $coverage = Genome::Model::Tools::Sam::Coverage->create(
     output_file => $output_file,                                                      
     return_output => 1,
     #use_version => 'r350wu1',  #This only works from r350wu1, once set Sam.pm default_value to r350wu1, this will become unnecessary
-    coverage_command => $ENV{GENOME_SW} . '/samtools/bamcheck/bamcheck-v0.13/bam-check -q 1',
+    coverage_command => Genome::Config::get('sw') . '/samtools/bamcheck/bamcheck-v0.13/bam-check -q 1',
 );
 
 isa_ok($coverage,'Genome::Model::Tools::Sam::Coverage');

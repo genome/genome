@@ -12,7 +12,7 @@ my $pkg = 'Genome::Model::Tools::Picard::CollectInsertSizeMetrics';
 
 use_ok($pkg);
 
-my $data_dir = File::Spec->catfile($ENV{GENOME_TEST_INPUTS}, 'Genome-Model-Tools-Picard-CollectInsertSizeMetrics');
+my $data_dir = File::Spec->catfile(Genome::Config::get('test_inputs'), 'Genome-Model-Tools-Picard-CollectInsertSizeMetrics');
 my $bam_file = File::Spec->catfile($data_dir, 'aligned.bam');
 my $expected_file = File::Spec->catfile($data_dir, 'expected.txt');
 my $output_file = Genome::Sys->create_temp_file_path;

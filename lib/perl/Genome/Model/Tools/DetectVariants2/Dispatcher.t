@@ -95,8 +95,8 @@ my $expected_plan = {
 my ($trees, $plan) = $obj->plan;
 is_deeply($plan, $expected_plan, "plan matches expectations");
 
-my $tumor_bam = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Dispatcher/flank_tumor_sorted.bam";
-my $normal_bam = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Dispatcher/flank_normal_sorted.bam";
+my $tumor_bam = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Dispatcher/flank_tumor_sorted.bam";
+my $normal_bam = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Dispatcher/flank_normal_sorted.bam";
 my @multiple_bam = ($tumor_bam,"thing");
 # Test dispatcher for running a complex case -- the intersect is nonsensical, but tests intersections while still keeping the test short
 my $test_working_dir = File::Temp::tempdir('DetectVariants2-Dispatcher-combineXXXXX', CLEANUP => 1, TMPDIR => 1);

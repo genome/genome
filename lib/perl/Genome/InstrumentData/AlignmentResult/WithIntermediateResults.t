@@ -12,7 +12,7 @@ use above 'Genome';
 use Genome::InstrumentData::InstrumentDataTestObjGenerator;
 use Test::More;
 
-my $bam_path = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam';
+my $bam_path = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam';
 
 use_ok('Genome::InstrumentData::AlignmentResult');
 # Test Intermediate AR Class

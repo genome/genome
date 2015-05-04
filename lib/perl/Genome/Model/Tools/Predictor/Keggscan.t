@@ -20,7 +20,7 @@ $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
 
 use_ok('Genome::Model::Tools::Predictor::Keggscan') or die;
 
-my $test_data_base_dir = $ENV{GENOME_TEST_INPUTS} . '/';
+my $test_data_base_dir = Genome::Config::get('test_inputs') . '/';
 my $fasta = join('/', $test_data_base_dir, 'Genome-Model-Tools-Predictor/medium.fasta');
 ok(-e $fasta, "test fasta file found at $fasta") or die;
 

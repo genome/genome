@@ -10,7 +10,7 @@ use Test::More tests => 4;
 
 use_ok('Genome::Model::Tools::BedTools::Slop');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-BedTools-Slop';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-BedTools-Slop';
 
 my $test_bed = $data_dir .'/test.bed';
 my $genome_file = $data_dir .'/all_sequences.genome';

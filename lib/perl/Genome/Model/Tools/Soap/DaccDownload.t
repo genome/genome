@@ -8,7 +8,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Soap::DaccDownload') or die;
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Soap-DaccDownload';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Soap-DaccDownload';
 ok(-d $data_dir, "Data dir exists");
 
 my %available_files;

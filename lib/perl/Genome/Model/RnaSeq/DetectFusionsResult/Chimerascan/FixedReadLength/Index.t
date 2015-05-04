@@ -14,7 +14,7 @@ use Test::More;
 my $class = "Genome::Model::RnaSeq::DetectFusionsResult::Chimerascan::FixedReadLength::Index";
 use_ok($class);
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult-Index/v2";
+my $data_dir = Genome::Config::get('test_inputs')."/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult-Index/v2";
 
 my $reference_model = Genome::Model::ImportedReferenceSequence->create(
     name => '1 chr test model',

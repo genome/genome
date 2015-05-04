@@ -14,7 +14,7 @@ plan tests => 3;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::Control');
 my $standard_dir = '/gscmnt/pacbio/production/smrtanalysis/common/references/Standard_v1';
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-Control';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-Control';
 
 my $input_fofn = $data_directory .'/input.fofn';
 my $region_table = $data_directory .'/data/filtered_regions.fofn';

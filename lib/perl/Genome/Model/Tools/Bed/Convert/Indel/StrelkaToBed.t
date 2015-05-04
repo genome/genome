@@ -12,7 +12,7 @@ use_ok('Genome::Model::Tools::Bed::Convert::Indel::StrelkaToBed');
 my $tmpdir = File::Temp::tempdir('Bed-Convert-Indel-StrelkaToBedXXXXX', CLEANUP => 1, TMPDIR => 1);
 
 
-my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-Tools-Bed-Convert-Indel/2012-10-10/';
+my $expected_data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Bed-Convert-Indel/2012-10-10/';
 
 my $input_file = $expected_data_directory . 'StrelkaToBed.t.input';
 my $expected_file = $expected_data_directory . 'StrelkaToBed.t.expected';

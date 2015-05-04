@@ -17,7 +17,7 @@ ok(!Genome::Model::Tools::Sx::Filter::ByLength->execute(filter_length => 'all'),
 ok(!Genome::Model::Tools::Sx::Filter::ByLength->execute(filter_length => -1), 'execute w/ filter length less than 0');
 
 # Files
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx';
 my $in_fastq = $dir.'/trimmer_bwa_style.example.fastq';
 ok(-s $in_fastq, 'in fastq');
 my $example_fastq = $dir.'/filter_by_length.example.fastq';

@@ -38,7 +38,7 @@ use Inline(
 END
 
     AUTOSTUDY => 1,
-    CLASSPATH => $ENV{GENOME_SW_LEGACY_JAVA} . '/rdp-classifier/rdp-classifier-2.3/rdp_classifier-2.3.jar',
+    CLASSPATH => Genome::Config::get('sw_legacy_java') . '/rdp-classifier/rdp-classifier-2.3/rdp_classifier-2.3.jar',
     STUDY => [
         'edu.msu.cme.rdp.classifier.rrnaclassifier.ClassifierFactory',
         'edu.msu.cme.rdp.classifier.rrnaclassifier.Classifier',

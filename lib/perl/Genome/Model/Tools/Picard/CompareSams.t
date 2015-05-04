@@ -10,7 +10,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Picard::CompareSams');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Picard-CompareSams/';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Picard-CompareSams/';
 
 my $file1 = $data_dir . 'normal.tiny.bam';
 my $file2 = $data_dir . 'tumor.tiny.bam';

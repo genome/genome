@@ -318,7 +318,7 @@ sub data_dir {
     $package->class;
 
     (my $dirname = $package) =~ s/::/-/g;
-    my @parts = ($ENV{GENOME_TEST_INPUTS}, $dirname);
+    my @parts = (Genome::Config::get('test_inputs'), $dirname);
     if ($test_version) {
         push @parts, $test_version;
     }

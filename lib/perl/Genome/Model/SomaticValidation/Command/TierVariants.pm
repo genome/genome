@@ -21,7 +21,7 @@ class Genome::Model::SomaticValidation::Command::TierVariants{
     ],
     has_param => [
         lsf_queue => {
-            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
+            default => Genome::Config::get('lsf_queue_build_worker_alt'),
         },
     ],
 };
@@ -165,7 +165,7 @@ sub params_for_result {
         prior_result_id => $result->id,
         annotation_build_id => $build->annotation_build->id,
         classifier_version => $build->tiering_version,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
         users => Genome::SoftwareResult::User->user_hash_for_build($build),
     );
 }

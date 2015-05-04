@@ -27,8 +27,8 @@ my $refbuild_id = 101947881;
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
 ok($ref_seq_build, 'human36 reference sequence build') or die;
 
-my $test_data = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-GatkGermlineIndel";
-my $base_expected_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-GatkGermlineIndel/";
+my $test_data = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-GatkGermlineIndel";
+my $base_expected_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-GatkGermlineIndel/";
 my $expected_version = "expected.v2";
 my $expected_data = $base_expected_dir . $expected_version;
 my $tumor =  $test_data."/flank_tumor_sorted.bam";

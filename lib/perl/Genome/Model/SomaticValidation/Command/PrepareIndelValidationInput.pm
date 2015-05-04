@@ -46,7 +46,7 @@ class Genome::Model::SomaticValidation::Command::PrepareIndelValidationInput {
     ],
     has_param => [
         lsf_queue => {
-            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
+            default => Genome::Config::get('lsf_queue_build_worker_alt'),
         },
     ],
 };

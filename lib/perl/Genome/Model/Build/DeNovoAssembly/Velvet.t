@@ -23,7 +23,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
 
 use_ok('Genome::Model::Build::DeNovoAssembly::Velvet') or die;
 
-my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/DeNovoAssembly';
+my $base_dir = Genome::Config::get('test_inputs') . '/Genome-Model/DeNovoAssembly';
 my $archive_path = $base_dir.'/inst_data/-7777/archive.tgz';
 ok(-s $archive_path, 'inst data archive path') or die;
 my $example_dir = $base_dir.'/velvet_v23';
@@ -151,7 +151,7 @@ is(File::Compare::compare($existing_assembler_input_files[0],
     0, 'assembler input file matches');
 
 # ASSEMBLE
-my $queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+my $queue = Genome::Config::get('lsf_queue_build_worker_alt');
 my %assembler_params = $build->assembler_params;
 #print Data::Dumper::Dumper(\%assembler_params);
 is_deeply(

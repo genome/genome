@@ -12,14 +12,14 @@ use_ok('Genome::Model::Tools::Pcap::Ace') or die;
 
 my @assemblies;
 push @assemblies, Genome::Model::Tools::Pcap::Ace->new(
-    input_file => $ENV{GENOME_TEST_INPUTS} . "/Genome-Assembly-Pcap/test.ace"
+    input_file => Genome::Config::get('test_inputs') . "/Genome-Assembly-Pcap/test.ace"
 );
 
 my $tmp = File::Temp->new( UNLINK => 1, SUFFIX => '.db' );
 die "Failed to create temp sqlite db file for testing.\n" unless defined $tmp;
 
 push @assemblies, Genome::Model::Tools::Pcap::Ace->new(
-    input_file => $ENV{GENOME_TEST_INPUTS} . "/Genome-Assembly-Pcap/test.ace",
+    input_file => Genome::Config::get('test_inputs') . "/Genome-Assembly-Pcap/test.ace",
     using_db => 1,
     db_type => "SQLite",
     db_file => $tmp->filename
@@ -27,7 +27,7 @@ push @assemblies, Genome::Model::Tools::Pcap::Ace->new(
 
 
 push @assemblies, Genome::Model::Tools::Pcap::Ace->new(
-    input_file => $ENV{GENOME_TEST_INPUTS} . "/Genome-Assembly-Pcap/test.ace",
+    input_file => Genome::Config::get('test_inputs') . "/Genome-Assembly-Pcap/test.ace",
     using_db => 1,
     db_type => "mysql"
 );	
@@ -65,7 +65,6 @@ foreach my $assembly (@assemblies) {
 }
 
 foreach my $assembly (@assemblies) {
-    #$assembly->_build_ace_index(file_name => $ENV{GENOME_TEST_INPUTS} . '/Genome-Assembly-Pcap/test.ace');
     #TODO: write tests for indexing
     ok(1, 'index built properly');
 }

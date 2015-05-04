@@ -30,7 +30,7 @@ class Genome::Wiki::Document {
              calculate => q{ Genome::Config::dev_mode() ? 'dev' : 'prod' },
         },
         wiki_server_url => {
-            calculate => qq{ '$ENV{GENOME_SYS_SERVICES_WIKI_URL}' . 'api.php' },
+            calculate => qq{ Genome::Config::get('sys_services_wiki_url') . 'api.php' },
         },
     },
 };

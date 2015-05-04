@@ -12,7 +12,7 @@ use File::Compare;
 use Data::Dumper;
 
 # Check test data directory exists
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ImportTranscriptFeature-KeggPathway';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ImportTranscriptFeature-KeggPathway';
 ok (-d $test_dir, "Test data directory exists");
 
 # Check test gene pathway file exists

@@ -89,7 +89,7 @@ sub setup {
     my $chimerascan_result_class = $parameters{chimerascan_result_class};
     my $picard_version = $parameters{picard_version};
 
-    my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/$chimerascan_version";
+    my $data_dir = Genome::Config::get('test_inputs') . "/Genome-Model-RnaSeq-DetectFusionsResult-ChimerascanResult/$chimerascan_version";
 
     my $tophat_dir = $data_dir . "/tophat_data$test_data_version";
     die "Couldn't find tophat_dir at '$tophat_dir'" unless -d $tophat_dir;

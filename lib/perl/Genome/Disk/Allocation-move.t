@@ -80,7 +80,7 @@ SKIP: {
     ok(UR::Context->commit, 'commit of dummy objects to db successful') or die;
 }
 # Create a fake owner of the allocation
-my $user = Genome::Sys::User->create(email => $ENV{GENOME_EMAIL_TEST}, name => 'Fake McFakerton', username => 'fakeguy');
+my $user = Genome::Sys::User->create(email => Genome::Config::get('email_test'), name => 'Fake McFakerton', username => 'fakeguy');
 ok($user, 'created user');
 
 # Create a dummy allocation

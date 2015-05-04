@@ -17,7 +17,7 @@ use_ok($pkg);
 my $TEST_VERSION = 2;
 
 # my $data_dir_t = Genome::Utility::Test->data_dir_ok($pkg, $TEST_VERSION);
-my $data_dir = File::Spec->join($ENV{GENOME_TEST_INPUTS}, "Genome-File-OrderedPosition", $TEST_VERSION);
+my $data_dir = File::Spec->join(Genome::Config::get('test_inputs'), "Genome-File-OrderedPosition", $TEST_VERSION);
 
 subtest "sorted file without header" => sub {
     my $file = $pkg->new(File::Spec->join($data_dir, "varscan.snp.Somatic.strandfilter"), 10_000 );

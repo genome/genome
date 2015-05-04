@@ -37,12 +37,12 @@ my %BREAKDANCER_VERSIONS = (
         max => 'BreakDancerMax.pl',
     },
     '2010_06_24' => {
-        dir => $ENV{GENOME_SW} . '/breakdancermax/breakdancer-20100624',
+        dir => Genome::Config::get('sw') . '/breakdancermax/breakdancer-20100624',
         cfg => 'perl/bam2cfg_2.pl',  #original bam2cfg.pl has problem close pipe filehandler
         max => 'cpp/breakdancer_max',
     },
     '2010_07_19' => {
-        dir => $ENV{GENOME_SW} . '/breakdancermax/breakdancer-20100719',
+        dir => Genome::Config::get('sw') . '/breakdancermax/breakdancer-20100719',
         cfg => 'perl/bam2cfg_2.pl',
         max => 'cpp/breakdancer_max',
     },

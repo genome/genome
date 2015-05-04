@@ -78,8 +78,8 @@ sub run_and_diff {
     my $class_as_dirname = $class;
     $class_as_dirname =~ s/::/-/g;
 
-    my $input_dir = $ENV{GENOME_TEST_INPUTS} . "/$class_as_dirname/$results_version/inputs";
-    my $expected_output_dir = $ENV{GENOME_TEST_INPUTS} . "/$class_as_dirname/$results_version/expected-output";
+    my $input_dir = Genome::Config::get('test_inputs') . "/$class_as_dirname/$results_version/inputs";
+    my $expected_output_dir = Genome::Config::get('test_inputs') . "/$class_as_dirname/$results_version/expected-output";
 
     my $output_dir;
     if (_should_rebuild()) {

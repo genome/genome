@@ -104,7 +104,7 @@ class Genome::Model::View::Solr::Xml {
             calculate => sub {
                 my $build = $_[0]->last_succeeded_build();
                 return 'none' if !$build;
-                return Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL}, $build->data_directory());
+                return Genome::Utility::List::join_with_single_slash(Genome::Config::get('sys_services_files_url'), $build->data_directory());
             },
         },
         display_label3 => {
@@ -119,7 +119,7 @@ class Genome::Model::View::Solr::Xml {
                 my $data_dir = $build->data_directory() || return 'none';
                 my $report_pathname = join('/', $data_dir, 'reports', 'Summary', 'report.html');
                 if (! -e $report_pathname) { return 'none'; }
-                my $summary = Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL}, $report_pathname);
+                my $summary = Genome::Utility::List::join_with_single_slash(Genome::Config::get('sys_services_files_url'), $report_pathname);
             },
         },
         default_aspects => {

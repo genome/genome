@@ -8,7 +8,7 @@ use Test::More;
 require File::Compare;
 
 my $module = 'Genome-Model-Tools-Assembly-Ace';
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/$module";
+my $data_dir = Genome::Config::get('test_inputs') . "/$module";
 
 ok(-d $data_dir, "Found test data dir");
 #create test temp dir

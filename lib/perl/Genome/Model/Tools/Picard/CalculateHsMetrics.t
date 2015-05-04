@@ -12,7 +12,7 @@ my $pkg = 'Genome::Model::Tools::Picard::CalculateHsMetrics';
 
 use_ok($pkg);
 
-my $data_dir = File::Spec->catfile($ENV{GENOME_TEST_INPUTS}, 'Genome-Model-Tools-Picard-CalculateHsMetrics');
+my $data_dir = File::Spec->catfile(Genome::Config::get('test_inputs'), 'Genome-Model-Tools-Picard-CalculateHsMetrics');
 my $bam_file = File::Spec->catfile($data_dir, 'coordsort.bam');
 my $expected_file = File::Spec->catfile($data_dir, 'expected.txt');
 my $targets_file = File::Spec->catfile($data_dir, 'targets.txt');

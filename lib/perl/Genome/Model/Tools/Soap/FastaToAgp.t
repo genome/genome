@@ -11,7 +11,7 @@ use_ok ('Genome::Model::Tools::Soap::FastaToAgp') or die;
 
 #check test data dir and files
 my $version = 'v1';
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Soap/FastaToAgp_'.$version;
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Soap/FastaToAgp_'.$version;
 ok (-d $data_dir, "Data dir exists") or die;
 
 #check test input/output files

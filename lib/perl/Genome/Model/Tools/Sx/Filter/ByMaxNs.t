@@ -17,7 +17,7 @@ ok(!Genome::Model::Tools::Sx::Filter::ByMaxNs->execute(maximum => 'all'), 'execu
 ok(!Genome::Model::Tools::Sx::Filter::ByMaxNs->execute(maximum => -1), 'execute w/ maximum less than 0');
 
 # Files
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/FilterByMaxNs';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/FilterByMaxNs';
 my $in_fwd_fastq = $dir.'/in.fwd.fastq';
 ok(-s $in_fwd_fastq, 'in fastq');
 my $in_rev_fastq = $dir.'/in.rev.fastq';

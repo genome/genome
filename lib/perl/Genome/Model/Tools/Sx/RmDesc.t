@@ -12,7 +12,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::Sx::RmDesc') or die;
 
 # Files
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx';
 my $example_fastq = $dir.'/rm_desc.example.fastq';
 ok(-s $example_fastq, 'example fastq');
 my $in_fastq = $dir.'/rm_desc.in.fastq';

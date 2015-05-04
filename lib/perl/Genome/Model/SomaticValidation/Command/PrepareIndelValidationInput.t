@@ -12,7 +12,7 @@ use above 'Genome';
 use Genome::Utility::Test qw(compare_ok);
 use Test::More tests => 21;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-SomaticValidation-Command-PrepareIndelValidationInput';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-SomaticValidation-Command-PrepareIndelValidationInput';
 my $test_input_dir = "$test_dir/input.v1";
 my $detected_variants = "$test_input_dir/indels.hq.bed";
 my $variant_list = "$test_input_dir/variant_list.indels.hq.bed";
@@ -29,7 +29,7 @@ test_build($expected_dvonly_dir, 'dv');
 sub test_build {
     my $expected_dir = shift;
     my $test_mode = shift;
-    my $temp_build_data_dir = File::Temp::tempdir('t_SomaticValidation_Build-XXXXX', DIR => "$ENV{GENOME_TEST_TEMP}", CLEANUP => 1);
+    my $temp_build_data_dir = File::Temp::tempdir('t_SomaticValidation_Build-XXXXX', TMPDIR => 1, CLEANUP => 1);
     my $build_variants_dir = "$temp_build_data_dir/variants";
     my $build_indels = "$build_variants_dir/indels.hq.bed";
     Genome::Sys->create_directory($build_variants_dir);

@@ -11,7 +11,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::PooledBac::MapContigsToAssembly') or die;
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-PooledBac-MapContigsToAssembly/v1';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-PooledBac-MapContigsToAssembly/v1';
 ok(-d $dir, 'test dir exists');
 my $example_contig_map = $dir.'/CONTIG_MAP';
 ok(-s $example_contig_map, 'example contig map exists');

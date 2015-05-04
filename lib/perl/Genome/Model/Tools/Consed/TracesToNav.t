@@ -12,7 +12,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::Consed::TracesToNav') or die;
 
 # Files
-my $dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Consed-TracesToNav",
+my $dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Consed-TracesToNav",
 my $file_base = '10_126008345_126010576';
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 my $refseq = $tmpdir."/$file_base.c1.refseq.fasta";

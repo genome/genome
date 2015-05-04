@@ -17,7 +17,7 @@ BEGIN {
 }
 
 my $tmp_dir = File::Temp::tempdir('Genome-Model-Tools-Blat-Parallel-XXXXX', CLEANUP => 1, TMPDIR => 1);
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Blat-Parallel';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Blat-Parallel';
 
 my @query_files = (
     $data_dir .'/s_7_1_sequence.fa',

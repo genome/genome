@@ -38,7 +38,7 @@ sub annotation_headers {
 }
 
 sub get_test_data {
-    my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Transcript-VariantAnnotator';
+    my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Transcript-VariantAnnotator';
     ok (-e $test_dir, "test data directory exists at $test_dir");
 
     my $test_variants_file = $test_dir . "/variants.tsv";

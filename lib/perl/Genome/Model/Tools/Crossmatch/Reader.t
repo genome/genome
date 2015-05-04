@@ -10,7 +10,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Crossmatch::Reader') or die;
 
-my $file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Crossmatch/reader.crossmatch';
+my $file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Crossmatch/reader.crossmatch';
 my $reader = Genome::Model::Tools::Crossmatch::Reader->create(input => $file);
 ok($reader, 'create reader');
 my $aln_cnt = 0;

@@ -64,7 +64,7 @@ class Genome::Model::GenePrediction::Command::Pap::KEGGScan::RunKeggScan {
         },
         blast_lsf_queue => {
             is => 'Text',
-            default => $ENV{GENOME_LSF_QUEUE_SHORT},
+            default => Genome::Config::get('lsf_queue_short'),
             doc => 'Queue in which LSF jobs should be scheduled',
         },
         blast_lsf_resource => {

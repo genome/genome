@@ -28,7 +28,7 @@ my $sr_class = $cmd_class.'Result';
 use_ok($cmd_class);
 use_ok($sr_class);
 
-my $test_data_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Relationship-SequencingQc";
+my $test_data_directory = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Relationship-SequencingQc";
 my $expected_directory = $test_data_directory . "/expected.v1";
 my $test_output_base = File::Temp::tempdir('Genome-Model-Tools-Relationship-SequencingQc-XXXXX', CLEANUP => 1, TMPDIR => 1);
 

@@ -254,7 +254,7 @@ sub execute {
     $fh->print( $xslt->{content} );
     $fh->close;
 
-    my $link = Genome::Utility::List::join_with_single_slash($ENV{GENOME_SYS_SERVICES_FILES_URL}, $report_file);
+    my $link = Genome::Utility::List::join_with_single_slash(Genome::Config::get('sys_services_files_url'), $report_file);
     send_email_report(
         to => undef,  # don't actually send the email anymore
         subject => 'Genome Model '. $self->model->name .' Reference Coverage Report for Build '. $self->build->id,

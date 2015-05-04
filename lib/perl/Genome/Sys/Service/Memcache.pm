@@ -12,7 +12,7 @@ class Genome::Sys::Service::Memcache {
     my $host;
     sub host {
         unless (defined $host) {
-            $host = $ENV{GENOME_SYS_SERVICES_MEMCACHE};
+            $host = Genome::Config::get('sys_services_memcache');
             $host =~ s/:\w+$//;  # Strip out port designation
         }
         return $host;

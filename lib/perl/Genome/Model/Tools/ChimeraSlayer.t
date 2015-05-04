@@ -15,7 +15,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
 use_ok( 'Genome::Model::Tools::ChimeraSlayer' );
 
 my $version = 1;
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ChimeraSlayer/v'.$version;
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ChimeraSlayer/v'.$version;
 ok( -d $test_data_dir, 'Test data dir' );
 
 #check test files

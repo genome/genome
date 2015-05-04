@@ -24,7 +24,7 @@ else {
 
 use_ok('Genome::Model::Tools::DetectVariants2::Filter::FalsePositiveVcf');
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-FalsePositiveVcf';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Filter-FalsePositiveVcf';
 
 # FIXME currently snvs.vcf.gz has been copied into the detector dir even though that is a lie.
 
@@ -70,7 +70,7 @@ for my $result (@test_alignment_results) {
 }
 
 my $result_allocation = Genome::Disk::Allocation->create(
-    disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
+    disk_group_name => Genome::Config::get('disk_group_models'),
     kilobytes_requested => 1,
     allocation_path => 'this_is_a_test',
     owner_id => $detector_result->id,

@@ -10,7 +10,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::Dacc::Upload') or die;
 
 # setup
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Dacc';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Dacc';
 my @files_to_upload = map { $dir.'/'.$_ } (qw/ a b /);
 my %files;
 my $expected_cmd;
@@ -41,7 +41,7 @@ $up->dump_status_messages(1);
 ok(!$up->execute, 'execute: failed as expected');
 
 diag('Success: launch to LSF');
-$expected_cmd = "bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -u " . Genome::Config->user_email . " -R 'rusage[internet_upload_mbps=100,aspera_upload_mbps=100]' gmt dacc upload /DACC_DIR/ $dir/a $dir/b";
+$expected_cmd = "bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -u " . Genome::Config->user_email . " -R 'rusage[internet_upload_mbps=100,aspera_upload_mbps=100]' gmt dacc upload /DACC_DIR/ $dir/a $dir/b";
 $up = Genome::Model::Tools::Dacc::Upload->create(
     dacc_directory => 'DACC_DIR',
     files => \@files_to_upload,

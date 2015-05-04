@@ -48,9 +48,6 @@ genome model export metadata id=2891454740 > 2891454740.dat
 genome model export metadata id=2891454740 --refdata > 2891454740.refdata.dat
 
 genome model export metadata "name like myproject%" > myproject.dat
-
-# untested
-GENOME_SYS_ID=gms100 genome model export data "name like myproject%" | GENOME_SYS_ID=gms200 genome model import data --update -
 EOS
 }
 
@@ -104,7 +101,7 @@ sub execute {
     # This is outside the repo intentionally.
     # This translates local values to those which are distributable outside of TGI.
 
-    my $sanitize_file = $ENV{GENOME_HOME} . "/export/sanitize.csv";
+    my $sanitize_file = Genome::Config::get('home') . "/export/sanitize.csv";
     unless (-e $sanitize_file) {
         die "Expected external file $sanitize_file to exist to sanitize data.  Disable this if you are sure you can dump data unsanitized.";
     }
@@ -137,7 +134,7 @@ sub execute {
 
     # Get the disk groups
 
-    my @group_names = ($ENV{GENOME_DISK_GROUP_ALIGNMENTS}, $ENV{GENOME_DISK_GROUP_DEV}, $ENV{GENOME_DISK_GROUP_MODELS}, $ENV{GENOME_DISK_GROUP_REFERENCES});
+    my @group_names = (Genome::Config::get('disk_group_alignments'), Genome::Config::get('disk_group_dev'), Genome::Config::get('disk_group_models'), Genome::Config::get('disk_group_references'));
     my @groups = Genome::Disk::Group->get(group_name => \@group_names);
     for my $group (@groups) {
         $self->add_to_dump_queue($group, \%queue, \%exclude, \%sanitize_map);

@@ -104,7 +104,7 @@ sub execute {
         min_coverage => $self->min_coverage,
         ped_file => $self->ped_file,
         parent_relationship_cutoff => $self->parent_relationship_cutoff,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
         users => $self->result_users,
     );
     Genome::Sys->symlink_directory($software_result->output_dir, $output_dir);
@@ -549,7 +549,7 @@ sub run_beagle {
     my $output_dir = $self->output_dir;
 
     #./beagle.sh  fastibd=true unphased=cleft_lip/mpileup/bgl_from_vcf.test_input out=cleft_lip/mpileup/cleft_lip.out missing=?
-    my $cmd = "java -Xmx14000m -jar $ENV{GENOME_SW}/beagle/installed/beagle.jar fastibd=true unphased=$beagle_input out=$output_dir/beagle missing=?";
+    my $cmd = "java -Xmx14000m -jar " . Genome::Config::get('sw') . "/beagle/installed/beagle.jar fastibd=true unphased=$beagle_input out=$output_dir/beagle missing=?";
     my $rv = Genome::Sys->shellcmd(cmd=>$cmd, input_files=>[$beagle_input]);
     if($rv != 1) {
         $self->error_message("Error running Beagle\n");

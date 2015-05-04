@@ -12,7 +12,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::Sx::Metrics::Basic') or die;
 
 # Dir/files
-my $testdir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/Metrics/Basic/v1';
+my $testdir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/Metrics/Basic/v1';
 my $example_file = $testdir.'/metrics.txt';
 my $legacy_file = $testdir.'/metrics.legacy';
 

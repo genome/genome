@@ -24,7 +24,7 @@ class Genome::InstrumentData::Command::Import::HmpSraProcessNew {
 	ascp_pw => { is_optional => 0, doc => 'DACC FTP password for aspera transfer', },
 	srs_sample_id => { is_optional => 0, doc => 'SRS sample id to extract ... ', },
 	srr_accessions => { is_optional => 0, doc => 'space separated list of SRR accession ids for the raw SRA data downloads to use.', },
-	picard_dir => { is_optional => 1, default_value => "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.27", doc => 'full path to directory containing Picard jar files (note: This path must include the updated EstimateLibraryComplexity that handles redundancy removal)', },
+	picard_dir => { is_optional => 1, default_value => Genome::Config::get('sw_legacy_java') . "/samtools/picard-tools-1.27", doc => 'full path to directory containing Picard jar files (note: This path must include the updated EstimateLibraryComplexity that handles redundancy removal)', },
 	species_name => { is_optional => 0, doc => 'species name to include in various imports.',},
 	_working_dir => { is_optional=>1, is_transient=>1, }
     ],
@@ -263,7 +263,7 @@ sub execute {
     my $pe_read_size_in_kb = $fwd_read_size[0] + $rev_read_size[0];
     my $pe_allocation_request_in_kb = $pe_read_size_in_kb * 1.05;
     my $pe_alloc = Genome::Disk::Allocation->create(
-	disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
+	disk_group_name     => Genome::Config::get('disk_group_alignments'),
 	allocation_path     => 'instrument_data/imported/'.$pe_inst_data->id,
 	kilobytes_requested => $pe_allocation_request_in_kb,
 	owner_class_name    => $pe_inst_data->class,
@@ -335,7 +335,7 @@ sub execute {
     my @singleton_read_size = split(/\s+/,$singleton_read_size);
     my $sing_allocation_request_in_kb = $singleton_read_size[0] * 1.05;
     my $sing_alloc = Genome::Disk::Allocation->create(
-	disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
+	disk_group_name     => Genome::Config::get('disk_group_alignments'),
 	allocation_path     => 'instrument_data/imported/'.$sing_inst_data->id,
 	kilobytes_requested => $sing_allocation_request_in_kb,
 	owner_class_name    => $sing_inst_data->class,

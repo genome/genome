@@ -7,7 +7,7 @@ use above "Genome";
 use Genome::Model::Tools::Sam::Merge;
 use Test::More tests => 5;
 
-my $input = $ENV{GENOME_TEST_INPUTS} . "/Genome-InstrumentData-Alignment/test.sam";
+my $input = Genome::Config::get('test_inputs') . "/Genome-InstrumentData-Alignment/test.sam";
 
 # step 1: test 1 
 my $tmp_dir = File::Temp->newdir( "AddReadGroupTag_XXXXX",

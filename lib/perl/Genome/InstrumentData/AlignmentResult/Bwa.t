@@ -38,7 +38,7 @@ my $instrument_data = Genome::InstrumentData::Solexa->create(
     run_name => '110101_TEST',
     subset_name => 4,
     run_type => 'Paired',
-    bam_path => $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Align-Bwa/input_rg.bam',
+    bam_path => Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Align-Bwa/input_rg.bam',
      # expected outputs are here, too
 );
 ok($instrument_data, 'create instrument data: '.$instrument_data->id);

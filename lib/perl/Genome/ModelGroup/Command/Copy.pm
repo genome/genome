@@ -314,7 +314,7 @@ $DB::single = 1;
         $to->add_model_bridge(model_id => $to_model->id);
     }
    
-    my $monitor_string = "Monitor this group at: " . $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL};
+    my $monitor_string = "Monitor this group at: " . Genome::Config::get('sys_services_web_view_url');
     $monitor_string =~ s:/*$:/:; # make sure exactly one trailing slash exists
     $monitor_string .= "genome/model-group/status.html?id=" . $to->id;
     $self->status_message($monitor_string);

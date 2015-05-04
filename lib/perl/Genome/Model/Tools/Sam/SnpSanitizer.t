@@ -13,7 +13,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::Sam::SnpSanitizer');
 }
 
-my $root_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam/SnpSanitizer';
+my $root_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam/SnpSanitizer';
 
 my $tmp_dir  = File::Temp::tempdir(
     "SnpSanitizer_XXXXXX", 

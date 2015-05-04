@@ -54,7 +54,7 @@ ok($wrapper->execute, 'wrapper executed');
 my $relative_yaml_path = File::Spec->join(qw(test_model_2 resource.yaml));
 my $yaml = File::Spec->join($output_dir, $relative_yaml_path);
 my $expected_yaml = File::Spec->join($expected_dir, $relative_yaml_path);
-my $GENOME_TEST_INPUTS = realpath($ENV{GENOME_TEST_INPUTS});
+my $GENOME_TEST_INPUTS = realpath(Genome::Config::get('test_inputs'));
 my %compare_args = (
     replace => [
         [ qr(\Q$GENOME_TEST_INPUTS\E) => 'GENOME_TEST_INPUTS' ],

@@ -9,7 +9,7 @@ use Data::Dumper 'Dumper';
 use Test::More;
 
 sub base_test_dir {
-    return $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/DeNovoAssembly';
+    return Genome::Config::get('test_inputs') . '/Genome-Model/DeNovoAssembly';
 }
 
 my %entities;

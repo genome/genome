@@ -11,7 +11,7 @@ require File::Compare;
 use_ok( 'Genome::Model::Tools::Sx::Trim::EulerEc' ) or die;
 
 #input files
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/';
 my $input_file = $test_dir.'/euler.input.fastq';
 ok( -s $input_file, "Input file exists" );
 

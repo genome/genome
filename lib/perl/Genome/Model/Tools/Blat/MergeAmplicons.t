@@ -13,7 +13,7 @@ BEGIN {
 
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Blat-MergeAmplicons';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Blat-MergeAmplicons';
 ok(-d $test_data_dir,'test data dir exists as directory');
 
 my @same_files = glob($test_data_dir .'/same*.txt');

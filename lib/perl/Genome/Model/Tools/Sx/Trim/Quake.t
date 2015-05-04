@@ -10,7 +10,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Sx::Trim::Quake') or die;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/';
 my $input = $test_dir.'/reader_writer.collated.fastq';
 my $tmp_dir = Genome::Sys->base_temp_directory;
 my $output = $tmp_dir.'/output.fastq';

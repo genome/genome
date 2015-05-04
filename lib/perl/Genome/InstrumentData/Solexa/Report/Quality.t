@@ -13,7 +13,7 @@ use Data::Dumper 'Dumper';
 
 use_ok('Genome::InstrumentData::Solexa::Report::Quality') or die;
 
-my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Solexa-Report-Quality/';
+my $base_dir = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Solexa-Report-Quality/';
 ok( -d $base_dir, "Base dir exists" ) or die;
 
 my $bam = $base_dir.'/test_run_name.sanger.bam';

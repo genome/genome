@@ -20,11 +20,11 @@ class Genome::Report::Command::Email {
     has_optional => [
         from => {
             is => 'Text',
-            doc => "Sender of the email.  Defaults to YOU\@$ENV{GENOME_EMAIL_DOMAIN}.",
+            doc => "Sender of the email.  Defaults to YOU\@" . Genome::Config::get('email_domain') . ".",
         },
         replyto => {
             is => 'Text',
-            doc => "Reply to for email.  Defaults to YOU\@$ENV{GENOME_EMAIL_DOMAIN}.",
+            doc => "Reply to for email.  Defaults to YOU\@" . Genome::Config::get('email_domain') . ".",
         },
     ],
 };

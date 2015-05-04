@@ -33,7 +33,7 @@ EOS
 }
 
 my %VERSIONS = (
-#    '2.0.1'   => $ENV{GENOME_SW} . '/shrimp2/SHRiMP_2_0_1/bin/gmapper',
+#    '2.0.1'   => Genome::Config::get('sw') . '/shrimp2/SHRiMP_2_0_1/bin/gmapper',
     '2.0.1'   => '/gscmnt/sata820/info/medseq/alignment-test/shrimp2/SHRiMP_2_0_1/bin/gmapper',
     'shrimp2' => 'shrimp2',
 );

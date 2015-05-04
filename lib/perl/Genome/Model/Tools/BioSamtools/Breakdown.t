@@ -15,7 +15,7 @@ if ($] < 5.010) {
 }
 plan tests => 5;
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-BioSamtools/Breakdown';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-BioSamtools/Breakdown';
 my $bam_file = $test_data_dir .'/breakdown.bam';
 
 my $expected_tsv = $test_data_dir .'/breakdown-64.tsv';

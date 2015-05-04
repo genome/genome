@@ -17,7 +17,7 @@ ok(!Genome::Model::Tools::Sx::Filter::ByMinNonNs->execute(minimum => 'all'), 'ex
 ok(!Genome::Model::Tools::Sx::Filter::ByMinNonNs->execute(minimum => -1), 'execute w/ minimum less than 0');
 
 # Files
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/FilterByMinNonNs';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/FilterByMinNonNs';
 my $in_fwd_fastq = $dir.'/in.fwd.fastq';
 ok(-s $in_fwd_fastq, 'in fastq');
 my $in_rev_fastq = $dir.'/in.rev.fastq';

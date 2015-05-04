@@ -88,7 +88,7 @@ my $allocation_path = tempdir(
     UNLINK => 1,
 );
 
-my $user = Genome::Sys::User->create(email => $ENV{GENOME_EMAIL_TEST}, name => 'Fake McFakerton', username => 'fakeguy');
+my $user = Genome::Sys::User->create(email => Genome::Config::get('email_test'), name => 'Fake McFakerton', username => 'fakeguy');
 ok($user, 'created user');
 
 my %params = (

@@ -25,7 +25,7 @@ BEGIN {
 my $pkg = 'Genome::Model::PhenotypeCorrelation::Command::ParallelVep';
 use_ok($pkg);
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-PhenotypeCorrelation-testdata/CaseControl";
+my $test_data_dir = Genome::Config::get('test_inputs') . "/Genome-Model-PhenotypeCorrelation-testdata/CaseControl";
 
 my $tmpdir = tempdir(
     't-ParallelVep-XXXXX',
@@ -42,7 +42,7 @@ for my $dir ($logdir, $workdir) {
 
 # TEST!
 my $vcf_file = "$test_data_dir/multisample.vcf.gz";
-my $ensembl_annotation_build_id = $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD};
+my $ensembl_annotation_build_id = Genome::Config::get('db_ensembl_default_imported_annotation_build');
 my $annotation_build = Genome::Model::Build->get($ensembl_annotation_build_id);
 
 my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(

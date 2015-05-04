@@ -18,7 +18,7 @@ use_ok('Genome::Model::Tools::Consed::AceToOut')
     or die;
 
 #< SETUP: 4 TESTS >#
-my $DIR = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Consed-AceToOut';
+my $DIR = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Consed-AceToOut';
 ok(-d $DIR, "Test dir ($DIR) exists");
 my $ACEFILE = $DIR.'/M_BB0392D19.ace';
 ok(-s $ACEFILE, "Acefile ($ACEFILE) exists");

@@ -14,7 +14,7 @@ plan tests => 4;
 
 use_ok('Genome::Model::Tools::BioSamtools::ProgressionInstance');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-RefCov/Progression';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-RefCov/Progression';
 my @bam_files = glob($data_dir .'/*.bam');
 my $target_query_file = $data_dir .'/BACKBONE.tsv';
 my $output_directory = Genome::Sys->create_temp_directory();

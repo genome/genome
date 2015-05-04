@@ -7,7 +7,7 @@ use above "Genome";
 use Test::More tests => 12;
 
 use_ok('Genome::Model::Tools::Annotate::LookupVariants');
-my $variant_file = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Annotate-LookupVariants/snp.list.in";
+my $variant_file = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Annotate-LookupVariants/snp.list.in";
 ok (-e $variant_file);
 
 my $tmpdir = File::Temp::tempdir(
@@ -19,7 +19,7 @@ my $tmpdir = File::Temp::tempdir(
 my $dbsnp_path = "/gscmnt/sata835/info/medseq/model_data/2857166586/ImportedVariations/tmp";
 my $known_out = "$tmpdir/Genome-Model-Tools-Annotate-LookupVariants-known-only.out";
 if ($known_out && -e $known_out) {`rm -f $known_out`;}
-my $exp_known_out = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Annotate-LookupVariants/expected.known-only.out";
+my $exp_known_out = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Annotate-LookupVariants/expected.known-only.out";
 ok (-e $exp_known_out);
 
 my $known = Genome::Model::Tools::Annotate::LookupVariants->create(report_mode => "known-only", variant_file => "$variant_file", output_file => "$tmpdir/Genome-Model-Tools-Annotate-LookupVariants-known-only.out", filter_out_submitters => "SNP500CANCER,OMIMSNP,CANCER-GENOME,CGAP-GAI,LCEISEN,ICRCG", require_allele_match => 1, dbSNP_path => $dbsnp_path);
@@ -35,7 +35,7 @@ ok($knowndiff eq '', "known output as expected");
 
 my $novel_out ="$tmpdir/Genome-Model-Tools-Annotate-LookupVariants-novel-only.out";
 if ($novel_out && -e $novel_out) {`rm -f $novel_out`;}
-my $exp_novel_out = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Annotate-LookupVariants/expected.novel-only.out";
+my $exp_novel_out = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Annotate-LookupVariants/expected.novel-only.out";
 ok (-e $exp_novel_out);
 
 

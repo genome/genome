@@ -46,7 +46,7 @@ sub _construct_sx_command_parts {
         my %params = (
             instrument_data_id => $id->id,
             read_processor => $self->read_processor,
-            test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+            test_name => (Genome::Config::get('software_result_test_name') || undef),
             users => $result_users,
         );
         my @output_file_config = $self->output_file_config;

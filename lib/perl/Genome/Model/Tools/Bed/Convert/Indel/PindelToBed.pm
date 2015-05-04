@@ -44,7 +44,7 @@ class Genome::Model::Tools::Bed::Convert::Indel::PindelToBed {
             default_value => 'rusage[mem=4000] span[hosts=1] -M 4000000',
         },
         lsf_queue => {
-            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+            default_value => Genome::Config::get('lsf_queue_build_worker'),
         }, 
     ],
 };

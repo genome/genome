@@ -81,7 +81,7 @@ sub MAQ_Ace {
   my $ace_body_qa = $ace_body_qa_fh->filename();
   my $num_reads = 0;
 	
-  my ($maq_mapview) = $ENV{GENOME_SW} . "/maq/maq-0.5.1_i686-linux/maq mapview $maq_file";
+  my ($maq_mapview) = Genome::Config::get('sw') . "/maq/maq-0.5.1_i686-linux/maq mapview $maq_file";
   open(MAQVIEW,"$maq_mapview |") or return 0; # $logger->fatal("Unable to run command: $maq_mapview");
   my ($bn) = basename($maq_file) =~ /(\S+)\.map/;
   my $rec_id = 0;

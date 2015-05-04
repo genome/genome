@@ -21,7 +21,7 @@ else {
 
 use_ok('Genome::Model::Tools::Somatic::FilterFalsePositives');
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Somatic-FilterFalsePositives';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Somatic-FilterFalsePositives';
 
 my $bam_file = join('/', $test_data_dir, 'tumor.tiny.bam');
 my $variant_file = join('/', $test_data_dir, 'varscan.snp.test');

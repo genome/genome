@@ -12,7 +12,7 @@ class Genome::InstrumentData::Gatk::Test {
     has_constant => [
         test_data_dir => {
             is_constant => 1,
-            calculate => q| return $ENV{GENOME_TEST_INPUTS}.'/Genome-InstrumentData-Gatk'; |,
+            calculate => q| return Genome::Config::get('test_inputs').'/Genome-InstrumentData-Gatk'; |,
         },
         reference_build => {
             is_constant => 1,

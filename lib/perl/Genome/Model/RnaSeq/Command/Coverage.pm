@@ -168,7 +168,7 @@ sub params_for_result {
         annotation_file_basenames => $annotation_file_basenames,
         merge_annotation_features => $merge_annotation_features,
         mask_reference_transcripts => $mask_reference_transcripts,
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        test_name => (Genome::Config::get('software_result_test_name') || undef),
         users => $result_users,
     );
 }

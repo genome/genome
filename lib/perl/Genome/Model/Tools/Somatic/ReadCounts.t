@@ -21,7 +21,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::Somatic::ReadCounts');    
 };
 
-my $test_input_dir          = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Somatic-ReadCounts/';
+my $test_input_dir          = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Somatic-ReadCounts/';
 my $tumor_bam               = $test_input_dir . 'tumor.tiny.bam';
 my $normal_bam              = $test_input_dir . 'normal.tiny.bam';
 my $sites_file              = $test_input_dir . 'sites.in';

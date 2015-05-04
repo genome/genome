@@ -370,7 +370,7 @@ sub prepare_reference_sequence_index {
         reference_build_id => $refindex->reference_build_id,
         aligner_name => 'bowtie',
         aligner_version => $bowtie_version,
-        test_name => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME},
+        test_name => Genome::Config::get('aligner_index_test_name'),
         users => $refindex->_user_data_for_nested_results,
     );
 

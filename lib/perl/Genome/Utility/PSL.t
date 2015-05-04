@@ -12,7 +12,7 @@ use Test::More tests => 6;
 use Genome::Utility::PSL::Reader;
 use Genome::Utility::PSL::Writer;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-PSL';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Utility-PSL';
 my $file = "$test_dir/test.psl";
 
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);

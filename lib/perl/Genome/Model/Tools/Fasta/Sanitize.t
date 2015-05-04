@@ -20,7 +20,7 @@ use_ok ('Genome::Model::Tools::Fasta::Sanitize')
     or die;
 
 ##< SETUP: 3 TESTS >#
-my $DIR = Cwd::abs_path($ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta-Sanitize');
+my $DIR = Cwd::abs_path(Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fasta-Sanitize');
 ok(-d $DIR, "Test dir ($DIR) exists");
 my $DIRTY_FASTA = $DIR.'/dirty.fasta';
 ok(-f $DIRTY_FASTA, "Dirty fasta ($DIRTY_FASTA) exists");

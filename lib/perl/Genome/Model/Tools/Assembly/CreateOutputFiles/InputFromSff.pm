@@ -53,7 +53,7 @@ sub execute {
     }
 
     #figure out what version of sffinfo to use
-    my $bin_path = ($self->bin_path) ? $self->bin_path : $ENV{GENOME_SW} . '/454/DataProcessing-2.6';
+    my $bin_path = ($self->bin_path) ? $self->bin_path : Genome::Config::get('sw') . '/454/DataProcessing-2.6';
     my $sff_info = $bin_path.'/bin/sffinfo';
     unless (-s $sff_info) {
 	$self->error_message("Failed to find sffinfo in bin: ".$bin_path.'/bin');

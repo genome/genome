@@ -28,11 +28,11 @@ EOS
 }
 
 my %VERSIONS = (
-    '3.15'    => $ENV{GENOME_SW} . '/mummer/MUMmer3.15',
-    '3.20'    => $ENV{GENOME_SW} . '/mummer/MUMmer3.20',
-    '3.21'    => $ENV{GENOME_SW} . '/mummer/MUMmer3.21',
-    '3.22'    => $ENV{GENOME_SW} . '/mummer/MUMmer3.22',
-    '3.22-64' => $ENV{GENOME_SW} . '/mummer/MUMmer3.22-64',
+    '3.15'    => Genome::Config::get('sw') . '/mummer/MUMmer3.15',
+    '3.20'    => Genome::Config::get('sw') . '/mummer/MUMmer3.20',
+    '3.21'    => Genome::Config::get('sw') . '/mummer/MUMmer3.21',
+    '3.22'    => Genome::Config::get('sw') . '/mummer/MUMmer3.22',
+    '3.22-64' => Genome::Config::get('sw') . '/mummer/MUMmer3.22-64',
 );
 
 sub path_for_version {

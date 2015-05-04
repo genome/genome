@@ -17,7 +17,7 @@ ok(scalar(Genome::Model::Tools::Sx::Trim::Remove->create(length => 'all')->__err
 ok(scalar(Genome::Model::Tools::Sx::Trim::Remove->create(length => 0)->__errors__), 'Create w/ length => 0');
 
 # Files
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx';
 my $in_fastq = $dir.'/trimmer.input.fastq';
 ok(-s $in_fastq, 'in fastq');
 my $example_fastq = $dir.'/trimmer.remove.example.fastq';

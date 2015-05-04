@@ -21,7 +21,7 @@ use Data::Dumper;
 use_ok('Genome::Model::ClinSeq::Command::GetVariantSources') or die;
 
 #Define the test where expected results are stored
-my $expected_output_dir = $ENV{"GENOME_TEST_INPUTS"} .
+my $expected_output_dir = Genome::Config::get('test_inputs') .
   "/Genome-Model-ClinSeq-Command-GetVariantSources/2014-08-09/";
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 

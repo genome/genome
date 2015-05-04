@@ -19,7 +19,7 @@ my $factory = Genome::Utility::MetagenomicClassifier::PopulationCompositionFacto
 ok($factory, 'Got factory instance');
 my $composition = $factory->get_composition(
     classifier => $classifier,
-    fasta_file => $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-MetagenomicClassifier/U_PR-JP_TS1_2PCA.fasta',
+    fasta_file => Genome::Config::get('test_inputs') . '/Genome-Utility-MetagenomicClassifier/U_PR-JP_TS1_2PCA.fasta',
 );
 ok($composition, 'Got composition from factory');
 isa_ok($composition, 'Genome::Utility::MetagenomicClassifier::PopulationComposition');

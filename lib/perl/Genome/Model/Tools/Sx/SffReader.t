@@ -21,7 +21,7 @@ my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 ok(-d $tmpdir, 'Created temp dir');
 my $fastq = $tmpdir.'/out.fastq';
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/';
 my $sff = $dir.'/reader.sff';
 ok(-s $sff, 'sff exists') or die;
 my $example_fastq = $dir.'/reader.sff.fastq';

@@ -25,7 +25,7 @@ else {
 use_ok( 'Genome::Model::Tools::DetectVariants2::Filter::NovoRealign');
 
 my $file_name = 'svs.hq';
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-NovoRealign/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Filter-NovoRealign/';
 my $normal_bam  = $test_input_dir . 'chr16_17.normal.bam';
 my $tumor_bam   = $test_input_dir . 'chr16_17.tumor.bam';
 my $sv_file     = $test_input_dir . $file_name;

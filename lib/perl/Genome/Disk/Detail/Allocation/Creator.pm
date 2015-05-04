@@ -68,14 +68,14 @@ sub verify_no_child_allocations {
 }
 
 sub wait_for_database_pause {
-    if ($ENV{GENOME_DB_PAUSE} and -e $ENV{GENOME_DB_PAUSE}) {
+    if (Genome::Config::get('db_pause') and -e Genome::Config::get('db_pause')) {
         print "Database updating has been paused; not going to attempt "
             . "to allocate disk until the pause is released. "
             . "Please stand by...\n";
 
         while (1) {
             sleep 30;
-            last unless -e $ENV{GENOME_DB_PAUSE};
+            last unless -e Genome::Config::get('db_pause');
         }
 
         print "Database updating has been resumed, continuing allocation!\n";

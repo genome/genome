@@ -27,11 +27,11 @@ my $refbuild_id = 106942997;
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
 ok($ref_seq_build, 'GRCh37-lite-build37 reference sequence build') or die;
 
-my $tumor =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Mutect/tiny.tumor.bam";
-my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Mutect/tiny.normal.bam";
+my $tumor =  Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Mutect/tiny.tumor.bam";
+my $normal = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Mutect/tiny.normal.bam";
 
 #Define path to a custom reference sequence build dir
-my $custom_reference_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Mutect/custom_reference";
+my $custom_reference_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Mutect/custom_reference";
 ok(-e $custom_reference_dir, "Found the custom reference dir: $custom_reference_dir");
 
 #Use small reference sequence build by setting up a custom reference genome model

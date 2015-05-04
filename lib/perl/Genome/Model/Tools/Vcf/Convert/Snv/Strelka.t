@@ -14,7 +14,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Vcf::Convert::Snv::Strelka') or die;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Convert-Snv-Strelka";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Vcf-Convert-Snv-Strelka";
 my $input_file    = $test_dir . '/snvs.hq';
 my $expected_file = $test_dir . '/expected.v4/snvs.vcf.gz';
 my $output_file   = Genome::Sys->create_temp_file_path;

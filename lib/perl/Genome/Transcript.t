@@ -10,7 +10,7 @@ use Test::More skip_all => 'out of date, need to update without using models';
 my $build    = Genome::Model::ImportedAnnotation->get(name => 'NCBI-human.combined-annotation')->build_by_version(0);
 my $iterator = $build->transcript_iterator;
 
-my $storable_data_file = ($ENV{GENOME_TEST_INPUTS} . '/Genome-Transcript/annot-var-5.stor');
+my $storable_data_file = (Genome::Config::get('test_inputs') . '/Genome-Transcript/annot-var-5.stor');
 
 my $sd = retrieve("$storable_data_file");
 my %data;

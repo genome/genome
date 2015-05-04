@@ -54,7 +54,7 @@ sub resolve_accumulated_alignments_path {
     unless ($allocation) {
 
         $allocation = Genome::Disk::Allocation->allocate(
-                                                                  disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
+                                                                  disk_group_name => Genome::Config::get('disk_group_models'),
                                                                   allocation_path => $allocation_path,
                                                                   kilobytes_requested => $kb_needed,
                                                                   owner_class_name => $self->class,

@@ -15,7 +15,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::Sx::Rename') or die;
 
 # Files
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx';
 my $in_fastq = $dir.'/rename.in.fastq';
 ok(-s $in_fastq, 'in fastq');
 my $example_fastq = $dir.'/rename.example.fastq';

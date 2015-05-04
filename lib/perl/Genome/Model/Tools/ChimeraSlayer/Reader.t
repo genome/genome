@@ -11,7 +11,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::ChimeraSlayer::Reader') or die;
 
 my $version = 1;
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ChimeraSlayer/v'.$version;
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ChimeraSlayer/v'.$version;
 my $cpc_file = $test_data_dir.'/chims1.NAST.CPS.CPC';
 
 # 0  ChimeraSlayer

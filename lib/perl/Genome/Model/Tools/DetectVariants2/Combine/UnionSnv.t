@@ -20,7 +20,7 @@ BEGIN {
 
 use_ok( 'Genome::Model::Tools::DetectVariants2::Combine::UnionSnv');
 
-my $test_data_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Combine-UnionSnv';
+my $test_data_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Combine-UnionSnv';
 is(-d $test_data_dir, 1, 'test_data_dir exists') || die;
 
 my $expected_output = $test_data_dir."/expected";
@@ -39,8 +39,8 @@ my $control_aligned_reads = join('/', $test_data_dir, 'flank_normal_sorted.bam')
 
 my $vcf_version = Genome::Model::Tools::Vcf->get_vcf_version;
 my $detector_name_a = 'Genome::Model::Tools::DetectVariants2::Samtools';
-my $detector_a_vcf_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Combine-UnionSnv/samtools_vcf_result";
-my $detector_b_vcf_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Combine-UnionSnv/varscan_vcf_result";
+my $detector_a_vcf_directory = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Combine-UnionSnv/samtools_vcf_result";
+my $detector_b_vcf_directory = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Combine-UnionSnv/varscan_vcf_result";
 my $detector_version_a = 'awesome';
 my $output_dir_a = join('/', $test_data_dir, 'samtools-r599-');
 my $detector_a = Genome::Model::Tools::DetectVariants2::Result->__define__(

@@ -12,7 +12,7 @@ use Test::More;
 
 use_ok ('Genome::Model::Tools::Fasta::Trim::Trim3') or die;
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta/TrimQuality';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fasta/TrimQuality';
 ok(-d $dir, "Test dir ($dir) exists");
 my $example_fasta = $dir .'/example.fasta';
 ok(-f $example_fasta, "Example fasta ($example_fasta) exists");

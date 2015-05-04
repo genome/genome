@@ -13,8 +13,8 @@ BEGIN {
 };
 
 my $tmp_dir = File::Temp::tempdir('Fastq-SolToSanger-XXXXX', CLEANUP => 1, TMPDIR => 1);
-my $fastq_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/SolToSanger/test.fq';
-my $expected_sanger_fastq_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/SolToSanger/test.fq.sanger';
+my $fastq_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fastq/SolToSanger/test.fq';
+my $expected_sanger_fastq_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fastq/SolToSanger/test.fq.sanger';
 
 my $sol2sanger = Genome::Model::Tools::Fastq::Sol2sanger->create(
                                                                 fastq_file => $fastq_file,

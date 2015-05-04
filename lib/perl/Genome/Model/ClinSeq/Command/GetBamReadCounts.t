@@ -35,7 +35,7 @@ my $code_dir = abs_path(File::Basename::dirname(__FILE__));
 ok(-e $code_dir, "Found current code dir: $code_dir");
 
 #Define the path to test input and expected results files
-my $expected_data_directory = $ENV{"GENOME_TEST_INPUTS"} . '/Genome-Model-ClinSeq-Command-GetBamReadCounts/2013-01-31';
+my $expected_data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-ClinSeq-Command-GetBamReadCounts/2013-01-31';
 ok(-e $expected_data_directory, "Found expected data directory: $expected_data_directory");
 
 #Check for input positions file

@@ -14,7 +14,7 @@ use_ok("Genome::Model::ImportedVariationList::Command::ImportCosmicBuild");
 my $reference_sequence_build = Genome::Model::Build::ReferenceSequence->get_by_name('g1k-human-build37');
 
 my $version = 66;
-my $data_url = $ENV{GENOME_TEST_URL}.'/Genome-Db-Cosmic-Command-Import-Vcf/v1';
+my $data_url = Genome::Config::get('test_url').'/Genome-Db-Cosmic-Command-Import-Vcf/v1';
 print "$data_url\n";
 my $import_cosmic_build = Genome::Model::ImportedVariationList::Command::ImportCosmicBuild->create(
     vcf_file_urls => ["$data_url/Coding.vcf.gz","$data_url/NonCoding.vcf.gz"],

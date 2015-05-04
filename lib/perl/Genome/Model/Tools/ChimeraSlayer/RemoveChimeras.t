@@ -13,7 +13,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::ChimeraSlayer::RemoveChimeras') or die;
 
 my $version = 1;
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ChimeraSlayer/RemoveChimeras/v'.$version;
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ChimeraSlayer/RemoveChimeras/v'.$version;
 my $sequences = $test_data_dir.'/sequences.fastq';
 my $cpc_file = $test_data_dir.'/chimeras.CPS.CPC';
 my $expected_output = $test_data_dir.'/sequences.chimera-free.fasta';

@@ -33,7 +33,7 @@ EOS
 }
 
 my %VERSIONS = (
-    '2.5'    => $ENV{GENOME_SW} . '/ssaha2/ssaha2_v2.5_x86_64/ssaha2',
+    '2.5'    => Genome::Config::get('sw') . '/ssaha2/ssaha2_v2.5_x86_64/ssaha2',
     'ssaha2' => 'ssaha2',
 );
 

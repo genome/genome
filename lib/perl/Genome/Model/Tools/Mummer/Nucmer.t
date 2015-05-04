@@ -11,7 +11,7 @@ require File::Compare;
 use_ok('Genome::Model::Tools::Mummer::Nucmer') or die;
 
 my $version = 'v1';
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Mummer/Nucmer-'.$version;
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Mummer/Nucmer-'.$version;
 ok ( -d $data_dir, 'Test data dir exists' );
 
 my $test_dir = Genome::Sys->create_temp_directory();

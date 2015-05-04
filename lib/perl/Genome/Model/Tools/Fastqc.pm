@@ -45,12 +45,12 @@ EOS
 }
 
 my %FASTQC_VERSIONS = (
-    '0.10.0' => $ENV{GENOME_SW} . '/fastqc/FastQC-0.10.0',
-    '0.6.1'  => $ENV{GENOME_SW} . '/fastqc/FastQC-0.6.1',
-    '0.4.3'  => $ENV{GENOME_SW} . '/fastqc/FastQC-0.4.3',
-    '0.4.1'  => $ENV{GENOME_SW} . '/fastqc/FastQC-0.4.1',
-    '0.3'    => $ENV{GENOME_SW} . '/fastqc/FastQC-0.3',
-    '0.2'    => $ENV{GENOME_SW} . '/fastqc/FastQC-0.2',
+    '0.10.0' => Genome::Config::get('sw') . '/fastqc/FastQC-0.10.0',
+    '0.6.1'  => Genome::Config::get('sw') . '/fastqc/FastQC-0.6.1',
+    '0.4.3'  => Genome::Config::get('sw') . '/fastqc/FastQC-0.4.3',
+    '0.4.1'  => Genome::Config::get('sw') . '/fastqc/FastQC-0.4.1',
+    '0.3'    => Genome::Config::get('sw') . '/fastqc/FastQC-0.3',
+    '0.2'    => Genome::Config::get('sw') . '/fastqc/FastQC-0.2',
 );
 
 sub path_for_fastqc_version {

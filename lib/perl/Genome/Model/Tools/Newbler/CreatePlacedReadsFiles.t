@@ -11,7 +11,7 @@ require File::Compare;
 use_ok( 'Genome::Model::Tools::Newbler::CreatePlacedReadsFiles' );
 
 my $version = 'v3';
-my $test_suite = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Newbler/CreatePlacedReadsFiles-'.$version;
+my $test_suite = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Newbler/CreatePlacedReadsFiles-'.$version;
 ok( -d $test_suite, "Test suite dir exists" );
 
 my $temp_dir = Genome::Sys->create_temp_directory();

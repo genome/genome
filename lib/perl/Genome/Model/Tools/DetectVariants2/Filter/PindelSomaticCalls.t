@@ -22,13 +22,13 @@ if (Genome::Config->arch_os ne 'x86_64') {
 use_ok( 'Genome::Model::Tools::DetectVariants2::Filter::PindelSomaticCalls');
 
 my $refbuild_id = 101947881;
-my $input_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Filter-PindelSomaticCalls";
+my $input_directory = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Filter-PindelSomaticCalls";
 
 my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
     reference_sequence_build_id => $refbuild_id,
 );
 
-my $detector_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Filter-PindelSomaticCalls/pindel-0.5-";
+my $detector_directory = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Filter-PindelSomaticCalls/pindel-0.5-";
 
 # Updated to .v2 for correcting an error with newlines
 my $expected_dir = $input_directory . "/expected_5/";

@@ -13,7 +13,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::Consed::PhdReader') or die;
 use_ok('Genome::Model::Tools::Consed::PhdWriter') or die;
 
-my $phd_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Consed/L25990P6001H1.b1.phd.8';
+my $phd_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Consed/L25990P6001H1.b1.phd.8';
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 my $phd_out = $tmpdir.'/phd';
 

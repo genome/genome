@@ -13,7 +13,7 @@ use_ok('Genome::Model::Tools::Sx::BedWriter') or die;
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 ok(-d $tmpdir, 'temp dir');
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/';
 my $fasta = $dir.'/bed_writer.fasta';
 ok(-s $fasta, 'fasta exists') or die;
 my $example_bed_file = $dir.'/bed_writer.v2.bed';

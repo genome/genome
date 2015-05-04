@@ -11,7 +11,7 @@ use_ok( 'Genome::Model::Tools::Velvet::CreateContigsFiles' );
 
 #TODO - move to correct test suite module dir when all tests are configured
 my $version = 'v3';
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Velvet/CreateReadsFiles-".$version;
+my $data_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Velvet/CreateReadsFiles-".$version;
 
 ok(-d $data_dir, "Found data directory: $data_dir") or die;
 

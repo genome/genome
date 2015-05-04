@@ -12,7 +12,7 @@ unless ($archos =~ /64/) {
 }
 
 #check for test data files
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Soap/DeNovoAssemble/data_dir';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Soap/DeNovoAssemble/data_dir';
 ok(-d $data_dir, "Data dir exists");
 
 my @data_files = qw/ config.txt
@@ -42,7 +42,7 @@ ok( $create, "Created gmt soap de-novo assemble");
 ok(($create->execute) == 1, "Command ran successfully");
 
 #compare output files
-my $data_run_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Soap/DeNovoAssemble/run_dir';
+my $data_run_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Soap/DeNovoAssemble/run_dir';
 ok(-d $data_run_dir, "Data run dir exists");
 
 #soap-denovo output files

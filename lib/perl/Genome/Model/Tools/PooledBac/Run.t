@@ -15,7 +15,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
 use_ok( 'Genome::Model::Tools::PooledBac::Run' ) or die;
 
 my $version = 1;
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-PooledBac/Run_v'.$version;
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-PooledBac/Run_v'.$version;
 ok( -d $test_dir, 'Test suite dir exists' ) or die;
 
 my $run_dir = Genome::Sys->create_temp_directory();

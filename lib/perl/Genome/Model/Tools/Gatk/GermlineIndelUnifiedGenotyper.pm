@@ -66,7 +66,7 @@ class Genome::Model::Tools::Gatk::GermlineIndelUnifiedGenotyper {
     ],
     has_param => [
         lsf_queue => {
-            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+            default_value => Genome::Config::get('lsf_queue_build_worker'),
         },
         lsf_resource => {
             default_value => "-R 'rusage[mem=6000] select[mem>6000 && maxtmp>100000] span[hosts=1]' -M 6000000",
