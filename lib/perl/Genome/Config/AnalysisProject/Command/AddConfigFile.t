@@ -29,7 +29,7 @@ my $analysis_project = Genome::Config::AnalysisProject->create(
 my $cmd = $class->create(
     analysis_project => $analysis_project,
     config_file => $file,
-    tag => [$tag, $tag2],
+    tags => [$tag, $tag2],
 );
 
 $cmd->execute();

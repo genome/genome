@@ -12,7 +12,7 @@ use_ok( 'Genome::Model::Tools::Velvet::CreateUnplacedReadsFiles' );
 
 #TODO - move to correct test suite module dir when all tests are configured
 my $module = 'Genome-Model-Tools-Assembly-CreateOutputFiles2';
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/$module";
+my $data_dir = Genome::Config::get('test_inputs') . "/$module";
 
 ok(-d $data_dir, "Found data directory: $data_dir");
 

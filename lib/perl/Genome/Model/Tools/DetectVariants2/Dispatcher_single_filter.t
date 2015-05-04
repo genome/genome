@@ -32,8 +32,8 @@ my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
 my $det_class_base = 'Genome::Model::Tools::DetectVariants2';
 my $dispatcher_class = "${det_class_base}::Dispatcher";
 
-my $tumor_bam = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Dispatcher/flank_tumor_sorted.bam";
-my $normal_bam = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-Dispatcher/flank_normal_sorted.bam";
+my $tumor_bam = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Dispatcher/flank_tumor_sorted.bam";
+my $normal_bam = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-Dispatcher/flank_normal_sorted.bam";
 
 # Test dispatcher for running a single detector followed by a single filter case
 my $test_working_dir = File::Temp::tempdir('DetectVariants2-Dispatcher-filterXXXXX', CLEANUP => 1, TMPDIR => 1);

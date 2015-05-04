@@ -117,7 +117,7 @@ class Genome::Model::GenePrediction::Command::Bacterial::Merge {
         rpc_queue => {
             is      => 'String',
             doc     => "LSF queue to use",
-            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+            default => Genome::Config::get('lsf_queue_build_worker'),
         },
         rpc_core_number => {
             is      => 'String',
@@ -132,7 +132,7 @@ class Genome::Model::GenePrediction::Command::Bacterial::Merge {
         rfam_seed => {
             is => 'Scalar',
             doc => "path to Rfam.seed file",
-            default => $ENV{GENOME_SW} . "/rfam/rfam-8.1/Rfam.seed",
+            default => Genome::Config::get('sw') . "/rfam/rfam-8.1/Rfam.seed",
         },
         _debug_fh => {
             is  => 'Scalar',

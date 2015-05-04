@@ -19,7 +19,7 @@ ok(!$failed_create, 'Failed to create w/ writer w/o config ');
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 ok(-d $tmpdir, 'Created temp dir');
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/';
 
 my $collated_fastq = $dir.'/reader_writer.collated.fastq';
 ok(-s $collated_fastq, 'Collated fastq exists') or die;

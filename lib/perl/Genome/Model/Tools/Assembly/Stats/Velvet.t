@@ -8,7 +8,7 @@ use above "Genome";
 use Test::More;
 
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Assembly-Stats/Velvet_v3";
+my $data_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Assembly-Stats/Velvet_v3";
 ok(-d $data_dir, "Found data directory: $data_dir");
 
 #create temp test dir

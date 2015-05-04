@@ -159,7 +159,7 @@ sub _alignment_metrics_from_result {
             aligned_reads_file=> $result->get_bam_file,
             reference_file => $result->reference_build->full_consensus_path('fa'),
             return_output => 1,
-            coverage_command => $ENV{GENOME_SW} . '/samtools/bamcheck/bamcheck-v0.13/bam-check -q 1',
+            coverage_command => Genome::Config::get('sw') . '/samtools/bamcheck/bamcheck-v0.13/bam-check -q 1',
         );
         my $bam_coverage_report = $coverage->execute;
         if (defined($bam_coverage_report) ) {

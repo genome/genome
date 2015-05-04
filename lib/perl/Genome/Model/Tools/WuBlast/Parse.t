@@ -13,7 +13,7 @@ BEGIN {
         use_ok('Genome::Model::Tools::WuBlast::Parse');
 }
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-WuBlast';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-WuBlast';
 
 my @output_files = map{$test_dir."/blast$_.blast"}(1..3);
 my @parse_files  = map{$test_dir."/parse$_.out"}(1..3);

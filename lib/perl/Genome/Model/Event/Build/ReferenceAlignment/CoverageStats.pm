@@ -129,7 +129,7 @@ sub params_for_result {
         use_short_roi_names => $use_short_roi,
         merge_contiguous_regions => $merge_regions,
         roi_track_name => ($roi_track_name || undef),
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        test_name => (Genome::Config::get('software_result_test_name') || undef),
         users => $result_users,
     );
 }

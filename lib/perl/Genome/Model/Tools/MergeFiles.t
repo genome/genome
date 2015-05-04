@@ -16,7 +16,7 @@ my $file_count = 0;
 
 use_ok('Genome::Model::Tools::MergeFiles') or die;
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-GenePrediction-Eukaryotic/';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-GenePrediction-Eukaryotic/';
 ok(-d $test_data_dir, "test data dir exists at $test_data_dir") or die;
 
 my $fasta_1 = $test_data_dir . 'short_ctg.dna';

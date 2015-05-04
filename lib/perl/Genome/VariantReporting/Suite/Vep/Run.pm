@@ -49,6 +49,11 @@ class Genome::VariantReporting::Suite::Vep::Run {
             is => 'Bool',
             doc => 'Turn on the short_name option in Genome::FeatureList::processed_bed_file_content. This replaces the content of the bed file name column with region numbers. Useful if the name column contains special characters.',
         },
+        allow_same_file => {
+            is => 'Bool',
+            is_optional => 1,
+            doc => 'Toggles the allow-same-file flag in joinx vcf-merge to allow merging entries from the same file. Requires joinx version 1.11 or higher',
+        }
     ],
     has_structural_param => [
         lsf_resource => {
@@ -65,3 +70,27 @@ sub name {
 sub result_class {
     'Genome::VariantReporting::Suite::Vep::RunResult';
 }
+
+sub __planned_errors__ {
+    my ($self, $params) = @_;
+    my $version = $params->{joinx_version};
+    my $allow_same_file = $params->{allow_same_file};
+    return $self->SUPER::__planned_errors__($params), $self->_get_joinx_version_error($version, $allow_same_file);
+}
+
+sub _get_joinx_version_error {
+    my ($self, $version, $allow_same_file) = @_;
+
+    my @errors;
+    if ($allow_same_file && (version->parse("v".$version) < version->parse("v1.11"))) {
+        push @errors, UR::Object::Tag->create(
+            type => 'error',
+            properties => ['joinx_version'],
+            desc => "Provided parameter joinx_version: $version does not support --allow-same-file option, use 1.11 and above",
+        );
+    }
+
+    return @errors;
+}
+
+1;

@@ -26,7 +26,7 @@ my $ber_annotate_class = 'Genome::Model::Tools::Predictor::Ber::Annotate';
 use_ok($ber_annotate_class) or die;
 
 
-my $test_data_path = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Predictor/Ber/';
+my $test_data_path = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Predictor/Ber/';
 my $test_fasta = join('/', $test_data_path, 'BER.fa');
 ok(-e $test_fasta, "test fasta file exists")or diag "test_fasta: $test_fasta";
 

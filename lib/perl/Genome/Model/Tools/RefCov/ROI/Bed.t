@@ -15,7 +15,7 @@ BEGIN {
 }
 
 # TODO: Subset bed file into one or two entries per chr
-my $file = $ENV{GENOME_TEST_INPUTS} . '/Genome-RefCov-ROI-Bed/SANGER.bed';
+my $file = Genome::Config::get('test_inputs') . '/Genome-RefCov-ROI-Bed/SANGER.bed';
 if (-s $file) {
     my $region_set = Genome::Model::Tools::RefCov::ROI::Bed->create(file => $file);
     my @chromosomes = $region_set->chromosomes;

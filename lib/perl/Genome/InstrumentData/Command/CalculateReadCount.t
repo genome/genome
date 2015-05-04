@@ -15,9 +15,9 @@ use Test::More;
 
 use_ok('Genome::InstrumentData::Command::CalculateReadCount') or die;
 
-my $test_path1 = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-CalculateReadCount';
+my $test_path1 = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Command-CalculateReadCount';
 test_with_path($test_path1);
-my $test_path2 = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-CalculateReadCount/with_flagstat';
+my $test_path2 = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Command-CalculateReadCount/with_flagstat';
 test_with_path($test_path2);
 
 done_testing();

@@ -20,8 +20,7 @@ class Genome::Model::Tools::CgHub::Query {
     has_optional_output => {
         xml_file => {
             is => "Text",
-            default_value => '-',
-            doc => 'Save metadata XML output to this file. Default is to write XML to STDOUT.',
+            doc => 'Save metadata XML output to this file.',
         },
     },
     has_optional_transient_output => {
@@ -51,7 +50,7 @@ sub execute {
 
     my $content = $response->content;
     $self->metadata_xml($content);
-    Genome::Sys->write_file($self->xml_file, $content);
+    Genome::Sys->write_file($self->xml_file, $content) if $self->xml_file;
 
     return 1;
 }

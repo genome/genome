@@ -7,7 +7,7 @@ use above 'Genome';
 use Genome::Model::Tools::Picard::SortSam;
 use Test::More tests => 6;
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Tools-Sam-Merge';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Tools-Sam-Merge';
 my $input_normal = $dir. '/normal.tiny.bam';
 my $input_tumor  = $dir. '/tumor.tiny.bam';
 

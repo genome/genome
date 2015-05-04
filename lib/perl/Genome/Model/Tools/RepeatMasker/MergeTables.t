@@ -11,7 +11,7 @@ use File::Compare;
 BEGIN {
       use_ok('Genome::Model::Tools::RepeatMasker::MergeTables');
 };
-my $root_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-RepeatMasker/MergeTables';
+my $root_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-RepeatMasker/MergeTables';
 my @lanes = qw(3 4);
 my @tables;
 for my $lane (@lanes) {

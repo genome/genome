@@ -21,7 +21,7 @@ use_ok('Genome::Model::Tools::BioSamtools::CoverageStats');
 
 my $tmp_dir = File::Temp::tempdir('BioSamtools-CoverageStats-'.Genome::Sys->username.'-XXXX',CLEANUP => 1, TMPDIR => 1);
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-BioSamtools/RefCov';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-BioSamtools/RefCov';
 
 my $bam_file = $data_dir .'/test.bam';
 my $regions_file = $data_dir .'/test_regions.bed';

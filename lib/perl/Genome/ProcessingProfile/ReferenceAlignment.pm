@@ -296,7 +296,7 @@ sub params_for_alignment {
                     samtools_version => $self->samtools_version || undef,
                     bedtools_version => $self->bedtools_version || undef,
                     filter_name => $input->filter_desc || undef,
-                    test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+                    test_name => Genome::Config::get('software_result_test_name') || undef,
                     instrument_data_segment_type => undef,
                     instrument_data_segment_id => undef,
                 );
@@ -359,7 +359,7 @@ sub params_for_merged_alignment {
         picard_version => $self->picard_version || undef,
         samtools_version => $self->samtools_version || undef,
         bedtools_version => $self->bedtools_version || undef,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
     );
     if(scalar @$filters) {
         $params{filter_name} = $filters;

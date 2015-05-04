@@ -18,7 +18,7 @@ sub arch_os {
 }
 
 # in dev mode we use dev search, dev wiki, dev memcache, etc, but production database still ;)
-my $dev_mode = exists $ENV{GENOME_DEV_MODE} ? $ENV{GENOME_DEV_MODE} : (UR::DBI->no_commit ? 1 : 0);
+my $dev_mode = ( Genome::Config::get('dev_mode') || UR::DBI->no_commit );
 if ($dev_mode) {
     my $h = hostname;
     warn "***** GENOME_DEV_MODE ($h) *****";
@@ -26,7 +26,7 @@ if ($dev_mode) {
 
 sub dev_mode {
     shift;
-    if (@_ && !$ENV{GENOME_DEV_MODE}) {
+    if (@_ && !Genome::Config::get('dev_mode')) {
         $dev_mode = shift;
     }
 
@@ -45,7 +45,7 @@ sub auth_user {
 }
 
 sub domain {
-    return $ENV{GENOME_EMAIL_DOMAIN};
+    return Genome::Config::get('email_domain');
 }
 
 sub user_email {
@@ -66,7 +66,7 @@ sub reference_sequence_directory {
 }
 
 sub root_directory {
-    $ENV{GENOME_MODEL_ROOT} || '/gscmnt/gc4096/info/symlinks';
+    Genome::Config::get('model_root') || '/gscmnt/gc4096/info/symlinks';
 }
 
 1;

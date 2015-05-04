@@ -6,7 +6,7 @@ use above 'Genome';
 use Test::More tests => 11;
 
 use_ok('Genome::Model::Tools::RefSeq::Fasta');
-my $refseq_fasta = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-RefSeq-Fasta/AML_Validation_22_Trios-43114216_43116216-Ensembl.c1.refseq.fasta";
+my $refseq_fasta = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-RefSeq-Fasta/AML_Validation_22_Trios-43114216_43116216-Ensembl.c1.refseq.fasta";
 ok (-f $refseq_fasta);
 
 my ($info) = Genome::Model::Tools::RefSeq::Fasta->execute(refseq_fasta => $refseq_fasta, no_stdout => 1);

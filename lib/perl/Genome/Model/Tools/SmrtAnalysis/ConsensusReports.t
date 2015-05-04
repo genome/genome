@@ -14,7 +14,7 @@ plan tests => 3;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::ConsensusReports');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-ConsensusReports';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-ConsensusReports';
 
 my $reference_directory = '/gscmnt/pacbio/production/smrtanalysis/common/references/BAC_AC241402_3';
 my $variants_gff = $data_directory .'/data/variants.gff';

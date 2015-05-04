@@ -3,6 +3,10 @@ package Genome::Site;
 use strict;
 use warnings;
 
+BEGIN {
+    require Genome::Config;
+};
+
 use Carp qw(croak);
 use File::Spec qw();
 use Sys::Hostname qw(hostname);
@@ -12,7 +16,7 @@ use Module::Runtime qw(require_module);
 our $VERSION = $Genome::VERSION;
 
 sub import {
-    if (my $config = $ENV{GENOME_CONFIG}) {
+    if (my $config = Genome::Config::get('config')) {
         require_module($config);
     }
     else {

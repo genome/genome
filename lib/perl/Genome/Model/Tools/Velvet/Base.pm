@@ -35,7 +35,7 @@ sub resolve_version {
     my @uname = POSIX::uname();
     $ver .= '-64' if $uname[4] eq 'x86_64';
     
-    my $exec = $ENV{GENOME_SW} . "/velvet/$ver/$type";
+    my $exec = Genome::Config::get('sw') . "/velvet/$ver/$type";
     unless (-x $exec) {
         $self->error_message("$exec is not excutable");
         return;

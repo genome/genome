@@ -11,7 +11,7 @@ use File::Path qw(rmtree);
 
 use_ok( 'Genome::Model::Tools::Breakdancer::TigraToBreakdancer');
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Breakdancer-TigraToBreakdancer/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Breakdancer-TigraToBreakdancer/';
 my $sv_file     = $test_input_dir . 'breakdancer.out';
 my $tigra_file  = $test_input_dir . 'tigra.out';
 my $pass_file   = $test_input_dir . 'pass.out';

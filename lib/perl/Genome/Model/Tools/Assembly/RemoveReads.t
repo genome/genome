@@ -13,7 +13,7 @@ use Test::More skip_all => "Does not play nice with the test harness";
 my $ace_file = 'merge.ace';
 my $contig = 'contig00012.0';
 my $read_list = 'FR3TRLO01AVOWP,FR3TRLO01BM88T';
-my $path = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Assembly-MergeContigs/edit_dir';
+my $path = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Assembly-MergeContigs/edit_dir';
 
 
 my $out_file_name = 'remove_reads_out.ace';

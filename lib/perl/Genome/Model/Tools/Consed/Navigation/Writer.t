@@ -13,7 +13,7 @@ use Test::More tests => 8;
 use_ok('Genome::Model::Tools::Consed::Navigation::Writer')
     or die;
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Consed';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Consed';
 ok(-d $dir, "Test dir ($dir) exists");
 my $expected_nav = $dir.'/repeats.nav';
 ok(-f $expected_nav, "Nav file ($expected_nav) exists");

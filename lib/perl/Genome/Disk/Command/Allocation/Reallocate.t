@@ -15,7 +15,7 @@ use_ok('Genome::Disk::Command::Allocation::Reallocate') or die;
 use_ok('Genome::Disk::Allocation') or die;
 
 my $allocation = Genome::Disk::Allocation->create(
-    disk_group_name => $ENV{GENOME_DISK_GROUP_DEV},
+    disk_group_name => Genome::Config::get('disk_group_dev'),
     allocation_path => 'command/allocation/deallocate/test',
     kilobytes_requested => 100,
     owner_class_name => 'UR::Value',
@@ -25,7 +25,7 @@ ok($allocation->volume);
 ok($allocation, 'Successfully created test allocation') or die;
 
 my $archived_allocation = Genome::Disk::Allocation->create(
-    disk_group_name => $ENV{GENOME_DISK_GROUP_DEV},
+    disk_group_name => Genome::Config::get('disk_group_dev'),
     allocation_path => 'command/allocation/deallocate/test_archived',
     kilobytes_requested => 100,
     owner_class_name => 'UR::Value',

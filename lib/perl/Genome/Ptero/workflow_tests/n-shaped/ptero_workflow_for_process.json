@@ -1,0 +1,402 @@
+{
+   "links" : [
+      {
+         "destination" : "Mark likes the letter N",
+         "destinationProperty" : "a",
+         "source" : "input connector",
+         "sourceProperty" : "a"
+      },
+      {
+         "destination" : "Mark likes the letter N",
+         "destinationProperty" : "b",
+         "source" : "input connector",
+         "sourceProperty" : "b"
+      },
+      {
+         "destination" : "Mark likes the letter N",
+         "destinationProperty" : "c",
+         "source" : "input connector",
+         "sourceProperty" : "c"
+      },
+      {
+         "destination" : "Mark likes the letter N",
+         "destinationProperty" : "d",
+         "source" : "input connector",
+         "sourceProperty" : "d"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "out_a",
+         "source" : "Mark likes the letter N",
+         "sourceProperty" : "out_a"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "out_b",
+         "source" : "Mark likes the letter N",
+         "sourceProperty" : "out_b"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "out_c",
+         "source" : "Mark likes the letter N",
+         "sourceProperty" : "out_c"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "out_d",
+         "source" : "Mark likes the letter N",
+         "sourceProperty" : "out_d"
+      },
+      {
+         "destination" : "set status Succeeded",
+         "destinationProperty" : "out_d",
+         "source" : "Mark likes the letter N",
+         "sourceProperty" : "out_d"
+      },
+      {
+         "destination" : "output connector",
+         "destinationProperty" : "dummy_output for Genome::Process(123)",
+         "source" : "set status Succeeded",
+         "sourceProperty" : "dummy_output"
+      }
+   ],
+   "tasks" : {
+      "Mark likes the letter N" : {
+         "methods" : [
+            {
+               "name" : "set status Running",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Running",
+                     "--exit-code",
+                     1
+                  ],
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            },
+            {
+               "name" : "Mark likes the letter N",
+               "parameters" : {
+                  "links" : [
+                     {
+                        "destination" : "A",
+                        "destinationProperty" : "param",
+                        "source" : "input connector",
+                        "sourceProperty" : "a"
+                     },
+                     {
+                        "destination" : "B",
+                        "destinationProperty" : "param",
+                        "source" : "input connector",
+                        "sourceProperty" : "b"
+                     },
+                     {
+                        "destination" : "C",
+                        "destinationProperty" : "param",
+                        "source" : "input connector",
+                        "sourceProperty" : "c"
+                     },
+                     {
+                        "destination" : "D",
+                        "destinationProperty" : "param",
+                        "source" : "input connector",
+                        "sourceProperty" : "d"
+                     },
+                     {
+                        "destination" : "output connector",
+                        "destinationProperty" : "out_a",
+                        "source" : "A",
+                        "sourceProperty" : "result"
+                     },
+                     {
+                        "destination" : "output connector",
+                        "destinationProperty" : "out_b",
+                        "source" : "B",
+                        "sourceProperty" : "result"
+                     },
+                     {
+                        "destination" : "output connector",
+                        "destinationProperty" : "out_c",
+                        "source" : "C",
+                        "sourceProperty" : "result"
+                     },
+                     {
+                        "destination" : "output connector",
+                        "destinationProperty" : "out_d",
+                        "source" : "D",
+                        "sourceProperty" : "result"
+                     },
+                     {
+                        "destination" : "C",
+                        "destinationProperty" : "res1",
+                        "source" : "A",
+                        "sourceProperty" : "result"
+                     },
+                     {
+                        "destination" : "D",
+                        "destinationProperty" : "res1",
+                        "source" : "A",
+                        "sourceProperty" : "result"
+                     },
+                     {
+                        "destination" : "D",
+                        "destinationProperty" : "res2",
+                        "source" : "B",
+                        "sourceProperty" : "result"
+                     }
+                  ],
+                  "tasks" : {
+                     "A" : {
+                        "methods" : [
+                           {
+                              "name" : "shortcut",
+                              "parameters" : {
+                                 "commandLine" : [
+                                    "genome",
+                                    "ptero",
+                                    "wrapper",
+                                    "--command-class",
+                                    "Genome::Ptero::TestCommand::NullCommand",
+                                    "--method",
+                                    "shortcut",
+                                    "--log-directory",
+                                    "test_logs/n-shaped"
+                                 ],
+                                 "environment" : {
+                                    "FOO" : "bar"
+                                 },
+                                 "user" : "dmorton",
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                              },
+                              "service" : "shell-command"
+                           },
+                           {
+                              "name" : "execute",
+                              "parameters" : {
+                                 "commandLine" : [
+                                    "genome",
+                                    "ptero",
+                                    "wrapper",
+                                    "--command-class",
+                                    "Genome::Ptero::TestCommand::NullCommand",
+                                    "--method",
+                                    "execute",
+                                    "--log-directory",
+                                    "test_logs/n-shaped"
+                                 ],
+                                 "environment" : {
+                                    "FOO" : "bar"
+                                 },
+                                 "user" : "dmorton",
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                              },
+                              "service" : "shell-command"
+                           }
+                        ]
+                     },
+                     "B" : {
+                        "methods" : [
+                           {
+                              "name" : "shortcut",
+                              "parameters" : {
+                                 "commandLine" : [
+                                    "genome",
+                                    "ptero",
+                                    "wrapper",
+                                    "--command-class",
+                                    "Genome::Ptero::TestCommand::NullCommand",
+                                    "--method",
+                                    "shortcut",
+                                    "--log-directory",
+                                    "test_logs/n-shaped"
+                                 ],
+                                 "environment" : {
+                                    "FOO" : "bar"
+                                 },
+                                 "user" : "dmorton",
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                              },
+                              "service" : "shell-command"
+                           },
+                           {
+                              "name" : "execute",
+                              "parameters" : {
+                                 "commandLine" : [
+                                    "genome",
+                                    "ptero",
+                                    "wrapper",
+                                    "--command-class",
+                                    "Genome::Ptero::TestCommand::NullCommand",
+                                    "--method",
+                                    "execute",
+                                    "--log-directory",
+                                    "test_logs/n-shaped"
+                                 ],
+                                 "environment" : {
+                                    "FOO" : "bar"
+                                 },
+                                 "user" : "dmorton",
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                              },
+                              "service" : "shell-command"
+                           }
+                        ]
+                     },
+                     "C" : {
+                        "methods" : [
+                           {
+                              "name" : "shortcut",
+                              "parameters" : {
+                                 "commandLine" : [
+                                    "genome",
+                                    "ptero",
+                                    "wrapper",
+                                    "--command-class",
+                                    "Genome::Ptero::TestCommand::NullCommand",
+                                    "--method",
+                                    "shortcut",
+                                    "--log-directory",
+                                    "test_logs/n-shaped"
+                                 ],
+                                 "environment" : {
+                                    "FOO" : "bar"
+                                 },
+                                 "user" : "dmorton",
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                              },
+                              "service" : "shell-command"
+                           },
+                           {
+                              "name" : "execute",
+                              "parameters" : {
+                                 "commandLine" : [
+                                    "genome",
+                                    "ptero",
+                                    "wrapper",
+                                    "--command-class",
+                                    "Genome::Ptero::TestCommand::NullCommand",
+                                    "--method",
+                                    "execute",
+                                    "--log-directory",
+                                    "test_logs/n-shaped"
+                                 ],
+                                 "environment" : {
+                                    "FOO" : "bar"
+                                 },
+                                 "user" : "dmorton",
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                              },
+                              "service" : "shell-command"
+                           }
+                        ]
+                     },
+                     "D" : {
+                        "methods" : [
+                           {
+                              "name" : "shortcut",
+                              "parameters" : {
+                                 "commandLine" : [
+                                    "genome",
+                                    "ptero",
+                                    "wrapper",
+                                    "--command-class",
+                                    "Genome::Ptero::TestCommand::NullCommand",
+                                    "--method",
+                                    "shortcut",
+                                    "--log-directory",
+                                    "test_logs/n-shaped"
+                                 ],
+                                 "environment" : {
+                                    "FOO" : "bar"
+                                 },
+                                 "user" : "dmorton",
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                              },
+                              "service" : "shell-command"
+                           },
+                           {
+                              "name" : "execute",
+                              "parameters" : {
+                                 "commandLine" : [
+                                    "genome",
+                                    "ptero",
+                                    "wrapper",
+                                    "--command-class",
+                                    "Genome::Ptero::TestCommand::NullCommand",
+                                    "--method",
+                                    "execute",
+                                    "--log-directory",
+                                    "test_logs/n-shaped"
+                                 ],
+                                 "environment" : {
+                                    "FOO" : "bar"
+                                 },
+                                 "user" : "dmorton",
+                                 "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+                              },
+                              "service" : "shell-command"
+                           }
+                        ]
+                     }
+                  }
+               },
+               "service" : "workflow"
+            },
+            {
+               "name" : "set status Crashed",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Crashed",
+                     "--exit-code",
+                     1
+                  ],
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            }
+         ]
+      },
+      "set status Succeeded" : {
+         "methods" : [
+            {
+               "name" : "set status Succeeded",
+               "parameters" : {
+                  "commandLine" : [
+                     "genome",
+                     "process",
+                     "set-status",
+                     "123",
+                     "Succeeded",
+                     "--exit-code",
+                     0
+                  ],
+                  "environment" : {
+                     "FOO" : "bar"
+                  },
+                  "user" : "dmorton",
+                  "workingDirectory" : "/home/archive/dmorton/genome/lib/perl/Genome"
+               },
+               "service" : "shell-command"
+            }
+         ]
+      }
+   }
+}

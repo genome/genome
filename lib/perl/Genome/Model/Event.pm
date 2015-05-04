@@ -481,7 +481,7 @@ sub bsub_rusage {
 }
 
 sub lsf_queue {
-    return $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+    return Genome::Config::get('lsf_queue_build_worker_alt');
 }
 
 #< Scheduling, Abandon >#

@@ -12,7 +12,7 @@ my $pkg = 'Genome::Model::Tools::Picard::CollectAlignmentSummaryMetrics';
 
 use_ok($pkg);
 
-my $data_dir = File::Spec->catfile($ENV{GENOME_TEST_INPUTS}, 'Genome-Model-Tools-Picard-CollectAlignmentSummaryMetrics');
+my $data_dir = File::Spec->catfile(Genome::Config::get('test_inputs'), 'Genome-Model-Tools-Picard-CollectAlignmentSummaryMetrics');
 my $bam_file = File::Spec->catfile($data_dir, 'aligned.bam');
 my $ref_file = File::Spec->catfile($data_dir, 'small.fa');
 my $expected_file = File::Spec->catfile($data_dir, 'expected.txt');

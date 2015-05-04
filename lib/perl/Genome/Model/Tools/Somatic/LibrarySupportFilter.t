@@ -15,7 +15,7 @@ BEGIN {
     use_ok( 'Genome::Model::Tools::Somatic::LibrarySupportFilter');
 };
 
-my $indel_file = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Somatic-LibrarySupportFilter/sniper.indels.txt";
+my $indel_file = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Somatic-LibrarySupportFilter/sniper.indels.txt";
 
 my $test_output_dir = File::Temp::tempdir('Genome-Model-Tools-Somatic-LibrarySupportFilter-XXXXX', CLEANUP => 1, TMPDIR => 1);
 $test_output_dir .= '/';

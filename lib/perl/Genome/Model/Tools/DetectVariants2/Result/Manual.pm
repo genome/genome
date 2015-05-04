@@ -216,7 +216,7 @@ sub resolve_allocation_subdirectory {
     return Genome::Model::Tools::DetectVariants2::Result::DetectionBase::_resolve_subdirectory(@_);
 }
 
-sub resolve_allocation_disk_group_name { $ENV{GENOME_DISK_GROUP_MODELS} }
+sub resolve_allocation_disk_group_name { Genome::Config::get('disk_group_models') }
 
 sub _needs_symlinks_followed_when_syncing { return 1; }
 

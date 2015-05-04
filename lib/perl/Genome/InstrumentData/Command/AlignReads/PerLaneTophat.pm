@@ -25,7 +25,7 @@ sub _fallback_lsf_resource {
     my $tmp_gb = 300;
 
     my $user = getpwuid($<);
-    my $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+    my $queue = Genome::Config::get('lsf_queue_alignment_default');
 
     #my $host_groups;
     #my $command = qq(bqueues -l $queue | grep ^HOSTS:);

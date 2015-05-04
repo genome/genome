@@ -14,7 +14,7 @@ plan tests => 3;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::Rccs');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-Rccs';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-Rccs';
 
 my $input_fofn = $data_directory .'/input.fofn';
 my $cmp_hdf5_file = $data_directory .'/data/aligned_reads.cmp.h5';

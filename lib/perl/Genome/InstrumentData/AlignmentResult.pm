@@ -12,7 +12,10 @@ use File::Copy;
 use File::stat;
 use Carp qw(confess);
 use File::Basename;
+use Scope::Guard qw();
+use Try::Tiny qw(try catch);
 
+use Genome::Sys::LockMigrationProxy qw();
 use Genome::Utility::Instrumentation;
 
 use warnings;
@@ -308,6 +311,10 @@ sub bam_md5_path {
     return File::Spec->join($self->output_dir, 'all_sequences.bam.md5');
 }
 
+sub bam_header_path {
+    return File::Spec->join(shift->output_dir, 'all_sequences.bam.header');
+}
+
 sub __display_name__ {
     my $self = shift;
 
@@ -356,7 +363,7 @@ sub lsf_queue {
         return $self->__lsf_queue;
     }
 
-    return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+    return Genome::Config::get('lsf_queue_alignment_default');
 }
 
 sub required_rusage_for_building_index {
@@ -439,7 +446,7 @@ sub create {
     my $estimated_kb_usage = $self->estimated_kb_usage;
     $self->debug_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
     $self->debug_message("Check for available disk...");
-    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => $ENV{GENOME_DISK_GROUP_ALIGNMENTS});
+    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => Genome::Config::get('disk_group_alignments'));
     $self->debug_message("Found " . scalar(@available_volumes) . " disk volumes");
     my $unallocated_kb = 0;
     for my $volume (@available_volumes) {
@@ -724,7 +731,7 @@ sub collect_inputs {
         my $output_file = $bam_file . '.flagstat';
         unless (-s $output_file) {
             $output_file = $self->temp_scratch_directory . '/import_bam.flagstat';
-            die unless $self->_create_bam_flagstat($bam_file, $output_file);
+            $self->create_bam_flagstat($bam_file, $output_file);
         }
         my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
         die $self->error_message('Failed to get flagstat data on input bam: '. $bam_file) unless $stats;
@@ -896,7 +903,7 @@ sub determine_input_read_count_from_bam {
     my $bam_file    = $self->_extracted_bam_path || $self->instrument_data->bam_path;
     my $output_file = $self->temp_scratch_directory . "/input_bam.flagstat";
 
-    die unless $self->_create_bam_flagstat($bam_file, $output_file);
+    $self->create_bam_flagstat($bam_file, $output_file);
 
     $self->_flagstat_file($output_file);
     my $stats = Genome::Model::Tools::Sam::Flagstat->parse_file_into_hashref($output_file);
@@ -993,7 +1000,7 @@ sub postprocess_bam_file {
 
     #STEPS 8:  CREATE BAM.FLAGSTAT
     $self->debug_message("Creating all_sequences.bam.flagstat ...");
-    die unless $self->_create_bam_flagstat($bam_file, $output_file);
+    $self->create_bam_flagstat($bam_file, $output_file);
 
     #STEPS 9: VERIFY BAM IS NOT TRUNCATED BY FLAGSTAT
     $self->debug_message("Verifying the bam...");
@@ -1022,6 +1029,7 @@ sub _use_alignment_summary_cpp { return 1; };
 sub _compute_alignment_metrics {
     my $self = shift;
     my $bam = $self->final_staged_bam_path;
+    $self->set_bam_size($bam); #store this for per lane bam recreation
 
     if ($self->_use_alignment_summary_cpp){
         my $out = `bash -c "LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/gsc/scripts/opt/genome_legacy_code/lib:/gsc/pkg/boost/boost_1_42_0/lib /gsc/scripts/opt/genome_legacy_code/bin/alignment-summary-v1.2.6 --bam=\"$bam\" --ignore-cigar-md-errors"`;
@@ -1064,7 +1072,6 @@ sub _compute_alignment_metrics {
         $self->singleton_read_count         ($res->{singleton});
         $self->singleton_base_count         ($res->{singleton_bp});
 
-        $self->bam_size(stat($bam)->size); #store this for per lane bam recreation
         Genome::Utility::Instrumentation::inc('alignment_result.read_count', $self->total_read_count);
     }
 
@@ -1093,18 +1100,19 @@ sub _create_bam_index {
     return 1;
 }
 
-sub _create_bam_flagstat {
+sub create_bam_flagstat {
     my ($self, $bam_file, $output_file) = @_;
+    $bam_file = $self->bam_path unless defined $bam_file;
+    $output_file = $self->bam_flagstat_path unless defined $output_file;
 
+    return 1 if -e $output_file;
     unless (-s $bam_file) {
-        $self->error_message('BAM file ' . $bam_file . ' does not exist or is empty');
-        return;
+        die $self->error_message('BAM file (%s) does not exist or is empty', $bam_file);
     }
 
-    if (-e $output_file) {
-        $self->warning_message('Flagstat file '.$output_file.' exists. Now overwrite');
-        unlink $output_file;
-    }
+    my $lock  = $self->get_bam_lock;
+    my $guard = Scope::Guard->new(sub { $lock->unlock() });
+    return 1 if -e $output_file;
 
     my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
         bam_file       => $bam_file,
@@ -1114,12 +1122,51 @@ sub _create_bam_flagstat {
     );
 
     unless ($cmd and $cmd->execute) {
-        $self->error_message("Failed to create or execute flagstat command on bam: $bam_file");
-        return;
+        die $self->error_message("Failed to create or execute flagstat command on bam: $bam_file");
     }
+
     return 1;
 }
 
+sub create_bam_header {
+    my $self = shift;
+    return 1 if -s $self->bam_header_path;
+
+    my $lock  = $self->get_bam_lock;
+    my $guard = Scope::Guard->new(sub { $lock->unlock() });
+    return 1 if -s $self->bam_header_path;
+
+    my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
+
+    Genome::Sys->shellcmd(
+        cmd => sprintf('%s view -H %s > %s', $sam_path, $self->bam_path, $self->bam_header_path),
+        output_files => [$self->bam_header_path],
+        input_files => [$self->bam_path],
+    );
+
+    return 1;
+}
+
+sub set_bam_size {
+    my ($self, $bam_file) = @_;
+    return 1 if $self->bam_size;
+
+    unless (defined $bam_file && -s $bam_file) {
+        $bam_file = $self->get_bam_file;
+        unless (-s $bam_file) {
+            die $self->error_message('BAM file (%s) does not exist or is empty', $bam_file);
+        }
+    }
+    my $previous_value = UR::Context->query_underlying_context;
+    UR::Context->query_underlying_context(1);
+    my $bam_size = $self->bam_size;
+    UR::Context->query_underlying_context($previous_value);
+    return 1 if $bam_size;
+
+    $self->bam_size(stat($bam_file)->size);
+
+    return 1;
+}
 
 sub _verify_bam {
     my $self = shift;
@@ -1418,7 +1465,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    $ENV{GENOME_DISK_GROUP_ALIGNMENTS};
+    Genome::Config::get('disk_group_alignments');
 }
 
 
@@ -1655,14 +1702,14 @@ sub get_bam_file {
     }
     else {
         my $lock = $self->get_bam_lock;
+        my $guard = Scope::Guard->new(sub { $lock->unlock() });
+
         if ($self->get_merged_alignment_results) {
-            $lock->unlock;
             return $self->revivified_alignment_bam_file_path;
         }
         else {
             my @bams = $self->alignment_bam_file_paths;
             unless (@bams) {
-                $lock->unlock;    
                 if ($self->get_merged_alignment_results) {
                     return $self->revivified_alignment_bam_file_path;
                 }
@@ -1679,7 +1726,6 @@ sub get_bam_file {
                 }
             }
             unless (@bams == 1) {
-                $lock->unlock;
                 die $self->error_message('Only 1 bam path is expected but got '.scalar @bams.'for '.$self->id);
             }
             my $temp_allocation = $self->_get_temp_allocation();
@@ -1691,8 +1737,7 @@ sub get_bam_file {
                     Genome::Sys->copy_file($file, $dest_file);
                 }
             }
-
-            $lock->unlock;
+            $self->_reallocate_temp_allocation($temp_allocation);
             return File::Spec->join($temp_allocation->absolute_path, basename($bams[0]));
         }
     }
@@ -1722,7 +1767,8 @@ sub remove_bam {
     my $self = shift;
 
     my $bam_path = $self->bam_path;
-    my $lock = $self->get_bam_lock;
+    my $lock  = $self->get_bam_lock;
+    my $guard = Scope::Guard->new(sub { $lock->unlock() });
 
     for my $type ('', '.bai', '.md5') {
         my $file = $bam_path . $type;
@@ -1732,7 +1778,6 @@ sub remove_bam {
         }
     }
     $self->_reallocate_disk_allocation;
-    $lock->unlock;
     return 1;
 }
 
@@ -1749,13 +1794,16 @@ sub revivified_alignment_bam_file_path {
     return $self->_revivified_bam_file_path if defined $self->_revivified_bam_file_path;
 
     my $temp_allocation = $self->_get_temp_allocation($self->output_dir);
-    
+
     my $revivified_bam = File::Spec->join($temp_allocation->absolute_path, 'all_sequences.bam');
     my $merged_bam = $self->get_merged_bam_to_revivify_per_lane_bam;
 
     unless ($merged_bam and -s $merged_bam) {
         die $self->error_message('Failed to get valid merged bam to recreate per lane bam '.$self->id);
     }
+
+    $self->create_bam_header;
+    $self->create_bam_flagstat;
 
     my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
         merged_bam          => $merged_bam,
@@ -1764,13 +1812,15 @@ sub revivified_alignment_bam_file_path {
         samtools_version    => $self->samtools_version,
         picard_version      => $self->picard_version,
         bam_header          => $self->bam_header_path,
-        comparison_flagstat => $self->flagstat_path,
+        comparison_flagstat => $self->bam_flagstat_path,
         include_qc_failed   => 1,
     );
 
     unless ($cmd->execute) {
         die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
     }
+
+    $self->_reallocate_temp_allocation($temp_allocation);
 
     if (-s $revivified_bam) {
         # Cache the path of this revivified bam for future access
@@ -1787,7 +1837,7 @@ sub _get_temp_allocation {
     my $bam_size_kilobytes = $self->bam_size/1024 if $self->bam_size;
 
     my $temp_allocation = Genome::Disk::Allocation->create(
-        disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
+        disk_group_name     => Genome::Config::get('disk_group_alignments'),
         allocation_path     => 'merged/recreated_per_lane_bam/'.$self->id.'_'._get_uuid_string(),
         kilobytes_requested => $bam_size_kilobytes || 100_000_000, # This should always be set, but just in case we reserve a lot
         owner_class_name    => 'Genome::Sys::User',
@@ -1801,21 +1851,24 @@ sub _get_temp_allocation {
     return $temp_allocation;
 }
 
+
+sub _reallocate_temp_allocation {
+    my ($self, $temp_allocation) = @_;
+    try {
+        $temp_allocation->reallocate;
+    }
+    catch {
+        $self->warning_message('Failed to reallocate temp allocation '.$temp_allocation->id. " Error: $_");
+        return;
+    }
+}
+
+
 sub _get_uuid_string {
     my $ug = Data::UUID->new();
     my $uuid = $ug->create();
     return $ug->to_string($uuid);
 }
-
-sub bam_header_path {
-    return File::Spec->join(shift->output_dir, 'all_sequences.bam.header');
-}
-
-
-sub flagstat_path {
-    return File::Spec->join(shift->output_dir, 'all_sequences.bam.flagstat');
-}
-
 
 sub get_merged_bam_to_revivify_per_lane_bam {
     my $self = shift;

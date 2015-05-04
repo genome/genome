@@ -9,7 +9,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::BioSamtools::ErrorRate');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-BioSamtools/ErrorRate/';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-BioSamtools/ErrorRate/';
 my $bam = $test_dir . 'test.bam';
 
 my $expected_out = $test_dir.'v1/expected.out';

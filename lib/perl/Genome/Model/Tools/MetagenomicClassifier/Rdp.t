@@ -16,7 +16,7 @@ use_ok('Genome::Model::Tools::MetagenomicClassifier::Rdp') or die;
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 ok(-d $tmpdir, 'created tmp dir');
 my $tmp_rdp_file = $tmpdir.'/U_PR-JP_TS1_2PCA.fasta.rdp';
-my $fasta = $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-MetagenomicClassifier/U_PR-JP_TS1_2PCA.fasta';
+my $fasta = Genome::Config::get('test_inputs') . '/Genome-Utility-MetagenomicClassifier/U_PR-JP_TS1_2PCA.fasta';
 ok(-s $fasta, 'Test fasta exists');
 
 # create and execute

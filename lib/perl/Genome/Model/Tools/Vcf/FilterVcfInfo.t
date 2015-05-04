@@ -17,7 +17,7 @@ if(defined($ARGV[0]) && ($ARGV[0] eq "REBUILD")){
     $rebuild = 1;
 }
 
-my $test_base = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-FilterVcfInfo";
+my $test_base = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Vcf-FilterVcfInfo";
 my $test_dir = $test_base . "/" . $version;
 
 if($rebuild){

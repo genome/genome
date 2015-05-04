@@ -46,7 +46,7 @@ sub name {
 }
 
 sub required_interpreters {
-    return qw(position vaf per-library-vaf);
+    return qw(position vep vaf per-library-vaf);
 }
 
 sub headers {
@@ -57,6 +57,12 @@ sub headers {
         stop
         reference
         variant
+        transcript_name
+        trv_type
+        trv_type_category
+        amino_acid_change
+        default_gene_name
+        ensembl_gene_id
     /;
     push @headers, per_sample_vaf_headers($self);
     push @headers, per_library_vaf_headers($self);

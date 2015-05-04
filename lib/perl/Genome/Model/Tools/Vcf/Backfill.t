@@ -8,7 +8,7 @@ use Test::More tests => 5;
 
 use_ok('Genome::Model::Tools::Vcf::Backfill');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Backfill";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Vcf-Backfill";
 my $input_dir = "$test_dir/input.v3";
 my $expected_base = "expected.v5";
 my $expected_dir = "$test_dir/$expected_base";

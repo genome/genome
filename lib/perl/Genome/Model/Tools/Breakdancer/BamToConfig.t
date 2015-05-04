@@ -18,7 +18,7 @@ if ($archos !~ /64/) {
 
 use_ok( 'Genome::Model::Tools::Breakdancer::BamToConfig');
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Breakdancer-BamToConfig/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Breakdancer-BamToConfig/';
 my $cfg_file    = $test_input_dir . 'breakdancer_config';
 my $normal_bam  = $test_input_dir . 'normal.bam';
 my $tumor_bam   = $test_input_dir . 'tumor.bam';

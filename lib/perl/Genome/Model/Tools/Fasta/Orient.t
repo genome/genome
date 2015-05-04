@@ -17,7 +17,7 @@ BEGIN {
 
 #< Test if it really works >#
 my $tmp_dir = Genome::Sys->create_temp_directory('Genome-Model-Tools-Fasta-Orient');
-my $orig_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta-Orient';
+my $orig_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fasta-Orient';
 my %file_path = (
     fasta => '/assembled.fasta',
     qual => '/assembled.fasta.qual',

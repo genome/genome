@@ -78,30 +78,27 @@ sub planned_names {
     my $self = shift;
 
     my @properties = $self->__meta__->properties(is_planned => 1);
-    return map {$_->property_name} @properties;
+    return Set::Scalar->new(map {$_->property_name} @properties);
 }
 
-# TODO this is not covered by tests
-sub validate_with_plan_params {
-    my ($self, $params) = validate_pos(@_, 1, 1);
+sub planned_required_names {
+    my $self = shift;
 
-    my @errors = $self->__planned_errors__($params);
-    if (@errors) {
-        $self->print_errors(@errors);
-        die $self->error_message("Failed to validate_with_plan_params with params:\n" . Data::Dumper::Dumper $params);
-    }
-    return;
+    my @properties = $self->__meta__->properties(is_planned => 1, is_optional => 0);
+    return Set::Scalar->new(map {$_->property_name} @properties);
 }
 
 sub __planned_errors__ {
     my ($self, $params) = validate_pos(@_, 1, 1);
-    my $needed = Set::Scalar->new($self->planned_names);
+    my $needed = $self->planned_required_names;
     return Genome::VariantReporting::Framework::Utility::get_missing_errors($self->class, $params, $needed, "Parameters", "run"),
-        $self->_get_extra_errors($params, $needed);
+        $self->_get_extra_errors($params);
 }
 
 sub _get_extra_errors {
-    my ($self, $params, $needed) = validate_pos(@_, 1, 1, 1);
+    my ($self, $params) = validate_pos(@_, 1, 1);
+
+    my $needed = $self->planned_names;
 
     my $have = Set::Scalar->new(keys %{$params});
     my @errors;
@@ -176,7 +173,7 @@ sub input_hash {
         }
     }
 
-    $hash{test_name} = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME};
+    $hash{test_name} = Genome::Config::get('software_result_test_name');
 
     return %hash;
 }

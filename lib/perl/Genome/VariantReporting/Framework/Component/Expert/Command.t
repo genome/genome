@@ -43,4 +43,6 @@ ok(!exists $input_hash{'variant_type_lookup'}, 'variant_type_lookup entry absent
 lives_ok { $obj->resolve_plan_attributes } 'resolve_plan_attributes execute successfully';
 is($obj->__planned__, 'foo', 'Value of __planned__ is as expected');
 
+is_deeply([$obj->__planned_errors__(($plan->expert_plans)[0]->run_params)], [], 'No planned errors found');
+
 done_testing();

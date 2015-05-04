@@ -17,7 +17,7 @@ sub cmd_display_name {
     return 'dust';
 }
 
-sub executable_path { $ENV{GENOME_SW} . '/wu-blast/blast2x64_2006-05-04/filter/dust' }
+sub executable_path { Genome::Config::get('sw') . '/wu-blast/blast2x64_2006-05-04/filter/dust' }
 
 sub execute {
     my $self = shift;

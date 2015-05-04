@@ -17,8 +17,8 @@ BEGIN {
     use_ok('Genome::Model::Tools::Sam::ValidateHeader');
 }
 
-my $input = $ENV{GENOME_TEST_INPUTS} . "/Genome-InstrumentData-Alignment/new.bam";
-my $input_bad = $ENV{GENOME_TEST_INPUTS} . "/Genome-InstrumentData-Alignment/old.bam";
+my $input = Genome::Config::get('test_inputs') . "/Genome-InstrumentData-Alignment/new.bam";
+my $input_bad = Genome::Config::get('test_inputs') . "/Genome-InstrumentData-Alignment/old.bam";
 
 my $hv = Genome::Model::Tools::Sam::ValidateHeader->create(input_file=>$input);
 ok($hv, "created command");

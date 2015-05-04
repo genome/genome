@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Genome;
 use Genome::Sys::LockProxy qw();
+use File::Spec;
 use File::Path;
 use File::Copy;
 
@@ -84,7 +85,7 @@ class Genome::Model::Build::ReferenceSequence {
         },
         combines => {
             is => 'Genome::Model::Build::ReferenceSequence',
-            doc => 'If specified, merges several other references into one.', 
+            doc => 'If specified, merges several other references into one.',
             is_many => 1,
         },
     ],
@@ -390,8 +391,8 @@ sub full_consensus_sam_index_path {
     unless (-e $idx_file) {
         my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($sam_version);
         my $cmd      = $sam_path.' faidx '.$fa_file;
-        
-        $self->warning_message("no failx file at $idx_file!");
+
+        $self->warning_message("no faidx file at $idx_file!");
 
         my $lock = Genome::Sys::LockProxy->new(
             resource => 'reference-sequence-' . $self->id . '-faidx',
@@ -442,20 +443,31 @@ sub external_url {
     return $url;
 }
 
+sub sequence_dictionary_path {
+    my $self = shift;
+    my $file_type = shift;
+
+    return File::Spec->join($self->data_directory, 'seqdict', "seqdict.$file_type");
+}
+
 sub get_sequence_dictionary {
     my $self = shift;
     my $file_type = shift;
     my $species = shift;
     my $picard_version = shift;
+    my $create_ok = shift;
+    $create_ok = 1 unless defined $create_ok;
 
     my $picard_path = Genome::Model::Tools::Picard->path_for_picard_version($picard_version);
 
     my $seqdict_dir_path = $self->data_directory.'/seqdict';
-    my $path = "$seqdict_dir_path/seqdict.$file_type";
+    my $path = $self->sequence_dictionary_path($file_type);
 
     if (-s $path) {
         return $path;
-    } 
+    } elsif (not $create_ok) {
+        return;
+    }
 
     $self->warning_message("No seqdict at path $path.  Creating...");
 
@@ -481,7 +493,7 @@ sub get_sequence_dictionary {
     my $seqdict_dir = $self->data_directory."/seqdict/";
     my $cd_rv =  Genome::Sys->create_directory($seqdict_dir);
     if ($cd_rv ne $seqdict_dir) {
-        $self->error_message("Failed to to create sequence dictionary directory for $path. Quiting");
+        $self->error_message("Failed to to create sequence dictionary directory for $path. Quitting");
         return;
     }
 
@@ -520,7 +532,7 @@ sub get_sequence_dictionary {
         }
 
         if ($csd_rv ne 1) {
-            $self->error_message("Failed to to create sequence dictionary for $path. Quiting");
+            $self->error_message("Failed to to create sequence dictionary for $path. Quitting");
             return;
         }
     }
@@ -617,7 +629,11 @@ sub chromosome_array_ref {
     my $picard_version = delete($params{picard_version});
     unless ($picard_version) { $picard_version = '1.36'; }
 
-    my $seq_dict = $self->get_sequence_dictionary($format,$species,$picard_version);
+    my $create_if_necessary = delete($params{create_seqdict});
+    unless (defined $create_if_necessary) { $create_if_necessary = 1; }
+
+    my $seq_dict = $self->get_sequence_dictionary($format,$species,$picard_version,$create_if_necessary);
+    return unless $seq_dict;
 
     my $cmd = Genome::Model::Tools::BioSamtools::ListChromosomes->create(
         input_file => $seq_dict,
@@ -652,7 +668,7 @@ sub cached_full_consensus_path {
 }
 
 sub local_cache_basedir {
-    return $ENV{GENOME_FS_LOCAL_NETWORK_CACHE};
+    return Genome::Config::get('fs_local_network_cache');
 }
 
 sub local_cache_dir {
@@ -675,7 +691,7 @@ sub available_kb {
     Carp::confess('No directory to get available kb!') if not $directory;
     Carp::confess("Directory ($directory) does not exist! Cannot get available kb!") if not -d $directory;
 
-    $self->status_message('Get availble kb for '.$directory);
+    $self->status_message('Get available kb for '.$directory);
 
     my $cmd = "df -k $directory |";
     $self->status_message('DF command: '.$cmd);

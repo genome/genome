@@ -88,5 +88,5 @@ my $plot = Genome::Model::Tools::Graph::OncoPlot->create(
 ok($plot->execute,'Executed');
 ok((-e "$outFile"), 'Image created');
 
-#my $file = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Graph/heatmap-test-matrix.csv";
+#my $file = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Graph/heatmap-test-matrix.csv";
 #print($file)                                                     

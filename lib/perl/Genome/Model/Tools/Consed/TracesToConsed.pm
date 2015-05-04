@@ -857,7 +857,7 @@ sub get_dw(%) {
     #--- Check for handle, retry and die if failed ---
     if (! $dbh) {
 	$dbh=DBI->connect('dbi:Oracle:dwrac',$user,$pwd,{AutoCommit => 0,RaiseError=>0,RowCacheSize=>0,ora_check_sql => 0});
-	die " Could not connect to OLTP database on 2 attempt, Quiting ... \n" if (! $dbh);
+	die " Could not connect to OLTP database on 2 attempt, Quitting ... \n" if (! $dbh);
     }
     
     #--- Set handle to deal with blob ---
@@ -925,7 +925,7 @@ sub get_oltp(@) {
     #--- Check for handle, retry and die if failed ---
     if (! $dbh) {
 	$dbh=DBI->connect('dbi:Oracle:gscprod',$user,$pwd,{AutoCommit => 0,RaiseError=>0,RowCacheSize=>0,ora_check_sql => 0});
-	die " Could not connect to OLTP database on 2 attempt, Quiting ... \n" if (! $dbh);
+	die " Could not connect to OLTP database on 2 attempt, Quitting ... \n" if (! $dbh);
     }
     
     #--- sql to get info from oltp using amplicon ---

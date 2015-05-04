@@ -133,7 +133,7 @@ class Genome::Model::Tools::Pindel::RunPindel {
     # Make workflow choose 64 bit blades
     has_param => [
         lsf_queue => {
-            default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
+            default_value => Genome::Config::get('lsf_queue_build_worker_alt'),
         }, 
         lsf_resource => {
             default_value => "-M 12000000 -R 'select[mem>12000] rusage[mem=12000]'",
@@ -151,7 +151,7 @@ class Genome::Model::Tools::Pindel::RunPindel {
 };
 
 # FIXME make this the real deployed path
-my $env_path = $ENV{GENOME_SW};
+my $env_path = Genome::Config::get('sw');
 my $old_pindel2vcf_path = $env_path . "/pindel2vcf/0.1.9/pindel2vcf-0.1.9";
 
 my %PINDEL_VERSIONS = (

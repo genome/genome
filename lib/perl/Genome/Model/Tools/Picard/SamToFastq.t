@@ -20,7 +20,7 @@ use Path::Class qw(dir file);
 # /gscmnt/sata604/hiseq2000/100218_P21_0393_AFC20GF1/Data/Intensities/Basecalls/GERALD_30-03-2010_lims
 # see FastqToSam.t
 my $dir = dir(
-    $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Picard-FastqToSam');
+    Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Picard-FastqToSam');
 
 my $tmpdir = dir( File::Temp::tempdir( CLEANUP => 1 ) );
 my $fq1    = $tmpdir->file('s_1_1_sequence.txt');

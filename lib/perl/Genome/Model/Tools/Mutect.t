@@ -23,13 +23,13 @@ if ($archos !~ /64/) {
 
 use_ok('Genome::Model::Tools::Mutect');
 
-my $tumor =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/v2/tiny.tumor.bam";
-my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/v2/tiny.normal.bam";
-my $expected_out = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/v2/expected.out";
-my $expected_vcf = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/v2/expected.vcf";
+my $tumor =  Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Mutect/v2/tiny.tumor.bam";
+my $normal = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Mutect/v2/tiny.normal.bam";
+my $expected_out = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Mutect/v2/expected.out";
+my $expected_vcf = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Mutect/v2/expected.vcf";
 
 #Define path to a custom reference sequence build dir
-my $custom_reference_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect/v2/custom_reference";
+my $custom_reference_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Mutect/v2/custom_reference";
 ok(-e $custom_reference_dir, "Found the custom reference dir: $custom_reference_dir");
 my $fasta = $custom_reference_dir . "/all_sequences.fa";
 ok( -s $fasta, "reference sequence fa file present");

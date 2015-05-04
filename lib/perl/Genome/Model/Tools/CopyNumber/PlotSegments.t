@@ -10,7 +10,7 @@ use File::Temp qw();
 
 use_ok('Genome::Model::Tools::CopyNumber::PlotSegments');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-CopyNumber-PlotSegments";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-CopyNumber-PlotSegments";
 my $output_file = Genome::Sys->create_temp_file_path;
 my $input_dir = "$test_dir";
 my $input_file = "$input_dir/input1.seg.cbs";

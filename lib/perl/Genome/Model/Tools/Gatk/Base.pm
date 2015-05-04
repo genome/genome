@@ -52,15 +52,15 @@ EOS
 
 sub gatk_versions {
     my %GATK_VERSIONS = (
-        'v1' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.5336/' . $GATK_COMMAND, # This is temporary... "v1" is what is in the first set of somatic-variation processing profiles
-        '2986' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.2986/' . $GATK_COMMAND,
-        '3362' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.3362/' . $GATK_COMMAND,
-        '3362P' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.3362P/' . $GATK_COMMAND,
-        '3423' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.3423/' . $GATK_COMMAND,
-        '3471' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.3471/' . $GATK_COMMAND,
-        '4168' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.4168/' . $GATK_COMMAND,
-        '5336' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.5336/' . $GATK_COMMAND,
-        '5777' => $ENV{GENOME_SW} . '/gatk/GenomeAnalysisTK-1.0.5777/' . $GATK_COMMAND,
+        'v1' => Genome::Config::get('sw') . '/gatk/GenomeAnalysisTK-1.0.5336/' . $GATK_COMMAND, # This is temporary... "v1" is what is in the first set of somatic-variation processing profiles
+        '2986' => Genome::Config::get('sw') . '/gatk/GenomeAnalysisTK-1.0.2986/' . $GATK_COMMAND,
+        '3362' => Genome::Config::get('sw') . '/gatk/GenomeAnalysisTK-1.0.3362/' . $GATK_COMMAND,
+        '3362P' => Genome::Config::get('sw') . '/gatk/GenomeAnalysisTK-1.0.3362P/' . $GATK_COMMAND,
+        '3423' => Genome::Config::get('sw') . '/gatk/GenomeAnalysisTK-1.0.3423/' . $GATK_COMMAND,
+        '3471' => Genome::Config::get('sw') . '/gatk/GenomeAnalysisTK-1.0.3471/' . $GATK_COMMAND,
+        '4168' => Genome::Config::get('sw') . '/gatk/GenomeAnalysisTK-1.0.4168/' . $GATK_COMMAND,
+        '5336' => Genome::Config::get('sw') . '/gatk/GenomeAnalysisTK-1.0.5336/' . $GATK_COMMAND,
+        '5777' => Genome::Config::get('sw') . '/gatk/GenomeAnalysisTK-1.0.5777/' . $GATK_COMMAND,
         '2.4' => Genome::Sys->jar_path($GATK_BASE, "2.4"),
     );
     return %GATK_VERSIONS;

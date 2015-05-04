@@ -197,7 +197,7 @@ sub gather_details
 		      '-e',
 		      $bsubannoerr,
 		      '-q',
-		      $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+		      Genome::Config::get('lsf_queue_build_worker'),
               '-M',
               '8000000',
 		      '-n',

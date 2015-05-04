@@ -10,7 +10,7 @@ use Test::More;
 use_ok ( 'Genome::Model::Tools::Velvet::CreateSupercontigsFiles' ) or die;
 
 my $version = 'v3';
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Velvet/CreateSupercontigsFiles-'.$version;
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Velvet/CreateSupercontigsFiles-'.$version;
 ok(-d $data_dir, "Found data directory: $data_dir") or die;
 
 my $temp_dir = Genome::Sys->create_temp_directory();

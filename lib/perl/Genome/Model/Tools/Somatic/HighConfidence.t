@@ -21,7 +21,7 @@ BEGIN {
 
 use_ok( 'Genome::Model::Tools::Somatic::HighConfidence');
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Somatic-HighConfidence/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Somatic-HighConfidence/';
 
 my $sniper_file     = $test_input_dir . 'sniper.in';
 my $tumor_bam_file  = $test_input_dir . 'tumor.tiny.bam';

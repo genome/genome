@@ -11,7 +11,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::PhredPhrap::ScfToPhd') or die;
 
-my $path = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-PhredPhrap'; #directory for sample data and output
+my $path = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-PhredPhrap'; #directory for sample data and output
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 my $phd_dir = $tmpdir.'/phd_dir';

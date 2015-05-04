@@ -16,7 +16,7 @@ use Genome::Test::Factory::SoftwareResult::User;
 
 use_ok('Genome::Model::Tools::DetectVariants2::Filter::VarscanPValue') || die;
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-VarscanPValue';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Filter-VarscanPValue';
 my $expected_output_dir = join('/', $test_data_dir, 'output');
 
 my $bam_file = join('/', $test_data_dir, 'tumor.tiny.bam');

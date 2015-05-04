@@ -14,7 +14,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::GenePredictor::Glimmer3');
 }
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-GenePredictor';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-GenePredictor';
 ok(-d $test_data_dir, "test data directory exists at $test_data_dir");
 
 my $fasta_file = $test_data_dir . '/Contig0a.20kb.masked.fasta';

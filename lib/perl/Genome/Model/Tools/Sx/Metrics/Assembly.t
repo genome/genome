@@ -11,7 +11,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::Sx::Metrics::Assembly') or die;
 
 #check testsuite data files
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/Metrics/Assembly/v6';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/Metrics/Assembly/v6';
 ok(-d $data_dir, "Data dir exists") or die;
 
 #create temp test dir

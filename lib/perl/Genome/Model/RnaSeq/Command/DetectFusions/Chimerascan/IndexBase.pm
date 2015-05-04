@@ -67,7 +67,7 @@ sub _fetch_result {
 
     my $result_class_name = $self->result_class_name;
     my $result = $result_class_name->$method(
-            test_name => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef,
+            test_name => Genome::Config::get('aligner_index_test_name') || undef,
             version => $self->detector_version,
             bowtie_version => $self->bowtie_version,
             reference_build => $self->build->reference_sequence_build,

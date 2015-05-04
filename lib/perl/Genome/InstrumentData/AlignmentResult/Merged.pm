@@ -12,7 +12,6 @@ use List::Util qw(shuffle);
 use Try::Tiny qw(try catch finally);
 
 use Genome;
-use Genome::Sys::LockProxy qw();
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
 
 class Genome::InstrumentData::AlignmentResult::Merged {
@@ -240,28 +239,8 @@ sub create {
             #Reserve some space beforehand for flagstat and header files
             $self->_size_up_allocation($alignment);
 
-            my $header = $bam_path . '.header';
-            unless (-s $header) {
-                my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
-                my $cmd = "$sam_path view -H $bam_path > $header";
-                Genome::Sys->shellcmd(
-                    cmd => $cmd,
-                    input_files  => [$bam_path],
-                    output_files => [$header],
-                );
-            }
-            my $flagstat = $bam_path . '.flagstat';
-            unless (-s $flagstat) {
-                my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
-                    bam_file    => $bam_path,
-                    output_file => $flagstat,
-                    use_version => $self->samtools_version,
-                );
-
-                unless ($cmd->execute) {
-                    die $self->error_message("Fail to run flagstat on $bam_path");
-                }
-            }
+            $alignment->create_bam_header;
+            $alignment->create_bam_flagstat;
             $self->_remove_per_lane_bam_post_commit($alignment);
         }
     }
@@ -417,7 +396,7 @@ sub required_rusage {
 }
 
 sub resolve_allocation_disk_group_name {
-    $ENV{GENOME_DISK_GROUP_MODELS};
+    Genome::Config::get('disk_group_models');
 }
 
 sub resolve_allocation_kilobytes_requested {
@@ -440,15 +419,14 @@ sub estimated_kb_usage {
         my $bam_size = $alignment->bam_size;
 
         unless (defined $bam_size) {
-            my @aln_bams = $alignment->alignment_bam_file_paths;
-            unless (@aln_bams) {
-                die $self->error_message("alignment $alignment has no bams at " . $alignment->output_dir);
+            my $aln_bam = $alignment->get_bam_file;
+            unless (-s $aln_bam) {
+                die $self->error_message('BAM file (%s) for alignment (%s) does not exist or is empty', $aln_bam, $alignment->id);
             }
-            for (@aln_bams) {
-                my $size = stat($_)->size;
-                $self->debug_message("BAM has size: " . $size);
-                $bam_size += $size;
-            }
+            $alignment->set_bam_size($aln_bam);
+            my $size = $alignment->bam_size;
+            $self->debug_message("BAM has size: " . $size);
+            $bam_size = $size;
         }
         $total_size += $bam_size;
     }

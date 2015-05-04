@@ -198,7 +198,7 @@ sub test_shortcutting {
 
 sub generate_fake_instrument_data {
 
-    my $fastq_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Align-Maq/test_sample_name';
+    my $fastq_directory = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Align-Maq/test_sample_name';
     my $instrument_data = Genome::InstrumentData::Solexa->create_mock(
                                                                       id => $FAKE_INSTRUMENT_DATA_ID,
                                                                       sequencing_platform => 'solexa',

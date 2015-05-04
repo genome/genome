@@ -12,7 +12,7 @@ my $pkg = 'Genome::Model::Tools::Picard::CleanSam';
 
 use_ok($pkg);
 
-my $data_dir = File::Spec->catfile($ENV{GENOME_TEST_INPUTS}, 'Genome-Model-Tools-Picard-CleanSam');
+my $data_dir = File::Spec->catfile(Genome::Config::get('test_inputs'), 'Genome-Model-Tools-Picard-CleanSam');
 my $sam_file = File::Spec->catfile($data_dir, 'dirty.sam');
 my $expected_file = File::Spec->catfile($data_dir, 'expected.sam');
 my $output_file = Genome::Sys->create_temp_file_path . ".sam";

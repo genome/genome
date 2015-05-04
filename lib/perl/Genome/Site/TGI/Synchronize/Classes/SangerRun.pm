@@ -78,7 +78,7 @@ sub dump_to_file_system {
     my $disk_allocation = Genome::Disk::Allocation->get(owner_id => $self->id);
     unless ( $disk_allocation ) {
         $disk_allocation = Genome::Disk::Allocation->allocate(
-            disk_group_name => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
+            disk_group_name => Genome::Config::get('disk_group_alignments'),
             allocation_path => '/instrument_data/sanger-'.$self->id,
             kilobytes_requested => 10240, # 10 Mb
             owner_class_name => 'Genome::InstrumentData::Sanger',

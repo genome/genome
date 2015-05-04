@@ -38,7 +38,7 @@ class NoNext::Reader {
     is => 'Genome::Utility::IO::Reader',
 };
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-IO';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Utility-IO';
 ok(-d $dir, "Test dir ($dir) exists");
 my $albums_file = $dir.'/albums.csv';
 ok(-f $albums_file, "Albums csv file ($albums_file) exists");

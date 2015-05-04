@@ -23,13 +23,13 @@ if ($archos !~ /64/) {
 
 use_ok('Genome::Model::Tools::Mutect::ParallelWrapper');
 
-my $tumor =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/tiny.tumor.bam";
-my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/tiny.normal.bam";
-my $expected_out = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/expected.v2.out"; #updating for v1.1.4
-my $expected_vcf = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/expected.vcf";
+my $tumor =  Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/tiny.tumor.bam";
+my $normal = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/tiny.normal.bam";
+my $expected_out = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/expected.v2.out"; #updating for v1.1.4
+my $expected_vcf = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/expected.vcf";
 
 #Define path to a custom reference sequence build dir
-my $custom_reference_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/custom_reference";
+my $custom_reference_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Mutect-Parallel-Wrapper/custom_reference";
 ok(-e $custom_reference_dir, "Found the custom reference dir: $custom_reference_dir");
 
 my $fasta = Genome::File::Fasta->create(id => "$custom_reference_dir/all_sequences.fa");

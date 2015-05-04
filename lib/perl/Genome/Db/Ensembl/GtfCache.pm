@@ -9,7 +9,7 @@ my ($VEP_DIR) = Cwd::abs_path(__FILE__) =~ /(.*)\//;
 my $VEP_SCRIPT_PATH = $VEP_DIR . "/Command/Vep.d/gtf2vep";
 
 class Genome::Db::Ensembl::GtfCache {
-    is => "Genome::SoftwareResult::Stageable",
+    is => ["Genome::SoftwareResult::Stageable", 'Genome::SoftwareResult::WithNestedResults'],
     has => [
         version => {
             is => 'Text',
@@ -51,8 +51,7 @@ sub create {
     $self->_prepare_staging_directory;
     $self->gtf_content_hash(Genome::Sys->md5sum($self->gtf_file_path));
     $self->lookup_hash($self->calculate_lookup_hash); #reset after modifying file_content_hash
-
-    my $annotation_api = Genome::Db::Ensembl::Api->get_or_create(version => $self->version);
+    my $annotation_api = Genome::Db::Ensembl::Api->get_or_create(version => $self->version, users => $self->_user_data_for_nested_results);
     
     my $script_path = $self->_resolve_vep_script_path($annotation_api);
     my $reference_build = Genome::Model::Build->get($self->reference_build_id);
@@ -167,7 +166,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    $ENV{GENOME_DISK_GROUP_MODELS};
+    Genome::Config::get('disk_group_models');
 }
 
 1;

@@ -277,7 +277,7 @@ sub _resolve_workflow_for_build {
     my $lsf_project = shift;
 
     if (!defined $lsf_queue || $lsf_queue eq '' || $lsf_queue eq 'inline') {
-        $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+        $lsf_queue = Genome::Config::get('lsf_queue_build_worker_alt');
     }
     if (!defined $lsf_project || $lsf_project eq '') {
         $lsf_project = 'build' . $build->id;
@@ -721,7 +721,7 @@ sub params_for_alignment {
         picard_version => $self->picard_version || undef,
         samtools_version => $self->samtools_version || undef,
         filter_name => undef, #unused
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
         bowtie_version => $self->bowtie_version
     );
     #$self->debug_message('The AlignmentResult parameters are: '. Data::Dumper::Dumper(%params));

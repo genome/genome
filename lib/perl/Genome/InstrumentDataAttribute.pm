@@ -35,7 +35,7 @@ sub create {
     # and have a default value. Doing so in the class definition doesn't work due
     # to some sort of UR bug that Tony is aware of.
     unless ($bx->specifies_value_for('nomenclature')) {
-        $bx = $bx->add_filter('nomenclature' => $ENV{GENOME_NOMENCLATURE_DEFAULT});
+        $bx = $bx->add_filter('nomenclature' => Genome::Config::get('nomenclature_default'));
     }
     return $class->SUPER::create($bx);
 }

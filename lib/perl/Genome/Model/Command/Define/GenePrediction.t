@@ -36,7 +36,7 @@ my $test_taxon = Genome::Taxon->create(
 ok($test_taxon, 'created test taxon successfully') or die;
 
 # ====== Make temporary files ======
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '';
+my $test_data_dir = Genome::Config::get('test_inputs') . '';
 my $test_output_dir = File::Temp::tempdir(
     'Genome-Model-GenePrediction-Eukaryotic-XXXXX',
     TMPDIR => 1,

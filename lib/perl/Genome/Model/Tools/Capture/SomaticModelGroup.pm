@@ -400,11 +400,11 @@ sub execute {                               # replace with real execution logic.
 						{
 							if($self->reference)
 							{
-								system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file --reference " . $self->reference);
+								system("bsub -q " . Genome::Config::get('lsf_queue_short') . " -R\"select[mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file --reference " . $self->reference);
 							}
 							else
 							{
-								system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file");															
+								system("bsub -q " . Genome::Config::get('lsf_queue_short') . " -R\"select[mem>6000] rusage[mem=6000]\" -M 6000000 gmt somatic ultra-high-confidence --min-tumor-var-freq 0.10 --tumor-bam $tumor_bam --normal-bam $normal_bam --variant-file $tier1_snvs --output-file $output_file --filtered-file $filtered_file");															
 							}
 
 						}
@@ -436,7 +436,7 @@ sub execute {                               # replace with real execution logic.
 						$cmd .= " --reference " . $self->reference if($self->reference);
 						if(!(-e "$output_dir/varScan.output.copynumber"))
 						{
-							system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>4000]\" $cmd");							
+							system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>4000]\" $cmd");							
 						}
 						else
 						{
@@ -1267,7 +1267,7 @@ sub output_germline_files
 
 	close(SCRIPT);
 	
-	system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $germline_dir/germline.sh.log \"sh $germline_dir/germline.sh\"");
+	system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $germline_dir/germline.sh.log \"sh $germline_dir/germline.sh\"");
 
 
 	## Process Germline Indels ##
@@ -1289,7 +1289,7 @@ sub output_germline_files
 			$cmd = "grep GERMLINE $gatk_indel_file >$gatk_output_file.temp";
 			print SCRIPT "$cmd\n";
 			print SCRIPT "echo Limiting to ROI...\n";
-			$cmd = "java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.v2.2.6.jar limit $gatk_output_file.temp --regions-file " . $self->germline_roi_file . " --output-file $gatk_output_file";
+			$cmd = "java -jar " . Genome::Config::get('sw_legacy_java') . "/VarScan/VarScan.v2.2.6.jar limit $gatk_output_file.temp --regions-file " . $self->germline_roi_file . " --output-file $gatk_output_file";
 			print SCRIPT "$cmd\n";
 			$cmd = "rm -rf $gatk_output_file.temp";
 			print SCRIPT "$cmd\n";
@@ -1320,7 +1320,7 @@ sub output_germline_files
 		if($self->germline_roi_file)
 		{
 			print SCRIPT "echo Limiting to ROI...\n";
-			$cmd = "java -jar $ENV{GENOME_SW_LEGACY_JAVA}/VarScan/VarScan.jar limit $output_indel_varscan --regions-file " . $self->germline_roi_file . " --output-file $output_indel_varscan.roi";
+			$cmd = "java -jar " . Genome::Config::get('sw_legacy_java') . "/VarScan/VarScan.jar limit $output_indel_varscan --regions-file " . $self->germline_roi_file . " --output-file $output_indel_varscan.roi";
 			print SCRIPT "$cmd\n";
 			$output_indel_varscan .= ".roi";
 		}
@@ -1349,7 +1349,7 @@ sub output_germline_files
 		print SCRIPT "$cmd\n";
 	}
 
-	system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $germline_dir/germline-indel.sh.log \"sh $germline_dir/germline-indel.sh\"");
+	system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>8000] rusage[mem=8000]\" -M 8000000 -oo $germline_dir/germline-indel.sh.log \"sh $germline_dir/germline-indel.sh\"");
 
 }
 
@@ -1443,7 +1443,7 @@ sub output_loh_files
 		## Apply the FP-filter ##
 		my $cmd = "gmt somatic filter-false-positives --variant-file $germline_output_file.unfiltered --bam-file $tumor_bam --output-file $germline_output_file";
 		$cmd .= " --reference " . $self->reference if($self->reference);
-		system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
+		system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
 	}
 	
 
@@ -1462,7 +1462,7 @@ sub output_loh_files
 		## Apply the FP-filter ##
 		my $cmd = "gmt somatic filter-false-positives --variant-file $loh_output_file.unfiltered --bam-file $normal_bam --output-file $loh_output_file";
 		$cmd .= " --reference " . $self->reference if($self->reference);
-		system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT} -R\"select[mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
+		system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>8000 && tmp>2000] rusage[mem=8000]\" -M 8000000 $cmd");
 	}
 	
 	## If both files exist, process them ##
@@ -1499,7 +1499,7 @@ sub process_loh
 		system("cat $germline_snp $loh_snp >$combined_snp");
 		system("gmt capture sort-by-chr-pos --input $combined_snp --output $combined_snp");
 		my $cmd = "gmt varscan loh-segments --variant-file $combined_snp --output-basename $combined_snp.loh";
-		system("bsub -q $ENV{GENOME_LSF_QUEUE_SHORT} -R\"select[mem>1000] rusage[mem=1000]\" \"$cmd\"");
+		system("bsub -q " . Genome::Config::get('lsf_queue_short') . " -R\"select[mem>1000] rusage[mem=1000]\" \"$cmd\"");
 	}
 	else
 	{

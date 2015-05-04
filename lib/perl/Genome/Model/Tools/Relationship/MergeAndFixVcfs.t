@@ -14,7 +14,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Relationship::MergeAndFixVcfs');
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} .
+my $test_data_dir = Genome::Config::get('test_inputs') .
         '/Genome-Model-Tools-Relationship-MergeAndFixVcfs';
 
 my $input_denovo = join('/', $test_data_dir, 'DS10000.denovo.vcf.gz');

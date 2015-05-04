@@ -124,7 +124,7 @@ sub version_db_fasta_file {
 sub path_to_nastier {
     my $self = shift;
 
-    my $script = $ENV{GENOME_SW} . '/broad/NAST-iEr/run_NAST-iEr.pl';
+    my $script = Genome::Config::get('sw') . '/broad/NAST-iEr/run_NAST-iEr.pl';
     if ( not -x $script ) {
         $self->error_message("Failed to find script of script is not executable: $script");
         return;

@@ -13,7 +13,7 @@ use Test::More;
 
 use_ok("Genome::Model::Tools::Annotate::AppendColumns");
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Annotate-AppendColumns/v2";
+my $test_dir = Genome::Config::get('test_inputs')."/Genome-Model-Tools-Annotate-AppendColumns/v2";
 my $temp_file = Genome::Sys->create_temp_file_path;
 
 my $cmd = Genome::Model::Tools::Annotate::AppendColumns->create(

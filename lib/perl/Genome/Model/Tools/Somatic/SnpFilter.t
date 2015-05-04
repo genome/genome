@@ -21,7 +21,7 @@ BEGIN {
 
 use_ok( 'Genome::Model::Tools::Somatic::SnpFilter');
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Somatic-SnpFilter/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Somatic-SnpFilter/';
 my $tumor_snp_file  = $test_input_dir . 'tumor.in';
 my $sniper_snp_file = $test_input_dir . 'sniper.in';
 

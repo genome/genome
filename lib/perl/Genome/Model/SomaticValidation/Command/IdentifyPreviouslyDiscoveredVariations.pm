@@ -21,7 +21,7 @@ class Genome::Model::SomaticValidation::Command::IdentifyPreviouslyDiscoveredVar
     ],
     has_param => [
         lsf_queue => {
-            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
+            default => Genome::Config::get('lsf_queue_build_worker_alt'),
         },
     ],
 };
@@ -167,7 +167,7 @@ sub params_for_result {
         previously_discovered_result_id => $previously_discovered_result->id,
         classifier_version => 1,
         variant_type => $variant_type,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
         skip_filtering => undef,
         users => Genome::SoftwareResult::User->user_hash_for_build($build),
     );

@@ -11,7 +11,7 @@ class Genome::Disk::Command::Group::UnderAllocated {
         disk_group_names => {
             is => 'Text',
             doc => 'comma delimited list of disk groups to be checked',
-            default => "$ENV{GENOME_DISK_GROUP_ALIGNMENTS},$ENV{GENOME_DISK_GROUP_MODELS}",
+            default => join(',', Genome::Config::get('disk_group_alignments'), Genome::Config::get('disk_group_models')),
         },
         send_alert => {
             is => 'Boolean',

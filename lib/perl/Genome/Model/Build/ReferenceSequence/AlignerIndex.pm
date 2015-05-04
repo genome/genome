@@ -259,7 +259,7 @@ sub _gather_params_for_get_or_create {
     my $p = $class->SUPER::_gather_params_for_get_or_create(@_);
 
     unless ($p->{params}{test_name}) {
-        $p->{params}{test_name} = ($ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef);
+        $p->{params}{test_name} = (Genome::Config::get('aligner_index_test_name') || undef);
     }
     if (exists $p->{params}{aligner_name} && $class->aligner_requires_param_masking($p->{params}{aligner_name})) {
         $p->{params}{aligner_params} = undef;
@@ -300,9 +300,9 @@ sub resolve_allocation_subdirectory {
 
 sub resolve_allocation_disk_group_name {
     if ($_[0]->reference_build->model->is_rederivable) {
-        return $ENV{GENOME_DISK_GROUP_MODELS};
+        return Genome::Config::get('disk_group_models');
     } else {
-        return $ENV{GENOME_DISK_GROUP_REFERENCES};
+        return Genome::Config::get('disk_group_references');
     }
 }
 

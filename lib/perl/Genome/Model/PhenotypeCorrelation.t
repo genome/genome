@@ -21,7 +21,7 @@ if ($archos !~ /64/) {
     plan  tests => 16;
 }
 
-my $test_data_directory = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-PhenotypeCorrelation/2012-09-10/";
+my $test_data_directory = Genome::Config::get('test_inputs') . "/Genome-Model-PhenotypeCorrelation/2012-09-10/";
 
 my $tmp_dir = File::Temp::tempdir('Genome-Model-Build-PhenotypeCorrelation-XXXXX', CLEANUP => 1, TMPDIR => 1);
 

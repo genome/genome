@@ -26,8 +26,8 @@ my $refbuild_id = 101947881;
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
 ok($ref_seq_build, 'human36 reference sequence build') or die;
 
-my $tumor =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants-Somatic-Sniper/tumor.tiny.bam";
-my $normal = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants-Somatic-Sniper/normal.tiny.bam";
+my $tumor =  Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants-Somatic-Sniper/tumor.tiny.bam";
+my $normal = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants-Somatic-Sniper/normal.tiny.bam";
 
 my $test_base_dir = File::Temp::tempdir('SomaticSniperXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $test_working_dir = "$test_base_dir/output";

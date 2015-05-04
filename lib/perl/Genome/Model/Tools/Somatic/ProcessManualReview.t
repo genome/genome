@@ -9,11 +9,11 @@ use File::Spec;
 my $variantMatcherOut = new File::Temp( UNLINK => 0 );
 
 my $variantFile = File::Spec->catfile(
-	$ENV{GENOME_TEST_INPUTS}, "Genome-Model",
+	Genome::Config::get('test_inputs'), "Genome-Model",
 	"ProcessManualReview",    "Snvs.indels.annotated"
 );
 my $reviewedFile = File::Spec->catfile(
-	$ENV{GENOME_TEST_INPUTS}, "Genome-Model",
+	Genome::Config::get('test_inputs'), "Genome-Model",
 	"ProcessManualReview",    "Reviewed.bed"
 );
 use_ok('Genome::Model::Tools::Somatic::ProcessManualReview');

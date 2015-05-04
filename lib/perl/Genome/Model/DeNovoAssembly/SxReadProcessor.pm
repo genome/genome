@@ -195,7 +195,7 @@ sub determine_processing {
                 read_processor => $processing->{processor},
                 output_file_count => ( $instrument_data->is_paired_end ? 2 : 1 ),
                 output_file_type => 'sanger',
-                test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+                test_name => (Genome::Config::get('software_result_test_name') || undef),
             };
         }
 
@@ -216,7 +216,7 @@ sub determine_processing {
             coverage => $processing->{coverage},
             output_file_count => $output_file_counts[0],
             output_file_type => 'sanger',
-            test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+            test_name => (Genome::Config::get('software_result_test_name') || undef),
         };
     }
 

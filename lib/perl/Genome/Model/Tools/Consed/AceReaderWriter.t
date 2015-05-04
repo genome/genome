@@ -14,7 +14,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::Consed::AceReader') or die;
 use_ok('Genome::Model::Tools::Consed::AceWriter') or die;
 
-my $ace_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Consed/M_BB0392D19.ace';
+my $ace_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Consed/M_BB0392D19.ace';
 my $reader = Genome::Model::Tools::Consed::AceReader->create(
     file => $ace_file,
 );

@@ -5,6 +5,8 @@ use strict;
 
 our $VERSION = '0.080100';
 
+require Genome::Config;
+
 use UR;
 use File::Temp;
 use IO::String;
@@ -19,15 +21,18 @@ UR::Object::Type->define(
     english_name => 'genome',
 );
 
-# Checks that all variables that start with GENOME_ have a corresponding Genome/Env/* module
-# and assigns default values to any variables that have one set.
-require Genome::Env;
+sub execution_id {
+    unless ($ENV{GENOME_EXECUTION_ID}) {
+        $ENV{GENOME_EXECUTION_ID} = UR::Object::Type->autogenerate_new_object_id_uuid();
+    }
+    return $ENV{GENOME_EXECUTION_ID};
+}
 
-# Local configuration
+require Genome::Env;
 require Genome::Site;
 
-if ($ENV{GENOME_SYS_UMASK}) {
-    my $old_umask = umask oct($ENV{GENOME_SYS_UMASK});
+if (my $umask = Genome::Config::get('sys_umask')) {
+    my $old_umask = umask oct($umask);
     if (!defined($old_umask)) {
         die 'failed to set umask';
     }

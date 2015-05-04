@@ -17,7 +17,7 @@ is(Genome::Model::Tools::Sx::FastqWriter->type, 'sanger', 'type is sanger');
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 ok(-d $tmpdir, 'Created temp dir');
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/';
 
 my $collated_fastq = $dir.'/reader_writer.collated.fastq';
 ok(-s $collated_fastq, 'Collated fastq exists') or die;
@@ -48,11 +48,11 @@ is($count, 12, 'Read/write 12 fastq sets');
 ok($writer->flush, 'flush');
 is(File::Compare::compare($forward_fastq, $out_fastq), 0, 'files match');
 
-my $validate_good_reader = Genome::Model::Tools::Sx::FastqReader->create(file =>  $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/FastqReaderWriter/good.fastq');
+my $validate_good_reader = Genome::Model::Tools::Sx::FastqReader->create(file =>  Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/FastqReaderWriter/good.fastq');
 ok($validate_good_reader, 'create reader to validate file');
 ok($validate_good_reader->validate, 'validated good fastq');
 
-my $validate_bad_reader = Genome::Model::Tools::Sx::FastqReader->create(file =>  $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/FastqReaderWriter/bad.fastq');
+my $validate_bad_reader = Genome::Model::Tools::Sx::FastqReader->create(file =>  Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/FastqReaderWriter/bad.fastq');
 ok($validate_bad_reader, 'create reader to validate file');
 ok(!$validate_bad_reader->validate, 'failed to validate bad fastq');
 

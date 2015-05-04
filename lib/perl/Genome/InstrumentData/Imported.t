@@ -72,8 +72,8 @@ my $i3 = Genome::InstrumentData::Imported->create(
     id => -789,
     library_id              => $l->id, 
     import_source_name      => 'Broad',
-    original_data_path      => $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-Import-Fastq/s_5_1_sequence.txt,'
-                                . $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-Import-Fastq/s_5_2_sequence.txt',
+    original_data_path      => Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Command-Import-Fastq/s_5_1_sequence.txt,'
+                                . Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Command-Import-Fastq/s_5_2_sequence.txt',
                                 
     import_format           => 'fastq',
     sequencing_platform     => 'solexa',
@@ -90,8 +90,8 @@ is($i3->sequencing_platform,'solexa','platform is correct');
 is($i3->user_name, Genome::Sys->username, "user name is correct");
 is($i3->import_format, "fastq","import format = fastq");
 is($i3->original_data_path, 
-  $ENV{GENOME_TEST_INPUTS} . "/Genome-InstrumentData-Command-Import-Fastq/s_5_1_sequence.txt,"
-      . $ENV{GENOME_TEST_INPUTS} . "/Genome-InstrumentData-Command-Import-Fastq/s_5_2_sequence.txt", 
+  Genome::Config::get('test_inputs') . "/Genome-InstrumentData-Command-Import-Fastq/s_5_1_sequence.txt,"
+      . Genome::Config::get('test_inputs') . "/Genome-InstrumentData-Command-Import-Fastq/s_5_2_sequence.txt", 
   "original_data_path matches"
 );
 is($i3->calculate_alignment_estimated_kb_usage, "585", "estimated kb usage is correct");

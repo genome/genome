@@ -202,7 +202,7 @@ sub compare_ok {
             }
 
             # different
-            my($line1,$line2) = @lines[0,$i];
+            my($line1,$line2) = map { defined($_) ? $_ : "" } @lines[0,$i];
             chomp($line1, $line2);
 
             $tb->diag(sprintf("First diff:\n--- %s line %d\n+++ %s line %d\n-%s\n+%s\n",
@@ -318,7 +318,7 @@ sub data_dir {
     $package->class;
 
     (my $dirname = $package) =~ s/::/-/g;
-    my @parts = ($ENV{GENOME_TEST_INPUTS}, $dirname);
+    my @parts = (Genome::Config::get('test_inputs'), $dirname);
     if ($test_version) {
         push @parts, $test_version;
     }

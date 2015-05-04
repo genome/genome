@@ -10,7 +10,7 @@ use File::Compare;
 
 use_ok('Genome::Model::Tools::Picard::IterativeMarkDuplicates');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Picard-IterativeMarkDuplicates';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Picard-IterativeMarkDuplicates';
 my $test_bam = $data_dir .'/test.bam';
 my $expected_metrics = $data_dir .'/expected_metrics.tsv';
 

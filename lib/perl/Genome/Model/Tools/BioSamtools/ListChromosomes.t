@@ -14,7 +14,7 @@ if ($] < 5.010) {
 plan tests => 8;
 
 use_ok('Genome::Model::Tools::BioSamtools::ListChromosomes');
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-BioSamtools-ListChromosomes';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-BioSamtools-ListChromosomes';
 my $seq_dict = $data_dir .'/seqdict.sam';
 
 my $expected_output_file = $data_dir .'/expected_output/list.txt';

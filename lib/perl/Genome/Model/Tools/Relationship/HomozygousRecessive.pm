@@ -39,7 +39,7 @@ class Genome::Model::Tools::Relationship::HomozygousRecessive {
     },
     lsf_queue => {
         is => 'Text',
-        default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+        default => Genome::Config::get('lsf_queue_build_worker'),
     },
     ],
 };

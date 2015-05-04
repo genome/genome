@@ -132,7 +132,7 @@ sub _fallback_lsf_resource {
     my $tmp_gb = $tmp_mb/1024;
 
     my $user = getpwuid($<);
-    my $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+    my $queue = Genome::Config::get('lsf_queue_alignment_default');
 
     #my $host_groups;
     #my $command = qq(bqueues -l $queue | grep ^HOSTS:);
@@ -194,7 +194,7 @@ sub params_for_alignment {
 
         filter_name => $self->instrument_data_filter || undef,
 
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
 
         users => $self->result_users,
     );

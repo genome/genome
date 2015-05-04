@@ -17,6 +17,7 @@ experts:
         joinx_version: 1.8
         plugins_version: 1
         short_name: 0
+        allow_same_file: 0
     fpkm:
         sample_name: tumor
         fpkm_file: fpkm_file

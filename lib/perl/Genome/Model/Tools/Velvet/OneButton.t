@@ -44,7 +44,7 @@ foreach my $param (@params) {
 
     my $data_dir = $module;
     $data_dir =~ s/::/-/g;
-    $data_dir = $ENV{GENOME_TEST_INPUTS} . "/$data_dir";
+    $data_dir = Genome::Config::get('test_inputs') . "/$data_dir";
 
     #UNCOMMENT THE FOLLOWING TWO LINES WHEN BUILD NEW TEST DATA
     #`mkdir -p $data_dir/$data_sub_dirs[0]`;

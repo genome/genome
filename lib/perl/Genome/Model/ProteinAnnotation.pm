@@ -67,7 +67,7 @@ sub __errors__ {
 }
 
 sub server_dispatch {
-    return $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
+    return Genome::Config::get('lsf_queue_build_worker');
 }
 
 sub map_workflow_inputs {

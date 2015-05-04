@@ -143,30 +143,31 @@ EOS
 
 # NOTE: These are in order.
 # Please put the most recent first.
+my $sw_legacy_java = Genome::Config::get('sw_legacy_java');
 my @PICARD_VERSIONS = (
     '1.123' => '/gscmnt/sata132/techd/solexa/jwalker/lib/picard-tools-1.123',
-    '1.82' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.82',
-    '1.77' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.77',
-    '1.52' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.52',
-    '1.46' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.46',
-    '1.42' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.42',
-    '1.40' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.40',
-    '1.36' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.36',
-    '1.31' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.31',
-    '1.29' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.29',
-    '1.25' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.25',
-    '1.24' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.24',
-    '1.23' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.23',
-    'r436' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-r436', #contains a fix for when a whole library is unmapped
-    '1.22' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.22',
-    '1.21' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.21',
-    '1.17' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.17',
+    '1.82' => $sw_legacy_java . '/samtools/picard-tools-1.82',
+    '1.77' => $sw_legacy_java . '/samtools/picard-tools-1.77',
+    '1.52' => $sw_legacy_java . '/samtools/picard-tools-1.52',
+    '1.46' => $sw_legacy_java . '/samtools/picard-tools-1.46',
+    '1.42' => $sw_legacy_java . '/samtools/picard-tools-1.42',
+    '1.40' => $sw_legacy_java . '/samtools/picard-tools-1.40',
+    '1.36' => $sw_legacy_java . '/samtools/picard-tools-1.36',
+    '1.31' => $sw_legacy_java . '/samtools/picard-tools-1.31',
+    '1.29' => $sw_legacy_java . '/samtools/picard-tools-1.29',
+    '1.25' => $sw_legacy_java . '/samtools/picard-tools-1.25',
+    '1.24' => $sw_legacy_java . '/samtools/picard-tools-1.24',
+    '1.23' => $sw_legacy_java . '/samtools/picard-tools-1.23',
+    'r436' => $sw_legacy_java . '/samtools/picard-tools-r436', #contains a fix for when a whole library is unmapped
+    '1.22' => $sw_legacy_java . '/samtools/picard-tools-1.22',
+    '1.21' => $sw_legacy_java . '/samtools/picard-tools-1.21',
+    '1.17' => $sw_legacy_java . '/samtools/picard-tools-1.17',
     # old processing profiles used a different standard
     # this was supposed to be ONLY for things where we work directly from svn instead of released versions, like samtools :(
-    'r116' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.16',
-    'r107' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.07/',
-    'r104' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.04/',
-    'r103wu0' => $ENV{GENOME_SW_LEGACY_JAVA} . '/samtools/picard-tools-1.03/',
+    'r116' => $sw_legacy_java . '/samtools/picard-tools-1.16',
+    'r107' => $sw_legacy_java . '/samtools/picard-tools-1.07/',
+    'r104' => $sw_legacy_java . '/samtools/picard-tools-1.04/',
+    'r103wu0' => $sw_legacy_java . '/samtools/picard-tools-1.03/',
 );
 
 my %PICARD_VERSIONS = @PICARD_VERSIONS;
@@ -262,12 +263,11 @@ sub path_for_picard_version {
 }
 
 sub installed_picard_versions {
-    my @files = glob('/usr/share/java/picard-*.jar');
+    my @files = glob('/usr/share/java/picard-tools*');
 
     my @versions;
     for my $f (@files) {
-        if($f =~ /picard-([\d\.]+).jar$/) {
-            next if $1 eq '1.124';
+        if($f =~ /picard-tools([\d\.]+)\/?$/) {
             push @versions, $1;
         }
     }
@@ -421,7 +421,7 @@ This is the last warning you will receive about this process.
 MESSAGE
 
                 undef $w;
-                my $from = '"' . __PACKAGE__ . sprintf('" <%s@%s>', Genome::Sys->username, $ENV{GENOME_EMAIL_DOMAIN});
+                my $from = '"' . __PACKAGE__ . sprintf('" <%s@%s>', Genome::Sys->username, Genome::Config::get('email_domain'));
 
                 my @to = map { Genome::Utility::Email::construct_address($_) }
                             split(' ', $self->_monitor_mail_to);
@@ -432,7 +432,7 @@ MESSAGE
                 Genome::Utility::Email::send(
                     from    => $from,
                     to      => \@to,
-                    cc      => $ENV{GENOME_EMAIL_PIPELINE_NOISY},
+                    cc      => Genome::Config::get('email_pipeline_noisy'),
                     subject => $subject,
                     body    => $data,
                 );

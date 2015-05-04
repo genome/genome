@@ -12,7 +12,7 @@ use_ok('Genome::Model::Tools::Fastq::RandomSubset');
 
 my $tmp_dir = File::Temp::tempdir('Fastq-RandomSubset-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/RandomSubset';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fastq/RandomSubset';
 #my $tmp_dir = $data_dir;
 my $expected_50_file = $data_dir .'/50_seq.fastq';
 my $expected_10_file = $data_dir .'/10_seq.fastq';

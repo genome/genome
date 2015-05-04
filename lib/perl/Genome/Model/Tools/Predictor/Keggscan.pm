@@ -34,7 +34,7 @@ class Genome::Model::Tools::Predictor::Keggscan {
         },
         blast_lsf_queue => {
             is => 'Text',
-            value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+            value => Genome::Config::get('lsf_queue_build_worker'),
             doc => 'Queue in which LSF jobs should be scheduled',
         },
         blast_lsf_resource => {

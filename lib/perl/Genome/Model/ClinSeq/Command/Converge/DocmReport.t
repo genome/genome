@@ -5,7 +5,7 @@ use above "Genome";
 use Test::More tests => 9; 
 
 #Define the expected result
-my $expected_out = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-ClinSeq-Command-Converge-DocmReport/2014-10-16/';
+my $expected_out = Genome::Config::get('test_inputs') . '/Genome-Model-ClinSeq-Command-Converge-DocmReport/2014-10-16/';
 ok(-d $expected_out, "directory of expected output exists: $expected_out") or die;
 
 #Obtain two clin-seq build objects

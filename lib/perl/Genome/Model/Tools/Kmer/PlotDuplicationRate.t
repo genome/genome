@@ -11,7 +11,7 @@ use above 'Genome';
 use_ok('Genome::Model::Tools::Kmer::DuplicationRate');
 
 my $tmp_dir = Genome::Sys->create_temp_directory('Genome-Model-Tools-Kmer-PlotDuplicationRate-'. Genome::Sys->username);
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Kmer-DuplicationRate';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Kmer-DuplicationRate';
 my $occratio_file = $data_dir .'/s_7_occratio.txt';
 
 my $plot_dup_rate = Genome::Model::Tools::Kmer::PlotDuplicationRate->create(

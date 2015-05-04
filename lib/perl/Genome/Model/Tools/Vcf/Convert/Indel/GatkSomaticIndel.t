@@ -12,7 +12,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
 
 use_ok('Genome::Model::Tools::Vcf::Convert::Indel::GatkSomaticIndel');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Vcf-Convert-Indel-GatkSomaticIndel';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Vcf-Convert-Indel-GatkSomaticIndel';
 my $expected_file = "$test_dir/expected.v2/indels.vcf.gz";
 my $input_file    = "$test_dir/indels.hq";
 my $output_file   = Genome::Sys->create_temp_file_path;

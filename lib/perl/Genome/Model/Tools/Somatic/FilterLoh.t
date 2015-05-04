@@ -14,7 +14,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::Somatic::FilterLoh');    
 };
 
-my $test_input_dir      = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Somatic-FilterLoh/54367/';
+my $test_input_dir      = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Somatic-FilterLoh/54367/';
 my $tumor_snp_file      = $test_input_dir . 'tumor.snp'; #In SVN rev.54367, changed input format
 my $normal_snp_file     = $test_input_dir . 'normal.snp';
 

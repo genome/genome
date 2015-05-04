@@ -11,7 +11,7 @@ my $ace_file = 'merge.ace';
 my $contig = 'contig00012.0';
 my $split_position = 150;
 my $no_gui = 1;
-my $path = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Assembly-MergeContigs/edit_dir';
+my $path = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Assembly-MergeContigs/edit_dir';
 
 
 my $out_file_name = 'split_out.ace';

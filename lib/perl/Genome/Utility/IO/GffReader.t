@@ -8,7 +8,7 @@ use above 'Genome';
 use Test::More tests => 3;
 
 use_ok('Genome::Utility::IO::GffReader');
-my $gff_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-IO-GffReader/alignment_summary.gff';
+my $gff_file = Genome::Config::get('test_inputs') . '/Genome-Utility-IO-GffReader/alignment_summary.gff';
 
 my $reader = Genome::Utility::IO::GffReader->create(
    input => $gff_file,
@@ -23,7 +23,7 @@ $data = $reader->next_with_attributes_hash_ref;
 my $attributes = $data->{attributes_hash_ref};
 #print Data::Dumper::Dumper($attributes) ."\n";
 
-my $gtf_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-IO-GffReader/annotation.gtf';
+my $gtf_file = Genome::Config::get('test_inputs') . '/Genome-Utility-IO-GffReader/annotation.gtf';
 my $gtf_reader = Genome::Utility::IO::GffReader->create(
    input => $gtf_file,
 );

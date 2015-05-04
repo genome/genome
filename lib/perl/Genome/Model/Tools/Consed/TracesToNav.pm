@@ -48,12 +48,13 @@ sub help_brief {
 }
 
 sub help_synopsis {
+    my $test_inputs = Genome::Config::get('test_inputs');
     return <<EOS
 gmt consed traces-to-nav --ace --list
 
 running...
 
-gmt consed traces-to-nav --ace $ENV{GENOME_TEST_INPUTS}Genome-Model-Tools-Consed-TracesToConsed/10_126008345_126010576/edit_dir/10_126008345_126010576.ace.1 --convert-coords $ENV{GENOME_TEST_INPUTS}Genome-Model-Tools-Consed-TracesToConsed/10_126008345_126010576/edit_dir/10_126008345_126010576.c1.refseq.fasta --input-type simple --name-nav test.traces.to.nav --list $ENV{GENOME_TEST_INPUTS}Genome-Model-Tools-Consed-TracesToNav/Nav.list
+gmt consed traces-to-nav --ace ${test_inputs}Genome-Model-Tools-Consed-TracesToConsed/10_126008345_126010576/edit_dir/10_126008345_126010576.ace.1 --convert-coords ${test_inputs}Genome-Model-Tools-Consed-TracesToConsed/10_126008345_126010576/edit_dir/10_126008345_126010576.c1.refseq.fasta --input-type simple --name-nav test.traces.to.nav --list ${test_inputs}Genome-Model-Tools-Consed-TracesToNav/Nav.list
 
 will produce a navigator ==> test.traces.to.nav.date.nav
 and a spreadsheet ==> test.traces.to.nav.date.csv

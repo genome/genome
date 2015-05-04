@@ -10,7 +10,7 @@ use File::Spec qw();
 my $pkg = 'Genome::Model::Tools::Picard::BuildBamIndex';
 use_ok($pkg);
 
-my $data_dir = File::Spec->catfile($ENV{GENOME_TEST_INPUTS}, 'Genome-Model-Tools-Picard-BuildBamIndex');
+my $data_dir = File::Spec->catfile(Genome::Config::get('test_inputs'), 'Genome-Model-Tools-Picard-BuildBamIndex');
 
 my $bam_file = File::Spec->catfile($data_dir, "coordsort.bam");
 my $tmpdir = Genome::Sys->create_temp_directory;

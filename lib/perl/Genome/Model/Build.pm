@@ -21,6 +21,8 @@ use Genome::Sys::LSF::bsub qw();
 use Genome::Utility::Email;
 use Genome::Utility::Vcf;
 
+require Scope::Guard;
+
 class Genome::Model::Build {
     is => [
         "Genome::Notable",
@@ -621,7 +623,7 @@ sub _cpu_slot_usage_breakdown {
         }
 
         if ($op_type->can('lsf_queue') and defined($op_type->lsf_queue)
-            and $op_type->lsf_queue eq $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW}
+            and $op_type->lsf_queue eq Genome::Config::get('lsf_queue_build_workflow')
         ) {
             # skip jobs which run in workflow because they internally run another workflow
             next;
@@ -1023,7 +1025,7 @@ sub start {
 
         # Creates a workflow for the build
         # TODO Initialize workflow shouldn't take arguments
-        unless ($self->_initialize_workflow($params{job_dispatch} || $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT})) {
+        unless ($self->_initialize_workflow($params{job_dispatch} || Genome::Config::get('lsf_queue_build_worker_alt'))) {
             Carp::croak "Build " . $self->__display_name__ . " could not initialize workflow!";
         }
 
@@ -1340,6 +1342,16 @@ sub _get_job {
     return shift @jobs;
 }
 
+sub get_build_id {
+    return $ENV{GENOME_BUILD_ID};
+}
+
+sub set_build_id {
+    my $new_value = shift;
+    (my $orig_genome_build_id, $ENV{GENOME_BUILD_ID}) = ($ENV{GENOME_BUILD_ID}, $new_value);
+    return Scope::Guard->new(sub { $ENV{GENOME_BUILD_ID} = $orig_genome_build_id });
+}
+
 sub _launch {
     my $self = shift;
     my %params = @_;
@@ -1348,7 +1360,8 @@ sub _launch {
     local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
     local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
-    local $ENV{GENOME_BUILD_ID} = $self->id;
+
+    my $build_id_guard = set_build_id($self->id);
 
     # right now it is "inline" or the name of an LSF queue.
     # ultimately, it will be the specification for parallelization
@@ -1432,7 +1445,7 @@ sub _job_dispatch {
     } elsif ($model->processing_profile->can('job_dispatch') && defined $model->processing_profile->job_dispatch) {
         $job_dispatch = $model->processing_profile->job_dispatch;
     } else {
-        $job_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+        $job_dispatch = Genome::Config::get('lsf_queue_build_worker_alt');
     }
     return $job_dispatch;
 }
@@ -1448,7 +1461,7 @@ sub _server_dispatch {
     } elsif ($model->can('server_dispatch') && defined $model->server_dispatch) {
         $server_dispatch = $model->server_dispatch;
     } else {
-        $server_dispatch = $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW};
+        $server_dispatch = Genome::Config::get('lsf_queue_build_workflow');
     }
     return $server_dispatch;
 }
@@ -1475,7 +1488,7 @@ sub _job_group_spec {
 sub _initialize_workflow {
     #     Create the data and log directories and resolve the workflow for this build.
     my $self = shift;
-    my $optional_lsf_queue = shift || $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+    my $optional_lsf_queue = shift || Genome::Config::get('lsf_queue_build_worker_alt');
 
     Genome::Sys->create_directory( $self->data_directory )
         or return;
@@ -1489,10 +1502,10 @@ sub _initialize_workflow {
 
     ## so developers dont fail before the workflow changes get deployed to /gsc/scripts
     # NOTE: Genome::Config is obsolete, so this code must work when it is not installed as well.
-    if ($workflow->can('notify_url') and $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL}) {
+    if ($workflow->can('notify_url') and my $view_url = Genome::Config::get('sys_services_web_view_url')) {
         require UR::Object::View::Default::Xsl;
 
-        my $cachetrigger = $ENV{GENOME_SYS_SERVICES_WEB_VIEW_URL};
+        my $cachetrigger = $view_url;
         $cachetrigger =~ s/view$/cachetrigger/;
 
         my $url = $cachetrigger . '/' . UR::Object::View::Default::Xsl::type_to_url(ref($self)) . '/status.html?id=' . $self->id;
@@ -1853,8 +1866,8 @@ sub generate_send_and_save_report {
     my $email_confirmation = Genome::Report::Email->send_report(
         report => $report,
         to => $to->id,
-        from => 'apipe@'.Genome::Config::domain(),
-        replyto => 'noreply@'.Genome::Config::domain(),
+        from => Genome::Config::get('email_pipeline'),
+        replyto => Genome::Config::get('email_noreply'),
         # maybe not the best/correct place for this information but....
         xsl_files => [ $generator->get_xsl_file_for_html ],
     );

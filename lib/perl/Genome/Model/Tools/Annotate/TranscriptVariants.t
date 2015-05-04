@@ -7,7 +7,7 @@ use Test::More tests => 9;
 use File::Compare;
 use above "Genome";
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Annotate-TranscriptVariants';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Annotate-TranscriptVariants';
 ok(-d $test_dir, "test data dir exists");
 
 my $input = "$test_dir/input";

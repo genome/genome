@@ -63,6 +63,11 @@ class Genome::Model::Tools::Joinx::VcfMerge {
             is => 'Text',
             doc => 'where to redirect stderr from joinx, if desired',
         },
+        allow_same_file => {
+            is => 'Boolean',
+            default => 0,
+            doc => 'Allow merging entries from the same file.',
+        }
     ],
 };
 
@@ -167,6 +172,12 @@ sub _resolve_flags {
     }
     if ($self->merge_samples) {
         $flags .= " -s";
+    }
+    if ($self->allow_same_file) {
+        if ( version->parse('v'.$self->use_version) < version->parse("v1.11") ) {
+            die $self->error_message("Invalid option (--allow-same-file) for joinx version (%s). Use 1.11 and above.", $self->use_version);
+        }
+        $flags .= ' --allow-same-file',
     }
     if ($self->exact_pos) {
         if ( version->parse('v'.$self->use_version) < version->parse("v1.7") ) {

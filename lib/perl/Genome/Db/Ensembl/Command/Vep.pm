@@ -9,7 +9,7 @@ class Genome::Db::Ensembl::Command::Vep {
     has => [
         ensembl_annotation_build_id => {
             is => 'String',
-            doc => "ID of ImportedAnnotation build with the desired ensembl version. \n  Current default build is: $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD}, \n  Ensembl 67_37l_v2 is: 124434505)",
+            doc => "ID of ImportedAnnotation build with the desired ensembl version. \n  Current default build is: " . Genome::Config::get('db_ensembl_default_imported_annotation_build') . ", \n  Ensembl 67_37l_v2 is: 124434505)",
         },
 
     ],

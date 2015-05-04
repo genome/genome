@@ -17,7 +17,7 @@ require File::Compare;
 use_ok( 'Genome::Model::Tools::ChimeraSlayer::DetectChimeras' ) or die;
 
 my $version = 2;
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ChimeraSlayer/DetectChimeras/v'.$version;
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ChimeraSlayer/DetectChimeras/v'.$version;
 ok( -d $test_data_dir, 'Test data dir' );
 my $sequences = $test_data_dir.'/chims.NAST';
 ok( -s $sequences, 'Input sequences file' );

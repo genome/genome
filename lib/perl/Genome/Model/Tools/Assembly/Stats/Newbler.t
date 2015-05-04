@@ -7,7 +7,7 @@ use above "Genome";
 use Test::More;
 require File::Compare;
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Assembly-Stats/Newbler';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Assembly-Stats/Newbler';
 ok(-d $data_dir, "Data dir exists");
 
 my $temp_dir = Genome::Sys->create_temp_directory();

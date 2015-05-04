@@ -7,6 +7,8 @@ use Log::Log4perl qw(get_logger :levels);
 use JSON;
 use Digest::SHA qw(sha1);
 
+require Genome::Model::Build;
+
 # syslog, logstash, and UDP MTU can all affect this length.  Most recently we
 # hit the UDP MTU limit going through the switches between blades and logstash.
 # This is obviously site specific and should be move to configuration.
@@ -58,9 +60,7 @@ my $callback = sub {
     my $level = $MESSAGE_TYPE_TO_LOG_LEVEL{$type};
     my $retval;
 
-    # original logic runs only if the GENOME_SYS_LOG_DETAIL variable is not set
-
-    unless ($ENV{GENOME_SYS_LOG_DETAIL}) {
+    unless (Genome::Config::get('sys_log_detail')) {
         # by default we just log errors, and do so as text
         if ($level eq 'error') {
             if (substr($message,0,1) ne '{') {
@@ -83,11 +83,7 @@ my $callback = sub {
         return 1;
     }
 
-    # detailed JSON logging occurs only when the GENOME_SYS_LOG_DETAIL variable is set for now
-   
-    # should we just standardize on JSON log entries?
-
-    my $min_level = $ENV{GENOME_SYS_LOG_LEVEL};
+    my $min_level = Genome::Config::get('sys_log_level');
     if (not $min_level) {
         # skip message b/c syslog level is not set at all
         return 1;
@@ -146,9 +142,9 @@ my $callback = sub {
             p => $$,
             j => $ENV{LSB_JOBID},
             u => $ENV{USER},
-            b => $ENV{GENOME_BUILD_ID},
+            b => Genome::Model::Build::get_build_id(),
             type => $level,
-            ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} ? (test => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME}) : ()),
+            (Genome::Config::get('software_result_test_name') ? (test => Genome::Config::get('software_result_test_name')) : ()),
             ($incoming_json_data ? %$incoming_json_data : (msg => $message)),
         };
     };

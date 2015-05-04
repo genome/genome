@@ -12,7 +12,7 @@ use_ok('Genome::Model::Tools::Velvet::ToAce');
 
 #test suite dir
 my $test_version = '-v3';
-my $root_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Velvet/ToAce'.$test_version;
+my $root_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Velvet/ToAce'.$test_version;
 
 #test dir
 my $run_dir = Genome::Sys->create_temp_directory();

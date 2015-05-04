@@ -10,7 +10,7 @@ use Test::More;
 
 use_ok( 'Genome::Model::Tools::Velvet::Metrics' ) or die;
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Velvet/Metrics/v8";
+my $data_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Velvet/Metrics/v8";
 my $example_metrics = $data_dir.'/metrics.txt';
 
 #create temp test dir

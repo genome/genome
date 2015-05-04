@@ -144,13 +144,13 @@ class Genome::Model::ClinSeq::Command::Converge::SnvIndelReport {
 sub help_synopsis {
   return <<EOS
 
-genome model clin-seq converge snv-indel-report --builds='id in ["4b7539bb10cc4b9c97577cf11f4c79a2","cdca0edf526c4fe193d3054627a5871b"]' --outdir=/tmp/snv_indel_report/
+genome model clin-seq converge snv-indel-report --builds='id in ["4b7539bb10cc4b9c97577cf11f4c79a2","cdca0edf526c4fe193d3054627a5871b"]' --outdir=/tmp/snv_indel_report/ --bam-readcount-version=0.7
 
-genome model clin-seq converge snv-indel-report --builds='model.model_groups.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/
+genome model clin-seq converge snv-indel-report --builds='model.model_groups.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/ --bam-readcount-version=0.7
 
-genome model clin-seq converge snv-indel-report --builds='model_groups.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/
+genome model clin-seq converge snv-indel-report --builds='model_groups.id=9d0fcdca2b5d4f4385b83d2f75addac4,is_last_complete=1' --outdir=/tmp/snv_indel_report/ --bam-readcount-version=0.7
 
-genome model clin-seq converge snv-indel-report --builds='model.id in ["279f50e35d2b479ea3c32486eafd4ad4","7143119a93984056ae3f32c88c9ac2a1"],is_last_complete=1' --outdir=/tmp/snv_indel_report/
+genome model clin-seq converge snv-indel-report --builds='model.id in ["279f50e35d2b479ea3c32486eafd4ad4","7143119a93984056ae3f32c88c9ac2a1"],is_last_complete=1' --outdir=/tmp/snv_indel_report/ --bam-readcount-version=0.7
 
 EOS
 }
@@ -1152,6 +1152,31 @@ sub get_result_files {
   return $result_files;
 }
 
+sub columns {
+    my $self = shift;
+    return qw(
+        min_coverage_observed
+        max_normal_vaf_observed
+        max_tumor_vaf_observed
+        variant_source_callers
+        variant_source_caller_count
+        data_type
+        igv_link
+        filtered
+    );
+}
+
+sub header_extension {
+    my $self = shift;
+    return join "\t", $self->columns();
+}
+
+sub line_extension {
+    my $self = shift;
+    my $data = shift;
+    return join("\t", map { $data->{$_} } $self->columns());
+}
+
 sub print_final_files{
   my $self = shift;
   my %args = @_;
@@ -1210,16 +1235,15 @@ sub print_final_files{
       }
 
       #Print headers for each out file
-      my $header_extension = "min_coverage_observed\tmax_normal_vaf_observed\tmax_tumor_vaf_observed\tvariant_source_callers\tvariant_source_caller_count\tdata_type\tfiltered";
-      my $full_header = "$_"."\t$header_extension";
+      my $full_header =  join("\t", $_,  $self->header_extension());
       $full_header .= "\t$per_lib_header" if $per_lib_header;
       print $final_unfiltered_fh "$full_header\n";
       print $final_filtered_fh "$full_header\n";
 
       my @include_values = @line[@include_col_pos];
       my $include_values_string = join("\t", @include_values);
-      my $short_header = "$include_values_string"."\t$header_extension";
-      $short_header .= "\t$per_lib_header" if $per_lib_header;
+      my $short_header = join("\t", $include_values_string, $self->header_extension());
+      $short_header = join("\t", $short_header, $per_lib_header) if $per_lib_header;
       print $final_unfiltered_clean_fh "$short_header\n";
       print $final_filtered_clean_fh "$short_header\n";
       print $final_filtered_coding_clean_fh "$short_header\n";
@@ -1234,10 +1258,12 @@ sub print_final_files{
     my $per_lib_count_line = join("\t", @per_lib_counts) if defined($variants->{$v}->{per_lib_counts});
     $variants->{$v}->{data_type} =~ s/,$//;
     $variants->{$v}->{filtered} =~ s/,$//;
+    my $igv_link = $self->create_igv_link($chr, $start, $stop);
+    $variants->{$v}->{igv_link} = $igv_link;
 
-    my $line_extension = "$variants->{$v}->{min_coverage_observed}\t$variants->{$v}->{max_normal_vaf_observed}\t$variants->{$v}->{max_tumor_vaf_observed}\t$variants->{$v}->{variant_source_callers}\t$variants->{$v}->{variant_source_caller_count}\t$variants->{$v}->{data_type}\t$variants->{$v}->{filtered}";
-    my $full_line = "$_\t$line_extension";
-    $full_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
+    my $line_extension = $self->line_extension($variants->{$v});
+    my $full_line = join("\t", $_, $line_extension);
+    $full_line = join("\t", $full_line, $per_lib_count_line) if defined($per_lib_count_line);
 
     print $final_unfiltered_fh "$full_line\n";
     unless ($variants->{$v}->{filtered}){
@@ -1247,7 +1273,7 @@ sub print_final_files{
     my @include_values = @line[@include_col_pos];
     my $include_values_string = join("\t", @include_values);
 
-    my $short_line = "$include_values_string"."\t$line_extension";
+    my $short_line = join("\t", $include_values_string, $line_extension);
     $short_line .= "\t$per_lib_count_line" if defined($per_lib_count_line);
 
     print $final_unfiltered_clean_fh "$short_line\n";
@@ -1413,8 +1439,6 @@ sub create_plots{
   }
   return;
 }
-
-
 
 1;
 

@@ -22,7 +22,7 @@ my $test_output_dir = tempdir('Genome-Model-Tools-GenePredictor-Rfamscan-XXXXXX'
 chmod(0755, $test_output_dir);
 ok(-d $test_output_dir, "test output dir exists");
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-GenePredictor/';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-GenePredictor/';
 my $fasta = $test_data_dir . 'Contig0a.masked.fasta.short';
 ok(-e $fasta, "fasta file exists at $fasta");
 

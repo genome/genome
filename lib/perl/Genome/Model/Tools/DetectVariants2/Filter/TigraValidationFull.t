@@ -27,7 +27,7 @@ my $meta = Genome::Model::Tools::DetectVariants2::Filter::TigraValidationFull->_
 my $specify_chr = $meta->properties(property_name => 'specify_chr');
 is($specify_chr->valid_values, undef, "Valid values for specify_chr overridden correctly");
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-TigraValidationFull/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Filter-TigraValidationFull/';
 my $normal_bam  = $test_input_dir . 'normal.bam';
 my $tumor_bam   = $test_input_dir . 'tumor.bam';
 my $sv_file     = $test_input_dir . 'svs.hq';

@@ -20,7 +20,7 @@ BEGIN {
 
 use_ok('Genome::Model::Tools::DetectVariants2::Combine::UnionCnv');
 
-my $test_data_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Combine-UnionCnv';
+my $test_data_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Combine-UnionCnv';
 is(-d $test_data_dir, 1, 'test_data_dir exists') || die;
 
 # FIXME This directory had snvs in it so I copied results to detect future differences.

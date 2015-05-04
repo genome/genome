@@ -7,7 +7,7 @@ use above "Genome";
 use File::Temp;
 
 #This script is inteded to test the --get_frame_shift_sequence flag
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Transcript-VariantAnnotator/get_frame_shift_sequence';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Transcript-VariantAnnotator/get_frame_shift_sequence';
 ok (-e $test_dir, "test data directory exists at $test_dir");
 
 my $test_variants_file = $test_dir . "/variants.tsv";

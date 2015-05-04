@@ -44,7 +44,7 @@ sub execute {
     my $api_version = $self->ensembl_version_string($version);
     my $api_result = Genome::Db::Ensembl::Api->get_or_create(
         version => $api_version,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
+        test_name => Genome::Config::get('software_result_test_name'),
     );
     #link result to build
     $api_result->add_user(label => 'api', user => $build);

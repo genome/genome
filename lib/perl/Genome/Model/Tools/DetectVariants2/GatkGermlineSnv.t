@@ -27,8 +27,8 @@ my $refbuild_id = 101947881;
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
 ok($ref_seq_build, 'human36 reference sequence build') or die;
 
-my $test_data = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-GatkGermlineSnv";
-my $expected_base = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-GatkGermlineSnv/";
+my $test_data = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-GatkGermlineSnv";
+my $expected_base = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-GatkGermlineSnv/";
 # V2 adds the actual score and depth values to the bed
 # V3 adjusts the column used for score -- QUAL instead of GQ
 my $expected_data = "$expected_base/expected.v3";

@@ -27,9 +27,9 @@ use Storable qw/freeze thaw/;
 use Sys::Hostname qw/hostname/;
 
 our $environment = (hostname eq 'vm44' || hostname eq 'vm62.gsc.wustl.edu') ? 'prod' : 'dev';
-our %servers = ('prod' => $ENV{'GENOME_SYS_SERVICES_MEMCACHE'}, 
-                'dev' => $ENV{'GENOME_SYS_SERVICES_MEMCACHE'}, 
-                'local' => 'localhost:11211'
+our %servers = ('prod' => Genome::Config::get('sys_services_memcache'),
+                'dev' => Genome::Config::get('sys_services_memcache'),
+                'local' => 'localhost:11211',
                 );
 our $cache_timeout = 0;
 our $lock_timeout = 600;

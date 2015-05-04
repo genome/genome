@@ -19,7 +19,7 @@ BEGIN {
 
 use_ok( 'Genome::Model::Tools::Sv::CrossMatchForIndel');
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sv-CrossMatchForIndel/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sv-CrossMatchForIndel/';
 my $cm_file  = $test_input_dir . 'cm.file';
 my $ref_seq  = $test_input_dir . 'ref.seq';
 my $ctg_file = $test_input_dir . 'contig.seq';

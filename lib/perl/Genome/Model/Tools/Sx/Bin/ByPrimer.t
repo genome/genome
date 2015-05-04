@@ -17,7 +17,7 @@ ok(!Genome::Model::Tools::Sx::Bin::ByPrimer->execute(primers => [':seq']), 'crea
 ok(!Genome::Model::Tools::Sx::Bin::ByPrimer->execute(primers => ['name:']), 'create w/o sequence');
 
 # Files
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx';
 my $example_acgt = $dir.'/bin_by_primer.acgt.fastq';
 ok(-s $example_acgt, 'example acgt');
 my $example_tgca = $dir.'/bin_by_primer.tgca.fastq';

@@ -96,7 +96,7 @@ class Genome::Model::Tools::Somatic::IdentifyDnpAdv {
 };
 
 my %READCOUNT_VERSIONS = (
-    '0.2' => $ENV{GENOME_SW} . '/samtools/readcount/readcount-v0.2/' . $READCOUNT_COMMAND,
+    '0.2' => Genome::Config::get('sw') . '/samtools/readcount/readcount-v0.2/' . $READCOUNT_COMMAND,
 );
 
 sub help_brief {
@@ -292,7 +292,7 @@ sub execute {
         $count_line{$chr}{$pos}=$count_line;
      }
     unless($readcounts->close()) {
-        $self->error_message("Error running $ENV{GENOME_SW}/samtools/readcount/readcount-v0.2/bam-readcount");
+        $self->error_message("Error running " . Genome::Config::get('sw') . "/samtools/readcount/readcount-v0.2/bam-readcount");
         die;
     }
     $self->debug_message("The number of total sites for readcount: $total_readcount");

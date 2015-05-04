@@ -200,7 +200,7 @@ sub send_mail {
                     {
                             smtp => 'gscsmtp.wustl.edu',
                             to => $recipients,
-                            from => $ENV{GENOME_EMAIL_PIPELINE},
+                            from => Genome::Config::get('email_pipeline'),
                             subject => $subject,
                             multipart => 'related',
                             on_error => 'die',

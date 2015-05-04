@@ -15,7 +15,7 @@ use File::Compare;
 use_ok("Genome::Model::Tools::Validation::LongIndelsParseRemapped");
 
 my $version = 1;
-my $base_dir = $ENV{GENOME_TEST_INPUTS}."/Genome-Model-Tools-Validation-LongIndelsParseRemapped/v$version";
+my $base_dir = Genome::Config::get('test_inputs')."/Genome-Model-Tools-Validation-LongIndelsParseRemapped/v$version";
 my $temp_dir = Genome::Sys->create_temp_directory;
 
 my $cmd = Genome::Model::Tools::Validation::LongIndelsParseRemapped->create(

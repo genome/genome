@@ -20,7 +20,7 @@ BEGIN {
 
 use_ok( 'Genome::Model::Tools::DetectVariants2::Filter::SomaticScoreMappingQuality');
 
-my $test_data_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-SomaticScoreMappingQuality';
+my $test_data_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Filter-SomaticScoreMappingQuality';
 my $refbuild_id    = 101947881;
 my $tumor_bam_file     = $test_data_dir . '/flank_tumor_sorted.bam';
 my $normal_bam_file    = $test_data_dir . '/flank_normal_sorted.bam';

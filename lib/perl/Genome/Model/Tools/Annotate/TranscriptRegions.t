@@ -19,7 +19,7 @@ my $tmp_dir = File::Temp::tempdir(
 );
 my $output = File::Spec->join($tmp_dir, 'output');
 
-my $expected_output = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Annotate-TranscriptRegions/TranscriptRegions.t.expected.output.txt.new";
+my $expected_output = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Annotate-TranscriptRegions/TranscriptRegions.t.expected.output.txt.new";
 ok(-e $expected_output, "expected output file exists at $expected_output");
 
 my $regions = Genome::Model::Tools::Annotate::TranscriptRegions->create(chromosome=>$chromosome,start=>$start,stop=>$stop,organism=>$organism,version=>$version,output=>$output);

@@ -28,7 +28,7 @@ class Genome::Sys::Gateway {
 
         is_current        => { is => 'Boolean',
                               calculate_from => ['id'],
-                              calculate => q|$id eq $ENV{GENOME_SYS_ID}|,
+                              calculate => q|$id eq Genome::Config::get('sys_id')|,
                               doc => 'true for the current system',
                             },
 
@@ -48,7 +48,7 @@ class Genome::Sys::Gateway {
     data_source => { 
         #uri => "file:$tmpdir/\$rank.dat[$name\t$serial]" }
         is => 'UR::DataSource::Filesystem',
-        path  => $ENV{GENOME_HOME} . '/known-systems/$id.tsv',
+        path  => Genome::Config::get('home') . '/known-systems/$id.tsv',
         columns => ['hostname','id_rsa_pub','desc','ftp_detail','http_detail','ssh_detail','nfs_detail'],
         delimiter => "\t",
     },

@@ -64,7 +64,8 @@ foreach my $fin(@ARGV){
       my $nbam=($opts{C})?"normal.capture.bam":"normal.bam";
       my $cmd=sprintf "gmt copy-number graph --chromosome=%s --start=%d --end=%d --output-dir=./ --name=%s --tumor-bam-file=$tbam --normal-bam-file=$nbam",$chr,$start,$end,$fname;
       print "$cmd\n";
-      `bsub -N -u plotSV\@$ENV{GENOME_EMAIL_DOMAIN} -M 8000000 -R "select[mem>8000] rusage[mem=8000]" -J COPYNUMBER -oo $fname.log $cmd`;
+      my $email_domain = Genome::Config::get('email_domain');
+      `bsub -N -u plotSV\@$email_domain -M 8000000 -R "select[mem>8000] rusage[mem=8000]" -J COPYNUMBER -oo $fname.log $cmd`;
     }
     else{  #pairoscope
       my @bams=($opts{C})?('tumor.capture','normal.capture'):('tumor','normal');

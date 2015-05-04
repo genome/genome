@@ -161,8 +161,9 @@ $manager = Genome::InstrumentData::Command::Import::Manager->create(
     source_files_tsv => $test_dir.'/invalid-no-library-name-column.tsv',
 );
 ok($manager, 'create manager');
+my ($source_files_tsv_error) = grep { ($_->properties)[0] eq 'source_files_tsv' } $manager->__errors__;
+ok($source_files_tsv_error, 'got an error about source_files_tsv');
 ok(!$manager->execute, 'execute failed for no library column in file');
-is($manager->error_message, 'Property \'source_files_tsv\': No "library_name" column in source files tsv! '.$manager->source_files_tsv, 'correct error');
 
 # fail - extra column name column in csv
 $manager = Genome::InstrumentData::Command::Import::Manager->create(

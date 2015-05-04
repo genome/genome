@@ -116,7 +116,7 @@ sub _collect_params {
         roi_file => $self->roi_file,
         reference_sequence => $self->reference_sequence,
         somatic_variation_build => $self->somatic_variation_build,
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        test_name => (Genome::Config::get('software_result_test_name') || undef),
         users => $result_users,
     );
 

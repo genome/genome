@@ -2,3 +2,5 @@ default=enforce-equal
 info.CSQ=uniq-concat
 info.SEG_DUP=enforce-equal-unordered
 info.ON_TARGET=uniq-concat
+info.DISEASE=per-alt-delimited-list
+info.PMID=per-alt-delimited-list

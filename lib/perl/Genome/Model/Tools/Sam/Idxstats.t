@@ -21,7 +21,7 @@ my @ori_map_chr_list = (1..22, 'X', 'Y', 'NT_113940');
 my @full_chr_list = (@ori_map_chr_list, 'NT_113908', 'NT_113917');
 my $sam_version = 'r963';
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-Idxstats';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam-Idxstats';
 my $bam_file = $data_dir.'/test.bam';
 
 my $tmp_dir  = Genome::Sys->create_temp_directory(Genome::Sys->username . "Idxstats_XXXXXX");

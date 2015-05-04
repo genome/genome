@@ -16,7 +16,7 @@ my $class = "Genome::Db::Tgi::Command::ImportMitelman";
 
 use_ok($class);
 my $data_dir = Genome::Utility::Test->data_dir_ok($class, "v1");
-my $url = $ENV{GENOME_TEST_URL}."/Genome-Db-Tgi-Command-ImportMitelman/v1/test.tar.gz";
+my $url = Genome::Config::get('test_url')."/Genome-Db-Tgi-Command-ImportMitelman/v1/test.tar.gz";
 my $output_dir = Genome::Sys->create_temp_directory;
 my $cmd = $class->create(data_url => $url, output_dir => $output_dir);
 ok($cmd->execute, "Import executed successfully");

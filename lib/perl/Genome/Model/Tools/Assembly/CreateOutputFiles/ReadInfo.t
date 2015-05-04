@@ -9,7 +9,7 @@ require File::Compare;
 
 use_ok( 'Genome::Model::Tools::Assembly::CreateOutputFiles::ReadInfo' ) or die;
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Assembly-CreateOutputFiles';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Assembly-CreateOutputFiles';
 ok(-d $data_dir, "Found data directory: $data_dir") or die;
 
 my $test_ace = $data_dir.'/edit_dir/velvet_asm.ace';

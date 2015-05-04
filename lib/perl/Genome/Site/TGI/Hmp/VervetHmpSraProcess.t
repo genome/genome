@@ -20,7 +20,7 @@ use VervetHmpSraProcess;
 
 #Setup test_dir
 my $test_dir = '/gscmnt/sata156/research/mmitreva/HMP_DAWG/VERVET_HMP/VERVET_PIPELINE_WORK/TEST'; #THIS IS A TEMPORARY LOCATION!!!!
-#my $test_dir = '$GENOME_TEST_INPUTS/Genome-InstrumentData-Import-Hmp/SUBDIR';
+#my $test_dir = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Import-Hmp/SUBDIR';
 my $bam_name = 'GoldStandardForTesting.2873462096.cleaned.bam';
 my $bam_path = $test_dir . '/' . $bam_name;
 
@@ -58,7 +58,7 @@ foreach my $sample_name (sort {$a cmp $b} keys(%{$index})) { #This example shoul
 	$subset_name_space_delimited_list .= "$subset_name ";
     }
     $subset_name_space_delimited_list =~ s/\s+$//;
-    my $cmd = VervetHmpSraProcess->create(srs_sample_id => "$sample_name",srr_accessions => "$subset_name_space_delimited_list",picard_dir => "$ENV{GENOME_SW_LEGACY_JAVA}/samtools/picard-tools-1.27");
+    my $cmd = VervetHmpSraProcess->create(srs_sample_id => "$sample_name",srr_accessions => "$subset_name_space_delimited_list",picard_dir => Genome::Config::get('sw_legacy_java') . "/samtools/picard-tools-1.27");
     ok($cmd, 'created VervetHmpSraProcess object');
     ok($cmd->execute, 'executed VervetHmpSraProcess object');
 }

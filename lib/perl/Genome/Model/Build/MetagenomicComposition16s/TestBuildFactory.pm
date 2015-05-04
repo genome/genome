@@ -92,8 +92,8 @@ sub build_with_example_build {
     die 'Failed to create MC16s model!' if not $entities{'example_build_'.$sequencing_platform};
 
     my %example_data_directories = (
-        454 => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16s454/build_v5.2chimeras', # start w/ 2 chimeras
-        sanger => $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16sSanger/build_v3',
+        454 => Genome::Config::get('test_inputs') . '/Genome-Model/MetagenomicComposition16s454/build_v5.2chimeras', # start w/ 2 chimeras
+        sanger => Genome::Config::get('test_inputs') . '/Genome-Model/MetagenomicComposition16sSanger/build_v3',
     );
     $entities{'example_build_'.$sequencing_platform}->data_directory( $example_data_directories{$sequencing_platform} ) or die 'Failed to get example data directory!';
     $entities{'example_build_'.$sequencing_platform}->status('Succeeded');
@@ -117,7 +117,7 @@ sub build_with_example_build_for_454 {
 sub instrument_data_454 {
     my $library = library();
 
-    my $inst_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16s454/inst_data';
+    my $inst_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model/MetagenomicComposition16s454/inst_data';
     $entities{instrument_data_454} = Genome::InstrumentData::Solexa->create(# don't look
         id => --$id,
         run_name => 'R_2010_01_09_11_08_12_FLX08080418_Administrator_100737113',
@@ -150,7 +150,7 @@ sub instrument_data_sanger {
     die 'Failed to create instrument data sanger!' if not $entities{instrument_data_sanger};
 
     no warnings qw/ once redefine /;
-    *Genome::InstrumentData::Sanger::full_path = sub{ $ENV{GENOME_TEST_INPUTS} . '/Genome-Model/MetagenomicComposition16sSanger/inst_data/'.$entities{instrument_data_sanger}->id; };
+    *Genome::InstrumentData::Sanger::full_path = sub{ Genome::Config::get('test_inputs') . '/Genome-Model/MetagenomicComposition16sSanger/inst_data/'.$entities{instrument_data_sanger}->id; };
     use warnings;
 
     die 'full_path sanger!' if not -d $entities{instrument_data_sanger}->full_path;

@@ -13,7 +13,7 @@ use Test::More;
 
 use_ok("Genome::Model::Build::SomaticVariation::CalcCovgResult");
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Build-SomaticVariation-CalcCovgResult';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Build-SomaticVariation-CalcCovgResult';
 
 my $base_dir = $data_dir."/v1";
 

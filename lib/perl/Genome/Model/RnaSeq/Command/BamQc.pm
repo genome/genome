@@ -24,7 +24,7 @@ class Genome::Model::RnaSeq::Command::BamQc {
     ],
     has_param => [
         lsf_queue => {
-            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+            default => Genome::Config::get('lsf_queue_build_worker'),
         },
     ],
     has_optional_output => [
@@ -99,7 +99,7 @@ sub params_for_result {
         error_rate_version  => $pp->error_rate_version || Genome::Model::Tools::BioSamtools::ErrorRate->default_errorrate_version,
         error_rate          => $pp->calculate_error_rate || 0,
         read_length         => 1,
-        test_name           => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name           => Genome::Config::get('software_result_test_name') || undef,
         users               => $result_users,
     );
 }

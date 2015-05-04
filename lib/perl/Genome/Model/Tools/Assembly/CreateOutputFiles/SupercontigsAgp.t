@@ -9,7 +9,7 @@ require File::Compare;
 
 use_ok( 'Genome::Model::Tools::Assembly::CreateOutputFiles::SupercontigsAgp' ) or die;
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Assembly/CreateSupercontigsAgp-v1";
+my $data_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Assembly/CreateSupercontigsAgp-v1";
 ok(-d $data_dir, "Found data directory: $data_dir") or die;
 
 #make test dir

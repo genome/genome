@@ -13,7 +13,7 @@ use Test::More;
 
 use_ok('Genome::Model::GenePrediction::Command::Eukaryotic::MaskRnaSequence') or die;
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-GenePrediction-Eukaryotic/';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-GenePrediction-Eukaryotic/';
 ok(-d $test_data_dir, "test data dir exists at $test_data_dir") or die;
 
 my $test_output_dir = File::Temp::tempdir('Genome-Model-GenePrediction-Eukaryotic-XXXXX', TMPDIR => 1, CLEANUP => 1);

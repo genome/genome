@@ -11,7 +11,7 @@ use_ok("Genome::Model::Tools::Dbsnp::ImportVcf");
 
 my $tmp_dir = File::Temp::tempdir('Genome-Model-Tools-Dbsnp-Import-Vcf-XXXX', CLEANUP => 1, TMPDIR => 1);
 
-my $base_url = $ENV{GENOME_TEST_URL}.'/Genome-Model-Tools-Dbsnp-Import-Vcf';
+my $base_url = Genome::Config::get('test_url').'/Genome-Model-Tools-Dbsnp-Import-Vcf';
 my $importer = Genome::Model::Tools::Dbsnp::ImportVcf->create(
    vcf_file_url => $base_url.'/VCF/4.0/00-All.vcf.gz',
    output_file_path => $tmp_dir . '/testfile.vcf',

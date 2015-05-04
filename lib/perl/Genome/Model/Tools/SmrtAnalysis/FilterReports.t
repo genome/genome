@@ -14,7 +14,7 @@ plan tests => 3;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::FilterReports');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-FilterReports';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-FilterReports';
 my $input_fofn = $data_directory .'/input.fofn';
 my $filtered_summary_file = $data_directory .'/data/filtered_summary.csv';
 

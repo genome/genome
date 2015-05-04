@@ -8,7 +8,7 @@ use Test::More tests => 5;
 
 use_ok('Genome::Model::Tools::Vcf::RegionLimit');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-RegionLimit";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Vcf-RegionLimit";
 my $expected_base = "expected";
 my $expected_dir = "$test_dir/$expected_base";
 my $expected_file = "$expected_dir/expected.vcf.gz";

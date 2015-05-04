@@ -95,7 +95,7 @@ sub execute {
         chdir $self->_tmpdir."/$set";
         $self->debug_message('chdir to '.$self->_tmpdir."/$set to run EulerEC");
         if ( -s 'euler.fasta' ) {
-            my $env_var = 'EUSRC=' . $ENV{GENOME_SW} . '/euler/euler-sr-ec-2.0.2 MACHTYPE=x86_64';#set env
+            my $env_var = 'EUSRC=' . Genome::Config::get('sw') . '/euler/euler-sr-ec-2.0.2 MACHTYPE=x86_64';#set env
             my $cmd = $env_var.' EulerEC.pl euler.fasta '.$self->_euler_cmd_params;
             $self->debug_message("Running EulerEC for set $set with command: $cmd");
             ### THS IS DOESN'T SEEM WORK WITH STRINGS OF MULTIPLE SX CMDS WILL LOOK INTO IT ###

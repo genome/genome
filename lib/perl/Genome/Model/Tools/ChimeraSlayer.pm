@@ -221,7 +221,7 @@ sub version_db_fasta_file {
 sub path_to_chimera_slayer {
     my $self = shift;
 
-    my $script = $ENV{GENOME_SW} . '/broad/ChimeraSlayer/ChimeraSlayer.pl';
+    my $script = Genome::Config::get('sw') . '/broad/ChimeraSlayer/ChimeraSlayer.pl';
     unless( -x $script ) {
         $self->error_message("Failed to find script or script is not executable: $script");
         return;

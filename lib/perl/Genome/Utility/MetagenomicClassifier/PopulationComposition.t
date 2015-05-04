@@ -17,7 +17,7 @@ my $population_composition = Genome::Utility::MetagenomicClassifier::PopulationC
 ok($population_composition, 'created population composition');
 
 can_ok($population_composition, 'add_classification');
-my $classifications = retrieve($ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-MetagenomicClassifier/classifications.stor');
+my $classifications = retrieve(Genome::Config::get('test_inputs') . '/Genome-Utility-MetagenomicClassifier/classifications.stor');
 for my $classification ( @$classifications ) { # should be 10
     $population_composition->add_classification($classification)
 }

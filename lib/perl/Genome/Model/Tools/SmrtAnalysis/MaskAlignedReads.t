@@ -14,7 +14,7 @@ plan tests => 3;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::MaskAlignedReads');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-MaskAlignedReads';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-MaskAlignedReads';
 
 my $cmp_hdf5_file = $data_directory .'/data/control_reads.cmp.h5';
 my $region_table = $data_directory .'/data/filtered_regions.fofn';

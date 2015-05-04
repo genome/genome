@@ -906,7 +906,7 @@ sub _cleanup_archive_directory {
     my $cmd = "if [ -d $directory ] ; then rm -rf $directory ; else exit 1; fi";
     unless ($ENV{UR_DBI_NO_COMMIT}) {
         my ($job_id, $status) = Genome::Sys->bsub_and_wait(
-            queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
+            queue => Genome::Config::get('archive_lsf_queue'),
             cmd => "$cmd",
         );
         confess "Failed to execute $cmd via LSF job $job_id, received status $status" unless $status eq 'DONE';

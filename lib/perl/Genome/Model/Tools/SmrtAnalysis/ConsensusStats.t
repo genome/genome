@@ -14,7 +14,7 @@ plan tests => 3;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::Resequencing');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-ConsensusStats';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-ConsensusStats';
 
 my $alignment_summary_gff_file = $data_directory .'/data/alignment_summary.gff';
 my $variants_gff_file = $data_directory .'/data/variants.gff';

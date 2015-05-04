@@ -1,8 +1,13 @@
-
 package Genome::InlineConfig;
+
 use strict;
 use warnings;
+
 use Config;
+
+BEGIN {
+    require Genome::Config;
+};
 
 our $DIRECTORY;
 sub DIRECTORY {
@@ -28,4 +33,3 @@ sub CCFLAGS {
 }
 
 1;
-

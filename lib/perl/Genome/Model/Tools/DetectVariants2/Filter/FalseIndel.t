@@ -20,7 +20,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
 
 use_ok('Genome::Model::Tools::DetectVariants2::Filter::FalseIndel');
 
-my $test_base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-FalseIndel';
+my $test_base_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Filter-FalseIndel';
 my $test_data_dir = $test_base_dir. "/input.v3";
 my $detector_vcf_directory = $test_base_dir. "/detector_vcf_result";
 

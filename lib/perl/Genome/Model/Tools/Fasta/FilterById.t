@@ -13,8 +13,8 @@ BEGIN
     use_ok ('Genome::Model::Tools::Fasta::FilterById');
 }
 
-my $fasta_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta-FilterById/short.fna';
-my $filter_list = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta-FilterById/454_crossmatch.filter';
+my $fasta_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fasta-FilterById/short.fna';
+my $filter_list = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fasta-FilterById/454_crossmatch.filter';
 my $output_file = Genome::Sys->create_temp_file_path('clean.fna');
 
 my $filter_by_id = Genome::Model::Tools::Fasta::FilterById->create(fasta_file=>$fasta_file,filter_list=>$filter_list,output_file=>$output_file);

@@ -10,7 +10,7 @@ require File::Compare;
 use_ok ('Genome::Model::Tools::Velvet::StandardOutputs') or die;
 
 my $version = 'v4';
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Velvet/StandardOutputs-'.$version;
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Velvet/StandardOutputs-'.$version;
 ok (-d $data_dir, "Test suite data dir exists") or die;
 
 #temp test dir

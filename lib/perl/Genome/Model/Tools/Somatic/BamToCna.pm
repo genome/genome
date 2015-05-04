@@ -124,13 +124,13 @@ class Genome::Model::Tools::Somatic::BamToCna {
     },
     lsf_queue => {
         is_param => 1,
-        default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+        default_value => Genome::Config::get('lsf_queue_build_worker'),
     },
     ]
 };
 
 my %BAMWINDOW_VERSIONS = (
-    '0.1' => $ENV{GENOME_SW} . '/bamwindow/bamwindow-v0.1/' . $BAMWINDOW_COMMAND,
+    '0.1' => Genome::Config::get('sw') . '/bamwindow/bamwindow-v0.1/' . $BAMWINDOW_COMMAND,
 );
 
 sub help_synopsis {

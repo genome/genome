@@ -20,7 +20,7 @@ sub execute {
     $self->status_message("Creating archive volumes for any volumes that lack one!");
 
     my %report;
-    my $archive_group = Genome::Disk::Group->get(disk_group_name => $ENV{GENOME_DISK_GROUP_ARCHIVE});
+    my $archive_group = Genome::Disk::Group->get(disk_group_name => Genome::Config::get('disk_group_archive'));
     unless ($archive_group) {
         $archive_group = Genome::Disk::Group->create(
             permissions => '775',
@@ -28,7 +28,7 @@ sub execute {
             subdirectory => 'info',
             unix_gid => '10006',
             unix_uid => '10102',
-            disk_group_name => $ENV{GENOME_DISK_GROUP_ARCHIVE},
+            disk_group_name => Genome::Config::get('disk_group_archive'),
         );
         unless ($archive_group) {
             die "No archive group found and could not create one!";
@@ -37,7 +37,7 @@ sub execute {
         push @{$report{groups}}, $archive_group->disk_group_name;
     }
 
-    my @disk_group_names = ($ENV{GENOME_DISK_GROUP_REFERENCES}, $ENV{GENOME_DISK_GROUP_MODELS}, $ENV{GENOME_DISK_GROUP_ALIGNMENTS});
+    my @disk_group_names = (Genome::Config::get('disk_group_references'), Genome::Config::get('disk_group_models'), Genome::Config::get('disk_group_alignments'));
     my @groups = Genome::Disk::Group->get(disk_group_name => \@disk_group_names);
     for my $group (@groups) {
         my @volumes = $group->volumes;

@@ -12,7 +12,7 @@ use Test::More tests => 7;
 use_ok('Genome::Model::Tools::Consed::Navigation::ListReader')
     or die;
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Consed';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Consed';
 ok(-d $dir, "Test dir ($dir) exists");
 my $list = $dir.'/repeats.list';
 ok(-f $list, "List file ($list) exists");

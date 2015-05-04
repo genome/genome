@@ -48,7 +48,7 @@ sub _test_dir {
     my ($package, $test_version) = @_;
 
     (my $dirname = $package) =~ s/::/-/g;
-    my $test_dir = File::Spec->join($ENV{GENOME_TEST_INPUTS},
+    my $test_dir = File::Spec->join(Genome::Config::get('test_inputs'),
         $dirname, $test_version);
 
     return $test_dir;
