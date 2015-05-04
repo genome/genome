@@ -123,12 +123,20 @@ sub unarchive {
         Genome::Timeline::Event::Allocation->unarchived($self->reason, $allocation_object);
         $allocation_object->status('active');
 
-        unless ($tx->commit() && $allocation_object->_commit_unless_testing) {
-            die 'failed to commit';
+        if ($tx->commit()) {
+            undef $tx;
+            unless ($allocation_object->_commit_unless_testing) {
+                die 'failed to commit';
+            }
+        }
+        else {
+            die 'failed to commit transaction';
         }
     }
     catch {
-        $tx->rollback();
+        if ($tx) {
+            $tx->rollback();
+        }
         if ($target_path and -d $target_path and not $ENV{UR_DBI_NO_COMMIT}) {
             Genome::Sys->remove_directory_tree($target_path);
         }
