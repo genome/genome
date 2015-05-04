@@ -28,7 +28,6 @@ sub execution_id {
     return $ENV{GENOME_EXECUTION_ID};
 }
 
-require Genome::Env;
 require Genome::Site;
 
 if (my $umask = Genome::Config::get('sys_umask')) {
