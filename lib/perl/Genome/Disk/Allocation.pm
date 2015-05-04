@@ -293,8 +293,11 @@ sub is_archived {
 
 sub archive_path {
     my $self = shift;
+    my $mount_path = $self->volume->is_archive
+                   ? $self->volume->mount_path
+                   : $self->volume->archive_mount_path;
     return File::Spec->join(
-        $self->volume->archive_mount_path,
+        $mount_path,
         $self->group_subdirectory,
         $self->allocation_path,
     );
