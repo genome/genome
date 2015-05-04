@@ -25,20 +25,4 @@ sub create {
     return $self;
 }
 
-sub perl_path {
-    die('Remove perl-5.10.0');
-}
-
-sub bin_path {
-    die('Remove /gsc/var/tmp/Bio-SamTools');
-}
-
-sub execute_path {
-    die('Do not call execute_path in '. __PACKAGE__);
-}
-
-sub bioperl_path {
-    die('Do not define bioperl version');
-}
-
 1;
