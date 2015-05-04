@@ -105,19 +105,7 @@ sub unarchive {
         }
 
         # Make updates to the allocation
-        $allocation_object->mount_path($shadow_allocation->volume->mount_path);
-        Genome::Sys->create_directory($allocation_object->absolute_path);
-        unless (Genome::Sys->rename(
-                $shadow_allocation->absolute_path,
-                $allocation_object->absolute_path)
-        ) {
-            confess($allocation_object->error_message(sprintf(
-                    "Could not move shadow allocation path (%s) to "
-                    . "final path (%s).  This should never happen, "
-                    . "even when 100%% full.",
-                    $shadow_allocation->absolute_path,
-                    $allocation_object->absolute_path)));
-        }
+        $self->_swap_shadow_allocation($shadow_allocation, $allocation_object);
         $allocation_object->_update_owner_for_move;
         $allocation_object->archive_after_time(
             Genome::Disk::Command::Allocation::DelayArchiving->_resolve_date_from_months(3));
@@ -151,6 +139,29 @@ sub unarchive {
     $allocation_object->status('active');
 
     $allocation_object->_cleanup_archive_directory($archive_path);
+    return 1;
+}
+
+sub _swap_shadow_allocation {
+    my ($self, $shadow_allocation, $allocation_object) = @_;
+
+    my $tx = UR::Context::Transaction->begin();
+    try {
+        $allocation_object->mount_path($shadow_allocation->volume->mount_path);
+        Genome::Sys->create_directory($allocation_object->absolute_path);
+        Genome::Sys->rename($shadow_allocation->absolute_path, $allocation_object->absolute_path);
+        $tx->commit();
+    }
+    catch {
+        $tx->rollback();
+        confess($allocation_object->error_message(sprintf(
+                    "Could not move shadow allocation path (%s) to "
+                    . "final path (%s).  This should never happen, "
+                    . "even when 100%% full.",
+                    $shadow_allocation->absolute_path,
+                    $allocation_object->absolute_path)));
+    };
+
     return 1;
 }
 
