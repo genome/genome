@@ -5,7 +5,7 @@ use warnings;
 
 use Cwd;
 use Path::Class;
-use JSON::XS;
+use JSON;
 
 class Genome::Model::Tools::Vcf::EvaluateVcfs {
     is => "Command::V2",
@@ -125,7 +125,7 @@ sub dump_stats_to_json {
     }
 
     # JSON-ify
-    my $coder = JSON::XS->new()->pretty(1)->canonical(1)->allow_nonref;
+    my $coder = JSON->new()->pretty(1)->canonical(1)->allow_nonref;
     my $json_txt = $coder->encode(\%summary);
 
     # dump to file
