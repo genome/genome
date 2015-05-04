@@ -1,0 +1,4 @@
+# The 'email_virome_screening' configuration variable holds the name of the
+# email alias used as the recepient for some virome screening reports.
+--- 
+env: GENOME_EMAIL_VIROME_SCREENING
