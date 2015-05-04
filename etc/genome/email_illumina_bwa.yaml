@@ -1,0 +1,4 @@
+# The 'email_illumina_bwa' configuration variable holds the email address used
+# as the recepient for some BWA reports such as contamination screening.
+--- 
+env: GENOME_EMAIL_ILLUMINA_BWA
