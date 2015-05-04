@@ -1,0 +1,5 @@
+# The 'db_music_testdata' configuration variable is the directory containing
+# "unversioned" MuSiC test data. Most useful for testing purposes.
+---
+env: GENOME_DB_MUSIC_TESTDATA
+default_value: ""
