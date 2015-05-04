@@ -1,0 +1,3 @@
+--- 
+env: GENOME_VIEW_CACHE
+default_value: ""
