@@ -1,0 +1,5 @@
+# Specifies the LSF queue to submit short jobs to.
+--- 
+env: GENOME_LSF_QUEUE_SHORT
+validators:
+  - LSFQueue
