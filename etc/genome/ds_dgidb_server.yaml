@@ -1,0 +1,5 @@
+# The 'ds_dgidb_server' configuration variable holds database server connection
+# details for the Dbidb database.  Its value is used to build the DBI
+# connection string after the DBI driver name.
+--- 
+env: GENOME_DS_DGIDB_SERVER
