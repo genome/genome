@@ -15,6 +15,8 @@ use File::Find::Rule;
 use Cwd;
 use DateTime;
 
+require File::Spec;
+
 our $TESTING_DISK_ALLOCATION = 0;
 
 use constant SECONDS_IN_ONE_YEAR => 365*24*60*60;
@@ -291,7 +293,12 @@ sub is_archived {
 
 sub tar_path {
     my $self = shift;
-    return join('/', $self->absolute_path, 'archive.tar');
+    return File::Spec->join(
+        $self->volume->archive_mount_path,
+        $self->group_subdirectory,
+        $self->allocation_path,
+        'archive.tar',
+    );
 }
 
 sub archivable {
