@@ -7,8 +7,6 @@ use Genome;
 
 use Carp qw(confess);
 
-require File::Spec;
-
 class Genome::Disk::Detail::Allocation::Archiver {
     is => 'Genome::Disk::Detail::StrictObject',
 
@@ -30,7 +28,7 @@ sub archive {
 
     my $current_allocation_path = $allocation_object->absolute_path;
     my $tar_path = $allocation_object->tar_path();
-    my $archive_allocation_path = (File::Spec->splitpath($tar_path))[1];
+    my $archive_allocation_path = $allocation_object->archive_path();
 
     # This gets set to true immediately before tarball creation is started.
     # This allows for conditional clean up of the archive directory in case of
