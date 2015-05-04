@@ -78,6 +78,8 @@ sub grammar {
             { $return = [ $item[1] ]; $item[1]->{decoration} = $item[2]; }
         | alignment
             { [ $item[1] ]; }
+        | align_and_merge
+            { [ $item[1] ]; }
         | filtration
             { [$item[1] ]; }
 
@@ -89,6 +91,9 @@ sub grammar {
             { $return = $item[7]; $item[7]->{reference} = $item[3]; $item[7]->{annotation} = $item[5]; $item[7]->{type} = 'align'; }
         | "aligned" "to" reference "using" aligner
             { $return = $item[5]; $item[5]->{reference} = $item[3]; $item[5]->{type} = 'align'; }
+
+        align_and_merge: "align" "and" "merge" "to" reference "using" aligner
+            { $return = $item[7]; $item[7]->{reference} = $item[5], $item[7]->{type} = 'align_and_merge' }
 
         filtration: "filtered" "using" filter
             { $return = $item[3]; $item[3]->{type} = 'filter'; }

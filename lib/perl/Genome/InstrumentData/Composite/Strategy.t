@@ -510,6 +510,21 @@ _test_strategy(
     },
 );
 
+_test_strategy(
+    'instrument_data align and merge to reference using speedseq test_version api v3',
+    {
+        'api_version' => 'v3',
+        'action' => [{
+            'params' => '',
+            'reference' => 'reference',
+            'version' => 'test_version',
+            'name' => 'speedseq',
+            'type' => 'align_and_merge'
+        }],
+        'data' => 'instrument_data'
+    }
+);
+
 done_testing();
 
 
