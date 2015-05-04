@@ -57,6 +57,7 @@ sub unarchive {
     my $tar_path = $allocation_object->tar_path;
     my $cmd = "tar -C $target_path -xf $tar_path";
 
+    my $tx = UR::Context::Transaction->begin();
     try {
         # It's very possible that if no commit is on, the volumes/allocations
         # being dealt with are test objects that don't exist out of this local
@@ -115,11 +116,12 @@ sub unarchive {
                 $old_absolute_path, $allocation_object->absolute_path);
         }
 
-        unless ($allocation_object->_commit_unless_testing) {
-            confess "Could not commit!";
+        unless ($tx->commit() && $allocation_object->_commit_unless_testing) {
+            die 'failed to commit';
         }
     }
     catch {
+        $tx->rollback();
         if ($target_path and -d $target_path and not $ENV{UR_DBI_NO_COMMIT}) {
             Genome::Sys->remove_directory_tree($target_path);
         }
