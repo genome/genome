@@ -1,0 +1,5 @@
+# The 'rest_rlimit_as' configuration allows the RLIMIT_AS resource to be set in
+# Genome::Model::Command::Services::WebApp::Rest.
+--- 
+env: GENOME_REST_RLIMIT_AS
+default_value: ""
