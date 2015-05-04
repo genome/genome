@@ -116,6 +116,13 @@ sub unarchive {
                 $old_absolute_path, $allocation_object->absolute_path);
         }
 
+        $allocation_object->add_note(
+            header_text => 'unarchived',
+            body_text => $self->reason,
+        );
+        Genome::Timeline::Event::Allocation->unarchived($self->reason, $allocation_object);
+        $allocation_object->status('active');
+
         unless ($tx->commit() && $allocation_object->_commit_unless_testing) {
             die 'failed to commit';
         }
@@ -131,14 +138,6 @@ sub unarchive {
         $allocation_lock->unlock() if $allocation_lock;
         $shadow_allocation->delete();
     };
-
-    $allocation_object->add_note(
-        header_text => 'unarchived',
-        body_text => $self->reason,
-    );
-    Genome::Timeline::Event::Allocation->unarchived($self->reason,
-        $allocation_object);
-    $allocation_object->status('active');
 
     $allocation_object->_cleanup_archive_directory($archive_path);
     return 1;
