@@ -13,7 +13,7 @@ BEGIN {
         use_ok ('Genome::Model::Tools::Fasta::TrimQuality');
 }
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta/TrimQuality';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fasta/TrimQuality';
 ok(-d $dir, "Test dir ($dir) exists");
 my $fasta = $dir .'/test.fasta';
 ok(-f $fasta, "Fasta ($fasta) exists");

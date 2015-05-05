@@ -134,7 +134,8 @@ sub create {
     for my $type (qw/ g h /) {
         my $velvet = $self->_versioned_velvet($type);
         unless ( $velvet ) {
-            $self->error_message("Invalid version ($version) of velvet. Please look in directory $ENV{GENOME_SW}/velvet/ for valid versions.");
+            my $sw = Genome::Config::get('sw');
+            $self->error_message("Invalid version ($version) of velvet. Please look in directory $sw/velvet/ for valid versions.");
             $self->delete;
             return;
         }
@@ -784,7 +785,7 @@ sub _compare {
     return;
 }
 
-sub _version_path { $ENV{GENOME_SW} . '/velvet/velvet_' }
+sub _version_path { Genome::Config::get('sw') . '/velvet/velvet_' }
 
 sub reset_log
 {

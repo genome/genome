@@ -50,7 +50,7 @@ class Genome::Model::Tools::Abyss::Parallel {
         job_queue => {
             is => 'Text',
             doc => 'The job queue to schedule the work in.',
-            default => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
+            default => Genome::Config::get('lsf_queue_build_worker_alt'),
         },
         min_coverage => {
             is => 'Text',

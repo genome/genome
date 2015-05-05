@@ -12,7 +12,7 @@ plan tests => 7;
 
 use_ok( 'Genome::Model::Tools::Sv::ParseCrossMatch');
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sv-ParseCrossMatch/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sv-ParseCrossMatch/';
 my $cm_file = $test_input_dir . 'cm.file';
 
 my $cm = Genome::Model::Tools::Sv::ParseCrossMatch->create(

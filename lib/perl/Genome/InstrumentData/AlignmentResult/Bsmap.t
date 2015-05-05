@@ -238,7 +238,7 @@ sub generate_fake_instrument_data {
         ok($library, 'create library');
     }
 
-    my $fastq_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Align-Maq/test_sample_name';
+    my $fastq_directory = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Align-Maq/test_sample_name';
     my $instrument_data = Genome::InstrumentData::Solexa->create(
         id => $FAKE_INSTRUMENT_DATA_ID,
         library => $library,
@@ -250,7 +250,7 @@ sub generate_fake_instrument_data {
         subset_name => 4,
         run_type => 'Paired',
         gerald_directory => $fastq_directory,
-        bam_path => $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam'
+        bam_path => Genome::Config::get('test_inputs') . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam'
     );
     ok($instrument_data, 'create instrument data: '.$instrument_data->id);
     ok($instrument_data->is_paired_end, 'instrument data is paired end');

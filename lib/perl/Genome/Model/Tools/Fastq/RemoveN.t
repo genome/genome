@@ -12,7 +12,7 @@ BEGIN
     use_ok ('Genome::Model::Tools::Fastq::RemoveN');
 }
 
-my $path = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Fastq-RemoveN/";
+my $path = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Fastq-RemoveN/";
 my $fastq_file      = "$path/in.fastq";
 my $n_static        = "$path/expected-out.fastq";
 my $n_removed_file  = Genome::Sys->create_temp_file_path('actual-out.fastq');

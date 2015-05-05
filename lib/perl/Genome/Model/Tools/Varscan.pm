@@ -54,14 +54,15 @@ sub help_detail {                           # This is what the user will see wit
 EOS
 }
 
+my $sw_legacy_java = Genome::Config::get('sw_legacy_java');
 my %VARSCAN_VERSIONS = (
-    '2.3.6' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.3.6.jar',
-    '2.3.5' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.3.5.jar',
-    '2.3.2' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.3.2.jar',
-    '2.3.1' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.3.1.jar',
-    '2.2.9' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.2.9.jar',
-    '2.2.6' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.2.6.jar',
-    '2.2.4' => $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.v2.2.4.jar',
+    '2.3.6' => $sw_legacy_java . '/VarScan/VarScan.v2.3.6.jar',
+    '2.3.5' => $sw_legacy_java . '/VarScan/VarScan.v2.3.5.jar',
+    '2.3.2' => $sw_legacy_java . '/VarScan/VarScan.v2.3.2.jar',
+    '2.3.1' => $sw_legacy_java . '/VarScan/VarScan.v2.3.1.jar',
+    '2.2.9' => $sw_legacy_java . '/VarScan/VarScan.v2.2.9.jar',
+    '2.2.6' => $sw_legacy_java . '/VarScan/VarScan.v2.2.6.jar',
+    '2.2.4' => $sw_legacy_java . '/VarScan/VarScan.v2.2.4.jar',
 );
 
 sub java_command_line {
@@ -133,7 +134,7 @@ sub pileup_command_for_reference_and_bam {
 
 sub path_for_latest_version {
     my $class = shift;
-    my $link = $ENV{GENOME_SW_LEGACY_JAVA} . '/VarScan/VarScan.jar';
+    my $link = Genome::Config::get('sw_legacy_java') . '/VarScan/VarScan.jar';
 
     unless(-e $link and -l $link) {
         $class->error_message('Link to latest version not found or not a link!');

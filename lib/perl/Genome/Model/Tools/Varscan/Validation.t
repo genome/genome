@@ -21,7 +21,7 @@ use_ok('Genome::Model::Tools::Varscan::Validation');
 my $ref_seq = Genome::Model::Build::ImportedReferenceSequence->get_by_name('NCBI-human-build36');
 isa_ok($ref_seq, 'Genome::Model::Build::ImportedReferenceSequence', 'loaded reference sequence');
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Varscan-Validation';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Varscan-Validation';
 
 my $tumor_bam =  join('/', $test_data_dir, 'tumor.tiny.bam');
 my $normal_bam = join('/', $test_data_dir, 'normal.tiny.bam');

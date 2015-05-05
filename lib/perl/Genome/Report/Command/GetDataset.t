@@ -12,7 +12,7 @@ use_ok('Genome::Report::Command::GetDataset') or die;
 my @output_types = Genome::Report::Command::GetDataset->output_types;
 for my $output_type ( @output_types ) {
     my $cmd = Genome::Report::Command::GetDataset->create(
-        report_directory => $ENV{GENOME_TEST_INPUTS} . '/Genome-Report-XSLT/Assembly_Stats',
+        report_directory => Genome::Config::get('test_inputs') . '/Genome-Report-XSLT/Assembly_Stats',
         dataset_name => 'stats',
         output_type => $output_type,
     );

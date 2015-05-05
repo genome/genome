@@ -28,13 +28,13 @@ class Genome::Model::Germline {
         server_dispatch => {
             is_constant => 1,
             is_class_wide => 1,
-            value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+            value => Genome::Config::get('lsf_queue_build_worker'),
             doc => 'lsf queue to submit the launcher or \'inline\''
         },
         job_dispatch => {
             is_constant => 1,
             is_class_wide => 1,
-            value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT},
+            value => Genome::Config::get('lsf_queue_build_worker'),
             doc => 'lsf queue to submit jobs or \'inline\' to run them in the launcher'
         },
     ],

@@ -14,7 +14,7 @@ use above "Genome";
 use Test::More;
 use File::Temp;
 
-my $datadir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/MaskDust';
+my $datadir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/MaskDust';
  
 my $temp_dir = Genome::Sys->create_temp_directory;
 my $temp_input_dir = Genome::Sys->create_temp_directory;

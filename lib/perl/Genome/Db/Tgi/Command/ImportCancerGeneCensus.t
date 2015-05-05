@@ -17,7 +17,7 @@ my $class = "Genome::Db::Tgi::Command::ImportCancerGeneCensus";
 use_ok($class);
 my $data_dir = Genome::Utility::Test->data_dir_ok($class, "v1");
 my $expected_output = "$data_dir/expected.out";
-my $url = $ENV{GENOME_TEST_URL}."/Genome-Db-Tgi-Command-ImportCancerGeneCensus/v1/census.tsv";
+my $url = Genome::Config::get('test_url')."/Genome-Db-Tgi-Command-ImportCancerGeneCensus/v1/census.tsv";
 my $output_file = Genome::Sys->create_temp_file_path;
 my $cmd = $class->create(data_url => $url, output_file => $output_file);
 ok($cmd->execute, "Import executed successfully");

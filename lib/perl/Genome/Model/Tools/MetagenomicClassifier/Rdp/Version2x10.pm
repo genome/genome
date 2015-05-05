@@ -39,7 +39,7 @@ use Inline(
 END
 
     AUTOSTUDY => 1,
-    CLASSPATH => join(':', map { $ENV{GENOME_SW_LEGACY_JAVA} . '/rdp-classifier/rdp-classifier-2.10/'.$_ } (qw/
+    CLASSPATH => join(':', map { Genome::Config::get('sw_legacy_java') . '/rdp-classifier/rdp-classifier-2.10/'.$_ } (qw/
             AlignmentTools.jar
             ReadSeq.jar
             TaxonomyTree.jar

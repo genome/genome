@@ -14,7 +14,7 @@ use Genome::Utility::Test qw(compare_ok);
 
 use_ok('Genome::Model::Tools::Predictor::Psortb') or die;
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Predictor';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Predictor';
 ok(-d $test_data_dir, "test data dir exists at $test_data_dir") or die;
 
 my $test_fasta = join('/', $test_data_dir, 'medium.fasta');

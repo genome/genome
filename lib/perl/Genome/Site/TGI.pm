@@ -1,6 +1,11 @@
 package Genome::Site::TGI;
+
 use strict;
 use warnings;
+
+BEGIN {
+    require Genome::Config;
+};
 
 # do this first so we get usage metrics even if something crashes below
 use Genome::Site::TGI::UsageLog;
@@ -83,7 +88,7 @@ BEGIN {
         GENOME_TEST_URL
     );
 
-    if ($ENV{GENOME_DEV_MODE}) {
+    if (Genome::Config::get('dev_mode')) {
         $ENV{GENOME_SYS_SERVICES_MEMCACHE} = 'apipe-dev.gsc.wustl.edu:11211';
         $ENV{GENOME_SYS_SERVICES_SOLR} = 'http://solr-dev:8080/solr';
     }
@@ -135,7 +140,7 @@ use Genome::Sys;
 use Genome::Site::TGI::Extension::Sys;      # extensions to Genome::Sys
 
 BEGIN {
-    unless ($ENV{GENOME_DEV_MODE}) {
+    unless (Genome::Config::get('dev_mode')) {
         require Genome::Site::TGI::Extension::Logger;
         Genome::Site::TGI::Extension::Logger->import();
     }

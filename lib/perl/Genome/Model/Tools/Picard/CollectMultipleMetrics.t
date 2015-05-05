@@ -7,7 +7,7 @@ use above "Genome";
 use Genome::Model::Tools::Picard::CollectMultipleMetrics;
 use Test::More;
 
-my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Picard-CollectMultipleMetrics';
+my $base_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Picard-CollectMultipleMetrics';
 my $bam = $base_dir . '/test.bam';
 my $ref = $base_dir . '/test.ref.fa';
 

@@ -8,10 +8,10 @@ use Test::More;
 
 use_ok( 'Genome::Model::Tools::ViromeScreening' ) or die;
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreening/Titanium17';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ViromeScreening/Titanium17';
 ok( -d $data_dir, "Testsuite data dir exists" ) or die;
 
-ok( -s $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreening/virome-screening2.xml', "Work xml file exsits" ) or die;
+ok( -s Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ViromeScreening/virome-screening2.xml', "Work xml file exsits" ) or die;
 
 my $temp_dir = Genome::Sys->create_temp_directory();
 

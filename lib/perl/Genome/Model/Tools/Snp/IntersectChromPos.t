@@ -12,7 +12,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::Snp::IntersectChromPos');
 };
     
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Snp-IntersectChromPos/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Snp-IntersectChromPos/';
 
 my $file1 = $test_input_dir . 'file1.in';
 my $file2 = $test_input_dir . 'file2.in';

@@ -21,7 +21,7 @@ class Genome::Model::Tools::Kmer {
 };
 
 my %GENOMETOOLS_VERSIONS = (
-    '1.3.2'    => $ENV{GENOME_SW} . '/genometools/genometools-1.3.2',
+    '1.3.2'    => Genome::Config::get('sw') . '/genometools/genometools-1.3.2',
 );
 
 sub path_for_genometools_version {

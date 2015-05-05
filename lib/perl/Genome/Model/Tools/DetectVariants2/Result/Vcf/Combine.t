@@ -24,7 +24,7 @@ use_ok('Genome::Model::Tools::DetectVariants2::Result::Vcf::Combine');
 
 
 #TODO this could really use its own very tiny dataset--we don't care about the results in this test so much as the process
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Result-Vcf-Combine';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Result-Vcf-Combine';
 my $inputs = $test_dir."/inputs";
 
 my $expected_dir = $test_dir."/expected.v8";

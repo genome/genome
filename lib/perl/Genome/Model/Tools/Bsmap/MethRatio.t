@@ -11,7 +11,7 @@ use Test::More tests => 3;
 my $class = 'Genome::Model::Tools::Bsmap::MethRatio';
 use_ok($class);
 
-my $test_root = File::Spec->join($ENV{GENOME_TEST_INPUTS},
+my $test_root = File::Spec->join(Genome::Config::get('test_inputs'),
     qw(Genome-Model-Tools-Bsmap-MethRatio v2.74 2015-01-06));
 
 sub fasta_for_reference {

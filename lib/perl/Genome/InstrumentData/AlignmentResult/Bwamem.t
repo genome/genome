@@ -19,7 +19,7 @@ my $TEST_SAMTOOLS_VERSION = '0.1.19';
 my $TEST_PICARD_VERSION = '1.113';
 my $samtools_path = Genome::Model::Tools::Sam->path_for_samtools_version($TEST_SAMTOOLS_VERSION);
 
-my $bam_path = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam';
+my $bam_path = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-AlignmentResult-Bwa/input.bam';
 my $inst_data = Genome::InstrumentData::InstrumentDataTestObjGenerator::create_solexa_instrument_data(
     $bam_path
     );

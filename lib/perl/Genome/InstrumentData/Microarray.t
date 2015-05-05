@@ -25,11 +25,11 @@ ok($instrument_data, 'created dummy instrument data');
 
 ok(!$instrument_data->genotype_file, 'no genotype file, yet');
 
-test_update_genotype_file($ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file1');
+test_update_genotype_file(Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Microarray/test_genotype_file1');
 # works also if there is already an existing gentoype_file associated with the instrument_data...
 
 
-test_update_genotype_file($ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file2');
+test_update_genotype_file(Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Microarray/test_genotype_file2');
 
 done_testing();
 

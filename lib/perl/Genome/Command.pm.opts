@@ -37635,6 +37635,23 @@ $Genome::Command::OPTS_SPEC = [
   ],
   '>process',
   [
+    '>set-status',
+    [
+      'exit-code=s',
+      undef,
+      'process=s',
+      undef,
+      'status=s',
+      [
+        'New',
+        'Succeeded',
+        'Crashed',
+        'Running',
+        'Scheduled'
+      ],
+      'help!',
+      undef
+    ],
     '>test',
     [
       'some-output=s',
@@ -37662,22 +37679,6 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
-    '>diff-blessed',
-    [
-      'process-name=s',
-      'files',
-      'new-process=s',
-      undef,
-      'help!',
-      undef
-    ],
-    '>verify-for-cle',
-    [
-      'process=s',
-      undef,
-      'help!',
-      undef
-    ],
     '>view',
     [
       'COLUMN-WIDTH=s',
@@ -37694,12 +37695,30 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       'inputs!',
       undef,
-      'full!',
-      undef,
       'logs!',
+      undef,
+      'notes!',
+      undef,
+      'full!',
       undef,
       'workflow!',
       undef,
+      'process=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>diff-blessed',
+    [
+      'process-name=s',
+      'files',
+      'new-process=s',
+      undef,
+      'help!',
+      undef
+    ],
+    '>verify-for-cle',
+    [
       'process=s',
       undef,
       'help!',

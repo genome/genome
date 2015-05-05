@@ -28,7 +28,7 @@ my $refbuild_id = 101947881;
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
 ok($ref_seq_build, 'human36 reference sequence build') or die;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Squaredancer';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Squaredancer';
 my $test_base_dir = File::Temp::tempdir('DetectVariants2-Squaredancer-XXXXX', CLEANUP => 1, TMPDIR => 1);
 my $test_working_dir = "$test_base_dir/output";
 

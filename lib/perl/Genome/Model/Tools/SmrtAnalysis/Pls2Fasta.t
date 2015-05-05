@@ -15,7 +15,7 @@ plan tests => 4;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::Pls2Fasta');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-Pls2Fasta';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-Pls2Fasta';
 
 my $bas_h5_fofn = $data_directory .'/input.fofn';
 my $rgn_h5_fofn = $data_directory .'/output.fofn';

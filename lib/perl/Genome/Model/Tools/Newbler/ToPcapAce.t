@@ -16,7 +16,7 @@ use_ok( 'Genome::Model::Tools::Newbler::ToPcapAce' ) or die;
 
 #test suite dir
 my $version = 'v4';
-my $test_suite = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Newbler/ToPcapAce-'.$version;
+my $test_suite = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Newbler/ToPcapAce-'.$version;
 
 ok( -d $test_suite, "Test suite dir exists" ) or die;
 

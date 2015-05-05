@@ -12,7 +12,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::Fastq::Trimq2::Fragment');
 };
 
-my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/Trimq2/Fragment';
+my $base_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fastq/Trimq2/Fragment';
 
 my $tmp_dir = File::Temp::tempdir(
     'Fastq-Trimq2-XXXXX', 

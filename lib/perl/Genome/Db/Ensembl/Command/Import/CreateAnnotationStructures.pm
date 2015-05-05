@@ -85,7 +85,7 @@ sub execute
         dump_file => $self->dump_file,
         log_file => $self->log_file,
         software_version => $self->software_version,
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        test_name => (Genome::Config::get('software_result_test_name') || undef),
     );
 
     $result->add_user(label => 'annotation_structures', user => $self->build);

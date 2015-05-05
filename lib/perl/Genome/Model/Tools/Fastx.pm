@@ -42,9 +42,9 @@ EOS
 
 
 my %FASTX_VERSIONS = (
-    '0.0.13' => $ENV{GENOME_SW} . '/fastx/fastx_toolkit-0.0.13/bin',
-    '0.0.10' => $ENV{GENOME_SW} . '/fastx/fastx_toolkit-0.0.10/bin',
-    '0.0.7' => $ENV{GENOME_SW} . '/fastx/fastx_toolkit-0.0.7/bin',
+    '0.0.13' => Genome::Config::get('sw') . '/fastx/fastx_toolkit-0.0.13/bin',
+    '0.0.10' => Genome::Config::get('sw') . '/fastx/fastx_toolkit-0.0.10/bin',
+    '0.0.7' => Genome::Config::get('sw') . '/fastx/fastx_toolkit-0.0.7/bin',
 );
 
 sub fastx_tool_path {

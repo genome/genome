@@ -7,7 +7,7 @@ use version;
 
 use Genome;
 
-my $DEFAULT_LSF_RESOURCE = $ENV{GENOME_TESTING}
+my $DEFAULT_LSF_RESOURCE = Genome::Config::get('testing')
     ? "-R 'span[hosts=1]' -n 4"
     : "-R 'select[mem>=64000] rusage[mem=64000] span[hosts=1]' -M 64000000 -n 4";
 
@@ -117,7 +117,7 @@ sub params_for_result {
         cufflinks_version => $pp->expression_version,
         cufflinks_params => $pp->expression_params,
         annotation_reference_transcripts_mode  => $self->annotation_reference_transcripts_mode,
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        test_name => (Genome::Config::get('software_result_test_name') || undef),
         users => $result_users,
     );
     if ( defined($pp->mask_reference_transcripts) ) {

@@ -25,7 +25,7 @@ ok($example_build, 'example build');
 my $sx_result = Genome::InstrumentData::SxResult->__define__(
     instrument_data_id => $build->instrument_data->id,
     read_processor => 'trim bwa-style -trim-qual-level 10 | filter by-length -filter-length 35 | rename illumina-to-pcap',
-    output_dir => $ENV{GENOME_TEST_INPUTS}.'/Genome-Model/DeNovoAssembly/Build-ProcessInstrumentData-v1/',
+    output_dir => Genome::Config::get('test_inputs').'/Genome-Model/DeNovoAssembly/Build-ProcessInstrumentData-v1/',
     output_file_type => 'sanger',
     output_file_count => 2,
 );
@@ -46,7 +46,7 @@ is($build->reads_processed, 28028, 'set reads processed on build');
 is($build->reads_processed_success, '1.000', 'set reads processed success on build');
 
 for my $file_name ( $sx_results[0]->read_processor_output_files ) {
-    compare_ok($sx_results[0]->output_dir.'/'.$file_name, $ENV{GENOME_TEST_INPUTS}.'/Genome-Model/DeNovoAssembly/Build-MergeAndLinkSxResults-v1/'.$file_name, "fastq $file_name matches");
+    compare_ok($sx_results[0]->output_dir.'/'.$file_name, Genome::Config::get('test_inputs').'/Genome-Model/DeNovoAssembly/Build-MergeAndLinkSxResults-v1/'.$file_name, "fastq $file_name matches");
 }
 
 for (1..2) {

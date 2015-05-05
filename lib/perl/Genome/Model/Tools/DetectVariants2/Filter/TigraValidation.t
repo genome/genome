@@ -23,7 +23,7 @@ BEGIN {
 
 use_ok( 'Genome::Model::Tools::DetectVariants2::Filter::TigraValidation');
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-TigraValidation/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Filter-TigraValidation/';
 my $normal_bam  = $test_input_dir . 'normal.bam';
 my $tumor_bam   = $test_input_dir . 'tumor.bam';
 my $sv_file     = $test_input_dir . 'svs.hq';

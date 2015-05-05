@@ -11,7 +11,7 @@ use File::Copy::Recursive;
 use_ok( 'Genome::Model::Tools::PooledBac::GeneratePostAssemblyReports' ) or die;
 
 my $version = 1;
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-PooledBac/GeneratePostAssemblyReports_v'.$version;
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-PooledBac/GeneratePostAssemblyReports_v'.$version;
 ok( -d $test_dir, 'Test suite dir exists' ) or die;
 
 my $tmp_dir = Genome::Sys->create_temp_directory();

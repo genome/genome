@@ -16,7 +16,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Sx::Trim::Flexbar') or die;
 
-my $datadir = $ENV{GENOME_TEST_INPUTS}.'/Genome-Model-Tools-Sx/TrimFlexbar';
+my $datadir = Genome::Config::get('test_inputs').'/Genome-Model-Tools-Sx/TrimFlexbar';
 my $input1 = "$datadir/input_1.fastq";
 ok(-s $input1, 'fastq input 1') or die;
 my $input2 = "$datadir/input_2.fastq";
@@ -48,7 +48,7 @@ is(@output, 1, "got 1 fastq files");
 is(Genome::Sys->md5sum($output[0]), '0bc803457a4343eaa555b99916d226c3', "Output fastq matches");
 
 my $version = 230;
-$datadir = $ENV{GENOME_TEST_INPUTS}.'/Genome-Model-Tools-Sx/TrimFlexbar'.$version;
+$datadir = Genome::Config::get('test_inputs').'/Genome-Model-Tools-Sx/TrimFlexbar'.$version;
 $input1 = "$datadir/input_1.fastq";
 ok(-s $input1, 'fastq input 1') or die;
 $input2 = "$datadir/input_2.fastq";
@@ -79,5 +79,5 @@ is(@output, 1, "got 1 fastq files");
 my $md_sum = Genome::Sys->md5sum( $output[0] );
 is( Genome::Sys->md5sum( $output[0] ), '88874bc2a76115d49589b2e5d58d3d9b', 'Output fastq matches' );
 
-#print "gvimdiff $output[0] $GENOME_TEST_INPUTS/Genome-Model-Tools-Sx/TrimFlexbar/revcomp_adapter_removed.far2.17.fastq\n"; <STDIN>;
+#print "gvimdiff $output[0] $datadir/revcomp_adapter_removed.far2.17.fastq\n"; <STDIN>;
 done_testing();

@@ -9,7 +9,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::ViromeEvent::BlastX_Viral::PoolAndSplitSequence');
 
 #check testsuite files/dirs
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreening/Titanium17';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ViromeScreening/Titanium17';
 ok( -d $data_dir, "Testsuite data dir exists" ) or die;
 
 my $run = 'Titanium17';

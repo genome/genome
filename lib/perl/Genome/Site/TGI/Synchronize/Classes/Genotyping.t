@@ -43,7 +43,7 @@ cmp_ok(@properties_to_copy, '>', @properties_to_keep_updated, 'more properties t
 my $lims_object = $lims_class->__define__(%properties);
 ok($lims_object, "define lims $entity_name object");
 
-my $genotype_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file1';
+my $genotype_file = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Microarray/test_genotype_file1';
 $lims_object->genotype_file($genotype_file);
 $lims_object->sample_id($sample->id);
 $lims_object->sample_name($sample->name);

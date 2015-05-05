@@ -19,7 +19,7 @@ use Genome::Test::Factory::SoftwareResult::User;
 use_ok('Genome::InstrumentData::SxResult');
 use_ok('Genome::InstrumentData::InstrumentDataTestObjGenerator');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-SxResult';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-SxResult';
 
 my ($instrument_data) = Genome::InstrumentData::InstrumentDataTestObjGenerator::create_solexa_instrument_data($data_dir.'/inst_data/-6666/archive.bam');
 my $read_processor = '';
@@ -31,7 +31,7 @@ my %sx_result_params = (
     read_processor => $read_processor,
     output_file_count => $output_file_count,
     output_file_type => $output_file_type,
-    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    test_name => (Genome::Config::get('software_result_test_name') || undef),
     users => Genome::Test::Factory::SoftwareResult::User->setup_user_hash,
 );
 
@@ -95,7 +95,7 @@ my %sx_result_params_with_config = (
     output_file_config => [ 
         'basename='.$instrument_data->id.'.1.fastq:type=sanger:name=fwd', 'basename='.$instrument_data->id.'.2.fastq:type=sanger:name=rev',
     ],
-    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    test_name => (Genome::Config::get('software_result_test_name') || undef),
     users => Genome::Test::Factory::SoftwareResult::User->setup_user_hash,
 );
 

@@ -13,7 +13,7 @@ class Genome::Model::Tools::GenePredictor::RfamScan {
     has_optional => [
         rfam_install_path => {
             is => 'Path',
-            default => $ENV{GENOME_SW} . '/rfam/',
+            default => Genome::Config::get('sw') . '/rfam/',
             doc => 'Base installation path of rfam',
         },
         version => {

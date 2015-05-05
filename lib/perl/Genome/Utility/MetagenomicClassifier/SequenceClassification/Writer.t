@@ -15,7 +15,7 @@ use_ok('Genome::Utility::MetagenomicClassifier::SequenceClassification::Writer')
 
 # Seq classifications to write
 use_ok('Genome::Utility::MetagenomicClassifier::SequenceClassification');
-my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-MetagenomicClassifier-SequenceClassification-Writer/';
+my $base_dir = Genome::Config::get('test_inputs') . '/Genome-Utility-MetagenomicClassifier-SequenceClassification-Writer/';
 my $classifications_stor_file = $base_dir.'/classifications.stor';
 my $classifications = Storable::retrieve($classifications_stor_file);
 ok($classifications, 'Loaded classifications');

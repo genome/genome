@@ -314,7 +314,8 @@ sub execute {
 
 sub _convert_url_to_path {
     my $path = shift;
-    $path =~ s/$ENV{GENOME_SYS_SERVICES_FILES_URL}//;
+    my $url = Genome::Config::get('sys_services_files_url');
+    $path =~ s/$url//;
     $path = '/' . $path;
     return $path;
 }
@@ -459,7 +460,7 @@ sub generate_track_xml {
   my $color_option = "UNEXPECTED_PAIR";
 
   #Set the resource file url path
-  $resource_file_url = $ENV{GENOME_SYS_SERVICES_FILES_URL} . $resource_file;
+  $resource_file_url = Genome::Config::get('sys_services_files_url') . $resource_file;
 
   #Abbreviate some aspects of the base track name
   if ($tissue_desc =~ /skin\,\s+nos/i){
@@ -489,7 +490,7 @@ sub generate_track_xml {
     my $read_track_name = "$base_track_name Reads";
     my $resource_file_coverage = $resource_file . "_coverage";
 
-    my $resource_file_coverage_url = $ENV{GENOME_SYS_SERVICES_FILES_URL} . $resource_file_coverage;
+    my $resource_file_coverage_url = Genome::Config::get('sys_services_files_url') . $resource_file_coverage;
 
   $xml=<<XML;
     <Track altColor="0,0,178" autoScale="true" color="175,175,175" colorScale="ContinuousColorScale;0.0;9062.0;255,255,255;175,175,175" displayMode="COLLAPSED" featureVisibilityWindow="-1" fontSize="$font_size" id="$resource_file_coverage_url" name="$coverage_track_name" showDataRange="true" visible="true">
@@ -548,14 +549,6 @@ sub generate_resource_xml {
     $self->error_message("\n\nNo resources found for creation of a resource XML section for IGV in DumpIgvXml.pm\n\n");
     exit(1);
   }
-
-  #Create an XML block like this:
-  # <Resources>
-  #   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc7001/info/model_data/2879615516/build114445127/alignments/114469152.bam"/>
-  #   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc7001/info/model_data/2879616958/build114445247/alignments/114445014.bam"/>
-  #   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/accepted_hits.bam"/>
-  #   <Resource path="$ENV{GENOME_SYS_SERVICES_FILES_URL}/gscmnt/gc2016/info/model_data/2880794613/build115909698/alignments/junctions.bed"/>
-  # </Resources>
 
   my $xml = "  <Resources>";
   foreach my $resource (sort @resource_list){

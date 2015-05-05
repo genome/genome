@@ -172,10 +172,8 @@ ok($create_fail, 'CREATE create: w/o params');
 $create_fail->dump_error_messages(0);
 $create_fail->queue_error_messages(1);
 ok(!$create_fail->execute, 'CREATE execute: failed w/o name');
-my @error_messages = $create_fail->error_messages();
-is_deeply(\@error_messages,
-    [ q(Property 'name': No value specified for required property) ],
-    'Got expected error message');
+my ($name_error) = grep { ($_->properties)[0] eq 'name' } $create_fail->__errors__;
+ok($name_error, 'got an error about name');
 $create_fail->delete;
 
 # Create Mother Nature, the Mom
@@ -350,7 +348,7 @@ $update_job_null->dump_status_messages(0);
 $update_job_null->dump_error_messages(0);
 $update_job_null->queue_error_messages(1);
 ok(eval{(!$update_job_null->execute && !$update_job_null->result)}, 'UPDATE PROPERTY job: execute to set undef');
-@error_messages = $update_job_null->error_messages();
+my @error_messages = $update_job_null->error_messages();
 is_deeply(\@error_messages,
     [q(Cannot set job to NULL. Sorry.)],
     'Expected error message');
@@ -381,11 +379,8 @@ $update_no_people_fail->dump_status_messages(0);
 $update_no_people_fail->dump_error_messages(0);
 $update_no_people_fail->queue_error_messages(1);
 ok((!$update_no_people_fail->execute && !$update_no_people_fail->result), 'UPDATE PROPERTY name: execute failed w/o people');
-$DB::single = 1;
-@error_messages = $update_no_people_fail->error_messages();
-is_deeply(\@error_messages,
-    [ q(Property 'people': No value specified for required property), ],
-    'Expected error messages');
+my ($people_error) = grep { ($_->properties)[0] eq 'people' } $update_no_people_fail->__errors__;
+ok($people_error, 'got an error about people');
 $update_no_people_fail->delete;
 
 # fail: text only if null
@@ -444,10 +439,8 @@ $update_pets_fail->dump_error_messages(0);
 $update_pets_fail->queue_error_messages(1);
 ok((!$update_pets_fail->execute && !$update_pets_fail->result), 'UPDATE PROPERTY has pets: execute failed b/c value was not in list');
 is($ronnie->has_pets, $ronnie_has_pets, 'UPDATE PROPERTY has pets: unchanged');
-@error_messages = $update_pets_fail->error_messages();
-is_deeply(\@error_messages,
-    [   q(Property 'value': The value blah is not in the list of valid values for value.  Valid values are: yes, no), ],
-    'Expected error messages');
+my ($value_error) = grep { ($_->properties)[0] eq 'value' } $update_pets_fail->__errors__;
+ok($value_error, 'got an error about value');
 $update_pets_fail->delete;
 
 # add/remove
@@ -526,10 +519,8 @@ $update_add_fail_no_people->dump_status_messages(0);
 $update_add_fail_no_people->dump_error_messages(0);
 $update_add_fail_no_people->queue_error_messages(1);
 ok((!$update_add_fail_no_people->execute && !$update_add_fail_no_people->result), 'UPDATE ADD friends: execute fails as expected, no people');
-@error_messages = $update_add_fail_no_people->error_messages();
-is_deeply(\@error_messages,
-    [   q(Property 'people': No value specified for required property), ],
-    'Expected error messages');
+($people_error) = grep { ($_->properties)[0] eq 'people' } $update_add_fail_no_people->__errors__;
+ok($people_error, 'got an error about people');
 $update_add_fail_no_people->delete;
 
 my $update_add_fail_no_values = Person::Command::Update::Friends::Add->create(
@@ -540,10 +531,8 @@ $update_add_fail_no_values->dump_status_messages(0);
 $update_add_fail_no_values->dump_error_messages(0);
 $update_add_fail_no_values->queue_error_messages(1);
 ok((!$update_add_fail_no_values->execute && !$update_add_fail_no_values->result), 'UPDATE ADD friends: execute fails as expected, no values');
-@error_messages = $update_add_fail_no_values->error_messages();
-is_deeply(\@error_messages,
-    [   q(Property 'values': No value specified for required property), ],
-    'Expected error messages');
+my ($values_error) = grep { ($_->properties)[0] eq 'values' } $update_add_fail_no_values->__errors__;
+ok($values_error, 'got an error about values');
 $update_add_fail_no_values->delete;
 
 # DELETE
@@ -567,10 +556,8 @@ $delete_fail->dump_status_messages(0);
 $delete_fail->dump_error_messages(0);
 $delete_fail->queue_error_messages(1);
 ok(!$delete_fail->execute, "DELETE execute: failed as expected");
-@error_messages = $delete_fail->error_messages();
-is_deeply(\@error_messages,
-    [   q(Property 'people': No value specified for required property) ],
-    'Expected error messages');
+($people_error) = grep { ($_->properties)[0] eq 'people' } $delete_fail->__errors__;
+ok($people_error, 'got an error about people');
 $delete_fail->delete;
 
 # success

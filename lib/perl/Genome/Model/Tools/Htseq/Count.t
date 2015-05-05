@@ -8,7 +8,7 @@ use Genome::Test::Factory::SoftwareResult::User;
 
 $ENV{UR_DBI_NO_COMMIT} = 1;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Htseq-Count/2013-04-04';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Htseq-Count/2013-04-04';
 my $rebuilding = (@ARGV and $ARGV[0] eq 'REBUILD');
 
 my $test_outdir;
@@ -71,7 +71,8 @@ my $expected_out2 = $test_dir . '/expected-outputs/transcript-counts.tsv';
 ok(-e $expected_out2, "found comparison output file 2: $expected_out2");
 
 # before running, ensure results do not exist previously
-my $test_name = $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} ||= "testsuite " . UR::Context->now . " " . Sys::Hostname::hostname() . "-$$.";
+$ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} ||= "testsuite " . UR::Context->now . " " . Sys::Hostname::hostname() . "-$$.";
+my $test_name = Genome::Config::get('software_result_test_name');
 my $result_exists = Genome::Model::Tools::Htseq::Count::Result->get(
     alignment_results => [$a],
     test_name => $test_name

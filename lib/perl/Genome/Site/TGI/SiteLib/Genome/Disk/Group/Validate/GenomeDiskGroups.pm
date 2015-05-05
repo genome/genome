@@ -53,12 +53,12 @@ sub genome_disk_group_names {
         'info_genome_models',
         'info_alignments',
         'apipe_ci',
-        $ENV{GENOME_DISK_GROUP_DEV},
-        $ENV{GENOME_DISK_GROUP_REFERENCES},
-        $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
-        $ENV{GENOME_DISK_GROUP_MODELS},
-        $ENV{GENOME_DISK_GROUP_TRASH},
-        $ENV{GENOME_DISK_GROUP_RESEARCH},
+        Genome::Config::get('disk_group_dev'),
+        Genome::Config::get('disk_group_references'),
+        Genome::Config::get('disk_group_alignments'),
+        Genome::Config::get('disk_group_models'),
+        Genome::Config::get('disk_group_trash'),
+        Genome::Config::get('disk_group_research'),
     );
 }
 

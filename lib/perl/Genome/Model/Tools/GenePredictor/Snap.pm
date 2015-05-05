@@ -69,7 +69,7 @@ sub execute {
 
     # Use full path to snap executable, with version, instead of the symlink.
     # This prevents the symlink being changed silently and affecting our output!
-    my $snap_path = $ENV{GENOME_SW} . "/snap/snap-" . $self->version . "/snap";
+    my $snap_path = Genome::Config::get('sw') . "/snap/snap-" . $self->version . "/snap";
 
     unless (-d $self->raw_output_directory) {
         my $mkdir_rv = make_path($self->raw_output_directory);

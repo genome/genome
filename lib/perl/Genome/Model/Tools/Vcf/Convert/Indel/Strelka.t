@@ -16,7 +16,7 @@ use above 'Genome';
 
 use_ok('Genome::Model::Tools::Vcf::Convert::Indel::Strelka');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Convert-Indel-Strelka";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Vcf-Convert-Indel-Strelka";
 my $expected_file = "$test_dir/v3/indels.vcf.gz";
 
 my $output_file = Genome::Sys->create_temp_file_path;

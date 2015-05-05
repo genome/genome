@@ -13,6 +13,7 @@ use File::stat;
 use Carp qw(confess);
 use File::Basename;
 use Scope::Guard qw();
+use Try::Tiny qw(try catch);
 
 use Genome::Sys::LockMigrationProxy qw();
 use Genome::Utility::Instrumentation;
@@ -362,7 +363,7 @@ sub lsf_queue {
         return $self->__lsf_queue;
     }
 
-    return $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT};
+    return Genome::Config::get('lsf_queue_alignment_default');
 }
 
 sub required_rusage_for_building_index {
@@ -445,7 +446,7 @@ sub create {
     my $estimated_kb_usage = $self->estimated_kb_usage;
     $self->debug_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
     $self->debug_message("Check for available disk...");
-    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => $ENV{GENOME_DISK_GROUP_ALIGNMENTS});
+    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => Genome::Config::get('disk_group_alignments'));
     $self->debug_message("Found " . scalar(@available_volumes) . " disk volumes");
     my $unallocated_kb = 0;
     for my $volume (@available_volumes) {
@@ -1464,7 +1465,7 @@ sub resolve_allocation_subdirectory {
 }
 
 sub resolve_allocation_disk_group_name {
-    $ENV{GENOME_DISK_GROUP_ALIGNMENTS};
+    Genome::Config::get('disk_group_alignments');
 }
 
 
@@ -1736,6 +1737,7 @@ sub get_bam_file {
                     Genome::Sys->copy_file($file, $dest_file);
                 }
             }
+            $self->_reallocate_temp_allocation($temp_allocation);
             return File::Spec->join($temp_allocation->absolute_path, basename($bams[0]));
         }
     }
@@ -1818,6 +1820,8 @@ sub revivified_alignment_bam_file_path {
         die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
     }
 
+    $self->_reallocate_temp_allocation($temp_allocation);
+
     if (-s $revivified_bam) {
         # Cache the path of this revivified bam for future access
         $self->_revivified_bam_file_path($revivified_bam);
@@ -1833,7 +1837,7 @@ sub _get_temp_allocation {
     my $bam_size_kilobytes = $self->bam_size/1024 if $self->bam_size;
 
     my $temp_allocation = Genome::Disk::Allocation->create(
-        disk_group_name     => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
+        disk_group_name     => Genome::Config::get('disk_group_alignments'),
         allocation_path     => 'merged/recreated_per_lane_bam/'.$self->id.'_'._get_uuid_string(),
         kilobytes_requested => $bam_size_kilobytes || 100_000_000, # This should always be set, but just in case we reserve a lot
         owner_class_name    => 'Genome::Sys::User',
@@ -1846,6 +1850,19 @@ sub _get_temp_allocation {
     );
     return $temp_allocation;
 }
+
+
+sub _reallocate_temp_allocation {
+    my ($self, $temp_allocation) = @_;
+    try {
+        $temp_allocation->reallocate;
+    }
+    catch {
+        $self->warning_message('Failed to reallocate temp allocation '.$temp_allocation->id. " Error: $_");
+        return;
+    }
+}
+
 
 sub _get_uuid_string {
     my $ug = Data::UUID->new();

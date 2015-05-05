@@ -370,38 +370,40 @@ sub execute {
     my $normal_purity = $self->normal_purity;
     my $varscan_params = "--validation 1 --somatic-p-value 1.0e-02 --p-value 0.10 --min-coverage 8 --min-var-freq $min_freq --normal-purity $normal_purity";
     my $default_varscan_params = "--validation 1 --somatic-p-value 1.0e-02 --p-value 0.10 --min-coverage 8 --min-var-freq 0.08 --normal-purity 1";
-    my $bsub = qq(bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R "select[mem>16000 && tmp>10000] rusage[mem=16000, tmp=10000]" -M 16000000 );
+    my $bsub = qq(bsub -q ) . Genome::Config::get('lsf_queue_build_worker') . qq( -R "select[mem>16000 && tmp>10000] rusage[mem=16000, tmp=10000]" -M 16000000 );
 
     # put several jobs into array @cmds
     my @cmds;
     my $user = $ENV{USER};
+    my $email_domain = Genome::Config::get('email_domain');
     if ($skip_if_output_present && -e $realigned_normal_bam_file && -e $realigned_tumor_bam_file) {
         if ($self->relapse_bam){
             push(@cmds,"$bsub -J varscan_validation_tumnor \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel.tumnor --output-snp $output_snp.tumnor --reference $reference --varscan-params \"$varscan_params\"\'");
             push(@cmds, "$bsub -J varscan_validation_relnor \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.relnor --output-snp $output_snp.relnor --reference $reference --varscan-params \"$varscan_params\"\'");
             push(@cmds,"$bsub -J varscan_validation_reltum \'gmt varscan validation --normal-bam $realigned_tumor_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.reltum --output-snp $output_snp.reltum --reference $reference --varscan-params \"$varscan_params\"\'");
-            push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation_tumnor -w \'ended(JOB0))\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.tumnor --validation-snp-file $output_snp.tumnor --variants-file $small_indel_list_nobed --output-file $final_output_file.tumnor\'");
-            push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation_relnor -w \'ended(JOB1)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.relnor --validation-snp-file $output_snp.relnor --variants-file $small_indel_list_nobed --output-file $final_output_file.relnor\'");
-            push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation_reltum -w \'ended(JOB2)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.reltum --validation-snp-file $output_snp.reltum --variants-file $small_indel_list_nobed --output-file $final_output_file.reltum\'");
+            push(@cmds,"$bsub -N -u $user\@$email_domain -J varscan_process_validation_tumnor -w \'ended(JOB0))\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.tumnor --validation-snp-file $output_snp.tumnor --variants-file $small_indel_list_nobed --output-file $final_output_file.tumnor\'");
+            push(@cmds,"$bsub -N -u $user\@$email_domain -J varscan_process_validation_relnor -w \'ended(JOB1)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.relnor --validation-snp-file $output_snp.relnor --variants-file $small_indel_list_nobed --output-file $final_output_file.relnor\'");
+            push(@cmds,"$bsub -N -u $user\@$email_domain -J varscan_process_validation_reltum -w \'ended(JOB2)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.reltum --validation-snp-file $output_snp.reltum --variants-file $small_indel_list_nobed --output-file $final_output_file.reltum\'");
         }
         else {
             push(@cmds,"$bsub -J varscan_validation \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_tumor_bam_file --output-indel $output_indel --output-snp $output_snp --reference $reference --varscan-params \"$varscan_params\"\'");
 
-            push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation -w \'ended(JOB0)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel --validation-snp-file $output_snp --variants-file $small_indel_list_nobed --output-file $final_output_file\'");
+            push(@cmds,"$bsub -N -u $user\@$email_domain -J varscan_process_validation -w \'ended(JOB0)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel --validation-snp-file $output_snp --variants-file $small_indel_list_nobed --output-file $final_output_file\'");
         }
     }
     elsif ($self->relapse_bam) {
+        my $sw = Genome::Config::get('sw');
         my $bsub_normal_output = "$realigned_bam_file_directory/realignment_normal.out";
         my $bsub_normal_error = "$realigned_bam_file_directory/realignment_normal.err";
-        push(@cmds,"$bsub -J $realigned_normal_bam_file -o $bsub_normal_output -e $bsub_normal_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_normal_bam_file -I $normal_bam -R $reference  --targetIntervalsAreNotSorted\'");
+        push(@cmds,"$bsub -J $realigned_normal_bam_file -o $bsub_normal_output -e $bsub_normal_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $sw/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_normal_bam_file -I $normal_bam -R $reference  --targetIntervalsAreNotSorted\'");
 
         my $bsub_tumor_output = "$realigned_bam_file_directory/realignment_tumor.out";
         my $bsub_tumor_error = "$realigned_bam_file_directory/realignment_tumor.err";
-        push(@cmds,"$bsub -J $realigned_tumor_bam_file -o $bsub_tumor_output -e $bsub_tumor_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_tumor_bam_file -I $tumor_bam -R $reference --targetIntervalsAreNotSorted\'");
+        push(@cmds,"$bsub -J $realigned_tumor_bam_file -o $bsub_tumor_output -e $bsub_tumor_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $sw/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_tumor_bam_file -I $tumor_bam -R $reference --targetIntervalsAreNotSorted\'");
 
         my $bsub_relapse_output = "$realigned_bam_file_directory/realignment_relapse.out";
         my $bsub_relapse_error = "$realigned_bam_file_directory/realignment_relapse.err";
-        push(@cmds,"$bsub -J $realigned_relapse_bam_file -o $bsub_relapse_output -e $bsub_relapse_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $ENV{GENOME_SW}/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_relapse_bam_file -I $relapse_bam -R $reference --targetIntervalsAreNotSorted\'");
+        push(@cmds,"$bsub -J $realigned_relapse_bam_file -o $bsub_relapse_output -e $bsub_relapse_error \'java -Xmx16g -Djava.io.tmpdir=/tmp -jar $sw/gatk/GenomeAnalysisTK-1.0.5777/GenomeAnalysisTK.jar -et NO_ET -T IndelRealigner -targetIntervals $small_indel_list -o $realigned_relapse_bam_file -I $relapse_bam -R $reference --targetIntervalsAreNotSorted\'");
         push(@cmds,"$bsub -J bamindex_normal -w \'ended(JOB0)\' \'samtools index $realigned_normal_bam_file\'");
         push(@cmds,"$bsub -J bamindex_tumor -w \'ended(JOB1)\' \'samtools index $realigned_tumor_bam_file\'");
         push(@cmds,"$bsub -J bamindex_relapse -w \'ended(JOB2)\' \'samtools index $realigned_relapse_bam_file\'");
@@ -410,9 +412,9 @@ sub execute {
         push(@cmds,"$bsub -J varscan_validation_relnor -w \'ended(JOB3) && ended(JOB5)\' \'gmt varscan validation --normal-bam $realigned_normal_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.relnor --output-snp $output_snp.relnor --reference $reference --varscan-params \"$default_varscan_params\"\'");
         push(@cmds,"$bsub -J varscan_validation_reltum -w \'ended(JOB4) && ended(JOB5)\' \'gmt varscan validation --normal-bam $realigned_tumor_bam_file --tumor-bam $realigned_relapse_bam_file --output-indel $output_indel.reltum --output-snp $output_snp.reltum --reference $reference --varscan-params \"$default_varscan_params\"\'");
 
-        push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation_tumnor -w \'ended(JOB6)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.tumnor --validation-snp-file $output_snp.tumnor --variants-file $small_indel_list_nobed --output-file $final_output_file.tumnor\'");
-        push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation_relnor -w \'ended(JOB7)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.relnor --validation-snp-file $output_snp.relnor --variants-file $small_indel_list_nobed --output-file $final_output_file.relnor\'");
-        push(@cmds,"$bsub -N -u $user\@$ENV{GENOME_EMAIL_DOMAIN} -J varscan_process_validation_reltum -w \'ended(JOB8)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.reltum --validation-snp-file $output_snp.reltum --variants-file $small_indel_list_nobed --output-file $final_output_file.reltum\'");
+        push(@cmds,"$bsub -N -u $user\@$email_domain -J varscan_process_validation_tumnor -w \'ended(JOB6)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.tumnor --validation-snp-file $output_snp.tumnor --variants-file $small_indel_list_nobed --output-file $final_output_file.tumnor\'");
+        push(@cmds,"$bsub -N -u $user\@$email_domain -J varscan_process_validation_relnor -w \'ended(JOB7)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.relnor --validation-snp-file $output_snp.relnor --variants-file $small_indel_list_nobed --output-file $final_output_file.relnor\'");
+        push(@cmds,"$bsub -N -u $user\@$email_domain -J varscan_process_validation_reltum -w \'ended(JOB8)\' \'gmt varscan process-validation-indels --validation-indel-file $output_indel.reltum --validation-snp-file $output_snp.reltum --variants-file $small_indel_list_nobed --output-file $final_output_file.reltum\'");
     }
     else{
         # This was added so things are testable for now

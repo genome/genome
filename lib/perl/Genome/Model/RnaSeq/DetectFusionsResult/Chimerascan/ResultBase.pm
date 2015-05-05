@@ -457,7 +457,7 @@ sub _get_index {
 
     (my $index_class = $self->_chimerascan_result_class) =~ s/::Result$/::Index/;
     my %params = (
-        test_name => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME} || undef,
+        test_name => Genome::Config::get('aligner_index_test_name') || undef,
         version => $self->version,
         bowtie_version => $bowtie_version,
         reference_build => $self->alignment_result->reference_build,

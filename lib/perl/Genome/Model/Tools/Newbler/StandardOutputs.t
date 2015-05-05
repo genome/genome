@@ -11,7 +11,7 @@ use_ok( 'Genome::Model::Tools::Newbler::StandardOutputs' ) or die;
 
 #test suite
 my $version = 'v5';
-my $test_suite = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Newbler/StandardOutputs-'.$version;
+my $test_suite = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Newbler/StandardOutputs-'.$version;
 ok( -d $test_suite, "Test suite dir exists" );
 
 #temp test dir

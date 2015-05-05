@@ -77,7 +77,7 @@ sub init {
         if ( $entity_name =~ /^instrument data/ ) {
             for my $lims_object ( @lims_objects ) {
                 # FIXME
-                my $file = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file1';
+                my $file = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Microarray/test_genotype_file1';
                 $sync->instrument_data_with_successful_pidfas->{ $lims_object->id } = $file;
             }
         }
@@ -141,7 +141,7 @@ sub _define_lims_instrument_data_microarray {
     my %properties = ( map { $_ => --$i } $lims_class->properties_to_copy );
     $properties{sample_id} = $sample->id;
     $properties{sample_name} = $sample->name;
-    $properties{genotype_file} = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file1';
+    $properties{genotype_file} = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Microarray/test_genotype_file1';
 
     my @lims_objects = ( $lims_class->create(%properties) );
     $properties{id} = --$i;
@@ -158,7 +158,7 @@ sub _define_lims_instrument_data_454 {
         $lims_class->create( map { $_ => --$i } $lims_class->properties_to_copy ),
     );
 
-    my $file = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Microarray/test_genotype_file1';
+    my $file = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Microarray/test_genotype_file1';
     map { $_->sff_file($file) } @lims_objects;
 
     return @lims_objects;

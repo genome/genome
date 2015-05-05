@@ -17,7 +17,7 @@ use_ok('Genome::Model::Tools::Predictor::Interproscan') or die;
 my $temp_output_dir = Genome::Sys->create_temp_directory();
 ok(-d $temp_output_dir, "created temp output dir at $temp_output_dir");
 
-my $test_data_path = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Predictor';
+my $test_data_path = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Predictor';
 my $test_fasta = join('/', $test_data_path, 'medium.fasta');
 ok(-e $test_fasta, "test fasta file exists")
     or diag "test_fasta: $test_fasta";

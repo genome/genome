@@ -14,7 +14,7 @@ class Genome::Memcache {
     has => {
         memcache_server_location => {
             is => 'Text',
-            default_value => $ENV{GENOME_SYS_SERVICES_MEMCACHE},
+            default_value => Genome::Config::get('sys_services_memcache'),
         },
         _memcache_server => {
             is => 'Cache::Memcached',

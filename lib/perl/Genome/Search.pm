@@ -16,13 +16,13 @@ class Genome::Search {
         environment => {
             is => 'Text',
             calculate => q|
-                return 'prod' if exists $ENV{GENOME_DEV_MODE} and $ENV{GENOME_DEV_MODE} == 1;
+                return 'prod' if Genome::Config::get('dev_mode');
                 return 'dev';
             |,
         },
         solr_server => {
             is => 'Text',
-            default_value => $ENV{GENOME_SYS_SERVICES_SOLR},
+            default_value => Genome::Config::get('sys_services_solr'),
             doc => 'Location of the Solr server',
         },
         _solr_server => {

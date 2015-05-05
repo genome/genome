@@ -17,7 +17,7 @@ ok(!Genome::Model::Tools::Sx::Limit::ByBases->execute(bases => 'all'), 'failed  
 ok(!Genome::Model::Tools::Sx::Limit::ByBases->execute(bases => 0), 'failed w/ bases => 0');
 
 # Files
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/LimitByBases/v2';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/LimitByBases/v2';
 my $in_fastq = $dir.'/in.fastq';
 ok(-s $in_fastq, 'in fastq');
 my $example_fastq = $dir.'/out.fastq';

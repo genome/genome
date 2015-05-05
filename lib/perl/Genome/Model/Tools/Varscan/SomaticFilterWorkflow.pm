@@ -135,7 +135,7 @@ sub validate_workflow {
 sub set_lsf_queue {
     my $self = shift;
     my $w = shift;
-    my $lsf_queue = $ENV{'GENOME_LSF_QUEUE_BUILD_WORKER_ALT'};
+    my $lsf_queue = Genome::Config::get('lsf_queue_build_worker_alt');
     $w->operation_type->lsf_queue($lsf_queue);
 }
 

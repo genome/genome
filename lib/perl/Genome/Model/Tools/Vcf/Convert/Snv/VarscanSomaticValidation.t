@@ -16,7 +16,7 @@ use above 'Genome';
 
 use_ok('Genome::Model::Tools::Vcf::Convert::Snv::VarscanSomaticValidation');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Convert-Snv-VarscanSomaticValidation";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Vcf-Convert-Snv-VarscanSomaticValidation";
 #this is just a copy of the varscan somatic tests, with the header changed to include validation
 #since everything important is inherited from that module
 

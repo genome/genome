@@ -56,15 +56,7 @@ sub get_workflow_inputs {
 sub execute {
     my $self = shift;
 
-    $self->process->write_environment_file;
-
-    $self->status_message("Reading in workflow from file: %s",
-        $self->process->workflow_file);
-    my $dag = Genome::WorkflowBuilder::DAG->from_xml_filename(
-        $self->process->workflow_file);
-
-    $dag->recursively_set_log_dir($self->process->log_directory);
-    $dag->name($self->process->workflow_name);
+    my $dag = $self->get_dag_for_execution;
 
     $self->update_status('Running');
     my $inputs = $self->get_workflow_inputs;
@@ -86,6 +78,35 @@ sub execute {
         $self->status_message("Workflow completed with outputs: %s", pp($outputs));
         return $outputs;
     }
+}
+
+sub get_dag_for_execution {
+    my $self = shift;
+
+    $self->process->write_environment_file;
+
+    $self->status_message("Reading in workflow from file: %s",
+        $self->process->workflow_file);
+    my $dag = Genome::WorkflowBuilder::DAG->from_xml_filename(
+        $self->process->workflow_file);
+
+    $dag->recursively_set_log_dir($self->process->log_directory);
+    $dag->name($self->process->workflow_name);
+
+    return $dag;
+}
+
+sub submit {
+    my $self = shift;
+
+    my $dag = $self->get_dag_for_execution;
+
+    $self->update_status('Scheduled');
+
+    my $inputs = $self->get_workflow_inputs;
+    $self->status_message("Submitting workflow with inputs: %s", pp($inputs));
+
+    return $dag->submit(inputs => $inputs, process_id => $self->process->id);
 }
 
 sub update_status {
@@ -127,7 +148,7 @@ sub _bsub_in_pend_state {
         log_file => $self->workflow_process_out_log,
         hold_job => 1,
         project => $self->process->workflow_name,
-        queue => $ENV{GENOME_LSF_QUEUE_BUILD_WORKFLOW},
+        queue => Genome::Config::get('lsf_queue_build_workflow'),
         send_job_report => 1,
         never_rerunnable => 1,
     );

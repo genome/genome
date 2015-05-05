@@ -99,7 +99,7 @@ sub archive {
             # '&&' is misinterpreted by bash (rather than being "bsub '1 && 2'
             # it is looked at as 'bsub 1' && '2')
             ($job_id, $status) = Genome::Sys->bsub_and_wait(
-                queue => $ENV{GENOME_ARCHIVE_LSF_QUEUE},
+                queue => Genome::Config::get('archive_lsf_queue'),
                 job_group => '/archive',
                 log_file => "/tmp/$id",
                 cmd => "$cmd",

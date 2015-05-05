@@ -71,7 +71,7 @@ class Genome::Model::PhenotypeCorrelation::Command::BurdenTestSummary {
         annotation_build_id => {
             is => "Text",
             doc => "The id of the ImportedAnnotation build to use",
-            default_value => $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD},
+            default_value => Genome::Config::get('db_ensembl_default_imported_annotation_build'),
         },
     ],
     has_transient_optional => [

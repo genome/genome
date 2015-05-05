@@ -15,7 +15,7 @@ use File::Basename;
 use File::Copy qw();
 use File::Path;
 use File::Spec;
-use File::stat qw(stat);
+use File::stat qw(stat lstat);
 use IO::File;
 use JSON;
 use List::MoreUtils "each_array";
@@ -282,11 +282,9 @@ sub _uniq {
 
 sub dbpath {
     my ($class, $name, $version) = @_;
-    my $envname = $class->dbname_to_envname($name);
-    my $dbpath;
-    if ($envname and $ENV{$envname}) {
-        $dbpath = $ENV{$envname};
-        print STDERR "Using '$dbpath' from $envname.\n";
+    my $dbpath = $class->lookup_dbpath($name);
+    if ($dbpath) {
+        print STDERR "Using '$dbpath' from config.\n";
     } else {
         unless ($version) {
             die "Genome::Sys dbpath must be called with a database name and a version. " .
@@ -297,21 +295,21 @@ sub dbpath {
     return $dbpath;
 }
 
-sub dbname_to_envname {
+sub lookup_dbpath {
     my ($class, $name) = @_;
-    my %envmap = (
-        'genome-music-testdata' => 'GENOME_DB_MUSIC_TESTDATA',
-        'cosmic' => 'GENOME_DB_COSMIC',
-        'omim' => 'GENOME_DB_OMIM',
-        'pfam' => 'GENOME_DB_PFAM',
+    my %config_key = (
+        'genome-music-testdata' => 'db_music_testdata',
+        'cosmic' => 'db_cosmic',
+        'omim' => 'db_omim',
+        'pfam' => 'db_pfam',
     );
-    return $envmap{$name};
+    return Genome::Config::get($config_key{$name});
 }
 
 sub _find_in_genome_db_paths {
     my ($class, $name, $version) = @_;
 
-    my $base_dirs = $ENV{GENOME_DB};
+    my $base_dirs = Genome::Config::get('db');
     my $subdir = "$name/$version";
 
     my @base_dirs = split(':',$base_dirs);
@@ -379,7 +377,7 @@ sub jar_version_path_map {
     my ($class, $pkg_name) = @_;
 
     my %versions;
-    my @dirs = split(':', $ENV{GENOME_JAR_PATH});
+    my @dirs = split(':', Genome::Config::get('jar_path'));
 
     for my $dir (@dirs) {
         my $prefix = "$dir/$pkg_name-";
@@ -408,7 +406,7 @@ sub sw_version_path_map {
     # packaged software should have a versioned executable like /usr/bin/myapp1.2.3 or /usr/bin/mypackage-myapp1.2.3 in the bin.
     my %versions1;
     my @dirs1 = (split(':',$ENV{PATH}), "~/gsc-pkg-bio/");
-    my @sw_ignore = split(':',$ENV{GENOME_SW_IGNORE} || '');
+    my @sw_ignore = split(':', Genome::Config::get('sw_ignore') || '');
     for my $dir1 (@dirs1) {
         if (grep { index($dir1,$_) == 0 } @sw_ignore) {
             # skip directories starting with something in @sw_ignore
@@ -432,9 +430,6 @@ sub sw_version_path_map {
         }
     }
 
-    # find software installed under $GENOME_SW
-    # The pattern for these has varied over time.  They will be like will be like:
-    #   $GENOME_SW/$pkg_name/{$pkg_name-,,*}$version/{.,bin,scripts}/{$pkg_name,}{-,}$app_name{-,}{$version,}
     sub _common_prefix_length {
         my ($first,@rest) = @_;
         my $len;
@@ -449,7 +444,7 @@ sub sw_version_path_map {
     }
 
     my %pkgdirs;
-    my @dirs2 = split(':',$ENV{GENOME_SW});  #most of the system expects this to be one value not-colon separated currently
+    my @dirs2 = split(':',Genome::Config::get('sw'));  #most of the system expects this to be one value not-colon separated currently
     for my $dir2 (@dirs2) {
         # one subdir will exist per application
         my @app_subdirs = glob("$dir2/$pkg_name");
@@ -580,7 +575,7 @@ sub base_temp_directory {
 
     # For debugging purposes, allow cleanup to be disabled
     my $cleanup = 1;
-    if($ENV{'GENOME_SYS_NO_CLEANUP'}) {
+    if (Genome::Config::get('sys_no_cleanup')) {
         $cleanup = 0;
     }
     my $dir = File::Temp::tempdir($template, DIR=>$tmp_location, CLEANUP => $cleanup);
@@ -835,7 +830,7 @@ sub create_directory {
 
     # have to set umask, make_path's mode/umask option is not sufficient
     my $umask = umask;
-    umask oct($ENV{GENOME_SYS_UMASK});
+    umask oct(Genome::Config::get('sys_umask'));
     make_path($directory); # not from File::Path
     umask $umask;
 
@@ -847,7 +842,7 @@ sub create_directory {
 sub make_path {
     my ($path) = validate_pos(@_, {type => SCALAR});
 
-    my $gid = gidgrnam($ENV{GENOME_SYS_GROUP});
+    my $gid = gidgrnam(Genome::Config::get('sys_group'));
 
     my @dirs = File::Spec->splitdir($path);
     for (my $i = 0; $i < @dirs; $i++) {
@@ -1460,7 +1455,8 @@ sub shellcmd {
     # disconnect the db handle in case this is about to take awhile
     $self->disconnect_default_handles unless $keep_dbh_connection_open;
 
-    if ($ENV{GENOME_SYS_PAUSE_SHELLCMD} and $cmd =~ $ENV{GENOME_SYS_PAUSE_SHELLCMD}) {
+    my $sys_pause_shellcmd = Genome::Config::get('sys_pause_shellcmd');
+    if ($sys_pause_shellcmd and $cmd =~ $sys_pause_shellcmd) {
         my $file = '/tmp/GENOME_SYS_PAUSE.' . $$;
         $self->warning_message("RUN MANUALLY (and remove $file afterward): $cmd");
         Genome::Sys->write_file($file,$cmd . "\n");
@@ -1625,7 +1621,7 @@ sub shellcmd {
         Genome::Sys->message_callback('status',$old_status_cb);
     }
 
-    if ($ENV{GENOME_SYS_LOG_DETAIL}) {
+    if (Genome::Config::get('sys_log_detail')) {
         my $msg = encode_json({%orig_params, t1 => $t1, t2 => $t2, elapsed => $elapsed });
         Genome::Sys->debug_message(qq|$msg|)
     }
@@ -1749,9 +1745,20 @@ sub _unpreserved_permissions {
     return 1;
 }
 
+sub _same_device {
+    my @paths = @_;
+    return (lstat($paths[0])->dev == lstat($paths[1])->dev);
+}
+
 sub rename {
     my ($class, $oldname, $newname) = @_;
+
     _unpreserved_permissions($class, $oldname, $newname, sub {
+        my $newparentdir = (File::Spec->splitpath($newname))[1];
+        if (!_same_device($oldname, $newparentdir)) {
+            confess 'cannot rename across devices, use move instead';
+        }
+
         unless ( CORE::rename $oldname, $newname ) {
             die qq(CORE::rename should never fail or we didn't do a good enough job mimicking it.  Error was: $!);
         }
@@ -1849,8 +1856,8 @@ The 3-parameter variation is only for packages which have multiple executables.
 This is a wrapper for the OS-specific strategy for managing multiple versions of software packages,
 (i.e. /etc/alternatives for Debian/Ubuntu)
 
-The GENOME_SW environment variable contains a colon-separated lists of paths which this falls back to.
-The default value is /var/lib/genome/sw/.
+The 'sw' configuration variable contains a colon-separated lists of paths which
+this falls back to.  The default value is /var/lib/genome/sw/.
 
 =head3 ex:
 
@@ -1884,8 +1891,8 @@ Return a map of version numbers to executable paths.
 Return the path to the preprocessed copy of the specified database.
 (This is in lieu of a consistent API for the database in question.)
 
-The GENOME_DB environment variable contains a colon-separated lists of paths which this falls back to.
-The default value is /var/lib/genome/db/.
+The 'db' configuration variable contains a colon-separated lists of paths which
+this falls back to.  The default value is /var/lib/genome/db/.
 
 =head3 ex:
 

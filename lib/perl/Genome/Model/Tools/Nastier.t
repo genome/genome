@@ -17,7 +17,7 @@ use_ok( 'Genome::Model::Tools::Nastier' );
 
 #test suite dir
 my $version = 1;
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Nastier/v'.$version;
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Nastier/v'.$version;
 ok( -d $data_dir, 'data dir exists' );
 
 #in/out files

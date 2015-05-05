@@ -435,7 +435,7 @@ sub _map_workflow_inputs_for_normal_assembly {
 sub _resolve_workflow_for_build {
     my ($self, $build, $lsf_queue, $lsf_project) = @_;
 
-    $lsf_queue ||= $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+    $lsf_queue ||= Genome::Config::get('lsf_queue_build_worker_alt');
     $lsf_project ||= 'build' . $build->id;
 
     if ($self->is_imported())  {

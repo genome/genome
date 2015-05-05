@@ -24,8 +24,8 @@ BEGIN {
 #  $fastq = chr(ord($solq) - 31);
 
 my $tmp_dir = File::Temp::tempdir('Fastq-SolToPhred-XXXXX', CLEANUP => 1, TMPDIR => 1);
-my $fastq_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/SolToPhred/test.fq';
-my $expected_phred_fastq_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq/SolToPhred/test.fq.utf8.phred';
+my $fastq_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fastq/SolToPhred/test.fq';
+my $expected_phred_fastq_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fastq/SolToPhred/test.fq.utf8.phred';
 
 my $sol2phred = Genome::Model::Tools::Fastq::Sol2phred->create(
                                                                 fastq_file => $fastq_file,

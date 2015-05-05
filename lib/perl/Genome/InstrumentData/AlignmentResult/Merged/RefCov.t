@@ -24,7 +24,7 @@ if ($] < 5.010) {
 
 use_ok('Genome::InstrumentData::AlignmentResult::Merged::RefCov');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-AlignmentResult-Merged-CoverageStats';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-AlignmentResult-Merged-CoverageStats';
 
 my ($merged_result, $feature_list) = &setup_data();
 

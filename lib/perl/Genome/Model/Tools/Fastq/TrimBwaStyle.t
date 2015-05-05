@@ -11,7 +11,7 @@ use above 'Genome';
 use_ok('Genome::Model::Tools::Fastq::TrimBwaStyle') or die;
 
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
-my $base_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq-TrimBwaStyle';
+my $base_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fastq-TrimBwaStyle';
 my $fastq_file = "$base_dir/test.fastq";
 
 my $trim = Genome::Model::Tools::Fastq::TrimBwaStyle->create(

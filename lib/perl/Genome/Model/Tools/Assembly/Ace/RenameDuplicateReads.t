@@ -12,7 +12,7 @@ use_ok( 'Genome::Model::Tools::Assembly::Ace::RenameDuplicateReads' ) or die;
 
 #check test suite dir
 my $version = 'v1';
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Assembly/RenameDuplicateReads-'.$version;
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Assembly/RenameDuplicateReads-'.$version;
 ok ( -d $test_dir, 'test suite dir' );
 
 #make temp test dir

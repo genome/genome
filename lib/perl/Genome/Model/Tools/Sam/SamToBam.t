@@ -21,7 +21,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::Sam::SamToBam');
 }
 
-my $root_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-SamToBam';
+my $root_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam-SamToBam';
 
 my $tmp_dir  = File::Temp::tempdir(
     'SamToBam-XXXXX',

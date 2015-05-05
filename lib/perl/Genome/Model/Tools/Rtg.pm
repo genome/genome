@@ -38,14 +38,14 @@ EOS
 
 my %RTG_VERSIONS = (
     'v2.0.1-build-28762' => '/gsc/bin',
-    'EAP-2010-08-03-30243' => $ENV{GENOME_SW} . '/rtg/rtg-EAP-2010-08-03-30243',
-    'EAP-2010-08-13-30504' => $ENV{GENOME_SW} . '/rtg/rtg-EAP-2010-08-13-30504',
-    'EAP-2010-08-13-30504' => $ENV{GENOME_SW} . '/rtg/rtg-EAP-2010-08-13-30504',
-    'EAP-2010-09-13-WashU-31357' => $ENV{GENOME_SW} . '/rtg/rtg-EAP2010-09-13-WashU-31357',
+    'EAP-2010-08-03-30243' => Genome::Config::get('sw') . '/rtg/rtg-EAP-2010-08-03-30243',
+    'EAP-2010-08-13-30504' => Genome::Config::get('sw') . '/rtg/rtg-EAP-2010-08-13-30504',
+    'EAP-2010-08-13-30504' => Genome::Config::get('sw') . '/rtg/rtg-EAP-2010-08-13-30504',
+    'EAP-2010-09-13-WashU-31357' => Genome::Config::get('sw') . '/rtg/rtg-EAP2010-09-13-WashU-31357',
     'rtg'   => 'rtg',
-    '2.3.1' => $ENV{GENOME_SW} . '/rtg/rtg-2.3.1',
-    '2.3.2' => $ENV{GENOME_SW} . '/rtg/rtg-2.3.2',
-    '2.6' => $ENV{GENOME_SW} . '/rtg/rtg-2.6',
+    '2.3.1' => Genome::Config::get('sw') . '/rtg/rtg-2.3.1',
+    '2.3.2' => Genome::Config::get('sw') . '/rtg/rtg-2.3.2',
+    '2.6' => Genome::Config::get('sw') . '/rtg/rtg-2.6',
 );
 
 sub rtg_path {

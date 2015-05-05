@@ -383,7 +383,7 @@ sub api {
     my $self = shift;
     return Genome::Db::Ensembl::Api->get_or_create(
         version => $self->ensembl_version,
-        test_name => $ENV{GENOME_ALIGNER_INDEX_TEST_NAME},
+        test_name => Genome::Config::get('aligner_index_test_name'),
         users => $self->_result_users,
     );
 }
@@ -567,10 +567,10 @@ sub cache_args {
 }
 
 sub db_connect_args {
-    my $host_param = defined $ENV{GENOME_DB_ENSEMBL_HOST} ? "--host ".$ENV{GENOME_DB_ENSEMBL_HOST} : "";
-    my $user_param = defined $ENV{GENOME_DB_ENSEMBL_USER} ? "--user ".$ENV{GENOME_DB_ENSEMBL_USER} : "";
-    my $password_param = defined $ENV{GENOME_DB_ENSEMBL_PASS} ? "--password ".$ENV{GENOME_DB_ENSEMBL_PASS} : "";
-    my $port_param = defined $ENV{GENOME_DB_ENSEMBL_PORT} ? "--port ".$ENV{GENOME_DB_ENSEMBL_PORT} : "";
+    my $host_param = defined Genome::Config::get('db_ensembl_host') ? "--host ".Genome::Config::get('db_ensembl_host') : "";
+    my $user_param = defined Genome::Config::get('db_ensembl_user') ? "--user ".Genome::Config::get('db_ensembl_user') : "";
+    my $password_param = defined Genome::Config::get('db_ensembl_pass') ? "--password ".Genome::Config::get('db_ensembl_pass') : "";
+    my $port_param = defined Genome::Config::get('db_ensembl_port') ? "--port ".Genome::Config::get('db_ensembl_port') : "";
     return join(" ", $host_param, $user_param, $password_param, $port_param);
 }
 
@@ -736,7 +736,7 @@ sub cache {
     my %cache_result_params;
     $cache_result_params{version} = $self->ensembl_version;
     $cache_result_params{species} = $self->_species_lookup($self->species);
-    $cache_result_params{test_name} = $ENV{GENOME_ALIGNER_INDEX_TEST_NAME};
+    $cache_result_params{test_name} = Genome::Config::get('aligner_index_test_name');
     if ($self->gtf_cache) {
         $cache_result_params{reference_build_id} = $self->reference_build_id;
         if (defined $self->gtf_file) {

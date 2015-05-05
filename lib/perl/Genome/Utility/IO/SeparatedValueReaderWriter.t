@@ -13,7 +13,7 @@ use Test::Exception;
 use_ok('Genome::Utility::IO::SeparatedValueReader') or die;
 use_ok('Genome::Utility::IO::SeparatedValueWriter') or die;
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-IO';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Utility-IO';
 my $albums_csv = $test_dir.'/albums.csv';
 my $albums_no_headers = $test_dir.'/albums.no_headers.csv';
 my $albums_regexp = $test_dir.'/albums.test_regexp.csv';

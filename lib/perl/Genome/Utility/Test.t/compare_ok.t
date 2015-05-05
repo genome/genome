@@ -5,6 +5,7 @@ use above "Genome";
 use Test::Builder::Tester;
 use Genome::Utility::Test qw(capture_ok);
 use Test::More;
+use Test::Fatal qw(exception);
 
 BEGIN {
     use_ok 'Genome::Utility::Test', qw(compare_ok);
@@ -18,17 +19,15 @@ my $_compare_ok_parse_args = \&Genome::Utility::Test::_compare_ok_parse_args;
 
 my @args_A = ('file_1', 'file_2', 'args_A');
 subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_A) => sub {
-    local $@ = '';
-    my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_A) };
-    ok(!$@, 'did not die');
+    plan tests => 1;
+    my ($f1, $f2, %o) = $_compare_ok_parse_args->(@args_A);
     is($o{name}, $args_A[2], 'name matched expected value');
 };
 
 my @args_B = ('file_1', 'file_2', 'args_B', filters => [qr(/foo/)]);
 subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_B) => sub {
-    local $@ = '';
-    my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_B) };
-    ok(!$@, 'did not die');
+    plan tests => 3;
+    my ($f1, $f2, %o) = $_compare_ok_parse_args->(@args_B);
     is($o{name}, $args_B[2], 'name matched expected value');
     is(scalar(@{$o{xform}}), 1, 'Created one transform');
 
@@ -38,9 +37,8 @@ subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_B) => sub {
 
 my @args_C = ('file_1', 'file_2', filters => [qr(/foo/)], name => 'args_C');
 subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_C) => sub {
-    local $@ = '';
-    my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_C) };
-    ok(!$@, 'did not die');
+    plan tests => 3;
+    my ($f1, $f2, %o) = $_compare_ok_parse_args->(@args_C);
     is($o{name}, $args_C[5], 'name matched expected value');
     is(scalar(@{$o{xform}}), 1, 'Created one transform');
 
@@ -50,18 +48,17 @@ subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_C) => sub {
 
 my @args_D = ('file_1', 'file_2', 'args_D', name => 'args_D');
 subtest '_compare_ok_parse_args did fail to parse: ' . join(', ', @args_D) => sub {
-    local $@ = '';
-    my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_D) };
-    like($@,
+    plan tests => 1;
+    my $exception = exception { $_compare_ok_parse_args->(@args_D) };
+    like($exception,
         qr(^duplicate name argument not expected),
         'Got exception specifying the test name twice');
 };
 
 my @args_E = ('file_1', 'file_2', 'args_E', filters => qr(/foo/));
 subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_E) => sub {
-    local $@ = '';
-    my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_E) };
-    ok(!$@, 'did not die');
+    plan tests => 3;
+    my ($f1, $f2, %o) = $_compare_ok_parse_args->(@args_E);
     is($o{name}, $args_E[2], 'name matched expected value');
     is(scalar(@{$o{xform}}), 1, 'Created one transform');
 
@@ -71,9 +68,8 @@ subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_E) => sub {
 
 my @args_F = ('file1', 'file2', 'args_F', replace => [[qr(/foo/) => 'bar'], ['abc' => 'xyz']]);
 subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_F) => sub {
-    local $@ = '';
-    my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_F) };
-    ok(!$@, 'did not die');
+    plan tests => 5;
+    my ($f1, $f2, %o) = $_compare_ok_parse_args->(@args_F);
     is($o{name}, $args_F[2], 'name matched expected value');
     is(scalar(@{$o{xform}}), 2, 'Created two transforms');
 
@@ -86,9 +82,8 @@ subtest '_compare_ok_parse_args parsed: ' . join(', ', @args_F) => sub {
 };
 
 subtest '_compare_ok_parse_args parsed with multiple occurrences: ' . join(', ', @args_F) => sub {
-    local $@ = '';
-    my ($f1, $f2, %o) = eval { $_compare_ok_parse_args->(@args_F) };
-    ok(!$@, 'did not die');
+    plan tests => 3;
+    my ($f1, $f2, %o) = $_compare_ok_parse_args->(@args_F);
     is($o{name}, $args_F[2], 'name matched expected value');
     is(scalar(@{$o{xform}}), 2, 'Created two transforms');
 
@@ -97,6 +92,8 @@ subtest '_compare_ok_parse_args parsed with multiple occurrences: ' . join(', ',
 };
 
 subtest 'compare_ok matches diff command' => sub {
+    plan tests => 8;
+
     my $expected_fh = File::Temp->new(TMPDIR => 1);
     my $expected_fn = $expected_fh->filename;
     $expected_fh->print("a\n");
@@ -132,6 +129,8 @@ subtest 'compare_ok matches diff command' => sub {
 };
 
 subtest 'compare_ok replace' => sub {
+    plan tests => 8;
+
     my $expected_fh = File::Temp->new(TMPDIR => 1);
     my $expected_fn = $expected_fh->filename;
     $expected_fh->print("a\n");

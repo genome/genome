@@ -16,7 +16,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Sx::Trim::Flexbar::V2x21') or die;
 
-my $datadir = $ENV{GENOME_TEST_INPUTS}.'/Genome-Model-Tools-Sx/TrimFlexbar';
+my $datadir = Genome::Config::get('test_inputs').'/Genome-Model-Tools-Sx/TrimFlexbar';
 my $input1 = "$datadir/input_1.fastq";
 ok(-s $input1, 'fastq input 1') or die;
 my $input2 = "$datadir/input_2.fastq";
@@ -45,5 +45,5 @@ my @output = glob("$temp_dir/*fastq");
 is(@output, 1, "got 1 fastq files");
 is(Genome::Sys->md5sum($output[0]), '0bc803457a4343eaa555b99916d226c3', "Output fastq matches");
 
-#print "gvimdiff $output[0] $GENOME_TEST_INPUTS/Genome-Model-Tools-Sx/TrimFlexbar/revcomp_adapter_removed.far2.17.fastq\n"; <STDIN>;
+#print "gvimdiff $output[0] $datadir/revcomp_adapter_removed.far2.17.fastq\n"; <STDIN>;
 done_testing();

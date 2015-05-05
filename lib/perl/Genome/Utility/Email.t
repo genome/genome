@@ -11,7 +11,7 @@ use Genome::Utility::Email;
 
 {
     my $addr = Genome::Utility::Email::construct_address();
-    my $expected = sprintf('%s@%s', $ENV{USER}, $ENV{GENOME_EMAIL_DOMAIN});
+    my $expected = sprintf('%s@%s', $ENV{USER}, Genome::Config::get('email_domain'));
     is($addr, $expected, 'construct_address with no params');
 }
 
@@ -19,6 +19,6 @@ use Genome::Utility::Email;
     my $name = 'bob';
     $name++ while ($name eq $ENV{USER});
     my $addr = Genome::Utility::Email::construct_address($name);
-    my $expected = sprintf('%s@%s', $name, $ENV{GENOME_EMAIL_DOMAIN});
+    my $expected = sprintf('%s@%s', $name, Genome::Config::get('email_domain'));
     is($addr, $expected, 'construct_address given a name');
 }

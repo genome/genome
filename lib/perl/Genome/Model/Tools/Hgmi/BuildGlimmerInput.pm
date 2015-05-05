@@ -52,7 +52,7 @@ sub execute {
     my $self = shift;
 
     ##FIXME: This should not be hardcoded, the necessary binaries should be deployed to /gsc.
-    my $glimmer_bin_dir = $ENV{GENOME_SW} . '/glimmer/glimmer3.02/bin';
+    my $glimmer_bin_dir = Genome::Config::get('sw') . '/glimmer/glimmer3.02/bin';
 
     ##FIXME: This should not be hardcoded either, should be in a superclass or it should be a
     ##       parameter.

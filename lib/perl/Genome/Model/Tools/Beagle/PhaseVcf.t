@@ -9,7 +9,7 @@ use Test::More tests => 5;
 
 use_ok('Genome::Model::Tools::Beagle::PhaseVcf');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Beagle-PhaseVcf";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Beagle-PhaseVcf";
 my $input_dir = "$test_dir/input.v1";
 my $input_vcf = "$input_dir/input.vcf.gz";
 my $input_ped = "$input_dir/input.ped";

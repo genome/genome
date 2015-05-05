@@ -8,7 +8,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::ViromeEvent::Assignment::Report');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreening/Titanium17/Titanium17_undecodable';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ViromeScreening/Titanium17/Titanium17_undecodable';
 ok( -d $data_dir, "Test suite data dir exists" );
 
 my $c = Genome::Model::Tools::ViromeEvent::Assignment::Report->create(

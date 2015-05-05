@@ -136,7 +136,7 @@ sub test_debroadify_bam {
 sub setup_test_env {
     my %test_env;
 
-    $test_env{input_dir} = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam-Debroadify';
+    $test_env{input_dir} = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam-Debroadify';
     $test_env{output_dir} = File::Temp->newdir();
 
     $test_env{input_sam_file} = File::Temp->new(

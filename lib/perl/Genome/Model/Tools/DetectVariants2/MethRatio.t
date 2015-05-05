@@ -28,7 +28,7 @@ my $refbuild_id = 106942997;
 my $ref_seq_build = Genome::Model::Build::ImportedReferenceSequence->get($refbuild_id);
 ok($ref_seq_build, 'human37 reference sequence build') or die;
 
-my $testbam =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-DetectVariants2-MethRatio/test.bam";
+my $testbam =  Genome::Config::get('test_inputs') . "/Genome-Model-Tools-DetectVariants2-MethRatio/test.bam";
 
 my $tmpbase = File::Temp::tempdir('MethRatioXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $tmpdir = "$tmpbase/output";

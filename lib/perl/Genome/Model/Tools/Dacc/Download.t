@@ -10,7 +10,7 @@ use Test::More;
 use_ok('Genome::Model::Tools::Dacc::Download') or die;
 
 # setup
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Dacc';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Dacc';
 my (%files, $expected_cmd);
 my $is_running_in_lsf = 0;
 no warnings qw/ once redefine /;
@@ -53,7 +53,7 @@ ok(!$dl->execute, 'execute: failed as expected');
 
 diag('Success: launch to LSF');
 $files{b} = 2;
-$expected_cmd = "bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -u " . Genome::Config->user_email . " -R 'rusage[internet_download_mbps=100]' gmt dacc download /DACC_DIR/ $dir a b";
+$expected_cmd = "bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -u " . Genome::Config->user_email . " -R 'rusage[internet_download_mbps=100]' gmt dacc download /DACC_DIR/ $dir a b";
 $dl = Genome::Model::Tools::Dacc::Download->create(
     dacc_directory => 'DACC_DIR',
     destination => $dir,

@@ -15,7 +15,7 @@ plan tests => 4;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::MakeAdapterReport');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-MakeAdapterReport';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-MakeAdapterReport';
 
 my $hdf5_fofn = $data_directory .'/input.fofn';
 my $expected_report_xml_file = $data_directory .'/results/filterReports_adapters.xml';

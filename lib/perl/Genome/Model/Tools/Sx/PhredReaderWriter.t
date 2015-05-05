@@ -9,7 +9,7 @@ require File::Temp;
 require File::Compare;
 use Test::More;
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx';
 use_ok('Genome::Model::Tools::Sx::PhredReader') or die;
 use_ok('Genome::Model::Tools::Sx::PhredWriter') or die;
 

@@ -53,7 +53,7 @@ class Genome::Model::Tools::DetectVariants2::PlotCnv{
     ],
     has_param => [
          lsf_queue => {
-             default_value => $ENV{GENOME_LSF_QUEUE_DV2_WORKFLOW},
+             default_value => Genome::Config::get('lsf_queue_dv2_workflow'),
          },
      ],
 };

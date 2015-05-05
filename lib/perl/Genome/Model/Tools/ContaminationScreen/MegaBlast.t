@@ -10,10 +10,10 @@ use Test::More tests => 2;
 BEGIN {use_ok('Genome::Model::Tools::ContaminationScreen::MegaBlast');}
 
 my %params;
-$params{input_file} = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ContaminationScreen-MegaBlast/test_nt.fna';
+$params{input_file} = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ContaminationScreen-MegaBlast/test_nt.fna';
 $params{output_file} = Genome::Sys->create_temp_file_path('test_output.fna');
 $params{database} = '/gscmnt/sata837/assembly/nt_db/genbank_nt_20091004'; 
-$params{header} = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ContaminationScreen-MegaBlast/nt.index.header';
+$params{header} = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ContaminationScreen-MegaBlast/nt.index.header';
 
 my $hcs_MegaBlast = Genome::Model::Tools::ContaminationScreen::MegaBlast->create(%params);
 

@@ -7,7 +7,7 @@ use above 'Genome';
 use Test::More;
 
 use_ok('Genome::Model::Tools::ViromeEvent::CDHIT::CheckResult');
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-ViromeScreening/Titanium17/Titanium17_undecodable';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-ViromeScreening/Titanium17/Titanium17_undecodable';
 
 #check cd-hit directoryies
 ok( -x '/gscmnt/sata835/info/medseq/virome/scripts_used_by_virome/cd-hit-64/cd-hit-est', "64 bit cd-hit exists and is executable" );

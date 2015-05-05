@@ -26,7 +26,7 @@ use Genome::Utility::Test qw(run_ok);
 require_ok('Genome::Sys');
 
 # BZIP
-my $input_file = $ENV{GENOME_TEST_INPUTS} . "/Genome-Utility-Filesystem/pileup.cns";
+my $input_file = Genome::Config::get('test_inputs') . "/Genome-Utility-Filesystem/pileup.cns";
 my $source_file = Genome::Sys->create_temp_file_path();
 ok(Genome::Sys->copy_file($input_file, $source_file),"Copied test file to temp."); 
 
@@ -41,7 +41,7 @@ ok (-s $bzip_file, "Bzip file exists.");
 
 # FILES
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
-my $base_test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-Filesystem';
+my $base_test_dir = Genome::Config::get('test_inputs') . '/Genome-Utility-Filesystem';
 
 # Read file
 my $existing_file = sprintf('%s/existing_file.txt', $base_test_dir);
@@ -334,7 +334,7 @@ AAAAAPBnfAKKRRlNACgAAA==
 END
 my $decoded = decode_base64($encoded);
 my $tmpdir2 = Genome::Sys->create_temp_directory;
-my $tarpath = $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-Filesystem/hobbes.tgz';
+my $tarpath = Genome::Config::get('test_inputs') . '/Genome-Utility-Filesystem/hobbes.tgz';
 my $archive = Genome::Sys->extract_archive(from => $tarpath,
     to => $tmpdir2);
 ok($archive, 'Extracted gzipped tarball.');

@@ -15,7 +15,7 @@ my $reference_sequence_build = Genome::Model::Build::ReferenceSequence->get_by_n
 
 my $version = 137;
 my $import_dbsnp_build = Genome::Model::ImportedVariationList::Command::ImportDbsnpBuild->create(
-    vcf_file_url => $ENV{GENOME_TEST_URL}.'/Genome-Model-Tools-Dbsnp-Import-Vcf/v2/VCF/00-All.vcf.gz',
+    vcf_file_url => Genome::Config::get('test_url').'/Genome-Model-Tools-Dbsnp-Import-Vcf/v2/VCF/00-All.vcf.gz',
     version => $version,
     reference_sequence_build => $reference_sequence_build ,
 );

@@ -8,6 +8,7 @@ sub {
     my ( $content ) = @_;
 
     my $string = join( "\n", @$content );
+    my $email = Genome::Config::get('email_pipeline');
     my $doc = <<"    HTML";
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
     <!--template: status/root.xsl:match "/"-->
@@ -41,7 +42,7 @@ sub {
           <div class="rounded" style="background: #FFF; margin-bottom: 10px;">
             <div class="padding10">
               <p><strong>Error:</strong> $string<br>
-                Please email $ENV{GENOME_EMAIL_PIPELINE}</p>
+                Please email $email</p>
             </div>
           </div>
         </div>

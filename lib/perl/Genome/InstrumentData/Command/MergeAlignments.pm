@@ -114,7 +114,7 @@ sub params_for_merged_alignment {
         duplication_handler_version => $self->duplication_handler_version,
         samtools_version => $self->samtools_version || undef,
         bedtools_version => $self->bedtools_version || undef,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
 
         users => $self->result_users,
     );

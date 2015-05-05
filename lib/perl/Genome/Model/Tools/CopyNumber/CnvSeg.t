@@ -23,7 +23,7 @@ if ($archos !~ /64/) {
 
 use_ok('Genome::Model::Tools::CopyNumber::CnvSeg');
 
-my $test_data =  $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-CopyNumber-CnvSeg";
+my $test_data =  Genome::Config::get('test_inputs') . "/Genome-Model-Tools-CopyNumber-CnvSeg";
 
 my $tmpbase = File::Temp::tempdir('CnvSegXXXXX', CLEANUP => 1, TMPDIR => 1);
 my $output_file = "$tmpbase/cnv-seg-output.cnvseg";

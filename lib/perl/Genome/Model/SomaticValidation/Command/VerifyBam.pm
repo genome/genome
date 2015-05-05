@@ -94,7 +94,7 @@ sub params_for_result {
         precise => 1,
         version => $self->build->model->verify_bam_id_version,
         result_version => 2,
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME},
+        test_name => Genome::Config::get('software_result_test_name'),
         users => $user_data,
     );
     if (defined $self->build->target_region_set) {

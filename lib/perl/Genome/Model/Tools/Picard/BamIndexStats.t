@@ -12,7 +12,7 @@ use File::Spec qw();
 my $pkg = 'Genome::Model::Tools::Picard::BamIndexStats';
 use_ok($pkg);
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Picard-BamIndexStats';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Picard-BamIndexStats';
 
 my $input_file = File::Spec->catfile($data_dir, "coordsort.bam");
 my $expected_file = File::Spec->catfile($data_dir, "expected.txt");

@@ -36,8 +36,8 @@ EOS
 
 
 my %MOSAIK_VERSIONS = (
-    '1.0.1388' => $ENV{GENOME_SW} . '/mosaik/Mosaik-1.0.1388/mosaik_x64/bin/Mosaik',
-    '1.1.0021' => $ENV{GENOME_SW} . '/mosaik/mosaik-1.1.0021/bin/Mosaik',
+    '1.0.1388' => Genome::Config::get('sw') . '/mosaik/Mosaik-1.0.1388/mosaik_x64/bin/Mosaik',
+    '1.1.0021' => Genome::Config::get('sw') . '/mosaik/mosaik-1.1.0021/bin/Mosaik',
     'mosaik'   => 'Mosaik',
 );
 

@@ -4,7 +4,7 @@ use warnings;
 use above "Genome";
 use Test::More;
 
-my $expected_out = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-ClinSeq-Command-Converge-DgidbGenes/2015-02-05/';
+my $expected_out = Genome::Config::get('test_inputs') . '/Genome-Model-ClinSeq-Command-Converge-DgidbGenes/2015-02-05/';
 ok(-d $expected_out, "directory of expected output exists: $expected_out") or die;
 
 my $clinseq_build_id = '478c89dd197e44d392865ca0fbc6f122';

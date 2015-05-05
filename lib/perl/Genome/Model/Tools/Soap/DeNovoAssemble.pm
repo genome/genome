@@ -97,8 +97,6 @@ sub execute {
 	return;
     }
 
-    #eg $ENV{GENOME_SW}/soap/SOAPdenovo-1.04/SOAPdenovo all -s 61BKE_untrimmed.config -K 31 -R -d 1 -o 61BKE_Untrimmed -p 8
-
     #required params
     my $cmd = $self->path_for_soap_denovo_version.' all -s '.$self->config_file.' -o '.$self->output_dir_and_file_prefix;
     #optional with default values

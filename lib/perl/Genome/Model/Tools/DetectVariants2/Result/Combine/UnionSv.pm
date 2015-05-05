@@ -14,7 +14,7 @@ class Genome::Model::Tools::DetectVariants2::Result::Combine::UnionSv{
 
 sub _needs_symlinks_followed_when_syncing { 0 };
 sub _working_dir_prefix { 'union-sv' };
-sub resolve_allocation_disk_group_name { $ENV{GENOME_DISK_GROUP_MODELS} };
+sub resolve_allocation_disk_group_name { Genome::Config::get('disk_group_models') };
 sub allocation_subdir_prefix { 'union_sv' };
 sub _variant_type { 'svs' };
 

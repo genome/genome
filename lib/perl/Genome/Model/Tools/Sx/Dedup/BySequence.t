@@ -16,7 +16,7 @@ use Test::More;
 
 use_ok('Genome::Model::Tools::Sx::Dedup::BySequence') or die;
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sx/DedupBySequence';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sx/DedupBySequence';
 
 my $in_fastq = $dir.'/in.fastq';
 ok(-s $in_fastq, 'in fastq');

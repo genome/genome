@@ -173,7 +173,7 @@ sub _bsub_unarchives {
             '--lab', $lab, '--requestor', $requestor,
         );
         my $job_id = Genome::Sys->bsub(
-            queue => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+            queue => Genome::Config::get('lsf_queue_build_worker'),
             cmd => \@cmd,
             log_file => "$log_file_dir/$allocation_id.out",
             err_file => "$log_file_dir/$allocation_id.err",

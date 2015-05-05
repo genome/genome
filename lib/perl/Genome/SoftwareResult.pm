@@ -19,6 +19,8 @@ use JSON;
 
 use Genome::Utility::Instrumentation;
 
+require Genome::Model::Build;
+
 class Genome::SoftwareResult {
     is_abstract => 1,
     table_name => 'result.software_result',
@@ -351,9 +353,9 @@ sub create {
             eval {
                 Genome::Sys->create_directory($output_dir)
             };
-            if ($@) {
+            if (my $error = $@) {
                 $self->delete;
-                die $@;
+                die $error;
             }
         }
     }
@@ -434,7 +436,6 @@ my $recalculate_lookup_hash_callback = sub {
     my ($object, $aspect) = @_;
     return unless $object;
     return unless $object->software_result;
-    local $@;
     $object->software_result->recalculate_lookup_hash();
 };
 for my $name (qw(Param Input)) {
@@ -646,7 +647,7 @@ sub _auto_unarchive {
     my ($package, undef, $line) = caller;
     my $reason = sprintf('Automatically unarchiving due to request from %s line %s for software result %s run by %s', $package, $line, $self->id, $user);
 
-    my $build = $ENV{GENOME_BUILD_ID};
+    my $build = Genome::Model::Build::get_build_id();
     $reason .= sprintf(' for build %s', $build) if $build;
 
     for my $allocation (@allocations) {

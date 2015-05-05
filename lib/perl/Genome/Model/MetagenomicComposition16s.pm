@@ -221,7 +221,7 @@ sub _resolve_workflow_for_build {
     # detect and remove chimeras [optional]
     # report
 
-    $lsf_queue //= $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+    $lsf_queue //= Genome::Config::get('lsf_queue_build_worker_alt');
     $lsf_project //= 'build' . $build->id;
 
     my $workflow = Workflow::Model->create(

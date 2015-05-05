@@ -21,13 +21,13 @@ my $test_output_dir = tempdir('Genome-Model-Tools-GenePredictor-Fgenesh-XXXXXX',
 );
 chmod(0755, $test_output_dir);
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-GenePredictor/';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-GenePredictor/';
 ok(-d $test_data_dir, "test data directory exists at $test_data_dir");
 
 my $fasta = $test_data_dir . 'Contig0a.masked.fasta';
 ok(-e $fasta, "fasta file exists at $fasta");
 
-my $model = $ENV{GENOME_SW} . '/softberry/fgenesh_installed/C_elegans';
+my $model = Genome::Config::get('sw') . '/softberry/fgenesh_installed/C_elegans';
 ok(-e $model, "model file exists at $model");
 
 my $command = Genome::Model::Tools::GenePredictor::Fgenesh->create(

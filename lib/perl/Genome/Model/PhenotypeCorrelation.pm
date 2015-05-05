@@ -96,7 +96,7 @@ class Genome::Model::PhenotypeCorrelation {
         ensembl_annotation_build_id => {
             is => 'Text',
             doc => 'ID of ImportedAnnotation build with the desired ensembl version.',
-            default => $ENV{GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD},
+            default => Genome::Config::get('db_ensembl_default_imported_annotation_build'),
         },
     ],
     has_optional_input => [

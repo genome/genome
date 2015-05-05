@@ -118,7 +118,7 @@ sub create {
 
     if($file and Genome::Sys->check_for_path_existence($file)) {
         my $allocation = Genome::Disk::Allocation->allocate(
-            disk_group_name => $ENV{GENOME_DISK_GROUP_REFERENCES},
+            disk_group_name => Genome::Config::get('disk_group_references'),
             allocation_path => 'feature_list/' . $self->id,
             kilobytes_requested => ( int((-s $file) / 1024) + 1),
             owner_class_name => $self->class,

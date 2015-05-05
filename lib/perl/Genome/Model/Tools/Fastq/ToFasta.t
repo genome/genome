@@ -11,7 +11,7 @@ use Genome;
 use_ok('Genome::Model::Tools::Fastq::ToFasta');
 
 my $tmp_dir = Genome::Sys->create_temp_directory('Genome-Model-Tools-Fastq-ToFasta-'. Genome::Sys->username);
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq-To-Fasta';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fastq-To-Fasta';
 my $fastq_file = $data_dir .'/s_6_1_sequence.txt';
 my $expected_fasta_file = $data_dir .'/s_6_1_sequence.fa';
 

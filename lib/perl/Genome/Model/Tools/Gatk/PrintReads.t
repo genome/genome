@@ -19,7 +19,7 @@ else {
 use_ok('Genome::Model::Tools::Gatk::PrintReads');
 
 # Inputs
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Gatk-PrintReads/v1';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Gatk-PrintReads/v1';
 my @input_bams   = ("$test_data_dir/input1.bam", "$test_data_dir/input2.bam");
 my $input_grp    = "$test_data_dir/input.grp";
 my $input_ref_mt = "$test_data_dir/all_sequences.MT.fa";

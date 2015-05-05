@@ -18,7 +18,7 @@ ok(!Genome::Model::Tools::Assembly::ReadFilter::Trim->create(trim_length => 0), 
 
 # valid create and execution
 my $trimmer = Genome::Model::Tools::Assembly::ReadFilter::Trim->create(trim_length => 10);
-my $io = Bio::SeqIO->new(-file => $ENV{GENOME_TEST_INPUTS} . "/Genome-Model/DeNovoAssembly/velvet_solexa_build_v0.3/collated.fastq", -format => 'fastq');
+my $io = Bio::SeqIO->new(-file => Genome::Config::get('test_inputs') . "/Genome-Model/DeNovoAssembly/velvet_solexa_build_v0.3/collated.fastq", -format => 'fastq');
 my $ok = 1;
 my $count = 0;
 while ((my $fq = $io->next_seq) && ($count++<500)) {

@@ -11,7 +11,7 @@ use_ok( 'Genome::Model::Tools::Velvet::CreateGapFile' ) or die;
 
 my $version = 'v2';
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Velvet/CmtFile-'.$version;
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Velvet/CmtFile-'.$version;
 ok( -d $data_dir, 'Data dir' );
 
 my $test_dir = Genome::Sys->create_temp_directory();

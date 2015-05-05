@@ -35,7 +35,7 @@ class Genome::Model::Tools::DetectVariants2::Combine {
     ],
     has_param => [
         lsf_queue => {
-            default => $ENV{GENOME_LSF_QUEUE_DV2_WORKER},
+            default => Genome::Config::get('lsf_queue_dv2_worker'),
         },
     ],
     has_optional => [

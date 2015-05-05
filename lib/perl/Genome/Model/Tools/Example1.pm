@@ -20,7 +20,7 @@ class Genome::Model::Tools::Example1 {
     ], 
 };
 
-sub _is_hidden_in_docs { $ENV{GENOME_EXAMPLES} ? () : 1 }
+sub _is_hidden_in_docs { Genome::Config::get('examples') ? () : 1 }
 
 sub sub_command_sort_position { -2 }
 

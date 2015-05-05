@@ -45,7 +45,7 @@ sub _validate_file {
     my $file_path = shift;
     my ($filename, $dir) = File::Basename::fileparse($file_path);
     $dir =~ s!/$!!;
-    unless ($dir eq $ENV{'GENOME_ANALYSIS_PROJECT_DEFAULTS'}){
+    unless ($dir eq Genome::Config::get('analysis_project_defaults')){
         return 0;
     }
 #TODO: once an actual validator for these files is written, swap this out for a call to that tool

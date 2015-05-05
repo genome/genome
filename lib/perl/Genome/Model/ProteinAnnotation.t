@@ -13,7 +13,7 @@ use Test::More;
 
 use_ok('Genome::Model::ProteinAnnotation') or die;
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '';
+my $test_data_dir = Genome::Config::get('test_inputs') . '';
 my $fasta_file = join('/', $test_data_dir, 'Genome-Model-Tools-Predictor/medium.fasta');
 ok(-e $fasta_file, "test fasta file exists at $fasta_file");
 

@@ -24,8 +24,8 @@ ok($helpers, 'get helpers');
 
 # source files functions
 my @source_files = (
-    $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-Import-Basic/fastq-1.fq.gz',
-    $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-Command-Import-Basic/fastq-2.fastq',
+    Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Command-Import-Basic/fastq-1.fq.gz',
+    Genome::Config::get('test_inputs') . '/Genome-InstrumentData-Command-Import-Basic/fastq-2.fastq',
 );
 
 # source file retrieval

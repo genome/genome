@@ -16,7 +16,7 @@ my $tmp_dir = File::Temp::tempdir(
     CLEANUP => 1,
 );
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Breakdancer-MergeFiles';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Breakdancer-MergeFiles';
 my @in_files   = map{$dir.'/'.$_}qw(file1.in file2.in);
 my $expect_out = $dir . '/file3.out';
 my $merge_file = $tmp_dir .'/merge.out';

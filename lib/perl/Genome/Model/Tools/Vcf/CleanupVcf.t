@@ -16,7 +16,7 @@ use File::Temp;
 
 use_ok('Genome::Model::Tools::Vcf::CleanupVcf');
 
-my $test_data_directory = join('/', $ENV{GENOME_TEST_INPUTS}, 'Genome-Model-Tools-Vcf-CleanupVcf');
+my $test_data_directory = join('/', Genome::Config::get('test_inputs'), 'Genome-Model-Tools-Vcf-CleanupVcf');
 diag("Test data located at: $test_data_directory");
 
 my $output_directory = File::Temp::tempdir(

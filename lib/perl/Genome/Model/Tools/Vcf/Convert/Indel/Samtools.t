@@ -17,7 +17,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
 
 use_ok('Genome::Model::Tools::Vcf::Convert::Indel::Samtools');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Convert-Indel-Samtools";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Vcf-Convert-Indel-Samtools";
 
 # V3 - Correct reference sequence specification and description of BQ and AD fields
 # V4 - Vcf header format change

@@ -129,8 +129,7 @@ sub analyze_data {
     my $arff_file = $self->data_file;
     my $output_file = $self->output_file;
 
-    my $cmd = 'java -Xmx2048m -cp $ENV{GENOME_SW_LEGACY_JAVA}/weka.jar ' . 'weka.classifiers.trees.J48 -x 10 -B -C 0.25 -M 2 -t ' . $arff_file . ' > ' . $output_file;
-    #my $cmd = 'java -Xmx2048m -cp $ENV{GENOME_SW_LEGACY_JAVA}/weka.jar ' . 'weka.classifiers.rules.DecisionTable -x 10 -X 1 -S "weka.attributeSelection.BestFirst -D 2 -N 30 -S 2" -t ' . $arff_file . ' -R > ' . $output_file;
+    my $cmd = 'java -Xmx2048m -cp ' . Genome::Config::get('sw_legacy_java') . '/weka.jar ' . 'weka.classifiers.trees.J48 -x 10 -B -C 0.25 -M 2 -t ' . $arff_file . ' > ' . $output_file;
 
     Genome::Sys->shellcmd(
         cmd => $cmd,

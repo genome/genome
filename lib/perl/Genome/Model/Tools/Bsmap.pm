@@ -34,7 +34,6 @@ More information about the BSMAP suite of tools can be found at http://code.goog
 EOS
 }
 
-# TODO install this to $ENV{GENOME_SW}/bsmap/bsmap-2.1/
 my %BSMAP_VERSIONS = (
     '2.1' => '/gsc/bin/bsmap',
     '2.43' => '/gscuser/cmiller/usr/src/bsmap-2.43/bsmap',

@@ -16,7 +16,7 @@ class Genome::Model::Event::Build::ReferenceAlignment::BamQc {
 };
 
 sub lsf_queue {
-    return $ENV{GENOME_LSF_QUEUE_BUILD_WORKER};
+    return Genome::Config::get('lsf_queue_build_worker');
 }
 
 sub bsub_rusage {
@@ -103,7 +103,7 @@ sub params_for_result {
         error_rate_version  => $error_rate_version,
         error_rate          => 1,
         read_length         => $read_length,
-        test_name           => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name           => Genome::Config::get('software_result_test_name') || undef,
         users               => $result_users,
     );
 }

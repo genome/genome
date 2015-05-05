@@ -10,7 +10,7 @@ use Test::More;
 use XML::LibXML;
 
 use_ok('Genome::Report');
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Report/';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Report/';
 my $reports_dir = $dir.'/xml_reports';
 my $tmp_dir = Genome::Sys->base_temp_directory;
 

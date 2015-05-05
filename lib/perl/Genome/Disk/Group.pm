@@ -93,7 +93,7 @@ class Genome::Disk::Group {
         },
     ],
     data_source => 'Genome::DataSource::Oltp',
-    doc => "Represents a disk group (eg, $ENV{GENOME_DISK_GROUP_DEV}), which contains any number of disk volumes",
+    doc => "Represents a disk group (eg, " . Genome::Config::get('disk_group_dev') . "), which contains any number of disk volumes",
 };
 
 

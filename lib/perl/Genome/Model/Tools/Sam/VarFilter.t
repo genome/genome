@@ -19,7 +19,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::Sam::VarFilter');
 }
 
-my $root_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam/VarFilter';
+my $root_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam/VarFilter';
 
 my $tmp_dir  = File::Temp::tempdir(
     "VarFilter_XXXXXX", 

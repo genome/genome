@@ -21,7 +21,7 @@ use_ok('Genome::Model::Tools::Varscan::PullOneTwoBpIndels');
 
 # Inputs
 my $varscan_version = "2.3.2";
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Varscan-PullOneTwoBpIndels';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Varscan-PullOneTwoBpIndels';
 my $input_indels = "$test_data_dir/indel_files_to_validate";
 my $tumor_bam = "$test_data_dir/tumor.bam";
 my $normal_bam = "$test_data_dir/normal.bam";

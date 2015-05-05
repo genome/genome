@@ -16,7 +16,7 @@ use_ok('Genome::Model::Tools::Varscan::ProcessValidation');
 
 my $version = "v2";
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Varscan-ProcessValidation' . "/$version";
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Varscan-ProcessValidation' . "/$version";
 print $test_data_dir . "\n";
 my $variants_file = join('/', $test_data_dir, 'variant_list.snp');
 my $validation_file = join('/', $test_data_dir, 'varscan.snp');

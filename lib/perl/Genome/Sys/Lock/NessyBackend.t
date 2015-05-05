@@ -5,7 +5,8 @@ use Genome::Sys::Lock::NessyBackend;
 use Genome::Utility::Text qw(rand_string);
 use Test::More;
 
-if ($ENV{GENOME_NESSY_SERVER}) {
+my $nessy_server = Genome::Config::get('nessy_server');
+if ($nessy_server) {
     plan tests => 3;
 } else {
     plan skip_all => 'No Nessy URL specified for testing.';
@@ -20,7 +21,7 @@ subtest 'basic test' => sub {
     diag 'resource = ' . $resource_name;
 
     my $n = Genome::Sys::Lock::NessyBackend->new(
-        url => $ENV{GENOME_NESSY_SERVER},
+        url => $nessy_server,
         is_mandatory => 1,
     );
 
@@ -42,7 +43,7 @@ subtest 'instance validation' => sub {
     for (1..2) {
         push @r, 'NessLock.t/' . rand_string();
         push @n, Genome::Sys::Lock::NessyBackend->new(
-            url => $ENV{GENOME_NESSY_SERVER},
+            url => $nessy_server,
             is_mandatory => 1,
         );
         $n[-1]->lock(
@@ -72,11 +73,11 @@ subtest 'namespace validation' => sub {
 
     my $resource = rand_string();
     my $root_n = Genome::Sys::Lock::NessyBackend->new(
-        url => $ENV{GENOME_NESSY_SERVER},
+        url => $nessy_server,
         is_mandatory => 1,
     );
     my $namespace_n = Genome::Sys::Lock::NessyBackend->new(
-        url => $ENV{GENOME_NESSY_SERVER},
+        url => $nessy_server,
         is_mandatory => 1,
         namespace => 'foo',
     );

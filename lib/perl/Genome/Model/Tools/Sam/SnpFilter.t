@@ -14,7 +14,7 @@ BEGIN {
     use_ok('Genome::Model::Tools::Sam::SnpFilter');
 }
 
-my $root_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sam/SnpFilter';
+my $root_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam/SnpFilter';
 
 my $tmp_dir  = File::Temp::tempdir(
     "SnpFilter_XXXXXX", 

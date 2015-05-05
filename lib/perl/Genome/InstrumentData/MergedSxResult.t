@@ -15,7 +15,7 @@ use Test::More;
 use_ok('Genome::InstrumentData::MergedSxResult');
 use_ok('Genome::InstrumentData::InstrumentDataTestObjGenerator');
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-InstrumentData-SxResult';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-InstrumentData-SxResult';
 
 my ($instrument_data) = Genome::InstrumentData::InstrumentDataTestObjGenerator::create_solexa_instrument_data($data_dir."/inst_data/-6666/archive.bam");
 my ($instrument_data2) = Genome::InstrumentData::InstrumentDataTestObjGenerator::create_solexa_instrument_data($data_dir."/inst_data/-6666/archive.bam");
@@ -28,7 +28,7 @@ my %sx_result_params = (
     read_processor => $read_processor,
     output_file_count => $output_file_count,
     output_file_type => $output_file_type,
-    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    test_name => (Genome::Config::get('software_result_test_name') || undef),
     users => Genome::Test::Factory::SoftwareResult::User->setup_user_hash,
 );
 
@@ -44,7 +44,7 @@ ok(Genome::InstrumentData::MergedSxResult->create(
     read_processor => $read_processor,
     output_file_count => $output_file_count,
     output_file_type => $output_file_type,
-    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    test_name => (Genome::Config::get('software_result_test_name') || undef),
     coverage => undef,
     _user_data_for_nested_results => Genome::Test::Factory::SoftwareResult::User->setup_user_hash,
     ),
@@ -58,7 +58,7 @@ ok(Genome::InstrumentData::MergedSxResult->create(
     read_processor => $read_processor,
     output_file_count => $output_file_count,
     output_file_type => $output_file_type,
-    test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+    test_name => (Genome::Config::get('software_result_test_name') || undef),
     coverage => 10,
     _user_data_for_nested_results => Genome::Test::Factory::SoftwareResult::User->setup_user_hash,
     ),

@@ -25,7 +25,7 @@ class Genome::Test_SR {
 my $sr = Genome::Test_SR->create(p => 'test', i => 'test');
 isa_ok($sr, 'Genome::SoftwareResult', 'setup a test software result');
 
-my $disk_allocation = Genome::Disk::Allocation->create(owner_id => $sr->id, owner_class_name => $sr->class, kilobytes_requested => 1, disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS}, allocation_path => $sr->id . '-alloc');
+my $disk_allocation = Genome::Disk::Allocation->create(owner_id => $sr->id, owner_class_name => $sr->class, kilobytes_requested => 1, disk_group_name => Genome::Config::get('disk_group_models'), allocation_path => $sr->id . '-alloc');
 
 no warnings qw(redefine);
 my $simulate_is_archived = 1;

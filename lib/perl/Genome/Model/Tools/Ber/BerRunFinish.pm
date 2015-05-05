@@ -909,7 +909,7 @@ BODY
 
     Genome::Utility::Email::send(
         from    => $from,
-        to      => [ $from, $ENV{GENOME_EMAIL_ANNOTATION}],
+        to      => [ $from, Genome::Config::get('email_annotation')],
         subject => $subject,
         body    => $body,
         attachments => {

@@ -15,7 +15,7 @@ plan tests => 13;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::FilterPlsH5');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-FilterPlsH5';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-FilterPlsH5';
 my @bas_h5_files = glob($data_directory .'/*.bas.h5');
 
 my $expected_fofn_file_path = $data_directory .'/input.fofn';

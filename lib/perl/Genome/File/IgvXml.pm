@@ -34,7 +34,7 @@ class Genome::File::IgvXml {
         },
         base_url => {
             is => 'String',
-            default => $ENV{GENOME_SYS_SERVICES_FILES_URL},
+            default => Genome::Config::get('sys_services_files_url'),
             doc => 'base url for all file paths. Will be prepended.',
         },
         font_size => {

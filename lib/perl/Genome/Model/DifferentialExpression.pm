@@ -283,7 +283,7 @@ sub _resolve_workflow_for_build {
     my $lsf_project = shift;
 
     if (!defined $lsf_queue || $lsf_queue eq '' || $lsf_queue eq 'inline') {
-        $lsf_queue = $ENV{GENOME_LSF_QUEUE_BUILD_WORKER_ALT};
+        $lsf_queue = Genome::Config::get('lsf_queue_build_worker_alt');
     }
     if (!defined $lsf_project || $lsf_project eq '') {
         $lsf_project = 'build' . $build->id;

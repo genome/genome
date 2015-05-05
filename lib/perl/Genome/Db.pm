@@ -52,7 +52,7 @@ sub __display_name__ {
 sub __load__ {
     my ($class, $bx) = @_;
     my @rows;
-    my @dirs = split(':',$ENV{GENOME_DB});
+    my @dirs = split(':', Genome::Config::get('db'));
     for my $dir (@dirs) {
         my @db_dirs = glob("$dir/*");
         while (my $db_dir = shift @db_dirs) {

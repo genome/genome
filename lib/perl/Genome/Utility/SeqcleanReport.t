@@ -15,7 +15,7 @@ BEGIN {
     use_ok('Genome::Utility::SeqcleanReport::Writer');
 }
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Utility-SeqcleanReport';
+my $test_dir = Genome::Config::get('test_inputs') . '/Genome-Utility-SeqcleanReport';
 my $file = "$test_dir/test.cln";
 
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);

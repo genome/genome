@@ -19,7 +19,7 @@ unless( -d "/tmp/disk/")
 
 unless( -l "/tmp/disk/analysis")
 {
-    symlink($ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Hgmi/analysis",
+    symlink(Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Hgmi/analysis",
             "/tmp/disk/analysis");
 }
 

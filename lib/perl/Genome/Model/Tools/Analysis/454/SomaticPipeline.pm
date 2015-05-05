@@ -39,7 +39,7 @@ class Genome::Model::Tools::Analysis::454::SomaticPipeline {
 		},
 		lsf_queue => {
 		    is_param => 1,
-		    default_value => $ENV{GENOME_LSF_QUEUE_BUILD_WORKER},
+		    default_value => Genome::Config::get('lsf_queue_build_worker'),
 		},
 	],
 };
@@ -228,7 +228,7 @@ sub execute {                               # replace with real execution logic.
 
 			close(SCRIPT);
 
-			system("bsub -q $ENV{GENOME_LSF_QUEUE_BUILD_WORKER} -R\"select[mem>6000 && tmp>20000] rusage[mem=6000]\" -M 6000000 -u \'" . Genome::Sys->username . "\' -oo $varscan_data_dir/script_pipeline.sh.out sh $varscan_data_dir/script_pipeline.sh");		
+			system("bsub -q " . Genome::Config::get('lsf_queue_build_worker') . " -R\"select[mem>6000 && tmp>20000] rusage[mem=6000]\" -M 6000000 -u \'" . Genome::Sys->username . "\' -oo $varscan_data_dir/script_pipeline.sh.out sh $varscan_data_dir/script_pipeline.sh");		
 		}
 	}
 	

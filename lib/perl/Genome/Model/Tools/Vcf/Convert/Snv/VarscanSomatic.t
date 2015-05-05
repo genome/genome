@@ -16,7 +16,7 @@ use above 'Genome';
 
 use_ok('Genome::Model::Tools::Vcf::Convert::Snv::VarscanSomatic');
 
-my $test_dir = $ENV{GENOME_TEST_INPUTS} . "/Genome-Model-Tools-Vcf-Convert-Snv-VarscanSomatic";
+my $test_dir = Genome::Config::get('test_inputs') . "/Genome-Model-Tools-Vcf-Convert-Snv-VarscanSomatic";
 # V2 updated with various corrections
 # V3 - remove VT INFO field in header and VT=SNP in the body
 # V4 - add source in header

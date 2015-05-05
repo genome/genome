@@ -14,7 +14,7 @@ BEGIN {
         use_ok ('Genome::Model::Tools::Fasta::To::Scf');
 }
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta/To';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fasta/To';
 my $fasta_file = $dir .'/test.fasta';
 my $expected_fastq = $dir .'/test.fastq.ori';
 

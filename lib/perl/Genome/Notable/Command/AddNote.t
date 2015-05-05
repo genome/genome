@@ -35,9 +35,10 @@ my $command = Genome::Notable::Test::Command::AddNote->create(
 );
 ok($command, 'made command object without header_text');
 
+my ($header_text_error) = grep { ($_->properties)[0] eq 'header_text' } $command->__errors__;
+ok($header_text_error, 'got an error about header_text');
 my $rv = eval { $command->execute };
 ok(!$rv, 'could not execute add note command, as expected');
-ok($command->error_message =~ /Property 'header_text': No value specified for required property/, 'received expected error from add note command');
 
 $command = Genome::Notable::Test::Command::AddNote->create(
     notable => $notable,

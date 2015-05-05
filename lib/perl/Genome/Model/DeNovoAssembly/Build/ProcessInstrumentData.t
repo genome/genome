@@ -36,7 +36,7 @@ ok($process->shortcut, 'shortcut succeeded');
 ok($process->sx_result, 'set sx result during shortcut on process inst data');
 
 for (1..2) {
-    compare_ok($process->sx_result->output_dir.'/-7777.'.$_.'.fastq', $ENV{GENOME_TEST_INPUTS}.'/Genome-Model/DeNovoAssembly/Build-ProcessInstrumentData-v1/-7777.'.$_.'.fastq', "fastq $_ matches");
+    compare_ok($process->sx_result->output_dir.'/-7777.'.$_.'.fastq', Genome::Config::get('test_inputs').'/Genome-Model/DeNovoAssembly/Build-ProcessInstrumentData-v1/-7777.'.$_.'.fastq', "fastq $_ matches");
 }
 
 #print $process->sx_result->output_dir."\n";<STDIN>;

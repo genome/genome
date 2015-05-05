@@ -10,7 +10,7 @@ use File::Temp;
 
 use_ok('Genome::Model::Tools::Sv::SvAnnot');
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Sv-SvAnnot/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sv-SvAnnot/';
 my $tmp_dir = Genome::Sys->create_temp_directory();
 
 for my $type (qw(36_standard 37_merged)) {

@@ -10,7 +10,7 @@ use Test::More tests => 8;
 
 BEGIN {use_ok('Genome::Model::Tools::Fasta::Chunker');}
 
-my ($dir, $tmp_dir, $chunk_size) = ($ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta-Chunker/', Genome::Sys->create_temp_directory, 5);
+my ($dir, $tmp_dir, $chunk_size) = (Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fasta-Chunker/', Genome::Sys->create_temp_directory, 5);
 
 #create
 my $chunker = Genome::Model::Tools::Fasta::Chunker->create(

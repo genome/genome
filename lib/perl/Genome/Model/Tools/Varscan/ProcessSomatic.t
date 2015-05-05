@@ -15,7 +15,7 @@ use Test::More tests => 12;
 use_ok('Genome::Model::Tools::Varscan::ProcessSomatic');
 
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Varscan-ProcessSomatic';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Varscan-ProcessSomatic';
 
 my $snp_file = join('/', $test_data_dir, 'varscan.snp');
 

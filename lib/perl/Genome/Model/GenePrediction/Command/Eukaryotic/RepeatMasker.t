@@ -21,7 +21,7 @@ BEGIN {
 
 use_ok('Genome::Model::GenePrediction::Command::Eukaryotic::RepeatMasker');
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-GenePrediction-Eukaryotic/';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-GenePrediction-Eukaryotic/';
 ok(-d $test_data_dir, "test data directory exists at $test_data_dir");
 
 my $fasta_file = $test_data_dir . "repeat_masker_input.fasta";

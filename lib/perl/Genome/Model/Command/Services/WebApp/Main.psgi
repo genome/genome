@@ -18,7 +18,7 @@ use File::Basename;
 use Plack::Util;
 use Plack::Builder;
 
-our $always_memcache = $ENV{'GENOME_VIEW_CACHE'};
+our $always_memcache = Genome::Config::get('view_cache');
 
 our $psgi_path;
 eval {

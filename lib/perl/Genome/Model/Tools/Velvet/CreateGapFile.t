@@ -9,7 +9,7 @@ use Test::More;
 use_ok( 'Genome::Model::Tools::Velvet::CreateGapFile' ) or die;
 
 my $version = 'v2';
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Velvet/CreateGapFile-'.$version;
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Velvet/CreateGapFile-'.$version;
 ok(-d $data_dir, "Found data directory: $data_dir") or die;
 
 my $test_contigs_file = $data_dir.'/velvet_asm.afg';

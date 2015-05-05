@@ -15,7 +15,7 @@ plan tests => 4;
 
 use_ok('Genome::Model::Tools::SmrtAnalysis::SummarizeCompareByMovie');
 
-my $data_directory = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-SmrtAnalysis-SummarizeCompareByMovie';
+my $data_directory = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-SmrtAnalysis-SummarizeCompareByMovie';
 
 my $cmp_hdf5_file = $data_directory .'/data/control_reads.cmp.h5';
 my $bas_hdf5_fofn = $data_directory .'/input.fofn';

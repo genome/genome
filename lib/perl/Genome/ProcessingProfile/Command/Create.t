@@ -9,6 +9,7 @@ use strict;
 use warnings;
 
 use above "Genome";
+use Try::Tiny qw(try catch);
 
 use Test::More tests => 38;
 
@@ -187,8 +188,7 @@ sub test_processing_profile_class {
 sub test_based_on_param_value_overrides_default_value {
     my $transaction = UR::Context::Transaction->begin;
 
-    local $@ = '';
-    eval {
+    try {
         my $meta = UR::Object::Type->get('Genome::ProcessingProfile::Tester');
         ok($meta, 'got "Genome::ProcessingProfile::Tester" class object');
 
@@ -227,8 +227,11 @@ sub test_based_on_param_value_overrides_default_value {
         # make sure it got alternate_pp's dna_source not the default value for dna_source
         isnt($alternate_pp->dna_source, $default_dna_source, "alternate_pp's dna_source should not match the default value");
         is($alternate_pp->dna_source, $source_pp->dna_source, "alternate_pp's dna_source matches source_pp");
+    }
+    catch {
+        print "ERROR: $_\n";
+        return;
     };
-    print "ERROR: $@\n" if ($@);
 
     $transaction->rollback;
 }

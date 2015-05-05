@@ -12,7 +12,7 @@ use_ok('Genome::Model::Tools::Fastq::Trimmer');
 
 my $tmp_dir = File::Temp::tempdir('Fastq-Trimmer-XXXXX', CLEANUP => 1, TMPDIR => 1);
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq-Trimmer';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fastq-Trimmer';
 #my $tmp_dir = $data_dir;
 my $expected_fastq = $data_dir .'/5_25.fastq';
 my $fastq_file = $data_dir .'/original.fastq';

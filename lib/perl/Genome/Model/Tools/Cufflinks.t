@@ -15,5 +15,5 @@ for my $app (@executables) {
 
     my $v2 = Genome::Model::Tools::Cufflinks->create(use_version => '1.2.1');
     my $p2 = $v2->$method;
-    is($p2, $ENV{GENOME_SW} . "/cufflinks/cufflinks-1.2.1.Linux_x86_64/$app", "finds $app path $p2 for legacy cufflinks installation");
+    is($p2, Genome::Config::get('sw') . "/cufflinks/cufflinks-1.2.1.Linux_x86_64/$app", "finds $app path $p2 for legacy cufflinks installation");
 }

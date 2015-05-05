@@ -19,7 +19,7 @@ BEGIN {
 my $tmp_dir = File::Temp::tempdir(CLEANUP => 1);
 my $database = $tmp_dir .'/test_db';
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-WuBlast-Xdformat';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-WuBlast-Xdformat';
 my @fasta_names = (qw/ 11 12 13 /);
 my @fasta_files = map { sprintf('%s/%s.fa', $test_data_dir, $_) } @fasta_names;
 is(grep({ -s } @fasta_files), 3, 'The three fasta files exist');

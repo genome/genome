@@ -9,7 +9,7 @@ require File::Compare;
 
 use_ok( 'Genome::Model::Tools::Consed::ReplaceXns' ) or die;
 
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Consed-ReplaceXns';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Consed-ReplaceXns';
 ok( -d $data_dir, 'test suite dir' );
 
 my $ace_in = '454Contigs.ace.1';

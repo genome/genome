@@ -36,7 +36,7 @@ ok(substr($fake_read_seq,$offset,1) eq "A", 'Finished test of _calculate_offset(
 
 # test for high confidence part
 
-my $test_input_dir  = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Somatic-IdentifyDnpAdv/';
+my $test_input_dir  = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Somatic-IdentifyDnpAdv/';
 
 my $sniper_file     = $test_input_dir . 'sniper.in';
 my $tumor_bam_file  = $test_input_dir . 'tumor.tiny.bam';

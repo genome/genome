@@ -168,7 +168,7 @@ sub create_allocation {
 
     my $build = $self->somatic_variation_build;
     my %allocation_params = (
-        disk_group_name => $ENV{GENOME_DISK_GROUP_MODELS},
+        disk_group_name => Genome::Config::get('disk_group_models'),
         allocation_path => File::Spec->join('model_data', 'CreateReport', $build->id),
         kilobytes_requested => 4_000_000,
         owner_class_name => $build->disk_allocation->class,

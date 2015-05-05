@@ -10,7 +10,7 @@ use Test::More;
 use_ok('Genome::Report');
 use_ok('Genome::Report::XSLT');
 
-my $dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Report-XSLT';
+my $dir = Genome::Config::get('test_inputs') . '/Genome-Report-XSLT';
 my $report = Genome::Report->create_report_from_directory($dir.'/Assembly_Stats');
 ok($report, 'create report') or die;
 

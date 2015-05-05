@@ -11,7 +11,7 @@ BEGIN {
         use_ok('Genome::Model::Tools::Blat::Subject');
 }
 
-my $query_file = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Blat-Subject/test.fa';
+my $query_file = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Blat-Subject/test.fa';
 ok(-s $query_file,'query file has size');
 
 my $subject_file = Genome::Config::reference_sequence_directory() . '/refseq-for-test/11.fa';

@@ -18,9 +18,9 @@ class Genome::Model::Tools::Soap::Base {
 my $SOAP_ALIGN_DEFAULT = '2.20';
 
 my %SOAP_ALIGN_VERSIONS = (
-    '2.20' => $ENV{GENOME_SW} . '/soap/SOAPaligner-2.20',
-    '2.19' => $ENV{GENOME_SW} . '/soap/SOAPaligner-2.19',
-    '2.01' => $ENV{GENOME_SW} . '/soap/SOAPaligner-2.01',
+    '2.20' => Genome::Config::get('sw') . '/soap/SOAPaligner-2.20',
+    '2.19' => Genome::Config::get('sw') . '/soap/SOAPaligner-2.19',
+    '2.01' => Genome::Config::get('sw') . '/soap/SOAPaligner-2.01',
 );
 
 sub path_for_soap_align_version {
@@ -46,7 +46,7 @@ sub path_for_soap_denovo_version {
     my $self = shift;
     my @base_cmds = (qw/ SOAPdenovo SOAPdenovo63mer SOAPdenovo-63mer /);
     for my $base_cmd ( @base_cmds ) {
-        my $command = $ENV{GENOME_SW} . '/soap/SOAPdenovo-'.$self->version.'/'.$base_cmd;
+        my $command = Genome::Config::get('sw') . '/soap/SOAPdenovo-'.$self->version.'/'.$base_cmd;
         next if not -s $command;
         return $command;
     }

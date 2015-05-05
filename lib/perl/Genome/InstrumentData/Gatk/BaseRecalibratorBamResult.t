@@ -95,7 +95,7 @@ is_deeply(
 # Allocation params
 is(
     $base_recalibrator_bam_result->resolve_allocation_disk_group_name,
-    $ENV{GENOME_DISK_GROUP_MODELS},
+    Genome::Config::get('disk_group_models'),
     'resolve_allocation_disk_group_name',
 );
 is(

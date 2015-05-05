@@ -78,7 +78,7 @@ sub _get_chimerascan_path_for_version {
         return $path, $bin_sub, $python_sub;
     } else {
         # fall back to old installation method
-        $path = $ENV{GENOME_SW} . "/chimerascan/chimerascan-$version";
+        $path = Genome::Config::get('sw') . "/chimerascan/chimerascan-$version";
         if (-e $path) {
             my $bin_sub = 'chimerascan';
             my $python_sub = join('/', 'build', 'lib.linux-x86_64-2.6');

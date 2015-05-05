@@ -254,7 +254,7 @@ sub read_processor_params_for_instrument_data {
         read_processor => $read_processor,
         output_file_count => $output_file_count,
         output_file_type => 'sanger',
-        test_name => ($ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef),
+        test_name => (Genome::Config::get('software_result_test_name') || undef),
         users => Genome::SoftwareResult::User->user_hash_for_build($self),
     );
 }
@@ -288,8 +288,8 @@ sub _mem_in_gb {
 
 sub resolve_assemble_lsf_queue {
     my $self = shift;
-    my $queue = $ENV{GENOME_LSF_QUEUE_ASSEMBLY};
-    $queue = $ENV{GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT} if $ENV{UR_DBI_NO_COMMIT};
+    my $queue = Genome::Config::get('lsf_queue_assembly');
+    $queue = Genome::Config::get('lsf_queue_alignment_default') if $ENV{UR_DBI_NO_COMMIT};
     return $queue;
 }
 

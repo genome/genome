@@ -69,7 +69,7 @@ sub execute {
         description => $self->description,
         format => $self->format,
         previous_result_id => ($previous_result? $previous_result->id : undef),
-        test_name => $ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} || undef,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
         source_build_id => $source_build->id,
     );
 

@@ -55,49 +55,15 @@ sub _load {
     }
     $self->bio_db_bam($bam);
     $self->header($bam->header);
-    
+
     my $bam_file = $self->bam_file;
     my $bam_mtime = (stat($bam_file))[9];
-    
+
     my $bai_mtime = (stat($bai_file))[9];
     if ((defined($bam_mtime) && defined($bai_mtime)) && $bam_mtime > $bai_mtime) {
         die('BAM file '. $bam_file .' appears to be newer than BAM index '. $bai_file);
     }
-    # I'm not sure this symlink business ever worked... deprecated June 14th, 2012 by Jason Walker
-    if (0) { 
-        my @bam_symlinks;
-        while (-l $bam_file) {
-            push @bam_symlinks, $bam_file;
-            $bam_file = readlink($bam_file);
-        }
-        my $bam_mtime = (stat($bam_file))[9];
-        my @symlinks;
-        if (-e $bai_file) {
-            while (-l $bai_file) {
-                push @symlinks, $bai_file;
-                $bai_file = readlink($bai_file);
-            }
-            my $bai_mtime = (stat($bai_file))[9];
-            if ((defined($bam_mtime) && defined($bai_mtime)) && $bam_mtime > $bai_mtime) {
-                unless (unlink $bai_file) {
-                    die('Failed to remove old bai file'. $bai_file);
-                }
-            }
-        }
-        unless (-e $bai_file) {
-            Bio::DB::Bam->index_build($self->bam_file);
-            if (@symlinks) {
-                @symlinks = reverse(@symlinks);
-                my $to_file = $bai_file;
-                for my $from_file (@symlinks) {
-                    unless (symlink($to_file,$from_file)) {
-                        die('Failed to create symlink '. $from_file .' => '. $to_file);
-                    }
-                    $to_file = $from_file;
-                }
-            }
-        }
-    }
+
     my $index  = Bio::DB::Bam->index($self->bam_file,1);
     unless ($index) {
         die('Failed to find, load, or generate index for BAM file '. $self->bam_file);

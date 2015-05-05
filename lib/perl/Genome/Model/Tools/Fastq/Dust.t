@@ -6,7 +6,7 @@ use above "Genome";  # forces a 'use lib' when run directly from the cmdline
 use Test::More tests => 3;
 use File::Temp;
 
-my $datadir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fastq-Dust';
+my $datadir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fastq-Dust';
  
 my $input = "$datadir/input.fastq";
 die "no $input" unless -e $input;

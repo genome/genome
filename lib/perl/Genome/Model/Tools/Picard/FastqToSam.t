@@ -12,7 +12,7 @@ use Path::Class qw(dir file);
 # data here is first 100 lines from lane 1 of
 # /gscmnt/sata604/hiseq2000/100218_P21_0393_AFC20GF1/Data/Intensities/Basecalls/GERALD_30-03-2010_lims
 my $dir = dir(
-    $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Picard-FastqToSam');
+    Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Picard-FastqToSam');
 
 # step 1: test 1 file case
 

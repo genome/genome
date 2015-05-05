@@ -28,7 +28,7 @@ my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
     reference_sequence_build_id => $refbuild_id,
 );
 
-my $test_input_dir      = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-Loh';
+my $test_input_dir      = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Filter-Loh';
 my $tumor_snp_file      = $test_input_dir . '/snvs.hq.bed';
 my $tumor_bam_file      = $test_input_dir. '/tumor.tiny.bam';
 my $normal_bam_file     = $test_input_dir. '/normal.tiny.bam';

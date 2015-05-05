@@ -371,7 +371,7 @@ sub _create_instrument_data {
     $instrument_data->add_attribute(attribute_label => 'original_format', attribute_value => $self->original_format);
 
     my $allocation = Genome::Disk::Allocation->create(
-        disk_group_name => $ENV{GENOME_DISK_GROUP_ALIGNMENTS},
+        disk_group_name => Genome::Config::get('disk_group_alignments'),
         allocation_path => 'instrument_data/imported/'.$instrument_data->id,
         kilobytes_requested => $self->kilobytes_requested,
         owner_class_name => $instrument_data->class,

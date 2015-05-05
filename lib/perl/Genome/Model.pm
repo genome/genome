@@ -378,7 +378,7 @@ sub _resolve_subject {
 sub _resolve_disk_group_name_for_build {
     # This gets called during the build start process when attempting to create a disk allocation.
     # TODO: move into the config to have two disk groups, one for "built" things and one for "imported" things
-    $ENV{GENOME_DISK_GROUP_MODELS};
+    Genome::Config::get('disk_group_models');
 }
 
 # Override in subclasses

@@ -9,7 +9,7 @@ use Test::More tests => 3;
 
 use_ok('Genome::Model::Tools::Kmer::Suffixerator');
 my $tmp_dir = File::Temp::tempdir('Kmer-Suffixerator-'. Genome::Sys->username .'-XXXX', CLEANUP => 1, TMPDIR => 1);
-my $data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-Fasta-ToTwoBit';
+my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Fasta-ToTwoBit';
 my @fasta_files;
 for ( 11 .. 13) {
     push @fasta_files, $data_dir .'/'. $_ .'.fasta';

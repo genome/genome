@@ -20,7 +20,7 @@ if (Genome::Config->arch_os ne 'x86_64') {
 
 use_ok('Genome::Model::Tools::DetectVariants2::Filter::FalsePositive');
 
-my $test_data_dir = $ENV{GENOME_TEST_INPUTS} . '/Genome-Model-Tools-DetectVariants2-Filter-FalsePositive';
+my $test_data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-DetectVariants2-Filter-FalsePositive';
 # v2 adjustment included input/output bed files as a base instead of varscan lines
 my $expected_dir = join('/', $test_data_dir, 'expected.v4');
 

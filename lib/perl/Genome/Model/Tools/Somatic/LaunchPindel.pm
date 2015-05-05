@@ -93,7 +93,8 @@ sub execute {
             $self->debug_message("using $newlib include on bsub");
         }
         my $reference_build_id=$self->reference_sequence_build;
-        print `bsub -u $email_address -N -q $ENV{GENOME_LSF_QUEUE_DV2_WORKFLOW} "perl $include -S gmt detect-variants2 dispatcher --aligned-reads-input $tumor_bam    --control-aligned-reads-input $normal_bam --reference-build-id $reference_build_id --output-directory $output --indel-detection-strategy 'pindel 0.4 filtered by pindel-somatic-calls v1 then pindel-read-support v1'"`;
+        my $queue = Genome::Config::get('lsf_queue_dv2_workflow');
+        print `bsub -u $email_address -N -q $queue "perl $include -S gmt detect-variants2 dispatcher --aligned-reads-input $tumor_bam    --control-aligned-reads-input $normal_bam --reference-build-id $reference_build_id --output-directory $output --indel-detection-strategy 'pindel 0.4 filtered by pindel-somatic-calls v1 then pindel-read-support v1'"`;
         return 1;
     }
 1;
