@@ -40,11 +40,6 @@ class Genome::InstrumentData::Command::Import::Basic {
             is_many => 1,
             doc => 'Name and value pairs to add to the instrument data. Separate name and value with an equals (=) and name/value pairs with a comma (,).',
         },
-        original_format => {
-            is => 'Text',
-            valid_values => [qw/ bam fastq fastq_archive sra /],
-            doc => 'The original format of the source files. Use if the format cannot be determined from the file extension.',
-        },
     ],
     has_optional_constant_calculated => {
         helpers => {
@@ -55,7 +50,7 @@ class Genome::InstrumentData::Command::Import::Basic {
         _workflow => {},
         _verify_not_imported_op => {},
         _working_directory => { is => 'Text', },
-        _instrument_data_properties => { is => 'Hash', },
+        inputs => { is => 'Genome::InstrumentData::Command::Import::WorkFlow::Inputs', },
         _new_instrument_data => { is => 'Genome::InstrumentData', is_many => 1 },
     ],
 };
@@ -89,8 +84,7 @@ sub execute {
     my $instdat_props_ok = $self->_resolve_instrument_data_properties;
     return if not $instdat_props_ok;
 
-    my $original_format = $self->_resolve_original_format;
-    return if not $original_format;
+    $self->_die_if_original_data_path_previously_imported;
 
     my $working_directory = $self->_resolve_working_directory;
     return if not $working_directory;
@@ -112,72 +106,32 @@ sub execute {
     return 1;
 }
 
-sub _resolve_original_format {
-    my $self = shift;
-    $self->status_message('Resolve original format...');
-
-    if ( $self->original_format ) {
-        $self->status_message('Original format: '.$self->original_format);
-        return $self->original_format;
-    }
-
-    my @source_files = $self->source_files;
-    my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my %formats;
-    my $is_archived = 0;
-    for my $source_file ( @source_files ) {
-        my $format = $helpers->source_file_format($source_file);
-        return if not $format;
-        $formats{$format}++;
-        $is_archived++ if $helpers->is_source_file_archived($source_file);
-    }
-
-    my @formats = keys %formats;
-    if ( @formats > 1 ) {
-        $self->error_message('Got more than one format when trying to determine format!');
-        return;
-    }
-
-    my $format = $formats[0];
-    if ( $is_archived > 1 ) {
-        $self->error_message('More than one file is archived. Please import them separately.');
-        return;
-    }
-    elsif ( $is_archived ) {
-        $format .= '_archive';
-    }
-    $self->status_message('Original format: '.$format);
-
-    my $max_source_files = ( $format =~ /^fast[aq]$/ ? 2 : 1 );
-    if ( @source_files > $max_source_files ) {
-        $self->error_message("Cannot handle more than $max_source_files source files!");
-        return;
-    }
-
-    $self->status_message('Resolve original format...done');
-    return $self->original_format($format);
-}
-
 sub _resolve_instrument_data_properties {
     my $self = shift;
 
     my @instrument_data_properties = $self->instrument_data_properties;
-    push @instrument_data_properties, 'description='.$self->description if defined $self->description;
+    push @instrument_data_properties, 'description='.$self->description if defined $self->description;		
     push @instrument_data_properties, 'downsample_ratio='.$self->downsample_ratio if defined $self->downsample_ratio;
-    my $instdata_props_processor = Genome::InstrumentData::Command::Import::WorkFlow::ResolveInstDataProperties->execute(
+    my $instdata_props_processor = Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
+        source_files => [ $self->source_files ],
         instrument_data_properties => \@instrument_data_properties,
     );
-    if ( not $instdata_props_processor->result ) {
-        $self->error_message('Failed to process instrument data properties!');
-        return;
-    }
 
-    my $instrument_data_properties =  $instdata_props_processor->resolved_instrument_data_properties;
-    if ( not $instrument_data_properties->{original_data_path} ) {
-        $instrument_data_properties->{original_data_path} = join(',', $self->source_files);
-    }
+    return $self->inputs($instdata_props_processor);
+}
 
-    return $self->_instrument_data_properties($instrument_data_properties);
+sub _die_if_original_data_path_previously_imported {
+    my $self = shift;
+    my @odp_attrs = Genome::InstrumentDataAttribute->get(
+        attribute_label => 'original_data_path',
+        attribute_value => $self->inputs->source_files->original_data_path,
+    );
+    return 1 if not @odp_attrs;
+    die $self->error_message(
+        'Source files (%s) have existing instrument data (%s). Cannot reimport!', 
+        $self->inputs->source_files->original_data_path,
+        join(' ', map { $_->instrument_data_id } @odp_attrs),
+    );
 }
 
 sub _resolve_working_directory {
@@ -195,10 +149,7 @@ sub _resolve_working_directory {
 sub _verify_adequate_disk_space_is_available_for_source_files {
     my $self = shift;
     my $helpers = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get;
-    my $space_available = $helpers->verify_adequate_disk_space_is_available_for_source_files(
-        working_directory => $self->_working_directory,
-        source_files => [ $self->source_files ],
-    );
+    my $space_available = $self->inputs->source_files->verify_adequate_disk_space_is_available_for_processing($self->_working_directory);
     return $space_available;
 }
 
@@ -237,7 +188,7 @@ sub _build_workflow {
 sub _resolve_workflow_steps {
     my $self = shift;
 
-    my $steps_method = '_steps_to_build_workflow_for_'.$self->original_format;
+    my $steps_method = '_steps_to_build_workflow_for_'.$self->inputs->format;
     my @steps = $self->$steps_method;
     return @steps if not $self->downsample_ratio;
 
@@ -286,7 +237,7 @@ sub _add_retrieve_source_path_op_to_workflow {
     my ($self, $previous_op) = @_;
 
     my @op_name_parts = (qw/ retrieve source path from /);
-    push @op_name_parts, $self->helpers->source_files_retrieval_method($self->source_files); # confesses on error
+    push @op_name_parts, $self->inputs->source_files->retrieval_method;
     my $workflow = $self->_workflow;
     my $retrieve_source_path_op = $self->helpers->add_operation_to_workflow_by_name($workflow, join(' ', @op_name_parts));
     $workflow->add_link(
@@ -521,11 +472,11 @@ sub _gather_inputs_for_workflow {
     return {
         analysis_project => $self->analysis_project,
         downsample_ratio => $self->downsample_ratio,
-        instrument_data_properties => $self->_instrument_data_properties,
+        instrument_data_properties => $self->inputs->instrument_data_properties,
         library => $self->library,
         library_name => $self->library->name,
         sample_name => $self->library->sample->name,
-        source_paths => [ $self->source_files ],
+        source_paths => [ $self->inputs->source_files->paths ],
         working_directory => $self->_working_directory,
     };
 }
