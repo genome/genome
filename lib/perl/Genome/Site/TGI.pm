@@ -20,74 +20,6 @@ BEGIN {
 use lib $plugins_dir;
 
 BEGIN {
-    my @shell_vars = qw(
-        GENOME_DB
-        GENOME_DB_QUERY_PAUSE
-        GENOME_DISK_GROUP_ALIGNMENTS
-        GENOME_DISK_GROUP_ARCHIVE
-        GENOME_DISK_GROUP_DEV
-        GENOME_DISK_GROUP_MODELS
-        GENOME_DISK_GROUP_REFERENCES
-        GENOME_DISK_GROUP_RESEARCH
-        GENOME_DISK_GROUP_TRASH
-        GENOME_DS_DGIDB_AUTH
-        GENOME_DS_DGIDB_LOGIN
-        GENOME_DS_DGIDB_OWNER
-        GENOME_DS_DGIDB_SERVER
-        GENOME_DS_DGIDB_TYPE
-        GENOME_DS_DWRAC_AUTH
-        GENOME_DS_DWRAC_LOGIN
-        GENOME_DS_DWRAC_OWNER
-        GENOME_DS_DWRAC_SERVER
-        GENOME_DS_DWRAC_TYPE
-        GENOME_DS_GMSCHEMA_AUTH
-        GENOME_DS_GMSCHEMA_LOGIN
-        GENOME_DS_GMSCHEMA_OWNER
-        GENOME_DS_GMSCHEMA_SERVER
-        GENOME_DS_GMSCHEMA_TYPE
-        GENOME_DS_OLTP_AUTH
-        GENOME_DS_OLTP_LOGIN
-        GENOME_DS_OLTP_OWNER
-        GENOME_DS_OLTP_SERVER
-        GENOME_DS_OLTP_TYPE
-        GENOME_EMAIL_ANNOTATION
-        GENOME_EMAIL_DOMAIN
-        GENOME_EMAIL_ILLUMINA_BWA
-        GENOME_EMAIL_NOREPLY
-        GENOME_EMAIL_PIPELINE
-        GENOME_EMAIL_PIPELINE_NOISY
-        GENOME_EMAIL_SMTP_SERVER
-        GENOME_EMAIL_TEST
-        GENOME_EMAIL_VIROME_SCREENING
-        GENOME_FS_LOCAL_NETWORK_CACHE
-        GENOME_HOME
-        GENOME_LOCK_DIR
-        GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT
-        GENOME_LSF_QUEUE_ASSEMBLY
-        GENOME_LSF_QUEUE_BIGMEM
-        GENOME_LSF_QUEUE_BUILD_WORKER
-        GENOME_LSF_QUEUE_BUILD_WORKER_ALT
-        GENOME_LSF_QUEUE_BUILD_WORKFLOW
-        GENOME_LSF_QUEUE_DV2_WORKER
-        GENOME_LSF_QUEUE_DV2_WORKFLOW
-        GENOME_LSF_QUEUE_SHORT
-        GENOME_ROOT
-        GENOME_SW
-        GENOME_SW_IGNORE
-        GENOME_SW_LEGACY_JAVA
-        GENOME_SYS_GROUP
-        GENOME_SYS_ID
-        GENOME_SYS_SERVICES_FILES_URL
-        GENOME_SYS_SERVICES_MEMCACHE
-        GENOME_SYS_SERVICES_SEARCH_URL
-        GENOME_SYS_SERVICES_SOLR
-        GENOME_SYS_SERVICES_WEB_VIEW_URL
-        GENOME_SYS_SERVICES_WIKI_URL
-        GENOME_SYS_UMASK
-        GENOME_TEST_INPUTS
-        GENOME_TEST_URL
-    );
-
     if (Genome::Config::get('dev_mode')) {
         Genome::Config::set_env('sys_services_memcache', 'apipe-dev.gsc.wustl.edu:11211');
         Genome::Config::set_env('sys_services_solr', 'http://solr-dev:8080/solr');
@@ -97,20 +29,6 @@ BEGIN {
         Genome::Config::set_env('statsd_host', '');
         Genome::Config::set_env('statsd_port', '');
         Genome::Config::set_env('db_pause', '');
-    } else {
-        # these get pushed on because if Genome::Site::TGI gets called by a
-        # subshell during tests then it will fail because the parent deleted
-        # these environment variables
-        push @shell_vars, qw(
-            GENOME_DB_PAUSE
-            GENOME_STATSD_HOST
-            GENOME_STATSD_PORT
-        );
-    }
-
-    my @unset_shell_vars = grep { !defined($ENV{$_}) } @shell_vars;
-    if (@unset_shell_vars) {
-        die q(ERROR: You need to start a new shell so that environment variables are setup for Genome.pm.  The following environment variables are not set: ) . join(', ', @unset_shell_vars);
     }
 
     my $sys_id = Genome::Config::get('sys_id');
