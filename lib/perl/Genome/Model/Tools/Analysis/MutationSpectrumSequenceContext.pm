@@ -125,17 +125,17 @@ sub execute {
     }
 
 
-    STDERR->print("step1: Calculating Mutation Context based on variants using window_size $window_size\n");
-    my ($mutation_context4type,$mutation_context2type) =  generate_mutation_seq_context($ROI_file,$window_size,$ref_seq_fasta);
-    STDERR->print("step2: Calculating Background Mutation Context based on $random_trials randomized samplings\n");
-    my ($random_context4type,$random_context2type) = generate_random_seq_context($ref_seq_fasta,$window_size,$random_trials,$random_number_seed);
+    $self->status_message("step1: Calculating Mutation Context based on variants using window_size $window_size\n");
+    my ($mutation_context4type,$mutation_context2type) =  $self->generate_mutation_seq_context($ROI_file,$window_size,$ref_seq_fasta);
+    $self->status_message("step2: Calculating Background Mutation Context based on $random_trials randomized samplings\n");
+    my ($random_context4type,$random_context2type) = $self->generate_random_seq_context($ref_seq_fasta,$window_size,$random_trials,$random_number_seed);
     make_file4plot_4type("${plot_input_file}.4type",$mutation_context4type,$random_context4type);
     make_file4plot_2type("${plot_input_file}.2type",$mutation_context2type,$random_context2type);
 
 
     my $call;
     my $R_cmd;
-    STDERR->print("step3: Performing proportion test on Mutation vs Background\n");
+    $self->status_message("step3: Performing proportion test on Mutation vs Background - 4type\n");
     prepare_file4_proportion_test_4type($mutation_context4type,$random_context4type,"$proportiontestFile.4type");
     $R_cmd = qq{ debug_session() };
     $call = Genome::Model::Tools::R::CallR->create(command=>$R_cmd, library=> "MutationSpectrum.R");
@@ -144,12 +144,13 @@ sub execute {
     $call = Genome::Model::Tools::R::CallR->create(command=>$R_cmd, library=> "MutationSpectrum.R");
     $call->execute;
 
+    $self->status_message("step3: Performing proportion test on Mutation vs Background - 2type\n");
     prepare_file4_proportion_test_2type($mutation_context2type,$random_context2type,"$proportiontestFile.2type");
     $R_cmd = qq{ compare_prop2populations(input_file="${proportiontestFile}.2type",output_file="${proportiontestFile}.2type.pvalues") };
     $call = Genome::Model::Tools::R::CallR->create(command=>$R_cmd, library=> "MutationSpectrum.R");
     $call->execute;
 
-    STDERR->print("step4: Plotting Mutation Context\n");
+    $self->status_message("step4: Plotting Mutation Context\n");
     $R_cmd = qq{ plot_mutation_spectrum_seq_contextV2(input4type="${plot_input_file}.4type",input2type="${plot_input_file}.2type",output_file="$plot_output_file",plot_title="$plot_title") };
     $call = Genome::Model::Tools::R::CallR->create(command=>$R_cmd, library=> "MutationSpectrum.R");
     $call->execute;
@@ -163,7 +164,7 @@ sub execute {
 
 
 sub generate_mutation_seq_context {
-
+    my $self = shift;
     my $ROI_file = shift;          #input variant files (5 columns)
     my $window_size = shift;       #size of the context around each position sampled
     my $ref_fasta = shift;         #absolute path to ref seq fasta
@@ -212,7 +213,7 @@ sub generate_mutation_seq_context {
         if(!exists($mutation_context1->{$key})) {
             $key = return_mutation_spectrum_category($ref,$var);
             if(!defined($key)) {
-                STDERR->print("Warning, cannot classify mutation category for $list[3], skipping...\n");
+                $self->warning_message("Warning, cannot classify mutation category for $list[3], skipping...\n");
                 next;
             }
             $rev_compl= 1;
@@ -241,7 +242,7 @@ sub generate_mutation_seq_context {
 
 
 sub generate_random_seq_context {
-
+    my $self = shift;
     my $ref_fasta = shift;                  #absolute path to ref seq fasta
     my $window_size = shift;                #size of the context around each position sampled
     my $number_trials = shift;              #number of random trials to perform
