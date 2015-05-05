@@ -375,18 +375,19 @@ sub print_subject_table{
 
   my $outfile = $self->outdir . "subjects_legend.txt";
   my $out_fh = Genome::Sys->open_file_for_writing($outfile);
-  print $out_fh "name\tprefix\tday\ttimepoint_position\tsample_type\torder\ttissue_desc\ttissue_label\textraction_type\textraction_label\n";
+  print $out_fh "name\tprefix\ttime_point_unit\ttime_point_value\ttime_point_position\tsample_type\torder\ttissue_desc\ttissue_label\textraction_type\textraction_label\n";
   foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys %{$align_builds}){
     my $order = $align_builds->{$name}->{order};
     my $prefix = $align_builds->{$name}->{prefix};
-    my $day = $align_builds->{$name}->{day};
-    my $timepoint_position = $align_builds->{$name}->{timepoint_position};
+    my $time_point_unit = $align_builds->{$name}->{time_point_unit};
+    my $time_point_value = $align_builds->{$name}->{time_point_value};
+    my $time_point_position = $align_builds->{$name}->{time_point_position};
     my $sample_type = $align_builds->{$name}->{sample_common_name};
     my $tissue_desc = $align_builds->{$name}->{tissue_desc};
     my $tissue_label = $align_builds->{$name}->{tissue_label};
     my $extraction_type = $align_builds->{$name}->{extraction_type};
     my $extraction_label = $align_builds->{$name}->{extraction_label};
-    print $out_fh "$name\t$prefix\t$day\t$timepoint_position\t$sample_type\t$order\t$tissue_desc\t$tissue_label\t$extraction_type\t$extraction_label\n";
+    print $out_fh "$name\t$prefix\t$time_point_unit\t$time_point_value\t$time_point_position\t$sample_type\t$order\t$tissue_desc\t$tissue_label\t$extraction_type\t$extraction_label\n";
   }
   close($out_fh);
 
@@ -1375,7 +1376,7 @@ sub create_plots{
     push(@prefixes, $prefix);
     my $day = $align_builds->{$name}->{day};
     push(@timepoint_names, $day);
-    my $timepoint_position = $align_builds->{$name}->{timepoint_position};
+    my $timepoint_position = $align_builds->{$name}->{time_point_position};
     push(@timepoint_positions, $timepoint_position);
     my $sample_type = $align_builds->{$name}->{sample_common_name};
     push(@sample_types, $sample_type);
