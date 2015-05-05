@@ -1,0 +1,3 @@
+--- 
+env: GENOME_MODEL_ROOT
+default_value: ""
