@@ -9,6 +9,8 @@ use Genome::ConfigSpec qw();
 use Path::Class qw();
 use YAML::Syck qw();
 
+require Scope::Guard;
+
 =item get()
 
 C<get($key)> retrieves the configuration value specified by the input key.  It
@@ -76,6 +78,34 @@ sub spec {
         croakf('unable to locate spec: %s', $key);
     }
     return Genome::ConfigSpec->new_from_file($file);
+}
+
+sub set_env {
+    my ($key, $value) = @_;
+    my $spec = Genome::Config::spec($key);
+    unless ($spec->has_env) {
+        croakf('configuration does not specify an environment variable: %s', $key);
+    }
+
+    my $env_key = $spec->env;
+
+    my $guard_closure;
+    if (exists $ENV{$env_key}) {
+        my $orig_value = $ENV{$env_key};
+        $guard_closure = sub { $ENV{$env_key} = $orig_value };
+    }
+    else {
+        $guard_closure = sub { delete $ENV{$env_key} };
+    }
+
+    $ENV{$env_key} = $value;
+
+    if (defined wantarray) {
+        my $guard = Scope::Guard->new($guard_closure);
+        return $guard;
+    }
+
+    return 1;
 }
 
 sub all_specs {
