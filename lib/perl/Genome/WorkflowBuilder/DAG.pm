@@ -107,7 +107,7 @@ sub submit {
 
     my $inputs = {%{$self->constant_values}, %{$p{inputs}}};
 
-    my $backend = $ENV{GENOME_WORKFLOW_BUILDER_BACKEND};
+    my $backend = Genome::Config::get('workflow_builder_backend');
     if ($backend eq 'ptero') {
         my $wf_builder = $self->get_ptero_builder_for_process($p{process_id});
 

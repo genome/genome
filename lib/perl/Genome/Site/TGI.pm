@@ -113,7 +113,8 @@ BEGIN {
         die q(ERROR: You need to start a new shell so that environment variables are setup for Genome.pm.  The following environment variables are not set: ) . join(', ', @unset_shell_vars);
     }
 
-    if (!$ENV{GENOME_SYS_ID} || $ENV{GENOME_SYS_ID} ne 'GMS1') {
+    my $sys_id = Genome::Config::get('sys_id');
+    if (!$sys_id || $sys_id ne 'GMS1') {
         die q(ERROR: At TGI we expect the GENOME_SYS_ID to be 'GMS1'.  Other sites should not use the Genome::Site::TGI module.)
     }
 };
