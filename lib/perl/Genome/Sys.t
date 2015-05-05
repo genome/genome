@@ -24,7 +24,7 @@ my $tmp2 = $tmp . '/set2';
 mdir($tmp2);
 ok($tmp2, "made temp directory $tmp2");
 
-$ENV{GENOME_DB} = join(":",$tmp1,$tmp2);
+Genome::Config::set_env('db', join(":",$tmp1,$tmp2));
 
 mdir($tmp1 . '/db1/1.0');
 mdir($tmp1 . '/db1/2.1'); # the others are noise

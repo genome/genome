@@ -11,7 +11,9 @@ $ENV{UR_DBI_NO_COMMIT} = 1;
 # try with a pair and verify that merging results works
 # gmt htseq count --align id:133654083/133965883 --app-version 0.5.4p1
 
-$ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} ||= "testsuite " . UR::Context->now . " " . Sys::Hostname::hostname() . "-$$.";
+unless (Genome::Config::get('software_result_test_name')) {
+    Genome::Config::set_env('software_result_test_name', "testsuite " . UR::Context->now . " " . Sys::Hostname::hostname() . "-$$.");
+}
 my $test_name = Genome::Config::get('software_result_test_name');
 
 my @alignment_result_ids = (133654083,133965883);

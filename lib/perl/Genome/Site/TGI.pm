@@ -89,14 +89,14 @@ BEGIN {
     );
 
     if (Genome::Config::get('dev_mode')) {
-        $ENV{GENOME_SYS_SERVICES_MEMCACHE} = 'apipe-dev.gsc.wustl.edu:11211';
-        $ENV{GENOME_SYS_SERVICES_SOLR} = 'http://solr-dev:8080/solr';
+        Genome::Config::set_env('sys_services_memcache', 'apipe-dev.gsc.wustl.edu:11211');
+        Genome::Config::set_env('sys_services_solr', 'http://solr-dev:8080/solr');
     }
 
     if ($ENV{UR_DBI_NO_COMMIT}) {
-        delete $ENV{GENOME_STATSD_HOST};
-        delete $ENV{GENOME_STATSD_PORT};
-        delete $ENV{GENOME_DB_PAUSE};
+        Genome::Config::set_env('statsd_host', '');
+        Genome::Config::set_env('statsd_port', '');
+        Genome::Config::set_env('db_pause', '');
     } else {
         # these get pushed on because if Genome::Site::TGI gets called by a
         # subshell during tests then it will fail because the parent deleted

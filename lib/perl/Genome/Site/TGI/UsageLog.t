@@ -3,15 +3,16 @@ use warnings;
 
 BEGIN {
     # make sure we don't record usage because of this test
-    $ENV{GENOME_LOG_USAGE} = 0;
+    require Genome::Config;
+    Genome::Config::set_env('log_usage', 0);
 };
 use above 'Genome::Site::TGI::UsageLog';
 use Test::More tests => 2;
 
 subtest 'test assumptions' => sub {
     plan tests => 2;
-    is($ENV{GENOME_LOG_USAGE}, 0, 'GENOME_LOG_USAGE is off initially');
-    delete $ENV{GENOME_LOG_USAGE};
+    is(Genome::Config::get('log_usage'), 0, 'GENOME_LOG_USAGE is off initially');
+    Genome::Config::set_env('log_usage', '');
     ok(!Genome::Site::TGI::UsageLog::should_record_usage(), 'should_record_usage is false (since UsageLog was already used)');
 };
 

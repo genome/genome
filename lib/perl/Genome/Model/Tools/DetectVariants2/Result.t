@@ -90,7 +90,7 @@ isnt($result3, $result, 'produced a different result with different parameter');
 my $output_dir3 = $command3->output_directory;
 is(readlink($output_dir3), $result3->output_dir, 'created symlink to third result');
 
-$ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} = 'dv2-result-test';
+Genome::Config::set_env('software_result_test_name', 'dv2-result-test');
 $command_params{output_directory} = $test_working_dir . '/test4';
 
 my $command4 = Genome::Model::Tools::DetectVariants2::Samtools->create(%command_params);
