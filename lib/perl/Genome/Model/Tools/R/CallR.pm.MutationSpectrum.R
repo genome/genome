@@ -620,8 +620,3 @@ plot_mutation_distance<- function(mut_dist_file,chr_boundary_file,plot_title="Mu
   }
 }
 
-debug_session <- function {
-  print(sessionInfo())
-  print(.libPaths())
-  print(capabilities())
-}
