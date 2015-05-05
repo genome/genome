@@ -1,3 +1,0 @@
---- 
-env: GENOME_LOCK_DIR
-default_value: /var/lock/genome/
