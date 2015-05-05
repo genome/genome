@@ -89,6 +89,8 @@ my $clip_overlap_result_two_inst_data = construct_clip_overlap_result(
     $ref, $merge_result_two_inst_data
 );
 
+my $speedseq_result = construct_speedseq_result($ref, @two_instrument_data);
+
 my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
     reference_sequence_build => $ref,
 );
@@ -176,8 +178,31 @@ subtest 'simple alignments with qc decoration' => sub {
     $override->restore;
 };
 
+subtest 'simple align_and_merge strategy' => sub {
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
+        inputs => {
+            instrument_data => \@two_instrument_data,
+            reference_sequence_build => $ref,
+            force_fragment => 0,
+            result_users => $result_users,
+        },
+        strategy => 'instrument_data align and merge to reference_sequence_build using speedseq test api v1',
+    );
+    isa_ok(
+        $ad,
+        'Genome::InstrumentData::Composite::Workflow',
+        'created dispatcher for simple align_and_merge strategy'
+    );
+
+    ok($ad->execute, 'executed dispatcher for simple align_and_merge');
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+    is_deeply([$speedseq_result], [sort @ad_results], 'found speedseq result');
+    check_result_bam(@ad_results);
+};
+
 subtest 'simple alignments with merge' => sub {
-   my $ad = Genome::InstrumentData::Composite::Workflow->create(
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@two_instrument_data,
             ref => $ref,
@@ -580,6 +605,33 @@ sub construct_clip_overlap_result {
     $clip_overlap_result->lookup_hash($clip_overlap_result->calculate_lookup_hash());
 
     return $clip_overlap_result;
+}
+
+sub construct_speedseq_result {
+    my $reference = shift;
+    my @instrument_data = @_;
+
+    my $speedseq_result = Genome::InstrumentData::AlignmentResult::Merged::Speedseq->__define__(
+        reference_build => $reference,
+        aligner_name => 'speedseq',
+        aligner_version => 'test',
+    );
+    for my $i (0..$#instrument_data) {
+        $speedseq_result->add_input(
+            name => 'instrument_data-' . $i,
+            value_id => $instrument_data[$i]->id,
+        );
+    }
+    $speedseq_result->add_param(
+        name => 'instrument_data_count',
+        value_id=> scalar(@instrument_data),
+    );
+    $speedseq_result->add_param(
+        name => 'instrument_data_md5',
+        value_id => Genome::Sys->md5sum_data(join(':', sort(map($_->id, @instrument_data))))
+    );
+    $speedseq_result->lookup_hash($speedseq_result->calculate_lookup_hash());
+    return $speedseq_result;
 }
 
 sub check_result_bam {
