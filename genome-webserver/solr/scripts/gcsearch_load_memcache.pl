@@ -9,7 +9,7 @@ use Cache::Memcached;
 
 require Genome::Config;
 
-my $lock_resource = Genome::Config::get('lock_dir') . '/gcsearch/memcache_loader';
+my $lock_resource = Genome::Config::get('site_lock_dir') . '/gcsearch/memcache_loader';
 
 my $lock = Genome::Sys->lock_resource(resource_lock=>$lock_resource, max_try=>0);
 unless ($lock) {
