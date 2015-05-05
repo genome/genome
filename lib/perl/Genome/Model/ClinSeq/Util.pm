@@ -1274,7 +1274,7 @@ sub get_ref_align_builds{
         $ref_builds{$name}{time_point_unit} = $time_point_unit;
         $ref_builds{$name}{time_point_value} = $time_point_value;
     } else {
-        die $self->error_message("could not parse day value from sample attribute (caTissue timepoint): $time_point_string");
+        die $self->error_message("could not parse timepoint value from sample attribute (caTissue timepoint): $time_point_string");
     }
   }
   my $time_point_counter = 0;
@@ -1365,7 +1365,7 @@ sub add_rnaseq_ref_builds {
       join("_", ($subject_common_name, $build_type, $time_point));
     $ref_builds->{$rnaseq_name}{time_point_tissue} =
       join("_", ($subject_common_name, $build_type, $tissue_desc, $time_point));
-    $ref_builds->{$rnaseq_name}{day} = $time_point;
+    $ref_builds->{$rnaseq_name}{time_point_string} = $time_point;
   }
 }
 
