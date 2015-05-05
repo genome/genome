@@ -6,7 +6,7 @@ use warnings;
 use above 'Genome';
 use Test::More tests => 3;
 
-my $pkg = 'Genome::Model::Tools::SpeedSeq::Base';
+my $pkg = 'Genome::Model::Tools::Speedseq::Base';
 use_ok ($pkg);
 
 my $version = 'test';

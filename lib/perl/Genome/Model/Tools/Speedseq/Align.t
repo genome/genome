@@ -7,7 +7,7 @@ use above 'Genome';
 use Test::More tests => 3;
 use Genome::Utility::Test qw(compare_ok);
 
-my $pkg = 'Genome::Model::Tools::SpeedSeq::Realign';
+my $pkg = 'Genome::Model::Tools::Speedseq::Align';
 use_ok($pkg);
 
 my $speedseq_version = 'test';
@@ -16,28 +16,30 @@ my $test_data_dir = __FILE__.".d";
 my $expected_output_dir = __FILE__.".out";
 
 my $reference_fasta = $test_data_dir .'/human_g1k_v37_20_42220611-42542245.fasta';
-my $bam = $test_data_dir .'/NA12878.20slice.30X.bam';
+my $fastq = $test_data_dir .'/NA12878.20slice.30X.fastq.gz';
+my $read_group_header = '@RG\tID:NA12878\tSM:NA12878\tLB:lib1';
 
-# Do not use the same temp directory for output.  SpeedSeq cleans up the temp directory.
+# Do not use the same temp directory for output.  Speedseq cleans up the temp directory.
 my $temp_directory = Genome::Sys->create_temp_directory();
 my $output_prefix = Genome::Sys->create_temp_directory() .'/example';
 
-my $realign_cmd = $pkg->create(
+my $align_cmd = $pkg->create(
    version => $speedseq_version,
    output_prefix => $output_prefix,
    temp_directory => $temp_directory,
    reference_fasta => $reference_fasta,
-   bams => $bam,
+   fastq => $fastq,
+   paired => 1,
    sort_memory => 3,
+   read_group_header => $read_group_header,
 );
 
-isa_ok($realign_cmd,$pkg);
-ok($realign_cmd->execute,'execute command '. $pkg);
+isa_ok($align_cmd,$pkg);
+ok($align_cmd->execute,'execute command '. $pkg);
 
-# The BAM headers differ since realign uses a temp pipe as the input to the BWAMEM command
-# Figure out a way to diff a BAM excluding the header, it must exist somewhere
+# BAM diff is failing
 
-#for my $output_file ($realign_cmd->output_files) {
+#for my $output_file ($align_cmd->output_files) {
 #    my ($basename,$dirname) = File::Basename::fileparse($output_file);
 #    my $expected_output_file = $expected_output_dir .'/'. $basename;
 #    compare_ok($output_file,$expected_output_file);

@@ -1,12 +1,12 @@
-package Genome::Model::Tools::SpeedSeq::Realign;
+package Genome::Model::Tools::Speedseq::Realign;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Tools::SpeedSeq::Realign {
-    is => 'Genome::Model::Tools::SpeedSeq::AlignBase',
+class Genome::Model::Tools::Speedseq::Realign {
+    is => 'Genome::Model::Tools::Speedseq::AlignBase',
     has_input => [
         bams => {
             is => 'Text',
