@@ -18,6 +18,13 @@ class Genome::Config::Command::Get {
             calculated_default => 1,
             doc => 'Limit to one or more keys; otherwise all keys.',
         },
+        format => {
+            is => 'Text',
+            is_optional => 1,
+            default_value => 'default',
+            valid_values => [qw(bash default)],
+            doc => 'Specifies the output format.',
+        },
     ],
 };
 
@@ -32,10 +39,32 @@ sub __default_keys__ {
 sub execute {
     my $self = shift;
     for my $key ($self->keys) {
-        my $value = Genome::Config::get($key);
-        printf "%s = '%s'\n", $key, $value;
+        $self->print($key);
     }
     return 1;
-};
+}
+
+sub print {
+    my ($self, $key) = @_;
+
+    if ($self->format eq 'bash') {
+        return print_bash($key);
+    }
+
+    return print_default($key);
+}
+
+sub print_bash {
+    my $key = shift;
+    my $spec = Genome::Config::spec($key);
+    my $value = Genome::Config::get($key);
+    printf qq(%s="%s"\n), $spec->env, $value;
+}
+
+sub print_default {
+    my $key = shift;
+    my $value = Genome::Config::get($key);
+    printf "%s = '%s'\n", $key, $value;
+}
 
 1;
