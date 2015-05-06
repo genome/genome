@@ -6,8 +6,8 @@ use Test::More tests => 293;
 use JSON;
 
 #
-# NOTE: this tests only the experimental/optional JSON logging 
-# which occurs when GENOME_SYS_LOG_DETAIL is set
+# NOTE: this tests only the experimental/optional JSON logging which occurs
+# when 'sys_log_detail' is set
 #
 
 # this will cause us to cut out just before sending into the syslogger

@@ -33,7 +33,7 @@ BEGIN {
 
     my $sys_id = Genome::Config::get('sys_id');
     if (!$sys_id || $sys_id ne 'GMS1') {
-        die q(ERROR: At TGI we expect the GENOME_SYS_ID to be 'GMS1'.  Other sites should not use the Genome::Site::TGI module.)
+        die q(ERROR: At TGI we expect the sys_id to be 'GMS1'.  Other sites should not use the Genome::Site::TGI module.)
     }
 };
 
