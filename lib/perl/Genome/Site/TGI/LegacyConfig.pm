@@ -6,7 +6,6 @@ use warnings;
 our $VERSION = $Genome::VERSION;
 
 use UR;
-use Sys::Hostname;
 
 my $arch_os;
 sub arch_os {
@@ -15,13 +14,6 @@ sub arch_os {
         chomp($arch_os);
     }
     return $arch_os;
-}
-
-# in dev mode we use dev search, dev wiki, dev memcache, etc, but production database still ;)
-my $dev_mode = ( Genome::Config::get('dev_mode') || UR::DBI->no_commit );
-if ($dev_mode) {
-    my $h = hostname;
-    warn "***** GENOME_DEV_MODE ($h) *****";
 }
 
 sub reference_sequence_directory {
