@@ -26,10 +26,11 @@ my $basedir = Path::Class::Dir->new(
 );
 
 SKIP: {
-    skip "this is a long-running test & must be run within TGI", 75;
+    skip "this is a long-running test & must be run within TGI", 77;
 
     my $cmd = run_evaluate_vcfs();
     check_stats($cmd);
+    check_json_file($cmd);
 }
 
 done_testing();
@@ -71,6 +72,15 @@ sub check_stats {
             delta_ok($calculated, $expected, "stat: '$stat' matches up");
         }
     }
+}
+
+sub check_json_file {
+    my $cmd = shift;
+    my $json_file = $cmd->json_file;
+
+    ok(-e $json_file, "Found $json_file in the output dir!");
+    my $size = -s $json_file;
+    ok($size, "JSON file contains data ($size bytes)!");
 }
 
 sub setup_evaluation_params {
