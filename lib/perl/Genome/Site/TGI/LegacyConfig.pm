@@ -44,10 +44,6 @@ sub auth_user {
     return $auth_user;
 }
 
-sub domain {
-    return Genome::Config::get('email_domain');
-}
-
 sub reference_sequence_directory {
     return join('/', Genome::Config::get('model_root'), 'reference_sequences');
 }

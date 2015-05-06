@@ -137,18 +137,18 @@ sub fix_params_and_get {
     my %p;
     if (scalar(@p) == 1) {
         my $key = $p[0];
-        $p{'email'} = $key;
+        $p{email} = $key;
     }
     else {
         %p = @p;
     }
 
-    if (defined($p{'email'})
-        && $p{'email'} !~ /\@/) {
-        my $old = $p{'email'};
-        my $new = join('@',$p{'email'},Genome::Config::domain());
+    if (defined($p{email}) && $p{email} !~ /\@/) {
+        my $user = Genome::Sys::User->get(username => $p{email});
+        my $old = $p{email};
+        my $new = $user->email;
         warn "Trying to get() for '$old' - assuming you meant '$new'";
-        $p{'email'} = $new;
+        $p{email} = $new;
     }
 
     return $class->SUPER::get(%p);
