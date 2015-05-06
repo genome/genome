@@ -22,7 +22,7 @@ class Genome::Config::Command::Get {
             is => 'Text',
             is_optional => 1,
             default_value => 'default',
-            valid_values => [qw(bash default)],
+            valid_values => [qw(bash default tcsh)],
             doc => 'Specifies the output format.',
         },
     ],
@@ -51,6 +51,10 @@ sub print {
         return print_bash($key);
     }
 
+    if ($self->format eq 'tcsh') {
+        return print_tcsh($key);
+    }
+
     return print_default($key);
 }
 
@@ -65,6 +69,13 @@ sub print_default {
     my $key = shift;
     my $value = Genome::Config::get($key);
     printf "%s = '%s'\n", $key, $value;
+}
+
+sub print_tcsh {
+    my $key = shift;
+    my $spec = Genome::Config::spec($key);
+    my $value = Genome::Config::get($key);
+    printf qq(setenv %s "%s"\n), $spec->env, $value;
 }
 
 1;
