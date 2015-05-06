@@ -65,10 +65,6 @@ BEGIN {
 use Genome::Sys::Lock;
 use Genome::Site::TGI::Extension::Sys::Lock;
 
-# the old Genome::Config is all deprecated
-# the core stuff about looking up your host config is now in Genome::Site
-use Genome::Site::TGI::LegacyConfig;
-
 # configuration for internal WUGC network software & LIMS
 # this module is called by Genome::Config::edu::wustl::gsc right now on all *.gsc.wustl.edu hosts
 # print STDERR "using " . __PACKAGE__ . "\n";
