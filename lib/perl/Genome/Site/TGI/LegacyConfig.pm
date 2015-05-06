@@ -24,15 +24,6 @@ if ($dev_mode) {
     warn "***** GENOME_DEV_MODE ($h) *****";
 }
 
-sub dev_mode {
-    shift;
-    if (@_ && !Genome::Config::get('dev_mode')) {
-        $dev_mode = shift;
-    }
-
-    return $dev_mode;
-}
-
 sub reference_sequence_directory {
     return join('/', Genome::Config::get('model_root'), 'reference_sequences');
 }

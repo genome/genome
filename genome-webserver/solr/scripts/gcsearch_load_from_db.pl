@@ -75,7 +75,7 @@ Genome::Search->get()->refresh_cache_on_add(1);
 my $time;
 
 my $lock_resource = 'gcsearch/db_loader';
-if (Genome::Config->dev_mode()) {
+if (Genome::Config::get('dev_mode')) {
     $lock_resource .= '_dev';
 }
 if ($lock_name) {

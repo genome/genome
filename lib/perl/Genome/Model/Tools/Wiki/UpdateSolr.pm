@@ -33,7 +33,7 @@ sub execute {
 
     my $resource_lock = 'gcsearch/wiki_loader';
 
-    if (Genome::Config->dev_mode()) {
+    if (Genome::Config::get('dev_mode')) {
         $resource_lock .= '_dev';
     }
 
