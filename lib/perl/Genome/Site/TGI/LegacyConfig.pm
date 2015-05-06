@@ -48,13 +48,6 @@ sub domain {
     return Genome::Config::get('email_domain');
 }
 
-sub user_email {
-    my $self = shift;
-    my $user = shift;
-    $user ||= $ENV{REMOTE_USER} || Genome::Sys->username();
-    return join('@', $user, Genome::Config::domain());
-}
-
 sub reference_sequence_directory {
     return join('/', Genome::Config::get('model_root'), 'reference_sequences');
 }
