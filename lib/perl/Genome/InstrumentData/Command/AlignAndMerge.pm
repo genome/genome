@@ -96,29 +96,80 @@ class Genome::InstrumentData::Command::AlignAndMerge {
 
 sub execute {
     my $self = shift;
-    return $self->_process_alignments('get_or_create');
+
+    my $result = $self->_process_alignments('get_or_create');
+    unless ($result) {
+        $self->error_message("Error finding or generating alignments!");
+        return 0;
+    }
+    $self->result_id($result->id);
+
+    my $per_lane_results = $self->_process_per_lane_alignments('get_or_create');
+    unless ($per_lane_results) {
+        $self->error_message("Error finding or generating per-lane alignments!");
+        return 0;
+    }
+
+    return $result;
 }
 
 sub shortcut {
     my $self = shift;
-    return $self->_process_alignments('get_with_lock');
+
+    my $result = $self->_process_alignments('get_with_lock');
+    unless ($result) {
+        return undef;
+    }
+    $self->result_id($result->id);
+
+    my $per_lane_results = $self->_process_per_lane_alignments('get_with_lock');
+    unless ($per_lane_results) {
+        return undef;
+    }
+
+    return $result;
 }
 
 sub _process_alignments {
     my $self = shift;
     my $mode = shift;
 
+    my %params = $self->_alignment_params;
     my $result = Genome::InstrumentData::AlignmentResult::Merged::Speedseq->$mode(
         instrument_data => [$self->instrument_data],
+        %params,
+    );
+
+    return $result;
+}
+
+sub _process_per_lane_alignments {
+    my $self = shift;
+    my $mode = shift;
+
+    my %params = $self->_alignment_params;
+    my @per_lane_results;
+    for my $instrument_data ($self->instrument_data) {
+        push @per_lane_results, Genome::InstrumentData::AlignmentResult::Speedseq->$mode(
+            instrument_data => $instrument_data,
+            samtools_version => $self->samtools_version,
+            picard_version => $self->picard_version,
+            %params,
+        );
+    }
+    return (scalar(@per_lane_results) == scalar($self->instrument_data));
+}
+
+sub _alignment_params {
+    my $self = shift;
+
+    return (
         reference_build => $self->reference_sequence_build,
         users => $self->result_users,
         aligner_name => $self->name,
         aligner_version => $self->version,
         aligner_params => $self->params,
     );
-    $self->result_id($result->id);
-
-    return 1;
 }
 
 1;

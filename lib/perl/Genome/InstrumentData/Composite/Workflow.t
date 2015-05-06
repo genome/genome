@@ -631,6 +631,19 @@ sub construct_speedseq_result {
         value_id => Genome::Sys->md5sum_data(join(':', sort(map($_->id, @instrument_data))))
     );
     $speedseq_result->lookup_hash($speedseq_result->calculate_lookup_hash());
+
+    for my $instrument_data (@instrument_data) {
+        my $per_lane_speedseq_result = Genome::InstrumentData::AlignmentResult::Speedseq->__define__(
+            instrument_data => $instrument_data,
+            reference_build => $reference,
+            aligner_name => 'speedseq',
+            aligner_version => 'test',
+            samtools_version => 'r599',
+            picard_version => '1.29',
+        );
+        $per_lane_speedseq_result->lookup_hash($per_lane_speedseq_result->calculate_lookup_hash());
+    }
+
     return $speedseq_result;
 }
 
