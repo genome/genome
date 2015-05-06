@@ -33,17 +33,6 @@ sub dev_mode {
     return $dev_mode;
 }
 
-sub auth_user {
-
-    my ($class, $u) = @_;
-    my $auth_user = Genome::Sys->username();
-    if (defined($u)) {
-        $auth_user = $u;
-    }
-
-    return $auth_user;
-}
-
 sub reference_sequence_directory {
     return join('/', Genome::Config::get('model_root'), 'reference_sequences');
 }
