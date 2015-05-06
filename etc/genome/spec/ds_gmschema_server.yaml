@@ -2,4 +2,4 @@
 # connection details for the GMSchema database.  Its value is used to build the
 # DBI connection string after the DBI driver name.
 --- 
-env: GENOME_DS_GMSCHEMA_SERVER
+env: XGENOME_DS_GMSCHEMA_SERVER

@@ -3,5 +3,5 @@
 # existing result, in order to run tests or to "move" results out of the way to
 # be regenerated.
 ---
-env: GENOME_ALIGNER_INDEX_TEST_NAME
+env: XGENOME_ALIGNER_INDEX_TEST_NAME
 default_value: ""

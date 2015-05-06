@@ -2,4 +2,4 @@
 # details for the Oltp database.  Its value is used to build the DBI connection
 # string after the DBI driver name.
 --- 
-env: GENOME_DS_OLTP_SERVER
+env: XGENOME_DS_OLTP_SERVER

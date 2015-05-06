@@ -1,5 +1,5 @@
 # The 'sys_services_solr' configuration variable points to the host:port of the
 # solr server, if present.
 --- 
-env: GENOME_SYS_SERVICES_SOLR
+env: XGENOME_SYS_SERVICES_SOLR
 default_value: http://localhost:8080/genome_solr

@@ -4,5 +4,5 @@
 # etc.).  This path is a fallback for systems with locally produced software
 # which is not packaged.
 --- 
-env: GENOME_SW
+env: XGENOME_SW
 default_value: /var/lib/genome/sw

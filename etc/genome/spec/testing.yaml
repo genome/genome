@@ -1,4 +1,4 @@
 # The 'testing' configuration variable should be set true during testing.
 --- 
-env: GENOME_TESTING
+env: XGENOME_TESTING
 default_value: ""

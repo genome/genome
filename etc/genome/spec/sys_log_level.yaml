@@ -10,5 +10,5 @@
 #   6  alert       n/a
 #   7  emergency   n/a
 --- 
-env: GENOME_SYS_LOG_LEVEL
+env: XGENOME_SYS_LOG_LEVEL
 default_value: ""

@@ -1,5 +1,5 @@
 # The 'jar_path' configuration variable contains a colon-separated list of
 # places to look for jar files.
 --- 
-env: GENOME_JAR_PATH
+env: XGENOME_JAR_PATH
 default_value: /usr/share/java

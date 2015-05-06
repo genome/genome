@@ -13,5 +13,5 @@
 # Set to 0 to log zero errors
 # Defaults to only log errors when a build id is present and apipe-builder is the user.
 --- 
-env: GENOME_LOG_COMMAND_ERROR
+env: XGENOME_LOG_COMMAND_ERROR
 default_value: default

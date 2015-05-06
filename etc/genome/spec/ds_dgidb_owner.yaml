@@ -1,4 +1,4 @@
 # The 'ds_dgidb_owner' configuration variable holds the default schema/owner
 # for the tables in the Dgidb data source.
 --- 
-env: GENOME_DS_DGIDB_OWNER
+env: XGENOME_DS_DGIDB_OWNER

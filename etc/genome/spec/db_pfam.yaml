@@ -1,5 +1,5 @@
 # The 'db_pfam' configuration variable is the directory containing
 # "unversioned" Pfam database. Most useful for testing purposes.
 ---
-env: GENOME_DB_PFAM
+env: XGENOME_DB_PFAM
 default_value: ""

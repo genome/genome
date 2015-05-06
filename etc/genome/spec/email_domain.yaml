@@ -1,4 +1,4 @@
 # The 'email_domain' configuration variable holds the name of the email domain.
 # This is used in several places to construct email addresses and send email.
 --- 
-env: GENOME_EMAIL_DOMAIN
+env: XGENOME_EMAIL_DOMAIN

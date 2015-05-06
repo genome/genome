@@ -1,5 +1,5 @@
 # Specified the LSF queue to submit assembly jobs to.
 --- 
-env: GENOME_LSF_QUEUE_ASSEMBLY
+env: XGENOME_LSF_QUEUE_ASSEMBLY
 validators:
   - LSFQueue

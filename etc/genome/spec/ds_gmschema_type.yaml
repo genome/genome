@@ -2,4 +2,4 @@
 # the GMSchema data source.  It should be something that inherits from
 # UR::DataSource::RDBMS.
 --- 
-env: GENOME_DS_GMSCHEMA_TYPE
+env: XGENOME_DS_GMSCHEMA_TYPE

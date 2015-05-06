@@ -1,4 +1,4 @@
 # The 'db_ensembl_default_imported_annotation_build' configuration variable
 # gives the id of the default Ensembl ImportedAnnotation build to use.
 ---
-env: GENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD
+env: XGENOME_DB_ENSEMBL_DEFAULT_IMPORTED_ANNOTATION_BUILD

@@ -1,5 +1,5 @@
 # Specified the LSF queue to submit build worker jobs to.
 --- 
-env: GENOME_LSF_QUEUE_BUILD_WORKER
+env: XGENOME_LSF_QUEUE_BUILD_WORKER
 validators:
   - LSFQueue
