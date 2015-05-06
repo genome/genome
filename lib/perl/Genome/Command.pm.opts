@@ -37148,13 +37148,6 @@ $Genome::Command::OPTS_SPEC = [
         undef,
         'instrument-data-properties=s@',
         'files',
-        'original-format=s',
-        [
-          'bam',
-          'fastq',
-          'fastq_archive',
-          'sra'
-        ],
         'help!',
         undef
       ],
