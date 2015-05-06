@@ -60,6 +60,14 @@ class Genome::Sys::User {
     data_source => 'Genome::DataSource::GMSchema',
 };
 
+sub get_current {
+    my $class = shift;
+    my $username = Genome::Sys->username();
+    # if multiple matches get will crash in scalar context
+    my $user = $class->get(username => $username);
+    return $user;
+}
+
 sub _resolve_param_value_from_text_by_name_or_id {
     my $class = shift;
     my $param_arg = shift;
