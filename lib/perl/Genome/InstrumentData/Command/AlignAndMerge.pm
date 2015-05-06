@@ -79,29 +79,94 @@ class Genome::InstrumentData::Command::AlignAndMerge {
 
 sub execute {
     my $self = shift;
-    return $self->_process_alignments('get_or_create');
+
+    my $result = $self->_process_alignments('get_or_create');
+    unless ($result) {
+        $self->error_message("Error finding or generating alignments!");
+        return 0;
+    }
+    $self->result_id($result->id);
+
+    my $per_lane_results = $self->_process_per_lane_alignments('get_or_create');
+    unless ($per_lane_results) {
+        $self->error_message("Error finding or generating per-lane alignments!");
+        return 0;
+    }
+
+    return $result;
 }
 
 sub shortcut {
     my $self = shift;
-    return $self->_process_alignments('get_with_lock');
+
+    my $result = $self->_process_alignments('get_with_lock');
+    unless ($result) {
+        return undef;
+    }
+    $self->result_id($result->id);
+
+    my $per_lane_results = $self->_process_per_lane_alignments('get_with_lock');
+    unless ($per_lane_results) {
+        return undef;
+    }
+    $self->per_lane_alignment_result_ids([map { $_->id } @per_lane_results]);
+
+    return $result;
 }
 
 sub _process_alignments {
     my $self = shift;
     my $mode = shift;
 
-    my $result = Genome::InstrumentData::AlignmentResult::Merged::Speedseq->$mode(
+    my $class = $self->merged_result_class;
+    my %params = $self->_alignment_params;
+    my $result = $class->$mode(
         instrument_data => [$self->instrument_data],
+        %params,
+    );
+
+    return $result;
+}
+
+sub _process_per_lane_alignments {
+    my $self = shift;
+    my $mode = shift;
+
+    my $class = $self->per_lane_result_class;
+    my %params = $self->_alignment_params;
+    my @per_lane_results;
+    for my $instrument_data ($self->instrument_data) {
+        push @per_lane_results, $class->$mode(
+            instrument_data => $instrument_data,
+            samtools_version => $self->samtools_version,
+            picard_version => $self->picard_version,
+            %params,
+        );
+    }
+    return (scalar(@per_lane_results) == scalar($self->instrument_data));
+}
+
+sub _alignment_params {
+    my $self = shift;
+
+    return (
         reference_build => $self->reference_sequence_build,
         users => $self->result_users,
         aligner_name => $self->name,
         aligner_version => $self->version,
         aligner_params => $self->params,
+        test_name => Genome::Config::get('software_result_test_name') || undef,
     );
-    $self->result_id($result->id);
+}
 
-    return 1;
+sub merged_result_class {
+    my $self = shift;
+    return 'Genome::InstrumentData::AlignmentResult::Merged::' . ucfirst($self->name);
+}
+
+sub per_lane_result_class {
+    my $self = shift;
+    return 'Genome::InstrumentData::AlignmentResult::' . ucfirst($self->name);
 }
 
 1;
