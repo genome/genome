@@ -8,6 +8,8 @@ use Genome::Sys::Lock qw();
 use Genome::Sys::LockProxy qw();
 use Params::Validate qw(validate validate_with HASHREF);
 
+require Scope::Guard;
+
 =item new()
 
 Keyword Arguments:
