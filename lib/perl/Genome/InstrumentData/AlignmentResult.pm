@@ -12,7 +12,6 @@ use File::Copy;
 use File::stat;
 use Carp qw(confess);
 use File::Basename;
-use Scope::Guard qw();
 use Try::Tiny qw(try catch);
 
 use Genome::Sys::LockMigrationProxy qw();
@@ -1110,8 +1109,7 @@ sub create_bam_flagstat {
         die $self->error_message('BAM file (%s) does not exist or is empty', $bam_file);
     }
 
-    my $lock  = $self->get_bam_lock;
-    my $guard = Scope::Guard->new(sub { $lock->unlock() });
+    my $guard  = $self->get_bam_lock->unlock_guard();
     return 1 if -e $output_file;
 
     my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
@@ -1132,8 +1130,7 @@ sub create_bam_header {
     my $self = shift;
     return 1 if -s $self->bam_header_path;
 
-    my $lock  = $self->get_bam_lock;
-    my $guard = Scope::Guard->new(sub { $lock->unlock() });
+    my $guard  = $self->get_bam_lock->unlock_guard();
     return 1 if -s $self->bam_header_path;
 
     my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
@@ -1701,8 +1698,7 @@ sub get_bam_file {
         return $self->revivified_alignment_bam_file_path;
     }
     else {
-        my $lock = $self->get_bam_lock;
-        my $guard = Scope::Guard->new(sub { $lock->unlock() });
+        my $guard = $self->get_bam_lock->unlock_guard();
 
         if ($self->get_merged_alignment_results) {
             return $self->revivified_alignment_bam_file_path;
@@ -1763,8 +1759,7 @@ sub remove_bam {
     my $self = shift;
 
     my $bam_path = $self->bam_path;
-    my $lock  = $self->get_bam_lock;
-    my $guard = Scope::Guard->new(sub { $lock->unlock() });
+    my $guard = $self->get_bam_lock->unlock_guard();
 
     for my $type ('', '.bai', '.md5') {
         my $file = $bam_path . $type;
