@@ -1135,14 +1135,21 @@ sub create_bam_header {
 
     my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 
+    my $source_bam_path = $self->source_bam_path_for_header;
+
     Genome::Sys->shellcmd(
-        cmd => sprintf('%s view -H %s > %s', $sam_path, $self->bam_path, $self->bam_header_path),
+        cmd => sprintf('%s view -H %s > %s', $sam_path, $source_bam_path, $self->bam_header_path),
         output_files => [$self->bam_header_path],
-        input_files => [$self->bam_path],
+        input_files => [$source_bam_path],
         keep_dbh_connection_open => 1,  # this runs very fast
     );
 
     return 1;
+}
+
+sub source_bam_path_for_header {
+    my $self = shift;
+    return $self->bam_path;
 }
 
 sub set_bam_size {
