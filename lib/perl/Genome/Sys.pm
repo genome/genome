@@ -1286,6 +1286,18 @@ sub iterate_file_lines {
     return($lines_read || '0 but true');
 }
 
+####
+####
+
+my $arch_os;
+sub arch_os {
+    unless ($arch_os) {
+        $arch_os = `uname -m`;
+        chomp($arch_os);
+    }
+    return $arch_os;
+}
+
 #####
 # Methods dealing with user names, groups, etc
 #####

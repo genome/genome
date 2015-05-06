@@ -36,7 +36,7 @@ EOS
 sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
-    unless (Genome::Config->arch_os =~ /64/) {
+    unless (Genome::Sys->arch_os =~ /64/) {
         $self->error_message('This genome-model tool '. $self->command_name .' will only run on 64-bit');
         return;
     }

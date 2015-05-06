@@ -7,14 +7,6 @@ our $VERSION = $Genome::VERSION;
 
 use UR;
 
-my $arch_os;
-sub arch_os {
-    unless ($arch_os) {
-        $arch_os = `uname -m`;
-        chomp($arch_os);
-    }
-    return $arch_os;
-}
 
 1;
 

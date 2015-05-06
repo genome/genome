@@ -33,7 +33,7 @@ sub execute {
     my $fasta_files_string = join(' ',@fasta_files);
     #Something went wrong with the 64-bit install or the build of 64-bit binaries
     my $db_flag = '-db';
-    if (Genome::Config->arch_os =~ /64/) {
+    if (Genome::Sys->arch_os =~ /64/) {
         $db_flag = '-forward-delete-char';
     }
     my $cmd = $genometools_path .' suffixerator -dna -pl -tis -suf -lcp -v -parts '. $self->parts .' '. $db_flag  .' '. $fasta_files_string .' -indexname '. $self->index_name;
