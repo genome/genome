@@ -55,12 +55,6 @@ sub user_email {
     return join('@', $user, Genome::Config::domain());
 }
 
-sub namespaces {
-#    my @ns = (qw/BAP Command EGAP GAP Genome MGAP PAP UR Workflow/);
-    my @ns = (qw/Genome UR Workflow/);
-    return @ns;
-}
-
 sub reference_sequence_directory {
     return join('/', Genome::Config::get('model_root'), 'reference_sequences');
 }
