@@ -16,10 +16,6 @@ sub arch_os {
     return $arch_os;
 }
 
-sub reference_sequence_directory {
-    return join('/', Genome::Config::get('model_root'), 'reference_sequences');
-}
-
 1;
 
 =pod
