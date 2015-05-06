@@ -62,11 +62,7 @@ sub namespaces {
 }
 
 sub reference_sequence_directory {
-    return join('/', Genome::Config::root_directory(), 'reference_sequences');
-}
-
-sub root_directory {
-    Genome::Config::get('model_root') || '/gscmnt/gc4096/info/symlinks';
+    return join('/', Genome::Config::get('model_root'), 'reference_sequences');
 }
 
 1;
