@@ -56,6 +56,7 @@ function help {
 
     -w workflow_repo
           The path to a Workflow repo to use instead of the default.
+    -t    Enable testing mode.
 EOS
 }
 
@@ -69,7 +70,8 @@ function main {
     fi
 
     local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF \
-        DB_SNAPSHOT_NAME DB_ID DB_HOST DB_PORT SQITCH_REPO UR_REPO WF_REPO
+        DB_SNAPSHOT_NAME DB_ID DB_HOST DB_PORT SQITCH_REPO UR_REPO WF_REPO \
+        TESTING_MODE=""
     parse_opts "$@"
     shift $((OPTIND-1))
 
@@ -116,6 +118,21 @@ function main {
     fi
     log.info ''
 
+    if test -n "$TESTING_MODE"
+    then
+        # Have to use `genome config get` after setup_env.  This imports
+        # GENOME_TEST_INPUTS.
+        eval "$(genome config get --format=bash test_inputs)"
+
+        unset WF_USE_FLOW
+        export GENOME_LOG_USAGE=0
+        export UR_DBI_NO_COMMIT=1
+        export GE_ENV_NAME="genome-test-env"
+        export GENOME_SYS_SERVICES_FILES_URL="file:///"
+        export GENOME_TEST_URL="${GENOME_SYS_SERVICES_FILES_URL}${GENOME_TEST_INPUTS}"
+        export GENOME_TESTING=1
+    fi
+
     if test "$#" -gt 0
     then
         log.info "$@"...
@@ -150,7 +167,7 @@ function parse_opts {
     DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" DB_ID="" DB_HOST="" DB_PORT="" SQITCH_REPO="" UR_REPO="" WF_REPO="" PERSIST_DB=""
 
     local opts
-    while getopts :hMm:Dd:i:pUu:Ww: opts "$@"
+    while getopts :hMm:Dd:i:pUu:Ww:t opts "$@"
     do
         case $opts in
             h)
@@ -190,6 +207,9 @@ function parse_opts {
                 ;;
             w)
                 WF_REPO="$OPTARG"
+                ;;
+            t)
+                TESTING_MODE=1
                 ;;
             :)
                 fatal $OPT_ERR "option -$OPTARG requires an argument"
