@@ -1802,6 +1802,23 @@ sub revivified_alignment_bam_file_path {
     }
 
     $self->create_bam_header;
+    $self->create_bam_flagstat_and_revivify($merged_bam, $revivified_bam);
+
+    $self->_reallocate_temp_allocation($temp_allocation);
+
+    if (-s $revivified_bam) {
+        # Cache the path of this revivified bam for future access
+        $self->_revivified_bam_file_path($revivified_bam);
+        return ($revivified_bam);
+    }
+    else {
+        die $self->error_message("After running RecreatePerLaneBam, no per-lane bam (%s) exists still!", $revivified_bam);
+    }
+}
+
+sub create_bam_flagstat_and_revivify {
+    my ($self, $merged_bam, $revivified_bam) = @_;
+
     $self->create_bam_flagstat;
 
     my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
@@ -1817,17 +1834,6 @@ sub revivified_alignment_bam_file_path {
 
     unless ($cmd->execute) {
         die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
-    }
-
-    $self->_reallocate_temp_allocation($temp_allocation);
-
-    if (-s $revivified_bam) {
-        # Cache the path of this revivified bam for future access
-        $self->_revivified_bam_file_path($revivified_bam);
-        return ($revivified_bam);
-    }
-    else {
-        die $self->error_message("After running RecreatePerLaneBam, no per-lane bam (%s) exists still!", $revivified_bam);
     }
 }
 
