@@ -31,6 +31,12 @@ class Genome::Model::Tools::SpeedSeq::Align {
             example_values => ['@RG\tID:id\tSM:samplename\tLB:lib'],
             tool_param_name => 'R',
         },
+        paired => {
+            is => 'Boolean',
+            doc => 'first fastq file consists of interleaved paired-end sequences',
+            is_optional => 1,
+            tool_param_name => 'p',
+        },
     ],
 };
 

@@ -25,12 +25,6 @@ class Genome::Model::Tools::SpeedSeq::AlignBase {
             example_values => ['in1.fq','in.realign'],
             tool_param_name => 'o',
         },
-        paired => {
-            is => 'Boolean',
-            doc => 'first fastq file consists of interleaved paired-end sequences',
-            is_optional => 1,
-            tool_param_name => 'p',
-        },
         threads => {
             is => 'Integer',
             doc => 'threads',
