@@ -1139,6 +1139,7 @@ sub create_bam_header {
         cmd => sprintf('%s view -H %s > %s', $sam_path, $self->bam_path, $self->bam_header_path),
         output_files => [$self->bam_header_path],
         input_files => [$self->bam_path],
+        keep_dbh_connection_open => 1,  # this runs very fast
     );
 
     return 1;
