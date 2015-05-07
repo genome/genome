@@ -1,4 +1,4 @@
-package Genome::Model::Tools::SpeedSeq::Base;
+package Genome::Model::Tools::Speedseq::Base;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 use Carp qw(confess);
 use Data::Dumper;
 
-class Genome::Model::Tools::SpeedSeq::Base {
+class Genome::Model::Tools::Speedseq::Base {
     is => 'Command::V2',
     is_abstract => 1,
     attributes_have => [

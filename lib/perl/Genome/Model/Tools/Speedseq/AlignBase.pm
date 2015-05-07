@@ -1,12 +1,12 @@
-package Genome::Model::Tools::SpeedSeq::AlignBase;
+package Genome::Model::Tools::Speedseq::AlignBase;
 
 use strict;
 use warnings;
 
 use Genome;
 
-class Genome::Model::Tools::SpeedSeq::AlignBase {
-    is => 'Genome::Model::Tools::SpeedSeq::Base',
+class Genome::Model::Tools::Speedseq::AlignBase {
+    is => 'Genome::Model::Tools::Speedseq::Base',
     is_abstract => 1,
     has_input => [
         reference_fasta => {

@@ -6,6 +6,5 @@ use warnings;
 use above 'Genome';
 use Test::More tests => 1;
 
-my $pkg = 'Genome::Model::Tools::SpeedSeq';
-use_ok($pkg);
-
+my $pkg = 'Genome::Model::Tools::Speedseq::AlignBase';
+use_ok ($pkg);
