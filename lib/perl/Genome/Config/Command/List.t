@@ -6,9 +6,9 @@ use warnings;
 use Genome qw();
 use Genome::Test::Config qw(setup_config);
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 
-use_ok('Genome::Config::Command::Get');
+use_ok('Genome::Config::Command::List');
 
 my ($temp_dirs, $new_temp_dir) = Genome::Test::Config::temp_dir_helper();
 local $ENV{XGENOME_CONFIG_SNAP} = $new_temp_dir->();
@@ -30,9 +30,11 @@ setup_config(
 );
 
 my @commands = (
-    Genome::Config::Command::Get->create(key => 'home_key'),
-    Genome::Config::Command::Get->create(key => 'conf_key'),
+    Genome::Config::Command::List->create(),
+    Genome::Config::Command::List->create(keys => [qw(home_key)]),
+    Genome::Config::Command::List->create(keys => [qw(home_key conf_key)]),
 );
 for my $command (@commands) {
     ok($command->execute);
 }
+

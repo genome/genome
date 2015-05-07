@@ -22,7 +22,10 @@ class Genome::Config::Command::Validate {
 };
 
 sub help_detail {
-    'Validate configuration key-value pairs.'
+    return <<EOS
+Validate configuration key-value pairs.  You should run this after making a
+change to be sure your new value is valid.
+EOS
 }
 
 sub __default_keys__ {

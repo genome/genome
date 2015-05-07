@@ -120,17 +120,15 @@ function main {
 
     if test -n "$TESTING_MODE"
     then
-        # Have to use `genome config get` after setup_env.  This imports
-        # GENOME_TEST_INPUTS.
-        eval "$(genome config get --format=bash test_inputs)"
-
+        # Have to use `genome config get` after setup_env.
+        TEST_INPUTS="$(genome config get test_inputs)"
+        eval "$(genome config set-env log_usage 0)"
+        eval "$(genome config set-env sys_services_files_url 'file:///')"
+        eval "$(genome config set-env test_url "${GENOME_SYS_SERVICES_FILES_URL}${TEST_INPUTS}")"
+        eval "$(genome config set-env testing 1)"
         unset WF_USE_FLOW
-        export GENOME_LOG_USAGE=0
         export UR_DBI_NO_COMMIT=1
         export GE_ENV_NAME="genome-test-env"
-        export GENOME_SYS_SERVICES_FILES_URL="file:///"
-        export GENOME_TEST_URL="${GENOME_SYS_SERVICES_FILES_URL}${GENOME_TEST_INPUTS}"
-        export GENOME_TESTING=1
     fi
 
     if test "$#" -gt 0
