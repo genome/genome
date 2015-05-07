@@ -13,6 +13,7 @@ class Genome::Model::Tools::SpeedSeq::Realign {
             doc => 'BAM file(s) (must contain read group tags)',
             is_many => 1,
             example_values => ['in.bam'],
+            tool_bare_arg_position => '2',
         },
     ],
     has_param => [
@@ -20,48 +21,22 @@ class Genome::Model::Tools::SpeedSeq::Realign {
             is => 'Boolean',
             doc => 'rename reads for smaller file size',
             is_optional => 1,
+            tool_param_name => 'n',
         },
     ],
 };
 
-sub execute {
-    my $self = shift;
+sub _tool_subcommand_name {
+    return 'realign';
+}
 
-    # OPTIONS aka params
-    my $options = $self->_resolve_options_string();
-    if ($self->rename_reads) {
-        $options .= ' -n';
-    }
-
-    # INPUTS
-    my @input_files;
-    my $inputs_string = $self->reference_fasta;
-    push @input_files, $self->reference_fasta;
-    for my $bam ($self->bams) {
-        push @input_files, $bam;
-        $inputs_string .= ' '. $bam;
-    }
-    if ($self->config_file) {
-        push @input_files, $self->config_file;
-    }
-
-    # COMMAND
-    my $cmd = $self->speedseq_path .' realign '. $options .' '. $inputs_string;
+#sub execute {
+#    my $self = shift;
 
     # OUTPUTS
-    my $basename = 'in.realign';
-    if ($self->output_prefix) {
-        $basename = $self->output_prefix;
-    }
-    my @output_files = $self->_resolve_output_file_paths($basename);
-    Genome::Sys->shellcmd(
-        cmd => $cmd,
-        input_files => \@input_files,
-        output_files => \@output_files,
-    );
-    $self->output_files(\@output_files);
-
-    return 1;
-}
+    #unless ($self->output_prefix) {
+    #    $self->output_prefix('in.realign');
+    #}
+#}
 
 1;
