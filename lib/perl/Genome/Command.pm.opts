@@ -31599,8 +31599,6 @@ $Genome::Command::OPTS_SPEC = [
       [
         'bedtools-version=s',
         'files',
-        'rawdata=s',
-        undef,
         'joinx-version=s',
         'files',
         'pass-filter-expression=s',
