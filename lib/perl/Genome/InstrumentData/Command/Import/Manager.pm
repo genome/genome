@@ -100,38 +100,11 @@ Status Output
 HELP
 }
 
-sub __errors__ {
-    my $self = shift;
-
-    my @errors = $self->SUPER::__errors__;
-    return @errors if @errors;
-
-    my $list_config = $self->list_config;
-    if ( $list_config ) {
-        my %list_config;
-        @list_config{qw/ command job_name_column status_column /} = split(';', $list_config);
-        for my $attr ( keys %list_config ) {
-            if ( not defined $list_config{$attr} ) {
-                push @errors, UR::Object::Tag->create(
-                    type => 'invalid',
-                    properties => [qw/ list_config /],
-                    desc => "Missing $attr in $list_config",
-                );
-                return @errors;
-            }
-            $list_config{$attr}-- if $attr =~ /col/;
-            my $method = '_list_'.$attr;
-            $self->$method( $list_config{$attr} );
-        }
-    }
-
-    return;
-}
-
 sub execute {
     my $self = shift;
 
     $self->_resolve_launch_command;
+    $self->_resolve_list_config;
     $self->_load_file;
 
     my $source_files_ok = $self->_check_source_files_and_set_kb_required_for_processing;
@@ -168,6 +141,26 @@ sub _resolve_launch_command {
 
     $cmd_format .= "genome instrument-data import basic --library name=%{library_name} --source-files %s --import-source-name '%s'%s%s%s",
     $self->_launch_command_format($cmd_format);
+
+    return 1;
+}
+
+sub _resolve_list_config {
+    my $self = shift;
+
+    my $list_config = $self->list_config;
+    return 1 if not $list_config;
+
+    my %list_config;
+    @list_config{qw/ command job_name_column status_column /} = split(';', $list_config);
+    for my $attr ( sort keys %list_config ) {
+        if ( not defined $list_config{$attr} ) {
+            die $self->error_message("Missing %s in list config: %s", $attr, $list_config);
+        }
+        $list_config{$attr}-- if $attr =~ /col/;
+        my $method = '_list_'.$attr;
+        $self->$method( $list_config{$attr} );
+    }
 
     return 1;
 }

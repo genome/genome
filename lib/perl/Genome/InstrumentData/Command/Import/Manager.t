@@ -153,5 +153,18 @@ throws_ok(
     'execute failed w/ non existing source file',
 );
 
+# fail - invalid list config
+throws_ok(
+    sub{
+        Genome::InstrumentData::Command::Import::Manager->execute(
+            analysis_project => $analysis_project,
+            file => $input_file,
+            list_config => 'INVALID',
+        );
+    },
+    qr/Missing job_name_column in list config: INVALID/,
+    'execute failed w/ invalid list config',
+);
+
 chdir $cwd;
 done_testing();
