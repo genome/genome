@@ -8,6 +8,7 @@ use Genome;
 use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
 use Genome::InstrumentData::Command::Import::CsvParser;
 use IO::File;
+use Params::Validate ':types';
 
 class Genome::InstrumentData::Command::Import::Manager {
     is => 'Command::V2',
@@ -106,20 +107,13 @@ sub execute {
     $self->_resolve_launch_command;
     $self->_resolve_list_config;
     $self->_load_file;
+    $self->_check_source_files_and_set_kb_required_for_processing;
+    $self->_load_instrument_data;
+    $self->_load_statuses;
+    $self->_launch_imports;
+    $self->_output_status;
 
-    my $source_files_ok = $self->_check_source_files_and_set_kb_required_for_processing;
-    return if not $source_files_ok;
-
-    my $load_instrument_data = $self->_load_instrument_data;
-    return if not $load_instrument_data;
-
-    my $load_statuses = $self->_load_statuses;
-    return if not $load_statuses;
-
-    my $launch_imports = $self->_launch_imports;
-    return if not $launch_imports;
-
-    return $self->_output_status;
+    return 1
 }
 
 sub _resolve_launch_command {
@@ -189,8 +183,7 @@ sub _load_file {
 sub _check_source_files_and_set_kb_required_for_processing {
     my $self = shift;
 
-    my $imports = $self->_imports;
-    for my $import ( @$imports ) {
+    for my $import ( @{$self->_imports} ) {
         # get disk space required [checks if source files exist]
         my $disk_space_required_in_kb = Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles->create(
             paths => [ split(',', $import->{instdata}->{source_files}) ],
@@ -200,20 +193,16 @@ sub _check_source_files_and_set_kb_required_for_processing {
         $import->{mtmp} = sprintf('%.0f', $disk_space_required_in_kb / 1024);
         $import->{kbtmp} = $disk_space_required_in_kb;
     }
-    $self->_imports($imports);
 
-    return if $self->error_message;
     return 1;
 }
 
 sub _load_instrument_data {
     my $self = shift;
 
-    my $imports = $self->_imports;
-
     # Get instdata by source files
     my @instrument_data = Genome::InstrumentData::Imported->get(
-        original_data_path => [ map { $_->{instdata}->{source_files} } @$imports ],
+        original_data_path => [ map { $_->{instdata}->{source_files} } @{$self->_imports} ],
         '-hint' => [qw/ attributes /],
     );
 
@@ -227,13 +216,11 @@ sub _load_instrument_data {
         push @{$instrument_data{$id}}, $instrument_data;
     }
 
-    for my $import ( @$imports ) {
+    for my $import ( @{$self->_imports} ) {
         my $lookup_id = $import->{instdata}->{source_files};
         $lookup_id .= sprintf('%f', $import->{instdata}->{downsample_ratio}) if $import->{instdata}->{downsample_ratio};
         $import->{instrument_data} = $instrument_data{$lookup_id};
     }
-
-    $self->_imports($imports);
 
     return 1;
 }
@@ -259,8 +246,6 @@ sub _load_statuses {
         $import->{status} = $get_status_for_import->($import);
     }
 
-    $self->_imports($imports);
-
     return 1;
 }
 
@@ -270,10 +255,7 @@ sub _load_job_statuses {
     my $job_list_cmd = $self->_list_command;
     $job_list_cmd .= ' 2>/dev/null |';
     my $fh = IO::File->new($job_list_cmd);
-    if ( not $fh ) {
-        $self->error_message('Failed to execute import list command! '.$job_list_cmd);
-        return;
-    }
+    die $self->error_message('Failed to execute import list command! '.$job_list_cmd) if not $fh;
     
     my $name_column = $self->_list_job_name_column;
     my $status_column = $self->_list_status_column;
@@ -309,8 +291,7 @@ sub _launch_imports {
         my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
         if ( not $rv ) {
             $self->error_message($@) if $@;
-            $self->error_message('Failed to launch instrument data import command!');
-            return;
+            die $self->error_message('Failed to launch instrument data import command!');
         }
         $import->{status} = 'pend';
     };
@@ -320,15 +301,12 @@ sub _launch_imports {
         next if $import->{status} ne 'needed';
         $launch_sub->($import) or return;
     }
-    print STDERR "\n";
 
     return 1;
 }
 
 sub _resolve_launch_command_for_import {
-    my ($self, $import) = @_;
-
-    Carp::confess('No import to resolve launch command!') if not $import;
+    my ($self, $import) = Params::Validate::validate_pos(@_, {type => OBJECT}, {type => HASHREF});
 
     my $cmd_format = $self->_launch_command_format;
     my $substitutions = $self->_launch_command_substitutions;
