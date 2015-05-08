@@ -57,62 +57,6 @@ ok($cmd->result, 'execute');
 Genome::Utility::Test::compare_ok($cmd->output_file, File::Spec->join($data_dir, $commands_file_name), 'commands files match');
 
 # Fails
-## invalid file type
-throws_ok(
-    sub{ Genome::InstrumentData::Command::Import::GenerateEntityCreateCommands->execute(file => File::Spec->join($data_dir, 'samples.blah')); },
-    qr/Cannot determine type for file: .+. It needs to end with \.csv or \.tsv\./,
-    'failed w/ invalid file type',
-);
-
-## empty file
-throws_ok(
-    sub{ Genome::InstrumentData::Command::Import::GenerateEntityCreateCommands->execute(file => File::Spec->join($data_dir, 'empty.csv')); },
-    qr/File \(.+\) is empty\!/,
-    'failed w/ empty file',
-);
-
-## invalid entity type
-throws_ok(
-    sub{ Genome::InstrumentData::Command::Import::GenerateEntityCreateCommands->execute(file => File::Spec->join($data_dir, 'invalid-entity-type.csv')); },
-    qr/Invalid entity type: unknown/,
-    'failed w/ invalid entity type',
-);
-
-## invalid sample name
-throws_ok(
-    sub{ Genome::InstrumentData::Command::Import::GenerateEntityCreateCommands->execute(file => File::Spec->join($data_dir, 'invalid-sample-name.csv')); },
-    qr/Invalid sample name: INVALID.NAME-. It must have at least 3 parts separated by dashes./,
-    'failed w/ invalid sample name',
-);
-
-## no sample name then nomenclature is required
-throws_ok(
-    sub{ Genome::InstrumentData::Command::Import::GenerateEntityCreateCommands->execute(file => File::Spec->join($data_dir, 'no-nomenclature.csv')); },
-    qr/No sample\.nomenclature column given\! It is required to resolve entity names when no sample name is given\./,
-    'failed w/o sample name and sample.nomenclature',
-);
-
-## no sample name then individual name part is required
-throws_ok(
-    sub{ Genome::InstrumentData::Command::Import::GenerateEntityCreateCommands->execute(file => File::Spec->join($data_dir, 'no-individual-name-part.csv')); },
-    qr/No individual\.name_part column_given! It is required to resolve entity names when no sample name is given\./,
-    'failed w/o sample name and individual.name_part',
-);
-
-## no sample name then sample name part is required
-throws_ok(
-    sub{ Genome::InstrumentData::Command::Import::GenerateEntityCreateCommands->execute(file => File::Spec->join($data_dir, 'no-sample-name-part.csv')); },
-    qr/No sample\.name_part column_given! It is required to resolve entity names when no sample name is given\./,
-    'failed w/o sample name and sample.name_part',
-);
-
-## no sample name then sample name part is required
-throws_ok(
-    sub{ Genome::InstrumentData::Command::Import::GenerateEntityCreateCommands->execute(file => File::Spec->join($data_dir, 'individual-name-mismatch.csv')); },
-    qr/Invalid individual name: TGI-AAAA\. It must include the first part of the sample name: TGI-AA12345-Z98765\./,
-    'failed when sample name does not include individual name',
-);
-
 ## missing required property
 throws_ok(
     sub{ Genome::InstrumentData::Command::Import::GenerateEntityCreateCommands->execute(file => File::Spec->join($data_dir, 'missing-required-property.csv')); },

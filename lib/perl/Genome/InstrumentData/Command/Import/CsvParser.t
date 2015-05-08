@@ -17,22 +17,23 @@ my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Comma
 my $input_file = File::Spec->join($data_dir, 'info.csv');
 
 my $csv_parser = $class->create(file => File::Spec->join($data_dir, 'info.tsv'));
-my $cnt = 0;
 my $ref;
-while ( $ref = $csv_parser->next ) {
-    $cnt++;
-}
-is($cnt, 4, 'read 4 entries');
+for (1..4) { $ref = $csv_parser->next }
 is_deeply(
     $ref,
     {
-        'library.name' => 'TeSt-0000-01-extlibs',
-        'instdata.source_files' => 'bam3.bam',
-        'instdata.lane' => 7,
-        'instdata.downsample_ratio' => '.1',
+        individual => { name => 'TeSt-0000', nomenclature => 'TeSt', upn => '0000', },
+        sample => { name => 'TeSt-0000-01', nomenclature => 'TeSt', },
+        library => { name => 'TeSt-0000-01-extlibs', },
+        instdata => {
+            source_files => 'bam3.bam',
+            lane => 7,
+            downsample_ratio => '.1',
+        },
     }, 
     'last ref is correct',
 );
+ok(!$csv_parser->next, 'reached end of file');
 
 # Fails
 ## invalid file type
@@ -65,46 +66,30 @@ throws_ok(
 
 ## no sample name then nomenclature is required
 throws_ok(
-    sub{ $class->create(file => File::Spec->join($data_dir, 'no-nomenclature.csv')); },
+    sub{ $class->create(file => File::Spec->join($data_dir, 'no-nomenclature.csv'))->next; },
     qr/No sample\.nomenclature column given\! It is required to resolve entity names when no sample name is given\./,
     'failed w/o sample name and sample.nomenclature',
 );
 
-done_testing(); exit;
-
 ## no sample name then individual name part is required
 throws_ok(
-    sub{ $class->create(file => File::Spec->join($data_dir, 'no-individual-name-part.csv')); },
+    sub{ $class->create(file => File::Spec->join($data_dir, 'no-individual-name-part.csv'))->next; },
     qr/No individual\.name_part column_given! It is required to resolve entity names when no sample name is given\./,
     'failed w/o sample name and individual.name_part',
 );
 
 ## no sample name then sample name part is required
 throws_ok(
-    sub{ $class->create(file => File::Spec->join($data_dir, 'no-sample-name-part.csv')); },
+    sub{ $class->create(file => File::Spec->join($data_dir, 'no-sample-name-part.csv'))->next; },
     qr/No sample\.name_part column_given! It is required to resolve entity names when no sample name is given\./,
     'failed w/o sample name and sample.name_part',
 );
 
 ## no sample name then sample name part is required
 throws_ok(
-    sub{ $class->create(file => File::Spec->join($data_dir, 'individual-name-mismatch.csv')); },
+    sub{ $class->create(file => File::Spec->join($data_dir, 'individual-name-mismatch.csv'))->next; },
     qr/Invalid individual name: TGI-AAAA\. It must include the first part of the sample name: TGI-AA12345-Z98765\./,
     'failed when sample name does not include individual name',
-);
-
-## missing required property
-throws_ok(
-    sub{ $class->create(file => File::Spec->join($data_dir, 'missing-required-property.csv')); },
-    qr/Missing required individual properties\: taxon/,
-    'failed when missing requried property [individual taxon]',
-);
-
-## unknown property
-throws_ok(
-    sub{ $class->create(file => File::Spec->join($data_dir, 'unknown-property.csv')); },
-    qr/Unknown individual property\: unknown_property/,
-    'failed w/ unknown property',
 );
 
 done_testing();

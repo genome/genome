@@ -21,7 +21,6 @@ class Genome::InstrumentData::Command::Import::CsvParser {
     has_optional_transient => {
         _entity_attributes => { is => 'ARRAY', },
         _fh => { },
-        _nomenclature => { is => 'Text', },
         _parser => { },
     }
 };
@@ -135,11 +134,18 @@ sub _resolve_entity_params_for_values {
 sub _resolve_names_for_entities {
     my ($self, $entity_params) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => HASHREF});
 
+    # set sample name if library name given and sample name not given
+    if ( $entity_params->{library}->{name} and  not $entity_params->{sample}->{name} ) {
+        my @tokens = split(/\-/, $entity_params->{library}->{name});
+        pop @tokens; #rm lib ext
+        $entity_params->{sample}->{name} = join('-', @tokens);
+    }
+
     my $nomenclature = delete $entity_params->{sample}->{nomenclature};
     my $individual_name_part = delete $entity_params->{individual}->{name_part};
     my $sample_name_part = delete $entity_params->{sample}->{name_part};
 
-    # sample
+    # sample - use name to fill in as needed
     my $sample_name = $entity_params->{sample}->{name};
     if ( $sample_name ) {
         my @tokens = split(/\-/, $sample_name);
@@ -155,6 +161,7 @@ sub _resolve_names_for_entities {
         $sample_name = join('-', $nomenclature, $individual_name_part, $sample_name_part);
         $entity_params->{sample}->{name} = $sample_name;
     }
+    $entity_params->{sample}->{nomenclature} = $nomenclature;
 
     # individual
     my $individual_name = $entity_params->{individual}->{name};
@@ -164,15 +171,15 @@ sub _resolve_names_for_entities {
     else {
         $entity_params->{individual}->{name} = join('-', $nomenclature, $individual_name_part);
     }
+    $entity_params->{individual}->{nomenclature} = $nomenclature;
     $entity_params->{individual}->{upn} = $individual_name_part if not $entity_params->{individual}->{upn};
     
-    # library - add ext or use default
-    $entity_params->{library}->{name} = $sample_name.( 
-        $entity_params->{library}->{ext} ? $entity_params->{library}->{ext} : '-extlibs'
-    );
-
-    # nomenclature
-    $self->_nomenclature($nomenclature);
+    # library name - add ext or use default if name not given/set
+    if ( not $entity_params->{library}->{name} ) {
+        $entity_params->{library}->{name} = $sample_name.( 
+            $entity_params->{library}->{ext} ? $entity_params->{library}->{ext} : '-extlibs'
+        );
+    }
 
     return 1;
 }

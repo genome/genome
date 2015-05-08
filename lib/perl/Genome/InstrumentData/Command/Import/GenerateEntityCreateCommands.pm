@@ -49,7 +49,6 @@ sub execute {
 sub _add_individual_create_command {
     my ($self, $entity_params) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => HASHREF});
     my $params = $entity_params->{individual};
-    $params->{nomenclature} = $self->_nomenclature; # add the nomenclature to the params
     return $self->_add_create_command_for_type('individual', $params);
 }
 
@@ -57,7 +56,6 @@ sub _add_sample_create_command {
     my ($self, $entity_params) = Params::Validate::validate_pos(@_, {type => HASHREF}, {type => HASHREF});
     my $params = $entity_params->{sample};
     die $self->error_message('Sample extraction_type is required to create a sample!') if not $params->{extraction_type}; # FIXME
-    $params->{nomenclature} = $self->_nomenclature; # add the nomenclature to the params
     $params->{source} = $entity_params->{individual}->{name}; # add the individual name to the params
     return $self->_add_create_command_for_type('sample', $params);
 }
