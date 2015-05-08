@@ -110,9 +110,6 @@ sub execute {
     my $source_files_ok = $self->_check_source_files_and_set_kb_required_for_processing;
     return if not $source_files_ok;
 
-    my $load_libraries = $self->_load_libraries;
-    return if not $load_libraries;
-
     my $load_instrument_data = $self->_load_instrument_data;
     return if not $load_instrument_data;
 
@@ -180,6 +177,8 @@ sub _load_file {
         $seen{$id}++;
         $import->{job_name} = $id;
         $import->{library_name} = $import->{library}->{name};
+        my @libraries = Genome::Library->get(name => $import->{library}->{name});
+        $import->{library_cnt} = scalar @libraries;
         push @imports, $import;
     }
     $self->_imports(\@imports);
@@ -191,7 +190,6 @@ sub _check_source_files_and_set_kb_required_for_processing {
     my $self = shift;
 
     my $imports = $self->_imports;
-    my %library_names_seen;
     for my $import ( @$imports ) {
         # get disk space required [checks if source files exist]
         my $disk_space_required_in_kb = Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles->create(
@@ -201,23 +199,6 @@ sub _check_source_files_and_set_kb_required_for_processing {
         $import->{gtmp} = sprintf('%.0f', $disk_space_required_in_kb / 1048576);
         $import->{mtmp} = sprintf('%.0f', $disk_space_required_in_kb / 1024);
         $import->{kbtmp} = $disk_space_required_in_kb;
-    }
-    $self->_imports($imports);
-
-    return if $self->error_message;
-    return 1;
-}
-
-sub _load_libraries {
-    my $self = shift;
-
-    my $imports = $self->_imports;
-    for my $import ( @$imports ) {
-        # library name, number and job name
-        my $library_name = $import->{library}->{name};
-        # genome library - get as array in case there are many with the same name
-        my @libraries = Genome::Library->get(name => $library_name);
-        $import->{library_cnt} = scalar @libraries;
     }
     $self->_imports($imports);
 
