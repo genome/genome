@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
 use Genome::InstrumentData::Command::Import::CsvParser;
 use IO::File;
 
@@ -215,8 +216,9 @@ sub _check_source_files_and_set_kb_required_for_processing {
     my %library_names_seen;
     for my $import ( @$imports ) {
         # get disk space required [checks if source files exist]
-        my $disk_space_required_in_kb = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->kilobytes_required_for_processing_of_source_files( split(',', $import->{instdata}->{source_files}) );
-        return if Genome::InstrumentData::Command::Import::WorkFlow::Helpers->error_message;
+        my $disk_space_required_in_kb = Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles->create(
+            paths => [ split(',', $import->{instdata}->{source_files}) ],
+        )->kilobytes_required_for_processing;
         $disk_space_required_in_kb = 1048576 if $disk_space_required_in_kb < 1048576; # 1 Gb 
         $import->{gtmp} = sprintf('%.0f', $disk_space_required_in_kb / 1048576);
         $import->{mtmp} = sprintf('%.0f', $disk_space_required_in_kb / 1024);
