@@ -106,16 +106,6 @@ sub __errors__ {
     my @errors = $self->SUPER::__errors__;
     return @errors if @errors;
 
-    my $import_cmd_error = $self->_resolve_launch_command;
-    if ( $import_cmd_error ) {
-        push @errors, UR::Object::Tag->create(
-            type => 'invalid',
-            properties => [qw/ launch_config /],
-            desc => $import_cmd_error,
-        );
-        return @errors;
-    }
-
     my $list_config = $self->list_config;
     if ( $list_config ) {
         my %list_config;
@@ -138,29 +128,10 @@ sub __errors__ {
     return;
 }
 
-sub _resolve_launch_command {
-    my $self = shift;
-
-    my $cmd_format = $self->launch_config;
-    if ( $cmd_format ) {
-        my $substitutions = $self->_launch_command_substitutions;
-        my $required_substitution = 'job_name';
-        my $substitution = $substitutions->{$required_substitution};
-        if ( $cmd_format =~ /$substitution/ ) {
-            $self->_launch_command_has_job_name(1);
-        }
-        $cmd_format .= ' ';
-    }
-
-    $cmd_format .= "genome instrument-data import basic --library name=%{library_name} --source-files %s --import-source-name '%s'%s%s%s",
-    $self->_launch_command_format($cmd_format);
-
-    return;
-}
-
 sub execute {
     my $self = shift;
 
+    $self->_resolve_launch_command;
     $self->_load_file;
 
     my $source_files_ok = $self->_check_source_files_and_set_kb_required_for_processing;
@@ -179,6 +150,26 @@ sub execute {
     return if not $launch_imports;
 
     return $self->_output_status;
+}
+
+sub _resolve_launch_command {
+    my $self = shift;
+
+    my $cmd_format = $self->launch_config;
+    if ( $cmd_format ) {
+        my $substitutions = $self->_launch_command_substitutions;
+        my $required_substitution = 'job_name';
+        my $substitution = $substitutions->{$required_substitution};
+        if ( $cmd_format =~ /$substitution/ ) {
+            $self->_launch_command_has_job_name(1);
+        }
+        $cmd_format .= ' ';
+    }
+
+    $cmd_format .= "genome instrument-data import basic --library name=%{library_name} --source-files %s --import-source-name '%s'%s%s%s",
+    $self->_launch_command_format($cmd_format);
+
+    return 1;
 }
 
 sub _load_file {
