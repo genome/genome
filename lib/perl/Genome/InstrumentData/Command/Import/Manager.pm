@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 
+use Genome::InstrumentData::Command::Import::CsvParser;
 use IO::File;
 
 class Genome::InstrumentData::Command::Import::Manager {
@@ -15,28 +16,9 @@ class Genome::InstrumentData::Command::Import::Manager {
             is => 'Genome::Config::AnalysisProject',
             doc => 'Analysis project to assign to the created instrument data.',
         },
-        source_files_tsv => {
+        file => {
             is => 'Text',
-            doc => <<DOC
-TAB separated file containing library names, source files and instrument data attributes to import.
- 
-Required Columns
- library_name    Name of the library. The library must exist.
- source_files    Source files [bam, fastq, sra, etc] to import. Separate files by comma (,). 
-
-Additional Columns
- The columns are to specify attributes for instrument data. Attributes are skipped if they are empty for a particular instrument data.
-
-Example
-
-This will look to run/check imports for 2 libraires. Library 1 has 2 source files [bams] to import. The second library, Sample-02-extlibs, has 2 fastqs to import. They will be downloaded, unzipped and converted to bam. In addition, the flow_cell_id, lane and index_sequence will be added to the respective instrument data as attributes.
-
-library_name        source_files    flow_cell_id    lane    index_sequence
-Sample-01-extlibs   sample-1.1.bam  XAXAXA          1       AATTGG
-Sample-01-extlibs   sample-1.2.bam  XAXAXA          1       TTAACC
-Sample-02-extlibs   http://fastqs.org/sample-2.fwd.fastq.gz,http://fastqs.org/sample-2.rev.fastq.gz  XYYYYX  2   GAACTT
-
-DOC
+            doc => Genome::InstrumentData::Command::Import::CsvParser->csv_help,
         },
     ],
     has_optional => [
@@ -158,81 +140,6 @@ sub __errors__ {
         }
     }
 
-    my $load_info_error = $self->_load_source_files_tsv;
-    if ( $load_info_error ) {
-        push @errors, UR::Object::Tag->create(
-            type => 'invalid',
-            properties => [qw/ source_files_tsv /],
-            desc => $load_info_error,
-        );
-        return @errors;
-    }
-
-    return;
-}
-
-sub _load_source_files_tsv {
-    my $self = shift;
-
-    my $source_files_tsv = $self->source_files_tsv;
-    if ( not -f $source_files_tsv or not -s $source_files_tsv ) {
-        return 'Invalid source files tsv! '.$source_files_tsv;
-    }
-
-    my $info_reader = Genome::Utility::IO::SeparatedValueReader->create(
-        input => $source_files_tsv,
-        separator => "\t",
-    );
-    if ( not $info_reader ) {
-        return 'Failed to open source files tsv! '.$source_files_tsv;
-    }
-
-    my %headers_not_found = ( library_name => 1, source_files => 1, );
-    for my $header ( @{$info_reader->headers} ) {
-        delete $headers_not_found{$header};
-    }
-
-    if ( %headers_not_found ) {
-        return 'No '.join(' ', map { '"'.$_.'"' } keys %headers_not_found).' column in source files tsv! '.$self->source_files_tsv;
-    }
-
-    my (@imports, %seen);
-    while ( my $hash = $info_reader->next ) {
-        my $id = substr(Genome::Sys->md5sum_data( join('', map { $hash->{$_} } sort keys %$hash) ), 0, 6);
-        my $source_files = delete $hash->{source_files};
-        if ( $seen{$id} ) {
-            $self->error_message('Duplicate entry on line '.$info_reader->line_number.'!');
-            return;
-        }
-        $seen{$id}++;
-        my $library_name = delete $hash->{library_name};
-        if ( not $library_name ) {
-            $self->error_message('No library name in source files tsv on line '.$info_reader->line_number.'!');
-            return;
-        }
-        my $import = {
-            library_name => $library_name,
-            source_files => $source_files,
-            job_name => $id,
-        };
-        push @imports, $import;
-        my %instrument_data_properties;
-        for my $name ( sort keys %$hash ) {
-            my $value = $hash->{$name};
-            next if not defined $value or $value eq '';
-            if ( defined $instrument_data_properties{$name} ) {
-                $self->error_message('');
-                return;
-            }
-            $instrument_data_properties{$name} = $value;
-        }
-        $import->{instrument_data_properties} = \%instrument_data_properties;
-    }
-
-    $self->_imports(\@imports);
-
-    return $info_reader->error_message;
-
     return;
 }
 
@@ -259,9 +166,11 @@ sub _resolve_launch_command {
 sub execute {
     my $self = shift;
 
+    $self->_load_file;
+
     my $source_files_ok = $self->_check_source_files_and_set_kb_required_for_processing;
     return if not $source_files_ok;
- 
+
     my $load_libraries = $self->_load_libraries;
     return if not $load_libraries;
 
@@ -277,6 +186,28 @@ sub execute {
     return $self->_output_status;
 }
 
+sub _load_file {
+    my $self = shift;
+
+    my $parser = Genome::InstrumentData::Command::Import::CsvParser->create(file => $self->file);
+    my (@imports, %seen);
+    while ( my $import = $parser->next ) {
+        my $string = join(' ', $import->{library}->{name}, map { $import->{instdata}->{$_} } keys %{$import->{instdata}});
+        $string .= $import->{instdata}->{downsample_ratio} if $import->{instdata}->{downsample_ratio};
+        my $id = substr(Genome::Sys->md5sum_data($string), 0, 6);
+        if ( $seen{$id} ) {
+            die $self->error_message("Duplicate source file/library combination! $string");
+        }
+        $seen{$id}++;
+        $import->{job_name} = $id;
+        $import->{library_name} = $import->{library}->{name};
+        push @imports, $import;
+    }
+    $self->_imports(\@imports);
+
+    return 1;
+}
+
 sub _check_source_files_and_set_kb_required_for_processing {
     my $self = shift;
 
@@ -284,13 +215,13 @@ sub _check_source_files_and_set_kb_required_for_processing {
     my %library_names_seen;
     for my $import ( @$imports ) {
         # get disk space required [checks if source files exist]
-        my $disk_space_required_in_kb = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->kilobytes_required_for_processing_of_source_files( split(',', $import->{source_files}) );
+        my $disk_space_required_in_kb = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->kilobytes_required_for_processing_of_source_files( split(',', $import->{instdata}->{source_files}) );
         return if Genome::InstrumentData::Command::Import::WorkFlow::Helpers->error_message;
         $disk_space_required_in_kb = 1048576 if $disk_space_required_in_kb < 1048576; # 1 Gb 
         $import->{gtmp} = sprintf('%.0f', $disk_space_required_in_kb / 1048576);
         $import->{mtmp} = sprintf('%.0f', $disk_space_required_in_kb / 1024);
         $import->{kbtmp} = $disk_space_required_in_kb;
-     }
+    }
     $self->_imports($imports);
 
     return if $self->error_message;
@@ -301,15 +232,12 @@ sub _load_libraries {
     my $self = shift;
 
     my $imports = $self->_imports;
-    my %library_names_seen;
     for my $import ( @$imports ) {
         # library name, number and job name
-        my $library_name = $import->{library_name};
-        $import->{library_number} = ++$library_names_seen{$library_name};
+        my $library_name = $import->{library}->{name};
         # genome library - get as array in case there are many with the same name
         my @libraries = Genome::Library->get(name => $library_name);
-        $import->{library} = \@libraries if @libraries;
-        next if not $import->{library}; # error will be displayed later
+        $import->{library_cnt} = scalar @libraries;
     }
     $self->_imports($imports);
 
@@ -324,7 +252,7 @@ sub _load_instrument_data {
 
     # Get instdata by source files
     my @instrument_data = Genome::InstrumentData::Imported->get(
-        original_data_path => [ map { $_->{source_files} } @$imports ],
+        original_data_path => [ map { $_->{instdata}->{source_files} } @$imports ],
         '-hint' => [qw/ attributes /],
     );
 
@@ -339,8 +267,8 @@ sub _load_instrument_data {
     }
 
     for my $import ( @$imports ) {
-        my $lookup_id = $import->{source_files};
-        $lookup_id .= sprintf('%f', $import->{instrument_data_properties}->{downsample_ratio}) if $import->{instrument_data_properties}->{downsample_ratio};
+        my $lookup_id = $import->{instdata}->{source_files};
+        $lookup_id .= sprintf('%f', $import->{instdata}->{downsample_ratio}) if $import->{instdata}->{downsample_ratio};
         $import->{instrument_data} = $instrument_data{$lookup_id};
     }
 
@@ -357,8 +285,8 @@ sub _load_statuses {
 
     my $get_status_for_import = sub{
         my $import = shift;
-        return 'no_library' if not $import->{library};
-        return 'too_many_libraries' if @{$import->{library}} > 1;
+        return 'no_library' if $import->{library_cnt} == 0;
+        return 'too_many_libraries' if $import->{library_cnt} > 1;
         return $import->{job_status} if $import->{job_status};
         return 'needed' if not $import->{instrument_data};
         return 'success';
@@ -458,20 +386,22 @@ sub _resolve_launch_command_for_import {
         $cmd_format =~ s/$pattern/$value/g;
     }
 
-    my $instrument_data_properties = $import->{instrument_data_properties};
+    my %instrument_data_properties = %{$import->{instdata}};
+    my $source_files = delete $instrument_data_properties{source_files};
+    my $downsample_ratio = delete $instrument_data_properties{downsample_ratio};
     my $cmd .= sprintf(
         $cmd_format,
-        $import->{source_files},
-        ( $import->{library}->[0]->sample->nomenclature // 'WUGC' ), #FIXME nomenclature
+        $source_files,
+        ( $import->{sample}->{nomenclature} ),
         ( 
-            %{$import->{instrument_data_properties}}
-            ? ' --instrument-data-properties '.  join(',', map { $_."='".$instrument_data_properties->{$_}."'"; } sort keys %$instrument_data_properties)
+            %instrument_data_properties
+            ? ' --instrument-data-properties '.  join(',', map { $_."='".$instrument_data_properties{$_}."'"; } sort keys %instrument_data_properties)
             : ''
         ),
         $self->analysis_project ? " --analysis-project id=".$self->analysis_project->id : '',
         ( 
-            defined $instrument_data_properties->{downsample_ratio}
-            ? " --downsample-ratio ".$instrument_data_properties->{downsample_ratio} 
+            defined $downsample_ratio
+            ? " --downsample-ratio ".$downsample_ratio
             : '' 
         ),
     );
@@ -484,11 +414,11 @@ sub _output_status {
 
     my @status = ( ['library_name'], ['job_name'], ['status'], ['inst_data'], );
     my ($i, @row, %totals);
-    for my $import ( sort { $a->{library_name} cmp $b->{library_name} } @{$self->_imports} ) {
+    for my $import ( sort { $a->{library}->{name} cmp $b->{library}->{name} } @{$self->_imports} ) {
         $totals{total}++;
         $totals{ $import->{status} }++;
         @row = (
-            $import->{library_name}, 
+            $import->{library}->{name}, 
             $import->{job_name}, 
             $import->{status}, 
             ( $import->{instrument_data} ? join(' ', map { $_->id } @{$import->{instrument_data}}) : 'NA' ),
