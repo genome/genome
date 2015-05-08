@@ -97,16 +97,6 @@ is_deeply([ map { $_->{status} } @$imports_aryref ], [qw/ pend run run pend /], 
 is_deeply([ map { $_->{job_status} } @$imports_aryref ], [qw/ pend run run pend /], 'imports aryref job_status');
 ok(!grep({ $_->{instrument_data} } @$imports_aryref), 'imports aryref does not have instrument_data');
 
-# Print commands
-$manager = Genome::InstrumentData::Command::Import::Manager->create(
-    analysis_project => $analysis_project,
-    file => $input_file,
-    launch_config => "echo %{job_name} LAUNCH! GTMP=%{gtmp}", # successful imports, will not launch
-    show_import_commands => 1,
-);
-ok($manager, 'create manager');
-ok($manager->execute, 'execute');
-
 # Create inst data
 my @inst_data;
 for my $import ( @$imports_aryref ) {

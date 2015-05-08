@@ -57,10 +57,6 @@ Example for LSF
 
 DOC
         },
-        show_import_commands => {
-            is => 'Boolean',
-            doc => 'Show the import commands for source files that need to be imported *instead* of executing them.',
-        },
     ],
     has_optional_transient => [
         _imports => { is => 'Array', },
@@ -78,12 +74,10 @@ DOC
 
 sub help_detail {
     return <<HELP;
-Outputs
-There are 3 potential outputs:
+Output
 
  WHAT            SENT TO  DESCRIPTION    
  Status          STDOUT   One for each library/source files set.
- Import command  STDERR   Command to import the source files. Printed if the --show-import-commands option is indicated.
  Stats           STDERR   Summary stats for statuses.
 
 Status Output
@@ -331,37 +325,29 @@ sub _load_job_statuses {
 sub _launch_imports {
     my $self = shift;
 
-    if ( not $self->show_import_commands ) {
-        # not printing commands, can they be launched?
-        if ( not $self->launch_config ) {
-            $self->warning_message('Cannot launch jobs because there is no launch config!');
-            return 1;
-        }
-        elsif ( not $self->list_config ) { 
-            $self->warning_message('Can not launch jobs because there is no list config!');
-            return 1;
-        }
-        elsif ( not $self->_launch_command_has_job_name ) {
-            $self->warning_message('Cannot launch jobs because there is no %{job_name} in launch config!');
-            return 1;
-        }
+    if ( not $self->launch_config ) {
+        $self->warning_message('Cannot launch jobs because there is no launch config!');
+        return 1;
+    }
+    elsif ( not $self->list_config ) { 
+        $self->warning_message('Can not launch jobs because there is no list config!');
+        return 1;
+    }
+    elsif ( not $self->_launch_command_has_job_name ) {
+        $self->warning_message('Cannot launch jobs because there is no %{job_name} in launch config!');
+        return 1;
     }
 
     my $launch_sub = sub{
         my $import = shift;
         my $cmd = $self->_resolve_launch_command_for_import($import);
-        if ( $self->show_import_commands ) {
-            print STDERR "$cmd\n";
+        my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
+        if ( not $rv ) {
+            $self->error_message($@) if $@;
+            $self->error_message('Failed to launch instrument data import command!');
+            return;
         }
-        else {
-            my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-            if ( not $rv ) {
-                $self->error_message($@) if $@;
-                $self->error_message('Failed to launch instrument data import command!');
-                return;
-            }
-            $import->{status} = 'pend';
-        }
+        $import->{status} = 'pend';
     };
 
     my $imports = $self->_imports;
