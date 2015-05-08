@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::GenerateBase;
+package Genome::InstrumentData::Command::Import::CsvParser;
 
 use strict;
 use warnings;
@@ -10,32 +10,23 @@ require List::MoreUtils;
 use Params::Validate qw( :types );
 use Text::CSV;
 
-class Genome::InstrumentData::Command::Import::GenerateBase {
-    is => 'Command::V2',
-    is_abstract => 1,
-    has_input => {
+class Genome::InstrumentData::Command::Import::CsvParser {
+    is => 'UR::Object',
+    has => {
         file => {
             is => 'Text',
             doc => 'Comma (.csv) or tab (.tsv) separated file of entity names, attributes and other meta data. Separator is determined by file extension.',
         },
     },
-    has_optional_output => {
-        output_file => {
-            is => 'Text',
-            default_value => '-',
-            doc => 'Output file to put the commands to create the needed entities for import.',
-        },
-    },
     has_optional_transient => {
-        _output => { is => 'ARRAY', default_value => [], },
-        _instdata_property_names => { is => 'ARRAY', },
         _entity_attributes => { is => 'ARRAY', },
+        _fh => { },
         _nomenclature => { is => 'Text', },
-        _names_seen => { is => 'HASH', default_value => {}, },
+        _parser => { },
     }
 };
 
-sub help_detail {
+sub csv_help {
     return <<HELP;
 The file should be a comma or tab separated values and indicated with the appropriate extension (csv and tsv). Column headers to use to generate the create commands should start with the entity (individual, sample, library, instdata) name then a period (.) and then then attribute name (Ex: sample.name_part). Here are some required and optional columns. For more, see each entity's create command (Ex: genome sample create --h). Please see Confluence documentation for more information and a full example.
 
@@ -69,8 +60,11 @@ sub entity_types {
     return (qw/ individual sample library instdata/);
 }
 
-sub _open_file_parser {
-    my $self = shift;
+sub create {
+    my $class = shift;
+
+    my $self = $class->SUPER::create(@_);
+    return if not $self;
 
     my $file = $self->file;
     my ($dir, $basename, $ext) = File::Basename::fileparse($file, 'csv', 'tsv');
@@ -80,16 +74,30 @@ sub _open_file_parser {
             empty_is_undef => 1,
         });
     die $self->error_message('Failed to create Text::CSV parser!') if not $parser;
+    $self->_parser($parser);
 
     die $self->error_message('File (%s) is empty!', $file) if not -s $file;
     my $fh = Genome::Sys->open_file_for_reading($file);
+    $self->_fh($fh);
     my $headers = $parser->getline($fh);
     $parser->column_names($headers);
 
     my $entity_attributes_ok = $self->_resolve_headers($headers);
     return if not $entity_attributes_ok;
 
-    return sub{ return $parser->getline_hr($fh); };
+    return $self;
+}
+
+sub next {
+    my $self = shift;
+
+    my $line_ref = $self->_parser->getline_hr($self->_fh);
+    return if not $line_ref;
+
+    my $entity_params = $self->_resolve_entity_params_for_values($line_ref);
+    $self->_resolve_names_for_entities($entity_params);
+
+    return $entity_params;
 }
 
 sub _resolve_headers {
