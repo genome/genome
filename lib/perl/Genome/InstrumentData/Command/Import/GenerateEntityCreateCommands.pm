@@ -5,27 +5,42 @@ use warnings;
 
 use Genome;
 
+use Genome::InstrumentData::Command::Import::CsvParser;
 require File::Basename;
 require List::MoreUtils;
 use Params::Validate qw( :types );
 
 class Genome::InstrumentData::Command::Import::GenerateEntityCreateCommands {
-    is => 'Genome::InstrumentData::Command::Import::GenerateBase',
+    is => 'Command::V2',
+    has_input => {
+        file => {
+            is => 'Text',
+            doc => Genome::InstrumentData::Command::Import::CsvParser->csv_help,
+        },
+    },
+    has_optional_output => {
+        output_file => {
+            is => 'Text',
+            default_value => '-',
+            doc => 'Output file to put the commands to create the needed entities for import.',
+        },
+    },
+    has_optional_transient => {
+        _names_seen => { is => 'HASH', default_value => {}, },
+        _output => { is => 'ARRAY', default_value => [], },
+    },
     doc => 'generate commands to create individuals, samples, and libraries that are necessary to import instrument data',
 };
 
-sub _output_header {
-    return "#!/usr/bin/env bash\n";
+sub help_detail {
+    return 'Using a modified metadata spreadsheet saved as a comma/tab separarted file, generate the commands necessary to make susupport entities (individaul, sample, library) to import instrument data.';
 }
 
 sub execute {
     my $self = shift;
     
-    my $parser = $self->_open_file_parser;
-    while ( my $line_ref = $parser->() ) {
-        my $entity_params = $self->_resolve_entity_params_for_values($line_ref);
-        $self->_resolve_names_for_entities($entity_params);
-
+    my $parser = Genome::InstrumentData::Command::Import::CsvParser->create(file => $self->file);
+    while ( my $entity_params = $parser->next ) {
         # Add entity commands as needed
         my $library = Genome::Library->get(name => $entity_params->{library}->{name});
         next if $library;
@@ -105,6 +120,13 @@ sub _add_create_command_for_type {
     push @{$self->_output}, $cmd."\n";
 
     return 1;
+}
+
+sub _generate_output {
+    my $self = shift;
+    my @output = @{$self->_output};
+    return 1 if not @output;
+    return Genome::Sys->write_file($self->output_file, "#!/usr/bin/env bash\n", @output);
 }
 
 1;
