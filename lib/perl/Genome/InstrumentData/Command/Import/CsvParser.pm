@@ -27,30 +27,41 @@ class Genome::InstrumentData::Command::Import::CsvParser {
 
 sub csv_help {
     return <<HELP;
-The file should be a comma or tab separated values and indicated with the appropriate extension (csv and tsv). Column headers to use to generate the create commands should start with the entity (individual, sample, library, instdata) name then a period (.) and then then attribute name (Ex: sample.name_part). Here are some required and optional columns. For more, see each entity's create command (Ex: genome sample create --h). Please see Confluence documentation for more information and a full example.
+This is a comma (.csv) or tab (.tsv) separated file of entity names, attributes and other meta data. Separator is determined by file extension. Column headers to use to generate the create commands should start with the entity (individual, sample, library, instdata) name then a period (.) and then then attribute name (Ex: sample.name_part). Here are some required and optional columns. For more, see each entity's create command (Ex: genome sample create --h). Please see Confluence documentation for more information and a full example.
 
 Individual\n
  Required
-  individual.name_part => Name or id from external source.
-  individual.taxon      => Species name of the taxon.
+  individual.name_part      => Name or id from external source.
+   OR
+  individual.name           => Full indidvidual name. Use when the name is desired to have a different value than bein derived from the sample/library name.
+
+  individual.taxon          => Species name of the taxon.
+ Optional
+  individual.upn            => External name/identifier. Often the second part of the new sample name.
+  sample.common_name        => Usually the project name plus a number
 
 Sample\n
  Required
-  sample.name_part => Name or id from external source. If name is given, the individual and library names will be resolved from it.
-  sample.extraction_type => 'genomic dna' or 'rna'
+  sample.name               => The full sample name. The individual and library names will be dervied from it, unless they are given. 
+   OR
+  sample.name_part          => Name or id from external source. If name is given, the individual and library names will be resolved from it.
+  sample.extraction_type    => 'genomic dna' or 'rna'
 
  Optional, but recommended:
-  sample.common_name    => Usually normal or tumor to indicate disease state.
+  sample.common_name        => Usually normal or tumor to indicate disease state.
 
 Library\n
  Optional
-  library.ext           => Extension to append to the sample name. Default is 'extlibs'.
+  library.ext               => Extension to append to the sample name. Default is 'extlibs'.
  
 Instrument Data (needed for generating source-files.tsv)
  Required
-  instdata.source_files  => Local copy of the source files to import.
+  instdata.source_files     => Local copy of the source files to import.
  Optional
-  instdata.run_name      => The run name or id.
+  instdata.run_name         => The run name or id.
+  instdata.flow_cell_id     => The flow cell id of the run.
+  instdata.lane             => The lane of the run.
+  instdata.index_sequence   => The run name or id.
 
 HELP
 }
