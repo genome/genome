@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 3;
+use Test::More tests => 9;
 use Genome::Utility::Test qw(compare_ok);
 
 my $pkg = 'Genome::Model::Tools::Speedseq::Realign';
@@ -34,11 +34,17 @@ my $realign_cmd = $pkg->create(
 isa_ok($realign_cmd,$pkg);
 ok($realign_cmd->execute,'execute command '. $pkg);
 
-# The BAM headers differ since realign uses a temp pipe as the input to the BWAMEM command
-# Figure out a way to diff a BAM excluding the header, it must exist somewhere
-
-#for my $output_file ($realign_cmd->output_files) {
-#    my ($basename,$dirname) = File::Basename::fileparse($output_file);
-#    my $expected_output_file = $expected_output_dir .'/'. $basename;
-#    compare_ok($output_file,$expected_output_file);
-#}   
+# BAM diff
+for my $output_file ($realign_cmd->output_files) {
+    my ($basename,$dirname,$suffix) = File::Basename::fileparse($output_file,qw/\.bam \.bai/);  
+    my $expected_output_file = $expected_output_dir .'/'. $basename . $suffix;
+    if ($suffix eq '.bam') {
+          my $cmp = Genome::Model::Tools::Sam::Compare->execute(
+          file1 => $output_file,
+          file2 => $expected_output_file,
+          );
+          ok ($cmp->result, 'compare BAMs'); 
+    } else {
+      compare_ok($output_file,$expected_output_file,diag=>0);
+    }                                              
+}   
