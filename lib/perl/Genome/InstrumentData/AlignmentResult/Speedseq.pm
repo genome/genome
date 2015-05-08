@@ -71,11 +71,12 @@ sub final_staged_bam_path {
 }
 
 # Override _check_read_count() from Genome::InstrumentData::AlignmentResult to
-# filter reads with secondary alignment flag (0x100) when comparing to the fastq.
+# filter reads with secondary alignment flag (0x100) or supplementary
+# alignments (0x800)when comparing to the fastq.
 sub _check_read_count {
     my ($self, $bam_rd_ct) = @_;
 
-    my $flag = 0x100;
+    my $flag = 0x900;
     my $bam_file = $self->final_staged_bam_path;
 
     my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
