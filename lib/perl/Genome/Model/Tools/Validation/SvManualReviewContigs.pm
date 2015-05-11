@@ -236,6 +236,7 @@ sub execute {
         version => $version,
         fasta_file => $contigs_file,
         prefix => $sample_id . "_SV_Contigs",
+        is_rederivable => 1,
     );
     unless ($new_ref_cmd->execute) {
         $self->error_message('Failed to execute the definition of the new reference sequence with added contigs.');
