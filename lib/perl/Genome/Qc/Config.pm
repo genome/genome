@@ -15,18 +15,50 @@ class Genome::Qc::Config {
 
 sub get_commands_for_alignment_result {
     return {
-        picard_collect_multiple_metrics => {
-            class => 'Genome::Qc::Tool::PicardCollectMultipleMetrics',
+        picard_calculate_hs_metrics => {
+            class => 'Genome::Qc::Tool::Picard::CalculateHsMetrics',
             params => {
-                param1 => 'a',
-                param2 => 'b',
+                input_file => '/dev/stdin',
+                bait_intervals => 'bait_intervals', #region_of_interest_set
+                target_intervals => 'target_intervals', #target_region_set
+                use_version => 1.123,
             },
-            dependency => {name => "bam_file", fd => "STDOUT"},
+            in_file => "bam_file",
         },
-        samtools_view => {
-            class => 'Genome::Qc::Tool::BamFile',
+        picard_collect_wgs_metrics => {
+            class => 'Genome::Qc::Tool::Picard::CollectWgsMetrics',
             params => {
-                input_file => '-',
+                input_file => '/dev/stdin',
+                reference_sequence => 'reference_sequence',
+                use_version => 1.123,
+            },
+            in_file => "bam_file",
+        },
+        picard_collect_gc_bias_metrics => {
+            class => 'Genome::Qc::Tool::Picard::CollectGcBiasMetrics',
+            params => {
+                input_file => '/dev/stdin',
+                refseq_file => 'reference_sequence',
+                assume_sorted => 1,
+                use_version => 1.123,
+                output_file=> '/dev/null',
+            },
+            in_file => "bam_file",
+        },
+        picard_mark_duplicates => {
+            class => 'Genome::Qc::Tool::Picard::MarkDuplicates',
+            params => {
+                output_file => '/dev/null',
+                input_file => '/dev/stdin',
+                use_version => 1.123,
+            },
+            in_file => "bam_file",
+        },
+        picard_collect_multiple_metrics => {
+            class => 'Genome::Qc::Tool::Picard::CollectMultipleMetrics',
+            params => {
+                input_file => '/dev/stdin',
+                use_version => 1.123,
             },
             in_file => "bam_file",
         },

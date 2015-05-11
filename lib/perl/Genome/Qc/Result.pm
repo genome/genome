@@ -34,6 +34,7 @@ sub _run {
     my %tools = $self->_tools;
     my $process_graph = Genome::WorkflowBuilder::StreamGraph->create(
         output_xml => File::Spec->join($self->temp_staging_directory, "out.xml"),
+        name => 'Run QC',
     );
     my %process_ref;
     while (my ($name, $tool) = each %tools) {
@@ -103,7 +104,7 @@ sub _tools {
     my $commands = $self->qc_config->get_commands_for_alignment_result($self->alignment_result);
     my %tools;
     for my $name (keys %$commands) {
-        my $tool = _tool_from_name_and_params($commands->{$name}->{class},
+        my $tool = $self->_tool_from_name_and_params($commands->{$name}->{class},
                     $commands->{$name}->{params});
         $tools{$name} = $tool;
     }
@@ -123,17 +124,23 @@ sub _non_streaming_tools {
 }
 
 sub _tool_from_name_and_params {
-    my ($name, $gmt_params) = @_;
+    my ($self, $name, $gmt_params) = @_;
     if (defined $name->output_file_accessor) {
         my $output_param_name = $name->output_file_accessor;
-        $gmt_params->{$output_param_name} = Genome::Sys->create_temp_file;
+        $gmt_params->{$output_param_name} = Genome::Sys->create_temp_file_path;
     }
-    return $name->create(gmt_params => $gmt_params);
+    my $tool = $name->create(gmt_params => $gmt_params, alignment_result => $self->alignment_result);
+    while (my ($param_name, $param_value) = each %$gmt_params) {
+        if ($tool->can($param_value)) {
+            $tool->gmt_params->{$param_name} = $tool->$param_value;
+        }
+    }
+    return $tool;
 }
 
 sub _add_metrics {
     my ($self, $tool) = @_;
-    my %metrics = %{$tool->get_metrics};
+    my %metrics = $tool->get_metrics;
     while (my ($name, $value) = each %metrics) {
         $self->add_metric(
             metric_name => $name,
