@@ -61,7 +61,7 @@ for my $format (qw/ bam fastq /) {
 }
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
-my $file = $tmpdir.'/source-files.tsv';
+my $file = File::Spec->join($tmpdir.'file.tsv');
 my $generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->create(
     instrument_data => \@instrument_data,
     file => $file,
@@ -94,7 +94,7 @@ throws_ok( sub{ $generate->execute }, qr/^Source file does not exist! does_not_e
 my $new_bam = $test_dir.'/new-source-files/new.bam';
 my $new_fq1 = $test_dir.'/new-source-files/new.1.fastq';
 my $new_fq2 = $test_dir.'/new-source-files/new.2.fastq';
-$file = File::Spec->join($tmpdir, 'source-files.with_new.csv');
+$file = File::Spec->join($tmpdir, 'source-files.with_new_source_files.csv');
 $generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->create(
     instrument_data => \@instrument_data,
     file => $file,
@@ -109,7 +109,7 @@ ok($generate->execute, 'execute');
 compare_ok($file, File::Spec->join($test_dir, 'file.with_new_source_files.csv'), 'file matches', %compare_args);
 
 # success w/ downsample ratios
-unlink $file;
+$file = File::Spec->join($tmpdir, 'source-files.with_downsample_ratios.tsv');
 $generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->create(
     instrument_data => \@instrument_data,
     file => $file,

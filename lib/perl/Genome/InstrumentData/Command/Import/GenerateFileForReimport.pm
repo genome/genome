@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 use Genome::InstrumentData::Reimport;
+use Text::CSV;
 
 class Genome::InstrumentData::Command::Import::GenerateFileForReimport { 
     is => 'Command::V2',
@@ -35,6 +36,7 @@ class Genome::InstrumentData::Command::Import::GenerateFileForReimport {
     },
     has_optional_transient => {
         _instrument_data_and_new_source_files => { is => 'Hash', },
+        sep_char => { is => 'Text', },
     },
 };
 
@@ -113,11 +115,19 @@ sub execute {
         }
     }
     $self->status_message('Found '.@reimports.' instrument data...');
-
+    
     my @headers = Genome::InstrumentData::Reimport->headers_for_reimport_attributes(@reimports);
     return if not @headers;
 
     my $file = $self->file;
+    my $sep_char = Genome::InstrumentData::Command::Import::CsvParser->resovle_sep_vhar_from_file_extension($file);
+    my $writer = Text::CSV->new({
+            sep_char => $sep_char,
+            empty_is_undef => 1,
+            always_quote => ( $sep_char eq ',' ? 1 : 0 ),
+        });
+    die $self->error_message('Failed to create Text::CSV parser!') if not $writer;
+
     my $fh = eval{ Genome::Sys->open_file_for_writing($file); };
     if ( not $fh ) {
         $self->error_message($@) if $@;
@@ -125,13 +135,15 @@ sub execute {
         return 1;
     }
 
-    $fh->print( join("\t", @headers)."\n" );
+    $writer->print($fh, \@headers);
+    $fh->print("\n");
     for my $reimport ( @reimports ) {
-        $fh->print( join("\t", map { $reimport->{$_} // '' } @headers)."\n" );
+        $writer->print($fh, [ map { $reimport->{$_} // '' } @headers ]);
+        $fh->print("\n");
     }
     $fh->close;
-
     $self->status_message('Wrote file: '.$file);
+
     $self->status_message('Success!');
     return 1;
 }
