@@ -70,18 +70,32 @@ sub retrieval_method {
     }
 }
 
-sub file_size {
+sub _is_file_local {
     my $self = shift;
 
-    if ( $self->retrieval_method eq 'local disk' ) {
-        return -s $self->path;
+    if ( $self->path =~ m#^(http|https|file)\://# ) {
+        return;
+    }
+
+    return 1;
+}
+
+sub file_size {
+    return $_[0]->_file_size($_[0]->path);
+}
+
+sub _file_size {
+    my ($self, $file) = @_;
+
+    if ( $self->_is_file_local($file) ) {
+        return -s $file;
     }
 
     my $agent = LWP::UserAgent->new;
-    my $response = $agent->head($self->path);
+    my $response = $agent->head($file);
     if ( not $response->is_success ) {
         $self->error_message($response->message) if $response->message;
-        die $self->error_message('HEAD failed for remote file! %s', $self->path);
+        die $self->error_message('HEAD failed for remote file! %s', $file);
     }
 
     return $response->headers->content_length;
