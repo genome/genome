@@ -76,6 +76,9 @@ ok($command->execute, 'Command executed correctly');
 ok($command->result, 'Merged result created');
 
 my $per_lane_result = Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data => $command->instrument_data);
-ok($per_lane_result, 'Pre lane result created correctly');
+ok($per_lane_result, 'Per-lane result created correctly');
+
+is(-e File::Spec->join($per_lane_result->temp_staging_directory, 'all_sequences.bam'), undef, "Per-lane bam file doesn't exist in temp_staging_directory");
+is(-e File::Spec->join($per_lane_result->output_dir, 'all_sequences.bam'), undef, "Per-lane bam file doesn't exist in output_dir");
 
 done_testing;
