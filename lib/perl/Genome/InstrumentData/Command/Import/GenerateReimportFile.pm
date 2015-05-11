@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::GenerateFileForReimport;
+package Genome::InstrumentData::Command::Import::GenerateReimportFile;
 
 use strict;
 use warnings;
@@ -7,7 +7,7 @@ use Genome;
 
 use Text::CSV;
 
-class Genome::InstrumentData::Command::Import::GenerateFileForReimport { 
+class Genome::InstrumentData::Command::Import::GenerateReimportFile { 
     is => 'Command::V2',
     has_input => {
         instrument_data => {

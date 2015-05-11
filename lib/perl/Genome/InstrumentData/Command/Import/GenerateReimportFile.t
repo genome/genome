@@ -16,9 +16,9 @@ require File::Spec;
 use Test::Exception;
 use Test::More;
 
-use_ok('Genome::InstrumentData::Command::Import::GenerateFileForReimport') or die;
+use_ok('Genome::InstrumentData::Command::Import::GenerateReimportFile') or die;
 
-my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import::GenerateFileForReimport', 'v4');
+my $test_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', File::Spec->join('generate-cmds', 'generate-reimport-file'));
 my %compare_args = (
     replace => [
         [ qr(\Q$test_dir\E) => 'TEST_INPUTS_DIR' ],
@@ -62,7 +62,7 @@ for my $format (qw/ bam fastq /) {
 
 my $tmpdir = File::Temp::tempdir(CLEANUP => 1);
 my $file = File::Spec->join($tmpdir.'file.tsv');
-my $generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->create(
+my $generate = Genome::InstrumentData::Command::Import::GenerateReimportFile->create(
     instrument_data => \@instrument_data,
     file => $file,
 );
@@ -72,7 +72,7 @@ compare_ok($file, File::Spec->join($test_dir, 'file.tsv'), 'file matches', %comp
 
 # With new source files...
 # failures
-$generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->create(
+$generate = Genome::InstrumentData::Command::Import::GenerateReimportFile->create(
     instrument_data => \@instrument_data,
     file => $file,
     instrument_data_and_new_source_files => [ 'mal-formed' ],
@@ -82,7 +82,7 @@ my @errors = $generate->__errors__;
 is(@errors, 1, 'correct number of errors');
 is($errors[0]->desc, 'Mal-formed instrument data and new source files! mal-formed', 'correct error message');
 
-$generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->create(
+$generate = Genome::InstrumentData::Command::Import::GenerateReimportFile->create(
     instrument_data => \@instrument_data,
     file => $file,
     instrument_data_and_new_source_files => [ $instrument_data[0]->id.'=does_not_exist', ],
@@ -95,7 +95,7 @@ my $new_bam = $test_dir.'/new-source-files/new.bam';
 my $new_fq1 = $test_dir.'/new-source-files/new.1.fastq';
 my $new_fq2 = $test_dir.'/new-source-files/new.2.fastq';
 $file = File::Spec->join($tmpdir, 'source-files.with_new_source_files.csv');
-$generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->create(
+$generate = Genome::InstrumentData::Command::Import::GenerateReimportFile->create(
     instrument_data => \@instrument_data,
     file => $file,
     instrument_data_and_new_source_files => [ 
@@ -110,7 +110,7 @@ compare_ok($file, File::Spec->join($test_dir, 'file.with_new_source_files.csv'),
 
 # success w/ downsample ratios
 $file = File::Spec->join($tmpdir, 'source-files.with_downsample_ratios.tsv');
-$generate = Genome::InstrumentData::Command::Import::GenerateFileForReimport->create(
+$generate = Genome::InstrumentData::Command::Import::GenerateReimportFile->create(
     instrument_data => \@instrument_data,
     file => $file,
     downsample_ratios => [qw/ 0.1 0.05 0.001 /],
