@@ -1362,7 +1362,7 @@ sub create_plots{
   }
 
   #Set the R script that will process output from this perl script
-  #TODO: Right now, this script will only work for a very particular situation (normal, dayX_tumor, dayY_tumor) - Make it more flexible ...
+
   my $build_count = keys %{$align_builds};
   my @prefixes;
   my @combined_vaf_cols;
@@ -1374,8 +1374,8 @@ sub create_plots{
   foreach my $name (sort {$align_builds->{$a}->{order} <=> $align_builds->{$b}->{order}} keys %{$align_builds}){
     my $prefix = $align_builds->{$name}->{prefix};
     push(@prefixes, $prefix);
-    my $day = $align_builds->{$name}->{day};
-    push(@timepoint_names, $day);
+    my $time_point_name =  $align_builds->{$name}->{time_point_unit} . $align_builds->{$name}->{time_point_value};
+    push(@timepoint_names, $time_point_name);
     my $timepoint_position = $align_builds->{$name}->{time_point_position};
     push(@timepoint_positions, $timepoint_position);
     my $sample_type = $align_builds->{$name}->{sample_common_name};
