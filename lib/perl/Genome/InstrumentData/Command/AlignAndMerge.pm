@@ -134,8 +134,9 @@ sub _process_alignments {
     my $self = shift;
     my $mode = shift;
 
+    my $class = $self->merged_result_class;
     my %params = $self->_alignment_params;
-    my $result = Genome::InstrumentData::AlignmentResult::Merged::Speedseq->$mode(
+    my $result = $class->$mode(
         instrument_data => [$self->instrument_data],
         %params,
     );
@@ -147,10 +148,11 @@ sub _process_per_lane_alignments {
     my $self = shift;
     my $mode = shift;
 
+    my $class = $self->per_lane_result_class;
     my %params = $self->_alignment_params;
     my @per_lane_results;
     for my $instrument_data ($self->instrument_data) {
-        push @per_lane_results, Genome::InstrumentData::AlignmentResult::Speedseq->$mode(
+        push @per_lane_results, $class->$mode(
             instrument_data => $instrument_data,
             samtools_version => $self->samtools_version,
             picard_version => $self->picard_version,
@@ -170,6 +172,16 @@ sub _alignment_params {
         aligner_version => $self->version,
         aligner_params => $self->params,
     );
+}
+
+sub merged_result_class {
+    my $self = shift;
+    return 'Genome::InstrumentData::AlignmentResult::Merged::' . ucfirst($self->name);
+}
+
+sub per_lane_result_class {
+    my $self = shift;
+    return 'Genome::InstrumentData::AlignmentResult::' . ucfirst($self->name);
 }
 
 1;
