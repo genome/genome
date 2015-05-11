@@ -27,7 +27,7 @@ class Genome::Config::AnalysisProject::InstrumentDataBridge {
             default_value => 'new',
             valid_values => [ "new", "failed", "processed", "skipped" ],
         },
-        fail_count => { is => 'Integer', len => 4, default_value => 0 },
+        fail_count => { is => 'Integer', default_value => 0 },
         reason => { is => 'Text', is_optional => 1 },
     ],
     schema_name => 'GMSchema',
