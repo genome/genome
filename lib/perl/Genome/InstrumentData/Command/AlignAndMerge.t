@@ -74,7 +74,6 @@ my $command = Genome::InstrumentData::Command::AlignAndMerge->create(
 );
 ok($command->execute, 'Command executed correctly');
 ok($command->result, 'Merged result created');
-$DB::single=1;
 
 my $per_lane_result = Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data => $command->instrument_data);
 ok($per_lane_result, 'Pre lane result created correctly');
