@@ -39,8 +39,13 @@ class Genome::InstrumentData::Command::Import::GenerateFileForReimport {
     },
 };
 
+sub help_brief {
+    return 'generate a file to reimport/import downsampled instrument data';
+}
+
 sub help_detail {
     return <<HELP;
+Given existing instrument data, this command will generate a file that can be used in the import manager to reimport these instrument data. Reimports are done because the original file(s) imported are unable to be used in pipelines or to import downsampled versions (via given downsample ratios). Additionally, a mapping of instrument data ids and new source files can be given if the imported ones are invalid.
 HELP
 }
 
