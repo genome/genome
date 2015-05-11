@@ -70,6 +70,15 @@ sub entity_types {
     return (qw/ individual sample library instdata/);
 }
 
+sub resovle_sep_vhar_from_file_extension {
+    my ($class, $file) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
+
+    my ($dir, $basename, $ext) = File::Basename::fileparse($file, 'csv', 'tsv');
+    die $class->error_message("Cannot determine type for file: %s. It needs to end with .csv or .tsv.", $file) if not $ext;
+
+    return ( $ext eq 'csv' ? ',' : "\t" ),
+}
+
 sub create {
     my $class = shift;
 
@@ -77,10 +86,9 @@ sub create {
     return if not $self;
 
     my $file = $self->file;
-    my ($dir, $basename, $ext) = File::Basename::fileparse($file, 'csv', 'tsv');
-    die $self->error_message("Cannot determine type for file: %s. It needs to end with .csv or .tsv.", $file) if not $ext;
+    my $sep_char = $self->resovle_sep_vhar_from_file_extension($file);
     my $parser = Text::CSV->new({
-            sep_char => ( $ext eq 'csv' ? ',' : "\t" ),
+            sep_char => $sep_char,
             empty_is_undef => 1,
         });
     die $self->error_message('Failed to create Text::CSV parser!') if not $parser;
