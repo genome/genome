@@ -186,7 +186,7 @@ subtest 'simple align_and_merge strategy' => sub {
             force_fragment => 0,
             result_users => $result_users,
         },
-        strategy => 'instrument_data align and merge to reference_sequence_build using speedseq test api v1',
+        strategy => 'instrument_data both aligned to reference_sequence_build and merged using speedseq test api v1',
     );
     isa_ok(
         $ad,

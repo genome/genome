@@ -511,7 +511,7 @@ _test_strategy(
 );
 
 _test_strategy(
-    'instrument_data align and merge to reference using speedseq test_version api v3',
+    'instrument_data both aligned to reference and merged using speedseq test_version api v3',
     {
         'api_version' => 'v3',
         'action' => [{
