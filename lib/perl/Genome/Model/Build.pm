@@ -2657,7 +2657,7 @@ sub _heartbeat {
     );
     if (grep { $heartbeat{status} eq $_ } ('Succeeded', 'Preserved')) {
         $heartbeat{is_ok} = 1;
-        $heartbeat{message} = 'Build is succeeded. Status is '.$heartbeat{status}.'.';
+        $heartbeat{message} = 'Build has succeeded. Status is '.$heartbeat{status}.'.';
         return %heartbeat;
     }
 
