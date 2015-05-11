@@ -56,6 +56,7 @@ sub execute {
 
         try {
             $build->abandon($self->header_text, $self->body_text);
+            $self->successfully_abandoned_callback($build);
             $transaction->commit() or die "commit failed";
         } catch {
             $self->append_error($build->__display_name__, "Failed to abandon build: $_.");
