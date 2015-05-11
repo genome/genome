@@ -66,9 +66,7 @@ throws_ok(
     sub{
         $class->create(
             source_files => [qw/ in.bam /],
-            instrument_data_properties => [qw/ 
-            description=
-            /],
+            instrument_data_properties => [qw/ description= /],
         );
     },
     qr#Failed to parse with instrument data property label/value! description=#,
