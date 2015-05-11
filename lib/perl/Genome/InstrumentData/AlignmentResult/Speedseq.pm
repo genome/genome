@@ -30,7 +30,7 @@ sub source_bam_path_for_header {
 sub create_bam_flagstat_and_revivify {
     my ($self, $merged_bam, $revivified_bam) = @_;
 
-    my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
+    my %params = (
         merged_bam          => $merged_bam,
         per_lane_bam        => $revivified_bam,
         instrument_data_id  => $self->read_and_platform_group_tag_id,
@@ -38,6 +38,14 @@ sub create_bam_flagstat_and_revivify {
         picard_version      => $self->picard_version,
         bam_header          => $self->bam_header_path,
         include_qc_failed   => 1,
+    );
+
+    if (-e $self->bam_flagstat_path) {
+        $params{comparison_flagstat} = $self->bam_flagstat_path;
+    }
+
+    my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
+        %params
     );
     unless ($cmd->execute) {
         die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
