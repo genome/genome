@@ -110,7 +110,7 @@ foreach my $chr(@chrs){
       if(/XM\:i\:(\d+)/){
 	$t->{XM}=$1;
       }
-      next unless(defined $t->{XM} and $t->{XM}<$opts{m});  #ignore reads with multiple mismatch in the aligned portion
+      next if(defined $t->{XM} and $t->{XM}>=$opts{m});  #ignore reads with multiple mismatch in the aligned portion
 
       if(/RG\:Z\:(\S+)/){
 	$t->{RG}=$1;
