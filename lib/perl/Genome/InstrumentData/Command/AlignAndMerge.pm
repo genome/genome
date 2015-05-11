@@ -80,6 +80,13 @@ class Genome::InstrumentData::Command::AlignAndMerge {
 sub execute {
     my $self = shift;
 
+    for my $param (qw(trimmer_name trimmer_params trimmer_version)) {
+        if (defined($self->$param)) {
+            $self->error_message('Optional parameter (%s) not supported at this time.', $param);
+            return 0;
+        }
+    }
+
     my $result = $self->_process_alignments('get_or_create');
     unless ($result) {
         $self->error_message("Error finding or generating alignments!");
