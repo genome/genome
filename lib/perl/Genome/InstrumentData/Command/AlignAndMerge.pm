@@ -46,23 +46,6 @@ class Genome::InstrumentData::Command::AlignAndMerge {
             is => 'Text',
             doc => 'The version of Bedtools to use when needed by aligners/filters',
         },
-        annotation_build_id => {
-            is => 'Number',
-            doc => 'Id of the annotation build to use when aligning',
-            is_optional => 1,
-        },
-        instrument_data_segment_id => {
-            is => 'Text',
-            doc => 'A specific segment of the data to align',
-        },
-        instrument_data_segment_type => {
-            is => 'Text',
-            doc => 'How the data is segmented',
-        },
-        instrument_data_filter => {
-            is => 'Text',
-            valid_values => [ 'forward-only', 'reverse-only', undef ],
-        },
         force_fragment => {
             is => 'Boolean',
             default_value => 0,
