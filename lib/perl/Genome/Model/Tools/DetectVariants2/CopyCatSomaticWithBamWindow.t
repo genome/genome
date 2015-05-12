@@ -138,7 +138,7 @@ sub _create_test_annotation_data{
     );
     ok($cmd, "Annotation data creation command exists");
     ok($cmd->execute, 'Successfully created annotation data set');
-    return $version;
+    return $cmd->version;
 }
 
 1;
