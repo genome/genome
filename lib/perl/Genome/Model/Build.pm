@@ -2770,7 +2770,9 @@ sub _heartbeat {
 
             last WF;
         }
+    }
 
+    unless ($heartbeat{message}) {
         $heartbeat{message} = 'OK. Seems to be running!';
         $heartbeat{is_ok} = 1;
     }
