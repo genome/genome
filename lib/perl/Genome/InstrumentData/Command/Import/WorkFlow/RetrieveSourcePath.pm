@@ -109,7 +109,7 @@ sub retrieve_source_md5 {
 
     my $source_md5 = $self->_load_source_md5;
     if ( not $source_md5 ) {
-        $self->debug_message('Source MD5 could not be loaded from $md5_path and therefore not storing it.');
+        $self->debug_message('Source MD5 is not available! It will not be saved.');
         return 1;
     }
 

@@ -93,7 +93,7 @@ throws_ok { $helpers->run_md5($bam_path) } qr/^No MD5 path given to run MD5!/, '
 my $md5_path = $bam_path.'.md5';
 my $run_md5 = $helpers->run_md5($bam_path, $md5_path); # runs
 ok($run_md5, 'run md5');
-throws_ok(sub{ $helpers->run_md5($bam_path, $md5_path); }, qr/Refusing to run MD5, the destination path exits/, 'Failed to re-run_md5');
+throws_ok(sub{ $helpers->run_md5($bam_path, $md5_path); }, qr/Refusing to run MD5, the destination path exists/, 'Failed to re-run_md5');
 my $load_md5 = $helpers->load_md5($md5_path); # loads
 is_deeply($load_md5, $run_md5, 'run/load md5 matches');
 

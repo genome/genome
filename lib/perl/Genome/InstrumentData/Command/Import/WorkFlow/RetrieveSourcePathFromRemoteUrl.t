@@ -27,7 +27,7 @@ is($destination_path, File::Spec->join($tmp_dir, $source_basename), 'destination
 ok(-s $destination_path, 'destination path exists');
 
 ok(-s $cmd->destination_path, 'destination path exists');
-like($cmd->destination_original_md5_path, qr/\.md5-orig$/, 'correcly named destination_original_md5_path');
+like($cmd->destination_original_md5_path, qr/\.md5-orig$/, 'correctly named destination_original_md5_path');
 ok(-s $cmd->destination_original_md5_path, 'destination_original_md5_path exists');
 my $md5 = Genome::InstrumentData::Command::Import::WorkFlow::Helpers->load_md5($cmd->destination_original_md5_path);
 is($md5, 'f81fbc3d3a6b57d11e60b016bb2c950c', 'correct md5');

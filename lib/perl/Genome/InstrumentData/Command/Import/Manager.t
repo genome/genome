@@ -182,7 +182,7 @@ throws_ok(
         );
     },
     qr/Source file does not have any size! bam4.bam/,
-    'execute failed w/ non existing source file',
+    'execute failed w/ source file that does not exist',
 );
 
 chdir $cwd;

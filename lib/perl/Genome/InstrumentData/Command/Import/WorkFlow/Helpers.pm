@@ -351,7 +351,7 @@ sub run_md5 {
 
     $self->debug_message("Path: $path");
     $self->debug_message("MD5 path: $md5_path");
-    die $self->error_message('Refusing to run MD5, the destination path exits! %s', $md5_path) if -s $md5_path;
+    die $self->error_message('Refusing to run MD5, the destination path exists! %s', $md5_path) if -s $md5_path;
     my $cmd = "md5sum $path > $md5_path";
     my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
     if ( not $rv or not -s $md5_path ) {

@@ -41,7 +41,7 @@ for (my $i = 0; $i < @fastq_paths; $i++) {
 }
 
 ok(!glob($local_source_file->path.'*'), 'removed archived source path after extracting');
-ok(!-e $cmd->extract_directory, 'removed extract diectory after extracting');
+ok(!-e $cmd->extract_directory, 'removed extract directory after extracting');
 
 # FAIL - no fastqs in archive
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::ArchiveToFastqs->execute(
