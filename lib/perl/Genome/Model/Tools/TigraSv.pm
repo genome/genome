@@ -16,7 +16,7 @@ class Genome::Model::Tools::TigraSv {
     has => [
         use_version => {
             is  => 'Version',
-            doc => "tigra_sv version to be used, default is $DEFAULT. ",
+            doc => "tigra_sv version to be used.",
             is_optional   => 1,
             default_value => $DEFAULT,
         },
