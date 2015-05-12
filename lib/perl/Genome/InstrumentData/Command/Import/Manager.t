@@ -174,13 +174,16 @@ ok($manager, 'create manager');
 throws_ok(sub {$manager->execute}, qr/Expected 3 values, got 4 on line 3 in/, 'execute failed for invalid format');
 
 # fail - source file does not exist
-$manager = Genome::InstrumentData::Command::Import::Manager->create(
-    analysis_project => $analysis_project,
-    source_files_tsv => $test_dir.'/source-file-does-not-exist.tsv',
+throws_ok(
+    sub{
+        Genome::InstrumentData::Command::Import::Manager->execute(
+            analysis_project => $analysis_project,
+            source_files_tsv => $test_dir.'/source-file-does-not-exist.tsv',
+        );
+    },
+    qr/Source file does not have any size! bam4.bam/,
+    'execute failed w/ non existing source file',
 );
-ok($manager, 'create manager');
-ok(!$manager->execute, 'execute failed w/ non existing source file');
-is( Genome::InstrumentData::Command::Import::WorkFlow::Helpers->error_message, 'Source file does not have any size! bam4.bam', 'correct error');
 
 chdir $cwd;
 done_testing();
