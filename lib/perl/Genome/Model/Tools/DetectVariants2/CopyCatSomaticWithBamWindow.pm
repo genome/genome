@@ -126,18 +126,27 @@ sub _detect_variants {
     );
     $input{copycat_output_directory} = $self->_temp_staging_directory;
 
-    my $annotation_sr = Genome::Model::Tools::CopyCat::AnnotationData->get_with_lock(
-        reference_sequence => $self->reference_build,
-        version            => $annotation_version,
-        users              => $self->result_users,
-    );
-    unless($annotation_sr) {
-        die $self->error_message(
-            'No annotation data found for version %s and reference %s',
-            $annotation_version,
-            $self->reference_build->id,
+    my $annotation_reference = $self->reference_build;
+    my $annotation_sr;
+
+    until ($annotation_sr) {
+        unless ($annotation_reference) {
+            die $self->error_message(
+                'No annotation data found for version %s and reference %s',
+                $annotation_version,
+                $self->reference_build->id,
+            );
+        }
+
+        $annotation_sr = Genome::Model::Tools::CopyCat::AnnotationData->get_with_lock(
+            reference_sequence => $self->reference_build,
+            version            => $annotation_version,
+            users              => $self->result_users,
         );
+    } continue {
+        $annotation_reference = $annotation_reference->derived_from;
     }
+
     $input{annotation_data_id} = $annotation_sr->id;
 
     my $log_dir = $self->output_directory;
