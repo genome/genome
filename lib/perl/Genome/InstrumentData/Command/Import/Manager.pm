@@ -7,6 +7,7 @@ use Genome;
 
 use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
 use Genome::InstrumentData::Command::Import::CsvParser;
+
 use IO::File;
 use Params::Validate ':types';
 

@@ -55,7 +55,10 @@ function cache_repo {
 
 function init_workspace {
     export WORKSPACE="$(tempdir)"
-    cache_repo genome https://github.com/genome/genome.git "$WORKSPACE"
+
+    # clone from the existing genome repo instead of getting an origin/master
+    cache_repo genome "$(git rev-parse --git-dir)" "$WORKSPACE"
+
     cache_repo ur https://github.com/genome/UR.git "$WORKSPACE"
     cache_repo workflow https://github.com/genome/tgi-workflow.git "$WORKSPACE"
     cache_repo genome-sqitch https://github.com/genome/genome-sqitch.git "$WORKSPACE"

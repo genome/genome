@@ -30334,6 +30334,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'debug!',
         undef,
+        'r-session-info!',
+        undef,
         'help!',
         undef
       ],

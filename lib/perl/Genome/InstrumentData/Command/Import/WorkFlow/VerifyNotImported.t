@@ -22,13 +22,12 @@ my $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->
     source_path => $source_path,
 );
 ok($cmd->result, 'execute');
+isa_ok($cmd->source_file, 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFile', 'source_file');
 my $md5_path = $cmd->source_md5_path;
-is($md5_path, $cmd->helpers->md5_path_for($cmd->source_path), 'md5 path named correctly');
 ok(-s $md5_path, 'md5 path exists');
 
 # Load MD5
 my $original_md5_path = $cmd->original_md5_path;
-is($original_md5_path, $cmd->helpers->original_md5_path_for($cmd->source_path), 'original md5 path named correctly');
 rename($md5_path, $original_md5_path);
 ok(-s $original_md5_path, 'renamed md5 to valid original md5 path');
 $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->execute(
@@ -37,7 +36,6 @@ $cmd = Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported->exe
 );
 ok($cmd->result, 'execute');
 $md5_path = $cmd->source_md5_path;
-is($md5_path, $cmd->helpers->md5_path_for($cmd->source_path), 'md5 path named correctly');
 ok(-s $md5_path, 'md5 path exists');
 
 # Previously Imported MD5
