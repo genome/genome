@@ -85,4 +85,7 @@ ok(-e $per_lane_result->bam_flagstat_path, "Flagstat file exists");
 ok(-e $per_lane_result->bam_header_path, "Header file exists");
 ok(-e $per_lane_result->bam_md5_path, "Md5 file exists");
 
+$per_lane_result->_revivified_bam_file_path(undef);
+ok($per_lane_result->get_bam_file, "Subsequent revivifications work correctly");
+
 done_testing;
