@@ -185,6 +185,14 @@ sub _find_annotation_data {
         $annotation_reference = $annotation_reference->derived_from;
     }
 
+    if($annotation_sr->reference_sequence ne $reference_build) {
+        $self->status_message(
+            'No annotation data for reference %s.  Using data for reference %s from which it was derived.',
+            $reference_build->id,
+            $annotation_sr->reference_sequence->id,
+        );
+    }
+
     return $annotation_sr;
 }
 
