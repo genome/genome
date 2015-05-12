@@ -83,7 +83,9 @@ sub create {
         temp_directory => $temp_directory,
     );
     my $command = Genome::Model::Tools::Speedseq::Realign->create(%params);
-    $command->execute;
+    unless ($command->execute) {
+        die $self->error_message('Failed to execute Speedseq realign for instrument data ' . $self->instrument_data->id);
+    }
 
     my $final_bam = $self->_final_bam_file,
     $self->debug_message("Indexing the final BAM file...");
