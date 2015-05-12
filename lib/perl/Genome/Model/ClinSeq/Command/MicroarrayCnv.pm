@@ -41,7 +41,7 @@ class Genome::Model::ClinSeq::Command::MicroarrayCnv {
             is => 'Boolean',
             doc => 'True for tests, just makes CNView plots for kinase gene symbol list',
             default_value => 0,
-        	is_optional => 1,
+            is_optional => 1,
         },
     ],
     has_optional_input => [
@@ -84,13 +84,12 @@ EOS
 sub __errors__ {
     my $self = shift;
     my @errors = $self->SUPER::__errors__(@_);
-
     unless (-e $self->outdir && -d $self->outdir) {
         push @errors, UR::Object::Tag->create(
-	                                          type => 'error',
-	                                          properties => ['outdir'],
-	                                          desc => "Outdir: " . $self->outdir . " not found or not a directory",
-                                            );
+            type => 'error',
+            properties => ['outdir'],
+            desc => "Outdir: " . $self->outdir . " not found or not a directory",
+        );
     }
     return @errors;
 }
