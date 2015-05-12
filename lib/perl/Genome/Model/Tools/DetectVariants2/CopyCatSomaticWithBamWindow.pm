@@ -126,26 +126,11 @@ sub _detect_variants {
     );
     $input{copycat_output_directory} = $self->_temp_staging_directory;
 
-    my $annotation_reference = $self->reference_build;
-    my $annotation_sr;
-
-    until ($annotation_sr) {
-        unless ($annotation_reference) {
-            die $self->error_message(
-                'No annotation data found for version %s and reference %s',
-                $annotation_version,
-                $self->reference_build->id,
-            );
-        }
-
-        $annotation_sr = Genome::Model::Tools::CopyCat::AnnotationData->get_with_lock(
-            reference_sequence => $self->reference_build,
-            version            => $annotation_version,
-            users              => $self->result_users,
-        );
-    } continue {
-        $annotation_reference = $annotation_reference->derived_from;
-    }
+    my $annotation_sr = $self->_find_annotation_data(
+        $self->reference_build,
+        $annotation_version,
+        $self->result_users
+    );
 
     $input{annotation_data_id} = $annotation_sr->id;
 
@@ -172,6 +157,35 @@ sub _detect_variants {
     }
 
     return 1;
+}
+
+sub _find_annotation_data {
+    my $self = shift;
+    my $reference_build = shift;
+    my $annotation_version = shift;
+    my $result_users = shift;
+
+    my $annotation_reference = $reference_build;
+    my $annotation_sr;
+    until ($annotation_sr) {
+        unless ($annotation_reference) {
+            die $self->error_message(
+                'No annotation data found for version %s and reference %s',
+                $annotation_version,
+                $reference_build->id,
+            );
+        }
+
+        $annotation_sr = Genome::Model::Tools::CopyCat::AnnotationData->get_with_lock(
+            reference_sequence => $annotation_reference,
+            version            => $annotation_version,
+            users              => $result_users,
+        );
+    } continue {
+        $annotation_reference = $annotation_reference->derived_from;
+    }
+
+    return $annotation_sr;
 }
 
 sub has_version {

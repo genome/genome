@@ -10,10 +10,12 @@ BEGIN {
 }
 
 use above 'Genome';
-use Test::More tests => 18;
+use Test::More tests => 19;
+use Test::Exception;
 use File::Spec;
 use Genome::Utility::Test;
 use File::Compare;
+use Genome::Test::Factory::Model::ReferenceSequence;
 use Genome::Test::Factory::SoftwareResult::User;
 
 my $class = 'Genome::Model::Tools::DetectVariants2::CopyCatSomaticWithBamWindow';
@@ -126,6 +128,25 @@ for my $file (@non_diffable_files){
     my ($expected_wc) = split(" ", `wc -l $expected`);    
     ok(abs ($expected_wc - $actual_wc) <= 2, "$file line length is withing tolerance");
 }
+
+subtest 'find derived annotation data' => sub {
+    my $old_reference = Genome::Model::Build->get($refbuild_id);
+    my $annotation_data = $class->_find_annotation_data($old_reference, $version, $result_users);
+    ok($annotation_data, 'got annotation data');
+
+    my $new_reference = Genome::Test::Factory::Model::ReferenceSequence->setup_reference_sequence_build();
+    dies_ok(
+        sub {
+            $class->_find_annotation_data($new_reference, $version, $result_users);
+        },
+        'no annotation data for new reference',
+    );
+
+    $new_reference->derived_from($old_reference);
+    my $new_annotation_data = $class->_find_annotation_data($new_reference, $version, $result_users);
+    is($new_annotation_data, $annotation_data, 'finds same annotation data for a derivative reference');
+};
+
 
 sub _create_test_annotation_data{
     my $reference_build_id = shift;
