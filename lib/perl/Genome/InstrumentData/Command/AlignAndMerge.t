@@ -81,4 +81,8 @@ ok($per_lane_result, 'Per-lane result created correctly');
 is(-e File::Spec->join($per_lane_result->temp_staging_directory, 'all_sequences.bam'), undef, "Per-lane bam file doesn't exist in temp_staging_directory");
 is(-e File::Spec->join($per_lane_result->output_dir, 'all_sequences.bam'), undef, "Per-lane bam file doesn't exist in output_dir");
 
+ok(-e $per_lane_result->bam_flagstat_path, "Flagstat file exists");
+ok(-e $per_lane_result->bam_header_path, "Header file exists");
+ok(-e $per_lane_result->bam_md5_path, "Md5 file exists");
+
 done_testing;
