@@ -15,7 +15,7 @@ class Genome::InstrumentData::Command::Import::CsvParser {
     has => {
         file => {
             is => 'Text',
-            doc => 'Comma (.csv) or tab (.tsv) separated file of entity names, attributes and other meta data. Separator is determined by file extension.',
+            doc => 'Comma (.csv) or tab (.tsv) separated file of entity names, attributes and other metadata. Separator is determined by file extension.',
         },
     },
     has_optional_transient => {
@@ -27,18 +27,18 @@ class Genome::InstrumentData::Command::Import::CsvParser {
 
 sub csv_help {
     return <<HELP;
-This is a comma (.csv) or tab (.tsv) separated file of entity names, attributes and other meta data. Separator is determined by file extension. Column headers to use to generate the create commands should start with the entity (individual, sample, library, instdata) name then a period (.) and then then attribute name (Ex: sample.name_part). Here are some required and optional columns. For more, see each entity's create command (Ex: genome sample create --h). Please see Confluence documentation for more information and a full example.
+This is a comma (.csv) or tab (.tsv) separated file of entity names, attributes and other metadata. Separator is determined by file extension. Column headers should start with the entity (individual, sample, library, instdata) name then a period (.) and then then attribute name (Ex: sample.name_part). Here are some required and optional columns. For more, see each entity's create command (Ex: genome sample create --h). Please see Confluence documentation for more information and a full example.
 
 Individual\n
  Required
   individual.name_part      => Name or id from external source.
    OR
-  individual.name           => Full indidvidual name. Use when the name is desired to have a different value than bein derived from the sample/library name.
+  individual.name           => Full individual name. Use when the name is desired to have a different value than being derived from the sample/library name.
 
   individual.taxon          => Species name of the taxon.
  Optional
   individual.upn            => External name/identifier. Often the second part of the new sample name.
-  sample.common_name        => Usually the project name plus a number
+  individual.common_name        => Usually the project name plus a number
 
 Sample\n
  Required
@@ -70,7 +70,7 @@ sub entity_types {
     return (qw/ individual sample library instdata/);
 }
 
-sub resovle_sep_vhar_from_file_extension {
+sub resolve_sep_char_from_file_extension {
     my ($class, $file) = Params::Validate::validate_pos(@_, {isa => __PACKAGE__}, {type => SCALAR});
 
     my ($dir, $basename, $ext) = File::Basename::fileparse($file, 'csv', 'tsv');
@@ -86,7 +86,7 @@ sub create {
     return if not $self;
 
     my $file = $self->file;
-    my $sep_char = $self->resovle_sep_vhar_from_file_extension($file);
+    my $sep_char = $self->resolve_sep_char_from_file_extension($file);
     my $parser = Text::CSV->new({
             sep_char => $sep_char,
             empty_is_undef => 1,

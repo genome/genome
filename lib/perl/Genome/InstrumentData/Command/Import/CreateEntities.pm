@@ -25,7 +25,7 @@ class Genome::InstrumentData::Command::Import::CreateEntities {
 };
 
 sub help_detail {
-    return 'Using a modified metadata spreadsheet saved as a comma/tab separarted file, create the necessary entites (individaul, sample, library) to import instrument data.';
+    return 'Using a modified metadata spreadsheet saved as a comma/tab separated file, create the necessary entites (individual, sample, library) to import instrument data.';
 }
 
 sub execute {
@@ -91,13 +91,9 @@ sub _create_entity {
 
     my $entity_class = 'Genome::'.ucfirst($type);
     my $entity = $entity_class->create(%$params);
-    if ( not $entity ) {
-        die $self->error_message('Failed to create %s for %s.', $type, $params->{name});
-    }
-
-    my @errors = $entity->__errors__;
-    if ( @errors ) {
-        die $self->error_message('ERRORS!');
+    if ( not $entity or my @errors = $entity->__errors__ ) {
+        for ( @errors ) { $self->error_message($_->__display_name__); }
+        die $self->error_message('Problems creating %s for %s.', $type, $params->{name});
     }
 
     $self->status_message('CREATE %s %s', $type, $params->{name});
