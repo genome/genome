@@ -9,7 +9,7 @@ use POSIX;
 use DateTime;
 use IO::File;
 
-my $DEFAULT = '20110321';
+my $DEFAULT = '0.1';
 
 class Genome::Model::Tools::TigraSv {
     is  => 'Command',
@@ -43,7 +43,6 @@ EOS
 
 
 my %TIGRASV_VERSIONS = (
-    20110321 => '/gscuser/tabbott/bin/tigra-sv',
     '0.1'    => '/usr/bin/tigra-sv0.1',
 );
 
