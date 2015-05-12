@@ -11,14 +11,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePathFromL
     is => 'Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath',
 };
 
-sub _path_size {
-    return -s $_[0];
-}
-
-sub _source_path_size {
-    return _path_size($_[0]->source_path);
-}
-
 sub _retrieve_source_path {
     my $self = shift;
 
@@ -31,14 +23,10 @@ sub _retrieve_source_path {
     return 1;
 }
 
-sub source_md5 {
+sub _load_source_md5 {
     my $self = shift;
-
-    my $md5_path = $self->helpers->md5_path_for($self->source_path);
-    my $md5_path_exists = _path_size($md5_path);
-    return if not $md5_path_exists;
-
-    return $self->helpers->load_md5($md5_path);
+    return if not $self->source_file->md5_path_size;
+    return Genome::InstrumentData::Command::Import::WorkFlow::Helpers->load_md5($self->source_file->md5_path);
 }
 
 1;
