@@ -22,7 +22,7 @@ class Genome::Model::Tools::BedTools::PairToPair {
         },
         intersection_type => {
             is => 'Text',
-            doc => 'The results to output: "a-only" returns those regions in file A but not overlapped in B; "unique" returns one line for each region in file A that is matched;"overlap_both" returns original A and B entries plus the number of base pairs of overlap between the two features. "v" means Only report those entries in A that have _no overlaps_ with B.',
+            doc => "neither Report overlaps if neither end of A overlaps B. either  Report overlaps if either ends of A overlap B.  both    Report overlaps if both ends of A overlap B.  notboth Report overlaps if one or neither of A's overlap B",
             valid_values => ['neither', 'either', 'both', 'notboth'],
             default_value => $DEFAULT_INTERSECTION_TYPE,
             is_optional => 1,
