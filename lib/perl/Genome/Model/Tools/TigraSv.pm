@@ -3,7 +3,7 @@ package Genome::Model::Tools::TigraSv;
 use strict;
 use warnings;
 
-use Genome; 
+use Genome;
 use File::Basename;
 use POSIX;
 use DateTime;
@@ -14,11 +14,11 @@ my $DEFAULT = '0.1';
 class Genome::Model::Tools::TigraSv {
     is  => 'Command',
     has => [
-        use_version => { 
-            is  => 'Version', 
-            doc => "tigra_sv version to be used, default is $DEFAULT. ", 
-            is_optional   => 1, 
-            default_value => $DEFAULT,   
+        use_version => {
+            is  => 'Version',
+            doc => "tigra_sv version to be used, default is $DEFAULT. ",
+            is_optional   => 1,
+            default_value => $DEFAULT,
         },
     ],
 };
@@ -32,12 +32,12 @@ sub help_brief {
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-gmt tigra-sv ...    
+gmt tigra-sv ...
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
 EOS
 }
 
@@ -61,8 +61,8 @@ sub path_for_tigrasv_version {
 sub default_tigrasv_version {
     die "default tigra_sv version: $DEFAULT is not valid" unless $TIGRASV_VERSIONS{$DEFAULT};
     return $DEFAULT;
-}    
-    
+}
+
 sub tigrasv_path {
     my $self = shift;
     return $self->path_for_tigrasv_version($self->use_version);
