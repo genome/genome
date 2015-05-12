@@ -2679,8 +2679,8 @@ sub _heartbeat {
         }
 
         # only certain operation types would have LSF jobs and everything below is inspecting LSF status
-        my $operation_type = $wf_instance_exec->operation_instance->operation->operation_type;
-        unless ( grep { $operation_type->isa($_) } ('Workflow::OperationType::Command', 'Workflow::OperationType::Event') ) {
+        my $operation_type = $wf_instance_exec->operation_instance->operation_type;
+        unless ( $operation_type and grep { $operation_type->isa($_) } ('Workflow::OperationType::Command', 'Workflow::OperationType::Event') ) {
             next WF;
         }
 
