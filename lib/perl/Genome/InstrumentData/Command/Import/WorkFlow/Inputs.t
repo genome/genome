@@ -16,8 +16,12 @@ use Test::More;
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::Inputs';
 use_ok($class) or die;
 
+my $library = Genome::Library->__define__(name => 'TEST-sample-libs', sample => Genome::Sample->__define__(name => 'TEST-sample'));
+ok($library, 'define library');
+
 my @source_files = (qw/ in.1.fastq in.2.fastq /);
 my $inputs = $class->create(
+    library => $library,
     source_files => \@source_files,
     instrument_data_properties => [qw/ 
         description=imported
@@ -46,9 +50,15 @@ is_deeply(
 
 # ERRORS
 throws_ok(
-    sub { $class->create(); },
+    sub { $class->create(library => $library); },
     qr/No source files\!/,
     "create failed w/o source files",
+);
+
+throws_ok(
+    sub { $class->create(source_files => \@source_files); },
+    qr/No library given to work flow inputs\!/,
+    "create failed w/o library",
 );
 
 throws_ok(

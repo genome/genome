@@ -10,11 +10,14 @@ use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
 class Genome::InstrumentData::Command::Import::WorkFlow::Inputs { 
     is => 'UR::Object',
     has => {
+        library => { is => 'Genome::Library', },
         instrument_data_properties => { is => 'HASH', },
         source_files => { is => 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles', },
     },
     has_transient => {
         format => { via => 'source_files', to => 'format', },
+        library_name => { via => 'library', to => 'name', },
+        sample_name => { via => 'library', to => 'sample_name', },
     },
 };
 
@@ -26,6 +29,8 @@ sub create {
 
     $self->_resolve_source_files;
     $self->_resolve_instrument_data_properties;
+
+    die 'No library given to work flow inputs!' if not $self->library;
 
     return $self;
 }
