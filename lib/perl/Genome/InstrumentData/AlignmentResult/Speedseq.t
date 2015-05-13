@@ -83,4 +83,14 @@ my $alignment_result = $pkg->create(
 ok($alignment_result, 'Alignment result created successfully');
 isa_ok($alignment_result, $pkg, 'Alignment result is a speedseq alignment');
 
+is(-e File::Spec->join($alignment_result->temp_staging_directory, 'all_sequences.bam'), undef, "Per-lane bam file doesn't exist in temp_staging_directory");
+is(-e File::Spec->join($alignment_result->output_dir, 'all_sequences.bam'), undef, "Per-lane bam file doesn't exist in output_dir");
+
+ok(-e $alignment_result->bam_flagstat_path, "Flagstat file exists");
+ok(-e $alignment_result->bam_header_path, "Header file exists");
+ok(-e $alignment_result->bam_md5_path, "Md5 file exists");
+
+$alignment_result->_revivified_bam_file_path(undef);
+ok($alignment_result->get_bam_file, "Subsequent revivifications work correctly");
+
 done_testing;
