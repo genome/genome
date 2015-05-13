@@ -22,12 +22,5 @@ my $view_obj = $subject->create_view(
 ok($view_obj, "created a view") or die "test cannot continue...";
 isa_ok($view_obj, 'Genome::Model::Build::Set::View::Status::Html');
 
-
-UR::Object::View::Aspect->create_subscription(
-    method => 'delete',
-    callback => sub { $DB::single = 1; },
-);
-
-
 my $html = $view_obj->_generate_content();
 ok($html, "view returns HTML") or die "test cannot continue...";
