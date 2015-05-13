@@ -60,7 +60,7 @@ Genome::Sys::CommitAction - Schedule code to run at commit time
 =head1 DESCRIPTION
 
 This class provides a mechanism to schedule some code to run later when
-changed data is being saved to the database.  The callbacks are only when
+changed data is being saved to the database.  The callbacks are run only when
 the base, Process context is being committed, not when a software transaction
 is committed.  Callbacks are only run once, even if the Process context is
 committed multiple times.
@@ -80,6 +80,16 @@ all their C<con_sync> callbacks may run again, if the original Context commit
 exception is caught and it tries to commit again.  Note that C<on_sync_fail>
 callbacks are _not_ run when the context is rolled back with
 UR::Context->rollback
+
+Also note that if the C<con_sync> or C<on_commit> callbacks change the program
+state by creating, deleting or changing objects, those changes will not be
+saved during the commit() the callbacks are running in; they will be saved
+during the next commit.  The reason being that all the changes are collected
+before any saving and committing is done.  Changes that happen during these
+callbacks will have happened too late to make it into this list.  In
+particular, this behavior differs from a C<precommit> callback on the Context
+in that precommit callbacks run before the list of changes is collected.
+
 
 =head1 SEE ALSO
 
