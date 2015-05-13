@@ -19,7 +19,7 @@ require Genome::Utility::Test;
 use Test::More;
 use Test::Exception;
 
-use_ok('Genome::InstrumentData::Command::Import::Manager') or die;
+use_ok('Genome::InstrumentData::Command::Import::Launch') or die;
 
 my $cwd = Cwd::getcwd();
 my $data_dir = Genome::Utility::Test->data_dir_ok('Genome::InstrumentData::Command::Import', 'generate-cmds');
@@ -30,7 +30,7 @@ my $analysis_project = Genome::Config::AnalysisProject->create(name => '__TEST_A
 ok($analysis_project, 'create analysis project');
 
 # Library needed
-my $manager = Genome::InstrumentData::Command::Import::Manager->create(
+my $manager = Genome::InstrumentData::Command::Import::Launch->create(
     analysis_project => $analysis_project,
     file => $input_file,
     list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
@@ -64,7 +64,7 @@ for (0..1) {
 is(@libraries, 2, 'define 2 libraries');
 
 # Import needed
-$manager = Genome::InstrumentData::Command::Import::Manager->create(
+$manager = Genome::InstrumentData::Command::Import::Launch->create(
     analysis_project => $analysis_project,
     file => $input_file,
     list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
@@ -83,7 +83,7 @@ is($manager->_list_job_name_column, 0, '_list_job_name_column');
 is($manager->_list_status_column, 1, '_list_status_column');
 
 # One has import running, others are needed
-$manager = Genome::InstrumentData::Command::Import::Manager->create(
+$manager = Genome::InstrumentData::Command::Import::Launch->create(
     analysis_project => $analysis_project,
     file => $input_file,
     list_config => 'printf "%s %s\\n%s %s\\n%s %s\\n%s %s" ed08e9 pend 459d6a run 8245b4 run 640f80 pend;1;2',
@@ -116,7 +116,7 @@ for my $import ( @$imports_aryref ) {
 is(@inst_data, 4, 'define 4 inst data');
 
 # Fake successful imports by pointing bam_path to existing source_files.tsv
-$manager = Genome::InstrumentData::Command::Import::Manager->create(
+$manager = Genome::InstrumentData::Command::Import::Launch->create(
     analysis_project => $analysis_project,
     file => $input_file,
     list_config => "printf %s NOTHING_TO_SEE_HERE;1;2",
@@ -144,7 +144,7 @@ is_deeply(
 # fail - source file does not exist
 throws_ok(
     sub{
-        Genome::InstrumentData::Command::Import::Manager->execute(
+        Genome::InstrumentData::Command::Import::Launch->execute(
             analysis_project => $analysis_project,
             file => File::Spec->join($data_dir, 'source-file-does-not-exist.tsv'),
         );
@@ -156,7 +156,7 @@ throws_ok(
 # fail - invalid list config
 throws_ok(
     sub{
-        Genome::InstrumentData::Command::Import::Manager->execute(
+        Genome::InstrumentData::Command::Import::Launch->execute(
             analysis_project => $analysis_project,
             file => $input_file,
             list_config => 'INVALID',

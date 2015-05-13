@@ -1,4 +1,4 @@
-package Genome::InstrumentData::Command::Import::Manager;
+package Genome::InstrumentData::Command::Import::Launch;
 
 use strict;
 use warnings;
@@ -11,7 +11,7 @@ use Genome::InstrumentData::Command::Import::CsvParser;
 use IO::File;
 use Params::Validate ':types';
 
-class Genome::InstrumentData::Command::Import::Manager {
+class Genome::InstrumentData::Command::Import::Launch {
     is => 'Command::V2',
     doc => 'Manage importing sequence files into GMS',
     has => [
