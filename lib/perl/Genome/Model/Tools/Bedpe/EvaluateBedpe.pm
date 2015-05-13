@@ -34,36 +34,9 @@ class Genome::Model::Tools::Bedpe::EvaluateBedpe {
 sub execute {
     my $self = shift;
     $self->rawstats({});
-
-    my $true_positives_file = Genome::Sys->create_temp_file_path;
-    Genome::Model::Tools::BedTools::PairToPair->execute(
-        $self->common_params,
-        output_file => $true_positives_file,
-        input_file_a => $self->bedpe,
-        input_file_b => $self->gold_bedpe,
-        intersection_type => 'both',
-    );
-    $self->rawstats->{true_positive} = Genome::Sys->line_count($true_positives_file);
-
-    my $false_positives_file = Genome::Sys->create_temp_file_path;
-    Genome::Model::Tools::BedTools::PairToPair->execute(
-        $self->common_params,
-        output_file => $false_positives_file,
-        input_file_a => $self->bedpe,
-        input_file_b => $self->gold_bedpe,
-        intersection_type => 'notboth',
-    );
-    $self->rawstats->{false_positive} = Genome::Sys->line_count($false_positives_file);
-
-    my $false_negatives_file = Genome::Sys->create_temp_file_path;
-    Genome::Model::Tools::BedTools::PairToPair->execute(
-        $self->common_params,
-        output_file => $false_negatives_file,
-        input_file_a => $self->gold_bedpe,
-        input_file_b => $self->bedpe,
-        intersection_type => 'notboth',
-    );
-    $self->rawstats->{false_negative} = Genome::Sys->line_count($false_negatives_file);
+    $self->rawstats->{true_positive} = $self->_get_stat($self->bedpe, $self->gold_bedpe, 'both');
+    $self->rawstats->{false_positive} = $self->_get_stat($self->bedpe, $self->gold_bedpe, 'notboth');
+    $self->rawstats->{false_negative} = $self->_get_stat($self->gold_bedpe, $self->bedpe, 'notboth');
     return 1;
 }
 
@@ -76,6 +49,21 @@ sub common_params {
         require_different_names => 0,
         use_version => $self->bedtools_version,
     );
+}
+
+sub _get_stat {
+    my ($self, $file_a, $file_b, $type) = @_;
+
+    my $output_file = Genome::Sys->create_temp_file_path;
+
+    Genome::Model::Tools::BedTools::PairToPair->execute(
+        $self->common_params,
+        output_file => $output_file,
+        input_file_a => $file_a,
+        input_file_b => $file_b,
+        intersection_type => $type,
+    );
+    return Genome::Sys->line_count($output_file);
 }
 
 1;
