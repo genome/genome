@@ -1675,8 +1675,8 @@ sub success {
 
     #The build itself has no __changes__ and UR::Context->commit() will not trigger the subscription if on that object, so
     #use the master build event which has just been updated to 'Succeeded' with the current time.
-    $self->create_subscription(
-        method => 'commit',
+    $self->add_observer(
+        aspect => 'commit',
         callback => $commit_callback,
     );
 

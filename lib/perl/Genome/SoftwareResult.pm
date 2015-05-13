@@ -334,8 +334,8 @@ sub create {
     my $unlock_callback = sub {
         $self->_unlock;
     };
-    $self->create_subscription(method=>'commit', callback=>$unlock_callback);
-    $self->create_subscription(method=>'delete', callback=>$unlock_callback);
+    $self->add_observer(aspect => 'commit', callback => $unlock_callback);
+    $self->add_observer(aspect => 'delete', callback => $unlock_callback);
 
     if (my $output_dir = $self->output_dir) {
         if (-d $output_dir) {
