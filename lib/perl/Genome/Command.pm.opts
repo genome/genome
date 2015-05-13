@@ -37151,16 +37151,14 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>generate-entity-create-commands',
+      '>create-entities',
       [
         'file=s',
-        'files',
-        'output-file=s',
         'files',
         'help!',
         undef
       ],
-      '>generate-file-for-reimport',
+      '>generate-reimport-file',
       [
         'file=s',
         'files',
@@ -37173,27 +37171,16 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
-      '>generate-source-files-tsv',
-      [
-        'file=s',
-        'files',
-        'output-file=s',
-        'files',
-        'help!',
-        undef
-      ],
       '>manager',
       [
         'analysis-project=s',
         undef,
-        'source-files-tsv=s',
+        'file=s',
         'files',
         'launch-config=s',
         'files',
         'list-config=s',
         'files',
-        'show-import-commands!',
-        undef,
         'help!',
         undef
       ],
