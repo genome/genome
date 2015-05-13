@@ -75,8 +75,19 @@ my $command = Genome::InstrumentData::Command::AlignAndMerge->create(
 ok($command->execute, 'Command executed correctly');
 ok($command->result, 'Merged result created');
 
+my $merged_cmp = Genome::Model::Tools::Sam::Compare->execute(
+    file1 => $command->result->bam_file,
+    file2 => File::Spec->join($test_data_dir, 'merged_alignment_result.bam'),
+);
+ok($merged_cmp->result, 'Merged bam as expected');
+
 my $per_lane_result = Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data => $command->instrument_data);
 ok($per_lane_result, 'Per-lane result created correctly');
 
+my $per_lane_cmp = Genome::Model::Tools::Sam::Compare->execute(
+    file1 => $per_lane_result->get_bam_file,
+    file2 => File::Spec->join($test_data_dir, 'alignment_result.bam'),
+);
+ok($per_lane_cmp->result, 'Per-lane bam as expected');
 
 done_testing;
