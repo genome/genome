@@ -90,6 +90,12 @@ ok(-e $alignment_result->bam_flagstat_path, "Flagstat file exists");
 ok(-e $alignment_result->bam_header_path, "Header file exists");
 ok(-e $alignment_result->bam_md5_path, "Md5 file exists");
 
+my $cmp = Genome::Model::Tools::Sam::Compare->execute(
+    file1 => $alignment_result->get_bam_file,
+    file2 => File::Spec->join($test_data_dir, 'alignment_result.bam'),
+);
+ok($cmp->result, 'Per-lane bam as expected');
+
 $alignment_result->_revivified_bam_file_path(undef);
 ok($alignment_result->get_bam_file, "Subsequent revivifications work correctly");
 
