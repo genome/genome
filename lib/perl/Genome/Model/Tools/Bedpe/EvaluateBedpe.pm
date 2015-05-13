@@ -37,6 +37,7 @@ sub execute {
     $self->rawstats->{true_positive} = $self->_get_stat($self->bedpe, $self->gold_bedpe, 'both');
     $self->rawstats->{false_positive} = $self->_get_stat($self->bedpe, $self->gold_bedpe, 'notboth');
     $self->rawstats->{false_negative} = $self->_get_stat($self->gold_bedpe, $self->bedpe, 'notboth');
+    $self->_set_derivitive_stats;
     return 1;
 }
 
@@ -66,5 +67,15 @@ sub _get_stat {
     return Genome::Sys->line_count($output_file);
 }
 
+sub _set_derivitive_stats {
+    my $self = shift;
+    my $tp = $self->rawstats->{true_positive};
+    my $fp = $self->rawstats->{false_positive};
+    my $fn = $self->rawstats->{false_negative};
+
+    $self->rawstats->{ppv} = $tp/($tp + $fp);
+    $self->rawstats->{specificity} = $tp/($tp + $fn);
+    $self->rawstats->{f1} = 2*$tp/(2*$tp + $fp + $fn);
+}
 1;
 
