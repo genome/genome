@@ -5,376 +5,166 @@ use warnings;
 
 use Genome;
 
-use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
 use Genome::InstrumentData::Command::Import::CsvParser;
-
-use IO::File;
-use Params::Validate ':types';
+use Genome::InstrumentData::Command::Import::WorkFlow::Inputs;
+use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
+require List::Util;
 
 class Genome::InstrumentData::Command::Import::Launch {
     is => 'Command::V2',
     doc => 'Manage importing sequence files into GMS',
-    has => [
+    has => {
         analysis_project => {
             is => 'Genome::Config::AnalysisProject',
             doc => 'Analysis project to assign to the created instrument data.',
         },
         file => {
             is => 'Text',
-            doc => Genome::InstrumentData::Command::Import::CsvParser->csv_help,
+            doc => 'The metadata file containing sequence file, library names and other infomation to be associated with instruemtn daa.',
         },
-    ],
-    has_optional => [
-        launch_config => {
+        job_group_name => {
             is => 'Text',
-            doc => <<DOC
-Launch imports [if needed] using this command. Insert '%{job_name}' place holder into the command so the manager can monitor status.
- 
-The import commands will be printed to the screen [on STDERR] if:
- launch config is not given
- launch config does not have a '%{job_name}' in it
- list config is not given
-
-The temp space required can also be filled in be using the tmp family of placeholders. 
- %{gtmp}  gigabytes
- %{mtmp}  megabytes
- %{kbtmp} kilobytes
-
-Example for LSF
- Launch the job into group /me/mygroup and logging to /users/me/logs/%{job_name}
-
- bsub -J %{job_name} -g /me/mygroup -oo /users/me/logs/%{job_name} -M 16000000 -R 'select [mem>16000 & gtmp>%{gtmp}] rsuage[mem=16000,gtmp=%{gtmp}]'
-
-DOC
+            doc => 'The job group name. Used to throttle imports to prvent too many running at a time.',
         },
-        list_config => {
-            is => 'Text',
-            doc => <<DOC
-The command to run to list running imports. Give the command, job name column number and status column number, separated by semicolons (;). The command will be run and parsed, expecting to find the job name and status. This is then used to determine the next course of action for each source file(s).
-
-Example for LSF
- This will run the bjobs command, looking for the job name in column 7 and status in column 3.
-
- bjobs -w -g /me/mygroup;7;3
-
-DOC
+    },
+    has_optional => {
+        mem => {
+            is => 'Number',
+            default_value => 8000,
+            doc => 'Amount of memory in megabytes to request for each import.',
         },
-    ],
-    has_optional_transient => [
+    },
+    has_optional_transient => {
         _imports => { is => 'Array', },
-        _list_command => { is => 'Text', },
-        _list_job_name_column => { is => 'Text', },
-        _list_status_column => { is => 'Text', },
-        _launch_command_format => { is => 'Text', },
-        _launch_command_has_job_name => { is => 'Boolean', default_value => 0, },
-        _launch_command_substitutions => { 
-            is => 'Hash', 
-            default_value => { map { $_ => qr/%{$_}/ } (qw/ job_name library_name gtmp mtmp kbtmp /), },
-        },
-    ],
+        gtmp => { is => 'Number', },
+    },
 };
 
+sub help_brief {
+    return 'batch import sequence files into GMS'
+}
+
 sub help_detail {
-    return <<HELP;
-Output
+    my $help = <<HELP;
+Given a metadata file, launch an import process that will import the sequence files in GMS. The launching of the jobs is handled a genome 'process'.
 
- WHAT            SENT TO  DESCRIPTION    
- Status          STDOUT   One for each library/source files set.
- Stats           STDERR   Summary stats for statuses.
+Listing status of a process:
 
-Status Output
- The status output is formatted so that the columns are lined up. A line is output for each library name and source file set.
+\$ genome process view \$PROCESS_ID
 
- Example:
+Listing created instrument data:
 
- library_name      job_name status  inst_data
- Sample-01-extlibs ahsgdj   success 6c43929f065943a09f8ccc769e42c41d
- Sample-01-extlibs jfuexm   run     NA
- Sample-02-extlibs oodkmq   needed  NA
+\$ genome instrument-data list imported process_id=\$PROCESS_ID
 
- Column definitions:
-
- library_name Name of the library.
- #            Since the library name may be used more than once, this is the iteration as it appears in the source files tsv.
- status       Import status - no_library, needed, pend, run, success.
- inst_data    Instrument data id.
+About the Metadata File
 
 HELP
+    $help .= Genome::InstrumentData::Command::Import::CsvParser->csv_help;
+    return $help;
 }
 
 sub execute {
     my $self = shift;
 
-    $self->_resolve_launch_command;
-    $self->_resolve_list_config;
+    $self->_check_for_running_processes;
     $self->_load_file;
-    $self->_check_source_files_and_set_kb_required_for_processing;
-    $self->_load_instrument_data;
-    $self->_load_statuses;
-    $self->_launch_imports;
-    $self->_output_status;
+    $self->_launch_process;
 
     return 1
 }
 
-sub _resolve_launch_command {
+sub _check_for_running_processes {
     my $self = shift;
 
-    my $cmd_format = $self->launch_config;
-    if ( $cmd_format ) {
-        my $substitutions = $self->_launch_command_substitutions;
-        my $required_substitution = 'job_name';
-        my $substitution = $substitutions->{$required_substitution};
-        if ( $cmd_format =~ /$substitution/ ) {
-            $self->_launch_command_has_job_name(1);
-        }
-        $cmd_format .= ' ';
-    }
+    my $md5 = Genome::Sys->md5sum($self->file);
+    die $self->error_message('Failed to get md5 for import file! %s', $self->file) if not $md5;
 
-    $cmd_format .= "genome instrument-data import basic --library name=%{library_name} --source-files %s --import-source-name '%s'%s%s%s",
-    $self->_launch_command_format($cmd_format);
+    my @active_processes = Genome::InstrumentData::Command::Import::Process->get(
+        import_md5 => $md5,
+        status => [qw/ New Scheduled Running /],
+    );
 
-    return 1;
-}
+    return 1 if not @active_processes;
 
-sub _resolve_list_config {
-    my $self = shift;
-
-    my $list_config = $self->list_config;
-    return 1 if not $list_config;
-
-    my %list_config;
-    @list_config{qw/ command job_name_column status_column /} = split(';', $list_config);
-    for my $attr ( sort keys %list_config ) {
-        if ( not defined $list_config{$attr} ) {
-            die $self->error_message("Missing %s in list config: %s", $attr, $list_config);
-        }
-        $list_config{$attr}-- if $attr =~ /col/;
-        my $method = '_list_'.$attr;
-        $self->$method( $list_config{$attr} );
-    }
-
-    return 1;
+    $self->debug_message("Found '%s' process (%s) for metadata file: %s", $active_processes[0]->status, $active_processes[0]->id, $self->file);
+    die $self->error_message('Cannot start another import process until the previous one has completed!');
 }
 
 sub _load_file {
     my $self = shift;
 
     my $parser = Genome::InstrumentData::Command::Import::CsvParser->create(file => $self->file);
-    my (@imports, %seen);
+    my (%seen, @imports, @kb_required);
     while ( my $import = $parser->next ) {
-        my $string = join(' ', $import->{library}->{name}, map { $import->{instdata}->{$_} } keys %{$import->{instdata}});
-        $string .= $import->{instdata}->{downsample_ratio} if $import->{instdata}->{downsample_ratio};
+        my $library_name = $import->{library}->{name};
+        my $source_files = delete $import->{instdata}->{source_files};
+        my $string = join(' ', $library_name, $source_files, map { $import->{instdata}->{$_} } keys %{$import->{instdata}});
         my $id = substr(Genome::Sys->md5sum_data($string), 0, 6);
         if ( $seen{$id} ) {
             die $self->error_message("Duplicate source file/library combination! $string");
         }
         $seen{$id}++;
-        $import->{job_name} = $id;
-        $import->{library_name} = $import->{library}->{name};
-        my @libraries = Genome::Library->get(name => $import->{library}->{name});
-        $import->{library_cnt} = scalar @libraries;
-        push @imports, $import;
-    }
-    $self->_imports(\@imports);
 
-    return 1;
-}
+        my @libraries = Genome::Library->get(name => $library_name);
+        die $self->error_message('No library for name: %s', $library_name) if not @libraries;
+        die $self->error_message('Multiple libraries for library name: %s', $library_name) if @libraries > 1;
 
-sub _check_source_files_and_set_kb_required_for_processing {
-    my $self = shift;
-
-    for my $import ( @{$self->_imports} ) {
-        # get disk space required [checks if source files exist]
-        my $disk_space_required_in_kb = Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles->create(
-            paths => [ split(',', $import->{instdata}->{source_files}) ],
-        )->kilobytes_required_for_processing;
-        $disk_space_required_in_kb = 1048576 if $disk_space_required_in_kb < 1048576; # 1 Gb 
-        $import->{gtmp} = sprintf('%.0f', $disk_space_required_in_kb / 1048576);
-        $import->{mtmp} = sprintf('%.0f', $disk_space_required_in_kb / 1024);
-        $import->{kbtmp} = $disk_space_required_in_kb;
-    }
-
-    return 1;
-}
-
-sub _load_instrument_data {
-    my $self = shift;
-
-    # Get instdata by source files
-    my @instrument_data = Genome::InstrumentData::Imported->get(
-        original_data_path => [ map { $_->{instdata}->{source_files} } @{$self->_imports} ],
-        '-hint' => [qw/ attributes /],
-    );
-
-    # Create map w/ original data path files and downsample ratio as ids
-    my %instrument_data;
-    for my $instrument_data ( @instrument_data ) {
-        my $original_data_path = $instrument_data->original_data_path;
-        my $downsample_ratio_attr = $instrument_data->attributes(attribute_label => 'downsample_ratio');
-        my $id = $original_data_path;
-        $id .= sprintf('%f', $downsample_ratio_attr->attribute_value) if $downsample_ratio_attr;
-        push @{$instrument_data{$id}}, $instrument_data;
-    }
-
-    for my $import ( @{$self->_imports} ) {
-        my $lookup_id = $import->{instdata}->{source_files};
-        $lookup_id .= sprintf('%f', $import->{instdata}->{downsample_ratio}) if $import->{instdata}->{downsample_ratio};
-        $import->{instrument_data} = $instrument_data{$lookup_id};
-    }
-
-    return 1;
-}
-
-sub _load_statuses {
-    my $self = shift;
-
-    my $job_statuses = $self->_load_job_statuses;
-    return if not $job_statuses;
-
-    my $get_status_for_import = sub{
-        my $import = shift;
-        return 'no_library' if $import->{library_cnt} == 0;
-        return 'too_many_libraries' if $import->{library_cnt} > 1;
-        return $import->{job_status} if $import->{job_status};
-        return 'needed' if not $import->{instrument_data};
-        return 'success';
-    };
-
-    my $imports = $self->_imports;
-    for my $import ( @$imports ) {
-        $import->{job_status} = $job_statuses->{ $import->{job_name} };
-        $import->{status} = $get_status_for_import->($import);
-    }
-
-    return 1;
-}
-
-sub _load_job_statuses {
-    my $self = shift;
-
-    my $job_list_cmd = $self->_list_command;
-    $job_list_cmd .= ' 2>/dev/null |';
-    my $fh = IO::File->new($job_list_cmd);
-    die $self->error_message('Failed to execute import list command! '.$job_list_cmd) if not $fh;
-    
-    my $name_column = $self->_list_job_name_column;
-    my $status_column = $self->_list_status_column;
-    my %job_statuses;
-    while ( my $line = $fh->getline ) {
-        chomp $line;
-        my @tokens = split(/\s+/, $line);
-        $job_statuses{ $tokens[$name_column] } = lc $tokens[$status_column];
-    }
-
-    return \%job_statuses;
-}
-
-sub _launch_imports {
-    my $self = shift;
-
-    if ( not $self->launch_config ) {
-        $self->warning_message('Cannot launch jobs because there is no launch config!');
-        return 1;
-    }
-    elsif ( not $self->list_config ) { 
-        $self->warning_message('Can not launch jobs because there is no list config!');
-        return 1;
-    }
-    elsif ( not $self->_launch_command_has_job_name ) {
-        $self->warning_message('Cannot launch jobs because there is no %{job_name} in launch config!');
-        return 1;
-    }
-
-    my $launch_sub = sub{
-        my $import = shift;
-        my $cmd = $self->_resolve_launch_command_for_import($import);
-        my $rv = eval{ Genome::Sys->shellcmd(cmd => $cmd); };
-        if ( not $rv ) {
-            $self->error_message($@) if $@;
-            die $self->error_message('Failed to launch instrument data import command!');
-        }
-        $import->{status} = 'pend';
-    };
-
-    my $imports = $self->_imports;
-    for my $import ( @$imports ) {
-        next if $import->{status} ne 'needed';
-        $launch_sub->($import) or return;
-    }
-
-    return 1;
-}
-
-sub _resolve_launch_command_for_import {
-    my ($self, $import) = Params::Validate::validate_pos(@_, {type => OBJECT}, {type => HASHREF});
-
-    my $cmd_format = $self->_launch_command_format;
-    my $substitutions = $self->_launch_command_substitutions;
-    for my $name ( keys %$substitutions ) {
-        my $value = $import->{$name};
-        next if not defined $value;
-        my $pattern = $substitutions->{$name};
-        $cmd_format =~ s/$pattern/$value/g;
-    }
-
-    my %instrument_data_properties = %{$import->{instdata}};
-    my $source_files = delete $instrument_data_properties{source_files};
-    my $downsample_ratio = delete $instrument_data_properties{downsample_ratio};
-    my $cmd .= sprintf(
-        $cmd_format,
-        $source_files,
-        ( $import->{sample}->{nomenclature} ),
-        ( 
-            %instrument_data_properties
-            ? ' --instrument-data-properties '.  join(',', map { $_."='".$instrument_data_properties{$_}."'"; } sort keys %instrument_data_properties)
-            : ''
-        ),
-        $self->analysis_project ? " --analysis-project id=".$self->analysis_project->id : '',
-        ( 
-            defined $downsample_ratio
-            ? " --downsample-ratio ".$downsample_ratio
-            : '' 
-        ),
-    );
-
-    return $cmd;
-}
-
-sub _output_status {
-    my $self = shift;
-
-    my @status = ( ['library_name'], ['job_name'], ['status'], ['inst_data'], );
-    my ($i, @row, %totals);
-    for my $import ( sort { $a->{library}->{name} cmp $b->{library}->{name} } @{$self->_imports} ) {
-        $totals{total}++;
-        $totals{ $import->{status} }++;
-        @row = (
-            $import->{library}->{name}, 
-            $import->{job_name}, 
-            $import->{status}, 
-            ( $import->{instrument_data} ? join(' ', map { $_->id } @{$import->{instrument_data}}) : 'NA' ),
+        my $import = Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
+            analysis_project => $self->analysis_project,
+            library => $libraries[0],
+            instrument_data_properties => $import->{instdata},
+            source_files => [ split(',', $source_files) ], # FIXME move to csv parser
         );
-        for ( $i = 0; $i < @row; $i++ ) {
-            push @{$status[$i]}, $row[$i];
-        }
+        push @imports, $import;
+
+        my $kb_required = $import->source_files->kilobytes_required_for_processing;
+        $kb_required = 1048576 if $kb_required < 1048576; # 1 Gb 
+        push @kb_required, $kb_required;
     }
 
-    my @column_formats;
-    for ( $i = 0; $i < @status; $i++ ) {
-        my ($column_width) = sort { $b <=> $a } map { length($_) } @{$status[$i]};
-        $column_formats[$i] = '%-'.$column_width.'s';
-    }
+    $self->_imports(\@imports);
+    my $max_kb_required = List::Util::max(@kb_required);
+    $self->gtmp( $max_kb_required / ( 1024 * 1024 ) );
 
-    my $format = join(' ', @column_formats)."\n";
-    my $status;
-    my $rownum = @{$status[0]};
-    for ( $i = 0; $i < $rownum; $i++ ) {
-        $status .= sprintf($format, map { $_->[$i] } @status);
-    }
+    return 1;
+}
 
-    printf STDOUT $status;
-    print STDERR "\nSummary:\n".join("\n", map { sprintf('%-16s %s', $_, $totals{$_}) } sort { $a cmp $b } keys %totals)."\n";
+sub _launch_process {
+    my $self = shift;
+
+    my $dag = Genome::WorkflowBuilder::DAG->create(name => 'Import Instrument Data for '.$self->file);
+    my $gtmp = $self->gtmp;
+    my $mem = $self->mem;
+    my $lsf_resource = sprintf(
+        "-g %s -M %s -R 'select [mem>%s & gtmp>%s] rsuage[mem=%s,gtmp=%s]", 
+        $self->job_group_name, ($mem * 1024), $mem, $gtmp, $mem, $gtmp,
+    );
+    my $import_op = Genome::WorkflowBuilder::Command->create(
+        name => 'InstData Import WF Run',
+        command => 'Genome::InstrumentData::Command::Import::WorkFlow::Run',
+        lsf_resource => $lsf_resource,
+    );
+    $dag->connect_input(
+        input_property => 'work_flow_inputs',
+        destination => $import_op,
+        destination_property => 'work_flow_inputs',
+    );
+    $dag->connect_output(
+        output_property => 'instrument_data',
+        source => $import_op,
+        source_property => 'instrument_data',
+    );
+    $dag->add_operation($import_op);
+    $dag->parallel_by('work_flow_inputs');
+
+    my $p = Genome::InstrumentData::Command::Import::Process->create(import_file => $self->file);
+    $p->run(
+        workflow_xml => $dag->get_xml,
+        workflow_inputs => { work_flow_inputs => $self->_imports },
+    );
+
+    $self->debug_message('Started imports with process id: %s. View status with:', $p->id);
+    $self->debug_message('genome instrument-data import status %s', $p->id);
 
     return 1;
 }
