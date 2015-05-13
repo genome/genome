@@ -20,10 +20,11 @@ my $analysis_project = Genome::Config::AnalysisProject->__define__(name => 'TEST
 ok($analysis_project, 'define analysis project');
 my $library = Genome::Library->__define__(name => 'TEST-sample-libs', sample => Genome::Sample->__define__(name => 'TEST-sample'));
 ok($library, 'define library');
+my @source_files = (qw/ in.1.fastq in.2.fastq /);
 my %required_params = (
     analysis_project => $analysis_project,
     library => $library,
-    source_files => [qw/ in.1.fastq in.2.fastq /],
+    source_files => \@source_files,
 );
 
 my $inputs = $class->create(
@@ -36,15 +37,15 @@ my $inputs = $class->create(
     /],
 );
 ok($inputs, 'create inputs');
-
-isa_ok($inputs->source_files, 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles', 'set _source_files');
 is($inputs->format, 'fastq', 'source files format is fastq');
+is($inputs->library_name, $library->name, 'library_name');
+is($inputs->sample_name, $library->sample->name, 'sample_name');
 
 my %instrument_data_properties = (
     downsample_ratio => 0.7,
     description => 'imported',
     import_source_name => 'TGI',
-    original_data_path => join(',', @{$required_params{source_files}}),
+    original_data_path => join(',', @source_files),
     this => 'that', 
 );
 is_deeply(
@@ -59,6 +60,21 @@ my $instdata = Genome::InstrumentData::Imported->__define__;
 ok($instdata, 'define instdata');
 ok($instdata->original_data_path($inputs->source_files->original_data_path), 'add original_data_path');
 is_deeply([$inputs->instrument_data_for_original_data_path], [$instdata], 'instrument_data_for_original_data_path');
+
+# as_hashref
+is_deeply(
+    $inputs->as_hashref,
+    {
+        analysis_project => $analysis_project,
+        downsample_ratio => $instrument_data_properties{downsample_ratio},
+        instrument_data_properties => \%instrument_data_properties,
+        library => $library,
+        library_name => $library->name,
+        sample_name => $library->sample->name,
+        source_paths => \@source_files,
+    },
+    'inputs as_hashref',
+);
 
 # ERRORS
 for my $name ( sort keys %required_params ) {

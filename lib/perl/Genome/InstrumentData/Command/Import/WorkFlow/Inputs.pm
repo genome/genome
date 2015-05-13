@@ -79,5 +79,17 @@ sub instrument_data_for_original_data_path {
     return map { $_->instrument_data } @odp_attrs;
 }
 
+sub as_hashref {
+    my $self = shift;
+
+    my %hash = map { $_ => $self->$_ } (qw/
+        analysis_project instrument_data_properties library library_name sample_name
+        /);
+    $hash{downsample_ratio} = $self->instrument_data_properties->{downsample_ratio};
+    $hash{source_paths} = [ $self->source_files->paths ];
+
+    return \%hash;
+}
+
 1;
 
