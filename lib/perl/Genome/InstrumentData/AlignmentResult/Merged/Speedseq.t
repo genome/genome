@@ -10,8 +10,55 @@ use warnings;
 
 use above 'Genome';
 use Test::More;
+use Genome::Test::Factory::InstrumentData::Solexa;
+use Genome::Test::Factory::Model::ImportedReferenceSequence;
+use Genome::Test::Factory::Build;
+use Genome::Test::Factory::SoftwareResult::User;
+use Sub::Override;
 
 my $pkg = 'Genome::InstrumentData::AlignmentResult::Merged::Speedseq';
 use_ok($pkg);
+
+my $test_data_dir = __FILE__.'.d';
+
+my $ref_seq_model = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object;
+my $ref_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $ref_seq_model->id);
+use Genome::Model::Build::ReferenceSequence;
+my $override = Sub::Override->new(
+    'Genome::Model::Build::ReferenceSequence::full_consensus_path',
+    sub { return File::Spec->join($test_data_dir, 'human_g1k_v37_20_42220611-42542245.fasta'); }
+);
+
+my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
+    flow_cell_id => '12345ABXX',
+    lane => '2',
+    subset_name => '2',
+    run_name => 'example',
+    id => 'NA12878',
+);
+$instrument_data->bam_path(File::Spec->join($test_data_dir, 'NA12878.20slice.30X.bam'));
+
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
+
+my $merged_alignment_result = $pkg->create(
+    instrument_data => [$instrument_data],
+    reference_build => $ref_seq_build,
+    picard_version => '1.46',
+    samtools_version => 'r963',
+    aligner_name => 'speedseq',
+    aligner_version => 'test',
+    aligner_params => {},
+    _user_data_for_nested_results => $result_users,
+);
+ok($merged_alignment_result, 'Merged alignment result created successfully');
+isa_ok($merged_alignment_result, $pkg, 'Merged alignment result is a speedseq alignment');
+
+my $cmp = Genome::Model::Tools::Sam::Compare->execute(
+    file1 => $merged_alignment_result->bam_file,
+    file2 => File::Spec->join($test_data_dir, 'merged_alignment_result.bam'),
+);
+ok($cmp->result, 'Merged bam as expected');
 
 done_testing;
