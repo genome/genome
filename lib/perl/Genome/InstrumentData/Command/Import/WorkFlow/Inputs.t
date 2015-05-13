@@ -16,13 +16,18 @@ use Test::More;
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::Inputs';
 use_ok($class) or die;
 
+my $analysis_project = Genome::Config::AnalysisProject->__define__(name => 'TEST-AnP');
+ok($analysis_project, 'define analysis project');
 my $library = Genome::Library->__define__(name => 'TEST-sample-libs', sample => Genome::Sample->__define__(name => 'TEST-sample'));
 ok($library, 'define library');
-
-my @source_files = (qw/ in.1.fastq in.2.fastq /);
-my $inputs = $class->create(
+my %required_params = (
+    analysis_project => $analysis_project,
     library => $library,
-    source_files => \@source_files,
+    source_files => [qw/ in.1.fastq in.2.fastq /],
+);
+
+my $inputs = $class->create(
+    %required_params,
     instrument_data_properties => [qw/ 
         description=imported
         downsample_ratio=0.7
@@ -39,7 +44,7 @@ my %instrument_data_properties = (
     downsample_ratio => 0.7,
     description => 'imported',
     import_source_name => 'TGI',
-    original_data_path => join(',', @source_files),
+    original_data_path => join(',', @{$required_params{source_files}}),
     this => 'that', 
 );
 is_deeply(
@@ -56,22 +61,20 @@ ok($instdata->original_data_path($inputs->source_files->original_data_path), 'ad
 is_deeply([$inputs->instrument_data_for_original_data_path], [$instdata], 'instrument_data_for_original_data_path');
 
 # ERRORS
-throws_ok(
-    sub { $class->create(library => $library); },
-    qr/No source files\!/,
-    "create failed w/o source files",
-);
-
-throws_ok(
-    sub { $class->create(source_files => \@source_files); },
-    qr/No library given to work flow inputs\!/,
-    "create failed w/o library",
-);
+for my $name ( sort keys %required_params ) {
+    my $value = delete $required_params{$name};
+    throws_ok(
+        sub { $class->create(%required_params); },
+        qr/No $name given to work flow inputs\!/,
+        "create failed w/o $name",
+    );
+    $required_params{$name} = $value;
+}
 
 throws_ok(
     sub {
         $class->create(
-            source_files => [qw/ in.bam /],
+            %required_params,
             instrument_data_properties => [qw/ foo=bar foo=baz /],
         );
     },
@@ -82,7 +85,7 @@ throws_ok(
 throws_ok(
     sub{
         $class->create(
-            source_files => [qw/ in.bam /],
+            %required_params,
             instrument_data_properties => [qw/ description= /],
         );
     },

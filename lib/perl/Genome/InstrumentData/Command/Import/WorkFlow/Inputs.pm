@@ -10,6 +10,7 @@ use Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles;
 class Genome::InstrumentData::Command::Import::WorkFlow::Inputs { 
     is => 'UR::Object',
     has => {
+        analysis_project => { is => 'Genome::Config::AnalysisProject', },
         library => { is => 'Genome::Library', },
         instrument_data_properties => { is => 'HASH', },
         source_files => { is => 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles', },
@@ -27,25 +28,16 @@ sub create {
     my $self = $class->SUPER::create(%params);
     return if not $self;
 
-    $self->_resolve_source_files;
+    for my $requried (qw/ analysis_project library source_files /) {
+        die $self->error_message("No $requried given to work flow inputs!") if not $self->$requried;
+    }
+
+    $self->source_files(
+        Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles->create(paths => $self->source_files) 
+    );
     $self->_resolve_instrument_data_properties;
 
-    die 'No library given to work flow inputs!' if not $self->library;
-
     return $self;
-}
-
-sub _resolve_source_files {
-    my $self = shift;
-
-    my $source_files = $self->source_files;
-    die $self->error_message('No source files!') if not $source_files;
-    die $self->error_message('Invalid source files!') if not ref $source_files;
-    $self->source_files(
-        Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles->create(paths => $source_files) 
-    );
-
-    return 1;
 }
 
 sub _resolve_instrument_data_properties {
