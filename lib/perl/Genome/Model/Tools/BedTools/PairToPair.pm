@@ -95,7 +95,10 @@ sub execute {
     if ($self->require_different_names) {
         $options .= " -rdn";
     }
-    my $cmd = $self->bedtools_path .'/bin/pairToPair '. $options .' -a '. $self->input_file_a .' -b '. $self->input_file_b .' > '. $self->output_file;
+    my $cmd = $self->bedtools_path .'/bin/pairToPair '. $options .' -a '.
+        Genome::Sys->quote_for_shell($self->input_file_a) .
+        ' -b '. Genome::Sys->quote_for_shell($self->input_file_b) .
+        ' > '. Genome::Sys->quote_for_shell($self->output_file);
     Genome::Sys->shellcmd(
         cmd => $cmd,
         input_files => [$self->input_file_a,$self->input_file_b],
