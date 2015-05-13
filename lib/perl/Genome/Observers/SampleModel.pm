@@ -4,7 +4,8 @@ use strict;
 use warnings;
 use Carp;
 
-Genome::Sample->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::Sample',
     aspect => 'delete',
     callback => \&delete_models,
 );

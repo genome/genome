@@ -41,7 +41,8 @@ if ($nessy_server) {
     );
     Genome::Sys::Lock->add_backend('site', $nessy_site_backend);
 
-    UR::Context->process->add_observer(
+    UR::Observer->register_callback(
+        subject => UR::Context->process,
         aspect => 'sync_databases',
         callback => sub {
             my ($ctx, $aspect, $sync_db_result) = @_;

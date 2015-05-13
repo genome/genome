@@ -14,15 +14,18 @@ class Genome::DataSource::CommonRDBMS {
 
 my $query_pause = _make_db_pause_function('query_pause_sentry_file_path');
 foreach my $signal ( qw( query precreate_handle sequence_nextval ) ){
-    __PACKAGE__->create_subscription(
-        method => $signal,
+    UR::Observer->register_callback(
+        subject_class_name => __PACKAGE__,
+        aspect => $signal,
         callback => $query_pause,
     );
 }
 
 my $commit_pause = _make_db_pause_function('commit_pause_sentry_file_path');
-UR::Context->current->create_subscription(
-    method => 'precommit',
+UR::Observer->register_callback(
+    subject_class_name => 'UR::Context',
+    subject_id => UR::Context->current->id,
+    aspect => 'precommit',
     callback => sub {
         __PACKAGE__->$commit_pause;
     }

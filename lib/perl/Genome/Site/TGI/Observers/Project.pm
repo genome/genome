@@ -6,27 +6,32 @@ use warnings;
 our %groups_with_deleted_projects;
 our %deleted_parts;
 
-Genome::Project->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::Project',
     aspect => 'create',
     callback => \&create_callback,
 );
 
-Genome::Project->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::Project',
     aspect => 'delete',
     callback => \&delete_callback,
 );
 
-Genome::Project->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::Project',
     aspect => 'name',
     callback => \&project_rename,
 );
 
-Genome::ProjectPart->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::ProjectPart',
     aspect => 'create',
     callback => \&project_part_create,
 );
 
-Genome::ProjectPart->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::ProjectPart',
     aspect => 'delete',
     callback => \&project_part_delete,
 );

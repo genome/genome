@@ -37,7 +37,8 @@ class Genome::Sys::User::Role {
     id_generator => '-uuid',
 };
 
-Genome::Sys::User::Role->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::Sys::User::Role',
     callback => \&_change_callback,
 );
 

@@ -78,7 +78,8 @@ sub _resolve_param_value_from_text_by_name_or_id {
     return @results;
 }
 
-Genome::Sys::User->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::Sys::User',
     callback => \&_change_callback,
 );
 sub _change_callback {

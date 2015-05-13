@@ -57,7 +57,8 @@ class Genome::SoftwareResult {
     doc => 'base class for managed data sets, with database tracking for params, inputs, metrics, and disk',
 };
 
-Genome::SoftwareResult->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::SoftwareResult',
     aspect => 'subclass_loaded',
     callback => sub {
         my ($classname, $aspect, $subclassname) = @_;
@@ -441,7 +442,7 @@ my $recalculate_lookup_hash_callback = sub {
 for my $name (qw(Param Input)) {
     my $classname = join('::', qw(Genome SoftwareResult), $name);
     for my $aspect (qw(create value_id)) {
-        $classname->add_observer(aspect => $aspect, callback => $recalculate_lookup_hash_callback);
+        UR::Observer->register_callback(subject_class_name => $classname, aspect => $aspect, callback => $recalculate_lookup_hash_callback);
     }
 }
 
