@@ -9,6 +9,7 @@ use UR::DataSource::Pg;
 
 class Genome::DataSource::CommonRDBMS {
     doc => 'Mixin class to implement pausing access to the database',
+    valid_signals => [qw( precommit precreate_handle query sequence_nextval )]
 };
 
 my $query_pause = _make_db_pause_function('query_pause_sentry_file_path');
