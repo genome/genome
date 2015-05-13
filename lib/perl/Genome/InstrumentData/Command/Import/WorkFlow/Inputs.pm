@@ -77,5 +77,15 @@ sub _resolve_instrument_data_properties {
     return 1;
 }
 
+sub instrument_data_for_original_data_path {
+    my $self = shift;
+    my @odp_attrs = Genome::InstrumentDataAttribute->get(
+        attribute_label => 'original_data_path',
+        attribute_value => $self->source_files->original_data_path,
+    );
+    return if not @odp_attrs;
+    return map { $_->instrument_data } @odp_attrs;
+}
+
 1;
 

@@ -48,6 +48,13 @@ is_deeply(
     'instrument_data_properties',
 );
 
+# instrument data
+ok(!$inputs->instrument_data_for_original_data_path, 'no instrument_data_for_original_data_path ... yet');
+my $instdata = Genome::InstrumentData::Imported->__define__;
+ok($instdata, 'define instdata');
+ok($instdata->original_data_path($inputs->source_files->original_data_path), 'add original_data_path');
+is_deeply([$inputs->instrument_data_for_original_data_path], [$instdata], 'instrument_data_for_original_data_path');
+
 # ERRORS
 throws_ok(
     sub { $class->create(library => $library); },
