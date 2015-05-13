@@ -87,15 +87,38 @@ sub execute {
 sub _resolve_work_flow_inputs {
     my $self = shift;
 
-    my @instrument_data_properties = $self->instrument_data_properties;
-    push @instrument_data_properties, 'description='.$self->description if defined $self->description;		
-    push @instrument_data_properties, 'downsample_ratio='.$self->downsample_ratio if defined $self->downsample_ratio;
     return Genome::InstrumentData::Command::Import::WorkFlow::Inputs->create(
         analysis_project => $self->analysis_project,
         library => $self->library,
         source_files => [ $self->source_files ],
-        instrument_data_properties => \@instrument_data_properties,
+        instrument_data_properties => $self->_resolve_instrument_data_properties,
     );
+}
+
+sub _resolve_instrument_data_properties {
+    my $self = shift;
+
+    my @incoming_properties = $self->instrument_data_properties;
+    push @incoming_properties, 'description='.$self->description if defined $self->description;		
+    push @incoming_properties, 'downsample_ratio='.$self->downsample_ratio if defined $self->downsample_ratio;
+
+    my %properties;
+    return \%properties if not @incoming_properties;
+
+    for my $key_value_pair ( @incoming_properties ) {
+        my ($label, $value) = split('=', $key_value_pair);
+        if ( not defined $value or $value eq '' ) {
+            die $self->error_message('Failed to parse with instrument data property label/value! '.$key_value_pair);
+        }
+        if ( exists $properties{$label} and $value ne $properties{$label} ) {
+            die $self->error_message(
+                "Multiple values for instrument data property! $label => ".join(', ', sort $value, $properties{$label})
+            );
+        }
+        $properties{$label} = $value;
+    }
+
+    return \%properties;
 }
 
 1;

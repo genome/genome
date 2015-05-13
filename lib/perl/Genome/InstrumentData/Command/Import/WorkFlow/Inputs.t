@@ -29,12 +29,12 @@ my %required_params = (
 
 my $inputs = $class->create(
     %required_params,
-    instrument_data_properties => [qw/ 
-        description=imported
-        downsample_ratio=0.7
-        import_source_name=TGI
-        this=that
-    /],
+    instrument_data_properties => {
+        description => 'imported',
+        downsample_ratio => 0.7,
+        import_source_name => 'TGI',
+        this => 'that',
+    },
 );
 ok($inputs, 'create inputs');
 is($inputs->format, 'fastq', 'source files format is fastq');
@@ -86,27 +86,5 @@ for my $name ( sort keys %required_params ) {
     );
     $required_params{$name} = $value;
 }
-
-throws_ok(
-    sub {
-        $class->create(
-            %required_params,
-            instrument_data_properties => [qw/ foo=bar foo=baz /],
-        );
-    },
-    qr/Multiple values for instrument data property! foo => bar, baz/,
-    "execute failed w/ duplicate key, diff value for instdata properties",
-);
-
-throws_ok(
-    sub{
-        $class->create(
-            %required_params,
-            instrument_data_properties => [qw/ description= /],
-        );
-    },
-    qr#Failed to parse with instrument data property label/value! description=#,
-    "execute failes w/ missing value",
-);
 
 done_testing();
