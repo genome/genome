@@ -32,7 +32,7 @@ sub help_detail {
 }
 
 my %SPEEDSEQ_VERSIONS = (
-    'test'     => '/gscmnt/gc2719/halllab/bin/speedseq',
+    'test'     => '/gscmnt/gc2719/halllab/users/cchiang/bin/speedseq',
 );
 
 sub available_versions {
