@@ -7,6 +7,8 @@ use Test::More;
 use Genome::Sys;
 use File::Temp;
 use File::Spec;
+use Scope::Guard;
+use Cwd qw();
 use Genome::Utility::Test qw(compare_ok);
 use Test::Exception;
 
@@ -221,24 +223,44 @@ subtest create_symlink => sub {
     };
 
     subtest 'arguments' => sub {
-        plan tests => 2;
+        plan tests => 8;
 
-        throws_ok { Genome::Sys->create_symlink() }
+        throws_ok { Genome::Sys->create_symlink(undef, 'foo') }
             qr(Can't create_symlink: no target given),
-            'target param is required';
+            'target param cannot be undef';
 
-        throws_ok { Genome::Sys->create_symlink('/dev/null') }
+        throws_ok { Genome::Sys->create_symlink('', 'foo')}
+            qr(Can't create_symlink: no target given),
+            'target param cannot be empty string';
+
+        throws_ok { Genome::Sys->create_symlink('/dev/null', undef) }
             qr(Can't create_symlink: no 'link' given),
-            'link param is required',
+            'link param cannot be undef';
 
-        # add tests for creating links '' and 0
+        throws_ok { Genome::Sys->create_symlink('/dev/null', '') }
+            qr(Can't create_symlink: no 'link' given),
+            'link param cannot be empty string';
+
+        my $link_to_0 = File::Temp::tempnam($dir, 'arguments0');
+        ok( Genome::Sys->create_symlink(0, $link_to_0),
+            'Create symlink with target 0');
+        is(readlink($link_to_0), '0', 'link created ok');
+
+        my $cwd = Cwd::cwd();
+        my $guard = Scope::Guard->new(sub { chdir $cwd });
+        chdir $dir;
+        my $target = '/dev/null';
+        ok( Genome::Sys->create_symlink($target, '0'),
+            'Create symlink with link name 0');
+        is(readlink('0'), $target, 'symlink created ok')
+
     };
 
     subtest 'link exists' => sub {
         plan tests => 2;
 
         my $target = '/dev/null';
-        my $link = File::Temp::tmpnam($dir, 'exists');
+        my $link = File::Temp::tempnam($dir, 'exists');
         ok( Genome::Sys->create_symlink($target, $link),
             'create_symlink');
 

@@ -889,11 +889,11 @@ sub gidgrnam {
 sub create_symlink {
     my ($class, $target, $link) = @_;
 
-    unless ( defined $target ) {
+    unless ( defined($target) && length($target) ) {
         Carp::croak("Can't create_symlink: no target given");
     }
 
-    unless ( defined $link ) {
+    unless ( defined($link) && length($link) ) {
         Carp::croak("Can't create_symlink: no 'link' given");
     }
 
