@@ -93,6 +93,22 @@ sub test_redirect_stdout_stderr {
         unlink($parenterr, $childerr);
     }
 
+    {
+        my $parentout = File::Temp::tmpnam();
+        my $childout = File::Temp::tmpnam();
+        my $result = $test_redirect->(
+            cmd => [qw(echo another test)],
+            parentout => $parentout,
+            redirect_stdout => $childout,
+        );
+        ok($result, 'Run echo with stdout redirected not through a shell');
+        ok(! (-s $parentout), 'Found no output in stdout of parent')
+            or diag $read_file->($parentout);
+        # two newlines, as the shellcmd will emit an extra newline
+        is( $read_file->($childout), "another test\n\n", 'redirected child stdout to a file');
+        unlink($parentout, $childout);
+    }
+
     Genome::Sys->dump_status_messages($do_dump_status_messages);
 }
 
