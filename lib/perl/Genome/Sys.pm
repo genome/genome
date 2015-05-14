@@ -897,18 +897,13 @@ sub create_symlink {
         Carp::croak("Can't create_symlink: no 'link' given");
     }
 
-    if ( -e $link ) { # the link exists and points to something
-        Carp::croak("Link ($link) for target ($target) already exists.");
+    unless (symlink($target, $link)) {
+        if ($! == Errno::EEXIST) {
+            Carp::croak("Link ($link) for target ($target) already exists.");
+        } else {
+            Carp::croak("Can't create link ($link) to $target\: $!");
+        }
     }
-
-    if ( -l $link ) { # the link exists, but does not point to something
-        Carp::croak("Link ($link) for target ($target) is already a link.");
-    }
-
-    unless ( symlink($target, $link) ) {
-        Carp::croak("Can't create link ($link) to $target\: $!");
-    }
-
     return 1;
 }
 
