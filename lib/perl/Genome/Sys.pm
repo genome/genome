@@ -1405,6 +1405,12 @@ sub shellcmd {
 
     my ($t1,$t2,$elapsed);
 
+    my @cmdline;
+    if (ref($cmd) and ref($cmd) eq 'ARRAY') {
+        @cmdline = @$cmd;
+        $cmd = join(' ', map $self->quote_for_shell($_), @cmdline);
+    }
+
     # Go ahead and print the status message if the cmd is shortcutting
     if ($output_files and @$output_files) {
         my @found_outputs = grep { -e $_ } grep { not -p $_ } @$output_files;
@@ -1518,7 +1524,11 @@ sub shellcmd {
                 {   # POE sets a handler to ignore SIG{PIPE}, that makes the
                     # pipefail option useless.
                     local $SIG{PIPE} = 'DEFAULT';
-                    my @cmdline = ('bash', '-c', "$shellopts_part $cmd");
+
+                    unless (@cmdline) {
+                        @cmdline = ('bash', '-c', "$shellopts_part $cmd");
+                    }
+
                     exec(@cmdline)
                         or do {
                             print STDERR "Can't exec: $!\nCommand line was: ",join(' ', @cmdline),"\n";
