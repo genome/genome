@@ -38,6 +38,7 @@ sub execute {
     $self->rawstats->{false_positive} = $self->_get_stat($self->bedpe, $self->gold_bedpe, 'notboth');
     $self->rawstats->{false_negative} = $self->_get_stat($self->gold_bedpe, $self->bedpe, 'notboth');
     $self->_set_derivative_stats;
+    $self->print_stats;
     return 1;
 }
 
@@ -76,6 +77,14 @@ sub _set_derivative_stats {
     $self->rawstats->{ppv} = $tp/($tp + $fp);
     $self->rawstats->{specificity} = $tp/($tp + $fn);
     $self->rawstats->{f1} = 2*$tp/(2*$tp + $fp + $fn);
+}
+
+sub print_stats {
+    my $self = shift;
+
+    for my $stat (sort keys %{$self->rawstats}) {
+        printf("%s\t%s\n", $stat, $self->rawstats->{$stat});
+    }
 }
 1;
 
