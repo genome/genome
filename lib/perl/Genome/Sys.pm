@@ -1533,7 +1533,7 @@ sub shellcmd {
                         @cmdline = ('bash', '-c', "$shellopts_part $cmd");
                     }
 
-                    exec(@cmdline)
+                    exec { $cmdline[0] } (@cmdline)
                         or do {
                             print STDERR "Can't exec: $!\nCommand line was: ",join(' ', @cmdline),"\n";
                             exit(127);
