@@ -257,12 +257,17 @@ subtest create_symlink => sub {
     };
 
     subtest 'link exists' => sub {
-        plan tests => 2;
+        plan tests => 5;
 
         my $target = '/dev/null';
         my $link = File::Temp::tempnam($dir, 'exists');
         ok( Genome::Sys->create_symlink($target, $link),
             'create_symlink');
+        is(readlink($link), $target, 'symlink is ok');
+
+        ok( Genome::Sys->create_symlink($target, $link),
+            'create_symlink() with the same target and link');
+        is(readlink($link), $target, 'symlink is still ok');
 
         my $expected_error = quotemeta( qq(Link ($link) for target (/dev/zero) already exists) );
         throws_ok { Genome::Sys->create_symlink('/dev/zero', $link) }

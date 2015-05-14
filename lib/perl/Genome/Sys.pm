@@ -899,7 +899,9 @@ sub create_symlink {
 
     unless (symlink($target, $link)) {
         if ($! == Errno::EEXIST) {
-            Carp::croak("Link ($link) for target ($target) already exists.");
+            if (readlink($link) ne $target) {
+                Carp::croak("Link ($link) for target ($target) already exists.");
+            }
         } else {
             Carp::croak("Can't create link ($link) to $target\: $!");
         }
