@@ -194,12 +194,8 @@ sub create_and_start_build {
         }
     }
     else {
-        if ($create_error) {
-            $self->append_error($model->__display_name__, $create_error);
-        }
-        else {
-            $self->append_error($model->__display_name__, 'Build not created but unable to parse error, review console output.');
-        }
+        my $error_msg = $create_error || 'Build not created but unable to parse error, review console output.';
+        $self->append_error($model->__display_name__, $error_msg);
         $create_transaction->rollback;
     }
 }
