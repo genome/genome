@@ -6,7 +6,9 @@ use Test::More;
 
 use Genome::Sys;
 use File::Temp;
+use File::Spec;
 use Genome::Utility::Test qw(compare_ok);
+use Test::Exception;
 
 sub mdir($) {
     system "mkdir -p $_[0]";
@@ -200,6 +202,62 @@ subtest test_write__read_file => sub {
     ok(Genome::Sys->write_file('-', @lines), 'first write_file to STDOUT succeeds');
     ok(Genome::Sys->write_file('-', @lines), 'second write_file to STDOUT succeeds');
 
+};
+
+subtest create_symlink => sub {
+    plan tests => 4;
+
+    my $dir = File::Temp::tempdir( CLEANUP => 1 );
+
+    subtest basic => sub {
+        plan tests => 3;
+
+        my $target = '/dev/null';
+        my $link = File::Temp::tempnam($dir, 'basic');
+        ok( Genome::Sys->create_symlink($target, $link),
+            'create_symlink');
+        ok(-l $link, 'symlink created');
+        is(readlink($link), $target, 'symlink target');
+    };
+
+    subtest 'arguments' => sub {
+        plan tests => 2;
+
+        throws_ok { Genome::Sys->create_symlink() }
+            qr(Can't create_symlink: no target given),
+            'target param is required';
+
+        throws_ok { Genome::Sys->create_symlink('/dev/null') }
+            qr(Can't create_symlink: no 'link' given),
+            'link param is required',
+
+        # add tests for creating links '' and 0
+    };
+
+    subtest 'link exists' => sub {
+        plan tests => 2;
+
+        my $target = '/dev/null';
+        my $link = File::Temp::tmpnam($dir, 'exists');
+        ok( Genome::Sys->create_symlink($target, $link),
+            'create_symlink');
+
+        my $expected_error = quotemeta( qq(Link ($link) for target (/dev/zero) already exists) );
+        throws_ok { Genome::Sys->create_symlink('/dev/zero', $link) }
+            qr($expected_error),
+            'Creating a link with already existing name throws exception';
+    };
+
+    subtest 'symlink() fails' => sub {
+        plan tests => 1;
+
+        my $target = '/dev/null';
+        my $link = File::Spec->catfile($dir, 'not', 'exists', 'deep', 'path');
+        my $expected_error = quotemeta(qq(Can't create link ($link) to $target: No such file or directory));
+        throws_ok { Genome::Sys->create_symlink($target, $link) }
+            qr($expected_error),
+            'symlink() failing throws an exception';
+    };
 };
 
 done_testing();
