@@ -20,7 +20,7 @@ class Genome::Model::Tools::Bedpe::EvaluateBedpe {
         },
         slop => {
             is => 'Integer',
-            doc => 'The amount of slop (in b.p.). to be added to each footprint of A. *Note*: Slop is subtracted from start1 and start2 and added to end1 and end2.',
+            doc => 'The amount of slop (in b.p.). to be added to one set of breakpoints',
         },
     ],
     has_transient_optional_output => [
