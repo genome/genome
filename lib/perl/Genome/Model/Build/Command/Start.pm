@@ -145,6 +145,7 @@ sub create_and_start_build {
         }
         return $build;
     };
+    my $create_error = $@;
 
     if ($build and $create_transaction->commit) {
         # Record newly created build so other tools can access them.
@@ -153,6 +154,7 @@ sub create_and_start_build {
 
         my $start_transaction = UR::Context::Transaction->begin();
         my $build_started = eval { $build->start(%{$self->_start_params}) };
+        my $build_started_error = $@;
         if ($start_transaction->commit) {
             if ($build_started) {
                 $self->_builds_started($self->_builds_started + 1);
@@ -165,8 +167,8 @@ sub create_and_start_build {
                         $self->append_error($model->__display_name__, 'Build (' . $build->id . ') created but Unstartable, review build\'s notes.');
                     }
                 }
-                elsif ($@) {
-                    $self->append_error($model->__display_name__, 'Build (' . $build->id . ') ' . $@);
+                elsif ($build_started_error) {
+                    $self->append_error($model->__display_name__, 'Build (' . $build->id . ') ' . $build_started_error);
                 }
                 else {
                     $self->append_error($model->__display_name__, 'Build (' . $build->id . ') not started but unable to parse error, review console output.');
@@ -192,8 +194,8 @@ sub create_and_start_build {
         }
     }
     else {
-        if ($@) {
-            $self->append_error($model->__display_name__, $@);
+        if ($create_error) {
+            $self->append_error($model->__display_name__, $create_error);
         }
         else {
             $self->append_error($model->__display_name__, 'Build not created but unable to parse error, review console output.');
