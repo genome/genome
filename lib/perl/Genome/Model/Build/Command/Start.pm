@@ -159,45 +159,32 @@ sub create_and_start_build {
     }
 
     my $start_transaction = UR::Context::Transaction->begin();
-    my $build_started = eval { $build->start(%{$self->_start_params}) };
-    my $build_started_error = $@;
-    if ($start_transaction->commit) {
-        if ($build_started) {
-            $self->_builds_started($self->_builds_started + 1);
-            my $msg = "Successfully started build (" . $build->__display_name__ . ").";
-            $self->status_message($self->_color($msg, 'green'));
-        }
-        else {
-            if ($build->status eq 'Unstartable') {
-                unless ($self->unstartable_ok) {
-                    $self->append_error($model->__display_name__, 'Build (' . $build->id . ') created but Unstartable, review build\'s notes.');
-                }
-            }
-            elsif ($build_started_error) {
-                $self->append_error($model->__display_name__, 'Build (' . $build->id . ') ' . $build_started_error);
-            }
-            else {
-                $self->append_error($model->__display_name__, 'Build (' . $build->id . ') not started but unable to parse error, review console output.');
-            }
-        }
+    my $build_started = try {
+        $build->start(%{$self->_start_params});
+        $start_transaction->commit();
+        return 1;
     }
-    else {
-        # If we couldn't commit after trying to start then something blocked us from even committing that the build was Unstartable.
-        my $transaction_error = $start_transaction->error_message();
-        $start_transaction->rollback;
-        my $error_message = 'Failed to commit build start, rolling back to build creation.';
-        if ($transaction_error) {
-            $error_message .= " Transaction error: $transaction_error";
-        }
-        $self->append_error($model->__display_name__, $error_message);
+    catch {
+        $start_transaction->rollback();
+        $self->append_error($model->__display_name__, 'Build (' . $build->id . ') ' . $_);
         $build->status('Unstartable');
         $build->add_note(
             header_text => 'apipe_cron_status',
-            body_text => $error_message,
+            body_text => $_,
             auto_truncate_body_text => 1,
         );
         $build->model->build_requested(0);
+        return;
+    };
+    if (not $build_started) {
+        return ($build->status eq 'Unstartable' && $self->unstartable_ok);
     }
+
+    $self->_builds_started($self->_builds_started + 1);
+    my $msg = "Successfully started build (" . $build->__display_name__ . ").";
+    $self->status_message($self->_color($msg, 'green'));
+
+    return 1;
 }
 
 
@@ -213,4 +200,3 @@ sub display_builds_started {
 
 
 1;
-
