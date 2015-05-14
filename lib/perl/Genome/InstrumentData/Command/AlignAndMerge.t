@@ -88,6 +88,6 @@ my $cmp = Genome::Model::Tools::Sam::Compare->execute(
     file1 => $per_lane_result->get_bam_file,
     file2 => File::Spec->join($test_data_dir, 'alignment_result.bam'),
 );
-ok($cmp->result, 'Merged bam as expected');
+ok($cmp->result, 'Per-lane bam as expected');
 
 done_testing;
