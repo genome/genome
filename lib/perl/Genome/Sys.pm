@@ -47,16 +47,12 @@ sub concatenate_files {
 }
 
 sub quote_for_shell {
+    require String::ShellQuote;
+
     # this is needed until shellcmd supports an array form,
     # which is difficult because we go to a bash sub-shell by default
     my $class = shift;
-    my @quoted = @_;
-    for my $value (@quoted) {
-        $value =~ s|\\|\\\\|g;
-        $value =~ s/\"/\\\"/g;
-        $value = "\"${value}\"";
-        print STDERR $value,"\n";
-    }
+    my @quoted = map String::ShellQuote::shell_quote($_), @_;
     if (wantarray) {
         return @quoted
     }
