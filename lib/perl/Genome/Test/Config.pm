@@ -42,7 +42,7 @@ sub setup_config {
 }
 
 sub setup_spec_file {
-    my $dir = Path::Class::Dir->new($ENV{XGENOME_CONFIG_SNAP}, 'genome');
+    my $dir = Path::Class::Dir->new($ENV{XGENOME_CONFIG_SNAP}, 'genome', 'spec');
     write_yaml_data(dir => $dir, @_);
 }
 
