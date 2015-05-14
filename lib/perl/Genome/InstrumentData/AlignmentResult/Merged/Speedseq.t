@@ -28,15 +28,6 @@ my $override = Sub::Override->new(
     'Genome::Model::Build::ReferenceSequence::full_consensus_path',
     sub { return File::Spec->join($test_data_dir, 'human_g1k_v37_20_42220611-42542245.fasta'); }
 );
-# use Genome::InstrumentData::AlignmentResult;
-# my $override2 = Sub::Override->new(
-    # 'Genome::InstrumentData::AlignmentResult::_prepare_reference_sequences',
-    # sub { return 1; }
-# );
-# my $override3 = Sub::Override->new(
-    # 'Genome::InstrumentData::AlignmentResult::filter_non_database_objects',
-    # sub { my $self = shift; return @_; }
-# );
 
 my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
     flow_cell_id => '12345ABXX',
