@@ -147,11 +147,6 @@ sub data {
     return $self->{_data};
 }
 
-#< Get/Create >#
-sub get { # no real 'get'...since storage is not synced
-    confess "Cannot conventionally 'get' a report.  To get a stored report, use 'create_report_from_directory' or 'get_reports_in_parent_directory'\n";
-}
-
 sub create {
     my ($class, %params) = @_;
 
