@@ -58,6 +58,7 @@ sub execute {
         cmd => $cmd,
         input_files => \@input_files,
         output_files => \@output_files,
+        set_pipefail => 0,
     );
     $self->output_files(\@output_files);
 
