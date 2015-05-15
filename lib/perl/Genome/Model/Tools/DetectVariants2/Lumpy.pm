@@ -259,7 +259,9 @@ sub create_command {
     my $lumpy_base_params = $self->lumpy_base_params;
     my $executable_path   = $self->lumpy_command;
     my $output_file       = $self->_sv_staging_output;
-    return "$executable_path $lumpy_base_params $paired_end_commands $split_read_commands > $output_file";
+    my $temp_directory = Genome::Sys->create_temp_directory;
+    my $temp_file_prefix = File::Spec->join($temp_directory, "temp");
+    return "$executable_path $lumpy_base_params -t $temp_file_prefix $paired_end_commands $split_read_commands > $output_file";
 }
 
 sub lumpy_directory {
