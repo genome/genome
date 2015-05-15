@@ -9341,6 +9341,10 @@ $Genome::Command::OPTS_SPEC = [
       [
         'reason=s',
         'files',
+        'header-text=s',
+        'files',
+        'body-text=s',
+        'files',
         'builds=s@',
         undef,
         'help!',
