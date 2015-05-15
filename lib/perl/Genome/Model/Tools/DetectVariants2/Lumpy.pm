@@ -17,7 +17,12 @@ class Genome::Model::Tools::DetectVariants2::Lumpy {
             calculate_from => ['_temp_staging_directory'],
             calculate => q{ File::Spec->join($_temp_staging_directory, 'legend.tsv'); },
         },
-    ]
+    ],
+    has_param => [
+        lsf_resource => {
+            default_value => "-M 16000000 -R 'select[mem>16000] rusage[mem=16000]'",
+        },
+    ],
 };
 
 sub _detect_variants {
