@@ -53,6 +53,7 @@ class Genome::InstrumentData::Command::Import::Basic {
         inputs => { is => 'Genome::InstrumentData::Command::Import::WorkFlow::Inputs', },
         _new_instrument_data => { is => 'Genome::InstrumentData', is_many => 1 },
     ],
+    doc => 'import sequence files as instrument data into GMS',
 };
 
 sub help_detail {

@@ -518,7 +518,8 @@ compare_prop2populations <- function(input_file,output_file) {
   p.values.adjusted <- p.adjust(p.values,method='fdr');
 
   input.df <- cbind(input.df,p.values,p.values.adjusted);
-  
+  print("writing pvalues")
+  print(head(input.df))
   write.table(input.df,file=output_file,quote=F,row.names=F,col.names=F,sep="\t");
 
 }
@@ -617,5 +618,5 @@ plot_mutation_distance<- function(mut_dist_file,chr_boundary_file,plot_title="Mu
     #return(list(a=p1,b=p2));
     return(p);
   }
-
 }
+

@@ -50,4 +50,14 @@ sub output_file_accessor {
     return undef;
 }
 
+sub reference_build {
+    my $self = shift;
+    return $self->alignment_result->reference_build;
+}
+
+sub reference_sequence {
+    my $self = shift;
+    return $self->reference_build->full_consensus_path('fa');
+}
+
 1;

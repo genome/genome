@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Try::Tiny qw(try catch);
 
 class Genome::Model::Build::Command::Abandon {
     is  => 'Genome::Model::Build::Command::Base',
@@ -52,19 +53,27 @@ sub execute {
     for my $build (@builds) {
         $self->_total_command_count($self->_total_command_count + 1);
         my $transaction = UR::Context::Transaction->begin();
-        my $successful = eval { $build->abandon($self->header_text, $self->body_text) };
-        if ($successful and $transaction->commit) {
-            $self->status_message( "Successfully abandoned build (" . $build->__display_name__ . ")." );
-        }
-        else {
-            $self->append_error($build->__display_name__, "Failed to abandon build: $@.");
+
+        try {
+            $build->abandon($self->header_text, $self->body_text);
+            $self->successfully_abandoned_callback($build);
+            $transaction->commit() or die "commit failed";
+        } catch {
+            $self->append_error($build->__display_name__, "Failed to abandon build: $_.");
             $transaction->rollback;
-        }
+        };
     }
 
     $self->display_command_summary_report() if $self->show_display_command_summary_report;
 
     return !scalar(keys %{$self->_command_errors});
+}
+
+sub successfully_abandoned_callback {
+    my $self = shift;
+    my $build = shift;
+
+    $self->status_message( "Successfully abandoned build (" . $build->__display_name__ . ")." );
 }
 
 1;

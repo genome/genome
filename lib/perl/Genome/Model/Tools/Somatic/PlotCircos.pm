@@ -1,6 +1,3 @@
-#review tmooney
-#What was added for BRC1 only?
-
 package Genome::Model::Tools::Somatic::PlotCircos;
 
 use warnings;
