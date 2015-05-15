@@ -63,6 +63,10 @@ sub generate {
         right_property => 'result_id',
     );
 
+    if (exists $tree->{'action'}->[0]->{decoration}) {
+        push @$inputs, Genome::InstrumentData::Composite::Decorator->decorate($operation, $tree->{'action'}->[0]->{decoration});
+    }
+
     return $workflows, $inputs;
 }
 
