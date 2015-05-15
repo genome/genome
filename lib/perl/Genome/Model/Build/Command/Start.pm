@@ -140,6 +140,9 @@ sub create_and_start_build {
 
     $self->status_message("Trying to start #" . ($self->_builds_started + 1) . ': ' . $model->__display_name__ . "...");
 
+    my $outer_transaction = UR::Context::Transaction->begin();
+    $model->build_requested(0);
+
     my $create_transaction = UR::Context::Transaction->begin();
     my $build = try {
         my $build = Genome::Model::Build->create(model_id => $model->id, %{$self->_create_params})
@@ -151,6 +154,7 @@ sub create_and_start_build {
     }
     catch {
         $create_transaction->rollback();
+        $outer_transaction->rollback();
         $self->append_error($model->__display_name__, $_);
         return;
     };
@@ -173,9 +177,12 @@ sub create_and_start_build {
             body_text => $_,
             auto_truncate_body_text => 1,
         );
-        $build->model->build_requested(0);
         return;
     };
+    unless ($outer_transaction->commit) {
+        die 'transaction failed to commit';
+    }
+
     if (not $build_started) {
         return ($build->status eq 'Unstartable' && $self->unstartable_ok);
     }
@@ -183,7 +190,6 @@ sub create_and_start_build {
     $self->_builds_started($self->_builds_started + 1);
     my $msg = "Successfully started build (" . $build->__display_name__ . ").";
     $self->status_message($self->_color($msg, 'green'));
-
     return 1;
 }
 
