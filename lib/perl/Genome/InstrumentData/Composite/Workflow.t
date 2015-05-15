@@ -157,6 +157,7 @@ subtest 'simple alignments with qc decoration' => sub {
     my $qc_for_testing = Genome::Qc::Config->get(name => 'qc for Workflow test');
     isa_ok($qc_for_testing, 'Genome::Qc::Config', 'test configuration exists') or die('cannot continue');
 
+    my $config_name = 'qc for Workflow test';
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@two_instrument_data,
@@ -164,7 +165,7 @@ subtest 'simple alignments with qc decoration' => sub {
             force_fragment => 0,
             result_users => $result_users,
         },
-        strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] @qc [qc for Workflow test] api v1',
+        strategy => sprintf('inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] @qc [%s] api v1', $config_name),
         log_directory => $log_directory,
     );
     isa_ok(
@@ -174,6 +175,16 @@ subtest 'simple alignments with qc decoration' => sub {
     );
 
     ok($ad->execute, 'executed dispatcher for simple alignments with qc decoration');
+
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+
+    my @qc_results = map { Genome::Qc::Result->get(alignment_result => $_, config_name => $config_name) } @ad_results;
+    is(scalar(@qc_results), scalar(@ad_results), 'Qc results were created successfully');
+
+    for my $qc_result (@qc_results) {
+        is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
+    }
 
     $override->restore;
 };
