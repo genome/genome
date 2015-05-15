@@ -70,7 +70,7 @@ class Genome::InstrumentData::Command::AlignAndMerge {
             doc => 'The ID of the result generated/found when running the command',
         },
         alignment_result => {
-            is => 'Genome::InstrumentData::AlignmentResult::Merged',
+            is => 'Genome::InstrumentData::AlignedBamResult::Merged',
             id_by => 'result_id',
             doc => 'The result generated/found when running the command',
         }
