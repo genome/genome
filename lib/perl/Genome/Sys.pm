@@ -898,13 +898,14 @@ sub create_symlink {
     }
 
     unless (symlink($target, $link)) {
-        if ($! == Errno::EEXIST) {
+        my $symlink_error = $!;
+        if ($symlink_error == Errno::EEXIST) {
             my $current_target = readlink($link);
             if (defined($current_target) and $current_target ne $target) {
                 Carp::croak("Link ($link) for target ($target) already exists.");
             }
         } else {
-            Carp::croak("Can't create link ($link) to $target\: $!");
+            Carp::croak("Can't create link ($link) to $target\: $symlink_error");
         }
     }
     return 1;
