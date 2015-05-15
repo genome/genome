@@ -899,7 +899,8 @@ sub create_symlink {
 
     unless (symlink($target, $link)) {
         if ($! == Errno::EEXIST) {
-            if (readlink($link) ne $target) {
+            my $current_target = readlink($link);
+            if (defined($current_target) and $current_target ne $target) {
                 Carp::croak("Link ($link) for target ($target) already exists.");
             }
         } else {
