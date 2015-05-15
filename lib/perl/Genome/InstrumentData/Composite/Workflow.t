@@ -141,7 +141,7 @@ subtest 'simple alignments with qc decoration' => sub {
         sub supports_streaming { return 0; }
 
         sub get_metrics {
-            return { metric1 => 1 };
+            return ( metric1 => 1 );
         }
     }
 
@@ -231,7 +231,7 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
         sub supports_streaming { return 0; }
 
         sub get_metrics {
-            return { metric1 => 1 };
+            return ( metric1 => 1 );
         }
     }
 
