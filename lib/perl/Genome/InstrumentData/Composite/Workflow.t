@@ -141,7 +141,7 @@ subtest 'simple alignments with qc decoration' => sub {
         sub supports_streaming { return 0; }
 
         sub get_metrics {
-            return { metric1 => 1 };
+            return ( metric1 => 1 );
         }
     }
 
@@ -210,6 +210,69 @@ subtest 'simple align_and_merge strategy' => sub {
     my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
     is_deeply([$speedseq_result], [sort @ad_results], 'found speedseq result');
     check_result_bam(@ad_results);
+};
+
+subtest 'simple align_and_merge strategy with qc decoration' => sub {
+    {
+        package TestTool1;
+
+        use Genome;
+
+        class TestTool1 {
+            is => ['Genome::Qc::Tool'],
+            has => {param1 => {}},
+        };
+
+        sub cmd_line {
+            my $self = shift;
+            return ("echo", $self->param1);
+        }
+
+        sub supports_streaming { return 0; }
+
+        sub get_metrics {
+            return ( metric1 => 1 );
+        }
+    }
+
+    use Genome::Qc::Config;
+    my $override = Sub::Override->new(
+        'Genome::Qc::Config::get_commands_for_alignment_result',
+        sub {
+            return {test1 => {class => "TestTool1", params => {param1 => 1}}};
+        },
+    );
+
+    my $config_name = 'qc2 for Workflow test';
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
+        inputs => {
+            instrument_data => \@two_instrument_data,
+            reference_sequence_build => $ref,
+            force_fragment => 0,
+            result_users => $result_users,
+        },
+        strategy => sprintf('instrument_data both aligned to reference_sequence_build and merged using speedseq test @align-and-merge-qc [%s] api v1', $config_name),
+    );
+    isa_ok(
+        $ad,
+        'Genome::InstrumentData::Composite::Workflow',
+        'created dispatcher for simple align_and_merge strategy'
+    );
+
+    ok($ad->execute, 'executed dispatcher for simple align_and_merge');
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+    is_deeply([$speedseq_result], [sort @ad_results], 'found speedseq result');
+    check_result_bam(@ad_results);
+
+    for my $instrument_data (@two_instrument_data) {
+        my $per_lane_result = Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data_id => $instrument_data->id);
+        my $qc_result = Genome::Qc::Result->get(alignment_result => $per_lane_result, config_name => $config_name);
+        ok($qc_result, sprintf('Qc result for instrument_data (%s) was created successfully', $instrument_data->id));
+        is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
+    }
+
+    $override->restore;
 };
 
 subtest 'simple alignments with merge' => sub {
