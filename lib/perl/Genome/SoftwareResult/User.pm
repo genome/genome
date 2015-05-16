@@ -191,10 +191,18 @@ sub _role_for_type {
 sub user_hash_for_build {
     my $class = shift;
     my $build = shift;
+    unless ($build) {
+        Carp::croak q(user_hash_for_build requires 'build' as an argument);
+    }
+
+    my $sponsor = $build->model->analysis_projects // Genome::Sys::User->get(username => $build->model->run_as);
+    unless ($sponsor) {
+        die q(unable to determine sponsor for build);
+    }
 
     return {
         requestor => $build,
-        sponsor   => $build->model->analysis_projects // Genome::Sys::User->get(username => $build->model->run_as),
+        sponsor   => $sponsor,
     };
 }
 
