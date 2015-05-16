@@ -51,7 +51,8 @@ class Genome::Sys::Email {
     ],
 };
 
-__PACKAGE__->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => __PACKAGE__,
     aspect   => 'load',
     callback => sub {
         my ($self) = @_;

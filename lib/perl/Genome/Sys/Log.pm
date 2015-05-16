@@ -180,9 +180,10 @@ my $callback = sub {
 };
 
 for my $type (sort keys %MESSAGE_TYPE_TO_LOG_LEVEL) {
-    UR::Object->add_observer(
+    UR::Observer->register_callback(
+        subject_class_name => 'UR::Object',
         aspect => $type,
-        callback => $callback, 
+        callback => $callback,
     );
 }
 
