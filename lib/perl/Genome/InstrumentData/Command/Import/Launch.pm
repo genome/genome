@@ -37,6 +37,7 @@ class Genome::InstrumentData::Command::Import::Launch {
     has_optional_transient => {
         _imports => { is => 'Array', },
         gtmp => { is => 'Number', },
+        process => { is => 'Genome::InstrumentData::Command::Import::Process', },
     },
 };
 
@@ -140,7 +141,7 @@ sub _launch_process {
         $self->job_group_name, ($mem * 1024), $mem, $gtmp, $mem, $gtmp,
     );
     my $import_op = Genome::WorkflowBuilder::Command->create(
-        name => 'InstData Import WF Run',
+        name => 'InstData Import : Run WF',
         command => 'Genome::InstrumentData::Command::Import::WorkFlow::Run',
         lsf_resource => $lsf_resource,
     );
@@ -149,19 +150,40 @@ sub _launch_process {
         destination => $import_op,
         destination_property => 'work_flow_inputs',
     );
-    $dag->connect_output(
-        output_property => 'instrument_data',
-        source => $import_op,
-        source_property => 'instrument_data',
-    );
     $dag->add_operation($import_op);
     $dag->parallel_by('work_flow_inputs');
+
+    my $add_process_op = Genome::WorkflowBuilder::Command->create(
+        name => 'InstData Import : Add Process',
+        command => 'Genome::InstrumentData::Command::Import::WorkFlow::AddProcessToInstrumentData',
+    );
+    $dag->connect_input(
+        input_property => 'process',
+        destination => $add_process_op,
+        destination_property => 'process',
+    );
+    $dag->create_link(
+        source => $import_op,
+        source_property => 'instrument_data',
+        destination => $add_process_op,
+        destination_property => 'instrument_data',
+    );
+    $dag->connect_output(
+        output_property => 'instrument_data',
+        source => $add_process_op,
+        source_property => 'instrument_data',
+    );
+    $dag->add_operation($add_process_op);
 
     my $p = Genome::InstrumentData::Command::Import::Process->create(import_file => $self->file);
     $p->run(
         workflow_xml => $dag->get_xml,
-        workflow_inputs => { work_flow_inputs => $self->_imports },
+        workflow_inputs => { 
+            process => $p,
+            work_flow_inputs => $self->_imports,
+        },
     );
+    $self->process($p);
 
     $self->debug_message('Started imports with process id: %s. View status with:', $p->id);
     $self->debug_message('genome instrument-data import status %s', $p->id);

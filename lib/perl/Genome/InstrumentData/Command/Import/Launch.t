@@ -82,6 +82,8 @@ is($launch->gtmp, 1, 'gtmp');
 
 my @instdata = Genome::InstrumentData::Imported->get(library_id => [map {$_->id} @libraries]);
 is(@instdata, 2, 'create 2 instrument data');
+my @instdata_process_attrs = map { $_->attributes(attribute_label => 'process_id') } @instdata;
+is(@instdata_process_attrs, 2, 'added process_id attrs to instdata');
 
 # fail - source file does not exist
 throws_ok(
