@@ -10,8 +10,9 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
+use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Genome::Test::Factory::SoftwareResult::User;
+use Genome::Test::Factory::InstrumentData::Solexa;
 use Sub::Override;
 use Genome::Utility::Test qw(compare_ok);
 
@@ -99,7 +100,16 @@ my $test_dir = __FILE__.".d";
     }
 }
 
-my $alignment_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object();
+my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
+    flow_cell_id => '12345ABXX',
+    lane => '2',
+    subset_name => '2',
+    run_name => 'example',
+    id => 'NA12878',
+);
+my $alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->setup_object(
+    instrument_data => $instrument_data,
+);
 
 subtest "teed input" => sub {
     use Genome::Qc::Config;

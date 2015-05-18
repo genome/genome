@@ -14,26 +14,10 @@ class Genome::Qc::Config {
 };
 
 sub get_commands_for_alignment_result {
-    return {
-        picard_calculate_hs_metrics => {
-            class => 'Genome::Qc::Tool::Picard::CalculateHsMetrics',
-            params => {
-                input_file => '/dev/stdin',
-                bait_intervals => 'bait_intervals', #region_of_interest_set
-                target_intervals => 'target_intervals', #target_region_set
-                use_version => 1.123,
-            },
-            in_file => "bam_file",
-        },
-        picard_collect_wgs_metrics => {
-            class => 'Genome::Qc::Tool::Picard::CollectWgsMetrics',
-            params => {
-                input_file => '/dev/stdin',
-                reference_sequence => 'reference_sequence',
-                use_version => 1.123,
-            },
-            in_file => "bam_file",
-        },
+    my $self = shift;
+    my $is_capture = shift;
+
+    my %config = (
         picard_collect_gc_bias_metrics => {
             class => 'Genome::Qc::Tool::Picard::CollectGcBiasMetrics',
             params => {
@@ -62,7 +46,33 @@ sub get_commands_for_alignment_result {
             },
             in_file => "bam_file",
         },
-    };
+    );
+
+    if ($is_capture) {
+        $config{picard_calculate_hs_metrics} = {
+            class => 'Genome::Qc::Tool::Picard::CalculateHsMetrics',
+            params => {
+                input_file => '/dev/stdin',
+                bait_intervals => 'bait_intervals', #region_of_interest_set
+                target_intervals => 'target_intervals', #target_region_set
+                use_version => 1.123,
+            },
+            in_file => "bam_file",
+        };
+    }
+    else {
+        $config{picard_collect_wgs_metrics} = {
+            class => 'Genome::Qc::Tool::Picard::CollectWgsMetrics',
+            params => {
+                input_file => '/dev/stdin',
+                reference_sequence => 'reference_sequence',
+                use_version => 1.123,
+            },
+            in_file => "bam_file",
+        };
+    }
+
+    return \%config;
 }
 
 1;
