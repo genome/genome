@@ -22,6 +22,6 @@ subtest 'regression test for RT 105743' => sub {
     my $a_iter = Genome::Disk::Allocation->create_iterator();
     my $a = $a_iter->next;
     ok($a, 'got an allocation');
-    ok(UR::Context->rollback, 'rolled back again to induce arhivable side-effects');
+    ok(UR::Context->rollback, 'rolled back again to induce archivable side-effects');
     ok(UR::Context->commit, 'commit to demonstrate invalid data for save');
 };
