@@ -1,0 +1,6 @@
+# The 'sys_log_detail' configuration variable, when set to 1, will cause more
+# detailed logs in JSON format to be emitted.  Those logs can be indexed by
+# eleastic search or other aggregation systems.
+--- 
+env: GENOME_SYS_LOG_DETAIL
+default_value: ""

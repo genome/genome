@@ -224,7 +224,7 @@ sub _run_sffinfo {
     }
 
     # Verify 64 bit
-    unless ( Genome::Config->arch_os =~ /x86_64/ ) {
+    unless ( Genome::Sys->arch_os =~ /x86_64/ ) {
         Carp::confess(
             $self->error_message('Dumping $type file must be run on 64 bit machine.')
         );

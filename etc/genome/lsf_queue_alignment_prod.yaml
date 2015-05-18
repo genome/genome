@@ -1,0 +1,5 @@
+# Specified the LSF queue to submit production alignment jobs to.
+--- 
+env: GENOME_LSF_QUEUE_ALIGNMENT_PROD
+validators:
+  - LSFQueue

@@ -1,0 +1,5 @@
+# The 'park_beta_root' configuration variable is the root directory for the
+# Beta version of the Park system.
+--- 
+env: GENOME_PARK_BETA_ROOT
+default_value: /gscmnt/gc7006/info/model_data/ParkBeta2

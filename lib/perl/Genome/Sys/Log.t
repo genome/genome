@@ -6,8 +6,8 @@ use Test::More tests => 293;
 use JSON;
 
 #
-# NOTE: this tests only the experimental/optional JSON logging 
-# which occurs when GENOME_SYS_LOG_DETAIL is set
+# NOTE: this tests only the experimental/optional JSON logging which occurs
+# when 'sys_log_detail' is set
 #
 
 # this will cause us to cut out just before sending into the syslogger
@@ -15,7 +15,7 @@ use JSON;
 $Genome::Sys::Log::test_syslog = 1;
 
 # this turns on JSON logging
-$ENV{GENOME_SYS_LOG_DETAIL} = 1;
+Genome::Config::set_env('sys_log_detail', 1);
 
 # the code which logs is in F2::f2, called by F1::f1, called below in namespace F0
 require __FILE__ . ".d/F1.pm";
@@ -40,7 +40,7 @@ for my $type (qw/debug status warning error/) {
     for my $min_level (qw/debug info warn error/,'') {
         $level_n++;
 
-        $ENV{GENOME_SYS_LOG_LEVEL} = $min_level;
+        Genome::Config::set_env('sys_log_level', $min_level);
        
         for my $form (qw/text json/) {
             $n++;
@@ -100,7 +100,7 @@ for my $type (qw/debug status warning error/) {
 # test the special override so that Genome::Sys messages are linked to their caller not the Genome::Sys line
 #
 
-$ENV{GENOME_SYS_LOG_LEVEL} = 'debug';
+Genome::Config::set_env('sys_log_level', 'debug');
 my $expected_line1;
 my $expected_line2;
 sub F0::f0 {

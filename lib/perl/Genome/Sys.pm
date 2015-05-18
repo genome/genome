@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Carp qw(croakf);
 use Genome::Utility::File::Mode qw(mode);
 
 use autodie qw(chown);
@@ -299,7 +300,9 @@ sub lookup_dbpath {
         'omim' => 'db_omim',
         'pfam' => 'db_pfam',
     );
-    return Genome::Config::get($config_key{$name});
+    my $key = $config_key{$name};
+    return unless ($key);
+    return Genome::Config::get($key);
 }
 
 sub _find_in_genome_db_paths {
@@ -1277,6 +1280,18 @@ sub iterate_file_lines {
     }
 
     return($lines_read || '0 but true');
+}
+
+####
+####
+
+my $arch_os;
+sub arch_os {
+    unless ($arch_os) {
+        $arch_os = `uname -m`;
+        chomp($arch_os);
+    }
+    return $arch_os;
 }
 
 #####

@@ -13,7 +13,7 @@ use Test::Fatal qw(exception);
 
 do {
     my $disk_group_name = random_string();
-    local $ENV{GENOME_DISK_GROUP_MODELS} = $disk_group_name;
+    my $disk_group_models_guard = Genome::Config::set_env('disk_group_models', $disk_group_name);
     local $ENV{UR_DBI_NO_COMMIT} = 0;
     my $group = Genome::Disk::Group->__define__(
         disk_group_name => $disk_group_name,
@@ -29,7 +29,7 @@ do {
 
 do {
     my $disk_group_name = random_string();
-    local $ENV{GENOME_DISK_GROUP_MODELS} = random_string();
+    my $disk_group_models_guard = Genome::Config::set_env('disk_group_models', random_string());
     local $ENV{UR_DBI_NO_COMMIT} = 0;
 
     ok((none { $_ eq $disk_group_name } Genome::Disk::Group::Validate::GenomeDiskGroups::genome_disk_group_names()),

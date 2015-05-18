@@ -1,0 +1,4 @@
+# Set the URL for the Nessy locking server to use.
+--- 
+env: GENOME_NESSY_SERVER
+default_value: ""

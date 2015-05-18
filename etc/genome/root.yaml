@@ -1,0 +1,7 @@
+# The 'root' configuration variables is the directory at which GMS systems are
+# attached, typically /opt/gms/.
+#
+# The current GMS is attached under this directory, at
+# $GENOME_ROOT/$GENOME_SYS_ID.
+--- 
+env: GENOME_ROOT

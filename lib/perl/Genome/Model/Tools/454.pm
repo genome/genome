@@ -61,7 +61,7 @@ sub create {
         $link = 'installed';
     }
 
-    unless ( Genome::Config->arch_os =~ /64/ ) {
+    unless ( Genome::Sys->arch_os =~ /64/ ) {
         $self->error_message(
             'All 454 tools must be run from 64-bit architecture');
         return;

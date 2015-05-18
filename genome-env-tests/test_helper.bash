@@ -96,17 +96,19 @@ function submodule_is_not_initialized {
 }
 
 function apipe_test_db_is_used {
-    if echo "$GENOME_DS_GMSCHEMA_SERVER" | grep -qv 'apipe-test-db'
+    DS_GMSCHEMA_SERVER="$(genome config get ds_gmschema_server)"
+    if echo "$DS_GMSCHEMA_SERVER" | grep -qv 'apipe-test-db'
     then
-        echo "GENOME_DS_GMSCHEMA_SERVER should refer to apipe-test-db" >&2
+        echo "DS_GMSCHEMA_SERVER should refer to apipe-test-db" >&2
         exit 1
     fi
 }
 
 function apipe_test_db_is_not_used {
-    if echo "$GENOME_DS_GMSCHEMA_SERVER" | grep -q 'apipe-test-db'
+    DS_GMSCHEMA_SERVER="$(genome config get ds_gmschema_server)"
+    if echo "$DS_GMSCHEMA_SERVER" | grep -q 'apipe-test-db'
     then
-        echo "GENOME_DS_GMSCHEMA_SERVER should not refer to apipe-test-db" >&2
+        echo "DS_GMSCHEMA_SERVER should not refer to apipe-test-db" >&2
         exit 1
     fi
 }

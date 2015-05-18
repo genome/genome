@@ -12,7 +12,6 @@ my %params = (
     print_xml => 1,
     #print_datasets => 1,
     #datasets => 'rows',
-    #email => Genome::Config->user_email,
 );
 my $cmd = Genome::Report::GeneratorCommand->create(%params);
 

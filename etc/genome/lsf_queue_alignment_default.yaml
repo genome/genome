@@ -1,0 +1,4 @@
+--- 
+env: GENOME_LSF_QUEUE_ALIGNMENT_DEFAULT
+validators:
+  - LSFQueue

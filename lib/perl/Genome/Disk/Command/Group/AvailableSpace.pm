@@ -91,7 +91,7 @@ sub execute {
     if ($group_is_low and $self->send_alert) {
         my @to = map { Genome::Utility::Email::construct_address($_) } split(',', $self->alert_recipients);
         Genome::Utility::Email::send(
-            from    => Genome::Config->user_email,
+            from    => Genome::Sys::User->get_current->email,
             to      => \@to,
             subject => 'Disk Groups Running Low on Space!',
             body    => join("\n", @reports),

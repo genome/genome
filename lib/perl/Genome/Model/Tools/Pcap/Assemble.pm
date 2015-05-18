@@ -648,7 +648,7 @@ sub create_fake_phds
             q       => Genome::Config::get('lsf_queue_build_worker'),
             J       => "$fasta.MAKE_PHD",
             n       => 1,
-            u       => Genome::Config->user_email,
+            u       => Genome::Sys::User->get_current->email,
         );
 
         $self->error_message("Unable to create LSF job for $cmd") and return
