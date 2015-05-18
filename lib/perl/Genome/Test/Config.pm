@@ -42,15 +42,18 @@ sub setup_config {
 }
 
 sub setup_spec_file {
-    write_yaml_data(dir => $ENV{XGENOME_CONFIG_SNAP}, @_);
+    my $dir = Path::Class::Dir->new($ENV{XGENOME_CONFIG_SNAP}, 'genome');
+    write_yaml_data(dir => $dir, @_);
 }
 
 sub setup_home_file {
-    write_yaml_data(dir => $ENV{XGENOME_CONFIG_HOME}, name => 'config.yaml', @_);
+    my $dir = Path::Class::Dir->new($ENV{XGENOME_CONFIG_HOME}, 'genome');
+    write_yaml_data(dir => $dir, name => 'config.yaml', @_);
 }
 
 sub setup_global_file {
-    write_yaml_data(dir => $ENV{XGENOME_CONFIG_DIRS}, name => 'config.yaml', @_);
+    my $dir = Path::Class::Dir->new($ENV{XGENOME_CONFIG_DIRS}, 'genome');
+    write_yaml_data(dir => $dir, name => 'config.yaml', @_);
 }
 
 sub write_yaml_data {
@@ -60,10 +63,8 @@ sub write_yaml_data {
         data => 1,
     });
 
-    my $genome_dir = Path::Class::Dir->new($params{dir}, 'genome');
-    $genome_dir->mkpath();
-
-    my $config_file = Path::Class::File->new($genome_dir, $params{name});
+    $params{dir}->mkpath();
+    my $config_file = Path::Class::File->new($params{dir}, $params{name});
     YAML::Syck::DumpFile($config_file, $params{data});
 }
 
