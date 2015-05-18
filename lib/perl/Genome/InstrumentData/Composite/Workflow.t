@@ -251,7 +251,7 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
             force_fragment => 0,
             result_users => $result_users,
         },
-        strategy => sprintf('instrument_data both aligned to reference_sequence_build and merged using speedseq test @qc [%s] api v1', $config_name),
+        strategy => sprintf('instrument_data both aligned to reference_sequence_build and merged using speedseq test @align-and-merge-qc [%s] api v1', $config_name),
     );
     isa_ok(
         $ad,
@@ -265,10 +265,10 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
     is_deeply([$speedseq_result], [sort @ad_results], 'found speedseq result');
     check_result_bam(@ad_results);
 
-    my @qc_results = map { Genome::Qc::Result->get(alignment_result => $_, config_name => $config_name) } @ad_results;
-    is(scalar(@qc_results), scalar(@ad_results), 'Qc results were created successfully');
-
-    for my $qc_result (@qc_results) {
+    for my $instrument_data (@two_instrument_data) {
+        my $per_lane_result = Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data_id => $instrument_data->id);
+        my $qc_result = Genome::Qc::Result->get(alignment_result => $per_lane_result, config_name => $config_name);
+        ok($qc_result, sprintf('Qc result for instrument_data (%s) was created successfully', $instrument_data->id));
         is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
     }
 
