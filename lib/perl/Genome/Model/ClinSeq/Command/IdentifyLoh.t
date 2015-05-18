@@ -19,7 +19,7 @@ use_ok('Genome::Model::ClinSeq::Command::IdentifyLoh') or die;
 my $expected_output_dir =
 Genome::Utility::Test->data_dir_ok(
     'Genome::Model::ClinSeq::Command::IdentifyLoh',
-    '2015-04-22');
+    '2015-05-15');
 ok(-e $expected_output_dir, "Found test dir: $expected_output_dir") or die;
 
 my $temp_dir = Genome::Sys->create_temp_directory();
@@ -40,7 +40,7 @@ $run_iloh->execute();
 
 #Dump the output to a log file
 my @output1 = $run_iloh->status_messages();
-my $log_file = $temp_dir . "/GenerateSciclonePlots.log.txt";
+my $log_file = $temp_dir . "/IdentifyLoh.log.txt";
 my $log = IO::File->new(">$log_file");
 $log->print(join("\n", @output1));
 $log->close();
