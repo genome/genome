@@ -46,7 +46,7 @@ sub help_detail {
 
 sub execute {
     my $self = shift;
-    
+
     my @disk_groups;
     if ($self->disk_group_names) {
         @disk_groups = split(',', $self->disk_group_names);
