@@ -3,6 +3,7 @@ package Genome::SoftwareResult::User;
 use strict;
 use warnings;
 use Genome;
+use Genome::Carp qw(dief);
 use Genome::Sys::LockProxy qw();
 use List::MoreUtils qw(any);
 use Params::Validate qw(:types);
@@ -197,7 +198,7 @@ sub user_hash_for_build {
 
     my $sponsor = $build->model->analysis_projects // Genome::Sys::User->get(username => $build->model->run_as);
     unless ($sponsor) {
-        die q(unable to determine sponsor for build);
+        dief q(unable to determine sponsor for build: %s), $build->id;
     }
 
     return {
