@@ -81,13 +81,17 @@ my $merged_cmp = Genome::Model::Tools::Sam::Compare->execute(
 );
 ok($merged_cmp->result, 'Merged bam as expected');
 
-my $per_lane_result = Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data => $command->instrument_data);
-ok($per_lane_result, 'Per-lane result created correctly');
+my @per_lane_results = Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data => $command->instrument_data);
+ok(@per_lane_results, 'Per-lane result created correctly');
+is_deeply([$command->per_lane_alignment_result_ids], [map { $_->id } @per_lane_results], 'Per lane result ids match');
+is_deeply([$command->per_lane_alignment_results], [@per_lane_results], 'Per lane results match');
 
-my $per_lane_cmp = Genome::Model::Tools::Sam::Compare->execute(
-    file1 => $per_lane_result->get_bam_file,
-    file2 => File::Spec->join($test_data_dir, 'alignment_result.bam'),
-);
-ok($per_lane_cmp->result, 'Per-lane bam as expected');
+for my $per_lane_result (@per_lane_results) {
+    my $per_lane_cmp = Genome::Model::Tools::Sam::Compare->execute(
+        file1 => $per_lane_result->get_bam_file,
+        file2 => File::Spec->join($test_data_dir, 'alignment_result.bam'),
+    );
+    ok($per_lane_cmp->result, 'Per-lane bam as expected');
+}
 
 done_testing;

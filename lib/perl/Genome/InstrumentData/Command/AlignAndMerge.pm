@@ -73,7 +73,20 @@ class Genome::InstrumentData::Command::AlignAndMerge {
             is => 'Genome::InstrumentData::AlignedBamResult::Merged',
             id_by => 'result_id',
             doc => 'The result generated/found when running the command',
-        }
+        },
+        per_lane_alignment_result_ids => {
+            is => 'Text',
+            doc => 'The IDs of the per-lane results generated/found when running the command',
+            is_many => 1,
+        },
+        per_lane_alignment_results => {
+            is => 'Genome::InstrumentData::AlignmentResult',
+            is_many => 1,
+            calculate => q{
+                return Genome::InstrumentData::AlignmentResult->get([$self->per_lane_alignment_result_ids]);
+            },
+            doc => 'The per-lane results generated/found when running the command',
+        },
     ],
 };
 
@@ -94,11 +107,12 @@ sub execute {
     }
     $self->result_id($result->id);
 
-    my $per_lane_results = $self->_process_per_lane_alignments('get_or_create');
-    unless ($per_lane_results) {
+    my @per_lane_results = $self->_process_per_lane_alignments('get_or_create');
+    unless (scalar(@per_lane_results) == scalar($self->instrument_data)) {
         $self->error_message("Error finding or generating per-lane alignments!");
         return 0;
     }
+    $self->per_lane_alignment_result_ids([map { $_->id } @per_lane_results]);
 
     return $result;
 }
@@ -112,8 +126,8 @@ sub shortcut {
     }
     $self->result_id($result->id);
 
-    my $per_lane_results = $self->_process_per_lane_alignments('get_with_lock');
-    unless ($per_lane_results) {
+    my @per_lane_results = $self->_process_per_lane_alignments('get_with_lock');
+    unless (scalar(@per_lane_results) == scalar($self->instrument_data)) {
         return undef;
     }
 
@@ -149,7 +163,8 @@ sub _process_per_lane_alignments {
             %params,
         );
     }
-    return (scalar(@per_lane_results) == scalar($self->instrument_data));
+
+    return @per_lane_results;
 }
 
 sub _alignment_params {
