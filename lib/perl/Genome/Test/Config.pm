@@ -61,11 +61,7 @@ sub write_yaml_data {
     });
 
     my $genome_dir = Path::Class::Dir->new($params{dir}, 'genome');
-
-    my $mkdir_ok = mkdir $genome_dir;
-    if ((not $mkdir_ok) && $! != EEXIST) {
-        croakf 'mkdir failed: %s: %s', $genome_dir, $!;
-    }
+    $genome_dir->mkpath();
 
     my $config_file = Path::Class::File->new($genome_dir, $params{name});
     YAML::Syck::DumpFile($config_file, $params{data});
