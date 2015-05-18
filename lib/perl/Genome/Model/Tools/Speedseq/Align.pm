@@ -45,23 +45,4 @@ sub _tool_subcommand_name {
 }
 
 
-#sub execute {
-    #my $self = shift;
-    #if ($self->paired) {
-    #    if ($self->fastq2) {
-    #        die('Expected single interleaved paired-end FASTQ!');
-    #    }
-    #    $options .= ' -p';
-    #} else {
-    #    push @input_files, $self->fastq2;
-    #    $inputs_string .= ' '. $self->fastq2;
-    #}
-
-    # COMMAND
-    # OUTPUTS
-    #unless ($self->output_prefix) {
-    #    $self->output_prefix($self->fastq);
-    #}
-#}
-
 1;

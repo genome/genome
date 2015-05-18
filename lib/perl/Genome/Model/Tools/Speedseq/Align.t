@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use above 'Genome';
-use Test::More tests => 6;
+use Test::More tests => 9;
 use Genome::Utility::Test qw(compare_ok);
 
 my $pkg = 'Genome::Model::Tools::Speedseq::Align';
@@ -47,8 +47,7 @@ for my $output_file ($align_cmd->output_files) {
           file2 => $expected_output_file,
           );
           ok ($cmp->result, 'compare BAMs');  
-    } else {
-      #TODO: I'm not sure this is working as intended...
-      #compare_ok($output_file,$expected_output_file,diag=>0);
+    } elsif ($suffix eq '.bai') {
+      ok(-s $output_file, 'BAM index file has size.');
     }     
 }   

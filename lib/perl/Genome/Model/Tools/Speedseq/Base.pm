@@ -234,22 +234,6 @@ sub _shellcmd_extra_params {
     );
 }
 
-
-# string to be appended after the full command line (e.g., '> foo.out')
-#
-# there was a bug that led to some commands being built like:
-#
-#   java ... foo.jar class ARGS > output_file MORE_ARGS
-#
-# that's bad. this sort of conflicts with the idea of log_file, but commands
-# like "BamIndexStats" that have no native OUTPUT option (i.e., can only spew
-# to stdout) support the existence of this function.
-sub _redirects {
-    # example:
-    # my $self = shift;
-    # return sprintf(">> %s", $self->log_file) if $self->log_file;
-}
-
 sub build_cmdline_list {
     my $self = shift;
 

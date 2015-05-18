@@ -30,13 +30,5 @@ sub _tool_subcommand_name {
     return 'realign';
 }
 
-#sub execute {
-#    my $self = shift;
-
-    # OUTPUTS
-    #unless ($self->output_prefix) {
-    #    $self->output_prefix('in.realign');
-    #}
-#}
 
 1;
