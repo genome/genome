@@ -38074,6 +38074,20 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>set-env',
+    [
+      'format=s',
+      [
+        'bash',
+        'tcsh'
+      ],
+      'key=s',
+      'files',
+      'value=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>analysis-project',
     [
       '>tag-config-file',
@@ -38350,6 +38364,13 @@ $Genome::Command::OPTS_SPEC = [
       'help!',
       undef
     ],
+    '>get',
+    [
+      'key=s',
+      'files',
+      'help!',
+      undef
+    ],
     '>tag',
     [
       '>update',
@@ -38382,6 +38403,20 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      'help!',
+      undef
+    ],
+    '>validate',
+    [
+      'keys=s@',
+      'files',
+      'help!',
+      undef
+    ],
+    '>list',
+    [
+      'keys=s@',
+      'files',
       'help!',
       undef
     ],
