@@ -74,9 +74,11 @@ sub create {
     $self->_prepare_staging_directory;
     my $temp_directory = Genome::Sys->create_temp_directory();
 
+    my $aligner_index = Genome::InstrumentData::AlignmentResult::get_reference_sequence_index($self);
+
     my %params = (
         bams => [ map {$_->bam_path} $self->instrument_data ],
-        reference_fasta => $self->reference_build->full_consensus_path('fa'),
+        reference_fasta => $aligner_index->full_consensus_path('fa'),
         output_prefix => File::Spec->join($self->temp_staging_directory, $self->id),
         version => $self->aligner_version,
         sort_memory => $self->sort_memory,
@@ -117,6 +119,11 @@ sub sort_memory {
     #We might want to set an lsf resource to be at least 20G which is the
     #default for speedseq -M parameter
     return '3';
+}
+
+sub aligner_name_for_aligner_index {
+    my $self = shift;
+    return $self->aligner_name;
 }
 
 1;

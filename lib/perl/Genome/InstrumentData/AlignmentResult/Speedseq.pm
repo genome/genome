@@ -106,4 +106,49 @@ sub _promote_data {
     return $self->SUPER::_promote_data;
 }
 
+sub prepare_reference_sequence_index {
+    my $class = shift;
+    my $refindex = shift;
+
+    my $staging_dir = $refindex->temp_staging_directory;
+    my $staged_fasta_file = sprintf("%s/all_sequences.fa", $staging_dir);
+
+    Genome::Sys->create_symlink($refindex->reference_build->get_sequence_dictionary("sam"), $staging_dir ."/all_sequences.dict" );
+    my $bwa_version = $class->bwa_version($refindex->aligner_version);
+    my $bwa_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(
+        reference_build_id => $refindex->reference_build_id,
+        aligner_name => 'bwa',
+        aligner_version => $bwa_version,
+        test_name => Genome::Config::get('aligner_index_test_name'),
+        users => $refindex->_user_data_for_nested_results,
+    );
+    for my $filepath (glob($bwa_index->output_dir . "/*")){
+        my $filename = File::Basename::fileparse($filepath);
+        next if $filename eq 'all_sequences.fa';
+        next if $filename eq 'all_sequences.dict';
+        Genome::Sys->create_symlink($filepath, $staging_dir . "/$filename");
+    }
+
+    $bwa_index->add_user(
+        label => 'uses',
+        user => $refindex
+    );
+
+    return 1;
+}
+
+
+sub bwa_version {
+    my $class = shift;
+    my $speedseq_version = shift;
+    my %speedseq_version_to_bwa_version = (
+        'test' => '0.7.10',
+    );
+    my $bwa_version = $speedseq_version_to_bwa_version{$speedseq_version};
+    unless ($bwa_version) {
+        die $class->error_message('No bwa version assigned to speedseq version (%s)', $speedseq_version);
+    }
+    return $bwa_version;
+}
+
 1;

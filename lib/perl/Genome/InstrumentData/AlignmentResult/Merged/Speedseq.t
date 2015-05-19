@@ -15,6 +15,7 @@ use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::SoftwareResult::User;
 use Sub::Override;
+use Cwd qw(abs_path);
 
 my $pkg = 'Genome::InstrumentData::AlignmentResult::Merged::Speedseq';
 use_ok($pkg);
@@ -26,9 +27,21 @@ my $ref_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $ref_
 use Genome::Model::Build::ReferenceSequence;
 my $override = Sub::Override->new(
     'Genome::Model::Build::ReferenceSequence::full_consensus_path',
-    sub { return File::Spec->join($test_data_dir, 'human_g1k_v37_20_42220611-42542245.fasta'); }
+    sub { return abs_path(File::Spec->join($test_data_dir, 'human_g1k_v37_20_42220611-42542245.fasta')); }
 );
 
+my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build => $ref_seq_build,
+);
+my $aligner_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->__define__(
+    reference_build => $ref_seq_build,
+    aligner_version => 'test',
+    aligner_name => 'speedseq',
+    aligner_params => undef,
+    output_dir => File::Spec->join($test_data_dir, qw(aligner_index speedseq)),
+);
+ok($aligner_index, 'Created speedseq aligner index');
+$aligner_index->recalculate_lookup_hash;
 my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
     flow_cell_id => '12345ABXX',
     lane => '2',
@@ -37,10 +50,6 @@ my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_objec
     id => 'NA12878',
 );
 $instrument_data->bam_path(File::Spec->join($test_data_dir, 'NA12878.20slice.30X.bam'));
-
-my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
-    reference_sequence_build => $ref_seq_build,
-);
 
 my $merged_alignment_result = $pkg->create(
     instrument_data => [$instrument_data],
