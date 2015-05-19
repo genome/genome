@@ -21,7 +21,7 @@ class Genome::InstrumentData::Command::Import::CreateEntities {
     has_optional_transient => {
         _names_seen => { is => 'HASH', default_value => {}, },
     },
-    doc => 'generate commands to create individuals, samples, and libraries that are necessary to import instrument data',
+    doc => 'create individuals, samples, and libraries that are necessary to import instrument data',
 };
 
 sub help_detail {

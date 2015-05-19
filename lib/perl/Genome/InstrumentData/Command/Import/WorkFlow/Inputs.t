@@ -16,20 +16,30 @@ use Test::More;
 my $class = 'Genome::InstrumentData::Command::Import::WorkFlow::Inputs';
 use_ok($class) or die;
 
+my $analysis_project = Genome::Config::AnalysisProject->__define__(name => 'TEST-AnP');
+ok($analysis_project, 'define analysis project');
+my $library = Genome::Library->__define__(name => 'TEST-sample-libs', sample => Genome::Sample->__define__(name => 'TEST-sample'));
+ok($library, 'define library');
 my @source_files = (qw/ in.1.fastq in.2.fastq /);
-my $inputs = $class->create(
+my %required_params = (
+    analysis_project => $analysis_project,
+    library => $library,
     source_files => \@source_files,
-    instrument_data_properties => [qw/ 
-        description=imported
-        downsample_ratio=0.7
-        import_source_name=TGI
-        this=that
-    /],
+);
+
+my $inputs = $class->create(
+    %required_params,
+    instrument_data_properties => {
+        description => 'imported',
+        downsample_ratio => 0.7,
+        import_source_name => 'TGI',
+        this => 'that',
+    },
 );
 ok($inputs, 'create inputs');
-
-isa_ok($inputs->source_files, 'Genome::InstrumentData::Command::Import::WorkFlow::SourceFiles', 'set _source_files');
 is($inputs->format, 'fastq', 'source files format is fastq');
+is($inputs->library_name, $library->name, 'library_name');
+is($inputs->sample_name, $library->sample->name, 'sample_name');
 
 my %instrument_data_properties = (
     downsample_ratio => 0.7,
@@ -44,33 +54,37 @@ is_deeply(
     'instrument_data_properties',
 );
 
+# instrument data
+ok(!$inputs->instrument_data_for_original_data_path, 'no instrument_data_for_original_data_path ... yet');
+my $instdata = Genome::InstrumentData::Imported->__define__;
+ok($instdata, 'define instdata');
+ok($instdata->original_data_path($inputs->source_files->original_data_path), 'add original_data_path');
+is_deeply([$inputs->instrument_data_for_original_data_path], [$instdata], 'instrument_data_for_original_data_path');
+
+# as_hashref
+is_deeply(
+    $inputs->as_hashref,
+    {
+        analysis_project => $analysis_project,
+        downsample_ratio => $instrument_data_properties{downsample_ratio},
+        instrument_data_properties => \%instrument_data_properties,
+        library => $library,
+        library_name => $library->name,
+        sample_name => $library->sample->name,
+        source_paths => \@source_files,
+    },
+    'inputs as_hashref',
+);
+
 # ERRORS
-throws_ok(
-    sub { $class->create(); },
-    qr/No source files\!/,
-    "create failed w/o source files",
-);
-
-throws_ok(
-    sub {
-        $class->create(
-            source_files => [qw/ in.bam /],
-            instrument_data_properties => [qw/ foo=bar foo=baz /],
-        );
-    },
-    qr/Multiple values for instrument data property! foo => bar, baz/,
-    "execute failed w/ duplicate key, diff value for instdata properties",
-);
-
-throws_ok(
-    sub{
-        $class->create(
-            source_files => [qw/ in.bam /],
-            instrument_data_properties => [qw/ description= /],
-        );
-    },
-    qr#Failed to parse with instrument data property label/value! description=#,
-    "execute failes w/ missing value",
-);
+for my $name ( sort keys %required_params ) {
+    my $value = delete $required_params{$name};
+    throws_ok(
+        sub { $class->create(%required_params); },
+        qr/No $name given to work flow inputs\!/,
+        "create failed w/o $name",
+    );
+    $required_params{$name} = $value;
+}
 
 done_testing();
