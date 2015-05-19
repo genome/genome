@@ -1,5 +1,8 @@
 package Genome::Role::Logger;
 
+use strict;
+use warnings;
+
 use Genome;
 use Log::Dispatch;
 use Log::Dispatch::Screen;
@@ -86,7 +89,7 @@ sub log_dispatch_init {
 
 # create object methods for each log level
 for my $log_level (@log_levels) {
-    $sub_ref = sub {
+    my $sub_ref = sub {
         my ($self, $message) = @_;
 
         chomp $message;
