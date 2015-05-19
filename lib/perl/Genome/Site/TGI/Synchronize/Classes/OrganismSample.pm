@@ -35,7 +35,6 @@ class Genome::Site::TGI::Synchronize::Classes::OrganismSample {
         id => { is => 'Number', column_name => 'ORGANISM_SAMPLE_ID', },
     ],
     has => [
-        name => { is => 'Text', column_name => 'FULL_NAME', },
         nomenclature => { is => 'Text', },
     ],
     has_optional => [
@@ -45,6 +44,7 @@ class Genome::Site::TGI::Synchronize::Classes::OrganismSample {
         extraction_label        => { is => 'Text', column_name => 'SAMPLE_NAME', },
         extraction_type         => { is => 'Text', column_name => 'SAMPLE_TYPE', },
         organ_name              => { is => 'Text', },
+        name => { is => 'Text', column_name => 'FULL_NAME', },
         source_id               => { is => 'Number', },
         tissue_desc             => { is => 'Text', column_name => 'TISSUE_NAME', },
         tissue_label            => { is => 'Text', },
