@@ -50,11 +50,11 @@ sub execute {
         try {
             $self->info('Syncing volume: '.$volume->mount_path);
             if ($self->total_kb)      {
-                $self->debug('Sync total kb...');
+                $self->debug('Sync total kB...');
                 $volume->sync_total_kb(%args);
             }
             if ($self->unallocated_kb) {
-                $self->debug('Sync unallocated kb...');
+                $self->debug('Sync unallocated kB...');
                 $volume->sync_unallocated_kb(%args);
             }
             $transaction->commit or die 'Failed to commit volume! '.$volume->mount_path;
@@ -62,7 +62,7 @@ sub execute {
         catch {
             $self->error($_);
             $transaction->rollback;
-        }
+        };
     }
 
     return 1;
