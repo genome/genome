@@ -160,9 +160,9 @@ sub create_and_start_build {
 
     my $start_transaction = UR::Context::Transaction->begin();
     my $build_started = try {
-        $build->start(%{$self->_start_params}) || die "Couldn't start build";
+        my $rv = $build->start(%{$self->_start_params});
         $start_transaction->commit();
-        return 1;
+        return $rv;
     }
     catch {
         $start_transaction->rollback();
