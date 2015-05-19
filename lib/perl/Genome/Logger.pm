@@ -84,6 +84,10 @@ sub color_screen {
     );
 }
 
+####################################################
+# This is almost duplicated in Genome::Role::Logger.
+# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
 my @levels = keys %Log::Dispatch::LEVELS;
 for my $level (@levels) {
     my $name = join('::', __PACKAGE__, $level);
@@ -122,5 +126,9 @@ sub fatalf {
     my $class = shift;
     $class->croak('criticalf', @_);
 }
+
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# End almost duplication from Genome::Role::Logger.
+###################################################
 
 1;

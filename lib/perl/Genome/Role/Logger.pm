@@ -87,18 +87,51 @@ sub log_dispatch_init {
     return $log;
 }
 
+##############################################
+# This is almost duplicated in Genome::Logger.
+# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
 # create object methods for each log level
 for my $log_level (@log_levels) {
-    my $sub_ref = sub {
-        my ($self, $message) = @_;
-
-        chomp $message;
-        $message = uc($log_level) . ": $message\n";
-
-        return $self->log_dispatch->$log_level($message);
+    my $name = join('::', __PACKAGE__, $log_level);
+    my $namef = $name . 'f';
+    no strict 'refs';
+    *{$name} = sub {
+        my $self = shift;
+        return $self->log_dispatch->$log_level(@_);
     };
-    *$log_level = $sub_ref;
+    *{$namef} = sub {
+        my $self = shift;
+        # sprintf inspects argument number
+        my $message = sprintf(shift, @_);
+        $self->$name($message);
+    };
 }
+
+sub croak {
+    my $self = shift;
+    my $level = shift;
+
+    unless ($self->can($level)) {
+        Carp::croak "invalid level: $level";
+    }
+
+    Carp::croak $self->$level(@_);
+}
+
+sub fatal {
+    my $self = shift;
+    $self->croak('critical', @_);
+}
+
+sub fatalf {
+    my $self = shift;
+    $self->croak('criticalf', @_);
+}
+
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# End almost duplication from Genome::Logger.
+#############################################
 
 sub stderror {
     my ($self, $message) = @_;
