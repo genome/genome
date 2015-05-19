@@ -6,28 +6,22 @@ use warnings;
 use Carp qw();
 use Log::Dispatch qw();
 use Log::Dispatch::Screen qw();
-use Memoize qw(memoize);
 use Module::Runtime qw(module_notional_filename use_package_optimistically);
 
-memoize('logger', LIST_CACHE => 'MERGE');
+my $logger;
 sub logger {
-    assert_class_method(shift);
+    my $class = shift;
+    if ($logger) {
+        return $logger;
+    }
 
-    my $logger = Log::Dispatch->new(@_);
-
+    $logger = Log::Dispatch->new(@_);
     $logger->add(screen_to_add());
 
     return $logger;
 }
-
-sub assert_class_method_error { 'Must be called as class method' }
-sub assert_class_method {
-    my $class = shift;
-
-    # to ensure memoize works we are strict about this
-    unless ($class && $class eq __PACKAGE__) {
-        Carp::croak assert_class_method_error();
-    }
+sub clear_logger {
+    $logger = undef;
 }
 
 sub should_color_screen {
