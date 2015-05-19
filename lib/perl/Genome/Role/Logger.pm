@@ -23,6 +23,11 @@ class Genome::Role::Logger {
             valid_values => \@log_levels,
             doc => 'The minimum level to display on the scren.',
         },
+        log_file => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'Path to log file.',
+        },
         log_file_level => {
             is => 'Text',
             default => 'info',
@@ -34,18 +39,10 @@ class Genome::Role::Logger {
             default => 0,
             doc => '(warning) globally tie STDERR to this logger',
         },
-    ],
-    has_optional => [
-        log_file => {
-            is => 'Text',
-            doc => 'Path to log file.',
-        },
-    ],
-    has_constant => [
         log_dispatch => {
             is => 'Log::Dispatch',
-            doc => 'The Log::Dispatch object that is initialized based on options.',
             is_calculated => 1,
+            is_constant => 1,
             calculate => q($self->log_dispatch_init),
         },
     ],
