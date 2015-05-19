@@ -8,7 +8,7 @@ use Log::Dispatch;
 use Log::Dispatch::Screen;
 use Log::Dispatch::FileRotate;
 
-our @log_levels = qw(debug info notice warning error critical alert emergency);
+my @log_levels = keys %Log::Dispatch::LEVELS;
 
 class Genome::Role::Logger {
     has => [
