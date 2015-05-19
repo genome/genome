@@ -8,6 +8,17 @@ use Log::Dispatch qw();
 use Log::Dispatch::Screen qw();
 use Module::Runtime qw(module_notional_filename use_package_optimistically);
 
+use UR;
+
+class Genome::Logger {
+    has => {
+        delegate_logger => {
+            is => 'Log::Dispatch',
+            is_constant => 1,
+        },
+    },
+};
+
 my $logger;
 sub logger {
     my $class = shift;
@@ -15,8 +26,10 @@ sub logger {
         return $logger;
     }
 
-    $logger = Log::Dispatch->new(@_);
-    $logger->add(screen_to_add());
+    $logger = Genome::Logger->create(
+        delegate_logger => Log::Dispatch->new(@_),
+    );
+    $logger->delegate_logger->add(screen_to_add());
 
     return $logger;
 }
@@ -85,6 +98,12 @@ sub color_screen {
     );
 }
 
+sub normalize_self {
+    my $class = shift;
+    my $self = ref $class ? $class : $class->logger;
+    return $self;
+}
+
 ####################################################
 # This is almost duplicated in Genome::Role::Logger.
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -95,41 +114,50 @@ for my $level (@levels) {
     my $namef = $name . 'f';
     no strict 'refs';
     *{$name} = sub {
-        my $class = shift;
-        $class->logger->$level(@_);
+        my $self = normalize_self(shift);
+        $self->delegate_logger->$level(@_);
         return join(' ', @_);
     };
     *{$namef} = sub {
-        my $class = shift;
+        my $self = normalize_self(shift);
         # sprintf inspects argument number
         my $message = sprintf(shift, @_);
-        $class->$name($message);
+        $self->$name($message);
     };
 }
 
 sub croak {
-    my $class = shift;
+    my $self = shift;
     my $level = shift;
 
-    unless ($class->can($level)) {
+    unless ($self->can($level)) {
         Carp::croak "invalid level: $level";
     }
 
-    Carp::croak $class->$level(@_);
+    Carp::croak $self->$level(@_);
 }
 
 sub fatal {
-    my $class = shift;
-    $class->croak('critical', @_);
+    my $self = shift;
+    $self->croak('critical', @_);
 }
 
 sub fatalf {
-    my $class = shift;
-    $class->croak('criticalf', @_);
+    my $self = shift;
+    $self->croak('criticalf', @_);
 }
 
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # End almost duplication from Genome::Role::Logger.
 ###################################################
+
+for my $delegate_method (qw(add output remove)) {
+    my $name = join('::', __PACKAGE__, $delegate_method);
+    no strict 'refs';
+    *{$name} = sub {
+        my $self = shift;
+        return $self->delegate_logger->$delegate_method(@_);
+    }
+}
 
 1;
