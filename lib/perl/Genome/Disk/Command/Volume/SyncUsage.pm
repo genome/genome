@@ -5,13 +5,16 @@ use warnings;
 
 use Genome;
 
+use Try::Tiny;
+
 class Genome::Disk::Command::Volume::SyncUsage {
-    is => ['Genome::Role::Logger', 'Command'],
-    has => [
-        filter => {
-            is => 'Text',
-            doc => 'Filter expression for volume(s) to sync.',
+    is => ['Genome::Role::Logger', 'Command::V2'],
+    has => {
+        volumes => {
+            is => 'Genome::Disk::Volume',
+            is_many => 1,
             shell_args_position => 1,
+            doc => 'Filter expression for volume(s) to sync.',
         },
         total_kb => {
             is => 'Boolean',
@@ -23,12 +26,14 @@ class Genome::Disk::Command::Volume::SyncUsage {
             default => 1,
             doc => 'Sync unallocated_kb?',
         },
+    },
+    has_transient => {
         tie_stderr => {
             is => 'Boolean',
             default => 1,
             doc => '(warning) globally tie STDERR to this logger',
         },
-    ],
+    },
     doc => 'Sync usage info for volume (e.g. total KB and unallocated KB)',
 };
 
@@ -39,20 +44,24 @@ sub help_detail {
 sub execute {
     my $self = shift;
 
-    my $data_type = 'Genome::Disk::Volume';
-    my $bx = UR::BoolExpr->resolve_for_string($data_type, $self->filter);
-
-    my $volume_iter = $data_type->create_iterator($bx);
-    while (my $volume = $volume_iter->next) {
-        $self->info(sprintf('Syncing %s...', $volume->mount_path));
-        my %args = (verbose => 1);
-        if ($self->total_kb)      {
-            $self->debug('sync_total_kb');
-            $volume->sync_total_kb(%args);
+    my %args = (verbose => 1);
+    for my $volume ( $self->volumes ) {
+        my $transaction = UR::Context::Transaction->begin;
+        try {
+            $self->info('Syncing volume: '.$volume->mount_path);
+            if ($self->total_kb)      {
+                $self->debug('Sync total kb...');
+                $volume->sync_total_kb(%args);
+            }
+            if ($self->unallocated_kb) {
+                $self->debug('Sync unallocated kb...');
+                $volume->sync_unallocated_kb(%args);
+            }
+            $transaction->commit or die 'Failed to commit volume! '.$volume->mount_path;
         }
-        if ($self->unallocated_kb) {
-            $self->debug('sync_unallocated_kb');
-            $volume->sync_unallocated_kb(%args);
+        catch {
+            $self->error($_);
+            $transaction->rollback;
         }
     }
 
