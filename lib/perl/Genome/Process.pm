@@ -330,6 +330,11 @@ sub workflow_name {
     return sprintf('Genome::Process(%s)', $self->id);
 }
 
+sub lsf_project_name {
+    my $self = shift;
+    return $self->workflow_name;
+}
+
 sub newest_workflow_instance {
     my $self = shift;
     my @sorted = sort {$b->id <=> $a->id} $self->_workflow_instances;

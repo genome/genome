@@ -147,7 +147,7 @@ sub _bsub_in_pend_state {
         err_file => $self->workflow_process_error_log,
         log_file => $self->workflow_process_out_log,
         hold_job => 1,
-        project => $self->process->workflow_name,
+        project => $self->process->lsf_project_name,
         queue => Genome::Config::get('lsf_queue_build_workflow'),
         send_job_report => 1,
         never_rerunnable => 1,
