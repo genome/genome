@@ -11,6 +11,7 @@ use Log::Dispatch::FileRotate;
 my @log_levels = keys %Log::Dispatch::LEVELS;
 
 class Genome::Role::Logger {
+    is => 'Genome::Logger',
     has => [
         screen => {
             is => 'Boolean',
@@ -39,7 +40,7 @@ class Genome::Role::Logger {
             default => 0,
             doc => '(warning) globally tie STDERR to this logger',
         },
-        log_dispatch => {
+        delegate_logger => {
             is => 'Log::Dispatch',
             is_calculated => 1,
             is_constant => 1,
@@ -79,57 +80,11 @@ sub log_dispatch_init {
     return $log;
 }
 
-##############################################
-# This is almost duplicated in Genome::Logger.
-# vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-
-# create object methods for each log level
-for my $log_level (@log_levels) {
-    my $name = join('::', __PACKAGE__, $log_level);
-    my $namef = $name . 'f';
-    no strict 'refs';
-    *{$name} = sub {
-        my $self = shift;
-        return $self->log_dispatch->$log_level(@_);
-    };
-    *{$namef} = sub {
-        my $self = shift;
-        # sprintf inspects argument number
-        my $message = sprintf(shift, @_);
-        $self->$name($message);
-    };
-}
-
-sub croak {
-    my $self = shift;
-    my $level = shift;
-
-    unless ($self->can($level)) {
-        Carp::croak "invalid level: $level";
-    }
-
-    Carp::croak $self->$level(@_);
-}
-
-sub fatal {
-    my $self = shift;
-    $self->croak('critical', @_);
-}
-
-sub fatalf {
-    my $self = shift;
-    $self->croak('criticalf', @_);
-}
-
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# End almost duplication from Genome::Logger.
-#############################################
-
 sub stderror {
     my ($self, $message) = @_;
     chomp $message;
     $message = uc('stderr') . ": $message\n";
-    return $self->log_dispatch->error($message);
+    return $self->error($message);
 }
 
 # Thanks "socket puppet"
