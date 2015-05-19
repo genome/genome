@@ -161,7 +161,7 @@ sub create_and_start_build {
     my $start_transaction = UR::Context::Transaction->begin();
     my $build_started = try {
         my $rv = $build->start(%{$self->_start_params});
-        $start_transaction->commit();
+        $start_transaction->commit() or die "Cannot commit 'build start' transaction";
         return $rv;
     }
     catch {
