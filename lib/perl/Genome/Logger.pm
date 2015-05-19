@@ -15,11 +15,7 @@ sub logger {
 
     my $logger = Log::Dispatch->new(@_);
 
-    if (should_color_screen()) {
-        $logger->add(color_screen());
-    } else {
-        $logger->add(screen());
-    }
+    $logger->add(screen_to_add());
 
     return $logger;
 }
@@ -43,6 +39,15 @@ sub has_color_screen_package {
     my $name = use_package_optimistically('Log::Dispatch::Screen::Color');
     my $file = module_notional_filename($name);
     return $INC{$file};
+}
+
+sub screen_to_add {
+    my $class = shift;
+    if (should_color_screen()) {
+        return color_screen();
+    } else {
+        return screen();
+    }
 }
 
 sub screen {
