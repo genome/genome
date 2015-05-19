@@ -446,7 +446,7 @@ sub _disk_allocation_cleanup_closure {
         }
     };
     $self->debug_message("Created closure to delete disk allocation (%s) " .
-        "assocatied with process (%s)", $allocation_id, $process_id);
+        "associated with process (%s)", $allocation_id, $process_id);
     return $remove_allocation;
 }
 
