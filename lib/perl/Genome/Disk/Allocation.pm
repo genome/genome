@@ -547,6 +547,23 @@ sub __display_name__ {
     return $self->absolute_path;
 }
 
+sub __rollback_property__ {
+    my ($self, $property_name) = @_;
+
+    # We do not want to create new Genome::Timeline::Events during rollback so
+    # have to bypass the overridden methods and directly use the accessors.
+    if ($property_name eq 'archivable') {
+        my $saved_value = UR::Context->current->value_for_object_property_in_underlying_context($self, $property_name);
+        return $self->__archivable($saved_value);
+    }
+    if ($property_name eq 'archive_after_time') {
+        my $saved_value = UR::Context->current->value_for_object_property_in_underlying_context($self, $property_name);
+        return $self->__archive_after_time($saved_value);
+    }
+
+    return $self->SUPER::__rollback_property__($property_name);
+}
+
 # Using a system call when not in dev mode is a hack to get around the fact that we don't
 # have software transactions. Allocation need to be able to make its changes and commit
 # immediately so locks can be released in a timely manner. Without software transactions,
