@@ -57,12 +57,7 @@ sub log_dispatch_init {
     my $log = Log::Dispatch->new() || die;
 
     if ($self->screen) {
-        $log->add(
-            Log::Dispatch::Screen->new(
-                name => 'Screen',
-                min_level => $self->screen_level,
-            )
-        );
+        $log->add(Genome::Logger->screen_to_add(min_level => $self->screen_level));
     }
 
     if ($self->log_file) {

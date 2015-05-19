@@ -44,9 +44,9 @@ sub has_color_screen_package {
 sub screen_to_add {
     my $class = shift;
     if (should_color_screen()) {
-        return color_screen();
+        return color_screen(@_);
     } else {
-        return screen();
+        return screen(@_);
     }
 }
 
@@ -54,6 +54,7 @@ sub screen {
     my $screen = Log::Dispatch::Screen->new(
         name => 'screen',
         min_level => 'info',
+        @_,
     );
     return $screen;
 }
@@ -86,6 +87,7 @@ sub color_screen {
                 text => 'red',
             },
         },
+        @_,
     );
 }
 
