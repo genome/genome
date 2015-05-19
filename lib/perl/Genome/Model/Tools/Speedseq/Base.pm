@@ -249,10 +249,6 @@ sub build_cmdline_string {
     my $self = shift;
 
     my $cmd = join(' ', $self->build_cmdline_list);
-
-    my $redirects = $self->_redirects;
-    $cmd = join(" ", $cmd, $redirects) if $redirects;
-
     return $cmd;
 }
 
