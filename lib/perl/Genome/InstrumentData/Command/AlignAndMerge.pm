@@ -88,6 +88,11 @@ class Genome::InstrumentData::Command::AlignAndMerge {
             doc => 'The per-lane results generated/found when running the command',
         },
     ],
+    has_param => [
+        lsf_resource => {
+            value => q{-R 'select[mem>16000] rusage[mem=16000]' -M 16000000},
+        },
+    ],
 };
 
 sub execute {
