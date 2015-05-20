@@ -1392,6 +1392,11 @@ sub _launch {
         return $rv;
     }
     else {
+        if ($ENV{UR_DBI_NO_COMMIT}) {
+            $self->warning_message("Skipping launching process when NO_COMMIT is turned on (job will fail)\n");
+            return;
+        }
+
         my %inputs = $self->model->map_workflow_inputs($self);
         my $workflow = $self->_initialize_workflow($params{job_dispatch} || Genome::Config::get('lsf_queue_build_worker_alt'));
         unless ($workflow) {
