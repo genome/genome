@@ -243,11 +243,8 @@ sub model_has_failed_too_many_times {
     my @builds = reverse $model->builds;
     return unless @builds;
 
-    my $n = (@builds >= $max_fails ? ($max_fails - 1) : $#builds);
-    my @last_n_builds = @builds[0..$n];
-
-    my @failed_builds = grep { $_->status eq 'Failed' } @last_n_builds;
-    return (@failed_builds == $max_fails );
+    my @failed_builds = grep { $_->status eq 'Failed' } @builds;
+    return (@failed_builds >= $max_fails);
 }
 
 
