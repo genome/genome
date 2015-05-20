@@ -269,19 +269,6 @@ sub model_has_progressed {
 }
 
 
-sub latest_build_is_succeeded {
-    my $model = shift;
-
-    my $latest_build = $model->latest_build;
-
-    return (
-        $latest_build
-        && $latest_build->status
-        && $latest_build->status eq 'Succeeded'
-    );
-}
-
-
 sub previous_build {
     my $build = shift;
 
