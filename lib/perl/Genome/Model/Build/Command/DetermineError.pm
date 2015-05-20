@@ -437,3 +437,5 @@ sub set_file_and_line {
         $self->error_source_line($2);
     }
 }
+
+1;
