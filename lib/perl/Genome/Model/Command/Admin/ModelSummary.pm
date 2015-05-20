@@ -278,7 +278,7 @@ sub previous_build {
         grep { $_->date_scheduled lt $build->date_scheduled }
         $model->builds;
 
-    my $previous_build = @prior_builds ? $prior_builds[-1] : undef;
+    my $previous_build = @prior_builds ? $prior_builds[0] : undef;
     return $previous_build;
 }
 
