@@ -892,26 +892,25 @@ sub gidgrnam {
 sub create_symlink {
     my ($class, $target, $link) = @_;
 
-    unless ( defined $target ) {
+    unless ( defined($target) && length($target) ) {
         Carp::croak("Can't create_symlink: no target given");
     }
 
-    unless ( defined $link ) {
+    unless ( defined($link) && length($link) ) {
         Carp::croak("Can't create_symlink: no 'link' given");
     }
 
-    if ( -e $link ) { # the link exists and points to something
-        Carp::croak("Link ($link) for target ($target) already exists.");
+    unless (symlink($target, $link)) {
+        my $symlink_error = $!;
+        if ($symlink_error == Errno::EEXIST) {
+            my $current_target = readlink($link);
+            if (! defined($current_target) or $current_target ne $target) {
+                Carp::croak("Link ($link) for target ($target) already exists.");
+            }
+        } else {
+            Carp::croak("Can't create link ($link) to $target\: $symlink_error");
+        }
     }
-
-    if ( -l $link ) { # the link exists, but does not point to something
-        Carp::croak("Link ($link) for target ($target) is already a link.");
-    }
-
-    unless ( symlink($target, $link) ) {
-        Carp::croak("Can't create link ($link) to $target\: $!");
-    }
-
     return 1;
 }
 
