@@ -43,7 +43,7 @@ class Genome::Model::Command::Admin::ModelSummary {
         max_fail_count => {
             is => 'Number',
             default => 5,
-            doc => 'Rebuild will not be recommended for models that have failed this many times or more.',
+            doc => 'Rebuild will not be recommended for models that have failed this many times or more. (If undefined, any fail count will be allowed.)',
         },
     ],
 };
@@ -249,6 +249,7 @@ sub model_has_failed_too_many_times {
     my $model = shift;
 
     my $max_fails = $self->max_fail_count;
+    return unless defined $max_fails;
 
     my @builds = reverse $model->builds;
     return unless @builds;
