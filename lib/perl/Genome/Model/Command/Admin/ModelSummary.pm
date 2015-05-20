@@ -258,14 +258,14 @@ sub model_has_progressed {
     die unless (@builds > 1);
 
     my $latest_build = $model->latest_build;
-    my %latest_status = workflow_status($latest_build);
+    my $latest_error = determine_error_for_build($latest_build);
+    return unless $latest_error;
 
     my $previous_build = previous_build($latest_build);
-    my %previous_status = workflow_status($previous_build);
+    my $previous_error = determine_error_for_build($previous_build);
+    return unless $previous_error;
 
-    my $status_are_different = status_compare(\%latest_status, \%previous_status);
-
-    return $status_are_different;
+    return $latest_error ne $previous_error;
 }
 
 
@@ -293,42 +293,17 @@ sub previous_build {
 }
 
 
-sub workflow_status {
+sub determine_error_for_build {
     my $build = shift;
 
-    # The following is wrapped in a transaction and try to protect against
-    # "corrupt" Workflow::Models.
-    my $tx = UR::Context::Transaction->begin();
-    my %status = try {
-        my $build_instance = $build->newest_workflow_instance;
-        my @child_instances = $build_instance ? $build_instance->sorted_child_instances : ();
+    return unless ($build->status eq 'Failed' or $build->status eq 'Unstartable');
 
-        my %status;
-        for my $child_instance (@child_instances) {
-            (my $name = $child_instance->name) =~ s/^[0-9]+\s+//;
-            $status{$name} = $child_instance->status;
-        }
-        $tx->commit();
-        return %status;
-    } catch {
-        $tx->rollback();
-        return;
-    };
+    my $cmd = Genome::Model::Build::Command::DetermineError->execute(
+        build => $build,
+        display_results => 0,
+    );
 
-    return %status;
-}
-
-
-sub status_compare { # http://stackoverflow.com/q/540229
-    my %a = %{ shift @_ };
-    my %b = %{ shift @_ };
-    for my $key (keys %a) {
-          return 1 unless defined $b{$key} and $a{$key} eq $b{$key};
-          delete $a{$key};
-          delete $b{$key};
-    }
-    return 1 if keys %b;
-    return 0;
+    return $cmd->get_failed_key;
 }
 
 
