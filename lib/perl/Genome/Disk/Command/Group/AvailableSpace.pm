@@ -78,7 +78,7 @@ sub execute {
 
     $self->status_message(join("\n", @reports));
 
-    return 1;
+    return !$group_is_low;
 }
 
 sub kb_to_gb {
