@@ -251,7 +251,7 @@ sub model_has_failed_too_many_times {
     my $max_fails = $self->max_fail_count;
     return unless defined $max_fails;
 
-    my @builds = reverse $model->builds;
+    my @builds = $model->builds;
     return unless @builds;
 
     my @failed_builds = grep { $_->status eq 'Failed' } @builds;
