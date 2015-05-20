@@ -219,7 +219,7 @@ sub should_review_model {
     return if @builds == 1;
 
     # If it has failed >3 times in a row then submit for review.
-    return 1 if model_has_failed_to_many_times($model);
+    return 1 if model_has_failed_too_many_times($model);
 
     # If it hasn't made progress since last time then submit for review.
     return 1 unless model_has_progressed($model);
@@ -237,7 +237,7 @@ sub latest_build_succeeded {
 
 
 my $max_fails = 5;
-sub model_has_failed_to_many_times {
+sub model_has_failed_too_many_times {
     my $model = shift;
 
     my @builds = reverse $model->builds;
