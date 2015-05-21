@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Tools::Bedpe {
-    is => ['Command'],
+    is => ['Command::Tree'],
 
 };
 
