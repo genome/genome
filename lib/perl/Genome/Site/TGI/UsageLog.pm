@@ -11,6 +11,8 @@ use Carp;
 
 use Genome::Utility::Instrumentation qw();
 
+require Genome::Config;
+
 my $command = -e $0 ? join(' ', abs_path($0), @ARGV) : join(' ', $0, @ARGV);
 
 sub import {
@@ -61,8 +63,8 @@ sub record_usage {
 }
 
 sub dsn { 'dbi:Pg:dbname=genome_usage;host=gms-postgres.gsc.wustl.edu' }
-sub db_username { 'genome_usage' }
-sub db_password { 'r7Z1QU4ZVez2CR' }
+sub db_username { Genome::Config::get('usage_log_db_username') }
+sub db_password { Genome::Config::get('usage_log_db_password') }
 sub db_opts { { AutoCommit => 1, PrintError => 0, RaiseError => 0 } }
 
 sub log_dbi {
