@@ -30,38 +30,14 @@ class Genome::Model::Tools::DetectVariants2::GatkGermlineSnv{
 
 sub _detect_variants {
     my $self = shift;
-    my $refseq = $self->reference_sequence_input;
-    $refseq =~ s/\/opt\/fscache//;
-    my $gatk_cmd = Genome::Model::Tools::Gatk::GermlineSnv->create( 
-        bam_file => $self->aligned_reads_input, 
-        vcf_output_file => $self->_temp_staging_directory."/snvs.hq",
-        mb_of_ram => $self->mb_of_ram,
-        reference_fasta => $refseq,
-        version => $self->version,
-    );
-    if (Genome::Model::Tools::Gatk::GermlineSnv->is_legacy_version($self->version)) {
-        $gatk_cmd->verbose_output_file($self->_temp_staging_directory."/gatk_output_file");
-    }
 
-    unless($gatk_cmd->execute){
-        $self->error_message("Failed to run GATK command.");
-        die $self->error_message;
-    }
-    unless(-s $self->_temp_staging_directory."/snvs.hq"){
-        my $filename = $self->_temp_staging_directory."/snvs.hq";
-        my $output = `touch $filename`;
-        unless($output){
-            $self->error_message("creating an empty snvs.hq file failed.");
-            die $self->error_message;
-        }
-    }
-    return 1;
+    die $self->error_message('The GATK GermlineSnv detector is no longer available');
 }
 
 sub has_version {
     my $self = shift;
 
-    return Genome::Model::Tools::Gatk::GermlineSnv->has_version(@_);
+    return;
 }
 
 #TODO clean all of this up. It is usually/should be based on logic from Genome::Model::Tools::Bed::Convert logic in process_source... 
