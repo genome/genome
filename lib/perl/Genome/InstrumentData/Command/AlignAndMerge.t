@@ -46,12 +46,6 @@ my $aligner_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->__def
 ok($aligner_index, 'Created speedseq aligner index');
 $aligner_index->recalculate_lookup_hash;
 
-use Genome::InstrumentData::AlignmentResult;
-my $override3 = Sub::Override->new(
-    'Genome::InstrumentData::AlignmentResult::filter_non_database_objects',
-    sub { my $self = shift; return @_; }
-);
-
 my $instrument_data_1 = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
     flow_cell_id => '12345ABXX',
     lane => '1',

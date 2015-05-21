@@ -6,7 +6,10 @@ use Genome;
 
 class Genome::InstrumentData::AlignmentResult::Speedseq {
     is => 'Genome::InstrumentData::AlignmentResult',
-    has => [
+    has_metric => [
+        merged_alignment_result_id => {
+            is => 'Text',
+        }
     ],
 };
 
@@ -59,12 +62,7 @@ sub aligner_params_for_sam_header {
 
 sub get_merged_alignment_results {
     my $self = shift;
-    # Always load from the database, since other merged results may have committed since we updated the UR cache
-    my @results = Genome::InstrumentData::AlignmentResult::Merged::Speedseq->load(
-        'inputs.value_id' => $self->instrument_data_id,
-        test_name => $self->test_name,
-    );
-    return $self->filter_non_database_objects(@results);
+    return (Genome::InstrumentData::AlignmentResult::Merged::Speedseq->get($self->merged_alignment_result_id));
 }
 
 sub fillmd_for_sam { return 0; }

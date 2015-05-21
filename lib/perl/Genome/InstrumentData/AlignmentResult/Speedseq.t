@@ -33,10 +33,6 @@ my $override2 = Sub::Override->new(
     'Genome::InstrumentData::AlignmentResult::_prepare_reference_sequences',
     sub { return 1; }
 );
-my $override3 = Sub::Override->new(
-    'Genome::InstrumentData::AlignmentResult::filter_non_database_objects',
-    sub { my $self = shift; return @_; }
-);
 
 my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
     flow_cell_id => '12345ABXX',
@@ -78,6 +74,7 @@ my $alignment_result = $pkg->create(
     aligner_name => 'speedseq',
     aligner_version => 'test',
     aligner_params => {},
+    merged_alignment_result_id => $merged_alignment_result->id,
     _user_data_for_nested_results => $result_users,
 );
 ok($alignment_result, 'Alignment result created successfully');

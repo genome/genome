@@ -166,6 +166,7 @@ sub _process_per_lane_alignments {
             instrument_data => $instrument_data,
             samtools_version => $self->samtools_version,
             picard_version => $self->picard_version,
+            merged_alignment_result_id => $self->result_id,
             %params,
         );
     }
