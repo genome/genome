@@ -203,12 +203,5 @@ sub _resolve_names_for_entities {
     return 1;
 }
 
-sub _generate_output {
-    my $self = shift;
-    my @output = @{$self->_output};
-    return 1 if not @output;
-    return Genome::Sys->write_file($self->output_file, $self->_output_header, @output);
-}
-
 1;
 

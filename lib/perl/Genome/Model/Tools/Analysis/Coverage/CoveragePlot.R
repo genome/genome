@@ -1088,7 +1088,7 @@ xlab3 = "Average coverage depth of each ROI";
 ylab3 = "Density";
 
 xlab4 = NULL;
-ylab4 = "Coverage (%)";
+ylab4 = "Coverage (%)";###
 
 
 # color and symbol set
@@ -1122,6 +1122,9 @@ title1 <- paste(title1, " of ", nroi, " ROIs (total ", nbase, ' bases)', sep="")
 max1 <- 0;
 for (i in 1:length(b$stats))
     max1 <- max(max1, as.numeric(unlist(strsplit(b$stats[i], ","))));
+
+# if with extreme distribution
+if (max1 < 5) max1 <- 5;
 
 yscale1 <- cs_scale(c(0, max1), breaks=5);
 
@@ -1230,8 +1233,13 @@ g2 <- addGrob(g2, cs_vlegendGrob(just="right", x=unit(1.0, "npc")+unit(1.0, "cha
 title3 <- paste(title3, " of ", nroi, " ROIs", sep="");
 
 # defines the scale of a plot
-xscale3 <- cs_scale(d$x, breaks=5, range=c(0, max1));
-xscale3 <- c(xscale3, xscale3[length(xscale3)] + xscale3[length(xscale3)] - xscale3[length(xscale3) - 1], xscale3[length(xscale3)] + (xscale3[length(xscale3)] - xscale3[length(xscale3) - 1]) *2);
+if (max1 <= 5) {
+    xscale3 <- cs_scale(d$x, breaks=5, range=c(0, max(d$x)));
+} else {
+    xscale3 <- cs_scale(d$x, breaks=5, range=c(0, max1));
+    xscale3 <- c(xscale3, xscale3[length(xscale3)] + xscale3[length(xscale3)] - xscale3[length(xscale3) - 1], xscale3[length(xscale3)] + (xscale3[length(xscale3)] - xscale3[length(xscale3) - 1]) *2);
+}
+
 yscale3 <- cs_scale(d$y, breaks=5);
 
 
@@ -1255,7 +1263,8 @@ for (i in 1:length(samples))
     pch <- pchars[(i - 1) %% length(pchars) + 1];
     
     # min_depth_filter    percent_coverage
-    g3 <- addGrob(g3, cs_linesGrob(p$x, p$y, p=c(0.0,0.2,0.4,0.6,0.8,1.0), pch=pch, size=unit(0.7, "char"), pcol=col, default.units="native", name=NULL, gp=gpar(col=col), vp=g3$childrenvp));
+    if (length(p$x) > 1)
+        g3 <- addGrob(g3, cs_linesGrob(p$x, p$y, p=c(0.0,0.2,0.4,0.6,0.8,1.0), pch=pch, size=unit(0.7, "char"), pcol=col, default.units="native", name=NULL, gp=gpar(col=col), vp=g3$childrenvp));
 }
 
 
