@@ -324,6 +324,16 @@ sub update_status {
     return $self->status;
 }
 
+sub lsf_job_id {
+    my $self = shift;
+
+    my $id_note = $self->notes(header_text => 'workflow lsf job_id');
+    if ($id_note) {
+        return $id_note->body_text;
+    } else {
+        return;
+    }
+}
 
 sub workflow_name {
     my $self = shift;

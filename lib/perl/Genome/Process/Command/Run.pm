@@ -159,6 +159,11 @@ sub _bsub_in_pend_state {
         die "Failed to launch bsub:\n$_\n";
     };
     $self->process->update_status('Scheduled');
+
+    $self->process->add_note(
+        header_text => 'workflow lsf job_id',
+        body_text => $job_id,
+    );
     return $job_id;
 }
 

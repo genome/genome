@@ -1311,6 +1311,12 @@ sub _get_running_master_lsf_job {
     my $self = shift;
 
     my $job_id = $self->the_master_event->lsf_job_id;
+    if (not defined($job_id)) {
+        my $process = Genome::Model::Build::Process->get(build => $self);
+        if ($process) {
+            $job_id = $process->lsf_job_id;
+        }
+    }
     return if not defined $job_id;
 
     my $job = $self->_get_job($job_id);
