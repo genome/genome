@@ -1135,14 +1135,21 @@ sub create_bam_header {
 
     my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 
+    my $source_bam_path = $self->source_bam_path_for_header;
+
     Genome::Sys->shellcmd(
-        cmd => sprintf('%s view -H %s > %s', $sam_path, $self->bam_path, $self->bam_header_path),
+        cmd => sprintf('%s view -H %s > %s', $sam_path, $source_bam_path, $self->bam_header_path),
         output_files => [$self->bam_header_path],
-        input_files => [$self->bam_path],
+        input_files => [$source_bam_path],
         keep_dbh_connection_open => 1,  # this runs very fast
     );
 
     return 1;
+}
+
+sub source_bam_path_for_header {
+    my $self = shift;
+    return $self->bam_path;
 }
 
 sub set_bam_size {
@@ -1795,6 +1802,23 @@ sub revivified_alignment_bam_file_path {
     }
 
     $self->create_bam_header;
+    $self->create_bam_flagstat_and_revivify($merged_bam, $revivified_bam);
+
+    $self->_reallocate_temp_allocation($temp_allocation);
+
+    if (-s $revivified_bam) {
+        # Cache the path of this revivified bam for future access
+        $self->_revivified_bam_file_path($revivified_bam);
+        return ($revivified_bam);
+    }
+    else {
+        die $self->error_message("After running RecreatePerLaneBam, no per-lane bam (%s) exists still!", $revivified_bam);
+    }
+}
+
+sub create_bam_flagstat_and_revivify {
+    my ($self, $merged_bam, $revivified_bam) = @_;
+
     $self->create_bam_flagstat;
 
     my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
@@ -1810,17 +1834,6 @@ sub revivified_alignment_bam_file_path {
 
     unless ($cmd->execute) {
         die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
-    }
-
-    $self->_reallocate_temp_allocation($temp_allocation);
-
-    if (-s $revivified_bam) {
-        # Cache the path of this revivified bam for future access
-        $self->_revivified_bam_file_path($revivified_bam);
-        return ($revivified_bam);
-    }
-    else {
-        die $self->error_message("After running RecreatePerLaneBam, no per-lane bam (%s) exists still!", $revivified_bam);
     }
 }
 

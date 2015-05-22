@@ -5,6 +5,7 @@ use warnings;
 
 use Genome;
 use Sort::Naturally qw(nsort);
+use Genome::Utility::Text qw(string_to_camel_case);
 
 class Genome::InstrumentData::Composite::Workflow::Generator {
     is => 'Genome::InstrumentData::Composite::Workflow::Generator::Base',
@@ -53,7 +54,9 @@ sub generate {
     for my $group (keys %$objects_by_group) {
         my $alignment_objects = $objects_by_group->{$group};
 
-        my ($next_object_workflows, $next_object_inputs) = Genome::InstrumentData::Composite::Workflow::Generator::Align->generate( $tree, $input_data, $alignment_objects);
+        my ($next_object_workflows, $next_object_inputs);
+        my $alignment_generator = 'Genome::InstrumentData::Composite::Workflow::Generator::' . string_to_camel_case($tree->{action}->[0]->{type});
+        ($next_object_workflows, $next_object_inputs) = $alignment_generator->generate( $tree, $input_data, $alignment_objects);
         @$object_workflows{keys %$next_object_workflows} = values %$next_object_workflows;
         push @inputs, @$next_object_inputs;
 

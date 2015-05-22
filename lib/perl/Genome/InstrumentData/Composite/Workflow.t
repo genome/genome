@@ -89,6 +89,8 @@ my $clip_overlap_result_two_inst_data = construct_clip_overlap_result(
     $ref, $merge_result_two_inst_data
 );
 
+my $speedseq_result = construct_speedseq_result($ref, @two_instrument_data);
+
 my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
     reference_sequence_build => $ref,
 );
@@ -139,7 +141,7 @@ subtest 'simple alignments with qc decoration' => sub {
         sub supports_streaming { return 0; }
 
         sub get_metrics {
-            return { metric1 => 1 };
+            return ( metric1 => 1 );
         }
     }
 
@@ -155,6 +157,7 @@ subtest 'simple alignments with qc decoration' => sub {
     my $qc_for_testing = Genome::Qc::Config->get(name => 'qc for Workflow test');
     isa_ok($qc_for_testing, 'Genome::Qc::Config', 'test configuration exists') or die('cannot continue');
 
+    my $config_name = 'qc for Workflow test';
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@two_instrument_data,
@@ -162,7 +165,7 @@ subtest 'simple alignments with qc decoration' => sub {
             force_fragment => 0,
             result_users => $result_users,
         },
-        strategy => 'inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] @qc [qc for Workflow test] api v1',
+        strategy => sprintf('inst aligned to ref using bwa 0.5.9 [-t 4 -q 5::] @qc [%s] api v1', $config_name),
         log_directory => $log_directory,
     );
     isa_ok(
@@ -173,11 +176,107 @@ subtest 'simple alignments with qc decoration' => sub {
 
     ok($ad->execute, 'executed dispatcher for simple alignments with qc decoration');
 
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+
+    my @qc_results = map { Genome::Qc::Result->get(alignment_result => $_, config_name => $config_name) } @ad_results;
+    is(scalar(@qc_results), scalar(@ad_results), 'Qc results were created successfully');
+
+    for my $qc_result (@qc_results) {
+        is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
+    }
+
+    $override->restore;
+};
+
+subtest 'simple align_and_merge strategy' => sub {
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
+        inputs => {
+            instrument_data => \@two_instrument_data,
+            reference_sequence_build => $ref,
+            force_fragment => 0,
+            result_users => $result_users,
+        },
+        strategy => 'instrument_data both aligned to reference_sequence_build and merged using speedseq test api v1',
+    );
+    isa_ok(
+        $ad,
+        'Genome::InstrumentData::Composite::Workflow',
+        'created dispatcher for simple align_and_merge strategy'
+    );
+
+    ok($ad->execute, 'executed dispatcher for simple align_and_merge');
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+    is_deeply([$speedseq_result], [sort @ad_results], 'found speedseq result');
+    check_result_bam(@ad_results);
+};
+
+subtest 'simple align_and_merge strategy with qc decoration' => sub {
+    {
+        package TestTool1;
+
+        use Genome;
+
+        class TestTool1 {
+            is => ['Genome::Qc::Tool'],
+            has => {param1 => {}},
+        };
+
+        sub cmd_line {
+            my $self = shift;
+            return ("echo", $self->param1);
+        }
+
+        sub supports_streaming { return 0; }
+
+        sub get_metrics {
+            return ( metric1 => 1 );
+        }
+    }
+
+    use Genome::Qc::Config;
+    my $override = Sub::Override->new(
+        'Genome::Qc::Config::get_commands_for_alignment_result',
+        sub {
+            return {test1 => {class => "TestTool1", params => {param1 => 1}}};
+        },
+    );
+
+    my $config_name = 'qc2 for Workflow test';
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
+        inputs => {
+            instrument_data => \@two_instrument_data,
+            reference_sequence_build => $ref,
+            force_fragment => 0,
+            result_users => $result_users,
+        },
+        strategy => sprintf('instrument_data both aligned to reference_sequence_build and merged using speedseq test @align-and-merge-qc [%s] api v1', $config_name),
+    );
+    isa_ok(
+        $ad,
+        'Genome::InstrumentData::Composite::Workflow',
+        'created dispatcher for simple align_and_merge strategy'
+    );
+
+    ok($ad->execute, 'executed dispatcher for simple align_and_merge');
+    my @ad_result_ids = $ad->_result_ids;
+    my @ad_results = Genome::SoftwareResult->get(\@ad_result_ids);
+    is_deeply([$speedseq_result], [sort @ad_results], 'found speedseq result');
+    check_result_bam(@ad_results);
+
+    for my $instrument_data (@two_instrument_data) {
+        my $per_lane_result = Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data_id => $instrument_data->id);
+        my $qc_result = Genome::Qc::Result->get(alignment_result => $per_lane_result, config_name => $config_name);
+        ok($qc_result, sprintf('Qc result for instrument_data (%s) was created successfully', $instrument_data->id));
+        is_deeply({ $qc_result->get_metrics }, { metric1 => 1 }, 'Metrics as expected');
+    }
+
     $override->restore;
 };
 
 subtest 'simple alignments with merge' => sub {
-   my $ad = Genome::InstrumentData::Composite::Workflow->create(
+    my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@two_instrument_data,
             ref => $ref,
@@ -580,6 +679,46 @@ sub construct_clip_overlap_result {
     $clip_overlap_result->lookup_hash($clip_overlap_result->calculate_lookup_hash());
 
     return $clip_overlap_result;
+}
+
+sub construct_speedseq_result {
+    my $reference = shift;
+    my @instrument_data = @_;
+
+    my $speedseq_result = Genome::InstrumentData::AlignmentResult::Merged::Speedseq->__define__(
+        reference_build => $reference,
+        aligner_name => 'speedseq',
+        aligner_version => 'test',
+    );
+    for my $i (0..$#instrument_data) {
+        $speedseq_result->add_input(
+            name => 'instrument_data-' . $i,
+            value_id => $instrument_data[$i]->id,
+        );
+    }
+    $speedseq_result->add_param(
+        name => 'instrument_data_count',
+        value_id=> scalar(@instrument_data),
+    );
+    $speedseq_result->add_param(
+        name => 'instrument_data_md5',
+        value_id => Genome::Sys->md5sum_data(join(':', sort(map($_->id, @instrument_data))))
+    );
+    $speedseq_result->lookup_hash($speedseq_result->calculate_lookup_hash());
+
+    for my $instrument_data (@instrument_data) {
+        my $per_lane_speedseq_result = Genome::InstrumentData::AlignmentResult::Speedseq->__define__(
+            instrument_data => $instrument_data,
+            reference_build => $reference,
+            aligner_name => 'speedseq',
+            aligner_version => 'test',
+            samtools_version => 'r599',
+            picard_version => '1.29',
+        );
+        $per_lane_speedseq_result->lookup_hash($per_lane_speedseq_result->calculate_lookup_hash());
+    }
+
+    return $speedseq_result;
 }
 
 sub check_result_bam {

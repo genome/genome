@@ -510,6 +510,40 @@ _test_strategy(
     },
 );
 
+_test_strategy(
+    'instrument_data both aligned to reference and merged using speedseq test_version api v3',
+    {
+        'api_version' => 'v3',
+        'action' => [{
+            'params' => '',
+            'reference' => 'reference',
+            'version' => 'test_version',
+            'name' => 'speedseq',
+            'type' => 'align_and_merge'
+        }],
+        'data' => 'instrument_data'
+    }
+);
+
+_test_strategy(
+    'instrument_data both aligned to reference and merged using speedseq test_version @festive-decoration [turkey] api v3',
+    {
+        'api_version' => 'v3',
+        'action' => [{
+            'params' => '',
+            'decoration' => {
+                'params' => 'turkey',
+                'name' => 'festive-decoration'
+            },
+            'reference' => 'reference',
+            'version' => 'test_version',
+            'name' => 'speedseq',
+            'type' => 'align_and_merge'
+        }],
+        'data' => 'instrument_data'
+    }
+);
+
 done_testing();
 
 

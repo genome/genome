@@ -83,7 +83,7 @@ sub _input_file_for_tool {
 
 sub _error_file_for_tool {
     my ($self, $name) = @_;
-    my $file_name = $self->qc_config->get_commands_for_alignment_result->{$name}->{error_file};
+    my $file_name = $self->qc_config->get_commands_for_alignment_result($self->is_capture)->{$name}->{error_file};
     if (defined $file_name) {
         return File::Spec->join($self->temp_staging_directory, $file_name);
     }
@@ -92,7 +92,7 @@ sub _error_file_for_tool {
 
 sub _output_file_for_tool {
     my ($self, $name) = @_;
-    my $file_name = $self->qc_config->get_commands_for_alignment_result->{$name}->{out_file};
+    my $file_name = $self->qc_config->get_commands_for_alignment_result($self->is_capture)->{$name}->{out_file};
     if (defined $file_name) {
         return File::Spec->join($self->temp_staging_directory, $file_name);
     }
@@ -101,7 +101,7 @@ sub _output_file_for_tool {
 
 sub _tools {
     my $self = shift;
-    my $commands = $self->qc_config->get_commands_for_alignment_result($self->alignment_result);
+    my $commands = $self->qc_config->get_commands_for_alignment_result($self->is_capture);
     my %tools;
     for my $name (keys %$commands) {
         my $tool = $self->_tool_from_name_and_params($commands->{$name}->{class},
@@ -147,6 +147,11 @@ sub _add_metrics {
             metric_value => $value,
         );
     }
+}
+
+sub is_capture {
+    my $self = shift;
+    return $self->alignment_result->instrument_data->is_capture;
 }
 
 1;
