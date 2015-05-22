@@ -1,4 +1,0 @@
-# The 'sys_id' configuration variable determines the unique ID of the GMS
-# installation.
---- 
-env: GENOME_SYS_ID

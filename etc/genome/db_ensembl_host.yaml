@@ -1,4 +1,0 @@
-# The 'db_ensembl_host' configuration variable points to the host of the
-# Ensembl server.
----
-env: GENOME_DB_ENSEMBL_HOST

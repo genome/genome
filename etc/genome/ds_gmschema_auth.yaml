@@ -1,4 +1,0 @@
-# The 'ds_gmschema_auth' configuration variable holds the login password used
-# to connect to the GMSchema data source.
---- 
-env: GENOME_DS_GMSCHEMA_AUTH

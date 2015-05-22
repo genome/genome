@@ -1,4 +1,0 @@
-# The 'sys_services_web_view_url' configuration variable holds the base URL for
-# the web views.
---- 
-env: GENOME_SYS_SERVICES_WEB_VIEW_URL

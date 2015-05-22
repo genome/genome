@@ -1,4 +1,0 @@
-# The 'email_test' configuration variable holds an email address suitable for
-# using in tests.  It does not necessarily need to be a valid recipient.
---- 
-env: GENOME_EMAIL_TEST

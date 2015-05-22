@@ -1,0 +1,5 @@
+# The 'sw_legacy_java' configuration variable is the root directory for Java
+# jar bundles which are outside of the configured 'sw' structure.
+--- 
+env: XGENOME_SW_LEGACY_JAVA
+default_value: /var/lib/genome/legacy-java

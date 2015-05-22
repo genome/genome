@@ -1,5 +1,0 @@
-# The 'ds_dgidb_type' configuration variable indicates the parent class for the
-# Dgidb data source.  It should be something that inherits from
-# UR::DataSource::RDBMS.
---- 
-env: GENOME_DS_DGIDB_TYPE

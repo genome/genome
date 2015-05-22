@@ -1,3 +1,0 @@
---- 
-env: GENOME_TEST_URL
-default_value: localhost:8090//gms/temp/running-testsuites

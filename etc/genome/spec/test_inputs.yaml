@@ -1,0 +1,4 @@
+# The 'test_inputs' configuration variable is the root directory for test inputs storage.
+--- 
+env: XGENOME_TEST_INPUTS
+default_value: /var/lib/genome/testsuite-inputs

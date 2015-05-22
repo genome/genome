@@ -1,5 +1,0 @@
-# The 'sys_no_cleanup' configuration variable, when set to true, will not clean
-# up temporary files/directories on process exit.
---- 
-env: GENOME_SYS_NO_CLEANUP
-default_value: ""

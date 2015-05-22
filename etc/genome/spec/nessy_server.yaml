@@ -1,0 +1,4 @@
+# Set the URL for the Nessy locking server to use.
+--- 
+env: XGENOME_NESSY_SERVER
+default_value: ""

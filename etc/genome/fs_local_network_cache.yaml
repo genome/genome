@@ -1,5 +1,0 @@
-# The 'fs_local_network_cache' configuration variable is the root directory for
-# local cache storage.
---- 
-env: GENOME_FS_LOCAL_NETWORK_CACHE
-default_value: /tmp

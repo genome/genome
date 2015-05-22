@@ -1,3 +1,0 @@
---- 
-env: GENOME_DB_QUERY_PAUSE
-default_value: ""

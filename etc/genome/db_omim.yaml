@@ -1,5 +1,0 @@
-# The 'db_omim' configuration variable is the directory containing
-# "unversioned" OMIM database. Most useful for testing purposes.
----
-env: GENOME_DB_OMIM
-default_value: ""

@@ -1,4 +1,0 @@
-# The 'ds_gmschema_owner' configuration variable holds the default schema/owner
-# for the tables in the GMSchema data source.
---- 
-env: GENOME_DS_GMSCHEMA_OWNER

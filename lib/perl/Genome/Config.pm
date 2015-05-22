@@ -72,7 +72,7 @@ sub validate {
 
 sub spec {
     my $key = shift;
-    my $subpath = Path::Class::File->new('genome', $key . '.yaml');
+    my $subpath = Path::Class::File->new('genome', 'spec', $key . '.yaml');
     my $file = (_lookup_files($subpath, snapshot_dir()))[0];
     unless (defined $file) {
         croakf('unable to locate spec: %s', $key);
@@ -109,7 +109,7 @@ sub set_env {
 }
 
 sub all_specs {
-    my $snapshot_dir = Path::Class::Dir->new(snapshot_dir(), 'genome');
+    my $snapshot_dir = Path::Class::Dir->new(snapshot_dir(), 'genome', 'spec');
     my @spec_files = File::Find::Rule->file()
                                      ->name('*.yaml')
                                      ->not(File::Find::Rule->new->name('config.yaml'))

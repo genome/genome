@@ -1,0 +1,5 @@
+# Specified the LSF queue to submit big memory jobs to.
+--- 
+env: XGENOME_LSF_QUEUE_BIGMEM
+validators:
+  - LSFQueue

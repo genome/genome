@@ -121,10 +121,9 @@ function main {
     if test -n "$TESTING_MODE"
     then
         # Have to use `genome config get` after setup_env.
-        TEST_INPUTS="$(genome config get test_inputs)"
         eval "$(genome config set-env log_usage 0)"
         eval "$(genome config set-env sys_services_files_url 'file:///')"
-        eval "$(genome config set-env test_url "${GENOME_SYS_SERVICES_FILES_URL}${TEST_INPUTS}")"
+        eval "$(genome config set-env test_url "$(genome config get sys_services_files_url)$(genome config get test_inputs)")"
         eval "$(genome config set-env testing 1)"
         unset WF_USE_FLOW
         export UR_DBI_NO_COMMIT=1
@@ -576,9 +575,9 @@ function setup_env {
 
     if test -z "$DISABLE_DB"
     then
-        export GENOME_DS_GMSCHEMA_SERVER="dbname=${TESTDBSERVER_DB_NAME};host=${TESTDBSERVER_DB_HOST};port=${TESTDBSERVER_DB_PORT}"
-        export GENOME_DS_GMSCHEMA_LOGIN=$TESTDBSERVER_DB_USER
-        export GENOME_DS_GMSCHEMA_AUTH=$TESTDBSERVER_DB_PASS
+        eval "$(genome config set-env ds_gmschema_server "dbname=${TESTDBSERVER_DB_NAME};host=${TESTDBSERVER_DB_HOST};port=${TESTDBSERVER_DB_PORT}")"
+        eval "$(genome config set-env ds_gmschema_login "$TESTDBSERVER_DB_USER")"
+        eval "$(genome config set-env ds_gmschema_auth "$TESTDBSERVER_DB_PASS")"
     fi
 
     hash -r

@@ -1,5 +1,0 @@
-# When a shell command is to be executed with a specific pattern, creates a
-# temp file instead with that command, and waits for it to be deleted.
---- 
-env: GENOME_SYS_PAUSE_SHELLCMD
-default_value: ""

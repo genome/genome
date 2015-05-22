@@ -1,5 +1,0 @@
-# The 'db_cosmic' configuration variable is the directory containing
-# "unversioned" COSMIC database. Most useful for testing purposes.
----
-env: GENOME_DB_COSMIC
-default_value: ""

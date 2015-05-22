@@ -1,3 +1,0 @@
---- 
-env: GENOME_STATSD_PORT
-default_value: ""

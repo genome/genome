@@ -1,3 +1,0 @@
---- 
-env: GENOME_PTERO_WORKFLOW_SUBMIT_URL
-default_value: http://workflow.apipe-deis.gsc.wustl.edu/v1/workflows

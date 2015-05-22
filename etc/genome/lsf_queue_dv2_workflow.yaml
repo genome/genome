@@ -1,5 +1,0 @@
-# Specifies the LSF queue to submit DV2 workflow jobs to.
---- 
-env: GENOME_LSF_QUEUE_DV2_WORKFLOW
-validators:
-  - LSFQueue

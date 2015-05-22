@@ -1,0 +1,3 @@
+--- 
+env: XGENOME_DB_QUERY_PAUSE
+default_value: ""

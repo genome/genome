@@ -1,4 +1,0 @@
-# Specified the alternate LSF queue to submit build worker jobs to.  This is
-# used because there was no convention whether to use 'apipe' or 'long'.
---- 
-env: GENOME_LSF_QUEUE_BUILD_WORKER_ALT

@@ -1,4 +1,0 @@
-# The 'sw_ignore' directories in the default path under which to NOT look for
-# versioned software.
---- 
-env: GENOME_SW_IGNORE

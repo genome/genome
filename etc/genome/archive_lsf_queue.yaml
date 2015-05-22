@@ -1,5 +1,0 @@
----
-env: GENOME_ARCHIVE_LSF_QUEUE
-default_value: "hpss"
-validators:
-  - LSFQueue

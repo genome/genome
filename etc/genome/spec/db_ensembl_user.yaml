@@ -1,0 +1,4 @@
+# The 'db_ensembl_user' configuration variable points to the user of the
+# Ensembl server.
+---
+env: XGENOME_DB_ENSEMBL_USER

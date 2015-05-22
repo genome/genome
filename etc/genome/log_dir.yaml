@@ -1,3 +1,0 @@
---- 
-env: GENOME_LOG_DIR
-default_value: /var/log/genome/
