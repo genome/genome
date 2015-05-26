@@ -860,7 +860,7 @@ sub make_path {
                 next;
             } else {
                 Carp::confess("While creating path ($path), failed to create " .
-                    "directory ($subpath) because ($!)");
+                    "directory ($subpath) because ($mkdir_errno)");
             }
         }
     }
