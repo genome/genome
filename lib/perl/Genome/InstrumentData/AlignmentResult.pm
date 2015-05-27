@@ -1534,7 +1534,6 @@ sub _extract_input_fastq_filenames {
         }
     }
     else {
-        # FIXME - getting a warning about undefined string with 'eq'
         if (! defined($self->filter_name)) {
             $self->debug_message('No special filter for this input');
         }
