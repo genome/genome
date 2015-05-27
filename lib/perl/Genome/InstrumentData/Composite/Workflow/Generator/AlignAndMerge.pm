@@ -14,11 +14,13 @@ sub generate {
     my $input_data = shift;
     my $alignment_objects = shift;
 
+    my $aligner_name = ucfirst($tree->{action}->[0]->{name});
+
     #Make a workflow with its input and output connectors
     my $input_properties = ['instrument_data', 'reference_sequence_build', $class->_general_workflow_input_properties];
     my $tree_properties = ['name', 'params', 'version'];
     my $workflow = Workflow::Model->create(
-        name => 'Speedseq',
+        name => $aligner_name,
         input_properties => [@$input_properties, @$tree_properties],
         optional_input_properties => $input_properties,
         output_properties => ['result_id'],
@@ -26,9 +28,9 @@ sub generate {
     my $workflows = {};
     map { $workflows->{$_} = $workflow } @$alignment_objects;
 
-    #Make a speedseq operation
+    #Make a align_and_merge operation
     my $operation = $workflow->add_operation(
-        name => 'Speedseq operation',
+        name => "$aligner_name operation",
         operation_type => Workflow::OperationType::Command->create(
             command_class_name => 'Genome::InstrumentData::Command::AlignAndMerge',
         ),
