@@ -85,7 +85,6 @@ is(-e File::Spec->join($alignment_result->output_dir, 'all_sequences.bam'), unde
 
 ok(-e $alignment_result->bam_flagstat_path, "Flagstat file exists");
 ok(-e $alignment_result->bam_header_path, "Header file exists");
-ok(-e $alignment_result->bam_md5_path, "Md5 file exists");
 
 my $cmp = Genome::Model::Tools::Sam::Compare->execute(
     file1 => $alignment_result->get_bam_file,

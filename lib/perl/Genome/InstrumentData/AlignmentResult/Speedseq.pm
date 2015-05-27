@@ -99,7 +99,6 @@ sub _promote_data {
     my $self = shift;
 
     Genome::Sys->copy_file($self->revivified_alignment_bam_file_path . '.flagstat', File::Spec->join($self->temp_staging_directory, 'all_sequences.bam.flagstat'));
-    Genome::Sys->copy_file($self->revivified_alignment_bam_file_path . '.md5', File::Spec->join($self->temp_staging_directory, 'all_sequences.bam.md5'));
 
     return $self->SUPER::_promote_data;
 }
