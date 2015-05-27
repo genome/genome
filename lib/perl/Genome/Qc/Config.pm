@@ -40,6 +40,7 @@ sub get_commands_for_alignment_result {
             class => 'Genome::Qc::Tool::Picard::CollectMultipleMetrics',
             params => {
                 input_file => 'bam_file',
+                reference_sequence => 'reference_sequence',
                 use_version => 1.123,
             },
         },
