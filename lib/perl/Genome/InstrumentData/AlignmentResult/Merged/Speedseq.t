@@ -58,7 +58,7 @@ my $merged_alignment_result = $pkg->create(
     samtools_version => 'r963',
     aligner_name => 'speedseq',
     aligner_version => 'test',
-    aligner_params => {},
+    aligner_params => '',
     _user_data_for_nested_results => $result_users,
 );
 ok($merged_alignment_result, 'Merged alignment result created successfully');
