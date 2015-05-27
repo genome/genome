@@ -6,6 +6,7 @@ use warnings;
 use Genome;
 
 require File::Basename;
+require Genome::InstrumentData::Command::Import::WorkFlow::SourceFile;
 
 class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported { 
     is => [qw/ Command::V2 Genome::Model::Tools::Picard::WithDownsampleRatio /],
@@ -25,16 +26,14 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported {
             doc => 'Source MD5.',
         }, 
     },
-    has_optional_calculated => {
+    has_optional => {
         source_md5_path => {
-            calculate_from => [qw/ source_path /],
-            calculate => q{ return $self->helpers->md5_path_for($source_path); },
-            doc => 'Source MD5 path.',
+            via => 'source_file',
+            to => 'md5_path',
         }, 
         original_md5_path => {
-            calculate_from => [qw/ source_path /],
-            calculate => q{ return $self->helpers->original_md5_path_for($source_path); },
-            doc => 'Original source MD5 path.',
+            via => 'source_file',
+            to => 'original_md5_path',
         }, 
     },
     has_transient_optional => {
@@ -43,6 +42,11 @@ class Genome::InstrumentData::Command::Import::WorkFlow::VerifyNotImported {
     has_constant_calculated => {
         helpers => {
             calculate => q( Genome::InstrumentData::Command::Import::WorkFlow::Helpers->get; ),
+        },
+        source_file => {
+            is_constant => 1,
+            calculate_from => [qw/ source_path /],
+            calculate => q| return Genome::InstrumentData::Command::Import::WorkFlow::SourceFile->create(path => $source_path); |,
         },
     },
 };
@@ -68,7 +72,10 @@ sub execute {
     }
 
     # Run md5 on source file
-    my $md5 = $self->helpers->load_or_run_md5($self->source_path, $self->source_md5_path);
+    if ( not $self->source_file->md5_path_size ) {
+        $self->helpers->run_md5($self->source_path, $self->source_file->md5_path);
+    }
+    my $md5 = $self->helpers->load_md5($self->source_file->md5_path);
     return if not $md5;
 
     # Verify original md5 [if exists] matches
@@ -90,16 +97,14 @@ sub execute {
 
 sub _load_original_md5 {
     my $self = shift;
-    $self->debug_message('Load original MD5...');
 
-    my $original_md5_path = $self->helpers->original_md5_path_for($self->source_path);
-    my $original_md5_path_size = $self->helpers->file_size($original_md5_path);
-    if ( not $original_md5_path_size ) {
+    if ( not $self->source_file->original_md5_path_size ) {
         $self->debug_message('No original MD5...skip');
         return 1;
     }
 
-    my $original_md5 = $self->helpers->load_md5($original_md5_path);
+    $self->debug_message('Load original MD5...');
+    my $original_md5 = $self->helpers->load_md5($self->source_file->original_md5_path);
     if ( not $original_md5 ) {
         $self->error_message('Failed to load original MD5!');
         return;

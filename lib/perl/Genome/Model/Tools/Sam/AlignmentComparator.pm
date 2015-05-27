@@ -95,7 +95,7 @@ sub execute {
         my ($name,undef,$ext) = fileparse($_,'\.[^\.]*');
         my $in_file = $_;
         if ( $ext =~ /\.bam$/i ){
-           die('64-bit OS needed to analyze BAM files') unless (Genome::Config->arch_os() =~ /64/);
+           die('64-bit OS needed to analyze BAM files') unless (Genome::Sys->arch_os() =~ /64/);
            $in_file = "samtools view $_ |"; 
         } elsif ( not $ext =~ /\.sam$/i ){
             $self->error_message("Invalid filetype: $_. Must be SAM or BAM file.");

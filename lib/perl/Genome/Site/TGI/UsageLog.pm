@@ -39,7 +39,8 @@ sub import {
 my $should_record_usage;
 sub should_record_usage {
     return if $should_record_usage++;
-    return !exists $ENV{GENOME_LOG_USAGE} || $ENV{GENOME_LOG_USAGE};
+    my $log_usage = Genome::Config::get('log_usage');
+    return $log_usage eq '' || $log_usage;
 }
 
 sub record_usage {

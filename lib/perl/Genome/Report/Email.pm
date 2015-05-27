@@ -48,12 +48,12 @@ sub send_report {
         or return;
     my $from = ( defined $params{from} )
     ? delete $params{from}
-    : Genome::Config->user_email;
+    : Genome::Sys::User->get_current->email;
     $class->_validate_email_address_string('from', $from)
         or return;
     my $reply_to = ( defined $params{replyto} )
     ? delete $params{replyto}
-    : Genome::Config->user_email;
+    : Genome::Sys::User->get_current->email;
     $class->_validate_email_address_string('reply to', $reply_to)
         or return;
 

@@ -27,7 +27,6 @@ class Genome::Site::TGI::Synchronize::Classes::OrganismIndividual {
         id => { is => 'Number', len => 10, column_name => 'ORGANISM_ID' },
     ],
     has => [
-        name => { is => 'Text', column_name => 'FULL_NAME', }, # nullable in db
         taxon_id => { is => 'Number', },
     ],
     has_optional => [
@@ -37,6 +36,7 @@ class Genome::Site::TGI::Synchronize::Classes::OrganismIndividual {
         father_id  => { is => 'Number', },
         gender => { is => 'Text', },
         mother_id  => { is => 'Number', },
+        name => { is => 'Text', column_name => 'FULL_NAME', },
         nomenclature => { is => 'Text', },
         race => { is => 'Text', },
         upn => { is => 'Text', column_name => 'NAME', },

@@ -11,7 +11,7 @@ class Genome::Utility::ObjectWithCreatedBy {
     is_abstract => 1,
 };
 
-Genome::Utility::ObjectWithCreatedBy->add_observer(aspect => 'create',  callback => \&_populate_created_by);
+UR::Observer->register_callback(subject_class_name => 'Genome::Utility::ObjectWithCreatedBy', aspect => 'create',  callback => \&_populate_created_by);
 
 sub _preprocess_subclass_description {
     my ($class, $desc) = @_;

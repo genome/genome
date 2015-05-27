@@ -15,7 +15,7 @@ use File::Spec;
 
 Genome::Report::Email->silent();
 
-if(Genome::Config->arch_os() =~ '64') {
+if(Genome::Sys->arch_os() =~ '64') {
     plan tests => 27;
 } else {
     plan skip_all => 'Must be run on a 64-bit machine',

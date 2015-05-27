@@ -17,7 +17,7 @@ ok($report, 'create report') or die;
 
 my %valid_params = (
     report => $report,
-    to => [Genome::Config->user_email], # can be string or aryref
+    to => [Genome::Sys::User->get_current->email], # can be string or aryref
     xsl_files => [ $report->generator->get_xsl_file_for_html ],
 );
 

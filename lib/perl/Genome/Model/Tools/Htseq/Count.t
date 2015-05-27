@@ -71,7 +71,9 @@ my $expected_out2 = $test_dir . '/expected-outputs/transcript-counts.tsv';
 ok(-e $expected_out2, "found comparison output file 2: $expected_out2");
 
 # before running, ensure results do not exist previously
-$ENV{GENOME_SOFTWARE_RESULT_TEST_NAME} ||= "testsuite " . UR::Context->now . " " . Sys::Hostname::hostname() . "-$$.";
+unless (Genome::Config::get('software_result_test_name')) {
+    Genome::Config::set_env('software_result_test_name', "testsuite " . UR::Context->now . " " . Sys::Hostname::hostname() . "-$$.");
+}
 my $test_name = Genome::Config::get('software_result_test_name');
 my $result_exists = Genome::Model::Tools::Htseq::Count::Result->get(
     alignment_results => [$a],

@@ -8,7 +8,7 @@ use Test::More tests => 3;
 
 my $logger = Genome::Logger->logger();
 
-my %outputs = %{$logger->{outputs}};
+my %outputs = %{$logger->delegate_logger->{outputs}};
 my $screen = delete $outputs{screen};
 my $syslog = delete $outputs{syslog};
 

@@ -252,10 +252,11 @@ sub test_diff_vcf {
 
 sub _test_expected_report_params {
     my ($report_params) = @_;
+    my $user = Genome::Sys::User->get(username => $build->the_master_event->user_name);
     my %expected_params = (
-        to => $build->the_master_event->user_name.'@'.Genome::Config::domain(),
-        from => 'apipe@'.Genome::Config::domain(),
-        replyto => 'donotreply@'.Genome::Config::domain(),
+        to => $user->email,
+        from => Genome::Config::get('email_pipeline'),
+        replyto => Genome::Config::get('email_noreply'),
     );
     my %got_params = map { $_ => $report_params->{$_} } keys %expected_params; 
     die 'No report params!' if not %got_params;

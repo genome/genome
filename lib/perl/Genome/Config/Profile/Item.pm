@@ -70,7 +70,7 @@ class Genome::Config::Profile::Item {
     id_generator => '-uuid',
 };
 
-__PACKAGE__->add_observer(aspect => 'create', callback => \&_is_created);
+UR::Observer->register_callback(subject_class_name => __PACKAGE__, aspect => 'create', callback => \&_is_created);
 
 sub delete {
     my $self = shift;

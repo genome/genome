@@ -1675,8 +1675,8 @@ sub success {
 
     #The build itself has no __changes__ and UR::Context->commit() will not trigger the subscription if on that object, so
     #use the master build event which has just been updated to 'Succeeded' with the current time.
-    $self->create_subscription(
-        method => 'commit',
+    $self->add_observer(
+        aspect => 'commit',
         callback => $commit_callback,
     );
 
@@ -2657,7 +2657,7 @@ sub _heartbeat {
     );
     if (grep { $heartbeat{status} eq $_ } ('Succeeded', 'Preserved')) {
         $heartbeat{is_ok} = 1;
-        $heartbeat{message} = 'Build is succeeded. Stauts is '.$heartbeat{status}.'.';
+        $heartbeat{message} = 'Build has succeeded. Status is '.$heartbeat{status}.'.';
         return %heartbeat;
     }
 
@@ -2678,9 +2678,9 @@ sub _heartbeat {
             next WF;
         }
 
-        # only certaion operation types would have LSF jobs and everything below is inspecting LSF status
-        my $operation_type = $wf_instance_exec->operation_instance->operation->operation_type;
-        unless ( grep { $operation_type->isa($_) } ('Workflow::OperationType::Command', 'Workflow::OperationType::Event') ) {
+        # only certain operation types would have LSF jobs and everything below is inspecting LSF status
+        my $operation_type = $wf_instance_exec->operation_instance->operation_type;
+        unless ( $operation_type and grep { $operation_type->isa($_) } ('Workflow::OperationType::Command', 'Workflow::OperationType::Event') ) {
             next WF;
         }
 
@@ -2747,6 +2747,11 @@ sub _heartbeat {
             }
         }
 
+        my @parents = grep { $_->status eq 'running' } grep { defined($_->parent_execution_id) and $_->parent_execution_id eq $wf_instance_exec_id } @wf_instances;
+        if (@parents > 0) {
+            next WF; #this is a parent, so we wouldn't expect its output to be updated while its children are running.  Let them determine the heartbeat status.
+        }
+
         my $output_file = $wf_instance_exec->stdout;
         my $output_stat = stat($output_file);
         my $elapsed_mtime_output_file = time - $output_stat->mtime;
@@ -2765,6 +2770,9 @@ sub _heartbeat {
 
             last WF;
         }
+    }
+
+    unless ($heartbeat{message}) {
         $heartbeat{message} = 'OK. Seems to be running!';
         $heartbeat{is_ok} = 1;
     }

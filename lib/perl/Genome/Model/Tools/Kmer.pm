@@ -28,7 +28,7 @@ sub path_for_genometools_version {
     my ($class, $version) = @_;
     $version ||= $DEFAULT;
     my $path = $GENOMETOOLS_VERSIONS{$version};
-    if (Genome::Config->arch_os =~ /64/) {
+    if (Genome::Sys->arch_os =~ /64/) {
         if ($path) {
             $path .= '-64';
         }

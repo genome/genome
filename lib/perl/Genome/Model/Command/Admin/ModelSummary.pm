@@ -39,6 +39,13 @@ class Genome::Model::Command::Admin::ModelSummary {
             doc => 'When "--auto" is true, commit() to the database after this many Models have been identified for cleanup or restart.  0 means wait until the end to commit everything',
         }
     ],
+    has_optional => [
+        max_fail_count => {
+            is => 'Number',
+            default => 5,
+            doc => 'Rebuild will not be recommended for models that have failed this many times or more. (If undefined, any fail count will be allowed.)',
+        },
+    ],
 };
 
 
@@ -162,7 +169,7 @@ sub execute {
         elsif ($latest_build_status eq 'Succeeded') {
             $action = 'none';
         }
-        elsif (should_review_model($model)) {
+        elsif ($self->should_review_model($model)) {
             $action = 'review';
         }
         else {
@@ -205,6 +212,7 @@ sub print_message {
 
 
 sub should_review_model {
+    my $self = shift;
     my $model = shift;
 
     # If the latest build succeeded then we're happy.
@@ -219,7 +227,7 @@ sub should_review_model {
     return if @builds == 1;
 
     # If it has failed >3 times in a row then submit for review.
-    return 1 if model_has_failed_to_many_times($model);
+    return 1 if $self->model_has_failed_too_many_times($model);
 
     # If it hasn't made progress since last time then submit for review.
     return 1 unless model_has_progressed($model);
@@ -236,18 +244,18 @@ sub latest_build_succeeded {
 }
 
 
-my $max_fails = 5;
-sub model_has_failed_to_many_times {
+sub model_has_failed_too_many_times {
+    my $self = shift;
     my $model = shift;
 
-    my @builds = reverse $model->builds;
+    my $max_fails = $self->max_fail_count;
+    return unless defined $max_fails;
+
+    my @builds = $model->builds;
     return unless @builds;
 
-    my $n = (@builds >= $max_fails ? ($max_fails - 1) : $#builds);
-    my @last_n_builds = @builds[0..$n];
-
-    my @failed_builds = grep { $_->status eq 'Failed' } @last_n_builds;
-    return (@failed_builds == $max_fails );
+    my @failed_builds = grep { $_->status eq 'Failed' } @builds;
+    return (@failed_builds >= $max_fails);
 }
 
 

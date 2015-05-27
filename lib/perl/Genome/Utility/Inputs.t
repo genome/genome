@@ -3,6 +3,8 @@
 use strict;
 use warnings FATAL => 'all';
 
+use Data::Dump 'pp';
+use Test::Exception;
 use Test::More;
 use Test::Deep;
 use above 'Genome';
@@ -83,6 +85,16 @@ subtest "Nested ARRAY" => sub {
     ok(!Scalar::Util::blessed(encode($inputs)->{a}->[0]->[0]), "Encoded ARRAY element is **not** a blessed reference");
 
     cmp_deeply(decode(encode($inputs)), $inputs, "Roundtrip successful");
+};
+
+subtest "Convert Hash to Object" => sub {
+    my $hash = { class => 'TestObject', id => 'blah', };
+    my $msg = "Couldn't convert hash to class: ".pp($hash);
+    throws_ok(
+        sub{ Genome::Utility::Inputs::convert_hash_to_obj($hash);},
+        qr/$msg/,
+        'convert_hash_to_obj fails when object cannot be found',
+    );
 };
 
 done_testing();

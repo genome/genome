@@ -160,7 +160,7 @@ sub _resolve_subclass_name_for_aligner_name {
 
 sub verify_os {
     my $class = shift;
-    my $actual_os = Genome::Config->arch_os();
+    my $actual_os = Genome::Sys->arch_os();
     $class->debug_message("OS is $actual_os");
     my $required_os = $class->required_arch_os;
     $class->debug_message("Required OS is $required_os");

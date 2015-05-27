@@ -1,13 +1,17 @@
 package Genome::Role::Logger;
 
+use strict;
+use warnings;
+
 use Genome;
 use Log::Dispatch;
 use Log::Dispatch::Screen;
 use Log::Dispatch::FileRotate;
 
-our @log_levels = qw(debug info notice warning error critical alert emergency);
+my @log_levels = keys %Log::Dispatch::LEVELS;
 
 class Genome::Role::Logger {
+    is => 'Genome::Logger',
     has => [
         screen => {
             is => 'Boolean',
@@ -20,6 +24,11 @@ class Genome::Role::Logger {
             valid_values => \@log_levels,
             doc => 'The minimum level to display on the scren.',
         },
+        log_file => {
+            is => 'Text',
+            is_optional => 1,
+            doc => 'Path to log file.',
+        },
         log_file_level => {
             is => 'Text',
             default => 'info',
@@ -31,18 +40,10 @@ class Genome::Role::Logger {
             default => 0,
             doc => '(warning) globally tie STDERR to this logger',
         },
-    ],
-    has_optional => [
-        log_file => {
-            is => 'Text',
-            doc => 'Path to log file.',
-        },
-    ],
-    has_constant => [
-        log_dispatch => {
+        delegate_logger => {
             is => 'Log::Dispatch',
-            doc => 'The Log::Dispatch object that is initialized based on options.',
             is_calculated => 1,
+            is_constant => 1,
             calculate => q($self->log_dispatch_init),
         },
     ],
@@ -54,12 +55,7 @@ sub log_dispatch_init {
     my $log = Log::Dispatch->new() || die;
 
     if ($self->screen) {
-        $log->add(
-            Log::Dispatch::Screen->new(
-                name => 'Screen',
-                min_level => $self->screen_level,
-            )
-        );
+        $log->add(Genome::Logger->screen_to_add(min_level => $self->screen_level));
     }
 
     if ($self->log_file) {
@@ -84,24 +80,11 @@ sub log_dispatch_init {
     return $log;
 }
 
-# create object methods for each log level
-for my $log_level (@log_levels) {
-    $sub_ref = sub {
-        my ($self, $message) = @_;
-
-        chomp $message;
-        $message = uc($log_level) . ": $message\n";
-
-        return $self->log_dispatch->$log_level($message);
-    };
-    *$log_level = $sub_ref;
-}
-
 sub stderror {
     my ($self, $message) = @_;
     chomp $message;
     $message = uc('stderr') . ": $message\n";
-    return $self->log_dispatch->error($message);
+    return $self->error($message);
 }
 
 # Thanks "socket puppet"

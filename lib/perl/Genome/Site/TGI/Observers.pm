@@ -5,7 +5,8 @@ use warnings;
 
 # NOTE: the global syslog observers are in Genome::Sys::Log module.
 
-UR::Object::Type->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'UR::Object::Type',
     aspect => 'load',
     callback => sub {
         my $meta = shift;

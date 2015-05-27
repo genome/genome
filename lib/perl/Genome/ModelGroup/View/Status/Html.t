@@ -9,7 +9,6 @@ use Test::More tests => 6;
 
 use_ok('Genome::ModelGroup::View::Status::Html') or die "test cannot continue...";
 
-#7709 is tmooney_watchlist
 my $subject = Genome::ModelGroup->get(242);
 ok($subject, "found expected model-group subject") or die "test cannot continue...";
 

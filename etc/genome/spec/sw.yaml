@@ -1,0 +1,8 @@
+# The 'sw' configuration variable is the root directory for software
+# installations.  The Genome::Sys module typically leans on OS package
+# management where advanced package management exists (Debian/Ubuntu, RedHat,
+# etc.).  This path is a fallback for systems with locally produced software
+# which is not packaged.
+--- 
+env: XGENOME_SW
+default_value: /var/lib/genome/sw

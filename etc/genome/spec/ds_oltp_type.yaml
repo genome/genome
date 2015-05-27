@@ -1,0 +1,5 @@
+# The 'ds_oltp_type' configuration variable indicates the parent class for the
+# Oltp data source.  It should be something that inherits from
+# UR::DataSource::RDBMS.
+--- 
+env: XGENOME_DS_OLTP_TYPE

@@ -32,7 +32,7 @@ sub load {
         $base_dir = delete $params{base_dir};
     }
 
-    $ENV{GENOME_DB} = "$base_dir/reference_annotations/";
+    Genome::Config::set_env('db', "$base_dir/reference_annotations/");
 
     my $individual = Genome::Individual->create(common_name => "FAKE1",
         name => "test-clin-seq",

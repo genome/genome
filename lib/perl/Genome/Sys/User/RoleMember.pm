@@ -28,7 +28,8 @@ class Genome::Sys::User::RoleMember {
     data_source => 'Genome::DataSource::GMSchema',
 };
 
-Genome::Sys::User::RoleMember->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::Sys::User::RoleMember',
     callback => \&_change_callback,
 );
 sub _change_callback {

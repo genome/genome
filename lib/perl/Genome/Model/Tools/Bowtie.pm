@@ -54,10 +54,10 @@ sub path_for_bowtie_version {
     $version ||= $BOWTIE_DEFAULT;
     my $path = $BOWTIE_VERSIONS{$version};
     if (defined($path)) {
-        if (Genome::Config->arch_os =~ /64/) {
+        if (Genome::Sys->arch_os =~ /64/) {
             $path .= '-64/bowtie';
         }
-        elsif (Genome::Config->arch_os =~ /i686/) {
+        elsif (Genome::Sys->arch_os =~ /i686/) {
             # There is a x86 version at /gsc/pkg... but memory likely will be insufficient.
             # In any case, the Genome::InstrumentData::AlignmentResult::Bowtie will enforce X86_64
             $path .= '/bowtie';
@@ -108,7 +108,7 @@ sub default_version { return default_bowtie_version; }
 sub create {
     my $class = shift;
     my $self = $class->SUPER::create(@_);
-    unless (Genome::Config->arch_os =~ /64/) {
+    unless (Genome::Sys->arch_os =~ /64/) {
         $self->error_message('Most Bowtie tools must be run from 64-bit architecture');
         return;
     }

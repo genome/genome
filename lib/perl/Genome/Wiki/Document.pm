@@ -27,7 +27,7 @@ class Genome::Wiki::Document {
     },
     has => {
         environment => {
-             calculate => q{ Genome::Config::dev_mode() ? 'dev' : 'prod' },
+             calculate => q{ Genome::Config::get('dev_mode') ? 'dev' : 'prod' },
         },
         wiki_server_url => {
             calculate => qq{ Genome::Config::get('sys_services_wiki_url') . 'api.php' },
@@ -40,7 +40,8 @@ class Genome::Wiki::Document {
 # represents it in a Genome::Wiki::Document
 
 
-__PACKAGE__->add_observer (
+UR::Observer->register_callback(
+    subject_class_name => __PACKAGE__,
     aspect   => 'load',
     callback => sub {
         my ($self) = @_;

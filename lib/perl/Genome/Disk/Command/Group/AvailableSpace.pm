@@ -12,16 +12,6 @@ class Genome::Disk::Command::Group::AvailableSpace {
             is => 'Text',
             doc => 'comma delimited list of disk groups to be checked',
         },
-        send_alert => {
-            is => 'Boolean',
-            default => 0,
-            doc => 'If set, an alert will be sent out if a disk group is does not have the minimum amount of free space',
-        },
-        alert_recipients => {
-            is => 'Text',
-            default => 'jeldred,apipebulk',
-            doc => 'If an alert is sent, these are the recipients',
-        },
     ],
 };
 
@@ -46,7 +36,7 @@ sub help_detail {
 
 sub execute {
     my $self = shift;
-    
+
     my @disk_groups;
     if ($self->disk_group_names) {
         @disk_groups = split(',', $self->disk_group_names);
@@ -88,18 +78,7 @@ sub execute {
 
     $self->status_message(join("\n", @reports));
 
-    if ($group_is_low and $self->send_alert) {
-        my @to = map { Genome::Utility::Email::construct_address($_) } split(',', $self->alert_recipients);
-        Genome::Utility::Email::send(
-            from    => Genome::Config->user_email,
-            to      => \@to,
-            subject => 'Disk Groups Running Low on Space!',
-            body    => join("\n", @reports),
-        );
-        $self->warning_message("Sent alert to " . $self->alert_recipients);
-    }
-
-    return 1;
+    return !$group_is_low;
 }
 
 sub kb_to_gb {

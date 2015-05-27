@@ -14,12 +14,21 @@ use File::Basename;
 use Carp;
 use Carp::Heavy;
 
+require Sys::Hostname;
+
 # Standard namespace declaration for a UR namespace
 UR::Object::Type->define(
     class_name => 'Genome',
     is => ['UR::Namespace'],
     english_name => 'genome',
 );
+
+# in dev mode we use dev search, dev wiki, dev memcache, etc, but production database still ;)
+my $dev_mode = ( Genome::Config::get('dev_mode') || UR::DBI->no_commit );
+if ($dev_mode) {
+    my $h = Sys::Hostname::hostname;
+    warn "***** GENOME_DEV_MODE ($h) *****";
+}
 
 sub execution_id {
     unless ($ENV{GENOME_EXECUTION_ID}) {
@@ -28,7 +37,6 @@ sub execution_id {
     return $ENV{GENOME_EXECUTION_ID};
 }
 
-require Genome::Env;
 require Genome::Site;
 
 if (my $umask = Genome::Config::get('sys_umask')) {

@@ -1,0 +1,5 @@
+# The 'usage_log' configuration variable toggles whether usage metrics are
+# logged.
+--- 
+env: XGENOME_LOG_USAGE
+default_value: ""

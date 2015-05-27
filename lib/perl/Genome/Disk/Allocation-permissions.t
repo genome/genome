@@ -17,6 +17,7 @@ use lib File::Spec->join(dirname(__FILE__), 'Allocation', 't-lib');
 use GenomeDiskAllocationCommon qw(create_test_volumes);
 
 use File::stat qw(stat);
+use Genome::Utility::File::Mode qw(mode);
 
 use_ok('Genome::Disk::Allocation') or die;
 use_ok('Genome::Disk::Volume') or die;
@@ -66,24 +67,30 @@ sub touch {
     }
 }
 
-sub verify_permissions {
-    my ($mode, $allocation, @items) = @_;
-    for my $item (@items) {
-        my $full_path = File::Spec->join($allocation->absolute_path, $item);
-        my $sobj = stat $full_path;
-        is($sobj->mode & 07777, $mode, "$item is read only");
-    }
-}
-
 subtest 'set_permissions_read_only' => sub {
-    plan tests => scalar(@_DIRECTORIES) + scalar(@_FILES) + 1;
+    plan tests => 2;
 
     my $a = create_allocation_with_stuff('all-perm-test');
 
+    subtest 'allocation has writable content before set_permissions_read_only' => sub {
+        plan tests => scalar(@_DIRECTORIES) + scalar(@_FILES) + 1;
+        for my $item (@_FILES, @_DIRECTORIES, '.') {
+            my $full_path = File::Spec->join($a->absolute_path, $item);
+            my $mode = mode($full_path);
+            ok(($mode->is_user_writable || $mode->is_group_writable || $mode->is_other_writable), "$item is read only");
+        }
+    };
+
     $a->set_permissions_read_only;
 
-    verify_permissions(0444, $a, @_FILES);
-    verify_permissions(0555, $a, @_DIRECTORIES, '.');
+    subtest 'allocation does not have writable content after set_permissions_read_only' => sub {
+        plan tests => scalar(@_DIRECTORIES) + scalar(@_FILES) + 1;
+        for my $item (@_FILES, @_DIRECTORIES, '.') {
+            my $full_path = File::Spec->join($a->absolute_path, $item);
+            my $mode = mode($full_path);
+            ok(!($mode->is_user_writable || $mode->is_group_writable || $mode->is_other_writable), "$item is read only");
+        }
+    };
 };
 
 

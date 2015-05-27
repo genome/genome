@@ -1,0 +1,4 @@
+# The 'ds_dgidb_auth' configuration variable holds the login password used to
+# connect to the Dgidb data source.
+--- 
+env: XGENOME_DS_DGIDB_AUTH

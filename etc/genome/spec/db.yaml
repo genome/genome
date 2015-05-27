@@ -1,0 +1,4 @@
+# The 'db' configuration variable is the root directory for database storage.
+---
+env: XGENOME_DB
+default_value: /var/lib/genome/db
