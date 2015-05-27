@@ -47,9 +47,19 @@ global it cannot be guaranteed that it will not be overwritten.
 
 sub get {
     my $key = shift;
+    my %options = @_;
+    my $allow_undef = delete $options{allow_undef};
+    if (my @unrecognized_options = keys %options) {
+        croakf('unrecognized options: %s', join(', ', @unrecognized_options));
+    }
+
     my $spec = spec($key);
 
     my $value = _lookup_value($spec);
+    if ($allow_undef && !defined($value)) {
+        return;
+    }
+
     my $error = $spec->validate($value);
     if (defined $error) {
         my $msg = $spec->validation_error($error);
@@ -61,6 +71,37 @@ sub get {
     }
 
     return $value;
+}
+
+=item get_first()
+
+C<get_first($key1, $key2, ..., $keyN)> retrieves the first defined
+configuration value.  If the last key is to be retrieved it is called as
+C<get($keyN)> and will throw exceptions in the same manner.
+
+This could serve a couple purposes:
+
+- C<get_first($me, $parent, $grandparent)>
+- C<get_first($new_key, $old_key)>
+
+=cut
+
+sub get_first {
+    my $final_key = pop @_;
+    my @keys = @_;
+
+    unless (@_) {
+        croakf('get_first requires multiple keys');
+    }
+
+    while (my $key = shift @keys) {
+        my $value = get($key, allow_undef => 1);
+        if (defined $value) {
+            return $value;
+        }
+    }
+
+    return get($final_key);
 }
 
 sub validate {
