@@ -12,7 +12,7 @@ class Genome::Configurable {
     is_abstract => 1,
     subclass_description_preprocessor => __PACKAGE__ . '::extend_class_with_config',
     attributes_have => [
-        config => { is => 'Text', is_optional => 1 },
+        config => { is => 'Text', is_optional => 1, is_many => 1 },
     ],
 };
 
@@ -22,11 +22,19 @@ sub extend_class_with_config {
     while (my ($prop_name, $prop_desc) = each(%{ $desc->{has} })) {
         next unless (exists $prop_desc->{config} && $prop_desc->{config});
 
-        my $spec = Genome::Config::spec($prop_desc->{config});
+        my $key = $prop_desc->{config};
+        my $default;
+        if (ref($key) && ref($key) eq 'ARRAY') {
+            my @keys = @{$key};
+            my @specs = map { Genome::Config::spec($_) } @keys;
+            $default = sub { Genome::Config::get_first(@keys) };
+        }
+        else {
+            my $spec = Genome::Config::spec($key);
+            $default = sub { Genome::Config::get($key) };
+        }
 
-        my $key = $spec->key;
         my $default_method_name = '__default_' . $prop_name . '__';
-        my $default = sub { Genome::Config::get($key) };
         install_sub({
             code => $default,
             into => $prop_desc->{class_name},
