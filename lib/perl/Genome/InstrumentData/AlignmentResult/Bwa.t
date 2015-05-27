@@ -17,7 +17,7 @@ use Test::More;
 
 my $arch_os = Genome::Sys->arch_os;
 if ($arch_os =~ /x86_64/) {
-    plan tests => 18;
+    plan tests => 19;
 } else {
     plan skip_all => 'Must run on a 64 bit machine';
 }
@@ -70,10 +70,11 @@ ok(-s $bam_path, "created a bam");
 my $generated_bam_md5 = Genome::Sys->md5sum($bam_path);
 is($generated_bam_md5, 'b3e57087223378c0a2c235c5cc782623', "MD5 of bam matches");
 
-# FIXME test if the iar are deleted? if not we is done
-
 my @users = Genome::SoftwareResult::User->get(user => $alignment, label => 'intermediate result');
 ok(!@users, 'alignment is not using any intermediate results');
+
+my @iar = Genome::InstrumentData::IntermediateAlignmentResult::Bwa->get(instrument_data_id => $instrument_data->id);
+ok(!@iar, 'no intermediate alignment results still exist');
 
 # RECREATE FAIL
 my $recreate = Genome::InstrumentData::AlignmentResult->create(
