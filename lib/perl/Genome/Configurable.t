@@ -16,9 +16,7 @@ local $ENV{XGENOME_CONFIG_HOME} = $new_temp_dir->();
 local $ENV{XGENOME_CONFIG_DIRS} = $new_temp_dir->();
 setup_config(
     spec => {
-        'foo.name' => {
-            type => 'Str',
-        },
+        'foo.name' => {},
     },
     home => {
         'foo.name' => 'bar',
