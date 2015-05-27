@@ -856,11 +856,9 @@ sub make_path {
                 set_gid($gid, $subpath);
             }
         } else {
-            if ($mkdir_errno == EEXIST) {
-                next;
-            } else {
+            if ($mkdir_errno != EEXIST) {
                 Carp::confess("While creating path ($path), failed to create " .
-                    "directory ($subpath) because ($!)");
+                    "directory ($subpath) because ($mkdir_errno)");
             }
         }
     }
