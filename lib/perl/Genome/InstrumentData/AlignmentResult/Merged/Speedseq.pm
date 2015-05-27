@@ -86,7 +86,7 @@ sub create {
     );
     my $command = Genome::Model::Tools::Speedseq::Realign->create(%params);
     unless ($command->execute) {
-        die $self->error_message('Failed to execute Speedseq realign for instrument data ' . $self->instrument_data->id);
+        die $self->error_message('Failed to execute Speedseq realign for instrument data: ' . join(', ', map {$_->id} $self->instrument_data));
     }
 
     my $final_bam = $self->_final_bam_file,
