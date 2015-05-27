@@ -19,7 +19,7 @@ setup_config(
         'foo.name' => {},
     },
     home => {
-        'foo.name' => 'bar',
+        'foo.name' => 'foo_value',
     },
 );
 
@@ -34,7 +34,7 @@ UR::Object::Type->define(
 );
 
 my $foo1 = Genome::Foo->create();
-is($foo1->name, 'bar');
+is($foo1->name, 'foo_value');
 
 my $foo2 = Genome::Foo->create(name => 'Joe');
 is($foo2->name, 'Joe');
