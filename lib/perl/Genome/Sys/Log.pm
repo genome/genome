@@ -7,8 +7,6 @@ use Log::Log4perl qw(get_logger :levels);
 use JSON;
 use Digest::SHA qw(sha1);
 
-require Genome::Model::Build;
-
 # syslog, logstash, and UDP MTU can all affect this length.  Most recently we
 # hit the UDP MTU limit going through the switches between blades and logstash.
 # This is obviously site specific and should be move to configuration.
@@ -131,6 +129,10 @@ my $callback = sub {
 
     # use brief keys since we are space-constrained in syslog
     my $msg = do {
+        # Can't require Genome::Model::Build at top of because it creates a
+        # circular dependency Genome::Model::Build -> Genome ->
+        # Genome::Sys::Log -> Genome::Model::Build.
+        require Genome::Model::Build;
         no warnings;
         {
             f => $filename,
@@ -178,9 +180,10 @@ my $callback = sub {
 };
 
 for my $type (sort keys %MESSAGE_TYPE_TO_LOG_LEVEL) {
-    UR::Object->add_observer(
+    UR::Observer->register_callback(
+        subject_class_name => 'UR::Object',
         aspect => $type,
-        callback => $callback, 
+        callback => $callback,
     );
 }
 

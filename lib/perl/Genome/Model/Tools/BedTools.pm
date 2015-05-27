@@ -53,7 +53,7 @@ sub path_for_bedtools_version {
     my ($class, $version) = @_;
     $version ||= $BEDTOOLS_DEFAULT;
     my $path = $BEDTOOLS_VERSIONS{$version};
-    if (Genome::Config->arch_os =~ /64/) {
+    if (Genome::Sys->arch_os =~ /64/) {
         if ($path) {
             my $arch_path = $path .'-64';
             if (-d $arch_path) {

@@ -1,0 +1,4 @@
+# The 'email_pipeline' configuration variable holds the email address to be
+# used as the sender for some system-generated emails.
+--- 
+env: XGENOME_EMAIL_PIPELINE

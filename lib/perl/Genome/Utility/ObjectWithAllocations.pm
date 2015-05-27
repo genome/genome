@@ -38,8 +38,8 @@ sub _create_deallocate_disk_allocations_observer {
             'commit', $deallocator
         );
     };
-    UR::Context->create_subscription(
-        method => 'commit',
+    UR::Context->add_observer(
+        aspect => 'commit',
         callback => $deallocator
     );
 

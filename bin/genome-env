@@ -56,6 +56,7 @@ function help {
 
     -w workflow_repo
           The path to a Workflow repo to use instead of the default.
+    -t    Enable testing mode.
 EOS
 }
 
@@ -69,7 +70,8 @@ function main {
     fi
 
     local DISABLE_DB DISABLE_MIGRATIONS DISABLE_UR DISABLE_WF \
-        DB_SNAPSHOT_NAME DB_ID DB_HOST DB_PORT SQITCH_REPO UR_REPO WF_REPO
+        DB_SNAPSHOT_NAME DB_ID DB_HOST DB_PORT SQITCH_REPO UR_REPO WF_REPO \
+        TESTING_MODE=""
     parse_opts "$@"
     shift $((OPTIND-1))
 
@@ -116,6 +118,18 @@ function main {
     fi
     log.info ''
 
+    if test -n "$TESTING_MODE"
+    then
+        # Have to use `genome config get` after setup_env.
+        eval "$(genome config set-env log_usage 0)"
+        eval "$(genome config set-env sys_services_files_url 'file:///')"
+        eval "$(genome config set-env test_url "$(genome config get sys_services_files_url)$(genome config get test_inputs)")"
+        eval "$(genome config set-env testing 1)"
+        unset WF_USE_FLOW
+        export UR_DBI_NO_COMMIT=1
+        export GE_ENV_NAME="genome-test-env"
+    fi
+
     if test "$#" -gt 0
     then
         log.info "$@"...
@@ -150,7 +164,7 @@ function parse_opts {
     DISABLE_DB="" DISABLE_MIGRATIONS="" DISABLE_UR="" DISABLE_WF="" DB_SNAPSHOT_NAME="" DB_ID="" DB_HOST="" DB_PORT="" SQITCH_REPO="" UR_REPO="" WF_REPO="" PERSIST_DB=""
 
     local opts
-    while getopts :hMm:Dd:i:pUu:Ww: opts "$@"
+    while getopts :hMm:Dd:i:pUu:Ww:t opts "$@"
     do
         case $opts in
             h)
@@ -190,6 +204,9 @@ function parse_opts {
                 ;;
             w)
                 WF_REPO="$OPTARG"
+                ;;
+            t)
+                TESTING_MODE=1
                 ;;
             :)
                 fatal $OPT_ERR "option -$OPTARG requires an argument"
@@ -558,9 +575,9 @@ function setup_env {
 
     if test -z "$DISABLE_DB"
     then
-        export GENOME_DS_GMSCHEMA_SERVER="dbname=${TESTDBSERVER_DB_NAME};host=${TESTDBSERVER_DB_HOST};port=${TESTDBSERVER_DB_PORT}"
-        export GENOME_DS_GMSCHEMA_LOGIN=$TESTDBSERVER_DB_USER
-        export GENOME_DS_GMSCHEMA_AUTH=$TESTDBSERVER_DB_PASS
+        eval "$(genome config set-env ds_gmschema_server "dbname=${TESTDBSERVER_DB_NAME};host=${TESTDBSERVER_DB_HOST};port=${TESTDBSERVER_DB_PORT}")"
+        eval "$(genome config set-env ds_gmschema_login "$TESTDBSERVER_DB_USER")"
+        eval "$(genome config set-env ds_gmschema_auth "$TESTDBSERVER_DB_PASS")"
     fi
 
     hash -r

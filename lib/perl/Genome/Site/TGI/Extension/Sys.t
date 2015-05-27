@@ -289,9 +289,6 @@ $worked = eval { Genome::Sys->create_symlink($target) };
 ok(!$worked, "create_symlink with no 'link' fails as expected");
 like($@, qr/Can't create_symlink: no 'link' given/, 'exception message is correct');
 
-$worked = eval { Genome::Sys->create_symlink($target, $new_link) };
-ok(!$worked, 'Failed as expected - create_symlink when link already exists');
-like($@, qr/Link \($new_link\) for target \($target\) already exists/, 'exception message is correct');
 unlink $new_link; # remove to not influence target failures below
 
 # Target Failures

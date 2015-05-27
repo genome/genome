@@ -5,7 +5,8 @@ use warnings;
 
 use Carp;
 
-Genome::Library->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::Library',
     aspect => 'delete',
     callback => \&delete_instrument_data,
 );

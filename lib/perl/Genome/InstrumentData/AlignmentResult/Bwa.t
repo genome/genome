@@ -15,7 +15,7 @@ use Genome::Test::Factory::SoftwareResult::User;
 use File::Path;
 use Test::More;
 
-my $arch_os = Genome::Config->arch_os;
+my $arch_os = Genome::Sys->arch_os;
 if ($arch_os =~ /x86_64/) {
     plan tests => 18;
 } else {

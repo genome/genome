@@ -81,8 +81,8 @@ class Genome::Config::AnalysisProject {
     id_generator => '-uuid',
 };
 
-__PACKAGE__->add_observer(aspect => 'is_cle', callback => \&_is_updated);
-__PACKAGE__->add_observer(aspect => 'status', callback => \&_is_updated);
+UR::Observer->register_callback(subject_class_name => __PACKAGE__, aspect => 'is_cle', callback => \&_is_updated);
+UR::Observer->register_callback(subject_class_name => __PACKAGE__, aspect => 'status', callback => \&_is_updated);
 
 sub __display_name__ {
     my $self = shift;

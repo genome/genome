@@ -9,8 +9,7 @@ hostname=`hostname -s`
 
 INC=/gsc/scripts/opt/genome/current/web/lib/perl
 
-GENOME_DEV_MODE=0
-export GENOME_DEV_MODE
+export XGENOME_DEV_MODE=0
 
 ## change the symlink to the real path
 INC=`cd $INC; pwd -P`
@@ -36,9 +35,8 @@ OPTIONS="-M Genome::Model::Command::Services::WebApp::FCGI::Patch --app $PSGI --
 PERL5LIB=/gsc/scripts/opt/genome/vendor/lib/perl5:/gsc/scripts/lib/perl
 export PERL5LIB
 
-GENOME_VIEW_CACHE=1
-export GENOME_VIEW_CACHE
+export XGENOME_VIEW_CACHE=1
 
-echo "starting server from $0 with GENOME_DEV_MODE=$GENOME_DEV_MODE" >>$LOGFILE
+echo "starting server from $0 with XGENOME_DEV_MODE=$XGENOME_DEV_MODE" >>$LOGFILE
 
 exec /gsc/scripts/bin/genome-plackup $OPTIONS >>$LOGFILE 2>&1

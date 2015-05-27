@@ -1,0 +1,4 @@
+# The 'sys_group' determines the default user group to own GMS system data.
+--- 
+env: XGENOME_SYS_GROUP
+default_value: genome

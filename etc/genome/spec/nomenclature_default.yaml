@@ -1,0 +1,5 @@
+# The 'nomenclature_default' configuration variable to specify the default
+# nomenclature to use for new instrument data and sample attributes.
+--- 
+env: XGENOME_NOMENCLATURE_DEFAULT
+default_value: local

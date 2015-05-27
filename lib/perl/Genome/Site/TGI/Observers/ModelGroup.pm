@@ -6,27 +6,32 @@ use warnings;
 our %projects_with_deleted_model_groups;
 our %deleted_bridges;
 
-Genome::ModelGroup->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::ModelGroup',
     aspect => 'create',
     callback => \&model_group_create,
 );
 
-Genome::ModelGroup->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::ModelGroup',
     aspect => 'delete',
     callback => \&model_group_delete,
 );
 
-Genome::ModelGroup->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::ModelGroup',
     aspect => 'name',
     callback => \&model_group_rename,
 );
 
-Genome::ModelGroupBridge->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::ModelGroupBridge',
     aspect => 'create',
     callback => \&model_group_bridge_create,
 );
 
-Genome::ModelGroupBridge->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::ModelGroupBridge',
     aspect => 'delete',
     callback => \&model_group_bridge_delete,
 );

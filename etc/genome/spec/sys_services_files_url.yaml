@@ -1,0 +1,4 @@
+# The 'sys_services_files_url' configuration variable holds the base of the web
+# URL for retrieving files.
+--- 
+env: XGENOME_SYS_SERVICES_FILES_URL

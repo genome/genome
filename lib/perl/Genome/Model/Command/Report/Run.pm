@@ -204,7 +204,7 @@ sub execute {
 
     if ($saved) {
         # mail whoever ran the tools so they don't have to mail themselves
-        my $me = Genome::Config->user_email();
+        my $me = Genome::Sys::User->get_current->email;
         $self->status_message("Sending you the report (to $me)");
         my $r = Genome::Model::Command::Report::Mail->execute(
             model_id => $build->model_id,

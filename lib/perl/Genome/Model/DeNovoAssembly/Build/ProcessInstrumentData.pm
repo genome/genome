@@ -17,6 +17,7 @@ class Genome::Model::DeNovoAssembly::Build::ProcessInstrumentData {
     has_output => [
         sx_result => {
             is => 'Genome::InstrumentData::SxResult',
+            id_by => 'sx_result_id',
             doc => 'Sx result from processing instrument data.',
         },
     ],

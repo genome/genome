@@ -13,7 +13,7 @@ subtest 'non-color screen' => sub {
 
     no warnings 'redefine';
     local *Genome::Logger::should_color_screen = sub { 0 };
-    Memoize::flush_cache('Genome::Logger::logger');
+    Genome::Logger->clear_logger();
 
     my $logger = Genome::Logger->logger();
     isa_ok($logger->output('screen'), 'Log::Dispatch::Screen');
@@ -24,7 +24,7 @@ subtest 'color screen' => sub {
 
     no warnings 'redefine';
     local *Genome::Logger::should_color_screen = sub { 1 };
-    Memoize::flush_cache('Genome::Logger::logger');
+    Genome::Logger->clear_logger();
 
     ok(Genome::Logger->has_color_screen_package, 'has_color_screen_package');
 
@@ -35,7 +35,7 @@ subtest 'color screen' => sub {
 subtest 'context independent memoize' => sub {
     plan tests => 3;
 
-    Memoize::flush_cache('Genome::Logger::logger');
+    Genome::Logger->clear_logger();
 
     my $sl = Genome::Logger->logger();
     ok($sl, 'got logger in scalar context');
@@ -49,7 +49,7 @@ subtest 'context independent memoize' => sub {
 subtest 'exceptions' => sub {
     plan tests => 4;
 
-    Memoize::flush_cache('Genome::Logger::logger');
+    Genome::Logger->clear_logger();
     my $logger = Genome::Logger->logger();
     $logger->remove('screen');
 

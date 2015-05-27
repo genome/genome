@@ -2,6 +2,7 @@ package Genome::Utility::Inputs;
 
 use strict;
 use warnings FATAL => 'all';
+use Data::Dump 'pp';
 use Genome;
 use Params::Validate qw(validate_pos :types);
 use Scalar::Util qw();

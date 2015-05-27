@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Carp qw(croakf);
 use Genome::Utility::File::Mode qw(mode);
 
 use autodie qw(chown);
@@ -47,16 +48,12 @@ sub concatenate_files {
 }
 
 sub quote_for_shell {
+    require String::ShellQuote;
+
     # this is needed until shellcmd supports an array form,
     # which is difficult because we go to a bash sub-shell by default
     my $class = shift;
-    my @quoted = @_;
-    for my $value (@quoted) {
-        $value =~ s|\\|\\\\|g;
-        $value =~ s/\"/\\\"/g;
-        $value = "\"${value}\"";
-        print STDERR $value,"\n";
-    }
+    my @quoted = map String::ShellQuote::shell_quote($_), @_;
     if (wantarray) {
         return @quoted
     }
@@ -303,7 +300,9 @@ sub lookup_dbpath {
         'omim' => 'db_omim',
         'pfam' => 'db_pfam',
     );
-    return Genome::Config::get($config_key{$name});
+    my $key = $config_key{$name};
+    return unless ($key);
+    return Genome::Config::get($key);
 }
 
 sub _find_in_genome_db_paths {
@@ -893,26 +892,25 @@ sub gidgrnam {
 sub create_symlink {
     my ($class, $target, $link) = @_;
 
-    unless ( defined $target ) {
+    unless ( defined($target) && length($target) ) {
         Carp::croak("Can't create_symlink: no target given");
     }
 
-    unless ( defined $link ) {
+    unless ( defined($link) && length($link) ) {
         Carp::croak("Can't create_symlink: no 'link' given");
     }
 
-    if ( -e $link ) { # the link exists and points to something
-        Carp::croak("Link ($link) for target ($target) already exists.");
+    unless (symlink($target, $link)) {
+        my $symlink_error = $!;
+        if ($symlink_error == Errno::EEXIST) {
+            my $current_target = readlink($link);
+            if (! defined($current_target) or $current_target ne $target) {
+                Carp::croak("Link ($link) for target ($target) already exists.");
+            }
+        } else {
+            Carp::croak("Can't create link ($link) to $target\: $symlink_error");
+        }
     }
-
-    if ( -l $link ) { # the link exists, but does not point to something
-        Carp::croak("Link ($link) for target ($target) is already a link.");
-    }
-
-    unless ( symlink($target, $link) ) {
-        Carp::croak("Can't create link ($link) to $target\: $!");
-    }
-
     return 1;
 }
 
@@ -1281,6 +1279,18 @@ sub iterate_file_lines {
     }
 
     return($lines_read || '0 but true');
+}
+
+####
+####
+
+my $arch_os;
+sub arch_os {
+    unless ($arch_os) {
+        $arch_os = `uname -m`;
+        chomp($arch_os);
+    }
+    return $arch_os;
 }
 
 #####

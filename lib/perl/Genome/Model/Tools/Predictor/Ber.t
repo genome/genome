@@ -14,7 +14,7 @@ use Test::MockObject::Extends;
 use File::Path qw(make_path);
 use Genome::Utility::Test qw(compare_ok);
 
-$ENV{'GENOME_SYS_NO_CLEANUP'} = 1;
+Genome::Config::set_env('sys_no_cleanup', 1);
 
 my $ber_predictor_class = 'Genome::Model::Tools::Predictor::Ber';
 use_ok($ber_predictor_class) or die;

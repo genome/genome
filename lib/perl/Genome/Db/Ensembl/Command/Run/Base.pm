@@ -567,11 +567,11 @@ sub cache_args {
 }
 
 sub db_connect_args {
-    my $host_param = defined Genome::Config::get('db_ensembl_host') ? "--host ".Genome::Config::get('db_ensembl_host') : "";
-    my $user_param = defined Genome::Config::get('db_ensembl_user') ? "--user ".Genome::Config::get('db_ensembl_user') : "";
-    my $password_param = defined Genome::Config::get('db_ensembl_pass') ? "--password ".Genome::Config::get('db_ensembl_pass') : "";
-    my $port_param = defined Genome::Config::get('db_ensembl_port') ? "--port ".Genome::Config::get('db_ensembl_port') : "";
-    return join(" ", $host_param, $user_param, $password_param, $port_param);
+    my $host_param = Genome::Config::get('db_ensembl_host') ne '' ? "--host ".Genome::Config::get('db_ensembl_host') : "";
+    my $user_param = Genome::Config::get('db_ensembl_user') ne '' ? "--user ".Genome::Config::get('db_ensembl_user') : "";
+    my $pass_param = Genome::Config::get('db_ensembl_pass') ne '' ? "--password ".Genome::Config::get('db_ensembl_pass') : "";
+    my $port_param = Genome::Config::get('db_ensembl_port') ne '' ? "--port ".Genome::Config::get('db_ensembl_port') : "";
+    return join(" ", $host_param, $user_param, $pass_param, $port_param);
 }
 
 sub _species_lookup {

@@ -1,0 +1,5 @@
+# The 'ds_dwrac_type' configuration variable indicates the parent class for the
+# Dwrac data source.  It should be something that inherits from
+# UR::DataSource::RDBMS.
+--- 
+env: XGENOME_DS_DWRAC_TYPE

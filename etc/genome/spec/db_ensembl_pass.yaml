@@ -1,0 +1,5 @@
+# The 'db_ensembl_pass' configuration variable points to the password of the
+# Ensembl server.
+---
+env: XGENOME_DB_ENSEMBL_PASS
+default_value: ""

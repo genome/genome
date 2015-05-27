@@ -1,0 +1,5 @@
+# The 'rest_rlimit_cpu' configuration variable can be set to limit the CPU time
+# a request can take.
+--- 
+env: XGENOME_REST_RLIMIT_CPU
+default_value: ""

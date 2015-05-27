@@ -1,0 +1,6 @@
+# If the 'test_filldb' configuration variable has a true value, a test SQLite
+# database is created next to the currently running program, and all data
+# loaded from the primary database is copied into this SQLite database.
+--- 
+env: XGENOME_TEST_FILLDB
+default_value: ""

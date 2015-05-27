@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
-if (Genome::Config->arch_os ne 'x86_64') {
+if (Genome::Sys->arch_os ne 'x86_64') {
    plan skip_all => 'requires 64-bit machine';
 }
 

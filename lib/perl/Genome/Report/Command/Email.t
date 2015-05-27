@@ -19,7 +19,7 @@ my $dir = Genome::Config::get('test_inputs') . '/Genome-Report-XSLT';
 my $cmd = Genome::Report::Command::Email->create(
     report_directory => $dir.'/Assembly_Stats',
     xsl_files => $dir.'/AssemblyStats.txt.xsl',
-    to => Genome::Config->user_email,
+    to => Genome::Sys::User->get_current->email,
 );
 ok($cmd, 'create email command');
 $cmd->dump_status_messages(1);

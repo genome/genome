@@ -51,7 +51,7 @@ Output file format(stats_file):
 
 sub execute {
     my $self = shift;
-    unless (Genome::Config->arch_os =~ /64/) {
+    unless (Genome::Sys->arch_os =~ /64/) {
         die('Failed to run on 64-bit architecture');
     }
     my $regions = Genome::Model::Tools::RefCov::ROI::Bed->create(

@@ -96,9 +96,10 @@ sub requires_chunking {
     return 0;
 }
 
-# tmooney: The bulk of this was previously a separate module,
+# The bulk of this was previously a separate module,
 # `gmt predictor keggscan run-keggscan`, but is now incorporated here.
-# The following message was in that module.
+# The following message was in that module:
+#
 # bdericks: This module was originally written by Todd Wylie and named
 # KEGGscan_KO.v50.pl. The module can be found in version control at 
 # svn+ssh://svn/srv/svn/gscpan/hgmi_annotation/proteinAnnot. I've made

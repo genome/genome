@@ -1,0 +1,5 @@
+# The 'home' configuration variable is the directory of the GMS install,
+# typically /opt/gms/$GENOME_SYS_ID. Other GMS instances may be mounted next-to
+# the home install, in the same directory.
+--- 
+env: XGENOME_HOME

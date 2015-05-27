@@ -52,11 +52,13 @@ if ($INC{"Genome/Search.pm"}) {
             subject_class => $mg->class,
         );
     };
-    Genome::ModelGroupBridge->add_observer(
+    UR::Observer->register_callback(
+        subject_class_name => 'Genome::ModelGroupBridge',
         callback => $queue_model_group_callback,
         aspect => 'create',
     );
-    Genome::ModelGroupBridge->add_observer(
+    UR::Observer->register_callback(
+        subject_class_name => 'Genome::ModelGroupBridge',
         callback => $queue_model_group_callback,
         aspect => 'delete',
     );

@@ -421,7 +421,7 @@ sub create {
     }
 
     # STEP 1: verify the architecture on which we're running
-    my $actual_os = Genome::Config->arch_os();
+    my $actual_os = Genome::Sys->arch_os();
     $class->debug_message("OS is $actual_os");
     my $required_os = $class->required_arch_os;
     $class->debug_message("Required OS is $required_os");
@@ -1836,7 +1836,7 @@ sub _get_temp_allocation {
         owner_id            => Genome::Sys->username,
     );
     UR::Context->process->add_observer(
-        aspect   => 'pre-commit',
+        aspect   => 'precommit',
         once     => 1,
         callback => sub { $temp_allocation->delete; },
     );

@@ -218,11 +218,11 @@ sub get_ensembl_info {
     my $version = shift;
     my ($eversion,$ncbiversion) = split(/_/,$version);
 
-    my $host = defined Genome::Config::get('db_ensembl_host') ? Genome::Config::get('db_ensembl_host') : 'mysql1';
-    my $user = defined Genome::Config::get('db_ensembl_user') ? Genome::Config::get('db_ensembl_user') : 'mse'; 
-    my $password = defined Genome::Config::get('db_ensembl_pass') ? Genome::Config::get('db_ensembl_pass') : undef;
+    my $host = Genome::Config::get('db_ensembl_host') ne '' ? Genome::Config::get('db_ensembl_host') : 'mysql1';
+    my $user = Genome::Config::get('db_ensembl_user') ne '' ? Genome::Config::get('db_ensembl_user') : 'mse';
+    my $pass = Genome::Config::get('db_ensembl_pass') ne '' ? Genome::Config::get('db_ensembl_pass') : undef;
 
-    return ($host, $user, $password);
+    return ($host, $user, $pass);
 }
 
 sub generate_rna_seq_files {

@@ -11,8 +11,16 @@ class Genome::Utility::ObjectWithTimestamps {
     is_abstract => 1,
 };
 
-Genome::Utility::ObjectWithTimestamps->add_observer(callback => \&is_updated);
-Genome::Utility::ObjectWithTimestamps->add_observer(aspect => 'create',  callback => \&is_created);
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::Utility::ObjectWithTimestamps',
+    callback => \&is_updated,
+);
+
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::Utility::ObjectWithTimestamps',
+    aspect => 'create',
+    callback => \&is_created,
+);
 
 sub is_created {
     my $self = shift;

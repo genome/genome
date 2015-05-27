@@ -52,6 +52,8 @@ class Genome::Utility::Window{
         _leftover_object => { 
             is => 'UR::Object',
             is_optional => 1,
+            id_class_by => '_leftover_object_class_name',
+            id_by => '_leftover_object_id',
         },
 
         _objects => { 

@@ -11,14 +11,6 @@ class Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePathFromR
     is => 'Genome::InstrumentData::Command::Import::WorkFlow::RetrieveSourcePath',
 };
 
-sub _path_size {
-    return $_[0]->helpers->remote_file_size($_[1]);
-}
-
-sub _source_path_size {
-    return $_[0]->_path_size($_[0]->source_path);
-}
-
 sub _retrieve_source_path {
     my $self = shift;
 
@@ -33,12 +25,12 @@ sub _retrieve_source_path {
     return 1;
 }
 
-sub source_md5 {
+sub _load_source_md5 {
     my $self = shift;
 
-    my $md5_path = $self->helpers->md5_path_for($self->source_path);
+    return if not $self->source_file->md5_path_size;
     my $agent = LWP::UserAgent->new;
-    my $response = $agent->get($md5_path);
+    my $response = $agent->get($self->source_file->md5_path);
     if ( not $response->is_success ) {
         return;
     }

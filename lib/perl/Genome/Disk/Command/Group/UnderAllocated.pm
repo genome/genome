@@ -96,7 +96,7 @@ sub _send_report {
     if ((keys %{$under_allocated_volumes}) and $self->send_alert) {
         my @to = map { Genome::Utility::Email::construct_address($_) } split(',', $self->alert_recipients);
         Genome::Utility::Email::send(
-            from    => Genome::Config->user_email,
+            from    => Genome::Sys::User->get_current->email,
             to      => \@to,
             subject => 'Underallocated Volumes Found!',
             body    => $report,
