@@ -28,10 +28,15 @@ sub source_bam_path_for_header {
     return $self->get_merged_bam_to_revivify_per_lane_bam;
 }
 
+sub path_for_bam_header_creation {
+    my $self = shift;
+    return File::Spec->join($self->temp_staging_directory, 'all_sequences.bam.header');
+}
+
 #Don't create flagstat during revivification - postprocess_bam_file will take
 #care of that
 sub create_bam_flagstat_and_revivify {
-    my ($self, $merged_bam, $revivified_bam) = @_;
+    my ($self, $merged_bam, $revivified_bam, $bam_header_path) = @_;
 
     my %params = (
         merged_bam          => $merged_bam,
@@ -39,7 +44,7 @@ sub create_bam_flagstat_and_revivify {
         instrument_data_id  => $self->read_and_platform_group_tag_id,
         samtools_version    => $self->samtools_version,
         picard_version      => $self->picard_version,
-        bam_header          => $self->bam_header_path,
+        bam_header          => $bam_header_path,
         include_qc_failed   => 1,
     );
 
