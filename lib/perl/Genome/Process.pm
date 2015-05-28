@@ -324,10 +324,25 @@ sub update_status {
     return $self->status;
 }
 
+sub lsf_job_id {
+    my $self = shift;
+
+    my $id_note = $self->notes(header_text => 'workflow lsf job_id');
+    if ($id_note) {
+        return $id_note->body_text;
+    } else {
+        return;
+    }
+}
 
 sub workflow_name {
     my $self = shift;
     return sprintf('Genome::Process(%s)', $self->id);
+}
+
+sub lsf_project_name {
+    my $self = shift;
+    return $self->workflow_name;
 }
 
 sub newest_workflow_instance {
@@ -441,7 +456,7 @@ sub _disk_allocation_cleanup_closure {
         }
     };
     $self->debug_message("Created closure to delete disk allocation (%s) " .
-        "assocatied with process (%s)", $allocation_id, $process_id);
+        "associated with process (%s)", $allocation_id, $process_id);
     return $remove_allocation;
 }
 

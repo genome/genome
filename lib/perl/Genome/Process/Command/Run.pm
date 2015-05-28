@@ -147,7 +147,7 @@ sub _bsub_in_pend_state {
         err_file => $self->workflow_process_error_log,
         log_file => $self->workflow_process_out_log,
         hold_job => 1,
-        project => $self->process->workflow_name,
+        project => $self->process->lsf_project_name,
         queue => Genome::Config::get('lsf_queue_build_workflow'),
         send_job_report => 1,
         never_rerunnable => 1,
@@ -159,6 +159,11 @@ sub _bsub_in_pend_state {
         die "Failed to launch bsub:\n$_\n";
     };
     $self->process->update_status('Scheduled');
+
+    $self->process->add_note(
+        header_text => 'workflow lsf job_id',
+        body_text => $job_id,
+    );
     return $job_id;
 }
 

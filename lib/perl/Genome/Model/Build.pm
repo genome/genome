@@ -1311,6 +1311,12 @@ sub _get_running_master_lsf_job {
     my $self = shift;
 
     my $job_id = $self->the_master_event->lsf_job_id;
+    if (not defined($job_id)) {
+        my $process = Genome::Model::Build::Process->get(build => $self);
+        if ($process) {
+            $job_id = $process->lsf_job_id;
+        }
+    }
     return if not defined $job_id;
 
     my $job = $self->_get_job($job_id);
@@ -1392,46 +1398,22 @@ sub _launch {
         return $rv;
     }
     else {
-        my $lsf_project = "build" . $self->id;
-        $ENV{'WF_LSF_PROJECT'} = $lsf_project;
-
-        my $genome_bin = $Command::entry_point_bin || 'genome';
-
-        my @bsub_args = (
-            email    => Genome::Utility::Email::construct_address(),
-            err_file => $build_event->error_log_file,
-            hold_job => 1,
-            log_file => $build_event->output_log_file,
-            project  => $lsf_project,
-            queue    => $server_dispatch,
-            send_job_report => 1,
-            never_rerunnable => 1,
-        );
-        unless ($ENV{WF_EXCLUDE_JOB_GROUP}) {
-            push @bsub_args, job_group => $job_group;
+        if ($ENV{UR_DBI_NO_COMMIT}) {
+            $self->warning_message("Skipping launching process when NO_COMMIT is turned on (job will fail)\n");
+            return;
         }
 
-        my @genome_cmd = (
-            'annotate-log', $genome_bin, qw(model services build run),
-        );
-
-        my @genome_args;
-        # args have to be --key=value for Genome::Model->sudo_wrapper()
-        push @genome_args, '--model-id=' . $model->id;
-        push @genome_args, '--build-id=' . $self->id;
-        if ($job_dispatch eq 'inline') {
-            push @genome_args, '--inline';
+        my %inputs = $self->model->map_workflow_inputs($self);
+        my $workflow = $self->_initialize_workflow($params{job_dispatch} || Genome::Config::get('lsf_queue_build_worker_alt'));
+        unless ($workflow) {
+            Carp::croak "Build " . $self->__display_name__ . " could not initialize workflow!";
         }
-
-        my $job_id = $self->_execute_bsub_command(
-            'bsub',
-            @bsub_args,
-            cmd => [ @genome_cmd, @genome_args ],
+        my $workflow_xml = $workflow->save_to_xml();
+        my $process = Genome::Model::Build::Process->create(build => $self);
+        $process->run(
+            workflow_xml => $workflow_xml,
+            workflow_inputs => \%inputs,
         );
-        return unless $job_id;
-
-        $build_event->lsf_job_id($job_id);
-
         return 1;
     }
 }
@@ -1516,51 +1498,6 @@ sub _initialize_workflow {
     $workflow->save_to_xml(OutputFile => $self->data_directory . '/build.xml');
 
     return $workflow;
-}
-
-sub _execute_bsub_command { # here to overload in testing
-    my ($self, @cmd) = @_;
-
-    local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
-    local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
-    local $ENV{UR_DUMP_STATUS_MESSAGES} = 1;
-    local $ENV{UR_COMMAND_DUMP_STATUS_MESSAGES} = 1;
-
-    if ($ENV{UR_DBI_NO_COMMIT}) {
-        $self->warning_message("Skipping bsub when NO_COMMIT is turned on (job will fail)\n");
-        return 1;
-    }
-
-    my $job_id = eval { Genome::Sys::LSF::bsub::run(@cmd) };
-    if ($@) {
-        $self->error_message("Failed to launch bsub:\n$@\n");
-        return;
-    }
-
-    # create a change record so that if it is "undone" it will kill the job
-    my $bsub_undo = sub {
-        $self->status_message("Killing LSF job ($job_id) for build " . $self->__display_name__ . ".");
-        system("bkill $job_id");
-    };
-    my $lsf_change = UR::Context::Transaction->log_change($self, 'UR::Value', $job_id, 'external_change', $bsub_undo);
-    unless ($lsf_change) {
-        die $self->error_message("Failed to record LSF job submission ($job_id).");
-    }
-
-    # create a commit observer to resume the job when build is committed to database
-    my $process = UR::Context->process;
-    my $commit_observer = $process->add_observer(
-        aspect => 'commit',
-        callback => sub {
-            my $bresume_output = `bresume $job_id`; chomp $bresume_output;
-            $self->status_message($bresume_output) unless ( $bresume_output =~ /^Job <$job_id> is being resumed$/ );
-        },
-    );
-    unless ($commit_observer) {
-        $self->error_message("Failed to add commit observer to resume LSF job ($job_id).");
-    }
-
-    return "$job_id";
 }
 
 sub initialize {
