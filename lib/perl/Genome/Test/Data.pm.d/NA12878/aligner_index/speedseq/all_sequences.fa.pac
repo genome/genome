@@ -1,0 +1,1 @@
+../bwa/all_sequences.fa.pac

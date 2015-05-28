@@ -14,7 +14,9 @@ use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Build;
 use Genome::Test::Factory::SoftwareResult::User;
+use Genome::Test::Data qw(get_test_file);
 use Sub::Override;
+use Cwd qw(abs_path);
 
 my $pkg = 'Genome::InstrumentData::AlignmentResult::Speedseq';
 use_ok($pkg);
@@ -26,7 +28,7 @@ my $ref_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $ref_
 use Genome::Model::Build::ReferenceSequence;
 my $override = Sub::Override->new(
     'Genome::Model::Build::ReferenceSequence::full_consensus_path',
-    sub { return File::Spec->join($test_data_dir, 'human_g1k_v37_20_42220611-42542245.fasta'); }
+    sub { return abs_path(get_test_file('NA12878', 'human_g1k_v37_20_42220611-42542245.fasta')); }
 );
 use Genome::InstrumentData::AlignmentResult;
 my $override2 = Sub::Override->new(
@@ -41,7 +43,7 @@ my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_objec
     run_name => 'example',
     id => 'NA12878',
 );
-$instrument_data->bam_path(File::Spec->join($test_data_dir, 'NA12878.20slice.30X.bam'));
+$instrument_data->bam_path(get_test_file('NA12878', 'NA12878.20slice.30X.bam'));
 
 my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
     reference_sequence_build => $ref_seq_build,
