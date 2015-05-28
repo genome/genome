@@ -9,6 +9,7 @@ use Genome::ConfigSpec qw();
 use Path::Class qw();
 use YAML::Syck qw();
 
+require Scalar::Util;
 require Scope::Guard;
 
 =item get()
@@ -46,8 +47,7 @@ global it cannot be guaranteed that it will not be overwritten.
 =cut
 
 sub get {
-    my $key = shift;
-    my $spec = spec($key);
+    my $spec = _normalize_spec(shift);
 
     my $value = _lookup_value($spec);
     my $error = $spec->validate($value);
@@ -64,8 +64,7 @@ sub get {
 }
 
 sub validate {
-    my $key = shift;
-    my $spec = spec($key);
+    my $spec = _normalize_spec(shift);
     my $value = _lookup_value($spec);
     return $spec->validate($value);
 }
@@ -81,10 +80,10 @@ sub spec {
 }
 
 sub set_env {
-    my ($key, $value) = @_;
-    my $spec = Genome::Config::spec($key);
+    my $spec = _normalize_spec(shift);
+    my $value = shift;
     unless ($spec->has_env) {
-        croakf('configuration does not specify an environment variable: %s', $key);
+        croakf('configuration does not specify an environment variable: %s', $spec->key);
     }
 
     my $env_key = $spec->env;
@@ -153,8 +152,22 @@ sub global_dirs {
     return map { Path::Class::Dir->new($_) } split(/:/, $dirs);
 }
 
+=item _normalize_spec()
+
+C<_normalize_spec()> takes a key or spec as an input and returns the spec.
+
+=cut
+
+sub _normalize_spec {
+    my $spec = my $key = shift;
+    if (Scalar::Util::blessed($spec) && $spec->isa('Genome::ConfigSpec')) {
+        return $spec;
+    }
+    return spec($key);
+}
+
 sub _lookup_value {
-    my $spec = shift;
+    my $spec = _normalize_spec(shift);
 
     my $config_subpath = config_subpath();
     if ($spec->has_env && exists $ENV{$spec->env}) {
@@ -177,7 +190,8 @@ sub _lookup_value {
 }
 
 sub _lookup_value_from_files {
-    my ($spec, @files) = @_;
+    my $spec = _normalize_spec(shift);
+    my @files = @_;
     for my $f (@files) {
         my $data = YAML::Syck::LoadFile($f);
         if ($data->{$spec->key}) {
