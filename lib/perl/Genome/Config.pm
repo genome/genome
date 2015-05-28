@@ -154,7 +154,7 @@ sub global_dirs {
 
 sub has_default_value {
     my $spec = _normalize_spec(shift);
-    return $spec->has_default_value;
+    return ($spec->has_default_value || $spec->has_default_from);
 }
 
 sub default_value {
@@ -162,6 +162,13 @@ sub default_value {
     if ($spec->has_default_value) {
         return $spec->default_value;
     }
+
+    # This could infinite loop but will reveal itself when someone runs `genome
+    # config validate` after making their change.
+    if ($spec->has_default_from) {
+        return default_value($spec->default_from);
+    }
+
     return;
 }
 
