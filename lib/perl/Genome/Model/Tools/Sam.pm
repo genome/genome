@@ -10,7 +10,6 @@ use DateTime;
 use IO::File;
 
 my $DEFAULT = 'r963';
-#3Gb
 my $DEFAULT_MEMORY = 402653184;
 
 class Genome::Model::Tools::Sam {
