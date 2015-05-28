@@ -6,8 +6,6 @@ use warnings;
 use Test::More;
 use File::Temp;
 
-use above "Genome";
-
 use_ok('Genome::Role::Logger');
 
 test_stderr_tie();
