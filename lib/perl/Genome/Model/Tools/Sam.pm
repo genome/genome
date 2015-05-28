@@ -3,7 +3,7 @@ package Genome::Model::Tools::Sam;
 use strict;
 use warnings;
 
-use Genome; 
+use Genome;
 use File::Basename;
 use POSIX;
 use DateTime;
@@ -16,11 +16,11 @@ my $DEFAULT_MEMORY = 402653184;
 class Genome::Model::Tools::Sam {
     is  => 'Command',
     has_input => [
-        use_version => { 
-            is  => 'Version', 
-            doc => "samtools version to be used, default is $DEFAULT. ", 
-            is_optional   => 1, 
-            default_value => $DEFAULT,   
+        use_version => {
+            is  => 'Version',
+            doc => "samtools version to be used, default is $DEFAULT. ",
+            is_optional   => 1,
+            default_value => $DEFAULT,
         },
         maximum_memory => {
             is  => 'Integer',
@@ -40,14 +40,14 @@ sub help_brief {
 sub help_synopsis {
     my $self = shift;
     return <<"EOS"
-genome-model tools Sam ...    
+genome-model tools Sam ...
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
 More information about the Sam suite of tools can be found at http://Samtools.sourceforege.net.
-Everytime when we get a new version of samtools, we need update in this module and create new 
+Everytime when we get a new version of samtools, we need update in this module and create new
 processing_profile/model for pipeline.
 EOS
 }
@@ -235,10 +235,10 @@ sub read_count {
     my $count_cmd;
     if ($type =~ /SAM/i) {
         $count_cmd = "grep -cv '^\@' $filename";
-    } 
+    }
     elsif ($type =~ /BAM/i) {
         $count_cmd = "$samtools view $filename | wc -l";
-    } 
+    }
     else {
         $self->error_message("Unknown type ($type) from filename ($filename).");
         return;
