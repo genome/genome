@@ -108,7 +108,6 @@ sub prepare_reference_sequence_index {
     my $refindex = shift;
 
     my $staging_dir = $refindex->temp_staging_directory;
-    my $staged_fasta_file = sprintf("%s/all_sequences.fa", $staging_dir);
 
     Genome::Sys->create_symlink($refindex->reference_build->get_sequence_dictionary("sam"), $staging_dir ."/all_sequences.dict" );
     my $bwa_version = $class->bwa_version($refindex->aligner_version);
