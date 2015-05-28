@@ -30,6 +30,24 @@ EOS
     is($op->get_xml, $expected_xml, 'typical command produces expected xml');
 };
 
+subtest 'Command with different attributes in xml than on Command class' => sub {
+
+    my $expected_xml = <<EOS;
+<?xml version="1.0"?>
+<operation name="some op">
+  <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="bob" lsfResource="-M 25000 -R 'select[mem&gt;25] rusage[mem=25]'" commandClass="Genome::WorkflowBuilder::Test::DummyCommand">
+    <inputproperty>input</inputproperty>
+    <outputproperty>many_output</outputproperty>
+    <outputproperty>result</outputproperty>
+    <outputproperty>single_output</outputproperty>
+  </operationtype>
+</operation>
+EOS
+
+    my $op = Genome::WorkflowBuilder::Command->from_xml($expected_xml);
+    is($op->get_xml, $expected_xml, 'Xml attributes take priority');
+};
+
 subtest 'Parallel-By Command' => sub {
     my $op = Genome::WorkflowBuilder::Command->create(
         name => 'some op',

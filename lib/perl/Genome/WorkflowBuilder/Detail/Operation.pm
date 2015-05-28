@@ -213,5 +213,26 @@ sub _get_sanitized_env {
     return $env;
 }
 
+sub operationtype_attributes_from_xml_element {
+    my ($class, $element) = @_;
+
+    my %properties;
+    my %expected_attributes = $class->expected_attributes;
+    for my $property_name (keys(%expected_attributes)) {
+        my $attribute_name = $expected_attributes{$property_name};
+        $properties{$property_name} = $class->_get_value_from_xml_element(
+            $element, $attribute_name);
+    }
+    return %properties;
+}
+
+sub _get_value_from_xml_element {
+    my ($class, $element, $name) = @_;
+
+    my $nodes = $element->find('operationtype');
+    my $operation_type_element = $nodes->pop;
+    return $operation_type_element->getAttribute($name);
+}
+
 
 1;
