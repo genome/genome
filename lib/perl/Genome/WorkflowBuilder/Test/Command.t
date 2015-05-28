@@ -4,6 +4,8 @@ use warnings;
 use above 'Genome';
 use Test::More;
 
+use Genome::Test::Config qw(setup_config);
+
 
 use_ok('Genome::WorkflowBuilder::Command');
 
@@ -130,5 +132,41 @@ subtest 'specified_operation_type_attributes' => sub {
     is_deeply(\%got, \%expected, 'got attributes as specified first, then from command');
 };
 
+subtest 'command with config (calculated_default)' => sub {
+    my ($temp_dirs, $new_temp_dir) = Genome::Test::Config::temp_dir_helper();
+    local $ENV{XGENOME_CONFIG_SNAP} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_HOME} = $new_temp_dir->();
+    local $ENV{XGENOME_CONFIG_DIRS} = $new_temp_dir->();
+
+    setup_config(
+        spec => {
+            dummy_lsf_resource => {},
+            dummy_lsf_queue => {},
+        },
+        global => {
+            dummy_lsf_resource => 'my_dummy_lsf_resource',
+            dummy_lsf_queue => 'my_dummy_lsf_queue',
+        },
+    );
+
+    my $op = Genome::WorkflowBuilder::Command->create(
+        name => 'some op',
+        command => 'Genome::WorkflowBuilder::Test::DummyCommandCalculatedDefault'
+    );
+
+    my $expected_xml = <<EOS;
+<?xml version="1.0"?>
+<operation name="some op">
+  <operationtype typeClass="Workflow::OperationType::Command" lsfQueue="my_dummy_lsf_queue" lsfResource="my_dummy_lsf_resource" commandClass="Genome::WorkflowBuilder::Test::DummyCommandCalculatedDefault">
+    <inputproperty>input</inputproperty>
+    <outputproperty>many_output</outputproperty>
+    <outputproperty>result</outputproperty>
+    <outputproperty>single_output</outputproperty>
+  </operationtype>
+</operation>
+EOS
+
+    is($op->get_xml, $expected_xml, 'typical command produces expected xml');
+};
 
 done_testing();

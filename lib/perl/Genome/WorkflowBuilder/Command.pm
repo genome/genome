@@ -205,9 +205,15 @@ sub _get_attribute_from_command {
 
     my $property = $self->command->__meta__->properties(
         property_name => $property_name);
-    if (defined($property)) {
+    return unless defined $property;
+
+    if (defined $property->default_value) {
         return $property->default_value;
-    } else {
+    }
+    elsif ($property->calculated_default) {
+        return $property->calculated_default->();
+    }
+    else {
         return;
     }
 }
