@@ -17,13 +17,13 @@ class Genome::Model::Tools::Sam {
     has_input => [
         use_version => {
             is  => 'Version',
-            doc => "samtools version to be used, default is $DEFAULT. ",
+            doc => "samtools version to be used",
             is_optional   => 1,
             default_value => $DEFAULT,
         },
         maximum_memory => {
             is  => 'Integer',
-            doc => "the maximum memory available, default is $DEFAULT_MEMORY",
+            doc => "the maximum memory available",
             is_optional   => 1,
             default_value => $DEFAULT_MEMORY,
         },
