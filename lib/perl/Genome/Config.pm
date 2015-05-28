@@ -152,6 +152,19 @@ sub global_dirs {
     return map { Path::Class::Dir->new($_) } split(/:/, $dirs);
 }
 
+sub has_default_value {
+    my $spec = _normalize_spec(shift);
+    return $spec->has_default_value;
+}
+
+sub default_value {
+    my $spec = _normalize_spec(shift);
+    if ($spec->has_default_value) {
+        return $spec->default_value;
+    }
+    return;
+}
+
 =item _normalize_spec()
 
 C<_normalize_spec()> takes a key or spec as an input and returns the spec.
@@ -182,8 +195,8 @@ sub _lookup_value {
     @files = _lookup_files($config_subpath, snapshot_dir(), global_dirs());
     $value = _lookup_value_from_files($spec, @files);
 
-    if (!defined($value) && $spec->has_default_value) {
-        $value = $spec->default_value;
+    if (!defined($value) && has_default_value($spec)) {
+        $value = default_value($spec);
     }
 
     return $value;
