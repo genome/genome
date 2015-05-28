@@ -148,6 +148,29 @@ subtest 'command with config (calculated_default)' => sub {
             dummy_lsf_queue => 'my_dummy_lsf_queue',
         },
     );
+    local $INC{'Genome/WorkflowBuilder/Test/DummyCommandCalculatedDefault.pm'} = 1;
+    UR::Object::Type->define(
+        class_name => 'Genome::WorkflowBuilder::Test::DummyCommandCalculatedDefault',
+        is => [qw(Command Genome::Configurable)],
+
+        has_input => ['input'],
+
+        has_output => [
+            many_output => {
+                is_many => 1,
+            },
+            single_output => { },
+        ],
+
+        has_param => [
+            lsf_resource => {
+                config => 'dummy_lsf_resource',
+            },
+            lsf_queue => {
+                config => 'dummy_lsf_queue',
+            },
+        ],
+    );
 
     my $op = Genome::WorkflowBuilder::Command->create(
         name => 'some op',
