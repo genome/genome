@@ -21,13 +21,14 @@ sub prepare_reference_sequence_index {
 
     $class->debug_message("$class version $bwa_version is looking for a bwa version $bwa_version index.");
 
-    Genome::Sys->create_symlink($refindex->reference_build->get_sequence_dictionary("sam"), $staging_dir ."/all_sequences.dict" );
+    Genome::Sys->create_symlink($refindex->reference_build->get_sequence_dictionary('sam'), File::Spec->join($staging_dir, 'all_sequences.dict'));
 
+    my $users = $refindex->_user_data_for_nested_results;
+    $users->{uses} = $refindex;
     my $bwa_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(
-        users              => $refindex->_user_data_for_nested_results,
+        users              => $users,
         reference_build_id => $refindex->reference_build_id,
         aligner_name       => 'bwa',
-        #aligner_params    => $refindex->aligner_params, # none of the aligner params should affect the index step so I think this okay
         aligner_version    => $bwa_version,
         test_name          => Genome::Config::get('aligner_index_test_name'),
     );
@@ -36,13 +37,8 @@ sub prepare_reference_sequence_index {
         my $filename = File::Basename::fileparse($filepath);
         next if $filename eq 'all_sequences.fa';
         next if $filename eq 'all_sequences.dict';
-        Genome::Sys->create_symlink($filepath, $staging_dir . "/$filename");
+        Genome::Sys->create_symlink($filepath, File::Spec->join($staging_dir, $filename));
     }
-
-    $bwa_index->add_user(
-        label => 'uses',
-        user  => $refindex
-    );
 
     return 1;
 }
