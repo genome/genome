@@ -76,7 +76,7 @@ my $command = Genome::InstrumentData::Command::AlignAndMerge->create(
     reference_sequence_build => $ref_seq_build,
     name => 'speedseq',
     version => 'test',
-    params => {},
+    params => 'threads => 8, sort_memory => 8',
     result_users => $result_users,
     picard_version => '1.46',
     samtools_version => 'r963',

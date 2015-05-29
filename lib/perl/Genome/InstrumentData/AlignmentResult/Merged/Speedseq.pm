@@ -81,10 +81,10 @@ sub create {
         reference_fasta => $aligner_index->full_consensus_path('fa'),
         output_prefix => File::Spec->join($self->temp_staging_directory, $self->id),
         version => $self->aligner_version,
-        sort_memory => $self->sort_memory,
         temp_directory => $temp_directory,
     );
-    my $command = Genome::Model::Tools::Speedseq::Realign->create(%params);
+    my %aligner_params = eval($self->aligner_params);
+    my $command = Genome::Model::Tools::Speedseq::Realign->create(%params, %aligner_params);
     unless ($command->execute) {
         die $self->error_message('Failed to execute Speedseq realign for instrument data: ' . join(', ', map {$_->id} $self->instrument_data));
     }
@@ -109,16 +109,6 @@ sub create {
     $self->_reallocate_disk_allocation;
 
     return $self;
-}
-
-sub sort_memory {
-    my $self = shift;
-
-    #This needs to match the LSF resource request or during testing needs to
-    #be 3 or so
-    #We might want to set an lsf resource to be at least 20G which is the
-    #default for speedseq -M parameter
-    return '3';
 }
 
 sub aligner_name_for_aligner_index {
