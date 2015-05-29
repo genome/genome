@@ -7,6 +7,7 @@ my %_CLASS_TO_TYPE_MAPPING = (
     'Genome::WorkflowBuilder::DAG' => 'Workflow::OperationType::Model',
     'Genome::WorkflowBuilder::Command' => 'Workflow::OperationType::Command',
     'Genome::WorkflowBuilder::Converge' => 'Workflow::OperationType::Converge',
+    'Genome::WorkflowBuilder::Event' => 'Workflow::OperationType::Event',
 );
 
 my %_TYPE_TO_CLASS_MAPPING;
