@@ -90,7 +90,7 @@ class Genome::InstrumentData::Command::AlignAndMerge {
     ],
     has_param => [
         lsf_resource => {
-            value => q{-R 'select[mem>16000] rusage[mem=16000]' -M 16000000},
+            value => q{-R 'select[mem>60000] rusage[mem=60000]' -M 60000000},
         },
     ],
 };
