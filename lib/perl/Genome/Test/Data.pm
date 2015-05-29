@@ -2,7 +2,6 @@ package Genome::Test::Data;
 
 use strict;
 use warnings;
-use Genome;
 
 require Exporter;
 our @ISA = qw(Exporter);
@@ -15,7 +14,7 @@ sub get_test_file {
     my $file_name = shift;
     my $file = File::Spec->join(__FILE__ . '.d', $data_set, $file_name);
     unless (-e $file) {
-        die "Test file $file doen't exist";
+        die "Test file $file doesn't exist";
     }
     return $file;
 }
