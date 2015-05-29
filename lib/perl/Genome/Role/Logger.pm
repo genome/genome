@@ -3,10 +3,12 @@ package Genome::Role::Logger;
 use strict;
 use warnings;
 
-use Genome;
+use UR;
 use Log::Dispatch;
 use Log::Dispatch::Screen;
 use Log::Dispatch::FileRotate;
+
+require Genome::Logger;
 
 my @log_levels = keys %Log::Dispatch::LEVELS;
 
