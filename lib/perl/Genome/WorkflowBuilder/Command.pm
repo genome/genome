@@ -131,8 +131,13 @@ sub expected_attributes {
 
 sub input_properties {
     my $self = shift;
-    my @result = map {$_->property_name} $self->command->__meta__->properties(
+
+    my @metas = $self->command->__meta__->properties(
         is_input => 1, is_optional => 0);
+
+    my @metas_without_defaults = grep {! $_->default_value} @metas;
+
+    my @result = map {$_->property_name} @metas_without_defaults;
     return sort @result;
 }
 
