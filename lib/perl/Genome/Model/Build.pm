@@ -1025,12 +1025,14 @@ sub start {
 
         # Creates a workflow for the build
         # TODO Initialize workflow shouldn't take arguments
-        unless ($self->_initialize_workflow($params{job_dispatch} || Genome::Config::get('lsf_queue_build_worker_alt'))) {
+        my $workflow = $self->_initialize_workflow($params{job_dispatch} || Genome::Config::get('lsf_queue_build_worker_alt'));
+        unless ($workflow) {
             Carp::croak "Build " . $self->__display_name__ . " could not initialize workflow!";
         }
 
         # Launches the workflow (in a pend state, it's resumed by a commit hook)
-        unless ($self->_launch(%params)) {
+        my $workflow_xml = $workflow->save_to_xml();
+        unless ($self->_launch(\%params, $workflow_xml)) {
             Carp::croak "Build " . $self->__display_name__ . " could not be launched!";
         }
 
@@ -1359,8 +1361,8 @@ sub set_build_id {
 }
 
 sub _launch {
-    my $self = shift;
-    my %params = @_;
+    my ($self, $params, $workflow_xml) = @_;
+    my %params = %$params;
 
     local $ENV{UR_DUMP_DEBUG_MESSAGES} = 1;
     local $ENV{UR_COMMAND_DUMP_DEBUG_MESSAGES} = 1;
@@ -1404,11 +1406,6 @@ sub _launch {
         }
 
         my %inputs = $self->model->map_workflow_inputs($self);
-        my $workflow = $self->_initialize_workflow($params{job_dispatch} || Genome::Config::get('lsf_queue_build_worker_alt'));
-        unless ($workflow) {
-            Carp::croak "Build " . $self->__display_name__ . " could not initialize workflow!";
-        }
-        my $workflow_xml = $workflow->save_to_xml();
         my $process = Genome::Model::Build::Process->create(build => $self);
         $process->run(
             workflow_xml => $workflow_xml,
