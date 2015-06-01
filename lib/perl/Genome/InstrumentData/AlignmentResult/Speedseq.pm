@@ -17,6 +17,80 @@ sub post_create {
     return 1;
 }
 
+sub get_bam_file {
+    my $self = shift;
+
+    # Create doesn't do all of the necessary post-processing. This is being
+    # delayed until the first time that the bam file is revivified.
+    # If we don't have an allocation then this is the first revivification and
+    # we will need to do post-processing.
+    my $guard = $self->get_speedseq_bam_lock->unlock_guard();
+    unless ($self->disk_allocations) {
+        return $self->_inititalize_revivified_bam;
+    }
+    else {
+        return $self->SUPER::get_bam_file;
+    }
+}
+
+sub get_speedseq_bam_lock {
+    my $self = shift;
+
+    my $resource = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$self->id);
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => $resource,
+        scope => 'site',
+    )->lock(
+        max_try => 288, # Try for 48 hours every 10 minutes
+        block_sleep => 600,
+    );
+
+    die $self->error_message("Unable to acquire the lock for per lane alignment result id (%s) !", $self->id) unless $lock;
+    return $lock;
+}
+
+sub _inititalize_revivified_bam {
+    my $self = shift;
+
+    $self->_create_disk_allocation;
+
+    $self->debug_message("Prepare working directories...");
+    $self->_prepare_working_and_staging_directories;
+    $self->debug_message("Staging path is " . $self->temp_staging_directory);
+    $self->debug_message("Working path is " . $self->temp_scratch_directory);
+
+    $self->_prepare_output_directory;
+
+    my $bam_file = $self->SUPER::get_bam_file;
+
+    $self->debug_message("Postprocessing & Sanity Checking BAM file (if necessary)...");
+    unless ($self->postprocess_bam_file()) {
+        $self->error_message("Postprocess BAM file failed");
+        die $self->error_message;
+    }
+
+    $self->debug_message("Computing alignment metrics...");
+    $self->_compute_alignment_metrics();
+
+    $self->debug_message("Preparing the output directory...");
+    $self->debug_message("Staging disk usage is " . $self->_staging_disk_usage . " KB");
+    my $output_dir = $self->output_dir || $self->_prepare_output_directory;
+    $self->debug_message("Alignment output path is $output_dir");
+
+    $self->debug_message("Moving results to network disk...");
+    my $product_path;
+    unless($product_path= $self->_promote_data) {
+        $self->error_message("Failed to de-stage data into alignment directory " . $self->error_message);
+        die $self->error_message;
+    }
+
+    $self->_reallocate_disk_allocation;
+
+    $self->status_message("Alignment complete.");
+
+    return $bam_file;
+}
+
 #Use merged bam for header since we don't have an original per-lane bam
 sub source_bam_path_for_header {
     my $self = shift;
@@ -95,6 +169,8 @@ sub _check_read_count {
 
     $self->debug_message("Overriding _check_read_count: filtering flag $flag from bam read count.");
     $self->debug_message("Actual read count: $bam_rd_ct; filtered read count: $filtered_bam_rd_ct");
+
+    $self->_fastq_read_count($self->determine_input_read_count_from_bam);
 
     return $self->SUPER::_check_read_count($filtered_bam_rd_ct);
 }
