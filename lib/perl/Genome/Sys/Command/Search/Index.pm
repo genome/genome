@@ -25,7 +25,7 @@ class Genome::Sys::Command::Search::Index {
         },
         loop_sleep => {
             is => 'Number',
-            default => 10,
+            default => 1,
         },
         tie_stderr => {
             is => 'Boolean',
