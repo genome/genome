@@ -433,6 +433,19 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return unless $self;
 
+    $self->post_create;
+
+    return $self;
+}
+
+sub post_create {
+    my $self = shift;
+    $self->_generate_result;
+}
+
+sub _generate_result {
+    my $self = shift;
+
     if (my $output_dir = $self->output_dir) {
         if (-d $output_dir) {
             $self->debug_message("BACKFILL DIRECTORY: $output_dir!");
@@ -551,7 +564,6 @@ sub create {
     $self->_reallocate_disk_allocation;
 
     $self->status_message("Alignment complete.");
-    return $self;
 }
 
 sub delete {
