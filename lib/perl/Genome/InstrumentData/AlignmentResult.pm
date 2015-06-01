@@ -1035,7 +1035,7 @@ sub postprocess_bam_file {
 
     $self->debug_message("Indexing BAM file ...");
     unless($self->_create_bam_index) {
-        $self->error_message('Fail to create bam md5');
+        $self->error_message('Fail to create bam index');
         die $self->error_message;
     }
     return 1;
