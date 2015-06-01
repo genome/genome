@@ -3,10 +3,10 @@ package Genome::Utility::Inputs;
 use strict;
 use warnings FATAL => 'all';
 use Data::Dump 'pp';
+require Data::Transform::ExplicitMetadata;
 use Genome;
 use Params::Validate qw(validate_pos :types);
 use Scalar::Util qw();
-
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
@@ -36,10 +36,15 @@ sub encode {
 sub convert_obj_to_hash {
     my $obj = shift;
 
-    return {
-        class => $obj->class,
-        id => $obj->id,
-    };
+    if ( $obj->isa("UR::Object") ) {
+        return {
+            class => $obj->class,
+            id => $obj->id,
+        };
+    }
+    else {
+        return Data::Transform::ExplicitMetadata::encode($obj);
+    }
 }
 
 
@@ -65,13 +70,17 @@ sub decode {
 sub convert_hash_to_obj {
     my $hash = shift;
 
-    my $class = $hash->{'class'};
-    my $obj = $class->get($hash->{'id'});
-    unless (defined($obj)) {
-        die sprintf("Couldn't convert hash to class: %s", pp($hash));
+    if ( exists $hash->{'class'} and $hash->{'class'}->isa('UR::Object') ) {
+        my $class = $hash->{'class'};
+        my $obj = $class->get($hash->{'id'});
+        unless (defined($obj)) {
+            die sprintf("Couldn't convert hash to class: %s", pp($hash));
+        }
+        return $obj;
     }
-    return $obj;
+    else {
+        return Data::Transform::ExplicitMetadata::decode($hash);
+    }
 }
-
 
 1;
