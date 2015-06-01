@@ -5,6 +5,9 @@ use Genome;
 
 use strict;
 use warnings;
+
+use Params::Validate qw(:types);
+
 class Genome::Search::Queue {
     table_name => 'web.search_index_queue',
     id_by => [
@@ -86,7 +89,15 @@ sub create_dedup_iterator {
 }
 
 sub dedup_set {
-    my ($class, $set) = @_;
+    my ($class, $set) = Params::Validate::validate_pos(@_,
+        { type => SCALAR },
+        { isa => 'Genome::Search::Queue::Set',
+          callbacks => {
+              'specifies subject_id' => sub { shift->rule->value_for('subject_id') },
+              'specifies subject_class' => sub { shift->rule->value_for('subject_class') },
+          },
+        },
+    );
 
     my $m_iter = $set->member_iterator;
     my $q = $m_iter->next;
