@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Test::More;
+use List::Util qw(sum);
 
 require Sub::Override;
 
@@ -22,15 +23,7 @@ my $text_is_indexable = sub {
     }
 };
 
-test_create_missing_subject();
-test_create_missing_timestamp();
-test_create_existing_subject();
-test_create_non_indexable_subject();
-test_priority_sorting();
-
-done_testing();
-
-sub test_create_missing_subject {
+subtest test_create_missing_subject => sub {
     my $tx = UR::Context::Transaction->begin();
 
     my $index_queue = eval {
@@ -42,9 +35,9 @@ sub test_create_missing_subject {
     like($error, qr/subject/, 'error mentions subject');
 
     $tx->rollback();
-}
+};
 
-sub test_create_missing_timestamp {
+subtest test_create_missing_timestamp => sub {
     my $tx = UR::Context::Transaction->begin();
 
     my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
@@ -59,9 +52,9 @@ sub test_create_missing_timestamp {
     ok($index_queue->timestamp, 'timestamp was added');
 
     $tx->rollback();
-}
+};
 
-sub test_create_existing_subject {
+subtest test_create_existing_subject => sub {
     my $tx = UR::Context::Transaction->begin();
 
     my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
@@ -83,9 +76,9 @@ sub test_create_existing_subject {
     isnt($index_queue_2, $index_queue, 'new index_queue_2 is different than index_queue');
 
     $tx->rollback();
-}
+};
 
-sub test_create_non_indexable_subject {
+subtest test_create_non_indexable_subject => sub {
     my $tx = UR::Context::Transaction->begin();
 
     my $subject = UR::Value::Text->get('Hello, world.');
@@ -101,9 +94,9 @@ sub test_create_non_indexable_subject {
     like($error, qr/indexable/, 'error mentions indexable');
 
     $tx->rollback();
-}
+};
 
-sub test_priority_sorting {
+subtest test_priority_sorting => sub {
     my $tx = UR::Context::Transaction->begin();
 
     my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
@@ -139,4 +132,6 @@ sub test_priority_sorting {
     isnt(join('', @timestamp_sorted_queue_subject_ids), join('', @priority_sorted_queue_subject_ids), 'ordering by timestamp does not match priorty sort');
 
     $tx->rollback();
-}
+};
+
+done_testing();
