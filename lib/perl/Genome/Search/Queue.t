@@ -5,6 +5,8 @@ use warnings;
 
 use Test::More;
 
+require Sub::Override;
+
 use above "Genome";
 use_ok('Genome::Search::Queue') || die;
 
@@ -45,7 +47,7 @@ sub test_create_missing_subject {
 sub test_create_missing_timestamp {
     my $tx = UR::Context::Transaction->begin();
 
-    *Genome::Search::is_indexable = $text_is_indexable;
+    my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
 
     my $subject = UR::Value::Text->get('Hello, world.');
     my $index_queue = Genome::Search::Queue->create(
@@ -56,15 +58,13 @@ sub test_create_missing_timestamp {
     isa_ok($index_queue, 'UR::Object', 'create returned an object');
     ok($index_queue->timestamp, 'timestamp was added');
 
-    *Genome::Search::is_indexable = $orig_is_indexable;
-
     $tx->rollback();
 }
 
 sub test_create_existing_subject {
     my $tx = UR::Context::Transaction->begin();
 
-    *Genome::Search::is_indexable = $text_is_indexable;
+    my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
 
     my $subject = UR::Value::Text->get('Hello, world.');
     my $index_queue = Genome::Search::Queue->create(
@@ -81,8 +81,6 @@ sub test_create_existing_subject {
     isa_ok($index_queue_2, 'UR::Object', 'create returned an object');
 
     isnt($index_queue_2, $index_queue, 'new index_queue_2 is different than index_queue');
-
-    *Genome::Search::is_indexable = $orig_is_indexable;
 
     $tx->rollback();
 }
@@ -108,7 +106,7 @@ sub test_create_non_indexable_subject {
 sub test_priority_sorting {
     my $tx = UR::Context::Transaction->begin();
 
-    *Genome::Search::is_indexable = $text_is_indexable;
+    my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
 
     # purposely out of order so that timestamps won't sort in the same order as priority
     my @subject_ids = ('Thing 9', 'Thing', 'Thing 5', 'Thing 1', 'Thing 0', 'Thing 2');
