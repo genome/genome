@@ -455,21 +455,7 @@ sub _generate_result {
 
     # STEP 3: ENSURE WE WILL PROBABLY HAVE DISK SPACE WHEN ALIGNMENT COMPLETES
     # TODO: move disk_group, estimated_size, allocation and promotion up into the software result logic
-    my $estimated_kb_usage = $self->estimated_kb_usage;
-    $self->debug_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
-    $self->debug_message("Check for available disk...");
-    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => Genome::Config::get('disk_group_alignments'));
-    $self->debug_message("Found " . scalar(@available_volumes) . " disk volumes");
-    my $unallocated_kb = 0;
-    for my $volume (@available_volumes) {
-        $unallocated_kb += $volume->unallocated_kb;
-    }
-    $self->debug_message("Available disk: " . $unallocated_kb . " kb");
-    my $factor = 20;
-    unless ($unallocated_kb > ($factor * $estimated_kb_usage)) {
-        $self->error_message("NOT ENOUGH DISK SPACE!  This step requires $factor x as much disk as the job will use to be available before starting.");
-        die $self->error_message();
-    }
+    $self->_create_disk_allocation;
 
     # STEP 4: PREPARE THE STAGING DIRECTORY
     $self->debug_message("Prepare working directories...");
@@ -564,6 +550,26 @@ sub _generate_result {
     $self->_reallocate_disk_allocation;
 
     $self->status_message("Alignment complete.");
+}
+
+sub _create_disk_allocation {
+    my $self = shift;
+
+    my $estimated_kb_usage = $self->estimated_kb_usage;
+    $self->debug_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
+    $self->debug_message("Check for available disk...");
+    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => Genome::Config::get('disk_group_alignments'));
+    $self->debug_message("Found " . scalar(@available_volumes) . " disk volumes");
+    my $unallocated_kb = 0;
+    for my $volume (@available_volumes) {
+        $unallocated_kb += $volume->unallocated_kb;
+    }
+    $self->debug_message("Available disk: " . $unallocated_kb . " kb");
+    my $factor = 20;
+    unless ($unallocated_kb > ($factor * $estimated_kb_usage)) {
+        $self->error_message("NOT ENOUGH DISK SPACE!  This step requires $factor x as much disk as the job will use to be available before starting.");
+        die $self->error_message();
+    }
 }
 
 sub delete {
