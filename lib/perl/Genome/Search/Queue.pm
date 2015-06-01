@@ -100,6 +100,7 @@ sub dedup {
 
     my $delete_count = 0;
     my $commit_and_prune = sub {
+        Genome::Logger->infof("Committing the removal of %d duplicates...\n", $delete_count);
         $delete_count = 0;
         UR::Context->commit();
         UR::Context->prune_object_cache();
@@ -108,11 +109,14 @@ sub dedup {
     while (my $s = $iter->next) {
         if ($s->count > 1) {
             my $m_iter = $s->member_iterator;
-            $m_iter->next;
+            my $q = $m_iter->next;
+            my $duplicate_count = 0;
             while (my $q = $m_iter->next) {
                 $delete_count++;
+                $duplicate_count++;
                 $q->delete;
             }
+            Genome::Logger->infof("Deleted %d duplicates for %s (%s).\n", $duplicate_count, $q->subject_class, $q->subject_id);
 
             if ($delete_count > $max) {
                 $commit_and_prune->();
