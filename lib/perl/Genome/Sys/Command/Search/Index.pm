@@ -128,9 +128,6 @@ sub daemon {
 
             my $max = $self->max_changes_per_commit;
 
-            $self->info("CHILD($$): Deduplicating queue");
-            Genome::Search::Queue->dedup();
-
             if ($signaled_to_quit) {
                 $self->info("CHILD($$): signaled to quit");
                 exit;
@@ -189,53 +186,47 @@ sub index_queued {
 
     my $max_changes_count = delete $params{max_changes_count};
 
-    # TODO Should optimize this by grouping by subject id and class and removing all related rows
-    my $index_queue_iterator = Genome::Search::Queue->queue_iterator();
+    my $index_queue_iterator = Genome::Search::Queue->create_dedup_iterator();
 
-    my $subject_seen = {};
     my $modified_count = 0;
     while (
         !$signaled_to_quit
         && (!defined($max_changes_count) || $modified_count++ < $max_changes_count)
-        && (my $index_queue_item = $index_queue_iterator->next)
+        && (my $set = $index_queue_iterator->next)
     ) {
+        Genome::Search::Queue->dedup_set($set);
+        my $index_queue_item = $set->members;
+
         my $subject_class = $index_queue_item->subject_class;
         my $subject_id = $index_queue_item->subject_id;
         last if $signaled_to_quit;
 
-        # if we've already seen this subject during this iterator then we do not need to re-index it
-        if ($subject_seen->{$subject_class}->{$subject_id}) {
-            $index_queue_item->delete();
+        my $action;
+        if (not $subject_class->can('get')) {
+            $self->warning_message("Class ($subject_class) cannot 'get'. Deleting item (ID: $subject_id) from queue.");
+            $action = 'delete';
+        } else {
+            $action = ($subject_class->get($subject_id) ? 'add' : 'delete');
         }
-        else {
-            my $action;
-            if (not $subject_class->can('get')) {
-                $self->warning_message("Class ($subject_class) cannot 'get'. Deleting item (ID: $subject_id) from queue.");
+        if($action eq 'add' and $subject_class->isa('UR::Object::Set')) {
+            my $set = $subject_class->get($subject_id);
+            unless ($set->members) {
                 $action = 'delete';
-            } else {
-                $action = ($subject_class->get($subject_id) ? 'add' : 'delete');
             }
-            if($action eq 'add' and $subject_class->isa('UR::Object::Set')) {
-                my $set = $subject_class->get($subject_id);
-                unless ($set->members) {
-                    $action = 'delete';
-                }
-            }
-            last if $signaled_to_quit;
+        }
+        last if $signaled_to_quit;
 
-            my $modified_index;
-            timer('genome.sys.search.index.index_queue.modify_index', sub {
-                $modified_index = $self->modify_index($action, $subject_class, $subject_id)
-            });
-            if ($modified_index) {
-                increment('genome.sys.search.index.index_queue.modify_index.success');
-                $subject_seen->{$subject_class}->{$subject_id}++;
-                $index_queue_item->delete();
-            } else {
-                # Move it to the back of the line.
-                increment('genome.sys.search.index.index_queue.modify_index.failure');
-                $index_queue_item->timestamp(UR::Context->now);
-            }
+        my $modified_index;
+        timer('genome.sys.search.index.index_queue.modify_index', sub {
+            $modified_index = $self->modify_index($action, $subject_class, $subject_id)
+        });
+        if ($modified_index) {
+            increment('genome.sys.search.index.index_queue.modify_index.success');
+            $index_queue_item->delete();
+        } else {
+            # Move it to the back of the line.
+            increment('genome.sys.search.index.index_queue.modify_index.failure');
+            $index_queue_item->timestamp(UR::Context->now);
         }
     }
 
