@@ -76,6 +76,10 @@ sub create_BAM_in_staging_directory {
     return 1;
 }
 
+sub accepts_bam_input {
+    return 1;
+}
+
 sub final_staged_bam_path {
     my $self = shift;
     return $self->revivified_alignment_bam_file_path;
