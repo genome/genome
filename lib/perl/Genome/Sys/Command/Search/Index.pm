@@ -133,7 +133,7 @@ sub daemon {
                 exit;
             }
 
-            $self->info("CHILD($$): Processing index queue max=$max)");
+            $self->info("CHILD($$): Processing index queue max=$max");
             $self->index_queued(max_changes_count => $max);
 
             if ($signaled_to_quit) {
