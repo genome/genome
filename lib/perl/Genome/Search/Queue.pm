@@ -85,6 +85,20 @@ sub create_dedup_iterator {
     );
 }
 
+sub dedup_set {
+    my ($class, $set) = @_;
+
+    my $m_iter = $set->member_iterator;
+    my $q = $m_iter->next;
+    my $duplicate_count = 0;
+    while (my $q = $m_iter->next) {
+        $duplicate_count++;
+        $q->delete;
+    }
+
+    return $duplicate_count;
+}
+
 sub dedup {
     my $class = shift;
 
@@ -108,15 +122,9 @@ sub dedup {
     my $iter = $class->create_dedup_iterator();
     while (my $s = $iter->next) {
         if ($s->count > 1) {
-            my $m_iter = $s->member_iterator;
-            my $q = $m_iter->next;
-            my $duplicate_count = 0;
-            while (my $q = $m_iter->next) {
-                $delete_count++;
-                $duplicate_count++;
-                $q->delete;
-            }
-            Genome::Logger->infof("Deleted %d duplicates for %s (%s).\n", $duplicate_count, $q->subject_class, $q->subject_id);
+            my $duplicate_count = $class->dedup_set($s);
+            $delete_count += $duplicate_count;
+            Genome::Logger->infof("Deleted %d duplicates.\n", $duplicate_count);
 
             if ($delete_count > $max) {
                 $commit_and_prune->();
