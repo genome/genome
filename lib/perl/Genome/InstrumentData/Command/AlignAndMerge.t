@@ -53,6 +53,7 @@ my $instrument_data_1 = Genome::Test::Factory::InstrumentData::Solexa->setup_obj
     subset_name => '1',
     run_name => 'example',
     id => '-23',
+    run_type => 'Paired',
 );
 $instrument_data_1->bam_path(File::Spec->join($test_data_dir, '-533e0bb1a99f4fbe9e31cf6e19907133.bam'));
 my $instrument_data_2 = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
@@ -62,6 +63,7 @@ my $instrument_data_2 = Genome::Test::Factory::InstrumentData::Solexa->setup_obj
     subset_name => '2',
     run_name => 'example',
     id => 'NA12878',
+    run_type => 'Paired',
 );
 $instrument_data_2->bam_path(get_test_file('NA12878', 'NA12878.20slice.30X.bam'));
 my @two_instrument_data = ($instrument_data_1, $instrument_data_2);

@@ -42,6 +42,7 @@ my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_objec
     subset_name => '2',
     run_name => 'example',
     id => 'NA12878',
+    run_type => 'Paired',
 );
 $instrument_data->bam_path(get_test_file('NA12878', 'NA12878.20slice.30X.bam'));
 
