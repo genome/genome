@@ -104,6 +104,14 @@ sub _check_read_count {
     return $self->SUPER::_check_read_count($filtered_bam_rd_ct);
 }
 
+sub _create_bam_md5 {
+    return 1;
+}
+
+sub _create_bam_index {
+    return 1;
+}
+
 sub _promote_data {
     my $self = shift;
 
