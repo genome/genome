@@ -79,4 +79,50 @@ sub default_priority {
     return $property->{default_value};
 }
 
+sub create_dedup_iterator {
+    return $_[0]->create_iterator(
+        -group_by => [qw(subject_class subject_id)],
+    );
+}
+
+sub dedup {
+    my $class = shift;
+
+    my $max = 500;
+
+    my $lw = UR::Context->object_cache_size_lowwater();
+    my $lw_guard = Scope::Guard->new( sub { UR::Context->object_cache_size_lowwater($lw) } );
+    UR::Context->object_cache_size_lowwater($UR::Context::all_objects_cache_size);
+
+    my $hw = UR::Context->object_cache_size_highwater();
+    my $hw_guard = Scope::Guard->new( sub { UR::Context->object_cache_size_highwater($hw) } );
+    UR::Context->object_cache_size_highwater(UR::Context->object_cache_size_lowwater + 20 * $max);
+
+    my $delete_count = 0;
+    my $commit_and_prune = sub {
+        $delete_count = 0;
+        UR::Context->commit();
+        UR::Context->prune_object_cache();
+    };
+    my $iter = $class->create_dedup_iterator();
+    while (my $s = $iter->next) {
+        if ($s->count > 1) {
+            my $m_iter = $s->member_iterator;
+            $m_iter->next;
+            while (my $q = $m_iter->next) {
+                $delete_count++;
+                $q->delete;
+            }
+
+            if ($delete_count > $max) {
+                $commit_and_prune->();
+            }
+        }
+    }
+
+    $commit_and_prune->();
+
+    return 1;
+}
+
 1;

@@ -10,21 +10,7 @@ sub help_detail {
 }
 
 sub execute {
-    my $self = shift;
-
-    my %seen;
-    my $qi = Genome::Search::Queue->create_iterator();
-    while (my $q = $qi->next) {
-        my $s_class = $q->subject_class;
-        my $s_id = $q->subject_id;
-        if ($seen{$s_class}{$s_id}) {
-            $q->delete;
-        } else {
-            $seen{$s_class}{$s_id}++;
-        }
-    }
-
-    return 1;
+    return Genome::Search::Queue->dedup();
 }
 
 1;

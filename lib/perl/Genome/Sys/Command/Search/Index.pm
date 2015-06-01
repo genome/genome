@@ -129,7 +129,7 @@ sub daemon {
             my $max = $self->max_changes_per_commit;
 
             $self->info("CHILD($$): Deduplicating queue");
-            $self->dedup_queue();
+            Genome::Search::Queue->dedup();
 
             if ($signaled_to_quit) {
                 $self->info("CHILD($$): signaled to quit");
@@ -181,18 +181,6 @@ sub list {
     }
 
     return 1;
-}
-
-sub dedup_queue {
-    my $class = shift;
-
-    my %seen;
-    my $index_queue_iterator = Genome::Search::Queue->queue_iterator();
-    while (my $q = $index_queue_iterator->next) {
-        if ($seen{$q->subject_class}{$q->subject_id}++) {
-            $q->delete;
-        }
-    }
 }
 
 sub index_queued {

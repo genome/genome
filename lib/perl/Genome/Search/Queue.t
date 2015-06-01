@@ -134,4 +134,35 @@ subtest test_priority_sorting => sub {
     $tx->rollback();
 };
 
+subtest test_dedup => sub {
+    my $tx = UR::Context::Transaction->begin();
+
+    my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
+    my $create_dedup_iterator = Sub::Override->new('Genome::Search::Queue::create_dedup_iterator' => sub{
+        return Genome::Search::Queue->create_iterator(
+            subject_class => 'UR::Value::Text',
+            -group_by => [qw(subject_class subject_id)],
+        );
+    });
+
+    my @n_max = 1..5;
+    for my $n_max (@n_max) {
+        for my $n (1..$n_max) {
+            my $subject = UR::Value::Text->get('Thing ' . $n);
+            my $index_queue = Genome::Search::Queue->create(
+                subject_id => $subject->id,
+                subject_class => $subject->class,
+            );
+        }
+    }
+    cmp_ok(sum(@n_max), '>', scalar(@n_max), 'duplicates will be created');
+    is(scalar(() = Genome::Search::Queue->get(subject_class => 'UR::Value::Text')),
+        sum(@n_max), 'duplicates were created');
+    ok(Genome::Search::Queue->dedup(), 'dedup returned successfully');
+    is(scalar(() = Genome::Search::Queue->get(subject_class => 'UR::Value::Text')),
+        scalar(@n_max), 'duplicates were removed');
+
+    $tx->rollback();
+};
+
 done_testing();
