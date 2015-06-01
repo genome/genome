@@ -13,12 +13,7 @@ class Genome::InstrumentData::AlignmentResult::Speedseq {
     ],
 };
 
-sub _run_aligner {
-    my $self = shift;
-
-    #Run get_bam_file to fake revivify the per-lane bams
-    $self->_prepare_output_directory;
-    $self->get_bam_file;
+sub post_create {
     return 1;
 }
 
