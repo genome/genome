@@ -75,7 +75,7 @@ sub _set_derivative_stats {
     my $fn = $self->rawstats->{false_negative};
 
     $self->rawstats->{ppv} = $tp/($tp + $fp);
-    $self->rawstats->{specificity} = $tp/($tp + $fn);
+    $self->rawstats->{sensitivity} = $tp/($tp + $fn);
     $self->rawstats->{f1} = 2*$tp/(2*$tp + $fp + $fn);
 }
 
