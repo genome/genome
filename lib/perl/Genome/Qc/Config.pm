@@ -25,13 +25,14 @@ sub get_commands_for_alignment_result {
                 refseq_file => 'reference_sequence',
                 assume_sorted => 1,
                 use_version => 1.123,
-                output_file=> '/dev/null',
+                output_file=> 'output_file',
+                chart_output => 'chart_output',
             },
         },
         picard_mark_duplicates => {
             class => 'Genome::Qc::Tool::Picard::MarkDuplicates',
             params => {
-                output_file => '/dev/null',
+                output_file => 'output_file',
                 input_file => 'bam_file',
                 use_version => 1.123,
             },
