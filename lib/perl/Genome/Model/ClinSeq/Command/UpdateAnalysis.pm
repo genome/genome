@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use Genome;
 use Time::Piece;
+use List::MoreUtils qw(uniq);
 
 my $default_cancer_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("cancer_annotation_db")->default_value;
 my $default_misc_annotation_db_id = Genome::Model::ClinSeq->__meta__->property("misc_annotation_db")->default_value;
@@ -997,8 +998,14 @@ sub get_genotype_microarray_model_id{
   #If there is no default genotype data defined, return 0
   return $genotype_microarray_model_id unless $default_genotype_data;
 
-  #If there is genotype microarray data, look for GenotypeMicroarray models
-  my @models = $sample->models;
+  #If there is default genotype microarray data, look for GenotypeMicroarray models
+  my @models1 = $sample->models;
+  my $id = Genome::InstrumentData->get(id => $default_genotype_data->id);
+  my @models2 = Genome::Model->get(instrument_data => $id);
+  my @models = @models1;
+  push(@models, @models2);
+  @models = uniq(@models);
+
   my @final_models;
   my @skipped;
   foreach my $model (@models){
