@@ -100,8 +100,9 @@ sub dedup_set {
     );
 
     my $m_iter = $set->member_iterator;
-    my $q = $m_iter->next;
     my $duplicate_count = 0;
+
+    $m_iter->next;
     while (my $q = $m_iter->next) {
         $duplicate_count++;
         $q->delete;
