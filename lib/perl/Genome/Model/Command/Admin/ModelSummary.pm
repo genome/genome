@@ -295,6 +295,8 @@ sub determine_error_for_build {
 sub find_first_nondone_step {
     my $build = shift;
 
+    return if grep { $_ eq $build->status } ('Succeeded', 'Scheduled', 'Unstartable', 'New');
+
     # The following is wrapped in a transaction and try to protect against
     # "corrupt" Workflow::Models.
     my $tx = UR::Context::Transaction->begin();
