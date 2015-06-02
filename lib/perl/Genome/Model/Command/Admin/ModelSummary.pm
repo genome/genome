@@ -55,15 +55,6 @@ sub execute {
     my @models = $self->models;
     my @hide_statuses = $self->hide_statuses;
 
-    #preload data
-    my %failed_build_params = (
-        'status in' => ['Unknown', 'Unstartable', 'Failed'],
-    );
-    my @builds = Genome::Model::Build->get(
-        model_id => [map($_->id, @models)],
-        %failed_build_params,
-    );
-
     my $synchronous = ($self->auto and $self->auto_batch_size);  # whether we should start builds as we go or wait until the end
 
     # Header for the report produced at the end of the loop
@@ -105,9 +96,8 @@ sub execute {
 
         my ($latest_build, $latest_build_status) = $self->_build_and_status_for_model($model);
 
-
-        my @failed_builds = $model->builds(%failed_build_params);
-        my $fail_count   = scalar @failed_builds;
+        my $failure_set  = $self->failure_build_set($model);
+        my $fail_count   = $failure_set->count;
         my $model_id     = ($model ? $model->id                       : '-');
         my $model_name   = ($model ? $model->name                     : '-');
         my $pp_name      = ($model ? $model->processing_profile->name : '-');
@@ -283,6 +273,16 @@ sub model_has_progressed {
     return unless $previous_error;
 
     return $latest_error ne $previous_error;
+}
+
+sub failure_build_set {
+    my $self = shift;
+    my $model = shift;
+
+    return Genome::Model::Build->define_set(
+        model_id => $model->id,
+        status => ['Failed', 'Unstartable', 'Unknown'],
+    );
 }
 
 
