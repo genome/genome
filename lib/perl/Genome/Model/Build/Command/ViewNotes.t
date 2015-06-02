@@ -61,14 +61,15 @@ is($c,1, 'returned expected number of notes');
 
 sub run_command {
     my $cmd = shift;
-    my ($fh, $file) = Genome::Sys->create_temp_file();
+    my $path = Genome::Sys->create_temp_file_path();
     my $rv;
     {
-        local *STDOUT = $fh;
+        local *STDOUT;
+        open(STDOUT, '>', $path) or die $!;
         $rv = $cmd->execute;
-        close *STDOUT;
+        close STDOUT;
     }
 
     ok($rv, "executed command");
-    return $file;
+    return $path;
 }
