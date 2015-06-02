@@ -45,6 +45,7 @@ for my $file_type ('ensembl', 'vcf', 'vcf.gz') {
         ensembl_annotation_build_id => "d00a39c84382427fa0efdec3229e8f5f",
         quiet => 1,
         hgnc => 1,
+        reference_version => "GRCh37",
     );
 
     if ($file_type eq 'vcf' || $file_type eq 'vcf.gz') {

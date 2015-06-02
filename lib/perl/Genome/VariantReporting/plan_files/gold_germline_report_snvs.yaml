@@ -9,6 +9,7 @@ experts:
         insertion_centric: 0
     vep:
         ensembl_version: 75
+        reference_version: GRCh37
         custom_annotation_tags:
             - ON_TARGET
             - SEG_DUP

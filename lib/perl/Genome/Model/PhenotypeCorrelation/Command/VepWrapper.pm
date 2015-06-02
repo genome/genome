@@ -24,6 +24,9 @@ class Genome::Model::PhenotypeCorrelation::Command::VepWrapper {
             is => 'String',
             doc => 'ID of ImportedAnnotation build with the desired ensembl version.',
         },
+        reference_version => {
+            is => 'String',
+        },
         region => {
             is => "String",
             doc => "The region to annotate",
@@ -63,6 +66,7 @@ sub execute {
         input_file => "-",
         output_file => $output_file,
         ensembl_annotation_build_id => $self->ensembl_annotation_build_id,
+        reference_version => $self->reference_version,
         format => "vcf",
         condel => "b",
         polyphen => "b",

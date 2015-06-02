@@ -11,6 +11,10 @@ class Genome::VariantReporting::Suite::Vep::Run {
             is => 'String',
             doc => 'Version of ensembl database to use',
         },
+        reference_version => {
+            is => 'String',
+            doc => 'Version of reference sequence',
+        },
         custom_annotation_tags => {
             is => 'String',
             is_many => 1,
