@@ -34,4 +34,8 @@ sub gmt_class {
     return 'Genome::Model::Tools::Picard::MarkDuplicates';
 }
 
+sub output_file {
+    return Genome::Sys->create_temp_file_path();
+}
+
 1;
