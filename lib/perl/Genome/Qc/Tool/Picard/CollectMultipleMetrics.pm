@@ -66,7 +66,7 @@ sub gmt_class_for_file_extension {
     return $file_extension_to_gmt_class{$file_extension};
 }
 
-sub output_file_accessor {
+sub qc_metrics_file_accessor {
     return 'output_basename';
 }
 
@@ -76,7 +76,7 @@ sub get_metrics {
     my %desired_metric_results;
     my %metrics = $self->metrics;
     while (my ($tool, $tool_metrics) = each %metrics) {
-        my $base = $self->output_file;
+        my $base = $self->qc_metrics_file;
         my $file = join('.', $base, $tool);
         my $gmt_class = $self->gmt_class_for_file_extension($tool);
         my %metric_results = %{$gmt_class->parse_file_into_metrics_hashref($file)};

@@ -42,7 +42,7 @@ sub _run {
             name => $name,
             args => [$tool->cmd_line],
             in_file_link => $self->_input_file_for_tool($tool, $name),
-            out_file_link => $self->_output_file_for_tool($name),
+            out_file_link => $self->_qc_metrics_file_for_tool($name),
             err_file_link => $self->_error_file_for_tool($name),
         );
         $process_graph->add_process($process_ref{$name});
@@ -90,7 +90,7 @@ sub _error_file_for_tool {
     return undef;
 }
 
-sub _output_file_for_tool {
+sub _qc_metrics_file_for_tool {
     my ($self, $name) = @_;
     my $file_name = $self->qc_config->get_commands_for_alignment_result($self->is_capture)->{$name}->{out_file};
     if (defined $file_name) {
@@ -125,8 +125,8 @@ sub _non_streaming_tools {
 
 sub _tool_from_name_and_params {
     my ($self, $name, $gmt_params) = @_;
-    if (defined $name->output_file_accessor) {
-        my $output_param_name = $name->output_file_accessor;
+    if (defined $name->qc_metrics_file_accessor) {
+        my $output_param_name = $name->qc_metrics_file_accessor;
         $gmt_params->{$output_param_name} = Genome::Sys->create_temp_file_path;
     }
     my $tool = $name->create(gmt_params => $gmt_params, alignment_result => $self->alignment_result);

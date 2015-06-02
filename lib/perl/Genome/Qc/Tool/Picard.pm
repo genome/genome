@@ -18,7 +18,7 @@ sub cmd_line {
 sub get_metrics {
     my $self = shift;
 
-    my $file = $self->output_file;
+    my $file = $self->qc_metrics_file;
     my $gmt_class = $self->gmt_class;
     my %metrics = $self->metrics;
     my $metric_results = $gmt_class->parse_file_into_metrics_hashref($file);
