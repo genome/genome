@@ -4,6 +4,9 @@ use strict;
 use warnings;
 
 use Test::More;
+use List::Util qw(sum);
+
+require Sub::Override;
 
 use above "Genome";
 use_ok('Genome::Search::Queue') || die;
@@ -20,15 +23,7 @@ my $text_is_indexable = sub {
     }
 };
 
-test_create_missing_subject();
-test_create_missing_timestamp();
-test_create_existing_subject();
-test_create_non_indexable_subject();
-test_priority_sorting();
-
-done_testing();
-
-sub test_create_missing_subject {
+subtest test_create_missing_subject => sub {
     my $tx = UR::Context::Transaction->begin();
 
     my $index_queue = eval {
@@ -40,12 +35,12 @@ sub test_create_missing_subject {
     like($error, qr/subject/, 'error mentions subject');
 
     $tx->rollback();
-}
+};
 
-sub test_create_missing_timestamp {
+subtest test_create_missing_timestamp => sub {
     my $tx = UR::Context::Transaction->begin();
 
-    *Genome::Search::is_indexable = $text_is_indexable;
+    my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
 
     my $subject = UR::Value::Text->get('Hello, world.');
     my $index_queue = Genome::Search::Queue->create(
@@ -56,15 +51,13 @@ sub test_create_missing_timestamp {
     isa_ok($index_queue, 'UR::Object', 'create returned an object');
     ok($index_queue->timestamp, 'timestamp was added');
 
-    *Genome::Search::is_indexable = $orig_is_indexable;
-
     $tx->rollback();
-}
+};
 
-sub test_create_existing_subject {
+subtest test_create_existing_subject => sub {
     my $tx = UR::Context::Transaction->begin();
 
-    *Genome::Search::is_indexable = $text_is_indexable;
+    my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
 
     my $subject = UR::Value::Text->get('Hello, world.');
     my $index_queue = Genome::Search::Queue->create(
@@ -82,12 +75,10 @@ sub test_create_existing_subject {
 
     isnt($index_queue_2, $index_queue, 'new index_queue_2 is different than index_queue');
 
-    *Genome::Search::is_indexable = $orig_is_indexable;
-
     $tx->rollback();
-}
+};
 
-sub test_create_non_indexable_subject {
+subtest test_create_non_indexable_subject => sub {
     my $tx = UR::Context::Transaction->begin();
 
     my $subject = UR::Value::Text->get('Hello, world.');
@@ -103,12 +94,12 @@ sub test_create_non_indexable_subject {
     like($error, qr/indexable/, 'error mentions indexable');
 
     $tx->rollback();
-}
+};
 
-sub test_priority_sorting {
+subtest test_priority_sorting => sub {
     my $tx = UR::Context::Transaction->begin();
 
-    *Genome::Search::is_indexable = $text_is_indexable;
+    my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
 
     # purposely out of order so that timestamps won't sort in the same order as priority
     my @subject_ids = ('Thing 9', 'Thing', 'Thing 5', 'Thing 1', 'Thing 0', 'Thing 2');
@@ -141,4 +132,37 @@ sub test_priority_sorting {
     isnt(join('', @timestamp_sorted_queue_subject_ids), join('', @priority_sorted_queue_subject_ids), 'ordering by timestamp does not match priorty sort');
 
     $tx->rollback();
-}
+};
+
+subtest test_dedup => sub {
+    my $tx = UR::Context::Transaction->begin();
+
+    my $is_indexable = Sub::Override->new('Genome::Search::is_indexable', $text_is_indexable);
+    my $create_dedup_iterator = Sub::Override->new('Genome::Search::Queue::create_dedup_iterator' => sub{
+        return Genome::Search::Queue->create_iterator(
+            subject_class => 'UR::Value::Text',
+            -group_by => [qw(subject_class subject_id)],
+        );
+    });
+
+    my @n_max = 1..5;
+    for my $n_max (@n_max) {
+        for my $n (1..$n_max) {
+            my $subject = UR::Value::Text->get('Thing ' . $n);
+            my $index_queue = Genome::Search::Queue->create(
+                subject_id => $subject->id,
+                subject_class => $subject->class,
+            );
+        }
+    }
+    cmp_ok(sum(@n_max), '>', scalar(@n_max), 'duplicates will be created');
+    is(scalar(() = Genome::Search::Queue->get(subject_class => 'UR::Value::Text')),
+        sum(@n_max), 'duplicates were created');
+    ok(Genome::Search::Queue->dedup(), 'dedup returned successfully');
+    is(scalar(() = Genome::Search::Queue->get(subject_class => 'UR::Value::Text')),
+        scalar(@n_max), 'duplicates were removed');
+
+    $tx->rollback();
+};
+
+done_testing();
