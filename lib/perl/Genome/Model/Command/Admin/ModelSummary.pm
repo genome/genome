@@ -153,7 +153,7 @@ sub execute {
         elsif ($latest_build_status eq 'Succeeded') {
             $action = 'none';
         }
-        elsif ($self->should_review_model($model)) {
+        elsif ($self->should_review_model($model, $latest_build_status)) {
             $action = 'review';
         }
         else {
@@ -213,33 +213,23 @@ sub print_message {
 sub should_review_model {
     my $self = shift;
     my $model = shift;
+    my $latest_status = shift;
 
     # If the latest build succeeded then we're happy.
-    return if latest_build_succeeded($model);
+    return if $latest_status eq 'Succeeded';
 
-    my @builds = $model->builds;
-    return if @builds < 1;
+    # If there are no builds, nothing to review.
+    return if $latest_status eq '-';
 
-    my $latest_status = $model->latest_build->status;
     return 1 if $latest_status eq 'Unstartable';
 
-    return if @builds == 1;
-
-    # If it has failed >3 times in a row then submit for review.
+    # If it has failed >X times in a row then submit for review.
     return 1 if $self->model_has_failed_too_many_times($model);
 
     # If it hasn't made progress since last time then submit for review.
     return 1 unless $self->model_has_progressed($model);
 
     return;
-}
-
-
-sub latest_build_succeeded {
-    my $model = shift;
-
-    my $latest_build = $model->latest_build;
-    return ($latest_build->status eq 'Succeeded');
 }
 
 
@@ -262,7 +252,8 @@ sub model_has_progressed {
 
     my $failure_set = $self->failure_build_set($model);
 
-    die unless ($failure_set->count > 1);
+    #a first build has always made progress
+    return 1 unless ($failure_set->count > 1);
 
     my $it = $failure_set->member_iterator(-order_by => ['-created_at']);
     my $latest_build = $it->next;
