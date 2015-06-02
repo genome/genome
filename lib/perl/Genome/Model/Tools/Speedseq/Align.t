@@ -6,17 +6,17 @@ use warnings;
 use above 'Genome';
 use Test::More tests => 9;
 use Genome::Utility::Test qw(compare_ok);
+use Genome::Test::Data qw(get_test_file);
 
 my $pkg = 'Genome::Model::Tools::Speedseq::Align';
 use_ok($pkg);
 
 my $speedseq_version = 'test';
 
-my $test_data_dir = __FILE__.".d";
 my $expected_output_dir = __FILE__.".out";
 
-my $reference_fasta = $test_data_dir .'/human_g1k_v37_20_42220611-42542245.fasta';
-my $fastq = $test_data_dir .'/NA12878.20slice.30X.fastq.gz';
+my $reference_fasta = get_test_file('NA12878', 'human_g1k_v37_20_42220611-42542245.fasta');
+my $fastq = get_test_file('NA12878', 'NA12878.20slice.30X.fastq.gz');
 my $read_group_header = '@RG\tID:NA12878\tSM:NA12878\tLB:lib1';
 
 # Do not use the same temp directory for output.  speedseq cleans up the temp directory.

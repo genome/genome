@@ -1128,21 +1128,34 @@ sub create_bam_flagstat {
 
 sub create_bam_header {
     my $self = shift;
-    return 1 if -s $self->bam_header_path;
+    return $self->bam_header_path if -s $self->bam_header_path;
 
     my $guard  = $self->get_bam_lock->unlock_guard();
-    return 1 if -s $self->bam_header_path;
+    return $self->bam_header_path if -s $self->bam_header_path;
 
     my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 
+    my $source_bam_path = $self->source_bam_path_for_header;
+    my $bam_header_path = $self->path_for_bam_header_creation;
+
     Genome::Sys->shellcmd(
-        cmd => sprintf('%s view -H %s > %s', $sam_path, $self->bam_path, $self->bam_header_path),
-        output_files => [$self->bam_header_path],
-        input_files => [$self->bam_path],
+        cmd => sprintf('%s view -H %s > %s', $sam_path, $source_bam_path, $bam_header_path),
+        output_files => [$bam_header_path],
+        input_files => [$source_bam_path],
         keep_dbh_connection_open => 1,  # this runs very fast
     );
 
-    return 1;
+    return $bam_header_path;
+}
+
+sub source_bam_path_for_header {
+    my $self = shift;
+    return $self->bam_path;
+}
+
+sub path_for_bam_header_creation {
+    my $self = shift;
+    return $self->bam_header_path;
 }
 
 sub set_bam_size {
@@ -1794,23 +1807,8 @@ sub revivified_alignment_bam_file_path {
         die $self->error_message('Failed to get valid merged bam to recreate per lane bam '.$self->id);
     }
 
-    $self->create_bam_header;
-    $self->create_bam_flagstat;
-
-    my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
-        merged_bam          => $merged_bam,
-        per_lane_bam        => $revivified_bam,
-        instrument_data_id  => $self->read_and_platform_group_tag_id,
-        samtools_version    => $self->samtools_version,
-        picard_version      => $self->picard_version,
-        bam_header          => $self->bam_header_path,
-        comparison_flagstat => $self->bam_flagstat_path,
-        include_qc_failed   => 1,
-    );
-
-    unless ($cmd->execute) {
-        die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
-    }
+    my $bam_header_path = $self->create_bam_header;
+    $self->create_bam_flagstat_and_revivify($merged_bam, $revivified_bam, $bam_header_path);
 
     $self->_reallocate_temp_allocation($temp_allocation);
 
@@ -1821,6 +1819,27 @@ sub revivified_alignment_bam_file_path {
     }
     else {
         die $self->error_message("After running RecreatePerLaneBam, no per-lane bam (%s) exists still!", $revivified_bam);
+    }
+}
+
+sub create_bam_flagstat_and_revivify {
+    my ($self, $merged_bam, $revivified_bam, $bam_header_path) = @_;
+
+    $self->create_bam_flagstat;
+
+    my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
+        merged_bam          => $merged_bam,
+        per_lane_bam        => $revivified_bam,
+        instrument_data_id  => $self->read_and_platform_group_tag_id,
+        samtools_version    => $self->samtools_version,
+        picard_version      => $self->picard_version,
+        bam_header          => $bam_header_path,
+        comparison_flagstat => $self->bam_flagstat_path,
+        include_qc_failed   => 1,
+    );
+
+    unless ($cmd->execute) {
+        die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
     }
 }
 
