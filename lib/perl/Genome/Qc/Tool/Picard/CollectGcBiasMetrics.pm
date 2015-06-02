@@ -31,6 +31,10 @@ sub gmt_class {
     return 'Genome::Model::Tools::Picard::CollectGcBiasMetrics';
 }
 
+sub chart_output {
+    return Genome::Sys->create_temp_file_path();
+}
+
 sub output_file {
     return Genome::Sys->create_temp_file_path();
 }

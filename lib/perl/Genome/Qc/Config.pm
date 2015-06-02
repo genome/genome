@@ -26,6 +26,7 @@ sub get_commands_for_alignment_result {
                 assume_sorted => 1,
                 use_version => 1.123,
                 output_file=> 'output_file',
+                chart_output => 'chart_output',
             },
         },
         picard_mark_duplicates => {
