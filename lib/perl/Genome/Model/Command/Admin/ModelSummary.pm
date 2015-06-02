@@ -229,7 +229,7 @@ sub should_review_model {
     return 1 if $self->model_has_failed_too_many_times($model);
 
     # If it hasn't made progress since last time then submit for review.
-    return 1 unless model_has_progressed($model);
+    return 1 unless $self->model_has_progressed($model);
 
     return;
 }
@@ -250,25 +250,26 @@ sub model_has_failed_too_many_times {
     my $max_fails = $self->max_fail_count;
     return unless defined $max_fails;
 
-    my @builds = $model->builds;
-    return unless @builds;
+    my $failure_set = $self->failure_build_set($model);
 
-    my @failed_builds = grep { $_->status eq 'Failed' } @builds;
-    return (@failed_builds >= $max_fails);
+    return ($failure_set->count >= $max_fails);
 }
 
 
 sub model_has_progressed {
+    my $self = shift;
     my $model = shift;
 
-    my @builds = $model->builds;
-    die unless (@builds > 1);
+    my $failure_set = $self->failure_build_set($model);
 
-    my $latest_build = $model->latest_build;
+    die unless ($failure_set->count > 1);
+
+    my $it = $failure_set->member_iterator(-order_by => ['-created_at']);
+    my $latest_build = $it->next;
     my $latest_error = determine_error_for_build($latest_build);
     return unless $latest_error;
 
-    my $previous_build = previous_build($latest_build);
+    my $previous_build = $it->next;
     my $previous_error = determine_error_for_build($previous_build);
     return unless $previous_error;
 
@@ -283,20 +284,6 @@ sub failure_build_set {
         model_id => $model->id,
         status => ['Failed', 'Unstartable', 'Unknown'],
     );
-}
-
-
-sub previous_build {
-    my $build = shift;
-
-    my $model = $build->model;
-    my @prior_builds =
-        grep { $_->status eq $build->status }
-        grep { $_->date_scheduled lt $build->date_scheduled }
-        $model->builds;
-
-    my $previous_build = @prior_builds ? $prior_builds[0] : undef;
-    return $previous_build;
 }
 
 
