@@ -135,7 +135,7 @@ sub input_properties {
     my @metas = $self->command->__meta__->properties(
         is_input => 1, is_optional => 0);
 
-    my @metas_without_defaults = grep {! $_->default_value} @metas;
+    my @metas_without_defaults = grep {! defined($_->default_value)} @metas;
 
     my @result = map {$_->property_name} @metas_without_defaults;
     return sort @result;
