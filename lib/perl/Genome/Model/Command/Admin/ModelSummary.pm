@@ -55,8 +55,6 @@ sub execute {
     my @models = $self->models;
     my @hide_statuses = $self->hide_statuses;
 
-    my $synchronous = ($self->auto and $self->auto_batch_size);  # whether we should start builds as we go or wait until the end
-
     # Header for the report produced at the end of the loop
     $self->print_message(join("\t", qw(model_id action latest_build_status first_nondone_step latest_build_rev model_name pp_name fail_count)));
     $self->print_message(join("\t", qw(-------- ------ ------------------- ------------------ ---------------- ---------- ------- ----------)));
