@@ -10,6 +10,8 @@ use Module::Runtime qw(module_notional_filename use_package_optimistically);
 
 use UR;
 
+require Scalar::Util;
+
 class Genome::Logger {
     has => {
         delegate_logger => {
@@ -22,11 +24,13 @@ class Genome::Logger {
 my $logger;
 sub logger {
     my $class = shift;
-    if ($logger) {
+    if (Scalar::Util::blessed $logger
+        && $logger->isa($class)
+    ) {
         return $logger;
     }
 
-    $logger = Genome::Logger->create(
+    $logger = $class->create(
         delegate_logger => Log::Dispatch->new(@_),
     );
     $logger->delegate_logger->add(screen_to_add());
