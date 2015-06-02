@@ -103,13 +103,7 @@ sub execute {
     for my $model (@models) {
         my $per_model_txn = UR::Context::Transaction->begin();
 
-        my $build_iterator = $model->build_iterator(
-            'status not like' => 'Abandoned',
-            '-order_by' => '-created_at',
-        );
-        my $latest_build        = $build_iterator->next;
-        my $latest_build_status = ($latest_build ? $latest_build->status : '-');
-        $latest_build_status = 'Requested' if $model->build_requested;
+        my ($latest_build, $latest_build_status) = $self->_build_and_status_for_model($model);
 
 
         my @failed_builds = $model->builds(%failed_build_params);
@@ -200,6 +194,21 @@ sub execute {
     $self->print_message("Cleaned up " . $cleanup_rv{1} . ".") if $cleanup_rv{1};
     $self->print_message("Failed to clean up " . $cleanup_rv{0} . ".") if $cleanup_rv{0};
     return 1;
+}
+
+sub _build_and_status_for_model {
+    my $self = shift;
+    my $model = shift;
+
+    my $build_iterator = $model->build_iterator(
+        'status not like' => 'Abandoned',
+        '-order_by' => '-created_at',
+    );
+    my $latest_build        = $build_iterator->next;
+    my $latest_build_status = ($latest_build ? $latest_build->status : '-');
+    $latest_build_status = 'Requested' if $model->build_requested;
+
+    return ($latest_build, $latest_build_status);
 }
 
 
