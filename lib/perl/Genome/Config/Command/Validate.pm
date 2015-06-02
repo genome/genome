@@ -51,8 +51,8 @@ sub execute {
             push @{ $env{$spec->env} }, $spec;
         }
 
-        if ($spec->has_default_value) {
-            my $error = $spec->validate($spec->default_value);
+        if (Genome::Config::has_default_value($spec)) {
+            my $error = $spec->validate(Genome::Config::default_value($spec));
             if (defined $error) {
                 printf("%s has an invalid default_value\n", $spec->key);
                 $return = 0;

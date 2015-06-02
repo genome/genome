@@ -9,6 +9,7 @@ use Genome::ConfigSpec qw();
 use Path::Class qw();
 use YAML::Syck qw();
 
+require Scalar::Util;
 require Scope::Guard;
 
 =item get()
@@ -46,8 +47,7 @@ global it cannot be guaranteed that it will not be overwritten.
 =cut
 
 sub get {
-    my $key = shift;
-    my $spec = spec($key);
+    my $spec = _normalize_spec(shift);
 
     my $value = _lookup_value($spec);
     my $error = $spec->validate($value);
@@ -64,8 +64,7 @@ sub get {
 }
 
 sub validate {
-    my $key = shift;
-    my $spec = spec($key);
+    my $spec = _normalize_spec(shift);
     my $value = _lookup_value($spec);
     return $spec->validate($value);
 }
@@ -81,10 +80,10 @@ sub spec {
 }
 
 sub set_env {
-    my ($key, $value) = @_;
-    my $spec = Genome::Config::spec($key);
+    my $spec = _normalize_spec(shift);
+    my $value = shift;
     unless ($spec->has_env) {
-        croakf('configuration does not specify an environment variable: %s', $key);
+        croakf('configuration does not specify an environment variable: %s', $spec->key);
     }
 
     my $env_key = $spec->env;
@@ -153,8 +152,42 @@ sub global_dirs {
     return map { Path::Class::Dir->new($_) } split(/:/, $dirs);
 }
 
+sub has_default_value {
+    my $spec = _normalize_spec(shift);
+    return ($spec->has_default_value || $spec->has_default_from);
+}
+
+sub default_value {
+    my $spec = _normalize_spec(shift);
+    if ($spec->has_default_value) {
+        return $spec->default_value;
+    }
+
+    # This could infinite loop but will reveal itself when someone runs `genome
+    # config validate` after making their change.
+    if ($spec->has_default_from) {
+        return default_value($spec->default_from);
+    }
+
+    return;
+}
+
+=item _normalize_spec()
+
+C<_normalize_spec()> takes a key or spec as an input and returns the spec.
+
+=cut
+
+sub _normalize_spec {
+    my $spec = my $key = shift;
+    if (Scalar::Util::blessed($spec) && $spec->isa('Genome::ConfigSpec')) {
+        return $spec;
+    }
+    return spec($key);
+}
+
 sub _lookup_value {
-    my $spec = shift;
+    my $spec = _normalize_spec(shift);
 
     my $config_subpath = config_subpath();
     if ($spec->has_env && exists $ENV{$spec->env}) {
@@ -169,15 +202,16 @@ sub _lookup_value {
     @files = _lookup_files($config_subpath, snapshot_dir(), global_dirs());
     $value = _lookup_value_from_files($spec, @files);
 
-    if (!defined($value) && $spec->has_default_value) {
-        $value = $spec->default_value;
+    if (!defined($value) && has_default_value($spec)) {
+        $value = default_value($spec);
     }
 
     return $value;
 }
 
 sub _lookup_value_from_files {
-    my ($spec, @files) = @_;
+    my $spec = _normalize_spec(shift);
+    my @files = @_;
     for my $f (@files) {
         my $data = YAML::Syck::LoadFile($f);
         if ($data->{$spec->key}) {
