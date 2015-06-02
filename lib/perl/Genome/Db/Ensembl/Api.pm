@@ -25,15 +25,9 @@ sub create {
     $self->status_message("Download ensembl API version $version");
 
     my @package_names = $self->package_names;
-    #OLD CVS location
-    #my $base_url = "'http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/PACKAGENAME.tar.gz?root=ensembl&only_with_tag=branch-ensembl-VERSION&view=tar'";
-    #OLD github location
-    #my $base_url = "https://github.com/Ensembl/PACKAGENAME/archive/release/VERSION.zip";
     my $base_url = "https://github.com/Ensembl/PACKAGENAME.git";
 
     my $temp_directory_path = $self->temp_staging_directory;
-
-    #$self->download_vep($version, $temp_directory_path);
 
     for my $package_name (@package_names){
         my $git_url = $base_url;
@@ -91,18 +85,6 @@ sub download_and_extract {
     }
 
     return 1;
-}
-
-sub download_vep {
-    my $self = shift;
-    my $version = shift;
-    my $download_path = shift;
-
-    my $vep_name = "variant_effect_predictor";
-    my $tar_url = "'http://cvs.sanger.ac.uk/cgi-bin/viewvc.cgi/ensembl-tools/scripts/$vep_name.tar.gz?root=ensembl&pathrev=branch-ensembl-VERSION&view=tar'";
-    $tar_url =~ s/VERSION/$version/;
-
-    return $self->download_and_extract($tar_url, $download_path."/$vep_name.tar.gz", $download_path, $vep_name);
 }
 
 sub package_names {
