@@ -163,9 +163,9 @@ sub get_build_errors {
         my $header = join("\t", qw(Model Build Build-Class Date));
         my $line = join("\t", $build->model_id, $build->id, $build->class, $cmd->error_date);
         if ($cmd->error_type eq 'Unstartable') {
-            $key = $self->get_unstartable_key($cmd);
+            $key = $cmd->get_unstartable_key;
         } elsif ($cmd->error_type eq 'Failed') {
-            $key = $self->get_failed_key($cmd);
+            $key = $cmd->get_failed_key;
 
             # unstartable and unknown errors don't generally have a host.
             $header = join("\t", qw(Model Build Build-Class Host Date));
@@ -185,59 +185,6 @@ sub get_build_errors {
     return \%build_errors;
 }
 
-sub get_failed_key {
-    my ($self, $cmd) = @_;
-
-    if ($cmd->error_text =~ m/gscarchive/) {
-        return "Failed: Archived Data";
-    }
-    if ($cmd->error_source_line ne 'Unknown') {
-        (my $delocalized_file = $cmd->error_source_file) =~ s/^.*\/lib\/perl\///;
-        return sprintf("Failed: %s %s", $delocalized_file, $cmd->error_source_line);
-    } else {
-        return sprintf("Failed: %s", remove_ids_and_paths($cmd->error_text));
-    }
-}
-
-sub remove_ids_and_paths {
-    my $str = shift;
-    my $formatted_str = $str;
-
-    # replace things that look like paths
-    $formatted_str =~ s/[a-zA-Z0-9.\-_]*[\/][a-zA-Z0-9.\-_\/]*/<path>/g;
-
-    # replace things that look like ids
-    $formatted_str =~ s/[0-9a-f]{5,32}/<id>/g;
-
-    return $formatted_str;
-}
-
-
-sub get_unstartable_key {
-    my ($self, $cmd) = @_;
-
-    my $text = remove_ids_and_paths($cmd->error_text);
-    my $information;
-    if ($text =~ m/Transaction error:/) {
-        ($information = $text) =~ s/.*problems on//;
-        if ($information =~ m/(.*?)\:(.*?)\:/) {
-            $information = "$1: $2";
-        }
-    }
-    if ($text =~ m/reason:/) {
-        ($information = $text) =~ s/.*reason://;
-        if ($information =~ m/(.*?)\sat\s/) {
-            $information = $1;
-        }
-    }
-    if ($text =~ m/validated for start!/) {
-        ($information = $text) =~ s/.*validated for start!//;
-        if ($information =~ m/(.*?)\:(.*?)\:/) {
-            $information = "$1: $2";
-        }
-    }
-    return sprintf("Unstartable: %s", $information);
-}
 
 sub remove_builds_in_tickets {
     my ($self, $builds) = @_;

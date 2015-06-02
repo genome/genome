@@ -1407,6 +1407,16 @@ sub shellcmd {
     my $print_status_to_stderr       = delete $params{print_status_to_stderr};
     my $keep_dbh_connection_open     = delete $params{keep_dbh_connection_open};
 
+    my @cmdline;
+    if (ref($cmd) and ref($cmd) eq 'ARRAY') {
+        if (defined $set_pipefail) {
+            Carp::confess "Cannot use set_pipefail with ARRAY form of cmd!";
+        }
+
+        @cmdline = @$cmd;
+        $cmd = join(' ', map $self->quote_for_shell($_), @cmdline);
+    }
+
     $set_pipefail = 1 if not defined $set_pipefail;
     $print_status_to_stderr = 1 if not defined $print_status_to_stderr;
     $skip_if_output_is_present = 1 if not defined $skip_if_output_is_present;
@@ -1530,8 +1540,12 @@ sub shellcmd {
                 {   # POE sets a handler to ignore SIG{PIPE}, that makes the
                     # pipefail option useless.
                     local $SIG{PIPE} = 'DEFAULT';
-                    my @cmdline = ('bash', '-c', "$shellopts_part $cmd");
-                    exec(@cmdline)
+
+                    unless (@cmdline) {
+                        @cmdline = ('bash', '-c', "$shellopts_part $cmd");
+                    }
+
+                    exec { $cmdline[0] } (@cmdline)
                         or do {
                             print STDERR "Can't exec: $!\nCommand line was: ",join(' ', @cmdline),"\n";
                             exit(127);

@@ -36,6 +36,11 @@ class Genome::Model::ClinSeq::Command::Converge::Base {
               doc => 'minimum base quality of bases in reads to be considered',
               default => '20',
         },
+        allow_multiple_individuals => { 
+               is => 'Boolean',
+               default_value => 0,
+               doc => 'allow the user to combine clin-seq builds across multiple individuals (in cases that do not allow this)',
+        },
     ],
     doc => 'converge various data types across clinseq inputs'
 };
@@ -615,7 +620,11 @@ sub get_case_name{
   }
   my $nn = keys %names;
   if ($nn > 1){
-    die $self->error_message("$nn cases found among these builds, this tool is meant to operate on builds from a single individual");
+    if ($self->allow_multiple_individuals){
+      $self->warning_message("$nn cases found among these builds, this tool was originally meant to operate on builds from a single individual, combining multiple individuals anyway");
+    }else{
+      die $self->error_message("$nn cases found among these builds, this tool is meant to operate on builds from a single individual");
+    }
   }
 
   my $resolved_name;

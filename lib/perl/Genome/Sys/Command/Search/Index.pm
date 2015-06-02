@@ -43,7 +43,7 @@ sub execute {
     my $self = shift;
 
     # Manually init logger so it ties STDERR.
-    $self->log_dispatch();
+    $self->delegate_logger();
 
     if ($self->subject_text ne 'list') {
         my $confirmed = $self->prompt_for_confirmation() if $self->confirm;

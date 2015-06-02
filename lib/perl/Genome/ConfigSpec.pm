@@ -19,6 +19,7 @@ has 'key'        => (is => 'ro', isa => 'Str', required => 1);
 has 'validators' => (is => 'ro', isa => 'ArrayRef', default => sub { [] });
 
 has 'default_value' => (is => 'ro', isa => 'Str', predicate => 'has_default_value');
+has 'default_from'  => (is => 'ro', isa => 'Str', predicate => 'has_default_from');
 has 'env'           => (is => 'ro', isa => 'Str', predicate => 'has_env');
 has 'sticky'        => (is => 'ro', isa => 'Bool');
 
@@ -29,8 +30,12 @@ sub BUILD {
         croakf('`sticky` requires `env`');
     }
 
+    if ($self->has_default_value && $self->has_default_from) {
+        croakf('`default_value` and `default_from` are mutually exclusive');
+    }
+
     unshift @{$self->validators}, Genome::ConfigValidator::Defined->new();
-};
+}
 
 sub new_from_file {
     my $class = shift;
@@ -51,7 +56,7 @@ sub new_from_file {
         key => $key,
         validators => \@validators,
     );
-    for my $k (qw(env default_value sticky)) {
+    for my $k (qw(env default_from default_value sticky)) {
         if (defined $data->{$k}) {
             $params{$k} = $data->{$k};
         }
@@ -104,6 +109,11 @@ bound to.
 
 C<default_value> is the default value a configuration value should take when
 not otherwise specified.
+
+C<default_from> can be used to delegate the default value to another
+configuration variable.  If a configuration variable does not have a
+C<default_value> then the Genome::Config API will use C<default_from> to try
+looking up a default value for the specified configuration variable.
 
 C<sticky> is an attribute that suggests the value should not be allowed to
 change.

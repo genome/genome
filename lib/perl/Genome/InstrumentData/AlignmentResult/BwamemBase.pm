@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::InstrumentData::AlignmentResult::BwamemBase {
-    is => 'Genome::InstrumentData::AlignmentResult',
+    is => ['Genome::InstrumentData::AlignmentResult', 'Genome::InstrumentData::AlignmentResult::ReliesOnBwa'],
 };
 
 sub required_arch_os { 'x86_64' }
@@ -284,43 +284,11 @@ sub _param_hash_to_string {
     return join ' ', @param_list;
 }
 
-# Bwa mem should just find a corresponding Bwa index and symlink it. This is the
-# best we can do within the existing framework if we don't want to recreate an
-# identical index already created by the 'regular' bwa module.
-sub prepare_reference_sequence_index {
+sub bwa_version {
     my $class = shift;
     my $refindex = shift;
 
-    my $staging_dir = $refindex->temp_staging_directory;
-
-    my $aligner_version = $refindex->aligner_version;
-
-    $class->debug_message("Bwa mem version $aligner_version is looking for a bwa version $aligner_version index.");
-
-    Genome::Sys->create_symlink($refindex->reference_build->get_sequence_dictionary("sam"), $staging_dir ."/all_sequences.dict" );
-
-    my $bwa_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->get_or_create(
-        users              => $refindex->_user_data_for_nested_results,
-        reference_build_id => $refindex->reference_build_id,
-        aligner_name       => 'bwa',
-        #aligner_params    => $refindex->aligner_params, # none of the aligner params should affect the index step so I think this okay
-        aligner_version    => $aligner_version,
-        test_name          => Genome::Config::get('aligner_index_test_name'),
-    );
-
-    for my $filepath (glob($bwa_index->output_dir . "/*")){
-        my $filename = File::Basename::fileparse($filepath);
-        next if $filename eq 'all_sequences.fa';
-        next if $filename eq 'all_sequences.dict';
-        Genome::Sys->create_symlink($filepath, $staging_dir . "/$filename");
-    }
-
-    $bwa_index->add_user(
-        label => 'uses',
-        user  => $refindex
-    );
-
-    return 1;
+    return $refindex->aligner_version;
 }
 
 1;

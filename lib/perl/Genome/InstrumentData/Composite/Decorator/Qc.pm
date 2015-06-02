@@ -16,10 +16,8 @@ sub decorate {
 
     my $workflow = $operation->workflow_model;
 
-    my $qc_runner_op = Workflow::Operation->create(
-        name => $operation->name . ' @qc(' . $config_name . ')',
-        operation_type => Workflow::OperationType::Command->get('Genome::Qc::Run'),
-    );
+    my $name = $operation->name . ' @qc(' . $config_name . ')';
+    my $qc_runner_op = $class->create_qc_runner_op($name);
     $qc_runner_op->workflow_model($workflow);
     my $new_input_property = 'config_name_' . $qc_runner_op->id;
     my $new_output_property = 'qc_result_' . $qc_runner_op->id;
@@ -41,13 +39,7 @@ sub decorate {
         right_workflow_operation_id => $qc_runner_op->id,
         right_property => 'result_users',
     );
-    Genome::InstrumentData::Composite::Workflow::Generator::Base->_add_link_to_workflow(
-        $workflow,
-        left_workflow_operation_id => $operation->id,
-        left_property => 'alignment_result',
-        right_workflow_operation_id => $qc_runner_op->id,
-        right_property => 'alignment_result',
-    );
+    $class->add_alignment_link($workflow, $operation, $qc_runner_op);
     Genome::InstrumentData::Composite::Workflow::Generator::Base->_add_link_to_workflow(
         $workflow,
         left_workflow_operation_id => $qc_runner_op->id,
@@ -57,6 +49,30 @@ sub decorate {
     );
 
     return ('m_'. $new_input_property => $config_name);
+}
+
+sub create_qc_runner_op {
+    my $class = shift;
+    my $name = shift;
+
+    my $qc_runner_op = Workflow::Operation->create(
+        name => $name,
+        operation_type => Workflow::OperationType::Command->get('Genome::Qc::Run'),
+    );
+
+    return $qc_runner_op;
+}
+
+sub add_alignment_link {
+    my ($class, $workflow, $operation, $qc_runner_op) = @_;
+
+    Genome::InstrumentData::Composite::Workflow::Generator::Base->_add_link_to_workflow(
+        $workflow,
+        left_workflow_operation_id => $operation->id,
+        left_property => 'alignment_result',
+        right_workflow_operation_id => $qc_runner_op->id,
+        right_property => 'alignment_result',
+    );
 }
 
 1;

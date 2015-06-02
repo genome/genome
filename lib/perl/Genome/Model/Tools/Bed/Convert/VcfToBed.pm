@@ -53,17 +53,17 @@ sub process_source {
                 my $pos = $entry->{position} + $shift;
                 if($ref eq '*') {
                     #insertion
-                    $self->write_bed_line($entry->{chrom}, $pos-1, $pos-1, $ref, $var, '-', '-');
+                    $self->write_bed_line($entry->{chrom}, $pos-1, $pos-1, $ref, $var);
                 }
                 if($var eq '*') {
                     #deletion
-                    $self->write_bed_line($entry->{chrom}, $pos-1, $pos-1 + length($ref), $ref, $var, '-', '-');
+                    $self->write_bed_line($entry->{chrom}, $pos-1, $pos-1 + length($ref), $ref, $var);
                 }
             }
         }
         else {
             my $bed_gt = $self->_convert_snv_gt_to_bed($entry->{reference_allele}, @genotype_alleles);
-            $self->write_bed_line($entry->{chrom}, $entry->{position}-1, $entry->{position}, @$bed_gt, '-', '-');
+            $self->write_bed_line($entry->{chrom}, $entry->{position}-1, $entry->{position}, @$bed_gt);
         }
     }
     return 1;
@@ -115,7 +115,7 @@ sub help_synopsis {
 EOS
 }
 
-sub help_detail {                           
+sub help_detail {
     return <<EOS
     This tool takes a VCF file and converts the first sample in it to a TGI variant BED file with no information about the depth and quality
 EOS
