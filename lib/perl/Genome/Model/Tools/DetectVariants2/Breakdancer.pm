@@ -10,7 +10,7 @@ use Genome::Utility::Text;
 my @FULL_CHR_LIST = (1..22, 'X', 'Y', 'MT');
 
 class Genome::Model::Tools::DetectVariants2::Breakdancer{
-    is => 'Genome::Model::Tools::DetectVariants2::Detector',
+    is => [qw(Genome::Model::Tools::DetectVariants2::Detector Genome::Configurable)],
     has => [
         _config_base_name => {
             is => 'Text',
@@ -73,7 +73,8 @@ class Genome::Model::Tools::DetectVariants2::Breakdancer{
     ],
     has_param => [
         lsf_resource => {
-            default_value => "-M 25000000 -R 'select[mem>25000] rusage[mem=25000]'",
+            is_classwide => 1,
+            config => 'dv2.breakdancer.lsf_resource',
         },
     ],
 };

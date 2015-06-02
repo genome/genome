@@ -9,6 +9,7 @@ use Genome::ConfigSpec qw();
 use Path::Class qw();
 use YAML::Syck qw();
 
+require Genome::Logger;
 require Scope::Guard;
 
 =item get()
@@ -60,6 +61,7 @@ sub get {
         $ENV{$spec->env} = $value;
     }
 
+    Genome::Logger->debugf(qq(got config value for '%s': %s\n), $key, $value);
     return $value;
 }
 
