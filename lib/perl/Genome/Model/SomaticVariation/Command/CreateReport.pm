@@ -85,6 +85,11 @@ class Genome::Model::SomaticVariation::Command::CreateReport {
             is => 'Genome::Disk::Allocation',
         },
     ],
+    has_param => [
+        lsf_resource => {
+            default => "-R 'select[tmp>2000] rusage[tmp=2000]'",
+        },
+    ],
 };
 
 
