@@ -38,7 +38,7 @@ class Genome::Model::Command::Admin::FailedModelTickets {
 
 sub help_detail {
     return <<HELP;
-This command collects cron models by failed or unstartable build events and scours tickets for them. If they are not found, the models are summaraized first by the error entry log and then by grepping the error log files. The summary is the printed to STDOUT.
+This command collects cron models with failed or unstartable builds and scours tickets for their IDs. If they are not found in the existing tickets, the models are summarized and grouped by the `genome model build determine-error` output.
 HELP
 }
 
