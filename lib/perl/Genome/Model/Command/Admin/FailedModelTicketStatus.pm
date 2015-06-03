@@ -29,6 +29,11 @@ class Genome::Model::Command::Admin::FailedModelTicketStatus {
             doc => 'Only print status summary for each ticket',
             default => 0,
         },
+        include_subjects => {
+            is => 'Boolean',
+            doc => 'Include the subject of each ticket in the output',
+            default => 0,
+        },
     ],
 };
 
@@ -82,6 +87,13 @@ sub execute {
             $self->_color($self->_color('Ticket %s', 'bold'), 'white') .' (' . $self->_color('%s',$color) . '):',
             $ticket_id, $ticket->owner
         );
+        if($self->include_subjects) {
+            $self->status_message(
+                'Subject: ' . $self->_color('%s', 'magenta'),
+                $ticket->subject,
+            );
+        }
+
         if (@ids) {
             my @models = Genome::Model->get(\@ids);
             if (@models) {
