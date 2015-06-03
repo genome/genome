@@ -31,7 +31,7 @@ my $expected_stats = {
     false_positive => 1,
     false_negative => 1,
     ppv => .5,
-    specificity => .5,
+    sensitivity => .5,
     f1 => .5,
 };
 is_deeply($expected_stats, $cmd->rawstats, "stats were set correctly");
