@@ -5,17 +5,12 @@ use warnings;
 
 use Genome;
 
-use Error qw(:try);
-require RT::Client::REST;
-require RT::Client::REST::Ticket;
-require WWW::Mechanize;
-
 BEGIN {
         $ENV{UR_DBI_NO_COMMIT} = 1;
 }
 
 class Genome::Model::Command::Admin::FailedModelTickets {
-    is => 'Genome::Command::WithColor',
+    is => 'Genome::Model::Command::Admin::FailedModelTicketBase',
     doc => 'find failed cron models, check that they are in a ticket',
     has_input => [
         include_failed => {
@@ -162,69 +157,16 @@ sub get_build_errors {
     return \%build_errors;
 }
 
-sub _find_open_tickets {
-    my ($self, $rt) = @_;
-
-    # The call to $rt->search() below messed up the login credentials stored in the
-    # $rt session, making the loop at the bottom that retrieves tickets fail.
-    # Save a copy of the login credentials here so we can re-set them when it's
-    # time to get the ticket details
-    my $login_cookies = $rt->_cookie();
-
-    # Retrieve tickets -
-    $self->status_message('Looking for tickets...');
-    my @ticket_ids;
-    try {
-        @ticket_ids = $rt->search(
-            type => 'ticket',
-            query => "Queue = 'apipe-support' AND ( Status = 'new' OR Status = 'open' )",
-
-        );
-    }
-    catch Exception::Class::Base with {
-        my $msg = shift;
-        if ( $msg eq 'Internal Server Error' ) {
-            die 'Incorrect username or password';
-        }
-        else {
-            die $msg->message;
-        }
-    };
-    $self->status_message($self->_color('Tickets (new or open): ', 'bold').scalar(@ticket_ids));
-
-    $rt->_ua->cookie_jar($login_cookies);
-
-    return @ticket_ids;
-}
-
-sub _ticket_for_id {
-    my ($self, $rt, $ticket_id) = @_;
-
-    my $ticket = eval {
-        RT::Client::REST::Ticket->new(
-            rt => $rt,
-            id => $ticket_id,
-        )->retrieve;
-    };
-    unless ($ticket) {
-        $self->error_message("Problem retrieving data for ticket $ticket_id: $@");
-    }
-
-    return $ticket;
-}
-
-
 sub remove_builds_in_tickets {
     my ($self, $builds) = @_;
 
     # Connect
-    my $rt = _login_sso();
+    my $rt = $self->_login_sso();
 
     # Go through tickets
     my @ticket_ids = $self->_find_open_tickets($rt);
     my %tickets;
 
-    # re-set the login cookies that we saved away eariler
     $self->status_message('Matching models and builds to tickets...');
     for my $ticket_id ( @ticket_ids ) {
         my $ticket = $self->_ticket_for_id($rt, $ticket_id);
@@ -259,36 +201,5 @@ sub remove_builds_in_tickets {
     return %tickets;
 }
 
-sub _server {
-    return 'https://rt.gsc.wustl.edu/';
-}
-
-sub _login_sso {
-    my $self = shift;
-
-    my $mech = WWW::Mechanize->new(
-        after =>  1,
-        timeout => 10,
-        agent =>  'WWW-Mechanize',
-    );
-    $mech->get( _server() );
-
-    my $uri = $mech->uri;
-    my $host = $uri->host;
-    if ($host ne 'sso.gsc.wustl.edu') {
-        return;
-    }
-
-    $mech->submit_form (
-        form_number =>  1,
-        fields =>  {
-            j_username => 'limsrt',
-            j_password => 'Koh3gaed',
-        },
-    );
-    $mech->submit();
-
-    return RT::Client::REST->new(server => _server(), _cookie =>  $mech->{cookie_jar});
-}
 
 1;

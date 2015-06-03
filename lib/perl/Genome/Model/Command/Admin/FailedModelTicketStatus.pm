@@ -5,17 +5,12 @@ use warnings;
 
 use Genome;
 
-use Error qw(:try);
-require RT::Client::REST;
-require RT::Client::REST::Ticket;
-require WWW::Mechanize;
-
 BEGIN {
     $ENV{UR_DBI_NO_COMMIT} = 1;
 }
 
 class Genome::Model::Command::Admin::FailedModelTicketStatus {
-    is => 'Genome::Command::WithColor',
+    is => 'Genome::Model::Command::Admin::FailedModelTicketBase',
     doc => 'report status of models in tickets',
     has_optional_input => [
         tickets => {
@@ -48,15 +43,15 @@ sub execute {
     my $self = shift;
 
     # Connect
-    my $rt = Genome::Model::Command::Admin::FailedModelTickets->_login_sso();
+    my $rt = $self->_login_sso();
 
     my @ticket_ids = $self->tickets;
     unless(@ticket_ids) {
-        @ticket_ids = Genome::Model::Command::Admin::FailedModelTickets::_find_open_tickets($self, $rt);
+        @ticket_ids = $self->_find_open_tickets($rt);
     }
 
     for my $ticket_id ( @ticket_ids ) {
-        my $ticket = Genome::Model::Command::Admin::FailedModelTickets::_ticket_for_id($self, $rt, $ticket_id);
+        my $ticket = $self->_ticket_for_id($rt, $ticket_id);
         next unless $ticket;
 
         if(defined $self->owner and $ticket->owner ne $self->owner) {
