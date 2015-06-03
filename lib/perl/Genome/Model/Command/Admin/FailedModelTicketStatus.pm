@@ -56,16 +56,8 @@ sub execute {
     }
 
     for my $ticket_id ( @ticket_ids ) {
-        my $ticket = eval {
-            RT::Client::REST::Ticket->new(
-                rt => $rt,
-                id => $ticket_id,
-            )->retrieve;
-        };
-        unless ($ticket) {
-            $self->error_message("Problem retrieving data for ticket $ticket_id: $@");
-            next;
-        }
+        my $ticket = Genome::Model::Command::Admin::FailedModelTickets::_ticket_for_id($self, $rt, $ticket_id);
+        next unless $ticket;
 
         if(defined $self->owner and $ticket->owner ne $self->owner) {
             next;

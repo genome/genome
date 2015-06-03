@@ -197,6 +197,22 @@ sub _find_open_tickets {
     return @ticket_ids;
 }
 
+sub _ticket_for_id {
+    my ($self, $rt, $ticket_id) = @_;
+
+    my $ticket = eval {
+        RT::Client::REST::Ticket->new(
+            rt => $rt,
+            id => $ticket_id,
+        )->retrieve;
+    };
+    unless ($ticket) {
+        $self->error_message("Problem retrieving data for ticket $ticket_id: $@");
+    }
+
+    return $ticket;
+}
+
 
 sub remove_builds_in_tickets {
     my ($self, $builds) = @_;
@@ -211,16 +227,8 @@ sub remove_builds_in_tickets {
     # re-set the login cookies that we saved away eariler
     $self->status_message('Matching models and builds to tickets...');
     for my $ticket_id ( @ticket_ids ) {
-        my $ticket = eval {
-            RT::Client::REST::Ticket->new(
-                rt => $rt,
-                id => $ticket_id,
-            )->retrieve;
-        };
-        unless ($ticket) {
-            $self->error_message("Problem retrieving data for ticket $ticket_id: $@");
-            next;
-        }
+        my $ticket = $self->_ticket_for_id($rt, $ticket_id);
+        next unless $ticket;
 
         my $transactions = $ticket->transactions;
         my $transaction_iterator = $transactions->get_iterator;
