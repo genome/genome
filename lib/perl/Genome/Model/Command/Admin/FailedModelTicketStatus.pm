@@ -22,6 +22,7 @@ class Genome::Model::Command::Admin::FailedModelTicketStatus {
         owner => {
             is => 'Text',
             doc => 'Limit any tickets to those owned by this user',
+            example_values => ['Nobody'],
         },
         summary_only => {
             is => 'Boolean',
