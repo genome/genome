@@ -590,6 +590,12 @@ $Genome::Command::OPTS_SPEC = [
           ],
           'analysis-process=s',
           undef,
+          'reference-version=s',
+          [
+            'GRCh37',
+            'GRCh38',
+            'GRCm38'
+          ],
           'gtf-cache!',
           undef,
           'gtf-file=s',
@@ -647,6 +653,12 @@ $Genome::Command::OPTS_SPEC = [
           'files',
           'output-file=s',
           'files',
+          'condel=s',
+          [
+            'p',
+            's',
+            'b'
+          ],
           'hgnc!',
           undef,
           'sift=s',
@@ -656,12 +668,6 @@ $Genome::Command::OPTS_SPEC = [
             'b'
           ],
           'polyphen=s',
-          [
-            'p',
-            's',
-            'b'
-          ],
-          'condel=s',
           [
             'p',
             's',
@@ -688,6 +694,12 @@ $Genome::Command::OPTS_SPEC = [
           ],
           'analysis-process=s',
           undef,
+          'reference-version=s',
+          [
+            'GRCh37',
+            'GRCh38',
+            'GRCm38'
+          ],
           'gtf-cache!',
           undef,
           'gtf-file=s',
@@ -745,6 +757,12 @@ $Genome::Command::OPTS_SPEC = [
           'files',
           'output-file=s',
           'files',
+          'condel=s',
+          [
+            'p',
+            's',
+            'b'
+          ],
           'hgnc!',
           undef,
           'sift=s',
@@ -754,12 +772,6 @@ $Genome::Command::OPTS_SPEC = [
             'b'
           ],
           'polyphen=s',
-          [
-            'p',
-            's',
-            'b'
-          ],
-          'condel=s',
           [
             'p',
             's',
@@ -789,6 +801,12 @@ $Genome::Command::OPTS_SPEC = [
         ],
         'analysis-process=s',
         undef,
+        'reference-version=s',
+        [
+          'GRCh37',
+          'GRCh38',
+          'GRCm38'
+        ],
         'gtf-cache!',
         undef,
         'gtf-file=s',
@@ -846,6 +864,12 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'output-file=s',
         'files',
+        'condel=s',
+        [
+          'p',
+          's',
+          'b'
+        ],
         'hgnc!',
         undef,
         'sift=s',
@@ -855,12 +879,6 @@ $Genome::Command::OPTS_SPEC = [
           'b'
         ],
         'polyphen=s',
-        [
-          'p',
-          's',
-          'b'
-        ],
-        'condel=s',
         [
           'p',
           's',
@@ -7727,6 +7745,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'ensembl-annotation-build-id=s',
         'files',
+        'reference-version=s',
+        'files',
         'region=s',
         'files',
         'output-file=s',
@@ -7990,6 +8010,8 @@ $Genome::Command::OPTS_SPEC = [
           undef,
           'per-site-report-file=s',
           'files',
+          'reference-version=s',
+          'files',
           'sample-list-file=s',
           'files',
           'clinical-data-file=s',
@@ -8000,11 +8022,11 @@ $Genome::Command::OPTS_SPEC = [
           'files',
           'maximum-maf=s',
           undef,
+          'identify-controls-by=s',
+          'files',
           'glm-max-cols-per-file=s',
           undef,
           'identify-cases-by=s',
-          'files',
-          'identify-controls-by=s',
           'files',
           'help!',
           undef
@@ -8102,6 +8124,8 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'ensembl-annotation-build=s',
         undef,
+        'reference-version=s',
+        'files',
         'log-dir=s',
         'files',
         'work-dir=s',
@@ -37393,6 +37417,8 @@ $Genome::Command::OPTS_SPEC = [
       undef,
       'update',
       undef,
+      'align-and-merge',
+      undef,
       'calculate-read-count',
       undef,
       'help!',
@@ -37400,6 +37426,43 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>update',
     [
+      'help!',
+      undef
+    ],
+    '>align-and-merge',
+    [
+      'lsf-resource=s',
+      'files',
+      'name=s',
+      'files',
+      'version=s',
+      'files',
+      'params=s',
+      'files',
+      'instrument-data=s@',
+      undef,
+      'reference-sequence-build=s',
+      undef,
+      'picard-version=s',
+      'files',
+      'samtools-version=s',
+      'files',
+      'result-users=s',
+      undef,
+      'bedtools-version=s',
+      'files',
+      'alignment-result=s',
+      undef,
+      'force-fragment!',
+      undef,
+      'per-lane-alignment-result-ids=s@',
+      'files',
+      'trimmer-name=s',
+      'files',
+      'trimmer-params=s',
+      'files',
+      'trimmer-version=s',
+      'files',
       'help!',
       undef
     ],
