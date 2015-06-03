@@ -5,11 +5,7 @@ use warnings;
 
 use Genome;
 
-use Data::Dumper 'Dumper';
 use Error qw(:try);
-use File::Find 'find';
-use File::Grep 'fgrep';
-require IO::Prompt;
 require RT::Client::REST;
 require RT::Client::REST::Ticket;
 require WWW::Mechanize;
