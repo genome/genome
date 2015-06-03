@@ -162,12 +162,8 @@ sub get_build_errors {
     return \%build_errors;
 }
 
-
-sub remove_builds_in_tickets {
-    my ($self, $builds) = @_;
-
-    # Connect
-    my $rt = _login_sso();
+sub _find_open_tickets {
+    my ($self, $rt) = @_;
 
     # The call to $rt->search() below messed up the login credentials stored in the
     # $rt session, making the loop at the bottom that retrieves tickets fail.
@@ -196,11 +192,23 @@ sub remove_builds_in_tickets {
     };
     $self->status_message($self->_color('Tickets (new or open): ', 'bold').scalar(@ticket_ids));
 
+    $rt->_ua->cookie_jar($login_cookies);
+
+    return @ticket_ids;
+}
+
+
+sub remove_builds_in_tickets {
+    my ($self, $builds) = @_;
+
+    # Connect
+    my $rt = _login_sso();
+
     # Go through tickets
+    my @ticket_ids = $self->_find_open_tickets($rt);
     my %tickets;
 
     # re-set the login cookies that we saved away eariler
-    $rt->_ua->cookie_jar($login_cookies);
     $self->status_message('Matching models and builds to tickets...');
     for my $ticket_id ( @ticket_ids ) {
         my $ticket = eval {

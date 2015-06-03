@@ -50,37 +50,11 @@ sub execute {
     # Connect
     my $rt = Genome::Model::Command::Admin::FailedModelTickets->_login_sso();
 
-    # The call to $rt->search() below messed up the login credentials stored in the
-    # $rt session, making the loop at the bottom that retrieves tickets fail.
-    # Save a copy of the login credentials here so we can re-set them when it's
-    # time to get the ticket details
-    my $login_cookies = $rt->_cookie();
-
-    # Retrieve tickets -
-    $self->status_message('Looking for tickets...');
     my @ticket_ids = $self->tickets;
     unless(@ticket_ids) {
-        try {
-            @ticket_ids = $rt->search(
-                type => 'ticket',
-                query => "Queue = 'apipe-support' AND ( Status = 'new' OR Status = 'open' )",
-
-            );
-        }
-        catch Exception::Class::Base with {
-            my $msg = shift;
-            if ( $msg eq 'Internal Server Error' ) {
-                die 'Incorrect username or password';
-            }
-            else {
-                die $msg->message;
-            }
-        };
-        $self->status_message($self->_color('Tickets (new or open): ', 'bold').scalar(@ticket_ids));
+        @ticket_ids = Genome::Model::Command::Admin::FailedModelTickets::_find_open_tickets($self, $rt);
     }
 
-    # re-set the login cookies that we saved away eariler
-    $rt->_ua->cookie_jar($login_cookies);
     for my $ticket_id ( @ticket_ids ) {
         my $ticket = eval {
             RT::Client::REST::Ticket->new(
