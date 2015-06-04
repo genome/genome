@@ -458,13 +458,9 @@ sub _generate_result {
     $self->_create_disk_allocation;
 
     # STEP 4: PREPARE THE STAGING DIRECTORY
-    $self->debug_message("Prepare working directories...");
     $self->_prepare_working_and_staging_directories;
-    $self->debug_message("Staging path is " . $self->temp_staging_directory);
-    $self->debug_message("Working path is " . $self->temp_scratch_directory);
 
     # STEP 5: PREPARE REFERENCE SEQUENCES
-    $self->debug_message("Preparing the reference sequences...");
     unless($self->_prepare_reference_sequences) {
         $self->error_message("Reference sequences are invalid.  We can't proceed:  " . $self->error_message);
         die $self->error_message();
@@ -481,14 +477,12 @@ sub _generate_result {
 
         # STEP 7: PREPARE THE ALIGNMENT FILE (groups file, sequence dictionary)
         # this also prepares the bam output pipe and crams the alignment headers through it.
-        $self->debug_message("Preparing the all_sequences.sam in scratch");
         unless ($self->prepare_scratch_sam_file) {
             $self->error_message("Failed to prepare the scratch sam file with groups and sequence dictionary");
             die $self->error_message;
         }
 
         # STEP 7: RUN THE ALIGNER
-        $self->debug_message("Running aligner...");
         unless ($self->run_aligner(@inputs)) {
             $self->error_message("Failed to collect inputs and/or run the aligner!");
             die $self->error_message;
@@ -498,7 +492,6 @@ sub _generate_result {
         if ($self->supports_streaming_to_bam) {
             $self->close_out_streamed_bam_file;
         } else {
-            $self->debug_message("Constructing a BAM file (if necessary)...");
             unless( $self->create_BAM_in_staging_directory()) {
                 $self->error_message("Call to create_BAM_in_staging_directory failed.\n");
                 die $self->error_message;
@@ -522,14 +515,12 @@ sub _generate_result {
     }
 
     # STEP 9-10, validate BAM file (if necessary)
-    $self->debug_message("Postprocessing & Sanity Checking BAM file (if necessary)...");
     unless ($self->postprocess_bam_file()) {
         $self->error_message("Postprocess BAM file failed");
         die $self->error_message;
     }
 
     # STEP 11: COMPUTE ALIGNMENT METRICS
-    $self->debug_message("Computing alignment metrics...");
     $self->_compute_alignment_metrics();
 
     # STEP 12: PREPARE THE ALIGNMENT DIRECTORY ON NETWORK DISK
@@ -610,6 +601,8 @@ sub final_staged_bam_path {
 
 sub prepare_scratch_sam_file {
     my $self = shift;
+
+    $self->debug_message("Preparing the all_sequences.sam in scratch");
 
     my $scratch_sam_file = $self->scratch_sam_file_path;
 
@@ -770,6 +763,8 @@ sub collect_inputs {
 
 sub run_aligner {
     my ($self, @inputs) = @_;
+
+    $self->debug_message("Running aligner...");
 
     $self->debug_message("Got " . scalar(@inputs) . " input files");
     if (@inputs > 3) {
@@ -1001,6 +996,7 @@ sub close_out_streamed_bam_file {
 sub create_BAM_in_staging_directory {
     my $self = shift;
     # STEP 9: CONVERT THE ALL_SEQUENCES.SAM into ALL_SEQUENCES.BAM
+    $self->debug_message("Constructing a BAM file (if necessary)...");
     unless($self->_process_sam_files) {
         $self->error_message("Failed to process sam files into bam files. " . $self->error_message);
         die $self->error_message;
@@ -1011,6 +1007,8 @@ sub create_BAM_in_staging_directory {
 
 sub postprocess_bam_file {
     my $self = shift;
+
+    $self->debug_message("Postprocessing & Sanity Checking BAM file (if necessary)...");
 
     my $bam_file    = $self->final_staged_bam_path;
     my $output_file = $bam_file . '.flagstat';
@@ -1045,6 +1043,9 @@ sub _use_alignment_summary_cpp { return 1; };
 
 sub _compute_alignment_metrics {
     my $self = shift;
+
+    $self->debug_message("Computing alignment metrics...");
+
     my $bam = $self->final_staged_bam_path;
     $self->set_bam_size($bam); #store this for per lane bam recreation
 
@@ -1449,6 +1450,8 @@ sub _gather_params_for_get_or_create {
 sub _prepare_working_and_staging_directories {
     my $self = shift;
 
+    $self->debug_message("Prepare working directories...");
+
     unless ($self->_prepare_staging_directory) {
         $self->error_message("Failed to prepare staging directory");
         return;
@@ -1462,6 +1465,9 @@ sub _prepare_working_and_staging_directories {
     unless($scratch_tempdir) {
         die "failed to create a temp scrach directory for working files";
     }
+
+    $self->debug_message("Staging path is " . $self->temp_staging_directory);
+    $self->debug_message("Working path is " . $self->temp_scratch_directory);
 
     return 1;
 }
@@ -1585,6 +1591,9 @@ sub _extract_input_fastq_filenames {
 
 sub _prepare_reference_sequences {
     my $self = shift;
+
+    $self->debug_message("Preparing the reference sequences...");
+
     my $reference_build = $self->reference_build;
 
     my $ref_basename = File::Basename::fileparse($reference_build->full_consensus_path('fa'));

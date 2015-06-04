@@ -54,22 +54,13 @@ sub _inititalize_revivified_bam {
 
     $self->_create_disk_allocation;
 
-    $self->debug_message("Prepare working directories...");
     $self->_prepare_working_and_staging_directories;
-    $self->debug_message("Staging path is " . $self->temp_staging_directory);
-    $self->debug_message("Working path is " . $self->temp_scratch_directory);
-
     $self->_prepare_output_directory;
-
     my $bam_file = $self->SUPER::get_bam_file;
-
-    $self->debug_message("Postprocessing & Sanity Checking BAM file (if necessary)...");
     unless ($self->postprocess_bam_file()) {
         $self->error_message("Postprocess BAM file failed");
         die $self->error_message;
     }
-
-    $self->debug_message("Computing alignment metrics...");
     $self->_compute_alignment_metrics();
 
     $self->debug_message("Preparing the output directory...");
