@@ -17,12 +17,6 @@ class Genome::Model::Command::Admin::FailedModelTicketBase {
 sub _find_open_tickets {
     my ($self, $rt) = @_;
 
-    # The call to $rt->search() below messed up the login credentials stored in the
-    # $rt session, making the loop at the bottom that retrieves tickets fail.
-    # Save a copy of the login credentials here so we can re-set them when it's
-    # time to get the ticket details
-    my $login_cookies = $rt->_cookie();
-
     # Retrieve tickets -
     $self->status_message('Looking for tickets...');
     my @ticket_ids;
@@ -43,9 +37,6 @@ sub _find_open_tickets {
         }
     };
     $self->status_message($self->_color('Tickets (new or open): ', 'bold').scalar(@ticket_ids));
-
-    # re-set the login cookies that we saved away eariler
-    $rt->_ua->cookie_jar($login_cookies);
 
     return @ticket_ids;
 }
@@ -95,7 +86,11 @@ sub _login_sso {
     );
     $mech->submit();
 
-    return RT::Client::REST->new(server => _server(), _cookie =>  $mech->{cookie_jar});
+    my $rt = RT::Client::REST->new(server => _server(), _cookie =>  $mech->{cookie_jar});
+    #propagate the cookie jar to the UA since we're not calling $rt->login
+    $rt->_ua->cookie_jar( $mech->{cookie_jar} );
+
+    return $rt;
 }
 
 1;
