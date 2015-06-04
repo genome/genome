@@ -60,11 +60,14 @@ sub execute {
     # this will get logged to the log files
     $self->_log_execution_information;
 
-    my $command = $self->_instantiate_command(decode($self->execution->inputs));
-
-    $self->_run_command($command);
+    my ($status_ok, $command) = $self->_instantiate_and_run_command;
 
     $self->_teardown_logging;
+
+    unless ($status_ok) {
+        Carp::croak sprintf("Failed to instantiate and run (%) on (%s)\n",
+            $self->method, $self->command_class);
+    }
 
     printf SAVED_STDERR "Setting outputs: %s\n", pp(_get_command_outputs($command, $self->command_class));
     $self->execution->set_outputs(
@@ -141,20 +144,61 @@ sub _log_execution_information {
         $self->command_class, $self->method, abs_path($self->log_directory));
 }
 
-sub _instantiate_command {
-    my ($self, $inputs) = @_;
+sub _instantiate_and_run_command {
+    my $self = shift;
 
     printf SAVED_STDERR "Instantiating command %s\n", $self->command_class;
 
-    my $pkg = $self->command_class;
-    eval "use $pkg";
+    my $cmd;
+    my $status_ok = $self->_eval_command_class;
+    $status_ok = defined( $cmd = $self->_instantiate_command )  if $status_ok;
+    $status_ok = $self->_run_command($cmd)                      if $status_ok;
+    $status_ok = $self->_commit                                 if $status_ok;
 
+    if ($status_ok) {
+        $self->status_message("Succeeded to %s command %s",
+            $self->method, $self->command_class)
+    }
+
+    return ($status_ok, $cmd);
+}
+
+sub _eval_command_class {
+    my $self = shift;
+
+    my $eval_succeeded = try {
+        my $pkg = $self->command_class;
+        eval "use $pkg";
+        return 1;
+    }
+    catch {
+        Carp::cluck sprintf("Instantiating class (%s) failed\n", $self->command_class);
+        return;
+    };
+
+    return $eval_succeeded;
+}
+
+sub _instantiate_command {
+    my $self = shift;
+    my $inputs;
+
+    my $pkg = $self->command_class;
     my $cmd = try {
-        $pkg->create(%$inputs)
+        $inputs = decode($self->execution->inputs);
+        return $pkg->create(%$inputs);
     } catch {
-        Carp::confess sprintf(
-            "Failed to instantiate class (%s) with inputs (%s): %s",
-            $pkg, Data::Dump::pp($inputs), $_)
+        if (defined $inputs) {
+            Carp::cluck sprintf(
+                "Failed to instantiate class (%s) with inputs (%s): %s",
+                $pkg, Data::Dump::pp($inputs), $_)
+        }
+        else {
+            Carp::cluck sprintf(
+                "Failed to instantiate class (%s) with : %s",
+                $pkg, Data::Dump::pp($inputs), $_)
+        }
+        return;
     };
 
     return $cmd;
@@ -167,35 +211,38 @@ sub _run_command {
 
     my $method = $self->method;
     my $ret = try {
-        $command->$method()
+        return $command->$method();
     } catch {
-        Carp::confess sprintf(
+        Carp::cluck sprintf(
             "Crashed in %s for command %s: %s",
             $self->method, $self->command_class, $_,
         );
+        return;
     };
+
     unless ($ret) {
-        Carp::confess sprintf("Failed to %s for command %s.",
+        Carp::cluck sprintf("Failed to %s for command %s.",
             $self->method, $self->command_class,
         );
     }
 
-    _commit();
-
-    $self->status_message("Succeeded to %s command %s",
-        $method, $self->command_class);
+    return $ret;
 }
 
 sub _commit {
+    my $self = shift;
+
     my $rv = try {
-        UR::Context->commit()
+        return UR::Context->commit();
     } catch {
         Carp::confess "Failed to commit: $_";
+        return;
     };
 
     unless ($rv) {
         Carp::confess "Failed to commit: see previously logged errors";
     }
+    return $rv;
 }
 
 sub _get_command_outputs {
