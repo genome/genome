@@ -57,10 +57,7 @@ sub _inititalize_revivified_bam {
     $self->_prepare_working_and_staging_directories;
     $self->_prepare_output_directory;
     my $bam_file = $self->SUPER::get_bam_file;
-    unless ($self->postprocess_bam_file()) {
-        $self->error_message("Postprocess BAM file failed");
-        die $self->error_message;
-    }
+    $self->postprocess_bam_file;
     $self->_compute_alignment_metrics();
 
     $self->debug_message("Preparing the output directory...");
@@ -69,11 +66,7 @@ sub _inititalize_revivified_bam {
     $self->debug_message("Alignment output path is $output_dir");
 
     $self->debug_message("Moving results to network disk...");
-    my $product_path;
-    unless($product_path= $self->_promote_data) {
-        $self->error_message("Failed to de-stage data into alignment directory " . $self->error_message);
-        die $self->error_message;
-    }
+    $self->_promote_data;
 
     $self->_reallocate_disk_allocation;
 

@@ -461,10 +461,7 @@ sub _generate_result {
     $self->_prepare_working_and_staging_directories;
 
     # STEP 5: PREPARE REFERENCE SEQUENCES
-    unless($self->_prepare_reference_sequences) {
-        $self->error_message("Reference sequences are invalid.  We can't proceed:  " . $self->error_message);
-        die $self->error_message();
-    }
+    $self->_prepare_reference_sequences;
 
     eval {
 
@@ -477,10 +474,7 @@ sub _generate_result {
 
         # STEP 7: PREPARE THE ALIGNMENT FILE (groups file, sequence dictionary)
         # this also prepares the bam output pipe and crams the alignment headers through it.
-        unless ($self->prepare_scratch_sam_file) {
-            $self->error_message("Failed to prepare the scratch sam file with groups and sequence dictionary");
-            die $self->error_message;
-        }
+        $self->prepare_scratch_sam_file;
 
         # STEP 7: RUN THE ALIGNER
         unless ($self->run_aligner(@inputs)) {
@@ -492,10 +486,7 @@ sub _generate_result {
         if ($self->supports_streaming_to_bam) {
             $self->close_out_streamed_bam_file;
         } else {
-            unless( $self->create_BAM_in_staging_directory()) {
-                $self->error_message("Call to create_BAM_in_staging_directory failed.\n");
-                die $self->error_message;
-            }
+            $self->create_BAM_in_staging_directory;
         }
     };
 
@@ -515,10 +506,7 @@ sub _generate_result {
     }
 
     # STEP 9-10, validate BAM file (if necessary)
-    unless ($self->postprocess_bam_file()) {
-        $self->error_message("Postprocess BAM file failed");
-        die $self->error_message;
-    }
+    $self->postprocess_bam_file;
 
     # STEP 11: COMPUTE ALIGNMENT METRICS
     $self->_compute_alignment_metrics();
@@ -531,11 +519,7 @@ sub _generate_result {
 
     # STEP 13: PROMOTE THE DATA INTO ALIGNMENT DIRECTORY
     $self->debug_message("Moving results to network disk...");
-    my $product_path;
-    unless($product_path= $self->_promote_data) {
-        $self->error_message("Failed to de-stage data into alignment directory " . $self->error_message);
-        die $self->error_message;
-    }
+    $self->_promote_data;
 
     # STEP 14: RESIZE THE DISK
     $self->_reallocate_disk_allocation;
