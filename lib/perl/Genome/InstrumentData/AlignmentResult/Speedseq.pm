@@ -55,15 +55,17 @@ sub _inititalize_revivified_bam {
     $self->_create_disk_allocation;
 
     $self->_prepare_working_and_staging_directories;
-    $self->_prepare_output_directory;
-    my $bam_file = $self->SUPER::get_bam_file;
-    $self->postprocess_bam_file;
-    $self->_compute_alignment_metrics();
 
     $self->debug_message("Preparing the output directory...");
     $self->debug_message("Staging disk usage is " . $self->_staging_disk_usage . " KB");
     my $output_dir = $self->output_dir || $self->_prepare_output_directory;
     $self->debug_message("Alignment output path is $output_dir");
+
+    my $bam_file = $self->SUPER::get_bam_file;
+
+    $self->postprocess_bam_file;
+
+    $self->_compute_alignment_metrics;
 
     $self->debug_message("Moving results to network disk...");
     $self->_promote_data;
