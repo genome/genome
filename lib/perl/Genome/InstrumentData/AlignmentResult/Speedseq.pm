@@ -24,29 +24,13 @@ sub get_bam_file {
     # delayed until the first time that the bam file is revivified.
     # If we don't have an allocation then this is the first revivification and
     # we will need to do post-processing.
-    my $guard = $self->get_speedseq_bam_lock->unlock_guard();
+    my $guard = $self->get_bam_lock(__PACKAGE__)->unlock_guard();
     unless ($self->disk_allocations) {
         return $self->_inititalize_revivified_bam;
     }
     else {
         return $self->SUPER::get_bam_file;
     }
-}
-
-sub get_speedseq_bam_lock {
-    my $self = shift;
-
-    my $resource = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$self->id);
-    my $lock = Genome::Sys::LockProxy->new(
-        resource => $resource,
-        scope => 'site',
-    )->lock(
-        max_try => 288, # Try for 48 hours every 10 minutes
-        block_sleep => 600,
-    );
-
-    die $self->error_message("Unable to acquire the lock for per lane alignment result id (%s) !", $self->id) unless $lock;
-    return $lock;
 }
 
 sub _inititalize_revivified_bam {

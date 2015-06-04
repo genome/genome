@@ -1112,7 +1112,7 @@ sub create_bam_flagstat {
         die $self->error_message('BAM file (%s) does not exist or is empty', $bam_file);
     }
 
-    my $guard  = $self->get_bam_lock->unlock_guard();
+    my $guard  = $self->get_bam_lock(__PACKAGE__)->unlock_guard();
     return 1 if -e $output_file;
 
     my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
@@ -1133,7 +1133,7 @@ sub create_bam_header {
     my $self = shift;
     return $self->bam_header_path if -s $self->bam_header_path;
 
-    my $guard  = $self->get_bam_lock->unlock_guard();
+    my $guard  = $self->get_bam_lock(__PACKAGE__)->unlock_guard();
     return $self->bam_header_path if -s $self->bam_header_path;
 
     my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
@@ -1723,7 +1723,7 @@ sub get_bam_file {
         return $self->revivified_alignment_bam_file_path;
     }
     else {
-        my $guard = $self->get_bam_lock->unlock_guard();
+        my $guard = $self->get_bam_lock(__PACKAGE__)->unlock_guard();
 
         if ($self->get_merged_alignment_results) {
             return $self->revivified_alignment_bam_file_path;
@@ -1766,8 +1766,9 @@ sub get_bam_file {
 
 sub get_bam_lock {
     my $self = shift;
+    my $package = shift;
 
-    my $resource = File::Spec->join('genome', __PACKAGE__, 'lock-per-lane-alignment-'.$self->id);
+    my $resource = File::Spec->join('genome', $package, 'lock-per-lane-alignment-'.$self->id);
     my $lock = Genome::Sys::LockProxy->new(
         resource => $resource,
         scope => 'site',
@@ -1784,7 +1785,7 @@ sub remove_bam {
     my $self = shift;
 
     my $bam_path = $self->bam_path;
-    my $guard = $self->get_bam_lock->unlock_guard();
+    my $guard = $self->get_bam_lock(__PACKAGE__)->unlock_guard();
 
     for my $type ('', '.bai', '.md5') {
         my $file = $bam_path . $type;
