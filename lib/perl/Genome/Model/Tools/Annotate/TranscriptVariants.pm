@@ -759,7 +759,7 @@ sub transcript_report_headers {
     return ($self->variant_attributes, $self->variant_output_attributes, $self->get_extra_columns, $self->transcript_attributes);
 }
 
-sub file_has_header {
+sub validate_header {
     my $class = shift;
     my $file = shift;
 

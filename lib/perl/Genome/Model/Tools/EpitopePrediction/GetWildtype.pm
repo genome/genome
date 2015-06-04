@@ -64,7 +64,7 @@ sub validate_input_tsv_file {
     my $self = shift;
 
     # Ensure that the input_tsv_file has a header
-    unless (Genome::Model::Tools::Annotate::TranscriptVariants->file_has_header($self->input_tsv_file)) {
+    unless (Genome::Model::Tools::Annotate::TranscriptVariants->validate_header($self->input_tsv_file)) {
         die $self->error_message("The input_tsv_file does not have a header: %s", $self->input_tsv_file);
     }
 }
