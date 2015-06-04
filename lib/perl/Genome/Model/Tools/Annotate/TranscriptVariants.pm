@@ -768,11 +768,8 @@ sub validate_header {
 
     my @expected_column_headers = $class->variant_attributes();
     my $expected_header = join("\t", @expected_column_headers);
-    if ($first_line =~ m/^$expected_header/) {
-        return 1;
-    }
-    else {
-        return 0;
+    unless ($first_line =~ m/^$expected_header/) {
+        die $class->error_message('Input file header for file (%s) is not as expected. Expected header starts with: %s', $file, $expected_header);
     }
 }
 
