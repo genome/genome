@@ -284,6 +284,7 @@ sub execute {                               # replace with real execution logic.
 library(DNAcopy)
 CNA.object <- CNA(snp\$status[snp\$chrom=="$chrom"], snp\$chrom[snp\$chrom=="$chrom"], snp\$position[snp\$chrom=="$chrom"], data.type="binary", sampleid=c("Chromosome $chrom"))
 if(nrow(CNA.object) != 0) {
+    #scatterplot
     png("$outfile", height=300, width=800)
     maxpos <- max(snp\$pos[snp\$chrom=="$chrom"])
     segment.CNA.object <- segment(CNA.object)
@@ -297,7 +298,9 @@ if(nrow(CNA.object) != 0) {
     segments(pvalue.segment.CNA.object\$loc.start[pvalue.segment.CNA.object\$seg.mean>0.10], pvalue.segment.CNA.object\$seg.mean[pvalue.segment.CNA.object\$seg.mean>0.10] * 100, pvalue.segment.CNA.object\$loc.end[pvalue.segment.CNA.object\$seg.mean>0.10], pvalue.segment.CNA.object\$seg.mean[pvalue.segment.CNA.object\$seg.mean>0.10] * 100, col="red", lwd=2)
     hetDiff <- abs(snp\$nfreq - snp\$tfreq)
     points(snp\$pos[snp\$chrom=="$chrom" & snp\$status=="1"], minus1[snp\$chrom=="$chrom" & snp\$status=="1"], pch=19, cex=0.5, ylim=c(0,100), col="red")
+    legend("topright", legend = c("Normal","Tumor","LOH"), lty=c(1,1,1), lwd=c(2.5,2.5,2.5), col=c("blue","green","red"))
     dev.off()
+    #plot the distribution of VAFs
     png("$outfile_dist", height=300, width=800)
     par(mar=c(4,4,2,2))
     freqDistNormal <- table(cut(snp\$nfreq[snp\$chrom=="$chrom"], seq(0,105,by=5), left=FALSE, right=FALSE))
@@ -306,6 +309,7 @@ if(nrow(CNA.object) != 0) {
     rownames(freqDistTumor) <- seq(0,100,by=5)
     plot(prop.table(freqDistNormal), col="blue", type="l", ylim=c(0, 0.50), xlab="Variant Allele Frequency", ylab="Fraction of SNPs")
     lines(prop.table(freqDistTumor), col="green", type="l")
+    legend("topright", legend = c("Normal","Tumor"), lty=c(1,1), lwd=c(2.5,2.5), col=c("blue","green"))
     dev.off()
 }
 };

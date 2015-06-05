@@ -246,6 +246,11 @@ sub map_workflow_inputs {
   my $annotation_build = $self->_resolve_annotation;
   push @inputs, annotation_build => $annotation_build;
 
+  #Identify test model
+  if ($self->name =~ /^apipe\-test/){
+      push @inputs, test => 1;
+  }
+
   my $patient_dir = $data_directory . "/" . $common_name;
   my @dirs = ($patient_dir);
 
@@ -478,6 +483,13 @@ sub map_workflow_inputs {
       push @inputs, snv_indel_report_tiers => 'tier1';
     }
 
+    #IdentifyLoh
+    if ($exome_build || $wgs_build) {
+      my $loh_dir = $patient_dir . "/loh/";
+      push @dirs, $loh_dir;
+      push @inputs, loh_output_dir => $loh_dir;
+    }
+
     # For now it works to create directories here because the data_directory has been allocated.
     #It is possible that this would not happen until later, which would mess up assigning inputs to many of the commands.
     for my $dir (@dirs) {
@@ -558,6 +570,7 @@ sub _resolve_workflow_for_build {
   if ($build->wgs_build or $build->exome_build) {
     push @output_properties, 'mutation_diagram_result';
     push @output_properties, 'import_snvs_indels_result';
+    push @output_properties, 'loh_result';
     my $iterator = List::MoreUtils::each_arrayref([1..@$mqs], $mqs, $bqs);
     while(my ($i, $mq, $bq) = $iterator->()) {
       if($build->wgs_build) {
@@ -1221,7 +1234,6 @@ sub _resolve_workflow_for_build {
             $add_link->($exome_variant_sources_op, 'indel_variant_sources_file', $converge_snv_indel_report_op1, '_exome_indel_variant_sources_file');
         }
         #If this is a build of a test model, perform a faster analysis (e.g. apipe-test-clinseq-wer)
-        my $model_name = $self->name;
         if ($self->name =~ /^apipe\-test/){
           $add_link->($input_connector, 'snv_indel_report_tiers', $converge_snv_indel_report_op1, 'tiers');
         }
@@ -1289,6 +1301,19 @@ sub _resolve_workflow_for_build {
     }
   }
 
+  #IdentifyLoh - Run identify-loh tool for exome or WGS data
+  #genome model clin-seq identify-loh --clinseq-build=fafd219665d54462893fbacfe6639f70 --outdir=/Documents/GTB11/ --bamrc-version=0.7
+  if ($build->wgs_build or $build->exome_build){
+    $msg = "Identify regions of LOH and create plots";
+    my $identify_loh_op = $add_step->($msg, "Genome::Model::ClinSeq::Command::IdentifyLoh");
+    $add_link->($input_connector, 'build', $identify_loh_op, 'clinseq_build');
+    $add_link->($input_connector, 'loh_output_dir', $identify_loh_op, 'outdir');
+    $add_link->($input_connector, 'bam_readcount_version', $identify_loh_op, 'bamrc_version');
+    if ($self->name =~ /^apipe\-test/){
+      $add_link->($input_connector, 'test', $identify_loh_op, 'test');
+    }
+    $add_link->($identify_loh_op, 'result', $output_connector, 'loh_result');
+  }
 
   # REMINDER:
   # For new steps be sure to add their result to the output connector if they do not feed into another step.
