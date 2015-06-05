@@ -147,11 +147,11 @@ sub _instantiate_command {
     printf SAVED_STDERR "Instantiating command %s\n", $self->command_class;
 
     my $pkg = $self->command_class;
-    eval "use $pkg";
-
     my $cmd = try {
+        eval "use $pkg";
         $pkg->create(%$inputs)
     } catch {
+        $self->_teardown_logging;
         Carp::confess sprintf(
             "Failed to instantiate class (%s) with inputs (%s): %s",
             $pkg, Data::Dump::pp($inputs), $_)
@@ -169,31 +169,36 @@ sub _run_command {
     my $ret = try {
         $command->$method()
     } catch {
+        $self->_teardown_logging;
         Carp::confess sprintf(
             "Crashed in %s for command %s: %s",
             $self->method, $self->command_class, $_,
         );
     };
     unless ($ret) {
+        $self->_teardown_logging;
         Carp::confess sprintf("Failed to %s for command %s.",
             $self->method, $self->command_class,
         );
     }
 
-    _commit();
+    $self->_commit();
 
     $self->status_message("Succeeded to %s command %s",
         $method, $self->command_class);
 }
 
 sub _commit {
+    my $self = shift;
     my $rv = try {
         UR::Context->commit()
     } catch {
+        $self->_teardown_logging;
         Carp::confess "Failed to commit: $_";
     };
 
     unless ($rv) {
+        $self->_teardown_logging;
         Carp::confess "Failed to commit: see previously logged errors";
     }
 }
