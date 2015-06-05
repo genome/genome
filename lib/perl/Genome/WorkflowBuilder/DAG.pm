@@ -102,16 +102,17 @@ sub submit {
 
     my %p = Params::Validate::validate(@_, {
         inputs => {type => HASHREF},
-        process_id => {type => SCALAR},
+        process => {type => OBJECT},
     });
 
     my $inputs = {%{$self->constant_values}, %{$p{inputs}}};
+    my $process = $p{process};
 
     my $backend = Genome::Config::get('workflow_builder_backend');
     if ($backend eq 'ptero') {
-        my $wf_builder = $self->get_ptero_builder_for_process($p{process_id});
+        my $wf_builder = $self->get_ptero_builder_for_process($process);
 
-        my $wf_proxy = $wf_builder->submit(inputs => encode($inputs));
+        my $wf_proxy = $wf_builder->submit(inputs => encode($inputs), name => $process->workflow_name);
         $self->status_message("Submitted workflow to petri service: %s",
             $wf_proxy->url);
         return $wf_proxy;
@@ -210,9 +211,10 @@ sub get_ptero_builder_task {
 sub get_ptero_builder_for_process {
     require Ptero::Builder::Workflow;
 
-    my ($self, $process_id) = Params::Validate::validate_pos(@_, 1, 1);
+    my ($self, $process) = Params::Validate::validate_pos(@_, 1, 1);
+    my $process_id = $process->id;
 
-    my $outer_dag = Ptero::Builder::Workflow->new(name => "Genome::Process($process_id)");
+    my $outer_dag = Ptero::Builder::Workflow->new(name => $process->workflow_name);
 
     my $inner_task = $self->get_ptero_builder_task();
     $inner_task->methods([
