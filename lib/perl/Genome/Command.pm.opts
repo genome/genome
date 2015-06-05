@@ -9729,6 +9729,8 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>create-report',
       [
+        'lsf-resource=s',
+        'files',
         'somatic-variation-build=s',
         undef,
         'bam-readcount-version=s',
