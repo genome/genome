@@ -54,10 +54,6 @@ class Genome::Model::SomaticVariation::Command::AnnotateAndUploadVariants{
             is_optional => 1,
             doc => "Version of joinx to use, will be resolved to the latest default if not specified",
         },
-        lsf_resource => {
-            is => 'Text',
-            default => "-R 'rusage[mem=16000]' -M 16000000",
-        },
     ],
 };
 
