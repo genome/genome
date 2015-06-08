@@ -684,7 +684,7 @@ sub get_dna_instrument_data{
       my $fl = Genome::FeatureList->get(name => $trsn);
       if (not $fl or not $fl->content_type) {
         push @unknown, $instrument_data;
-      }elsif ($fl->content_type eq 'exome') {
+      }elsif ($fl->content_type eq 'exome' || $fl->content_type eq 'validation') {
         push @exome, $instrument_data;
         $trsns{$trsn}=1;
       }else {
