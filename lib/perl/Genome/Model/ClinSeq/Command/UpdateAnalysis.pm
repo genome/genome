@@ -194,6 +194,10 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               is => 'Boolean',
               doc => 'Allow imported instrument data to be included',
         },
+        validation_as_exome => {
+              is => 'Boolean',
+              doc => 'Treat validation data as exome data. Includes instrument data from validation capture in exome reference alignment model.',
+        },
    ],
     doc => 'evaluate models/builds for an individual and help create/update a clinseq model that meets requested criteria',
 };
@@ -224,8 +228,8 @@ sub help_detail {
     return <<EOS
 For a given individual, find the available samples and display to the user to select those desired for clinseq analysis
 
-A clin-seq model can consist of various combinations of reference alignment, wgs somatic, exome somatic, and rna-seq models, 
-
+A clin-seq model can consist of various combinations of reference alignment, wgs somatic, exome somatic, and rna-seq models,
+ 
 Only up to two DNA and two RNA samples may be specified. You can run with only DNA, only RNA or both.
 
 Once samples are set by the user, search for reference alignment, somatic variation, and rna-seq models for these samples
@@ -680,18 +684,34 @@ sub get_dna_instrument_data{
 
   foreach my $instrument_data (@sample_instrument_data){
     my $trsn = $instrument_data->target_region_set_name;
-    if ($trsn){
-      my $fl = Genome::FeatureList->get(name => $trsn);
-      if (not $fl or not $fl->content_type) {
-        push @unknown, $instrument_data;
-      }elsif ($fl->content_type eq 'exome' || $fl->content_type eq 'validation') {
-        push @exome, $instrument_data;
-        $trsns{$trsn}=1;
-      }else {
-        push @other, $instrument_data;
+    if ($self->validation_as_exome) {
+      if ($trsn){
+        my $fl = Genome::FeatureList->get(name => $trsn);
+        if (not $fl or not $fl->content_type) {
+          push @unknown, $instrument_data;
+        }elsif ($fl->content_type eq 'exome' || $fl->content_type eq 'validation') {
+          push @exome, $instrument_data;
+          $trsns{$trsn}=1;
+        }else {
+          push @other, $instrument_data;
+        }
+      }else{
+        push @wgs, $instrument_data;
       }
     }else{
-      push @wgs, $instrument_data;
+      if ($trsn){
+        my $fl = Genome::FeatureList->get(name => $trsn);
+        if (not $fl or not $fl->content_type) {
+          push @unknown, $instrument_data;
+        }elsif ($fl->content_type eq 'exome') {
+          push @exome, $instrument_data;
+          $trsns{$trsn}=1;
+        }else {
+          push @other, $instrument_data;
+        }
+      }else{
+        push @wgs, $instrument_data;
+      }
     }
   }
 
