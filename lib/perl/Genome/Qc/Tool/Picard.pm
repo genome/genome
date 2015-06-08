@@ -44,7 +44,7 @@ sub _get_metrics {
         unless (defined($metric_key)) {
             my @metric_keys = keys %{$metric_results};
             if (scalar(@metric_keys > 1)) {
-                die $self->error_message("More than one metrics key found in the metrics results.");
+                die $self->error_message("More than one metric key found in the metric results: " . join(', ', @metric_keys));
             }
             else {
                 $metric_key = $metric_keys[0];
