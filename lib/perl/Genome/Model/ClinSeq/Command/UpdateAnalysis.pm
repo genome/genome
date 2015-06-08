@@ -684,23 +684,18 @@ sub get_dna_instrument_data{
 
   foreach my $instrument_data (@sample_instrument_data){
     my $trsn = $instrument_data->target_region_set_name;
-    if ($self->validation_as_exome) {
-      if ($trsn){
-        my $fl = Genome::FeatureList->get(name => $trsn);
+    if ($trsn){
+      my $fl = Genome::FeatureList->get(name => $trsn);
+      if ($self->validation_as_exome) {
         if (not $fl or not $fl->content_type) {
           push @unknown, $instrument_data;
         }elsif ($fl->content_type eq 'exome' || $fl->content_type eq 'validation') {
           push @exome, $instrument_data;
           $trsns{$trsn}=1;
-        }else {
+        }else{
           push @other, $instrument_data;
         }
       }else{
-        push @wgs, $instrument_data;
-      }
-    }else{
-      if ($trsn){
-        my $fl = Genome::FeatureList->get(name => $trsn);
         if (not $fl or not $fl->content_type) {
           push @unknown, $instrument_data;
         }elsif ($fl->content_type eq 'exome') {
@@ -709,9 +704,9 @@ sub get_dna_instrument_data{
         }else {
           push @other, $instrument_data;
         }
-      }else{
-        push @wgs, $instrument_data;
       }
+    }else{
+      push @wgs, $instrument_data;
     }
   }
 
