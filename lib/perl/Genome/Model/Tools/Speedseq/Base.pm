@@ -229,6 +229,7 @@ sub _shellcmd_extra_params {
     return (
         skip_if_output_is_present => 0,
         keep_dbh_connection_open => 0,
+        set_pipefail => 0,
         input_files => \@input_files,
         output_files => \@output_files,
     );
