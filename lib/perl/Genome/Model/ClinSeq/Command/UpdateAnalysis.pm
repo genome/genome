@@ -255,6 +255,14 @@ sub execute {
     $self->status_message("\nExiting...  --display-defaults mode is used for summarizing purposes only\n\n");
     return 1;
   }
+  
+  #If the user selected the --validation-as-exome-my-trsn option, make sure --validation-as-exome option is used
+  if ($self->validation_as_exome_my_trsn) {
+    unless ($self->validation_as_exome) {
+      $self->error_message("Exiting... validation_as_exome_my_trsn requires validation_as_exome option");
+      exit 1;
+    }
+  }
 
   #Make sure an individual is defined
   unless ($self->individual){
