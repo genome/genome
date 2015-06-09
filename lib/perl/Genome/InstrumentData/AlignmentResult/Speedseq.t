@@ -86,16 +86,23 @@ isa_ok($alignment_result, $pkg, 'Alignment result is a speedseq alignment');
 is(-e File::Spec->join($alignment_result->temp_staging_directory, 'all_sequences.bam'), undef, "Per-lane bam file doesn't exist in temp_staging_directory");
 is(-e File::Spec->join($alignment_result->output_dir, 'all_sequences.bam'), undef, "Per-lane bam file doesn't exist in output_dir");
 
-ok(-e $alignment_result->bam_flagstat_path, "Flagstat file exists");
-ok(-e $alignment_result->bam_header_path, "Header file exists");
+ok(!(-e $alignment_result->bam_flagstat_path), "Flagstat file doesn't exist after initial object creation");
+ok(!(-e $alignment_result->bam_header_path), "Header file doesn't exist after initial object creation");
+ok(!($alignment_result->_revivified_bam_file_path), "Bam file hasn't been revivified-created during initial object creation");
+
+my $bam_file = $alignment_result->get_bam_file;
+ok($bam_file, 'Bam file got created');
 
 my $cmp = Genome::Model::Tools::Sam::Compare->execute(
-    file1 => $alignment_result->get_bam_file,
+    file1 => $bam_file,
     file2 => File::Spec->join($test_data_dir, 'alignment_result.bam'),
 );
 ok($cmp->result, 'Per-lane bam as expected');
 
+ok(-e $alignment_result->bam_flagstat_path, 'Flagstat file exists');
+ok(-e $alignment_result->bam_header_path, 'Header file exists');
+
 $alignment_result->_revivified_bam_file_path(undef);
-ok($alignment_result->get_bam_file, "Subsequent revivifications work correctly");
+ok($alignment_result->get_bam_file, 'Subsequent revivifications work correctly');
 
 done_testing;
