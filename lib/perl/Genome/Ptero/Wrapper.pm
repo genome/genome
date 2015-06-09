@@ -12,7 +12,7 @@ use Genome::Utility::Text qw(
 use Genome::Utility::Inputs qw(encode decode);
 use Data::Dump qw(pp);
 use Ptero::Proxy::Workflow::Execution;
-use Try::Tiny qw(try catch);
+use Try::Tiny qw(try catch finally);
 
 class Genome::Ptero::Wrapper {
     is => 'Command::V2',
@@ -60,11 +60,15 @@ sub execute {
     # this will get logged to the log files
     $self->_log_execution_information;
 
-    my $command = $self->_instantiate_command(decode($self->execution->inputs));
-
-    $self->_run_command($command);
-
-    $self->_teardown_logging;
+    my $command = try {
+        my $cmd = $self->_instantiate_command(decode($self->execution->inputs));
+        $self->_run_command($cmd);
+        return $cmd;
+    } catch {
+        die $_;
+    } finally {
+        $self->_teardown_logging;
+    };
 
     printf SAVED_STDERR "Setting outputs: %s\n", pp(_get_command_outputs($command, $self->command_class));
     $self->execution->set_outputs(
@@ -151,7 +155,6 @@ sub _instantiate_command {
         eval "use $pkg";
         $pkg->create(%$inputs)
     } catch {
-        $self->_teardown_logging;
         Carp::confess sprintf(
             "Failed to instantiate class (%s) with inputs (%s): %s",
             $pkg, Data::Dump::pp($inputs), $_)
@@ -169,14 +172,12 @@ sub _run_command {
     my $ret = try {
         $command->$method()
     } catch {
-        $self->_teardown_logging;
         Carp::confess sprintf(
             "Crashed in %s for command %s: %s",
             $self->method, $self->command_class, $_,
         );
     };
     unless ($ret) {
-        $self->_teardown_logging;
         Carp::confess sprintf("Failed to %s for command %s.",
             $self->method, $self->command_class,
         );
@@ -193,12 +194,10 @@ sub _commit {
     my $rv = try {
         UR::Context->commit()
     } catch {
-        $self->_teardown_logging;
         Carp::confess "Failed to commit: $_";
     };
 
     unless ($rv) {
-        $self->_teardown_logging;
         Carp::confess "Failed to commit: see previously logged errors";
     }
 }
