@@ -50,24 +50,31 @@ sub create_output_directory {
     }
 }
 
-sub dindel_install_dir {
-    my $self = shift;
-    return "/gscmnt/gc2146/info/medseq/dindel";
-}
-
 sub dindel_executable {
     my $self = shift;
-    return File::Spec->join($self->dindel_install_dir, "binaries", "dindel-1.01-linux-64bit");
+    return '/usr/bin/dindel-tgi1.01-wu1';
 }
 
 sub python_script {
     my ($self, $name) = @_;
-    my $path = File::Spec->join($self->dindel_install_dir, 'dindel-1.01-python', $name . '.py');
-    if (-s $path) {
-        return $path;
-    } else {
-        die "Couldn't find Dindel python script named '$name' at: $path\n";
-    }
+    return File::Spec->join($self->python_dir, $name . '.py');
+}
+
+sub python_dir {
+    return '/usr/share/dindel-tgi1.01-wu1';
+}
+
+sub run_python_shellcmd {
+    my $self = shift;
+
+    # This is to get around Dindel's python scripts unconventional package
+    # management strategy
+    local $ENV{PYTHONPATH} = sprintf("%s:%s",
+        File::Spec->join($self->python_dir, 'utils'),
+        $ENV{PYTHONPATH} || '');
+
+    my $rv = $self->shellcmd_arrayref(@_);
+    return $rv;
 }
 
 1;
