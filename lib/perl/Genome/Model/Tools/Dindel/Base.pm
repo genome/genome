@@ -69,13 +69,11 @@ sub run_python_shellcmd {
 
     # This is to get around Dindel's python scripts unconventional package
     # management strategy
-    #mkdir 'utils/';
     local $ENV{PYTHONPATH} = sprintf("%s:%s",
         File::Spec->join($self->python_dir, 'utils'),
         $ENV{PYTHONPATH} || '');
 
     my $rv = $self->shellcmd_arrayref(@_);
-    unlink 'utils/';
     return $rv;
 }
 
