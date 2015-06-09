@@ -198,6 +198,10 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               is => 'Boolean',
               doc => 'Treat validation data as exome data. Includes instrument data from validation capture in exome reference alignment model.',
         },
+        validation_as_exome_my_trsn => {
+              is => 'Boolean',
+              doc => 'If using validation-as-exome option, force target set region name to be derived from exome, not validation instrument data.', 
+        },
    ],
     doc => 'evaluate models/builds for an individual and help create/update a clinseq model that meets requested criteria',
 };
@@ -791,6 +795,26 @@ sub check_model_trsn_and_roi{
       $trsn_ref = $trsn;
     }
   }
+
+#  my $trsn_ref;
+#  foreach my $instrument_data (@model_instrument_data){
+#    my $trsn = $instrument_data->target_region_set_name;
+#    if ($trsn){
+#      if ($self->validation_as_exome && $self->validation_as_exome_my_trsn) {
+#        my $fl = Genome::FeatureList->get(name => $trsn);
+#        if ($fl->content_type eq 'exome') {
+#          $trsns{$trsn}=1;
+#          $trsn_ref = 'SeqCap EZ Human Exome v2.0';
+#        }else{
+#          $trsns{$trsn}=1;
+#        }
+#      }else{
+#        $trsns{$trsn}=1;
+#        $trsn_ref = $trsn;
+#      }
+#    }
+#  }
+
   
   #Watch out for cases where multiple TRSNs have been combined...
   my $trsn_count = keys %trsns;
@@ -836,13 +860,32 @@ sub get_trsn{
   my %trsns;
   my $trsn_ref;
 
+#  foreach my $instrument_data (@instrument_data){
+#    my $trsn = $instrument_data->target_region_set_name;
+#    if ($trsn){
+#      $trsns{$trsn}=1;
+#      $trsn_ref = $trsn;
+#    }
+#  }
+
   foreach my $instrument_data (@instrument_data){
     my $trsn = $instrument_data->target_region_set_name;
     if ($trsn){
-      $trsns{$trsn}=1;
-      $trsn_ref = $trsn;
+      if ($self->validation_as_exome && $self->validation_as_exome_my_trsn) {
+        my $fl = Genome::FeatureList->get(name => $trsn);
+        if ($fl->content_type eq 'exome') {
+          $trsns{$trsn}=1;
+          $trsn_ref = 'SeqCap EZ Human Exome v2.0';
+        }else{
+          $trsns{$trsn}=1;
+        }
+      }else{
+        $trsns{$trsn}=1;
+        $trsn_ref = $trsn;
+      }
     }
   }
+
   
   #Watch out for cases where multiple TRSNs have been combined...
   my $trsn_count = keys %trsns;
