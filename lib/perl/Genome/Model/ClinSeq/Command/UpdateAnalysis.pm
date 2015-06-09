@@ -199,8 +199,8 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               doc => 'Treat validation data as exome data. Includes instrument data from validation capture in exome reference alignment model.',
         },
         validation_as_exome_my_trsn => {
-              is => 'Boolean',
-              doc => 'If using validation-as-exome option, force target set region name to be derived from exome, not validation instrument data.', 
+              is => 'Number',
+              doc => 'If using validation-as-exome option, option to specify what instrument data to derive the target-set-region-name and region-of-interest from. 1=exome or 2=validation', 
         },
    ],
     doc => 'evaluate models/builds for an individual and help create/update a clinseq model that meets requested criteria',
@@ -839,19 +839,47 @@ sub get_trsn{
 
   my %trsns;
   my $trsn_ref;
-
+  
   foreach my $instrument_data (@instrument_data){
     my $trsn = $instrument_data->target_region_set_name;
     if ($trsn){
-      #Force exome trsn when validation-as-exome-my-trsn option is used with validation-as-exome option
-      if ($self->validation_as_exome && $self->validation_as_exome_my_trsn) {
-        my $fl = Genome::FeatureList->get(name => $trsn);
-        if ($fl->content_type eq 'exome') {
-          $trsns{$trsn}=1;
-          $trsn_ref = $trsn;
+      #When using validation-as-exome and validation-as-exome-my-trsn options, use user-defined target region set name (1=exome or 2=validation)
+      if ($self->validation_as_exome && $self->validation_as_exome_my_trsn) {      
+        my $user_trsn = $self->validation_as_exome_my_trsn;
+        #Check if a valid option for validation-as-exome-my-trsn has been used or warn user and exit
+        if ($user_trsn == 1){
+            $user_trsn = 'exome';
+        }elsif($user_trsn == 2){
+            $user_trsn = 'validation';
         }else{
-          $trsns{$trsn}=1;
+          $self->error_message("Not a valid argument for validation_as_exome_my_trsn. 1='exome' or 2='validation'");
+          exit 1;
         }
+        $self->warning_message("Using '$user_trsn' target region specified by validation-as-exome-my-trsn.");
+#        }else{
+          my $fl = Genome::FeatureList->get(name => $trsn);  
+          if ($fl->content_type eq $user_trsn) {
+            $trsns{$trsn}=1;
+            $trsn_ref = $trsn;
+          }else{
+            $trsns{$trsn}=1;
+          }
+#          if ($user_trsn == 1) {
+#            if ($fl->content_type eq 'exome') {
+#              $trsns{$trsn}=1;
+#              $trsn_ref = $trsn;
+#            }else{
+#              $trsns{$trsn}=1;
+#            }
+#          }else {
+#            if ($fl->content_type eq 'validation') {
+#              $trsns{$trsn}=1;
+#              $trsn_ref = $trsn;
+#            }else{
+#              $trsns{$trsn}=1;
+#            }
+#          }
+#        }
       }else{
         $trsns{$trsn}=1;
         $trsn_ref = $trsn;
