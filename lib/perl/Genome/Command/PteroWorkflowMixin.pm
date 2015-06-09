@@ -83,13 +83,13 @@ sub _write_executions_of_interest {
         my $ex_proxy = Ptero::Proxy::Workflow::Execution->new($execution->{details_url});
         if ($ex_proxy->concrete_execution->{status} eq 'errored') {
             print $handle join("\n", $self->_color_pair("Name", $ex_proxy->name) . "    " .
-                $self->_color_dim("Status: ") . $self->_status_color($ex_proxy->concrete_execution->{status}),
+                $self->_color_dim("Status: ") . $self->_ptero_status_color($ex_proxy->concrete_execution->{status}),
                 $self->_color_pair("Error Message", $ex_proxy->concrete_execution->{data}{errorMessage}),
                 $self->_color_pair("Stdout", $ex_proxy->concrete_execution->{data}{stdout}),
                 $self->_color_pair("Stderr", $ex_proxy->concrete_execution->{data}{stderr}));
         } else {
             print $handle join("\n", $self->_color_pair("Name", $ex_proxy->name) . "    " .
-                $self->_color_dim("Status: ") . $self->_status_color($ex_proxy->concrete_execution->{status}),
+                $self->_color_dim("Status: ") . $self->_ptero_status_color($ex_proxy->concrete_execution->{status}),
                 $self->_color_pair("Stdout Log", $ex_proxy->concrete_execution->{data}{stdout_log}),
                 $self->_color_pair("Stderr Log", $ex_proxy->concrete_execution->{data}{stderr_log}));
         }
@@ -109,7 +109,7 @@ my %PTERO_STATUS_COLORS = (
     canceled => "red",
 );
 
-sub _status_color {
+sub _ptero_status_color {
     my ($self, $text) = @_;
     return $self->_colorize_text_by_map($text, $text, %PTERO_STATUS_COLORS);
 }
@@ -119,7 +119,7 @@ sub _format_line {
     my ($stage, $status, $started, $duration, $pindex, $indent, $name) = @_;
 
     return join("  ", justify($self->_color_dim($stage), 'right', 8),
-        justify($self->_status_color($status), 'right', 9),
+        justify($self->_ptero_status_color($status), 'right', 9),
         justify($self->_color_dim("$started"), 'right', 19),
         justify($duration, 'right', 13),
         justify($self->_color_dim($pindex), 'left', 7),
@@ -355,7 +355,7 @@ sub _write_ptero_task_summary {
     }
     my $status_str;
     for my $status (sort keys %statuses) {
-        $status_str .= sprintf(' %s(%s)', $self->_status_color($status),
+        $status_str .= sprintf(' %s(%s)', $self->_ptero_status_color($status),
             $statuses{$status});
     }
 
