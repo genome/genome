@@ -90,7 +90,6 @@ sub _write_executions_of_interest {
         } else {
             print $handle join("\n", $self->_color_pair("Name", $ex_proxy->name) . "    " .
                 $self->_color_dim("Status: ") . $self->_ptero_status_color($ex_proxy->concrete_execution->{status}),
-                $self->_color_pair("Stdout Log", $ex_proxy->concrete_execution->{data}{stdout_log}),
                 $self->_color_pair("Stderr Log", $ex_proxy->concrete_execution->{data}{stderr_log}));
         }
         print $handle "\n";
