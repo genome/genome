@@ -267,7 +267,8 @@ sub _write_ptero_command_details {
     my ($shortcut, $execute) = @{$task->{methods}};
     if ($self->_method_is_active($shortcut, $color)) {
         $self->_write_ptero_command_details_shortcut(@_);
-    } elsif ($self->_method_is_active($execute, $color)) {
+    } elsif ($self->_method_is_active($execute, $color) ||
+             $self->_method_is_failed($execute, $color)) {
         $self->_write_ptero_command_details_execute(@_);
     } else {
         $self->_write_ptero_command_details_unstarted(@_);
@@ -280,6 +281,14 @@ sub _method_is_active {
 
     my $execution = $method->{executions}->{$color};
     return (defined($execution) && $execution->{status} ne 'failed');
+}
+
+sub _method_is_failed {
+    my $self = shift;
+    my ($method, $color) = @_;
+
+    my $execution = $method->{executions}->{$color};
+    return (defined($execution) && $execution->{status} eq 'failed');
 }
 
 sub _write_ptero_command_details_shortcut {
