@@ -57,7 +57,6 @@ sub dindel_executable {
 
 sub python_script {
     my ($self, $name) = @_;
-$DB::single=1;
     return File::Spec->join($self->python_dir, $name . '.py');
 }
 
