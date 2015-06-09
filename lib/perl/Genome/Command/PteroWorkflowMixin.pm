@@ -49,7 +49,7 @@ sub _display_ptero_workflow {
     my ($self, $handle, $workflow_name) = @_;
 
     return unless $self->workflow;
-    print $handle $self->_color_heading("Workflow") . "\n";
+    $handle->say($self->_color_heading("Workflow"));
 
     my $url = sprintf("%s?name=%s", Genome::Config::get('ptero_workflow_submit_url'),
         $workflow_name);
@@ -58,7 +58,7 @@ sub _display_ptero_workflow {
         return Ptero::Proxy::Workflow->new($url);
     };
     unless (defined($wf_proxy)) {
-        print $handle "No ptero workflow found at url ($url)\n";
+        $handle->say("No ptero workflow found at url ($url)");
         return;
     }
 
@@ -78,21 +78,21 @@ sub _write_executions_of_interest {
     my $self = shift;
     my $handle = shift;
 
-    print $handle "\n";
+    $handle->print("\n");
     for my $execution (@{$self->_executions_of_interest}) {
         my $ex_proxy = Ptero::Proxy::Workflow::Execution->new($execution->{details_url});
         if ($ex_proxy->concrete_execution->{status} eq 'errored') {
-            print $handle join("\n", $self->_color_pair("Name", $ex_proxy->name) . "    " .
+            $handle->print(join("\n", $self->_color_pair("Name", $ex_proxy->name) . "    " .
                 $self->_color_dim("Status: ") . $self->_ptero_status_color($ex_proxy->concrete_execution->{status}),
                 $self->_color_pair("Error Message", $ex_proxy->concrete_execution->{data}{errorMessage}),
                 $self->_color_pair("Stdout", $ex_proxy->concrete_execution->{data}{stdout}),
-                $self->_color_pair("Stderr", $ex_proxy->concrete_execution->{data}{stderr}));
+                $self->_color_pair("Stderr", $ex_proxy->concrete_execution->{data}{stderr})));
         } else {
-            print $handle join("\n", $self->_color_pair("Name", $ex_proxy->name) . "    " .
+            $handle->print(join("\n", $self->_color_pair("Name", $ex_proxy->name) . "    " .
                 $self->_color_dim("Status: ") . $self->_ptero_status_color($ex_proxy->concrete_execution->{status}),
-                $self->_color_pair("Stderr Log", $ex_proxy->concrete_execution->{data}{stderr_log}));
+                $self->_color_pair("Stderr Log", $ex_proxy->concrete_execution->{data}{stderr_log})));
         }
-        print $handle "\n";
+        $handle->print("\n");
     }
 }
 
@@ -129,14 +129,14 @@ sub _write_ptero_header {
     my $self = shift;
     my $handle = shift;
 
-    print $handle $self->_color_dim(strip_color($self->_format_line(
+    $handle->print($self->_color_dim(strip_color($self->_format_line(
         'STAGE',
         'STATUS',
         'STARTED',
         'DURATION',
         'P-INDEX',
         0,
-        'NAME')));
+        'NAME'))));
 
     return;
 }
@@ -146,23 +146,23 @@ sub _write_ptero_workflow {
 
     my $execution = $self->_top_level_dag($workflow)->{executions}->{$color};
     if ($execution) {
-        print $handle $self->_format_line(
+        $handle->print($self->_format_line(
             '',
             $execution->{status},
             $execution->datetime_started,
             $execution->duration,
             join(', ', $execution->parallel_indexes),
             $indent,
-            $workflow->{name});
+            $workflow->{name}));
     } elsif (scalar(keys %{$workflow->{executions}}) == 0) {
-        print $handle $self->_format_line(
+        $handle->print($self->_format_line(
             '',
             $workflow->{status},
             '',
             '',
             '',
             $indent,
-            $workflow->{name});
+            $workflow->{name}));
     }
 
     my @sorted_tasks = sort {
@@ -230,23 +230,23 @@ sub _write_ptero_dag_details {
 
     if ($method->{executions}->{$color}) {
         my $execution = $method->{executions}->{$color};
-        print $handle $self->_format_line(
+        $handle->print($self->_format_line(
             '',
             $execution->{status},
             $execution->datetime_started,
             $execution->duration,
             join(', ', $execution->parallel_indexes),
             $indent,
-            $method->{name});
+            $method->{name}));
     } elsif (scalar(keys %{$method->{executions}}) == 0) {
-        print $handle $self->_format_line(
+        $handle->print($self->_format_line(
             '',
             '',
             '',
             '',
             '',
             $indent,
-            $method->{name});
+            $method->{name}));
     } else {
         return;
     }
@@ -303,14 +303,14 @@ sub _write_ptero_command_details_shortcut {
     }
 
     if ($execution) {
-        print $handle $self->_format_line(
+        $handle->print($self->_format_line(
             'shortcut',
             $execution->{status},
             $execution->datetime_started,
             $execution->duration,
             join(', ', $execution->parallel_indexes),
             $indent,
-            $task_name);
+            $task_name));
     }
     return;
 }
@@ -328,14 +328,14 @@ sub _write_ptero_command_details_execute {
     }
 
     if ($execution) {
-        print $handle $self->_format_line(
+        $handle->print($self->_format_line(
             'execute',
             $execution->{status},
             $execution->datetime_started,
             $execution->duration,
             join(', ', $execution->parallel_indexes),
             $indent,
-            $task_name);
+            $task_name));
     }
     return;
 }
@@ -349,7 +349,7 @@ sub _write_ptero_command_details_unstarted {
         $parallel_by_str = $self->_color_pair("parallel-by", $task->{parallel_by});
     }
 
-    print $handle sprintf("%s%s%s\n", justify($parallel_by_str, 'center', 66), $INDENTATION_STR x $indent, $task_name);
+    $handle->printf("%s%s%s\n", justify($parallel_by_str, 'center', 66), $INDENTATION_STR x $indent, $task_name);
     return;
 }
 
@@ -367,7 +367,7 @@ sub _write_ptero_task_summary {
             $statuses{$status});
     }
 
-    print $handle sprintf("%s%s%s\n", justify($status_str, 'center', 66), $INDENTATION_STR x $indent, $task_name);
+    $handle->printf("%s%s%s\n", justify($status_str, 'center', 66), $INDENTATION_STR x $indent, $task_name);
     return;
 }
 
