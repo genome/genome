@@ -206,7 +206,7 @@ sub _write_ptero_task {
         $self->_write_ptero_task_summary($handle, $task_name, $task, $indent+1,
             \@child_executions);
     } else {
-        for my $child_execution (@child_executions) {
+        for my $child_execution (sort {$a->{color} <=> $b->{color}} @child_executions) {
             $self->_write_ptero_task($handle, $task_name, $task, $indent+1,
                 $child_execution->{color});
         }
