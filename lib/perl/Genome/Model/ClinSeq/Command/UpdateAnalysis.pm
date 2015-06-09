@@ -871,11 +871,12 @@ sub get_trsn{
   foreach my $instrument_data (@instrument_data){
     my $trsn = $instrument_data->target_region_set_name;
     if ($trsn){
+      #Force exome trsn when validation-as-exome-my-trsn option is used with validation-as-exome option
       if ($self->validation_as_exome && $self->validation_as_exome_my_trsn) {
         my $fl = Genome::FeatureList->get(name => $trsn);
         if ($fl->content_type eq 'exome') {
           $trsns{$trsn}=1;
-          $trsn_ref = 'SeqCap EZ Human Exome v2.0';
+          $trsn_ref = $trsn;
         }else{
           $trsns{$trsn}=1;
         }
