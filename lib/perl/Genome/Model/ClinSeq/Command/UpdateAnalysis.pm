@@ -796,26 +796,6 @@ sub check_model_trsn_and_roi{
     }
   }
 
-#  my $trsn_ref;
-#  foreach my $instrument_data (@model_instrument_data){
-#    my $trsn = $instrument_data->target_region_set_name;
-#    if ($trsn){
-#      if ($self->validation_as_exome && $self->validation_as_exome_my_trsn) {
-#        my $fl = Genome::FeatureList->get(name => $trsn);
-#        if ($fl->content_type eq 'exome') {
-#          $trsns{$trsn}=1;
-#          $trsn_ref = 'SeqCap EZ Human Exome v2.0';
-#        }else{
-#          $trsns{$trsn}=1;
-#        }
-#      }else{
-#        $trsns{$trsn}=1;
-#        $trsn_ref = $trsn;
-#      }
-#    }
-#  }
-
-  
   #Watch out for cases where multiple TRSNs have been combined...
   my $trsn_count = keys %trsns;
   if ($trsn_count >= 2){
@@ -859,14 +839,6 @@ sub get_trsn{
 
   my %trsns;
   my $trsn_ref;
-
-#  foreach my $instrument_data (@instrument_data){
-#    my $trsn = $instrument_data->target_region_set_name;
-#    if ($trsn){
-#      $trsns{$trsn}=1;
-#      $trsn_ref = $trsn;
-#    }
-#  }
 
   foreach my $instrument_data (@instrument_data){
     my $trsn = $instrument_data->target_region_set_name;
