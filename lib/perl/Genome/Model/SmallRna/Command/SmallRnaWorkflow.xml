@@ -1,6 +1,6 @@
 <?xml version='1.0' standalone='yes'?>
 
-<workflow name="SmallRna Workflow" logDir="/gscmnt/sata142/techd/jhundal/miRNA_logs/" >
+<workflow name="SmallRna Workflow">
   <link fromOperation="input connector" fromProperty="input_bam_file" toOperation="FilterBamFlagstat" toProperty="bam_file" />
   <link fromOperation="input connector" fromProperty="filtered_bam_file" toOperation="FilterBamFlagstat" toProperty="filtered_bam_file" />
   <link fromOperation="input connector" fromProperty="read_size_bin" toOperation="FilterBamFlagstat" toProperty="read_size_bin" />

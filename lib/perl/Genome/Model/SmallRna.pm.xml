@@ -1,6 +1,6 @@
 <?xml version='1.0' standalone='yes'?>
 
-<workflow name="Parallel Workflow" logDir="/gscmnt/sata142/techd/jhundal/miRNA_logs/" >
+<workflow name="Parallel Workflow">
   <link fromOperation="input connector" fromProperty="bam_file" toOperation="SmallRnaWorkflow" toProperty="bam_file" />
   <link fromOperation="input connector" fromProperty="output_base_dir" toOperation="SmallRnaWorkflow" toProperty="output_base_dir" />
   <link fromOperation="input connector" fromProperty="annotation_files" toOperation="SmallRnaWorkflow" toProperty="annotation_files" />
