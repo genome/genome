@@ -19,8 +19,6 @@
   <link fromOperation="FilterBamFlagstat" fromProperty="filtered_bam_file" toOperation="output connector" toProperty="normalized_filtered_bam" />
   <link fromOperation="FilterBamFlagstat" fromProperty="filtered_bam_file" toOperation="SmallRnaWorkflow" toProperty="normalized_bam_file" />
 
-  <link fromOperation="FilterBamFlagstat" fromProperty="result" toOperation="output connector" toProperty="result" />
-
   <operation name="FilterBamFlagstat">
     <operationtype commandClass="Genome::Model::SmallRna::Command::FilterBamFlagstat" typeClass="Workflow::OperationType::Command" />
   </operation>
