@@ -37,6 +37,7 @@ sub execute {
     $self->rawstats->{true_positive} = $self->_get_stat($self->bedpe, $self->gold_bedpe, 'both');
     $self->rawstats->{false_positive} = $self->_get_stat($self->bedpe, $self->gold_bedpe, 'notboth');
     $self->rawstats->{false_negative} = $self->_get_stat($self->gold_bedpe, $self->bedpe, 'notboth');
+    $self->rawstats->{total_calls} = Genome::Sys->line_count($self->bedpe);
     $self->_set_derivative_stats;
     $self->print_stats;
     return 1;
