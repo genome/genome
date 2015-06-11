@@ -185,7 +185,14 @@ sub dependent_cron_ref_align {
         (not $gmm || ($gmm && $gmm->id == $self->id));
     } @compatible_ref_align_models;
 
-    return @dependent_models;
+    # limit to models for which new results might still be useful
+    my @current_models = grep {
+        $_->analysis_project_bridges and
+        $_->analysis_project_bridges->config_profile_item and
+        $_->analysis_project_bridges->config_profile_item->is_current
+    } @dependent_models;
+
+    return @current_models;
 }
 
 sub request_builds_for_dependent_cron_ref_align {

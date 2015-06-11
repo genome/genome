@@ -7,6 +7,7 @@ BEGIN {
 
 use above 'Genome';
 use Test::More;
+use Genome::Test::Factory::AnalysisProject;
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::InstrumentData::Imported;
 use Genome::Test::Factory::Library;
@@ -47,6 +48,9 @@ my $qc_model = Genome::Model::ReferenceAlignment->create(
     subject => $qc_sample,
     instrument_data => [$qc_data],
 );
+my $anp = Genome::Test::Factory::AnalysisProject->setup_object();
+my ($config) = $anp->config_items;
+$anp->add_model_bridge(config_profile_item => $config, model => $qc_model);
 
 #make genotype microarray model
 my $genotype_microarray_model = Genome::Model::GenotypeMicroarray->create(

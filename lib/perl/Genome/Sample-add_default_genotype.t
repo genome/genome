@@ -15,6 +15,8 @@ use_ok('Genome::Model::GenotypeMicroarray::Test') or die;
 use_ok('Genome::Model::ReferenceAlignment') or die;
 use_ok('Genome::InstrumentData::Imported') or die;
 
+use Genome::Test::Factory::AnalysisProject;
+
 # Create test sample
 my $sample = create_test_sample();
 ok($sample, 'Made test sample');
@@ -125,10 +127,13 @@ sub create_ref_seq_build {
 sub create_ref_align_model {
     my ($sample, $ref_seq_build) = @_;
 
+    my $anp = Genome::Test::Factory::AnalysisProject->setup_object();
+    my ($config) = $anp->config_items;
+
     my $pp = create_ref_align_pp();
     return unless $pp;
 
-    return Genome::Model::ReferenceAlignment->create(
+    my $model = Genome::Model::ReferenceAlignment->create(
         subject_id => $sample->id,
         subject_class_name => $sample->class,
         name => 'test ref align model',
@@ -136,6 +141,10 @@ sub create_ref_align_model {
         processing_profile_id => $pp->id,
         auto_assign_inst_data => 1,
     );
+
+    $anp->add_model_bridge(config_profile_item => $config, model => $model);
+
+    return $model;
 }
 
 sub make_genotype_pp {
