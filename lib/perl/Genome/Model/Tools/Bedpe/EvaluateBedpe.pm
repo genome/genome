@@ -66,7 +66,10 @@ sub _get_stat {
         input_file_b => $file_b,
         intersection_type => $type,
     );
-    return Genome::Sys->line_count($output_file);
+
+    my $uniqueHits = Genome::Sys->create_temp_file_path;
+    `cut -f 1-10 $output_file | sort -u > $uniqueHits`;
+    return Genome::Sys->line_count($uniqueHits);
 }
 
 sub _set_derivative_stats {
