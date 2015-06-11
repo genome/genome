@@ -12,6 +12,7 @@ use Carp qw();
 use Genome::Utility::Text;
 
 class Genome::SoftwareResult::User {
+    is => ['Genome::Utility::ObjectWithLockedConstruction'],
     table_name => 'result.user',
     id_by => [
         id => { is => 'Text', len => 32 },
@@ -205,6 +206,21 @@ sub user_hash_for_build {
         requestor => $build,
         sponsor   => $sponsor,
     };
+}
+
+sub lock_id {
+    my $class = shift;
+
+    my $bx = $class->define_boolexpr(@_);
+
+    my $label = $bx->value_for('label');
+    if(length($label) >= 32) {
+        $label = Genome::Sys->md5sum_data($label);
+    }
+
+    return Genome::Utility::Text::sanitize_string_for_filesystem(
+        join('_', $label, $bx->value_for('user_id'), $bx->value_for('software_result_id'))
+    );
 }
 
 1;
