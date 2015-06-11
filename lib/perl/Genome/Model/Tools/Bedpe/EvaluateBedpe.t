@@ -34,7 +34,7 @@ subtest "Basic" => sub {
         ppv => .5,
         sensitivity => .5,
         f1 => .5,
-        total_calls => 2,
+        total_unique_calls => 2,
     };
     is_deeply($expected_stats, $cmd->rawstats, "stats were set correctly");
 };
@@ -55,7 +55,7 @@ subtest "Only one hit per sv" => sub {
         ppv => .5,
         sensitivity => 1,
         f1 => 0.666666666666667,
-        total_calls => 2,
+        total_unique_calls => 2,
     };
     is_deeply($expected_stats, $cmd->rawstats, "stats were set correctly");
 };

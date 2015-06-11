@@ -37,7 +37,7 @@ sub execute {
     $self->rawstats->{true_positive} = $self->_get_stat($self->bedpe, $self->gold_bedpe, 'both');
     $self->rawstats->{false_positive} = $self->_get_stat($self->bedpe, $self->gold_bedpe, 'notboth');
     $self->rawstats->{false_negative} = $self->_get_stat($self->gold_bedpe, $self->bedpe, 'notboth');
-    $self->rawstats->{total_calls} = Genome::Sys->line_count($self->bedpe);
+    $self->rawstats->{total_unique_calls} = $self->_unique_sv_count($self->bedpe);
     $self->_set_derivative_stats;
     $self->print_stats;
     return 1;
@@ -67,9 +67,14 @@ sub _get_stat {
         intersection_type => $type,
     );
 
-    my $uniqueHits = Genome::Sys->create_temp_file_path;
-    `cut -f 1-10 $output_file | sort -u > $uniqueHits`;
-    return Genome::Sys->line_count($uniqueHits);
+    return $self->_unique_sv_count($output_file);
+}
+
+sub _unique_sv_count {
+    my ($self, $file) = @_;
+    my $count = `cut -f 1-6 $file | sort -u | wc -l`;
+    chomp $count;
+    return $count;
 }
 
 sub _set_derivative_stats {
