@@ -847,6 +847,8 @@ sub make_path {
     for (my $i = 0; $i < @dirs; $i++) {
         my $subpath = File::Spec->catdir(@dirs[0..$i]);
 
+        next if -d $subpath;
+
         my $rv = mkdir $subpath;
         my $mkdir_errno = $!;
         if ($rv) {
