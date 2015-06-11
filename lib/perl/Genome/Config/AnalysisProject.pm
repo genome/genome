@@ -5,6 +5,8 @@ use warnings;
 
 use Genome;
 
+use List::MoreUtils qw(any);
+
 class Genome::Config::AnalysisProject {
     is => [
         "Genome::Utility::ObjectWithTimestamps",
@@ -127,6 +129,15 @@ sub _is_updated {
         "$old_val:$new_val",
         $self,
     );
+}
+
+sub is_current {
+    my $self = shift;
+
+    my $status = $self->status;
+    return if any { $_ eq $status } (qw(Completed Archived Template));
+
+    return 1;
 }
 
 1;
