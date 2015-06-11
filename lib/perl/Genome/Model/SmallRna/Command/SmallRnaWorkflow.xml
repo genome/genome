@@ -29,7 +29,6 @@
   <link fromOperation="input connector" fromProperty="output_spreadsheet" toOperation="Spreadsheet" toProperty="output_spreadsheet" />
   <link fromOperation="input connector" fromProperty="input_cluster_number" toOperation="Spreadsheet" toProperty="input_cluster_number" />
 
-  ######
   <link fromOperation="FilterBamFlagstat" fromProperty="filtered_bam_file" toOperation="ClusterCoverage" toProperty="bam_file" />
   <link fromOperation="FilterBamFlagstat" fromProperty="filtered_bam_file" toOperation="StatsGenerator" toProperty="bam_file" />
 
