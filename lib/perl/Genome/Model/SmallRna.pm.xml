@@ -23,13 +23,13 @@
     <operationtype commandClass="Genome::Model::SmallRna::Command::FilterBamFlagstat" typeClass="Workflow::OperationType::Command" />
   </operation>
 
-  <link fromOperation="FilterBamFlagstat" fromProperty="result" toOperation="output connector" toProperty="result" />
+  <link fromOperation="FilterBamFlagstat" fromProperty="result" toOperation="output connector" toProperty="filter_bam_flagstat_result" />
 
   <operation name="SmallRnaWorkflow" parallelBy="read_size_bin">
     <operationtype commandClass="Genome::Model::SmallRna::Command::SmallRnaWorkflow" typeClass="Workflow::OperationType::Command" />
   </operation>
 
-  <link fromOperation="SmallRnaWorkflow" fromProperty="result" toOperation="output connector" toProperty="result" />
+  <link fromOperation="SmallRnaWorkflow" fromProperty="result" toOperation="output connector" toProperty="small_rna_result" />
 
   <operationtype typeClass="Workflow::OperationType::Model">
     <inputproperty>bam_file</inputproperty>
@@ -45,7 +45,8 @@
     <inputproperty>normalized_filtered_bam</inputproperty>
 
     <outputproperty>normalized_filtered_bam</outputproperty>
-    <outputproperty>result</outputproperty>
+    <outputproperty>small_rna_result</outputproperty>
+    <outputproperty>filter_bam_flagstat_result</outputproperty>
   </operationtype>
 
 </workflow>
