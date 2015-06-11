@@ -68,9 +68,9 @@ sub create_bam_header {
 
     return $self->bam_header_path if -s $self->bam_header_path;
 
-    $self->prepare_scratch_sam_file;
+    my $scratch_sam_header_file = $self->prepare_scratch_sam_header_file;
 
-    Genome::Sys->move_file($self->scratch_sam_file_path, $self->bam_header_path);
+    Genome::Sys->move_file($scratch_sam_header_file, $self->bam_header_path);
     return $self->bam_header_path;
 }
 
