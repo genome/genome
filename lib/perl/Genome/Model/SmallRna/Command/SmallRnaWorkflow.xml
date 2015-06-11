@@ -44,17 +44,9 @@
 
   <link fromOperation="AnnotateCluster" fromProperty="output_tsv_file" toOperation="output connector" toProperty="output_tsv_file" />
 
-  <link fromOperation="FilterBamFlagstat" fromProperty="result" toOperation="output connector" toProperty="result" />
-  <link fromOperation="ClusterCoverage" fromProperty="result" toOperation="output connector" toProperty="result" />
-
-  <link fromOperation="StatsGenerator" fromProperty="result" toOperation="output connector" toProperty="result" />
-  <link fromOperation="AnnotateCluster" fromProperty="result" toOperation="output connector" toProperty="result" />
-  <link fromOperation="Spreadsheet" fromProperty="result" toOperation="output connector" toProperty="result" />
-
   <link fromOperation="StatsGenerator" fromProperty="output_stats_file" toOperation="Spreadsheet"  toProperty="input_stats_file" />
   <link fromOperation="AnnotateCluster" fromProperty="output_tsv_file" toOperation="Spreadsheet" toProperty="input_intersect_file" />
   <link fromOperation="Spreadsheet" fromProperty="output_spreadsheet" toOperation="output connector" toProperty="output_spreadsheet" />
-  <link fromOperation="Spreadsheet" fromProperty="result" toOperation="output connector" toProperty="result" />
 
 
   <operation name="FilterBamFlagstat">
@@ -108,7 +100,6 @@
     <outputproperty>output_tsv_file</outputproperty>
     <outputproperty>output_subclusters_file</outputproperty>
     <outputproperty>output_spreadsheet</outputproperty>
-    <outputproperty>result</outputproperty>
   </operationtype>
 
 </workflow>
