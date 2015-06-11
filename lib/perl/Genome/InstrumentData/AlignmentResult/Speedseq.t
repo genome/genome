@@ -24,7 +24,10 @@ use_ok($pkg);
 my $test_data_dir = __FILE__.'.d';
 
 my $ref_seq_model = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object;
-my $ref_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $ref_seq_model->id);
+my $ref_seq_build = Genome::Test::Factory::Build->setup_object(
+    model_id => $ref_seq_model->id,
+    id => 'a77284b86c934615baaf2d1344399498',
+);
 use Genome::Model::Build::ReferenceSequence;
 my $override = Sub::Override->new(
     'Genome::Model::Build::ReferenceSequence::full_consensus_path',

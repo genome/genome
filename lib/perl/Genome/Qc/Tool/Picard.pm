@@ -43,21 +43,11 @@ sub _get_metrics {
         my $metric_key = $metric_details->{metric_key};
         unless (defined($metric_key)) {
             my @metric_keys = keys %{$metric_results};
-            if (scalar(@metric_keys) == 1) {
-                $metric_key = $metric_keys[0];
+            if (scalar(@metric_keys) > 1) {
+                die $self->error_message("More than one metric key found in the metric results: " . join(', ', @metric_keys));
             }
             else {
-                my $library_name = $self->alignment_result->instrument_data->library->name;
-                my @matching_metric_keys = grep {$_ =~ m/$library_name/} @metric_keys;
-                if (scalar(@matching_metric_keys) == 1) {
-                    $metric_key = $matching_metric_keys[0];
-                }
-                elsif (scalar(@matching_metric_keys) == 0) {
-                    die $self->error_message("No matching metric key found for library (%s) in metric keys list: %s", $library_name, join(', ', @metric_keys));
-                }
-                else {
-                    die $self->error_message("More than one metrics key found for library (%s) in metric keys list: %s", $library_name, join(', ', @metric_keys));
-                }
+                $metric_key = $metric_keys[0];
             }
         }
         my $picard_metric = $metric_details->{picard_metric};

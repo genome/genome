@@ -587,6 +587,35 @@ sub prepare_scratch_sam_file {
     my $self = shift;
 
     $self->debug_message("Preparing the all_sequences.sam in scratch");
+    my $scratch_sam_file = $self->prepare_scratch_sam_header_file;
+
+    if ($self->supports_streaming_to_bam) {
+        my $ref_list  = $self->reference_build->full_consensus_sam_index_path($self->samtools_version);
+        my $sam_cmd = sprintf("| %s view -S -b -o %s - ", Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version), $self->temp_scratch_directory . "/raw_all_sequences.bam");
+        $self->debug_message("Opening $sam_cmd");
+
+        $self->_sam_output_fh(IO::File->new($sam_cmd));
+        unless ($self->_sam_output_fh()) {
+            $self->error_message("We support streaming for this alignment module, but can't open a pipe to $sam_cmd");
+            die $self->error_message;
+        }
+
+        my $temp_fh = IO::File->new($scratch_sam_file);
+        unless ($temp_fh) {
+            $self->error_message("Can't open temp sam header for reading.");
+            die $self->error_message;
+        }
+
+        binmode $temp_fh;
+        while (my $line = <$temp_fh>) {
+            $self->_sam_output_fh->print($line);
+        }
+    }
+    return 1;
+}
+
+sub prepare_scratch_sam_header_file {
+    my $self = shift;
 
     my $scratch_sam_file = $self->scratch_sam_file_path;
 
@@ -615,29 +644,7 @@ sub prepare_scratch_sam_file {
         $self->debug_message("Cat of sam files successful.");
     }
 
-    if ($self->supports_streaming_to_bam) {
-        my $ref_list  = $self->reference_build->full_consensus_sam_index_path($self->samtools_version);
-        my $sam_cmd = sprintf("| %s view -S -b -o %s - ", Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version), $self->temp_scratch_directory . "/raw_all_sequences.bam");
-        $self->debug_message("Opening $sam_cmd");
-
-        $self->_sam_output_fh(IO::File->new($sam_cmd));
-        unless ($self->_sam_output_fh()) {
-            $self->error_message("We support streaming for this alignment module, but can't open a pipe to $sam_cmd");
-            die $self->error_message;
-        }
-
-        my $temp_fh = IO::File->new($scratch_sam_file);
-        unless ($temp_fh) {
-            $self->error_message("Can't open temp sam header for reading.");
-            die $self->error_message;
-        }
-
-        binmode $temp_fh;
-        while (my $line = <$temp_fh>) {
-            $self->_sam_output_fh->print($line);
-        }
-    }
-    return 1;
+    return $scratch_sam_file;
 }
 
 # Override and return 1 if the aligner module can handle the read group

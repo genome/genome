@@ -45,6 +45,8 @@ sub _inititalize_revivified_bam {
     my $output_dir = $self->output_dir || $self->_prepare_output_directory;
     $self->debug_message("Alignment output path is $output_dir");
 
+    $self->create_bam_header;
+
     my $bam_file = $self->SUPER::get_bam_file;
 
     $self->postprocess_bam_file;
@@ -61,13 +63,18 @@ sub _inititalize_revivified_bam {
     return $bam_file;
 }
 
-#Use merged bam for header since we don't have an original per-lane bam
-sub source_bam_path_for_header {
+sub create_bam_header {
     my $self = shift;
-    return $self->get_merged_bam_to_revivify_per_lane_bam;
+
+    return $self->bam_header_path if -s $self->bam_header_path;
+
+    my $scratch_sam_header_file = $self->prepare_scratch_sam_header_file;
+
+    Genome::Sys->move_file($scratch_sam_header_file, $self->bam_header_path);
+    return $self->bam_header_path;
 }
 
-sub path_for_bam_header_creation {
+sub scratch_sam_file_path {
     my $self = shift;
     return File::Spec->join($self->temp_staging_directory, 'all_sequences.bam.header');
 }

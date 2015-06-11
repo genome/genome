@@ -10,6 +10,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use Test::Deep qw(cmp_bag);
 use Genome::Test::Factory::InstrumentData::Solexa;
 use Genome::Test::Factory::Model::ImportedReferenceSequence;
 use Genome::Test::Factory::Build;
@@ -24,7 +25,10 @@ use_ok($pkg);
 my $test_data_dir = __FILE__.'.d';
 
 my $ref_seq_model = Genome::Test::Factory::Model::ImportedReferenceSequence->setup_object;
-my $ref_seq_build = Genome::Test::Factory::Build->setup_object(model_id => $ref_seq_model->id);
+my $ref_seq_build = Genome::Test::Factory::Build->setup_object(
+    model_id => $ref_seq_model->id,
+    id => 'a77284b86c934615baaf2d1344399498',
+);
 
 use Genome::Model::Build::ReferenceSequence;
 my $override = Sub::Override->new(
@@ -52,7 +56,7 @@ my $instrument_data_1 = Genome::Test::Factory::InstrumentData::Solexa->setup_obj
     lane => '1',
     subset_name => '1',
     run_name => 'example',
-    id => '-23',
+    id => '2893815019',
     run_type => 'Paired',
 );
 $instrument_data_1->bam_path(File::Spec->join($test_data_dir, '-533e0bb1a99f4fbe9e31cf6e19907133.bam'));
@@ -73,8 +77,7 @@ my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
 );
 
 my $command = Genome::InstrumentData::Command::AlignAndMerge->create(
-    # instrument_data => [@two_instrument_data],
-    instrument_data => [$instrument_data_2],
+    instrument_data => [@two_instrument_data],
     reference_sequence_build => $ref_seq_build,
     name => 'speedseq',
     version => 'test',
@@ -92,15 +95,15 @@ my $merged_cmp = Genome::Model::Tools::Sam::Compare->execute(
 );
 ok($merged_cmp->result, 'Merged bam as expected');
 
-my @per_lane_results = Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data => $command->instrument_data);
+my @per_lane_results = map { Genome::InstrumentData::AlignmentResult::Speedseq->get(instrument_data => $_) } $command->instrument_data;
 ok(@per_lane_results, 'Per-lane result created correctly');
-is_deeply([$command->per_lane_alignment_result_ids], [map { $_->id } @per_lane_results], 'Per lane result ids match');
-is_deeply([$command->per_lane_alignment_results], [@per_lane_results], 'Per lane results match');
+cmp_bag([$command->per_lane_alignment_result_ids], [map { $_->id } @per_lane_results], 'Per lane result ids match');
+cmp_bag([$command->per_lane_alignment_results], [@per_lane_results], 'Per lane results match');
 
 for my $per_lane_result (@per_lane_results) {
     my $per_lane_cmp = Genome::Model::Tools::Sam::Compare->execute(
         file1 => $per_lane_result->get_bam_file,
-        file2 => File::Spec->join($test_data_dir, 'alignment_result.bam'),
+        file2 => File::Spec->join($test_data_dir, 'alignment_result.' . $per_lane_result->instrument_data->id . '.bam'),
     );
     ok($per_lane_cmp->result, 'Per-lane bam as expected');
 }
