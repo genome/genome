@@ -106,7 +106,7 @@ sub submit {
     my $inputs = $self->get_workflow_inputs;
     $self->status_message("Submitting workflow with inputs: %s", pp($inputs));
 
-    return $dag->submit(inputs => $inputs, process_id => $self->process->id);
+    return $dag->submit(inputs => $inputs, process => $self->process);
 }
 
 sub update_status {
