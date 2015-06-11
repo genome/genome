@@ -1012,7 +1012,7 @@ sub _resolve_param_value_from_text_by_name_or_id {
 sub _release_lock_or_die {
     my ($class, $lock, $error_message) = @_;
 
-    $class->debug_message("Cleaning up lock $lock...");
+    $class->debug_message("Cleaning up lock %s...", $lock->resource);
 
     unless ($lock->unlock()) {
         $class->error_message($error_message);
@@ -1020,7 +1020,7 @@ sub _release_lock_or_die {
     }
     delete $LOCKS{$lock->resource};
 
-    $class->debug_message("Cleanup completed for lock $lock.");
+    $class->debug_message("Cleanup completed for lock %s.", $lock->resource);
 }
 
 # children are things that use this
