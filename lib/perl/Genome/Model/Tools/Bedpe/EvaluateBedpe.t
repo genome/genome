@@ -18,23 +18,46 @@ my $version = "v1";
 
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, $version);
 
-my $cmd = $pkg->create(
-    bedpe => File::Spec->join($data_dir, 'a.bedpe'),
-    gold_bedpe => File::Spec->join($data_dir, 'gold.bedpe'),
-    bedtools_version => '2.17.0',
-    slop => 0,
-);
-ok($cmd->execute, "Command executed ok");
+subtest "Basic" => sub {
+    my $cmd = $pkg->create(
+        bedpe => File::Spec->join($data_dir, 'a.bedpe'),
+        gold_bedpe => File::Spec->join($data_dir, 'gold.bedpe'),
+        bedtools_version => '2.17.0',
+        slop => 0,
+    );
+    ok($cmd->execute, "Command executed ok");
 
-my $expected_stats = {
-    true_positive => 1,
-    false_positive => 1,
-    false_negative => 1,
-    ppv => .5,
-    sensitivity => .5,
-    f1 => .5,
+    my $expected_stats = {
+        true_positive => 1,
+        false_positive => 1,
+        false_negative => 1,
+        ppv => .5,
+        sensitivity => .5,
+        f1 => .5,
+        total_unique_calls => 2,
+    };
+    is_deeply($expected_stats, $cmd->rawstats, "stats were set correctly");
 };
-is_deeply($expected_stats, $cmd->rawstats, "stats were set correctly");
 
+subtest "Only one hit per sv" => sub {
+    my $cmd = $pkg->create(
+        bedpe => File::Spec->join($data_dir, 'a.bedpe'),
+        gold_bedpe => File::Spec->join($data_dir, 'gold2.bedpe'),
+        bedtools_version => '2.17.0',
+        slop => 1000,
+    );
+    ok($cmd->execute, "Command executed ok");
+
+    my $expected_stats = {
+        true_positive => 1,
+        false_positive => 1,
+        false_negative => 0,
+        ppv => .5,
+        sensitivity => 1,
+        f1 => 0.666666666666667,
+        total_unique_calls => 2,
+    };
+    is_deeply($expected_stats, $cmd->rawstats, "stats were set correctly");
+};
 done_testing;
 
