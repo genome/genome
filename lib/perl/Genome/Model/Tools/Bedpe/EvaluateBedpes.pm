@@ -13,7 +13,7 @@ class Genome::Model::Tools::Bedpe::EvaluateBedpes {
         },
         config_file => {
             is => 'Path',
-            doc => 'A tsv file which contains the following columns: caller_name, gold_name, data_name, bedpe, gold_bedpe, slop',
+            doc => 'A tsv file which contains the following columns: bedpe, gold_bedpe, slop (along with any other columns of metadata you wish to include',
         },
         output_json => {
             is => "Path",
@@ -36,14 +36,10 @@ sub execute {
             $line->{gold_bedpe},
             $line->{slop},
         );
-        my $entry = {
-            caller_name => $line->{caller_name},
-            gold_name => $line->{gold_name},
-            data_name => $line->{data_name},
-            stats => $stats,
-            slop => $line->{slop},
-        };
-        push @output, $entry;
+        $line->{stats} = $stats;
+        delete $line->{bedpe};
+        delete $line->{gold_bedpe};
+        push @output, $line;
     }
     Genome::Sys->write_file($self->output_json,
         to_json(\@output, {canonical => 1, pretty => 1}));
