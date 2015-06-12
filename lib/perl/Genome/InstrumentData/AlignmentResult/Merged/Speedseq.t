@@ -71,4 +71,6 @@ my $cmp = Genome::Model::Tools::Sam::Compare->execute(
 );
 ok($cmp->result, 'Merged bam as expected');
 
+ok(-e $merged_alignment_result->bam_md5_path, 'md5 file exists');
+
 done_testing;
