@@ -28015,6 +28015,17 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>bedpe',
     [
+      '>evaluate-bedpes',
+      [
+        'bedtools-version=s',
+        'files',
+        'config-file=s',
+        undef,
+        'output-json=s',
+        undef,
+        'help!',
+        undef
+      ],
       '>evaluate-bedpe',
       [
         'bedpe=s',
