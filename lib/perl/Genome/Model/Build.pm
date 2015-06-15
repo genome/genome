@@ -107,6 +107,10 @@ class Genome::Model::Build {
             calculate => q( return $self->newest_workflow_instance(); ),
         },
         software_revision => { is => 'Text', len => 1000 },
+        process => {
+            is => 'Genome::Model::Build::Process',
+            reverse_as => 'build',
+        }
     ],
     has_many_optional_deprecated => [
         # the_* ?
@@ -1307,12 +1311,6 @@ sub _kill_job {
     } while ($job && ($job->{Status} ne 'EXIT' && $job->{Status} ne 'DONE'));
 
     return 1;
-}
-
-sub process {
-    my $self = shift;
-
-    return Genome::Model::Build::Process->get(build => $self);
 }
 
 sub _get_running_master_lsf_job {
