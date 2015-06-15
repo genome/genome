@@ -3,12 +3,13 @@
 use strict;
 use warnings;
 
-use Test::More;
-
 use above 'Genome';
-use Genome::Model::Tools::BioSamtools::AlignmentSummaryV2;
 
-plan tests => 432;
+use Test::More;
+plan tests => 433;
+
+my $class = 'Genome::Model::Tools::BioSamtools::AlignmentSummaryV2';
+use_ok($class);
 
 # NOTE: When creating test data, remember that ROI start coords are 0-based,
 # and the end coord is open-ended and 1-based.  For example start: 1000, end: 1001 is a region 1-long,
@@ -624,7 +625,7 @@ my @test_data = (
 for (my $i = 0; $i < @test_data; $i++) {
     my $bam_reader = FakeBamReader->create(@{$test_data[$i]->{reads}});
     my $bed_reader = create_bed_reader(@{$test_data[$i]->{rois}});
-    my $stats = Genome::Model::Tools::BioSamtools::AlignmentSummaryV2->summarize_alignments($bam_reader, $bed_reader);
+    my $stats = $class->summarize_alignments($bam_reader, $bed_reader);
     ok($stats, "Get alignment summary stats for test $i");
     foreach my $key ( keys %{$test_data[$i]->{stats}} ) {
         my $expected_value = $test_data[$i]->{stats}->{$key} || 0;
@@ -633,9 +634,6 @@ for (my $i = 0; $i < @test_data; $i++) {
     }
     is($stats->{$_} || 0, 0, "$_ is 0") foreach keys %$stats;
 }
-
-
-
 
 sub create_bed_reader {
     my %rois;
