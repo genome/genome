@@ -45,6 +45,23 @@ class Genome::Model::Tools::BioSamtools::AlignmentSummaryV2 {
     ],
 };
 
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__;
+    return @errors if @errors;
+
+    unless ( $self->output_directory || $self->output_file) {
+        return UR::Object::Tag->create(
+            type => 'error',
+            properties => [qw/ output_file output_directory /],
+            desc => 'No output_file or output_directory provided!',
+        );
+    }
+
+    return;
+}
+
 sub execute {
     my $self = shift;
 
@@ -495,10 +512,6 @@ sub _resolve_output_file {
     my $self = shift;
 
     $self->debug_message('Resolving output file...');
-
-    unless ( $self->output_directory || $self->output_file) {
-        die 'Failed to provide either output_file or output_directory!';
-    }
 
     return $self->output_file if $self->output_file;
 

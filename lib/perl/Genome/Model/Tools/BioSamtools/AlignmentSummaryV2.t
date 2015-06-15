@@ -6,7 +6,7 @@ use warnings;
 use above 'Genome';
 
 use Test::More;
-plan tests => 433;
+plan tests => 435;
 
 my $class = 'Genome::Model::Tools::BioSamtools::AlignmentSummaryV2';
 use_ok($class);
@@ -634,6 +634,10 @@ for (my $i = 0; $i < @test_data; $i++) {
     }
     is($stats->{$_} || 0, 0, "$_ is 0") foreach keys %$stats;
 }
+
+my $as = $class->create(bam_file => 'bam');
+ok(!$as->execute, 'execute failed w/o output_file or output_directory');
+is($as->__errors__->desc, 'No output_file or output_directory provided!', 'correct error');
 
 sub create_bed_reader {
     my %rois;
