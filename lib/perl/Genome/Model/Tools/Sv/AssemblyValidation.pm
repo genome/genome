@@ -265,7 +265,6 @@ sub execute {
 
     my @tigra_sv_cmd = ($tigra_sv_path, '-D', $tigra_sv_desc_file, @tigra_sv_options, $sv_file, @bam_files);
 
-    print "tigra-sv command: " . join(' ', @tigra_sv_cmd) . "\n";
     $self->debug_message("tigra-sv command: %s", join(' ', @tigra_sv_cmd));
     my $rv = Genome::Sys->shellcmd(
         cmd           => \@tigra_sv_cmd,
