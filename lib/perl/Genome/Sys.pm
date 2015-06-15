@@ -1508,15 +1508,7 @@ sub shellcmd {
                 # parent
                 waitpid($pid, 0);
                 $system_retval = $?;
-                # add a new line so that bad programs don't break TAP, etc
-                # Adding a newline to the redirected stdout file isn't strictly
-                # necessary, but is included for compatibility with previous versions
-                # of this code that always printed an extra newline to STDOUT, whether
-                # it was redirected or not.
-                my $extra_newline = $redirect_stdout
-                                    ? IO::File->new($redirect_stdout, O_WRONLY|O_APPEND)
-                                    : *STDOUT;
-                print $extra_newline "\n";
+                print STDOUT "\n" unless $redirect_stdout; # add a new line so that bad programs don't break TAP, etc.
 
             } else {
                 # child
