@@ -76,8 +76,6 @@ sub execute {
     }
     import Bio::DB::Sam::Constants;
 
-    my $output_file = $self->_resolve_output_file();
-
     my $bam_reader = $self->_open_sorted_bam();
 
     $self->_verify_target_index($bam_reader);
@@ -89,7 +87,7 @@ sub execute {
     $self->debug_message("Summarizing alignments");
     my $stats_summary = $self->summarize_alignments($bam_reader, $bed_reader);
 
-    $self->_save_summary($stats_summary, $output_file);
+    $self->_save_summary($stats_summary);
 
     return 1;
 }
@@ -552,11 +550,12 @@ my @output_headers = qw(
 );
 
 sub _save_summary {
-    my ($self, $stats_summary, $output_file) = @_;
+    my ($self, $stats_summary) = @_;
 
+    my $output_file = $self->_resolve_output_file;
     $self->debug_message("Saving summary to output file $output_file");
 
-    my $output_fh = Genome::Sys->open_file_for_writing($self->output_file);
+    my $output_fh = Genome::Sys->open_file_for_writing($output_file);
     $output_fh->print(join("\t", @output_headers), "\n");
     no warnings 'uninitialized';
     $output_fh->print(join("\t", @$stats_summary{@output_headers}), "\n");
