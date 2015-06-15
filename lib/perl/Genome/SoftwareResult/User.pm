@@ -116,23 +116,10 @@ sub _register_users {
         aspect => 'precommit',
         once => 1,
         callback => sub {
-            my @locks;
             for my $params (@param_sets) {
                 next if grep { $params->{$_}->isa('UR::DeletedRef') } qw(user software_result);
-                push @locks, $class->_lock_and_create_if_needed($params);
+                $class->get_or_create($params);
             }
-
-            return unless @locks;
-
-            UR::Context->process->add_observer(
-                aspect => 'commit',
-                once => 1,
-                callback => sub {
-                    for my $lock (@locks) {
-                        $lock->unlock();
-                    }
-                }
-            );
         }
     );
     unless($observer) {
@@ -140,47 +127,16 @@ sub _register_users {
     }
 }
 
-sub _lock_and_create_if_needed {
+sub get_or_create {
     my $class = shift;
     my $params = shift;
 
-    my $existing = $class->get(%$params);
-    return if $existing;
-
-    my $resource = $class->_resolve_lock_name($params);
-    my $lock = Genome::Sys::LockProxy->new(
-        resource => $resource,
-        scope => 'site',
-    )->lock();
-    $class->_load_or_create($params);
-
-    return $lock;
-}
-
-sub _load_or_create {
-    my $class = shift;
-    my $params = shift;
-
-    my $self = $class->load(%$params);
+    my $self = $class->get(%$params);
     unless($self) {
         $self = $class->create(%$params);
     }
 
     return 1;
-}
-
-sub _resolve_lock_name {
-    my $class = shift;
-    my $params = shift;
-
-    my $label = $params->{label};
-    if(length($label) >= 32) {
-        $label = Genome::Sys->md5sum_data($label);
-    }
-
-    return 'genome/software-result-user/' . Genome::Utility::Text::sanitize_string_for_filesystem(
-        join('_', $label, $params->{user}->id, $params->{software_result}->id)
-    );
 }
 
 sub _role_for_type {
