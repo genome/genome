@@ -237,9 +237,6 @@ sub execute {
         $self->_unc_pred_fh($unc_pred_fh);
     }
 
-    #my $out_fh  = Genome::Sys->open_file_for_writing($out_file) or return;
-    #$out_fh->print("\#CHR1\tPOS1\tCHR2\tPOS2\tORI\tSIZE\tTYPE\tHET\twASMSCORE\tTRIMMED_CONTIG_SIZE\tALIGNED\%\tNUM_SEG\tNUM_FSUB\tNUM_FINDEL\tBP_FINDEL\tMicroHomology\tMicroInsertion\tPREFIX\tASMPARM\tCopyNumber\tGene\tKnown\n");
-
     srand(time ^ $$);
 
     my $datadir = $self->intermediate_read_dir;
@@ -334,7 +331,6 @@ sub execute {
                 $size >= $self->min_size_of_confirm_asm_sv && (!defined $self->invalid_indel_range || abs($maxSV->{size}-$size)<=$self->invalid_indel_range))) {
             my $scarstr = $maxSV->{scarsize}>0 ? substr($maxSV->{contig},$maxSV->{bkstart}-1,$maxSV->{bkend}-$maxSV->{bkstart}+1) : '-';
 
-            #        printf STDOUT ("%s\t%d(%d)\t%s\t%d(%d)\t%s\t%d(%d)\t%s(%s)\t%s\t%d\t%d\t%d\%\t%d\t%d\t%d\t%d\t%d\t%s\t%s\ta%d.b%d\t%s\t%s\t%s\n",$maxSV->{chr1},$maxSV->{start1},$start,$maxSV->{chr2},$maxSV->{start2},$end,$maxSV->{ori},$maxSV->{size},$size,$maxSV->{type},$type,$maxSV->{het},$maxSV->{weightedsize},$maxSV->{read_len},$maxSV->{fraction_aligned}*100,$maxSV->{n_seg},$maxSV->{n_sub},$maxSV->{n_indel},$maxSV->{nbp_indel},$maxSV->{microhomology},$scarstr,$prefix,50,100, 'NA', 'NA', 'NA');
             $out_fh->printf("%s\t%d(%d)\t%s\t%d(%d)\t%s\t%d(%d)\t%s(%s)\t%s\t%d\t%d\t%d\%\t%d\t%d\t%d\t%d\t%d\t%s\t%s\ta%d.b%d\t%s\t%s\t%s\n",$maxSV->{chr1},$maxSV->{start1},$start,$maxSV->{chr2},$maxSV->{start2},$end,$maxSV->{ori},$maxSV->{size},$size,$maxSV->{type},$type,$maxSV->{het},$maxSV->{weightedsize},$maxSV->{read_len},$maxSV->{fraction_aligned}*100,$maxSV->{n_seg},$maxSV->{n_sub},$maxSV->{n_indel},$maxSV->{nbp_indel},$maxSV->{microhomology},$scarstr,$prefix,50,100, 'NA', 'NA', 'NA');
 
             if ($bp_io) {  #save breakpoint sequence
@@ -368,9 +364,6 @@ sub execute {
         my $cmd = "mv -f $datadir " . $self->intermediate_save_dir;
         system $cmd;
     }
-    #elsif (!defined $self->intermediate_read_dir){
-    #    File::Temp::cleanup();
-    #}
 
     $out_fh->close;
     $cm_aln_fh->close if $cm_aln_fh;
@@ -466,7 +459,6 @@ sub _cross_match_validation {
 
     my $datadir = $self->_data_dir;
     my $ref_fa  = $datadir . "/$head.ref.fa";
-#    my $ref_fa = $datadir . "/$head.1.ref.fa";
     my ($tigra_sv_fa, $cm_out);
 
     if ($ctg_type eq 'homo') {
@@ -551,7 +543,6 @@ sub _UpdateSVs{
     if (defined $result) {
         print STDERR "Result: $result\n";
         my ($pre_chr1,$pre_start1,$pre_chr2,$pre_start2,$ori,$pre_bkstart,$pre_bkend,$pre_size,$pre_type,$pre_contigid,$alnscore,$scar_size,$read_len,$fraction_aligned,$n_seg,$n_sub,$n_indel,$nbp_indel,$strand,$microhomology,$alnstrs) = split /\s+/, $result;
-        #$pre_size += $makeup_size if $n_seg >= 2;
         if (defined $pre_size && defined $pre_start1 && defined $pre_start2) {
             my ($contigseq,$contiglens,$contigcovs,$kmerutil) = _GetContig($tigra_sv_fa, $pre_contigid);
             my ($refpos1, $refpos2, $rpos1, $rpos2) = _GetRefPos($cm_out, $pre_contigid,$pre_size,$pre_type);
@@ -571,12 +562,6 @@ sub _UpdateSVs{
                 $maxSV->{het}     = $type;
                 $maxSV->{ori}     = $ori;
                 $maxSV->{alnstrs} = $alnstrs;
-
-                    # add according to Ken's requirement, now cut and add it in CrossMatchIndel.pm for only INDEL
-#                    if($maxSV->{strand} =~ /-/ && $maxSV->{type} =~ /DEL/i){
-#                        $maxSV->{start2} -= 1;
-#                        $maxSV->{bkend} -= 1;
-#                    }
             }
         }
     }
@@ -628,29 +613,8 @@ sub _GetRefPos{
                 ($r1, $r2, $r3, $str, $g1, $g2, $g3) = ($a[$#a - 6], $a[$#a - 5], $a[$#a - 4], $a[$#a - 3], $a[$#a - 2], $a[$#a - 1], $a[$#a]);
             }
 
-            #print "HHHHHHHHHHHHHH: $r1, $r2, $r3\n";
             ($chr, $ref_1, $ref_2) = ($str =~ /(\S+):(\d+)-(\d+)/);
-=cut
-            #print "HHHHHHHHHHHHHHH: $g1\t$g2\t$g3\n";
-            if($g1 =~ /\(/){
-                ($ref_start, $ref_end) = ($g2, $g3) if($num == 0);
-                ($ref_start1, $ref_end1) = ($g2, $g3) if($num == 1);
-            }
-            if($r1 =~ /\(/){
-                ($r_start, $r_end) = ($r2, $r3) if($num == 0);
-                ($r_start1, $r_end1) = ($r2, $r3) if($num == 1);
-            }
-            if($g3 =~ /\(/){
-                ($ref_start, $ref_end) = ($g1, $g2) if($num == 0);
-                ($ref_start1, $ref_end1) = ($g1, $g2) if($num == 1);
-            }
-            if($r3 =~ /\(/){
-                ($r_start, $r_end) = ($r1, $r2) if($num == 0);
-                ($r_start1, $r_end1) = ($r1, $r2) if($num == 1);
-            }
-=cut
             $check = 1;
-#$num ++;
         }
     }
 
@@ -663,29 +627,10 @@ sub _GetRefPos{
     else{
         print STDERR "Error, didn't find $contigid of $pre_type and $pre_size in $fin";
     }
-=cut
-    if($num >= 2){
-        #$refpos1 = $ref_start > $ref_start1 ? $ref_start1 : $ref_start;
-        #$refpos2 = $ref_end > $ref_end1 ? $ref_end : $ref_end1;
-        #$rpos1 = $refpos1 == $ref_start ? $r_start : $r_start1;
-        #$rpos2 = $refpos2 == $ref_end ? $r_end : $r_end1;
-        $rpos1 = $r_start > $r_start1 ? $r_start1 : $r_start;
-        $rpos2 = $r_end > $r_end1 ? $r_end : $r_end1;
-        $refpos1 = $rpos1 == $r_start ? $ref_start : $ref_start1;
-        $refpos2 = $rpos2 == $r_end ? $ref_end : $ref_end1;
-    }
-    else{
-        $refpos1 = $ref_start;
-        $refpos2 = $ref_end;
-        $rpos1 = $r_start;
-        $rpos2 = $r_end;
-    }
-=cut
     $refpos1 += $ref_1;
     $refpos2 += $ref_1;
 
 
-#    print "$refpos1\t$refpos2\n";
     return ($refpos1, $refpos2, $rpos1, $rpos2);
 }
 
@@ -752,8 +697,6 @@ sub _ComputeTigraWeightedAvgSize{
         next if $size <= 50 && (($depth<3 && $ioc=~/0/) || $depth>500);  #skip error tips or extremely short and repetitive contigs
         $l = $fh->getline;
         chomp $l;
-        #$_=<CF>; chomp;
-        #next if($size<=50 && (/A{10}/ || /T{10}/ || /C{10}/ || /G{10}/));  #ignore homopolymer contig
         next if $size <= 50 && $l =~ /A{10}|T{10}|C{10}|G{10}/;
         $totalsize += $size*$depth;
         $totaldepth+= $depth;
