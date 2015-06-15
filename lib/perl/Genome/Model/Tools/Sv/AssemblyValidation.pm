@@ -202,7 +202,7 @@ class Genome::Model::Tools::Sv::AssemblyValidation {
 };
 
 
-       
+
 sub execute {
     my $self    = shift;
     my $sv_file = $self->sv_file;
@@ -283,8 +283,8 @@ sub execute {
 
     my @tigra_sv_fas = glob("$datadir/*.fa.contigs.fa");#get tigra homo ctg list
     @tigra_sv_fas = sort{(basename ($a)=~/^\S+?\.(\d+)\./)[0]<=> (basename ($b)=~/^\S+?\.(\d+)\./)[0]}@tigra_sv_fas; #sort ctg file by chr pos
-    
-    
+
+
     # open output file for the following resume
     my $out_fh = new IO::File;
     $out_fh->open(">>$out_file");
@@ -295,7 +295,7 @@ sub execute {
     for my $tigra_sv_fa (@tigra_sv_fas) {
         my ($tigra_sv_filename) = basename $tigra_sv_fa;
         my ($tigra_sv_name) = $tigra_sv_filename =~ /^(\S+)\.fa\.contigs\.fa/;
-        my ($chr1,$start,$chr2,$end,$type,$size,$ori,undef) = split /\./, $tigra_sv_name; # you get the $size from $prefix        
+        my ($chr1,$start,$chr2,$end,$type,$size,$ori,undef) = split /\./, $tigra_sv_name; # you get the $size from $prefix
         if (exists $output_map->{$tigra_sv_filename}) {
             my $p = $output_map->{$tigra_sv_filename};
             $chr1 = $p->{chr1};
@@ -317,33 +317,33 @@ sub execute {
         $self->_N50size(_ComputeTigraN50($tigra_sv_fa));
         $self->_WeightAvgSize(_ComputeTigraWeightedAvgSize($tigra_sv_fa));
 
-        
+
         #test homo, het contigs
         for my $ctg_type ('homo', 'het') {
             $self->_cross_match_validation($ctg_type, $tigra_sv_name, $tigra_sv_filename);
         }
-        
+
         my $maxSV = $self->_maxSV;
 
         if (defined $maxSV && ($type eq 'CTX' && $maxSV->{type} eq $type ||
-	        $type eq 'INV' && $maxSV->{type} eq $type ||
-		    (($type eq $maxSV->{type} && $type eq 'DEL') ||
-		    ($type eq 'ITX' && ($maxSV->{type} eq 'ITX' || $maxSV->{type} eq 'INS')) ||
-		    ($type eq 'INS' && ($maxSV->{type} eq 'ITX' || $maxSV->{type} eq 'INS'))) &&
+                $type eq 'INV' && $maxSV->{type} eq $type ||
+                (($type eq $maxSV->{type} && $type eq 'DEL') ||
+                ($type eq 'ITX' && ($maxSV->{type} eq 'ITX' || $maxSV->{type} eq 'INS')) ||
+                ($type eq 'INS' && ($maxSV->{type} eq 'ITX' || $maxSV->{type} eq 'INS'))) &&
                 # $maxSV->{size}
-                   $size >= $self->min_size_of_confirm_asm_sv && (!defined $self->invalid_indel_range || abs($maxSV->{size}-$size)<=$self->invalid_indel_range))) {
+                $size >= $self->min_size_of_confirm_asm_sv && (!defined $self->invalid_indel_range || abs($maxSV->{size}-$size)<=$self->invalid_indel_range))) {
             my $scarstr = $maxSV->{scarsize}>0 ? substr($maxSV->{contig},$maxSV->{bkstart}-1,$maxSV->{bkend}-$maxSV->{bkstart}+1) : '-';
 
             #        printf STDOUT ("%s\t%d(%d)\t%s\t%d(%d)\t%s\t%d(%d)\t%s(%s)\t%s\t%d\t%d\t%d\%\t%d\t%d\t%d\t%d\t%d\t%s\t%s\ta%d.b%d\t%s\t%s\t%s\n",$maxSV->{chr1},$maxSV->{start1},$start,$maxSV->{chr2},$maxSV->{start2},$end,$maxSV->{ori},$maxSV->{size},$size,$maxSV->{type},$type,$maxSV->{het},$maxSV->{weightedsize},$maxSV->{read_len},$maxSV->{fraction_aligned}*100,$maxSV->{n_seg},$maxSV->{n_sub},$maxSV->{n_indel},$maxSV->{nbp_indel},$maxSV->{microhomology},$scarstr,$prefix,50,100, 'NA', 'NA', 'NA');
             $out_fh->printf("%s\t%d(%d)\t%s\t%d(%d)\t%s\t%d(%d)\t%s(%s)\t%s\t%d\t%d\t%d\%\t%d\t%d\t%d\t%d\t%d\t%s\t%s\ta%d.b%d\t%s\t%s\t%s\n",$maxSV->{chr1},$maxSV->{start1},$start,$maxSV->{chr2},$maxSV->{start2},$end,$maxSV->{ori},$maxSV->{size},$size,$maxSV->{type},$type,$maxSV->{het},$maxSV->{weightedsize},$maxSV->{read_len},$maxSV->{fraction_aligned}*100,$maxSV->{n_seg},$maxSV->{n_sub},$maxSV->{n_indel},$maxSV->{nbp_indel},$maxSV->{microhomology},$scarstr,$prefix,50,100, 'NA', 'NA', 'NA');
-        
+
             if ($bp_io) {  #save breakpoint sequence
                 my $coord = join(".",$maxSV->{chr1},$maxSV->{start1},$maxSV->{chr2},$maxSV->{start2},$maxSV->{type},$maxSV->{size},$maxSV->{ori});
                 my $coord_pipe = join("|",$maxSV->{chr1},$maxSV->{start1},$maxSV->{chr2},$maxSV->{start2},$maxSV->{type},$maxSV->{size},$maxSV->{ori});
                 my $contigsize = $maxSV->{contiglens};
-                my $seqobj = Bio::Seq->new( 
+                my $seqobj = Bio::Seq->new(
                     -display_id => "ID:$prefix,Var:$coord,Ins:$maxSV->{bkstart}\-$maxSV->{bkend},Length:$contigsize,KmerCoverage:$maxSV->{contigcovs},Strand:$maxSV->{strand},Assembly_Score:$maxSV->{weightedsize},PercNonRefKmerUtil:$maxSV->{kmerutil},Ref_start:$maxSV->{refpos1},Ref_end:$maxSV->{refpos2},Contig_start:$maxSV->{rpos1},Contig_end:$maxSV->{rpos2},CrossMatch:$coord_pipe,TIGRA",
-                    -seq => $maxSV->{contig}, 
+                    -seq => $maxSV->{contig},
                 );
                 $bp_io->write_seq($seqobj);
             }
@@ -351,7 +351,7 @@ sub execute {
             if ($cm_aln_fh) {
                 $cm_aln_fh->printf("%s\t%d(%d)\t%s\t%d(%d)\t%s\t%d(%d)\t%s(%s)\t%s\t%d\t%d\t%d\%\t%d\t%d\t%d\t%d\t%d\t%s\t%s\ta%d.b%d\n",$maxSV->{chr1},$maxSV->{start1},$start,$maxSV->{chr2},$maxSV->{start2},$end,$maxSV->{ori},$maxSV->{size},$size,$maxSV->{type},$type,$maxSV->{het},$maxSV->{weightedsize},$maxSV->{read_len},$maxSV->{fraction_aligned}*100,$maxSV->{n_seg},$maxSV->{n_sub},$maxSV->{n_indel},$maxSV->{nbp_indel},$maxSV->{microhomology},$scarstr,$prefix,'50','100');
                 for my $aln (split /\,/, $maxSV->{alnstrs}) {
-	                $cm_aln_fh->printf("%s\n", join("\t", split /\|/, $aln));
+                    $cm_aln_fh->printf("%s\n", join("\t", split /\|/, $aln));
                 }
                 $cm_aln_fh->print("\n");
             }
@@ -465,7 +465,7 @@ sub _cross_match_validation {
     my $head   = join '.', $chr1, $start, $chr2, $end, $type, $size, $ori;
 
     my $datadir = $self->_data_dir;
-    my $ref_fa  = $datadir . "/$head.ref.fa"; 
+    my $ref_fa  = $datadir . "/$head.ref.fa";
 #    my $ref_fa = $datadir . "/$head.1.ref.fa";
     my ($tigra_sv_fa, $cm_out);
 
@@ -481,7 +481,7 @@ sub _cross_match_validation {
         $self->error_message("Wrong type: $ctg_type");
         die $self->error_message;
     }
-    
+
     unless (-s $tigra_sv_fa) {
         $self->warning_message("tigra sv fasta: $tigra_sv_fa is not valid. Skip this $ctg_type cross_match run");
         return;
@@ -493,21 +493,21 @@ sub _cross_match_validation {
     }
 
     my $cm_cmd_opt = '-bandwidth 20 -minmatch 20 -minscore 25 -penalty '.$self->cm_sub_penalty.' -discrep_lists -tags -gap_init '.$self->cm_gap_init_penalty.' -gap_ext -1';
-	my $cm_cmd = "cross_match $tigra_sv_fa $ref_fa $cm_cmd_opt > $cm_out 2>/dev/null";
-	           
+    my $cm_cmd = "cross_match $tigra_sv_fa $ref_fa $cm_cmd_opt > $cm_out 2>/dev/null";
+
     my $rv = Genome::Sys->shellcmd (
         cmd           => $cm_cmd,
         input_files   => [$tigra_sv_fa, $ref_fa],
         #output_files => [$cm_out],
         #allow_zero_size_output_files => 1,
     );
-    
+
     unless ($rv) {
         $self->error_message("Running cross_match for $tigra_sv_name homo failed.\nCommand: $cm_cmd");
         die $self->error_message;
     }
     $self->debug_message("Cross_match for $type contigs: $tigra_sv_name Done");
-        
+
     my $makeup_size      = 0; # by default they are zero
     my $concatenated_pos = 0; # by default they are zero
 
@@ -534,9 +534,9 @@ sub _cross_match_validation {
     $cm_indel = undef;
 
     if ($result && $result =~ /\S+/) {
-	    $self->_UpdateSVs($result,$makeup_size,$regionsize,$tigra_sv_fa,$ctg_type, $cm_out);
+        $self->_UpdateSVs($result,$makeup_size,$regionsize,$tigra_sv_fa,$ctg_type, $cm_out);
     }
-    
+
     return 1;
 }
 
@@ -555,22 +555,22 @@ sub _UpdateSVs{
         if (defined $pre_size && defined $pre_start1 && defined $pre_start2) {
             my ($contigseq,$contiglens,$contigcovs,$kmerutil) = _GetContig($tigra_sv_fa, $pre_contigid);
             my ($refpos1, $refpos2, $rpos1, $rpos2) = _GetRefPos($cm_out, $pre_contigid,$pre_size,$pre_type);
-            $alnscore = int($alnscore*100/$regionsize); 
+            $alnscore = int($alnscore*100/$regionsize);
             $alnscore = $alnscore>100 ? 100 : $alnscore;
             if (!defined $maxSV || $maxSV->{size}<$pre_size || $maxSV->{alnscore} < $alnscore) {
-	            my $N50score = int($N50size*100/$regionsize); 
+                my $N50score = int($N50size*100/$regionsize);
                 $N50score = $N50score>100 ? 100 : $N50score;
-	            if ($self->assemble_mouse) {  #Mouse
-	                $pre_chr1 =~ s/.*\///; 
+                if ($self->assemble_mouse) {  #Mouse
+                    $pre_chr1 =~ s/.*\///;
                     $pre_chr1 =~ s/\.fasta//;
-	                $pre_chr2 =~ s/.*\///; 
+                    $pre_chr2 =~ s/.*\///;
                     $pre_chr2 =~ s/\.fasta//;
                 }
-	            ($maxSV->{chr1},$maxSV->{start1},$maxSV->{chr2},$maxSV->{start2},$maxSV->{bkstart},$maxSV->{bkend},$maxSV->{size},$maxSV->{type},$maxSV->{contigid},$maxSV->{contig},$maxSV->{contiglens},$maxSV->{contigcovs},$maxSV->{kmerutil},$maxSV->{N50},$maxSV->{weightedsize},$maxSV->{alnscore},$maxSV->{scarsize},$maxSV->{a},$maxSV->{b},$maxSV->{read_len},$maxSV->{fraction_aligned},$maxSV->{n_seg},$maxSV->{n_sub},$maxSV->{n_indel},$maxSV->{nbp_indel},$maxSV->{strand},$maxSV->{microhomology},$maxSV->{refpos1},$maxSV->{refpos2},$maxSV->{rpos1},$maxSV->{rpos2}) = ($pre_chr1,$pre_start1,$pre_chr2,$pre_start2,$pre_bkstart,$pre_bkend,$pre_size,$pre_type,$pre_contigid,$contigseq,$contiglens,$contigcovs,$kmerutil,$N50score,$depthWeightedAvgSize,$alnscore,$scar_size,'50','100',$read_len,$fraction_aligned,$n_seg,$n_sub,$n_indel,$nbp_indel,$strand,$microhomology,$refpos1,$refpos2,$rpos1,$rpos2);
+                ($maxSV->{chr1},$maxSV->{start1},$maxSV->{chr2},$maxSV->{start2},$maxSV->{bkstart},$maxSV->{bkend},$maxSV->{size},$maxSV->{type},$maxSV->{contigid},$maxSV->{contig},$maxSV->{contiglens},$maxSV->{contigcovs},$maxSV->{kmerutil},$maxSV->{N50},$maxSV->{weightedsize},$maxSV->{alnscore},$maxSV->{scarsize},$maxSV->{a},$maxSV->{b},$maxSV->{read_len},$maxSV->{fraction_aligned},$maxSV->{n_seg},$maxSV->{n_sub},$maxSV->{n_indel},$maxSV->{nbp_indel},$maxSV->{strand},$maxSV->{microhomology},$maxSV->{refpos1},$maxSV->{refpos2},$maxSV->{rpos1},$maxSV->{rpos2}) = ($pre_chr1,$pre_start1,$pre_chr2,$pre_start2,$pre_bkstart,$pre_bkend,$pre_size,$pre_type,$pre_contigid,$contigseq,$contiglens,$contigcovs,$kmerutil,$N50score,$depthWeightedAvgSize,$alnscore,$scar_size,'50','100',$read_len,$fraction_aligned,$n_seg,$n_sub,$n_indel,$nbp_indel,$strand,$microhomology,$refpos1,$refpos2,$rpos1,$rpos2);
                 print STDERR "\n\nWeightedsize: $maxSV->{weightedsize}\n";
-	            $maxSV->{het}     = $type;
-	            $maxSV->{ori}     = $ori;
-	            $maxSV->{alnstrs} = $alnstrs;
+                $maxSV->{het}     = $type;
+                $maxSV->{ori}     = $ori;
+                $maxSV->{alnstrs} = $alnstrs;
 
                     # add according to Ken's requirement, now cut and add it in CrossMatchIndel.pm for only INDEL
 #                    if($maxSV->{strand} =~ /-/ && $maxSV->{type} =~ /DEL/i){
@@ -627,10 +627,10 @@ sub _GetRefPos{
             else{
                 ($r1, $r2, $r3, $str, $g1, $g2, $g3) = ($a[$#a - 6], $a[$#a - 5], $a[$#a - 4], $a[$#a - 3], $a[$#a - 2], $a[$#a - 1], $a[$#a]);
             }
-            
+
             #print "HHHHHHHHHHHHHH: $r1, $r2, $r3\n";
             ($chr, $ref_1, $ref_2) = ($str =~ /(\S+):(\d+)-(\d+)/);
-=cut                
+=cut
             #print "HHHHHHHHHHHHHHH: $g1\t$g2\t$g3\n";
             if($g1 =~ /\(/){
                 ($ref_start, $ref_end) = ($g2, $g3) if($num == 0);
