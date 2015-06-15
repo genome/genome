@@ -257,24 +257,25 @@ sub execute {
     $self->debug_message("Data directory: $datadir");
     $self->_data_dir($datadir);
 
-    my $tigra_sv_cmd = Genome::Sys->swpath('tigra-sv', '0.1');
-    my $tigra_sv_options = $self->_get_tigra_options;
-    my $bam_files = $self->_check_bam;
+    my $tigra_sv_path = Genome::Sys->swpath('tigra-sv', '0.1');
+    my @tigra_sv_options = $self->_get_tigra_options;
+    my @bam_files = $self->_check_bam;
     my $tigra_sv_desc_file = $self->tigra_sv_output_description_file;
     $tigra_sv_desc_file = "$datadir/output_description.tsv" unless $tigra_sv_desc_file;
-    $tigra_sv_cmd .= " -D $tigra_sv_desc_file ";
-    $tigra_sv_cmd .= ' '. $tigra_sv_options . $sv_file . $bam_files . " > " . $out_file;
 
-    print "tigra-sv command: $tigra_sv_cmd\n";
-    $self->debug_message("tigra-sv command: $tigra_sv_cmd");
+    my @tigra_sv_cmd = ($tigra_sv_path, '-D', $tigra_sv_desc_file, @tigra_sv_options, $sv_file, @bam_files);
+
+    print "tigra-sv command: " . join(' ', @tigra_sv_cmd) . "\n";
+    $self->debug_message("tigra-sv command: %s", join(' ', @tigra_sv_cmd));
     my $rv = Genome::Sys->shellcmd(
-        cmd           => $tigra_sv_cmd,
+        cmd           => \@tigra_sv_cmd,
         input_files   => [$sv_file],
+        redirect_stdout => $out_file,
         #output_files => [$snv_output_file],
         #allow_zero_size_output_files => 1,
     );
     unless ($rv) {
-        $self->error_message("Running tigra_sv failed.\nCommand: $tigra_sv_cmd");
+        $self->error_message("Running tigra_sv failed.\nCommand: %s", join(' ' , @tigra_sv_cmd));
         return;
     }
 
@@ -377,7 +378,7 @@ sub execute {
 sub _check_bam {
     my $self = shift;
     my $bam_files = $self->bam_files;
-    my (@bam_files, $valid_bam);
+    my (@bam_files, @valid_bam);
 
     if ($bam_files =~ /\,/) {
         @bam_files = split /\,/, $bam_files; #TODO validation check each file
@@ -395,9 +396,9 @@ sub _check_bam {
             $self->error_message("bam index file: $bam.bai is not valid");
             die $self->error_message;
         }
-        $valid_bam .= ' ' . $bam;
+        push @valid_bam, $bam;
     }
-    return $valid_bam;
+    return @valid_bam;
 }
 
 
@@ -416,22 +417,22 @@ sub _get_tigra_options {
         skip_call            => 'z',
     );
 
-    my $tigra_opts = '-d -r -I '. $self->_data_dir  . ' ';
-    $tigra_opts .= '-b ' unless $self->custom_sv_format;
-    $tigra_opts .= '-p 10000 ' if($self->asm_high_coverage);
-    $tigra_opts .= '-h 300 ' if($self->asm_high_coverage);
-    $tigra_opts .= '-z ' . $self->skip_call if($self->skip_call);
-    $tigra_opts .= '-c ' . $self->specify_chr . ' ' if($self->specify_chr);
-    $tigra_opts .= '-M ' . $self->min_size_of_confirm_asm_sv . ' ' if($self->min_size_of_confirm_asm_sv);
-    $tigra_opts .= '-R ' . $self->reference_file . ' ' if($self->reference_file);
-    $tigra_opts .= '-k ' . '15,25,39' . ' ' if($self->asm_high_coverage);
+    my @tigra_opts = (qw(-d -r -I ), $self->_data_dir);
+    push @tigra_opts, '-b' unless $self->custom_sv_format;
+    push @tigra_opts, (qw(-p 10000)) if($self->asm_high_coverage);
+    push @tigra_opts, (qw(-h 300)) if($self->asm_high_coverage);
+    push @tigra_opts, ('-z', $self->skip_call) if($self->skip_call);
+    push @tigra_opts, ('-c', $self->specify_chr) if($self->specify_chr);
+    push @tigra_opts, ('-M', $self->min_size_of_confirm_asm_sv) if($self->min_size_of_confirm_asm_sv);
+    push @tigra_opts, ('-R', $self->reference_file) if($self->reference_file);
+    push @tigra_opts, ('-k', '15,25,39') if($self->asm_high_coverage);
 
     for my $opt (keys %tigra_sv_options) {
         if ($self->$opt) {
-            $tigra_opts .= '-'.$tigra_sv_options{$opt}.' '.$self->$opt . ' ';
+            push @tigra_opts, ('-'.$tigra_sv_options{$opt}, $self->$opt);
         }
     }
-    return $tigra_opts;
+    return @tigra_opts;
 }
 
 
@@ -484,18 +485,20 @@ sub _cross_match_validation {
         return;
     }
 
-    my $cm_cmd_opt = '-bandwidth 20 -minmatch 20 -minscore 25 -penalty '.$self->cm_sub_penalty.' -discrep_lists -tags -gap_init '.$self->cm_gap_init_penalty.' -gap_ext -1';
-    my $cm_cmd = "cross_match $tigra_sv_fa $ref_fa $cm_cmd_opt > $cm_out 2>/dev/null";
+    my @cm_cmd_opt = (qw(-bandwidth 20 -minmatch 20 -minscore 25 -penalty), $self->cm_sub_penalty, qw(-discrep_lists -tags -gap_init), $self->cm_gap_init_penalty, qw(-gap_ext -1));
+    my @cm_cmd = ('cross_match', $tigra_sv_fa, $ref_fa, @cm_cmd_opt);
 
     my $rv = Genome::Sys->shellcmd (
-        cmd           => $cm_cmd,
+        cmd           => \@cm_cmd,
         input_files   => [$tigra_sv_fa, $ref_fa],
+        redirect_stdout => $cm_out,
+        redirect_stderr => '/dev/null',
         #output_files => [$cm_out],
         #allow_zero_size_output_files => 1,
     );
 
     unless ($rv) {
-        $self->error_message("Running cross_match for $tigra_sv_name homo failed.\nCommand: $cm_cmd");
+        $self->error_message("Running cross_match for $tigra_sv_name homo failed.\nCommand: %s", join(' ', @cm_cmd));
         die $self->error_message;
     }
     $self->debug_message("Cross_match for $type contigs: $tigra_sv_name Done");
