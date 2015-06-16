@@ -110,7 +110,7 @@ sub get_builds {
         }
 
         # only keep the most recently scheduled build
-        next if $builds{ $model->id } and $builds{ $model->id }->date_scheduled gt $build->date_scheduled;
+        next if $builds{ $model->id } and $builds{ $model->id }->created_at gt $build->created_at;
         $builds{ $model->id } = $build;
     }
     $self->status_message('Found '.keys(%builds).' models');
