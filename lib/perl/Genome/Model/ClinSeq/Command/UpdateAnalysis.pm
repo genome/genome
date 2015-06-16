@@ -697,24 +697,17 @@ sub get_dna_instrument_data{
     my $trsn = $instrument_data->target_region_set_name;
     if ($trsn){
       my $fl = Genome::FeatureList->get(name => $trsn);
+      my @valid_types = "exome";
       if ($self->validation_as_exome) {
-        if (not $fl or not $fl->content_type) {
-          push @unknown, $instrument_data;
-        }elsif ($fl->content_type eq 'exome' || $fl->content_type eq 'validation') {
-          push @exome, $instrument_data;
-          $trsns{$trsn}=1;
-        }else{
-          push @other, $instrument_data;
-        }
+        push(@valid_types, "validation");
+      }
+      if (not $fl or not $fl->content_type) {
+        push @unknown, $instrument_data;
+      }elsif (grep {$fl->content_type eq $_} @valid_types) {
+        push @exome, $instrument_data;
+        $trsns{$trsn}=1;
       }else{
-        if (not $fl or not $fl->content_type) {
-          push @unknown, $instrument_data;
-        }elsif ($fl->content_type eq 'exome') {
-          push @exome, $instrument_data;
-          $trsns{$trsn}=1;
-        }else {
-          push @other, $instrument_data;
-        }
+        push @other, $instrument_data;
       }
     }else{
       push @wgs, $instrument_data;
