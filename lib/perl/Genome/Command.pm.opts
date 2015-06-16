@@ -8733,10 +8733,10 @@ $Genome::Command::OPTS_SPEC = [
       ],
       '>genotype-microarray',
       [
+        'dbsnp-build=s',
+        undef,
         'processing-profile-name=s',
         'files',
-        'variation-list-build=s',
-        undef,
         'auto-assign-inst-data!',
         undef,
         'subject-name=s',
