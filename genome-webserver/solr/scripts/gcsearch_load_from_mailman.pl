@@ -1,4 +1,4 @@
-#!/usr/bin/env genome-perl
+#! /usr/bin/env genome-perl
 
 use above "Genome";
 
