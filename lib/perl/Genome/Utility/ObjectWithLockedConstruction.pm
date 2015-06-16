@@ -13,19 +13,17 @@ class Genome::Utility::ObjectWithLockedConstruction {
 
 sub create {
     my $class = shift;
+
+    my $obj = $class->get(@_);
+    return $obj if $obj;
+
     if ($ENV{UR_DBI_NO_COMMIT}) {
         return $class->SUPER::create(@_);
     } else {
         my $lock_id = $class->lock_id(@_);
-
         my $lock_var = sprintf('%s/%s', $class, $lock_id);
 
-        my $obj = $class->get(@_);
-        if($obj) {
-            return $obj;
-        } else {
-            return $class->create_with_lock($lock_var, @_);
-        }
+        return $class->create_with_lock($lock_var, @_);
     }
 }
 
