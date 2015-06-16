@@ -75,9 +75,6 @@ $result->add_user(user => $p, label => 'test');
 is_deeply([$p->results], [$result],
     'Found TestResult via SoftwareResult::User relationship');
 
-$result->add_user(user => $p, label => 'test');
-is_deeply([$p->results], [$result, $result],
-    'Found two TestResults via SoftwareResult::User relationship');
 my $code_test_dir = __FILE__ . '.d';
 
 my %tests = (
