@@ -118,25 +118,13 @@ sub _register_users {
         callback => sub {
             for my $params (@param_sets) {
                 next if grep { $params->{$_}->isa('UR::DeletedRef') } qw(user software_result);
-                $class->get_or_create($params);
+                $class->create($params);
             }
         }
     );
     unless($observer) {
         die 'Failed to create observer';
     }
-}
-
-sub get_or_create {
-    my $class = shift;
-    my $params = shift;
-
-    my $self = $class->get(%$params);
-    unless($self) {
-        $self = $class->create(%$params);
-    }
-
-    return 1;
 }
 
 sub _role_for_type {
