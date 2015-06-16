@@ -49,8 +49,7 @@ HELP
 sub execute {
     my $self = shift;
 
-    my @events = $self->get_events();
-    my %builds = $self->get_builds(@events);
+    my %builds = $self->get_builds();
 
     $self->remove_builds_in_tickets(\%builds);
 
@@ -63,55 +62,37 @@ sub execute {
     return 1;
 }
 
-sub get_events {
+sub get_builds {
     my $self = shift;
 
     # Find cron models by failed build events
-    my @events;
+    my @builds;
     if ($self->include_failed) {
-        $self->status_message('Looking for failed model events...');
-        @events = Genome::Model::Event->get(
-            event_status => 'Failed',
-            event_type => 'genome model build',
-            user_name => 'apipe-builder',
-            -hint => [qw/ build /],
+        $self->status_message('Looking for failed builds...');
+        @builds = Genome::Model::Build->get(
+            status => 'Failed',
+            run_by => 'apipe-builder',
         );
     }
 
     # Find cron models by unstartable build events
     if ($self->include_unstartable) {
-        $self->status_message('Looking for unstartable model events...');
-        my @unstartable_events = Genome::Model::Event->get(
-            event_status => 'Unstartable',
-            event_type => 'genome model build',
-            user_name => 'apipe-builder',
-            -hint => [qw/ build /],
+        $self->status_message('Looking for unstartable builds...');
+        my @unstartable_builds = Genome::Model::Build->get(
+            status => 'Unstartable',
+            run_by => 'apipe-builder',
         );
-        @events = (@events, @unstartable_events);
+        @builds = (@builds, @unstartable_builds);
     }
 
-    if (scalar(@events)) {
-        return @events;
-    } else {
-        $self->error_message('No failed or unstartable events found!');
+    unless (scalar(@builds)) {
+        $self->error_message('No failed or unstartable builds found!');
         die $self->error_message();
     }
-}
 
-sub get_builds {
-    my ($self, @events) = @_;
-
-    $self->status_message("Looking up Models and Builds from events...");
-
-    my @build_ids;
-    for my $event (@events) {
-        next if not $event->build_id;
-        push @build_ids, $event->build_id;
-    }
-    my @builds = Genome::Model::Build->get('id in' => \@build_ids, -hint => [qw(model_id events date_scheduled)]);
     my @models = Genome::Model->get('id in' => [map {$_->model_id} @builds]);
-    $self->status_message(sprintf("Found %d builds from %d events in %d models",
-            scalar(@builds), scalar(@events), scalar(@models)));
+    $self->status_message(sprintf("Found %d builds in %d models",
+            scalar(@builds), scalar(@models)));
 
     # cache the model_status calculations (they're calculated and slowly)...
     my %model_status;
