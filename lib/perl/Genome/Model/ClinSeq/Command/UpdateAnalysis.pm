@@ -259,8 +259,7 @@ sub execute {
   #If the user selected the --validation-as-exome-my-trsn option, make sure --validation-as-exome option is used
   if ($self->validation_as_exome_my_trsn) {
     unless ($self->validation_as_exome) {
-      $self->error_message("Exiting... validation_as_exome_my_trsn requires validation_as_exome option");
-      exit 1;
+      die $self->error_message("Exiting... validation_as_exome_my_trsn requires validation_as_exome option");
     }
   }
 
@@ -860,23 +859,22 @@ sub get_trsn{
       $user_trsn = 'validation';
       $self->warning_message("Using '$user_trsn' target region specified by validation-as-exome-my-trsn.");
     }else{
-      $self->error_message("Not a valid argument for validation_as_exome_my_trsn. 1='exome' or 2='validation'");
-      exit 1;
+      die $self->error_message("Not a valid argument for validation_as_exome_my_trsn. 1='exome' or 2='validation'");
     }
     
+    #Assigns the target-region-set-name to the value defined by the user
     foreach my $instrument_data (@instrument_data){
       my $trsn = $instrument_data->target_region_set_name;
       if ($trsn){
         my $fl = Genome::FeatureList->get(name => $trsn);
+        $trsns{$trsn}=1;
         if ($fl->content_type eq $user_trsn) {
-          $trsns{$trsn}=1;
           $trsn_ref = $trsn;
-        }else{
-          $trsns{$trsn}=1;
         }
       }
     }
-     
+  
+  #Default behavior for choosing target-region-set-name   
   }else{
     foreach my $instrument_data (@instrument_data){
       my $trsn = $instrument_data->target_region_set_name;
