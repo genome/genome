@@ -13,6 +13,7 @@ use Genome::Utility::Inputs qw(encode decode);
 use Data::Dump qw(pp);
 use Ptero::Proxy::Workflow::Execution;
 use Try::Tiny qw(try catch finally);
+use Carp qw();
 
 class Genome::Ptero::Wrapper {
     is => 'Command::V2',
@@ -65,10 +66,12 @@ sub execute {
         $self->_run_command($cmd);
         return $cmd;
     } catch {
-        die $_;
-    } finally {
+        Carp::cluck($_);
         $self->_teardown_logging;
+        die $_;
     };
+
+    $self->_teardown_logging;
 
     printf SAVED_STDERR "Setting outputs: %s\n", pp(_get_command_outputs($command, $self->command_class));
     $self->execution->set_outputs(
