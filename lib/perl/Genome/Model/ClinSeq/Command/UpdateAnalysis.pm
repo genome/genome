@@ -198,7 +198,7 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               is => 'Boolean',
               doc => 'Treat validation data as exome data. Includes instrument data from validation capture in exome reference alignment model.',
         },
-        validation_as_exome_my_trsn => {
+        my_trsn => {
               is => 'Number',
               doc => 'If using validation-as-exome option, option to specify what instrument data to derive the target-set-region-name and region-of-interest from. 1=exome or 2=validation', 
         },
@@ -256,10 +256,10 @@ sub execute {
     return 1;
   }
   
-  #If the user selected the --validation-as-exome-my-trsn option, make sure --validation-as-exome option is used
-  if ($self->validation_as_exome_my_trsn) {
+  #If the user selected the --my-trsn option, make sure --validation-as-exome option is used
+  if ($self->my_trsn) {
     unless ($self->validation_as_exome) {
-      die $self->error_message("Exiting... validation_as_exome_my_trsn requires validation_as_exome option");
+      die $self->error_message("Exiting... my-trsn requires validation-as-exome option");
     }
   }
 
@@ -840,19 +840,19 @@ sub get_trsn{
   my %trsns;
   my $trsn_ref;
   
-  #When using validation-as-exome and validation-as-exome-my-trsn options, use user-defined target region set name (1=exome or 2=validation)
-  if ($self->validation_as_exome && $self->validation_as_exome_my_trsn) {
-    my $user_trsn = $self->validation_as_exome_my_trsn;
+  #When using validation-as-exome and my-trsn options, use user-defined target region set name (1=exome or 2=validation)
+  if ($self->validation_as_exome && $self->my_trsn) {
+    my $user_trsn = $self->my_trsn;
     
-    #Check if a valid option for validation-as-exome-my-trsn and use or warn user and exit
+    #Check if a valid option for my-trsn and use or warn user and exit
     if ($user_trsn == 1){
       $user_trsn = 'exome';
-      $self->warning_message("Using '$user_trsn' target region specified by validation-as-exome-my-trsn.");
+      $self->warning_message("Using '$user_trsn' target region specified by my-trsn.");
     }elsif($user_trsn == 2){
       $user_trsn = 'validation';
-      $self->warning_message("Using '$user_trsn' target region specified by validation-as-exome-my-trsn.");
+      $self->warning_message("Using '$user_trsn' target region specified by my-trsn.");
     }else{
-      die $self->error_message("Not a valid argument for validation_as_exome_my_trsn. 1='exome' or 2='validation'");
+      die $self->error_message("Not a valid argument for my_trsn. 1='exome' or 2='validation'");
     }
     
     #Assigns the target-region-set-name to the value defined by the user
