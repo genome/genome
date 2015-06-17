@@ -229,8 +229,9 @@ sub create {
         $self->debug_message('Merge done');
     }
     catch {
+        my $err = $_;
         $tx->rollback();
-        die $class->error_message('Merge failed due to error: ' . $_);
+        die $class->error_message('Merge failed due to error: ' . $err);
     };
 
     $self->_reallocate_disk_allocation;
