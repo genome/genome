@@ -197,7 +197,7 @@ subtest 'simple align_and_merge strategy' => sub {
             force_fragment => 0,
             result_users => $result_users,
         },
-        strategy => 'instrument_data both aligned to reference_sequence_build and merged using speedseq test [threads => 8, sort_memory => 8] api v1',
+        strategy => 'instrument_data both aligned to reference_sequence_build and merged using speedseq test [sort_memory => 8] api v1',
     );
     isa_ok(
         $ad,
@@ -251,7 +251,7 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
             force_fragment => 0,
             result_users => $result_users,
         },
-        strategy => sprintf('instrument_data both aligned to reference_sequence_build and merged using speedseq test [threads => 8, sort_memory => 8] @align-and-merge-qc [%s] api v1', $config_name),
+        strategy => sprintf('instrument_data both aligned to reference_sequence_build and merged using speedseq test [sort_memory => 8] @align-and-merge-qc [%s] api v1', $config_name),
     );
     isa_ok(
         $ad,
@@ -689,7 +689,7 @@ sub construct_speedseq_result {
         reference_build => $reference,
         aligner_name => 'speedseq',
         aligner_version => 'test',
-        aligner_params => 'threads => 8, sort_memory => 8',
+        aligner_params => 'sort_memory => 8',
     );
     for my $i (0..$#instrument_data) {
         $speedseq_result->add_input(
@@ -713,7 +713,7 @@ sub construct_speedseq_result {
             reference_build => $reference,
             aligner_name => 'speedseq',
             aligner_version => 'test',
-            aligner_params => 'threads => 8, sort_memory => 8',
+            aligner_params => 'sort_memory => 8',
             samtools_version => 'r599',
             picard_version => '1.29',
         );
