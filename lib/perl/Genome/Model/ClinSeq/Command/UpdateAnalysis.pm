@@ -199,8 +199,9 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               doc => 'Treat validation data as exome data. Includes instrument data from validation capture in exome reference alignment model.',
         },
         my_trsn => {
-              is => 'Number',
-              doc => 'If using validation-as-exome option, option to specify what instrument data to derive the target-set-region-name and region-of-interest from. 1=exome or 2=validation', 
+              is => 'Text',
+              doc => 'If using validation-as-exome option, option to specify what instrument data to derive the target-set-region-name and region-of-interest from. valid options: exome or validation', 
+              valid_values => ['exome','validation']
         },
    ],
     doc => 'evaluate models/builds for an individual and help create/update a clinseq model that meets requested criteria',
@@ -840,20 +841,10 @@ sub get_trsn{
   my %trsns;
   my $trsn_ref;
   
-  #When using validation-as-exome and my-trsn options, use user-defined target region set name (1=exome or 2=validation)
+  #When using validation-as-exome and my-trsn options, use user-defined target region set name (exome or validation)
   if ($self->validation_as_exome && $self->my_trsn) {
     my $user_trsn = $self->my_trsn;
-    
-    #Check if a valid option for my-trsn and use or warn user and exit
-    if ($user_trsn == 1){
-      $user_trsn = 'exome';
-      $self->warning_message("Using '$user_trsn' target region specified by my-trsn.");
-    }elsif($user_trsn == 2){
-      $user_trsn = 'validation';
-      $self->warning_message("Using '$user_trsn' target region specified by my-trsn.");
-    }else{
-      die $self->error_message("Not a valid argument for my_trsn. 1='exome' or 2='validation'");
-    }
+    $self->warning_message("Using '$user_trsn' target region specified by my-trsn.");
     
     #Assigns the target-region-set-name to the value defined by the user
     foreach my $instrument_data (@instrument_data){
