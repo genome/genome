@@ -26,6 +26,6 @@ my $command = $package->create(vcf => $vcf, bam => $bam, out_prefix => $out_pref
 my $exe_path = Genome::Model::Tools::VerifyBamId::_get_exe_path($version);
 is($exe_path, "/usr/bin/verifyBamID$version", "exe path is found");
 
-is($command->_get_cmd, "$exe_path --vcf $vcf --bam $bam --out $out_prefix --maxDepth $max_depth --precise --ignoreRG", "command is constructed correctly");
+is($command->_get_cmd, "$exe_path --vcf $vcf --bam $bam --out $out_prefix --maxDepth $max_depth --ignoreRG --precise", "command is constructed correctly");
 
 done_testing;
