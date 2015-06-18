@@ -35,6 +35,10 @@ class Genome::Config::AnalysisProject::InstrumentDataBridge {
     id_generator => '-uuid',
 };
 
+sub __display_name__ {
+    return sprintf('bridge between instrument data (%s) and analysis project (%s)', $_[0]->instrument_data->id, $_[0]->analysis_project->id);
+}
+
 sub reschedule {
     my $self = shift;
 
