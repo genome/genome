@@ -157,7 +157,7 @@ sub _mark_sync_status {
 sub should_skip {
     my ($self, $inst_data) = @_;
 
-    return 'ignored flag is set on instrument data' if $inst_data->ignored;
+    return sprintf('Instrument data (%s) has ignored flag is set, skipping!', $inst_data) if $inst_data->ignored;
     return;
 }
 
