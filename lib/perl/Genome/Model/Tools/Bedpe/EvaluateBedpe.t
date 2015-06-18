@@ -35,6 +35,7 @@ subtest "Basic" => sub {
         sensitivity => .5,
         f1 => .5,
         total_unique_calls => 2,
+        total_unique_gold_calls => 2,
     };
     is_deeply($expected_stats, $cmd->rawstats, "stats were set correctly");
 };
@@ -56,6 +57,7 @@ subtest "Only one hit per sv" => sub {
         sensitivity => 1,
         f1 => 0.666666666666667,
         total_unique_calls => 2,
+        total_unique_gold_calls => 2,
     };
     is_deeply($expected_stats, $cmd->rawstats, "stats were set correctly");
 };

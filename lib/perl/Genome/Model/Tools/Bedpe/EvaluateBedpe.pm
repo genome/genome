@@ -38,6 +38,7 @@ sub execute {
     $self->rawstats->{false_positive} = $self->_get_stat($self->bedpe, $self->gold_bedpe, 'notboth');
     $self->rawstats->{false_negative} = $self->_get_stat($self->gold_bedpe, $self->bedpe, 'notboth');
     $self->rawstats->{total_unique_calls} = $self->_unique_sv_count($self->bedpe);
+    $self->rawstats->{total_unique_gold_calls} = $self->_unique_sv_count($self->gold_bedpe);
     $self->_set_derivative_stats;
     $self->print_stats;
     return 1;
