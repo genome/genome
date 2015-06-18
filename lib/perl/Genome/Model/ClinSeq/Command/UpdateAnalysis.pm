@@ -842,7 +842,7 @@ sub get_trsn{
   my $trsn_ref;
   
   #When using validation-as-exome and my-trsn options, use user-defined target region set name (exome or validation)
-  if ($self->validation_as_exome && $self->my_trsn) {
+  if ($self->my_trsn) {
     my $user_trsn = $self->my_trsn;
     $self->warning_message("Using '$user_trsn' target region specified by my-trsn.");
     
@@ -857,7 +857,12 @@ sub get_trsn{
         }
       }
     }
-  
+    
+    #Checks that $trsn_ref has been initialized
+    if(!defined $trsn_ref) {
+      die $self->error_message("Cannot provide --my-trsn specified target region set name. Feature list of the target region set name does not have expected 'exome' or 'validation' content type.");
+    }
+
   #Default behavior for choosing target-region-set-name   
   }else{
     foreach my $instrument_data (@instrument_data){
