@@ -17,6 +17,7 @@ use Genome;
 use Term::ANSIColor;
 use File::Path;
 use File::Basename;
+use File::Spec;
 use IO::File;
 use Sort::Naturally;
 use Data::Dumper;
@@ -260,17 +261,6 @@ sub _calculate_library_count {
     return scalar($self->libraries);
 }
 
-sub complete_build_directory {
-    my $self=shift;
-    if (defined $self->last_complete_build) {
-        return $self->last_complete_build->data_directory;
-    }
-    else
-    {
-        return;
-    }
-}
-
 sub run_names {
     my $self = shift;
     my %distinct_run_names = map { $_->run_name => 1}  $self->instrument_data;
@@ -297,7 +287,9 @@ sub region_of_interest_set {
 
 sub accumulated_alignments_directory {
     my $self = shift;
-    return $self->complete_build_directory . '/alignments';
+    my $last_complete_build = $self->last_complete_build;
+    return if not $last_complete_build;
+    return File::Spec->join($last_complete_build->data_directory, 'alignments');
 }
 
 sub is_eliminate_all_duplicates {

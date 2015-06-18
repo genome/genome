@@ -18,13 +18,8 @@ my $m = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
 ok($m, "got a model");
 is($m->reference_sequence_name, 'test_model_1-build', 'The ref_seq of the model matches the expected');
 
-my $data_directory = $m->complete_build_directory;
-my $expected ='model_data/2771359026/build97848505';
-like($data_directory, qr/$expected$/, "resolved data directory");  # FIX WHEN WE SWITCH MODELS
-
 my $f = $m->accumulated_alignments_directory();
 is($f, "$data_directory/alignments", "found alignments directory");
 
 is($m->experimental_subject, $m->subject, 'experimental subject return subject that is a sample');
 ok(!$m->control_subject, 'control subject returns nothing');
-
