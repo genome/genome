@@ -52,13 +52,14 @@ sub execute {
 
     for my $current_pair (@instrument_data_analysis_project_pairs) {
         my $current_inst_data = $current_pair->instrument_data;
+        my $analysis_project = $current_pair->analysis_project;
+        $self->status_message('Working on instrument data %s for analysis project (%s)...', $current_inst_data->id, $analysis_project->id);
 
         if(my $skip_reason = $self->should_skip($current_inst_data)) {
             $self->_mark_pair_as_skipped($current_pair, $skip_reason);
             next;
         }
 
-        my $analysis_project = $current_pair->analysis_project;
         if (my $msg = $self->should_wait($current_inst_data, $analysis_project)) {
             $self->status_message($msg);
             next;
