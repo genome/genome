@@ -36,7 +36,9 @@ sub execute {
             $line->{gold_bedpe},
             $line->{slop},
         );
-        $line->{stats} = $stats;
+        for my $key (keys %$stats) {
+            $line->{$key} = $stats->{$key};
+        }
         delete $line->{bedpe};
         delete $line->{gold_bedpe};
         push @output, $line;

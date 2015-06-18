@@ -13,7 +13,7 @@ use Test::More;
 use Genome::Utility::Test qw(compare_ok);
 
 my $pkg = "Genome::Model::Tools::Bedpe::EvaluateBedpes";
-my $version = "v1";
+my $version = "v2";
 use_ok($pkg);
 
 my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, $version);
