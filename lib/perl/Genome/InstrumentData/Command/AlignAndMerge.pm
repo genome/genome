@@ -88,30 +88,7 @@ class Genome::InstrumentData::Command::AlignAndMerge {
             doc => 'The per-lane results generated/found when running the command',
         },
     ],
-    has_param => [
-        lsf_resource => {
-            value => &_lsf_resource(),
-        },
-    ],
 };
-
-sub _lsf_resource {
-
-    my $mem_mb = 1024 * 60;
-    my $mem_kb = $mem_mb*1024;
-
-    my $cpus = 8;
-
-    my $queue = Genome::Config::get('lsf_queue_alignment_prod');
-
-    my $select  = "select[ncpus >= $cpus && mem >= $mem_mb] span[hosts=1]";
-    my $rusage  = "rusage[mem=$mem_mb]";
-    my $options = "-M $mem_kb -n $cpus -q $queue";
-
-    my $required_usage = "-R '$select $rusage' $options";
-
-    return $required_usage;
-}
 
 sub execute {
     my $self = shift;
