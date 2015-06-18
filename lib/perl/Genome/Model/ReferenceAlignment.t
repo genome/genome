@@ -18,22 +18,6 @@ my $m = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
 ok($m, "got a model");
 is($m->reference_sequence_name, 'test_model_1-build', 'The ref_seq of the model matches the expected');
 
-# we may build and build again, but just test this build...
-# TODO: mock
-#my $build_id = 96402993; This build does not exist anymore.
-my $build_id = 97848505;
-my @completed = $m->completed_builds;
-for my $b (@completed) {
-    next if $b->id == $build_id;
-    $b->status('Running');
-    $b->date_completed(undef);
-}
-
-my $last_complete_build = $m->last_complete_build;
-unless ($last_complete_build->id == $build_id) {
-    die "Failed to force model " . $m->id . " to use build " . $build_id . " as its last complete build.  Got " . $last_complete_build->id;
-}
-
 my $data_directory = $m->complete_build_directory;
 my $expected ='model_data/2771359026/build97848505';
 like($data_directory, qr/$expected$/, "resolved data directory");  # FIX WHEN WE SWITCH MODELS
