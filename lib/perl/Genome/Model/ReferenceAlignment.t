@@ -28,7 +28,3 @@ is($f, "$data_directory/alignments", "found alignments directory");
 is($m->experimental_subject, $m->subject, 'experimental subject return subject that is a sample');
 ok(!$m->control_subject, 'control subject returns nothing');
 
-
-sub all_exist {
-    return (!(grep{ ! -e $_ } @_) ? 1 : 0);
-}
