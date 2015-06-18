@@ -55,7 +55,7 @@ sub execute {
         my $analysis_project = $current_pair->analysis_project;
         $self->status_message('Working on instrument data %s for analysis project (%s)...', $current_inst_data->id, $analysis_project->id);
 
-        if(my $skip_reason = $self->should_skip($current_inst_data)) {
+        if(my $skip_reason = $self->should_skip($current_pair)) {
             $self->_mark_pair_as_skipped($current_pair, $skip_reason);
             next;
         }
@@ -155,8 +155,9 @@ sub _mark_sync_status {
 }
 
 sub should_skip {
-    my ($self, $inst_data) = @_;
+    my ($self, $anp_instdata_bridge) = @_;
 
+    my $inst_data = $anp_instdata_bridge->instrument_data;
     return sprintf('Instrument data (%s) has ignored flag is set, skipping!', $inst_data) if $inst_data->ignored;
     return;
 }
