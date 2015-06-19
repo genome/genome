@@ -169,7 +169,6 @@ sub dependent_cron_ref_align {
 
     my @ref_align_models = Genome::Model::ReferenceAlignment->get(
         subject_id => [map { $_->id } @subjects],
-        reference_sequence_build => $self->reference_sequence_build,
     );
 
     # limit to models with a compatible reference sequence build
