@@ -84,6 +84,7 @@ sub create {
         temp_directory => $temp_directory,
     );
     my %aligner_params = eval($self->aligner_params);
+    $aligner_params{threads} = $self->_available_cpu_count;
     my $command = Genome::Model::Tools::Speedseq::Realign->create(%params, %aligner_params);
     unless ($command->execute) {
         die $self->error_message('Failed to execute Speedseq realign for instrument data: ' . join(', ', map {$_->id} $self->instrument_data));
