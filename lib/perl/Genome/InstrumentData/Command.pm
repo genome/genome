@@ -22,7 +22,10 @@ Genome::Command::Crud->init_sub_commands(
     create => {do_not_init => 1},
     delete => {do_not_init => 1},
     list => {do_not_init => 1},
-    update => {only_if_null => 1, exclude => [qw/ library full_path /]},
+    update => {exclude => [qw/ 
+        full_path import_format import_source_name 
+        library run_name sequencing_platform subset_name
+        /]},
 );
 
 1;
