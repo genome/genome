@@ -730,5 +730,12 @@ sub scalar_property_from_underlying_alignment_results {
     }
 }
 
+sub estimated_gtmp_for_instrument_data  {
+    my $class = shift;
+    die $class->error_message(
+        "Attempted to call estimated_gtmp_for_instrument_data() on %s which does not implement it!",
+        $class
+    );
+}
 
 1;
