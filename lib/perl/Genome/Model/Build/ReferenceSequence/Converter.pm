@@ -5,9 +5,6 @@ use warnings;
 use strict;
 use Sys::Hostname;
 
-# README - If adding an alogrithm, please add to the list of valid algorithms
-our $VALID_ALGORITHMS = [qw/ convert_position convert_chrXX_contigs_to_GL chop_chr prepend_chr lift_over no_op /],
-
 class Genome::Model::Build::ReferenceSequence::Converter {
     is => ['Genome::SoftwareResult'],
     has => [
@@ -31,9 +28,9 @@ class Genome::Model::Build::ReferenceSequence::Converter {
         },
     ],
     has_metric => [
-        algorithm => {
+        algorithm => { # README - If adding an algorithm, please add to the list of valid algorithms
             is => 'Text',
-            valid_values => $VALID_ALGORITHMS,
+            valid_values => [qw/ convert_position convert_chrXX_contigs_to_GL chop_chr prepend_chr lift_over no_op /],
             doc => 'method to use to convert from the source to the destination',
         },
         resource => {
