@@ -5,8 +5,6 @@ use warnings;
 
 use Genome;
 
-use Genome::Model::Build::ReferenceSequence::Converter;
-
 class Genome::Model::ReferenceSequence::Command::Converter::Create {
     is => 'Command::V2',
     has_input => [
