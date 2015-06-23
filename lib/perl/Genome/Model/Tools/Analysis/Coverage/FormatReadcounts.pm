@@ -1,5 +1,5 @@
 package Genome::Model::Tools::Analysis::Coverage::FormatReadcounts;
-
+ 
 use strict;
 use warnings;
 use Genome;

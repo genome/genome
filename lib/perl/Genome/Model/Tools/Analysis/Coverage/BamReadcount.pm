@@ -5,7 +5,7 @@ use IO::File;
 use warnings;
 use Genome::Model::Tools::Vcf::Helpers qw/convertIub/;
 use Genome::File::BamReadcount::Reader;
-
+ 
 
 
 class Genome::Model::Tools::Analysis::Coverage::BamReadcount{
