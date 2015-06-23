@@ -3,7 +3,7 @@ use strict;
 use Genome;
 use IO::File;
 use warnings;
- 
+
 
 class Genome::Model::Tools::Analysis::Coverage::AddReadcounts{
     is => 'Command',

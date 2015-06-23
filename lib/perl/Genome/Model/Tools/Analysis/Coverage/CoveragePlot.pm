@@ -1,5 +1,5 @@
 package Genome::Model::Tools::Analysis::Coverage::CoveragePlot;
- 
+
 use strict;
 use Genome;
 use IO::File;

@@ -3,7 +3,7 @@ use strict;
 use Genome;
 use IO::File;
 use warnings;
- 
+
 use List::MoreUtils qw(each_array all pairwise);
 
 

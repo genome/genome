@@ -4,7 +4,7 @@ use strict;
 use Genome;
 use IO::File;
 use warnings;
- 
+
 
 class Genome::Model::Tools::Analysis::Coverage::CoverageHist{
     is => 'Command',
