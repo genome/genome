@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Qc::Tool::Bedtools::Intersect {
-    is => ['Genome::Qc::Tool', 'Genome::Qc::Tool::WithVariationListVcf'],
+    is => 'Genome::Qc::Tool::WithVariationListVcf',
 };
 
 sub cmd_line {

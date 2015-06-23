@@ -5,7 +5,7 @@ use warnings;
 use Genome;
 
 class Genome::Qc::Tool::WithVariationListVcf {
-    is_abstract => 1,
+    is => 'Genome::Qc::Tool',
     has => [
         variation_list_build_id => {
             is => 'Text',

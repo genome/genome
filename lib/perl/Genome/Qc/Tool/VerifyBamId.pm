@@ -6,7 +6,7 @@ use Genome;
 use List::MoreUtils qw(uniq);
 
 class Genome::Qc::Tool::VerifyBamId {
-    is => ['Genome::Qc::Tool', 'Genome::Qc::Tool::WithVariationListVcf'],
+    is => 'Genome::Qc::Tool::WithVariationListVcf',
 };
 
 
