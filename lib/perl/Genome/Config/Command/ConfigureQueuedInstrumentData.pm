@@ -158,7 +158,7 @@ sub should_skip {
     my ($self, $anp_instdata_bridge) = @_;
 
     my $inst_data = $anp_instdata_bridge->instrument_data;
-    return sprintf('Instrument data (%s) has ignored flag is set, skipping!', $inst_data) if $inst_data->ignored;
+    return sprintf('Instrument data (%s) has ignored flag set, skipping!', $inst_data->id) if $inst_data->ignored;
     return;
 }
 
