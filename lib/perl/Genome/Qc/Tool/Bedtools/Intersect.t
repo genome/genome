@@ -16,7 +16,6 @@ use_ok($pkg);
 
 my $data_dir = __FILE__.".d";
 
-# my $output = File::Spec->join($data_dir, 'out');
 my $output = Genome::Sys->create_temp_file_path;
 my $temp_file = Genome::Sys->create_temp_file_path;
 
