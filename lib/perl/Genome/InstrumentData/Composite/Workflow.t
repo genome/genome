@@ -190,6 +190,12 @@ subtest 'simple alignments with qc decoration' => sub {
 };
 
 subtest 'simple align_and_merge strategy' => sub {
+    use Genome::InstrumentData::AlignmentResult::Merged::Speedseq;
+    my $gtmp_override = Sub::Override->new(
+        'Genome::InstrumentData::AlignmentResult::Merged::Speedseq::estimated_gtmp_for_instrument_data',
+        sub { return 1; },
+    );
+
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             instrument_data => \@two_instrument_data,
@@ -241,6 +247,11 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
         sub {
             return {test1 => {class => "TestTool1", params => {param1 => 1}}};
         },
+    );
+    use Genome::InstrumentData::AlignmentResult::Merged::Speedseq;
+    my $gtmp_override = Sub::Override->new(
+        'Genome::InstrumentData::AlignmentResult::Merged::Speedseq::estimated_gtmp_for_instrument_data',
+        sub { return 1; },
     );
 
     my $config_name = 'qc2 for Workflow test';

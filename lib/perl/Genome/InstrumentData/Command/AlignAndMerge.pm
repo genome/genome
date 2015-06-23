@@ -88,30 +88,7 @@ class Genome::InstrumentData::Command::AlignAndMerge {
             doc => 'The per-lane results generated/found when running the command',
         },
     ],
-    has_param => [
-        lsf_resource => {
-            value => &_lsf_resource(),
-        },
-    ],
 };
-
-sub _lsf_resource {
-
-    my $mem_mb = 1024 * 60;
-    my $mem_kb = $mem_mb*1024;
-
-    my $cpus = 8;
-
-    my $queue = Genome::Config::get('lsf_queue_alignment_prod');
-
-    my $select  = "select[ncpus >= $cpus && mem >= $mem_mb] span[hosts=1]";
-    my $rusage  = "rusage[mem=$mem_mb]";
-    my $options = "-M $mem_kb -n $cpus -q $queue";
-
-    my $required_usage = "-R '$select $rusage' $options";
-
-    return $required_usage;
-}
 
 sub execute {
     my $self = shift;
@@ -162,9 +139,9 @@ sub _process_alignments {
     my $self = shift;
     my $mode = shift;
 
-    my $class = $self->merged_result_class;
+    my $merged_class = $self->class->merged_result_class($self->name);
     my %params = $self->_alignment_params;
-    my $result = $class->$mode(
+    my $result = $merged_class->$mode(
         instrument_data => [$self->instrument_data],
         %params,
     );
@@ -176,11 +153,11 @@ sub _process_per_lane_alignments {
     my $self = shift;
     my $mode = shift;
 
-    my $class = $self->per_lane_result_class;
+    my $per_lane_class = $self->class->per_lane_result_class($self->name);
     my %params = $self->_alignment_params;
     my @per_lane_results;
     for my $instrument_data ($self->instrument_data) {
-        push @per_lane_results, $class->$mode(
+        push @per_lane_results, $per_lane_class->$mode(
             instrument_data => $instrument_data,
             samtools_version => $self->samtools_version,
             picard_version => $self->picard_version,
@@ -206,13 +183,15 @@ sub _alignment_params {
 }
 
 sub merged_result_class {
-    my $self = shift;
-    return 'Genome::InstrumentData::AlignmentResult::Merged::' . ucfirst($self->name);
+    my $class = shift;
+    my $name = shift;
+    return 'Genome::InstrumentData::AlignmentResult::Merged::' . ucfirst($name);
 }
 
 sub per_lane_result_class {
-    my $self = shift;
-    return 'Genome::InstrumentData::AlignmentResult::' . ucfirst($self->name);
+    my $class = shift;
+    my $name = shift;
+    return 'Genome::InstrumentData::AlignmentResult::' . ucfirst($name);
 }
 
 1;

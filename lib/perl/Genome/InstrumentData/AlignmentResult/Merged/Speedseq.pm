@@ -9,6 +9,7 @@ use Genome::InstrumentData::AlignmentResult::Merged::Helpers qw(
     resolve_alignment_subdirectory
     resolve_allocation_disk_group_name
 );
+use File::stat;
 
 class Genome::InstrumentData::AlignmentResult::Merged::Speedseq {
     is => ['Genome::InstrumentData::AlignedBamResult::Merged', 'Genome::SoftwareResult::WithNestedResults'],
@@ -115,6 +116,19 @@ sub create {
 sub aligner_name_for_aligner_index {
     my $self = shift;
     return $self->aligner_name;
+}
+
+sub estimated_gtmp_for_instrument_data {
+    my $class = shift;
+    my $instrument_data = shift;
+    my $bam_path = $instrument_data->bam_path();
+
+    my $st = stat($bam_path);
+    unless ($st) {
+        die $class->error_message('Unable to find bam file at %s', $bam_path);
+    }
+
+    return 3 * $st->size();
 }
 
 1;
