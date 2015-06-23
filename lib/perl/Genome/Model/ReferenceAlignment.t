@@ -10,16 +10,29 @@ BEGIN {
 
 use above "Genome";
 
+require File::Spec;
 use Genome::Test::Factory::Model::ReferenceAlignment;
-use Test::More tests => 7;
+require Sub::Install;
+use Test::More tests => 6;
 
 use_ok('Genome::Test::Factory::Model::ReferenceAlignment') or die;
 my $m = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
 ok($m, "got a model");
 is($m->reference_sequence_name, 'test_model_1-build', 'The ref_seq of the model matches the expected');
 
-my $f = $m->accumulated_alignments_directory();
-is($f, "$data_directory/alignments", "found alignments directory");
+my $data_directory = File::Spec->join('', 'mnt', 'model', 'build');
+my $build = Genome::Model::Build->__define__(
+    model => $m,
+    data_directory => $data_directory,
+);
+
+Sub::Install::reinstall_sub({
+        code => sub{ return $build },
+        into => 'Genome::Model',
+        as => 'last_complete_build',
+    });
+my $f = $m->accumulated_alignments_directory;
+is($f, File::Spec->join($data_directory, 'alignments'), "alignments directory");
 
 is($m->experimental_subject, $m->subject, 'experimental subject return subject that is a sample');
 ok(!$m->control_subject, 'control subject returns nothing');
