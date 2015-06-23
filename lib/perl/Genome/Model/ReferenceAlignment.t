@@ -13,7 +13,8 @@ use above "Genome";
 require File::Spec;
 use Genome::Test::Factory::Model::ReferenceAlignment;
 require Sub::Install;
-use Test::More tests => 6;
+use Test::Exception;
+use Test::More tests => 8;
 
 use_ok('Genome::Test::Factory::Model::ReferenceAlignment') or die;
 my $m = Genome::Test::Factory::Model::ReferenceAlignment->setup_object();
@@ -26,7 +27,7 @@ my $build = Genome::Model::Build->__define__(
     data_directory => $data_directory,
 );
 
-Sub::Install::reinstall_sub({
+Sub::Install::reinstall_sub({ # easy way to return this build to get it's data_directory
         code => sub{ return $build },
         into => 'Genome::Model',
         as => 'last_complete_build',
@@ -36,3 +37,11 @@ is($f, File::Spec->join($data_directory, 'alignments'), "alignments directory");
 
 is($m->experimental_subject, $m->subject, 'experimental subject return subject that is a sample');
 ok(!$m->control_subject, 'control subject returns nothing');
+
+is($m->default_model_name, 'sample_name_1.refalign', 'default_model_name'); 
+Sub::Install::reinstall_sub({
+        code => sub{ return 1; },
+        into => 'Genome::Model::ReferenceAlignment',
+        as => 'is_lane_qc',
+    });
+throws_ok(sub{ $m->default_model_name; }, qr/Attempting to get the default name when creating a lane qc model that does not have instrument data assigned/, 'failed to get default model name for lane qc model w/o instdata assigned'); 

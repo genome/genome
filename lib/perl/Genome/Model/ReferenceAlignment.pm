@@ -520,6 +520,7 @@ sub default_model_name {
     my $self = shift;
 
     if ($self->is_lane_qc) {
+        die $self->error_message('Attempting to get the default name when creating a lane qc model that does not have instrument data assigned. Please check the analysis project configuration or include the instrument data when creating the model.') if not $self->instrument_data;
         return $self->_get_incremented_name($self->default_lane_qc_model_name_for_instrument_data($self->instrument_data));
     } else {
         return $self->SUPER::default_model_name();
