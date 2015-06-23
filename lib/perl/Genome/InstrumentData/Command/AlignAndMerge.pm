@@ -139,9 +139,9 @@ sub _process_alignments {
     my $self = shift;
     my $mode = shift;
 
-    my $class = $self->class->merged_result_class($self->name);
+    my $merged_class = $self->class->merged_result_class($self->name);
     my %params = $self->_alignment_params;
-    my $result = $class->$mode(
+    my $result = $merged_class->$mode(
         instrument_data => [$self->instrument_data],
         %params,
     );
@@ -153,11 +153,11 @@ sub _process_per_lane_alignments {
     my $self = shift;
     my $mode = shift;
 
-    my $class = $self->class->per_lane_result_class($self->name);
+    my $per_lane_class = $self->class->per_lane_result_class($self->name);
     my %params = $self->_alignment_params;
     my @per_lane_results;
     for my $instrument_data ($self->instrument_data) {
-        push @per_lane_results, $class->$mode(
+        push @per_lane_results, $per_lane_class->$mode(
             instrument_data => $instrument_data,
             samtools_version => $self->samtools_version,
             picard_version => $self->picard_version,
