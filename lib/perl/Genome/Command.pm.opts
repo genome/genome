@@ -4442,6 +4442,21 @@ $Genome::Command::OPTS_SPEC = [
         'help!',
         undef
       ],
+      '>failed-model-ticket-status',
+      [
+        'color!',
+        undef,
+        'owner=s',
+        'files',
+        'summary-only!',
+        undef,
+        'include-subjects!',
+        undef,
+        'tickets=s@',
+        undef,
+        'help!',
+        undef
+      ],
       '>cleanup-succeeded',
       [
         'models=s@',
@@ -37444,8 +37459,6 @@ $Genome::Command::OPTS_SPEC = [
     ],
     '>align-and-merge',
     [
-      'lsf-resource=s',
-      'files',
       'name=s',
       'files',
       'version=s',
