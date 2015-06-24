@@ -37,6 +37,8 @@ sub execute {
             $line->{slop},
         );
         for my $key (keys %$stats) {
+            die "Duplicate key $key: this would overwrite the column provided in the config"
+                if exists $line->{$key};
             $line->{$key} = $stats->{$key};
         }
         delete $line->{bedpe};
