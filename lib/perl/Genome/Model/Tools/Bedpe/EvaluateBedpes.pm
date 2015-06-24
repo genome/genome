@@ -13,7 +13,7 @@ class Genome::Model::Tools::Bedpe::EvaluateBedpes {
         },
         config_file => {
             is => 'Path',
-            doc => 'A tsv file which contains the following columns: bedpe, gold_bedpe, slop (along with any other columns of metadata you wish to include',
+            doc => 'A tsv file which contains the following columns: bedpe, gold_bedpe, slop (along with any other columns of metadata you wish to include)',
         },
         output_json => {
             is => "Path",
