@@ -80,8 +80,8 @@ sub _login_sso {
     $mech->submit_form (
         form_number =>  1,
         fields =>  {
-            j_username => 'limsrt',
-            j_password => 'Koh3gaed',
+            j_username => Genome::Config::get('rt_login'),
+            j_password => Genome::Config::get('rt_auth'),
         },
     );
     $mech->submit();
