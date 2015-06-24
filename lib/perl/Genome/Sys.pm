@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Genome;
+use Genome::Carp qw(croakf);
 use Genome::Utility::File::Mode qw(mode);
 
 use autodie qw(chown);
@@ -47,16 +48,12 @@ sub concatenate_files {
 }
 
 sub quote_for_shell {
+    require String::ShellQuote;
+
     # this is needed until shellcmd supports an array form,
     # which is difficult because we go to a bash sub-shell by default
     my $class = shift;
-    my @quoted = @_;
-    for my $value (@quoted) {
-        $value =~ s|\\|\\\\|g;
-        $value =~ s/\"/\\\"/g;
-        $value = "\"${value}\"";
-        print STDERR $value,"\n";
-    }
+    my @quoted = map String::ShellQuote::shell_quote($_), @_;
     if (wantarray) {
         return @quoted
     }
@@ -303,7 +300,9 @@ sub lookup_dbpath {
         'omim' => 'db_omim',
         'pfam' => 'db_pfam',
     );
-    return Genome::Config::get($config_key{$name});
+    my $key = $config_key{$name};
+    return unless ($key);
+    return Genome::Config::get($key);
 }
 
 sub _find_in_genome_db_paths {
@@ -857,11 +856,9 @@ sub make_path {
                 set_gid($gid, $subpath);
             }
         } else {
-            if ($mkdir_errno == EEXIST) {
-                next;
-            } else {
+            if ($mkdir_errno != EEXIST) {
                 Carp::confess("While creating path ($path), failed to create " .
-                    "directory ($subpath) because ($!)");
+                    "directory ($subpath) because ($mkdir_errno)");
             }
         }
     }
@@ -893,26 +890,25 @@ sub gidgrnam {
 sub create_symlink {
     my ($class, $target, $link) = @_;
 
-    unless ( defined $target ) {
+    unless ( defined($target) && length($target) ) {
         Carp::croak("Can't create_symlink: no target given");
     }
 
-    unless ( defined $link ) {
+    unless ( defined($link) && length($link) ) {
         Carp::croak("Can't create_symlink: no 'link' given");
     }
 
-    if ( -e $link ) { # the link exists and points to something
-        Carp::croak("Link ($link) for target ($target) already exists.");
+    unless (symlink($target, $link)) {
+        my $symlink_error = $!;
+        if ($symlink_error == Errno::EEXIST) {
+            my $current_target = readlink($link);
+            if (! defined($current_target) or $current_target ne $target) {
+                Carp::croak("Link ($link) for target ($target) already exists.");
+            }
+        } else {
+            Carp::croak("Can't create link ($link) to $target\: $symlink_error");
+        }
     }
-
-    if ( -l $link ) { # the link exists, but does not point to something
-        Carp::croak("Link ($link) for target ($target) is already a link.");
-    }
-
-    unless ( symlink($target, $link) ) {
-        Carp::croak("Can't create link ($link) to $target\: $!");
-    }
-
     return 1;
 }
 
@@ -1283,6 +1279,18 @@ sub iterate_file_lines {
     return($lines_read || '0 but true');
 }
 
+####
+####
+
+my $arch_os;
+sub arch_os {
+    unless ($arch_os) {
+        $arch_os = `uname -m`;
+        chomp($arch_os);
+    }
+    return $arch_os;
+}
+
 #####
 # Methods dealing with user names, groups, etc
 #####
@@ -1399,6 +1407,16 @@ sub shellcmd {
     my $print_status_to_stderr       = delete $params{print_status_to_stderr};
     my $keep_dbh_connection_open     = delete $params{keep_dbh_connection_open};
 
+    my @cmdline;
+    if (ref($cmd) and ref($cmd) eq 'ARRAY') {
+        if (defined $set_pipefail) {
+            Carp::confess "Cannot use set_pipefail with ARRAY form of cmd!";
+        }
+
+        @cmdline = @$cmd;
+        $cmd = join(' ', map $self->quote_for_shell($_), @cmdline);
+    }
+
     $set_pipefail = 1 if not defined $set_pipefail;
     $print_status_to_stderr = 1 if not defined $print_status_to_stderr;
     $skip_if_output_is_present = 1 if not defined $skip_if_output_is_present;
@@ -1490,15 +1508,7 @@ sub shellcmd {
                 # parent
                 waitpid($pid, 0);
                 $system_retval = $?;
-                # add a new line so that bad programs don't break TAP, etc
-                # Adding a newline to the redirected stdout file isn't strictly
-                # necessary, but is included for compatibility with previous versions
-                # of this code that always printed an extra newline to STDOUT, whether
-                # it was redirected or not.
-                my $extra_newline = $redirect_stdout
-                                    ? IO::File->new($redirect_stdout, O_WRONLY|O_APPEND)
-                                    : *STDOUT;
-                print $extra_newline "\n";
+                print STDOUT "\n" unless $redirect_stdout; # add a new line so that bad programs don't break TAP, etc.
 
             } else {
                 # child
@@ -1522,8 +1532,12 @@ sub shellcmd {
                 {   # POE sets a handler to ignore SIG{PIPE}, that makes the
                     # pipefail option useless.
                     local $SIG{PIPE} = 'DEFAULT';
-                    my @cmdline = ('bash', '-c', "$shellopts_part $cmd");
-                    exec(@cmdline)
+
+                    unless (@cmdline) {
+                        @cmdline = ('bash', '-c', "$shellopts_part $cmd");
+                    }
+
+                    exec { $cmdline[0] } (@cmdline)
                         or do {
                             print STDERR "Can't exec: $!\nCommand line was: ",join(' ', @cmdline),"\n";
                             exit(127);

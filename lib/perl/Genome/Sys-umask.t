@@ -16,7 +16,7 @@ subtest 'create_directory overrides umask' => sub {
     plan tests => 7;
 
     # use a string because we get a string from shell, not an octal
-    local $ENV{GENOME_SYS_UMASK} = '0002';
+    my $sys_umask_guard = Genome::Config::set_env('sys_umask', '0002');
 
     # setup
     my $td_path = File::Temp->newdir();
@@ -39,13 +39,13 @@ subtest 'create_directory overrides umask' => sub {
     ok(!$mkdir_mode->is_group_writable, 'subdirectory made with mkdir does not have group write permissions');
 };
 
-subtest "GENOME_SYS_UMASK='0027'" => sub {
-    # setting GENOME_SYS_UMASK='0027' revealed that by not casting
-    # GENOME_SYS_UMASK as octal we were not using the expected umask
+subtest "sys_umask='0027'" => sub {
+    # setting sys_umask='0027' revealed that by not casting sys_umask as octal
+    # we were not using the expected umask
     plan tests => 7;
 
     # use a string because we get a string from shell, not an octal
-    local $ENV{GENOME_SYS_UMASK} = '0027';
+    my $sys_umask_guard = Genome::Config::set_env('sys_umask', '0027');
 
     # setup
     my $td_path = File::Temp->newdir();
@@ -64,7 +64,7 @@ subtest "GENOME_SYS_UMASK='0027'" => sub {
     subtest 'create_directory permissions' => sub {
         plan tests => 11;
         # default dir perms = 0777
-        # with setgid and GENOME_SYS_UMASK = 2750
+        # with setgid and sys_umask = 2750
         my $cd_mode = mode($cd_path);
         ok(!$cd_mode->is_setuid);
         ok( $cd_mode->is_setgid);

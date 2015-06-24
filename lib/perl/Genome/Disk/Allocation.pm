@@ -15,6 +15,8 @@ use File::Find::Rule;
 use Cwd;
 use DateTime;
 
+require File::Spec;
+
 our $TESTING_DISK_ALLOCATION = 0;
 
 use constant SECONDS_IN_ONE_YEAR => 365*24*60*60;
@@ -289,9 +291,21 @@ sub is_archived {
     return $self->status eq 'archived';
 }
 
+sub archive_path {
+    my $self = shift;
+    my $mount_path = $self->volume->is_archive
+                   ? $self->volume->mount_path
+                   : $self->volume->archive_mount_path;
+    return File::Spec->join(
+        $mount_path,
+        $self->group_subdirectory,
+        $self->allocation_path,
+    );
+}
+
 sub tar_path {
     my $self = shift;
-    return join('/', $self->absolute_path, 'archive.tar');
+    return File::Spec->join($self->archive_path, 'archive.tar');
 }
 
 sub archivable {
@@ -531,6 +545,23 @@ sub has_valid_owner {
 sub __display_name__ {
     my $self = shift;
     return $self->absolute_path;
+}
+
+sub __rollback_property__ {
+    my ($self, $property_name) = @_;
+
+    # We do not want to create new Genome::Timeline::Events during rollback so
+    # have to bypass the overridden methods and directly use the accessors.
+    if ($property_name eq 'archivable') {
+        my $saved_value = UR::Context->current->value_for_object_property_in_underlying_context($self, $property_name);
+        return $self->__archivable($saved_value);
+    }
+    if ($property_name eq 'archive_after_time') {
+        my $saved_value = UR::Context->current->value_for_object_property_in_underlying_context($self, $property_name);
+        return $self->__archive_after_time($saved_value);
+    }
+
+    return $self->SUPER::__rollback_property__($property_name);
 }
 
 # Using a system call when not in dev mode is a hack to get around the fact that we don't

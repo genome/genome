@@ -472,8 +472,11 @@ sub stat_sensitivity_exact {
     my $results = $self->get_rawstats();
 
     my $total_true = $self->stat_total_true_positive_exact;
-    if ($total_true == 0) {
-        return 0;
+    {
+        no warnings;
+        if ($total_true == 0) {
+            return "NaN";
+        }
     }
 
     my $stat = $results->{true_positive_exact} / $total_true;
@@ -500,8 +503,11 @@ sub stat_sensitivity_partial {
     my $results = $self->get_rawstats();
 
     my $total_true = $self->stat_total_true_positive_partial;
-    if ($total_true == 0) {
-        return 0;
+    {
+        no warnings;
+        if ($total_true == 0) {
+            return "NaN";
+        }
     }
 
     my $stat = $results->{true_positive_partial} / $total_true;
@@ -537,8 +543,11 @@ sub stat_exact_specificity {
     # may be significantly smaller than the target space ROI
     
     my $tn = $self->stat_true_negatives();
-    if ($tn == 0) {
-        return 0;
+    {
+        no warnings;
+        if ($tn == 0) {
+            return "NaN";
+        }
     }
 
     my $stat =
@@ -551,8 +560,11 @@ sub stat_partial_specificity {
     my $results = $self->get_rawstats();
 
     my $tn = $self->stat_true_negatives();
-    if ($tn == 0) {
-        return 0;
+    {
+        no warnings;
+        if ($tn == 0) {
+            return "NaN";
+        }
     }
 
     my $stat =
@@ -567,8 +579,11 @@ sub stat_exact_ppv {
     my $tp_exact = $self->stat_true_positive_found_exact();
 
     my $denominator = $fp_exact + $tp_exact;
-    if ($denominator == 0) {
-        return 0;
+    {
+        no warnings;
+        if ($denominator == 0) {
+            return "NaN";
+        }
     }
 
     my $stat = $tp_exact / $denominator;
@@ -582,8 +597,11 @@ sub stat_partial_ppv {
     my $tp_partial = $self->stat_true_positive_found_partial();
 
     my $denominator = $fp_partial + $tp_partial;
-    if ($denominator == 0) {
-        return 0;
+    {
+        no warnings;
+        if ($denominator == 0) {
+            return "NaN";
+        }
     }
 
     my $stat = $tp_partial / $denominator;
@@ -605,8 +623,11 @@ sub stat_lines_specificity_in_tn_only {
     # doesn't take partial into account
 
     my $tn = $self->stat_true_negatives();
-    if ($tn == 0) {
-        return 0;
+    {
+        no warnings;
+        if ($tn == 0) {
+            return "NaN";
+        }
     }
 
     my $stat = ($tn - $results->{false_positives_in_roi}) / $tn;

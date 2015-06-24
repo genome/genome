@@ -24,6 +24,11 @@ class Genome::Db::Ensembl::Command::Run::Base {
             is_optional => 1,
             default_value => "2_2",
         },
+        reference_version => {
+            is => 'Text',
+            is_optional => 1,
+            valid_values => [qw(GRCh37 GRCh38 GRCm38)],
+        },
         input_file => {
             is => 'String',
             doc => 'File of variants to be annotated',
@@ -567,11 +572,11 @@ sub cache_args {
 }
 
 sub db_connect_args {
-    my $host_param = defined Genome::Config::get('db_ensembl_host') ? "--host ".Genome::Config::get('db_ensembl_host') : "";
-    my $user_param = defined Genome::Config::get('db_ensembl_user') ? "--user ".Genome::Config::get('db_ensembl_user') : "";
-    my $password_param = defined Genome::Config::get('db_ensembl_pass') ? "--password ".Genome::Config::get('db_ensembl_pass') : "";
-    my $port_param = defined Genome::Config::get('db_ensembl_port') ? "--port ".Genome::Config::get('db_ensembl_port') : "";
-    return join(" ", $host_param, $user_param, $password_param, $port_param);
+    my $host_param = Genome::Config::get('db_ensembl_host') ne '' ? "--host ".Genome::Config::get('db_ensembl_host') : "";
+    my $user_param = Genome::Config::get('db_ensembl_user') ne '' ? "--user ".Genome::Config::get('db_ensembl_user') : "";
+    my $pass_param = Genome::Config::get('db_ensembl_pass') ne '' ? "--password ".Genome::Config::get('db_ensembl_pass') : "";
+    my $port_param = Genome::Config::get('db_ensembl_port') ne '' ? "--port ".Genome::Config::get('db_ensembl_port') : "";
+    return join(" ", $host_param, $user_param, $pass_param, $port_param);
 }
 
 sub _species_lookup {
@@ -756,6 +761,10 @@ sub cache {
         else {
             $cache_result_params{sift} = 0;
         }
+        unless ($self->reference_version) {
+            die "Must specify reference version if using vep cache";
+        }
+        $cache_result_params{reference_version} = $self->reference_version;
         $cache_result_params{users} = $self->_result_users;
         $cache_result = Genome::Db::Ensembl::VepCache->get_or_create(%cache_result_params);
     }

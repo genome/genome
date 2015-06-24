@@ -47,7 +47,13 @@ class Genome::Model::Tools::Bed::Convert {
             is => "Boolean",
             default => 0,
             doc => "Don't create versioned symlink noise, just output the bed file",
-        }
+        },
+        omit_trailing_columns =>{
+            is => 'Boolean',
+            default => 0,
+            doc => "Omit the 5th and 6th quality/depth fields (which are often just dashes)",
+        },
+
     ],
     has_transient_optional => [
         _input_fh => {
@@ -81,7 +87,7 @@ sub help_synopsis {
 EOS
 }
 
-sub help_detail {                           
+sub help_detail {
     return <<EOS
     This is a collection of small tools to take variant calls in various formats and convert them to a common BED format (using the first four or five columns).
 EOS
@@ -95,13 +101,13 @@ sub versioned_path {
 
 sub execute {
     my $self = shift;
-    
+
     unless($self->initialize_filehandles) {
         return;
     }
-    
+
     my $retval = $self->process_source;
-    
+
     $self->close_filehandles;
 
     return unless $retval;
@@ -113,7 +119,7 @@ sub execute {
                 input => $self->output,
                 output => $final_output,
                 );
-            
+
             if ($sort_cmd->execute()) {
                 unlink($self->output);
             } else {
@@ -134,40 +140,40 @@ sub execute {
 
 sub initialize_filehandles {
     my $self = shift;
-    
+
     if($self->_input_fh || $self->_output_fh) {
         return 1; #Already initialized
     }
-    
+
     my $input = $self->source;
     my $output = $self->output;
-    
+
     eval {
         my $input_fh = Genome::Sys->open_file_for_reading($input);
         my $output_fh = Genome::Sys->open_file_for_writing($output);
-        
+
         $self->_input_fh($input_fh);
         $self->_output_fh($output_fh);
     };
-    
+
     if($@) {
         $self->error_message('Failed to open file. ' . $@);
         $self->close_filehandles;
         return;
     }
-    
+
     return 1;
 }
 
 sub close_filehandles {
     my $self = shift;
-    
+
     my $input_fh = $self->_input_fh;
     close($input_fh) if $input_fh;
-    
+
     my $output_fh = $self->_output_fh;
     close($output_fh) if $output_fh;
-    
+
     return 1;
 }
 
@@ -180,9 +186,13 @@ sub format_line {
         $values[1] += 1;
     }
     splice(@values,3,2, join('/', @values[3,4]));
-    # push - if quality and/or depth fields are missing
-    while (@values < 6) {
-        push(@values, '-');
+
+    unless($self->omit_trailing_columns){
+        # push - if quality and/or depth fields are missing
+        while (@values < 6) {
+            push(@values, '-');
+
+        }
     }
     return join("\t", @values);
 }
@@ -211,7 +221,7 @@ sub write_bed_line {
 
     my $output_fh = $self->_output_fh;
     print $output_fh $self->format_line(@_)."\n";
-    
+
     return 1;
 }
 

@@ -60,6 +60,14 @@ class Genome::Sys::User {
     data_source => 'Genome::DataSource::GMSchema',
 };
 
+sub get_current {
+    my $class = shift;
+    my $username = Genome::Sys->username();
+    # if multiple matches get will crash in scalar context
+    my $user = $class->get(username => $username);
+    return $user;
+}
+
 sub _resolve_param_value_from_text_by_name_or_id {
     my $class = shift;
     my $param_arg = shift;
@@ -78,7 +86,8 @@ sub _resolve_param_value_from_text_by_name_or_id {
     return @results;
 }
 
-Genome::Sys::User->add_observer(
+UR::Observer->register_callback(
+    subject_class_name => 'Genome::Sys::User',
     callback => \&_change_callback,
 );
 sub _change_callback {
@@ -129,18 +138,18 @@ sub fix_params_and_get {
     my %p;
     if (scalar(@p) == 1) {
         my $key = $p[0];
-        $p{'email'} = $key;
+        $p{email} = $key;
     }
     else {
         %p = @p;
     }
 
-    if (defined($p{'email'})
-        && $p{'email'} !~ /\@/) {
-        my $old = $p{'email'};
-        my $new = join('@',$p{'email'},Genome::Config::domain());
+    if (defined($p{email}) && $p{email} !~ /\@/) {
+        my $user = Genome::Sys::User->get(username => $p{email});
+        my $old = $p{email};
+        my $new = $user->email;
         warn "Trying to get() for '$old' - assuming you meant '$new'";
-        $p{'email'} = $new;
+        $p{email} = $new;
     }
 
     return $class->SUPER::get(%p);

@@ -14,7 +14,7 @@ use File::Temp;
 use Test::More;
 use Genome::Test::Factory::SoftwareResult::User;
 
-if (Genome::Config->arch_os ne 'x86_64') {
+if (Genome::Sys->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 } elsif(not $ENV{UR_RUN_LONG_TESTS}) {
     plan skip_all => 'This test usually takes 2-3 minutes but can time out in jenkins.  Use `ur test run --long` to enable.';

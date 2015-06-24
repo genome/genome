@@ -8,7 +8,7 @@ use Test::More;
 #use Test::More skip_all => "The new installed version of newbler has a new directory name/structure.  Update me to work with it!";
 
 BEGIN {
-    my $archos = Genome::Config->arch_os;
+    my $archos = Genome::Sys->arch_os;
     if ( $archos !~ /64/ ) {
         plan skip_all => "Must run from 64-bit machine";
     }

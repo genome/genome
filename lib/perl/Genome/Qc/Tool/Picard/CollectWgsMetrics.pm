@@ -12,7 +12,7 @@ sub supports_streaming {
     return 1;
 }
 
-sub output_file_accessor {
+sub qc_metrics_file_accessor {
     return 'output_file';
 }
 

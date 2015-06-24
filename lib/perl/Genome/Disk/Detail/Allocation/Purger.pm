@@ -73,8 +73,7 @@ sub _purge_archived {
     my $allocation_object = shift;
 
     unless ($ENV{UR_DBI_NO_COMMIT}) {
-        $allocation_object->_cleanup_archive_directory(
-            $allocation_object->absolute_path);
+        $allocation_object->_cleanup_archive_directory($allocation_object->archive_path);
     }
 
     $self->_finalize_purge($allocation_object);

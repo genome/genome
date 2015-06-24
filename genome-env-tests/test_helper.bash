@@ -55,7 +55,10 @@ function cache_repo {
 
 function init_workspace {
     export WORKSPACE="$(tempdir)"
-    cache_repo genome https://github.com/genome/genome.git "$WORKSPACE"
+
+    # clone from the existing genome repo instead of getting an origin/master
+    cache_repo genome "$(git rev-parse --git-dir)" "$WORKSPACE"
+
     cache_repo ur https://github.com/genome/UR.git "$WORKSPACE"
     cache_repo workflow https://github.com/genome/tgi-workflow.git "$WORKSPACE"
     cache_repo genome-sqitch https://github.com/genome/genome-sqitch.git "$WORKSPACE"
@@ -93,17 +96,19 @@ function submodule_is_not_initialized {
 }
 
 function apipe_test_db_is_used {
-    if echo "$GENOME_DS_GMSCHEMA_SERVER" | grep -qv 'apipe-test-db'
+    DS_GMSCHEMA_SERVER="$(genome config get ds_gmschema_server)"
+    if echo "$DS_GMSCHEMA_SERVER" | grep -qv 'apipe-test-db'
     then
-        echo "GENOME_DS_GMSCHEMA_SERVER should refer to apipe-test-db" >&2
+        echo "DS_GMSCHEMA_SERVER should refer to apipe-test-db" >&2
         exit 1
     fi
 }
 
 function apipe_test_db_is_not_used {
-    if echo "$GENOME_DS_GMSCHEMA_SERVER" | grep -q 'apipe-test-db'
+    DS_GMSCHEMA_SERVER="$(genome config get ds_gmschema_server)"
+    if echo "$DS_GMSCHEMA_SERVER" | grep -q 'apipe-test-db'
     then
-        echo "GENOME_DS_GMSCHEMA_SERVER should not refer to apipe-test-db" >&2
+        echo "DS_GMSCHEMA_SERVER should not refer to apipe-test-db" >&2
         exit 1
     fi
 }

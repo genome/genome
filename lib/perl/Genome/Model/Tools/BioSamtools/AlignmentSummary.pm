@@ -89,33 +89,6 @@ sub execute {
         die('Failed to provide either output_file or output_directory!');
     }
 
-    my $bed_file = $self->bed_file;
-    my $regions;
-    if ($bed_file) {
-        my ($bed_basename,$bed_dirname,$bed_suffix) = File::Basename::fileparse($bed_file,qw/\.bed/);
-        unless(defined($bed_suffix)) {
-            die ('Failed to recognize bed_file '. $bed_file .' without bed suffix');
-        }
-        $resolved_output_file .= '-'. $bed_basename;
-        if (defined($self->wingspan)) {
-            $resolved_output_file .= '-wingspan_'. $self->wingspan;
-        }
-        $regions = Genome::Model::Tools::RefCov::ROI::Bed->create(
-            file => $bed_file,
-            #Used for fast lookups at the cost of memory, the higher the number the more memory
-            region_index_substring => 5,
-            wingspan => $self->wingspan,
-        );
-        unless ($regions) {
-            die('Failed to load region file '. $bed_file .'.  Accepted formats are: bed');
-        }
-    }
-    $resolved_output_file .= '-alignment_summary.tsv';
-    unless ($self->output_file) {
-        $self->output_file($resolved_output_file);
-    }
-    my $out_fh = Genome::Sys->open_file_for_writing($self->output_file);
-
     my $refcov_bam  = Genome::Model::Tools::RefCov::Bam->create(bam_file => $bam_file );
     unless ($refcov_bam) {
         die('Failed to load bam file '. $bam_file);
@@ -142,6 +115,38 @@ sub execute {
     unless ($targets == $i) {
         die 'Expected '. $targets .' targets but counted '. $i .' indices';
     }
+
+    my $bed_file = $self->bed_file;
+    my $regions;
+    if ($bed_file) {
+        my ($bed_basename,$bed_dirname,$bed_suffix) = File::Basename::fileparse($bed_file,qw/\.bed/);
+        unless(defined($bed_suffix)) {
+            die ('Failed to recognize bed_file '. $bed_file .' without bed suffix');
+        }
+        $resolved_output_file .= '-'. $bed_basename;
+        if (defined($self->wingspan)) {
+            $resolved_output_file .= '-wingspan_'. $self->wingspan;
+        }
+
+        #Used for fast lookups at the cost of memory, the higher the number the more memory
+        my $substring_depth = 5;
+        $substring_depth -= int($targets / 10_000); #reduce the depth if there are a lot of contigs
+        $substring_depth = 0 if $substring_depth < 0;
+
+        $regions = Genome::Model::Tools::RefCov::ROI::Bed->create(
+            file => $bed_file,
+            region_index_substring => $substring_depth,
+            wingspan => $self->wingspan,
+        );
+        unless ($regions) {
+            die('Failed to load region file '. $bed_file .'.  Accepted formats are: bed');
+        }
+    }
+    $resolved_output_file .= '-alignment_summary.tsv';
+    unless ($self->output_file) {
+        $self->output_file($resolved_output_file);
+    }
+    my $out_fh = Genome::Sys->open_file_for_writing($self->output_file);
 
     my %stats_summary;
     while (my $align = $bam->read1()) {

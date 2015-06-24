@@ -1,0 +1,4 @@
+# The 'ds_oltp_owner' configuration variable holds the default schema/owner for
+# the tables in the Oltp data source.
+--- 
+env: XGENOME_DS_OLTP_OWNER

@@ -8,6 +8,8 @@ use Genome::Sys::Lock qw();
 use Params::Validate qw(validate_with);
 use Scalar::Util qw(blessed);
 
+require Scope::Guard;
+
 =item new()
 
 Keyword Arguments:
@@ -99,6 +101,18 @@ sub unlock {
         resource_lock => $self->resource,
         scope => $self->scope,
     );
+}
+
+=item unlock_guard()
+
+C<unlock_guard()> returns a Scope::Guard that will unlock the
+C<Genome::Sys::LockProxy> object.
+
+=cut
+
+sub unlock_guard {
+    my $self = shift;
+    return Scope::Guard->new( sub { $self->unlock() } );
 }
 
 1;

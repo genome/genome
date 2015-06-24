@@ -12,7 +12,6 @@ use File::Copy;
 use File::stat;
 use Carp qw(confess);
 use File::Basename;
-use Scope::Guard qw();
 use Try::Tiny qw(try catch);
 
 use Genome::Sys::LockMigrationProxy qw();
@@ -422,7 +421,7 @@ sub create {
     }
 
     # STEP 1: verify the architecture on which we're running
-    my $actual_os = Genome::Config->arch_os();
+    my $actual_os = Genome::Sys->arch_os();
     $class->debug_message("OS is $actual_os");
     my $required_os = $class->required_arch_os;
     $class->debug_message("Required OS is $required_os");
@@ -434,6 +433,19 @@ sub create {
     my $self = $class->SUPER::create(@_);
     return unless $self;
 
+    $self->post_create;
+
+    return $self;
+}
+
+sub post_create {
+    my $self = shift;
+    $self->_generate_result;
+}
+
+sub _generate_result {
+    my $self = shift;
+
     if (my $output_dir = $self->output_dir) {
         if (-d $output_dir) {
             $self->debug_message("BACKFILL DIRECTORY: $output_dir!");
@@ -443,34 +455,13 @@ sub create {
 
     # STEP 3: ENSURE WE WILL PROBABLY HAVE DISK SPACE WHEN ALIGNMENT COMPLETES
     # TODO: move disk_group, estimated_size, allocation and promotion up into the software result logic
-    my $estimated_kb_usage = $self->estimated_kb_usage;
-    $self->debug_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
-    $self->debug_message("Check for available disk...");
-    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => Genome::Config::get('disk_group_alignments'));
-    $self->debug_message("Found " . scalar(@available_volumes) . " disk volumes");
-    my $unallocated_kb = 0;
-    for my $volume (@available_volumes) {
-        $unallocated_kb += $volume->unallocated_kb;
-    }
-    $self->debug_message("Available disk: " . $unallocated_kb . " kb");
-    my $factor = 20;
-    unless ($unallocated_kb > ($factor * $estimated_kb_usage)) {
-        $self->error_message("NOT ENOUGH DISK SPACE!  This step requires $factor x as much disk as the job will use to be available before starting.");
-        die $self->error_message();
-    }
+    $self->_create_disk_allocation;
 
     # STEP 4: PREPARE THE STAGING DIRECTORY
-    $self->debug_message("Prepare working directories...");
     $self->_prepare_working_and_staging_directories;
-    $self->debug_message("Staging path is " . $self->temp_staging_directory);
-    $self->debug_message("Working path is " . $self->temp_scratch_directory);
 
     # STEP 5: PREPARE REFERENCE SEQUENCES
-    $self->debug_message("Preparing the reference sequences...");
-    unless($self->_prepare_reference_sequences) {
-        $self->error_message("Reference sequences are invalid.  We can't proceed:  " . $self->error_message);
-        die $self->error_message();
-    }
+    $self->_prepare_reference_sequences;
 
     eval {
 
@@ -483,14 +474,9 @@ sub create {
 
         # STEP 7: PREPARE THE ALIGNMENT FILE (groups file, sequence dictionary)
         # this also prepares the bam output pipe and crams the alignment headers through it.
-        $self->debug_message("Preparing the all_sequences.sam in scratch");
-        unless ($self->prepare_scratch_sam_file) {
-            $self->error_message("Failed to prepare the scratch sam file with groups and sequence dictionary");
-            die $self->error_message;
-        }
+        $self->prepare_scratch_sam_file;
 
         # STEP 7: RUN THE ALIGNER
-        $self->debug_message("Running aligner...");
         unless ($self->run_aligner(@inputs)) {
             $self->error_message("Failed to collect inputs and/or run the aligner!");
             die $self->error_message;
@@ -500,11 +486,7 @@ sub create {
         if ($self->supports_streaming_to_bam) {
             $self->close_out_streamed_bam_file;
         } else {
-            $self->debug_message("Constructing a BAM file (if necessary)...");
-            unless( $self->create_BAM_in_staging_directory()) {
-                $self->error_message("Call to create_BAM_in_staging_directory failed.\n");
-                die $self->error_message;
-            }
+            $self->create_BAM_in_staging_directory;
         }
     };
 
@@ -524,14 +506,9 @@ sub create {
     }
 
     # STEP 9-10, validate BAM file (if necessary)
-    $self->debug_message("Postprocessing & Sanity Checking BAM file (if necessary)...");
-    unless ($self->postprocess_bam_file()) {
-        $self->error_message("Postprocess BAM file failed");
-        die $self->error_message;
-    }
+    $self->postprocess_bam_file;
 
     # STEP 11: COMPUTE ALIGNMENT METRICS
-    $self->debug_message("Computing alignment metrics...");
     $self->_compute_alignment_metrics();
 
     # STEP 12: PREPARE THE ALIGNMENT DIRECTORY ON NETWORK DISK
@@ -542,17 +519,32 @@ sub create {
 
     # STEP 13: PROMOTE THE DATA INTO ALIGNMENT DIRECTORY
     $self->debug_message("Moving results to network disk...");
-    my $product_path;
-    unless($product_path= $self->_promote_data) {
-        $self->error_message("Failed to de-stage data into alignment directory " . $self->error_message);
-        die $self->error_message;
-    }
+    $self->_promote_data;
 
     # STEP 14: RESIZE THE DISK
     $self->_reallocate_disk_allocation;
 
     $self->status_message("Alignment complete.");
-    return $self;
+}
+
+sub _create_disk_allocation {
+    my $self = shift;
+
+    my $estimated_kb_usage = $self->estimated_kb_usage;
+    $self->debug_message("Estimated disk for this data set: " . $estimated_kb_usage . " kb");
+    $self->debug_message("Check for available disk...");
+    my @available_volumes = Genome::Disk::Volume->get(disk_group_names => Genome::Config::get('disk_group_alignments'));
+    $self->debug_message("Found " . scalar(@available_volumes) . " disk volumes");
+    my $unallocated_kb = 0;
+    for my $volume (@available_volumes) {
+        $unallocated_kb += $volume->unallocated_kb;
+    }
+    $self->debug_message("Available disk: " . $unallocated_kb . " kb");
+    my $factor = 20;
+    unless ($unallocated_kb > ($factor * $estimated_kb_usage)) {
+        $self->error_message("NOT ENOUGH DISK SPACE!  This step requires $factor x as much disk as the job will use to be available before starting.");
+        die $self->error_message();
+    }
 }
 
 sub delete {
@@ -594,6 +586,37 @@ sub final_staged_bam_path {
 sub prepare_scratch_sam_file {
     my $self = shift;
 
+    $self->debug_message("Preparing the all_sequences.sam in scratch");
+    my $scratch_sam_file = $self->prepare_scratch_sam_header_file;
+
+    if ($self->supports_streaming_to_bam) {
+        my $ref_list  = $self->reference_build->full_consensus_sam_index_path($self->samtools_version);
+        my $sam_cmd = sprintf("| %s view -S -b -o %s - ", Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version), $self->temp_scratch_directory . "/raw_all_sequences.bam");
+        $self->debug_message("Opening $sam_cmd");
+
+        $self->_sam_output_fh(IO::File->new($sam_cmd));
+        unless ($self->_sam_output_fh()) {
+            $self->error_message("We support streaming for this alignment module, but can't open a pipe to $sam_cmd");
+            die $self->error_message;
+        }
+
+        my $temp_fh = IO::File->new($scratch_sam_file);
+        unless ($temp_fh) {
+            $self->error_message("Can't open temp sam header for reading.");
+            die $self->error_message;
+        }
+
+        binmode $temp_fh;
+        while (my $line = <$temp_fh>) {
+            $self->_sam_output_fh->print($line);
+        }
+    }
+    return 1;
+}
+
+sub prepare_scratch_sam_header_file {
+    my $self = shift;
+
     my $scratch_sam_file = $self->scratch_sam_file_path;
 
     unless($self->construct_groups_file) {
@@ -621,29 +644,7 @@ sub prepare_scratch_sam_file {
         $self->debug_message("Cat of sam files successful.");
     }
 
-    if ($self->supports_streaming_to_bam) {
-        my $ref_list  = $self->reference_build->full_consensus_sam_index_path($self->samtools_version);
-        my $sam_cmd = sprintf("| %s view -S -b -o %s - ", Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version), $self->temp_scratch_directory . "/raw_all_sequences.bam");
-        $self->debug_message("Opening $sam_cmd");
-
-        $self->_sam_output_fh(IO::File->new($sam_cmd));
-        unless ($self->_sam_output_fh()) {
-            $self->error_message("We support streaming for this alignment module, but can't open a pipe to $sam_cmd");
-            die $self->error_message;
-        }
-
-        my $temp_fh = IO::File->new($scratch_sam_file);
-        unless ($temp_fh) {
-            $self->error_message("Can't open temp sam header for reading.");
-            die $self->error_message;
-        }
-
-        binmode $temp_fh;
-        while (my $line = <$temp_fh>) {
-            $self->_sam_output_fh->print($line);
-        }
-    }
-    return 1;
+    return $scratch_sam_file;
 }
 
 # Override and return 1 if the aligner module can handle the read group
@@ -753,6 +754,8 @@ sub collect_inputs {
 
 sub run_aligner {
     my ($self, @inputs) = @_;
+
+    $self->debug_message("Running aligner...");
 
     $self->debug_message("Got " . scalar(@inputs) . " input files");
     if (@inputs > 3) {
@@ -984,6 +987,7 @@ sub close_out_streamed_bam_file {
 sub create_BAM_in_staging_directory {
     my $self = shift;
     # STEP 9: CONVERT THE ALL_SEQUENCES.SAM into ALL_SEQUENCES.BAM
+    $self->debug_message("Constructing a BAM file (if necessary)...");
     unless($self->_process_sam_files) {
         $self->error_message("Failed to process sam files into bam files. " . $self->error_message);
         die $self->error_message;
@@ -994,6 +998,8 @@ sub create_BAM_in_staging_directory {
 
 sub postprocess_bam_file {
     my $self = shift;
+
+    $self->debug_message("Postprocessing & Sanity Checking BAM file (if necessary)...");
 
     my $bam_file    = $self->final_staged_bam_path;
     my $output_file = $bam_file . '.flagstat';
@@ -1018,7 +1024,7 @@ sub postprocess_bam_file {
 
     $self->debug_message("Indexing BAM file ...");
     unless($self->_create_bam_index) {
-        $self->error_message('Fail to create bam md5');
+        $self->error_message('Fail to create bam index');
         die $self->error_message;
     }
     return 1;
@@ -1028,6 +1034,9 @@ sub _use_alignment_summary_cpp { return 1; };
 
 sub _compute_alignment_metrics {
     my $self = shift;
+
+    $self->debug_message("Computing alignment metrics...");
+
     my $bam = $self->final_staged_bam_path;
     $self->set_bam_size($bam); #store this for per lane bam recreation
 
@@ -1110,8 +1119,7 @@ sub create_bam_flagstat {
         die $self->error_message('BAM file (%s) does not exist or is empty', $bam_file);
     }
 
-    my $lock  = $self->get_bam_lock;
-    my $guard = Scope::Guard->new(sub { $lock->unlock() });
+    my $guard  = $self->get_bam_lock(__PACKAGE__)->unlock_guard();
     return 1 if -e $output_file;
 
     my $cmd = Genome::Model::Tools::Sam::Flagstat->create(
@@ -1130,21 +1138,34 @@ sub create_bam_flagstat {
 
 sub create_bam_header {
     my $self = shift;
-    return 1 if -s $self->bam_header_path;
+    return $self->bam_header_path if -s $self->bam_header_path;
 
-    my $lock  = $self->get_bam_lock;
-    my $guard = Scope::Guard->new(sub { $lock->unlock() });
-    return 1 if -s $self->bam_header_path;
+    my $guard  = $self->get_bam_lock(__PACKAGE__)->unlock_guard();
+    return $self->bam_header_path if -s $self->bam_header_path;
 
     my $sam_path = Genome::Model::Tools::Sam->path_for_samtools_version($self->samtools_version);
 
+    my $source_bam_path = $self->source_bam_path_for_header;
+    my $bam_header_path = $self->path_for_bam_header_creation;
+
     Genome::Sys->shellcmd(
-        cmd => sprintf('%s view -H %s > %s', $sam_path, $self->bam_path, $self->bam_header_path),
-        output_files => [$self->bam_header_path],
-        input_files => [$self->bam_path],
+        cmd => sprintf('%s view -H %s > %s', $sam_path, $source_bam_path, $bam_header_path),
+        output_files => [$bam_header_path],
+        input_files => [$source_bam_path],
+        keep_dbh_connection_open => 1,  # this runs very fast
     );
 
-    return 1;
+    return $bam_header_path;
+}
+
+sub source_bam_path_for_header {
+    my $self = shift;
+    return $self->bam_path;
+}
+
+sub path_for_bam_header_creation {
+    my $self = shift;
+    return $self->bam_header_path;
 }
 
 sub set_bam_size {
@@ -1420,6 +1441,8 @@ sub _gather_params_for_get_or_create {
 sub _prepare_working_and_staging_directories {
     my $self = shift;
 
+    $self->debug_message("Prepare working directories...");
+
     unless ($self->_prepare_staging_directory) {
         $self->error_message("Failed to prepare staging directory");
         return;
@@ -1433,6 +1456,9 @@ sub _prepare_working_and_staging_directories {
     unless($scratch_tempdir) {
         die "failed to create a temp scrach directory for working files";
     }
+
+    $self->debug_message("Staging path is " . $self->temp_staging_directory);
+    $self->debug_message("Working path is " . $self->temp_scratch_directory);
 
     return 1;
 }
@@ -1556,6 +1582,9 @@ sub _extract_input_fastq_filenames {
 
 sub _prepare_reference_sequences {
     my $self = shift;
+
+    $self->debug_message("Preparing the reference sequences...");
+
     my $reference_build = $self->reference_build;
 
     my $ref_basename = File::Basename::fileparse($reference_build->full_consensus_path('fa'));
@@ -1701,8 +1730,7 @@ sub get_bam_file {
         return $self->revivified_alignment_bam_file_path;
     }
     else {
-        my $lock = $self->get_bam_lock;
-        my $guard = Scope::Guard->new(sub { $lock->unlock() });
+        my $guard = $self->get_bam_lock(__PACKAGE__)->unlock_guard();
 
         if ($self->get_merged_alignment_results) {
             return $self->revivified_alignment_bam_file_path;
@@ -1745,20 +1773,17 @@ sub get_bam_file {
 
 sub get_bam_lock {
     my $self = shift;
-    my ($old_resource, $new_resource) = map{File::Spec->join('genome', $_, 'lock-per-lane-alignment-'.$self->id)}('Genome::InstrumentData::AlignmentResult::Merged', __PACKAGE__);
-    my $lock = Genome::Sys::LockMigrationProxy->new(
-        old => {
-            resource => $old_resource,
-            scope => 'site',
-        },
-        new => {
-            resource => $new_resource,
-            scope => 'site',
-        },
+    my $package = shift;
+
+    my $resource = File::Spec->join('genome', $package, 'lock-per-lane-alignment-'.$self->id);
+    my $lock = Genome::Sys::LockProxy->new(
+        resource => $resource,
+        scope => 'site',
     )->lock(
         max_try => 288, # Try for 48 hours every 10 minutes
         block_sleep => 600,
     );
+
     die $self->error_message("Unable to acquire the lock for per lane alignment result id (%s) !", $self->id) unless $lock;
     return $lock;
 }
@@ -1767,8 +1792,7 @@ sub remove_bam {
     my $self = shift;
 
     my $bam_path = $self->bam_path;
-    my $lock  = $self->get_bam_lock;
-    my $guard = Scope::Guard->new(sub { $lock->unlock() });
+    my $guard = $self->get_bam_lock(__PACKAGE__)->unlock_guard();
 
     for my $type ('', '.bai', '.md5') {
         my $file = $bam_path . $type;
@@ -1802,23 +1826,8 @@ sub revivified_alignment_bam_file_path {
         die $self->error_message('Failed to get valid merged bam to recreate per lane bam '.$self->id);
     }
 
-    $self->create_bam_header;
-    $self->create_bam_flagstat;
-
-    my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
-        merged_bam          => $merged_bam,
-        per_lane_bam        => $revivified_bam,
-        instrument_data_id  => $self->read_and_platform_group_tag_id,
-        samtools_version    => $self->samtools_version,
-        picard_version      => $self->picard_version,
-        bam_header          => $self->bam_header_path,
-        comparison_flagstat => $self->bam_flagstat_path,
-        include_qc_failed   => 1,
-    );
-
-    unless ($cmd->execute) {
-        die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
-    }
+    my $bam_header_path = $self->create_bam_header;
+    $self->create_bam_flagstat_and_revivify($merged_bam, $revivified_bam, $bam_header_path);
 
     $self->_reallocate_temp_allocation($temp_allocation);
 
@@ -1829,6 +1838,27 @@ sub revivified_alignment_bam_file_path {
     }
     else {
         die $self->error_message("After running RecreatePerLaneBam, no per-lane bam (%s) exists still!", $revivified_bam);
+    }
+}
+
+sub create_bam_flagstat_and_revivify {
+    my ($self, $merged_bam, $revivified_bam, $bam_header_path) = @_;
+
+    $self->create_bam_flagstat;
+
+    my $cmd = Genome::InstrumentData::AlignmentResult::Command::RecreatePerLaneBam->create(
+        merged_bam          => $merged_bam,
+        per_lane_bam        => $revivified_bam,
+        instrument_data_id  => $self->read_and_platform_group_tag_id,
+        samtools_version    => $self->samtools_version,
+        picard_version      => $self->picard_version,
+        bam_header          => $bam_header_path,
+        comparison_flagstat => $self->bam_flagstat_path,
+        include_qc_failed   => 1,
+    );
+
+    unless ($cmd->execute) {
+        die $self->error_message('Failed to execute RecreatePerLaneBam for '.$self->id);
     }
 }
 
@@ -1844,7 +1874,7 @@ sub _get_temp_allocation {
         owner_id            => Genome::Sys->username,
     );
     UR::Context->process->add_observer(
-        aspect   => 'pre-commit',
+        aspect   => 'precommit',
         once     => 1,
         callback => sub { $temp_allocation->delete; },
     );

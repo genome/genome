@@ -1,0 +1,3 @@
+# syslog, logstash, and UDP MTU can all affect this length.
+---
+default_value: 1024

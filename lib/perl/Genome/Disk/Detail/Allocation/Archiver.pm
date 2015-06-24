@@ -27,11 +27,8 @@ sub archive {
         Genome::Disk::Allocation->get_with_lock($id);
 
     my $current_allocation_path = $allocation_object->absolute_path;
-    my $archive_allocation_path = join('/',
-        $allocation_object->volume->archive_mount_path,
-        $allocation_object->group_subdirectory,
-        $allocation_object->allocation_path);
-    my $tar_path = join('/', $archive_allocation_path, 'archive.tar');
+    my $tar_path = $allocation_object->tar_path();
+    my $archive_allocation_path = $allocation_object->archive_path();
 
     # This gets set to true immediately before tarball creation is started.
     # This allows for conditional clean up of the archive directory in case of

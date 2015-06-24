@@ -448,7 +448,13 @@ sub getVcfFile{
             return("$prefix/$dir/snvs.vcf.gz");
         }
 
-    } elsif($dir=~/varscan/){
+    } elsif($dir=~/mutect/){
+        if(-s "$prefix/$dir/snvs.vcf.gz"){
+            return("$prefix/$dir/snvs.vcf.gz");
+        }
+
+    }
+    elsif($dir=~/varscan/){
         if(-s "$prefix/$dir/varscan-high-confidence-v1-d41d8cd98f00b204e9800998ecf8427e/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/snvs.vcf.gz"){
             return("$prefix/$dir/varscan-high-confidence-v1-d41d8cd98f00b204e9800998ecf8427e/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/snvs.vcf.gz");
         }
@@ -457,9 +463,8 @@ sub getVcfFile{
         if(-s "$prefix/$dir/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/somatic-score-mapping-quality-v1-39b60f48b6f8c9e63436a5424305e9fd/snvs.vcf.gz"){
             return("$prefix/$dir/false-positive-v1-05fbf69c10534fd630b99e44ddf73c7f/somatic-score-mapping-quality-v1-39b60f48b6f8c9e63436a5424305e9fd/snvs.vcf.gz");
         }
-
     } else {
-        die("Don't know how to find the calls for ")
+        die("Don't know how to find the calls for $dir")
     }
     return("ERROR: couldn't find the snvs.vcf.gz file under directory $dir\n");
 }
@@ -683,7 +688,7 @@ sub execute {
   my $cmd = "ln -s '" . $build_dir . "' '" . $output_dir . "/" . $sample_name . "/build_directory'";;
   `$cmd`;
 
-  
+
   # Check if the necessary files exist in this build
   my $snv_file = "$build_dir/effects/snvs.hq.novel.tier1.v2.bed";
   unless( -e $snv_file ){
@@ -704,7 +709,7 @@ sub execute {
       }
   }
 
-    #cat all the filtered snvs together (same for indels) 
+    #cat all the filtered snvs together (same for indels)
   my @sfiles = glob("$build_dir/effects/snvs.hq.novel.tier*.v2.bed");
   @sfiles = (@sfiles, glob("$build_dir/effects/snvs.hq.previously_detected.tier*.v2.bed"));
   #enclose names in single quotes to handle special characters in bash
@@ -754,7 +759,7 @@ sub execute {
   $indel_file = "$output_dir/$sample_name/indels/indels.hq.bed";
 
   my %dups;
-  
+
   #--------------------------------------------------------------
   #munge through SNV file to remove duplicates and fix IUB codes
   $snv_file = cleanFile($snv_file);
@@ -800,7 +805,7 @@ sub execute {
           $snv_file = "$new_snv_file";
           $cmd = "joinx intersect -a '" . $indel_file . "' -b '" . $output_dir . "/" . $sample_name . "/featurelist' >'" . $new_indel_file . "'";
           `$cmd`;
-          $indel_file = "$new_indel_file";      
+          $indel_file = "$new_indel_file";
       } else {
           $self->warning_message("feature list not found or target regions not specified; No target region filtering being done even though --restrict-to-target-regions set.");
       }
@@ -937,7 +942,7 @@ sub execute {
   $cmd = "head -n 1 '" . $snv_file . "' >'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated'";
   `$cmd`;
   $cmd = "tail -n +2 '" . $indel_file . "' >>'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tmp'";
-  `$cmd`;  
+  `$cmd`;
   $cmd = "tail -n +2 '" . $snv_file . "' >>'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tmp'";
   `$cmd`;
   $cmd = "joinx sort -i '" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated.tmp' >>'" . $output_dir . "/" . $sample_name . "/snvs.indels.annotated'";
@@ -984,7 +989,7 @@ sub execute {
       my $bam_files;
       my $labels;
       $bam_files = join(",",($normal_bam,$tumor_bam));
-      $labels = join(",",("normal $sample_name","tumor $sample_name"));      
+      $labels = join(",",("normal $sample_name","tumor $sample_name"));
 
 
       if(defined($igv_reference_name)){

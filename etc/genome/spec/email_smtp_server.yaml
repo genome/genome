@@ -1,0 +1,4 @@
+# The 'email_smtp_server' configuration variable holds the name of the email
+# server used to send email through.
+--- 
+env: XGENOME_EMAIL_SMTP_SERVER

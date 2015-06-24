@@ -19,11 +19,11 @@ class Genome::Site::TGI::Synchronize::Classes::PopulationGroup {
         id => { is => 'Number', column_name => 'PG_ID' },
     ],
     has => [
-        name => { is => 'Text', }, # nullable in db
         taxon_id => { is => 'Number', },
     ],
     has_optional => [
         description => { is => 'Text', },
+        name => { is => 'Text', },
     ],
     has_many_optional => [
         member_ids => {

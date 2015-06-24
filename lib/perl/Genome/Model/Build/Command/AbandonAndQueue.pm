@@ -6,7 +6,7 @@ use warnings;
 use Genome;
 
 class Genome::Model::Build::Command::AbandonAndQueue {
-    is => 'Genome::Model::Build::Command::Base',
+    is => 'Genome::Model::Build::Command::Abandon',
     has => [
         reason => {
             is => 'Text',
@@ -25,29 +25,13 @@ sub help_detail {
     return help_brief();
 }
 
-sub execute {
+sub successfully_abandoned_callback {
     my $self = shift;
+    my $build = shift;
 
-    my @builds = $self->builds;
-    my $build_count = scalar(@builds);
-    for my $build (@builds) {
-        $self->_total_command_count($self->_total_command_count + 1);
-        my $transaction = UR::Context::Transaction->begin();
-        my $successful = eval { $build->abandon; };
-        if ($successful and $transaction->commit) {
-            $build->model->build_requested(1, $self->reason);
-            $self->status_message("Abandoned build (" . $build->__display_name__ . ") and queued model.");
-        }
-        else {
-            $self->append_error($build->__display_name__, "Failed to abandon build: $@.");
-            $transaction->rollback;
-        }
-    }
-
-    $self->display_command_summary_report();
-
-    return !scalar(keys %{$self->_command_errors});
+    $build->model->build_requested(1, $self->reason);
+    $self->status_message("Abandoned build (" . $build->__display_name__ . ") and queued model.");
 }
 
-1;
 
+1;

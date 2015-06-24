@@ -1,0 +1,4 @@
+# The 'ds_dwrac_auth' configuration variable holds the login password used to
+# connect to the Dwrac data source.
+--- 
+env: XGENOME_DS_DWRAC_AUTH

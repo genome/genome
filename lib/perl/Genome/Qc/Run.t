@@ -10,8 +10,9 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
+use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Genome::Test::Factory::SoftwareResult::User;
+use Genome::Test::Factory::InstrumentData::Solexa;
 use Sub::Install qw (reinstall_sub);
 
 my $pkg = "Genome::Qc::Run";
@@ -37,10 +38,10 @@ use_ok($pkg);
     }
 
     sub get_metrics {
-        return {
+        return (
             metric1 => 1,
             metric2 => 2,
-        };
+        );
     }
 }
 
@@ -64,10 +65,10 @@ use_ok($pkg);
     }
 
     sub get_metrics {
-        return {
+        return (
             metricA => 1,
             metricB => 2,
-        };
+        );
     }
 }
 
@@ -81,7 +82,16 @@ reinstall_sub({
     },
 });
 
-my $alignment_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object();
+my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
+    flow_cell_id => '12345ABXX',
+    lane => '2',
+    subset_name => '2',
+    run_name => 'example',
+    id => 'NA12878',
+);
+my $alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->setup_object(
+    instrument_data => $instrument_data,
+);
 my $command = $pkg->create(
     alignment_result => $alignment_result,
     config_name => 'testing_config',

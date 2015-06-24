@@ -3,6 +3,8 @@
 use strict;
 use warnings FATAL => 'all';
 
+use Data::Dump 'pp';
+use Test::Exception;
 use Test::More;
 use Test::Deep;
 use above 'Genome';
@@ -17,41 +19,56 @@ BEGIN {
 };
 
 {
-    package TestObject;
+    package Test::URObject;
 
     use strict;
     use warnings FATAL => 'all';
-    use Genome;
+    use UR;
 
-    class TestObject {
+    class Test::URObject {
         is => ['UR::Object'],
     };
+
+}
+
+{
+
+    package Test::Object;
+
+    use strict;
+    use warnings FATAL => 'all';
+
+    sub new { my ($c, %p) = @_; return bless(\%p, $c); }
+    sub name { return $_[0]->{name}; }
+
 }
 
 subtest "Basic" => sub {
     my $inputs = {
-        a => TestObject->create(),
-        b => TestObject->create(),
+        a => Test::URObject->create(),
+        b => Test::Object->new(name => 'Ren'),
         c => 'foo',
     };
     my $other_inputs = {
-        a => TestObject->create(),
-        b => TestObject->create(),
+        a => Test::URObject->create(),
+        b => Test::Object->new(name => 'Stimpy'),
         c => 'foo',
     };
 
     ok(!eq_deeply($inputs, $other_inputs), "Different inputs don't compare as equal (sanity)");
 
-    ok(Scalar::Util::blessed($inputs->{a}), "Raw value is a blessed reference");
-    ok(!Scalar::Util::blessed(encode($inputs)->{a}), "Encoded value is **not** a blessed reference");
+    for my $k (qw/ a b /) {
+        ok(Scalar::Util::blessed($inputs->{$k}), "Raw value is a blessed reference");
+        ok(!Scalar::Util::blessed(encode($inputs)->{$k}), "Encoded value is **not** a blessed reference");
+    }
 
     cmp_deeply(decode(encode($inputs)), $inputs, "Roundtrip successful");
 };
 
 subtest "ARRAY" => sub {
     my $inputs = {
-        a => [TestObject->create(), TestObject->create()],
-        b => TestObject->create(),
+        a => [Test::URObject->create(), Test::URObject->create()],
+        d => Test::Object->new(name => 'Mr. Horse'),
         c => 'foo',
     };
 
@@ -64,7 +81,7 @@ subtest "ARRAY" => sub {
 subtest "Mixed ARRAY" => sub {
     plan skip_all => "We don't currently support mixed arrays";
     my $inputs = {
-        a => ['taco', TestObject->create()],
+        a => ['taco', Test::URObject->create()],
     };
 
     ok(Scalar::Util::blessed($inputs->{a}->[1]), "Raw ARRAY element is a blessed reference");
@@ -83,6 +100,16 @@ subtest "Nested ARRAY" => sub {
     ok(!Scalar::Util::blessed(encode($inputs)->{a}->[0]->[0]), "Encoded ARRAY element is **not** a blessed reference");
 
     cmp_deeply(decode(encode($inputs)), $inputs, "Roundtrip successful");
+};
+
+subtest "Failure to convert hash to UR::Object" => sub {
+    my $hash = { class => 'Test::URObject', id => 'blah', };
+    my $msg = "Couldn't convert hash to class: ".pp($hash);
+    throws_ok(
+        sub{ Genome::Utility::Inputs::convert_hash_to_obj($hash);},
+        qr/$msg/,
+        'convert_hash_to_obj fails when object cannot be found',
+    );
 };
 
 done_testing();

@@ -8,6 +8,8 @@ use Genome::Sys::Lock qw();
 use Genome::Sys::LockProxy qw();
 use Params::Validate qw(validate validate_with HASHREF);
 
+require Scope::Guard;
+
 =item new()
 
 Keyword Arguments:
@@ -95,6 +97,18 @@ sub unlock {
     }
 
     return $self;
+}
+
+=item unlock_guard()
+
+C<unlock_guard()> returns a Scope::Guard that will unlock the
+C<Genome::Sys::LockMigrationProxy> object.
+
+=cut
+
+sub unlock_guard {
+    my $self = shift;
+    return Scope::Guard->new( sub { $self->unlock() } );
 }
 
 1;

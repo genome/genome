@@ -3,6 +3,7 @@ package Genome::SoftwareResult::User;
 use strict;
 use warnings;
 use Genome;
+use Genome::Carp qw(dief);
 use Genome::Sys::LockProxy qw();
 use List::MoreUtils qw(any);
 use Params::Validate qw(:types);
@@ -11,6 +12,7 @@ use Carp qw();
 use Genome::Utility::Text;
 
 class Genome::SoftwareResult::User {
+    is => ['Genome::Utility::ObjectWithLockedConstruction'],
     table_name => 'result.user',
     id_by => [
         id => { is => 'Text', len => 32 },
@@ -191,11 +193,34 @@ sub _role_for_type {
 sub user_hash_for_build {
     my $class = shift;
     my $build = shift;
+    unless ($build) {
+        Carp::croak q(user_hash_for_build requires 'build' as an argument);
+    }
+
+    my $sponsor = $build->model->analysis_projects // Genome::Sys::User->get(username => $build->model->run_as);
+    unless ($sponsor) {
+        dief q(unable to determine sponsor for build: %s), $build->id;
+    }
 
     return {
         requestor => $build,
-        sponsor   => $build->model->analysis_projects // Genome::Sys::User->get(username => $build->model->run_as),
+        sponsor   => $sponsor,
     };
+}
+
+sub lock_id {
+    my $class = shift;
+
+    my $bx = $class->define_boolexpr(@_);
+
+    my $label = $bx->value_for('label');
+    if(length($label) >= 32) {
+        $label = Genome::Sys->md5sum_data($label);
+    }
+
+    return Genome::Utility::Text::sanitize_string_for_filesystem(
+        join('_', $label, $bx->value_for('user_id'), $bx->value_for('software_result_id'))
+    );
 }
 
 1;

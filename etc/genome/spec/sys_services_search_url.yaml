@@ -1,0 +1,4 @@
+# The 'sys_services_search_url' configuration variable holds URL that leads to
+# the search web page.
+--- 
+env: XGENOME_SYS_SERVICES_SEARCH_URL

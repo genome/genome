@@ -6,8 +6,6 @@ use warnings;
 use Test::More;
 use File::Temp;
 
-use above "Genome";
-
 use_ok('Genome::Role::Logger');
 
 test_stderr_tie();
@@ -21,7 +19,7 @@ sub test_stderr_tie {
         log_file => "$tmp_file",
         tie_stderr => 1,
     );
-    $logger->log_dispatch();
+    $logger->delegate_logger();
 
     my $test_message = "Test.\n";
     my $expected_file_content = "STDERR: $test_message";

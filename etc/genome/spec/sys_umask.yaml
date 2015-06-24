@@ -1,0 +1,3 @@
+# The 'sys_umask' determines the default umask, e.g. when creating directories.
+--- 
+env: XGENOME_SYS_UMASK

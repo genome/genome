@@ -6,32 +6,35 @@ use warnings;
 use Carp qw();
 use Log::Dispatch qw();
 use Log::Dispatch::Screen qw();
-use Memoize qw(memoize);
 use Module::Runtime qw(module_notional_filename use_package_optimistically);
 
-memoize('logger', LIST_CACHE => 'MERGE');
+use UR;
+
+class Genome::Logger {
+    has => {
+        delegate_logger => {
+            is => 'Log::Dispatch',
+            is_constant => 1,
+        },
+    },
+};
+
+my $logger;
 sub logger {
-    assert_class_method(shift);
-
-    my $logger = Log::Dispatch->new(@_);
-
-    if (should_color_screen()) {
-        $logger->add(color_screen());
-    } else {
-        $logger->add(screen());
+    my $class = shift;
+    if ($logger) {
+        return $logger;
     }
+
+    $logger = Genome::Logger->create(
+        delegate_logger => Log::Dispatch->new(@_),
+    );
+    $logger->delegate_logger->add(screen_to_add());
 
     return $logger;
 }
-
-sub assert_class_method_error { 'Must be called as class method' }
-sub assert_class_method {
-    my $class = shift;
-
-    # to ensure memoize works we are strict about this
-    unless ($class && $class eq __PACKAGE__) {
-        Carp::croak assert_class_method_error();
-    }
+sub clear_logger {
+    $logger = undef;
 }
 
 sub should_color_screen {
@@ -45,10 +48,20 @@ sub has_color_screen_package {
     return $INC{$file};
 }
 
+sub screen_to_add {
+    my $class = shift;
+    if (should_color_screen()) {
+        return color_screen(@_);
+    } else {
+        return screen(@_);
+    }
+}
+
 sub screen {
     my $screen = Log::Dispatch::Screen->new(
         name => 'screen',
         min_level => 'info',
+        @_,
     );
     return $screen;
 }
@@ -81,7 +94,14 @@ sub color_screen {
                 text => 'red',
             },
         },
+        @_,
     );
+}
+
+sub normalize_self {
+    my $class = shift;
+    my $self = ref $class ? $class : $class->logger;
+    return $self;
 }
 
 my @levels = keys %Log::Dispatch::LEVELS;
@@ -90,37 +110,49 @@ for my $level (@levels) {
     my $namef = $name . 'f';
     no strict 'refs';
     *{$name} = sub {
-        my $class = shift;
-        $class->logger->$level(@_);
-        return join(' ', @_);
+        my $self = normalize_self(shift);
+        my $message = join(' ', @_);
+        chomp $message;
+        $message .= "\n";
+        $self->delegate_logger->$level($message);
+        return $message;
     };
     *{$namef} = sub {
-        my $class = shift;
+        my $self = normalize_self(shift);
         # sprintf inspects argument number
         my $message = sprintf(shift, @_);
-        $class->$name($message);
+        $self->$name($message);
     };
 }
 
 sub croak {
-    my $class = shift;
+    my $self = shift;
     my $level = shift;
 
-    unless ($class->can($level)) {
+    unless ($self->can($level)) {
         Carp::croak "invalid level: $level";
     }
 
-    Carp::croak $class->$level(@_);
+    Carp::croak $self->$level(@_);
 }
 
 sub fatal {
-    my $class = shift;
-    $class->croak('critical', @_);
+    my $self = shift;
+    $self->croak('critical', @_);
 }
 
 sub fatalf {
-    my $class = shift;
-    $class->croak('criticalf', @_);
+    my $self = shift;
+    $self->croak('criticalf', @_);
+}
+
+for my $delegate_method (qw(add output remove)) {
+    my $name = join('::', __PACKAGE__, $delegate_method);
+    no strict 'refs';
+    *{$name} = sub {
+        my $self = shift;
+        return $self->delegate_logger->$delegate_method(@_);
+    }
 }
 
 1;

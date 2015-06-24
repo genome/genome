@@ -113,23 +113,31 @@ sub _get_ptero_execute_method {
 sub from_xml_element {
     my ($class, $element) = @_;
 
-    my $command_class = $class->_get_command_class_from_xml_element($element);
     return $class->create(
         name => $element->getAttribute('name'),
-        command => $command_class,
         parallel_by => $element->getAttribute('parallelBy'),
+        $class->operationtype_attributes_from_xml_element($element),
     );
 }
 
-my %_EXPECTED_ATTRIBUTES = (
-    lsf_project => 'lsfProject',
-    lsf_queue => 'lsfQueue',
-    lsf_resource => 'lsfResource',
-);
+sub expected_attributes {
+    return (
+        command => 'commandClass',
+        lsf_project => 'lsfProject',
+        lsf_queue => 'lsfQueue',
+        lsf_resource => 'lsfResource',
+    );
+}
+
 sub input_properties {
     my $self = shift;
-    my @result = map {$_->property_name} $self->command->__meta__->properties(
+
+    my @metas = $self->command->__meta__->properties(
         is_input => 1, is_optional => 0);
+
+    my @metas_without_defaults = grep {! defined($_->default_value)} @metas;
+
+    my @result = map {$_->property_name} @metas_without_defaults;
     return sort @result;
 }
 
@@ -138,7 +146,8 @@ sub operation_type_attributes {
     my %attributes = (
         commandClass => $self->command,
     );
-    for my $name (keys(%_EXPECTED_ATTRIBUTES)) {
+    my %expected_attributes = $self->expected_attributes;
+    for my $name (keys(%expected_attributes)) {
         my $value;
         if (defined($self->$name)) {
             $value = $self->$name;
@@ -147,7 +156,7 @@ sub operation_type_attributes {
         }
 
         if (defined($value)) {
-            $attributes{$_EXPECTED_ATTRIBUTES{$name}} = $value;
+            $attributes{$expected_attributes{$name}} = $value;
         }
     }
     return %attributes;
@@ -205,19 +214,17 @@ sub _get_attribute_from_command {
 
     my $property = $self->command->__meta__->properties(
         property_name => $property_name);
-    if (defined($property)) {
+    return unless defined $property;
+
+    if (defined $property->default_value) {
         return $property->default_value;
-    } else {
+    }
+    elsif ($property->calculated_default) {
+        return $property->calculated_default->();
+    }
+    else {
         return;
     }
-}
-
-sub _get_command_class_from_xml_element {
-    my ($class, $element) = @_;
-
-    my $nodes = $element->find('operationtype');
-    my $operation_type_element = $nodes->pop;
-    return $operation_type_element->getAttribute('commandClass');
 }
 
 

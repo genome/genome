@@ -780,6 +780,9 @@ sub _filter_variants {
 
     ## Parse the variants file ##
     while(my $line = $input_fh->getline) {
+        if ($. % 100_000 == 0) {
+            $self->debug_message('Processed %s input lines.', $.);
+        }
         # FIXME should just pass in a single sample here instead of a whole line. Or a sample joined with a line to make a whole single sample vcf line?
         my $parsed_line = parse_vcf_line($line, \@sample_names);
         $self->filter_one_line($parsed_line, $readcount_searcher_by_sample, $stats, \@sample_names);

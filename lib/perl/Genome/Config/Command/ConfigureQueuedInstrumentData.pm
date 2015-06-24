@@ -51,13 +51,14 @@ sub execute {
             Lingua::EN::Inflect::NO('item', scalar(@instrument_data_analysis_project_pairs))));
 
     for my $current_pair (@instrument_data_analysis_project_pairs) {
-        my $current_inst_data = $current_pair->instrument_data;
+        $self->status_message('Working on %s', $current_pair->__display_name__);
 
-        if(my $skip_reason = $self->should_skip($current_inst_data)) {
+        if(my $skip_reason = $self->should_skip($current_pair)) {
             $self->_mark_pair_as_skipped($current_pair, $skip_reason);
             next;
         }
 
+        my $current_inst_data = $current_pair->instrument_data;
         my $analysis_project = $current_pair->analysis_project;
         if (my $msg = $self->should_wait($current_inst_data, $analysis_project)) {
             $self->status_message($msg);
@@ -154,9 +155,10 @@ sub _mark_sync_status {
 }
 
 sub should_skip {
-    my ($self, $inst_data) = @_;
+    my ($self, $anp_instdata_bridge) = @_;
 
-    return 'ignored flag is set on instrument data' if $inst_data->ignored;
+    my $inst_data = $anp_instdata_bridge->instrument_data;
+    return sprintf('Instrument data (%s) has ignored flag set, skipping!', $inst_data->id) if $inst_data->ignored;
     return;
 }
 

@@ -248,9 +248,6 @@ sub _create_genome_objects_for_lims_objects {
     $self->status_message('Attempted: '.$ids_to_create->size);
     $self->status_message('Created:   '.@ids_created);
 
-    $self->status_message("Unloading $lims_class objects...");
-    my $unloaded = $lims_class->unload;
-
     $self->_report($report);
 
     $self->status_message("Commit $entity_name...");
@@ -260,6 +257,9 @@ sub _create_genome_objects_for_lims_objects {
         $transaction->rollback;
         Carp::confess( $self->error_message("Failed to commit $genome_class!") );
     }
+
+    $self->status_message("Unloading $lims_class objects...");
+    my $unloaded = $lims_class->unload;
 
     $self->status_message("Create $entity_name objects in Genome...done");
     return 1;

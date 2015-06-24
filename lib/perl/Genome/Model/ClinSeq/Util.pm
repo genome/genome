@@ -1455,7 +1455,7 @@ sub get_best_somvar_build {
     my $somvar_build =
         $clinseq_build->wgs_build;
     unless($somvar_build) {
-        my $somvar_build = $clinseq_build->exome_build;
+        $somvar_build = $clinseq_build->exome_build;
         $self->status_message("Using exome somvvar build.");
     } else {
         $self->status_message("Using WGS somvvar build.");

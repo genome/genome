@@ -54,7 +54,7 @@ $gm = Genome::Model::Command::Define::GenotypeMicroarray->create(
     processing_profile_name => $ppname ,
     subject_name            => $sample->name,
     model_name              => $test_model_name .".test",
-    variation_list_build    => $vl_build,
+    dbsnp_build             => $vl_build,
     add_to_projects         => [$project],
 );
 $gm->dump_status_messages(1);

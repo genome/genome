@@ -18,7 +18,7 @@ sub cmd_line {
 sub get_metrics {
     my $self = shift;
 
-    my $file = $self->output_file;
+    my $file = $self->qc_metrics_file;
     my $gmt_class = $self->gmt_class;
     my %metrics = $self->metrics;
     my $metric_results = $gmt_class->parse_file_into_metrics_hashref($file);
@@ -43,8 +43,8 @@ sub _get_metrics {
         my $metric_key = $metric_details->{metric_key};
         unless (defined($metric_key)) {
             my @metric_keys = keys %{$metric_results};
-            if (scalar(@metric_keys > 1)) {
-                die $self->error_message("More than one metrics key found in the metrics results.");
+            if (scalar(@metric_keys) > 1) {
+                die $self->error_message("More than one metric key found in the metric results: " . join(', ', @metric_keys));
             }
             else {
                 $metric_key = $metric_keys[0];

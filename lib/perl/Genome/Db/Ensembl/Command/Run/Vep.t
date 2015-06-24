@@ -46,6 +46,7 @@ for my $file_type ('ensembl', 'vcf', 'vcf.gz') {
         quiet => 1,
         hgnc => 1,
         hgvs => 1,
+        reference_version => "GRCh37",
         fasta => "/gscmnt/ams1102/info/model_data/2869585698/build106942997/all_sequences.fa",
     );
 

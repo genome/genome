@@ -6,7 +6,11 @@ use Test::More;
 
 use Genome::Sys;
 use File::Temp;
+use File::Spec;
+use Scope::Guard;
+use Cwd qw();
 use Genome::Utility::Test qw(compare_ok);
+use Test::Exception;
 
 sub mdir($) {
     system "mkdir -p $_[0]";
@@ -24,7 +28,7 @@ my $tmp2 = $tmp . '/set2';
 mdir($tmp2);
 ok($tmp2, "made temp directory $tmp2");
 
-$ENV{GENOME_DB} = join(":",$tmp1,$tmp2);
+Genome::Config::set_env('db', join(":",$tmp1,$tmp2));
 
 mdir($tmp1 . '/db1/1.0');
 mdir($tmp1 . '/db1/2.1'); # the others are noise
@@ -200,6 +204,94 @@ subtest test_write__read_file => sub {
     ok(Genome::Sys->write_file('-', @lines), 'first write_file to STDOUT succeeds');
     ok(Genome::Sys->write_file('-', @lines), 'second write_file to STDOUT succeeds');
 
+};
+
+subtest create_symlink => sub {
+    plan tests => 4;
+
+    my $dir = File::Temp::tempdir( CLEANUP => 1 );
+
+    subtest basic => sub {
+        plan tests => 3;
+
+        my $target = '/dev/null';
+        my $link = File::Temp::tempnam($dir, 'basic');
+        ok( Genome::Sys->create_symlink($target, $link),
+            'create_symlink');
+        ok(-l $link, 'symlink created');
+        is(readlink($link), $target, 'symlink target');
+    };
+
+    subtest 'arguments' => sub {
+        plan tests => 8;
+
+        throws_ok { Genome::Sys->create_symlink(undef, 'foo') }
+            qr(Can't create_symlink: no target given),
+            'target param cannot be undef';
+
+        throws_ok { Genome::Sys->create_symlink('', 'foo')}
+            qr(Can't create_symlink: no target given),
+            'target param cannot be empty string';
+
+        throws_ok { Genome::Sys->create_symlink('/dev/null', undef) }
+            qr(Can't create_symlink: no 'link' given),
+            'link param cannot be undef';
+
+        throws_ok { Genome::Sys->create_symlink('/dev/null', '') }
+            qr(Can't create_symlink: no 'link' given),
+            'link param cannot be empty string';
+
+        my $link_to_0 = File::Temp::tempnam($dir, 'arguments0');
+        ok( Genome::Sys->create_symlink(0, $link_to_0),
+            'Create symlink with target 0');
+        is(readlink($link_to_0), '0', 'link created ok');
+
+        my $cwd = Cwd::cwd();
+        my $guard = Scope::Guard->new(sub { chdir $cwd });
+        chdir $dir;
+        my $target = '/dev/null';
+        ok( Genome::Sys->create_symlink($target, '0'),
+            'Create symlink with link name 0');
+        is(readlink('0'), $target, 'symlink created ok')
+
+    };
+
+    subtest 'link exists' => sub {
+        plan tests => 6;
+
+        my $target = '/dev/null';
+        my $link = File::Temp::tempnam($dir, 'exists');
+        ok( Genome::Sys->create_symlink($target, $link),
+            'create_symlink');
+        is(readlink($link), $target, 'symlink is ok');
+
+        ok( Genome::Sys->create_symlink($target, $link),
+            'create_symlink() with the same target and link');
+        is(readlink($link), $target, 'symlink is still ok');
+
+        my $expected_error = quotemeta( qq(Link ($link) for target (/dev/zero) already exists) );
+        throws_ok { Genome::Sys->create_symlink('/dev/zero', $link) }
+            qr($expected_error),
+            'Creating a link with already existing name throws exception';
+
+        my $not_a_link = File::Temp->new(DIR => $dir);
+        $not_a_link->close();
+        $expected_error = quotemeta( qq(Link \($not_a_link\) for target \(/dev/zero\) already exists));
+        throws_ok { Genome::Sys->create_symlink('/dev/zero', $not_a_link) }
+            qr($expected_error),
+            'Creating a link when a file already exists with that name throws exception';
+    };
+
+    subtest 'symlink() fails' => sub {
+        plan tests => 1;
+
+        my $target = '/dev/null';
+        my $link = File::Spec->catfile($dir, 'not', 'exists', 'deep', 'path');
+        my $expected_error = quotemeta(qq(Can't create link ($link) to $target: No such file or directory));
+        throws_ok { Genome::Sys->create_symlink($target, $link) }
+            qr($expected_error),
+            'symlink() failing throws an exception';
+    };
 };
 
 done_testing();

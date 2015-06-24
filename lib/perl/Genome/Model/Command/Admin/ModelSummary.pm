@@ -39,6 +39,13 @@ class Genome::Model::Command::Admin::ModelSummary {
             doc => 'When "--auto" is true, commit() to the database after this many Models have been identified for cleanup or restart.  0 means wait until the end to commit everything',
         }
     ],
+    has_optional => [
+        max_fail_count => {
+            is => 'Number',
+            default => 5,
+            doc => 'Rebuild will not be recommended for models that have failed this many times or more. (If undefined, any fail count will be allowed.)',
+        },
+    ],
 };
 
 
@@ -47,17 +54,6 @@ sub execute {
 
     my @models = $self->models;
     my @hide_statuses = $self->hide_statuses;
-
-    #preload data
-    my %failed_build_params = (
-        'status in' => ['Unknown', 'Unstartable', 'Failed'],
-    );
-    my @builds = Genome::Model::Build->get(
-        model_id => [map($_->id, @models)],
-        %failed_build_params,
-    );
-
-    my $synchronous = ($self->auto and $self->auto_batch_size);  # whether we should start builds as we go or wait until the end
 
     # Header for the report produced at the end of the loop
     $self->print_message(join("\t", qw(model_id action latest_build_status first_nondone_step latest_build_rev model_name pp_name fail_count)));
@@ -96,17 +92,10 @@ sub execute {
     for my $model (@models) {
         my $per_model_txn = UR::Context::Transaction->begin();
 
-        my $build_iterator = $model->build_iterator(
-            'status not like' => 'Abandoned',
-            '-order_by' => '-created_at',
-        );
-        my $latest_build        = $build_iterator->next;
-        my $latest_build_status = ($latest_build ? $latest_build->status : '-');
-        $latest_build_status = 'Requested' if $model->build_requested;
+        my ($latest_build, $latest_build_status) = $self->_build_and_status_for_model($model);
 
-
-        my @failed_builds = $model->builds(%failed_build_params);
-        my $fail_count   = scalar @failed_builds;
+        my $failure_set  = $self->failure_build_set($model);
+        my $fail_count   = $failure_set->count;
         my $model_id     = ($model ? $model->id                       : '-');
         my $model_name   = ($model ? $model->name                     : '-');
         my $pp_name      = ($model ? $model->processing_profile->name : '-');
@@ -162,7 +151,7 @@ sub execute {
         elsif ($latest_build_status eq 'Succeeded') {
             $action = 'none';
         }
-        elsif (should_review_model($model)) {
+        elsif ($self->should_review_model($model, $latest_build_status)) {
             $action = 'review';
         }
         else {
@@ -195,6 +184,21 @@ sub execute {
     return 1;
 }
 
+sub _build_and_status_for_model {
+    my $self = shift;
+    my $model = shift;
+
+    my $build_iterator = $model->build_iterator(
+        'status not like' => 'Abandoned',
+        '-order_by' => '-created_at',
+    );
+    my $latest_build        = $build_iterator->next;
+    my $latest_build_status = ($latest_build ? $latest_build->status : '-');
+    $latest_build_status = 'Requested' if $model->build_requested;
+
+    return ($latest_build, $latest_build_status);
+}
+
 
 sub print_message {
     my $self = shift;
@@ -205,135 +209,91 @@ sub print_message {
 
 
 sub should_review_model {
+    my $self = shift;
     my $model = shift;
+    my $latest_status = shift;
 
     # If the latest build succeeded then we're happy.
-    return if latest_build_succeeded($model);
+    return if $latest_status eq 'Succeeded';
 
-    my @builds = $model->builds;
-    return if @builds < 1;
+    # If there are no builds, nothing to review.
+    return if $latest_status eq '-';
 
-    my $latest_status = $model->latest_build->status;
     return 1 if $latest_status eq 'Unstartable';
 
-    return if @builds == 1;
-
-    # If it has failed >3 times in a row then submit for review.
-    return 1 if model_has_failed_to_many_times($model);
+    # If it has failed >X times in a row then submit for review.
+    return 1 if $self->model_has_failed_too_many_times($model);
 
     # If it hasn't made progress since last time then submit for review.
-    return 1 unless model_has_progressed($model);
+    return 1 unless $self->model_has_progressed($model);
 
     return;
 }
 
 
-sub latest_build_succeeded {
+sub model_has_failed_too_many_times {
+    my $self = shift;
     my $model = shift;
 
-    my $latest_build = $model->latest_build;
-    return ($latest_build->status eq 'Succeeded');
-}
+    my $max_fails = $self->max_fail_count;
+    return unless defined $max_fails;
 
+    my $failure_set = $self->failure_build_set($model);
 
-my $max_fails = 5;
-sub model_has_failed_to_many_times {
-    my $model = shift;
-
-    my @builds = reverse $model->builds;
-    return unless @builds;
-
-    my $n = (@builds >= $max_fails ? ($max_fails - 1) : $#builds);
-    my @last_n_builds = @builds[0..$n];
-
-    my @failed_builds = grep { $_->status eq 'Failed' } @last_n_builds;
-    return (@failed_builds == $max_fails );
+    return ($failure_set->count >= $max_fails);
 }
 
 
 sub model_has_progressed {
+    my $self = shift;
     my $model = shift;
 
-    my @builds = $model->builds;
-    die unless (@builds > 1);
+    my $failure_set = $self->failure_build_set($model);
 
-    my $latest_build = $model->latest_build;
-    my %latest_status = workflow_status($latest_build);
+    #a first build has always made progress
+    return 1 unless ($failure_set->count > 1);
 
-    my $previous_build = previous_build($latest_build);
-    my %previous_status = workflow_status($previous_build);
+    my $it = $failure_set->member_iterator(-order_by => ['-created_at']);
+    my $latest_build = $it->next;
+    my $latest_error = determine_error_for_build($latest_build);
+    return unless $latest_error;
 
-    my $status_are_different = status_compare(\%latest_status, \%previous_status);
+    my $previous_build = $it->next;
+    my $previous_error = determine_error_for_build($previous_build);
+    return unless $previous_error;
 
-    return $status_are_different;
+    return $latest_error ne $previous_error;
 }
 
-
-sub latest_build_is_succeeded {
+sub failure_build_set {
+    my $self = shift;
     my $model = shift;
 
-    my $latest_build = $model->latest_build;
-
-    return (
-        $latest_build
-        && $latest_build->status
-        && $latest_build->status eq 'Succeeded'
+    return Genome::Model::Build->define_set(
+        model_id => $model->id,
+        status => ['Failed', 'Unstartable', 'Unknown'],
     );
 }
 
 
-sub previous_build {
+sub determine_error_for_build {
     my $build = shift;
 
-    my $model = $build->model;
-    my @prior_builds = grep { $_->date_scheduled lt $build->date_scheduled } $model->builds;
+    return unless ($build->status eq 'Failed' or $build->status eq 'Unstartable');
 
-    my $previous_build = @prior_builds ? $prior_builds[-1] : undef;
-    return $previous_build;
-}
+    my $cmd = Genome::Model::Build::Command::DetermineError->execute(
+        build => $build,
+        display_results => 0,
+    );
 
-
-sub workflow_status {
-    my $build = shift;
-
-    # The following is wrapped in a transaction and try to protect against
-    # "corrupt" Workflow::Models.
-    my $tx = UR::Context::Transaction->begin();
-    my %status = try {
-        my $build_instance = $build->newest_workflow_instance;
-        my @child_instances = $build_instance ? $build_instance->sorted_child_instances : ();
-
-        my %status;
-        for my $child_instance (@child_instances) {
-            (my $name = $child_instance->name) =~ s/^[0-9]+\s+//;
-            $status{$name} = $child_instance->status;
-        }
-        $tx->commit();
-        return %status;
-    } catch {
-        $tx->rollback();
-        return;
-    };
-
-    return %status;
-}
-
-
-sub status_compare { # http://stackoverflow.com/q/540229
-    my %a = %{ shift @_ };
-    my %b = %{ shift @_ };
-    for my $key (keys %a) {
-          return 1 unless defined $b{$key} and $a{$key} eq $b{$key};
-          delete $a{$key};
-          delete $b{$key};
-    }
-    return 1 if keys %b;
-    return 0;
+    return $cmd->get_failed_key;
 }
 
 
 sub find_first_nondone_step {
     my $build = shift;
+
+    return if grep { $_ eq $build->status } ('Succeeded', 'Scheduled', 'Unstartable', 'New');
 
     # The following is wrapped in a transaction and try to protect against
     # "corrupt" Workflow::Models.
@@ -370,3 +330,5 @@ sub _find_first_nondone_step_impl {
 
     return $failed_step;
 }
+
+1;

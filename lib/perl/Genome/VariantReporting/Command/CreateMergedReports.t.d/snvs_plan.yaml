@@ -1,6 +1,7 @@
 experts:
     'vep':
         ensembl_version: 75
+        reference_version: GRCh37
         custom_annotation_tags: []
         feature_list_ids: feature_list_ids
         reference_fasta: reference_fasta

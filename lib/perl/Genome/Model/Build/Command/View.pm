@@ -9,6 +9,7 @@ class Genome::Model::Build::Command::View {
     is => [
         'Genome::Command::Viewer',
         'Genome::Command::WorkflowMixin',
+        'Genome::Command::PteroWorkflowMixin',
     ],
     has => [
         build => {
@@ -94,8 +95,12 @@ sub write_report {
     }
 
     my $workflow = $self->build->newest_workflow_instance;
-    $self->_display_workflow($handle, $workflow);
-    $self->_display_logs($handle, $workflow);
+    if (defined $workflow) {
+        $self->_display_workflow($handle, $workflow);
+        $self->_display_logs($handle, $workflow);
+    } else {
+        $self->_display_ptero_workflow($handle, $self->build->process->workflow_name);
+    }
 
     1;
 }

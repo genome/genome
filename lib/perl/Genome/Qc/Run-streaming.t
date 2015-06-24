@@ -10,9 +10,10 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-use Genome::Test::Factory::InstrumentData::MergedAlignmentResult;
+use Genome::Test::Factory::InstrumentData::AlignmentResult;
 use Genome::Test::Factory::SoftwareResult::User;
-use Sub::Install qw (reinstall_sub);
+use Genome::Test::Factory::InstrumentData::Solexa;
+use Sub::Override;
 use Genome::Utility::Test qw(compare_ok);
 
 my $pkg = "Genome::Qc::Run";
@@ -43,7 +44,7 @@ my $test_dir = __FILE__.".d";
     }
 
     sub get_metrics {
-        return {};
+        return ();
     }
 }
 {
@@ -65,10 +66,10 @@ my $test_dir = __FILE__.".d";
     }
 
     sub get_metrics {
-        return {
+        return (
             metric1 => 1,
             metric2 => 2,
-        };
+        );
     }
 }
 
@@ -92,36 +93,45 @@ my $test_dir = __FILE__.".d";
     }
 
     sub get_metrics {
-        return {
+        return (
             metricA => 1,
             metricB => 2,
-        };
+        );
     }
 }
 
-my $alignment_result = Genome::Test::Factory::InstrumentData::MergedAlignmentResult->setup_object();
+my $instrument_data = Genome::Test::Factory::InstrumentData::Solexa->setup_object(
+    flow_cell_id => '12345ABXX',
+    lane => '2',
+    subset_name => '2',
+    run_name => 'example',
+    id => 'NA12878',
+);
+my $alignment_result = Genome::Test::Factory::InstrumentData::AlignmentResult->setup_object(
+    instrument_data => $instrument_data,
+);
 
 subtest "teed input" => sub {
     use Genome::Qc::Config;
-    reinstall_sub({
-            into => 'Genome::Qc::Config',
-            as => 'get_commands_for_alignment_result',
-            code => sub {
-                return {
-                    cat => {class => "TestCat",
-                        params => {input_file => '/dev/stdin'},
-                        in_file => "first_input_file",
-                    },
-                    test1 => {class => "TestTool1",
-                                  params => {input_file => '/dev/stdin'},
-                                  dependency => {name => 'cat', fd => "stdout"},
-                                  out_file => "test1.out"},
-                    test2 => {class => "TestTool2",
+    my $override = Sub::Override->new(
+        'Genome::Qc::Config::get_commands_for_alignment_result',
+        sub {
+            return {
+                cat => {class => "TestCat",
+                    params => {input_file => '/dev/stdin'},
+                    in_file => "first_input_file",
+                },
+                test1 => {class => "TestTool1",
                               params => {input_file => '/dev/stdin'},
                               dependency => {name => 'cat', fd => "stdout"},
-                              out_file => "test2.out"}};
-            },
-        });
+                              out_file => "test1.out"},
+                test2 => {class => "TestTool2",
+                          params => {input_file => '/dev/stdin'},
+                          dependency => {name => 'cat', fd => "stdout"},
+                          out_file => "test2.out"}
+            };
+        },
+    );
 
     my $command = $pkg->create(
         config_name => 'testing-qc-run',
@@ -138,29 +148,30 @@ subtest "teed input" => sub {
             File::Spec->join($test_dir, $file_name), "Teed processes produced correct file $test");
     }
     $command->output_result->test_name("first subtest");
+    $override->restore;
 };
 
 subtest "piped input" => sub {
     use Genome::Qc::Config;
-    reinstall_sub({
-            into => 'Genome::Qc::Config',
-            as => 'get_commands_for_alignment_result',
-            code => sub {
-                return {
-                    cat => {class => "TestCat",
-                        params => {input_file => '/dev/stdin'},
-                        in_file => "first_input_file",
-                    },
-                    test1 => {class => "TestTool1",
-                        params => {input_file => '/dev/stdin'},
-                        dependency => {fd => "stdout", name => "cat"},
-                    },
-                    test2 => {class => "TestTool2",
-                        params => {input_file => '/dev/stdin'},
-                        dependency => {fd => "stdout", name => "test1"},
-                        out_file => "test-piped.out"}};
-            },
-        });
+    my $override= Sub::Override->new(
+        'Genome::Qc::Config::get_commands_for_alignment_result',
+        sub {
+            return {
+                cat => {class => "TestCat",
+                    params => {input_file => '/dev/stdin'},
+                    in_file => "first_input_file",
+                },
+                test1 => {class => "TestTool1",
+                    params => {input_file => '/dev/stdin'},
+                    dependency => {fd => "stdout", name => "cat"},
+                },
+                test2 => {class => "TestTool2",
+                    params => {input_file => '/dev/stdin'},
+                    dependency => {fd => "stdout", name => "test1"},
+                    out_file => "test-piped.out"}
+            };
+        }
+    );
 
     my $command = $pkg->create(
         config_name => 'testing-qc-run',
@@ -174,6 +185,7 @@ subtest "piped input" => sub {
     my $file_name = "test-piped.out";
     compare_ok(File::Spec->join($command->output_result->output_dir, $file_name),
         File::Spec->join($test_dir, $file_name), "Piped processes produced correct file");
+    $override->restore;
 };
 done_testing;
 

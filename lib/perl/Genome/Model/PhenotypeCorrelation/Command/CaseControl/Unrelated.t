@@ -83,6 +83,7 @@ sub test_with_clinical_data {
     my $cmd = $pkg->create(
             multisample_vcf => $vcf_file,
             ensembl_annotation_build => $annotation_build,
+            reference_version => 'GRCh37',
             output_directory => $tmpdir,
             sample_list_file => $sample_list_file,
             clinical_data_file => $clinical_data_file,

@@ -5,6 +5,9 @@ use Genome;
 
 use strict;
 use warnings;
+
+use Params::Validate qw(:types);
+
 class Genome::Search::Queue {
     table_name => 'web.search_index_queue',
     id_by => [
@@ -77,6 +80,73 @@ sub default_priority {
     my $meta = $class->__meta__;
     my $property = $meta->property('priority');
     return $property->{default_value};
+}
+
+sub create_dedup_iterator {
+    return $_[0]->create_iterator(
+        -group_by => [qw(subject_class subject_id)],
+    );
+}
+
+sub dedup_set {
+    my ($class, $set) = Params::Validate::validate_pos(@_,
+        { type => SCALAR },
+        { isa => 'Genome::Search::Queue::Set',
+          callbacks => {
+              'specifies subject_id' => sub { shift->rule->value_for('subject_id') },
+              'specifies subject_class' => sub { shift->rule->value_for('subject_class') },
+          },
+        },
+    );
+
+    my $m_iter = $set->member_iterator;
+    my $duplicate_count = 0;
+
+    $m_iter->next;
+    while (my $q = $m_iter->next) {
+        $duplicate_count++;
+        $q->delete;
+    }
+
+    return $duplicate_count;
+}
+
+sub dedup {
+    my $class = shift;
+
+    my $max = 500;
+
+    my $lw = UR::Context->object_cache_size_lowwater();
+    my $lw_guard = Scope::Guard->new( sub { UR::Context->object_cache_size_lowwater($lw) } );
+    UR::Context->object_cache_size_lowwater($UR::Context::all_objects_cache_size);
+
+    my $hw = UR::Context->object_cache_size_highwater();
+    my $hw_guard = Scope::Guard->new( sub { UR::Context->object_cache_size_highwater($hw) } );
+    UR::Context->object_cache_size_highwater(UR::Context->object_cache_size_lowwater + 20 * $max);
+
+    my $delete_count = 0;
+    my $commit_and_prune = sub {
+        Genome::Logger->infof("Committing the removal of %d duplicates...\n", $delete_count);
+        $delete_count = 0;
+        UR::Context->commit();
+        UR::Context->prune_object_cache();
+    };
+    my $iter = $class->create_dedup_iterator();
+    while (my $s = $iter->next) {
+        if ($s->count > 1) {
+            my $duplicate_count = $class->dedup_set($s);
+            $delete_count += $duplicate_count;
+            Genome::Logger->infof("Deleted %d duplicates.\n", $duplicate_count);
+
+            if ($delete_count > $max) {
+                $commit_and_prune->();
+            }
+        }
+    }
+
+    $commit_and_prune->();
+
+    return 1;
 }
 
 1;
