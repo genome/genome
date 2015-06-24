@@ -6,6 +6,7 @@ use Genome;
 
 class Genome::Qc::Tool::WithVariationListVcf {
     is => 'Genome::Qc::Tool',
+    is_abstract => 1,
     has => [
         variation_list_build_id => {
             is => 'Text',
