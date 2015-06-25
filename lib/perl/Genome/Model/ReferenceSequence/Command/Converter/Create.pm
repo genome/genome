@@ -5,13 +5,12 @@ use warnings;
 
 use Genome;
 
-
 class Genome::Model::ReferenceSequence::Command::Converter::Create {
     is => 'Command::V2',
     has_input => [
         source_reference => { is => 'Genome::Model::Build::ReferenceSequence', doc => 'the reference to convert from' },
         destination_reference => { is => 'Genome::Model::Build::ReferenceSequence', doc => 'the reference to convert to' },
-        algorithm => { is => 'Text', doc => 'method to do the conversion (valid values are methods of Genome::FeatureList::Converter)' },
+        algorithm => { is => 'Text', doc => 'method to do the conversion', valid_values => Genome::Model::Build::ReferenceSequence::Converter->__meta__->property_meta_for_name('algorithm')->valid_values, },
     ],
     has_optional_input => [
         resource => { is => 'Text', doc => 'additional resource for the algorithm to use (e.g. chain file for liftOver)' },
