@@ -5,12 +5,33 @@ use warnings;
 use Genome;
 
 class Genome::Qc::Config {
-    is => 'UR::Value',
-    id_by => [
-        name => {
-            is => 'String',
-        },
+    is => [
+        'Genome::Utility::ObjectWithTimestamps',
+        'Genome::Utility::ObjectWithCreatedBy',
     ],
+    table_name => 'config.qc',
+    id_by => [
+        id => {
+            is => 'Text',
+            len => 64,
+        }
+    ],
+    has => [
+        name => {
+            is => 'Text',
+        },
+        type => {
+            is => 'String',
+            is_optional => 1,
+            valid_values => ['wgs', 'exome'],
+        },
+        config => {
+            is => 'Text',
+        }
+    ],
+    schema_name => 'GMSchema',
+    data_source => 'Genome::DataSource::GMSchema',
+    id_generator => '-uuid',
 };
 
 sub get_commands_for_alignment_result {
