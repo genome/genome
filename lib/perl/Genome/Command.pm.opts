@@ -6907,7 +6907,14 @@ $Genome::Command::OPTS_SPEC = [
           'destination-reference=s',
           undef,
           'algorithm=s',
-          'files',
+          [
+            'convert_position',
+            'convert_chrXX_contigs_to_GL',
+            'chop_chr',
+            'prepend_chr',
+            'lift_over',
+            'no_op'
+          ],
           'resource=s',
           'files',
           'help!',
