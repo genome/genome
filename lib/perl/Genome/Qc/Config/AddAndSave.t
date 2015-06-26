@@ -18,7 +18,7 @@ use_ok($pkg);
 
 my $test_dir = __FILE__ . '.d';
 
-subtest 'add valid config' => sub {
+subtest 'add and save valid config' => sub {
     my $config_name = 'valid config';
     my $config_path = File::Spec->join($test_dir, 'valid_config.yaml');
     my $add_command = Genome::Qc::Config::Add->create(
