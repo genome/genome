@@ -3,6 +3,8 @@ package Genome::Qc::Config;
 use strict;
 use warnings;
 use Genome;
+use JSON qw(decode_json);
+use Set::Scalar;
 
 class Genome::Qc::Config {
     is => [
@@ -23,7 +25,7 @@ class Genome::Qc::Config {
         type => {
             is => 'String',
             is_optional => 1,
-            valid_values => ['wgs', 'exome'],
+            valid_values => ['wgs', 'exome', 'all'],
         },
         config => {
             is => 'Text',
@@ -38,59 +40,17 @@ sub get_commands_for_alignment_result {
     my $self = shift;
     my $is_capture = shift;
 
-    my %config = (
-        picard_collect_gc_bias_metrics => {
-            class => 'Genome::Qc::Tool::Picard::CollectGcBiasMetrics',
-            params => {
-                input_file => 'bam_file',
-                refseq_file => 'reference_sequence',
-                assume_sorted => 1,
-                use_version => 1.123,
-                output_file=> 'output_file',
-                chart_output => 'chart_output',
-            },
-        },
-        picard_mark_duplicates => {
-            class => 'Genome::Qc::Tool::Picard::MarkDuplicates',
-            params => {
-                output_file => 'output_file',
-                input_file => 'bam_file',
-                use_version => 1.123,
-            },
-        },
-        picard_collect_multiple_metrics => {
-            class => 'Genome::Qc::Tool::Picard::CollectMultipleMetrics',
-            params => {
-                input_file => 'bam_file',
-                reference_sequence => 'reference_sequence',
-                use_version => 1.123,
-            },
-        },
-    );
+    my $config = decode_json($self->config);
 
-    if ($is_capture) {
-        $config{picard_calculate_hs_metrics} = {
-            class => 'Genome::Qc::Tool::Picard::CalculateHsMetrics',
-            params => {
-                input_file => 'bam_file',
-                bait_intervals => 'bait_intervals', #region_of_interest_set
-                target_intervals => 'target_intervals', #target_region_set
-                use_version => 1.123,
-            },
-        };
-    }
-    else {
-        $config{picard_collect_wgs_metrics} = {
-            class => 'Genome::Qc::Tool::Picard::CollectWgsMetrics',
-            params => {
-                input_file => 'bam_file',
-                reference_sequence => 'reference_sequence',
-                use_version => 1.123,
-            },
-        };
+    unless ($is_capture && $self->_config_types_for_capture_data->contains($self->type)) {
+        die $self->error_message('Config type (%s) of config (%s) is not valid for capture data', $self->type, $self->name);
     }
 
-    return \%config;
+    return $config;
+}
+
+sub _config_types_for_capture_data {
+    return Set::Scalar->new('exome', 'all');
 }
 
 1;
