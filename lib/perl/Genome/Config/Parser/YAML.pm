@@ -19,4 +19,11 @@ sub parse {
     return LoadFile($filename);
 }
 
+sub write {
+    my ($self, $filename, $data) = @_;
+    die('Failed to provide filename!') unless $filename;
+    die('Failed to provide content!') unless $data;
+    return DumpFile($filename, $data);
+}
+
 1;
