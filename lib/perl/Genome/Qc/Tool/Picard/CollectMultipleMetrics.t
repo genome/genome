@@ -54,6 +54,8 @@ my %expected_metrics = (
     'pct_chimeric' => 0,
     'mean_insert_size' => 144.111111,
     'median_insert_size' => 139,
+    'insert_size_standard_deviation' => '24.353873',
+    'insert_size_median_absolute_deviation' => '12',
 );
 is_deeply({$tool->get_metrics}, {%expected_metrics}, 'Parsed metrics as expected');
 

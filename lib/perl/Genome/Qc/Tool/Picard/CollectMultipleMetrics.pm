@@ -44,8 +44,14 @@ sub metrics {
             mean_insert_size => {
                 picard_metric => 'MEAN_INSERT_SIZE',
             },
+            insert_size_standard_deviation => {
+                picard_metric => 'STANDARD_DEVIATION',
+            },
             median_insert_size => {
                 picard_metric => 'MEDIAN_INSERT_SIZE',
+            },
+            insert_size_median_absolute_deviation => {
+                picard_metric => 'MEDIAN_ABSOLUTE_DEVIATION',
             },
         },
     );
