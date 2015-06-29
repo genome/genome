@@ -203,7 +203,7 @@ subtest 'simple align_and_merge strategy' => sub {
             force_fragment => 0,
             result_users => $result_users,
         },
-        strategy => 'instrument_data both aligned to reference_sequence_build and merged using speedseq test [sort_memory => 8] api v1',
+        strategy => 'instrument_data both aligned to reference_sequence_build and merged using speedseq 0.0.3a-gms [sort_memory => 8] api v1',
     );
     isa_ok(
         $ad,
@@ -262,7 +262,7 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
             force_fragment => 0,
             result_users => $result_users,
         },
-        strategy => sprintf('instrument_data both aligned to reference_sequence_build and merged using speedseq test [sort_memory => 8] @align-and-merge-qc [%s] api v1', $config_name),
+        strategy => sprintf('instrument_data both aligned to reference_sequence_build and merged using speedseq 0.0.3a-gms [sort_memory => 8] @align-and-merge-qc [%s] api v1', $config_name),
     );
     isa_ok(
         $ad,
@@ -699,7 +699,7 @@ sub construct_speedseq_result {
     my $speedseq_result = Genome::InstrumentData::AlignmentResult::Merged::Speedseq->__define__(
         reference_build => $reference,
         aligner_name => 'speedseq',
-        aligner_version => 'test',
+        aligner_version => '0.0.3a-gms',
         aligner_params => 'sort_memory => 8',
     );
     for my $i (0..$#instrument_data) {
@@ -723,7 +723,7 @@ sub construct_speedseq_result {
             instrument_data => $instrument_data,
             reference_build => $reference,
             aligner_name => 'speedseq',
-            aligner_version => 'test',
+            aligner_version => '0.0.3a-gms',
             aligner_params => 'sort_memory => 8',
             samtools_version => 'r599',
             picard_version => '1.29',

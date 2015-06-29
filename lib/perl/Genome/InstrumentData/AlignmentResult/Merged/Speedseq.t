@@ -36,7 +36,7 @@ my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
 );
 my $aligner_index = Genome::Model::Build::ReferenceSequence::AlignerIndex->__define__(
     reference_build => $ref_seq_build,
-    aligner_version => 'test',
+    aligner_version => '0.0.3a-gms',
     aligner_name => 'speedseq',
     aligner_params => undef,
     output_dir => get_test_file('NA12878', File::Spec->join(qw(aligner_index speedseq))),
@@ -58,7 +58,7 @@ my $merged_alignment_result = $pkg->create(
     picard_version => '1.46',
     samtools_version => 'r963',
     aligner_name => 'speedseq',
-    aligner_version => 'test',
+    aligner_version => '0.0.3a-gms',
     aligner_params => '',
     _user_data_for_nested_results => $result_users,
 );
