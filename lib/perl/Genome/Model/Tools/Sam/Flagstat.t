@@ -8,17 +8,19 @@ use above "Genome";
 use YAML;
 use Test::More;
 use File::Compare;
+use Genome::Utility::Test;
 
 if (Genome::Sys->arch_os ne 'x86_64') {
     plan skip_all => 'requires 64-bit machine';
 }
 else {
-    plan tests => 9;
+    plan tests => 10;
 }
 
-use_ok('Genome::Model::Tools::Sam::Flagstat');
+my $pkg = 'Genome::Model::Tools::Sam::Flagstat';
+use_ok($pkg);
 
-my $data_dir = Genome::Config::get('test_inputs') . '/Genome-Model-Tools-Sam-Flagstat';
+my $data_dir = Genome::Utility::Test->data_dir_ok($pkg, 'v2');
 my $tmp_dir  = Genome::Sys->create_temp_directory(Genome::Sys->username . "Flagstat_XXXXXX");
 
 my $bam_file      = $data_dir.'/test.bam';
