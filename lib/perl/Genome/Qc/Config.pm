@@ -45,6 +45,12 @@ sub get_commands_for_alignment_result {
                 use_version => 1.123,
             },
         },
+        samtool_flagstat => {
+            class => 'Genome::Qc::Tool::Samtools::Flagstat',
+            params => {
+                'bam-file' => 'bam_file',
+            },
+        },
     );
 
     if ($is_capture) {
