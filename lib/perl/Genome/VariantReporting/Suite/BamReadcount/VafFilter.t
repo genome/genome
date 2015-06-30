@@ -190,4 +190,42 @@ subtest "no bam readcount entry" => sub {
     is_deeply({$filter->filter_entry($no_readcount_entry)}, \%expected_return_values, "Sample 1 return values as expected");
 };
 
+subtest "inclusive and exclusive" => sub {
+    my $filter = $pkg->create(
+        sample_name => 'S1',
+        min_vaf => 5,
+        exclusive => 0,
+    );
+    ok($filter->passes_filter(5), "min_vaf inclusive passes on the boundary condition");
+    ok($filter->passes_filter(6), "min_vaf inclusive passes on the correct side of the boundary condition");
+    ok(!$filter->passes_filter(4), "min_vaf inclusive fails on the wrong side of the boundary condition");
+
+    $filter = $pkg->create(
+        sample_name => 'S1',
+        min_vaf => 5,
+        exclusive => 1,
+    );
+    ok(!$filter->passes_filter(5), "min_vaf exclusive fails on the boundary condition");
+    ok($filter->passes_filter(6), "min_vaf exclusive passes on the correct side of the boundary condition");
+    ok(!$filter->passes_filter(4), "min_vaf exclusive fails on the wrong side of the boundary condition");
+
+    $filter = $pkg->create(
+        sample_name => 'S1',
+        max_vaf => 5,
+        exclusive => 0,
+    );
+    ok($filter->passes_filter(5), "max_vaf inclusive passes on the boundary condition");
+    ok($filter->passes_filter(4), "max_vaf inclusive passes on the correct side of the boundary condition");
+    ok(!$filter->passes_filter(6), "max_vaf inclusive fails on the wrong side of the boundary condition");
+
+    $filter = $pkg->create(
+        sample_name => 'S1',
+        max_vaf => 5,
+        exclusive => 1,
+    );
+    ok(!$filter->passes_filter(5), "max_vaf exclusive fails on the boundary condition");
+    ok($filter->passes_filter(4), "max_vaf exclusive passes on the correct side of the boundary condition");
+    ok(!$filter->passes_filter(6), "max_vaf exclusive fails on the wrong side of the boundary condition");
+};
+
 done_testing;
