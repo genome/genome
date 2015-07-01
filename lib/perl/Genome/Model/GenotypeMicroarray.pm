@@ -20,11 +20,6 @@ class Genome::Model::GenotypeMicroarray{
         },
     },
     has_param => {
-        input_format => {
-            doc => 'file format, defaults to "wugc", which is currently the only format supported',
-            valid_values => ['wugc'],
-            default_value => 'wugc',
-        },
         instrument_type => {
             doc => 'the type of microarray instrument',
             valid_values => [qw/ affymetrix illumina infinium plink unknown /],
