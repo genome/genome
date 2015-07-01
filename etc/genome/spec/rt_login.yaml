@@ -2,4 +2,3 @@
 # to connect to Request Tracker.
 --- 
 env: XGENOME_RT_LOGIN
-default_value: "limsrt"
