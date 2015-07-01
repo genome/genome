@@ -57,10 +57,6 @@ sub _ticket_for_id {
     return $ticket;
 }
 
-sub _server {
-    return 'https://rt.gsc.wustl.edu/';
-}
-
 sub _login_sso {
     my $self = shift;
 
@@ -69,7 +65,7 @@ sub _login_sso {
         timeout => 10,
         agent =>  'WWW-Mechanize',
     );
-    $mech->get( $self->_server() );
+    $mech->get( Genome::Config::get('rt_url') );
 
     my $uri = $mech->uri;
     my $host = $uri->host;
@@ -86,7 +82,7 @@ sub _login_sso {
     );
     $mech->submit();
 
-    my $rt = RT::Client::REST->new(server => _server(), _cookie =>  $mech->{cookie_jar});
+    my $rt = RT::Client::REST->new(server => Genome::Config::get('rt_url'), _cookie =>  $mech->{cookie_jar});
     #propagate the cookie jar to the UA since we're not calling $rt->login
     $rt->_ua->cookie_jar( $mech->{cookie_jar} );
 

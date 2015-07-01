@@ -1,0 +1,5 @@
+# The 'rt_url' configuration variable holds the URL of the server
+# to connect to Request Tracker.
+--- 
+env: XGENOME_RT_URL
+default_value: "https://rt.gsc.wustl.edu/"
