@@ -104,8 +104,11 @@ sub _tools {
     my $commands = $self->qc_config->get_commands_for_alignment_result($self->is_capture);
     my %tools;
     for my $name (keys %$commands) {
-        my $tool = $self->_tool_from_name_and_params($commands->{$name}->{class},
-                    $commands->{$name}->{params});
+        my $tool = $self->_tool_from_name_and_params(
+            $commands->{$name}->{class},
+            $commands->{$name}->{params},
+            $commands->{$name}->{additional_params},
+        );
         $tools{$name} = $tool;
     }
     return %tools;
@@ -124,12 +127,16 @@ sub _non_streaming_tools {
 }
 
 sub _tool_from_name_and_params {
-    my ($self, $name, $gmt_params) = @_;
+    my ($self, $name, $gmt_params, $additional_params) = @_;
     if (defined $name->qc_metrics_file_accessor) {
         my $output_param_name = $name->qc_metrics_file_accessor;
         $gmt_params->{$output_param_name} = Genome::Sys->create_temp_file_path;
     }
-    my $tool = $name->create(gmt_params => $gmt_params, alignment_result => $self->alignment_result);
+    my $tool = $name->create(
+        gmt_params => $gmt_params,
+        alignment_result => $self->alignment_result,
+        %{$additional_params},
+    );
     while (my ($param_name, $param_value) = each %$gmt_params) {
         if ($tool->can($param_value)) {
             $tool->gmt_params->{$param_name} = $tool->$param_value;

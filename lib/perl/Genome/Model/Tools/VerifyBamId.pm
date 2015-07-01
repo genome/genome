@@ -43,14 +43,20 @@ sub execute {
 
 sub _get_cmd {
     my $self = shift;
+
+    return join(' ', $self->_get_cmd_list);
+}
+
+sub _get_cmd_list {
+    my $self = shift;
     my $executable = _get_exe_path($self->version);
-    my $precise = "";
-    if ($self->precise) {
-        $precise = "--precise";
-    }
-    return join(" ", $executable, "--vcf", $self->vcf, "--bam", $self->bam, 
+    my @cmd_list = ($executable, "--vcf", $self->vcf, "--bam", $self->bam,
                     "--out", $self->out_prefix, "--maxDepth", $self->max_depth,
-                    $precise, "--ignoreRG");
+                    "--ignoreRG");
+    if ($self->precise) {
+        push (@cmd_list, "--precise");
+    }
+    return @cmd_list;
 }
 
 sub _get_exe_path {

@@ -3,6 +3,7 @@ package Genome::Qc::Tool;
 use strict;
 use warnings;
 use Genome;
+use List::MoreUtils qw(uniq);
 
 class Genome::Qc::Tool {
     is_abstract => 1,
@@ -58,6 +59,24 @@ sub reference_build {
 sub reference_sequence {
     my $self = shift;
     return $self->reference_build->full_consensus_path('fa');
+}
+
+sub sample {
+    my $self = shift;
+
+    my @samples = uniq map {$_->sample} $self->alignment_result->instrument_data;
+    die "More than one sample" if scalar(@samples) > 1;
+    return $samples[0];
+}
+
+sub sample_id {
+    my $self = shift;
+    return $self->sample->id;
+}
+
+sub sample_name {
+    my $self = shift;
+    return $self->sample->name;
 }
 
 1;
