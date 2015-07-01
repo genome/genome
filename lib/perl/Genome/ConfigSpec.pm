@@ -118,7 +118,7 @@ looking up a default value for the specified configuration variable.
 C<sticky> is an attribute that suggests the value should not be allowed to
 change.
 
-=head 1 EXAMPLE
+=head1 EXAMPLE
 
 For example, if you want to register a configuration variable for the key,
 'foo', you could create C<foo.yaml>,
