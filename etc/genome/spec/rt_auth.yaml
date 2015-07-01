@@ -2,3 +2,4 @@
 # to connect to Request Tracker.
 --- 
 env: XGENOME_RT_AUTH
+default_value: "Koh3gaed"
