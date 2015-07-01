@@ -9,6 +9,7 @@ use File::Path 'rmtree';
 use List::MoreUtils qw{ uniq };
 use List::Util qw(shuffle);
 use Try::Tiny qw(try catch finally);
+use Set::Scalar;
 
 use Genome;
 use Genome::Utility::Text; #quiet warning about deprecated use of autoload
@@ -738,5 +739,43 @@ sub estimated_gtmp_for_instrument_data  {
         $class
     );
 }
+
+
+sub get_supersede_merged_alignments {
+    my $self = shift;
+    my @ars  = $self->collect_individual_alignments;
+    my $ars  = Set::Scalar->new(@ars);
+    
+    my %ct;
+    my @founds = ();
+
+    for my $ar (@ars) {
+        my @sup_mrs = $ar->get_merged_alignment_results;
+        for my $sup_mr (@sup_mrs) {
+            if ($ct{$sup_mr->id}) {
+                $ct{$sup_mr->id}++;
+            }
+            else {
+                $ct{$sup_mr->id} = 1;
+            }
+        }
+    }
+
+    for my $supmr_id (keys %ct) {
+        next unless $ct{$supmr_id} == $ars->size;
+        next if $supmr_id eq $self->id;
+
+        my $supmr  = __PACKAGE__->get($supmr_id);
+        next if $supmr->test_name;
+
+        my $supars = Set::Scalar->new($supmr->collect_individual_alignments);
+        
+        if ($supars->is_proper_superset($ars)) {
+            push @founds, $supmr;
+        }
+    }
+    return @founds;
+}
+
 
 1;
