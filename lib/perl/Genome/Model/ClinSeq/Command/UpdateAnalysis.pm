@@ -194,13 +194,9 @@ class Genome::Model::ClinSeq::Command::UpdateAnalysis {
               is => 'Boolean',
               doc => 'Allow imported instrument data to be included',
         },
-        validation_as_exome => {
-              is => 'Boolean',
-              doc => 'Treat validation data as exome data. Includes instrument data from validation capture in exome reference alignment model.',
-        },
-        my_trsn => {
-              is => 'Text',
-              doc => 'If using validation-as-exome option, option to specify what instrument data to derive the target-set-region-name and region-of-interest from. valid options: exome or validation', 
+        add_validation_data_to_exome => {
+              is => 'text',
+              doc => 'Includes instrument data from validation capture in exome reference alignment model. Specify which instrument data to derive the target-set-region-name and region-of-interest from.',
               valid_values => ['exome','validation']
         },
    ],
@@ -257,13 +253,6 @@ sub execute {
     return 1;
   }
   
-  #If the user selected the --my-trsn option, make sure --validation-as-exome option is used
-  if ($self->my_trsn) {
-    unless ($self->validation_as_exome) {
-      die $self->error_message("Exiting... my-trsn requires validation-as-exome option");
-    }
-  }
-
   #Make sure an individual is defined
   unless ($self->individual){
     $self->error_message("Missing required parameter: --individual.");
@@ -699,7 +688,7 @@ sub get_dna_instrument_data{
     if ($trsn){
       my $fl = Genome::FeatureList->get(name => $trsn);
       my @valid_types = "exome";
-      if ($self->validation_as_exome) {
+      if ($self->add_validation_data_to_exome) {
         push(@valid_types, "validation");
       }
       if (not $fl or not $fl->content_type) {
@@ -841,10 +830,10 @@ sub get_trsn{
   my %trsns;
   my $trsn_ref;
   
-  #When using validation-as-exome and my-trsn options, use user-defined target region set name (exome or validation)
-  if ($self->my_trsn) {
-    my $user_trsn = $self->my_trsn;
-    $self->warning_message("Using '$user_trsn' target region specified by my-trsn.");
+  #When using add-validation-data-to-exome, allow user-defined target region set name (exome or validation)
+  if ($self->add_validation_data_to_exome) {
+    my $user_trsn = $self->add_validation_data_to_exome;
+    $self->warning_message("Using '$user_trsn' target region specified by add-validation-data-to-exome.");
     
     #Assigns the target-region-set-name to the value defined by the user
     foreach my $instrument_data (@instrument_data){
@@ -860,7 +849,7 @@ sub get_trsn{
     
     #Checks that $trsn_ref has been initialized
     if(!defined $trsn_ref) {
-      die $self->error_message("Cannot provide --my-trsn specified target region set name. Feature list of the target region set name does not have expected 'exome' or 'validation' content type.");
+      die $self->error_message("Cannot provide --add-validation-data-to-exome specified target region set name. Feature list of the target region set name does not have expected 'exome' or 'validation' content type.");
     }
 
   #Default behavior for choosing target-region-set-name   
@@ -1186,7 +1175,7 @@ sub check_ref_align_models{
     next unless ($self->determine_model_data_type('-model'=>$model) eq $data_type);
 
     #If the desired $data_type is exome.  Check that the TRSN and ROI have been set correctly, exclude models that are not
-    next unless ($self->check_model_trsn_and_roi('-model'=>$model, '-data_type'=>$data_type));
+#    next unless ($self->check_model_trsn_and_roi('-model'=>$model, '-data_type'=>$data_type));
     #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
 
     push (@final_models, $model);
