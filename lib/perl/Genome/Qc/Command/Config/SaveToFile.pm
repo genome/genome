@@ -1,11 +1,11 @@
-package Genome::Qc::Config::SaveToFile;
+package Genome::Qc::Command::Config::SaveToFile;
 
 use strict;
 use warnings;
 use Genome;
 use JSON qw(decode_json);
 
-class Genome::Qc::Config::SaveToFile {
+class Genome::Qc::Command::Config::SaveToFile {
     is => 'Command::V2',
     has => [
         config_item => {
@@ -17,7 +17,12 @@ class Genome::Qc::Config::SaveToFile {
             doc => 'File path to store the QC configuration file',
         },
     ],
+    doc => 'A command to write an existing QC configuration to a file',
 };
+
+sub help_detail {
+    return 'A command to write an existing QC configuration to a file';
+}
 
 sub execute {
     my $self = shift;

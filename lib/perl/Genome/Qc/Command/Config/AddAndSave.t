@@ -13,15 +13,18 @@ use Test::More;
 use Test::Exception;
 use Genome::Utility::Test qw(compare_ok);
 
-my $pkg = 'Genome::Qc::Config::Add';
-use_ok($pkg);
+my $add_pkg = 'Genome::Qc::Command::Config::Add';
+use_ok($add_pkg);
+
+my $save_pkg = 'Genome::Qc::Command::Config::SaveToFile';
+use_ok($save_pkg);
 
 my $test_dir = __FILE__ . '.d';
 
 subtest 'add and save valid config' => sub {
     my $config_name = 'valid config';
     my $config_path = File::Spec->join($test_dir, 'valid_config.yaml');
-    my $add_command = Genome::Qc::Config::Add->create(
+    my $add_command = $add_pkg->create(
         name => $config_name,
         file_path => $config_path,
         type => 'all',
@@ -29,7 +32,7 @@ subtest 'add and save valid config' => sub {
     ok($add_command->execute);
     ok(my $config_item = Genome::Qc::Config->get(name => $config_name));
 
-    my $duplicate_name_add_command = Genome::Qc::Config::Add->create(
+    my $duplicate_name_add_command = $add_pkg->create(
         name => $config_name,
         file_path => Genome::Sys->create_temp_file_path(),
         type => 'wgs',
@@ -37,7 +40,7 @@ subtest 'add and save valid config' => sub {
     throws_ok(sub { $duplicate_name_add_command->execute }, qr/A config item with name \($config_name\) already exists/);
 
     my $saved_config_path = Genome::Sys->create_temp_file_path();
-    my $save_command = Genome::Qc::Config::SaveToFile->create(
+    my $save_command = $save_pkg->create(
         config_item => $config_item,
         file_path => $saved_config_path,
     );
@@ -81,7 +84,7 @@ my %invalid_config_files = (
 
 while ( my ($test_name, $test_setup) = each %invalid_config_files ) {
     subtest "$test_name" => sub {
-        throws_ok(sub { $pkg->_validate_config($test_setup->{config_hash}) }, qr/$test_setup->{error_message}/, "Test config '$test_name' fails ok" );
+        throws_ok(sub { $add_pkg->_validate_config($test_setup->{config_hash}) }, qr/$test_setup->{error_message}/, "Test config '$test_name' fails ok" );
     };
 }
 

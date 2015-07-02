@@ -1,4 +1,4 @@
-package Genome::Qc::Config::Add;
+package Genome::Qc::Command::Config::Add;
 
 use strict;
 use warnings;
@@ -6,7 +6,7 @@ use Genome;
 use Set::Scalar;
 use JSON qw(encode_json);
 
-class Genome::Qc::Config::Add {
+class Genome::Qc::Command::Config::Add {
     is => 'Command::V2',
     has => [
         name => {
@@ -23,7 +23,12 @@ class Genome::Qc::Config::Add {
             doc => 'Type of data this qc configuration applies to',
         },
     ],
+    doc => 'A command to add a QC configuration to the database',
 };
+
+sub help_detail {
+    return 'A command to add a QC configuration to the database';
+}
 
 sub execute {
     my $self = shift;
