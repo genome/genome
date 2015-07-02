@@ -1175,7 +1175,7 @@ sub check_ref_align_models{
     next unless ($self->determine_model_data_type('-model'=>$model) eq $data_type);
 
     #If the desired $data_type is exome.  Check that the TRSN and ROI have been set correctly, exclude models that are not
-#    next unless ($self->check_model_trsn_and_roi('-model'=>$model, '-data_type'=>$data_type));
+    next unless ($self->check_model_trsn_and_roi('-model'=>$model, '-data_type'=>$data_type));
     #$self->status_message("\t\tName: " . $model->name . " (" . $model->id . ")");
 
     push (@final_models, $model);
