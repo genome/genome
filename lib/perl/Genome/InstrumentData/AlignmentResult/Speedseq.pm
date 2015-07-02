@@ -175,6 +175,7 @@ sub bwa_version {
     my $speedseq_version = $refindex->aligner_version;
     my %speedseq_version_to_bwa_version = (
         'test' => '0.7.10',
+        '0.0.3a-gms' => '0.7.10',
     );
     my $bwa_version = $speedseq_version_to_bwa_version{$speedseq_version};
     unless ($bwa_version) {

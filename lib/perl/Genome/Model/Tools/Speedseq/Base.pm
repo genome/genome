@@ -60,6 +60,7 @@ sub help_detail {
 
 my %TOOL_VERSIONS = (
     'test'     => '/gscmnt/sata849/info/speedseq_freeze/v1/speedseq/bin/speedseq',
+    '0.0.3a-gms' => '/gscmnt/sata849/info/speedseq_freeze/v2/speedseq/bin/speedseq',
 );
 
 sub available_versions {
