@@ -198,8 +198,8 @@ sub prepare_annotation_index {
     my $annot_build = $annot_index->annotation_build;
     my $out_dir     = $annot_index->temp_staging_directory;
 
-    my %aliger_params = __PACKAGE__->decomposed_aligner_params($annot_index->aligner_params);
-    my $params = $aliger_params{index_params};
+    my %aligner_params = __PACKAGE__->decomposed_aligner_params($annot_index->aligner_params);
+    my $params = $aligner_params{index_params};
 
     my $ref_seq_fasta = $ref_build->full_consensus_path('fa');
     my $gtf_file      = $annot_build->annotation_file('gtf', $ref_build->id);
