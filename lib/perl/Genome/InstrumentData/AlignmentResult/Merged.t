@@ -188,7 +188,7 @@ subtest 'testing supersede merged alignment' => sub {
 
     # We need to override this because get_merged_alignment_results only returns objects in the database. 
     Sub::Install::install_sub({code => sub { my $self = shift; return @_; }, into => 'Genome::InstrumentData::AlignmentResult', as => 'filter_non_database_objects'});
-    is_deeply([$small_merged_alignment_result->get_supersede_merged_alignment_results(1)], [$merged_alignment_result], 'Got supersede merged alignment for small merged alignment');
+    is_deeply([$small_merged_alignment_result->get_superseding_results(1)], [$merged_alignment_result], 'Got supersede merged alignment for small merged alignment');
 };
 
 done_testing();

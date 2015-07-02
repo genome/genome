@@ -741,7 +741,7 @@ sub estimated_gtmp_for_instrument_data  {
 }
 
 
-sub get_supersede_merged_alignment_results {
+sub get_superseding_results {
     my ($self, $test_name_ok) = @_;
 
     my @ars  = $self->collect_individual_alignments;
