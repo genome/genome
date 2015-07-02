@@ -113,7 +113,8 @@ sub _assign_instrument_data_to_model {
     my %params_hash = (model => $model);
     my $cmd = Genome::Model::Command::InstrumentData::Assign::ByExpression->create(
             model => $model,
-            instrument_data => [$instrument_data]
+            instrument_data => [$instrument_data],
+            force => 1, #trust the configuration to know what it's doing
         );
     my $executed_ok = eval{ $cmd->execute };
 
