@@ -1922,12 +1922,10 @@ $Genome::Command::OPTS_SPEC = [
       [
         'name=s',
         'files',
-        'input-format=s',
+        'instrument-type=s',
         'files',
         'based-on=s',
         undef,
-        'instrument-type=s',
-        'files',
         'describe!',
         undef,
         'help!',
