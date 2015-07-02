@@ -73,6 +73,7 @@ use_ok($pkg);
 }
 
 use Genome::Qc::Config;
+my $config = Genome::Qc::Config->__define__(name => 'testing_config');
 reinstall_sub({
     into => 'Genome::Qc::Config',
     as => 'get_commands_for_alignment_result',

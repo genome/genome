@@ -154,10 +154,10 @@ subtest 'simple alignments with qc decoration' => sub {
     );
 
     my $log_directory = Genome::Sys->create_temp_directory();
-    my $qc_for_testing = Genome::Qc::Config->get(name => 'qc for Workflow test');
+    my $config_name = 'qc for Workflow test';
+    my $qc_for_testing = Genome::Qc::Config->__define__(name => $config_name);
     isa_ok($qc_for_testing, 'Genome::Qc::Config', 'test configuration exists') or die('cannot continue');
 
-    my $config_name = 'qc for Workflow test';
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             inst => \@two_instrument_data,
@@ -241,7 +241,10 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
         }
     }
 
+    my $config_name = 'qc2 for Workflow test';
+
     use Genome::Qc::Config;
+    my $config = Genome::Qc::Config->__define__(name => $config_name);
     my $override = Sub::Override->new(
         'Genome::Qc::Config::get_commands_for_alignment_result',
         sub {
@@ -254,7 +257,6 @@ subtest 'simple align_and_merge strategy with qc decoration' => sub {
         sub { return 1; },
     );
 
-    my $config_name = 'qc2 for Workflow test';
     my $ad = Genome::InstrumentData::Composite::Workflow->create(
         inputs => {
             instrument_data => \@two_instrument_data,
