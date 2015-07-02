@@ -741,8 +741,9 @@ sub estimated_gtmp_for_instrument_data  {
 }
 
 
-sub get_supersede_merged_alignments {
-    my $self = shift;
+sub get_supersede_merged_alignment_results {
+    my ($self, $test_name_ok) = @_;
+
     my @ars  = $self->collect_individual_alignments;
     my $ars  = Set::Scalar->new(@ars);
     
@@ -766,7 +767,10 @@ sub get_supersede_merged_alignments {
         next if $supmr_id eq $self->id;
 
         my $supmr  = __PACKAGE__->get($supmr_id);
-        next if $supmr->test_name;
+
+        unless ($test_name_ok) {
+            next if $supmr->test_name;
+        }
 
         my $supars = Set::Scalar->new($supmr->collect_individual_alignments);
         

@@ -70,7 +70,7 @@ ok(dircopy($expected_shortcut_path, $tmp_shortcut_path2), 'Copied expected dir t
 my @instrument_data    = generate_fake_instrument_data();
 my @individual_results = generate_individual_alignment_results(@instrument_data);
 
-my @params = (
+my %parameters = (
      aligner_name                => $aligner_name,
      aligner_version             => $aligner_version,
      samtools_version            => $samtools_version,
@@ -85,8 +85,10 @@ my @params = (
      instrument_data_segment     => [map {$_->id . ':A:2:read_group'} @instrument_data],
 );
 
-my $merged_alignment_result = $pkg->create(@params, _user_data_for_nested_results => $result_users);
+my $merged_alignment_result = $pkg->create(%parameters, _user_data_for_nested_results => $result_users);
 isa_ok($merged_alignment_result, $pkg, 'produced merged alignment result');
+
+
 
 subtest 'testing merge without filter_name' => sub {
     compare_ok($merged_alignment_result->bam_file, File::Spec->join($expected_dir, '-120573001.bam'),
@@ -118,17 +120,17 @@ subtest 'testing merge without filter_name' => sub {
         }
     }
 
-    my $existing_alignment_result = $pkg->get_or_create(@params, users => $result_users);
+    my $existing_alignment_result = $pkg->get_or_create(%parameters, users => $result_users);
     is($existing_alignment_result, $merged_alignment_result, 'got back the previously created result');
 };
 
 subtest 'testing merge with filter_name' => sub {
     my @filtered_params = (
-        @params,
+        %parameters,
         filter_name => [$instrument_data[0]->id . ':forward-only', $instrument_data[1]->id . ':forward-only'],
     );
 
-    my $existing_alignment_result = $pkg->get_or_create(@params, users => $result_users);
+    my $existing_alignment_result = $pkg->get_or_create(%parameters, users => $result_users);
     is($existing_alignment_result, $merged_alignment_result, 'got back the previously created result');
 
 
@@ -153,13 +155,13 @@ subtest 'testing merge with filter_name' => sub {
 
     is($existing_filtered_alignment_result, $filtered_alignment_result, 'got back the previously created filtered result');
 
-    my $gotten_alignment_result = $pkg->get_with_lock(@params, users => $result_users);
+    my $gotten_alignment_result = $pkg->get_with_lock(%parameters, users => $result_users);
     is($gotten_alignment_result, $existing_alignment_result, 'using get returns same result as get_or_create');
 };
 
 subtest 'testing invalid merged alignment' => sub {
     my @segmented_params = (
-        @params,
+        %parameters,
         instrument_data_segment => [$instrument_data[0]->id . ':test:read_group', $instrument_data[0]->id . ':test2:read_group'],
     );
 
@@ -170,7 +172,27 @@ subtest 'testing invalid merged alignment' => sub {
     like($error, qr/Failed to find individual alignments for all instrument_data/, 'failed for expected reason');
 };
 
+
+subtest 'testing supersede merged alignment' => sub {
+    #need recopy bam back to ar output dir since it was removed after merge
+    for my $type ('', '.bai') {
+        my $ar_base = 'all_sequences.bam'.$type;
+        my $ar_file = File::Spec->join($tmp_shortcut_path1, 0, $ar_base);
+        Genome::Sys->copy_file(File::Spec->join($expected_shortcut_path, 0, $ar_base), $ar_file);
+        ok(-s $ar_file, "$ar_base copied over ok");
+    }
+
+    $parameters{instrument_data_id} = [$instrument_data[0]->id];
+    my $small_merged_alignment_result = $pkg->create(%parameters, _user_data_for_nested_results => $result_users);
+    isa_ok($small_merged_alignment_result, $pkg, 'produced small merged alignment result');
+
+    # We need to override this because get_merged_alignment_results only returns objects in the database. 
+    Sub::Install::install_sub({code => sub { my $self = shift; return @_; }, into => 'Genome::InstrumentData::AlignmentResult', as => 'filter_non_database_objects'});
+    is_deeply([$small_merged_alignment_result->get_supersede_merged_alignment_results(1)], [$merged_alignment_result], 'Got supersede merged alignment for small merged alignment');
+};
+
 done_testing();
+
 
 sub generate_individual_alignment_results {
     my @instrument_data = @_;
