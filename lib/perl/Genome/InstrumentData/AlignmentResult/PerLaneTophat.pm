@@ -30,17 +30,17 @@ sub required_arch_os { 'x86_64' }
 #THE FILE Genome::InstrumentData::Command::AlignReads::PerLaneTophat INSTEAD!!!
 sub required_rusage {
     my $class = shift;
-    
+
     my $mem_mb = 32000;
     my $mem_kb = $mem_mb*1024;
     my $tmp_gb = 400;
     my $cpus = 4;
-    
+
     my $select  = "select[ncpus >= $cpus && mem >= $mem_mb && gtmp >= $tmp_gb] span[hosts=1]";
     my $rusage  = "rusage[mem=$mem_mb, gtmp=$tmp_gb]";
     my $options = "-M $mem_kb -n $cpus";
     my $required_usage = "-R '$select $rusage' $options";
-    
+
     return $required_usage;
 }
 
@@ -328,7 +328,7 @@ sub _get_aligner_params_to_generate_annotation_index {
 
     # remove --bowtie-version from aligner_params
     $aligner_params = $class->_remove_bowtie_version($aligner_params);
- 
+
     # add in the options that tell TopHat that we want to store the index
     $aligner_params .= " --transcriptome-only";
     $aligner_params .= " --transcriptome-index '$index_prefix'";
@@ -479,9 +479,9 @@ sub _get_modified_tophat_params {
     # Default of 300 should be reasonable for 500bp PE libraries sequenced 2x100bp
     my $estimated_library_size = 350;
     my $estimated_sd = 50;
-    
+
     my $median_inner_insert_size = ($estimated_library_size - ($instrument_data->read_length * 2) );
-    
+
     my $sd_insert_size = $estimated_sd;
     $params .= ' --mate-inner-dist '. $median_inner_insert_size;
     $params .= ' --mate-std-dev '. $sd_insert_size;
