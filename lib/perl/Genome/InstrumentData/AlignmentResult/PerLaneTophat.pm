@@ -316,7 +316,7 @@ sub _get_bowtie_path_to_generate_annotation_index {
     return $bowtie_path;
 }
 
-sub _aliger_params_has_gtf {
+sub _aligner_params_include_gtf {
     my $params = shift;
     return ($params =~ /(^| )(-G|--GTF)/ ? 1 : 0);
 }
@@ -334,7 +334,7 @@ sub _get_aligner_params_to_generate_annotation_index {
     $aligner_params .= " --transcriptome-index '$index_prefix'";
 
     # add -G <gtf_file> option to tell TopHat what to make the index out of
-    if (_aliger_params_has_gtf($aligner_params)) {
+    if (_aligner_params_include_gtf($aligner_params)) {
         my $annotation_build = $annotation_index->annotation_build;
         $class->error_message('Annotation build \''. $annotation_build->__display_name__ .
             '\' is defined, but there seems to be a GTF file already in the read_aligner_params: ' .
@@ -455,7 +455,7 @@ sub _get_modified_tophat_params {
 
     if ($self->annotation_build) {
         my $annotation_index = $self->get_annotation_index;
-        if (_aliger_params_has_gtf($params)) {
+        if (_aligner_params_include_gtf($params)) {
             die ('This processing_profile is requesting annotation_reference_transcripts \''. $self->annotation_build->__display_name__ .'\', but there seems to be a GTF file already defined in the read_aligner_params: '. $params);
         }
         my $transcriptome_index_prefix = $annotation_index->full_consensus_path();
