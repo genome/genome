@@ -454,12 +454,10 @@ sub _get_modified_tophat_params {
     }
 
     if ($self->annotation_build) {
-        #TODOthis method doesn't exist
         my $annotation_index = $self->get_annotation_index;
         if (_aliger_params_has_gtf($params)) {
             die ('This processing_profile is requesting annotation_reference_transcripts \''. $self->annotation_build->__display_name__ .'\', but there seems to be a GTF file already defined in the read_aligner_params: '. $params);
         }
-        #TODO: get ref index with annotation build
         my $transcriptome_index_prefix = $annotation_index->full_consensus_path();
         $params .= ' --transcriptome-index '. $transcriptome_index_prefix;
     }
