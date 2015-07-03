@@ -6772,6 +6772,11 @@ $Genome::Command::OPTS_SPEC = [
         'files',
         'allow-imported!',
         undef,
+        'add-validation-data-to-exome=s',
+        [
+          'exome',
+          'validation'
+        ],
         'ref-align-pp=s',
         undef,
         'wgs-somatic-variation-pp=s',
