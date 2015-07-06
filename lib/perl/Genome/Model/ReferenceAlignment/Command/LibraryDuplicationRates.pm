@@ -16,16 +16,16 @@ class Genome::Model::ReferenceAlignment::Command::LibraryDuplicationRates {
 };
 
 sub help_brief {
-    'A command to print Picard MarkDuplicates duplication metrics for a build.'
+    'A command to print Picard MarkDuplicates duplication metrics for a reference alignment build.'
 }
 
 sub help_synopsis {
-    'Dump build duplication metrics to standard out in tab-delimited format.'
+    'Dump reference alignment build duplication metrics to standard out in tab-delimited format.'
 }
 
 sub help_detail{
     return <<"EOS"
-All builds currently use Picard MarkDuplicates to flag PCR duplicates after merging the individual instrument data alignments.
+All reference alignment builds currently use Picard MarkDuplicates to flag PCR duplicates after merging the individual instrument data alignments.
 One output from Picard MarkDuplicates is a metrics file that provides a per library breakdown of PCR and optical duplicate reads.  This tool simply parses the metrics file and dumps those metrics along with basic build/model information in tab-delimited form.
 EOS
 }
