@@ -38,8 +38,6 @@ sub execute {
     }
 
     my $config = Genome::Config::Parser::YAML->parse($self->file_path);
-    $self->_validate_config($config);
-
     my $config_item = Genome::Qc::Config->create(
         name => $self->name,
         type => $self->type,
@@ -47,29 +45,6 @@ sub execute {
     );
 
     return 1;
-}
-
-sub _validate_config {
-    my $self = shift;
-    my $config = shift;
-
-    my $available_tools = Set::Scalar->new(Genome::Qc::Tool->available_tools);
-
-    while ( my ($config_element, $tool_config) =  each %$config ) {
-        for my $key ($self->required_keys_for_tool) {
-            unless ($tool_config->{$key}) {
-                die $self->error_message ("Missing key '$key' for config element (%s)", $config_element);
-            }
-        }
-
-        unless ($available_tools->has($tool_config->{class})) {
-            die $self->error_message ("Tool class (%s) for config element (%s) not found under Genome::Qc::Tool", $tool_config->{class}, $config_element);
-        }
-    }
-}
-
-sub required_keys_for_tool {
-    return ('class', 'params');
 }
 
 1;

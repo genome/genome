@@ -36,6 +36,40 @@ class Genome::Qc::Config {
     id_generator => '-uuid',
 };
 
+sub __errors__ {
+    my $self = shift;
+
+    my @errors = $self->SUPER::__errors__(@_);
+
+    my $available_tools = Set::Scalar->new(Genome::Qc::Tool->available_tools);
+    my $config = decode_json($self->config);
+    while ( my ($config_element, $tool_config) =  each %$config ) {
+        for my $key ($self->required_keys_for_tool) {
+            unless ($tool_config->{$key}) {
+                push @errors, UR::Object::Tag->create(
+                    type => 'error',
+                    properties => ['config'],
+                    desc => "Missing key '$key' for config element ($config_element)",
+                );
+            }
+        }
+
+        if (defined($tool_config->{class}) && !$available_tools->has($tool_config->{class})) {
+            push @errors, UR::Object::Tag->create(
+                type => 'error',
+                properties => ['config'],
+                desc => sprintf("Tool class (%s) for config element (%s) not found under Genome::Qc::Tool", $tool_config->{class}, $config_element),
+            );
+        }
+    }
+
+    return @errors;
+}
+
+sub required_keys_for_tool {
+    return ('class', 'params');
+}
+
 sub get_commands_for_alignment_result {
     my $self = shift;
     my $is_capture = shift;

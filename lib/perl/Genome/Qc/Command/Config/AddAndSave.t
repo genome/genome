@@ -21,71 +21,29 @@ use_ok($save_pkg);
 
 my $test_dir = __FILE__ . '.d';
 
-subtest 'add and save valid config' => sub {
-    my $config_name = 'valid config';
-    my $config_path = File::Spec->join($test_dir, 'valid_config.yaml');
-    my $add_command = $add_pkg->create(
-        name => $config_name,
-        file_path => $config_path,
-        type => 'all',
-    );
-    ok($add_command->execute);
-    ok(my $config_item = Genome::Qc::Config->get(name => $config_name));
-
-    my $duplicate_name_add_command = $add_pkg->create(
-        name => $config_name,
-        file_path => Genome::Sys->create_temp_file_path(),
-        type => 'wgs',
-    );
-    throws_ok(sub { $duplicate_name_add_command->execute }, qr/A config item with name \($config_name\) already exists/);
-
-    my $saved_config_path = Genome::Sys->create_temp_file_path();
-    my $save_command = $save_pkg->create(
-        config_item => $config_item,
-        file_path => $saved_config_path,
-    );
-    ok($save_command->execute);
-    compare_ok($config_path, $saved_config_path, 'Saved file identical to original file');
-};
-
-my %invalid_config_files = (
-    class_key => {
-        error_message => "Missing key 'class' for config element",
-        config_hash => {
-            tool1 => {
-                params => {
-                    param1 => 'value1',
-                    param2 => 'value2',
-                }
-            }
-        }
-    },
-    params_key => {
-        error_message => "Missing key 'params' for config element",
-        config_hash => {
-            tool1 => {
-                class => 'Genome::Qc::Tool::Picard::CollectGcBiasMetrics',
-            }
-        }
-    },
-    class_exists => {
-        error_message => 'Tool class \(Nonexistent::Class\) for config element \(tool1\) not found',
-        config_hash => {
-            tool1 => {
-                class => 'Nonexistent::Class',
-                params => {
-                    param1 => 'value1',
-                    param2 => 'value2',
-                }
-            }
-        }
-    },
+my $config_name = 'valid config';
+my $config_path = File::Spec->join($test_dir, 'valid_config.yaml');
+my $add_command = $add_pkg->create(
+    name => $config_name,
+    file_path => $config_path,
+    type => 'all',
 );
+ok($add_command->execute);
+ok(my $config_item = Genome::Qc::Config->get(name => $config_name));
 
-while ( my ($test_name, $test_setup) = each %invalid_config_files ) {
-    subtest "$test_name" => sub {
-        throws_ok(sub { $add_pkg->_validate_config($test_setup->{config_hash}) }, qr/$test_setup->{error_message}/, "Test config '$test_name' fails ok" );
-    };
-}
+my $duplicate_name_add_command = $add_pkg->create(
+    name => $config_name,
+    file_path => Genome::Sys->create_temp_file_path(),
+    type => 'wgs',
+);
+throws_ok(sub { $duplicate_name_add_command->execute }, qr/A config item with name \($config_name\) already exists/);
+
+my $saved_config_path = Genome::Sys->create_temp_file_path();
+my $save_command = $save_pkg->create(
+    config_item => $config_item,
+    file_path => $saved_config_path,
+);
+ok($save_command->execute);
+compare_ok($config_path, $saved_config_path, 'Saved file identical to original file');
 
 done_testing;
