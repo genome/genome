@@ -19,7 +19,6 @@ class Genome::Model::ReferenceAlignment::Command::RefCovMetrics {
         },
         type => {
             is => 'Text',
-            default_value => 'coverage',
             valid_values => [qw/ alignment coverage /],
             doc => 'Type of metrics to retrieve from the reference coverage result',
         },
@@ -28,7 +27,7 @@ class Genome::Model::ReferenceAlignment::Command::RefCovMetrics {
         separator => {
             is => 'Text',
             default_value => "\t",
-            doc => 'Separator to use.',
+            doc => 'Separator to use. Default value is tab (\t).',
         },
     },
     has_optional_output => {
@@ -39,6 +38,13 @@ class Genome::Model::ReferenceAlignment::Command::RefCovMetrics {
         },
     },
 };
+
+sub help_brief { 'get ref cov metrics from models' }
+sub help_detail {
+    return <<HELP;
+This command will get reference coverage from a model's succeeded builds. It goes directly to the refcof software result, and does not look at the model/build metrics.
+HELP
+}
 
 sub execute {
     my $self = shift;
