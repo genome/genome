@@ -12,6 +12,11 @@ my $class = 'Genome::Model::ReferenceAlignment::Command::RefCovMetrics';
 use_ok($class) or die;
 
 my $build = Test::MockObject->new();
+my $model = Test::MockObject->new();
+$model->set_isa('Genome::Model::ReferenceAlignment', 'Genome::Model');
+$model->set_always('name', 'Johnny Vegas');
+$model->set_always('builds', ($build));
+
 my $coverage_stats_summary = {
      0 => {
          1  => { target_base_pair => 368332, mean_depth => 58.303, },
@@ -25,11 +30,23 @@ my $coverage_stats_summary = {
 };
 $build->set_always('coverage_stats_summary_hash_ref', $coverage_stats_summary);
 
-my $model = Test::MockObject->new();
-$model->set_isa('Genome::Model::ReferenceAlignment', 'Genome::Model');
-$model->set_always('builds', ($build));
+my $cmd = $class->execute(models => $model, type => 'coverage');
+ok($cmd->result, 'execute for coverage');
 
-my $cmd = $class->execute(models => $model);
-ok($cmd->result, 'execute');
+my $alignment_summary_hash_ref = {
+    '0' => {
+        'total_bp' => '366769868',
+        'unique_off_target_aligned_bp' => '299651882',
+        'unique_target_aligned_bp' => '29092686',
+    },
+    '500' => {
+        'total_bp' => '366769868',
+        'unique_off_target_aligned_bp' => '298629738',
+        'unique_target_aligned_bp' => '30114830',
+    }
+};
+$build->set_always('alignment_summary_hash_ref', $alignment_summary_hash_ref);
+my $cmd = $class->execute(models => $model, type => 'alignment');
+ok($cmd->result, 'execute for alignment');
 
 done_testing();
