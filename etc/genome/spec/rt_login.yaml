@@ -1,0 +1,4 @@
+# The 'rt_login' configuration variable holds the login user name
+# to connect to Request Tracker.
+--- 
+env: XGENOME_RT_LOGIN

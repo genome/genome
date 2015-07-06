@@ -1,0 +1,4 @@
+# The 'rt_auth' configuration variable holds the login password
+# to connect to Request Tracker.
+--- 
+env: XGENOME_RT_AUTH
