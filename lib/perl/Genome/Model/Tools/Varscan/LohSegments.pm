@@ -291,8 +291,13 @@ if(nrow(CNA.object) != 0) {
     pvalue.segment.CNA.object <- segment.CNA.object\$output
     detach(package:DNAcopy)
     par(mar=c(4,4,2,2))
+    #This could be removed since we pre-select the normal SNPs
+    #using min_freq_for_het and max_freq_for_het, we thus already know
+    #how these points look
     plot(snp\$pos[snp\$chrom=="$chrom"], snp\$nfreq[snp\$chrom=="$chrom"], pch=19, cex=0.25, ylim=c(0,100), xlim=c(1,maxpos), xlab="Position on chr$chrom", ylab="Variant Allele Freq", col="blue")
     points(snp\$pos[snp\$chrom=="$chrom"], snp\$tfreq[snp\$chrom=="$chrom"], pch=19, cex=0.25, ylim=c(0,100), col="green")
+    #The y value is the segment mean, which is essentially
+    #the proportion of LOH SNPs in a segment.
     segments(lohsegs\$chr_start[lohsegs\$chrom=="$chrom"], lohsegs\$one[lohsegs\$chrom=="$chrom"], lohsegs\$chr_stop[lohsegs\$chrom=="$chrom"], lohsegs\$one[lohsegs\$chrom=="$chrom"], col="red")
     segments(pvalue.segment.CNA.object\$loc.start[pvalue.segment.CNA.object\$seg.mean>0.10], pvalue.segment.CNA.object\$seg.mean[pvalue.segment.CNA.object\$seg.mean>0.10] * 100, pvalue.segment.CNA.object\$loc.end[pvalue.segment.CNA.object\$seg.mean>0.10], pvalue.segment.CNA.object\$seg.mean[pvalue.segment.CNA.object\$seg.mean>0.10] * 100, col="red", lwd=2)
     hetDiff <- abs(snp\$nfreq - snp\$tfreq)
