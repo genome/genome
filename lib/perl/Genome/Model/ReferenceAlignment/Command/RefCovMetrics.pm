@@ -63,6 +63,7 @@ sub execute {
             push @headers, keys %$row;
             next MODEL;
         }
+        $self->warning_message('No results for model: '.$model->__display_name__);
     }
 
     my @headers = List::MoreUtils::uniq(sort map { keys %$_ } @data);
@@ -94,10 +95,9 @@ sub _extract_alignment_metrics {
 
     my %row;
     for my $wingspan ( keys %$metrics ) {
-        print "$wingspan\n";
         for my $name ( keys %{$metrics->{$wingspan}} ) {
             my $key = join('_', 'alignment-wingspan', $wingspan, $name);
-            $row{$name} = $metrics->{$wingspan}->{$name};
+            $row{$key} = $metrics->{$wingspan}->{$name};
         }
     }
 
