@@ -45,7 +45,7 @@ sub execute {
             $data->{SUBJECT_NAME} = $build->model->subject->name;
             $data->{COUNT_INSTRUMENT_DATA} = scalar(@library_instrument_data);
             unless ($writer) {
-                my @headers = keys %{$data};
+                my @headers = sort keys %{$data};
                 $writer = Genome::Utility::IO::SeparatedValueWriter->create(
                     separator => "\t",
                     headers => \@headers,
