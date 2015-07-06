@@ -40,5 +40,9 @@ sub execute {
         }
     }
     $writer->output->close;
-    exit;
+
+    return 1;
 }
+
+
+1;
