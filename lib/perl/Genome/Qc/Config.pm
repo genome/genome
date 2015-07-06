@@ -76,15 +76,22 @@ sub get_commands_for_alignment_result {
 
     my $config = decode_json($self->config);
 
-    unless ($is_capture && $self->_config_types_for_capture_data->contains($self->type)) {
+    if ($is_capture && $self->_invalid_config_types_for_capture_data->contains($self->type)) {
         die $self->error_message('Config type (%s) of config (%s) is not valid for capture data', $self->type, $self->name);
+    }
+    if (!$is_capture && $self->_invalid_config_types_for_wgs_data->contains($self->type)) {
+        die $self->error_message('Config type (%s) of config (%s) is not valid for whole genome data', $self->type, $self->name);
     }
 
     return $config;
 }
 
-sub _config_types_for_capture_data {
-    return Set::Scalar->new('exome', 'all');
+sub _invalid_config_types_for_capture_data {
+    return Set::Scalar->new('wgs');
+}
+
+sub _invalid_config_types_for_wgs_data {
+    return Set::Scalar->new('exome');
 }
 
 1;

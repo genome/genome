@@ -10,6 +10,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
+use Test::Exception;
 use JSON qw(encode_json);
 
 my $pkg = 'Genome::Qc::Config';
@@ -29,6 +30,17 @@ subtest 'valid config' => sub {
     ok($config_item->isa($pkg), 'Config created');
     my @errors = $config_item->__errors__;
     is(scalar(@errors), 0, 'No errors are thrown');
+
+    lives_ok(sub { $config_item->get_commands_for_alignment_result('1') }, "'all' type works for capture data");
+    lives_ok(sub { $config_item->get_commands_for_alignment_result('0') }, "'all' type works for wgs data");
+
+    $config_item->type('wgs');
+    dies_ok(sub { $config_item->get_commands_for_alignment_result('1') }, "'wgs' type dies for capture data");
+    lives_ok(sub { $config_item->get_commands_for_alignment_result('0') }, "'wgs' type works for wgs data");
+
+    $config_item->type('exome');
+    lives_ok(sub { $config_item->get_commands_for_alignment_result('1') }, "'exome' type works for capture data");
+    dies_ok(sub { $config_item->get_commands_for_alignment_result('0') }, "'exome' type dies for wgs data");
 };
 
 my %invalid_config_files = (
