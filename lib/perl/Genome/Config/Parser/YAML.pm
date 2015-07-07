@@ -4,6 +4,7 @@ use warnings;
 use strict;
 
 use YAML::Syck;
+use Params::Validate qw(validate_pos);
 
 class Genome::Config::Parser::YAML {
     is => 'Genome::Config::Parser',
@@ -11,7 +12,7 @@ class Genome::Config::Parser::YAML {
 };
 
 sub parse {
-    my ($self, $filename) = @_;
+    my ($self, $filename) = validate_pos(@_, 1, 1);
     die('Failed to provide filename!') unless $filename;
     die("$filename doesn't exist!") unless (-e $filename);
     die("$filename is empty!") unless (-s $filename);
@@ -20,7 +21,7 @@ sub parse {
 }
 
 sub write {
-    my ($self, $filename, $data) = @_;
+    my ($self, $filename, $data) = validate_pos(@_, 1, 1, 1);
     die('Failed to provide filename!') unless $filename;
     die('Failed to provide content!') unless $data;
     return DumpFile($filename, $data);
