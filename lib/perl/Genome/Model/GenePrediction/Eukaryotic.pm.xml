@@ -7,7 +7,7 @@
     <link fromOperation="input connector"          fromProperty="split_fastas_output_directory"      toOperation="split_fasta"              toProperty="output_directory" />
     <link fromOperation="input connector"          fromProperty="max_bases_per_fasta"                toOperation="split_fasta"              toProperty="max_bases_per_file" />
 
-    <link fromOperation="split_fasta"              fromProperty="fasta_files"                        toOperation="contig_predict_genes"     toProperty="fasta_file" />
+    <link fromOperation="split_fasta"              fromProperty="split_fasta_files"                        toOperation="contig_predict_genes"     toProperty="fasta_file" />
     <link fromOperation="input connector"          fromProperty="prediction_directory"               toOperation="contig_predict_genes"     toProperty="prediction_directory" />
     <link fromOperation="input connector"          fromProperty="domain"                             toOperation="contig_predict_genes"     toProperty="domain" />
     <link fromOperation="input connector"          fromProperty="raw_output_directory"               toOperation="contig_predict_genes"     toProperty="raw_output_directory" />
