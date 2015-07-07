@@ -10,7 +10,7 @@ use warnings;
 
 use above "Genome";
 use Test::More;
-use Genome::Utility::Test;
+use Genome::Utility::Test qw(compare_ok);
 
 my $pkg = 'Genome::Model::Tools::Bedpe::EvaluateBedpe';
 use_ok($pkg);
@@ -63,12 +63,15 @@ subtest "Only one hit per sv" => sub {
 };
 
 subtest "Require two hits" => sub {
+    my $tp = Genome::Sys->create_temp_file_path;
+    my $expected_tp = File::Spec->join($data_dir, 'expected_tp.bedpe');
     my $cmd = $pkg->create(
         bedpe => File::Spec->join($data_dir, 'a.bedpe'),
         gold_bedpe => File::Spec->join($data_dir, 'gold3.bedpe'),
         bedtools_version => '2.17.0',
         slop => 1000,
         min_hit_support => 2,
+        true_positive_file => $tp,
     );
     ok($cmd->execute, "Command executed ok");
 
@@ -83,6 +86,7 @@ subtest "Require two hits" => sub {
         total_unique_gold_calls => 3,
     };
     is_deeply($cmd->rawstats, $expected_stats, "stats were set correctly");
+    compare_ok($tp, $expected_tp, "True positives were output correctly");
 };
 
 done_testing;

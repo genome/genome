@@ -27,6 +27,11 @@ class Genome::Model::Tools::Bedpe::EvaluateBedpe {
             doc => 'Minimum # of hits from gold_bedpe required to report an sv as a true positive.  Note, if != 1, the derived stats are probably not valid',
             default_value => 1,
         },
+        true_positive_file => {
+            is => 'Path',
+            is_optional => 1,
+            doc => 'Output the true positive hits to this file',
+        },
     ],
     has_transient_optional_output => [
         rawstats => {
@@ -39,7 +44,7 @@ class Genome::Model::Tools::Bedpe::EvaluateBedpe {
 sub execute {
     my $self = shift;
     $self->rawstats({});
-    $self->rawstats->{true_positive} = $self->_get_stat($self->bedpe, $self->gold_bedpe, 'both', $self->min_hit_support);
+    $self->rawstats->{true_positive} = $self->_get_stat($self->bedpe, $self->gold_bedpe, 'both', $self->min_hit_support, $self->true_positive_file);
     $self->rawstats->{false_negative} = $self->_get_stat($self->gold_bedpe, $self->bedpe, 'notboth', 1);
     $self->rawstats->{total_unique_calls} = $self->_unique_sv_count($self->bedpe);
     $self->rawstats->{total_unique_gold_calls} = $self->_unique_sv_count($self->gold_bedpe);
@@ -61,7 +66,7 @@ sub common_params {
 }
 
 sub _get_stat {
-    my ($self, $file_a, $file_b, $type, $min_hit_support) = @_;
+    my ($self, $file_a, $file_b, $type, $min_hit_support, $output) = @_;
 
     my $output_file = Genome::Sys->create_temp_file_path;
 
@@ -73,16 +78,20 @@ sub _get_stat {
         intersection_type => $type,
     );
 
-    return $self->_sv_with_min_support_count($output_file, $file_a, $min_hit_support);
+    return $self->_sv_with_min_support_count($output_file, $file_a, $min_hit_support, $output);
 }
 
 sub _sv_with_min_support_count {
-    my ($self, $file, $original_file, $min_hit_support) = @_;
+    my ($self, $file, $original_file, $min_hit_support, $output) = @_;
     my $f = new IO::File($file, "r");
     my %results;
 
     my $id_index = _count_cols($original_file) + 6;
 
+    my $out;
+    if ($output) {
+        $out = Genome::Sys->open_file_for_writing($output);
+    }
     while (my $line = $f->getline) {
         chomp $line;
         my @f = split("\t", $line);
@@ -107,6 +116,12 @@ sub _sv_with_min_support_count {
 
         next unless exists $results{$sv_name} && ($results{$sv_name}{count} >= $min_hit_support);
         $count++;
+        if ($output) {
+            print $out "$line\n";
+        }
+    }
+    if ($out) {
+        $out->close;
     }
     return $count;
 }
