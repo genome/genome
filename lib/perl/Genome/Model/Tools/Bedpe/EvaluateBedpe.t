@@ -37,7 +37,7 @@ subtest "Basic" => sub {
         total_unique_calls => 2,
         total_unique_gold_calls => 2,
     };
-    is_deeply($expected_stats, $cmd->rawstats, "stats were set correctly");
+    is_deeply($cmd->rawstats, $expected_stats, "stats were set correctly");
 };
 
 subtest "Only one hit per sv" => sub {
@@ -59,7 +59,7 @@ subtest "Only one hit per sv" => sub {
         total_unique_calls => 2,
         total_unique_gold_calls => 2,
     };
-    is_deeply($expected_stats, $cmd->rawstats, "stats were set correctly");
+    is_deeply($cmd->rawstats, $expected_stats, "stats were set correctly");
 };
 done_testing;
 
