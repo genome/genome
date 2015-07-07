@@ -8,6 +8,7 @@ my %_CLASS_TO_TYPE_MAPPING = (
     'Genome::WorkflowBuilder::Command' => 'Workflow::OperationType::Command',
     'Genome::WorkflowBuilder::Converge' => 'Workflow::OperationType::Converge',
     'Genome::WorkflowBuilder::Event' => 'Workflow::OperationType::Event',
+    'Genome::WorkflowBuilder::Block' => 'Workflow::OperationType::Block',
 );
 
 my %_TYPE_TO_CLASS_MAPPING;
