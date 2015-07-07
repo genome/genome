@@ -100,7 +100,10 @@ class Genome::Model::Tools::DetectVariants2::Dispatcher {
     ],
     has_param => [
         lsf_queue => {
-            default_value => Genome::Config::get('lsf_queue_dv2_workflow'),
+            default => Genome::Config::get('lsf_queue_dv2_workflow'),
+        },
+        lsf_resource => {
+            default => Genome::Config::get('lsf_resource_dv2_dispatcher'),
         },
     ],
     doc => 'generate complex variant detection results'
