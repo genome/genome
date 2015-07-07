@@ -305,7 +305,7 @@ sub read_support {
         die $self->error_message("Could not locate tumor_bam at: ".$tumor_bam);
     }
     unless(-s $normal_bam){
-        die $self->error_message("Could not locate normal_bam at: ".$tumor_bam);
+        die $self->error_message("Could not locate normal_bam at: ".$normal_bam);
     }
 
     my @call_fields = split /\s/, $call;
