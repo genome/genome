@@ -33,22 +33,16 @@ class Genome::Model::Tools::DetectVariants2::SpeedseqSv {
 sub _detect_variants {
 	my $self = shift;
 
-	my $cmd = $self->create(
+	my $cmd = $pkg->create(
 		version => 'test',
 		temp_directory => $temp_directory,
 	   	reference_fasta => $reference_fasta,
    		full_bam_file => $bam,
-   		output_prefix => $test_dir,
+   		output_prefix => $self->_sv_staging_output,
    		CNVnator_read_depth => 'true',
 		split_read_bam_file => $split_bam,
 		genotype_svtyper => 1,
 		discordant_read_bam_file => $discordant_bam,
 	);
-	#return $cmd;
+	$cmd->execute();
 };
-sub get_full_bam(){
-	return $bam;
-}
-sub get_reference_fasta(){
-	return $reference_fasta;
-}

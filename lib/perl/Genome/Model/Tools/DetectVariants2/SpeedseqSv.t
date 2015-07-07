@@ -24,26 +24,25 @@ my $test_dir = "/gscmnt/gc2801/analytics/mfulton/test1";
         my $split_bam = "$data_dir/NA12878.20slice.30X.splitters.bam";
         my $discordant_bam = "$data_dir/NA12878.20slice.30X.discordants.bam";
         my $reference_fasta = "$data_dir/human_g1k_v37_20_42220611-42542245.fasta";        
-        my $pkg = 'Genome::Model::Tools::Speedseq::Sv';
 	my $pkg2 = 'Genome::Model::Tools::DetectVariants2::SpeedseqSv';
+	my $refbuild_id = 101947881;
+	my $result_users = Genome::Test::Factory::SoftwareResult::User->setup_user_hash(
+    reference_sequence_build_id => $refbuild_id,
+);
 
-my $command2 = $pkg->create(
-       version => 'test',
-       temp_directory => $temp_directory,
-       reference_fasta => $reference_fasta,
-       full_bam_file => $bam,
-       output_prefix => $output,
-       CNVnator_read_depth => 'true',
-       split_read_bam_file => $split_bam,
-       genotype_svtyper => 1,
-       discordant_read_bam_file => $discordant_bam,
+
+
+my $command2 = $pkg2->create(
+	output_directory => $output,
+	reference_build_id => $refbuild_id,
+	result_users => $result_users,	
 );
 
 ok($command2->execute, 'Executed `gmt detect-variants2 Speedseq` command');
 
-compare_ok("$output.sv.vcf.gz","$test_dir/test1.sv.vcf.gz");
-compare_ok("$output.sv.vcf.gz.tbi","$test_dir/test1.sv.vcf.gz.tbi");
-compare_ok("$output.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed","$test_dir/test1.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed");
-compare_ok("$output.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt","$test_dir/test1.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt");
+compare_ok("$output/svs.hq.sv.vcf.gz","$test_dir/test1.sv.vcf.gz");
+compare_ok("$output/svs.hq.sv.vcf.gz.tbi","$test_dir/test1.sv.vcf.gz.tbi");
+compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed","$test_dir/test1.sv.NA12878.20slice.30X.aligned.bam.readdepth.bed");
+compare_ok("$output/svs.hq.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt","$test_dir/test1.sv.NA12878.20slice.30X.aligned.bam.readdepth.txt");
 
 done_testing();
