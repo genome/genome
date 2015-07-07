@@ -31,25 +31,40 @@ sub execute {
     );
     my @output;
     while (my $line = $reader->next()) {
+        my $true_positive_file = Genome::Sys->create_temp_file_path;
         my $stats = $self->_run_one(
             $line->{bedpe},
             $line->{gold_bedpe},
             $line->{slop},
             $line->{min_hit_support},
-            $line->{true_positive_file},
+            $true_positive_file,
         );
         for my $key (keys %$stats) {
             die "Duplicate key $key: this would overwrite the column provided in the config"
                 if exists $line->{$key};
             $line->{$key} = $stats->{$key};
         }
+
+        if ($line->{include_tps}) {
+            $line->{true_positives} = [_read_tps($true_positive_file)];
+        }
         delete $line->{bedpe};
         delete $line->{gold_bedpe};
+        delete $line->{include_tps};
         push @output, $line;
     }
     Genome::Sys->write_file($self->output_json,
         to_json(\@output, {canonical => 1, pretty => 1}));
     return 1;
+}
+
+sub _read_tps {
+    my $file = shift;
+    my @tps = Genome::Sys->read_file($file);
+    for my $tp (@tps) {
+        chomp $tp;
+    }
+    return @tps;
 }
 
 sub _run_one {
