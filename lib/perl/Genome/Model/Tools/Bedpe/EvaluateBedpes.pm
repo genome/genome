@@ -35,6 +35,8 @@ sub execute {
             $line->{bedpe},
             $line->{gold_bedpe},
             $line->{slop},
+            $line->{min_hit_support},
+            $line->{true_positive_file},
         );
         for my $key (keys %$stats) {
             die "Duplicate key $key: this would overwrite the column provided in the config"
@@ -51,12 +53,14 @@ sub execute {
 }
 
 sub _run_one {
-    my ($self, $bedpe, $gold_bedpe, $slop) = @_;
+    my ($self, $bedpe, $gold_bedpe, $slop, $min_hit_support, $true_positive_file) = @_;
     my $cmd = Genome::Model::Tools::Bedpe::EvaluateBedpe->create(
         bedpe => $bedpe,
         gold_bedpe => $gold_bedpe,
         slop => $slop,
         bedtools_version => $self->bedtools_version,
+        min_hit_support => $min_hit_support || 1,
+        true_positive_file => $true_positive_file,
     );
     $cmd->execute;
     return $cmd->rawstats;
