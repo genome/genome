@@ -229,10 +229,10 @@ sub _validate_found_allocation {
         # Allocation exists without a result the whole time the result is being created. Ideally locks
         # would prevent us from getting here during that window but our locks are not 100% reliable.
         my @error_message = (
-            sprintf("Found allocation at (%s) but no software result for it's owner ID (%s).",
-                $allocation->absolute_path, $allocation->id),
-            "This is either because the software result is currently being generated or because the allocation has been orphaned.",
+            "Found allocation at (%s) but no software result for it's owner ID (%s). ".
+            "This is either because the software result is currently being generated or because the allocation has been orphaned. ".
             "If it is determined that the allocation has been orphaned then the allocation will need to be removed.",
+            $allocation->absolute_path, $allocation->owner_id,
         );
         Genome::Utility::Instrumentation::increment('dv2.result.found_orphaned_allocation');
         die $class->error_message(join(' ', @error_message));
