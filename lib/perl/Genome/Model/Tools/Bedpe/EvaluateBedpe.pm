@@ -44,8 +44,8 @@ class Genome::Model::Tools::Bedpe::EvaluateBedpe {
 sub execute {
     my $self = shift;
     $self->rawstats({});
-    $self->rawstats->{true_positive} = $self->_get_stat($self->bedpe, $self->gold_bedpe, 'both', $self->min_hit_support, $self->true_positive_file);
-    $self->rawstats->{false_negative} = $self->_get_stat($self->gold_bedpe, $self->bedpe, 'notboth', 1);
+    $self->rawstats->{true_positive} = $self->_get_true_positives();
+    $self->rawstats->{false_negative} = $self->_get_false_negatives();
     $self->rawstats->{total_unique_calls} = $self->_unique_sv_count($self->bedpe);
     $self->rawstats->{total_unique_gold_calls} = $self->_unique_sv_count($self->gold_bedpe);
     $self->rawstats->{false_positive} = $self->rawstats->{total_unique_calls} - $self->rawstats->{true_positive};
@@ -65,8 +65,8 @@ sub common_params {
     );
 }
 
-sub _get_stat {
-    my ($self, $file_a, $file_b, $type, $min_hit_support, $output) = @_;
+sub _get_pair_to_pair_output {
+    my ($self, $file_a, $file_b, $type) = @_;
 
     my $output_file = Genome::Sys->create_temp_file_path;
 
@@ -77,8 +77,19 @@ sub _get_stat {
         input_file_b => $file_b,
         intersection_type => $type,
     );
+    return $output_file;
+}
 
-    return $self->_sv_with_min_support_count($output_file, $file_a, $min_hit_support, $output);
+sub _get_false_negatives {
+    my $self = shift;
+    my $output_file = $self->_get_pair_to_pair_output($self->gold_bedpe, $self->bedpe, 'notboth');
+    return $self->_unique_sv_count($output_file);
+}
+
+sub _get_true_positives {
+    my $self = shift;
+    my $output_file = $self->_get_pair_to_pair_output($self->bedpe, $self->gold_bedpe, 'both');
+    return $self->_sv_with_min_support_count($output_file, $self->bedpe, $self->min_hit_support, $self->true_positive_file);
 }
 
 sub _sv_with_min_support_count {
