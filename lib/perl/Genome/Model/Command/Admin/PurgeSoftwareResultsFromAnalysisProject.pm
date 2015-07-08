@@ -21,6 +21,11 @@ class Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject {
             require_user_verify => 1,
             doc => 'List of AnalysisProjects to purge',
         },
+        dry_run => {
+            is => 'Boolean',
+            default_value => 0,
+            doc => 'Do not actually purge anything',
+        },
     ],
 };
 
@@ -97,9 +102,13 @@ sub execute {
             die unless $sr;
 
             my $reason = 'Expunge software result uniquely used by model from disabled config item ('. $data->{profile_item_id} .') for analysis project \''. $data->{anp_name} .'\' ('. $data->{anp_id} .')';
-            print $reason ."\n";
-            $sr->expunge($reason);
-            UR::Context->commit();
+            if ($self->dry_run) {
+                $self->warning_message('Dry run, not removing software result '.$sr->id);
+            } else {
+                print $reason ."\n";
+                $sr->expunge($reason);
+                UR::Context->commit();
+            }
         }
     }
 }
