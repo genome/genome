@@ -136,11 +136,6 @@ sub purge_one_analysis_project {
 
     my $unlocker = $self->_get_lock_for_analysis_project($anp);
 
-    my $sth = $dbh->prepare($sql);
-    die $self->error_message("preparing SQL failed : $DBI::errstr") unless $sth;
-
-    $sth->execute($anp->id);
-
     my $total_kb_purged = 0;
     my $software_result_count = 0;
 
@@ -150,6 +145,11 @@ sub purge_one_analysis_project {
                                 int($total_kb_purged / KB_IN_ONE_GB),
                                 $software_result_count);
     });
+
+    my $sth = $dbh->prepare($sql);
+    die $self->error_message("preparing SQL failed : $DBI::errstr") unless $sth;
+
+    $sth->execute($anp->id);
 
     while (my $data = $sth->fetchrow_hashref()) {
         my $sr = Genome::SoftwareResult->get($data->{result_id});
