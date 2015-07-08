@@ -37,8 +37,8 @@ class Genome::Model::GenePrediction::Command::Eukaryotic::SplitFasta {
             default => 5000000,
             doc => 'Maximum number of bases allowed in each split fasta file',
         },
-        fasta_files => {
-            is => 'ARRAY',
+        split_fasta_files => {
+            is_many => 1,
             is_output => 1,
             doc => 'An array of split fasta files',
         },
@@ -135,7 +135,7 @@ sub execute {
         $current_chunk_size += $length;
     }
 
-    $self->fasta_files(\@filenames);
+    $self->split_fasta_files(\@filenames);
     $self->genome_size($total_bases);
     $self->debug_message("Created $counter fasta files in $output_directory.");
     $self->debug_message("Altogether, there are $total_bases bases of sequence!");
