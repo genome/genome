@@ -33,26 +33,49 @@ EOS
 sub execute {
     my $self = shift;
 
-    my $writer;
+    my @data;
     for my $build ($self->builds) {
-        my $library_metrics = $build->mark_duplicates_library_metrics_hash_ref;
         my @instrument_data = $build->instrument_data;
-        for my $library_name (keys %{$library_metrics}) {
-            my $data = $library_metrics->{$library_name};
+        my @library_names = List::MoreUtils::uniq(sort map { $_->library->name } @instrument_data);
+
+        for my $library_name (@library_names) {
             my @library_instrument_data = grep {$_->library_name eq $library_name} @instrument_data;
-            $data->{BUILD_ID} = $build->id;
-            $data->{MODEL_ID} = $build->model->id;
-            $data->{SUBJECT_NAME} = $build->model->subject->name;
-            $data->{COUNT_INSTRUMENT_DATA} = scalar(@library_instrument_data);
-            unless ($writer) {
-                my @headers = sort keys %{$data};
-                $writer = Genome::Utility::IO::SeparatedValueWriter->create(
-                    separator => "\t",
-                    headers => \@headers,
-                );
+            my $data = {
+                'BUILD_ID' => $build->id,
+                'MODEL_ID' => $build->model->id,
+                'SUBJECT_NAME' => $build->model->subject->name,
+                'COUNT_INSTRUMENT_DATA' => scalar(@library_instrument_data),
+            };
+
+             my @library_metrics = Genome::Model::Metric->get(
+                build_id => $build->id,
+                name => { operator => 'like', value => $library_name .'%' },
+            );
+            unless (@library_metrics) {
+                $self->error_message('Missing MarkDuplicates metrics for library('. $library_name .') and build('. $build->id .')');
+                die($self->error_message);
             }
-            $writer->write_one($data);
+            for my $library_metric (@library_metrics) {
+                my $regex = $library_name .'_([A-Z_]+)';
+                $library_metric->name =~ /^$regex/;
+                my $key = $1;
+                my $value = $library_metric->value;
+                $data->{$key} = $value;
+            }
+            push @data, $data;
         }
+    }
+    unless (@data) {
+        $self->warning_message('MarkDuplicates metric files were not found for builds!');
+        return 1;
+    }
+    my @headers = List::MoreUtils::uniq(sort map { keys %$_ } @data);
+    my $writer = Genome::Utility::IO::SeparatedValueWriter->create(
+        separator => "\t",
+        headers => \@headers,
+    );
+    for (@data) {
+        $writer->write_one($_);
     }
     $writer->output->close;
 
