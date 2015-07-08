@@ -108,6 +108,12 @@ sub _sv_with_min_support_count {
         my @f = split("\t", $line);
         my $sv_name = $f[6];
         my $read_id = $f[$id_index];
+        unless (defined $sv_name) {
+            die "Sv name not defined on line:\n$line";
+        }
+        unless (defined $read_id) {
+            die "read id not defined on line:\n$line";
+        }
         ++$results{$sv_name}{count} unless exists $results{$sv_name}{reads}{$read_id};
         $results{$sv_name}{reads}{$read_id} = 1;
         $results{$sv_name}{sv} = \@f;
@@ -122,6 +128,9 @@ sub _sv_with_min_support_count {
         chomp $line;
         my @f = split("\t", $line);
         my $sv_name = $f[6];
+        unless (defined $sv_name) {
+            die "Sv name not defined on line:\n$line";
+        }
         next if exists $seen{$sv_name};
         $seen{$sv_name} = 1;
 
