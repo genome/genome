@@ -4,7 +4,11 @@ use warnings;
 package Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject;
 
 use DateTime::Format::Strptime;
+use Scope::Guard;
 use Genome;
+use Genome::Sys::LockProxy;
+
+use constant KB_IN_ONE_GB => 1048576;
 
 class Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject {
     is => 'Command::V2',
@@ -92,6 +96,37 @@ sub analysis_project_is_old_enough_to_purge {
     return ( DateTime::Duration->compare( $anp_updated_duration, $duration_to_retain ) == -1 );
 }
 
+
+sub _get_lock_for_analysis_project {
+    my($self, $anp) = @_;
+
+    my $unlocker;
+    if ($ENV{UR_DBI_NO_COMMIT}) {
+        $unlocker = sub {};
+
+    } else {
+        my $lock = Genome::Sys::LockProxy->new(
+            resource => 'genome model admin purge-software-results-from-analysis-project' . $anp->id,
+            scope => 'site',
+        )->lock(max_try => 1);
+
+        die $self->error_message('Cannot get lock for analysis project '.$anp->id) unless $lock;
+
+        my $observer = UR::Context->current->add_observer(
+            aspect => 'commit',
+            callback => sub {
+                $lock->unlock();
+            }
+        );
+
+        $unlocker = sub {
+            $observer->delete();
+            $lock->unlock();
+        };
+    }
+    return $unlocker;
+}
+
 sub purge_one_analysis_project {
     my($self, $anp) = @_;
 
@@ -107,15 +142,32 @@ sub purge_one_analysis_project {
     my $dbh = Genome::DataSource::GMSchema->get_default_handle();
     die $self->error_message('Cannot get default database handle') unless $dbh;
 
+    my $unlocker = $self->_get_lock_for_analysis_project($anp);
+
     my $sth = $dbh->prepare($sql);
     die $self->error_message("preparing SQL failed : $DBI::errstr") unless $sth;
 
     $sth->execute($anp->id);
+
+    my $total_kb_purged = 0;
+    my $software_result_count = 0;
+
+    my $unlock_and_print_report = Scope::Guard->new(sub {
+        $unlocker->();
+        $self->status_message('Removed %d GB from %d software results',
+                                int($total_kb_purged / KB_IN_ONE_GB),
+                                $software_result_count);
+    });
+
     while (my $data = $sth->fetchrow_hashref()) {
         my $sr = Genome::SoftwareResult->get($data->{result_id});
         die $self->error_message('Cannot get software result '. $data->{result_id}) unless $sr;
 
         my $reason = 'Expunge software result uniquely used by model from disabled config item ('. $data->{profile_item_id} .') for analysis project \''. $data->{anp_name} .'\' ('. $data->{anp_id} .')';
+
+        $software_result_count++;
+        $total_kb_purged += $data->{kilobytes_requested};
+
         if ($self->dry_run) {
             $self->warning_message('Dry run, not removing software result '.$sr->id);
         } else {
