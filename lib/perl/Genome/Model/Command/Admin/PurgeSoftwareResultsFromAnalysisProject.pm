@@ -112,15 +112,7 @@ sub _get_lock_for_analysis_project {
 
         die $self->error_message('Cannot get lock for analysis project '.$anp->id) unless $lock;
 
-        my $observer = UR::Context->current->add_observer(
-            aspect => 'commit',
-            callback => sub {
-                $lock->unlock();
-            }
-        );
-
         $unlocker = sub {
-            $observer->delete();
             $lock->unlock();
         };
     }
