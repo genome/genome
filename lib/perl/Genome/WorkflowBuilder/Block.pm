@@ -35,7 +35,7 @@ sub get_ptero_builder_task {
 }
 
 sub _get_ptero_block_method {
-    require Ptero::Builder::Detail::Workflow::Converge;
+    require Ptero::Builder::Detail::Workflow::Block;
 
     my $self = shift;
     my ($output_name) = $self->output_properties;
