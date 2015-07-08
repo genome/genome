@@ -1,11 +1,28 @@
 use strict;
 use warnings;
 
-use Data::Dumper;
+package Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject;
+
 use DateTime::Format::Strptime;
 use Genome;
 
-my $days_to_retain = 30;
+class Genome::Model::Command::Admin::PurgeSoftwareResultsFromAnalysisProject {
+    is => 'Command::V2',
+    has => [
+        days_to_retain => {
+            is => 'Integer',
+            default_value => 30,
+            doc => 'Things older than this many days will be purged',
+        },
+        analysis_projects => {
+            is => 'Genome::Config::AnalysisProject',
+            is_many => 1,
+            shell_args_position => 1,
+            require_user_verify => 1,
+            doc => 'List of AnalysisProjects to purge',
+        },
+    ],
+};
 
 my $sql = qq(
     SELECT * FROM (
@@ -39,51 +56,50 @@ my $sql = qq(
     )
 );
 
-my $anp_id = $ARGV[0];
+sub execute {
+    my $self = shift;
 
-my $anp = Genome::Config::AnalysisProject->get($anp_id);
-die unless $anp;
+    foreach my $anp ( $self->analysis_projects ) {
+        if ($anp->is_cle) {
+            die('Failed to process CLE analysis project: '. $anp->id);
+        }
 
-if ($anp->is_cle) {
-    die('Failed to process CLE analysis project: '. $anp->id);
+        my $strp = DateTime::Format::Strptime->new(
+            pattern   => UR::Context->date_template(),
+        );
+
+        my $now_str = UR::Context->now();
+        my $updated_at_str = $anp->updated_at;
+
+        my $dt1 = $strp->parse_datetime($updated_at_str);
+        my $dt2 = $strp->parse_datetime($now_str);
+
+        my $anp_updated_duration = $dt1->delta_days($dt2);
+
+        my $duration_to_retain = DateTime::Duration->new(
+            days        => $self->days_to_retain,
+        );
+
+        if ( DateTime::Duration->compare( $anp_updated_duration, $duration_to_retain ) == -1 ) {
+            warn('Analysis project \''. $anp->id .'\' was updated at '. $updated_at_str .' which is less than the '. $self->days_to_retain .' days to retain disabled results');
+            exit;
+        }
+
+        my $dbh = Genome::DataSource::GMSchema->get_default_handle();
+        die unless $dbh;
+
+        my $sth = $dbh->prepare($sql);
+        die unless $sth;
+
+        $sth->execute($anp->id);
+        while (my $data = $sth->fetchrow_hashref()) {
+            my $sr = Genome::SoftwareResult->get($data->{result_id});
+            die unless $sr;
+
+            my $reason = 'Expunge software result uniquely used by model from disabled config item ('. $data->{profile_item_id} .') for analysis project \''. $data->{anp_name} .'\' ('. $data->{anp_id} .')';
+            print $reason ."\n";
+            $sr->expunge($reason);
+            UR::Context->commit();
+        }
+    }
 }
-
-my $strp = DateTime::Format::Strptime->new(
-    pattern   => UR::Context->date_template(),
-);
-
-my $now_str = UR::Context->now();
-my $updated_at_str = $anp->updated_at;
-
-my $dt1 = $strp->parse_datetime($updated_at_str);
-my $dt2 = $strp->parse_datetime($now_str);
-
-my $anp_updated_duration = $dt1->delta_days($dt2);
-
-my $duration_to_retain = DateTime::Duration->new(
-    days        => $days_to_retain,
-);
-
-if ( DateTime::Duration->compare( $anp_updated_duration, $duration_to_retain ) == -1 ) {
-    warn('Analysis project \''. $anp_id .'\' was updated at '. $updated_at_str .' which is less than the '. $days_to_retain .' days to retain disabled results');
-    exit;
-}
-
-my $dbh = Genome::DataSource::GMSchema->get_default_handle();
-die unless $dbh;
-
-my $sth = $dbh->prepare($sql);
-die unless $sth;
-
-$sth->execute($anp_id);
-while (my $data = $sth->fetchrow_hashref()) {
-    my $sr = Genome::SoftwareResult->get($data->{result_id});
-    die unless $sr;
-
-    my $reason = 'Expunge software result uniquely used by model from disabled config item ('. $data->{profile_item_id} .') for analysis project \''. $data->{anp_name} .'\' ('. $data->{anp_id} .')';
-    print $reason ."\n";
-    $sr->expunge($reason);
-    UR::Context->commit();
-}
-
-exit;
