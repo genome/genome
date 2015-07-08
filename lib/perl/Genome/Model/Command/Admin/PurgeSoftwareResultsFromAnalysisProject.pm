@@ -65,50 +65,56 @@ sub execute {
     my $self = shift;
 
     foreach my $anp ( $self->analysis_projects ) {
-        if ($anp->is_cle) {
-            die('Failed to process CLE analysis project: '. $anp->id);
-        }
+        $self->purge_one_analysis_project($anp);
+    }
+}
 
-        my $strp = DateTime::Format::Strptime->new(
-            pattern   => UR::Context->date_template(),
-        );
+sub purge_one_analysis_project {
+    my($self, $anp) = @_;
 
-        my $now_str = UR::Context->now();
-        my $updated_at_str = $anp->updated_at;
+    if ($anp->is_cle) {
+        die('Failed to process CLE analysis project: '. $anp->id);
+    }
 
-        my $dt1 = $strp->parse_datetime($updated_at_str);
-        my $dt2 = $strp->parse_datetime($now_str);
+    my $strp = DateTime::Format::Strptime->new(
+        pattern   => UR::Context->date_template(),
+    );
 
-        my $anp_updated_duration = $dt1->delta_days($dt2);
+    my $now_str = UR::Context->now();
+    my $updated_at_str = $anp->updated_at;
 
-        my $duration_to_retain = DateTime::Duration->new(
-            days        => $self->days_to_retain,
-        );
+    my $dt1 = $strp->parse_datetime($updated_at_str);
+    my $dt2 = $strp->parse_datetime($now_str);
 
-        if ( DateTime::Duration->compare( $anp_updated_duration, $duration_to_retain ) == -1 ) {
-            warn('Analysis project \''. $anp->id .'\' was updated at '. $updated_at_str .' which is less than the '. $self->days_to_retain .' days to retain disabled results');
-            exit;
-        }
+    my $anp_updated_duration = $dt1->delta_days($dt2);
 
-        my $dbh = Genome::DataSource::GMSchema->get_default_handle();
-        die unless $dbh;
+    my $duration_to_retain = DateTime::Duration->new(
+        days        => $self->days_to_retain,
+    );
 
-        my $sth = $dbh->prepare($sql);
-        die unless $sth;
+    if ( DateTime::Duration->compare( $anp_updated_duration, $duration_to_retain ) == -1 ) {
+        $self->warning_message('Analysis project \''. $anp->id .'\' was updated at '. $updated_at_str .' which is less than the '. $self->days_to_retain .' days to retain disabled results');
+        return;
+    }
 
-        $sth->execute($anp->id);
-        while (my $data = $sth->fetchrow_hashref()) {
-            my $sr = Genome::SoftwareResult->get($data->{result_id});
-            die unless $sr;
+    my $dbh = Genome::DataSource::GMSchema->get_default_handle();
+    die unless $dbh;
 
-            my $reason = 'Expunge software result uniquely used by model from disabled config item ('. $data->{profile_item_id} .') for analysis project \''. $data->{anp_name} .'\' ('. $data->{anp_id} .')';
-            if ($self->dry_run) {
-                $self->warning_message('Dry run, not removing software result '.$sr->id);
-            } else {
-                print $reason ."\n";
-                $sr->expunge($reason);
-                UR::Context->commit();
-            }
+    my $sth = $dbh->prepare($sql);
+    die unless $sth;
+
+    $sth->execute($anp->id);
+    while (my $data = $sth->fetchrow_hashref()) {
+        my $sr = Genome::SoftwareResult->get($data->{result_id});
+        die unless $sr;
+
+        my $reason = 'Expunge software result uniquely used by model from disabled config item ('. $data->{profile_item_id} .') for analysis project \''. $data->{anp_name} .'\' ('. $data->{anp_id} .')';
+        if ($self->dry_run) {
+            $self->warning_message('Dry run, not removing software result '.$sr->id);
+        } else {
+            print $reason ."\n";
+            $sr->expunge($reason);
+            UR::Context->commit();
         }
     }
 }
