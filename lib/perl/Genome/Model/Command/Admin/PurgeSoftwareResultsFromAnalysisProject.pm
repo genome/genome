@@ -69,12 +69,8 @@ sub execute {
     }
 }
 
-sub purge_one_analysis_project {
+sub analysis_project_is_old_enough_to_purge {
     my($self, $anp) = @_;
-
-    if ($anp->is_cle) {
-        die('Failed to process CLE analysis project: '. $anp->id);
-    }
 
     my $strp = DateTime::Format::Strptime->new(
         pattern   => UR::Context->date_template(),
@@ -92,8 +88,18 @@ sub purge_one_analysis_project {
         days        => $self->days_to_retain,
     );
 
-    if ( DateTime::Duration->compare( $anp_updated_duration, $duration_to_retain ) == -1 ) {
-        $self->warning_message('Analysis project \''. $anp->id .'\' was updated at '. $updated_at_str .' which is less than the '. $self->days_to_retain .' days to retain disabled results');
+    return ( DateTime::Duration->compare( $anp_updated_duration, $duration_to_retain ) == -1 );
+}
+
+sub purge_one_analysis_project {
+    my($self, $anp) = @_;
+
+    if ($anp->is_cle) {
+        die('Failed to process CLE analysis project: '. $anp->id);
+    }
+
+    if ( $self->analysis_project_is_old_enough_to_purge($anp) ) {
+        $self->warning_message('Analysis project \''. $anp->id .'\' was updated at '. $anp->updated_at .' which is less than the '. $self->days_to_retain .' days to retain disabled results');
         return;
     }
 
