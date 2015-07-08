@@ -95,7 +95,7 @@ sub purge_one_analysis_project {
     my($self, $anp) = @_;
 
     if ($anp->is_cle) {
-        die('Failed to process CLE analysis project: '. $anp->id);
+        die $self->error_message('Failed to process CLE analysis project: '. $anp->id);
     }
 
     if ( $self->analysis_project_is_old_enough_to_purge($anp) ) {
@@ -104,21 +104,21 @@ sub purge_one_analysis_project {
     }
 
     my $dbh = Genome::DataSource::GMSchema->get_default_handle();
-    die unless $dbh;
+    die $self->error_message('Cannot get default database handle') unless $dbh;
 
     my $sth = $dbh->prepare($sql);
-    die unless $sth;
+    die $self->error_message("preparing SQL failed : $DBI::errstr") unless $sth;
 
     $sth->execute($anp->id);
     while (my $data = $sth->fetchrow_hashref()) {
         my $sr = Genome::SoftwareResult->get($data->{result_id});
-        die unless $sr;
+        die $self->error_message('Cannot get software result '. $data->{result_id}) unless $sr;
 
         my $reason = 'Expunge software result uniquely used by model from disabled config item ('. $data->{profile_item_id} .') for analysis project \''. $data->{anp_name} .'\' ('. $data->{anp_id} .')';
         if ($self->dry_run) {
             $self->warning_message('Dry run, not removing software result '.$sr->id);
         } else {
-            print $reason ."\n";
+            $self->status_message($reason);
             $sr->expunge($reason);
             UR::Context->commit();
         }
