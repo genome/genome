@@ -11,7 +11,7 @@ class Genome::Model::ReferenceAlignment::Command::RefCovMetrics {
     is => 'Command::V2',
     has_input => {
         models => {
-            is => 'Genome::Model::ReferenceAlignment',
+            is => 'Genome::Model',
             is_many => 1,
             shell_args_position => 1,
             require_user_verify => 0,
@@ -52,19 +52,33 @@ sub execute {
     my ($metrics_method, $extract_metrics_method) = $self->_resolve_methods;
     my $fh = Genome::Sys->open_file_for_writing($self->output_path);
 
-    my (@data, @headers);
+    my @data;
     MODEL: for my $model ( $self->models ) {
         BUILD: for my $build ( $model->builds(status => 'Succeeded', -order => 'date_completed') ) {
-            my $metrics = $build->$metrics_method;
-            next BUILD if not $metrics;
-            my $row = $self->$extract_metrics_method($metrics);
-            $row->{model_name} = $model->name;
-            push @data, $row;
-            push @headers, keys %$row;
-            next MODEL;
+            if ( not $build->is_current ) {
+                next BUILD;
+            }
+
+            my @results = $build->results;
+            next BUILD if not @results;
+            my @coverage_stats = List::MoreUtils::uniq(
+                grep { $_->isa('Genome::InstrumentData::AlignmentResult::Merged::CoverageStats') } @results
+            );
+            next BUILD if not @coverage_stats;
+
+            RESULT: for my $result ( @coverage_stats ) {
+                my $metrics = $result->$metrics_method;
+                next RESULT if not $metrics;
+                my $row = $self->$extract_metrics_method($metrics);
+                $row->{model_name} = $model->name;
+                push @data, $row;
+                next MODEL;
+            }
         }
         $self->warning_message('No results for model: '.$model->__display_name__);
     }
+
+    return 1 if not @data;
 
     my @headers = List::MoreUtils::uniq(sort map { keys %$_ } @data);
     my $idx = List::MoreUtils::firstidx { $_ eq 'model_name' } @headers;

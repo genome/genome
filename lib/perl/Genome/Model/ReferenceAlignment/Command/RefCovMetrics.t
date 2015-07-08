@@ -7,16 +7,33 @@ use above 'Genome';
 
 require Test::MockObject;
 use Test::More;
-plan tests => 3;
+plan tests => 4;
 
 my $class = 'Genome::Model::ReferenceAlignment::Command::RefCovMetrics';
 use_ok($class) or die;
 
 my $build = Test::MockObject->new();
+$build->set_always('is_current', 1);
+$build->set_series('results');
+
 my $model = Test::MockObject->new();
 $model->set_isa('Genome::Model::ReferenceAlignment', 'Genome::Model');
 $model->set_always('name', 'JohnnyVegas');
+$model->set_always('__display_name__', 'JohnnyVegas (1)');
 $model->set_always('builds', ($build));
+
+subtest 'no results' => sub{
+    plan tests => 2;
+
+    my $cmd = $class->execute(models => $model, type => 'coverage');
+    ok($cmd->result, 'execute for coverage');
+    is($cmd->warning_message, 'No results for model: '.$model->__display_name__, 'correct warning mesage');
+
+};
+
+my $result = Test::MockObject->new();
+$result->set_isa('Genome::InstrumentData::AlignmentResult::Merged::CoverageStats');
+$build->set_always('results', $result);
 
 subtest 'coverage' => sub{
     plan tests => 2;
@@ -32,7 +49,7 @@ subtest 'coverage' => sub{
 
         }
     };
-    $build->set_always('coverage_stats_summary_hash_ref', $coverage_stats_summary);
+    $result->set_always('coverage_stats_summary_hash_ref', $coverage_stats_summary);
 
     my $out = Genome::Sys->create_temp_file_path('model.coverage');
     my $cmd = $class->execute(models => $model, type => 'coverage', output_path => $out);
@@ -64,7 +81,7 @@ subtest 'alignment' => sub{
             'unique_target_aligned_bp' => '30114830',
         }
     };
-    $build->set_always('alignment_summary_hash_ref', $alignment_summary_hash_ref);
+    $result->set_always('alignment_summary_hash_ref', $alignment_summary_hash_ref);
 
     my $out = Genome::Sys->create_temp_file_path('model.alignment');
     my $cmd = $class->execute(models => $model, type => 'alignment', output_path => $out);
