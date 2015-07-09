@@ -66,7 +66,7 @@ sub sample {
 
     my @samples = uniq map {$_->sample} $self->alignment_result->instrument_data;
     if (scalar(@samples) > 1) {
-        die $self->error_message("More than one sample: %s", join(', ', map {$_->name} @samples));
+        die $self->error_message("More than one sample for alignment result (%s): %s", $self->alignment_result->id, join(', ', map {$_->name} @samples));
     }
     else {
         return $samples[0];
