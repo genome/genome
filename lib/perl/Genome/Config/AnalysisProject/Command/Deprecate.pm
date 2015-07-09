@@ -27,7 +27,7 @@ sub help_synopsis {
 
 sub help_detail {
     return <<"EOS"
-Given some analysis projects, this will deprecate the analysis project.  This includes setting all config profile items to disabled and updating the project status to Deprecated.
+Deprecate each of the input analysis projects.  Deprecate includes setting all config profile items to disabled and updating the project status to Deprecated.
 EOS
 }
 
