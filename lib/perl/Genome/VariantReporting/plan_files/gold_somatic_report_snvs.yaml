@@ -65,6 +65,7 @@ reports:
                     - VarscanSomatic
                     - Sniper
                     - Strelka
+                sample_name: discovery_tumor
             vaf:
                 sample_name_labels: sample_name_labels
                 sample_names:
