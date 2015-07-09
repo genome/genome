@@ -36,6 +36,7 @@ sub execute {
     if ($self->is_single_bam($model)) {
         # Germline
         $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
+            common_translations => $self->get_common_translations(),
             discovery => $model->last_succeeded_build,
             plan_file_basename => 'gold_germline_report_TYPE.yaml',
             gold_sample_name => $self->gold_sample_name,
@@ -44,6 +45,7 @@ sub execute {
     } else {
         #Somatic
         $model_pair = Genome::VariantReporting::Command::Wrappers::ModelPair->create(
+            common_translations => $self->get_common_translations(),
             discovery => $model->last_succeeded_build,
             plan_file_basename => 'gold_somatic_report_TYPE.yaml',
             gold_sample_name => $self->gold_sample_name,
@@ -84,6 +86,69 @@ sub is_single_bam {
     my $self = shift;
     my $model = shift;
     return (!defined($model->normal_sample));
+}
+
+sub get_common_translations {
+    my $self = shift;
+
+    return {
+        sample_name_labels => {
+            $self->discovery_sample_name =>
+                sprintf('Discovery(%s)', $self->discovery_sample_name),
+            $self->normal_sample_name =>
+                sprintf('Normal(%s)', $self->normal_sample_name),
+            $self->gold_sample_name =>
+                sprintf('Gold(%s)', $self->gold_sample_name),
+        },
+        library_name_labels => {
+            $self->get_library_name_labels('discovery'),
+            $self->get_library_name_labels('normal'),
+            $self->get_library_name_labels('gold'),
+        },
+    };
+}
+
+sub discovery_sample_name {
+    my $self = shift;
+    return $self->discovery_sample->name;
+}
+
+sub normal_sample_name {
+    my $self = shift;
+    return $self->normal_sample->name;
+}
+
+sub normal_sample {
+    my $self = shift;
+    return $self->model->normal_sample;
+}
+
+sub discovery_sample {
+    my $self = shift;
+    return $self->model->tumor_sample;
+}
+
+sub gold_sample {
+    my $self = shift;
+    return Genome::Sample->get(name => $self->gold_sample_name);
+}
+
+my %counters;
+sub get_library_name_labels {
+    my ($self, $category) = @_;
+
+    my %labels;
+    $counters{$category} = 1;
+
+    my $accessor = sprintf('%s_sample', $category);
+    for my $library ($self->$accessor->libraries) {
+        $labels{$library->name} = sprintf('%s-Library%d(%s)',
+            ucfirst($category),
+            $counters{$category}++,
+            $library->name,
+        );
+    }
+    return %labels;
 }
 
 1;
