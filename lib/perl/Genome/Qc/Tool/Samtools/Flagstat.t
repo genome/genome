@@ -37,7 +37,7 @@ my @expected_cmd_line =(
 is_deeply([$tool->cmd_line], [@expected_cmd_line], 'Command line list as expected');
 
 my %expected_metrics = (
-    pct_interchromosomal_mappings => '0.0142700329308452',
+    pct_interchromosomal_mappings => '0.0145251396648045',
 );
 is_deeply({$tool->get_metrics}, {%expected_metrics}, 'Parsed metrics as expected');
 
