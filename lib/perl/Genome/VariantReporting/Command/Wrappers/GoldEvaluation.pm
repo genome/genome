@@ -36,7 +36,7 @@ sub execute {
     if ($self->is_single_bam($model)) {
         # Germline
         $model_pair = Genome::VariantReporting::Command::Wrappers::SingleModel->create(
-            common_translations => $self->get_common_translations(),
+            common_translations => $self->get_germline_translations(),
             discovery => $model->last_succeeded_build,
             plan_file_basename => 'gold_germline_report_TYPE.yaml',
             gold_sample_name => $self->gold_sample_name,
@@ -45,7 +45,7 @@ sub execute {
     } else {
         #Somatic
         $model_pair = Genome::VariantReporting::Command::Wrappers::ModelPair->create(
-            common_translations => $self->get_common_translations(),
+            common_translations => $self->get_somatic_translations(),
             discovery => $model->last_succeeded_build,
             plan_file_basename => 'gold_somatic_report_TYPE.yaml',
             gold_sample_name => $self->gold_sample_name,
@@ -90,6 +90,17 @@ sub is_single_bam {
 
 sub get_common_translations {
     my $self = shift;
+    my $model = $self->model;
+    if ($self->is_single_bam($model)) {
+        return $self->get_germline_translations();
+    }
+    else {
+        return $self->get_somatic_translations();
+    }
+}
+
+sub get_somatic_translations {
+    my $self = shift;
 
     return {
         sample_name_labels => {
@@ -103,6 +114,23 @@ sub get_common_translations {
         library_name_labels => {
             $self->get_library_name_labels('discovery'),
             $self->get_library_name_labels('normal'),
+            $self->get_library_name_labels('gold'),
+        },
+    };
+}
+
+sub get_germline_translations {
+    my $self = shift;
+
+    return {
+        sample_name_labels => {
+            $self->discovery_sample_name =>
+                sprintf('Discovery(%s)', $self->discovery_sample_name),
+            $self->gold_sample_name =>
+                sprintf('Gold(%s)', $self->gold_sample_name),
+        },
+        library_name_labels => {
+            $self->get_library_name_labels('discovery'),
             $self->get_library_name_labels('gold'),
         },
     };
