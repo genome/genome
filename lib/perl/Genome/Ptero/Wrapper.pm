@@ -66,9 +66,10 @@ sub execute {
         $self->_run_command($cmd);
         return $cmd;
     } catch {
-        Carp::cluck($_);
+        my $error = $_;
+        Carp::cluck($error);
         $self->_teardown_logging;
-        die $_;
+        die $error;
     };
 
     $self->_teardown_logging;
