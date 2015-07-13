@@ -66,7 +66,7 @@ class Genome::Model::Tools::Pindel::ProcessPindelReads {
             is => 'String',
             doc => 'Full path to aligned reads bam file',
         },
-        control_aligned_reads_input => {    
+        control_aligned_reads_input => {
             is => 'String',
             doc => 'Full path to control aligned reads bam file',
         },
@@ -133,12 +133,12 @@ class Genome::Model::Tools::Pindel::ProcessPindelReads {
 
 sub help_synopsis {
     return <<"EOS"
-gmt pindel process-pindel-reads --input-file pindel.outfile --output-file pindel.adapted 
+gmt pindel process-pindel-reads --input-file pindel.outfile --output-file pindel.adapted
 EOS
 }
 
-sub help_detail {                           
-    return <<EOS 
+sub help_detail {
+    return <<EOS
 Transforms a file from pindel output format to bed format
 EOS
 }
@@ -168,7 +168,7 @@ sub execute {
     if(defined($read_support_output_file)){
         $self->_read_support_fh(Genome::Sys->open_file_for_writing($read_support_output_file));
     }
-    
+
     #set output to a temp file if sorting output, otherwise dump it right into the final destination
     my $sort_output_flag = $self->sort_output;
     my $bed_mode =  $self->mode eq 'to_bed';
@@ -210,7 +210,7 @@ sub execute {
     return 1;
 }
 
-sub process_source { 
+sub process_source {
     my $self = shift;
     my ($input, $output, $refseq) = @_;
     my %events;
@@ -225,7 +225,7 @@ sub process_source {
         my $normal_support=0;
         my $read = 0;
         if($line =~ m/^#+$/){
-            my @event = (); 
+            my @event = ();
             my $call = $input_fh->getline;
             chomp $call;
             push @event, $call;
@@ -277,7 +277,7 @@ sub somatic_filter {
     for my $support (@support){
         if($support =~ m/normal/){
             $normal_support++;
-        } 
+        }
     }
     if($self->create_hq_raw_reads && ($normal_support==0)){
         $self->print_raw_read(\@event,$hq_raw);
@@ -305,7 +305,7 @@ sub read_support {
         die $self->error_message("Could not locate tumor_bam at: ".$tumor_bam);
     }
     unless(-s $normal_bam){
-        die $self->error_message("Could not locate normal_bam at: ".$tumor_bam);
+        die $self->error_message("Could not locate normal_bam at: ".$normal_bam);
     }
 
     my @call_fields = split /\s/, $call;
@@ -420,15 +420,15 @@ sub read_support {
     my $is_lq = 1;
 
     my $p_value = Genome::Statistics::calculate_p_value(
-                    $normal_read_support, 
-                    $normal_read_sw_support, 
-                    $tumor_read_support, 
+                    $normal_read_support,
+                    $normal_read_sw_support,
+                    $tumor_read_support,
                     $tumor_read_sw_support);
     if($p_value == 1) {
         $p_value = Genome::Statistics::calculate_p_value(
-                    $normal_read_sw_support, 
-                    $normal_read_support, 
-                    $tumor_read_sw_support, 
+                    $normal_read_sw_support,
+                    $normal_read_support,
+                    $tumor_read_sw_support,
                     $tumor_read_support);
     }
 
@@ -455,11 +455,11 @@ sub read_support {
     }
     else {
         die $self->error_message("Nothing to do!");
-    } 
+    }
     if(system("rm -f $temp")){
         die $self->error_message("Failed to complete the command: rm -f $temp");
     }
-    
+
     return 1;
 }
 
@@ -496,7 +496,7 @@ sub vaf_filter {
         if(system($tsam_cmd)){
             die $self->error_message("Failed to run the command: $tsam_cmd");
         }
-        $tumor_read_support = $self->line_count($temp);        
+        $tumor_read_support = $self->line_count($temp);
     }
     else {
         my @results = `samtools view $tumor_bam $chr:$stop-$stop`;
@@ -511,7 +511,7 @@ sub vaf_filter {
 
     # Currently, there are some instances when samtools view runs for along time, and either does not return,
     # or returns nothing, resulting in zero tumor_read_support, which itself causes a divide by zero error.
-    # SO, in the interests of testing this filter on real data, I have added an override which sets 
+    # SO, in the interests of testing this filter on real data, I have added an override which sets
     # tumor_read_support to 1 and fails the site, but notifies the user.  rlong 8/24/2011
 
 
@@ -528,7 +528,7 @@ sub vaf_filter {
     my $cutoff = $self->variant_freq_cutoff;
     if ($vaf >= $cutoff) {
         $vaf_cutoff_met = 1;
-    } 
+    }
 
     if($override){
         $vaf_cutoff_met=0;
@@ -545,7 +545,7 @@ sub vaf_filter {
     }
     else {
         die $self->error_message("Nothing to do!");
-    } 
+    }
     return 1;
 }
 
@@ -595,19 +595,19 @@ sub parse {
     my ($chr, $start, $stop);
     $chr = $call_fields[7];
     $start = $call_fields[9];
-    $stop = $call_fields[10];    
+    $stop = $call_fields[10];
     my $support = $call_fields[15];
     my ($ref, $var);
     if($type =~ m/D/) {
         $var =0;
-        ###Make pindels coordinates(which seem to be last undeleted base and first undeleted base) 
+        ###Make pindels coordinates(which seem to be last undeleted base and first undeleted base)
         ###conform to our annotators requirements
         $stop = $stop -1;
         ###also deletions which don't contain their full sequence should be dumped to separate file
         my $allele_string;
-        my $start_for_faidx = $start+1; 
+        my $start_for_faidx = $start+1;
         my $sam_default = Genome::Model::Tools::Sam->path_for_samtools_version;
-        my $faidx_cmd = "$sam_default faidx " . $self->_refseq . " $chr:$start_for_faidx-$stop"; 
+        my $faidx_cmd = "$sam_default faidx " . $self->_refseq . " $chr:$start_for_faidx-$stop";
         my @faidx_return= `$faidx_cmd`;
         shift(@faidx_return);
         chomp @faidx_return;
